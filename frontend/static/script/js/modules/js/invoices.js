@@ -346,7 +346,7 @@ PosnicPro.invoices = {
         if (notes) { h += '<div class="q-block m-t-10"><div class="q-label"><lang class="lang_notes_title">Notes</lang></div>' + esc(notes) + '</div>'; }
         var sig = PosnicPro.local.get('quotesignature');
         if (sig) {
-            h += '<div class="q-sign-img"><img loading="lazy" decoding="async" src="' + sig + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
+            h += '<div class="q-sign-img"><img loading="lazy" decoding="async" src="' + esc(sig) + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
                 + '<div class="q-sign"><lang class="lang_authorised_signatory">Authorised signatory</lang></div>';
         }
         $('#ie_preview').html(h);
@@ -874,6 +874,7 @@ PosnicPro.invoices = {
         var booked = PosnicPro.invoices._booked(inv);
         return {
             title: PosnicPro.invoices._title(inv),
+            paperSize: PosnicPro.printSettings ? PosnicPro.printSettings.get('invoice').paperSize : 'a4',
             number: inv.invoice_id,
             headLines: [
                 'Date: ' + dmy(inv.issue_date || inv.created_date),
@@ -892,7 +893,7 @@ PosnicPro.invoices = {
     _withDoc: function (use) {
         var inv = PosnicPro.invoices._current;
         if (!inv) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_open_an_invoice_first', 'Open an invoice first.')); return; }
-        PosnicPro.lazy.load('jspdf').then(function () {
+        Promise.all([PosnicPro.lazy.load('jspdf'), PosnicPro.printSettings ? PosnicPro.printSettings.ready() : null]).then(function () {
             var C = (window.jspdf && typeof window.jspdf.jsPDF === 'function') ? window.jspdf.jsPDF
                 : (typeof window.jsPDF === 'function') ? window.jsPDF
                 : (typeof window.jspdf === 'function') ? window.jspdf : null;
@@ -917,14 +918,14 @@ PosnicPro.invoices = {
             img.onerror = function () { go(null); };
             setTimeout(function () { go(null); }, 1500);
             img.src = src;
+        }).catch(function () {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_document_prepare_failed', 'Could not prepare the document. Check print settings and try again.'));
         });
     },
     printNow: function () {
         PosnicPro.invoices._withDoc(function (doc) {
-            if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
-            var url = doc.output('bloburl');
-            var w = window.open(url, '_blank');
-            if (!w) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_allow_pop_ups_so_the_invoice_can_print', 'Allow pop-ups so the invoice can print.')); }
+            PosnicPro.printPdfDocument(doc, (PosnicPro.invoices._current || {}).invoice_id || 'invoice',
+                PosnicPro.i18n.t('lang_allow_pop_ups_so_the_invoice_can_print', 'Allow pop-ups so the invoice can print.'), 'invoice');
         });
     },
     print: function () {

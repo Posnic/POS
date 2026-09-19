@@ -31,6 +31,7 @@ jest.mock('../../../src/controllers/settings.controller', () => {
     editTax: make,
     deleteTax: make,
     getUnitAll: make,
+    previewReceiptQr: make,
     getUnitAjaxList: make,
     addUnit: make,
     editUnit: make,

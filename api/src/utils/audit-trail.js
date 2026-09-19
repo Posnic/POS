@@ -24,7 +24,7 @@
  * than no log. `redactValue` enforces that rather than trusting callers.
  */
 
-const SENSITIVE = /pass|pwd|pin|secret|token|key|hash|otp|salt/i;
+const SENSITIVE = /pass|pwd|pin|secret|token|key|hash|otp|salt|recovery/i;
 
 /*
  * Values are recorded only when they are safe AND small. A field named

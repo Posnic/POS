@@ -68,6 +68,7 @@ const salesService = require('../../../src/services/sale.service');
 const { ERROR_MESSAGES } = require('../../../src/constants/sales.constants');
 const { NotFoundError, BadRequestError } = require('../../../src/utils/appError');
 const { PAYMENT_STATUS, SALE_STATUS } = require('../../../src/constants');
+const { KOT_EVENT } = require('../../../src/helpers/kot-notify');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -124,9 +125,14 @@ describe('SalesService', () => {
   let consoleErrorSpy;
   let consoleLogSpy;
   let consoleWarnSpy;
+  let kotNotifications;
+  let onKotReady;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    kotNotifications = [];
+    onKotReady = (event) => kotNotifications.push(event);
+    process.on(KOT_EVENT, onKotReady);
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -174,9 +180,90 @@ describe('SalesService', () => {
   });
 
   afterEach(() => {
+    process.removeListener(KOT_EVENT, onKotReady);
     consoleErrorSpy.mockRestore();
     consoleLogSpy.mockRestore();
     consoleWarnSpy.mockRestore();
+  });
+
+  describe('desktop KOT printing starts when the order is saved', () => {
+    beforeEach(() => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    });
+
+    test.each([{ sale_method: 'Table-Order' }, { sale_process: 'KOT' }])(
+      'notifies the kitchen once after committing %j',
+      async (options) => {
+        let commit;
+        let started;
+        const saving = new Promise((resolve) => {
+          commit = resolve;
+        });
+        const saveStarted = new Promise((resolve) => {
+          started = resolve;
+        });
+        salesRepository.create.mockImplementationOnce(() => {
+          started();
+          return saving;
+        });
+
+        const pending = salesService.processSale(makeSaleData(options), '', 'Add', makeContext());
+        await saveStarted;
+        expect(kotNotifications).toEqual([]);
+        commit({ _id: 'savedKotId' });
+        const result = await pending;
+
+        expect(result.status).toBe(true);
+        expect(kotNotifications).toEqual([
+          { branchId: BRANCH_ID, saleId: 'savedKotId', reason: 'created', at: expect.any(Number) },
+        ]);
+      }
+    );
+
+    test('a rejected order write does not wake the printer', async () => {
+      salesRepository.create.mockRejectedValueOnce(new Error('write failed'));
+      const result = await salesService.processSale(
+        makeSaleData({ sale_method: 'Table-Order' }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result.status).toBe(false);
+      expect(kotNotifications).toEqual([]);
+    });
+
+    test.each([
+      ['Add', {}],
+      ['Hold', {}],
+      ['Hold', { sale_method: 'Table-Order' }],
+    ])('does not notify for %s without a submitted kitchen order (%j)', async (mode, options) => {
+      const result = await salesService.processSale(makeSaleData(options), '', mode, makeContext());
+      expect(result.status).toBe(true);
+      expect(kotNotifications).toEqual([]);
+    });
+
+    test('changes saved through the till wake the same kitchen queue', async () => {
+      const saleId = '64f8f2f4c2b9c0a1e4b55555';
+      salesRepository.getById.mockResolvedValue({
+        items: [],
+        changes: [],
+        set: jest.fn(),
+        sales_id: 'INV000001',
+        sale_method: 'Table-Order',
+        sale_process: 'KOT',
+        payment_status: 'Unpaid',
+      });
+      const result = await salesService.processSale(
+        makeSaleData({ sale_method: 'Table-Order', payment_mode: '', payment_status: 'Unpaid' }),
+        saleId,
+        'Edit',
+        makeContext()
+      );
+      expect(result.status).toBe(true);
+      expect(kotNotifications).toEqual([
+        { branchId: BRANCH_ID, saleId, reason: 'updated', at: expect.any(Number) },
+      ]);
+    });
   });
 
   // ── processSale – validation ──────────────────────────────────────────────
@@ -580,6 +667,7 @@ describe('SalesService', () => {
       expect(Number(saved.payment_pending)).toBe(0);
       /* Still a table order in history; the STATUS is what clears the floor. */
       expect(saved.sale_process).toBe('KOT');
+      expect(kotNotifications).toEqual([]);
     });
 
     test('updates register entry for edit mode', async () => {

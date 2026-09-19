@@ -302,6 +302,8 @@ test('no line is wider than the paper', () => {
 
 const HOTEL = {
   branch_name: 'Virundu Restaurant',
+  country: 'India',
+  table_options: true,
   branch_gstin_number: '33AABCM9561A1ZS',
   branch_fssai_number: '12415013000025',
   indian_gst: 'enable',
@@ -390,6 +392,17 @@ test('a shop with the switch on but no licence prints no label', () => {
   const bill = buildBillPayload(AT(20), { ...HOTEL, branch_fssai_number: '', bill_print_fssai: true });
   assert.strictEqual(bill.fssai, '');
   assert.ok(!/FSSAI/.test(paper({ ...bill, title: 'TAX INVOICE' })));
+});
+
+test('queued ESC/POS bills omit FSSAI outside India or with Restaurant disabled', () => {
+  for (const country of ['India', 'IN', 'United States', 'United Arab Emirates', 'Singapore', '', undefined]) {
+    for (const enabled of [true, false]) {
+      const bill = buildBillPayload(AT(20), { ...HOTEL, country, table_options: enabled, bill_print_fssai: true });
+      const allowed = enabled && ['India', 'IN'].includes(country);
+      assert.strictEqual(bill.fssai, allowed ? HOTEL.branch_fssai_number : '');
+      assert.strictEqual(paper(bill).includes('FSSAI:'), allowed);
+    }
+  }
 });
 
 test('THE SHOP ROWS ARE IN THE HEADER, not stranded after the total', () => {

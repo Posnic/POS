@@ -31,6 +31,7 @@
 
     <!--Start Contentbar-->
     <div class="contentbar" style="position: relative;">
+        <div id="kot-print-feedback" class="alert alert-info" hidden></div>
         <div class="row" style="margin: 0;">
             <!-- Left Sidebar - Table Grid -->
             <div class="col-lg-6 col-md-7"
@@ -322,7 +323,11 @@
                 </button>
                 <button type="button" class="btn btn-primary" onclick="PosnicPro.kot.printKOT()">
                     <i class="feather icon-printer mr-2"></i>
-                    <lang class="lang_print_title">Print</lang>
+                    <lang class="lang_print_bill">Print Bill</lang>
+                </button>
+                <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.kot.printKOTSlip($('#kot_view_modal').data('sale-id'))">
+                    <i class="feather icon-printer mr-2"></i>
+                    <lang class="lang_kot_print_button">Print KOT</lang>
                 </button>
             </div>
         </div>

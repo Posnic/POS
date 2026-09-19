@@ -6,6 +6,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
+const { fitDocument } = require('./receipt-page-layout');
 const rawPrintService = require('./raw-print-service');
 
 /* How long the printer list may be remembered. Long enough that a receipt
@@ -568,7 +569,7 @@ class HardwareManager {
         '100mm': { width: 100000, height: 1000000, windowWidth: 378 },
         'a4':    { width: 210000, height: 297000,  windowWidth: 794 },
         'a5':    { width: 148000, height: 210000,  windowWidth: 559 },
-        'letter':{ width: 216000, height: 279000,  windowWidth: 816 }
+        'letter':{ width: 215900, height: 279400,  windowWidth: 816 }
       };
 
       // Get pageSize from options or default to 80mm (3inch)
@@ -625,9 +626,19 @@ class HardwareManager {
       }
       await this._waitForPrintPage(printWindow.webContents);
 
+      // Designed thermal receipts end at their content instead of feeding a
+      // metre of paper (the fallback page size used by older HTML templates).
+      if (options.fitReceipt === true && (sizeKey === '58mm' || sizeKey === '80mm')) {
+        const fitted = await printWindow.webContents.executeJavaScript(
+          `(${fitDocument.toString()})(document)`
+        );
+        if (fitted) Object.assign(pageSize, fitted);
+      }
+
       const printOpts = {
         silent: options.silent !== false,
         printBackground: true,
+        scaleFactor: 100,
         margins: { marginType: 'none' },
         pageSize: pageSize,
         copies: Math.max(1, parseInt(options.copies, 10) || 1)
@@ -656,7 +667,7 @@ class HardwareManager {
         result = await this._printViaPdfFallback(printWindow, deviceName, options);
       }
 
-      if (!result.success && deviceName) {
+      if (!result.success && deviceName && options.strictPrinter !== true) {
         console.warn(`Named printer "${deviceName}" failed, falling back to Windows default printer`);
         result = await this._printWithSystemDefaultFallback(printWindow, options);
       }

@@ -295,7 +295,28 @@ class SettingsRepository extends BaseModel {
            Stored verbatim they read as ENABLED through every `!== false`
            gate - the all-toggles-on incident. The boolean is stored, so no
            reader ever meets the string. null still means inherit. */
-        if (key === 'analytics_enable') {
+        if (key === 'receipt_designs' && value !== null) {
+          try {
+            accepted[key] = await require('../helpers/resolve-receipt-design').resolveReceiptDesign(
+              value
+            );
+          } catch (error) {
+            return { status: false, data: null, message: error.message };
+          }
+        } else if (key === 'quote_default_signature') {
+          if (
+            value !== null &&
+            value !== '' &&
+            !require('../helpers/receipt-design').image(value)
+          ) {
+            return {
+              status: false,
+              data: null,
+              message: 'Choose a PNG, JPEG or WebP signature under 400 KB.',
+            };
+          }
+          accepted[key] = value;
+        } else if (key === 'analytics_enable') {
           /* same string-boolean trap as the feature toggles */
           accepted[key] = coerceFeatureToggle(value);
         } else if (key === 'analytics_ga_id') {

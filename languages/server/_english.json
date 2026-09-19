@@ -380,6 +380,10 @@
     "src/controllers/categories.controller.js",
     "src/controllers/customer-categories.controller.js"
   ],
+  "Choose a PNG, JPEG or WebP signature under 400 KB.": [
+    "src/models/setting.model.js",
+    "src/repositories/settings.repository.js"
+  ],
   "Choose a supplier": [
     "src/repositories/purchase-order.repository.js"
   ],
@@ -651,6 +655,9 @@
   "Email is required": [
     "src/controllers/users.controller.js"
   ],
+  "Email recovery is unavailable on this installation. Use an offline recovery code, or ask your administrator for help.": [
+    "src/models/setting.model.js"
+  ],
   "Email settings updated successfully": [
     "src/models/setting.model.js"
   ],
@@ -679,6 +686,9 @@
   ],
   "Enter the amount received": [
     "src/services/invoice-sync.js"
+  ],
+  "Enter up to 1,000 characters for the QR code.": [
+    "src/controllers/settings.controller.js"
   ],
   "Error": [
     "src/models/base.model.js"
@@ -1380,6 +1390,9 @@
   "Nothing was said": [
     "src/services/voice-intent.service.js"
   ],
+  "Offline recovery is unavailable here.": [
+    "src/routes/recovery.routes.js"
+  ],
   "On the way": [
     "src/repositories/sale.repository.js"
   ],
@@ -1457,6 +1470,9 @@
   "Password reset key is required": [
     "src/controllers/users.controller.js"
   ],
+  "Password reset. Sign in with your new password. This recovery code can no longer be used.": [
+    "src/services/recovery.service.js"
+  ],
   "Password successfully updated": [
     "src/controllers/users.controller.js",
     "src/repositories/user.repository.js"
@@ -1525,6 +1541,9 @@
   ],
   "Please provide a valid email address": [
     "src/models/user.model.js"
+  ],
+  "Please sign in again.": [
+    "src/routes/auth-utils.routes.js"
   ],
   "Posnic API v2 root": [
     "app.js"
@@ -2106,6 +2125,9 @@
     "src/models/customer-category.model.js",
     "src/services/customer-category.service.js"
   ],
+  "This content is too long for a QR code. Shorten it and try again.": [
+    "src/controllers/settings.controller.js"
+  ],
   "This database already contains a shop. Installing would replace it, ": [
     "src/services/install.service.js"
   ],
@@ -2195,6 +2217,9 @@
   "This refund has already been processed for this sale": [
     "src/repositories/sale.repository.js"
   ],
+  "This register needs to be resumed on this device. Open Cash Register and choose Resume.": [
+    "src/repositories/register.repository.js"
+  ],
   "This shop has not set up an AI provider": [
     "src/services/ai.service.js"
   ],
@@ -2265,6 +2290,9 @@
   ],
   "Too many questions in a minute. Please wait a moment and ask again.": [
     "src/middleware/assistant-rate-limit.js"
+  ],
+  "Too many recovery attempts. Please wait fifteen minutes and try again.": [
+    "src/middleware/auth-rate-limit.js"
   ],
   "Too many requests from this IP, please try again after 15 minutes": [
     "src/middleware/security.js"

@@ -744,5 +744,6 @@
   "Could not sweep the print queue": "Die Druckwarteschlange konnte nicht bereinigt werden",
   "Could not read what needs attention": "Was Aufmerksamkeit braucht, konnte nicht gelesen werden",
   "Could not answer the print job": "Der Druckauftrag konnte nicht beantwortet werden",
-  "Could not read the print queue": "Die Druckwarteschlange konnte nicht gelesen werden"
+  "Could not read the print queue": "Die Druckwarteschlange konnte nicht gelesen werden",
+  "This register needs to be resumed on this device. Open Cash Register and choose Resume.": "Diese Kasse muss auf diesem Gerät fortgesetzt werden. Öffnen Sie „Kasse“ und wählen Sie „Fortsetzen“."
 }

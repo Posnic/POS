@@ -42,6 +42,24 @@ window.addEventListener('hashchange', function () {
     if (window.location.hash !== '#/dashboard') { PosnicPro._bootStage.drain(); }
 });
 
+// Register ownership belongs to a browser profile, not its IP address or
+// Electron version. Keep this across sign-ins, restarts and application updates.
+PosnicPro.requestDeviceId = function () {
+    if (PosnicPro._requestDeviceId) { return PosnicPro._requestDeviceId; }
+    var key = 'posnic_request_device_id';
+    var id;
+    try { id = localStorage.getItem(key); } catch (e) { /* storage unavailable */ }
+    if (!/^[a-f0-9]{32}$/.test(id || '')) {
+        if (!window.crypto || !window.crypto.getRandomValues) { return null; }
+        var bytes = new Uint8Array(16);
+        window.crypto.getRandomValues(bytes);
+        id = Array.from(bytes, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+        try { localStorage.setItem(key, id); } catch (e) { /* stable for this page */ }
+    }
+    PosnicPro._requestDeviceId = id;
+    return id;
+};
+
 PosnicPro.request = function (params, callback, failure = null) {
     var method = params.method ? params.method : 'GET';
     if (PosnicPro._bootStage.shouldDefer(params, method)) {
@@ -62,6 +80,8 @@ PosnicPro.request = function (params, callback, failure = null) {
     {
         // JWT Token support for Electron cross-origin requests
         var headers = {};
+        var deviceId = PosnicPro.requestDeviceId();
+        if (deviceId) { headers['X-Device-Id'] = deviceId; }
         /* The API returns this derived token on any cookie-authenticated
          * response. It is useless without the HttpOnly credential it is bound
          * to, but proves an unsafe browser request came from code that could

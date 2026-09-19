@@ -1040,6 +1040,22 @@
                 <div id="qProgPct" style="color:#94a3b8;font-size:12px;margin-top:14px;">0%</div>
             </div>
 
+            <div class="form-section" id="stepRecovery" style="display:none;">
+                <h2>Save your recovery codes</h2>
+                <p>Your shop is ready. These codes let the owner reset a forgotten password without email or internet.</p>
+                <p id="recoveryAccount"></p>
+                <pre id="recoveryCodes" dir="ltr" style="font-size:14px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f5f9;padding:16px;border-radius:8px;"></pre>
+                <p>Each code works once. Keep a copy away from this computer, such as on a USB drive or written on paper in a safe place. Anyone with a code can reset this account.</p>
+                <button type="button" class="btn btn-secondary" id="saveRecoveryCodes">Save recovery codes</button>
+                <label style="display:flex;gap:10px;align-items:flex-start;margin-top:24px;">
+                    <input type="checkbox" id="recoverySaved" style="width:auto;margin-top:4px;">
+                    <span>I have saved these codes somewhere safe.</span>
+                </label>
+                <div class="btn-container">
+                    <button type="button" class="btn btn-primary" id="recoveryContinue" disabled>Continue to sign in →</button>
+                </div>
+            </div>
+
             <form id="installForm">
                 <!-- Step 1: User Account Section -->
                 <div class="form-section" id="step1" style="display: none;">
@@ -1455,7 +1471,7 @@ const form = document.getElementById('installForm');
         // Step 0: installation mode (local shop vs Posnic Cloud)
         // ------------------------------------------------------------------
         function showSection(id) {
-            ['step0', 'stepCloud', 'stepQuick', 'stepProgress', 'step1'].forEach((name) => {
+            ['step0', 'stepCloud', 'stepCloudSignup', 'stepQuick', 'stepProgress', 'stepRecovery', 'step1', 'step2', 'step3', 'step4'].forEach((name) => {
                 const el = document.getElementById(name);
                 if (el) el.style.display = name === id ? 'block' : 'none';
             });
@@ -1463,6 +1479,46 @@ const form = document.getElementById('installForm');
                Every other step is a form, and a form stretched to 940px reads
                worse than one at 600. */
             document.body.classList.toggle('choosing', id === 'step0');
+        }
+        function finishInstallation(data) {
+            const goToLogin = () => {
+                if (window.electron && window.electron.loadPage) window.electron.loadPage('login');
+                else window.location.href = API_BASE + '/login.html';
+            };
+            // Cloud and older API versions do not issue local recovery codes.
+            if (!data || !Array.isArray(data.recoveryCodes) || !data.recoveryCodes.length) {
+                goToLogin();
+                return;
+            }
+            showSection('stepRecovery');
+            const codes = data.recoveryCodes;
+            document.getElementById('recoveryAccount').textContent = 'Owner account: ' + data.recoveryAccount;
+            document.getElementById('recoveryCodes').textContent = codes.join('\n');
+            const saved = document.getElementById('recoverySaved');
+            const next = document.getElementById('recoveryContinue');
+            saved.checked = false;
+            next.disabled = true;
+            saved.onchange = () => { next.disabled = !saved.checked; };
+            document.getElementById('saveRecoveryCodes').onclick = () => {
+                const text = 'POSNIC - OFFLINE RECOVERY CODES\nAccount: ' + data.recoveryAccount + '\n\n' + codes.join('\n') +
+                    '\n\nEach code works once. Keep this sheet away from the till. Anyone with a code can reset this account.\n';
+                const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'posnic-recovery-codes.txt';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            };
+            next.onclick = () => {
+                if (!saved.checked) return;
+                document.getElementById('recoveryCodes').textContent = '';
+                document.getElementById('saveRecoveryCodes').onclick = null;
+                codes.length = 0;
+                data.recoveryCodes = [];
+                goToLogin();
+            };
         }
         document.getElementById('chooseLocalBtn').addEventListener('click', () => showSection('stepQuick'));
         document.getElementById('qBackBtn').addEventListener('click', () => showSection('step0'));
@@ -1684,13 +1740,7 @@ const form = document.getElementById('installForm');
                         if (ok < 2) await new Promise((r) => setTimeout(r, 300));
                     }
                     prog.finish();
-                    setTimeout(() => {
-                        if (window.electron && window.electron.loadPage) {
-                            window.electron.loadPage('login');
-                        } else {
-                            window.location = API_BASE + '/login.html';
-                        }
-                    }, 600);
+                    finishInstallation(result.data);
                 } else {
                     prog.stop();
                     showSection('stepQuick');
@@ -2568,7 +2618,7 @@ const form = document.getElementById('installForm');
                 });
 
                 const result = await response.json();
-                console.log('📥 Installation result:', result);
+                console.log('📥 Installation completed:', result.type === 'success' || result.success);
 
                 if (result.type === 'success' || result.success) {
                     // Save backup config via Electron IPC
@@ -2582,28 +2632,8 @@ const form = document.getElementById('installForm');
                         // Don't block installation success on backup config save failure
                     }
                     
-                    // Hide loading and show success screen
                     loadingIndicator.style.display = 'none';
-                    document.getElementById('successScreen').classList.add('show');
-                    
-                    // Start countdown from 10 seconds
-                    let countdown = 10;
-                    const countdownElement = document.getElementById('countdown');
-                    
-                    const countdownInterval = setInterval(() => {
-                        countdown--;
-                        countdownElement.textContent = countdown;
-                        
-                        if (countdown <= 0) {
-                            clearInterval(countdownInterval);
-                            // Use Electron's IPC to load login page
-                            if (window.electron && window.electron.loadPage) {
-                                window.electron.loadPage('login');
-                            } else {
-                                window.location.href = 'public/login.html';
-                            }
-                        }
-                    }, 1000);
+                    finishInstallation(result.data);
                 } else {
                     throw new Error(result.message || 'Installation failed');
                 }

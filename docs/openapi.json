@@ -142,6 +142,10 @@
       "description": "Mounted at /receivings"
     },
     {
+      "name": "Recovery",
+      "description": "Mounted at /users/recovery"
+    },
+    {
       "name": "Registers",
       "description": "Mounted at /registers"
     },
@@ -893,6 +897,71 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/branches/{id}/signature": {
+      "get": {
+        "summary": "branchesController",
+        "operationId": "get_branches_id_signature",
+        "tags": [
+          "Branches"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "branchesController",
+        "operationId": "put_branches_id_signature",
+        "tags": [
+          "Branches"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/branches": {
@@ -10088,6 +10157,98 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/users/recovery/options": {
+      "get": {
+        "summary": "recoveryOptions",
+        "operationId": "get_users_recovery_options",
+        "tags": [
+          "Recovery"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/users/recovery/reset": {
+      "post": {
+        "summary": "resetWithRecoveryCode",
+        "operationId": "post_users_recovery_reset",
+        "tags": [
+          "Recovery"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/users/recovery/codes": {
+      "get": {
+        "summary": "recoveryCodeStatus",
+        "operationId": "get_users_recovery_codes",
+        "tags": [
+          "Recovery"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "generateRecoveryCodes",
+        "operationId": "post_users_recovery_codes",
+        "tags": [
+          "Recovery"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/registers/getDataChanges": {
       "get": {
         "summary": "getDataChanges",
@@ -11753,6 +11914,40 @@
         "operationId": "post_sales_voiceIntent",
         "tags": [
           "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/{id}/kotPrint": {
+      "post": {
+        "summary": "counterKotPrint",
+        "operationId": "post_sales_id_kotPrint",
+        "tags": [
+          "Sales"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -13968,6 +14163,30 @@
       "post": {
         "summary": "forgotPassword",
         "operationId": "post_settings_forgotPassword",
+        "tags": [
+          "Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/settings/receiptDesignQr": {
+      "post": {
+        "summary": "previewReceiptQr",
+        "operationId": "post_settings_receiptDesignQr",
         "tags": [
           "Settings"
         ],

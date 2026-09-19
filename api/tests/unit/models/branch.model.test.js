@@ -688,6 +688,39 @@ describe('BranchModel.getRegisterList', () => {
     expect(r.data.open_register.register_name).toBe('Main');
   });
 
+  test.each([
+    ['this-device', 'this-device', false],
+    ['old-device', 'this-device', true],
+    [undefined, 'this-device', true],
+    ['this-device', null, true],
+  ])('requires explicit resume for lock %s and request %s: %s', async (lock, device, required) => {
+    const regId = validObjId();
+    const user = { _id: validObjId(), license: validObjId(), usertype: 'owner' };
+    const session = {
+      _id: validObjId(),
+      register_id: regId,
+      register_name: 'Main',
+      register_status: 'Opened',
+      lock_device_id: lock,
+      current_user_id: user._id,
+    };
+    mockCollection.findOne.mockResolvedValue(session);
+    mockCollection.updateOne = jest.fn();
+    mockCollection.find = jest
+      .fn()
+      .mockReturnValue({ toArray: jest.fn().mockResolvedValue([session]) });
+    mockModel.findById.mockReturnValue({
+      lean: jest
+        .fn()
+        .mockResolvedValue({ register: [{ register_id: regId, register_name: 'Main' }] }),
+    });
+    const result = await bm.getRegisterList(validId(), user, device);
+    expect(result.data.open_register.resume_required).toBe(required);
+    expect(result.data.register_data[0].resume_required).toBe(required);
+    expect(result.data.register_data[0].in_use_by_me).toBe(true);
+    expect(mockCollection.updateOne).not.toHaveBeenCalled();
+  });
+
   test('returns status:false when an exception is thrown', async () => {
     mockModel.findById.mockImplementation(() => {
       throw new Error('DB failure');

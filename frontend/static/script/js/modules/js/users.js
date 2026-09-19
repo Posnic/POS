@@ -1085,6 +1085,22 @@ PosnicPro.users = {
         });
     },
 
+    restoreRegisterSession: function (data) {
+        var open = data && data.open_register;
+        if (!open || open.register_status !== 'Opened' || open.resume_required !== false) {
+            PosnicPro.local.set('userRegisterStatus', 'Closed');
+            db.currentregister.put({id: '1', register_status: 'closed'});
+            return false;
+        }
+        PosnicPro.local.set('cash_register_id', open.cash_register_id);
+        PosnicPro.local.set('register_id', open.register_id);
+        PosnicPro.local.set('register_name', open.register_name);
+        PosnicPro.local.set('userRegisterStatus', 'Open');
+        db.currentregister.put({id: '1', register_id: open.register_id,
+            register_name: open.register_name, register_status: 'open'});
+        return true;
+    },
+
     selectedRegisterActiveBranchUser: function (id) {
         var params = {
             url: 'branches/userRegisterBranchSelect',
@@ -1115,20 +1131,7 @@ PosnicPro.users = {
                 }
 
                 // Check if there's an open register in database
-                if (data.open_register && data.open_register.register_status === 'Opened') {
-                    // Load existing open register to local storage and IndexedDB
-                    PosnicPro.local.set('cash_register_id', data.open_register.cash_register_id);
-                    PosnicPro.local.set('register_id', data.open_register.register_id);
-                    PosnicPro.local.set('register_name', data.open_register.register_name);
-                    PosnicPro.local.set('userRegisterStatus', 'Open');
-                    
-                    db.currentregister.put({
-                        id: '1', 
-                        register_id: data.open_register.register_id, 
-                        register_name: data.open_register.register_name, 
-                        register_status: 'open'
-                    });
-                    
+                if (PosnicPro.users.restoreRegisterSession(data)) {
                     // Continue to dashboard without showing modal
                     $('.loginform_card').hide();
                     PosnicPro.users.createCookie('loginuser', 'yes', 1);

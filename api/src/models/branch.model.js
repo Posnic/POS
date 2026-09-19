@@ -187,6 +187,9 @@ const branchSchema = new Schema(
     regular_body_print: { type: String },
     thermal_body_print: { type: String },
     print_controls: { type: Object },
+    receipt_designs: { type: Object },
+    // Shared document signature; retain the original quotation key for sync.
+    quote_default_signature: { type: String },
 
     client_dateformat: { type: String, default: 'dd/mm/yyyy' },
     server_dateformat: { type: String, default: 'd/m/Y' },
@@ -553,7 +556,7 @@ class BranchModel {
    * @param {Object} user - Current user object with _id and license
    * @returns {Promise<Object>} - { status, data, message }
    */
-  async getRegisterList(branchId, user = null) {
+  async getRegisterList(branchId, user = null, deviceId = null) {
     try {
       if (!branchId || !Types.ObjectId.isValid(branchId)) {
         return {
@@ -583,6 +586,9 @@ class BranchModel {
             register_id: openRegDoc.register_id ? openRegDoc.register_id.toString() : '',
             register_name: openRegDoc.register_name || '',
             register_status: openRegDoc.register_status || '',
+            // Reading the register list must not transfer a till's lock. A
+            // different (or legacy) device needs an explicit Open/Resume.
+            resume_required: !deviceId || openRegDoc.lock_device_id !== deviceId,
           };
         }
       }
@@ -633,6 +639,7 @@ class BranchModel {
                   current_user: 1,
                   current_user_id: 1,
                   register_opendate: 1,
+                  lock_device_id: 1,
                 },
               }
             )
@@ -647,6 +654,7 @@ class BranchModel {
                 ? String(open.current_user_id || '') === String(user._id)
                 : false;
               row.open_since = open.register_opendate || null;
+              row.resume_required = !deviceId || open.lock_device_id !== deviceId;
             } else {
               row.in_use = false;
             }

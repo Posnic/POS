@@ -85,6 +85,8 @@ function qtyText(value) {
  *   items        [{ name, quantity, description }]
  *   source       where the order came from, already worded; '' prints nothing
  *   cancelled    true when this sheet is a cancellation, so the lines are struck
+ *   duplicate    true for an explicitly requested reprint
+ *   originalTitle the original ticket kind when reprinting from the log
  * @param {{paperWidth?: string, strikeCancelled?: boolean}} options
  *   paperWidth      '48' for 80mm, '32' for 58mm
  *   strikeCancelled false for a printer that cannot take a raster; see strikeLine
@@ -99,6 +101,10 @@ function renderKitchenTicket(ticket = {}, options = {}) {
   /* What kind of sheet. Double height, because a cook glancing at a spike of
      tickets is looking for exactly this word. */
   if (ticket.title) r.centre(String(ticket.title), { bold: true, size: 1 });
+  if (ticket.duplicate) {
+    r.centre('Do not prepare again', { bold: true });
+    if (ticket.originalTitle) r.centre('Original: ' + String(ticket.originalTitle));
+  }
 
   /* The serial, in the biggest type the roll has. This is what the pass
      shouts and what the cook matches an amendment against. */

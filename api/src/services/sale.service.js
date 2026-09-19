@@ -13,6 +13,7 @@ const { PAYMENT_STATUS, SALE_STATUS } = require('../constants');
 const salesChannels = require('../utils/sales-channels');
 const { NotFoundError, BadRequestError } = require('../utils/appError');
 const { toNumberExpression } = require('../helpers/sales.helper');
+const { notifyKotReady } = require('../helpers/kot-notify');
 
 // Helper to get model instance or class
 const getModel = (SaleModel) => SaleModel || Sale;
@@ -1268,6 +1269,13 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
     // For new sales use generated prefixId; for edits, keep the existing sales_id if available
     const salePrefixedId =
       id === '' ? prefixId : existingSale && existingSale.sales_id ? existingSale.sales_id : '';
+
+    // The till saves through this service; handset orders notify from the
+    // repository. Wake the same kitchen queue as soon as this write commits,
+    // otherwise desktop orders wait for its 30-second fallback poll.
+    if (saleProcess === 'KOT' && process !== 'Hold' && !settlingTheBill) {
+      notifyKotReady({ branchId, saleId, reason: id === '' ? 'created' : 'updated' });
+    }
 
     /*
      * The sale is committed - tell the sync agent NOW, not on the 15s scan.

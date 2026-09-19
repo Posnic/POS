@@ -47,6 +47,7 @@ PosnicPro.branches = {
         PosnicPro.branches.loadFullEdit(id);
     },
     loadFullEdit: function (id) {
+        PosnicPro.branchSignature.mount('#branch-signature-settings', { branchId: id });
         // Option lists first (idempotent - they repopulate by id wherever the
         // controls live), then this branch's values over them.
         PosnicPro.settings.loadSelectSettingCountry();

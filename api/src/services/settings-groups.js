@@ -90,6 +90,7 @@ const PREFERENCES = [
   'footer_image',
   'footer_qr_url',
   'footer_image_caption',
+  'receipt_designs',
   'printall',
   'print_url',
   'print_logoimg',

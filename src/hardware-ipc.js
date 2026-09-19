@@ -219,12 +219,13 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   // Render the same bytes for the tender preview without contacting a printer,
   // opening the drawer, or recording a print job.
   ipcMain.handle('printer:preview-receipt', async (_event, sale, options = {}) => {
-    const { renderSale, COLUMNS } = require('./escpos-receipt');
+    const { COLUMNS } = require('./escpos-receipt');
+    const { renderReceipt } = require('./escpos-unicode');
     const { parse } = require('./escpos-preview');
     const { resolvePictures } = require('./escpos-logo');
     const paperWidth = options.paperWidth === '58' ? '58' : '80';
     const prepared = await resolvePictures(sale, paperWidth);
-    return parse(renderSale(prepared, {
+    return parse(await renderReceipt(prepared, {
       paperWidth,
       symbolGlyphs: options.symbolGlyphs !== false,
     }), COLUMNS[paperWidth]);
@@ -246,7 +247,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     const startedAt = Date.now();
     const receiptLog = require('./receipt-log');
     try {
-      const { renderSale } = require('./escpos-receipt');
+      const { renderReceipt } = require('./escpos-unicode');
       const { normalizeTargets, columnsFor } = require('./printer-targets');
 
       /*
@@ -342,13 +343,13 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         /* Rendered per target: an 80mm roll is 48 columns and a 58mm roll is
            32, so the same bytes cannot serve both. Getting this wrong wraps the
            total onto its own line, which looks like a rounding bug on paper. */
-        const paperWidth = String(columnsFor(target.pageSize));
+        const paperWidth = columnsFor(target.pageSize) <= 32 ? '58' : '80';
         /* eslint-disable-next-line no-await-in-loop -- one fetch, cached
            per paper width, and the loop is serial anyway. */
         const logo = await pictureDots('logo', paperWidth, true);
         /* eslint-disable-next-line no-await-in-loop -- cached per width. */
         const footerImage = await pictureDots('footerImage', paperWidth, false);
-        const bytes = renderSale({ ...(sale || {}), logo, footerImage }, {
+        const bytes = await renderReceipt({ ...(sale || {}), logo, footerImage }, {
           paperWidth,
           /* A printer that cannot be taught a glyph spells the currency
              instead. Per machine, like the printer name. */
@@ -468,6 +469,21 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     return await hardwareManager.printHTML(htmlContent, options);
   });
 
+  ipcMain.handle('printer:print-pdf', async (event, bytes, kind) => {
+    const saved = require('./device-preferences').documentPrintSettings();
+    const profile = kind === 'invoice' || kind === 'quotation' ? saved[kind] : {};
+    if (profile.printerName && profile.printerName !== 'default') {
+      const printers = await hardwareManager.listPrinters();
+      if (!printers.some((printer) => printer.name === profile.printerName)) {
+        return { success: false, error: 'The selected ' + kind + ' printer is unavailable. Check Print settings.' };
+      }
+    }
+    return require('./print-pdf').printPdfDocument(bytes, {
+      ...profile,
+      parent: BrowserWindow.fromWebContents(event.sender),
+    });
+  });
+
   // Preferences Handlers (file-based persistence)
   const _prefsPath = path.join(app.getPath('userData'), 'preferences.json');
 
@@ -487,6 +503,20 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   }
 
   const preferences = _loadPrefs();
+
+  ipcMain.handle('printer:get-document-settings', () =>
+    require('./device-preferences').documentPrintSettings(preferences));
+  ipcMain.handle('printer:save-document-settings', (_event, value) => {
+    try {
+      const settings = require('./device-preferences').validateDocumentPrintSettings(value);
+      const next = { ...preferences, receipt_printers: JSON.stringify(settings.sales),
+        receipt_printer: settings.sales[0].name, print_width: settings.sales[0].pageSize,
+        document_print_profiles: { invoice: settings.invoice, quotation: settings.quotation } };
+      fs.writeFileSync(_prefsPath, JSON.stringify(next, null, 2));
+      Object.assign(preferences, next);
+      return { success: true, settings };
+    } catch (error) { return { success: false, error: error.message }; }
+  });
 
   /*
    * Bring the shop's hardware back up by itself.
@@ -819,6 +849,11 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   ipcMain.handle('kot:reprint', async (event, logEntry) => {
     if (!kotManager) return { success: false, error: 'KOT manager not initialized' };
     return await kotManager.reprint(logEntry);
+  });
+
+  ipcMain.handle('kot:print-ticket', async (_event, sale) => {
+    if (!kotManager) return { success: false, error: 'KOT manager not initialized' };
+    return kotManager.printCounterTicket(sale);
   });
 
   /*

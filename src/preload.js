@@ -94,12 +94,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPaperSizes: () => ipcRenderer.invoke('printer:get-paper-sizes'),
     setDefault: (name) => ipcRenderer.invoke('printer:set-default', name),
     print:      (htmlContent, options) => ipcRenderer.invoke('printer:print', htmlContent, options),
+    printPdf:   (bytes, kind) => ipcRenderer.invoke('printer:print-pdf', bytes, kind),
+    getDocumentSettings: () => ipcRenderer.invoke('printer:get-document-settings'),
+    saveDocumentSettings: (settings) => ipcRenderer.invoke('printer:save-document-settings', settings),
     // Receipts go as ESC/POS on the desktop: no page, no scaling, no driver
     // rendering. The browser keeps using print() above.
     printReceipt: (sale, options) => ipcRenderer.invoke('printer:print-receipt', sale, options),
     previewReceipt: (sale, options) => ipcRenderer.invoke('printer:preview-receipt', sale, options),
-    // Reports declare their sections; the main process decides how they fit
-    // the paper. A4 reports keep going through the page path above.
+    // Roll reports declare their sections; sheet PDFs use printPdf above.
     printReport: (doc, options) => ipcRenderer.invoke('printer:print-report', doc, options)
   },
   /*
@@ -174,6 +176,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openViaPrinter: (printerName, pin) => ipcRenderer.invoke('cashDrawer:open-via-printer', printerName, pin)
   },
   kot: {
+    printTicket: (sale) => ipcRenderer.invoke('kot:print-ticket', sale),
     getConfig:    () => ipcRenderer.invoke('kot:get-config'),
     startPolling: (config) => ipcRenderer.invoke('kot:start-polling', config),
     stopPolling:  () => ipcRenderer.invoke('kot:stop-polling'),

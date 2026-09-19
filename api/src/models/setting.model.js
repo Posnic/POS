@@ -1190,6 +1190,17 @@ class SettingModel extends BaseModel {
 
   async updateCommonSettings(data = {}) {
     try {
+      if (
+        data.quote_default_signature !== undefined &&
+        data.quote_default_signature !== '' &&
+        !require('../helpers/receipt-design').image(data.quote_default_signature)
+      ) {
+        return {
+          status: false,
+          data: null,
+          message: 'Choose a PNG, JPEG or WebP signature under 400 KB.',
+        };
+      }
       /*
        * THE QR, MADE ONCE.
        *
@@ -1200,12 +1211,18 @@ class SettingModel extends BaseModel {
        * be work nobody asked for.
        */
       const { resolveFooterImage } = require('../helpers/footer-qr');
-      if (data.footer_qr_url !== undefined || data.footer_image !== undefined) {
+      let currentFooter;
+      if (
+        data.footer_qr_url !== undefined ||
+        data.footer_image !== undefined ||
+        data.footer_image_caption !== undefined
+      ) {
         const branches = await this.getCollection('branches');
         const now = await branches.findOne(
           { _id: this.normalizeId(this.branchId) },
-          { projection: { footer_qr_url: 1, footer_image: 1 } }
+          { projection: { footer_qr_url: 1, footer_image: 1, footer_image_caption: 1 } }
         );
+        currentFooter = now || {};
         const made = await resolveFooterImage(data, now || {});
         if (made) Object.assign(data, made);
         else {
@@ -1267,12 +1284,18 @@ class SettingModel extends BaseModel {
             {
               $set: {
                 'printing_design.$.printing_design': data.print_type,
-                'printing_design.$.printing_max_char': data.print_character,
-                'printing_design.$.printing_size': data.print_size,
+                ...(data.print_character !== undefined
+                  ? { 'printing_design.$.printing_max_char': data.print_character }
+                  : {}),
+                ...(data.print_size !== undefined
+                  ? { 'printing_design.$.printing_size': data.print_size }
+                  : {}),
                 // Paper width in millimetres. Added alongside the others rather
                 // than replacing any: printing_size is the font size, this is
                 // the roll the receipt has to fit on.
-                'printing_design.$.print_width': data.print_width,
+                ...(data.print_width !== undefined
+                  ? { 'printing_design.$.print_width': data.print_width }
+                  : {}),
               },
             }
           );
@@ -1695,6 +1718,11 @@ class SettingModel extends BaseModel {
        * "restuaruent module is enabled and saved. its not sync with server
        * why ?"
        */
+      if (data.receipt_designs !== undefined) {
+        updateFields.receipt_designs = require('../helpers/receipt-design').normalize(
+          data.receipt_designs
+        );
+      }
       updateFields.updated_date = new Date();
 
       // Update branch collection (matches PHP $set logic line 389-434)
@@ -1710,7 +1738,15 @@ class SettingModel extends BaseModel {
         url: printUrl,
         header_print: data.header_print,
         footer_print: data.footer_print,
+        ...(data.receipt_designs !== undefined ? { receipt_designs: data.receipt_designs } : {}),
       };
+      // Return the resolved picture, including cache hits and explicit clears,
+      // so the form and the next print see the saved state without a reload.
+      if (currentFooter) {
+        for (const key of ['footer_image', 'footer_qr_url', 'footer_image_caption']) {
+          result[key] = String(updateFields[key] ?? currentFooter[key] ?? '');
+        }
+      }
 
       return {
         status: true,
@@ -4290,6 +4326,19 @@ class SettingModel extends BaseModel {
    */
   async getForgotUserDetails(email, req = null) {
     try {
+      // Installation-wide, before looking up an account, so this error does
+      // not disclose whether the submitted email exists.
+      if (
+        require('../utils/recovery-codes').enabled() &&
+        !(process.env.BREVO_API_KEY || process.env.SENDINBLUE_KEY)
+      ) {
+        return {
+          status: false,
+          data: null,
+          message:
+            'Email recovery is unavailable on this installation. Use an offline recovery code, or ask your administrator for help.',
+        };
+      }
       const usersCollection = await this.getCollection('users');
       /*
        * String(), because this value came from a request body and Mongo reads

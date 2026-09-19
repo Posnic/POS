@@ -1,0 +1,20 @@
+[
+  { "code": "en", "text": "Fresh orange juice" },
+  { "code": "ta", "text": "பால் தேநீர்" },
+  { "code": "hi", "text": "दूध वाली चाय" },
+  { "code": "ml", "text": "പാൽ ചായ" },
+  { "code": "kn", "text": "ಹಾಲಿನ ಚಹಾ" },
+  { "code": "te", "text": "పాల టీ" },
+  { "code": "si", "text": "කිරි තේ" },
+  { "code": "ne", "text": "दूध चिया" },
+  { "code": "ar", "text": "شاي بالنعناع" },
+  { "code": "fr", "text": "Café au lait et crème brûlée" },
+  { "code": "es", "text": "Café con leche y piña" },
+  { "code": "pt", "text": "Pão de queijo e café" },
+  { "code": "id", "text": "Teh susu hangat" },
+  { "code": "th", "text": "ชานมร้อน" },
+  { "code": "de", "text": "Käsebrötchen und Süßigkeiten" },
+  { "code": "sw", "text": "Chai ya maziwa" },
+  { "code": "nl", "text": "Crème en café" },
+  { "code": "it", "text": "Caffè e tè al limone" }
+]

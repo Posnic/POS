@@ -19,6 +19,7 @@ PosnicPro.kot = {
         $('#v-pills-dashboard').addClass('show active');
         $('.page_loader,#osk-container,#closeSaleButton,#closeEditButton').hide();
         $('.page-title-box,#kot').show();
+        if (PosnicPro.kotPrint) PosnicPro.kotPrint.restore();
 
         // Load tables first, then select the specified table if provided
         if (table_number) {
@@ -706,8 +707,8 @@ PosnicPro.kot = {
                                     <button type="button" class="btn btn-info" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')">
                                         <i class="feather icon-printer"></i> <lang class="lang_print_bill">Print Bill</lang>
                                     </button>
-                                    <button type="button" class="btn kot-print-btn" style="background:#6f42c1; color:#fff; display:none;" onclick="PosnicPro.kot.printKOTSlip('${kot._id}')">
-                                        <i class="feather icon-printer"></i> KOT Print
+                                    <button type="button" class="btn kot-print-btn" style="background:#6f42c1; color:#fff;" onclick="PosnicPro.kot.printKOTSlip('${kot._id}')">
+                                        <i class="feather icon-printer"></i> <lang class="lang_kot_print_button">Print KOT</lang>
                                     </button>
                                     <!--
                                       And this one takes the money. "Settle" and "Settlement" were
@@ -1522,6 +1523,7 @@ PosnicPro.kot = {
         PosnicPro.put(params, function(res) {
             spinner.remove();
             if (res.type === 'success') {
+                if (PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(saleId);
                 // Refresh KOT details
                 if (PosnicPro.kot.currentTableNumber) {
                     PosnicPro.kot.loadTableDetails(PosnicPro.kot.currentTableNumber);
@@ -1628,6 +1630,7 @@ PosnicPro.kot = {
             PosnicPro.put(params, function(res) {
                 spinner.remove();
                 if (res.type === 'success') {
+                    if (PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(saleId);
                     // Refresh KOT details
                     if (PosnicPro.kot.currentTableNumber) {
                         PosnicPro.kot.loadTableDetails(PosnicPro.kot.currentTableNumber);
@@ -1916,6 +1919,7 @@ PosnicPro.kot = {
                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')" title="Print Bill" data-t-title="lang_print_bill" data-toggle="tooltip">
                                     <i class="feather icon-printer"></i>
                                 </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="PosnicPro.kot.printKOTSlip('${kot._id}')"><lang class="lang_kot_print_button">Print KOT</lang></button>
                             </div>
                         </div>
                     </div>
@@ -1992,6 +1996,7 @@ PosnicPro.kot = {
                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')" title="Print Bill" data-t-title="lang_print_bill" data-toggle="tooltip">
                                     <i class="feather icon-printer"></i>
                                 </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="PosnicPro.kot.printKOTSlip('${kot._id}')"><lang class="lang_kot_print_button">Print KOT</lang></button>
                             </div>
                         </div>
                     </div>
@@ -2219,6 +2224,7 @@ PosnicPro.kot = {
                     PosnicPro.alert(response.type, response.message);
                     if (response.type === 'success') {
                         $('#kot_view_modal').modal('hide');
+                        if (PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(saleId);
                         PosnicPro.kot.refreshTables();
                     }
                 });
@@ -2242,85 +2248,8 @@ PosnicPro.kot = {
     },
 
     printKOTSlip: function (saleId) {
-        if (!saleId) return;
-
-        PosnicPro.get('sales/' + saleId, function (response) {
-            if (response.type !== 'success') {
-                PosnicPro.alert(response.type, response.message);
-                return;
-            }
-
-            var data = response.data || {};
-            var printSize = PosnicPro.local.get('printing_size') || 'receipt_small';
-
-            function esc(s) {
-                return String(s || '').replace(/[&<>"']/g, function (c) {
-                    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
-                });
-            }
-
-            var title = 'New Order';
-            var dateTime = data.created_date || data.date || '';
-            var orderType = (data.dine_type || '').toString().trim();
-            var sid = (data.sales_id || '').toString().trim();
-            var tableNo = (data.table_number || '').toString().trim();
-            var pax = (data.person_count !== null && typeof data.person_count !== 'undefined') ? data.person_count : '';
-
-            var items = data.items || [];
-            var lines = '';
-
-            for (var i = 0; i < items.length; i++) {
-                var it = items[i] || {};
-                var name = esc(it.item_name || '');
-                var qty = it.item_quantity || 0;
-
-                /* The NOTE only. Falling through to `description` put the
-                   dish's catalogue copy on the paper as if it were an
-                   instruction - see the same fix in sales.js addItem. */
-                var descRaw = it.item_description || '';
-                var desc = esc(descRaw);
-                var descText = desc ? ('** ' + desc + ' **') : '';
-
-                lines += ''
-                    + '<div class="kot-line" style="border-top:1px dashed #000;">'
-                    + '<div class="kot-item">'
-                    + '<div class="kot-item-name">' + name + '</div>'
-                    + (descText ? '<div class="kot-item-desc">' + descText + '</div>' : '')
-                    + '</div>'
-                    + '<div class="kot-qty">X' + qty + '</div>'
-                    + '</div>';
-            }
-
-            var content = ''
-                + '<div id="receipt_wrapper" class="' + esc(printSize) + '">'
-                + '<div id="receipt_wrapper_inner">'
-                + '<div class="kot-center kot-title">' + esc(title) + '</div>'
-                + '<div class="kot-center kot-datetime">' + esc(dateTime) + '</div>'
-                + (orderType ? '<div class="kot-center kot-ordertype">' + esc(orderType) + '</div>' : '')
-                + (sid ? '<div class="kot-center kot-sid">SID' + esc(sid) + '</div>' : '')
-                + '<div class="kot-center kot-tablepax">Table: [' + esc(tableNo || '-') + '] / Pax: [' + esc(pax || '-') + ']</div>'
-                + lines
-                + '</div>'
-                + '</div>'
-                + '<style>'
-                + '  #receipt_wrapper_inner{font-family: monospace;}'
-                + '  .kot-center{text-align:center;}'
-                + '  .kot-title{font-size:18px;font-weight:900;letter-spacing:1px;margin:4px 0 2px;}'
-                + '  .kot-datetime{font-size:14px;font-weight:700;margin:2px 0;}'
-                + '  .kot-ordertype{font-size:16px;font-weight:900;margin:2px 0;text-transform:uppercase;}'
-                + '  .kot-sid{font-size:16px;font-weight:900;margin:2px 0;letter-spacing:2px;}'
-                + '  .kot-tablepax{font-size:14px;font-weight:900;margin:4px 0;}'
-                + '  .kot-dotted{border-top:1px dotted #000;margin:6px 0;}'
-                + '  .kot-item-sep{width:100%;border-top:1px dashed #000;margin:6px 0;}'
-                + '  .kot-line{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin:2px 0;}'
-                + '  .kot-item{max-width:78%;word-break:break-word;}'
-                + '  .kot-item-name{font-size:15px;font-weight:900;text-transform:uppercase;line-height:16px;}'
-                + '  .kot-item-desc{font-size:9px !important;font-weight:400;font-style:italic;line-height:12px;margin-top:2px;text-transform:none;}'
-                + '  .kot-qty{min-width:45px;text-align:right;font-size:15px;font-weight:900;}'
-                + '</style>';
-
-            PosnicPro.printView(content, '');
-        });
+        $('#kot_view_modal').modal('hide');
+        return PosnicPro.kotPrint.print(saleId);
     },
 
     editKOTFromList: function (saleId) {
@@ -2801,6 +2730,7 @@ PosnicPro.kot = {
                     spinner.remove();
                     if (res.type === 'success') {
                         PosnicPro.alert('success', PosnicPro.i18n.t('lang_order_cancelled_all_items_were_removed', 'Order cancelled - all items were removed.'));
+                        if (PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(saleId);
                         if (PosnicPro.kot.currentTableNumber) {
                              // Refresh tables and clear details panel
                              PosnicPro.kot.refreshTables();
@@ -2853,6 +2783,7 @@ PosnicPro.kot = {
                 spinner.remove();
                 if (res.type === 'success') {
                     // Refresh KOT details for the current table
+                    if (PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(saleId);
                     if (PosnicPro.kot.currentTableNumber) {
                         PosnicPro.kot.loadTableDetails(PosnicPro.kot.currentTableNumber);
                     } else {
@@ -3160,6 +3091,7 @@ PosnicPro.kot = {
             if (res.type === 'success') {
                 PosnicPro.alert('success', PosnicPro.i18n.t('lang_item_added', 'Item added'));
                 
+                if (PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(saleId);
                 // Hide add modal
                 $('#kot_add_item_modal').modal('hide');
                 

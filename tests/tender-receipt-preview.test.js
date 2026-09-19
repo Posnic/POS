@@ -139,7 +139,7 @@ for (const layout of ['80', 'a4']) {
 test('cart reads numeric amounts, fractional quantities and product names without edit controls', () => {
     const { dom, win, $, branch, preview } = till();
     win.PosnicPro.sales.SaleTableLineItems = { A: { tax: 2, tax_name: '4811' } };
-    $('body').append('<input id="sales_new_customer_name" value="Sam"><input id="grand_total" value="1500">' +
+    $('body').append('<input id="sales_new_customer_name" value="Sam"><input id="sales_new_customer_gst_number" value="GST123"><input id="grand_total" value="1500">' +
         '<span id="sales_new_subtotal">1,500.00</span><span id="extraDisc">10</span><span id="percentIcon"></span>' +
         '<span id="RoundOff">-0.45</span><span id="discount_sale_amount">20.00</span>' +
         '<table id="sales_new_items_table"><tbody><tr><td id="addSalesLineItemName_A" data-id="Gift &amp; Wrap">Gift &amp; Wrap<button>Edit</button></td>' +
@@ -158,6 +158,7 @@ test('cart reads numeric amounts, fractional quantities and product names withou
     assert.equal(result.items[0].item_quantity, 1.5);
     assert.equal(result.items[0].total_amount, 1530);
     assert.equal(result.sales_id, '');
+    assert.equal(result.customer_gst_number, 'GST123');
     dom.window.close();
 });
 
@@ -176,6 +177,34 @@ test('late loads cannot replace a return summary and a failed load keeps totals 
     success({ type: 'error' });
     assert.match($('#tender_receipt_preview').text(), /Retry/);
     assert.notEqual($('#tender_amount_list')[0].style.display, 'none');
+    dom.window.close();
+});
+
+test('browser preview loads its stylesheet and relative logo without a configured baseUrl', async () => {
+    const { dom, win, $, branch, preview } = till();
+    delete win.PosnicPro.baseUrl;
+    branch.logo = '/uploads/shop.png';
+    win.PosnicPro.paperCss = () => '';
+    win.PosnicPro.get = (_request, done) => done({ type: 'success', data: branch });
+    let cssUrl;
+    $.ajax = (request) => {
+        cssUrl = request.url;
+        return $.Deferred().resolve('@media print { body { color: black; } }').promise();
+    };
+    preview.show();
+    // Wait for the observable result: a fixed 50 ms races jQuery's deferred
+    // stylesheet load when the complete desktop suite runs concurrently.
+    const deadline = Date.now() + 2000;
+    while (!$('#tender_receipt_preview iframe').attr('srcdoc') && Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    assert.equal(cssUrl, 'http://localhost/static/pages/print.css');
+    const html = $('#tender_receipt_preview iframe').attr('srcdoc');
+    assert.ok(html, $('#tender_receipt_preview').text());
+    assert.match(html, /<base href="http:\/\/localhost\/">/);
+    assert.match(html, /@media all/);
+    assert.equal(preview.rawData(html).logo.src, 'http://localhost/uploads/shop.png');
+    assert.equal(preview.rawData(html).footerImage.src, qr);
     dom.window.close();
 });
 

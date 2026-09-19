@@ -41,7 +41,7 @@ PosnicPro.registers = {
                     // Resume covers the browser that lost its local session
                     // record; when the session is already live here the
                     // details below the table are the whole story.
-                    if (PosnicPro.local.get('userRegisterStatus') !== 'Open') {
+                    if (r.resume_required !== false || PosnicPro.local.get('userRegisterStatus') !== 'Open') {
                         action = '<button type="button" class="btn btn-primary btn-sm register-open-btn" data-idx="' + i + '"><i class="feather icon-unlock"></i> Resume</button>';
                     }
                 } else if (r.in_use) {

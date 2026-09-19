@@ -475,3 +475,41 @@ describe('copying settings to another branch', () => {
     expect(r.data.unknown).toEqual(['wibble']);
   });
 });
+
+describe('shared signature persistence', () => {
+  const image = 'data:image/png;base64,AAAA';
+  beforeEach(() => {
+    for (const name of Object.keys(mockCollections)) delete mockCollections[name];
+    for (const name of ['branch_documents', 'branches'])
+      mockCollections[name] = {
+        findOne: jest.fn().mockResolvedValue(null),
+        updateOne: jest.fn().mockResolvedValue({ matchedCount: 1 }),
+      };
+  });
+  test.each([image, ''])(
+    'writes and clears only this branch signature in both stores',
+    async (value) => {
+      const repo = new SettingsRepository();
+      const result = await repo.saveGroup('documents', { quote_default_signature: value }, ctx);
+      expect(result.status).toBe(true);
+      expect(mockCollections.branch_documents.updateOne.mock.calls[0][0].branch_id.toString()).toBe(
+        BRANCH
+      );
+      const [filter, update] = mockCollections.branches.updateOne.mock.calls[0];
+      expect(filter._id.toString()).toBe(BRANCH);
+      expect(filter.license.toString()).toBe(LICENSE);
+      expect(update.$set).toEqual({ quote_default_signature: value });
+    }
+  );
+  test.each([
+    'data:image/svg+xml;base64,AAAA',
+    'https://example.com/a.png',
+    'data:image/png;base64,' + 'A'.repeat(400000),
+  ])('invalid shared image never reaches either store', async (value) => {
+    const repo = new SettingsRepository();
+    const result = await repo.saveGroup('documents', { quote_default_signature: value }, ctx);
+    expect(result.status).toBe(false);
+    expect(mockCollections.branch_documents.updateOne).not.toHaveBeenCalled();
+    expect(mockCollections.branches.updateOne).not.toHaveBeenCalled();
+  });
+});

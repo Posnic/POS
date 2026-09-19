@@ -1,0 +1,40 @@
+.posnic-app-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    padding: 12px 30px 20px;
+    color: var(--theme-text-muted);
+    font-size: 12px;
+}
+.posnic-about-link {
+    padding: 6px 0;
+    border: 0;
+    background: transparent;
+    color: var(--theme-text-secondary);
+    font: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.posnic-about-link:hover { color: var(--theme-primary-color); }
+.posnic-about-link:focus-visible { outline: 2px solid var(--theme-primary-color); outline-offset: 4px; }
+.posnic-about-dialog { max-width: 480px; }
+.posnic-about-product { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+.posnic-about-details {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px 20px;
+    margin: 24px 0 0;
+}
+.posnic-about-details dt { font-weight: 400; color: var(--theme-text-muted); }
+.posnic-about-details dd { margin: 0; overflow-wrap: anywhere; user-select: all; }
+.posnic-about-build { font-family: ui-monospace, Consolas, monospace; }
+.posnic-about-copy-status { min-height: 1.5em; margin: 24px 0 0; font-size: 13px; }
+@media (max-width: 575px) {
+    .posnic-app-footer { padding: 12px 15px 20px; }
+    .posnic-about-dialog { margin: 12px; }
+}
+@media print {
+    .posnic-app-footer, #posnic_about_dialog { display: none !important; }
+}

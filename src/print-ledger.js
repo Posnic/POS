@@ -274,6 +274,7 @@ function summary(day = _today()) {
 }
 
 module.exports = {
+  state: (key) => _dir && key ? _load().entries[String(key)]?.state : undefined,
   setDir,
   keyFor,
   attempted,

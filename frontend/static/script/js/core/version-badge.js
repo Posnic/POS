@@ -140,85 +140,87 @@
             return bits.join(' | ');
         },
 
-        copy: function (text, done) {
-            /* Same fallback ladder as the boot card: a till on an origin
-               without the async clipboard still has to be able to copy. */
+        copy: function (text, done, fail) {
+            function fallback() {
+                var ta = document.createElement('textarea');
+                var focused = document.activeElement;
+                // Keep the fallback inside the modal's focus trap.
+                var parent = document.getElementById('posnic_about_dialog') || document.body;
+                var copied = false;
+                try {
+                    ta.value = text;
+                    ta.setAttribute('readonly', '');
+                    ta.style.position = 'fixed';
+                    ta.style.left = '-9999px';
+                    parent.appendChild(ta);
+                    ta.select();
+                    copied = document.execCommand('copy') === true;
+                } catch (e) { /* report failure below */ }
+                finally {
+                    if (ta.parentNode) { ta.parentNode.removeChild(ta); }
+                    if (focused && focused.focus) { focused.focus(); }
+                }
+                if (copied) { done(); } else if (fail) { fail(); }
+            }
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(text).then(done, function () { });
+                    navigator.clipboard.writeText(text).then(done, fallback);
                     return;
                 }
-            } catch (e) { /* fall through */ }
-            try {
-                var ta = document.createElement('textarea');
-                ta.value = text;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                done();
-            } catch (e) { /* a shop can still read it off the screen */ }
+            } catch (e) { /* try the legacy clipboard */ }
+            fallback();
         },
 
-        /*
-         * Fill whichever version lines this page has.
-         *
-         * Both are optional: the sign-in page carries one, the dashboard
-         * carries the other, and a page with neither costs one query and
-         * stops.
-         */
+        show: function () {
+            window.jQuery('#posnic_about_dialog').modal('show');
+        },
+
         paint: function () {
             var host = document.getElementById('posnic_version_line');
             var lite = document.getElementById('posnic_version_login');
             if (!host && !lite) { return; }
 
             PosnicPro.versionBadge.read(!!host).then(function (v) {
-                /*
-                 * Nothing knowable means nothing shown.
-                 *
-                 * A row reading "Posnic ?" is worse than no row: it answers
-                 * the support question with a shrug, and a shop would read
-                 * it out as though it were the answer.
-                 */
                 if (!v.app && !v.server && !v.page) { return; }
-
                 var headline = PosnicPro.versionBadge.headline(v);
-                var full = PosnicPro.versionBadge.line(v);
-
                 if (lite) {
-                    /* textContent, not markup: these are numbers from the
-                       machine, and the sign-in page has no session to lose
-                       but every reason not to build HTML from strings. */
                     lite.textContent = v.page ? (headline + ' · ' + v.page) : headline;
-                    lite.setAttribute('title', full);
+                    lite.setAttribute('title', PosnicPro.versionBadge.line(v));
                 }
-
                 if (host) {
-                    var num = host.querySelector('.posnic-version-number');
-                    var sub = host.querySelector('.posnic-version-build');
-                    if (num) { num.textContent = headline; }
-                    if (sub) {
-                        var detail = [];
-                        if (v.page) { detail.push(v.page); }
-                        if (v.server && v.server !== v.app) { detail.push('server ' + v.server); }
-                        sub.textContent = detail.join(' · ');
-                    }
-                    host.setAttribute('title', full);
-                    host.style.display = '';
-
-                    host.addEventListener('click', function (e) {
-                        /* Inside a dropdown: a click here is about the number,
-                           not about navigating or closing the menu. */
-                        e.preventDefault();
-                        e.stopPropagation();
-                        PosnicPro.versionBadge.copy(full, function () {
-                            var mark = host.querySelector('.posnic-version-copied');
-                            if (!mark) { return; }
-                            mark.style.opacity = '1';
-                            setTimeout(function () { mark.style.opacity = '0'; }, 1600);
-                        });
-                    });
+                    host.textContent = headline;
+                    host.hidden = false;
                 }
+            });
+
+            var dialog = document.getElementById('posnic_about_dialog');
+            if (!dialog || !window.jQuery) { return; }
+            var copyButton = document.getElementById('posnic_about_copy');
+            var status = document.getElementById('posnic_about_copy_status');
+            function fill(id, value) { document.getElementById(id).textContent = value; }
+
+            window.jQuery(dialog).off('show.bs.modal.posnicAbout').on('show.bs.modal.posnicAbout', function () {
+                status.textContent = '';
+                copyButton.disabled = true;
+                PosnicPro.versionBadge.read(true).then(function (v) {
+                    var unavailable = PosnicPro.i18n.t('lang_about_unavailable', 'Unavailable');
+                    fill('posnic_about_version', PosnicPro.versionBadge.headline(v));
+                    fill('posnic_about_mode', v.app ? PosnicPro.i18n.t('lang_desktop', 'Desktop') : PosnicPro.i18n.t('lang_browser', 'Browser'));
+                    fill('posnic_about_app', v.app);
+                    document.getElementById('posnic_about_app_label').hidden = !v.app;
+                    document.getElementById('posnic_about_app').hidden = !v.app;
+                    fill('posnic_about_server', v.server || unavailable);
+                    fill('posnic_about_page', v.page || unavailable);
+                    copyButton.disabled = !v.app && !v.server && !v.page;
+                    copyButton.onclick = function () {
+                        status.textContent = '';
+                        PosnicPro.versionBadge.copy(PosnicPro.versionBadge.line(v), function () {
+                            status.textContent = PosnicPro.i18n.t('lang_about_details_copied', 'Details copied to clipboard.');
+                        }, function () {
+                            status.textContent = PosnicPro.i18n.t('lang_about_copy_failed', 'Could not copy. Select the details above to copy them manually.');
+                        });
+                    };
+                });
             });
         }
     };

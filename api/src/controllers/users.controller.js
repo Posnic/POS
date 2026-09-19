@@ -21,6 +21,7 @@ const { authCookieOptions } = require('../utils/auth-cookie');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const { setActiveTenantContext } = require('../utils/tenant-context');
 const { recordAudit } = require('../utils/audit-trail');
+const { stampSession } = require('../utils/auth-version');
 
 /*
  * What somebody sees when a sign-in fails.
@@ -203,13 +204,17 @@ class UsersController extends BaseController {
       // 2) Check if user exists && password is correct
       const user = await this.userModel.findOne({ email }).select('+password');
 
-      if (!user || !(await bcrypt.compare(password, user.password))) {
+      if (
+        !user ||
+        !(await require('../utils/password-match').passwordMatches(password, user.password))
+      ) {
         return next(new AppError('Incorrect email or password', httpStatus.UNAUTHORIZED));
       }
 
       // 3) Store user id in session (PHP-style primary auth)
       if (req.session) {
         req.session.userId = user._id.toString();
+        stampSession(req, user);
       }
 
       // 4) If everything ok, send token to client
@@ -384,6 +389,7 @@ class UsersController extends BaseController {
 
       // Store user id in session for PHP-style primary auth
       if (req.session) {
+        stampSession(req, user);
         req.session.userId = user._id.toString();
         // Reset outstandingCustomersModal flag on login so modal shows every time
         req.session.outstandingCustomersModal = false;

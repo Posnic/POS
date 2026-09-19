@@ -1416,19 +1416,14 @@ if ($wrapper.length) {
 
                 /* Kept locally because the print path reads them at print
                    time, on a page that may never have opened Settings. */
-                PosnicPro.local.set('footer_image', data.footer_image || '');
-                PosnicPro.local.set('footer_image_caption', data.footer_image_caption || '');
-                PosnicPro.settings._footerImagePicked = false;
-                $('#footer_qr_url').val(data.footer_qr_url || '');
-                $('#footer_image_caption').val(data.footer_image_caption || '');
-                $('#footer_image_value').val(data.footer_image || '');
-                if (data.footer_image) {
-                    $('#footer_image_thumb').attr('src', data.footer_image).show();
-                    $('#footer_image_clear').show();
-                } else {
-                    $('#footer_image_thumb').hide().attr('src', '');
-                    $('#footer_image_clear').hide();
-                }
+                PosnicPro.settings.applyReceiptFooter({
+                    footer_image: data.footer_image || '',
+                    footer_qr_url: data.footer_qr_url,
+                    footer_image_caption: data.footer_image_caption
+                });
+                if (PosnicPro.receiptDesignerEditor) PosnicPro.receiptDesignerEditor.load(data);
+                if (PosnicPro.printSettings) PosnicPro.printSettings.mount(data);
+                if (PosnicPro.kotPrint) PosnicPro.kotPrint.loadSettings();
 
                 $('.print_store_name').text(data.branch_name);
                 $('.print_store_gst').text(data.branch_gstin_number);
@@ -2118,6 +2113,17 @@ if ($wrapper.length) {
             PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_that_branch', 'Could not save that branch'));
         });
     },
+    applyReceiptFooter: function (data) {
+        if (!data || data.footer_image === undefined) { return; }
+        PosnicPro.local.set('footer_image', data.footer_image || '');
+        PosnicPro.local.set('footer_image_caption', data.footer_image_caption || '');
+        PosnicPro.settings._footerImagePicked = false;
+        $('#footer_qr_url').val(data.footer_qr_url || '');
+        $('#footer_image_caption').val(data.footer_image_caption || '');
+        $('#footer_image_value').val(data.footer_image || '');
+        $('#footer_image_thumb').attr('src', data.footer_image || '').toggle(!!data.footer_image);
+        $('#footer_image_clear').toggle(!!data.footer_image);
+    },
     /* successLabel: what the toast says on success - each Save button names
        its own act ("Module switches saved") instead of the generic server
        line, which reads the same from four different screens. */
@@ -2277,6 +2283,7 @@ if ($wrapper.length) {
                 PosnicPro.settings._featuresDirty = false;
                 PosnicPro.settings.syncDemoDataAfterSave();
                 let htmlView = $('#footer_print').text();
+                PosnicPro.settings.applyReceiptFooter(response.data);
                 $('.footer-content').text(htmlView);
                 let htmlHeaderView = $('#header_print').text();
                 $('.header-content').text(htmlHeaderView);
@@ -2320,7 +2327,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 if (tableNow !== was.table_options) {
                     PosnicPro.local.set('table_options', tableNow);
                     var kotOn = tableNow === 'enable';
-                    if (kotOn) { PosnicPro.applyKotVisibility(true); }
+                    PosnicPro.applyKotVisibility(kotOn);
                     $('#view_kot_page,#view_kotorder_page,#view_kothistory_page,#viewkotreport_page')
                         .closest('li').toggle(kotOn);
                     $('#view_touchsales_page').closest('li').toggle(!kotOn);
@@ -2500,6 +2507,7 @@ if ($("#sale_quick_edit").is(":checked")) {
         $('#v-pills-demodata-tab').toggle(on('module_demo_data_enable'));
         $('#v-pills-quotes-tab').toggle(on('quotes_enable'));
         $('#v-pills-invoices-tab').toggle(on('invoices_enable'));
+        if (PosnicPro.printSettings) PosnicPro.printSettings.features(s);
         $('#v-pills-tillpin-tab').toggle(s.till_lock_enable === true);
         $('#v-pills-cashregister-tab').toggle(on('cash_register_enable'));
         $('#v-pills-cashbook-tab').toggle(on('module_cashbook_enable'));
@@ -4856,6 +4864,12 @@ jQuery.validator.addMethod("lettersonly", function (value, element) {
 }, "Use letters only");
 $("#tax_discount_add").submit(function (event) {
     event.preventDefault();
+    // Only this form owns the selected Core Settings tab. Other pages share
+    // updateCommonSetting, and the hidden Receipt Print tab stays active.
+    if ($('#core-tab-print').hasClass('active') && PosnicPro.receiptDesignerEditor) {
+        PosnicPro.receiptDesignerEditor.save();
+        return;
+    }
     if ($('#tax_discount_add').valid()) {            // checks form for validity
         PosnicPro.settings.updateCommonSetting('Core Settings saved');
     }
@@ -6899,20 +6913,13 @@ $(document).on('input', '#footer_qr_url', function () {
 });
 
 $(document).on('change', '#quote_signature_file', function () {
-    var f = this.files && this.files[0];
-    if (!f) { return; }
-    if (f.size > 300 * 1024) {
-        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_keep_the_signature_under_300_kb_a_small_pn', 'Keep the signature under 300 KB - a small PNG works best.'));
-        $(this).val('');
-        return;
-    }
-    var reader = new FileReader();
-    reader.onload = function (e) {
-        $('#quote_default_signature').val(e.target.result);
-        $('#quote_signature_thumb').attr('src', e.target.result).show();
+    var file = this.files && this.files[0], input = this;
+    if (!file) return;
+    PosnicPro.branchSignature.readFile(file).then(function (value) {
+        $('#quote_default_signature').val(value);
+        $('#quote_signature_thumb').attr('src', value).show();
         $('#quote_signature_clear').show();
-    };
-    reader.readAsDataURL(f);
+    }).catch(function (error) { PosnicPro.alert('error', error.message); }).finally(function () { $(input).val(''); });
 });
 $(document).on('click', '#quote_signature_clear', function () {
     $('#quote_default_signature').val('');
@@ -7062,6 +7069,7 @@ $(document).on('click', '#invoice_settings_save', function () {
 });
 
 $(document).on('click', '#quote_settings_save', function () {
+    var signatureBranchId = PosnicPro.branchSignature.activeBranch();
     var payload = {
         quote_default_payment_method: $('#quote_default_payment_method').val() || '',
         quote_default_bank_details: $('#quote_default_bank_details').val() || '',
@@ -7074,7 +7082,7 @@ $(document).on('click', '#quote_settings_save', function () {
         $('#quote_settings_save').prop('disabled', false);
         PosnicPro.alert(r.type, r.type === 'success' ? 'Quotation settings saved' : r.message);
         if (r.type === 'success') {
-            PosnicPro.local.set('quotesignature', payload.quote_default_signature);
+            PosnicPro.branchSignature.sync(signatureBranchId, payload.quote_default_signature);
         }
     }, function (xhr) {
         $('#quote_settings_save').prop('disabled', false);

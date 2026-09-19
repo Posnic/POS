@@ -4130,6 +4130,7 @@ PosnicPro.sales.addSale = {
                     if (PosnicPro.sales.saleProcess !== 'KOT' && response.data.print === true) {
                         PosnicPro.sales.view.printSale(response.data.sales_id, 'sale');
                     }
+                    if (isKotNewSale && PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(response.data.sales_id);
                     if (response.data.mail === true && $('#sales_new_customer_email').val() !== "") {
                         PosnicPro.sales.addSale.sendSalesReceipt(response.data.sales_id);
                     }
@@ -4785,6 +4786,7 @@ PosnicPro.sales.editSale = {
                     $('.printSalesWhatsAppReceipt').attr('href', 'javascript:void(0)').attr('onclick', `PosnicPro.sales.showWhatsAppReceipt('${saleId}', '${phone}', '${name}')`);
 
                     // Auto-print on KOT settlement when printall setting is enabled
+                    if (isKotOrderEditFlow && PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(saleId);
                     if (isKotPaymentOnlyFlow &&
                         response &&
                         typeof response.data === 'object' &&
@@ -4818,12 +4820,12 @@ PosnicPro.sales.editSale = {
                         // order is updated successfully, navigate back to the KOT
                         // History list instead of leaving the user on the KOT edit
                         // screen.
-                        var isKotOrderEditFlow = (PosnicPro.sales &&
+                        var returnToKot = (PosnicPro.sales &&
                             PosnicPro.sales.saleProcess === 'KOT' &&
                             PosnicPro.kotorder && PosnicPro.kotorder.editSaleId &&
                             PosnicPro.sales.paymentOnlyMode !== true);
 
-                        if (isKotOrderEditFlow) {
+                        if (returnToKot) {
                             // Refresh KOT data to show updated table list and details
                             if (PosnicPro.kot && typeof PosnicPro.kot.refreshKOTData === 'function') {
                                 PosnicPro.kot.refreshKOTData();
@@ -6915,11 +6917,9 @@ PosnicPro.sales.setSaleDefaults = function () {
     var registerModuleOn = !!(PosnicPro.shiftWidget
         && PosnicPro.shiftWidget._setting('cash_register_enable', true));
     var branchHasNoRegisters = PosnicPro.local.get('branch_has_no_registers');
-    var registerStatus = PosnicPro.local.get('userRegisterStatus');
-    var registerId = PosnicPro.local.get('register_id');
-
-    // If branch has registers but no register is open, check database and show modal if needed
-    if (registerModuleOn && branchHasNoRegisters !== 'true' && (registerStatus !== 'Open' || !registerId)) {
+    // Local 'Open' state can outlive a restart or a resume on another till.
+    // Verify ownership before checkout; never silently take over a device lock.
+    if (registerModuleOn && branchHasNoRegisters !== 'true') {
         var branchId = PosnicPro.local.get('branch_id_set');
         var params = {
             url: 'branches/userRegisterBranchSelect',
@@ -6927,30 +6927,12 @@ PosnicPro.sales.setSaleDefaults = function () {
         };
         
         PosnicPro.get(params, function (response) {
+            if (PosnicPro.local.get('branch_id_set') !== branchId) { return; }
             if (response.type === 'success') {
-                if (response.data.open_register && response.data.open_register.register_status === 'Opened') {
-                    // Load existing open register
-                    PosnicPro.local.set('cash_register_id', response.data.open_register.cash_register_id);
-                    PosnicPro.local.set('register_id', response.data.open_register.register_id);
-                    PosnicPro.local.set('register_name', response.data.open_register.register_name);
-                    PosnicPro.local.set('userRegisterStatus', 'Open');
-                    
-                    db.currentregister.put({
-                        id: '1', 
-                        register_id: response.data.open_register.register_id, 
-                        register_name: response.data.open_register.register_name, 
-                        register_status: 'open'
-                    });
-                    
-                    PosnicPro.alert('success', 'Register loaded: ' + response.data.open_register.register_name);
+                if (PosnicPro.users.restoreRegisterSession(response.data)) {
+                    // This device already holds the open session.
                 } else if (response.data.register_data && response.data.register_data.length > 0) {
-                    // Show register selection modal
-                    var registerOption = '';
-                    for (var i = 0; i < response.data.register_data.length; i++) {
-                        var row = response.data.register_data[i];
-                        registerOption += '<option id="' + row.register_id + '" value="' + row.register_id + '">' + row.register_name + '</option>';
-                    }
-                    $('.choose_register_model').html(registerOption);
+                    PosnicPro.users.fillRegisterSelect($('.choose_register_model'), response.data.register_data);
                     $('#salesRegisterModal').modal('show');
                     
                     PosnicPro.alert('warning', PosnicPro.i18n.t('lang_select_a_register_before_creating_a_sale', 'Select a register before creating a sale.'));
@@ -9724,7 +9706,7 @@ PosnicPro.quotes = {
     _withQuoteDoc: function (use) {
         var q = PosnicPro.quotes._current;
         if (!q) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_open_a_quote_first', 'Open a quote first.')); return; }
-        PosnicPro.lazy.load('jspdf').then(function () {
+        Promise.all([PosnicPro.lazy.load('jspdf'), PosnicPro.printSettings ? PosnicPro.printSettings.ready() : null]).then(function () {
             var C = (window.jspdf && typeof window.jspdf.jsPDF === 'function') ? window.jspdf.jsPDF
                 : (typeof window.jsPDF === 'function') ? window.jsPDF
                 : (typeof window.jspdf === 'function') ? window.jspdf : null;
@@ -9734,7 +9716,9 @@ PosnicPro.quotes = {
             var go = function (logo) {
                 if (done) { return; }
                 done = true;
-                use(PosnicPro.quotes._buildPdf(C, q, PosnicPro.quotes._seller(), logo));
+                use(PosnicPro.quotes._buildPdf(C, q, PosnicPro.quotes._seller(), logo, {
+                    paperSize: PosnicPro.printSettings ? PosnicPro.printSettings.get('quotation').paperSize : 'a4'
+                }));
             };
             if (!src || src === 'store.png') { go(null); return; }
             var img = new Image();
@@ -9749,6 +9733,8 @@ PosnicPro.quotes = {
             img.onerror = function () { go(null); };
             setTimeout(function () { go(null); }, 1500);
             img.src = src;
+        }).catch(function () {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_document_prepare_failed', 'Could not prepare the document. Check print settings and try again.'));
         });
     },
     /* The professional quotation document. Layout verified numerically
@@ -9764,8 +9750,12 @@ PosnicPro.quotes = {
      */
     _buildPdf: function (C, q, seller, logo, opts) {
       var o = opts || null;
-      var doc = new C({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-        var W = 210, M = 16, R = W - M, bottom = 278;
+      var paper = o && ['a4', 'a5', 'letter'].indexOf(o.paperSize) !== -1 ? o.paperSize : 'a4';
+      var doc = new C({ unit: 'mm', format: paper, orientation: 'portrait' });
+        var W = paper === 'a5' ? 148 : paper === 'letter' ? 215.9 : 210;
+        var H = paper === 'a5' ? 210 : paper === 'letter' ? 279.4 : 297;
+        var compact = paper === 'a5', M = compact ? 10 : 16, R = W - M, bottom = H - 19;
+        var identityWidth = compact ? R - M : 104;
         var y = M + 2;
         var totalAlias = typeof doc.getNumberOfPages === 'function' ? '{tp}' : '{tp}';
         var txt = function (t) {
@@ -9785,8 +9775,8 @@ PosnicPro.quotes = {
         };
         var pageFooter = function () {
           doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(140, 148, 160);
-          doc.text(txt(o && o.number ? o.number : q.quote_id) + '  -  ' + txt(seller.name), M, 289);
-          doc.text('Page ' + doc.internal.getNumberOfPages() + ' of ' + totalAlias, R, 289, { align: 'right' });
+          doc.text(doc.splitTextToSize(txt(o && o.number ? o.number : q.quote_id) + '  -  ' + txt(seller.name), R - M - 35).slice(0, 2), M, H - 8);
+          doc.text('Page ' + doc.internal.getNumberOfPages() + ' of ' + totalAlias, R, H - 8, { align: 'right' });
         };
         var ensure = function (h) {
           if (y + h > bottom) { pageFooter(); doc.addPage(); y = M + 2; }
@@ -9803,20 +9793,20 @@ PosnicPro.quotes = {
           try { doc.addImage(logo.data, 'PNG', M, leftY, lw, lh); leftY += lh + 4; } catch (e) { /* no logo */ }
         }
         doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(26, 32, 44);
-        var nameLines = doc.splitTextToSize(txt(seller.name), 104).slice(0, 2);
+        var nameLines = doc.splitTextToSize(txt(seller.name), identityWidth).slice(0, 2);
         nameLines.forEach(function (ln) { doc.text(ln, M, leftY + 4); leftY += 5.8; });
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
         /* filter(Boolean): splitTextToSize('') yields [''], and an empty line
            still costs 4.3mm of header. No address means no gap either. */
-        doc.splitTextToSize(txt(seller.address), 104).filter(Boolean).slice(0, 2).forEach(function (ln) {
+        doc.splitTextToSize(txt(seller.address), identityWidth).filter(Boolean).slice(0, 2).forEach(function (ln) {
           doc.text(ln, M, leftY + 3.5); leftY += 4.3;
         });
         var contact = [seller.phone, seller.email].filter(Boolean).map(txt).join('  -  ');
-        if (contact) { doc.text(contact, M, leftY + 3.5); leftY += 4.3; }
+        if (contact) { doc.splitTextToSize(contact, identityWidth).forEach(function (ln) { doc.text(ln, M, leftY + 3.5); leftY += 4.3; }); }
         var taxLabel = seller.taxLabel || 'GSTIN';
         if (seller.gstin) { doc.text(taxLabel + ': ' + txt(seller.gstin), M, leftY + 3.5); leftY += 4.3; }
 
-        var rightY = y;
+        var rightY = compact ? leftY + 5 : y;
         doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(45, 55, 72);
         doc.text(o && o.title ? o.title : PosnicPro.i18n.t('lang_quotation', 'QUOTATION'), R, rightY + 6, { align: 'right' });
         doc.setFontSize(10.5); doc.setTextColor(26, 32, 44);
@@ -9825,7 +9815,7 @@ PosnicPro.quotes = {
         if (o && o.headLines) {
           /* the generalized head: any number of small lines, then a stamp */
           var ry = rightY + 17.5;
-          o.headLines.forEach(function (ln) { if (ln) { doc.text(txt(ln), R, ry, { align: 'right' }); ry += 4; } });
+          o.headLines.forEach(function (ln) { if (ln) { doc.splitTextToSize(txt(ln), compact ? R - M : 70).forEach(function (line) { doc.text(line, R, ry, { align: 'right' }); ry += 4; }); } });
           if (o.stamp) {
             doc.setFont('helvetica', 'bold');
             doc.text(String(o.stamp).toUpperCase(), R, ry + 0.5, { align: 'right' });
@@ -9851,22 +9841,21 @@ PosnicPro.quotes = {
         doc.text('BILL TO', M, y);
         y += 5;
         doc.setFontSize(10.5); doc.setTextColor(26, 32, 44);
-        doc.text(txt(q.customer_name || 'Walk-in customer'), M, y);
-        y += 4.6;
+        doc.splitTextToSize(txt(q.customer_name || 'Walk-in customer'), R - M).forEach(function (ln) { doc.text(ln, M, y); y += 4.6; });
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
         if (q.customer_address) {
-          doc.splitTextToSize(txt(q.customer_address), 100).slice(0, 2).forEach(function (ln) {
+          doc.splitTextToSize(txt(q.customer_address), R - M).slice(0, 2).forEach(function (ln) {
             doc.text(ln, M, y); y += 4.3;
           });
         }
         var cLine = [q.customer_phone ? 'Phone: ' + txt(q.customer_phone) : '',
           q.customer_gstin ? taxLabel + ': ' + txt(q.customer_gstin) : ''].filter(Boolean).join('   ');
-        if (cLine) { doc.text(cLine, M, y); y += 4.3; }
-        if (q.customer_email) { doc.text(txt(q.customer_email), M, y); y += 4.3; }
+        if (cLine) { doc.splitTextToSize(cLine, R - M).forEach(function (ln) { doc.text(ln, M, y); y += 4.3; }); }
+        if (q.customer_email) { doc.splitTextToSize(txt(q.customer_email), R - M).forEach(function (ln) { doc.text(ln, M, y); y += 4.3; }); }
         y += 4;
 
         /* items table: fixed professional columns */
-        var colIdx = 9, colQty = 16, colPrice = 28, colAmt = 31;
+        var colIdx = compact ? 7 : 9, colQty = compact ? 12 : 16, colPrice = compact ? 25 : 28, colAmt = compact ? 28 : 31;
         var tableW = R - M;
         var colItem = tableW - colIdx - colQty - colPrice - colAmt;
         var xIdx = M, xItem = M + colIdx, xQty = xItem + colItem, xPrice = xQty + colQty, xAmt = xPrice + colPrice;
@@ -9947,7 +9936,7 @@ PosnicPro.quotes = {
         });
 
         /* totals: right-hand block */
-        var totX = 128;
+        var totX = R - 66;
         ensure(26);
         y += 3;
         doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(70, 78, 92);
@@ -9976,6 +9965,7 @@ PosnicPro.quotes = {
             y += 6;
           });
         }
+        ensure(15);
         doc.setDrawColor(45, 55, 72); doc.setLineWidth(0.4);
         doc.line(totX, y + 1.5, R, y + 1.5);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(26, 32, 44);
@@ -9998,12 +9988,13 @@ PosnicPro.quotes = {
         var block = function (label, text) {
           if (!text) { return; }
           var lines = doc.splitTextToSize(txt(text), tableW);
-          ensure(8 + lines.length * 4.3);
+          ensure(13);
           doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(138, 148, 166);
           doc.text(label, M, y + 4);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(60, 68, 82);
-          lines.forEach(function (ln, i) { doc.text(ln, M, y + 8.5 + i * 4.3); });
-          y += 8.5 + lines.length * 4.3 + 2;
+          y += 8.5;
+          lines.forEach(function (ln) { ensure(4.3); doc.text(ln, M, y); y += 4.3; });
+          y += 2;
         };
         /* Footer sections obey the quote's own layout order (dragged on the
            preview); anything unlisted follows in the default order. */
@@ -10045,12 +10036,12 @@ PosnicPro.quotes = {
            no signatory line at all) */
         if (seller.signature) {
           ensure(40);
-          y = Math.min(Math.max(y + 12, 236), bottom - 24);
-          try { doc.addImage(seller.signature, 'PNG', 150, y - 4, 36, 12); } catch (e) { /* bad image, line still prints */ }
+          y = Math.min(Math.max(y + 12, bottom - 42), bottom - 24);
+          try { doc.addImage(seller.signature, 'PNG', R - 44, y - 4, 36, 12); } catch (e) { /* bad image, line still prints */ }
           doc.setDrawColor(138, 148, 166); doc.setLineWidth(0.3);
-          doc.line(138, y + 10, R, y + 10);
+          doc.line(R - 56, y + 10, R, y + 10);
           doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(103, 112, 127);
-          doc.text('Authorised signatory', (138 + R) / 2, y + 14.5, { align: 'center' });
+          doc.text('Authorised signatory', R - 28, y + 14.5, { align: 'center' });
         }
 
         pageFooter();
@@ -10059,10 +10050,8 @@ PosnicPro.quotes = {
     },
     printNow: function () {
         PosnicPro.quotes._withQuoteDoc(function (doc) {
-            if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
-            var url = doc.output('bloburl');
-            var w = window.open(url, '_blank');
-            if (!w) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_allow_pop_ups_so_the_quote_can_print', 'Allow pop-ups so the quote can print.')); }
+            PosnicPro.printPdfDocument(doc, (PosnicPro.quotes._current || {}).quote_id || 'quote',
+                PosnicPro.i18n.t('lang_allow_pop_ups_so_the_quote_can_print', 'Allow pop-ups so the quote can print.'), 'quotation');
         });
     },
     print: function () {
@@ -12704,44 +12693,18 @@ $(function () {
     });
 });
 
-/* Quote-page signature upload: saves to the shop settings (presence-
-   gated partial post) and repaints the live paper immediately. */
+/* The quotation editor uploads the same branch signature as the designer. */
 $(document).on('change', '#qe_sig_file', function () {
-    var f = this.files && this.files[0];
-    var input = this;
-    if (!f) { return; }
-    if (f.size > 300 * 1024) {
-        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_keep_the_signature_under_300_kb_a_small_pn', 'Keep the signature under 300 KB - a small PNG works best.'));
-        $(input).val('');
-        return;
-    }
-    var reader = new FileReader();
-    reader.onload = function (e) {
-        var dataUrl = e.target.result;
-        /* The documents endpoint, not the god endpoint. This exact call is
-           what returned "Default customer is required" (69bc0cd): the old
-           validator demanded fields that belong to another group on every
-           save, including a one-key one like this. An endpoint that knows
-           only `documents` cannot ask for them. */
-        PosnicPro.put({
-            url: 'settings/group/documents',
-            data: JSON.stringify({ quote_default_signature: dataUrl })
-        }, function (r) {
-            $(input).val('');
-            if (r.type !== 'success') { PosnicPro.alert(r.type, r.message); return; }
-            PosnicPro.local.set('quotesignature', dataUrl);
-            $('#quote_default_signature').val(dataUrl);
-            $('#quote_signature_thumb').attr('src', dataUrl).show();
-            $('#quote_signature_clear').show();
-            PosnicPro.quotes._edSigSync();
-            PosnicPro.quotes.edRecalc();
-            PosnicPro.alert('success', PosnicPro.i18n.t('lang_signature_saved_it_now_signs_this_and_ever', 'Signature saved - it now signs this and every future quote.'));
-        }, function () {
-            $(input).val('');
-            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_signature', 'Could not save the signature'));
-        });
-    };
-    reader.readAsDataURL(f);
+    var file = this.files && this.files[0], input = this, branchId = PosnicPro.branchSignature.activeBranch();
+    if (!file) return;
+    $(input).prop('disabled', true);
+    PosnicPro.branchSignature.readFile(file).then(function (value) {
+        return PosnicPro.branchSignature.save(branchId, value);
+    }).then(function () {
+        PosnicPro.alert('success', PosnicPro.i18n.t('lang_signature_saved_shared', 'Signature saved for this branch.'));
+    }).catch(function (error) {
+        PosnicPro.alert('error', error.message);
+    }).finally(function () { $(input).val('').prop('disabled', false); });
 });
 
 /*

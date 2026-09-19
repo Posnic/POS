@@ -158,6 +158,87 @@ test('a printer that refuses is reported, and NOT printed again through the wind
   assert.strictEqual(results[0].reason, 'offline', 'the reason the printer gave was lost');
 });
 
+test('counter printing uses only configured kitchen targets and labels copies', async () => {
+  const sent = [];
+  const kot = new KOTManager({ hardware: {
+    sendRawToPrinter: async (name, bytes) => { sent.push({ name, bytes }); return { success: true }; },
+  } });
+  kot.config = { printerNames: ['Kitchen'] };
+  const result = await kot.printCounterTicket({ _id: 'counter-test', sales_id: 'K-100',
+    print_jobs: [{ type: 'copy', items: [{ item_name: 'Tea', item_quantity: 1 }] }],
+  });
+  assert.equal(result.success, true);
+  assert.deepEqual(sent.map(s => s.name), ['Kitchen']);
+  assert.match(readable(sent[0].bytes), /DUPLICATE KOT/);
+  assert.match(readable(sent[0].bytes), /Do not\s+prepare again/i);
+});
+
+test('reprinting a logged ticket labels every printer copy and keeps its KOT number', async () => {
+  const sent = [];
+  const kot = new KOTManager({ hardware: {
+    sendRawToPrinter: async (name, bytes) => { sent.push({ name, bytes }); return { success: true }; },
+  } });
+  kot.config = { printerNames: ['Kitchen', 'Pass'], printers: [
+    { name: 'Kitchen', copies: 2, pageSize: '80mm' },
+    { name: 'Pass', copies: 1, pageSize: '58mm' },
+  ] };
+  kot.getDailyKotNumber = () => { throw new Error('a reprint must not allocate a new number'); };
+  await kot.reprint({ printKind: 'edit', kotNumber: 42,
+    _saleData: { sales_id: 'K-42', table_number: '5', sale_process: 'KOT' },
+    items: [{ item_name: 'Tea', item_quantity: 2 }],
+  });
+  assert.deepEqual(sent.map(s => s.name), ['Kitchen', 'Kitchen', 'Pass']);
+  for (const { bytes } of sent) {
+    const paper = readable(bytes);
+    assert.match(paper, /DUPLICATE KOT/);
+    assert.match(paper, /Do not\s+prepare again/);
+    assert.match(paper, /Original: Additional Order/);
+    assert.match(paper, /#42/);
+    assert.match(paper, /TABLE 5/);
+  }
+});
+
+test('counter printing reports unavailable only without kitchen targets', async () => {
+  const kot = new KOTManager({ hardware: { sendRawToPrinter: async () => ({ success: false, error: 'offline' }) } });
+  kot.config = { printerNames: [] };
+  assert.deepEqual(await kot.printCounterTicket({}), { available: false });
+  kot.config.printerNames = ['Kitchen'];
+  const result = await kot.printCounterTicket({ print_jobs: [{ key: 'counter-failure-' + Date.now(), type: 'new', items: [{ item_name: 'Tea' }] }] });
+  assert.equal(result.available, true);
+  assert.equal(result.success, false);
+  assert.equal(result.error, 'offline');
+});
+
+test('counter tickets use the poller ledger before sending and do not repeat after a lost acknowledgement', async () => {
+  const ledger = require('../src/print-ledger');
+  const key = 'counter-success-' + Date.now();
+  let count = 0;
+  const kot = new KOTManager({ hardware: { sendRawToPrinter: async () => {
+    assert.equal(ledger.state(key), 'attempted'); count++;
+    return { success: true };
+  } } });
+  kot.config = { printerNames: ['Kitchen'] };
+  const sale = { _id: 'counter-ledger', print_jobs: [{ key, type: 'new', items: [{ item_name: 'Tea' }] }] };
+  assert.equal((await kot.printCounterTicket(sale)).success, true);
+  assert.equal((await kot.printCounterTicket(sale)).success, true);
+  assert.equal(count, 1);
+  assert.equal(kot._claimForPrint(key, { saleId: sale._id }), false);
+});
+
+test('counter HTML fallback cannot silently switch to the system default printer', async () => {
+  const kot = new KOTManager();
+  const devices = [];
+  kot._sendPrintJob = async (_win, options) => { devices.push(options.deviceName); return { success: false, reason: 'offline' }; };
+  // Exercise the actual selection logic while preventing any physical print.
+  kot._printViaPdfFallback = async () => ({ success: false, reason: 'offline' });
+  kot._printWithSystemDefaultFallback = async () => { throw new Error('default printer used'); };
+  const win = { webContents: { printToPDF: async () => { throw new Error('no PDF'); } } };
+  const result = await kot._printToDeviceWithFallback(win, 'Kitchen', '80', true);
+  assert.equal(result.success, false);
+  assert.equal(devices.length, 2);
+  assert.ok(devices.every(d => d === 'Kitchen'));
+});
+
 test('the ticket is in the packaged build', () => {
   /* build.files is an allowlist; a module missing from it throws "Cannot find
      module" on a customer's counter and nowhere else. */

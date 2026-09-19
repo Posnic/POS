@@ -98,7 +98,7 @@ const A_TABLE_SALE = {
    turned on for data the shop has not got must print nothing, which is a
    different test - this one proves the switch is wired at all. */
 const SHOP_DATA = {
-  bill_print_fssai: { branch_fssai_number: '12415013000025' },
+  bill_print_fssai: { branch_fssai_number: '12415013000025', country: 'India', table_options: true },
   bill_print_session: {
     menu_dayparts: [{ id: 'dinner', name: 'Dinner', hours: [{ from: '19:00', to: '23:30' }] }],
   },

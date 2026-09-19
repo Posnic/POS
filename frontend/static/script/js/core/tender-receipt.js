@@ -5,6 +5,10 @@
     var revision = 0;
     var resizeObserver;
 
+    function assetBase() {
+        return new URL(PosnicPro.baseUrl || '.', document.baseURI).href;
+    }
+
     function number(value) {
         return parseFloat(String(value == null ? '' : value).replace(/,/g, '')) || 0;
     }
@@ -54,6 +58,7 @@
             customer_phone: $('#sales_new_customer_phone').val() || '',
             customer_email: $('#sales_new_customer_email').val() || '',
             customer_address: $('#sales_new_customer_address').val() || '',
+            customer_gst_number: $('#sales_new_customer_gst_number').val() || '',
             items_subtotal: number($('#sales_new_subtotal').text()),
             items_total: number($('.tendered_total').first().text()),
             discount: number($('#discount_sale_amount').text()),
@@ -74,6 +79,9 @@
     }
 
     function documentFor(branch, data, layout) {
+        if (branch.receipt_designs && PosnicPro.receiptDesigner) {
+            return PosnicPro.receiptDesigner.render($.extend({}, branch, data), layout, true);
+        }
         var a4 = layout === 'a4';
         var template = a4 ? (branch.regular_body_print || branch.print_a4html)
             : (branch.thermal_body_print || branch.print_standard_html);
@@ -117,7 +125,7 @@
     function styles(layout) {
         if (!cssRequests[layout]) {
             cssRequests[layout] = $.ajax({
-                url: PosnicPro.baseUrl + 'static/pages/' + (layout === 'a4' ? 'a4print.css' : 'print.css'),
+                url: assetBase() + 'static/pages/' + (layout === 'a4' ? 'a4print.css' : 'print.css'),
                 dataType: 'text'
             }).then(function (css) { return css.replace(/@media\s+print\b/g, '@media all'); });
             cssRequests[layout].fail(function () { delete cssRequests[layout]; });
@@ -126,8 +134,9 @@
     }
 
     function mount(box, html, css, layout) {
-        var a4 = layout === 'a4';
-        var width = a4 ? 794 : (layout === '58' ? 182 : 273);
+        var sheet = layout === 'a4' || layout === 'a5' || layout === 'letter';
+        var designed = html.indexOf('data-receipt-design=') !== -1;
+        var width = sheet ? (layout === 'letter' ? 816 : layout === 'a5' ? 559 : 794) : (layout === '58' ? 182 : 273);
         var frame = $('<iframe class="tender-receipt-frame" title="Sale print preview" data-t-title="lang_sale_print_preview" sandbox="allow-same-origin" scrolling="no">');
         var paper = $('<div class="tender-receipt-paper">').append(frame);
         var fit = function () {
@@ -147,11 +156,11 @@
             $(frame[0].contentDocument).find('img').on('load error', fit);
         });
         var esc = PosnicPro.escapeHtml;
-        var paperCss = a4 ? '' : PosnicPro.paperCss(layout);
-        frame.attr('srcdoc', '<!doctype html><html><head><meta charset="utf-8"><base href="' + esc(PosnicPro.baseUrl) + '">' +
+        var paperCss = sheet || designed ? '' : PosnicPro.paperCss(layout);
+        frame.attr('srcdoc', '<!doctype html><html><head><meta charset="utf-8"><base href="' + esc(assetBase()) + '">' +
             '<style>' + css + '\n' + paperCss + '\nhtml,body{background:#fff;color:#000;overflow:hidden!important;}' +
             'body{margin:0!important;display:flow-root;}a{pointer-events:none;}' +
-            (a4 ? 'body{box-sizing:border-box;width:794px;padding:53px 45px!important;}' : '') +
+            (sheet ? 'body{box-sizing:border-box;width:' + width + 'px;padding:12mm!important;}' : '') +
             '</style></head><body>' + html + '</body></html>');
         box.empty().append(paper);
     }
@@ -164,8 +173,8 @@
         sale.footer = footerLines.join('\n');
         var logo = root.find('.branch_image').filter(function () { return this.style.display !== 'none'; }).find('img').first();
         var footer = root.find('.footer-image img').first();
-        if (logo.attr('src')) { sale.logo = { src: new URL(logo.attr('src'), PosnicPro.baseUrl).href }; }
-        if (footer.attr('src')) { sale.footerImage = { src: new URL(footer.attr('src'), PosnicPro.baseUrl).href, dither: false }; }
+        if (logo.attr('src')) { sale.logo = { src: new URL(logo.attr('src'), assetBase()).href }; }
+        if (footer.attr('src')) { sale.footerImage = { src: new URL(footer.attr('src'), assetBase()).href, dither: false }; }
         return sale;
     }
 
@@ -247,8 +256,9 @@
                 if (!response || response.type !== 'success' || !response.data) { failed(); return; }
                 var branch = response.data;
                 var layout = branch.print_type === 'a4' ? 'a4' : (branch.print_width === '58' ? '58' : '80');
+                if (branch.receipt_designs) layout = branch.receipt_designs.defaultFormat;
                 var printer = window.electronAPI && window.electronAPI.printer;
-                if (layout !== 'a4' && printer && printer.previewReceipt && PosnicPro.receiptData) {
+                if (!branch.receipt_designs && layout !== 'a4' && printer && printer.previewReceipt && PosnicPro.receiptData) {
                     try {
                         var html = documentFor(branch, cartData(branch), layout);
                         printer.previewReceipt(rawData(html), {
@@ -260,7 +270,7 @@
                     } catch (error) { failed(); }
                     return;
                 }
-                styles(layout).then(function (css) {
+                (branch.receipt_designs ? $.Deferred().resolve('').promise() : styles(layout)).then(function (css) {
                     if (current !== revision) { return; }
                     try {
                         var data = cartData(branch);

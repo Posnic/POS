@@ -875,6 +875,34 @@ PosnicPro = {
         _afterLoad: {},
     },
 
+    /* Generated PDFs need a desktop print dialog, not window.open(blob:),
+       which the Electron shell deliberately refuses. Keep the PDF itself so
+       invoices, quotes and reports retain their pagination and typography. */
+    printPdfDocument: function (doc, filename, popupMessage, kind) {
+        var printer = window.electronAPI && window.electronAPI.printer;
+        var desktop = !!window.electronAPI || /Electron/i.test(navigator.userAgent);
+        var failed = function (error) {
+            PosnicPro.alert('error', error && error.message || PosnicPro.i18n.t('lang_pdf_print_failed', 'Could not open printing. Download the PDF and try printing it again.'));
+        };
+        if (desktop) {
+            if (!printer || typeof printer.printPdf !== 'function') {
+                // A newer web bundle can run inside an older desktop app.
+                doc.save(filename + '.pdf');
+                PosnicPro.alert('info', PosnicPro.i18n.t('lang_pdf_print_older_desktop', 'PDF saved. Open it to print. Update the desktop app for direct printing.'));
+                return Promise.resolve();
+            }
+            return Promise.resolve().then(function () {
+                return printer.printPdf(new Uint8Array(doc.output('arraybuffer')), kind);
+            }).then(function (result) {
+                if (!result || (!result.success && !result.cancelled)) { failed(result && result.error ? new Error(result.error) : null); }
+            }).catch(failed);
+        }
+        if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
+        var url = doc.output('bloburl');
+        var w = window.open(url, '_blank');
+        if (!w) { PosnicPro.alert('warning', popupMessage); }
+        return Promise.resolve();
+    },
     /*
      * Report exports (owner ask): every report should leave the screen as a
      * professional A4 PDF, a CSV, or an Excel sheet - never a themed
@@ -1085,10 +1113,8 @@ PosnicPro = {
         },
         printPdf: function (elId, meta) {
             PosnicPro.reportExport._withPdf(elId, meta, function (doc) {
-                if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
-                var url = doc.output('bloburl');
-                var w = window.open(url, '_blank');
-                if (!w) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_allow_pop_ups_so_the_report_can_print', 'Allow pop-ups so the report can print.')); }
+                PosnicPro.printPdfDocument(doc, meta.filename || 'report',
+                    PosnicPro.i18n.t('lang_allow_pop_ups_so_the_report_can_print', 'Allow pop-ups so the report can print.'));
             });
         },
         _download: function (blob, filename) {
@@ -3385,7 +3411,55 @@ PosnicPro = {
         return true;
     },
 
+    waitForPrintAssets: function (doc) {
+        // Print frames live off screen. Lazy images will never enter the
+        // viewport, and a fixed delay can print before a remote logo arrives.
+        return new Promise(function (resolve, reject) {
+            var cleanups = [];
+            var timer = setTimeout(function () { finish(new Error('Print assets timed out')); }, 15000);
+            var finished = false;
+            function finish(error) {
+                if (finished) { return; }
+                finished = true;
+                clearTimeout(timer);
+                cleanups.forEach(function (cleanup) { cleanup(); });
+                if (error) { reject(error); } else { resolve(); }
+            }
+            function loaded(element, ready) {
+                return new Promise(function (done, fail) {
+                    function onLoad() { done(); }
+                    function onError() { fail(new Error('Could not load a print asset')); }
+                    element.addEventListener('load', onLoad);
+                    element.addEventListener('error', onError);
+                    cleanups.push(function () {
+                        element.removeEventListener('load', onLoad);
+                        element.removeEventListener('error', onError);
+                    });
+                    if (ready()) { done(); }
+                });
+            }
+            var pending = Array.from(doc.images).filter(function (img) {
+                return !!img.getAttribute('src');
+            }).map(function (img) {
+                img.removeAttribute('loading');
+                img.removeAttribute('decoding');
+                img.loading = 'eager';
+                if (img.complete && !img.naturalWidth) {
+                    return Promise.reject(new Error('Could not load a receipt image'));
+                }
+                return loaded(img, function () { return img.complete && img.naturalWidth > 0; });
+            });
+            Array.from(doc.querySelectorAll('link[rel="stylesheet"]')).forEach(function (link) {
+                pending.push(loaded(link, function () { return !!link.sheet; }));
+            });
+            if (doc.fonts && doc.fonts.ready) { pending.push(doc.fonts.ready); }
+            Promise.all(pending).then(function () { finish(); }, finish);
+        });
+    },
     printView: function (contents, image) {
+        var designMatch = String(contents).match(/data-receipt-design="(58|80|a4|a5|letter)"/);
+        if (designMatch && PosnicPro.receiptDesigner) return PosnicPro.receiptDesigner.print(contents, designMatch[1]);
+        var assetBase = new URL(PosnicPro.baseUrl || '.', document.baseURI).href;
         // Electron: silent print via ipc (window.electronAPI.printer.print)
         if (navigator.userAgent.indexOf('Electron') !== -1 && window.electronAPI && window.electronAPI.printer && window.electronAPI.printer.print) {
             // print_type is a select that only exists on the settings page, the
@@ -3420,9 +3494,9 @@ PosnicPro = {
             let printUrl = PosnicPro.local.get('print_url');
             // margin-top on the body pushes the first line down the roll and is
             // wasted paper on a receipt; the page rule below owns the margins.
-            var html = '<html><head><title>.</title></head><body>';
+            var html = '<html><head><title>.</title><base href="' + PosnicPro.escapeHtml(assetBase) + '"></head><body>';
             if (data === 'a4') {
-            html += '<link href="' + PosnicPro.baseUrl + 'static/pages/a4print.css" rel="stylesheet" type="text/css" onload="console.log(\'A4 CSS loaded\')" />';
+            html += '<link href="' + assetBase + 'static/pages/a4print.css" rel="stylesheet" type="text/css" />';
             } else {
             /*
              * print.css, the same sheet the browser has always used.
@@ -3438,7 +3512,7 @@ PosnicPro = {
              * It is 173KB against 11KB, read from local disk. That is not a
              * cost worth a receipt that looks wrong.
              */
-            html += '<link href="' + PosnicPro.baseUrl + 'static/pages/print.css" rel="stylesheet" type="text/css" onload="console.log(\'Print CSS loaded\')" />';
+            html += '<link href="' + assetBase + 'static/pages/print.css" rel="stylesheet" type="text/css" />';
             }
             html += '<style type="text/css" media="print">' + PosnicPro.paperCss() + '</style>';
             html += contents;
@@ -3506,13 +3580,13 @@ PosnicPro = {
         var frameDoc = frame1[0].contentWindow ? frame1[0].contentWindow : frame1[0].contentDocument.document ? frame1[0].contentDocument.document : frame1[0].contentDocument;
         frameDoc.document.open();
         //Create a new HTML document.
-        frameDoc.document.write('<html><head><title>.</title>');
+        frameDoc.document.write('<html><head><title>.</title><base href="' + PosnicPro.escapeHtml(assetBase) + '">');
         frameDoc.document.write('</head><body style="margin-top:15px;">');
         //Append the external CSS file.
         if (data === 'a4') {
-            frameDoc.document.write('<link href="' + (PosnicPro.baseUrl || '') + 'static/pages/a4print.css" rel="stylesheet" type="text/css" onload="console.log(\'Web A4 CSS loaded\')" />');
+            frameDoc.document.write('<link href="' + assetBase + 'static/pages/a4print.css" rel="stylesheet" type="text/css" />');
         } else {
-            frameDoc.document.write('<link href="' + (PosnicPro.baseUrl || '') + 'static/pages/print.css" rel="stylesheet" type="text/css" onload="console.log(\'Web Print CSS loaded\')" />');
+            frameDoc.document.write('<link href="' + assetBase + 'static/pages/print.css" rel="stylesheet" type="text/css" />');
         }
         frameDoc.document.write('<style type="text/css" media="print">' + PosnicPro.paperCss() + '</style>');
         frameDoc.document.write(contents);
@@ -3530,11 +3604,10 @@ PosnicPro = {
         frameDoc.document.write('</body></html>');
         frameDoc.document.close();
 
-        // Trigger browser print for the hidden iframe. Use a short
-        // timeout so the browser has time to layout the contents.
+        // Open the print dialog only once its images and styles have loaded.
         var frameWindow = frame1[0].contentWindow || (frame1[0].contentDocument && frame1[0].contentDocument.defaultView);
         if (frameWindow && typeof frameWindow.print === 'function') {
-            setTimeout(function () {
+            PosnicPro.waitForPrintAssets(frameWindow.document).then(function () {
                 try {
                     frameWindow.focus();
                     frameWindow.print();
@@ -3542,7 +3615,11 @@ PosnicPro = {
                     // If print() fails, we silently ignore here so that
                     // navigation logic below still runs.
                 }
-            }, 500);
+            }).catch(function (error) {
+                console.warn('[print]', error.message);
+                $(frame1).remove();
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_print_failed', 'Print failed'));
+            });
 
             // Best-effort cleanup after printing.
             frameWindow.onafterprint = function () {

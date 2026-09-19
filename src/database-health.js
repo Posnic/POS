@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+
 const REQUIRED_INDEXES = [
   { collection: 'cashregister', keys: { register_id: 1, branch_id: 1, license: 1 }, options: { unique: true, partialFilterExpression: { register_status: 'Opened' }, name: 'one_open_session_per_register' } },
   { collection: 'sales', keys: { license: 1, billing_transaction_id: 1 }, options: { unique: true, partialFilterExpression: { billing_transaction_id: { $type: 'string' } }, name: 'unique_billing_transaction_per_license' } },
@@ -44,8 +46,26 @@ const duplicateCheck = async (db, collection, idField) => {
     { $match: { count: { $gt: 1 } } },
     { $limit: 25 },
   ]).toArray();
-  return rows.map((row) => ({ collection, field: idField, value: row._id.value, count: row.count, documents: row.documents.map(String) }));
+  return rows.map((row) => ({ collection, field: idField, license: String(row._id.license || ''), branch: String(row._id.branch || ''), value: row._id.value, count: row.count, documents: row.documents.map(String) }));
 };
+
+const describeDuplicate = (duplicate) => {
+  const value = String(duplicate.value).replace(/[\r\n\t]/g, ' ').slice(0, 80);
+  if (duplicate.collection === 'items' && duplicate.field === 'barcode_id') {
+    return `Barcode "${value}" is shared by ${duplicate.count} items. Review this barcode in Items; scanning it may select the wrong product.`;
+  }
+  return `Receipt number "${value}" is shared by ${duplicate.count} sales. Review these records in Sales History.`;
+};
+
+// A changed duplicate must be reported even if the number of groups stays
+// the same. Exclude scan times and successful repairs from acknowledgements.
+const healthFindingFingerprint = (report) => crypto.createHash('sha256').update(stableStringify({
+  errors: (report.errors || []).slice().sort(),
+  warnings: (report.warnings || []).slice().sort(),
+  duplicates: (report.duplicates || []).map((duplicate) => ({
+    ...duplicate, documents: (duplicate.documents || []).slice().sort(),
+  })).sort((a, b) => stableStringify(a).localeCompare(stableStringify(b))),
+})).digest('hex');
 
 const repairBranchSettings = async (db) => {
   const branches = db.collection('branches');
@@ -207,9 +227,9 @@ const runDatabaseHealthCheck = async (mongoClient) => {
       }
     }
     /*
-     * Only the identifiers the SYSTEM issues are checked for duplicates:
-     * sales_id and barcode_id are generated and must be unique, so a
-     * duplicate there is a real fault. itemid is the shop's own SKU - a
+     * Check receipt numbers and scanned barcodes. Barcodes can also be
+     * entered by the shop, so duplicates need review, never automatic changes.
+     * itemid is the shop's own SKU - a
      * person types it, the item form even defaults it to "1", and two
      * products sharing a SKU is a data-entry choice, not corruption. Flagging
      * it raised a health warning on every start for something that is not
@@ -232,7 +252,7 @@ const runDatabaseHealthCheck = async (mongoClient) => {
       duplicateCheck(db, 'sales', 'sales_id'),
       duplicateCheck(db, 'items', 'barcode_id'),
     ])).flat();
-    if (report.duplicates.length) report.warnings.push(`${report.duplicates.length} duplicate ID group(s) require review`);
+    report.warnings.push(...report.duplicates.map(describeDuplicate));
     /*
      * Filling in missing branch settings is maintenance, not a fault.
      *
@@ -253,9 +273,10 @@ const runDatabaseHealthCheck = async (mongoClient) => {
     report.errors.push(error.message);
   }
   report.status = report.errors.length ? 'error' : report.warnings.length ? 'warning' : 'healthy';
+  report.findingFingerprint = healthFindingFingerprint(report);
   report.durationMs = Date.now() - startedAt;
   report.checkedAt = new Date().toISOString();
   return report;
 };
 
-module.exports = { runDatabaseHealthCheck, renumberDuplicateSales };
+module.exports = { runDatabaseHealthCheck, renumberDuplicateSales, describeDuplicate, healthFindingFingerprint };

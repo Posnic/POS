@@ -740,6 +740,32 @@ describe('SalesRepository', () => {
   });
 
   describe('getLegacyDetails', () => {
+    test.each(['India', 'United States', undefined])(
+      'receipt licensing uses the current outlet country (%s), not stale sale data',
+      async (country) => {
+        if (!collections.sales) collections.sales = mkCol();
+        if (!collections.branches) collections.branches = mkCol();
+        collections.sales.findOne.mockResolvedValue({
+          _id: FAKE_ID,
+          branch_id: FAKE_BRANCH,
+          license: FAKE_LICENSE,
+          items: [],
+          country: 'India',
+        });
+        collections.branches.findOne.mockResolvedValue({
+          country,
+          table_options: true,
+          branch_fssai_number: '12345678901234',
+          receipt_designs: { version: 1 },
+          menu_dayparts: [],
+        });
+        const result = await salesRepository.getLegacyDetails(FAKE_ID);
+        expect(result.status).toBe(true);
+        expect(result.data.country).toBe(country);
+        expect(result.data.branch_fssai_number).toBe('12345678901234');
+      }
+    );
+
     test.each(['data:image/png;base64,current', ''])(
       'receipt reads the current branch footer, including removal: %s',
       async (image) => {

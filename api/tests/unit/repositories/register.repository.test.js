@@ -901,6 +901,29 @@ describe('RegisterRepository', () => {
       lock_acquired_at: new Date('2026-08-18T00:00:00Z'),
     });
 
+    test('the current device can save without changing the session', async () => {
+      col.findOne.mockResolvedValue(openSession(FAKE_USER));
+      const result = await repo.validateSessionOwner(FAKE_ID, FAKE_USER, 'device-A');
+      expect(result.status).toBe(true);
+      expect(col.updateOne).not.toHaveBeenCalled();
+    });
+
+    test('a stale device cannot save and is told how to resume', async () => {
+      col.findOne.mockResolvedValue(openSession(FAKE_USER));
+      const result = await repo.validateSessionOwner(FAKE_ID, FAKE_USER, 'device-B');
+      expect(result.status).toBe(false);
+      expect(result.message).toContain('Open Cash Register and choose Resume');
+      expect(col.updateOne).not.toHaveBeenCalled();
+    });
+
+    test('another cashier cannot save even with the same device ID', async () => {
+      col.findOne.mockResolvedValue(openSession('64f9a1c2e3b4d5e6f7000099'));
+      const result = await repo.validateSessionOwner(FAKE_ID, FAKE_USER, 'device-A');
+      expect(result.status).toBe(false);
+      expect(result.message).toContain('opened by Priya');
+      expect(col.updateOne).not.toHaveBeenCalled();
+    });
+
     test('same user on a DIFFERENT device resumes, and the lock transfers', async () => {
       col.findOne.mockResolvedValue(openSession(FAKE_USER));
       const r = await repo.registeraddInsert({
@@ -917,6 +940,27 @@ describe('RegisterRepository', () => {
           $set: expect.objectContaining({ lock_device_id: 'device-B' }),
         })
       );
+      expect(col.insertOne).not.toHaveBeenCalled();
+    });
+
+    test('explicit resume keeps the cash session and float; only the resumed device can save', async () => {
+      const session = { ...openSession(FAKE_USER), opening_float: 200 };
+      col.findOne.mockImplementation(async () => session);
+      col.updateOne.mockImplementation(async (_filter, update) => {
+        Object.assign(session, update.$set);
+        return { matchedCount: 1, modifiedCount: 1 };
+      });
+      const resumed = await repo.registeraddInsert({
+        register_Id: FAKE_REG,
+        register_name: 'Main',
+        opening_float: '0',
+        lock_device_id: 'device-B',
+      });
+      expect(resumed.status).toBe(true);
+      expect(resumed.data).toBe(FAKE_ID);
+      expect(session.opening_float).toBe(200);
+      expect((await repo.validateSessionOwner(FAKE_ID, FAKE_USER, 'device-B')).status).toBe(true);
+      expect((await repo.validateSessionOwner(FAKE_ID, FAKE_USER, 'device-A')).status).toBe(false);
       expect(col.insertOne).not.toHaveBeenCalled();
     });
 
