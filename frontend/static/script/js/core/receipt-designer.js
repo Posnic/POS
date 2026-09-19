@@ -276,7 +276,7 @@
                 clearTimeout(loadTimeout);
                 var win = frame[0].contentWindow;
                 Promise.resolve().then(function () { return PosnicPro.waitForPrintAssets(win.document); }).then(function () {
-                    window.PosnicReceiptPage.fitDocument(win.document);
+                    window.PosnicReceiptPage.fitDocument(win.document, { usePrinterPaper: true });
                     win.onafterprint = function () { frame.remove(); resolve({ success: true, dialog: true }); };
                     win.focus(); win.print();
                     if (!options.sample) PosnicPro.afterPrint();
