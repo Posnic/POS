@@ -3292,5 +3292,14 @@
   "lang_rd_website_payment_link_or_other_text": "വെബ്സൈറ്റ്, പേയ്മെന്റ് ലിങ്ക് അല്ലെങ്കിൽ മറ്റൊരു വാചകം",
   "lang_rd_width_of_printable_area_": "വീതി (പ്രിന്റ് ചെയ്യാവുന്ന ഭാഗത്തിന്റെ %)",
   "lang_rd_your_layout": "നിങ്ങളുടെ ലേഔട്ട്",
-  "lang_rd_a5": "A5"
+  "lang_rd_a5": "A5",
+  "lang_about_posnic": "Posnic സംബന്ധിച്ച്",
+  "lang_about_support_hint": "സഹായത്തിനായി ബന്ധപ്പെടുമ്പോൾ ഈ വിവരങ്ങൾ പങ്കിടുക.",
+  "lang_about_running_in": "പ്രവർത്തന പരിസരം",
+  "lang_about_desktop_version": "ഡെസ്ക്ടോപ്പ് പതിപ്പ്",
+  "lang_about_server_version": "സെർവർ പതിപ്പ്",
+  "lang_about_page_build": "പേജ് ബിൽഡ്",
+  "lang_about_unavailable": "ലഭ്യമല്ല",
+  "lang_about_details_copied": "വിവരങ്ങൾ ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി.",
+  "lang_about_copy_failed": "പകർത്താൻ കഴിഞ്ഞില്ല. മുകളിലെ വിവരങ്ങൾ തിരഞ്ഞെടുത്ത് നേരിട്ട് പകർത്തുക."
 }

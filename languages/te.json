@@ -3292,5 +3292,14 @@
   "lang_rd_website_payment_link_or_other_text": "వెబ్‌సైట్, చెల్లింపు లింక్ లేదా ఇతర వచనం",
   "lang_rd_width_of_printable_area_": "వెడల్పు (ప్రింట్ ప్రాంతంలో %)",
   "lang_rd_your_layout": "మీ లేఅవుట్",
-  "lang_rd_a5": "A5"
+  "lang_rd_a5": "A5",
+  "lang_about_posnic": "Posnic గురించి",
+  "lang_about_support_hint": "సహాయాన్ని సంప్రదించేటప్పుడు ఈ వివరాలను పంచుకోండి.",
+  "lang_about_running_in": "నడుస్తున్న వాతావరణం",
+  "lang_about_desktop_version": "డెస్క్‌టాప్ వెర్షన్",
+  "lang_about_server_version": "సర్వర్ వెర్షన్",
+  "lang_about_page_build": "పేజీ బిల్డ్",
+  "lang_about_unavailable": "అందుబాటులో లేదు",
+  "lang_about_details_copied": "వివరాలు క్లిప్‌బోర్డ్‌కు కాపీ చేయబడ్డాయి.",
+  "lang_about_copy_failed": "కాపీ చేయలేకపోయాము. పై వివరాలను ఎంచుకుని మాన్యువల్‌గా కాపీ చేయండి."
 }

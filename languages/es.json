@@ -3292,5 +3292,14 @@
   "lang_rd_website_payment_link_or_other_text": "Sitio web, enlace de pago u otro texto",
   "lang_rd_width_of_printable_area_": "Ancho (% del área imprimible)",
   "lang_rd_your_layout": "Su diseño",
-  "lang_rd_a5": "A5"
+  "lang_rd_a5": "A5",
+  "lang_about_posnic": "Acerca de Posnic",
+  "lang_about_support_hint": "Comparte estos datos al contactar con soporte.",
+  "lang_about_running_in": "Entorno",
+  "lang_about_desktop_version": "Versión de escritorio",
+  "lang_about_server_version": "Versión del servidor",
+  "lang_about_page_build": "Compilación de la página",
+  "lang_about_unavailable": "No disponible",
+  "lang_about_details_copied": "Datos copiados al portapapeles.",
+  "lang_about_copy_failed": "No se pudo copiar. Selecciona los datos de arriba para copiarlos manualmente."
 }

@@ -3292,5 +3292,14 @@
   "lang_rd_website_payment_link_or_other_text": "Situs web, tautan pembayaran, atau teks lain",
   "lang_rd_width_of_printable_area_": "Lebar (% area cetak)",
   "lang_rd_your_layout": "Tata letak Anda",
-  "lang_rd_a5": "A5"
+  "lang_rd_a5": "A5",
+  "lang_about_posnic": "Tentang Posnic",
+  "lang_about_support_hint": "Bagikan detail ini saat menghubungi dukungan.",
+  "lang_about_running_in": "Lingkungan",
+  "lang_about_desktop_version": "Versi desktop",
+  "lang_about_server_version": "Versi server",
+  "lang_about_page_build": "Build halaman",
+  "lang_about_unavailable": "Tidak tersedia",
+  "lang_about_details_copied": "Detail disalin ke papan klip.",
+  "lang_about_copy_failed": "Tidak dapat menyalin. Pilih detail di atas untuk menyalinnya secara manual."
 }

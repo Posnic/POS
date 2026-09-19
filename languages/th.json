@@ -3292,5 +3292,14 @@
   "lang_rd_website_payment_link_or_other_text": "เว็บไซต์ ลิงก์ชำระเงิน หรือข้อความอื่น",
   "lang_rd_width_of_printable_area_": "ความกว้าง (% ของพื้นที่พิมพ์)",
   "lang_rd_your_layout": "เค้าโครงของคุณ",
-  "lang_rd_a5": "A5"
+  "lang_rd_a5": "A5",
+  "lang_about_posnic": "เกี่ยวกับ Posnic",
+  "lang_about_support_hint": "แชร์รายละเอียดเหล่านี้เมื่อติดต่อฝ่ายสนับสนุน",
+  "lang_about_running_in": "สภาพแวดล้อม",
+  "lang_about_desktop_version": "เวอร์ชันเดสก์ท็อป",
+  "lang_about_server_version": "เวอร์ชันเซิร์ฟเวอร์",
+  "lang_about_page_build": "บิลด์ของหน้า",
+  "lang_about_unavailable": "ไม่พร้อมใช้งาน",
+  "lang_about_details_copied": "คัดลอกรายละเอียดไปยังคลิปบอร์ดแล้ว",
+  "lang_about_copy_failed": "คัดลอกไม่ได้ เลือกรายละเอียดด้านบนเพื่อคัดลอกด้วยตนเอง"
 }

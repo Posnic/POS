@@ -3292,5 +3292,14 @@
   "lang_rd_website_payment_link_or_other_text": "वेबसाइट, भुक्तानी लिंक वा अन्य पाठ",
   "lang_rd_width_of_printable_area_": "चौडाइ (प्रिन्ट क्षेत्रको %)",
   "lang_rd_your_layout": "तपाईंको लेआउट",
-  "lang_rd_a5": "A5"
+  "lang_rd_a5": "A5",
+  "lang_about_posnic": "Posnic बारे",
+  "lang_about_support_hint": "सहायताका लागि सम्पर्क गर्दा यी विवरणहरू साझा गर्नुहोस्।",
+  "lang_about_running_in": "चलिरहेको वातावरण",
+  "lang_about_desktop_version": "डेस्कटप संस्करण",
+  "lang_about_server_version": "सर्भर संस्करण",
+  "lang_about_page_build": "पृष्ठ बिल्ड",
+  "lang_about_unavailable": "उपलब्ध छैन",
+  "lang_about_details_copied": "विवरणहरू क्लिपबोर्डमा प्रतिलिपि गरियो।",
+  "lang_about_copy_failed": "प्रतिलिपि गर्न सकिएन। माथिका विवरणहरू चयन गरेर आफैँ प्रतिलिपि गर्नुहोस्।"
 }

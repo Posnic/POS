@@ -3292,5 +3292,14 @@
   "lang_rd_website_payment_link_or_other_text": "ವೆಬ್‌ಸೈಟ್, ಪಾವತಿ ಲಿಂಕ್ ಅಥವಾ ಇತರೆ ಪಠ್ಯ",
   "lang_rd_width_of_printable_area_": "ಅಗಲ (ಮುದ್ರಣ ಪ್ರದೇಶದ %)",
   "lang_rd_your_layout": "ನಿಮ್ಮ ವಿನ್ಯಾಸ",
-  "lang_rd_a5": "A5"
+  "lang_rd_a5": "A5",
+  "lang_about_posnic": "Posnic ಕುರಿತು",
+  "lang_about_support_hint": "ಬೆಂಬಲವನ್ನು ಸಂಪರ್ಕಿಸುವಾಗ ಈ ವಿವರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಿ.",
+  "lang_about_running_in": "ಚಾಲನೆಯ ಪರಿಸರ",
+  "lang_about_desktop_version": "ಡೆಸ್ಕ್‌ಟಾಪ್ ಆವೃತ್ತಿ",
+  "lang_about_server_version": "ಸರ್ವರ್ ಆವೃತ್ತಿ",
+  "lang_about_page_build": "ಪುಟದ ಬಿಲ್ಡ್",
+  "lang_about_unavailable": "ಲಭ್ಯವಿಲ್ಲ",
+  "lang_about_details_copied": "ವಿವರಗಳನ್ನು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ.",
+  "lang_about_copy_failed": "ನಕಲಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮೇಲಿನ ವಿವರಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ ಕೈಯಾರೆ ನಕಲಿಸಿ."
 }

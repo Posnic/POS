@@ -3292,5 +3292,14 @@
   "lang_rd_website_payment_link_or_other_text": "වෙබ් අඩවිය, ගෙවීම් සබැඳිය හෝ වෙනත් පෙළ",
   "lang_rd_width_of_printable_area_": "පළල (මුද්‍රණය කළ හැකි ප්‍රදේශයේ %)",
   "lang_rd_your_layout": "ඔබේ සැලැස්ම",
-  "lang_rd_a5": "A5"
+  "lang_rd_a5": "A5",
+  "lang_about_posnic": "Posnic පිළිබඳව",
+  "lang_about_support_hint": "සහාය අමතන විට මෙම විස්තර බෙදා ගන්න.",
+  "lang_about_running_in": "ක්‍රියාත්මක පරිසරය",
+  "lang_about_desktop_version": "ඩෙස්ක්ටොප් අනුවාදය",
+  "lang_about_server_version": "සේවාදායක අනුවාදය",
+  "lang_about_page_build": "පිටු බිල්ඩ්",
+  "lang_about_unavailable": "ලබා ගත නොහැක",
+  "lang_about_details_copied": "විස්තර ක්ලිප්බෝඩ් වෙත පිටපත් කරන ලදී.",
+  "lang_about_copy_failed": "පිටපත් කළ නොහැකි විය. ඉහත විස්තර තෝරා අතින් පිටපත් කරන්න."
 }

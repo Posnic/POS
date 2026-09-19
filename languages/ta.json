@@ -3328,5 +3328,14 @@
   "lang_rd_website_payment_link_or_other_text": "இணையதளம், கட்டண இணைப்பு அல்லது வேறு உரை",
   "lang_rd_width_of_printable_area_": "அகலம் (அச்சிடும் பகுதியின் %)",
   "lang_rd_your_layout": "உங்கள் வடிவமைப்பு",
-  "lang_rd_a5": "A5"
+  "lang_rd_a5": "A5",
+  "lang_about_posnic": "Posnic பற்றி",
+  "lang_about_support_hint": "உதவியைத் தொடர்புகொள்ளும்போது இந்த விவரங்களைப் பகிரவும்.",
+  "lang_about_running_in": "இயங்கும் சூழல்",
+  "lang_about_desktop_version": "டெஸ்க்டாப் பதிப்பு",
+  "lang_about_server_version": "சேவையகப் பதிப்பு",
+  "lang_about_page_build": "பக்க உருவாக்கம்",
+  "lang_about_unavailable": "கிடைக்கவில்லை",
+  "lang_about_details_copied": "விவரங்கள் கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டன.",
+  "lang_about_copy_failed": "நகலெடுக்க முடியவில்லை. மேலே உள்ள விவரங்களைத் தேர்ந்தெடுத்து கைமுறையாக நகலெடுக்கவும்."
 }

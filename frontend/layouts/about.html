@@ -1,0 +1,38 @@
+<footer class="posnic-app-footer hidden-print">
+    <span id="posnic_version_line" hidden></span>
+    <button type="button" class="posnic-about-link" data-toggle="modal" data-target="#posnic_about_dialog">
+        <lang class="lang_about_posnic">About Posnic</lang>
+    </button>
+</footer>
+
+<div class="modal fade" id="posnic_about_dialog" tabindex="-1" role="dialog" aria-labelledby="posnic_about_title" aria-describedby="posnic_about_help">
+    <div class="modal-dialog modal-dialog-centered posnic-about-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="posnic_about_title"><lang class="lang_about_posnic">About Posnic</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="posnic-about-product" id="posnic_about_version"></p>
+                <p class="text-muted" id="posnic_about_help"><lang class="lang_about_support_hint">Share these details when contacting support.</lang></p>
+                <dl class="posnic-about-details">
+                    <dt><lang class="lang_about_running_in">Running in</lang></dt>
+                    <dd id="posnic_about_mode"></dd>
+                    <dt id="posnic_about_app_label" hidden><lang class="lang_about_desktop_version">Desktop version</lang></dt>
+                    <dd id="posnic_about_app" hidden></dd>
+                    <dt><lang class="lang_about_server_version">Server version</lang></dt>
+                    <dd id="posnic_about_server"></dd>
+                    <dt><lang class="lang_about_page_build">Page build</lang></dt>
+                    <dd id="posnic_about_page" class="posnic-about-build"></dd>
+                </dl>
+                <p id="posnic_about_copy_status" class="posnic-about-copy-status" role="status" aria-live="polite" aria-atomic="true"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button>
+                <button type="button" class="btn btn-primary" id="posnic_about_copy" disabled>
+                    <lang class="lang_copy_details">Copy details</lang>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
