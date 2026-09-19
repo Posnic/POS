@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "Vitone",
   "lang_rd_line_thickness": "Unene wa mstari",
   "lang_rd_set_as_default": "Weka kama chaguomsingi",
-  "lang_rd_save_to_apply": "Hifadhi miundo ili kutumia mabadiliko yako."
+  "lang_rd_save_to_apply": "Hifadhi miundo ili kutumia mabadiliko yako.",
+  "lang_rd_print_sample": "Chapisha mfano",
+  "lang_rd_full_screen": "Skrini nzima",
+  "lang_rd_exit_full_screen": "Ondoka skrini nzima",
+  "lang_rd_print_sample_hint": "Chapisha umbizo hili kwa data ya mfano na mabadiliko yako ambayo hayajahifadhiwa.",
+  "lang_rd_preparing_sample": "Inaandaa mfano…",
+  "lang_rd_sample_not_sale": "MFANO - Si mauzo",
+  "lang_rd_sample_sent": "Mfano umetumwa kwa kichapishi",
+  "lang_rd_print_dialog_closed": "Kidirisha cha uchapishaji kimefungwa",
+  "lang_rd_preview_zoom": "Ukuzaji wa hakiki",
+  "lang_rd_fit_whole_receipt": "Onyesha risiti nzima",
+  "lang_rd_fit_width": "Linganisha upana",
+  "lang_rd_qr_retry": "Imeshindwa kutengeneza msimbo wa QR. Angalia muunganisho wako na ujaribu tena."
 }

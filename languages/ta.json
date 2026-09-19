@@ -3348,5 +3348,17 @@
   "lang_rd_dotted": "புள்ளிக் கோடு",
   "lang_rd_line_thickness": "கோட்டின் தடிமன்",
   "lang_rd_set_as_default": "இயல்புநிலையாக அமை",
-  "lang_rd_save_to_apply": "மாற்றங்களைப் பயன்படுத்த வடிவமைப்புகளைச் சேமிக்கவும்."
+  "lang_rd_save_to_apply": "மாற்றங்களைப் பயன்படுத்த வடிவமைப்புகளைச் சேமிக்கவும்.",
+  "lang_rd_print_sample": "மாதிரியை அச்சிடு",
+  "lang_rd_full_screen": "முழுத் திரை",
+  "lang_rd_exit_full_screen": "முழுத் திரையிலிருந்து வெளியேறு",
+  "lang_rd_print_sample_hint": "மாதிரித் தரவுகளையும் சேமிக்காத மாற்றங்களையும் கொண்டு இந்த வடிவத்தை அச்சிடவும்.",
+  "lang_rd_preparing_sample": "மாதிரி தயாராகிறது…",
+  "lang_rd_sample_not_sale": "மாதிரி - விற்பனை அல்ல",
+  "lang_rd_sample_sent": "மாதிரி அச்சுப்பொறிக்கு அனுப்பப்பட்டது",
+  "lang_rd_print_dialog_closed": "அச்சிடும் சாளரம் மூடப்பட்டது",
+  "lang_rd_preview_zoom": "முன்னோட்ட அளவு",
+  "lang_rd_fit_whole_receipt": "முழு ரசீதையும் காட்டு",
+  "lang_rd_fit_width": "அகலத்திற்குப் பொருத்து",
+  "lang_rd_qr_retry": "QR குறியீட்டை உருவாக்க முடியவில்லை. இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்."
 }

@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "Punteggiata",
   "lang_rd_line_thickness": "Spessore linea",
   "lang_rd_set_as_default": "Imposta come predefinito",
-  "lang_rd_save_to_apply": "Salva i modelli per applicare le modifiche."
+  "lang_rd_save_to_apply": "Salva i modelli per applicare le modifiche.",
+  "lang_rd_print_sample": "Stampa esempio",
+  "lang_rd_full_screen": "Schermo intero",
+  "lang_rd_exit_full_screen": "Esci da schermo intero",
+  "lang_rd_print_sample_hint": "Stampa questo formato con dati di esempio e le modifiche non salvate.",
+  "lang_rd_preparing_sample": "Preparazione dell'esempio…",
+  "lang_rd_sample_not_sale": "ESEMPIO - Non è una vendita",
+  "lang_rd_sample_sent": "Esempio inviato alla stampante",
+  "lang_rd_print_dialog_closed": "Finestra di stampa chiusa",
+  "lang_rd_preview_zoom": "Zoom anteprima",
+  "lang_rd_fit_whole_receipt": "Mostra l'intera ricevuta",
+  "lang_rd_fit_width": "Adatta alla larghezza",
+  "lang_rd_qr_retry": "Impossibile generare il codice QR. Controlla la connessione e riprova."
 }

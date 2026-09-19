@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "منقط",
   "lang_rd_line_thickness": "سُمك الخط",
   "lang_rd_set_as_default": "تعيين كافتراضي",
-  "lang_rd_save_to_apply": "احفظ التصاميم لتطبيق تغييراتك."
+  "lang_rd_save_to_apply": "احفظ التصاميم لتطبيق تغييراتك.",
+  "lang_rd_print_sample": "طباعة نموذج",
+  "lang_rd_full_screen": "ملء الشاشة",
+  "lang_rd_exit_full_screen": "إنهاء ملء الشاشة",
+  "lang_rd_print_sample_hint": "اطبع هذا التنسيق ببيانات تجريبية وتغييراتك غير المحفوظة.",
+  "lang_rd_preparing_sample": "جارٍ إعداد النموذج…",
+  "lang_rd_sample_not_sale": "نموذج - ليس عملية بيع",
+  "lang_rd_sample_sent": "تم إرسال النموذج إلى الطابعة",
+  "lang_rd_print_dialog_closed": "تم إغلاق نافذة الطباعة",
+  "lang_rd_preview_zoom": "تكبير المعاينة",
+  "lang_rd_fit_whole_receipt": "إظهار الإيصال بالكامل",
+  "lang_rd_fit_width": "ملاءمة العرض",
+  "lang_rd_qr_retry": "تعذر إنشاء رمز QR. تحقق من اتصالك وحاول مرة أخرى."
 }

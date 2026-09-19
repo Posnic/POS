@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "थोप्लेदार",
   "lang_rd_line_thickness": "रेखाको मोटाइ",
   "lang_rd_set_as_default": "पूर्वनिर्धारित बनाउनुहोस्",
-  "lang_rd_save_to_apply": "परिवर्तनहरू लागू गर्न डिजाइनहरू सुरक्षित गर्नुहोस्।"
+  "lang_rd_save_to_apply": "परिवर्तनहरू लागू गर्न डिजाइनहरू सुरक्षित गर्नुहोस्।",
+  "lang_rd_print_sample": "नमुना प्रिन्ट गर्नुहोस्",
+  "lang_rd_full_screen": "पूरा स्क्रिन",
+  "lang_rd_exit_full_screen": "पूरा स्क्रिनबाट बाहिर निस्कनुहोस्",
+  "lang_rd_print_sample_hint": "नमुना डेटा र सुरक्षित नगरिएका परिवर्तनहरूसहित यो ढाँचा प्रिन्ट गर्नुहोस्।",
+  "lang_rd_preparing_sample": "नमुना तयार हुँदैछ…",
+  "lang_rd_sample_not_sale": "नमुना - बिक्री होइन",
+  "lang_rd_sample_sent": "नमुना प्रिन्टरमा पठाइयो",
+  "lang_rd_print_dialog_closed": "प्रिन्ट संवाद बन्द भयो",
+  "lang_rd_preview_zoom": "पूर्वावलोकन जुम",
+  "lang_rd_fit_whole_receipt": "पूरै रसिद देखाउनुहोस्",
+  "lang_rd_fit_width": "चौडाइमा मिलाउनुहोस्",
+  "lang_rd_qr_retry": "QR कोड बनाउन सकिएन। आफ्नो जडान जाँचेर फेरि प्रयास गर्नुहोस्।"
 }

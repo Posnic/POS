@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "చుక్కలతో",
   "lang_rd_line_thickness": "గీత మందం",
   "lang_rd_set_as_default": "డిఫాల్ట్‌గా సెట్ చేయండి",
-  "lang_rd_save_to_apply": "మార్పులను వర్తింపజేయడానికి డిజైన్‌లను సేవ్ చేయండి."
+  "lang_rd_save_to_apply": "మార్పులను వర్తింపజేయడానికి డిజైన్‌లను సేవ్ చేయండి.",
+  "lang_rd_print_sample": "నమూనాను ముద్రించండి",
+  "lang_rd_full_screen": "పూర్తి తెర",
+  "lang_rd_exit_full_screen": "పూర్తి తెర నుండి నిష్క్రమించండి",
+  "lang_rd_print_sample_hint": "నమూనా డేటా మరియు సేవ్ చేయని మార్పులతో ఈ ఆకృతిని ముద్రించండి.",
+  "lang_rd_preparing_sample": "నమూనా సిద్ధమవుతోంది…",
+  "lang_rd_sample_not_sale": "నమూనా - అమ్మకం కాదు",
+  "lang_rd_sample_sent": "నమూనా ప్రింటర్‌కు పంపబడింది",
+  "lang_rd_print_dialog_closed": "ముద్రణ విండో మూసివేయబడింది",
+  "lang_rd_preview_zoom": "ముందస్తు వీక్షణ జూమ్",
+  "lang_rd_fit_whole_receipt": "మొత్తం రసీదును చూపించు",
+  "lang_rd_fit_width": "వెడల్పుకు సరిపోల్చు",
+  "lang_rd_qr_retry": "QR కోడ్‌ను రూపొందించలేకపోయాము. మీ కనెక్షన్‌ను తనిఖీ చేసి మళ్లీ ప్రయత్నించండి."
 }

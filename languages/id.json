@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "Titik-titik",
   "lang_rd_line_thickness": "Ketebalan garis",
   "lang_rd_set_as_default": "Jadikan default",
-  "lang_rd_save_to_apply": "Simpan desain untuk menerapkan perubahan Anda."
+  "lang_rd_save_to_apply": "Simpan desain untuk menerapkan perubahan Anda.",
+  "lang_rd_print_sample": "Cetak contoh",
+  "lang_rd_full_screen": "Layar penuh",
+  "lang_rd_exit_full_screen": "Keluar dari layar penuh",
+  "lang_rd_print_sample_hint": "Cetak format ini dengan data contoh dan perubahan Anda yang belum disimpan.",
+  "lang_rd_preparing_sample": "Menyiapkan contoh…",
+  "lang_rd_sample_not_sale": "CONTOH - Bukan penjualan",
+  "lang_rd_sample_sent": "Contoh dikirim ke printer",
+  "lang_rd_print_dialog_closed": "Dialog cetak ditutup",
+  "lang_rd_preview_zoom": "Zoom pratinjau",
+  "lang_rd_fit_whole_receipt": "Tampilkan seluruh struk",
+  "lang_rd_fit_width": "Sesuaikan lebar",
+  "lang_rd_qr_retry": "Kode QR tidak dapat dibuat. Periksa koneksi Anda dan coba lagi."
 }

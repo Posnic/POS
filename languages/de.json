@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "Gepunktet",
   "lang_rd_line_thickness": "Linienstärke",
   "lang_rd_set_as_default": "Als Standard festlegen",
-  "lang_rd_save_to_apply": "Speichern Sie die Designs, um Ihre Änderungen anzuwenden."
+  "lang_rd_save_to_apply": "Speichern Sie die Designs, um Ihre Änderungen anzuwenden.",
+  "lang_rd_print_sample": "Muster drucken",
+  "lang_rd_full_screen": "Vollbild",
+  "lang_rd_exit_full_screen": "Vollbild beenden",
+  "lang_rd_print_sample_hint": "Dieses Format mit Beispieldaten und Ihren ungespeicherten Änderungen drucken.",
+  "lang_rd_preparing_sample": "Muster wird vorbereitet…",
+  "lang_rd_sample_not_sale": "MUSTER - Kein Verkauf",
+  "lang_rd_sample_sent": "Muster an Drucker gesendet",
+  "lang_rd_print_dialog_closed": "Druckdialog geschlossen",
+  "lang_rd_preview_zoom": "Vorschauzoom",
+  "lang_rd_fit_whole_receipt": "Gesamten Beleg anzeigen",
+  "lang_rd_fit_width": "An Breite anpassen",
+  "lang_rd_qr_retry": "QR-Code konnte nicht erstellt werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
 }

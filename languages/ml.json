@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "കുത്തുകളുള്ള",
   "lang_rd_line_thickness": "വരയുടെ കനം",
   "lang_rd_set_as_default": "ഡിഫോൾട്ടായി സജ്ജമാക്കുക",
-  "lang_rd_save_to_apply": "മാറ്റങ്ങൾ പ്രയോഗിക്കാൻ ഡിസൈനുകൾ സംരക്ഷിക്കുക."
+  "lang_rd_save_to_apply": "മാറ്റങ്ങൾ പ്രയോഗിക്കാൻ ഡിസൈനുകൾ സംരക്ഷിക്കുക.",
+  "lang_rd_print_sample": "മാതൃക പ്രിന്റ് ചെയ്യുക",
+  "lang_rd_full_screen": "പൂർണ്ണ സ്ക്രീൻ",
+  "lang_rd_exit_full_screen": "പൂർണ്ണ സ്ക്രീനിൽ നിന്ന് പുറത്തുകടക്കുക",
+  "lang_rd_print_sample_hint": "മാതൃകാ വിവരങ്ങളും സേവ് ചെയ്യാത്ത മാറ്റങ്ങളും ഉപയോഗിച്ച് ഈ ഫോർമാറ്റ് പ്രിന്റ് ചെയ്യുക.",
+  "lang_rd_preparing_sample": "മാതൃക തയ്യാറാക്കുന്നു…",
+  "lang_rd_sample_not_sale": "മാതൃക - വിൽപ്പനയല്ല",
+  "lang_rd_sample_sent": "മാതൃക പ്രിന്ററിലേക്ക് അയച്ചു",
+  "lang_rd_print_dialog_closed": "പ്രിന്റ് വിൻഡോ അടച്ചു",
+  "lang_rd_preview_zoom": "പ്രിവ്യൂ സൂം",
+  "lang_rd_fit_whole_receipt": "മുഴുവൻ രസീതും കാണിക്കുക",
+  "lang_rd_fit_width": "വീതിക്ക് അനുയോജ്യമാക്കുക",
+  "lang_rd_qr_retry": "QR കോഡ് സൃഷ്ടിക്കാനായില്ല. കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക."
 }

@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "තිත් ඉරි",
   "lang_rd_line_thickness": "රේඛාවේ ඝනකම",
   "lang_rd_set_as_default": "පෙරනිමිය ලෙස සකසන්න",
-  "lang_rd_save_to_apply": "වෙනස්කම් යෙදීමට සැලසුම් සුරකින්න."
+  "lang_rd_save_to_apply": "වෙනස්කම් යෙදීමට සැලසුම් සුරකින්න.",
+  "lang_rd_print_sample": "ආදර්ශයක් මුද්‍රණය කරන්න",
+  "lang_rd_full_screen": "පූර්ණ තිරය",
+  "lang_rd_exit_full_screen": "පූර්ණ තිරයෙන් ඉවත් වන්න",
+  "lang_rd_print_sample_hint": "ආදර්ශ දත්ත සහ සුරැකි නැති වෙනස්කම් සමඟ මෙම ආකෘතිය මුද්‍රණය කරන්න.",
+  "lang_rd_preparing_sample": "ආදර්ශය සකසමින්…",
+  "lang_rd_sample_not_sale": "ආදර්ශය - විකිණීමක් නොවේ",
+  "lang_rd_sample_sent": "ආදර්ශය මුද්‍රකයට යවන ලදී",
+  "lang_rd_print_dialog_closed": "මුද්‍රණ කවුළුව වසා ඇත",
+  "lang_rd_preview_zoom": "පෙරදසුන විශාලනය",
+  "lang_rd_fit_whole_receipt": "සම්පූර්ණ රිසිට්පත පෙන්වන්න",
+  "lang_rd_fit_width": "පළලට ගළපන්න",
+  "lang_rd_qr_retry": "QR කේතය සෑදිය නොහැකි විය. සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න."
 }

@@ -3327,5 +3327,17 @@
   "lang_rd_dotted": "बिंदुदार",
   "lang_rd_line_thickness": "रेखा की मोटाई",
   "lang_rd_set_as_default": "डिफ़ॉल्ट बनाएँ",
-  "lang_rd_save_to_apply": "बदलाव लागू करने के लिए डिज़ाइन सहेजें।"
+  "lang_rd_save_to_apply": "बदलाव लागू करने के लिए डिज़ाइन सहेजें।",
+  "lang_rd_print_sample": "नमूना प्रिंट करें",
+  "lang_rd_full_screen": "पूरी स्क्रीन",
+  "lang_rd_exit_full_screen": "पूरी स्क्रीन से बाहर निकलें",
+  "lang_rd_print_sample_hint": "इस प्रारूप को नमूना डेटा और अपने सहेजे बिना बदलावों के साथ प्रिंट करें।",
+  "lang_rd_preparing_sample": "नमूना तैयार हो रहा है…",
+  "lang_rd_sample_not_sale": "नमूना - बिक्री नहीं है",
+  "lang_rd_sample_sent": "नमूना प्रिंटर पर भेज दिया गया",
+  "lang_rd_print_dialog_closed": "प्रिंट संवाद बंद हो गया",
+  "lang_rd_preview_zoom": "पूर्वावलोकन ज़ूम",
+  "lang_rd_fit_whole_receipt": "पूरी रसीद दिखाएँ",
+  "lang_rd_fit_width": "चौड़ाई में फ़िट करें",
+  "lang_rd_qr_retry": "QR कोड नहीं बन सका। अपना कनेक्शन जाँचें और फिर से कोशिश करें।"
 }

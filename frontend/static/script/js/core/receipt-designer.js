@@ -232,10 +232,14 @@
         }
         return '<style>' + css(format, layout.fontSize) + '</style><article class="rd-document' + (sheet ? ' rd-sheet' : '') + '" data-receipt-design="' + format + '">' + html + '</article>';
     }
-    function print(html, format) {
+    function print(html, format, options) {
+        options = options || {};
         var doc = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(label('Receipt')) + '</title></head><body>' + html + '</body></html>';
         var printer = window.electronAPI && window.electronAPI.printer;
-        var failure = function (error) { PosnicPro.alert('error', error.message || label('Print failed')); };
+        var failure = function (error) {
+            if (options.sample) throw error;
+            PosnicPro.alert('error', error.message || label('Print failed'));
+        };
         if (printer && printer.print) {
             return Promise.resolve(PosnicPro.syncPrinterPreferences ? PosnicPro.syncPrinterPreferences() : null)
                 .catch(function () {})
@@ -255,19 +259,25 @@
                 silent: true, forceHtml: true, printBackground: true, margins: { marginType: 'none' } }); })
                 .then(function (result) {
                     if (!result || !result.success) throw new Error(result && result.error || label('Print failed'));
-                    PosnicPro.afterPrint();
+                    if (!options.sample) PosnicPro.afterPrint();
+                    return result;
                 }).catch(failure);
         }
         var frame = $('<iframe title="Receipt print" data-t-title="lang_receipt_print" sandbox="allow-same-origin allow-modals">').css({ position: 'fixed', left: '-10000px', top: 0, width: contract.formats[format].width + 'mm', height: '1000px', border: 0 });
-        frame.on('load', function () {
-            var win = frame[0].contentWindow;
-            PosnicPro.waitForPrintAssets(win.document).then(function () {
-                window.PosnicReceiptPage.fitDocument(win.document);
-                win.onafterprint = function () { frame.remove(); };
-                win.focus(); win.print(); PosnicPro.afterPrint();
-            }).catch(function (error) { frame.remove(); failure(error); });
-        });
-        frame.attr('srcdoc', doc).appendTo('body');
+        return new Promise(function (resolve, reject) {
+            var loadTimeout = setTimeout(function () { frame.remove(); reject(new Error(label('Print failed'))); }, 15000);
+            frame.on('load', function () {
+                clearTimeout(loadTimeout);
+                var win = frame[0].contentWindow;
+                Promise.resolve().then(function () { return PosnicPro.waitForPrintAssets(win.document); }).then(function () {
+                    window.PosnicReceiptPage.fitDocument(win.document);
+                    win.onafterprint = function () { frame.remove(); resolve({ success: true, dialog: true }); };
+                    win.focus(); win.print();
+                    if (!options.sample) PosnicPro.afterPrint();
+                }).catch(function (error) { frame.remove(); reject(error); });
+            });
+            frame.attr('srcdoc', doc).appendTo('body');
+        }).catch(failure);
     }
     PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, render: render, css: css, print: print, block: block, label: label, copy: copy, formatFor: formatFor };
 }());
