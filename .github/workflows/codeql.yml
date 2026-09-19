@@ -16,11 +16,11 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   schedule:
     # Mondays, early. Far enough from a working day that a red result is seen
     # before anyone starts building on top of it.
-    - cron: '17 5 * * 1'
+    - cron: "17 5 * * 1"
 
 permissions:
   contents: read
