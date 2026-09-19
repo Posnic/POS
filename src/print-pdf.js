@@ -63,4 +63,66 @@ async function printPdfFile(file, { printer, copies = 1 } = {}) {
   });
 }
 
-module.exports = { printPdfFile };
+/* PDFs made by the invoice, quotation and report screens already have a page
+   layout. Print those bytes with a printer chooser instead of turning them
+   into a receipt or asking Electron to open a blocked browser popup. */
+async function printPdfDocument(bytes, { parent, printerName = '', paperSize = 'a4', copies = 1 } = {}) {
+  const fs = require('fs');
+  const path = require('path');
+  const { randomUUID } = require('crypto');
+  const { app, BrowserWindow } = require('electron');
+  let file;
+  try {
+    if (!(bytes instanceof Uint8Array) || bytes.byteLength > 25 * 1024 * 1024) {
+      throw new Error('Invalid PDF document');
+    }
+    const pdf = Buffer.from(bytes);
+    if (pdf.subarray(0, 5).toString('ascii') !== '%PDF-') {
+      throw new Error('Invalid PDF document');
+    }
+    file = path.join(app.getPath('temp'), `posnic-document-${randomUUID()}.pdf`);
+    fs.writeFileSync(file, pdf, { flag: 'wx', mode: 0o600 });
+    if (process.platform === 'win32') {
+      const { print } = require('pdf-to-printer');
+      await print(file, { printDialog: !printerName, printer: printerName === 'default' ? undefined : printerName || undefined,
+        paperSize: paperSize === 'letter' ? 'letter' : paperSize.toUpperCase(), copies, scale: 'noscale' });
+      // The native chooser can be cancelled; returning means it closed, not
+      // that paper was confirmed. The frontend must not announce "printed".
+      return { success: true };
+    }
+    return await new Promise((resolve) => {
+      const win = new BrowserWindow({
+        parent: parent || undefined, width: 900, height: 750, show: false,
+        autoHideMenuBar: true,
+        webPreferences: {
+          nodeIntegration: false, contextIsolation: true, sandbox: true,
+          webSecurity: true, plugins: true,
+        },
+      });
+      win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+      win.webContents.on('will-navigate', (event) => event.preventDefault());
+      const finish = (result) => {
+        resolve(result);
+        if (!win.isDestroyed()) win.destroy();
+      };
+      win.once('closed', () => resolve({ cancelled: true }));
+      win.loadFile(file).then(() => {
+        if (win.isDestroyed()) return;
+        win.show();
+        win.webContents.print({ silent: !!printerName, deviceName: printerName === 'default' ? '' : printerName,
+          pageSize: paperSize === 'letter' ? 'Letter' : paperSize.toUpperCase(), copies, printBackground: true }, (success, reason) => {
+          finish(success ? { success: true } : /cancel/i.test(reason || '')
+            ? { cancelled: true } : { success: false, error: reason || 'Printing failed' });
+        });
+      }).catch((err) => finish({ success: false, error: err.message }));
+    });
+  } catch (err) {
+    return { success: false, error: err.message };
+  } finally {
+    if (file) {
+      try { fs.unlinkSync(file); } catch (_) { /* a driver may still hold it */ }
+    }
+  }
+}
+
+module.exports = { printPdfFile, printPdfDocument };

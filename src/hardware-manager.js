@@ -667,7 +667,7 @@ class HardwareManager {
         result = await this._printViaPdfFallback(printWindow, deviceName, options);
       }
 
-      if (!result.success && deviceName) {
+      if (!result.success && deviceName && options.strictPrinter !== true) {
         console.warn(`Named printer "${deviceName}" failed, falling back to Windows default printer`);
         result = await this._printWithSystemDefaultFallback(printWindow, options);
       }

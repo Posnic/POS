@@ -60,6 +60,10 @@
         if (requested === 'a4' || requested === 'a5' || requested === 'letter') return requested;
         if (requested === '58' || requested === '80') return requested;
         if (requested === 'standard') return PosnicPro.resolvePaperWidth() === '58' ? '58' : '80';
+        if (PosnicPro.printSettings) {
+            var paper = PosnicPro.printSettings.saleFormat();
+            if (contract.formats[paper]) return paper;
+        }
         return data.receipt_designs.defaultFormat;
     }
     function headerValue(value) {
@@ -292,7 +296,8 @@
             return Promise.resolve(PosnicPro.syncPrinterPreferences ? PosnicPro.syncPrinterPreferences() : null)
                 .catch(function () {})
                 .then(function () {
-                    var chosen = PosnicPro.resolveReceiptPrinter();
+                    var chosen = options.target ? options.target.name : PosnicPro.resolveReceiptPrinter();
+                    if (chosen === 'default') chosen = '';
                     if (chosen) return chosen;
                     return Promise.resolve(printer.getDefault()).then(function (fallback) {
                         var name = fallback && typeof fallback === 'object' ? fallback.name : fallback;
@@ -303,11 +308,12 @@
                     });
                 }).then(function (name) { return printer.print(doc, { printerName: name,
                 pageSize: format === '58' || format === '80' ? format + 'mm' : format,
+                copies: options.target ? options.target.copies : 1,
                 fitReceipt: format === '58' || format === '80',
-                silent: true, forceHtml: true, printBackground: true, margins: { marginType: 'none' } }); })
+                silent: true, strictPrinter: true, forceHtml: true, printBackground: true, margins: { marginType: 'none' } }); })
                 .then(function (result) {
                     if (!result || !result.success) throw new Error(result && result.error || label('Print failed'));
-                    if (!options.sample) PosnicPro.afterPrint();
+                    if (!options.sample && !options.batch) PosnicPro.afterPrint();
                     return result;
                 }).catch(failure);
         }
@@ -327,5 +333,19 @@
             frame.attr('srcdoc', doc).appendTo('body');
         }).catch(failure);
     }
-    PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, standardLayout: standardLayout, render: render, css: css, print: print, block: block, label: label, copy: copy, formatFor: formatFor };
+    async function printSale(data, requested, kitchenBill) {
+        try {
+            if (PosnicPro.printSettings) await PosnicPro.printSettings.ready();
+            if (!data.receipt_designs) data = Object.assign({}, data, { receipt_designs: defaults(data) });
+            var targets = window.electronAPI && PosnicPro.printSettings ? PosnicPro.printSettings.get('sales') : [null];
+            for (var target of targets) {
+                var paper = target ? target.pageSize.replace('mm', '') : null;
+                var chosen = formatFor(data, requested || paper);
+                // A format explicitly selected for this print takes precedence.
+                await print(render(data, chosen, kitchenBill), chosen, { target: target, batch: true, sample: true });
+            }
+            PosnicPro.afterPrint();
+        } catch (error) { PosnicPro.alert('error', error.message || label('Print failed')); }
+    }
+    PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, standardLayout: standardLayout, render: render, css: css, print: print, printSale: printSale, block: block, label: label, copy: copy, formatFor: formatFor };
 }());

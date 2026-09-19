@@ -469,6 +469,21 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     return await hardwareManager.printHTML(htmlContent, options);
   });
 
+  ipcMain.handle('printer:print-pdf', async (event, bytes, kind) => {
+    const saved = require('./device-preferences').documentPrintSettings();
+    const profile = kind === 'invoice' || kind === 'quotation' ? saved[kind] : {};
+    if (profile.printerName && profile.printerName !== 'default') {
+      const printers = await hardwareManager.listPrinters();
+      if (!printers.some((printer) => printer.name === profile.printerName)) {
+        return { success: false, error: 'The selected ' + kind + ' printer is unavailable. Check Print settings.' };
+      }
+    }
+    return require('./print-pdf').printPdfDocument(bytes, {
+      ...profile,
+      parent: BrowserWindow.fromWebContents(event.sender),
+    });
+  });
+
   // Preferences Handlers (file-based persistence)
   const _prefsPath = path.join(app.getPath('userData'), 'preferences.json');
 
@@ -488,6 +503,20 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   }
 
   const preferences = _loadPrefs();
+
+  ipcMain.handle('printer:get-document-settings', () =>
+    require('./device-preferences').documentPrintSettings(preferences));
+  ipcMain.handle('printer:save-document-settings', (_event, value) => {
+    try {
+      const settings = require('./device-preferences').validateDocumentPrintSettings(value);
+      const next = { ...preferences, receipt_printers: JSON.stringify(settings.sales),
+        receipt_printer: settings.sales[0].name, print_width: settings.sales[0].pageSize,
+        document_print_profiles: { invoice: settings.invoice, quotation: settings.quotation } };
+      fs.writeFileSync(_prefsPath, JSON.stringify(next, null, 2));
+      Object.assign(preferences, next);
+      return { success: true, settings };
+    } catch (error) { return { success: false, error: error.message }; }
+  });
 
   /*
    * Bring the shop's hardware back up by itself.
