@@ -821,6 +821,7 @@ describe('updateCommonSettings', () => {
     const saved = await m.updateCommonSettings({ footer_image: png, footer_qr_url: '' });
     expect(saved.status).toBe(true);
     expect(branch.footer_image).toBe(png);
+    expect(saved.data.footer_image).toBe(png);
 
     for (let count = 0; count < 3; count++) {
       // Reopening loads the saved address. The form sends no unchanged image.
@@ -830,6 +831,8 @@ describe('updateCommonSettings', () => {
         footer_image_caption: 'Scan our shop',
       });
       expect(result.status).toBe(true);
+      expect(result.data.footer_image).toBe(png);
+      expect(result.data.footer_image_caption).toBe('Scan our shop');
       expect(setOf(col)).not.toHaveProperty('footer_image');
       expect(buildBillPayload({}, branch).footerImage).toEqual({ src: png });
       expect(buildBillPayload({}, branch).footerImageCaption).toBe('Scan our shop');
@@ -837,6 +840,8 @@ describe('updateCommonSettings', () => {
 
     const removed = await m.updateCommonSettings({ footer_image: '', footer_qr_url: '' });
     expect(removed.status).toBe(true);
+    expect(removed.data.footer_image).toBe('');
+    expect(removed.data.footer_qr_url).toBe('');
     expect(buildBillPayload({}, branch).footerImage).toBeNull();
   });
 
@@ -852,6 +857,18 @@ describe('updateCommonSettings', () => {
     await m.updateCommonSettings({ footer_qr_url: '' });
     expect(setOf(col)).not.toHaveProperty('footer_image');
     expect(setOf(col)).not.toHaveProperty('footer_qr_url');
+  });
+
+  test('saving a new QR address returns the generated picture immediately', async () => {
+    const result = await m.updateCommonSettings({
+      footer_qr_url: 'https://example.com/shop',
+      footer_image_caption: 'Scan here',
+    });
+    expect(result.status).toBe(true);
+    expect(result.data.footer_image).toMatch(/^data:image\/png;base64,/);
+    expect(result.data.footer_image).toBe(setOf(col).footer_image);
+    expect(result.data.footer_qr_url).toBe('https://example.com/shop');
+    expect(result.data.footer_image_caption).toBe('Scan here');
   });
 
   test('failed QR generation cannot replace the stored source while keeping the old picture', async () => {

@@ -1200,12 +1200,18 @@ class SettingModel extends BaseModel {
        * be work nobody asked for.
        */
       const { resolveFooterImage } = require('../helpers/footer-qr');
-      if (data.footer_qr_url !== undefined || data.footer_image !== undefined) {
+      let currentFooter;
+      if (
+        data.footer_qr_url !== undefined ||
+        data.footer_image !== undefined ||
+        data.footer_image_caption !== undefined
+      ) {
         const branches = await this.getCollection('branches');
         const now = await branches.findOne(
           { _id: this.normalizeId(this.branchId) },
-          { projection: { footer_qr_url: 1, footer_image: 1 } }
+          { projection: { footer_qr_url: 1, footer_image: 1, footer_image_caption: 1 } }
         );
+        currentFooter = now || {};
         const made = await resolveFooterImage(data, now || {});
         if (made) Object.assign(data, made);
         else {
@@ -1711,6 +1717,13 @@ class SettingModel extends BaseModel {
         header_print: data.header_print,
         footer_print: data.footer_print,
       };
+      // Return the resolved picture, including cache hits and explicit clears,
+      // so the form and the next print see the saved state without a reload.
+      if (currentFooter) {
+        for (const key of ['footer_image', 'footer_qr_url', 'footer_image_caption']) {
+          result[key] = String(updateFields[key] ?? currentFooter[key] ?? '');
+        }
+      }
 
       return {
         status: true,

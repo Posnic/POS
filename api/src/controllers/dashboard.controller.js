@@ -749,7 +749,7 @@ class DashboardController extends BaseController {
 
       const branchDoc = await branches.findOne(
         { _id: branchId },
-        { projection: { store_address: 1, store_telephone: 1, branch_image: 1 } }
+        { projection: { store_address: 1, store_telephone: 1, logo: 1 } }
       );
       const itemFilter = { 'branch_access.branch_id': branchId, item_status: { $ne: 'instant' } };
       const taxFilter = { branch_id: branchId };
@@ -775,7 +775,7 @@ class DashboardController extends BaseController {
         { key: 'items', done: itemCount > 0 },
         {
           key: 'receipt',
-          done: Boolean(branchDoc?.branch_image && branchDoc.branch_image !== 'store.png'),
+          done: Boolean(branchDoc?.logo?.trim() && branchDoc.logo !== 'store.png'),
         },
         { key: 'employees', done: userCount > 1 },
         { key: 'taxes', done: taxCount > 0 },

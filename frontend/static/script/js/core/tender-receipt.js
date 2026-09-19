@@ -5,6 +5,10 @@
     var revision = 0;
     var resizeObserver;
 
+    function assetBase() {
+        return new URL(PosnicPro.baseUrl || '.', document.baseURI).href;
+    }
+
     function number(value) {
         return parseFloat(String(value == null ? '' : value).replace(/,/g, '')) || 0;
     }
@@ -117,7 +121,7 @@
     function styles(layout) {
         if (!cssRequests[layout]) {
             cssRequests[layout] = $.ajax({
-                url: PosnicPro.baseUrl + 'static/pages/' + (layout === 'a4' ? 'a4print.css' : 'print.css'),
+                url: assetBase() + 'static/pages/' + (layout === 'a4' ? 'a4print.css' : 'print.css'),
                 dataType: 'text'
             }).then(function (css) { return css.replace(/@media\s+print\b/g, '@media all'); });
             cssRequests[layout].fail(function () { delete cssRequests[layout]; });
@@ -148,7 +152,7 @@
         });
         var esc = PosnicPro.escapeHtml;
         var paperCss = a4 ? '' : PosnicPro.paperCss(layout);
-        frame.attr('srcdoc', '<!doctype html><html><head><meta charset="utf-8"><base href="' + esc(PosnicPro.baseUrl) + '">' +
+        frame.attr('srcdoc', '<!doctype html><html><head><meta charset="utf-8"><base href="' + esc(assetBase()) + '">' +
             '<style>' + css + '\n' + paperCss + '\nhtml,body{background:#fff;color:#000;overflow:hidden!important;}' +
             'body{margin:0!important;display:flow-root;}a{pointer-events:none;}' +
             (a4 ? 'body{box-sizing:border-box;width:794px;padding:53px 45px!important;}' : '') +
@@ -164,8 +168,8 @@
         sale.footer = footerLines.join('\n');
         var logo = root.find('.branch_image').filter(function () { return this.style.display !== 'none'; }).find('img').first();
         var footer = root.find('.footer-image img').first();
-        if (logo.attr('src')) { sale.logo = { src: new URL(logo.attr('src'), PosnicPro.baseUrl).href }; }
-        if (footer.attr('src')) { sale.footerImage = { src: new URL(footer.attr('src'), PosnicPro.baseUrl).href, dither: false }; }
+        if (logo.attr('src')) { sale.logo = { src: new URL(logo.attr('src'), assetBase()).href }; }
+        if (footer.attr('src')) { sale.footerImage = { src: new URL(footer.attr('src'), assetBase()).href, dither: false }; }
         return sale;
     }
 

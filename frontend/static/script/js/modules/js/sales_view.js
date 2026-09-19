@@ -1519,7 +1519,7 @@ PosnicPro.sales.view = {
                     $printContainer.append(
                         '<div class="receipt-footer-image" style="text-align:center; margin-top:10px;">'
                         + _capHtml
-                        + '<div class="footer-image"><img loading="lazy" decoding="async" alt="" '
+                        + '<div class="footer-image"><img alt="" '
                         + 'style="max-width:60%; display:inline-block;" src="'
                         + $('<i>').text(_fimg).html() + '">'
                         + '</div></div>'

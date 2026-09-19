@@ -113,6 +113,32 @@ const mockRes = () => {
   return res;
 };
 
+describe('receipt setup checklist', () => {
+  test.each([
+    ['/uploads/shop.png', true],
+    ['store.png', false],
+    ['', false],
+    [undefined, false],
+  ])('reads the branch logo field (%s)', async (logo, done) => {
+    const BaseModel = require('../../../src/models/base.model');
+    const collection = {
+      findOne: jest.fn().mockResolvedValue({ logo }),
+      countDocuments: jest.fn().mockResolvedValue(0),
+    };
+    BaseModel.prototype.getCollection = jest.fn().mockResolvedValue(collection);
+    try {
+      const res = mockRes();
+      await controller.getSetupChecklist(mockReq(), res);
+      const payload = res.json.mock.calls[0][0];
+      expect(payload.type).toBe('success');
+      expect(payload.data.checks.find((check) => check.key === 'receipt').done).toBe(done);
+      expect(collection.findOne.mock.calls[0][1].projection.logo).toBe(1);
+    } finally {
+      delete BaseModel.prototype.getCollection;
+    }
+  });
+});
+
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
 let mdl;
