@@ -1,6 +1,9 @@
 /* Receipt designer labels are explicit so the language catalog can extract them. */
 PosnicPro.receiptDesignLabel = function (value) {
     switch (value) {
+    case "Default": return PosnicPro.i18n.t('lang_default', 'Default');
+    case "Set as default": return PosnicPro.i18n.t('lang_rd_set_as_default', 'Set as default');
+    case "Save designs to apply your changes.": return PosnicPro.i18n.t('lang_rd_save_to_apply', 'Save designs to apply your changes.');
     case "Default text size": return PosnicPro.i18n.t('lang_rd_default_text_size', 'Default text size');
     case "Applies to this paper format. Select a block to override its text size or make it bold.": return PosnicPro.i18n.t('lang_rd_font_scope', 'Applies to this paper format. Select a block to override its text size or make it bold.');
     case "Block text size": return PosnicPro.i18n.t('lang_rd_block_text_size', 'Block text size');

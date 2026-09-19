@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "Durchgezogen",
   "lang_rd_dashed": "Gestrichelt",
   "lang_rd_dotted": "Gepunktet",
-  "lang_rd_line_thickness": "Linienstärke"
+  "lang_rd_line_thickness": "Linienstärke",
+  "lang_rd_set_as_default": "Als Standard festlegen",
+  "lang_rd_save_to_apply": "Speichern Sie die Designs, um Ihre Änderungen anzuwenden."
 }

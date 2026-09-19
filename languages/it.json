@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "Continua",
   "lang_rd_dashed": "Tratteggiata",
   "lang_rd_dotted": "Punteggiata",
-  "lang_rd_line_thickness": "Spessore linea"
+  "lang_rd_line_thickness": "Spessore linea",
+  "lang_rd_set_as_default": "Imposta come predefinito",
+  "lang_rd_save_to_apply": "Salva i modelli per applicare le modifiche."
 }

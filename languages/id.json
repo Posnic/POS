@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "Utuh",
   "lang_rd_dashed": "Putus-putus",
   "lang_rd_dotted": "Titik-titik",
-  "lang_rd_line_thickness": "Ketebalan garis"
+  "lang_rd_line_thickness": "Ketebalan garis",
+  "lang_rd_set_as_default": "Jadikan default",
+  "lang_rd_save_to_apply": "Simpan desain untuk menerapkan perubahan Anda."
 }

@@ -2,8 +2,10 @@
 
 Open **Core Settings → Receipt Print**. Each paper format has its own saved
 layout: 58 mm thermal, 80 mm thermal, A4, A5 and US Letter. Switching the editor tab
-does not change the default receipt format. Choose the default beside the
-Receipt designer heading, above the paper-format tabs.
+does not change the default receipt format. Each format card has **Set as default**.
+The blue outline marks the format being edited; a green check and **Default**
+label mark the default for receipts. Choose the default, then **Save designs**
+to apply the change. Undo restores the previous choice before saving.
 
 Add text, sale fields, QR codes, images, the branch logo, receipt barcodes or
 dividers from the left. Select a block to edit its content and alignment.

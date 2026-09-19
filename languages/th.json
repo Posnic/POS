@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "เส้นทึบ",
   "lang_rd_dashed": "เส้นประ",
   "lang_rd_dotted": "เส้นจุด",
-  "lang_rd_line_thickness": "ความหนาของเส้น"
+  "lang_rd_line_thickness": "ความหนาของเส้น",
+  "lang_rd_set_as_default": "ตั้งเป็นค่าเริ่มต้น",
+  "lang_rd_save_to_apply": "บันทึกแบบเพื่อใช้การเปลี่ยนแปลงของคุณ"
 }
