@@ -2,7 +2,8 @@
 
 Open **Core Settings → Receipt Print**. Each paper format has its own saved
 layout: 58 mm thermal, 80 mm thermal, A4, A5 and US Letter. Switching the editor tab
-does not change the default receipt format. Choose the default separately.
+does not change the default receipt format. Choose the default beside the
+Receipt designer heading, above the paper-format tabs.
 
 Add text, sale fields, QR codes, images, the branch logo, receipt barcodes or
 dividers from the left. Select a block to edit its content and alignment.
@@ -23,6 +24,20 @@ dividers keep their full-width, 1 px dashed appearance until edited.
 Thermal designs have a printable width of 48 mm on a 58 mm roll and
 72 mm on an 80 mm roll. Sheet designs have 12 mm margins and a wider item table.
 Item names wrap instead of being cut off.
+
+A4, A5 and US Letter use an invoice composition: adjacent logo, store and receipt
+details form a header with the invoice number and date on the right. Adjacent
+customer fields form a Bill to section. The full-width table has separate item,
+quantity, unit price and amount columns. Totals sit on the right, with following
+text, sale fields and small QR/image blocks beside them on the left. Images wider
+than 40% of the page and dividers remain full-width blocks. Image percentages
+still refer to the printable paper width. Terms and the signature share a footer.
+A5 uses smaller header spacing, logo limits and table padding to fit its page.
+Thermal formats retain their compact, stacked receipt layout.
+
+The renderer groups adjacent blocks without changing their saved order or
+content. Moving a divider or another block between sections breaks that grouping.
+Existing saved sheet designs gain this presentation without a settings reset.
 
 The preview uses clearly labelled sample sale data. Text entered in a QR block
 is encoded exactly, including links or payment references. QR generation uses

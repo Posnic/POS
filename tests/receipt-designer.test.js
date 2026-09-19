@@ -284,3 +284,71 @@ test('invalid block styles are rejected before storage', () => {
     }
     dom.window.close();
 });
+
+test('sheets compose invoice sections while thermal keeps its compact receipt layout', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const format of ['a4', 'a5', 'letter', '80']) {
+        const blocks = design.layouts[format].blocks;
+        const at = blocks.findIndex(b => b.type === 'items');
+        blocks.splice(at, 0, engine.block('field', { field: 'customer_name' }), engine.block('field', { field: 'customer_phone' }));
+    }
+    sale.customer_phone = '+44 117 555 0123';
+    sale.invoice_terms = 'Keep this invoice.';
+    const original = JSON.stringify(design);
+    for (const format of ['a4', 'a5', 'letter']) {
+        const output = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(output.find('.rd-invoice-header .rd-block-logo').length, 1);
+        assert.equal(output.find('.rd-invoice-header .rd-block-store').length, 1);
+        assert.equal(output.find('.rd-invoice-meta').text(), 'INVOICEInvoice #S128Date19/09/2026');
+        assert.match(output.find('.rd-invoice-customer').text(), /Bill to.*bad\(\).*555 0123/);
+        assert.deepEqual(output.find('thead th').toArray().map(e => $(e).text()), ['Item', 'Qty', 'Unit price', 'Amount']);
+        assert.equal(output.find('tbody td').eq(1).text(), '2 ea');
+        assert.equal(output.find('tbody td').eq(2).text(), '$ 12.00');
+        assert.equal(output.find('.rd-invoice-summary > .rd-block-totals').length, 1);
+        assert.equal(output.find('.rd-invoice-supporting img[alt="QR code"]').length, 1);
+        assert.match(output.find('.rd-invoice-end').text(), /Keep this invoice.*Authorised signatory/);
+        assert.deepEqual(output.find('[data-block-id]').toArray().map(e => e.dataset.blockId), Array.from(design.layouts[format].blocks, b => b.id));
+        const preview = $('<div>').html(engine.render({ ...sale, sales_id: '' }, format, true));
+        assert.equal(preview.find('.rd-invoice-title').text(), 'Bill');
+        assert.doesNotMatch(preview.find('.rd-invoice-meta').text(), /Invoice #/);
+    }
+    const thermal = $('<div>').html(engine.render(sale, '80', false));
+    assert.equal(thermal.find('.rd-invoice-header,.rd-invoice-summary,.rd-invoice-customer').length, 0);
+    assert.equal(thermal.find('thead th').length, 2);
+    assert.match(thermal.find('.rd-transaction').text(), /Receipt S128/);
+    assert.equal(JSON.stringify(design), original, 'Rendering does not migrate or overwrite saved designs');
+    dom.window.close();
+});
+
+test('sheet grouping preserves custom boundaries, wide artwork and long item lists', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    const blocks = design.layouts.a5.blocks;
+    blocks.splice(1, 0, engine.block('text', { text: 'Custom opening message' }));
+    blocks.push(engine.block('divider'), engine.block('image', { src: pixel, width: 85 }), engine.block('logo'), engine.block('logo'));
+    sale.items = Array.from({ length: 70 }, (_, i) => ({ item_name: 'Item ' + i + ' with a long descriptive name', item_price: 12, item_quantity: 2, total_amount: 24 }));
+    const output = $('<div>').html(engine.render(sale, 'a5', false));
+    assert.equal(output.find('tbody tr').length, 70);
+    assert.deepEqual(output.find('[data-block-id]').toArray().map(e => e.dataset.blockId), Array.from(blocks, b => b.id));
+    assert.equal(output.find('.rd-invoice-supporting .rd-block-image').length, 0, 'Wide artwork retains the full printable width');
+    assert.equal(output.find('.rd-invoice-header .rd-block-logo').length, 0, 'Standalone and repeated logos do not overlap in a header grid');
+    assert.equal(output.find('.rd-block-image img')[0].style.width, '105.4mm');
+    assert.match(output.find('style').text(), /\.rd-block-items\{break-inside:auto/);
+    assert.match(output.find('style').text(), /thead\{display:table-header-group/);
+    dom.window.close();
+});
+
+test('the default format control sits beside the designer heading and still saves separately', () => {
+    const { dom, w, $, branch } = setup();
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('.rd-topbar #rd-default-format').length, 1);
+    assert.equal($('#rd-default-format').length, 1);
+    $('[data-format="a5"]').trigger('click');
+    assert.equal($('#rd-default-format').val(), '80');
+    $('#rd-default-format').val('a4').trigger('change');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(sent.receipt_designs.defaultFormat, 'a4');
+    assert.equal($('[data-format="a5"]').attr('aria-pressed'), 'true');
+    dom.window.close();
+});

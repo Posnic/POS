@@ -3,10 +3,10 @@
 .card:has(#core-tab-print.active) > .card-footer { display: none; }
 #receipt-designer button, #receipt-designer input, #receipt-designer select, #receipt-designer textarea { font: inherit; }
 #receipt-designer button:focus-visible, #receipt-designer input:focus-visible, #receipt-designer select:focus-visible, #receipt-designer textarea:focus-visible { outline: 3px solid #8bb6ff; outline-offset: 2px; }
-.rd-topbar { display: flex; justify-content: space-between; gap: 20px; align-items: center; margin: 5px 0 24px; }
+.rd-topbar { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(180px, 240px) auto; gap: 20px; align-items: start; margin: 5px 0 24px; }
 .rd-topbar h3 { margin: 0 0 5px; font-size: 21px; font-weight: 650; }
 .rd-topbar p, .rd-library p { margin: 0; color: #66758b; font-size: 13px; }
-.rd-save-area { display: flex; align-items: center; gap: 16px; }
+.rd-save-area { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .rd-status { font-size: 12px; color: #66758b; max-width: 260px; }
 .rd-status.rd-error { color: #b42318; }
 .rd-formats { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px; margin-bottom: 16px; }
@@ -14,9 +14,9 @@
 .rd-formats button i { margin-right: 9px; }
 .rd-formats button small { display: block; margin: 5px 0 0 24px; font-weight: 400; color: #6c7a90; }
 .rd-formats button.is-active { border-color: #1766df; box-shadow: 0 0 0 1px #1766df; color: #0954bd; background: #f3f8ff; }
-.rd-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 0 0 20px; font-size: 13px; }
+.rd-toolbar { display: grid; gap: 6px; min-width: 0; font-size: 13px; }
 .rd-toolbar label { margin: 0; font-weight: 600; }.rd-toolbar-help { color: #6c7a90; font-size: 12px; }
-#receipt-designer .rd-toolbar select { width: auto; min-width: 180px; }
+#receipt-designer .rd-toolbar select { width: 100%; min-width: 0; }
 #receipt-designer .rd-font-control select { width: 85px; }.rd-font-control label { min-width: 0; }
 #receipt-designer select, #receipt-designer textarea { border: 1px solid #cbd5e3; border-radius: 5px; background: #fff; color: #24364e; padding: 8px 10px; }
 .rd-workspace { display: grid; grid-template-columns: minmax(150px, .7fr) minmax(270px, 1.25fr) minmax(300px, 1.6fr); border: 1px solid var(--rd-border); border-radius: 10px; overflow: clip; align-items: start; }
@@ -56,5 +56,5 @@
 .rd-preview-footer { display: flex; flex-direction: column; gap: 3px; text-align: center; margin-top: 12px; font-size: 12px; }.rd-dimensions { color: #71829a; font-size: 11px; }
 .rd-print-options { border: 1px solid var(--rd-border); border-radius: 7px; padding: 15px 18px; margin-top: 20px; }.rd-print-options summary { cursor: pointer; font-weight: 600; font-size: 13px; }.rd-existing-options { margin-top: 16px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }.rd-print-options .btn { margin-top: 10px; }
 @media (max-width: 1199px) { .rd-workspace { grid-template-columns: 145px minmax(240px,1fr) minmax(250px,1.1fr); }.rd-save-area { flex-direction: column; align-items: flex-end; gap: 6px; } }
-@media (max-width: 991px) { .rd-workspace { grid-template-columns: 150px 1fr; }.rd-preview { grid-column: 1/-1; position: static; border-left: 0; border-top: 1px solid var(--rd-border); }.rd-preview-stage { max-height: 600px; }.rd-existing-options { grid-template-columns: 1fr; } }
-@media (max-width: 575px) { .rd-topbar { align-items: flex-start; flex-direction: column; }.rd-save-area { align-items: flex-start; }.rd-formats { grid-template-columns: 1fr 1fr; }.rd-formats button { padding: 12px; }.rd-workspace { display: block; }.rd-library { border-right: 0; border-bottom: 1px solid var(--rd-border); }.rd-library-buttons { grid-template-columns: 1fr 1fr; }.rd-preview { position: static; }.rd-toolbar-help { width: 100%; } }
+@media (max-width: 991px) { .rd-topbar { grid-template-columns: minmax(0, 1fr) minmax(180px, 240px); }.rd-save-area { grid-column: 1/-1; flex-direction: row; justify-content: flex-end; align-items: center; }.rd-workspace { grid-template-columns: 150px 1fr; }.rd-preview { grid-column: 1/-1; position: static; border-left: 0; border-top: 1px solid var(--rd-border); }.rd-preview-stage { max-height: 600px; }.rd-existing-options { grid-template-columns: 1fr; } }
+@media (max-width: 575px) { .rd-topbar { grid-template-columns: minmax(0, 1fr); }.rd-save-area { justify-content: space-between; }.rd-formats { grid-template-columns: 1fr 1fr; }.rd-formats button { padding: 12px; }.rd-workspace { display: block; }.rd-library { border-right: 0; border-bottom: 1px solid var(--rd-border); }.rd-library-buttons { grid-template-columns: 1fr 1fr; }.rd-preview { position: static; }.rd-toolbar-help { width: 100%; } }
