@@ -109,6 +109,7 @@
             "../src/receipt-page-layout.js",
             "static/script/js/core/receipt-design-labels.js",
             "static/script/js/core/receipt-designer.js",
+            "static/script/js/core/print-settings.js",
             "static/script/js/core/branch-signature.js",
             "static/script/js/modules/js/receipt-designer-editor.js",
             "static/script/js/modules/js/invoices.js",

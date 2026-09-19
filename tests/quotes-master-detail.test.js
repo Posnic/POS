@@ -904,7 +904,7 @@ test('the PDF filters the same way, and leaves no gap behind', () => {
   /* splitTextToSize('') is [''], which prints nothing and still costs 4.3mm. */
   assert.match(
     salesSource,
-    /splitTextToSize\(txt\(seller\.address\), 104\)\.filter\(Boolean\)/,
+    /splitTextToSize\(txt\(seller\.address\), identityWidth\)\.filter\(Boolean\)/,
     'an empty address still reserves a line of header space',
   );
 });

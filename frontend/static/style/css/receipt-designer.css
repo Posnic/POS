@@ -107,3 +107,10 @@ body.rd-workspace-open { overflow: hidden; }
 .branch-signature-control small { color: #52637b; line-height: 1.5; margin-bottom: 8px; }
 .branch-signature-remove { margin: 4px 0; }
 .branch-signature-status { font-size: 12px; margin-top: 6px; }
+/* Keep device setup available without pushing the design workspace down. */
+.print-settings-panel { border: 1px solid #d5dfed; border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; }
+.print-settings-panel summary { cursor: pointer; font-weight: 600; }
+.print-settings-panel td, .print-settings-panel th { vertical-align: middle; }
+.print-settings-panel [data-setting="copies"] { width: 70px; }
+.print-settings-panel [data-setting="printer"] { min-width: 170px; }
+.print-settings-panel [data-setting="paper"] { min-width: 135px; }

@@ -875,6 +875,34 @@ PosnicPro = {
         _afterLoad: {},
     },
 
+    /* Generated PDFs need a desktop print dialog, not window.open(blob:),
+       which the Electron shell deliberately refuses. Keep the PDF itself so
+       invoices, quotes and reports retain their pagination and typography. */
+    printPdfDocument: function (doc, filename, popupMessage, kind) {
+        var printer = window.electronAPI && window.electronAPI.printer;
+        var desktop = !!window.electronAPI || /Electron/i.test(navigator.userAgent);
+        var failed = function (error) {
+            PosnicPro.alert('error', error && error.message || PosnicPro.i18n.t('lang_pdf_print_failed', 'Could not open printing. Download the PDF and try printing it again.'));
+        };
+        if (desktop) {
+            if (!printer || typeof printer.printPdf !== 'function') {
+                // A newer web bundle can run inside an older desktop app.
+                doc.save(filename + '.pdf');
+                PosnicPro.alert('info', PosnicPro.i18n.t('lang_pdf_print_older_desktop', 'PDF saved. Open it to print. Update the desktop app for direct printing.'));
+                return Promise.resolve();
+            }
+            return Promise.resolve().then(function () {
+                return printer.printPdf(new Uint8Array(doc.output('arraybuffer')), kind);
+            }).then(function (result) {
+                if (!result || (!result.success && !result.cancelled)) { failed(result && result.error ? new Error(result.error) : null); }
+            }).catch(failed);
+        }
+        if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
+        var url = doc.output('bloburl');
+        var w = window.open(url, '_blank');
+        if (!w) { PosnicPro.alert('warning', popupMessage); }
+        return Promise.resolve();
+    },
     /*
      * Report exports (owner ask): every report should leave the screen as a
      * professional A4 PDF, a CSV, or an Excel sheet - never a themed
@@ -1085,10 +1113,8 @@ PosnicPro = {
         },
         printPdf: function (elId, meta) {
             PosnicPro.reportExport._withPdf(elId, meta, function (doc) {
-                if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
-                var url = doc.output('bloburl');
-                var w = window.open(url, '_blank');
-                if (!w) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_allow_pop_ups_so_the_report_can_print', 'Allow pop-ups so the report can print.')); }
+                PosnicPro.printPdfDocument(doc, meta.filename || 'report',
+                    PosnicPro.i18n.t('lang_allow_pop_ups_so_the_report_can_print', 'Allow pop-ups so the report can print.'));
             });
         },
         _download: function (blob, filename) {
