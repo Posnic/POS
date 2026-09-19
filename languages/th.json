@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "บิลด์ของหน้า",
   "lang_about_unavailable": "ไม่พร้อมใช้งาน",
   "lang_about_details_copied": "คัดลอกรายละเอียดไปยังคลิปบอร์ดแล้ว",
-  "lang_about_copy_failed": "คัดลอกไม่ได้ เลือกรายละเอียดด้านบนเพื่อคัดลอกด้วยตนเอง"
+  "lang_about_copy_failed": "คัดลอกไม่ได้ เลือกรายละเอียดด้านบนเพื่อคัดลอกด้วยตนเอง",
+  "lang_rd_default_text_size": "ขนาดข้อความเริ่มต้น",
+  "lang_rd_font_scope": "ใช้กับรูปแบบกระดาษนี้ เลือกบล็อกเพื่อเปลี่ยนขนาดข้อความหรือทำให้เป็นตัวหนา",
+  "lang_rd_block_text_size": "ขนาดข้อความของบล็อก",
+  "lang_rd_use_default": "ใช้ค่าเริ่มต้น",
+  "lang_rd_line_style": "รูปแบบเส้น",
+  "lang_rd_solid": "เส้นทึบ",
+  "lang_rd_dashed": "เส้นประ",
+  "lang_rd_dotted": "เส้นจุด",
+  "lang_rd_line_thickness": "ความหนาของเส้น"
 }

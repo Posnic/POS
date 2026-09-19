@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "Toleo la ukurasa",
   "lang_about_unavailable": "Haipatikani",
   "lang_about_details_copied": "Maelezo yamenakiliwa kwenye ubao wa kunakili.",
-  "lang_about_copy_failed": "Imeshindwa kunakili. Chagua maelezo yaliyo juu ili kuyanakili mwenyewe."
+  "lang_about_copy_failed": "Imeshindwa kunakili. Chagua maelezo yaliyo juu ili kuyanakili mwenyewe.",
+  "lang_rd_default_text_size": "Ukubwa wa maandishi chaguomsingi",
+  "lang_rd_font_scope": "Inatumika kwa muundo huu wa karatasi. Chagua kizuizi ili kubadilisha ukubwa wa maandishi au kuyafanya mazito.",
+  "lang_rd_block_text_size": "Ukubwa wa maandishi ya kizuizi",
+  "lang_rd_use_default": "Tumia chaguomsingi",
+  "lang_rd_line_style": "Mtindo wa mstari",
+  "lang_rd_solid": "Mfululizo",
+  "lang_rd_dashed": "Vistari",
+  "lang_rd_dotted": "Vitone",
+  "lang_rd_line_thickness": "Unene wa mstari"
 }

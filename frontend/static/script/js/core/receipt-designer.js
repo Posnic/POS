@@ -136,15 +136,25 @@
                 var value = values[b.field];
                 if (value === undefined || value === null || value === '') return '';
                 content = '<div class="rd-text">' + (b.field === 'brand_url' ? '' : '<strong>' + esc(label(contract.fields[b.field])) + ':</strong> ') + esc(value) + '</div>';
-            } else if (b.type === 'text') content = '<div class="rd-text"' + (b.bold ? ' style="font-weight:bold"' : '') + '>' + esc(b.text) + '</div>';
-            else if (b.type === 'divider') content = '<hr class="rd-divider">';
+            } else if (b.type === 'text') content = '<div class="rd-text">' + esc(b.text) + '</div>';
+            else if (b.type === 'divider') {
+                var lineStyle = ['solid', 'dashed', 'dotted'].indexOf(b.lineStyle) !== -1 ? b.lineStyle : 'dashed';
+                var width = Math.max(15, Math.min(100, Number(b.width) || 100));
+                var thickness = Math.max(1, Math.min(4, Number(b.thickness) || 1));
+                content = '<hr class="rd-divider" style="border-top-style:' + lineStyle + ';border-top-width:' + thickness + 'px;width:' + width + '%;margin-left:' + (b.align === 'center' || b.align === 'right' ? 'auto' : '0') + ';margin-right:' + (b.align === 'center' ? 'auto' : '0') + '">';
+            }
             else {
                 var logo = data.logo || data.branch_image;
                 var src = b.type === 'logo' ? safeImage(!logo || logo === 'store.png' ? 'static/images/default/store.png' : logo) : b.type === 'barcode' ? barcode(data.sales_id) : safeImage(b.src);
                 if (!src) return '';
                 content = '<img src="' + esc(src) + '" alt="' + esc(label(b.type === 'qr' ? 'QR code' : b.type === 'logo' ? 'Store logo' : b.type === 'barcode' ? PosnicPro.i18n.t('lang_rd_receipt_barcode', 'Receipt barcode') : PosnicPro.i18n.t('lang_image', 'Image'))) + '" style="width:' + (b.type === 'logo' ? (sheet ? 22 : 45) : b.type === 'barcode' ? 90 : b.width) + '%;max-height:' + (b.type === 'logo' ? '100px' : 'none') + ';">';
             }
-            return '<section class="rd-block rd-block-' + b.type + '" data-block-id="' + esc(b.id) + '" style="text-align:' + b.align + '">' + content + '</section>';
+            var style = 'text-align:' + b.align;
+            if (contract.textTypes.indexOf(b.type) !== -1) {
+                if (Number.isFinite(Number(b.fontSize)) && Number(b.fontSize) >= 8 && Number(b.fontSize) <= 32) style += ';font-size:' + Number(b.fontSize) + 'px';
+                if (b.bold === true) style += ';font-weight:bold';
+            }
+            return '<section class="rd-block rd-block-' + b.type + '" data-block-id="' + esc(b.id) + '" style="' + style + '">' + content + '</section>';
         }).join('');
         if (sheet) {
             if ((data.branch_gstin_number || on(data.gst)) && PosnicPro.sales && PosnicPro.sales.view && PosnicPro.sales.view._amountInWords) {

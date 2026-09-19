@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "ಪುಟದ ಬಿಲ್ಡ್",
   "lang_about_unavailable": "ಲಭ್ಯವಿಲ್ಲ",
   "lang_about_details_copied": "ವಿವರಗಳನ್ನು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ.",
-  "lang_about_copy_failed": "ನಕಲಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮೇಲಿನ ವಿವರಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ ಕೈಯಾರೆ ನಕಲಿಸಿ."
+  "lang_about_copy_failed": "ನಕಲಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮೇಲಿನ ವಿವರಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ ಕೈಯಾರೆ ನಕಲಿಸಿ.",
+  "lang_rd_default_text_size": "ಪೂರ್ವನಿಯೋಜಿತ ಪಠ್ಯ ಗಾತ್ರ",
+  "lang_rd_font_scope": "ಈ ಕಾಗದದ ಸ್ವರೂಪಕ್ಕೆ ಅನ್ವಯಿಸುತ್ತದೆ. ಪಠ್ಯದ ಗಾತ್ರ ಬದಲಿಸಲು ಅಥವಾ ದಪ್ಪವಾಗಿಸಲು ಬ್ಲಾಕ್ ಆಯ್ಕೆಮಾಡಿ.",
+  "lang_rd_block_text_size": "ಬ್ಲಾಕ್ ಪಠ್ಯದ ಗಾತ್ರ",
+  "lang_rd_use_default": "ಪೂರ್ವನಿಯೋಜಿತ ಬಳಸಿ",
+  "lang_rd_line_style": "ಗೆರೆಯ ಶೈಲಿ",
+  "lang_rd_solid": "ನಿರಂತರ",
+  "lang_rd_dashed": "ತುಂಡು ಗೆರೆ",
+  "lang_rd_dotted": "ಚುಕ್ಕೆ ಗೆರೆ",
+  "lang_rd_line_thickness": "ಗೆರೆಯ ದಪ್ಪ"
 }

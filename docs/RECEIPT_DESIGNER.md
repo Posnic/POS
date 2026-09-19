@@ -9,8 +9,18 @@ dividers from the left. Select a block to edit its content and alignment.
 Drag its handle to reorder it, or use Move up / Move down. Undo restores recent
 edits. Items and totals are required, and totals must follow the items.
 
-**Text size** changes the font, measured in CSS pixels. It does not change the
-paper. Thermal designs have a printable width of 48 mm on a 58 mm roll and
+**Default text size** sets the base font for the paper format being edited,
+measured in CSS pixels. Select any text-bearing block (including sale fields,
+store details, items and totals) to choose its **Block text size** and **Bold text**.
+**Use default** follows the format's default size. Headings and totals retain
+their built-in emphasis. Other blocks and other paper formats are unaffected.
+These controls change text, not the paper.
+
+Select a divider to choose solid, dashed or dotted lines, 1–4 px thickness,
+15–100% of the printable width, and left, centre or right alignment. Existing
+dividers keep their full-width, 1 px dashed appearance until edited.
+
+Thermal designs have a printable width of 48 mm on a 58 mm roll and
 72 mm on an 80 mm roll. Sheet designs have 12 mm margins and a wider item table.
 Item names wrap instead of being cut off.
 

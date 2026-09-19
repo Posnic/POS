@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "Compilación de la página",
   "lang_about_unavailable": "No disponible",
   "lang_about_details_copied": "Datos copiados al portapapeles.",
-  "lang_about_copy_failed": "No se pudo copiar. Selecciona los datos de arriba para copiarlos manualmente."
+  "lang_about_copy_failed": "No se pudo copiar. Selecciona los datos de arriba para copiarlos manualmente.",
+  "lang_rd_default_text_size": "Tamaño de texto predeterminado",
+  "lang_rd_font_scope": "Se aplica a este formato de papel. Seleccione un bloque para cambiar su tamaño de texto o ponerlo en negrita.",
+  "lang_rd_block_text_size": "Tamaño de texto del bloque",
+  "lang_rd_use_default": "Usar predeterminado",
+  "lang_rd_line_style": "Estilo de línea",
+  "lang_rd_solid": "Continua",
+  "lang_rd_dashed": "Discontinua",
+  "lang_rd_dotted": "Punteada",
+  "lang_rd_line_thickness": "Grosor de línea"
 }

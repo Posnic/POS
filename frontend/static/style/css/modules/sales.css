@@ -536,10 +536,10 @@ select{
 
 /* customer view css */
 
-.breadcrumbbar {
+body.customer-display .breadcrumbbar {
     margin: 5px 30px -10px 30px;
 }
-.contentbar {
+body.customer-display .contentbar {
     margin-bottom: -50px;
 }
 #list_linelitem_parent{

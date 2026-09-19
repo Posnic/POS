@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "إصدار الصفحة",
   "lang_about_unavailable": "غير متاح",
   "lang_about_details_copied": "تم نسخ التفاصيل إلى الحافظة.",
-  "lang_about_copy_failed": "تعذّر النسخ. حدّد التفاصيل أعلاه لنسخها يدويًا."
+  "lang_about_copy_failed": "تعذّر النسخ. حدّد التفاصيل أعلاه لنسخها يدويًا.",
+  "lang_rd_default_text_size": "حجم النص الافتراضي",
+  "lang_rd_font_scope": "ينطبق على تنسيق الورق هذا. حدد كتلة لتغيير حجم نصها أو جعله عريضًا.",
+  "lang_rd_block_text_size": "حجم نص الكتلة",
+  "lang_rd_use_default": "استخدام الافتراضي",
+  "lang_rd_line_style": "نمط الخط",
+  "lang_rd_solid": "متصل",
+  "lang_rd_dashed": "متقطع",
+  "lang_rd_dotted": "منقط",
+  "lang_rd_line_thickness": "سُمك الخط"
 }

@@ -1,6 +1,15 @@
 /* Receipt designer labels are explicit so the language catalog can extract them. */
 PosnicPro.receiptDesignLabel = function (value) {
     switch (value) {
+    case "Default text size": return PosnicPro.i18n.t('lang_rd_default_text_size', 'Default text size');
+    case "Applies to this paper format. Select a block to override its text size or make it bold.": return PosnicPro.i18n.t('lang_rd_font_scope', 'Applies to this paper format. Select a block to override its text size or make it bold.');
+    case "Block text size": return PosnicPro.i18n.t('lang_rd_block_text_size', 'Block text size');
+    case "Use default": return PosnicPro.i18n.t('lang_rd_use_default', 'Use default');
+    case "Line style": return PosnicPro.i18n.t('lang_rd_line_style', 'Line style');
+    case "Solid": return PosnicPro.i18n.t('lang_rd_solid', 'Solid');
+    case "Dashed": return PosnicPro.i18n.t('lang_rd_dashed', 'Dashed');
+    case "Dotted": return PosnicPro.i18n.t('lang_rd_dotted', 'Dotted');
+    case "Line thickness": return PosnicPro.i18n.t('lang_rd_line_thickness', 'Line thickness');
     case "58 mm thermal": return PosnicPro.i18n.t('lang_rd_58_mm_thermal', '58 mm thermal');
     case "80 mm thermal": return PosnicPro.i18n.t('lang_rd_80_mm_thermal', '80 mm thermal');
     case "A4": return PosnicPro.i18n.t('lang_rd_a4', 'A4');
