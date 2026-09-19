@@ -3331,5 +3331,18 @@
   "lang_signature_branch_required": "Chagua tawi kabla ya kupakia saini.",
   "lang_signature_connection_error": "Saini haikuweza kusasishwa. Angalia muunganisho wako na ujaribu tena.",
   "lang_signature_image_hint": "Tumia picha ya PNG, JPEG au WebP isiyozidi MB 5. PNG yenye mandharinyuma ya uwazi inapendekezwa.",
-  "lang_signature_shared_hint": "Inatumiwa kwa pamoja kwenye risiti, ankara na nukuu za bei za tawi hili. Upakiaji na uondoaji huhifadhiwa mara moja."
+  "lang_signature_shared_hint": "Inatumiwa kwa pamoja kwenye risiti, ankara na nukuu za bei za tawi hili. Upakiaji na uondoaji huhifadhiwa mara moja.",
+  "lang_rd_customer_tax_number": "Namba ya kodi ya mteja",
+  "lang_rd_field_width": "Upana wa sehemu",
+  "lang_rd_full_width": "Upana kamili",
+  "lang_rd_half_width": "Nusu ya upana",
+  "lang_rd_half_width_help": "Weka sehemu mbili za nusu ya upana kando kwa kando katika mstari mmoja.",
+  "lang_rd_item_layout": "Mpangilio wa bidhaa",
+  "lang_rd_items_detailed": "Maelezo - idadi na bei ya kipimo chini",
+  "lang_rd_items_compact": "Mfupi - bidhaa × idadi na kiasi",
+  "lang_rd_reset_template": "Rejesha kiolezo",
+  "lang_rd_reset_confirm": "Urejeshe muundo huu kwenye kiolezo cha kawaida? Miundo mingine na taarifa za tawi zitabaki. Hifadhi miundo ili kutumia.",
+  "lang_rd_fssai_help": "Huchapishwa pamoja na taarifa za duka ikiwa imejazwa. Ongeza kizuizi cha FSSAI kuchagua nafasi yake.",
+  "lang_rd_thank_you": "Asante kwa kununua!",
+  "lang_rd_receipt_number": "Namba ya risiti"
 }

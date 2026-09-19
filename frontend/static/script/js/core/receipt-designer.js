@@ -8,6 +8,13 @@
     var copy = function (v) { return JSON.parse(JSON.stringify(v)); };
     function label(value) { return PosnicPro.receiptDesignLabel ? PosnicPro.receiptDesignLabel(value) : value; }
     function block(type, extra) { return Object.assign({ id: 'b' + Math.random().toString(36).slice(2), type: type, align: 'left' }, extra || {}); }
+    // A clean starting template, separate from migrating a shop's legacy settings.
+    function standardLayout(format) {
+        var align = contract.formats[format].height ? 'left' : 'center';
+        return { fontSize: contract.formats[format].font, blocks: [block('logo', { align: align }), block('store', { align: align }), block('transaction')]
+            .concat(['customer_name', 'customer_phone', 'customer_email', 'customer_address', 'customer_tax_number'].map(function (field) { return block('field', { field: field }); }))
+            .concat([block('items'), block('totals'), block('text', { text: PosnicPro.i18n.t('lang_rd_thank_you', 'Thank you for shopping!'), align: 'center' })]) };
+    }
     function defaults(branch) {
         var result = { version: 1, defaultFormat: branch.print_type === 'a4' ? 'a4' : branch.print_width === '58' ? '58' : '80', layouts: {} };
         Object.keys(contract.formats).forEach(function (format) {
@@ -57,6 +64,18 @@
     }
     // Group adjacent invoice blocks without changing the shop's block order.
     // A moved text/image/divider remains exactly where the designer placed it.
+    function pairFields(blocks) {
+        var result = [];
+        for (var i = 0; i < blocks.length; i++) {
+            var first = blocks[i], next = blocks[i + 1];
+            if (first.half && next && next.half) {
+                result.push({ type: 'fieldrow', customer: first.customer && next.customer, supporting: true,
+                    html: '<div class="rd-field-row">' + first.html + next.html + '</div>' });
+                i++;
+            } else result.push(first);
+        }
+        return result;
+    }
     function composeSheet(blocks) {
         var html = '', at = 0;
         while (at < blocks.length) {
@@ -68,7 +87,7 @@
                 html += group.some(function (b) { return b.type !== 'logo'; }) ? '<div class="rd-invoice-header' + (group.some(function (b) { return b.type === 'logo'; }) ? ' has-logo' : '') + '">' + groupHtml + '</div>' : groupHtml;
             } else if (blocks[at].customer) {
                 while (at < blocks.length && blocks[at].customer) group.push(blocks[at++]);
-                html += '<div class="rd-invoice-customer"><div class="rd-invoice-label">' + esc(PosnicPro.i18n.t('lang_bill_to', 'Bill to')) + '</div><div class="rd-invoice-customer-fields">' + group.map(function (b) { return b.html; }).join('') + '</div></div>';
+                html += '<div class="rd-invoice-customer"><div class="rd-invoice-label">' + esc(label('Customer')) + '</div><div class="rd-invoice-customer-fields">' + group.map(function (b) { return b.html; }).join('') + '</div></div>';
             } else if (blocks[at].type === 'totals') {
                 var totals = blocks[at++].html;
                 while (at < blocks.length && blocks[at].supporting) group.push(blocks[at++]);
@@ -93,7 +112,7 @@
             '.rd-invoice-customer{border-bottom:1px solid #ccd2d9;padding-bottom:' + (compact ? '3mm' : '4mm') + ';margin-bottom:' + (compact ? '4mm' : '5mm') + ';break-inside:avoid;}' +
             '.rd-invoice-customer-fields{display:grid;grid-template-columns:1fr 1fr;gap:1.5mm var(--rd-invoice-gap);}.rd-invoice-customer-fields .rd-block{margin:0;min-width:0;}' +
             '.rd-invoice-customer-fields .rd-field-customer_name,.rd-invoice-customer-fields .rd-field-customer_address{grid-column:1/-1;}' +
-            '.rd-field-customer_name .rd-text{font-size:1.15em;font-weight:600;}.rd-invoice-customer-fields .rd-field-label{display:none;}' +
+            '.rd-field-customer_name .rd-text{font-size:1.15em;font-weight:600;}.rd-invoice-customer-fields .rd-field-customer_name .rd-field-label{display:none;}' +
             '.rd-sheet .rd-block-items{margin-bottom:5mm;}' +
             '.rd-sheet th{background:#edf0f4;border-top:1px solid #202936;border-bottom:1px solid #202936;font-size:.85em;text-transform:uppercase;letter-spacing:.03em;padding:3mm 2mm;}' +
             '.rd-sheet td{padding:var(--rd-row-pad) 2mm;border-bottom:1px solid #dce0e5;}.rd-sheet .rd-number{font-variant-numeric:tabular-nums;}' +
@@ -112,6 +131,7 @@
             '.rd-signature{display:inline-block;text-align:center;vertical-align:top;}.rd-signature img{display:block;margin:0 auto;max-height:18mm;max-width:100%;}.rd-signature-blank{height:12mm;}.rd-signature-line{border-top:1px solid #777;padding-top:1mm;margin-top:1mm;font-size:.85em;}' +
             '.rd-document{width:' + f.content + 'mm;max-width:100%;margin:0 auto;font:' + font + 'px/' + (sheet ? '1.5 Arial,sans-serif' : '1.25 monospace') + ';color:#111;overflow-wrap:anywhere;}' +
             '.rd-block{margin:0 0 ' + (sheet ? '14px' : '4px') + ';break-inside:avoid;}' +
+            '.rd-field-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:3mm;break-inside:avoid;}.rd-field-row>.rd-block{min-width:0;}.rd-invoice-customer-fields>.rd-field-row{grid-column:1/-1;}' +
             '.rd-block-items{break-inside:auto;}.rd-document h1{font-size:1.7em;line-height:1.2;margin:0 0 5px;color:#111;}' +
             '.rd-store-contact{white-space:pre-line;}.rd-document p{margin:2px 0;}.rd-document img{height:auto;max-width:100%;object-fit:contain;}' +
             '.rd-document table{width:100%;border-collapse:collapse;table-layout:fixed;font:inherit;color:inherit;}' +
@@ -140,8 +160,16 @@
         var money = function (v) { return esc(currency) + ' ' + esc(Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })); };
         var pair = function (name, value, total) { return '<div class="rd-total-row' + (total ? ' rd-grand-total' : '') + '"><span>' + esc(label(name)) + '</span><span>' + value + '</span></div>'; };
         var items = data.items || [];
+        var present = function (v) { return v !== undefined && v !== null && v !== false && String(v).trim() !== ''; };
+        var gstNumber = [data.customer_gstin, data.customer_gstin_number, data.customer_gst_number].find(present);
+        var taxNumber = present(gstNumber) ? gstNumber : data.customer_tax_number;
+        var fieldLabel = function (field) { return label({ customer_name: 'Name', customer_phone: 'Phone', customer_email: 'Email', customer_address: 'Address', customer_tax_number: present(gstNumber) ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID') }[field] || contract.fields[field]); };
+        var beforePayment = preview || !data.sales_id;
+        var documentTitle = beforePayment ? (present(data.branch_gstin_number) || on(data.gst) ? label('Tax invoice') : label('Bill')) : label('Receipt');
+        var hasField = function (field) { return layout.blocks.some(function (b) { return b.type === 'field' && b.field === field; }); };
         var values = {
             customer_name: data.customer_name, customer_phone: data.customer_phone, customer_email: data.customer_email,
+            customer_tax_number: taxNumber,
             customer_address: data.customer_address, sale_note: data.sales_description, brand_url: data.website || PosnicPro.BRAND_URL,
             total_quantity: items.reduce(function (n, i) { return n + Number(i.item_quantity || 0); }, 0),
             table: data.table_number, order_type: data.dine_type, covers: data.covers || data.person_count,
@@ -156,21 +184,23 @@
                 if (data.store_telephone) content += '<p>' + esc(data.store_telephone) + '</p>';
                 if (data.store_email) content += '<p>' + esc(data.store_email) + '</p>';
                 if (data.branch_gstin_number) content += '<p>GSTIN: ' + esc(data.branch_gstin_number) + '</p>';
+                if (on(data.table_options) && present(data.branch_fssai_number) && !hasField('fssai')) content += '<p>' + esc(label('FSSAI licence number')) + ': ' + esc(String(data.branch_fssai_number).trim()) + '</p>';
                 content += '</div>';
             } else if (b.type === 'transaction') {
                 if (sheet) {
-                    content = '<div class="rd-invoice-meta"><div class="rd-invoice-title">' + esc(data.sales_id ? PosnicPro.i18n.t('lang_invoice', 'INVOICE') : label('Bill')) + '</div><dl>';
-                    if (data.sales_id) content += '<dt>' + esc(PosnicPro.i18n.t('lang_invoice_2', 'Invoice #')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
+                    content = '<div class="rd-invoice-meta"><div class="rd-invoice-title">' + esc(documentTitle) + '</div><dl>';
+                    if (data.sales_id) content += '<dt>' + esc(beforePayment ? PosnicPro.i18n.t('lang_bill_no', 'Bill no') : PosnicPro.i18n.t('lang_rd_receipt_number', 'Receipt number')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
                     content += '<dt>' + esc(PosnicPro.i18n.t('lang_date_title', 'Date')) + '</dt><dd>' + esc(data.created_date || data.date || '') + '</dd></dl></div>';
-                } else content = '<div class="rd-transaction"><strong>' + esc(data.sales_id ? label('Receipt') + ' ' + data.sales_id : label('Bill')) + '</strong><span>' + esc(data.created_date || data.date || '') + '</span></div>';
-                if (data.customer_gstin || data.customer_gstin_number || data.customer_gst_number) content += '<p>' + esc(label('Customer GSTIN')) + ': ' + esc(data.customer_gstin || data.customer_gstin_number || data.customer_gst_number) + '</p>';
+                } else content = '<div class="rd-transaction"><strong>' + esc(documentTitle + (data.sales_id ? ' ' + data.sales_id : '')) + '</strong><span>' + esc(data.created_date || data.date || '') + '</span></div>';
+                if (present(taxNumber) && !hasField('customer_tax_number')) content += '<p class="rd-customer-tax">' + esc(fieldLabel('customer_tax_number')) + ': ' + esc(String(taxNumber).trim()) + '</p>';
             } else if (b.type === 'items') {
-                content = '<table><colgroup><col style="width:' + (sheet ? '46' : '60') + '%">' + (sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : '<col style="width:40%">') + '</colgroup><thead><tr><th>' + esc(label('Item')) + '</th>' + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
+                var compact = !sheet && b.itemLayout === 'compact';
+                content = '<table><colgroup><col style="width:' + (sheet ? '46' : compact ? '68' : '60') + '%">' + (sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr><th>' + esc(compact ? label('Item') + ' × ' + label('Qty') : label('Item')) + '</th>' + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
                 items.forEach(function (item) {
                     var qty = Number(item.item_quantity || 0);
                     var hsn = item.hsncode || item.hsn_code || item.hsn || (/^\d{4,8}$/.test(item.tax_name || '') ? item.tax_name : '');
-                    content += '<tr><td>' + esc(item.item_name) + (b.hsn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
-                    if (!sheet) content += '<div class="rd-line-detail">' + esc(qty + ' ' + (item.item_unit || '') + ' × ') + money(item.item_price) + '</div>';
+                    content += '<tr><td>' + esc(item.item_name) + (compact ? ' × ' + esc(qty) : '') + (b.hsn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
+                    if (!sheet && !compact) content += '<div class="rd-line-detail">' + esc(qty + ' ' + (item.item_unit || '') + ' × ') + money(item.item_price) + '</div>';
                     if (Number(item.item_discount) || Number(item.item_discount_percentage)) content += '<div class="rd-line-detail">' + esc(label('Discount')) + ': ' + (Number(item.item_discount_percentage) ? esc(item.item_discount_percentage) + '%' : money(item.item_discount)) + '</div>';
                     content += '</td>' + (sheet ? '<td class="rd-number">' + esc(qty + ' ' + (item.item_unit || '')) + '</td><td class="rd-number">' + money(item.item_price) + '</td>' : '') + '<td class="rd-number">' + money(item.total_amount) + '</td></tr>';
                 });
@@ -194,8 +224,8 @@
                 content += '</div>';
             } else if (b.type === 'field') {
                 var value = values[b.field];
-                if (value === undefined || value === null || value === '') return '';
-                content = '<div class="rd-text">' + (b.field === 'brand_url' ? '' : '<strong class="rd-field-label">' + esc(label(contract.fields[b.field])) + ':</strong> ') + esc(value) + '</div>';
+                if (!present(value)) return '';
+                content = '<div class="rd-text">' + (b.field === 'brand_url' ? '' : '<strong class="rd-field-label">' + esc(fieldLabel(b.field)) + ':</strong> ') + esc(String(value).trim()) + '</div>';
             } else if (b.type === 'text') {
                 if (!String(b.text || '').trim()) return '';
                 content = '<div class="rd-text">' + esc(b.text) + '</div>';
@@ -225,8 +255,9 @@
                 if (Number.isFinite(Number(b.fontSize)) && Number(b.fontSize) >= 8 && Number(b.fontSize) <= 32) style += ';font-size:' + Number(b.fontSize) + 'px';
                 if (b.bold === true) style += ';font-weight:bold';
             }
-            return { type: b.type, customer: b.type === 'field' && /^customer_/.test(b.field), supporting: b.type === 'text' || b.type === 'field' || ((b.type === 'qr' || b.type === 'image') && b.width <= 40), html: '<section class="rd-block rd-block-' + b.type + (b.type === 'field' ? ' rd-field-' + b.field : '') + '" data-block-id="' + esc(b.id) + '" style="' + style + '">' + content + '</section>' };
+            return { type: b.type, half: b.type === 'field' && b.width === 50, customer: b.type === 'field' && /^customer_/.test(b.field), supporting: b.type === 'text' || b.type === 'field' || ((b.type === 'qr' || b.type === 'image') && b.width <= 40), html: '<section class="rd-block rd-block-' + b.type + (b.type === 'field' ? ' rd-field-' + b.field : '') + '" data-block-id="' + esc(b.id) + '" style="' + style + '">' + content + '</section>' };
         }).filter(Boolean);
+        rendered = pairFields(rendered);
         var html = sheet ? composeSheet(rendered) : rendered.map(function (b) { return b.html; }).join('');
         if (sheet) {
             var notes = '';
@@ -285,5 +316,5 @@
             frame.attr('srcdoc', doc).appendTo('body');
         }).catch(failure);
     }
-    PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, render: render, css: css, print: print, block: block, label: label, copy: copy, formatFor: formatFor };
+    PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, standardLayout: standardLayout, render: render, css: css, print: print, block: block, label: label, copy: copy, formatFor: formatFor };
 }());

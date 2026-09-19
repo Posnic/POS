@@ -3346,5 +3346,18 @@
   "lang_signature_branch_required": "हस्ताक्षर अपलोड करने से पहले शाखा चुनें।",
   "lang_signature_connection_error": "हस्ताक्षर अपडेट नहीं हो सके। अपना कनेक्शन जाँचें और फिर कोशिश करें।",
   "lang_signature_image_hint": "5 MB तक की PNG, JPEG या WebP छवि इस्तेमाल करें। पारदर्शी PNG सबसे उपयुक्त है।",
-  "lang_signature_shared_hint": "इस शाखा की रसीदों, इनवॉइस और कोटेशन में साझा है। अपलोड और हटाने के बदलाव तुरंत सहेजे जाते हैं।"
+  "lang_signature_shared_hint": "इस शाखा की रसीदों, इनवॉइस और कोटेशन में साझा है। अपलोड और हटाने के बदलाव तुरंत सहेजे जाते हैं।",
+  "lang_rd_customer_tax_number": "ग्राहक कर संख्या",
+  "lang_rd_field_width": "फ़ील्ड की चौड़ाई",
+  "lang_rd_full_width": "पूरी चौड़ाई",
+  "lang_rd_half_width": "आधी चौड़ाई",
+  "lang_rd_half_width_help": "एक पंक्ति में दिखाने के लिए आधी चौड़ाई वाले दो फ़ील्ड साथ रखें।",
+  "lang_rd_item_layout": "आइटम लेआउट",
+  "lang_rd_items_detailed": "विस्तृत - मात्रा और इकाई मूल्य नीचे",
+  "lang_rd_items_compact": "संक्षिप्त - आइटम × मात्रा और राशि",
+  "lang_rd_reset_template": "टेम्पलेट रीसेट करें",
+  "lang_rd_reset_confirm": "इस प्रारूप को मानक टेम्पलेट पर रीसेट करें? अन्य प्रारूप और शाखा विवरण बने रहेंगे। लागू करने के लिए डिज़ाइन सहेजें।",
+  "lang_rd_fssai_help": "दर्ज होने पर दुकान के विवरण के साथ छपेगा। स्थान चुनने के लिए FSSAI ब्लॉक जोड़ें।",
+  "lang_rd_thank_you": "खरीदारी के लिए धन्यवाद!",
+  "lang_rd_receipt_number": "रसीद संख्या"
 }

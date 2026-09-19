@@ -92,6 +92,208 @@ test('editor adds and reorders blocks, keeps formats independent, and sends a pa
     dom.window.close();
 });
 
+test('FSSAI prints from current branch details on all formats and an explicit field controls its position', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    sale.table_options = 'enable'; sale.branch_fssai_number = ' 12345678901234 ';
+    for (const format of Object.keys(contract.formats)) {
+        const render = () => $('<div>').html(engine.render(sale, format, false));
+        assert.match(render().find('.rd-store').text(), /FSSAI licence number: 12345678901234/);
+        const field = engine.block('field', { field: 'fssai' });
+        design.layouts[format].blocks.push(field);
+        const output = render();
+        assert.doesNotMatch(output.find('.rd-store').text(), /12345678901234/);
+        assert.equal(output.find('.rd-field-fssai').text(), 'FSSAI licence number: 12345678901234');
+        assert.equal(output.find('[data-block-id]').last().attr('data-block-id'), field.id);
+        sale.branch_fssai_number = '   ';
+        assert.equal(render().find('.rd-field-fssai').length, 0);
+        sale.branch_fssai_number = '12345678901234'; sale.table_options = false;
+        assert.doesNotMatch(render().text(), /12345678901234/);
+        sale.table_options = true;
+    }
+    dom.window.close();
+});
+
+test('adjacent half-width fields share a row, preserve styling and omit empty fields without blank cells', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    sale.table_options = true; sale.serving_session = 'Lunch'; sale.covers = 2;
+    for (const format of Object.keys(contract.formats)) {
+        design.layouts[format].blocks.push(engine.block('field', { field: 'session', width: 50, bold: true, fontSize: 13 }), engine.block('field', { field: 'covers', width: 50 }));
+    }
+    sale.receipt_designs = contract.normalize(JSON.parse(JSON.stringify(design)));
+    for (const format of Object.keys(contract.formats)) {
+        const output = $('<div>').html(engine.render(sale, format, false));
+        const row = output.find('.rd-field-row');
+        assert.equal(row.length, 1); assert.equal(row.children().length, 2);
+        assert.equal(row.text(), 'Session: LunchCovers: 2');
+        assert.equal(row.find('.rd-field-session').css('font-size'), '13px');
+        assert.equal(row.find('.rd-field-session').css('font-weight'), 'bold');
+        const empty = $('<div>').html(engine.render({ ...sale, serving_session: ' \n ' }, format, false));
+        assert.equal(empty.find('.rd-field-session,.rd-field-row').length, 0);
+        assert.equal(empty.find('.rd-field-covers').text(), 'Covers: 2');
+    }
+    const b = design.layouts['80'].blocks;
+    b.splice(b.length - 1, 0, engine.block('divider'));
+    sale.receipt_designs = design;
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-field-row').length, 0, 'A divider remains a boundary');
+    dom.window.close();
+});
+
+test('compact thermal items omit the unit-price line without losing amounts, discounts or HSN; sheets retain columns', async () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const format of Object.keys(contract.formats)) Object.assign(design.layouts[format].blocks.find(b => b.type === 'items'), { itemLayout: 'compact', hsn: true });
+    sale.receipt_designs = await resolveReceiptDesign(JSON.parse(JSON.stringify(design)));
+    for (const format of ['58', '80']) {
+        const output = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(output.find('tbody td').first().text(), 'Cup <em>large</em> × 2');
+        assert.equal(output.find('tbody td').last().text(), '$ 24.00');
+        assert.equal(output.find('.rd-line-detail,em').length, 0);
+        assert.equal(output.find('th').first().text(), 'Item × Qty');
+        const detail = $('<div>').html(engine.render({ ...sale, items: [{ ...sale.items[0], hsn_code: '1234', item_discount_percentage: 10 }] }, format, false));
+        assert.match(detail.find('tbody').text(), /HSN\/SAC: 1234Discount: 10%/);
+    }
+    for (const format of ['a4', 'a5', 'letter']) {
+        const output = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(output.find('th').length, 4);
+        assert.equal(output.find('tbody td').eq(1).text(), '2 ea');
+        assert.equal(output.find('tbody td').eq(2).text(), '$ 12.00');
+    }
+    delete design.layouts['80'].blocks.find(b => b.type === 'items').itemLayout;
+    sale.receipt_designs = contract.normalize(JSON.parse(JSON.stringify(design)));
+    assert.match($('<div>').html(engine.render(sale, '80', false)).find('.rd-line-detail').text(), /2 ea × \$ 12.00/);
+    dom.window.close();
+});
+
+test('customer fields omit missing and whitespace values, use short labels and print tax identity once', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const format of Object.keys(contract.formats)) {
+        design.layouts[format] = engine.standardLayout(format);
+        const blank = { ...sale, customer_name: '\t', customer_phone: null, customer_email: false, customer_address: undefined, customer_gst_number: '  ' };
+        let output = $('<div>').html(engine.render(blank, format, false));
+        assert.equal(output.find('.rd-block-field,.rd-invoice-customer,.rd-customer-tax').length, 0);
+        output = $('<div>').html(engine.render({ ...blank, customer_name: 'Alex', customer_phone: ' 012345 ', customer_tax_number: 'VAT-123' }, format, false));
+        assert.equal(output.find('.rd-field-customer_name').text(), 'Name: Alex');
+        assert.equal(output.find('.rd-field-customer_phone').text(), 'Phone: 012345');
+        assert.equal(output.find('.rd-field-customer_tax_number').text(), 'Tax ID: VAT-123');
+        assert.equal(output.find('.rd-customer-tax').length, 0);
+        output = $('<div>').html(engine.render({ ...sale, customer_gstin: '  ', customer_phone: '012345' }, format, false));
+        assert.equal(output.find('.rd-field-customer_tax_number').text(), 'GSTIN: GST123');
+        assert.equal(output.find('.rd-customer-tax').length, 0);
+        assert.doesNotMatch(output.find('.rd-block-field').text(), /Customer (name|phone|email|address)/);
+        design.layouts[format].blocks = design.layouts[format].blocks.filter(b => b.field !== 'customer_tax_number');
+        output = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(output.find('.rd-customer-tax').text(), 'GSTIN: GST123', 'Legacy layouts keep their tax identity');
+    }
+    dom.window.close();
+});
+
+test('document names follow the sale stage for every paper format including a saved restaurant bill', () => {
+    const { dom, engine, sale, $ } = setup();
+    for (const format of Object.keys(contract.formats)) {
+        const title = (data, before) => $('<div>').html(engine.render(data, format, before)).find('.rd-invoice-title,.rd-transaction strong').text();
+        assert.match(title(sale, false), /^Receipt/);
+        assert.match(title(sale, true), /^Bill/);
+        assert.match(title({ ...sale, branch_gstin_number: 'GST123' }, true), /^Tax invoice/);
+        assert.match(title({ ...sale, branch_gstin_number: 'GST123' }, false), /^Receipt/);
+        assert.doesNotMatch(title({ ...sale, sales_id: '' }, true), /Receipt|Invoice/i);
+    }
+    dom.window.close();
+});
+
+test('new field and item settings are validated and defaults keep existing saved templates compatible', () => {
+    const { dom, engine, design } = setup();
+    design.layouts['80'].blocks.push(engine.block('field', { field: 'customer_tax_number' }));
+    const result = contract.normalize(JSON.parse(JSON.stringify(design)));
+    assert.equal(result.layouts['80'].blocks.at(-1).width, 100);
+    assert.equal(result.layouts['80'].blocks.find(b => b.type === 'items').itemLayout, 'detailed');
+    design.layouts['80'].blocks.at(-1).width = 75;
+    assert.throws(() => contract.normalize(design), /full or half width/);
+    design.layouts['80'].blocks.at(-1).width = 50;
+    design.layouts['80'].blocks.find(b => b.type === 'items').itemLayout = 'invalid';
+    assert.throws(() => contract.normalize(design), /valid item layout/);
+    dom.window.close();
+});
+
+test('editor saves half-width fields and compact items independently by format and reset can be cancelled or undone', () => {
+    const { dom, w, $, branch, design } = setup();
+    branch.table_options = true; branch.receipt_designs = contract.normalize(JSON.parse(JSON.stringify(design)));
+    let sent;
+    w.PosnicPro.put = (req, done) => { sent = JSON.parse(req.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    const original = JSON.stringify(branch.receipt_designs.layouts.a4);
+    $('[data-add="field"][data-field="session"]').trigger('click');
+    $('#rd-field-width').val('50').trigger('change');
+    assert.match($('.rd-block-card.is-selected .rd-select').text(), /Half width/);
+    $('[data-add="field"][data-field="covers"]').trigger('click');
+    $('#rd-field-width').val('50').trigger('change');
+    $('.rd-select').filter((_i, e) => $(e).text() === 'ItemsRequired').trigger('click');
+    $('#rd-item-layout').val('compact').trigger('change');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(sent.receipt_designs.layouts['80'].blocks.find(b => b.type === 'items').itemLayout, 'compact');
+    assert.deepEqual(sent.receipt_designs.layouts['80'].blocks.slice(-2).map(b => b.width), [50, 50]);
+    assert.equal(JSON.stringify(sent.receipt_designs.layouts.a4), original);
+    const compactDesign = JSON.stringify(sent.receipt_designs);
+    $('[data-action="reset-template"]').trigger('click');
+    assert.equal($('.rd-reset-confirm').prop('hidden'), false);
+    $('[data-action="cancel-reset"]').trigger('click');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(JSON.stringify(sent.receipt_designs), compactDesign);
+    $('[data-action="reset-template"]').trigger('click');
+    $('[data-action="confirm-reset"]').trigger('click');
+    assert.match($('.rd-status').text(), /Unsaved/);
+    assert.equal(JSON.stringify(sent.receipt_designs), compactDesign, 'Reset does not save automatically');
+    $('[data-action="undo"]').trigger('click');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(JSON.stringify(sent.receipt_designs), compactDesign);
+    $('[data-action="reset-template"]').trigger('click');
+    $('[data-action="confirm-reset"]').trigger('click');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(JSON.stringify(sent.receipt_designs.layouts.a4), original);
+    assert.equal(sent.receipt_designs.defaultFormat, '80');
+    assert.equal(sent.receipt_designs.layouts['80'].blocks.some(b => b.type === 'qr'), false, 'Standard templates do not restore obsolete legacy customizations');
+    assert.equal(sent.receipt_designs.layouts['80'].blocks.find(b => b.type === 'items').itemLayout, 'detailed');
+    assert.equal(sent.receipt_designs.layouts['80'].blocks.filter(b => b.field?.startsWith('customer_')).length, 5);
+    assert.match($('iframe[title="Receipt design preview"]').attr('srcdoc'), /Tax ID:<\/strong> TAX-123456/, 'Adding a tax field has sample data to preview');
+    $('[data-format="a4"]').trigger('click');
+    $('.rd-select').filter((_i, e) => $(e).text() === 'ItemsRequired').trigger('click');
+    assert.equal($('#rd-item-layout').length, 0, 'Sheet items retain a separate column design');
+    dom.window.close();
+});
+
+test('FSSAI edits reach live preview and sample immediately, persist, and edits during a save remain unsaved', async () => {
+    const { dom, w, $, branch, design } = setup();
+    branch.table_options = true; branch.branch_fssai_number = '11111111111111';
+    branch.receipt_designs = contract.normalize(JSON.parse(JSON.stringify(design)));
+    let request, finish, sample;
+    w.PosnicPro.put = (req, done) => { request = JSON.parse(req.data); finish = done; };
+    w.PosnicPro.post = (req, done) => done({ type: 'success', data: { src: pixel } });
+    w.PosnicPro.resolveReceiptPrinter = () => 'Counter';
+    w.electronAPI = { printer: { print: async (html) => { sample = html; return { success: true }; } } };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('#branch_fssai_number').val(), '11111111111111');
+    $('#branch_fssai_number').val('22222222222222').trigger('input');
+    assert.equal($('.rd-status').text(), 'Unsaved changes');
+    await new Promise(resolve => setTimeout(resolve, 210));
+    assert.match($('iframe[title="Receipt design preview"]').attr('srcdoc'), /22222222222222/);
+    await w.PosnicPro.receiptDesignerEditor.printSample();
+    assert.match(sample, /22222222222222/);
+    $('[data-action="save"]').trigger('click');
+    assert.equal(request.branch_fssai_number, '22222222222222');
+    $('#branch_fssai_number').val('33333333333333').trigger('input');
+    finish({ type: 'success', data: { receipt_designs: request.receipt_designs } });
+    assert.equal(branch.branch_fssai_number, '22222222222222');
+    assert.equal($('#branch_fssai_number').val(), '33333333333333');
+    assert.match($('.rd-status').text(), /newer unsaved/);
+    $('[data-action="save"]').trigger('click');
+    finish({ type: 'success', data: { receipt_designs: request.receipt_designs } });
+    assert.equal(branch.branch_fssai_number, '33333333333333');
+    assert.equal($('.rd-status').text(), 'All designs saved');
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('#branch_fssai_number').val(), '33333333333333');
+    $('#printall').prop('checked', true).trigger('change');
+    assert.equal($('.rd-status').text(), 'Unsaved changes');
+    dom.window.close();
+});
+
 test('desktop printing refreshes the selected printer and never guesses the kitchen printer', async () => {
     const { dom, w, engine } = setup();
     let name = 'Old printer', sent, error;
@@ -286,7 +488,7 @@ test('invalid block styles are rejected before storage', () => {
     dom.window.close();
 });
 
-test('sheets compose invoice sections while thermal keeps its compact receipt layout', () => {
+test('sheets compose page sections while thermal keeps its compact receipt layout', () => {
     const { dom, engine, design, sale, $ } = setup();
     for (const format of ['a4', 'a5', 'letter', '80']) {
         const blocks = design.layouts[format].blocks;
@@ -300,8 +502,8 @@ test('sheets compose invoice sections while thermal keeps its compact receipt la
         const output = $('<div>').html(engine.render(sale, format, false));
         assert.equal(output.find('.rd-invoice-header .rd-block-logo').length, 1);
         assert.equal(output.find('.rd-invoice-header .rd-block-store').length, 1);
-        assert.equal(output.find('.rd-invoice-meta').text(), 'INVOICEInvoice #S128Date19/09/2026');
-        assert.match(output.find('.rd-invoice-customer').text(), /Bill to.*bad\(\).*555 0123/);
+        assert.equal(output.find('.rd-invoice-meta').text(), 'ReceiptReceipt numberS128Date19/09/2026');
+        assert.match(output.find('.rd-invoice-customer').text(), /Customer.*bad\(\).*555 0123/);
         assert.deepEqual(output.find('thead th').toArray().map(e => $(e).text()), ['Item', 'Qty', 'Unit price', 'Amount']);
         assert.equal(output.find('tbody td').eq(1).text(), '2 ea');
         assert.equal(output.find('tbody td').eq(2).text(), '$ 12.00');
