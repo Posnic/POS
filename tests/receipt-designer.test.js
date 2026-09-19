@@ -498,11 +498,15 @@ test('Electron samples use the normal print route without completing or leaving 
     dom.window.close();
 });
 
-test('browser sample waits for image assets, fits the page, and restores the editor after the print dialog', async () => {
+test('browser sample waits for assets, uses printer paper, and restores the editor after the print dialog', async () => {
     const { dom, w, $, engine } = setup();
     let ready, fitted = 0, printed = 0, after = 0;
     w.PosnicPro.waitForPrintAssets = () => new Promise(resolve => { ready = resolve; });
-    w.PosnicReceiptPage.fitDocument = () => { fitted++; };
+    w.PosnicReceiptPage.fitDocument = (doc, options) => {
+        assert.equal(doc, $('iframe[title="Receipt print"]')[0].contentDocument);
+        assert.equal(options.usePrinterPaper, true);
+        fitted++;
+    };
     w.PosnicPro.afterPrint = () => { after++; };
     const job = engine.print('<article>Sample</article>', '80', { sample: true });
     const frame = $('iframe[title="Receipt print"]');
