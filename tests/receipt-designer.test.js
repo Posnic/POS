@@ -213,6 +213,29 @@ test('new field and item settings are validated and defaults keep existing saved
     dom.window.close();
 });
 
+test('thermal header preserves the full receipt number and localized clock with its day period', () => {
+    const { dom, engine, sale, $ } = setup();
+    for (const format of ['58', '80']) {
+        for (const [date, clock] of [
+            ['9/16/2026, 5:56:20 PM', '5:56:20 PM'],
+            ['16/09/2026 5:56 PM', '5:56 PM'],
+            ['16.09.2026, 17:56:20', '17:56:20'],
+            ['16/09/2026 ٥:٥٦:٢٠ م', '٥:٥٦:٢٠ م'],
+        ]) {
+            const output = $('<div>').html(engine.render({ ...sale, sales_id: 'SAMPLE-001', created_date: date }, format, false));
+            assert.equal(output.find('.rd-transaction strong').text(), 'Receipt SAMPLE-001');
+            assert.equal(output.find('.rd-transaction strong .rd-header-value').text(), 'SAMPLE-001');
+            assert.equal(output.find('.rd-transaction-date').text(), date);
+            assert.equal(output.find('.rd-transaction-date .rd-header-value').last().text(), clock);
+        }
+        const plain = $('<div>').html(engine.render({ ...sale, sales_id: '<img src=x>', created_date: '19/09/2026' }, format, false));
+        assert.equal(plain.find('.rd-transaction strong').text(), 'Receipt <img src=x>');
+        assert.equal(plain.find('.rd-transaction-date').text(), '19/09/2026');
+        assert.equal(plain.find('.rd-transaction img').length, 0);
+    }
+    dom.window.close();
+});
+
 test('editor saves half-width fields and compact items independently by format and reset can be cancelled or undone', () => {
     const { dom, w, $, branch, design } = setup();
     branch.table_options = true; branch.receipt_designs = contract.normalize(JSON.parse(JSON.stringify(design)));
