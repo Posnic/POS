@@ -605,6 +605,34 @@ describe('updateGeneralSetting', () => {
 describe('updateCommonSettings', () => {
   const validBody = { receiving_prefix: 'REC', notification_value: 10 };
 
+  test('rejects an invalid receipt design before calling the settings writer', async () => {
+    const res = mockRes();
+    await ctrl.updateCommonSettings(
+      mockReq({ body: { receipt_designs: { version: 1, defaultFormat: 'invalid' } } }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(settingsService.updateCommonSettings).not.toHaveBeenCalled();
+  });
+
+  test('QR preview encodes text without saving any setting', async () => {
+    const res = mockRes();
+    await ctrl.previewReceiptQr(
+      mockReq({ body: { text: 'https://www.customerwebsite.com' } }),
+      res
+    );
+    expect(res.json.mock.calls[0][0].data.src).toMatch(/^data:image\/png;base64,/);
+    expect(settingsService.updateCommonSettings).not.toHaveBeenCalled();
+  });
+
+  test('QR preview rejects blank and oversized content', async () => {
+    for (const text of ['', 'x'.repeat(1001)]) {
+      const res = mockRes();
+      await ctrl.previewReceiptQr(mockReq({ body: { text } }), res);
+      expect(res.status).toHaveBeenCalledWith(400);
+    }
+  });
+
   test('200 on successful update', async () => {
     settingsService.updateCommonSettings.mockResolvedValue(ok());
     const res = mockRes();

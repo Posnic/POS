@@ -549,6 +549,31 @@ class SettingController extends BaseController {
     }
   }
 
+  async previewReceiptQr(req, res) {
+    const text = req.body && req.body.text;
+    if (typeof text !== 'string' || !text.trim() || text.length > 1000) {
+      return res.status(400).json({
+        type: 'error',
+        message: 'Enter up to 1,000 characters for the QR code.',
+        data: null,
+      });
+    }
+    try {
+      const src = await require('qrcode').toDataURL(text, {
+        width: 384,
+        margin: 4,
+        errorCorrectionLevel: 'M',
+      });
+      return res.json({ type: 'success', data: { src } });
+    } catch (_) {
+      return res.status(400).json({
+        type: 'error',
+        message: 'This content is too long for a QR code. Shorten it and try again.',
+        data: null,
+      });
+    }
+  }
+
   async updateCommonSettings(req, res) {
     try {
       const settingModel = this.createModelWithContext(req);
@@ -616,6 +641,14 @@ class SettingController extends BaseController {
        * own. Empty means "none" and partial payloads may omit it entirely.
        */
 
+      if (data.receipt_designs !== undefined) {
+        try {
+          const { resolveReceiptDesign } = require('../helpers/resolve-receipt-design');
+          data.receipt_designs = await resolveReceiptDesign(data.receipt_designs);
+        } catch (error) {
+          return res.status(400).json({ type: 'error', message: error.message, data: null });
+        }
+      }
       const result = await settingsService.updateCommonSettings(data);
 
       if (result.status) {

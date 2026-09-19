@@ -63,37 +63,9 @@
             run: function () { PosnicPro.shiftWidget.openReport(); },
         },
         {
-            /* Version surfacing (SW roadmap W3): one screenshotable line
-               that tells support which build AND which cache generation a
-               till runs - the two can differ when a worker update is still
-               pending, which is exactly the case worth seeing. */
-            name: 'About This Till', keywords: 'version build cache info support help',
-            visible: function () { return true; },
-            run: function () {
-                var parts = [];
-                var finish = function () {
-                    PosnicPro.alert('success', parts.join(' · ') || 'No version info available');
-                };
-                var cachePart = (window.caches && caches.keys)
-                    ? caches.keys().then(function (keys) {
-                        for (var i = 0; i < keys.length; i++) {
-                            if (keys[i].indexOf('posnic-static-') === 0) {
-                                parts.push('cache ' + keys[i].slice('posnic-static-'.length, 'posnic-static-'.length + 8));
-                                return;
-                            }
-                        }
-                        parts.push('cache none');
-                    }).catch(function () {})
-                    : Promise.resolve();
-                var versionPart = new Promise(function (resolve) {
-                    PosnicPro.get({ url: 'runtime-info', data: {} }, function (response) {
-                        var d = (response && response.data) || response || {};
-                        if (d.version) parts.unshift('Posnic ' + d.version + (d.mode ? ' (' + d.mode + ')' : ''));
-                        resolve();
-                    }, function () { resolve(); });
-                });
-                Promise.all([cachePart, versionPart]).then(finish, finish);
-            },
+            name: 'About Posnic', keywords: 'version build cache info support help about this till',
+            visible: function () { return !!PosnicPro.versionBadge; },
+            run: function () { PosnicPro.versionBadge.show(); },
         },
         {
             /* The cache doctor (SW roadmap W3): one click instead of the

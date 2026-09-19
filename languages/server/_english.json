@@ -680,6 +680,9 @@
   "Enter the amount received": [
     "src/services/invoice-sync.js"
   ],
+  "Enter up to 1,000 characters for the QR code.": [
+    "src/controllers/settings.controller.js"
+  ],
   "Error": [
     "src/models/base.model.js"
   ],
@@ -2105,6 +2108,9 @@
   "This category details already exist in our system": [
     "src/models/customer-category.model.js",
     "src/services/customer-category.service.js"
+  ],
+  "This content is too long for a QR code. Shorten it and try again.": [
+    "src/controllers/settings.controller.js"
   ],
   "This database already contains a shop. Installing would replace it, ": [
     "src/services/install.service.js"

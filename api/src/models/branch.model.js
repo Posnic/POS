@@ -187,6 +187,7 @@ const branchSchema = new Schema(
     regular_body_print: { type: String },
     thermal_body_print: { type: String },
     print_controls: { type: Object },
+    receipt_designs: { type: Object },
 
     client_dateformat: { type: String, default: 'dd/mm/yyyy' },
     server_dateformat: { type: String, default: 'd/m/Y' },

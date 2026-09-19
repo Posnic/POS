@@ -179,6 +179,29 @@ test('late loads cannot replace a return summary and a failed load keeps totals 
     dom.window.close();
 });
 
+test('browser preview loads its stylesheet and relative logo without a configured baseUrl', async () => {
+    const { dom, win, $, branch, preview } = till();
+    delete win.PosnicPro.baseUrl;
+    branch.logo = '/uploads/shop.png';
+    win.PosnicPro.paperCss = () => '';
+    win.PosnicPro.get = (_request, done) => done({ type: 'success', data: branch });
+    let cssUrl;
+    $.ajax = (request) => {
+        cssUrl = request.url;
+        return $.Deferred().resolve('@media print { body { color: black; } }').promise();
+    };
+    preview.show();
+    await new Promise(resolve => setTimeout(resolve, 50));
+    assert.equal(cssUrl, 'http://localhost/static/pages/print.css');
+    const html = $('#tender_receipt_preview iframe').attr('srcdoc');
+    assert.ok(html, $('#tender_receipt_preview').text());
+    assert.match(html, /<base href="http:\/\/localhost\/">/);
+    assert.match(html, /@media all/);
+    assert.equal(preview.rawData(html).logo.src, 'http://localhost/uploads/shop.png');
+    assert.equal(preview.rawData(html).footerImage.src, qr);
+    dom.window.close();
+});
+
 test('desktop preview decodes actual receipt bytes, including logo, QR and euro glyph', () => {
     const { renderSale } = require('../src/escpos-receipt');
     const { parse, asLines } = require('../src/escpos-preview');

@@ -1,203 +1,156 @@
 'use strict';
 
-/*
- * WHICH VERSION IS THIS SHOP RUNNING?
- *
- * Owner, after a customer phoned in a printing fault: "i asked which
- * version using. now way to tell."
- *
- * There was no way to tell. The number lived in three places and none of
- * them was on a screen: app.getVersion() in the main process, package.json,
- * and Help > About - behind a menu bar that is hidden until somebody
- * presses Alt. A shop on the telephone cannot be talked through any of
- * that, so every support call opened with an unanswerable question.
- *
- * THREE NUMBERS, because they can disagree and the disagreement is the
- * interesting part. The asset channel can stage a newer frontend under an
- * older shell, and an installer has shipped an OLDER one - which looks
- * exactly like a fix that did not work. So the badge says which shell is
- * installed, which page bundle is actually executing, and which API build
- * answered, and copies all three as one line to paste into a message.
- *
- * Driven here against a made-up page rather than pinned by grepping for
- * strings: what matters is that a shop ends up with a readable number on
- * screen, and every one of these would pass on markup that renders empty.
- */
 const test = require('node:test');
-const assert = require('node:assert');
+const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { JSDOM } = require('jsdom');
+const jquery = require('jquery');
 
 const ROOT = path.join(__dirname, '..');
-const NL = String.fromCharCode(10);
+const SRC = fs.readFileSync(path.join(ROOT, 'frontend/static/script/js/core/version-badge.js'), 'utf8');
+const ABOUT = fs.readFileSync(path.join(ROOT, 'frontend/layouts/about.html'), 'utf8');
+const BOOTSTRAP = fs.readFileSync(path.join(ROOT, 'frontend/static/script/js/bootstrap.min.js'), 'utf8');
+const DASH = ['script/jquery.min.js', 'script/dashboard.2eca0dab.js'];
+const settled = () => new Promise((resolve) => setImmediate(resolve));
 
-const BADGE = path.join(ROOT, 'frontend', 'static', 'script', 'js', 'core', 'version-badge.js');
-const SRC = fs.readFileSync(BADGE, 'utf8');
-
-/* ------------------------------------------------------------------ *
- * A fake page, small enough to read.
- *
- * Only what the module actually touches. jsdom is not in this repo and
- * this does not need it: the module reads three things and writes text
- * into two elements.
- * ------------------------------------------------------------------ */
-function el(tag) {
-  const node = {
-    tagName: tag,
-    attrs: {},
-    style: {},
-    textContent: '',
-    children: {},
-    listeners: {},
-    getAttribute(k) { return Object.prototype.hasOwnProperty.call(this.attrs, k) ? this.attrs[k] : null; },
-    setAttribute(k, v) { this.attrs[k] = v; },
-    addEventListener(name, fn) { (this.listeners[name] = this.listeners[name] || []).push(fn); },
-    querySelector(sel) { return this.children[sel] || null; },
-  };
-  return node;
-}
-
-function versionRow() {
-  const row = el('li');
-  row.style.display = 'none';
-  row.children['.posnic-version-number'] = el('span');
-  row.children['.posnic-version-build'] = el('small');
-  row.children['.posnic-version-copied'] = el('span');
-  return row;
-}
-
-/**
- * Run version-badge.js against a made-up page.
- *
- * @param {object} opts
- *   scripts     src values on the page
- *   appVersion  what the desktop bridge answers, or null for a browser
- *   serverVersion what base/health answers, or null
- *   row         include the dashboard dropdown row
- *   login       include the sign-in line
- */
-function run(opts) {
-  const nodes = {};
-  if (opts.row !== false) nodes.posnic_version_line = versionRow();
-  if (opts.login) nodes.posnic_version_login = el('small');
-
+async function run(t, opts = {}) {
+  const markup = opts.login ? '<small id="posnic_version_login"></small>' : ABOUT;
+  const dom = new JSDOM(markup.replace('modal fade', 'modal') +
+    (opts.scripts || DASH).map(src => '<script src="' + src + '"></script>').join(''),
+    { url: 'https://shop.example/dashboard.html', runScripts: 'outside-only' });
+  t.after(() => dom.window.close());
+  const { window } = dom;
+  const $ = jquery(window);
+  window.jQuery = window.$ = $;
+  window.eval(BOOTSTRAP);
   const asked = [];
-  const PosnicPro = {
+  const copied = [];
+  window.PosnicPro = {
+    i18n: { t: (key, fallback) => fallback },
     get(url, ok, fail) {
       asked.push(url);
-      if (opts.serverVersion == null) { fail(); return; }
-      ok({ type: 'success', data: { version: opts.serverVersion } });
+      if (opts.serverVersion === null) { fail(); return; }
+      ok({ data: { version: opts.serverVersion || '1.6.1' } });
     },
   };
-
-  const document = {
-    readyState: 'complete',
-    getElementById: (id) => nodes[id] || null,
-    getElementsByTagName: () => (opts.scripts || []).map((src) => {
-      const s = el('script');
-      s.attrs.src = src;
-      return s;
-    }),
-    createElement: el,
-    body: { appendChild() {}, removeChild() {} },
-    addEventListener() {},
-  };
-
-  const window = {};
-  if (opts.appVersion != null) {
+  if (opts.appVersion) {
     window.electronAPI = {
-      desktop: { capabilities: () => Promise.resolve({ desktop: true, version: opts.appVersion }) },
+      desktop: { capabilities: () => Promise.resolve({ version: opts.appVersion }) },
     };
   }
-
-  const navigator = { clipboard: null };
-
-  const fn = new Function('PosnicPro', 'document', 'window', 'navigator', 'setTimeout', SRC);
-  fn(PosnicPro, document, window, navigator, () => {});
-
-  return { PosnicPro, nodes, asked };
+  Object.defineProperty(window.navigator, 'clipboard', { value: {
+    writeText: (value) => {
+      if (opts.clipboardDenied) return Promise.reject(new Error('Clipboard blocked'));
+      copied.push(value);
+      return Promise.resolve();
+    },
+  } });
+  const fallbackCopies = [];
+  window.document.execCommand = (command) => {
+    assert.equal(command, 'copy');
+    fallbackCopies.push(window.document.querySelector('textarea').value);
+    return opts.fallbackWorks === true;
+  };
+  window.eval(SRC);
+  await settled();
+  const node = (id) => window.document.getElementById(id);
+  const open = async () => {
+    window.document.querySelector('.posnic-about-link').click();
+    await settled();
+  };
+  return { window, $, node, open, asked, copied, fallbackCopies };
 }
 
-/* The module resolves through promises, so let the microtask queue drain. */
-const settled = () => new Promise((r) => setImmediate(r));
-
-const DASH = ['script/jquery.min.js', 'script/dashboard.2eca0dab.js'];
-
-test('the desktop shows the installed version and the build it is running', async () => {
-  const { nodes } = run({ scripts: DASH, appVersion: '1.6.1', serverVersion: '1.6.1' });
-  await settled();
-
-  const row = nodes.posnic_version_line;
-  assert.strictEqual(row.children['.posnic-version-number'].textContent, 'Posnic 1.6.1',
-    'the number a shop reads out is not there');
-  assert.match(row.children['.posnic-version-build'].textContent, /2eca0dab/,
-    'the page build is missing, so a stale frontend under a fresh shell is invisible');
-  assert.strictEqual(row.style.display, '',
-    'the row is still hidden, so nobody can read any of it');
+test('desktop details distinguish the installed app, page and server versions', async (t) => {
+  const { node, open } = await run(t, { appVersion: '1.6.1', serverVersion: '1.7.0' });
+  assert.equal(node('posnic_version_line').textContent, 'Posnic 1.6.1');
+  assert.equal(node('posnic_version_line').hidden, false);
+  await open();
+  assert.equal(node('posnic_about_dialog').getAttribute('aria-modal'), 'true');
+  assert.equal(node('posnic_about_mode').textContent, 'Desktop');
+  assert.equal(node('posnic_about_app').textContent, '1.6.1');
+  assert.equal(node('posnic_about_app').hidden, false);
+  assert.equal(node('posnic_about_server').textContent, '1.7.0');
+  assert.equal(node('posnic_about_page').textContent, '2eca0dab');
 });
 
-test('a server on a different build is named, not hidden behind the app number', () => {
-  /*
-   * The case this exists for: the shell says 1.6.1 and the API answering it
-   * is something else. Saying only the first would send support after the
-   * wrong build.
-   */
-  const { nodes } = run({ scripts: DASH, appVersion: '1.6.1', serverVersion: '1.7.0' });
-  return settled().then(() => {
-    const sub = nodes.posnic_version_line.children['.posnic-version-build'].textContent;
-    assert.match(sub, /server 1\.7\.0/, 'the server build is not shown when it disagrees');
-  });
+test('browser details omit the desktop version without losing the server or page', async (t) => {
+  const { node, open } = await run(t);
+  await open();
+  assert.equal(node('posnic_about_mode').textContent, 'Browser');
+  assert.equal(node('posnic_about_app').hidden, true);
+  assert.equal(node('posnic_about_app_label').hidden, true);
+  assert.equal(node('posnic_about_server').textContent, '1.6.1');
+  assert.equal(node('posnic_about_page').textContent, '2eca0dab');
 });
 
-test('a browser with no desktop shell still answers the question', async () => {
-  const { nodes } = run({
-    scripts: ['script/dashboard.2eca0dab.js'], appVersion: null, serverVersion: '1.6.1',
-  });
+test('viewing details never copies; only Copy details does, with written confirmation', async (t) => {
+  const { node, open, copied, $ } = await run(t, { appVersion: '1.6.1', serverVersion: '1.7.0' });
+  node('posnic_version_line').click();
+  await open();
+  assert.deepEqual(copied, []);
+  assert.equal(node('posnic_about_copy_status').textContent, '');
+  node('posnic_about_copy').click();
   await settled();
-  assert.strictEqual(nodes.posnic_version_line.children['.posnic-version-number'].textContent,
-    'Posnic 1.6.1', 'a cloud shop is told nothing');
+  assert.deepEqual(copied, ['Posnic 1.6.1 | desktop | page 2eca0dab | server 1.7.0']);
+  assert.equal(node('posnic_about_copy_status').textContent, 'Details copied to clipboard.');
+  assert.equal(node('posnic_about_copy_status').getAttribute('role'), 'status');
+  $('#posnic_about_dialog').modal('hide');
+  await open();
+  assert.equal(node('posnic_about_copy_status').textContent, '');
+  node('posnic_about_copy').click();
+  await settled();
+  assert.equal(copied.length, 2, 'reopening must not accumulate click handlers');
 });
 
-test('the copied line carries every number, on one line', async () => {
-  const { nodes } = run({ scripts: DASH, appVersion: '1.6.1', serverVersion: '1.7.0' });
+test('a denied clipboard falls back inside the dialog and restores button focus', async (t) => {
+  const { node, open, fallbackCopies, window } = await run(t, { clipboardDenied: true, fallbackWorks: true });
+  await open();
+  node('posnic_about_copy').focus();
+  node('posnic_about_copy').click();
   await settled();
-  const full = nodes.posnic_version_line.getAttribute('title');
-  assert.match(full, /Posnic 1\.6\.1/);
-  assert.match(full, /desktop/);
-  assert.match(full, /page 2eca0dab/);
-  assert.match(full, /server 1\.7\.0/);
-  assert.ok(full.indexOf(NL) === -1, 'it is not one line, so it pastes badly into a message');
+  assert.equal(fallbackCopies.length, 1);
+  assert.match(node('posnic_about_copy_status').textContent, /Details copied/);
+  assert.equal(window.document.activeElement, node('posnic_about_copy'));
+  assert.equal(window.document.querySelector('textarea'), null);
 });
 
-test('the sign-in screen asks no server, because it has no session to ask with', async () => {
-  const { nodes, asked } = run({
-    scripts: ['script/login.91f31103.js'], appVersion: '1.6.1', serverVersion: '1.6.1',
-    row: false, login: true,
-  });
+test('clipboard failure explains how to copy manually and never claims success', async (t) => {
+  const { node, open } = await run(t, { clipboardDenied: true });
+  await open();
+  node('posnic_about_copy').click();
   await settled();
-
-  assert.deepStrictEqual(asked, [], 'the sign-in page calls the API for a number it cannot be given');
-  assert.match(nodes.posnic_version_login.textContent, /Posnic 1\.6\.1/,
-    'a till nobody can sign in to still cannot say what it is');
-  assert.match(nodes.posnic_version_login.textContent, /91f31103/,
-    'the build of the page in front of them is not shown');
+  assert.equal(node('posnic_about_copy_status').textContent,
+    'Could not copy. Select the details above to copy them manually.');
 });
 
-test('a browser at the sign-in screen falls back to the build hash', async () => {
-  const { nodes } = run({
-    scripts: ['script/login.91f31103.js'], appVersion: null, serverVersion: null,
-    row: false, login: true,
-  });
-  await settled();
-  assert.match(nodes.posnic_version_login.textContent, /91f31103/,
-    'with no shell and no session there is nothing left to say, and it says nothing');
+test('an unavailable server still leaves the known page build available', async (t) => {
+  const { node, open } = await run(t, { serverVersion: null });
+  await open();
+  assert.equal(node('posnic_about_server').textContent, 'Unavailable');
+  assert.equal(node('posnic_about_copy').disabled, false);
 });
 
-test('knowing nothing shows nothing, rather than a row reading "Posnic ?"', async () => {
-  const { nodes } = run({ scripts: ['script/dashboard.js'], appVersion: null, serverVersion: null });
-  await settled();
-  assert.strictEqual(nodes.posnic_version_line.style.display, 'none',
-    'an empty row invites a shop to read a shrug down the telephone');
+test('unavailable versions do not show a misleading footer version or enable copying', async (t) => {
+  const { node, open } = await run(t, { scripts: ['script/dashboard.js'], serverVersion: null });
+  assert.equal(node('posnic_version_line').hidden, true);
+  await open();
+  assert.equal(node('posnic_about_server').textContent, 'Unavailable');
+  assert.equal(node('posnic_about_page').textContent, 'Unavailable');
+  assert.equal(node('posnic_about_copy').disabled, true);
+});
+
+test('the sign-in screen shows its known versions without asking the protected API', async (t) => {
+  const { node, asked } = await run(t, { login: true, scripts: ['script/login.91f31103.js'], appVersion: '1.6.1' });
+  assert.deepEqual(asked, []);
+  assert.equal(node('posnic_version_login').textContent, 'Posnic 1.6.1 · 91f31103');
+});
+
+test('browser sign-in can identify the page without a desktop shell or session', async (t) => {
+  const { node, asked } = await run(t, { login: true, scripts: ['script/login.91f31103.js'] });
+  assert.deepEqual(asked, []);
+  assert.equal(node('posnic_version_login').textContent, 'Posnic · 91f31103');
 });
 
 /* --------------------------------------------- the numbers have sources --- */
@@ -252,11 +205,12 @@ test('the badge rides both bundles, or it is on neither page', () => {
   }
 });
 
-test('both pages carry somewhere to put it', () => {
-  const header = fs.readFileSync(path.join(ROOT, 'frontend', 'layouts', 'header.html'), 'utf8');
-  const login = fs.readFileSync(path.join(ROOT, 'frontend', 'login.html'), 'utf8');
-  assert.match(header, /id="posnic_version_line"/, 'the profile menu has no version row');
-  assert.match(header, /posnic-version-number/, 'the row has nowhere to write the number');
-  assert.match(header, /posnic-version-build/, 'the row has nowhere to write the build');
-  assert.match(login, /id="posnic_version_login"/, 'the sign-in screen has no version line');
+test('version details are reachable from the footer, outside the account menu', () => {
+  const header = fs.readFileSync(path.join(ROOT, 'frontend/layouts/header.html'), 'utf8');
+  const dash = fs.readFileSync(path.join(ROOT, 'frontend/dashboard.html'), 'utf8');
+  const login = fs.readFileSync(path.join(ROOT, 'frontend/login.html'), 'utf8');
+  assert.doesNotMatch(header, /posnic_version_line|posnic-version-copied/);
+  assert.match(dash, /layouts\/about\.html/);
+  assert.match(ABOUT, /data-target="#posnic_about_dialog"/);
+  assert.match(login, /id="posnic_version_login"/);
 });

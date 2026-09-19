@@ -1416,19 +1416,12 @@ if ($wrapper.length) {
 
                 /* Kept locally because the print path reads them at print
                    time, on a page that may never have opened Settings. */
-                PosnicPro.local.set('footer_image', data.footer_image || '');
-                PosnicPro.local.set('footer_image_caption', data.footer_image_caption || '');
-                PosnicPro.settings._footerImagePicked = false;
-                $('#footer_qr_url').val(data.footer_qr_url || '');
-                $('#footer_image_caption').val(data.footer_image_caption || '');
-                $('#footer_image_value').val(data.footer_image || '');
-                if (data.footer_image) {
-                    $('#footer_image_thumb').attr('src', data.footer_image).show();
-                    $('#footer_image_clear').show();
-                } else {
-                    $('#footer_image_thumb').hide().attr('src', '');
-                    $('#footer_image_clear').hide();
-                }
+                PosnicPro.settings.applyReceiptFooter({
+                    footer_image: data.footer_image || '',
+                    footer_qr_url: data.footer_qr_url,
+                    footer_image_caption: data.footer_image_caption
+                });
+                if (PosnicPro.receiptDesignerEditor) PosnicPro.receiptDesignerEditor.load(data);
 
                 $('.print_store_name').text(data.branch_name);
                 $('.print_store_gst').text(data.branch_gstin_number);
@@ -2118,10 +2111,25 @@ if ($wrapper.length) {
             PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_that_branch', 'Could not save that branch'));
         });
     },
+    applyReceiptFooter: function (data) {
+        if (!data || data.footer_image === undefined) { return; }
+        PosnicPro.local.set('footer_image', data.footer_image || '');
+        PosnicPro.local.set('footer_image_caption', data.footer_image_caption || '');
+        PosnicPro.settings._footerImagePicked = false;
+        $('#footer_qr_url').val(data.footer_qr_url || '');
+        $('#footer_image_caption').val(data.footer_image_caption || '');
+        $('#footer_image_value').val(data.footer_image || '');
+        $('#footer_image_thumb').attr('src', data.footer_image || '').toggle(!!data.footer_image);
+        $('#footer_image_clear').toggle(!!data.footer_image);
+    },
     /* successLabel: what the toast says on success - each Save button names
        its own act ("Module switches saved") instead of the generic server
        line, which reads the same from four different screens. */
     updateCommonSetting: function (successLabel) {
+        if ($('#core-tab-print').hasClass('active') && PosnicPro.receiptDesignerEditor) {
+            PosnicPro.receiptDesignerEditor.save();
+            return;
+        }
         var loader = $(".loader-view-mystore");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var taxDetail = $("#tax_percentage").select2("data");
@@ -2277,6 +2285,7 @@ if ($wrapper.length) {
                 PosnicPro.settings._featuresDirty = false;
                 PosnicPro.settings.syncDemoDataAfterSave();
                 let htmlView = $('#footer_print').text();
+                PosnicPro.settings.applyReceiptFooter(response.data);
                 $('.footer-content').text(htmlView);
                 let htmlHeaderView = $('#header_print').text();
                 $('.header-content').text(htmlHeaderView);
@@ -2320,7 +2329,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 if (tableNow !== was.table_options) {
                     PosnicPro.local.set('table_options', tableNow);
                     var kotOn = tableNow === 'enable';
-                    if (kotOn) { PosnicPro.applyKotVisibility(true); }
+                    PosnicPro.applyKotVisibility(kotOn);
                     $('#view_kot_page,#view_kotorder_page,#view_kothistory_page,#viewkotreport_page')
                         .closest('li').toggle(kotOn);
                     $('#view_touchsales_page').closest('li').toggle(!kotOn);

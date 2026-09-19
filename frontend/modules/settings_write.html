@@ -5323,6 +5323,8 @@
 
                                             <!-- ============ RECEIPT PRINT ============ -->
                                             <div class="tab-pane fade" id="core-tab-print" role="tabpanel">
+                                                <div id="receipt-designer"></div>
+                                                <div id="receipt-legacy-settings" hidden>
                                                 <div class="row">
                                                     <div class="form-group col-md-12">
                                                         <label for="print_type">
@@ -5331,10 +5333,10 @@
                                                         <select name="print_type" id="print_type"
                                                             class="form-control border-control">
                                                             <option value="standard"><lang class="lang_thermal">Thermal</lang></option>
-                                                            <option value="a4"><lang class="lang_regular">Regular</lang></option>
+                                                            <option value="a4"><lang class="lang_a4_sheet">A4 sheet</lang></option>
                                                         </select>
                                                     </div>
-                                                    <div class="form-group col-md-12">
+                                                    <div class="form-group col-md-12 restaurant-only" style="display:none;">
                                                         <label for="bill_print_copies">
                                                             <lang class="lang_bill_copies_from_the_floor">Copies of a bill asked for from the floor</lang>
                                                         </label>
@@ -5381,7 +5383,7 @@
                                                 <div class="form-row">
                                                     <div class="form-group col-md-6">
                                                         <label for="print_size">
-                                                            <lang class="lang_size_title">Print size</lang>
+                                                            <lang class="lang_receipt_text_size">Text size</lang>
                                                         </label>
                                                         <select name="print_size" id="print_size"
                                                             class="form-control border-control">
@@ -5583,13 +5585,10 @@
                                                     <lang class="lang_what_the_bill_carries">What the bill carries</lang>
                                                 </h6>
                                                 <p class="text-muted mb-3" style="font-size:12.5px;">
-                                                    <lang class="lang_what_the_bill_carries_hint">Extra rows on the
-                                                    customer's copy. All off by default, because the kitchen ticket
-                                                    already carries them. Turn on whichever your bills are expected
-                                                    to show.</lang>
+                                                    <lang class="lang_what_the_bill_carries_hint">Choose the extra details to show on customer bills.</lang>
                                                 </p>
                                                 <div class="form-row">
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-6 restaurant-only" style="display:none;">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" id="bill_print_table" name="bill_print_table" />
@@ -5603,7 +5602,7 @@
                                                             </label>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-6 restaurant-only" style="display:none;">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" id="bill_print_dine_type" name="bill_print_dine_type" />
@@ -5617,7 +5616,7 @@
                                                             </label>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-6 restaurant-only" style="display:none;">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" id="bill_print_covers" name="bill_print_covers" />
@@ -5631,7 +5630,7 @@
                                                             </label>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-6 restaurant-only" style="display:none;">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" id="bill_print_steward" name="bill_print_steward" />
@@ -5654,12 +5653,12 @@
                                                                     <lang class="lang_bill_print_total_qty">Total quantity</lang>
                                                                 </span>
                                                                 <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
-                                                                    <lang class="lang_bill_print_total_qty_hint">How many dishes in all, not how many lines.</lang>
+                                                                    <lang class="lang_bill_print_total_qty_hint">Total quantity across all items.</lang>
                                                                 </small>
                                                             </label>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-6 restaurant-only" style="display:none;">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" id="bill_print_session" name="bill_print_session" />
@@ -5682,12 +5681,12 @@
                                                                     <lang class="lang_bill_print_hsn">HSN / SAC code</lang>
                                                                 </span>
                                                                 <small class="d-block text-muted" style="font-size:11.5px; line-height:1.35;">
-                                                                    <lang class="lang_bill_print_hsn_hint">A column beside each dish. Only lines that have a code show one.</lang>
+                                                                    <lang class="lang_bill_print_hsn_hint">A column beside each item. Only items that have a code show one.</lang>
                                                                 </small>
                                                             </label>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-6 restaurant-only" style="display:none;">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" id="bill_print_fssai" name="bill_print_fssai" />
@@ -5701,7 +5700,7 @@
                                                             </label>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-6 restaurant-only" style="display:none;">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" id="bill_print_source" name="bill_print_source" />
@@ -5717,7 +5716,7 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="form-row">
+                                                <div class="form-row restaurant-only" style="display:none;">
                                                     <div class="form-group col-md-6">
                                                         <label for="branch_fssai_number">
                                                             <lang class="lang_fssai_number">FSSAI licence number</lang>
@@ -5734,11 +5733,9 @@
 
                                                 <div class="alert alert-info mb-0" style="font-size:13px;">
                                                     <b><lang class="lang_customer_gstin_always_prints">A customer's own GSTIN always prints.</lang></b>
-                                                    <lang class="lang_customer_gstin_always_prints_hint">It needs no
-                                                    switch. A business buying a meal can only reclaim the tax against
-                                                    an invoice carrying its GSTIN, so if a customer has given one it
-                                                    goes on their bill. Add it on the customer, under GST Fields.</lang>
+                                                    <lang class="lang_customer_gstin_always_prints_hint">Add it on the customer, under GST Fields. When provided, it appears on their bill automatically.</lang>
                                                 </div>
+                                            </div>
                                             </div>
 
                                         </div>
