@@ -46,6 +46,8 @@ function parse(buf, columns = 48) {
 
   const style = { align: 0, bold: false, underline: 0, reverse: false, w: 1, h: 1 };
   let codepage = 16;
+  let downloaded = false;
+  let euroSlot = -1;
   /*
    * ESC 3 0 sets the line feed to zero dots, so the LF that follows does not
    * advance the paper and whatever prints next lands on the SAME row. That is
@@ -73,6 +75,21 @@ function parse(buf, columns = 48) {
 
     if (b === ESC) {
       const fn = buf[i + 1];
+      if (fn === 0x26) {
+        // renderSale downloads its euro glyph before enabling that font.
+        flush();
+        const bands = buf[i + 2];
+        const first = buf[i + 3];
+        const last = buf[i + 4];
+        euroSlot = first;
+        i += 5;
+        for (let slot = first; slot <= last; slot += 1) {
+          const width = buf[i++];
+          i += width * bands;
+        }
+        continue;
+      }
+      if (fn === 0x25) { flush(); downloaded = buf[i + 2] !== 0; i += 3; continue; }
       if (fn === 0x40) { i += 2; continue; }                                   // initialise
       if (fn === 0x74) { flush(); codepage = buf[i + 2]; i += 3; continue; }   // code page
       if (fn === 0x61) { flush(); style.align = buf[i + 2]; i += 3; continue; }
@@ -109,6 +126,7 @@ function parse(buf, columns = 48) {
         const start = i + 8;
         rows.push({
           kind: 'raster',
+          align: style.align,
           wBytes,
           h,
           /* m: 1 and 3 are double width, 2 and 3 double height. A struck line
@@ -132,7 +150,8 @@ function parse(buf, columns = 48) {
     }
     if (b < 0x20) { i += 1; continue; }
 
-    line += (codepage === 0 && CP437[b]) ? CP437[b] : String.fromCharCode(b);
+    line += downloaded && b === euroSlot ? '€'
+      : (codepage === 0 && CP437[b]) ? CP437[b] : String.fromCharCode(b);
     i += 1;
   }
   flush();

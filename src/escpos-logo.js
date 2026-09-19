@@ -258,7 +258,9 @@ async function resolvePictures(sale, paperWidth) {
     }
     /* eslint-disable-next-line no-await-in-loop -- two at most, and a
        printer is a serial device anyway. */
-    out[field] = await rasterFor(asked.src, paperWidth, deps, { dither });
+    out[field] = await rasterFor(asked.src, paperWidth, deps, {
+      dither, maxRows: field === 'footerImage' ? 384 : MAX_ROWS,
+    });
   }
   return out;
 }

@@ -515,6 +515,10 @@ class SalesRepository {
       doc.print_logoimg = print_logoimg;
       doc.print_sale_notes = print_sale_notes;
       doc.receipt_barcode = receipt_barcode;
+      // Read the saved footer for every print, including an explicit removal.
+      // A browser's settings cache may still contain an older shop image.
+      doc.footer_image = String(branchDoc?.footer_image || '');
+      doc.footer_image_caption = String(branchDoc?.footer_image_caption || '');
       if (logo && !doc.logo) {
         doc.logo = logo;
       }

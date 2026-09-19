@@ -90,6 +90,7 @@ jest.mock('../../../src/models/base.model', () => {
   MockBaseModel.loggedUserName = null;
   MockBaseModel.currentTimeZone = 'Asia/Kolkata';
   MockBaseModel.deletedDocumentBackup = jest.fn().mockResolvedValue({});
+  MockBaseModel.simplifyFields = jest.fn((doc) => ({ ...doc }));
   return MockBaseModel;
 });
 
@@ -739,6 +740,31 @@ describe('SalesRepository', () => {
   });
 
   describe('getLegacyDetails', () => {
+    test.each(['data:image/png;base64,current', ''])(
+      'receipt reads the current branch footer, including removal: %s',
+      async (image) => {
+        if (!collections.sales) collections.sales = mkCol();
+        collections.sales.findOne.mockResolvedValue({
+          _id: FAKE_ID,
+          sales_id: 'S001',
+          branch_id: FAKE_BRANCH,
+          items: [],
+          footer_image: 'data:image/png;base64,old',
+          footer_image_caption: 'Old caption',
+        });
+        if (!collections.branches) collections.branches = mkCol();
+        collections.branches.findOne.mockResolvedValue({
+          _id: FAKE_BRANCH,
+          footer_image: image,
+          footer_image_caption: image ? 'Scan our shop' : '',
+        });
+        const result = await salesRepository.getLegacyDetails(FAKE_ID);
+        expect(result.status).toBe(true);
+        expect(result.data.footer_image).toBe(image);
+        expect(result.data.footer_image_caption).toBe(image ? 'Scan our shop' : '');
+      }
+    );
+
     test('returns error for invalid id', async () => {
       mongoose.Types.ObjectId.isValid.mockReturnValueOnce(false);
       const r = await salesRepository.getLegacyDetails('bad-id');

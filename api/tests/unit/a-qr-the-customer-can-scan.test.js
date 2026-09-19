@@ -106,6 +106,17 @@ describe('an uploaded picture', () => {
     expect(made.footer_image).toBe(png);
   });
 
+  it('survives reopening settings and saving again without re-uploading the image', async () => {
+    const png = 'data:image/png;base64,iVBORw0KGgo=';
+    const saved = await resolveFooterImage({ footer_image: png, footer_qr_url: '' }, {});
+    const again = await resolveFooterImage(
+      { footer_qr_url: '', footer_image_caption: 'Scan our shop' },
+      saved
+    );
+    expect(again).toBeNull();
+    expect(saved.footer_image).toBe(png);
+  });
+
   it('and clears the address, so only one of them can win', async () => {
     /* Keeping both would mean deciding which prints, and that question has no
        good answer a shop would guess correctly. */

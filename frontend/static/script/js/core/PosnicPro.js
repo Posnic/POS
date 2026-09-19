@@ -391,38 +391,14 @@ PosnicPro = {
     },
     /* Common request for all outgoing server calls */
     requestImage: function (method, params, data, type, callback) {
-        let url = API_URL + params;
-        // JWT Token support for Electron cross-origin requests
-        var headers = {};
-        if (navigator.userAgent.indexOf('Electron') !== -1) {
-            const token = localStorage.getItem('posnic_jwt_token');
-            if (token) {
-                headers['Authorization'] = 'Bearer ' + token;
-                console.log('✅ JWT added to PosnicPro.requestImage:', url.substring(0, 50) + '...');
-            } else {
-                console.log('❌ No JWT for PosnicPro.requestImage:', url.substring(0, 50) + '...');
-            }
-        }
-        let request = $.ajax({
-            url: url,
+        // Keep multipart uploads on the same authentication and CSRF path as saves.
+        return PosnicPro.request({
+            url: params,
             method: method,
             data: data,
-            headers: headers,
-            xhrFields: {
-                withCredentials: true
-            },
             processData: type,
             contentType: type
-        });
-
-        request.done(function (data) {
-            callback(data);
-        });
-
-        request.fail(function (jqXHR, textStatus) {
-            PosnicPro.alert('error', PosnicPro.i18n.t('lang_request_faild', 'Request Faild!!.'));
-            return false;
-        });
+        }, callback);
     },
     setResponseData: function (fieldArray) {
         $.each(fieldArray, function (index, value) {
@@ -1703,7 +1679,10 @@ PosnicPro = {
     },
     /*For display item name last characters sholud be dot*/
     textOverflowPrintEllipsis: function (text, count, insertDots) {
-        return text.slice(0, count) + (((text.length > count) && insertDots) ? "..." : text);
+        text = String(text == null ? '' : text);
+        var limit = parseInt(count, 10);
+        if (!limit || limit < 0 || text.length <= limit) { return text; }
+        return text.slice(0, limit) + (insertDots ? '...' : '');
     },
     exportTableData: function (selectedTableRow, table) {
         // "Select all N" mode: export the whole filtered set, not the ticked
@@ -2994,8 +2973,8 @@ PosnicPro = {
     },
 
     /* The @page rule and the width the receipt body is held to. */
-    paperCss: function () {
-        var paper = PosnicPro.PAPER[PosnicPro.resolvePaperWidth()] || PosnicPro.PAPER['80'];
+    paperCss: function (width) {
+        var paper = PosnicPro.PAPER[width || PosnicPro.resolvePaperWidth()] || PosnicPro.PAPER['80'];
 
         if (paper.content === 'auto') {
             return '@page { size: ' + paper.css + '; margin: 8mm; }';
@@ -4348,8 +4327,9 @@ PosnicPro = {
         return arr.filter((item,
             index) => arr.indexOf(item) === index);
     },
-    toggleVisibility: function (key, className) {
-        (PosnicPro.local.get(key) === 'on') ? $(className).show() : $(className).hide();
+    toggleVisibility: function (key, className, root) {
+        var target = root ? root.find(className) : $(className);
+        (PosnicPro.local.get(key) === 'on') ? target.show() : target.hide();
     },
     importTableHeader: function (table) {
         var headersMap = {

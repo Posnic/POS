@@ -97,6 +97,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Receipts go as ESC/POS on the desktop: no page, no scaling, no driver
     // rendering. The browser keeps using print() above.
     printReceipt: (sale, options) => ipcRenderer.invoke('printer:print-receipt', sale, options),
+    previewReceipt: (sale, options) => ipcRenderer.invoke('printer:preview-receipt', sale, options),
     // Reports declare their sections; the main process decides how they fit
     // the paper. A4 reports keep going through the page path above.
     printReport: (doc, options) => ipcRenderer.invoke('printer:print-report', doc, options)

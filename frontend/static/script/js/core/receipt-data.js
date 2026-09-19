@@ -499,7 +499,7 @@ PosnicPro.receiptLogo = function (paperWidth) {
             storeEmail: textOf($root.find('.print_store_email')),
             gstin: textOf($root.find('.print_store_gst')).replace(/^GST(IN)?\s*:?\s*/i, ''),
 
-            title: textOf($root.find('.print-custom-title')) || textOf($root.find('.print-title')),
+            title: textOf($root.find('.print-title')) || textOf($root.find('.print-custom-title')),
             billNo: textOf($root.find('.print_view_id')),
             date: textOf($root.find('.print_date')),
             customer: customer,

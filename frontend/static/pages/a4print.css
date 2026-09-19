@@ -40,6 +40,16 @@
 }
 /*end*/
 
+/* Keep customized header text and the logo in normal flow. The stored
+   template's negative table margins otherwise place them on top of each other. */
+#receipt_wrapper .fullPadding > tbody > tr > td > table.col {
+    margin-top: 0 !important;
+}
+#receipt_wrapper .header-content,
+#receipt_wrapper .footer-content {
+    white-space: pre-line;
+}
+
 .print-deatils-size-family{
     font-size: 12px; 
     font-family: 'Open Sans', sans-serif;
