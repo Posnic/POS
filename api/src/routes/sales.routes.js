@@ -337,6 +337,13 @@ router.post(
 
 router.use(protect);
 
+router.post(
+  '/:id/kotPrint',
+  ensureValidSaleIdParam,
+  handleValidationErrors,
+  bindController(salesController.counterKotPrint)
+);
+
 // POST /api/sales - Create a new sale
 router.post(
   '/',

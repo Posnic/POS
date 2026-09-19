@@ -1091,6 +1091,21 @@ class SalesController extends BaseController {
     }
   }
 
+  async counterKotPrint(req, res, next) {
+    try {
+      if (!this.checkPermission('sales', 'read', req.user)) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED_VIEW_SALES, 403);
+      }
+      await this.ensureContext(req);
+      const printing = require('../repositories/counter-kot-print.repository');
+      const data = await printing.handle(req.params.id, req.body);
+      return this.success(res, data);
+    } catch (error) {
+      if (error.status) return this.error(res, error.message, error.status);
+      next(error);
+    }
+  }
+
   async getOne(req, res, next) {
     try {
       if (!this.checkPermission('sales', 'read', req.user)) {

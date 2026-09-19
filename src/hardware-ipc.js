@@ -821,6 +821,11 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     return await kotManager.reprint(logEntry);
   });
 
+  ipcMain.handle('kot:print-ticket', async (_event, sale) => {
+    if (!kotManager) return { success: false, error: 'KOT manager not initialized' };
+    return kotManager.printCounterTicket(sale);
+  });
+
   /*
    * Is Windows letting handsets reach this till?
    *

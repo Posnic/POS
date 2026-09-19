@@ -453,6 +453,7 @@ PosnicPro.kothistoryCancelConfirmed = function (id) {
                 PosnicPro.alert(res.type, res.message);
                 if (res.type === 'success') {
                     // Check if we're on KOT page (not KOT history page)
+                    if (PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(id);
                     var currentHash = window.location.hash;
                     if (currentHash.indexOf('#/kot') === 0 || currentHash.indexOf('#kot') === 0) {
                         // On KOT page, refresh data

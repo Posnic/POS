@@ -56,13 +56,13 @@ test('the cart stores the note, and never the dish description', () => {
 });
 
 test('the printed ticket reads the note field only', () => {
-  const kot = read('frontend/static/script/js/modules/js/kot.js');
+  const kot = read('frontend/static/script/js/core/kot-print.js');
 
-  const line = kot.split('\n').find((l) => l.includes('var descRaw'));
+  const line = kot.split('\n').find((l) => l.includes('var note ='));
   assert.ok(line, 'the ticket no longer renders a note; this test is reading nothing');
 
-  assert.match(line, /it\.item_description/, 'the ticket does not read the note');
-  assert.ok(!/it\.description|it\.item_desc\b/.test(line),
+  assert.match(line, /item\.item_description/, 'the ticket does not read the note');
+  assert.ok(!/item\.description|item\.item_desc\b/.test(line),
     'the ticket falls back to the catalogue description again: ' + line.trim());
 });
 

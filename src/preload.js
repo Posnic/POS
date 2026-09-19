@@ -174,6 +174,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openViaPrinter: (printerName, pin) => ipcRenderer.invoke('cashDrawer:open-via-printer', printerName, pin)
   },
   kot: {
+    printTicket: (sale) => ipcRenderer.invoke('kot:print-ticket', sale),
     getConfig:    () => ipcRenderer.invoke('kot:get-config'),
     startPolling: (config) => ipcRenderer.invoke('kot:start-polling', config),
     stopPolling:  () => ipcRenderer.invoke('kot:stop-polling'),

@@ -225,7 +225,7 @@ test('A CLAIM THAT CANNOT BE WRITTEN STILL PRINTS THE TICKET', async () => {
     if (name !== 'sales') return col;
     return new Proxy(col, {
       get(target, prop) {
-        if (prop === 'updateMany') {
+        if (prop === 'updateOne') {
           return () => Promise.reject(new Error('the disk is full'));
         }
         const value = target[prop];
