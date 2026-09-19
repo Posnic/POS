@@ -163,7 +163,7 @@
         var present = function (v) { return v !== undefined && v !== null && v !== false && String(v).trim() !== ''; };
         var gstNumber = [data.customer_gstin, data.customer_gstin_number, data.customer_gst_number].find(present);
         var taxNumber = present(gstNumber) ? gstNumber : data.customer_tax_number;
-        var fieldLabel = function (field) { return label({ customer_name: 'Name', customer_phone: 'Phone', customer_email: 'Email', customer_address: 'Address', customer_tax_number: present(gstNumber) ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID') }[field] || contract.fields[field]); };
+        var fieldLabel = function (field) { return label({ customer_name: 'Name', customer_phone: 'Phone', customer_email: 'Email', customer_address: 'Address', customer_tax_number: present(gstNumber) ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID'), fssai: 'FSSAI' }[field] || contract.fields[field]); };
         var beforePayment = preview || !data.sales_id;
         var documentTitle = beforePayment ? (present(data.branch_gstin_number) || on(data.gst) ? label('Tax invoice') : label('Bill')) : label('Receipt');
         var hasField = function (field) { return layout.blocks.some(function (b) { return b.type === 'field' && b.field === field; }); };
@@ -184,7 +184,7 @@
                 if (data.store_telephone) content += '<p>' + esc(data.store_telephone) + '</p>';
                 if (data.store_email) content += '<p>' + esc(data.store_email) + '</p>';
                 if (data.branch_gstin_number) content += '<p>GSTIN: ' + esc(data.branch_gstin_number) + '</p>';
-                if (on(data.table_options) && present(data.branch_fssai_number) && !hasField('fssai')) content += '<p>' + esc(label('FSSAI licence number')) + ': ' + esc(String(data.branch_fssai_number).trim()) + '</p>';
+                if (on(data.table_options) && present(data.branch_fssai_number) && !hasField('fssai')) content += '<p>' + esc(fieldLabel('fssai')) + ': ' + esc(String(data.branch_fssai_number).trim()) + '</p>';
                 content += '</div>';
             } else if (b.type === 'transaction') {
                 if (sheet) {
