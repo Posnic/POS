@@ -2126,10 +2126,6 @@ if ($wrapper.length) {
        its own act ("Module switches saved") instead of the generic server
        line, which reads the same from four different screens. */
     updateCommonSetting: function (successLabel) {
-        if ($('#core-tab-print').hasClass('active') && PosnicPro.receiptDesignerEditor) {
-            PosnicPro.receiptDesignerEditor.save();
-            return;
-        }
         var loader = $(".loader-view-mystore");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var taxDetail = $("#tax_percentage").select2("data");
@@ -4865,6 +4861,12 @@ jQuery.validator.addMethod("lettersonly", function (value, element) {
 }, "Use letters only");
 $("#tax_discount_add").submit(function (event) {
     event.preventDefault();
+    // Only this form owns the selected Core Settings tab. Other pages share
+    // updateCommonSetting, and the hidden Receipt Print tab stays active.
+    if ($('#core-tab-print').hasClass('active') && PosnicPro.receiptDesignerEditor) {
+        PosnicPro.receiptDesignerEditor.save();
+        return;
+    }
     if ($('#tax_discount_add').valid()) {            // checks form for validity
         PosnicPro.settings.updateCommonSetting('Core Settings saved');
     }
