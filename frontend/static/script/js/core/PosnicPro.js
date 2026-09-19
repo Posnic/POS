@@ -3431,7 +3431,7 @@ PosnicPro = {
         });
     },
     printView: function (contents, image) {
-        var designMatch = String(contents).match(/data-receipt-design="(58|80|a4|letter)"/);
+        var designMatch = String(contents).match(/data-receipt-design="(58|80|a4|a5|letter)"/);
         if (designMatch && PosnicPro.receiptDesigner) return PosnicPro.receiptDesigner.print(contents, designMatch[1]);
         var assetBase = new URL(PosnicPro.baseUrl || '.', document.baseURI).href;
         // Electron: silent print via ipc (window.electronAPI.printer.print)

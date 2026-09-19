@@ -169,7 +169,7 @@
         var controls = {};
         ['printall', 'bill_print_copies', 'branch_fssai_number'].forEach(function (id) { controls[id] = $('#' + id).closest('.form-group').detach(); });
         if (observer) observer.disconnect();
-        design = data.receipt_designs ? engine.copy(data.receipt_designs) : engine.defaults(data);
+        design = data.receipt_designs ? schema.normalize(data.receipt_designs) : engine.defaults(data);
         saved = editableState(design); format = design.defaultFormat; selected = null; undo = [];
         box.html('<div class="rd-topbar"><div><h3>' + esc(t('Receipt designer')) + '</h3><p>' + esc(t('Create a distinct layout for every paper format.')) + '</p></div><div class="rd-save-area"><span class="rd-status" role="status">' + esc(t(data.receipt_designs ? PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved') : PosnicPro.i18n.t('lang_rd_starting_from_your_current_receipt_settings', 'Starting from your current receipt settings'))) + '</span><button type="button" class="btn btn-primary" data-action="save">' + esc(t('Save designs')) + '</button></div></div>' +
             '<div class="rd-formats" role="group" aria-label="' + esc(t('Edit paper format')) + '">' + Object.keys(schema.formats).map(function (f) { return '<button type="button" data-format="' + f + '"><i class="feather icon-' + (schema.formats[f].height ? 'file-text' : 'printer') + '"></i>' + esc(t(schema.formats[f].name)) + '<small>' + esc(schema.formats[f].height ? schema.formats[f].width + ' × ' + schema.formats[f].height + ' mm' : t('Receipt roll')) + '</small></button>'; }).join('') + '</div>' +

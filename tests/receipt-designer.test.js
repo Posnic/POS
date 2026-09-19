@@ -21,7 +21,7 @@ function setup() {
         items: [{ item_name: 'Cup <em>large</em>', item_price: 12, item_quantity: 2, item_unit: 'ea', total_amount: 24 }], items_subtotal: 24, items_total: 26, tax: 2 };
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
 }
-test('four independent layouts migrate existing content and use different paper geometry', () => {
+test('five independent layouts migrate existing content and use different paper geometry', () => {
     const { dom, engine, design, sale, $ } = setup();
     for (const format of Object.keys(contract.formats)) {
         const output = $('<div>').html(engine.render(sale, format, false));
@@ -103,12 +103,68 @@ test('desktop printing refreshes the selected printer and never guesses the kitc
     assert.equal(sent.printerName, 'Counter');
     assert.equal(sent.pageSize, '58mm');
     assert.equal(sent.fitReceipt, true);
+    await engine.print('<article>Invoice</article>', 'a5');
+    assert.equal(sent.pageSize, 'a5');
+    assert.equal(sent.fitReceipt, false, 'A5 keeps its sheet height');
     sent = null;
     w.PosnicPro.syncPrinterPreferences = async () => { name = null; };
     w.PosnicPro._kitchenPrinters = ['kitchen'];
     await engine.print('<article>Receipt</article>', '80');
     assert.equal(sent, null);
     assert.match(error, /Choose a receipt printer/);
+    dom.window.close();
+});
+
+test('four-format saved designs gain an independent A5 layout without losing their settings', async () => {
+    const { dom, w, $, branch, design, engine } = setup();
+    delete design.layouts.a5;
+    design.layouts.a4.blocks.push(engine.block('text', { text: 'Existing invoice terms' }));
+    const original = JSON.stringify(design);
+    const expanded = await resolveReceiptDesign(JSON.parse(original));
+    assert.equal(JSON.stringify(design), original, 'Reading never mutates the saved design');
+    assert.equal(expanded.defaultFormat, '80');
+    assert.equal(expanded.layouts.a5.fontSize, 11);
+    assert.equal(expanded.layouts.a5.blocks.at(-1).text, 'Existing invoice terms');
+    assert.notEqual(expanded.layouts.a5.blocks, expanded.layouts.a4.blocks);
+    let saved;
+    w.PosnicPro.put = (req, done) => { saved = JSON.parse(req.data).receipt_designs; done({ type: 'success', data: { receipt_designs: saved } }); };
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: JSON.parse(original) });
+    $('[data-format="a5"]').trigger('click');
+    $('[data-add="text"]').trigger('click');
+    $('#rd-block-text').val('A5 only').trigger('input');
+    $('#rd-default-format').val('a5').trigger('change');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(saved.defaultFormat, 'a5');
+    assert.equal(saved.layouts.a5.blocks.at(-1).text, 'A5 only');
+    assert.equal(saved.layouts.a4.blocks.at(-1).text, 'Existing invoice terms');
+    const reloaded = await resolveReceiptDesign(saved);
+    assert.equal(reloaded.layouts.a5.blocks.at(-1).text, 'A5 only');
+    assert.deepEqual(await resolveReceiptDesign(reloaded), reloaded);
+    dom.window.close();
+});
+
+test('A5 tender and print dispatch use sheet geometry and the chosen A5 design', () => {
+    const { dom, w, $, engine, sale } = setup();
+    w.eval(read('frontend/static/script/js/core/tender-receipt.js'));
+    const preview = w.PosnicPro.tenderReceipt;
+    const html = preview.documentFor(sale, sale, 'a5');
+    assert.match(html, /size:148mm 210mm/);
+    assert.match(html, /width:124mm/);
+    const box = $('<div>').css('width', '800px').appendTo('body');
+    preview.mount(box, html, '', 'a5');
+    const srcdoc = box.find('iframe').attr('srcdoc');
+    assert.match(srcdoc, /width:559px;padding:12mm/);
+    assert.match(srcdoc, /data-receipt-design="a5"/);
+    assert.equal($('<div>').html(html).find('th').length, 4);
+    const core = read('frontend/static/script/js/core/PosnicPro.js').replace(/\r\n/g, '\n');
+    const start = core.indexOf('    printView: function');
+    const end = core.indexOf('\n    },', start);
+    w.eval('PosnicPro.printView = ' + core.slice(core.indexOf('function', start), end + 6) + ';');
+    let sent;
+    engine.print = (document, format) => { sent = { document, format }; };
+    w.PosnicPro.printView(html, '');
+    assert.equal(sent.format, 'a5');
+    assert.equal(sent.document, html);
     dom.window.close();
 });
 

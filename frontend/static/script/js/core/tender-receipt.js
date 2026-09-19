@@ -133,9 +133,9 @@
     }
 
     function mount(box, html, css, layout) {
-        var a4 = layout === 'a4' || layout === 'letter';
+        var sheet = layout === 'a4' || layout === 'a5' || layout === 'letter';
         var designed = html.indexOf('data-receipt-design=') !== -1;
-        var width = a4 ? (layout === 'letter' ? 816 : 794) : (layout === '58' ? 182 : 273);
+        var width = sheet ? (layout === 'letter' ? 816 : layout === 'a5' ? 559 : 794) : (layout === '58' ? 182 : 273);
         var frame = $('<iframe class="tender-receipt-frame" title="Sale print preview" data-t-title="lang_sale_print_preview" sandbox="allow-same-origin" scrolling="no">');
         var paper = $('<div class="tender-receipt-paper">').append(frame);
         var fit = function () {
@@ -155,11 +155,11 @@
             $(frame[0].contentDocument).find('img').on('load error', fit);
         });
         var esc = PosnicPro.escapeHtml;
-        var paperCss = a4 || designed ? '' : PosnicPro.paperCss(layout);
+        var paperCss = sheet || designed ? '' : PosnicPro.paperCss(layout);
         frame.attr('srcdoc', '<!doctype html><html><head><meta charset="utf-8"><base href="' + esc(assetBase()) + '">' +
             '<style>' + css + '\n' + paperCss + '\nhtml,body{background:#fff;color:#000;overflow:hidden!important;}' +
             'body{margin:0!important;display:flow-root;}a{pointer-events:none;}' +
-            (a4 ? 'body{box-sizing:border-box;width:' + width + 'px;padding:45px!important;}' : '') +
+            (sheet ? 'body{box-sizing:border-box;width:' + width + 'px;padding:12mm!important;}' : '') +
             '</style></head><body>' + html + '</body></html>');
         box.empty().append(paper);
     }

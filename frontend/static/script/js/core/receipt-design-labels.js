@@ -4,6 +4,7 @@ PosnicPro.receiptDesignLabel = function (value) {
     case "58 mm thermal": return PosnicPro.i18n.t('lang_rd_58_mm_thermal', '58 mm thermal');
     case "80 mm thermal": return PosnicPro.i18n.t('lang_rd_80_mm_thermal', '80 mm thermal');
     case "A4": return PosnicPro.i18n.t('lang_rd_a4', 'A4');
+    case "A5": return PosnicPro.i18n.t('lang_rd_a5', 'A5');
     case "Add a block": return PosnicPro.i18n.t('lang_rd_add_a_block', 'Add a block');
     case "Alignment": return PosnicPro.i18n.t('lang_rd_alignment', 'Alignment');
     case "All designs saved": return PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved');

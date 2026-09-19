@@ -9,6 +9,7 @@
     58: { name: '58 mm thermal', width: 58, content: 48, font: 10 },
     80: { name: '80 mm thermal', width: 80, content: 72, font: 12 },
     a4: { name: 'A4', width: 210, height: 297, content: 186, font: 12 },
+    a5: { name: 'A5', width: 148, height: 210, content: 124, font: 11 },
     letter: { name: 'US Letter', width: 215.9, height: 279.4, content: 191.9, font: 12 },
   };
   const fields = {
@@ -49,6 +50,18 @@
       /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value)
     );
   }
+  function layoutFor(value, format) {
+    const layout = value.layouts[format];
+    // Designs saved before A5 shipped keep their A4 content as an independent
+    // starting point, with text sized for the smaller sheet. Nothing is mutated.
+    if (format === 'a5' && layout === undefined && Array.isArray(value.layouts.a4?.blocks)) {
+      return {
+        fontSize: formats.a5.font,
+        blocks: JSON.parse(JSON.stringify(value.layouts.a4.blocks)),
+      };
+    }
+    return layout;
+  }
   function normalize(value) {
     if (
       !value ||
@@ -61,7 +74,7 @@
       throw new Error('Receipt images are too large. Use smaller images.');
     const out = { version: 1, defaultFormat: value.defaultFormat, layouts: {} };
     Object.keys(formats).forEach(function (format) {
-      const layout = value.layouts[format];
+      const layout = layoutFor(value, format);
       if (!layout || !Array.isArray(layout.blocks) || layout.blocks.length > 40)
         throw new Error('Each design must have at most 40 blocks.');
       const size = Number(layout.fontSize);
@@ -129,5 +142,6 @@
     required: required,
     image: image,
     normalize: normalize,
+    layoutFor: layoutFor,
   };
 });

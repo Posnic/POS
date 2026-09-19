@@ -50,7 +50,7 @@
     }
     function formatFor(data, requested) {
         if (!data.receipt_designs) return requested;
-        if (requested === 'a4' || requested === 'letter') return requested;
+        if (requested === 'a4' || requested === 'a5' || requested === 'letter') return requested;
         if (requested === '58' || requested === '80') return requested;
         if (requested === 'standard') return PosnicPro.resolvePaperWidth() === '58' ? '58' : '80';
         return data.receipt_designs.defaultFormat;
@@ -78,7 +78,7 @@
     function render(data, format, preview) {
         var designs = data.receipt_designs;
         format = formatFor(data, format);
-        var layout = designs.layouts[format];
+        var layout = contract.layoutFor(designs, format);
         var sheet = !!contract.formats[format].height;
         var currency = (typeof data.currency_type === 'string' ? data.currency_type : '') || PosnicPro.local.get('currencySign') || '';
         var money = function (v) { return esc(currency) + ' ' + esc(Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })); };

@@ -9,7 +9,7 @@
 .rd-save-area { display: flex; align-items: center; gap: 16px; }
 .rd-status { font-size: 12px; color: #66758b; max-width: 260px; }
 .rd-status.rd-error { color: #b42318; }
-.rd-formats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.rd-formats { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px; margin-bottom: 16px; }
 .rd-formats button { text-align: left; padding: 14px 16px; background: #fff; border: 1px solid var(--rd-border); border-radius: 8px; color: var(--rd-ink); cursor: pointer; font-weight: 600!important; }
 .rd-formats button i { margin-right: 9px; }
 .rd-formats button small { display: block; margin: 5px 0 0 24px; font-weight: 400; color: #6c7a90; }

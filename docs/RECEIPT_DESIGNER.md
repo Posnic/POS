@@ -1,7 +1,7 @@
 # Receipt designer
 
 Open **Core Settings → Receipt Print**. Each paper format has its own saved
-layout: 58 mm thermal, 80 mm thermal, A4 and US Letter. Switching the editor tab
+layout: 58 mm thermal, 80 mm thermal, A4, A5 and US Letter. Switching the editor tab
 does not change the default receipt format. Choose the default separately.
 
 Add text, sale fields, QR codes, images, the branch logo, receipt barcodes or
@@ -21,9 +21,11 @@ WebP files up to 5 MB and are resized before saving. The store logo comes from
 Branches / Outlet. Dynamic fields with no value are omitted. Restaurant fields
 are offered and printed only while Restaurant is enabled.
 
-Save designs stores all four layouts for the current branch. The initial
+Save designs stores all five layouts for the current branch. The initial
 layouts import the existing logo, customer settings, header, footer and QR.
 Existing receipt templates remain active until the designs are first saved.
+For an existing four-format design, A5 starts with a copy of the A4 content
+and an 11 px font on a 148 × 210 mm sheet. Editing it does not change A4.
 The saved designer applies to sale receipts and their pre-payment preview;
 returns, purchase documents and queued floor bills retain their existing paths.
 
