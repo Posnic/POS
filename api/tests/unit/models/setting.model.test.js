@@ -809,6 +809,64 @@ describe('updateCommonSettings', () => {
     return calls[calls.length - 1][1].$set;
   };
 
+  test('an uploaded QR survives repeated settings saves and still reaches the bill', async () => {
+    const { buildBillPayload } = require('../../../src/helpers/bill-payload');
+    const branch = {};
+    const png = 'data:image/png;base64,iVBORw0KGgo=';
+    col.findOne.mockImplementation(async () => ({ ...branch }));
+    col.updateOne.mockImplementation(async (_filter, update) => {
+      Object.assign(branch, update.$set);
+      return { matchedCount: 1, modifiedCount: 1 };
+    });
+    const saved = await m.updateCommonSettings({ footer_image: png, footer_qr_url: '' });
+    expect(saved.status).toBe(true);
+    expect(branch.footer_image).toBe(png);
+
+    for (let count = 0; count < 3; count++) {
+      // Reopening loads the saved address. The form sends no unchanged image.
+      const reopened = await col.findOne();
+      const result = await m.updateCommonSettings({
+        footer_qr_url: reopened.footer_qr_url,
+        footer_image_caption: 'Scan our shop',
+      });
+      expect(result.status).toBe(true);
+      expect(setOf(col)).not.toHaveProperty('footer_image');
+      expect(buildBillPayload({}, branch).footerImage).toEqual({ src: png });
+      expect(buildBillPayload({}, branch).footerImageCaption).toBe('Scan our shop');
+    }
+
+    const removed = await m.updateCommonSettings({ footer_image: '', footer_qr_url: '' });
+    expect(removed.status).toBe(true);
+    expect(buildBillPayload({}, branch).footerImage).toBeNull();
+  });
+
+  test('leaving a footer unchanged preserves both its picture and the QR source', async () => {
+    const current = {
+      footer_image: 'data:image/png;base64,AAAA',
+      footer_qr_url: 'https://example.com/shop',
+    };
+    col.findOne.mockResolvedValue(current);
+    await m.updateCommonSettings({ footer_qr_url: current.footer_qr_url });
+    expect(setOf(col)).not.toHaveProperty('footer_image');
+    expect(setOf(col)).not.toHaveProperty('footer_qr_url');
+    await m.updateCommonSettings({ footer_qr_url: '' });
+    expect(setOf(col)).not.toHaveProperty('footer_image');
+    expect(setOf(col)).not.toHaveProperty('footer_qr_url');
+  });
+
+  test('failed QR generation cannot replace the stored source while keeping the old picture', async () => {
+    const resolver = jest
+      .spyOn(require('../../../src/helpers/footer-qr'), 'resolveFooterImage')
+      .mockResolvedValueOnce(null);
+    try {
+      await m.updateCommonSettings({ footer_qr_url: 'https://example.com/changed' });
+      expect(setOf(col)).not.toHaveProperty('footer_image');
+      expect(setOf(col)).not.toHaveProperty('footer_qr_url');
+    } finally {
+      resolver.mockRestore();
+    }
+  });
+
   test('a signature-only save writes the signature and nothing else', async () => {
     m.user.access = { plan: { read: true } };
     await m.updateCommonSettings({ quote_default_signature: 'data:image/png;base64,AAA' });

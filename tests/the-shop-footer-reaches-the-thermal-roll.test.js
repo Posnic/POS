@@ -326,29 +326,8 @@ test('the brand URL is spelled once, not once per print path', () => {
   }
 });
 
-test('the preview reads the same slot the paper does', () => {
-  /*
-   * The preview is the half of the report that a shop sees BEFORE committing
-   * paper, and it hard-coded its own thanks line while reading nothing. It
-   * cannot be driven here without the whole sale screen, so this pins the two
-   * things that made it wrong: it reads .footer-content, and the canned line
-   * is reached only when nothing was written.
-   */
-  const sales = read('frontend', 'static', 'script', 'js', 'modules', 'js', 'sales.js');
-  const at = sales.indexOf('var footerHtml = footerLines.length');
-  assert.ok(at > -1, 'the preview no longer builds a footer from the shop');
-
-  const gather = sales.slice(at - 900, at);
-  assert.ok(gather.includes(".find") || gather.includes("'.footer-content'"), 'the preview stopped reading .footer-content');
-  assert.ok(
-    sales.indexOf('lang_thank_you_visit_again', at) > at,
-    'the canned line is no longer the fallback branch'
-  );
-  assert.ok(
-    !sales.slice(at).includes("'<div class=\"rp-thanks\"><lang class=\"lang_thank_you_visit_again\">Thank you, visit again</lang></div>' +"),
-    'the preview still appends the canned line unconditionally'
-  );
-});
+// The tender preview now uses the saved template and shared sale renderer.
+// Its footer and branding are exercised in tender-receipt-preview.test.js.
 
 /* ------------------------------------------- what the shop said, in its own
  *                                                        letters and symbols

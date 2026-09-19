@@ -1016,9 +1016,56 @@ PosnicPro.sales.view = {
             }
             if (response.type === 'success') {
                 var data = response.data;
+                PosnicPro.record_id = id;
+                PosnicPro.sales.view.renderSaleDocument(data, name, isKotHistoryPrint);
+
+                var contents = $(".print-modal-body").html();
+                var contentone = $(".print-modal-a4-body").html();
+                var canvas = document.getElementById("canvasTarget");
+                var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
+
+                PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
+                // one print only - the next follows the shop setting again
+                PosnicPro._printTypeOverride = null;
+                PosnicPro.sales.view._layoutOverride = null;
+
+                $('.invoice-table-content div').empty();
+            } else {
+                PosnicPro.alert(response.type, response.message);
+                PosnicPro._printTypeOverride = null;
+                PosnicPro.sales.view._layoutOverride = null;
+            }
+        }, function (xhr) {
+            /* There was no error handler here at all, so a dropped request
+               left the paper choice set and the NEXT receipt printed on the
+               wrong stock with nothing to explain it. */
+            PosnicPro._printTypeOverride = null;
+            PosnicPro.sales.view._layoutOverride = null;
+            if (PosnicPro.alert) {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_reach_the_server_to_print_this_r', 'Could not reach the server to print this receipt - try again.'));
+            }
+            console.error('[print] sales/' + id + ' request failed:', xhr && xhr.status);
+        });
+    },
+    /* Shared by printing and the unsaved sale preview. A detached root keeps
+     * preview rendering away from the cart, print modals and payment state. */
+    renderSaleDocument: function (data, name, isKotHistoryPrint, root, layout) {
+        var $ = jQuery;
+        if (root) {
+            $ = function (selector) {
+                return typeof selector === 'string' && selector.charAt(0) !== '<'
+                    ? root.find(selector) : jQuery(selector);
+            };
+            jQuery.extend($, jQuery);
+        }
+        var isA4Layout = layout ? layout === 'a4' : PosnicPro.sales.view._isA4();
+        var $printContainer = isA4Layout ? $('.print-modal-a4-body') : $('.print-modal-body');
+        $('.header-content, .footer-content').css('white-space', 'pre-line');
+        $('.Hide-Disc').show();
+        $('.gst-text-value,.print_igst_tax_view,.cgst-text-value,.print_csgst_tax_view').empty();
                 var isKotPrint = !!isKotHistoryPrint;
                 $('#receipt_wrapper').removeClass('receipt_small receipt_medium receipt_large receipt_extra_large');
-                let print_size = PosnicPro.local.get('printing_size');
+                let print_size = data.printing_size || PosnicPro.local.get('printing_size');
                 $('#receipt_wrapper').addClass(print_size);
                 $('.print_store_address').html(data.printing_address);
                 var branchGstin = (data.branch_gstin_number || '').toString().trim();
@@ -1049,12 +1096,10 @@ PosnicPro.sales.view = {
                         }
                     }
                 }
-                PosnicPro.record_id = $(id).data('id');
                 var currency = PosnicPro.local.get('currencySign');
                 $('.tax-print-hideshow,.amount-print-hideshow,.print-payment-status-hide').hide();
 
                 // Determine whether current print is A4 or thermal (standard) layout
-                var isA4Layout = PosnicPro.sales.view._isA4();
 
                 // Reset thermal-only partial payment rows on every print
                 $('.thermal-partial-row').hide();
@@ -1278,7 +1323,7 @@ PosnicPro.sales.view = {
                     }
 
                     // Mark the payment block row so it can be styled (centered with lines)
-                    var $printContainer = PosnicPro.sales.view._isA4()
+                    var $printContainer = isA4Layout
                         ? $(".print-modal-a4-body")
                         : $(".print-modal-body");
                     var $paymentRow = $printContainer.find('.print-invoice-payment-mode').closest('.row');
@@ -1322,21 +1367,21 @@ PosnicPro.sales.view = {
                  * also headed TAX INVOICE rather than Sales Receipt, which is
                  * the wording the law expects.
                  */
-                var _isInvoice = PosnicPro.sales.view._isA4();
+                var _isInvoice = isA4Layout;
                 var _hasCustomer = $.trim(data.customer_name || '') !== '';
                 $('.hide_customer_details').hide();
                 if (data.customer_print === true || (_isInvoice && _hasCustomer)) {
                     $('.hide_customer_details').show();
                     $('.print-custom-title').html(_isInvoice ? PosnicPro.i18n.t('lang_bill_to_2', 'Bill To') : PosnicPro.i18n.t('lang_pending_customer_detail', 'Customer Details'));
-                    $('.print-name').html(data.customer_name);
-                    $('.print-phone').html(data.customer_phone);
-                    $('.print-email').html(data.customer_email);
-                    $('.print-address').html(data.customer_address);
+                    $('.print-name').text(data.customer_name || '');
+                    $('.print-phone').text(data.customer_phone || '');
+                    $('.print-email').text(data.customer_email || '');
+                    $('.print-address').text(data.customer_address || '');
                 }
 
 
                 // Thermal & A4 print: show table number, order type and payment status with conditional hide
-                var isA4Print = PosnicPro.sales.view._isA4();
+                var isA4Print = isA4Layout;
                 var tableNumber = (data.table_number || '').toString().trim();
                 var orderType = (data.dine_type || '').toString().trim();
                 var paymentStatus = (typeof (data.payment_status) === 'undefined' || data.payment_status === null)
@@ -1396,7 +1441,7 @@ PosnicPro.sales.view = {
                 let sales_description = data.sales_description;
                 if (data.print_sale_notes === true && $.trim(sales_description).length !== 0) {
                     $('.print-sale-notes-hide').show();
-                    $('.print-sale-notes').html(sales_description);
+                    $('.print-sale-notes').text(sales_description).css('white-space', 'pre-line');
                 } else {
                     $('.print-sale-notes-hide').hide();
                 }
@@ -1432,7 +1477,7 @@ PosnicPro.sales.view = {
                     }
 
                     $(".branch_image").css("display", "block");
-                    $('#printlogoimage img').attr('src', logoPath);
+                    $('.printlogoimage img, #printlogoimage img').attr('src', logoPath);
                 } else {
                     $(".branch_image").css("display", "none");
                 }
@@ -1443,7 +1488,7 @@ PosnicPro.sales.view = {
                     $('.heading-tax-name').hide();
                     $('.tax_print_hide').hide();
                 }
-                PosnicPro.printBarcode();
+                if (!root) { PosnicPro.printBarcode(); }
                 var length = data.items.length;
                 var length_return = data.items_return.length;
                 var itemTotalQty = 0;
@@ -1464,8 +1509,8 @@ PosnicPro.sales.view = {
                  * Swept first so a reprint cannot stack two of them.
                  */
                 $('.receipt-footer-image').remove();
-                var _fimg = PosnicPro.local.get('footer_image') || '';
-                var _fcap = PosnicPro.local.get('footer_image_caption') || '';
+                var _fimg = data.footer_image !== undefined ? data.footer_image : (PosnicPro.local.get('footer_image') || '');
+                var _fcap = data.footer_image_caption !== undefined ? data.footer_image_caption : (PosnicPro.local.get('footer_image_caption') || '');
                 if (_fimg && name === 'sale') {
                     var _capHtml = _fcap
                         ? '<div class="footer-image-caption">'
@@ -1525,8 +1570,8 @@ PosnicPro.sales.view = {
                         + PosnicPro.escapeHtml(docTitle) + '</span>'
                     );
                     $('.print_date').text(data.created_date);
-                    if (PosnicPro.sales.view._isA4()) {
-                        var rowHTMLTaxLine;
+                    if (isA4Layout) {
+                        var rowHTMLTaxLine = '';
                         var igst = 0;
                         var cgst = 0;
                         var taxText = [];
@@ -1571,7 +1616,7 @@ PosnicPro.sales.view = {
                             let item_unit = (typeof (data.items[i].item_unit) !== "undefined" && data.items[i].item_unit !== null) ? data.items[i].item_unit : 'qty';
                             itemTotalQty += data.items[i].item_quantity;
                             let hsn = (data.items[i].tax_fields.length === 0 && data.items[i].tax > 0) ? data.items[i].tax_name : '--';
-                            let rowHTMLLine = '<tr><td height="1" colspan="7" style="border:1px solid #e4e4e4"></td></tr><tr><td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.textOverflowPrintEllipsis(data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true) + '</td>' +
+                            let rowHTMLLine = '<tr><td height="1" colspan="7" style="border:1px solid #e4e4e4"></td></tr><tr><td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.escapeHtml(PosnicPro.textOverflowPrintEllipsis(data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true)) + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_hsn" style="color: #646a6e;">' + hsn + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_price" style="color: #646a6e;" align="center">' + price.toFixed(2) + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_qty" style="color: #646a6e;" align="center">' + PosnicPro.formatQuantity(data.items[i].item_quantity, item_unit) + ' ' + item_unit + ' </td>' +
@@ -1669,7 +1714,7 @@ PosnicPro.sales.view = {
                             taxCgstText.push(tax / 2 + '% &nbsp;');
                             let item_unit = (typeof (data.items[i].item_unit) !== "undefined" && data.items[i].item_unit !== null) ? data.items[i].item_unit : 'qty';
                             itemTotalQty += data.items[i].item_quantity;
-                            let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.textOverflowPrintEllipsis(data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true) + '</div></div></div>' +
+                            let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.escapeHtml(PosnicPro.textOverflowPrintEllipsis(data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true)) + '</div></div></div>' +
                                 '<div class="col-md-3 col-sm-3 col-xs-3 gift_receipt_element"><div class="invoice-content item-qty text-left">' + PosnicPro.formatQuantity(data.items[i].item_quantity, item_unit) + ' ' + item_unit + '</div></div>' +
                                 '<div class="col-md-4 col-sm-4 col-xs-4 gift_receipt_element"><div class="invoice-content item-total pull-right ">' + currency + '&nbsp;<span class="number">' + price * data.items[i].item_quantity + '</span></div></div></div>';
 
@@ -1742,8 +1787,8 @@ PosnicPro.sales.view = {
                     $('.print-payment-status-hide').hide();
                     $('.print-title').html(PosnicPro.local.get('sale_return_title'));
                     $('.print_date').text(data.updated_date);
-                    if (PosnicPro.sales.view._isA4()) {
-                        var rowHTMLTaxLine;
+                    if (isA4Layout) {
+                        var rowHTMLTaxLine = '';
                         var igst = 0;
                         var cgst = 0;
                         var taxText = [];
@@ -1913,14 +1958,14 @@ PosnicPro.sales.view = {
                     }
                 }
 
-                PosnicPro.toggleVisibility('lineitem_hsn', '.lineitem_hsn');
-                PosnicPro.toggleVisibility('lineitem_price', '.lineitem_price');
-                PosnicPro.toggleVisibility('lineitem_qty', '.lineitem_qty');
-                PosnicPro.toggleVisibility('lineitem_disc', '.lineitem_disc');
-                PosnicPro.toggleVisibility('lineitem_tax', '.lineitem_tax');
-                PosnicPro.toggleVisibility('lineitem_total', '.lineitem_total');
-                PosnicPro.toggleVisibility('print_qty', '.print_qty');
-                PosnicPro.toggleVisibility('print_roundoff', '.print_roundoff');
+                PosnicPro.toggleVisibility('lineitem_hsn', '.lineitem_hsn', root);
+                PosnicPro.toggleVisibility('lineitem_price', '.lineitem_price', root);
+                PosnicPro.toggleVisibility('lineitem_qty', '.lineitem_qty', root);
+                PosnicPro.toggleVisibility('lineitem_disc', '.lineitem_disc', root);
+                PosnicPro.toggleVisibility('lineitem_tax', '.lineitem_tax', root);
+                PosnicPro.toggleVisibility('lineitem_total', '.lineitem_total', root);
+                PosnicPro.toggleVisibility('print_qty', '.print_qty', root);
+                PosnicPro.toggleVisibility('print_roundoff', '.print_roundoff', root);
 
                 $('.taxgst_print_hide,.tax_print_hide').hide();
                 $('#tax_print_hide').hide();
@@ -1945,7 +1990,7 @@ PosnicPro.sales.view = {
                     }
                 } else {
                     $('.indian-gstr').hide();
-                    if (PosnicPro.sales.view._isA4()) {
+                    if (isA4Layout) {
                         if (parseFloat(itemTotalTax) > 0) {
                             $('.tax_print_hide').show();
                             $('#tax_print_hide').show();
@@ -1962,7 +2007,7 @@ PosnicPro.sales.view = {
 
                 // KOT History prints: temporarily hide plain 'Payment' / 'Payment Status' labels.
                 // Non-KOT prints: always restore these labels so Sales/Settlement prints are unaffected.
-                var $printContainer = PosnicPro.sales.view._isA4()
+                var $printContainer = isA4Layout
                     ? $(".print-modal-a4-body")
                     : $(".print-modal-body");
 
@@ -1990,11 +2035,11 @@ PosnicPro.sales.view = {
                  * Swept first so a reprint cannot stack them.
                  */
                 $('.a4-invoice-extras').remove();
-                if (PosnicPro.sales.view._isA4() && name === 'sale') {
+                if (isA4Layout && name === 'sale') {
                     var _escX = function (v) { return $('<i>').text(v == null ? '' : v).html(); };
                     var _gstShop = !!branchGstin || PosnicPro.local.get('gst_action') === 'enable';
-                    var _terms = $.trim(PosnicPro.local.get('invoice_terms') || '');
-                    var _sig = $.trim(PosnicPro.local.get('quotesignature') || '');
+                    var _terms = $.trim(data.invoice_terms !== undefined ? data.invoice_terms : (PosnicPro.local.get('invoice_terms') || ''));
+                    var _sig = $.trim(data.quote_default_signature !== undefined ? data.quote_default_signature : (PosnicPro.local.get('quotesignature') || ''));
                     var _x = '<div class="a4-invoice-extras" style="margin-top:18px; font-size:12px; color:#5b5b5b;">';
                     if (_gstShop) {
                         _x += '<div style="padding:6px 0; border-top:1px solid #d8d8d8;"><b><lang class="lang_amount_in_words">Amount in words:</lang></b> '
@@ -2011,33 +2056,6 @@ PosnicPro.sales.view = {
                     $('.print-modal-a4-body').append(_x);
                 }
 
-                var contents = $(".print-modal-body").html();
-                var contentone = $(".print-modal-a4-body").html();
-                var canvas = document.getElementById("canvasTarget");
-                var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
-
-                PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
-                // one print only - the next follows the shop setting again
-                PosnicPro._printTypeOverride = null;
-                PosnicPro.sales.view._layoutOverride = null;
-
-                $('.invoice-table-content div').empty();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-                PosnicPro._printTypeOverride = null;
-                PosnicPro.sales.view._layoutOverride = null;
-            }
-        }, function (xhr) {
-            /* There was no error handler here at all, so a dropped request
-               left the paper choice set and the NEXT receipt printed on the
-               wrong stock with nothing to explain it. */
-            PosnicPro._printTypeOverride = null;
-            PosnicPro.sales.view._layoutOverride = null;
-            if (PosnicPro.alert) {
-                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_reach_the_server_to_print_this_r', 'Could not reach the server to print this receipt - try again.'));
-            }
-            console.error('[print] sales/' + id + ' request failed:', xhr && xhr.status);
-        });
     },
     /*Perticular Returned printing the sales data held by this function*/
     returnPrintSales: function (id) {

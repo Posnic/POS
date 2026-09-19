@@ -1208,7 +1208,11 @@ class SettingModel extends BaseModel {
         );
         const made = await resolveFooterImage(data, now || {});
         if (made) Object.assign(data, made);
-        else delete data.footer_image;
+        else {
+          // Keep the picture and its source together on a no-op or failed generation.
+          delete data.footer_image;
+          delete data.footer_qr_url;
+        }
       }
 
       // Ensure context is set (branchId, licenseId, user required for updates)

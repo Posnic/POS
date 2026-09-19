@@ -66,8 +66,10 @@ async function resolveFooterImage(data = {}, current = {}) {
     return { footer_image: data.footer_image.slice(0, MAX_STORED), footer_qr_url: '' };
   }
 
-  /* Both empty is the clear button. */
-  if (!wanted && !data.footer_image) {
+  /* The settings form omits an unchanged image to avoid uploading it again.
+     An empty address alone must not erase that saved picture. Only an
+     explicitly empty image is the clear button. */
+  if (!wanted && data.footer_image !== undefined && !data.footer_image) {
     return { footer_image: '', footer_qr_url: '' };
   }
 
