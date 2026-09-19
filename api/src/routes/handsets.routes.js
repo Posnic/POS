@@ -35,7 +35,8 @@ router.use(protect, handsetLimiter);
 const db = () => currentConnection(mongoose.connection).db;
 
 /** Who may see the shop's handsets, and turn one off. */
-const MAY = new Set(['admin', 'owner', 'manager', 'superadmin']);
+// Accounts use super_admin; retain superadmin for older shop records.
+const MAY = new Set(['admin', 'owner', 'manager', 'super_admin', 'superadmin']);
 const allowed = (user) => MAY.has(String(user?.usertype || user?.role || '').toLowerCase());
 
 const refuse = (res) =>
