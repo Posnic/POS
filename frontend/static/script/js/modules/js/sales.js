@@ -4130,6 +4130,7 @@ PosnicPro.sales.addSale = {
                     if (PosnicPro.sales.saleProcess !== 'KOT' && response.data.print === true) {
                         PosnicPro.sales.view.printSale(response.data.sales_id, 'sale');
                     }
+                    if (isKotNewSale && PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(response.data.sales_id);
                     if (response.data.mail === true && $('#sales_new_customer_email').val() !== "") {
                         PosnicPro.sales.addSale.sendSalesReceipt(response.data.sales_id);
                     }
@@ -4785,6 +4786,7 @@ PosnicPro.sales.editSale = {
                     $('.printSalesWhatsAppReceipt').attr('href', 'javascript:void(0)').attr('onclick', `PosnicPro.sales.showWhatsAppReceipt('${saleId}', '${phone}', '${name}')`);
 
                     // Auto-print on KOT settlement when printall setting is enabled
+                    if (isKotOrderEditFlow && PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(saleId);
                     if (isKotPaymentOnlyFlow &&
                         response &&
                         typeof response.data === 'object' &&
@@ -4818,12 +4820,12 @@ PosnicPro.sales.editSale = {
                         // order is updated successfully, navigate back to the KOT
                         // History list instead of leaving the user on the KOT edit
                         // screen.
-                        var isKotOrderEditFlow = (PosnicPro.sales &&
+                        var returnToKot = (PosnicPro.sales &&
                             PosnicPro.sales.saleProcess === 'KOT' &&
                             PosnicPro.kotorder && PosnicPro.kotorder.editSaleId &&
                             PosnicPro.sales.paymentOnlyMode !== true);
 
-                        if (isKotOrderEditFlow) {
+                        if (returnToKot) {
                             // Refresh KOT data to show updated table list and details
                             if (PosnicPro.kot && typeof PosnicPro.kot.refreshKOTData === 'function') {
                                 PosnicPro.kot.refreshKOTData();

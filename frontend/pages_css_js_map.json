@@ -112,6 +112,7 @@
             "static/script/js/core/branch-signature.js",
             "static/script/js/modules/js/receipt-designer-editor.js",
             "static/script/js/modules/js/invoices.js",
+            "static/script/js/core/kot-print.js",
             "static/script/js/modules/js/kot.js",
             "static/script/js/modules/js/kothistory.js",
             "static/script/js/modules/js/settings.js",

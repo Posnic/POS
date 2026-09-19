@@ -293,7 +293,7 @@ class KOTManager {
     return result;
   }
 
-  async _printToDeviceWithFallback(printWindow, deviceName, pageSizeKey) {
+  async _printToDeviceWithFallback(printWindow, deviceName, pageSizeKey, strictPrinter = false) {
     const baseOptions = {
       silent: true,
       printBackground: true,
@@ -319,12 +319,41 @@ class KOTManager {
       result = await this._printViaPdfFallback(printWindow, deviceName);
     }
 
-    if (!result.success && deviceName) {
+    if (!result.success && deviceName && !strictPrinter) {
       console.warn(`[KOT] Named printer "${deviceName}" failed, falling back to Windows default printer`);
       result = await this._printWithSystemDefaultFallback(printWindow);
     }
 
     return result;
+  }
+
+  async printCounterTicket(sale) {
+    const config = this.config || await this.loadConfig();
+    const printers = config?.printerNames || [];
+    if (!printers.length) return { available: false };
+    if (!sale || !Array.isArray(sale.print_jobs) || !sale.print_jobs.length || sale.print_jobs.length > 100) {
+      return { available: true, success: false, error: 'Invalid kitchen ticket' };
+    }
+    for (const job of sale.print_jobs) {
+      if (!['new', 'modified', 'cancel', 'copy'].includes(job.type) || !Array.isArray(job.items)) {
+        return { available: true, success: false, error: 'Invalid kitchen ticket' };
+      }
+      const key = job.type === 'copy' ? null : job.key;
+      if (job.type !== 'copy' && (typeof key !== 'string' || key.length > 200)) {
+        return { available: true, success: false, error: 'Missing kitchen ticket identity' };
+      }
+      if (key && !this._claimForPrint(key, { saleId: sale._id, kind: job.type })) {
+        if (printLedger.state(key) === 'printed') continue;
+        return { available: true, success: false, error: 'A previous print attempt needs checking. Confirm only if the ticket came out.' };
+      }
+      const counterResults = await this.silentPrint({ ...sale, items: job.items,
+        _printKind: job.type === 'modified' ? 'edit' : job.type }, printers, false, true);
+      if (key) printLedger.settle(key, _anyPrinted(counterResults), _firstReason(counterResults));
+      if (!counterResults?.length || counterResults.some((r) => r.status !== 'success')) {
+        return { available: true, success: false, error: _firstReason(counterResults) || 'The kitchen printer did not confirm printing.' };
+      }
+    }
+    return { available: true, success: true };
   }
 
   async reprint(logEntry) {
@@ -1001,7 +1030,7 @@ class KOTManager {
     }
   }
 
-  async silentPrint(sale, printerNames, skipLog = false) {
+  async silentPrint(sale, printerNames, skipLog = false, strictPrinter = false) {
     /*
      * HOW LONG IT ACTUALLY TOOK, ON THE SHOP'S OWN COUNTER.
      *
@@ -1156,7 +1185,7 @@ class KOTManager {
           const job = jobs[idx];
           const deviceName = job.name;
           const startedAt = Date.now();
-          const result = await this._printToDeviceWithFallback(printWindow, deviceName, job.pageSize);
+          const result = await this._printToDeviceWithFallback(printWindow, deviceName, job.pageSize, strictPrinter);
           const ms = Date.now() - startedAt;
           if (!result.success) {
             console.error(`[KOT] Print failed (${deviceName}) after ${ms} ms:`, result.reason);
@@ -1258,7 +1287,7 @@ class KOTManager {
       ? (cancelledWholeOrder
           ? 'Order Cancelled'
           : (cancelledLines > 1 ? 'Items Cancelled' : 'Item Cancelled'))
-      : (printKind === 'edit' ? 'Additional Order' : 'New Order');
+      : (printKind === 'copy' ? 'KOT COPY - Do not prepare again' : printKind === 'edit' ? 'Additional Order' : 'New Order');
 
     const dateText    = this._fmtDate(sale.updated_date || sale.updated_at || sale.created_date || sale.created_at || '');
     const tableNo     = sale.table_number || sale.tableNo || sale.table || sale.table_no || '';

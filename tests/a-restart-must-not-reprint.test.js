@@ -206,7 +206,8 @@ test('a ticket it has never seen still prints after a restart', () => {
 /* ----------------------------------------------------------- what it is not */
 
 test('it is written down BEFORE the paper, in both print paths', () => {
-  const src = fs.readFileSync(path.join(ROOT, 'src', 'kot-manager.js'), 'utf8');
+  const all = fs.readFileSync(path.join(ROOT, 'src', 'kot-manager.js'), 'utf8');
+  const src = all.slice(all.indexOf('async _pollOnce('));
   for (const block of [
     src.slice(src.indexOf('const jobResults'), src.indexOf('printedSaleIds.push(saleId);')),
     src.slice(src.indexOf('const results = await this.silentPrint')),

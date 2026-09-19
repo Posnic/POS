@@ -3207,8 +3207,29 @@
                                     href="#restaurantdelivery-line" role="tab" aria-controls="restaurantdelivery-line"
                                     aria-selected="false"><i class="feather icon-truck mr-1"></i><lang class="lang_delivery">Delivery</lang></a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="restaurantprinting-tab-line" data-toggle="tab"
+                                    href="#restaurantprinting-line" role="tab" aria-controls="restaurantprinting-line"
+                                    aria-selected="false"><i class="feather icon-printer mr-1"></i><lang class="lang_kot_print_tab">KOT printing</lang></a>
+                            </li>
                             </ul>
                             <div class="tab-content">
+                                <div class="tab-pane fade" id="restaurantprinting-line" role="tabpanel" aria-labelledby="restaurantprinting-tab-line">
+                                    <div class="card m-b-30"><div class="card-body">
+                                        <h5><lang class="lang_kot_print_settings">KOT printing on this counter</lang></h5>
+                                        <div class="custom-control custom-switch my-3">
+                                            <input type="checkbox" class="custom-control-input" id="kot-counter-auto">
+                                            <label class="custom-control-label" for="kot-counter-auto"><lang class="lang_kot_print_auto">Automatically print KOTs after saving an order</lang></label>
+                                        </div>
+                                        <p class="text-muted"><lang class="lang_kot_print_auto_help">Applies to orders saved on this browser or desktop. Desktop uses your kitchen printers; otherwise a print dialog opens. Orders already handled by a kitchen printer are not printed again.</lang></p>
+                                        <div class="form-group" style="max-width:260px">
+                                            <label for="kot-counter-width"><lang class="lang_kot_print_paper">Paper width for the print dialog</lang></label>
+                                            <select id="kot-counter-width" class="form-control"><option value="80" data-t="lang_80_mm">80 mm</option><option value="58" data-t="lang_58_mm">58 mm</option></select>
+                                        </div>
+                                        <p><lang class="lang_kot_print_manual_help">Print KOT is always available beside Print Bill. Saved changes print as additional or cancelled items. Copies are clearly marked.</lang></p>
+                                        <small id="kot-counter-saved" role="status"><lang class="lang_kot_print_settings_saved">Saved for this counter.</lang></small>
+                                    </div></div>
+                                </div>
                                 <div class="tab-pane fade show active" id="restauranttables-line" role="tabpanel"
                                     aria-labelledby="restauranttables-tab-line">
                                             <!--

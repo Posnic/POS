@@ -7533,7 +7533,7 @@ class SalesRepository {
    * running builds that do not send one, and this is the path that feeds every
    * kitchen: it must be a no-op for them until their till updates.
    */
-  async multiKitchenPrintModel(branchId, { tillId = '' } = {}) {
+  async multiKitchenPrintModel(branchId, { tillId = '', onlySaleId, counterUntil } = {}) {
     try {
       const db = await BaseModel.getDb();
       const branchCollection = db.collection('branches');
@@ -7614,7 +7614,7 @@ class SalesRepository {
       };
 
       const mine = String(tillId || '').trim();
-      const notSomebodyElses = mine
+      const ordinaryClaim = mine
         ? {
             $or: [
               { kot_claimed_at: null },
@@ -7627,13 +7627,39 @@ class SalesRepository {
             ],
           }
         : {};
+      // A browser dialog must not race the background kitchen printer, including
+      // older tills without an ID. A counter holds its ticket until confirmed.
+      const notSomebodyElses = {
+        $and: [
+          ordinaryClaim,
+          {
+            $or: [
+              { kot_counter_until: { $exists: false } },
+              { kot_counter_until: { $lte: new Date() } },
+            ],
+          },
+          ...(counterUntil
+            ? [
+                {
+                  $or: [
+                    { kot_legacy_until: { $exists: false } },
+                    { kot_legacy_until: { $lte: new Date() } },
+                  ],
+                },
+              ]
+            : []),
+        ],
+      };
+      const selectedSale = onlySaleId
+        ? { _id: new mongoose.Types.ObjectId(String(onlySaleId)) }
+        : {};
 
       const kotSales = await salesCollection
         .find(
           {
             branch_id: branchObjectId,
             sale_process: { $regex: 'KOT', $options: 'i' },
-            created_date: { $gte: todayStart, $lt: todayEnd },
+            ...(onlySaleId ? selectedSale : { created_date: { $gte: todayStart, $lt: todayEnd } }),
             ...hasUnprintedChanges,
             ...notSomebodyElses,
           },
@@ -7646,7 +7672,7 @@ class SalesRepository {
           {
             branch_id: branchObjectId,
             sale_process: { $regex: 'cancelled', $options: 'i' },
-            created_date: { $gte: todayStart, $lt: todayEnd },
+            ...(onlySaleId ? selectedSale : { created_date: { $gte: todayStart, $lt: todayEnd } }),
             ...hasUnprintedChanges,
             ...notSomebodyElses,
           },
@@ -7746,18 +7772,43 @@ class SalesRepository {
        * two tills might both print - and that is far better than a kitchen
        * that gets nothing because a bookkeeping write failed.
        */
-      if (mine && processedSales.length) {
+      const claimed = [];
+      for (const sale of processedSales) {
         try {
-          await salesCollection.updateMany(
-            { _id: { $in: processedSales.map((sale) => sale._id) } },
-            { $set: { kot_claimed_by: mine, kot_claimed_at: new Date() } }
+          // Check and take in one write: two readers can see the same pending
+          // ticket, but only one may hand it to a printer.
+          const result = await salesCollection.updateOne(
+            {
+              _id: sale._id,
+              ...notSomebodyElses,
+              last_printed_change_index: sale.last_printed_change_index ?? null,
+            },
+            {
+              $set: {
+                ...(mine
+                  ? { kot_claimed_by: mine, kot_claimed_at: new Date() }
+                  : { kot_legacy_until: new Date(Date.now() + KOT_CLAIM_MS) }),
+                ...(counterUntil
+                  ? {
+                      kot_counter_until: counterUntil,
+                      kot_counter_index: sale.new_last_printed_change_index,
+                      kot_counter_keys: require('../utils/kot-job-key')
+                        .kotJobKeys(sale)
+                        .map((job) => job.key),
+                    }
+                  : {}),
+              },
+            }
           );
+          if (result.matchedCount) claimed.push(sale);
         } catch (e) {
+          if (counterUntil) throw e;
           console.warn('[kot] could not record which till took these:', e && e.message);
+          claimed.push(sale);
         }
       }
 
-      return { status: true, message: 'Get unprinted sales successfully', data: processedSales };
+      return { status: true, message: 'Get unprinted sales successfully', data: claimed };
     } catch (error) {
       console.error('Error in multiKitchenPrintModel:', error);
       return {
@@ -7897,6 +7948,7 @@ class SalesRepository {
               kot_claimed_by: '',
               kot_claimed_at: null,
             },
+            $unset: { kot_legacy_until: '' },
           }
         );
         if (result.modifiedCount > 0) modifiedCount++;

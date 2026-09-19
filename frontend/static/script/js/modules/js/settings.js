@@ -1422,6 +1422,7 @@ if ($wrapper.length) {
                     footer_image_caption: data.footer_image_caption
                 });
                 if (PosnicPro.receiptDesignerEditor) PosnicPro.receiptDesignerEditor.load(data);
+                if (PosnicPro.kotPrint) PosnicPro.kotPrint.loadSettings();
 
                 $('.print_store_name').text(data.branch_name);
                 $('.print_store_gst').text(data.branch_gstin_number);
