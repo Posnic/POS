@@ -536,6 +536,7 @@ class SalesRepository {
           'website',
           'table_options',
           'branch_fssai_number',
+          'country',
           'invoice_terms',
           'quote_default_signature',
         ]) {

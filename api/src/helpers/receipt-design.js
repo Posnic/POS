@@ -30,6 +30,20 @@
     source: 'Order source',
   };
   const restaurant = ['table', 'order_type', 'covers', 'steward', 'session', 'fssai', 'source'];
+  function fieldAvailable(field, branch = {}) {
+    if (!restaurant.includes(field)) return true;
+    if (![true, 'true', 'enable'].includes(branch.table_options)) return false;
+    // The outlet's country determines licensing, never its currency, language
+    // or customer's address. Missing country information does not imply India.
+    return (
+      field !== 'fssai' ||
+      ['INDIA', 'IN', 'IND'].includes(
+        String(branch.country || '')
+          .trim()
+          .toUpperCase()
+      )
+    );
+  }
   const types = [
     'store',
     'transaction',
@@ -170,6 +184,7 @@
     formats: formats,
     fields: fields,
     restaurant: restaurant,
+    fieldAvailable: fieldAvailable,
     types: types,
     required: required,
     textTypes: textTypes,
