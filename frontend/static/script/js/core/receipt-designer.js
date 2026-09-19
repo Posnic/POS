@@ -62,6 +62,15 @@
         if (requested === 'standard') return PosnicPro.resolvePaperWidth() === '58' ? '58' : '80';
         return data.receipt_designs.defaultFormat;
     }
+    function headerValue(value) {
+        return '<span class="rd-header-value">' + esc(value) + '</span>';
+    }
+    function thermalDate(value) {
+        // Keep the supplied locale and date order. A clock and its day period
+        // travel together; narrow paper can wrap between the date and time.
+        var parts = String(value || '').match(/^(.*?[\s,])(\p{Nd}{1,2}:\p{Nd}{2}.*)$/u);
+        return parts ? headerValue(parts[1].trim()) + ' ' + headerValue(parts[2]) : headerValue(value);
+    }
     // Group adjacent invoice blocks without changing the shop's block order.
     // A moved text/image/divider remains exactly where the designer placed it.
     function pairFields(blocks) {
@@ -139,7 +148,9 @@
             '.rd-document td{padding:6px 3px;vertical-align:top;border-bottom:1px solid #ddd;}.rd-document tr{break-inside:avoid;}.rd-document thead{display:table-header-group;}' +
             '.rd-number{text-align:right!important;white-space:normal;}.rd-line-detail{font-size:.88em;color:#444;}' +
             '.rd-total-row{display:flex;justify-content:space-between;gap:12px;margin:3px 0;}.rd-grand-total{font-size:1.3em;font-weight:bold;border-top:2px solid #111;padding-top:7px;margin-top:8px;}' +
-            '.rd-totals{width:' + (sheet ? '48%' : '100%') + ';margin-left:auto;}.rd-transaction{display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid #bbb;padding-bottom:8px;}' +
+            '.rd-totals{width:' + (sheet ? '48%' : '100%') + ';margin-left:auto;}.rd-transaction{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;border-bottom:1px solid #bbb;padding-bottom:8px;}' +
+            '.rd-transaction>strong,.rd-transaction-date{flex:0 0 auto;min-width:0;max-width:100%;}.rd-transaction-date{margin-left:auto;text-align:right;}' +
+            '.rd-header-value{display:inline-block;max-width:100%;vertical-align:top;overflow-wrap:anywhere;}' +
             '.rd-muted{color:#555;font-size:.9em;}.rd-text{white-space:pre-wrap;}.rd-divider{border:0;border-top:1px dashed #777;margin:10px 0;}' +
             '.rd-sheet .rd-store{padding-bottom:12px;border-bottom:2px solid #222;}.rd-terms{margin-top:20px;font-size:.9em;white-space:pre-line;}' +
             (sheet ? sheetCss(format) :
@@ -191,7 +202,7 @@
                     content = '<div class="rd-invoice-meta"><div class="rd-invoice-title">' + esc(documentTitle) + '</div><dl>';
                     if (data.sales_id) content += '<dt>' + esc(beforePayment ? PosnicPro.i18n.t('lang_bill_no', 'Bill no') : PosnicPro.i18n.t('lang_rd_receipt_number', 'Receipt number')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
                     content += '<dt>' + esc(PosnicPro.i18n.t('lang_date_title', 'Date')) + '</dt><dd>' + esc(data.created_date || data.date || '') + '</dd></dl></div>';
-                } else content = '<div class="rd-transaction"><strong>' + esc(documentTitle + (data.sales_id ? ' ' + data.sales_id : '')) + '</strong><span>' + esc(data.created_date || data.date || '') + '</span></div>';
+                } else content = '<div class="rd-transaction"><strong>' + esc(documentTitle) + (data.sales_id ? ' ' + headerValue(data.sales_id) : '') + '</strong><span class="rd-transaction-date">' + thermalDate(data.created_date || data.date || '') + '</span></div>';
                 if (present(taxNumber) && !hasField('customer_tax_number')) content += '<p class="rd-customer-tax">' + esc(fieldLabel('customer_tax_number')) + ': ' + esc(String(taxNumber).trim()) + '</p>';
             } else if (b.type === 'items') {
                 var compact = !sheet && b.itemLayout === 'compact';
