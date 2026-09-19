@@ -2324,7 +2324,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 if (tableNow !== was.table_options) {
                     PosnicPro.local.set('table_options', tableNow);
                     var kotOn = tableNow === 'enable';
-                    if (kotOn) { PosnicPro.applyKotVisibility(true); }
+                    PosnicPro.applyKotVisibility(kotOn);
                     $('#view_kot_page,#view_kotorder_page,#view_kothistory_page,#viewkotreport_page')
                         .closest('li').toggle(kotOn);
                     $('#view_touchsales_page').closest('li').toggle(!kotOn);
