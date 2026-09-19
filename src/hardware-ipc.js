@@ -469,6 +469,12 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     return await hardwareManager.printHTML(htmlContent, options);
   });
 
+  ipcMain.handle('printer:print-pdf', async (event, bytes) => {
+    return require('./print-pdf').printPdfDocument(bytes, {
+      parent: BrowserWindow.fromWebContents(event.sender),
+    });
+  });
+
   // Preferences Handlers (file-based persistence)
   const _prefsPath = path.join(app.getPath('userData'), 'preferences.json');
 

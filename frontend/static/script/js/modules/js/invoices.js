@@ -921,10 +921,8 @@ PosnicPro.invoices = {
     },
     printNow: function () {
         PosnicPro.invoices._withDoc(function (doc) {
-            if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
-            var url = doc.output('bloburl');
-            var w = window.open(url, '_blank');
-            if (!w) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_allow_pop_ups_so_the_invoice_can_print', 'Allow pop-ups so the invoice can print.')); }
+            PosnicPro.printPdfDocument(doc, (PosnicPro.invoices._current || {}).invoice_id || 'invoice',
+                PosnicPro.i18n.t('lang_allow_pop_ups_so_the_invoice_can_print', 'Allow pop-ups so the invoice can print.'));
         });
     },
     print: function () {

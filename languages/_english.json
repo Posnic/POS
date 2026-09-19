@@ -2238,6 +2238,8 @@
   "lang_payout": "Payout",
   "lang_payroll_csv": "Payroll CSV",
   "lang_paytotal_title": "Pay Total",
+  "lang_pdf_print_failed": "Could not open printing. Download the PDF and try printing it again.",
+  "lang_pdf_print_older_desktop": "PDF saved. Open it to print. Update the desktop app for direct printing.",
   "lang_pdf_tools_not_loaded_refresh_and_retry": "PDF tools not loaded - refresh and retry.",
   "lang_pending_customer_detail": "Customer Details",
   "lang_pending_payment": "Customer Dues (money owed to you)",

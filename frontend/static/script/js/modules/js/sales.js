@@ -10061,10 +10061,8 @@ PosnicPro.quotes = {
     },
     printNow: function () {
         PosnicPro.quotes._withQuoteDoc(function (doc) {
-            if (typeof doc.autoPrint === 'function') { doc.autoPrint(); }
-            var url = doc.output('bloburl');
-            var w = window.open(url, '_blank');
-            if (!w) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_allow_pop_ups_so_the_quote_can_print', 'Allow pop-ups so the quote can print.')); }
+            PosnicPro.printPdfDocument(doc, (PosnicPro.quotes._current || {}).quote_id || 'quote',
+                PosnicPro.i18n.t('lang_allow_pop_ups_so_the_quote_can_print', 'Allow pop-ups so the quote can print.'));
         });
     },
     print: function () {
