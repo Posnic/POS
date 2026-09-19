@@ -16,6 +16,7 @@ const { ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
+const recoveryCodes = require('../utils/recovery-codes');
 
 /**
  * Install Service
@@ -156,7 +157,15 @@ class InstallService {
       oneYearLater.setFullYear(oneYearLater.getFullYear() + DEFAULTS.PLAN_DURATION_YEARS);
 
       // Insert user
-      const userId = await this._createUser(data, licenseId, usersecretkey, now, oneYearLater);
+      const recovery = recoveryCodes.enabled() ? recoveryCodes.createBatch(now) : null;
+      const userId = await this._createUser(
+        data,
+        licenseId,
+        usersecretkey,
+        now,
+        oneYearLater,
+        recovery
+      );
 
       // Load print templates
       const { regularBodyPrint, thermalBodyPrint } = this._loadPrintTemplates();
@@ -279,7 +288,9 @@ class InstallService {
 
       return {
         status: true,
-        data: '',
+        data: recovery
+          ? { recoveryCodes: recovery.codes, recoveryAccount: data.register_useremail.trim() }
+          : '',
         message: SUCCESS_MESSAGES.ACCOUNT_CREATED,
       };
     } catch (error) {
@@ -355,7 +366,7 @@ class InstallService {
     return await bcrypt.hash(random, 10);
   }
 
-  async _createUser(data, licenseId, usersecretkey, now, oneYearLater) {
+  async _createUser(data, licenseId, usersecretkey, now, oneYearLater, recovery = null) {
     // A cloud signup already hashed this password for the website account, and
     // the plaintext is deliberately not kept anywhere. Accepting the hash lets
     // one password work for the website, the shop's cloud site and the till,
@@ -365,6 +376,7 @@ class InstallService {
       : await bcrypt.hash(data.register_userpassword.trim(), 10);
 
     const userData = {
+      ...(recovery ? { localRecovery: recovery.record } : {}),
       branch_access: '',
       plan: {
         name: DEFAULTS.PLAN_NAME,

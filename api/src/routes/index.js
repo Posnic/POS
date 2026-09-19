@@ -42,6 +42,7 @@ const clientErrorsRoutes = require('./client-errors.routes');
 const stockLogsRoutes = require('./stock-logs.routes');
 const suppliersRoutes = require('./suppliers.routes');
 const usersRoutes = require('./users.routes'); // Updated from userRoutes
+const recoveryRoutes = require('./recovery.routes');
 const variantsRoutes = require('./variants.routes');
 const whatsappRoutes = require('./whatsapp.routes');
 
@@ -110,6 +111,7 @@ router.use('/setting', settingsRoutes); // Legacy PHP path support
 router.use('/stock-logs', stockLogsRoutes); // Changed from stocklogs to stock-logs
 router.use('/stocklogs', stockLogsRoutes); // Legacy path support
 router.use('/suppliers', suppliersRoutes);
+router.use('/users/recovery', recoveryRoutes);
 router.use('/users', usersRoutes);
 router.use('/variants', variantsRoutes);
 router.use('/whatsapp', whatsappRoutes);

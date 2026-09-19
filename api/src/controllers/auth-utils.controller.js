@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const { clientIp } = require('../utils/client-ip');
 const { promisify } = require('util');
 const { authCookieOptions } = require('../utils/auth-cookie');
+const authVersion = require('../utils/auth-version');
 /* Per request. A signing key read once at module load is the process's key,
    and in a process serving several shops that is some other customer's. */
 const { currentSecret } = require('../db/tenant-context');
@@ -33,14 +34,19 @@ const config = require('../config/config');
 const expiresIn = () => process.env.JWT_EXPIRES_IN || config.jwt.expiresIn;
 const cookieDays = () => Number(process.env.JWT_COOKIE_EXPIRES_IN || config.jwt.cookieExpiresIn);
 
-const signToken = (id) => {
-  return jwt.sign({ id }, currentSecret('JWT_SECRET'), {
-    expiresIn: expiresIn(),
-  });
+const signToken = (id, version = 0) => {
+  return jwt.sign(
+    { id, ...(version ? { authVersion: version } : {}) },
+    currentSecret('JWT_SECRET'),
+    {
+      expiresIn: expiresIn(),
+    }
+  );
 };
 
 const createSendToken = (user, statusCode, res) => {
-  const token = signToken(user._id);
+  const token = signToken(user._id, authVersion.version(user));
+  authVersion.stampSession(res.req, user);
   const cookieOptions = authCookieOptions({
     expires: new Date(Date.now() + cookieDays() * 24 * 60 * 60 * 1000),
   });
@@ -78,7 +84,8 @@ const createAndSendToken = async (user, statusCode, res, req) => {
   console.log('🔥 Status:', statusCode);
   console.log('🔥 req exists:', !!req);
 
-  const token = signToken(user._id);
+  const token = signToken(user._id, authVersion.version(user));
+  authVersion.stampSession(req, user);
 
   // 🔍 SESSION CREATION DEBUG - ADD THIS
   console.log('=======================');

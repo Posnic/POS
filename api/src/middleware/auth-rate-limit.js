@@ -148,7 +148,24 @@ const handsetLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Offline recovery has its own allowance: failed email delivery must not
+// exhaust the emergency route. Successful recovery does not consume attempts.
+const recoveryLimiter = rateLimit({
+  store: new MongoRateLimitStore({ prefix: 'offline-recovery' }),
+  keyGenerator: perClientKey,
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  message: {
+    type: 'error',
+    message: 'Too many recovery attempts. Please wait fifteen minutes and try again.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+});
+
 module.exports = {
+  recoveryLimiter,
   loginLimiter,
   passwordResetLimiter,
   registerLimiter,

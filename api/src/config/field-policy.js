@@ -73,6 +73,16 @@ const FIELDS = Object.freeze({
   }),
 
   users: Object.freeze({
+    localRecovery: {
+      policy: POLICY.LOCAL_ONLY,
+      encrypt: false,
+      why: 'One-way digests of offline recovery codes belong only to this installation.',
+    },
+    authVersion: {
+      policy: POLICY.LOCAL_ONLY,
+      encrypt: false,
+      why: 'Revocation generation for local sessions and tokens.',
+    },
     password: {
       policy: POLICY.SYNC_PLAIN,
       encrypt: false,

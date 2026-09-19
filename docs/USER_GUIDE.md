@@ -51,8 +51,9 @@ A setup wizard runs the first time. You will be asked for:
 
 - **Your shop's name and address** — these appear on receipts.
 - **An administrator login** — the account that can do everything. Keep the
-  password somewhere safe; there is no one to email for a reset, because your
-  data is on your machine and nobody else has it.
+  password somewhere safe. At the end of setup, save the owner's offline
+  recovery codes separately from the till. They let you reset a forgotten
+  password without email or internet.
 - **Currency and tax settings** — including your GSTIN if you are in India.
 - **Your first branch** — if you only have one shop, this is just its name.
 
@@ -387,10 +388,12 @@ application; if it happens again, restart the machine and check the log.
 **Stock numbers look wrong.** Check **Inventory Logs** — every change is
 recorded with a reason and a time.
 
-**I forgot the admin password.** Another user with administrator rights can
-reset it. If nobody can log in, the data is still there but you will need help
-recovering access — the security that protects your data from strangers protects
-it from you too.
+**I forgot the admin password.** In a local Community installation, choose
+**Recover with an offline code** on the sign-in screen. Enter your email or
+username, one saved recovery code, and your new password. Each code works once.
+If you have no codes yet and can still sign in, open **Profile → Account recovery**
+and generate a set using your current password. See [Offline account recovery](COMMUNITY_RECOVERY.md)
+for storage advice and what to do if every owner is locked out without codes.
 
 ### Getting help
 

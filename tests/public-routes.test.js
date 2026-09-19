@@ -53,6 +53,12 @@ function openRoutes(file) {
  * what strangers may do to a shop's data, so it should take a code review.
  */
 const ALLOWED_ANONYMOUS = {
+  'recovery.routes.js': [
+    // Installation-wide capability only, without account lookup; reset proves
+    // ownership with a one-use 128-bit code, with its own persistent limiter.
+    // Code generation/status stay behind protect and owner checks.
+    '/options', '/reset',
+  ],
   'users.routes.js': [
     // Invisible to this sweep for months: the file is single-quoted and the
     // sweep matched only double quotes. Reviewed on discovery - every one
