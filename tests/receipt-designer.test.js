@@ -94,7 +94,7 @@ test('editor adds and reorders blocks, keeps formats independent, and sends a pa
 
 test('FSSAI prints from current branch details on all formats and an explicit field controls its position', () => {
     const { dom, engine, design, sale, $ } = setup();
-    sale.table_options = 'enable'; sale.branch_fssai_number = ' 12345678901234 ';
+    sale.table_options = 'enable'; sale.country = 'India'; sale.branch_fssai_number = ' 12345678901234 ';
     for (const format of Object.keys(contract.formats)) {
         const render = () => $('<div>').html(engine.render(sale, format, false));
         assert.match(render().find('.rd-store').text(), /FSSAI: 12345678901234/);
@@ -110,6 +110,51 @@ test('FSSAI prints from current branch details on all formats and an explicit fi
         assert.doesNotMatch(render().text(), /12345678901234/);
         sale.table_options = true;
     }
+    dom.window.close();
+});
+
+test('FSSAI follows the restaurant outlet country on every format, including saved blocks', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    sale.table_options = true; sale.branch_fssai_number = '12345678901234';
+    sale.currency = 'INR'; sale.customer_country = 'India';
+    for (const country of ['India', ' india ', 'IN', 'IND', 'United States', 'United Arab Emirates', 'Singapore', '', undefined]) {
+        sale.country = country;
+        const allowed = ['India', ' india ', 'IN', 'IND'].includes(country);
+        for (const format of Object.keys(contract.formats)) {
+            const render = () => $('<div>').html(engine.render(sale, format, false));
+            assert.equal(render().text().includes('FSSAI: 12345678901234'), allowed, String(country));
+            design.layouts[format].blocks.push(engine.block('field', { field: 'fssai', width: 50 }));
+            assert.equal(render().text().includes('FSSAI: 12345678901234'), allowed, 'Saved field: ' + country);
+            assert.equal(render().find('.rd-field-fssai').length, allowed ? 1 : 0);
+            design.layouts[format].blocks.pop();
+        }
+    }
+    dom.window.close();
+});
+
+test('country changes hide FSSAI controls and blocks without deleting saved licence details', () => {
+    const { dom, w, $, branch, design, engine } = setup();
+    branch.table_options = true; branch.country = 'India'; branch.branch_fssai_number = '12345678901234';
+    design.layouts['80'].blocks.push(engine.block('field', { field: 'fssai' }));
+    branch.receipt_designs = design;
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    for (const country of ['India', 'United States', '', 'India']) {
+        branch.country = country;
+        w.PosnicPro.receiptDesignerEditor.load(branch);
+        const allowed = country === 'India';
+        assert.equal($('[data-field="fssai"]').length, allowed ? 1 : 0);
+        assert.equal($('.rd-block-list').text().includes('FSSAI'), allowed);
+        assert.equal($('#branch_fssai_number').closest('.form-group').css('display') !== 'none', allowed);
+        assert.equal($('[data-field="session"]').length, 1, 'Other restaurant fields remain available');
+        $('[data-action="save"]').trigger('click');
+        assert.equal(sent.branch_fssai_number, '12345678901234');
+        assert.equal(sent.receipt_designs.layouts['80'].blocks.filter(b => b.field === 'fssai').length, 1);
+    }
+    branch.table_options = false;
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('[data-field="fssai"]').length, 0);
+    assert.equal($('#branch_fssai_number').closest('.form-group').css('display'), 'none');
     dom.window.close();
 });
 
@@ -284,7 +329,7 @@ test('editor saves half-width fields and compact items independently by format a
 
 test('FSSAI edits reach live preview and sample immediately, persist, and edits during a save remain unsaved', async () => {
     const { dom, w, $, branch, design } = setup();
-    branch.table_options = true; branch.branch_fssai_number = '11111111111111';
+    branch.table_options = true; branch.country = 'India'; branch.branch_fssai_number = '11111111111111';
     branch.receipt_designs = contract.normalize(JSON.parse(JSON.stringify(design)));
     let request, finish, sample;
     w.PosnicPro.put = (req, done) => { request = JSON.parse(req.data); finish = done; };

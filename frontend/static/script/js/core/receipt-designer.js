@@ -26,7 +26,7 @@
             if (on(branch.customer_print)) ['customer_name', 'customer_phone', 'customer_address'].forEach(function (field) { blocks.push(block('field', { field: field })); });
             Object.keys({ table: 1, order_type: 1, covers: 1, steward: 1, session: 1, fssai: 1, source: 1 }).forEach(function (field) {
                 var key = { order_type: 'dine_type' }[field] || field;
-                if (on(branch['bill_print_' + key])) blocks.push(block('field', { field: field }));
+                if (contract.fieldAvailable(field, branch) && on(branch['bill_print_' + key])) blocks.push(block('field', { field: field }));
             });
             blocks.push(block('items', { hsn: on(branch.bill_print_hsn) }), block('totals'));
             if (on(branch.bill_print_total_qty)) blocks.push(block('field', { field: 'total_quantity' }));
@@ -189,13 +189,13 @@
         };
         var rendered = layout.blocks.map(function (b) {
             var content = '';
-            if (b.type === 'field' && contract.restaurant.indexOf(b.field) !== -1 && !on(data.table_options)) return '';
+            if (b.type === 'field' && !contract.fieldAvailable(b.field, data)) return '';
             if (b.type === 'store') {
                 content = '<div class="rd-store"><h1>' + esc(data.branch_name || data.store_name || PosnicPro.local.get('branchname')) + '</h1><div class="rd-store-contact">' + esc(plain(data.printing_address || data.store_address || '')) + '</div>';
                 if (data.store_telephone) content += '<p>' + esc(data.store_telephone) + '</p>';
                 if (data.store_email) content += '<p>' + esc(data.store_email) + '</p>';
                 if (data.branch_gstin_number) content += '<p>GSTIN: ' + esc(data.branch_gstin_number) + '</p>';
-                if (on(data.table_options) && present(data.branch_fssai_number) && !hasField('fssai')) content += '<p>' + esc(fieldLabel('fssai')) + ': ' + esc(String(data.branch_fssai_number).trim()) + '</p>';
+                if (contract.fieldAvailable('fssai', data) && present(data.branch_fssai_number) && !hasField('fssai')) content += '<p>' + esc(fieldLabel('fssai')) + ': ' + esc(String(data.branch_fssai_number).trim()) + '</p>';
                 content += '</div>';
             } else if (b.type === 'transaction') {
                 if (sheet) {

@@ -1,6 +1,7 @@
 'use strict';
 
 const { isWalkIn } = require('../utils/walk-in');
+const { fieldAvailable } = require('./receipt-design');
 
 /*
  * A SALE, TURNED INTO SOMETHING A PRINTER CAN ACTUALLY PRINT.
@@ -478,7 +479,10 @@ function buildBillPayload(sale = {}, branch = {}) {
      * shop that is not a food business has no licence to print and a blank
      * label reads as a fault.
      */
-    fssai: wants(branch, 'bill_print_fssai') ? String(branch.branch_fssai_number || '').trim() : '',
+    fssai:
+      fieldAvailable('fssai', branch) && wants(branch, 'bill_print_fssai')
+        ? String(branch.branch_fssai_number || '').trim()
+        : '',
 
     /* Not "RECEIPT" and not "TAX INVOICE". Nobody has paid yet, and calling it
        either would be a document this shop has not issued. */
