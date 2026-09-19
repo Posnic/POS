@@ -134,6 +134,7 @@ const { OrderAlert } = require('./order-alert');
    of them has the speaker. See src/kitchen-announce.js. */
 const kitchenAnnounce = require('./kitchen-announce');
 const SyncAgentManager = require('./sync-agent-manager');
+const { cloudServerUrl, validateActivation } = require('./cloud-activation');
 const { AssetUpdater } = require('./asset-updater');
 
 // === FILE-BASED LOGGING (for packaged exe debugging) ===
@@ -1250,26 +1251,7 @@ function getMachineId() {
 }
 
 async function connectCloudDevice(activation, base) {
-  const { deviceToken, deviceId, syncUrl } = activation;
-  if (!deviceToken || !deviceId) return { ok: false, error: 'The cloud server returned an incomplete activation. Please retry.' };
-
-  /*
-   * Where this till syncs is decided by the server, not by what was typed
-   * here.
-   *
-   * With one gateway the address entered at activation is the address to sync
-   * with, and that is what this stored. With several machines it stops being
-   * true: a shop lives on one of them and only the server knows which. It now
-   * says so, and the till believes it.
-   *
-   * Falling back to what was typed keeps every existing installation working,
-   * and keeps activation possible against an estate that has not been told
-   * its own addresses yet.
-   */
-  const gatewayUrl = syncUrl ? String(syncUrl).replace(/\/+$/, '') : base;
-  if (syncUrl && gatewayUrl !== base) {
-    console.log(`[Cloud] this shop syncs with ${gatewayUrl}`);
-  }
+  const { deviceToken, deviceId, gatewayUrl } = validateActivation(activation, base);
 
   // Local installs enable MongoDB auth during setup; the agent must use
   // the same credentials. Fresh cloud-mode installs have no auth yet.
@@ -1291,7 +1273,8 @@ async function connectCloudDevice(activation, base) {
     localUri,
     localDb: 'PosnicPro',
     statusPort: 5055
-  }, null, 2));
+  }, null, 2), { mode: 0o600 });
+  fs.chmodSync(CLOUD_CONFIG_FILE, 0o600);
 
   if (!syncAgentManager) syncAgentManager = new SyncAgentManager({ app });
   syncAgentManager.stop();
@@ -1325,7 +1308,7 @@ ipcMain.handle('cloud:activate', async (_event, { serverUrl, email, password, wa
     if (!serverUrl || !email || !password) {
       return { ok: false, error: 'Server, email and password are required' };
     }
-    const base = String(serverUrl).trim().replace(/\/+$/, '');
+    const base = cloudServerUrl(String(serverUrl).trim());
     const deviceName = require('os').hostname();
 
     /*
@@ -1342,7 +1325,7 @@ ipcMain.handle('cloud:activate', async (_event, { serverUrl, email, password, wa
     let response;
     for (;;) {
       response = await fetch(`${base}/v1/activate`, {
-        method: 'POST',
+        method: 'POST', redirect: 'error',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email, password, deviceName, machineId: getMachineId() }),
         signal: AbortSignal.timeout(20_000)
@@ -1547,12 +1530,12 @@ ipcMain.handle('cloud:signup', () => shell.openExternal('https://www.posnic.com/
 ipcMain.handle('cloud:pair', async (_event, { serverUrl, code, waitForShopMs } = {}) => {
   try {
     if (!code) return { ok: false, error: 'Enter the pairing code' };
-    const base = String(serverUrl || 'https://gateway.posnic.com').trim().replace(/\/+$/, '');
+    const base = cloudServerUrl(String(serverUrl || 'https://gateway.posnic.com').trim());
     const deadline = Date.now() + Math.max(0, Number(waitForShopMs) || 0);
     let response;
     for (;;) {
       response = await fetch(`${base}/v1/pairing/redeem`, {
-        method: 'POST',
+        method: 'POST', redirect: 'error',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           code: String(code).trim(),

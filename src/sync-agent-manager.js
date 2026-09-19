@@ -153,12 +153,10 @@ class SyncAgentManager {
     let agentDir = this._findAgent();
     if (!agentDir) {
       const { installAgent } = require('./agent-bootstrap');
-      const resourcesRoot = this.app.isPackaged ? process.resourcesPath : __dirname;
       console.log('[SyncAgent] installing verified cloud sync component');
       await installAgent({
         config: cfg,
         engine: this._updatesEngine(),
-        sevenZip: path.join(resourcesRoot, 'tools', process.platform === 'win32' ? '7za.exe' : '7za'),
         fetch: this._fetch,
       });
       agentDir = this._findAgent();

@@ -13,11 +13,11 @@ by whoever is available.
 `MAJOR.MINOR.PATCH`, plain semver. The tag carries a `v`; the version inside
 `package.json` never does.
 
-| Change | Version | What the shop sees |
-|---|---|---|
+| Change                                           | Version           | What the shop sees                                   |
+| ------------------------------------------------ | ----------------- | ---------------------------------------------------- |
 | Electron, Node, a native module, bundled MongoDB | **major** `x.0.0` | Waits on the Updates screen until the shop starts it |
-| Our features | **minor** `1.x.0` | Downloads quietly, installs when the till is closed |
-| Our fixes | **patch** `1.0.x` | Downloads quietly, installs when the till is closed |
+| Our features                                     | **minor** `1.x.0` | Downloads quietly, installs when the till is closed  |
+| Our fixes                                        | **patch** `1.0.x` | Downloads quietly, installs when the till is closed  |
 
 **Reserve the major for the platform.** Not for "this feels like a big
 release". `update-service.js` classifies a major as a core update and makes the
@@ -35,6 +35,9 @@ stops automatic updates for everyone, with no error anywhere.
 
 1. **Land everything on `main`** and let CI go green. Release re-runs the same
    checks, so a red `main` is a red release.
+   Review the promotion PR's code-scanning alerts separately: a successful
+   CodeQL job can still report security warnings. Resolve actionable findings
+   and record the evidence for any false positive before publishing.
 
 2. **Bump the version** in `package.json`. One commit, nothing else in it.
 
@@ -44,6 +47,7 @@ stops automatic updates for everyone, with no error anywhere.
    what changed for them, and anything they must do differently.
 
 4. **Tag and push.**
+
    ```
    git tag v1.4.0
    git push origin v1.4.0
@@ -149,7 +153,7 @@ down this list - the first one that applies is the cheapest.
 
 ### 1. A bad frontend asset update - seconds, no network
 
-*Updates screen → **Go back to the previous version**.*
+_Updates screen → **Go back to the previous version**._
 
 A pointer move and a restart. It works with no internet, which matters because
 the machine that needs it most is often the one that cannot reach you. Only
@@ -175,12 +179,12 @@ possible moment.
 
 The supported route, and what support should walk a shop through:
 
-1. In the application: *Updates → Update settings →* turn **Check for updates
+1. In the application: _Updates → Update settings →_ turn **Check for updates
    automatically** off. Skipping this means it updates straight back again.
-2. *Updates → Going back to an earlier release → **Open the releases page***.
+2. _Updates → Going back to an earlier release → **Open the releases page**_.
 3. Download the previous version's installer.
 4. Run it. Install over the top; do **not** uninstall first.
-5. Confirm the version in *Updates*, and that recent sales are present.
+5. Confirm the version in _Updates_, and that recent sales are present.
 6. Leave automatic updates off until the replacement release is out.
 
 **Installing over the top keeps the data.** `AppData\Roaming\posnic` -
@@ -191,7 +195,7 @@ here.
 
 ### 4. Data damaged by a release - restore
 
-*Backup Manager → History* → pick the backup taken immediately before the
+_Backup Manager → History_ → pick the backup taken immediately before the
 update. Every update takes one first: a forced backup runs before the installer
 is handed control, and if that backup fails **the update is cancelled** rather
 than applied.
