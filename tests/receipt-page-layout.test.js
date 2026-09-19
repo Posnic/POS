@@ -12,9 +12,10 @@ test('thermal paper follows receipt content, never the enclosing window height',
         doc.querySelector('article').getBoundingClientRect = () => ({ height });
         Object.defineProperty(doc.body, 'scrollHeight', { value: 3000 });
         const fitted = fitDocument(doc);
-        assert.equal(fitted.width, Number(format) * 1000);
+        const printableWidth = format === '80' ? 72 : 48;
+        assert.equal(fitted.width, printableWidth * 1000);
         assert.equal(fitted.height, 106100);
-        assert.match(doc.querySelector('#rd-fitted-paper').textContent, new RegExp('@page\\{size:' + format + 'mm 106.1mm;margin:0;'));
+        assert.match(doc.querySelector('#rd-fitted-paper').textContent, new RegExp('@page\\{size:' + printableWidth + 'mm 106.1mm;margin:0;'));
         height = 200;
         assert.equal(fitDocument(doc).height, 53200);
         assert.equal(doc.querySelectorAll('#rd-fitted-paper').length, 1);
@@ -42,7 +43,7 @@ test('fitted paper overrides receipt styles in the body, including after refitti
     fitDocument(doc);
     assert.equal(doc.body.lastElementChild.id, 'rd-fitted-paper');
     const styles = Array.from(doc.querySelectorAll('style'));
-    assert.match(styles[styles.length - 1].textContent, /@page\{size:80mm 106\.1mm/);
+    assert.match(styles[styles.length - 1].textContent, /@page\{size:72mm 106\.1mm/);
     assert.equal(doc.querySelectorAll('#rd-fitted-paper').length, 1);
     dom.window.close();
 });

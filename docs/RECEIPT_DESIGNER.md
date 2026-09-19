@@ -61,12 +61,17 @@ paper to the chosen receipt format. Browser printing also requires selecting
 the matching paper in the print dialog. Designed desktop receipts use the HTML
 print path so block order, Unicode text and images remain consistent with the
 preview. Browser and Electron use the same thermal page fitter after images
-and fonts load: an explicit paper width and content height, no page margins,
+and fonts load: an explicit printable width and content height, no page margins,
 and 1 mm padding above and below the receipt. Thermal rows and blocks use
 compact spacing; empty text blocks do not consume paper. Invoice spacing is
 unchanged. In a browser print dialog, select the matching roll, 100% scale,
 no margins and no headers/footers. A driver's feed/cut settings and the
 printer's physical cutter clearance can still add paper beyond the document.
+Thermal print jobs use the head's printable width (72 mm for an 80 mm roll,
+48 mm for a 58 mm roll), at 100% scale. The driver supplies the unprintable
+sides of the roll. Sending the full roll width to a 576-dot POS-80C head was
+confirmed to generate a 640-dot raster and crop the last characters on the
+right. Preview still shows the physical roll around its printable area.
 
 Custom designs currently use the HTML/Windows-driver path in Electron, not raw
 ESC/POS. The existing raw ESC/POS receipt and floor-bill paths are separate;
