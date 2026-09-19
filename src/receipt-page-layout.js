@@ -8,7 +8,11 @@
     var receipt = doc.querySelector('.rd-document[data-receipt-design]');
     var format = receipt && receipt.getAttribute('data-receipt-design');
     if (format !== '58' && format !== '80') return null;
-    var width = Number(format);
+    // Thermal drivers address the print head, not the edge-to-edge roll.
+    // Sending an 80 mm raster to a 72 mm (576-dot) head crops its right edge;
+    // centring 72 mm content on that page adds another unwanted 4 mm offset.
+    // The printer itself supplies the unprintable sides of the physical roll.
+    var width = format === '80' ? 72 : 48;
     // Never measure body.scrollHeight: it includes the preview/window height.
     var height = receipt.getBoundingClientRect().height;
     if (!Number.isFinite(height) || height <= 0) throw new Error('The receipt could not be measured.');

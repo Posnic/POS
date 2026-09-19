@@ -638,6 +638,7 @@ class HardwareManager {
       const printOpts = {
         silent: options.silent !== false,
         printBackground: true,
+        scaleFactor: 100,
         margins: { marginType: 'none' },
         pageSize: pageSize,
         copies: Math.max(1, parseInt(options.copies, 10) || 1)
