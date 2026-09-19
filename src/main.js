@@ -1249,6 +1249,77 @@ function getMachineId() {
   return id;
 }
 
+async function connectCloudDevice(activation, base) {
+  const { deviceToken, deviceId, syncUrl } = activation;
+  if (!deviceToken || !deviceId) return { ok: false, error: 'The cloud server returned an incomplete activation. Please retry.' };
+
+  /*
+   * Where this till syncs is decided by the server, not by what was typed
+   * here.
+   *
+   * With one gateway the address entered at activation is the address to sync
+   * with, and that is what this stored. With several machines it stops being
+   * true: a shop lives on one of them and only the server knows which. It now
+   * says so, and the till believes it.
+   *
+   * Falling back to what was typed keeps every existing installation working,
+   * and keeps activation possible against an estate that has not been told
+   * its own addresses yet.
+   */
+  const gatewayUrl = syncUrl ? String(syncUrl).replace(/\/+$/, '') : base;
+  if (syncUrl && gatewayUrl !== base) {
+    console.log(`[Cloud] this shop syncs with ${gatewayUrl}`);
+  }
+
+  // Local installs enable MongoDB auth during setup; the agent must use
+  // the same credentials. Fresh cloud-mode installs have no auth yet.
+  let localUri = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
+  try {
+    const credFile = path.join(app.getPath('userData'), '.mongodb-credentials.json');
+    if (fs.existsSync(credFile)) {
+      const creds = JSON.parse(fs.readFileSync(credFile, 'utf8'));
+      if (creds.uri) localUri = creds.uri;
+    }
+  } catch (credErr) {
+    console.warn('[Cloud] Could not read MongoDB credentials:', credErr.message);
+  }
+
+  fs.writeFileSync(CLOUD_CONFIG_FILE, JSON.stringify({
+    gatewayUrl,
+    deviceToken,
+    deviceId,
+    localUri,
+    localDb: 'PosnicPro',
+    statusPort: 5055
+  }, null, 2));
+
+  if (!syncAgentManager) syncAgentManager = new SyncAgentManager({ app });
+  syncAgentManager.stop();
+  syncAgentManager.stopped = false;
+  try {
+    const started = await syncAgentManager.start();
+    if (!started) throw new Error('Cloud sync could not start. Please retry or contact support.');
+  } catch (error) {
+    return { ok: false, canResume: true, error: error.message || 'Cloud sync could not start. Please retry.' };
+  }
+  console.log('[Cloud] Device activated:', deviceId);
+  createMenu(); // refresh: local-only entries (e.g. Backup Manager) hide
+  if (tray && tray.rebuildMenu) tray.rebuildMenu();
+  refreshBrand().catch(() => {});  // white label, if this shop has one
+  refreshLimits().catch(() => {}); // how many outlets they may run
+  return { ok: true, deviceId };
+}
+
+
+ipcMain.handle('cloud:resume', async () => {
+  try {
+    const config = JSON.parse(fs.readFileSync(CLOUD_CONFIG_FILE, 'utf8'));
+    return await connectCloudDevice(config, config.gatewayUrl);
+  } catch (error) {
+    return { ok: false, error: 'Could not resume cloud setup. Please sign in again.' };
+  }
+});
+
 ipcMain.handle('cloud:activate', async (_event, { serverUrl, email, password, waitForShopMs } = {}) => {
   try {
     if (!serverUrl || !email || !password) {
@@ -1287,61 +1358,7 @@ ipcMain.handle('cloud:activate', async (_event, { serverUrl, email, password, wa
           : `Cloud server error (${response.status})`);
       return { ok: false, error: msg };
     }
-    const { deviceToken, deviceId, syncUrl } = await response.json();
-
-    /*
-     * Where this till syncs is decided by the server, not by what was typed
-     * here.
-     *
-     * With one gateway the address entered at activation is the address to sync
-     * with, and that is what this stored. With several machines it stops being
-     * true: a shop lives on one of them and only the server knows which. It now
-     * says so, and the till believes it.
-     *
-     * Falling back to what was typed keeps every existing installation working,
-     * and keeps activation possible against an estate that has not been told
-     * its own addresses yet.
-     */
-    const gatewayUrl = syncUrl ? String(syncUrl).replace(/\/+$/, '') : base;
-    if (syncUrl && gatewayUrl !== base) {
-      console.log(`[Cloud] this shop syncs with ${gatewayUrl}`);
-    }
-
-    // Local installs enable MongoDB auth during setup; the agent must use
-    // the same credentials. Fresh cloud-mode installs have no auth yet.
-    let localUri = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
-    try {
-      const credFile = path.join(app.getPath('userData'), '.mongodb-credentials.json');
-      if (fs.existsSync(credFile)) {
-        const creds = JSON.parse(fs.readFileSync(credFile, 'utf8'));
-        if (creds.uri) localUri = creds.uri;
-      }
-    } catch (credErr) {
-      console.warn('[Cloud] Could not read MongoDB credentials:', credErr.message);
-    }
-
-    fs.writeFileSync(CLOUD_CONFIG_FILE, JSON.stringify({
-      gatewayUrl,
-      deviceToken,
-      deviceId,
-      localUri,
-      localDb: 'PosnicPro',
-      statusPort: 5055
-    }, null, 2));
-
-    if (!syncAgentManager) syncAgentManager = new SyncAgentManager({ app });
-    syncAgentManager.stop();
-    syncAgentManager.stopped = false;
-    const started = syncAgentManager.start();
-    if (!started) {
-      return { ok: false, error: 'Sync agent is not installed in this build' };
-    }
-    console.log('[Cloud] Device activated:', deviceId);
-    createMenu(); // refresh: local-only entries (e.g. Backup Manager) hide
-    if (tray && tray.rebuildMenu) tray.rebuildMenu();
-    refreshBrand().catch(() => {});  // white label, if this shop has one
-    refreshLimits().catch(() => {}); // how many outlets they may run
-    return { ok: true, deviceId };
+    return await connectCloudDevice(await response.json(), base);
   } catch (error) {
     console.error('[Cloud] Activation failed:', error.message);
     const friendly = /abort|fetch failed|ENOTFOUND|ECONNREFUSED/i.test(String(error.message))
@@ -1512,7 +1529,7 @@ ipcMain.handle('cloud:status', async () => {
   } catch (e) {
     // agent not running - connected but no live status
   }
-  return { connected, sync };
+  return { connected, sync, running: !!(syncAgentManager && syncAgentManager.child) };
 });
 
 ipcMain.handle('cloud:signup', () => shell.openExternal('https://www.posnic.com/cloud'));
@@ -1557,7 +1574,7 @@ ipcMain.handle('cloud:pair', async (_event, { serverUrl, code, waitForShopMs } =
       }
       return { ok: false, error: msg };
     }
-    return { ok: true, ...(await response.json()) };
+    return await connectCloudDevice(await response.json(), base);
   } catch (e) {
     return { ok: false, error: 'Could not reach Posnic. Check the internet connection.' };
   }
