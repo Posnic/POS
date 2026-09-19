@@ -6,6 +6,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
+const { fitDocument } = require('./receipt-page-layout');
 const rawPrintService = require('./raw-print-service');
 
 /* How long the printer list may be remembered. Long enough that a receipt
@@ -628,10 +629,10 @@ class HardwareManager {
       // Designed thermal receipts end at their content instead of feeding a
       // metre of paper (the fallback page size used by older HTML templates).
       if (options.fitReceipt === true && (sizeKey === '58mm' || sizeKey === '80mm')) {
-        const height = await printWindow.webContents.executeJavaScript(
-          'Math.ceil(document.querySelector(".rd-document").getBoundingClientRect().height)'
+        const fitted = await printWindow.webContents.executeJavaScript(
+          `(${fitDocument.toString()})(document)`
         );
-        if (Number.isFinite(height) && height > 0) pageSize.height = Math.max(20000, Math.min(3000000, Math.ceil((height + 16) * 25400 / 96)));
+        if (fitted) Object.assign(pageSize, fitted);
       }
 
       const printOpts = {

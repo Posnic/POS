@@ -60,7 +60,17 @@ Printers are selected per computer in Hardware Manager. Match the printer's
 paper to the chosen receipt format. Browser printing also requires selecting
 the matching paper in the print dialog. Designed desktop receipts use the HTML
 print path so block order, Unicode text and images remain consistent with the
-preview. Thermal pages are fitted to their content in the updated desktop app.
+preview. Browser and Electron use the same thermal page fitter after images
+and fonts load: an explicit paper width and content height, no page margins,
+and 1 mm padding above and below the receipt. Thermal rows and blocks use
+compact spacing; empty text blocks do not consume paper. Invoice spacing is
+unchanged. In a browser print dialog, select the matching roll, 100% scale,
+no margins and no headers/footers. A driver's feed/cut settings and the
+printer's physical cutter clearance can still add paper beyond the document.
+
+Custom designs currently use the HTML/Windows-driver path in Electron, not raw
+ESC/POS. The existing raw ESC/POS receipt and floor-bill paths are separate;
+they do not yet reproduce the custom designer's blocks and styling.
 
 Changes go through a pull request targeting `develop`, then verification on
 [the development sandbox](https://develop.posnic.io). Promotion to `main` is a

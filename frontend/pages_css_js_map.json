@@ -106,6 +106,7 @@
             "static/script/js/modules/js/sales_view.js",
             "static/script/js/core/tender-receipt.js",
             "../api/src/helpers/receipt-design.js",
+            "../src/receipt-page-layout.js",
             "static/script/js/core/receipt-design-labels.js",
             "static/script/js/core/receipt-designer.js",
             "static/script/js/modules/js/receipt-designer-editor.js",

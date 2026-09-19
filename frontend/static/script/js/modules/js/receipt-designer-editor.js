@@ -53,7 +53,7 @@
             if (observer) observer.disconnect();
             if (window.ResizeObserver) { observer = new ResizeObserver(fit); observer.observe(box.find('.rd-preview-stage')[0]); }
         });
-        var padding = f.height ? '12mm' : '4mm ' + ((f.width - f.content) / 2) + 'mm';
+        var padding = f.height ? '12mm' : '0 ' + ((f.width - f.content) / 2) + 'mm';
         frame.attr('srcdoc', '<!doctype html><html><head><meta charset="utf-8"></head><body>' + html +
             '<style>html{width:' + width + 'px;}body{box-sizing:border-box;width:' + width + 'px;padding:' + padding + '!important;display:flow-root;}' +
             '.rd-document{width:' + innerWidth + 'px;max-width:100%;}.rd-block{cursor:pointer;}.rd-block:hover{outline:1px dashed #3878d8;outline-offset:3px;}</style></body></html>');

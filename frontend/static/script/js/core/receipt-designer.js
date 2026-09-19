@@ -107,11 +107,11 @@
     function css(format, font) {
         var f = contract.formats[format];
         var sheet = !!f.height;
-        return '@page{size:' + (sheet ? f.width + 'mm ' + f.height + 'mm' : f.width + 'mm auto') + ';margin:' + (sheet ? '12mm' : '0') + ';}' +
+        return '@page{size:' + (sheet ? f.width + 'mm ' + f.height + 'mm' : 'auto') + ';margin:' + (sheet ? '12mm' : '0') + ';}' +
             'html,body{margin:0!important;padding:0!important;background:#fff!important;color:#161b25!important;}' +
             '.rd-document,.rd-document *{box-sizing:border-box;}' +
-            '.rd-document{width:' + f.content + 'mm;max-width:100%;margin:0 auto;font:' + font + 'px/' + (sheet ? '1.5 Arial,sans-serif' : '1.4 monospace') + ';color:#111;overflow-wrap:anywhere;}' +
-            '.rd-block{margin:0 0 ' + (sheet ? '14px' : '7px') + ';break-inside:avoid;}' +
+            '.rd-document{width:' + f.content + 'mm;max-width:100%;margin:0 auto;font:' + font + 'px/' + (sheet ? '1.5 Arial,sans-serif' : '1.25 monospace') + ';color:#111;overflow-wrap:anywhere;}' +
+            '.rd-block{margin:0 0 ' + (sheet ? '14px' : '4px') + ';break-inside:avoid;}' +
             '.rd-block-items{break-inside:auto;}.rd-document h1{font-size:1.7em;line-height:1.2;margin:0 0 5px;color:#111;}' +
             '.rd-store-contact{white-space:pre-line;}.rd-document p{margin:2px 0;}.rd-document img{height:auto;max-width:100%;object-fit:contain;}' +
             '.rd-document table{width:100%;border-collapse:collapse;table-layout:fixed;font:inherit;color:inherit;}' +
@@ -122,7 +122,13 @@
             '.rd-totals{width:' + (sheet ? '48%' : '100%') + ';margin-left:auto;}.rd-transaction{display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid #bbb;padding-bottom:8px;}' +
             '.rd-muted{color:#555;font-size:.9em;}.rd-text{white-space:pre-wrap;}.rd-divider{border:0;border-top:1px dashed #777;margin:10px 0;}' +
             '.rd-sheet .rd-store{padding-bottom:12px;border-bottom:2px solid #222;}.rd-terms{margin-top:20px;font-size:.9em;white-space:pre-line;}' +
-            (sheet ? sheetCss(format) : '') +
+            (sheet ? sheetCss(format) :
+                '.rd-document{display:flow-root;padding:1mm 0;}.rd-block:last-child{margin-bottom:0;}' +
+                '.rd-document th{padding:3px 2px;}.rd-document td{padding:3px 2px;}' +
+                '.rd-document h1{margin-bottom:3px;}.rd-document p{margin:0;}' +
+                '.rd-total-row{margin:1px 0;}.rd-grand-total{padding-top:4px;margin-top:4px;}' +
+                '.rd-transaction{padding-bottom:4px;}.rd-divider{margin:4px 0;}' +
+                '.rd-block-logo,.rd-block-image,.rd-block-qr,.rd-block-barcode{line-height:0;}.rd-document img{vertical-align:top;}') +
             '@media print{.rd-document{max-width:none!important;}body{width:auto!important;min-width:0!important;}}';
     }
     function render(data, format, preview) {
@@ -190,7 +196,10 @@
                 var value = values[b.field];
                 if (value === undefined || value === null || value === '') return '';
                 content = '<div class="rd-text">' + (b.field === 'brand_url' ? '' : '<strong class="rd-field-label">' + esc(label(contract.fields[b.field])) + ':</strong> ') + esc(value) + '</div>';
-            } else if (b.type === 'text') content = '<div class="rd-text">' + esc(b.text) + '</div>';
+            } else if (b.type === 'text') {
+                if (!String(b.text || '').trim()) return '';
+                content = '<div class="rd-text">' + esc(b.text) + '</div>';
+            }
             else if (b.type === 'divider') {
                 var lineStyle = ['solid', 'dashed', 'dotted'].indexOf(b.lineStyle) !== -1 ? b.lineStyle : 'dashed';
                 var width = Math.max(15, Math.min(100, Number(b.width) || 100));
@@ -253,6 +262,7 @@
         frame.on('load', function () {
             var win = frame[0].contentWindow;
             PosnicPro.waitForPrintAssets(win.document).then(function () {
+                window.PosnicReceiptPage.fitDocument(win.document);
                 win.onafterprint = function () { frame.remove(); };
                 win.focus(); win.print(); PosnicPro.afterPrint();
             }).catch(function (error) { frame.remove(); failure(error); });
