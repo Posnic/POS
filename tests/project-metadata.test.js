@@ -37,7 +37,13 @@ test('CodeMeta states a version, and it cannot drift from package.json', () => {
 
   const cffReleaseDate = /^date-released:\s*(.+)$/m.exec(citation);
   assert.ok(cffReleaseDate, 'CITATION.cff states no release date');
-  assert.equal(cffReleaseDate[1].trim(), '2026-08-28');
+  const appstream = fs.readFileSync(
+    path.join(root, 'builds/linux/com.posnic.app.metainfo.xml'), 'utf8',
+  );
+  const latestRelease = /<release version="([^"]+)" date="([^"]+)"/.exec(appstream);
+  assert.ok(latestRelease, 'AppStream states no release');
+  assert.equal(latestRelease[1], packageJson.version);
+  assert.equal(cffReleaseDate[1].trim(), latestRelease[2]);
 
   assert.equal(
     metadata.releaseNotes,
