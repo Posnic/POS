@@ -76,6 +76,20 @@ test('the whole order going is Order Cancelled, which is a different thing', () 
   assert.strictEqual(headingOf(oneLine), 'Items Cancelled');
 });
 
+test('HTML reprints are duplicates while retaining cancellation instructions', () => {
+  const duplicate = ticket(atTable({ sale_process: 'cancelled', _isReprint: true, items: [biryani, naan] }), 'cancel');
+  assert.strictEqual(headingOf(duplicate), 'DUPLICATE KOT');
+  assert.match(duplicate, /Do not prepare again/);
+  assert.match(duplicate, /Original: Order Cancelled/);
+  assert.match(duplicate, /class="in cx"/);
+  const copy = ticket(atTable({ items: [biryani] }), 'copy');
+  assert.strictEqual(headingOf(copy), 'DUPLICATE KOT');
+  assert.match(copy, /Do not prepare again/);
+  for (const kind of ['new', 'edit', 'cancel']) {
+    assert.doesNotMatch(ticket(atTable({ items: [biryani] }), kind), /DUPLICATE KOT|Do not prepare again/);
+  }
+});
+
 test('a reduction still reads as a cancellation, which is what the kitchen wanted', () => {
   /* Owner: "quantity reduced is bad for them". A reduction arrives as a cancel
      job carrying the amount removed, and must keep printing that way. */

@@ -76,7 +76,9 @@ test('browser rendering has kitchen notes, escaped content and no money', () => 
   assert.match(html, /Soup &lt;hot&gt;/);
   assert.match(html, /&lt;script&gt;salt/);
   assert.doesNotMatch(html, /<script>|100|item_price/);
-  assert.match(s.api.render({ ...sale, print_jobs: [{ ...sale.print_jobs[0], type: 'copy' }] }, '80'), /Do not prepare again/);
+  const duplicate = s.api.render({ ...sale, print_jobs: [{ ...sale.print_jobs[0], type: 'copy' }] }, '80');
+  assert.match(duplicate, /DUPLICATE KOT - Do not prepare again/);
+  assert.doesNotMatch(html, /DUPLICATE KOT|Do not prepare again/);
   s.dom.window.close();
 });
 

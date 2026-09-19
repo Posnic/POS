@@ -1584,7 +1584,7 @@
   "lang_kot_print_cancelled": "Cancelled Items",
   "lang_kot_print_confirm": "Confirm KOT printing",
   "lang_kot_print_confirm_help": "Confirm only after the ticket comes out. Cancelling the print dialog does not mark it printed.",
-  "lang_kot_print_copy": "KOT COPY - Do not prepare again",
+  "lang_kot_print_copy": "DUPLICATE KOT - Do not prepare again",
   "lang_kot_print_covers": "Covers",
   "lang_kot_print_elsewhere": "The kitchen printer is already handling this KOT.",
   "lang_kot_print_failed": "Could not print the KOT.",
