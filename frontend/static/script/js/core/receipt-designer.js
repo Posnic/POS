@@ -161,10 +161,22 @@
         var printer = window.electronAPI && window.electronAPI.printer;
         var failure = function (error) { PosnicPro.alert('error', error.message || label('Print failed')); };
         if (printer && printer.print) {
-            return printer.print(doc, { printerName: PosnicPro.resolveReceiptPrinter() || undefined,
+            return Promise.resolve(PosnicPro.syncPrinterPreferences ? PosnicPro.syncPrinterPreferences() : null)
+                .catch(function () {})
+                .then(function () {
+                    var chosen = PosnicPro.resolveReceiptPrinter();
+                    if (chosen) return chosen;
+                    return Promise.resolve(printer.getDefault()).then(function (fallback) {
+                        var name = fallback && typeof fallback === 'object' ? fallback.name : fallback;
+                        if (!name || (PosnicPro._kitchenPrinters || []).indexOf(String(name).trim().toLowerCase()) !== -1) {
+                            throw new Error('Choose a receipt printer in Hardware Manager.');
+                        }
+                        return name;
+                    });
+                }).then(function (name) { return printer.print(doc, { printerName: name,
                 pageSize: format === '58' || format === '80' ? format + 'mm' : format,
                 fitReceipt: format === '58' || format === '80',
-                silent: true, forceHtml: true, printBackground: true, margins: { marginType: 'none' } })
+                silent: true, forceHtml: true, printBackground: true, margins: { marginType: 'none' } }); })
                 .then(function (result) {
                     if (!result || !result.success) throw new Error(result && result.error || label('Print failed'));
                     PosnicPro.afterPrint();

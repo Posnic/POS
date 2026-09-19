@@ -90,3 +90,24 @@ test('editor adds and reorders blocks, keeps formats independent, and sends a pa
     assert.equal($('#printall').length, 1, 'Reloading settings keeps the moved controls');
     dom.window.close();
 });
+
+test('desktop printing refreshes the selected printer and never guesses the kitchen printer', async () => {
+    const { dom, w, engine } = setup();
+    let name = 'Old printer', sent, error;
+    w.PosnicPro.syncPrinterPreferences = async () => { name = 'Counter'; };
+    w.PosnicPro.resolveReceiptPrinter = () => name;
+    w.PosnicPro.afterPrint = () => {};
+    w.PosnicPro.alert = (_type, message) => { error = message; };
+    w.electronAPI = { printer: { print: async (_doc, options) => { sent = options; return { success: true }; }, getDefault: async () => ({ name: 'Kitchen' }) } };
+    await engine.print('<article>Receipt</article>', '58');
+    assert.equal(sent.printerName, 'Counter');
+    assert.equal(sent.pageSize, '58mm');
+    assert.equal(sent.fitReceipt, true);
+    sent = null;
+    w.PosnicPro.syncPrinterPreferences = async () => { name = null; };
+    w.PosnicPro._kitchenPrinters = ['kitchen'];
+    await engine.print('<article>Receipt</article>', '80');
+    assert.equal(sent, null);
+    assert.match(error, /Choose a receipt printer/);
+    dom.window.close();
+});
