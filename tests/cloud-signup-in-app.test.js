@@ -1,156 +1,39 @@
 'use strict';
-
-/*
- * Installing the till should not require knowing anything technical.
- *
- * Two things stood between a shopkeeper and a working till, and neither was
- * a question they could answer:
- *
- *   - "Cloud Server", a text box with exactly one correct value, already
- *     filled in, that could only be got wrong;
- *   - "Don't have an account? Create one", which opened a web browser. That
- *     ends the installation: sign up somewhere else, wait for a verification
- *     email, come back later if at all - possibly not even at this machine.
- *
- * The sync address was never the problem: the gateway has always decided it
- * at activation and handed it back, and the till stores what it is told.
- *
- * These tests pin the parts that would fail silently - a field that quietly
- * reappears in front of customers, a spam check quietly dropped, a wait that
- * quietly applies to ordinary sign-ins too.
- */
-
 const test = require('node:test');
-const assert = require('node:assert');
-const fs = require('fs');
-const path = require('path');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { JSDOM } = require('jsdom');
+const source = fs.readFileSync(path.join(__dirname, '../src/install-wizard.html'), 'utf8');
 
-const ROOT = path.join(__dirname, '..');
-const wizard = fs.readFileSync(path.join(ROOT, 'src', 'install-wizard.html'), 'utf8');
-const main = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
-const preload = fs.readFileSync(path.join(ROOT, 'src', 'preload.js'), 'utf8');
-
-test('the cloud server is not a question the customer is asked', () => {
-  const m = wizard.match(/<input[^>]*id="cloudServer"[^>]*>/);
-  assert.ok(m, 'the cloudServer field is gone entirely - the connect handler reads it');
-  assert.match(m[0], /type="hidden"/,
-    'cloudServer must not be a visible text box: it has one correct value and can only be got wrong');
+test('cloud trial leads, offline Community setup and pairing remain available', () => {
+  const dom = new JSDOM(source), doc = dom.window.document;
+  assert.equal(doc.querySelector('.mode-cards').firstElementChild.id, 'modeCloud');
+  assert.match(doc.querySelector('#modeCloud').textContent, /14-day free trial/);
+  assert.equal(doc.querySelector('#chooseLocalBtn').textContent, 'Set up offline');
+  assert.ok(doc.querySelector('#pairCode'));
+  assert.equal(doc.querySelector('#cloudServer').type, 'hidden');
+  assert.equal(doc.querySelector('#suPassword'), null);
+  dom.window.close();
 });
-
-test('support can still reach the server field', () => {
-  /* Hidden is right for customers; unreachable would be wrong for support. */
-  assert.match(wizard, /id="cloudServerToggle"/);
-  assert.match(wizard, /id="cloudServerVisible"/);
-  assert.match(wizard, /cloudServerVisible'\)\.addEventListener\('input'/,
-    'the visible copy must write into the real field, or a support change does nothing');
-});
-
-test('creating an account no longer opens a browser', () => {
-  const handler = wizard.match(/async function openSignup\(e\)[\s\S]*?\n        \}/);
-  assert.ok(handler, 'the openSignup handler was not found');
-  assert.ok(!/cloud\?\.signup\(\)/.test(handler[0]),
-    'the link must open the in-app form, not shell out to the website');
-  assert.match(handler[0], /showSection\('stepCloudSignup'\)/);
-});
-
-test('the way to create an account is on the cloud step too', () => {
-  /*
-   * The link lived only on the mode chooser, so somebody who picked Cloud and
-   * only then realised they had no account had to work out that Back was the
-   * way forward. Both doors now run the same handler, so they cannot drift.
-   */
-  assert.match(wizard, /id="cloudSignupLink"/);
-  assert.match(wizard, /signupLink'\)\.addEventListener\('click', openSignup\)/);
-  assert.match(wizard, /cloudSignupLink'\)\.addEventListener\('click', openSignup\)/);
-});
-
-test('the in-app form asks only what a shopkeeper knows', () => {
-  for (const id of ['suBusinessName', 'suName', 'suEmail', 'suPassword']) {
-    assert.match(wizard, new RegExp(`id="${id}"`), `${id} is missing from the signup form`);
-  }
-  /* The web address is derived from the shop name by the server, which already
-     does that whenever the website omits one. Asking for it here would be the
-     same mistake as the server box. */
-  assert.ok(!/id="suSubdomain"/.test(wizard),
-    'the customer must not be asked to invent a web address');
-});
-
-test('the spam check is kept', () => {
-  /*
-   * Dropping it for anything claiming to be the installer would put an
-   * unauthenticated create-a-shop call on the public internet: the flag
-   * saying "I am the desktop app" is trivially forged.
-   */
-  assert.match(wizard, /id="suCaptchaAnswer"/);
-  assert.match(main, /cloud:captcha/);
-  assert.match(main, /captchaToken/, 'the answer must be sent to the server, which verifies it');
-});
-
-test('a rejected attempt is handed a fresh sum', () => {
-  /* The sum is single use. Reusing a spent one fails the spam check instead
-     of whatever was actually wrong, which is how people end up stuck. */
-  const handler = wizard.match(/suCreateBtn'\)\.addEventListener\([\s\S]*?\n        \}\);/);
-  assert.ok(handler, 'the create handler was not found');
-  const failureBranch = handler[0].slice(handler[0].indexOf('if (!r || !r.ok)'));
-  assert.match(failureBranch, /loadCaptcha\(\)/,
-    'a failed create must reload the spam check');
-});
-
-test('details already typed are carried across, not asked again', () => {
-  const handler = wizard.match(/async function openSignup\(e\)[\s\S]*?\n        \}/)[0];
-  assert.match(handler, /suEmail'\)\.value = typedEmail/);
-  const create = wizard.match(/suCreateBtn'\)\.addEventListener\([\s\S]*?\n        \}\);/)[0];
-  assert.match(create, /cloudEmail'\)\.value = email/,
-    'after creating an account the email must be carried to the connect step');
-  assert.match(create, /cloudPassword'\)\.value = password/);
-});
-
-test('the trial starts without waiting for an email', () => {
-  assert.match(main, /startTrialNow: true/,
-    'the installer must ask the server to start the shop now - nobody at a till can reach an email');
-});
-
-test('waiting for the shop applies only after signing up', () => {
-  /*
-   * A wrong password must still fail immediately. If the wait applied to every
-   * sign-in, a typo would sit behind a five-minute progress bar.
-   */
-  assert.match(wizard, /waitForShopMs: justSignedUp \? \d+ : 0/);
-  assert.match(main, /response\.status === 401 \|\| Date\.now\(\) >= deadline/,
-    'a 401 must break the retry loop - no amount of waiting fixes a wrong password');
-});
-
-test('the renderer can actually reach the new calls', () => {
-  /* A handler with no preload bridge is a handler nothing can call. */
-  assert.match(preload, /captcha:\s*\(\) => ipcRenderer\.invoke\('cloud:captcha'\)/);
-  assert.match(preload, /createAccount:\s*\(details\) => ipcRenderer\.invoke\('cloud:create-account', details\)/);
-  assert.match(main, /ipcMain\.handle\('cloud:create-account'/);
-});
-
-/* ------------------------------------------------------------- pairing --- */
-
-test('the installer offers a pairing code as well as a password', () => {
-  /*
-   * A code is issued by somebody allowed to add a device and dies in ten
-   * minutes. The password alternative is the owner's, is shared with staff,
-   * never expires, and downloads the whole business onto whatever asked.
-   */
-  assert.match(wizard, /id="pairCode"/, 'no pairing field in the installer');
-  assert.match(wizard, /cloud\.pair\(\{/, 'the pair button must call the pairing IPC');
-  assert.match(main, /ipcMain\.handle\('cloud:pair'/);
-  assert.match(preload, /pair: \(details\) => ipcRenderer\.invoke\('cloud:pair', details\)/);
-});
-
-test('a refused code is not retried into oblivion', () => {
-  /* Single use and ten minutes: retrying a 401 only burns the customer's
-     window and tells them nothing. */
-  const handler = main.slice(main.indexOf("ipcMain.handle('cloud:pair'"));
-  assert.match(handler.slice(0, 2000), /response\.status === 401/,
-    'a 401 must end the attempt rather than looping');
-});
-
-test('pairing does not ask for a gateway address either', () => {
-  const btn = wizard.slice(wizard.indexOf("pairBtn').addEventListener"));
-  assert.match(btn.slice(0, 900), /cloudServer'\)\.value/,
-    'the pair call must reuse the hidden server field, not add a new question');
+test('trial and sign-in actions use browser authorization; pairing stays independent', async () => {
+  const dom = new JSDOM(source, { runScripts: 'outside-only' });
+  const calls = [], pending = [];
+  dom.window.electronAPI = { cloud: {
+    authorize: async (intent) => { calls.push(intent); return { ok: true }; },
+    pair: async (details) => { calls.push(details.code); return { ok: true }; },
+    cancelAuthorization: () => calls.push('cancel'), reopenAuthorization: async () => ({ ok: true }),
+  } };
+  dom.window.showSection = () => {};
+  dom.window.runCloudSetup = (connect) => { const p = connect(); pending.push(p); return p; };
+  const start = source.indexOf('        async function startBrowserCloud(');
+  const end = source.indexOf("        document.getElementById('cloudBackBtn')", start);
+  dom.window.eval(source.slice(start, end));
+  for (const id of ['chooseCloudBtn', 'signupLink', 'cloudSignupLink', 'browserSignInBtn']) dom.window.document.getElementById(id).click();
+  dom.window.document.getElementById('pairCode').value = 'P1-K7M4-9QX2';
+  dom.window.document.getElementById('pairBtn').click();
+  await Promise.all(pending);
+  assert.deepEqual(calls, ['signup', 'login', 'signup', 'login', 'P1-K7M4-9QX2']);
+  dom.window.document.getElementById('cancelBrowserBtn').click(); assert.equal(calls.at(-1), 'cancel');
+  dom.window.close();
 });

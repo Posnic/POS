@@ -111,6 +111,8 @@
       "src/agent-update-apply.js",
       "src/agent-bootstrap.js",
       "src/cloud-activation.js",
+      "src/browser-cloud-auth.js",
+      "src/cloud-shop-identity.js",
       "src/connector-runtime.js",
       "src/window-chrome.js",
       "src/window-theme.js",

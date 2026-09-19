@@ -105,7 +105,7 @@ const CHECKS = [
      * being pushed - which would make this hook fail every time, and a hook
      * that always fails is one everybody bypasses.
      */
-    needs: () => fs.existsSync(path.join(ROOT, 'frontend', 'public', 'assets')),
+    needs: () => fs.existsSync(path.join(ROOT, 'frontend', 'public', 'dashboard.html')),
     missing: 'the built pages. cd frontend && npm ci && npm run build:assets',
     slow: false,
   },

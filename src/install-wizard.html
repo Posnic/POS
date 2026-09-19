@@ -190,10 +190,7 @@
             white-space: nowrap;
         }
 
-        /* The two cards are not equals, and pretending otherwise is what made them
-   look like the same offer twice. Local is what almost everyone should pick;
-   Cloud is for someone who already pays for it. So local carries the weight -
-   a tinted field, a solid button - and Cloud is quiet and outlined. */
+        /* Cloud trial is the primary choice; Community remains available offline. */
         .mode-card.is-primary {
             border-color: #cfe0f2;
             background: linear-gradient(180deg, #f7fbff 0%, #ffffff 62%);
@@ -233,8 +230,7 @@
             color: #1e4d78;
         }
 
-        /* Cloud's button is outlined, so the eye lands on the local one first
-           and the two stop looking like the same decision. */
+        /* Secondary actions remain easy to find without competing with the trial. */
         .btn-outline {
             background: #fff;
             color: #3D85C6;
@@ -792,187 +788,63 @@
                 </div>
             </div>
 
-            <!-- Step 0: Installation mode -->
-            <div class="form-section" id="step0" style="display: block;">
-                <div class="mode-head">
-                    <h2>How will you use Posnic?</h2>
-                    <p>Both editions run the same till and work without internet.</p>
-                </div>
+            <!-- Cloud enrollment is separate from everyday local staff login. -->
+            <div class="form-section" id="step0" style="display:block;">
+                <div class="mode-head"><h2>Your shop, ready anywhere</h2><p>Start with Posnic Cloud, or keep your shop on this computer.</p></div>
                 <div class="mode-cards">
-                    <div class="mode-card is-primary" id="modeLocal">
-                        <span class="mode-flag">Most shops start here</span>
-                        <div class="mode-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M3 9l1.5-5h15L21 9"></path>
-                                <path d="M3 9a3 3 0 006 0 3 3 0 006 0 3 3 0 006 0"></path>
-                                <path d="M4.5 11v9h15v-9"></path>
-                                <path d="M9.5 20v-5h5v5"></path>
-                            </svg>
-                        </div>
-                        <div class="mode-title-row">
-                            <h3>Community Edition</h3>
-                            <span class="mode-badge">Free forever</span>
-                        </div>
-                        <p class="mode-headline">Runs entirely on this computer.</p>
-                        <p>Open source, and your data never leaves the shop.</p>
-                        <ul class="mode-points">
-                            <li>Works fully offline — no internet needed, ever</li>
-                            <li>Other counters and phones connect over your shop's Wi-Fi</li>
-                            <li>Your data stays on this machine, backed up locally</li>
-                        </ul>
-                        <button type="button" class="btn btn-primary" id="chooseLocalBtn">Set Up Local Shop</button>
+                    <div class="mode-card is-primary" id="modeCloud">
+                        <span class="mode-flag">Recommended</span>
+                        <div class="mode-title-row"><h3>Posnic Cloud</h3><span class="mode-badge">14-day free trial</span></div>
+                        <p class="mode-headline">One shop across your desktop and the cloud.</p>
+                        <p>Connect securely in your browser. Your till keeps working when the internet drops.</p>
+                        <ul class="mode-points"><li>Sync sales, stock and customers across your branches</li><li>View your business from a browser, anywhere</li><li>Use local staff login after the first download</li></ul>
+                        <button type="button" class="btn btn-primary" id="chooseCloudBtn">Start cloud trial</button>
+                        <a href="#" id="signupLink" class="mode-link">Sign in to an existing cloud account</a>
+                        <a href="#" id="choosePairLink" class="mode-link">Have a pairing code?</a>
                     </div>
-                    <div class="mode-card" id="modeCloud">
-                        <div class="mode-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M17.5 19a4.5 4.5 0 00.5-8.97 6 6 0 00-11.66-1.2A3.75 3.75 0 006.5 19z"></path>
-                                <path d="M12 12.5v4"></path>
-                                <path d="M10.25 14.25L12 12.5l1.75 1.75"></path>
-                            </svg>
-                        </div>
-                        <div class="mode-title-row">
-                            <h3>Posnic Cloud</h3>
-                            <span class="mode-badge neutral">Subscription</span>
-                        </div>
-                        <p class="mode-headline">Adds sync across branches.</p>
-                        <p>For shops that already have a Cloud subscription. Everything in
-                           Community Edition, plus the points below.</p>
-                        <ul class="mode-points">
-                            <li>Sales, stock and customers sync across every branch</li>
-                            <li>Open your dashboard from any browser, anywhere</li>
-                            <li>Existing data downloads to this machine automatically</li>
-                        </ul>
-                        <button type="button" class="btn btn-outline" id="chooseCloudBtn">I have a Cloud account</button>
-                        <a href="#" id="signupLink" class="mode-link">Don't have an account? Create one →</a>
+                    <div class="mode-card" id="modeLocal">
+                        <div class="mode-title-row"><h3>Community Edition</h3><span class="mode-badge neutral">Free</span></div>
+                        <p class="mode-headline">Keep your shop on this computer.</p>
+                        <p>Set up and sign in without an internet connection or cloud account.</p>
+                        <ul class="mode-points"><li>Run your till fully offline</li><li>Connect counters and phones over your shop Wi-Fi</li><li>Manage your own local backups</li></ul>
+                        <button type="button" class="btn btn-outline" id="chooseLocalBtn">Set up offline</button>
                     </div>
                 </div>
-                <p class="mode-footnote">Not sure? <strong>Start local.</strong> Moving to Cloud later takes a minute and loses nothing.</p>
+                <p class="mode-footnote">Cloud needs internet for authorization and the first download. After that, staff sign in locally and changes sync when you reconnect.</p>
             </div>
 
-            <!-- Cloud setup: minimal connect + download -->
-            <div class="form-section" id="stepCloud" style="display: none;">
-                <h2>☁️ Connect to Posnic Cloud</h2>
-                <!--
-                  The server address is not a question a shopkeeper can answer.
-                  It has exactly one correct value, it was already filled in,
-                  and leaving it on screen only invited someone to change it
-                  into something that cannot work. The sync address was never
-                  typed here anyway - the gateway decides it at activation and
-                  hands it back - so this was the last piece of plumbing still
-                  facing the customer.
-
-                  Kept in the DOM, and reachable, because support occasionally
-                  needs to point an installation somewhere else; it is just no
-                  longer the first thing a new customer is asked.
-                -->
-                <input type="hidden" id="cloudServer" value="https://gateway.posnic.com">
-                <p class="cloud-server-note">
-                    Connecting to <strong>Posnic Cloud</strong>
-                    <a href="#" id="cloudServerToggle">change</a>
-                </p>
-                <div class="form-group" id="cloudServerRow" style="display: none;">
-                    <label>Cloud Server</label>
-                    <input type="text" id="cloudServerVisible" value="https://gateway.posnic.com" autocomplete="off">
+            <div class="form-section" id="stepCloud" style="display:none;">
+                <h2>Connect to Posnic Cloud</h2>
+                <p class="field-hint" style="margin-bottom:18px;">Sign in or create your account in your browser, then approve this computer. Your cloud password stays in the browser.</p>
+                <button type="button" class="btn btn-primary" id="browserSignInBtn" style="width:100%;">Sign in with browser</button>
+                <a href="#" id="cloudSignupLink" class="mode-link" style="display:block;margin-top:12px;">New to Posnic? Start your free cloud trial</a>
+                <div id="browserWait" style="display:none;margin:16px 0;" role="status" aria-live="polite">
+                    <p>Complete the approval in your browser, then return here. This window will continue automatically.</p>
+                    <div class="btn-container"><button type="button" class="btn btn-secondary" id="reopenBrowserBtn">Open browser again</button><button type="button" class="btn btn-secondary" id="cancelBrowserBtn">Cancel</button></div>
                 </div>
-                <div class="form-group">
-                    <label>Email <span class="required">*</span></label>
-                    <input type="email" id="cloudEmail" autocomplete="username">
-                    <!--
-                      Said plainly because the wrong answer looks right. This
-                      connects the TILL to a shop, which is the owner's account
-                      - a cashier's username and PIN are for signing in to the
-                      app afterwards, and typing those here only ever returns
-                      "invalid credentials" with nothing to explain why.
-                    -->
-                    <div class="field-hint">The email this shop signed up with. Staff sign in later, inside the app.</div>
-                </div>
-                <div class="form-group">
-                    <label>Password <span class="required">*</span></label>
-                    <input type="password" id="cloudPassword" autocomplete="current-password">
-                </div>
-                <!-- Also offered here, not only on the previous screen. Someone
-                     who picks Cloud and only then realises they have no account
-                     should not have to go Back to find the way forward. -->
-                <!--
-                  Pairing with a code.
-
-                  The alternative to typing the owner's password into a machine
-                  that then downloads the whole business. Somebody allowed to
-                  add a device issues a code, reads it out, and it dies in ten
-                  minutes - so a staff member can set a till up without ever
-                  holding the credential that opens everything.
-                -->
-                <div class="form-group" id="pairRow" style="margin-top:14px;">
-                    <label>Or pair with a code</label>
+                <div class="form-group" id="pairRow" style="margin-top:24px;">
+                    <label for="pairCode">Or use a pairing code</label>
                     <div style="display:flex;gap:8px;align-items:center;">
-                        <input type="text" id="pairCode" placeholder="P1-K7M4-9QX2" autocomplete="off"
-                               style="text-transform:uppercase;letter-spacing:1px;">
-                        <button type="button" class="btn btn-secondary" id="pairBtn" style="white-space:nowrap;">Pair</button>
+                        <input type="text" id="pairCode" placeholder="P1-K7M4-9QX2" autocomplete="off" style="text-transform:uppercase;letter-spacing:1px;">
+                        <button type="button" class="btn btn-secondary" id="pairBtn">Pair</button>
                     </div>
-                    <div class="field-hint">Ask whoever manages your shop for a code. It lasts ten minutes.</div>
+                    <div class="field-hint">Use a code from your shop owner. It expires after ten minutes.</div>
                 </div>
-                <a href="#" id="cloudSignupLink" class="mode-link" style="margin-top:6px;">Don't have an account? Create one →</a>
-                <div id="cloudError" style="display:none; color:#dc3545; margin:10px 0;"></div>
-                <div id="cloudProgress" style="display:none; margin:14px 0;">
-                    <div style="background:#eef0f7;border-radius:8px;height:12px;overflow:hidden;margin-bottom:10px;">
-                        <div id="cloudProgBar" style="height:100%;width:2%;border-radius:8px;background:#3D85C6;transition:width 0.6s ease;"></div>
-                    </div>
-                    <div class="mode-progress-text" id="cloudProgressText">Connecting…</div>
-                    <div id="cloudProgressSub" style="color:#94a3b8;font-size:12px;margin-top:4px;">&nbsp;</div>
+                <details style="margin:18px 0;color:#64748b;font-size:13px;"><summary>Advanced connection</summary>
+                    <input type="hidden" id="cloudServer" value="https://gateway.posnic.com">
+                    <p class="cloud-server-note">Posnic Cloud <a href="#" id="cloudServerToggle">Change server</a></p>
+                    <div class="form-group" id="cloudServerRow" style="display:none;"><label for="cloudServerVisible">Cloud server</label><input type="text" id="cloudServerVisible" value="https://gateway.posnic.com"></div>
+                    <div class="form-group"><label for="cloudEmail">Owner email</label><input type="email" id="cloudEmail" autocomplete="username"></div>
+                    <div class="form-group"><label for="cloudPassword">Cloud password</label><input type="password" id="cloudPassword" autocomplete="current-password"></div>
+                    <button type="button" class="btn btn-secondary" id="cloudConnectBtn">Connect with password</button>
+                </details>
+                <div id="cloudError" role="alert" style="display:none;color:#b91c1c;margin:12px 0;"></div>
+                <div id="cloudProgress" style="display:none;margin:14px 0;" role="status" aria-live="polite">
+                    <div style="background:#eef0f7;border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px;"><div id="cloudProgBar" style="height:100%;width:2%;background:#3D85C6;transition:width .6s ease;"></div></div>
+                    <div class="mode-progress-text" id="cloudProgressText">Connecting…</div><div id="cloudProgressSub" class="field-hint"></div>
                 </div>
-                <div class="btn-container">
-                    <button type="button" class="btn btn-secondary" id="cloudBackBtn">← Back</button>
-                    <button type="button" class="btn btn-primary" id="cloudConnectBtn">Connect &amp; Download Data</button>
-                </div>
-            </div>
-
-            <!--
-              Opening an account without leaving the till.
-
-              "Don't have an account?" used to open a browser, which ends the
-              installation: sign up elsewhere, wait for an email, come back
-              later if at all. Everything asked here is something a shopkeeper
-              knows. The web address is derived from the shop name by the
-              server, and the sync address was never asked for - the gateway
-              decides it at activation.
-            -->
-            <div class="form-section" id="stepCloudSignup" style="display: none;">
-                <h2>☁️ Create your Posnic Cloud account</h2>
-                <p style="color:#64748b;font-size:13px;margin:-6px 0 16px;">
-                    Your shop is ready to use straight away. We will email you to confirm
-                    your address, but you do not have to wait for it.
-                </p>
-                <div class="form-group">
-                    <label>Shop Name <span class="required">*</span></label>
-                    <input type="text" id="suBusinessName" placeholder="e.g. Sri Ganesh Stores" autocomplete="organization">
-                </div>
-                <div class="form-group">
-                    <label>Your Name <span class="required">*</span></label>
-                    <input type="text" id="suName" autocomplete="name">
-                </div>
-                <div class="form-group">
-                    <label>Email <span class="required">*</span></label>
-                    <input type="email" id="suEmail" autocomplete="username">
-                </div>
-                <div class="form-group">
-                    <label>Password <span class="required">*</span></label>
-                    <input type="password" id="suPassword" placeholder="Minimum 8 characters" autocomplete="new-password">
-                </div>
-                <div class="form-group">
-                    <label id="suCaptchaLabel">Spam check</label>
-                    <input type="text" id="suCaptchaAnswer" autocomplete="off" inputmode="numeric">
-                </div>
-                <div id="suError" style="display:none; color:#dc3545; margin:10px 0;"></div>
-                <div id="suProgress" style="display:none; margin:14px 0;">
-                    <div style="background:#eef0f7;border-radius:8px;height:12px;overflow:hidden;margin-bottom:10px;">
-                        <div id="suProgBar" style="height:100%;width:2%;border-radius:8px;background:#3D85C6;transition:width 0.6s ease;"></div>
-                    </div>
-                    <div class="mode-progress-text" id="suProgressText">Creating your account…</div>
-                </div>
-                <div class="btn-container">
-                    <button type="button" class="btn btn-secondary" id="suBackBtn">← Back</button>
-                    <button type="button" class="btn btn-primary" id="suCreateBtn">Create &amp; Continue</button>
-                </div>
+                <p class="field-hint">After the first download, your staff can sign in and sell offline. Cloud and local shops are never merged automatically.</p>
+                <div class="btn-container"><button type="button" class="btn btn-secondary" id="cloudBackBtn">Back</button></div>
             </div>
 
             <!-- Quick local setup: one form, everything else defaulted -->
@@ -1754,7 +1626,21 @@ const form = document.getElementById('installForm');
                 qError.style.display = 'block';
             }
         });
-        document.getElementById('chooseCloudBtn').addEventListener('click', () => showSection('stepCloud'));
+        async function startBrowserCloud(intent) {
+            showSection('stepCloud');
+            await runCloudSetup(() => window.electronAPI.cloud.authorize(intent), true);
+        }
+        document.getElementById('chooseCloudBtn').addEventListener('click', () => startBrowserCloud('signup'));
+        document.getElementById('browserSignInBtn').addEventListener('click', () => startBrowserCloud('login'));
+        document.getElementById('signupLink').addEventListener('click', (e) => { e.preventDefault(); startBrowserCloud('login'); });
+        document.getElementById('cloudSignupLink').addEventListener('click', (e) => { e.preventDefault(); startBrowserCloud('signup'); });
+        document.getElementById('choosePairLink').addEventListener('click', (e) => { e.preventDefault(); showSection('stepCloud'); document.getElementById('pairCode').focus(); });
+        document.getElementById('cancelBrowserBtn').addEventListener('click', () => window.electronAPI.cloud.cancelAuthorization());
+        window.addEventListener('beforeunload', () => window.electronAPI?.cloud?.cancelAuthorization());
+        document.getElementById('reopenBrowserBtn').addEventListener('click', async () => {
+            const result = await window.electronAPI.cloud.reopenAuthorization();
+            if (!result.ok) { document.getElementById('cloudError').textContent = result.error; document.getElementById('cloudError').style.display = 'block'; }
+        });
         document.getElementById('pairBtn').addEventListener('click', async () => {
             const code = document.getElementById('pairCode').value.trim();
             if (!code) {
@@ -1783,123 +1669,6 @@ const form = document.getElementById('installForm');
             document.getElementById('cloudServer').value = e.target.value.trim();
         });
 
-        /* Creating an account happens here now, not in a browser. */
-        let suChallenge = null;
-        /* Set only on the path straight out of account creation, so a
-           normal sign-in still fails fast on a wrong password. */
-        let justSignedUp = false;
-        async function loadCaptcha() {
-            const label = document.getElementById('suCaptchaLabel');
-            const r = await window.electronAPI?.cloud?.captcha();
-            if (!r || !r.ok) {
-                suChallenge = null;
-                label.textContent = 'Spam check unavailable — check the internet connection';
-                return;
-            }
-            suChallenge = r.challenge;
-            /* The challenge arrives already phrased as a question ("10 - 5 = ?")
-               and is not always addition, so it is shown as sent rather than
-               wrapped in wording of our own that would read "what is 10 - 5 = ??". */
-            label.innerHTML = 'Spam check <span class="required">*</span> — ' +
-                String(suChallenge.question || '').replace(/[<>]/g, '');
-        }
-
-        /* Both doors lead to the same form: the chooser screen and the cloud
-           step itself. Bound from one handler so they cannot drift apart. */
-        async function openSignup(e) {
-            e.preventDefault();
-            /* Carry over anything already typed, so the same question is not
-               asked twice on the way to the same account. */
-            const typedEmail = document.getElementById('cloudEmail').value.trim();
-            const typedPassword = document.getElementById('cloudPassword').value;
-            if (typedEmail) document.getElementById('suEmail').value = typedEmail;
-            if (typedPassword) document.getElementById('suPassword').value = typedPassword;
-            showSection('stepCloudSignup');
-            document.getElementById('suBusinessName').focus();
-            await loadCaptcha();
-        }
-        document.getElementById('signupLink').addEventListener('click', openSignup);
-        document.getElementById('cloudSignupLink').addEventListener('click', openSignup);
-
-        document.getElementById('suBackBtn').addEventListener('click', () => showSection('stepCloud'));
-
-        document.getElementById('suCreateBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('suCreateBtn');
-            const err = document.getElementById('suError');
-            const prog = document.getElementById('suProgress');
-            const progText = document.getElementById('suProgressText');
-            const val = (id) => document.getElementById(id).value.trim();
-            const businessName = val('suBusinessName');
-            const name = val('suName');
-            const email = val('suEmail');
-            const password = document.getElementById('suPassword').value;
-            const captchaAnswer = val('suCaptchaAnswer');
-
-            err.style.display = 'none';
-            /* Checked here so a mistake is corrected in place rather than
-               costing a round trip AND a fresh spam sum. */
-            if (!businessName || !name || !email || !password) {
-                err.textContent = 'Please fill in the shop name, your name, email and password.';
-                err.style.display = 'block';
-                return;
-            }
-            if (password.length < 8) {
-                err.textContent = 'Password must be at least 8 characters.';
-                err.style.display = 'block';
-                return;
-            }
-            if (!suChallenge) {
-                err.textContent = 'The spam check could not be loaded. Check the internet connection and try again.';
-                err.style.display = 'block';
-                await loadCaptcha();
-                return;
-            }
-            if (!captchaAnswer) {
-                err.textContent = 'Please answer the spam check.';
-                err.style.display = 'block';
-                return;
-            }
-
-            btn.disabled = true;
-            prog.style.display = 'block';
-            progText.textContent = 'Creating your account…';
-
-            const r = await window.electronAPI.cloud.createAccount({
-                name, businessName, email, password,
-                captchaToken: suChallenge.token,
-                captchaAnswer,
-            });
-
-            if (!r || !r.ok) {
-                btn.disabled = false;
-                prog.style.display = 'none';
-                err.textContent = (r && r.error) || 'Could not create the account.';
-                err.style.display = 'block';
-                /* The sum is single use: a rejected attempt must be handed a
-                   new one, or the next try fails on the spam check instead of
-                   whatever was actually wrong. */
-                document.getElementById('suCaptchaAnswer').value = '';
-                await loadCaptcha();
-                return;
-            }
-
-            /*
-             * Straight on to connecting, with the details already given.
-             * Asking again for an email and password typed thirty seconds ago
-             * is the kind of step that makes software feel like paperwork.
-             */
-            document.getElementById('cloudEmail').value = email;
-            document.getElementById('cloudPassword').value = password;
-            progText.textContent = 'Setting up ' + (r.subdomain || 'your shop') + '…';
-            /* The shop is built by a background job on the server, so it is
-               not there the instant the account exists. Connecting waits for
-               it rather than reporting a failure that is only a few minutes
-               early. */
-            justSignedUp = true;
-            showSection('stepCloud');
-            document.getElementById('cloudConnectBtn').click();
-        });
-
         document.getElementById('cloudConnectBtn').addEventListener('click', async () => {
             const btn = document.getElementById('cloudConnectBtn');
             const errorBox = document.getElementById('cloudError');
@@ -1922,13 +1691,12 @@ const form = document.getElementById('installForm');
             }
 
             await runCloudSetup(() => window.electronAPI.cloud.activate({
-                serverUrl, email, password, waitForShopMs: justSignedUp ? 300000 : 0,
+                serverUrl, email, password,
             }));
-            justSignedUp = false;
         });
 
         let resumeCloudDownload = false;
-        async function runCloudSetup(connect) {
+        async function runCloudSetup(connect, browser = false) {
             const btn = document.getElementById('cloudConnectBtn');
             const backBtn = document.getElementById('cloudBackBtn');
             const pairBtn = document.getElementById('pairBtn');
@@ -1937,19 +1705,24 @@ const form = document.getElementById('installForm');
             const progressText = document.getElementById('cloudProgressText');
             if (btn.disabled) return;
             btn.disabled = backBtn.disabled = pairBtn.disabled = true;
+            document.getElementById('browserSignInBtn').disabled = true;
+            document.getElementById('browserWait').style.display = browser && !resumeCloudDownload ? 'block' : 'none';
             errorBox.style.display = 'none';
             progress.style.display = 'block';
-            progressText.textContent = 'Connecting and preparing cloud sync…';
+            progressText.textContent = browser && !resumeCloudDownload ? 'Waiting for browser approval…' : 'Connecting and preparing cloud sync…';
             let poll;
             function failed(message) {
                 clearTimeout(poll);
                 btn.disabled = backBtn.disabled = pairBtn.disabled = false;
+                document.getElementById('browserSignInBtn').disabled = false;
+                document.getElementById('browserWait').style.display = 'none';
                 progress.style.display = 'none';
                 errorBox.textContent = message;
                 errorBox.style.display = 'block';
             }
             try {
                 const result = await (resumeCloudDownload ? window.electronAPI.cloud.resume() : connect());
+                document.getElementById('browserWait').style.display = 'none';
                 resumeCloudDownload = !!(result && (result.ok || result.canResume));
                 if (!result || !result.ok) {
                     failed((result && result.error) || 'Cloud setup failed. Please retry.');
@@ -2675,8 +2448,11 @@ const form = document.getElementById('installForm');
             const step = field.closest('.form-section');
             if (!step || step.style.display === 'none') return;
 
-            const button = step.querySelector('.btn-primary:not([disabled])');
-            if (!button || button.offsetParent === null) return;
+            const cloudAction = field.id === 'pairCode' ? 'pairBtn'
+                : field.closest('details') ? 'cloudConnectBtn' : 'browserSignInBtn';
+            const button = step.id === 'stepCloud' ? document.getElementById(cloudAction)
+                : step.querySelector('.btn-primary:not([disabled])');
+            if (!button || button.disabled || button.offsetParent === null) return;
 
             event.preventDefault();
             button.click();
