@@ -171,7 +171,7 @@ async function saveLocal(key, buffer) {
  * the path cannot climb out of uploads/.
  */
 const LEGACY_FILE_RE =
-  /^(?:[A-Za-z0-9][A-Za-z0-9._-]{0,80}\/){0,4}[A-Za-z0-9][A-Za-z0-9._-]{0,180}\.(jpg|jpeg|png|webp)$/i;
+  /^(?:[A-Za-z0-9][A-Za-z0-9._-]{0,80}\/){0,4}[A-Za-z0-9][A-Za-z0-9._-]{0,180}\.(jpg|jpeg|png|webp|gif|bmp)$/i;
 
 function isLegacyFile(name) {
   return typeof name === 'string' && LEGACY_FILE_RE.test(name);
