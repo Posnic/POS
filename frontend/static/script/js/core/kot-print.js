@@ -2,7 +2,7 @@
  * not proof that paper came out; only a printer result or cashier confirms it. */
 (function () {
     'use strict';
-    var active = null, busy = false, queued = [], lastId = '', focusNext = false, leaseTimer, branchKey;
+    var active = null, busy = false, queued = [], leaseTimer, branchKey;
     var esc = function (value) { return PosnicPro.escapeHtml(String(value == null ? '' : value)); };
     function key(suffix) { return 'kot_counter_' + suffix + '_' + PosnicPro.local.get('branch_id_set'); }
     function automatic() { return PosnicPro.local.get(key('auto')) === 'true'; }
@@ -20,13 +20,15 @@
             else sessionStorage.removeItem(key('pending'));
         } catch (_) { /* Printing still works without session storage. */ }
     }
-    function feedback(message) {
-        var box = $('#kot-print-feedback').empty().prop('hidden', false);
-        $('<span role="status">').text(message || PosnicPro.i18n.t('lang_kot_print_saved', 'Order saved.')).appendTo(box);
-        if (lastId || active) $('<button type="button" class="btn btn-sm btn-outline-primary ml-3">')
-            .text(active ? PosnicPro.i18n.t('lang_kot_print_confirm', 'Confirm KOT printing') : PosnicPro.i18n.t('lang_kot_print_button', 'Print KOT'))
-            .on('click', function () { if (active) confirmation(); else start(lastId, false); }).appendTo(box);
-        if (focusNext && box.is(':visible')) { box.find('button').trigger('focus'); focusNext = false; }
+    function feedback(message, isError) {
+        var box = $('#kot-print-feedback').empty().prop('hidden', false)
+            .toggleClass('alert-danger', !!isError).toggleClass('alert-info', !isError);
+        $('<span>').attr('role', isError ? 'alert' : 'status').text(message).appendTo(box);
+        // Printing belongs to the order's actions. Only an unfinished print
+        // needs a page-level action so the cashier can reopen its confirmation.
+        if (active) $('<button type="button" class="btn btn-sm btn-outline-primary ml-3">')
+            .text(PosnicPro.i18n.t('lang_kot_print_confirm', 'Confirm KOT printing'))
+            .on('click', function () { confirmation(); }).appendTo(box);
     }
     function render(sale, width) {
         var titles = { new: PosnicPro.i18n.t('lang_kot_print_new', 'New Order'), modified: PosnicPro.i18n.t('lang_kot_print_additional', 'Additional Order'),
@@ -76,7 +78,7 @@
         if (!active || !active.token) return;
         leaseTimer = setInterval(function () {
             if (active && active.token) api(active.id, { action: 'renew', token: active.token }).catch(function (error) {
-                clearInterval(leaseTimer); feedback(error.message);
+                clearInterval(leaseTimer); feedback(error.message, true);
             });
         }, 30000);
     }
@@ -92,7 +94,7 @@
             }
             active = null; clearInterval(leaseTimer); remember(); closeDialog();
             feedback(action === 'confirm' ? PosnicPro.i18n.t('lang_kot_print_printed', 'KOT printed.') : PosnicPro.i18n.t('lang_kot_print_pending', 'KOT returned to the kitchen queue.'));
-        } catch (error) { feedback(error.message); }
+        } catch (error) { feedback(error.message, true); }
         finally { busy = false; setTimeout(drain, 0); }
     }
     function confirmation(error) {
@@ -126,7 +128,7 @@
         restoreBranch();
         if (!id || busy) return;
         if (active) { confirmation(); return; }
-        busy = true; lastId = id;
+        busy = true;
         feedback(PosnicPro.i18n.t('lang_kot_print_preparing', 'Preparing KOT…'));
         try {
             var result = await api(id, { action: 'prepare', copy: !!copy });
@@ -139,7 +141,7 @@
             }
             active = { id: id, token: result.token, sale: result.sale };
             remember(); watchLease(); busy = false; await send();
-        } catch (error) { feedback(error.message); }
+        } catch (error) { feedback(error.message, true); }
         finally { busy = false; setTimeout(drain, 0); }
     }
     function loadSettings() {
@@ -150,13 +152,13 @@
     function afterSave(id) {
         restoreBranch();
         if (!id) return;
-        lastId = id; focusNext = !automatic(); feedback();
         if (automatic()) { if (queued.indexOf(id) === -1) queued.push(id); drain(); }
     }
     function restoreBranch() {
         var current = key('pending');
         if (branchKey === current) return;
-        branchKey = current; active = null; lastId = ''; queued = []; clearInterval(leaseTimer); closeDialog();
+        branchKey = current; active = null; queued = []; clearInterval(leaseTimer); closeDialog();
+        $('#kot-print-feedback').empty().prop('hidden', true);
         if (!active) {
             try { active = JSON.parse(sessionStorage.getItem(key('pending')) || 'null'); } catch (_) { active = null; }
             if (active) watchLease();
@@ -164,7 +166,8 @@
     }
     function restore() {
         restoreBranch();
-        if (active || lastId) feedback(active ? PosnicPro.i18n.t('lang_kot_print_unconfirmed', 'KOT printing needs confirmation.') : undefined);
+        if (active) feedback(PosnicPro.i18n.t('lang_kot_print_unconfirmed', 'KOT printing needs confirmation.'));
+        else $('#kot-print-feedback').empty().prop('hidden', true);
         loadSettings();
     }
     $(document).on('change', '#kot-counter-auto, #kot-counter-width', function () {
