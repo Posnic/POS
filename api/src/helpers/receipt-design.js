@@ -41,9 +41,10 @@
     'image',
     'barcode',
     'divider',
+    'signature',
   ];
   const required = ['store', 'transaction', 'items', 'totals'];
-  const textTypes = ['store', 'transaction', 'items', 'totals', 'text', 'field'];
+  const textTypes = ['store', 'transaction', 'items', 'totals', 'text', 'field', 'signature'];
   function image(value) {
     return (
       typeof value === 'string' &&
@@ -126,10 +127,11 @@
             throw new Error('Enter content for every QR code.');
           b.bold = block.bold === true;
         }
-        if (block.type === 'image' || block.type === 'qr') {
+        if (block.type === 'image' || block.type === 'qr' || block.type === 'signature') {
           if (block.type === 'image' && !image(block.src))
             throw new Error('Upload a PNG, JPEG or WebP image for each image block.');
-          if (image(block.src)) b.src = block.src;
+          // Signatures always come from the branch, never a stale per-layout copy.
+          if (block.type !== 'signature' && image(block.src)) b.src = block.src;
           b.width = Math.max(
             15,
             Math.min(100, Number(block.width) || (block.type === 'qr' ? 45 : 60))

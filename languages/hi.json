@@ -3339,5 +3339,12 @@
   "lang_rd_preview_zoom": "पूर्वावलोकन ज़ूम",
   "lang_rd_fit_whole_receipt": "पूरी रसीद दिखाएँ",
   "lang_rd_fit_width": "चौड़ाई में फ़िट करें",
-  "lang_rd_qr_retry": "QR कोड नहीं बन सका। अपना कनेक्शन जाँचें और फिर से कोशिश करें।"
+  "lang_rd_qr_retry": "QR कोड नहीं बन सका। अपना कनेक्शन जाँचें और फिर से कोशिश करें।",
+  "lang_upload_signature": "हस्ताक्षर अपलोड करें",
+  "lang_remove_signature": "हस्ताक्षर हटाएँ",
+  "lang_signature_saved_shared": "इस शाखा के लिए हस्ताक्षर सहेजे गए।",
+  "lang_signature_branch_required": "हस्ताक्षर अपलोड करने से पहले शाखा चुनें।",
+  "lang_signature_connection_error": "हस्ताक्षर अपडेट नहीं हो सके। अपना कनेक्शन जाँचें और फिर कोशिश करें।",
+  "lang_signature_image_hint": "5 MB तक की PNG, JPEG या WebP छवि इस्तेमाल करें। पारदर्शी PNG सबसे उपयुक्त है।",
+  "lang_signature_shared_hint": "इस शाखा की रसीदों, इनवॉइस और कोटेशन में साझा है। अपलोड और हटाने के बदलाव तुरंत सहेजे जाते हैं।"
 }

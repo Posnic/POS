@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "Zoom pratinjau",
   "lang_rd_fit_whole_receipt": "Tampilkan seluruh struk",
   "lang_rd_fit_width": "Sesuaikan lebar",
-  "lang_rd_qr_retry": "Kode QR tidak dapat dibuat. Periksa koneksi Anda dan coba lagi."
+  "lang_rd_qr_retry": "Kode QR tidak dapat dibuat. Periksa koneksi Anda dan coba lagi.",
+  "lang_upload_signature": "Unggah tanda tangan",
+  "lang_remove_signature": "Hapus tanda tangan",
+  "lang_signature_saved_shared": "Tanda tangan disimpan untuk cabang ini.",
+  "lang_signature_branch_required": "Pilih cabang sebelum mengunggah tanda tangan.",
+  "lang_signature_connection_error": "Tanda tangan tidak dapat diperbarui. Periksa koneksi Anda dan coba lagi.",
+  "lang_signature_image_hint": "Gunakan gambar PNG, JPEG, atau WebP hingga 5 MB. PNG transparan disarankan.",
+  "lang_signature_shared_hint": "Digunakan bersama pada struk, faktur, dan penawaran cabang ini. Unggahan dan penghapusan langsung disimpan."
 }

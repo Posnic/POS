@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "Ukuzaji wa hakiki",
   "lang_rd_fit_whole_receipt": "Onyesha risiti nzima",
   "lang_rd_fit_width": "Linganisha upana",
-  "lang_rd_qr_retry": "Imeshindwa kutengeneza msimbo wa QR. Angalia muunganisho wako na ujaribu tena."
+  "lang_rd_qr_retry": "Imeshindwa kutengeneza msimbo wa QR. Angalia muunganisho wako na ujaribu tena.",
+  "lang_upload_signature": "Pakia saini",
+  "lang_remove_signature": "Ondoa saini",
+  "lang_signature_saved_shared": "Saini imehifadhiwa kwa tawi hili.",
+  "lang_signature_branch_required": "Chagua tawi kabla ya kupakia saini.",
+  "lang_signature_connection_error": "Saini haikuweza kusasishwa. Angalia muunganisho wako na ujaribu tena.",
+  "lang_signature_image_hint": "Tumia picha ya PNG, JPEG au WebP isiyozidi MB 5. PNG yenye mandharinyuma ya uwazi inapendekezwa.",
+  "lang_signature_shared_hint": "Inatumiwa kwa pamoja kwenye risiti, ankara na nukuu za bei za tawi hili. Upakiaji na uondoaji huhifadhiwa mara moja."
 }

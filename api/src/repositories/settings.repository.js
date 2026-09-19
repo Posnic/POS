@@ -303,6 +303,19 @@ class SettingsRepository extends BaseModel {
           } catch (error) {
             return { status: false, data: null, message: error.message };
           }
+        } else if (key === 'quote_default_signature') {
+          if (
+            value !== null &&
+            value !== '' &&
+            !require('../helpers/receipt-design').image(value)
+          ) {
+            return {
+              status: false,
+              data: null,
+              message: 'Choose a PNG, JPEG or WebP signature under 400 KB.',
+            };
+          }
+          accepted[key] = value;
         } else if (key === 'analytics_enable') {
           /* same string-boolean trap as the feature toggles */
           accepted[key] = coerceFeatureToggle(value);

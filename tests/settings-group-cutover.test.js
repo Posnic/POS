@@ -38,9 +38,11 @@ const salesJs = fs.readFileSync(
 const GROUPS = require(path.join(ROOT, 'api', 'src', 'services', 'settings-groups')).GROUPS;
 
 
-test('the signature upload posts to the documents endpoint', () => {
+test('the signature upload uses the branch helper backed by the documents group', () => {
   const handler = blockAt(salesJs, "$(document).on('change', '#qe_sig_file', function () {");
-  assert.match(handler, /url: 'settings\/group\/documents'/);
+  assert.match(handler, /PosnicPro\.branchSignature\.save\(branchId, value\)/);
+  const controller = fs.readFileSync(path.join(ROOT, 'api/src/controllers/branches.controller.js'), 'utf8');
+  assert.match(blockAt(controller, '  async saveSignature(req, res) {'), /saveGroup\(\s*'documents'/);
   assert.ok(
     !handler.includes('setting/updateCommonSettings'),
     'this exact call is the one that 400d on a field it never sent',

@@ -12704,44 +12704,18 @@ $(function () {
     });
 });
 
-/* Quote-page signature upload: saves to the shop settings (presence-
-   gated partial post) and repaints the live paper immediately. */
+/* The quotation editor uploads the same branch signature as the designer. */
 $(document).on('change', '#qe_sig_file', function () {
-    var f = this.files && this.files[0];
-    var input = this;
-    if (!f) { return; }
-    if (f.size > 300 * 1024) {
-        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_keep_the_signature_under_300_kb_a_small_pn', 'Keep the signature under 300 KB - a small PNG works best.'));
-        $(input).val('');
-        return;
-    }
-    var reader = new FileReader();
-    reader.onload = function (e) {
-        var dataUrl = e.target.result;
-        /* The documents endpoint, not the god endpoint. This exact call is
-           what returned "Default customer is required" (69bc0cd): the old
-           validator demanded fields that belong to another group on every
-           save, including a one-key one like this. An endpoint that knows
-           only `documents` cannot ask for them. */
-        PosnicPro.put({
-            url: 'settings/group/documents',
-            data: JSON.stringify({ quote_default_signature: dataUrl })
-        }, function (r) {
-            $(input).val('');
-            if (r.type !== 'success') { PosnicPro.alert(r.type, r.message); return; }
-            PosnicPro.local.set('quotesignature', dataUrl);
-            $('#quote_default_signature').val(dataUrl);
-            $('#quote_signature_thumb').attr('src', dataUrl).show();
-            $('#quote_signature_clear').show();
-            PosnicPro.quotes._edSigSync();
-            PosnicPro.quotes.edRecalc();
-            PosnicPro.alert('success', PosnicPro.i18n.t('lang_signature_saved_it_now_signs_this_and_ever', 'Signature saved - it now signs this and every future quote.'));
-        }, function () {
-            $(input).val('');
-            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_the_signature', 'Could not save the signature'));
-        });
-    };
-    reader.readAsDataURL(f);
+    var file = this.files && this.files[0], input = this, branchId = PosnicPro.branchSignature.activeBranch();
+    if (!file) return;
+    $(input).prop('disabled', true);
+    PosnicPro.branchSignature.readFile(file).then(function (value) {
+        return PosnicPro.branchSignature.save(branchId, value);
+    }).then(function () {
+        PosnicPro.alert('success', PosnicPro.i18n.t('lang_signature_saved_shared', 'Signature saved for this branch.'));
+    }).catch(function (error) {
+        PosnicPro.alert('error', error.message);
+    }).finally(function () { $(input).val('').prop('disabled', false); });
 });
 
 /*

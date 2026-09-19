@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "Zoom de la vista previa",
   "lang_rd_fit_whole_receipt": "Ver recibo completo",
   "lang_rd_fit_width": "Ajustar al ancho",
-  "lang_rd_qr_retry": "No se pudo generar el código QR. Comprueba tu conexión e inténtalo de nuevo."
+  "lang_rd_qr_retry": "No se pudo generar el código QR. Comprueba tu conexión e inténtalo de nuevo.",
+  "lang_upload_signature": "Subir firma",
+  "lang_remove_signature": "Eliminar firma",
+  "lang_signature_saved_shared": "Firma guardada para esta sucursal.",
+  "lang_signature_branch_required": "Selecciona una sucursal antes de subir una firma.",
+  "lang_signature_connection_error": "No se pudo actualizar la firma. Revisa tu conexión e inténtalo de nuevo.",
+  "lang_signature_image_hint": "Usa una imagen PNG, JPEG o WebP de hasta 5 MB. Se recomienda un PNG transparente.",
+  "lang_signature_shared_hint": "Se comparte entre recibos, facturas y presupuestos de esta sucursal. Las cargas y eliminaciones se guardan de inmediato."
 }

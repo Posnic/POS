@@ -24,7 +24,7 @@ jest.mock('../../../src/models/branch.model', () => {
     getBranchDetails: jest.fn(),
     getBranchRegisterList: jest.fn(),
     exportBranchOrder: jest.fn(),
-    model: { findById: jest.fn() },
+    model: { findById: jest.fn(), findOne: jest.fn() },
   };
   return {
     BranchModel: jest.fn(() => instance),
@@ -35,8 +35,12 @@ jest.mock('../../../src/models/branch.model', () => {
 const mockCopyGroups = jest.fn();
 const mockAccountGroup = jest.fn();
 const mockSaveGroup = jest.fn();
+const mockResolveGroup = jest.fn();
 jest.mock('../../../src/repositories/settings.repository', () => {
   return class MockSettingsRepo {
+    resolveGroup(...a) {
+      return mockResolveGroup(...a);
+    }
     copyGroups(...a) {
       return mockCopyGroups(...a);
     }
@@ -1362,5 +1366,88 @@ describe('BranchesController — copying the catalogue at branch creation', () =
     const res = mockRes();
     await ctrl.add(mockReq({ body: { name: 'Second shop', copy_items_from: 'src1' } }), res);
     expect(copySpy.mock.calls[0][1].licenseId).toBe(mockReq().user.license);
+  });
+});
+
+describe('shared branch signature', () => {
+  const image = 'data:image/png;base64,AAAA';
+  const branchId = '64b000000000000000000001';
+  const licenseId = '64b000000000000000000002';
+  const reqFor = (body = { signature: image }) =>
+    mockReq({
+      params: { id: branchId },
+      body,
+      user: { role: 'owner', license: licenseId, branch_id: '64b000000000000000000003' },
+    });
+  beforeEach(() => {
+    bm.model.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: branchId }) });
+    mockSaveGroup.mockResolvedValue({ status: true });
+    mockResolveGroup.mockResolvedValue({
+      status: true,
+      data: { values: { quote_default_signature: image } },
+    });
+  });
+  test('owner can edit another branch in the same licence without changing the selected branch', async () => {
+    const res = mockRes();
+    await ctrl.saveSignature(reqFor(), res);
+    expect(bm.model.findOne.mock.calls[0][0]._id.toString()).toBe(branchId);
+    expect(bm.model.findOne.mock.calls[0][0].license.toString()).toBe(licenseId);
+    expect(mockSaveGroup).toHaveBeenCalledWith(
+      'documents',
+      { quote_default_signature: image },
+      { branchId, licenseId },
+      { level: 'branch' }
+    );
+    expect(res.json.mock.calls[0][0].data).toEqual({ branch_id: branchId, signature: image });
+  });
+  test('reads the resolved shared document value', async () => {
+    const res = mockRes();
+    await ctrl.getSignature(reqFor(), res);
+    expect(mockResolveGroup).toHaveBeenCalledWith('documents', { branchId, licenseId });
+    expect(res.json.mock.calls[0][0].data.signature).toBe(image);
+  });
+  test('explicit empty value clears the signature', async () => {
+    await ctrl.saveSignature(reqFor({ signature: '' }), mockRes());
+    expect(mockSaveGroup.mock.calls[0][1]).toEqual({ quote_default_signature: '' });
+  });
+  test.each([
+    undefined,
+    null,
+    'https://example.com/a.png',
+    'data:image/svg+xml;base64,AAAA',
+    'data:image/png;base64,' + 'A'.repeat(400000),
+  ])('rejects invalid image input without writing', async (signature) => {
+    const res = mockRes();
+    await ctrl.saveSignature(reqFor({ signature }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockSaveGroup).not.toHaveBeenCalled();
+  });
+  test('does not cross a licence boundary even for an owner', async () => {
+    bm.model.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+    const res = mockRes();
+    await ctrl.saveSignature(reqFor(), res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(mockSaveGroup).not.toHaveBeenCalled();
+  });
+  test('staff cannot target an unassigned branch', async () => {
+    const req = reqFor();
+    req.user = { ...req.user, role: 'manager', branch_access: [{ branch_id: req.user.branch_id }] };
+    const res = mockRes();
+    await ctrl.saveSignature(req, res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockSaveGroup).not.toHaveBeenCalled();
+  });
+  test('staff without write permission cannot replace the signature', async () => {
+    const req = reqFor();
+    req.user = {
+      role: 'cashier',
+      branch_id: branchId,
+      license: licenseId,
+      access: { branch: { write: false }, setting: { write: false } },
+    };
+    const res = mockRes();
+    await ctrl.saveSignature(req, res);
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(mockSaveGroup).not.toHaveBeenCalled();
   });
 });

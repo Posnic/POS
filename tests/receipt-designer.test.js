@@ -307,7 +307,8 @@ test('sheets compose invoice sections while thermal keeps its compact receipt la
         assert.equal(output.find('tbody td').eq(2).text(), '$ 12.00');
         assert.equal(output.find('.rd-invoice-summary > .rd-block-totals').length, 1);
         assert.equal(output.find('.rd-invoice-supporting img[alt="QR code"]').length, 1);
-        assert.match(output.find('.rd-invoice-end').text(), /Keep this invoice.*Authorised signatory/);
+        assert.match(output.find('.rd-invoice-end').text(), /Keep this invoice/);
+        assert.equal(output.find('.rd-signature').length, 0);
         assert.deepEqual(output.find('[data-block-id]').toArray().map(e => e.dataset.blockId), Array.from(design.layouts[format].blocks, b => b.id));
         const preview = $('<div>').html(engine.render({ ...sale, sales_id: '' }, format, true));
         assert.equal(preview.find('.rd-invoice-title').text(), 'Bill');
@@ -518,5 +519,49 @@ test('browser sample waits for image assets, fits the page, and restores the edi
     frame[0].contentWindow.onafterprint();
     assert.equal((await job).dialog, true);
     assert.equal($('iframe[title="Receipt print"]').length, 0);
+    dom.window.close();
+});
+
+
+test('signature is opt-in per format and reads the shared branch image on every render', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    sale.quote_default_signature = pixel;
+    for (const format of Object.keys(contract.formats)) {
+        assert.equal($('<div>').html(engine.render(sale, format, false)).find('.rd-signature').length, 0);
+        design.layouts[format].blocks.push(engine.block('signature', { align: 'right', width: 30, fontSize: 14, bold: true, src: pixel }));
+    }
+    sale.receipt_designs = contract.normalize(JSON.parse(JSON.stringify(design)));
+    for (const format of Object.keys(contract.formats)) {
+        const block = sale.receipt_designs.layouts[format].blocks.at(-1);
+        assert.equal(block.src, undefined, 'Images belong to the branch, not a layout snapshot');
+        let output = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(output.find('.rd-block-signature').css('text-align'), 'right');
+        assert.equal(output.find('.rd-block-signature').css('font-size'), '14px');
+        assert.equal(output.find('.rd-signature').attr('style'), 'width:30%');
+        assert.equal(output.find('.rd-signature img').attr('src'), pixel);
+        output = $('<div>').html(engine.render({ ...sale, quote_default_signature: '' }, format, false));
+        assert.equal(output.find('.rd-signature img').length, 0);
+        assert.equal(output.find('.rd-signature-blank').length, 1, 'An explicit empty block leaves room to sign by hand');
+    }
+    dom.window.close();
+});
+
+test('signature editor saves only the optional block and keeps each format independent', () => {
+    const { dom, w, $, branch } = setup();
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, quote_default_signature: pixel });
+    $('[data-format="a4"]').trigger('click');
+    $('[data-add="signature"]').trigger('click');
+    assert.equal($('#rd-align').val(), 'right');
+    $('#rd-align').val('left').trigger('change');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(sent.receipt_designs.layouts.a4.blocks.at(-1).type, 'signature');
+    assert.equal(sent.receipt_designs.layouts.a4.blocks.at(-1).align, 'left');
+    assert.equal(sent.receipt_designs.layouts['80'].blocks.some(b => b.type === 'signature'), false);
+    assert.equal(sent.quote_default_signature, undefined);
+    $('.rd-block-card.is-selected [data-action="remove"]').trigger('click');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(sent.receipt_designs.layouts.a4.blocks.some(b => b.type === 'signature'), false);
     dom.window.close();
 });

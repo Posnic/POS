@@ -1190,6 +1190,17 @@ class SettingModel extends BaseModel {
 
   async updateCommonSettings(data = {}) {
     try {
+      if (
+        data.quote_default_signature !== undefined &&
+        data.quote_default_signature !== '' &&
+        !require('../helpers/receipt-design').image(data.quote_default_signature)
+      ) {
+        return {
+          status: false,
+          data: null,
+          message: 'Choose a PNG, JPEG or WebP signature under 400 KB.',
+        };
+      }
       /*
        * THE QR, MADE ONCE.
        *

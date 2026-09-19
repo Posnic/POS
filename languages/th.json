@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "ซูมตัวอย่าง",
   "lang_rd_fit_whole_receipt": "แสดงใบเสร็จทั้งหมด",
   "lang_rd_fit_width": "พอดีความกว้าง",
-  "lang_rd_qr_retry": "สร้างรหัส QR ไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
+  "lang_rd_qr_retry": "สร้างรหัส QR ไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
+  "lang_upload_signature": "อัปโหลดลายเซ็น",
+  "lang_remove_signature": "ลบลายเซ็น",
+  "lang_signature_saved_shared": "บันทึกลายเซ็นสำหรับสาขานี้แล้ว",
+  "lang_signature_branch_required": "เลือกสาขาก่อนอัปโหลดลายเซ็น",
+  "lang_signature_connection_error": "อัปเดตลายเซ็นไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
+  "lang_signature_image_hint": "ใช้ภาพ PNG, JPEG หรือ WebP ขนาดไม่เกิน 5 MB แนะนำ PNG พื้นหลังโปร่งใส",
+  "lang_signature_shared_hint": "ใช้ร่วมกันในใบเสร็จ ใบแจ้งหนี้ และใบเสนอราคาของสาขานี้ การอัปโหลดและการลบจะบันทึกทันที"
 }

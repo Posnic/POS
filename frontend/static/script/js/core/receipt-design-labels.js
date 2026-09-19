@@ -1,6 +1,7 @@
 /* Receipt designer labels are explicit so the language catalog can extract them. */
 PosnicPro.receiptDesignLabel = function (value) {
     switch (value) {
+    case "Authorised signatory": return PosnicPro.i18n.t('lang_authorised_signatory', 'Authorised signatory');
     case "Print sample": return PosnicPro.i18n.t('lang_rd_print_sample', 'Print sample');
     case "Full screen": return PosnicPro.i18n.t('lang_rd_full_screen', 'Full screen');
     case "Exit full screen": return PosnicPro.i18n.t('lang_rd_exit_full_screen', 'Exit full screen');

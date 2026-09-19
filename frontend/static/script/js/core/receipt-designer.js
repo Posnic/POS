@@ -101,8 +101,7 @@
             '.rd-sheet .rd-totals{width:100%;border-top:1px solid #ccd2d9;padding-top:2mm;}.rd-sheet .rd-total-row{padding:1mm 2mm;margin:0;}' +
             '.rd-sheet .rd-grand-total{border-top:2px solid #202936;border-bottom:2px solid #202936;background:#edf0f4;padding:3mm 2mm;margin:2mm 0;font-size:1.3em;}' +
             '.rd-sheet .rd-block-totals{margin-bottom:' + (compact ? '4mm' : '8mm') + ';}.rd-invoice-end{display:flex;align-items:flex-end;gap:var(--rd-invoice-gap);border-top:1px solid #ccd2d9;margin-top:' + (compact ? '4mm' : '8mm') + ';padding-top:3mm;break-inside:avoid;}' +
-            '.rd-invoice-end-notes{flex:1;min-width:0;}.rd-invoice-end .rd-terms{margin:0 0 3mm;}.rd-signature{width:' + (compact ? '38mm' : '52mm') + ';margin-left:auto;text-align:center;flex-shrink:0;}' +
-            '.rd-signature img{max-height:12mm;max-width:100%;}.rd-signature-line{border-top:1px solid #777;padding-top:2mm;margin-top:10mm;font-size:.85em;}';
+            '.rd-invoice-end-notes{flex:1;min-width:0;}.rd-invoice-end .rd-terms{margin:0 0 3mm;}';
     }
     function css(format, font) {
         var f = contract.formats[format];
@@ -110,6 +109,7 @@
         return '@page{size:' + (sheet ? f.width + 'mm ' + f.height + 'mm' : 'auto') + ';margin:' + (sheet ? '12mm' : '0') + ';}' +
             'html,body{margin:0!important;padding:0!important;background:#fff!important;color:#161b25!important;}' +
             '.rd-document,.rd-document *{box-sizing:border-box;}' +
+            '.rd-signature{display:inline-block;text-align:center;vertical-align:top;}.rd-signature img{display:block;margin:0 auto;max-height:18mm;max-width:100%;}.rd-signature-blank{height:12mm;}.rd-signature-line{border-top:1px solid #777;padding-top:1mm;margin-top:1mm;font-size:.85em;}' +
             '.rd-document{width:' + f.content + 'mm;max-width:100%;margin:0 auto;font:' + font + 'px/' + (sheet ? '1.5 Arial,sans-serif' : '1.25 monospace') + ';color:#111;overflow-wrap:anywhere;}' +
             '.rd-block{margin:0 0 ' + (sheet ? '14px' : '4px') + ';break-inside:avoid;}' +
             '.rd-block-items{break-inside:auto;}.rd-document h1{font-size:1.7em;line-height:1.2;margin:0 0 5px;color:#111;}' +
@@ -200,6 +200,13 @@
                 if (!String(b.text || '').trim()) return '';
                 content = '<div class="rd-text">' + esc(b.text) + '</div>';
             }
+            else if (b.type === 'signature') {
+                var signature = contract.image(data.quote_default_signature) ? data.quote_default_signature : '';
+                var signatureLabel = PosnicPro.i18n.t('lang_authorised_signatory', 'Authorised signatory');
+                content = '<div class="rd-signature" style="width:' + (b.width || 60) + '%">' +
+                    (signature ? '<img src="' + esc(signature) + '" alt="' + esc(signatureLabel) + '">' : '<div class="rd-signature-blank"></div>') +
+                    '<div class="rd-signature-line">' + esc(signatureLabel) + '</div></div>';
+            }
             else if (b.type === 'divider') {
                 var lineStyle = ['solid', 'dashed', 'dotted'].indexOf(b.lineStyle) !== -1 ? b.lineStyle : 'dashed';
                 var width = Math.max(15, Math.min(100, Number(b.width) || 100));
@@ -227,8 +234,7 @@
                 notes += '<div class="rd-terms"><strong>' + esc(PosnicPro.i18n.t('lang_amount_in_words', 'Amount in words:')) + '</strong> ' + esc(PosnicPro.sales.view._amountInWords(data.items_total)) + '</div>';
             }
             if (data.invoice_terms) notes += '<div class="rd-terms"><strong>' + esc(PosnicPro.i18n.t('lang_terms_conditions', 'Terms & conditions')) + '</strong><br>' + esc(data.invoice_terms) + '</div>';
-            var signature = safeImage(data.quote_default_signature);
-            html += '<div class="rd-invoice-end">' + (notes ? '<div class="rd-invoice-end-notes">' + notes + '</div>' : '') + '<div class="rd-signature">' + (signature ? '<img src="' + esc(signature) + '" alt="">' : '') + '<div class="rd-signature-line">' + esc(PosnicPro.i18n.t('lang_authorised_signatory', 'Authorised signatory')) + '</div></div></div>';
+            if (notes) html += '<div class="rd-invoice-end"><div class="rd-invoice-end-notes">' + notes + '</div></div>';
         }
         return '<style>' + css(format, layout.fontSize) + '</style><article class="rd-document' + (sheet ? ' rd-sheet' : '') + '" data-receipt-design="' + format + '">' + html + '</article>';
     }

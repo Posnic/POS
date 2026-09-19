@@ -6910,20 +6910,13 @@ $(document).on('input', '#footer_qr_url', function () {
 });
 
 $(document).on('change', '#quote_signature_file', function () {
-    var f = this.files && this.files[0];
-    if (!f) { return; }
-    if (f.size > 300 * 1024) {
-        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_keep_the_signature_under_300_kb_a_small_pn', 'Keep the signature under 300 KB - a small PNG works best.'));
-        $(this).val('');
-        return;
-    }
-    var reader = new FileReader();
-    reader.onload = function (e) {
-        $('#quote_default_signature').val(e.target.result);
-        $('#quote_signature_thumb').attr('src', e.target.result).show();
+    var file = this.files && this.files[0], input = this;
+    if (!file) return;
+    PosnicPro.branchSignature.readFile(file).then(function (value) {
+        $('#quote_default_signature').val(value);
+        $('#quote_signature_thumb').attr('src', value).show();
         $('#quote_signature_clear').show();
-    };
-    reader.readAsDataURL(f);
+    }).catch(function (error) { PosnicPro.alert('error', error.message); }).finally(function () { $(input).val(''); });
 });
 $(document).on('click', '#quote_signature_clear', function () {
     $('#quote_default_signature').val('');
@@ -7073,6 +7066,7 @@ $(document).on('click', '#invoice_settings_save', function () {
 });
 
 $(document).on('click', '#quote_settings_save', function () {
+    var signatureBranchId = PosnicPro.branchSignature.activeBranch();
     var payload = {
         quote_default_payment_method: $('#quote_default_payment_method').val() || '',
         quote_default_bank_details: $('#quote_default_bank_details').val() || '',
@@ -7085,7 +7079,7 @@ $(document).on('click', '#quote_settings_save', function () {
         $('#quote_settings_save').prop('disabled', false);
         PosnicPro.alert(r.type, r.type === 'success' ? 'Quotation settings saved' : r.message);
         if (r.type === 'success') {
-            PosnicPro.local.set('quotesignature', payload.quote_default_signature);
+            PosnicPro.branchSignature.sync(signatureBranchId, payload.quote_default_signature);
         }
     }, function (xhr) {
         $('#quote_settings_save').prop('disabled', false);

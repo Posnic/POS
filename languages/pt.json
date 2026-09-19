@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "Zoom da prévia",
   "lang_rd_fit_whole_receipt": "Mostrar recibo completo",
   "lang_rd_fit_width": "Ajustar à largura",
-  "lang_rd_qr_retry": "Não foi possível gerar o código QR. Verifique sua conexão e tente novamente."
+  "lang_rd_qr_retry": "Não foi possível gerar o código QR. Verifique sua conexão e tente novamente.",
+  "lang_upload_signature": "Carregar assinatura",
+  "lang_remove_signature": "Remover assinatura",
+  "lang_signature_saved_shared": "Assinatura guardada para esta filial.",
+  "lang_signature_branch_required": "Selecione uma filial antes de carregar uma assinatura.",
+  "lang_signature_connection_error": "Não foi possível atualizar a assinatura. Verifique a ligação e tente novamente.",
+  "lang_signature_image_hint": "Use uma imagem PNG, JPEG ou WebP até 5 MB. Recomenda-se um PNG transparente.",
+  "lang_signature_shared_hint": "Partilhada entre recibos, faturas e orçamentos desta filial. Os carregamentos e as remoções são guardados imediatamente."
 }

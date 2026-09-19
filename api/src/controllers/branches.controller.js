@@ -674,6 +674,85 @@ class BranchesController extends BaseController {
     }
   }
 
+  // The image is shared by this branch's document modules. Keep the existing
+  // persisted key so old quotations, desktops and the sync protocol still work.
+  async signatureContext(req, res, action) {
+    if (
+      !this.checkPermission('branch', action, req.user) &&
+      !this.checkPermission('setting', action, req.user)
+    ) {
+      this.error(res, 'Unauthorized', 403);
+      return null;
+    }
+    const id = String(req.params.id || '');
+    const licenseId = req.tenantContext?.licenseId || req.user?.license || req.user?.license_id;
+    if (!ObjectId.isValid(id) || !ObjectId.isValid(String(licenseId || ''))) {
+      this.error(res, 'Branch context is required', 400);
+      return null;
+    }
+    const role = String(req.user?.usertype || req.user?.role || '').toLowerCase();
+    const current =
+      req.tenantContext?.branchId || req.session?.selectedBranchId || req.user?.branch_id;
+    const allowed = (Array.isArray(req.user?.branch_access) ? req.user.branch_access : []).map(
+      (b) => String(b?.branch_id || b)
+    );
+    if (
+      !['owner', 'admin', 'super_admin'].includes(role) &&
+      !(allowed.length ? allowed.includes(id) : String(current) === id)
+    ) {
+      this.error(res, 'Unauthorized', 403);
+      return null;
+    }
+    const branch = await this.branchModel.model
+      .findOne({
+        _id: new ObjectId(id),
+        license: new ObjectId(String(licenseId)),
+      })
+      .lean();
+    if (!branch) {
+      this.error(res, 'Branch not found', 404);
+      return null;
+    }
+    return { branchId: id, licenseId: String(licenseId) };
+  }
+
+  async getSignature(req, res) {
+    try {
+      const context = await this.signatureContext(req, res, 'read');
+      if (!context) return;
+      const result = await settingsRepository.resolveGroup('documents', context);
+      if (!result.status) return this.error(res, result.message, 400);
+      const value = result.data.values.quote_default_signature;
+      const signature = require('../helpers/receipt-design').image(value) ? value : '';
+      return this.success(res, { branch_id: context.branchId, signature }, 'Signature loaded');
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
+  async saveSignature(req, res) {
+    try {
+      const context = await this.signatureContext(req, res, 'write');
+      if (!context) return;
+      const signature = req.body?.signature;
+      if (signature !== '' && !require('../helpers/receipt-design').image(signature)) {
+        return this.error(res, 'Choose a PNG, JPEG or WebP signature under 400 KB.', 400);
+      }
+      const result = await settingsRepository.saveGroup(
+        'documents',
+        {
+          quote_default_signature: signature,
+        },
+        context,
+        { level: 'branch' }
+      );
+      if (!result.status) return this.error(res, result.message, 400);
+      return this.success(res, { branch_id: context.branchId, signature }, 'Signature saved');
+    } catch (error) {
+      return this.error(res, error.message, 500);
+    }
+  }
+
   /**
    * PHP: getDataChanges()
    * Get data changes for synchronization

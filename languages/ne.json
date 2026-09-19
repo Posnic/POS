@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "पूर्वावलोकन जुम",
   "lang_rd_fit_whole_receipt": "पूरै रसिद देखाउनुहोस्",
   "lang_rd_fit_width": "चौडाइमा मिलाउनुहोस्",
-  "lang_rd_qr_retry": "QR कोड बनाउन सकिएन। आफ्नो जडान जाँचेर फेरि प्रयास गर्नुहोस्।"
+  "lang_rd_qr_retry": "QR कोड बनाउन सकिएन। आफ्नो जडान जाँचेर फेरि प्रयास गर्नुहोस्।",
+  "lang_upload_signature": "हस्ताक्षर अपलोड गर्नुहोस्",
+  "lang_remove_signature": "हस्ताक्षर हटाउनुहोस्",
+  "lang_signature_saved_shared": "यस शाखाका लागि हस्ताक्षर सुरक्षित भयो।",
+  "lang_signature_branch_required": "हस्ताक्षर अपलोड गर्नुअघि शाखा छान्नुहोस्।",
+  "lang_signature_connection_error": "हस्ताक्षर अद्यावधिक गर्न सकिएन। आफ्नो जडान जाँचेर फेरि प्रयास गर्नुहोस्।",
+  "lang_signature_image_hint": "5 MB सम्मको PNG, JPEG वा WebP छवि प्रयोग गर्नुहोस्। पारदर्शी PNG उत्तम हुन्छ।",
+  "lang_signature_shared_hint": "यस शाखाका रसिद, इनभ्वाइस र कोटेसनमा साझा हुन्छ। अपलोड र हटाउने परिवर्तन तुरुन्तै सुरक्षित हुन्छन्।"
 }

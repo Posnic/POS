@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "පෙරදසුන විශාලනය",
   "lang_rd_fit_whole_receipt": "සම්පූර්ණ රිසිට්පත පෙන්වන්න",
   "lang_rd_fit_width": "පළලට ගළපන්න",
-  "lang_rd_qr_retry": "QR කේතය සෑදිය නොහැකි විය. සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න."
+  "lang_rd_qr_retry": "QR කේතය සෑදිය නොහැකි විය. සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.",
+  "lang_upload_signature": "අත්සන උඩුගත කරන්න",
+  "lang_remove_signature": "අත්සන ඉවත් කරන්න",
+  "lang_signature_saved_shared": "මෙම ශාඛාව සඳහා අත්සන සුරැකිණි.",
+  "lang_signature_branch_required": "අත්සන උඩුගත කිරීමට පෙර ශාඛාවක් තෝරන්න.",
+  "lang_signature_connection_error": "අත්සන යාවත්කාලීන කළ නොහැකි විය. සම්බන්ධතාව පරීක්ෂා කර නැවත උත්සාහ කරන්න.",
+  "lang_signature_image_hint": "5 MB දක්වා PNG, JPEG හෝ WebP රූපයක් භාවිත කරන්න. විනිවිද පෙනෙන PNG වඩා සුදුසුය.",
+  "lang_signature_shared_hint": "මෙම ශාඛාවේ රිසිට්පත්, ඉන්වොයිසි සහ මිල ගණන් සඳහා පොදුවේ භාවිත වේ. උඩුගත කිරීම් සහ ඉවත් කිරීම් වහාම සුරැකේ."
 }

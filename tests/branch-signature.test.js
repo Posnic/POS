@@ -1,0 +1,86 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { JSDOM } = require('jsdom');
+const branch = '64b000000000000000000001', other = '64b000000000000000000002';
+const pixel = 'data:image/png;base64,AAAA';
+const flush = () => new Promise(resolve => setImmediate(resolve));
+function setup() {
+    const dom = new JSDOM('<div id="host"></div><input id="quote_default_signature"><img id="quote_signature_thumb"><button id="quote_signature_clear"></button>', { url: 'http://localhost', runScripts: 'outside-only' });
+    const w = dom.window, $ = require('jquery')(w), cache = { branch_id_set: branch, quotesignature: pixel };
+    w.$ = w.jQuery = $;
+    w.PosnicPro = { local: { get: key => cache[key], set: (key, val) => { cache[key] = val; } }, i18n: { t: (key, fallback) => fallback } };
+    for (const file of ['api/src/helpers/receipt-design.js', 'frontend/static/script/js/core/branch-signature.js']) w.eval(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'));
+    return { dom, w, $, cache, helper: w.PosnicPro.branchSignature };
+}
+test('shared upload saves only the branch signature and refreshes document caches after success', async () => {
+    const { dom, w, $, cache, helper } = setup();
+    let request, done, calls = 0;
+    w.PosnicPro.put = (args, callback) => { request = args; done = callback; };
+    w.PosnicPro.quotes = { _ed: {}, _edSigSync: () => { calls++; }, edRecalc() {} };
+    const next = 'data:image/png;base64,BBBB';
+    const saving = helper.save(branch, next);
+    assert.equal(cache.quotesignature, pixel, 'No optimistic overwrite before the server accepts it');
+    assert.equal(request.url, 'branches/' + branch + '/signature');
+    assert.deepEqual(JSON.parse(request.data), { signature: next });
+    done({ type: 'success', data: { signature: next } });
+    await saving;
+    assert.equal(cache.quotesignature, next);
+    assert.equal($('#quote_default_signature').val(), next);
+    assert.equal(calls, 1);
+    dom.window.close();
+});
+test('editing another branch does not replace the active branch invoice/quotation image', async () => {
+    const { dom, w, cache, helper } = setup();
+    w.PosnicPro.put = (_args, done) => done({ type: 'success', data: { signature: '' } });
+    await helper.save(other, '');
+    assert.equal(cache.quotesignature, pixel);
+    dom.window.close();
+});
+test('failed removal preserves the preview and is retryable; success clears shared caches', async () => {
+    const { dom, w, $, cache, helper } = setup();
+    w.PosnicPro.get = (_args, done) => done({ type: 'success', data: { signature: pixel } });
+    w.PosnicPro.put = (_args, _done, fail) => fail();
+    helper.mount('#host', { branchId: branch });
+    await flush();
+    $('.branch-signature-remove').trigger('click');
+    await flush();
+    assert.equal($('.branch-signature-preview').attr('src'), pixel);
+    assert.equal(cache.quotesignature, pixel);
+    assert.match($('.branch-signature-status').text(), /Check your connection/);
+    assert.equal($('.branch-signature-remove').prop('disabled'), false);
+    w.PosnicPro.put = (_args, done) => done({ type: 'success', data: { signature: '' } });
+    $('.branch-signature-remove').trigger('click');
+    await flush();
+    assert.equal(cache.quotesignature, '');
+    assert.equal($('.branch-signature-preview').css('display'), 'none');
+    dom.window.close();
+});
+test('a late read cannot restore a removed signature and replacing the host cannot overwrite another branch', async () => {
+    const { dom, w, $, cache, helper } = setup();
+    let firstRead;
+    w.PosnicPro.get = (_args, done) => { firstRead = done; };
+    helper.mount('#host', { branchId: branch, source: pixel });
+    w.PosnicPro.put = (_args, done) => done({ type: 'success', data: { signature: '' } });
+    await helper.save(branch, '');
+    firstRead({ type: 'success', data: { signature: pixel } });
+    await flush();
+    assert.equal(cache.quotesignature, '');
+    assert.equal($('.branch-signature-preview').css('display'), 'none');
+    helper.mount('#host', { branchId: branch });
+    const oldRead = firstRead;
+    helper.mount('#host', { branchId: other });
+    firstRead({ type: 'success', data: { signature: '' } });
+    oldRead({ type: 'success', data: { signature: pixel } });
+    await flush();
+    assert.equal($('.branch-signature-preview').css('display'), 'none');
+    dom.window.close();
+});
+test('invalid file types and oversized input are rejected before decoding or saving', async () => {
+    const { dom, helper } = setup();
+    await assert.rejects(helper.readFile({ type: 'image/svg+xml', size: 10 }), /PNG, JPEG or WebP/);
+    await assert.rejects(helper.readFile({ type: 'image/png', size: 6 * 1024 * 1024 }), /5 MB/);
+    assert.equal(helper.source('data:image/svg+xml;base64,AAAA'), '');
+    dom.window.close();
+});

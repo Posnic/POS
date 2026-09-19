@@ -95,3 +95,13 @@ body.rd-workspace-open { overflow: hidden; }
     .rd-workspace-dialog #receipt-designer { height: auto; min-height: 100%; }
     .rd-workspace-dialog .rd-workspace { flex: none; }
 }
+
+/* Shared signature settings also appear on Branch / Outlet. */
+.branch-signature-control { min-width: 0; }
+.branch-signature-control .branch-signature-help { font-size: 12px; color: #52637b; margin: 0 0 10px; }
+.branch-signature-preview { display: block; max-width: 100%; max-height: 100px; padding: 8px; margin: 0 0 10px; border: 1px solid #d7dfeb; background: #fff; object-fit: contain; }
+.branch-signature-control label, .branch-signature-control small, .branch-signature-status { display: block; }
+.branch-signature-file { display: block; max-width: 100%; font-size: 12px; margin-bottom: 6px; }
+.branch-signature-control small { color: #52637b; line-height: 1.5; margin-bottom: 8px; }
+.branch-signature-remove { margin: 4px 0; }
+.branch-signature-status { font-size: 12px; margin-top: 6px; }
