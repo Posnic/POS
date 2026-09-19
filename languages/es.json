@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "Continua",
   "lang_rd_dashed": "Discontinua",
   "lang_rd_dotted": "Punteada",
-  "lang_rd_line_thickness": "Grosor de línea"
+  "lang_rd_line_thickness": "Grosor de línea",
+  "lang_rd_set_as_default": "Establecer por defecto",
+  "lang_rd_save_to_apply": "Guarde los diseños para aplicar los cambios."
 }

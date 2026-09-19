@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "निरन्तर",
   "lang_rd_dashed": "टुक्रे रेखा",
   "lang_rd_dotted": "थोप्लेदार",
-  "lang_rd_line_thickness": "रेखाको मोटाइ"
+  "lang_rd_line_thickness": "रेखाको मोटाइ",
+  "lang_rd_set_as_default": "पूर्वनिर्धारित बनाउनुहोस्",
+  "lang_rd_save_to_apply": "परिवर्तनहरू लागू गर्न डिजाइनहरू सुरक्षित गर्नुहोस्।"
 }

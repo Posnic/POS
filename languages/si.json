@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "අඛණ්ඩ",
   "lang_rd_dashed": "කඩ ඉරි",
   "lang_rd_dotted": "තිත් ඉරි",
-  "lang_rd_line_thickness": "රේඛාවේ ඝනකම"
+  "lang_rd_line_thickness": "රේඛාවේ ඝනකම",
+  "lang_rd_set_as_default": "පෙරනිමිය ලෙස සකසන්න",
+  "lang_rd_save_to_apply": "වෙනස්කම් යෙදීමට සැලසුම් සුරකින්න."
 }

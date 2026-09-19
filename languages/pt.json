@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "Contínua",
   "lang_rd_dashed": "Tracejada",
   "lang_rd_dotted": "Pontilhada",
-  "lang_rd_line_thickness": "Espessura da linha"
+  "lang_rd_line_thickness": "Espessura da linha",
+  "lang_rd_set_as_default": "Definir como padrão",
+  "lang_rd_save_to_apply": "Salve os modelos para aplicar as alterações."
 }

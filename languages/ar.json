@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "متصل",
   "lang_rd_dashed": "متقطع",
   "lang_rd_dotted": "منقط",
-  "lang_rd_line_thickness": "سُمك الخط"
+  "lang_rd_line_thickness": "سُمك الخط",
+  "lang_rd_set_as_default": "تعيين كافتراضي",
+  "lang_rd_save_to_apply": "احفظ التصاميم لتطبيق تغييراتك."
 }

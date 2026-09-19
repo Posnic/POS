@@ -3325,5 +3325,7 @@
   "lang_rd_solid": "ठोस",
   "lang_rd_dashed": "डैश वाली",
   "lang_rd_dotted": "बिंदुदार",
-  "lang_rd_line_thickness": "रेखा की मोटाई"
+  "lang_rd_line_thickness": "रेखा की मोटाई",
+  "lang_rd_set_as_default": "डिफ़ॉल्ट बनाएँ",
+  "lang_rd_save_to_apply": "बदलाव लागू करने के लिए डिज़ाइन सहेजें।"
 }

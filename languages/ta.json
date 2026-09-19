@@ -3346,5 +3346,7 @@
   "lang_rd_solid": "தொடர் கோடு",
   "lang_rd_dashed": "கோடிட்ட கோடு",
   "lang_rd_dotted": "புள்ளிக் கோடு",
-  "lang_rd_line_thickness": "கோட்டின் தடிமன்"
+  "lang_rd_line_thickness": "கோட்டின் தடிமன்",
+  "lang_rd_set_as_default": "இயல்புநிலையாக அமை",
+  "lang_rd_save_to_apply": "மாற்றங்களைப் பயன்படுத்த வடிவமைப்புகளைச் சேமிக்கவும்."
 }

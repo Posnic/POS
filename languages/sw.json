@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "Mfululizo",
   "lang_rd_dashed": "Vistari",
   "lang_rd_dotted": "Vitone",
-  "lang_rd_line_thickness": "Unene wa mstari"
+  "lang_rd_line_thickness": "Unene wa mstari",
+  "lang_rd_set_as_default": "Weka kama chaguomsingi",
+  "lang_rd_save_to_apply": "Hifadhi miundo ili kutumia mabadiliko yako."
 }

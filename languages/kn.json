@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "ನಿರಂತರ",
   "lang_rd_dashed": "ತುಂಡು ಗೆರೆ",
   "lang_rd_dotted": "ಚುಕ್ಕೆ ಗೆರೆ",
-  "lang_rd_line_thickness": "ಗೆರೆಯ ದಪ್ಪ"
+  "lang_rd_line_thickness": "ಗೆರೆಯ ದಪ್ಪ",
+  "lang_rd_set_as_default": "ಪೂರ್ವನಿಯೋಜಿತವಾಗಿ ಹೊಂದಿಸಿ",
+  "lang_rd_save_to_apply": "ಬದಲಾವಣೆಗಳನ್ನು ಅನ್ವಯಿಸಲು ವಿನ್ಯಾಸಗಳನ್ನು ಉಳಿಸಿ."
 }

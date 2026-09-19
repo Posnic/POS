@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "Doorgetrokken",
   "lang_rd_dashed": "Gestreept",
   "lang_rd_dotted": "Gestippeld",
-  "lang_rd_line_thickness": "Lijndikte"
+  "lang_rd_line_thickness": "Lijndikte",
+  "lang_rd_set_as_default": "Als standaard instellen",
+  "lang_rd_save_to_apply": "Sla de ontwerpen op om uw wijzigingen toe te passen."
 }

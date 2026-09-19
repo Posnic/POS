@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "തുടർച്ചയായ",
   "lang_rd_dashed": "ഇടവിട്ട",
   "lang_rd_dotted": "കുത്തുകളുള്ള",
-  "lang_rd_line_thickness": "വരയുടെ കനം"
+  "lang_rd_line_thickness": "വരയുടെ കനം",
+  "lang_rd_set_as_default": "ഡിഫോൾട്ടായി സജ്ജമാക്കുക",
+  "lang_rd_save_to_apply": "മാറ്റങ്ങൾ പ്രയോഗിക്കാൻ ഡിസൈനുകൾ സംരക്ഷിക്കുക."
 }

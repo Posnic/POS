@@ -132,7 +132,7 @@ test('four-format saved designs gain an independent A5 layout without losing the
     $('[data-format="a5"]').trigger('click');
     $('[data-add="text"]').trigger('click');
     $('#rd-block-text').val('A5 only').trigger('input');
-    $('#rd-default-format').val('a5').trigger('change');
+    $('[data-default-format="a5"]').trigger('click');
     $('[data-action="save"]').trigger('click');
     assert.equal(saved.defaultFormat, 'a5');
     assert.equal(saved.layouts.a5.blocks.at(-1).text, 'A5 only');
@@ -337,18 +337,51 @@ test('sheet grouping preserves custom boundaries, wide artwork and long item lis
     dom.window.close();
 });
 
-test('the default format control sits beside the designer heading and still saves separately', () => {
+test('format cards separate editing from default selection and preserve the choice after save', () => {
     const { dom, w, $, branch } = setup();
     let sent;
     w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
     w.PosnicPro.receiptDesignerEditor.load(branch);
-    assert.equal($('.rd-topbar #rd-default-format').length, 1);
-    assert.equal($('#rd-default-format').length, 1);
+    assert.equal($('#rd-default-format').length, 0, 'There is no separate default dropdown');
+    assert.equal($('.rd-format-card').length, 5);
+    assert.equal($('button button').length, 0, 'Each card has two independent native buttons');
+    assert.equal($('.rd-format-card.is-default [data-default-format]').attr('data-default-format'), '80');
     $('[data-format="a5"]').trigger('click');
-    assert.equal($('#rd-default-format').val(), '80');
-    $('#rd-default-format').val('a4').trigger('change');
+    assert.equal($('.rd-format-card.is-default [data-default-format]').attr('data-default-format'), '80');
+    $('[data-default-format="a4"]').trigger('click');
+    assert.equal($('.rd-format-card.is-active [data-format]').attr('data-format'), 'a5', 'Choosing a default does not switch the editing context');
+    assert.equal($('.rd-format-card.is-default').length, 1);
+    assert.equal($('[data-default-format="a4"]').attr('aria-disabled'), 'true');
+    assert.equal($('[data-default-format="a4"]').text(), 'Default');
+    assert.equal($('[data-default-format="80"]').text(), 'Set as default');
+    assert.match($('[data-default-format="58"]').attr('aria-label'), /Set as default: 58 mm thermal/);
+    assert.equal($('.rd-status').text(), 'Unsaved changes');
+    $('[data-default-format="a4"]').trigger('click');
+    $('[data-action="undo"]').trigger('click');
+    assert.equal($('.rd-format-card.is-default [data-default-format]').attr('data-default-format'), '80', 'Clicking the existing default does not add an undo step');
+    $('[data-default-format="a4"]').trigger('click');
     $('[data-action="save"]').trigger('click');
     assert.equal(sent.receipt_designs.defaultFormat, 'a4');
     assert.equal($('[data-format="a5"]').attr('aria-pressed'), 'true');
+    assert.equal($('.rd-status').text(), 'All designs saved');
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: sent.receipt_designs });
+    assert.equal($('.rd-format-card.is-default [data-default-format]').attr('data-default-format'), 'a4');
+    assert.equal($('.rd-format-card.is-active [data-format]').attr('data-format'), 'a4');
+    $('[data-format="58"]').trigger('click');
+    assert.equal($('.rd-format-card.is-default [data-default-format]').attr('data-default-format'), 'a4');
+    dom.window.close();
+});
+
+test('a failed save leaves the chosen default editable and undo restores the saved choice', () => {
+    const { dom, w, $, branch } = setup();
+    w.PosnicPro.put = (_request, _done, fail) => fail({ responseJSON: { message: 'Connection lost' } });
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('[data-default-format="letter"]').trigger('click');
+    $('[data-action="save"]').trigger('click');
+    assert.equal($('.rd-status').text(), 'Connection lost');
+    assert.equal($('.rd-format-card.is-default [data-default-format]').attr('data-default-format'), 'letter');
+    assert.equal($('[data-action="save"]').prop('disabled'), false);
+    $('[data-action="undo"]').trigger('click');
+    assert.equal($('.rd-format-card.is-default [data-default-format]').attr('data-default-format'), '80');
     dom.window.close();
 });

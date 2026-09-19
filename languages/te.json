@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "నిరంతర",
   "lang_rd_dashed": "గీతలతో",
   "lang_rd_dotted": "చుక్కలతో",
-  "lang_rd_line_thickness": "గీత మందం"
+  "lang_rd_line_thickness": "గీత మందం",
+  "lang_rd_set_as_default": "డిఫాల్ట్‌గా సెట్ చేయండి",
+  "lang_rd_save_to_apply": "మార్పులను వర్తింపజేయడానికి డిజైన్‌లను సేవ్ చేయండి."
 }

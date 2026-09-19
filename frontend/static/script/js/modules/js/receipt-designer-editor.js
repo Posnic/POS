@@ -99,10 +99,21 @@
         box.find('.rd-block-count').text(layout().blocks.filter(visible).length + ' / 40');
         box.find('[data-action="undo"]').prop('disabled', !undo.length);
     }
+    function renderFormats() {
+        box.find('[data-format]').each(function () {
+            var f = this.getAttribute('data-format');
+            $(this).attr('aria-pressed', String(f === format)).closest('.rd-format-card').toggleClass('is-active', f === format).toggleClass('is-default', f === design.defaultFormat);
+        });
+        box.find('[data-default-format]').each(function () {
+            var f = this.getAttribute('data-default-format');
+            var isDefault = f === design.defaultFormat;
+            $(this).attr('aria-disabled', String(isDefault)).attr('aria-label', (isDefault ? PosnicPro.i18n.t('lang_rd_default_receipt_format', 'Default receipt format') : PosnicPro.i18n.t('lang_rd_set_as_default', 'Set as default')) + ': ' + t(schema.formats[f].name))
+                .html((isDefault ? '<i class="feather icon-check-circle" aria-hidden="true"></i>' : '') + '<span>' + esc(isDefault ? PosnicPro.i18n.t('lang_default', 'Default') : PosnicPro.i18n.t('lang_rd_set_as_default', 'Set as default')) + '</span>');
+        });
+    }
     function renderEditor() {
-        box.find('[data-format]').each(function () { $(this).toggleClass('is-active', this.getAttribute('data-format') === format).attr('aria-pressed', String(this.getAttribute('data-format') === format)); });
+        renderFormats();
         box.find('#rd-text-size').val(layout().fontSize);
-        box.find('#rd-default-format').val(design.defaultFormat);
         renderList(); preview();
     }
     function move(id, at) {
@@ -178,8 +189,8 @@
         if (observer) observer.disconnect();
         design = data.receipt_designs ? schema.normalize(data.receipt_designs) : engine.defaults(data);
         saved = editableState(design); format = design.defaultFormat; selected = null; undo = [];
-        box.html('<div class="rd-topbar"><div><h3>' + esc(t('Receipt designer')) + '</h3><p>' + esc(t('Create a distinct layout for every paper format.')) + '</p></div><div class="rd-toolbar"><label for="rd-default-format">' + esc(t('Default receipt format')) + '</label><select id="rd-default-format" aria-describedby="rd-default-help">' + Object.keys(schema.formats).map(function (f) { return '<option value="' + f + '">' + esc(t(schema.formats[f].name)) + '</option>'; }).join('') + '</select><span id="rd-default-help" class="rd-toolbar-help">' + esc(t('Editing a design does not change the default.')) + '</span></div><div class="rd-save-area"><span class="rd-status" role="status">' + esc(t(data.receipt_designs ? PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved') : PosnicPro.i18n.t('lang_rd_starting_from_your_current_receipt_settings', 'Starting from your current receipt settings'))) + '</span><button type="button" class="btn btn-primary" data-action="save">' + esc(t('Save designs')) + '</button></div></div>' +
-            '<div class="rd-formats" role="group" aria-label="' + esc(t('Edit paper format')) + '">' + Object.keys(schema.formats).map(function (f) { return '<button type="button" data-format="' + f + '"><i class="feather icon-' + (schema.formats[f].height ? 'file-text' : 'printer') + '"></i>' + esc(t(schema.formats[f].name)) + '<small>' + esc(schema.formats[f].height ? schema.formats[f].width + ' × ' + schema.formats[f].height + ' mm' : t('Receipt roll')) + '</small></button>'; }).join('') + '</div>' +
+        box.html('<div class="rd-topbar"><div><h3>' + esc(t('Receipt designer')) + '</h3><p>' + esc(t('Create a distinct layout for every paper format.')) + '</p></div><div class="rd-save-area"><span class="rd-status" role="status">' + esc(t(data.receipt_designs ? PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved') : PosnicPro.i18n.t('lang_rd_starting_from_your_current_receipt_settings', 'Starting from your current receipt settings'))) + '</span><button type="button" class="btn btn-primary" data-action="save">' + esc(t('Save designs')) + '</button></div></div>' +
+            '<div class="rd-formats" role="group" aria-label="' + esc(t('Edit paper format')) + '" aria-describedby="rd-formats-help">' + Object.keys(schema.formats).map(function (f) { return '<div class="rd-format-card"><button type="button" class="rd-format-edit" data-format="' + f + '"><i class="feather icon-' + (schema.formats[f].height ? 'file-text' : 'printer') + '" aria-hidden="true"></i>' + esc(t(schema.formats[f].name)) + '<small>' + esc(schema.formats[f].height ? schema.formats[f].width + ' × ' + schema.formats[f].height + ' mm' : t('Receipt roll')) + '</small></button><button type="button" class="rd-format-default" data-default-format="' + f + '"></button></div>'; }).join('') + '</div><p id="rd-formats-help" class="rd-formats-help">' + esc(t('Editing a design does not change the default.')) + ' ' + esc(t('Save designs to apply your changes.')) + '</p>' +
             '<div class="rd-workspace"><aside class="rd-library"><h4>' + esc(t('Add a block')) + '</h4><p>' + esc(t('Click to add. Drag blocks to reorder.')) + '</p><div class="rd-library-buttons">' + ['text', 'qr', 'image', 'logo', 'barcode', 'divider'].map(function (type) { return '<button type="button" data-add="' + type + '"><span>+</span>' + esc(t(names[type])) + '</button>'; }).join('') + '</div><h4>' + esc(t('Sale fields')) + '</h4><div class="rd-library-buttons">' + Object.keys(schema.fields).filter(function (f) { return restaurant() || schema.restaurant.indexOf(f) === -1; }).map(function (field) { return '<button type="button" data-add="field" data-field="' + field + '"><span>+</span>' + esc(t(schema.fields[field])) + '</button>'; }).join('') + '</div></aside>' +
             '<section class="rd-layout"><div class="rd-section-heading"><h4>' + esc(t('Your layout')) + ' <small class="rd-block-count"></small></h4>' + button('undo', 'Undo', 'rotate-ccw', 'disabled') + '</div><div class="rd-font-control"><label for="rd-text-size">' + esc(t('Default text size')) + '</label><select id="rd-text-size" aria-describedby="rd-font-scope">' + [8,9,10,11,12,13,14,16,18].map(function (n) { return '<option value="' + n + '">' + n + ' px</option>'; }).join('') + '</select><small id="rd-font-scope">' + esc(t('Applies to this paper format. Select a block to override its text size or make it bold.')) + '</small></div><ol class="rd-block-list"></ol><p class="rd-help">' + esc(t('Store details, receipt details, items and totals are always included.')) + '</p></section>' +
             '<aside class="rd-preview"><div class="rd-section-heading"><h4>' + esc(t('Live preview')) + '</h4><span class="rd-sample-label">' + esc(t('Sample sale')) + '</span></div><div class="rd-preview-stage"><div class="rd-preview-page"></div></div><div class="rd-preview-footer"><strong class="rd-preview-name"></strong><span class="rd-dimensions"></span></div><p class="rd-help">' + esc(t('Preview uses sample customer and item details. Actual receipts use the sale data.')) + '</p></aside></div>' +
@@ -195,6 +206,10 @@
         });
         box.off('.receiptDesigner').on('click.receiptDesigner', '[data-format]', function () {
             format = this.getAttribute('data-format'); selected = null; box.find('.rd-preview-stage').scrollTop(0); renderEditor();
+        }).on('click.receiptDesigner', '[data-default-format]', function () {
+            var next = this.getAttribute('data-default-format');
+            if (next === design.defaultFormat) return;
+            checkpoint(); design.defaultFormat = next; renderFormats(); changed();
         }).on('click.receiptDesigner', '[data-add]', function () {
             if (layout().blocks.length >= 40) { status(t('Each design can contain up to 40 blocks.'), true); return; }
             checkpoint(); var type = this.getAttribute('data-add');
@@ -214,8 +229,8 @@
             else if (action === 'select') { selected = selected === id ? null : id; renderList(); }
             else if (action === 'remove' && at >= 0 && schema.required.indexOf(layout().blocks[at].type) === -1) { checkpoint(); layout().blocks.splice(at, 1); renderList(); changed(); }
             else if (action === 'up' || action === 'down') move(id, at + (action === 'up' ? -1 : 1));
-        }).on('change.receiptDesigner', '#rd-default-format, #rd-text-size', function () {
-            checkpoint(); if (this.id === 'rd-default-format') design.defaultFormat = this.value; else layout().fontSize = Number(this.value); changed();
+        }).on('change.receiptDesigner', '#rd-text-size', function () {
+            checkpoint(); layout().fontSize = Number(this.value); changed();
         }).on('input.receiptDesigner change.receiptDesigner', '[data-prop]', function (event) {
             if (event.type === 'change' && this.tagName === 'TEXTAREA') return;
             var b = layout().blocks.find(function (v) { return v.id === selected; }); if (!b) return;

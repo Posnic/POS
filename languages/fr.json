@@ -3310,5 +3310,7 @@
   "lang_rd_solid": "Continue",
   "lang_rd_dashed": "Tirets",
   "lang_rd_dotted": "Pointillés",
-  "lang_rd_line_thickness": "Épaisseur de ligne"
+  "lang_rd_line_thickness": "Épaisseur de ligne",
+  "lang_rd_set_as_default": "Définir par défaut",
+  "lang_rd_save_to_apply": "Enregistrez les modèles pour appliquer vos modifications."
 }
