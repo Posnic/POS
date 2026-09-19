@@ -214,3 +214,15 @@ test('version details are reachable from the footer, outside the account menu', 
   assert.match(ABOUT, /data-target="#posnic_about_dialog"/);
   assert.match(login, /id="posnic_version_login"/);
 });
+
+// The production HTML assembler only includes files registered in this map.
+test('the About dialog ships inside the built dashboard', (t) => {
+  const map = JSON.parse(fs.readFileSync(path.join(ROOT, 'frontend/pages_html_map.json'), 'utf8'));
+  assert.ok(map.files.includes('layouts/about.html'));
+  const built = path.join(ROOT, 'frontend/public/dashboard.html');
+  if (!fs.existsSync(built)) { t.skip('Run the frontend build to verify its output'); return; }
+  const html = fs.readFileSync(built, 'utf8');
+  assert.match(html, /id="posnic_about_dialog"/);
+  assert.match(html, /id="posnic_about_copy"/);
+  assert.doesNotMatch(html, /posnic-version-copied/);
+});
