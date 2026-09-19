@@ -23,20 +23,19 @@ const change = (name = 'Soup') => ({
 });
 async function order(extra = {}) {
   const _id = new mongoose.Types.ObjectId();
-  await db
-    .collection('sales')
-    .insertOne({
-      _id,
-      branch_id: BRANCH,
-      license: LICENSE,
-      sale_process: 'KOT',
-      sales_id: 'KOT-1',
-      created_date: new Date(),
-      customer_phone: 'private',
-      items: change().items,
-      changes: [change()],
-      ...extra,
-    });
+  const collection = db.collection('sales');
+  await collection.insertOne({
+    _id,
+    branch_id: BRANCH,
+    license: LICENSE,
+    sale_process: 'KOT',
+    sales_id: 'KOT-1',
+    created_date: new Date(),
+    customer_phone: 'private',
+    items: change().items,
+    changes: [change()],
+    ...extra,
+  });
   return String(_id);
 }
 const read = (id) => db.collection('sales').findOne({ _id: new mongoose.Types.ObjectId(id) });
