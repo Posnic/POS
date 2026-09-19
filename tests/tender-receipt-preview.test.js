@@ -191,7 +191,12 @@ test('browser preview loads its stylesheet and relative logo without a configure
         return $.Deferred().resolve('@media print { body { color: black; } }').promise();
     };
     preview.show();
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Wait for the observable result: a fixed 50 ms races jQuery's deferred
+    // stylesheet load when the complete desktop suite runs concurrently.
+    const deadline = Date.now() + 2000;
+    while (!$('#tender_receipt_preview iframe').attr('srcdoc') && Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 20));
+    }
     assert.equal(cssUrl, 'http://localhost/static/pages/print.css');
     const html = $('#tender_receipt_preview iframe').attr('srcdoc');
     assert.ok(html, $('#tender_receipt_preview').text());
