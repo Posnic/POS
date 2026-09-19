@@ -1421,6 +1421,7 @@ if ($wrapper.length) {
                     footer_qr_url: data.footer_qr_url,
                     footer_image_caption: data.footer_image_caption
                 });
+                if (PosnicPro.receiptDesignerEditor) PosnicPro.receiptDesignerEditor.load(data);
 
                 $('.print_store_name').text(data.branch_name);
                 $('.print_store_gst').text(data.branch_gstin_number);
@@ -2125,6 +2126,10 @@ if ($wrapper.length) {
        its own act ("Module switches saved") instead of the generic server
        line, which reads the same from four different screens. */
     updateCommonSetting: function (successLabel) {
+        if ($('#core-tab-print').hasClass('active') && PosnicPro.receiptDesignerEditor) {
+            PosnicPro.receiptDesignerEditor.save();
+            return;
+        }
         var loader = $(".loader-view-mystore");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var taxDetail = $("#tax_percentage").select2("data");

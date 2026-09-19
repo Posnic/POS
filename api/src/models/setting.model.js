@@ -1273,12 +1273,18 @@ class SettingModel extends BaseModel {
             {
               $set: {
                 'printing_design.$.printing_design': data.print_type,
-                'printing_design.$.printing_max_char': data.print_character,
-                'printing_design.$.printing_size': data.print_size,
+                ...(data.print_character !== undefined
+                  ? { 'printing_design.$.printing_max_char': data.print_character }
+                  : {}),
+                ...(data.print_size !== undefined
+                  ? { 'printing_design.$.printing_size': data.print_size }
+                  : {}),
                 // Paper width in millimetres. Added alongside the others rather
                 // than replacing any: printing_size is the font size, this is
                 // the roll the receipt has to fit on.
-                'printing_design.$.print_width': data.print_width,
+                ...(data.print_width !== undefined
+                  ? { 'printing_design.$.print_width': data.print_width }
+                  : {}),
               },
             }
           );
@@ -1701,6 +1707,11 @@ class SettingModel extends BaseModel {
        * "restuaruent module is enabled and saved. its not sync with server
        * why ?"
        */
+      if (data.receipt_designs !== undefined) {
+        updateFields.receipt_designs = require('../helpers/receipt-design').normalize(
+          data.receipt_designs
+        );
+      }
       updateFields.updated_date = new Date();
 
       // Update branch collection (matches PHP $set logic line 389-434)
@@ -1716,6 +1727,7 @@ class SettingModel extends BaseModel {
         url: printUrl,
         header_print: data.header_print,
         footer_print: data.footer_print,
+        ...(data.receipt_designs !== undefined ? { receipt_designs: data.receipt_designs } : {}),
       };
       // Return the resolved picture, including cache hits and explicit clears,
       // so the form and the next print see the saved state without a reload.

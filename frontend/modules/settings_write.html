@@ -5323,6 +5323,8 @@
 
                                             <!-- ============ RECEIPT PRINT ============ -->
                                             <div class="tab-pane fade" id="core-tab-print" role="tabpanel">
+                                                <div id="receipt-designer"></div>
+                                                <div id="receipt-legacy-settings" hidden>
                                                 <div class="row">
                                                     <div class="form-group col-md-12">
                                                         <label for="print_type">
@@ -5331,7 +5333,7 @@
                                                         <select name="print_type" id="print_type"
                                                             class="form-control border-control">
                                                             <option value="standard"><lang class="lang_thermal">Thermal</lang></option>
-                                                            <option value="a4"><lang class="lang_regular">Regular</lang></option>
+                                                            <option value="a4"><lang class="lang_a4_sheet">A4 sheet</lang></option>
                                                         </select>
                                                     </div>
                                                     <div class="form-group col-md-12 restaurant-only" style="display:none;">
@@ -5381,7 +5383,7 @@
                                                 <div class="form-row">
                                                     <div class="form-group col-md-6">
                                                         <label for="print_size">
-                                                            <lang class="lang_size_title">Print size</lang>
+                                                            <lang class="lang_receipt_text_size">Text size</lang>
                                                         </label>
                                                         <select name="print_size" id="print_size"
                                                             class="form-control border-control">
@@ -5733,6 +5735,7 @@
                                                     <b><lang class="lang_customer_gstin_always_prints">A customer's own GSTIN always prints.</lang></b>
                                                     <lang class="lang_customer_gstin_always_prints_hint">Add it on the customer, under GST Fields. When provided, it appears on their bill automatically.</lang>
                                                 </div>
+                                            </div>
                                             </div>
 
                                         </div>

@@ -568,7 +568,7 @@ class HardwareManager {
         '100mm': { width: 100000, height: 1000000, windowWidth: 378 },
         'a4':    { width: 210000, height: 297000,  windowWidth: 794 },
         'a5':    { width: 148000, height: 210000,  windowWidth: 559 },
-        'letter':{ width: 216000, height: 279000,  windowWidth: 816 }
+        'letter':{ width: 215900, height: 279400,  windowWidth: 816 }
       };
 
       // Get pageSize from options or default to 80mm (3inch)
@@ -624,6 +624,15 @@ class HardwareManager {
         }
       }
       await this._waitForPrintPage(printWindow.webContents);
+
+      // Designed thermal receipts end at their content instead of feeding a
+      // metre of paper (the fallback page size used by older HTML templates).
+      if (options.fitReceipt === true && (sizeKey === '58mm' || sizeKey === '80mm')) {
+        const height = await printWindow.webContents.executeJavaScript(
+          'Math.ceil(document.querySelector(".rd-document").getBoundingClientRect().height)'
+        );
+        if (Number.isFinite(height) && height > 0) pageSize.height = Math.max(20000, Math.min(3000000, Math.ceil((height + 16) * 25400 / 96)));
+      }
 
       const printOpts = {
         silent: options.silent !== false,

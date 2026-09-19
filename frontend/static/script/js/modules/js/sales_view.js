@@ -1024,7 +1024,12 @@ PosnicPro.sales.view = {
                 var canvas = document.getElementById("canvasTarget");
                 var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
 
-                PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
+                if (name === 'sale' && data.receipt_designs && PosnicPro.receiptDesigner && !/Return/.test(data.sale_process || '')) {
+                    var designFormat = PosnicPro.receiptDesigner.formatFor(data, PosnicPro.sales.view._layoutOverride);
+                    PosnicPro.printView(PosnicPro.receiptDesigner.render(data, designFormat, !!isKotHistoryPrint), '');
+                } else {
+                    PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
+                }
                 // one print only - the next follows the shop setting again
                 PosnicPro._printTypeOverride = null;
                 PosnicPro.sales.view._layoutOverride = null;

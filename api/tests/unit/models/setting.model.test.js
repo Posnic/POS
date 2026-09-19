@@ -809,6 +809,27 @@ describe('updateCommonSettings', () => {
     return calls[calls.length - 1][1].$set;
   };
 
+  test('receipt designs persist together and unrelated saves leave them intact', async () => {
+    const contract = require('../../../src/helpers/receipt-design');
+    const designs = { version: 1, defaultFormat: 'letter', layouts: {} };
+    for (const format of Object.keys(contract.formats)) {
+      designs.layouts[format] = {
+        fontSize: 12,
+        blocks: contract.required.map((type) => ({ id: type, type, align: 'left' })),
+      };
+    }
+    const result = await m.updateCommonSettings({ receipt_designs: designs });
+    expect(result.status).toBe(true);
+    expect(setOf(col).receipt_designs.defaultFormat).toBe('letter');
+    expect(Object.keys(setOf(col))).toEqual(
+      expect.arrayContaining(['receipt_designs', 'updated_date'])
+    );
+    expect(setOf(col)).not.toHaveProperty('print_logoimg');
+    expect(result.data.receipt_designs).toEqual(designs);
+    await m.updateCommonSettings({ printall: 'true' });
+    expect(setOf(col)).not.toHaveProperty('receipt_designs');
+  });
+
   test('an uploaded QR survives repeated settings saves and still reaches the bill', async () => {
     const { buildBillPayload } = require('../../../src/helpers/bill-payload');
     const branch = {};

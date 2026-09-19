@@ -78,6 +78,9 @@
     }
 
     function documentFor(branch, data, layout) {
+        if (branch.receipt_designs && PosnicPro.receiptDesigner) {
+            return PosnicPro.receiptDesigner.render($.extend({}, branch, data), layout, true);
+        }
         var a4 = layout === 'a4';
         var template = a4 ? (branch.regular_body_print || branch.print_a4html)
             : (branch.thermal_body_print || branch.print_standard_html);
@@ -130,8 +133,9 @@
     }
 
     function mount(box, html, css, layout) {
-        var a4 = layout === 'a4';
-        var width = a4 ? 794 : (layout === '58' ? 182 : 273);
+        var a4 = layout === 'a4' || layout === 'letter';
+        var designed = html.indexOf('data-receipt-design=') !== -1;
+        var width = a4 ? (layout === 'letter' ? 816 : 794) : (layout === '58' ? 182 : 273);
         var frame = $('<iframe class="tender-receipt-frame" title="Sale print preview" data-t-title="lang_sale_print_preview" sandbox="allow-same-origin" scrolling="no">');
         var paper = $('<div class="tender-receipt-paper">').append(frame);
         var fit = function () {
@@ -151,11 +155,11 @@
             $(frame[0].contentDocument).find('img').on('load error', fit);
         });
         var esc = PosnicPro.escapeHtml;
-        var paperCss = a4 ? '' : PosnicPro.paperCss(layout);
+        var paperCss = a4 || designed ? '' : PosnicPro.paperCss(layout);
         frame.attr('srcdoc', '<!doctype html><html><head><meta charset="utf-8"><base href="' + esc(assetBase()) + '">' +
             '<style>' + css + '\n' + paperCss + '\nhtml,body{background:#fff;color:#000;overflow:hidden!important;}' +
             'body{margin:0!important;display:flow-root;}a{pointer-events:none;}' +
-            (a4 ? 'body{box-sizing:border-box;width:794px;padding:53px 45px!important;}' : '') +
+            (a4 ? 'body{box-sizing:border-box;width:' + width + 'px;padding:45px!important;}' : '') +
             '</style></head><body>' + html + '</body></html>');
         box.empty().append(paper);
     }
@@ -251,8 +255,9 @@
                 if (!response || response.type !== 'success' || !response.data) { failed(); return; }
                 var branch = response.data;
                 var layout = branch.print_type === 'a4' ? 'a4' : (branch.print_width === '58' ? '58' : '80');
+                if (branch.receipt_designs) layout = branch.receipt_designs.defaultFormat;
                 var printer = window.electronAPI && window.electronAPI.printer;
-                if (layout !== 'a4' && printer && printer.previewReceipt && PosnicPro.receiptData) {
+                if (!branch.receipt_designs && layout !== 'a4' && printer && printer.previewReceipt && PosnicPro.receiptData) {
                     try {
                         var html = documentFor(branch, cartData(branch), layout);
                         printer.previewReceipt(rawData(html), {
@@ -264,7 +269,7 @@
                     } catch (error) { failed(); }
                     return;
                 }
-                styles(layout).then(function (css) {
+                (branch.receipt_designs ? $.Deferred().resolve('').promise() : styles(layout)).then(function (css) {
                     if (current !== revision) { return; }
                     try {
                         var data = cartData(branch);

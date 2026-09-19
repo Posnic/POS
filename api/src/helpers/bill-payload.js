@@ -589,4 +589,4 @@ function buildBillPayload(sale = {}, branch = {}) {
  * what counts as a number, a sale could be filed under a guest whose receipt
  * says there was no guest.
  */
-module.exports = { buildBillPayload, isDialable };
+module.exports = { buildBillPayload, isDialable, sessionName };

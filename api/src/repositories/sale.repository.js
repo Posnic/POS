@@ -12,7 +12,8 @@ const { formatDate } = require('../utils/helpers');
 const { notifyKotReady } = require('../helpers/kot-notify');
 const { notifyBillRequested } = require('../helpers/bill-notify');
 const { queuePrintJob } = require('./print-job.repository');
-const { buildBillPayload, isDialable } = require('../helpers/bill-payload');
+const { buildBillPayload, isDialable, sessionName } = require('../helpers/bill-payload');
+const { orderSource } = require('../utils/order-source');
 
 /*
  * The shop, plus the dayparts if the bill is going to name the service.
@@ -28,7 +29,13 @@ const { buildBillPayload, isDialable } = require('../helpers/bill-payload');
  * still a bill.
  */
 async function withDayparts(shop) {
-  const on = shop && (shop.bill_print_session === true || shop.bill_print_session === 'true');
+  const on =
+    shop &&
+    (shop.bill_print_session === true ||
+      shop.bill_print_session === 'true' ||
+      Object.values(shop.receipt_designs?.layouts || {}).some((layout) =>
+        layout.blocks?.some((block) => block.type === 'field' && block.field === 'session')
+      ));
   if (!on) return shop;
   try {
     const settings = await new BaseModel('settings').getCollection('settings');
@@ -519,6 +526,25 @@ class SalesRepository {
       // A browser's settings cache may still contain an older shop image.
       doc.footer_image = String(branchDoc?.footer_image || '');
       doc.footer_image_caption = String(branchDoc?.footer_image_caption || '');
+      doc.receipt_designs = branchDoc?.receipt_designs || null;
+      if (doc.receipt_designs) {
+        for (const key of [
+          'branch_name',
+          'printing_address',
+          'store_telephone',
+          'store_email',
+          'website',
+          'table_options',
+          'branch_fssai_number',
+          'invoice_terms',
+          'quote_default_signature',
+        ]) {
+          doc[key] = branchDoc[key];
+        }
+        doc.logo = branchDoc.logo || '';
+        doc.order_source = orderSource(doc);
+        doc.serving_session = sessionName(doc, await withDayparts(branchDoc));
+      }
       if (logo && !doc.logo) {
         doc.logo = logo;
       }
