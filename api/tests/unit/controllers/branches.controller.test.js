@@ -699,10 +699,11 @@ describe('BranchesController — userRegisterBranchSelect', () => {
   test('returns 200 with register list when branch ID resolved', async () => {
     branchesService.normalizeBranchId.mockReturnValue('b1');
     bm.getRegisterList.mockResolvedValue({ status: true, data: [{ id: 'r1' }], message: 'OK' });
-    const req = mockReq({ query: { id: 'b1' } });
+    const req = mockReq({ query: { id: 'b1' }, headers: { 'x-device-id': 'stable-till' } });
     const res = mockRes();
     await ctrl.userRegisterBranchSelect(req, res);
-    expect(bm.getRegisterList).toHaveBeenCalledWith('b1', adminUser);
+    const deviceId = require('../../../src/utils/device-id.util').getRequestDeviceId(req);
+    expect(bm.getRegisterList).toHaveBeenCalledWith('b1', adminUser, deviceId);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json.mock.calls[0][0].type).toBe('success');
   });
@@ -714,7 +715,11 @@ describe('BranchesController — userRegisterBranchSelect', () => {
     const res = mockRes();
     await ctrl.userRegisterBranchSelect(mockReq(), res);
     expect(branchesService.getFirstBranch).toHaveBeenCalled();
-    expect(bm.getRegisterList).toHaveBeenCalledWith('fb1', adminUser);
+    expect(bm.getRegisterList).toHaveBeenCalledWith(
+      'fb1',
+      adminUser,
+      expect.stringMatching(/^[a-f0-9]{32}$/)
+    );
   });
 
   test('returns 400 when no branch ID can be resolved at all', async () => {

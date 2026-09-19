@@ -744,5 +744,6 @@
   "Could not sweep the print queue": "प्रिंट कतार साफ़ नहीं हो सकी",
   "Could not read what needs attention": "जिन पर ध्यान चाहिए, वे पढ़े नहीं जा सके",
   "Could not answer the print job": "प्रिंट कार्य का उत्तर दर्ज नहीं हो सका",
-  "Could not read the print queue": "प्रिंट कतार पढ़ी नहीं जा सकी"
+  "Could not read the print queue": "प्रिंट कतार पढ़ी नहीं जा सकी",
+  "This register needs to be resumed on this device. Open Cash Register and choose Resume.": "इस डिवाइस पर कैश रजिस्टर का सत्र फिर से शुरू करना होगा। कैश रजिस्टर खोलें और फिर से शुरू करें चुनें।"
 }

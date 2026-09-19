@@ -2217,6 +2217,9 @@
   "This refund has already been processed for this sale": [
     "src/repositories/sale.repository.js"
   ],
+  "This register needs to be resumed on this device. Open Cash Register and choose Resume.": [
+    "src/repositories/register.repository.js"
+  ],
   "This shop has not set up an AI provider": [
     "src/services/ai.service.js"
   ],

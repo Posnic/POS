@@ -744,5 +744,6 @@
   "Could not sweep the print queue": "No se pudo depurar la cola de impresión",
   "Could not read what needs attention": "No se pudo leer lo que necesita atención",
   "Could not answer the print job": "No se pudo responder al trabajo de impresión",
-  "Could not read the print queue": "No se pudo leer la cola de impresión"
+  "Could not read the print queue": "No se pudo leer la cola de impresión",
+  "This register needs to be resumed on this device. Open Cash Register and choose Resume.": "Debes reanudar esta caja en este dispositivo. Abre Caja y selecciona Reanudar."
 }

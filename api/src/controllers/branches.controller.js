@@ -8,6 +8,7 @@ const { redactBranchSecrets, stripBranchSecrets } = require('../services/setting
 const SettingsRepository = require('../repositories/settings.repository');
 const dataSharing = require('../services/data-sharing');
 const catalogueCopy = require('../services/catalogue-copy');
+const { getRequestDeviceId } = require('../utils/device-id.util');
 
 const settingsRepository = new SettingsRepository();
 
@@ -535,7 +536,11 @@ class BranchesController extends BaseController {
         return this.error(res, 'Branch id is required', 400);
       }
 
-      const result = await this.branchModel.getRegisterList(resolvedId, req.user);
+      const result = await this.branchModel.getRegisterList(
+        resolvedId,
+        req.user,
+        getRequestDeviceId(req)
+      );
 
       if (!result.status) {
         const statusCode = result.message === 'Branch id is required' ? 400 : 404;
