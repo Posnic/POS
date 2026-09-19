@@ -3316,5 +3316,14 @@
   "lang_about_page_build": "पेज बिल्ड",
   "lang_about_unavailable": "उपलब्ध नहीं",
   "lang_about_details_copied": "जानकारी क्लिपबोर्ड पर कॉपी की गई।",
-  "lang_about_copy_failed": "कॉपी नहीं हो सका। ऊपर की जानकारी चुनकर मैन्युअल रूप से कॉपी करें।"
+  "lang_about_copy_failed": "कॉपी नहीं हो सका। ऊपर की जानकारी चुनकर मैन्युअल रूप से कॉपी करें।",
+  "lang_rd_default_text_size": "डिफ़ॉल्ट टेक्स्ट आकार",
+  "lang_rd_font_scope": "इस कागज़ के प्रारूप पर लागू होता है। टेक्स्ट का आकार बदलने या उसे बोल्ड करने के लिए ब्लॉक चुनें।",
+  "lang_rd_block_text_size": "ब्लॉक के टेक्स्ट का आकार",
+  "lang_rd_use_default": "डिफ़ॉल्ट उपयोग करें",
+  "lang_rd_line_style": "रेखा शैली",
+  "lang_rd_solid": "ठोस",
+  "lang_rd_dashed": "डैश वाली",
+  "lang_rd_dotted": "बिंदुदार",
+  "lang_rd_line_thickness": "रेखा की मोटाई"
 }

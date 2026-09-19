@@ -183,3 +183,172 @@ test('a QR preview completing during save does not report an unsaved edit', asyn
     assert.equal($('.rd-status').text(), 'All designs saved');
     dom.window.close();
 });
+
+test('block typography and divider settings survive save and render on every paper format', async () => {
+    const { dom, w, $, engine, design, sale } = setup();
+    w.eval(read('frontend/static/script/js/core/tender-receipt.js'));
+    for (const format of Object.keys(contract.formats)) {
+        const blocks = design.layouts[format].blocks;
+        blocks.push(engine.block('text', { text: 'Scan below', fontSize: 20, bold: true }));
+        blocks.push(engine.block('field', { field: 'customer_name', fontSize: 14, bold: true }));
+        for (const lineStyle of ['solid', 'dashed', 'dotted']) {
+            blocks.push(engine.block('divider', { lineStyle, width: 65, thickness: 3, align: 'center' }));
+        }
+        blocks.push(engine.block('divider'));
+    }
+    sale.receipt_designs = await resolveReceiptDesign(JSON.parse(JSON.stringify(design)));
+    assert.deepEqual(await resolveReceiptDesign(sale.receipt_designs), sale.receipt_designs);
+    for (const format of Object.keys(contract.formats)) {
+        for (const html of [engine.render(sale, format, false), w.PosnicPro.tenderReceipt.documentFor(sale, sale, format)]) {
+            const output = $('<div>').html(html);
+            assert.equal(output.find('.rd-block-text').last()[0].style.fontSize, '20px');
+            assert.equal(output.find('.rd-block-text').last()[0].style.fontWeight, 'bold');
+            assert.equal(output.find('.rd-block-field').last()[0].style.fontSize, '14px');
+            assert.equal(output.find('.rd-block-field').last()[0].style.fontWeight, 'bold');
+            assert.equal(output.find('.rd-block-items')[0].style.fontSize, '', 'Unedited blocks inherit the format default');
+            const lines = output.find('.rd-divider').toArray();
+            ['solid', 'dashed', 'dotted'].forEach((style, i) => {
+                assert.equal(lines[i].style.borderTopStyle, style);
+                assert.equal(lines[i].style.borderTopWidth, '3px');
+                assert.equal(lines[i].style.width, '65%');
+                assert.equal(lines[i].style.marginLeft, 'auto');
+                assert.equal(lines[i].style.marginRight, 'auto');
+            });
+            assert.equal(lines[3].style.borderTopStyle, 'dashed', 'Old dividers keep their appearance');
+            assert.equal(lines[3].style.width, '100%');
+            assert.equal(lines[3].style.borderTopWidth, '1px');
+        }
+    }
+    dom.window.close();
+});
+
+test('editor scopes text styling to a block and format, and can return to the default size', () => {
+    const { dom, w, $, branch } = setup();
+    let saved;
+    w.PosnicPro.put = (request, done) => {
+        saved = JSON.parse(request.data).receipt_designs;
+        done({ type: 'success', data: { receipt_designs: saved } });
+    };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('[data-add="text"]').trigger('click');
+    $('#rd-block-text').val('Scan below').trigger('input');
+    $('#rd-block-size').val('20').trigger('change');
+    $('[data-prop="bold"]').prop('checked', true).trigger('change');
+    $('#rd-text-size').val('14').trigger('change');
+    $('[data-add="divider"]').trigger('click');
+    $('#rd-line-style').val('dotted').trigger('change');
+    $('#rd-line-thickness').val('2').trigger('change');
+    $('#rd-line-width').val('50').trigger('input');
+    $('#rd-align').val('right').trigger('change');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(saved.layouts['80'].fontSize, 14);
+    assert.equal(saved.layouts['80'].blocks.at(-2).fontSize, 20);
+    assert.equal(saved.layouts['80'].blocks.at(-2).bold, true);
+    assert.equal(saved.layouts['80'].blocks.at(-1).width, 50);
+    assert.equal(saved.layouts.a4.fontSize, 12);
+    assert.equal(saved.layouts.a4.blocks.some(b => b.type === 'divider'), false);
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: saved });
+    $('.rd-block-card').last().find('[data-action="select"]').trigger('click');
+    assert.equal($('#rd-line-style').val(), 'dotted');
+    assert.equal($('#rd-line-thickness').val(), '2');
+    assert.equal($('#rd-line-width').val(), '50');
+    assert.equal($('#rd-align').val(), 'right');
+    $('.rd-block-card').eq(-2).find('[data-action="select"]').trigger('click');
+    assert.equal($('#rd-block-size').val(), '20');
+    assert.equal($('[data-prop="bold"]').prop('checked'), true);
+    $('#rd-block-size').val('').trigger('change');
+    $('[data-prop="bold"]').prop('checked', false).trigger('change');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(saved.layouts['80'].blocks.at(-2).fontSize, undefined);
+    assert.equal(saved.layouts['80'].blocks.at(-2).bold, false);
+    assert.equal(saved.layouts['80'].fontSize, 14);
+    dom.window.close();
+});
+
+test('invalid block styles are rejected before storage', () => {
+    const { dom, engine, design } = setup();
+    const b = engine.block('divider');
+    design.layouts['80'].blocks.push(b);
+    for (const props of [{ width: 101 }, { width: 'bad' }, { thickness: 0 }, { thickness: Infinity }, { lineStyle: 'solid;display:none' }]) {
+        Object.assign(b, { width: 100, thickness: 1, lineStyle: 'dashed' }, props);
+        assert.throws(() => contract.normalize(design), /divider|Divider/);
+    }
+    design.layouts['80'].blocks.pop();
+    for (const type of contract.textTypes) {
+        const text = engine.block(type, { text: 'Hello', field: 'customer_name', fontSize: '12px;display:none' });
+        design.layouts['80'].blocks.push(text);
+        assert.throws(() => contract.normalize(design), /Block text size/);
+        text.fontSize = 33;
+        assert.throws(() => contract.normalize(design), /Block text size/);
+        design.layouts['80'].blocks.pop();
+    }
+    dom.window.close();
+});
+
+test('sheets compose invoice sections while thermal keeps its compact receipt layout', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const format of ['a4', 'a5', 'letter', '80']) {
+        const blocks = design.layouts[format].blocks;
+        const at = blocks.findIndex(b => b.type === 'items');
+        blocks.splice(at, 0, engine.block('field', { field: 'customer_name' }), engine.block('field', { field: 'customer_phone' }));
+    }
+    sale.customer_phone = '+44 117 555 0123';
+    sale.invoice_terms = 'Keep this invoice.';
+    const original = JSON.stringify(design);
+    for (const format of ['a4', 'a5', 'letter']) {
+        const output = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(output.find('.rd-invoice-header .rd-block-logo').length, 1);
+        assert.equal(output.find('.rd-invoice-header .rd-block-store').length, 1);
+        assert.equal(output.find('.rd-invoice-meta').text(), 'INVOICEInvoice #S128Date19/09/2026');
+        assert.match(output.find('.rd-invoice-customer').text(), /Bill to.*bad\(\).*555 0123/);
+        assert.deepEqual(output.find('thead th').toArray().map(e => $(e).text()), ['Item', 'Qty', 'Unit price', 'Amount']);
+        assert.equal(output.find('tbody td').eq(1).text(), '2 ea');
+        assert.equal(output.find('tbody td').eq(2).text(), '$ 12.00');
+        assert.equal(output.find('.rd-invoice-summary > .rd-block-totals').length, 1);
+        assert.equal(output.find('.rd-invoice-supporting img[alt="QR code"]').length, 1);
+        assert.match(output.find('.rd-invoice-end').text(), /Keep this invoice.*Authorised signatory/);
+        assert.deepEqual(output.find('[data-block-id]').toArray().map(e => e.dataset.blockId), Array.from(design.layouts[format].blocks, b => b.id));
+        const preview = $('<div>').html(engine.render({ ...sale, sales_id: '' }, format, true));
+        assert.equal(preview.find('.rd-invoice-title').text(), 'Bill');
+        assert.doesNotMatch(preview.find('.rd-invoice-meta').text(), /Invoice #/);
+    }
+    const thermal = $('<div>').html(engine.render(sale, '80', false));
+    assert.equal(thermal.find('.rd-invoice-header,.rd-invoice-summary,.rd-invoice-customer').length, 0);
+    assert.equal(thermal.find('thead th').length, 2);
+    assert.match(thermal.find('.rd-transaction').text(), /Receipt S128/);
+    assert.equal(JSON.stringify(design), original, 'Rendering does not migrate or overwrite saved designs');
+    dom.window.close();
+});
+
+test('sheet grouping preserves custom boundaries, wide artwork and long item lists', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    const blocks = design.layouts.a5.blocks;
+    blocks.splice(1, 0, engine.block('text', { text: 'Custom opening message' }));
+    blocks.push(engine.block('divider'), engine.block('image', { src: pixel, width: 85 }), engine.block('logo'), engine.block('logo'));
+    sale.items = Array.from({ length: 70 }, (_, i) => ({ item_name: 'Item ' + i + ' with a long descriptive name', item_price: 12, item_quantity: 2, total_amount: 24 }));
+    const output = $('<div>').html(engine.render(sale, 'a5', false));
+    assert.equal(output.find('tbody tr').length, 70);
+    assert.deepEqual(output.find('[data-block-id]').toArray().map(e => e.dataset.blockId), Array.from(blocks, b => b.id));
+    assert.equal(output.find('.rd-invoice-supporting .rd-block-image').length, 0, 'Wide artwork retains the full printable width');
+    assert.equal(output.find('.rd-invoice-header .rd-block-logo').length, 0, 'Standalone and repeated logos do not overlap in a header grid');
+    assert.equal(output.find('.rd-block-image img')[0].style.width, '105.4mm');
+    assert.match(output.find('style').text(), /\.rd-block-items\{break-inside:auto/);
+    assert.match(output.find('style').text(), /thead\{display:table-header-group/);
+    dom.window.close();
+});
+
+test('the default format control sits beside the designer heading and still saves separately', () => {
+    const { dom, w, $, branch } = setup();
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('.rd-topbar #rd-default-format').length, 1);
+    assert.equal($('#rd-default-format').length, 1);
+    $('[data-format="a5"]').trigger('click');
+    assert.equal($('#rd-default-format').val(), '80');
+    $('#rd-default-format').val('a4').trigger('change');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(sent.receipt_designs.defaultFormat, 'a4');
+    assert.equal($('[data-format="a5"]').attr('aria-pressed'), 'true');
+    dom.window.close();
+});

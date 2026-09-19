@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "पृष्ठ बिल्ड",
   "lang_about_unavailable": "उपलब्ध छैन",
   "lang_about_details_copied": "विवरणहरू क्लिपबोर्डमा प्रतिलिपि गरियो।",
-  "lang_about_copy_failed": "प्रतिलिपि गर्न सकिएन। माथिका विवरणहरू चयन गरेर आफैँ प्रतिलिपि गर्नुहोस्।"
+  "lang_about_copy_failed": "प्रतिलिपि गर्न सकिएन। माथिका विवरणहरू चयन गरेर आफैँ प्रतिलिपि गर्नुहोस्।",
+  "lang_rd_default_text_size": "पूर्वनिर्धारित पाठ आकार",
+  "lang_rd_font_scope": "यो कागजको ढाँचामा लागू हुन्छ। पाठको आकार बदल्न वा बाक्लो बनाउन ब्लक छान्नुहोस्।",
+  "lang_rd_block_text_size": "ब्लकको पाठ आकार",
+  "lang_rd_use_default": "पूर्वनिर्धारित प्रयोग गर्नुहोस्",
+  "lang_rd_line_style": "रेखाको शैली",
+  "lang_rd_solid": "निरन्तर",
+  "lang_rd_dashed": "टुक्रे रेखा",
+  "lang_rd_dotted": "थोप्लेदार",
+  "lang_rd_line_thickness": "रेखाको मोटाइ"
 }

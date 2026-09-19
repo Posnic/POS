@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "Build de la page",
   "lang_about_unavailable": "Indisponible",
   "lang_about_details_copied": "Informations copiées dans le presse-papiers.",
-  "lang_about_copy_failed": "La copie a échoué. Sélectionnez les informations ci-dessus pour les copier manuellement."
+  "lang_about_copy_failed": "La copie a échoué. Sélectionnez les informations ci-dessus pour les copier manuellement.",
+  "lang_rd_default_text_size": "Taille de texte par défaut",
+  "lang_rd_font_scope": "S’applique à ce format de papier. Sélectionnez un bloc pour modifier sa taille de texte ou le mettre en gras.",
+  "lang_rd_block_text_size": "Taille du texte du bloc",
+  "lang_rd_use_default": "Utiliser la valeur par défaut",
+  "lang_rd_line_style": "Style de ligne",
+  "lang_rd_solid": "Continue",
+  "lang_rd_dashed": "Tirets",
+  "lang_rd_dotted": "Pointillés",
+  "lang_rd_line_thickness": "Épaisseur de ligne"
 }

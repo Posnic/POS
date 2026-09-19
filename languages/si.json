@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "පිටු බිල්ඩ්",
   "lang_about_unavailable": "ලබා ගත නොහැක",
   "lang_about_details_copied": "විස්තර ක්ලිප්බෝඩ් වෙත පිටපත් කරන ලදී.",
-  "lang_about_copy_failed": "පිටපත් කළ නොහැකි විය. ඉහත විස්තර තෝරා අතින් පිටපත් කරන්න."
+  "lang_about_copy_failed": "පිටපත් කළ නොහැකි විය. ඉහත විස්තර තෝරා අතින් පිටපත් කරන්න.",
+  "lang_rd_default_text_size": "පෙරනිමි පෙළ ප්‍රමාණය",
+  "lang_rd_font_scope": "මෙම කඩදාසි ආකෘතියට අදාළ වේ. පෙළ ප්‍රමාණය වෙනස් කිරීමට හෝ තද කිරීමට කොටසක් තෝරන්න.",
+  "lang_rd_block_text_size": "කොටසේ පෙළ ප්‍රමාණය",
+  "lang_rd_use_default": "පෙරනිමිය භාවිත කරන්න",
+  "lang_rd_line_style": "රේඛා විලාසය",
+  "lang_rd_solid": "අඛණ්ඩ",
+  "lang_rd_dashed": "කඩ ඉරි",
+  "lang_rd_dotted": "තිත් ඉරි",
+  "lang_rd_line_thickness": "රේඛාවේ ඝනකම"
 }

@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "Build halaman",
   "lang_about_unavailable": "Tidak tersedia",
   "lang_about_details_copied": "Detail disalin ke papan klip.",
-  "lang_about_copy_failed": "Tidak dapat menyalin. Pilih detail di atas untuk menyalinnya secara manual."
+  "lang_about_copy_failed": "Tidak dapat menyalin. Pilih detail di atas untuk menyalinnya secara manual.",
+  "lang_rd_default_text_size": "Ukuran teks default",
+  "lang_rd_font_scope": "Berlaku untuk format kertas ini. Pilih blok untuk mengubah ukuran teksnya atau membuatnya tebal.",
+  "lang_rd_block_text_size": "Ukuran teks blok",
+  "lang_rd_use_default": "Gunakan default",
+  "lang_rd_line_style": "Gaya garis",
+  "lang_rd_solid": "Utuh",
+  "lang_rd_dashed": "Putus-putus",
+  "lang_rd_dotted": "Titik-titik",
+  "lang_rd_line_thickness": "Ketebalan garis"
 }

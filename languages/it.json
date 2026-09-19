@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "Build della pagina",
   "lang_about_unavailable": "Non disponibile",
   "lang_about_details_copied": "Dettagli copiati negli appunti.",
-  "lang_about_copy_failed": "Copia non riuscita. Seleziona i dettagli sopra per copiarli manualmente."
+  "lang_about_copy_failed": "Copia non riuscita. Seleziona i dettagli sopra per copiarli manualmente.",
+  "lang_rd_default_text_size": "Dimensione testo predefinita",
+  "lang_rd_font_scope": "Si applica a questo formato carta. Seleziona un blocco per modificarne la dimensione del testo o renderlo in grassetto.",
+  "lang_rd_block_text_size": "Dimensione testo del blocco",
+  "lang_rd_use_default": "Usa predefinita",
+  "lang_rd_line_style": "Stile linea",
+  "lang_rd_solid": "Continua",
+  "lang_rd_dashed": "Tratteggiata",
+  "lang_rd_dotted": "Punteggiata",
+  "lang_rd_line_thickness": "Spessore linea"
 }

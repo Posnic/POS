@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "Paginabuild",
   "lang_about_unavailable": "Niet beschikbaar",
   "lang_about_details_copied": "Gegevens naar het klembord gekopieerd.",
-  "lang_about_copy_failed": "Kopiëren mislukt. Selecteer de gegevens hierboven om ze handmatig te kopiëren."
+  "lang_about_copy_failed": "Kopiëren mislukt. Selecteer de gegevens hierboven om ze handmatig te kopiëren.",
+  "lang_rd_default_text_size": "Standaard tekstgrootte",
+  "lang_rd_font_scope": "Geldt voor dit papierformaat. Selecteer een blok om de tekstgrootte te wijzigen of de tekst vet te maken.",
+  "lang_rd_block_text_size": "Tekstgrootte van blok",
+  "lang_rd_use_default": "Standaard gebruiken",
+  "lang_rd_line_style": "Lijnstijl",
+  "lang_rd_solid": "Doorgetrokken",
+  "lang_rd_dashed": "Gestreept",
+  "lang_rd_dotted": "Gestippeld",
+  "lang_rd_line_thickness": "Lijndikte"
 }

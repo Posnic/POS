@@ -43,6 +43,7 @@
     'divider',
   ];
   const required = ['store', 'transaction', 'items', 'totals'];
+  const textTypes = ['store', 'transaction', 'items', 'totals', 'text', 'field'];
   function image(value) {
     return (
       typeof value === 'string' &&
@@ -97,6 +98,26 @@
           b.field = block.field;
         }
         if (block.type === 'items') b.hsn = block.hsn === true;
+        if (textTypes.includes(block.type)) {
+          b.bold = block.bold === true;
+          if (block.fontSize != null && block.fontSize !== '') {
+            const fontSize = Number(block.fontSize);
+            if (!Number.isFinite(fontSize) || fontSize < 8 || fontSize > 32)
+              throw new Error('Block text size must be between 8 and 32 px.');
+            b.fontSize = fontSize;
+          }
+        }
+        if (block.type === 'divider') {
+          b.lineStyle = block.lineStyle || 'dashed';
+          if (!['solid', 'dashed', 'dotted'].includes(b.lineStyle))
+            throw new Error('Choose a solid, dashed or dotted divider.');
+          b.width = block.width == null ? 100 : Number(block.width);
+          b.thickness = block.thickness == null ? 1 : Number(block.thickness);
+          if (!Number.isFinite(b.width) || b.width < 15 || b.width > 100)
+            throw new Error('Divider width must be between 15 and 100 percent.');
+          if (!Number.isFinite(b.thickness) || b.thickness < 1 || b.thickness > 4)
+            throw new Error('Divider thickness must be between 1 and 4 px.');
+        }
         if (block.type === 'text' || block.type === 'qr') {
           b.text = String(block.text || '');
           if (b.text.length > 1000)
@@ -140,6 +161,7 @@
     restaurant: restaurant,
     types: types,
     required: required,
+    textTypes: textTypes,
     image: image,
     normalize: normalize,
     layoutFor: layoutFor,

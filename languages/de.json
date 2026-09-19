@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "Seiten-Build",
   "lang_about_unavailable": "Nicht verfügbar",
   "lang_about_details_copied": "Details in die Zwischenablage kopiert.",
-  "lang_about_copy_failed": "Kopieren fehlgeschlagen. Markieren Sie die Angaben oben, um sie manuell zu kopieren."
+  "lang_about_copy_failed": "Kopieren fehlgeschlagen. Markieren Sie die Angaben oben, um sie manuell zu kopieren.",
+  "lang_rd_default_text_size": "Standardtextgröße",
+  "lang_rd_font_scope": "Gilt für dieses Papierformat. Wählen Sie einen Block, um seine Textgröße zu ändern oder ihn fett darzustellen.",
+  "lang_rd_block_text_size": "Textgröße des Blocks",
+  "lang_rd_use_default": "Standard verwenden",
+  "lang_rd_line_style": "Linienart",
+  "lang_rd_solid": "Durchgezogen",
+  "lang_rd_dashed": "Gestrichelt",
+  "lang_rd_dotted": "Gepunktet",
+  "lang_rd_line_thickness": "Linienstärke"
 }

@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "പേജ് ബിൽഡ്",
   "lang_about_unavailable": "ലഭ്യമല്ല",
   "lang_about_details_copied": "വിവരങ്ങൾ ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി.",
-  "lang_about_copy_failed": "പകർത്താൻ കഴിഞ്ഞില്ല. മുകളിലെ വിവരങ്ങൾ തിരഞ്ഞെടുത്ത് നേരിട്ട് പകർത്തുക."
+  "lang_about_copy_failed": "പകർത്താൻ കഴിഞ്ഞില്ല. മുകളിലെ വിവരങ്ങൾ തിരഞ്ഞെടുത്ത് നേരിട്ട് പകർത്തുക.",
+  "lang_rd_default_text_size": "ഡിഫോൾട്ട് അക്ഷര വലുപ്പം",
+  "lang_rd_font_scope": "ഈ പേപ്പർ ഫോർമാറ്റിന് ബാധകമാണ്. അക്ഷര വലുപ്പം മാറ്റാനോ ബോൾഡ് ആക്കാനോ ഒരു ബ്ലോക്ക് തിരഞ്ഞെടുക്കുക.",
+  "lang_rd_block_text_size": "ബ്ലോക്കിലെ അക്ഷര വലുപ്പം",
+  "lang_rd_use_default": "ഡിഫോൾട്ട് ഉപയോഗിക്കുക",
+  "lang_rd_line_style": "വരയുടെ ശൈലി",
+  "lang_rd_solid": "തുടർച്ചയായ",
+  "lang_rd_dashed": "ഇടവിട്ട",
+  "lang_rd_dotted": "കുത്തുകളുള്ള",
+  "lang_rd_line_thickness": "വരയുടെ കനം"
 }

@@ -3301,5 +3301,14 @@
   "lang_about_page_build": "పేజీ బిల్డ్",
   "lang_about_unavailable": "అందుబాటులో లేదు",
   "lang_about_details_copied": "వివరాలు క్లిప్‌బోర్డ్‌కు కాపీ చేయబడ్డాయి.",
-  "lang_about_copy_failed": "కాపీ చేయలేకపోయాము. పై వివరాలను ఎంచుకుని మాన్యువల్‌గా కాపీ చేయండి."
+  "lang_about_copy_failed": "కాపీ చేయలేకపోయాము. పై వివరాలను ఎంచుకుని మాన్యువల్‌గా కాపీ చేయండి.",
+  "lang_rd_default_text_size": "డిఫాల్ట్ అక్షర పరిమాణం",
+  "lang_rd_font_scope": "ఈ కాగితం ఆకృతికి వర్తిస్తుంది. అక్షర పరిమాణాన్ని మార్చడానికి లేదా బోల్డ్ చేయడానికి బ్లాక్‌ను ఎంచుకోండి.",
+  "lang_rd_block_text_size": "బ్లాక్ అక్షర పరిమాణం",
+  "lang_rd_use_default": "డిఫాల్ట్ ఉపయోగించండి",
+  "lang_rd_line_style": "గీత శైలి",
+  "lang_rd_solid": "నిరంతర",
+  "lang_rd_dashed": "గీతలతో",
+  "lang_rd_dotted": "చుక్కలతో",
+  "lang_rd_line_thickness": "గీత మందం"
 }
