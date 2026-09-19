@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "เส้นจุด",
   "lang_rd_line_thickness": "ความหนาของเส้น",
   "lang_rd_set_as_default": "ตั้งเป็นค่าเริ่มต้น",
-  "lang_rd_save_to_apply": "บันทึกแบบเพื่อใช้การเปลี่ยนแปลงของคุณ"
+  "lang_rd_save_to_apply": "บันทึกแบบเพื่อใช้การเปลี่ยนแปลงของคุณ",
+  "lang_rd_print_sample": "พิมพ์ตัวอย่าง",
+  "lang_rd_full_screen": "เต็มหน้าจอ",
+  "lang_rd_exit_full_screen": "ออกจากเต็มหน้าจอ",
+  "lang_rd_print_sample_hint": "พิมพ์รูปแบบนี้ด้วยข้อมูลตัวอย่างและการเปลี่ยนแปลงที่ยังไม่ได้บันทึก",
+  "lang_rd_preparing_sample": "กำลังเตรียมตัวอย่าง…",
+  "lang_rd_sample_not_sale": "ตัวอย่าง - ไม่ใช่รายการขาย",
+  "lang_rd_sample_sent": "ส่งตัวอย่างไปยังเครื่องพิมพ์แล้ว",
+  "lang_rd_print_dialog_closed": "ปิดหน้าต่างพิมพ์แล้ว",
+  "lang_rd_preview_zoom": "ซูมตัวอย่าง",
+  "lang_rd_fit_whole_receipt": "แสดงใบเสร็จทั้งหมด",
+  "lang_rd_fit_width": "พอดีความกว้าง",
+  "lang_rd_qr_retry": "สร้างรหัส QR ไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
 }

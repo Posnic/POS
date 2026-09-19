@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "ಚುಕ್ಕೆ ಗೆರೆ",
   "lang_rd_line_thickness": "ಗೆರೆಯ ದಪ್ಪ",
   "lang_rd_set_as_default": "ಪೂರ್ವನಿಯೋಜಿತವಾಗಿ ಹೊಂದಿಸಿ",
-  "lang_rd_save_to_apply": "ಬದಲಾವಣೆಗಳನ್ನು ಅನ್ವಯಿಸಲು ವಿನ್ಯಾಸಗಳನ್ನು ಉಳಿಸಿ."
+  "lang_rd_save_to_apply": "ಬದಲಾವಣೆಗಳನ್ನು ಅನ್ವಯಿಸಲು ವಿನ್ಯಾಸಗಳನ್ನು ಉಳಿಸಿ.",
+  "lang_rd_print_sample": "ಮಾದರಿ ಮುದ್ರಿಸಿ",
+  "lang_rd_full_screen": "ಪೂರ್ಣ ಪರದೆ",
+  "lang_rd_exit_full_screen": "ಪೂರ್ಣ ಪರದೆಯಿಂದ ನಿರ್ಗಮಿಸಿ",
+  "lang_rd_print_sample_hint": "ಮಾದರಿ ಮಾಹಿತಿ ಮತ್ತು ಉಳಿಸದ ಬದಲಾವಣೆಗಳೊಂದಿಗೆ ಈ ಸ್ವರೂಪವನ್ನು ಮುದ್ರಿಸಿ.",
+  "lang_rd_preparing_sample": "ಮಾದರಿ ಸಿದ್ಧವಾಗುತ್ತಿದೆ…",
+  "lang_rd_sample_not_sale": "ಮಾದರಿ - ಮಾರಾಟವಲ್ಲ",
+  "lang_rd_sample_sent": "ಮಾದರಿಯನ್ನು ಪ್ರಿಂಟರ್‌ಗೆ ಕಳುಹಿಸಲಾಗಿದೆ",
+  "lang_rd_print_dialog_closed": "ಮುದ್ರಣ ಸಂವಾದ ಮುಚ್ಚಲಾಗಿದೆ",
+  "lang_rd_preview_zoom": "ಮುನ್ನೋಟ ಜೂಮ್",
+  "lang_rd_fit_whole_receipt": "ಸಂಪೂರ್ಣ ರಸೀದಿ ತೋರಿಸಿ",
+  "lang_rd_fit_width": "ಅಗಲಕ್ಕೆ ಹೊಂದಿಸಿ",
+  "lang_rd_qr_retry": "QR ಕೋಡ್ ರಚಿಸಲಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
 }

@@ -2990,6 +2990,10 @@ input:checked + .slider:before {
 /* One settings title: the global header names the page; pane-internal
    breadcrumbs (Register Details, Cash Book) stand down. */
 #settings .contentbar .breadcrumbbar { display: none; }
+.settings-page-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 18px; }
+.settings-page-heading .page-title { flex-shrink: 0; }
+.settings-core-hint { display: none; font-size: 12px; }
+#settings:has(#v-pills-general.active) .settings-core-hint { display: inline; }
 
 /* Quotation preview: an A4 sheet on screen, edits in place. */
 #quotes_view_card { max-width: 900px; margin: 0 auto; }

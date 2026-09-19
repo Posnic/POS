@@ -3312,5 +3312,17 @@
   "lang_rd_dotted": "Gestippeld",
   "lang_rd_line_thickness": "Lijndikte",
   "lang_rd_set_as_default": "Als standaard instellen",
-  "lang_rd_save_to_apply": "Sla de ontwerpen op om uw wijzigingen toe te passen."
+  "lang_rd_save_to_apply": "Sla de ontwerpen op om uw wijzigingen toe te passen.",
+  "lang_rd_print_sample": "Voorbeeld afdrukken",
+  "lang_rd_full_screen": "Volledig scherm",
+  "lang_rd_exit_full_screen": "Volledig scherm verlaten",
+  "lang_rd_print_sample_hint": "Druk dit formaat af met voorbeeldgegevens en uw niet-opgeslagen wijzigingen.",
+  "lang_rd_preparing_sample": "Voorbeeld voorbereiden…",
+  "lang_rd_sample_not_sale": "VOORBEELD - Geen verkoop",
+  "lang_rd_sample_sent": "Voorbeeld naar printer verzonden",
+  "lang_rd_print_dialog_closed": "Afdrukvenster gesloten",
+  "lang_rd_preview_zoom": "Voorbeeldzoom",
+  "lang_rd_fit_whole_receipt": "Hele bon weergeven",
+  "lang_rd_fit_width": "Aan breedte aanpassen",
+  "lang_rd_qr_retry": "Kan QR-code niet maken. Controleer uw verbinding en probeer het opnieuw."
 }

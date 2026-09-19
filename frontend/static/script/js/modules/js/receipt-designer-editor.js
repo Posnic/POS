@@ -2,6 +2,7 @@
     'use strict';
     var engine, schema, branch, design, saved, format, selected, box, observer;
     var undo = [], qrTimer, previewTimer, frameRevision = 0, saving = false, drag = null;
+    var workspaceDialog, restoreWorkspace, printing = false, previewFit = 'page', editorRevision = 0;
     var esc = function (value) { return PosnicPro.escapeHtml(String(value == null ? '' : value)); };
     var t = function (value) { return engine.label(value); };
     var names = { store: 'Store details', transaction: 'Receipt details', items: 'Items', totals: 'Totals', logo: 'Store logo', text: 'Text', field: 'Dynamic field', qr: 'QR code', image: 'Image', barcode: 'Receipt barcode', divider: 'Divider' };
@@ -29,6 +30,73 @@
             sales_description: t('Please keep this receipt for your records.'), payment_mode: 'Card', partial_check: 'false',
             table_number: '12', dine_type: 'Dine in', covers: 2, steward_name: 'Sam', serving_session: 'Lunch', order_source: 'Counter' });
     }
+    function closeWorkspace() {
+        if (restoreWorkspace) restoreWorkspace();
+    }
+    function expandWorkspace() {
+        if (workspaceDialog) { closeWorkspace(); return; }
+        var dialog = document.createElement('dialog');
+        dialog.className = 'rd-workspace-dialog';
+        dialog.setAttribute('aria-labelledby', 'rd-title');
+        box.before(dialog); dialog.appendChild(box[0]);
+        workspaceDialog = dialog;
+        var toggle = box.find('[data-action="expand"]');
+        function label(expanded) {
+            toggle.attr('aria-expanded', String(expanded)).find('span').text(t(expanded ? PosnicPro.i18n.t('lang_rd_exit_full_screen', 'Exit full screen') : PosnicPro.i18n.t('lang_rd_full_screen', 'Full screen')));
+            toggle.find('i').attr('class', 'feather icon-' + (expanded ? 'minimize' : 'maximize'));
+        }
+        restoreWorkspace = function () {
+            if (workspaceDialog !== dialog) return;
+            dialog.close();
+            $(dialog).before(box); dialog.remove(); workspaceDialog = null;
+            restoreWorkspace = null;
+            document.body.classList.remove('rd-workspace-open');
+            label(false); toggle[0].focus({ preventScroll: true });
+        };
+        dialog.addEventListener('close', restoreWorkspace, { once: true });
+        document.body.classList.add('rd-workspace-open');
+        label(true); dialog.showModal(); toggle[0].focus({ preventScroll: true });
+        dialog.scrollTop = 0;
+    }
+    function printSample() {
+        if (printing) return;
+        var data = sample(), atFormat = format, revision = editorRevision;
+        // Validate the selected draft only; unfinished blocks in another format
+        // must not stop a shopkeeper testing this one. Never save a sample sale.
+        try {
+            var draft = engine.copy(design);
+            Object.keys(draft.layouts).forEach(function (f) { draft.layouts[f] = draft.layouts[atFormat]; });
+            var checked = schema.normalize(draft).layouts[atFormat];
+            data.receipt_designs = engine.copy(design);
+            data.receipt_designs.layouts[atFormat] = checked;
+        } catch (error) { box.find('.rd-print-status').text(error.message); return; }
+        data.sales_id = 'SAMPLE-001';
+        printing = true;
+        box.find('[data-action="print-sample"]').prop('disabled', true);
+        box.find('.rd-print-status').text(t('Preparing sample…'));
+        return Promise.all(checked.blocks.filter(function (b) { return b.type === 'qr' && !b.src; }).map(function (b) {
+            return new Promise(function (resolve, reject) {
+                PosnicPro.post({ url: 'setting/receiptDesignQr', data: JSON.stringify({ text: b.text }) }, function (res) {
+                    if (res.type !== 'success' || !res.data || !schema.image(res.data.src)) { reject(new Error(res.message || t('Could not generate QR code.'))); return; }
+                    b.src = res.data.src; resolve();
+                }, function () { reject(new Error(t('Could not generate QR code. Check your connection and try again.'))); });
+            });
+        })).then(function () {
+            if (revision !== editorRevision) return;
+            var html = engine.render(data, atFormat, false);
+            // The marker is inside the document so thermal page fitting includes it.
+            html = html.replace(/(<article[^>]*>)/, '$1<div style="text-align:center;font-size:10px;font-weight:bold;margin-bottom:3px">' + esc(t('SAMPLE - Not a sale')) + '</div>');
+            return engine.print(html, atFormat, { sample: true });
+        }).then(function (result) {
+            if (revision !== editorRevision) return;
+            box.find('.rd-print-status').text(result && result.success ? t(result.dialog ? PosnicPro.i18n.t('lang_rd_print_dialog_closed', 'Print dialog closed') : PosnicPro.i18n.t('lang_rd_sample_sent', 'Sample sent to printer')) : '');
+        }).catch(function (error) {
+            if (revision === editorRevision) box.find('.rd-print-status').text(error.message || t('Print failed'));
+        }).finally(function () {
+            if (revision !== editorRevision) return;
+            printing = false; box.find('[data-action="print-sample"]').prop('disabled', false);
+        });
+    }
     function preview() {
         if (!box || !box.length || !design) return;
         var host = box.find('.rd-preview-page');
@@ -45,6 +113,7 @@
                 if (rev !== frameRevision || !doc || !doc.body) return;
                 var scale = Math.min(1, Math.max(150, host.parent().width() - 40) / width);
                 var height = Math.max(doc.body.scrollHeight, f.height ? f.height * 96 / 25.4 : 0);
+                if (previewFit === 'page') scale = Math.min(scale, Math.max(120, host.parent().height() - 32) / height);
                 frame.css({ width: width, height: height, transform: 'scale(' + scale + ')' });
                 host.css({ width: width * scale, height: height * scale });
             };
@@ -107,8 +176,9 @@
         box.find('[data-default-format]').each(function () {
             var f = this.getAttribute('data-default-format');
             var isDefault = f === design.defaultFormat;
-            $(this).attr('aria-disabled', String(isDefault)).attr('aria-label', (isDefault ? PosnicPro.i18n.t('lang_rd_default_receipt_format', 'Default receipt format') : PosnicPro.i18n.t('lang_rd_set_as_default', 'Set as default')) + ': ' + t(schema.formats[f].name))
-                .html((isDefault ? '<i class="feather icon-check-circle" aria-hidden="true"></i>' : '') + '<span>' + esc(isDefault ? PosnicPro.i18n.t('lang_default', 'Default') : PosnicPro.i18n.t('lang_rd_set_as_default', 'Set as default')) + '</span>');
+            var name = (isDefault ? t('Default receipt format') : t('Set as default')) + ': ' + t(schema.formats[f].name);
+            $(this).attr('aria-disabled', String(isDefault)).attr('aria-label', name).attr('title', name)
+                .html('<i class="feather icon-' + (isDefault ? 'check-circle' : 'star') + '" aria-hidden="true"></i><span class="' + (isDefault ? 'rd-default-text' : 'sr-only') + '">' + esc(isDefault ? t('Default') : t('Set as default')) + '</span>');
         });
     }
     function renderEditor() {
@@ -182,6 +252,8 @@
         });
     }
     function load(data) {
+        closeWorkspace(); editorRevision++; printing = false;
+        clearTimeout(qrTimer); clearTimeout(previewTimer);
         engine = PosnicPro.receiptDesigner; schema = engine.contract; branch = data;
         box = $('#receipt-designer'); if (!box.length) return;
         var controls = {};
@@ -189,11 +261,11 @@
         if (observer) observer.disconnect();
         design = data.receipt_designs ? schema.normalize(data.receipt_designs) : engine.defaults(data);
         saved = editableState(design); format = design.defaultFormat; selected = null; undo = [];
-        box.html('<div class="rd-topbar"><div><h3>' + esc(t('Receipt designer')) + '</h3><p>' + esc(t('Create a distinct layout for every paper format.')) + '</p></div><div class="rd-save-area"><span class="rd-status" role="status">' + esc(t(data.receipt_designs ? PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved') : PosnicPro.i18n.t('lang_rd_starting_from_your_current_receipt_settings', 'Starting from your current receipt settings'))) + '</span><button type="button" class="btn btn-primary" data-action="save">' + esc(t('Save designs')) + '</button></div></div>' +
-            '<div class="rd-formats" role="group" aria-label="' + esc(t('Edit paper format')) + '" aria-describedby="rd-formats-help">' + Object.keys(schema.formats).map(function (f) { return '<div class="rd-format-card"><button type="button" class="rd-format-edit" data-format="' + f + '"><i class="feather icon-' + (schema.formats[f].height ? 'file-text' : 'printer') + '" aria-hidden="true"></i>' + esc(t(schema.formats[f].name)) + '<small>' + esc(schema.formats[f].height ? schema.formats[f].width + ' × ' + schema.formats[f].height + ' mm' : t('Receipt roll')) + '</small></button><button type="button" class="rd-format-default" data-default-format="' + f + '"></button></div>'; }).join('') + '</div><p id="rd-formats-help" class="rd-formats-help">' + esc(t('Editing a design does not change the default.')) + ' ' + esc(t('Save designs to apply your changes.')) + '</p>' +
+        box.html('<div class="rd-topbar"><h3 id="rd-title">' + esc(t('Receipt designer')) + '</h3><div class="rd-save-area"><span class="rd-status" role="status">' + esc(t(data.receipt_designs ? PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved') : PosnicPro.i18n.t('lang_rd_starting_from_your_current_receipt_settings', 'Starting from your current receipt settings'))) + '</span><button type="button" class="btn btn-outline-primary btn-sm" data-action="print-sample" title="' + esc(t('Print this format with sample data and your unsaved changes.')) + '"><i class="feather icon-printer" aria-hidden="true"></i> ' + esc(t('Print sample')) + '</button><button type="button" class="btn btn-outline-primary btn-sm" data-action="expand" aria-expanded="false"><i class="feather icon-maximize" aria-hidden="true"></i> <span>' + esc(t('Full screen')) + '</span></button><button type="button" class="btn btn-primary btn-sm" data-action="save">' + esc(t('Save designs')) + '</button></div></div>' +
+            '<div class="rd-formats" role="group" aria-label="' + esc(t('Edit paper format')) + '" aria-describedby="rd-formats-help">' + Object.keys(schema.formats).map(function (f) { return '<div class="rd-format-card"><button type="button" class="rd-format-edit" data-format="' + f + '" title="' + esc(schema.formats[f].height ? schema.formats[f].width + ' × ' + schema.formats[f].height + ' mm' : t('Receipt roll')) + '"><i class="feather icon-' + (schema.formats[f].height ? 'file-text' : 'printer') + '" aria-hidden="true"></i>' + esc(t(schema.formats[f].name)) + '</button><button type="button" class="rd-format-default" data-default-format="' + f + '"></button></div>'; }).join('') + '</div><p id="rd-formats-help" class="sr-only">' + esc(t('Editing a design does not change the default.')) + ' ' + esc(t('Save designs to apply your changes.')) + '</p><p class="rd-print-status" role="status"></p>' +
             '<div class="rd-workspace"><aside class="rd-library"><h4>' + esc(t('Add a block')) + '</h4><p>' + esc(t('Click to add. Drag blocks to reorder.')) + '</p><div class="rd-library-buttons">' + ['text', 'qr', 'image', 'logo', 'barcode', 'divider'].map(function (type) { return '<button type="button" data-add="' + type + '"><span>+</span>' + esc(t(names[type])) + '</button>'; }).join('') + '</div><h4>' + esc(t('Sale fields')) + '</h4><div class="rd-library-buttons">' + Object.keys(schema.fields).filter(function (f) { return restaurant() || schema.restaurant.indexOf(f) === -1; }).map(function (field) { return '<button type="button" data-add="field" data-field="' + field + '"><span>+</span>' + esc(t(schema.fields[field])) + '</button>'; }).join('') + '</div></aside>' +
             '<section class="rd-layout"><div class="rd-section-heading"><h4>' + esc(t('Your layout')) + ' <small class="rd-block-count"></small></h4>' + button('undo', 'Undo', 'rotate-ccw', 'disabled') + '</div><div class="rd-font-control"><label for="rd-text-size">' + esc(t('Default text size')) + '</label><select id="rd-text-size" aria-describedby="rd-font-scope">' + [8,9,10,11,12,13,14,16,18].map(function (n) { return '<option value="' + n + '">' + n + ' px</option>'; }).join('') + '</select><small id="rd-font-scope">' + esc(t('Applies to this paper format. Select a block to override its text size or make it bold.')) + '</small></div><ol class="rd-block-list"></ol><p class="rd-help">' + esc(t('Store details, receipt details, items and totals are always included.')) + '</p></section>' +
-            '<aside class="rd-preview"><div class="rd-section-heading"><h4>' + esc(t('Live preview')) + '</h4><span class="rd-sample-label">' + esc(t('Sample sale')) + '</span></div><div class="rd-preview-stage"><div class="rd-preview-page"></div></div><div class="rd-preview-footer"><strong class="rd-preview-name"></strong><span class="rd-dimensions"></span></div><p class="rd-help">' + esc(t('Preview uses sample customer and item details. Actual receipts use the sale data.')) + '</p></aside></div>' +
+            '<aside class="rd-preview"><div class="rd-section-heading"><h4>' + esc(t('Live preview')) + '</h4><select class="rd-preview-fit" aria-label="' + esc(t('Preview zoom')) + '"><option value="page">' + esc(t('Fit whole receipt')) + '</option><option value="width">' + esc(t('Fit width')) + '</option></select></div><div class="rd-preview-stage"><div class="rd-preview-page"></div></div><div class="rd-preview-footer"><strong class="rd-preview-name"></strong><span class="rd-dimensions"></span><span class="rd-sample-label">' + esc(t('Sample sale')) + '</span></div></aside></div>' +
             '<details class="rd-print-options"><summary>' + esc(t('Printing options')) + '</summary><div class="rd-existing-options"></div><p class="rd-help">' + esc(t('Choose the connected printer in Hardware Manager. Match its paper to the receipt format.')) + '</p><button type="button" class="btn btn-outline-primary btn-sm" data-action="hardware">' + esc(t('Open Hardware Manager')) + '</button></details>');
         // Keep the existing settings controls and values; only their presentation changes.
         ['printall', 'bill_print_copies', 'branch_fssai_number'].forEach(function (id) {
@@ -224,11 +296,15 @@
             var action = this.getAttribute('data-action'); var id = $(this).closest('[data-id]').attr('data-id');
             var at = layout().blocks.findIndex(function (b) { return b.id === id; });
             if (action === 'save') save();
+            else if (action === 'expand') expandWorkspace();
+            else if (action === 'print-sample') printSample();
             else if (action === 'hardware') $('#open_hardware_manager').trigger('click');
             else if (action === 'undo' && undo.length) { design = undo.pop(); renderEditor(); status(t(dirty() ? PosnicPro.i18n.t('lang_rd_unsaved_changes', 'Unsaved changes') : PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved'))); }
             else if (action === 'select') { selected = selected === id ? null : id; renderList(); }
             else if (action === 'remove' && at >= 0 && schema.required.indexOf(layout().blocks[at].type) === -1) { checkpoint(); layout().blocks.splice(at, 1); renderList(); changed(); }
             else if (action === 'up' || action === 'down') move(id, at + (action === 'up' ? -1 : 1));
+        }).on('change.receiptDesigner', '.rd-preview-fit', function () {
+            previewFit = this.value; preview();
         }).on('change.receiptDesigner', '#rd-text-size', function () {
             checkpoint(); layout().fontSize = Number(this.value); changed();
         }).on('input.receiptDesigner change.receiptDesigner', '[data-prop]', function (event) {
@@ -256,7 +332,9 @@
             var ended = drag; drag = null; box.find('.is-dragging,.rd-drop-target').removeClass('is-dragging rd-drop-target');
             if (event.type === 'pointerup' && ended.target) move(ended.id, layout().blocks.findIndex(function (b) { return b.id === ended.target; }));
         });
+        box.find('.rd-preview-fit').val(previewFit);
+        $(window).off('hashchange.receiptDesignerWorkspace').on('hashchange.receiptDesignerWorkspace', closeWorkspace);
         renderEditor();
     }
-    PosnicPro.receiptDesignerEditor = { load: load, save: save };
+    PosnicPro.receiptDesignerEditor = { load: load, save: save, printSample: printSample };
 }());

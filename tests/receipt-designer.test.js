@@ -386,3 +386,137 @@ test('a failed save leaves the chosen default editable and undo restores the sav
     assert.equal($('.rd-format-card.is-default [data-default-format]').attr('data-default-format'), '80');
     dom.window.close();
 });
+
+test('expanded workspace preserves draft, form controls and focus, and cleans up on navigation or reload', () => {
+    const { dom, w, $, branch } = setup();
+    w.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+    w.HTMLDialogElement.prototype.close = function () { this.open = false; };
+    const editor = w.PosnicPro.receiptDesignerEditor;
+    editor.load(branch);
+    $('[data-format="a5"]').trigger('click');
+    $('[data-add="text"]').trigger('click');
+    $('#rd-block-text').val('Draft stays here').trigger('input');
+    const card = $('.rd-block-card.is-selected')[0];
+    const parent = $('#receipt-designer')[0].parentNode;
+    $('[data-action="expand"]').trigger('click');
+    assert.equal($('dialog')[0].open, true);
+    assert.equal($('.rd-workspace-open').length, 1);
+    assert.equal($('[data-action="expand"]').attr('aria-expanded'), 'true');
+    assert.equal($('#printall').length, 1);
+    $('dialog')[0].dispatchEvent(new w.Event('close')); // Native Escape closes the dialog.
+    assert.equal($('dialog').length, 0);
+    assert.equal($('#receipt-designer')[0].parentNode, parent);
+    assert.equal($('.rd-block-card.is-selected')[0], card);
+    assert.equal($('#rd-block-text').val(), 'Draft stays here');
+    assert.equal(w.document.activeElement, $('[data-action="expand"]')[0]);
+    assert.equal($('[data-format="a5"]').attr('aria-pressed'), 'true');
+    assert.equal($('.rd-status').text(), 'Unsaved changes');
+    $('[data-action="expand"]').trigger('click');
+    $(w).trigger('hashchange');
+    assert.equal($('dialog,.rd-workspace-open').length, 0);
+    $('[data-action="expand"]').trigger('click');
+    editor.load(branch);
+    assert.equal($('dialog,.rd-workspace-open').length, 0);
+    assert.equal($('#receipt-designer').length, 1);
+    dom.window.close();
+});
+
+test('sample prints a snapshot of the selected unsaved format, resolves QR and never saves or changes defaults', async () => {
+    const { dom, w, $, branch, engine } = setup();
+    let sent, qrDone, qrText, saves = 0, calls = 0;
+    w.PosnicPro.put = () => { saves++; };
+    w.PosnicPro.post = (req, done) => { qrText = JSON.parse(req.data).text; qrDone = done; };
+    engine.print = async (html, format, options) => { calls++; sent = { html, format, options }; return { success: true }; };
+    const editor = w.PosnicPro.receiptDesignerEditor;
+    editor.load(branch);
+    $('[data-add="image"]').trigger('click'); // Unfinished 80 mm block must not block A5.
+    $('[data-format="a5"]').trigger('click');
+    $('[data-add="text"]').trigger('click');
+    $('#rd-block-text').val('A5 unsaved offer').trigger('input');
+    $('[data-add="qr"]').trigger('click');
+    $('#rd-block-text').val('https://example.com/offer').trigger('input');
+    const pending = editor.printSample();
+    editor.printSample();
+    assert.equal(calls, 0, 'Do not silently omit an unfinished QR code');
+    assert.equal($('[data-action="print-sample"]').prop('disabled'), true);
+    assert.equal(qrText, 'https://example.com/offer');
+    $('[data-format="58"]').trigger('click'); // Printed draft is stable during async generation.
+    qrDone({ type: 'success', data: { src: pixel } });
+    await pending;
+    assert.equal(calls, 1);
+    assert.equal(sent.format, 'a5');
+    assert.equal(sent.options.sample, true);
+    const printed = $('<div>').html(sent.html);
+    assert.match(printed.find('article').text(), /SAMPLE.*Not a sale.*SAMPLE-001/s);
+    assert.match(printed.text(), /A5 unsaved offer/);
+    assert.equal(printed.find('img[alt="QR code"]').length, 2);
+    assert.equal(saves, 0);
+    assert.equal($('[data-default-format="80"]').attr('aria-disabled'), 'true');
+    assert.equal($('.rd-status').text(), 'Unsaved changes');
+    assert.equal($('[data-action="print-sample"]').prop('disabled'), false);
+    assert.equal($('.rd-print-status').text(), 'Sample sent to printer');
+    dom.window.close();
+});
+
+test('sample QR and printer failures keep the draft editable and allow retry', async () => {
+    const { dom, w, $, branch, engine } = setup();
+    const editor = w.PosnicPro.receiptDesignerEditor;
+    editor.load(branch);
+    $('[data-add="qr"]').trigger('click');
+    $('#rd-block-text').val('https://example.com/new').trigger('input');
+    let printed = false;
+    engine.print = async () => { printed = true; throw new Error('Printer is offline'); };
+    w.PosnicPro.post = (_req, _done, fail) => fail();
+    await editor.printSample();
+    assert.equal(printed, false);
+    assert.match($('.rd-print-status').text(), /Could not generate QR/);
+    assert.equal($('[data-action="print-sample"]').prop('disabled'), false);
+    w.PosnicPro.post = (_req, done) => done({ type: 'success', data: { src: pixel } });
+    await editor.printSample();
+    assert.equal(printed, true);
+    assert.equal($('.rd-print-status').text(), 'Printer is offline');
+    assert.equal($('#rd-block-text').val(), 'https://example.com/new');
+    assert.equal($('.rd-status').text(), 'Unsaved changes');
+    dom.window.close();
+});
+
+test('Electron samples use the normal print route without completing or leaving a sale', async () => {
+    const { dom, w, engine } = setup();
+    let after = 0, options;
+    w.PosnicPro.resolveReceiptPrinter = () => 'Counter';
+    w.PosnicPro.afterPrint = () => { after++; };
+    w.electronAPI = { printer: { print: async (_html, opts) => { options = opts; return { success: true }; } } };
+    assert.equal((await engine.print('<article>Sample</article>', '80', { sample: true })).success, true);
+    assert.equal(options.forceHtml, true);
+    assert.equal(options.fitReceipt, true);
+    assert.equal(options.printerName, 'Counter');
+    assert.equal(after, 0);
+    w.electronAPI.printer.print = async () => ({ success: false, error: 'Out of paper' });
+    await assert.rejects(engine.print('<article>Sample</article>', '80', { sample: true }), /Out of paper/);
+    assert.equal(after, 0);
+    dom.window.close();
+});
+
+test('browser sample waits for image assets, fits the page, and restores the editor after the print dialog', async () => {
+    const { dom, w, $, engine } = setup();
+    let ready, fitted = 0, printed = 0, after = 0;
+    w.PosnicPro.waitForPrintAssets = () => new Promise(resolve => { ready = resolve; });
+    w.PosnicReceiptPage.fitDocument = () => { fitted++; };
+    w.PosnicPro.afterPrint = () => { after++; };
+    const job = engine.print('<article>Sample</article>', '80', { sample: true });
+    const frame = $('iframe[title="Receipt print"]');
+    frame[0].contentWindow.focus = () => {};
+    frame[0].contentWindow.print = () => { printed++; };
+    frame.trigger('load');
+    await Promise.resolve();
+    assert.equal(printed, 0);
+    ready();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(fitted, 1);
+    assert.equal(printed, 1);
+    assert.equal(after, 0);
+    frame[0].contentWindow.onafterprint();
+    assert.equal((await job).dialog, true);
+    assert.equal($('iframe[title="Receipt print"]').length, 0);
+    dom.window.close();
+});

@@ -1,6 +1,19 @@
 /* Receipt designer labels are explicit so the language catalog can extract them. */
 PosnicPro.receiptDesignLabel = function (value) {
     switch (value) {
+    case "Print sample": return PosnicPro.i18n.t('lang_rd_print_sample', 'Print sample');
+    case "Full screen": return PosnicPro.i18n.t('lang_rd_full_screen', 'Full screen');
+    case "Exit full screen": return PosnicPro.i18n.t('lang_rd_exit_full_screen', 'Exit full screen');
+    case "Print this format with sample data and your unsaved changes.": return PosnicPro.i18n.t('lang_rd_print_sample_hint', 'Print this format with sample data and your unsaved changes.');
+    case "Preparing sample…": return PosnicPro.i18n.t('lang_rd_preparing_sample', 'Preparing sample…');
+    case "SAMPLE - Not a sale": return PosnicPro.i18n.t('lang_rd_sample_not_sale', 'SAMPLE - Not a sale');
+    case "Sample sent to printer": return PosnicPro.i18n.t('lang_rd_sample_sent', 'Sample sent to printer');
+    case "Print dialog closed": return PosnicPro.i18n.t('lang_rd_print_dialog_closed', 'Print dialog closed');
+    case "Preview zoom": return PosnicPro.i18n.t('lang_rd_preview_zoom', 'Preview zoom');
+    case "Fit whole receipt": return PosnicPro.i18n.t('lang_rd_fit_whole_receipt', 'Fit whole receipt');
+    case "Fit width": return PosnicPro.i18n.t('lang_rd_fit_width', 'Fit width');
+    case "Could not generate QR code. Check your connection and try again.": return PosnicPro.i18n.t('lang_rd_qr_retry', 'Could not generate QR code. Check your connection and try again.');
+
     case "Default": return PosnicPro.i18n.t('lang_default', 'Default');
     case "Set as default": return PosnicPro.i18n.t('lang_rd_set_as_default', 'Set as default');
     case "Save designs to apply your changes.": return PosnicPro.i18n.t('lang_rd_save_to_apply', 'Save designs to apply your changes.');
