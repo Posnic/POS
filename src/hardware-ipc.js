@@ -219,12 +219,13 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   // Render the same bytes for the tender preview without contacting a printer,
   // opening the drawer, or recording a print job.
   ipcMain.handle('printer:preview-receipt', async (_event, sale, options = {}) => {
-    const { renderSale, COLUMNS } = require('./escpos-receipt');
+    const { COLUMNS } = require('./escpos-receipt');
+    const { renderReceipt } = require('./escpos-unicode');
     const { parse } = require('./escpos-preview');
     const { resolvePictures } = require('./escpos-logo');
     const paperWidth = options.paperWidth === '58' ? '58' : '80';
     const prepared = await resolvePictures(sale, paperWidth);
-    return parse(renderSale(prepared, {
+    return parse(await renderReceipt(prepared, {
       paperWidth,
       symbolGlyphs: options.symbolGlyphs !== false,
     }), COLUMNS[paperWidth]);
@@ -246,7 +247,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     const startedAt = Date.now();
     const receiptLog = require('./receipt-log');
     try {
-      const { renderSale } = require('./escpos-receipt');
+      const { renderReceipt } = require('./escpos-unicode');
       const { normalizeTargets, columnsFor } = require('./printer-targets');
 
       /*
@@ -342,13 +343,13 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         /* Rendered per target: an 80mm roll is 48 columns and a 58mm roll is
            32, so the same bytes cannot serve both. Getting this wrong wraps the
            total onto its own line, which looks like a rounding bug on paper. */
-        const paperWidth = String(columnsFor(target.pageSize));
+        const paperWidth = columnsFor(target.pageSize) <= 32 ? '58' : '80';
         /* eslint-disable-next-line no-await-in-loop -- one fetch, cached
            per paper width, and the loop is serial anyway. */
         const logo = await pictureDots('logo', paperWidth, true);
         /* eslint-disable-next-line no-await-in-loop -- cached per width. */
         const footerImage = await pictureDots('footerImage', paperWidth, false);
-        const bytes = renderSale({ ...(sale || {}), logo, footerImage }, {
+        const bytes = await renderReceipt({ ...(sale || {}), logo, footerImage }, {
           paperWidth,
           /* A printer that cannot be taught a glyph spells the currency
              instead. Per machine, like the printer name. */

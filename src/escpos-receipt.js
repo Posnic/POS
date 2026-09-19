@@ -717,6 +717,11 @@ class Receipt {
   }
 
   build() { return Buffer.concat(this.parts); }
+
+  centreWrapped(s) {
+    for (const line of wrap(s, this.width)) this.centre(line);
+    return this;
+  }
 }
 
 /*
@@ -749,7 +754,7 @@ function wrap(text, width) {
  * GSTIN line looks broken, where one without the line simply does not mention
  * tax.
  */
-function renderSale(sale, options = {}) {
+function renderSale(sale, options = {}, renderer) {
   /*
    * Whether this printer can be taught a symbol its font lacks.
    *
@@ -774,7 +779,8 @@ function renderSale(sale, options = {}) {
   const wantsEuro = JSON.stringify(text).indexOf(String.fromCharCode(0x20ac)) > -1;
   const glyphs = options.symbolGlyphs !== false && wantsEuro;
   euroText = glyphs ? EURO_MARK : 'EUR';
-  const r = new Receipt(options.paperWidth || '80', { glyphs });
+  // Both text and shaped graphic receipts use the same fields and arithmetic.
+  const r = renderer || new Receipt(options.paperWidth || '80', { glyphs });
   /*
    * Amounts carry the symbol the receipt was already showing.
    *
@@ -940,7 +946,7 @@ function renderSale(sale, options = {}) {
    */
   if (sale.footer) {
     for (const line of String(sale.footer).split('\n')) {
-      for (const w of wrap(line, r.width)) r.centre(w);
+      r.centreWrapped(line);
     }
   } else if (sale.showThanks !== false) {
     r.centre('Thank you, please visit again');
@@ -975,7 +981,7 @@ function renderSale(sale, options = {}) {
     r.feed(1);
     if (sale.footerImageCaption) {
       for (const line of String(sale.footerImageCaption).split(String.fromCharCode(10))) {
-        for (const w of wrap(line, r.width)) r.centre(w);
+        r.centreWrapped(line);
       }
     }
     r.raster(sale.footerImage);

@@ -38,7 +38,7 @@
  * instead of losing the bill.
  */
 
-const { renderSale } = require('./escpos-receipt');
+const { renderReceipt } = require('./escpos-unicode');
 const { columnsFor } = require('./printer-targets');
 
 /*
@@ -777,12 +777,13 @@ class BillManager {
        * treatment as the counter receipt rather than a plainer version.
        */
       const { resolvePictures } = require('./escpos-logo');
-      const withPictures = await resolvePictures(sale || {}, String(columnsFor(this.paperSize)));
+      const paperWidth = columnsFor(this.paperSize) <= 32 ? '58' : '80';
+      const withPictures = await resolvePictures(sale || {}, paperWidth);
 
-      const bytes = renderSale(
+      const bytes = await renderReceipt(
         { ...withPictures, title: gstin ? 'TAX INVOICE' : 'BILL' },
         {
-          paperWidth: String(columnsFor(this.paperSize)),
+          paperWidth,
           /* The drawer is the cashier business and this is not a payment. */
           openDrawer: false,
           cut: true,
