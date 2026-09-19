@@ -34,6 +34,8 @@ const bound = {
 };
 
 router.use(protect);
+router.get('/:id/signature', branchesController.getSignature.bind(branchesController));
+router.put('/:id/signature', branchesController.saveSignature.bind(branchesController));
 
 // GET /api/branches - Get all branches
 router.get('/', bound.getAll);

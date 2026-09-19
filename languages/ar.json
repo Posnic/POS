@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "تكبير المعاينة",
   "lang_rd_fit_whole_receipt": "إظهار الإيصال بالكامل",
   "lang_rd_fit_width": "ملاءمة العرض",
-  "lang_rd_qr_retry": "تعذر إنشاء رمز QR. تحقق من اتصالك وحاول مرة أخرى."
+  "lang_rd_qr_retry": "تعذر إنشاء رمز QR. تحقق من اتصالك وحاول مرة أخرى.",
+  "lang_upload_signature": "تحميل التوقيع",
+  "lang_remove_signature": "إزالة التوقيع",
+  "lang_signature_saved_shared": "تم حفظ التوقيع لهذا الفرع.",
+  "lang_signature_branch_required": "اختر فرعًا قبل تحميل التوقيع.",
+  "lang_signature_connection_error": "تعذر تحديث التوقيع. تحقق من اتصالك وحاول مرة أخرى.",
+  "lang_signature_image_hint": "استخدم صورة PNG أو JPEG أو WebP بحجم يصل إلى 5 ميجابايت. يفضل استخدام PNG بخلفية شفافة.",
+  "lang_signature_shared_hint": "مشترك بين إيصالات هذا الفرع وفواتيره وعروض أسعاره. يتم حفظ التحميل والإزالة فورًا."
 }

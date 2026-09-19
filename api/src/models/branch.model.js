@@ -188,6 +188,8 @@ const branchSchema = new Schema(
     thermal_body_print: { type: String },
     print_controls: { type: Object },
     receipt_designs: { type: Object },
+    // Shared document signature; retain the original quotation key for sync.
+    quote_default_signature: { type: String },
 
     client_dateformat: { type: String, default: 'dd/mm/yyyy' },
     server_dateformat: { type: String, default: 'd/m/Y' },

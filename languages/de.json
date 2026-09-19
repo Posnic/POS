@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "Vorschauzoom",
   "lang_rd_fit_whole_receipt": "Gesamten Beleg anzeigen",
   "lang_rd_fit_width": "An Breite anpassen",
-  "lang_rd_qr_retry": "QR-Code konnte nicht erstellt werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+  "lang_rd_qr_retry": "QR-Code konnte nicht erstellt werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+  "lang_upload_signature": "Unterschrift hochladen",
+  "lang_remove_signature": "Unterschrift entfernen",
+  "lang_signature_saved_shared": "Unterschrift für diese Filiale gespeichert.",
+  "lang_signature_branch_required": "Wählen Sie vor dem Hochladen eine Filiale aus.",
+  "lang_signature_connection_error": "Die Unterschrift konnte nicht aktualisiert werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+  "lang_signature_image_hint": "PNG, JPEG oder WebP bis 5 MB. Am besten eignet sich eine transparente PNG-Datei.",
+  "lang_signature_shared_hint": "Gemeinsam für Belege, Rechnungen und Angebote dieser Filiale. Hochladen und Entfernen werden sofort gespeichert."
 }

@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "Zoom de l'aperçu",
   "lang_rd_fit_whole_receipt": "Afficher le reçu entier",
   "lang_rd_fit_width": "Ajuster à la largeur",
-  "lang_rd_qr_retry": "Impossible de générer le code QR. Vérifiez votre connexion et réessayez."
+  "lang_rd_qr_retry": "Impossible de générer le code QR. Vérifiez votre connexion et réessayez.",
+  "lang_upload_signature": "Importer une signature",
+  "lang_remove_signature": "Supprimer la signature",
+  "lang_signature_saved_shared": "Signature enregistrée pour cette succursale.",
+  "lang_signature_branch_required": "Sélectionnez une succursale avant d’importer une signature.",
+  "lang_signature_connection_error": "Impossible de mettre à jour la signature. Vérifiez votre connexion et réessayez.",
+  "lang_signature_image_hint": "Utilisez une image PNG, JPEG ou WebP de 5 Mo maximum. Un PNG transparent est recommandé.",
+  "lang_signature_shared_hint": "Partagée entre les reçus, factures et devis de cette succursale. Les imports et suppressions sont enregistrés immédiatement."
 }

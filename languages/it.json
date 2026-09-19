@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "Zoom anteprima",
   "lang_rd_fit_whole_receipt": "Mostra l'intera ricevuta",
   "lang_rd_fit_width": "Adatta alla larghezza",
-  "lang_rd_qr_retry": "Impossibile generare il codice QR. Controlla la connessione e riprova."
+  "lang_rd_qr_retry": "Impossibile generare il codice QR. Controlla la connessione e riprova.",
+  "lang_upload_signature": "Carica firma",
+  "lang_remove_signature": "Rimuovi firma",
+  "lang_signature_saved_shared": "Firma salvata per questa filiale.",
+  "lang_signature_branch_required": "Seleziona una filiale prima di caricare una firma.",
+  "lang_signature_connection_error": "Impossibile aggiornare la firma. Controlla la connessione e riprova.",
+  "lang_signature_image_hint": "Usa un’immagine PNG, JPEG o WebP fino a 5 MB. Si consiglia un PNG trasparente.",
+  "lang_signature_shared_hint": "Condivisa tra ricevute, fatture e preventivi di questa filiale. Caricamenti e rimozioni vengono salvati subito."
 }

@@ -3324,5 +3324,12 @@
   "lang_rd_preview_zoom": "Voorbeeldzoom",
   "lang_rd_fit_whole_receipt": "Hele bon weergeven",
   "lang_rd_fit_width": "Aan breedte aanpassen",
-  "lang_rd_qr_retry": "Kan QR-code niet maken. Controleer uw verbinding en probeer het opnieuw."
+  "lang_rd_qr_retry": "Kan QR-code niet maken. Controleer uw verbinding en probeer het opnieuw.",
+  "lang_upload_signature": "Handtekening uploaden",
+  "lang_remove_signature": "Handtekening verwijderen",
+  "lang_signature_saved_shared": "Handtekening opgeslagen voor dit filiaal.",
+  "lang_signature_branch_required": "Selecteer een filiaal voordat u een handtekening uploadt.",
+  "lang_signature_connection_error": "De handtekening kon niet worden bijgewerkt. Controleer uw verbinding en probeer het opnieuw.",
+  "lang_signature_image_hint": "Gebruik een PNG-, JPEG- of WebP-afbeelding tot 5 MB. Een transparante PNG werkt het beste.",
+  "lang_signature_shared_hint": "Gedeeld door kassabonnen, facturen en offertes van dit filiaal. Uploaden en verwijderen worden direct opgeslagen."
 }

@@ -5,7 +5,7 @@
     var workspaceDialog, restoreWorkspace, printing = false, previewFit = 'page', editorRevision = 0;
     var esc = function (value) { return PosnicPro.escapeHtml(String(value == null ? '' : value)); };
     var t = function (value) { return engine.label(value); };
-    var names = { store: 'Store details', transaction: 'Receipt details', items: 'Items', totals: 'Totals', logo: 'Store logo', text: 'Text', field: 'Dynamic field', qr: 'QR code', image: 'Image', barcode: 'Receipt barcode', divider: 'Divider' };
+    var names = { store: 'Store details', transaction: 'Receipt details', items: 'Items', totals: 'Totals', logo: 'Store logo', text: 'Text', field: 'Dynamic field', qr: 'QR code', image: 'Image', barcode: 'Receipt barcode', divider: 'Divider', signature: 'Authorised signatory' };
     function restaurant() { return branch.table_options === true || branch.table_options === 'true' || branch.table_options === 'enable'; }
     function layout() { return design.layouts[format]; }
     function visible(b) { return b.type !== 'field' || restaurant() || schema.restaurant.indexOf(b.field) === -1; }
@@ -142,6 +142,7 @@
         }
         if (b.type === 'image') html += '<label for="rd-image-file">' + esc(t('Upload image')) + '</label><input id="rd-image-file" type="file" accept="image/png,image/jpeg,image/webp"><small>' + esc(t('PNG, JPEG or WebP. Up to 5 MB.')) + '</small>' + (b.src ? '<img class="rd-image-thumb" src="' + esc(b.src) + '" alt="' + esc(t('Uploaded image')) + '">' : '');
         if (b.type === 'logo') html += '<p class="rd-help">' + esc(t('Uses the logo saved in Branches / Outlet.')) + '</p>';
+        if (b.type === 'signature') html += '<div class="rd-signature-settings"></div>';
         if (b.type === 'field') html += '<p class="rd-help">' + esc(t('Filled from each sale. Omitted when no value is available.')) + '</p>';
         if (b.type === 'barcode') html += '<p class="rd-help">' + esc(t('Code 128 barcode of the saved receipt number. Appears after the sale is saved.')) + '</p>';
         if (b.type === 'items') html += '<label class="rd-inline"><input type="checkbox" data-prop="hsn" ' + (b.hsn ? 'checked' : '') + '> ' + esc(t('Show HSN / SAC codes')) + '</label><p class="rd-help">' + esc(t('Item names wrap onto the next line. Prices and quantities stay readable.')) + '</p>';
@@ -155,7 +156,7 @@
             html += '<label for="rd-line-width">' + esc(t('Width (% of printable area)')) + '</label><input id="rd-line-width" type="range" min="15" max="100" step="5" data-prop="width" value="' + (b.width || 100) + '"><output class="rd-width-value" for="rd-line-width">' + (b.width || 100) + '%</output>';
         }
         if (['items', 'totals', 'transaction'].indexOf(b.type) === -1) html += '<label for="rd-align">' + esc(t('Alignment')) + '</label><select id="rd-align" data-prop="align">' + ['left', 'center', 'right'].map(function (a) { return '<option value="' + a + '"' + (b.align === a ? ' selected' : '') + '>' + esc(t(a.charAt(0).toUpperCase() + a.slice(1))) + '</option>'; }).join('') + '</select>';
-        if (b.type === 'image' || b.type === 'qr') html += '<label for="rd-image-width">' + esc(t('Width (% of printable area)')) + '</label><input id="rd-image-width" type="range" min="15" max="100" step="5" data-prop="width" value="' + (b.width || 45) + '"><output class="rd-width-value">' + (b.width || 45) + '%</output>';
+        if (b.type === 'image' || b.type === 'qr' || b.type === 'signature') html += '<label for="rd-image-width">' + esc(t('Width (% of printable area)')) + '</label><input id="rd-image-width" type="range" min="15" max="100" step="5" data-prop="width" value="' + (b.width || 45) + '"><output class="rd-width-value">' + (b.width || 45) + '%</output>';
         return html + '</div>';
     }
     function renderList() {
@@ -167,6 +168,9 @@
         }).join(''));
         box.find('.rd-block-count').text(layout().blocks.filter(visible).length + ' / 40');
         box.find('[data-action="undo"]').prop('disabled', !undo.length);
+        if (PosnicPro.branchSignature && box.find('.rd-signature-settings').length) {
+            PosnicPro.branchSignature.mount(box.find('.rd-signature-settings'), { branchId: branch._id || branch.id || PosnicPro.local.get('branch_id_set'), source: branch.quote_default_signature });
+        }
     }
     function renderFormats() {
         box.find('[data-format]').each(function () {
@@ -263,7 +267,7 @@
         saved = editableState(design); format = design.defaultFormat; selected = null; undo = [];
         box.html('<div class="rd-topbar"><h3 id="rd-title">' + esc(t('Receipt designer')) + '</h3><div class="rd-save-area"><span class="rd-status" role="status">' + esc(t(data.receipt_designs ? PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved') : PosnicPro.i18n.t('lang_rd_starting_from_your_current_receipt_settings', 'Starting from your current receipt settings'))) + '</span><button type="button" class="btn btn-outline-primary btn-sm" data-action="print-sample" title="' + esc(t('Print this format with sample data and your unsaved changes.')) + '"><i class="feather icon-printer" aria-hidden="true"></i> ' + esc(t('Print sample')) + '</button><button type="button" class="btn btn-outline-primary btn-sm" data-action="expand" aria-expanded="false"><i class="feather icon-maximize" aria-hidden="true"></i> <span>' + esc(t('Full screen')) + '</span></button><button type="button" class="btn btn-primary btn-sm" data-action="save">' + esc(t('Save designs')) + '</button></div></div>' +
             '<div class="rd-formats" role="group" aria-label="' + esc(t('Edit paper format')) + '" aria-describedby="rd-formats-help">' + Object.keys(schema.formats).map(function (f) { return '<div class="rd-format-card"><button type="button" class="rd-format-edit" data-format="' + f + '" title="' + esc(schema.formats[f].height ? schema.formats[f].width + ' × ' + schema.formats[f].height + ' mm' : t('Receipt roll')) + '"><i class="feather icon-' + (schema.formats[f].height ? 'file-text' : 'printer') + '" aria-hidden="true"></i>' + esc(t(schema.formats[f].name)) + '</button><button type="button" class="rd-format-default" data-default-format="' + f + '"></button></div>'; }).join('') + '</div><p id="rd-formats-help" class="sr-only">' + esc(t('Editing a design does not change the default.')) + ' ' + esc(t('Save designs to apply your changes.')) + '</p><p class="rd-print-status" role="status"></p>' +
-            '<div class="rd-workspace"><aside class="rd-library"><h4>' + esc(t('Add a block')) + '</h4><p>' + esc(t('Click to add. Drag blocks to reorder.')) + '</p><div class="rd-library-buttons">' + ['text', 'qr', 'image', 'logo', 'barcode', 'divider'].map(function (type) { return '<button type="button" data-add="' + type + '"><span>+</span>' + esc(t(names[type])) + '</button>'; }).join('') + '</div><h4>' + esc(t('Sale fields')) + '</h4><div class="rd-library-buttons">' + Object.keys(schema.fields).filter(function (f) { return restaurant() || schema.restaurant.indexOf(f) === -1; }).map(function (field) { return '<button type="button" data-add="field" data-field="' + field + '"><span>+</span>' + esc(t(schema.fields[field])) + '</button>'; }).join('') + '</div></aside>' +
+            '<div class="rd-workspace"><aside class="rd-library"><h4>' + esc(t('Add a block')) + '</h4><p>' + esc(t('Click to add. Drag blocks to reorder.')) + '</p><div class="rd-library-buttons">' + ['text', 'qr', 'image', 'logo', 'barcode', 'divider', 'signature'].map(function (type) { return '<button type="button" data-add="' + type + '"><span>+</span>' + esc(t(names[type])) + '</button>'; }).join('') + '</div><h4>' + esc(t('Sale fields')) + '</h4><div class="rd-library-buttons">' + Object.keys(schema.fields).filter(function (f) { return restaurant() || schema.restaurant.indexOf(f) === -1; }).map(function (field) { return '<button type="button" data-add="field" data-field="' + field + '"><span>+</span>' + esc(t(schema.fields[field])) + '</button>'; }).join('') + '</div></aside>' +
             '<section class="rd-layout"><div class="rd-section-heading"><h4>' + esc(t('Your layout')) + ' <small class="rd-block-count"></small></h4>' + button('undo', 'Undo', 'rotate-ccw', 'disabled') + '</div><div class="rd-font-control"><label for="rd-text-size">' + esc(t('Default text size')) + '</label><select id="rd-text-size" aria-describedby="rd-font-scope">' + [8,9,10,11,12,13,14,16,18].map(function (n) { return '<option value="' + n + '">' + n + ' px</option>'; }).join('') + '</select><small id="rd-font-scope">' + esc(t('Applies to this paper format. Select a block to override its text size or make it bold.')) + '</small></div><ol class="rd-block-list"></ol><p class="rd-help">' + esc(t('Store details, receipt details, items and totals are always included.')) + '</p></section>' +
             '<aside class="rd-preview"><div class="rd-section-heading"><h4>' + esc(t('Live preview')) + '</h4><select class="rd-preview-fit" aria-label="' + esc(t('Preview zoom')) + '"><option value="page">' + esc(t('Fit whole receipt')) + '</option><option value="width">' + esc(t('Fit width')) + '</option></select></div><div class="rd-preview-stage"><div class="rd-preview-page"></div></div><div class="rd-preview-footer"><strong class="rd-preview-name"></strong><span class="rd-dimensions"></span><span class="rd-sample-label">' + esc(t('Sample sale')) + '</span></div></aside></div>' +
             '<details class="rd-print-options"><summary>' + esc(t('Printing options')) + '</summary><div class="rd-existing-options"></div><p class="rd-help">' + esc(t('Choose the connected printer in Hardware Manager. Match its paper to the receipt format.')) + '</p><button type="button" class="btn btn-outline-primary btn-sm" data-action="hardware">' + esc(t('Open Hardware Manager')) + '</button></details>');
@@ -285,10 +289,10 @@
         }).on('click.receiptDesigner', '[data-add]', function () {
             if (layout().blocks.length >= 40) { status(t('Each design can contain up to 40 blocks.'), true); return; }
             checkpoint(); var type = this.getAttribute('data-add');
-            var b = engine.block(type, { align: ['qr','image','logo','barcode'].indexOf(type) !== -1 ? 'center' : 'left' });
+            var b = engine.block(type, { align: type === 'signature' ? 'right' : ['qr','image','logo','barcode'].indexOf(type) !== -1 ? 'center' : 'left' });
             if (type === 'field') b.field = this.getAttribute('data-field');
             if (type === 'text' || type === 'qr') b.text = '';
-            if (type === 'qr' || type === 'image') b.width = schema.formats[format].height ? 25 : 60;
+            if (type === 'qr' || type === 'image' || type === 'signature') b.width = schema.formats[format].height ? (type === 'signature' ? 30 : 25) : 60;
             layout().blocks.push(b); selected = b.id; renderList(); changed();
             var card = box.find('.rd-block-card.is-selected')[0];
             if (card && card.scrollIntoView) { card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); box.find('.rd-block-card.is-selected textarea').trigger('focus'); }
@@ -334,6 +338,11 @@
         });
         box.find('.rd-preview-fit').val(previewFit);
         $(window).off('hashchange.receiptDesignerWorkspace').on('hashchange.receiptDesignerWorkspace', closeWorkspace);
+        $(window).off('posnic:signature-saved.receiptDesigner').on('posnic:signature-saved.receiptDesigner', function (_event, data) {
+            if (data.branchId !== String(branch._id || branch.id || PosnicPro.local.get('branch_id_set'))) return;
+            branch.quote_default_signature = data.signature;
+            schedulePreview();
+        });
         renderEditor();
     }
     PosnicPro.receiptDesignerEditor = { load: load, save: save, printSample: printSample };

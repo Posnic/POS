@@ -346,7 +346,7 @@ PosnicPro.invoices = {
         if (notes) { h += '<div class="q-block m-t-10"><div class="q-label"><lang class="lang_notes_title">Notes</lang></div>' + esc(notes) + '</div>'; }
         var sig = PosnicPro.local.get('quotesignature');
         if (sig) {
-            h += '<div class="q-sign-img"><img loading="lazy" decoding="async" src="' + sig + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
+            h += '<div class="q-sign-img"><img loading="lazy" decoding="async" src="' + esc(sig) + '" alt="" style="max-height:40px; max-width:160px; display:block; margin:0 auto;"></div>'
                 + '<div class="q-sign"><lang class="lang_authorised_signatory">Authorised signatory</lang></div>';
         }
         $('#ie_preview').html(h);

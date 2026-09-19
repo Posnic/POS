@@ -380,6 +380,10 @@
     "src/controllers/categories.controller.js",
     "src/controllers/customer-categories.controller.js"
   ],
+  "Choose a PNG, JPEG or WebP signature under 400 KB.": [
+    "src/models/setting.model.js",
+    "src/repositories/settings.repository.js"
+  ],
   "Choose a supplier": [
     "src/repositories/purchase-order.repository.js"
   ],
