@@ -13,6 +13,7 @@ function setup() {
     const w = dom.window; w.$ = w.jQuery = require('jquery')(w);
     w.PosnicPro = { escapeHtml: v => w.$('<i>').text(v).html(), local: { get: () => '$', set: () => {} }, i18n: { t: (_key, text) => text }, BRAND_URL: 'https://www.posnic.com' };
     w.eval(read('api/src/helpers/receipt-design.js'));
+    w.eval(read('src/receipt-page-layout.js'));
     w.eval(read('frontend/static/script/js/core/receipt-designer.js'));
     w.eval(read('frontend/static/script/js/modules/js/receipt-designer-editor.js'));
     const branch = { branch_name: 'My Shop', logo: pixel, print_logoimg: true, footer_print: 'Thanks <b>again</b>', footer_qr_url: 'https://example.com/shop', footer_image: pixel, table_options: false };
@@ -32,7 +33,7 @@ test('five independent layouts migrate existing content and use different paper 
         assert.equal(output.find('em').length, 0);
         assert.match(output.find('.rd-grand-total').text(), /26\.00/);
         assert.equal(output.find('th').length, contract.formats[format].height ? 4 : 2);
-        assert.match(output.find('style').text(), new RegExp(contract.formats[format].width + 'mm'));
+        assert.match(output.find('style').text(), new RegExp(contract.formats[format].content + 'mm'));
     }
     design.layouts['58'].blocks[0].align = 'right';
     assert.equal(design.layouts['80'].blocks[0].align, 'center');
