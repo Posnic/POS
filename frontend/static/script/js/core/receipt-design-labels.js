@@ -1,6 +1,28 @@
 /* Receipt designer labels are explicit so the language catalog can extract them. */
 PosnicPro.receiptDesignLabel = function (value) {
     switch (value) {
+    case "Customer tax number": return PosnicPro.i18n.t('lang_rd_customer_tax_number', 'Customer tax number');
+    case "Field width": return PosnicPro.i18n.t('lang_rd_field_width', 'Field width');
+    case "Full width": return PosnicPro.i18n.t('lang_rd_full_width', 'Full width');
+    case "Half width": return PosnicPro.i18n.t('lang_rd_half_width', 'Half width');
+    case "Place two half-width fields next to each other to share a row.": return PosnicPro.i18n.t('lang_rd_half_width_help', 'Place two half-width fields next to each other to share a row.');
+    case "Item layout": return PosnicPro.i18n.t('lang_rd_item_layout', 'Item layout');
+    case "Detailed - quantity and unit price below": return PosnicPro.i18n.t('lang_rd_items_detailed', 'Detailed - quantity and unit price below');
+    case "Compact - item × quantity and amount": return PosnicPro.i18n.t('lang_rd_items_compact', 'Compact - item × quantity and amount');
+    case "Reset template": return PosnicPro.i18n.t('lang_rd_reset_template', 'Reset template');
+    case "Reset this format to the standard template? Other formats and branch details are kept. Save designs to apply.": return PosnicPro.i18n.t('lang_rd_reset_confirm', 'Reset this format to the standard template? Other formats and branch details are kept. Save designs to apply.');
+    case "Printed with store details when set. Add an FSSAI block to choose its position.": return PosnicPro.i18n.t('lang_rd_fssai_help', 'Printed with store details when set. Add an FSSAI block to choose its position.');
+    case "Thank you for shopping!": return PosnicPro.i18n.t('lang_rd_thank_you', 'Thank you for shopping!');
+    case "Receipt number": return PosnicPro.i18n.t('lang_rd_receipt_number', 'Receipt number');
+    case "Name": return PosnicPro.i18n.t('lang_name_title', 'Name');
+    case "Phone": return PosnicPro.i18n.t('lang_phone_title', 'Phone');
+    case "Email": return PosnicPro.i18n.t('lang_email_title', 'Email');
+    case "Address": return PosnicPro.i18n.t('lang_address_title', 'Address');
+    case "Customer": return PosnicPro.i18n.t('lang_newcustomer_title', 'Customer');
+    case "Cancel": return PosnicPro.i18n.t('lang_cancel', 'Cancel');
+    case "GSTIN": return PosnicPro.i18n.t('lang_gstin', 'GSTIN');
+    case "Tax ID": return PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
+    case "Tax invoice": return PosnicPro.i18n.t('lang_tax_invoice', 'TAX INVOICE');
     case "Authorised signatory": return PosnicPro.i18n.t('lang_authorised_signatory', 'Authorised signatory');
     case "Print sample": return PosnicPro.i18n.t('lang_rd_print_sample', 'Print sample');
     case "Full screen": return PosnicPro.i18n.t('lang_rd_full_screen', 'Full screen');

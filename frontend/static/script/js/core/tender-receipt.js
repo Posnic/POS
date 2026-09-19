@@ -58,6 +58,7 @@
             customer_phone: $('#sales_new_customer_phone').val() || '',
             customer_email: $('#sales_new_customer_email').val() || '',
             customer_address: $('#sales_new_customer_address').val() || '',
+            customer_gst_number: $('#sales_new_customer_gst_number').val() || '',
             items_subtotal: number($('#sales_new_subtotal').text()),
             items_total: number($('.tendered_total').first().text()),
             discount: number($('#discount_sale_amount').text()),

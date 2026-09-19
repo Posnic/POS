@@ -17,6 +17,7 @@
     customer_phone: 'Customer phone',
     customer_email: 'Customer email',
     customer_address: 'Customer address',
+    customer_tax_number: 'Customer tax number',
     total_quantity: 'Total quantity',
     brand_url: 'Brand website',
     sale_note: 'Sale note',
@@ -97,8 +98,16 @@
           if (!Object.prototype.hasOwnProperty.call(fields, block.field))
             throw new Error('Unknown receipt field.');
           b.field = block.field;
+          b.width = block.width == null ? 100 : Number(block.width);
+          if (![50, 100].includes(b.width))
+            throw new Error('Choose full or half width for a field.');
         }
-        if (block.type === 'items') b.hsn = block.hsn === true;
+        if (block.type === 'items') {
+          b.hsn = block.hsn === true;
+          b.itemLayout = block.itemLayout || 'detailed';
+          if (!['detailed', 'compact'].includes(b.itemLayout))
+            throw new Error('Choose a valid item layout.');
+        }
         if (textTypes.includes(block.type)) {
           b.bold = block.bold === true;
           if (block.fontSize != null && block.fontSize !== '') {
