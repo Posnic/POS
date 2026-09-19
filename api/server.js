@@ -1,6 +1,10 @@
 const dotenv = require('dotenv');
 
 // Load environment variables FIRST
+// PM2 may launch from the provisioner's directory. Storage configuration is
+// beside this API, independent of the working directory; explicit process
+// variables (including each shop's database and secrets) still take priority.
+dotenv.config({ path: require('path').join(__dirname, '.env'), quiet: true });
 dotenv.config({ path: './.env', quiet: true });
 
 const mongoose = require('mongoose');

@@ -28,6 +28,7 @@
  */
 
 const dotenv = require('dotenv');
+dotenv.config({ path: require('path').join(__dirname, '.env'), quiet: true });
 dotenv.config({ path: './.env', quiet: true });
 
 const http = require('http');
