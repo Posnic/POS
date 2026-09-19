@@ -3,7 +3,11 @@
 Restaurant orders offer **Print Bill** and **Print KOT** separately. Print KOT
 prints pending kitchen changes, including additions and cancellations. A ticket
 already reported as printed offers **Reprint a copy**, clearly labelled so the
-kitchen does not prepare the order again.
+kitchen does not prepare the order again. Copies from the order screen and
+Electron's KOT log are headed **DUPLICATE KOT** with **Do not prepare again**.
+A log reprint keeps its original KOT number and ticket type, including
+cancellation markings. First prints and genuinely additional or cancelled
+items retain their usual headings.
 
 In **Settings → Restaurant → KOT printing**, enable **Automatically print KOTs
 after saving an order** to print orders and item changes saved on this counter.
