@@ -1,7 +1,7 @@
 (function (window, document, $) {
     'use strict';
     if (!$ || !window.PosnicPro) return;
-    var activeDialog = null;
+    var activeDialog = null, dialogSequence = 0;
 
     function request(method, path, data) {
         return new Promise(function (resolve, reject) {
@@ -29,8 +29,10 @@
         if (activeDialog) activeDialog.close();
         var node = document.createElement('dialog');
         node.style.cssText = 'width:600px;max-width:calc(100vw - 32px);max-height:90vh;overflow:auto;border:1px solid #ddd;border-radius:12px;padding:24px;color:var(--theme-text-color,#222);background:var(--theme-card-bg,#fff)';
-        node.setAttribute('aria-labelledby', 'offline-recovery-title');
-        node.innerHTML = '<div class="d-flex justify-content-between align-items-start"><h4 id="offline-recovery-title"></h4><button type="button" class="btn btn-light" data-close aria-label="Close recovery" data-t-aria-label="lang_close_recovery">×</button></div>' + body;
+        var titleId = 'offline-recovery-title-' + (++dialogSequence);
+        node.setAttribute('aria-labelledby', titleId);
+        node.innerHTML = '<div class="d-flex justify-content-between align-items-start"><h4></h4><button type="button" class="btn btn-light" data-close aria-label="Close recovery" data-t-aria-label="lang_close_recovery">×</button></div>' + body;
+        node.querySelector('h4').id = titleId;
         node.querySelector('h4').textContent = title;
         node.querySelector('[data-close]').onclick = function () { node.close(); };
         node.addEventListener('close', function () { node.innerHTML = ''; node.remove(); if (activeDialog === node) activeDialog = null; });
@@ -42,7 +44,7 @@
             '<p><lang class="lang_recovery_offline_hint">Use one of the recovery codes you saved for this shop. No email or internet connection is needed.</lang></p>' +
             '<form><label class="d-block"><lang class="lang_recovery_username">Email or username</lang><input name="account" dir="auto" class="form-control" autocomplete="username" required maxlength="250"></label>' +
             '<p id="recovery-code-help" class="mb-2"><lang class="lang_recovery_code_instructions">Copy one unused code from your saved recovery sheet. Enter all 8 groups of 4 letters or numbers, from just one line.</lang></p>' +
-            '<div id="recovery-code-example" class="border rounded p-2 mb-2"><small class="d-block"><lang class="lang_recovery_code_example_hint">Example only — use a code from your own sheet:</lang></small><code dir="ltr" class="d-block" style="font-size:clamp(10px,2.8vw,13px);white-space:nowrap"></code></div>' +
+            '<div id="recovery-code-example" class="border rounded p-2 mb-2"><small class="d-block"><lang class="lang_recovery_code_example_hint">Example only. Use a code from your own sheet:</lang></small><code dir="ltr" class="d-block" style="font-size:clamp(10px,2.8vw,13px);white-space:nowrap"></code></div>' +
             '<label class="d-block"><lang class="lang_recovery_code">Recovery code</lang><input name="recoveryCode" dir="ltr" class="form-control" style="font-family:monospace;font-size:clamp(11px,3vw,14px)" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" data-t-placeholder="lang_recovery_code_format" aria-describedby="recovery-code-help recovery-code-example recovery-code-error" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="80"></label>' +
             '<p id="recovery-code-error" class="text-danger" role="alert" hidden></p>' +
             '<label class="d-block"><lang class="lang_newpassword_title">New Password</lang><input name="newPassword" class="form-control" type="password" autocomplete="new-password" required minlength="8" maxlength="20"></label>' +
