@@ -179,7 +179,9 @@ test('pasting multiple codes refuses without spending any; one complete code sti
     expect(unchanged.localRecovery.hashes).toEqual(batch.record.hashes);
   }
   expect((await ask('/recovery/reset', { body: input() })).status).toBe(200);
-  expect((await db.collection('users').findOne({ _id: owner._id })).localRecovery.hashes).toHaveLength(7);
+  expect(
+    (await db.collection('users').findOne({ _id: owner._id })).localRecovery.hashes
+  ).toHaveLength(7);
 });
 
 test('two simultaneous attempts with one code cannot both reset the password', async () => {
