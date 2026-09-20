@@ -2695,7 +2695,7 @@
   "lang_recovery_account_label": "Account: {account}",
   "lang_recovery_back_to_login": "Back to sign in",
   "lang_recovery_code": "Recovery code",
-  "lang_recovery_code_example_hint": "Example only — use a code from your own sheet:",
+  "lang_recovery_code_example_hint": "Example only. Use a code from your own sheet:",
   "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
   "lang_recovery_code_incomplete": "Enter the complete code: 8 groups of 4 characters from one line of your saved sheet.",
   "lang_recovery_code_instructions": "Copy one unused code from your saved recovery sheet. Enter all 8 groups of 4 letters or numbers, from just one line.",
