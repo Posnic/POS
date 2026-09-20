@@ -38,6 +38,13 @@
                                     <lang class="lang_modules">Features</lang>
                                 </a>
                                 
+                                <div class="settings-nav-group" data-desktop-only><lang class="lang_desktop_this_computer">This computer</lang></div>
+                                <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-devices-tab" data-toggle="pill" href="#v-pills-devices" role="tab" aria-controls="v-pills-devices" aria-selected="false"><i class="feather icon-printer mr-2"></i><lang class="lang_desktop_devices">Devices & Printing</lang></a>
+                                <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-app-tab" data-toggle="pill" href="#v-pills-app" role="tab" aria-controls="v-pills-app" aria-selected="false"><i class="feather icon-monitor mr-2"></i><lang class="lang_desktop_app">App Settings</lang></a>
+                                <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-updates-tab" data-toggle="pill" href="#v-pills-updates" role="tab" aria-controls="v-pills-updates" aria-selected="false"><i class="feather icon-download-cloud mr-2"></i><lang class="lang_desktop_updates">Software Updates</lang></a>
+                                <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-backups-tab" data-toggle="pill" href="#v-pills-backups" role="tab" aria-controls="v-pills-backups" aria-selected="false"><i class="feather icon-database mr-2"></i><lang class="lang_desktop_backups">Backup & Recovery</lang></a>
+                                <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-cloudsync-tab" data-toggle="pill" href="#v-pills-cloudsync" role="tab" aria-controls="v-pills-cloudsync" aria-selected="false"><i class="feather icon-cloud mr-2"></i><lang class="lang_desktop_cloudsync">Cloud Sync</lang></a>
+                                <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-systemstatus-tab" data-toggle="pill" href="#v-pills-systemstatus" role="tab" aria-controls="v-pills-systemstatus" aria-selected="false"><i class="feather icon-activity mr-2"></i><lang class="lang_desktop_systemstatus">System Status</lang></a>
                                 <div class="settings-nav-group"><lang class="lang_navgroup_modules">Features</lang></div>
                                 <a class="nav-link mb-2" id="v-pills-cashregister-tab"
                                     data-toggle="pill" href="#v-pills-cashregister" role="tab"
@@ -203,6 +210,12 @@
                 <!-- Start col -->
                 <div class="col-lg-7 col-xl-9">
                     <div class="tab-content loader-view-mystore" id="v-pills-tabContent">
+                        <div class="tab-pane fade" id="v-pills-devices" role="tabpanel" aria-labelledby="v-pills-devices-tab"><div class="card"><div class="card-body" data-desktop-page="devices"></div></div></div>
+                        <div class="tab-pane fade" id="v-pills-app" role="tabpanel" aria-labelledby="v-pills-app-tab"><div class="card"><div class="card-body" data-desktop-page="app"></div></div></div>
+                        <div class="tab-pane fade" id="v-pills-updates" role="tabpanel" aria-labelledby="v-pills-updates-tab"><div class="card"><div class="card-body" data-desktop-page="updates"></div></div></div>
+                        <div class="tab-pane fade" id="v-pills-backups" role="tabpanel" aria-labelledby="v-pills-backups-tab"><div class="card"><div class="card-body" data-desktop-page="backups"></div></div></div>
+                        <div class="tab-pane fade" id="v-pills-cloudsync" role="tabpanel" aria-labelledby="v-pills-cloudsync-tab"><div class="card"><div class="card-body" data-desktop-page="cloudsync"></div></div></div>
+                        <div class="tab-pane fade" id="v-pills-systemstatus" role="tabpanel" aria-labelledby="v-pills-systemstatus-tab"><div class="card"><div class="card-body" data-desktop-page="systemstatus"></div></div></div>
                         <div class="tab-pane fade" id="v-pills-workforce" role="tabpanel" aria-labelledby="v-pills-workforce-tab">
                             <div class="card m-b-30">
                                 <div class="card-header">
@@ -3215,6 +3228,7 @@
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane fade" id="restaurantprinting-line" role="tabpanel" aria-labelledby="restaurantprinting-tab-line">
+                                    <div class="card mb-3" data-desktop-only><div class="card-body" data-desktop-page="kitchen"></div></div>
                                     <div class="card m-b-30"><div class="card-body">
                                         <h5><lang class="lang_kot_print_settings">KOT printing on this counter</lang></h5>
                                         <div class="custom-control custom-switch my-3">
@@ -5342,8 +5356,24 @@
 
                                             <!-- ============ RECEIPT PRINT ============ -->
                                             <div class="tab-pane fade" id="core-tab-print" role="tabpanel">
-                                                <div id="document-print-settings"></div>
-                                                <div id="receipt-designer"></div>
+                                                <ul class="nav nav-tabs print-settings-tabs mb-3" role="tablist" aria-label="Print settings" data-t-aria-label="lang_print_settings">
+                                                    <li class="nav-item"><a class="nav-link active" id="print-printers-tab" data-toggle="tab" href="#print-printers" role="tab" aria-controls="print-printers" aria-selected="true"><i class="feather icon-printer mr-2" aria-hidden="true"></i><lang class="lang_printer_settings">Printer Settings</lang></a></li>
+                                                    <li class="nav-item"><a class="nav-link" id="print-design-tab" data-toggle="tab" href="#print-design" role="tab" aria-controls="print-design" aria-selected="false"><i class="feather icon-layout mr-2" aria-hidden="true"></i><lang class="lang_receipt_design">Receipt Design</lang></a></li>
+                                                </ul>
+                                                <div class="tab-content">
+                                                    <div class="tab-pane fade show active" id="print-printers" role="tabpanel" aria-labelledby="print-printers-tab">
+                                                        <div id="document-print-settings"></div>
+                                                        <section class="print-settings-panel">
+                                                            <h5><lang class="lang_rd_printing_options">Printing options</lang></h5>
+                                                            <div id="receipt-print-behaviour"></div>
+                                                            <button type="button" class="btn btn-primary btn-sm" id="save-print-behaviour"><lang class="lang_save_printing_options">Save printing options</lang></button>
+                                                            <span class="small ml-2" id="print-behaviour-status" role="status"></span>
+                                                        </section>
+                                                    </div>
+                                                    <div class="tab-pane fade" id="print-design" role="tabpanel" aria-labelledby="print-design-tab">
+                                                        <div id="receipt-designer"></div>
+                                                    </div>
+                                                </div>
                                                 <div id="receipt-legacy-settings" hidden>
                                                 <div class="row">
                                                     <div class="form-group col-md-12">

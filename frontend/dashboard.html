@@ -1022,27 +1022,25 @@
                 // with brand-blue fallbacks for pages without a theme.
                 style.textContent =
                     '#posnic-desktop-fab{position:fixed;bottom:18px;right:18px;z-index:99990;font-family:inherit}' +
-                    '#posnic-desktop-fab .fab-btn{background:var(--theme-primary-color,#3D85C6);' +
-                    'color:var(--theme-btn-primary-text,#fff);border:none;border-radius:24px;' +
+                    '#posnic-desktop-fab .fab-btn{background:var(--theme-card-bg,#fff);' +
+                    'color:var(--theme-text-primary,#16203a);border:1px solid var(--theme-border-color,#d5dfed);border-radius:8px;' +
                     'height:46px;min-width:46px;padding:0 14px;display:flex;align-items:center;justify-content:center;' +
-                    'font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25)}' +
-                    '#posnic-desktop-fab .fab-label{max-width:0;overflow:hidden;white-space:nowrap;' +
-                    'transition:max-width .25s ease,margin-left .25s ease;margin-left:0}' +
-                    '#posnic-desktop-fab:hover .fab-label,#posnic-desktop-fab.open .fab-label{max-width:70px;margin-left:8px}' +
-                    '#posnic-desktop-fab .fab-btn:hover{background:var(--theme-primary-hover,var(--theme-primary-color,#2F6EA8))}' +
+                    'font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.10)}' +
+                    '#posnic-desktop-fab .fab-label{white-space:nowrap;margin-inline-start:8px}' +
+                    '#posnic-desktop-fab button:focus-visible{outline:2px solid var(--theme-primary-color,#506fe4);outline-offset:-3px}' +
                     '#posnic-desktop-fab .fab-menu{display:none;position:absolute;bottom:48px;right:0;' +
                     'background:var(--theme-card-bg,#fff);border:1px solid var(--theme-border-color,#e6e6e6);' +
-                    'border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);overflow:hidden;min-width:190px}' +
+                    'border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px;min-width:250px;max-width:calc(100vw - 36px);max-height:calc(100vh - 90px);overflow:auto}' +
                     '#posnic-desktop-fab.open .fab-menu{display:block}' +
-                    '#posnic-desktop-fab .fab-menu button{display:block;width:100%;text-align:left;background:none;' +
-                    'border:none;padding:11px 16px;font-size:13px;color:var(--theme-menu-text,#333);cursor:pointer}' +
+                    '#posnic-desktop-fab .fab-menu button{display:flex;gap:12px;align-items:center;width:100%;text-align:start;background:none;' +
+                    'border:none;border-radius:5px;padding:10px 12px;font:inherit;font-size:13px;color:var(--theme-text-primary,#16203a);cursor:pointer}' +
                     '#posnic-desktop-fab .fab-menu button:hover{background:var(--theme-menu-active-bg,#f0f2ff);' +
                     'color:var(--theme-menu-active-text,inherit)}';
                 document.head.appendChild(style);
 
                 const fab = document.createElement('div');
                 fab.id = 'posnic-desktop-fab';
-                fab.innerHTML = '<div class="fab-menu"></div><button class="fab-btn" title="Desktop tools" data-t-title="lang_desktop_tools">🖥️<span class="fab-label"><lang class="lang_desktop">Desktop</lang></span><span id="posnic-sync-dot"></span></button>';
+                fab.innerHTML = '<div class="fab-menu" id="posnic-desktop-menu" role="menu"></div><button type="button" class="fab-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="posnic-desktop-menu" title="Desktop tools" data-t-title="lang_desktop_tools"><i class="feather icon-monitor" aria-hidden="true"></i><span class="fab-label"><lang class="lang_desktop">Desktop</lang></span><span id="posnic-sync-dot"></span></button>';
                 document.body.appendChild(fab);
 
                 const dotStyle = document.createElement('style');
@@ -1067,29 +1065,49 @@
                 setInterval(refreshSyncDot, 30000);
 
                 const menu = fab.querySelector('.fab-menu');
-                const addItem = (label, target) => {
+                const trigger = fab.querySelector('.fab-btn');
+                const closeMenu = () => { fab.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); };
+                const addItem = (label, target, icon, settings) => {
                     const b = document.createElement('button');
-                    b.textContent = label;
+                    b.type = 'button'; b.setAttribute('role', 'menuitem');
+                    const glyph = document.createElement('i'); glyph.className = 'feather icon-' + icon; glyph.setAttribute('aria-hidden', 'true');
+                    b.appendChild(glyph); b.appendChild(document.createTextNode(label));
                     b.addEventListener('click', () => {
-                        fab.classList.remove('open');
-                        window.electronAPI.desktop.open(target);
+                        closeMenu();
+                        if (settings) hasher.setHash('settings/' + target);
+                        else window.electronAPI.desktop.open(target);
                     });
                     menu.appendChild(b);
                 };
 
                 window.electronAPI.desktop.capabilities().then((caps) => {
-                    addItem('🖨️ Hardware Manager', 'hardware');
-                    if (caps.backup) addItem('💾 Backup Manager', 'backup');
-                    addItem('🔄 Software Update', 'update');
-                    addItem('☁️ Cloud Sync', 'cloud');
-                    addItem('ℹ️ About Posnic', 'about');
+                    if (PosnicPro.userACL && PosnicPro.userACL.branch && PosnicPro.userACL.branch.write) addItem(PosnicPro.i18n.t('lang_desktop_app', 'App Settings'), 'app', 'settings', true);
+                    addItem(PosnicPro.i18n.t('lang_desktop_hardware_diagnostics', 'Hardware diagnostics'), 'hardware', 'printer');
+                    if (['enable', 'true', true].includes(PosnicPro.local.get('table_options'))) addItem(PosnicPro.i18n.t('lang_desktop_kitchen', 'Kitchen Printing'), 'hardware:kot', 'clipboard');
+                    if (caps.backup) addItem(PosnicPro.i18n.t('lang_desktop_backups', 'Backup & Recovery'), 'backup', 'database');
+                    addItem(PosnicPro.i18n.t('lang_desktop_update_recovery', 'Updates & recovery'), 'update', 'download-cloud');
+                    addItem(PosnicPro.i18n.t('lang_desktop_cloudsync', 'Cloud Sync'), 'cloud', 'cloud');
+                    addItem(PosnicPro.i18n.t('lang_desktop_view_logs', 'View application logs'), 'log', 'file-text');
+                    addItem(PosnicPro.i18n.t('lang_about_posnic', 'About Posnic'), 'about', 'info');
                 }).catch(() => {});
 
                 fab.querySelector('.fab-btn').addEventListener('click', (e) => {
                     e.stopPropagation();
                     fab.classList.toggle('open');
+                    trigger.setAttribute('aria-expanded', String(fab.classList.contains('open')));
+                    if (fab.classList.contains('open')) menu.querySelector('button')?.focus();
                 });
-                document.addEventListener('click', () => fab.classList.remove('open'));
+                fab.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') { closeMenu(); trigger.focus(); e.preventDefault(); }
+                    const items = Array.from(menu.querySelectorAll('button'));
+                    if (!items.length || !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+                    e.preventDefault(); fab.classList.add('open'); trigger.setAttribute('aria-expanded', 'true');
+                    const at = items.indexOf(document.activeElement);
+                    const next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : e.key === 'ArrowDown' ? (at + 1) % items.length : (at + items.length - 1) % items.length;
+                    items[next].focus();
+                });
+                document.addEventListener('click', (e) => { if (!fab.contains(e.target)) closeMenu(); });
+                fab.addEventListener('focusout', () => { queueMicrotask(() => { if (!fab.contains(document.activeElement)) closeMenu(); }); });
 
                 // --- Tray branch switching ---------------------------------
                 // Mirror the header's branch dropdown into the tray menu, and

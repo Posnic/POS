@@ -262,6 +262,22 @@
             status(xhr && xhr.responseJSON && xhr.responseJSON.message || t('Could not save designs. Your changes are still here.'), true);
         });
     }
+    function saveBehaviour() {
+        var button = $('#save-print-behaviour'), note = $('#print-behaviour-status');
+        var values = printOptions(), payload = { printall: values.printall, bill_print_copies: values.bill_print_copies };
+        button.prop('disabled', true);
+        PosnicPro.put({ url: 'setting/updateCommonSettings', data: JSON.stringify(payload) }, function (res) {
+            button.prop('disabled', false);
+            if (res.type !== 'success') { note.text(res.message || PosnicPro.i18n.t('lang_print_save_failed', 'Could not save print settings.')); return; }
+            Object.assign(branch, payload);
+            savedOptions = JSON.stringify(Object.assign(JSON.parse(savedOptions), payload));
+            PosnicPro.local.set('printall', payload.printall);
+            note.text(PosnicPro.i18n.t('lang_print_settings_saved', 'Print settings saved.'));
+        }, function (xhr) {
+            button.prop('disabled', false);
+            note.text(xhr && xhr.responseJSON && xhr.responseJSON.message || PosnicPro.i18n.t('lang_print_save_failed', 'Could not save print settings.'));
+        });
+    }
     function load(data) {
         closeWorkspace(); editorRevision++; printing = false;
         clearTimeout(qrTimer); clearTimeout(previewTimer);
@@ -278,12 +294,13 @@
             '<div class="rd-workspace"><aside class="rd-library"><h4>' + esc(t('Add a block')) + '</h4><p>' + esc(t('Click to add. Drag blocks to reorder.')) + '</p><div class="rd-library-buttons">' + ['text', 'qr', 'image', 'logo', 'barcode', 'divider', 'signature'].map(function (type) { return '<button type="button" data-add="' + type + '"><span>+</span>' + esc(t(names[type])) + '</button>'; }).join('') + '</div><h4>' + esc(t('Sale fields')) + '</h4><div class="rd-library-buttons">' + Object.keys(schema.fields).filter(function (f) { return schema.fieldAvailable(f, branch); }).map(function (field) { return '<button type="button" data-add="field" data-field="' + field + '"><span>+</span>' + esc(t(schema.fields[field])) + '</button>'; }).join('') + '</div></aside>' +
             '<section class="rd-layout"><div class="rd-section-heading"><h4>' + esc(t('Your layout')) + ' <small class="rd-block-count"></small></h4><div>' + button('reset-template', 'Reset template', 'refresh-cw') + button('undo', 'Undo', 'rotate-ccw', 'disabled') + '</div></div><div class="rd-reset-confirm" hidden><p>' + esc(t('Reset this format to the standard template? Other formats and branch details are kept. Save designs to apply.')) + '</p><button type="button" class="btn btn-outline-primary btn-sm" data-action="confirm-reset">' + esc(t('Reset template')) + '</button> <button type="button" class="btn btn-light btn-sm" data-action="cancel-reset">' + esc(t('Cancel')) + '</button></div><div class="rd-font-control"><label for="rd-text-size">' + esc(t('Default text size')) + '</label><select id="rd-text-size" aria-describedby="rd-font-scope">' + [8,9,10,11,12,13,14,16,18].map(function (n) { return '<option value="' + n + '">' + n + ' px</option>'; }).join('') + '</select><small id="rd-font-scope">' + esc(t('Applies to this paper format. Select a block to override its text size or make it bold.')) + '</small></div><ol class="rd-block-list"></ol><p class="rd-help">' + esc(t('Store details, receipt details, items and totals are always included.')) + '</p></section>' +
             '<aside class="rd-preview"><div class="rd-section-heading"><h4>' + esc(t('Live preview')) + '</h4><select class="rd-preview-fit" aria-label="' + esc(t('Preview zoom')) + '"><option value="page">' + esc(t('Fit whole receipt')) + '</option><option value="width">' + esc(t('Fit width')) + '</option></select></div><div class="rd-preview-stage"><div class="rd-preview-page"></div></div><div class="rd-preview-footer"><strong class="rd-preview-name"></strong><span class="rd-dimensions"></span><span class="rd-sample-label">' + esc(t('Sample sale')) + '</span></div></aside></div>' +
-            '<details class="rd-print-options"><summary>' + esc(t('Printing options')) + '</summary><div class="rd-existing-options"></div><p class="rd-help">' + esc(PosnicPro.i18n.t('lang_print_choose_above', 'Choose printers, paper sizes and copies in Printers & paper above.')) + '</p></details>');
+            '<section class="rd-print-options"><div class="rd-existing-options"></div></section>');
         // Keep the existing settings controls and values; only their presentation changes.
         ['printall', 'bill_print_copies', 'branch_fssai_number'].forEach(function (id) {
             var group = controls[id];
             if (group.length) {
-                group.removeClass('col-md-6 col-md-12').appendTo(box.find('.rd-existing-options'));
+                var destination = id !== 'branch_fssai_number' && $('#receipt-print-behaviour').length ? $('#receipt-print-behaviour') : box.find('.rd-existing-options');
+                group.removeClass('col-md-6 col-md-12').appendTo(destination);
                 if (id === 'branch_fssai_number') group.removeClass('restaurant-only').toggle(schema.fieldAvailable('fssai', branch));
                 else if (id !== 'printall') group.addClass('restaurant-only').toggle(restaurant());
                 else group.find('small').text(t('Print a receipt automatically after payment.'));
@@ -291,6 +308,10 @@
             }
         });
         savedOptions = JSON.stringify(printOptions());
+        $('#save-print-behaviour').off('.receiptBehaviour').on('click.receiptBehaviour', saveBehaviour);
+        $('#receipt-print-behaviour').off('.receiptBehaviour').on('change.receiptBehaviour', 'input,select', function () {
+            $('#print-behaviour-status').text(t('Unsaved changes'));
+        });
         box.off('.receiptDesigner').on('click.receiptDesigner', '[data-format]', function () {
             format = this.getAttribute('data-format'); selected = null; box.find('.rd-preview-stage').scrollTop(0); renderEditor();
         }).on('click.receiptDesigner', '[data-default-format]', function () {

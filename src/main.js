@@ -1802,6 +1802,10 @@ ipcMain.handle('cloud:disconnect', async () => {
 // Desktop tools — lets the web UI open the same managers the File menu and
 // tray expose (discoverability; menu/tray remain the crash-safe fallback).
 ipcMain.handle('desktop:open', (_event, target) => {
+  if (typeof target === 'string' && /^hardware:(receipt|cash|weight|scanner|kot|screen|sound|mobile)$/.test(target)) {
+    openHardwareManager(target.split(':')[1]);
+    return true;
+  }
   switch (target) {
     case 'hardware': openHardwareManager(); break;
     case 'backup': if (!fs.existsSync(CLOUD_CONFIG_FILE)) openBackupManager(); break;
@@ -1867,6 +1871,30 @@ ipcMain.handle('desktop:capabilities', () => ({
   version: app.getVersion(),
   backup: !fs.existsSync(CLOUD_CONFIG_FILE)
 }));
+
+// Startup is an operating-system preference, shared by Settings and the shell.
+ipcMain.handle('desktop:behaviour-get', () => ({
+  supported: process.platform === 'win32' || process.platform === 'darwin',
+  openAtLogin: (process.platform === 'win32' || process.platform === 'darwin')
+    ? app.getLoginItemSettings().openAtLogin : false,
+}));
+ipcMain.handle('desktop:behaviour-save', (_event, patch) => {
+  if (process.platform !== 'win32' && process.platform !== 'darwin') {
+    return { success: false, error: 'Manage startup applications in your operating system settings.' };
+  }
+  if (!patch || typeof patch.openAtLogin !== 'boolean') {
+    return { success: false, error: 'Choose whether to start Posnic at login.' };
+  }
+  app.setLoginItemSettings({ openAtLogin: patch.openAtLogin, args: ['--hidden'] });
+  return { success: true };
+});
+
+function openAppSettings(section = 'app') {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.show();
+  mainWindow.focus();
+  mainWindow.webContents.send('desktop:navigate', section);
+}
 
 async function clearStartupBrowserCache() {
   try {
@@ -2506,6 +2534,8 @@ function createMenu() {
     {
       label: 'File',
       submenu: [
+        { label: 'App Settings', click: () => openAppSettings('app') },
+        { type: 'separator' },
         {
           label: 'Hardware Manager',
           accelerator: 'CmdOrCtrl+H',
@@ -2807,6 +2837,9 @@ function applyWindowChrome(theme) {
       });
     }
     fs.writeFileSync(CHROME_FILE, JSON.stringify({ ...chrome, palette: theme || null }));
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send('theme:changed', theme || null);
+    }
     return { ok: true, ...chrome };
   } catch (err) {
     console.warn('[chrome] could not apply theme to the window:', err.message);
@@ -3211,6 +3244,19 @@ function openAboutWindow() {
 
   const REPO = 'https://github.com/Posnic/POS';
 
+  // About has no privileged preload. Inline only bundled styles and validated
+  // colour tokens so it still follows the shop without granting it IPC access.
+  let aboutStyles = '';
+  try {
+    aboutStyles = fs.readFileSync(path.join(__dirname, 'window-theme.css'), 'utf8')
+      + fs.readFileSync(path.join(__dirname, 'desktop-design.css'), 'utf8').replace(/@font-face\s*\{[^}]*\}/g, '');
+    const palette = JSON.parse(fs.readFileSync(CHROME_FILE, 'utf8')).palette || {};
+    const tokens = { bodyBg: 'body-bg', cardBg: 'card-bg', topbarBg: 'header-bg', textPrimary: 'text', textSecondary: 'muted', borderColor: 'border', primaryColor: 'accent' };
+    const declarations = Object.entries(tokens).filter(([key]) => /^#[0-9a-f]{6}$/i.test(palette[key] || ''))
+      .map(([key, token]) => `--w-${token}:${palette[key]};`).join('');
+    aboutStyles += `:root{${declarations}--w-raised:color-mix(in srgb,var(--w-card-bg) 92%,var(--w-text) 8%);}`;
+  } catch (_) { /* Bundled default styles remain useful before the first login. */ }
+
   const html = `<!doctype html><html><head><meta charset="utf-8">
     <style>
       :root { color-scheme: light dark; }
@@ -3257,7 +3303,7 @@ function openAboutWindow() {
       .links a:hover { text-decoration: underline; }
 
       .foot { padding: 6px 24px 22px; font-size: 11.5px; color: #8d97ab; line-height: 1.6; }
-    </style></head><body>
+    </style><style>${aboutStyles}</style></head><body class="desktop-window" data-desktop-window="about">
     <div class="hero">
       ${logoTag}
       <h1>${esc(d.app.name)}</h1>
@@ -4054,19 +4100,13 @@ function createTray() {
         },
         { type: 'separator' },
         ...branchItems,
-        {
-          label: 'Start with Windows',
-          type: 'checkbox',
-          checked: app.getLoginItemSettings().openAtLogin,
-          click: (item) => {
-            app.setLoginItemSettings({ openAtLogin: item.checked, args: ['--hidden'] });
-          }
-        },
+        { label: 'App Settings', click: () => openAppSettings('app') },
+        { label: 'Kitchen Printing', click: () => openHardwareManager('kot') },
         { label: 'Hardware Manager', click: () => openHardwareManager() },
         ...(fs.existsSync(CLOUD_CONFIG_FILE) ? [] : [
           { label: 'Backup Manager', click: () => openBackupManager() }
         ]),
-        { label: 'Software Update', click: () => openUpdateManager() },
+        { label: 'Updates & Recovery', click: () => openUpdateManager() },
         { label: 'Posnic Cloud...', click: () => openCloudManager() },
         { type: 'separator' },
         {
@@ -4166,8 +4206,9 @@ function openBackupManager() {
 }
 
 // Open hardware manager window
-function openHardwareManager() {
+function openHardwareManager(section) {
   if (hardwareWindow) {
+    if (section) hardwareWindow.webContents.send('desktop:navigate', section);
     hardwareWindow.focus();
     return;
   }
@@ -4190,7 +4231,7 @@ function openHardwareManager() {
   });
   hardwareWindow.setMenuBarVisibility(false);
 
-  hardwareWindow.loadFile('src/hardware-manager.html');
+  hardwareWindow.loadFile('src/hardware-manager.html', section ? { hash: section } : {});
 
   hardwareWindow.on('closed', () => {
     hardwareWindow = null;
@@ -4561,7 +4602,7 @@ app.whenReady().then(async () => {
       const printers = Array.isArray(kotConfig && kotConfig.printerNames)
         ? kotConfig.printerNames.filter((n) => n && String(n).trim())
         : [];
-      if (kotConfig && kotConfig.branchId && printers.length) {
+      if (kotConfig && kotConfig.enabled !== false && kotConfig.branchId && printers.length) {
         await kotManager.startPolling(kotConfig);
         console.log('KOT polling restored from saved settings at startup');
       } else {

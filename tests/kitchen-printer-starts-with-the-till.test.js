@@ -43,7 +43,7 @@ test('a till that was never given a kitchen printer starts nothing', () => {
      the API about a branch it does not have, every thirty seconds, forever. */
   const start = MAIN.indexOf('kotManager = new KOTManager(');
   const after = MAIN.slice(start, start + 2400);
-  assert.match(after, /if \(kotConfig && kotConfig\.branchId && printers\.length\)/,
+  assert.match(after, /if \(kotConfig && kotConfig\.enabled !== false && kotConfig\.branchId && printers\.length\)/,
     'it starts without checking there is a branch and a printer');
   assert.match(after, /printerNames\.filter\(\(n\) => n && String\(n\)\.trim\(\)\)/,
     'a config holding one empty printer name counts as configured');

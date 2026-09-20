@@ -353,12 +353,13 @@
   <!-- The shop's theme, applied over this window's own styles. See window-theme.js. -->
   <link rel="stylesheet" href="window-theme.css">
   <script src="window-theme.js"></script>
+  <link rel="stylesheet" href="desktop-design.css">
 </head>
-<body>
+<body class="desktop-window" data-desktop-window="hardware">
     <div class="container">
         <div class="header">
             <h1>🔧 Hardware Manager</h1>
-            <p>Manage all your POS devices from one place</p>
+            <p>Connections, test printing and diagnostics for this computer.</p>
         </div>
 
         <div class="tabs">
@@ -367,7 +368,7 @@
             <button class="tab" onclick="switchTab('weight')">⚖️ Weight Machine</button>
             <!-- Only a shop running table service has anything to print a KOT
                  for; the dashboard mirrors the setting into preferences. -->
-            <button class="tab" id="kotTabButton" onclick="switchTab('kot')" style="display:none;">🖨️ Multi KOT Print</button>
+            <button class="tab" id="kotTabButton" onclick="switchTab('kot')" style="display:none;">Kitchen Printing</button>
             <button class="tab" onclick="switchTab('screen')">📺 Kitchen Screen</button>
             <button class="tab" onclick="switchTab('sound')">🔔 Kitchen Sound</button>
             <button class="tab" onclick="switchTab('mobile')">📱 Mobile Devices</button>
@@ -648,13 +649,13 @@
                 </div>
             </div>
 
-            <!-- Multi KOT Print Tab -->
+            <!-- Kitchen Printing Tab -->
             <div id="kotTab" class="tab-content">
                 <div id="kotStatusBar" style="display:none;padding:14px 18px;border-radius:12px;margin-bottom:20px;font-weight:600;font-size:15px;"></div>
 
                 <!-- Connected banner -->
                 <div id="kotConnectedBanner" style="display:none;background:linear-gradient(135deg,#28a745,#20c997);color:#fff;padding:16px 22px;border-radius:14px;margin-bottom:20px;display:none;">
-                    <div style="font-size:17px;font-weight:700;">✅ Multi KOT Print, Active</div>
+                    <div style="font-size:17px;font-weight:700;">✅ Kitchen Printing, Active</div>
                     <div id="kotBannerInfo" style="font-size:13px;margin-top:6px;opacity:.9;"></div>
                 </div>
 
@@ -715,15 +716,15 @@
                             <div style="padding:14px;color:#9ca3af;font-size:13px;text-align:center;">Click "Load Printers" to list available printers.</div>
                         </div>
                         <div id="kotPrinterNote" style="margin-top:8px;padding:10px 14px;border-radius:8px;background:#fff3cd;border:1px solid #ffc107;font-size:12px;color:#856404;display:none;">
-                            🔒 Printer selection is locked while polling is active. Click <strong>Stop Polling</strong> to change printer settings.
+                            🔒 Printer selection is locked while printing is running. Click <strong>Pause printing</strong> to change printer settings.
                         </div>
                     </div>
                 </div>
 
                 <!-- Action buttons -->
                 <div style="display:flex;gap:14px;margin-bottom:24px;">
-                    <button id="kotStartBtn" onclick="kotStart()" class="btn btn-success" style="flex:1;padding:16px;font-size:16px;">▶ Start KOT Polling</button>
-                    <button id="kotStopBtn"  onclick="kotStop()"  class="btn btn-danger"  style="flex:1;padding:16px;font-size:16px;" disabled>⏹ Stop Polling</button>
+                    <button id="kotStartBtn" onclick="kotStart()" class="btn btn-success" style="flex:1;padding:16px;font-size:16px;">▶ Resume kitchen printing</button>
+                    <button id="kotStopBtn"  onclick="kotStop()"  class="btn btn-danger"  style="flex:1;padding:16px;font-size:16px;" disabled>⏹ Pause printing</button>
                 </div>
 
                 <!-- Live status -->
@@ -1311,12 +1312,17 @@
         // TAB SWITCHING
         // ===========================
         function switchTab(tabName) {
-            if (event && event.target && event.target.classList.contains('tab-disabled')) {
+            const selectedButton = Array.from(document.querySelectorAll('.tabs .tab')).find(button => button.getAttribute('onclick') === "switchTab('" + tabName + "')");
+            if (!selectedButton || selectedButton.classList.contains('tab-disabled')) {
                 return;
             }
 
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            if (event && event.target) event.target.classList.add('active');
+            document.querySelectorAll('.tab').forEach(tab => {
+                const active = tab === selectedButton;
+                tab.classList.toggle('active', active);
+                tab.setAttribute('aria-selected', String(active));
+                tab.tabIndex = active ? 0 : -1;
+            });
 
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
@@ -2462,7 +2468,7 @@
             if (!printerNames.length) { kotShowStatus('Select at least one printer.', 'warn'); return; }
             kotShowStatus('Starting. ' + _describeTargets(printerNames), 'info');
 
-            kotShowStatus('Starting KOT polling...', 'info');
+            kotShowStatus('Starting kitchen printing...', 'info');
             try {
                 /* printers[] carries the per-printer settings; printerNames stays
                    populated so a till running an older main process still gets
@@ -2487,9 +2493,8 @@
         async function kotStop() {
             try {
                 await window.electronAPI.kot.stopPolling();
-                kotShowStatus('⏹ KOT polling stopped.', 'warn');
+                kotShowStatus('⏹ Kitchen printing paused. This pause is saved.', 'warn');
                 kotUpdateButtons(false);
-                if (kotStatusTimer) { clearInterval(kotStatusTimer); kotStatusTimer = null; }
                 document.getElementById('kotLiveStatus').textContent = 'Idle';
                 document.getElementById('kotLiveStatus').style.color = '#6c757d';
                 document.getElementById('kotConnectedBanner').style.display = 'none';
@@ -2503,7 +2508,7 @@
             document.getElementById('kotStopBtn').disabled  = !running;
             document.getElementById('kotConnectedBanner').style.display = running ? 'block' : 'none';
 
-            // Lock printer list while polling is active
+            // Lock printer list while printing is running
             document.querySelectorAll('#kotPrinterList input[type=checkbox]').forEach(cb => cb.disabled = running);
             document.querySelectorAll('#kotPrinterList label').forEach(lbl => lbl.style.opacity = running ? '0.55' : '1');
             document.querySelector('button[onclick="kotLoadPrinters()"]').disabled = running;
@@ -2513,7 +2518,8 @@
         async function kotRefreshStatus() {
             try {
                 const s = await window.electronAPI.kot.getStatus();
-                document.getElementById('kotLiveStatus').textContent  = s.isPolling ? '🟢 Polling' : 'Idle';
+                document.getElementById('kotLiveStatus').textContent  = s.isPolling ? 'Running' : 'Paused';
+                kotUpdateButtons(!!s.isPolling);
                 document.getElementById('kotLiveStatus').style.color  = s.isPolling ? '#28a745' : '#6c757d';
                 document.getElementById('kotLastPoll').textContent    = s.lastPollTime   || ', ';
                 document.getElementById('kotLiveBranch').textContent  = s.branchId       || ', ';
@@ -2639,12 +2645,10 @@
                 const list = await window.electronAPI.printer.list();
                 _kotRenderPrinterList(list, cfg.printers && cfg.printers.length ? cfg.printers : (cfg.printerNames || []));
 
-                // If config exists, auto-start polling
-                if (cfg.branchId && cfg.printerNames && cfg.printerNames.length) {
-                    await window.electronAPI.kot.startPolling(cfg);
-                    kotUpdateButtons(true);
-                    kotShowStatus('✅ KOT polling restored from saved settings.', 'success');
-                }
+                // Opening settings only observes the worker. The main process
+                // starts saved configurations and honours an explicit pause.
+                const state = await window.electronAPI.kot.getStatus();
+                kotUpdateButtons(!!state.isPolling);
 
                 // Poll status every 5 seconds to update live display
                 kotStatusTimer = setInterval(kotRefreshStatus, 5000);

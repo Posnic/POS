@@ -763,9 +763,9 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     return { success: true };
   });
 
-  ipcMain.handle('kot:stop-polling', () => {
+  ipcMain.handle('kot:stop-polling', async () => {
     if (!kotManager) return { success: false, error: 'KOT manager not initialized' };
-    kotManager.stopPolling();
+    await kotManager.pausePolling();
     return { success: true };
   });
 
