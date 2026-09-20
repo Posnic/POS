@@ -305,6 +305,10 @@ jobs:
       # One CycloneDX document per downloadable package. Each file carries the
       # package SHA-256, exact source commit, locked API graph, Electron runtime
       # and the separately licensed MongoDB server bundled with the package.
+      - name: Keep macOS updater metadata valid after notarization
+        if: matrix.name == 'macOS'
+        run: node scripts/prepare-mac-updater.js
+
       - name: Generate artifact SBOMs
         run: npm run release:sbom
 

@@ -86,10 +86,16 @@ test('a public installer upgrade retains the downloaded agent when it has no bun
 // Exercise the real main-process connection helper with an asynchronous manager.
 function connection(start) {
   const main = fs.readFileSync(path.join(__dirname, '../src/main.js'), 'utf8');
-  const helper = main.slice(main.indexOf('async function connectCloudDevice('), main.indexOf("ipcMain.handle('cloud:resume'"));
+  const helper = main.slice(main.indexOf('let cloudConnectionBusy ='), main.indexOf("ipcMain.handle('cloud:resume'"));
   const manager = { stop() {}, start };
-  const sandbox = { fs: { existsSync: () => false, writeFileSync() {}, chmodSync() {} }, validateActivation, path, app: { getPath: () => 'test' },
+  const sandbox = { fs: { existsSync: () => false, readFileSync: () => { throw Object.assign(new Error('missing'), { code: 'ENOENT' }); }, writeFileSync() {}, chmodSync() {} }, validateActivation, path, app: { getPath: () => 'test' },
     process: { env: {} }, console: { log() {}, warn() {} }, CLOUD_CONFIG_FILE: 'test.json', syncAgentManager: manager,
+    WEBSITE_API: 'https://www.posnic.com', AbortSignal,
+    fetch: async () => ({ ok: true, json: async () => ({ tenantDb: 'shop', branchIds: [] }) }),
+    require: (name) => name === 'mongodb' ? { MongoClient: class {
+      async connect() {} async close() {}
+      db() { return { collection: () => ({ find: () => ({ toArray: async () => [] }), countDocuments: async () => 0 }) }; }
+    } } : require(name === './cloud-shop-identity' ? '../src/cloud-shop-identity' : name),
     createMenu() {}, tray: null, refreshBrand: async () => {}, refreshLimits: async () => {}, };
   vm.runInNewContext(helper, sandbox);
   return sandbox.connectCloudDevice({ deviceToken: 'a'.repeat(64), deviceId: 'device' }, 'https://cloud.example');
@@ -104,7 +110,7 @@ test('activation does not succeed before the component has started', async () =>
   let finish;
   let complete = false;
   const result = connection(() => new Promise((resolve) => { finish = resolve; })).then((r) => { complete = true; return r; });
-  await Promise.resolve();
+  while (!finish) await new Promise((resolve) => setImmediate(resolve));
   assert.equal(complete, false);
   finish(true);
   assert.equal((await result).ok, true);

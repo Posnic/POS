@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     credentials: () => ipcRenderer.invoke('install:credentials')
   },
   cloud: {
+    authorize: (intent) => ipcRenderer.invoke('cloud:authorize-browser', { intent }),
+    cancelAuthorization: () => ipcRenderer.invoke('cloud:cancel-authorization'),
+    reopenAuthorization: () => ipcRenderer.invoke('cloud:reopen-authorization'),
     activate:   (details) => ipcRenderer.invoke('cloud:activate', details),
     resume: () => ipcRenderer.invoke('cloud:resume'),
     status:     () => ipcRenderer.invoke('cloud:status'),

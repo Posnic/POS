@@ -1250,7 +1250,15 @@ function getMachineId() {
   return id;
 }
 
+let cloudConnectionBusy = false;
 async function connectCloudDevice(activation, base) {
+  if (cloudConnectionBusy) return { ok: false, error: 'A cloud connection is already in progress.' };
+  cloudConnectionBusy = true;
+  try { return await connectVerifiedCloudDevice(activation, base); }
+  finally { cloudConnectionBusy = false; }
+}
+
+async function connectVerifiedCloudDevice(activation, base) {
   const { deviceToken, deviceId, gatewayUrl } = validateActivation(activation, base);
 
   // Local installs enable MongoDB auth during setup; the agent must use
@@ -1264,6 +1272,42 @@ async function connectCloudDevice(activation, base) {
     }
   } catch (credErr) {
     console.warn('[Cloud] Could not read MongoDB credentials:', credErr.message);
+  }
+
+  // Enrollment must never merge two shops. Staff login itself stays local;
+  // this online check only runs when connecting or resuming cloud setup.
+  const identityFile = path.join(app.getPath('userData'), 'cloud-shop-identity.json');
+  const identityResponse = await fetch(`${gatewayUrl}/v1/device/identity`, {
+    headers: { authorization: `Bearer ${deviceToken}` }, redirect: 'error', signal: AbortSignal.timeout(20_000),
+  });
+  if (!identityResponse.ok) throw new Error('Could not verify which cloud shop this device belongs to. Check your connection and retry.');
+  const identity = await identityResponse.json();
+  let savedTenant = null;
+  try { savedTenant = JSON.parse(fs.readFileSync(identityFile, 'utf8')).tenantDb; }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  const localClient = new (require('mongodb').MongoClient)(localUri, { serverSelectionTimeoutMS: 3000 });
+  let verifiedIdentity;
+  try {
+    await localClient.connect();
+    const db = localClient.db('PosnicPro');
+    const branches = await db.collection('branches').find({}, { projection: { _id: 1 } }).toArray();
+    const userCount = await db.collection('users').countDocuments();
+    const businessCounts = await Promise.all(['items', 'sales', 'customers', 'purchases'].map(
+      (name) => db.collection(name).countDocuments({}, { limit: 1 })
+    ));
+    verifiedIdentity = require('./cloud-shop-identity').assertSameShop({
+      identity, savedTenant, localBranchIds: branches.map((branch) => String(branch._id)), userCount,
+      businessDataCount: businessCounts.reduce((sum, count) => sum + count, 0),
+    });
+  } finally { await localClient.close(); }
+  // Create once, exclusively: do not follow or overwrite a file installed
+  // between verification and enrollment by another process.
+  try {
+    fs.writeFileSync(identityFile, JSON.stringify({ tenantDb: verifiedIdentity.tenantDb }), { mode: 0o600, flag: 'wx' });
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    const binding = JSON.parse(fs.readFileSync(identityFile, 'utf8'));
+    if (binding.tenantDb !== verifiedIdentity.tenantDb) throw new Error('The local shop connection changed. Restart Posnic and try again.');
   }
 
   fs.writeFileSync(CLOUD_CONFIG_FILE, JSON.stringify({
@@ -1584,6 +1628,26 @@ ipcMain.handle('cloud:pair', async (_event, { serverUrl, code, waitForShopMs } =
  * saying "I am the desktop app" is trivially forged.
  */
 const WEBSITE_API = process.env.POSNIC_WEBSITE_API || 'https://www.posnic.com';
+const browserCloudAuth = new (require('./browser-cloud-auth').BrowserCloudAuth)({
+  website: WEBSITE_API,
+  openExternal: (url) => shell.openExternal(url),
+});
+ipcMain.handle('cloud:authorize-browser', async (_event, { intent = 'login' } = {}) => {
+  try {
+    const activation = await browserCloudAuth.authorize({
+      intent, machineId: getMachineId(), deviceName: require('os').hostname(),
+    });
+    return await connectCloudDevice(activation, 'https://gateway.posnic.com');
+  } catch (error) {
+    return { ok: false, error: /fetch failed|ENOTFOUND|abort/i.test(error.message)
+      ? 'Could not reach Posnic Cloud. Check your internet connection and try again.' : error.message };
+  }
+});
+ipcMain.handle('cloud:cancel-authorization', () => { browserCloudAuth.cancel(); return { ok: true }; });
+ipcMain.handle('cloud:reopen-authorization', async () => {
+  try { await browserCloudAuth.reopen(); return { ok: true }; }
+  catch (error) { return { ok: false, error: error.message }; }
+});
 
 ipcMain.handle('cloud:captcha', async () => {
   try {
@@ -4030,12 +4094,14 @@ function openCloudManager() {
     return;
   }
   cloudWindow = new BrowserWindow({
-    width: 560,
-    height: 680,
+    width: 620,
+    height: 780,
+    minWidth: 480,
+    minHeight: 560,
     icon: appIconPath(),
     title: 'Posnic Cloud',
     autoHideMenuBar: true,
-    resizable: false,
+    resizable: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -5461,6 +5527,7 @@ app.on('child-process-gone', (_event, details) => {
 });
 
 app.on('before-quit', async event => {
+  browserCloudAuth.cancel();
   if (shutdownInProgress) return;
 
   /* Let the machine sleep again. Holding a power block past shutdown is how a
