@@ -234,7 +234,7 @@ describe('ItemRepository', () => {
         .mockResolvedValueOnce({ _id: { toString: () => 'other-item' } }); // barcode clash
       const r = await repo.upsertItem(data, '', ctx);
       expect(r.status).toBe('exist');
-      expect(r.message).toBe('Barcode exists');
+      expect(r.message).toContain('Barcode "B001" is already used by item "other-item"');
       expect(col.insertOne).not.toHaveBeenCalled();
       const filter = col.findOne.mock.calls[1][0];
       expect(filter.$or).toEqual([
@@ -256,10 +256,11 @@ describe('ItemRepository', () => {
     test('an item may keep its own barcode on update (self-match allowed)', async () => {
       col.findOne
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ _id: { toString: () => FAKE_ID } }) // the clash is itself
+        .mockResolvedValueOnce(null) // the uniqueness query excludes itself
         .mockResolvedValueOnce({ track_inventory: false, name: 'Pen' });
       const r = await repo.upsertItem(data, FAKE_ID, ctx);
       expect(r.status).toBe(true);
+      expect(col.findOne.mock.calls[1][0]._id.$ne.toString()).toBe(FAKE_ID);
     });
 
     test('open_price is presence-gated: sent -> stored boolean, absent -> untouched', async () => {

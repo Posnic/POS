@@ -544,7 +544,12 @@ class ItemsController extends BaseController {
         return this.success(res, result.data, result.message || 'Item updated successfully');
       }
 
-      return this.error(res, ERROR_MESSAGES.FAILED_TO_UPDATE_ITEM, 500, result?.data || null);
+      return this.error(
+        res,
+        result?.message || ERROR_MESSAGES.FAILED_TO_UPDATE_ITEM,
+        result?.status === 'exist' ? 409 : 500,
+        result?.data || null
+      );
     } catch (error) {
       console.error('Error in edit:', error);
       return this.error(res, ERROR_MESSAGES.FAILED_TO_UPDATE_ITEM, 500, error);

@@ -437,7 +437,8 @@ class ItemService {
       return { status: false, data: null, message: 'The family needs a product name.' };
     }
     const seenValues = new Set();
-    const seenBarcodes = new Set();
+    const itemBarcodes = require('../utils/item-barcodes');
+    const seenBarcodes = new Map();
     for (const [i, row] of rows.entries()) {
       const label = 'Variant ' + (i + 1);
       if (!row || !String(row.name || '').trim()) {
@@ -455,16 +456,15 @@ class ItemService {
         };
       }
       seenValues.add(value.toLowerCase());
-      const barcode = String(row.barcode_id || '').trim();
-      if (barcode) {
+      for (const barcode of itemBarcodes.codes(row)) {
         if (seenBarcodes.has(barcode)) {
           return {
             status: false,
             data: null,
-            message: 'Barcode "' + barcode + '" appears twice in the family.',
+            message: itemBarcodes.conflictMessage(barcode, seenBarcodes.get(barcode)),
           };
         }
-        seenBarcodes.add(barcode);
+        seenBarcodes.set(barcode, row);
       }
     }
 
@@ -483,10 +483,10 @@ class ItemService {
       const result = await this.addItem({ data: payload, branchId, licenseId, user });
       const newId =
         result &&
-        result.status &&
+        result.status === true &&
         result.data &&
         (result.data._id || result.data.id || result.data);
-      if (!result || !result.status || !newId) {
+      if (!result || result.status !== true || !newId) {
         await this.repository
           .hardDeleteItems(created, { licenseId })
           .catch((e) => console.error('Family rollback failed:', e.message));

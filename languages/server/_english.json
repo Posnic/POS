@@ -190,9 +190,6 @@
   "Backup records retrieved successfully": [
     "src/controllers/settings.controller.js"
   ],
-  "Barcode \"": [
-    "src/services/item.service.js"
-  ],
   "Below referral minimum spend": [
     "src/services/loyalty.service.js"
   ],

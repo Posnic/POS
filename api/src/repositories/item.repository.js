@@ -12,6 +12,7 @@ const itemChannels = require('../utils/item-channels');
 const salesChannels = require('../utils/sales-channels');
 const currencyLabel = require('../utils/currency-label');
 const orderingAssistant = require('../services/ordering-assistant.service');
+const itemBarcodes = require('../utils/item-barcodes');
 
 /*
  * The diet mark, or nothing.
@@ -1698,6 +1699,10 @@ class ItemRepository extends BaseModel {
   }
 
   async upsertItem(data, id = '', context = {}) {
+    return itemBarcodes.withWriteLock(context, () => this._upsertItem(data, id, context));
+  }
+
+  async _upsertItem(data, id = '', context = {}) {
     try {
       const collection = await this.getCollection(this.collectionName);
 
@@ -1744,6 +1749,15 @@ class ItemRepository extends BaseModel {
 
       const existing = await collection.findOne(existingFilter);
       if (existing && existing._id.toString() !== id) {
+        const duplicateCode = itemBarcodes
+          .codes(data)
+          .find((code) => itemBarcodes.codes(existing).includes(code));
+        if (duplicateCode)
+          return {
+            status: 'exist',
+            message: itemBarcodes.conflictMessage(duplicateCode, existing),
+            data: null,
+          };
         return {
           status: 'exist',
           message: 'This item details already exist in our system',
@@ -1758,24 +1772,18 @@ class ItemRepository extends BaseModel {
        * (this item's codes vs existing primaries and alternates). Blank
        * barcodes are exempt: most quick-entry items have none.
        */
-      const candidateCodes = [
-        ...(data.barcode_id ? [String(data.barcode_id).trim()] : []),
-        ...(Array.isArray(data.barcodes) ? data.barcodes.map((b) => String(b).trim()) : []),
-      ].filter(Boolean);
-      if (candidateCodes.length > 0) {
-        const barcodeFilter = {
-          'branch_access.branch_id': branchObjectId,
-          license: licenseObjectId,
-          $or: [{ barcode_id: { $in: candidateCodes } }, { barcodes: { $in: candidateCodes } }],
+      const candidateCodes = itemBarcodes.codes(data);
+      const clash = await itemBarcodes.findConflict(collection, candidateCodes, {
+        branchId: branchObjectId,
+        licenseId: licenseObjectId,
+        selfId: id ? new ObjectId(id) : null,
+      });
+      if (clash) {
+        return {
+          status: 'exist',
+          message: clash.message,
+          data: { barcode: clash.barcode, itemId: String(clash.item._id) },
         };
-        const barcodeClash = await collection.findOne(barcodeFilter);
-        if (barcodeClash && barcodeClash._id.toString() !== id) {
-          return {
-            status: 'exist',
-            message: ERROR_MESSAGES.BARCODE_EXISTS,
-            data: null,
-          };
-        }
       }
 
       // Get tax fields if tax_id provided
@@ -1826,7 +1834,7 @@ class ItemRepository extends BaseModel {
         name: (data.name || '').trim(),
         date: now,
         itemid: resolvedItemId,
-        barcode_id: (data.barcode_id || '').trim(),
+        barcode_id: itemBarcodes.normalize(data.barcode_id),
         supplier_name: (data.supplier_name || '').trim(),
         supplier_id:
           data.supplier_id && ObjectId.isValid(data.supplier_id)
@@ -2173,6 +2181,21 @@ class ItemRepository extends BaseModel {
         _id: itemObjectId,
         license: licenseObjectId,
       });
+
+      // Omitted alternate codes are retained. Check them as well if the item
+      // is being saved into a different branch or repairing old duplicates.
+      if (!Array.isArray(data.barcodes) && existingItem?.barcodes?.length) {
+        const retainedClash = await itemBarcodes.findConflict(
+          collection,
+          itemBarcodes.codes({ barcodes: existingItem.barcodes }),
+          {
+            branchId: branchObjectId,
+            licenseId: licenseObjectId,
+            selfId: itemObjectId,
+          }
+        );
+        if (retainedClash) return { status: 'exist', message: retainedClash.message, data: null };
+      }
 
       await collection.updateOne(
         { _id: itemObjectId, license: licenseObjectId },
@@ -6312,6 +6335,10 @@ class ItemRepository extends BaseModel {
   }
 
   async importItems(data, context = {}) {
+    return itemBarcodes.withWriteLock(context, () => this._importItems(data, context));
+  }
+
+  async _importItems(data, context = {}) {
     try {
       if (!Array.isArray(data) || data.length === 0) {
         return { status: false, data: null, message: 'No items to import' };
@@ -6344,14 +6371,16 @@ class ItemRepository extends BaseModel {
 
       // Step 1: Filter unique records from CSV data based on 'name' and 'itemid'
       const uniqueCSVRecords = new Map();
-      for (const raw of limitedRows) {
+      const rowNumbers = new Map();
+      for (const [index, raw] of limitedRows.entries()) {
         const item = { ...(raw || {}) };
         item.name = item.name || '';
         item.itemid = item.itemid || '';
-        item.barcode_id = item.barcode_id || '';
+        item.barcode_id = itemBarcodes.normalize(item.barcode_id);
         const key = `${item.name}-${item.itemid}`;
         if (!uniqueCSVRecords.has(key)) {
           uniqueCSVRecords.set(key, item);
+          rowNumbers.set(item, index + 2); // header occupies the first CSV row
         }
       }
 
@@ -6479,6 +6508,49 @@ class ItemRepository extends BaseModel {
           status: false,
           data: null,
           message: 'No rows to import',
+        };
+      }
+
+      // Validate the entire accepted file before writing items or creating any
+      // supplier/category/tax/unit records. Re-imports may keep their own code.
+      const barcodeErrors = [];
+      const seenCodes = new Map();
+      for (const item of documentsToInsert) {
+        const matched = existingByRow.get(item);
+        const candidateCodes = itemBarcodes.codes({
+          ...matched,
+          ...item,
+          barcodes: matched?.barcodes,
+        }); // the CSV does not replace alternates
+        const row = rowNumbers.get(item);
+        const addError = (message) =>
+          barcodeErrors.push({
+            row,
+            name: item.name,
+            barcode_id: item.barcode_id,
+            status: message,
+          });
+        for (const code of candidateCodes) {
+          const other = seenCodes.get(code);
+          if (other) {
+            addError(
+              `CSV rows ${rowNumbers.get(other)} and ${row}: barcode "${itemBarcodes.display(code)}" is used by "${itemBarcodes.display(itemBarcodes.label(other))}" and "${itemBarcodes.display(itemBarcodes.label(item))}". Each item or variant needs a different barcode.`
+            );
+          } else seenCodes.set(code, item);
+        }
+        const clash = await itemBarcodes.findConflict(collection, candidateCodes, {
+          branchId: branchObjectId,
+          licenseId: licenseObjectId,
+          selfId: matched?._id,
+        });
+        if (clash)
+          addError(`CSV row ${row} ("${itemBarcodes.display(item.name)}"): ${clash.message}`);
+      }
+      if (barcodeErrors.length) {
+        return {
+          status: false,
+          data: barcodeErrors,
+          message: `${barcodeErrors[0].status} Nothing was imported. Correct the listed barcodes and try again.`,
         };
       }
 
