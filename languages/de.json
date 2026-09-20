@@ -3422,5 +3422,9 @@
   "lang_recovery_setup_reminder": "Sichern Sie den Zugang zu Ihrem Geschäft: Speichern Sie Offline-Wiederherstellungscodes für den Fall, dass E-Mail nicht verfügbar ist.",
   "lang_recovery_sheet_warning": "Jeder Code funktioniert einmal. Bewahren Sie dieses Blatt getrennt von der Kasse auf. Jeder mit einem Code kann dieses Konto zurücksetzen.",
   "lang_recovery_shown_once": "Nur einmal angezeigt. Jeder Code kann {account} einmal zurücksetzen.",
-  "lang_recovery_username": "E-Mail oder Benutzername"
+  "lang_recovery_username": "E-Mail oder Benutzername",
+  "lang_recovery_one_line_hint": "Jede Zeile ist ein eigener Wiederherstellungscode. Geben Sie zum Zurücksetzen Ihres Passworts nur eine vollständige Zeile ein, nicht die ganze Liste.",
+  "lang_recovery_code_multiple": "Fügen Sie nur einen Wiederherstellungscode aus einer Zeile Ihres gespeicherten Blatts ein, nicht die ganze Liste.",
+  "lang_recovery_code_incomplete": "Geben Sie den vollständigen Code ein: 8 Gruppen mit je 4 Zeichen aus einer Zeile Ihres gespeicherten Blatts.",
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
 }

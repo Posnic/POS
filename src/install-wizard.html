@@ -916,6 +916,7 @@
                 <h2>Save your recovery codes</h2>
                 <p>Your shop is ready. These codes let the owner reset a forgotten password without email or internet.</p>
                 <p id="recoveryAccount"></p>
+                <p>Each line is a separate recovery code. To reset your password, enter only one complete line, not the whole list.</p>
                 <pre id="recoveryCodes" dir="ltr" style="font-size:14px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f5f9;padding:16px;border-radius:8px;"></pre>
                 <p>Each code works once. Keep a copy away from this computer, such as on a USB drive or written on paper in a safe place. Anyone with a code can reset this account.</p>
                 <button type="button" class="btn btn-secondary" id="saveRecoveryCodes">Save recovery codes</button>
@@ -1372,7 +1373,8 @@ const form = document.getElementById('installForm');
             next.disabled = true;
             saved.onchange = () => { next.disabled = !saved.checked; };
             document.getElementById('saveRecoveryCodes').onclick = () => {
-                const text = 'POSNIC - OFFLINE RECOVERY CODES\nAccount: ' + data.recoveryAccount + '\n\n' + codes.join('\n') +
+                const text = 'POSNIC - OFFLINE RECOVERY CODES\nAccount: ' + data.recoveryAccount + '\n\n' +
+                    'Each line is a separate recovery code. To reset your password, enter only one complete line, not the whole list.\n\n' + codes.join('\n') +
                     '\n\nEach code works once. Keep this sheet away from the till. Anyone with a code can reset this account.\n';
                 const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
                 const link = document.createElement('a');

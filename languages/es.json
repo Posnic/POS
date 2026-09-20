@@ -3422,5 +3422,9 @@
   "lang_recovery_setup_reminder": "Protege el acceso a tu tienda: guarda códigos de recuperación sin conexión por si el correo no está disponible.",
   "lang_recovery_sheet_warning": "Cada código funciona una vez. Guarda esta hoja separada de la caja. Cualquiera que tenga un código puede restablecer esta cuenta.",
   "lang_recovery_shown_once": "Se muestran una sola vez. Cada código permite restablecer {account} una vez.",
-  "lang_recovery_username": "Correo o nombre de usuario"
+  "lang_recovery_username": "Correo o nombre de usuario",
+  "lang_recovery_one_line_hint": "Cada línea es un código de recuperación independiente. Para restablecer tu contraseña, introduce solo una línea completa, no toda la lista.",
+  "lang_recovery_code_multiple": "Pega solo un código de recuperación de una línea de la hoja guardada, no toda la lista.",
+  "lang_recovery_code_incomplete": "Introduce el código completo: 8 grupos de 4 caracteres de una línea de la hoja guardada.",
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
 }

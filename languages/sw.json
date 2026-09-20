@@ -3422,5 +3422,9 @@
   "lang_recovery_setup_reminder": "Linda ufikiaji wa duka lako: hifadhi misimbo ya urejeshaji bila intaneti iwapo barua pepe haipatikani.",
   "lang_recovery_sheet_warning": "Kila msimbo hufanya kazi mara moja. Hifadhi karatasi hii mbali na kompyuta ya mauzo. Mtu yeyote mwenye msimbo anaweza kubadilisha nenosiri la akaunti hii.",
   "lang_recovery_shown_once": "Inaonyeshwa mara moja tu. Kila msimbo unaweza kurejesha {account} mara moja.",
-  "lang_recovery_username": "Barua pepe au jina la mtumiaji"
+  "lang_recovery_username": "Barua pepe au jina la mtumiaji",
+  "lang_recovery_one_line_hint": "Kila mstari ni msimbo tofauti wa kurejesha akaunti. Ili kuweka upya nenosiri, ingiza mstari mmoja kamili tu, si orodha nzima.",
+  "lang_recovery_code_multiple": "Bandika msimbo mmoja tu wa kurejesha akaunti kutoka mstari mmoja wa karatasi uliyohifadhi, si orodha nzima.",
+  "lang_recovery_code_incomplete": "Ingiza msimbo kamili: makundi 8 ya vibambo 4 kutoka mstari mmoja wa karatasi uliyohifadhi.",
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
 }
