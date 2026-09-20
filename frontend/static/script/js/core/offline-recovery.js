@@ -1,7 +1,7 @@
 (function (window, document, $) {
     'use strict';
     if (!$ || !window.PosnicPro) return;
-    var activeDialog = null;
+    var activeDialog = null, dialogSequence = 0;
 
     function request(method, path, data) {
         return new Promise(function (resolve, reject) {
@@ -29,8 +29,10 @@
         if (activeDialog) activeDialog.close();
         var node = document.createElement('dialog');
         node.style.cssText = 'width:600px;max-width:calc(100vw - 32px);max-height:90vh;overflow:auto;border:1px solid #ddd;border-radius:12px;padding:24px;color:var(--theme-text-color,#222);background:var(--theme-card-bg,#fff)';
-        node.setAttribute('aria-labelledby', 'offline-recovery-title');
-        node.innerHTML = '<div class="d-flex justify-content-between align-items-start"><h4 id="offline-recovery-title"></h4><button type="button" class="btn btn-light" data-close aria-label="Close recovery" data-t-aria-label="lang_close_recovery">×</button></div>' + body;
+        var titleId = 'offline-recovery-title-' + (++dialogSequence);
+        node.setAttribute('aria-labelledby', titleId);
+        node.innerHTML = '<div class="d-flex justify-content-between align-items-start"><h4></h4><button type="button" class="btn btn-light" data-close aria-label="Close recovery" data-t-aria-label="lang_close_recovery">×</button></div>' + body;
+        node.querySelector('h4').id = titleId;
         node.querySelector('h4').textContent = title;
         node.querySelector('[data-close]').onclick = function () { node.close(); };
         node.addEventListener('close', function () { node.innerHTML = ''; node.remove(); if (activeDialog === node) activeDialog = null; });
