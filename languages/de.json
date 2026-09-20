@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "Jede Zeile ist ein eigener Wiederherstellungscode. Geben Sie zum Zurücksetzen Ihres Passworts nur eine vollständige Zeile ein, nicht die ganze Liste.",
   "lang_recovery_code_multiple": "Fügen Sie nur einen Wiederherstellungscode aus einer Zeile Ihres gespeicherten Blatts ein, nicht die ganze Liste.",
   "lang_recovery_code_incomplete": "Geben Sie den vollständigen Code ein: 8 Gruppen mit je 4 Zeichen aus einer Zeile Ihres gespeicherten Blatts.",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "Kopieren Sie einen unbenutzten Code von Ihrem gespeicherten Wiederherstellungsblatt. Geben Sie alle 8 Gruppen mit je 4 Buchstaben oder Ziffern aus genau einer Zeile ein.",
+  "lang_recovery_code_example_hint": "Nur ein Beispiel — verwenden Sie einen Code von Ihrem eigenen Blatt:",
+  "lang_recovery_reset_success_title": "Passwort erfolgreich zurückgesetzt",
+  "lang_recovery_reset_success_hint": "Melden Sie sich mit Ihrem neuen Passwort an.",
+  "lang_recovery_used_code_hint": "Dieser Wiederherstellungscode wurde verwendet und kann nicht erneut verwendet werden. Bewahren Sie die übrigen Codes für später auf."
 }

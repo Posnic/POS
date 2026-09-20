@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "كل سطر هو رمز استرداد مستقل. لإعادة تعيين كلمة المرور، أدخل سطراً كاملاً واحداً فقط، وليس القائمة كلها.",
   "lang_recovery_code_multiple": "الصق رمز استرداد واحداً فقط من سطر واحد في الورقة المحفوظة، وليس القائمة كلها.",
   "lang_recovery_code_incomplete": "أدخل الرمز كاملاً: 8 مجموعات، كل منها 4 محارف، من سطر واحد في الورقة المحفوظة.",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "انسخ رمزًا غير مستخدم من ورقة رموز الاسترداد المحفوظة. أدخل المجموعات الثماني كاملة، كل منها 4 أحرف أو أرقام، من سطر واحد فقط.",
+  "lang_recovery_code_example_hint": "مثال فقط — استخدم رمزًا من ورقتك الخاصة:",
+  "lang_recovery_reset_success_title": "تمت إعادة تعيين كلمة المرور بنجاح",
+  "lang_recovery_reset_success_hint": "سجّل الدخول بكلمة المرور الجديدة.",
+  "lang_recovery_used_code_hint": "تم استخدام رمز الاسترداد هذا ولا يمكن استخدامه مرة أخرى. احتفظ بالرموز المتبقية لاستخدامها لاحقًا."
 }

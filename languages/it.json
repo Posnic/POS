@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "Ogni riga è un codice di recupero distinto. Per reimpostare la password, inserisci una sola riga completa, non l’intero elenco.",
   "lang_recovery_code_multiple": "Incolla un solo codice di recupero da una riga del foglio salvato, non l’intero elenco.",
   "lang_recovery_code_incomplete": "Inserisci il codice completo: 8 gruppi di 4 caratteri da una riga del foglio salvato.",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "Copia un codice non ancora utilizzato dal foglio di recupero salvato. Inserisci tutti gli 8 gruppi di 4 lettere o numeri da una sola riga.",
+  "lang_recovery_code_example_hint": "Solo un esempio: usa un codice del tuo foglio:",
+  "lang_recovery_reset_success_title": "Password reimpostata correttamente",
+  "lang_recovery_reset_success_hint": "Accedi con la nuova password.",
+  "lang_recovery_used_code_hint": "Questo codice di recupero è stato utilizzato e non può essere riutilizzato. Conserva i codici rimanenti per il futuro."
 }

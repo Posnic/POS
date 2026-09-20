@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "Kila mstari ni msimbo tofauti wa kurejesha akaunti. Ili kuweka upya nenosiri, ingiza mstari mmoja kamili tu, si orodha nzima.",
   "lang_recovery_code_multiple": "Bandika msimbo mmoja tu wa kurejesha akaunti kutoka mstari mmoja wa karatasi uliyohifadhi, si orodha nzima.",
   "lang_recovery_code_incomplete": "Ingiza msimbo kamili: makundi 8 ya vibambo 4 kutoka mstari mmoja wa karatasi uliyohifadhi.",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "Nakili msimbo mmoja ambao haujatumika kutoka kwenye karatasi yako ya urejeshaji uliyohifadhi. Weka makundi yote 8 ya herufi au tarakimu 4 kutoka mstari mmoja tu.",
+  "lang_recovery_code_example_hint": "Mfano tu — tumia msimbo kutoka kwenye karatasi yako mwenyewe:",
+  "lang_recovery_reset_success_title": "Nenosiri limewekwa upya",
+  "lang_recovery_reset_success_hint": "Ingia kwa nenosiri lako jipya.",
+  "lang_recovery_used_code_hint": "Msimbo huu wa urejeshaji umetumika na hauwezi kutumika tena. Hifadhi misimbo iliyobaki kwa matumizi ya baadaye."
 }

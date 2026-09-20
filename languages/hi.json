@@ -3441,5 +3441,10 @@
   "lang_recovery_one_line_hint": "हर पंक्ति एक अलग पुनर्प्राप्ति कोड है। पासवर्ड रीसेट करने के लिए केवल एक पूरी पंक्ति दर्ज करें, पूरी सूची नहीं।",
   "lang_recovery_code_multiple": "सहेजी गई शीट की एक पंक्ति से केवल एक पुनर्प्राप्ति कोड पेस्ट करें, पूरी सूची नहीं।",
   "lang_recovery_code_incomplete": "पूरा कोड दर्ज करें: सहेजी गई शीट की एक पंक्ति से 4-4 अक्षरों के 8 समूह।",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "अपनी सहेजी गई रिकवरी शीट से एक अप्रयुक्त कोड कॉपी करें। केवल एक पंक्ति के सभी 8 समूह दर्ज करें, जिनमें प्रत्येक में 4 अक्षर या अंक हों।",
+  "lang_recovery_code_example_hint": "केवल उदाहरण — अपनी शीट से कोई कोड इस्तेमाल करें:",
+  "lang_recovery_reset_success_title": "पासवर्ड सफलतापूर्वक रीसेट हो गया",
+  "lang_recovery_reset_success_hint": "अपने नए पासवर्ड से साइन इन करें।",
+  "lang_recovery_used_code_hint": "इस रिकवरी कोड का उपयोग हो चुका है और इसे दोबारा इस्तेमाल नहीं किया जा सकता। बाकी कोड बाद के लिए सुरक्षित रखें।"
 }

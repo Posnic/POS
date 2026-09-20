@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "Elke regel is een afzonderlijke herstelcode. Voer slechts één volledige regel in om uw wachtwoord opnieuw in te stellen, niet de hele lijst.",
   "lang_recovery_code_multiple": "Plak slechts één herstelcode uit één regel van uw opgeslagen blad, niet de hele lijst.",
   "lang_recovery_code_incomplete": "Voer de volledige code in: 8 groepen van 4 tekens uit één regel van uw opgeslagen blad.",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "Kopieer één ongebruikte code van uw opgeslagen herstelblad. Voer alle 8 groepen van 4 letters of cijfers uit één regel in.",
+  "lang_recovery_code_example_hint": "Alleen een voorbeeld — gebruik een code van uw eigen blad:",
+  "lang_recovery_reset_success_title": "Wachtwoord opnieuw ingesteld",
+  "lang_recovery_reset_success_hint": "Meld u aan met uw nieuwe wachtwoord.",
+  "lang_recovery_used_code_hint": "Deze herstelcode is gebruikt en kan niet opnieuw worden gebruikt. Bewaar de overige codes voor later."
 }

@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "Cada línea es un código de recuperación independiente. Para restablecer tu contraseña, introduce solo una línea completa, no toda la lista.",
   "lang_recovery_code_multiple": "Pega solo un código de recuperación de una línea de la hoja guardada, no toda la lista.",
   "lang_recovery_code_incomplete": "Introduce el código completo: 8 grupos de 4 caracteres de una línea de la hoja guardada.",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "Copie un código sin usar de su hoja de recuperación guardada. Introduzca los 8 grupos de 4 letras o números de una sola línea.",
+  "lang_recovery_code_example_hint": "Solo es un ejemplo: use un código de su propia hoja:",
+  "lang_recovery_reset_success_title": "Contraseña restablecida correctamente",
+  "lang_recovery_reset_success_hint": "Inicie sesión con su nueva contraseña.",
+  "lang_recovery_used_code_hint": "Este código de recuperación ya se ha usado y no puede volver a utilizarse. Guarde los códigos restantes para más adelante."
 }

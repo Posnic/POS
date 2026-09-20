@@ -29,7 +29,8 @@
         if (activeDialog) activeDialog.close();
         var node = document.createElement('dialog');
         node.style.cssText = 'width:600px;max-width:calc(100vw - 32px);max-height:90vh;overflow:auto;border:1px solid #ddd;border-radius:12px;padding:24px;color:var(--theme-text-color,#222);background:var(--theme-card-bg,#fff)';
-        node.innerHTML = '<div class="d-flex justify-content-between align-items-start"><h4></h4><button type="button" class="btn btn-light" data-close aria-label="Close recovery" data-t-aria-label="lang_close_recovery">×</button></div>' + body;
+        node.setAttribute('aria-labelledby', 'offline-recovery-title');
+        node.innerHTML = '<div class="d-flex justify-content-between align-items-start"><h4 id="offline-recovery-title"></h4><button type="button" class="btn btn-light" data-close aria-label="Close recovery" data-t-aria-label="lang_close_recovery">×</button></div>' + body;
         node.querySelector('h4').textContent = title;
         node.querySelector('[data-close]').onclick = function () { node.close(); };
         node.addEventListener('close', function () { node.innerHTML = ''; node.remove(); if (activeDialog === node) activeDialog = null; });
@@ -40,8 +41,9 @@
         var node = dialog(PosnicPro.i18n.t('lang_recovery_offline_title', 'Recover your account offline'),
             '<p><lang class="lang_recovery_offline_hint">Use one of the recovery codes you saved for this shop. No email or internet connection is needed.</lang></p>' +
             '<form><label class="d-block"><lang class="lang_recovery_username">Email or username</lang><input name="account" dir="auto" class="form-control" autocomplete="username" required maxlength="250"></label>' +
-            '<label class="d-block"><lang class="lang_recovery_code">Recovery code</lang><input name="recoveryCode" dir="ltr" class="form-control" style="font-family:monospace;font-size:clamp(11px,3vw,14px)" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" data-t-placeholder="lang_recovery_code_format" aria-describedby="recovery-code-help recovery-code-error" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="80"></label>' +
-            '<small id="recovery-code-help" class="d-block mb-2"><lang class="lang_recovery_one_line_hint">Each line is a separate recovery code. To reset your password, enter only one complete line, not the whole list.</lang></small>' +
+            '<p id="recovery-code-help" class="mb-2"><lang class="lang_recovery_code_instructions">Copy one unused code from your saved recovery sheet. Enter all 8 groups of 4 letters or numbers, from just one line.</lang></p>' +
+            '<div id="recovery-code-example" class="border rounded p-2 mb-2"><small class="d-block"><lang class="lang_recovery_code_example_hint">Example only — use a code from your own sheet:</lang></small><code dir="ltr" class="d-block" style="font-size:clamp(10px,2.8vw,13px);white-space:nowrap"></code></div>' +
+            '<label class="d-block"><lang class="lang_recovery_code">Recovery code</lang><input name="recoveryCode" dir="ltr" class="form-control" style="font-family:monospace;font-size:clamp(11px,3vw,14px)" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" data-t-placeholder="lang_recovery_code_format" aria-describedby="recovery-code-help recovery-code-example recovery-code-error" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="80"></label>' +
             '<p id="recovery-code-error" class="text-danger" role="alert" hidden></p>' +
             '<label class="d-block"><lang class="lang_newpassword_title">New Password</lang><input name="newPassword" class="form-control" type="password" autocomplete="new-password" required minlength="8" maxlength="20"></label>' +
             '<small><lang class="lang_recovery_password_policy">Use 8-20 characters, without spaces at the beginning or end.</lang></small>' +
@@ -49,6 +51,7 @@
             '<p role="status" class="mt-3" data-message></p><button type="submit" class="btn btn-primary"><lang class="lang_foget_mail">Reset Password</lang></button></form>' +
             '<details class="mt-3"><summary><lang class="lang_recovery_no_codes_title">No recovery codes?</lang></summary><p class="mt-2"><lang class="lang_recovery_no_codes_help">An owner who can still sign in can create codes in Profile → Account recovery. If every owner is locked out and no codes were saved, the computer administrator must recover access locally. Support cannot retrieve an old code or password. Keep your shop data; reinstalling is not a password reset.</lang></p></details>');
         var form = node.querySelector('form'), message = node.querySelector('[data-message]');
+        node.querySelector('#recovery-code-example code').textContent = 'A1B2-C3D4-E5F6-A7B8-C9D0-E1F2-A3B4-C5D6';
         var code = form.elements.recoveryCode, codeError = node.querySelector('#recovery-code-error');
         function compactCode(value) { return value.replace(/[\s-]/g, '').toUpperCase(); }
         function setCodeError(error) {
@@ -89,16 +92,20 @@
             var button = form.querySelector('[type=submit]');
             button.disabled = true; message.textContent = '';
             try {
-                var result = await request('POST', 'users/recovery/reset', {
+                await request('POST', 'users/recovery/reset', {
                     account: form.elements.account.value, recoveryCode: form.elements.recoveryCode.value,
                     newPassword: form.elements.newPassword.value, confirmPassword: form.elements.confirmPassword.value
                 });
-                form.reset(); form.hidden = true;
+                form.reset();
                 try { localStorage.removeItem('posnic_jwt_token'); } catch (_) {}
-                var done = document.createElement('p'); done.setAttribute('role', 'status'); done.textContent = PosnicPro.i18n.say(result.message);
-                var back = document.createElement('button'); back.type = 'button'; back.className = 'btn btn-primary'; back.textContent = PosnicPro.i18n.t('lang_recovery_back_to_login', 'Back to sign in');
+                if (!node.isConnected) return;
+                var success = dialog(PosnicPro.i18n.t('lang_recovery_reset_success_title', 'Password reset successfully'),
+                    '<div class="alert alert-success d-flex align-items-start mt-3" style="background:#ecfdf5;color:#166534;border-color:#bbf7d0" role="status"><span aria-hidden="true" style="font-size:26px;line-height:1;margin-inline-end:12px">&#10003;</span><p class="mb-0"><lang class="lang_recovery_reset_success_hint">Sign in with your new password.</lang></p></div>' +
+                    '<p><lang class="lang_recovery_used_code_hint">This recovery code has been used and cannot be used again. Keep your remaining codes for later.</lang></p>' +
+                    '<button type="button" class="btn btn-primary" data-back-to-login><lang class="lang_recovery_back_to_login">Back to sign in</lang></button>');
+                var back = success.querySelector('[data-back-to-login]');
                 back.onclick = function () { window.location.href = 'login.html'; };
-                node.appendChild(done); node.appendChild(back); back.focus();
+                back.focus();
             } catch (error) { message.textContent = PosnicPro.i18n.say(error.message); button.disabled = false; }
         };
     }
