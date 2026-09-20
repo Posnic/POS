@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "Cada linha é um código de recuperação separado. Para redefinir sua senha, insira apenas uma linha completa, não a lista inteira.",
   "lang_recovery_code_multiple": "Cole apenas um código de recuperação de uma linha da folha salva, não a lista inteira.",
   "lang_recovery_code_incomplete": "Insira o código completo: 8 grupos de 4 caracteres de uma linha da folha salva.",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "Copie um código não utilizado da folha de recuperação que guardou. Introduza os 8 grupos de 4 letras ou números de uma única linha.",
+  "lang_recovery_code_example_hint": "Apenas um exemplo — utilize um código da sua própria folha:",
+  "lang_recovery_reset_success_title": "Palavra-passe reposta com sucesso",
+  "lang_recovery_reset_success_hint": "Inicie sessão com a nova palavra-passe.",
+  "lang_recovery_used_code_hint": "Este código de recuperação já foi utilizado e não pode voltar a ser usado. Guarde os códigos restantes para mais tarde."
 }

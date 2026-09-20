@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "हरेक पङ्क्ति छुट्टै पुनःप्राप्ति कोड हो। पासवर्ड रिसेट गर्न एउटा पूरा पङ्क्ति मात्र प्रविष्ट गर्नुहोस्, सम्पूर्ण सूची होइन।",
   "lang_recovery_code_multiple": "सुरक्षित राखिएको पानाको एउटा पङ्क्तिबाट एउटा मात्र पुनःप्राप्ति कोड टाँस्नुहोस्, सम्पूर्ण सूची होइन।",
   "lang_recovery_code_incomplete": "पूरा कोड प्रविष्ट गर्नुहोस्: सुरक्षित राखिएको पानाको एउटा पङ्क्तिबाट ४-४ वर्णका ८ समूह।",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "तपाईंले सुरक्षित राखेको रिकभरी पानाबाट प्रयोग नभएको एउटा कोड प्रतिलिपि गर्नुहोस्। एउटै लाइनका ४ अक्षर वा अङ्क भएका सबै ८ समूह प्रविष्ट गर्नुहोस्।",
+  "lang_recovery_code_example_hint": "उदाहरण मात्र — आफ्नै पानाको कोड प्रयोग गर्नुहोस्:",
+  "lang_recovery_reset_success_title": "पासवर्ड सफलतापूर्वक रिसेट भयो",
+  "lang_recovery_reset_success_hint": "आफ्नो नयाँ पासवर्डले साइन इन गर्नुहोस्।",
+  "lang_recovery_used_code_hint": "यो रिकभरी कोड प्रयोग भइसकेको छ र फेरि प्रयोग गर्न सकिँदैन। बाँकी कोडहरू पछिका लागि सुरक्षित राख्नुहोस्।"
 }

@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "แต่ละบรรทัดเป็นรหัสกู้คืนแยกกัน หากต้องการรีเซ็ตรหัสผ่าน ให้ป้อนเพียงหนึ่งบรรทัดให้ครบ ไม่ใช่ทั้งรายการ",
   "lang_recovery_code_multiple": "วางรหัสกู้คืนเพียงรหัสเดียวจากหนึ่งบรรทัดในเอกสารที่บันทึกไว้ ไม่ใช่ทั้งรายการ",
   "lang_recovery_code_incomplete": "ป้อนรหัสให้ครบ: 8 กลุ่ม กลุ่มละ 4 ตัวอักษร จากหนึ่งบรรทัดในเอกสารที่บันทึกไว้",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "คัดลอกรหัสที่ยังไม่ได้ใช้หนึ่งรหัสจากแผ่นรหัสกู้คืนที่คุณบันทึกไว้ กรอกให้ครบทั้ง 8 กลุ่ม กลุ่มละ 4 ตัวอักษรหรือตัวเลข จากเพียงบรรทัดเดียว",
+  "lang_recovery_code_example_hint": "ตัวอย่างเท่านั้น — ใช้รหัสจากแผ่นของคุณเอง:",
+  "lang_recovery_reset_success_title": "รีเซ็ตรหัสผ่านสำเร็จแล้ว",
+  "lang_recovery_reset_success_hint": "ลงชื่อเข้าใช้ด้วยรหัสผ่านใหม่",
+  "lang_recovery_used_code_hint": "รหัสกู้คืนนี้ถูกใช้แล้วและไม่สามารถใช้ซ้ำได้ โปรดเก็บรหัสที่เหลือไว้ใช้ในภายหลัง"
 }

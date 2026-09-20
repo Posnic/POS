@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "ಪ್ರತಿಯೊಂದು ಸಾಲು ಪ್ರತ್ಯೇಕ ಮರುಪಡೆಯುವಿಕೆ ಕೋಡ್ ಆಗಿದೆ. ಪಾಸ್‌ವರ್ಡ್ ಮರುಹೊಂದಿಸಲು ಒಂದು ಸಂಪೂರ್ಣ ಸಾಲನ್ನು ಮಾತ್ರ ನಮೂದಿಸಿ, ಸಂಪೂರ್ಣ ಪಟ್ಟಿಯನ್ನಲ್ಲ.",
   "lang_recovery_code_multiple": "ಉಳಿಸಿದ ಹಾಳಿಯ ಒಂದು ಸಾಲಿನಿಂದ ಒಂದೇ ಮರುಪಡೆಯುವಿಕೆ ಕೋಡ್ ಅನ್ನು ಅಂಟಿಸಿ, ಸಂಪೂರ್ಣ ಪಟ್ಟಿಯನ್ನಲ್ಲ.",
   "lang_recovery_code_incomplete": "ಸಂಪೂರ್ಣ ಕೋಡ್ ನಮೂದಿಸಿ: ಉಳಿಸಿದ ಹಾಳಿಯ ಒಂದು ಸಾಲಿನಿಂದ ತಲಾ 4 ಅಕ್ಷರಗಳ 8 ಗುಂಪುಗಳು.",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "ನೀವು ಉಳಿಸಿದ ಮರುಪಡೆಯುವಿಕೆ ಹಾಳೆಯಿಂದ ಇನ್ನೂ ಬಳಸದ ಒಂದು ಕೋಡ್ ನಕಲಿಸಿ. ಒಂದೇ ಸಾಲಿನಲ್ಲಿರುವ ತಲಾ 4 ಅಕ್ಷರಗಳು ಅಥವಾ ಅಂಕಿಗಳ ಎಲ್ಲಾ 8 ಗುಂಪುಗಳನ್ನು ನಮೂದಿಸಿ.",
+  "lang_recovery_code_example_hint": "ಇದು ಉದಾಹರಣೆ ಮಾತ್ರ — ನಿಮ್ಮ ಸ್ವಂತ ಹಾಳೆಯಲ್ಲಿರುವ ಕೋಡ್ ಬಳಸಿ:",
+  "lang_recovery_reset_success_title": "ಪಾಸ್‌ವರ್ಡ್ ಯಶಸ್ವಿಯಾಗಿ ಮರುಹೊಂದಿಸಲಾಗಿದೆ",
+  "lang_recovery_reset_success_hint": "ನಿಮ್ಮ ಹೊಸ ಪಾಸ್‌ವರ್ಡ್‌ನೊಂದಿಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.",
+  "lang_recovery_used_code_hint": "ಈ ಮರುಪಡೆಯುವಿಕೆ ಕೋಡ್ ಅನ್ನು ಬಳಸಲಾಗಿದೆ ಮತ್ತು ಮತ್ತೆ ಬಳಸಲಾಗುವುದಿಲ್ಲ. ಉಳಿದ ಕೋಡ್‌ಗಳನ್ನು ಮುಂದಿನ ಬಳಕೆಗಾಗಿ ಸುರಕ್ಷಿತವಾಗಿಡಿ."
 }

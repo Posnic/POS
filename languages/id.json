@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "Setiap baris adalah kode pemulihan tersendiri. Untuk mereset kata sandi, masukkan hanya satu baris lengkap, bukan seluruh daftar.",
   "lang_recovery_code_multiple": "Tempel hanya satu kode pemulihan dari satu baris lembar yang disimpan, bukan seluruh daftar.",
   "lang_recovery_code_incomplete": "Masukkan kode lengkap: 8 kelompok berisi 4 karakter dari satu baris lembar yang disimpan.",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "Salin satu kode yang belum digunakan dari lembar pemulihan yang Anda simpan. Masukkan semua 8 kelompok yang masing-masing berisi 4 huruf atau angka, dari satu baris saja.",
+  "lang_recovery_code_example_hint": "Hanya contoh — gunakan kode dari lembar Anda sendiri:",
+  "lang_recovery_reset_success_title": "Kata sandi berhasil diatur ulang",
+  "lang_recovery_reset_success_hint": "Masuk dengan kata sandi baru Anda.",
+  "lang_recovery_used_code_hint": "Kode pemulihan ini sudah digunakan dan tidak dapat digunakan lagi. Simpan kode yang tersisa untuk nanti."
 }

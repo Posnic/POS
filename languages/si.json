@@ -3426,5 +3426,10 @@
   "lang_recovery_one_line_hint": "සෑම පේළියක්ම වෙනම ප්‍රතිසාධන කේතයකි. මුරපදය යළි සැකසීමට එක් සම්පූර්ණ පේළියක් පමණක් ඇතුළත් කරන්න, මුළු ලැයිස්තුවම නොවේ.",
   "lang_recovery_code_multiple": "සුරැකි පත්‍රයේ එක් පේළියකින් එක් ප්‍රතිසාධන කේතයක් පමණක් අලවන්න, මුළු ලැයිස්තුවම නොවේ.",
   "lang_recovery_code_incomplete": "සම්පූර්ණ කේතය ඇතුළත් කරන්න: සුරැකි පත්‍රයේ එක් පේළියකින් අක්ෂර 4 බැගින් ඇති කාණ්ඩ 8ක්.",
-  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
+  "lang_recovery_code_instructions": "ඔබ සුරැකි ප්‍රතිසාධන පත්‍රයෙන් භාවිත නොකළ එක් කේතයක් පිටපත් කරන්න. එකම පේළියේ ඇති අකුරු හෝ ඉලක්කම් 4 බැගින් වූ කාණ්ඩ 8 ම ඇතුළත් කරන්න.",
+  "lang_recovery_code_example_hint": "උදාහරණයක් පමණි — ඔබේම පත්‍රයේ කේතයක් භාවිත කරන්න:",
+  "lang_recovery_reset_success_title": "මුරපදය සාර්ථකව යළි සකසා ඇත",
+  "lang_recovery_reset_success_hint": "ඔබේ නව මුරපදයෙන් පිවිසෙන්න.",
+  "lang_recovery_used_code_hint": "මෙම ප්‍රතිසාධන කේතය භාවිත කර ඇති අතර නැවත භාවිත කළ නොහැක. ඉතිරි කේත පසුව භාවිතයට සුරකින්න."
 }
