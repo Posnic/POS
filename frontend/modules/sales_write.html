@@ -695,9 +695,10 @@
 <div id="infobar-settings-sidebar-tender-details" class="infobar-settings-sidebar">
     <div class="infobar-settings-sidebar-head" style="position: fixed;">
 
-        <a href="javascript:void(0)" class="infobar-tender-close">
-            <img src="static/images/svg-icon/close.svg" class="img-fluid menu-hamburger-close" alt="close" loading="lazy" decoding="async">
-        </a>
+        <button type="button" class="btn btn-light infobar-tender-close tender-close-button"
+                aria-label="Close" data-t-aria-label="lang_close_title" title="Close" data-t-title="lang_close_title">
+            <span aria-hidden="true">&times;</span>
+        </button>
     </div>
     <div class="infobar-settings-sidebar-body" style="background: #f2f3f7;">
 
@@ -981,6 +982,9 @@
                                                             <a href="javascript:void(0)" class="btn btn-outline-primary sale-done-paper" id="print_receipt_a4"
                                                                title="Print a full A4 invoice" data-t-title="lang_print_a_full_a4_invoice">A4</a>
                                                         </div>
+                                                        <button type="button" class="btn btn-outline-secondary btn-block infobar-tender-close sale-done-close">
+                                                            <lang class="lang_close_title">Close</lang>
+                                                        </button>
                                                         <div class="sale-done-send">
                                                             <a href="javascript:void(0)" class="smsSalesReceipt btn btn-light">
                                                                 <i class="feather icon-message-square mr-2"></i><span><lang class="lang_sms">SMS</lang></span>
