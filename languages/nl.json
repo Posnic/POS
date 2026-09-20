@@ -3422,5 +3422,9 @@
   "lang_recovery_setup_reminder": "Bescherm de toegang tot uw winkel: bewaar offline herstelcodes voor als e-mail niet beschikbaar is.",
   "lang_recovery_sheet_warning": "Elke code werkt één keer. Bewaar dit blad apart van de kassa. Iedereen met een code kan dit account opnieuw instellen.",
   "lang_recovery_shown_once": "Slechts één keer zichtbaar. Elke code kan {account} één keer opnieuw instellen.",
-  "lang_recovery_username": "E-mail of gebruikersnaam"
+  "lang_recovery_username": "E-mail of gebruikersnaam",
+  "lang_recovery_one_line_hint": "Elke regel is een afzonderlijke herstelcode. Voer slechts één volledige regel in om uw wachtwoord opnieuw in te stellen, niet de hele lijst.",
+  "lang_recovery_code_multiple": "Plak slechts één herstelcode uit één regel van uw opgeslagen blad, niet de hele lijst.",
+  "lang_recovery_code_incomplete": "Voer de volledige code in: 8 groepen van 4 tekens uit één regel van uw opgeslagen blad.",
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
 }

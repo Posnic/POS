@@ -3422,5 +3422,9 @@
   "lang_recovery_setup_reminder": "Lindungi akses ke toko Anda: simpan kode pemulihan offline jika email tidak tersedia.",
   "lang_recovery_sheet_warning": "Setiap kode hanya dapat digunakan sekali. Simpan lembar ini terpisah dari komputer kasir. Siapa pun yang memiliki kode dapat mereset akun ini.",
   "lang_recovery_shown_once": "Hanya ditampilkan sekali. Setiap kode dapat mereset {account} satu kali.",
-  "lang_recovery_username": "Email atau nama pengguna"
+  "lang_recovery_username": "Email atau nama pengguna",
+  "lang_recovery_one_line_hint": "Setiap baris adalah kode pemulihan tersendiri. Untuk mereset kata sandi, masukkan hanya satu baris lengkap, bukan seluruh daftar.",
+  "lang_recovery_code_multiple": "Tempel hanya satu kode pemulihan dari satu baris lembar yang disimpan, bukan seluruh daftar.",
+  "lang_recovery_code_incomplete": "Masukkan kode lengkap: 8 kelompok berisi 4 karakter dari satu baris lembar yang disimpan.",
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
 }

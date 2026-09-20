@@ -3422,5 +3422,9 @@
   "lang_recovery_setup_reminder": "Proteja o acesso à sua loja: salve códigos de recuperação offline caso o e-mail fique indisponível.",
   "lang_recovery_sheet_warning": "Cada código funciona uma vez. Guarde esta folha separada do caixa. Qualquer pessoa com um código pode redefinir esta conta.",
   "lang_recovery_shown_once": "Exibidos uma única vez. Cada código pode redefinir {account} uma vez.",
-  "lang_recovery_username": "E-mail ou nome de usuário"
+  "lang_recovery_username": "E-mail ou nome de usuário",
+  "lang_recovery_one_line_hint": "Cada linha é um código de recuperação separado. Para redefinir sua senha, insira apenas uma linha completa, não a lista inteira.",
+  "lang_recovery_code_multiple": "Cole apenas um código de recuperação de uma linha da folha salva, não a lista inteira.",
+  "lang_recovery_code_incomplete": "Insira o código completo: 8 grupos de 4 caracteres de uma linha da folha salva.",
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
 }

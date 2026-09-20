@@ -16,7 +16,8 @@
     }
     function saveCodes(account, codes) {
         var text = PosnicPro.i18n.t('lang_recovery_download_title', 'POSNIC - OFFLINE RECOVERY CODES') + '\n' +
-            PosnicPro.i18n.t('lang_recovery_account_label', 'Account: {account}').replace('{account}', account) + '\n\n' + codes.join('\n') + '\n\n' +
+            PosnicPro.i18n.t('lang_recovery_account_label', 'Account: {account}').replace('{account}', account) + '\n\n' +
+            PosnicPro.i18n.t('lang_recovery_one_line_hint', 'Each line is a separate recovery code. To reset your password, enter only one complete line, not the whole list.') + '\n\n' + codes.join('\n') + '\n\n' +
             PosnicPro.i18n.t('lang_recovery_sheet_warning', 'Each code works once. Keep this sheet away from the till. Anyone with a code can reset this account.') + '\n';
         var url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
         var link = document.createElement('a');
@@ -39,17 +40,52 @@
         var node = dialog(PosnicPro.i18n.t('lang_recovery_offline_title', 'Recover your account offline'),
             '<p><lang class="lang_recovery_offline_hint">Use one of the recovery codes you saved for this shop. No email or internet connection is needed.</lang></p>' +
             '<form><label class="d-block"><lang class="lang_recovery_username">Email or username</lang><input name="account" dir="auto" class="form-control" autocomplete="username" required maxlength="250"></label>' +
-            '<label class="d-block"><lang class="lang_recovery_code">Recovery code</lang><input name="recoveryCode" dir="ltr" class="form-control" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="80"></label>' +
+            '<label class="d-block"><lang class="lang_recovery_code">Recovery code</lang><input name="recoveryCode" dir="ltr" class="form-control" style="font-family:monospace;font-size:clamp(11px,3vw,14px)" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" data-t-placeholder="lang_recovery_code_format" aria-describedby="recovery-code-help recovery-code-error" autocomplete="off" autocapitalize="characters" spellcheck="false" required maxlength="80"></label>' +
+            '<small id="recovery-code-help" class="d-block mb-2"><lang class="lang_recovery_one_line_hint">Each line is a separate recovery code. To reset your password, enter only one complete line, not the whole list.</lang></small>' +
+            '<p id="recovery-code-error" class="text-danger" role="alert" hidden></p>' +
             '<label class="d-block"><lang class="lang_newpassword_title">New Password</lang><input name="newPassword" class="form-control" type="password" autocomplete="new-password" required minlength="8" maxlength="20"></label>' +
             '<small><lang class="lang_recovery_password_policy">Use 8-20 characters, without spaces at the beginning or end.</lang></small>' +
             '<label class="d-block mt-2"><lang class="lang_confirmpassword_title">Confirm Password</lang><input name="confirmPassword" class="form-control" type="password" autocomplete="new-password" required minlength="8" maxlength="20"></label>' +
             '<p role="status" class="mt-3" data-message></p><button type="submit" class="btn btn-primary"><lang class="lang_foget_mail">Reset Password</lang></button></form>' +
             '<details class="mt-3"><summary><lang class="lang_recovery_no_codes_title">No recovery codes?</lang></summary><p class="mt-2"><lang class="lang_recovery_no_codes_help">An owner who can still sign in can create codes in Profile → Account recovery. If every owner is locked out and no codes were saved, the computer administrator must recover access locally. Support cannot retrieve an old code or password. Keep your shop data; reinstalling is not a password reset.</lang></p></details>');
         var form = node.querySelector('form'), message = node.querySelector('[data-message]');
+        var code = form.elements.recoveryCode, codeError = node.querySelector('#recovery-code-error');
+        function compactCode(value) { return value.replace(/[\s-]/g, '').toUpperCase(); }
+        function setCodeError(error) {
+            codeError.textContent = error; codeError.hidden = !error;
+            code.setCustomValidity(error);
+            if (error) code.setAttribute('aria-invalid', 'true');
+            else code.removeAttribute('aria-invalid');
+        }
+        function multipleCodesMessage() {
+            return PosnicPro.i18n.t('lang_recovery_code_multiple', 'Paste only one recovery code from one line of your saved sheet, not the whole list.');
+        }
+        code.addEventListener('input', function () { setCodeError(''); message.textContent = ''; });
+        code.addEventListener('paste', function (event) {
+            if (!event.clipboardData) return;
+            var pasted = event.clipboardData.getData('text');
+            var candidate = code.value.slice(0, code.selectionStart) + pasted + code.value.slice(code.selectionEnd);
+            var value = compactCode(candidate);
+            // Inspect the complete paste before maxlength can silently cut it.
+            // Never choose or submit one code on the user's behalf from a list.
+            if (value.length > 32) {
+                event.preventDefault(); setCodeError(multipleCodesMessage());
+            } else if (/^[A-F0-9]{32}$/.test(value)) {
+                event.preventDefault(); code.value = value.match(/.{4}/g).join('-'); setCodeError('');
+                message.textContent = '';
+            }
+        });
         var username = document.getElementById('username');
         if (username) form.elements.account.value = username.value;
         form.onsubmit = async function (event) {
             event.preventDefault();
+            if (code.validity.customError) { code.focus(); return; }
+            var value = compactCode(code.value);
+            if (!/^[A-F0-9]{32}$/.test(value)) {
+                setCodeError(value.length > 32 ? multipleCodesMessage() : PosnicPro.i18n.t('lang_recovery_code_incomplete', 'Enter the complete code: 8 groups of 4 characters from one line of your saved sheet.'));
+                code.focus(); return;
+            }
+            code.value = value.match(/.{4}/g).join('-');
             var button = form.querySelector('[type=submit]');
             button.disabled = true; message.textContent = '';
             try {
@@ -80,6 +116,7 @@
                 form.reset(); form.remove();
                 var data = result.data, codes = data.recoveryCodes;
                 var note = document.createElement('p'); note.textContent = PosnicPro.i18n.t('lang_recovery_shown_once', 'Shown once. Each code can reset {account} once.').replace('{account}', data.recoveryAccount);
+                var help = document.createElement('p'); help.textContent = PosnicPro.i18n.t('lang_recovery_one_line_hint', 'Each line is a separate recovery code. To reset your password, enter only one complete line, not the whole list.');
                 var list = document.createElement('pre'); list.dir = 'ltr'; list.style.cssText = 'font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere'; list.textContent = codes.join('\n');
                 var save = document.createElement('button'); save.type = 'button'; save.className = 'btn btn-primary'; save.textContent = PosnicPro.i18n.t('lang_recovery_save_codes', 'Save recovery codes');
                 save.onclick = function () { saveCodes(data.recoveryAccount, codes); };
@@ -88,7 +125,7 @@
                 var done = document.createElement('button'); done.type = 'button'; done.className = 'btn btn-success'; done.textContent = PosnicPro.i18n.t('lang_done', 'Done'); done.disabled = true;
                 check.onchange = function () { done.disabled = !check.checked; };
                 done.onclick = function () { node.close(); };
-                node.append(note, list, save, label, done);
+                node.append(note, help, list, save, label, done);
                 node.addEventListener('close', function () { codes.length = 0; data.recoveryCodes = []; });
                 updateStatus({ remaining: codes.length });
                 var banner = document.getElementById('offline_recovery_notice'); if (banner) banner.remove();

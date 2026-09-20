@@ -166,6 +166,24 @@ test('reset works without email, consumes only its code, preserves shop data and
   expect((await ask('/recovery/reset', { body: input() })).status).toBe(400);
 });
 
+test('pasting multiple codes refuses without spending any; one complete code still works', async () => {
+  for (const recoveryCode of [
+    batch.codes.slice(0, 2).join(' '),
+    batch.codes.join('\n'),
+    `POSNIC - OFFLINE RECOVERY CODES\nAccount: ${owner.email}\n\n${batch.codes.join('\n')}`,
+  ]) {
+    const result = await ask('/recovery/reset', { body: input({ recoveryCode }) });
+    expect(result.status).toBe(400);
+    const unchanged = await db.collection('users').findOne({ _id: owner._id });
+    expect(unchanged.password).toBe(owner.password);
+    expect(unchanged.localRecovery.hashes).toEqual(batch.record.hashes);
+  }
+  expect((await ask('/recovery/reset', { body: input() })).status).toBe(200);
+  expect(
+    (await db.collection('users').findOne({ _id: owner._id })).localRecovery.hashes
+  ).toHaveLength(7);
+});
+
 test('two simultaneous attempts with one code cannot both reset the password', async () => {
   const results = await Promise.allSettled([
     service.reset(db, input()),

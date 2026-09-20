@@ -3422,5 +3422,9 @@
   "lang_recovery_setup_reminder": "Protégez l'accès à votre boutique : conservez des codes de récupération hors ligne au cas où l'e-mail serait indisponible.",
   "lang_recovery_sheet_warning": "Chaque code fonctionne une fois. Conservez cette feuille à l'écart de la caisse. Toute personne ayant un code peut réinitialiser ce compte.",
   "lang_recovery_shown_once": "Affichés une seule fois. Chaque code peut réinitialiser {account} une fois.",
-  "lang_recovery_username": "E-mail ou nom d'utilisateur"
+  "lang_recovery_username": "E-mail ou nom d'utilisateur",
+  "lang_recovery_one_line_hint": "Chaque ligne est un code de récupération distinct. Pour réinitialiser votre mot de passe, saisissez une seule ligne complète, pas toute la liste.",
+  "lang_recovery_code_multiple": "Collez un seul code de récupération provenant d’une ligne de votre feuille sauvegardée, pas toute la liste.",
+  "lang_recovery_code_incomplete": "Saisissez le code complet : 8 groupes de 4 caractères provenant d’une ligne de votre feuille sauvegardée.",
+  "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
 }
