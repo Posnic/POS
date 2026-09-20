@@ -88,7 +88,7 @@ function connection(start) {
   const main = fs.readFileSync(path.join(__dirname, '../src/main.js'), 'utf8');
   const helper = main.slice(main.indexOf('let cloudConnectionBusy ='), main.indexOf("ipcMain.handle('cloud:resume'"));
   const manager = { stop() {}, start };
-  const sandbox = { fs: { existsSync: () => false, writeFileSync() {}, chmodSync() {} }, validateActivation, path, app: { getPath: () => 'test' },
+  const sandbox = { fs: { existsSync: () => false, readFileSync: () => { throw Object.assign(new Error('missing'), { code: 'ENOENT' }); }, writeFileSync() {}, chmodSync() {} }, validateActivation, path, app: { getPath: () => 'test' },
     process: { env: {} }, console: { log() {}, warn() {} }, CLOUD_CONFIG_FILE: 'test.json', syncAgentManager: manager,
     WEBSITE_API: 'https://www.posnic.com', AbortSignal,
     fetch: async () => ({ ok: true, json: async () => ({ tenantDb: 'shop', branchIds: [] }) }),

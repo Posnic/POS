@@ -1283,7 +1283,8 @@ async function connectVerifiedCloudDevice(activation, base) {
   if (!identityResponse.ok) throw new Error('Could not verify which cloud shop this device belongs to. Check your connection and retry.');
   const identity = await identityResponse.json();
   let savedTenant = null;
-  if (fs.existsSync(identityFile)) savedTenant = JSON.parse(fs.readFileSync(identityFile, 'utf8')).tenantDb;
+  try { savedTenant = JSON.parse(fs.readFileSync(identityFile, 'utf8')).tenantDb; }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
   const localClient = new (require('mongodb').MongoClient)(localUri, { serverSelectionTimeoutMS: 3000 });
   let verifiedIdentity;
   try {
@@ -1299,8 +1300,15 @@ async function connectVerifiedCloudDevice(activation, base) {
       businessDataCount: businessCounts.reduce((sum, count) => sum + count, 0),
     });
   } finally { await localClient.close(); }
-  fs.writeFileSync(identityFile, JSON.stringify({ tenantDb: verifiedIdentity.tenantDb }), { mode: 0o600 });
-  fs.chmodSync(identityFile, 0o600);
+  // Create once, exclusively: do not follow or overwrite a file installed
+  // between verification and enrollment by another process.
+  try {
+    fs.writeFileSync(identityFile, JSON.stringify({ tenantDb: verifiedIdentity.tenantDb }), { mode: 0o600, flag: 'wx' });
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    const binding = JSON.parse(fs.readFileSync(identityFile, 'utf8'));
+    if (binding.tenantDb !== verifiedIdentity.tenantDb) throw new Error('The local shop connection changed. Restart Posnic and try again.');
+  }
 
   fs.writeFileSync(CLOUD_CONFIG_FILE, JSON.stringify({
     gatewayUrl,
