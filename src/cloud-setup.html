@@ -89,19 +89,27 @@
     <div id="disconnectedView">
         <div class="card">
             <h3>Connect this machine to Posnic Cloud</h3>
+            <p class="subtitle">Approve this computer in your browser. Staff login stays local after the first download, including when offline.</p>
+            <button class="btn" id="browserBtn">Sign in with browser</button>
+            <button class="btn secondary" id="trialBtn">Start cloud trial</button>
+            <div id="browserActions" style="display:none;"><button class="btn secondary" id="reopenBtn">Open browser again</button><button class="btn secondary" id="cancelAuthBtn">Cancel authorization</button></div>
+            <label for="pairCode">Pairing code</label><input id="pairCode" placeholder="P1-K7M4-9QX2" autocomplete="off">
+            <button class="btn secondary" id="pairBtn">Pair this computer</button>
+            <details style="margin-top:18px;"><summary>Advanced connection</summary>
             <label>Cloud Server</label>
             <input type="text" id="server" value="https://gateway.posnic.com">
             <label>Email</label>
             <input type="email" id="email" autocomplete="username">
             <label>Password</label>
             <input type="password" id="password" autocomplete="current-password">
-            <button class="btn" id="connectBtn">Connect &amp; Start Sync</button>
+            <button class="btn secondary" id="connectBtn">Connect with password</button>
+            </details>
+            <p class="subtitle" style="margin-top:14px;">An existing local shop must match the cloud shop. Connecting does not merge separate businesses.</p>
             <div class="error" id="error"></div>
             <div class="progress" id="progress"></div>
         </div>
         <div class="links">
-            Don't have a subscription yet?
-            <a href="#" id="signup">Create your Posnic Cloud account →</a>
+            <a href="#" id="signup">Create a cloud account in your browser</a>
         </div>
     </div>
 
@@ -152,7 +160,7 @@
 
         $('signup').addEventListener('click', (e) => {
             e.preventDefault();
-            window.electronAPI?.cloud?.signup();
+            connectCloud(() => window.electronAPI.cloud.authorize('signup'), true);
         });
         $('viewLogBtn').addEventListener('click', () => window.electronAPI?.desktop?.open('log'));
         $('refreshBtn').addEventListener('click', refreshStatus);
@@ -182,31 +190,52 @@
                 $('error').style.display = 'block';
                 return;
             }
-            btn.disabled = true;
-            $('progress').textContent = 'Connecting…';
-            $('progress').style.display = 'block';
-
-            const result = await window.electronAPI.cloud.activate(details);
-            btn.disabled = false;
-            if (!result.ok) {
-                $('progress').style.display = 'none';
-                $('error').textContent = result.error || 'Activation failed.';
-                $('error').style.display = 'block';
-                return;
-            }
-            $('progress').style.display = 'none';
-            refreshStatus();
+            await connectCloud(() => window.electronAPI.cloud.activate(details));
         });
+
+        let connecting = false;
+        async function connectCloud(connect, browser = false) {
+            if (connecting) return;
+            connecting = true;
+            const controls = ['connectBtn', 'browserBtn', 'trialBtn', 'pairBtn'];
+            controls.forEach((id) => { $(id).disabled = true; });
+            $('error').style.display = 'none';
+            $('progress').style.display = 'block';
+            $('progress').textContent = browser ? 'Waiting for approval in your browser…' : 'Connecting…';
+            $('browserActions').style.display = browser ? 'block' : 'none';
+            try {
+                const result = await connect();
+                if (!result.ok) throw new Error(result.error || 'Could not connect. Please retry.');
+                await refreshStatus();
+            } catch (error) {
+                $('error').textContent = error.message;
+                $('error').style.display = 'block';
+            } finally {
+                connecting = false;
+                controls.forEach((id) => { $(id).disabled = false; });
+                $('progress').style.display = 'none';
+                $('browserActions').style.display = 'none';
+            }
+        }
+        $('browserBtn').onclick = () => connectCloud(() => window.electronAPI.cloud.authorize('login'), true);
+        $('trialBtn').onclick = () => connectCloud(() => window.electronAPI.cloud.authorize('signup'), true);
+        $('cancelAuthBtn').onclick = () => window.electronAPI.cloud.cancelAuthorization();
+        $('reopenBtn').onclick = async () => {
+            const result = await window.electronAPI.cloud.reopenAuthorization();
+            if (!result.ok) { $('error').textContent = result.error; $('error').style.display = 'block'; }
+        };
+        $('pairBtn').onclick = () => connectCloud(() => window.electronAPI.cloud.pair({ code: $('pairCode').value.trim() }));
+        window.addEventListener('beforeunload', () => window.electronAPI.cloud.cancelAuthorization());
 
         // Enter connects, the way it would if these inputs were in a form.
         // They are not, so the browser had nothing to submit and Enter did
         // nothing after typing a password.
-        for (const id of ['server', 'email', 'password']) {
+        for (const id of ['server', 'email', 'password', 'pairCode']) {
             const field = document.getElementById(id);
             if (!field) continue;
             field.addEventListener('keydown', (event) => {
                 if (event.key !== 'Enter' || event.isComposing) return;
-                const button = document.getElementById('connectBtn');
+                const button = document.getElementById(id === 'pairCode' ? 'pairBtn' : 'connectBtn');
                 if (!button || button.disabled) return;
                 event.preventDefault();
                 button.click();
