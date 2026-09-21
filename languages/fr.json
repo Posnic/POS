@@ -3530,5 +3530,18 @@
   "lang_print_settings": "Paramètres d’impression",
   "lang_printer_settings": "Paramètres des imprimantes",
   "lang_receipt_design": "Mise en page du ticket",
-  "lang_save_printing_options": "Enregistrer les options d’impression"
+  "lang_save_printing_options": "Enregistrer les options d’impression",
+  "lang_devices": "Appareils",
+  "lang_branch_payments": "Paiements de la succursale",
+  "lang_app": "Application",
+  "lang_all_apps": "Toutes les applications",
+  "lang_connect_mobile_pos": "Connecter Mobile POS",
+  "lang_connect_captain": "Connecter Captain",
+  "lang_printers_scanners_scales": "Imprimantes, scanners et balances",
+  "lang_printing_tills": "Caisses d’impression",
+  "lang_app_branch": "Application / succursale",
+  "lang_manage_captain_devices": "Gérer les appareils Captain",
+  "lang_mobile_pos_settings": "Paramètres Mobile POS",
+  "lang_authorized": "Autorisé",
+  "lang_module_mobile_pos": "Mobile POS"
 }

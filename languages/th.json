@@ -3530,5 +3530,18 @@
   "lang_print_settings": "การตั้งค่าการพิมพ์",
   "lang_printer_settings": "การตั้งค่าเครื่องพิมพ์",
   "lang_receipt_design": "ออกแบบใบเสร็จ",
-  "lang_save_printing_options": "บันทึกตัวเลือกการพิมพ์"
+  "lang_save_printing_options": "บันทึกตัวเลือกการพิมพ์",
+  "lang_devices": "อุปกรณ์",
+  "lang_branch_payments": "การชำระเงินของสาขา",
+  "lang_app": "แอป",
+  "lang_all_apps": "แอปทั้งหมด",
+  "lang_connect_mobile_pos": "เชื่อมต่อ Mobile POS",
+  "lang_connect_captain": "เชื่อมต่อ Captain",
+  "lang_printers_scanners_scales": "เครื่องพิมพ์ เครื่องสแกน และเครื่องชั่ง",
+  "lang_printing_tills": "เครื่องคิดเงินสำหรับพิมพ์",
+  "lang_app_branch": "แอป / สาขา",
+  "lang_manage_captain_devices": "จัดการอุปกรณ์ Captain",
+  "lang_mobile_pos_settings": "การตั้งค่า Mobile POS",
+  "lang_authorized": "ได้รับอนุญาต",
+  "lang_module_mobile_pos": "Mobile POS"
 }

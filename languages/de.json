@@ -3530,5 +3530,18 @@
   "lang_print_settings": "Druckeinstellungen",
   "lang_printer_settings": "Druckereinstellungen",
   "lang_receipt_design": "Beleggestaltung",
-  "lang_save_printing_options": "Druckoptionen speichern"
+  "lang_save_printing_options": "Druckoptionen speichern",
+  "lang_devices": "Geräte",
+  "lang_branch_payments": "Filialzahlungen",
+  "lang_app": "App",
+  "lang_all_apps": "Alle Apps",
+  "lang_connect_mobile_pos": "Mobile POS verbinden",
+  "lang_connect_captain": "Captain verbinden",
+  "lang_printers_scanners_scales": "Drucker, Scanner und Waagen",
+  "lang_printing_tills": "Druckende Kassen",
+  "lang_app_branch": "App / Filiale",
+  "lang_manage_captain_devices": "Captain-Geräte verwalten",
+  "lang_mobile_pos_settings": "Mobile-POS-Einstellungen",
+  "lang_authorized": "Autorisiert",
+  "lang_module_mobile_pos": "Mobile POS"
 }

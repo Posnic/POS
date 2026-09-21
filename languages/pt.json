@@ -3530,5 +3530,18 @@
   "lang_print_settings": "Configurações de impressão",
   "lang_printer_settings": "Configurações da impressora",
   "lang_receipt_design": "Design do recibo",
-  "lang_save_printing_options": "Salvar opções de impressão"
+  "lang_save_printing_options": "Salvar opções de impressão",
+  "lang_devices": "Dispositivos",
+  "lang_branch_payments": "Pagamentos da filial",
+  "lang_app": "Aplicativo",
+  "lang_all_apps": "Todos os aplicativos",
+  "lang_connect_mobile_pos": "Conectar Mobile POS",
+  "lang_connect_captain": "Conectar Captain",
+  "lang_printers_scanners_scales": "Impressoras, leitores e balanças",
+  "lang_printing_tills": "Caixas de impressão",
+  "lang_app_branch": "Aplicativo / filial",
+  "lang_manage_captain_devices": "Gerenciar dispositivos Captain",
+  "lang_mobile_pos_settings": "Configurações do Mobile POS",
+  "lang_authorized": "Autorizado",
+  "lang_module_mobile_pos": "Mobile POS"
 }

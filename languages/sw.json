@@ -3530,5 +3530,18 @@
   "lang_print_settings": "Mipangilio ya uchapishaji",
   "lang_printer_settings": "Mipangilio ya kichapishi",
   "lang_receipt_design": "Muundo wa risiti",
-  "lang_save_printing_options": "Hifadhi chaguo za uchapishaji"
+  "lang_save_printing_options": "Hifadhi chaguo za uchapishaji",
+  "lang_devices": "Vifaa",
+  "lang_branch_payments": "Malipo ya tawi",
+  "lang_app": "Programu",
+  "lang_all_apps": "Programu zote",
+  "lang_connect_mobile_pos": "Unganisha Mobile POS",
+  "lang_connect_captain": "Unganisha Captain",
+  "lang_printers_scanners_scales": "Printa, skana na mizani",
+  "lang_printing_tills": "Kaunta za kuchapisha",
+  "lang_app_branch": "Programu / tawi",
+  "lang_manage_captain_devices": "Dhibiti vifaa vya Captain",
+  "lang_mobile_pos_settings": "Mipangilio ya Mobile POS",
+  "lang_authorized": "Imeidhinishwa",
+  "lang_module_mobile_pos": "Mobile POS"
 }

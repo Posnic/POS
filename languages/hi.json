@@ -3545,5 +3545,18 @@
   "lang_print_settings": "प्रिंट सेटिंग्स",
   "lang_printer_settings": "प्रिंटर सेटिंग्स",
   "lang_receipt_design": "रसीद डिज़ाइन",
-  "lang_save_printing_options": "प्रिंट विकल्प सहेजें"
+  "lang_save_printing_options": "प्रिंट विकल्प सहेजें",
+  "lang_devices": "डिवाइस",
+  "lang_branch_payments": "शाखा के भुगतान",
+  "lang_app": "ऐप",
+  "lang_all_apps": "सभी ऐप",
+  "lang_connect_mobile_pos": "Mobile POS जोड़ें",
+  "lang_connect_captain": "Captain जोड़ें",
+  "lang_printers_scanners_scales": "प्रिंटर, स्कैनर और तराजू",
+  "lang_printing_tills": "प्रिंट करने वाले काउंटर",
+  "lang_app_branch": "ऐप / शाखा",
+  "lang_manage_captain_devices": "Captain डिवाइस प्रबंधित करें",
+  "lang_mobile_pos_settings": "Mobile POS सेटिंग्स",
+  "lang_authorized": "अधिकृत",
+  "lang_module_mobile_pos": "Mobile POS"
 }

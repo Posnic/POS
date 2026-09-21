@@ -3530,5 +3530,18 @@
   "lang_print_settings": "ప్రింట్ సెట్టింగ్‌లు",
   "lang_printer_settings": "ప్రింటర్ సెట్టింగ్‌లు",
   "lang_receipt_design": "రసీదు రూపకల్పన",
-  "lang_save_printing_options": "ప్రింటింగ్ ఎంపికలను సేవ్ చేయండి"
+  "lang_save_printing_options": "ప్రింటింగ్ ఎంపికలను సేవ్ చేయండి",
+  "lang_devices": "పరికరాలు",
+  "lang_branch_payments": "శాఖ చెల్లింపులు",
+  "lang_app": "యాప్",
+  "lang_all_apps": "అన్ని యాప్‌లు",
+  "lang_connect_mobile_pos": "Mobile POS కనెక్ట్ చేయండి",
+  "lang_connect_captain": "Captain కనెక్ట్ చేయండి",
+  "lang_printers_scanners_scales": "ప్రింటర్లు, స్కానర్లు మరియు తూకపు యంత్రాలు",
+  "lang_printing_tills": "ప్రింట్ చేసే కౌంటర్లు",
+  "lang_app_branch": "యాప్ / శాఖ",
+  "lang_manage_captain_devices": "Captain పరికరాలను నిర్వహించండి",
+  "lang_mobile_pos_settings": "Mobile POS సెట్టింగ్‌లు",
+  "lang_authorized": "అధీకృతం",
+  "lang_module_mobile_pos": "Mobile POS"
 }

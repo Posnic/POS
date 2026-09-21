@@ -26,8 +26,8 @@ const SCRIPT = read('frontend', 'static', 'script', 'js', 'modules', 'js', 'hand
 const SETTINGS = read('frontend', 'static', 'script', 'js', 'modules', 'js', 'settings.js');
 
 test('THERE IS A DOOR, and it is in the Manage menu', () => {
-  assert.match(SIDEBAR, /id="manage_sec_handsets"/, 'nothing in the menu opens it');
-  assert.match(SIDEBAR, /href="#\/settings\/handsets"/);
+  assert.match(SIDEBAR, /id="manage_sec_devices"/, 'nothing in the menu opens it');
+  assert.match(SIDEBAR, /href="#\/settings\/devices"/);
 });
 
 test('and the pane that address opens exists', () => {
@@ -36,13 +36,14 @@ test('and the pane that address opens exists', () => {
    * so a menu entry without a pane is a link that silently goes somewhere
    * else - which is worse than no link at all.
    */
-  assert.match(PANE, /id="v-pills-handsets"/);
+  assert.match(PANE, /id="v-pills-devices"/);
   assert.match(PANE, /id="handsets_body"/, 'the table has no body to fill');
 });
 
 test('OPENING IT FETCHES THE LIST', () => {
   /* Every time: a phone that signed in a minute ago belongs on it. */
-  assert.match(SETTINGS, /key === 'handsets' && PosnicPro\.handsets/);
+  assert.match(SETTINGS, /key === 'devices' && PosnicPro\.handsets/);
+  assert.match(SETTINGS, /if \(key === 'handsets'\) key = 'devices'/, 'legacy device links must still resolve');
   assert.match(SETTINGS, /PosnicPro\.handsets\.load\(\)/);
 });
 
@@ -68,8 +69,9 @@ test('stopping one is asked about, and the question says what happens next', () 
 
   const body = SCRIPT.slice(at, at + 900);
   assert.match(body, /swal\(/, 'a phone is stopped with no confirmation');
-  assert.match(body, /lang_stop_this_phone_ask/);
-  assert.match(body, /password/i, 'the question does not say how to undo it');
+  assert.match(body, /lang_stop_device_access_help/);
+  assert.match(body, /authorized credentials/i, 'the question does not say how to undo it');
+  assert.match(body, /reconnects.*Offline authorization.*expires/, 'offline revocation must not promise an immediate remote stop');
 });
 
 test('and letting one back is not', () => {
@@ -100,15 +102,15 @@ test('every word on it can be translated', () => {
    */
   const english = JSON.parse(read('languages', '_english.json'));
   const keys = [
-    'lang_handsets',
-    'lang_handsets_help',
+    'lang_devices',
+    'lang_manage_paired_mobile_pos_and_captain_phone',
     'lang_handset_phone',
     'lang_handset_status',
     'lang_used_by',
-    'lang_in_use',
+    'lang_authorized',
     'lang_let_it_back',
     'lang_stop_this_phone',
-    'lang_stop_this_phone_ask',
+    'lang_stop_device_access_help',
     'lang_no_handset_has_signed_in_yet',
   ];
 

@@ -3530,5 +3530,18 @@
   "lang_print_settings": "මුද්‍රණ සැකසුම්",
   "lang_printer_settings": "මුද්‍රණ යන්ත්‍ර සැකසුම්",
   "lang_receipt_design": "රිසිට්පත් නිර්මාණය",
-  "lang_save_printing_options": "මුද්‍රණ විකල්ප සුරකින්න"
+  "lang_save_printing_options": "මුද්‍රණ විකල්ප සුරකින්න",
+  "lang_devices": "උපාංග",
+  "lang_branch_payments": "ශාඛා ගෙවීම්",
+  "lang_app": "යෙදුම",
+  "lang_all_apps": "සියලු යෙදුම්",
+  "lang_connect_mobile_pos": "Mobile POS සම්බන්ධ කරන්න",
+  "lang_connect_captain": "Captain සම්බන්ධ කරන්න",
+  "lang_printers_scanners_scales": "මුද්‍රණ යන්ත්‍ර, ස්කෑනර් සහ තරාදි",
+  "lang_printing_tills": "මුද්‍රණය කරන කවුන්ටර",
+  "lang_app_branch": "යෙදුම / ශාඛාව",
+  "lang_manage_captain_devices": "Captain උපාංග කළමනාකරණය",
+  "lang_mobile_pos_settings": "Mobile POS සැකසුම්",
+  "lang_authorized": "අවසර දී ඇත",
+  "lang_module_mobile_pos": "Mobile POS"
 }

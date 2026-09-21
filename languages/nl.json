@@ -3530,5 +3530,18 @@
   "lang_print_settings": "Afdrukinstellingen",
   "lang_printer_settings": "Printerinstellingen",
   "lang_receipt_design": "Bonontwerp",
-  "lang_save_printing_options": "Afdrukopties opslaan"
+  "lang_save_printing_options": "Afdrukopties opslaan",
+  "lang_devices": "Apparaten",
+  "lang_branch_payments": "Filiaalbetalingen",
+  "lang_app": "App",
+  "lang_all_apps": "Alle apps",
+  "lang_connect_mobile_pos": "Mobile POS verbinden",
+  "lang_connect_captain": "Captain verbinden",
+  "lang_printers_scanners_scales": "Printers, scanners en weegschalen",
+  "lang_printing_tills": "Afdrukkende kassa’s",
+  "lang_app_branch": "App / filiaal",
+  "lang_manage_captain_devices": "Captain-apparaten beheren",
+  "lang_mobile_pos_settings": "Mobile POS-instellingen",
+  "lang_authorized": "Geautoriseerd",
+  "lang_module_mobile_pos": "Mobile POS"
 }

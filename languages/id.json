@@ -3530,5 +3530,18 @@
   "lang_print_settings": "Pengaturan cetak",
   "lang_printer_settings": "Pengaturan printer",
   "lang_receipt_design": "Desain struk",
-  "lang_save_printing_options": "Simpan opsi pencetakan"
+  "lang_save_printing_options": "Simpan opsi pencetakan",
+  "lang_devices": "Perangkat",
+  "lang_branch_payments": "Pembayaran cabang",
+  "lang_app": "Aplikasi",
+  "lang_all_apps": "Semua aplikasi",
+  "lang_connect_mobile_pos": "Hubungkan Mobile POS",
+  "lang_connect_captain": "Hubungkan Captain",
+  "lang_printers_scanners_scales": "Printer, pemindai dan timbangan",
+  "lang_printing_tills": "Kasir pencetak",
+  "lang_app_branch": "Aplikasi / cabang",
+  "lang_manage_captain_devices": "Kelola perangkat Captain",
+  "lang_mobile_pos_settings": "Pengaturan Mobile POS",
+  "lang_authorized": "Diizinkan",
+  "lang_module_mobile_pos": "Mobile POS"
 }

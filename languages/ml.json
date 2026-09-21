@@ -3530,5 +3530,18 @@
   "lang_print_settings": "പ്രിന്റ് ക്രമീകരണങ്ങൾ",
   "lang_printer_settings": "പ്രിന്റർ ക്രമീകരണങ്ങൾ",
   "lang_receipt_design": "രസീത് രൂപകൽപ്പന",
-  "lang_save_printing_options": "പ്രിന്റ് ഓപ്ഷനുകൾ സംരക്ഷിക്കുക"
+  "lang_save_printing_options": "പ്രിന്റ് ഓപ്ഷനുകൾ സംരക്ഷിക്കുക",
+  "lang_devices": "ഉപകരണങ്ങൾ",
+  "lang_branch_payments": "ശാഖയിലെ പേയ്‌മെന്റുകൾ",
+  "lang_app": "ആപ്പ്",
+  "lang_all_apps": "എല്ലാ ആപ്പുകളും",
+  "lang_connect_mobile_pos": "Mobile POS ബന്ധിപ്പിക്കുക",
+  "lang_connect_captain": "Captain ബന്ധിപ്പിക്കുക",
+  "lang_printers_scanners_scales": "പ്രിന്ററുകൾ, സ്കാനറുകൾ, തൂക്കയന്ത്രങ്ങൾ",
+  "lang_printing_tills": "പ്രിന്റ് ചെയ്യുന്ന കൗണ്ടറുകൾ",
+  "lang_app_branch": "ആപ്പ് / ശാഖ",
+  "lang_manage_captain_devices": "Captain ഉപകരണങ്ങൾ നിയന്ത്രിക്കുക",
+  "lang_mobile_pos_settings": "Mobile POS ക്രമീകരണങ്ങൾ",
+  "lang_authorized": "അംഗീകൃതം",
+  "lang_module_mobile_pos": "Mobile POS"
 }

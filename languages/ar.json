@@ -3530,5 +3530,18 @@
   "lang_print_settings": "إعدادات الطباعة",
   "lang_printer_settings": "إعدادات الطابعة",
   "lang_receipt_design": "تصميم الإيصال",
-  "lang_save_printing_options": "حفظ خيارات الطباعة"
+  "lang_save_printing_options": "حفظ خيارات الطباعة",
+  "lang_devices": "الأجهزة",
+  "lang_branch_payments": "مدفوعات الفرع",
+  "lang_app": "التطبيق",
+  "lang_all_apps": "كل التطبيقات",
+  "lang_connect_mobile_pos": "ربط Mobile POS",
+  "lang_connect_captain": "ربط Captain",
+  "lang_printers_scanners_scales": "الطابعات والماسحات والموازين",
+  "lang_printing_tills": "أجهزة نقاط البيع للطباعة",
+  "lang_app_branch": "التطبيق / الفرع",
+  "lang_manage_captain_devices": "إدارة أجهزة Captain",
+  "lang_mobile_pos_settings": "إعدادات Mobile POS",
+  "lang_authorized": "مصرّح به",
+  "lang_module_mobile_pos": "Mobile POS"
 }

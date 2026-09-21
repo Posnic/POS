@@ -3566,5 +3566,18 @@
   "lang_print_settings": "அச்சு அமைப்புகள்",
   "lang_printer_settings": "அச்சுப்பொறி அமைப்புகள்",
   "lang_receipt_design": "ரசீது வடிவமைப்பு",
-  "lang_save_printing_options": "அச்சிடும் விருப்பங்களைச் சேமி"
+  "lang_save_printing_options": "அச்சிடும் விருப்பங்களைச் சேமி",
+  "lang_devices": "சாதனங்கள்",
+  "lang_branch_payments": "கிளைப் பணப்பரிவர்த்தனைகள்",
+  "lang_app": "செயலி",
+  "lang_all_apps": "அனைத்துச் செயலிகளும்",
+  "lang_connect_mobile_pos": "Mobile POS இணைக்கவும்",
+  "lang_connect_captain": "Captain இணைக்கவும்",
+  "lang_printers_scanners_scales": "அச்சுப்பொறிகள், ஸ்கேனர்கள் மற்றும் தராசுகள்",
+  "lang_printing_tills": "அச்சிடும் விற்பனை முனையங்கள்",
+  "lang_app_branch": "செயலி / கிளை",
+  "lang_manage_captain_devices": "Captain சாதனங்களை நிர்வகி",
+  "lang_mobile_pos_settings": "Mobile POS அமைப்புகள்",
+  "lang_authorized": "அங்கீகரிக்கப்பட்டது",
+  "lang_module_mobile_pos": "Mobile POS"
 }

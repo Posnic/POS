@@ -631,6 +631,12 @@
   "Device ID is required": [
     "src/controllers/whatsapp.controller.js"
   ],
+  "Device access revoked. Offline authorization expires within its configured period. Signing in again restores access.": [
+    "src/routes/handsets.routes.js"
+  ],
+  "Device not found in your branches": [
+    "src/routes/handsets.routes.js"
+  ],
   "Device removed successfully": [
     "src/controllers/whatsapp.controller.js"
   ],
@@ -2014,9 +2020,6 @@
   ],
   "That key does not belong to an API user.": [
     "src/middleware/api-key.js"
-  ],
-  "That phone is turned off. Signing in on it again will let it back.": [
-    "src/routes/handsets.routes.js"
   ],
   "That phone may be used again": [
     "src/routes/handsets.routes.js"

@@ -367,8 +367,9 @@ const protect = async (req, res, next) => {
       return continueWithTenant(req, res, next, principal);
     }
 
-    // 1) Try authenticating via existing express-session first (PHP-style primary auth)
-    if (req.session && req.session.userId) {
+    // Explicit bearer credentials must retain their user/device identity even
+    // when a previous response created a browser/native cookie session.
+    if (!bearer.startsWith('Bearer ') && req.session && req.session.userId) {
       try {
         const currentUser = await findUserByIdentifier(req.session.userId);
         if (currentUser && authVersion.current(currentUser, req.session)) {
@@ -436,6 +437,8 @@ const protect = async (req, res, next) => {
     }
 
     // 6) Restore session from JWT like PHP's JwtHelper does
+    if (req.handsetDevice && decoded.branch_id)
+      req.headers['x-branch-id'] = String(decoded.branch_id);
     if (req.session) {
       req.session.userId = currentUser.id || currentUser._id?.toString();
       authVersion.stampSession(req, currentUser);
@@ -502,7 +505,11 @@ const isLoggedIn = async (req, res, next) => {
 const optionalProtect = async (req, res, next) => {
   try {
     // 1) Try session-based auth
-    if (req.session && req.session.userId) {
+    if (
+      !String(req.headers?.authorization || '').startsWith('Bearer ') &&
+      req.session &&
+      req.session.userId
+    ) {
       try {
         const currentUser = await findUserByIdentifier(req.session.userId);
         if (currentUser && authVersion.current(currentUser, req.session)) {

@@ -3530,5 +3530,18 @@
   "lang_print_settings": "Impostazioni di stampa",
   "lang_printer_settings": "Impostazioni stampante",
   "lang_receipt_design": "Design dello scontrino",
-  "lang_save_printing_options": "Salva opzioni di stampa"
+  "lang_save_printing_options": "Salva opzioni di stampa",
+  "lang_devices": "Dispositivi",
+  "lang_branch_payments": "Pagamenti della filiale",
+  "lang_app": "App",
+  "lang_all_apps": "Tutte le app",
+  "lang_connect_mobile_pos": "Collega Mobile POS",
+  "lang_connect_captain": "Collega Captain",
+  "lang_printers_scanners_scales": "Stampanti, scanner e bilance",
+  "lang_printing_tills": "Casse per la stampa",
+  "lang_app_branch": "App / filiale",
+  "lang_manage_captain_devices": "Gestisci dispositivi Captain",
+  "lang_mobile_pos_settings": "Impostazioni Mobile POS",
+  "lang_authorized": "Autorizzato",
+  "lang_module_mobile_pos": "Mobile POS"
 }

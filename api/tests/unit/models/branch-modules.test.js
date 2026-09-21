@@ -161,3 +161,15 @@ describe('updateCommonSettings remote-target dispatch', () => {
     expect(rows[0].receiving_prefix).toBe('ORI');
   });
 });
+
+test('Mobile POS defaults off, preserves legacy enabled branches, and is independent of Captain', async () => {
+  const rows = [{ _id: TARGET, license: LICENSE, module_captain_enable: false }];
+  const model = makeModel(rows);
+  expect((await model.getBranchModules(TARGET)).data.modules.module_mobile_pos_enable).toBe(false);
+  rows[0].mobile_pos = { enabled: true, offlineHours: 24 };
+  expect((await model.getBranchModules(TARGET)).data.modules.module_mobile_pos_enable).toBe(true);
+  await model.updateBranchModules(TARGET, { module_mobile_pos_enable: 'false' });
+  expect((await model.getBranchModules(TARGET)).data.modules.module_mobile_pos_enable).toBe(false);
+  expect(rows[0].module_captain_enable).toBe(false);
+  expect(rows[0].mobile_pos.offlineHours).toBe(24);
+});

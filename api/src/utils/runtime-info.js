@@ -110,6 +110,7 @@ function buildRuntimeInfo(env = process.env, apiRoot = path.join(__dirname, '..'
        * nor honours the key.
        */
       idempotentOrders: true,
+      mobilePosV1: true,
     },
   };
 }

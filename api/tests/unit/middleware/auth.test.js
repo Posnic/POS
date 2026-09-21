@@ -1,4 +1,5 @@
 'use strict';
+jest.mock('mongoose', () => ({ connection: { db: undefined } }));
 
 jest.mock('jsonwebtoken', () => ({
   sign: jest.fn(() => 'signed-token'),
@@ -140,3 +141,26 @@ describe('middleware/auth', () => {
     expect(res.clearCookie).not.toHaveBeenCalled();
   });
 });
+
+test.each(['protect', 'optionalProtect'])(
+  '%s preserves bearer device identity when a cookie session is also present',
+  async (method) => {
+    jest.clearAllMocks();
+    const user = { id: 'token-user', changedPasswordAfter: jest.fn(() => false) };
+    jwt.verify.mockResolvedValue({ id: 'token-user', device_id: 'phone-123', iat: 1 });
+    findUserByIdentifier.mockResolvedValue(user);
+    const req = {
+      headers: { authorization: 'Bearer device-token' },
+      session: { userId: 'cookie-user' },
+      cookies: {},
+    };
+    const next = jest.fn();
+    await auth[method](req, { locals: {} }, next);
+    expect(jwt.verify).toHaveBeenCalled();
+    expect(findUserByIdentifier).toHaveBeenCalledWith('token-user');
+    expect(findUserByIdentifier).not.toHaveBeenCalledWith('cookie-user');
+    expect(req.handsetDevice).toBe('phone-123');
+    expect(req.user).toBe(user);
+    expect(next).toHaveBeenCalledWith();
+  }
+);
