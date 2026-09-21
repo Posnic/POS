@@ -1,0 +1,86 @@
+body {
+  margin: 0;
+  background: #f6f7f8;
+  color: #182129;
+  font:
+    16px/1.5 system-ui,
+    sans-serif;
+}
+main {
+  max-width: 760px;
+  margin: auto;
+  padding: 24px;
+}
+h1 {
+  font-size: 28px;
+}
+h2 {
+  font-size: 20px;
+  margin-top: 0;
+}
+section {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  margin: 20px 0;
+  border: 1px solid #e2e5e8;
+}
+label {
+  display: block;
+  margin: 12px 0;
+}
+input:not([type='checkbox']):not([type='radio']) {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 10px;
+  border: 1px solid #b7bec4;
+  border-radius: 6px;
+}
+input[type='checkbox'],
+input[type='radio'] {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+button {
+  font: inherit;
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 7px;
+  background: #182129;
+  color: white;
+  border: 0;
+  margin: 8px 8px 8px 0;
+}
+p {
+  color: #52606b;
+}
+#message {
+  color: #a32b14;
+  white-space: pre-line;
+}
+output {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.account {
+  border-top: 1px solid #ddd;
+  padding: 12px 0;
+}
+a {
+  color: #a54500;
+  overflow-wrap: anywhere;
+}
+#addresses select {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  font: inherit;
+  border: 1px solid #b7bec4;
+  border-radius: 6px;
+}

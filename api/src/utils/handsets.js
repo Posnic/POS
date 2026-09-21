@@ -124,7 +124,7 @@ function deviceIdOf(device) {
  *   downstream changes. An app that does not send a device is the app as it
  *   was, and must keep working exactly as it did.
  */
-async function remember(db, { device, user, ip } = {}) {
+async function remember(db, { device, user, ip, branchId } = {}) {
   const deviceId = deviceIdOf(device);
   if (!db || !deviceId) return '';
 
@@ -133,13 +133,19 @@ async function remember(db, { device, user, ip } = {}) {
 
   const set = {
     device_id: deviceId,
+    ...(branchId || user?.branch_id ? { branch_id: clean(branchId || user.branch_id, 64) } : {}),
     last_seen: seen,
     last_ip: clean(ip, 64),
     user_id: clean(user && (user._id || user.id), 64),
     user_name: clean(user && (user.username || user.email || user.name)),
+    branch_name: clean(
+      (user?.branch_access || []).find(
+        (b) => String(b.branch_id) === String(branchId || user?.branch_id)
+      )?.branch_name || ''
+    ),
     model: clean(facts.device_model),
     platform: clean(facts.platform, 40),
-    app: clean(facts.app, 40),
+    app: clean(facts.app || (facts.platform === 'mobile-pos' ? 'mobile-pos' : 'captain'), 40),
     app_version: clean(facts.app_version, 60),
     network: clean(facts.network, 20),
     language: clean(facts.language, 20),

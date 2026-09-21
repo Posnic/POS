@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "Lindungi akses ke toko Anda: simpan kode pemulihan offline jika email tidak tersedia.",
   "lang_recovery_sheet_warning": "Setiap kode hanya dapat digunakan sekali. Simpan lembar ini terpisah dari komputer kasir. Siapa pun yang memiliki kode dapat mereset akun ini.",
   "lang_recovery_shown_once": "Hanya ditampilkan sekali. Setiap kode dapat mereset {account} satu kali.",
-  "lang_recovery_username": "Email atau nama pengguna"
+  "lang_recovery_username": "Email atau nama pengguna",
+  "lang_devices": "Perangkat",
+  "lang_branch_payments": "Pembayaran cabang",
+  "lang_app": "Aplikasi",
+  "lang_all_apps": "Semua aplikasi",
+  "lang_connect_mobile_pos": "Hubungkan Mobile POS",
+  "lang_connect_captain": "Hubungkan Captain",
+  "lang_printers_scanners_scales": "Printer, pemindai dan timbangan",
+  "lang_printing_tills": "Kasir pencetak",
+  "lang_app_branch": "Aplikasi / cabang",
+  "lang_manage_captain_devices": "Kelola perangkat Captain",
+  "lang_mobile_pos_settings": "Pengaturan Mobile POS",
+  "lang_authorized": "Diizinkan",
+  "lang_module_mobile_pos": "Mobile POS"
 }

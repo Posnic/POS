@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "మీ దుకాణ ప్రాప్యతను కాపాడండి: ఇమెయిల్ అందుబాటులో లేనప్పుడు ఉపయోగించేందుకు ఆఫ్‌లైన్ పునరుద్ధరణ కోడ్‌లను సేవ్ చేయండి.",
   "lang_recovery_sheet_warning": "ప్రతి కోడ్ ఒక్కసారి మాత్రమే పనిచేస్తుంది. ఈ పత్రాన్ని అమ్మకాల కంప్యూటర్‌కు దూరంగా ఉంచండి. కోడ్ ఉన్న ఎవరైనా ఈ ఖాతాను రీసెట్ చేయవచ్చు.",
   "lang_recovery_shown_once": "ఒక్కసారి మాత్రమే చూపబడతాయి. ప్రతి కోడ్ {account} ను ఒక్కసారి రీసెట్ చేయగలదు.",
-  "lang_recovery_username": "ఇమెయిల్ లేదా వినియోగదారు పేరు"
+  "lang_recovery_username": "ఇమెయిల్ లేదా వినియోగదారు పేరు",
+  "lang_devices": "పరికరాలు",
+  "lang_branch_payments": "శాఖ చెల్లింపులు",
+  "lang_app": "యాప్",
+  "lang_all_apps": "అన్ని యాప్‌లు",
+  "lang_connect_mobile_pos": "Mobile POS కనెక్ట్ చేయండి",
+  "lang_connect_captain": "Captain కనెక్ట్ చేయండి",
+  "lang_printers_scanners_scales": "ప్రింటర్లు, స్కానర్లు మరియు తూకపు యంత్రాలు",
+  "lang_printing_tills": "ప్రింట్ చేసే కౌంటర్లు",
+  "lang_app_branch": "యాప్ / శాఖ",
+  "lang_manage_captain_devices": "Captain పరికరాలను నిర్వహించండి",
+  "lang_mobile_pos_settings": "Mobile POS సెట్టింగ్‌లు",
+  "lang_authorized": "అధీకృతం",
+  "lang_module_mobile_pos": "Mobile POS"
 }

@@ -53,6 +53,13 @@ function openRoutes(file) {
  * what strangers may do to a shop's data, so it should take a code review.
  */
 const ALLOWED_ANONYMOUS = {
+  'mobile-pos.routes.js': [
+    // Pairing is a rate-limited authentication entry point with an expiring,
+    // one-use secret; cloud grants also require the approved phone and proof.
+    // Discovery proof returns only a nonce MAC for an unexpired random grant,
+    // never account, catalogue or device data. All selling routes use protect.
+    '/pair', '/enrolment-proof',
+  ],
   'recovery.routes.js': [
     // Installation-wide capability only, without account lookup; reset proves
     // ownership with a one-use 128-bit code, with its own persistent limiter.

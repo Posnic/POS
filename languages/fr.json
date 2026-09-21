@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "Protégez l'accès à votre boutique : conservez des codes de récupération hors ligne au cas où l'e-mail serait indisponible.",
   "lang_recovery_sheet_warning": "Chaque code fonctionne une fois. Conservez cette feuille à l'écart de la caisse. Toute personne ayant un code peut réinitialiser ce compte.",
   "lang_recovery_shown_once": "Affichés une seule fois. Chaque code peut réinitialiser {account} une fois.",
-  "lang_recovery_username": "E-mail ou nom d'utilisateur"
+  "lang_recovery_username": "E-mail ou nom d'utilisateur",
+  "lang_devices": "Appareils",
+  "lang_branch_payments": "Paiements de la succursale",
+  "lang_app": "Application",
+  "lang_all_apps": "Toutes les applications",
+  "lang_connect_mobile_pos": "Connecter Mobile POS",
+  "lang_connect_captain": "Connecter Captain",
+  "lang_printers_scanners_scales": "Imprimantes, scanners et balances",
+  "lang_printing_tills": "Caisses d’impression",
+  "lang_app_branch": "Application / succursale",
+  "lang_manage_captain_devices": "Gérer les appareils Captain",
+  "lang_mobile_pos_settings": "Paramètres Mobile POS",
+  "lang_authorized": "Autorisé",
+  "lang_module_mobile_pos": "Mobile POS"
 }

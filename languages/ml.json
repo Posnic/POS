@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "കടയിലേക്കുള്ള പ്രവേശനം സംരക്ഷിക്കുക: ഇമെയിൽ ലഭ്യമല്ലാത്തപ്പോൾ ഉപയോഗിക്കാൻ ഓഫ്‌ലൈൻ വീണ്ടെടുക്കൽ കോഡുകൾ സൂക്ഷിക്കുക.",
   "lang_recovery_sheet_warning": "ഓരോ കോഡും ഒരിക്കൽ മാത്രമേ പ്രവർത്തിക്കൂ. ഈ താൾ വിൽപ്പന കമ്പ്യൂട്ടറിൽനിന്ന് മാറ്റി സൂക്ഷിക്കുക. കോഡുള്ള ആർക്കും ഈ അക്കൗണ്ട് പുനഃസജ്ജമാക്കാം.",
   "lang_recovery_shown_once": "ഒരിക്കൽ മാത്രം കാണിക്കും. ഓരോ കോഡിനും {account} ഒരിക്കൽ പുനഃസജ്ജമാക്കാം.",
-  "lang_recovery_username": "ഇമെയിൽ അല്ലെങ്കിൽ ഉപയോക്തൃനാമം"
+  "lang_recovery_username": "ഇമെയിൽ അല്ലെങ്കിൽ ഉപയോക്തൃനാമം",
+  "lang_devices": "ഉപകരണങ്ങൾ",
+  "lang_branch_payments": "ശാഖയിലെ പേയ്‌മെന്റുകൾ",
+  "lang_app": "ആപ്പ്",
+  "lang_all_apps": "എല്ലാ ആപ്പുകളും",
+  "lang_connect_mobile_pos": "Mobile POS ബന്ധിപ്പിക്കുക",
+  "lang_connect_captain": "Captain ബന്ധിപ്പിക്കുക",
+  "lang_printers_scanners_scales": "പ്രിന്ററുകൾ, സ്കാനറുകൾ, തൂക്കയന്ത്രങ്ങൾ",
+  "lang_printing_tills": "പ്രിന്റ് ചെയ്യുന്ന കൗണ്ടറുകൾ",
+  "lang_app_branch": "ആപ്പ് / ശാഖ",
+  "lang_manage_captain_devices": "Captain ഉപകരണങ്ങൾ നിയന്ത്രിക്കുക",
+  "lang_mobile_pos_settings": "Mobile POS ക്രമീകരണങ്ങൾ",
+  "lang_authorized": "അംഗീകൃതം",
+  "lang_module_mobile_pos": "Mobile POS"
 }

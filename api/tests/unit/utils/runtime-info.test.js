@@ -98,7 +98,7 @@ describe('buildRuntimeInfo', () => {
      * classifying it is a decision, not a detail.
      */
     const GRANTS = ['account'];
-    const CAPABILITIES = ['idempotentOrders'];
+    const CAPABILITIES = ['idempotentOrders', 'mobilePosV1'];
 
     const features = buildRuntimeInfo({}, '/nowhere').features;
     expect(typeof features).toBe('object');

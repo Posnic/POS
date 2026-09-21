@@ -22,6 +22,9 @@ const path = require('path');
 
 const branchSchema = new Schema(
   {
+    mobile_pos: { type: Schema.Types.Mixed },
+    module_mobile_pos_enable: { type: Boolean },
+    payment_settings: { type: Schema.Types.Mixed },
     branch_id: { type: Schema.Types.ObjectId, ref: 'Branch' },
     branch_name: { type: String, required: true },
     store_email: { type: String },

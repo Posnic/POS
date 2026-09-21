@@ -42,6 +42,10 @@
       "description": "Mounted at /base"
     },
     {
+      "name": "Branch payments",
+      "description": "Mounted at /branch-payments"
+    },
+    {
       "name": "Branches",
       "description": "Mounted at /branches"
     },
@@ -120,6 +124,10 @@
     {
       "name": "Messaging",
       "description": "Mounted at /messaging"
+    },
+    {
+      "name": "Mobile pos",
+      "description": "Mounted at /mobile-pos"
     },
     {
       "name": "Online ordering",
@@ -897,6 +905,51 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/branch-payments": {
+      "get": {
+        "summary": "branch",
+        "operationId": "get_branch_payments",
+        "tags": [
+          "Branch payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "payments",
+        "operationId": "post_branch_payments",
+        "tags": [
+          "Branch payments"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/branches/{id}/signature": {
@@ -8337,6 +8390,242 @@
         "operationId": "post_messaging_test",
         "tags": [
           "Messaging"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile-pos/enrolment-proof": {
+      "post": {
+        "summary": "hex",
+        "operationId": "post_mobile_pos_enrolment_proof",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile-pos/pair": {
+      "post": {
+        "summary": "handsetLifetimeSeconds",
+        "operationId": "post_mobile_pos_pair",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile-pos/bootstrap": {
+      "get": {
+        "summary": "bootstrap",
+        "operationId": "get_mobile_pos_bootstrap",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/mobile-pos/sales": {
+      "post": {
+        "summary": "ingest",
+        "operationId": "post_mobile_pos_sales",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile-pos/settings": {
+      "get": {
+        "summary": "branchId",
+        "operationId": "get_mobile_pos_settings",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "saved",
+        "operationId": "post_mobile_pos_settings",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile-pos/recover": {
+      "post": {
+        "summary": "length",
+        "operationId": "post_mobile_pos_recover",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile-pos/pair-codes": {
+      "post": {
+        "summary": "name",
+        "operationId": "post_mobile_pos_pair_codes",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile-pos/devices/revoke": {
+      "post": {
+        "summary": "revoked",
+        "operationId": "post_mobile_pos_devices_revoke",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile-pos/print-jobs": {
+      "post": {
+        "summary": "queued",
+        "operationId": "post_mobile_pos_print_jobs",
+        "tags": [
+          "Mobile pos"
         ],
         "responses": {
           "200": {

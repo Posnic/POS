@@ -74,6 +74,7 @@ PosnicPro.settings = {
          * routes to the page that owns it now; a key nobody knows lands on
          * Core Settings rather than on rubble.
          */
+        if (key === 'handsets') key = 'devices';
         var LEGACY_SECTIONS = {
             branches: 'branches',
             outlet: 'branches',
@@ -120,7 +121,11 @@ PosnicPro.settings = {
         if (key === 'taxmodule') { PosnicPro.settings.taxSystemLoad(); }
         /* A list has to be fetched every time it is opened: a phone that
            signed in a minute ago belongs on it. */
-        if (key === 'handsets' && PosnicPro.handsets) { PosnicPro.handsets.load(); }
+        if (key === 'devices' && PosnicPro.handsets) { PosnicPro.handsets.load(); }
+        if (key === 'mobilepos' || key === 'branchpayments') {
+            var base = (typeof API_URL === 'string' && API_URL) || '/api';
+            $('#' + (key === 'mobilepos' ? 'mobile_pos_frame' : 'branch_payments_frame')).attr('src', base.replace(/\/+$/, '') + '/mobile-pos-setup' + (key === 'branchpayments' ? '?view=payments' : ''));
+        }
         if (key === 'ai') { PosnicPro.settings.ai.load(); }
     },
     /*
@@ -638,6 +643,7 @@ PosnicPro.settings = {
                         module_online_ordering_enable: response.data['module_online_ordering_enable'] !== false,
                         module_kiosk_enable: response.data['module_kiosk_enable'] !== false,
                         module_captain_enable: response.data['module_captain_enable'] !== false,
+                        module_mobile_pos_enable: response.data['module_mobile_pos_enable'] === true,
                         module_delivery_partners_enable: response.data['module_delivery_partners_enable'] !== false,
                         module_webshop_enable: response.data['module_webshop_enable'] !== false,
                         module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false,
@@ -939,6 +945,7 @@ PosnicPro.settings = {
                 $('#module_online_ordering_enable').prop('checked', data.module_online_ordering_enable !== false);
                 $('#module_kiosk_enable').prop('checked', data.module_kiosk_enable !== false);
                 $('#module_captain_enable').prop('checked', data.module_captain_enable !== false);
+                $('#module_mobile_pos_enable').prop('checked', data.module_mobile_pos_enable === undefined ? data.mobile_pos?.enabled === true : data.module_mobile_pos_enable === true);
                 $('#module_delivery_partners_enable').prop('checked', data.module_delivery_partners_enable !== false);
                 $('#module_webshop_enable').prop('checked', data.module_webshop_enable !== false);
                 $('#module_recyclebin_enable').prop('checked', data.module_recyclebin_enable !== false);
@@ -976,6 +983,7 @@ PosnicPro.settings = {
                     module_online_ordering_enable: data.module_online_ordering_enable !== false,
                     module_kiosk_enable: data.module_kiosk_enable !== false,
                     module_captain_enable: data.module_captain_enable !== false,
+                    module_mobile_pos_enable: data.module_mobile_pos_enable === true,
                     module_delivery_partners_enable: data.module_delivery_partners_enable !== false,
                     module_webshop_enable: data.module_webshop_enable !== false,
                     module_recyclebin_enable: data.module_recyclebin_enable !== false,
@@ -2019,7 +2027,7 @@ if ($wrapper.length) {
         'cash_register_enable', 'till_lock_enable',
         'module_tax_enable', 'module_credit_enable', 'module_marketing_enable',
         'module_messaging_enable',
-        'module_online_ordering_enable', 'module_kiosk_enable', 'module_captain_enable',
+        'module_online_ordering_enable', 'module_kiosk_enable', 'module_captain_enable', 'module_mobile_pos_enable',
         'module_delivery_partners_enable', 'module_webshop_enable',
         /* Derived from the five above, but still saved: the reports that span
            channels read it. */
@@ -2245,6 +2253,7 @@ if ($wrapper.length) {
                 module_online_ordering_enable: $('#module_online_ordering_enable').is(':checked') ? 'true' : 'false',
                 module_kiosk_enable: $('#module_kiosk_enable').is(':checked') ? 'true' : 'false',
                 module_captain_enable: $('#module_captain_enable').is(':checked') ? 'true' : 'false',
+                module_mobile_pos_enable: $('#module_mobile_pos_enable').is(':checked') ? 'true' : 'false',
                 module_delivery_partners_enable: $('#module_delivery_partners_enable').is(':checked') ? 'true' : 'false',
                 module_webshop_enable: $('#module_webshop_enable').is(':checked') ? 'true' : 'false',
                 module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked') ? 'true' : 'false',
@@ -2375,6 +2384,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_online_ordering_enable: $('#module_online_ordering_enable').is(':checked'),
                     module_kiosk_enable: $('#module_kiosk_enable').is(':checked'),
                     module_captain_enable: $('#module_captain_enable').is(':checked'),
+                    module_mobile_pos_enable: $('#module_mobile_pos_enable').is(':checked'),
                     module_delivery_partners_enable: $('#module_delivery_partners_enable').is(':checked'),
                     module_webshop_enable: $('#module_webshop_enable').is(':checked'),
                     module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked'),
@@ -4040,7 +4050,7 @@ $(function () {
 
     // The printer and paper controls moved to Hardware Manager, a separate
     // window the desktop app owns. This is the way through to it.
-    $(document).on('click', '#open_hardware_manager', function () {
+    $(document).on('click', '#open_hardware_manager, [data-open-device-hardware]', function () {
         if (window.electronAPI && window.electronAPI.desktop) {
             window.electronAPI.desktop.open('hardware');
         } else {
@@ -7611,6 +7621,7 @@ PosnicPro.settings.FEATURE_HOME = {
     module_online_ordering_enable: ['onlineordering', 'Online Ordering'],
     module_kiosk_enable: ['kioskmachine', 'Kiosk Machine'],
     module_captain_enable: ['captainapp', 'Captain App'],
+    module_mobile_pos_enable: ['mobilepos', 'Mobile POS'],
     module_delivery_partners_enable: ['deliverypartners', 'Delivery Partners'],
     module_webshop_enable: ['webshop', 'Webshop'],
     module_themes_enable: ['theme', 'Themes'],
@@ -10099,3 +10110,19 @@ $(document).on('click', '#ai_remove_all', function () {
        and the form comes back empty for a fresh setup. */
     PosnicPro.settings.ai.removeKey();
 });
+
+$(document).on('click', '#v-pills-mobilepos-tab', function (e) {
+    e.preventDefault();
+    var base = (typeof API_URL === 'string' && API_URL) || '/api';
+    $('#mobile_pos_frame').attr('src', base.replace(/\/+$/, '') + '/mobile-pos-setup');
+});
+
+window.addEventListener('message', function (event) {
+    var frames = ['mobile_pos_frame', 'branch_payments_frame'].map(function (id) { return document.getElementById(id); });
+    if (!frames.some(function (frame) { return frame && frame.contentWindow === event.source && frame.src && new URL(frame.src, location.href).origin === event.origin; })) return;
+    var data = event.data || {};
+    if (data.type !== 'posnic-settings-nav' || ['modules', 'devices', 'branchpayments'].indexOf(data.section) < 0) return;
+    if (data.section === 'devices') PosnicPro.handsets.filter = 'mobile-pos';
+    location.hash = '#/settings/' + data.section;
+});
+$(document).on('click', '#captain_devices_link', function () { PosnicPro.handsets.filter = 'captain'; });

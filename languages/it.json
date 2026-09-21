@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "Proteggi l'accesso al negozio: salva codici di recupero offline nel caso in cui l'email non sia disponibile.",
   "lang_recovery_sheet_warning": "Ogni codice funziona una volta. Conserva questo foglio lontano dalla cassa. Chiunque abbia un codice può reimpostare questo account.",
   "lang_recovery_shown_once": "Mostrati una sola volta. Ogni codice può reimpostare {account} una volta.",
-  "lang_recovery_username": "Email o nome utente"
+  "lang_recovery_username": "Email o nome utente",
+  "lang_devices": "Dispositivi",
+  "lang_branch_payments": "Pagamenti della filiale",
+  "lang_app": "App",
+  "lang_all_apps": "Tutte le app",
+  "lang_connect_mobile_pos": "Collega Mobile POS",
+  "lang_connect_captain": "Collega Captain",
+  "lang_printers_scanners_scales": "Stampanti, scanner e bilance",
+  "lang_printing_tills": "Casse per la stampa",
+  "lang_app_branch": "App / filiale",
+  "lang_manage_captain_devices": "Gestisci dispositivi Captain",
+  "lang_mobile_pos_settings": "Impostazioni Mobile POS",
+  "lang_authorized": "Autorizzato",
+  "lang_module_mobile_pos": "Mobile POS"
 }

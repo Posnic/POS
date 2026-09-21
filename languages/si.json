@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "වෙළඳසැලට ප්‍රවේශය ආරක්ෂා කරන්න: ඊමේල් නොලැබෙන විට භාවිත කිරීමට අන්තර්ජාලය රහිත ප්‍රතිසාධන කේත සුරකින්න.",
   "lang_recovery_sheet_warning": "සෑම කේතයක්ම එක් වරක් පමණක් ක්‍රියා කරයි. මෙම පත්‍රය විකුණුම් පරිගණකයෙන් වෙන්ව තබන්න. කේතයක් ඇති ඕනෑම කෙනෙකුට මෙම ගිණුම යළි සැකසිය හැක.",
   "lang_recovery_shown_once": "එක් වරක් පමණක් පෙන්වයි. සෑම කේතයකටම {account} එක් වරක් යළි සැකසිය හැක.",
-  "lang_recovery_username": "ඊමේල් හෝ පරිශීලක නාමය"
+  "lang_recovery_username": "ඊමේල් හෝ පරිශීලක නාමය",
+  "lang_devices": "උපාංග",
+  "lang_branch_payments": "ශාඛා ගෙවීම්",
+  "lang_app": "යෙදුම",
+  "lang_all_apps": "සියලු යෙදුම්",
+  "lang_connect_mobile_pos": "Mobile POS සම්බන්ධ කරන්න",
+  "lang_connect_captain": "Captain සම්බන්ධ කරන්න",
+  "lang_printers_scanners_scales": "මුද්‍රණ යන්ත්‍ර, ස්කෑනර් සහ තරාදි",
+  "lang_printing_tills": "මුද්‍රණය කරන කවුන්ටර",
+  "lang_app_branch": "යෙදුම / ශාඛාව",
+  "lang_manage_captain_devices": "Captain උපාංග කළමනාකරණය",
+  "lang_mobile_pos_settings": "Mobile POS සැකසුම්",
+  "lang_authorized": "අවසර දී ඇත",
+  "lang_module_mobile_pos": "Mobile POS"
 }

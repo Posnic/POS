@@ -229,6 +229,8 @@ class SyncAgentManager {
        * while the answer was one header away.
        */
       POSNIC_APP_VERSION: this.app.getVersion(),
+      // Set by resolveLocalPorts before startup; do not advertise a guessed port.
+      POSNIC_API_PORT: String(process.env.PORT || ''),
       /*
        * Self-update (U3.5). Where the agent should leave downloaded releases
        * for this manager to verify and apply on the next app start, and

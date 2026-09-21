@@ -1590,6 +1590,7 @@ class SettingModel extends BaseModel {
         module_online_ordering_enable: offOnly,
         module_kiosk_enable: offOnly,
         module_captain_enable: offOnly,
+        module_mobile_pos_enable: onOnly,
         module_delivery_partners_enable: offOnly,
         module_webshop_enable: offOnly,
         module_recyclebin_enable: offOnly,
@@ -1787,6 +1788,7 @@ class SettingModel extends BaseModel {
       module_online_ordering_enable: { parse: offOnly, dflt: true },
       module_kiosk_enable: { parse: offOnly, dflt: true },
       module_captain_enable: { parse: offOnly, dflt: true },
+      module_mobile_pos_enable: { parse: onOnly, dflt: false },
       module_delivery_partners_enable: { parse: offOnly, dflt: true },
       module_webshop_enable: { parse: offOnly, dflt: true },
       module_recyclebin_enable: { parse: offOnly, dflt: true },
@@ -1882,6 +1884,8 @@ class SettingModel extends BaseModel {
       for (const [key, def] of Object.entries(SettingModel.moduleToggleMap())) {
         modules[key] = branch[key] === undefined ? def.dflt : def.parse(branch[key]);
       }
+      if (branch.module_mobile_pos_enable === undefined)
+        modules.module_mobile_pos_enable = branch.mobile_pos?.enabled === true;
       let idle = parseInt(branch.till_lock_idle_minutes, 10);
       if (isNaN(idle) || idle < 0) idle = 0;
       modules.till_lock_idle_minutes = Math.min(idle, 120);

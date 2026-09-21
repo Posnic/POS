@@ -106,6 +106,12 @@ jobs:
           npx jest -c jest.ci.config.js --ci --forceExit             --coverageReporters=text-summary --coverage 2>&1 | tee ../.jest-api.log
           exit ${PIPESTATUS[0]}
 
+      - name: Mobile POS integration
+        working-directory: api
+        env:
+          MOBILE_FULL_APP: "1"
+        run: node --test tests/mobile-pos.integration.cjs
+
       # The README carries a test count, a coverage figure and an endpoint
       # count. All three are hardcoded and all three drift; the readiness audit
       # found the test badge already stale. This checks them against what just

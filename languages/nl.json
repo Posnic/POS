@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "Bescherm de toegang tot uw winkel: bewaar offline herstelcodes voor als e-mail niet beschikbaar is.",
   "lang_recovery_sheet_warning": "Elke code werkt één keer. Bewaar dit blad apart van de kassa. Iedereen met een code kan dit account opnieuw instellen.",
   "lang_recovery_shown_once": "Slechts één keer zichtbaar. Elke code kan {account} één keer opnieuw instellen.",
-  "lang_recovery_username": "E-mail of gebruikersnaam"
+  "lang_recovery_username": "E-mail of gebruikersnaam",
+  "lang_devices": "Apparaten",
+  "lang_branch_payments": "Filiaalbetalingen",
+  "lang_app": "App",
+  "lang_all_apps": "Alle apps",
+  "lang_connect_mobile_pos": "Mobile POS verbinden",
+  "lang_connect_captain": "Captain verbinden",
+  "lang_printers_scanners_scales": "Printers, scanners en weegschalen",
+  "lang_printing_tills": "Afdrukkende kassa’s",
+  "lang_app_branch": "App / filiaal",
+  "lang_manage_captain_devices": "Captain-apparaten beheren",
+  "lang_mobile_pos_settings": "Mobile POS-instellingen",
+  "lang_authorized": "Geautoriseerd",
+  "lang_module_mobile_pos": "Mobile POS"
 }

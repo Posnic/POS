@@ -175,6 +175,17 @@ class StockLogsRepository extends BaseModel {
         view_item_id: newLog.view_item_id?.toString(),
       });
 
+      // Mobile offline ingestion can resume after a process interruption.
+      // A stable operation id records its stock audit exactly once.
+      if (logData.operationId && ObjectId.isValid(logData.operationId)) {
+        const stableId = new ObjectId(logData.operationId);
+        await collection.updateOne({ _id: stableId }, { $setOnInsert: newLog }, { upsert: true });
+        return {
+          status: true,
+          data: { _id: stableId, ...newLog },
+          message: SUCCESS_MESSAGES.STOCK_LOG_CREATED,
+        };
+      }
       const result = await collection.insertOne(newLog);
 
       console.log('[STOCK LOG] Stock log created successfully:', result.insertedId.toString());

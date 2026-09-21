@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "احمِ الوصول إلى متجرك: احفظ رموز استرداد دون اتصال لاستخدامها عند تعذر البريد الإلكتروني.",
   "lang_recovery_sheet_warning": "يعمل كل رمز مرة واحدة. احتفظ بهذه الورقة بعيداً عن جهاز البيع. يستطيع أي شخص لديه رمز إعادة تعيين هذا الحساب.",
   "lang_recovery_shown_once": "تُعرض مرة واحدة فقط. يمكن لكل رمز إعادة تعيين {account} مرة واحدة.",
-  "lang_recovery_username": "البريد الإلكتروني أو اسم المستخدم"
+  "lang_recovery_username": "البريد الإلكتروني أو اسم المستخدم",
+  "lang_devices": "الأجهزة",
+  "lang_branch_payments": "مدفوعات الفرع",
+  "lang_app": "التطبيق",
+  "lang_all_apps": "كل التطبيقات",
+  "lang_connect_mobile_pos": "ربط Mobile POS",
+  "lang_connect_captain": "ربط Captain",
+  "lang_printers_scanners_scales": "الطابعات والماسحات والموازين",
+  "lang_printing_tills": "أجهزة نقاط البيع للطباعة",
+  "lang_app_branch": "التطبيق / الفرع",
+  "lang_manage_captain_devices": "إدارة أجهزة Captain",
+  "lang_mobile_pos_settings": "إعدادات Mobile POS",
+  "lang_authorized": "مصرّح به",
+  "lang_module_mobile_pos": "Mobile POS"
 }
