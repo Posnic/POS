@@ -1410,7 +1410,7 @@ PosnicPro = {
         start: function () {
             if (PosnicPro.realtime._source || typeof EventSource === 'undefined') return;
             try {
-                var es = new EventSource('events');
+                var es = new EventSource('/api/events');
                 PosnicPro.realtime._source = es;
                 es.onopen = function () { PosnicPro.realtime.connected = true; };
                 es.onerror = function () { PosnicPro.realtime.connected = false; };
@@ -1419,6 +1419,11 @@ PosnicPro = {
                     try { event = JSON.parse(msg.data); } catch (e) { return; }
                     if (!event || event.type !== 'change' || !event.entity) return;
                     var entity = event.entity;
+                    if (event.newSale === true) {
+                        (PosnicPro.realtime._handlers['sale-arrival'] || []).forEach(function (fn) {
+                            try { fn(event); } catch (e) { /* alerts never block refresh */ }
+                        });
+                    }
                     try { PosnicPro.bellFeed.record(entity); } catch (e) { /* feed is a bonus */ }
                     clearTimeout(PosnicPro.realtime._timers[entity]);
                     PosnicPro.realtime._timers[entity] = setTimeout(function () {

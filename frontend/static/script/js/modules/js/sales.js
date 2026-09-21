@@ -539,13 +539,18 @@
     _histRows: [],
     _openDocId: null,
     loadHistory: function (page) {
+        if (PosnicPro.sales._historyLoading && !page) return;
+        PosnicPro.sales._historyLoading = true;
+        $('#sales_refresh_btn').prop('disabled', true);
         PosnicPro.sales.mountHistoryFilters();
         var self = PosnicPro.sales;
         if (page) { self._histPage = page; }
+        var requestId = self._historyRequest = (self._historyRequest || 0) + 1;
         var filters = PosnicPro.listFilter.legacyFilters('sales', { dateKey: 'updated_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.get({
             url: 'sales',
+            timeout: 15000,
             data: (function () {
                 var d = { page: self._histPage, limit: self.HIST_PAGE_SIZE, filters: JSON.stringify(filters) };
                 var sv = PosnicPro.listSort.value('sales');
@@ -555,6 +560,9 @@
         }, function (response) {
             var data = (response && response.data) || {};
             var list = data.list || [];
+            if (requestId !== self._historyRequest) return;
+            self._historyLoading = false;
+            $('#sales_refresh_btn').prop('disabled', false);
             self._histRows = list;
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('sales') > 0;
@@ -590,6 +598,9 @@
             $('#sales_list_rows').html(html);
             self.renderHistoryPager(Number(data.total) || list.length);
         }, function () {
+            if (requestId !== self._historyRequest) return;
+            self._historyLoading = false;
+            $('#sales_refresh_btn').prop('disabled', false);
             $('#sales_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_sales_try_again">Could not load sales - try again.</lang></div>');
         });
     },

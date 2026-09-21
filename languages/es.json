@@ -3435,5 +3435,10 @@
   "lang_manage_captain_devices": "Administrar dispositivos Captain",
   "lang_mobile_pos_settings": "Ajustes de Mobile POS",
   "lang_authorized": "Autorizado",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_sales_live_updates": "Live updates",
+  "lang_sales_auto_refresh": "Refresh sales every 5 seconds",
+  "lang_sales_arrival_sound": "Chime for new sales from other devices",
+  "lang_sales_live_device_scope": "Saved for this device and branch. Your filters and page stay selected.",
+  "lang_test_sound": "Test sound"
 }

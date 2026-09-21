@@ -194,7 +194,10 @@ test('real password login registers phone and downloads live branch catalogue', 
   assert.equal(snapshot.items[0].price, 1000);
   assert.equal(snapshot.shop.capabilities.saleSync, true);
 });
-test('paid cash sale lands in normal desktop sales and concurrent retry deducts stock once', async () => {
+test('paid cash sale lands in normal desktop sales and concurrent retry deducts stock once', async (t) => {
+  const messages = [];
+  const subscription = require('../src/realtime/event-bus').subscribe(db.databaseName, { write: line => messages.push(line) });
+  t.after(() => subscription.unsubscribe());
   const s = sale();
   const body = { idempotencyKey: s.id, sale: s };
   const replies = await Promise.all([
@@ -203,6 +206,8 @@ test('paid cash sale lands in normal desktop sales and concurrent retry deducts 
   ]);
   for (const reply of replies) assert.equal(reply.status, 200, JSON.stringify(reply.data));
   assert.equal(replies[0].data.serverId, replies[1].data.serverId);
+  assert.equal(messages.filter(line => line.includes('"newSale":true')).length, 1);
+  assert.ok(messages[0].includes(String(branch._id)));
   const saved = await db
     .collection('sales')
     .findOne({ _id: new ObjectId(replies[0].data.serverId) });

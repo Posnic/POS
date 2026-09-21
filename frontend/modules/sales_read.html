@@ -14,6 +14,9 @@
                 <div class="col-auto text-right">
                     <div class="widgetbar">
                         <span id="sales_sort_host"></span>
+                        <button type="button" id="sales_refresh_btn" class="btn btn-secondary-rgba" title="Refresh" data-t-title="lang_refresh">
+                            <i class="feather icon-refresh-cw mr-2"></i><lang class="lang_refresh">Refresh</lang>
+                        </button>
                         <button type="button" id="sales_filter_btn"
                             class="btn btn-primary-rgba lf-btn"
                             data-toggle="tooltip" title="Filter sales" data-t-title="lang_filter_sales">
@@ -29,6 +32,15 @@
             </div>
             <!--
                 KEPT DELIBERATELY, and not a filter control any more.
+            -->
+            <details class="mt-2" id="sales_live_settings">
+                <summary><lang class="lang_sales_live_updates">Live updates</lang></summary>
+                <label class="mr-3"><input type="checkbox" id="sales_auto_refresh" checked> <lang class="lang_sales_auto_refresh">Refresh sales every 5 seconds</lang></label>
+                <label class="mr-3"><input type="checkbox" id="sales_arrival_sound"> <lang class="lang_sales_arrival_sound">Chime for new sales from other devices</lang></label>
+                <button type="button" id="sales_sound_test" class="btn btn-sm btn-light"><lang class="lang_test_sound">Test sound</lang></button>
+                <small class="d-block text-muted"><lang class="lang_sales_live_device_scope">Saved for this device and branch. Your filters and page stay selected.</lang></small>
+            </details>
+            <!--
 
                 Twenty other modules - branches, lowstock, receiving_add and
                 every report - read THIS element to label their own empty

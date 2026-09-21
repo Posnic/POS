@@ -103,6 +103,7 @@ PosnicPro.request = function (params, callback, failure = null) {
             url: url,
             method: method,
             dataType: 'json',
+            timeout: params.timeout || 0,
             headers: headers,
             xhrFields: {
                 withCredentials: true

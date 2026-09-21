@@ -103,6 +103,7 @@
             "static/script/js/modules/js/receiving_view.js",
             "static/script/js/modules/js/weight-bridge.js",
             "static/script/js/modules/js/sales.js",
+            "static/script/js/core/sales-live.js",
             "static/script/js/modules/js/sales_view.js",
             "static/script/js/core/tender-receipt.js",
             "../api/src/helpers/receipt-design.js",

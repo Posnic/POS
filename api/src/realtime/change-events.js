@@ -50,6 +50,16 @@ function changeEvents(req, res, next) {
         if (res.statusCode >= 200 && res.statusCode < 300 && req.db) {
           try {
             const event = { type: 'change', entity, at: new Date().toISOString() };
+            if (req.method === 'POST' && /^\/(api\/)?sales\/?$/.test(req.path)) {
+              event.newSale = true;
+              event.branchId = String(
+                req.tenantContext?.branchId ||
+                  req.session?.selectedBranchId ||
+                  req.session?.branch_id ||
+                  ''
+              );
+              event.sourceDeviceId = String(req.get?.('X-Device-Id') || '').slice(0, 80);
+            }
             publish(req.db.databaseName, event);
             /* Same signal, outward: registered webhook endpoints hear what
                the shop's own tills hear. Fire-and-forget both halves. */

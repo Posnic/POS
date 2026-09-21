@@ -3471,5 +3471,10 @@
   "lang_manage_captain_devices": "Captain சாதனங்களை நிர்வகி",
   "lang_mobile_pos_settings": "Mobile POS அமைப்புகள்",
   "lang_authorized": "அங்கீகரிக்கப்பட்டது",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_sales_live_updates": "நேரடி புதுப்பிப்புகள்",
+  "lang_sales_auto_refresh": "ஒவ்வொரு 5 வினாடிக்கும் விற்பனைகளைப் புதுப்பி",
+  "lang_sales_arrival_sound": "பிற சாதனங்களிலிருந்து புதிய விற்பனை வந்தால் ஒலி எழுப்பு",
+  "lang_sales_live_device_scope": "இந்தச் சாதனத்திற்கும் கிளைக்கும் சேமிக்கப்படும். வடிகட்டிகளும் பக்கமும் மாறாது.",
+  "lang_test_sound": "ஒலியைச் சோதி"
 }

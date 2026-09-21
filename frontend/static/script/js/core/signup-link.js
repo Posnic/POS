@@ -106,7 +106,7 @@
            leaves the links exactly as authored - unattributed, but working. */
         try {
             var x = new XMLHttpRequest();
-            x.open('GET', 'runtime-info', true);
+            x.open('GET', '/api/runtime-info', true);
             x.onload = function () {
                 try {
                     var info = JSON.parse(x.responseText || '{}');

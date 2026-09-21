@@ -589,9 +589,27 @@ async function finish(db, intent, c, deps = {}) {
     }
   }
   if (deps.afterEffects) await deps.afterEffects();
-  await db
+  const completed = await db
     .collection('mobile_sales')
-    .updateOne({ _id: intent._id }, { $set: { state: 'complete', completed: new Date() } });
+    .updateOne(
+      { _id: intent._id, state: { $ne: 'complete' } },
+      { $set: { state: 'complete', completed: new Date() } }
+    );
+  if (completed.modifiedCount) {
+    try {
+      require('../realtime/event-bus').publish(db.databaseName, {
+        type: 'change',
+        entity: 'sales',
+        newSale: true,
+        branchId: String(c.branchId),
+        source: 'mobile-pos',
+        eventId: 'mobile:' + intent._id,
+        at: new Date().toISOString(),
+      });
+    } catch {
+      /* Notification must never fail an acknowledged sale. */
+    }
+  }
   try {
     require('../sync/outbox').enqueue({
       collection: 'sales',
