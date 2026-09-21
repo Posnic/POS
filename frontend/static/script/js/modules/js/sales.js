@@ -1525,43 +1525,9 @@
         $editable.show();
         $editable.editable('toggle');
 
-        // If there is no saved note and no cached description, fetch description
-        // from Items collection on demand so items like "lime soda" still preload
-        if ($.trim(existingNote) === '' && $.trim(defaultDescription) === '') {
-            var $itemIdCell = $('#addSalesLineItemId_' + id);
-            var itemId = $.trim($itemIdCell.text() || '');
-            if (itemId !== '') {
-                PosnicPro.get('items/' + itemId, function (response) {
-                    if (response && response.type === 'success' && response.data) {
-                        var desc = '';
-                        if (typeof (response.data.item_description) !== 'undefined' && response.data.item_description !== null) {
-                            desc = response.data.item_description;
-                        } else if (typeof (response.data.description) !== 'undefined' && response.data.description !== null) {
-                            desc = response.data.description;
-                        }
-                        if (desc !== '') {
-                            // Strip HTML to plain text for clean textarea content
-                            desc = $('<div>').html(desc).text();
+        // Opening a note editor must never fetch catalogue copy or mutate the
+        // order. Only the explicit save callback above writes an instruction.
 
-                            // Only auto-fill if user is still on this item and has not typed anything yet
-                            if (PosnicPro.sales.currentItemNoteId === id) {
-                                var currentHidden = $('#addSalesLineItemNote_' + id).text();
-                                if ($.trim(currentHidden) === '') {
-                                    $editable.editable('setValue', desc, true);
-                                }
-                            }
-
-                            // Cache description for future opens
-                            if (PosnicPro.sales.SaleTableLineItems[id]) {
-                                PosnicPro.sales.SaleTableLineItems[id].item_description = desc;
-                            }
-                        }
-                    }
-                }, function () {
-                    // Ignore errors; simply leave editor empty
-                });
-            }
-        }
     },
 
     /*add new trash remove if unwanted addline items in touch sale order*/
@@ -3938,7 +3904,7 @@ PosnicPro.sales.addSale = {
                 let itemid = $(this).find(':nth-child(9)').text();
                 var status = ($('#salesType_' + itemid).text() === 'instant') ? 'instant' : 'Add';
 
-                // Prefer custom note from cart; if empty, fall back to original item description
+                // Use the saved order note; never borrow catalogue copy.
                 var noteText = $('#addSalesLineItemNote_' + itemid).text() || '';
                 var descriptionFromCache = '';
                 var cachedItem = PosnicPro.sales.SaleTableLineItems[itemid];
@@ -4493,7 +4459,7 @@ PosnicPro.sales.editSale = {
             PosnicPro.sales.addSalesLineTable = $('#sales_new_items_table tbody tr').map(function () {
                 let itemid = $(this).find(':nth-child(9)').text();
 
-                // Prefer custom note from cart; if empty, fall back to cached item description
+                // Use the saved order note; never borrow catalogue copy.
                 var noteText = $('#addSalesLineItemNote_' + itemid).text() || '';
                 var descriptionFromCache = '';
                 var cachedItem = PosnicPro.sales.SaleTableLineItems[itemid];
