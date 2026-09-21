@@ -138,7 +138,7 @@ PosnicPro.handsets = {
         /* The house dialog, the same one a role is deleted with. */
         swal({
             title: PosnicPro.i18n.t('lang_stop_this_phone', 'Stop this phone'),
-            text: 'Access stops when the phone reconnects. Offline authorization remains valid until it expires. Recorded sales stay on the phone. Signing in again with authorized credentials restores access.',
+            text: PosnicPro.i18n.t('lang_stop_device_access_help', 'Access stops when the phone reconnects. Offline authorization remains valid until it expires. Recorded sales stay on the phone. Signing in again with authorized credentials restores access.'),
             showCancelButton: true,
             confirmButtonClass: 'btn btn-danger',
             cancelButtonClass: 'btn btn-secondary m-l-10',

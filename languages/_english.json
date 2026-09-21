@@ -3198,6 +3198,7 @@
   "lang_stocklog_title": "Stock Log",
   "lang_stocklogdetail_title": "Stock Log Details",
   "lang_stop": "Stop",
+  "lang_stop_device_access_help": "Access stops when the phone reconnects. Offline authorization remains valid until it expires. Recorded sales stay on the phone. Signing in again with authorized credentials restores access.",
   "lang_stop_taking_orders": "Stop taking orders",
   "lang_stop_this_phone": "Stop this phone",
   "lang_stopped": "Stopped",
