@@ -4,6 +4,7 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
+const rateLimit = require('express-rate-limit');
 const crypto = require('node:crypto');
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = crypto.randomBytes(32).toString('hex');
@@ -98,8 +99,10 @@ before(
       r.db = db;
       n();
     });
-    app.post('/api/users/kioskMobileLogin', (r, s) =>
-      require('../src/controllers/users.controller').kioskMobileLogin(r, s)
+    app.post(
+      '/api/users/kioskMobileLogin',
+      rateLimit({ windowMs: 60000, limit: 30 }),
+      (r, s) => require('../src/controllers/users.controller').kioskMobileLogin(r, s)
     );
     app.use('/api/branch-payments', require('../src/routes/branch-payments.routes'));
     app.use('/api/mobile/v1', require('../src/routes/mobile-pos.routes'));
