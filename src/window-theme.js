@@ -22,14 +22,14 @@
   'use strict';
 
   var FALLBACK = {
-    bodyBg: '#f5f6fa',
+    bodyBg: '#f2f3f7',
     cardBg: '#ffffff',
     topbarBg: '#ffffff',
     sidebarBg: '#ffffff',
-    textPrimary: '#1f2937',
-    textSecondary: '#6b7280',
+    textPrimary: '#16203a',
+    textSecondary: '#5b6577',
     borderColor: '#e5e7eb',
-    primaryColor: '#4e6ddf',
+    primaryColor: '#506fe4',
   };
 
   /* WCAG relative luminance, to decide whether this is a dark theme. */
@@ -54,6 +54,9 @@
     root.style.setProperty('--w-muted', p.textSecondary);
     root.style.setProperty('--w-border', p.borderColor);
     root.style.setProperty('--w-accent', p.primaryColor);
+    root.style.setProperty('--w-font', p.fontFamily || "'DM Sans', 'Segoe UI', system-ui, sans-serif");
+    var accentLuminance = luminance(p.primaryColor);
+    root.style.setProperty('--w-on-accent', accentLuminance !== null && accentLuminance > 0.179 ? '#000000' : '#ffffff');
 
     /*
      * A raised surface, computed rather than sent.
@@ -68,11 +71,76 @@
 
     var dark = (luminance(p.bodyBg) !== null) && luminance(p.bodyBg) < 0.4;
     root.setAttribute('data-window-theme', dark ? 'dark' : 'light');
+    root.style.setProperty('--w-success', dark ? '#86efac' : '#166534');
+    root.style.setProperty('--w-danger', dark ? '#fca5a5' : '#b91c1c');
+    root.style.setProperty('--w-danger-bg', dark ? '#381d25' : '#fff1f2');
     /* So a native control - a select, a scrollbar - is drawn to match. */
     root.style.colorScheme = dark ? 'dark' : 'light';
   }
 
   function start() {
+    var kind = document.body.getAttribute('data-desktop-window');
+    var header = document.querySelector('.header, .hdr-text');
+    if (kind && header) {
+      var eyebrow = document.createElement('span');
+      eyebrow.className = 'desktop-eyebrow';
+      eyebrow.textContent = kind === 'update' ? 'Updates & recovery' : 'This computer';
+      header.prepend(eyebrow);
+    }
+    if (kind) {
+      document.querySelectorAll('.header h1, .section-title, .tabs .tab').forEach(function (el) {
+        el.textContent = el.textContent.replace(/^[^\p{L}\p{N}]+/u, '');
+      });
+      document.querySelectorAll('.tabs').forEach(function (tabs) {
+        tabs.setAttribute('role', 'tablist');
+        if (kind === 'hardware') tabs.setAttribute('aria-orientation', 'vertical');
+        var buttons = Array.from(tabs.querySelectorAll('.tab'));
+        buttons.forEach(function (button, i) {
+          button.setAttribute('role', 'tab');
+          button.id = button.id || 'desktop-tab-' + i;
+          var call = /switchTab\('([^']+)'\)/.exec(button.getAttribute('onclick') || '');
+          var target = call ? call[1] + 'Tab' : 'tab-' + button.getAttribute('data-tab');
+          var panel = document.getElementById(target);
+          if (panel) {
+            button.setAttribute('aria-controls', target);
+            panel.setAttribute('role', 'tabpanel');
+            panel.setAttribute('aria-labelledby', button.id);
+          }
+          function sync() {
+            buttons.forEach(function (b) {
+              var selected = b.classList.contains('active');
+              b.setAttribute('aria-selected', String(selected)); b.tabIndex = selected ? 0 : -1;
+            });
+          }
+          button.addEventListener('click', function () { queueMicrotask(sync); });
+          sync();
+        });
+        tabs.addEventListener('keydown', function (event) {
+          var visible = buttons.filter(function (b) { return !b.disabled && b.style.display !== 'none' && !b.classList.contains('tab-disabled'); });
+          var index = visible.indexOf(document.activeElement), next;
+          if (index < 0) return;
+          if (event.key === 'ArrowDown' || event.key === 'ArrowRight') next = (index + 1) % visible.length;
+          if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') next = (index + visible.length - 1) % visible.length;
+          if (event.key === 'Home') next = 0;
+          if (event.key === 'End') next = visible.length - 1;
+          if (next === undefined) return;
+          event.preventDefault(); visible[next].click(); visible[next].focus();
+        });
+      });
+      if (kind === 'hardware' && typeof window.switchTab === 'function') {
+        var section = location.hash.slice(1);
+        if (section) window.switchTab(section);
+        if (window.electronAPI && window.electronAPI.desktop && window.electronAPI.desktop.onNavigate) {
+          var removeNavigation = window.electronAPI.desktop.onNavigate(function (target) { window.switchTab(target); });
+          window.addEventListener('unload', removeNavigation, { once: true });
+        }
+      }
+    }
+    // A theme change applies to open windows as well as newly opened ones.
+    if (window.electronAPI && window.electronAPI.theme && window.electronAPI.theme.onChange) {
+      var unsubscribe = window.electronAPI.theme.onChange(apply);
+      window.addEventListener('unload', unsubscribe, { once: true });
+    }
     try {
       if (!window.electronAPI || !window.electronAPI.theme
           || !window.electronAPI.theme.palette) {

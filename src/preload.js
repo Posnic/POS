@@ -45,7 +45,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   desktop: {
     open:         (target) => ipcRenderer.invoke('desktop:open', target),
-    capabilities: () => ipcRenderer.invoke('desktop:capabilities')
+    capabilities: () => ipcRenderer.invoke('desktop:capabilities'),
+    getBehaviour: () => ipcRenderer.invoke('desktop:behaviour-get'),
+    saveBehaviour: (patch) => ipcRenderer.invoke('desktop:behaviour-save', patch),
+    onNavigate: (callback) => {
+      const handler = (_event, section) => callback(section);
+      ipcRenderer.on('desktop:navigate', handler);
+      return () => ipcRenderer.removeListener('desktop:navigate', handler);
+    }
   },
   /* The log viewer reads the file through the main process rather than a
      file:// URL, so the page keeps the same sandbox as every other window. */
@@ -144,6 +151,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     /* The palette the app is wearing, for the settings windows, which have
        their own stylesheets and cannot see the app's. */
     palette: () => ipcRenderer.invoke('theme:palette'),
+    onChange: (callback) => {
+      const handler = (_event, palette) => callback(palette);
+      ipcRenderer.on('theme:changed', handler);
+      return () => ipcRenderer.removeListener('theme:changed', handler);
+    },
   },
   /*
    * The title bar's own buttons.

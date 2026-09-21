@@ -118,6 +118,7 @@ PosnicPro.settings = {
         $('.manage-settings-entry').removeClass('active');
         $('#manage_sec_' + key).addClass('active');
         if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
+        if (PosnicPro.desktopSettings) { PosnicPro.desktopSettings.load(key); }
         if (key === 'taxmodule') { PosnicPro.settings.taxSystemLoad(); }
         /* A list has to be fetched every time it is opened: a phone that
            signed in a minute ago belongs on it. */

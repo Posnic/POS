@@ -1816,10 +1816,35 @@ PosnicPro = {
         PosnicPro.importAction = importform;
         $('#import_modal').modal('show');
         $('#errorTable').hide();
+        $('#errorMessages').empty();
         $('#importHeading').html(importform);
         $('#importHeading').css('textTransform', 'capitalize');
         $('.hide-import-table').hide();
         $('.importFileFormat').attr('href', './static/Import_sample_files/' + importform + '.csv');
+    },
+    // Import failures stay visible until another file is selected.
+    showItemImportErrors: function (response) {
+        if (PosnicPro.importAction !== 'items' || !response || !Array.isArray(response.data)) return;
+        var rows = response.data.filter(function (row) { return row && row.row && row.status; });
+        if (!rows.length) return;
+        // The API escapes these three characters for the legacy toast. Decode
+        // once, then insert as text so product names never become markup.
+        var plain = function (value) {
+            return String(value || '').replace(/&(amp|lt|gt);/g, function (_, entity) {
+                return { amp: '&', lt: '<', gt: '>' }[entity];
+            });
+        };
+        $('#errorMessages').text(plain(response.message));
+        var body = $('#errorTable tbody').empty();
+        rows.forEach(function (row) {
+            var tr = $('<tr>');
+            $('<td>').text(row.row).appendTo(tr);
+            var detail = $('<td>').text(row.name || '');
+            $('<div>').addClass('text-danger').text(plain(row.status)).appendTo(detail);
+            detail.appendTo(tr);
+            body.append(tr);
+        });
+        $('#errorTable').show();
     },
     /*Images view*/
     viewImage: function (name, path) {
@@ -5272,6 +5297,8 @@ $(".files").on('change', function (e) {
                         url: '' + PosnicPro.importAction + '/' + PosnicPro.importAction + 'Import',
                         data: JSON.stringify({ result: resultData })
                     };
+                    $('#errorMessages').empty();
+                    $('#errorTable').hide();
                     PosnicPro.post(params, function (response) {
                         if (response.type === 'success') {
                             var responseData = response.data;
@@ -5388,9 +5415,11 @@ $(".files").on('change', function (e) {
                             let actionUrl = (PosnicPro.importAction === 'customercategory') ? PosnicPro.importAction.toLowerCase() : PosnicPro.importAction;
                             PosnicPro[actionUrl][actionUrl + "Table"](actionUrl);
                         }
+                        PosnicPro.showItemImportErrors(response);
                         PosnicPro.alert(response.type, response.message);
                     }, function (xhr) {
                         var response = jQuery.parseJSON(xhr.responseText);
+                        PosnicPro.showItemImportErrors(response);
                         PosnicPro.alert(response.type, response.message);
                     });
                 };

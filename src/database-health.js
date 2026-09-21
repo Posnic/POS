@@ -49,10 +49,53 @@ const duplicateCheck = async (db, collection, idField) => {
   return rows.map((row) => ({ collection, field: idField, license: String(row._id.license || ''), branch: String(row._id.branch || ''), value: row._id.value, count: row.count, documents: row.documents.map(String) }));
 };
 
+// Inspect all scannable codes in each branch. The same code repeated on one
+// item is harmless; two different items answering it is ambiguous.
+const duplicateItemBarcodes = async (db) => {
+  const text = (input) => ({ $trim: { input: { $convert: { input, to: 'string', onNull: '', onError: '' } } } });
+  const rows = await db.collection('items').aggregate([
+    { $match: { del_status: { $nin: [1, '1', true] } } },
+    { $project: {
+      license: 1, name: 1, variant_value: 1,
+      branches: { $cond: [
+        { $gt: [{ $size: { $cond: [{ $isArray: '$branch_access' }, '$branch_access', []] } }, 0] },
+        { $setUnion: [{ $map: { input: '$branch_access', as: 'b', in: '$$b.branch_id' } }, []] },
+        [{ $ifNull: ['$branch_id', '$branch'] }],
+      ] },
+      codes: { $setUnion: [[text('$barcode_id')], { $map: {
+        input: { $cond: [{ $isArray: '$barcodes' }, '$barcodes', []] },
+        as: 'code', in: text('$$code'),
+      } }] },
+    } },
+    { $unwind: '$branches' }, { $unwind: '$codes' },
+    { $match: { codes: { $ne: '' } } },
+    { $group: {
+      _id: { license: '$license', branch: '$branches', value: '$codes' },
+      count: { $sum: 1 }, documents: { $push: '$_id' },
+      items: { $push: { id: '$_id', name: '$name', variant: '$variant_value' } },
+    } },
+    { $match: { count: { $gt: 1 } } },
+    { $sort: { '_id.license': 1, '_id.branch': 1, '_id.value': 1 } },
+    { $limit: 25 },
+  ]).toArray();
+  return rows.map((row) => ({ collection: 'items', field: 'barcode_id',
+    license: String(row._id.license || ''), branch: String(row._id.branch || ''),
+    value: row._id.value, count: row.count, documents: row.documents.map(String),
+    ...(row.items ? { items: row.items.map((item) => ({ ...item, id: String(item.id) }))
+      .sort((a, b) => a.id.localeCompare(b.id)) } : {}),
+  }));
+};
+
 const describeDuplicate = (duplicate) => {
   const value = String(duplicate.value).replace(/[\r\n\t]/g, ' ').slice(0, 80);
   if (duplicate.collection === 'items' && duplicate.field === 'barcode_id') {
-    return `Barcode "${value}" is shared by ${duplicate.count} items. Review this barcode in Items; scanning it may select the wrong product.`;
+    const names = (duplicate.items || []).slice(0, 5).map((item) => {
+      const name = String(item.name || item.id).replace(/[\r\n\t]/g, ' ').slice(0, 100);
+      const variant = String(item.variant || '').replace(/[\r\n\t]/g, ' ').slice(0, 60);
+      return `"${name}${variant && !name.includes(variant) ? ` (${variant})` : ''}"`;
+    });
+    const detail = names.length ? ` Items: ${names.join(', ')}${duplicate.count > names.length ? ', ...' : ''}.` : '';
+    return `Barcode "${value}" is shared by ${duplicate.count} items.${detail} Review this barcode in Items. Each item or variant needs a different barcode within a branch.`;
   }
   return `Receipt number "${value}" is shared by ${duplicate.count} sales. Review these records in Sales History.`;
 };
@@ -250,7 +293,7 @@ const runDatabaseHealthCheck = async (mongoClient) => {
 
     report.duplicates = (await Promise.all([
       duplicateCheck(db, 'sales', 'sales_id'),
-      duplicateCheck(db, 'items', 'barcode_id'),
+      duplicateItemBarcodes(db),
     ])).flat();
     report.warnings.push(...report.duplicates.map(describeDuplicate));
     /*

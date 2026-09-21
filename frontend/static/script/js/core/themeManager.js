@@ -612,6 +612,7 @@ PosnicPro.themeManager = {
                 textSecondary: read('--theme-text-secondary', '#6b7280'),
                 borderColor: read('--theme-border-color', '#e6e6e6'),
                 primaryColor: read('--theme-primary-color', '#4e6ddf'),
+                fontFamily: read('--theme-font-family', "'DM Sans', system-ui, sans-serif"),
             };
         } catch (e) {
             return fallback;

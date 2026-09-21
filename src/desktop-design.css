@@ -1,0 +1,154 @@
+/* Shared layout for independent desktop tools. Recovery never requires the API. */
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url('../frontend/static/fonts/dmsans/dmsans-1.woff2') format('woff2'); }
+@font-face { font-family: 'Lexend'; font-style: normal; font-weight: 400 500; font-display: swap; src: url('../frontend/static/fonts/lexend/lexend-latin.woff2') format('woff2'); }
+.desktop-window {
+  margin: 0; padding: 24px; min-height: 100vh;
+  font-family: var(--w-font, 'DM Sans', 'Segoe UI', system-ui, sans-serif);
+  font-size: 14px; line-height: 1.5;
+  background: var(--w-body-bg); color: var(--w-text);
+}
+.desktop-window *, .desktop-window *::before, .desktop-window *::after { box-sizing: border-box; }
+.desktop-window .container, .desktop-window .shell {
+  width: 100%; max-width: 1120px; margin: 0 auto; overflow: hidden;
+  border: 1px solid var(--w-border); border-radius: 12px;
+  background: var(--w-card-bg); color: var(--w-text);
+  box-shadow: 0 3px 16px rgb(0 0 0 / 4%);
+}
+.desktop-window .header, .desktop-window .hdr, .desktop-window header {
+  padding: 24px 28px; text-align: start; margin: 0;
+  background: var(--w-card-bg) !important; color: var(--w-text) !important;
+  border-bottom: 1px solid var(--w-border); border-radius: 0;
+}
+.desktop-window .header h1, .desktop-window .hdr h1, .desktop-window > h1 {
+  font-size: 23px; line-height: 1.3; letter-spacing: -.4px; font-weight: 650;
+  margin: 0 0 5px; background: transparent; color: var(--w-text) !important;
+}
+.desktop-window .header p, .desktop-window .hdr p, .desktop-window .subtitle {
+  font-size: 13px; opacity: 1; background: transparent; color: var(--w-muted) !important;
+}
+.desktop-eyebrow { display: block; font-size: 11px; font-weight: 650; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 9px; background: transparent; color: var(--w-muted); }
+.desktop-window .hdr-icon { display: none; }
+.desktop-window .content { padding: 26px; min-width: 0; min-height: 520px; background: var(--w-card-bg); color: var(--w-text); }
+.desktop-window .tabs { gap: 4px; padding: 0 20px; flex-wrap: nowrap; overflow-x: auto; }
+.desktop-window .tab {
+  display: flex; align-items: center; gap: 10px; flex: 0 0 auto; min-width: 0;
+  padding: 14px 12px; font: inherit; font-weight: 500; text-align: start;
+  border-radius: 0; transition: background .15s; white-space: nowrap;
+}
+.desktop-window .tab:hover:not(.tab-disabled) { background: var(--w-raised) !important; color: var(--w-text) !important; }
+.desktop-window .tab.active { font-weight: 650; }
+.desktop-nav-icon { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.desktop-window[data-desktop-window="hardware"] .container { display: grid; grid-template-columns: 208px minmax(0, 1fr); }
+.desktop-window[data-desktop-window="hardware"] .header { grid-column: 1 / -1; }
+.desktop-window[data-desktop-window="hardware"] .tabs { display: flex; flex-direction: column; padding: 18px 12px; border-bottom: 0 !important; border-right: 1px solid var(--w-border); overflow: visible; }
+.desktop-window[data-desktop-window="hardware"] .tab { flex: 0 0 auto; padding: 11px 12px; white-space: normal; border-radius: 7px; border: 1px solid transparent !important; }
+.desktop-window[data-desktop-window="hardware"] .tab.active { background: var(--w-raised) !important; color: var(--w-text) !important; border-color: var(--w-border) !important; box-shadow: inset 3px 0 var(--w-accent); }
+.desktop-window .btn, .desktop-window button:not(.tab):not(.toggle-btn) {
+  min-height: 36px; padding: 8px 14px; border-radius: 6px !important; font: inherit;
+  font-size: 13px !important; font-weight: 600 !important; cursor: pointer;
+  border: 1px solid var(--w-border) !important; box-shadow: none !important;
+  background: var(--w-card-bg) !important; color: var(--w-text) !important;
+  transition: border-color .15s, background .15s;
+}
+.desktop-window .btn-primary, .desktop-window .btn-success, .desktop-window .btn-check,
+.desktop-window .btn-dl, .desktop-window .btn-install, .desktop-window .btn.primary,
+.desktop-window button[style*="linear-gradient"], .desktop-window #browserBtn,
+.desktop-window #send, .desktop-window #btnSaveSettings {
+  background: var(--w-accent) !important; color: var(--w-on-accent, #fff) !important;
+  border-color: var(--w-accent) !important;
+}
+.desktop-window .btn-danger, .desktop-window .btn.danger {
+  background: var(--w-danger-bg) !important; color: var(--w-danger) !important;
+  border-color: var(--w-danger) !important;
+}
+.desktop-window button:hover:not(:disabled) { filter: brightness(.97); transform: none !important; }
+.desktop-window button:disabled { opacity: .55; cursor: not-allowed; }
+.desktop-window :is(button, input, select, textarea, a):focus-visible { outline: 2px solid var(--w-accent); outline-offset: 3px; box-shadow: none; }
+.desktop-window :is(input, select, textarea) { font: inherit; border-radius: 6px; border-width: 1px !important; }
+.desktop-window :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { padding: 9px 11px; min-height: 38px; }
+.desktop-window input[type="checkbox"], .desktop-window input[type="radio"] { width: 16px !important; height: 16px !important; min-height: 0; flex-shrink: 0; accent-color: var(--w-accent); }
+.desktop-window .form-group { margin-bottom: 18px; }
+.desktop-window .form-group label { font-size: 13px; margin-bottom: 7px; }
+.desktop-window :is(.card, .panel, .stat-card, .connection-card, .info-card) { border: 1px solid var(--w-border); border-radius: 8px; box-shadow: none; background: var(--w-card-bg) !important; color: var(--w-text) !important; }
+.desktop-window .section-title { font-size: 17px; font-weight: 650; margin-bottom: 20px; background: transparent; color: var(--w-text); }
+.desktop-window .stat-card { text-align: start; padding: 18px; }
+.desktop-window .stat-card .icon { display: none; }
+.desktop-window .stat-card .value { font-size: 19px; background: transparent; color: var(--w-text); }
+.desktop-window :is(.stat-card .label, .stat-card .sub, .panel-note, .panel-hint, .ver-label, .last-check, .progress-meta, .switch-row em) { background: transparent; color: var(--w-muted) !important; }
+.desktop-window .stats-grid { gap: 12px; }
+.desktop-window .alert, .desktop-window .status-card { border-radius: 8px; padding: 16px; box-shadow: none; background: var(--w-raised) !important; color: var(--w-text) !important; border: 1px solid var(--w-border); }
+.desktop-window .status-card { margin: 22px 26px; }
+.desktop-window .status-card.not-available { border-left: 3px solid var(--w-success); }
+.desktop-window .status-card.error { border-left: 3px solid var(--w-danger); }
+.desktop-window :is(.status-title, .status-sub, .panel-title, .ver-value) { background: transparent; color: var(--w-text) !important; }
+.desktop-window .actions { padding: 0 26px 24px; }
+.desktop-window .ver-row { padding: 18px 26px; background: var(--w-raised); color: var(--w-text); border-color: var(--w-border); }
+.desktop-window .panel { margin: 0 26px 20px; padding: 20px; }
+.desktop-window .panel-head { margin-bottom: 16px; }
+.desktop-window .release-notes { background: var(--w-raised); color: var(--w-text); white-space: pre-wrap; }
+.desktop-window .switch-row { align-items: flex-start; gap: 12px; }
+.desktop-window .switch-row input { margin-top: 3px; }
+.desktop-window .switch-row em { line-height: 1.5; }
+.desktop-window .field-row { flex-wrap: wrap; gap: 12px; }
+.desktop-window .modal-content { background: var(--w-card-bg) !important; color: var(--w-text) !important; border: 1px solid var(--w-border); border-radius: 12px; }
+.desktop-window[data-desktop-window="cloud"], .desktop-window[data-desktop-window="support"] { max-width: 820px; margin: auto; }
+.desktop-window[data-desktop-window="log"] { padding: 0; }
+.desktop-window .meta { background: var(--w-card-bg); color: var(--w-muted); border-color: var(--w-border); }
+.desktop-window .line:hover { background: var(--w-raised); color: var(--w-text); }
+.desktop-window .line.error { background: var(--w-danger-bg); color: var(--w-danger); }
+/* Old hardware panels used inline palettes. Map both foreground and surface,
+   including dynamically rendered printer rows, without changing visibility. */
+.desktop-window [style*="background:#fff"], .desktop-window [style*="background: #fff"],
+.desktop-window [style*="background:white"], .desktop-window [style*="background: white"] {
+  background: var(--w-card-bg) !important; color: var(--w-text) !important;
+  border-color: var(--w-border) !important; box-shadow: none !important;
+}
+.desktop-window [style*="background:#f"], .desktop-window [style*="background: #f"],
+.desktop-window [style*="background:#e"], .desktop-window [style*="background: #e"] {
+  background: var(--w-raised) !important; color: var(--w-text) !important;
+  border-color: var(--w-border) !important; box-shadow: none !important;
+}
+.desktop-window [style*="color:#2c3e50"], .desktop-window [style*="color:#374151"],
+.desktop-window [style*="color:#333"], .desktop-window [style*="color:#444"],
+.desktop-window [style*="color:#555"], .desktop-window [style*="color:#475569"] {
+  background-color: transparent; color: var(--w-text) !important;
+}
+.desktop-window [style*="color:#9ca3af"], .desktop-window [style*="color:#64748b"],
+.desktop-window [style*="color:#6c757d"], .desktop-window [style*="color:#6b7280"],
+.desktop-window [style*="color:#888"], .desktop-window [style*="color:#666"] {
+  background-color: transparent; color: var(--w-muted) !important;
+}
+.desktop-window [style*="box-shadow"] { box-shadow: none !important; }
+.desktop-window div[style*="linear-gradient"] {
+  background: var(--w-raised) !important; color: var(--w-text) !important;
+  border: 1px solid var(--w-border); border-radius: 8px !important;
+}
+.desktop-window :is(.status-row, td, th) { overflow-wrap: anywhere; }
+.desktop-window .status-row { gap: 20px; border-bottom: 1px solid var(--w-border); padding: 9px 0; }
+.desktop-window .status-row:last-child { border-bottom: 0; }
+.desktop-window .status-row .value { max-width: 65%; }
+.desktop-window .tab-content h2 { font-size: 18px; margin-bottom: 14px; }
+.desktop-window .wizard-container { background: var(--w-card-bg); color: var(--w-text); border: 1px solid var(--w-border); border-radius: 12px; box-shadow: 0 3px 16px rgb(0 0 0 / 4%); }
+.desktop-window :is(.wizard-header, .mode-card, .step-indicator, .summary-box) { background: var(--w-card-bg); color: var(--w-text); border-color: var(--w-border); }
+.desktop-window :is(.mode-card p, .wizard-header p, .step-label) { background: transparent; color: var(--w-muted); }
+.desktop-window .loading-container { --ink: var(--w-text); --ink-soft: var(--w-muted); --brand: var(--w-accent); --line: var(--w-border); }
+.desktop-window[data-desktop-window="startup"] { overflow: auto; height: auto; }
+.desktop-window[data-desktop-window="about"] { padding: 0; }
+.desktop-window[data-desktop-window="about"] .hero { background: var(--w-card-bg); color: var(--w-text); border-color: var(--w-border); text-align: start; }
+.desktop-window[data-desktop-window="about"] :is(.ver, .repo, .pill.off) { background: var(--w-raised); color: var(--w-text); border-color: var(--w-border); }
+.desktop-window[data-desktop-window="about"] :is(.by, .sec h2, .repo .n, .foot) { background: transparent; color: var(--w-muted); opacity: 1; }
+.desktop-window[data-desktop-window="about"] :is(.links a, .repo .u) { background: transparent; color: var(--w-text); text-decoration: underline; }
+@media (max-width: 740px) {
+  .desktop-window { padding: 12px; }
+  .desktop-window .header, .desktop-window .hdr { padding: 20px; }
+  .desktop-window .content { padding: 18px; }
+  .desktop-window[data-desktop-window="hardware"] .container { display: block; }
+  .desktop-window[data-desktop-window="hardware"] .tabs { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; border-right: 0; padding: 8px; }
+  .desktop-window[data-desktop-window="hardware"] .tab { white-space: nowrap; }
+  .desktop-window .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .desktop-window .actions-bar, .desktop-window .btn-row { flex-wrap: wrap; }
+  .desktop-window .panel { margin: 0 16px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desktop-window *, .desktop-window *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

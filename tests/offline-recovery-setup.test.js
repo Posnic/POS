@@ -36,6 +36,12 @@ function page(mode, handler) {
   return { dom, w, doc: w.document, saved };
 }
 function submit(w, form) { form.dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true })); }
+function paste(w, input, text) {
+  const event = new w.Event('paste', { bubbles: true, cancelable: true });
+  Object.defineProperty(event, 'clipboardData', { value: { getData: () => text } });
+  input.dispatchEvent(event);
+  return event;
+}
 
 test('owner can replace and save codes; account text is inert and codes disappear on close', async () => {
   let posted;
@@ -61,6 +67,8 @@ test('owner can replace and save codes; account text is inert and codes disappea
     assert.equal(done.disabled, true);
     buttons.find((b) => b.textContent === 'Save recovery codes').click();
     assert.match(await saved[0].text(), /A123-B456/);
+    assert.match(await saved[0].text(), /only one complete line, not the whole list/);
+    assert.match(dialog.textContent, /Each line is a separate recovery code/);
     const check = dialog.querySelector('input[type=checkbox]'); check.checked = true; check.dispatchEvent(new w.Event('change'));
     done.click();
     assert.equal(doc.querySelector('dialog'), null);
@@ -85,17 +93,87 @@ test('recovery shows a failed code, then clears credentials after a successful r
     w.localStorage.setItem('posnic_jwt_token', 'old-sign-in');
     doc.getElementById('offline_recovery_open').click();
     const form = doc.querySelector('dialog form');
+    assert.match(doc.getElementById('recovery-code-help').textContent, /8 groups of 4/);
+    assert.match(doc.getElementById('recovery-code-example').textContent, /Example only.*own sheet/);
+    assert.match(doc.querySelector('#recovery-code-example code').textContent, /^(?:[A-F0-9]{4}-){7}[A-F0-9]{4}$/);
+    assert.equal(form.elements.recoveryCode.value, '', 'the example must never be entered for the user');
     for (const [key, value] of Object.entries({ account: 'owner@example.test', recoveryCode: sample().recoveryCodes[0], newPassword: 'New-password-26', confirmPassword: 'New-password-26' })) form.elements[key].value = value;
     submit(w, form); await flush();
     assert.match(doc.querySelector('[data-message]').textContent, /already used/);
     assert.equal(form.querySelector('button').disabled, false);
+    assert.equal(doc.querySelector('[data-back-to-login]'), null);
+    assert.match(doc.querySelector('dialog h4').textContent, /Recover your account offline/);
+    const fields = { code: form.elements.recoveryCode, password: form.elements.newPassword, confirm: form.elements.confirmPassword };
     submit(w, form); await flush();
     assert.equal(posted.newPassword, 'New-password-26');
-    assert.equal(form.elements.recoveryCode.value, '');
-    assert.equal(form.elements.newPassword.value, '');
-    assert.equal(form.hidden, true);
+    for (const field of Object.values(fields)) assert.equal(field.value, '');
+    assert.equal(form.isConnected, false);
     assert.equal(w.localStorage.getItem('posnic_jwt_token'), null);
-    assert.match(doc.querySelector('dialog').textContent, /Sign in with your new password/);
+    const success = doc.querySelector('dialog');
+    assert.equal(doc.querySelectorAll('dialog').length, 1);
+    assert.equal(success.querySelector('h4').textContent, 'Password reset successfully');
+    assert.equal(success.getAttribute('aria-labelledby'), success.querySelector('h4').id);
+    assert.match(success.querySelector('[role=status].alert-success').textContent, /Sign in with your new password/);
+    assert.match(success.textContent, /cannot be used again/);
+    assert.equal(success.querySelector('form, input, details'), null);
+    assert.doesNotMatch(success.textContent, /No recovery codes|Recover your account offline|A123-B456/);
+    assert.equal(doc.activeElement, success.querySelector('[data-back-to-login]'));
+  } finally { dom.window.close(); }
+});
+
+test('whole-sheet paste is caught before truncation and cannot submit a previously entered code', async () => {
+  const posted = [];
+  const { dom, w, doc } = page('login', (method, _url, body, ok) => {
+    if (method === 'GET') ok({ data: { offline: true } });
+    else { posted.push(body); ok({ type: 'success', message: 'Password reset.' }); }
+  });
+  try {
+    await flush();
+    doc.getElementById('offline_recovery_open').click();
+    const form = doc.querySelector('dialog form'), code = form.elements.recoveryCode;
+    form.elements.account.value = 'owner@example.test';
+    form.elements.newPassword.value = form.elements.confirmPassword.value = 'New-password-26';
+    code.value = sample().recoveryCodes[0];
+    code.select();
+    const sheet = 'POSNIC - OFFLINE RECOVERY CODES\nAccount: owner@example.test\n\n' + sample().recoveryCodes.join('\n');
+    assert.ok(sheet.length > code.maxLength);
+    assert.equal(paste(w, code, sheet).defaultPrevented, true);
+    assert.equal(code.getAttribute('aria-invalid'), 'true');
+    assert.equal(code.checkValidity(), false);
+    assert.match(doc.getElementById('recovery-code-error').textContent, /only one recovery code/);
+    submit(w, form); await flush();
+    assert.equal(posted.length, 0, 'a malformed paste must not reset the account or spend an attempt');
+    assert.equal(form.querySelector('[type=submit]').disabled, false);
+    code.select();
+    assert.equal(paste(w, code, '  ' + sample().recoveryCodes[1].toLowerCase().replaceAll('-', ' ') + '\r\n').defaultPrevented, true);
+    assert.equal(code.value, sample().recoveryCodes[1]);
+    assert.equal(code.hasAttribute('aria-invalid'), false);
+    assert.equal(doc.getElementById('recovery-code-error').hidden, true);
+    submit(w, form); await flush();
+    assert.equal(posted.length, 1);
+    assert.equal(posted[0].recoveryCode, sample().recoveryCodes[1]);
+  } finally { dom.window.close(); }
+});
+
+test('incomplete and joined codes show an inline error without an HTTP reset request', async () => {
+  let attempts = 0;
+  const { dom, w, doc } = page('login', (method, _url, _body, ok) => {
+    if (method === 'GET') ok({ data: { offline: true } });
+    else attempts++;
+  });
+  try {
+    await flush();
+    doc.getElementById('offline_recovery_open').click();
+    const form = doc.querySelector('dialog form'), code = form.elements.recoveryCode;
+    for (const value of ['A123-B456', sample().recoveryCodes.join(' '), 'G'.repeat(32)]) {
+      code.value = value;
+      code.dispatchEvent(new w.Event('input', { bubbles: true }));
+      submit(w, form); await flush();
+      assert.equal(attempts, 0);
+      assert.equal(code.getAttribute('aria-invalid'), 'true');
+      assert.equal(doc.getElementById('recovery-code-error').hidden, false);
+      assert.equal(form.querySelector('[type=submit]').disabled, false);
+    }
   } finally { dom.window.close(); }
 });
 
@@ -145,6 +223,8 @@ for (const mode of ['quick', 'advanced']) test(`${mode} installation waits for s
     next.click(); assert.deepEqual(navigations, []);
     doc.getElementById('saveRecoveryCodes').click();
     assert.match(await saved[0].text(), /owner@example.test/);
+    assert.match(await saved[0].text(), /only one complete line, not the whole list/);
+    assert.match(doc.getElementById('stepRecovery').textContent, /Each line is a separate recovery code/);
     const check = doc.getElementById('recoverySaved'); check.checked = true; check.dispatchEvent(new w.Event('change'));
     next.click();
     assert.deepEqual(navigations, ['login']);

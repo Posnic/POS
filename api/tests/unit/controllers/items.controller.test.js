@@ -453,6 +453,15 @@ describe('delete', () => {
 // =============================================================================
 
 describe('edit', () => {
+  test('a barcode conflict returns 409 and the exact item-specific message', async () => {
+    const message = 'Barcode "6223014652308" is already used by item "Milk small".';
+    svc.updateItem.mockResolvedValue({ status: 'exist', data: null, message });
+    const res = mockRes();
+    await ctrl.edit(mockReq({ params: { id: VALID_ID }, body: {}, user: adminUser() }), res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message }));
+  });
+
   test('returns 200 on successful update', async () => {
     svc.updateItem.mockResolvedValue({ status: true, data: { _id: VALID_ID }, message: 'ok' });
     const req = mockReq({ params: { id: VALID_ID }, body: { name: 'Updated' }, user: adminUser() });

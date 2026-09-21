@@ -3767,6 +3767,11 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .sale-done-print { display: flex; gap: 6px; }
 .sale-done-print-main { flex: 1 1 auto; }
 .sale-done-paper { flex: 0 0 auto; min-width: 64px; font-size: 13px; }
+.sale-done-actions .sale-done-close {
+    min-height: 44px;
+    color: var(--theme-text-primary, #243b53);
+    border-color: var(--theme-border-color, #cbd5e1);
+}
 .sale-done-send { display: flex; gap: 6px; }
 .sale-done-send .btn { flex: 1 1 0; font-size: 13.5px; color: #5a6478; }
 .sale-done-send .btn:hover { background: #eef3ff; color: #2f5fe0; }
@@ -4551,6 +4556,24 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 #infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head {
     padding-top: 4px;      /* was 14px */
     padding-right: 20px;   /* was 30px */
+}
+#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .tender-close-button {
+    color: var(--theme-text-primary, #243b53);
+    background: var(--theme-card-bg, #fff);
+    border: 1px solid var(--theme-border-color, #cbd5e1);
+    line-height: 1;
+}
+#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .tender-close-button:hover {
+    color: var(--theme-primary-color, #0066d4);
+    background: var(--theme-hover-bg, #edf3fa);
+}
+#infobar-settings-sidebar-tender-details .tender-close-button span {
+    font-size: 28px;
+    line-height: inherit;
+}
+#infobar-settings-sidebar-tender-details .infobar-settings-sidebar-head .tender-close-button:focus-visible {
+    outline: 2px solid var(--theme-primary-color, #0066d4);
+    outline-offset: 2px;
 }
 
 /* ------------------------------------------------------------------

@@ -92,6 +92,28 @@ test('editor adds and reorders blocks, keeps formats independent, and sends a pa
     dom.window.close();
 });
 
+test('saving printing behaviour does not submit or discard unsaved receipt designs', () => {
+    const { dom, w, $, branch } = setup();
+    $('body').append('<div id="receipt-print-behaviour"></div><button id="save-print-behaviour"></button><span id="print-behaviour-status"></span>');
+    const sent = [];
+    w.PosnicPro.put = (request, done) => {
+        const data = JSON.parse(request.data); sent.push(data);
+        done({ type: 'success', data: data });
+    };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('[data-add="text"]').trigger('click');
+    $('#rd-block-text').val('New layout text').trigger('input');
+    $('#printall').prop('checked', true).trigger('change');
+    $('#save-print-behaviour').trigger('click');
+    assert.deepEqual(sent[0], { printall: 'true', bill_print_copies: '1' });
+    assert.match($('#print-behaviour-status').text(), /saved/);
+    assert.match($('.rd-status').text(), /Unsaved/);
+    $('[data-action="save"]').trigger('click');
+    assert.ok(sent[1].receipt_designs.layouts['80'].blocks.some(b => b.text === 'New layout text'));
+    assert.equal($('#printall').closest('#receipt-print-behaviour').length, 1);
+    dom.window.close();
+});
+
 test('FSSAI prints from current branch details on all formats and an explicit field controls its position', () => {
     const { dom, engine, design, sale, $ } = setup();
     sale.table_options = 'enable'; sale.country = 'India'; sale.branch_fssai_number = ' 12345678901234 ';

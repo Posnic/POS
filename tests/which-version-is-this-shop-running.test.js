@@ -178,7 +178,7 @@ test('the API tells a signed-in caller which build answered', () => {
     'the version is published to callers who have not signed in');
 });
 
-test('the About window can be opened without knowing about the Alt key', () => {
+test('the About window can be opened without knowing about the Alt key', async (t) => {
   /*
    * It already held the version, the platform and the cloud this till
    * syncs with. What it did not have was a route: Help > About lives on a
@@ -193,8 +193,24 @@ test('the About window can be opened without knowing about the Alt key', () => {
     'About cannot be opened from inside the app');
 
   const dash = fs.readFileSync(path.join(ROOT, 'frontend', 'dashboard.html'), 'utf8');
-  assert.match(dash, /addItem\([^)]*'about'\)/,
-    'nothing on screen opens it, so the target is unreachable');
+  const script = [...dash.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)]
+    .map(match => match[1]).find(code => code.includes('Desktop tools quick-access'));
+  assert.ok(script, 'the desktop quick menu is missing');
+  const dom = new JSDOM('', { url: 'https://shop.example/', runScripts: 'outside-only' });
+  t.after(() => dom.window.close());
+  const w = dom.window, opened = [];
+  w.PosnicPro = { i18n: { t: (_key, fallback) => fallback }, local: { get: () => false } };
+  w.electronAPI = { desktop: { capabilities: async () => ({ backup: true }), open: target => opened.push(target) } };
+  w.eval(script);
+  await settled();
+  const trigger = w.document.querySelector('.fab-btn');
+  trigger.click();
+  assert.equal(trigger.getAttribute('aria-expanded'), 'true');
+  const about = [...w.document.querySelectorAll('[role="menuitem"]')].find(button => button.textContent === 'About Posnic');
+  assert.ok(about, 'nothing on screen opens About');
+  about.click();
+  assert.deepEqual(opened, ['about']);
+  assert.equal(trigger.getAttribute('aria-expanded'), 'false');
 });
 
 test('the badge rides both bundles, or it is on neither page', () => {

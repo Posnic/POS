@@ -402,6 +402,7 @@ class KOTManager {
       fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2), 'utf8');
     } catch (e) {
       console.error('[KOT] Failed to save config:', e.message);
+      throw e;
     }
   }
 
@@ -545,12 +546,20 @@ class KOTManager {
   // ─── Polling lifecycle ────────────────────────────────────────────────────
 
   async startPolling(config) {
+    const next = { ...config, enabled: true };
+    await this.saveConfig(next);
     this.stopPolling();
-    this.config    = config;
+    this.config    = next;
     this.isPolling = true;
-    await this.saveConfig(config);
     console.log('[KOT] Polling started — branch:', config.branchId, '| printers:', config.printerNames);
     this._poll();
+  }
+
+  async pausePolling() {
+    const config = { ...(this.config || await this.loadConfig()), enabled: false };
+    await this.saveConfig(config);
+    this.config = config;
+    this.stopPolling();
   }
 
   stopPolling() {

@@ -46,7 +46,7 @@ for (const win of WINDOWS) {
   if (!/function switchTab/.test(html)) continue;
 
   test(`${win}: every tab button lands on a panel`, () => {
-    const called = [...html.matchAll(/switchTab\('([^']+)'\)/g)].map((m) => m[1]);
+    const called = [...html.matchAll(/onclick="switchTab\('([^']+)'\)"/g)].map((m) => m[1]);
     assert.ok(called.length > 0, 'no tab buttons found');
 
     const map = html.slice(html.indexOf('const tabMap'));
