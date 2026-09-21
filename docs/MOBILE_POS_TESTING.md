@@ -1,11 +1,15 @@
-# Mobile POS integration — 0.1.4 test build
+# Mobile POS integration — 0.2.0 test build
 
 ## Run the matching desktop and phone builds
 
 Close the running desktop app, then open
-`test-builds/mobile-pos-0.1.4/win-unpacked/Posnic.exe`. Keep the directory intact.
+`test-builds/mobile-pos-0.2.0/win-unpacked/Posnic.exe`. Keep the directory intact.
 This is a Windows test build, not a published installer. It uses the normal
-Posnic data directory. Install the matching Mobile POS 0.1.4 APK over the previously installed test version.
+Posnic data directory. Install the matching Mobile POS 0.2.0 APK over the previously installed test version. It uses the same test signing certificate; do not uninstall a phone holding unsynced sales.
+
+For a cloud account, open the updated desktop so its sync agent can report the current LAN address. On the phone choose **Sign in**, or **Create account · Free trial**, approve the matching device in the browser, and return to set a PIN. The phone prefers an authorized nearby till during onboarding and otherwise uses the cloud shop. This requires the account, gateway and shop APIs to be deployed together.
+
+For a Community/local shop, use **Connect a local or Community shop** and follow the steps below.
 
 1. Open **Settings → Features**, enable **Mobile POS**, and save. Captain has its own independent switch.
 2. Open **Settings → Mobile POS** for the shop-address QR, five-minute single-use pairing code, offline policy, quick-sale settings and receipt till.
@@ -16,7 +20,7 @@ Turning off Mobile POS blocks new pairing/bootstrap/sync. Already recorded sales
 
 Keep the desktop running and put the phone on the same LAN. In the mobile app
 use Wi-Fi search, scan the desktop QR, or enter the displayed address. A LAN
-firewall must permit the desktop API port (normally 5555).
+firewall must permit the desktop's actual configured API port shown in its QR/address; it is not necessarily 5555.
 
 ## Test checklist
 

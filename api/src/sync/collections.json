@@ -36,6 +36,7 @@
     "settings": "global"
   },
   "local_only": {
+    "handsets": "Handset token grants and revocation belong to the API that authorized the phone; copying them to an independent sale authority would permit cross-server access.",
     "counters": "per-machine sequence numbers; two machines must not share a counter",
     "device_meta": "what this machine knows about itself; meaningless elsewhere",
     "data_change_log": "the till's own change journal, which sync itself replaces",
