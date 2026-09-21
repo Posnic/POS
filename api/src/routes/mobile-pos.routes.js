@@ -174,7 +174,7 @@ router.post(
       s.quickTaxBps < 0 ||
       s.quickTaxBps > 10000
     )
-      mobile.fail('Choose an offline period of 1–72 hours and a valid tax rate.');
+      mobile.fail('Choose an offline period of 1 to 72 hours and a valid tax rate.');
     const config = {
       offlineHours: s.offlineHours,
       quickSale: s.quickSale === true,
@@ -264,7 +264,7 @@ router.post(
       payload = require('../helpers/bill-payload').buildBillPayload(sale, c.branch);
       payload.payments = [
         {
-          label: sale.payment_mode === 'Upi' ? 'UPI — staff confirmed' : 'Cash',
+          label: sale.payment_mode === 'Upi' ? 'UPI (staff confirmed)' : 'Cash',
           amount:
             intent.sale.payment.method === 'cash'
               ? intent.sale.payment.received / 100
@@ -275,7 +275,7 @@ router.post(
     } else
       payload = {
         storeName: c.branch.branch_name || 'Posnic',
-        billNo: 'TEST — NOT A SALE',
+        billNo: 'TEST (NOT A SALE)',
         items: [{ name: 'MOBILE POS TEST PRINT', qty: 1, rate: 0, amount: 0 }],
         total: 0,
       };

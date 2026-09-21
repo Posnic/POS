@@ -99,9 +99,9 @@
                                     aria-selected="false"><i class="feather icon-truck mr-2"></i>
                                     <lang class="lang_module_delivery_partners">Delivery Partners</lang>
                                 </a>
-                                <a class="nav-link mb-2" id="v-pills-devices-tab" data-toggle="pill" href="#v-pills-devices" role="tab">Devices</a>
-                                <a class="nav-link mb-2" id="v-pills-branchpayments-tab" data-toggle="pill" href="#v-pills-branchpayments" role="tab">Branch payments</a>
-                                <a class="nav-link mb-2" data-toggle="pill" href="#v-pills-mobilepos" role="tab" id="v-pills-mobilepos-tab"><i class="feather icon-smartphone mr-2"></i>Mobile POS</a>
+                                <a class="nav-link mb-2" id="v-pills-devices-tab" data-toggle="pill" href="#v-pills-devices" role="tab"><lang class="lang_devices">Devices</lang></a>
+                                <a class="nav-link mb-2" id="v-pills-branchpayments-tab" data-toggle="pill" href="#v-pills-branchpayments" role="tab"><lang class="lang_branch_payments">Branch payments</lang></a>
+                                <a class="nav-link mb-2" data-toggle="pill" href="#v-pills-mobilepos" role="tab" id="v-pills-mobilepos-tab"><i class="feather icon-smartphone mr-2"></i><lang class="lang_module_mobile_pos">Mobile POS</lang></a>
                                 <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-captainapp-tab"
                                     data-toggle="pill" href="#v-pills-captainapp" role="tab" aria-controls="v-pills-captainapp"
                                     aria-selected="false"><i class="feather icon-smartphone mr-2"></i>
@@ -499,13 +499,13 @@
                                                 <div class="card-header">
                                                     <h5 class="card-title"><lang class="lang_devices">Devices</lang></h5>
                                                     <p class="text-muted m-b-0">
-                                                        Manage paired Mobile POS and Captain phones. Revocation applies when a phone reconnects; offline authorization expires within the configured period.
-                                                    </p><div><label for="devices_app_filter">App</label> <select id="devices_app_filter"><option value="">All apps</option><option value="mobile-pos">Mobile POS</option><option value="captain">Captain App</option></select>
-                                                    <a href="#/settings/mobilepos" class="btn btn-outline-primary btn-sm">Connect Mobile POS</a>
-                                                    <a href="#/settings/captainapp" class="btn btn-outline-primary btn-sm">Connect Captain</a>
-                                                    <button type="button" class="btn btn-outline-primary btn-sm" data-open-device-hardware>Printers, scanners &amp; scales</button>
-                                                    <a href="#/settings/cashregister" class="btn btn-outline-primary btn-sm">Printing tills</a></div><p>
-                                                    Hardware belongs to the till it is connected to. Open Hardware Manager on that till to configure USB, Bluetooth and network devices.
+                                                        <lang class="lang_manage_paired_mobile_pos_and_captain_phone">Manage paired Mobile POS and Captain phones. Revocation applies when a phone reconnects; offline authorization expires within the configured period.</lang>
+                                                    </p><div><label for="devices_app_filter"><lang class="lang_app">App</lang></label> <select id="devices_app_filter"><option value=""><lang class="lang_all_apps">All apps</lang></option><option value="mobile-pos"><lang class="lang_module_mobile_pos">Mobile POS</lang></option><option value="captain"><lang class="lang_module_captain">Captain App</lang></option></select>
+                                                    <a href="#/settings/mobilepos" class="btn btn-outline-primary btn-sm"><lang class="lang_connect_mobile_pos">Connect Mobile POS</lang></a>
+                                                    <a href="#/settings/captainapp" class="btn btn-outline-primary btn-sm"><lang class="lang_connect_captain">Connect Captain</lang></a>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm" data-open-device-hardware><lang class="lang_printers_scanners_scales">Printers, scanners &amp; scales</lang></button>
+                                                    <a href="#/settings/cashregister" class="btn btn-outline-primary btn-sm"><lang class="lang_printing_tills">Printing tills</lang></a></div><p>
+                                                    <lang class="lang_hardware_belongs_to_the_till_it_is_connect">Hardware belongs to the till it is connected to. Open Hardware Manager on that till to configure USB, Bluetooth and network devices.</lang>
                                                     </p>
                                                 </div>
                                                 <div class="card-body">
@@ -514,7 +514,7 @@
                                                             <thead>
                                                                 <tr>
                                                                     <th><lang class="lang_handset_phone">Phone</lang></th>
-                                                                    <th>App / branch</th><th><lang class="lang_used_by">Used by</lang></th>
+                                                                    <th><lang class="lang_app_branch">App / branch</lang></th><th><lang class="lang_used_by">Used by</lang></th>
                                                                     <th><lang class="lang_last_used">Last used</lang></th>
                                                                     <th><lang class="lang_handset_status">Status</lang></th>
                                                                     <th style="text-align:right;"></th>
@@ -2640,7 +2640,7 @@
                                                         <label class="custom-control-label" for="module_mobile_pos_enable"></label>
                                                     </div>
                                                 </div>
-                                                <p class="module-desc">Sell, collect payment and print receipts from a phone, including offline sales.</p>
+                                                <p class="module-desc"><lang class="lang_sell_collect_payment_and_print_receipts_fr">Sell, collect payment and print receipts from a phone, including offline sales.</lang></p>
                                             </div>
 
 
@@ -3245,7 +3245,7 @@
                                         <p class="text-muted"><lang class="lang_kot_print_auto_help">Applies to orders saved on this browser or desktop. Desktop uses your kitchen printers; otherwise a print dialog opens. Orders already handled by a kitchen printer are not printed again.</lang></p>
                                         <div class="form-group" style="max-width:260px">
                                             <label for="kot-counter-width"><lang class="lang_kot_print_paper">Paper width for the print dialog</lang></label>
-                                            <select id="kot-counter-width" class="form-control"><option value="80" data-t="lang_80_mm">80 mm</option><option value="58" data-t="lang_58_mm">58 mm</option></select>
+                                            <select id="kot-counter-width" class="form-control"><option value="80" data-t="lang_80_mm"><lang class="lang_80_mm">80 mm</lang></option><option value="58" data-t="lang_58_mm"><lang class="lang_58_mm">58 mm</lang></option></select>
                                         </div>
                                         <p><lang class="lang_kot_print_manual_help">Print KOT is always available beside Print Bill. Saved changes print as additional or cancelled items. Copies are clearly marked.</lang></p>
                                         <small id="kot-counter-saved" role="status"><lang class="lang_kot_print_settings_saved">Saved for this counter.</lang></small>
@@ -6617,8 +6617,8 @@
                         </div>
 
                         <!-- Captain App -->
-                        <div class="tab-pane fade" id="v-pills-branchpayments" role="tabpanel"><iframe id="branch_payments_frame" title="Branch payments" style="width:100%;height:85vh;border:0" loading="lazy"></iframe></div>
-                        <div class="tab-pane fade" id="v-pills-mobilepos" role="tabpanel"><iframe id="mobile_pos_frame" title="Mobile POS settings" style="width:100%;height:85vh;border:0" loading="lazy"></iframe></div>
+                        <div class="tab-pane fade" id="v-pills-branchpayments" role="tabpanel"><iframe id="branch_payments_frame" title="Branch payments" data-t-title="lang_branch_payments" style="width:100%;height:85vh;border:0" loading="lazy"></iframe></div>
+                        <div class="tab-pane fade" id="v-pills-mobilepos" role="tabpanel"><iframe id="mobile_pos_frame" title="Mobile POS settings" data-t-title="lang_mobile_pos_settings" style="width:100%;height:85vh;border:0" loading="lazy"></iframe></div>
                         <div class="tab-pane fade" data-module="plan" data-access="read" id="v-pills-captainapp"
                             role="tabpanel" aria-labelledby="v-pills-captainapp-tab">
                             <div class="order-box">
@@ -6650,7 +6650,7 @@
                                                     aria-labelledby="captainhandsets-tab-line">
                                                     <div class="card border m-b-30">
                                                         <div class="card-body">
-                                                            <a class="btn btn-outline-primary btn-sm" href="#/settings/devices" id="captain_devices_link">Manage Captain devices</a>
+                                                            <a class="btn btn-outline-primary btn-sm" href="#/settings/devices" id="captain_devices_link"><lang class="lang_manage_captain_devices">Manage Captain devices</lang></a>
                                                             <h6 class="mb-1"><lang class="lang_captain_pair_title">Point a phone at this shop</lang></h6>
                                                             <small class="form-text text-muted mb-3">
                                                                 <lang class="lang_captain_pair_help">Install the Posnic captain app on the phone, open the pairing screen below on the till, and let the phone read the code. The owner knows the shop address; a waiter on their first shift does not, and this is so nobody has to type it.</lang>

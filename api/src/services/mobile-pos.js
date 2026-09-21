@@ -218,7 +218,7 @@ function validateSale(sale, grant, c, grants = new Map()) {
     fail('Sale is outside its offline permission period.', 409);
   if (sale.currency !== grant.shop.currency) fail('Currency does not match the branch.');
   if (!Array.isArray(sale.cart?.lines) || !sale.cart.lines.length || sale.cart.lines.length > 500)
-    fail('A sale needs 1–500 lines.');
+    fail('A sale needs 1 to 500 lines.');
   let total = 0,
     tax = 0;
   const lines = sale.cart.lines.map((line) => {

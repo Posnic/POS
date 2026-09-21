@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "आफ्नो पसलको पहुँच सुरक्षित राख्नुहोस्: इमेल उपलब्ध नभएको अवस्थामा प्रयोग गर्न अफलाइन पुनःप्राप्ति कोडहरू राख्नुहोस्।",
   "lang_recovery_sheet_warning": "हरेक कोड एक पटक मात्र काम गर्छ। यो पाना बिक्री कम्प्युटरबाट अलग राख्नुहोस्। कोड भएको जोसुकैले यो खाता रिसेट गर्न सक्छ।",
   "lang_recovery_shown_once": "एक पटक मात्र देखाइन्छ। हरेक कोडले {account} लाई एक पटक रिसेट गर्न सक्छ।",
-  "lang_recovery_username": "इमेल वा प्रयोगकर्ता नाम"
+  "lang_recovery_username": "इमेल वा प्रयोगकर्ता नाम",
+  "lang_devices": "उपकरणहरू",
+  "lang_branch_payments": "शाखाका भुक्तानीहरू",
+  "lang_app": "एप",
+  "lang_all_apps": "सबै एपहरू",
+  "lang_connect_mobile_pos": "Mobile POS जोड्नुहोस्",
+  "lang_connect_captain": "Captain जोड्नुहोस्",
+  "lang_printers_scanners_scales": "प्रिन्टर, स्क्यानर र तौल मेसिन",
+  "lang_printing_tills": "प्रिन्ट गर्ने काउन्टरहरू",
+  "lang_app_branch": "एप / शाखा",
+  "lang_manage_captain_devices": "Captain उपकरणहरू व्यवस्थापन गर्नुहोस्",
+  "lang_mobile_pos_settings": "Mobile POS सेटिङहरू",
+  "lang_authorized": "अधिकृत",
+  "lang_module_mobile_pos": "Mobile POS"
 }

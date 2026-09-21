@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "ನಿಮ್ಮ ಅಂಗಡಿಯ ಪ್ರವೇಶವನ್ನು ಕಾಪಾಡಿ: ಇಮೇಲ್ ಲಭ್ಯವಿಲ್ಲದಾಗ ಬಳಸಲು ಆಫ್‌ಲೈನ್ ಮರುಪಡೆಯುವಿಕೆ ಕೋಡ್‌ಗಳನ್ನು ಉಳಿಸಿ.",
   "lang_recovery_sheet_warning": "ಪ್ರತಿ ಕೋಡ್ ಒಮ್ಮೆ ಮಾತ್ರ ಕೆಲಸ ಮಾಡುತ್ತದೆ. ಈ ಹಾಳೆಯನ್ನು ಮಾರಾಟದ ಕಂಪ್ಯೂಟರ್‌ನಿಂದ ದೂರವಿಡಿ. ಕೋಡ್ ಹೊಂದಿರುವ ಯಾರಾದರೂ ಈ ಖಾತೆಯನ್ನು ಮರುಹೊಂದಿಸಬಹುದು.",
   "lang_recovery_shown_once": "ಒಮ್ಮೆ ಮಾತ್ರ ತೋರಿಸಲಾಗುತ್ತದೆ. ಪ್ರತಿ ಕೋಡ್ {account} ಅನ್ನು ಒಮ್ಮೆ ಮರುಹೊಂದಿಸಬಹುದು.",
-  "lang_recovery_username": "ಇಮೇಲ್ ಅಥವಾ ಬಳಕೆದಾರ ಹೆಸರು"
+  "lang_recovery_username": "ಇಮೇಲ್ ಅಥವಾ ಬಳಕೆದಾರ ಹೆಸರು",
+  "lang_devices": "ಸಾಧನಗಳು",
+  "lang_branch_payments": "ಶಾಖೆಯ ಪಾವತಿಗಳು",
+  "lang_app": "ಆ್ಯಪ್",
+  "lang_all_apps": "ಎಲ್ಲಾ ಆ್ಯಪ್‌ಗಳು",
+  "lang_connect_mobile_pos": "Mobile POS ಸಂಪರ್ಕಿಸಿ",
+  "lang_connect_captain": "Captain ಸಂಪರ್ಕಿಸಿ",
+  "lang_printers_scanners_scales": "ಪ್ರಿಂಟರ್‌ಗಳು, ಸ್ಕ್ಯಾನರ್‌ಗಳು ಮತ್ತು ತೂಕದ ಯಂತ್ರಗಳು",
+  "lang_printing_tills": "ಮುದ್ರಿಸುವ ಕೌಂಟರ್‌ಗಳು",
+  "lang_app_branch": "ಆ್ಯಪ್ / ಶಾಖೆ",
+  "lang_manage_captain_devices": "Captain ಸಾಧನಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
+  "lang_mobile_pos_settings": "Mobile POS ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+  "lang_authorized": "ಅಧಿಕೃತ",
+  "lang_module_mobile_pos": "Mobile POS"
 }

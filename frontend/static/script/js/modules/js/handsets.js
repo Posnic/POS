@@ -113,7 +113,7 @@ PosnicPro.handsets = {
                 + esc(PosnicPro.handsets._when(row.last_seen)) + '</td>'
                 + '<td style="white-space:nowrap;">' + (stopped
                     ? '<span class="badge badge-danger-inverse"><lang class="lang_stopped">Stopped</lang></span>'
-                    : '<span class="badge badge-success-inverse">Authorized</span>')
+                    : '<span class="badge badge-success-inverse"><lang class="lang_authorized">Authorized</lang></span>')
                 + '</td>'
                 + '<td style="text-align:right;white-space:nowrap;">' + (stopped
                     ? '<button type="button" class="btn btn-sm btn-outline-primary handset-allow" data-id="' + esc(id) + '">'

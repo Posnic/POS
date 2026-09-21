@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "ปกป้องการเข้าถึงร้าน: บันทึกรหัสกู้คืนออฟไลน์ไว้เผื่อใช้อีเมลไม่ได้",
   "lang_recovery_sheet_warning": "แต่ละรหัสใช้ได้ครั้งเดียว เก็บเอกสารนี้แยกจากเครื่องขายหน้าร้าน ใครก็ตามที่มีรหัสสามารถรีเซ็ตบัญชีนี้ได้",
   "lang_recovery_shown_once": "แสดงเพียงครั้งเดียว แต่ละรหัสใช้รีเซ็ต {account} ได้หนึ่งครั้ง",
-  "lang_recovery_username": "อีเมลหรือชื่อผู้ใช้"
+  "lang_recovery_username": "อีเมลหรือชื่อผู้ใช้",
+  "lang_devices": "อุปกรณ์",
+  "lang_branch_payments": "การชำระเงินของสาขา",
+  "lang_app": "แอป",
+  "lang_all_apps": "แอปทั้งหมด",
+  "lang_connect_mobile_pos": "เชื่อมต่อ Mobile POS",
+  "lang_connect_captain": "เชื่อมต่อ Captain",
+  "lang_printers_scanners_scales": "เครื่องพิมพ์ เครื่องสแกน และเครื่องชั่ง",
+  "lang_printing_tills": "เครื่องคิดเงินสำหรับพิมพ์",
+  "lang_app_branch": "แอป / สาขา",
+  "lang_manage_captain_devices": "จัดการอุปกรณ์ Captain",
+  "lang_mobile_pos_settings": "การตั้งค่า Mobile POS",
+  "lang_authorized": "ได้รับอนุญาต",
+  "lang_module_mobile_pos": "Mobile POS"
 }

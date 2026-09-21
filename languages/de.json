@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "Sichern Sie den Zugang zu Ihrem Geschäft: Speichern Sie Offline-Wiederherstellungscodes für den Fall, dass E-Mail nicht verfügbar ist.",
   "lang_recovery_sheet_warning": "Jeder Code funktioniert einmal. Bewahren Sie dieses Blatt getrennt von der Kasse auf. Jeder mit einem Code kann dieses Konto zurücksetzen.",
   "lang_recovery_shown_once": "Nur einmal angezeigt. Jeder Code kann {account} einmal zurücksetzen.",
-  "lang_recovery_username": "E-Mail oder Benutzername"
+  "lang_recovery_username": "E-Mail oder Benutzername",
+  "lang_devices": "Geräte",
+  "lang_branch_payments": "Filialzahlungen",
+  "lang_app": "App",
+  "lang_all_apps": "Alle Apps",
+  "lang_connect_mobile_pos": "Mobile POS verbinden",
+  "lang_connect_captain": "Captain verbinden",
+  "lang_printers_scanners_scales": "Drucker, Scanner und Waagen",
+  "lang_printing_tills": "Druckende Kassen",
+  "lang_app_branch": "App / Filiale",
+  "lang_manage_captain_devices": "Captain-Geräte verwalten",
+  "lang_mobile_pos_settings": "Mobile-POS-Einstellungen",
+  "lang_authorized": "Autorisiert",
+  "lang_module_mobile_pos": "Mobile POS"
 }

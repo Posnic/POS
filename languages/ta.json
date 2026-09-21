@@ -3458,5 +3458,18 @@
   "lang_recovery_setup_reminder": "கடைக்கான அணுகலைப் பாதுகாக்கவும்: மின்னஞ்சல் கிடைக்காதபோது பயன்படுத்த இணையமில்லா மீட்புக் குறியீடுகளைச் சேமிக்கவும்.",
   "lang_recovery_sheet_warning": "ஒவ்வொரு குறியீடும் ஒருமுறை மட்டுமே பயன்படும். இந்தத் தாளை விற்பனைக் கணினியிலிருந்து தனியாகப் பாதுகாக்கவும். குறியீடு உள்ள எவரும் இந்தக் கணக்கை மீட்டமைக்கலாம்.",
   "lang_recovery_shown_once": "ஒருமுறை மட்டுமே காட்டப்படும். ஒவ்வொரு குறியீடும் {account} கணக்கை ஒருமுறை மீட்டமைக்கலாம்.",
-  "lang_recovery_username": "மின்னஞ்சல் அல்லது பயனர்பெயர்"
+  "lang_recovery_username": "மின்னஞ்சல் அல்லது பயனர்பெயர்",
+  "lang_devices": "சாதனங்கள்",
+  "lang_branch_payments": "கிளைப் பணப்பரிவர்த்தனைகள்",
+  "lang_app": "செயலி",
+  "lang_all_apps": "அனைத்துச் செயலிகளும்",
+  "lang_connect_mobile_pos": "Mobile POS இணைக்கவும்",
+  "lang_connect_captain": "Captain இணைக்கவும்",
+  "lang_printers_scanners_scales": "அச்சுப்பொறிகள், ஸ்கேனர்கள் மற்றும் தராசுகள்",
+  "lang_printing_tills": "அச்சிடும் விற்பனை முனையங்கள்",
+  "lang_app_branch": "செயலி / கிளை",
+  "lang_manage_captain_devices": "Captain சாதனங்களை நிர்வகி",
+  "lang_mobile_pos_settings": "Mobile POS அமைப்புகள்",
+  "lang_authorized": "அங்கீகரிக்கப்பட்டது",
+  "lang_module_mobile_pos": "Mobile POS"
 }

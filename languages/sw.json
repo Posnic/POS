@@ -3422,5 +3422,18 @@
   "lang_recovery_setup_reminder": "Linda ufikiaji wa duka lako: hifadhi misimbo ya urejeshaji bila intaneti iwapo barua pepe haipatikani.",
   "lang_recovery_sheet_warning": "Kila msimbo hufanya kazi mara moja. Hifadhi karatasi hii mbali na kompyuta ya mauzo. Mtu yeyote mwenye msimbo anaweza kubadilisha nenosiri la akaunti hii.",
   "lang_recovery_shown_once": "Inaonyeshwa mara moja tu. Kila msimbo unaweza kurejesha {account} mara moja.",
-  "lang_recovery_username": "Barua pepe au jina la mtumiaji"
+  "lang_recovery_username": "Barua pepe au jina la mtumiaji",
+  "lang_devices": "Vifaa",
+  "lang_branch_payments": "Malipo ya tawi",
+  "lang_app": "Programu",
+  "lang_all_apps": "Programu zote",
+  "lang_connect_mobile_pos": "Unganisha Mobile POS",
+  "lang_connect_captain": "Unganisha Captain",
+  "lang_printers_scanners_scales": "Printa, skana na mizani",
+  "lang_printing_tills": "Kaunta za kuchapisha",
+  "lang_app_branch": "Programu / tawi",
+  "lang_manage_captain_devices": "Dhibiti vifaa vya Captain",
+  "lang_mobile_pos_settings": "Mipangilio ya Mobile POS",
+  "lang_authorized": "Imeidhinishwa",
+  "lang_module_mobile_pos": "Mobile POS"
 }
