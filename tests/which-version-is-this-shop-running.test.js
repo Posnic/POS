@@ -193,7 +193,7 @@ test('the About window can be opened without knowing about the Alt key', async (
     'About cannot be opened from inside the app');
 
   const dash = fs.readFileSync(path.join(ROOT, 'frontend', 'dashboard.html'), 'utf8');
-  const script = [...dash.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)]
+  const script = [...dash.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
     .map(match => match[1]).find(code => code.includes('Desktop tools quick-access'));
   assert.ok(script, 'the desktop quick menu is missing');
   const dom = new JSDOM('', { url: 'https://shop.example/', runScripts: 'outside-only' });
