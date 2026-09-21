@@ -47,10 +47,32 @@ const refuse = (res) =>
     data: null,
   });
 
+// Existing unassigned handsets remain visible to shop administrators. New
+// branch-bound devices are restricted to the staff member's branch access.
+const inScope = (req, row) =>
+  !row.branch_id ||
+  [
+    req.tenantContext?.branchId,
+    req.user?.branch_id,
+    ...(req.user?.branch_access || []).map((b) => b.branch_id),
+  ].some((id) => String(id || '') === String(row.branch_id));
+async function canManage(req, res) {
+  const rows = await handsets.list(db());
+  const row = rows.find((r) => r.device_id === req.params.deviceId);
+  if (row && inScope(req, row)) return true;
+  res.status(404).json({
+    type: 'error',
+    status: false,
+    message: 'Device not found in your branches',
+    data: null,
+  });
+  return false;
+}
+
 router.get('/', async (req, res) => {
   if (!allowed(req.user)) return refuse(res);
 
-  const rows = await handsets.list(db());
+  const rows = (await handsets.list(db())).filter((row) => inScope(req, row));
   return res.status(200).json({
     type: 'success',
     status: true,
@@ -67,6 +89,7 @@ router.get('/', async (req, res) => {
 router.post('/:deviceId/revoke', async (req, res) => {
   if (!allowed(req.user)) return refuse(res);
 
+  if (!(await canManage(req, res))) return;
   const found = await handsets.setRevoked(
     db(),
     req.params.deviceId,
@@ -91,7 +114,8 @@ router.post('/:deviceId/revoke', async (req, res) => {
   return res.status(200).json({
     type: 'success',
     status: true,
-    message: 'That phone is turned off. Signing in on it again will let it back.',
+    message:
+      'Device access revoked. Offline authorization expires within its configured period. Signing in again restores access.',
     data: null,
   });
 });
@@ -99,6 +123,8 @@ router.post('/:deviceId/revoke', async (req, res) => {
 router.post('/:deviceId/allow', async (req, res) => {
   if (!allowed(req.user)) return refuse(res);
 
+  if (!(await canManage(req, res))) return;
+  if (!(await canManage(req, res))) return;
   const found = await handsets.setRevoked(db(), req.params.deviceId, false, '');
   if (!found) {
     return res.status(404).json({

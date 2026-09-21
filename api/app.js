@@ -1114,6 +1114,18 @@ app.use(changeEvents);
  * forms like every infra endpoint.
  */
 require('./src/v1').registerV1({ app, protect: sseProtect });
+app.use(
+  ['/api/branch-payments', '/branch-payments'],
+  require('./src/routes/branch-payments.routes')
+);
+app.use(['/api/mobile/v1', '/mobile/v1'], require('./src/routes/mobile-pos.routes'));
+for (const extension of ['html', 'js', 'css']) {
+  const suffix = extension === 'html' ? '' : '.' + extension;
+  app.get(['/api/mobile-pos-setup' + suffix, '/mobile-pos-setup' + suffix], (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.sendFile(require('path').join(__dirname, 'src/routes/mobile-pos-setup.' + extension));
+  });
+}
 
 const sseEvents = (req, res) => {
   if (!req.db) return res.status(503).json({ type: 'error', message: 'No shop in context' });

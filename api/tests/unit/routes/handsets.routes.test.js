@@ -67,8 +67,23 @@ describe('handsets.routes', () => {
           path.endsWith('/revoke'),
           path.endsWith('/revoke') ? 'owner' : ''
         );
-        expect(handsets.list).not.toHaveBeenCalled();
+        expect(handsets.list).toHaveBeenCalledWith(tenantDb);
       }
+    });
+
+    test('does not expose or change a device assigned to another branch', async () => {
+      handsets.list.mockResolvedValue([{ device_id: 'phone-123', branch_id: 'other-branch' }]);
+      await handle(
+        {
+          user: { usertype: 'manager', branch_access: [{ branch_id: 'my-branch' }] },
+          params: { deviceId: 'phone-123' },
+        },
+        res
+      );
+      if (method === 'get')
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ data: [] }));
+      else expect(res.status).toHaveBeenCalledWith(404);
+      expect(handsets.setRevoked).not.toHaveBeenCalled();
     });
 
     test.each([

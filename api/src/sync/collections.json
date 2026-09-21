@@ -50,7 +50,10 @@
     "ai_usage": "The AI spend meter, counted where the call was made: the cloud meters the ordering page and the till meters its own screens. Rows are $inc counters, which last-writer-wins would clobber; the settings screen reads the side it is opened on.",
     "ai_voice_sessions": "Live-voice lines being metered by the cloud instance that opened them: a few minutes of clock per call, swept after two days. State of one server, not shop data.",
     "printjobs": "work waiting for a particular printer, claimed over HTTP by whichever till is allowed to. Syncing it would hand the same bill to two databases and print it twice, which is the one thing the atomic claim exists to prevent",
-    "print_tills": "the key digests this shop has allowed to take its print jobs. A till has no use for the list, and copying it between installations would mean a machine allowed in one shop being allowed in another"
+    "print_tills": "the key digests this shop has allowed to take its print jobs. A till has no use for the list, and copying it between installations would mean a machine allowed in one shop being allowed in another",
+    "mobile_sales": "Mobile device grants and durable ingestion journal belong to the issuing server. Moving them independently would permit cross-server replay; completed sales use the normal sales sync.",
+    "mobile_grants": "Mobile device grants and durable ingestion journal belong to the issuing server. Moving them independently would permit cross-server replay; completed sales use the normal sales sync.",
+    "mobile_pair_codes": "Mobile device grants and durable ingestion journal belong to the issuing server. Moving them independently would permit cross-server replay; completed sales use the normal sales sync."
   },
   "undecided": {
     "_note": "Shop data that today stays where it was written. Each needs a decision and, if synced, a check that rows carry branch_id and license and that deletes leave a tombstone. Until decided, a till and the cloud can disagree on these exactly as they did on tables.",

@@ -2835,6 +2835,8 @@ class UsersController extends BaseController {
         req.handsetDevice = await rememberHandset(db, {
           device: req.body && req.body.device,
           user: recordsFiltered,
+          branchId:
+            req.session?.selectedBranchId || req.session?.branch_id || recordsFiltered.branch_id,
           ip,
         });
 

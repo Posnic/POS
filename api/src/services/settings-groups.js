@@ -44,6 +44,7 @@ const FEATURES = [
   'module_online_ordering_enable',
   'module_kiosk_enable',
   'module_captain_enable',
+  'module_mobile_pos_enable',
   'module_delivery_partners_enable',
   'module_webshop_enable',
   'module_recyclebin_enable',

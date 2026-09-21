@@ -16,6 +16,8 @@
  */
 PosnicPro.handsets = {
     rows: [],
+    filter: "",
+    appType: function (row) { return /mobile.?pos/i.test([row.app, row.platform, row.model].join(" ")) ? "mobile-pos" : /captain/i.test([row.app, row.model].join(" ")) ? "captain" : "other"; },
 
     _esc: function (s) {
         return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -60,9 +62,10 @@ PosnicPro.handsets = {
     load: function () {
         var body = $('#handsets_body');
         if (!body.length) return;
+        $('#devices_app_filter').val(PosnicPro.handsets.filter);
 
         body.html(
-            '<tr><td colspan="5" class="text-center text-muted">' +
+            '<tr><td colspan="6" class="text-center text-muted">' +
             '<lang class="lang_loading_handsets">Loading the handsets.</lang></td></tr>'
         );
 
@@ -71,7 +74,7 @@ PosnicPro.handsets = {
             PosnicPro.handsets.render();
         }, function () {
             body.html(
-                '<tr><td colspan="5" class="text-center text-danger">' +
+                '<tr><td colspan="6" class="text-center text-danger">' +
                 '<lang class="lang_could_not_load_handsets">Could not load the handsets.</lang>' +
                 '</td></tr>'
             );
@@ -86,6 +89,8 @@ PosnicPro.handsets = {
 
         var html = '';
         (PosnicPro.handsets.rows || []).forEach(function (row) {
+            var app = PosnicPro.handsets.appType(row);
+            if (PosnicPro.handsets.filter && PosnicPro.handsets.filter !== app) return;
             var id = String(row.device_id || '');
             var stopped = row.revoked === true;
 
@@ -102,12 +107,13 @@ PosnicPro.handsets = {
                 + '<td style="font-weight:600;white-space:nowrap;">' + name
                 + (platform ? '<div class="q-muted" style="font-weight:400;font-size:12px;">' + esc(platform) + '</div>' : '')
                 + '</td>'
+                + '<td>' + esc(app === 'mobile-pos' ? 'Mobile POS' : app === 'captain' ? 'Captain App' : (row.app || 'Unclassified')) + '<div class="q-muted">' + esc(row.branch_name || 'Branch not recorded') + '</div></td>'
                 + '<td style="white-space:nowrap;">' + esc(row.user_name || '') + '</td>'
                 + '<td style="white-space:nowrap;" title="' + esc(row.last_seen || '') + '">'
                 + esc(PosnicPro.handsets._when(row.last_seen)) + '</td>'
                 + '<td style="white-space:nowrap;">' + (stopped
                     ? '<span class="badge badge-danger-inverse"><lang class="lang_stopped">Stopped</lang></span>'
-                    : '<span class="badge badge-success-inverse"><lang class="lang_in_use">In use</lang></span>')
+                    : '<span class="badge badge-success-inverse">Authorized</span>')
                 + '</td>'
                 + '<td style="text-align:right;white-space:nowrap;">' + (stopped
                     ? '<button type="button" class="btn btn-sm btn-outline-primary handset-allow" data-id="' + esc(id) + '">'
@@ -118,7 +124,7 @@ PosnicPro.handsets = {
                 + '</tr>';
         });
 
-        body.html(html || '<tr><td colspan="5" class="text-center text-muted">' +
+        body.html(html || '<tr><td colspan="6" class="text-center text-muted">' +
             '<lang class="lang_no_handset_has_signed_in_yet">No handset has signed in to this shop yet. Sign in on a phone and it appears here.</lang></td></tr>');
     },
 
@@ -132,7 +138,7 @@ PosnicPro.handsets = {
         /* The house dialog, the same one a role is deleted with. */
         swal({
             title: PosnicPro.i18n.t('lang_stop_this_phone', 'Stop this phone'),
-            text: PosnicPro.i18n.t('lang_stop_this_phone_ask', 'It stops taking orders at once. Signing in on it again with the shop password lets it back.'),
+            text: 'Access stops when the phone reconnects. Offline authorization remains valid until it expires. Recorded sales stay on the phone. Signing in again with authorized credentials restores access.',
             showCancelButton: true,
             confirmButtonClass: 'btn btn-danger',
             cancelButtonClass: 'btn btn-secondary m-l-10',
@@ -168,3 +174,5 @@ $(document).on('click', '.handset-stop', function () {
 $(document).on('click', '.handset-allow', function () {
     PosnicPro.handsets.allow($(this).data('id'));
 });
+
+$(document).on("change", "#devices_app_filter", function () { PosnicPro.handsets.filter = $(this).val(); PosnicPro.handsets.render(); });

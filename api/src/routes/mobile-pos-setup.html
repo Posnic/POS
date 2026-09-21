@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Mobile POS setup</title>
+    <link rel="stylesheet" href="mobile-pos-setup.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Mobile POS</h1>
+      <p id="branch">Loading your branch…</p>
+      <p id="message" role="status"></p>
+      <form id="settings" hidden>
+        <section>
+          <h2>Access</h2>
+          <p id="feature-status"></p>
+          <button type="button" data-nav="modules">Open Features</button>
+          <label
+            >Allow selling offline for
+            <input type="number" id="hours" min="1" max="72" required /> hours</label
+          >
+          <p>
+            Turning off Mobile POS in Features stops new connections and sync. Recorded sales stay
+            on the phone. A phone already offline keeps its permission until this period expires.
+          </p>
+        </section>
+        <section id="connect-section">
+          <h2>Connect a phone</h2>
+          <p>
+            Use the same Wi-Fi as this desktop. Enter one of these addresses, or use the Wi-Fi
+            search icon in the app.
+          </p>
+          <div id="addresses"></div>
+          <p>
+            Sign in on the phone with the staff member’s account, or generate a one-use code for
+            your current account.
+          </p>
+          <button type="button" id="pair">Generate pairing code</button><output id="code"></output>
+          <p id="code-help"></p>
+        </section>
+        <section>
+          <h2>Quick sales</h2>
+          <label class="check"
+            ><input type="checkbox" id="quick" /> Allow entering an amount without choosing an
+            item</label
+          ><label
+            >Quick-sale tax (%)
+            <input type="number" id="tax" min="0" max="100" step="0.01" required /></label
+          ><label class="check"><input type="checkbox" id="inclusive" /> Amount includes tax</label>
+        </section>
+        <section id="payments-section">
+          <h2>UPI accounts</h2>
+          <p>
+            The phone shows an amount QR. Staff must confirm receipt of payment in the bank or
+            payment app before completing the sale.
+          </p>
+          <div id="accounts"></div>
+          <button type="button" id="add">Add UPI account</button>
+        </section>
+        <section>
+          <h2>Receipt printing</h2>
+          <p>
+            On the phone, choose More → Printer → Till to use the desktop receipt printer. Choose
+            System to use a printer available to Android.
+          </p>
+          <label
+            >Receipt till ID (optional)<input
+              id="till"
+              maxlength="128"
+              placeholder="Any available till in this branch"
+          /></label>
+          <p>
+            Configure the physical printer in the desktop Hardware settings. The first available
+            till claims each job unless a till ID is specified.
+          </p>
+        </section>
+        <button type="submit">Save settings</button>
+      </form>
+      <section id="attention-section" hidden>
+        <h2>Sales needing attention</h2>
+        <div id="attention"></div>
+        <button id="recover" type="button">Resume interrupted sync</button>
+      </section>
+      <section id="device-links">
+        <h2>Devices and payments</h2>
+        <button type="button" data-nav="devices">Manage devices</button
+        ><button type="button" data-nav="branchpayments">Branch payments</button>
+        <p>
+          UPI accounts are shared by this branch. Staff permissions are managed in Staff → Roles.
+        </p>
+      </section>
+    </main>
+    <script src="mobile-pos-setup.js"></script>
+  </body>
+</html>
