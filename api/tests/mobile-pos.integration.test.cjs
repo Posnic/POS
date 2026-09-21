@@ -520,6 +520,49 @@ test('branch payments migrate legacy data and mobile settings cannot overwrite f
   assert.equal((await call('/mobile/v1/bootstrap')).data.shop.defaultUpiAccountId, 'shared');
 });
 
+for (const useLocal of [false, true]) test('account-first mobile UI reaches PIN using ' + (useLocal ? 'the authenticated LAN till' : 'the cloud shop'),
+  { skip: !process.env.MOBILE_PREVIEW_DIR || !process.env.MOBILE_PLAYWRIGHT_PATH }, async () => {
+    const { chromium, expect } = require(process.env.MOBILE_PLAYWRIGHT_PATH.replace(/playwright$/, '@playwright/test'));
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+      let request, pairedAt;
+      const code = useLocal ? '112233445566' : 'ABCDEF123456';
+      const enrolmentId = crypto.randomUUID();
+      await context.route('https://www.posnic.com/api/mobile/**', async route => {
+        const path = new URL(route.request().url()).pathname;
+        if (path.endsWith('/authorize')) return route.fulfill({ contentType: 'text/html', body: '<p>Approved test device</p>' });
+        const body = route.request().postDataJSON();
+        if (path.endsWith('/requests')) {
+          request = body;
+          return route.fulfill({ json: { request: 'r'.repeat(43), expiresIn: 900,
+            authorizationUrl: 'https://www.posnic.com/api/mobile/authorize?request=' + 'r'.repeat(43) } });
+        }
+        assert.equal(crypto.createHash('sha256').update(body.codeVerifier).digest('base64url'), request.codeChallenge);
+        await db.collection('mobile_pair_codes').insertOne({ _id: mobile.hash(code), enrolmentId, userId: user._id,
+          branchId: branch._id, license: branch.license, expires: new Date(Date.now() + 60000),
+          deviceId: request.deviceId, codeChallenge: request.codeChallenge });
+        return route.fulfill({ json: { baseUrl: 'https://mobile-test.example/api', code, localServers: useLocal ? [{ name: 'Nearby till', addresses: ['http://192.168.50.4:42590/api'], code, enrolmentId }] : [] } });
+      });
+      await context.route(/^(https:\/\/mobile-test\.example|http:\/\/192\.168\.50\.4:42590)\/api\//, async route => {
+        const r = route.request();
+        if (r.url().endsWith('/pair')) pairedAt = new URL(r.url()).hostname;
+        const response = await fetch(base + new URL(r.url()).pathname.replace(/^\/api/, ''), {
+          method: r.method(), headers: { 'content-type': 'application/json', ...(r.headers().authorization ? { authorization: r.headers().authorization } : {}) },
+          body: r.postData() || undefined,
+        });
+        await route.fulfill({ status: response.status, contentType: 'application/json', body: await response.text() });
+      });
+      const page = await context.newPage();
+      await page.goto(base.replace(/\/api$/, '/'));
+      await expect(page.getByTestId('server-input')).toHaveCount(0);
+      await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+      await expect(page.getByRole('textbox', { name: 'PIN', exact: true })).toBeVisible({ timeout: 15000 });
+      assert.equal(request.intent, 'login');
+      assert.equal(pairedAt, useLocal ? '192.168.50.4' : 'mobile-test.example');
+    } finally { await browser.close(); }
+  });
+
 test('Features API persists Mobile POS independently and branch read returns the saved switch', { skip: process.env.MOBILE_FULL_APP !== '1' }, async () => {
   const result = await call('/setting/updateCommonSettings', { module_mobile_pos_enable: 'false', module_captain_enable: 'true', sales_prefix: 'M', receiving_prefix: 'R' }, token, 'PUT');
   assert.equal(result.status, 200, JSON.stringify(result.data));
