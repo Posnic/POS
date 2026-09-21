@@ -81,7 +81,8 @@ advertise shared-ledger LAN/cloud failover.
   automated tests. Card-reader/provider payments and complex item configurations
   remain outside this build's advertised capabilities.
 
-Run from `api`: `node --test tests/mobile-pos.integration.test.cjs`.
+Run from `api`: `node --test tests/mobile-pos.integration.cjs`.
 For the two browser scenarios also set `MOBILE_PLAYWRIGHT_PATH` to an installed
 Playwright package and `MOBILE_PREVIEW_DIR` to the compiled Mobile-App `dist`
-directory. The integration test uses the bundled Windows mongod in this tree.
+directory. The integration test uses the bundled Windows mongod when available;
+on other platforms mongodb-memory-server downloads a matching binary.

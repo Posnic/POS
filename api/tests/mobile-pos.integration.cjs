@@ -3,6 +3,7 @@
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const fs = require('node:fs');
 const crypto = require('node:crypto');
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = crypto.randomBytes(32).toString('hex');
@@ -16,7 +17,9 @@ const sessionStores = new Set();
 before(
   async () => {
     mongo = await MongoMemoryServer.create({
-      binary: { systemBinary: path.resolve(__dirname, '../../mongodb/bin/mongod.exe') },
+      binary: fs.existsSync(path.resolve(__dirname, '../../mongodb/bin/mongod.exe'))
+        ? { systemBinary: path.resolve(__dirname, '../../mongodb/bin/mongod.exe') }
+        : {},
       instance: { dbName: 'mobile_test' },
     });
     process.env.MONGODB_URI = mongo.getUri();
