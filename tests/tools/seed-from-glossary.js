@@ -60,7 +60,7 @@ function serialiseGlossary(g) {
     return `    ${JSON.stringify(term)}: {${pairs.join(', ')}}`;
   });
   const head = JSON.stringify(
-    { _readme: g._readme, languages: g.languages, doNotTranslate: g.doNotTranslate, notes: g.notes },
+    Object.fromEntries(Object.entries(g).filter(([key]) => key !== 'terms')),
     null, 2,
   );
   return `${head.slice(0, -2)},\n\n  "terms": {\n${rows.join(',\n')}\n  }\n}\n`;

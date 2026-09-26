@@ -138,8 +138,9 @@ function keysUsed() {
        a string the app renders. Line comments are left alone because a
        naive // strip eats https:// inside real string literals. */
     const js = stripComments(fs.readFileSync(file, 'utf8'));
-    for (const m of js.matchAll(/i18n\.t\(\s*'([^']+)'\s*,\s*'([^']*)'/g)) {
-      remember(m[1], m[2], file);
+    for (const m of js.matchAll(/i18n\.t\(\s*(['"])(.*?)\1\s*,\s*(['"])((?:\\.|(?!\3)[^\\])*)\3/g)) {
+      const english = m[4].replace(/\\(['"\\])/g, '$1').replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+      remember(m[2], english, file);
       calls += 1;
     }
     /* A t() call with no English fallback still uses the key. */
@@ -188,7 +189,7 @@ function keysUsed() {
 function languages() {
   try {
     return fs.readdirSync(LANG_DIR)
-      .filter((f) => f.endsWith('.json'))
+      .filter((f) => f.endsWith('.json') && !f.startsWith('_'))
       .map((f) => f.replace(/\.json$/, ''))
       .sort();
   } catch {

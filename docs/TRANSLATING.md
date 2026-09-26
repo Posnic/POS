@@ -39,83 +39,74 @@ understand here:
 
 ---
 
-## Which languages, and how far along
+## Coverage and review status
 
-| Language | Code | Screens | The server's toasts | Read by a speaker? |
-|---|---|---|---|---|
-| English | en | in the app itself | in the app itself | yes |
-| தமிழ் Tamil | ta | all | not yet | **yes** |
-| हिन्दी Hindi | hi | all | half | not yet - marked *beta* |
-| മലയാളം Malayalam | ml | all | not yet | not yet - marked *beta* |
-| ಕನ್ನಡ Kannada | kn | all | not yet | not yet - marked *beta* |
-| తెలుగు Telugu | te | all | not yet | not yet - marked *beta* |
-| සිංහල Sinhala | si | all | not yet | not yet - marked *beta* |
-| नेपाली Nepali | ne | all | not yet | not yet - marked *beta* |
-| العربية Arabic | ar | all | half | not yet - marked *beta*, right-to-left |
-| Français French | fr | all | all | not yet - marked *beta* |
-| Español Spanish | es | all | half | not yet - marked *beta* |
-| Português Portuguese | pt | all | not yet | not yet - marked *beta* |
-| Bahasa Indonesia | id | all | not yet | not yet - marked *beta* |
-| ไทย Thai | th | all | not yet | not yet - marked *beta* |
-| Deutsch German | de | all | half | not yet - marked *beta* |
-| Kiswahili | sw | all | not yet | not yet - marked *beta* |
-| Nederlands Dutch | nl | all | not yet | not yet - marked *beta* |
-| Italiano Italian | it | all | not yet | not yet - marked *beta* |
+The app offers 58 language choices. Coverage means that a UI key has a non-empty
+translation; it does **not** mean a native speaker has reviewed its meaning.
+The picker shows the current coverage percentage and marks unreviewed packs beta.
+Search by the native name, English name or language code (for example Dutch,
+Nederlands, or nl).
 
-### Which language is added next, and why
+- English is the source language. Tamil is the existing reviewed pack.
+- Dutch now answers every current UI key, including printing, online ordering,
+  device access and quotation markup. Its wording still needs native-speaker review.
+- The other existing packs answer approximately 93–94% of UI keys. Recent receipt,
+  session, note and settings messages have been added to each of them.
+- **The 40 new packs are starter packs, approximately 3% coverage, not complete
+  localizations.** They provide common actions, sales and document labels, and
+  essential tooltips. All remaining messages intentionally fall back to English.
+  Never fill missing entries with English merely to raise the coverage figure.
 
-The queue is not a list of the world's biggest languages. It is the countries
-that have actually sent Posnic a signup and had nothing here to read the till
-in, most signups first:
+The starter collection adds the remaining EU official languages: Bulgarian,
+Croatian, Czech, Danish, Estonian, Finnish, Greek, Hungarian, Irish, Latvian,
+Lithuanian, Maltese, Polish, Romanian, Slovak, Slovenian and Swedish.
+It also adds Albanian, Bosnian, Icelandic, Macedonian, Norwegian Bokmål,
+Russian, Serbian, Turkish and Ukrainian; Bengali, Gujarati, Hebrew, Japanese,
+Korean, Malay, Marathi, Persian, Punjabi (Gurmukhi), Filipino, Urdu, Vietnamese,
+and Simplified and Traditional Chinese. This is not every European regional or
+minority language. Such additions need their own vocabulary and review.
 
-| Next | Code | Signups waiting on it |
-|---|---|---|
-| Filipino | tl | Philippines |
-| Български | bg | Bulgaria |
-| Bosanski | bs | Bosnia and Herzegovina |
-| ភាសាខ្មែរ | km | Cambodia |
-| Čeština | cs | Czechia |
-| Azərbaycan | az | Azerbaijan |
-| Kinyarwanda | rw | Rwanda |
+The scope of these packs is the main POS interface. Customer menus, the Captain
+app, native Electron window text and printed-script/font coverage have separate
+implementations and need separate validation. Server-message coverage is also
+separate: a complete UI pack is not a complete server-message pack.
 
-Swahili came off the top of that list first: Kenya, Tanzania, Uganda and DR
-Congo had all sent a signup with nothing here to read. Dutch and Italian
-followed for Belgium, Switzerland and Malta.
+### Completing a pack
 
-### Adding one
+1. Run `node tests/tools/i18n-coverage.js --worksheet <code>` for the current
+   missing strings and their screen context. The count changes as features land.
+2. Translate whole messages, retaining every `{name}` and `{0}` placeholder,
+   HTML marker and protected brand name. Check the meaning on its actual screen.
+3. Merge the worksheet with the coverage tool, then run
+   `node tests/tools/check-translations.js` and the i18n tests.
+4. Review login, a sale and return, payments, inventory, quotations, restaurant
+   orders and printing with a native speaker. Check long labels and RTL layouts.
+5. Remove `stage: 'starter'` after completing the starter pack. Set `reviewed`
+   to true only after the screen review. Do not infer review from coverage.
 
-1. Add a column to `languages/_glossary.json` - the 147 shared terms.
-2. Add `{ code, name, flag, reviewed: false }` to
-   `frontend/gulpfile.js/config.js`.
-3. `node tests/tools/seed-from-glossary.js --write` - fills a few hundred of
-   the 2,925 keys from the glossary alone.
-4. `node tests/tools/i18n-coverage.js --worksheet <code>` - writes the other
-   463 to `<code>-to-translate.json`.
-5. Fill the blanks, then
-   `node tests/tools/i18n-coverage.js --merge <code> --out <code>-to-translate.json`.
-6. `node tests/tools/check-translations.js` and `npm test`.
+### Adding a language
 
-Step 4 is the real work, and it is where a language earns its place: those 463
-are the terms of art - opening float, input tax credit, KOT, PAX, parked sale,
-split payment - plus 26 strings carrying HTML that has to survive intact. A
-pack has to answer 95% of the keys before it may ship (`tests/i18n.test.js`),
-which is what stops a half-English screen reaching a real till.
+Add its native name, English search name, code and review status to
+`frontend/gulpfile.js/config.js`, then add `languages/<code>.json` and its glossary
+vocabulary. Regional codes such as `zh-TW` work in selection, persistence and
+server-message packaging. Declare RTL languages with `dir: 'rtl'`.
 
-**Every language ships in every build.** Pick it from the menu in the header of
-any Posnic and the switch is instant. A language nobody who speaks it has read
-yet is marked *beta* beside its name, and hovering shows how many of the app's
-strings it answers. That mark is the whole review process made visible: it
-comes off when a speaker has been through the common screens.
+`node tests/tools/seed-from-glossary.js --write` fills exact matching labels
+without overwriting existing translations. Context matters: Print as a settings
+tab can be a noun while Print on a button is a verb. Do not overwrite all equal
+English labels with one translation blindly.
+
+The coverage baseline is a regression guard. Add new languages to it and raise
+existing values as coverage improves; never lower existing baselines to pass CI.
+`POSNIC_REVIEWED_LANGUAGES_ONLY=1` still builds only reviewed languages.
 
 ### Where the words came from
 
-The glossary was written first: one settled word per POS term, every language
-side by side. The packs were seeded from it, then completed by machine
-translation on 2026-09-02 against the glossary and the screen each string sits
-on. So they are consistent - Save is the same word on every screen - and they
-are complete, but **they have not been read by a person who speaks the
-language**, which is the thing that matters most and the thing we cannot do
-ourselves.
+The original packs were seeded from the glossary and expanded with machine
+translation on 2026-09-02. Later screens have added new gaps. The current starter
+packs contain drafted core vocabulary; they have not been bulk-filled with
+English or claimed as native-speaker reviewed. Terminology and grammar must be
+reviewed in screen context before a pack can be called reviewed.
 
 The owner's decision was to ship them anyway, honestly labelled, rather than
 hold them back: a shopkeeper who can read most of their screen is better off
@@ -157,7 +148,7 @@ Say in the PR that you speak the language - that is the thing we cannot check.
 
 ### Taking the beta mark off
 
-A language stops being *beta* when somebody who speaks it has been through the
+A language stops being _beta_ when somebody who speaks it has been through the
 common screens above and says so in a PR. Flip `reviewed: false` to
 `reviewed: true` on its line in `frontend/gulpfile.js/config.js`. That one
 line is the difference.
@@ -214,12 +205,12 @@ This one is worth explaining, because six translators in a row got it wrong for
 the same good reason. A review tool that rejects a value identical to its
 English is right almost always - that is exactly what a skipped row looks like.
 But a brand has no translation, so the only way to satisfy the tool was to
-invent one: *Provider Way2sms*, *TextLocal*, *Msimbo wa Pharmacode*, a Razorpay
+invent one: _Provider Way2sms_, _TextLocal_, _Msimbo wa Pharmacode_, a Razorpay
 tab prefixed with the word for gateway. A payment tab that no longer names the
 payment provider. If a name is on that list, leave it exactly as it is.
 
-Descriptive names are deliberately **not** on the list. *Soft Dark*, *Warm
-Night* and *Diamond* are words, and a theme picker in Thai should read in Thai.
+Descriptive names are deliberately **not** on the list. _Soft Dark_, _Warm
+Night_ and _Diamond_ are words, and a theme picker in Thai should read in Thai.
 
 ### Merge tokens
 
@@ -309,18 +300,18 @@ column first - it is the fastest way to a consistent pack.
 Every word a person reads has to be reachable by a key, or it is English in
 every language. Three shapes, one runtime:
 
-| Where the words are | Write | Translated by |
-|---|---|---|
-| Template text | `<lang class="lang_key">English</lang>` | `PosnicPro.i18n.apply()` at load |
-| Inside `<title>` or `<option>` | the same tag - the build hoists it to `data-t="lang_key"` | apply() |
-| `placeholder`, `title`, `aria-label` | `placeholder="English" data-t-placeholder="lang_key"` | apply() |
-| Markup JavaScript renders (table headers, pills, modal bodies) | `'<th><lang class="lang_key">Bill #</lang></th>'` | `PosnicPro.i18n.watch()` as it lands |
-| Text JavaScript sets (`.text()`, toasts, labels, ternaries) | `PosnicPro.i18n.t('lang_key', 'English')` | at the call |
+| Where the words are                                            | Write                                                     | Translated by                        |
+| -------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------ |
+| Template text                                                  | `<lang class="lang_key">English</lang>`                   | `PosnicPro.i18n.apply()` at load     |
+| Inside `<title>` or `<option>`                                 | the same tag - the build hoists it to `data-t="lang_key"` | apply()                              |
+| `placeholder`, `title`, `aria-label`                           | `placeholder="English" data-t-placeholder="lang_key"`     | apply()                              |
+| Markup JavaScript renders (table headers, pills, modal bodies) | `'<th><lang class="lang_key">Bill #</lang></th>'`         | `PosnicPro.i18n.watch()` as it lands |
+| Text JavaScript sets (`.text()`, toasts, labels, ternaries)    | `PosnicPro.i18n.t('lang_key', 'English')`                 | at the call                          |
 
 The English is the fallback, physically present in every case, so a missing
 key never shows anything worse than English.
 
-**One thing to watch:** `t()` evaluated when a module *loads* runs before any
+**One thing to watch:** `t()` evaluated when a module _loads_ runs before any
 pack has arrived, so a top-level object literal must carry `<lang>` markup
 instead of `t()` (see `PosnicPro.dashboard.SETUP_CARDS`). Calls inside
 functions are fine.
@@ -487,18 +478,18 @@ some languages simply need more room.
 A POS has terms of art. Machine translation gets these wrong in ways a
 shopkeeper notices immediately:
 
-| Term | What it means here |
-|---|---|
-| Sale | One completed transaction with a customer |
-| Return | Goods coming back from a customer |
-| Receiving | Goods arriving from a supplier |
-| Register | The physical till and its cash session |
-| Shift | One person's period of working the till |
-| Tender | The money handed over, and how (cash, card) |
-| Void | Cancelling a line or a sale before it completes |
-| Customer credit | Goods taken now, paid later |
-| Stock | Quantity on hand |
-| Branch / outlet | One shop location |
+| Term            | What it means here                              |
+| --------------- | ----------------------------------------------- |
+| Sale            | One completed transaction with a customer       |
+| Return          | Goods coming back from a customer               |
+| Receiving       | Goods arriving from a supplier                  |
+| Register        | The physical till and its cash session          |
+| Shift           | One person's period of working the till         |
+| Tender          | The money handed over, and how (cash, card)     |
+| Void            | Cancelling a line or a sale before it completes |
+| Customer credit | Goods taken now, paid later                     |
+| Stock           | Quantity on hand                                |
+| Branch / outlet | One shop location                               |
 
 If your language has a word shopkeepers actually use, prefer it over the
 literal translation. The person reading this screen is standing behind a
@@ -517,4 +508,4 @@ You do not have to speak a language to check that a pull request is safe:
 - No keys renamed or removed - `--missing` should not grow.
 - CI is green.
 
-Whether the words are *good* needs a speaker. Say which you checked.
+Whether the words are _good_ needs a speaker. Say which you checked.

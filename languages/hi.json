@@ -3564,5 +3564,21 @@
   "lang_pricing_for_new_quotations": "नए कोटेशन का मूल्य निर्धारण",
   "lang_quote_base_unit_price": "मूल इकाई मूल्य",
   "lang_item_markup": "वस्तु मूल्य वृद्धि (%)",
-  "lang_hardware_manager": "हार्डवेयर प्रबंधक"
+  "lang_hardware_manager": "हार्डवेयर प्रबंधक",
+  "lang_ai_edit": "संपादित करें",
+  "lang_cancel": "रद्द करें",
+  "lang_fg_all": "सभी",
+  "lang_fg_customers": "ग्राहक",
+  "lang_int_voice_save": "सहेजें",
+  "lang_item_restaurant_title": "रेस्तरां",
+  "lang_add_note": "नोट जोड़ें",
+  "lang_edit_note": "नोट संपादित करें",
+  "lang_receipt_printed_ok": "रसीद प्रिंट हो गई",
+  "lang_sent_to_printer": "प्रिंटर को भेज दिया गया",
+  "lang_loading_print_preview": "प्रिंट पूर्वावलोकन लोड हो रहा है…",
+  "lang_settings_saved": "सेटिंग सहेजी गईं",
+  "lang_your_session_has_ended_please_sign_in_ag": "आपका सत्र समाप्त हो गया है। कृपया फिर से साइन इन करें।",
+  "lang_not_saved_yet": "अभी सहेजा नहीं गया। सहेजें दबाएँ।",
+  "lang_search_languages": "भाषाएँ खोजें",
+  "lang_no_languages_found": "कोई भाषा नहीं मिली"
 }

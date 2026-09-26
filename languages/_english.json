@@ -189,7 +189,7 @@
   "lang_ai_live_voice": "Let customers talk to it, live: it listens and talks back",
   "lang_ai_live_voice_hint": "A microphone appears beside the assistant. The customer speaks and hears it answer, can interrupt it, and it adds to the order as they talk, like a phone call with a waiter. The sound goes from the phone straight to your provider; our servers never hear it. Billed by your provider per minute of audio, which costs several times a typed question; it counts against the monthly limit above. Live voice needs an OpenAI key today. With another provider the microphone still works turn by turn, using the phone's own voice, at the price of a typed question.",
   "lang_ai_live_voice_needs_openai": "Live voice needs an OpenAI key; with this provider the microphone works turn by turn",
-  "lang_ai_live_voice_off": "Off: the microphone works turn by turn, with the phone\\",
+  "lang_ai_live_voice_off": "Off: the microphone works turn by turn, with the phone's own voice",
   "lang_ai_live_voice_on": "Live: the microphone opens a voice call with the assistant",
   "lang_ai_live_voice_rate": "About {amount} for each minute of conversation, counted against the monthly limit while the call is on.",
   "lang_ai_module_desc": "Writes item descriptions for you. You bring your own AI account and pay that provider directly; we charge nothing. Set it up on the AI assistance page.",
@@ -1556,7 +1556,7 @@
   "lang_int_voice_key": "API key",
   "lang_int_voice_key_on_file": "Key saved",
   "lang_int_voice_key_remove_q": "Remove the saved key?",
-  "lang_int_voice_key_remove_text": "Handsets fall back to the phone\\",
+  "lang_int_voice_key_remove_text": "Handsets fall back to the phone's own recognition until a new key is saved. Your provider account is not touched.",
   "lang_int_voice_key_removed": "The key is removed.",
   "lang_int_voice_key_saved": "A key is saved. Type a new one to replace it.",
   "lang_int_voice_language": "Language",
@@ -3796,5 +3796,7 @@
   "lang_quote_markup_breakdown": "Base {base} + {percent}% markup (+{amount} on this line)",
   "lang_show_markup_breakdown_on_new_quotations": "Show markup breakdown on new quotations",
   "lang_show_markup_breakdown_on_the_quotation": "Show markup breakdown on the quotation",
-  "lang_hardware_manager": "Hardware Manager"
+  "lang_hardware_manager": "Hardware Manager",
+  "lang_no_languages_found": "No languages found",
+  "lang_search_languages": "Search languages"
 }
