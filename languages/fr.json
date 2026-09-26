@@ -3548,5 +3548,6 @@
   "lang_markup_2": "Majoration (%)",
   "lang_pricing_for_new_quotations": "Tarification des nouveaux devis",
   "lang_quote_base_unit_price": "Prix unitaire de base",
-  "lang_item_markup": "Majoration par article (%)"
+  "lang_item_markup": "Majoration par article (%)",
+  "lang_hardware_manager": "Gestionnaire de matériel"
 }

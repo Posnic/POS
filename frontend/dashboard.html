@@ -1072,17 +1072,25 @@
                     b.type = 'button'; b.setAttribute('role', 'menuitem');
                     const glyph = document.createElement('i'); glyph.className = 'feather icon-' + icon; glyph.setAttribute('aria-hidden', 'true');
                     b.appendChild(glyph); b.appendChild(document.createTextNode(label));
-                    b.addEventListener('click', () => {
+                    b.addEventListener('click', async () => {
                         closeMenu();
                         if (settings) hasher.setHash('settings/' + target);
-                        else window.electronAPI.desktop.open(target);
+                        else {
+                            try {
+                                const opened = await window.electronAPI.desktop.open(target);
+                                if (opened === false || (opened && opened.ok === false)) throw new Error('Desktop action unavailable');
+                            } catch (error) {
+                                console.error('[Desktop tools] Could not open ' + target, error);
+                                PosnicPro.alert('error', PosnicPro.i18n.t('lang_request_failed', 'Request failed'));
+                            }
+                        }
                     });
                     menu.appendChild(b);
                 };
 
                 window.electronAPI.desktop.capabilities().then((caps) => {
                     if (PosnicPro.userACL && PosnicPro.userACL.branch && PosnicPro.userACL.branch.write) addItem(PosnicPro.i18n.t('lang_desktop_app', 'App Settings'), 'app', 'settings', true);
-                    addItem(PosnicPro.i18n.t('lang_desktop_hardware_diagnostics', 'Hardware diagnostics'), 'hardware', 'printer');
+                    addItem(PosnicPro.i18n.t('lang_hardware_manager', 'Hardware Manager'), 'hardware', 'printer');
                     if (['enable', 'true', true].includes(PosnicPro.local.get('table_options'))) addItem(PosnicPro.i18n.t('lang_desktop_kitchen', 'Kitchen Printing'), 'hardware:kot', 'clipboard');
                     if (caps.backup) addItem(PosnicPro.i18n.t('lang_desktop_backups', 'Backup & Recovery'), 'backup', 'database');
                     addItem(PosnicPro.i18n.t('lang_desktop_update_recovery', 'Updates & recovery'), 'update', 'download-cloud');
@@ -1107,7 +1115,12 @@
                     items[next].focus();
                 });
                 document.addEventListener('click', (e) => { if (!fab.contains(e.target)) closeMenu(); });
-                fab.addEventListener('focusout', () => { queueMicrotask(() => { if (!fab.contains(document.activeElement)) closeMenu(); }); });
+                // Chromium can run a microtask between blur and focus. At that
+                // point activeElement is body, even when focus is moving to a
+                // different menu item. Hiding the menu then cancels its click.
+                fab.addEventListener('focusout', (e) => {
+                    if (!fab.contains(e.relatedTarget)) closeMenu();
+                });
 
                 // --- Tray branch switching ---------------------------------
                 // Mirror the header's branch dropdown into the tray menu, and

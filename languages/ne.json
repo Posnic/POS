@@ -3548,5 +3548,6 @@
   "lang_markup_2": "मूल्य वृद्धि (%)",
   "lang_pricing_for_new_quotations": "नयाँ कोटेशनको मूल्य निर्धारण",
   "lang_quote_base_unit_price": "आधार एकाइ मूल्य",
-  "lang_item_markup": "वस्तुको मूल्य वृद्धि (%)"
+  "lang_item_markup": "वस्तुको मूल्य वृद्धि (%)",
+  "lang_hardware_manager": "हार्डवेयर व्यवस्थापक"
 }

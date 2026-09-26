@@ -3548,5 +3548,6 @@
   "lang_markup_2": "Ricarico (%)",
   "lang_pricing_for_new_quotations": "Prezzi per nuovi preventivi",
   "lang_quote_base_unit_price": "Prezzo unitario base",
-  "lang_item_markup": "Ricarico articolo (%)"
+  "lang_item_markup": "Ricarico articolo (%)",
+  "lang_hardware_manager": "Gestione hardware"
 }
