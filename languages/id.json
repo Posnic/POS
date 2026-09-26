@@ -3548,5 +3548,6 @@
   "lang_markup_2": "Kenaikan harga (%)",
   "lang_pricing_for_new_quotations": "Harga untuk penawaran baru",
   "lang_quote_base_unit_price": "Harga dasar per unit",
-  "lang_item_markup": "Kenaikan harga item (%)"
+  "lang_item_markup": "Kenaikan harga item (%)",
+  "lang_hardware_manager": "Pengelola Perangkat Keras"
 }

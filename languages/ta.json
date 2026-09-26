@@ -3585,5 +3585,6 @@
   "lang_markup_2": "விலை உயர்வு (%)",
   "lang_pricing_for_new_quotations": "புதிய விலைப்புள்ளிகளுக்கான விலை நிர்ணயம்",
   "lang_quote_base_unit_price": "அடிப்படை அலகு விலை",
-  "lang_item_markup": "பொருளின் விலை உயர்வு (%)"
+  "lang_item_markup": "பொருளின் விலை உயர்வு (%)",
+  "lang_hardware_manager": "வன்பொருள் மேலாளர்"
 }
