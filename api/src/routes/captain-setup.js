@@ -1,4 +1,5 @@
 'use strict';
+/* global document, location */
 const $ = (id) => document.getElementById(id);
 let csrf = '';
 async function call(path, body) {
