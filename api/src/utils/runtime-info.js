@@ -111,6 +111,7 @@ function buildRuntimeInfo(env = process.env, apiRoot = path.join(__dirname, '..'
        */
       idempotentOrders: true,
       mobilePosV1: true,
+      captainAccessV1: true,
     },
   };
 }
