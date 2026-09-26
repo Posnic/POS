@@ -112,6 +112,10 @@ jobs:
           MOBILE_FULL_APP: "1"
         run: node --test tests/mobile-pos.integration.cjs
 
+      - name: Captain pairing and delivery authority integration
+        working-directory: api
+        run: node --test tests/captain-access.integration.cjs
+
       # The README carries a test count, a coverage figure and an endpoint
       # count. All three are hardcoded and all three drift; the readiness audit
       # found the test badge already stale. This checks them against what just

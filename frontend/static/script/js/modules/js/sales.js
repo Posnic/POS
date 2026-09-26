@@ -8691,7 +8691,7 @@ PosnicPro.quotes = {
     _ed: null,
     _edBlank: function () {
         var week = new Date(Date.now() + 7 * 86400000);
-        return { id: '', quote_id: '', customer_id: '', lines: [], charges: [], valid_until: week.toISOString().slice(0, 10) };
+        return { pricing_mode: 'discount', show_markup: false, id: '', quote_id: '', customer_id: '', lines: [], charges: [], valid_until: week.toISOString().slice(0, 10) };
     },
     _edShell: function () {
         PosnicPro.HideSideBarModal();
@@ -8732,7 +8732,16 @@ PosnicPro.quotes = {
         }).catch(function () { /* drag is a nicety */ });
     },
     showAdd: function () {
+        // Fetch for every new quote: another till may have changed the branch default.
+        PosnicPro.get({ url: 'quotes/defaults', data: {} }, function (r) {
+            if (r && r.type === 'success') { PosnicPro.quotes._showAdd(r.data); }
+            else { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_quotation_pricing_settings', 'Could not load quotation pricing settings. Please try again.')); }
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_quotation_pricing_settings', 'Could not load quotation pricing settings. Please try again.')); });
+    },
+    _showAdd: function (defaults) {
         PosnicPro.quotes._ed = PosnicPro.quotes._edBlank();
+        PosnicPro.quotes._ed.pricing_mode = defaults.pricing_mode === 'markup' ? 'markup' : 'discount';
+        PosnicPro.quotes._ed.show_markup = defaults.show_markup === true;
         PosnicPro.quotes._edShell();
         PosnicPro.quotes._loadTaxList(function () { PosnicPro.quotes.edRender(); });
         PosnicPro.quotes._edSigSync();
@@ -8755,6 +8764,8 @@ PosnicPro.quotes = {
                 return;
             }
             var ed = PosnicPro.quotes._edBlank();
+            ed.pricing_mode = q.pricing_mode === 'markup' ? 'markup' : 'discount';
+            ed.show_markup = q.show_markup === true;
             ed.id = String(q._id);
             ed.quote_id = q.quote_id || '';
             ed.customer_id = q.customer_id ? String(q.customer_id) : '';
@@ -8766,7 +8777,9 @@ PosnicPro.quotes = {
                     description: l.description || '',
                     barcode_id: l.barcode_id || '',
                     qty: Number(l.qty) || 1,
-                    unit_price: Number(l.unit_price) || 0,
+                    unit_price: Number(ed.pricing_mode === 'markup' ? l.base_unit_price : l.unit_price) || 0,
+                    markup_percent: l.markup ? l.markup.value : 0,
+                    pricing_mode: ed.pricing_mode,
                     dtype: l.discount ? l.discount.type : '',
                     dval: l.discount ? l.discount.value : '',
                     tax_name: l.tax_name || '',
@@ -8853,11 +8866,23 @@ PosnicPro.quotes = {
         });
         return rows;
     },
+    // Editor prices are bases; stored document prices are already final.
+    _edUnitPrice: function (l) {
+        var base = Number(l.unit_price) || 0;
+        return l.pricing_mode === 'markup'
+            ? PosnicPro.quotes._edR2(base * (1 + (Number(l.markup_percent) || 0) / 100)) : base;
+    },
+    _markupNote: function (l, show, money) {
+        if (!show || !l.markup) { return ''; }
+        return PosnicPro.i18n.t('lang_quote_markup_breakdown', 'Base {base} + {percent}% markup (+{amount} on this line)')
+            .replace('{base}', money(l.base_unit_price)).replace('{percent}', Number(l.markup.value))
+            .replace('{amount}', money(l.markup.computed));
+    },
     /* One line's total, the same arithmetic the server stores. */
     _edLineTotal: function (l) {
         var r2 = PosnicPro.quotes._edR2;
-        var gross = r2((Number(l.qty) || 0) * (Number(l.unit_price) || 0));
-        var v = Number(l.dval);
+        var gross = r2((Number(l.qty) || 0) * PosnicPro.quotes._edUnitPrice(l));
+        var v = l.pricing_mode === 'markup' ? 0 : Number(l.dval);
         var taxable = gross;
         if (l.dtype === 'percent' && v > 0) { taxable = r2(gross - r2((gross * Math.min(v, 100)) / 100)); }
         else if (l.dtype === 'amount' && v > 0) { taxable = r2(gross - Math.min(v, gross)); }
@@ -8870,8 +8895,8 @@ PosnicPro.quotes = {
         var r2 = PosnicPro.quotes._edR2;
         var rate = Number(l.tax_value) || 0;
         if (!(rate > 0)) { return 0; }
-        var gross = r2((Number(l.qty) || 0) * (Number(l.unit_price) || 0));
-        var v = Number(l.dval);
+        var gross = r2((Number(l.qty) || 0) * PosnicPro.quotes._edUnitPrice(l));
+        var v = l.pricing_mode === 'markup' ? 0 : Number(l.dval);
         var taxable = gross;
         if (l.dtype === 'percent' && v > 0) { taxable = r2(gross - r2((gross * Math.min(v, 100)) / 100)); }
         else if (l.dtype === 'amount' && v > 0) { taxable = r2(gross - Math.min(v, gross)); }
@@ -8883,8 +8908,16 @@ PosnicPro.quotes = {
         var ed = PosnicPro.quotes._ed;
         if (!ed) { return; }
         var esc = PosnicPro.quotes._esc;
+        var markup = ed.pricing_mode === 'markup';
+        $('#qe_pricing_mode').val(ed.pricing_mode);
+        $('#qe_show_markup').prop('checked', ed.show_markup);
+        $('#qe_markup_display').toggle(markup);
+        $('#qe_discount_fields').toggle(!markup);
+        $('#qe_price_heading').text(markup ? PosnicPro.i18n.t('lang_quote_base_unit_price', 'Base unit price') : PosnicPro.i18n.t('lang_unit_price', 'Unit price'));
+        $('#qe_adjustment_heading').text(markup ? PosnicPro.i18n.t('lang_item_markup', 'Item markup (%)') : PosnicPro.i18n.t('lang_line_discount', 'Line discount'));
         var html = '';
         ed.lines.forEach(function (l, i) {
+            l.pricing_mode = ed.pricing_mode;
             html += '<tr data-i="' + i + '">'
                 + '<td><span class="qe-l-grip" title="Drag to reorder" data-t-title="lang_drag_to_reorder">&#x2630;</span>'
                 + '<input type="text" class="qe-l-name form-control form-control-sm" maxlength="200" placeholder="' + (l.kind === 'custom' ? PosnicPro.i18n.t('lang_custom_line_name', 'Custom line name') : PosnicPro.i18n.t('lang_newitem_title', 'Item')) + '" value="' + esc(l.item_name) + '">'
@@ -8909,11 +8942,11 @@ PosnicPro.quotes = {
                 + '</td>'
                 + '<td><input type="number" class="qe-l-qty form-control form-control-sm" min="0" step="any" value="' + esc(l.qty) + '"></td>'
                 + '<td><input type="number" class="qe-l-price form-control form-control-sm" min="0" step="0.01" value="' + esc(l.unit_price) + '"></td>'
-                + '<td><div class="input-group input-group-sm" style="min-width:150px;">'
+                + (markup ? '<td><input aria-label="Item markup (%)" data-t-aria-label="lang_item_markup" type="number" class="qe-l-markup form-control form-control-sm" min="0" max="100000" step="any" value="' + esc(l.markup_percent || 0) + '"></td>' : '<td><div class="input-group input-group-sm" style="min-width:150px;">'
                 + '<select class="qe-l-dtype form-control" style="max-width:64px;"><option value=""' + (!l.dtype ? ' selected' : '') + '>-</option>'
                 + '<option value="percent"' + (l.dtype === 'percent' ? ' selected' : '') + '>%</option>'
                 + '<option value="amount"' + (l.dtype === 'amount' ? ' selected' : '') + '>amt</option></select>'
-                + '<input type="number" class="qe-l-dval form-control" min="0" step="0.01" value="' + esc(l.dval) + '"></div></td>'
+                + '<input type="number" class="qe-l-dval form-control" min="0" step="0.01" value="' + esc(l.dval) + '"></div></td>')
                 + '<td class="text-right qe-l-total" style="white-space:nowrap; padding-top:12px;">' + PosnicPro.quotes._edLineTotal(l).toFixed(2) + '</td>'
                 + '<td><button type="button" class="btn qe-l-del" title="Remove line" data-t-title="lang_remove_line">&times;</button></td>'
                 + '</tr>';
@@ -8949,7 +8982,7 @@ PosnicPro.quotes = {
         });
         subtotal = r2(subtotal);
         taxSum = r2(taxSum);
-        var dtype = $('#qe_disc_type').val();
+        var dtype = ed.pricing_mode === 'markup' ? '' : $('#qe_disc_type').val();
         var dval = Number($('#qe_disc_value').val());
         var qdisc = 0;
         if (dtype === 'percent' && dval > 0) { qdisc = r2((subtotal * Math.min(dval, 100)) / 100); }
@@ -9013,7 +9046,13 @@ PosnicPro.quotes = {
             + '<th class="text-right"><lang class="lang_price_title">Price</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th></tr></thead><tbody>';
         ed.lines.forEach(function (l, i) {
             var note = esc(l.description || '');
-            if (l.dtype && Number(l.dval) > 0) {
+            var markupNote = PosnicPro.quotes._markupNote({
+                base_unit_price: l.unit_price,
+                markup: l.pricing_mode === 'markup' ? { value: l.markup_percent || 0,
+                    computed: PosnicPro.quotes._edR2(Number(l.qty) * (PosnicPro.quotes._edUnitPrice(l) - Number(l.unit_price))) } : null
+            }, ed.show_markup, money);
+            if (markupNote) { note += (note ? ' &middot; ' : '') + markupNote; }
+            if (l.pricing_mode !== 'markup' && l.dtype && Number(l.dval) > 0) {
                 note += (note ? ' &middot; ' : '') + (l.dtype === 'percent' ? l.dval + '% off' : money(l.dval) + ' off');
             }
             if (Number(l.tax_value) > 0) {
@@ -9023,7 +9062,7 @@ PosnicPro.quotes = {
             h += '<tr><td>' + (i + 1) + '</td><td>' + (esc(l.item_name) || '<span class="text-muted">(unnamed)</span>')
                 + (note ? '<div class="q-muted" style="font-size:11px;">' + note + '</div>' : '') + '</td>'
                 + '<td class="text-right">' + esc(l.qty) + '</td>'
-                + '<td class="text-right">' + money(l.unit_price) + '</td>'
+                + '<td class="text-right">' + money(PosnicPro.quotes._edUnitPrice(l)) + '</td>'
                 + '<td class="text-right">' + money(PosnicPro.quotes._edLineTotal(l)) + '</td></tr>';
         });
         h += '</tbody><tfoot>'
@@ -9110,7 +9149,13 @@ PosnicPro.quotes = {
             return (String(l.item_name).trim() || l.item_id) && Number(l.qty) > 0;
         });
         if (!lines.length) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_add_at_least_one_line_with_a_name_and_quan', 'Add at least one line with a name and quantity.')); return; }
+        if (ed.pricing_mode === 'markup' && lines.some(function (l) {
+            var pct = Number(l.markup_percent || 0), base = Number(l.unit_price);
+            return !Number.isFinite(pct) || pct < 0 || pct > 100000 || !Number.isFinite(base) || base < 0;
+        })) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_a_non_negative_base_price_and_an_ite', 'Enter a non-negative base price and an item markup from 0 to 100000%.')); return; }
         var payload = {
+            pricing_mode: ed.pricing_mode,
+            show_markup: ed.show_markup,
             lines: lines.map(function (l) {
                 var out = {
                     kind: l.kind, item_id: l.item_id || '', item_name: l.item_name,
@@ -9119,7 +9164,11 @@ PosnicPro.quotes = {
                     tax_name: l.tax_name || '', tax_value: Number(l.tax_value) || 0,
                     tax_type: l.tax_type || ''
                 };
-                if (l.dtype && Number(l.dval) > 0) { out.discount = { type: l.dtype, value: Number(l.dval) }; }
+                if (ed.pricing_mode === 'markup') {
+                    out.base_unit_price = Number(l.unit_price);
+                    out.markup = { type: 'percent', value: Number(l.markup_percent || 0) };
+                }
+                if (ed.pricing_mode !== 'markup' && l.dtype && Number(l.dval) > 0) { out.discount = { type: l.dtype, value: Number(l.dval) }; }
                 return out;
             }),
             charges: ed.charges.filter(function (c) { return String(c.name).trim() && Number(c.value) > 0; }),
@@ -9136,7 +9185,7 @@ PosnicPro.quotes = {
             valid_until: $('#qe_valid_until').val() || '',
             total: PosnicPro.quotes.edRecalc()
         };
-        var dtype = $('#qe_disc_type').val();
+        var dtype = ed.pricing_mode === 'markup' ? '' : $('#qe_disc_type').val();
         if (dtype && Number($('#qe_disc_value').val()) > 0) {
             payload.discount = { type: dtype, value: Number($('#qe_disc_value').val()) };
         }
@@ -9406,6 +9455,8 @@ PosnicPro.quotes = {
                 + '</tr></thead><tbody>';
             (q.items || []).forEach(function (l, i) {
                 var note = esc(l.description || '');
+                var markupNote = PosnicPro.quotes._markupNote(l, q.show_markup, money);
+                if (markupNote) { note += (note ? ' &middot; ' : '') + markupNote; }
                 if (l.discount && l.discount.value > 0) {
                     var dTxt = l.discount.type === 'percent'
                         ? l.discount.value + '% off'
@@ -9595,11 +9646,15 @@ PosnicPro.quotes = {
         // discounts and blocks pass through UNCHANGED so an inline save can
         // never strip what the editor authored
         var payload = {
+            pricing_mode: q.pricing_mode || 'discount',
+            show_markup: q.show_markup === true,
             items: (q.items || []).map(function (l) {
                 return {
                     kind: l.kind, item_id: l.item_id ? String(l.item_id) : '',
                     item_name: l.item_name, description: l.description || '',
                     barcode_id: l.barcode_id, qty: l.qty, unit_price: l.unit_price,
+                    base_unit_price: l.base_unit_price, markup: l.markup,
+                    tax_name: l.tax_name, tax_value: l.tax_value, tax_type: l.tax_type,
                     discount: l.discount ? { type: l.discount.type, value: l.discount.value } : undefined
                 };
             }),
@@ -9730,7 +9785,7 @@ PosnicPro.quotes = {
             .replace(/\s+/g, ' ').trim();
         };
         var money = function (n) {
-          return 'Rs ' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          return (txt(PosnicPro.local.get('currencySign') || '') + ' ' + Number(n || 0).toFixed(2)).trim();
         };
         var dmy = function (v) {
           if (!v) { return ''; }
@@ -9859,6 +9914,8 @@ PosnicPro.quotes = {
           lines = lines.slice(0, 3);
           /* description + a per-line discount note ride under the name, gray */
           var subText = txt(l.description || '');
+          var markupNote = PosnicPro.quotes._markupNote(l, q.show_markup, money);
+          if (markupNote) { subText += (subText ? '  -  ' : '') + markupNote; }
           if (l.discount && l.discount.value > 0) {
             var dNote = l.discount.type === 'percent' ? l.discount.value + '% off' : money(l.discount.value) + ' off';
             subText = subText ? subText + '  -  ' + dNote : dNote;
@@ -9876,7 +9933,7 @@ PosnicPro.quotes = {
               if (doc.getTextWidth(ln) <= wAvail) { subLines.push(ln); }
               else { chunkFit(ln, wAvail).forEach(function (p2) { subLines.push(p2); }); }
             });
-            subLines = subLines.slice(0, 2);
+            subLines = subLines.slice(0, markupNote ? 6 : 2);
             doc.setFontSize(8.8);
           }
           var subH = subLines.length * 3.6;
@@ -12543,6 +12600,25 @@ PosnicPro.sales.openRegisterFromSales = function () {
 };
 
 /* ---- Quotation editor wiring (Q2): state follows every keystroke ---- */
+$(document).on('change', '#qe_pricing_mode', function () {
+    var ed = PosnicPro.quotes._ed;
+    if (!ed) { return; }
+    var mode = $(this).val();
+    var adjusted = ed.lines.some(function (l) { return Number(l.dval) > 0 || Number(l.markup_percent) > 0; }) || Number($('#qe_disc_value').val()) > 0;
+    if (adjusted && !window.confirm(PosnicPro.i18n.t('lang_quote_change_pricing_confirm', 'Changing pricing mode clears the current discounts and markups. Base prices stay unchanged. Continue?'))) {
+        $(this).val(ed.pricing_mode); return;
+    }
+    ed.pricing_mode = mode;
+    ed.lines.forEach(function (l) { l.dtype = ''; l.dval = ''; l.markup_percent = 0; });
+    $('#qe_disc_type,#qe_disc_value').val('');
+    PosnicPro.quotes.edRender();
+});
+$(document).on('change', '#qe_show_markup', function () {
+    if (PosnicPro.quotes._ed) {
+        PosnicPro.quotes._ed.show_markup = $(this).prop('checked');
+        PosnicPro.quotes.edRecalc();
+    }
+});
 $(document).on('input change', '#qe_lines input, #qe_lines select', function () {
     var i = $(this).closest('tr').data('i');
     var ed = PosnicPro.quotes._ed;
@@ -12555,6 +12631,7 @@ $(document).on('input change', '#qe_lines input, #qe_lines select', function () 
     else if ($t.hasClass('qe-l-price')) { l.unit_price = $t.val(); }
     else if ($t.hasClass('qe-l-dtype')) { l.dtype = $t.val(); }
     else if ($t.hasClass('qe-l-dval')) { l.dval = $t.val(); }
+    else if ($t.hasClass('qe-l-markup')) { l.markup_percent = $t.val(); }
     PosnicPro.quotes.edRecalc();
 });
 $(document).on('change', '#qe_lines .qe-l-taxsel', function () {

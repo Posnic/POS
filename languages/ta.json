@@ -1,4 +1,5 @@
 {
+  "lang_approve_captain_phone": "கேப்டன் கைப்பேசிக்கு அனுமதி அளிக்கவும்",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - நாள்/மாதம்/ஆண்டு (dd/mm/yyyy)",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - மாதம்/நாள்/ஆண்டு (mm/dd/yyyy)",
   "lang_01_january_18_d_mm_yy": "01 ஜனவரி 18 - நாள் மாதம் ஆண்டு (d MM yy)",
@@ -3579,5 +3580,10 @@
   "lang_manage_captain_devices": "Captain சாதனங்களை நிர்வகி",
   "lang_mobile_pos_settings": "Mobile POS அமைப்புகள்",
   "lang_authorized": "அங்கீகரிக்கப்பட்டது",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "விலைப்புள்ளி விலை நிர்ணயம்",
+  "lang_markup_2": "விலை உயர்வு (%)",
+  "lang_pricing_for_new_quotations": "புதிய விலைப்புள்ளிகளுக்கான விலை நிர்ணயம்",
+  "lang_quote_base_unit_price": "அடிப்படை அலகு விலை",
+  "lang_item_markup": "பொருளின் விலை உயர்வு (%)"
 }

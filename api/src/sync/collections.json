@@ -36,6 +36,8 @@
     "settings": "global"
   },
   "local_only": {
+    "captain_sessions": "Rotating device credentials and revocation belong only to the API that authorized the Captain phone.",
+    "captain_pair_codes": "Single-use Captain approvals are issued or delivered explicitly to one server; they must never be replicated as shop data.",
     "handsets": "Handset token grants and revocation belong to the API that authorized the phone; copying them to an independent sale authority would permit cross-server access.",
     "counters": "per-machine sequence numbers; two machines must not share a counter",
     "device_meta": "what this machine knows about itself; meaningless elsewhere",

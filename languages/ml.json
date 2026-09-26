@@ -3543,5 +3543,10 @@
   "lang_manage_captain_devices": "Captain ഉപകരണങ്ങൾ നിയന്ത്രിക്കുക",
   "lang_mobile_pos_settings": "Mobile POS ക്രമീകരണങ്ങൾ",
   "lang_authorized": "അംഗീകൃതം",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "ക്വട്ടേഷൻ വില നിർണയം",
+  "lang_markup_2": "വില വർധന (%)",
+  "lang_pricing_for_new_quotations": "പുതിയ ക്വട്ടേഷനുകളുടെ വില നിർണയം",
+  "lang_quote_base_unit_price": "അടിസ്ഥാന യൂണിറ്റ് വില",
+  "lang_item_markup": "ഇനത്തിന്റെ വില വർധന (%)"
 }

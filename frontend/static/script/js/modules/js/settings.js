@@ -873,6 +873,8 @@ PosnicPro.settings = {
                 $('#email_smtp_password').val(data.email_smtp_password || '');
                 $('#email_smtp_from').val(data.email_smtp_from || '');
                 PosnicPro.settings.markSavedSecrets(data.secrets_configured);
+                $('#quote_pricing_mode').val(data.quote_pricing_mode === 'markup' ? 'markup' : 'discount');
+                $('#quote_show_markup').prop('checked', data.quote_show_markup === true);
                 $('#quote_default_payment_method').val(data.quote_default_payment_method || '');
                 $('#quote_default_bank_details').val(data.quote_default_bank_details || '');
                 $('#quote_default_terms').val(data.quote_default_terms || '');
@@ -2174,6 +2176,8 @@ if ($wrapper.length) {
                 email_smtp_username: $('#email_smtp_username').val() || '',
                 email_smtp_password: $('#email_smtp_password').val() || '',
                 email_smtp_from: $('#email_smtp_from').val() || '',
+                quote_pricing_mode: $('#quote_pricing_mode').val() || 'discount',
+                quote_show_markup: $('#quote_show_markup').prop('checked'),
                 quote_default_payment_method: $('#quote_default_payment_method').val() || '',
                 quote_default_bank_details: $('#quote_default_bank_details').val() || '',
                 quote_default_terms: $('#quote_default_terms').val() || '',
@@ -7082,13 +7086,15 @@ $(document).on('click', '#invoice_settings_save', function () {
 $(document).on('click', '#quote_settings_save', function () {
     var signatureBranchId = PosnicPro.branchSignature.activeBranch();
     var payload = {
+        quote_pricing_mode: $('#quote_pricing_mode').val() || 'discount',
+        quote_show_markup: $('#quote_show_markup').prop('checked'),
         quote_default_payment_method: $('#quote_default_payment_method').val() || '',
         quote_default_bank_details: $('#quote_default_bank_details').val() || '',
         quote_default_terms: $('#quote_default_terms').val() || '',
         quote_default_signature: $('#quote_default_signature').val() || ''
     };
     $('#quote_settings_save').prop('disabled', true);
-    // four keys, all of them documents - so the documents endpoint
+    // Quotation defaults belong to the documents settings group.
     PosnicPro.put({ url: 'settings/group/documents', data: JSON.stringify(payload) }, function (r) {
         $('#quote_settings_save').prop('disabled', false);
         PosnicPro.alert(r.type, r.type === 'success' ? 'Quotation settings saved' : r.message);

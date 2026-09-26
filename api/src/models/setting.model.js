@@ -1442,6 +1442,15 @@ class SettingModel extends BaseModel {
         // Quotation defaults: prefilled into every NEW quote server-side,
         // still editable per quote on its preview. Presence-gated so older
         // tills that do not send them cannot wipe them.
+        ...(data.quote_pricing_mode !== undefined
+          ? { quote_pricing_mode: data.quote_pricing_mode === 'markup' ? 'markup' : 'discount' }
+          : {}),
+        ...(data.quote_show_markup !== undefined
+          ? {
+              quote_show_markup:
+                data.quote_show_markup === true || data.quote_show_markup === 'true',
+            }
+          : {}),
         ...(data.quote_default_payment_method !== undefined
           ? {
               quote_default_payment_method: String(data.quote_default_payment_method || '')
