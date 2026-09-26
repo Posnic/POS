@@ -343,10 +343,11 @@ class OrderAlert {
     }
 
     this._play(alert, payload);
-    if (alert === 'received' && payload.saleId && payload.ticket && !this._spoken.has(String(payload.saleId))) {
+    const spokenKey = payload.eventKey ? `${payload.saleId}:${payload.eventKey}` : String(payload.saleId);
+    if (alert === 'received' && payload.saleId && payload.ticket && !this._spoken.has(spokenKey)) {
       try {
         if (this._onAccepted(payload)) {
-          this._spoken.add(String(payload.saleId));
+          this._spoken.add(spokenKey);
           if (this._spoken.size > 1000) this._spoken.delete(this._spoken.values().next().value);
         }
       } catch (e) { /* A speaker failure must not interrupt order handling. */ }

@@ -346,6 +346,7 @@ class KOTManager {
         if (printLedger.state(key) === 'printed') continue;
         return { available: true, success: false, error: 'A previous print attempt needs checking. Confirm only if the ticket came out.' };
       }
+      if (this.isPolling && key && !printLedger.deliveryPlan(key)) this._announceToKitchen(sale, job.items, job.type);
       const counterResults = await this.silentPrint({ ...sale, items: job.items,
         _deliveryKey: key, _printKind: job.type === 'modified' ? 'edit' : job.type }, printers, false, true);
       if (key) printLedger.settle(key, _allPrinted(counterResults), _firstReason(counterResults));
