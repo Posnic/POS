@@ -58,6 +58,7 @@ function notifyOrderAttention(details = {}) {
       state: details.state ? String(details.state) : '',
       total: Number(details.total) || 0,
       at: new Date().toISOString(),
+      ...(details.ticket && details.alert !== 'waiting' ? { ticket: details.ticket } : {}),
     };
 
     process.emit(ATTENTION_EVENT, payload);
