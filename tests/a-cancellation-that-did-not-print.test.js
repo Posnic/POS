@@ -157,7 +157,7 @@ test('a cancellation whose printer refused is NOT reported as printed', async ()
   } finally { r.done(); }
 });
 
-test('AND IT COMES BACK on the next poll, and prints', async () => {
+test('AND IT COMES BACK after the retry delay, and prints', async (t) => {
   /*
    * The half that matters. Refusing to report it is only useful if the ticket
    * is actually tried again - the ledger used to refuse any key it had seen,
@@ -169,6 +169,8 @@ test('AND IT COMES BACK on the next poll, and prints', async () => {
     assert.strictEqual(r.sent.length, 1);
 
     r.setPrinter(true);                       // somebody put paper in
+    const later = Date.now() + 30001;
+    t.mock.method(Date, 'now', () => later);
     await r.manager._pollOnce();
 
     assert.strictEqual(r.sent.length, 2, 'the cancellation was never tried again');
@@ -178,7 +180,7 @@ test('AND IT COMES BACK on the next poll, and prints', async () => {
   } finally { r.done(); }
 });
 
-test('it gives up rather than printing for ever at a printer that is off', async () => {
+test('an offline printer is rate limited without discarding the unprinted cancellation', async () => {
   const r = rig({ printerWorks: false });
   try {
     for (let i = 0; i < 8; i += 1) {
@@ -186,10 +188,8 @@ test('it gives up rather than printing for ever at a printer that is off', async
       await r.manager._pollOnce();
       if (r.stillOffered() === 0) break;
     }
-    assert.strictEqual(r.sent.length, ledger.MAX_ATTEMPTS,
-      'the number of attempts against a dead printer is not bounded');
-    assert.strictEqual(r.stillOffered(), 0,
-      'a ticket with no tries left still sits in the queue, so every poll re-fetches it');
+    assert.strictEqual(r.sent.length, 1, 'repeated polls ignored the retry delay');
+    assert.strictEqual(r.stillOffered(), 1, 'an unprinted cancellation was discarded');
   } finally { r.done(); }
 });
 
