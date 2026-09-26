@@ -22,7 +22,11 @@ const UNITS = { s: 1, m: 60, h: 3600, d: 86400 };
  * @returns {number} seconds
  */
 function jwtLifetimeSeconds(env = process.env) {
-  const raw = String(env.JWT_EXPIRES_IN || DEFAULT).trim();
+  // The embedded till keeps its login across restarts and days off. Its
+  // rolling session/cookie uses Chromium's 400-day persistent-cookie limit.
+  // Explicit logout and authVersion revocation still invalidate access.
+  // Cloud browsers retain their existing configured lifetime.
+  const raw = String(env.POSNIC_DESKTOP === '1' ? '400d' : env.JWT_EXPIRES_IN || DEFAULT).trim();
   /* The `jsonwebtoken` shorthand, because that is what the env var holds:
      "24h", "30m", "7d", or plain seconds. Anything else falls back rather
      than throwing - a malformed setting must not stop sign-in. */
@@ -74,7 +78,14 @@ function handsetLifetimeSeconds(env = process.env) {
   return Number(match[1]) * UNITS[(match[2] || 's').toLowerCase()];
 }
 
+function loginCookieDays(env = process.env) {
+  if (env.POSNIC_DESKTOP === '1') return 400;
+  const days = Number(env.JWT_COOKIE_EXPIRES_IN || 7);
+  return Number.isFinite(days) && days > 0 ? days : 7;
+}
+
 module.exports = {
+  loginCookieDays,
   jwtLifetimeSeconds,
   handsetLifetimeSeconds,
   DEFAULT_LIFETIME: DEFAULT,
