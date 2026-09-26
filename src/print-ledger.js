@@ -90,7 +90,8 @@ function _load() {
   const keep = new Set([...Array(KEEP_DAYS).keys()].map(_dayKey));
   const entries = {};
   for (const [key, value] of Object.entries((raw && raw.entries) || {})) {
-    if (value && keep.has(String(value.day || ''))) entries[key] = value;
+    if (value && (keep.has(String(value.day || '')) ||
+      value.deliveries?.some(item => item.state !== 'printed'))) entries[key] = value;
   }
   _cache = { entries };
   return _cache;
@@ -112,6 +113,7 @@ function _save() {
          reason a till stopped, which would be a worse bug than the one it
          prevents. */
       keys
+        .filter(k => !_cache.entries[k].deliveries?.some(item => item.state !== 'printed'))
         .sort((a, b) => String(_cache.entries[a].at).localeCompare(String(_cache.entries[b].at)))
         .slice(0, keys.length - MAX_ENTRIES)
         .forEach((k) => delete _cache.entries[k]);
@@ -273,7 +275,46 @@ function summary(day = _today()) {
   return out;
 }
 
+// Freeze the destinations for an in-flight ticket. Later configuration edits
+// must not forget an unpaid delivery or send an old order to new printers.
+function deliveryPlan(key, targets) {
+  const entry = _dir && key ? _load().entries[String(key)] : null;
+  if (!entry) return null;
+  if (!entry.deliveries && targets) {
+    entry.deliveries = targets.flatMap(t => Array.from({ length: t.copies }, (_, i) => ({
+      name: t.name, pageSize: t.pageSize, copy: i + 1, of: t.copies,
+      printKind: t.printKind, kotNumber: t.kotNumber,
+      state: 'pending', attempts: 0,
+    })));
+    _save();
+  }
+  return entry.deliveries || null;
+}
+
+function beginDelivery(key, index) {
+  const item = deliveryPlan(key)?.[index];
+  if (!item || item.state === 'printed' || item.state === 'attempted') return false;
+  if (item.retryAt && Date.now() < item.retryAt) return false;
+  item.state = 'attempted';
+  item.attempts += 1;
+  _save();
+  return true;
+}
+
+function finishDelivery(key, index, ok, reason) {
+  const item = deliveryPlan(key)?.[index];
+  if (!item) return;
+  item.state = ok ? 'printed' : 'failed';
+  item.reason = String(reason || '').slice(0, 200);
+  // Known failures retry in the background, with a five-minute ceiling.
+  item.retryAt = ok ? 0 : Date.now() + Math.min(300000, 30000 * 2 ** Math.min(item.attempts - 1, 4));
+  _save();
+}
+
 module.exports = {
+  deliveryPlan,
+  beginDelivery,
+  finishDelivery,
   state: (key) => _dir && key ? _load().entries[String(key)]?.state : undefined,
   setDir,
   keyFor,

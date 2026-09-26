@@ -20,12 +20,12 @@ const printLedger = require('./print-ledger');
  * What a print attempt came back as.
  *
  * silentPrint answers with one entry per printer per copy. One printer failing
- * while another succeeded is not a failed ticket - the kitchen has its copy and
- * the file copy did not print, and those are different events.
+ * while another succeeded leaves a delivery outstanding. Every selected
+ * printer and every requested copy must succeed before acknowledging a ticket.
  */
-function _anyPrinted(results) {
-  if (!Array.isArray(results)) return false;
-  return results.some((r) => r && r.status === 'success');
+function _allPrinted(results) {
+  if (!Array.isArray(results) || !results.length) return false;
+  return results.every((r) => r && r.status === 'success');
 }
 
 function _firstReason(results) {
@@ -329,7 +329,7 @@ class KOTManager {
 
   async printCounterTicket(sale) {
     const config = this.config || await this.loadConfig();
-    const printers = config?.printerNames || [];
+    const printers = config?.printers?.length ? config.printers : config?.printerNames || [];
     if (!printers.length) return { available: false };
     if (!sale || !Array.isArray(sale.print_jobs) || !sale.print_jobs.length || sale.print_jobs.length > 100) {
       return { available: true, success: false, error: 'Invalid kitchen ticket' };
@@ -347,8 +347,8 @@ class KOTManager {
         return { available: true, success: false, error: 'A previous print attempt needs checking. Confirm only if the ticket came out.' };
       }
       const counterResults = await this.silentPrint({ ...sale, items: job.items,
-        _printKind: job.type === 'modified' ? 'edit' : job.type }, printers, false, true);
-      if (key) printLedger.settle(key, _anyPrinted(counterResults), _firstReason(counterResults));
+        _deliveryKey: key, _printKind: job.type === 'modified' ? 'edit' : job.type }, printers, false, true);
+      if (key) printLedger.settle(key, _allPrinted(counterResults), _firstReason(counterResults));
       if (!counterResults?.length || counterResults.some((r) => r.status !== 'success')) {
         return { available: true, success: false, error: _firstReason(counterResults) || 'The kitchen printer did not confirm printing.' };
       }
@@ -443,6 +443,8 @@ class KOTManager {
    * or any earlier one. False means DO NOT PRINT.
    */
   _claimForPrint(key, about) {
+    // A resumed ticket checks each copy's durable result before sending.
+    if (printLedger.deliveryPlan(key) && printLedger.state(key) !== 'printed') return true;
     /*
      * A FAILURE WE WATCHED IS NOT THE SAME AS A CRASH.
      *
@@ -718,7 +720,11 @@ class KOTManager {
             const jobKey   = kotJobKey(saleId, job);
 
             /* Written down first, then printed. See _claimForPrint. */
-            if (!this._claimForPrint(jobKey, { saleId, kind: jobType })) continue;
+            if (!this._claimForPrint(jobKey, { saleId, kind: jobType })) {
+              if (printLedger.state(jobKey) !== 'printed') stillOwed = true;
+              else printedKeys.push(jobKey);
+              continue;
+            }
 
             /*
              * AND THE KITCHEN IS TOLD, out loud.
@@ -731,39 +737,23 @@ class KOTManager {
              * Behind the same claim that stops a ticket printing twice, so a
              * poll that sees the same job again does not say it again.
              */
-            this._announceToKitchen(sale, jobItems, jobType);
+            if (!printLedger.deliveryPlan(jobKey)) this._announceToKitchen(sale, jobItems, jobType);
 
             const jobResults = await this.silentPrint(
-              { ...sale, _printKind: jobType === 'modified' ? 'edit' : jobType, items: jobItems },
+              { ...sale, _deliveryKey: jobKey, _printKind: jobType === 'modified' ? 'edit' : jobType, items: jobItems },
               printerNames
             );
-            /* Recorded for measurement only. Nothing reads this to decide
-               whether to print - a failed ticket is not retried here, and
-               changing that is a bigger decision than this change. */
-            const cameOut = _anyPrinted(jobResults);
+            // Complete only when every destination has its copy.
+            const cameOut = _allPrinted(jobResults);
             printLedger.settle(jobKey, cameOut, _firstReason(jobResults));
             /* Named for the server's shadow queue. Only when paper actually
                came out - reporting a failed ticket as printed would close a
                row that SHOULD be showing up as a disagreement. */
             if (cameOut) printedKeys.push(jobKey);
-            else if (!printLedger.spent(jobKey)) stillOwed = true;
+            else { stillOwed = true; this.lastPollStatus = 'Printing pending: check Kitchen Printing logs'; }
           }
 
-          /*
-           * AND THE SERVER IS ONLY TOLD WHEN IT IS TRUE.
-           *
-           * This advanced last_printed_change_index whatever happened -
-           * every ticket refused, the printer off at the wall, and the
-           * sale was still reported as printed and never offered again.
-           * Between that and the ledger refusing a second attempt, a
-           * failed cancellation had two locks on it and no key.
-           *
-           * `stillOwed` means a ticket on this sale failed and has a try
-           * left. Leaving the sale unreported is what brings it back on
-           * the next poll, which is the only way the retry above ever
-           * happens. Once the tries are spent the sale is reported as
-           * before, or the queue would offer it for ever.
-           */
+          // Keep the sale queued until all selected printers have succeeded.
           if (!stillOwed) {
             printedSaleIds.push(saleId);
             if (sale.new_last_printed_change_index !== undefined) {
@@ -784,7 +774,13 @@ class KOTManager {
            see src/kot-job-key.js for why there are two rather than one. */
         const key = kotFallbackKey(sale, { cancelled: isCancel });
 
-        if (!this._claimForPrint(key, { saleId, kind: isCancel ? 'cancel' : 'kot' })) continue;
+        if (!this._claimForPrint(key, { saleId, kind: isCancel ? 'cancel' : 'kot' })) {
+          if (printLedger.state(key) === 'printed') {
+            printedSaleIds.push(saleId);
+            printedKeys.push(key);
+          }
+          continue;
+        }
 
         if (!isCancel) {
           /* Durable too, so a ticket after a restart is still an amendment
@@ -796,13 +792,12 @@ class KOTManager {
           sale._printKind = 'cancel';
         }
 
-        const results = await this.silentPrint(sale, printerNames);
-        const cameOut = _anyPrinted(results);
+        const results = await this.silentPrint({ ...sale, _deliveryKey: key }, printerNames);
+        const cameOut = _allPrinted(results);
         printLedger.settle(key, cameOut, _firstReason(results));
         if (cameOut) printedKeys.push(key);
-        /* Same rule as the jobs path above: a ticket with a try left keeps
-           the sale in the queue, because that is what brings it back. */
-        if (cameOut || printLedger.spent(key)) printedSaleIds.push(saleId);
+        if (!cameOut) this.lastPollStatus = 'Printing pending: check Kitchen Printing logs';
+        if (cameOut) printedSaleIds.push(saleId);
       }
 
       if (printedSaleIds.length > 0) {
@@ -919,36 +914,48 @@ class KOTManager {
    * refuses is a failure and is reported as one: falling through to the window
    * there would put the same order on paper twice.
    */
-  async _printRaw(sale, printKind, kotNumber, printerNames) {
+  _deliveryJobs(sale, printerNames) {
     const targets = normalizeTargets(
-      { printers: this.config?.printers, printerNames, pageSize: this.config?.pageSize },
-      '80mm'
-    );
-    if (!targets.length) return null;
+      { printers: this.config?.printers || printerNames, printerNames, pageSize: this.config?.pageSize }, '80mm');
+    return printLedger.deliveryPlan(sale._deliveryKey, targets.map(t => ({ ...t,
+      printKind: sale._printKind, kotNumber: sale._deliveryNumber }))) ||
+      targets.flatMap(t => Array.from({ length: t.copies }, (_, i) => ({
+        name: t.name, pageSize: t.pageSize, copy: i + 1, of: t.copies,
+      })));
+  }
 
+  async _deliverCopy(sale, jobs, index, via, send) {
+    const job = jobs[index];
+    const key = sale._deliveryKey;
+    if (printLedger.deliveryPlan(key)) {
+      if (job.state === 'printed') return { name: job.name, copy: job.copy, status: 'success', cached: true, via };
+      if (!printLedger.beginDelivery(key, index)) return {
+        name: job.name, copy: job.copy, status: 'pending', deferred: true, via,
+        reason: job.state === 'attempted' ? 'Previous print outcome unknown. Check the printer before reprinting.' : 'Waiting to retry failed printer',
+      };
+    }
+    const started = Date.now();
+    let result;
+    try { result = await send(); }
+    catch (error) { result = { success: false, error: error.message || String(error) }; }
+    const ok = !!result?.success;
+    const reason = ok ? '' : (result?.error || result?.reason || 'Printer did not confirm printing');
+    printLedger.finishDelivery(key, index, ok, reason);
+    return { name: job.name, copy: job.copy, status: ok ? 'success' : 'failed', reason, ms: Date.now() - started, via };
+  }
+
+  async _printRaw(sale, printKind, kotNumber, printerNames) {
+    const jobs = this._deliveryJobs(sale, printerNames);
+    // Build every layout before sending any bytes, so falling back cannot
+    // duplicate a copy already handed to another printer.
+    const layouts = jobs.map(job => this._rawTicket(sale, printKind, kotNumber, columnsFor(job.pageSize)));
+    if (!jobs.length || layouts.some(bytes => !bytes)) return null;
     const results = [];
-    for (const target of targets) {
-      const columns = columnsFor(target.pageSize);
-      const bytes = this._rawTicket(sale, printKind, kotNumber, columns);
-      if (!bytes) return null;          // a layout we cannot draw: use the window
-
-      for (let copy = 0; copy < target.copies; copy += 1) {
-        const label = `Posnic KOT #${kotNumber}`
-          + (target.copies > 1 ? ` (${copy + 1}/${target.copies})` : '');
-        /* eslint-disable-next-line no-await-in-loop -- printers are serial
-           devices; two jobs at once interleave on the same roll. */
-        const startedAt = Date.now();
-        const sent = await this.hardware.sendRawToPrinter(target.name, bytes, label);
-        const ms = Date.now() - startedAt;
-        if (sent && sent.success) {
-          console.log(`[KOT] Printed -> ${target.name} (${ms} ms)`);
-          results.push({ name: target.name, status: 'success', ms, via: 'bytes' });
-        } else {
-          const reason = (sent && sent.error) || 'unknown';
-          console.error(`[KOT] Print failed (${target.name}) after ${ms} ms:`, reason);
-          results.push({ name: target.name, status: 'failed', reason, ms, via: 'bytes' });
-        }
-      }
+    for (let index = 0; index < jobs.length; index += 1) {
+      const job = jobs[index];
+      results.push(await this._deliverCopy(sale, jobs, index, 'bytes', () =>
+        this.hardware.sendRawToPrinter(job.name, layouts[index], `Posnic KOT #${kotNumber}` +
+          (job.of > 1 ? ` (${job.copy}/${job.of})` : ''))));
     }
     return results;
   }
@@ -962,6 +969,7 @@ class KOTManager {
    *                                fallback, which is about ten times slower
    */
   _logTicket(sale, printKind, kotNumber, saleDispId, saleDbId, printerResults, timing = {}) {
+    if (printerResults.length && printerResults.every(r => r.cached || r.deferred)) return;
     const uid = crypto.randomUUID ? crypto.randomUUID()
               : crypto.createHash('md5').update(`${Date.now()}-${Math.random()}`).digest('hex');
     this._appendLog({
@@ -1067,12 +1075,14 @@ class KOTManager {
      * now it looked identical in the log to a fast one.
      */
     const ticketStartedAt = Date.now();
-    const printKind  = (sale._printKind || '').toLowerCase();
+    const remembered = printLedger.deliveryPlan(sale._deliveryKey)?.[0];
+    const printKind  = remembered?.printKind || (sale._printKind || '').toLowerCase();
     const saleDispId = sale.sales_id || sale.sid || sale.sale_id || '';
     const saleDbId   = sale._id?.toString ? sale._id.toString() : String(sale._id || '');
-    const kotNumber  = sale._isReprint && Number.isInteger(sale._kotNumber) && sale._kotNumber > 0
+    const kotNumber  = remembered?.kotNumber || (sale._isReprint && Number.isInteger(sale._kotNumber) && sale._kotNumber > 0
       ? sale._kotNumber
-      : this.getDailyKotNumber(printKind, saleDispId || saleDbId);
+      : this.getDailyKotNumber(printKind, saleDispId || saleDbId));
+    sale = { ...sale, _printKind: printKind, _deliveryNumber: kotNumber };
 
     /*
      * BYTES FIRST, if there is a printer to send them to.
@@ -1179,42 +1189,12 @@ class KOTManager {
        * way to tell. If a device name is genuinely unreachable the print fails
        * and says so, which is recoverable; silently printing elsewhere is not.
        */
-      const targets = normalizeTargets(
-        Array.isArray(printerNames) && printerNames.length
-          ? { printers: printerNames }
-          : this.config || {},
-        '80mm'
-      );
-
-      /* Flattened so one entry is one sheet: two copies is two passes through
-         the same printer, which is what the driver expects for a roll. */
-      const jobs = [];
-      for (const t of targets) {
-        for (let c = 0; c < t.copies; c += 1) {
-          jobs.push({ name: t.name, pageSize: t.pageSize, copy: c + 1, of: t.copies });
-        }
+      const jobs = this._deliveryJobs(sale, printerNames);
+      for (let index = 0; index < jobs.length; index += 1) {
+        const job = jobs[index];
+        printerResults.push(await this._deliverCopy(sale, jobs, index, 'window', () =>
+          this._printToDeviceWithFallback(printWindow, job.name, job.pageSize, true)));
       }
-
-      await new Promise((resolve) => {
-        let idx = 0;
-        const next = async () => {
-          const job = jobs[idx];
-          const deviceName = job.name;
-          const startedAt = Date.now();
-          const result = await this._printToDeviceWithFallback(printWindow, deviceName, job.pageSize, strictPrinter);
-          const ms = Date.now() - startedAt;
-          if (!result.success) {
-            console.error(`[KOT] Print failed (${deviceName}) after ${ms} ms:`, result.reason);
-            printerResults.push({ name: deviceName, status: 'failed', reason: result.reason || 'unknown', ms, via: 'window' });
-          } else {
-            console.log(`[KOT] Printed -> ${deviceName} (${ms} ms, window)`);
-            printerResults.push({ name: deviceName, status: 'success', ms, via: 'window' });
-          }
-          idx++;
-          if (idx < jobs.length) next(); else resolve();
-        };
-        next();
-      });
     } finally {
       printWindow.close();
     }
