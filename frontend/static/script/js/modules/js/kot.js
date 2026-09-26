@@ -136,12 +136,15 @@ PosnicPro.kot = {
         }
     },
 
-    loadTables: function (callback) {
+    loadTables: function (callback, quiet) {
+        if (PosnicPro.kot._tablesLoading) return;
+        PosnicPro.kot._tablesLoading = true;
         var loader = $(".loader-table-kot");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        if (!quiet) $("<div class='loadingSpinner'></div>").appendTo(loader);
 
         // Use optimized API to get only tables with active orders
         PosnicPro.get('sales/getTablesWithActiveOrders', function (response) {
+            PosnicPro.kot._tablesLoading = false;
             loader.find(".loadingSpinner:first").remove();
 
             if (response.type === 'success' && response.data) {
@@ -181,12 +184,14 @@ PosnicPro.kot = {
                 if (callback && typeof callback === 'function') {
                     callback(tables, hasTakeaway);
                 }
-            } else {
+            } else if (!quiet) {
                 $('#kot_tables_grid').empty();
                 $('#kot_no_tables').show();
             }
         }, function (xhr) {
+            PosnicPro.kot._tablesLoading = false;
             loader.find(".loadingSpinner:first").remove();
+            if (quiet) return;
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
         });
@@ -372,13 +377,13 @@ PosnicPro.kot = {
         }, 400);
     },
 
-    loadTableDetails: function (tableNumber) {
+    loadTableDetails: function (tableNumber, quiet) {
         console.log('=== loadTableDetails called for table:', tableNumber);
         var detailsPanel = $('#kot_table_details');
         console.log('Right panel element found:', detailsPanel.length > 0);
 
         var loadingHtml = '<div class="text-center" style="padding: 60px 20px;"><div class="loadingSpinner"></div><p class="text-muted mt-3"><lang class="lang_loading_table_details">Loading table details...</lang></p></div>';
-        detailsPanel.html(loadingHtml);
+        if (!quiet) detailsPanel.html(loadingHtml);
 
         /*
          * ONLY WHAT IS STILL OPEN.
@@ -422,6 +427,14 @@ PosnicPro.kot = {
         };
 
         PosnicPro.get(params, function (response) {
+            if (PosnicPro.kot.currentTableNumber !== tableNumber) return;
+            if (quiet && ($('.modal.show:visible').length ||
+                (document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)))) return;
+            if (quiet && (response.type !== 'success' || !response.data)) return;
+            var signature = JSON.stringify(response.data);
+            if (quiet && PosnicPro.kot._detailsTable === tableNumber && PosnicPro.kot._detailsSignature === signature) return;
+            PosnicPro.kot._detailsTable = tableNumber;
+            PosnicPro.kot._detailsSignature = signature;
             console.log('loadTableDetails API response:', response);
             var kotList = [];
             var kotCount = 0;
@@ -478,7 +491,7 @@ PosnicPro.kot = {
                 // Initialize tooltips
                 PosnicPro.kot.initTooltips();
             }
-        });
+        }, quiet ? function () {} : undefined);
     },
 
     convertTo24Hour: function (dateString) {
@@ -2499,10 +2512,11 @@ PosnicPro.kot = {
         });
     },
 
-    refreshTables: function () {
+    refreshTables: function (quiet) {
         var selected = PosnicPro.kot.currentTableNumber;
 
         PosnicPro.kot.loadTables(function (tables, hasTakeaway) {
+            if (PosnicPro.kot.currentTableNumber !== selected) return;
             // Only reselect if a table was already selected
             if (selected) {
                 var tableBox = $('[data-table-number="' + selected + '"]');
@@ -2519,10 +2533,10 @@ PosnicPro.kot = {
                         'box-shadow': '0 4px 8px rgba(33, 150, 243, 0.3)'
                     });
 
-                    PosnicPro.kot.loadTableDetails(selected);
+                    PosnicPro.kot.loadTableDetails(selected, quiet);
                 }
             }
-        });
+        }, quiet);
     },
 
     updateItemQuantity: function (saleId, itemId, change) {
@@ -3116,3 +3130,20 @@ PosnicPro.kot = {
         });
     },
 };
+
+/* Refresh arrivals where staff are already looking, without interrupting edits. */
+(function () {
+    var scheduled;
+    function refresh() {
+        if (document.hidden || !$('#kot').is(':visible') || $('.modal.show:visible').length) return;
+        if (document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+        PosnicPro.kot.refreshTables(true);
+    }
+    window.addEventListener('posnic:orders-changed', function () {
+        clearTimeout(scheduled);
+        scheduled = setTimeout(refresh, 250);
+    });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+    window.addEventListener('focus', refresh);
+    setInterval(refresh, 5000);
+})();

@@ -8818,6 +8818,7 @@ class SalesRepository {
         alert: arrival.alert,
         state: arrival.state,
         total: finalTotal,
+        ticket: { table: saleDocument.table_number || '', items: saleDocument.items || [] },
       });
 
       return {
