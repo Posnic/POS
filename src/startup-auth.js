@@ -25,6 +25,14 @@ function validateSavedLogin(origin, cookies, options = {}) {
     const finish = result => {
       if (settled) return;
       settled = true;
+      // A starting database or temporarily busy API is not a revoked login.
+      const retries = options.retries == null ? 2 : options.retries;
+      if (result === null && retries > 0) {
+        setTimeout(() => resolve(validateSavedLogin(origin, cookies, {
+          ...options, retries: retries - 1
+        })), options.retryDelayMs == null ? 1000 : options.retryDelayMs);
+        return;
+      }
       resolve(result);
     };
 
@@ -33,14 +41,15 @@ function validateSavedLogin(origin, cookies, options = {}) {
       timeout: timeoutMs
     }, response => {
       response.resume();
-      finish(response.statusCode >= 200 && response.statusCode < 300);
+      finish(response.statusCode >= 200 && response.statusCode < 300
+        ? true : (response.statusCode === 401 || response.statusCode === 403 ? false : null));
     });
 
     request.on('timeout', () => {
       request.destroy();
-      finish(false);
+      finish(null);
     });
-    request.on('error', () => finish(false));
+    request.on('error', () => finish(null));
   });
 }
 
