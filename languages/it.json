@@ -3543,5 +3543,10 @@
   "lang_manage_captain_devices": "Gestisci dispositivi Captain",
   "lang_mobile_pos_settings": "Impostazioni Mobile POS",
   "lang_authorized": "Autorizzato",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "Prezzi del preventivo",
+  "lang_markup_2": "Ricarico (%)",
+  "lang_pricing_for_new_quotations": "Prezzi per nuovi preventivi",
+  "lang_quote_base_unit_price": "Prezzo unitario base",
+  "lang_item_markup": "Ricarico articolo (%)"
 }

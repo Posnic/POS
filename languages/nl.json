@@ -3543,5 +3543,10 @@
   "lang_manage_captain_devices": "Captain-apparaten beheren",
   "lang_mobile_pos_settings": "Mobile POS-instellingen",
   "lang_authorized": "Geautoriseerd",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "Offerteprijzen",
+  "lang_markup_2": "Opslag (%)",
+  "lang_pricing_for_new_quotations": "Prijzen voor nieuwe offertes",
+  "lang_quote_base_unit_price": "Basisprijs per eenheid",
+  "lang_item_markup": "Artikelopslag (%)"
 }

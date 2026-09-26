@@ -3543,5 +3543,10 @@
   "lang_manage_captain_devices": "จัดการอุปกรณ์ Captain",
   "lang_mobile_pos_settings": "การตั้งค่า Mobile POS",
   "lang_authorized": "ได้รับอนุญาต",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "การกำหนดราคาใบเสนอราคา",
+  "lang_markup_2": "ส่วนเพิ่มราคา (%)",
+  "lang_pricing_for_new_quotations": "การกำหนดราคาสำหรับใบเสนอราคาใหม่",
+  "lang_quote_base_unit_price": "ราคาฐานต่อหน่วย",
+  "lang_item_markup": "ส่วนเพิ่มราคาสินค้า (%)"
 }

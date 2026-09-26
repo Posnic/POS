@@ -513,3 +513,26 @@ describe('shared signature persistence', () => {
     expect(mockCollections.branches.updateOne).not.toHaveBeenCalled();
   });
 });
+
+test('quotation pricing settings persist in documents and mirror to the branch', async () => {
+  mockCollections.branch_documents = { updateOne: jest.fn().mockResolvedValue({}) };
+  mockCollections.branches = { updateOne: jest.fn().mockResolvedValue({}) };
+  const repo = new SettingsRepository();
+  const r = await repo.saveGroup(
+    'documents',
+    { quote_pricing_mode: 'markup', quote_show_markup: 'false' },
+    ctx
+  );
+  expect(r.status).toBe(true);
+  expect(mockCollections.branch_documents.updateOne.mock.calls[0][1].$set).toMatchObject({
+    quote_pricing_mode: 'markup',
+    quote_show_markup: false,
+  });
+  expect(mockCollections.branches.updateOne.mock.calls[0][1].$set).toEqual({
+    quote_pricing_mode: 'markup',
+    quote_show_markup: false,
+  });
+  expect((await repo.saveGroup('documents', { quote_pricing_mode: 'unknown' }, ctx)).status).toBe(
+    false
+  );
+});

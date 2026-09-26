@@ -3543,5 +3543,10 @@
   "lang_manage_captain_devices": "إدارة أجهزة Captain",
   "lang_mobile_pos_settings": "إعدادات Mobile POS",
   "lang_authorized": "مصرّح به",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "تسعير عرض الأسعار",
+  "lang_markup_2": "زيادة السعر (%)",
+  "lang_pricing_for_new_quotations": "التسعير لعروض الأسعار الجديدة",
+  "lang_quote_base_unit_price": "سعر الوحدة الأساسي",
+  "lang_item_markup": "زيادة سعر الصنف (%)"
 }
