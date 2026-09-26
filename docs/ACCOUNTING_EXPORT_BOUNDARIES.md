@@ -215,9 +215,9 @@ transactions depend on those masters.
 
 Sources:
 
-TallyHelp: Import Data into TallyPrime
+- [TallyHelp: Import Data into TallyPrime](https://help.tallysolutions.com/import-data-in-tally/)
 
-TallyHelp: Import Data from JSON or XML into TallyPrime
+- [TallyHelp: Import Data from JSON or XML into TallyPrime](https://help.tallysolutions.com/import-data-from-xml-or-json/)
 
 Boundary for Posnic
 
@@ -261,11 +261,9 @@ Credit notes can be imported from CSV, TSV or XLS, with field mapping.
 
 Sources:
 
-Zoho Books: Customers & Vendors
-
-Zoho Books: Invoices
-
-Zoho Books: Credit Notes
+- [Zoho Books: Customers & Vendors](https://www.zoho.com/in/books/help/contacts/)
+- [Zoho Books: Import Invoices](https://www.zoho.com/in/books/kb/invoices/imp-inv.html)
+- [Zoho Books: Credit Notes](https://www.zoho.com/in/books/help/credit-note/)
 
 Zoho's migration documentation also treats invoices and payments received as
 separate sales transactions when migrating from Tally, which reinforces the
@@ -273,7 +271,7 @@ need to preserve invoices and payments as distinct export records.
 
 Source:
 
-Zoho Books: Migrate from Tally to Zoho Books
+- [Zoho Books: Migrate from Tally to Zoho Books](https://www.zoho.com/in/books/help/migration/tally-to-zoho-books.html)
 
 Boundary for Posnic
 
@@ -287,9 +285,8 @@ Those APIs are deliberately out of scope for this issue.
 
 Source:
 
-Zoho Books API: Customer Payments
-
-Zoho Books API: OAuth scopes
+- [Zoho Books API: Customer Payments](https://www.zoho.com/books/api/v3/customer-payments/)
+- [Zoho Books API: OAuth](https://www.zoho.com/books/api/v3/oauth/)
 
 Payments and partial payments
 
