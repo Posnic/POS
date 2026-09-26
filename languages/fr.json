@@ -3543,5 +3543,10 @@
   "lang_manage_captain_devices": "Gérer les appareils Captain",
   "lang_mobile_pos_settings": "Paramètres Mobile POS",
   "lang_authorized": "Autorisé",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "Tarification du devis",
+  "lang_markup_2": "Majoration (%)",
+  "lang_pricing_for_new_quotations": "Tarification des nouveaux devis",
+  "lang_quote_base_unit_price": "Prix unitaire de base",
+  "lang_item_markup": "Majoration par article (%)"
 }

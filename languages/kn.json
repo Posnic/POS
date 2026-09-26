@@ -3543,5 +3543,10 @@
   "lang_manage_captain_devices": "Captain ಸಾಧನಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
   "lang_mobile_pos_settings": "Mobile POS ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
   "lang_authorized": "ಅಧಿಕೃತ",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "ದರಪಟ್ಟಿಯ ಬೆಲೆ ನಿಗದಿ",
+  "lang_markup_2": "ಬೆಲೆ ಹೆಚ್ಚಳ (%)",
+  "lang_pricing_for_new_quotations": "ಹೊಸ ದರಪಟ್ಟಿಗಳ ಬೆಲೆ ನಿಗದಿ",
+  "lang_quote_base_unit_price": "ಮೂಲ ಘಟಕ ಬೆಲೆ",
+  "lang_item_markup": "ವಸ್ತುವಿನ ಬೆಲೆ ಹೆಚ್ಚಳ (%)"
 }

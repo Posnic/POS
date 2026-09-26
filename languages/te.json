@@ -3543,5 +3543,10 @@
   "lang_manage_captain_devices": "Captain పరికరాలను నిర్వహించండి",
   "lang_mobile_pos_settings": "Mobile POS సెట్టింగ్‌లు",
   "lang_authorized": "అధీకృతం",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "కొటేషన్ ధర నిర్ణయం",
+  "lang_markup_2": "ధర పెంపు (%)",
+  "lang_pricing_for_new_quotations": "కొత్త కొటేషన్ల ధర నిర్ణయం",
+  "lang_quote_base_unit_price": "ప్రాథమిక యూనిట్ ధర",
+  "lang_item_markup": "వస్తువు ధర పెంపు (%)"
 }

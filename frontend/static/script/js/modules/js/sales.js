@@ -8735,8 +8735,8 @@ PosnicPro.quotes = {
         // Fetch for every new quote: another till may have changed the branch default.
         PosnicPro.get({ url: 'quotes/defaults', data: {} }, function (r) {
             if (r && r.type === 'success') { PosnicPro.quotes._showAdd(r.data); }
-            else { PosnicPro.alert('error', 'Could not load quotation pricing settings. Please try again.'); }
-        }, function () { PosnicPro.alert('error', 'Could not load quotation pricing settings. Please try again.'); });
+            else { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_quotation_pricing_settings', 'Could not load quotation pricing settings. Please try again.')); }
+        }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_quotation_pricing_settings', 'Could not load quotation pricing settings. Please try again.')); });
     },
     _showAdd: function (defaults) {
         PosnicPro.quotes._ed = PosnicPro.quotes._edBlank();
@@ -8874,8 +8874,9 @@ PosnicPro.quotes = {
     },
     _markupNote: function (l, show, money) {
         if (!show || !l.markup) { return ''; }
-        return 'Base ' + money(l.base_unit_price) + ' + ' + Number(l.markup.value) + '% markup'
-            + ' (+' + money(l.markup.computed) + ' on this line)';
+        return PosnicPro.i18n.t('lang_quote_markup_breakdown', 'Base {base} + {percent}% markup (+{amount} on this line)')
+            .replace('{base}', money(l.base_unit_price)).replace('{percent}', Number(l.markup.value))
+            .replace('{amount}', money(l.markup.computed));
     },
     /* One line's total, the same arithmetic the server stores. */
     _edLineTotal: function (l) {
@@ -8912,8 +8913,8 @@ PosnicPro.quotes = {
         $('#qe_show_markup').prop('checked', ed.show_markup);
         $('#qe_markup_display').toggle(markup);
         $('#qe_discount_fields').toggle(!markup);
-        $('#qe_price_heading').text(markup ? 'Base unit price' : PosnicPro.i18n.t('lang_unit_price', 'Unit price'));
-        $('#qe_adjustment_heading').text(markup ? 'Item markup (%)' : PosnicPro.i18n.t('lang_line_discount', 'Line discount'));
+        $('#qe_price_heading').text(markup ? PosnicPro.i18n.t('lang_quote_base_unit_price', 'Base unit price') : PosnicPro.i18n.t('lang_unit_price', 'Unit price'));
+        $('#qe_adjustment_heading').text(markup ? PosnicPro.i18n.t('lang_item_markup', 'Item markup (%)') : PosnicPro.i18n.t('lang_line_discount', 'Line discount'));
         var html = '';
         ed.lines.forEach(function (l, i) {
             l.pricing_mode = ed.pricing_mode;
@@ -8941,7 +8942,7 @@ PosnicPro.quotes = {
                 + '</td>'
                 + '<td><input type="number" class="qe-l-qty form-control form-control-sm" min="0" step="any" value="' + esc(l.qty) + '"></td>'
                 + '<td><input type="number" class="qe-l-price form-control form-control-sm" min="0" step="0.01" value="' + esc(l.unit_price) + '"></td>'
-                + (markup ? '<td><input aria-label="Item markup (%)" type="number" class="qe-l-markup form-control form-control-sm" min="0" max="100000" step="any" value="' + esc(l.markup_percent || 0) + '"></td>' : '<td><div class="input-group input-group-sm" style="min-width:150px;">'
+                + (markup ? '<td><input aria-label="Item markup (%)" data-t-aria-label="lang_item_markup" type="number" class="qe-l-markup form-control form-control-sm" min="0" max="100000" step="any" value="' + esc(l.markup_percent || 0) + '"></td>' : '<td><div class="input-group input-group-sm" style="min-width:150px;">'
                 + '<select class="qe-l-dtype form-control" style="max-width:64px;"><option value=""' + (!l.dtype ? ' selected' : '') + '>-</option>'
                 + '<option value="percent"' + (l.dtype === 'percent' ? ' selected' : '') + '>%</option>'
                 + '<option value="amount"' + (l.dtype === 'amount' ? ' selected' : '') + '>amt</option></select>'
@@ -9151,7 +9152,7 @@ PosnicPro.quotes = {
         if (ed.pricing_mode === 'markup' && lines.some(function (l) {
             var pct = Number(l.markup_percent || 0), base = Number(l.unit_price);
             return !Number.isFinite(pct) || pct < 0 || pct > 100000 || !Number.isFinite(base) || base < 0;
-        })) { PosnicPro.alert('warning', 'Enter a non-negative base price and an item markup from 0 to 100000%.'); return; }
+        })) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_enter_a_non_negative_base_price_and_an_ite', 'Enter a non-negative base price and an item markup from 0 to 100000%.')); return; }
         var payload = {
             pricing_mode: ed.pricing_mode,
             show_markup: ed.show_markup,
@@ -12604,7 +12605,7 @@ $(document).on('change', '#qe_pricing_mode', function () {
     if (!ed) { return; }
     var mode = $(this).val();
     var adjusted = ed.lines.some(function (l) { return Number(l.dval) > 0 || Number(l.markup_percent) > 0; }) || Number($('#qe_disc_value').val()) > 0;
-    if (adjusted && !window.confirm('Changing pricing mode clears the current discounts and markups. Base prices stay unchanged. Continue?')) {
+    if (adjusted && !window.confirm(PosnicPro.i18n.t('lang_quote_change_pricing_confirm', 'Changing pricing mode clears the current discounts and markups. Base prices stay unchanged. Continue?'))) {
         $(this).val(ed.pricing_mode); return;
     }
     ed.pricing_mode = mode;

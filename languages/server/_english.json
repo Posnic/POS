@@ -384,6 +384,10 @@
   "Choose a supplier": [
     "src/repositories/purchase-order.repository.js"
   ],
+  "Choose discount or markup quotation pricing.": [
+    "src/repositories/quote.repository.js",
+    "src/repositories/settings.repository.js"
+  ],
   "Claim failed": [
     "app.js"
   ],

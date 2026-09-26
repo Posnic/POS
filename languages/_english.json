@@ -3781,5 +3781,19 @@
   "lang_printers_scanners_scales": "Printers, scanners &amp; scales",
   "lang_printing_tills": "Printing tills",
   "lang_sell_collect_payment_and_print_receipts_fr": "Sell, collect payment and print receipts from a phone, including offline sales.",
-  "lang_stop_device_access_help": "Access stops when the phone reconnects. Offline authorization remains valid until it expires. Recorded sales stay on the phone. Signing in again with authorized credentials restores access."
+  "lang_stop_device_access_help": "Access stops when the phone reconnects. Offline authorization remains valid until it expires. Recorded sales stay on the phone. Signing in again with authorized credentials restores access.",
+  "lang_could_not_load_quotation_pricing_settings": "Could not load quotation pricing settings. Please try again.",
+  "lang_enter_a_non_negative_base_price_and_an_ite": "Enter a non-negative base price and an item markup from 0 to 100000%.",
+  "lang_include_base_price_markup_percentage_and_i": "Include base price, markup percentage and increase in the preview, PDF and print. Leave off to show only final prices.",
+  "lang_item_markup": "Item markup (%)",
+  "lang_markup_2": "Markup (%)",
+  "lang_markup_adds_a_percentage_to_each_item_s_ba": "Markup adds a percentage to each item's base price. Existing quotations stay unchanged.",
+  "lang_off_customers_see_final_prices_only": "Off: customers see final prices only.",
+  "lang_pricing_for_new_quotations": "Pricing for new quotations",
+  "lang_quotation_pricing": "Quotation pricing",
+  "lang_quote_base_unit_price": "Base unit price",
+  "lang_quote_change_pricing_confirm": "Changing pricing mode clears the current discounts and markups. Base prices stay unchanged. Continue?",
+  "lang_quote_markup_breakdown": "Base {base} + {percent}% markup (+{amount} on this line)",
+  "lang_show_markup_breakdown_on_new_quotations": "Show markup breakdown on new quotations",
+  "lang_show_markup_breakdown_on_the_quotation": "Show markup breakdown on the quotation"
 }

@@ -3543,5 +3543,10 @@
   "lang_manage_captain_devices": "Dhibiti vifaa vya Captain",
   "lang_mobile_pos_settings": "Mipangilio ya Mobile POS",
   "lang_authorized": "Imeidhinishwa",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "Bei za nukuu",
+  "lang_markup_2": "Ongezeko la bei (%)",
+  "lang_pricing_for_new_quotations": "Bei za nukuu mpya",
+  "lang_quote_base_unit_price": "Bei ya msingi kwa kipimo",
+  "lang_item_markup": "Ongezeko la bei ya bidhaa (%)"
 }
