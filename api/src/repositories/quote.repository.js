@@ -76,8 +76,8 @@ class QuoteRepository extends BaseModel {
     return docMath.discountOf(raw, gross);
   }
 
-  _normalizeLines(rows) {
-    return docMath.normalizeLines(rows, 'quote');
+  _normalizeLines(rows, markup = false) {
+    return docMath.normalizeLines(rows, 'quote', { markup });
   }
 
   _normalizeCharges(rows) {
@@ -102,7 +102,15 @@ class QuoteRepository extends BaseModel {
       const wall = this._wall(context);
       if (!wall) return { status: false, data: null, message: 'Branch ID not found' };
 
-      const parsed = this._normalizeLines(data.lines || data.items);
+      if (data.pricing_mode !== undefined && !['discount', 'markup'].includes(data.pricing_mode)) {
+        return {
+          status: false,
+          data: null,
+          message: 'Choose discount or markup quotation pricing.',
+        };
+      }
+      const markup = data.pricing_mode === 'markup';
+      const parsed = this._normalizeLines(data.lines || data.items, markup);
       if (parsed.error) return { status: false, data: null, message: parsed.error };
 
       /* Money authority (QUOTATION_MODULE_DESIGN rule 4) lives in
@@ -110,7 +118,7 @@ class QuoteRepository extends BaseModel {
       const money = docMath.computeTotals({
         lines: parsed.lines,
         charges: this._normalizeCharges(data.charges),
-        discount: data.discount,
+        discount: markup ? null : data.discount,
         clientTotal: data.total,
         clientTaxTotal: data.tax_total,
       });
@@ -148,6 +156,8 @@ class QuoteRepository extends BaseModel {
           .trim()
           .slice(0, 1500),
         items: parsed.lines,
+        pricing_mode: markup ? 'markup' : 'discount',
+        show_markup: markup && data.show_markup === true,
         charges: money.charges,
         discount: money.discount,
         charges_total: money.charges_total,

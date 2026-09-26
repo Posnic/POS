@@ -4074,6 +4074,20 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="fc-section" id="fc_quotes">
+                                        <div class="form-row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="quote_pricing_mode">Pricing for new quotations</label>
+                                                <select id="quote_pricing_mode" class="form-control form-control-sm">
+                                                    <option value="discount">Discount</option>
+                                                    <option value="markup">Markup (%)</option>
+                                                </select>
+                                                <small class="text-muted">Markup adds a percentage to each item's base price. Existing quotations stay unchanged.</small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label><input type="checkbox" id="quote_show_markup"> Show markup breakdown on new quotations</label>
+                                                <small class="text-muted d-block">Include base price, markup percentage and increase in the preview, PDF and print. Leave off to show only final prices.</small>
+                                            </div>
+                                        </div>
                                         <h6 class="fc-title"><lang class="lang_quotes_title">Quotes</lang></h6>
 
                 <div class="row">
