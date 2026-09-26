@@ -3548,5 +3548,6 @@
   "lang_markup_2": "വില വർധന (%)",
   "lang_pricing_for_new_quotations": "പുതിയ ക്വട്ടേഷനുകളുടെ വില നിർണയം",
   "lang_quote_base_unit_price": "അടിസ്ഥാന യൂണിറ്റ് വില",
-  "lang_item_markup": "ഇനത്തിന്റെ വില വർധന (%)"
+  "lang_item_markup": "ഇനത്തിന്റെ വില വർധന (%)",
+  "lang_hardware_manager": "ഹാർഡ്‌വെയർ മാനേജർ"
 }

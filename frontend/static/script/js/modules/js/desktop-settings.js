@@ -90,7 +90,7 @@
         case "platform": return PosnicPro.i18n.t('lang_desktop_platform', 'Operating system');
         case "edition": return PosnicPro.i18n.t('lang_desktop_edition', 'Installation');
         case "view_logs": return PosnicPro.i18n.t('lang_desktop_view_logs', 'View application logs');
-        case "hardware_diagnostics": return PosnicPro.i18n.t('lang_desktop_hardware_diagnostics', 'Hardware diagnostics');
+        case "hardware_diagnostics": return PosnicPro.i18n.t('lang_hardware_manager', 'Hardware Manager');
         case "about": return PosnicPro.i18n.t('lang_about_posnic', 'About Posnic');
         case "kitchen_running": return PosnicPro.i18n.t('lang_desktop_kitchen_running', 'Running - tickets print as orders arrive');
         case "kitchen_paused": return PosnicPro.i18n.t('lang_desktop_kitchen_paused', 'Paused - automatic kitchen printing is stopped');

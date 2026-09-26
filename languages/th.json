@@ -3548,5 +3548,6 @@
   "lang_markup_2": "ส่วนเพิ่มราคา (%)",
   "lang_pricing_for_new_quotations": "การกำหนดราคาสำหรับใบเสนอราคาใหม่",
   "lang_quote_base_unit_price": "ราคาฐานต่อหน่วย",
-  "lang_item_markup": "ส่วนเพิ่มราคาสินค้า (%)"
+  "lang_item_markup": "ส่วนเพิ่มราคาสินค้า (%)",
+  "lang_hardware_manager": "ตัวจัดการฮาร์ดแวร์"
 }

@@ -938,7 +938,6 @@
   "lang_desktop_edition": "Installation",
   "lang_desktop_folder_required": "Choose a backup folder.",
   "lang_desktop_frequency": "Frequency",
-  "lang_desktop_hardware_diagnostics": "Hardware diagnostics",
   "lang_desktop_hourly": "Hourly",
   "lang_desktop_install_quit": "Install updates when I close Posnic",
   "lang_desktop_installation": "This installation",
@@ -3796,5 +3795,6 @@
   "lang_quote_change_pricing_confirm": "Changing pricing mode clears the current discounts and markups. Base prices stay unchanged. Continue?",
   "lang_quote_markup_breakdown": "Base {base} + {percent}% markup (+{amount} on this line)",
   "lang_show_markup_breakdown_on_new_quotations": "Show markup breakdown on new quotations",
-  "lang_show_markup_breakdown_on_the_quotation": "Show markup breakdown on the quotation"
+  "lang_show_markup_breakdown_on_the_quotation": "Show markup breakdown on the quotation",
+  "lang_hardware_manager": "Hardware Manager"
 }
