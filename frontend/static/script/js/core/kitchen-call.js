@@ -152,9 +152,19 @@
       if (!src) return done();
 
       var over = false;
+      var timer;
       var finish = function () {
         if (over) return;
         over = true;
+        if (typeof window.clearTimeout === 'function') window.clearTimeout(timer);
+        if (player) {
+          player.onended = null;
+          player.onerror = null;
+          // A timed-out bell must stop before the next words or bell start.
+          try {
+            if (typeof player.pause === 'function') player.pause();
+          } catch (e) { /* A failed audio device is already finished. */ }
+        }
         done();
       };
 
@@ -165,14 +175,10 @@
         player.onended = finish;
         player.onerror = finish;
 
+        // Recover a bell whose audio device never reports completion.
+        timer = window.setTimeout(finish, 1800);
         var attempt = player.play();
         if (attempt && typeof attempt.catch === 'function') attempt.catch(finish);
-
-        /* A belt for the braces: some engines never fire onended on a clip
-           this short, and a sequence that waits forever is worse than one that
-           runs on. Longer than the arrival bell, which is the longer of the
-           two. */
-        window.setTimeout(finish, 1800);
       } catch (e) {
         finish();
       }
@@ -195,14 +201,30 @@
       }
 
       var over = false;
+      var timer;
+      var said;
       var finish = function () {
         if (over) return;
         over = true;
+        if (typeof window.clearTimeout === 'function') window.clearTimeout(timer);
+        if (said) {
+          said.onend = null;
+          said.onerror = null;
+        }
         done();
       };
 
+      function checkFinished() {
+        if (over) return;
+        // Missing completion events can be recovered only once the engine is
+        // idle. Long lines and paused/pending speech still own the speaker.
+        if (engine.speaking || engine.pending || engine.paused) {
+          timer = window.setTimeout(checkFinished, 1000);
+        } else finish();
+      }
+
       try {
-        var said = new window.SpeechSynthesisUtterance(text);
+        said = new window.SpeechSynthesisUtterance(text);
         var picked = named(wanted) || voice();
         if (picked) {
           said.voice = picked;
@@ -228,11 +250,8 @@
         said.onend = finish;
         said.onerror = finish;
 
+        timer = window.setTimeout(checkFinished, 9000);
         engine.speak(said);
-
-        /* A voice that never reports finishing must not strand the dishes
-           behind it. Longer than any single line of a ticket. */
-        window.setTimeout(finish, 9000);
       } catch (e) {
         /* A machine with no voices installed still gets the bells, which is
            most of the value. Speech is the part that can be missing. */
@@ -241,22 +260,16 @@
     });
   }
 
-  /*
-   * Which announcement is the current one.
-   *
-   * Six courses from a table of six arrive within seconds. Without this the
-   * speaker would still be working through the last rush when the next one
-   * starts, describing food that is already on a pass. The newest ticket is
-   * the one nobody has seen.
-   */
-  var running = 0;
+  // New orders and cancellations share one FIFO. An entire ticket, including
+  // its bells, finishes before the next ticket can use either audio engine.
+  var announcements = Promise.resolve();
 
   bridge.on(function (payload) {
     if (!payload) return;
 
     var lines =
-      payload.lines && payload.lines.length
-        ? payload.lines
+      Array.isArray(payload.lines) && payload.lines.length
+        ? payload.lines.slice()
         : payload.say
           ? [payload.say]
           : [];
@@ -273,14 +286,9 @@
      */
     var head = typeof payload.head === 'number' ? payload.head : lines.length;
 
-    var mine = (running += 1);
-
-    try {
-      var engine = window.speechSynthesis;
-      if (engine && (engine.speaking || engine.pending)) engine.cancel();
-    } catch (e) {
-      /* An engine that will not be interrupted is still an engine. */
-    }
+    var sound = payload.sound;
+    var itemSound = payload.itemSound;
+    var wantedVoice = payload.voice;
 
     /*
      * THE BELL FIRST, AND THE WORDS WAIT FOR IT TO END rather than starting on
@@ -289,29 +297,28 @@
      */
     var steps = [
       function () {
-        return ring(payload.sound);
+        return ring(sound);
       },
     ];
 
     lines.forEach(function (line, i) {
       if (i >= head) {
         steps.push(function () {
-          return ring(payload.itemSound);
+          return ring(itemSound);
         });
       }
       steps.push(function () {
-        return say(line, payload.voice);
+        return say(line, wantedVoice);
       });
     });
 
-    steps.reduce(function (chain, step) {
-      return chain.then(function () {
-        /* A newer ticket started while this one was still talking. Stop here
-           rather than finish describing food somebody has already plated. */
-        if (mine !== running) return undefined;
-        return step();
-      });
-    }, Promise.resolve());
+    announcements = announcements.then(function () {
+      return steps.reduce(function (chain, step) {
+        return chain.then(step);
+      }, Promise.resolve());
+    }).catch(function () {
+      // An unavailable audio device must not poison subsequent tickets.
+    });
   });
 
   /*
