@@ -7663,7 +7663,9 @@ class SalesRepository {
             ...hasUnprintedChanges,
             ...notSomebodyElses,
           },
-          { sort: { created_date: 1, _id: 1 }, limit: 50 }
+          // Revisit the least recently attempted tickets first. A batch of
+          // failed printers must not permanently hide later pending orders.
+          { sort: { kot_claimed_at: 1, created_date: 1, _id: 1 }, limit: 50 }
         )
         .toArray();
 
@@ -7676,7 +7678,7 @@ class SalesRepository {
             ...hasUnprintedChanges,
             ...notSomebodyElses,
           },
-          { sort: { created_date: 1 }, limit: 20 }
+          { sort: { kot_claimed_at: 1, created_date: 1, _id: 1 }, limit: 20 }
         )
         .toArray();
 

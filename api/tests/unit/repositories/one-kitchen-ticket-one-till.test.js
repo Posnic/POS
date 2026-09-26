@@ -58,6 +58,22 @@ const handedTo = async (tillId) => {
   return (out.data || []).map((sale) => String(sale._id));
 };
 
+test.each([
+  ['KOT', 50],
+  ['cancelled', 20],
+])(
+  'unacknowledged %s tickets do not starve orders beyond the batch of %i',
+  async (sale_process, limit) => {
+    for (let i = 0; i < limit; i += 1) await order({ sale_process });
+    const first = await handedTo('kitchen');
+    expect(first).toHaveLength(limit);
+    const later = await order({ sale_process });
+    const second = await handedTo('kitchen');
+    expect(second).toContain(later);
+    expect(second).toHaveLength(limit);
+  }
+);
+
 beforeAll(async () => {
   mem = await MongoMemoryServer.create();
   await mongoose.connect(mem.getUri('posnic'));
