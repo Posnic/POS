@@ -472,3 +472,33 @@ describe('InvoiceRepository', () => {
     expect(writes()).toBe(0);
   });
 });
+
+test('quote markup converts to the agreed invoice price without applying it twice', async () => {
+  const math = require('../../../src/services/document-math');
+  const items = math.normalizeLines(
+    [
+      {
+        item_id: ITEM,
+        item_name: 'Rice',
+        qty: 2,
+        base_unit_price: 100,
+        markup: { type: 'percent', value: 20 },
+        tax_value: 18,
+        tax_type: 'exclusive',
+      },
+    ],
+    'quote',
+    { markup: true }
+  ).lines;
+  const repo = new InvoiceRepository();
+  repo.upsertInvoice = jest.fn(async (payload) => payload);
+  const payload = await repo.createFromQuote(
+    { _id: QUOTE, items, total: 283.2, tax_total: 43.2 },
+    ctx
+  );
+  const normalized = math.normalizeLines(payload.lines, 'invoice').lines;
+  expect(normalized[0].unit_price).toBe(120);
+  expect(normalized[0].line_total).toBe(283.2);
+  expect(normalized[0].markup).toBeUndefined();
+  expect(normalized[0].discount).toBeNull();
+});

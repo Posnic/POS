@@ -3543,5 +3543,10 @@
   "lang_manage_captain_devices": "Kelola perangkat Captain",
   "lang_mobile_pos_settings": "Pengaturan Mobile POS",
   "lang_authorized": "Diizinkan",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "Penetapan harga penawaran",
+  "lang_markup_2": "Kenaikan harga (%)",
+  "lang_pricing_for_new_quotations": "Harga untuk penawaran baru",
+  "lang_quote_base_unit_price": "Harga dasar per unit",
+  "lang_item_markup": "Kenaikan harga item (%)"
 }

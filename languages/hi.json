@@ -3558,5 +3558,10 @@
   "lang_manage_captain_devices": "Captain डिवाइस प्रबंधित करें",
   "lang_mobile_pos_settings": "Mobile POS सेटिंग्स",
   "lang_authorized": "अधिकृत",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "कोटेशन मूल्य निर्धारण",
+  "lang_markup_2": "मूल्य वृद्धि (%)",
+  "lang_pricing_for_new_quotations": "नए कोटेशन का मूल्य निर्धारण",
+  "lang_quote_base_unit_price": "मूल इकाई मूल्य",
+  "lang_item_markup": "वस्तु मूल्य वृद्धि (%)"
 }

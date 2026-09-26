@@ -3543,5 +3543,19 @@
   "lang_manage_captain_devices": "Administrar dispositivos Captain",
   "lang_mobile_pos_settings": "Ajustes de Mobile POS",
   "lang_authorized": "Autorizado",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "Precios de la cotización",
+  "lang_markup_2": "Incremento (%)",
+  "lang_pricing_for_new_quotations": "Precios para nuevas cotizaciones",
+  "lang_quote_base_unit_price": "Precio unitario base",
+  "lang_item_markup": "Incremento por artículo (%)",
+  "lang_show_markup_breakdown_on_the_quotation": "Mostrar el desglose del incremento en la cotización",
+  "lang_off_customers_see_final_prices_only": "Desactivado: los clientes solo ven los precios finales.",
+  "lang_markup_adds_a_percentage_to_each_item_s_ba": "El incremento añade un porcentaje al precio base de cada artículo. Las cotizaciones existentes no cambian.",
+  "lang_show_markup_breakdown_on_new_quotations": "Mostrar el desglose del incremento en las nuevas cotizaciones",
+  "lang_include_base_price_markup_percentage_and_i": "Incluye el precio base, el porcentaje y el importe del incremento en la vista previa, el PDF y la impresión. Desactívelo para mostrar solo los precios finales.",
+  "lang_could_not_load_quotation_pricing_settings": "No se pudo cargar la configuración de precios de cotizaciones. Inténtelo de nuevo.",
+  "lang_quote_markup_breakdown": "Base {base} + {percent}% de incremento (+{amount} en esta línea)",
+  "lang_enter_a_non_negative_base_price_and_an_ite": "Introduzca un precio base no negativo y un incremento por artículo entre 0 y 100000%.",
+  "lang_quote_change_pricing_confirm": "Cambiar el modo de precios elimina los descuentos e incrementos actuales. Los precios base no cambian. ¿Continuar?"
 }
