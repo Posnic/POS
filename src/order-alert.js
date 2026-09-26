@@ -305,8 +305,10 @@ function dataUri(buffer) {
  * open makes no sound, which is correct: there is nobody there to hear it.
  */
 class OrderAlert {
-  constructor({ getWindow } = {}) {
+  constructor({ getWindow, onAccepted } = {}) {
     this._getWindow = typeof getWindow === "function" ? getWindow : () => null;
+    this._onAccepted = typeof onAccepted === "function" ? onAccepted : () => {};
+    this._spoken = new Set();
     /*
      * A MAP, not a set: escalation needs to know how long each order has been
      * waiting and when it was last mentioned. A set could only say "something
@@ -341,6 +343,15 @@ class OrderAlert {
     }
 
     this._play(alert, payload);
+    const spokenKey = payload.eventKey ? `${payload.saleId}:${payload.eventKey}` : String(payload.saleId);
+    if (alert === 'received' && payload.saleId && payload.ticket && !this._spoken.has(spokenKey)) {
+      try {
+        if (this._onAccepted(payload)) {
+          this._spoken.add(spokenKey);
+          if (this._spoken.size > 1000) this._spoken.delete(this._spoken.values().next().value);
+        }
+      } catch (e) { /* A speaker failure must not interrupt order handling. */ }
+    }
   }
 
   /** Somebody dealt with it, so stop asking. */

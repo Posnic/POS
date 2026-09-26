@@ -1125,7 +1125,9 @@
                         Plays a real ticket through the speaker on this computer, exactly as a
                         kitchen would hear it. Nothing is ordered and nothing is printed.
                     </p>
-                    <button type="button" class="btn btn-primary" id="kitchenSoundTest">Test the sound</button>
+                    <button type="button" class="btn btn-primary" id="kitchenSoundSave">Save sound settings</button>
+                    <span id="kitchenSoundSaveResult" role="status" aria-live="polite" style="margin:0 12px;"></span>
+                    <button type="button" class="btn btn-secondary" id="kitchenSoundTest">Save and test sound</button>
                     <span id="kitchenSoundTestResult" style="margin-left:12px;color:#555;font-size:14px;"></span>
                 </div>
             </div>
@@ -4027,19 +4029,36 @@
                     option.textContent = v.name + ' (' + v.lang + ')';
                     select.appendChild(option);
                 });
+                if (chosen && !Array.from(select.options).some(function (option) { return option.value === chosen; })) {
+                    var pending = document.createElement('option');
+                    pending.value = chosen;
+                    pending.textContent = chosen + ' (uses an available voice until loaded)';
+                    select.appendChild(pending);
+                }
                 select.value = chosen || '';
             };
 
-            var save = function () {
-                bridge.set({
+            var save = async function () {
+                var button = at('kitchenSoundSave');
+                button.disabled = true;
+                at('kitchenSoundSaveResult').textContent = 'Saving…';
+                try {
+                var saved = await bridge.set({
                     ting: at('kitchenTing').checked,
                     speak: at('kitchenSpeak').checked,
                     arrivalBell: at('kitchenArrivalBell').value,
                     itemBell: at('kitchenItemBell').value,
                     voice: at('kitchenVoice').value || ''
                 });
-                at('kitchenSoundTestResult').textContent = '';
+                if (!saved) throw new Error('Settings could not be saved. Please retry.');
+                at('kitchenSoundSaveResult').textContent = 'Saved on this computer';
+                return true;
+                } catch (error) {
+                    at('kitchenSoundSaveResult').textContent = error.message || 'Settings could not be saved. Please retry.';
+                    return false;
+                } finally { button.disabled = false; }
             };
+            at('kitchenSoundSave').addEventListener('click', save);
 
             bridge.get().then(function (said) {
                 /* The switches, before anything that can fail. */
@@ -4073,7 +4092,9 @@
             ['kitchenTing', 'kitchenSpeak', 'kitchenArrivalBell', 'kitchenItemBell', 'kitchenVoice']
                 .forEach(function (id) {
                     var el = at(id);
-                    if (el) el.addEventListener('change', save);
+                    if (el) el.addEventListener('change', function () {
+                        at('kitchenSoundSaveResult').textContent = 'Unsaved changes';
+                    });
                 });
 
             /* One player, reused: a new Audio() per press leaves the old ones
@@ -4123,8 +4144,9 @@
              */
             var test = at('kitchenSoundTest');
             if (test) {
-                test.addEventListener('click', function () {
+                test.addEventListener('click', async function () {
                     var result = at('kitchenSoundTestResult');
+                    if (!(await save())) return;
                     result.textContent = 'Playing...';
                     bridge.test().then(function (said) {
                         if (said && said.reason === 'off') {

@@ -39,6 +39,7 @@ const PACKAGED_PAGES = new Set([
   'backup-manager.html',
   'hardware-manager.html',
   'update-manager.html',
+  'log-viewer.html',
 ]);
 
 /* Read the port when asked, never at module load: main.js sets it after

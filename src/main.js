@@ -4688,7 +4688,19 @@ app.whenReady().then(async () => {
    * A till with no window open makes no sound, which is right: there is nobody
    * standing there to hear it.
    */
-  orderAlert = new OrderAlert({ getWindow: () => mainWindow });
+  orderAlert = new OrderAlert({
+    getWindow: () => mainWindow,
+    onAccepted: (payload) => {
+      // A configured printer announces its own ticket once it claims the job.
+      // A speaker-only kitchen must not depend on that printer poller running.
+      if (kotManager && kotManager.isPolling) return false;
+      const wants = kitchenAnnounce.settings();
+      if (!wants.ting && !wants.speak) return false;
+      return require('./order-alert').announceKitchenTicket(
+        () => require('./order-alert').speakingWindow(BrowserWindow), payload.ticket, wants
+      );
+    },
+  });
   /* So the per-machine switch can find userData without importing electron
      itself, which is what lets it be read in a test. */
   kitchenAnnounce.useApp(app);

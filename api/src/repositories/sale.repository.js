@@ -7663,7 +7663,9 @@ class SalesRepository {
             ...hasUnprintedChanges,
             ...notSomebodyElses,
           },
-          { sort: { created_date: 1, _id: 1 }, limit: 50 }
+          // Revisit the least recently attempted tickets first. A batch of
+          // failed printers must not permanently hide later pending orders.
+          { sort: { kot_claimed_at: 1, created_date: 1, _id: 1 }, limit: 50 }
         )
         .toArray();
 
@@ -7676,7 +7678,7 @@ class SalesRepository {
             ...hasUnprintedChanges,
             ...notSomebodyElses,
           },
-          { sort: { created_date: 1 }, limit: 20 }
+          { sort: { kot_claimed_at: 1, created_date: 1, _id: 1 }, limit: 20 }
         )
         .toArray();
 
@@ -8818,6 +8820,7 @@ class SalesRepository {
         alert: arrival.alert,
         state: arrival.state,
         total: finalTotal,
+        ticket: { table: saleDocument.table_number || '', items: saleDocument.items || [] },
       });
 
       return {
@@ -10055,6 +10058,10 @@ class SalesRepository {
             branchId: String(orderDoc?.branch_id || ''),
             saleId: String(orderId),
             reason: 'cancelled',
+            table: orderDoc.table_number,
+            items: changesItems,
+            revision: existingChanges.length,
+            whole: true,
           });
         }
 
@@ -10416,6 +10423,9 @@ class SalesRepository {
           branchId: String(updateFields.branch_id || orderDoc?.branch_id || ''),
           saleId: String(orderId),
           reason: 'updated',
+          table: updateFields.table_number || orderDoc.table_number,
+          items: changesItems,
+          revision: existingChanges.length,
         });
       }
 
@@ -11294,6 +11304,9 @@ class SalesRepository {
       branchId: String(orderDoc.branch_id || ''),
       saleId: String(orderDoc._id),
       reason: 'updated',
+      table: orderDoc.table_number,
+      items: changes,
+      revision: log.length,
     });
 
     return {
@@ -11593,6 +11606,10 @@ class SalesRepository {
       branchId: String(orderDoc.branch_id || ''),
       saleId: String(orderDoc._id),
       reason: 'cancelled',
+      table: orderDoc.table_number,
+      items: changes,
+      revision: log.length,
+      whole: true,
     });
 
     return {

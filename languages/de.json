@@ -3548,5 +3548,6 @@
   "lang_markup_2": "Aufschlag (%)",
   "lang_pricing_for_new_quotations": "Preisgestaltung für neue Angebote",
   "lang_quote_base_unit_price": "Basisstückpreis",
-  "lang_item_markup": "Artikelaufschlag (%)"
+  "lang_item_markup": "Artikelaufschlag (%)",
+  "lang_hardware_manager": "Hardwareverwaltung"
 }
