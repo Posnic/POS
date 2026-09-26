@@ -125,14 +125,18 @@ const encryptSessionId = (sessionId) => {
 // Create and sign basic JWT token (id-only payload used by modern routes)
 const signToken = (id, version = 0) => {
   return jwt.sign({ id, ...(version ? { authVersion: version } : {}) }, getJwtSecret(), {
-    expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+    expiresIn: jwtLifetimeSeconds(),
   });
 };
 
 /* Lives in its own dependency-free file so the number in the token and the
    number a client is told cannot drift apart, and so it is testable without
    installing the API. */
-const { jwtLifetimeSeconds, handsetLifetimeSeconds } = require('../utils/token-lifetime');
+const {
+  jwtLifetimeSeconds,
+  handsetLifetimeSeconds,
+  loginCookieDays,
+} = require('../utils/token-lifetime');
 
 // Legacy-style JWT including encrypted session_id in the payload.
 // This mirrors the PHP design where JWT carries an encrypted session id
@@ -187,7 +191,7 @@ const signLegacyToken = (user, req, branchId, expiresIn) => {
    * caller keeps the lifetime it already had.
    */
   return jwt.sign(payload, getJwtSecret(), {
-    expiresIn: expiresIn || process.env.JWT_EXPIRES_IN || '24h',
+    expiresIn: expiresIn || jwtLifetimeSeconds(),
   });
 };
 
@@ -196,7 +200,7 @@ const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id, authVersion.version(user));
   authVersion.stampSession(res.req, user);
   const cookieOptions = authCookieOptions({
-    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + loginCookieDays() * 24 * 60 * 60 * 1000),
   });
 
   // Send JWT via HTTP-only cookie so browser automatically

@@ -2463,7 +2463,7 @@ async function redirectToLogin() {
       ? await validateSavedLogin(origin, cookies)
       : false;
 
-    if (hasSavedCookie && !hasSavedLogin) {
+    if (hasSavedCookie && hasSavedLogin === false) {
       console.warn('[Auth] Saved login is no longer valid; clearing stale session');
       await clearStaleLogin(session.defaultSession.cookies, origin, console);
     }
@@ -2473,7 +2473,7 @@ async function redirectToLogin() {
       : `${origin}/public/login.html`;
 
     await loadPageAndReveal(targetUrl);
-    if (!hasSavedLogin) {
+    if (hasSavedLogin === false) {
       mainWindow.webContents.executeJavaScript(`
         localStorage.removeItem('posnic_jwt_token');
         document.cookie = 'loginuser=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
