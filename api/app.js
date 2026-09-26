@@ -1118,7 +1118,15 @@ app.use(
   ['/api/branch-payments', '/branch-payments'],
   require('./src/routes/branch-payments.routes')
 );
+app.use(['/api/captain/v1', '/captain/v1'], require('./src/routes/captain-access.routes'));
 app.use(['/api/mobile/v1', '/mobile/v1'], require('./src/routes/mobile-pos.routes'));
+for (const extension of ['html', 'js', 'css']) {
+  const suffix = extension === 'html' ? '' : '.' + extension;
+  app.get(['/api/captain-setup' + suffix, '/captain-setup' + suffix], (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.sendFile(require('path').join(__dirname, 'src/routes/captain-setup.' + extension), {dotfiles:'allow'});
+  });
+}
 for (const extension of ['html', 'js', 'css']) {
   const suffix = extension === 'html' ? '' : '.' + extension;
   app.get(['/api/mobile-pos-setup' + suffix, '/mobile-pos-setup' + suffix], (req, res) => {

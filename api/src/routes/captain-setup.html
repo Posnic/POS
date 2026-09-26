@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Connect Captain · Posnic</title
+  ><link rel="stylesheet" href="captain-setup.css" />
+  <main>
+    <h1>Connect Captain</h1>
+    <p>Approve one phone for a staff member. This does not enable Mobile POS.</p>
+    <p id="branch"></p>
+    <details>
+      <summary>Connection settings</summary>
+      <label for="fallback-url">Internet address for this till</label>
+      <input id="fallback-url" type="url" placeholder="https://your-shop.example/api" />
+      <p>
+        Use a secure address that reaches this same till. Captain verifies it before switching. An
+        independent cloud copy cannot accept this till’s pending orders.
+      </p>
+      <button id="save-connection" type="button">Save connection settings</button>
+      <p id="connection-message" role="status"></p>
+    </details>
+    <label for="staff">Staff member</label
+    ><select id="staff"></select
+    ><button id="generate" disabled>Create pairing QR and code</button>
+    <p id="message" role="status"></p>
+    <section id="result" hidden>
+      <h2 id="name"></h2>
+      <p>Use once within five minutes. Keep this code private.</p>
+      <strong id="code"></strong>
+      <label for="address">Till address · shop Wi-Fi is usually fastest</label>
+      <select id="address"></select>
+      <img id="qr" alt="Pair Captain" width="240" height="240" />
+    </section>
+    <p>Manage or revoke phones in Settings → Devices → Captain App.</p>
+  </main>
+  <script src="captain-setup.js"></script>
+</html>
