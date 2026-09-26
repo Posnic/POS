@@ -143,3 +143,21 @@ test('every failure says what to do about it', () => {
   assert.match(r.out, /TRANSLATING\.md/, 'it should point at the guide');
   assert.match(r.out, /bug in this check/, 'and invite a report if it is unclear');
 });
+
+
+test('translated messages must preserve named and numeric placeholders', () => {
+  const files = { '_english.json': { lang_message: '{name}: {0} / {0}' },
+    'nl.json': { lang_message: '{name}: {0}' } };
+  let result = checkWith(files, ['en', 'nl']);
+  assert.equal(result.code, 1, result.out);
+  assert.match(result.out, /interpolation placeholders/);
+  files['nl.json'].lang_message = '{0} / {0}: {name}';
+  result = checkWith(files, ['en', 'nl']);
+  assert.equal(result.code, 0, result.out);
+});
+
+test('damaged Unicode characters are rejected', () => {
+  const result = checkWith({ 'nl.json': { lang_message: 'Opsla\uFFFDn' } });
+  assert.equal(result.code, 1, result.out);
+  assert.match(result.out, /replacement character/);
+});
