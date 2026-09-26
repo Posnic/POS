@@ -10058,6 +10058,10 @@ class SalesRepository {
             branchId: String(orderDoc?.branch_id || ''),
             saleId: String(orderId),
             reason: 'cancelled',
+            table: orderDoc.table_number,
+            items: changesItems,
+            revision: existingChanges.length,
+            whole: true,
           });
         }
 
@@ -10419,6 +10423,9 @@ class SalesRepository {
           branchId: String(updateFields.branch_id || orderDoc?.branch_id || ''),
           saleId: String(orderId),
           reason: 'updated',
+          table: updateFields.table_number || orderDoc.table_number,
+          items: changesItems,
+          revision: existingChanges.length,
         });
       }
 
@@ -11297,6 +11304,9 @@ class SalesRepository {
       branchId: String(orderDoc.branch_id || ''),
       saleId: String(orderDoc._id),
       reason: 'updated',
+      table: orderDoc.table_number,
+      items: changes,
+      revision: log.length,
     });
 
     return {
@@ -11596,6 +11606,10 @@ class SalesRepository {
       branchId: String(orderDoc.branch_id || ''),
       saleId: String(orderDoc._id),
       reason: 'cancelled',
+      table: orderDoc.table_number,
+      items: changes,
+      revision: log.length,
+      whole: true,
     });
 
     return {

@@ -65,10 +65,11 @@ test('legacy sales also keep a missing printer queued without duplicating succes
  r.tick();r.set(()=>({success:true}));await r.manager._pollOnce();assert.equal(r.calls.length,5);assert.equal(r.marks.length,1);
 });
 test('counter retry does not return success while one kitchen copy is missing',async t=>{
- const r=rig(t);r.sale.print_jobs[0].key='counter-key';r.set((_name,n)=>({success:n!==2,error:'offline'}));
+ const r=rig(t);r.manager.isPolling=true;r.sale.print_jobs[0].key='counter-key';r.set((_name,n)=>({success:n!==2,error:'offline'}));
  assert.equal((await r.manager.printCounterTicket(r.sale)).success,false);
  r.tick();assert.equal((await r.manager.printCounterTicket(r.sale)).success,true);assert.equal(r.calls.length,4);
  assert.equal((await r.manager.printCounterTicket(r.sale)).success,true);assert.equal(r.calls.length,4);
+ assert.equal(r.announced,1,'counter printing announced the ticket again on retry');
 });
 test('pending deliveries survive the normal ledger age limit',t=>{
  const r=rig(t);ledger.claim('old');ledger.deliveryPlan('old',r.manager.config.printers);
