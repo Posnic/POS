@@ -98,3 +98,19 @@ test('delay thresholds escalate permanently and empty-state CSS stays hidden wit
   assert.equal(dom.window.getComputedStyle(dom.window.document.getElementById('board')).display,'none');
  }finally{dom.window.close();}
 });
+
+test('table-only board groups tables by oldest order and never renders dishes or order numbers',()=>{
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try{
+  dom.window.kitchenScreen.setConfig({tableOnly:true,_fit:{fontPx:40,columns:4,cards:8}});
+  dom.window.kitchenScreen.setTickets([{table:'T1',placedAt:new Date(Date.now()-20*60000).toISOString(),items:[{name:'Secret dish'}]}, {table:'T1',placedAt:new Date().toISOString(),items:[]},{table:'T2',placedAt:new Date().toISOString(),items:[]}]);
+  assert.equal(dom.window.document.querySelectorAll('.table-only').length,2);
+  assert.equal(dom.window.document.querySelectorAll('.table-icon').length,2);
+  assert.ok(dom.window.document.querySelector('.table-only.urgent'));
+  assert.ok(dom.window.document.querySelector('.table-only.calm'));
+  assert.equal(dom.window.document.querySelector('.items'),null);
+  assert.equal(dom.window.document.querySelector('.age'),null);
+  assert.equal(dom.window.document.querySelector('#board').textContent,'T1T2');
+ }finally{dom.window.close();}
+});

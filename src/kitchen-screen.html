@@ -126,6 +126,13 @@
   .urgent .delay-label.pulse { animation: urgency-pulse 2s ease-in-out infinite; }
   @keyframes urgency-pulse { 50% { opacity: .65; } }
   @media (prefers-reduced-motion: reduce) { .urgent .delay-label.pulse { animation: none; } }
+  .ticket.table-only { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-height:180px; border:4px solid #4ade80; background:#14532d; color:#fff; }
+  .ticket.table-only.warm { border-color:#fb923c; background:#7c2d12; }
+  .ticket.table-only.late, .ticket.table-only.urgent { border-color:#f87171; background:#7f1d1d; }
+  .table-icon { width:1.6em; height:1.6em; }
+  .table-only.urgent.pulse { animation:table-alert 2s ease-in-out infinite; }
+  @keyframes table-alert { 50% { box-shadow:inset 0 0 0 5px #fca5a5; } }
+  @media (prefers-reduced-motion:reduce) { .table-only.urgent.pulse { animation:none; } }
   .top { flex-wrap: wrap; }
   .table { overflow-wrap: anywhere; min-width: 0; }
 
@@ -269,6 +276,20 @@
     var state = stateFor(mins, cfg);
     var node = el('div', 'ticket ' + state + (compact ? ' compact' : ''));
 
+    if (cfg.tableOnly) {
+      node.classList.add('table-only');
+      if (cfg.pulseAlerts !== false) node.classList.add('pulse');
+      var icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      icon.setAttribute('viewBox', '0 0 48 48');
+      icon.setAttribute('class', 'table-icon');
+      icon.setAttribute('aria-hidden', 'true');
+      icon.innerHTML = '<path d="M8 18h32v8H8zM12 26v14m24-14v14M16 8h16v6H16z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>';
+      node.appendChild(icon);
+      node.appendChild(el('span', 'table', ticket.table || 'No table'));
+      node.setAttribute('aria-label', (ticket.table || 'No table') + ', ' + state);
+      return node;
+    }
+
     var top = el('div', 'top');
     if (cfg.showTable !== false) {
       top.appendChild(el('span', 'table', ticket.table || ticket.orderNumber || '-'));
@@ -329,14 +350,25 @@
       return Date.parse(a.placedAt || 0) - Date.parse(b.placedAt || 0);
     });
 
+    if (cfg.tableOnly) {
+      var seenTables = new Set();
+      live = live.filter(function(ticket) {
+        if (!ticket.table) return true;
+        var key = String(ticket.table).trim();
+        if (seenTables.has(key)) return false;
+        seenTables.add(key);
+        return true;
+      });
+    }
     $('count').textContent = live.length;
-    $('word').textContent = live.length === 1 ? 'order' : 'orders';
+    $('word').textContent = cfg.tableOnly ? (live.length === 1 ? 'table' : 'tables') : (live.length === 1 ? 'order' : 'orders');
     $('empty').hidden = live.length > 0 || !!cfg._feedStatus;
     board.hidden = live.length === 0;
 
     // Rotate every dish into view instead of permanently hiding it under +more.
     var maxItems = Math.max(1, Number(cfg.maxItemsPerCard) || 3);
     live = live.flatMap(function (ticket) {
+      if (cfg.tableOnly) return [ticket];
       var parts = [];
       var items = ticket.items || [];
       for (var offset = 0; offset < items.length; offset += maxItems) {
@@ -348,9 +380,9 @@
     var font = Math.max(24, Math.min(Number(fitInfo.fontPx) || 40, (window.innerWidth || 1100) / 18));
     document.documentElement.style.setProperty('--font', font + 'px');
     var width = board.clientWidth || window.innerWidth || 1100;
-    var ceiling = Math.max(1, Math.min(Number(fitInfo.columns) || 4, Math.floor(width / (font * 12))));
+    var ceiling = Math.max(1, Math.min(Number(fitInfo.columns) || 4, Math.floor(width / (font * (cfg.tableOnly ? 7 : 12)))));
     var height = board.clientHeight || window.innerHeight || 700;
-    var rows = Math.max(1, Math.floor(height / (font * (maxItems * 1.5 + 4))));
+    var rows = Math.max(1, Math.floor(height / (font * (cfg.tableOnly ? 6 : maxItems * 1.5 + 4))));
     var perPage = Math.max(1, Math.min((fitInfo.cards || 8) * (compact ? 2 : 1), ceiling * rows));
     var pages = Math.max(1, Math.ceil(live.length / perPage));
     if (page >= pages) page = 0;
