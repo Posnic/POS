@@ -131,6 +131,7 @@ function itemLines(sale, branch) {
       );
       return {
         name: String(it.name || it.item_name).trim(),
+        ...require('../utils/item-localization').snapshot(it),
         /*
          * The HSN or SAC code, when the shop asks for it.
          *

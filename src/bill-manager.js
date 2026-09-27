@@ -779,6 +779,9 @@ class BillManager {
       const { resolvePictures } = require('./escpos-logo');
       const paperWidth = columnsFor(this.paperSize) <= 32 ? '58' : '80';
       const withPictures = await resolvePictures(sale || {}, paperWidth);
+      const itemLanguage = require('./device-preferences').get('item_print_languages') || {};
+      withPictures.items = (withPictures.items || []).map(item => ({ ...item,
+        name: require('./item-localization').name(item, itemLanguage.receipt || '', itemLanguage.bilingual) }));
 
       const bytes = await renderReceipt(
         { ...withPictures, title: gstin ? 'TAX INVOICE' : 'BILL' },

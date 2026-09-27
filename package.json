@@ -97,6 +97,7 @@
       "src/handset-slots.js",
       "src/till-stays-awake.js",
       "src/kot-job-key.js",
+      "src/item-localization.js",
       "src/waiting-order-policy.js",
       "src/kitchen-screen.js",
       "src/kitchen-announce.js",

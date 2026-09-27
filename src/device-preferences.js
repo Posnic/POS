@@ -178,6 +178,7 @@ function documentPrintSettings(prefs = all()) {
       printerName: prefs.receipt_printer || 'default', pageSize: prefs.print_width || '80mm' })
       .map((target) => ({ ...target, name: target.name || 'default' })),
     invoice: sheet(documents.invoice), quotation: sheet(documents.quotation),
+    ...(prefs.item_print_languages ? { itemLanguages: prefs.item_print_languages } : {}),
   };
 }
 
@@ -197,7 +198,13 @@ function validateDocumentPrintSettings(value) {
     const target = value[kind];
     if (!target || !name(target.printerName) || !['a4', 'a5', 'letter'].includes(target.paperSize) || !copies(target.copies)) throw new Error('Invalid ' + kind + ' print settings.');
   }
+  const itemLanguages = value.itemLanguages;
+  if (itemLanguages) {
+    const locale = require('./item-localization').locale;
+    if ((itemLanguages.receipt && !locale(itemLanguages.receipt)) || (itemLanguages.kot && !locale(itemLanguages.kot)) || typeof itemLanguages.bilingual !== 'boolean') throw new Error('Choose valid item print languages.');
+  }
   return documentPrintSettings({ receipt_printers: value.sales,
+    item_print_languages: itemLanguages ? { receipt: itemLanguages.receipt || '', kot: itemLanguages.kot || '', bilingual: itemLanguages.bilingual } : undefined,
     document_print_profiles: { invoice: value.invoice, quotation: value.quotation } });
 }
 

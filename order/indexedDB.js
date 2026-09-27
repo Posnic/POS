@@ -1659,7 +1659,9 @@ async function removeCartItem(id) {
 // ✅ Optimized update function: Prevents multiple IndexedDB calls
 async function updateCartQuantity(id, change) {
     clearOrderAttemptId();
-    const storedProducts = await getData("products");
+    const originals = await getData("products");
+    if (window.i18n && window.i18n.registerItems) window.i18n.registerItems(originals);
+    const storedProducts = originals.map(product => window.PosnicItemText ? window.PosnicItemText.display(product, window.i18n && window.i18n.lang) : product);
     /* `id` here is the LINE key, which for a dish with extras is not the
        dish's id. The line says which dish it is; see optionKey. */
     const currentLines = await getCartData();
@@ -1686,6 +1688,8 @@ async function updateCartQuantity(id, change) {
 }
 
 async function patchVisibleProductsFromData(updatedProducts = [], changedProductIds = []) {
+    if (window.i18n && window.i18n.registerItems) window.i18n.registerItems(updatedProducts);
+    updatedProducts = updatedProducts.map(product => window.PosnicItemText ? window.PosnicItemText.display(product, window.i18n && window.i18n.lang) : product);
     if (!document.getElementById("product-list")) {
         return;
     }
@@ -1722,7 +1726,9 @@ async function loadProducts() {
     }
 
     console.log("🔄 Loading products from IndexedDB...");
-    const storedProducts = await getData("products");
+    const originals = await getData("products");
+    if (window.i18n && window.i18n.registerItems) window.i18n.registerItems(originals);
+    const storedProducts = originals.map(product => window.PosnicItemText ? window.PosnicItemText.display(product, window.i18n && window.i18n.lang) : product);
 
     if (storedProducts.length === 0) {
         /*
@@ -1897,6 +1903,7 @@ function catalogueItem(item, categoryName) {
     return {
         id: String(itemId),
         name: item.name || "Unknown",
+        ...(window.PosnicItemText ? window.PosnicItemText.catalog(item) : {}),
         available_quantity: item.available_quantity || 0,
         price: parseFloat(item.final_price) || 0,
         discount_price: parseFloat(item.discount_price) || 0,
@@ -2807,7 +2814,9 @@ function extrasFor(chosen) {
  * rule knows nothing about.
  */
 async function addWithOptions(itemId, chosen, change) {
-    const storedProducts = await getData("products");
+    const originals = await getData("products");
+    if (window.i18n && window.i18n.registerItems) window.i18n.registerItems(originals);
+    const storedProducts = originals.map(product => window.PosnicItemText ? window.PosnicItemText.display(product, window.i18n && window.i18n.lang) : product);
     const product = storedProducts.find((one) => String(one.id) === String(itemId));
     if (!product) return null;
 
@@ -2830,7 +2839,9 @@ async function addWithOptions(itemId, chosen, change) {
 
 async function updateQuantity(id, change) {
     clearOrderAttemptId();
-    const storedProducts = await getData("products");
+    const originals = await getData("products");
+    if (window.i18n && window.i18n.registerItems) window.i18n.registerItems(originals);
+    const storedProducts = originals.map(product => window.PosnicItemText ? window.PosnicItemText.display(product, window.i18n && window.i18n.lang) : product);
     const storedProduct = storedProducts.find(item => String(item.id) === String(id));
     const currentCart = await getCartData();
     const result = KioskCore.changeCartQuantity(currentCart, storedProduct, id, change);
@@ -3816,7 +3827,7 @@ function orderViewList(source) {
         list = list
             .map(function (p, i) {
                 var hit = scoreItem(q, {
-                    name: p.name,
+                    name: [p.name, p.original_name].concat((p.translations || []).map(row => row.name || '')).join(' '),
                     description: p.description,
                     category: p.category_name
                 });

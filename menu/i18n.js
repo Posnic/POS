@@ -519,7 +519,7 @@
   function fromUrl() {
     try {
       var code = new URLSearchParams(window.location.search).get("lang");
-      return code && LANGS[code] ? code : "";
+      return code && (LANGS[code] || (window.PosnicItemText && window.PosnicItemText.locale(code))) ? code : "";
     } catch (e) {
       return "";
     }
@@ -536,7 +536,7 @@
 
   var lang = fromUrl();
   if (lang) remember(lang);
-  else lang = LANGS[saved()] ? saved() : fromPhone() || "en";
+  else lang = (LANGS[saved()] || (window.PosnicItemText && window.PosnicItemText.locale(saved()))) ? saved() : fromPhone() || "en";
 
   document.documentElement.setAttribute("lang", lang);
 
@@ -639,6 +639,18 @@
     });
   }
 
+  function registerItems(items) {
+    if (!window.PosnicItemText) return;
+    (items || []).forEach(function (item) {
+      [item.default_language].concat((item.translations || []).map(function (row) { return row.locale; })).forEach(function (code) {
+        code = window.PosnicItemText.locale(code);
+        if (!code || LANGS[code]) return;
+        try { LANGS[code] = new Intl.DisplayNames([code], {type: 'language'}).of(code); }
+        catch (_) { LANGS[code] = code; }
+      });
+    });
+    paintToggles();
+  }
   function nextLang() {
     var codes = Object.keys(LANGS);
     return codes[(codes.indexOf(lang) + 1) % codes.length];
@@ -648,6 +660,24 @@
      the person who cannot read the current one can still find their way. */
   function paintToggles() {
     var other = nextLang();
+    if (Object.keys(LANGS).length > 2) {
+      document.querySelectorAll('[data-lang-toggle]').forEach(function (button) {
+        var select = button.nextElementSibling;
+        if (!select || !select.hasAttribute('data-catalogue-language')) {
+          select = document.createElement('select'); select.setAttribute('data-catalogue-language', '');
+          select.setAttribute('aria-label', t('Change language'));
+          select.style.cssText = 'max-width:12rem;padding:6px;border:1px solid #ccd4df;border-radius:6px;background:inherit;color:inherit';
+          select.addEventListener('change', function () { set(this.value); });
+          button.insertAdjacentElement('afterend', select);
+        }
+        select.replaceChildren();
+        Object.keys(LANGS).forEach(function (code) {
+          var option = document.createElement('option'); option.value = code; option.textContent = LANGS[code]; option.lang = code; select.appendChild(option);
+        });
+        select.value = LANGS[lang] ? lang : 'en'; button.hidden = true;
+      });
+      return;
+    }
     var list = document.querySelectorAll("[data-lang-toggle]");
     for (var i = 0; i < list.length; i++) {
       list[i].textContent = LANGS[other];
@@ -691,6 +721,6 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
   else start();
 
-  window.i18n = { t: t, lang: lang, languages: LANGS, apply: walk, set: set };
+  window.i18n = { t: t, lang: lang, languages: LANGS, apply: walk, set: set, registerItems: registerItems };
   window.t = t;
 })();

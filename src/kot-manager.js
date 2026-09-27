@@ -873,7 +873,7 @@ class KOTManager {
           deliverTo: f.deliverTo,
           note: f.orderNote,
           items: f.items.map((it) => ({
-            name: it.item_name || it.name || it.product_name || it.itemName || '',
+            name: require('./item-localization').name(it, (require('./device-preferences').get('item_print_languages') || {}).kot || '') || it.product_name || it.itemName || '',
             quantity: it.item_quantity ?? it.quantity ?? it.qty ?? 1,
             /* The note a waiter typed. `description` is the catalogue
                sentence and must never reach a cook - see escpos-kot.js. */
@@ -1345,7 +1345,7 @@ class KOTManager {
     } = this._ticketFields(sale, printKind, kotNumber);
 
     const itemsHtml = items.map(it => {
-      const name = it.item_name || it.name || it.product_name || it.itemName || '';
+      const name = require('./item-localization').name(it, (require('./device-preferences').get('item_print_languages') || {}).kot || '') || it.product_name || it.itemName || '';
       const qty  = it.item_quantity || it.quantity || it.qty || it.item_qty || 1;
       /* The note only; the catalogue sentence is not an instruction. */
       const desc = it.item_note || it.item_description || it.desc || '';
