@@ -3549,5 +3549,9 @@
   "lang_pricing_for_new_quotations": "Preisgestaltung für neue Angebote",
   "lang_quote_base_unit_price": "Basisstückpreis",
   "lang_item_markup": "Artikelaufschlag (%)",
-  "lang_hardware_manager": "Hardwareverwaltung"
+  "lang_hardware_manager": "Hardwareverwaltung",
+  "lang_guest_bills": "Gästerechnungen",
+  "lang_guest_bills_changed": "Der Tisch wurde geändert. Fordern Sie aktualisierte Gästerechnungen an, bevor Sie diese Beträge kassieren.",
+  "lang_guest_bills_unpaid": "Unbezahlte Gästeanteile. Kassieren und erfassen Sie die Zahlung über die Zahlungsfunktionen der Kasse.",
+  "lang_guest_bills_retry": "Gästerechnungen erneut versuchen"
 }

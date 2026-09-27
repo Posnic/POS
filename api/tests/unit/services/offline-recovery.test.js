@@ -64,6 +64,8 @@ beforeAll(async () => {
   const app = express();
   app.use(
     express.json(),
+    // lgtm[js/missing-token-validation] csrfProtect is mounted in this same chain,
+    // and the cookie-backed replacement test verifies missing CSRF proof is rejected.
     cookieParser(),
     session({
       secret: 'synthetic-test-only-session-secret',

@@ -3549,5 +3549,9 @@
   "lang_pricing_for_new_quotations": "Prijzen voor nieuwe offertes",
   "lang_quote_base_unit_price": "Basisprijs per eenheid",
   "lang_item_markup": "Artikelopslag (%)",
-  "lang_hardware_manager": "Hardwarebeheer"
+  "lang_hardware_manager": "Hardwarebeheer",
+  "lang_guest_bills": "Gastenrekeningen",
+  "lang_guest_bills_changed": "De tafel is gewijzigd. Vraag bijgewerkte gastenrekeningen aan voordat u deze bedragen int.",
+  "lang_guest_bills_unpaid": "Onbetaalde gastenaandelen. Ontvang en registreer de betaling via de betaalfuncties van de kassa.",
+  "lang_guest_bills_retry": "Gastenrekeningen opnieuw proberen"
 }

@@ -2274,6 +2274,9 @@
   "Too many accounts created from this connection. Please wait an hour.": [
     "src/middleware/auth-rate-limit.js"
   ],
+  "Too many bill requests. Please retry shortly.": [
+    "src/routes/sales.routes.js"
+  ],
   "Too many changes in a minute. Please wait a moment and try again.": [
     "src/middleware/assistant-rate-limit.js"
   ],
