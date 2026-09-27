@@ -103,6 +103,11 @@ router.post(
   bindController(salesController.requestBillPrint)
 );
 
+const guestBills = require('../controllers/guest-bill.controller');
+router.get('/guestBills/table', optionalProtect, protectOrKioskKey, guestBills.read);
+router.get('/guestBills/latest', optionalProtect, protectOrKioskKey, guestBills.latest);
+router.post('/guestBills/print', optionalProtect, protectOrKioskKey, guestBills.send);
+
 // --- Kiosk-authenticated routes (use kioskkey header, not JWT) ---
 // Must be registered BEFORE router.use(protect)
 router.post('/kioskOrder', ensureKioskKey, bindController(salesController.kioskOrder));

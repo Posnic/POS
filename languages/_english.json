@@ -3796,5 +3796,9 @@
   "lang_quote_markup_breakdown": "Base {base} + {percent}% markup (+{amount} on this line)",
   "lang_show_markup_breakdown_on_new_quotations": "Show markup breakdown on new quotations",
   "lang_show_markup_breakdown_on_the_quotation": "Show markup breakdown on the quotation",
-  "lang_hardware_manager": "Hardware Manager"
+  "lang_hardware_manager": "Hardware Manager",
+  "lang_guest_bills": "Guest bills",
+  "lang_guest_bills_changed": "The table changed. Ask for updated guest bills before collecting these amounts.",
+  "lang_guest_bills_unpaid": "Unpaid guest shares. Collect and record payment using the cashier payment controls.",
+  "lang_guest_bills_retry": "Retry guest bills"
 }

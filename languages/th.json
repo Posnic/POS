@@ -3549,5 +3549,9 @@
   "lang_pricing_for_new_quotations": "การกำหนดราคาสำหรับใบเสนอราคาใหม่",
   "lang_quote_base_unit_price": "ราคาฐานต่อหน่วย",
   "lang_item_markup": "ส่วนเพิ่มราคาสินค้า (%)",
-  "lang_hardware_manager": "ตัวจัดการฮาร์ดแวร์"
+  "lang_hardware_manager": "ตัวจัดการฮาร์ดแวร์",
+  "lang_guest_bills": "บิลลูกค้า",
+  "lang_guest_bills_changed": "ข้อมูลโต๊ะเปลี่ยนแล้ว ขอรับบิลลูกค้าที่อัปเดตก่อนเรียกเก็บยอดเหล่านี้",
+  "lang_guest_bills_unpaid": "ส่วนแบ่งของลูกค้ายังไม่ได้ชำระ รับและบันทึกการชำระเงินด้วยส่วนควบคุมการชำระเงินของแคชเชียร์",
+  "lang_guest_bills_retry": "ลองส่งบิลลูกค้าอีกครั้ง"
 }

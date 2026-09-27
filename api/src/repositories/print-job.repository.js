@@ -15,6 +15,7 @@
  */
 
 const mongoose = require('mongoose');
+const crypto = require('node:crypto');
 const { ObjectId } = require('mongodb');
 /*
  * THE MODEL IS FETCHED WHEN IT IS USED, NOT WHEN THIS FILE LOADS.
@@ -84,7 +85,7 @@ async function queuePrintJob(job = {}, { Model } = {}) {
     if (!job.branchId) {
       return { status: false, message: 'A print job needs a branch', data: null };
     }
-    const doc = await model.create({
+    const record = {
       branch_id: asObjectId(job.branchId),
       till_id: job.tillId ? String(job.tillId).trim() : null,
       kind: job.kind || 'bill',
@@ -93,7 +94,15 @@ async function queuePrintJob(job = {}, { Model } = {}) {
       sale_id: job.saleId ? asObjectId(job.saleId) : null,
       status: 'queued',
       created_at: new Date(),
-    });
+    };
+    // A guest-bill retry reuses the same job, including when the first response was lost.
+    let doc;
+    if (job.ticketKey) {
+      record._id = crypto.createHash('sha256').update(JSON.stringify([String(record.branch_id), String(job.ticketKey)])).digest('hex').slice(0, 24);
+      const key={branch_id:record.branch_id,ticket_key:String(job.ticketKey)};
+      try { doc=await model.findOneAndUpdate(key,{$setOnInsert:{...record,ticket_key:key.ticket_key}},{upsert:true,returnDocument:'after',setDefaultsOnInsert:true}); }
+      catch(error) { if(error.code!==11000)throw error;doc=await model.findOne(key); }
+    } else doc=await model.create(record);
     /*
      * WAKE ANY TILL THAT IS HOLDING FOR THIS.
      *
