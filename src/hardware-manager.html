@@ -394,11 +394,16 @@
                     <label>Expected port <input id="wrPort" placeholder="Detected on first use" maxlength="128"></label>
                     <label>Physical USB instance ID (optional) <input id="wrPnp" placeholder="USBPRINT\…" maxlength="512"></label>
                     <label><input type="checkbox" id="wrInitialize" checked> Initialize ESC/POS before sending</label>
-                    <label><input type="checkbox" id="wrKeepAlive" checked> Keep USB ESC/POS printer awake while Posnic is running</label>
-                    <p>Sends a paperless initialization after 30 seconds idle. No paper feed or cut. Requires ESC/POS initialization above. Pauses while printing or disconnected.</p>
+                    <label><input type="checkbox" id="wrKeepAlive" checked> Send idle ESC/POS initialization (supported printers only)</label>
+                    <p>Sends ESC @ after 30 seconds idle, without feed or cut. This resets printer state and is not a guaranteed wake command. Enable only if your printer supports it. Pauses during app printing or disconnection. Do not run the separate diagnostic keep-alive helper alongside it.</p>
                     <button type="button" onclick="wrSave()">Save recovery settings</button>
                     <p>Changing these settings affects new jobs only. Pending jobs retain their original printer and port. No ports are swapped automatically.</p>
                     <div id="wrMessage" role="status"></div>
+                    <h4>Windows settings for reliable printing</h4>
+                    <div id="wrPower" role="status"></div>
+                    <p>Recommended for a dedicated counter: keep it plugged in and prevent sleep/hibernate while serving. Battery settings affect battery life. These checks do not change Windows settings.</p>
+                    <p>If a USB printer still disappears: in Device Manager, inspect its USB hub → Properties → Power Management, where available, and temporarily test with “Allow the computer to turn off this device to save power” cleared. Restore it if there is no improvement. Posnic cannot verify every hub or printer firmware setting.</p>
+                    <p>For an extender connection, test the same printer with a short direct USB cable across the usual idle period. Check extender power and cables. Initialization cannot restore a device that Windows cannot see.</p>
                     <pre id="wrHealth" style="white-space:pre-wrap;"></pre>
                     <pre id="wrKeepAliveStatus" style="white-space:pre-wrap;"></pre>
                     <div id="wrJobs" role="status" style="max-height:240px;overflow:auto;"></div>
@@ -2141,10 +2146,16 @@
                 if (!status.supported) return;
                 document.getElementById('windowsRecovery').style.display = 'block';
                 wrBindings = status.bindings || {};
+                const power = document.getElementById('wrPower');
+                power.replaceChildren();
+                const messages = status.systemSettings?.guidance || ['Power settings have not been checked.'];
+                (messages.length ? messages : ['Checked Sleep, Hibernate and USB selective suspend: all disabled in the current power plan.']).forEach(message => {
+                    const row = document.createElement('p'); row.textContent = message; power.appendChild(row);
+                });
                 document.getElementById('wrKeepAliveStatus').textContent = Object.values(status.keepAlive || {}).map(p =>
                     p.printer + ' | ' + p.status + ' | ' + new Date(p.at).toLocaleTimeString()).join('\n');
                 document.getElementById('wrHealth').textContent = (status.health || []).map(p =>
-                    p.printer + ' | ' + p.port + ' | USB present: ' + p.present + ' | WorkOffline: ' + p.workOffline + ' | Windows status: ' + p.printerStatus).join('\n');
+                    p.printer + ' | ' + p.port + ' | USB: ' + (p.discovery || p.present) + ' | WorkOffline: ' + p.workOffline + ' | Windows status: ' + p.printerStatus).join('\n');
                 const list = document.getElementById('wrJobs');
                 list.replaceChildren();
                 (status.jobs || []).slice().reverse().forEach(job => {
