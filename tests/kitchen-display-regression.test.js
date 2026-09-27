@@ -114,3 +114,22 @@ test('table-only board groups tables by oldest order and never renders dishes or
   assert.equal(dom.window.document.querySelector('#board').textContent,'T1T2');
  }finally{dom.window.close();}
 });
+
+test('table grid uses both dimensions for landscape and portrait without shrinking to fit every table',()=>{
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try{
+  const board=dom.window.document.getElementById('board');let width=1400,height=650;
+  Object.defineProperty(board,'clientWidth',{get:()=>width});Object.defineProperty(board,'clientHeight',{get:()=>height});
+  dom.window.kitchenScreen.setConfig({tableOnly:true,_fit:{fontPx:40,columns:2,cards:4}});
+  dom.window.kitchenScreen.setTickets(Array.from({length:6},(_,i)=>({table:'T'+i,placedAt:new Date().toISOString(),items:[]})));
+  assert.equal(board.style.getPropertyValue('--columns'),'3');
+  assert.equal(board.querySelectorAll('.table-only').length,6);
+  width=650;height=1400;dom.window.dispatchEvent(new dom.window.Event('resize'));
+  assert.equal(board.style.getPropertyValue('--columns'),'2');
+  assert.equal(board.querySelectorAll('.table-only').length,6);
+  dom.window.kitchenScreen.setTickets(Array.from({length:40},(_,i)=>({table:'T'+i,placedAt:new Date().toISOString(),items:[]})));
+  assert.ok(board.querySelectorAll('.table-only').length<40);
+  assert.match(dom.window.document.getElementById('pager').textContent,/of/);
+ }finally{dom.window.close();}
+});

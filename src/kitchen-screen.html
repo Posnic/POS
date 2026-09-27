@@ -126,10 +126,11 @@
   .urgent .delay-label.pulse { animation: urgency-pulse 2s ease-in-out infinite; }
   @keyframes urgency-pulse { 50% { opacity: .65; } }
   @media (prefers-reduced-motion: reduce) { .urgent .delay-label.pulse { animation: none; } }
-  .ticket.table-only { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-height:180px; border:4px solid #4ade80; background:#14532d; color:#fff; }
+  .ticket.table-only { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-height:0; border:4px solid #4ade80; background:#14532d; color:#fff; }
   .ticket.table-only.warm { border-color:#fb923c; background:#7c2d12; }
   .ticket.table-only.late, .ticket.table-only.urgent { border-color:#f87171; background:#7f1d1d; }
-  .table-icon { width:1.6em; height:1.6em; }
+  .table-icon { width:1.6em; height:1.6em; flex-shrink:0; }
+  .table-only .table { text-align:center; max-width:100%; }
   .table-only.urgent.pulse { animation:table-alert 2s ease-in-out infinite; }
   @keyframes table-alert { 50% { box-shadow:inset 0 0 0 5px #fca5a5; } }
   @media (prefers-reduced-motion:reduce) { .table-only.urgent.pulse { animation:none; } }
@@ -384,6 +385,12 @@
     var height = board.clientHeight || window.innerHeight || 700;
     var rows = Math.max(1, Math.floor(height / (font * (cfg.tableOnly ? 6 : maxItems * 1.5 + 4))));
     var perPage = Math.max(1, Math.min((fitInfo.cards || 8) * (compact ? 2 : 1), ceiling * rows));
+    if (cfg.tableOnly) {
+      // Size from both dimensions, not a monitor's saved orientation or dish layout.
+      ceiling = Math.max(1, Math.floor(width / Math.max(220, font * 6)));
+      rows = Math.max(1, Math.floor(height / Math.max(190, font * 5)));
+      perPage = ceiling * rows;
+    }
     var pages = Math.max(1, Math.ceil(live.length / perPage));
     if (page >= pages) page = 0;
 
@@ -414,7 +421,27 @@
      * nothing about the busy case changes.
      */
 
-    board.style.setProperty('--columns', String(Math.max(1, Math.min(ceiling, shown.length))));
+    var columns = Math.max(1, Math.min(ceiling, shown.length));
+    board.style.gridTemplateRows = '';
+    board.style.alignContent = 'start';
+    board.style.removeProperty('font-size');
+    if (cfg.tableOnly && shown.length) {
+      var best = Infinity, tileRows = 1;
+      for (var c = 1; c <= Math.min(ceiling, shown.length); c++) {
+        var r = Math.ceil(shown.length / c);
+        if (r > rows) continue;
+        var score = Math.abs(Math.log((width / c) / (height / r) / 1.2)) + (c * r - shown.length) * .15;
+        if (score < best) { best = score; columns = c; tileRows = r; }
+      }
+      board.style.gridTemplateRows = 'repeat(' + tileRows + ', minmax(0, 1fr))';
+      board.style.alignContent = 'stretch';
+      var tileFont = Math.max(24, Math.min(96, (width / columns - 36) / 5, (height / tileRows - 40) / 4.5));
+      board.style.fontSize = tileFont + 'px';
+      board.style.setProperty('--font', tileFont + 'px');
+    } else {
+      board.style.removeProperty('--font');
+    }
+    board.style.setProperty('--columns', String(columns));
 
     $('pager').textContent = pages > 1 ? (page + 1) + ' of ' + pages : '';
   }
