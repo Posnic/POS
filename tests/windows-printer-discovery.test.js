@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { powerGuidance } = require('../src/windows-printer-transport');
-const script = fs.readFileSync(path.join(__dirname, '../src/windows-printer-health.ps1'), 'utf8');
+const script = fs.readFileSync(path.join(__dirname, '../src/windows-printer-health.ps1'), 'utf8').replace(/\r\n/g, '\n');
 const windows = process.platform === 'win32';
 function ps(code, input) {
   const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', code], {
