@@ -45,4 +45,3 @@
   }
   return { normalize: normalize, sizes: sizes, patterns: patterns };
 });
-
