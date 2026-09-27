@@ -152,7 +152,8 @@ test('unknown USB presence and permission denied fail visibly without elevation'
   assert.match((await r.send()).error, /could not be identified/);
   r.health.present = true; r.health.workOffline = true;
   r.transport.recover = async () => { throw Error('Access denied'); };
-  assert.match((await r.send('other')).error, /Access denied/);
+  await r.tick(2000);
+  assert.match((await r.send()).error, /Access denied/);
   assert.equal(r.calls.length, 0);
 });
 
@@ -323,4 +324,77 @@ test('real initialization adapter sends exactly ESC @ with no printable bytes, f
   const adapter = require('../src/windows-printer-transport');
   await adapter.initialize({ printer: 'Kitchen_Printer', document: 'Paperless-test', file: path.join(r.dir, 'idle.bin') });
   assert.deepEqual([...data], [0x1b, 0x40]);
+});
+
+function legacyFailure(r, overrides = {}) {
+  const id = idFor('legacy');
+  const job = { id, printer: 'Kitchen_Printer', document: 'Posnic-' + id, binding: { port: 'USB003' },
+    state: 'failed', reason: 'USB device could not be identified; configure its PnP instance ID',
+    submitted: false, retries: 0, nextAt: 0, ...overrides };
+  fs.writeFileSync(path.join(r.dir, id + '.bin'), Buffer.from('test only'));
+  r.queue.write(id + '.json', job); return job;
+}
+test('legacy identity failure is scheduled after restart, without needing fresh enqueue', async t => {
+  const r = rig(t); legacyFailure(r); r.queue.stop();
+  const next = r.make(); await r.tick(0, next);
+  assert.equal(r.calls.length, 1); assert.equal(next.list()[0].status, 'Sent to printer');
+  await r.tick(30000, next); assert.equal(r.calls.length, 1);
+});
+test('legacy identity failure migrates during tick and fresh repeated enqueue', async t => {
+  for (const trigger of ['tick', 'enqueue']) {
+    const r = rig(t); const job = legacyFailure(r); r.queue.jobs.set(job.id, job);
+    if (trigger === 'tick') await r.tick(); else await r.send('legacy');
+    assert.equal(r.calls.length, 1); assert.equal(job.state, 'sent');
+    await r.send('legacy'); assert.equal(r.calls.length, 1);
+  }
+});
+test('migration never replays submitted, accepted, observed, spooler-ID or unrelated failures', async t => {
+  for (const fields of [{submitted:true}, {accepted:true}, {observed:true}, {spoolerId:93}, {reason:'Other error'}]) {
+    const r = rig(t); legacyFailure(r, fields); r.queue.stop(); const next = r.make();
+    await r.tick(0, next); assert.equal(r.calls.length, 0);
+  }
+});
+test('discovery errors retry on schedule and return after exhaustion without duplicate submissions', async t => {
+  const r = rig(t); const inspect = r.transport.inspect;
+  r.transport.inspect = async () => { throw Error('PnP enumeration failed'); };
+  await r.send(); const job = r.queue.jobs.get(idFor('kot-1'));
+  await r.tick(1000); assert.equal(job.retries, 1);
+  await r.tick(1000); await r.tick(5000); await r.tick(10000);
+  assert.equal(job.state, 'failed'); assert.equal(job.reconnect, true); assert.equal(r.calls.length, 0);
+  r.transport.inspect = inspect; await r.tick(); await r.send(); assert.equal(r.calls.length, 1);
+});
+test('ambiguous identity is not disconnected; reconnect resolves it and pins the destination', async t => {
+  const r = rig(t); r.health.discovery = 'ambiguous'; r.health.present = null; r.health.pnpId = '';
+  assert.match((await r.send()).error, /Multiple connected/); assert.equal(r.calls.length, 0);
+  r.health.discovery = 'resolved'; r.health.present = true; r.health.pnpId = 'USBPRINT\\Kitchen\\serial';
+  await r.tick(); assert.equal(r.calls.length, 1);
+  assert.equal(r.queue.jobs.get(idFor('kot-1')).binding.pnpId, r.health.pnpId);
+});
+test('driver extended status Unknown with primary Idle permits serialized quiet-period initialization', async t => {
+  const r = rig(t); r.health.extendedStatus = 2; r.queue.configure('Kitchen_Printer', {});
+  await r.tick(); assert.equal(r.initialized.length, 0);
+  await r.tick(30000); assert.equal(r.initialized.length, 1);
+});
+test('stale saved identity never switches to a replacement; original reconnect resumes once', async t => {
+  const r = rig(t); r.queue.configure('Kitchen_Printer', {port:'USB003',pnpId:r.health.pnpId});
+  r.health.discovery = 'stale-binding'; r.health.present = null;
+  await r.send(); assert.equal(r.calls.length, 0);
+  r.health.discovery = 'resolved'; r.health.present = true;
+  await r.tick(); assert.equal(r.calls.length, 1);
+});
+
+test('external helper or unavailable audit suppresses optional idle writes', async t => {
+  const r = rig(t); r.queue.configure('Kitchen_Printer', {});
+  r.transport.systemSettings = async () => ({externalKeepAlive:true});
+  await r.tick(); await r.tick(30000); assert.equal(r.initialized.length, 0);
+  r.transport.systemSettings = async () => {throw Error('Denied');};
+  await r.tick(30000); assert.equal(r.initialized.length, 0);
+  r.transport.systemSettings = async () => ({externalKeepAlive:false});
+  await r.tick(30000); assert.equal(r.initialized.length, 1);
+});
+test('missing legacy payload is not automatically recreated or replayed', async t => {
+  const r = rig(t); const job = legacyFailure(r);
+  fs.unlinkSync(path.join(r.dir, job.id + '.bin')); r.queue.stop();
+  const next = r.make(); await r.tick(0,next); assert.equal(r.calls.length,0);
+  assert.equal(next.jobs.get(job.id).state,'failed');
 });

@@ -175,9 +175,14 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   });
 
   // Printer Handlers
-  ipcMain.handle('printer:recovery-status', () => {
+  ipcMain.handle('printer:recovery-status', async () => {
     const queue = hardwareManager.getWindowsPrintQueue();
-    return queue ? { supported: true, bindings: queue.bindings,
+    let systemSettings;
+    if (queue) {
+      try { systemSettings = await queue.transport.systemSettings(); }
+      catch (_) { systemSettings = { guidance: ['Windows power settings could not be checked. Review Sleep, Hibernate and USB selective suspend manually in Power Options.'] }; }
+    }
+    return queue ? { supported: true, systemSettings, bindings: queue.bindings,
       health: [...queue.health.values()].map(item => item.value), keepAlive: queue.keepAlive, jobs: queue.list() } : { supported: false };
   });
   ipcMain.handle('printer:recovery-configure', async (_event, printer, binding) => {

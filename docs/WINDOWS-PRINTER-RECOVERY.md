@@ -27,7 +27,7 @@ pooling is refused because it can route a ticket to another device.
 USB presence is checked with Windows PnP, mapping USBPRINT's device-specific
 `PortName` to the configured queue. A persistent SWD PrintQueue instance, or
 another printer with the same driver, does not prove physical presence.
-Unknown mappings stop safely and ask for an explicit physical instance ID.
+Only currently present matches are eligible. Unknown mappings and enumeration failures wait safely for another check; ambiguous or stale bindings remain distinct and never choose another device automatically.
 
 The helper attempts to clear `WorkOffline` only when the matching device is
 present. It uses the current user's permissions. If Windows refuses this
@@ -86,7 +86,8 @@ Idle keep-alive is enabled by default for configured USB ESC/POS queues,
 and can be disabled in Hardware Manager. After at least 30 seconds quiet,
 the same RAW writer sends only `ESC @` (1B 40), without feed, text, or cut.
 It requires verified USB presence, matching port/device, an empty Windows
-queue, and both printer statuses explicitly Idle. Busy or unknown status
+queue, and primary printer status explicitly Idle. Extended Idle (3) or Unknown (2)
+is accepted for drivers such as POS-80C; unknown primary or busy status
 is not permission to reset a printer's buffer. Initialization disabled also
 disables keep-alive. This is not a bidirectional status acknowledgement.
 
@@ -123,3 +124,43 @@ arrive once; the queue's “Sent to printer” remains a Windows observation.
 
 Windows references: [Win32_Printer properties](https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-printer)
 and [Get-PnpDevice](https://learn.microsoft.com/en-us/powershell/module/pnpdevice/get-pnpdevice).
+
+## Discovery correction and old job recovery
+
+The health probe reads the configured queue and matches its port to currently present physical USBPRINT devices. Historical registry entries are not evidence of presence. A single present match is usable; multiple present matches, enumeration failures and missing mappings remain distinct. A saved physical instance ID never silently changes to another device. Expected ports remain frozen per job.
+
+The queue retries temporary discovery failures with its existing 2/5/10-second delays, then waits for recovery. Startup, background polling and repeated enqueue can migrate only the exact old USB identification failure when the durable record explicitly says it was never submitted and has no accepted, observed or spooler-ID evidence. The original ID and bytes are retained. Submitted or uncertain jobs are never replayed because an empty spooler does not prove non-delivery.
+
+## What the shopkeeper sees
+
+Open **Hardware Manager → Receipt Printer → Windows printer health & recovery**. Check the printer queue, expected port, physical identity, current discovery result and job status. A stale binding needs the physical printer and port checked before saving a new binding; existing pending jobs retain their original destination.
+
+The same section audits the current Windows power plan, read-only, at most once per minute. Enabled or unavailable settings display instructions:
+
+- For a dedicated counter, keep mains power connected. In **Control Panel → Power Options → Change plan settings**, set **Put the computer to sleep** to **Never** while serving.
+- Under **Change advanced power settings → Sleep**, check **Hibernate after**. Battery settings have a battery-life tradeoff.
+- For USB disconnections after idle, temporarily test **USB settings → USB selective suspend → Disabled**. Restore the setting if it does not improve the fault. Microsoft normally recommends selective suspend remain enabled; this is an isolation step, not a universal requirement.
+- If necessary, inspect the printer's USB hub in **Device Manager → Properties → Power Management**. Where available, temporarily clear **Allow the computer to turn off this device to save power**, and restore it if ineffective. The app cannot verify every hub/firmware setting or organizational policy.
+
+No power plan, driver, port, Windows security setting or spooler service is changed by this audit. Screen lock is different from system sleep. The app's existing power blocker does not prove USB hardware stays connected.
+
+## Remove the diagnostic helper before testing
+
+The separate `posnic-printer-keepalive.ps1` in the diagnostic handoff is not part of the product. Stop that helper and remove its shortcut from the Windows Startup folder (`shell:startup`) on the affected computer. Do not stop all PowerShell processes or delete unrelated shortcuts. Hardware Manager warns when the helper is detected, and optional app idle commands are suppressed while it is running or the audit is unavailable. This patch does not remotely remove diagnostic scripts.
+
+Idle ESC/POS initialization is serialized with the app's print jobs, requires a quiet interval and an empty Windows queue, and accepts the observed POS-80C combination of primary Idle (3) and extended Unknown (2). Unknown primary status still blocks it. ESC @ resets printer state; it is not a documented universal wake command and an empty spooler does not establish that every external writer or physical buffer is idle. Disable idle initialization if unsupported. No paper feed/cut is used for initialization.
+
+## Verification on the affected counter
+
+Do not replay diagnostic job metadata or actual orders. Keep a record of the selected reception/kitchen queues and their existing ports. After removing the separate helper, use a clearly labelled test ticket:
+
+1. Print once to each destination and verify the physical destination and formatting/cut.
+2. Leave the counter idle for its usual failure interval. Record discovery status and power settings, then print a fresh test ticket.
+3. Disconnect/reconnect the kitchen USB connection with one new test job pending. Verify one physical copy after reconnect and no reception reroute.
+4. Repeat the same idle interval with the kitchen printer on a short direct USB cable, then compare with the extender. Record USB arrival/removal times, power and cable/extender model. A repeated physical disappearance despite the software fixes needs this controlled hardware test.
+
+“Sent to printer” means Windows accepted/released the job, not proof of paper output. If the outcome is uncertain, inspect the paper and queue before explicitly requesting a duplicate.
+
+Automated tests use synthetic jobs and mock transports; Windows-only tests execute the actual PowerShell resolver with synthetic device records. They cannot establish that an extender or printer remains physically connected indefinitely.
+
+References: [Microsoft powercfg options](https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options), [USB selective suspend](https://learn.microsoft.com/en-us/windows-hardware/drivers/usbcon/usb-selective-suspend).
