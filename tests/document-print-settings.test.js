@@ -252,3 +252,14 @@ test('item print languages persist independently of each other and printer desti
   assert.deepEqual(prefs.item_print_languages,policy,'saving from an older screen preserves language choices');
   assert.throws(()=>validateDocumentPrintSettings({...profiles,itemLanguages:{...policy,kot:'../bad'}}));
 });
+
+
+test('API-side bill workers can load device preferences without an Electron dependency', () => {
+  const loaded = {exports:{}};
+  new Function('require','module','exports',read('src/device-preferences.js'))(name => {
+    if (name === 'electron') throw Object.assign(new Error('No Electron in API runtime'), {code:'MODULE_NOT_FOUND'});
+    return require(name);
+  },loaded,loaded.exports);
+  assert.deepEqual(loaded.exports.all(),{});
+  assert.equal(loaded.exports.get('item_print_languages'),null);
+});

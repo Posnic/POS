@@ -19,10 +19,10 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { app } = require('electron');
 
 function prefsPath() {
   try {
+    const { app } = require('electron');
     return path.join(app.getPath('userData'), 'preferences.json');
   } catch (e) {
     /* No electron app object: a test, or a script. */
@@ -135,8 +135,7 @@ function cloudPrintRelay() {
  */
 function kotPrinterNames() {
   try {
-    const { app } = require('electron');
-    const file = path.join(app.getPath('userData'), 'kot-config.json');
+        const file = path.join(app.getPath('userData'), 'kot-config.json');
     if (!fs.existsSync(file)) return [];
     const cfg = JSON.parse(fs.readFileSync(file, 'utf8')) || {};
     const fromList = Array.isArray(cfg.printers)
