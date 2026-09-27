@@ -164,3 +164,21 @@ Do not replay diagnostic job metadata or actual orders. Keep a record of the sel
 Automated tests use synthetic jobs and mock transports; Windows-only tests execute the actual PowerShell resolver with synthetic device records. They cannot establish that an extender or printer remains physically connected indefinitely.
 
 References: [Microsoft powercfg options](https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options), [USB selective suspend](https://learn.microsoft.com/en-us/windows-hardware/drivers/usbcon/usb-selective-suspend).
+
+### Keeping the KOT computer awake and retaining settings
+
+While kitchen printing is running, Posnic holds an Electron system-sleep
+blocker. Pausing kitchen printing or quitting Posnic releases it. It does not
+move the mouse, prevent screen locking, or send paper to keep Windows awake.
+Forced sleep, signing out, shutdown and physical USB loss are not prevented.
+
+For a test upgrade, install the EXE over the existing installation. A manual
+uninstall also preserves configuration when **Keep my data** is selected.
+Use the same Windows account and application identity. Choosing permanent
+**Delete everything** removes settings too; that choice is intentionally
+respected. Settings are not stored beside the EXE.
+
+Printer preferences and KOT configuration are now saved by writing and flushing
+a temporary file before replacing the existing file. Failed saves report an
+error instead of silently claiming success. This protects against interrupted
+writes; it cannot recover settings that were already deleted by an old uninstall.
