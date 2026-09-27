@@ -49,11 +49,10 @@ test('SOMETHING CALLS setTickets, which nothing did', () => {
 
 test('and the feed is started with the screens, and stopped with them', () => {
   assert.match(MAIN, /require\('\.\/kitchen-screen-feed'\)/);
-  assert.match(MAIN, /feed\.start\(\{ branchId \}\)/);
+  assert.match(MAIN, /feed\.start\(\{ resolveBranch:/);
   assert.match(MAIN, /require\('\.\/kitchen-screen-feed'\)\.stop\(\);/);
-  /* Started only once a branch is known: a poll with no branch asks a
-     question with no answer, every five seconds, for ever. */
-  assert.match(MAIN, /if \(branchId\) \{\n\s*feed\.start/);
+  /* Resolve again after startup so a screen-only till can become ready. */
+  assert.match(MAIN, /branches.length === 1/);
 });
 
 test('there is an endpoint for it to ask', () => {

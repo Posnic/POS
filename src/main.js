@@ -4848,17 +4848,18 @@ app.whenReady().then(async () => {
    * `setTickets` is the only way anything reaches a kitchen screen and it was
    * called from nowhere, so a screen on a wall showed an empty list for ever
    * while setup mode filled itself with samples and looked perfect. This is
-   * the feed. It only runs once a branch is known, and a shop with no screen
-   * configured opens none and pays nothing for it.
+   * the feed. Resolve the branch lazily: the local server may not be ready
+   * yet and a kitchen screen does not require a configured kitchen printer.
    */
   try {
     const feed = require('./kitchen-screen-feed');
-    const kotConfig = kotManager ? await kotManager.loadConfig() : null;
-    const branchId = (kotConfig && kotConfig.branchId) || '';
-    if (branchId) {
-      feed.start({ branchId });
-      console.log('Kitchen screen feed started');
-    }
+    feed.start({ resolveBranch: async () => {
+      const cfg = kotManager ? await kotManager.loadConfig() : null;
+      if (cfg && cfg.branchId) return String(cfg.branchId);
+      const branches = await require('./hardware-ipc').readLocalBranches();
+      return branches.length === 1 ? branches[0].id : '';
+    } });
+    console.log('Kitchen screen feed started');
   } catch (e) {
     console.warn('[kitchen-screen] nothing to show on it:', e && e.message);
   }

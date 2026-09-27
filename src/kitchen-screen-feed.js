@@ -35,7 +35,8 @@ const EVERY_MS = 5000;
 const KEEP_LAST_ON_FAILURE = true;
 
 let timer = null;
-let lastGood = null;
+const lastGood = new Map();
+let generation = 0;
 
 function screens() {
   return require('./kitchen-screen');
@@ -58,7 +59,7 @@ function apiUrl() {
  * interesting parts - what happens when the shop cannot be reached - can be
  * checked at all.
  */
-async function tick({ branchId, fetchImpl } = {}) {
+async function tick({ branchId, fetchImpl, displayId, isCurrent = () => true } = {}) {
   const branch = String(branchId || '').trim();
   if (!branch) return { ok: false, why: 'no branch' };
 
@@ -83,8 +84,10 @@ async function tick({ branchId, fetchImpl } = {}) {
       return { ok: false, why: 'invalid response' };
     }
     const tickets = answer.data;
-    lastGood = tickets;
-    screens().setTickets(tickets);
+    if (!isCurrent()) return { ok: false, why: 'superseded' };
+    lastGood.set(branch, tickets);
+    if (displayId) screens().setTickets(tickets, displayId);
+    else screens().setTickets(tickets);
     return { ok: true, count: tickets.length };
   } catch (e) {
     /*
@@ -93,9 +96,9 @@ async function tick({ branchId, fetchImpl } = {}) {
      * screen that empties itself every time the API hiccups is a screen
      * nobody trusts.
      */
-    if (KEEP_LAST_ON_FAILURE && lastGood) {
+    if (KEEP_LAST_ON_FAILURE && lastGood.has(branch) && isCurrent()) {
       try {
-        screens().setTickets(lastGood);
+        screens().setTickets(lastGood.get(branch), displayId);
       } catch (err) {
         /* nothing to do */
       }
@@ -105,24 +108,62 @@ async function tick({ branchId, fetchImpl } = {}) {
 }
 
 /** Start feeding, if this shop has a screen to feed. Idempotent. */
-function start({ branchId, everyMs = EVERY_MS } = {}) {
+async function pollScreens({ resolveBranch, fetchImpl, isCurrent = () => true } = {}) {
+  const open = screens().displays().filter(d => d.open && d.configured);
+  if (!open.length) return;
+  const fallback = open.some(d => !d.config.branchId) && resolveBranch ? await resolveBranch() : '';
+  if (!isCurrent()) return;
+  await Promise.all(open.map(async d => {
+    const branchId = String(d.config.branchId || fallback || '');
+    const current = () => isCurrent() && screens().configFor(d.id).enabled &&
+      String(screens().configFor(d.id).branchId || '') === String(d.config.branchId || '');
+    if (!branchId) {
+      screens().setTickets([], d.id);
+      screens().setFeedStatus('Choose an orders branch in Hardware Manager > Kitchen Screen.', d.id);
+      return;
+    }
+    // A branch change must not leave the previous branch's tickets on the wall.
+    if (screenBranches.get(d.id) !== branchId) {
+      screenBranches.set(d.id, branchId);
+      screens().setTickets([], d.id);
+      screens().setFeedStatus('Connecting to kitchen orders...', d.id);
+    }
+    const result = await tick({ branchId, displayId: d.id, fetchImpl, isCurrent: current });
+    if (current()) screens().setFeedStatus(result.ok ? '' :
+      'Orders connection unavailable. Retrying; any orders shown may be out of date.', d.id);
+  }));
+}
+const screenBranches = new Map();
+
+function start({ branchId, resolveBranch, everyMs = EVERY_MS } = {}) {
   stop();
   const branch = String(branchId || '').trim();
-  if (!branch) return null;
-  timer = setInterval(() => {
-    tick({ branchId: branch }).catch(() => {});
-  }, everyMs);
+  if (!branch && !resolveBranch) return null;
+  const epoch = generation;
+  let busy = false;
+  const run = async () => {
+    if (busy) return;
+    busy = true;
+    try {
+      if (resolveBranch) await pollScreens({ resolveBranch, isCurrent: () => epoch === generation });
+      else await tick({ branchId: branch, isCurrent: () => epoch === generation });
+    } catch (e) {
+      if (epoch !== generation) return;
+      for (const d of screens().displays().filter(d => d.open && d.configured)) {
+        screens().setFeedStatus('Orders connection unavailable. Retrying...', d.id);
+      }
+    } finally { busy = false; }
+  };
+  timer = setInterval(run, everyMs);
   if (typeof timer.unref === 'function') timer.unref();
-  /* Straight away as well: a shop that has just opened a screen should not
-     watch an empty wall for five seconds wondering whether it works. */
-  tick({ branchId: branch }).catch(() => {});
+  run();
   return timer;
 }
 
 function stop() {
-  if (!timer) return;
-  clearInterval(timer);
+  generation += 1;
+  if (timer) clearInterval(timer);
   timer = null;
 }
 
-module.exports = { start, stop, tick, EVERY_MS };
+module.exports = { start, stop, tick, pollScreens, EVERY_MS };

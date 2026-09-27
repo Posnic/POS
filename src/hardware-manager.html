@@ -3811,6 +3811,7 @@
                 var res = await window.posnicKitchenScreen.list();
                 screenState.displays = (res && res.displays) || [];
                 screenState.defaults = (res && res.defaults) || {};
+                screenState.branches = (res && res.branches) || [];
                 drawScreens();
             } catch (e) {
                 host.innerHTML = '<p style="color:#b91c1c;font-size:14px;">Could not read the screens: '
@@ -3887,6 +3888,11 @@
                 +     '</label>'
                 +   '</div>'
 
+                + '<label style="display:block;margin-top:12px;">Orders from branch <select id="branch-' + d.id + '">'
+                + '<option value="">Automatic (single branch or kitchen printer branch)</option>'
+                + (screenState.branches || []).map(function (b) {
+                    return '<option value="' + esc(b.id) + '" ' + (c.branchId === b.id ? 'selected' : '') + '>' + esc(b.name) + '</option>';
+                  }).join('') + '</select></label>'
                 + (d.primary
                     ? '<div style="margin-top:12px;font-size:13px;color:#92400e;background:#fef3c7;padding:9px 12px;border-radius:8px;">'
                       + 'This is the screen the till itself is on. Using it would cover the sale screen.</div>'
@@ -4009,6 +4015,7 @@
             if (!screensAvailable()) return;
             var patch = {
                 enabled:          onOff('use-' + id, false),
+                branchId:         (document.getElementById('branch-' + id) || {}).value || '',
                 viewingDistanceM: numOr('dist-' + id, 2.5),
                 diagonalInches:   numOr('diag-' + id, 43),
                 targetArcmin:     numOr('arc-' + id, 20),

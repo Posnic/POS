@@ -184,6 +184,7 @@
       <span><span id="count">0</span> <span id="word">orders</span></span>
       <span id="pager"></span>
     </header>
+    <div id="connection" role="status" style="font-size:0.55em;padding-top:8px">Connecting to kitchen orders...</div>
     <div id="board"></div>
     <div id="empty" hidden>Nothing cooking.</div>
   </div>
@@ -362,6 +363,7 @@
 
   function setConfig(cfg) {
     config = cfg || {};
+    $('connection').textContent = config.setupMode ? 'Preview - sample orders' : (config._feedStatus || '');
     applyFit(config._fit, config);
     $('title').textContent = config.name || 'Kitchen';
 
@@ -398,7 +400,9 @@
   if (window.posnicKitchenScreen && window.posnicKitchenScreen.onConfig) {
     window.posnicKitchenScreen.onConfig(setConfig);
     window.posnicKitchenScreen.onTickets(setTickets);
-    window.posnicKitchenScreen.ready(displayId);
+    window.posnicKitchenScreen.ready(displayId).catch(function () {
+      $('connection').textContent = 'Kitchen display could not connect. Close and reopen it in Hardware Manager.';
+    });
   }
 
   /* The clock moves even when nothing arrives, and a ticket going from amber
