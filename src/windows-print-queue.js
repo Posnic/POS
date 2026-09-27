@@ -12,6 +12,10 @@ function readiness(health, binding = {}) {
   if (String(health.port).includes(',')) return 'Printer pooling is not supported; choose a single port';
   if (binding.port && binding.port.toLowerCase() !== String(health.port).toLowerCase()) return 'Printer port changed; check configuration';
   if (binding.pnpId && String(health.pnpId).toLowerCase() !== binding.pnpId.toLowerCase()) return 'Printer device changed; check configuration';
+  if (health.discovery === 'port-mismatch') return 'Configured USB device belongs to a different port; check configuration';
+  if (health.discovery === 'stale-binding') return 'Saved USB device is absent; a different device is on this port. Check the physical printer and binding';
+  if (health.discovery === 'ambiguous') return 'Multiple connected USB printers match this port; check printer configuration';
+  if (health.discovery === 'error') return 'USB discovery failed; waiting to check again';
   if (health.usb && health.present === false) return 'Printer disconnected';
   if (health.usb && health.present !== true) return 'USB device could not be identified; configure its PnP instance ID';
   if (health.workOffline || health.printerStatus === 7 || health.extendedStatus === 7) return 'Printer offline';
@@ -43,8 +47,21 @@ class WindowsPrintQueue {
     for (const name of fs.readdirSync(dir).filter(name => /^[a-f0-9]{64}\.json$/.test(name))) {
       const job = this.read(name);
       if (!job || name !== job.id + '.json') throw new Error('Unreadable printer recovery state: ' + name);
+      this.migrateIdentityFailure(job);
       this.jobs.set(job.id, job);
     }
+  }
+
+  migrateIdentityFailure(job) {
+    // Only the exact old pre-submission failure is safe to recover. A spooler
+    // job may have vanished before polling, so absence is NOT replay evidence.
+    if (job.state !== 'failed' || job.submitted !== false || job.accepted || job.observed || job.spoolerId ||
+        job.reason !== 'USB device could not be identified; configure its PnP instance ID' ||
+        !fs.existsSync(path.join(this.dir, job.id + '.bin'))) return;
+    job.reconnect = true; job.retries = 0; job.nextAt = 0;
+    job.state = 'waiting'; job.reason = 'Checking USB printer identity again';
+    this.write(job.id + '.json', job);
+    this.log({ jobId: job.id, printer: job.printer, event: 'recover-legacy-identity-failure' });
   }
 
   read(file, fallback) {
@@ -119,7 +136,8 @@ class WindowsPrintQueue {
     const key = printer.toLowerCase();
     const serial = JSON.stringify(health);
     if (this.health.get(key)?.serial !== serial) this.log({ printer, port: health.port,
-      pnpId: health.pnpId, present: health.present, workOffline: health.workOffline,
+      pnpId: health.pnpId, present: health.present, discovery: health.discovery, candidateCount: health.candidateCount,
+      discoveryError: health.discoveryError, workOffline: health.workOffline,
       printerStatus: health.printerStatus, extendedStatus: health.extendedStatus,
       jobs: health.jobs.map(item => ({ id: item.id, status: item.status })) });
     this.health.set(key, { serial, value: health });
@@ -134,6 +152,8 @@ class WindowsPrintQueue {
     const existing = this.jobs.get(id);
     if (existing) {
       if (existing.printer.toLowerCase() !== printer.toLowerCase()) return Promise.resolve({ success: false, status: 'Failed', error: 'Job ID belongs to another printer' });
+      this.migrateIdentityFailure(existing);
+      this.start();
       return this.run(printer).then(() => this.result(existing));
     }
     const frozen = { ...(this.bindings[printer.toLowerCase()] || {}), ...binding };
@@ -161,12 +181,13 @@ class WindowsPrintQueue {
 
   async step(job) {
     if (job.state === 'sent') return;
+    if (!job.submitted && job.state !== 'failed' && job.nextAt > this.now()) return;
     if (job.state === 'failed' && !job.reconnect && !job.submitted) return;
     let health;
     try { health = await this.snapshot(job.printer, job.binding); }
     catch (error) {
       if (job.submitted) return this.transition(job, 'queued', 'Cannot read Windows queue: ' + error.message);
-      return this.defer(job, 'Cannot read Windows queue: ' + error.message, false);
+      return this.defer(job, 'Cannot read Windows queue: ' + error.message);
     }
     let reason = readiness(health, job.binding);
     if (!job.binding.port && health.port) {
@@ -176,6 +197,14 @@ class WindowsPrintQueue {
       if (!this.bindings[job.printer.toLowerCase()]) {
         this.bindings[job.printer.toLowerCase()] = { ...job.binding };
         this.write('bindings.json', this.bindings);
+      }
+    }
+    if (!reason && health.present === true && !job.binding.pnpId && health.pnpId) {
+      job.binding.pnpId = health.pnpId;
+      this.write(job.id + '.json', job);
+      const saved = this.bindings[job.printer.toLowerCase()];
+      if (saved && !saved.pnpId && saved.port === job.binding.port) {
+        saved.pnpId = health.pnpId; this.write('bindings.json', this.bindings);
       }
     }
     if (health.present === true && health.workOffline && !/changed/.test(reason) && job.nextAt <= this.now()) {
@@ -230,7 +259,7 @@ class WindowsPrintQueue {
         return this.transition(job, 'waiting', 'Waiting for printer initialization');
       }
     }
-    if (reason) return this.defer(job, reason, /offline|disconnected|Printer error|failed job/i.test(reason));
+    if (reason) return this.defer(job, reason, /offline|disconnected|Printer error|failed job|USB discovery failed|could not be identified|Multiple connected USB|Saved USB device is absent|Printer status unknown/i.test(reason));
     // Persist BEFORE crossing the spooler boundary. A crash in the following
     // call is ambiguous, not permission to submit a second copy.
     job.submitted = true;
@@ -307,7 +336,13 @@ class WindowsPrintQueue {
     // spooler and explicitly Idle status, never between queued receipt jobs.
     if (binding.keepAlive === false || binding.initialize === false || !this.transport.initialize ||
         !health.usb || health.present !== true || reason || health.jobs.length ||
-        health.printerStatus !== 3 || health.extendedStatus !== 3) return;
+        health.printerStatus !== 3 || ![2, 3].includes(health.extendedStatus)) return;
+    // Never add an app idle writer alongside the diagnostic helper. Failure
+    // to audit suppresses optional idle traffic, not actual receipt delivery.
+    if (this.transport.systemSettings) {
+      try { if ((await this.transport.systemSettings()).externalKeepAlive !== false) return; }
+      catch (_) { return; }
+    }
     const last = Math.max(prior?.at || 0, this.activity.get(key) || 0);
     if (this.now() - last < 30000) return;
     const pulse = this.keepAlive[key] = { printer, at: this.now(), pending: true,
@@ -339,6 +374,7 @@ class WindowsPrintQueue {
       const key = String(printer).toLowerCase();
       if (key && key !== 'default' && !this.bindings[key]) this.bindings[key] = {};
     }
+    for (const job of this.jobs.values()) this.migrateIdentityFailure(job);
     const names = new Set([...this.jobs.values()].filter(job => job.state !== 'sent' &&
       (job.state !== 'failed' || job.reconnect || job.submitted)).map(job => job.printer));
     for (const name of names) await this.run(name);
