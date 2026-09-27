@@ -64,6 +64,25 @@ class ItemsController extends BaseController {
     this.service = new ItemService();
   }
 
+  async printableMenu(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false || req.user?.access?.setting?.read === false) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      const context = await this.ensureContext(req);
+      const allowed = req.user?.branch_access;
+      if (Array.isArray(allowed) && allowed.length &&
+          !allowed.some((b) => String(b.branch_id || b) === String(context.branchId))) {
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      }
+      const db = await require('../models/base.model').getDb();
+      const data = await require('../services/printable-menu').snapshot(db, context);
+      return this.success(res, data, 'Menu loaded');
+    } catch (error) {
+      return this.error(res, error.message || 'Could not load the printable menu', 400);
+    }
+  }
+
   setRequestContext(req) {
     const BaseModel = require('../models/base.model');
     const user = req.user || {};

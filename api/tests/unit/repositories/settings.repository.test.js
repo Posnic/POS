@@ -138,6 +138,33 @@ describe('settings read path', () => {
     }
   };
 
+  test('a printable menu design saves only its branch document key', async () => {
+    seedWrite();
+    mockCollections.branch_documents = {
+      findOne: jest.fn().mockResolvedValue(null),
+      updateOne: jest.fn().mockResolvedValue({ matchedCount: 1 }),
+    };
+    const design = { title: 'Lunch', categories: [], pattern: 'coastal' };
+    const r = await repo.saveGroup('documents', { printable_menu_design: design }, ctx);
+    expect(r.status).toBe(true);
+    const [filter, update] = mockCollections.branch_documents.updateOne.mock.calls[0];
+    expect(String(filter.branch_id)).toBe(BRANCH);
+    expect(String(filter.license)).toBe(LICENSE);
+    expect(Object.keys(update.$set).sort()).toEqual(['branch_id', 'license', 'printable_menu_design']);
+    expect(update.$set.printable_menu_design.categories).toEqual([]);
+    expect(update.$set.printable_menu_design.pattern).toBe('coastal');
+    expect(mockCollections.branch_features.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('an unsafe printable background is rejected before any write', async () => {
+    seedWrite();
+    const r = await repo.saveGroup('documents', {
+      printable_menu_design: { background: 'https://example.com/tracker.png' },
+    }, ctx);
+    expect(r.status).toBe(false);
+    expect(mockCollections.branches.updateOne).not.toHaveBeenCalled();
+  });
+
   test('only the keys sent are written - nothing else can appear in the update', async () => {
     seedWrite();
     await repo.saveGroup('features', { quotes_enable: true }, ctx);

@@ -469,9 +469,10 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     return await hardwareManager.printHTML(htmlContent, options);
   });
 
-  ipcMain.handle('printer:print-pdf', async (event, bytes, kind) => {
+  ipcMain.handle('printer:print-pdf', async (event, bytes, kind, paperSize) => {
     const saved = require('./device-preferences').documentPrintSettings();
-    const profile = kind === 'invoice' || kind === 'quotation' ? saved[kind] : {};
+    const profile = kind === 'invoice' || kind === 'quotation' ? saved[kind] :
+      kind === 'menu' ? { paperSize: ['a4', 'a5', 'letter'].includes(paperSize) ? paperSize : 'a4' } : {};
     if (profile.printerName && profile.printerName !== 'default') {
       const printers = await hardwareManager.listPrinters();
       if (!printers.some((printer) => printer.name === profile.printerName)) {
