@@ -77,3 +77,15 @@ test('glossary seeding retains brand names and future metadata', t => {
   assert.deepEqual(after.brands, glossary.brands);
   assert.equal(after.reviewPolicy, glossary.reviewPolicy);
 });
+
+test('every language flag is bundled in both shapes used by the picker', () => {
+  for (const { code, flag } of config.LANGUAGES) {
+    for (const shape of ['1x1', '4x3']) {
+      const svg = readFlag(shape, flag);
+      assert.match(svg, /<svg\b/, code + ': ' + shape);
+    }
+  }
+});
+function readFlag(shape, flag) {
+  return fs.readFileSync(path.join(root, 'frontend/static/images/flags', shape, flag + '.svg'), 'utf8');
+}
