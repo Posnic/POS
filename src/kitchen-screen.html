@@ -33,8 +33,8 @@
 
     --ground: #101114;
     --card: #1b1d22;
-    --ink: #f4f6f8;
-    --muted: #9aa3ad;
+    --ink: #ffffff;
+    --muted: #cbd5e1;
     --rule: #2c3038;
 
     /* Age. Deliberately not red/green: amber to red, and each step also
@@ -114,7 +114,8 @@
      without colour vision. */
   .ticket.warm { border-left-color: var(--warm); border-left-width: calc(var(--font) * 0.26); }
   .ticket.late { border-left-color: var(--late); border-left-width: calc(var(--font) * 0.34); }
-  .ticket.grey { opacity: 0.45; }
+  /* Old active tickets still need to be read across the kitchen. */
+  .ticket.grey { opacity: 1; }
 
   .top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--gap); }
 
@@ -134,7 +135,7 @@
   .items { display: flex; flex-direction: column; gap: calc(var(--gap) * 0.15); }
   .item { display: flex; gap: calc(var(--gap) * 0.5); align-items: baseline; }
   .qty { font-weight: 800; min-width: 2.1em; font-variant-numeric: tabular-nums; }
-  .name { flex: 1; overflow-wrap: anywhere; }
+  .name { flex: 1; overflow-wrap: anywhere; font-weight: 700; }
 
   /* A note is the line that costs money when missed. Never dimmed, never
      dropped when space runs short. */

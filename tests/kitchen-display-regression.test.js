@@ -67,3 +67,17 @@ test('a late request cannot populate a screen after its branch changes', async (
   assert.equal(sent,false);
  } finally {screens.setTickets=original;}
 });
+
+test('old active tickets keep full brightness and bold dish names', () => {
+ const {JSDOM} = require('jsdom');
+ const fs = require('node:fs');
+ const dom = new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'), {runScripts:'dangerously'});
+ try {
+  dom.window.kitchenScreen.setConfig({greyAfterMin:45,_fit:{fontPx:40,lineHeightPx:50,columns:2,cards:4}});
+  dom.window.kitchenScreen.setTickets([{table:'T1',placedAt:new Date(Date.now()-120*60000).toISOString(),items:[{qty:1,name:'Soup'}]}]);
+  const ticket=dom.window.document.querySelector('.ticket.grey');
+  assert.ok(ticket);
+  assert.equal(dom.window.getComputedStyle(ticket).opacity,'1');
+  assert.equal(dom.window.getComputedStyle(ticket.querySelector('.name')).fontWeight,'700');
+ } finally {dom.window.close();}
+});
