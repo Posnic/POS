@@ -3549,5 +3549,9 @@
   "lang_pricing_for_new_quotations": "Harga untuk penawaran baru",
   "lang_quote_base_unit_price": "Harga dasar per unit",
   "lang_item_markup": "Kenaikan harga item (%)",
-  "lang_hardware_manager": "Pengelola Perangkat Keras"
+  "lang_hardware_manager": "Pengelola Perangkat Keras",
+  "lang_guest_bills": "Nota tamu",
+  "lang_guest_bills_changed": "Data meja berubah. Minta nota tamu terbaru sebelum menagih jumlah ini.",
+  "lang_guest_bills_unpaid": "Bagian tagihan tamu belum dibayar. Terima dan catat pembayaran menggunakan kontrol pembayaran kasir.",
+  "lang_guest_bills_retry": "Coba lagi nota tamu"
 }

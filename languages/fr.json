@@ -3549,5 +3549,9 @@
   "lang_pricing_for_new_quotations": "Tarification des nouveaux devis",
   "lang_quote_base_unit_price": "Prix unitaire de base",
   "lang_item_markup": "Majoration par article (%)",
-  "lang_hardware_manager": "Gestionnaire de matériel"
+  "lang_hardware_manager": "Gestionnaire de matériel",
+  "lang_guest_bills": "Additions des convives",
+  "lang_guest_bills_changed": "La table a été modifiée. Demandez des additions à jour avant d’encaisser ces montants.",
+  "lang_guest_bills_unpaid": "Parts des convives non réglées. Encaissez et enregistrez le paiement avec les commandes de paiement de la caisse.",
+  "lang_guest_bills_retry": "Réessayer les additions"
 }

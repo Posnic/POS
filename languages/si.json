@@ -3549,5 +3549,9 @@
   "lang_pricing_for_new_quotations": "නව මිල ගණන් සඳහා මිල නියම කිරීම",
   "lang_quote_base_unit_price": "මූලික ඒකක මිල",
   "lang_item_markup": "අයිතමයේ මිල වැඩි කිරීම (%)",
-  "lang_hardware_manager": "දෘඩාංග කළමනාකරු"
+  "lang_hardware_manager": "දෘඩාංග කළමනාකරු",
+  "lang_guest_bills": "අමුත්තන්ගේ බිල්",
+  "lang_guest_bills_changed": "මේසයේ වෙනසක් සිදුවී ඇත. මෙම මුදල් අය කිරීමට පෙර යාවත්කාලීන කළ අමුත්තන්ගේ බිල් ඉල්ලන්න.",
+  "lang_guest_bills_unpaid": "අමුත්තන්ගේ කොටස් තවම ගෙවා නැත. මුදල් අයකැමිගේ ගෙවීම් පාලන භාවිතයෙන් මුදල් භාරගෙන ගෙවීම සටහන් කරන්න.",
+  "lang_guest_bills_retry": "අමුත්තන්ගේ බිල් නැවත උත්සාහ කරන්න"
 }

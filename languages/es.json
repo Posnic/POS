@@ -3558,5 +3558,9 @@
   "lang_quote_markup_breakdown": "Base {base} + {percent}% de incremento (+{amount} en esta línea)",
   "lang_enter_a_non_negative_base_price_and_an_ite": "Introduzca un precio base no negativo y un incremento por artículo entre 0 y 100000%.",
   "lang_quote_change_pricing_confirm": "Cambiar el modo de precios elimina los descuentos e incrementos actuales. Los precios base no cambian. ¿Continuar?",
-  "lang_hardware_manager": "Administrador de hardware"
+  "lang_hardware_manager": "Administrador de hardware",
+  "lang_guest_bills": "Cuentas de los comensales",
+  "lang_guest_bills_changed": "La mesa ha cambiado. Solicita cuentas actualizadas antes de cobrar estos importes.",
+  "lang_guest_bills_unpaid": "Partes de los comensales pendientes de pago. Cobra y registra el pago con los controles de pago de la caja.",
+  "lang_guest_bills_retry": "Reintentar cuentas"
 }

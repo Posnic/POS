@@ -3549,5 +3549,9 @@
   "lang_pricing_for_new_quotations": "التسعير لعروض الأسعار الجديدة",
   "lang_quote_base_unit_price": "سعر الوحدة الأساسي",
   "lang_item_markup": "زيادة سعر الصنف (%)",
-  "lang_hardware_manager": "مدير الأجهزة"
+  "lang_hardware_manager": "مدير الأجهزة",
+  "lang_guest_bills": "فواتير الضيوف",
+  "lang_guest_bills_changed": "تغيّرت بيانات الطاولة. اطلب فواتير ضيوف محدّثة قبل تحصيل هذه المبالغ.",
+  "lang_guest_bills_unpaid": "حصص الضيوف غير مدفوعة. حصّل المبلغ وسجّل الدفع باستخدام أدوات الدفع في الكاشير.",
+  "lang_guest_bills_retry": "إعادة محاولة فواتير الضيوف"
 }
