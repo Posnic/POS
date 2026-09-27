@@ -3625,5 +3625,12 @@
   "lang_pm_save": "രൂപകൽപ്പന സംരക്ഷിക്കുക",
   "lang_pm_subtitle": "ഉപശീർഷകം",
   "lang_pm_title": "റെസ്റ്റോറന്റിന്റെ പേര്",
-  "lang_pm_type": "അക്ഷരശൈലി"
+  "lang_pm_type": "അക്ഷരശൈലി",
+  "lang_pm_option_dots": "കുത്തുകൾ",
+  "lang_pm_option_diamonds": "വജ്രങ്ങൾ",
+  "lang_pm_option_chevron": "വളഞ്ഞ വരകൾ",
+  "lang_pm_option_scallops": "ചെതുമ്പലുകൾ",
+  "lang_pm_option_bamboo": "മുള",
+  "lang_pm_option_petals": "ഇതളുകൾ",
+  "lang_pm_option_hexagon": "തേനീച്ചക്കൂട്"
 }

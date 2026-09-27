@@ -3625,5 +3625,12 @@
   "lang_pm_save": "حفظ التصميم",
   "lang_pm_subtitle": "عنوان فرعي",
   "lang_pm_title": "اسم المطعم",
-  "lang_pm_type": "نمط الخط"
+  "lang_pm_type": "نمط الخط",
+  "lang_pm_option_dots": "نقاط",
+  "lang_pm_option_diamonds": "معينات",
+  "lang_pm_option_chevron": "متعرج",
+  "lang_pm_option_scallops": "حراشف",
+  "lang_pm_option_bamboo": "خيزران",
+  "lang_pm_option_petals": "بتلات",
+  "lang_pm_option_hexagon": "قرص العسل"
 }

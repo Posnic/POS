@@ -3625,5 +3625,12 @@
   "lang_pm_save": "Salva design",
   "lang_pm_subtitle": "Sottotitolo",
   "lang_pm_title": "Nome del ristorante",
-  "lang_pm_type": "Stile del carattere"
+  "lang_pm_type": "Stile del carattere",
+  "lang_pm_option_dots": "Puntini",
+  "lang_pm_option_diamonds": "Rombi",
+  "lang_pm_option_chevron": "Zigzag",
+  "lang_pm_option_scallops": "Scaglie",
+  "lang_pm_option_bamboo": "Bambù",
+  "lang_pm_option_petals": "Petali",
+  "lang_pm_option_hexagon": "Nido d’ape"
 }

@@ -3625,5 +3625,12 @@
   "lang_pm_save": "บันทึกการออกแบบ",
   "lang_pm_subtitle": "คำบรรยายรอง",
   "lang_pm_title": "ชื่อร้านอาหาร",
-  "lang_pm_type": "รูปแบบตัวอักษร"
+  "lang_pm_type": "รูปแบบตัวอักษร",
+  "lang_pm_option_dots": "จุด",
+  "lang_pm_option_diamonds": "ข้าวหลามตัด",
+  "lang_pm_option_chevron": "ซิกแซก",
+  "lang_pm_option_scallops": "เกล็ด",
+  "lang_pm_option_bamboo": "ไผ่",
+  "lang_pm_option_petals": "กลีบดอก",
+  "lang_pm_option_hexagon": "รังผึ้ง"
 }

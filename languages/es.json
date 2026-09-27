@@ -3634,5 +3634,12 @@
   "lang_pm_save": "Guardar diseño",
   "lang_pm_subtitle": "Subtítulo",
   "lang_pm_title": "Nombre del restaurante",
-  "lang_pm_type": "Estilo de letra"
+  "lang_pm_type": "Estilo de letra",
+  "lang_pm_option_dots": "Puntos",
+  "lang_pm_option_diamonds": "Rombos",
+  "lang_pm_option_chevron": "Zigzag",
+  "lang_pm_option_scallops": "Escamas",
+  "lang_pm_option_bamboo": "Bambú",
+  "lang_pm_option_petals": "Pétalos",
+  "lang_pm_option_hexagon": "Panal"
 }

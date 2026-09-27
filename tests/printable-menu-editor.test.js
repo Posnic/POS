@@ -15,7 +15,9 @@ function editor() {
         put: (params, ok) => { writes.push(params); ok({ type: 'success', data: {} }); }
     };
     w.eval(fs.readFileSync(path.join(root, 'api/src/helpers/printable-menu-design.js'), 'utf8'));
-    w.PosnicPrintableMenuRenderer = { render: (_host, _data, design) => ({ pages: [], count: 0, design }) };
+    w.eval(fs.readFileSync(path.join(root, 'frontend/static/script/js/core/printable-menu-renderer.js'), 'utf8'));
+    const pattern = w.PosnicPrintableMenuRenderer.pattern;
+    w.PosnicPrintableMenuRenderer = { pattern, render: (_host, _data, design) => ({ pages: [], count: 0, design }) };
     w.eval(fs.readFileSync(path.join(root, 'frontend/static/script/js/modules/js/printable-menu.js'), 'utf8'));
     return { dom, w, pending, writes };
 }
@@ -60,5 +62,18 @@ test('failed loads leave saving and exporting disabled with a retry action', asy
     assert.equal(w.$('#pm-save').prop('disabled'), true);
     assert.equal(w.$('#pm-download').prop('disabled'), true);
     assert.equal(w.$('#pm-reload').prop('disabled'), false);
+    dom.window.close();
+});
+
+test('pattern thumbnails replace uploaded images and persist the selected design', async () => {
+    const { dom, w, pending, writes } = editor();
+    w.$('#pm-reload').trigger('click'); answer(pending, 'One'); await tick();
+    assert.equal(w.document.querySelectorAll('#pm-patterns button').length, 12);
+    for (const img of w.document.querySelectorAll('#pm-patterns img')) assert.match(img.src, /^data:image\/svg\+xml/);
+    w.$('#pm-patterns [data-pattern="petals"]').trigger('click');
+    assert.equal(w.document.querySelector('[data-pattern="petals"]').getAttribute('aria-pressed'), 'true');
+    w.$('#pm-save').trigger('click'); await tick();
+    const saved = JSON.parse(writes[0].data).printable_menu_design;
+    assert.equal(saved.pattern, 'petals'); assert.equal(saved.background, '');
     dom.window.close();
 });

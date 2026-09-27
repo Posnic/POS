@@ -6,9 +6,9 @@ instant items are excluded. A temporary stock-out does not remove a dish from
 the printed menu, and a public ordering address is not required.
 
 Choose A4, A5 or Letter paper, one or two columns, text size, type style and
-accent color. Use a built-in pattern or upload a PNG, JPEG or WebP background.
-Background strength controls its visibility; the text has a pale backing for
-readability. Images are resized before saving. Titles, footer notes, dietary
+accent color. Choose one of twelve thumbnail swatches or upload a PNG, JPEG or WebP background.
+Background strength controls its visibility; the pattern remains visible behind the text. Use a low strength for
+readability. Selecting a pattern replaces an uploaded image. Images are resized before saving. Titles, footer notes, dietary
 marks, descriptions and category selection can also be customized.
 
 **Save design** saves only this branch's menu design, without changing item

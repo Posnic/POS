@@ -3662,5 +3662,12 @@
   "lang_pm_save": "வடிவமைப்பைச் சேமி",
   "lang_pm_subtitle": "துணைத்தலைப்பு",
   "lang_pm_title": "உணவகத்தின் பெயர்",
-  "lang_pm_type": "எழுத்துரு பாணி"
+  "lang_pm_type": "எழுத்துரு பாணி",
+  "lang_pm_option_dots": "புள்ளிகள்",
+  "lang_pm_option_diamonds": "வைர வடிவங்கள்",
+  "lang_pm_option_chevron": "நெளிவடிவம்",
+  "lang_pm_option_scallops": "செதில் வடிவம்",
+  "lang_pm_option_bamboo": "மூங்கில்",
+  "lang_pm_option_petals": "இதழ்கள்",
+  "lang_pm_option_hexagon": "தேன்கூடு"
 }

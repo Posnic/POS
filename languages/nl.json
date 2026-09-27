@@ -3625,5 +3625,12 @@
   "lang_pm_save": "Ontwerp opslaan",
   "lang_pm_subtitle": "Ondertitel",
   "lang_pm_title": "Restaurantnaam",
-  "lang_pm_type": "Letterstijl"
+  "lang_pm_type": "Letterstijl",
+  "lang_pm_option_dots": "Stippen",
+  "lang_pm_option_diamonds": "Ruiten",
+  "lang_pm_option_chevron": "Zigzag",
+  "lang_pm_option_scallops": "Schubben",
+  "lang_pm_option_bamboo": "Bamboe",
+  "lang_pm_option_petals": "Bloemblaadjes",
+  "lang_pm_option_hexagon": "Honingraat"
 }

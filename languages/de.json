@@ -3625,5 +3625,12 @@
   "lang_pm_save": "Gestaltung speichern",
   "lang_pm_subtitle": "Untertitel",
   "lang_pm_title": "Restaurantname",
-  "lang_pm_type": "Schriftstil"
+  "lang_pm_type": "Schriftstil",
+  "lang_pm_option_dots": "Punkte",
+  "lang_pm_option_diamonds": "Rauten",
+  "lang_pm_option_chevron": "Zickzack",
+  "lang_pm_option_scallops": "Schuppen",
+  "lang_pm_option_bamboo": "Bambus",
+  "lang_pm_option_petals": "Blütenblätter",
+  "lang_pm_option_hexagon": "Waben"
 }

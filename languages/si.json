@@ -3625,5 +3625,12 @@
   "lang_pm_save": "සැලසුම සුරකින්න",
   "lang_pm_subtitle": "උපශීර්ෂය",
   "lang_pm_title": "ආපනශාලාවේ නම",
-  "lang_pm_type": "අකුරු විලාසය"
+  "lang_pm_type": "අකුරු විලාසය",
+  "lang_pm_option_dots": "තිත්",
+  "lang_pm_option_diamonds": "දියමන්ති",
+  "lang_pm_option_chevron": "සිග්සැග්",
+  "lang_pm_option_scallops": "කොරපොතු",
+  "lang_pm_option_bamboo": "උණ",
+  "lang_pm_option_petals": "පෙති",
+  "lang_pm_option_hexagon": "මී වදය"
 }

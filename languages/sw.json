@@ -3625,5 +3625,12 @@
   "lang_pm_save": "Hifadhi muundo",
   "lang_pm_subtitle": "Kichwa kidogo",
   "lang_pm_title": "Jina la mgahawa",
-  "lang_pm_type": "Mtindo wa herufi"
+  "lang_pm_type": "Mtindo wa herufi",
+  "lang_pm_option_dots": "Nukta",
+  "lang_pm_option_diamonds": "Almasi",
+  "lang_pm_option_chevron": "Zigizaga",
+  "lang_pm_option_scallops": "Magamba",
+  "lang_pm_option_bamboo": "Mianzi",
+  "lang_pm_option_petals": "Petali",
+  "lang_pm_option_hexagon": "Sega la asali"
 }
