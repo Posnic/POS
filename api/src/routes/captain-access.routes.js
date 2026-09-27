@@ -128,4 +128,47 @@ router.post(
     return { signedOut: true };
   })
 );
+
+const payments = require('../services/captain-payments');
+const paymentLimit = rateLimit({
+  windowMs: 60000,
+  limit: 180,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+router.get(
+  '/payment-options',
+  paymentLimit,
+  wrap(async (req) => (await payments.scope(req, false)).options)
+);
+router.post('/payments/table', paymentLimit, wrap(payments.prepare));
+router.post('/payments/record', paymentLimit, wrap(payments.record));
+router.post('/payments/release', paymentLimit, wrap(payments.release));
+router.get(
+  '/payment-settings',
+  paymentLimit,
+  wrap(async (req) => {
+    if (!require('../utils/branch-access').allowed(req.user, 'settings'))
+      access.fail('MANAGER_REQUIRED', 'Settings permission is required.');
+    return payments.settings((await require('../utils/branch-access').context(req)).branch);
+  })
+);
+router.post(
+  '/payment-settings',
+  paymentLimit,
+  wrap(async (req) => {
+    if (!require('../utils/branch-access').allowed(req.user, 'settings'))
+      access.fail('MANAGER_REQUIRED', 'Settings permission is required.');
+    const c = await require('../utils/branch-access').context(req);
+    const value = payments.validateSettings(req.body || {});
+    await req.db
+      .collection('branches')
+      .updateOne(
+        { _id: c.branchId, license: c.license },
+        { $set: { captain_payments: value, updated_date: new Date() } }
+      );
+    return { saved: true, ...value };
+  })
+);
+
 module.exports = router;
