@@ -6736,6 +6736,7 @@
                                                         href="#captainproducts-line" role="tab" aria-controls="captainproducts-line"
                                                         aria-selected="false"><i class="feather icon-package mr-1"></i><lang class="lang_what_it_sells">What it sells</lang></a>
                                                 </li>
+                                                <li class="nav-item"><a class="nav-link" id="captainpayments-tab-line" data-toggle="tab" href="#captainpayments-line" role="tab" aria-controls="captainpayments-line" aria-selected="false"><lang class="lang_payment">PAYMENT</lang></a></li>
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="captainvoice-tab-line" data-toggle="tab"
                                                         href="#captainvoice-line" role="tab" aria-controls="captainvoice-line"
@@ -6780,6 +6781,21 @@
                                                     <div class="channel-products-host"></div>
                                                 </div>
 
+                                                <div class="tab-pane fade" id="captainpayments-line" role="tabpanel" aria-labelledby="captainpayments-tab-line">
+                                                    <div style="max-width:560px">
+                                                        <h6><lang class="lang_captain_collect_payments">Collect payments in Captain</lang></h6>
+                                                        <p class="text-muted"><lang class="lang_captain_payments_help">Allow authorized staff to record payments received at the table. Card and digital payments must be confirmed on the terminal or bank app first.</lang></p>
+                                                        <label class="d-flex align-items-center mb-3"><input type="checkbox" id="captain_payments_enabled" class="mr-2"><lang class="lang_captain_collect_payments">Collect payments in Captain</lang></label>
+                                                        <fieldset id="captain_payment_methods"><legend class="h6"><lang class="lang_payment_methods">Payment methods</lang></legend>
+                                                            <label class="mr-3"><input type="checkbox" value="Cash" checked> <lang class="lang_cash">Cash</lang></label>
+                                                            <label class="mr-3"><input type="checkbox" value="Card" checked> <lang class="lang_card">Card</lang></label>
+                                                            <label><input type="checkbox" value="Upi" checked> <lang class="lang_upi">UPI</lang></label>
+                                                        </fieldset>
+                                                        <label class="d-block my-3"><input type="checkbox" id="captain_payment_receipt" checked> <lang class="lang_captain_payment_receipt">Print a receipt after each payment</lang></label>
+                                                        <button type="button" class="btn btn-primary" id="save_captain_payments" disabled><lang class="lang_save_title">Save</lang></button>
+                                                        <p id="captain_payments_message" class="mt-2" role="status"></p>
+                                                    </div>
+                                                </div>
                                                 <div class="tab-pane fade" id="captainvoice-line" role="tabpanel"
                                                     aria-labelledby="captainvoice-tab-line">
                                                     <div class="card border m-b-30">

@@ -99,7 +99,7 @@ test('a receipt that printed says so, with the printer and how long it took', as
   assert.ok(seen.showing, 'the table never appeared');
   assert.match(seen.rows, /Table 4/);
   assert.match(seen.rows, /EPSON TM-T82/, 'it does not say which printer');
-  assert.match(seen.rows, /printed/);
+  assert.match(seen.rows, /Sent to printer/);
   assert.match(seen.rows, /812ms/, 'it does not say how long it took');
 });
 

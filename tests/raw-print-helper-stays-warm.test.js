@@ -34,25 +34,24 @@ const SVC = fs.readFileSync(path.join(ROOT, 'src', 'raw-print-service.js'), 'utf
 
 const onWindows = process.platform === 'win32';
 
-test('the raw print path tries the warm helper before starting a process', () => {
+test('Windows raw printing uses the durable queue and the existing warm writer', () => {
   const send = HW.slice(HW.indexOf('async sendRawToPrinter('), HW.indexOf('_sendRawViaCups(printerName, buffer, docName) {'));
-  assert.match(send, /const warm = await rawPrintService\.send\(\{ printer: printerName, file: tmpBin, doc: docName \}\);/,
-    'the helper is not asked');
-  /* And it is asked BEFORE the old spawn, or it saves nothing. */
-  assert.ok(
-    send.indexOf('rawPrintService.send(') < send.indexOf('execSync('),
-    'the per-job spawn still runs first'
-  );
+  const transport = fs.readFileSync(path.join(ROOT, 'src/windows-printer-transport.js'), 'utf8');
+  assert.match(send, /getWindowsPrintQueue\(\)\.enqueue/);
+  assert.match(transport, /raw\.send\(/);
+  assert.doesNotMatch(send, /execSync\(/, 'an uncertain print must never fall back to a second submission');
 });
 
-test('a helper that cannot be used falls back instead of failing the receipt', () => {
-  const send = HW.slice(HW.indexOf('async sendRawToPrinter('), HW.indexOf('_sendRawViaCups(printerName, buffer, docName) {'));
-  assert.match(send, /if \(!warm\.unavailable\) \{/, 'an unusable helper is treated as a printer fault');
-  assert.match(send, /execSync\(/, 'the fallback spawn is gone, so a broken helper means no receipt');
-  assert.match(SVC, /unavailable: true/, 'the service cannot say it is unusable');
-  /* A real printer failure must NOT fall back and print twice. */
-  assert.match(send, /if \(warm\.success\) return \{ success: true, bytes: buffer\.length \};\s*return \{ success: false/,
-    'a refused print falls through to the spawn and prints the receipt twice');
+test('resident helper returns the Windows job ID while heartbeat remains paperless', () => {
+  const { RawPrintService } = require('../src/raw-print-service');
+  const service = new RawPrintService();
+  let answer;
+  service.pending.set('7', { resolve: value => { answer = value; } });
+  service._answer('OK 7 123');
+  assert.deepStrictEqual(answer, { success: true, spoolerJobId: 123 });
+  service.pending.set('8', { resolve: value => { answer = value; } });
+  service._answer('OK 8');
+  assert.deepStrictEqual(answer, { success: true });
 });
 
 test('it is started at boot, so the first receipt does not pay for it', () => {
