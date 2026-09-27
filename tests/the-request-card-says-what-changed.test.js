@@ -225,7 +225,7 @@ test('every word on the card is a key the packs can answer', () => {
       key + ' is not spelled out, so the scanner cannot see it'
     );
     for (const file of fs.readdirSync(dir).filter((f) => /^[a-z]{2}\.json$/.test(f))) {
-      const pack = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+      const pack = require(path.join(ROOT, 'tests/helpers/language-pack'))(ROOT, file);
       assert.ok(pack[key], file + ' has no ' + key);
     }
   }

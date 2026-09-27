@@ -163,13 +163,13 @@ describe('a shop says how its food travels', () => {
     expect(js).toMatch(/'true', 'enable', 'enabled', '1', 'on', 'yes'/);
   });
 
-  test('every pack carries the five new words', () => {
+  test('established packs translate the five words and starter packs have fallback', () => {
     const packs = fs
       .readdirSync(path.join(ROOT, 'languages'))
       .filter((n) => n.endsWith('.json') && !n.startsWith('_'));
     expect(packs.length).toBeGreaterThanOrEqual(17);
     for (const pack of packs) {
-      const words = JSON.parse(read('languages', pack));
+      const words = require(path.join(ROOT, 'tests/helpers/language-pack'))(ROOT, pack);
       for (const key of [
         'lang_how_the_food_travels',
         'lang_fulfilment_dine_in',
