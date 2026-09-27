@@ -226,7 +226,7 @@ Var POSNIC_DELETE_DATA
   ; stalled there until it was answered.
   IfSilent unposnic_done
 
-  MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON1 "Keep your business data (sales database and backups)?$\r$\n$\r$\nYES - Keep my data (recommended). Reinstalling Posnic later will find everything exactly as it was.$\r$\n$\r$\nNO - I want to permanently delete everything from this computer." /SD IDYES IDYES unposnic_done
+  MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON1 "Keep your business data and hardware settings?$\r$\n$\r$\nYES - Keep my data (recommended for updates and test reinstalls). Keeps sales, backups, printer selections, paper sizes and other hardware settings. Reinstall using the same Windows account.$\r$\n$\r$\nNO - I want to permanently delete everything from this computer." /SD IDYES IDYES unposnic_done
 
   MessageBox MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2 "WARNING - PERMANENT DELETION$\r$\n$\r$\nThis will erase ALL sales history, inventory, customers and settings from this computer. If you do not use Posnic Cloud, this is the ONLY copy of your business data - it CANNOT be recovered.$\r$\n$\r$\nYour backup folder (Documents\Posnic-Backups) will also be deleted. If you may ever need this data, click NO now and first copy that folder to a pen drive or another computer.$\r$\n$\r$\nPermanently delete everything?" /SD IDNO IDYES unposnic_wipe
   Goto unposnic_done

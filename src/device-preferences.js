@@ -31,6 +31,24 @@ function prefsPath() {
 }
 
 /** Everything this machine was told. Never throws; an unreadable file is {}. */
+// Replace only after the complete JSON is durable. An interrupted save must
+// leave the previous configuration readable, not a truncated preferences file.
+function saveJson(file, value) {
+  const temp = file + '.tmp';
+  let fd;
+  try {
+    fd = fs.openSync(temp, 'w', 0o600);
+    fs.writeFileSync(fd, JSON.stringify(value, null, 2), 'utf8');
+    fs.fsyncSync(fd);
+    fs.closeSync(fd);
+    fd = undefined;
+    fs.renameSync(temp, file);
+  } finally {
+    if (fd !== undefined) fs.closeSync(fd);
+    try { fs.unlinkSync(temp); } catch (_) { /* renamed, or never created */ }
+  }
+}
+
 function all() {
   const file = prefsPath();
   if (!file) return {};
@@ -135,7 +153,8 @@ function cloudPrintRelay() {
  */
 function kotPrinterNames() {
   try {
-        const file = path.join(app.getPath('userData'), 'kot-config.json');
+    const { app } = require('electron');
+    const file = path.join(app.getPath('userData'), 'kot-config.json');
     if (!fs.existsSync(file)) return [];
     const cfg = JSON.parse(fs.readFileSync(file, 'utf8')) || {};
     const fromList = Array.isArray(cfg.printers)
@@ -208,6 +227,7 @@ function validateDocumentPrintSettings(value) {
 }
 
 module.exports = {
+  saveJson,
   all,
   get,
   receiptPrinterName,
