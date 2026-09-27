@@ -6,7 +6,8 @@ instant items are excluded. A temporary stock-out does not remove a dish from
 the printed menu, and a public ordering address is not required.
 
 Choose A4, A5 or Letter paper, one or two columns, text size, type style and
-accent color. Choose one of twelve thumbnail swatches or upload a PNG, JPEG or WebP background.
+accent color. Choose one of eighteen thumbnail swatches or upload a PNG, JPEG or WebP background.
+Food themes include dining cutlery, seafood, coffee, herbs, pizza and barbecue.
 Background strength controls its visibility; the pattern remains visible behind the text. Use a low strength for
 readability. Selecting a pattern replaces an uploaded image. Images are resized before saving. Titles, footer notes, dietary
 marks, descriptions and category selection can also be customized.

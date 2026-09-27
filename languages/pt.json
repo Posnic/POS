@@ -3632,5 +3632,11 @@
   "lang_pm_option_scallops": "Escamas",
   "lang_pm_option_bamboo": "Bambu",
   "lang_pm_option_petals": "Pétalas",
-  "lang_pm_option_hexagon": "Colmeia"
+  "lang_pm_option_hexagon": "Colmeia",
+  "lang_pm_option_cutlery": "Talheres",
+  "lang_pm_option_seafood": "Frutos do mar",
+  "lang_pm_option_coffee": "Cafeteria",
+  "lang_pm_option_herbs": "Jardim de ervas",
+  "lang_pm_option_pizza": "Pizzaria",
+  "lang_pm_option_grill": "Churrasqueira"
 }
