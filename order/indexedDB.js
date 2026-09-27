@@ -1905,7 +1905,8 @@ function catalogueItem(item, categoryName) {
     return {
         id: String(itemId),
         name: item.name || "Unknown",
-        ...(window.PosnicItemText ? window.PosnicItemText.catalog(item) : {}),
+        default_language: item.default_language || '',
+        translations: Array.isArray(item.translations) ? item.translations : [],
         available_quantity: item.available_quantity || 0,
         price: parseFloat(item.final_price) || 0,
         discount_price: parseFloat(item.discount_price) || 0,
