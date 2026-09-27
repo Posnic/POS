@@ -67,8 +67,9 @@ before(async () => {
   });
   app.use('/api/captain/v1', require('../src/routes/captain-access.routes'));
   const { protect, optionalProtect } = require('../src/middleware/auth');
-  app.get('/api/sales/guestBills/table', protect, (_r, s) => s.json({ allowed: true }));
-  app.post('/api/sales/tablePayments/record', protect, (_r, s) => s.json({ allowed: true }));
+  const paymentTestLimit = require('express-rate-limit')({windowMs:60000,limit:180});
+  app.get('/api/sales/guestBills/table', paymentTestLimit, protect, (_r, s) => s.json({ allowed: true }));
+  app.post('/api/sales/tablePayments/record', paymentTestLimit, protect, (_r, s) => s.json({ allowed: true }));
   app.get('/api/users/admin', protect, (r, s) => s.json({ user: r.user._id }));
   app.post('/api/items/accessQr', optionalProtect, (r, s) =>
     s.json({ user: r.user?._id, cookieUser: r.session.userId })
