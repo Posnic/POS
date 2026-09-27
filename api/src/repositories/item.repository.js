@@ -525,12 +525,7 @@ class ItemRepository extends BaseModel {
     const collection = await this.getCollection(this.collectionName);
     const items = await collection
       .find(built.filter, {
-        projection: {
-          name: 1,
-          mrp_price: 1,
-          company_price: 1,
-          selling_price: 1,
-        },
+        projection: { name: 1, mrp_price: 1, company_price: 1, selling_price: 1 },
       })
       .toArray();
 
@@ -778,9 +773,7 @@ class ItemRepository extends BaseModel {
 
     const collection = await this.getCollection(this.collectionName);
     const items = await collection
-      .find(built.filter, {
-        projection: { name: 1, prep_minutes: 1 },
-      })
+      .find(built.filter, { projection: { name: 1, prep_minutes: 1 } })
       .toArray();
 
     const spare = onlyEmpty !== false;
@@ -864,9 +857,7 @@ class ItemRepository extends BaseModel {
 
     const collection = await this.getCollection(this.collectionName);
     const items = await collection
-      .find(built.filter, {
-        projection: { name: 1, spice_choice: 1 },
-      })
+      .find(built.filter, { projection: { name: 1, spice_choice: 1 } })
       .toArray();
 
     /*
@@ -1119,12 +1110,7 @@ class ItemRepository extends BaseModel {
     const collection = await this.getCollection(this.collectionName);
     const items = await collection
       .find(built.filter, {
-        projection: {
-          name: 1,
-          mrp_price: 1,
-          company_price: 1,
-          selling_price: 1,
-        },
+        projection: { name: 1, mrp_price: 1, company_price: 1, selling_price: 1 },
       })
       .toArray();
     const compute = this._marginCompute(mode, margin);
@@ -1171,13 +1157,7 @@ class ItemRepository extends BaseModel {
     const collection = await this.getCollection(this.collectionName);
     const items = await collection
       .find(built.filter, {
-        projection: {
-          name: 1,
-          branch_id: 1,
-          mrp_price: 1,
-          company_price: 1,
-          selling_price: 1,
-        },
+        projection: { name: 1, branch_id: 1, mrp_price: 1, company_price: 1, selling_price: 1 },
       })
       .toArray();
     if (!items.length)
@@ -1433,14 +1413,7 @@ class ItemRepository extends BaseModel {
 
     const scope = { demo_pack: { $exists: true }, 'branch_access.branch_id': branch, license };
     const candidates = await items
-      .find(scope, {
-        projection: {
-          _id: 1,
-          name: 1,
-          demo_seeded_at: 1,
-          updated_date: 1,
-        },
-      })
+      .find(scope, { projection: { _id: 1, name: 1, demo_seeded_at: 1, updated_date: 1 } })
       .toArray();
 
     if (!candidates.length) {
@@ -5598,13 +5571,7 @@ class ItemRepository extends BaseModel {
     };
     return collection
       .find(filter, {
-        projection: {
-          item_name: 1,
-          name: 1,
-          tax: 1,
-          hsncode: 1,
-          hsndescription: 1,
-        },
+        projection: { item_name: 1, name: 1, tax: 1, hsncode: 1, hsndescription: 1 },
       })
       .sort({ item_name: 1 })
       .toArray();

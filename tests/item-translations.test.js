@@ -118,3 +118,19 @@ test('a translated description cannot become the original after switching langua
   const value = {name:'Coffee',description:'',translations:[{locale:'nl',description:'Menu text'}]};
   assert.equal(text.display(text.display(value,'nl'),'fr').description,'');
 });
+
+
+test('script and region locales fall back progressively without changing the original', () => {
+  assert.equal(text.name({name:'Tea',translations:[{locale:'zh-Hant',name:'茶'}]},'zh-Hant-TW'),'茶');
+});
+
+
+test('customer cart stores the original identity and can change language after adding', () => {
+  const core = require('../order/assets/kiosk-core');
+  const product = {...item,id:'coffee',price:20};
+  const cart = core.changeCartQuantity([],text.display(product,'nl'),'coffee',1).cart;
+  assert.equal(cart[0].name,'Coffee');
+  assert.equal(text.name(cart[0],'ar'),'قهوة');
+  assert.equal(cart[0].id,'coffee');assert.equal(cart[0].price,20);
+  assert.ok(cart[0].translations.every(row => !('description' in row)));
+});

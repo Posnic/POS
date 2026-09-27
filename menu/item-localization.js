@@ -54,13 +54,15 @@
       base = locale(item.default_language);
     if (!code || code === base) return original;
     const entries = Array.isArray(item.translations) ? item.translations : [];
-    const exact = entries.find(function (row) {
-      return row && locale(row.locale) === code;
-    });
-    const parent = entries.find(function (row) {
-      return row && locale(row.locale) === code.split('-')[0];
-    });
-    return String((exact && exact[field]) || (parent && parent[field]) || original);
+    const parts = code.split('-');
+    while (parts.length) {
+      const candidate = parts.join('-');
+      if (candidate === base) return original;
+      const match = entries.find((row) => row && locale(row.locale) === candidate);
+      if (match && match[field]) return String(match[field]);
+      parts.pop();
+    }
+    return original;
   }
   function name(item, language, bilingual) {
     const value = text(item, language, 'name');
@@ -88,7 +90,7 @@
     };
   }
   const languages =
-    'en nl de fr es it pt el da sv nb nn fi is ga cy mt lb pl cs sk hu ro bg hr sl et lv lt sq bs mk sr uk ru be tr ar he fa ur hi bn pa gu mr ta te kn ml si ne th vi id ms fil zh ja ko sw am ha yo zu af km lo my ka hy az kk uz mn'.split(
+    'en en-GB nl de fr fr-CA es es-MX it pt pt-BR ca eu gl fy fo rm gd br se el da sv nb nn fi is ga cy mt lb pl cs sk hu ro bg hr sl et lv lt sq bs mk sr uk ru be tr ar he fa ur hi bn pa gu mr ta te kn ml si ne th vi id ms fil zh zh-CN zh-TW zh-Hans zh-Hant ja ko sw am ha yo zu af km lo my ka hy az kk uz mn'.split(
       ' '
     );
   function display(item, code) {

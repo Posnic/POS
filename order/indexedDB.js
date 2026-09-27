@@ -1187,7 +1187,8 @@ async function fetchAndStoreBranch(branchId, redirect = true, options = {}) {
                    refreshed on each load - a warning an hour old is no use. */
                 kitchen: result.data.kitchen && typeof result.data.kitchen === "object" ? result.data.kitchen : null
             }]);
-            await rememberShop();
+            if (window.i18n && window.i18n.registerItems) window.i18n.registerItems(cartData);
+        await rememberShop();
             /* A browser that already had the menu draws the header from the
                branch row it stored last time, which on an older row has no
                name - so the page said "Menu" until the next visit. The name
@@ -1291,6 +1292,7 @@ async function validateCartWithProducts(updatedProducts, renderUI = true) {
                 return {
                     ...item,
                     name: updatedProduct.name,
+                    ...(window.PosnicItemText ? window.PosnicItemText.snapshot(updatedProduct) : {}),
                     img: updatedProduct.img,
                     icon: updatedProduct.icon || "",
                     diet: updatedProduct.diet || "",
@@ -1393,7 +1395,7 @@ async function renderCart(cartData = null) {
             totalQty += quantity;
 
             const safeItemId = escapeHtml(itemId);
-            const safeItemName = escapeHtml(String(item.name ?? "Unknown"));
+            const safeItemName = escapeHtml(String(window.PosnicItemText ? window.PosnicItemText.name(item, window.i18n && window.i18n.lang) : item.name ?? "Unknown"));
             const picture = item.img
                 ? `<img src="${escapeHtml(getSafeImageUrl(item.img))}" alt="" class="item-image">`
                 : `<span class="item-icon" aria-hidden="true">${escapeHtml(item.icon || "")}</span>`;
@@ -2906,7 +2908,7 @@ function renderOrderPanel(cartData) {
             const lineTotal = quantity * (Number(item.price) || 0);
             return `<div class="panel-line" data-item-id="${escapeHtml(String(item.id ?? ""))}">
                 <span class="panel-line-qty">${quantity}&times;</span>
-                <span class="panel-line-name">${escapeHtml(String(item.name ?? "Unknown"))}</span>
+                <span class="panel-line-name">${escapeHtml(String(window.PosnicItemText ? window.PosnicItemText.name(item, window.i18n && window.i18n.lang) : item.name ?? "Unknown"))}</span>
                 <span class="panel-line-total">${escapeHtml(money(lineTotal))}</span>
             </div>`;
         }).join("");
