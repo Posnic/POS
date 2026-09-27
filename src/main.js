@@ -2342,8 +2342,8 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
 
   // Handle downloads - show save dialog
   mainWindow.webContents.session.on('will-download', (event, item, webContents) => {
-    // setSavePath must happen during will-download. If we wait on the async
-    // dialog promise, Chromium may already start writing to its default path.
+    // Let Chromium own the asynchronous chooser. A synchronous dialog here
+    // blocks the embedded Captain API and KOT polling until somebody closes it.
     const filename = item.getFilename ? item.getFilename() : path.basename(item.getURL());
     const defaultPath = path.join(app.getPath('downloads'), filename || 'download');
     const ext = path.extname(filename || '').replace('.', '');
@@ -2354,25 +2354,12 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
         ]
       : [{ name: 'All files', extensions: ['*'] }];
 
-    const result = dialog.showSaveDialogSync(mainWindow, {
+    item.setSaveDialogOptions({
       title: 'Save file',
       defaultPath,
       buttonLabel: 'Save',
       filters
     });
-
-    if (!result) {
-      try { item.cancel(); } catch (e) { /* ignore */ }
-      return;
-    }
-
-    try {
-      item.setSavePath(result);
-    } catch (e) {
-      console.error('Failed to set save path for download:', e.message);
-      try { item.cancel(); } catch (cancelError) { /* ignore */ }
-      return;
-    }
 
     item.on('updated', (evt, state) => {
       if (state === 'interrupted') {
@@ -2382,7 +2369,7 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
 
     item.once('done', (evt, state) => {
       if (state === 'completed') {
-        console.log('Download completed:', result);
+        console.log('Download completed:', item.getSavePath());
       } else {
         console.error('Download failed:', state);
       }
