@@ -206,6 +206,7 @@
       <span id="title">Kitchen</span>
       <span><span id="count">0</span> <span id="word">orders</span></span>
       <span id="pager"></span>
+      <div id="wall-clock" style="margin-left:auto;text-align:right;white-space:nowrap;color:var(--ink)"><time id="current-time"></time><div id="current-date" style="font-size:.7em;color:var(--muted)"></div></div>
     </header>
     <div id="connection" role="status" style="font-size:0.55em;padding-top:8px">Connecting to kitchen orders...</div>
     <div id="board"></div>
@@ -352,6 +353,15 @@
 
     return node;
   }
+
+  function updateClock() {
+    var now = new Date();
+    $('current-time').textContent = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true});
+    $('current-time').dateTime = now.toISOString();
+    $('current-date').textContent = now.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'});
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
 
   function render() {
     var cfg = config || {};
