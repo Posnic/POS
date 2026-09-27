@@ -224,3 +224,14 @@ test('linked drawer totals follow guest tenders without duplicate register entri
   expect(register.register_sales).toHaveLength(1);
   expect(register.register_sales[0].multi_payment).toEqual({ Cash: 105 });
 });
+test('version and request ID operators cannot bypass duplicate-payment protection', async () => {
+  const plan = await service.prepare(req());
+  for (const version of [1, { $gte: 0 }, '0', -1])
+    await expect(service.record(pay(plan, { version }))).rejects.toMatchObject({ status: 409 });
+  await expect(
+    service.record(pay(plan, { request_id: [require('crypto').randomUUID()] }))
+  ).rejects.toMatchObject({ status: 422 });
+  expect(
+    (await db.collection('captain_payment_plans').findOne({ _id: plan.id })).payments
+  ).toHaveLength(0);
+});

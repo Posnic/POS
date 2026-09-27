@@ -402,7 +402,8 @@ async function record(req) {
   const c = await scope(req, false),
     db = req.db,
     input = req.body;
-  if (!/^[a-zA-Z0-9-]{16,80}$/.test(input.request_id || '')) fail('Invalid payment request.');
+  if (typeof input.request_id !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(input.request_id))
+    fail('Invalid payment request.');
   const plans = db.collection('captain_payment_plans');
   await plans.createIndex(
     { branch_id: 1, 'payments.id': 1 },
@@ -426,6 +427,8 @@ async function record(req) {
     await reconcile(db, c, plan);
     return { ...view(plan, c.options), confirmed: input.request_id };
   }
+  if (!Number.isSafeInteger(input.version) || input.version !== plan.version)
+    fail('Another payment changed this bill. Refresh before collecting more.', 409);
   if (!c.options.enabled || !c.options.methods.includes(input.method))
     fail('This payment method is not enabled in Captain.', 403);
   const paidGuests = new Set(plan.payments.flatMap((p) => p.guests));
@@ -482,7 +485,7 @@ async function record(req) {
         _id: plan._id,
         ...baseFilter(c),
         state: 'open',
-        version: input.version,
+        version: plan.version,
         'payments.id': { $ne: input.request_id },
       },
       { $push: { payments: payment }, $inc: { version: 1 } }
