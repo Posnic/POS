@@ -39,9 +39,11 @@ function discountOf(raw, gross) {
  * DOCUMENT - the catalog is never touched. A row with a name but no valid
  * item id heals into a custom row rather than vanishing.
  *
- * `noun` only shapes the error text ("per quote" / "per invoice").
+ * `noun` shapes the error text. Quote markup is opt-in: persist the base and
+ * percentage separately, and keep unit_price as the rounded final price so
+ * invoice and sale conversion cannot apply the increase a second time.
  */
-function normalizeLines(rows, noun = 'document') {
+function normalizeLines(rows, noun = 'document', { markup = false } = {}) {
   if (!Array.isArray(rows) || rows.length === 0) return { error: 'Add at least one line' };
   if (rows.length > 500) return { error: `At most 500 lines per ${noun}` };
   const lines = [];
@@ -53,9 +55,36 @@ function normalizeLines(rows, noun = 'document') {
     const qty = Number(row.qty);
     const price = Number(row.unit_price);
     if (!Number.isFinite(qty) || qty <= 0) continue;
-    const unitPrice = Number.isFinite(price) && price >= 0 ? price : 0;
+    let unitPrice = Number.isFinite(price) && price >= 0 ? price : 0;
+    let increase;
+    let basePrice;
+    if (markup) {
+      basePrice = Number(row.base_unit_price);
+      const percent = Number(row.markup?.value);
+      if (
+        row.base_unit_price == null ||
+        !Number.isFinite(basePrice) ||
+        basePrice < 0 ||
+        row.markup?.type !== 'percent' ||
+        row.markup.value == null ||
+        row.markup.value === '' ||
+        !Number.isFinite(percent) ||
+        percent < 0 ||
+        percent > 100000
+      )
+        return { error: 'Enter a non-negative base price and an item markup from 0 to 100000%.' };
+      unitPrice = round2(basePrice * (1 + percent / 100));
+      if (!Number.isSafeInteger(Math.round(qty * unitPrice * 100))) {
+        return { error: 'The marked-up line amount is too large.' };
+      }
+      increase = {
+        type: 'percent',
+        value: percent,
+        computed: round2(qty * unitPrice - qty * basePrice),
+      };
+    }
     const gross = round2(qty * unitPrice);
-    const discount = discountOf(row.discount, gross);
+    const discount = markup ? null : discountOf(row.discount, gross);
     /*
      * Per-line tax (owner: "each line item will have different tax - indian
      * GST like that"), seeded from the item's own configured tax. Inclusive
@@ -83,6 +112,7 @@ function normalizeLines(rows, noun = 'document') {
       barcode_id: String(row.barcode_id || '').trim(),
       qty,
       unit_price: unitPrice,
+      ...(markup ? { base_unit_price: basePrice, markup: increase } : {}),
       discount,
       tax_name: String(row.tax_name || '')
         .trim()
@@ -181,7 +211,9 @@ function computeTotals({ lines, charges, discount, clientTotal, clientTaxTotal }
   }
   chargesTotal = round2(chargesTotal);
   const computedTotal = Math.max(0, round2(chargeBase + chargesTotal));
-  const hasNewMoney = charges.length > 0 || docDiscount !== null || lines.some((l) => l.discount);
+  const hasMarkup = lines.some((l) => l.markup);
+  const hasNewMoney =
+    charges.length > 0 || docDiscount !== null || lines.some((l) => l.discount) || hasMarkup;
   /* Lines carrying their own tax make the tax total OURS to compute; the
      legacy path (sale-screen carts) keeps sending its own figure. */
   const linesCarryTax = lines.some((l) => l.tax_value > 0);
@@ -193,11 +225,12 @@ function computeTotals({ lines, charges, discount, clientTotal, clientTaxTotal }
     discount: docDiscount,
     charges,
     charges_total: chargesTotal,
-    tax_total: linesCarryTax
-      ? computedTaxTotal
-      : Number.isFinite(taxTotal) && taxTotal >= 0
-        ? taxTotal
-        : 0,
+    tax_total:
+      linesCarryTax || hasMarkup
+        ? computedTaxTotal
+        : Number.isFinite(taxTotal) && taxTotal >= 0
+          ? taxTotal
+          : 0,
     total: hasNewMoney ? computedTotal : Number.isFinite(total) && total > 0 ? total : subtotal,
   };
 }

@@ -89,14 +89,27 @@
                                     </div>
                                 </div>
                                 <div class="qe-sec">
+                                    <div class="form-row mb-2">
+                                        <div class="col-sm-6">
+                                            <label for="qe_pricing_mode"><lang class="lang_quotation_pricing">Quotation pricing</lang></label>
+                                            <select id="qe_pricing_mode" class="form-control form-control-sm">
+                                                <option value="discount"><lang class="lang_discount_title">Discount</lang></option>
+                                                <option value="markup"><lang class="lang_markup_2">Markup (%)</lang></option>
+                                            </select>
+                                        </div>
+                                        <div class="col-sm-6" id="qe_markup_display">
+                                            <label><input type="checkbox" id="qe_show_markup"> <lang class="lang_show_markup_breakdown_on_the_quotation">Show markup breakdown on the quotation</lang></label>
+                                            <small class="text-muted d-block"><lang class="lang_off_customers_see_final_prices_only">Off: customers see final prices only.</lang></small>
+                                        </div>
+                                    </div>
                                     <div class="q-label"><lang class="lang_lines">Lines</lang></div>
                                     <input type="text" id="qe_item_search" class="form-control form-control-sm mb-2"
                                         placeholder="Search an item to add a line" data-t-placeholder="lang_search_an_item_to_add_a_line" autocomplete="off">
                                     <div class="table-responsive">
                                         <table class="table table-sm mb-1" id="qe_lines_table">
                                             <thead><tr>
-                                                <th style="min-width:170px;"><lang class="lang_newitem_title">Item</lang></th><th><lang class="lang_qty_title">Qty</lang></th><th><lang class="lang_unit_price">Unit price</lang></th>
-                                                <th><lang class="lang_line_discount">Line discount</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th><th></th>
+                                                <th style="min-width:170px;"><lang class="lang_newitem_title">Item</lang></th><th><lang class="lang_qty_title">Qty</lang></th><th id="qe_price_heading"><lang class="lang_unit_price">Unit price</lang></th>
+                                                <th id="qe_adjustment_heading"><lang class="lang_line_discount">Line discount</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th><th></th>
                                             </tr></thead>
                                             <tbody id="qe_lines"></tbody>
                                         </table>
@@ -110,7 +123,7 @@
                                 </div>
                                 <div class="qe-sec">
                                     <div class="form-row">
-                                        <div class="col-md-6 mb-2">
+                                        <div class="col-md-6 mb-2" id="qe_discount_fields">
                                             <div class="q-label"><lang class="lang_quote_discount">Quote discount</lang></div>
                                             <div class="input-group input-group-sm">
                                                 <select id="qe_disc_type" class="form-control" style="max-width:110px;" aria-label="Qe disc type" data-t-aria-label="lang_qe_disc_type">

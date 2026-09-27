@@ -1,3 +1,4 @@
+const { loginCookieDays } = require('../utils/token-lifetime');
 const { redact } = require('../utils/redact');
 const { clientIp } = require('../utils/client-ip');
 const { currentConnection } = require('../db/tenant-context');
@@ -606,9 +607,7 @@ class UsersController extends BaseController {
       // Generate legacy-style JWT payload that includes encrypted session_id,
       // mirroring the PHP behaviour for JWT tokens used by the legacy frontend.
       const token = signLegacyToken(user, req);
-      const days = process.env.JWT_COOKIE_EXPIRES_IN
-        ? parseInt(process.env.JWT_COOKIE_EXPIRES_IN)
-        : 7;
+      const days = loginCookieDays();
       res.cookie(
         'jwt',
         token,
@@ -2469,9 +2468,7 @@ class UsersController extends BaseController {
       }
 
       const jwtToken = signLegacyToken(recordsFiltered, req);
-      const days = process.env.JWT_COOKIE_EXPIRES_IN
-        ? parseInt(process.env.JWT_COOKIE_EXPIRES_IN)
-        : 7;
+      const days = loginCookieDays();
       res.cookie(
         'jwt',
         jwtToken,

@@ -69,7 +69,7 @@ test('a short write is a failure, not a success', () => {
 });
 
 test('OK is written on exactly one path, and it is the good one', () => {
-  const okLines = SVC.split('\n').filter((l) => /WriteLine\("OK \$id"\)/.test(l));
+  const okLines = SVC.split('\n').filter((l) => /WriteLine\("OK \$id(?: \$docId)?"\)/.test(l));
   /* One for a finished print, one for the heartbeat that never touches a
      printer. Any more means a failure path answers OK again. */
   assert.strictEqual(okLines.length, 2, 'OK is written from ' + okLines.length + ' places');

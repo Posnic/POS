@@ -142,6 +142,7 @@
 
   api.on(function (payload) {
     payload = payload || {};
+    window.dispatchEvent(new CustomEvent('posnic:orders-changed', { detail: payload }));
     play(payload.sound);
     announce(payload);
   });

@@ -4074,6 +4074,20 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="fc-section" id="fc_quotes">
+                                        <div class="form-row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="quote_pricing_mode"><lang class="lang_pricing_for_new_quotations">Pricing for new quotations</lang></label>
+                                                <select id="quote_pricing_mode" class="form-control form-control-sm">
+                                                    <option value="discount"><lang class="lang_discount_title">Discount</lang></option>
+                                                    <option value="markup"><lang class="lang_markup_2">Markup (%)</lang></option>
+                                                </select>
+                                                <small class="text-muted"><lang class="lang_markup_adds_a_percentage_to_each_item_s_ba">Markup adds a percentage to each item's base price. Existing quotations stay unchanged.</lang></small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label><input type="checkbox" id="quote_show_markup"> <lang class="lang_show_markup_breakdown_on_new_quotations">Show markup breakdown on new quotations</lang></label>
+                                                <small class="text-muted d-block"><lang class="lang_include_base_price_markup_percentage_and_i">Include base price, markup percentage and increase in the preview, PDF and print. Leave off to show only final prices.</lang></small>
+                                            </div>
+                                        </div>
                                         <h6 class="fc-title"><lang class="lang_quotes_title">Quotes</lang></h6>
 
                 <div class="row">
@@ -6681,6 +6695,7 @@
                                                     <div class="card border m-b-30">
                                                         <div class="card-body">
                                                             <a class="btn btn-outline-primary btn-sm" href="#/settings/devices" id="captain_devices_link"><lang class="lang_manage_captain_devices">Manage Captain devices</lang></a>
+                                                            <p><a class="btn btn-primary btn-sm" href="/api/captain-setup" target="_blank" rel="noopener"><lang class="lang_approve_captain_phone">Approve a Captain phone</lang></a></p>
                                                             <h6 class="mb-1"><lang class="lang_captain_pair_title">Point a phone at this shop</lang></h6>
                                                             <small class="form-text text-muted mb-3">
                                                                 <lang class="lang_captain_pair_help">Install the Posnic captain app on the phone, open the pairing screen below on the till, and let the phone read the code. The owner knows the shop address; a waiter on their first shift does not, and this is so nobody has to type it.</lang>

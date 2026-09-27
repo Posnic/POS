@@ -233,6 +233,7 @@ test('the signers and the reported lifetime read the same setting', () => {
 
   /* Both must fall back to the same value, or a client is told an expiry the
      token does not have. */
-  assert.match(auth, /JWT_EXPIRES_IN \|\| '24h'/);
+  assert.match(auth, /expiresIn: jwtLifetimeSeconds\(\)/);
+  assert.match(auth, /expiresIn: expiresIn \|\| jwtLifetimeSeconds\(\)/);
   assert.match(lifetime, /const DEFAULT = '24h'/);
 });

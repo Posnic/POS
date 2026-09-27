@@ -53,6 +53,14 @@ function openRoutes(file) {
  * what strangers may do to a shop's data, so it should take a code review.
  */
 const ALLOWED_ANONYMOUS = {
+  'captain-access.routes.js': [
+    // Bootstrap endpoints run before a bearer exists. Pairing consumes a
+    // short-lived manager secret; refresh verifies the rotating renewal secret.
+    // Proof endpoints return only nonce-bound HMACs, never a session or user data.
+    // Each endpoint is rate limited; captain-access.integration.cjs exercises
+    // expiry, replay, revocation, permissions and the proof boundary.
+    '/enrolment-proof', '/pair', '/refresh', '/route-proof',
+  ],
   'mobile-pos.routes.js': [
     // Pairing is a rate-limited authentication entry point with an expiring,
     // one-use secret; cloud grants also require the approved phone and proof.
