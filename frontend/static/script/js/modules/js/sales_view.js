@@ -1620,7 +1620,7 @@ PosnicPro.sales.view = {
                             let item_unit = (typeof (data.items[i].item_unit) !== "undefined" && data.items[i].item_unit !== null) ? data.items[i].item_unit : 'qty';
                             itemTotalQty += data.items[i].item_quantity;
                             let hsn = (data.items[i].tax_fields.length === 0 && data.items[i].tax > 0) ? data.items[i].tax_name : '--';
-                            let rowHTMLLine = '<tr><td height="1" colspan="7" style="border:1px solid #e4e4e4"></td></tr><tr><td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.escapeHtml(PosnicPro.textOverflowPrintEllipsis(data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true)) + '</td>' +
+                            let rowHTMLLine = '<tr><td height="1" colspan="7" style="border:1px solid #e4e4e4"></td></tr><tr><td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.escapeHtml(PosnicPro.textOverflowPrintEllipsis(PosnicPro.printItemName ? PosnicPro.printItemName(data.items[i], 'receipt') : data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true)) + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_hsn" style="color: #646a6e;">' + hsn + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_price" style="color: #646a6e;" align="center">' + price.toFixed(2) + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_qty" style="color: #646a6e;" align="center">' + PosnicPro.formatQuantity(data.items[i].item_quantity, item_unit) + ' ' + item_unit + ' </td>' +
@@ -1718,7 +1718,7 @@ PosnicPro.sales.view = {
                             taxCgstText.push(tax / 2 + '% &nbsp;');
                             let item_unit = (typeof (data.items[i].item_unit) !== "undefined" && data.items[i].item_unit !== null) ? data.items[i].item_unit : 'qty';
                             itemTotalQty += data.items[i].item_quantity;
-                            let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.escapeHtml(PosnicPro.textOverflowPrintEllipsis(data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true)) + '</div></div></div>' +
+                            let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.escapeHtml(PosnicPro.textOverflowPrintEllipsis(PosnicPro.printItemName ? PosnicPro.printItemName(data.items[i], 'receipt') : data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true)) + '</div></div></div>' +
                                 '<div class="col-md-3 col-sm-3 col-xs-3 gift_receipt_element"><div class="invoice-content item-qty text-left">' + PosnicPro.formatQuantity(data.items[i].item_quantity, item_unit) + ' ' + item_unit + '</div></div>' +
                                 '<div class="col-md-4 col-sm-4 col-xs-4 gift_receipt_element"><div class="invoice-content item-total pull-right ">' + currency + '&nbsp;<span class="number">' + price * data.items[i].item_quantity + '</span></div></div></div>';
 
@@ -1838,7 +1838,7 @@ PosnicPro.sales.view = {
                                 let item_unit = (typeof (val.item_unit) != "undefined" && val.item_unit !== null) ? val.item_unit : 'qty';
                                 itemTotalQty += val.item_quantity;
                                 let hsn = (val.tax_fields.length === 0 && val.tax > 0) ? val.tax_name : '--';
-                                let rowHTMLLine = '<tr><td height="1" colspan="7" style="border-top:1px solid #e4e4e4"></td></tr><tr><td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.textOverflowPrintEllipsis(val.item_name, PosnicPro.local.get('printing_max_char'), true) + '</td>' +
+                                let rowHTMLLine = '<tr><td height="1" colspan="7" style="border-top:1px solid #e4e4e4"></td></tr><tr><td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.textOverflowPrintEllipsis(PosnicPro.printItemName ? PosnicPro.printItemName(val, 'receipt') : val.item_name, PosnicPro.local.get('printing_max_char'), true) + '</td>' +
                                     '<td class="print-deatils-size-family print-details-align lineitem_hsn" style="color: #646a6e;">' + hsn + '</td>' +
                                     '<td class="print-deatils-size-family print-details-align lineitem_price" style="color: #646a6e;" align="center">' + price.toFixed(2) + '</td>' +
                                     '<td class="print-deatils-size-family print-details-align lineitem_qty" style="color: #646a6e;" align="center">' + PosnicPro.formatQuantity(val.item_quantity, item_unit) + ' ' + item_unit + ' </td>' +
@@ -1916,7 +1916,7 @@ PosnicPro.sales.view = {
                                 taxCgstText.push(tax / 2 + '% &nbsp;');
                                 let item_unit = (typeof (val.item_unit) !== "undefined" && val.item_unit !== null) ? val.item_unit : 'qty';
                                 itemTotalQty += val.item_quantity;
-                                let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.textOverflowPrintEllipsis(val.item_name, PosnicPro.local.get('printing_max_char'), true) + '</div></div></div>' +
+                                let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.textOverflowPrintEllipsis(PosnicPro.printItemName ? PosnicPro.printItemName(val, 'receipt') : val.item_name, PosnicPro.local.get('printing_max_char'), true) + '</div></div></div>' +
                                     '<div class="col-md-3 col-sm-3 col-xs-3 gift_receipt_element"><div class="invoice-content item-qty text-left">' + PosnicPro.formatQuantity(val.item_quantity, item_unit) + ' ' + item_unit + '</div></div>' +
                                     '<div class="col-md-4 col-sm-4 col-xs-4 gift_receipt_element"><div class="invoice-content item-total pull-right ">' + currency + '&nbsp;<span class="number">' + price * val.item_quantity + '</span></div></div></div>';
 
@@ -2156,7 +2156,7 @@ PosnicPro.sales.view = {
                         itemTotalQty += response.data.return_data[i].item_quantity;
                         let hsn = (response.data.return_data[i].item_tax_fields.length === 0 && response.data.return_data[i].item_tax > 0) ? response.data.return_data[i].item_tax_name : '--';
                         let rowHTMLLine = '<tr><td height="1" colspan="7" style="border-top:1px solid #e4e4e4"></td></tr><tr>\n\
-                                <td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.textOverflowPrintEllipsis(response.data.return_data[i].item_name, PosnicPro.local.get('printing_max_char'), true) + '</td>' +
+                                <td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.textOverflowPrintEllipsis(PosnicPro.printItemName ? PosnicPro.printItemName(response.data.return_data[i], 'receipt') : response.data.return_data[i].item_name, PosnicPro.local.get('printing_max_char'), true) + '</td>' +
                             '<td class="print-deatils-size-family print-details-align lineitem_hsn" style="color: #646a6e;">' + hsn + '</td>' +
                             '<td class="print-deatils-size-family print-details-align lineitem_price" style="color: #646a6e;" align="center">' + price.toFixed(2) + '</td>' +
                             '<td class="print-deatils-size-family print-details-align lineitem_qty" style="color: #646a6e;" align="center">' + PosnicPro.formatQuantity(response.data.return_data[i].item_quantity, item_unit) + ' ' + item_unit + '</td>' +
@@ -2245,7 +2245,7 @@ PosnicPro.sales.view = {
                         taxCgstText.push(tax / 2 + '% &nbsp;');
                         let item_unit = (typeof (response.data.return_data[i].item_unit) != "undefined" && response.data.return_data[i].item_unit !== null) ? response.data.return_data[i].item_unit : 'qty';
                         itemTotalQty += response.data.return_data[i].item_quantity;
-                        let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.textOverflowPrintEllipsis(response.data.return_data[i].item_name, PosnicPro.local.get('printing_max_char'), true) + '</div></div></div>' +
+                        let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.textOverflowPrintEllipsis(PosnicPro.printItemName ? PosnicPro.printItemName(response.data.return_data[i], 'receipt') : response.data.return_data[i].item_name, PosnicPro.local.get('printing_max_char'), true) + '</div></div></div>' +
                             '<div class="col-md-3 col-sm-3 col-xs-3 gift_receipt_element"><div class="invoice-content item-qty text-left">' + PosnicPro.formatQuantity(response.data.return_data[i].item_quantity, item_unit) + ' ' + item_unit + '</div></div>' +
                             '<div class="col-md-4 col-sm-4 col-xs-4 gift_receipt_element"><div class="invoice-content item-total pull-right ">' + currency + '&nbsp;<span class="number">' + price * response.data.return_data[i].item_quantity + '</span></div></div></div>';
 

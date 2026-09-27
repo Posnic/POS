@@ -114,6 +114,7 @@ router.post('/soldOut', validateSoldOut, bindController(itemsController.markSold
  * Declared before '/:id' so that route does not swallow it.
  */
 router.get('/icon-suggestion', bindController(itemsController.iconSuggestion));
+router.get('/printable-menu', bindController(itemsController.printableMenu));
 
 router.get('/channel', bindController(itemsController.channelItems));
 router.post('/channel', bindController(itemsController.setChannelForItems));

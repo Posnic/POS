@@ -73,6 +73,13 @@ function looksLikeMojibake(text) {
   return false;
 }
 
+let englishSource = {};
+const englishPath = path.join(LANG_DIR, '_english.json');
+if (fs.existsSync(englishPath)) englishSource = JSON.parse(fs.readFileSync(englishPath, 'utf8'));
+function placeholders(value) {
+  return (String(value).match(/\{(?:[0-9]+|[A-Za-z_][A-Za-z0-9_]*)\}/g) || []).sort().join('|');
+}
+
 for (const file of files) {
   const full = path.join(LANG_DIR, file);
   const code = file.replace(/\.json$/, '');
@@ -142,6 +149,14 @@ for (const file of files) {
      *
      * ">" alone is fine: Tamil writes a breadcrumb as "Manage > Features".
      */
+    if (value.includes('\uFFFD')) {
+      fail(file, `${key} contains a replacement character`, 'Restore the original Unicode text and save as UTF-8.');
+    }
+    if (value.trim() && typeof englishSource[key] === 'string'
+        && placeholders(value) !== placeholders(englishSource[key])) {
+      fail(file, `${key} changes interpolation placeholders`,
+        'Keep every {name} or {0} token exactly as in English, including repeated tokens.');
+    }
     for (const tag of value.match(/<\s*\/?\s*([a-zA-Z][a-zA-Z0-9]*)/g) || []) {
       const name = tag.replace(/[<\/\s]/g, '').toLowerCase();
       if (!ALLOWED_TAGS.includes(name)) {
@@ -210,7 +225,7 @@ if (fs.existsSync(SERVER_DIR)) {
   } catch (e) {
     notes.push('languages/server/_english.json could not be read, so the message keys were not checked: ' + e.message);
   }
-  serverFiles = fs.readdirSync(SERVER_DIR).filter((f) => /^[a-z]{2}\.json$/.test(f)).sort();
+  serverFiles = fs.readdirSync(SERVER_DIR).filter((f) => /^[a-z]{2}(?:-[A-Za-z]{2,4})?\.json$/.test(f)).sort();
   for (const file of serverFiles) {
     const where = 'languages/server/' + file;
     let dict;

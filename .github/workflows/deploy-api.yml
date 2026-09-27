@@ -71,7 +71,7 @@ jobs:
           # until tonight. The literal in the HTML is what a checkout served
           # straight from the tree uses; tests/bundle-deployment.test.js keeps
           # the two in step.
-          sed -i "s/v=20260912-design/v=${GITHUB_SHA:0:8}/g" order/*.html menu/index.html
+          sed -i "s/v=20260927-items/v=${GITHUB_SHA:0:8}/g" order/*.html menu/index.html
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy.pem" \
             menu/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:~/apps/tenants/app/menu/"

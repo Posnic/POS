@@ -1,20 +1,234 @@
 [
-  { "code": "en", "text": "Fresh orange juice" },
-  { "code": "ta", "text": "பால் தேநீர்" },
-  { "code": "hi", "text": "दूध वाली चाय" },
-  { "code": "ml", "text": "പാൽ ചായ" },
-  { "code": "kn", "text": "ಹಾಲಿನ ಚಹಾ" },
-  { "code": "te", "text": "పాల టీ" },
-  { "code": "si", "text": "කිරි තේ" },
-  { "code": "ne", "text": "दूध चिया" },
-  { "code": "ar", "text": "شاي بالنعناع" },
-  { "code": "fr", "text": "Café au lait et crème brûlée" },
-  { "code": "es", "text": "Café con leche y piña" },
-  { "code": "pt", "text": "Pão de queijo e café" },
-  { "code": "id", "text": "Teh susu hangat" },
-  { "code": "th", "text": "ชานมร้อน" },
-  { "code": "de", "text": "Käsebrötchen und Süßigkeiten" },
-  { "code": "sw", "text": "Chai ya maziwa" },
-  { "code": "nl", "text": "Crème en café" },
-  { "code": "it", "text": "Caffè e tè al limone" }
+  {
+    "code": "en",
+    "text": "Fresh orange juice"
+  },
+  {
+    "code": "ta",
+    "text": "பால் தேநீர்"
+  },
+  {
+    "code": "hi",
+    "text": "दूध वाली चाय"
+  },
+  {
+    "code": "ml",
+    "text": "പാൽ ചായ"
+  },
+  {
+    "code": "kn",
+    "text": "ಹಾಲಿನ ಚಹಾ"
+  },
+  {
+    "code": "te",
+    "text": "పాల టీ"
+  },
+  {
+    "code": "si",
+    "text": "කිරි තේ"
+  },
+  {
+    "code": "ne",
+    "text": "दूध चिया"
+  },
+  {
+    "code": "ar",
+    "text": "شاي بالنعناع"
+  },
+  {
+    "code": "fr",
+    "text": "Café au lait et crème brûlée"
+  },
+  {
+    "code": "es",
+    "text": "Café con leche y piña"
+  },
+  {
+    "code": "pt",
+    "text": "Pão de queijo e café"
+  },
+  {
+    "code": "id",
+    "text": "Teh susu hangat"
+  },
+  {
+    "code": "th",
+    "text": "ชานมร้อน"
+  },
+  {
+    "code": "de",
+    "text": "Käsebrötchen und Süßigkeiten"
+  },
+  {
+    "code": "sw",
+    "text": "Chai ya maziwa"
+  },
+  {
+    "code": "nl",
+    "text": "Crème en café"
+  },
+  {
+    "code": "it",
+    "text": "Caffè e tè al limone"
+  },
+  {
+    "code": "bg",
+    "text": "Прясно мляко"
+  },
+  {
+    "code": "bn",
+    "text": "তাজা কমলার রস"
+  },
+  {
+    "code": "bs",
+    "text": "Svježi sok od narandže"
+  },
+  {
+    "code": "cs",
+    "text": "Čerstvý pomerančový džus"
+  },
+  {
+    "code": "da",
+    "text": "Frisk appelsinjuice"
+  },
+  {
+    "code": "el",
+    "text": "Φρέσκος χυμός πορτοκαλιού"
+  },
+  {
+    "code": "et",
+    "text": "Värske apelsinimahl"
+  },
+  {
+    "code": "fa",
+    "text": "آب پرتقال تازه"
+  },
+  {
+    "code": "fi",
+    "text": "Tuore appelsiinimehu"
+  },
+  {
+    "code": "ga",
+    "text": "Sú oráiste úr"
+  },
+  {
+    "code": "gu",
+    "text": "તાજો નારંગીનો રસ"
+  },
+  {
+    "code": "he",
+    "text": "מיץ תפוזים טרי"
+  },
+  {
+    "code": "hr",
+    "text": "Svježi sok od naranče"
+  },
+  {
+    "code": "hu",
+    "text": "Friss narancslé"
+  },
+  {
+    "code": "is",
+    "text": "Ferskur appelsínusafi"
+  },
+  {
+    "code": "ja",
+    "text": "搾りたてのオレンジジュース"
+  },
+  {
+    "code": "ko",
+    "text": "신선한 오렌지 주스"
+  },
+  {
+    "code": "lt",
+    "text": "Šviežios apelsinų sultys"
+  },
+  {
+    "code": "lv",
+    "text": "Svaiga apelsīnu sula"
+  },
+  {
+    "code": "mk",
+    "text": "Свеж сок од портокал"
+  },
+  {
+    "code": "mr",
+    "text": "ताजा संत्र्याचा रस"
+  },
+  {
+    "code": "ms",
+    "text": "Jus oren segar"
+  },
+  {
+    "code": "mt",
+    "text": "Meraq tal-larinġ frisk"
+  },
+  {
+    "code": "nb",
+    "text": "Fersk appelsinjuice"
+  },
+  {
+    "code": "pa",
+    "text": "ਤਾਜ਼ਾ ਸੰਤਰੇ ਦਾ ਰਸ"
+  },
+  {
+    "code": "pl",
+    "text": "Świeży sok pomarańczowy"
+  },
+  {
+    "code": "ro",
+    "text": "Suc proaspăt de portocale"
+  },
+  {
+    "code": "ru",
+    "text": "Свежевыжатый апельсиновый сок"
+  },
+  {
+    "code": "sk",
+    "text": "Čerstvá pomarančová šťava"
+  },
+  {
+    "code": "sl",
+    "text": "Svež pomarančni sok"
+  },
+  {
+    "code": "sq",
+    "text": "Lëng portokalli i freskët"
+  },
+  {
+    "code": "sr",
+    "text": "Свеж сок од поморанџе"
+  },
+  {
+    "code": "sv",
+    "text": "Färsk apelsinjuice"
+  },
+  {
+    "code": "tl",
+    "text": "Sariwang katas ng kahel"
+  },
+  {
+    "code": "tr",
+    "text": "Taze portakal suyu"
+  },
+  {
+    "code": "uk",
+    "text": "Свіжий апельсиновий сік"
+  },
+  {
+    "code": "ur",
+    "text": "تازہ مالٹے کا رس"
+  },
+  {
+    "code": "vi",
+    "text": "Nước cam tươi"
+  },
+  {
+    "code": "zh-CN",
+    "text": "鲜榨橙汁"
+  },
+  {
+    "code": "zh-TW",
+    "text": "鮮榨柳橙汁"
+  }
 ]

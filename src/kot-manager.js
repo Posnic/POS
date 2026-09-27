@@ -859,6 +859,7 @@ class KOTManager {
     try {
       const f = this._ticketFields(sale, printKind, kotNumber);
       if (!f) return null;
+      const itemLanguage = (require('./device-preferences').get('item_print_languages') || {}).kot || '';
       return renderKitchenTicket(
         {
           title: f.duplicate ? 'DUPLICATE KOT' : f.title,
@@ -873,7 +874,7 @@ class KOTManager {
           deliverTo: f.deliverTo,
           note: f.orderNote,
           items: f.items.map((it) => ({
-            name: it.item_name || it.name || it.product_name || it.itemName || '',
+            name: require('./item-localization').name(it, itemLanguage) || it.product_name || it.itemName || '',
             quantity: it.item_quantity ?? it.quantity ?? it.qty ?? 1,
             /* The note a waiter typed. `description` is the catalogue
                sentence and must never reach a cook - see escpos-kot.js. */
@@ -1344,8 +1345,9 @@ class KOTManager {
       orderNote, deliverTo, saleIdDisplay, items, isCancelled,
     } = this._ticketFields(sale, printKind, kotNumber);
 
+    const itemLanguage = (require('./device-preferences').get('item_print_languages') || {}).kot || '';
     const itemsHtml = items.map(it => {
-      const name = it.item_name || it.name || it.product_name || it.itemName || '';
+      const name = require('./item-localization').name(it, itemLanguage) || it.product_name || it.itemName || '';
       const qty  = it.item_quantity || it.quantity || it.qty || it.item_qty || 1;
       /* The note only; the catalogue sentence is not an instruction. */
       const desc = it.item_note || it.item_description || it.desc || '';

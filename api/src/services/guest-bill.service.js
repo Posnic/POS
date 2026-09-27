@@ -53,6 +53,7 @@ function snapshotFrom(sales, branch, table) {
       lines.push({
         id: String(sale._id) + ':' + i,
         name: item.name,
+        ...require('../utils/item-localization').snapshot(item),
         quantity: Number(item.qty),
         components: parts,
         amountMinor: parts.reduce((n, c) => n + c.minor, 0),
@@ -101,6 +102,7 @@ function billForGuest(snapshot, guest, branch, sale, batchId) {
     ],
     items: guest.lines.map((line) => ({
       name: line.name,
+      ...require('../utils/item-localization').snapshot(line),
       qty:
         line.weight === line.weightTotal
           ? String(line.quantity)

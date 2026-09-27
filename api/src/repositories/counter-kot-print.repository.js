@@ -15,6 +15,7 @@ function ticket(sale) {
   const pickItems = (items) =>
     (items || []).map((item) => ({
       item_name: String(item.item_name || item.name || ''),
+      ...require('../utils/item-localization').snapshot(item),
       item_quantity: item.item_quantity ?? item.quantity ?? 1,
       item_note: String(item.item_note || item.item_description || item.note || ''),
       spice_level: item.spice_level ?? item.spice,

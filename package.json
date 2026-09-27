@@ -97,6 +97,7 @@
       "src/handset-slots.js",
       "src/till-stays-awake.js",
       "src/kot-job-key.js",
+      "src/item-localization.js",
       "src/waiting-order-policy.js",
       "src/kitchen-screen.js",
       "src/kitchen-announce.js",
@@ -195,7 +196,23 @@
       "src/scale-parser.js",
       "src/essae-weight-reader.js",
       "src/pin-lock.js",
-      "src/pin-lock-ipc.js"
+      "src/pin-lock-ipc.js",
+      "src/fonts/NotoSansBengali.ttf",
+      "src/fonts/NotoSansBengali-OFL.txt",
+      "src/fonts/NotoSansGujarati.ttf",
+      "src/fonts/NotoSansGujarati-OFL.txt",
+      "src/fonts/NotoSansGurmukhi.ttf",
+      "src/fonts/NotoSansGurmukhi-OFL.txt",
+      "src/fonts/NotoSansHebrew.ttf",
+      "src/fonts/NotoSansHebrew-OFL.txt",
+      "src/fonts/NotoSansJP.ttf",
+      "src/fonts/NotoSansJP-OFL.txt",
+      "src/fonts/NotoSansKR.ttf",
+      "src/fonts/NotoSansKR-OFL.txt",
+      "src/fonts/NotoSansSC.ttf",
+      "src/fonts/NotoSansSC-OFL.txt",
+      "src/fonts/NotoSansTC.ttf",
+      "src/fonts/NotoSansTC-OFL.txt"
     ],
     "extraResources": [
       {

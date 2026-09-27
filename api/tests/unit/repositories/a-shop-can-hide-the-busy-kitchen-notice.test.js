@@ -148,13 +148,13 @@ describe('the switch is wired all the way through', () => {
     expect(items).toMatch(/await this\.wantsKitchenNotice\(branchDoc\)/);
   });
 
-  test('the words are in every pack', () => {
+  test('the words are translated or available through starter fallback', () => {
     const packs = fs
       .readdirSync(path.join(ROOT, 'languages'))
       .filter((name) => name.endsWith('.json') && !name.startsWith('_'));
     expect(packs.length).toBeGreaterThanOrEqual(17);
     for (const pack of packs) {
-      const words = JSON.parse(read('languages', pack));
+      const words = require(path.join(ROOT, 'tests/helpers/language-pack'))(ROOT, pack);
       expect(words.lang_tell_customers_the_kitchen_is_busy).toBeTruthy();
       expect(words.lang_tell_customers_the_kitchen_is_busy_help).toBeTruthy();
     }

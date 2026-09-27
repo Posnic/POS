@@ -6,6 +6,11 @@ const { toJSON, paginate } = require('./plugins');
 const itemSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
+    default_language: { type: String, default: '' },
+    translations: {
+      type: [{ _id: false, locale: String, name: String, description: String }],
+      default: [],
+    },
     barcode_id: String,
     sku: String,
     category_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
@@ -235,6 +240,8 @@ class ItemModel {
   static fields = {
     _id: { type: 'ObjectId', select: true, name: 'id' },
     name: { type: 'String', select: true },
+    default_language: { type: 'String', select: true },
+    translations: { type: 'Array', select: true },
     itemid: { type: 'String', select: true },
     barcode_id: { type: 'String', select: true },
     /*

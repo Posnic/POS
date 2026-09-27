@@ -54,6 +54,32 @@ test('invoice, quote and PDF report print actions send the exact PDF to the desk
   assert.deepEqual(p.sent, [], 'desktop PDFs must not embed a second automatic print action');
 });
 
+test('menu printing carries its paper size and does not borrow the receipt printer', async () => {
+  const sent = [];
+  const p = page({ printer: { printPdf: async (...args) => { sent.push(args); return { success: true }; } } });
+  await p.PosnicPro.printPdfDocument(p.doc, 'menu', 'Allow pop-ups', 'menu', 'a5');
+  assert.equal(sent[0][1], 'menu');
+  assert.equal(sent[0][2], 'a5');
+  const source = read('src/hardware-ipc.js');
+  const start = source.indexOf("  ipcMain.handle('printer:print-pdf'");
+  const end = source.indexOf('  // Preferences Handlers', start);
+  let handler;
+  const profiles = [];
+  vm.runInNewContext(source.slice(start, end), {
+    ipcMain: { handle: (_name, fn) => { handler = fn; } },
+    BrowserWindow: { fromWebContents: () => null },
+    hardwareManager: { listPrinters: async () => { throw new Error('Menu must open a chooser'); } },
+    require: (name) => name === './device-preferences' ?
+      { documentPrintSettings: () => ({ invoice: { printerName: 'Receipt printer' } }) } :
+      { printPdfDocument: async (_bytes, options) => { profiles.push(options); return { success: true }; } }
+  });
+  await handler({ sender: {} }, pdf, 'menu', 'a5');
+  await handler({ sender: {} }, pdf, 'menu', 'invalid');
+  assert.equal(profiles[0].paperSize, 'a5');
+  assert.equal(profiles[0].printerName, undefined);
+  assert.equal(profiles[1].paperSize, 'a4');
+});
+
 test('a desktop print failure is reported without opening a popup or printing again', async () => {
   for (const printPdf of [async () => ({ success: false }), async () => { throw new Error('offline'); }]) {
     const p = page({ printer: { printPdf } });
@@ -210,7 +236,7 @@ test('PDF window cancellation and loading errors close the window and clean up',
 });
 
 test('the PDF bridge is registered through guarded IPC and shipped in the desktop package', () => {
-  assert.match(read('src/preload.js'), /printPdf:\s*\(bytes, kind\) => ipcRenderer.invoke\('printer:print-pdf', bytes, kind\)/);
+  assert.match(read('src/preload.js'), /printPdf:\s*\(bytes, kind, paperSize\) => ipcRenderer.invoke\('printer:print-pdf', bytes, kind, paperSize\)/);
   const ipc = read('src/hardware-ipc.js');
   assert.match(ipc, /ipcMain = require\('\.\/ipc-guard'\).guard\(rawIpcMain\)/);
   assert.match(ipc, /ipcMain.handle\('printer:print-pdf'[\s\S]*?require\('\.\/print-pdf'\).printPdfDocument\(bytes/);

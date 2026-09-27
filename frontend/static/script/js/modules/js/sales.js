@@ -1132,7 +1132,7 @@
         var lineItemTax = params.tax;
         var lineItemTaxType = params.tax_type;
         var id = params.id ? params.id : params.item_id;
-        var item_name = params.item_name ? params.item_name : params.name;
+        var item_name = PosnicPro.itemName ? PosnicPro.itemName(params) : (params.item_name || params.name);
         /*
          * A LINE WITH NO NOTE HAS NO NOTE.
          *
@@ -1346,7 +1346,7 @@
         var saleEditIcon = (PosnicPro.local.get('sale_quick_edit') === 'disable') ? '' :
             '<a href="javascript:void(0)" class="sale-line-act sale-line-edit" data-id="' + id + '" title="Edit price, qty, discount, tax" data-t-title="lang_edit_price_qty_discount_tax"><i class="feather icon-edit-2"></i></a>';
         var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
-            '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + PosnicPro.escapeHtml(item_name) + '" ' + colWidth + '>' + item_name + inlineNote + '</td>' +
+            '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + PosnicPro.escapeHtml(item_name) + '" ' + colWidth + '>' + PosnicPro.escapeHtml(item_name) + inlineNote + '</td>' +
             '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
             '    <td name ="addSalesLineItemUnit" id="addSalesLineItemUnit_' + id + '" class="text-center">' + item_unit + '</td>' +
             '    <td name ="addSalesLineItemPrice" id="addSalesLineItemPrice_' + id + '" class="font_size14" ' + kotHideStyle + '>' + mrpPrice.toFixed(2) + inlinePrice + '</td>' +
@@ -1435,6 +1435,7 @@
             $("#" + row + '').removeClass('table-highlight-row');
         }, 500);
 
+        $('#addSalesLineItemName_' + id).data('itemText', params).data('originalName', params.item_name || params.name || '');
         $('#sales_new_item_name').val('');
         /*Line Total Calculation using Below Function Call*/
         if (PosnicPro.sales.SaleAction !== 'return') {
@@ -3918,7 +3919,8 @@ PosnicPro.sales.addSale = {
                     sale_inline_item_price: $('#saleInlineItemPrice_' + itemid).text(),
                     sale_inline_discount_value: $('#saleInlineDiscount_' + itemid).text(),
                     sale_inline_discount_pervalue: $('#saleInlineDiscountPer_' + itemid).text(),
-                    item_name: $('#addSalesLineItemName_' + itemid).text(),
+                    item_name: $('#addSalesLineItemName_' + itemid).data('originalName') || $('#addSalesLineItemName_' + itemid).text(),
+                    ...(window.PosnicItemText ? window.PosnicItemText.snapshot($('#addSalesLineItemName_' + itemid).data('itemText')) : {}),
                     item_price: $('#addSalesLineItemPrice_' + itemid).text(),
                     item_unit: $('#addSalesLineItemUnit_' + itemid).text(),
                     item_discount: $('#addSalesLineDiscountAmount_' + itemid).text(),
@@ -4339,7 +4341,8 @@ PosnicPro.sales.editSale = {
 
                 return {
                     item_status: $('#salesOrderType_' + itemid).text(),
-                    item_name: $('#addSalesLineItemName_' + itemid).text(),
+                    item_name: $('#addSalesLineItemName_' + itemid).data('originalName') || $('#addSalesLineItemName_' + itemid).text(),
+                    ...(window.PosnicItemText ? window.PosnicItemText.snapshot($('#addSalesLineItemName_' + itemid).data('itemText')) : {}),
                     item_unit: $('#addSalesLineItemUnit_' + itemid).text(),
                     item_price: $('#addSalesLineItemSellingPrice_' + itemid).text(),
                     item_discount: $('#addSalesLineDiscountAmount_' + itemid).text(),
@@ -4473,7 +4476,8 @@ PosnicPro.sales.editSale = {
                     sale_inline_discount_pervalue: $("#saleInlineDiscountPer_" + itemid).text(),
                     sale_inline_discount_value: $("#saleInlineDiscount_" + itemid).text(),
                     item_status: $('#salesOrderType_' + itemid).text(),
-                    item_name: $('#addSalesLineItemName_' + itemid).text(),
+                    item_name: $('#addSalesLineItemName_' + itemid).data('originalName') || $('#addSalesLineItemName_' + itemid).text(),
+                    ...(window.PosnicItemText ? window.PosnicItemText.snapshot($('#addSalesLineItemName_' + itemid).data('itemText')) : {}),
                     item_unit: $('#addSalesLineItemUnit_' + itemid).text(),
                     item_price: $('#addSalesLineItemPrice_' + itemid).text(),
                     item_discount: $('#addSalesLineDiscountAmount_' + itemid).text(),
@@ -4891,7 +4895,8 @@ PosnicPro.sales.holdSale = {
                 return {
                     return: false,
                     item_status: 'Hold',
-                    item_name: $('#addSalesLineItemName_' + itemid).text(),
+                    item_name: $('#addSalesLineItemName_' + itemid).data('originalName') || $('#addSalesLineItemName_' + itemid).text(),
+                    ...(window.PosnicItemText ? window.PosnicItemText.snapshot($('#addSalesLineItemName_' + itemid).data('itemText')) : {}),
                     item_price: $('#addSalesLineItemPrice_' + itemid).text(),
                     item_discount: $('#addSalesLineDiscountAmount_' + itemid).text(),
                     item_discount_percentage: $('#addSalesLineDiscountPercentage_' + itemid).text(),
@@ -7192,7 +7197,7 @@ PosnicPro.sales.itemsMenu = {
                             app = app + PosnicPro.sales.itemsMenu._familyTile(familyRows, currency);
                             continue;
                         }
-                        var list_item_name = getItemdata[i]['item_name'] ? getItemdata[i]['item_name'] : getItemdata[i]['name'];
+                        var list_item_name = PosnicPro.itemName ? PosnicPro.itemName(getItemdata[i]) : (getItemdata[i].item_name || getItemdata[i].name);
                         // the name reaches two attributes and a text node; escape
                         // once. It used to be truncated at 30 chars in JS, which is
                         // why the two-line CSS clamp had nothing to wrap.
@@ -10195,7 +10200,8 @@ PosnicPro.quotes = {
             if (!itemid) { return null; }
             return {
                 item_id: $('#addSalesLineItemId_' + itemid).text(),
-                item_name: $('#addSalesLineItemName_' + itemid).text(),
+                item_name: $('#addSalesLineItemName_' + itemid).data('originalName') || $('#addSalesLineItemName_' + itemid).text(),
+                    ...(window.PosnicItemText ? window.PosnicItemText.snapshot($('#addSalesLineItemName_' + itemid).data('itemText')) : {}),
                 barcode_id: $('#addSalesLineItemBarcodeId_' + itemid).text(),
                 qty: parseFloat($('#touchsale_item_qty' + itemid).val()) || 1,
                 unit_price: parseFloat(String($('#addSalesLineItemPrice_' + itemid).text()).replace(/,/g, '')) || 0
@@ -11133,7 +11139,7 @@ $(function () {
                         let currentDate = new Date().getTime(currentDateTimeCentralTimeZone);
                         let items_expiry_date = dataItem.items_expiry_date;
                         if (items_expiry_date >= currentDate || items_expiry_date === null || items_expiry_date === '') {
-                            suggestions.push({ "value": dataItem.item_name, "data": dataItem });
+                            suggestions.push({ "value": PosnicPro.itemName ? PosnicPro.itemName(dataItem) : dataItem.item_name, "data": dataItem });
                         }
                     });
                 } else {

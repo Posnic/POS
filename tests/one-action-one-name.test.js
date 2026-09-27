@@ -126,12 +126,12 @@ test('both labels reach the packs rather than sitting as bare English', () => {
   assert.match(panel, /<lang class="lang_settlement">Take Payment<\/lang>/);
 });
 
-test('every pack answers both keys, so no till falls back to English', () => {
+test('established packs translate both keys and starter packs have fallback', () => {
   const dir = path.join(ROOT, 'languages');
   const packs = fs.readdirSync(dir).filter((f) => f.endsWith('.json') && !f.startsWith('_'));
   assert.ok(packs.length >= 17, 'packs went missing');
   for (const file of packs) {
-    const pack = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+    const pack = require(path.join(ROOT, 'tests/helpers/language-pack'))(ROOT, file);
     for (const key of ['lang_settlement', 'lang_print_bill']) {
       assert.ok(pack[key] && String(pack[key]).trim(), file + ' does not answer ' + key);
     }

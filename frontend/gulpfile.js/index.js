@@ -227,8 +227,8 @@ function buildLangPacks(cb) {
         const serverDir = pathx.join(process.cwd(), '..', 'languages', 'server');
         if (fsx.existsSync(serverDir)) {
             for (const file of fsx.readdirSync(serverDir)) {
-                if (!/^[a-z]{2}[.]json$/.test(file)) continue;
-                const lang = file.slice(0, 2);
+                if (!/^[a-z]{2}(?:-[A-Za-z]{2,4})?[.]json$/.test(file)) continue;
+                const lang = file.slice(0, -5);
                 let says;
                 try {
                     says = JSON.parse(fsx.readFileSync(pathx.join(serverDir, file), 'utf8'));
@@ -277,6 +277,8 @@ function buildLangPacks(cb) {
         const list = shippedLanguages.map((l) => {
             const entry = { code: l.code, name: l.name, flag: l.flag, reviewed: !!l.reviewed };
             if (l.dir) entry.dir = l.dir;
+            if (l.englishName) entry.englishName = l.englishName;
+            if (l.stage) entry.stage = l.stage;
             if (l.code === 'en') { entry.coverage = 100; return entry; }
             if (used) {
                 const dict = packs[l.code] || {};

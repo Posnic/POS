@@ -19,7 +19,9 @@
             ? currentCart[existingIndex]
             : {
                 id: String(product.id),
-                name: product.name,
+                name: product.original_name || product.name,
+                ...(product.translations ? { default_language: product.default_language || '',
+                    translations: product.translations.filter(row => row.name).map(row => ({locale: row.locale, name: row.name})) } : {}),
                 img: product.img,
                 price: product.price,
                 tax_price: product.tax_price,

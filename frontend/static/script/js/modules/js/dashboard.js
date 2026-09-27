@@ -838,7 +838,8 @@ function posnicLanguageStyling(code) {
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (list) {
             if (!Array.isArray(list) || !list.length) return;
-            menu.innerHTML = list.map(function (l) {
+            menu.innerHTML = '<div class="px-3 py-2"><input type="search" class="form-control form-control-sm" data-language-search></div>'
+                + '<div data-language-options style="max-height:55vh;overflow-y:auto">' + list.map(function (l) {
                 /*
                  * An unreviewed language says so. "beta" is the one word every
                  * script here reads, and the tooltip carries the number a
@@ -862,8 +863,35 @@ function posnicLanguageStyling(code) {
                 return '<a class="dropdown-item" href="javascript:void(0)" data-code="' + l.code + '"'
                     + ' data-value="' + l.name + '"' + title + '>'
                     + '<i class="flag flag-icon-' + (l.flag || 'us') + ' flag-icon-squared"></i> '
-                    + '<bdi>' + l.name + '</bdi>' + note + '</a>';
-            }).join('');
+                    + '<bdi>' + l.name + '</bdi>' + note
+                    + (typeof l.coverage === 'number' ? ' <small class="text-muted">' + l.coverage + '%</small>' : '') + '</a>';
+            }).join('') + '</div><p class="px-3 py-2 mb-0" data-language-empty hidden></p>';
+            var search = menu.querySelector('[data-language-search]');
+            search.placeholder = PosnicPro.i18n.t('lang_search_languages', 'Search languages');
+            search.setAttribute('aria-label', search.placeholder);
+            search.setAttribute('data-t-placeholder', 'lang_search_languages');
+            search.setAttribute('data-t-aria-label', 'lang_search_languages');
+            var empty = menu.querySelector('[data-language-empty]');
+            empty.textContent = PosnicPro.i18n.t('lang_no_languages_found', 'No languages found');
+            empty.setAttribute('data-t', 'lang_no_languages_found');
+            function foldLanguage(text) {
+                return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            }
+            search.addEventListener('click', function (event) { event.stopPropagation(); });
+            search.addEventListener('keydown', function (event) {
+                if (event.key !== 'Escape') event.stopPropagation();
+            });
+            search.addEventListener('input', function () {
+                var query = foldLanguage(search.value.trim());
+                var shown = 0;
+                menu.querySelectorAll('a[data-code]').forEach(function (row, i) {
+                    var language = list[i];
+                    var matches = foldLanguage(language.name + ' ' + (language.englishName || '') + ' ' + language.code).indexOf(query) !== -1;
+                    row.style.display = matches ? '' : 'none';
+                    if (matches) shown++;
+                });
+                empty.hidden = shown !== 0;
+            });
 
             /* The label and the type sizes follow the SETTLED language - after
                the first-run detection in PosnicPro.i18n has had its say. */
@@ -902,7 +930,7 @@ $('#change_language').on('click', 'a', function () {
      * cached older header cannot break the switcher on the first load after an
      * update.
      */
-    var code = /^[a-z]{2}$/.test(nav_id) ? nav_id
+    var code = /^[a-z]{2}(?:-[A-Za-z]{2,4})?$/.test(nav_id) ? nav_id
         : (/^([a-z]{2})_/.test(nav_id) ? nav_id.slice(0, 2) : 'en');
     PosnicPro.i18n.change(code).then(function () { posnicLanguageStyling(code); });
 });
