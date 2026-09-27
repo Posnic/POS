@@ -1,0 +1,94 @@
+{
+  "provider": "wix",
+  "catalog_version": "v3",
+  "product": {
+    "id": "SYNTH-WIX-PROD-1001",
+    "name": "Classic T-Shirt",
+    "options": [
+      {
+        "name": "Size",
+        "choices": [
+          "Small",
+          "Large"
+        ]
+      },
+      {
+        "name": "Color",
+        "choices": [
+          "Red",
+          "Blue"
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "id": "SYNTH-WIX-VAR-1001",
+        "choices": {
+          "Size": "Small",
+          "Color": "Red"
+        },
+        "sku": "SYNTH-SKU-1001",
+        "barcode": "SYNTH-BC-1001",
+        "expected_posnic": {
+          "variant_parent_name": "Classic T-Shirt",
+          "variant_axis": "Variant",
+          "variant_value": "Small - Red",
+          "itemid": "SYNTH-SKU-1001",
+          "barcode_id": "SYNTH-BC-1001",
+          "review": false
+        }
+      },
+      {
+        "id": "SYNTH-WIX-VAR-1002",
+        "choices": {
+          "Size": "Small",
+          "Color": "Blue"
+        },
+        "sku": "SYNTH-SKU-1002",
+        "barcode": null,
+        "expected_posnic": {
+          "variant_parent_name": "Classic T-Shirt",
+          "variant_axis": "Variant",
+          "variant_value": "Small - Blue",
+          "itemid": "SYNTH-SKU-1002",
+          "barcode_id": null,
+          "review": false
+        }
+      },
+      {
+        "id": "SYNTH-WIX-VAR-1003",
+        "choices": {
+          "Size": "Large",
+          "Color": "Red"
+        },
+        "sku": null,
+        "barcode": "SYNTH-BC-1003",
+        "expected_posnic": {
+          "variant_parent_name": "Classic T-Shirt",
+          "variant_axis": "Variant",
+          "variant_value": "Large - Red",
+          "itemid": null,
+          "barcode_id": "SYNTH-BC-1003",
+          "review": true
+        }
+      },
+      {
+        "id": "SYNTH-WIX-VAR-1004",
+        "choices": {
+          "Size": "Large",
+          "Color": "Blue"
+        },
+        "sku": null,
+        "barcode": null,
+        "expected_posnic": {
+          "variant_parent_name": "Classic T-Shirt",
+          "variant_axis": "Variant",
+          "variant_value": "Large - Blue",
+          "itemid": null,
+          "barcode_id": null,
+          "review": true
+        }
+      }
+    ]
+  }
+}
