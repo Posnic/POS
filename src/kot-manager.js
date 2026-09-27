@@ -351,10 +351,10 @@ class KOTManager {
         _deliveryKey: key, _printKind: job.type === 'modified' ? 'edit' : job.type }, printers, false, true);
       if (key) printLedger.settle(key, _allPrinted(counterResults), _firstReason(counterResults));
       if (!counterResults?.length || counterResults.some((r) => r.status !== 'success')) {
-        return { available: true, success: false, error: _firstReason(counterResults) || 'The kitchen printer did not confirm printing.' };
+        return { available: true, success: false, pending: !!counterResults?.some(r => r.status === 'pending'), status: counterResults?.find(r => r.printStatus)?.printStatus, error: _firstReason(counterResults) || 'The kitchen printer did not confirm printing.' };
       }
     }
-    return { available: true, success: true };
+    return { available: true, success: true, status: 'Sent to printer' };
   }
 
   async reprint(logEntry) {
@@ -928,9 +928,10 @@ class KOTManager {
   async _deliverCopy(sale, jobs, index, via, send) {
     const job = jobs[index];
     const key = sale._deliveryKey;
+    const windowsTracked = via === 'bytes' && process.platform === 'win32' && typeof this.hardware?.getWindowsPrintQueue === 'function';
     if (printLedger.deliveryPlan(key)) {
       if (job.state === 'printed') return { name: job.name, copy: job.copy, status: 'success', cached: true, via };
-      if (!printLedger.beginDelivery(key, index)) return {
+      if (!windowsTracked && !printLedger.beginDelivery(key, index)) return {
         name: job.name, copy: job.copy, status: 'pending', deferred: true, via,
         reason: job.state === 'attempted' ? 'Previous print outcome unknown. Check the printer before reprinting.' : 'Waiting to retry failed printer',
       };
@@ -942,7 +943,7 @@ class KOTManager {
     const ok = !!result?.success;
     const reason = ok ? '' : (result?.error || result?.reason || 'Printer did not confirm printing');
     printLedger.finishDelivery(key, index, ok, reason);
-    return { name: job.name, copy: job.copy, status: ok ? 'success' : 'failed', reason, ms: Date.now() - started, via };
+    return { name: job.name, copy: job.copy, status: ok ? 'success' : (result?.pending ? 'pending' : 'failed'), reason, ms: Date.now() - started, via, jobId: result?.jobId, printStatus: result?.status };
   }
 
   async _printRaw(sale, printKind, kotNumber, printerNames) {
@@ -951,12 +952,14 @@ class KOTManager {
     // duplicate a copy already handed to another printer.
     const layouts = jobs.map(job => this._rawTicket(sale, printKind, kotNumber, columnsFor(job.pageSize)));
     if (!jobs.length || layouts.some(bytes => !bytes)) return null;
+    const requestId = sale._deliveryKey || (sale._windowsPrintRequest ||= crypto.randomUUID());
     const results = [];
     for (let index = 0; index < jobs.length; index += 1) {
       const job = jobs[index];
       results.push(await this._deliverCopy(sale, jobs, index, 'bytes', () =>
         this.hardware.sendRawToPrinter(job.name, layouts[index], `Posnic KOT #${kotNumber}` +
-          (job.of > 1 ? ` (${job.copy}/${job.of})` : ''))));
+          (job.of > 1 ? ` (${job.copy}/${job.of})` : ''),
+          { jobId: `kot:${requestId}:${index}` })));
     }
     return results;
   }
