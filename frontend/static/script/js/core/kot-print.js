@@ -93,7 +93,7 @@
                 catch (error) { if (action !== 'release' || error.status !== 409) throw error; }
             }
             active = null; clearInterval(leaseTimer); remember(); closeDialog();
-            feedback(action === 'confirm' ? PosnicPro.i18n.t('lang_kot_print_printed', 'KOT printed.') : PosnicPro.i18n.t('lang_kot_print_pending', 'KOT returned to the kitchen queue.'));
+            feedback(action === 'confirm' ? PosnicPro.i18n.t('lang_sent_to_printer', 'Sent to printer') : PosnicPro.i18n.t('lang_kot_print_pending', 'KOT returned to the kitchen queue.'));
         } catch (error) { feedback(error.message, true); }
         finally { busy = false; setTimeout(drain, 0); }
     }
@@ -118,8 +118,11 @@
             // sending any bytes, including when the cashier chooses to retry.
             if (active.token) await api(active.id, { action: 'renew', token: active.token });
             var kot = window.electronAPI && window.electronAPI.kot;
+            // Keep an explicitly requested copy's identity across retries too.
+            if (!active.sale._windowsPrintRequest) active.sale._windowsPrintRequest = active.token || window.crypto.randomUUID();
             var result = kot && kot.printTicket ? await kot.printTicket(active.sale) : { available: false };
             if (result.available === false) { await browserPrint(active.sale); busy = false; confirmation(); return; }
+            if (result.pending) { busy = false; feedback(result.error || result.status || 'Queued'); return; }
             if (!result.success) throw new Error(result.error || PosnicPro.i18n.t('lang_kot_print_failed', 'Could not print the KOT.'));
             busy = false; await finish('confirm');
         } catch (error) { busy = false; confirmation(error.message); }

@@ -175,6 +175,20 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   });
 
   // Printer Handlers
+  ipcMain.handle('printer:recovery-status', () => {
+    const queue = hardwareManager.getWindowsPrintQueue();
+    return queue ? { supported: true, bindings: queue.bindings,
+      health: [...queue.health.values()].map(item => item.value), jobs: queue.list() } : { supported: false };
+  });
+  ipcMain.handle('printer:recovery-configure', async (_event, printer, binding) => {
+    const queue = hardwareManager.getWindowsPrintQueue();
+    if (!queue) return { success: false, error: 'Windows only' };
+    if (!(await hardwareManager.listPrinters({ fresh: true })).some(item => item.name === printer)) return { success: false, error: 'Printer queue not found' };
+    try {
+      queue.configure(printer, binding || {});
+      return { success: true };
+    } catch (error) { return { success: false, error: error.message }; }
+  });
   /* Hardware Manager's chooser, and anything else asking a person to pick:
      always the real list, never a remembered one. */
   ipcMain.handle('printer:list', async () => {
@@ -338,6 +352,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         return raster;
       }
 
+      const requestId = options.jobId || 'receipt:' + require('crypto').createHash('sha256').update(JSON.stringify(sale || {})).digest('hex');
       const results = [];
       for (const target of targets) {
         /* Rendered per target: an 80mm roll is 48 columns and a 58mm roll is
@@ -366,7 +381,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
             + (target.copies > 1 ? ` (${copy + 1}/${target.copies})` : '');
           /* eslint-disable-next-line no-await-in-loop -- printers are serial
              devices; two jobs sent at once interleave on the same roll. */
-          const r = await hardwareManager.sendRawToPrinter(target.name, bytes, label);
+          const r = await hardwareManager.sendRawToPrinter(target.name, bytes, label, { jobId: requestId + ":" + targets.indexOf(target) + ":" + copy });
           results.push({ printer: target.name || '(default)', copy: copy + 1, sent: bytes.length, ...r });
         }
       }
@@ -398,6 +413,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         ms: Date.now() - startedAt,
         printers: results.map((r) => ({
           name: r.printer,
+          jobId: r.jobId,
           copy: r.copy,
           status: r.success ? 'success' : 'failed',
           reason: r.success ? undefined : (r.error || 'unknown'),
@@ -407,6 +423,9 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
 
       return {
         success: results.some((r) => r.success),
+        pending: results.some(r => r.pending),
+        status: results.every(r => r.success) ? 'Sent to printer' : (results.find(r => !r.success)?.status || 'Failed'),
+        jobs: results,
         bytes: sentBytes,
         printed: results.length - failed.length,
         attempted: results.length,
@@ -437,7 +456,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   });
 
   /* The day's receipts, for the Hardware Manager screen. */
-  ipcMain.handle('receipt:get-logs', (event, date) => require('./receipt-log').forDate(date));
+  ipcMain.handle('receipt:get-logs', (event, date) => hardwareManager.reconcilePrintLogs(require('./receipt-log').forDate(date)));
 
   ipcMain.handle('receipt:delete-log', (event, date, id) => ({
     success: require('./receipt-log').remove(date, id),
@@ -458,7 +477,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         cut: options.cut !== false,
       });
       return await hardwareManager.sendRawToPrinter(
-        options.printerName, bytes, options.docName || 'Posnic Report');
+        options.printerName, bytes, options.docName || 'Posnic Report', { jobId: options.jobId });
     } catch (err) {
       console.error('[Print] report render failed:', err.message);
       return { success: false, error: err.message };
@@ -838,7 +857,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
 
   ipcMain.handle('kot:get-logs', (event, date) => {
     if (!kotManager) return [];
-    return kotManager.getLogs(date);
+    return hardwareManager.reconcilePrintLogs(kotManager.getLogs(date));
   });
 
   ipcMain.handle('kot:delete-log', (event, date, logId) => {
