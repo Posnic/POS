@@ -3564,5 +3564,9 @@
   "lang_pricing_for_new_quotations": "नए कोटेशन का मूल्य निर्धारण",
   "lang_quote_base_unit_price": "मूल इकाई मूल्य",
   "lang_item_markup": "वस्तु मूल्य वृद्धि (%)",
-  "lang_hardware_manager": "हार्डवेयर प्रबंधक"
+  "lang_hardware_manager": "हार्डवेयर प्रबंधक",
+  "lang_guest_bills": "मेहमानों के बिल",
+  "lang_guest_bills_changed": "टेबल बदल गया है। ये रकम लेने से पहले अपडेट किए गए मेहमान बिल माँगें।",
+  "lang_guest_bills_unpaid": "मेहमानों के हिस्सों का भुगतान बाकी है। कैशियर के भुगतान विकल्पों से भुगतान लें और दर्ज करें।",
+  "lang_guest_bills_retry": "मेहमान बिलों के लिए फिर कोशिश करें"
 }

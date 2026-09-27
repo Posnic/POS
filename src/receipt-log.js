@@ -68,6 +68,7 @@ function printers(value) {
   return value.slice(0, MAX_PRINTERS).map((printer) => ({
     name: text(printer?.name, 128),
     status: printer?.status === 'success' ? 'success' : 'failed',
+    ...(/^[a-f0-9]{64}$/.test(printer?.jobId || '') ? { jobId: printer.jobId } : {}),
     reason: text(printer?.reason, 512) || undefined,
     bytes: Number.isFinite(Number(printer?.bytes)) ? Math.max(0, Number(printer.bytes)) : undefined,
   }));

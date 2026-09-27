@@ -104,7 +104,7 @@ test('a working till says so, on the near door, without mentioning the internet'
   assert.match(seen.rows, /Over the internet/);
   assert.match(seen.rows, /Nothing is sent outside the shop/,
     'a shop with the cloud door shut is not told that it is shut');
-  assert.match(seen.printed, /3 printed/);
+  assert.match(seen.printed, /3 sent to printer/);
   assert.equal(seen.trouble, '', 'a healthy till is showing an alarm');
 });
 
