@@ -103,6 +103,37 @@ router.post(
   bindController(salesController.requestBillPrint)
 );
 
+const guestBills = require('../controllers/guest-bill.controller');
+const guestBillLimit = require('express-rate-limit')({
+  windowMs: 60 * 1000,
+  limit: 180,
+  keyGenerator: require('../middleware/rate-limit-key').perShopKey,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { type: 'error', message: 'Too many bill requests. Please retry shortly.' },
+});
+router.get(
+  '/guestBills/table',
+  guestBillLimit,
+  optionalProtect,
+  protectOrKioskKey,
+  guestBills.read
+);
+router.get(
+  '/guestBills/latest',
+  guestBillLimit,
+  optionalProtect,
+  protectOrKioskKey,
+  guestBills.latest
+);
+router.post(
+  '/guestBills/print',
+  guestBillLimit,
+  optionalProtect,
+  protectOrKioskKey,
+  guestBills.send
+);
+
 // --- Kiosk-authenticated routes (use kioskkey header, not JWT) ---
 // Must be registered BEFORE router.use(protect)
 router.post('/kioskOrder', ensureKioskKey, bindController(salesController.kioskOrder));

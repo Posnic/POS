@@ -50,6 +50,8 @@ before(async () => {
   const express = require('express'),
     app = express();
   app.use(express.json());
+  // lgtm[js/missing-token-validation] The real csrf.protect middleware below validates
+  // credential-bound CSRF tokens before these test routes; cookie pairing is tested below.
   app.use(require('cookie-parser')());
   app.use(
     require('express-session')({
