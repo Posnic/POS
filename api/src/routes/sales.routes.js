@@ -372,6 +372,12 @@ router.post(
   protectOrKioskKey,
   bindController(salesController.getFrequentItems)
 );
+router.post(
+  '/serveKitchenItems',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.serveKitchenItems)
+);
 router.get(
   '/getListKot',
   optionalProtect,

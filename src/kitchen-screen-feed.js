@@ -68,6 +68,7 @@ async function tick({ branchId, fetchImpl } = {}) {
   try {
     const response = await doFetch(`${apiUrl()}/sales/kitchenScreenTickets`, {
       method: 'POST',
+      signal: AbortSignal.timeout(10000),
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
@@ -78,7 +79,10 @@ async function tick({ branchId, fetchImpl } = {}) {
     if (!response || !response.ok) return { ok: false, why: 'refused' };
 
     const answer = await response.json();
-    const tickets = answer && Array.isArray(answer.data) ? answer.data : [];
+    if (!answer || answer.type === 'error' || answer.status === false || !Array.isArray(answer.data)) {
+      return { ok: false, why: 'invalid response' };
+    }
+    const tickets = answer.data;
     lastGood = tickets;
     screens().setTickets(tickets);
     return { ok: true, count: tickets.length };
