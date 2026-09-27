@@ -247,7 +247,7 @@ test('the guarded desktop preview handler never contacts hardware or opens the d
     const handlers = new Map();
     const mod = { exports: {} };
     vm.runInNewContext(read('src/hardware-ipc.js'), {
-        module: mod, console: { log() {} }, global: {}, process, setTimeout() {},
+        module: mod, console: { log() {}, error() {} }, global: {}, process, setTimeout() {},
         require(name) {
             if (name === 'electron') return {
                 app: { getPath: () => path.join(__dirname, 'fixtures', 'no-user-data') },

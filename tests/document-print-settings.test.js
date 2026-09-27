@@ -40,7 +40,8 @@ function ipc(prefs, file, fileSystem = fs) {
   const end = source.indexOf('\n  /*', from);
   new Function('ipcMain', 'require', 'preferences', 'fs', '_prefsPath', source.slice(from, end))(
     { handle: (key, fn) => { handlers[key] = fn; } },
-    () => ({ documentPrintSettings, validateDocumentPrintSettings }), prefs, fileSystem, file);
+    () => ({ documentPrintSettings, validateDocumentPrintSettings,
+      saveJson: fileSystem === fs ? require('../src/device-preferences').saveJson : fileSystem.writeFileSync }), prefs, fileSystem, file);
   return handlers;
 }
 

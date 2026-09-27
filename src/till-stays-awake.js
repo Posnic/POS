@@ -1,44 +1,8 @@
 'use strict';
 
-/*
- * A TILL THAT IS ASLEEP IS A TILL THAT IS NOT PRINTING.
- *
- * Owner: "desktop app system got logged out or screen lock, then also our app
- * should keep wake."
- *
- * THE FAILURE, WHICH NEEDS NO QUEUE TO HURT
- *
- * Windows sleeps an idle machine. A restaurant till is idle for long stretches
- * between services, and the moment it sleeps the kitchen stops receiving
- * tickets and handsets stop reaching it - while the screen still says Posnic
- * and nothing anywhere reports a fault. The waiter presses send, the phone says
- * sent, and no paper comes out. Nobody finds out until somebody walks to the
- * printer.
- *
- * Two separate things are needed and they are routinely confused:
- *
- *   SLEEP is the machine suspending. It stops the process, the network and the
- *   printer. That is what powerSaveBlocker prevents.
- *
- *   THE LOCK SCREEN is not sleep. A locked Windows session keeps running
- *   everything, and printing continues. So locking the till is fine and should
- *   be encouraged - it is LOGGING OUT that kills it, because the session ends.
- *
- * WHAT THIS DELIBERATELY DOES NOT DO
- *
- * It does not keep the machine awake for ever. A till blocked from sleeping
- * around the clock runs hotter, wears its disk, and takes Windows updates at
- * whatever hour it likes. The block is held while the shop is trading and
- * released when it is not, which is the honest version of "keep awake".
- *
- * And it never blocks the DISPLAY from turning off, only the system from
- * suspending. A kitchen screen that cannot blank is a kitchen screen that burns
- * in.
- *
- * NOTHING HERE MAY THROW. Every one of these APIs is optional in a way the
- * documentation does not admit: powerSaveBlocker is absent under some remote
- * sessions, and powerMonitor emits nothing on a machine with no ACPI. A till
- * must start and sell whatever this module manages to do.
+/* Prevent automatic system sleep only while kitchen printing is active.
+ * The screen may turn off and lock normally. This cannot prevent forced sleep,
+ * Windows logout, or a USB extender/device from losing its connection.
  */
 
 /* Required lazily so the module loads and can be tested outside Electron. */
@@ -164,15 +128,21 @@ function watch() {
 }
 
 /** Everything, wrapped, for one call at startup. Never throws. */
-function start() {
+function start(enabled = false) {
   try {
-    const held = keepAwake();
+    const held = setKitchenPrinting(enabled);
     const watched = watch();
     return { held, watched };
   } catch (err) {
     console.warn('[power] did not start:', err && err.message);
     return { held: false, watched: false };
   }
+}
+
+function setKitchenPrinting(enabled) {
+  if (enabled === true) return keepAwake();
+  allowSleep();
+  return false;
 }
 
 function stop() {
@@ -184,6 +154,7 @@ function stop() {
 }
 
 module.exports = {
+  setKitchenPrinting,
   keepAwake,
   allowSleep,
   isAwakeHeld,

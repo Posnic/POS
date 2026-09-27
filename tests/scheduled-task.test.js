@@ -21,7 +21,7 @@ const path = require('path');
 const st = require('../src/scheduled-task');
 
 const ROOT = path.join(__dirname, '..');
-const MAIN = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
+const MAIN = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8').replace(/\r\n/g, '\n');
 
 test('only tasks main.js can actually run may be scheduled', () => {
   const fn = MAIN.slice(MAIN.indexOf('async function runScheduledTaskAndExit'));

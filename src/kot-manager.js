@@ -400,7 +400,7 @@ class KOTManager {
 
   async saveConfig(config) {
     try {
-      fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2), 'utf8');
+      require('./device-preferences').saveJson(this.configPath, config);
     } catch (e) {
       console.error('[KOT] Failed to save config:', e.message);
       throw e;
@@ -554,6 +554,7 @@ class KOTManager {
     this.stopPolling();
     this.config    = next;
     this.isPolling = true;
+    require('./till-stays-awake').setKitchenPrinting(true);
     console.log('[KOT] Polling started — branch:', config.branchId, '| printers:', config.printerNames);
     this._poll();
   }
@@ -577,6 +578,7 @@ class KOTManager {
     /* A note left by a nudge must not outlive the polling it was for. */
     this._pollAgain = false;
     this.isPolling = false;
+    require('./till-stays-awake').setKitchenPrinting(false);
     console.log('[KOT] Polling stopped');
   }
 

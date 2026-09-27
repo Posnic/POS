@@ -311,7 +311,17 @@
     $('word').textContent = live.length === 1 ? 'order' : 'orders';
     $('empty').hidden = live.length > 0;
 
-    var compact = live.length > (Number(cfg.compactAfter) || 8);
+    // Rotate every dish into view instead of permanently hiding it under +more.
+    var maxItems = Math.max(1, Number(cfg.maxItemsPerCard) || 3);
+    live = live.flatMap(function (ticket) {
+      var parts = [];
+      var items = ticket.items || [];
+      for (var offset = 0; offset < items.length; offset += maxItems) {
+        parts.push(Object.assign({}, ticket, {items: items.slice(offset, offset + maxItems)}));
+      }
+      return parts.length ? parts : [ticket];
+    });
+    var compact = cfg.showItems === false && live.length > (Number(cfg.compactAfter) || 8);
     var perPage = Math.max(1, (fitInfo.cards || 8) * (compact ? 2 : 1));
     var pages = Math.max(1, Math.ceil(live.length / perPage));
     if (page >= pages) page = 0;

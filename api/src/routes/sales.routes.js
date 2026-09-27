@@ -1,4 +1,5 @@
 const express = require('express');
+const { rateLimit } = require('express-rate-limit');
 const router = express.Router();
 const salesController = require('../controllers/sales.controller');
 const { protect, optionalProtect } = require('../middleware/auth');
@@ -371,6 +372,13 @@ router.post(
   optionalProtect,
   protectOrKioskKey,
   bindController(salesController.getFrequentItems)
+);
+router.post(
+  '/serveKitchenItems',
+  rateLimit({ windowMs: 60000, limit: 180, standardHeaders: true, legacyHeaders: false }),
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.serveKitchenItems)
 );
 router.get(
   '/getListKot',
