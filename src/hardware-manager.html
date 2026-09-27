@@ -387,6 +387,15 @@
               tax lines - stays in Settings, because that is a shop decision.
             -->
             <div id="receiptTab" class="tab-content active">
+                <details id="printerEnvironment" open style="padding:16px;margin-bottom:16px;background:white;border-radius:10px;">
+                    <summary>Printer readiness &amp; idle troubleshooting</summary>
+                    <p>Checks run on this computer without printing or changing system settings. A listed printer is not proof that paper will come out.</p>
+                    <div id="printerEnvironmentStatus" role="status">Checking power and printer settings…</div>
+                    <div id="printerEnvironmentChecks"></div>
+                    <h4>What to do if printing stops after idle</h4>
+                    <ol id="printerEnvironmentSteps"></ol>
+                    <p>Checks are refreshed automatically while this page is open; system results are cached for up to one minute. USB recovery controls below are available on Windows only.</p>
+                </details>
                 <details id="windowsRecovery" style="display:none;padding:16px;margin-bottom:16px;background:white;border-radius:10px;">
                     <summary>Windows printer health &amp; recovery</summary>
                     <p>Jobs stay on their chosen printer. Status “Sent to printer” means Windows released the job; check the paper to confirm output.</p>
@@ -2144,6 +2153,26 @@
             if (!window.electronAPI?.printer?.recoveryStatus) return;
             try {
                 const status = await window.electronAPI.printer.recoveryStatus();
+                const environment = status.environment;
+                const environmentStatus = document.getElementById('printerEnvironmentStatus');
+                if (environmentStatus) {
+                    environmentStatus.textContent = environment
+                        ? ({ win32: 'Windows', darwin: 'macOS', linux: 'Linux' }[environment.platform] || environment.platform) +
+                          ' · Checked ' + new Date(environment.checkedAt).toLocaleTimeString() +
+                          ' · System sleep prevention: ' + (environment.awake ? 'active for KOT' : 'not active')
+                        : 'Could not verify settings. Use your operating system’s printer and power settings.';
+                    const checks = document.getElementById('printerEnvironmentChecks'); checks.replaceChildren();
+                    (environment?.checks || []).forEach(check => {
+                        const row = document.createElement('p');
+                        row.style.whiteSpace = 'pre-wrap';
+                        row.textContent = ({ review: 'Review', unknown: 'Could not verify', info: 'Detected' }[check.status] || 'Detected') + ' — ' + check.label + ': ' + check.detail;
+                        checks.appendChild(row);
+                    });
+                    const steps = document.getElementById('printerEnvironmentSteps'); steps.replaceChildren();
+                    [...(environment?.instructions || []), ...(environment?.common || [])].forEach(message => {
+                        const row = document.createElement('li'); row.textContent = message; steps.appendChild(row);
+                    });
+                }
                 if (!status.supported) return;
                 document.getElementById('windowsRecovery').style.display = 'block';
                 wrBindings = status.bindings || {};
@@ -2164,7 +2193,11 @@
                     row.textContent = job.printer + ' | ' + job.status + (job.error ? ' - ' + job.error : '') + ' | Job ' + job.jobId.slice(0, 12) + (job.spoolerJobId ? ' | Windows ' + job.spoolerJobId : '');
                     list.appendChild(row);
                 });
-            } catch (error) { document.getElementById('wrMessage').textContent = error.message; }
+            } catch (error) {
+                document.getElementById('wrMessage').textContent = error.message;
+                const status = document.getElementById('printerEnvironmentStatus');
+                if (status) status.textContent = 'Could not check settings. Open your system printer queue and Power settings; check paper, cover and connection. ' + error.message;
+            }
         }
         async function wrSave() {
             const result = await window.electronAPI.printer.configureRecovery(document.getElementById('wrPrinter').value, {

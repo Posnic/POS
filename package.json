@@ -180,6 +180,7 @@
       "src/raw-print-service.js",
       "src/windows-print-queue.js",
       "src/windows-printer-transport.js",
+      "src/printer-environment.js",
       "src/windows-printer-health.ps1",
       "src/escpos-report.js",
       "src/preload.js",
