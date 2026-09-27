@@ -7873,27 +7873,79 @@ class SalesRepository {
    * so the honest boundary is the one that already exists: it leaves the
    * screen when the table is billed, paid or called off.
    */
-  async kitchenScreenTickets(branchId, { limit = 40 } = {}) {
+  async serveKitchenItems({ saleId, branchId, items, actor }) {
+    if (
+      !mongoose.Types.ObjectId.isValid(String(saleId)) ||
+      !mongoose.Types.ObjectId.isValid(String(branchId)) ||
+      !Array.isArray(items) ||
+      !items.length ||
+      items.length > 200
+    ) {
+      return { status: false, message: 'Invalid service request' };
+    }
+    const db = await BaseModel.getDb();
+    const collection = db.collection('sales');
+    const scope = {
+      _id: new mongoose.Types.ObjectId(String(saleId)),
+      branch_id: new mongoose.Types.ObjectId(String(branchId)),
+      sale_process: { $regex: 'KOT', $options: 'i' },
+      payment_status: { $nin: ['Paid', 'Cancelled'] },
+      order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
+      ...activeTenantFilter(),
+    };
+    const sale = await collection.findOne(scope);
+    if (!sale) return { status: false, message: 'Open order not found' };
+    const rounds = require('../helpers/kitchen-rounds').rounds;
+    const lines = rounds(sale).flatMap((round) => round.items);
+    const service = { ...(sale.kitchen_service || {}) };
+    for (const requested of items) {
+      const line = lines.find((row) => row.id === requested.id);
+      const quantity = Number(requested.quantity);
+      if (!line || !Number.isFinite(quantity) || quantity < 0 || quantity > line.quantity) {
+        return { status: false, message: 'Order changed. Refresh before marking items served.' };
+      }
+      // Absolute totals make retrying the same tap safe on slow connections.
+      if (quantity > line.served)
+        service[line.id] = { quantity, at: new Date(), by: String(actor || '') };
+    }
+    const result = await collection.updateOne(
+      {
+        ...scope,
+        changes: sale.changes === undefined ? { $exists: false } : sale.changes,
+        items: sale.items,
+        kitchen_service:
+          sale.kitchen_service === undefined ? { $exists: false } : sale.kitchen_service,
+      },
+      { $set: { kitchen_service: service } }
+    );
+    if (!result.matchedCount)
+      return { status: false, message: 'Order changed. Refresh before marking items served.' };
+    return {
+      status: true,
+      message: 'Items marked served',
+      data: rounds({ ...sale, kitchen_service: service }),
+    };
+  }
+
+  async kitchenScreenTickets(branchId) {
     try {
       const db = await BaseModel.getDb();
       const branchObjectId = mongoose.Types.ObjectId.isValid(String(branchId))
         ? new mongoose.Types.ObjectId(String(branchId))
         : branchId;
 
-      const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
       const rows = await db
         .collection('sales')
         .find(
           {
             branch_id: branchObjectId,
             sale_process: { $regex: 'KOT', $options: 'i' },
-            created_date: { $gte: todayStart },
             payment_status: { $nin: ['Paid', 'Cancelled'] },
+            order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
             ...activeTenantFilter(),
           },
           {
             sort: { created_date: 1 },
-            limit: Math.max(1, Math.min(100, limit)),
             projection: {
               sales_id: 1,
               token_id: 1,
@@ -7901,6 +7953,10 @@ class SalesRepository {
               created_date: 1,
               date: 1,
               items: 1,
+              changes: 1,
+              kitchen_service: 1,
+              bill_requested_at: 1,
+              bill_printed_at: 1,
             },
           }
         )
@@ -7909,19 +7965,7 @@ class SalesRepository {
       /* The shape the screen draws, and nothing else. A kitchen screen hangs
          where customers and staff can both see it, so prices, customers and
          phone numbers have no business travelling to it. */
-      const tickets = rows.map((sale) => ({
-        table: String(sale.table_number || ''),
-        orderNumber: String(sale.sales_id || sale.token_id || ''),
-        placedAt: new Date(sale.created_date || sale.date || Date.now()).toISOString(),
-        items: (Array.isArray(sale.items) ? sale.items : []).map((line) => ({
-          qty: Number(line.item_quantity != null ? line.item_quantity : line.quantity || 0) || 1,
-          name: String(line.item_name || line.name || ''),
-          /* The note a waiter typed. A screen hangs where customers and
-             staff can both see it, and the catalogue sentence belongs on a
-             menu, not above a fryer. */
-          note: String(line.item_note || line.item_description || '').slice(0, 80),
-        })),
-      }));
+      const tickets = rows.flatMap(require('../helpers/kitchen-rounds').tickets);
 
       return { status: true, message: 'success', data: tickets };
     } catch (error) {
@@ -9915,6 +9959,7 @@ class SalesRepository {
           dine_type: doc.dine_type || 'Dine-in',
           status: derivedStatus,
           created_at: doc.created_date || doc.date,
+          kitchen_rounds: require('../helpers/kitchen-rounds').rounds(doc),
           total_amount: doc.sales_total || doc.total || 0,
           subtotal: doc.sales_sub_total || doc.subtotal || 0,
           tax: doc.tax || 0,
@@ -13012,7 +13057,10 @@ class SalesRepository {
         status: true,
         message: docs.length ? 'Records fetched' : 'No records found',
         data: {
-          list: docs,
+          list: docs.map((sale) => ({
+            ...sale,
+            kitchen_rounds: require('../helpers/kitchen-rounds').rounds(sale),
+          })),
           total,
           per_page: limit,
           current_page: page,

@@ -7053,6 +7053,23 @@ class SalesController extends BaseController {
    * wall showed an empty list for ever, while setup mode filled itself with
    * samples and looked perfect. This is what feeds it.
    */
+  async serveKitchenItems(req, res) {
+    try {
+      const out = await require('../repositories/sale.repository').serveKitchenItems({
+        saleId: req.body.saleId,
+        branchId: req.body.branchId,
+        items: req.body.items,
+        actor: req.user?.id || req.user?._id || 'Captain',
+      });
+      return out.status
+        ? this.success(res, out.data, out.message)
+        : this.error(res, out.message, 409);
+    } catch (error) {
+      console.error('Error marking items served:', error);
+      return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
   async kitchenScreenTickets(req, res) {
     try {
       const salesRepository = require('../repositories/sale.repository');
