@@ -49,7 +49,7 @@
                     job.items.map(function (item) {
                         var note = item.item_note || item.item_description || '';
                         var spice = item.spice_level != null && item.spice_level !== '' ? String(item.spice_level) : '';
-                        return '<div class="item ' + (job.type === 'cancel' ? 'cancel' : '') + '"><div class="name"><strong>' + esc(item.item_name) + '</strong>' +
+                        return '<div class="item ' + (job.type === 'cancel' ? 'cancel' : '') + '"><div class="name"><strong>' + esc(PosnicPro.printItemName ? PosnicPro.printItemName(item, 'kot') : item.item_name) + '</strong>' +
                             (note ? '<p class="note">' + esc(note) + '</p>' : '') + (spice ? '<p class="note">' + esc(PosnicPro.i18n.t('lang_kot_print_spice', 'Spice')) + ': ' + esc(spice) + '</p>' : '') +
                             '</div><div class="qty">× ' + esc(item.item_quantity) + '</div></div>';
                     }).join('') + (sale.sales_description ? '<p>' + esc(sale.sales_description) + '</p>' : '') + '</section>';

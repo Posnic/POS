@@ -612,7 +612,13 @@
   })();
 
   function render(data) {
-    state.categories = data.categories || [];
+    state.categories = (data.categories || []).map(function (category) {
+      var items = category.items || [];
+      if (window.i18n && window.i18n.registerItems) window.i18n.registerItems(items);
+      return Object.assign({}, category, { items: items.map(function (item) {
+        return window.PosnicItemText ? window.PosnicItemText.display(item, window.i18n && window.i18n.lang) : item;
+      }) });
+    });
     state.currency = (data.store && data.store.currency) || "";
     state.flat = [];
     state.categories.forEach(function (c) {
@@ -940,7 +946,7 @@
 
         if (ok && q) {
           var hit = scoreItem(q, {
-            name: item.name,
+            name: [item.name, item.original_name].concat((item.translations || []).map(function (row) { return row.name || ''; })).join(' '),
             description: item.description,
             category: item.categoryName,
           });

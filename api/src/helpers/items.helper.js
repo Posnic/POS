@@ -5,6 +5,7 @@
 
 const { FIELD_LIMITS, ERROR_MESSAGES } = require('../constants/items.constants');
 const gtin = require('../utils/gtin');
+const itemText = require('../utils/item-localization');
 
 /**
  * Sanitize item data before persistence
@@ -16,6 +17,14 @@ const gtin = require('../utils/gtin');
  */
 const sanitizeItemData = (data = {}) => {
   const sanitized = { ...data };
+  if (Object.prototype.hasOwnProperty.call(data, 'translations')) {
+    sanitized.translations = itemText.normalize(data.translations);
+  }
+  if (Object.prototype.hasOwnProperty.call(data, 'default_language')) {
+    sanitized.default_language = itemText.locale(data.default_language);
+    if (data.default_language && !sanitized.default_language)
+      throw new Error('Choose a valid original item language.');
+  }
 
   // Remove system / immutable fields
   delete sanitized._id;

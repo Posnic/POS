@@ -581,7 +581,7 @@ PosnicPro.kot = {
                 if (kot.items && kot.items.length > 0) {
                     itemsListHtml = '<table style="width: 100%; font-size: 13px; margin-top: 10px;">';
                     kot.items.forEach(function (item, idx) {
-                        var itemName = item.item_name || '';
+                        var itemName = PosnicPro.itemName ? PosnicPro.itemName(item) : (item.item_name || '');
                         var itemQty = item.item_quantity || 0;
                         var itemDesc = item.item_description || '';
 
@@ -2187,7 +2187,7 @@ PosnicPro.kot = {
                 if (data.items && data.items.length > 0) {
                     for (var i = 0; i < data.items.length; i++) {
                         var item = data.items[i];
-                        var itemName = item.item_name || '';
+                        var itemName = PosnicPro.itemName ? PosnicPro.itemName(item) : (item.item_name || '');
                         var itemQty = item.item_quantity || 0;
 
                         itemsHtml += '<tr>' +

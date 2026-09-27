@@ -1,3 +1,4 @@
+const itemText = require('../utils/item-localization');
 // src/models/sale_model.js
 const mongoose = require('mongoose');
 const { computeLineTax } = require('../services/tax-engine');
@@ -75,6 +76,9 @@ const saleItemSchema = new mongoose.Schema(
       type: Number,
       min: 0,
     },
+
+    default_language: { type: String, default: undefined },
+    translations: { type: [{ _id: false, locale: String, name: String }], default: undefined },
 
     // PHP-compatible item-level mirror fields (from Api/src/model/sales_model.php::$itemsale)
     sale_inline_item_price: {
@@ -936,6 +940,7 @@ saleSchema.pre('save', async function () {
         item_status: src.item_status != null ? src.item_status : '',
         return: src.return === true,
         item_name: src.item_name != null ? src.item_name : '',
+        ...itemText.snapshot(src),
         item_sku: src.item_sku != null ? src.item_sku : '',
         item_price: src.item_price != null ? src.item_price : 0,
         item_discount: src.item_discount != null ? src.item_discount : 0,
@@ -2084,6 +2089,7 @@ Sale.kioskOrderModel = async function (data) {
 
       itemResponse.push({
         item_name: doc.name,
+        ...itemText.snapshot(doc),
         item_quantity: parseFloat(item.item_quantity),
         item_price: basePrice * parseFloat(item.item_quantity),
         item_base_price: basePrice,
@@ -2102,6 +2108,7 @@ Sale.kioskOrderModel = async function (data) {
         item_status: 'Add',
         return: false,
         item_name: doc.name,
+        ...itemText.snapshot(doc),
         item_sku: doc.itemid,
         item_price: sellingPrice,
         item_discount: parseFloat(discountAmount),

@@ -1,3 +1,4 @@
+const itemText = require('../utils/item-localization');
 const mongoose = require('mongoose');
 const { currentConnection } = require('../db/tenant-context');
 const { ObjectId } = require('mongodb');
@@ -4954,6 +4955,7 @@ class SalesRepository {
           item_status: 'Add',
           return: false,
           item_name: item.item_name,
+          ...itemText.snapshot(item.translations ? item : itemDoc),
           item_sku: itemDoc.itemid || itemDoc.sku || '',
           item_price: price,
           item_discount: discountAmount,
@@ -8480,6 +8482,7 @@ class SalesRepository {
           return {
             item_id: String(si.item_id || ''),
             item_name: String(si.item_name || ''),
+            ...itemText.snapshot(si),
             item_quantity: qty,
             process: 'add',
             item_code: '',
@@ -9894,6 +9897,7 @@ class SalesRepository {
           item_id: item.item_id || '',
           name: item.item_name || item.name || '',
           item_name: item.item_name || item.name || '',
+          ...itemText.snapshot(item),
           quantity: item.item_quantity || item.quantity || 1,
           item_quantity: item.item_quantity || item.quantity || 1,
           price: item.item_price || item.unit_price || 0,
@@ -10041,6 +10045,7 @@ class SalesRepository {
           changesItems.push({
             item_id: idStr,
             item_name: String(ex.item_name || ''),
+            ...itemText.snapshot(ex),
             item_quantity: qty,
             /* The typed note if the line has one. A cancellation ticket is
                read by the same cook as the order, so it follows the same rule:
@@ -10196,6 +10201,7 @@ class SalesRepository {
           changesItems.push({
             item_id: productId,
             item_name: String(itemDoc.name || item.name || ''),
+            ...itemText.snapshot(itemDoc),
             item_quantity: changeQty,
             /* From the request first: an amendment carries the note the person
                just typed, and the stored copy is the one before it. */
@@ -10289,6 +10295,7 @@ class SalesRepository {
             item_status: 'Add',
             return: false,
             item_name: itemDoc.name || item.name || '',
+            ...itemText.snapshot(itemDoc),
             item_sku: itemDoc.itemid || '',
             item_price: sellingPrice,
             item_quantity: itemQuantity,
@@ -10344,6 +10351,7 @@ class SalesRepository {
         changesItems.push({
           item_id: String(remItemId),
           item_name: String(remItemData.name || ''),
+          ...itemText.snapshot(remItemData),
           item_quantity: remQty,
           item_description: String(remItemData.description || ''),
           spice_level: spiceLevel.levelOf(remItemData.spice_level),
@@ -10835,6 +10843,7 @@ class SalesRepository {
       line: {
         item_id: itemId,
         item_name: itemDoc.name || item.item_name || '',
+        ...itemText.snapshot(itemDoc),
         name: itemDoc.name || item.item_name || '',
         quantity: qty,
         unit_price: round(baseUnitPrice),

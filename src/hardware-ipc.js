@@ -529,7 +529,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   ipcMain.handle('printer:save-document-settings', (_event, value) => {
     try {
       const settings = require('./device-preferences').validateDocumentPrintSettings(value);
-      const next = { ...preferences, receipt_printers: JSON.stringify(settings.sales),
+      const next = { ...preferences, item_print_languages: settings.itemLanguages || preferences.item_print_languages, receipt_printers: JSON.stringify(settings.sales),
         receipt_printer: settings.sales[0].name, print_width: settings.sales[0].pageSize,
         document_print_profiles: { invoice: settings.invoice, quotation: settings.quotation } };
       fs.writeFileSync(_prefsPath, JSON.stringify(next, null, 2));

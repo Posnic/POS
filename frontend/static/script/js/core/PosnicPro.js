@@ -7026,3 +7026,12 @@ $(function () {
         paint();
     }
 });
+
+/* Catalogue translations are shop data, separate from application language packs. */
+PosnicPro.itemName = function (item, language, bilingual) {
+    return window.PosnicItemText.name(item, language === undefined ? PosnicPro.i18n.code() : language, bilingual);
+};
+PosnicPro.printItemName = function (item, kind) {
+    var policy = PosnicPro.printSettings ? PosnicPro.printSettings.get('itemLanguages') : {};
+    return PosnicPro.itemName(item, policy[kind || 'receipt'] || '', kind !== 'kot' && policy.bilingual === true);
+};
