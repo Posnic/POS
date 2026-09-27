@@ -1,3 +1,4 @@
+/* global window */
 (function (root) {
   'use strict';
   function fail(message) {

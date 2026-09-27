@@ -138,7 +138,7 @@ function createService(deps = {}) {
       !/^[a-f\d]{24}$/i.test(branchId) ||
       !table ||
       table.length > 40 ||
-      /[\x00-\x1f]/.test(table)
+      Array.from(table).some((character) => character.charCodeAt(0) < 32)
     )
       throw problem('Choose a branch and table.');
     return { branchId, table };
