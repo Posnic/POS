@@ -3958,6 +3958,8 @@
                 +       '</div>'
                 +       '<div>'
                 +         field('red-' + d.id, 'Turns red after', c.redAfterMin, 'min')
+                + field('pulse-' + d.id, 'Pulse alert after', c.pulseAfterMin || 15, 'min')
+                + '<label><input type="checkbox" id="pulse-on-' + d.id + '" ' + (c.pulseAlerts !== false ? 'checked' : '') + '> Pulse very late alerts</label>'
                 +         '<div style="height:10px;"></div>'
                 +         field('dwell-' + d.id, 'Each page shows for', c.pageDwellSeconds, 'sec',
                                 'Only when there are more orders than fit.')
@@ -4027,6 +4029,8 @@
                 maxItemsPerCard:  numOr('items-' + id, 3),
                 amberAfterMin:    numOr('amber-' + id, 5),
                 redAfterMin:      numOr('red-' + id, 10),
+                pulseAfterMin:    numOr('pulse-' + id, 15),
+                pulseAlerts:      onOff('pulse-on-' + id, true),
                 pageDwellSeconds: numOr('dwell-' + id, 8)
             };
             try {

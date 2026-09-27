@@ -53,6 +53,7 @@
   }
 
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
 
   html, body {
     margin: 0;
@@ -97,6 +98,7 @@
     align-content: start;
     padding-top: var(--gap);
     min-height: 0;
+    overflow-y: auto;
   }
 
   .ticket {
@@ -116,6 +118,17 @@
   .ticket.late { border-left-color: var(--late); border-left-width: calc(var(--font) * 0.34); }
   /* Old active tickets still need to be read across the kitchen. */
   .ticket.grey { opacity: 1; }
+  .ticket.urgent { border-left: calc(var(--font) * 0.34) solid var(--late); }
+  .ticket.urgent .age { color: var(--late); font-weight: 800; }
+  .ticket.urgent .bar > i { background: var(--late); }
+  .delay-label { font-size: .55em; font-weight: 800; color: var(--warm); }
+  .late .delay-label, .urgent .delay-label { color: var(--late); }
+  .urgent .delay-label.pulse { animation: urgency-pulse 2s ease-in-out infinite; }
+  @keyframes urgency-pulse { 50% { opacity: .65; } }
+  @media (prefers-reduced-motion: reduce) { .urgent .delay-label.pulse { animation: none; } }
+  .top { flex-wrap: wrap; }
+  .table { overflow-wrap: anywhere; min-width: 0; }
+
 
   .top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--gap); }
 
@@ -235,9 +248,12 @@
   }
 
   function stateFor(mins, cfg) {
-    if (mins >= (cfg.greyAfterMin || 45)) return 'grey';
-    if (mins >= (cfg.redAfterMin || 10)) return 'late';
-    if (mins >= (cfg.amberAfterMin || 5)) return 'warm';
+    var amber = Math.max(1, Number(cfg.amberAfterMin) || 5);
+    var red = Math.max(amber, Number(cfg.redAfterMin) || 10);
+    var urgent = Math.max(red, Number(cfg.pulseAfterMin) || 15);
+    if (mins >= urgent) return 'urgent';
+    if (mins >= red) return 'late';
+    if (mins >= amber) return 'warm';
     return 'calm';
   }
 
@@ -258,9 +274,13 @@
       top.appendChild(el('span', 'table', ticket.table || ticket.orderNumber || '-'));
     }
     if (cfg.showAge !== false) {
-      top.appendChild(el('span', 'age', mins + 'm'));
+      top.appendChild(el('span', 'age', mins < 60 ? mins + 'm' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'));
     }
     node.appendChild(top);
+    if (state !== 'calm') {
+      node.appendChild(el('div', 'delay-label' + (cfg.pulseAlerts !== false ? ' pulse' : ''),
+        state === 'warm' ? 'Waiting' : state === 'late' ? 'Delayed' : 'Very late'));
+    }
 
     if (compact) {
       var n = (ticket.items || []).reduce(function (s, i) { return s + (Number(i.qty) || 1); }, 0);
@@ -311,7 +331,8 @@
 
     $('count').textContent = live.length;
     $('word').textContent = live.length === 1 ? 'order' : 'orders';
-    $('empty').hidden = live.length > 0;
+    $('empty').hidden = live.length > 0 || !!cfg._feedStatus;
+    board.hidden = live.length === 0;
 
     // Rotate every dish into view instead of permanently hiding it under +more.
     var maxItems = Math.max(1, Number(cfg.maxItemsPerCard) || 3);
@@ -324,7 +345,13 @@
       return parts.length ? parts : [ticket];
     });
     var compact = cfg.showItems === false && live.length > (Number(cfg.compactAfter) || 8);
-    var perPage = Math.max(1, (fitInfo.cards || 8) * (compact ? 2 : 1));
+    var font = Math.max(24, Math.min(Number(fitInfo.fontPx) || 40, (window.innerWidth || 1100) / 18));
+    document.documentElement.style.setProperty('--font', font + 'px');
+    var width = board.clientWidth || window.innerWidth || 1100;
+    var ceiling = Math.max(1, Math.min(Number(fitInfo.columns) || 4, Math.floor(width / (font * 12))));
+    var height = board.clientHeight || window.innerHeight || 700;
+    var rows = Math.max(1, Math.floor(height / (font * (maxItems * 1.5 + 4))));
+    var perPage = Math.max(1, Math.min((fitInfo.cards || 8) * (compact ? 2 : 1), ceiling * rows));
     var pages = Math.max(1, Math.ceil(live.length / perPage));
     if (page >= pages) page = 0;
 
@@ -354,7 +381,7 @@
      * line. The moment the kitchen fills up the ceiling applies again and
      * nothing about the busy case changes.
      */
-    var ceiling = Math.max(1, (cfg._fit && cfg._fit.columns) || 4);
+
     board.style.setProperty('--columns', String(Math.max(1, Math.min(ceiling, shown.length))));
 
     $('pager').textContent = pages > 1 ? (page + 1) + ' of ' + pages : '';
@@ -409,6 +436,7 @@
   /* The clock moves even when nothing arrives, and a ticket going from amber
      to red is the whole point of the colour. */
   setInterval(render, 15000);
+  window.addEventListener('resize', render);
 
   /* Page rotation, only ever reached when there is more than one page. */
   setInterval(function () {

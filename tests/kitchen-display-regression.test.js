@@ -75,9 +75,26 @@ test('old active tickets keep full brightness and bold dish names', () => {
  try {
   dom.window.kitchenScreen.setConfig({greyAfterMin:45,_fit:{fontPx:40,lineHeightPx:50,columns:2,cards:4}});
   dom.window.kitchenScreen.setTickets([{table:'T1',placedAt:new Date(Date.now()-120*60000).toISOString(),items:[{qty:1,name:'Soup'}]}]);
-  const ticket=dom.window.document.querySelector('.ticket.grey');
+  const ticket=dom.window.document.querySelector('.ticket.urgent');
   assert.ok(ticket);
-  assert.equal(dom.window.getComputedStyle(ticket).opacity,'1');
+  assert.notEqual(dom.window.getComputedStyle(ticket).opacity,'0.45');
   assert.equal(dom.window.getComputedStyle(ticket.querySelector('.name')).fontWeight,'700');
  } finally {dom.window.close();}
+});
+
+test('delay thresholds escalate permanently and empty-state CSS stays hidden with orders', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try {
+  dom.window.kitchenScreen.setConfig({_fit:{fontPx:40,columns:2,cards:6},pulseAlerts:false});
+  for(const [mins,state] of [[0,'calm'],[5,'warm'],[10,'late'],[15,'urgent'],[1500,'urgent']]){
+   dom.window.kitchenScreen.setTickets([{table:'T1',placedAt:new Date(Date.now()-mins*60000).toISOString(),items:[{name:'Soup',qty:1}]}]);
+   assert.ok(dom.window.document.querySelector('.ticket.'+state));
+   assert.equal(dom.window.getComputedStyle(dom.window.document.getElementById('empty')).display,'none');
+   assert.equal(dom.window.document.querySelector('.delay-label.pulse'),null);
+  }
+  dom.window.kitchenScreen.setTickets([]);
+  assert.equal(dom.window.document.getElementById('empty').hidden,false);
+  assert.equal(dom.window.getComputedStyle(dom.window.document.getElementById('board')).display,'none');
+ }finally{dom.window.close();}
 });

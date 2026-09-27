@@ -91,6 +91,8 @@ const DEFAULTS = Object.freeze({
      it is late and moves to the front. */
   amberAfterMin: 5,
   redAfterMin: 10,
+  pulseAfterMin: 15,
+  pulseAlerts: true,
   /* Switch to compact cards - table and item count only, same text size -
      rather than shrinking text, once this many tickets are live. */
   compactAfter: 8,
