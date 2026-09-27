@@ -4605,7 +4605,7 @@ PosnicPro.i18n = {
         var stored = PosnicPro.local.get('language_code');
         if (!stored) {
             var href = PosnicPro.local.get('language_herf') || '';
-            var m = /^([a-z]{2})_/.exec(href);
+            var m = /^([a-z]{2}(?:-[A-Za-z]{2,4})?)_/.exec(href);
             if (!m) {
                 /* Nothing chosen, ever. English for now, and NOT written back:
                    a stored value looks exactly like a choice, and the first-run
@@ -4637,7 +4637,7 @@ PosnicPro.i18n = {
      * t() answers as the new language rather than the one being left.
      */
     select: function (href) {
-        var m = /^([a-z]{2})_/.exec(String(href || ''));
+        var m = /^([a-z]{2}(?:-[A-Za-z]{2,4})?)_/.exec(String(href || ''));
         var code = m ? m[1] : 'en';
         PosnicPro.local.set('language_herf', href);
         PosnicPro.local.set('language_code', code);
@@ -4728,6 +4728,13 @@ PosnicPro.i18n = {
             var tag = String(prefs[i] || '').toLowerCase();
             if (!tag) continue;
             if (byCode[tag]) return byCode[tag];
+            // Match script/region variants without choosing the wrong Chinese script.
+            var aliases = { 'zh': 'zh-cn', 'zh-hans': 'zh-cn', 'zh-hans-cn': 'zh-cn',
+                'zh-sg': 'zh-cn', 'zh-hans-sg': 'zh-cn', 'zh-hant': 'zh-tw',
+                'zh-hant-tw': 'zh-tw', 'zh-hk': 'zh-tw', 'zh-mo': 'zh-tw',
+                'zh-hant-hk': 'zh-tw', 'zh-hant-mo': 'zh-tw', 'no': 'nb', 'no-no': 'nb',
+                'fil': 'tl', 'fil-ph': 'tl', 'iw': 'he', 'iw-il': 'he' };
+            if (aliases[tag] && byCode[aliases[tag]]) return byCode[aliases[tag]];
             var primary = tag.split('-')[0];
             if (byCode[primary]) return byCode[primary];
         }
