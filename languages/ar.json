@@ -3543,5 +3543,15 @@
   "lang_manage_captain_devices": "إدارة أجهزة Captain",
   "lang_mobile_pos_settings": "إعدادات Mobile POS",
   "lang_authorized": "مصرّح به",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "تسعير عرض الأسعار",
+  "lang_markup_2": "زيادة السعر (%)",
+  "lang_pricing_for_new_quotations": "التسعير لعروض الأسعار الجديدة",
+  "lang_quote_base_unit_price": "سعر الوحدة الأساسي",
+  "lang_item_markup": "زيادة سعر الصنف (%)",
+  "lang_hardware_manager": "مدير الأجهزة",
+  "lang_guest_bills": "فواتير الضيوف",
+  "lang_guest_bills_changed": "تغيّرت بيانات الطاولة. اطلب فواتير ضيوف محدّثة قبل تحصيل هذه المبالغ.",
+  "lang_guest_bills_unpaid": "حصص الضيوف غير مدفوعة. حصّل المبلغ وسجّل الدفع باستخدام أدوات الدفع في الكاشير.",
+  "lang_guest_bills_retry": "إعادة محاولة فواتير الضيوف"
 }

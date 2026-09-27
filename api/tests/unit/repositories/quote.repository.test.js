@@ -72,6 +72,95 @@ describe('QuoteRepository', () => {
     require('../../../src/db/ensure-index')._reset();
   });
 
+  test.each([0, 20, 150])(
+    'markup %s is calculated from base, survives resaving, and ignores client totals',
+    async (percent) => {
+      mockCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId(QUOTE_ID) });
+      const data = {
+        pricing_mode: 'markup',
+        show_markup: true,
+        total: 999999,
+        tax_total: 999,
+        discount: { type: 'percent', value: 50 },
+        items: [
+          {
+            item_id: ITEM,
+            item_name: 'Rice',
+            qty: 2,
+            base_unit_price: 100,
+            unit_price: 9999,
+            markup: { type: 'percent', value: percent, computed: 999 },
+            discount: { type: 'amount', value: 90 },
+          },
+        ],
+      };
+      expect((await repo.upsertQuote(data, '', ctx)).status).toBe(true);
+      const doc = mockCollection.insertOne.mock.calls[0][0];
+      expect(doc.total).toBe(200 * (1 + percent / 100));
+      expect(doc.tax_total).toBe(0);
+      expect(doc.discount).toBeNull();
+      expect(doc.items[0]).toMatchObject({
+        base_unit_price: 100,
+        unit_price: 100 * (1 + percent / 100),
+        discount: null,
+        markup: { value: percent, computed: 2 * percent },
+      });
+      mockCollection.updateOne.mockResolvedValue({ matchedCount: 1 });
+      expect((await repo.upsertQuote(doc, QUOTE_ID, ctx)).status).toBe(true);
+      expect(mockCollection.updateOne.mock.calls[0][1].$set.items).toEqual(doc.items);
+    }
+  );
+
+  test.each(['exclusive', 'inclusive'])(
+    'markup precedes %s tax and rounds final unit price',
+    async (taxType) => {
+      mockCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId(QUOTE_ID) });
+      const r = await repo.upsertQuote(
+        {
+          pricing_mode: 'markup',
+          items: [
+            {
+              item_name: 'Service',
+              qty: 3,
+              base_unit_price: 10.03,
+              markup: { type: 'percent', value: 12.5 },
+              tax_value: 18,
+              tax_type: taxType,
+            },
+          ],
+        },
+        '',
+        ctx
+      );
+      expect(r.status).toBe(true);
+      const doc = mockCollection.insertOne.mock.calls[0][0];
+      expect(doc.items[0].unit_price).toBe(11.28);
+      expect(doc.items[0].markup.computed).toBe(3.75);
+      expect(doc.total).toBe(taxType === 'exclusive' ? 39.93 : 33.84);
+      expect(doc.tax_total).toBe(taxType === 'exclusive' ? 6.09 : 5.16);
+    }
+  );
+
+  test.each([-1, Infinity, 'bad', 100001, null])('rejects malformed markup %s', async (value) => {
+    const r = await repo.upsertQuote(
+      {
+        pricing_mode: 'markup',
+        items: [
+          {
+            item_name: 'Service',
+            qty: 1,
+            base_unit_price: 100,
+            markup: { type: 'percent', value },
+          },
+        ],
+      },
+      '',
+      ctx
+    );
+    expect(r.status).toBe(false);
+    expect(mockCollection.insertOne).not.toHaveBeenCalled();
+  });
+
   test('create writes only the quotes collection and numbers QUO-000001', async () => {
     mockCollection.insertOne.mockResolvedValue({ insertedId: new ObjectId(QUOTE_ID) });
     const r = await repo.upsertQuote(

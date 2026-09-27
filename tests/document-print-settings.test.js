@@ -205,10 +205,10 @@ test('an explicitly chosen sales printer never falls back to the system default'
 test('invoice and quotation PDFs use actual A4, A5 and Letter pages with content inside the paper', () => {
   const { jsPDF } = require('../frontend/static/script/js/jspdf.umd.min.js');
   const source = read('frontend/static/script/js/modules/js/sales.js');
-  const from = source.indexOf('_buildPdf: function'), end = source.indexOf('    printNow: function', from);
-  const builder = vm.runInNewContext('({' + source.slice(from, end) + '})._buildPdf', {
-    PosnicPro: { i18n: { t: (_key, text) => text }, quotes: {} },
-  });
+  const from = source.indexOf('PosnicPro.quotes = {'), end = source.indexOf('\n};', from) + 3;
+  const PosnicPro = { i18n: { t: (_key, text) => text }, local: { get: () => 'Rs' } };
+  vm.runInNewContext(source.slice(from, end), { PosnicPro });
+  const builder = PosnicPro.quotes._buildPdf;
   for (const [paper, width, height] of [['a4', 210, 297], ['a5', 148, 210], ['letter', 215.9, 279.4]]) {
     for (const invoice of [false, true]) {
       const positions = [];

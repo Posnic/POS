@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Posnic API",
-    "version": "1.8.0",
+    "version": "1.8.1",
     "description": "REST API for the Posnic point of sale.\n\nGenerated from the route table and express-validator chains by `npm run docs:api`. Do not edit by hand.\n\nRequest schemas are present for endpoints that carry validation middleware. The rest are listed with their path, method and handler but no body schema, because inventing one would be worse than the gap.",
     "license": {
       "name": "AGPL-3.0-only",
@@ -52,6 +52,10 @@
     {
       "name": "Campaign",
       "description": "Mounted at /campaigns"
+    },
+    {
+      "name": "Captain access",
+      "description": "Mounted at /captain-access"
     },
     {
       "name": "Cashback",
@@ -1838,6 +1842,220 @@
               "type": "string"
             }
           }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain-access/enrolment-proof": {
+      "post": {
+        "summary": "proof",
+        "operationId": "post_captain_access_enrolment_proof",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain-access/pair": {
+      "post": {
+        "summary": "pair",
+        "operationId": "post_captain_access_pair",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain-access/refresh": {
+      "post": {
+        "summary": "refresh",
+        "operationId": "post_captain_access_refresh",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain-access/route-proof": {
+      "post": {
+        "summary": "routeProof",
+        "operationId": "post_captain_access_route_proof",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain-access/pair-codes": {
+      "post": {
+        "summary": "result",
+        "operationId": "post_captain_access_pair_codes",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain-access/settings": {
+      "get": {
+        "summary": "name",
+        "operationId": "get_captain_access_settings",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/captain-access/connection-settings": {
+      "post": {
+        "summary": "saved",
+        "operationId": "post_captain_access_connection_settings",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain-access/session": {
+      "get": {
+        "summary": "branchId",
+        "operationId": "get_captain_access_session",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/captain-access/logout": {
+      "post": {
+        "summary": "signedOut",
+        "operationId": "post_captain_access_logout",
+        "tags": [
+          "Captain access"
         ],
         "responses": {
           "200": {
@@ -9369,6 +9587,29 @@
         }
       }
     },
+    "/quotes/defaults": {
+      "get": {
+        "summary": "defaults",
+        "operationId": "get_quotes_defaults",
+        "tags": [
+          "Quotes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/quotes/{id}": {
       "get": {
         "summary": "getById",
@@ -11511,6 +11752,76 @@
       "post": {
         "summary": "requestBillPrint",
         "operationId": "post_sales_requestBillPrint",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/guestBills/table": {
+      "get": {
+        "summary": "read",
+        "operationId": "get_sales_guestBills_table",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/sales/guestBills/latest": {
+      "get": {
+        "summary": "latest",
+        "operationId": "get_sales_guestBills_latest",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/sales/guestBills/print": {
+      "post": {
+        "summary": "send",
+        "operationId": "post_sales_guestBills_print",
         "tags": [
           "Sales"
         ],

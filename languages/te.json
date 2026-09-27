@@ -3543,5 +3543,15 @@
   "lang_manage_captain_devices": "Captain పరికరాలను నిర్వహించండి",
   "lang_mobile_pos_settings": "Mobile POS సెట్టింగ్‌లు",
   "lang_authorized": "అధీకృతం",
-  "lang_module_mobile_pos": "Mobile POS"
+  "lang_module_mobile_pos": "Mobile POS",
+  "lang_quotation_pricing": "కొటేషన్ ధర నిర్ణయం",
+  "lang_markup_2": "ధర పెంపు (%)",
+  "lang_pricing_for_new_quotations": "కొత్త కొటేషన్ల ధర నిర్ణయం",
+  "lang_quote_base_unit_price": "ప్రాథమిక యూనిట్ ధర",
+  "lang_item_markup": "వస్తువు ధర పెంపు (%)",
+  "lang_hardware_manager": "హార్డ్‌వేర్ నిర్వాహకం",
+  "lang_guest_bills": "అతిథుల బిల్లులు",
+  "lang_guest_bills_changed": "టేబుల్‌లో మార్పు జరిగింది. ఈ మొత్తాలు తీసుకునే ముందు తాజా అతిథి బిల్లులను అడగండి.",
+  "lang_guest_bills_unpaid": "అతిథుల వాటాలకు చెల్లింపు జరగలేదు. క్యాషియర్ చెల్లింపు నియంత్రణల ద్వారా చెల్లింపు తీసుకుని నమోదు చేయండి.",
+  "lang_guest_bills_retry": "అతిథి బిల్లులను మళ్లీ ప్రయత్నించండి"
 }

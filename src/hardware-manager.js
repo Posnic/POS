@@ -7,7 +7,6 @@ const { execSync } = require('child_process');
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
 const { fitDocument } = require('./receipt-page-layout');
-const rawPrintService = require('./raw-print-service');
 
 /* How long the printer list may be remembered. Long enough that a receipt
    never pays the spooler for it, short enough that a printer plugged in
@@ -814,72 +813,6 @@ class HardwareManager {
   }
 
   /*
-   * The winspool RAW passthrough, as a PowerShell script.
-   *
-   * Kept in one place because two callers need it and a second copy would
-   * drift. The marshalling is fiddly - DOCINFO has to reach StartDocPrinter as
-   * an IntPtr, not a struct - and getting it wrong fails silently by printing
-   * nothing at all.
-   */
-  _rawPrintScript(safePrinter, safeBin, docName) {
-    return `
-Add-Type -TypeDefinition @"
-using System;
-using System.Runtime.InteropServices;
-public class RawPrint {
-    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
-    public struct DOCINFO {
-        [MarshalAs(UnmanagedType.LPTStr)] public string pDocName;
-        [MarshalAs(UnmanagedType.LPTStr)] public string pOutputFile;
-        [MarshalAs(UnmanagedType.LPTStr)] public string pDataType;
-    }
-    [DllImport("winspool.Drv", CharSet=CharSet.Unicode)]
-    public static extern bool OpenPrinter(string n, out IntPtr h, IntPtr p);
-    [DllImport("winspool.Drv")] public static extern bool ClosePrinter(IntPtr h);
-    [DllImport("winspool.Drv", CharSet=CharSet.Unicode)]
-    public static extern int StartDocPrinter(IntPtr h, int lvl, IntPtr pDocInfo);
-    [DllImport("winspool.Drv")] public static extern bool StartPagePrinter(IntPtr h);
-    [DllImport("winspool.Drv")]
-    public static extern bool WritePrinter(IntPtr h, IntPtr buf, int len, out int written);
-    [DllImport("winspool.Drv")] public static extern bool EndPagePrinter(IntPtr h);
-    [DllImport("winspool.Drv")] public static extern bool EndDocPrinter(IntPtr h);
-}
-"@
-$bytes = [System.IO.File]::ReadAllBytes('${safeBin}')
-$ptr = [System.Runtime.InteropServices.Marshal]::AllocHGlobal($bytes.Length)
-[System.Runtime.InteropServices.Marshal]::Copy($bytes, 0, $ptr, $bytes.Length)
-$hPrinter = [IntPtr]::Zero
-$di = New-Object RawPrint+DOCINFO
-$di.pDocName = '${docName}'
-$di.pDataType = 'RAW'
-$diPtr = [System.Runtime.InteropServices.Marshal]::AllocHGlobal([System.Runtime.InteropServices.Marshal]::SizeOf($di))
-[System.Runtime.InteropServices.Marshal]::StructureToPtr($di, $diPtr, $false)
-try {
-    if ([RawPrint]::OpenPrinter('${safePrinter}', [ref]$hPrinter, [IntPtr]::Zero)) {
-        $docId = [RawPrint]::StartDocPrinter($hPrinter, 1, $diPtr)
-        if ($docId -gt 0) {
-            [RawPrint]::StartPagePrinter($hPrinter) | Out-Null
-            $w = 0
-            [RawPrint]::WritePrinter($hPrinter, $ptr, $bytes.Length, [ref]$w) | Out-Null
-            [RawPrint]::EndPagePrinter($hPrinter) | Out-Null
-            [RawPrint]::EndDocPrinter($hPrinter) | Out-Null
-            [RawPrint]::ClosePrinter($hPrinter) | Out-Null
-            Write-Output 'OK'
-        } else {
-            [RawPrint]::ClosePrinter($hPrinter) | Out-Null
-            Write-Error "StartDocPrinter failed (docId=$docId)"; exit 1
-        }
-    } else {
-        Write-Error 'Cannot open printer: ${safePrinter}'; exit 1
-    }
-} finally {
-    [System.Runtime.InteropServices.Marshal]::FreeHGlobal($diPtr)
-    [System.Runtime.InteropServices.Marshal]::FreeHGlobal($ptr)
-}
-`;
-  }
-
-  /*
    * Send bytes to a printer untouched.
    *
    * The same winspool RAW path the cash drawer already proved, lifted out so
@@ -890,7 +823,7 @@ try {
    * Works for USB, network and local queues without needing the printer
    * shared, which the alternatives all require.
    */
-  async sendRawToPrinter(printerName, buffer, docName = 'Posnic Receipt') {
+  async sendRawToPrinter(printerName, buffer, docName = 'Posnic Receipt', options = {}) {
     if (!printerName) return { success: false, error: 'No printer chosen' };
     if (!buffer || !buffer.length) return { success: false, error: 'Nothing to print' };
 
@@ -908,52 +841,63 @@ try {
       return this._sendRawViaCups(printerName, buffer, docName);
     }
 
-    let rawTempDir;
     try {
-      // Keep each job in a private, freshly-created directory. Predictable
-      // names in a shared temp folder can be replaced before the spooler reads
-      // them, which could send somebody else's data to the printer.
-      rawTempDir = fs.mkdtempSync(path.join(app.getPath('temp'), 'posnic-raw-'));
-      const tmpBin = path.join(rawTempDir, 'receipt.bin');
-      const tmpPs1 = path.join(rawTempDir, 'print.ps1');
-      fs.writeFileSync(tmpBin, buffer, { mode: 0o600, flag: 'wx' });
-
-      /*
-       * THE WARM HELPER FIRST.
-       *
-       * Starting PowerShell and compiling the interop class costs 350 to
-       * 550 ms on a real till, and it was paid on every copy of every
-       * receipt. src/raw-print-service.js keeps one alive and answers a job
-       * in under a millisecond. If it cannot be used - it would not start,
-       * it stopped, this is not Windows - it says so rather than failing the
-       * print, and the original per-job spawn below runs unchanged.
-       */
-      const warm = await rawPrintService.send({ printer: printerName, file: tmpBin, doc: docName });
-      if (!warm.unavailable) {
-        if (warm.success) return { success: true, bytes: buffer.length };
-        return { success: false, error: warm.error || 'The spooler did not confirm the job' };
-      }
-      console.warn('[Print] the warm print helper is unavailable; starting one PowerShell for this job');
-
-      const safePrinter = String(printerName).replace(/'/g, "''");
-      const safeBin = tmpBin.replace(/\\/g, '\\\\');
-      const safeDoc = String(docName).replace(/'/g, "''");
-
-      fs.writeFileSync(tmpPs1, this._rawPrintScript(safePrinter, safeBin, safeDoc), 'utf8');
-      const out = execSync(
-        `powershell -NoProfile -ExecutionPolicy Bypass -File "${tmpPs1}"`,
-        { timeout: 20000 }
-      ).toString().trim();
-
-      if (out.includes('OK')) return { success: true, bytes: buffer.length };
-      return { success: false, error: 'The spooler did not confirm the job' };
-    } catch (err) {
-      console.error('[Print] raw send failed:', err.message);
-      return { success: false, error: err.message };
-    } finally {
-      // A failed print must not leave receipt data in the shared temp folder.
-      try { if (rawTempDir) fs.rmSync(rawTempDir, { recursive: true, force: true }); } catch (e) { /* ignore */ }
+      return await this.getWindowsPrintQueue().enqueue({ printer: printerName, bytes: buffer,
+        jobId: options.jobId, binding: options.binding });
+    } catch (error) {
+      return { success: false, status: 'Failed', error: error.message };
     }
+  }
+
+  getWindowsPrintQueue() {
+    if (process.platform !== 'win32') return null;
+    if (!this.windowsPrintQueue) {
+      const { WindowsPrintQueue } = require('./windows-print-queue');
+      this.windowsPrintQueue = new WindowsPrintQueue({
+        dir: path.join(app.getPath('userData'), 'windows-print-queue'),
+        transport: require('./windows-printer-transport'),
+        configured: () => {
+          const prefs = require('./device-preferences').all();
+          let receipts = prefs.receipt_printers || [];
+          if (typeof receipts === 'string') { try { receipts = JSON.parse(receipts); } catch (_) { receipts = []; } }
+          let kitchen = {};
+          try { kitchen = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'kot-config.json'), 'utf8')); } catch (_) { /* not configured */ }
+          const { normalizeTargets, PAPER_SIZES } = require('./printer-targets');
+          const targets = [...normalizeTargets({ printers: Array.isArray(receipts) ? receipts : [],
+            printerName: prefs.receipt_printer, pageSize: prefs.print_width }), ...normalizeTargets(kitchen)];
+          // Office sheet printers must never receive ESC/POS idle bytes.
+          // Also stop idle traffic when a saved printer is no longer selected.
+          const sheets = new Set(targets.filter(item => !PAPER_SIZES[item.pageSize]?.roll).map(item => item.name.toLowerCase()));
+          return targets.filter(item => item.name && PAPER_SIZES[item.pageSize]?.roll && !sheets.has(item.name.toLowerCase())).map(item => item.name);
+        },
+        onStatus: status => {
+          for (const win of BrowserWindow.getAllWindows()) {
+            if (!win.isDestroyed()) win.webContents.send('printer:job-status', status);
+          }
+        },
+      });
+      this.windowsPrintQueue.start();
+      app.once('before-quit', () => this.windowsPrintQueue.stop());
+    }
+    return this.windowsPrintQueue;
+  }
+
+  reconcilePrintLogs(rows) {
+    if (!this.windowsPrintQueue) return rows;
+    return rows.map(row => {
+      const printers = (row.printers || []).map(printer => {
+        const job = this.windowsPrintQueue.jobs.get(printer.jobId);
+        if (!job) return printer;
+        const result = this.windowsPrintQueue.result(job);
+        return { ...printer, status: result.success ? 'success' : (result.pending ? 'pending' : 'failed'),
+          printStatus: result.status, reason: result.error || '' };
+      });
+      const tracked = printers.filter(printer => printer.printStatus);
+      if (!tracked.length) return row;
+      const outstanding = printers.find(printer => printer.status !== 'success');
+      return { ...row, printers, status: outstanding ? (outstanding.status === 'pending' ? 'pending' : 'failed') : 'printed',
+        printStatus: outstanding ? outstanding.printStatus || 'Failed' : 'Sent to printer' };
+    });
   }
 
   /*

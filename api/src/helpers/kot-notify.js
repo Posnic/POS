@@ -42,6 +42,30 @@ function notifyKotReady(details = {}) {
       at: Date.now(),
     };
     process.emit(KOT_EVENT, payload);
+    // A speaker-only kitchen has no printer poller to read these changes.
+    // Send only the committed delta, with a distinct identity per revision.
+    if (Array.isArray(details.items)) {
+      for (const kind of ['cancel', 'add']) {
+        const items = details.items.filter((item) => item.process === kind);
+        if (!items.length) continue;
+        const eventKey = require('crypto')
+          .createHash('sha256')
+          .update(JSON.stringify([payload.saleId, details.revision, kind, items]))
+          .digest('hex');
+        require('./order-attention').notifyOrderAttention({
+          branchId: payload.branchId,
+          saleId: payload.saleId,
+          eventKey,
+          ticket: {
+            table: String(details.table || ''),
+            items,
+            cancelled: kind === 'cancel',
+            whole: details.whole === true,
+            changed: kind === 'add',
+          },
+        });
+      }
+    }
   } catch (e) {
     /* Deliberately swallowed. The sale is already written; the fallback poll
        will find this ticket within its interval. */

@@ -2463,7 +2463,7 @@ async function redirectToLogin() {
       ? await validateSavedLogin(origin, cookies)
       : false;
 
-    if (hasSavedCookie && !hasSavedLogin) {
+    if (hasSavedCookie && hasSavedLogin === false) {
       console.warn('[Auth] Saved login is no longer valid; clearing stale session');
       await clearStaleLogin(session.defaultSession.cookies, origin, console);
     }
@@ -2473,7 +2473,7 @@ async function redirectToLogin() {
       : `${origin}/public/login.html`;
 
     await loadPageAndReveal(targetUrl);
-    if (!hasSavedLogin) {
+    if (hasSavedLogin === false) {
       mainWindow.webContents.executeJavaScript(`
         localStorage.removeItem('posnic_jwt_token');
         document.cookie = 'loginuser=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
@@ -4559,6 +4559,10 @@ app.whenReady().then(async () => {
 
   // Initialize hardware manager
   hardwareManager = new HardwareManager();
+  if (process.platform === 'win32') {
+    try { hardwareManager.getWindowsPrintQueue(); }
+    catch (error) { console.error('[Print] Recovery state needs attention:', error.message); }
+  }
   console.log('HardwareManager initialized');
 
   /*
@@ -4570,7 +4574,7 @@ app.whenReady().then(async () => {
    * print path falls back to a per-job spawn exactly as it always did.
    */
   require('./raw-print-service').warm().then((ok) => {
-    console.log(ok ? 'Raw print helper warm' : 'Raw print helper unavailable; prints will start their own');
+    console.log(ok ? 'Raw print helper warm' : 'Raw print helper unavailable; pending jobs remain in recovery');
   });
 
   // Initialize KOT manager
@@ -4688,7 +4692,19 @@ app.whenReady().then(async () => {
    * A till with no window open makes no sound, which is right: there is nobody
    * standing there to hear it.
    */
-  orderAlert = new OrderAlert({ getWindow: () => mainWindow });
+  orderAlert = new OrderAlert({
+    getWindow: () => mainWindow,
+    onAccepted: (payload) => {
+      // A configured printer announces its own ticket once it claims the job.
+      // A speaker-only kitchen must not depend on that printer poller running.
+      if (kotManager && kotManager.isPolling) return false;
+      const wants = kitchenAnnounce.settings();
+      if (!wants.ting && !wants.speak) return false;
+      return require('./order-alert').announceKitchenTicket(
+        () => require('./order-alert').speakingWindow(BrowserWindow), payload.ticket, wants
+      );
+    },
+  });
   /* So the per-machine switch can find userData without importing electron
      itself, which is what lets it be read in a test. */
   kitchenAnnounce.useApp(app);

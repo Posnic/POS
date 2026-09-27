@@ -189,6 +189,8 @@ const DOCUMENTS = [
   'quote_default_bank_details',
   'quote_default_terms',
   'quote_default_signature',
+  'quote_pricing_mode',
+  'quote_show_markup',
   'invoice_terms',
 ];
 

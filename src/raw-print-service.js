@@ -29,9 +29,10 @@
  *
  * WHAT IT PROMISES
  *
- * Nothing new can break. If the helper will not start, or dies, or does not
- * answer in time, the caller falls back to the per-job spawn that has always
- * been there. A printer that is offline fails exactly as it did.
+ * A successful reply carries the Windows spooler job ID, not a claim that
+ * paper came out. windows-print-queue.js owns readiness, monitoring and
+ * recovery. A timeout after sending is ambiguous and must never trigger a
+ * second submission through another print path.
  *
  * NOT ON MAC OR LINUX. There the job goes to `lp`, a small native binary that
  * starts in a few milliseconds, so there is nothing to keep warm.
@@ -76,6 +77,8 @@ const HEARTBEAT_MS = 60 * 1000;
  */
 const LOOP_SCRIPT = `
 $ErrorActionPreference = 'Stop'
+[Console]::InputEncoding = New-Object System.Text.UTF8Encoding($false)
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
@@ -86,16 +89,16 @@ public class PosnicRawPrint {
         [MarshalAs(UnmanagedType.LPTStr)] public string pOutputFile;
         [MarshalAs(UnmanagedType.LPTStr)] public string pDataType;
     }
-    [DllImport("winspool.Drv", CharSet=CharSet.Unicode)]
+    [DllImport("winspool.Drv", CharSet=CharSet.Unicode, SetLastError=true)]
     public static extern bool OpenPrinter(string n, out IntPtr h, IntPtr p);
-    [DllImport("winspool.Drv")] public static extern bool ClosePrinter(IntPtr h);
-    [DllImport("winspool.Drv", CharSet=CharSet.Unicode)]
+    [DllImport("winspool.Drv", SetLastError=true)] public static extern bool ClosePrinter(IntPtr h);
+    [DllImport("winspool.Drv", CharSet=CharSet.Unicode, SetLastError=true)]
     public static extern int StartDocPrinter(IntPtr h, int lvl, IntPtr pDocInfo);
-    [DllImport("winspool.Drv")] public static extern bool StartPagePrinter(IntPtr h);
-    [DllImport("winspool.Drv")]
+    [DllImport("winspool.Drv", SetLastError=true)] public static extern bool StartPagePrinter(IntPtr h);
+    [DllImport("winspool.Drv", SetLastError=true)]
     public static extern bool WritePrinter(IntPtr h, IntPtr buf, int len, out int written);
-    [DllImport("winspool.Drv")] public static extern bool EndPagePrinter(IntPtr h);
-    [DllImport("winspool.Drv")] public static extern bool EndDocPrinter(IntPtr h);
+    [DllImport("winspool.Drv", SetLastError=true)] public static extern bool EndPagePrinter(IntPtr h);
+    [DllImport("winspool.Drv", SetLastError=true)] public static extern bool EndDocPrinter(IntPtr h);
 }
 "@
 [Console]::Out.WriteLine('READY')
@@ -147,7 +150,7 @@ while ($true) {
                     } elseif (-not $endPageOk -or -not $endDocOk) {
                         [Console]::Out.WriteLine("ERR $id The printer did not close the job")
                     } else {
-                        [Console]::Out.WriteLine("OK $id")
+                        [Console]::Out.WriteLine("OK $id $docId")
                     }
                 } else {
                     [PosnicRawPrint]::ClosePrinter($hPrinter) | Out-Null
@@ -198,7 +201,7 @@ class RawPrintService {
     this.ready = new Promise((resolve, reject) => {
       let child;
       try {
-        child = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', LOOP_SCRIPT], {
+        child = spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command', LOOP_SCRIPT], {
           stdio: ['pipe', 'pipe', 'pipe'],
           windowsHide: true,
         });
@@ -206,6 +209,7 @@ class RawPrintService {
         return reject(error);
       }
       this.child = child;
+      child.stdin.on('error', error => { settleStart(error); this._down(error); });
 
       let buffer = '';
       let started = false;
@@ -243,7 +247,7 @@ class RawPrintService {
       });
 
       /* A helper that never says READY is a helper that will never print.
-         Give up quickly and let the caller use the old path. */
+         Give up quickly and let the recovery queue report the failure. */
       setTimeout(() => settleStart(new Error('the print helper did not start')), 8000);
     });
 
@@ -265,7 +269,7 @@ class RawPrintService {
     /* It answered, so whatever was wrong is over: a later crash should retry
        quickly rather than inherit the backoff from an old bad spell. */
     this.restarts = 0;
-    if (verb === 'OK') waiting.resolve({ success: true });
+    if (verb === 'OK') waiting.resolve(message ? { success: true, spoolerJobId: Number(message) } : { success: true });
     else waiting.resolve({ success: false, error: message || 'The spooler did not confirm the job' });
   }
 
@@ -369,7 +373,7 @@ class RawPrintService {
       } catch (error) {
         this.pending.delete(id);
         clearTimeout(timer);
-        resolve({ success: false, unavailable: true, error: error && error.message });
+        resolve({ success: false, error: error && error.message });
       }
     });
   }
