@@ -184,6 +184,7 @@ const PREFERENCES = [
 ];
 
 const DOCUMENTS = [
+  'printable_menu_design',
   // what a printed or emailed document says - usually IS copied to a new branch
   'quote_default_payment_method',
   'quote_default_bank_details',

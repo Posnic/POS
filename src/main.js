@@ -4559,6 +4559,10 @@ app.whenReady().then(async () => {
 
   // Initialize hardware manager
   hardwareManager = new HardwareManager();
+  if (process.platform === 'win32') {
+    try { hardwareManager.getWindowsPrintQueue(); }
+    catch (error) { console.error('[Print] Recovery state needs attention:', error.message); }
+  }
   console.log('HardwareManager initialized');
 
   /*
@@ -4570,7 +4574,7 @@ app.whenReady().then(async () => {
    * print path falls back to a per-job spawn exactly as it always did.
    */
   require('./raw-print-service').warm().then((ok) => {
-    console.log(ok ? 'Raw print helper warm' : 'Raw print helper unavailable; prints will start their own');
+    console.log(ok ? 'Raw print helper warm' : 'Raw print helper unavailable; pending jobs remain in recovery');
   });
 
   // Initialize KOT manager

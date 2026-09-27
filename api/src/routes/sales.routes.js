@@ -103,6 +103,90 @@ router.post(
   bindController(salesController.requestBillPrint)
 );
 
+const captainPayments = require('../services/captain-payments');
+const captainPaymentRoute = (fn) => async (req, res) => {
+  try {
+    req.captainPaymentDesktop = true;
+    res.json(await fn(req));
+  } catch (error) {
+    res.status(error.status || 500).json({
+      error: {
+        message: error.status
+          ? error.message
+          : 'Could not confirm payment. Retry the same request.',
+      },
+    });
+  }
+};
+const guestBills = require('../controllers/guest-bill.controller');
+const guestBillLimit = require('express-rate-limit')({
+  windowMs: 60 * 1000,
+  limit: 180,
+  keyGenerator: require('../middleware/rate-limit-key').perShopKey,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { type: 'error', message: 'Too many bill requests. Please retry shortly.' },
+});
+router.get(
+  '/guestBills/table',
+  guestBillLimit,
+  optionalProtect,
+  protectOrKioskKey,
+  guestBills.read
+);
+router.get(
+  '/guestBills/latest',
+  guestBillLimit,
+  optionalProtect,
+  protectOrKioskKey,
+  guestBills.latest
+);
+router.post(
+  '/guestBills/print',
+  guestBillLimit,
+  optionalProtect,
+  protectOrKioskKey,
+  guestBills.send
+);
+
+router.get(
+  '/tablePayments/options',
+  guestBillLimit,
+  protect,
+  captainPaymentRoute(async (req) => {
+    const c = await captainPayments.scope(req, false);
+    const plan = await req.db.collection('captain_payment_plans').findOne({
+      branch_id: c.branchId,
+      license: c.license,
+      table: String(req.query.table_number || ''),
+      state: 'open',
+    });
+    return {
+      ...c.options,
+      enabled: captainPayments.settings(c.branch).enabled || Boolean(plan),
+      plan: plan ? captainPayments.view(plan, c.options) : null,
+    };
+  })
+);
+router.post(
+  '/tablePayments/table',
+  guestBillLimit,
+  protect,
+  captainPaymentRoute(captainPayments.prepare)
+);
+router.post(
+  '/tablePayments/record',
+  guestBillLimit,
+  protect,
+  captainPaymentRoute(captainPayments.record)
+);
+router.post(
+  '/tablePayments/release',
+  guestBillLimit,
+  protect,
+  captainPaymentRoute(captainPayments.release)
+);
+
 // --- Kiosk-authenticated routes (use kioskkey header, not JWT) ---
 // Must be registered BEFORE router.use(protect)
 router.post('/kioskOrder', ensureKioskKey, bindController(salesController.kioskOrder));

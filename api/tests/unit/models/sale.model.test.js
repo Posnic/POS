@@ -1013,3 +1013,27 @@ describe('invoice_key survives the strict schema', () => {
     expect(Sale.schema.path('source_invoice_id').instance).toBe('ObjectId');
   });
 });
+
+describe('item translation snapshots', () => {
+  test('Mongoose and live-order normalization retain names without menu descriptions', async () => {
+    const sale = new Sale({
+      sale_method: 'Live-Order',
+      items: [
+        {
+          item_name: 'Coffee',
+          default_language: 'en',
+          translations: [{ locale: 'nl', name: 'Koffie', description: 'Menu only' }],
+          item_quantity: 2,
+          total_amount: 40,
+        },
+      ],
+    });
+    expect(sale.items[0].translations[0].name).toBe('Koffie');
+    await getPreSaveFn().call(sale);
+    const stored = sale.toObject().items[0];
+    expect(stored.item_name).toBe('Coffee');
+    expect(stored.translations).toEqual([{ locale: 'nl', name: 'Koffie' }]);
+    expect(stored.item_quantity).toBe(2);
+    expect(stored.total_amount).toBe(40);
+  });
+});

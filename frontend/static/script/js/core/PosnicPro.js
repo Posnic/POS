@@ -878,7 +878,7 @@ PosnicPro = {
     /* Generated PDFs need a desktop print dialog, not window.open(blob:),
        which the Electron shell deliberately refuses. Keep the PDF itself so
        invoices, quotes and reports retain their pagination and typography. */
-    printPdfDocument: function (doc, filename, popupMessage, kind) {
+    printPdfDocument: function (doc, filename, popupMessage, kind, paperSize) {
         var printer = window.electronAPI && window.electronAPI.printer;
         var desktop = !!window.electronAPI || /Electron/i.test(navigator.userAgent);
         var failed = function (error) {
@@ -892,7 +892,7 @@ PosnicPro = {
                 return Promise.resolve();
             }
             return Promise.resolve().then(function () {
-                return printer.printPdf(new Uint8Array(doc.output('arraybuffer')), kind);
+                return printer.printPdf(new Uint8Array(doc.output('arraybuffer')), kind, paperSize);
             }).then(function (result) {
                 if (!result || (!result.success && !result.cancelled)) { failed(result && result.error ? new Error(result.error) : null); }
             }).catch(failed);
@@ -3417,16 +3417,16 @@ PosnicPro = {
                 if (result.failures && result.failures.length) {
                     PosnicPro.alert('warning', PosnicPro.i18n.t(
                         'lang_printed_on_some_printers',
-                        'Printed on ' + result.printed + ' of ' + result.attempted + ' printers. '
+                        'Sent to ' + result.printed + ' of ' + result.attempted + ' printers. '
                         + result.failures.map(function (f) { return f.printer + ': ' + f.error; }).join('; ')
                     ));
                 } else {
                     PosnicPro.alert('success', where
                         ? PosnicPro.i18n.t('lang_sent_to_printer', 'Sent to printer') + ': ' + where
-                        : PosnicPro.i18n.t('lang_receipt_printed_ok', 'Receipt printed'));
+                        : PosnicPro.i18n.t('lang_sent_to_printer', 'Sent to printer'));
                 }
             } else {
-                PosnicPro.alert('error', (result && result.error) ? result.error : 'Print failed');
+                PosnicPro.alert(result && result.pending ? 'warning' : 'error', (result && result.error) ? result.error : 'Print failed');
             }
         })
         .catch(function (err) {
@@ -3580,7 +3580,7 @@ PosnicPro = {
                     if (result && result.success) {
                     PosnicPro.afterPrint();
                     } else {
-                    PosnicPro.alert('error', (result && result.error) ? result.error : 'Print failed');
+                    PosnicPro.alert(result && result.pending ? 'warning' : 'error', (result && result.error) ? result.error : 'Print failed');
                     }
                 })
                 .catch(function (err) {
@@ -7033,3 +7033,12 @@ $(function () {
         paint();
     }
 });
+
+/* Catalogue translations are shop data, separate from application language packs. */
+PosnicPro.itemName = function (item, language, bilingual) {
+    return window.PosnicItemText.name(item, language === undefined ? PosnicPro.i18n.code() : language, bilingual);
+};
+PosnicPro.printItemName = function (item, kind) {
+    var policy = PosnicPro.printSettings ? PosnicPro.printSettings.get('itemLanguages') : {};
+    return PosnicPro.itemName(item, policy[kind || 'receipt'] || '', kind !== 'kot' && policy.bilingual === true);
+};

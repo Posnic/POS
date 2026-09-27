@@ -50,6 +50,8 @@ before(async () => {
   const express = require('express'),
     app = express();
   app.use(express.json());
+  // lgtm[js/missing-token-validation] The real csrf.protect middleware below validates
+  // credential-bound CSRF tokens before these test routes; cookie pairing is tested below.
   app.use(require('cookie-parser')());
   app.use(
     require('express-session')({
@@ -65,6 +67,9 @@ before(async () => {
   });
   app.use('/api/captain/v1', require('../src/routes/captain-access.routes'));
   const { protect, optionalProtect } = require('../src/middleware/auth');
+  const paymentTestLimit = require('express-rate-limit')({windowMs:60000,limit:180});
+  app.get('/api/sales/guestBills/table', paymentTestLimit, protect, (_r, s) => s.json({ allowed: true }));
+  app.post('/api/sales/tablePayments/record', paymentTestLimit, protect, (_r, s) => s.json({ allowed: true }));
   app.get('/api/users/admin', protect, (r, s) => s.json({ user: r.user._id }));
   app.post('/api/items/accessQr', optionalProtect, (r, s) =>
     s.json({ user: r.user?._id, cookieUser: r.session.userId })
@@ -386,4 +391,54 @@ test('Captain scoped sessions cannot access Mobile POS or administration', async
     () => access.verifySession(request, staff),
     (e) => e.code === 'DEVICE_REVOKED'
   );
+});
+
+test('paired Captain can split and record payments but cannot change settings or use cashier bypass', async () => {
+  const { grant } = await paired();
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  assert.equal((await fetch(base + '/sales/guestBills/table', { headers })).status, 200);
+  assert.equal((await fetch(base + '/captain/v1/payment-options', { headers })).status, 200);
+  assert.equal((await fetch(base + '/captain/v1/payment-settings', { headers })).status, 403);
+  assert.equal(
+    (await fetch(base + '/sales/tablePayments/record', { method: 'POST', headers, body: '{}' }))
+      .status,
+    403
+  );
+  await db
+    .collection('branches')
+    .updateOne(
+      { _id: branch._id },
+      { $set: { captain_payments: { enabled: true, methods: ['Cash'], printReceipt: false } } }
+    );
+  await db.collection('sales').insertOne({
+    branch_id: branch._id,
+    license: branch.license,
+    table_number: 'PAY1',
+    sale_process: 'KOT',
+    payment_status: 'Unpaid',
+    sales_total: 10,
+    sales_sub_total: 10,
+    items: [{ item_name: 'Tea', item_quantity: 1, item_base_price: 10 }],
+  });
+  const prepared = await fetch(base + '/captain/v1/payments/table', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ table_number: 'PAY1' }),
+  });
+  assert.equal(prepared.status, 200);
+  const plan = await prepared.json();
+  const response = await fetch(base + '/captain/v1/payments/record', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      planId: plan.id,
+      version: plan.version,
+      amountMinor: 1000,
+      receivedMinor: 1000,
+      method: 'Cash',
+      request_id: crypto.randomUUID(),
+    }),
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).dueMinor, 0);
 });

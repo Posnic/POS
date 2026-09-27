@@ -100,12 +100,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
   printer: {
+    recoveryStatus: () => ipcRenderer.invoke('printer:recovery-status'),
+    configureRecovery: (printer, binding) => ipcRenderer.invoke('printer:recovery-configure', printer, binding),
+    onJobStatus: callback => {
+      const handler = (_event, status) => callback(status);
+      ipcRenderer.on('printer:job-status', handler);
+      return () => ipcRenderer.removeListener('printer:job-status', handler);
+    },
     list:       () => ipcRenderer.invoke('printer:list'),
     getDefault: () => ipcRenderer.invoke('printer:get-default'),
     getPaperSizes: () => ipcRenderer.invoke('printer:get-paper-sizes'),
     setDefault: (name) => ipcRenderer.invoke('printer:set-default', name),
     print:      (htmlContent, options) => ipcRenderer.invoke('printer:print', htmlContent, options),
-    printPdf:   (bytes, kind) => ipcRenderer.invoke('printer:print-pdf', bytes, kind),
+    printPdf:   (bytes, kind, paperSize) => ipcRenderer.invoke('printer:print-pdf', bytes, kind, paperSize),
     getDocumentSettings: () => ipcRenderer.invoke('printer:get-document-settings'),
     saveDocumentSettings: (settings) => ipcRenderer.invoke('printer:save-document-settings', settings),
     // Receipts go as ESC/POS on the desktop: no page, no scaling, no driver
