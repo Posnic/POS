@@ -151,6 +151,7 @@ PosnicPro.items = {
         }
         PosnicPro.items.itemAction = 'add';
         PosnicPro.itemDayparts.set([]);
+        PosnicPro.itemTranslations.reset();
         
         // Apply discount from selected category
         setTimeout(function() {
@@ -990,6 +991,7 @@ PosnicPro.items = {
             tax: tax_value,
             tax_type: $('input[name="tax_radio_value"]:checked').val(),
             description: content.val(),
+                    ...PosnicPro.itemTranslations.data(),
             image: PosnicPro.items.imageParams,
             modifier_group_ids: PosnicPro.items._modifierGroupIds(),
             barcodes: PosnicPro.items._altBarcodes(),
@@ -1095,6 +1097,7 @@ PosnicPro.items = {
                 tile_shape: autoRow.shape,
             } : {}, {
                 name: rowName,
+                translations: (shared.translations || []).map(function (entry) { return Object.assign({}, entry, { name: entry.name ? entry.name + " / " + variantName : "" }); }),
                 variant_value: variantName,
                 sku_id: $('#items_itemid_' + key + '').val(),
                 barcode_id: $('#items_barcodeid_' + key + '').val(),
@@ -1270,6 +1273,7 @@ PosnicPro.items = {
                     tax: tax_value,
                     tax_type: $('input[name="tax_radio_value"]:checked').val(),
                     description: content.val(),
+                    ...PosnicPro.itemTranslations.data(),
                     image: PosnicPro.items.imageParams,
                     modifier_group_ids: PosnicPro.items._modifierGroupIds(),
                     barcodes: PosnicPro.items._altBarcodes(),
@@ -1792,6 +1796,7 @@ PosnicPro.items = {
                 $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
                 $('#item_diet').val(data.diet || '');
                 PosnicPro.itemDayparts.set(data.daypart_ids || []);
+                PosnicPro.itemTranslations.reset(data);
                 PosnicPro.itemGoesWith.set(data.goes_with || []);
                 PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
@@ -2683,6 +2688,7 @@ PosnicPro.items = {
                 $('#item_show_on_menu').prop('checked', data.show_on_menu !== false);
                 $('#item_diet').val(data.diet || '');
                 PosnicPro.itemDayparts.set(data.daypart_ids || []);
+                PosnicPro.itemTranslations.reset(data);
                 PosnicPro.itemGoesWith.set(data.goes_with || []);
                 PosnicPro.itemChannels.set(data.channel_off || []);
                 $('#item_prep_note').val(data.prep_note || '');
@@ -4006,6 +4012,7 @@ PosnicPro.items = {
     },
 
     itemClearForm: function () {
+        PosnicPro.itemTranslations.reset();
         $('.error_item').css('display', 'none');
         $('#item-display-preview').html('');
         $('#items_description').val('');
@@ -4639,9 +4646,8 @@ $(document).ready(function () {
         rules: {
             items_name: {
                 required: true,
-                alphanumeric: true,
-                minlength: 3,
-                maxlength: 500
+                minlength: 1,
+                maxlength: 200
             },
             /* NOT required. The form never marked it - no red asterisk - so a
                rule demanding it refused a save while pointing at nothing (owner:

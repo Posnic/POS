@@ -124,9 +124,33 @@
                                         <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" class="form-control border-control" id="items_name"
-                                        name="items_name" placeholder="Enter Item Name" data-t-placeholder="lang_enter_item_name" minlength="3" maxlength="500"
+                                        name="items_name" placeholder="Enter Item Name" data-t-placeholder="lang_enter_item_name" minlength="1" maxlength="200" dir="auto"
                                         autocomplete="off" required>
                                     <input type="hidden" name="id" id="itemid">
+                                    <div class="d-flex align-items-center justify-content-between mt-2">
+                                        <button type="button" id="item_translation_toggle" class="btn btn-sm btn-link p-0" aria-expanded="false" aria-controls="item_translation_panel">
+                                            <i class="feather icon-globe mr-1" aria-hidden="true"></i><lang class="lang_item_translations">Translations</lang><span id="item_translation_count"></span>
+                                        </button>
+                                    </div>
+                                    <section id="item_translation_panel" class="border rounded p-3 mt-2" hidden aria-label="Item translations" data-t-aria-label="lang_item_translations_panel">
+                                        <div class="form-row">
+                                            <div class="col-sm-6 mb-2"><label for="item_original_language"><lang class="lang_item_original_language">Original language</lang></label><select id="item_original_language" class="form-control form-control-sm"></select></div>
+                                            <div class="col-sm-6 mb-2"><label for="item_translation_language"><lang class="lang_item_add_language">Add translation</lang></label><select id="item_translation_language" class="form-control form-control-sm"></select></div>
+                                        </div>
+                                        <div id="item_translation_chips" class="d-flex flex-wrap mb-2" style="gap:6px;max-height:120px;overflow-y:auto" role="group" aria-label="Translation languages" data-t-aria-label="lang_item_translation_languages"></div>
+                                        <small id="item_translation_empty" class="text-muted"><lang class="lang_item_translation_empty">Add only the languages your shop uses. Translations share this item's price, barcode and stock.</lang></small>
+                                        <div id="item_translation_fields" hidden>
+                                            <div class="d-flex justify-content-between align-items-center mb-2"><strong id="item_translation_heading"></strong><button id="item_translation_remove" type="button" class="btn btn-sm btn-link text-danger"><lang class="lang_item_remove_translation">Remove translation</lang></button></div>
+                                            <label for="item_translation_name"><lang class="lang_itemname_title">Item Name</lang></label>
+                                            <small class="d-block text-muted mb-1"><lang class="lang_item_original_text">Original:</lang> <bdi id="item_translation_original_name"></bdi></small>
+                                            <input id="item_translation_name" type="text" class="form-control" maxlength="200" dir="auto">
+                                            <label for="item_translation_description" class="mt-2"><lang class="lang_item_menu_description">Customer menu description</lang></label>
+                                            <small class="d-block text-muted mb-1" style="max-height:4.5em;overflow:auto"><lang class="lang_item_original_text">Original:</lang> <bdi id="item_translation_original_description"></bdi></small>
+                                            <textarea id="item_translation_description" class="form-control" rows="2" maxlength="2000" dir="auto"></textarea>
+                                            <small class="text-muted"><lang class="lang_item_translation_save_hint">Saved with this item. Empty fields use the original. Descriptions appear only on the customer menu.</lang></small>
+                                        </div>
+                                    </section>
+
                                 </div>
                                 <div class="form-group col-md-6">
                                     <label class="form-control-placeholder" for="items_selling_price">

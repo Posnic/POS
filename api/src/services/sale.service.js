@@ -461,6 +461,7 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         changes_items.push({
           item_id: itemId,
           item_name: document.name,
+          ...require('../utils/item-localization').snapshot(document),
           item_quantity: changeQty,
           process: changeProcess,
           item_code: document.itemid,
@@ -581,6 +582,7 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         item_status: finalStatus,
         return: false,
         item_name: document.name,
+        ...require('../utils/item-localization').snapshot(document),
         item_sku: document.itemid,
         item_price: sellingPrice,
         item_discount: discountAmount,

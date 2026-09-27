@@ -19,10 +19,10 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { app } = require('electron');
 
 function prefsPath() {
   try {
+    const { app } = require('electron');
     return path.join(app.getPath('userData'), 'preferences.json');
   } catch (e) {
     /* No electron app object: a test, or a script. */
@@ -135,8 +135,7 @@ function cloudPrintRelay() {
  */
 function kotPrinterNames() {
   try {
-    const { app } = require('electron');
-    const file = path.join(app.getPath('userData'), 'kot-config.json');
+        const file = path.join(app.getPath('userData'), 'kot-config.json');
     if (!fs.existsSync(file)) return [];
     const cfg = JSON.parse(fs.readFileSync(file, 'utf8')) || {};
     const fromList = Array.isArray(cfg.printers)
@@ -178,6 +177,7 @@ function documentPrintSettings(prefs = all()) {
       printerName: prefs.receipt_printer || 'default', pageSize: prefs.print_width || '80mm' })
       .map((target) => ({ ...target, name: target.name || 'default' })),
     invoice: sheet(documents.invoice), quotation: sheet(documents.quotation),
+    ...(prefs.item_print_languages ? { itemLanguages: prefs.item_print_languages } : {}),
   };
 }
 
@@ -197,7 +197,13 @@ function validateDocumentPrintSettings(value) {
     const target = value[kind];
     if (!target || !name(target.printerName) || !['a4', 'a5', 'letter'].includes(target.paperSize) || !copies(target.copies)) throw new Error('Invalid ' + kind + ' print settings.');
   }
+  const itemLanguages = value.itemLanguages;
+  if (itemLanguages) {
+    const locale = require('./item-localization').locale;
+    if ((itemLanguages.receipt && !locale(itemLanguages.receipt)) || (itemLanguages.kot && !locale(itemLanguages.kot)) || typeof itemLanguages.bilingual !== 'boolean') throw new Error('Choose valid item print languages.');
+  }
   return documentPrintSettings({ receipt_printers: value.sales,
+    item_print_languages: itemLanguages ? { receipt: itemLanguages.receipt || '', kot: itemLanguages.kot || '', bilingual: itemLanguages.bilingual } : undefined,
     document_print_profiles: { invoice: value.invoice, quotation: value.quotation } });
 }
 

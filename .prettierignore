@@ -79,3 +79,5 @@ frontend/static/style/
 
 # A byte copy of order/assets/i18n.js (order/ is ignored above); formatting the copy breaks the identity test.
 menu/i18n.js
+# Byte-identical to the canonical item text resolver bundled into the API/UI.
+menu/item-localization.js
