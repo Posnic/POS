@@ -3242,12 +3242,65 @@
                                     aria-selected="false"><i class="feather icon-truck mr-1"></i><lang class="lang_delivery">Delivery</lang></a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link" id="restaurantprintmenu-tab-line" data-toggle="tab"
+                                    href="#restaurantprintmenu-line" role="tab" aria-controls="restaurantprintmenu-line"
+                                    aria-selected="false"><i class="feather icon-file-text mr-1"></i><lang class="lang_printable_menu">Printable menu</lang></a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" id="restaurantprinting-tab-line" data-toggle="tab"
                                     href="#restaurantprinting-line" role="tab" aria-controls="restaurantprinting-line"
                                     aria-selected="false"><i class="feather icon-printer mr-1"></i><lang class="lang_kot_print_tab">KOT printing</lang></a>
                             </li>
                             </ul>
                             <div class="tab-content">
+                                <div class="tab-pane fade" id="restaurantprintmenu-line" role="tabpanel" aria-labelledby="restaurantprintmenu-tab-line">
+                                    <div class="card"><div class="card-body">
+                                        <h5><lang class="lang_printable_menu">Printable menu</lang></h5>
+                                        <p class="text-muted"><lang class="lang_pm_intro">Turn this branch's menu into pages for your tables. Customize the design, then download a PDF or print.</lang></p>
+                                        <div class="pm-toolbar">
+                                            <button type="button" id="pm-save" class="btn btn-outline-primary" disabled><lang class="lang_pm_save">Save design</lang></button>
+                                            <button type="button" id="pm-download" class="btn btn-primary" disabled><lang class="lang_download_pdf">Download PDF</lang></button>
+                                            <button type="button" id="pm-print" class="btn btn-outline-primary" disabled><lang class="lang_print">Print</lang></button>
+                                            <button type="button" id="pm-reload" class="btn btn-light"><lang class="lang_pm_reload">Reload menu</lang></button>
+                                            <span id="pm-status" role="status" aria-live="polite"></span>
+                                        </div>
+                                        <div class="pm-editor">
+                                            <fieldset id="pm-controls" class="pm-controls" disabled>
+                                                <legend class="h6"><lang class="lang_pm_design">Menu design</lang></legend>
+                                                <label for="pm-title"><lang class="lang_pm_title">Restaurant name</lang></label>
+                                                <input id="pm-title" class="form-control" maxlength="120" data-pm="title">
+                                                <label for="pm-subtitle"><lang class="lang_pm_subtitle">Subtitle</lang></label>
+                                                <input id="pm-subtitle" class="form-control" maxlength="200" data-pm="subtitle">
+                                                <div class="pm-pair">
+                                                    <div><label for="pm-size"><lang class="lang_desktop_paper">Paper</lang></label><select id="pm-size" class="form-control" data-pm="size"><option value="a4">A4</option><option value="a5">A5</option><option value="letter"><lang class="lang_pm_option_letter">Letter</lang></option></select></div>
+                                                    <div><label for="pm-columns"><lang class="lang_pm_columns">Columns</lang></label><select id="pm-columns" class="form-control" data-pm="columns"><option value="1">1</option><option value="2">2</option></select></div>
+                                                </div>
+                                                <div class="pm-pair">
+                                                    <div><label for="pm-font"><lang class="lang_pm_type">Type style</lang></label><select id="pm-font" class="form-control" data-pm="font"><option value="serif"><lang class="lang_pm_option_classic_serif">Classic serif</lang></option><option value="sans"><lang class="lang_pm_option_modern_sans">Modern sans</lang></option></select></div>
+                                                    <div><label for="pm-font-size"><lang class="lang_receipt_text_size">Text size</lang></label><select id="pm-font-size" class="form-control" data-pm="fontSize"><option value="14"><lang class="lang_small">Small</lang></option><option value="16"><lang class="lang_pm_option_standard">Standard</lang></option><option value="18"><lang class="lang_large">Large</lang></option></select></div>
+                                                </div>
+                                                <label for="pm-pattern"><lang class="lang_pm_pattern">Background pattern</lang></label>
+                                                <select id="pm-pattern" class="form-control" data-pm="pattern"><option value="plain"><lang class="lang_pm_option_clean_white">Clean white</lang></option><option value="linen"><lang class="lang_pm_option_linen">Linen</lang></option><option value="coastal"><lang class="lang_pm_option_coastal_waves">Coastal waves</lang></option><option value="botanical"><lang class="lang_pm_option_botanical">Botanical</lang></option><option value="deco"><lang class="lang_pm_option_art_deco">Art deco</lang></option></select>
+                                                <label for="pm-accent"><lang class="lang_pm_accent">Accent color</lang></label>
+                                                <input type="color" id="pm-accent" class="form-control" data-pm="accent">
+                                                <label for="pm-background"><lang class="lang_pm_background">Your background image</lang></label>
+                                                <input type="file" id="pm-background" class="form-control-file" accept="image/png,image/jpeg,image/webp">
+                                                <small class="text-muted"><lang class="lang_pm_image_help">PNG, JPEG or WebP, up to 10 MB. Images are fitted to the page and optimized for printing. An uploaded image replaces the pattern.</lang></small>
+                                                <button type="button" id="pm-remove-background" class="btn btn-link btn-sm px-0"><lang class="lang_pm_remove_background">Remove image</lang></button>
+                                                <label for="pm-opacity"><lang class="lang_pm_opacity">Background strength</lang></label>
+                                                <input type="range" id="pm-opacity" min="0" max="0.5" step="0.02" data-pm="opacity" class="custom-range">
+                                                <label class="pm-check"><input type="checkbox" id="pm-descriptions" data-pm="descriptions"><lang class="lang_pm_descriptions">Show item descriptions</lang></label>
+                                                <label class="pm-check"><input type="checkbox" id="pm-diet" data-pm="diet"><lang class="lang_pm_diet">Show dietary marks</lang></label>
+                                                <label for="pm-footer"><lang class="lang_pm_footer">Footer note</lang></label>
+                                                <textarea id="pm-footer" class="form-control" rows="3" maxlength="300" data-pm="footer"></textarea>
+                                                <label><lang class="lang_categories">Categories</lang></label>
+                                                <div><button type="button" id="pm-all" class="btn btn-link btn-sm px-0"><lang class="lang_select_all">Select all</lang></button> · <button type="button" id="pm-none" class="btn btn-link btn-sm"><lang class="lang_pm_none">Clear selection</lang></button></div>
+                                                <div id="pm-categories" class="pm-category-options"></div>
+                                            </fieldset>
+                                            <div><p id="pm-summary" class="small text-muted"></p><div id="pm-preview" class="pm-preview" aria-label="Printable menu preview" data-t-aria-label="lang_pm_preview"></div></div>
+                                        </div>
+                                    </div></div>
+                                </div>
                                 <div class="tab-pane fade" id="restaurantprinting-line" role="tabpanel" aria-labelledby="restaurantprinting-tab-line">
                                     <div class="card mb-3" data-desktop-only><div class="card-body" data-desktop-page="kitchen"></div></div>
                                     <div class="card m-b-30"><div class="card-body">

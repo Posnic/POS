@@ -303,6 +303,12 @@ class SettingsRepository extends BaseModel {
           } catch (error) {
             return { status: false, data: null, message: error.message };
           }
+        } else if (key === 'printable_menu_design' && value !== null) {
+          try {
+            accepted[key] = require('../helpers/printable-menu-design').normalize(value);
+          } catch (error) {
+            return { status: false, data: null, message: error.message };
+          }
         } else if (key === 'quote_pricing_mode') {
           if (value !== null && !['discount', 'markup'].includes(value)) {
             return {
