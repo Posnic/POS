@@ -150,7 +150,11 @@ describe('settings read path', () => {
     const [filter, update] = mockCollections.branch_documents.updateOne.mock.calls[0];
     expect(String(filter.branch_id)).toBe(BRANCH);
     expect(String(filter.license)).toBe(LICENSE);
-    expect(Object.keys(update.$set).sort()).toEqual(['branch_id', 'license', 'printable_menu_design']);
+    expect(Object.keys(update.$set).sort()).toEqual([
+      'branch_id',
+      'license',
+      'printable_menu_design',
+    ]);
     expect(update.$set.printable_menu_design.categories).toEqual([]);
     expect(update.$set.printable_menu_design.pattern).toBe('coastal');
     expect(mockCollections.branch_features.updateOne).not.toHaveBeenCalled();
@@ -158,9 +162,13 @@ describe('settings read path', () => {
 
   test('an unsafe printable background is rejected before any write', async () => {
     seedWrite();
-    const r = await repo.saveGroup('documents', {
-      printable_menu_design: { background: 'https://example.com/tracker.png' },
-    }, ctx);
+    const r = await repo.saveGroup(
+      'documents',
+      {
+        printable_menu_design: { background: 'https://example.com/tracker.png' },
+      },
+      ctx
+    );
     expect(r.status).toBe(false);
     expect(mockCollections.branches.updateOne).not.toHaveBeenCalled();
   });

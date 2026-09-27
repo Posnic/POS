@@ -20,8 +20,14 @@
       throw new Error('Choose a PNG, JPEG or WebP background under 1 MB.');
     }
     const categories = v.categories == null ? null : v.categories;
-    if (categories !== null && (!Array.isArray(categories) || categories.length > 500 ||
-      categories.some(function (s) { return typeof s !== 'string' || s.length > 100; }))) {
+    if (
+      categories !== null &&
+      (!Array.isArray(categories) ||
+        categories.length > 500 ||
+        categories.some(function (s) {
+          return typeof s !== 'string' || s.length > 100;
+        }))
+    ) {
       throw new Error('Invalid menu categories.');
     }
     return {
@@ -35,12 +41,14 @@
       font: v.font === 'sans' ? 'sans' : 'serif',
       pattern: patterns.indexOf(v.pattern) !== -1 ? v.pattern : 'plain',
       accent: /^#[0-9a-f]{6}$/i.test(v.accent || '') ? v.accent : '#155e63',
-      opacity: Number.isFinite(Number(v.opacity)) && v.opacity !== null ?
-        Math.min(0.5, Math.max(0, Number(v.opacity))) : 0.16,
+      opacity:
+        Number.isFinite(Number(v.opacity)) && v.opacity !== null
+          ? Math.min(0.5, Math.max(0, Number(v.opacity)))
+          : 0.16,
       descriptions: v.descriptions === true,
       diet: v.diet !== false,
       categories: categories === null ? null : Array.from(new Set(categories)),
-      background: image
+      background: image,
     };
   }
   return { normalize: normalize, sizes: sizes, patterns: patterns };

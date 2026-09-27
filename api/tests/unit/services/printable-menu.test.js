@@ -1,16 +1,47 @@
 'use strict';
 const { ObjectId } = require('mongodb');
 const { snapshot } = require('../../../src/services/printable-menu');
-const branchId = new ObjectId(), licenseId = new ObjectId();
+const branchId = new ObjectId(),
+  licenseId = new ObjectId();
 function fixture() {
   const branch = { branch_name: 'Coastal Kitchen', currency: 'INR' };
   const branchQuery = jest.fn().mockResolvedValue(branch);
-  const itemQuery = jest.fn().mockReturnValue({ sort: () => ({ toArray: async () => [
-    { _id: new ObjectId(), name: 'Vanilla Milkshake', selling_price: 180, category_id: 'drinks', category_name: 'Drinks', diet: 'veg' },
-    { _id: new ObjectId(), name: 'Chocolate Milkshake', selling_price: 180, category_id: 'drinks', category_name: 'Drinks', diet: 'veg' },
-    { _id: new ObjectId(), name: 'Fish', selling_price: 300, category_name: 'Main course', diet: 'non_veg' }
-  ] }) });
-  return { branchQuery, itemQuery, db: { collection: (name) => name === 'branches' ? { findOne: branchQuery } : { find: itemQuery } } };
+  const itemQuery = jest.fn().mockReturnValue({
+    sort: () => ({
+      toArray: async () => [
+        {
+          _id: new ObjectId(),
+          name: 'Vanilla Milkshake',
+          selling_price: 180,
+          category_id: 'drinks',
+          category_name: 'Drinks',
+          diet: 'veg',
+        },
+        {
+          _id: new ObjectId(),
+          name: 'Chocolate Milkshake',
+          selling_price: 180,
+          category_id: 'drinks',
+          category_name: 'Drinks',
+          diet: 'veg',
+        },
+        {
+          _id: new ObjectId(),
+          name: 'Fish',
+          selling_price: 300,
+          category_name: 'Main course',
+          diet: 'non_veg',
+        },
+      ],
+    }),
+  });
+  return {
+    branchQuery,
+    itemQuery,
+    db: {
+      collection: (name) => (name === 'branches' ? { findOne: branchQuery } : { find: itemQuery }),
+    },
+  };
 }
 test('prints a branch without requiring a public store or ordering to be enabled', async () => {
   const f = fixture();
@@ -19,7 +50,8 @@ test('prints a branch without requiring a public store or ordering to be enabled
   expect(data.currency).toBe('INR');
   expect(data.categories).toHaveLength(2);
   expect(data.categories[0].items.map((x) => [x.name, x.price])).toEqual([
-    ['Vanilla Milkshake', 180], ['Chocolate Milkshake', 180]
+    ['Vanilla Milkshake', 180],
+    ['Chocolate Milkshake', 180],
   ]);
   const [filter, options] = f.itemQuery.mock.calls[0];
   expect(filter.license).toEqual(licenseId);

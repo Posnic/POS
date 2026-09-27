@@ -71,8 +71,11 @@ class ItemsController extends BaseController {
       }
       const context = await this.ensureContext(req);
       const allowed = req.user?.branch_access;
-      if (Array.isArray(allowed) && allowed.length &&
-          !allowed.some((b) => String(b.branch_id || b) === String(context.branchId))) {
+      if (
+        Array.isArray(allowed) &&
+        allowed.length &&
+        !allowed.some((b) => String(b.branch_id || b) === String(context.branchId))
+      ) {
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
       const db = await require('../models/base.model').getDb();
