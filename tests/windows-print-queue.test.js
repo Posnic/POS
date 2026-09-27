@@ -193,3 +193,134 @@ test('diagnostic log rotates at one MiB and excludes receipt content', async t =
   assert.ok(entries.some(row => row.port === 'USB003' && row.present === true));
   assert.ok(entries.some(row => row.spoolerJobId === 1));
 });
+
+test('idle keep-alive contacts each configured USB queue every 30 seconds without receipts', async t => {
+  const r = rig(t);
+  r.queue.configure('Kitchen_Printer', {});
+  await r.tick(0);
+  await r.tick(29999); assert.equal(r.initialized.length, 0);
+  await r.tick(1); assert.equal(r.initialized.length, 1);
+  assert.match(r.initialized[0].document, /^Posnic-idle-/);
+  assert.equal(r.calls.length, 0);
+  await r.tick(15000); assert.equal(r.initialized.length, 1);
+  await r.tick(15000); assert.equal(r.initialized.length, 2);
+  assert.notEqual(r.initialized[0].document, r.initialized[1].document);
+});
+
+test('idle disconnect submits nothing; reconnect clears WorkOffline and resumes pulses', async t => {
+  const r = rig(t); r.queue.configure('Kitchen_Printer', {});
+  r.health.present = false; r.health.workOffline = true;
+  await r.tick(); await r.tick(60000);
+  assert.equal(r.initialized.length + r.recovered.length, 0);
+  r.health.present = true;
+  await r.tick(); assert.equal(r.recovered.length, 1); assert.equal(r.initialized.length, 1);
+});
+
+test('queued idle pulse survives restart without accumulating another job', async t => {
+  const r = rig(t); r.queue.configure('Kitchen_Printer', {});
+  r.transport.initialize = async job => {
+    r.initialized.push(job);
+    r.health.jobs.push({ id: 42, document: job.document, status: 'Offline', error: true });
+    return { success: true, spoolerJobId: 42 };
+  };
+  await r.tick(); await r.tick(30000);
+  r.queue.stop(); const restored = r.make();
+  await r.tick(60000, restored); await r.tick(60000, restored);
+  assert.equal(r.initialized.length, 1);
+  assert.equal((await r.send('receipt', 'Kitchen_Printer', restored)).status, 'Waiting');
+  assert.equal(r.calls.length, 0);
+  r.health.jobs = [];
+  // The real receipt runs after the old pulse drains, without duplicating it.
+  r.transport.initialize = async job => { r.initialized.push(job); return { success: true }; };
+  await r.tick(30000, restored);
+  assert.equal(r.calls.length, 1);
+  assert.equal(r.initialized.filter(j => j.document.startsWith('Posnic-idle-')).length, 1);
+});
+
+test('uncertain idle submission is not repeated across restart', async t => {
+  const r = rig(t); r.queue.configure('Kitchen_Printer', {});
+  r.transport.initialize = async job => { r.initialized.push(job); throw new Error('pipe lost'); };
+  await r.tick(); await r.tick(30000);
+  r.queue.stop(); const restored = r.make();
+  await r.tick(60000, restored);
+  assert.equal(r.initialized.length, 1);
+  assert.match(restored.keepAlive.kitchen_printer.status, /outcome unknown/);
+});
+
+test('idle traffic does not reset a busy printer, unrelated job, or recent receipt', async t => {
+  const r = rig(t); r.queue.configure('Kitchen_Printer', {});
+  await r.tick(); r.health.printerStatus = 4;
+  await r.tick(60000); assert.equal(r.initialized.length, 0);
+  r.health.printerStatus = 3;
+  r.health.jobs = [{ id: 90, document: 'Another app', status: 'Printing', error: false }];
+  await r.tick(60000); assert.equal(r.initialized.length, 0);
+  r.health.jobs = [];
+  await r.send(); const count = r.initialized.length;
+  await r.tick(29999); assert.equal(r.initialized.length, count);
+  await r.tick(1); assert.equal(r.initialized.length, count + 1);
+});
+
+test('idle pulse and newly arriving receipt use one lock and receipt completes immediately afterward', async t => {
+  const r = rig(t); r.queue.configure('Kitchen_Printer', {});
+  let entered, finish;
+  const enteredPulse = new Promise(resolve => { entered = resolve; });
+  const release = new Promise(resolve => { finish = resolve; });
+  r.transport.initialize = async job => {
+    r.initialized.push(job);
+    if (job.document.startsWith('Posnic-idle-')) { entered(); await release; }
+    return { success: true };
+  };
+  await r.tick();
+  const tick = r.tick(30000); await enteredPulse;
+  const receipt = r.send();
+  assert.equal(r.calls.length, 0);
+  finish(); await tick;
+  assert.equal((await receipt).status, 'Sent to printer');
+  assert.equal(r.calls.length, 1);
+  assert.deepEqual([...r.calls[0].bytes], [27, 64, 65, 10, 29, 86, 0]);
+});
+
+test('keep-alive respects opt-out, unknown devices, port mismatch, non-USB and stop', async t => {
+  const r = rig(t); r.queue.configure('Kitchen_Printer', { keepAlive: false });
+  await r.tick(); await r.tick(60000); assert.equal(r.initialized.length, 0);
+  r.queue.configure('Kitchen_Printer', { initialize: false });
+  await r.tick(60000); assert.equal(r.initialized.length, 0);
+  r.queue.configure('Kitchen_Printer', { port: 'USB999' });
+  await r.tick(60000); assert.equal(r.initialized.length, 0);
+  r.queue.configure('Kitchen_Printer', {}); r.health.present = null;
+  await r.tick(60000); assert.equal(r.initialized.length, 0);
+  r.health.present = true; r.health.usb = false;
+  await r.tick(60000); assert.equal(r.initialized.length, 0);
+  r.health.usb = true; r.queue.stop();
+  await r.tick(60000); assert.equal(r.initialized.length, 0);
+});
+
+test('reception and kitchen idle commands keep separate names, ports and payload files', async t => {
+  const r = rig(t);
+  r.queue.configure('Reception_Printer', { port: 'USB004' });
+  r.queue.configure('Kitchen_Printer', { port: 'USB003' });
+  r.transport.inspect = async printer => ({ ...r.health, jobs: [], printer,
+    port: printer.toLowerCase().startsWith('reception') ? 'USB004' : 'USB003' });
+  await r.tick(); await r.tick(30000);
+  assert.deepEqual(r.initialized.map(j => j.printer).sort(), ['kitchen_printer', 'reception_printer']);
+  assert.notEqual(r.initialized[0].file, r.initialized[1].file);
+});
+
+test('removed printers stop receiving idle commands', async t => {
+  const r = rig(t); let selected = ['Kitchen_Printer'];
+  r.queue.configured = () => selected;
+  await r.tick(); await r.tick(30000); assert.equal(r.initialized.length, 1);
+  selected = []; await r.tick(60000); assert.equal(r.initialized.length, 1);
+});
+
+test('real initialization adapter sends exactly ESC @ with no printable bytes, feed or cut', async t => {
+  const r = rig(t);
+  const raw = require('../src/raw-print-service');
+  const original = raw.send;
+  t.after(() => { raw.send = original; });
+  let data;
+  raw.send = async job => { data = fs.readFileSync(job.file); return { success: true, spoolerJobId: 7 }; };
+  const adapter = require('../src/windows-printer-transport');
+  await adapter.initialize({ printer: 'Kitchen_Printer', document: 'Paperless-test', file: path.join(r.dir, 'idle.bin') });
+  assert.deepEqual([...data], [0x1b, 0x40]);
+});

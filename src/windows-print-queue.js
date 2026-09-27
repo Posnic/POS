@@ -22,7 +22,7 @@ function readiness(health, binding = {}) {
 }
 
 class WindowsPrintQueue {
-  constructor({ dir, transport, now = Date.now, wait = sleep, delays = [2000, 5000, 10000], onStatus = () => {}, configured = () => [] }) {
+  constructor({ dir, transport, now = Date.now, wait = sleep, delays = [2000, 5000, 10000], onStatus = () => {}, configured = () => null }) {
     this.dir = dir;
     this.transport = transport;
     this.now = now;
@@ -37,6 +37,8 @@ class WindowsPrintQueue {
     this.stopped = false;
     fs.mkdirSync(dir, { recursive: true });
     this.bindings = this.read('bindings.json', {});
+    this.keepAlive = this.read('keep-alive.json', {});
+    this.activity = new Map();
     // Corrupt state must fail closed. It must never turn into a new submission.
     for (const name of fs.readdirSync(dir).filter(name => /^[a-f0-9]{64}\.json$/.test(name))) {
       const job = this.read(name);
@@ -63,10 +65,13 @@ class WindowsPrintQueue {
     // Bounded diagnostic metadata only: never receipt contents/customer data.
     try {
       const file = path.join(this.dir, 'health.log');
-      if (fs.existsSync(file) && fs.statSync(file).size > 1024 * 1024) {
+      let size = 0;
+      try { size = fs.statSync(file).size; } catch (error) { if (error.code !== 'ENOENT') throw error; }
+      if (size > 1024 * 1024) {
         for (let i = 2; i >= 1; i--) {
           const older = file + '.' + i;
-          if (fs.existsSync(older)) fs.renameSync(older, file + '.' + (i + 1));
+          try { fs.renameSync(older, file + '.' + (i + 1)); }
+          catch (error) { if (error.code !== 'ENOENT') throw error; }
         }
         fs.renameSync(file, file + '.1');
       }
@@ -90,6 +95,7 @@ class WindowsPrintQueue {
       try { this.onStatus(this.result(job)); } catch (_) { /* UI can close at any time. */ }
     }
     if (state === 'sent') {
+      this.activity.set(job.printer.toLowerCase(), this.now());
       try { fs.unlinkSync(path.join(this.dir, job.id + '.bin')); } catch (_) { /* no payload required after completion */ }
     }
     return this.result(job);
@@ -101,7 +107,8 @@ class WindowsPrintQueue {
     const pnpId = String(binding.pnpId || '').trim();
     if (port.length > 128 || pnpId.length > 512 || /[\r\n\0]/.test(port + pnpId + printer)) throw new Error('Invalid printer binding');
     if (pnpId && !/^USB(?:PRINT)?\\/i.test(pnpId)) throw new Error('Use the physical USB or USBPRINT instance ID');
-    this.bindings[printer.toLowerCase()] = { port, pnpId, initialize: binding.initialize !== false };
+    this.bindings[printer.toLowerCase()] = { port, pnpId, initialize: binding.initialize !== false,
+      keepAlive: binding.keepAlive !== false };
     this.write('bindings.json', this.bindings);
     // Existing jobs retain their frozen destinations; configuration only
     // affects new requests. There is no automatic port reassignment.
@@ -123,6 +130,7 @@ class WindowsPrintQueue {
     if (jobId !== undefined && (typeof jobId !== 'string' || !jobId || jobId.length > 1024)) return Promise.resolve({ success: false, status: 'Failed', error: 'Invalid print job ID' });
     if (!printer || !Buffer.isBuffer(bytes) || !bytes.length) return Promise.resolve({ success: false, status: 'Failed', error: 'Choose a printer and a non-empty receipt' });
     const id = idFor(jobId || crypto.randomUUID());
+    if (!/^[a-f0-9]{64}$/.test(id)) throw new Error('Invalid job storage ID');
     const existing = this.jobs.get(id);
     if (existing) {
       if (existing.printer.toLowerCase() !== printer.toLowerCase()) return Promise.resolve({ success: false, status: 'Failed', error: 'Job ID belongs to another printer' });
@@ -195,6 +203,11 @@ class WindowsPrintQueue {
       if (job.accepted && this.live.has(job.id) && !job.lastJobError && !reason) return this.transition(job, 'sent');
       return this.transition(job, 'failed', 'Print outcome unknown; check the printer before requesting a duplicate');
     }
+    // An idle initialization must finish before a receipt is submitted.
+    const pulse = this.keepAlive[job.printer.toLowerCase()];
+    if (pulse?.pending && this.pulsePending(pulse, health)) {
+      return this.transition(job, 'waiting', pulse.status);
+    }
     if (job.state === 'failed') {
       if (!job.reconnect || reason) return;
       job.reconnect = false; job.retries = 0; job.nextAt = 0;
@@ -221,6 +234,7 @@ class WindowsPrintQueue {
     // Persist BEFORE crossing the spooler boundary. A crash in the following
     // call is ambiguous, not permission to submit a second copy.
     job.submitted = true;
+    this.activity.set(job.printer.toLowerCase(), this.now());
     this.transition(job, 'queued');
     let result;
     try { result = await this.transport.submit({ printer: job.printer, document: job.document, file: path.join(this.dir, job.id + '.bin') }); }
@@ -238,37 +252,102 @@ class WindowsPrintQueue {
     return this.step(job);
   }
 
-  run(printer) {
+  run(printer, idle = false) {
     const key = printer.toLowerCase();
-    if (this.running.has(key)) return this.running.get(key);
-    const promise = (async () => {
+    // Chain callers rather than sharing a promise: a receipt arriving during
+    // an idle probe must run after it, not be left waiting for another tick.
+    const previous = this.running.get(key) || Promise.resolve();
+    const promise = previous.catch(() => {}).then(async () => {
+      if (this.stopped) return;
       for (const job of this.jobs.values()) {
         if (this.stopped || job.printer.toLowerCase() !== key || job.state === 'sent') continue;
         await this.step(job);
-        if (['waiting', 'offline', 'queued'].includes(job.state)) break;
+        if (['waiting', 'offline', 'queued'].includes(job.state)) return;
       }
-    })().finally(() => this.running.delete(key));
+      if (idle) await this.idle(printer, this.bindings[key]);
+    }).finally(() => { if (this.running.get(key) === promise) this.running.delete(key); });
     this.running.set(key, promise);
     return promise;
   }
 
+  pulsePending(pulse, health) {
+    const original = health.jobs.find(job => job.document === pulse.document);
+    if (original) {
+      pulse.observed = true;
+      pulse.spoolerId = original.id;
+      pulse.status = 'Waiting for idle keep-alive: Windows ' + original.status;
+    } else if (pulse.accepted || pulse.observed) {
+      pulse.pending = false;
+      pulse.status = 'Idle keep-alive left Windows queue';
+    } else {
+      pulse.status = 'Idle keep-alive outcome unknown; check Windows queue before printing';
+    }
+    this.write('keep-alive.json', this.keepAlive);
+    return pulse.pending;
+  }
+
+  async idle(printer, binding = {}) {
+    const key = printer.toLowerCase();
+    let health = await this.snapshot(printer, binding);
+    if (!this.activity.has(key) || health.jobs.length || health.printerStatus !== 3) this.activity.set(key, this.now());
+    if (!binding.port && health.port) {
+      Object.assign(binding, { port: health.port, pnpId: health.pnpId || '' });
+      this.write('bindings.json', this.bindings);
+    }
+    let reason = readiness(health, binding);
+    if (health.usb && health.present === true && health.workOffline && reason === 'Printer offline') {
+      await this.transport.recover(printer, binding);
+      await this.wait(300);
+      health = await this.snapshot(printer, binding);
+      reason = readiness(health, binding);
+    }
+    const prior = this.keepAlive[key];
+    if (prior?.pending && this.pulsePending(prior, health)) return;
+    // ESC @ resets the print buffer. Only send after a quiet period, an empty
+    // spooler and explicitly Idle status, never between queued receipt jobs.
+    if (binding.keepAlive === false || binding.initialize === false || !this.transport.initialize ||
+        !health.usb || health.present !== true || reason || health.jobs.length ||
+        health.printerStatus !== 3 || health.extendedStatus !== 3) return;
+    const last = Math.max(prior?.at || 0, this.activity.get(key) || 0);
+    if (this.now() - last < 30000) return;
+    const pulse = this.keepAlive[key] = { printer, at: this.now(), pending: true,
+      document: 'Posnic-idle-' + crypto.randomUUID(), status: 'Idle keep-alive queued' };
+    // Persist before submitting. Unknown outcomes block subsequent pulses,
+    // including after restart; never accumulate wake jobs behind an outage.
+    this.write('keep-alive.json', this.keepAlive);
+    let result;
+    try {
+      result = await this.transport.initialize({ printer, document: pulse.document,
+        file: path.join(this.dir, 'idle-' + idFor(key) + '.bin') });
+    } catch (error) { result = { success: false, error: error.message }; }
+    pulse.accepted = !!result.success;
+    pulse.spoolerId = result.spoolerJobId || null;
+    if (result.unavailable) pulse.pending = false; // helper never received it
+    pulse.status = result.success ? 'Idle keep-alive accepted by Windows' : 'Idle keep-alive failed: ' + (result.error || 'No answer');
+    this.write('keep-alive.json', this.keepAlive);
+    this.log({ printer, port: health.port, pnpId: health.pnpId, present: health.present,
+      event: 'idle-keep-alive', spoolerJobId: pulse.spoolerId, status: pulse.status });
+    await this.wait(300);
+    health = await this.snapshot(printer, binding);
+    if (pulse.pending) this.pulsePending(pulse, health);
+  }
+
   async tick() {
-    for (const printer of this.configured()) {
+    const configured = this.configured();
+    const idleNames = configured && new Set(configured.map(value => String(value).toLowerCase()));
+    for (const printer of configured || []) {
       const key = String(printer).toLowerCase();
       if (key && key !== 'default' && !this.bindings[key]) this.bindings[key] = {};
     }
     const names = new Set([...this.jobs.values()].filter(job => job.state !== 'sent' &&
       (job.state !== 'failed' || job.reconnect || job.submitted)).map(job => job.printer));
     for (const name of names) await this.run(name);
-    // Idle health checks do not open/write to a printer or produce paper.
-    for (const [name, binding] of Object.entries(this.bindings)) {
+    // Idle traffic uses the same per-printer lock as receipts and KOTs.
+    for (const name of Object.keys(this.bindings)) {
       if ([...names].some(value => value.toLowerCase() === name)) continue;
+      if (idleNames && !idleNames.has(name)) continue;
       try {
-        const health = await this.snapshot(name, binding);
-        if (!binding.port && health.port) {
-          Object.assign(binding, { port: health.port, pnpId: health.pnpId || '' });
-          this.write('bindings.json', this.bindings);
-        }
+        await this.run(name, true);
       } catch (error) { this.log({ printer: name, error: error.message }); }
     }
   }

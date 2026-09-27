@@ -77,8 +77,30 @@ installation directory. Job state is flushed and atomically replaced before
 submission. Successful jobs retain their deduplication record; their receipt
 payload is removed. Corrupt state fails closed instead of resetting history.
 
-Health checks run without printing: every two seconds while jobs are active,
-or every fifteen seconds when idle. Status changes log the timestamp, queue,
+Health checks run every two seconds while jobs are active, or every fifteen
+seconds when idle. Reading Windows status alone does not contact the USB
+printer; the resident helper's own ping only checks its process. Neither
+previous check kept an idle USB printer active.
+
+Idle keep-alive is enabled by default for configured USB ESC/POS queues,
+and can be disabled in Hardware Manager. After at least 30 seconds quiet,
+the same RAW writer sends only `ESC @` (1B 40), without feed, text, or cut.
+It requires verified USB presence, matching port/device, an empty Windows
+queue, and both printer statuses explicitly Idle. Busy or unknown status
+is not permission to reset a printer's buffer. Initialization disabled also
+disables keep-alive. This is not a bidirectional status acknowledgement.
+
+Idle commands and receipts share one per-printer lock. A durable record in
+`keep-alive.json` tracks each idle command before submission; an existing
+or uncertain command prevents another, including after restart. An unknown
+submission blocks new receipts for review rather than risk a delayed reset
+in the middle of a receipt. Reconnected devices are rechecked and WorkOffline
+is cleared using normal user permissions before sending anything. Hardware
+Manager shows the last keep-alive attempt/status. The existing Electron
+system-sleep blocker stays in place; display blanking is allowed. No global
+USB power policy is changed.
+
+Status changes log the timestamp, queue,
 port, physical instance/presence, Windows status, spooler IDs and retry count.
 `health.log` rotates at 1 MiB with three archived files. It contains metadata,
 not receipt content. Pending payloads are retained for restart recovery.
@@ -89,7 +111,10 @@ not receipt content. Pending payloads are retained for restart recovery.
 disconnected and reconnecting devices, retries/exhaustion, restart ambiguity,
 concurrent duplicates, existing errored jobs, initialization, and routing
 isolation. Existing KOT, receipt formatting, IPC and raw-helper tests cover
-the integration. No test needs to send paper to a physical printer.
+the integration. Idle tests also cover interval limits, disabled settings,
+busy/unrelated jobs, receipt arrival during a pulse, lost helper responses,
+restart, reconnect and destination isolation. No test needs to send paper
+to a physical printer.
 
 The USB extender/cable can still disconnect the device electrically; software
 cannot repair that. Validate the affected installation after an idle period,

@@ -862,8 +862,13 @@ class HardwareManager {
           if (typeof receipts === 'string') { try { receipts = JSON.parse(receipts); } catch (_) { receipts = []; } }
           let kitchen = {};
           try { kitchen = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'kot-config.json'), 'utf8')); } catch (_) { /* not configured */ }
-          return [...(Array.isArray(receipts) ? receipts : []), prefs.receipt_printer,
-            ...(kitchen.printers || kitchen.printerNames || [])].map(item => typeof item === 'string' ? item : item?.name).filter(Boolean);
+          const { normalizeTargets, PAPER_SIZES } = require('./printer-targets');
+          const targets = [...normalizeTargets({ printers: Array.isArray(receipts) ? receipts : [],
+            printerName: prefs.receipt_printer, pageSize: prefs.print_width }), ...normalizeTargets(kitchen)];
+          // Office sheet printers must never receive ESC/POS idle bytes.
+          // Also stop idle traffic when a saved printer is no longer selected.
+          const sheets = new Set(targets.filter(item => !PAPER_SIZES[item.pageSize]?.roll).map(item => item.name.toLowerCase()));
+          return targets.filter(item => item.name && PAPER_SIZES[item.pageSize]?.roll && !sheets.has(item.name.toLowerCase())).map(item => item.name);
         },
         onStatus: status => {
           for (const win of BrowserWindow.getAllWindows()) {

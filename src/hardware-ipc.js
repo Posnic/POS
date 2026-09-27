@@ -178,7 +178,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   ipcMain.handle('printer:recovery-status', () => {
     const queue = hardwareManager.getWindowsPrintQueue();
     return queue ? { supported: true, bindings: queue.bindings,
-      health: [...queue.health.values()].map(item => item.value), jobs: queue.list() } : { supported: false };
+      health: [...queue.health.values()].map(item => item.value), keepAlive: queue.keepAlive, jobs: queue.list() } : { supported: false };
   });
   ipcMain.handle('printer:recovery-configure', async (_event, printer, binding) => {
     const queue = hardwareManager.getWindowsPrintQueue();

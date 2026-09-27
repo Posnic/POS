@@ -394,10 +394,13 @@
                     <label>Expected port <input id="wrPort" placeholder="Detected on first use" maxlength="128"></label>
                     <label>Physical USB instance ID (optional) <input id="wrPnp" placeholder="USBPRINT\…" maxlength="512"></label>
                     <label><input type="checkbox" id="wrInitialize" checked> Initialize ESC/POS before sending</label>
+                    <label><input type="checkbox" id="wrKeepAlive" checked> Keep USB ESC/POS printer awake while Posnic is running</label>
+                    <p>Sends a paperless initialization after 30 seconds idle. No paper feed or cut. Requires ESC/POS initialization above. Pauses while printing or disconnected.</p>
                     <button type="button" onclick="wrSave()">Save recovery settings</button>
                     <p>Changing these settings affects new jobs only. Pending jobs retain their original printer and port. No ports are swapped automatically.</p>
                     <div id="wrMessage" role="status"></div>
                     <pre id="wrHealth" style="white-space:pre-wrap;"></pre>
+                    <pre id="wrKeepAliveStatus" style="white-space:pre-wrap;"></pre>
                     <div id="wrJobs" role="status" style="max-height:240px;overflow:auto;"></div>
                 </details>
                 <div id="rpStatus" style="display:none;padding:16px 20px;border-radius:12px;margin-bottom:20px;font-weight:600;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
@@ -2129,6 +2132,7 @@
             document.getElementById('wrPort').value = binding.port || '';
             document.getElementById('wrPnp').value = binding.pnpId || '';
             document.getElementById('wrInitialize').checked = binding.initialize !== false;
+            document.getElementById('wrKeepAlive').checked = binding.keepAlive !== false;
         }
         async function wrRefresh() {
             if (!window.electronAPI?.printer?.recoveryStatus) return;
@@ -2137,6 +2141,8 @@
                 if (!status.supported) return;
                 document.getElementById('windowsRecovery').style.display = 'block';
                 wrBindings = status.bindings || {};
+                document.getElementById('wrKeepAliveStatus').textContent = Object.values(status.keepAlive || {}).map(p =>
+                    p.printer + ' | ' + p.status + ' | ' + new Date(p.at).toLocaleTimeString()).join('\n');
                 document.getElementById('wrHealth').textContent = (status.health || []).map(p =>
                     p.printer + ' | ' + p.port + ' | USB present: ' + p.present + ' | WorkOffline: ' + p.workOffline + ' | Windows status: ' + p.printerStatus).join('\n');
                 const list = document.getElementById('wrJobs');
@@ -2152,6 +2158,7 @@
             const result = await window.electronAPI.printer.configureRecovery(document.getElementById('wrPrinter').value, {
                 port: document.getElementById('wrPort').value, pnpId: document.getElementById('wrPnp').value,
                 initialize: document.getElementById('wrInitialize').checked,
+                keepAlive: document.getElementById('wrKeepAlive').checked,
             });
             document.getElementById('wrMessage').textContent = result.success ? 'Recovery settings saved for new jobs.' : result.error;
             await wrRefresh();
