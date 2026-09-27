@@ -133,3 +133,16 @@ test('table grid uses both dimensions for landscape and portrait without shrinki
   assert.match(dom.window.document.getElementById('pager').textContent,/of/);
  }finally{dom.window.close();}
 });
+
+test('tall detailed board uses available rows instead of a fixed four-card limit',()=>{
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try{
+  const board=dom.window.document.getElementById('board');
+  Object.defineProperty(board,'clientWidth',{value:1000});Object.defineProperty(board,'clientHeight',{value:1600});
+  dom.window.kitchenScreen.setConfig({tableOnly:false,_fit:{fontPx:40,columns:2,cards:4}});
+  dom.window.kitchenScreen.setTickets(Array.from({length:5},(_,i)=>({table:'T'+i,placedAt:new Date().toISOString(),items:[{name:'Soup',qty:1}]})));
+  assert.equal(board.querySelectorAll('.ticket').length,5);
+  assert.equal(dom.window.document.getElementById('pager').textContent,'');
+ }finally{dom.window.close();}
+});

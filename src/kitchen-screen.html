@@ -384,7 +384,7 @@
     var ceiling = Math.max(1, Math.min(Number(fitInfo.columns) || 4, Math.floor(width / (font * (cfg.tableOnly ? 7 : 12)))));
     var height = board.clientHeight || window.innerHeight || 700;
     var rows = Math.max(1, Math.floor(height / (font * (cfg.tableOnly ? 6 : maxItems * 1.5 + 4))));
-    var perPage = Math.max(1, Math.min((fitInfo.cards || 8) * (compact ? 2 : 1), ceiling * rows));
+    var perPage = Math.max(1, ceiling * rows);
     if (cfg.tableOnly) {
       // Size from both dimensions, not a monitor's saved orientation or dish layout.
       ceiling = Math.max(1, Math.floor(width / Math.max(220, font * 6)));
