@@ -6199,15 +6199,15 @@ PosnicPro.kotreport.showGuestBills = function ($container, tableNumber, branchVa
     if (branches.length !== 1 || !branches[0]) return;
     var panel = $('<section class="guest-bill-cashier border rounded p-3 mb-3"></section>');
     $container.prepend(panel);
-    var text = function (key, fallback) { return PosnicPro.i18n ? PosnicPro.i18n.t(key, fallback) : fallback; };
+    var i18n = PosnicPro.i18n || { t: function (key, fallback) { return fallback; } };
     function load() {
-        panel.empty().append($('<span class="text-muted"></span>').text(text('lang_loading_details', 'Loading details...')));
+        panel.empty().append($('<span class="text-muted"></span>').text(i18n.t('lang_loading_details', 'Loading details...')));
         PosnicPro.get({url:'sales/guestBills/latest',data:{branchId:branches[0],table_number:tableNumber}}, function (response) {
             if (response.type !== 'success' || !response.data) { panel.remove(); return; }
             var data = response.data;
-            panel.empty().append($('<h6></h6>').text(text('lang_guest_bills','Guest bills')));
+            panel.empty().append($('<h6></h6>').text(i18n.t('lang_guest_bills','Guest bills')));
             if (data.stale) {
-                panel.append($('<p class="text-warning mb-0"></p>').text(text('lang_guest_bills_changed','The table changed. Ask for updated guest bills before collecting these amounts.')));
+                panel.append($('<p class="text-warning mb-0"></p>').text(i18n.t('lang_guest_bills_changed','The table changed. Ask for updated guest bills before collecting these amounts.')));
                 return;
             }
             var list=$('<dl class="mb-2"></dl>');
@@ -6216,9 +6216,9 @@ PosnicPro.kotreport.showGuestBills = function ($container, tableNumber, branchVa
                 row.append($('<dt></dt>').text(guest.name),$('<dd class="mb-0"></dd>').text((data.currency || '')+(guest.totalMinor/100).toFixed(2)));
                 list.append(row);
             });
-            panel.append(list,$('<p class="text-muted small mb-0"></p>').text(text('lang_guest_bills_unpaid','Unpaid guest shares. Collect and record payment using the cashier payment controls.')));
+            panel.append(list,$('<p class="text-muted small mb-0"></p>').text(i18n.t('lang_guest_bills_unpaid','Unpaid guest shares. Collect and record payment using the cashier payment controls.')));
         }, function () {
-            panel.empty().append($('<button type="button" class="btn btn-outline-secondary btn-sm"></button>').text(text('lang_guest_bills_retry','Retry guest bills')).on('click',load));
+            panel.empty().append($('<button type="button" class="btn btn-outline-secondary btn-sm"></button>').text(i18n.t('lang_guest_bills_retry','Retry guest bills')).on('click',load));
         });
     }
     load();
