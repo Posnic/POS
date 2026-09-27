@@ -68,6 +68,15 @@
         guests[g].lines.push({
           id: line.id,
           name: line.name,
+          ...(line.translations
+            ? {
+                default_language: line.default_language,
+                translations: line.translations.map((row) => ({
+                  locale: row.locale,
+                  name: row.name,
+                })),
+              }
+            : {}),
           quantity: line.quantity,
           weight,
           weightTotal: weights.reduce((a, b) => a + b, 0),

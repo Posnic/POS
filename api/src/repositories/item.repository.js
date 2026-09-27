@@ -1,3 +1,4 @@
+const itemText = require('../utils/item-localization');
 const { searchPattern } = require('../utils/safe-search');
 const tradingDay = require('../utils/trading-day');
 // src/repositories/item.repository.js
@@ -1832,6 +1833,14 @@ class ItemRepository extends BaseModel {
         branch_name: branchName,
         branch_access: [{ branch_id: branchObjectId, branch_name: branchName }],
         name: (data.name || '').trim(),
+        ...(Object.prototype.hasOwnProperty.call(data, 'translations')
+          ? { translations: itemText.normalize(data.translations) }
+          : {}),
+        ...(Object.prototype.hasOwnProperty.call(data, 'default_language')
+          ? {
+              default_language: itemText.locale(data.default_language),
+            }
+          : {}),
         date: now,
         itemid: resolvedItemId,
         barcode_id: itemBarcodes.normalize(data.barcode_id),
@@ -2349,6 +2358,7 @@ class ItemRepository extends BaseModel {
             view_item_id: item._id,
             item_barcode_id: item.barcode_id || '',
             item_name: item.name || '',
+            ...itemText.snapshot(item),
             item_quantity: '0',
             process: 'Delete Item',
             reference: item.barcode_id || '',
@@ -2421,6 +2431,7 @@ class ItemRepository extends BaseModel {
       {
         $or: [
           { name: { $regex: searchPattern(query), $options: 'i' } },
+          { 'translations.name': { $regex: searchPattern(query), $options: 'i' } },
           { barcode_id: query },
           { barcodes: query },
         ],
@@ -2675,7 +2686,13 @@ class ItemRepository extends BaseModel {
       if (searchTerm) {
         const regex = new RegExp(String(searchTerm), 'i');
         conditions.push({
-          $or: [{ name: regex }, { itemid: regex }, { barcode_id: regex }, { sku: regex }],
+          $or: [
+            { name: regex },
+            { 'translations.name': regex },
+            { itemid: regex },
+            { barcode_id: regex },
+            { sku: regex },
+          ],
         });
       }
 
@@ -2795,6 +2812,7 @@ class ItemRepository extends BaseModel {
       } else if (regex) {
         searchConditions = [
           { name: regex },
+          { 'translations.name': regex },
           { itemid: regex },
           { barcode_id: regex },
           { barcodes: regex },
@@ -2842,6 +2860,8 @@ class ItemRepository extends BaseModel {
             $project: {
               _id: 1,
               name: 1,
+              default_language: 1,
+              translations: 1,
               selling_price: 1,
               mrp_price: 1,
               itemid: 1,
@@ -2872,6 +2892,7 @@ class ItemRepository extends BaseModel {
       const suggestions = data.map((item) => ({
         item_id: item._id?.toString?.() || '',
         item_name: item.name || '',
+        ...itemText.snapshot(item),
         selling_price: item.selling_price || 0,
         mrp_price: item.mrp_price || 0,
         itemid: item.itemid || '',
@@ -2983,6 +3004,7 @@ class ItemRepository extends BaseModel {
         .map((item) => ({
           id: item._id?.toString?.() || '',
           name: item.name || '',
+          ...itemText.snapshot(item),
           selling_price: item.selling_price || 0,
           itemid: item.itemid || '',
           available_quantity: String(item.available_quantity || 0),
@@ -3248,7 +3270,13 @@ class ItemRepository extends BaseModel {
       const searchConditions =
         type === 'barcode'
           ? [{ barcode_id: regex }, { barcodes: regex }]
-          : [{ name: regex }, { itemid: regex }, { barcode_id: regex }, { barcodes: regex }];
+          : [
+              { name: regex },
+              { 'translations.name': regex },
+              { itemid: regex },
+              { barcode_id: regex },
+              { barcodes: regex },
+            ];
 
       // Build the filter matching PHP logic exactly
       const whereConditions = [
@@ -3269,6 +3297,7 @@ class ItemRepository extends BaseModel {
       const list = items.map((item) => ({
         item_id: item._id?.toString() || '',
         item_name: item.name || '',
+        ...itemText.snapshot(item),
         selling_price: item.selling_price || 0,
         item_code: item.itemid || '',
         item_unit: item.unit || 'qty',
@@ -3355,6 +3384,7 @@ class ItemRepository extends BaseModel {
       const list = items.map((item) => ({
         item_id: item._id?.toString() || '',
         item_name: item.name || '',
+        ...itemText.snapshot(item),
         selling_price: item.selling_price || 0,
         item_code: item.itemid || '',
         item_unit: item.unit || 'qty',
@@ -3620,6 +3650,7 @@ class ItemRepository extends BaseModel {
         .map((item) => ({
           item_id: item._id?.toString() || '',
           item_name: item.name || '',
+          ...itemText.snapshot(item),
           selling_price: item.selling_price || 0,
           itemid: item.itemid || '',
           available_quantity: String(item.available_quantity || 0),
@@ -3694,6 +3725,7 @@ class ItemRepository extends BaseModel {
       const list = items.map((item) => ({
         _id: item._id?.toString() || '',
         item_name: item.name || '',
+        ...itemText.snapshot(item),
         discount_amount: item.discount_amount || 0,
         discount_percentage: item.discount_percentage || 0,
         selling_price: item.selling_price || 0,
@@ -3879,6 +3911,8 @@ class ItemRepository extends BaseModel {
           projection: {
             _id: 1,
             name: 1,
+            default_language: 1,
+            translations: 1,
             category_name: 1,
             selling_price: 1,
             channel_off: 1,
@@ -4233,6 +4267,8 @@ class ItemRepository extends BaseModel {
           projection: {
             _id: 1,
             name: 1,
+            default_language: 1,
+            translations: 1,
             description: 1,
             image: 1,
             selling_price: 1,
@@ -4324,6 +4360,7 @@ class ItemRepository extends BaseModel {
         byCategory.get(key).items.push({
           id: String(row._id),
           name: row.name || '',
+          ...itemText.catalog(row),
           description: row.description || '',
           image: row.image || '',
           /*
@@ -4744,7 +4781,12 @@ class ItemRepository extends BaseModel {
     return {
       status: true,
       message: off === false ? 'Back on the menu' : 'Marked as run out for today',
-      data: { id: String(item._id), name: item.name || '', sold_out_today: off !== false },
+      data: {
+        id: String(item._id),
+        name: item.name || '',
+        ...itemText.snapshot(item),
+        sold_out_today: off !== false,
+      },
     };
   }
 
@@ -4825,6 +4867,8 @@ class ItemRepository extends BaseModel {
               $push: {
                 id: '$_id',
                 name: '$name',
+                default_language: '$default_language',
+                translations: '$translations',
                 img: '$image',
                 icon: '$icon',
                 available_quantity: '$available_quantity',
@@ -5494,6 +5538,7 @@ class ItemRepository extends BaseModel {
       const list = items.map((item) => ({
         id: item._id?.toString() || '',
         name: item.name || '',
+        ...itemText.snapshot(item),
         selling_price: item.selling_price || 0,
         category_id: item.category_id?.toString() || '',
         category_name: item.category_name || '',
@@ -6086,7 +6131,12 @@ class ItemRepository extends BaseModel {
         $and: [
           regex
             ? {
-                $or: [{ name: regex }, { itemid: regex }, { barcode_id: regex }],
+                $or: [
+                  { name: regex },
+                  { 'translations.name': regex },
+                  { itemid: regex },
+                  { barcode_id: regex },
+                ],
               }
             : {},
           { 'branch_access.branch_id': branchObjectId },
@@ -6100,6 +6150,7 @@ class ItemRepository extends BaseModel {
       const list = items.map((item) => ({
         item_id: item._id?.toString() || '',
         item_name: item.name || '',
+        ...itemText.snapshot(item),
         selling_price: item.selling_price || 0,
         itemid: item.itemid || '',
         available_quantity: String(item.available_quantity || 0),

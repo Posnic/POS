@@ -878,7 +878,7 @@ PosnicPro = {
     /* Generated PDFs need a desktop print dialog, not window.open(blob:),
        which the Electron shell deliberately refuses. Keep the PDF itself so
        invoices, quotes and reports retain their pagination and typography. */
-    printPdfDocument: function (doc, filename, popupMessage, kind) {
+    printPdfDocument: function (doc, filename, popupMessage, kind, paperSize) {
         var printer = window.electronAPI && window.electronAPI.printer;
         var desktop = !!window.electronAPI || /Electron/i.test(navigator.userAgent);
         var failed = function (error) {
@@ -892,7 +892,7 @@ PosnicPro = {
                 return Promise.resolve();
             }
             return Promise.resolve().then(function () {
-                return printer.printPdf(new Uint8Array(doc.output('arraybuffer')), kind);
+                return printer.printPdf(new Uint8Array(doc.output('arraybuffer')), kind, paperSize);
             }).then(function (result) {
                 if (!result || (!result.success && !result.cancelled)) { failed(result && result.error ? new Error(result.error) : null); }
             }).catch(failed);
@@ -7026,3 +7026,12 @@ $(function () {
         paint();
     }
 });
+
+/* Catalogue translations are shop data, separate from application language packs. */
+PosnicPro.itemName = function (item, language, bilingual) {
+    return window.PosnicItemText.name(item, language === undefined ? PosnicPro.i18n.code() : language, bilingual);
+};
+PosnicPro.printItemName = function (item, kind) {
+    var policy = PosnicPro.printSettings ? PosnicPro.printSettings.get('itemLanguages') : {};
+    return PosnicPro.itemName(item, policy[kind || 'receipt'] || '', kind !== 'kot' && policy.bilingual === true);
+};

@@ -18,10 +18,11 @@
         var sales = parse(PosnicPro.local.get('receipt_printers'), []);
         if (!Array.isArray(sales) || !sales.length) sales = [{ name: PosnicPro.local.get('receipt_printer') || 'default', pageSize: PosnicPro.local.get('print_width') || '80mm', copies: 1 }];
         sales = sales.map(function (v) { return { name: String(v.name || 'default'), pageSize: String(v.pageSize || '80mm'), copies: Math.min(20, Math.max(1, parseInt(v.copies, 10) || 1)) }; });
-        return { sales: sales, invoice: sheet(documents.invoice), quotation: sheet(documents.quotation) };
+        return { sales: sales, invoice: sheet(documents.invoice), quotation: sheet(documents.quotation), itemLanguages: parse(PosnicPro.local.get('item_print_languages'), {}) };
     }
     function mirror(value) {
         state = value;
+        PosnicPro.local.set('item_print_languages', JSON.stringify(state.itemLanguages || {}));
         PosnicPro.local.set('document_print_profiles', JSON.stringify({ invoice: state.invoice, quotation: state.quotation }));
         PosnicPro.local.set('receipt_printers', JSON.stringify(state.sales));
         PosnicPro.local.set('receipt_printer', state.sales[0].name || 'default');
@@ -63,18 +64,26 @@
             '</td><td><input class="form-control form-control-sm" type="number" min="1" max="20" data-setting="copies" value="' + value.copies + '" aria-label="' + esc(title + ' — ' + PosnicPro.i18n.t('lang_print_copies', 'Copies')) + '"' + (desktop() ? '' : ' disabled') + '></td><td>' +
             (sale && index ? '<button type="button" class="btn btn-light btn-sm" data-print-remove aria-label="' + esc(PosnicPro.i18n.t('lang_print_remove_printer', 'Remove printer')) + '">×</button>' : '') + '</td></tr>';
     }
+    function languageSettings() {
+        var words = { '': PosnicPro.i18n.t('lang_item_original_language_print', 'Original item name') };
+        (window.PosnicItemText ? window.PosnicItemText.languages : []).forEach(function (code) {
+            try { words[code] = new Intl.DisplayNames([code], { type: 'language' }).of(code); } catch (_) { words[code] = code; }
+        });
+        var policy = state.itemLanguages || {};
+        return '<div class="form-row mb-2"><div class="col-sm-6"><label for="print-item-receipt">' + esc(PosnicPro.i18n.t('lang_item_receipt_language', 'Receipt item language')) + '</label>' + select(words, policy.receipt || '', 'id="print-item-receipt"') + '</div><div class="col-sm-6"><label for="print-item-kot">' + esc(PosnicPro.i18n.t('lang_item_kitchen_language', 'Kitchen item language')) + '</label>' + select(words, policy.kot || '', 'id="print-item-kot"') + '</div></div><label class="small"><input type="checkbox" id="print-item-bilingual"' + (policy.bilingual ? ' checked' : '') + '> ' + esc(PosnicPro.i18n.t('lang_item_bilingual_receipt', 'Also show original item names on receipts')) + '</label><p class="small text-muted">' + esc(PosnicPro.i18n.t('lang_item_print_language_help', 'Missing translations use the original name. Customer menu descriptions are never printed.')) + '</p>';
+    }
     function render() {
         var host = $('#document-print-settings');
         host.html('<section class="print-settings-panel"><h5>' + esc(PosnicPro.i18n.t('lang_print_printers_paper', 'Printers & paper')) + '</h5><p class="small text-muted">' + esc(PosnicPro.i18n.t('lang_print_this_device', 'Saved on this computer')) + '</p><p class="small text-muted mt-2">' +
             esc(desktop() ? PosnicPro.i18n.t('lang_print_device_help', 'Choose a printer and paper for each document. Other computers keep their own choices.') : PosnicPro.i18n.t('lang_print_browser_help', 'Paper choices are saved in this browser. Choose the printer and copies in the browser print dialog.')) + '</p><div class="table-responsive"><table class="table table-sm mb-2"><thead><tr><th>' + esc(PosnicPro.i18n.t('lang_print_document', 'Document')) + '</th><th>' + esc(PosnicPro.i18n.t('lang_printer', 'Printer')) + '</th><th>' + esc(PosnicPro.i18n.t('lang_print_paper_size', 'Paper size')) + '</th><th>' + esc(PosnicPro.i18n.t('lang_print_copies', 'Copies')) + '</th><th></th></tr></thead><tbody>' +
             state.sales.map(function (v, i) { return row('sales', v, i); }).join('') + row('invoice', state.invoice) + row('quotation', state.quotation) +
-            '</tbody></table></div><div class="d-flex align-items-center flex-wrap mb-2"><button type="button" class="btn btn-outline-primary btn-sm mr-2" data-print-refresh>' + esc(PosnicPro.i18n.t('lang_print_refresh_printers', 'Refresh printers')) + '</button>' +
+            '</tbody></table></div>' + languageSettings() + '<div class="d-flex align-items-center flex-wrap mb-2"><button type="button" class="btn btn-outline-primary btn-sm mr-2" data-print-refresh>' + esc(PosnicPro.i18n.t('lang_print_refresh_printers', 'Refresh printers')) + '</button>' +
             (desktop() ? '<button type="button" class="btn btn-outline-primary btn-sm mr-2" data-print-add>' + esc(PosnicPro.i18n.t('lang_print_add_sales_printer', 'Add sales printer')) + '</button>' : '') +
             '<button type="button" class="btn btn-primary btn-sm" data-print-save>' + esc(PosnicPro.i18n.t('lang_print_save_settings', 'Save print settings')) + '</button><span class="small ml-2" role="status" data-print-status></span></div></section>');
         features(featureState);
     }
     function collect() {
-        var next = { sales: [], invoice: state.invoice, quotation: state.quotation };
+        var next = { sales: [], invoice: state.invoice, quotation: state.quotation, itemLanguages: { receipt: $('#print-item-receipt').val() || '', kot: $('#print-item-kot').val() || '', bilingual: $('#print-item-bilingual').prop('checked') === true } };
         $('#document-print-settings [data-profile]').each(function () {
             var el = $(this), kind = el.attr('data-profile');
             if (el.prop('hidden')) return;

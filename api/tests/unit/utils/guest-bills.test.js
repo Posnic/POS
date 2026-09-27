@@ -205,3 +205,14 @@ test('server snapshot and printed guests reconcile subtotal, tax, discount and a
       )
     ).toBe(Math.round(bill.total * 100));
 });
+
+test('translated names survive guest bill splitting without menu descriptions', () => {
+  const data = JSON.parse(JSON.stringify(sales));
+  data[0].items[0].default_language = 'en';
+  data[0].items[0].translations = [{ locale: 'nl', name: 'Soep', description: 'Menu only' }];
+  const snap = snapshotFrom(data, {}, 'T1');
+  const guest = split(snap, { mode: 'equal', guests: ['A', 'B'] })[0];
+  const bill = billForGuest(snap, guest, {}, data[0], 'batch');
+  expect(bill.items[0].translations).toEqual([{ locale: 'nl', name: 'Soep' }]);
+  expect(bill.items[0].name).toBe('Soup');
+});

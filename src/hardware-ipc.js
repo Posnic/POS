@@ -488,9 +488,10 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     return await hardwareManager.printHTML(htmlContent, options);
   });
 
-  ipcMain.handle('printer:print-pdf', async (event, bytes, kind) => {
+  ipcMain.handle('printer:print-pdf', async (event, bytes, kind, paperSize) => {
     const saved = require('./device-preferences').documentPrintSettings();
-    const profile = kind === 'invoice' || kind === 'quotation' ? saved[kind] : {};
+    const profile = kind === 'invoice' || kind === 'quotation' ? saved[kind] :
+      kind === 'menu' ? { paperSize: ['a4', 'a5', 'letter'].includes(paperSize) ? paperSize : 'a4' } : {};
     if (profile.printerName && profile.printerName !== 'default') {
       const printers = await hardwareManager.listPrinters();
       if (!printers.some((printer) => printer.name === profile.printerName)) {
@@ -528,7 +529,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   ipcMain.handle('printer:save-document-settings', (_event, value) => {
     try {
       const settings = require('./device-preferences').validateDocumentPrintSettings(value);
-      const next = { ...preferences, receipt_printers: JSON.stringify(settings.sales),
+      const next = { ...preferences, item_print_languages: settings.itemLanguages || preferences.item_print_languages, receipt_printers: JSON.stringify(settings.sales),
         receipt_printer: settings.sales[0].name, print_width: settings.sales[0].pageSize,
         document_print_profiles: { invoice: settings.invoice, quotation: settings.quotation } };
       fs.writeFileSync(_prefsPath, JSON.stringify(next, null, 2));

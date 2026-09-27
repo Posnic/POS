@@ -1,6 +1,6 @@
 {
   "name": "posnic",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "Free, offline-first point-of-sale software for retail and restaurants, with open source POS code and billing workflows. Posnic source is AGPL-3.0-only; packages contain separately licensed components.",
   "main": "src/main.js",
   "desktopName": "com.posnic.app.desktop",
@@ -97,6 +97,7 @@
       "src/handset-slots.js",
       "src/till-stays-awake.js",
       "src/kot-job-key.js",
+      "src/item-localization.js",
       "src/waiting-order-policy.js",
       "src/kitchen-screen.js",
       "src/kitchen-announce.js",
