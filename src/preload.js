@@ -100,6 +100,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }
   },
   printer: {
+    recoveryStatus: () => ipcRenderer.invoke('printer:recovery-status'),
+    configureRecovery: (printer, binding) => ipcRenderer.invoke('printer:recovery-configure', printer, binding),
+    onJobStatus: callback => {
+      const handler = (_event, status) => callback(status);
+      ipcRenderer.on('printer:job-status', handler);
+      return () => ipcRenderer.removeListener('printer:job-status', handler);
+    },
     list:       () => ipcRenderer.invoke('printer:list'),
     getDefault: () => ipcRenderer.invoke('printer:get-default'),
     getPaperSizes: () => ipcRenderer.invoke('printer:get-paper-sizes'),
