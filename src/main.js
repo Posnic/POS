@@ -4817,7 +4817,7 @@ app.whenReady().then(async () => {
    */
   try {
     const power = require('./till-stays-awake');
-    power.start();
+    power.start(!!kotManager?.isPolling);
     power.whenWokenUp(() => {
       /* Every path that collects work, not only the local one: a till that
          slept through a cloud-relayed bill has to ask for that too. */

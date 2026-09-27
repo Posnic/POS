@@ -522,9 +522,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   }
 
   function _savePrefs(prefs) {
-    try {
-      fs.writeFileSync(_prefsPath, JSON.stringify(prefs, null, 2), 'utf8');
-    } catch (e) { /* ignore */ }
+    require('./device-preferences').saveJson(_prefsPath, prefs);
   }
 
   const preferences = _loadPrefs();
@@ -537,7 +535,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
       const next = { ...preferences, item_print_languages: settings.itemLanguages || preferences.item_print_languages, receipt_printers: JSON.stringify(settings.sales),
         receipt_printer: settings.sales[0].name, print_width: settings.sales[0].pageSize,
         document_print_profiles: { invoice: settings.invoice, quotation: settings.quotation } };
-      fs.writeFileSync(_prefsPath, JSON.stringify(next, null, 2));
+      require('./device-preferences').saveJson(_prefsPath, next);
       Object.assign(preferences, next);
       return { success: true, settings };
     } catch (error) { return { success: false, error: error.message }; }
@@ -589,8 +587,10 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
    */
   if (!preferences.cloud_print_key) {
     preferences.cloud_print_key = require('crypto').randomBytes(32).toString('hex');
-    _savePrefs(preferences);
-    console.log('[BILL] made this till a printing key for the cloud');
+    try {
+      _savePrefs(preferences);
+      console.log('[BILL] made this till a printing key for the cloud');
+    } catch (error) { console.error('[hardware] Could not persist relay key:', error.message); }
   }
 
   ipcMain.handle('preferences:get', (event, key) => {
@@ -598,8 +598,9 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   });
 
   ipcMain.handle('preferences:set', (event, key, value) => {
-    preferences[key] = value;
-    _savePrefs(preferences);
+    const next = { ...preferences, [key]: value };
+    _savePrefs(next);
+    Object.assign(preferences, next);
     if (key === 'mobile.maxDevices' && global.mobileTracker) {
       global.mobileTracker.maxDevices = Math.max(1, parseInt(value, 10) || 6);
     }
