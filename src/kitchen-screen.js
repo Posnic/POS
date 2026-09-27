@@ -79,7 +79,7 @@ const DEFAULTS = Object.freeze({
      on the panel. */
   safeAreaPercent: 3,
   /* What a card carries. Each one costs a line. */
-  tableOnly: true,
+  tableOnly: false,
   showTable: true,
   showItems: true,
   showItemNotes: true,

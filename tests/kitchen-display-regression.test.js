@@ -146,3 +146,19 @@ test('tall detailed board uses available rows instead of a fixed four-card limit
   assert.equal(dom.window.document.getElementById('pager').textContent,'');
  }finally{dom.window.close();}
 });
+
+test('arrival is AM/PM time only, unassigned table is blank, and lateness has no text badge',()=>{
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try{
+  dom.window.kitchenScreen.setConfig({tableOnly:false,_fit:{fontPx:40,columns:2,cards:4}});
+  dom.window.kitchenScreen.setTickets([{orderNumber:'SALE-123',placedAt:new Date(Date.now()-86400000).toISOString(),items:[{name:'Soup',qty:1}]}]);
+  const card=dom.window.document.querySelector('.ticket');
+  assert.match(card.querySelector('.arrival').textContent,/^\d{1,2}:\d{2} (AM|PM)$/);
+  assert.equal(card.querySelector('.table'),null);
+  assert.equal(card.querySelector('.delay-label'),null);
+  assert.ok(!card.textContent.includes('No table'));
+  assert.ok(!card.textContent.includes('SALE-123'));
+  assert.ok(card.classList.contains('urgent'));
+ }finally{dom.window.close();}
+});
