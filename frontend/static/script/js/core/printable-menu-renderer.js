@@ -22,9 +22,17 @@
             scallops: '<path d="M-20 0A20 20 0 0 0 20 0A20 20 0 0 0 60 0M-20 20A20 20 0 0 0 20 20A20 20 0 0 0 60 20" stroke-width="1"/>',
             bamboo: '<path d="M9 0V40M12 0V40M7 12H14M7 32H14M11 20Q23 5 30 9Q22 20 11 20M11 29Q-2 15 1 13" stroke-width="1"/>',
             petals: '<path d="M20 20C0 -4 0 44 20 20C44 0 -4 0 20 20C40 44 40 -4 20 20C-4 40 44 40 20 20Z" stroke-width="1"/>',
-            hexagon: '<path d="M10 3H30L40 20L30 37H10L0 20Z" stroke-width="1"/>'
+            hexagon: '<path d="M10 3H30L40 20L30 37H10L0 20Z" stroke-width="1"/>',
+            cutlery: '<circle cx="40" cy="38" r="17"/><circle cx="40" cy="38" r="12"/><path d="M12 19V34Q17 42 22 34V19M17 19V61M66 19Q56 33 62 41H66M66 19V61"/>',
+            seafood: '<path d="M17 29Q34 10 51 29Q34 48 17 29ZM51 29L65 19V39ZM12 59Q20 53 28 59T44 59T60 59T76 59"/><circle cx="27" cy="26" r="1.5"/><path d="M36 18L41 10L46 22M34 24Q39 29 34 34"/>',
+            coffee: '<path d="M18 31H53V46Q51 58 36 58Q21 58 18 46ZM53 33H59Q69 33 64 43Q61 48 53 47M13 64H62M27 23C17 15 35 14 27 6M40 23C30 15 48 14 40 6"/>',
+            herbs: '<path d="M19 68Q43 47 53 12M30 56Q9 54 16 38Q33 38 30 56ZM38 45Q57 48 66 32Q47 27 38 45ZM45 31Q27 29 32 14Q48 15 45 31ZM52 17Q68 18 69 6Q57 2 52 17Z"/>',
+            pizza: '<path d="M13 19Q39 3 66 20L40 69ZM13 19L17 28Q40 15 62 28M34 43L28 54M48 50L45 57"/><circle cx="29" cy="34" r="4"/><circle cx="49" cy="34" r="4"/><circle cx="39" cy="50" r="3"/>',
+            grill: '<path d="M14 43H66Q62 62 40 62Q18 62 14 43ZM25 62L20 72M55 62L60 72M32 35C16 23 39 23 32 10C52 21 45 28 48 35M22 49H58M27 55H53"/>'
         };
-        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (thumbnail ? 120 : 800) + '" height="' + (thumbnail ? 80 : 1200) + '"><defs><pattern id="p" width="40" height="40" patternUnits="userSpaceOnUse"><g fill="none" stroke="' + color + '" opacity="' + (thumbnail ? 0.45 : 1) + '">' + (drawings[name] || '') + '</g></pattern></defs><rect width="100%" height="100%" fill="url(#p)"/></svg>';
+        var food = ['cutlery', 'seafood', 'coffee', 'herbs', 'pizza', 'grill'].indexOf(name) !== -1;
+        var tile = food ? 80 : 40;
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (thumbnail ? 120 : 800) + '" height="' + (thumbnail ? 80 : 1200) + '"><defs><pattern id="p" width="' + tile + '" height="' + tile + '" patternUnits="userSpaceOnUse"><g fill="none" stroke="' + color + '" stroke-width="' + (food ? 1.5 : 1) + '" stroke-linecap="round" stroke-linejoin="round" opacity="' + (thumbnail ? 0.65 : 1) + '">' + (drawings[name] || '') + '</g></pattern></defs><rect width="100%" height="100%" fill="url(#p)"/></svg>';
         return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     }
     function row(item, design, currency) {

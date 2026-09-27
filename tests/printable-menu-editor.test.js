@@ -68,7 +68,7 @@ test('failed loads leave saving and exporting disabled with a retry action', asy
 test('pattern thumbnails replace uploaded images and persist the selected design', async () => {
     const { dom, w, pending, writes } = editor();
     w.$('#pm-reload').trigger('click'); answer(pending, 'One'); await tick();
-    assert.equal(w.document.querySelectorAll('#pm-patterns button').length, 12);
+    assert.equal(w.document.querySelectorAll('#pm-patterns button').length, 18);
     for (const img of w.document.querySelectorAll('#pm-patterns img')) assert.match(img.src, /^data:image\/svg\+xml/);
     w.$('#pm-patterns [data-pattern="petals"]').trigger('click');
     assert.equal(w.document.querySelector('[data-pattern="petals"]').getAttribute('aria-pressed'), 'true');

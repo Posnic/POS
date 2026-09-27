@@ -3632,5 +3632,11 @@
   "lang_pm_option_scallops": "حراشف",
   "lang_pm_option_bamboo": "خيزران",
   "lang_pm_option_petals": "بتلات",
-  "lang_pm_option_hexagon": "قرص العسل"
+  "lang_pm_option_hexagon": "قرص العسل",
+  "lang_pm_option_cutlery": "أدوات المائدة",
+  "lang_pm_option_seafood": "مأكولات بحرية",
+  "lang_pm_option_coffee": "مقهى",
+  "lang_pm_option_herbs": "حديقة أعشاب",
+  "lang_pm_option_pizza": "مطعم بيتزا",
+  "lang_pm_option_grill": "شواية"
 }

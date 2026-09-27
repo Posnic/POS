@@ -19,6 +19,12 @@
     'bamboo',
     'petals',
     'hexagon',
+    'cutlery',
+    'seafood',
+    'coffee',
+    'herbs',
+    'pizza',
+    'grill',
   ];
   function normalize(input) {
     const v = input || {};
