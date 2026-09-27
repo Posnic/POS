@@ -720,7 +720,7 @@ describe('SalesRepository', () => {
       MockSaleModel.countDocuments.mockResolvedValue(1);
       const r = await salesRepository.salePage({}, { limit: 10, page: 1 }, FAKE_BRANCH);
       expect(r.status).toBe(true);
-      expect(r.data.list).toEqual(docs);
+      expect(r.data.list).toEqual(docs.map((doc) => ({ ...doc, kitchen_rounds: [] })));
       expect(r.data.total).toBe(1);
     });
     test('returns empty results', async () => {
