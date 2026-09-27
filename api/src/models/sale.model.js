@@ -669,6 +669,9 @@ const saleSchema = new mongoose.Schema(
       default: 0,
     },
 
+    captain_payment_plan: { type: String },
+    captain_payment_version: { type: Number },
+    captain_payments: { type: mongoose.Schema.Types.Mixed },
     denomination_values: {
       type: mongoose.Schema.Types.Mixed,
     },

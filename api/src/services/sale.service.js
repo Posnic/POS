@@ -196,6 +196,7 @@ const enrichSaleContext = async (context = {}) => {
  * @param {Object} context - { branchId, licenseId, userId, userName, ... }
  */
 const processSale = async (data, id = '', process = 'Add', context = {}) => {
+  let finishCaptainEdit;
   try {
     // 1. Basic Validation
     if ((parseFloat(data.sales_total) || 0) < 0) {
@@ -277,6 +278,14 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
     if (id !== '') {
       existingSale = await salesRepository.getById(id);
       if (existingSale) {
+        if (existingSale.captain_payment_plan)
+          await require('./captain-payment-guard').mutable(await BaseModel.getDb(), existingSale);
+        const paymentBranch = await getBranchById(existingSale.branch_id || context.branchId);
+        if (paymentBranch?.captain_payments?.enabled)
+          finishCaptainEdit = await require('./captain-payment-guard').beginEdit(
+            await BaseModel.getDb(),
+            existingSale
+          );
         if (existingSale.items) {
           existingSale.items.forEach((oldItem) => {
             if (oldItem.item_id) {
@@ -1633,6 +1642,8 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
   } catch (error) {
     console.error('processSale Error:', error);
     return { status: false, message: error.message, data: null };
+  } finally {
+    if (finishCaptainEdit) await finishCaptainEdit();
   }
 };
 

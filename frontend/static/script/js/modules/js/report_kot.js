@@ -6193,12 +6193,16 @@ PosnicPro.kotdiscountreport = {
 };
 
 
-// Guest shares are reference amounts; only the existing cashier payment flow settles a sale.
+// Payment details also resume guest payments already collected in Captain.
 PosnicPro.kotreport.showGuestBills = function ($container, tableNumber, branchValue) {
     var branches = Array.isArray(branchValue) ? branchValue : String(branchValue || PosnicPro.local.get('branch_id_set') || '').split(',');
     if (branches.length !== 1 || !branches[0]) return;
     var panel = $('<section class="guest-bill-cashier border rounded p-3 mb-3"></section>');
     $container.prepend(panel);
+    var paymentButton=$('<button type="button" class="btn btn-outline-primary mb-3" hidden></button>')
+      .text(PosnicPro.i18n.t('lang_captain_payment_details','Payment details'))
+      .attr('data-collect-table',tableNumber).attr('data-branch-id',branches[0]);
+    $container.prepend(paymentButton);
     var i18n = PosnicPro.i18n || { t: function (key, fallback) { return fallback; } };
     function load() {
         panel.empty().append($('<span class="text-muted"></span>').text(i18n.t('lang_loading_details', 'Loading details...')));
@@ -6221,5 +6225,18 @@ PosnicPro.kotreport.showGuestBills = function ($container, tableNumber, branchVa
             panel.empty().append($('<button type="button" class="btn btn-outline-secondary btn-sm"></button>').text(i18n.t('lang_guest_bills_retry','Retry guest bills')).on('click',load));
         });
     }
-    load();
+    PosnicPro.get({url:'sales/tablePayments/options',data:{table_number:tableNumber,branchId:branches[0]}},function (response) {
+        paymentButton.prop('hidden', !response.enabled);
+        if (!response.plan) { load(); return; }
+        var bill=response.plan;
+        panel.empty().append($('<h6></h6>').text(i18n.t('lang_captain_payment_details','Payment details')));
+        bill.guests.forEach(function (guest) {
+            panel.append($('<p class="d-flex justify-content-between"></p>').append($('<span></span>').text(guest.name),$('<strong></strong>').text(guest.paid ? i18n.t('lang_paid','Paid') : bill.currency+(guest.totalMinor/100).toFixed(2))));
+        });
+        panel.append($('<p class="mb-0"></p>').text(i18n.t('lang_captain_remaining_balance','Remaining balance')+': '+bill.currency+(bill.dueMinor/100).toFixed(2)));
+    },load);
 };
+
+window.addEventListener('captain:payment-recorded', function () {
+    if (document.querySelector('.guest-bill-cashier')) PosnicPro.kotreport.salesSummaryTable();
+});

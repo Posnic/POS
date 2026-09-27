@@ -1609,6 +1609,7 @@ class SalesRepository {
   }
 
   async deleteSales(ids, { SaleModel } = {}) {
+    const captainEdits = [];
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
         return { status: false, data: null, message: 'No IDs provided' };
@@ -1640,6 +1641,18 @@ class SalesRepository {
       const itemsCollection = db.collection('items');
       const stockLogsRepository = new StockLogsRepository();
 
+      const paymentCandidates = await salesCollection
+        .find({
+          _id: { $in: objectIds },
+          ...(BaseModel.license ? { license: BaseModel.license } : {}),
+          ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
+        })
+        .toArray();
+      for (const sale of paymentCandidates) {
+        const finish = await require('../services/captain-payment-guard').beginEdit(db, sale);
+        if (finish) captainEdits.push(finish);
+      }
+
       // Write change logs for each sale id (PHP BaseModel::changeLog parity)
       for (const oid of objectIds) {
         try {
@@ -1654,6 +1667,7 @@ class SalesRepository {
       const salesFilter = {
         _id: { $in: objectIds },
         ...licenseFilter,
+        captain_payment_plan: { $exists: false },
         ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
       };
 
@@ -1905,6 +1919,8 @@ class SalesRepository {
         data: null,
         message: error.message,
       };
+    } finally {
+      for (const finish of captainEdits) await finish();
     }
   }
 
@@ -1944,6 +1960,13 @@ class SalesRepository {
 
   async save(sale) {
     if (!sale) return null;
+    if (!sale.isNew && typeof sale.$where !== 'function') {
+      if (sale.captain_payment_plan) {
+        await require('../services/captain-payment-guard').mutable(await BaseModel.getDb(), sale);
+        sale.set('captain_payment_plan', undefined);
+      }
+      sale.$where = { ...(sale.$where || {}), captain_payment_plan: { $exists: false } };
+    }
     return sale.save();
   }
 
@@ -6930,6 +6953,7 @@ class SalesRepository {
         // Get sale details first
         const saleDetails = await saleCollection.findOne(saleQuery);
         if (!saleDetails) continue;
+        await require('../services/captain-payment-guard').mutable(db, saleDetails);
 
         // Build update filter (same as query filter)
         const updateFilter = {
@@ -6941,8 +6965,9 @@ class SalesRepository {
           updateFilter.branch_id = new ObjectId(branch_id);
         }
 
-        // Update sale to mark as paid
-        await saleCollection.updateMany(updateFilter, {
+        // A Captain reservation must not be overwritten by legacy settlement.
+        updateFilter.captain_payment_plan = { $exists: false };
+        const settled = await saleCollection.updateMany(updateFilter, {
           $set: {
             partial_balance: parseFloat(saleData.amount) + parseFloat(saleData.paidamount || 0),
             payment_status: 'Paid',
@@ -6952,6 +6977,9 @@ class SalesRepository {
             updated_by_id: loggedUserId ? new ObjectId(loggedUserId) : undefined,
           },
         });
+
+        if (!settled.matchedCount)
+          throw new Error(require('../services/captain-payment-guard').message);
 
         // Build transaction filter
         const transactionFilter = {
@@ -7178,10 +7206,9 @@ class SalesRepository {
    * lets the floor fire it - Toast, Square, Lightspeed, MICROS, Petpooja.
    *
    * WHAT THE HANDSET MAY AND MAY NOT DO. It may ASK for the bill. It may not
-   * say the bill was paid. The person who takes the order must not be the
-   * person who declares the money received, or a waiter can close a cash bill
-   * and pocket it with nothing in the system to disagree. So nothing on this
-   * path writes payment_status, and a test says so out loud.
+   * say the bill was paid. Payment collection uses the separate Captain payments endpoint, with
+   * manager configuration, sales permissions and an idempotent journal.
+   * Nothing on this print-only path writes payment_status.
    *
    * WHERE IT PRINTS. The cashier's receipt printer, never the kitchen's. They
    * are different documents, not one document in two places: a KOT is
@@ -9922,6 +9949,7 @@ class SalesRepository {
     personCount,
     { SaleModel, newTableId, seenAt } = {}
   ) {
+    let finishCaptainEdit;
     try {
       const db = await BaseModel.getDb();
       const salesCollection = db.collection('sales');
@@ -9936,6 +9964,11 @@ class SalesRepository {
       if (!orderDoc) {
         return { status: false, message: 'Order not found', data: [] };
       }
+
+      finishCaptainEdit = await require('../services/captain-payment-guard').beginEdit(
+        db,
+        orderDoc
+      );
 
       /*
        * A SAVE WRITTEN AGAINST A VIEW THAT HAS MOVED ON.
@@ -10033,7 +10066,7 @@ class SalesRepository {
         }
 
         const updateResult = await salesCollection.updateOne(
-          { _id: orderObjectId },
+          { _id: orderObjectId, captain_payment_plan: { $exists: false } },
           { $set: updateFields }
         );
 
@@ -10420,7 +10453,7 @@ class SalesRepository {
         updateFields.person_count = parseInt(personCount, 10);
 
       const updateResult = await salesCollection.updateOne(
-        { _id: orderObjectId },
+        { _id: orderObjectId, captain_payment_plan: { $exists: false } },
         { $set: updateFields }
       );
 
@@ -10459,6 +10492,8 @@ class SalesRepository {
         message: error.message || 'Failed to update order',
         data: [],
       };
+    } finally {
+      if (finishCaptainEdit) await finishCaptainEdit();
     }
   }
 
@@ -11211,6 +11246,7 @@ class SalesRepository {
   async changeCustomerOrderItems(orderDoc, wanted, how = {}) {
     const db = await BaseModel.getDb();
     const salesCollection = db.collection('sales');
+    await require('../services/captain-payment-guard').mutable(db, orderDoc);
     const lines = Array.isArray(orderDoc.items) ? orderDoc.items : [];
 
     const asked = new Map();
@@ -11288,7 +11324,7 @@ class SalesRepository {
     log.push({ timestamp: at, items: changes });
 
     const result = await salesCollection.updateOne(
-      { _id: orderDoc._id },
+      { _id: orderDoc._id, captain_payment_plan: { $exists: false } },
       {
         $set: {
           items: kept,
@@ -11553,6 +11589,7 @@ class SalesRepository {
   async cancelCustomerOrder(orderDoc, how = {}) {
     const db = await BaseModel.getDb();
     const salesCollection = db.collection('sales');
+    await require('../services/captain-payment-guard').mutable(db, orderDoc);
     const at = new Date();
     const lines = Array.isArray(orderDoc.items) ? orderDoc.items : [];
     const changes = lines
@@ -11577,7 +11614,7 @@ class SalesRepository {
     if (changes.length) log.push({ timestamp: at, items: changes });
 
     const result = await salesCollection.updateOne(
-      { _id: orderDoc._id },
+      { _id: orderDoc._id, captain_payment_plan: { $exists: false } },
       {
         $set: {
           sale_process: 'cancelled',
