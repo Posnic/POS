@@ -1,0 +1,29 @@
+name: Windows printer recovery tests
+on:
+  pull_request:
+    paths:
+      - 'src/windows-printer-*.js'
+      - 'src/windows-printer-*.ps1'
+      - 'src/windows-print-queue.js'
+      - 'src/hardware-manager.html'
+      - 'tests/windows-printer-discovery.test.js'
+      - 'tests/windows-print-queue.test.js'
+      - 'tests/kot-multi-printer-recovery.test.js'
+      - '.github/workflows/windows-printer-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  printer-recovery:
+    name: Windows USB discovery and queue recovery
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      # Synthetic device records and transport only; no printing or power changes.
+      - run: node --test tests/windows-printer-discovery.test.js tests/windows-print-queue.test.js tests/kot-multi-printer-recovery.test.js
