@@ -8,13 +8,10 @@ const run = (fn) => async (req, res) => {
   } catch (error) {
     const status = error.status || 500;
     if (status === 500) console.error('Guest bill request failed:', error);
-    return res
-      .status(status)
-      .json({
-        type: 'error',
-        message:
-          status === 500 ? 'Could not prepare the guest bills. Please retry.' : error.message,
-      });
+    return res.status(status).json({
+      type: 'error',
+      message: status === 500 ? 'Could not prepare the guest bills. Please retry.' : error.message,
+    });
   }
 };
 module.exports = {
