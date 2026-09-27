@@ -49,6 +49,24 @@
             el('pm-categories').appendChild(label);
         });
         $('#pm-remove-background').prop('disabled', !design.background);
+        patternChoices();
+    }
+    function patternChoices() {
+        var host = el('pm-patterns');
+        if (!host) return;
+        if (!host.children.length) {
+            Array.from(el('pm-pattern').options).forEach(function (option) {
+                var button = document.createElement('button'); button.type = 'button';
+                button.className = 'pm-pattern-choice'; button.dataset.pattern = option.value;
+                var image = document.createElement('img'); image.alt = '';
+                var label = document.createElement('span'); label.textContent = option.textContent;
+                button.appendChild(image); button.appendChild(label); host.appendChild(button);
+            });
+        }
+        host.querySelectorAll('button').forEach(function (button) {
+            button.setAttribute('aria-pressed', String(!design.background && button.dataset.pattern === el('pm-pattern').value));
+            button.querySelector('img').src = renderer.pattern(button.dataset.pattern, el('pm-accent').value, true);
+        });
     }
     function scalePreview() {
         var preview = el('pm-preview');
@@ -66,6 +84,7 @@
         try {
             if (!stage) { stage = document.createElement('div'); stage.className = 'pm-stage'; stage.setAttribute('aria-hidden', 'true'); document.body.appendChild(stage); }
             design = read();
+            patternChoices();
             result = renderer.render(stage, data, design);
             var preview = el('pm-preview'); preview.replaceChildren();
             result.pages.forEach(function (page) {
@@ -192,6 +211,12 @@
         if ($('#restaurantprintmenu-line').hasClass('active')) load();
     });
     $(document).on('input change', '#pm-controls [data-pm], #pm-categories input', changed);
+    $(document).on('click', '#pm-patterns button', function () {
+        if (busy || !data) return;
+        design.background = ''; el('pm-pattern').value = this.dataset.pattern;
+        $('#pm-remove-background').prop('disabled', true);
+        patternChoices(); changed();
+    });
     $(document).on('click', '#pm-save', save);
     $(document).on('click', '#pm-download', function () { output(false); });
     $(document).on('click', '#pm-print', function () { output(true); });

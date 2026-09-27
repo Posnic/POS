@@ -3625,5 +3625,12 @@
   "lang_pm_save": "ವಿನ್ಯಾಸ ಉಳಿಸಿ",
   "lang_pm_subtitle": "ಉಪಶೀರ್ಷಿಕೆ",
   "lang_pm_title": "ರೆಸ್ಟೋರೆಂಟ್ ಹೆಸರು",
-  "lang_pm_type": "ಅಕ್ಷರ ಶೈಲಿ"
+  "lang_pm_type": "ಅಕ್ಷರ ಶೈಲಿ",
+  "lang_pm_option_dots": "ಚುಕ್ಕೆಗಳು",
+  "lang_pm_option_diamonds": "ವಜ್ರಗಳು",
+  "lang_pm_option_chevron": "ಅಂಕುಡೊಂಕು",
+  "lang_pm_option_scallops": "ಚಿಪ್ಪುಗಳು",
+  "lang_pm_option_bamboo": "ಬಿದಿರು",
+  "lang_pm_option_petals": "ದಳಗಳು",
+  "lang_pm_option_hexagon": "ಜೇನುಗೂಡು"
 }

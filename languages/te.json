@@ -3625,5 +3625,12 @@
   "lang_pm_save": "రూపకల్పనను సేవ్ చేయి",
   "lang_pm_subtitle": "ఉపశీర్షిక",
   "lang_pm_title": "రెస్టారెంట్ పేరు",
-  "lang_pm_type": "అక్షర శైలి"
+  "lang_pm_type": "అక్షర శైలి",
+  "lang_pm_option_dots": "చుక్కలు",
+  "lang_pm_option_diamonds": "వజ్రాలు",
+  "lang_pm_option_chevron": "జిగ్‌జాగ్",
+  "lang_pm_option_scallops": "పొలుసులు",
+  "lang_pm_option_bamboo": "వెదురు",
+  "lang_pm_option_petals": "రేకులు",
+  "lang_pm_option_hexagon": "తేనెగూడు"
 }

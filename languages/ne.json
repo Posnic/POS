@@ -3625,5 +3625,12 @@
   "lang_pm_save": "डिजाइन सुरक्षित गर्नुहोस्",
   "lang_pm_subtitle": "उपशीर्षक",
   "lang_pm_title": "रेस्टुरेन्टको नाम",
-  "lang_pm_type": "अक्षर शैली"
+  "lang_pm_type": "अक्षर शैली",
+  "lang_pm_option_dots": "थोप्लाहरू",
+  "lang_pm_option_diamonds": "हीरा",
+  "lang_pm_option_chevron": "बाङ्गोटिङ्गो",
+  "lang_pm_option_scallops": "कत्ला",
+  "lang_pm_option_bamboo": "बाँस",
+  "lang_pm_option_petals": "पंखुडी",
+  "lang_pm_option_hexagon": "मौरीको चाका"
 }

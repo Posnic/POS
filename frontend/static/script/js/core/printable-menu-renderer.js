@@ -7,15 +7,24 @@
         if (text != null) n.textContent = String(text);
         return n;
     }
-    function pattern(name, color) {
-        if (name === 'plain') return '';
+    function pattern(name, color, thumbnail) {
+        if (contract.patterns.indexOf(name) === -1) return '';
+        color = /^#[0-9a-f]{6}$/i.test(color || '') ? color : '#155e63';
+        if (name === 'plain' && !thumbnail) return '';
         var drawings = {
             linen: '<path d="M0 0H40M0 20H40M0 0V40M20 0V40" stroke-width=".5"/>',
             coastal: '<path d="M-20 12Q0 -4 20 12T60 12M-20 32Q0 16 20 32T60 32" stroke-width="1.5"/>',
             botanical: '<path d="M0 40L40 0M10 30Q-4 5 20 20Q35 44 30 10" stroke-width="1"/>',
-            deco: '<path d="M0 40L20 0L40 40M0 30L20 10L40 30M0 0H40" stroke-width="1"/>'
+            deco: '<path d="M0 40L20 0L40 40M0 30L20 10L40 30M0 0H40" stroke-width="1"/>',
+            dots: '<circle cx="10" cy="10" r="2"/><circle cx="30" cy="30" r="2"/>',
+            diamonds: '<path d="M20 2L38 20L20 38L2 20Z" stroke-width="1"/>',
+            chevron: '<path d="M0 8L20 24L40 8M0 28L20 44L40 28M0 -12L20 4L40 -12" stroke-width="1"/>',
+            scallops: '<path d="M-20 0A20 20 0 0 0 20 0A20 20 0 0 0 60 0M-20 20A20 20 0 0 0 20 20A20 20 0 0 0 60 20" stroke-width="1"/>',
+            bamboo: '<path d="M9 0V40M12 0V40M7 12H14M7 32H14M11 20Q23 5 30 9Q22 20 11 20M11 29Q-2 15 1 13" stroke-width="1"/>',
+            petals: '<path d="M20 20C0 -4 0 44 20 20C44 0 -4 0 20 20C40 44 40 -4 20 20C-4 40 44 40 20 20Z" stroke-width="1"/>',
+            hexagon: '<path d="M10 3H30L40 20L30 37H10L0 20Z" stroke-width="1"/>'
         };
-        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1200"><defs><pattern id="p" width="40" height="40" patternUnits="userSpaceOnUse"><g fill="none" stroke="' + color + '">' + drawings[name] + '</g></pattern></defs><rect width="100%" height="100%" fill="url(#p)"/></svg>';
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (thumbnail ? 120 : 800) + '" height="' + (thumbnail ? 80 : 1200) + '"><defs><pattern id="p" width="40" height="40" patternUnits="userSpaceOnUse"><g fill="none" stroke="' + color + '" opacity="' + (thumbnail ? 0.45 : 1) + '">' + (drawings[name] || '') + '</g></pattern></defs><rect width="100%" height="100%" fill="url(#p)"/></svg>';
         return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     }
     function row(item, design, currency) {
@@ -106,5 +115,5 @@
         pages.forEach(function (p, i) { p.querySelector('.pm-page-number').textContent = (i + 1) + ' / ' + pages.length; });
         return { pages: pages, count: total, design: d };
     }
-    window.PosnicPrintableMenuRenderer = { render: render };
+    window.PosnicPrintableMenuRenderer = { render: render, pattern: pattern };
 })();

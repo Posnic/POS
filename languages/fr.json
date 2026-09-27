@@ -3625,5 +3625,12 @@
   "lang_pm_save": "Enregistrer la présentation",
   "lang_pm_subtitle": "Sous-titre",
   "lang_pm_title": "Nom du restaurant",
-  "lang_pm_type": "Style de police"
+  "lang_pm_type": "Style de police",
+  "lang_pm_option_dots": "Pois",
+  "lang_pm_option_diamonds": "Losanges",
+  "lang_pm_option_chevron": "Chevrons",
+  "lang_pm_option_scallops": "Écailles",
+  "lang_pm_option_bamboo": "Bambou",
+  "lang_pm_option_petals": "Pétales",
+  "lang_pm_option_hexagon": "Nid d’abeille"
 }

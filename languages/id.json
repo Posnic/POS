@@ -3625,5 +3625,12 @@
   "lang_pm_save": "Simpan desain",
   "lang_pm_subtitle": "Subjudul",
   "lang_pm_title": "Nama restoran",
-  "lang_pm_type": "Gaya huruf"
+  "lang_pm_type": "Gaya huruf",
+  "lang_pm_option_dots": "Titik",
+  "lang_pm_option_diamonds": "Belah ketupat",
+  "lang_pm_option_chevron": "Zigzag",
+  "lang_pm_option_scallops": "Sisik",
+  "lang_pm_option_bamboo": "Bambu",
+  "lang_pm_option_petals": "Kelopak",
+  "lang_pm_option_hexagon": "Sarang lebah"
 }

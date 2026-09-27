@@ -3625,5 +3625,12 @@
   "lang_pm_save": "Salvar design",
   "lang_pm_subtitle": "Subtítulo",
   "lang_pm_title": "Nome do restaurante",
-  "lang_pm_type": "Estilo de fonte"
+  "lang_pm_type": "Estilo de fonte",
+  "lang_pm_option_dots": "Pontos",
+  "lang_pm_option_diamonds": "Losangos",
+  "lang_pm_option_chevron": "Zigue-zague",
+  "lang_pm_option_scallops": "Escamas",
+  "lang_pm_option_bamboo": "Bambu",
+  "lang_pm_option_petals": "Pétalas",
+  "lang_pm_option_hexagon": "Colmeia"
 }

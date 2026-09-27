@@ -6,7 +6,20 @@
 })(typeof window !== 'undefined' ? window : this, function () {
   'use strict';
   const sizes = { a4: [210, 297], a5: [148, 210], letter: [215.9, 279.4] };
-  const patterns = ['plain', 'linen', 'coastal', 'botanical', 'deco'];
+  const patterns = [
+    'plain',
+    'linen',
+    'coastal',
+    'botanical',
+    'deco',
+    'dots',
+    'diamonds',
+    'chevron',
+    'scallops',
+    'bamboo',
+    'petals',
+    'hexagon',
+  ];
   function normalize(input) {
     const v = input || {};
     if (typeof v !== 'object' || Array.isArray(v)) throw new Error('Invalid menu design.');
