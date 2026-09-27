@@ -268,3 +268,38 @@ test('discount fields: percent stays percent, an amount is spread per unit', () 
   });
   expect(booking.discountFields({ qty: 4 })).toEqual({ amount: 0, percent: 0 });
 });
+
+test('an invoice originating from a markup quote books the final unit price', async () => {
+  mockGetInvoice.mockResolvedValue({
+    status: true,
+    data: invoice({
+      items: [
+        {
+          kind: 'item',
+          item_id: ITEM,
+          item_name: 'Rice',
+          qty: 2,
+          unit_price: 120,
+          discount: null,
+          tax_value: 18,
+          tax_type: 'exclusive',
+          line_total: 283.2,
+        },
+      ],
+      charges: [],
+      discount: null,
+      subtotal: 283.2,
+      total: 283.2,
+      tax_total: 43.2,
+    }),
+  });
+  expect((await booking.issueInvoice(INVOICE, ctx)).status).toBe(true);
+  const payload = mockProcessSale.mock.calls[0][0];
+  expect(payload.items[0]).toMatchObject({
+    sale_inline_item_price: 120,
+    item_quantity: 2,
+    sale_inline_discount_value: 0,
+    tax: 18,
+  });
+  expect(payload.tax).toBe(43.2);
+});

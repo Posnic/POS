@@ -23,6 +23,8 @@ const continueWithTenant = async (req, res, next, currentUser) => {
   res.locals.user = currentUser;
   try {
     await attachTenantContext(req, currentUser);
+    if (req.captainSession)
+      await require('../services/captain-access').verifySession(req, currentUser);
 
     /*
      * A PHONE THE SHOP HAS STOPPED GETS NOTHING, AND IS TOLD WHY.
@@ -70,6 +72,11 @@ const continueWithTenant = async (req, res, next, currentUser) => {
       next
     );
   } catch (error) {
+    if (req.captainSession && error.statusCode) {
+      return res
+        .status(error.statusCode)
+        .json({ error: { code: error.code || 'CAPTAIN_PERMISSION', message: error.message } });
+    }
     if (error instanceof TenantContextError) {
       return res.status(error.statusCode).json({
         type: 'error',
@@ -125,14 +132,18 @@ const encryptSessionId = (sessionId) => {
 // Create and sign basic JWT token (id-only payload used by modern routes)
 const signToken = (id, version = 0) => {
   return jwt.sign({ id, ...(version ? { authVersion: version } : {}) }, getJwtSecret(), {
-    expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+    expiresIn: jwtLifetimeSeconds(),
   });
 };
 
 /* Lives in its own dependency-free file so the number in the token and the
    number a client is told cannot drift apart, and so it is testable without
    installing the API. */
-const { jwtLifetimeSeconds, handsetLifetimeSeconds } = require('../utils/token-lifetime');
+const {
+  jwtLifetimeSeconds,
+  handsetLifetimeSeconds,
+  loginCookieDays,
+} = require('../utils/token-lifetime');
 
 // Legacy-style JWT including encrypted session_id in the payload.
 // This mirrors the PHP design where JWT carries an encrypted session id
@@ -173,6 +184,7 @@ const signLegacyToken = (user, req, branchId, expiresIn) => {
    * The handset sign-in is the only thing that sets it.
    */
   if (req && req.handsetDevice) payload.device_id = String(req.handsetDevice);
+  if (req?.captainSession) payload.captain_session = String(req.captainSession);
 
   /*
    * A caller may ask for a different lifetime, and exactly one does.
@@ -187,7 +199,7 @@ const signLegacyToken = (user, req, branchId, expiresIn) => {
    * caller keeps the lifetime it already had.
    */
   return jwt.sign(payload, getJwtSecret(), {
-    expiresIn: expiresIn || process.env.JWT_EXPIRES_IN || '24h',
+    expiresIn: expiresIn || jwtLifetimeSeconds(),
   });
 };
 
@@ -196,7 +208,7 @@ const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id, authVersion.version(user));
   authVersion.stampSession(res.req, user);
   const cookieOptions = authCookieOptions({
-    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + loginCookieDays() * 24 * 60 * 60 * 1000),
   });
 
   // Send JWT via HTTP-only cookie so browser automatically
@@ -227,6 +239,10 @@ const auth = async (req, res, next) => {
     // Verify token
     const decoded = await promisify(jwt.verify)(token, getJwtSecret());
     if (decoded && decoded.device_id) req.handsetDevice = String(decoded.device_id);
+    if (decoded && decoded.captain_session) {
+      req.captainSession = String(decoded.captain_session);
+      if (decoded.branch_id) req.headers['x-branch-id'] = String(decoded.branch_id);
+    }
 
     // Check if user still exists
     const currentUser = await findUserByIdentifier(decoded.id);
@@ -396,6 +412,7 @@ const protect = async (req, res, next) => {
     try {
       decoded = await promisify(jwt.verify)(token, getJwtSecret());
       if (decoded && decoded.device_id) req.handsetDevice = String(decoded.device_id);
+      if (decoded && decoded.captain_session) req.captainSession = String(decoded.captain_session);
     } catch (err) {
       if (err.name === 'JsonWebTokenError') {
         dropDeadCookie(req, res, token);
@@ -439,7 +456,7 @@ const protect = async (req, res, next) => {
     // 6) Restore session from JWT like PHP's JwtHelper does
     if (req.handsetDevice && decoded.branch_id)
       req.headers['x-branch-id'] = String(decoded.branch_id);
-    if (req.session) {
+    if (req.session && !req.captainSession) {
       req.session.userId = currentUser.id || currentUser._id?.toString();
       authVersion.stampSession(req, currentUser);
       // Restore branch_id from JWT if session doesn't have it (PHP: $_SESSION['PosnicPro']['settings']['_id'])
@@ -526,6 +543,10 @@ const optionalProtect = async (req, res, next) => {
       try {
         const decoded = await promisify(jwt.verify)(token, getJwtSecret());
         if (decoded && decoded.device_id) req.handsetDevice = String(decoded.device_id);
+        if (decoded && decoded.captain_session) {
+          req.captainSession = String(decoded.captain_session);
+          if (decoded.branch_id) req.headers['x-branch-id'] = String(decoded.branch_id);
+        }
         const currentUser = await findUserByIdentifier(decoded.id);
         if (
           currentUser &&
@@ -533,7 +554,7 @@ const optionalProtect = async (req, res, next) => {
           !currentUser.changedPasswordAfter(decoded.iat)
         ) {
           // Restore session from JWT (same as protect does)
-          if (req.session) {
+          if (req.session && !req.captainSession) {
             req.session.userId = currentUser.id || currentUser._id?.toString();
             authVersion.stampSession(req, currentUser);
           }

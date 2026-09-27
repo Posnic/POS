@@ -990,15 +990,15 @@ app.use(
      * out mid-sale exactly 24 hours later, however busy the counter - the
      * session died at its busiest. Rolling resets the window on every request
      * (connect-mongo's touch keeps the store's TTL in step), so an active till
-     * never expires and an abandoned browser still does, 24h after it was
-     * last used.
+     * stays signed in. Cloud browsers expire after 24h of inactivity; the
+     * embedded desktop uses a persistent rolling session across days off.
      */
     rolling: true,
     cookie: {
       secure: isProduction(),
       sameSite: isProduction() ? 'none' : 'lax',
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 1 day of INACTIVITY, not of shift
+      maxAge: (process.env.POSNIC_DESKTOP === '1' ? 400 : 1) * 24 * 60 * 60 * 1000,
     },
   })
 );
@@ -1118,7 +1118,15 @@ app.use(
   ['/api/branch-payments', '/branch-payments'],
   require('./src/routes/branch-payments.routes')
 );
+app.use(['/api/captain/v1', '/captain/v1'], require('./src/routes/captain-access.routes'));
 app.use(['/api/mobile/v1', '/mobile/v1'], require('./src/routes/mobile-pos.routes'));
+for (const extension of ['html', 'js', 'css']) {
+  const suffix = extension === 'html' ? '' : '.' + extension;
+  app.get(['/api/captain-setup' + suffix, '/captain-setup' + suffix], (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.sendFile(require('path').join(__dirname, 'src/routes/captain-setup.' + extension), {dotfiles:'allow'});
+  });
+}
 for (const extension of ['html', 'js', 'css']) {
   const suffix = extension === 'html' ? '' : '.' + extension;
   app.get(['/api/mobile-pos-setup' + suffix, '/mobile-pos-setup' + suffix], (req, res) => {

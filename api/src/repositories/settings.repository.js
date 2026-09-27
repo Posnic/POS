@@ -303,6 +303,17 @@ class SettingsRepository extends BaseModel {
           } catch (error) {
             return { status: false, data: null, message: error.message };
           }
+        } else if (key === 'quote_pricing_mode') {
+          if (value !== null && !['discount', 'markup'].includes(value)) {
+            return {
+              status: false,
+              data: null,
+              message: 'Choose discount or markup quotation pricing.',
+            };
+          }
+          accepted[key] = value;
+        } else if (key === 'quote_show_markup') {
+          accepted[key] = value === null ? null : value === true || value === 'true';
         } else if (key === 'quote_default_signature') {
           if (
             value !== null &&

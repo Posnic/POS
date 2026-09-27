@@ -387,6 +387,22 @@
               tax lines - stays in Settings, because that is a shop decision.
             -->
             <div id="receiptTab" class="tab-content active">
+                <details id="windowsRecovery" style="display:none;padding:16px;margin-bottom:16px;background:white;border-radius:10px;">
+                    <summary>Windows printer health &amp; recovery</summary>
+                    <p>Jobs stay on their chosen printer. Status “Sent to printer” means Windows released the job; check the paper to confirm output.</p>
+                    <label>Printer queue <select id="wrPrinter" onchange="wrSelection()"></select></label>
+                    <label>Expected port <input id="wrPort" placeholder="Detected on first use" maxlength="128"></label>
+                    <label>Physical USB instance ID (optional) <input id="wrPnp" placeholder="USBPRINT\…" maxlength="512"></label>
+                    <label><input type="checkbox" id="wrInitialize" checked> Initialize ESC/POS before sending</label>
+                    <label><input type="checkbox" id="wrKeepAlive" checked> Keep USB ESC/POS printer awake while Posnic is running</label>
+                    <p>Sends a paperless initialization after 30 seconds idle. No paper feed or cut. Requires ESC/POS initialization above. Pauses while printing or disconnected.</p>
+                    <button type="button" onclick="wrSave()">Save recovery settings</button>
+                    <p>Changing these settings affects new jobs only. Pending jobs retain their original printer and port. No ports are swapped automatically.</p>
+                    <div id="wrMessage" role="status"></div>
+                    <pre id="wrHealth" style="white-space:pre-wrap;"></pre>
+                    <pre id="wrKeepAliveStatus" style="white-space:pre-wrap;"></pre>
+                    <div id="wrJobs" role="status" style="max-height:240px;overflow:auto;"></div>
+                </details>
                 <div id="rpStatus" style="display:none;padding:16px 20px;border-radius:12px;margin-bottom:20px;font-weight:600;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
 
                 <div style="background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
@@ -1125,7 +1141,9 @@
                         Plays a real ticket through the speaker on this computer, exactly as a
                         kitchen would hear it. Nothing is ordered and nothing is printed.
                     </p>
-                    <button type="button" class="btn btn-primary" id="kitchenSoundTest">Test the sound</button>
+                    <button type="button" class="btn btn-primary" id="kitchenSoundSave">Save sound settings</button>
+                    <span id="kitchenSoundSaveResult" role="status" aria-live="polite" style="margin:0 12px;"></span>
+                    <button type="button" class="btn btn-secondary" id="kitchenSoundTest">Save and test sound</button>
                     <span id="kitchenSoundTestResult" style="margin-left:12px;color:#555;font-size:14px;"></span>
                 </div>
             </div>
@@ -1821,7 +1839,7 @@
             const printed = document.getElementById('bpPrinted');
             if (printed) {
                 printed.textContent = s.printed
-                    ? s.printed + ' printed since this computer started, last ' + bpWhen(s.lastPrintedAt)
+                    ? s.printed + ' sent to printer since this computer started, last ' + bpWhen(s.lastPrintedAt)
                     : 'none printed yet';
             }
 
@@ -1999,8 +2017,8 @@
                     + '<td style="padding:10px 12px;">' + where + '</td>'
                     + '<td style="padding:10px 12px;">'
                     + (ok
-                        ? '<span style="color:#12b76a;font-weight:700;">printed</span>' + took
-                        : '<span style="color:#f04438;font-weight:700;">did not print</span>'
+                        ? '<span style="color:#12b76a;font-weight:700;">Sent to printer</span>' + took
+                        : '<span style="color:#f04438;font-weight:700;">' + rlSafe(row.printStatus || 'did not print') + '</span>'
                           + (said ? ' <span style="color:#b42318;">' + said + '</span>' : ''))
                     + '</td></tr>';
             }).join('');
@@ -2107,6 +2125,56 @@
                 rpShowStatus('Could not save: ' + e.message, 'error');
             }
         }
+
+        let wrBindings = {};
+        function wrSelection() {
+            const binding = wrBindings[document.getElementById('wrPrinter').value.toLowerCase()] || {};
+            document.getElementById('wrPort').value = binding.port || '';
+            document.getElementById('wrPnp').value = binding.pnpId || '';
+            document.getElementById('wrInitialize').checked = binding.initialize !== false;
+            document.getElementById('wrKeepAlive').checked = binding.keepAlive !== false;
+        }
+        async function wrRefresh() {
+            if (!window.electronAPI?.printer?.recoveryStatus) return;
+            try {
+                const status = await window.electronAPI.printer.recoveryStatus();
+                if (!status.supported) return;
+                document.getElementById('windowsRecovery').style.display = 'block';
+                wrBindings = status.bindings || {};
+                document.getElementById('wrKeepAliveStatus').textContent = Object.values(status.keepAlive || {}).map(p =>
+                    p.printer + ' | ' + p.status + ' | ' + new Date(p.at).toLocaleTimeString()).join('\n');
+                document.getElementById('wrHealth').textContent = (status.health || []).map(p =>
+                    p.printer + ' | ' + p.port + ' | USB present: ' + p.present + ' | WorkOffline: ' + p.workOffline + ' | Windows status: ' + p.printerStatus).join('\n');
+                const list = document.getElementById('wrJobs');
+                list.replaceChildren();
+                (status.jobs || []).slice().reverse().forEach(job => {
+                    const row = document.createElement('p');
+                    row.textContent = job.printer + ' | ' + job.status + (job.error ? ' - ' + job.error : '') + ' | Job ' + job.jobId.slice(0, 12) + (job.spoolerJobId ? ' | Windows ' + job.spoolerJobId : '');
+                    list.appendChild(row);
+                });
+            } catch (error) { document.getElementById('wrMessage').textContent = error.message; }
+        }
+        async function wrSave() {
+            const result = await window.electronAPI.printer.configureRecovery(document.getElementById('wrPrinter').value, {
+                port: document.getElementById('wrPort').value, pnpId: document.getElementById('wrPnp').value,
+                initialize: document.getElementById('wrInitialize').checked,
+                keepAlive: document.getElementById('wrKeepAlive').checked,
+            });
+            document.getElementById('wrMessage').textContent = result.success ? 'Recovery settings saved for new jobs.' : result.error;
+            await wrRefresh();
+        }
+        document.addEventListener('DOMContentLoaded', async function () {
+            if (!window.electronAPI?.printer?.recoveryStatus) return;
+            await wrRefresh();
+            const printers = await window.electronAPI.printer.list();
+            for (const printer of printers) {
+                const option = document.createElement('option'); option.value = printer.name; option.textContent = printer.name;
+                document.getElementById('wrPrinter').appendChild(option);
+            }
+            wrSelection();
+            const timer = setInterval(wrRefresh, 5000);
+            window.addEventListener('beforeunload', () => clearInterval(timer), { once: true });
+        });
 
         async function rpSave() {
             const targets = _collectTargets('rpPrinterList');
@@ -2244,7 +2312,7 @@
                 if (result && result.success) {
                     rpShowStatus('Sent ' + result.bytes + ' bytes. Check that every amount ends flush right.', 'success');
                 } else {
-                    rpShowStatus('Print failed: ' + ((result && result.error) || 'unknown reason'), 'error');
+                    rpShowStatus((result && result.status || 'Failed') + ': ' + ((result && result.error) || 'unknown reason'), result && result.pending ? 'warn' : 'error');
                 }
             } catch (e) {
                 rpShowStatus('Print failed: ' + e.message, 'error');
@@ -2843,8 +2911,8 @@
                 /* The printer's own words, not a summary of them. */
                 const firstWhy = (r.printers || []).map(p => p.reason).filter(Boolean)[0] || '';
                 const result = ok
-                    ? '<span style="font-weight:700;color:#155724;">✓ Printed</span>'
-                    : '<span style="font-weight:700;color:#b91c1c;" title="' + logEsc(firstWhy) + '">✗ Failed</span>'
+                    ? '<span style="font-weight:700;color:#155724;">✓ Sent to printer</span>'
+                    : '<span style="font-weight:700;color:#b91c1c;" title="' + logEsc(firstWhy) + '">' + logEsc(r.printStatus || 'Failed') + '</span>'
                       + (firstWhy ? '<div style="font-size:11px;color:#b91c1c;">' + logEsc(firstWhy) + '</div>' : '');
 
                 const tr = document.createElement('tr');
@@ -3051,7 +3119,7 @@
                     background:${p.status === 'success' ? '#d4edda' : '#f8d7da'};">
                     <span style="font-weight:600;">${p.name}</span>
                     <span style="font-weight:700;color:${p.status === 'success' ? '#155724' : '#721c24'};">
-                        ${p.status === 'success' ? '✓ Printed' : '✗ Failed' + (p.reason ? ': ' + p.reason : '')}
+                        ${p.status === 'success' ? '✓ Sent to printer' : logEsc(p.printStatus || 'Failed') + (p.reason ? ': ' + logEsc(p.reason) : '')}
                     </span>
                 </div>`).join('');
 
@@ -4027,19 +4095,36 @@
                     option.textContent = v.name + ' (' + v.lang + ')';
                     select.appendChild(option);
                 });
+                if (chosen && !Array.from(select.options).some(function (option) { return option.value === chosen; })) {
+                    var pending = document.createElement('option');
+                    pending.value = chosen;
+                    pending.textContent = chosen + ' (uses an available voice until loaded)';
+                    select.appendChild(pending);
+                }
                 select.value = chosen || '';
             };
 
-            var save = function () {
-                bridge.set({
+            var save = async function () {
+                var button = at('kitchenSoundSave');
+                button.disabled = true;
+                at('kitchenSoundSaveResult').textContent = 'Saving…';
+                try {
+                var saved = await bridge.set({
                     ting: at('kitchenTing').checked,
                     speak: at('kitchenSpeak').checked,
                     arrivalBell: at('kitchenArrivalBell').value,
                     itemBell: at('kitchenItemBell').value,
                     voice: at('kitchenVoice').value || ''
                 });
-                at('kitchenSoundTestResult').textContent = '';
+                if (!saved) throw new Error('Settings could not be saved. Please retry.');
+                at('kitchenSoundSaveResult').textContent = 'Saved on this computer';
+                return true;
+                } catch (error) {
+                    at('kitchenSoundSaveResult').textContent = error.message || 'Settings could not be saved. Please retry.';
+                    return false;
+                } finally { button.disabled = false; }
             };
+            at('kitchenSoundSave').addEventListener('click', save);
 
             bridge.get().then(function (said) {
                 /* The switches, before anything that can fail. */
@@ -4073,7 +4158,9 @@
             ['kitchenTing', 'kitchenSpeak', 'kitchenArrivalBell', 'kitchenItemBell', 'kitchenVoice']
                 .forEach(function (id) {
                     var el = at(id);
-                    if (el) el.addEventListener('change', save);
+                    if (el) el.addEventListener('change', function () {
+                        at('kitchenSoundSaveResult').textContent = 'Unsaved changes';
+                    });
                 });
 
             /* One player, reused: a new Audio() per press leaves the old ones
@@ -4123,8 +4210,9 @@
              */
             var test = at('kitchenSoundTest');
             if (test) {
-                test.addEventListener('click', function () {
+                test.addEventListener('click', async function () {
                     var result = at('kitchenSoundTestResult');
+                    if (!(await save())) return;
                     result.textContent = 'Playing...';
                     bridge.test().then(function (said) {
                         if (said && said.reason === 'off') {

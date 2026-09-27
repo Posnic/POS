@@ -19,7 +19,7 @@ function contextOf(req) {
       (Array.isArray(user.branch_access) && user.branch_access[0]?.branch_id) ||
       null,
     branchName: req.tenantContext?.branchName || user.branch_name || '',
-    licenseId: req.tenantContext?.licenseId || user.license || null,
+    licenseId: req.tenantContext?.licenseId || user.license || user.license_id || null,
     userId: user._id || null,
     userName: user.username || user.email || '',
   };
@@ -37,6 +37,26 @@ const ok = (res, data, message, meta) =>
   res.json({ type: 'success', message, data, ...(meta ? { meta } : {}) });
 
 module.exports = {
+  async defaults(req, res) {
+    try {
+      if (!can(req, 'read')) return fail(res, 'Unauthorized access', 403);
+      const SettingsRepository = require('../repositories/settings.repository');
+      const result = await new SettingsRepository().resolveGroup('documents', contextOf(req));
+      if (!result.status) return fail(res, 'Could not load quotation pricing settings', 503);
+      const values = result.data.values;
+      return ok(
+        res,
+        {
+          pricing_mode: values.quote_pricing_mode === 'markup' ? 'markup' : 'discount',
+          show_markup: values.quote_show_markup === true,
+        },
+        'Quotation pricing defaults'
+      );
+    } catch (error) {
+      return fail(res, 'Could not load quotation pricing settings', 503);
+    }
+  },
+
   async create(req, res) {
     try {
       if (!can(req, 'write')) return fail(res, 'Unauthorized access', 403);
