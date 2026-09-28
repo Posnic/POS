@@ -375,28 +375,33 @@ router.post(
 );
 router.post(
   '/kitchenDisplayReport',
+  rateLimit({ windowMs: 60000, limit: 600, standardHeaders: true, legacyHeaders: false }),
   ensurePrintDevice,
   bindController(salesController.kitchenDisplayReport)
 );
 router.post(
   '/kitchenDeliveryReport',
+  rateLimit({ windowMs: 60000, limit: 600, standardHeaders: true, legacyHeaders: false }),
   ensurePrintDevice,
   bindController(salesController.kitchenDeliveryReport)
 );
 router.get(
   '/kitchenDeliveryStatus',
+  rateLimit({ windowMs: 60000, limit: 300, standardHeaders: true, legacyHeaders: false }),
   optionalProtect,
   protectOrKioskKey,
   bindController(salesController.kitchenDeliveryStatus)
 );
 router.get(
   '/handoverStaff',
+  rateLimit({ windowMs: 60000, limit: 120, standardHeaders: true, legacyHeaders: false }),
   optionalProtect,
   protectOrKioskKey,
   bindController(salesController.handoverStaff)
 );
 router.post(
   '/handoverOrder',
+  rateLimit({ windowMs: 60000, limit: 120, standardHeaders: true, legacyHeaders: false }),
   optionalProtect,
   protectOrKioskKey,
   bindController(salesController.handoverOrder)
