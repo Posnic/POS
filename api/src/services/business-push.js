@@ -5,6 +5,8 @@ const { createBusinessAccess, hash } = require('./business-access');
 const { createExpoTransport, tokenPattern } = require('./business-push-transport');
 const { deferQuiet } = require('./business-notification-time');
 const indexes = new WeakMap();
+const pushMessages = require('./business-push-messages.json');
+const supportedLanguages = Object.freeze(Object.keys(pushMessages));
 function configuration() {
   const projectId = process.env.POSNIC_BUSINESS_EXPO_PROJECT_ID;
   const accessToken = process.env.POSNIC_BUSINESS_EXPO_ACCESS_TOKEN;
@@ -41,7 +43,11 @@ async function ready(db) {
     );
   await indexes.get(db);
 }
-async function deviceStatus(db, identity, { config = configuration() } = {}) {
+async function deviceStatus(
+  db,
+  identity,
+  { config = configuration(), includeLanguages = false } = {}
+) {
   const row = await db.collection('business_push_devices').findOne({
     sessionId: identity.session._id,
     accountId: String(identity.user._id),
@@ -51,6 +57,9 @@ async function deviceStatus(db, identity, { config = configuration() } = {}) {
     available: config.enabled,
     projectId: config.projectId,
     enabled: config.enabled && !!row,
+    ...(includeLanguages
+      ? { supportedLanguages, locale: supportedLanguages.includes(row?.locale) ? row.locale : 'en' }
+      : {}),
   };
 }
 async function registerDevice(
@@ -62,7 +71,11 @@ async function registerDevice(
   if (!config.enabled) fail('push_unavailable', 503);
   if (
     !input ||
-    Object.keys(input).sort().join(',') !== 'platform,projectId,token' ||
+    !['platform,projectId,token', 'locale,platform,projectId,token'].includes(
+      Object.keys(input).sort().join(',')
+    ) ||
+    (Object.hasOwn(input, 'locale') &&
+      (typeof input.locale !== 'string' || !supportedLanguages.includes(input.locale))) ||
     !['android', 'ios'].includes(input.platform) ||
     input.projectId !== config.projectId ||
     typeof input.token !== 'string' ||
@@ -87,6 +100,8 @@ async function registerDevice(
           sessionId,
           token: input.token,
           platform: input.platform,
+          locale:
+            input.locale || (previous?.sessionId === sessionId ? previous.locale : null) || 'en',
           projectId: input.projectId,
           generation: previous?.sessionId === sessionId ? previous.generation : crypto.randomUUID(),
           expiresAt: identity.session.expiresAt,
@@ -259,7 +274,7 @@ async function drainPush(
         });
         continue;
       }
-      const ticketId = await transport.send(device.token, job.eventId);
+      const ticketId = await transport.send(device.token, job.eventId, device.locale || 'en');
       await deliveries.updateOne(lease, {
         $set: {
           state: 'receipt',

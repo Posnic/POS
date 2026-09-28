@@ -1,4 +1,5 @@
 'use strict';
+const messages = Object.freeze(require('./business-push-messages.json'));
 const ticket = /^[a-f\d-]{36}$/i;
 const tokenPattern = /^(?:ExpoPushToken|ExponentPushToken)\[[A-Za-z0-9_-]{10,200}\]$/;
 function failure(code, retryable = false) {
@@ -75,7 +76,7 @@ function createExpoTransport({ accessToken, fetcher = fetch } = {}) {
     throw failure('push_invalid_response', true);
   }
   return {
-    async send(token, eventId) {
+    async send(token, eventId, locale = 'en') {
       if (!tokenPattern.test(token) || !/^[a-f\d]{24}$/.test(eventId))
         throw failure('push_invalid_request');
       // Never put business figures, account identifiers, URLs, or decisions on a lock screen.
@@ -83,7 +84,10 @@ function createExpoTransport({ accessToken, fetcher = fetch } = {}) {
         await post('send', {
           to: token,
           title: 'Posnic Business',
-          body: 'An update is ready in your Business Inbox.',
+          body:
+            typeof locale === 'string' && Object.hasOwn(messages, locale)
+              ? messages[locale]
+              : messages.en,
           data: { kind: 'business-inbox', eventId },
           channelId: 'business-updates',
           priority: 'normal',

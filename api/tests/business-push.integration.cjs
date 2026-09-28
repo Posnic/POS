@@ -124,6 +124,77 @@ test('concurrent delivery is private, durable and tracks provider acceptance sep
   assert.deepEqual(status, { available: true, projectId: config.projectId, enabled: true });
   assert.equal(JSON.stringify(status).includes(token), false);
 });
+
+test('recipient languages belong to each session device and legacy renewal preserves the preference', async () => {
+  const f = await fixture();
+  const registration = { token, platform: 'android', projectId: config.projectId };
+  await push.registerDevice(db, f.identity, { ...registration, locale: 'fr' }, { config });
+  await push.registerDevice(db, f.identity, registration, { config });
+  const legacy = await push.deviceStatus(db, f.identity, { config });
+  assert.equal(Object.hasOwn(legacy, 'locale'), false);
+  const localized = await push.deviceStatus(db, f.identity, { config, includeLanguages: true });
+  assert.equal(localized.locale, 'fr');
+  assert.equal(localized.supportedLanguages.length, 18);
+  for (const locale of ['constructor', 'fr-CA', '', null, { en: true }])
+    await assert.rejects(
+      push.registerDevice(db, f.identity, { ...registration, locale }, { config }),
+      { code: 'invalid_request' }
+    );
+  const second = { ...f.session, _id: opaque(), tokenHash: opaque() };
+  await db.collection('business_sessions').insertOne(second);
+  const secondToken = 'ExpoPushToken[seconddevice12345]';
+  await push.registerDevice(
+    db,
+    { user: f.user, session: second },
+    {
+      ...registration,
+      token: secondToken,
+      locale: 'ar',
+    },
+    { config, now: () => at - 1000 }
+  );
+  const sent = new Map();
+  await push.drainPush(db, {
+    config,
+    now: () => at,
+    transport: {
+      async send(recipient, event, locale) {
+        assert.equal(event, String(f.event._id));
+        sent.set(recipient, locale);
+        return '22222222-2222-4222-8222-222222222222';
+      },
+    },
+  });
+  assert.deepEqual(
+    sent,
+    new Map([
+      [token, 'fr'],
+      [secondToken, 'ar'],
+    ])
+  );
+});
+
+test('a queued retry reads the current device language without creating another delivery', async () => {
+  const f = await fixture();
+  const languages = [];
+  const transport = {
+    async send(recipient, event, locale) {
+      languages.push(locale);
+      if (languages.length === 1) throw Object.assign(new Error('offline'), { retryable: true });
+      return '22222222-2222-4222-8222-222222222222';
+    },
+  };
+  await push.drainPush(db, { config, now: () => at, transport });
+  await push.registerDevice(
+    db,
+    f.identity,
+    { token, projectId: config.projectId, platform: 'android', locale: 'ta' },
+    { config }
+  );
+  await push.drainPush(db, { config, now: () => at + 31000, transport });
+  assert.deepEqual(languages, ['en', 'ta']);
+  assert.equal(await db.collection('business_push_deliveries').countDocuments({}), 1);
+});
 test('revoked sessions and removed financial access cannot send even a generic alert', async () => {
   const f = await fixture();
   await db

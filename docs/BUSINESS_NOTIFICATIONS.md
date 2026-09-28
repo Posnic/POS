@@ -71,3 +71,19 @@ platform accepted the message, not that the phone displayed it or a person read
 it. Invalid-device receipts remove only the matching registration generation.
 No business amounts or credentials enter the payload. Local tests use a fake
 provider; actual APNs/FCM delivery and device behavior remain unverified.
+
+Recipient language is a device preference. A client requests
+`GET /api/business/v1/notifications/device?language=1` to negotiate the optional
+`supportedLanguages` and `locale` fields. Requests without this query retain the
+original response shape for strict older clients. Older servers ignore the query
+and return their original response; clients then omit `locale` from registration.
+New registrations may include one of the 18 supported language codes. Invalid
+codes are rejected, and omission on renewal preserves the same device's stored
+preference. No account or branch identity can be supplied by this setting.
+
+The worker reads the current device language immediately before each send,
+including retries, while preserving all session, branch, ACL and schedule checks.
+Each language has fixed generic lock-screen wording; business names, figures and
+decisions remain inside the authenticated Inbox. Missing or unsupported stored
+languages fall back to English. Translation review and signed-device delivery
+qualification remain release requirements.

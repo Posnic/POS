@@ -135,18 +135,16 @@ test('device bridge HTTP accepts only an exact, single-use Gateway grant and nev
       });
     assert.equal((await call('pb1_' + opaque())).status, 401);
     const token = 'pbd1_' + opaque();
-    await db
-      .collection('business_device_grants')
-      .insertOne({
-        _id: hash(token),
-        protocolVersion: 1,
-        tenantDb: db.databaseName,
-        action: 'create',
-        bodyHash: hash(JSON.stringify(body)),
-        device: { deviceId: opaque(), branches: [String(f.branch._id)] },
-        issuedAt: new Date(),
-        expiresAt: new Date(Date.now() + 5000),
-      });
+    await db.collection('business_device_grants').insertOne({
+      _id: hash(token),
+      protocolVersion: 1,
+      tenantDb: db.databaseName,
+      action: 'create',
+      bodyHash: hash(JSON.stringify(body)),
+      device: { deviceId: opaque(), branches: [String(f.branch._id)] },
+      issuedAt: new Date(),
+      expiresAt: new Date(Date.now() + 5000),
+    });
     assert.equal((await call(token, { ...body, requesterAuthVersion: 2 })).status, 401);
     const response = await call(token);
     assert.equal(response.status, 200);
@@ -776,6 +774,33 @@ test('push registration is scoped to the authenticated Business session and retu
       projectId,
       enabled: true,
     });
+    const capability = await (await fetch(url + '?language=1', { headers })).json();
+    assert.equal(capability.locale, 'en');
+    assert.equal(capability.supportedLanguages.length, 18);
+    assert.equal(capability.supportedLanguages.includes('ta'), true);
+    assert.equal(JSON.stringify(capability).includes(input.token), false);
+    assert.deepEqual(
+      await (
+        await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ ...input, locale: 'ta' }),
+        })
+      ).json(),
+      { enabled: true }
+    );
+    assert.equal((await (await fetch(url + '?language=1', { headers })).json()).locale, 'ta');
+    assert.equal(Object.hasOwn(await (await fetch(url, { headers })).json(), 'locale'), false);
+    assert.equal(
+      (
+        await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ ...input, locale: 'constructor' }),
+        })
+      ).status,
+      400
+    );
     assert.deepEqual(await (await fetch(url, { method: 'DELETE', headers })).json(), {
       enabled: false,
     });

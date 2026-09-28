@@ -228,7 +228,11 @@ router.post(
 router.get(
   '/notifications/device',
   wrap(async (req, res) => {
-    res.json(await require('../services/business-push').deviceStatus(req.db, req.businessIdentity));
+    res.json(
+      await require('../services/business-push').deviceStatus(req.db, req.businessIdentity, {
+        includeLanguages: req.query.language === '1',
+      })
+    );
   })
 );
 router.post(
