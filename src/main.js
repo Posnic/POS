@@ -2276,7 +2276,7 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
   /*
    * What is deliberately NOT on that list: camera, microphone, geolocation,
    * display-capture, serial, usb, hid, midi and idle-detection. A point of sale
-   * needs none of them, and the scale and printer are driven from the main
+   * grants microphone only to the enabled Kitchen Sound page below. The scale and printer are driven from the main
    * process through IPC rather than through the Web Serial API - denying
    * 'serial' here does not touch them.
    *
@@ -2284,9 +2284,26 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
    * one, it says so in app.log rather than failing silently.
    */
 
+  function kitchenAudioPermission(webContents, permission, details = {}) {
+    try {
+      const url = new URL(webContents.getURL());
+      if (url.protocol !== 'file:') return false;
+      if (details.isMainFrame === false) return false;
+      if (details.requestingUrl && new URL(details.requestingUrl).pathname !== url.pathname) return false;
+      const file = require('url').fileURLToPath(url);
+      const hardware = file === path.join(__dirname, 'hardware-manager.html');
+      const player = file === path.join(__dirname, 'kitchen-audio.html');
+      if (permission === 'speaker-selection') return hardware || player;
+      if (permission === 'media' && hardware && kitchenAnnounce.settings().talkEnabled) {
+        return details.mediaType === 'audio' || (Array.isArray(details.mediaTypes) && details.mediaTypes.length === 1 && details.mediaTypes[0] === 'audio');
+      }
+    } catch (e) { /* deny */ }
+    return false;
+  }
+
   mainWindow.webContents.session.setPermissionRequestHandler(
-    (webContents, permission, callback) => {
-      const allowed = ALLOWED_PERMISSIONS.has(permission);
+    (webContents, permission, callback, details) => {
+      const allowed = ALLOWED_PERMISSIONS.has(permission) || kitchenAudioPermission(webContents, permission, details);
       if (!allowed) {
         console.log(`[Security] denied permission request: ${permission}`);
       }
@@ -2298,7 +2315,7 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
      requested, and a handler that only covers the asynchronous path leaves
      those at Chromium's default. */
   mainWindow.webContents.session.setPermissionCheckHandler(
-    (webContents, permission) => ALLOWED_PERMISSIONS.has(permission)
+    (webContents, permission, requestingOrigin, details) => ALLOWED_PERMISSIONS.has(permission) || kitchenAudioPermission(webContents, permission, details)
   );
 
   /*
@@ -4708,6 +4725,7 @@ app.whenReady().then(async () => {
   /* So the per-machine switch can find userData without importing electron
      itself, which is what lets it be read in a test. */
   kitchenAnnounce.useApp(app);
+  require('./kitchen-audio').install({app, BrowserWindow, ipcMain});
   console.log('OrderAlert initialized');
 
   /*

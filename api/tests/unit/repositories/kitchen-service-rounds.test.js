@@ -40,8 +40,23 @@ const request = () => ({
   actor: 'staff',
   items: [{ id: 'c0i0', quantity: 1 }],
 });
+test('wall screen excludes ordinary counter sales before and after payment', async () => {
+  const base = await collection.findOne({ _id: id });
+  const counterId = new mongoose.Types.ObjectId();
+  await collection.insertOne({ ...base, _id: counterId, sale_process: 'Add', table_number: '' });
+  let result = await repository.kitchenScreenTickets(String(branch));
+  expect(result.status).toBe(true);
+  expect(result.data.map(t => t.id)).toEqual([`${id}:c0`]);
+  await collection.updateOne({ _id: counterId }, { $set: { payment_status: 'Paid' } });
+  result = await repository.kitchenScreenTickets(String(branch));
+  expect(result.data.map(t => t.id)).toEqual([`${id}:c0`]);
+});
 test('service persists, retries are idempotent, and the kitchen shows only the remainder', async () => {
+  const changed = jest.fn();
+  process.on('posnic:kitchen-served', changed);
+  try {
   expect((await repository.serveKitchenItems(request())).status).toBe(true);
+  expect(changed).toHaveBeenCalledWith({branchId:String(branch),saleId:String(id)});
   expect((await repository.serveKitchenItems(request())).status).toBe(true);
   const saved = await collection.findOne({ _id: id });
   expect(saved.kitchen_service.c0i0.quantity).toBe(1);
@@ -50,6 +65,7 @@ test('service persists, retries are idempotent, and the kitchen shows only the r
   const screen = await repository.kitchenScreenTickets(String(branch));
   expect(screen.status).toBe(true);
   expect(screen.data[0].items[0].qty).toBe(1);
+  } finally { process.removeListener('posnic:kitchen-served', changed); }
 });
 test('another branch, closed orders, invalid lines and over-serving cannot mutate service', async () => {
   expect(

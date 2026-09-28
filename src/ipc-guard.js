@@ -39,6 +39,7 @@ const PACKAGED_PAGES = new Set([
   'backup-manager.html',
   'hardware-manager.html',
   'kitchen-screen.html',
+  'kitchen-audio.html',
   'update-manager.html',
   'log-viewer.html',
 ]);

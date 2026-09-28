@@ -37,6 +37,7 @@ const KEEP_LAST_ON_FAILURE = true;
 let timer = null;
 const lastGood = new Map();
 let generation = 0;
+let servedListener = null;
 
 function screens() {
   return require('./kitchen-screen');
@@ -135,25 +136,41 @@ async function pollScreens({ resolveBranch, fetchImpl, isCurrent = () => true } 
 }
 const screenBranches = new Map();
 
-function start({ branchId, resolveBranch, everyMs = EVERY_MS } = {}) {
+function start({ branchId, resolveBranch, everyMs = EVERY_MS, fetchImpl } = {}) {
   stop();
   const branch = String(branchId || '').trim();
   if (!branch && !resolveBranch) return null;
   const epoch = generation;
   let busy = false;
+  let revision = 0;
+  let pending = false;
   const run = async () => {
     if (busy) return;
     busy = true;
+    pending = false;
+    const reading = revision;
+    const isCurrent = () => epoch === generation && reading === revision;
     try {
-      if (resolveBranch) await pollScreens({ resolveBranch, isCurrent: () => epoch === generation });
-      else await tick({ branchId: branch, isCurrent: () => epoch === generation });
+      if (resolveBranch) await pollScreens({ resolveBranch, fetchImpl, isCurrent });
+      else await tick({ branchId: branch, fetchImpl, isCurrent });
     } catch (e) {
       if (epoch !== generation) return;
       for (const d of screens().displays().filter(d => d.open && d.configured)) {
         screens().setFeedStatus('Orders connection unavailable. Retrying...', d.id);
       }
-    } finally { busy = false; }
+    } finally {
+      busy = false;
+      if (pending && epoch === generation) void run();
+    }
   };
+  servedListener = (event) => {
+    if (!event?.branchId || (!resolveBranch && String(event.branchId) !== branch)) return;
+    // Discard a response read before service was saved, then read fresh without overlap.
+    revision += 1;
+    pending = true;
+    void run();
+  };
+  process.on('posnic:kitchen-served', servedListener);
   timer = setInterval(run, everyMs);
   if (typeof timer.unref === 'function') timer.unref();
   run();
@@ -162,6 +179,8 @@ function start({ branchId, resolveBranch, everyMs = EVERY_MS } = {}) {
 
 function stop() {
   generation += 1;
+  if (servedListener) process.removeListener('posnic:kitchen-served', servedListener);
+  servedListener = null;
   if (timer) clearInterval(timer);
   timer = null;
 }

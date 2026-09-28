@@ -79,9 +79,18 @@ function settingsPath() {
  * instead of going silent, and a downloaded voice pack later just adds another
  * name to the same list.
  */
-const DEFAULTS = { ting: false, speak: false, arrivalBell: "rising", itemBell: "soft", voice: "" };
+const DEFAULTS = { ting: false, speak: false, arrivalBell: "rising", itemBell: "soft", voice: "", outputs: [], volume: 1, talkEnabled: false, talkTing: false, talkBell: "rising", itemTing: true, pauseWhileRecording: true, branchId: "" };
 
 const shape = (said) => ({
+  outputs: Array.isArray(said.outputs) ? [...new Map(said.outputs.filter(o => o && typeof o.id === 'string' && o.id.length < 300).slice(0,8).map(o=>[o.id,{id:o.id,label:String(o.label||'Speaker').slice(0,150)}])).values()] : [],
+  volume: Number.isFinite(Number(said.volume)) ? Math.max(0,Math.min(1,Number(said.volume))) : 1,
+  talkEnabled: said.talkEnabled === true,
+  talkTing: said.talkTing === true,
+  talkBell: typeof said.talkBell === "string" && said.talkBell ? said.talkBell : "rising",
+  itemTing: said.itemTing !== false,
+  pauseWhileRecording: said.pauseWhileRecording !== false,
+  branchId: typeof said.branchId === 'string' ? said.branchId.slice(0,40) : '',
+
   ting: said.ting === true,
   speak: said.speak === true,
   arrivalBell: typeof said.arrivalBell === "string" && said.arrivalBell
@@ -142,6 +151,14 @@ function set(next) {
      they spent five minutes choosing. */
   const wanted = shape(
     Object.assign({}, now, {
+      outputs: asked.outputs !== undefined ? asked.outputs : now.outputs,
+      volume: asked.volume !== undefined ? asked.volume : now.volume,
+      talkEnabled: asked.talkEnabled !== undefined ? asked.talkEnabled : now.talkEnabled,
+      talkTing: asked.talkTing !== undefined ? asked.talkTing : now.talkTing,
+      talkBell: asked.talkBell !== undefined ? asked.talkBell : now.talkBell,
+      itemTing: asked.itemTing !== undefined ? asked.itemTing : now.itemTing,
+      pauseWhileRecording: asked.pauseWhileRecording !== undefined ? asked.pauseWhileRecording : now.pauseWhileRecording,
+      branchId: asked.branchId !== undefined ? asked.branchId : now.branchId,
       ting: asked.ting !== undefined ? asked.ting === true : now.ting,
       speak: asked.speak !== undefined ? asked.speak === true : now.speak,
       arrivalBell: asked.arrivalBell !== undefined ? asked.arrivalBell : now.arrivalBell,
@@ -152,7 +169,8 @@ function set(next) {
 
   try {
     fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, JSON.stringify(wanted, null, 2), "utf8");
+    fs.writeFileSync(file + ".tmp", JSON.stringify(wanted, null, 2), "utf8");
+    fs.renameSync(file + ".tmp", file);
     return true;
   } catch (e) {
     return false;

@@ -991,6 +991,10 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       // Core PHP ordering
       date: mongo_date,
       sale_process: saleProcess,
+      // Only the server's KOT path enrolls kitchen work; caller flags are ignored.
+      kitchen_required: existingSale?.kitchen_required === true ||
+        (!existingSale && saleProcess === 'KOT') ||
+        (existingSale?.sale_process === 'KOT' && existingSale.payment_status !== 'Paid'),
       user_id: String(userId),
       user_name: userName,
       category_id: customer ? customer.category_id : '',
@@ -1168,6 +1172,10 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
     };
 
     const finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
+    if (finalSaleData.kitchen_required) {
+      finalSaleData.kitchen_closed = !require('../helpers/kitchen-rounds').rounds({ ...existingSale, ...finalSaleData })
+        .some(round => round.items.some(item => item.remaining > 0));
+    }
 
     // Inventory Verification BEFORE Insert (PHP lines 653-690)
     if (id === '') {
