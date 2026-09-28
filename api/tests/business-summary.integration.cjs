@@ -99,14 +99,12 @@ test('Cloud runtime, cancellation and elapsed budgets stop preparation', async (
 async function workFixture() {
   const b = branch(),
     localDb = client.db('desktop_' + b.id);
-  await localDb
-    .collection('branches')
-    .insertOne({
-      _id: new ObjectId(b.id),
-      license: new ObjectId(b.license),
-      currency: b.currency,
-      time_zone: b.timezone,
-    });
+  await localDb.collection('branches').insertOne({
+    _id: new ObjectId(b.id),
+    license: new ObjectId(b.license),
+    currency: b.currency,
+    time_zone: b.timezone,
+  });
   await localDb.collection('sales').insertOne(sale(b));
   const job = {
     _id: b.id + ':2026-09-28',
@@ -187,4 +185,66 @@ test('stopping a desktop worker cancels preparation and never stages a result', 
   worker.stop();
   await work;
   assert.equal((await f.local.findOne({ _id: f.job._id })).pendingSummary, undefined);
+});
+
+test('opt-in Community desktop prepares and serves the same summary without Cloud or a sync agent', async () => {
+  const f = await workFixture();
+  const { readBusinessOverview } = require('../src/services/business-reports');
+  const at = Date.parse('2026-09-28T12:00:00Z');
+  const context = {
+    businessId: f.job.license,
+    capabilities: ['overview.read'],
+    branches: [
+      { id: f.job.branchId, currency: 'INR', currencyDigits: 2, timezone: 'Asia/Kolkata' },
+    ],
+  };
+  const query = { branchId: f.job.branchId, businessDate: f.job.businessDate };
+  await assert.rejects(readBusinessOverview(f.localDb, context, query, { now: () => at }), {
+    code: 'summary_unavailable',
+  });
+  const previous = process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+  process.env.POSNIC_BUSINESS_LOCAL_REPORTING = '1';
+  let failWrite = true;
+  const failingDb = {
+    collection(name) {
+      const collection = f.localDb.collection(name);
+      if (name !== 'business_prepared_summaries') return collection;
+      return {
+        async replaceOne(...args) {
+          if (failWrite) {
+            failWrite = false;
+            throw new Error('interrupted Community publication');
+          }
+          return collection.replaceOne(...args);
+        },
+      };
+    },
+  };
+  let worker = createDesktopReportingWorker(failingDb, { now: () => at });
+  try {
+    await worker.tick();
+    assert.ok(
+      (await f.localDb.collection('business_reporting_publishers').findOne({ _id: f.job.branchId }))
+        .pending
+    );
+    await assert.rejects(readBusinessOverview(f.localDb, context, query, { now: () => at }), {
+      code: 'summary_unavailable',
+    });
+    worker.stop();
+    worker = createDesktopReportingWorker(f.localDb, { now: () => at });
+    await worker.tick();
+    const summary = await readBusinessOverview(f.localDb, context, query, { now: () => at });
+    assert.equal(summary.salesAfterReturnsMinor, 10000);
+    assert.equal(summary.freshness.complete, false);
+    assert.equal(await f.local.findOne({ _id: 'desktop-runtime' }), null);
+    const owner = await f.localDb
+      .collection('business_reporting_publishers')
+      .findOne({ _id: f.job.branchId });
+    assert.match(owner.deviceId, /^community-/);
+    assert.equal(owner.pending, undefined);
+  } finally {
+    worker.stop();
+    if (previous === undefined) delete process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+    else process.env.POSNIC_BUSINESS_LOCAL_REPORTING = previous;
+  }
 });

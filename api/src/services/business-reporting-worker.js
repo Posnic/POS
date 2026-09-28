@@ -10,6 +10,10 @@ function createDesktopReportingWorker(
   { now = Date.now, prepare = prepareDesktopSummary } = {}
 ) {
   const local = db.collection('business_reporting_local');
+  const community =
+    process.env.POSNIC_BUSINESS_LOCAL_REPORTING === '1'
+      ? require('./business-local-reporting').createLocalReportingBridge(db, { now })
+      : null;
   let running = false,
     stopped = false,
     controller = null,
@@ -25,14 +29,19 @@ function createDesktopReportingWorker(
       let job;
       try {
         const at = new Date(now());
-        await local.updateOne(
-          { _id: 'desktop-runtime' },
-          { $set: { protocolVersion: 2, expiresAt: new Date(now() + 120000) } },
-          { upsert: true }
-        );
+        if (community) {
+          await community.enqueue();
+          await community.publish();
+        } else
+          await local.updateOne(
+            { _id: 'desktop-runtime' },
+            { $set: { protocolVersion: 2, expiresAt: new Date(now() + 120000) } },
+            { upsert: true }
+          );
         job = await local.findOneAndUpdate(
           {
             kind: 'job',
+            publisherMode: community ? 'community' : { $ne: 'community' },
             expiresAt: { $gt: at },
             pendingSummary: { $exists: false },
             $and: [
@@ -77,6 +86,7 @@ function createDesktopReportingWorker(
         controller = new AbortController();
         const summary = await prepare(db, { ...info, license: job.license }, job.businessDate, {
           signal: controller.signal,
+          now,
         });
         if (stopped) return;
         await local.updateOne(
@@ -91,6 +101,7 @@ function createDesktopReportingWorker(
             $unset: { leaseId: '', leaseUntil: '', error: '' },
           }
         );
+        if (community) await community.publish();
       } catch (error) {
         if (job)
           await local
