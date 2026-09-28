@@ -55,7 +55,7 @@
     },
     {
       "name": "Captain access",
-      "description": "Mounted at /captain-access"
+      "description": "Mounted at /api/captain/v1"
     },
     {
       "name": "Cashback",
@@ -122,6 +122,10 @@
       "description": "Mounted at /items"
     },
     {
+      "name": "Kitchen board",
+      "description": "Mounted at /api/kitchen"
+    },
+    {
       "name": "Loyalty",
       "description": "Mounted at /loyalty"
     },
@@ -131,7 +135,7 @@
     },
     {
       "name": "Mobile pos",
-      "description": "Mounted at /mobile-pos"
+      "description": "Mounted at /api/mobile/v1"
     },
     {
       "name": "Online ordering",
@@ -1860,10 +1864,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/enrolment-proof": {
+    "/api/captain/v1/enrolment-proof": {
       "post": {
         "summary": "proof",
-        "operationId": "post_captain_access_enrolment_proof",
+        "operationId": "post_api_captain_v1_enrolment_proof",
         "tags": [
           "Captain access"
         ],
@@ -1884,10 +1888,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/pair": {
+    "/api/captain/v1/pair": {
       "post": {
         "summary": "pair",
-        "operationId": "post_captain_access_pair",
+        "operationId": "post_api_captain_v1_pair",
         "tags": [
           "Captain access"
         ],
@@ -1908,10 +1912,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/refresh": {
+    "/api/captain/v1/refresh": {
       "post": {
         "summary": "refresh",
-        "operationId": "post_captain_access_refresh",
+        "operationId": "post_api_captain_v1_refresh",
         "tags": [
           "Captain access"
         ],
@@ -1932,10 +1936,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/route-proof": {
+    "/api/captain/v1/route-proof": {
       "post": {
         "summary": "routeProof",
-        "operationId": "post_captain_access_route_proof",
+        "operationId": "post_api_captain_v1_route_proof",
         "tags": [
           "Captain access"
         ],
@@ -1956,10 +1960,89 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/pair-codes": {
+    "/api/captain/v1/kitchen-ready": {
+      "get": {
+        "summary": "board",
+        "operationId": "get_api_captain_v1_kitchen_ready",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "board",
+        "operationId": "post_api_captain_v1_kitchen_ready",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/api/captain/v1/kitchen-audio/{action}": {
+      "post": {
+        "summary": "value",
+        "operationId": "post_api_captain_v1_kitchen_audio_action",
+        "tags": [
+          "Captain access"
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/api/captain/v1/pair-codes": {
       "post": {
         "summary": "result",
-        "operationId": "post_captain_access_pair_codes",
+        "operationId": "post_api_captain_v1_pair_codes",
         "tags": [
           "Captain access"
         ],
@@ -1980,10 +2063,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/settings": {
+    "/api/captain/v1/settings": {
       "get": {
         "summary": "name",
-        "operationId": "get_captain_access_settings",
+        "operationId": "get_api_captain_v1_settings",
         "tags": [
           "Captain access"
         ],
@@ -2003,10 +2086,10 @@
         }
       }
     },
-    "/captain-access/connection-settings": {
+    "/api/captain/v1/connection-settings": {
       "post": {
         "summary": "saved",
-        "operationId": "post_captain_access_connection_settings",
+        "operationId": "post_api_captain_v1_connection_settings",
         "tags": [
           "Captain access"
         ],
@@ -2027,10 +2110,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/session": {
+    "/api/captain/v1/session": {
       "get": {
         "summary": "branchId",
-        "operationId": "get_captain_access_session",
+        "operationId": "get_api_captain_v1_session",
         "tags": [
           "Captain access"
         ],
@@ -2050,10 +2133,10 @@
         }
       }
     },
-    "/captain-access/logout": {
+    "/api/captain/v1/logout": {
       "post": {
         "summary": "signedOut",
-        "operationId": "post_captain_access_logout",
+        "operationId": "post_api_captain_v1_logout",
         "tags": [
           "Captain access"
         ],
@@ -2074,10 +2157,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/payment-options": {
+    "/api/captain/v1/payment-options": {
       "get": {
         "summary": "scope",
-        "operationId": "get_captain_access_payment_options",
+        "operationId": "get_api_captain_v1_payment_options",
         "tags": [
           "Captain access"
         ],
@@ -2097,10 +2180,10 @@
         }
       }
     },
-    "/captain-access/payments/table": {
+    "/api/captain/v1/payments/table": {
       "post": {
         "summary": "prepare",
-        "operationId": "post_captain_access_payments_table",
+        "operationId": "post_api_captain_v1_payments_table",
         "tags": [
           "Captain access"
         ],
@@ -2121,10 +2204,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/payments/record": {
+    "/api/captain/v1/payments/record": {
       "post": {
         "summary": "record",
-        "operationId": "post_captain_access_payments_record",
+        "operationId": "post_api_captain_v1_payments_record",
         "tags": [
           "Captain access"
         ],
@@ -2145,10 +2228,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/payments/release": {
+    "/api/captain/v1/payments/release": {
       "post": {
         "summary": "release",
-        "operationId": "post_captain_access_payments_release",
+        "operationId": "post_api_captain_v1_payments_release",
         "tags": [
           "Captain access"
         ],
@@ -2169,10 +2252,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/captain-access/payment-settings": {
+    "/api/captain/v1/payment-settings": {
       "get": {
         "summary": "access",
-        "operationId": "get_captain_access_payment_settings",
+        "operationId": "get_api_captain_v1_payment_settings",
         "tags": [
           "Captain access"
         ],
@@ -2193,7 +2276,7 @@
       },
       "post": {
         "summary": "saved",
-        "operationId": "post_captain_access_payment_settings",
+        "operationId": "post_api_captain_v1_payment_settings",
         "tags": [
           "Captain access"
         ],
@@ -8528,6 +8611,172 @@
         }
       }
     },
+    "/api/kitchen/devices/pair": {
+      "post": {
+        "summary": "pair",
+        "operationId": "post_api_kitchen_devices_pair",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/api/kitchen/settings": {
+      "post": {
+        "summary": "saveSettings",
+        "operationId": "post_api_kitchen_settings",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/api/kitchen/devices/code": {
+      "post": {
+        "summary": "create",
+        "operationId": "post_api_kitchen_devices_code",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/api/kitchen/devices": {
+      "get": {
+        "summary": "list",
+        "operationId": "get_api_kitchen_devices",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/kitchen/devices/revoke": {
+      "post": {
+        "summary": "revoke",
+        "operationId": "post_api_kitchen_devices_revoke",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/api/kitchen": {
+      "get": {
+        "summary": "list",
+        "operationId": "get_api_kitchen",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/kitchen/transition": {
+      "post": {
+        "summary": "transition",
+        "operationId": "post_api_kitchen_transition",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/loyalty/config": {
       "get": {
         "summary": "getConfig",
@@ -8789,10 +9038,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/mobile-pos/enrolment-proof": {
+    "/api/mobile/v1/enrolment-proof": {
       "post": {
         "summary": "hex",
-        "operationId": "post_mobile_pos_enrolment_proof",
+        "operationId": "post_api_mobile_v1_enrolment_proof",
         "tags": [
           "Mobile pos"
         ],
@@ -8813,10 +9062,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/mobile-pos/pair": {
+    "/api/mobile/v1/pair": {
       "post": {
         "summary": "handsetLifetimeSeconds",
-        "operationId": "post_mobile_pos_pair",
+        "operationId": "post_api_mobile_v1_pair",
         "tags": [
           "Mobile pos"
         ],
@@ -8837,10 +9086,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/mobile-pos/bootstrap": {
+    "/api/mobile/v1/bootstrap": {
       "get": {
         "summary": "bootstrap",
-        "operationId": "get_mobile_pos_bootstrap",
+        "operationId": "get_api_mobile_v1_bootstrap",
         "tags": [
           "Mobile pos"
         ],
@@ -8860,10 +9109,10 @@
         }
       }
     },
-    "/mobile-pos/sales": {
+    "/api/mobile/v1/sales": {
       "post": {
         "summary": "ingest",
-        "operationId": "post_mobile_pos_sales",
+        "operationId": "post_api_mobile_v1_sales",
         "tags": [
           "Mobile pos"
         ],
@@ -8884,10 +9133,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/mobile-pos/settings": {
+    "/api/mobile/v1/settings": {
       "get": {
         "summary": "branchId",
-        "operationId": "get_mobile_pos_settings",
+        "operationId": "get_api_mobile_v1_settings",
         "tags": [
           "Mobile pos"
         ],
@@ -8908,7 +9157,7 @@
       },
       "post": {
         "summary": "saved",
-        "operationId": "post_mobile_pos_settings",
+        "operationId": "post_api_mobile_v1_settings",
         "tags": [
           "Mobile pos"
         ],
@@ -8929,10 +9178,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/mobile-pos/recover": {
+    "/api/mobile/v1/recover": {
       "post": {
         "summary": "length",
-        "operationId": "post_mobile_pos_recover",
+        "operationId": "post_api_mobile_v1_recover",
         "tags": [
           "Mobile pos"
         ],
@@ -8953,10 +9202,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/mobile-pos/pair-codes": {
+    "/api/mobile/v1/pair-codes": {
       "post": {
         "summary": "name",
-        "operationId": "post_mobile_pos_pair_codes",
+        "operationId": "post_api_mobile_v1_pair_codes",
         "tags": [
           "Mobile pos"
         ],
@@ -8977,10 +9226,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/mobile-pos/devices/revoke": {
+    "/api/mobile/v1/devices/revoke": {
       "post": {
         "summary": "revoked",
-        "operationId": "post_mobile_pos_devices_revoke",
+        "operationId": "post_api_mobile_v1_devices_revoke",
         "tags": [
           "Mobile pos"
         ],
@@ -9001,10 +9250,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/mobile-pos/print-jobs": {
+    "/api/mobile/v1/print-jobs": {
       "post": {
         "summary": "queued",
-        "operationId": "post_mobile_pos_print_jobs",
+        "operationId": "post_api_mobile_v1_print_jobs",
         "tags": [
           "Mobile pos"
         ],

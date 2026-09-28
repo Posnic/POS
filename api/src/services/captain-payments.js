@@ -170,6 +170,7 @@ async function reconcile(db, c, plan) {
           payment_pending: due / 100,
           balance: due / 100,
           payment_status: due ? 'Unpaid' : 'Paid',
+          kitchen_required: true,
           partial_check: due > 0 && paid > 0,
           payment_mode: Object.keys(multi).join(','),
           multi_payment: multi,

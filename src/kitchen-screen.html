@@ -33,8 +33,8 @@
 
     --ground: #101114;
     --card: #1b1d22;
-    --ink: #f4f6f8;
-    --muted: #9aa3ad;
+    --ink: #ffffff;
+    --muted: #cbd5e1;
     --rule: #2c3038;
 
     /* Age. Deliberately not red/green: amber to red, and each step also
@@ -53,6 +53,7 @@
   }
 
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
 
   html, body {
     margin: 0;
@@ -97,6 +98,7 @@
     align-content: start;
     padding-top: var(--gap);
     min-height: 0;
+    overflow-y: auto;
   }
 
   .ticket {
@@ -112,9 +114,30 @@
 
   /* Warm and late also thicken the rule and fill the bar, so the state reads
      without colour vision. */
+  .ticket.calm { border-left-color:#4ade80; }
   .ticket.warm { border-left-color: var(--warm); border-left-width: calc(var(--font) * 0.26); }
   .ticket.late { border-left-color: var(--late); border-left-width: calc(var(--font) * 0.34); }
-  .ticket.grey { opacity: 0.45; }
+  /* Old active tickets still need to be read across the kitchen. */
+  .ticket.grey { opacity: 1; }
+  .ticket.urgent { border-left: calc(var(--font) * 0.34) solid var(--late); }
+  .ticket.urgent .age { color: var(--late); font-weight: 800; }
+  .ticket.urgent .bar > i { background: var(--late); }
+  .delay-label { font-size: .55em; font-weight: 800; color: var(--warm); }
+  .late .delay-label, .urgent .delay-label { color: var(--late); }
+  .urgent .delay-label.pulse { animation: urgency-pulse 2s ease-in-out infinite; }
+  @keyframes urgency-pulse { 50% { opacity: .65; } }
+  @media (prefers-reduced-motion: reduce) { .urgent .delay-label.pulse { animation: none; } }
+  .ticket.table-only { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-height:0; border:4px solid #4ade80; background:#14532d; color:#fff; }
+  .ticket.table-only.warm { border-color:#fb923c; background:#7c2d12; }
+  .ticket.table-only.late, .ticket.table-only.urgent { border-color:#f87171; background:#7f1d1d; }
+  .table-icon { width:1.6em; height:1.6em; flex-shrink:0; }
+  .table-only .table { text-align:center; max-width:100%; }
+  .ticket.urgent.pulse { animation:table-alert 2s ease-in-out infinite; }
+  @keyframes table-alert { 50% { box-shadow:inset 0 0 0 5px #fca5a5; } }
+  @media (prefers-reduced-motion:reduce) { .ticket.urgent.pulse { animation:none; } }
+  .top { flex-wrap: wrap; }
+  .table { overflow-wrap: anywhere; min-width: 0; }
+
 
   .top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--gap); }
 
@@ -134,7 +157,7 @@
   .items { display: flex; flex-direction: column; gap: calc(var(--gap) * 0.15); }
   .item { display: flex; gap: calc(var(--gap) * 0.5); align-items: baseline; }
   .qty { font-weight: 800; min-width: 2.1em; font-variant-numeric: tabular-nums; }
-  .name { flex: 1; overflow-wrap: anywhere; }
+  .name { flex: 1; overflow-wrap: anywhere; font-weight: 700; }
 
   /* A note is the line that costs money when missed. Never dimmed, never
      dropped when space runs short. */
@@ -183,7 +206,9 @@
       <span id="title">Kitchen</span>
       <span><span id="count">0</span> <span id="word">orders</span></span>
       <span id="pager"></span>
+      <div id="wall-clock" style="margin-left:auto;text-align:right;white-space:nowrap;color:var(--ink)"><time id="current-time"></time><div id="current-date" style="font-size:.7em;color:var(--muted)"></div></div>
     </header>
+    <div id="connection" role="status" style="font-size:0.55em;padding-top:8px">Connecting to kitchen orders...</div>
     <div id="board"></div>
     <div id="empty" hidden>Nothing cooking.</div>
   </div>
@@ -233,9 +258,12 @@
   }
 
   function stateFor(mins, cfg) {
-    if (mins >= (cfg.greyAfterMin || 45)) return 'grey';
-    if (mins >= (cfg.redAfterMin || 10)) return 'late';
-    if (mins >= (cfg.amberAfterMin || 5)) return 'warm';
+    var amber = Math.max(1, Number(cfg.amberAfterMin) || 5);
+    var red = Math.max(amber, Number(cfg.redAfterMin) || 10);
+    var urgent = Math.max(red, Number(cfg.pulseAfterMin) || 15);
+    if (mins >= urgent) return 'urgent';
+    if (mins >= red) return 'late';
+    if (mins >= amber) return 'warm';
     return 'calm';
   }
 
@@ -251,14 +279,54 @@
     var state = stateFor(mins, cfg);
     var node = el('div', 'ticket ' + state + (compact ? ' compact' : ''));
 
+    if (cfg.tableOnly) {
+      node.classList.add('table-only');
+      if (cfg.pulseAlerts !== false) node.classList.add('pulse');
+      var icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      icon.setAttribute('viewBox', '0 0 48 48');
+      icon.setAttribute('class', 'table-icon');
+      icon.setAttribute('aria-hidden', 'true');
+      var shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      shape.setAttribute('d', 'M8 18h32v8H8zM12 26v14m24-14v14M16 8h16v6H16z');
+      shape.setAttribute('fill', 'none');
+      shape.setAttribute('stroke', 'currentColor');
+      shape.setAttribute('stroke-width', '4');
+      shape.setAttribute('stroke-linejoin', 'round');
+      icon.appendChild(shape);
+      node.appendChild(icon);
+      node.appendChild(el('span', 'table', ticket.table || ''));
+      node.setAttribute('aria-label', (ticket.table || '') + ', ' + state);
+      return node;
+    }
+
     var top = el('div', 'top');
-    if (cfg.showTable !== false) {
-      top.appendChild(el('span', 'table', ticket.table || ticket.orderNumber || '-'));
+    if (cfg.showTable !== false && String(ticket.table || '').trim()) {
+      var heading = el('span', 'table');
+      var icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      icon.setAttribute('viewBox', '0 0 48 48');
+      icon.setAttribute('aria-hidden', 'true');
+      icon.style.cssText = 'width:.7em;height:.7em;margin-right:.25em';
+      var shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      shape.setAttribute('d', 'M8 18h32v8H8zM12 26v14m24-14v14M16 8h16v6H16z');
+      shape.setAttribute('fill', 'none');
+      shape.setAttribute('stroke', 'currentColor');
+      shape.setAttribute('stroke-width', '4');
+      icon.appendChild(shape);
+      heading.appendChild(icon);
+      heading.appendChild(document.createTextNode(ticket.table || ''));
+      top.appendChild(heading);
     }
     if (cfg.showAge !== false) {
-      top.appendChild(el('span', 'age', mins + 'm'));
+      top.appendChild(el('span', 'age', mins < 60 ? mins + 'm' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'));
     }
     node.appendChild(top);
+    var arrived = new Date(ticket.placedAt);
+    if (isFinite(arrived.getTime())) {
+      var arrival = el('div', 'arrival', arrived.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}));
+      arrival.style.cssText = 'font-size:.55em;color:var(--muted)';
+      node.appendChild(arrival);
+    }
+    if (state === 'urgent' && cfg.pulseAlerts !== false) node.classList.add('pulse');
 
     if (compact) {
       var n = (ticket.items || []).reduce(function (s, i) { return s + (Number(i.qty) || 1); }, 0);
@@ -297,6 +365,15 @@
     return node;
   }
 
+  function updateClock() {
+    var now = new Date();
+    $('current-time').textContent = now.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true});
+    $('current-time').dateTime = now.toISOString();
+    $('current-date').textContent = now.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'});
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
   function render() {
     var cfg = config || {};
     var fitInfo = cfg._fit || {};
@@ -307,13 +384,25 @@
       return Date.parse(a.placedAt || 0) - Date.parse(b.placedAt || 0);
     });
 
+    if (cfg.tableOnly) {
+      var seenTables = new Set();
+      live = live.filter(function(ticket) {
+        if (!ticket.table) return true;
+        var key = String(ticket.table).trim();
+        if (seenTables.has(key)) return false;
+        seenTables.add(key);
+        return true;
+      });
+    }
     $('count').textContent = live.length;
-    $('word').textContent = live.length === 1 ? 'order' : 'orders';
-    $('empty').hidden = live.length > 0;
+    $('word').textContent = cfg.tableOnly ? (live.length === 1 ? 'table' : 'tables') : (live.length === 1 ? 'order' : 'orders');
+    $('empty').hidden = live.length > 0 || !!cfg._feedStatus;
+    board.hidden = live.length === 0;
 
     // Rotate every dish into view instead of permanently hiding it under +more.
     var maxItems = Math.max(1, Number(cfg.maxItemsPerCard) || 3);
     live = live.flatMap(function (ticket) {
+      if (cfg.tableOnly) return [ticket];
       var parts = [];
       var items = ticket.items || [];
       for (var offset = 0; offset < items.length; offset += maxItems) {
@@ -322,7 +411,19 @@
       return parts.length ? parts : [ticket];
     });
     var compact = cfg.showItems === false && live.length > (Number(cfg.compactAfter) || 8);
-    var perPage = Math.max(1, (fitInfo.cards || 8) * (compact ? 2 : 1));
+    var font = Math.max(24, Math.min(Number(fitInfo.fontPx) || 40, (window.innerWidth || 1100) / 18));
+    document.documentElement.style.setProperty('--font', font + 'px');
+    var width = board.clientWidth || window.innerWidth || 1100;
+    var ceiling = Math.max(1, Math.min(Number(fitInfo.columns) || 4, Math.floor(width / (font * (cfg.tableOnly ? 7 : 12)))));
+    var height = board.clientHeight || window.innerHeight || 700;
+    var rows = Math.max(1, Math.floor(height / (font * (cfg.tableOnly ? 6 : maxItems * 1.5 + 4))));
+    var perPage = Math.max(1, ceiling * rows);
+    if (cfg.tableOnly) {
+      // Size from both dimensions, not a monitor's saved orientation or dish layout.
+      ceiling = Math.max(1, Math.floor(width / Math.max(220, font * 6)));
+      rows = Math.max(1, Math.floor(height / Math.max(190, font * 5)));
+      perPage = ceiling * rows;
+    }
     var pages = Math.max(1, Math.ceil(live.length / perPage));
     if (page >= pages) page = 0;
 
@@ -352,8 +453,28 @@
      * line. The moment the kitchen fills up the ceiling applies again and
      * nothing about the busy case changes.
      */
-    var ceiling = Math.max(1, (cfg._fit && cfg._fit.columns) || 4);
-    board.style.setProperty('--columns', String(Math.max(1, Math.min(ceiling, shown.length))));
+
+    var columns = ceiling;
+    board.style.gridTemplateRows = '';
+    board.style.alignContent = 'start';
+    board.style.removeProperty('font-size');
+    if (cfg.tableOnly && shown.length) {
+      var best = Infinity, tileRows = 1;
+      for (var c = 1; c <= Math.min(ceiling, shown.length); c++) {
+        var r = Math.ceil(shown.length / c);
+        if (r > rows) continue;
+        var score = Math.abs(Math.log((width / c) / (height / r) / 1.2)) + (c * r - shown.length) * .15;
+        if (score < best) { best = score; columns = c; tileRows = r; }
+      }
+      board.style.gridTemplateRows = 'repeat(' + tileRows + ', minmax(0, 1fr))';
+      board.style.alignContent = 'stretch';
+      var tileFont = Math.max(24, Math.min(96, (width / columns - 36) / 5, (height / tileRows - 40) / 4.5));
+      board.style.fontSize = tileFont + 'px';
+      board.style.setProperty('--font', tileFont + 'px');
+    } else {
+      board.style.removeProperty('--font');
+    }
+    board.style.setProperty('--columns', String(columns));
 
     $('pager').textContent = pages > 1 ? (page + 1) + ' of ' + pages : '';
   }
@@ -362,6 +483,7 @@
 
   function setConfig(cfg) {
     config = cfg || {};
+    $('connection').textContent = config.setupMode ? 'Preview - sample orders' : (config._feedStatus || '');
     applyFit(config._fit, config);
     $('title').textContent = config.name || 'Kitchen';
 
@@ -398,12 +520,15 @@
   if (window.posnicKitchenScreen && window.posnicKitchenScreen.onConfig) {
     window.posnicKitchenScreen.onConfig(setConfig);
     window.posnicKitchenScreen.onTickets(setTickets);
-    window.posnicKitchenScreen.ready(displayId);
+    window.posnicKitchenScreen.ready(displayId).catch(function () {
+      $('connection').textContent = 'Kitchen display could not connect. Close and reopen it in Hardware Manager.';
+    });
   }
 
   /* The clock moves even when nothing arrives, and a ticket going from amber
      to red is the whole point of the colour. */
   setInterval(render, 15000);
+  window.addEventListener('resize', render);
 
   /* Page rotation, only ever reached when there is more than one page. */
   setInterval(function () {

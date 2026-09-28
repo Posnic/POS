@@ -100,6 +100,15 @@ module.exports = [
   },
 
   {
+    files: ['src/kitchen-board/board.js', 'src/kitchen-board/device.js'],
+    languageOptions: { sourceType: 'script', globals: globals.browser },
+  },
+  {
+    files: ['src/kitchen-board/sw.js'],
+    languageOptions: { sourceType: 'script', globals: globals.serviceworker },
+  },
+
+  {
     // Tests run under Jest and legitimately use its globals.
     files: ['tests/**/*.js'],
     languageOptions: { globals: { ...globals.node, ...globals.jest } },

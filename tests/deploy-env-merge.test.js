@@ -118,7 +118,7 @@ test('running the real step keeps every key it did not set', (t) => {
    * checks above.
    */
   const probe = spawnSync('bash', ['-c', 'exit 0']);
-  if (probe.error) {
+  if (probe.error || probe.status !== 0) {
     t.skip('bash is not available to run the deploy step');
     return;
   }

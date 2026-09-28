@@ -16,7 +16,7 @@ function product(line) {
 function quantity(line) {
   return Math.max(0, Number(line.item_quantity ?? line.quantity ?? line.sale_inline_item_qty) || 0);
 }
-function rounds(sale) {
+function rounds(sale, { descriptions = true } = {}) {
   const result = [];
   const current = new Map();
   for (const line of sale.items || []) {
@@ -46,7 +46,7 @@ function rounds(sale) {
           ordered_at: date(change.timestamp) || date(sale.created_date),
           quantity: qty,
           name: String(line.item_name || line.name || ''),
-          note: String(line.item_note || line.item_description || ''),
+          note: String(line.item_note || (descriptions && line.item_description) || ''),
           spice_level: line.spice_level,
         });
       }
@@ -80,7 +80,7 @@ function rounds(sale) {
         ordered_at: date(sale.created_date),
         quantity: missing,
         name: String(line.item_name || line.name || line.sale_inline_item_name || ''),
-        note: String(line.item_note || line.item_description || ''),
+        note: String(line.item_note || (descriptions && line.item_description) || ''),
         spice_level: line.spice_level,
       });
   }
@@ -100,8 +100,10 @@ function rounds(sale) {
   return [...groups.values()];
 }
 function tickets(sale) {
-  const closed = date(sale.bill_requested_at || sale.bill_printed_at);
-  return rounds(sale).flatMap((round) => {
+  const closed = sale.kitchen_required
+    ? null
+    : date(sale.bill_requested_at || sale.bill_printed_at);
+  return rounds(sale, { descriptions: false }).flatMap((round) => {
     if (closed && (!round.ordered_at || round.ordered_at <= closed)) return [];
     const items = round.items
       .filter((line) => line.remaining > 0)
