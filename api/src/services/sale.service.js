@@ -19,12 +19,7 @@ const { notifyKotReady } = require('../helpers/kot-notify');
 const getModel = (SaleModel) => SaleModel || Sale;
 
 const { computeLineTax } = require('./tax-engine');
-const round2 = (value, decimals = 2) => {
-  const num = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(num)) return 0;
-  const factor = Math.pow(10, decimals);
-  return Math.round(num * factor) / factor;
-};
+const { calculateSaleHeader, round2 } = require('./sale-header');
 
 // Shared aggregation pipeline for daily payment/tender breakdown.
 //
@@ -195,9 +190,24 @@ const enrichSaleContext = async (context = {}) => {
  * @param {String} process - 'Add' | 'Edit' | 'Hold' | 'KOT'
  * @param {Object} context - { branchId, licenseId, userId, userName, ... }
  */
-const processSale = async (data, id = '', process = 'Add', context = {}) => {
+const processSale = async (
+  data,
+  id = '',
+  process = 'Add',
+  context = {},
+  { preview = false } = {}
+) => {
   let finishCaptainEdit;
   try {
+    if (
+      preview &&
+      (id !== '' ||
+        process !== 'Add' ||
+        !Array.isArray(data?.items) ||
+        data.items.length < 1 ||
+        data.items.length > 100)
+    )
+      return { status: false, message: 'Unsupported decision preview' };
     // 1. Basic Validation
     if ((parseFloat(data.sales_total) || 0) < 0) {
       // PHP checks < 1, but let's say 0 for safety, PHP said < 1
@@ -233,7 +243,8 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       const registerSession = await registerRepository.validateSessionOwner(
         data.register_id,
         context.userId,
-        context.deviceId
+        context.deviceId,
+        ...(preview ? [{ acquire: false }] : [])
       );
       if (!registerSession.status) {
         return {
@@ -690,6 +701,33 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       });
     }
 
+    // Stop before numbering, stock, payment or sale writes. This internal
+    // preview uses the exact checkout tax and header calculations above/below.
+    if (preview) {
+      return {
+        status: true,
+        data: {
+          header: calculateSaleHeader(data, sale_tot_amount, context),
+          roundOff: context.roundOff === true,
+          subtotal: sale_subtotal_amount,
+          tax: sale_tax_amount,
+          lineDiscount: sale_discount_amount,
+          items: itemsale.map((item) => ({
+            itemId: String(item.item_id),
+            name: item.item_name,
+            quantity: item.item_quantity,
+            unitPrice: item.item_price,
+            discountAmount: item.item_discount,
+            discountPercent: item.item_discount_percentage,
+            taxRate: item.tax,
+            taxType: item.tax_type,
+            taxAmount: item.tax_amount,
+            total: item.total_amount,
+          })),
+        },
+      };
+    }
+
     // Generate Sales ID if New.
     //
     // Allocated from the atomic per-branch counter rather than by reading the
@@ -716,70 +754,18 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       });
     }
 
-    // Extra Discount & Round Off
-    const extraDiscountRaw = data.extra_discount ? Math.abs(parseFloat(data.extra_discount)) : 0;
-    const extraDiscount = round2(extraDiscountRaw, 2);
-    let itemsTotAmount = sale_tot_amount - extraDiscount;
-    let salesExtraDiscount = extraDiscount;
-
-    if (data.extra_discount_type === 'percent') {
-      const discAmt = sale_tot_amount * (extraDiscount / 100);
-      itemsTotAmount = sale_tot_amount - discAmt;
-      salesExtraDiscount = discAmt;
-    }
-
-    /*
-     * Coupon discount - a code the cashier applied. Validated in the controller
-     * against this branch's coupons (active, in date, within its usage limits,
-     * over its minimum spend), so here it is simply a fixed amount that reduces
-     * the payable total. A coupon and a loyalty redemption may both apply to one
-     * bill; each is clamped so the running total can never go below zero.
-     */
-    const couponCode = (data.coupon_code || '').toString().trim().toUpperCase();
-    const couponDiscountValue = round2(
-      Math.min(Math.abs(parseFloat(data.coupon_discount_value) || 0), itemsTotAmount),
-      2
-    );
-    if (couponDiscountValue > 0) {
-      itemsTotAmount = itemsTotAmount - couponDiscountValue;
-    }
-
-    /*
-     * Loyalty redemption - a discount the cashier chose to spend points on.
-     *
-     * The points and the currency value were already validated in the
-     * controller against this branch's loyalty rules and the customer's
-     * balance, so here it is simply a fixed amount that reduces the payable
-     * total, exactly like the extra discount above, and then rides the same
-     * round-off and payment logic below. It is a plain number in the branch's
-     * own currency, so it carries no assumption about symbol or country. Clamped
-     * so a redemption can never push a bill below zero.
-     */
-    const loyaltyRedeemValue = round2(
-      Math.min(Math.abs(parseFloat(data.loyalty_redeem_value) || 0), itemsTotAmount),
-      2
-    );
-    const loyaltyRedeemPoints = Math.max(0, parseInt(data.loyalty_redeem_points, 10) || 0);
-    if (loyaltyRedeemValue > 0) {
-      itemsTotAmount = itemsTotAmount - loyaltyRedeemValue;
-    }
-
-    // Fetch Branch Settings for Round Off
-    const roundOffSetting = context.roundOff === true;
-
-    let roundOffValue = 0;
-    let finalSaleTotAmount = itemsTotAmount;
-
-    if (roundOffSetting) {
-      finalSaleTotAmount = Math.round(itemsTotAmount);
-      roundOffValue = finalSaleTotAmount - itemsTotAmount;
-    }
-
-    const salesTotalForDoc = round2(finalSaleTotAmount, 2);
-    const roundOffForDoc = round2(roundOffValue, 2);
-    const itemsTotalForDoc = roundOffSetting
-      ? Math.round(itemsTotAmount)
-      : round2(itemsTotAmount, 2);
+    const {
+      extraDiscount,
+      salesExtraDiscount,
+      couponCode,
+      couponDiscountValue,
+      loyaltyRedeemPoints,
+      loyaltyRedeemValue,
+      finalSaleTotAmount,
+      salesTotalForDoc,
+      roundOffForDoc,
+      itemsTotalForDoc,
+    } = calculateSaleHeader(data, sale_tot_amount, context);
 
     // PHP-like helper functions for exact logic parity
     const isset = (value) => value !== undefined && value !== null;
@@ -2689,6 +2675,7 @@ const getSalesSummaryReportsData = async ({ match, branchObjectIds }, { SaleMode
 
 module.exports = {
   processSale,
+  previewSale: (data, context) => processSale(data, '', 'Add', context, { preview: true }),
   getTablesWithActiveOrders,
   enrichSaleContext,
   getSaleById,

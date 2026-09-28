@@ -38,6 +38,7 @@
   "local_only": {
     "business_push_devices": "Private push registrations are bound to a Business session and never travel through device synchronization.",
     "business_push_deliveries": "Push retry leases and provider receipts belong only to the notification-delivery server.",
+    "business_decisions": "Approval state and application receipts use the dedicated decision protocol, never generic collection sync.",
     "business_notification_preferences": "Per-account delivery preferences and scheduler leases belong to the authorizing Business server.",
     "business_inbox": "Private account notifications and read receipts must never use generic device synchronization.",
     "business_reporting_requests": "Short-lived Business read requests are consumed by the assigned reporting desktop through a dedicated protocol.",

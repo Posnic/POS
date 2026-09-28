@@ -186,6 +186,46 @@ describe('SalesService', () => {
     consoleWarnSpy.mockRestore();
   });
 
+  describe('Business decision pricing preview', () => {
+    test('uses checkout prices without allocating a bill, locking a register, writing stock or notifying the kitchen', async () => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      const data = makeSaleData({
+        register_id: '64f8f2f4c2b9c0a1e4b33333',
+        extra_discount: 10,
+        extra_discount_type: 'percent',
+      });
+      const preview = await salesService.previewSale(data, makeContext());
+      expect(preview.status).toBe(true);
+      expect(preview.data.items).toHaveLength(1);
+      expect(preview.data).not.toHaveProperty('customer_phone');
+      expect(mockRegisterRepositoryInstance.validateSessionOwner).toHaveBeenCalledWith(
+        data.register_id,
+        makeContext().userId,
+        makeContext().deviceId,
+        { acquire: false }
+      );
+      expect(salesRepository.generateSalesIdForBranch).not.toHaveBeenCalled();
+      expect(salesRepository.create).not.toHaveBeenCalled();
+      expect(salesRepository.save).not.toHaveBeenCalled();
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+      expect(mockRegisterRepositoryInstance.addSaleRegisterEntry).not.toHaveBeenCalled();
+      expect(kotNotifications).toHaveLength(0);
+      await salesService.processSale(data, '', 'Add', makeContext());
+      const written = salesRepository.create.mock.calls[0][0];
+      expect(written.sales_total).toBe(preview.data.header.salesTotalForDoc);
+      expect(written.sale_extra_discount).toBe(preview.data.header.salesExtraDiscount);
+      expect(written.tax).toBe(preview.data.tax);
+    });
+    test('rejects an unbounded preview before item queries', async () => {
+      const result = await salesService.previewSale(
+        makeSaleData({ items: Array.from({ length: 101 }, () => makeItemPayload()) }),
+        makeContext()
+      );
+      expect(result.status).toBe(false);
+      expect(mockItemRepositoryInstance.findItemById).not.toHaveBeenCalled();
+    });
+  });
+
   describe('desktop KOT printing starts when the order is saved', () => {
     beforeEach(() => {
       mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
