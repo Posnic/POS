@@ -46,3 +46,25 @@ test('a slow drain cannot overlap another tick and shutdown stops subsequent ten
   await pending;
   expect(drain).toHaveBeenCalledTimes(1);
 });
+
+test('approval materialization precedes push and one channel failure cannot suppress the remaining stages', async () => {
+  const calls = [];
+  const worker = createNotificationWorker({
+    tenants: () => [{ db: { databaseName: 'one' } }],
+    approvals: async () => {
+      calls.push('approvals');
+    },
+    drain: async () => {
+      calls.push('daily');
+      throw new Error('daily unavailable');
+    },
+    prepare: async () => {
+      calls.push('prepare');
+    },
+    push: async () => {
+      calls.push('push');
+    },
+  });
+  await worker.tick();
+  expect(calls).toEqual(['approvals', 'daily', 'prepare', 'push']);
+});

@@ -914,6 +914,85 @@ test('item reads require live item ACL, one authorized branch and a validated pu
   );
 });
 
+test('approval-alert HTTP preferences and background Inbox delivery retain live ACL and legacy negotiation', async () => {
+  const prior = process.env.POSNIC_BUSINESS_DECISIONS;
+  process.env.POSNIC_BUSINESS_DECISIONS = '1';
+  try {
+    const f = await fixture();
+    await db
+      .collection('users')
+      .updateOne(
+        { _id: f.user._id },
+        {
+          $set: {
+            'access.pos.discount_approve_remote': true,
+            'access.pos.discount_max_percent': 20,
+          },
+        }
+      );
+    const value = await grant(f),
+      id = String(f.branch._id);
+    const url = base + '/api/business/v1/notifications/approvals/' + id;
+    const headers = {
+      'x-forwarded-proto': 'https',
+      authorization: 'Bearer ' + value.token,
+      'content-type': 'application/json',
+    };
+    assert.equal((await fetch(url, { headers: { 'x-forwarded-proto': 'https' } })).status, 401);
+    assert.equal((await (await fetch(url, { headers })).json()).enabled, false);
+    const input = {
+      enabled: true,
+      expectedRevision: 0,
+      quiet: { enabled: false, start: '22:00', end: '07:00' },
+    };
+    assert.equal(
+      (await fetch(url, { method: 'POST', headers, body: JSON.stringify(input) })).status,
+      200
+    );
+    assert.equal(
+      (await fetch(url, { method: 'POST', headers, body: JSON.stringify(input) })).status,
+      409
+    );
+    assert.equal((await fetch(url.replace(id, String(new ObjectId())), { headers })).status, 403);
+    const request = {
+      _id: new ObjectId(),
+      license: f.license,
+      branchId: id,
+      requesterId: String(new ObjectId()),
+      state: 'pending',
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + 300000),
+      summary: { beforeDiscountMinor: 10000, discountMinor: 1000 },
+    };
+    await db.collection('business_decisions').insertOne(request);
+    const worker = require('../src/services/business-notification-worker').createNotificationWorker(
+      { tenants: () => [{ db }] }
+    );
+    await worker.tick();
+    worker.stop();
+    const inboxUrl = base + '/api/business/v1/inbox';
+    assert.equal((await (await fetch(inboxUrl, { headers })).json()).entries.length, 0);
+    const inbox = await (await fetch(inboxUrl + '?approvals=1', { headers })).json();
+    assert.equal(inbox.entries.length, 1);
+    assert.equal(inbox.entries[0].requestId, String(request._id));
+    const discovery = await (
+      await fetch(base + '/api/business/v1/discovery?approvals=1', { headers })
+    ).json();
+    assert.equal(discovery.approvalAlerts, 'inbox-approval-v1');
+    await db
+      .collection('users')
+      .updateOne({ _id: f.user._id }, { $set: { 'access.pos.discount_approve_remote': false } });
+    assert.equal((await fetch(url, { headers })).status, 403);
+    assert.equal(
+      (await (await fetch(inboxUrl + '?approvals=1', { headers })).json()).entries.length,
+      0
+    );
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_DECISIONS;
+    else process.env.POSNIC_BUSINESS_DECISIONS = prior;
+  }
+});
+
 test('prepared reads reject an in-progress publisher, wrong generation and false completeness', async () => {
   const { readBusinessOverview } = require('../src/services/business-reports');
   const f = await fixture(),

@@ -69,6 +69,9 @@ router.get('/discovery', (_req, res) =>
     audience: 'posnic-business',
     reporting: 'bounded-summary-v2',
     ...(_req.query.items === '1' ? { itemReporting: 'bounded-items-v1' } : {}),
+    ...(_req.query.approvals === '1' && process.env.POSNIC_BUSINESS_DECISIONS === '1'
+      ? { approvalAlerts: 'inbox-approval-v1' }
+      : {}),
   })
 );
 router.post(
@@ -274,6 +277,31 @@ router.post(
   wrap(async (req, res) =>
     res.json(
       await require('../services/business-notifications').savePreference(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.params.branchId,
+        req.body
+      )
+    )
+  )
+);
+router.get(
+  '/notifications/approvals/:branchId',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-approval-notifications').getApprovalPreference(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.params.branchId
+      )
+    )
+  )
+);
+router.post(
+  '/notifications/approvals/:branchId',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-approval-notifications').saveApprovalPreference(
         req.db,
         await req.businessAccess.contextFor(req.businessIdentity.user),
         req.params.branchId,

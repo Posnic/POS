@@ -1,6 +1,7 @@
 'use strict';
 const { drainDue, prepareUpcoming } = require('./business-notifications');
 const { drainPush } = require('./business-push');
+const { drainApprovalAlerts } = require('./business-approval-notifications');
 
 // A shared shard visits a bounded number of tenant databases per tick. Host aliases
 // do not duplicate work, and the cursor advances even when one tenant is unavailable.
@@ -10,6 +11,7 @@ function createNotificationWorker({
   drain = drainDue,
   prepare = prepareUpcoming,
   push = drainPush,
+  approvals = drainApprovalAlerts,
 }) {
   let cursor = 0,
     running = false,
@@ -35,9 +37,14 @@ function createNotificationWorker({
           cursor = (cursor + 1) % rows.length;
           try {
             await run(tenant, async () => {
-              await drain(tenant.db, { limit: 5 });
-              if (!stopped) await prepare(tenant.db);
-              if (!stopped) await push(tenant.db);
+              for (const stage of [approvals, drain, prepare, push]) {
+                if (stopped) break;
+                try {
+                  await stage(tenant.db, { limit: 5 });
+                } catch {
+                  /* One unavailable channel must not starve other notifications. */
+                }
+              }
             });
           } catch {
             /* Retry on a later visit; never log financial data or secrets. */

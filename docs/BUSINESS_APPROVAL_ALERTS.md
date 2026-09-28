@@ -1,8 +1,18 @@
 # Business approval alerts
 
-Status: in progress; preferences, event materialization and read/push eligibility
-are tested. Settings routes, scheduled approval-worker wiring and mobile UI are
-not enabled yet.
+Status: in progress; backend preferences, event materialization, scheduled worker
+and read/push eligibility are implemented in the local review branch. Mobile UI
+and physical provider/device qualification remain pending.
+
+With `POSNIC_BUSINESS_DECISIONS=1`, authenticated GET/POST requests to
+`/api/business/v1/notifications/approvals/:branchId` read or update the separate
+preference. POST accepts exactly `enabled`, `quiet` and `expectedRevision`.
+`/discovery?approvals=1` advertises `approvalAlerts: inbox-approval-v1` only while
+the decision feature is enabled; ordinary discovery remains unchanged. The
+shared tenant worker now processes approval alerts before daily preparation and
+push, with independent stage failure handling and existing shutdown/fairness
+bounds. An HTTP test runs the actual worker from opt-in through Inbox reading
+and checks permission removal and older-client behavior.
 
 Approval alerts have a separate per-account/branch opt-in and quiet-hours setting.
 Daily-summary preferences remain independent. Settings require current approval
@@ -45,8 +55,8 @@ recipient revocation, separate settings, first-save races, revisions, opt-in
 windows, invalid quiet hours, scope, self-approval, closed/expired requests and
 discount limits. Additional tests cover negotiated Inbox visibility, mark-read,
 closed requests, permission/limit changes before retries, independent opt-in and
-quiet-hour expiry. Remaining work: scheduled worker wiring, settings and
-navigation in the mobile app, localized copy and actual provider/device tests.
+quiet-hour expiry. Remaining work: settings and navigation in the mobile app,
+localized copy and actual provider/device tests.
 
 Notification-path review also found and corrected the missing `pushPending`
 marker on actual daily Inbox writes. A real scheduler-to-push-queue test now
