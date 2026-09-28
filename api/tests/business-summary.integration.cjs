@@ -174,8 +174,22 @@ test('desktop worker prepares a leased job, stages it durably and does not repea
   await worker.tick();
   assert.equal(calls, 1);
   assert.equal((await f.local.findOne({ _id: 'desktop-runtime' })).protocolVersion, 2);
+  assert.equal((await f.local.findOne({ _id: 'desktop-runtime' })).itemSummaryVersion, 1);
+  assert.equal(Object.hasOwn(staged.pendingSummary, 'itemInsights'), false);
   worker.stop();
 });
+test('negotiated worker jobs prepare item facts and retain incomplete-history metadata', async () => {
+  const f = await workFixture();
+  await f.local.updateOne({ _id: f.job._id }, { $set: { includeItems: true } });
+  const worker = createDesktopReportingWorker(f.localDb);
+  await worker.tick();
+  const staged = await f.local.findOne({ _id: f.job._id });
+  assert.equal(staged.pendingSummary.itemInsights.state, 'incomplete');
+  assert.equal(staged.pendingSummary.itemInsights.unavailableSales, 1);
+  assert.equal(staged.pendingSummary.billedSalesMinor, 10000);
+  worker.stop();
+});
+
 test('desktop worker rejects results after ownership changes and records failure without crashing checkout', async () => {
   const f = await workFixture();
   const worker = createDesktopReportingWorker(f.localDb, {
@@ -272,6 +286,11 @@ test('opt-in Community desktop prepares and serves the same summary without Clou
     const summary = await readBusinessOverview(f.localDb, context, query, { now: () => at });
     assert.equal(summary.salesAfterReturnsMinor, 10000);
     assert.equal(summary.freshness.complete, false);
+    const stored = await f.localDb
+      .collection('business_prepared_summaries')
+      .findOne({ _id: f.job._id });
+    assert.equal(stored.summary.itemInsights.state, 'incomplete');
+    assert.equal(stored.summary.itemInsights.unavailableSales, 1);
     assert.equal(await f.local.findOne({ _id: 'desktop-runtime' }), null);
     const owner = await f.localDb
       .collection('business_reporting_publishers')

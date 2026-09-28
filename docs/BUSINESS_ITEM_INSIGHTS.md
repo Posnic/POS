@@ -58,8 +58,8 @@ unit of each exact proportional share.
 
 ## Remaining delivery
 
-- Negotiate optional item summaries in the desktop publication protocol, with
-  publisher fencing and no item scan during mobile/server reads.
+- Verify the complete desktop-to-Gateway item contract and expose bounded,
+  publisher-fenced reads without item scans on mobile/server requests.
 - Enforce item-sales ACL and branch scope, preserve unit distinctions for
   quantities, and label allocated revenue rather than implying item profit.
 - Add mobile ranking/detail views, accessible gestures and qualified translated
@@ -84,8 +84,11 @@ Cloud or phone scans. Unit tests and actual return-writer integration tests now
 verify this boundary; prepared storage, API authorization and mobile ranking
 remain outstanding.
 
-The desktop preparer now accepts an explicit `includeItems: true` option for
-contract development. Existing workers do not enable it yet. It adds item facts
+The desktop preparer accepts an explicit `includeItems: true` option. Updated
+workers advertise item-summary version 1; the sync agent enables the option only
+when the Gateway work response also advertises version 1. Older combinations
+continue preparing the existing overview. Community jobs enable the option
+locally. It adds item facts
 to the existing bounded source scan and considers only invoices contributing to
 the requested business day. The accumulator validates all relevant invoices,
 keeps at most 10,000 items and 16 quantity units per item, and emits the top 20
@@ -99,5 +102,9 @@ incomplete state and unavailable invoice count, and leaves validated overview
 totals available. `available` describes validated item facts from the scanned
 source, not complete device synchronization: the parent `sourceComplete` remains
 false. Real MongoDB tests cover scoping, old unrelated invoices, legacy payload
-compatibility and ranking suppression. Publication negotiation, bounded API
-reads and UI delivery are still pending.
+compatibility and ranking suppression. Gateway validation bounds item counts,
+names, units and quantities, checks ordering/uniqueness and reconciliation, and
+retains existing ownership, sequence and retry fencing. Integration tests cover
+negotiation combinations, invalid rankings, incomplete-state replacement and
+Community crash recovery. End-to-end prepared-data contract qualification,
+bounded API reads and UI delivery are still pending.

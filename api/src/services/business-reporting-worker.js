@@ -35,7 +35,13 @@ function createDesktopReportingWorker(
         } else
           await local.updateOne(
             { _id: 'desktop-runtime' },
-            { $set: { protocolVersion: 2, expiresAt: new Date(now() + 120000) } },
+            {
+              $set: {
+                protocolVersion: 2,
+                itemSummaryVersion: 1,
+                expiresAt: new Date(now() + 120000),
+              },
+            },
             { upsert: true }
           );
         job = await local.findOneAndUpdate(
@@ -87,6 +93,7 @@ function createDesktopReportingWorker(
         const summary = await prepare(db, { ...info, license: job.license }, job.businessDate, {
           signal: controller.signal,
           now,
+          includeItems: job.includeItems === true,
         });
         if (stopped) return;
         await local.updateOne(

@@ -136,6 +136,7 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
         const update = {
           $set: {
             kind: 'job',
+            includeItems: true,
             publisherMode: 'community',
             branchId: request.branchId,
             license: String(branch.license),
