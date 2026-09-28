@@ -53,6 +53,7 @@ function fixture() {
       beforeDiscountMinor: 10000,
       discountMinor: 2000,
       payableMinor: 8000,
+      roundingMinor: 0,
       itemCount: 1,
       reason: 'Regular customer',
     },
@@ -182,6 +183,38 @@ test('application has a separate durable claim and receipt; interruption never r
   assert.equal(recovery.executionPermit, 'reconcile');
   await assert.rejects(ledger.cancel(f.source, requestId), { code: 'decision_changed' });
   const saleId = String(new ObjectId());
+  await assert.rejects(ledger.acknowledge(f.source, requestId, stored.executionId, saleId), {
+    code: 'sale_receipt_unconfirmed',
+  });
+  const receipt = {
+    version: 1,
+    decisionId: requestId,
+    revisionHash: f.input.revisionHash,
+    executionId: stored.executionId,
+    operationId: f.input.operationId,
+    deviceId: f.source.deviceId,
+    requesterId: f.source.requesterId,
+    approverId: f.context.accountId,
+    currency: 'INR',
+    currencyDigits: 2,
+    payableMinor: 8000,
+    discountMinor: 2000,
+  };
+  await db
+    .collection('sales')
+    .insertOne({
+      _id: new ObjectId(saleId),
+      license: new ObjectId(f.source.businessId),
+      branch_id: new ObjectId(f.source.branchId),
+      billing_transaction_id: f.input.operationId,
+      business_decision_receipt: { ...receipt, payableMinor: 9000 },
+    });
+  await assert.rejects(ledger.acknowledge(f.source, requestId, stored.executionId, saleId), {
+    code: 'sale_receipt_unconfirmed',
+  });
+  await db
+    .collection('sales')
+    .updateOne({ _id: new ObjectId(saleId) }, { $set: { business_decision_receipt: receipt } });
   const applied = await ledger.acknowledge(f.source, requestId, stored.executionId, saleId);
   assert.equal(applied.state, 'applied');
   assert.deepEqual(

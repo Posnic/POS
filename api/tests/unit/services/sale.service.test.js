@@ -187,6 +187,96 @@ describe('SalesService', () => {
   });
 
   describe('Business decision pricing preview', () => {
+    test('a rejected pre-commit decision restores reserved stock and never writes the sale', async () => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      const beforeCommit = jest.fn(async () => {
+        throw new Error('bill_changed');
+      });
+      const result = await salesService.processSale(makeSaleData(), '', 'Add', makeContext(), {
+        beforeCommit,
+      });
+      expect(result.status).toBe(false);
+      expect(beforeCommit).toHaveBeenCalledTimes(1);
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).toHaveBeenCalled();
+      expect(mockItemRepositoryInstance.updateStock).toHaveBeenCalledWith(expect.anything(), 2);
+      expect(salesRepository.create).not.toHaveBeenCalled();
+      expect(kotNotifications).toHaveLength(0);
+    });
+
+    test('a bill-level decision binds the actual checkout preview and explains rounding in exact minor units', async () => {
+      const { prepareDiscountIntent } = require('../../../src/services/business-discount-intent');
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      const context = makeContext({
+        roundOff: true,
+        branchSettings: {
+          _id: BRANCH_ID,
+          branch_name: 'Central',
+          currency: 'INR',
+          time_zone: 'Asia/Kolkata',
+        },
+      });
+      const data = makeSaleData({
+        billing_transaction_id: 'billing-operation-001',
+        items: [makeItemPayload({ item_price_total: '100.27' })],
+        extra_discount: 10,
+        extra_discount_type: 'percent',
+        approval_token: 'old-local-proof',
+      });
+      const prepared = await prepareDiscountIntent(data, context, 'Regular customer');
+      expect(prepared.summary).toEqual({
+        currency: 'INR',
+        currencyDigits: 2,
+        beforeDiscountMinor: 20054,
+        discountMinor: 2005,
+        payableMinor: 18000,
+        roundingMinor: -49,
+        itemCount: 1,
+        reason: 'Regular customer',
+      });
+      expect(
+        (
+          await prepareDiscountIntent(
+            { ...data, approval_token: 'another-proof' },
+            context,
+            'Regular customer'
+          )
+        ).revisionHash
+      ).toBe(prepared.revisionHash);
+      expect(
+        (
+          await prepareDiscountIntent(
+            { ...data, customer_id: 'different-customer' },
+            context,
+            'Regular customer'
+          )
+        ).revisionHash
+      ).not.toBe(prepared.revisionHash);
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(
+        makeItemDoc({ tax: 10, tax_type: 'exclusive' })
+      );
+      expect(
+        (await prepareDiscountIntent(data, context, 'Regular customer')).revisionHash
+      ).not.toBe(prepared.revisionHash);
+      expect(salesRepository.create).not.toHaveBeenCalled();
+      for (const change of [
+        { coupon_code: 'WELCOME' },
+        { tip_amount: 1 },
+        { partial_check: 'true' },
+        { unpaid: 'true' },
+        { items: [makeItemPayload({ item_discount: 1 })] },
+      ])
+        await expect(
+          prepareDiscountIntent({ ...data, ...change }, context, 'Reason')
+        ).rejects.toMatchObject({ code: 'unsupported_discount_combination' });
+      await expect(
+        prepareDiscountIntent(
+          data,
+          { ...context, branchSettings: { ...context.branchSettings, currency: 'JPY' } },
+          'Reason'
+        )
+      ).rejects.toMatchObject({ code: 'unsupported_discount_currency' });
+    });
+
     test('uses checkout prices without allocating a bill, locking a register, writing stock or notifying the kitchen', async () => {
       mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
       const data = makeSaleData({

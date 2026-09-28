@@ -73,6 +73,7 @@ function calculateSaleHeader(data, sale_tot_amount, context) {
   const itemsTotalForDoc = roundOffSetting ? Math.round(itemsTotAmount) : round2(itemsTotAmount, 2);
 
   return {
+    beforeManualDiscountForDoc: round2(sale_tot_amount, 2),
     extraDiscount,
     salesExtraDiscount,
     couponCode,

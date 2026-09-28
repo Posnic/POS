@@ -195,10 +195,15 @@ const processSale = async (
   id = '',
   process = 'Add',
   context = {},
-  { preview = false } = {}
+  { preview = false, beforeCommit } = {}
 ) => {
   let finishCaptainEdit;
   try {
+    if (
+      beforeCommit !== undefined &&
+      (typeof beforeCommit !== 'function' || id !== '' || process !== 'Add')
+    )
+      return { status: false, message: 'Unsupported decision commit' };
     if (
       preview &&
       (id !== '' ||
@@ -703,30 +708,29 @@ const processSale = async (
 
     // Stop before numbering, stock, payment or sale writes. This internal
     // preview uses the exact checkout tax and header calculations above/below.
-    if (preview) {
-      return {
-        status: true,
-        data: {
-          header: calculateSaleHeader(data, sale_tot_amount, context),
-          roundOff: context.roundOff === true,
-          subtotal: sale_subtotal_amount,
-          tax: sale_tax_amount,
-          lineDiscount: sale_discount_amount,
-          items: itemsale.map((item) => ({
-            itemId: String(item.item_id),
-            name: item.item_name,
-            quantity: item.item_quantity,
-            unitPrice: item.item_price,
-            discountAmount: item.item_discount,
-            discountPercent: item.item_discount_percentage,
-            taxRate: item.tax,
-            taxType: item.tax_type,
-            taxAmount: item.tax_amount,
-            total: item.total_amount,
-          })),
-        },
-      };
-    }
+    const decisionPricing =
+      preview || beforeCommit
+        ? {
+            header: calculateSaleHeader(data, sale_tot_amount, context),
+            roundOff: context.roundOff === true,
+            subtotal: sale_subtotal_amount,
+            tax: sale_tax_amount,
+            lineDiscount: sale_discount_amount,
+            items: itemsale.map((item) => ({
+              itemId: String(item.item_id),
+              name: item.item_name,
+              quantity: item.item_quantity,
+              unitPrice: item.item_price,
+              discountAmount: item.item_discount,
+              discountPercent: item.item_discount_percentage,
+              taxRate: item.tax,
+              taxType: item.tax_type,
+              taxAmount: item.tax_amount,
+              total: item.total_amount,
+            })),
+          }
+        : null;
+    if (preview) return { status: true, data: decisionPricing };
 
     // Generate Sales ID if New.
     //
@@ -1234,6 +1238,16 @@ const processSale = async (
       // ADD: create a new Sale document so that the pre-save hook can
       // normalize the payload into a PHP-style 1:1 document.
       try {
+        if (beforeCommit) {
+          const proof = await beforeCommit(decisionPricing);
+          finalSaleData.business_decision_receipt =
+            require('./business-decision-receipt').decisionReceipt(
+              proof,
+              context,
+              data.billing_transaction_id,
+              decisionPricing
+            );
+        }
         // If the unique bill-number index catches a one-in-a-million clash,
         // take the next number and retry rather than fail the sale.
         result = await salesRepository.createSaleUnique(finalSaleData, async () => {

@@ -85,7 +85,7 @@ function requestInput(input) {
   if (
     !summary ||
     Object.keys(summary).sort().join(',') !==
-      'beforeDiscountMinor,currency,currencyDigits,discountMinor,itemCount,payableMinor,reason' ||
+      'beforeDiscountMinor,currency,currencyDigits,discountMinor,itemCount,payableMinor,reason,roundingMinor' ||
     !/^[A-Z]{3}$/.test(summary.currency || '') ||
     !Number.isInteger(summary.currencyDigits) ||
     summary.currencyDigits < 0 ||
@@ -104,7 +104,10 @@ function requestInput(input) {
   if (
     summary.discountMinor === 0 ||
     summary.discountMinor > summary.beforeDiscountMinor ||
-    summary.payableMinor !== summary.beforeDiscountMinor - summary.discountMinor
+    !Number.isSafeInteger(summary.roundingMinor) ||
+    Math.abs(summary.roundingMinor) > 100 ||
+    summary.payableMinor !==
+      summary.beforeDiscountMinor - summary.discountMinor + summary.roundingMinor
   )
     fail('invalid_summary', 400);
 }
@@ -273,7 +276,28 @@ function createDecisionLedger(db, { now = Date.now } = {}) {
         if (row.saleId !== saleId) fail('execution_conflict');
         return row;
       }
-      // The authoritative sale writer must verify a durable, matching receipt.
+      const receipt = await db.collection('sales').findOne(
+        {
+          _id: new ObjectId(saleId),
+          license: row.license,
+          branch_id: new ObjectId(row.branchId),
+          billing_transaction_id: row.operationId,
+          'business_decision_receipt.version': 1,
+          'business_decision_receipt.decisionId': String(row._id),
+          'business_decision_receipt.revisionHash': row.revisionHash,
+          'business_decision_receipt.executionId': executionId,
+          'business_decision_receipt.operationId': row.operationId,
+          'business_decision_receipt.deviceId': row.deviceId,
+          'business_decision_receipt.requesterId': row.requesterId,
+          'business_decision_receipt.approverId': row.approverId,
+          'business_decision_receipt.currency': row.summary.currency,
+          'business_decision_receipt.currencyDigits': row.summary.currencyDigits,
+          'business_decision_receipt.payableMinor': row.summary.payableMinor,
+          'business_decision_receipt.discountMinor': row.summary.discountMinor,
+        },
+        { projection: { _id: 1 } }
+      );
+      if (!receipt) fail('sale_receipt_unconfirmed');
       return transition(row, 'applied', { saleId });
     },
   };
