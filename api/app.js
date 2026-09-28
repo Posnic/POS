@@ -1120,13 +1120,13 @@ app.use(
 );
 app.use(['/api/captain/v1', '/captain/v1'], require('./src/routes/captain-access.routes'));
 app.use('/api/kitchen', require('./src/routes/kitchen-board.routes'));
-app.get('/kitchen', (_req, res) => res.redirect('/kitchen/'));
+app.get(/^\/kitchen$/, (_req, res) => res.redirect('/kitchen/'));
 for (const file of ['index.html', 'board.js', 'board.css', 'device.js', 'manifest.webmanifest', 'sw.js', 'icon.svg']) {
   app.get(
     file === 'index.html' ? ['/kitchen/', '/kitchen/index.html'] : '/kitchen/' + file,
     (_req, res) => {
       res.set('Cache-Control', 'no-store');
-      res.sendFile(path.join(__dirname, 'src', 'kitchen-board', file));
+      res.sendFile(path.join(__dirname, 'src', 'kitchen-board', file), { dotfiles: 'allow' });
     }
   );
 }
