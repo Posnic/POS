@@ -1,8 +1,9 @@
 # Business decision device transport
 
-This transport remains behind `POSNIC_BUSINESS_DECISIONS=1`. Checkout integration,
-cashier UI, recovery reconciliation and native release qualification are not yet
-complete. Deploying these primitives does not enable a production approval flow.
+This transport remains behind `POSNIC_BUSINESS_DECISIONS=1`. Authenticated
+checkout routes and receipt recovery are implemented. Cashier UI, operator
+resolution of a missing receipt, broader bill combinations and native release
+qualification remain incomplete. Keep the production flag disabled.
 
 ## Trust boundary
 
@@ -42,17 +43,50 @@ consumption deadline. The desktop atomically consumes that proof once, binding
 the source, operation, revision, execution and exact response. A consumed permit
 is never released or automatically retried as a financial write.
 
-Checkout must call this guard immediately before saving the sale, using its
-actual final pricing hash, and save the receipt with the sale. A lost response,
+Checkout calls this guard immediately before saving the sale, using its
+actual final pricing hash, and saves the receipt with the sale. A lost response,
 expired permit or interrupted process must enter receipt reconciliation. The
 acknowledgement API requires a matching durable sale receipt; a client claim that
-the sale succeeded is insufficient. The remaining checkout/recovery integration
-must preserve these conditions before this feature is enabled.
+the sale succeeded is insufficient.
+
+## Checkout and recovery
+
+The ordinary POS session protects these routes. Current cashier auth generation,
+explicit branch membership and sales permission are checked again by the service:
+
+- `POST /api/sales/business-decisions`: `{ sale, reason }`, priced by the same
+  read-only checkout preview. Limited to 30 requests per cashier per minute.
+- `GET /api/sales/business-decisions/:requestId`: current scoped state.
+- `POST /api/sales/business-decisions/:requestId/cancel`: cancel a pending or
+  approved request. Read/cancel share a 120-per-minute cashier limit.
+- `POST /api/sales`: the existing Add endpoint accepts `business_decision_id` and
+  must pass the verified pre-commit gate. Supplying an ID never bypasses approval.
+  The gate rechecks the cashier and actual final pricing, then atomically consumes
+  the permit. Hold and other operation types reject this approval contract.
+
+The desktop shell's `POSNIC_SYNC_PAIRED=1` selects Cloud transport. Explicit
+Community mode needs `POSNIC_BUSINESS_LOCAL_DECISIONS=1` and stores a server-owned
+installation identity. A paired till never falls back to the local ledger.
+Both paths require `POSNIC_DESKTOP=1`; a Cloud tenant cannot run checkout through
+these routes. Register locking retains its existing identity; the immutable
+decision receipt carries the separately verified installation identity.
+
+The existing desktop reporting timer also runs a receipt-only recovery pass.
+Each pass examines at most four due execution commands with indexed, bounded
+sale lookups. It never calls a sale writer or requests another execution permit.
+It acknowledges a matching saved receipt, tolerates delayed ordinary sales sync,
+and marks the local journal confirmed only after the server says applied.
+Cloud acknowledgement remains a durable command across offline periods and
+temporary device revocation. A missing receipt stays unresolved; it is not proof
+that the sale failed, and there is deliberately no automatic second sale.
 
 ## Local validation
 
 Run the real MongoDB API suites `business-device-decisions.integration.cjs`,
-`business-decision-outbox.integration.cjs` and `business-access.integration.cjs`.
+`business-decision-outbox.integration.cjs`, `business-sale-preview.integration.cjs`
+and `business-access.integration.cjs`. The preview suite exercises the actual
+checkout controller and Mongoose sale writer, an authenticated owner decision,
+changed-bill rejection, duplicate checkout and recovery after user disablement.
 The companion Gateway contract suite is `tests/business-decisions.integration.cjs`
 with `POSNIC_BUSINESS_TEST_API_ROOT` pointing to this checkout's `api` directory.
 It exercises real Gateway HTTP handling and the tenant service through a

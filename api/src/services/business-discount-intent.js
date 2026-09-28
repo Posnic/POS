@@ -36,6 +36,7 @@ function validateIntent(payload, context, reason) {
     positive(payload.coupon_discount_value) ||
     positive(payload.loyalty_redeem_value) ||
     positive(payload.loyalty_redeem_points) ||
+    positive(payload.redeem_points) ||
     positive(payload.tip_amount) ||
     payload._id ||
     payload.sales_id ||
@@ -64,6 +65,13 @@ function validateIntent(payload, context, reason) {
   const intent = { ...payload };
   delete intent.approval_token;
   delete intent.business_decision_id;
+  // Checkout always writes these server-owned zero values before pricing.
+  // Canonicalize the same way for preview so an absent field and its ordinary
+  // zero-valued checkout form do not invalidate an otherwise identical bill.
+  intent.loyalty_redeem_points = 0;
+  delete intent.loyalty_redeem_value;
+  intent.coupon_discount_value = 0;
+  intent.coupon_code = '';
   // Validate the complete JSON intent before any pricing queries.
   revisionHash(intent);
   return { intent, branch };

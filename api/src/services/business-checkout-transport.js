@@ -1,0 +1,145 @@
+'use strict';
+const crypto = require('node:crypto');
+const { isMultiTenant } = require('../db/tenant-context');
+const { createDecisionOutbox } = require('./business-decision-outbox');
+const { createBusinessDeviceDecisions } = require('./business-device-decisions');
+const fail = (code, status = 503) => {
+  throw Object.assign(new Error(code), { code, status });
+};
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Internal checkout adapter. The desktop shell decides the pairing mode;
+ * callers cannot select a server or provide an installation identity. */
+function createCheckoutTransport(db, { now = Date.now, wait = sleep } = {}) {
+  if (
+    process.env.POSNIC_DESKTOP !== '1' ||
+    isMultiTenant() ||
+    process.env.POSNIC_BUSINESS_DECISIONS !== '1'
+  )
+    fail('decisions_unavailable', 404);
+  const paired = process.env.POSNIC_SYNC_PAIRED === '1';
+  if (!paired && process.env.POSNIC_BUSINESS_LOCAL_DECISIONS !== '1')
+    fail('decisions_unavailable', 404);
+  const outbox = createDecisionOutbox(db, { now });
+  const local = db.collection('business_decision_local');
+  const community = paired ? null : createBusinessDeviceDecisions(db, { now });
+  let installation;
+  async function identity() {
+    if (paired) {
+      // Bootstrap the existing agent without creating a background process.
+      for (let n = 0; n < 16; n++) {
+        try {
+          return await outbox.advertise();
+        } catch (error) {
+          if (error.code !== 'decision_agent_unavailable' || n === 15) throw error;
+          await wait(200);
+        }
+      }
+    }
+    if (!installation) {
+      // Explicit Community mode never advertises work to a Cloud agent.
+      await local.deleteOne({ _id: 'desktop-runtime' });
+      try {
+        await local.updateOne(
+          { _id: 'community-installation' },
+          {
+            $setOnInsert: { deviceId: 'community-' + crypto.randomUUID() },
+          },
+          { upsert: true }
+        );
+      } catch (error) {
+        if (error.code !== 11000) throw error;
+      }
+      installation = (await local.findOne({ _id: 'community-installation' }))?.deviceId;
+      if (!/^community-[A-Za-z0-9_-]{16,128}$/.test(installation || ''))
+        fail('decision_installation_unavailable');
+    }
+    return installation;
+  }
+  async function awaitReply(commandId, deviceId) {
+    // Bounded foreground wait. A timeout leaves the exact durable command for
+    // retry/reconciliation; it does not mean the remote operation was rejected.
+    for (let n = 0; n < 60; n++) {
+      const response = await outbox.result(commandId, deviceId);
+      if (response !== null) return response;
+      await wait(200);
+    }
+    fail('decision_transport_unavailable');
+  }
+  async function exchange(action, body) {
+    if (!['create', 'read', 'cancel', 'acknowledge'].includes(action))
+      fail('invalid_local_command', 400);
+    const deviceId = await identity();
+    if (community) return community[action]({ deviceId, branches: null }, body);
+    return awaitReply(await outbox.enqueue(deviceId, action, body), deviceId);
+  }
+  async function deliverCommunityClaim(commandId, deviceId) {
+    const leaseId = crypto.randomUUID();
+    const command = await local.findOneAndUpdate(
+      {
+        _id: commandId,
+        kind: 'command',
+        protocolVersion: 1,
+        deviceId,
+        action: 'claim',
+        $or: [{ state: 'queued' }, { state: 'sending', leaseUntil: { $lte: new Date(now()) } }],
+      },
+      {
+        $set: { state: 'sending', leaseId, leaseUntil: new Date(now() + 45000) },
+        $inc: { attempts: 1 },
+      },
+      { returnDocument: 'after' }
+    );
+    if (!command) return;
+    const filter = { _id: commandId, state: 'sending', leaseId };
+    try {
+      const response = await community.claim({ deviceId, branches: null }, command.body);
+      const startedAt = Date.parse(response.record.executionStartedAt);
+      await local.updateOne(filter, {
+        $set: {
+          state: 'done',
+          response,
+          receivedAt: new Date(now()),
+          ...(response.executionPermit === 'start'
+            ? {
+                startExpiresAt: new Date(Math.min(now() + 3000, startedAt + 5000)),
+              }
+            : {}),
+        },
+        $unset: { leaseUntil: '', leaseId: '', error: '' },
+      });
+    } catch (error) {
+      const permanent = [400, 401, 403, 404, 409, 410, 422].includes(error.status);
+      await local.updateOne(filter, {
+        $set: {
+          state: permanent ? 'failed' : 'queued',
+          error: {
+            code: error.code || 'decision_transport_unavailable',
+            status: error.status || 503,
+          },
+        },
+        $unset: { leaseUntil: '', leaseId: '' },
+      });
+      throw error;
+    }
+  }
+  async function start(body, operationId) {
+    const deviceId = await identity();
+    const command = await outbox.claim(deviceId, body);
+    if (community) await deliverCommunityClaim(command.commandId, deviceId);
+    await awaitReply(command.commandId, deviceId);
+    const proof = await outbox.consume(command.commandId, deviceId, {
+      ...body,
+      executionId: command.executionId,
+      operationId,
+    });
+    return { proof, deviceId };
+  }
+  async function recover(body) {
+    const deviceId = await identity();
+    if (community) return community.acknowledge({ deviceId, branches: null }, body);
+    return outbox.result(await outbox.enqueue(deviceId, 'acknowledge', body), deviceId);
+  }
+  return { exchange, start, recover };
+}
+module.exports = { createCheckoutTransport };

@@ -125,11 +125,14 @@ function createDesktopReportingWorker(
 function startDesktopReporting(db) {
   if (process.env.POSNIC_DESKTOP !== '1' || isMultiTenant()) return () => {};
   const worker = createDesktopReportingWorker(db);
+  const recovery = require('./business-decision-recovery').createDecisionRecovery(db);
   const timer = setInterval(() => {
     void worker.tick().catch(() => {});
+    void recovery.tick().catch(() => {});
   }, 30000);
   timer.unref();
   void worker.tick().catch(() => {});
+  void recovery.tick().catch(() => {});
   return () => {
     clearInterval(timer);
     worker.stop();

@@ -80,6 +80,90 @@ function createDecisionOutbox(db, { now = Date.now } = {}) {
       fail('decision_execution_conflict');
     return { commandId, executionId: row.body.executionId };
   }
+  async function enqueue(deviceId, action, body) {
+    enabled();
+    const serialized = JSON.stringify(body);
+    if (
+      !key(deviceId) ||
+      !['create', 'read', 'cancel', 'acknowledge'].includes(action) ||
+      !body ||
+      !id(body.branchId) ||
+      !id(body.requesterId) ||
+      !serialized ||
+      Buffer.byteLength(serialized) > 16384
+    )
+      fail('invalid_local_command', 400);
+    // Reads must be fresh. Mutations retain their exact envelope on a lost
+    // response; none can generate an alternative execution or financial write.
+    const commandId =
+      action === 'read' ? crypto.randomUUID() : digest(action + ':' + deviceId + ':' + serialized);
+    try {
+      await local.updateOne(
+        { _id: commandId },
+        {
+          $setOnInsert: {
+            kind: 'command',
+            protocolVersion: 1,
+            deviceId,
+            action,
+            body,
+            bodyHash: digest(serialized),
+            state: 'queued',
+            attempts: 0,
+            createdAt: new Date(now()),
+            nextAttemptAt: new Date(now()),
+            expiresAt: new Date(now() + 86400000),
+            // Receipt acknowledgements are part of recovery and must remain until
+            // explicitly reconciled. Other non-execution commands can age out.
+            ...(action === 'acknowledge' ? {} : { purgeAt: new Date(now() + 7 * 86400000) }),
+          },
+        },
+        { upsert: true }
+      );
+    } catch (error) {
+      if (error.code !== 11000) throw error;
+    }
+    if (action === 'acknowledge') {
+      // Receipt confirmation is safe to retry after transport revocation or a
+      // long offline interval: the server still verifies the durable sale.
+      await local.updateOne(
+        {
+          _id: commandId,
+          action,
+          deviceId,
+          $or: [
+            { state: 'failed', nextAttemptAt: { $lte: new Date(now()) } },
+            { state: 'queued', expiresAt: { $lte: new Date(now()) } },
+          ],
+        },
+        {
+          $set: {
+            state: 'queued',
+            expiresAt: new Date(now() + 86400000),
+            nextAttemptAt: new Date(now()),
+          },
+        }
+      );
+    }
+    return commandId;
+  }
+  async function result(commandId, deviceId) {
+    enabled();
+    if (!key(commandId) || !key(deviceId)) fail('invalid_local_command', 400);
+    const row = await local.findOne({
+      _id: commandId,
+      kind: 'command',
+      protocolVersion: 1,
+      deviceId,
+    });
+    if (!row) fail('decision_command_missing', 404);
+    if (row.state === 'failed')
+      fail(row.error?.code || 'decision_transport_unavailable', row.error?.status || 503);
+    if (row.state === 'done') return row.response;
+    if (!(row.expiresAt instanceof Date) || row.expiresAt.getTime() <= now())
+      fail('decision_transport_unavailable', 503);
+    return null;
+  }
   async function consume(commandId, deviceId, expected) {
     enabled();
     if (
@@ -144,6 +228,6 @@ function createDecisionOutbox(db, { now = Date.now } = {}) {
     if (!consumed) fail('decision_reconciliation_required');
     return { ...proof };
   }
-  return { advertise, claim, consume };
+  return { advertise, enqueue, result, claim, consume };
 }
 module.exports = { createDecisionOutbox };

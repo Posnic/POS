@@ -1,6 +1,7 @@
 'use strict';
 /** Called only with proof returned by the server's pre-commit decision gate. */
 function decisionReceipt(proof, context, operationId, pricing) {
+  const deviceId = context.businessDecisionDeviceId || context.deviceId;
   const id = (value) => typeof value === 'string' && /^[a-f\d]{24}$/.test(value);
   const key = (value) => typeof value === 'string' && /^[A-Za-z0-9_-]{16,128}$/.test(value);
   if (
@@ -13,7 +14,7 @@ function decisionReceipt(proof, context, operationId, pricing) {
     !/^[a-f\d]{64}$/.test(proof.revisionHash || '') ||
     !key(proof.executionId) ||
     !key(operationId) ||
-    !key(context.deviceId)
+    !key(deviceId)
   )
     throw new Error('Invalid decision commit proof');
   const branch = require('./business-access').branchInfo(context.branchSettings || {});
@@ -32,7 +33,7 @@ function decisionReceipt(proof, context, operationId, pricing) {
     version: 1,
     ...proof,
     operationId,
-    deviceId: context.deviceId,
+    deviceId,
     requesterId: String(context.userId),
     currency: branch.currency,
     currencyDigits: branch.currencyDigits,

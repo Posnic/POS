@@ -153,3 +153,114 @@ test('desktop advertises readiness but requires a live agent installation identi
   f.advance(1000);
   await assert.rejects(f.broker.advertise(), { code: 'decision_agent_unavailable' });
 });
+
+test('mutation envelopes survive retry, reads are fresh, and receipt retry retains exact identity', async () => {
+  const f = await fixture();
+  const body = {
+    branchId: f.body.branchId,
+    requesterId: f.body.requesterId,
+    requestId: f.body.requestId,
+  };
+  const first = await f.broker.enqueue(f.deviceId, 'cancel', body);
+  assert.equal(await f.broker.enqueue(f.deviceId, 'cancel', body), first);
+  assert.notEqual(
+    await f.broker.enqueue(f.deviceId, 'read', body),
+    await f.broker.enqueue(f.deviceId, 'read', body)
+  );
+  assert.equal(await f.broker.result(first, f.deviceId), null);
+  await assert.rejects(f.broker.result(first, crypto.randomUUID()), {
+    code: 'decision_command_missing',
+  });
+  const receipt = { ...body, executionId: f.command.executionId, saleId: String(new ObjectId()) };
+  const ack = await f.broker.enqueue(f.deviceId, 'acknowledge', receipt);
+  await f.local.updateOne(
+    { _id: ack },
+    {
+      $set: {
+        state: 'failed',
+        error: { code: 'device_revoked', status: 403 },
+        nextAttemptAt: new Date(f.now() + 1000),
+      },
+    }
+  );
+  await assert.rejects(f.broker.result(ack, f.deviceId), { code: 'device_revoked' });
+  f.advance(1000);
+  assert.equal(await f.broker.enqueue(f.deviceId, 'acknowledge', receipt), ack);
+  assert.equal(await f.broker.result(ack, f.deviceId), null);
+  assert.deepEqual((await f.local.findOne({ _id: ack })).body, receipt);
+});
+
+test('receipt recovery is bounded, fair, and never reclaims a missing sale', async () => {
+  const flags = ['POSNIC_DESKTOP', 'POSNIC_SYNC_PAIRED'];
+  const prior = Object.fromEntries(flags.map((key) => [key, process.env[key]]));
+  try {
+    for (const key of flags) process.env[key] = '1';
+    const f = await fixture();
+    await f.local.deleteMany({});
+    const commands = [];
+    for (let n = 0; n < 7; n++) {
+      const body = { ...f.body, requestId: String(new ObjectId()) };
+      const command = await f.broker.claim(f.deviceId, body);
+      commands.push({ body, command });
+      await f.local.updateOne(
+        { _id: command.commandId },
+        {
+          $set: {
+            state: 'done',
+            consumedAt: new Date(f.now()),
+            response: { record: { state: 'applying' } },
+          },
+        }
+      );
+    }
+    const { createDecisionRecovery } = require('../src/services/business-decision-recovery');
+    let called = 0;
+    const worker = createDecisionRecovery(f.db, {
+      now: f.now,
+      transport: {
+        recover: async () => {
+          called++;
+        },
+      },
+    });
+    await Promise.all([worker.tick(), worker.tick()]);
+    assert.equal(await f.local.countDocuments({ recoveryStatus: 'receipt_not_found' }), 4);
+    assert.equal(called, 0);
+    await worker.tick();
+    assert.equal(await f.local.countDocuments({ recoveryStatus: 'receipt_not_found' }), 7);
+    const { body, command } = commands[0],
+      saleId = new ObjectId();
+    await f.db.collection('sales').insertOne({
+      _id: saleId,
+      branch_id: new ObjectId(body.branchId),
+      business_decision_receipt: {
+        version: 1,
+        decisionId: body.requestId,
+        executionId: command.executionId,
+        revisionHash: body.revisionHash,
+        requesterId: body.requesterId,
+        deviceId: f.deviceId,
+      },
+    });
+    f.advance(30000);
+    const restarted = createDecisionRecovery(f.db, {
+      now: f.now,
+      transport: {
+        recover: async (sent) => {
+          called++;
+          assert.equal(sent.saleId, String(saleId));
+          return { state: 'applied', id: body.requestId, saleId: String(saleId) };
+        },
+      },
+    });
+    await restarted.tick();
+    await restarted.tick();
+    assert.equal(called, 1);
+    assert.equal((await f.local.findOne({ _id: command.commandId })).executionState, 'applied');
+  } finally {
+    for (const key of flags) {
+      if (prior[key] === undefined) delete process.env[key];
+      else process.env[key] = prior[key];
+    }
+  }
+});

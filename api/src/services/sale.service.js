@@ -1641,7 +1641,14 @@ const processSale = async (
     };
   } catch (error) {
     console.error('processSale Error:', error);
-    return { status: false, message: error.message, data: null };
+    return {
+      status: false,
+      message: error.message,
+      data: null,
+      ...(beforeCommit && typeof error.code === 'string' && Number.isInteger(error.status)
+        ? { decisionError: { code: error.code, status: error.status } }
+        : {}),
+    };
   } finally {
     if (finishCaptainEdit) await finishCaptainEdit();
   }
