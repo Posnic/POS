@@ -58,10 +58,8 @@ unit of each exact proportional share.
 
 ## Remaining delivery
 
-- Integrate the validated item contribution into preparation and explicitly
-  report incomplete history when returned invoices have no original snapshot.
-- Prepare bounded per-item summaries on the assigned desktop, with publisher
-  fencing, completeness metadata and no item scan during mobile/server reads.
+- Negotiate optional item summaries in the desktop publication protocol, with
+  publisher fencing and no item scan during mobile/server reads.
 - Enforce item-sales ACL and branch scope, preserve unit distinctions for
   quantities, and label allocated revenue rather than implying item profit.
 - Add mobile ranking/detail views, accessible gestures and qualified translated
@@ -85,3 +83,21 @@ bounded to 1,000 original lines and 10,000 total return lines, with the existing
 Cloud or phone scans. Unit tests and actual return-writer integration tests now
 verify this boundary; prepared storage, API authorization and mobile ranking
 remain outstanding.
+
+The desktop preparer now accepts an explicit `includeItems: true` option for
+contract development. Existing workers do not enable it yet. It adds item facts
+to the existing bounded source scan and considers only invoices contributing to
+the requested business day. The accumulator validates all relevant invoices,
+keeps at most 10,000 items and 16 quantity units per item, and emits the top 20
+after aggregation. Ranking uses allocated sales after returns with item ID as
+the tie-break; refund-only days can contain negative figures. The result is for
+one branch/day and must not be combined with other truncated branch rankings
+to claim a global top list.
+
+Missing or invalid item history suppresses the whole ranking, records an
+incomplete state and unavailable invoice count, and leaves validated overview
+totals available. `available` describes validated item facts from the scanned
+source, not complete device synchronization: the parent `sourceComplete` remains
+false. Real MongoDB tests cover scoping, old unrelated invoices, legacy payload
+compatibility and ranking suppression. Publication negotiation, bounded API
+reads and UI delivery are still pending.

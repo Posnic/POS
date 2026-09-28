@@ -79,6 +79,42 @@ test('malformed source amounts do not turn into a published zero or a partial su
   await db.collection('sales').insertMany([sale(b), sale(b, { sales_total: 'broken' })]);
   await assert.rejects(prepareDesktopSummary(db, b, '2026-09-28'), { code: 'invalid_amount' });
 });
+
+test('opt-in item preparation ranks scoped sales and suppresses an incomplete ranking without hiding overview totals', async () => {
+  const b = branch();
+  const item = new ObjectId();
+  await db.collection('sales').insertMany([
+    sale(b, {
+      items: [
+        {
+          item_id: String(item),
+          item_name: 'Tea',
+          item_unit: 'cup',
+          item_quantity: 2,
+          total_amount: 100,
+        },
+      ],
+    }),
+    sale(b, { date: new Date('2026-08-01T00:00:00Z') }), // Unrelated historical day has no item facts.
+    sale(b, { branch_id: new ObjectId() }),
+  ]);
+  const legacy = await prepareDesktopSummary(db, b, '2026-09-28');
+  assert.equal(Object.hasOwn(legacy, 'itemInsights'), false);
+  const result = await prepareDesktopSummary(db, b, '2026-09-28', { includeItems: true });
+  assert.equal(result.itemInsights.state, 'available');
+  assert.equal(result.itemInsights.sourceSales, 1);
+  assert.equal(result.itemInsights.items[0].salesAfterReturnsMinor, result.salesAfterReturnsMinor);
+  assert.deepEqual(result.itemInsights.items[0].quantities, [
+    { unit: 'cup', soldMilli: 2000, returnedMilli: 0 },
+  ]);
+  await db.collection('sales').insertOne(sale(b));
+  const incomplete = await prepareDesktopSummary(db, b, '2026-09-28', { includeItems: true });
+  assert.equal(incomplete.billedSalesMinor, 20000);
+  assert.equal(incomplete.itemInsights.state, 'incomplete');
+  assert.equal(incomplete.itemInsights.unavailableSales, 1);
+  assert.deepEqual(incomplete.itemInsights.items, []);
+  assert.equal(incomplete.itemInsights.totalItems, null);
+});
 test('Cloud runtime, cancellation and elapsed budgets stop preparation', async () => {
   const b = branch();
   await db.collection('sales').insertOne(sale(b));

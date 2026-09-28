@@ -2,6 +2,7 @@
 const { ObjectId } = require('mongodb');
 const { setTimeout: pause } = require('node:timers/promises');
 const { isMultiTenant } = require('../db/tenant-context');
+const { createItemSummary } = require('./business-item-summary');
 const {
   saleContribution,
   METRIC_VERSION,
@@ -44,7 +45,12 @@ function scopeId(value) {
  * The caller must obtain a reporting-publisher assignment before publishing.
  * This baseline scan is bounded and cooperatively yields between pages; it
  * never schedules itself on a Cloud server or promises source completeness. */
-async function prepareDesktopSummary(db, branch, day, { signal, now = Date.now } = {}) {
+async function prepareDesktopSummary(
+  db,
+  branch,
+  day,
+  { signal, now = Date.now, includeItems = false } = {}
+) {
   if (process.env.POSNIC_DESKTOP !== '1' || isMultiTenant())
     throw new MetricError('desktop_required');
   const parsedDay = new Date(day + 'T12:00:00Z');
@@ -62,13 +68,26 @@ async function prepareDesktopSummary(db, branch, day, { signal, now = Date.now }
     throw new MetricError('invalid_currency');
   const startedAt = now();
   const totals = { billedSalesMinor: 0, refundsMinor: 0, completedSales: 0 };
+  // Opt-in until the publication contract negotiates item support. Existing
+  // workers keep the v2 payload and smaller source projection unchanged.
+  const itemSummary = includeItems === true ? createItemSummary(branch, day) : null;
   let scanned = 0,
     sourceUpdatedAt = null;
   const cursor = db
     .collection('sales')
     .find(
       { license: scopeId(branch.license), branch_id: scopeId(branch.id) },
-      { projection: fields }
+      {
+        projection: itemSummary
+          ? {
+              ...fields,
+              items: 1,
+              business_item_origin: 1,
+              return_refund_transactions: 1,
+              'items_return.returnArray.returnValue': 1,
+            }
+          : fields,
+      }
     )
     .sort({ _id: 1 })
     .batchSize(PAGE_SIZE)
@@ -84,6 +103,8 @@ async function prepareDesktopSummary(db, branch, day, { signal, now = Date.now }
         if (row.businessDate !== day) continue;
         for (const key of Object.keys(totals)) totals[key] = safeSum(totals[key], row[key]);
       }
+      if (itemSummary && contribution.entries.some((row) => row.businessDate === day))
+        itemSummary.add(sale);
       if (!(sale.updated_date instanceof Date) || !Number.isFinite(sale.updated_date.getTime()))
         throw new MetricError('source_timestamp_required');
       if (!sourceUpdatedAt || sale.updated_date > sourceUpdatedAt)
@@ -106,6 +127,7 @@ async function prepareDesktopSummary(db, branch, day, { signal, now = Date.now }
       sourceUpdatedAt: sourceUpdatedAt?.toISOString() ?? null,
       sourceComplete: false,
       sourceDocuments: scanned,
+      ...(itemSummary ? { itemInsights: itemSummary.finish(totals) } : {}),
     };
   } finally {
     await cursor.close();
