@@ -194,3 +194,20 @@ test('starting twice leaves one timer, and stopping releases it', () => {
   /* And a shop with no branch never starts one. */
   assert.strictEqual(feed.start({ branchId: '' }), null);
 });
+
+test('only a renderer acknowledgment produces a kitchen display report', async () => {
+  const screens = require(path.join(ROOT, 'src', 'kitchen-screen.js'));
+  const real = screens.setTickets;
+  const calls=[];
+  const fetchImpl=async (url,opts)=>{calls.push({url,body:JSON.parse(opts.body)});return {ok:true,json:async()=>({data:[{id:'507f1f77bcf86cd799439011:c0',items:[]}]})};};
+  try {
+    screens.setTickets=async()=>[];
+    await feed.tick({branchId:'branch',fetchImpl});
+    assert.equal(calls.length,1);
+    screens.setTickets=async()=>['display-1'];
+    await feed.tick({branchId:'branch',fetchImpl});
+    assert.equal(calls.length,3);
+    assert.ok(calls[2].url.endsWith('/sales/kitchenDisplayReport'));
+    assert.deepEqual(calls[2].body.saleIds,['507f1f77bcf86cd799439011']);
+  } finally { screens.setTickets=real; }
+});

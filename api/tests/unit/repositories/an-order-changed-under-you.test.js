@@ -176,3 +176,68 @@ describe('a save that is not stale', () => {
     expect(fresh.status).not.toBe(false);
   });
 });
+
+test('same-product preparations survive edits and cancellation with their own notes', async () => {
+  const id = await anOrder(CHANGED_AT);
+  await db.collection('sales').updateOne(
+    { _id: new mongoose.Types.ObjectId(id) },
+    {
+      $set: {
+        items: [
+          {
+            item_id: NAAN,
+            line_id: 'dry',
+            item_name: 'Naan',
+            item_quantity: 1,
+            item_price: 40,
+            item_description: 'No butter',
+          },
+          {
+            item_id: NAAN,
+            line_id: 'butter',
+            item_name: 'Naan',
+            item_quantity: 2,
+            item_price: 40,
+            item_description: 'Extra butter',
+          },
+        ],
+      },
+    }
+  );
+  const out = await repo.updateOrderModel(
+    id,
+    [
+      { product_id: String(NAAN), line_id: 'dry', quantity: 1, price: 40, item_description: '' },
+      {
+        product_id: String(NAAN),
+        line_id: 'butter',
+        quantity: 1,
+        price: 40,
+        item_description: 'Extra butter',
+      },
+    ],
+    80,
+    null,
+    null,
+    null,
+    null,
+    '4',
+    'Dine-in',
+    2,
+    {}
+  );
+  expect(out.status).not.toBe(false);
+  const after = await stored(id);
+  expect(after.items).toHaveLength(2);
+  expect(after.items.find((line) => line.line_id === 'dry').item_description).toBe('');
+  expect(after.items.find((line) => line.line_id === 'butter').item_quantity).toBe(1);
+  const cancelled = after.changes
+    .flatMap((change) => change.items)
+    .filter((line) => line.process === 'cancel');
+  expect(cancelled).toHaveLength(1);
+  expect(cancelled[0]).toMatchObject({
+    line_id: 'butter',
+    item_quantity: 1,
+    item_description: 'Extra butter',
+  });
+});

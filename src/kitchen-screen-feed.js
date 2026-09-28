@@ -36,6 +36,7 @@ const KEEP_LAST_ON_FAILURE = true;
 
 let timer = null;
 let lastGood = null;
+let generation = 0;
 
 function screens() {
   return require('./kitchen-screen');
@@ -58,7 +59,7 @@ function apiUrl() {
  * interesting parts - what happens when the shop cannot be reached - can be
  * checked at all.
  */
-async function tick({ branchId, fetchImpl } = {}) {
+async function tick({ branchId, fetchImpl, expectedGeneration = generation } = {}) {
   const branch = String(branchId || '').trim();
   if (!branch) return { ok: false, why: 'no branch' };
 
@@ -82,9 +83,18 @@ async function tick({ branchId, fetchImpl } = {}) {
     if (!answer || answer.type === 'error' || answer.status === false || !Array.isArray(answer.data)) {
       return { ok: false, why: 'invalid response' };
     }
+    if (expectedGeneration !== generation) return {ok:false,why:'feed changed'};
     const tickets = answer.data;
     lastGood = tickets;
-    screens().setTickets(tickets);
+    const rendered = await screens().setTickets(tickets);
+    if (Array.isArray(rendered) && rendered.length) {
+      try {
+        await doFetch(`${apiUrl()}/sales/kitchenDisplayReport`, {method:'POST',signal:AbortSignal.timeout(3000),
+          headers:{'Content-Type':'application/json',kioskkey:process.env.KIOSK_API_KEY || ''},
+          body:JSON.stringify({branchId:branch,till:require('os').hostname(),screens:rendered,
+            saleIds:[...new Set(tickets.map(ticket=>String(ticket.id || '').split(':')[0]))],at:new Date().toISOString()})});
+      } catch {} // A status report must not clear the rendered tickets.
+    }
     return { ok: true, count: tickets.length };
   } catch (e) {
     /*
@@ -93,9 +103,9 @@ async function tick({ branchId, fetchImpl } = {}) {
      * screen that empties itself every time the API hiccups is a screen
      * nobody trusts.
      */
-    if (KEEP_LAST_ON_FAILURE && lastGood) {
+    if (KEEP_LAST_ON_FAILURE && lastGood && expectedGeneration === generation) {
       try {
-        screens().setTickets(lastGood);
+        await screens().setTickets(lastGood);
       } catch (err) {
         /* nothing to do */
       }
@@ -109,17 +119,24 @@ function start({ branchId, everyMs = EVERY_MS } = {}) {
   stop();
   const branch = String(branchId || '').trim();
   if (!branch) return null;
-  timer = setInterval(() => {
-    tick({ branchId: branch }).catch(() => {});
-  }, everyMs);
+  let busy = false;
+  const expectedGeneration = generation;
+  const refresh = async () => {
+    if (busy || expectedGeneration !== generation) return;
+    busy = true;
+    try { await tick({branchId:branch, expectedGeneration}); } finally { busy = false; }
+  };
+  timer = setInterval(() => { refresh().catch(() => {}); }, everyMs);
   if (typeof timer.unref === 'function') timer.unref();
   /* Straight away as well: a shop that has just opened a screen should not
      watch an empty wall for five seconds wondering whether it works. */
-  tick({ branchId: branch }).catch(() => {});
+  refresh().catch(() => {});
   return timer;
 }
 
 function stop() {
+  generation++;
+  lastGood = null;
   if (!timer) return;
   clearInterval(timer);
   timer = null;

@@ -373,6 +373,37 @@ router.post(
   protectOrKioskKey,
   bindController(salesController.getFrequentItems)
 );
+router.post('/kitchenDisplayReport', ensurePrintDevice, bindController(salesController.kitchenDisplayReport));
+router.post(
+  '/kitchenDeliveryReport',
+  ensurePrintDevice,
+  bindController(salesController.kitchenDeliveryReport)
+);
+router.get(
+  '/kitchenDeliveryStatus',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.kitchenDeliveryStatus)
+);
+router.get(
+  '/handoverStaff',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.handoverStaff)
+);
+router.post(
+  '/handoverOrder',
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.handoverOrder)
+);
+router.post(
+  '/fireKitchenItems',
+  rateLimit({ windowMs: 60000, limit: 120, standardHeaders: true, legacyHeaders: false }),
+  optionalProtect,
+  protectOrKioskKey,
+  bindController(salesController.fireKitchenItems)
+);
 router.post(
   '/serveKitchenItems',
   rateLimit({ windowMs: 60000, limit: 180, standardHeaders: true, legacyHeaders: false }),

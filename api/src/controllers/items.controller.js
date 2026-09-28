@@ -908,6 +908,7 @@ class ItemsController extends BaseController {
             homebanner: data.store?.homebanner || '',
             advertisement: data.store?.advertisement || '',
           },
+          money: require('../utils/currency').policy(data.store || {}),
           kiosk_payment: data.payment || {},
           kiosk_print: data.print || {},
         },
@@ -1001,6 +1002,7 @@ class ItemsController extends BaseController {
             homebanner: data.store?.homebanner || '',
             advertisement: data.store?.advertisement || '',
           },
+          money: require('../utils/currency').policy(data.store || {}),
           kiosk_payment: data.payment || {},
           /* The floor plan. The captain app reads this to draw its tables, and
              is the only caller that ever did. */

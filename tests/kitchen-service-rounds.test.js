@@ -39,3 +39,28 @@ test('every dish on long kitchen tickets rotates into view, including a busy kit
  for(let i=0;i<4;i++){collect(nodes.board);timers[1]();}
  assert.equal(seen.size,10);assert.equal(nodes.count.textContent,1);
 });
+
+
+test('cancelling one preparation never removes another guest preparation of the same product',()=>{
+ const dry={...line(1),line_id:'dry',item_description:'No chilli'};
+ const gravy={...line(2),line_id:'gravy',item_description:'Extra sauce'};
+ const order=sale();order.items=[dry,{...gravy,item_quantity:1}];
+ order.changes=[{timestamp:order.created_date,items:[dry,gravy]},
+ {timestamp:'2026-09-27T08:30:00Z',items:[{...gravy,item_quantity:1,process:'cancel'}]}];
+ order.kitchen_service={c0i0:{quantity:1}};
+ const remaining=tickets(order).flatMap(ticket=>ticket.items);
+ assert.equal(remaining.length,1);assert.equal(remaining[0].note,'Extra sauce');assert.equal(remaining[0].qty,1);
+});
+
+
+test('held courses do not cook until fired and firing never adds chargeable quantity',()=>{
+ const held={...line(2),line_id:'dessert',held:true,seat:2,course:'Dessert',allergies:['milk']};
+ const order=sale();order.items=[held];order.changes=[{timestamp:order.created_date,items:[held]}];
+ assert.deepEqual(tickets(order),[]);assert.equal(rounds(order)[0].items[0].held,true);
+ order.items=[{...held,held:false}];
+ order.changes.push({timestamp:'2026-09-27T09:00:00Z',items:[{...held,held:false,process:'fire',source_round_line:'c0i0'}]});
+ const rows=rounds(order).flatMap(round=>round.items);
+ assert.equal(rows.length,1);assert.equal(rows[0].id,'c0i0');assert.equal(rows[0].quantity,2);
+ assert.equal(tickets(order)[0].placedAt,'2026-09-27T09:00:00.000Z');
+ assert.deepEqual(tickets(order)[0].items[0].allergies,['milk']);
+});

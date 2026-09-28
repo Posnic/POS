@@ -235,3 +235,27 @@ test('version and request ID operators cannot bypass duplicate-payment protectio
     (await db.collection('captain_payment_plans').findOne({ _id: plan.id })).payments
   ).toHaveLength(0);
 });
+
+test.each([
+  ['JPY', 0, 105],
+  ['KWD', 3, 105000],
+])(
+  'payment journal uses %s precision and survives changed shop settings',
+  async (currencyCode, currencyDigits, totalMinor) => {
+    await db
+      .collection('branches')
+      .updateOne(
+        { _id: branch },
+        { $set: { currency_code: currencyCode, currency: currencyCode } }
+      );
+    const plan = await service.prepare(req());
+    expect(plan).toMatchObject({ currencyCode, currencyDigits, dueMinor: totalMinor });
+    await db
+      .collection('branches')
+      .updateOne({ _id: branch }, { $set: { currency_code: 'USD', currency: 'USD' } });
+    const paid = await service.record(pay(plan));
+    expect(paid.dueMinor).toBe(0);
+    const saved = await db.collection('sales').findOne({ _id: sale._id });
+    expect(saved.paid_amount).toBe(105);
+  }
+);

@@ -1,5 +1,7 @@
 'use strict';
 const { createHash } = require('crypto');
+const orderLine = require('../utils/order-line');
+const serviceLine = require('../utils/service-line');
 
 // Change positions are append-only ticket identities, independent of product IDs.
 function date(value) {
@@ -20,7 +22,7 @@ function rounds(sale) {
   const result = [];
   const current = new Map();
   for (const line of sale.items || []) {
-    const key = product(line);
+    const key = orderLine.key(line) || product(line);
     current.set(key, (current.get(key) || 0) + quantity(line));
   }
   const changes = Array.isArray(sale.changes) ? sale.changes : [];
@@ -28,12 +30,30 @@ function rounds(sale) {
     const change = changes[c];
     for (let i = 0; i < (change.items || []).length; i++) {
       const line = change.items[i];
-      const key = product(line);
+      const key = orderLine.key(line) || product(line);
       const qty = quantity(line);
-      if (String(line.process).toLowerCase() === 'cancel') {
+      if (String(line.process).toLowerCase() === 'amend') {
+        for (const original of result.filter((row) => row.line_key === key)) {
+          const held = original.held;
+          Object.assign(original, serviceLine.metadata(line), {
+            held,
+            note: String(line.item_description || ''),
+          });
+        }
+      } else if (String(line.process).toLowerCase() === 'fire') {
+        const original = result.find(
+          (row) => row.id === line.source_round_line && row.line_key === key
+        );
+        if (original && original.held) {
+          original.held = false;
+          original.fired_at = date(change.timestamp);
+          original.round = `c${c}`;
+
+        }
+      } else if (String(line.process).toLowerCase() === 'cancel') {
         let remaining = qty;
         // Cancel the newest outstanding additions first, keeping earlier service history.
-        for (const previous of [...result].reverse().filter((row) => row.product === key)) {
+        for (const previous of [...result].reverse().filter((row) => row.line_key === key)) {
           const removed = Math.min(remaining, previous.quantity);
           previous.quantity -= removed;
           remaining -= removed;
@@ -42,7 +62,9 @@ function rounds(sale) {
         result.push({
           id: `c${c}i${i}`,
           round: `c${c}`,
-          product: key,
+          product: product(line),
+          line_key: key,
+          ...serviceLine.metadata(line),
           ordered_at: date(change.timestamp) || date(sale.created_date),
           quantity: qty,
           name: String(line.item_name || line.name || ''),
@@ -55,9 +77,9 @@ function rounds(sale) {
   // Legacy tickets without complete change logs still appear and can be served.
   for (let i = 0; i < (sale.items || []).length; i++) {
     const line = sale.items[i],
-      key = product(line);
+      key = orderLine.key(line) || product(line);
     const logged = result
-      .filter((row) => row.product === key)
+      .filter((row) => row.line_key === key)
       .reduce((n, row) => n + row.quantity, 0);
     const missing = Math.min(quantity(line), Math.max(0, (current.get(key) || 0) - logged));
     if (missing)
@@ -76,7 +98,9 @@ function rounds(sale) {
             .digest('hex')
             .slice(0, 24),
         round: 'legacy',
-        product: key,
+        product: product(line),
+        line_key: key,
+        ...serviceLine.metadata(line),
         ordered_at: date(sale.created_date),
         quantity: missing,
         name: String(line.item_name || line.name || line.sale_inline_item_name || ''),
@@ -86,15 +110,15 @@ function rounds(sale) {
   }
   const groups = new Map();
   for (const row of result) {
-    row.quantity = Math.min(row.quantity, current.get(row.product) || 0);
-    current.set(row.product, Math.max(0, (current.get(row.product) || 0) - row.quantity));
+    row.quantity = Math.min(row.quantity, current.get(row.line_key) || 0);
+    current.set(row.line_key, Math.max(0, (current.get(row.line_key) || 0) - row.quantity));
     if (!row.quantity) continue;
     const service = (sale.kitchen_service || {})[row.id] || {};
     row.served = Math.min(row.quantity, Math.max(0, Number(service.quantity) || 0));
     row.served_at = date(service.at);
     row.remaining = row.quantity - row.served;
     if (!groups.has(row.round))
-      groups.set(row.round, { id: row.round, ordered_at: row.ordered_at, items: [] });
+      groups.set(row.round, { id: row.round, ordered_at: row.ordered_at, fired_at: row.fired_at || null, items: [] });
     groups.get(row.round).items.push(row);
   }
   return [...groups.values()];
@@ -102,14 +126,19 @@ function rounds(sale) {
 function tickets(sale) {
   const closed = date(sale.bill_requested_at || sale.bill_printed_at);
   return rounds(sale).flatMap((round) => {
-    if (closed && (!round.ordered_at || round.ordered_at <= closed)) return [];
+    const kitchenTime = round.fired_at || round.ordered_at;
+    if (closed && (!kitchenTime || kitchenTime <= closed)) return [];
     const items = round.items
-      .filter((line) => line.remaining > 0)
+      .filter((line) => !line.held && line.remaining > 0)
       .map((line) => ({
         id: line.id,
         qty: line.remaining,
         name: line.name,
         note: line.note,
+        seat: line.seat,
+        course: line.course,
+        allergies: line.allergies,
+        allergy_note: line.allergy_note,
       }));
     return items.length
       ? [
@@ -117,7 +146,7 @@ function tickets(sale) {
             id: `${sale._id}:${round.id}`,
             table: String(sale.table_number || ''),
             orderNumber: String(sale.sales_id || sale.token_id || ''),
-            placedAt: round.ordered_at,
+            placedAt: kitchenTime,
             items,
           },
         ]
