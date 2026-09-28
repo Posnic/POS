@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 const { saleContribution, businessDate } = require('../src/services/business-metrics');
+const { itemSaleContribution } = require('../src/services/business-item-metrics');
 let mongo, client, db, BaseModel, repository;
 before(async () => {
   mongo = await MongoMemoryServer.create({
@@ -126,6 +127,11 @@ test('actual partial/full return writes reconcile with Business and preserve the
     assert.equal(entries[0].billedSalesMinor, 20000);
     assert.equal(entries[1].businessDate, businessDate(new Date(), f.branch.timezone));
     assert.equal(entries[1].refundsMinor, returnedQuantity * 10000);
+    const itemEntries = itemSaleContribution(f.stored, f.branch).entries;
+    assert.equal(itemEntries[0].billedSalesMinor, 20000);
+    assert.equal(itemEntries[0].quantities[0].soldMilli, 2000);
+    assert.equal(itemEntries[1].refundsMinor, returnedQuantity * 10000);
+    assert.equal(itemEntries[1].quantities[0].returnedMilli, returnedQuantity * 1000);
   }
 });
 
@@ -145,16 +151,29 @@ test('a later return retains the original snapshot and pre-existing ambiguous hi
   const stored = await db.collection('sales').findOne({ _id: f.stored._id });
   assert.deepEqual(stored.business_item_origin, origin);
   assert.equal(stored.items.length, 0);
+  const itemEntries = itemSaleContribution(stored, f.branch).entries;
+  assert.equal(itemEntries[0].billedSalesMinor, 30000);
+  assert.equal(itemEntries[1].refundsMinor, 30000);
+  assert.equal(itemEntries[1].quantities[0].returnedMilli, 3000);
   const ambiguous = await returned({ storedExtra: { sale_process: 'PartialReturn' } });
   assert.equal(ambiguous.result.status, true);
   assert.equal(Object.hasOwn(ambiguous.stored, 'business_item_origin'), false);
+  assert.throws(
+    () => itemSaleContribution(ambiguous.stored, ambiguous.branch),
+    /unavailable_original_items/
+  );
 });
 test('actual return rounding reconciles, including a fully discounted zero-value return', async () => {
   const rounded = await returned({ amount: 18.75, roundOff: true });
   assert.equal(rounded.result.data.return_amount, 18.75);
   assert.equal(saleContribution(rounded.stored, rounded.branch).entries[1].refundsMinor, 1875);
+  assert.equal(itemSaleContribution(rounded.stored, rounded.branch).entries[1].refundsMinor, 1875);
   const free = await returned({ quantity: 1, returnedQuantity: 1, extra: 100, original: 0 });
   assert.equal(free.result.data.return_amount, 0);
   assert.equal(free.stored.items_return_total, 0);
   assert.equal(saleContribution(free.stored, free.branch).entries[1].refundsMinor, 0);
+  assert.equal(
+    itemSaleContribution(free.stored, free.branch).entries[1].quantities[0].returnedMilli,
+    1000
+  );
 });

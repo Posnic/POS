@@ -28,10 +28,13 @@ facts skip optional analytics metadata without stopping the refund. The helper
 also checks the resulting BSON size including the pending return writes.
 
 Actual MongoDB return-writer tests cover partial/full returns, a second return,
-fully discounted returns and ambiguous historical state. The sync agent and
-Gateway currently transfer complete sales documents, so no field allowlist
-change is indicated by source inspection; an actual snapshot sync round-trip
-and downstream validation remain required before publishing ranking data.
+fully discounted returns and ambiguous historical state. A separate real MongoDB
+fixture now exercises the actual Gateway router and sync agent over HTTP,
+including incremental partial/full returns and suppression of unchanged echoes.
+Original decimal facts survive both cloud storage and another till's download.
+Run `api/tests/business-item-sync.integration.cjs` with
+`POSNIC_BUSINESS_TEST_GATEWAY_ROOT` pointing to the Gateway checkout; the fixture
+injects device identity and does not qualify deployed authentication or HTTPS.
 
 ## Exact allocation primitive
 
@@ -55,12 +58,30 @@ unit of each exact proportional share.
 
 ## Remaining delivery
 
-- Qualify original-item snapshot synchronization and downstream validation,
-  with explicit handling of pre-existing returns without proof.
-- Reconcile item allocations to the canonical invoice and dated refund totals.
+- Integrate the validated item contribution into preparation and explicitly
+  report incomplete history when returned invoices have no original snapshot.
 - Prepare bounded per-item summaries on the assigned desktop, with publisher
   fencing, completeness metadata and no item scan during mobile/server reads.
 - Enforce item-sales ACL and branch scope, preserve unit distinctions for
   quantities, and label allocated revenue rather than implying item profit.
 - Add mobile ranking/detail views, accessible gestures and qualified translated
   explanations, followed by actual sale/return and native-device validation.
+
+## Item contribution boundary
+
+`business-item-metrics.js` first applies canonical v2 sale eligibility and scope
+validation. It validates snapshot identity, invoice date/total, canonical decimal
+facts and bounded lines before allocating revenue. Unreturned invoices can use
+their current original lines; historical returned invoices require a snapshot.
+Each dated refund uses its own return lines and recorded refund total. Daily
+allocated money must reconcile exactly to canonical invoice/refund totals.
+
+Quantity counters use integer thousandths and retain separate units. Every
+returned item/unit must exist in the original invoice and cumulative returned
+quantity cannot exceed the original. Invalid or incomplete history throws an
+explicit error; publishers must not treat it as zero sales. A contribution is
+bounded to 1,000 original lines and 10,000 total return lines, with the existing
+1,000-line bound on each return. These are desktop calculations, not request-time
+Cloud or phone scans. Unit tests and actual return-writer integration tests now
+verify this boundary; prepared storage, API authorization and mobile ranking
+remain outstanding.
