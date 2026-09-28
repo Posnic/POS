@@ -1,8 +1,9 @@
 # Business notifications
 
 The first delivery channel is the private Business Inbox. Enabling a daily summary
-does not grant phone push permission or register an APNs/FCM device. Native push,
-session-close triggers, stock alerts and approval requests remain separate work.
+does not grant phone push permission or register an APNs/FCM device. Phone push
+requires separate device opt-in and provider configuration. Session-close
+triggers, stock alerts and approval requests remain separate work.
 
 ## Delivery and scope
 
@@ -46,3 +47,27 @@ MongoDB database, plus the notification time/worker Jest suites. They exercise
 scope removal, conflicting settings, concurrent workers, crash checkpoint replay,
 quiet hours, daylight-saving changes, missing prepared data, bounded shard
 rotation, overlapping ticks and desktop preparation without an open app.
+
+## Optional phone delivery
+
+`/api/business/v1/notifications/device` exposes session-scoped status,
+registration and opt-out. Configure `POSNIC_BUSINESS_PUSH_ENABLED=1`,
+`POSNIC_BUSINESS_EXPO_PROJECT_ID` and secret `POSNIC_BUSINESS_EXPO_ACCESS_TOKEN`
+only on a deployment that owns that project. Enable enhanced push security in
+Expo. Do not distribute Posnic's project credential to Community operators; the
+official Community app still needs a separate scoped relay.
+
+The Inbox insertion also records pending phone work. A durable event/device
+record survives worker interruption. Every send rechecks the device session,
+password generation, account, branch, financial ACL and enabled schedule.
+Quiet-hour rules apply to retries. Old alerts expire rather than creating a
+catch-up flood. Provider registration tokens are private, excluded from sync and
+never returned by the status endpoint. Opt-out removes the current session's
+registration. Leases and unique event/device identities bound concurrency;
+collapse/tag identifiers reduce duplicate visible alerts after an ambiguous send.
+
+Provider tickets are checked later for receipts. `provider_accepted` means the
+platform accepted the message, not that the phone displayed it or a person read
+it. Invalid-device receipts remove only the matching registration generation.
+No business amounts or credentials enter the payload. Local tests use a fake
+provider; actual APNs/FCM delivery and device behavior remain unverified.

@@ -169,6 +169,33 @@ const protectBusiness = async (req, res, next) => {
 router.use(protectBusiness);
 router.use(limiter('business-private', 120));
 router.get(
+  '/notifications/device',
+  wrap(async (req, res) => {
+    res.json(await require('../services/business-push').deviceStatus(req.db, req.businessIdentity));
+  })
+);
+router.post(
+  '/notifications/device',
+  limiter('business-push-registration', 10),
+  wrap(async (req, res) => {
+    res.json(
+      await require('../services/business-push').registerDevice(
+        req.db,
+        req.businessIdentity,
+        req.body
+      )
+    );
+  })
+);
+router.delete(
+  '/notifications/device',
+  wrap(async (req, res) => {
+    res.json(
+      await require('../services/business-push').unregisterDevice(req.db, req.businessIdentity)
+    );
+  })
+);
+router.get(
   '/notifications/preferences/:branchId',
   wrap(async (req, res) =>
     res.json(

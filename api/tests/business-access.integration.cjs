@@ -436,6 +436,57 @@ test('Business notification routes require their own session and enforce current
   await db.collection('users').updateOne({ _id: f.user._id }, { $set: { branch_access: [] } });
   assert.equal((await fetch(url, { headers })).status, 403);
 });
+test('push registration is scoped to the authenticated Business session and returns no provider token', async () => {
+  const names = [
+    'POSNIC_BUSINESS_PUSH_ENABLED',
+    'POSNIC_BUSINESS_EXPO_PROJECT_ID',
+    'POSNIC_BUSINESS_EXPO_ACCESS_TOKEN',
+  ];
+  const previous = names.map((name) => process.env[name]);
+  const projectId = '11111111-1111-4111-8111-111111111111';
+  process.env[names[0]] = '1';
+  process.env[names[1]] = projectId;
+  process.env[names[2]] = 'fixture-only-no-provider-call';
+  try {
+    const f = await fixture(),
+      value = await grant(f),
+      url = base + '/api/business/v1/notifications/device';
+    const headers = {
+      'x-forwarded-proto': 'https',
+      authorization: 'Bearer ' + value.token,
+      'content-type': 'application/json',
+    };
+    assert.equal((await fetch(url, { headers: { 'x-forwarded-proto': 'https' } })).status, 401);
+    const input = { token: 'ExpoPushToken[abcdefghijk12345]', platform: 'android', projectId };
+    assert.equal(
+      (
+        await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ ...input, accountId: String(new ObjectId()) }),
+        })
+      ).status,
+      400
+    );
+    assert.deepEqual(
+      await (await fetch(url, { method: 'POST', headers, body: JSON.stringify(input) })).json(),
+      { enabled: true }
+    );
+    assert.deepEqual(await (await fetch(url, { headers })).json(), {
+      available: true,
+      projectId,
+      enabled: true,
+    });
+    assert.deepEqual(await (await fetch(url, { method: 'DELETE', headers })).json(), {
+      enabled: false,
+    });
+  } finally {
+    names.forEach((name, index) => {
+      if (previous[index] === undefined) delete process.env[name];
+      else process.env[name] = previous[index];
+    });
+  }
+});
 test('prepared overview enforces live ACL and branch scope and never substitutes missing summaries with zero', async () => {
   const f = await fixture(),
     value = await grant(f),

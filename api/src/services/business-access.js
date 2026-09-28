@@ -147,6 +147,16 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
     pending,
     contextFor,
     authenticate,
+    async sessionIdentity(id) {
+      if (!validOpaque(id)) fail('sign_in_required', 401);
+      const session = await sessions.findOne({
+        _id: id,
+        revokedAt: { $exists: false },
+        expiresAt: { $gt: new Date(now()) },
+      });
+      if (!session) fail('sign_in_required', 401);
+      return { session, user: await userFor(session) };
+    },
     async request(body) {
       if (
         !validOpaque(body.codeChallenge) ||
