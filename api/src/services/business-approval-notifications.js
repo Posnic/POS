@@ -237,9 +237,84 @@ async function drainApprovalAlerts(db, { now = Date.now, limit = 5 } = {}) {
   }
   return processed;
 }
+async function approvalAlertScope(db, accountId, license, branchId, requestId, now = Date.now) {
+  if (!validId(accountId) || !validId(branchId) || !validId(requestId)) fail('access_denied', 403);
+  const user = await db.collection('users').findOne({ _id: new ObjectId(accountId), license });
+  const context = await createBusinessAccess(db, { now }).contextFor(user);
+  const branch = branchFor(context, branchId);
+  const decision = await db
+    .collection('business_decisions')
+    .findOne({ _id: new ObjectId(requestId), license, branchId });
+  if (!canReceiveApproval(user, context, decision, now())) fail('access_denied', 403);
+  const preference = await db.collection('business_approval_notification_preferences').findOne({
+    _id: accountId + ':' + branchId,
+    license,
+    enabled: true,
+  });
+  if (
+    !preference ||
+    !(preference.enabledAt instanceof Date) ||
+    !(decision.createdAt instanceof Date) ||
+    preference.enabledAt > decision.createdAt
+  )
+    fail('access_denied', 403);
+  return { context, branch, preference: { ...preference, time: '23:00' }, decision };
+}
+async function visibleApprovalEvents(db, context, rows, now = Date.now) {
+  const events = rows.filter((row) => row.kind === 'approval_requested' && validId(row.requestId));
+  if (!events.length || !context.capabilities.includes('approvals.read')) return new Set();
+  const license = new ObjectId(context.businessId);
+  const user = await db
+    .collection('users')
+    .findOne({ _id: new ObjectId(context.accountId), license });
+  let current;
+  try {
+    current = await createBusinessAccess(db, { now }).contextFor(user);
+  } catch (error) {
+    if ([401, 403].includes(error.status)) return new Set();
+    throw error;
+  }
+  const decisions = await db
+    .collection('business_decisions')
+    .find({
+      _id: { $in: events.map((event) => new ObjectId(event.requestId)) },
+      license,
+    })
+    .limit(50)
+    .maxTimeMS(250)
+    .toArray();
+  const preferences = await db
+    .collection('business_approval_notification_preferences')
+    .find({
+      _id: { $in: events.map((event) => context.accountId + ':' + event.branchId) },
+      license,
+      enabled: true,
+    })
+    .limit(50)
+    .maxTimeMS(250)
+    .toArray();
+  return new Set(
+    events
+      .filter((event) => {
+        const decision = decisions.find(
+          (row) => String(row._id) === event.requestId && row.branchId === event.branchId
+        );
+        const preference = preferences.find((row) => row.branchId === event.branchId);
+        return (
+          preference?.enabledAt instanceof Date &&
+          decision?.createdAt instanceof Date &&
+          preference.enabledAt <= decision.createdAt &&
+          canReceiveApproval(user, current, decision, now())
+        );
+      })
+      .map((event) => String(event._id))
+  );
+}
 module.exports = {
   getApprovalPreference,
   saveApprovalPreference,
   canReceiveApproval,
   drainApprovalAlerts,
+  approvalAlertScope,
+  visibleApprovalEvents,
 };

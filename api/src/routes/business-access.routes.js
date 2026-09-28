@@ -289,7 +289,7 @@ router.get(
       await require('../services/business-notifications').listInbox(
         req.db,
         await req.businessAccess.contextFor(req.businessIdentity.user),
-        { before: req.query.before }
+        { before: req.query.before, includeApprovals: req.query.approvals === '1' }
       )
     )
   )

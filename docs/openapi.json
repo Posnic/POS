@@ -2001,7 +2001,7 @@
     },
     "/business/v1/inbox": {
       "get": {
-        "summary": "before",
+        "summary": "approvals",
         "operationId": "get_business_v1_inbox",
         "tags": [
           "Business access"

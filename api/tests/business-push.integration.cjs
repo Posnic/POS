@@ -151,6 +151,147 @@ test('actual scheduled Inbox materialization enters the push queue exactly once'
   assert.equal(sends, 1);
 });
 
+async function approvalFixture(quietHours = false) {
+  const f = await fixture();
+  await db.collection('business_inbox').deleteOne({ _id: f.event._id });
+  await db
+    .collection('business_notification_preferences')
+    .updateOne({ accountId: String(f.user._id) }, { $set: { enabled: false } });
+  f.user.access.pos = { discount_approve_remote: true, discount_max_percent: 20 };
+  await db.collection('users').updateOne({ _id: f.user._id }, { $set: { access: f.user.access } });
+  const service = require('../src/services/business-approval-notifications');
+  const context = await createBusinessAccess(db, { now: () => at }).contextFor(f.user);
+  await service.saveApprovalPreference(
+    db,
+    context,
+    f.event.branchId,
+    {
+      expectedRevision: 0,
+      enabled: true,
+      quiet: { enabled: quietHours, start: '22:00', end: '07:00' },
+    },
+    { now: () => at - 1 }
+  );
+  const decision = {
+    _id: new ObjectId(),
+    license: f.user.license,
+    branchId: f.event.branchId,
+    requesterId: String(new ObjectId()),
+    state: 'pending',
+    createdAt: new Date(at),
+    expiresAt: new Date(at + 300000),
+    summary: { beforeDiscountMinor: 10000, discountMinor: 1000 },
+  };
+  await db.collection('business_decisions').insertOne(decision);
+  await service.drainApprovalAlerts(db, { now: () => at });
+  const event = await db.collection('business_inbox').findOne({ requestId: String(decision._id) });
+  assert.ok(event);
+  return { ...f, decision, event };
+}
+test('approval alerts use their own opt-in and remain generic at the provider boundary', async () => {
+  const prior = process.env.POSNIC_BUSINESS_DECISIONS;
+  process.env.POSNIC_BUSINESS_DECISIONS = '1';
+  try {
+    const f = await approvalFixture();
+    let sends = 0;
+    await push.drainPush(db, {
+      config,
+      now: () => at,
+      transport: {
+        send: async (...args) => {
+          sends++;
+          assert.deepEqual(args, [token, String(f.event._id), 'en']);
+          return '22222222-2222-4222-8222-222222222222';
+        },
+      },
+    });
+    assert.equal(sends, 1);
+    const delivery = await db
+      .collection('business_push_deliveries')
+      .findOne({ eventId: String(f.event._id) });
+    assert.equal(delivery.staleAt.getTime(), f.decision.expiresAt.getTime());
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_DECISIONS;
+    else process.env.POSNIC_BUSINESS_DECISIONS = prior;
+  }
+});
+test('queued approval alerts recheck decisions, limits and preferences before every retry', async () => {
+  const prior = process.env.POSNIC_BUSINESS_DECISIONS;
+  process.env.POSNIC_BUSINESS_DECISIONS = '1';
+  try {
+    for (const change of ['closed', 'limit', 'disabled', 'permission', 'expired']) {
+      db = client.db('approval_retry_' + new ObjectId());
+      const f = await approvalFixture();
+      let sends = 0;
+      const transport = {
+        send: async () => {
+          sends++;
+          throw Object.assign(new Error('retry'), { retryable: true });
+        },
+      };
+      await push.drainPush(db, { config, now: () => at, transport });
+      assert.equal(sends, 1);
+      if (change === 'closed')
+        await db
+          .collection('business_decisions')
+          .updateOne({ _id: f.decision._id }, { $set: { state: 'approved' } });
+      if (change === 'limit')
+        await db
+          .collection('users')
+          .updateOne({ _id: f.user._id }, { $set: { 'access.pos.discount_max_percent': 5 } });
+      if (change === 'disabled')
+        await db
+          .collection('business_approval_notification_preferences')
+          .updateOne({ accountId: String(f.user._id) }, { $set: { enabled: false } });
+      if (change === 'permission')
+        await db
+          .collection('users')
+          .updateOne(
+            { _id: f.user._id },
+            { $set: { 'access.pos.discount_approve_remote': false } }
+          );
+      await push.drainPush(db, {
+        config,
+        now: () => at + (change === 'expired' ? 300001 : 30001),
+        transport,
+      });
+      assert.equal(sends, 1, change);
+      assert.equal(
+        (await db.collection('business_push_deliveries').findOne({ eventId: String(f.event._id) }))
+          .state,
+        'stopped'
+      );
+    }
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_DECISIONS;
+    else process.env.POSNIC_BUSINESS_DECISIONS = prior;
+  }
+});
+test('quiet hours do not defer a short-lived approval beyond its expiry', async () => {
+  const prior = process.env.POSNIC_BUSINESS_DECISIONS;
+  process.env.POSNIC_BUSINESS_DECISIONS = '1';
+  try {
+    const f = await approvalFixture(true);
+    await push.drainPush(db, {
+      config,
+      now: () => at,
+      transport: {
+        send: async () => {
+          assert.fail('quiet hours must suppress delivery');
+        },
+      },
+    });
+    assert.equal(
+      (await db.collection('business_push_deliveries').findOne({ eventId: String(f.event._id) }))
+        .state,
+      'stopped'
+    );
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_DECISIONS;
+    else process.env.POSNIC_BUSINESS_DECISIONS = prior;
+  }
+});
+
 test('recipient languages belong to each session device and legacy renewal preserves the preference', async () => {
   const f = await fixture();
   const registration = { token, platform: 'android', projectId: config.projectId };

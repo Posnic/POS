@@ -124,7 +124,18 @@ async function unregisterDevice(db, identity) {
   });
   return { enabled: false };
 }
-async function currentScope(db, accountId, license, branchId, now) {
+async function currentScope(db, accountId, license, branchId, now, event = {}) {
+  if (event.kind === 'approval_requested')
+    return require('./business-approval-notifications').approvalAlertScope(
+      db,
+      accountId,
+      license,
+      branchId,
+      event.requestId,
+      now
+    );
+  if (event.kind && !['daily_summary', 'daily_unavailable'].includes(event.kind))
+    fail('access_denied', 403);
   const access = createBusinessAccess(db, { now });
   const user = await db.collection('users').findOne({ _id: new ObjectId(accountId), license });
   const context = await access.contextFor(user);
@@ -170,7 +181,7 @@ async function drainPush(
     if (!event) break;
     try {
       if (now() - event.createdAt.getTime() < 3600000) {
-        await currentScope(db, event.accountId, event.license, event.branchId, now);
+        await currentScope(db, event.accountId, event.license, event.branchId, now, event);
         const recipients = await devices
           .find({
             accountId: event.accountId,
@@ -194,10 +205,17 @@ async function drainPush(
                 accountId: event.accountId,
                 license: event.license,
                 branchId: event.branchId,
+                kind: event.kind,
+                requestId: event.requestId ?? null,
                 state: 'pending',
                 attempts: 0,
                 nextAttemptAt: at,
-                staleAt: new Date(event.createdAt.getTime() + 3600000),
+                staleAt: new Date(
+                  Math.min(
+                    event.createdAt.getTime() + 3600000,
+                    event.kind === 'approval_requested' ? event.expiresAt.getTime() : Infinity
+                  )
+                ),
                 expiresAt: new Date(now() + 7 * 86400000),
               },
             },
@@ -261,13 +279,14 @@ async function drainPush(
         String(identity.user.license) !== String(job.license)
       )
         fail('access_denied', 403);
-      const scope = await currentScope(db, job.accountId, job.license, job.branchId, now);
+      const scope = await currentScope(db, job.accountId, job.license, job.branchId, now, job);
       const quietUntil = deferQuiet(at, {
         time: scope.preference.time,
         quiet: scope.preference.quiet,
         timezone: scope.branch.timezone,
       });
       if (quietUntil > at) {
+        if (quietUntil >= job.staleAt) fail('push_expired', 410);
         await deliveries.updateOne(lease, {
           $set: { nextAttemptAt: quietUntil },
           $unset: { leaseId: '', leaseUntil: '' },

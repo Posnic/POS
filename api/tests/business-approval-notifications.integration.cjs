@@ -47,6 +47,42 @@ function fixture() {
   return { user, context, branchId };
 }
 const quiet = { enabled: true, start: '22:00', end: '07:00' };
+test('Inbox negotiates approval entries and revalidates permission, limits and request state on read', async () => {
+  const f = await deliveryFixture(),
+    decision = f.request();
+  const { createBusinessAccess } = require('../src/services/business-access');
+  const context = await createBusinessAccess(f.local, { now: f.now }).contextFor(f.user);
+  const { listInbox, markRead } = require('../src/services/business-notifications');
+  await f.local.collection('business_decisions').insertOne(decision);
+  await drainApprovalAlerts(f.local, { now: f.now });
+  assert.equal((await listInbox(f.local, context, { now: f.now })).entries.length, 0);
+  const read = () => listInbox(f.local, context, { now: f.now, includeApprovals: true });
+  const result = await read();
+  assert.equal(result.entries.length, 1);
+  assert.equal(result.entries[0].requestId, String(decision._id));
+  assert.equal(result.entries[0].summary, null);
+  await markRead(f.local, context, result.entries[0].id);
+  assert.equal((await read()).entries[0].read, true);
+  await f.local
+    .collection('business_decisions')
+    .updateOne({ _id: decision._id }, { $set: { state: 'approved' } });
+  assert.equal((await read()).entries.length, 0);
+  await assert.rejects(markRead(f.local, context, result.entries[0].id), { code: 'access_denied' });
+  await f.local
+    .collection('business_decisions')
+    .updateOne({ _id: decision._id }, { $set: { state: 'pending' } });
+  await f.local
+    .collection('users')
+    .updateOne({ _id: f.user._id }, { $set: { 'access.pos.discount_max_percent': 5 } });
+  assert.equal((await read()).entries.length, 0);
+  await f.local
+    .collection('users')
+    .updateOne({ _id: f.user._id }, { $set: { 'access.pos.discount_max_percent': 20 } });
+  await f.local
+    .collection('business_approval_notification_preferences')
+    .updateOne({ accountId: context.accountId }, { $set: { enabled: false } });
+  assert.equal((await read()).entries.length, 0);
+});
 async function deliveryFixture() {
   const f = fixture(),
     local = client.db('alerts_' + f.branchId);
@@ -55,15 +91,13 @@ async function deliveryFixture() {
   f.user.activate = true;
   f.user.branch_access = [{ branch_id: new ObjectId(f.branchId) }];
   await local.collection('users').insertOne(f.user);
-  await local
-    .collection('branches')
-    .insertOne({
-      _id: new ObjectId(f.branchId),
-      license: f.user.license,
-      branch_name: 'Test',
-      currency: 'INR',
-      time_zone: 'Asia/Kolkata',
-    });
+  await local.collection('branches').insertOne({
+    _id: new ObjectId(f.branchId),
+    license: f.user.license,
+    branch_name: 'Test',
+    currency: 'INR',
+    time_zone: 'Asia/Kolkata',
+  });
   await saveApprovalPreference(
     local,
     f.context,
