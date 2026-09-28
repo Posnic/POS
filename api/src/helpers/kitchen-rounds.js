@@ -48,7 +48,6 @@ function rounds(sale, { descriptions = true } = {}) {
           original.held = false;
           original.fired_at = date(change.timestamp);
           original.round = `c${c}`;
-
         }
       } else if (String(line.process).toLowerCase() === 'cancel') {
         let remaining = qty;
@@ -68,7 +67,9 @@ function rounds(sale, { descriptions = true } = {}) {
           ordered_at: date(change.timestamp) || date(sale.created_date),
           quantity: qty,
           name: String(line.item_name || line.name || ''),
-          note: String(line.item_note || ((descriptions || line.line_id) && line.item_description) || ''),
+          note: String(
+            line.item_note || ((descriptions || line.line_id) && line.item_description) || ''
+          ),
           spice_level: line.spice_level,
         });
       }
@@ -104,7 +105,9 @@ function rounds(sale, { descriptions = true } = {}) {
         ordered_at: date(sale.created_date),
         quantity: missing,
         name: String(line.item_name || line.name || line.sale_inline_item_name || ''),
-        note: String(line.item_note || ((descriptions || line.line_id) && line.item_description) || ''),
+        note: String(
+          line.item_note || ((descriptions || line.line_id) && line.item_description) || ''
+        ),
         spice_level: line.spice_level,
       });
   }
@@ -118,14 +121,21 @@ function rounds(sale, { descriptions = true } = {}) {
     row.served_at = date(service.at);
     row.remaining = row.quantity - row.served;
     if (!groups.has(row.round))
-      groups.set(row.round, { id: row.round, ordered_at: row.ordered_at, fired_at: row.fired_at || null, items: [] });
+      groups.set(row.round, {
+        id: row.round,
+        ordered_at: row.ordered_at,
+        fired_at: row.fired_at || null,
+        items: [],
+      });
     groups.get(row.round).items.push(row);
   }
   return [...groups.values()];
 }
 function tickets(sale) {
-  const closed = sale.kitchen_required ? null : date(sale.bill_requested_at || sale.bill_printed_at);
-  return rounds(sale, {descriptions:false}).flatMap((round) => {
+  const closed = sale.kitchen_required
+    ? null
+    : date(sale.bill_requested_at || sale.bill_printed_at);
+  return rounds(sale, { descriptions: false }).flatMap((round) => {
     const kitchenTime = round.fired_at || round.ordered_at;
     if (closed && (!kitchenTime || kitchenTime <= closed)) return [];
     const items = round.items

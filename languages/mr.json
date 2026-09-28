@@ -95,5 +95,8 @@
   "lang_total_title": "एकूण",
   "lang_yes": "होय",
   "lang_ai_describe_hint": "वस्तूच्या तपशीलांवरून वर्णनाचा मसुदा तयार करा",
-  "lang_walk_in_customer_click_to_choose_or_add": "नोंदणी नसलेला ग्राहक. निवडण्यासाठी किंवा जोडण्यासाठी क्लिक करा"
+  "lang_walk_in_customer_click_to_choose_or_add": "नोंदणी नसलेला ग्राहक. निवडण्यासाठी किंवा जोडण्यासाठी क्लिक करा",
+  "lang_changes_not_saved": "बदल जतन झाले नाहीत.",
+  "lang_continue": "पुढे जा",
+  "lang_reason": "कारण"
 }

@@ -95,5 +95,8 @@
   "lang_total_title": "Tổng cộng",
   "lang_yes": "Có",
   "lang_ai_describe_hint": "Soạn mô tả dựa trên thông tin của mặt hàng",
-  "lang_walk_in_customer_click_to_choose_or_add": "Khách lẻ. Nhấn để chọn hoặc thêm"
+  "lang_walk_in_customer_click_to_choose_or_add": "Khách lẻ. Nhấn để chọn hoặc thêm",
+  "lang_changes_not_saved": "Chưa lưu thay đổi.",
+  "lang_continue": "Tiếp tục",
+  "lang_reason": "Lý do"
 }

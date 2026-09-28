@@ -241,3 +241,76 @@ test('same-product preparations survive edits and cancellation with their own no
     item_description: 'Extra butter',
   });
 });
+
+test('editing a removed catalogue dish keeps quantity and receipt fields consistent at shop precision', async () => {
+  const id = await anOrder(CHANGED_AT);
+  await db.collection('branches').updateOne({ _id: BRANCH }, { $set: { currency_code: 'KWD' } });
+  await db
+    .collection('sales')
+    .updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      {
+        $set: {
+          items: [
+            {
+              item_id: NAAN,
+              item_name: 'Naan',
+              quantity: 2,
+              item_quantity: 2,
+              item_price: 40.005,
+              unit_price: 40.005,
+              total: 80.01,
+              item_total: 80.01,
+              total_amount: 80.01,
+            },
+          ],
+        },
+      }
+    );
+  await db.collection('items').deleteOne({ _id: NAAN });
+  const result = await repo.updateOrderModel(
+    id,
+    [{ item_id: String(NAAN), quantity: 1, item_price: 40.005 }],
+    40.005,
+    null,
+    null,
+    null,
+    null,
+    '4',
+    'Dine-in',
+    2,
+    {}
+  );
+  expect(result.status).not.toBe(false);
+  const saved = await stored(id);
+  expect(saved.items[0]).toMatchObject({
+    quantity: 1,
+    item_quantity: 1,
+    total: 40.005,
+    item_total: 40.005,
+    total_amount: 40.005,
+  });
+  expect(saved.changes.at(-1).items[0]).toMatchObject({ process: 'cancel', item_quantity: 1 });
+});
+
+test('a newly added unknown dish refuses the whole edit instead of silently dropping it', async () => {
+  const id = await anOrder(CHANGED_AT);
+  const result = await repo.updateOrderModel(
+    id,
+    [
+      { item_id: String(NAAN), quantity: 1, item_price: 40 },
+      { item_id: String(new mongoose.Types.ObjectId()), quantity: 1, item_price: 20 },
+    ],
+    60,
+    null,
+    null,
+    null,
+    null,
+    '4',
+    'Dine-in',
+    2,
+    {}
+  );
+  expect(result.status).toBe(false);
+  expect((await stored(id)).items).toHaveLength(2);
+});

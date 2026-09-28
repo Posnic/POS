@@ -10,20 +10,22 @@ async function authorize(req) {
   const c = await context(req),
     body = req.body;
   if (!ObjectId.isValid(String(body.order_id))) fail('Choose an order.');
-  const sale = await req.db
-    .collection('sales')
-    .findOne({
-      _id: new ObjectId(String(body.order_id)),
-      license: c.license,
-      branch_id: c.branchId,
-    });
+  const sale = await req.db.collection('sales').findOne({
+    _id: new ObjectId(String(body.order_id)),
+    license: c.license,
+    branch_id: c.branchId,
+  });
   if (!sale) fail('Order not found.', 404);
   const incoming = new Map(
     (body.items || []).map((line) => [lineIdentity.key(line), quantity(line)])
   );
   const reduced =
     body.status === 'cancelled' ||
-    (sale.items || []).some((line) => (incoming.get(lineIdentity.key(line)) || 0) < Number(line.item_quantity ?? line.quantity ?? 0));
+    (sale.items || []).some(
+      (line) =>
+        (incoming.get(lineIdentity.key(line)) || 0) <
+        Number(line.item_quantity ?? line.quantity ?? 0)
+    );
   const discount =
     body.extra_discount != null &&
     (Number(body.extra_discount) !== Number(sale.extra_discount || 0) ||

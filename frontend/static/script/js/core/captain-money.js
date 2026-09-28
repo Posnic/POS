@@ -3,7 +3,13 @@
   'use strict';
   function policy(value = {}) {
     if (typeof value === 'string') value = { currency: value };
-    const text = [value.currencyCode, value.currency_code, value.currency_text, value.currency_type, value.currency]
+    const text = [
+      value.currencyCode,
+      value.currency_code,
+      value.currency_text,
+      value.currency_type,
+      value.currency,
+    ]
       .filter(Boolean)
       .join(' ');
     const supported = new Set(
@@ -21,7 +27,11 @@
               .maximumFractionDigits
           : 2;
     const symbol = String(
-      value.currencySymbol ?? value.currency_symbol ?? value.currency ?? value.currency_type ?? (code || '')
+      value.currencySymbol ??
+        value.currency_symbol ??
+        value.currency ??
+        value.currency_type ??
+        (code || '')
     )
       .split('')
       .filter((character) => character.charCodeAt(0) >= 32 && !'<>&"\''.includes(character))

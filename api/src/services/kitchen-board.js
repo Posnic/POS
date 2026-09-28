@@ -19,7 +19,7 @@ function project(sale) {
   return rounds(sale, { descriptions: false }).flatMap((round) => {
     const work = sale.kitchen_work?.[round.id] || {};
     const items = round.items
-      .filter((i) => i.remaining > 0)
+      .filter((i) => !i.held && i.remaining > 0)
       .map((i) => {
         const line = work.lines?.[i.id] || {};
         const ready = Math.max(
@@ -34,6 +34,10 @@ function project(sale) {
           total: i.quantity,
           served: i.served,
           note: i.note,
+          seat: i.seat,
+          course: i.course,
+          allergies: i.allergies,
+          allergy_note: i.allergy_note,
           ready,
           collected,
           collector: line.collector || '',
@@ -60,7 +64,7 @@ function project(sale) {
         saleId: String(sale._id),
         roundId: round.id,
         table: String(sale.table_number || ''),
-        placedAt: round.ordered_at,
+        placedAt: round.fired_at || round.ordered_at,
         state,
         owner: String(owner.id || ''),
         ownerName: String(owner.name || ''),
@@ -219,8 +223,9 @@ async function mutate(req, captain = false) {
     {
       $set: {
         kitchen_required: true,
-        kitchen_closed:
-          project({ ...sale, kitchen_work: work, kitchen_service: service }).length === 0,
+        kitchen_closed: !rounds({ ...sale, kitchen_work: work, kitchen_service: service }).some(
+          (round) => round.items.some((item) => item.remaining > 0)
+        ),
         kitchen_work: work,
         ...(b.operation === 'serve' ? { kitchen_service: service } : {}),
       },

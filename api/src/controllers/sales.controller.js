@@ -7065,8 +7065,15 @@ class SalesController extends BaseController {
     }
   }
   async kitchenDisplayReport(req, res) {
-    try { return this.success(res, await require('../services/kitchen-delivery').displayReport(req), 'Received'); }
-    catch (error) { return this.error(res, error.message, error.status || 500); }
+    try {
+      return this.success(
+        res,
+        await require('../services/kitchen-delivery').displayReport(req),
+        'Received'
+      );
+    } catch (error) {
+      return this.error(res, error.message, error.status || 500);
+    }
   }
   async kitchenDeliveryStatus(req, res) {
     try {

@@ -22,18 +22,16 @@ beforeEach(async () => {
   actor = new ObjectId();
   other = new ObjectId();
   await db.collection('branches').insertOne({ _id: branch, license });
-  await db
-    .collection('users')
-    .insertMany(
-      [actor, other].map((id, index) => ({
-        _id: id,
-        license,
-        branch_id: branch,
-        activate: true,
-        name: 'Staff ' + index,
-        access: { sales: { write: true } },
-      }))
-    );
+  await db.collection('users').insertMany(
+    [actor, other].map((id, index) => ({
+      _id: id,
+      license,
+      branch_id: branch,
+      activate: true,
+      name: 'Staff ' + index,
+      access: { sales: { write: true } },
+    }))
+  );
   const line = {
     item_id: new ObjectId().toString(),
     line_id: 'dessert',
@@ -137,15 +135,37 @@ test('cancellation requires a reason and a manager proof bound to this order and
 });
 const delivery = require('../../../src/services/kitchen-delivery');
 test('delivery status distinguishes printer acceptance from display rendering and isolates branches', async () => {
-  const input = req({ key:'ticket-1', printers:[{name:'Kitchen',copy:1,state:'accepted'}],at:new Date().toISOString(),till:'Till 1' });
+  const input = req({
+    key: 'ticket-1',
+    printers: [{ name: 'Kitchen', copy: 1, state: 'accepted' }],
+    at: new Date().toISOString(),
+    till: 'Till 1',
+  });
   await delivery.report(input);
-  await delivery.displayReport(req({saleIds:[String(sale._id)],screens:['screen-1'],till:'Till 1'}));
-  const read=req({});read.query={saleId:String(sale._id)};
-  const state=await delivery.status(read);
+  await delivery.displayReport(
+    req({ saleIds: [String(sale._id)], screens: ['screen-1'], till: 'Till 1' })
+  );
+  const read = req({});
+  read.query = { saleId: String(sale._id) };
+  const state = await delivery.status(read);
   expect(state.reports[0].printers[0].state).toBe('accepted');
-  expect(state.displays[0]).toMatchObject({recent:true,till:'Till 1'});
-  await delivery.displayReport(req({saleIds:[],screens:['screen-1'],till:'Till 1'}));
+  expect(state.displays[0]).toMatchObject({ recent: true, till: 'Till 1' });
+  await delivery.displayReport(req({ saleIds: [], screens: ['screen-1'], till: 'Till 1' }));
   expect((await delivery.status(read)).displays).toEqual([]);
-  read.query.saleId=String(new ObjectId());
-  await expect(delivery.status(read)).rejects.toMatchObject({status:404});
+  read.query.saleId = String(new ObjectId());
+  await expect(delivery.status(read)).rejects.toMatchObject({ status: 404 });
+});
+
+test('kitchen board hides held food and carries seat and allergy details after firing', async () => {
+  const board = require('../../../src/services/kitchen-board');
+  expect(board.project(sale)).toEqual([]);
+  await service.fire(req({ requestId: require('crypto').randomUUID(), items: ['c0i0'] }));
+  const after = await db.collection('sales').findOne({ _id: sale._id });
+  expect(after.kitchen_closed).toBe(false);
+  expect(board.project(after)[0].items[0]).toMatchObject({
+    seat: 2,
+    course: 'Dessert',
+    allergies: ['milk'],
+  });
+  expect(board.project(after)[0].placedAt).toBe(after.changes[1].timestamp.toISOString());
 });

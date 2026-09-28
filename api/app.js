@@ -1126,7 +1126,8 @@ for (const file of ['index.html', 'board.js', 'board.css', 'device.js', 'manifes
     file === 'index.html' ? ['/kitchen/', '/kitchen/index.html'] : '/kitchen/' + file,
     (_req, res) => {
       res.set('Cache-Control', 'no-store');
-      res.sendFile(path.join(__dirname, 'src', 'kitchen-board', file));
+      // Fixed server-owned filenames also work from hidden managed checkouts.
+      res.sendFile(path.join(__dirname, 'src', 'kitchen-board', file), { dotfiles: 'allow' });
     }
   );
 }

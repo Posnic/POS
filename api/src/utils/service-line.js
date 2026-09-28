@@ -25,7 +25,9 @@ function metadata(line) {
     seat < 0 ||
     seat > 99 ||
     course.length > 40 ||
-    [...course, ...allergyNote].some(char => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127) ||
+    [...course, ...allergyNote].some(
+      (char) => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127
+    ) ||
     !Array.isArray(allergies) ||
     allergies.length > ALLERGIES.length ||
     allergies.some((value) => !ALLERGIES.includes(value)) ||

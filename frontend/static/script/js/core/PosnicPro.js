@@ -2035,7 +2035,12 @@ PosnicPro = {
         $('#manager_pin_error').addClass('d-none').text('');
         $('#manager_pin_prompt').text(opts.prompt || "This action needs a manager's approval.");
         $('#manager_pin_submit').prop('disabled', false);
-        $('#manager_pin_modal').modal('show');
+        $('#manager_pin_modal').off('hidden.bs.modal.orderApproval').on('hidden.bs.modal.orderApproval', function () {
+            var pending = PosnicPro._pendingApproval;
+            PosnicPro._pendingApproval = null;
+            $('#manager_pin_input, #manager_card_input').val('');
+            if (pending && typeof pending.onDenied === 'function') pending.onDenied();
+        }).modal('show');
         setTimeout(function () { $('#manager_pin_input').trigger('focus'); }, 400);
     },
     _setApprovalMode: function (mode) {
@@ -2077,9 +2082,10 @@ PosnicPro = {
             url: byCard ? 'authorizations/verify-card' : 'authorizations/verify-pin',
             data: JSON.stringify(payload),
         }, function (response) {
+            if (PosnicPro._pendingApproval !== pending) return;
             if (response && response.type === 'success') {
-                $('#manager_pin_modal').modal('hide');
                 PosnicPro._pendingApproval = null;
+                $('#manager_pin_modal').modal('hide');
                 if (typeof pending.onApproved === 'function') pending.onApproved(response.data);
             } else {
                 reEnable();

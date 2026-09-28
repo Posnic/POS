@@ -74,7 +74,7 @@ async function fire(req) {
       changes: sale.changes === undefined ? { $exists: false } : sale.changes,
       captain_payment_plan: { $exists: false },
     },
-    { $set: { items, changes, updated_date: now } }
+    { $set: { items, changes, updated_date: now, kitchen_required: true, kitchen_closed: false } }
   );
   if (!updated.matchedCount) fail('Order changed. Refresh before sending this course.', 409);
   require('../helpers/kot-notify').notifyKotReady({

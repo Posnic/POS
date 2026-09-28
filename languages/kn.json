@@ -3656,5 +3656,8 @@
   "lang_pm_option_coffee": "ಕಾಫಿ ಅಂಗಡಿ",
   "lang_pm_option_herbs": "ಗಿಡಮೂಲಿಕೆ ತೋಟ",
   "lang_pm_option_pizza": "ಪಿಜ್ಜಾ ಅಂಗಡಿ",
-  "lang_pm_option_grill": "ಬಾರ್ಬೆಕ್ಯೂ ಗ್ರಿಲ್"
+  "lang_pm_option_grill": "ಬಾರ್ಬೆಕ್ಯೂ ಗ್ರಿಲ್",
+  "lang_changes_not_saved": "ಬದಲಾವಣೆಗಳು ಉಳಿಸಲ್ಪಟ್ಟಿಲ್ಲ.",
+  "lang_continue": "ಮುಂದುವರಿಸಿ",
+  "lang_reason": "ಕಾರಣ"
 }

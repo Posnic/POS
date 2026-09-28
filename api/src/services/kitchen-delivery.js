@@ -49,11 +49,36 @@ async function report(req) {
 }
 async function displayReport(req) {
   const body = req.body || {};
-  if (!ObjectId.isValid(String(body.branchId)) || !Array.isArray(body.saleIds) || body.saleIds.length > 2000 || body.saleIds.some(id => !ObjectId.isValid(String(id))) || !Array.isArray(body.screens) || !body.screens.length || body.screens.length > 100 || !body.till || String(body.till).length > 100) fail('Invalid display report.');
-  const db = req.db || await BaseModel.getDb();
-  const key = crypto.createHash('sha256').update(JSON.stringify([String(body.till), [...body.screens].map(String).sort()])).digest('hex');
-  const value = { at: new Date(), till: String(body.till), screens: body.screens.map(id => String(id).slice(0, 100)), saleIds: [...new Set(body.saleIds.map(String))] };
-  await db.collection('branches').updateOne({ _id: new ObjectId(String(body.branchId)), ...(BaseModel.license ? { license: BaseModel.license } : {}) }, { $set: { ['kitchen_display_status.' + key]: value } });
+  if (
+    !ObjectId.isValid(String(body.branchId)) ||
+    !Array.isArray(body.saleIds) ||
+    body.saleIds.length > 2000 ||
+    body.saleIds.some((id) => !ObjectId.isValid(String(id))) ||
+    !Array.isArray(body.screens) ||
+    !body.screens.length ||
+    body.screens.length > 100 ||
+    !body.till ||
+    String(body.till).length > 100
+  )
+    fail('Invalid display report.');
+  const db = req.db || (await BaseModel.getDb());
+  const key = crypto
+    .createHash('sha256')
+    .update(JSON.stringify([String(body.till), [...body.screens].map(String).sort()]))
+    .digest('hex');
+  const value = {
+    at: new Date(),
+    till: String(body.till),
+    screens: body.screens.map((id) => String(id).slice(0, 100)),
+    saleIds: [...new Set(body.saleIds.map(String))],
+  };
+  await db.collection('branches').updateOne(
+    {
+      _id: new ObjectId(String(body.branchId)),
+      ...(BaseModel.license ? { license: BaseModel.license } : {}),
+    },
+    { $set: { ['kitchen_display_status.' + key]: value } }
+  );
   return { received: true };
 }
 async function status(req) {
@@ -61,24 +86,29 @@ async function status(req) {
   const c = await context(req),
     id = req.query.saleId;
   if (!ObjectId.isValid(String(id))) fail('Choose an order.');
-  const sale = await req.db
-    .collection('sales')
-    .findOne(
-      { _id: new ObjectId(String(id)), license: c.license, branch_id: c.branchId },
-      {
-        projection: {
-          kitchen_delivery: 1,
-          created_date: 1,
-          kitchen_service: 1,
-          changes: 1,
-          items: 1,
-        },
-      }
-    );
+  const sale = await req.db.collection('sales').findOne(
+    { _id: new ObjectId(String(id)), license: c.license, branch_id: c.branchId },
+    {
+      projection: {
+        kitchen_delivery: 1,
+        created_date: 1,
+        kitchen_service: 1,
+        changes: 1,
+        items: 1,
+      },
+    }
+  );
   if (!sale) fail('Order not found.', 404);
   return {
     serverAccepted: true,
-    displays: Object.values(c.branch.kitchen_display_status || {}).filter(display => display.saleIds?.includes(String(id))).map(display => ({ at: display.at, till: display.till, screens: display.screens, recent: Date.now() - new Date(display.at).getTime() < 30000 })),
+    displays: Object.values(c.branch.kitchen_display_status || {})
+      .filter((display) => display.saleIds?.includes(String(id)))
+      .map((display) => ({
+        at: display.at,
+        till: display.till,
+        screens: display.screens,
+        recent: Date.now() - new Date(display.at).getTime() < 30000,
+      })),
     reports: Object.values(sale.kitchen_delivery || {})
       .sort((a, b) => new Date(b.at) - new Date(a.at))
       .slice(0, 20),

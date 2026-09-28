@@ -373,7 +373,11 @@ router.post(
   protectOrKioskKey,
   bindController(salesController.getFrequentItems)
 );
-router.post('/kitchenDisplayReport', ensurePrintDevice, bindController(salesController.kitchenDisplayReport));
+router.post(
+  '/kitchenDisplayReport',
+  ensurePrintDevice,
+  bindController(salesController.kitchenDisplayReport)
+);
 router.post(
   '/kitchenDeliveryReport',
   ensurePrintDevice,

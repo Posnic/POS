@@ -10313,7 +10313,15 @@ class SalesRepository {
           });
         }
         const qty = parseFloat(item.quantity || item.item_quantity || 0);
-        const price = parseFloat(item.price || item.unit_price || item.item_base_price || 0);
+        const price = Number(
+          item.price ??
+            item.unit_price ??
+            item.item_base_price ??
+            item.item_price ??
+            previousLine?.unit_price ??
+            previousLine?.item_price ??
+            0
+        );
         if (!productId || qty <= 0 || price < 0) continue;
 
         const oldQty = oldItemsData[lineKey] ? parseFloat(oldItemsData[lineKey].quantity) : 0;
@@ -10323,14 +10331,19 @@ class SalesRepository {
         if (mongoose.Types.ObjectId.isValid(productId)) {
           itemDoc = await itemCollection.findOne({
             _id: new mongoose.Types.ObjectId(productId),
+            license: orderDoc.license,
           });
         }
         if (!itemDoc) {
+          if (!previousLine)
+            throw new Error(
+              'This product has already been removed, so you can not modify anything.'
+            );
           // Item not in catalog (e.g. KOT order item) - update in-place using existing data
           if (existingIndex[lineKey] !== undefined) {
             const i = existingIndex[lineKey];
             updatedItems[i] = {
-              ...this._scaleOrderLine(updatedItems[i], oldQty, qty),
+              ...this._scaleOrderLine(updatedItems[i], oldQty, qty, monetary),
               ...serviceLine.metadata({ ...updatedItems[i], ...item }),
               item_quantity: qty,
               quantity: qty,
@@ -10343,7 +10356,16 @@ class SalesRepository {
                 ? { spice_level: spiceLevel.levelOf(item.spice_level) }
                 : {}),
             };
-            if (qty !== oldQty) changesItems.push({ ...preparation, item_id: productId, item_name: previousLine.item_name || '', item_quantity: Math.abs(qty - oldQty), item_description: newNote, spice_level: updatedItems[i].spice_level, process: qty > oldQty ? 'add' : 'cancel' });
+            if (qty !== oldQty)
+              changesItems.push({
+                ...preparation,
+                item_id: productId,
+                item_name: previousLine.item_name || '',
+                item_quantity: Math.abs(qty - oldQty),
+                item_description: newNote,
+                spice_level: spiceLevel.levelOf(updatedItems[i].spice_level),
+                process: qty > oldQty ? 'add' : 'cancel',
+              });
             incomingProductIds.push(lineKey);
           }
           continue;
@@ -11382,10 +11404,13 @@ class SalesRepository {
    * the price they were quoted rather than to whatever the catalogue says by
    * the time they change their mind.
    */
-  _scaleOrderLine(line, was, now) {
+  _scaleOrderLine(line, was, now, monetary) {
     if (!(was > 0) || now === was) return { ...line, item_quantity: now, quantity: now };
     const factor = now / was;
-    const scale = (value) => round(Number(value || 0) * factor);
+    const scale = (value) =>
+      monetary
+        ? Money.fromMinor(Money.toMinor(Number(value || 0) * factor, monetary), monetary)
+        : round(Number(value || 0) * factor);
     const scaled = { ...line, item_quantity: now, quantity: now };
     for (const field of [
       'tax_amount',
