@@ -1,7 +1,8 @@
 # Business item insights implementation
 
-Status: in progress. No item-ranking endpoint or mobile ranking is enabled by
-this change. The existing prepared overview and daily history remain unchanged.
+Status: in progress. A bounded item-ranking endpoint is implemented in the local
+review branch; the mobile ranking screen is pending. The existing prepared
+overview and daily history response contracts remain unchanged.
 
 ## Source constraint
 
@@ -58,10 +59,8 @@ unit of each exact proportional share.
 
 ## Remaining delivery
 
-- Verify the complete desktop-to-Gateway item contract and expose bounded,
-  publisher-fenced reads without item scans on mobile/server requests.
-- Enforce item-sales ACL and branch scope, preserve unit distinctions for
-  quantities, and label allocated revenue rather than implying item profit.
+- Integrate the bounded endpoint into the mobile ranking/detail views and label
+  allocated revenue rather than implying item profit.
 - Add mobile ranking/detail views, accessible gestures and qualified translated
   explanations, followed by actual sale/return and native-device validation.
 
@@ -81,8 +80,8 @@ explicit error; publishers must not treat it as zero sales. A contribution is
 bounded to 1,000 original lines and 10,000 total return lines, with the existing
 1,000-line bound on each return. These are desktop calculations, not request-time
 Cloud or phone scans. Unit tests and actual return-writer integration tests now
-verify this boundary; prepared storage, API authorization and mobile ranking
-remain outstanding.
+verify this boundary. Prepared storage and API authorization are now implemented
+and tested; mobile ranking remains outstanding.
 
 The desktop preparer accepts an explicit `includeItems: true` option. Updated
 workers advertise item-summary version 1; the sync agent enables the option only
@@ -106,5 +105,31 @@ compatibility and ranking suppression. Gateway validation bounds item counts,
 names, units and quantities, checks ordering/uniqueness and reconciliation, and
 retains existing ownership, sequence and retry fencing. Integration tests cover
 negotiation combinations, invalid rankings, incomplete-state replacement and
-Community crash recovery. End-to-end prepared-data contract qualification,
-bounded API reads and UI delivery are still pending.
+Community crash recovery. A cross-repository real MongoDB test runs the actual
+desktop worker, sync-agent publisher and Gateway service, then reads through the
+Business API service. It covers a truncated 25-item ranking with a refund and
+replacement by an incomplete result after a legacy invoice arrives. This
+reporting fixture uses an in-process transport; the separate snapshot test uses
+actual HTTP sync. Neither is deployed HTTPS/device qualification.
+
+## Bounded read contract
+
+`GET /api/business/v1/items?branchId=<id>&businessDate=YYYY-MM-DD` requires the
+dedicated Business session and current `overview.read` and `items.read` access.
+It accepts exactly one authorized branch. It shares overview date bounds,
+publisher assignment/sequence fencing, timestamps and partial/delayed freshness,
+and reads only prepared summaries and reporting metadata. Ordinary overview
+queries exclude stored item rows from their projection and response.
+
+The response contains overview metadata/totals plus `itemInsights` using the
+bounded schema described above. The reader validates that schema again at the
+storage boundary. Missing or invalid prepared item data returns 503; incomplete
+history is a 200 response with `state: incomplete` and an empty ranking. A valid
+empty day has `state: available` and `totalItems: 0`. The UI must distinguish
+these cases and retain the parent freshness/completeness warning.
+
+`GET /api/business/v1/discovery?items=1` advertises
+`itemReporting: bounded-items-v1`; unqualified discovery retains its existing
+response for older strict clients. HTTP tests cover live ACL removal, wrong and
+multiple branches, publisher pending state, malformed rows, incomplete state and
+no-store responses. Mobile integration and release qualification remain open.

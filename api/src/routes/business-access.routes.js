@@ -68,6 +68,7 @@ router.get('/discovery', (_req, res) =>
     authorization: 'business-pkce-v1',
     audience: 'posnic-business',
     reporting: 'bounded-summary-v2',
+    ...(_req.query.items === '1' ? { itemReporting: 'bounded-items-v1' } : {}),
   })
 );
 router.post(
@@ -335,6 +336,18 @@ router.get(
   wrap(async (req, res) =>
     res.json(
       await require('../services/business-reports').readBusinessOverview(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.query
+      )
+    )
+  )
+);
+router.get(
+  '/items',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-reports').readBusinessItems(
         req.db,
         await req.businessAccess.contextFor(req.businessIdentity.user),
         req.query

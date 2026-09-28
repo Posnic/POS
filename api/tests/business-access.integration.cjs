@@ -833,6 +833,87 @@ test('prepared overview enforces live ACL and branch scope and never substitutes
     .updateOne({ _id: f.user._id }, { $set: { access: { item: { read: true } } } });
   assert.equal((await read(id)).status, 403);
 });
+test('item reads require live item ACL, one authorized branch and a validated publisher snapshot', async () => {
+  const f = await fixture(),
+    value = await grant(f),
+    id = await prepared(f);
+  const url = base + '/api/business/v1/items?businessDate=' + reportDay + '&branchId=' + id;
+  const headers = { 'x-forwarded-proto': 'https', authorization: 'Bearer ' + value.token };
+  assert.equal((await fetch(url, { headers: { 'x-forwarded-proto': 'https' } })).status, 401);
+  assert.equal((await fetch(url, { headers })).status, 503);
+  const insight = {
+    schemaVersion: 1,
+    state: 'available',
+    reason: null,
+    sourceSales: 2,
+    unavailableSales: 0,
+    totalItems: 1,
+    truncated: false,
+    items: [
+      {
+        itemId: String(new ObjectId()),
+        name: 'Tea',
+        billedSalesMinor: 10000,
+        refundsMinor: 2500,
+        salesAfterReturnsMinor: 7500,
+        quantities: [{ unit: 'cup', soldMilli: 2000, returnedMilli: 1000 }],
+      },
+    ],
+  };
+  const summaries = db.collection('business_prepared_summaries');
+  await summaries.updateOne(
+    { branch_id: f.branch._id },
+    { $set: { 'summary.itemInsights': insight, 'summary.sourceDocuments': 2 } }
+  );
+  const response = await fetch(url, { headers });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('cache-control'), /no-store/);
+  assert.deepEqual((await response.json()).itemInsights, insight);
+  assert.equal((await fetch(url + '&branchId=' + String(new ObjectId()), { headers })).status, 400);
+  assert.equal((await fetch(url.replace(id, String(new ObjectId())), { headers })).status, 403);
+  await db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: id }, { $set: { pending: { sequence: 2 } } });
+  assert.equal((await fetch(url, { headers })).status, 503);
+  await db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: id }, { $unset: { pending: '' } });
+  await summaries.updateOne(
+    { branch_id: f.branch._id },
+    { $set: { 'summary.itemInsights.items.0.salesAfterReturnsMinor': 8000 } }
+  );
+  assert.equal((await fetch(url, { headers })).status, 503);
+  const incomplete = {
+    ...insight,
+    state: 'incomplete',
+    reason: 'original_items_unavailable',
+    unavailableSales: 1,
+    totalItems: null,
+    items: [],
+  };
+  await summaries.updateOne(
+    { branch_id: f.branch._id },
+    { $set: { 'summary.itemInsights': incomplete } }
+  );
+  assert.deepEqual((await (await fetch(url, { headers })).json()).itemInsights, incomplete);
+  await db
+    .collection('users')
+    .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
+  assert.equal((await fetch(url, { headers })).status, 403);
+  assert.equal((await fetch(url.replace('/items?', '/overview?'), { headers })).status, 200);
+  const discovery = await (
+    await fetch(base + '/api/business/v1/discovery?items=1', { headers })
+  ).json();
+  assert.equal(discovery.itemReporting, 'bounded-items-v1');
+  assert.equal(
+    Object.hasOwn(
+      await (await fetch(base + '/api/business/v1/discovery', { headers })).json(),
+      'itemReporting'
+    ),
+    false
+  );
+});
+
 test('prepared reads reject an in-progress publisher, wrong generation and false completeness', async () => {
   const { readBusinessOverview } = require('../src/services/business-reports');
   const f = await fixture(),

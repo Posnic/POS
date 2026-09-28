@@ -1609,7 +1609,7 @@
     },
     "/business/v1/discovery": {
       "get": {
-        "summary": "v2",
+        "summary": "v1",
         "operationId": "get_business_v1_discovery",
         "tags": [
           "Business access"
@@ -2131,6 +2131,31 @@
       "get": {
         "summary": "query",
         "operationId": "get_business_v1_overview",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/items": {
+      "get": {
+        "summary": "query",
+        "operationId": "get_business_v1_items",
         "tags": [
           "Business access"
         ],

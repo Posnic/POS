@@ -1,5 +1,6 @@
 'use strict';
 const { ObjectId } = require('mongodb');
+const { validateItemSummary } = require('./business-item-summary-validation');
 const fail = (code, status) => {
   throw Object.assign(new Error(code), { code, status });
 };
@@ -13,8 +14,14 @@ const sum = (a, b) => {
 };
 
 // Three bounded primary-key reads. Never prepares a report on a phone request.
-async function readBusinessOverview(db, context, query, { now = Date.now } = {}) {
+async function readBusinessOverview(
+  db,
+  context,
+  query,
+  { now = Date.now, includeItems = false } = {}
+) {
   if (!context.capabilities.includes('overview.read')) fail('access_denied', 403);
+  if (includeItems && !context.capabilities.includes('items.read')) fail('access_denied', 403);
   const ids = typeof query.branchId === 'string' ? [query.branchId] : query.branchId;
   const day = query.businessDate;
   const parsedDate = typeof day === 'string' ? new Date(day + 'T12:00:00Z') : null;
@@ -22,6 +29,7 @@ async function readBusinessOverview(db, context, query, { now = Date.now } = {})
     !Array.isArray(ids) ||
     !ids.length ||
     ids.length > 100 ||
+    (includeItems && ids.length !== 1) ||
     ids.some((id) => typeof id !== 'string' || !/^[a-f\d]{24}$/.test(id)) ||
     new Set(ids).size !== ids.length ||
     typeof day !== 'string' ||
@@ -99,7 +107,10 @@ async function readBusinessOverview(db, context, query, { now = Date.now } = {})
     fail('summary_unavailable', 503);
   const rows = await db
     .collection('business_prepared_summaries')
-    .find({ _id: { $in: ids.map((id) => id + ':' + day) }, license })
+    .find(
+      { _id: { $in: ids.map((id) => id + ':' + day) }, license },
+      includeItems ? {} : { projection: { 'summary.itemInsights': 0 } }
+    )
     .limit(ids.length)
     .maxTimeMS(250)
     .toArray();
@@ -128,6 +139,7 @@ async function readBusinessOverview(db, context, query, { now = Date.now } = {})
   let preparedAt = null,
     sourceUpdatedAt = null,
     sourceMissing = false;
+  let itemInsights;
   const checkedAt = now();
   for (const branch of branches) {
     const row = rows.find((row) => String(row.branch_id) === branch.id);
@@ -163,6 +175,15 @@ async function readBusinessOverview(db, context, query, { now = Date.now } = {})
           Date.parse(s.sourceUpdatedAt) > Date.parse(s.preparedAt) + 5 * 60000))
     )
       fail('summary_unavailable', 503);
+    if (includeItems) {
+      try {
+        if (!integer(s.sourceDocuments) || s.sourceDocuments > 100000)
+          fail('summary_unavailable', 503);
+        itemInsights = validateItemSummary(s.itemInsights, s);
+      } catch {
+        fail('summary_unavailable', 503);
+      }
+    }
     for (const key of Object.keys(totals)) totals[key] = sum(totals[key], s[key]);
     if (!preparedAt || s.preparedAt < preparedAt) preparedAt = s.preparedAt;
     if (s.sourceUpdatedAt === null) sourceMissing = true;
@@ -178,6 +199,7 @@ async function readBusinessOverview(db, context, query, { now = Date.now } = {})
     currency,
     currencyDigits,
     ...totals,
+    ...(includeItems ? { itemInsights } : {}),
     preparedAt,
     freshness: {
       state: checkedAt - Date.parse(preparedAt) > 15 * 60000 ? 'delayed' : 'partial',
@@ -187,4 +209,7 @@ async function readBusinessOverview(db, context, query, { now = Date.now } = {})
     },
   };
 }
-module.exports = { readBusinessOverview };
+async function readBusinessItems(db, context, query, options = {}) {
+  return readBusinessOverview(db, context, query, { ...options, includeItems: true });
+}
+module.exports = { readBusinessOverview, readBusinessItems };
