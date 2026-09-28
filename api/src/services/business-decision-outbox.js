@@ -33,6 +33,7 @@ function createDecisionOutbox(db, { now = Date.now } = {}) {
   }
   async function claim(deviceId, body) {
     enabled();
+    await require('./business-decision-local').ensureLocalDecisionIndexes(db);
     if (
       !key(deviceId) ||
       !body ||
@@ -82,6 +83,7 @@ function createDecisionOutbox(db, { now = Date.now } = {}) {
   }
   async function enqueue(deviceId, action, body) {
     enabled();
+    await require('./business-decision-local').ensureLocalDecisionIndexes(db);
     const serialized = JSON.stringify(body);
     if (
       !key(deviceId) ||

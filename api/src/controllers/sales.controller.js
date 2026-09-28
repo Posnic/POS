@@ -717,12 +717,28 @@ class SalesController extends BaseController {
   async businessDiscountDecision(req, res, next) {
     try {
       await this.ensureContext(req);
+      if (
+        req.params.requestId === 'capabilities' &&
+        req.method === 'GET' &&
+        !require('../services/business-checkout-transport').checkoutMode()
+      )
+        return res.json({
+          data: {
+            enabled: false,
+            branchId: String(this.resolveBranchContext(req).branch_id || ''),
+            requesterId: String(req.user?._id || ''),
+          },
+        });
       const context = await this.buildSaleContext(req);
       const decisions = require('../services/business-checkout-decisions').createCheckoutDecisions(
         await BaseModel.getDb()
       );
       let record;
-      if (req.method === 'GET') {
+      if (req.params.operationId && req.method === 'GET') {
+        record = await decisions.lookup(context, req.user, req.params.operationId);
+      } else if (req.params.requestId === 'capabilities' && req.method === 'GET') {
+        record = await decisions.capabilities(context, req.user);
+      } else if (req.method === 'GET') {
         record = await decisions.read(context, req.user, req.params.requestId);
       } else if (req.params.requestId) {
         record = await decisions.cancel(context, req.user, req.params.requestId);

@@ -31,7 +31,7 @@ function validateIntent(payload, context, reason) {
     String(payload.partial_check) === 'true' ||
     !payload.payment_mode ||
     payload.sale_method === 'Table-Order' ||
-    (payload.sale_process && payload.sale_process !== 'Add') ||
+    (payload.sale_process && !['Add', 'add'].includes(payload.sale_process)) ||
     payload.coupon_code ||
     positive(payload.coupon_discount_value) ||
     positive(payload.loyalty_redeem_value) ||
@@ -65,6 +65,7 @@ function validateIntent(payload, context, reason) {
   const intent = { ...payload };
   delete intent.approval_token;
   delete intent.business_decision_id;
+  intent.sale_process = 'Add';
   // Checkout always writes these server-owned zero values before pricing.
   // Canonicalize the same way for preview so an absent field and its ordinary
   // zero-valued checkout form do not invalidate an otherwise identical bill.

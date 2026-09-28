@@ -108,6 +108,7 @@ test('Community checkout uses authenticated owner approval, final pricing and on
       billing_transaction_id: crypto.randomUUID(),
       sales_total: 0,
       payment_mode: 'Cash',
+      sale_process: 'add',
       items: [{ item_id: String(itemId), item_quantity: 2 }],
       extra_discount: 10,
       extra_discount_type: 'percent',
@@ -147,6 +148,13 @@ test('Community checkout uses authenticated owner approval, final pricing and on
     assert.equal(requested.code, 200, JSON.stringify(requested.body));
     const row = requested.body.data;
     assert.equal(row.state, 'pending');
+    const capabilities = await checkout.capabilities(context, cashier);
+    assert.equal(capabilities.enabled, true);
+    assert.equal(capabilities.requesterId, String(cashier._id));
+    const resumed = await checkout.lookup(context, cashier, payload.billing_transaction_id);
+    assert.equal(resumed.id, row.id);
+    assert.equal(resumed.checkout.state, 'not_started');
+    assert.equal(await checkout.lookup(context, cashier, crypto.randomUUID()), null);
     assert.equal(await db.collection('sales').countDocuments({ license }), 0);
     await assert.rejects(
       checkout.gate(context, cashier, { ...payload, business_decision_id: row.id }),
@@ -186,6 +194,9 @@ test('Community checkout uses authenticated owner approval, final pricing and on
     assert.equal(sale.business_decision_receipt.decisionId, row.id);
     assert.match(sale.business_decision_receipt.deviceId, /^community-/);
     assert.equal(context.deviceId, 'register-browser-0001');
+    const locallySaved = await checkout.read(context, cashier, row.id);
+    assert.equal(locallySaved.checkout.state, 'saved');
+    assert.equal(locallySaved.checkout.saleId, String(sale._id));
     const retry = await invoke('create', original);
     assert.equal(retry.code, 200);
     assert.equal(retry.body.data.duplicate, true);

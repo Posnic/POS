@@ -102,6 +102,7 @@ PosnicPro.request = function (params, callback, failure = null) {
         var request = $.ajax({
             url: url,
             method: method,
+            timeout: params.timeout,
             dataType: 'json',
             headers: headers,
             xhrFields: {

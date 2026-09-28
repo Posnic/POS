@@ -7,6 +7,16 @@ const fail = (code, status = 503) => {
   throw Object.assign(new Error(code), { code, status });
 };
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+function checkoutMode() {
+  if (
+    process.env.POSNIC_DESKTOP !== '1' ||
+    isMultiTenant() ||
+    process.env.POSNIC_BUSINESS_DECISIONS !== '1'
+  )
+    return null;
+  if (process.env.POSNIC_SYNC_PAIRED === '1') return 'cloud';
+  return process.env.POSNIC_BUSINESS_LOCAL_DECISIONS === '1' ? 'community' : null;
+}
 
 /** Internal checkout adapter. The desktop shell decides the pairing mode;
  * callers cannot select a server or provide an installation identity. */
@@ -140,6 +150,40 @@ function createCheckoutTransport(db, { now = Date.now, wait = sleep } = {}) {
     if (community) return community.acknowledge({ deviceId, branches: null }, body);
     return outbox.result(await outbox.enqueue(deviceId, 'acknowledge', body), deviceId);
   }
-  return { exchange, start, recover };
+  async function lookup(source, operationId) {
+    if (!/^[A-Za-z0-9_-]{16,128}$/.test(operationId || '')) fail('invalid_discount_request', 400);
+    const deviceId = await identity();
+    let requestId;
+    if (community) {
+      const record = await db.collection('business_decisions').findOne(
+        {
+          deviceId,
+          branchId: source.branchId,
+          requesterId: source.requesterId,
+          operationId,
+        },
+        { projection: { _id: 1 }, maxTimeMS: 250 }
+      );
+      requestId = record && String(record._id);
+    } else {
+      await require('./business-decision-local').ensureLocalDecisionIndexes(db);
+      const command = await local.findOne(
+        {
+          kind: 'command',
+          protocolVersion: 1,
+          deviceId,
+          action: 'create',
+          'body.branchId': source.branchId,
+          'body.requesterId': source.requesterId,
+          'body.request.operationId': operationId,
+        },
+        { sort: { createdAt: -1 }, maxTimeMS: 250 }
+      );
+      if (command) requestId = (await outbox.result(command._id, deviceId))?.id;
+    }
+    if (!requestId) return null; // Unknown/pending is never proof that a bill failed.
+    return exchange('read', { ...source, requestId });
+  }
+  return { exchange, start, recover, lookup };
 }
-module.exports = { createCheckoutTransport };
+module.exports = { createCheckoutTransport, checkoutMode };

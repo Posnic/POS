@@ -451,6 +451,11 @@ router.post(
   bindController(salesController.businessDiscountDecision)
 );
 router.get(
+  '/business-decisions/operation/:operationId',
+  businessDecisionLimit,
+  bindController(salesController.businessDiscountDecision)
+);
+router.get(
   '/business-decisions/:requestId',
   businessDecisionLimit,
   bindController(salesController.businessDiscountDecision)

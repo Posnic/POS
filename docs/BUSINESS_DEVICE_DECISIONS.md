@@ -1,7 +1,7 @@
 # Business decision device transport
 
 This transport remains behind `POSNIC_BUSINESS_DECISIONS=1`. Authenticated
-checkout routes and receipt recovery are implemented. Cashier UI, operator
+checkout routes, cashier UI and receipt recovery are implemented. Operator
 resolution of a missing receipt, broader bill combinations and native release
 qualification remain incomplete. Keep the production flag disabled.
 
@@ -57,6 +57,11 @@ explicit branch membership and sales permission are checked again by the service
 - `POST /api/sales/business-decisions`: `{ sale, reason }`, priced by the same
   read-only checkout preview. Limited to 30 requests per cashier per minute.
 - `GET /api/sales/business-decisions/:requestId`: current scoped state.
+- `GET /api/sales/business-decisions/capabilities`: current branch, cashier and
+  transport support. Disabled installations return a disabled capability without
+  enabling remote approval.
+- `GET /api/sales/business-decisions/operation/:operationId`: recover a request
+  reference after a lost create response. A null result is not proof of failure.
 - `POST /api/sales/business-decisions/:requestId/cancel`: cancel a pending or
   approved request. Read/cancel share a 120-per-minute cashier limit.
 - `POST /api/sales`: the existing Add endpoint accepts `business_decision_id` and
@@ -81,6 +86,22 @@ temporary device revocation. A missing receipt stays unresolved; it is not proof
 that the sale failed, and there is deliberately no automatic second sale.
 
 ## Local validation
+
+The cashier dialog requires an explicit request and a separate explicit save.
+It stores only the operation and request references in session storage, scoped
+to API URL, branch and cashier. Closing or reopening the dialog never sends a
+second request. A failed save clears the displayed approval until a fresh read;
+a matching local receipt offers recovery with the original operation ID.
+Unresolved execution does not offer a second save. Request creation with an
+unknown outcome remains pending until the reference can be recovered.
+
+The first contract supports paid new counter sales with at most 100 items,
+two-decimal currencies and a bill-level manual discount. Other combinations
+continue through the on-site manager flow. The dialog has English and 17
+translated language packs; this does not qualify the mobile app's localization.
+Run `node --test tests/business-approval-ui.test.js` for its interaction and
+translation checks. Browser fixture checks cover narrow screens, Arabic RTL and
+200% text; full POS and physical-device acceptance remain required.
 
 Run the real MongoDB API suites `business-device-decisions.integration.cjs`,
 `business-decision-outbox.integration.cjs`, `business-sale-preview.integration.cjs`

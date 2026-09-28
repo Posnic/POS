@@ -55,13 +55,70 @@ function createCheckoutDecisions(db, { now = Date.now, transport } = {}) {
     };
   }
   return {
+    async capabilities(context, user) {
+      const source = await cashier(context, user);
+      return {
+        enabled: true,
+        protocolVersion: 1,
+        branchId: source.branchId,
+        requesterId: source.requesterId,
+        mode: require('./business-checkout-transport').checkoutMode(),
+        currencyDigits: require('./business-access').branchInfo(context.branchSettings)
+          .currencyDigits,
+      };
+    },
     async request(context, user, payload, reason) {
       const source = await cashier(context, user);
       const request = await prepareDiscountIntent(payload, context, reason);
       return channel.exchange('create', { ...source, request });
     },
+    async lookup(context, user, operationId) {
+      const source = await cashier(context, user);
+      const record = await channel.lookup(
+        { branchId: source.branchId, requesterId: source.requesterId },
+        operationId
+      );
+      return record ? this.read(context, user, record.id) : null;
+    },
     async read(context, user, requestId) {
-      return channel.exchange('read', await reference(context, user, requestId));
+      const ref = await reference(context, user, requestId);
+      const record = await channel.exchange('read', ref);
+      let checkout = { state: 'not_started', saleId: null };
+      await require('./business-decision-local').ensureLocalDecisionIndexes(db);
+      const local = await db.collection('business_decision_local').findOne({
+        kind: 'command',
+        protocolVersion: 1,
+        action: 'claim',
+        'body.requestId': ref.requestId,
+        'body.branchId': ref.branchId,
+        'body.requesterId': ref.requesterId,
+      });
+      if (local) {
+        // Confirm local persistence, never infer a sale from an execution claim.
+        const sale = await db.collection('sales').findOne(
+          {
+            license: new ObjectId(String(context.licenseId)),
+            branch_id: new ObjectId(ref.branchId),
+            billing_transaction_id: record.operationId,
+            'business_decision_receipt.version': 1,
+            'business_decision_receipt.decisionId': ref.requestId,
+            'business_decision_receipt.executionId': local.body.executionId,
+            'business_decision_receipt.revisionHash': record.revisionHash,
+            'business_decision_receipt.requesterId': ref.requesterId,
+            'business_decision_receipt.deviceId': local.deviceId,
+          },
+          { projection: { _id: 1 }, maxTimeMS: 250 }
+        );
+        if (sale)
+          checkout = {
+            state: record.state === 'applied' ? 'applied' : 'saved',
+            saleId: String(sale._id),
+          };
+        else if (local.consumedAt || ['applying', 'applied'].includes(record.state))
+          checkout = { state: 'reconciling', saleId: null };
+      } else if (['applying', 'applied'].includes(record.state))
+        checkout = { state: 'reconciling', saleId: null };
+      return { ...record, checkout };
     },
     async cancel(context, user, requestId) {
       return channel.exchange('cancel', await reference(context, user, requestId));
