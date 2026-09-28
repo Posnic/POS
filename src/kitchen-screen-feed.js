@@ -35,8 +35,9 @@ const EVERY_MS = 5000;
 const KEEP_LAST_ON_FAILURE = true;
 
 let timer = null;
-let lastGood = null;
+const lastGood = new Map();
 let generation = 0;
+let servedListener = null;
 
 function screens() {
   return require('./kitchen-screen');
@@ -59,7 +60,7 @@ function apiUrl() {
  * interesting parts - what happens when the shop cannot be reached - can be
  * checked at all.
  */
-async function tick({ branchId, fetchImpl, expectedGeneration = generation } = {}) {
+async function tick({ branchId, fetchImpl, displayId, isCurrent = () => true } = {}) {
   const branch = String(branchId || '').trim();
   if (!branch) return { ok: false, why: 'no branch' };
 
@@ -83,17 +84,17 @@ async function tick({ branchId, fetchImpl, expectedGeneration = generation } = {
     if (!answer || answer.type === 'error' || answer.status === false || !Array.isArray(answer.data)) {
       return { ok: false, why: 'invalid response' };
     }
-    if (expectedGeneration !== generation) return {ok:false,why:'feed changed'};
     const tickets = answer.data;
-    lastGood = tickets;
-    const rendered = await screens().setTickets(tickets);
-    if (Array.isArray(rendered) && rendered.length) {
+    if (!isCurrent()) return { ok: false, why: 'superseded' };
+    lastGood.set(branch, tickets);
+    const rendered = displayId ? await screens().setTickets(tickets, displayId) : await screens().setTickets(tickets);
+    if (Array.isArray(rendered) && rendered.length && isCurrent()) {
       try {
         await doFetch(`${apiUrl()}/sales/kitchenDisplayReport`, {method:'POST',signal:AbortSignal.timeout(3000),
           headers:{'Content-Type':'application/json',kioskkey:process.env.KIOSK_API_KEY || ''},
           body:JSON.stringify({branchId:branch,till:require('os').hostname(),screens:rendered,
-            saleIds:[...new Set(tickets.map(ticket=>String(ticket.id || '').split(':')[0]))],at:new Date().toISOString()})});
-      } catch {} // A status report must not clear the rendered tickets.
+            saleIds:[...new Set(tickets.map(ticket=>String(ticket.id || '').split(':')[0]))]})});
+      } catch {} // Status delivery must never clear an already rendered ticket.
     }
     return { ok: true, count: tickets.length };
   } catch (e) {
@@ -103,9 +104,9 @@ async function tick({ branchId, fetchImpl, expectedGeneration = generation } = {
      * screen that empties itself every time the API hiccups is a screen
      * nobody trusts.
      */
-    if (KEEP_LAST_ON_FAILURE && lastGood && expectedGeneration === generation) {
+    if (KEEP_LAST_ON_FAILURE && lastGood.has(branch) && isCurrent()) {
       try {
-        await screens().setTickets(lastGood);
+        await screens().setTickets(lastGood.get(branch), displayId);
       } catch (err) {
         /* nothing to do */
       }
@@ -115,31 +116,80 @@ async function tick({ branchId, fetchImpl, expectedGeneration = generation } = {
 }
 
 /** Start feeding, if this shop has a screen to feed. Idempotent. */
-function start({ branchId, everyMs = EVERY_MS } = {}) {
+async function pollScreens({ resolveBranch, fetchImpl, isCurrent = () => true } = {}) {
+  const open = screens().displays().filter(d => d.open && d.configured);
+  if (!open.length) return;
+  const fallback = open.some(d => !d.config.branchId) && resolveBranch ? await resolveBranch() : '';
+  if (!isCurrent()) return;
+  await Promise.all(open.map(async d => {
+    const branchId = String(d.config.branchId || fallback || '');
+    const current = () => isCurrent() && screens().configFor(d.id).enabled &&
+      String(screens().configFor(d.id).branchId || '') === String(d.config.branchId || '');
+    if (!branchId) {
+      screens().setTickets([], d.id);
+      screens().setFeedStatus('Choose an orders branch in Hardware Manager > Kitchen Screen.', d.id);
+      return;
+    }
+    // A branch change must not leave the previous branch's tickets on the wall.
+    if (screenBranches.get(d.id) !== branchId) {
+      screenBranches.set(d.id, branchId);
+      screens().setTickets([], d.id);
+      screens().setFeedStatus('Connecting to kitchen orders...', d.id);
+    }
+    const result = await tick({ branchId, displayId: d.id, fetchImpl, isCurrent: current });
+    if (current()) screens().setFeedStatus(result.ok ? '' :
+      'Orders connection unavailable. Retrying; any orders shown may be out of date.', d.id);
+  }));
+}
+const screenBranches = new Map();
+
+function start({ branchId, resolveBranch, everyMs = EVERY_MS, fetchImpl } = {}) {
   stop();
   const branch = String(branchId || '').trim();
-  if (!branch) return null;
+  if (!branch && !resolveBranch) return null;
+  const epoch = generation;
   let busy = false;
-  const expectedGeneration = generation;
-  const refresh = async () => {
-    if (busy || expectedGeneration !== generation) return;
+  let revision = 0;
+  let pending = false;
+  const run = async () => {
+    if (busy) return;
     busy = true;
-    try { await tick({branchId:branch, expectedGeneration}); } finally { busy = false; }
+    pending = false;
+    const reading = revision;
+    const isCurrent = () => epoch === generation && reading === revision;
+    try {
+      if (resolveBranch) await pollScreens({ resolveBranch, fetchImpl, isCurrent });
+      else await tick({ branchId: branch, fetchImpl, isCurrent });
+    } catch (e) {
+      if (epoch !== generation) return;
+      for (const d of screens().displays().filter(d => d.open && d.configured)) {
+        screens().setFeedStatus('Orders connection unavailable. Retrying...', d.id);
+      }
+    } finally {
+      busy = false;
+      if (pending && epoch === generation) void run();
+    }
   };
-  timer = setInterval(() => { refresh().catch(() => {}); }, everyMs);
+  servedListener = (event) => {
+    if (!event?.branchId || (!resolveBranch && String(event.branchId) !== branch)) return;
+    // Discard a response read before service was saved, then read fresh without overlap.
+    revision += 1;
+    pending = true;
+    void run();
+  };
+  process.on('posnic:kitchen-served', servedListener);
+  timer = setInterval(run, everyMs);
   if (typeof timer.unref === 'function') timer.unref();
-  /* Straight away as well: a shop that has just opened a screen should not
-     watch an empty wall for five seconds wondering whether it works. */
-  refresh().catch(() => {});
+  run();
   return timer;
 }
 
 function stop() {
-  generation++;
-  lastGood = null;
-  if (!timer) return;
-  clearInterval(timer);
+  generation += 1;
+  if (servedListener) process.removeListener('posnic:kitchen-served', servedListener);
+  servedListener = null;
+  if (timer) clearInterval(timer);
   timer = null;
 }
 
-module.exports = { start, stop, tick, EVERY_MS };
+module.exports = { start, stop, tick, pollScreens, EVERY_MS };

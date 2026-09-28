@@ -311,6 +311,8 @@ const saleSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    kitchen_closed: { type: Boolean, default: false },
+    kitchen_required: { type: Boolean, default: false },
     sale_process: {
       type: String,
       enum: SALE_PROCESS_VALUES,

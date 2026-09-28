@@ -1184,9 +1184,6 @@
   "No changes made or item not found": [
     "src/repositories/item.repository.js"
   ],
-  "No changes made to the order": [
-    "src/repositories/sale.repository.js"
-  ],
   "No data to import": [
     "src/controllers/customer-categories.controller.js"
   ],
@@ -1842,6 +1839,9 @@
   ],
   "Shift updated": [
     "src/repositories/shift.repository.js"
+  ],
+  "Sign in to hold a course.": [
+    "src/repositories/sale.repository.js"
   ],
   "Something went wrong!": [
     "src/middleware/errorHandler.js"

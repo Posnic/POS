@@ -1,6 +1,7 @@
 const Money = require('../utils/currency');
 const serviceLine = require('../utils/service-line');
 const orderLine = require('../utils/order-line');
+const kitchenActor = require('../helpers/kitchen-actor');
 const itemText = require('../utils/item-localization');
 const mongoose = require('mongoose');
 const { currentConnection } = require('../db/tenant-context');
@@ -6974,6 +6975,8 @@ class SalesRepository {
           $set: {
             partial_balance: parseFloat(saleData.amount) + parseFloat(saleData.paidamount || 0),
             payment_status: 'Paid',
+            kitchen_required:
+              saleDetails.kitchen_required === true || saleDetails.sale_process === 'KOT',
             payment_pending: 0.0,
             updated_date: new Date(),
             updated_by: loggedUserName,
@@ -7875,10 +7878,8 @@ class SalesRepository {
    *   - and it now claims what it hands out, so a ticket taken by the other
    *     till would never appear at all.
    *
-   * A screen shows what is open, whoever printed it, until it is settled.
-   * "Settled" has no marker in this product - nothing says a dish is done -
-   * so the honest boundary is the one that already exists: it leaves the
-   * screen when the table is billed, paid or called off.
+   * Tracked kitchen orders remain until served or cancelled, independently of
+   * billing. Legacy receipts retain their historical billing boundary.
    */
   async serveKitchenItems({ saleId, branchId, items, actor }) {
     if (
@@ -7895,9 +7896,7 @@ class SalesRepository {
     const scope = {
       _id: new mongoose.Types.ObjectId(String(saleId)),
       branch_id: new mongoose.Types.ObjectId(String(branchId)),
-      sale_process: { $regex: 'KOT', $options: 'i' },
-      payment_status: { $nin: ['Paid', 'Cancelled'] },
-      order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
+      ...require('../helpers/kitchen-eligibility').kitchenEligibility(),
       ...activeTenantFilter(),
     };
     const sale = await collection.findOne(scope);
@@ -7929,10 +7928,23 @@ class SalesRepository {
         kitchen_service:
           sale.kitchen_service === undefined ? { $exists: false } : sale.kitchen_service,
       },
-      { $set: { kitchen_service: service } }
+      {
+        $set: {
+          kitchen_service: service,
+          kitchen_closed: !rounds({ ...sale, kitchen_service: service }).some((r) =>
+            r.items.some((i) => i.remaining > 0)
+          ),
+        },
+      }
     );
     if (!result.matchedCount)
       return { status: false, message: 'Order changed. Refresh before marking items served.' };
+    // Only notify after the write succeeds. Cloud/other processes still use the normal poll.
+    try {
+      process.emit('posnic:kitchen-served', { branchId: String(branchId), saleId: String(saleId) });
+    } catch (error) {
+      console.warn('[kitchen] Could not request screen refresh:', error.message);
+    }
     return {
       status: true,
       message: 'Items marked served',
@@ -7952,9 +7964,7 @@ class SalesRepository {
         .find(
           {
             branch_id: branchObjectId,
-            sale_process: { $regex: 'KOT', $options: 'i' },
-            payment_status: { $nin: ['Paid', 'Cancelled'] },
-            order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
+            ...require('../helpers/kitchen-eligibility').kitchenEligibility(),
             ...activeTenantFilter(),
           },
           {
@@ -7968,6 +7978,7 @@ class SalesRepository {
               items: 1,
               changes: 1,
               kitchen_service: 1,
+              kitchen_required: 1,
               bill_requested_at: 1,
               bill_printed_at: 1,
             },
@@ -8662,6 +8673,7 @@ class SalesRepository {
         branch_name: branchName,
         license: branchDoc.license || BaseModel.license,
         sales_id: salesId,
+        kitchen_required: true,
         sale_process: 'KOT',
         /*
          * A KOT IS NOT PAID. It is a ticket for a kitchen.
@@ -8790,7 +8802,16 @@ class SalesRepository {
            Worked out once: calling twice would stamp two different times. */
         ...(clientRecord ? { client: clientRecord } : {}),
         // Initial change log entry for KOT printing
-        changes: changesItems.length ? [{ timestamp: now, items: changesItems }] : [],
+        kitchen_actor: staffOrder ? kitchenActor() : null,
+        changes: changesItems.length
+          ? [
+              {
+                timestamp: now,
+                items: changesItems,
+                kitchen_actor: staffOrder ? kitchenActor() : null,
+              },
+            ]
+          : [],
         /*
          * HOW LONG THE KITCHEN SHOULD TAKE, worked out once and kept.
          *
@@ -10165,8 +10186,10 @@ class SalesRepository {
             items: changesItems,
             actor,
             reason: audit.reason,
+            kitchen_actor: kitchenActor(),
           });
           updateFields.changes = existingChanges;
+          updateFields.kitchen_closed = false;
         }
 
         const updateResult = await salesCollection.updateOne(editFilter, {
@@ -10554,12 +10577,15 @@ class SalesRepository {
           items: changesItems,
           actor,
           reason: audit.reason,
+          kitchen_actor: kitchenActor(),
         });
       }
 
       const updateFields = {
         items: finalItems,
         changes: existingChanges,
+        kitchen_required: true,
+        kitchen_closed: false,
         sales_sub_total: baseSubtotal,
         items_subtotal: baseSubtotal,
         sales_total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),

@@ -51,7 +51,7 @@ async function displayReport(req) {
   const body = req.body || {};
   if (!ObjectId.isValid(String(body.branchId)) || !Array.isArray(body.saleIds) || body.saleIds.length > 2000 || body.saleIds.some(id => !ObjectId.isValid(String(id))) || !Array.isArray(body.screens) || !body.screens.length || body.screens.length > 100 || !body.till || String(body.till).length > 100) fail('Invalid display report.');
   const db = req.db || await BaseModel.getDb();
-  const key = crypto.createHash('sha256').update(String(body.till)).digest('hex');
+  const key = crypto.createHash('sha256').update(JSON.stringify([String(body.till), [...body.screens].map(String).sort()])).digest('hex');
   const value = { at: new Date(), till: String(body.till), screens: body.screens.map(id => String(id).slice(0, 100)), saleIds: [...new Set(body.saleIds.map(String))] };
   await db.collection('branches').updateOne({ _id: new ObjectId(String(body.branchId)), ...(BaseModel.license ? { license: BaseModel.license } : {}) }, { $set: { ['kitchen_display_status.' + key]: value } });
   return { received: true };

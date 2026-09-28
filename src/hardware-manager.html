@@ -1078,6 +1078,29 @@
             -->
             <div id="soundTab" class="tab-content">
                 <h2>🔔 Kitchen Sound</h2>
+                <div class="card">
+                  <h3>Speakers &amp; shared playback</h3>
+                  <p>Automatic order reading and staff voice messages play one at a time, in received order. Choose either source below, or enable both.</p>
+                  <p>Select every output that should hear orders and kitchen messages. Pair Bluetooth speakers in your computer settings first.</p>
+                  <div id="kitchenAudioOutputs"></div>
+                  <button class="btn" id="kitchenAudioRefresh">Refresh outputs</button>
+                  <label>Volume <input id="kitchenAudioVolume" type="range" min="0" max="1" step="0.05"></label>
+                  <p><label><input type="checkbox" id="kitchenPauseRecording"> Pause playback while someone records (helps prevent microphone feedback)</label></p>
+                </div>
+                <div class="card" style="margin-top:16px">
+                  <h3>Staff voice messages — Captain &amp; POS</h3>
+                  <p><label><input id="kitchenTalkEnabled" type="checkbox"> Allow recorded voice messages</label></p>
+                  <p><label><input type="checkbox" id="kitchenTalkTing"> Play a ting before each voice message</label></p>
+                  <label>Voice-message ting <select id="kitchenTalkBell"></select></label>
+                  <button type="button" class="btn" id="kitchenTalkBellTest">Test voice-message ting</button>
+                  <p><small>This sound belongs to staff recordings only. Automatic orders have separate sound controls below.</small></p>
+                  <label>Captain branch <select id="kitchenAudioBranch"><option value="">Automatic when there is one local branch</option></select></label>
+                  <button class="btn btn-primary" id="kitchenAudioSave">Save Kitchen Sound</button>
+                  <p><button class="btn" id="kitchenTalk" style="touch-action:none;user-select:none">Hold to record kitchen message</button> Release to send, up to 30 seconds. Playback follows your recording-pause setting.</p>
+                  <p id="kitchenAudioStatus" role="status"></p>
+                  <pre id="kitchenAudioJobs" style="white-space:pre-wrap;max-height:250px;overflow:auto">Checking playback status...</pre>
+                  <p>Playback completed means the computer finished sending audio. Check the speaker's own volume. Disconnected outputs keep their pending audio and retry; they never switch to another speaker.</p>
+                </div>
 
                 <div class="status" style="background:#e7f1ff;color:#1e3a8a;display:block;">
                     Turn this on only on the machine by the pass, the one with the speaker.
@@ -1087,18 +1110,18 @@
                 </div>
 
                 <div class="card" style="margin-top:20px;">
-                    <h3 style="margin-top:0;">What it does when a ticket arrives</h3>
+                    <h3 style="margin-top:0;">Automatic order announcements</h3>
 
                     <label style="display:flex;align-items:center;gap:12px;margin:14px 0;cursor:pointer;">
                         <input type="checkbox" id="kitchenTing" style="width:18px;height:18px;">
-                        <span><b>Ring a bell</b><br>
+                        <span><b>Play a ting when an order arrives</b><br>
                             <span style="color:#666;font-size:13px;">Says a ticket landed. Costs a second.</span>
                         </span>
                     </label>
 
                     <label style="display:flex;align-items:center;gap:12px;margin:14px 0;cursor:pointer;">
                         <input type="checkbox" id="kitchenSpeak" style="width:18px;height:18px;">
-                        <span><b>Read the order out</b><br>
+                        <span><b>Read new orders automatically</b><br>
                             <span style="color:#666;font-size:13px;">Table, how many plates, then each dish. Costs about ten seconds.</span>
                         </span>
                     </label>
@@ -1110,7 +1133,8 @@
                 </div>
 
                 <div class="card" style="margin-top:16px;">
-                    <h3 style="margin-top:0;">Which sounds</h3>
+                    <h3 style="margin-top:0;">Automatic order sounds &amp; voice</h3>
+                    <p><label><input type="checkbox" id="kitchenItemTing"> Also play a ting before each dish (when order ting is enabled)</label></p>
 
                     <div style="display:flex;align-items:center;gap:10px;margin:12px 0;">
                         <label style="width:190px;">Bell when the order arrives</label>
@@ -1156,7 +1180,7 @@
                         Plays a real ticket through the speaker on this computer, exactly as a
                         kitchen would hear it. Nothing is ordered and nothing is printed.
                     </p>
-                    <button type="button" class="btn btn-primary" id="kitchenSoundSave">Save sound settings</button>
+                    <button type="button" class="btn btn-primary" id="kitchenSoundSave">Save Kitchen Sound</button>
                     <span id="kitchenSoundSaveResult" role="status" aria-live="polite" style="margin:0 12px;"></span>
                     <button type="button" class="btn btn-secondary" id="kitchenSoundTest">Save and test sound</button>
                     <span id="kitchenSoundTestResult" style="margin-left:12px;color:#555;font-size:14px;"></span>
@@ -3811,6 +3835,7 @@
                 var res = await window.posnicKitchenScreen.list();
                 screenState.displays = (res && res.displays) || [];
                 screenState.defaults = (res && res.defaults) || {};
+                screenState.branches = (res && res.branches) || [];
                 drawScreens();
             } catch (e) {
                 host.innerHTML = '<p style="color:#b91c1c;font-size:14px;">Could not read the screens: '
@@ -3887,6 +3912,12 @@
                 +     '</label>'
                 +   '</div>'
 
+                + '<label style="display:block;margin-top:12px;">Orders from branch <select id="branch-' + d.id + '">'
+                + '<option value="">Automatic (single branch or kitchen printer branch)</option>'
+                + (screenState.branches || []).map(function (b) {
+                    return '<option value="' + esc(b.id) + '" ' + (c.branchId === b.id ? 'selected' : '') + '>' + esc(b.name) + '</option>';
+                  }).join('') + '</select></label>'
+                + '<label style="display:block;margin-top:12px"><input type="checkbox" id="table-only-' + d.id + '" ' + (c.tableOnly === true ? 'checked' : '') + '> Table icon and number only</label>'
                 + (d.primary
                     ? '<div style="margin-top:12px;font-size:13px;color:#92400e;background:#fef3c7;padding:9px 12px;border-radius:8px;">'
                       + 'This is the screen the till itself is on. Using it would cover the sale screen.</div>'
@@ -3952,6 +3983,8 @@
                 +       '</div>'
                 +       '<div>'
                 +         field('red-' + d.id, 'Turns red after', c.redAfterMin, 'min')
+                + field('pulse-' + d.id, 'Pulse alert after', c.pulseAfterMin || 15, 'min')
+                + '<label><input type="checkbox" id="pulse-on-' + d.id + '" ' + (c.pulseAlerts !== false ? 'checked' : '') + '> Pulse very late alerts</label>'
                 +         '<div style="height:10px;"></div>'
                 +         field('dwell-' + d.id, 'Each page shows for', c.pageDwellSeconds, 'sec',
                                 'Only when there are more orders than fit.')
@@ -4009,6 +4042,8 @@
             if (!screensAvailable()) return;
             var patch = {
                 enabled:          onOff('use-' + id, false),
+                tableOnly:        onOff('table-only-' + id, false),
+                branchId:         (document.getElementById('branch-' + id) || {}).value || '',
                 viewingDistanceM: numOr('dist-' + id, 2.5),
                 diagonalInches:   numOr('diag-' + id, 43),
                 targetArcmin:     numOr('arc-' + id, 20),
@@ -4020,6 +4055,8 @@
                 maxItemsPerCard:  numOr('items-' + id, 3),
                 amberAfterMin:    numOr('amber-' + id, 5),
                 redAfterMin:      numOr('red-' + id, 10),
+                pulseAfterMin:    numOr('pulse-' + id, 15),
+                pulseAlerts:      onOff('pulse-on-' + id, true),
                 pageDwellSeconds: numOr('dwell-' + id, 8)
             };
             try {
@@ -4116,7 +4153,9 @@
                 if (!select.value && names.length) select.value = names[0];
             };
 
+            var nativeVoices = null;
             var englishVoices = function () {
+                if (nativeVoices) return nativeVoices;
                 try {
                     var engine = window.speechSynthesis;
                     var all = engine && engine.getVoices ? engine.getVoices() : [];
@@ -4126,6 +4165,7 @@
                 }
             };
 
+            window.addEventListener('kitchen-audio-saved',function(){window.electronAPI.kitchenAudio.voices().then(function(list){nativeVoices=list;fillVoices(at('kitchenVoice').value);}).catch(function(e){at('kitchenSoundSaveResult').textContent=e.message;});});
             var fillVoices = function (chosen) {
                 var select = at('kitchenVoice');
                 if (!select) return;
@@ -4143,7 +4183,7 @@
                 if (chosen && !Array.from(select.options).some(function (option) { return option.value === chosen; })) {
                     var pending = document.createElement('option');
                     pending.value = chosen;
-                    pending.textContent = chosen + ' (uses an available voice until loaded)';
+                    pending.textContent = chosen + ' (check this voice is installed)';
                     select.appendChild(pending);
                 }
                 select.value = chosen || '';
@@ -4154,11 +4194,13 @@
                 button.disabled = true;
                 at('kitchenSoundSaveResult').textContent = 'Saving…';
                 try {
+                if (window.saveKitchenAudioSettings) { await window.saveKitchenAudioSettings(); at('kitchenSoundSaveResult').textContent='Kitchen Sound saved'; return true; }
                 var saved = await bridge.set({
                     ting: at('kitchenTing').checked,
                     speak: at('kitchenSpeak').checked,
                     arrivalBell: at('kitchenArrivalBell').value,
                     itemBell: at('kitchenItemBell').value,
+                    itemTing: at('kitchenItemTing').checked,
                     voice: at('kitchenVoice').value || ''
                 });
                 if (!saved) throw new Error('Settings could not be saved. Please retry.');
@@ -4175,6 +4217,7 @@
                 /* The switches, before anything that can fail. */
                 at('kitchenTing').checked = !!(said && said.ting);
                 at('kitchenSpeak').checked = !!(said && said.speak);
+                at('kitchenItemTing').checked = !said || said.itemTing !== false;
 
                 try {
                     bridge.bells().then(function (names) {
@@ -4182,6 +4225,7 @@
                         fill(at('kitchenItemBell'), (names && names.item) || [], said && said.itemBell);
                     }).catch(function () { /* the switches stand */ });
                     fillVoices(said && said.voice);
+                    if(said.outputs && said.outputs.length) window.electronAPI.kitchenAudio.voices().then(function(list){nativeVoices=list;fillVoices(said.voice);}).catch(function(e){at('kitchenSoundSaveResult').textContent=e.message;});
                 } catch (e) {
                     /* Leave the pickers. Nothing here is worth a switch. */
                 }
@@ -4200,7 +4244,7 @@
                 }
             } catch (e) { /* nothing to do */ }
 
-            ['kitchenTing', 'kitchenSpeak', 'kitchenArrivalBell', 'kitchenItemBell', 'kitchenVoice']
+            ['kitchenTing', 'kitchenSpeak', 'kitchenItemTing', 'kitchenArrivalBell', 'kitchenItemBell', 'kitchenVoice']
                 .forEach(function (id) {
                     var el = at(id);
                     if (el) el.addEventListener('change', function () {
@@ -4225,14 +4269,16 @@
                 button.addEventListener('click', function () {
                     var kind = button.getAttribute('data-kitchen-play');
                     var which = kind === 'item' ? at('kitchenItemBell').value : at('kitchenArrivalBell').value;
-                    bridge.preview(kind, which).then(hear).catch(function () {});
+                    bridge.get().then(function(config){if(config.outputs && config.outputs.length)return window.electronAPI.kitchenAudio.preview(kind,which);return bridge.preview(kind,which).then(hear);}).catch(function(e){at('kitchenSoundSaveResult').textContent=e.message;});
                 });
             });
 
             var voicePlay = at('kitchenVoicePlay');
             if (voicePlay) {
-                voicePlay.addEventListener('click', function () {
+                voicePlay.addEventListener('click', async function () {
                     try {
+                        var config=await bridge.get();
+                        if(config.outputs && config.outputs.length){await window.electronAPI.kitchenAudio.preview('voice',at('kitchenVoice').value);at('kitchenSoundSaveResult').textContent='Voice sample queued for selected speakers.';return;}
                         var engine = window.speechSynthesis;
                         if (!engine || typeof window.SpeechSynthesisUtterance !== 'function') return;
                         if (engine.speaking || engine.pending) engine.cancel();
@@ -4263,17 +4309,18 @@
                         if (said && said.reason === 'off') {
                             result.textContent = 'Turn one of these on first.';
                         } else if (!said || !said.played) {
-                            result.textContent = 'This computer could not play it.';
+                            result.textContent = 'This computer could not play it. Please check the volume and selected speaker connection.';
                         } else {
-                            result.textContent = 'Sent to the speaker. If you heard nothing, check the volume.';
+                            result.textContent = 'Announcement queued. Check speaker playback status above.';
                         }
                     }).catch(function () {
-                        result.textContent = 'This computer could not play it.';
+                        result.textContent = 'This computer could not play it. Please check the volume and selected speaker connection.';
                     });
                 });
             }
         })();
 
     </script>
+<script src="kitchen-audio-controls.js"></script>
 </body>
 </html>
