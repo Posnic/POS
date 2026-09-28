@@ -1862,7 +1862,7 @@
     },
     "/business/v1/notifications/device": {
       "get": {
-        "summary": "businessIdentity",
+        "summary": "language",
         "operationId": "get_business_v1_notifications_device",
         "tags": [
           "Business access"
