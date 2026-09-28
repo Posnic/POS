@@ -200,15 +200,13 @@ test('application has a separate durable claim and receipt; interruption never r
     payableMinor: 8000,
     discountMinor: 2000,
   };
-  await db
-    .collection('sales')
-    .insertOne({
-      _id: new ObjectId(saleId),
-      license: new ObjectId(f.source.businessId),
-      branch_id: new ObjectId(f.source.branchId),
-      billing_transaction_id: f.input.operationId,
-      business_decision_receipt: { ...receipt, payableMinor: 9000 },
-    });
+  await db.collection('sales').insertOne({
+    _id: new ObjectId(saleId),
+    license: new ObjectId(f.source.businessId),
+    branch_id: new ObjectId(f.source.branchId),
+    billing_transaction_id: f.input.operationId,
+    business_decision_receipt: { ...receipt, payableMinor: 9000 },
+  });
   await assert.rejects(ledger.acknowledge(f.source, requestId, stored.executionId, saleId), {
     code: 'sale_receipt_unconfirmed',
   });
