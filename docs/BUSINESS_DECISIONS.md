@@ -1,6 +1,16 @@
 # Business discount decision ledger
 
-Status: internal foundation only. No mobile route, till command or permission currently exposes this ledger. It cannot approve a live sale until the integrations below are completed and tested. Existing local manager PIN approval remains unchanged.
+Status: authenticated mobile review API, disabled unless `POSNIC_BUSINESS_DECISIONS=1`. The till/controller and Cloud device transport are still pending, so this is not enabled for live sales. Existing local manager PIN approval remains unchanged.
+
+## Authenticated review
+
+`GET /api/business/v1/decisions`, `GET /decisions/:id` and `POST /decisions/:id` use the dedicated Business session. Every call reads current account state, branch access and permission. Owner/admin accounts qualify; other staff require both dashboard financial read permissions and the explicit `access.pos.discount_approve_remote` bit. Ordinary till discount permission and a manager role name do not grant remote approval. Staff discount ceilings still apply. The permission appears on the existing role/user permission pages.
+
+Lists use an ObjectId cursor, at most 50 records, current license/branches, and a bounded database query. History includes expired requests; applying records remain open until receipt reconciliation. DTOs expose requester/approver display names, exact summary amounts, state and timeline, not source device identifiers, session IDs, execution IDs or revision hashes. Approvals cannot create a request or claim execution through these routes.
+
+A decision needs password verification less than five minutes old, from the same account and business. Normal Cloud browser consent is not evidence of a fresh password. Cloud step-up asks for a password with a separate account attempt limit; its original verification timestamp crosses the authenticated Gateway control channel. Community records the actual password-verification time. Neither exchanging nor rotating a token refreshes this time. A step-up session expires after ten minutes.
+
+The phone may send a temporary same-account `confirmationToken` alongside its original session. The token is never persisted in the ledger. A successful decision records the original phone session and verified password time, and promotes that same time on the phone session. The temporary confirmation session can then be revoked. Accepted identical retries remain idempotent. A new execution claim rechecks the original approver session, branch and ceiling; removing access or revoking that session prevents application. Reconciliation of an already-started execution remains possible after revocation and never grants a second execution.
 
 ## Authority and binding
 
@@ -27,8 +37,8 @@ The state change and bounded audit timeline are in one Mongo document, so standa
 - `sale.service.previewSale` reuses the checkout line/tax engine and extracted `sale-header` calculation, stopping before numbering, sale, stock, payment and kitchen writes. Its register check does not acquire a legacy device lock. `prepareDiscountIntent` binds this preview and the complete request. The first supported contract is a paid new sale, at most 100 lines, bill-level discount, two-decimal currency, without coupon/loyalty/tip/partial-payment or manual line-discount combinations. Summary amounts include an explicit rounding adjustment. Other currency precisions and combinations require their own reconciliation fixtures before enablement.
 - Wire the cashier/controller to the authenticated request and commit hook and add automatic recovery lookup. Audit update/held-sale paths separately; do not expose them through the first create-sale-only remote operation.
 - Bind desktop request upload and decision download to the authenticated device, branch, tenant and cashier, with a durable local outbox. Community uses its authoritative local API; Cloud uses a purpose-built Gateway protocol, not generic sales sync.
-- Re-read approver status, branch membership, discount ceiling and recent step-up evidence at decision and consumption. Existing stateless local manager tokens are not remote decision proof.
-- Add scoped list/detail/decision APIs, mobile review and confirm screens, safe notification targeting, explicit expiry/cancellation/conflict states and cashier fallback.
+- The authenticated facade now re-reads approver status, branch membership, discount ceiling and recent step-up evidence; the till bridge must call that facade for a new execution claim. Existing stateless local manager tokens are not remote decision proof.
+- Connect the companion mobile review/confirmation screens, add safe notification targeting and cashier fallback, and verify expiry/cancellation/conflict handling across the device transport.
 - Verify two devices/approvers, a changed bill, dropped acceptance response, crash after sale insert, failure before insert, revoked ACL, replay, disconnected till, duplicate billing transaction and eventual applied acknowledgement against actual checkout.
 
-Local foundation tests use real Mongo and supplied identity contexts. They prove ledger concurrency, idempotency, expiry, cancellation and revision binding. They do not prove production authentication, sale pricing or end-to-end application.
+Local ledger and authenticated-route tests use real Mongo, actual Business sessions, branch/permission changes and password verification. Actual sale-writer tests cover pricing and immutable receipts. They do not yet prove the complete cashier-to-phone-to-till transport or production deployment.

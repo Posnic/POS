@@ -194,6 +194,244 @@ test('rotation has one winner, revokes old tokens, preserves absolute expiry and
   await f.access.revoke(rotated.token);
   await assert.rejects(f.access.context(rotated.token), is('sign_in_required'));
 });
+
+test('exchanging and rotating tokens never refreshes the password-verification time', async () => {
+  const f = await fixture();
+  await approve(f);
+  const original = new Date(Date.now() - 120_000);
+  await db
+    .collection('business_authorizations')
+    .updateOne({ _id: hash(f.request) }, { $set: { issuedAt: original } });
+  const grant = await f.access.exchange(f.request, f.verifier);
+  assert.equal(
+    (await f.access.authenticate(grant.token)).session.authenticatedAt.getTime(),
+    original.getTime()
+  );
+  const rotated = await f.access.rotate(grant.token);
+  assert.equal(
+    (await f.access.authenticate(rotated.token)).session.authenticatedAt.getTime(),
+    original.getTime()
+  );
+  const cloud = await fixture();
+  await approve(cloud);
+  await db
+    .collection('business_authorizations')
+    .updateOne({ _id: hash(cloud.request) }, { $set: { authorization: 'cloud-browser' } });
+  const cloudGrant = await cloud.access.exchange(cloud.request, cloud.verifier);
+  assert.equal((await cloud.access.authenticate(cloudGrant.token)).session.authenticatedAt, null);
+});
+
+test('decision routes enforce branch scope, explicit remote permission, limits and verified recent authentication', async () => {
+  const prior = process.env.POSNIC_BUSINESS_DECISIONS;
+  process.env.POSNIC_BUSINESS_DECISIONS = '1';
+  try {
+    const f = await fixture(),
+      foreign = await fixture();
+    await db
+      .collection('users')
+      .updateMany(
+        { _id: { $in: [f.user._id, foreign.user._id] } },
+        { $set: { usertype: 'admin' } }
+      );
+    const session = await grant(f),
+      otherSession = await grant(foreign);
+    const identity = await f.access.authenticate(session.token);
+    const ledger = require('../src/services/business-decision-ledger').createDecisionLedger(db);
+    const source = {
+      businessId: String(f.license),
+      branchId: String(f.branch._id),
+      requesterId: String(new ObjectId()),
+      deviceId: 'desktop-00000000001',
+    };
+    const input = {
+      operationId: 'operation-' + opaque(),
+      revisionHash: 'a'.repeat(64),
+      summary: {
+        beforeDiscountMinor: 10000,
+        discountMinor: 2000,
+        payableMinor: 8000,
+        roundingMinor: 0,
+        currency: 'INR',
+        currencyDigits: 2,
+        itemCount: 1,
+        reason: 'Regular customer',
+      },
+    };
+    const row = await ledger.create(source, input),
+      path = '/api/business/v1/decisions/' + row._id;
+    const headers = (token) => ({
+      'x-forwarded-proto': 'https',
+      authorization: 'Bearer ' + token,
+      'content-type': 'application/json',
+    });
+    const read = async (url, token = session.token) =>
+      fetch(base + url, { headers: headers(token) });
+    const write = async (body, token = session.token) =>
+      fetch(base + path, { method: 'POST', headers: headers(token), body: JSON.stringify(body) });
+    const action = {
+      decisionId: 'decision-' + opaque(),
+      expectedRevision: 0,
+      outcome: 'approved',
+      reason: '',
+    };
+    const listed = await (await read('/api/business/v1/decisions')).json();
+    assert.equal(listed.entries.length, 1);
+    assert.equal(listed.entries[0].canDecide, true);
+    assert.equal(listed.entries[0].requiresStepUp, false);
+    assert.ok(!JSON.stringify(listed).includes(input.revisionHash));
+    assert.ok(!JSON.stringify(listed).includes(source.deviceId));
+    assert.equal((await read(path, otherSession.token)).status, 404);
+    await db
+      .collection('business_sessions')
+      .updateOne(
+        { _id: identity.session._id },
+        { $set: { authenticatedAt: new Date(Date.now() - 600_000) } }
+      );
+    assert.equal((await write(action)).status, 428);
+    const rotated = await f.access.rotate(session.token);
+    assert.equal((await write(action, rotated.token)).status, 428);
+    assert.equal(
+      (await write({ ...action, confirmationToken: otherSession.token }, rotated.token)).status,
+      409
+    );
+    const stepVerifier = opaque();
+    const stepRequest = await f.access.request({
+      codeChallenge: proof(stepVerifier),
+      deviceName: 'Confirm decision',
+      stepUp: true,
+    });
+    await f.access.decide(stepRequest.request, 'allow', f.user.username, password);
+    const confirmation = await f.access.exchange(stepRequest.request, stepVerifier);
+    assert.ok(Date.parse(confirmation.expiresAt) <= Date.now() + 600_000);
+    const decided = await write(
+      { ...action, confirmationToken: confirmation.token },
+      rotated.token
+    );
+    assert.equal(decided.status, 200);
+    assert.equal((await decided.json()).state, 'approved');
+    assert.equal(
+      (await f.access.authenticate(rotated.token)).session.authenticatedAt.getTime(),
+      (await f.access.authenticate(confirmation.token)).session.authenticatedAt.getTime()
+    );
+    assert.equal(
+      (await db.collection('business_decisions').findOne({ _id: row._id })).approverSessionId,
+      identity.session._id
+    );
+    await f.access.revoke(confirmation.token);
+    assert.ok(
+      !JSON.stringify(await db.collection('business_decisions').findOne({ _id: row._id })).includes(
+        confirmation.token
+      )
+    );
+    await db
+      .collection('business_sessions')
+      .updateOne({ _id: identity.session._id }, { $set: { authenticatedAt: new Date(0) } });
+    assert.equal(
+      (await write(action, rotated.token)).status,
+      200,
+      'accepted retry needs no new decision'
+    );
+    await db.collection('users').updateOne({ _id: f.user._id }, { $set: { branch_access: [] } });
+    assert.equal((await read(path, rotated.token)).status, 404);
+    const decisionApi = require('../src/services/business-decisions');
+    await assert.rejects(
+      decisionApi.claimDecision(
+        db,
+        source,
+        String(row._id),
+        input.revisionHash,
+        'execution-00000001'
+      ),
+      is('access_denied')
+    );
+    await db
+      .collection('users')
+      .updateOne({ _id: f.user._id }, { $set: { branch_access: [{ branch_id: f.branch._id }] } });
+    assert.equal(
+      (
+        await decisionApi.claimDecision(
+          db,
+          source,
+          String(row._id),
+          input.revisionHash,
+          'execution-00000001'
+        )
+      ).executionPermit,
+      'start',
+      'revoking the temporary proof does not revoke the primary session'
+    );
+    await f.access.revoke(rotated.token);
+    assert.equal(
+      (
+        await decisionApi.claimDecision(
+          db,
+          source,
+          String(row._id),
+          input.revisionHash,
+          'execution-00000001'
+        )
+      ).executionPermit,
+      'reconcile'
+    );
+    await assert.rejects(
+      decisionApi.claimDecision(
+        db,
+        source,
+        String(row._id),
+        input.revisionHash,
+        'execution-00000002'
+      ),
+      is('decision_changed')
+    );
+
+    const staff = await fixture();
+    await db.collection('users').updateOne(
+      { _id: staff.user._id },
+      {
+        $set: {
+          'access.pos': {
+            discount_apply: true,
+            discount_approve_remote: true,
+            discount_max_percent: 10,
+          },
+        },
+      }
+    );
+    const staffSession = await grant(staff);
+    const staffRow = await ledger.create(
+      { ...source, businessId: String(staff.license), branchId: String(staff.branch._id) },
+      input
+    );
+    const api = require('../src/services/business-decisions'),
+      staffIdentity = await staff.access.authenticate(staffSession.token);
+    const limited = await api.readDecision(db, staffIdentity.session._id, String(staffRow._id));
+    assert.equal(limited.canDecide, false);
+    assert.equal(limited.unavailableReason, 'discount_limit');
+    await assert.rejects(
+      api.decide(db, staffIdentity.session._id, String(staffRow._id), action),
+      is('discount_limit_exceeded')
+    );
+    await db
+      .collection('users')
+      .updateOne(
+        { _id: staff.user._id },
+        { $set: { 'access.pos.discount_approve_remote': false } }
+      );
+    await assert.rejects(
+      api.readDecision(db, staffIdentity.session._id, String(staffRow._id)),
+      is('access_denied')
+    );
+    assert.ok(
+      !capabilities({
+        usertype: 'manager',
+        access: { dashboard: { read: true, financials: true }, pos: { discount_apply: true } },
+      }).includes('discounts.approve')
+    );
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_DECISIONS;
+    else process.env.POSNIC_BUSINESS_DECISIONS = prior;
+  }
+});
 test('browser approval requires HTTPS, same-origin and browser-bound consent before a password is checked', async () => {
   const f = await fixture();
   const origin = base.replace('http:', 'https:');

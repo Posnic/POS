@@ -124,6 +124,7 @@ function createDecisionLedger(db, { now = Date.now } = {}) {
           { unique: true }
         ),
         rows.createIndex({ license: 1, branchId: 1, state: 1, createdAt: -1 }),
+        rows.createIndex({ license: 1, branchId: 1, state: 1, _id: -1 }),
       ]).catch((error) => {
         indexes.delete(db);
         throw error;
@@ -171,6 +172,11 @@ function createDecisionLedger(db, { now = Date.now } = {}) {
     return changed;
   }
   return {
+    ready,
+    async sourceRequest(source, requestId) {
+      if (!id(requestId)) fail('invalid_request', 400);
+      return get({ _id: new ObjectId(requestId), ...sourceFilter(source) });
+    },
     async create(source, input) {
       const filter = sourceFilter(source);
       requestInput(input);
@@ -243,6 +249,12 @@ function createDecisionLedger(db, { now = Date.now } = {}) {
         approverId: context.accountId,
         outcome: input.outcome,
         decisionReason: input.reason,
+        ...(context.approvalSessionId
+          ? {
+              approverSessionId: context.approvalSessionId,
+              authenticatedAt: context.approvalAuthenticatedAt,
+            }
+          : {}),
       });
     },
     async cancel(source, requestId) {

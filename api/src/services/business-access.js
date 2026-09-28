@@ -34,6 +34,9 @@ function capabilities(user) {
   const financials =
     owner || (access.dashboard?.read === true && access.dashboard?.financials === true);
   return [
+    ...(require('./business-decision-policy').remoteDiscountPolicy(user)
+      ? ['approvals.read', 'discounts.approve']
+      : []),
     ...(owner ? ['reporting.manage'] : []),
     ...(financials ? ['overview.read', 'tenders.read'] : []),
     ...((owner || access.item?.read === true) && financials ? ['items.read'] : []),
@@ -158,6 +161,7 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
       return { session, user: await userFor(session) };
     },
     async request(body) {
+      if (body?.stepUp !== undefined && typeof body.stepUp !== 'boolean') fail('invalid_request');
       if (
         !validOpaque(body.codeChallenge) ||
         typeof body.deviceName !== 'string' ||
@@ -171,6 +175,7 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
         _id: hash(request),
         codeChallenge: body.codeChallenge,
         deviceName: body.deviceName.trim(),
+        stepUp: body.stepUp === true,
         status: 'pending',
         createdAt: new Date(now()),
         expiresAt: new Date(now() + REQUEST_MS),
@@ -241,7 +246,7 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
       );
       if (!claimed.modifiedCount) fail('access_denied', 403);
       const token = 'pb1_' + opaque(),
-        expiresAt = new Date(now() + SESSION_MS);
+        expiresAt = new Date(now() + (row.stepUp === true ? 10 * 60_000 : SESSION_MS));
       await sessions.insertOne({
         _id: opaque(),
         tokenHash: hash(token),
@@ -250,6 +255,8 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
         authVersion: version(user),
         deviceName: row.deviceName,
         issuedAt: new Date(now()),
+        authenticatedAt:
+          row.authorization === 'cloud-browser' ? row.authenticatedAt || null : row.issuedAt,
         expiresAt,
       });
       return { token, expiresAt: expiresAt.toISOString(), context };

@@ -101,7 +101,7 @@ router.get(
       `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`
     );
     res.type('html')
-      .send(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connect Posnic Business</title><style>body{margin:0;background:#f5f7f8;color:#172b37;font:16px/1.55 system-ui}main{max-width:460px;margin:5vh auto;padding:28px;border-radius:20px;background:white}h1{line-height:1.2}label{display:block;margin:18px 0 5px}input,button{box-sizing:border-box;width:100%;font:inherit;padding:13px;border:1px solid #ccd8dd;border-radius:12px}button{margin-top:12px;background:#146b54;color:white;cursor:pointer}button.secondary{background:white;color:#146b54}button:disabled{opacity:.5}code{font-size:22px;letter-spacing:3px}p{color:#566a77}@media(max-width:520px){main{margin:16px;padding:22px}}</style><main><strong>Posnic Business</strong><h1>Connect your business</h1><p>Authorize <strong>${escape(row.deviceName)}</strong> to view the branches and business information your account permits. This connection cannot take sales.</p><p>Only continue if you started this request. Match this code with the one on your phone:</p><code>${escape(req.query.request.slice(-6).toUpperCase())}</code><form id="consent" method="post" action="${PATH}/approve"><label for="identifier">Email or username</label><input id="identifier" name="identifier" autocomplete="username" required maxlength="254" autocapitalize="none"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"><button type="submit">Connect Business</button><button class="secondary" id="deny" type="button">Cancel request</button></form><p id="status" role="status" aria-live="polite">Your password stays in this browser. Posnic Business receives a separate session.</p><script nonce="${nonce}">
+      .send(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connect Posnic Business</title><style>body{margin:0;background:#f5f7f8;color:#172b37;font:16px/1.55 system-ui}main{max-width:460px;margin:5vh auto;padding:28px;border-radius:20px;background:white}h1{line-height:1.2}label{display:block;margin:18px 0 5px}input,button{box-sizing:border-box;width:100%;font:inherit;padding:13px;border:1px solid #ccd8dd;border-radius:12px}button{margin-top:12px;background:#146b54;color:white;cursor:pointer}button.secondary{background:white;color:#146b54}button:disabled{opacity:.5}code{font-size:22px;letter-spacing:3px}p{color:#566a77}@media(max-width:520px){main{margin:16px;padding:22px}}</style><main><strong>Posnic Business</strong><h1>Connect your business</h1><p>Authorize <strong>${escape(row.deviceName)}</strong> to view permitted business information and review decisions your account allows. This connection cannot take sales.</p><p>Only continue if you started this request. Match this code with the one on your phone:</p><code>${escape(req.query.request.slice(-6).toUpperCase())}</code><form id="consent" method="post" action="${PATH}/approve"><label for="identifier">Email or username</label><input id="identifier" name="identifier" autocomplete="username" required maxlength="254" autocapitalize="none"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256"><button type="submit">Connect Business</button><button class="secondary" id="deny" type="button">Cancel request</button></form><p id="status" role="status" aria-live="polite">Your password stays in this browser. Posnic Business receives a separate session.</p><script nonce="${nonce}">
 const form=document.getElementById('consent'),status=document.getElementById('status');
 const headers={'Content-Type':'application/json'};
 const globalCsrf=${jsonForHtml(res.get('X-CSRF-TOKEN') || '')};
@@ -168,6 +168,44 @@ const protectBusiness = async (req, res, next) => {
 };
 router.use(protectBusiness);
 router.use(limiter('business-private', 120));
+router.get(
+  '/decisions',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-decisions').listDecisions(
+        req.db,
+        req.businessIdentity.session._id,
+        req.query
+      )
+    )
+  )
+);
+router.get(
+  '/decisions/:id',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-decisions').readDecision(
+        req.db,
+        req.businessIdentity.session._id,
+        req.params.id
+      )
+    )
+  )
+);
+router.post(
+  '/decisions/:id',
+  limiter('business-decisions', 20),
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-decisions').decide(
+        req.db,
+        req.businessIdentity.session._id,
+        req.params.id,
+        req.body
+      )
+    )
+  )
+);
 router.get(
   '/notifications/device',
   wrap(async (req, res) => {
