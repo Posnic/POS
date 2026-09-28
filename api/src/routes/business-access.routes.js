@@ -166,6 +166,21 @@ const protectBusiness = async (req, res, next) => {
       .json({ error: { code: error.status ? error.code : 'server_unavailable' } });
   }
 };
+router.post(
+  '/device-decisions/:action',
+  limiter('business-device-decisions', 240),
+  wrap(async (req, res) => {
+    const authorization = req.get('authorization') || '';
+    res.json(
+      await require('../services/business-device-decisions').useDeviceGrant(
+        req.db,
+        authorization.startsWith('Bearer ') ? authorization.slice(7) : '',
+        req.params.action,
+        req.body
+      )
+    );
+  })
+);
 router.use(protectBusiness);
 router.use(limiter('business-private', 120));
 router.get(

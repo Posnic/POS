@@ -318,6 +318,7 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
   };
 }
 module.exports = {
+  active,
   createBusinessAccess,
   capabilities,
   branchInfo,

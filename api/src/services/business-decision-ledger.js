@@ -195,6 +195,9 @@ function createDecisionLedger(db, { now = Date.now } = {}) {
             $setOnInsert: {
               ...filter,
               ...input,
+              ...(Number.isSafeInteger(source.authVersion) && source.authVersion >= 0
+                ? { requesterAuthVersion: source.authVersion }
+                : {}),
               action: 'discount_apply',
               state: 'pending',
               revision: 0,
@@ -212,6 +215,7 @@ function createDecisionLedger(db, { now = Date.now } = {}) {
       if (
         row.branchId !== filter.branchId ||
         row.requesterId !== filter.requesterId ||
+        (source.authVersion !== undefined && row.requesterAuthVersion !== source.authVersion) ||
         revisionHash(row.summary) !== revisionHash(input.summary)
       )
         fail('operation_conflict');

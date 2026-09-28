@@ -96,6 +96,67 @@ async function fixture() {
   return { license, branch, user, access, verifier, request: request.request };
 }
 const is = (code) => (error) => error.code === code;
+test('device bridge HTTP accepts only an exact, single-use Gateway grant and never a phone credential', async () => {
+  const prior = process.env.POSNIC_BUSINESS_DECISIONS;
+  process.env.POSNIC_BUSINESS_DECISIONS = '1';
+  try {
+    const f = await fixture();
+    await db
+      .collection('users')
+      .updateOne({ _id: f.user._id }, { $set: { 'access.sales.write': true } });
+    const body = {
+      branchId: String(f.branch._id),
+      requesterId: String(f.user._id),
+      requesterAuthVersion: 1,
+      request: {
+        operationId: opaque(),
+        revisionHash: 'a'.repeat(64),
+        summary: {
+          currency: 'INR',
+          currencyDigits: 2,
+          beforeDiscountMinor: 10000,
+          discountMinor: 2000,
+          payableMinor: 8000,
+          roundingMinor: 0,
+          itemCount: 2,
+          reason: 'Regular customer',
+        },
+      },
+    };
+    const call = (token, value = body) =>
+      fetch(base + '/api/business/v1/device-decisions/create', {
+        method: 'POST',
+        headers: {
+          'x-forwarded-proto': 'https',
+          'content-type': 'application/json',
+          authorization: 'Bearer ' + token,
+        },
+        body: JSON.stringify(value),
+      });
+    assert.equal((await call('pb1_' + opaque())).status, 401);
+    const token = 'pbd1_' + opaque();
+    await db
+      .collection('business_device_grants')
+      .insertOne({
+        _id: hash(token),
+        protocolVersion: 1,
+        tenantDb: db.databaseName,
+        action: 'create',
+        bodyHash: hash(JSON.stringify(body)),
+        device: { deviceId: opaque(), branches: [String(f.branch._id)] },
+        issuedAt: new Date(),
+        expiresAt: new Date(Date.now() + 5000),
+      });
+    assert.equal((await call(token, { ...body, requesterAuthVersion: 2 })).status, 401);
+    const response = await call(token);
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).state, 'pending');
+    assert.equal((await call(token)).status, 401);
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_DECISIONS;
+    else process.env.POSNIC_BUSINESS_DECISIONS = prior;
+  }
+});
 async function approve(f) {
   return f.access.decide(f.request, 'allow', f.user.username, password);
 }
