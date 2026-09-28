@@ -99,6 +99,17 @@ test('notification preferences are scoped to the account and branch and use comp
   const initial = await service.getPreference(db, f.context, f.branchId);
   assert.equal(initial.enabled, false);
   assert.equal(initial.revision, 0);
+  assert.deepEqual(Object.keys(initial).sort(), [
+    'branchId',
+    'channel',
+    'enabled',
+    'locale',
+    'nextSendAt',
+    'quiet',
+    'revision',
+    'time',
+    'timezone',
+  ]);
   const saved = await service.savePreference(db, f.context, f.branchId, input(), {
     now: () => beforeDue,
   });

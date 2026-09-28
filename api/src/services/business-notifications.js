@@ -46,7 +46,6 @@ function publicPreference(branch, row) {
     quiet: row?.quiet ?? defaultQuiet(),
     locale: row?.locale ?? 'en',
     channel: 'inApp',
-    pushPending: true,
     nextSendAt: row?.enabled ? row.nextRunAt.toISOString() : null,
   };
 }
