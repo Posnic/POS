@@ -14,6 +14,8 @@ Use the branch's configured IANA timezone, ISO currency and minor-unit precision
 
 Tests run the actual desktop sale calculation with controlled repository seams for coupon/loyalty/extra discount, part payment, tips, exclusive tax and rounding. Additional mapper tests cover return-date attribution, duplicate/mismatched returns, midnight/DST, branch/license scope and precision. They do not yet constitute end-to-end source completeness or return-writer qualification.
 
+The actual return repository is now exercised against real Mongo for partial/full returns, decimal amounts and zero-value discounted returns. This found and fixed a source defect: a recorded refund of zero fell back to its undiscounted line sum when updating `items_return_total`. Existing inconsistent historical records remain unavailable until reconciled; this change does not silently rewrite old financial records. The new tests preserve the writer's existing two-decimal return rounding behavior rather than claiming a different cash-rounding policy. The three related unit suites pass 191 tests, with two additional real-return integration tests.
+
 ## Prepared data and source completeness
 
 Phone reads must use indexed prepared summaries only. Opening Today must never scan sales, rebuild history or start a long aggregation. Preparation must have a bounded per-run work budget, durable replay and a visible failure state.
@@ -23,6 +25,8 @@ Production MongoDB is standalone, so a design depending on multi-document transa
 The existing gateway stamps ingestion time in `_syncMeta.at`; source `updated_date` alone cannot prove arrival order because offline devices can deliver older records. Neither timestamp proves that every till has uploaded its records. A current badge requires all expected source checkpoints. Until that exists, synchronized totals must be labelled partial/delayed with the last source time; refreshing an API cannot turn them current.
 
 `prepareDesktopSummary` is a desktop-only baseline preparation primitive. It projects only required fields, scans at most 100,000 scoped source documents in batches of 100, yields between batches, and stops after a 30-second budget or cancellation. A source error fails preparation instead of publishing a truncated total. It never runs in a Cloud process. The desktop worker creates the `{license, branch_id, _id}` index, leases one requested job at a time and stages its result durably. It retries no more often than once per five minutes per date and stops with the API server. Index/startup failures cannot prevent checkout from opening. Large-history qualification, incremental preparation and a controlled rebuild path remain required before production rollout.
+
+Local Windows/MongoDB 7.0.14 qualification with 100,000 synthetic paid sales completed in 16,591 ms, reconciled all 1,234,500,000 minor units and reported event-loop p99 24 ms / maximum 32 ms. Timezone formatters are reused in a bounded cache instead of allocated for each sale. Reproduce with `node tests/business-reporting-load.cjs` from `api`, using the local dependency/Mongo binary environment. This is one development-machine measurement, not a production latency claim, low-end device result or proof for branches beyond the explicit 100,000-document cap.
 
 ## Request and publication path
 

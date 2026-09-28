@@ -5440,7 +5440,16 @@ class SalesRepository {
           extraDiscSubReturnExtradisc = sale_total_amount * (extra_discount / 100);
         }
 
-        if (return_sale_amount_round !== 0) {
+        // Zero is a recorded refund too. A fully discounted return must not
+        // fall back to the undiscounted line sum merely because its total is 0.
+        const recordedReturnTotals =
+          itemsReturnBlocks.length > 0 &&
+          itemsReturnBlocks.every(
+            (block) =>
+              typeof block?.returnArray?.itemsTotalAmount === 'number' &&
+              Number.isFinite(block.returnArray.itemsTotalAmount)
+          );
+        if (return_sale_amount_round !== 0 || recordedReturnTotals) {
           return_sale_amount = return_sale_amount_round;
         }
 

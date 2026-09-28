@@ -36,14 +36,22 @@ function instant(value) {
   if (!Number.isFinite(date.getTime())) fail('invalid_date');
   return date;
 }
+const dateFormatters = new Map();
 function businessDate(value, timezone) {
   try {
-    const parts = new Intl.DateTimeFormat('en-CA', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).formatToParts(instant(value));
+    if (typeof timezone !== 'string' || !timezone || timezone.length > 100)
+      fail('invalid_timezone');
+    if (!dateFormatters.has(timezone)) {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      if (dateFormatters.size >= 64) dateFormatters.delete(dateFormatters.keys().next().value);
+      dateFormatters.set(timezone, formatter);
+    }
+    const parts = dateFormatters.get(timezone).formatToParts(instant(value));
     const get = (key) => parts.find((p) => p.type === key).value;
     return `${get('year')}-${get('month')}-${get('day')}`;
   } catch {
