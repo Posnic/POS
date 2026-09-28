@@ -28,6 +28,8 @@ before(async () => {
   app.set('trust proxy', 'loopback');
   app.use(require('express').json());
   app.use(
+    // lgtm[js/missing-token-validation] Test-only session: csrf.protect below guards ambient login credentials;
+    // Business /approve additionally checks its browser-bound nonce and exact Origin, exercised below.
     require('express-session')({
       secret: opaque(),
       resave: false,
@@ -219,6 +221,16 @@ test('browser approval requires HTTPS, same-origin and browser-bound consent bef
     password,
   });
   const url = base + '/api/business/v1/approve';
+  assert.equal(
+    (
+      await fetch(url, {
+        method: 'POST',
+        headers: { ...common, cookie, origin, 'content-type': 'application/json' },
+        body: JSON.stringify({ ...JSON.parse(body), csrf: opaque() }),
+      })
+    ).status,
+    403
+  );
   for (const headers of [
     { ...common, origin },
     { ...common, cookie, origin: 'https://attacker.test' },

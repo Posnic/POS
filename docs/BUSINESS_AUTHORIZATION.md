@@ -23,6 +23,6 @@ Context validates configured currency and timezone instead of silently guessing 
 
 ## Validation and remaining integration
 
-`node --test tests/business-access.integration.cjs` runs against a disposable MongoDB instance and real HTTP routes. It covers proof binding, concurrent exchange/rotation, hashed token storage, POS isolation, current ACL/branch changes, cross-license access, expiry, revocation and browser consent protection. CI runs this suite alongside existing Mobile POS and Captain integration checks.
+`node --test tests/business-access.integration.cjs` runs locally against a disposable MongoDB instance and real HTTP routes. It covers proof binding, concurrent exchange/rotation, hashed token storage, POS isolation, current ACL/branch changes, cross-license access, expiry, revocation and browser consent protection. No additional CI job or trigger is required.
 
-Cloud account-directory authorization still needs to issue a Business-specific grant through its control plane. This tenant-side endpoint supports the Community browser flow and forms the tenant-side boundary for that future Cloud integration. This change is not a deployment or a claim that live reports are ready.
+Cloud account-directory authorization is implemented in companion account-service and gateway changes. Its gateway writes a sixty-second approved Business request with the original S256 challenge; this tenant endpoint consumes it with the same current-user checks as Community consent. Deploy the tenant API before enabling that handoff. This change is not a deployment or a claim that live reports are ready.
