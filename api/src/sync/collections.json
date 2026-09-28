@@ -36,6 +36,10 @@
     "settings": "global"
   },
   "local_only": {
+    "business_reporting_requests": "Short-lived Business read requests are consumed by the assigned reporting desktop through a dedicated protocol.",
+    "business_reporting_local": "Local reporting assignments, snapshots and retry state belong to this desktop only.",
+    "business_reporting_publishers": "Gateway-owned desktop reporting assignments must not be changed through generic device synchronization.",
+    "business_prepared_summaries": "Prepared Business summaries enter through the assigned-publisher protocol, never last-writer-wins generic sync.",
     "business_authorizations": "Proof-bound browser consent requests belong only to the Business issuer; replication would permit cross-server replay.",
     "business_sessions": "Business token hashes and device revocation belong only to the issuing server and must never sync to another installation.",
     "captain_sessions": "Rotating device credentials and revocation belong only to the API that authorized the Captain phone.",

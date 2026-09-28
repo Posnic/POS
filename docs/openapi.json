@@ -1609,7 +1609,7 @@
     },
     "/business/v1/discovery": {
       "get": {
-        "summary": "unavailable",
+        "summary": "v2",
         "operationId": "get_business_v1_discovery",
         "tags": [
           "Business access"
@@ -1730,6 +1730,31 @@
         },
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
         "security": []
+      }
+    },
+    "/business/v1/overview": {
+      "get": {
+        "summary": "query",
+        "operationId": "get_business_v1_overview",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
       }
     },
     "/business/v1/context": {

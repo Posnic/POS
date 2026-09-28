@@ -255,3 +255,96 @@ test('browser approval requires HTTPS, same-origin and browser-bound consent bef
   const value = await f.access.exchange(f.request, f.verifier);
   assert.equal(value.context.accountId, String(f.user._id));
 });
+
+const reportDay = new Date().toISOString().slice(0, 10);
+async function prepared(f) {
+  const id = String(f.branch._id),
+    assignmentId = opaque(),
+    at = new Date().toISOString();
+  await db.collection('business_reporting_publishers').insertOne({
+    _id: id,
+    license: f.license,
+    assignmentId,
+    deviceId: 'desktop-test',
+    epoch: 1,
+    lastSequence: 1,
+  });
+  await db.collection('business_prepared_summaries').insertOne({
+    _id: id + ':' + reportDay,
+    branch_id: f.branch._id,
+    license: f.license,
+    publisherAssignmentId: assignmentId,
+    publisherDeviceId: 'desktop-test',
+    publisherEpoch: 1,
+    sequence: 1,
+    summary: {
+      schemaVersion: 2,
+      metricDefinitionVersion: 2,
+      branchId: id,
+      license: String(f.license),
+      businessDate: reportDay,
+      timezone: 'Asia/Kolkata',
+      currency: 'INR',
+      currencyDigits: 2,
+      billedSalesMinor: 10000,
+      refundsMinor: 2500,
+      salesAfterReturnsMinor: 7500,
+      completedSales: 2,
+      preparedAt: at,
+      sourceUpdatedAt: at,
+      sourceComplete: false,
+    },
+  });
+  return id;
+}
+test('prepared overview enforces live ACL and branch scope and never substitutes missing summaries with zero', async () => {
+  const f = await fixture(),
+    value = await grant(f),
+    id = String(f.branch._id);
+  const read = (branchId) =>
+    fetch(base + '/api/business/v1/overview?businessDate=' + reportDay + '&branchId=' + branchId, {
+      headers: { 'x-forwarded-proto': 'https', authorization: 'Bearer ' + value.token },
+    });
+  assert.equal((await read(id)).status, 503);
+  await prepared(f);
+  const response = await read(id);
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.salesAfterReturnsMinor, 7500);
+  assert.equal(result.freshness.state, 'partial');
+  assert.equal(result.freshness.complete, false);
+  assert.equal((await read(String(new ObjectId()))).status, 403);
+  await db
+    .collection('users')
+    .updateOne({ _id: f.user._id }, { $set: { access: { item: { read: true } } } });
+  assert.equal((await read(id)).status, 403);
+});
+test('prepared reads reject an in-progress publisher, wrong generation and false completeness', async () => {
+  const { readBusinessOverview } = require('../src/services/business-reports');
+  const f = await fixture(),
+    value = await grant(f),
+    id = await prepared(f),
+    query = { businessDate: reportDay, branchId: id };
+  await db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: id }, { $set: { pending: { sequence: 2 } } });
+  await assert.rejects(readBusinessOverview(db, value.context, query), is('summary_unavailable'));
+  await db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: id }, { $unset: { pending: '' } });
+  await db
+    .collection('business_prepared_summaries')
+    .updateOne({ branch_id: f.branch._id }, { $set: { publisherEpoch: 2 } });
+  await assert.rejects(readBusinessOverview(db, value.context, query), is('summary_unavailable'));
+  await db
+    .collection('business_prepared_summaries')
+    .updateOne(
+      { branch_id: f.branch._id },
+      { $set: { publisherEpoch: 1, 'summary.sourceComplete': true } }
+    );
+  await assert.rejects(readBusinessOverview(db, value.context, query), is('summary_unavailable'));
+  await assert.rejects(
+    readBusinessOverview(db, value.context, { ...query, branchId: [id, id] }),
+    is('invalid_request')
+  );
+});

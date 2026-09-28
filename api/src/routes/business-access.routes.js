@@ -67,7 +67,7 @@ router.get('/discovery', (_req, res) =>
     issuer: _req.businessOrigin,
     authorization: 'business-pkce-v1',
     audience: 'posnic-business',
-    reporting: 'unavailable',
+    reporting: 'bounded-summary-v2',
   })
 );
 router.post(
@@ -167,6 +167,19 @@ const protectBusiness = async (req, res, next) => {
   }
 };
 router.use(protectBusiness);
+router.use(limiter('business-private', 120));
+router.get(
+  '/overview',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-reports').readBusinessOverview(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.query
+      )
+    )
+  )
+);
 router.get(
   '/context',
   wrap(async (req, res) => res.json(await req.businessAccess.contextFor(req.businessIdentity.user)))

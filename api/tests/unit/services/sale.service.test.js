@@ -266,6 +266,65 @@ describe('SalesService', () => {
     });
   });
 
+  describe('Business billed-sales reconciliation uses the actual sale writer', () => {
+    test.each([
+      {
+        name: 'coupon, loyalty and extra discount',
+        data: { extra_discount: '10', coupon_discount_value: '15', loyalty_redeem_value: '5' },
+        expected: 17000,
+      },
+      {
+        name: 'part-paid bill',
+        data: { partial_check: 'true', partial_balance: '50' },
+        expected: 20000,
+      },
+      {
+        name: 'tip stays outside sales',
+        data: { tip_amount: '30', tip_in_total: 'true' },
+        expected: 20000,
+      },
+      {
+        name: 'exclusive tax is included once',
+        item: { tax: 18, tax_type: 'exclusive' },
+        expected: 23600,
+      },
+      {
+        name: 'bill rounding is already applied',
+        data: { items: [makeItemPayload({ item_price_total: '100.24' })] },
+        context: { roundOff: true },
+        expected: 20000,
+      },
+    ])('$name', async ({ data, item, context, expected }) => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc(item));
+      await salesService.processSale(
+        makeSaleData({ ...data, date: '2026-09-28T01:00:00.000Z' }),
+        '',
+        'Add',
+        makeContext(context)
+      );
+      const written = salesRepository.create.mock.calls[0][0];
+      const { saleContribution } = require('../../../src/services/business-metrics');
+      const result = saleContribution(
+        { ...written, _id: 'c'.repeat(24) },
+        {
+          id: BRANCH_ID,
+          license: LICENSE_ID,
+          currency: 'INR',
+          currencyDigits: 2,
+          timezone: 'Asia/Kolkata',
+        }
+      );
+      expect(result.entries).toEqual([
+        {
+          businessDate: '2026-09-28',
+          billedSalesMinor: expected,
+          refundsMinor: 0,
+          completedSales: 1,
+        },
+      ]);
+    });
+  });
+
   // ── processSale – validation ──────────────────────────────────────────────
 
   describe('processSale – validation', () => {
