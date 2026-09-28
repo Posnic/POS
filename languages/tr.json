@@ -95,5 +95,8 @@
   "lang_total_title": "Toplam",
   "lang_yes": "Evet",
   "lang_ai_describe_hint": "Ürünün bilgilerinden bir açıklama taslağı oluştur",
-  "lang_walk_in_customer_click_to_choose_or_add": "Kayıtsız müşteri. Seçmek veya eklemek için tıklayın"
+  "lang_walk_in_customer_click_to_choose_or_add": "Kayıtsız müşteri. Seçmek veya eklemek için tıklayın",
+  "lang_changes_not_saved": "Değişiklikler kaydedilmedi.",
+  "lang_continue": "Devam et",
+  "lang_reason": "Neden"
 }

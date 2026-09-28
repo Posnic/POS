@@ -3656,5 +3656,8 @@
   "lang_pm_option_coffee": "مقهى",
   "lang_pm_option_herbs": "حديقة أعشاب",
   "lang_pm_option_pizza": "مطعم بيتزا",
-  "lang_pm_option_grill": "شواية"
+  "lang_pm_option_grill": "شواية",
+  "lang_changes_not_saved": "لم تُحفظ التغييرات.",
+  "lang_continue": "متابعة",
+  "lang_reason": "السبب"
 }

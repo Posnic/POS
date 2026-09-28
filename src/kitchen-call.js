@@ -68,7 +68,7 @@ const countWord = (n) => {
  * the next one either. Six lines, then how many are left, and the ticket
  * itself is still on the spike for the detail.
  */
-const READ_AT_MOST = 6;
+const READ_AT_MOST = Infinity;
 
 /*
  * The name as the shop typed it, tidied of whitespace and nothing else.
@@ -108,7 +108,8 @@ const quantityOf = (item) =>
  */
 function script({ table, items, changed, cancelled, whole } = {}) {
   const said = (Array.isArray(items) ? items : [])
-    .map((item) => ({ name: spokenName(item), count: quantityOf(item) }))
+    .filter(item => !item.held)
+    .map((item) => ({ name: spokenName(item), count: quantityOf(item), instruction:item.instruction_only, allergies:[...(item.allergies || []),item.allergy_note || ''].filter(Boolean), seat:item.seat }))
     .filter((line) => line.name && line.count > 0);
 
   if (!said.length) return { head: [], items: [] };
@@ -185,8 +186,11 @@ function script({ table, items, changed, cancelled, whole } = {}) {
      * nothing else. "Cancel two naan" cannot be misheard as an order for two
      * naan; "two naan" after an opening they missed can.
      */
-    if (cancelled) return `Cancel ${count} ${line.name}`;
-    return `${count.charAt(0).toUpperCase()}${count.slice(1)} ${line.name}`;
+    const allergy=line.allergies.length ? '. Allergy: ' + line.allergies.join(', ') : '';
+    const seat=line.seat ? ', seat ' + line.seat : '';
+    if(line.instruction)return `Preparation update for ${count} ${line.name}${seat}. Do not add another item${allergy}`;
+    if (cancelled) return `Cancel ${count} ${line.name}${seat}${allergy}`;
+    return `${count.charAt(0).toUpperCase()}${count.slice(1)} ${line.name}${seat}${allergy}`;
   });
 
   const rest = said.length - read.length;

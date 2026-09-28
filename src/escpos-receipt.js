@@ -796,7 +796,8 @@ function renderSale(sale, options = {}, renderer) {
    * narrows the item name column, which wraps; it cannot overflow the line.
    */
   const symbol = sale.currency ? String(sale.currency) : '';
-  const money = (n) => symbol + Number(n || 0).toFixed(2);
+  const digits = Number.isInteger(sale.currencyDigits) && sale.currencyDigits >= 0 && sale.currencyDigits <= 4 ? sale.currencyDigits : 2;
+  const money = (n) => symbol + Number(n || 0).toFixed(digits);
 
   /*
    * The logo goes above the name, where a letterhead goes.

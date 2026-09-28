@@ -3665,5 +3665,8 @@
   "lang_pm_option_coffee": "Cafetería",
   "lang_pm_option_herbs": "Jardín de hierbas",
   "lang_pm_option_pizza": "Pizzería",
-  "lang_pm_option_grill": "Parrilla"
+  "lang_pm_option_grill": "Parrilla",
+  "lang_changes_not_saved": "No se guardaron los cambios.",
+  "lang_continue": "Continuar",
+  "lang_reason": "Motivo"
 }

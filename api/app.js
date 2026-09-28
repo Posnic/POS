@@ -1119,6 +1119,18 @@ app.use(
   require('./src/routes/branch-payments.routes')
 );
 app.use(['/api/captain/v1', '/captain/v1'], require('./src/routes/captain-access.routes'));
+app.use('/api/kitchen', require('./src/routes/kitchen-board.routes'));
+app.get(/^\/kitchen$/, (_req, res) => res.redirect('/kitchen/'));
+for (const file of ['index.html', 'board.js', 'board.css', 'device.js', 'manifest.webmanifest', 'sw.js', 'icon.svg']) {
+  app.get(
+    file === 'index.html' ? ['/kitchen/', '/kitchen/index.html'] : '/kitchen/' + file,
+    (_req, res) => {
+      res.set('Cache-Control', 'no-store');
+      // Fixed server-owned filenames also work from hidden managed checkouts.
+      res.sendFile(path.join(__dirname, 'src', 'kitchen-board', file), { dotfiles: 'allow' });
+    }
+  );
+}
 app.use(['/api/mobile/v1', '/mobile/v1'], require('./src/routes/mobile-pos.routes'));
 for (const extension of ['html', 'js', 'css']) {
   const suffix = extension === 'html' ? '' : '.' + extension;

@@ -3669,5 +3669,8 @@
   "lang_pm_option_coffee": "कॉफ़ी शॉप",
   "lang_pm_option_herbs": "जड़ी-बूटी उद्यान",
   "lang_pm_option_pizza": "पिज़्ज़ेरिया",
-  "lang_pm_option_grill": "बारबेक्यू ग्रिल"
+  "lang_pm_option_grill": "बारबेक्यू ग्रिल",
+  "lang_changes_not_saved": "बदलाव सेव नहीं हुए।",
+  "lang_continue": "आगे बढ़ें",
+  "lang_reason": "कारण"
 }

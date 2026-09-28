@@ -46,7 +46,11 @@ function notifyKotReady(details = {}) {
     // Send only the committed delta, with a distinct identity per revision.
     if (Array.isArray(details.items)) {
       for (const kind of ['cancel', 'add']) {
-        const items = details.items.filter((item) => item.process === kind);
+        const items = details.items.filter(
+          (item) =>
+            !item.held &&
+            (item.process === kind || (kind === 'add' && ['fire', 'amend'].includes(item.process)))
+        );
         if (!items.length) continue;
         const eventKey = require('crypto')
           .createHash('sha256')

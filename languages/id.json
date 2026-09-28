@@ -3656,5 +3656,8 @@
   "lang_pm_option_coffee": "Kedai kopi",
   "lang_pm_option_herbs": "Kebun herba",
   "lang_pm_option_pizza": "Kedai pizza",
-  "lang_pm_option_grill": "Panggangan"
+  "lang_pm_option_grill": "Panggangan",
+  "lang_changes_not_saved": "Perubahan tidak disimpan.",
+  "lang_continue": "Lanjutkan",
+  "lang_reason": "Alasan"
 }

@@ -176,14 +176,15 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
 
   // Printer Handlers
   ipcMain.handle('printer:recovery-status', async () => {
+    const environment = await require('./printer-environment').status();
     const queue = hardwareManager.getWindowsPrintQueue();
     let systemSettings;
     if (queue) {
       try { systemSettings = await queue.transport.systemSettings(); }
       catch (_) { systemSettings = { guidance: ['Windows power settings could not be checked. Review Sleep, Hibernate and USB selective suspend manually in Power Options.'] }; }
     }
-    return queue ? { supported: true, systemSettings, bindings: queue.bindings,
-      health: [...queue.health.values()].map(item => item.value), keepAlive: queue.keepAlive, jobs: queue.list() } : { supported: false };
+    return queue ? { supported: true, environment, systemSettings, bindings: queue.bindings,
+      health: [...queue.health.values()].map(item => item.value), keepAlive: queue.keepAlive, jobs: queue.list() } : { supported: false, environment };
   });
   ipcMain.handle('printer:recovery-configure', async (_event, printer, binding) => {
     const queue = hardwareManager.getWindowsPrintQueue();
@@ -927,9 +928,9 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
    * things plugged into them. They live beside the printer choice in
    * preferences.json.
    */
-  ipcMain.handle('kitchen-screen:list', () => {
+  ipcMain.handle('kitchen-screen:list', async () => {
     const screens = require('./kitchen-screen');
-    return { ok: true, displays: screens.displays(), defaults: screens.DEFAULTS };
+    return { ok: true, displays: screens.displays(), defaults: screens.DEFAULTS, branches: await readLocalBranches() };
   });
 
   ipcMain.handle('kitchen-screen:configure', (event, displayId, patch = {}) => {
@@ -962,6 +963,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   });
 
   /* The page says it has loaded and asks for its content. */
+  ipcMain.handle('kitchen-screen:rendered',(event,receipt)=>require('./kitchen-screen').acknowledgeRender(event.sender,receipt));
   ipcMain.handle('kitchen-screen:ready', (event, displayId) => {
     const screens = require('./kitchen-screen');
     const setup = !screens.configFor(displayId).enabled;

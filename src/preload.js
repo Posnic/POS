@@ -2,6 +2,19 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose hardware and printer APIs to renderer
 contextBridge.exposeInMainWorld('electronAPI', {
+  kitchenAudio: {
+    voices: () => ipcRenderer.invoke('kitchen-audio:voices'),
+    preview: (kind, which) => ipcRenderer.invoke('kitchen-audio:preview', kind, which),
+    next: () => ipcRenderer.invoke('kitchen-audio:next'),
+    ack: value => ipcRenderer.invoke('kitchen-audio:ack', value),
+    paused: () => ipcRenderer.invoke('kitchen-audio:paused'),
+    synthesize: (text, voice) => ipcRenderer.invoke('kitchen-audio:synthesize', text, voice),
+    status: () => ipcRenderer.invoke('kitchen-audio:status'),
+    start: () => ipcRenderer.invoke('kitchen-audio:start'),
+    cancel: id => ipcRenderer.invoke('kitchen-audio:cancel', id),
+    voice: (id, data) => ipcRenderer.invoke('kitchen-audio:voice', id, data),
+    test: id => ipcRenderer.invoke('kitchen-audio:test', id),
+  },
   /*
    * Which operating system this is.
    *
@@ -402,7 +415,7 @@ contextBridge.exposeInMainWorld('posnicKitchenScreen', {
     return () => ipcRenderer.removeListener('kitchen-screen:config', h);
   },
   onTickets: (cb) => {
-    const h = (_e, d) => cb(d);
+    const h = (_e, d, receipt) => { cb(d); if(receipt) ipcRenderer.invoke('kitchen-screen:rendered',receipt).catch(()=>{}); };
     ipcRenderer.on('kitchen-screen:tickets', h);
     return () => ipcRenderer.removeListener('kitchen-screen:tickets', h);
   }

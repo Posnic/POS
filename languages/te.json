@@ -3656,5 +3656,8 @@
   "lang_pm_option_coffee": "కాఫీ షాప్",
   "lang_pm_option_herbs": "మూలికల తోట",
   "lang_pm_option_pizza": "పిజ్జా దుకాణం",
-  "lang_pm_option_grill": "బార్బెక్యూ గ్రిల్"
+  "lang_pm_option_grill": "బార్బెక్యూ గ్రిల్",
+  "lang_changes_not_saved": "మార్పులు సేవ్ కాలేదు.",
+  "lang_continue": "కొనసాగించండి",
+  "lang_reason": "కారణం"
 }

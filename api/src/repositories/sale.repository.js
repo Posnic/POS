@@ -1,3 +1,7 @@
+const Money = require('../utils/currency');
+const serviceLine = require('../utils/service-line');
+const orderLine = require('../utils/order-line');
+const kitchenActor = require('../helpers/kitchen-actor');
 const itemText = require('../utils/item-localization');
 const mongoose = require('mongoose');
 const { currentConnection } = require('../db/tenant-context');
@@ -6971,6 +6975,8 @@ class SalesRepository {
           $set: {
             partial_balance: parseFloat(saleData.amount) + parseFloat(saleData.paidamount || 0),
             payment_status: 'Paid',
+            kitchen_required:
+              saleDetails.kitchen_required === true || saleDetails.sale_process === 'KOT',
             payment_pending: 0.0,
             updated_date: new Date(),
             updated_by: loggedUserName,
@@ -7740,9 +7746,12 @@ class SalesRepository {
           hasNewChanges = true;
           const change = changes[i];
           const items = Array.isArray(change.items) ? change.items : [];
-          const addItems = items.filter((it) => String(it.process || '').toLowerCase() === 'add');
+          const addItems = items.filter(
+            (it) =>
+              !it.held && ['add', 'fire', 'amend'].includes(String(it.process || '').toLowerCase())
+          );
           const cancelItems = items.filter(
-            (it) => String(it.process || '').toLowerCase() === 'cancel'
+            (it) => !it.held && String(it.process || '').toLowerCase() === 'cancel'
           );
 
           if (addItems.length > 0) {
@@ -7766,6 +7775,7 @@ class SalesRepository {
         }
 
         if (hasNewChanges && printJobs.length > 0) {
+          sale.money = Money.policy(branchData);
           sale.print_jobs = printJobs;
           sale.new_last_printed_change_index = highestPrintedIndex;
           processedSales.push(sale);
@@ -7868,10 +7878,8 @@ class SalesRepository {
    *   - and it now claims what it hands out, so a ticket taken by the other
    *     till would never appear at all.
    *
-   * A screen shows what is open, whoever printed it, until it is settled.
-   * "Settled" has no marker in this product - nothing says a dish is done -
-   * so the honest boundary is the one that already exists: it leaves the
-   * screen when the table is billed, paid or called off.
+   * Tracked kitchen orders remain until served or cancelled, independently of
+   * billing. Legacy receipts retain their historical billing boundary.
    */
   async serveKitchenItems({ saleId, branchId, items, actor }) {
     if (
@@ -7888,9 +7896,7 @@ class SalesRepository {
     const scope = {
       _id: new mongoose.Types.ObjectId(String(saleId)),
       branch_id: new mongoose.Types.ObjectId(String(branchId)),
-      sale_process: { $regex: 'KOT', $options: 'i' },
-      payment_status: { $nin: ['Paid', 'Cancelled'] },
-      order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
+      ...require('../helpers/kitchen-eligibility').kitchenEligibility(),
       ...activeTenantFilter(),
     };
     const sale = await collection.findOne(scope);
@@ -7901,7 +7907,13 @@ class SalesRepository {
     for (const requested of items) {
       const line = lines.find((row) => row.id === requested.id);
       const quantity = Number(requested.quantity);
-      if (!line || !Number.isFinite(quantity) || quantity < 0 || quantity > line.quantity) {
+      if (
+        !line ||
+        line.held ||
+        !Number.isFinite(quantity) ||
+        quantity < 0 ||
+        quantity > line.quantity
+      ) {
         return { status: false, message: 'Order changed. Refresh before marking items served.' };
       }
       // Absolute totals make retrying the same tap safe on slow connections.
@@ -7916,10 +7928,23 @@ class SalesRepository {
         kitchen_service:
           sale.kitchen_service === undefined ? { $exists: false } : sale.kitchen_service,
       },
-      { $set: { kitchen_service: service } }
+      {
+        $set: {
+          kitchen_service: service,
+          kitchen_closed: !rounds({ ...sale, kitchen_service: service }).some((r) =>
+            r.items.some((i) => i.remaining > 0)
+          ),
+        },
+      }
     );
     if (!result.matchedCount)
       return { status: false, message: 'Order changed. Refresh before marking items served.' };
+    // Only notify after the write succeeds. Cloud/other processes still use the normal poll.
+    try {
+      process.emit('posnic:kitchen-served', { branchId: String(branchId), saleId: String(saleId) });
+    } catch (error) {
+      console.warn('[kitchen] Could not request screen refresh:', error.message);
+    }
     return {
       status: true,
       message: 'Items marked served',
@@ -7939,9 +7964,7 @@ class SalesRepository {
         .find(
           {
             branch_id: branchObjectId,
-            sale_process: { $regex: 'KOT', $options: 'i' },
-            payment_status: { $nin: ['Paid', 'Cancelled'] },
-            order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
+            ...require('../helpers/kitchen-eligibility').kitchenEligibility(),
             ...activeTenantFilter(),
           },
           {
@@ -7955,6 +7978,7 @@ class SalesRepository {
               items: 1,
               changes: 1,
               kitchen_service: 1,
+              kitchen_required: 1,
               bill_requested_at: 1,
               bill_printed_at: 1,
             },
@@ -8385,6 +8409,8 @@ class SalesRepository {
         }
       }
 
+      const monetary = Money.policy(branchDoc);
+      const round = (value) => Money.fromMinor(Money.toMinor(value, monetary), monetary);
       const orderLocal = moment().tz(onlineOrdering.normalizeTimeZone(branchDoc.time_zone));
       const orderDay = orderLocal.day();
       const orderMinutes = orderLocal.hours() * 60 + orderLocal.minutes();
@@ -8394,7 +8420,11 @@ class SalesRepository {
 
       // Map items - use raw shape (no Mongoose ObjectId for item ref to avoid validation errors)
       const itemCollection = db.collection('items');
+      if (!staffOrder && items.some((item) => item.held === true)) {
+        return { status: false, message: 'Sign in to hold a course.', data: null };
+      }
       const saleItems = [];
+      orderLine.validate(items);
       for (const item of items) {
         /* Priced and checked in one place, shared with a line added to an
            order that has already gone. A refusal is returned as it stands. */
@@ -8525,6 +8555,7 @@ class SalesRepository {
           const total = round(price * qty);
           return {
             item_id: String(si.item_id || ''),
+            ...serviceLine.metadata(si),
             item_name: String(si.item_name || ''),
             ...itemText.snapshot(si),
             item_quantity: qty,
@@ -8642,6 +8673,7 @@ class SalesRepository {
         branch_name: branchName,
         license: branchDoc.license || BaseModel.license,
         sales_id: salesId,
+        kitchen_required: true,
         sale_process: 'KOT',
         /*
          * A KOT IS NOT PAID. It is a ticket for a kitchen.
@@ -8770,7 +8802,16 @@ class SalesRepository {
            Worked out once: calling twice would stamp two different times. */
         ...(clientRecord ? { client: clientRecord } : {}),
         // Initial change log entry for KOT printing
-        changes: changesItems.length ? [{ timestamp: now, items: changesItems }] : [],
+        kitchen_actor: staffOrder ? kitchenActor() : null,
+        changes: changesItems.length
+          ? [
+              {
+                timestamp: now,
+                items: changesItems,
+                kitchen_actor: staffOrder ? kitchenActor() : null,
+              },
+            ]
+          : [],
         /*
          * HOW LONG THE KITCHEN SHOULD TAKE, worked out once and kept.
          *
@@ -8894,7 +8935,10 @@ class SalesRepository {
         alert: arrival.alert,
         state: arrival.state,
         total: finalTotal,
-        ticket: { table: saleDocument.table_number || '', items: saleDocument.items || [] },
+        ticket: {
+          table: saleDocument.table_number || '',
+          items: (saleDocument.items || []).filter((item) => !item.held),
+        },
       });
 
       return {
@@ -9939,6 +9983,8 @@ class SalesRepository {
         const items = (Array.isArray(doc.items) ? doc.items : []).map((item) => ({
           id: item.item_id || '',
           item_id: item.item_id || '',
+          ...serviceLine.metadata(item),
+          modifiers: item.modifiers || [],
           name: item.item_name || item.name || '',
           item_name: item.item_name || item.name || '',
           ...itemText.snapshot(item),
@@ -9959,6 +10005,7 @@ class SalesRepository {
           dine_type: doc.dine_type || 'Dine-in',
           status: derivedStatus,
           created_at: doc.created_date || doc.date,
+          assigned_staff: doc.assigned_staff,
           kitchen_rounds: require('../helpers/kitchen-rounds').rounds(doc),
           total_amount: doc.sales_total || doc.total || 0,
           subtotal: doc.sales_sub_total || doc.subtotal || 0,
@@ -9992,7 +10039,7 @@ class SalesRepository {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel, newTableId, seenAt } = {}
+    { SaleModel, newTableId, seenAt, editPolicy } = {}
   ) {
     let finishCaptainEdit;
     try {
@@ -10010,6 +10057,33 @@ class SalesRepository {
         return { status: false, message: 'Order not found', data: [] };
       }
 
+      const editFilter = {
+        _id: orderObjectId,
+        captain_payment_plan: { $exists: false },
+        items: editPolicy?.expectedItems || orderDoc.items,
+        changes:
+          (editPolicy ? editPolicy.expectedChanges : orderDoc.changes) === undefined
+            ? { $exists: false }
+            : editPolicy
+              ? editPolicy.expectedChanges
+              : orderDoc.changes,
+        ...(editPolicy ? { branch_id: editPolicy.branchId, license: editPolicy.license } : {}),
+      };
+      const actor = editPolicy?.actor || {
+        id: String(BaseModel.loggedUser || ''),
+        name: BaseModel.loggedUserName || 'Staff',
+      };
+      const audit = {
+        at: new Date(),
+        actor,
+        reason: editPolicy?.reason || '',
+        approved_by: editPolicy?.approvedBy || [],
+        action: status === 'cancelled' ? 'cancel' : 'modify',
+      };
+      const shop = await db
+        .collection('branches')
+        .findOne({ _id: orderDoc.branch_id, license: orderDoc.license });
+      const monetary = Money.policy(shop || {});
       finishCaptainEdit = await require('../services/captain-payment-guard').beginEdit(
         db,
         orderDoc
@@ -10060,8 +10134,8 @@ class SalesRepository {
           payment_status: 'Cancelled',
           payment_pending: 0.0,
           updated_date: mongoDate,
-          updated_by: 'System',
-          updated_by_id: null,
+          updated_by: actor.name,
+          updated_by_id: actor.id || null,
         };
 
         const existingItems = Array.isArray(orderDoc.items) ? orderDoc.items : [];
@@ -10091,6 +10165,7 @@ class SalesRepository {
             item_id: idStr,
             item_name: String(ex.item_name || ''),
             ...itemText.snapshot(ex),
+            ...serviceLine.metadata(ex),
             item_quantity: qty,
             /* The typed note if the line has one. A cancellation ticket is
                read by the same cook as the order, so it follows the same rule:
@@ -10106,14 +10181,21 @@ class SalesRepository {
         }
 
         if (changesItems.length > 0) {
-          existingChanges.push({ timestamp: mongoDate, items: changesItems });
+          existingChanges.push({
+            timestamp: mongoDate,
+            items: changesItems,
+            actor,
+            reason: audit.reason,
+            kitchen_actor: kitchenActor(),
+          });
           updateFields.changes = existingChanges;
+          updateFields.kitchen_closed = false;
         }
 
-        const updateResult = await salesCollection.updateOne(
-          { _id: orderObjectId, captain_payment_plan: { $exists: false } },
-          { $set: updateFields }
-        );
+        const updateResult = await salesCollection.updateOne(editFilter, {
+          $set: updateFields,
+          $push: { captain_audit: audit },
+        });
 
         /*
          * AND THE KITCHEN IS TOLD AT ONCE, exactly as a new order tells it.
@@ -10156,19 +10238,23 @@ class SalesRepository {
             }
           : {
               status: false,
-              message: 'No changes made to the order',
+              message: 'order_changed',
               data: [],
             };
       }
 
       // ---------- EDIT FLOW ----------
       const existingItems = Array.isArray(orderDoc.items) ? orderDoc.items : [];
+      orderLine.validate(existingItems);
+      orderLine.validate(items);
       const oldItemsData = {};
 
       for (const ex of existingItems) {
-        const idStr = ex.item_id ? String(ex.item_id) : '';
+        const idStr = orderLine.key(ex);
         if (!idStr) continue;
         oldItemsData[idStr] = {
+          item_id: orderLine.product(ex),
+          ...serviceLine.metadata(ex),
           quantity: parseFloat(ex.item_quantity || 0),
           name: String(ex.item_name || ''),
           /* Carried so a REMOVED line can still say which one it was. Two of
@@ -10186,7 +10272,7 @@ class SalesRepository {
       const existingChanges = Array.isArray(orderDoc.changes) ? orderDoc.changes : [];
       const existingIndex = {};
       existingItems.forEach((ex, idx) => {
-        const key = ex.item_id ? String(ex.item_id) : '';
+        const key = orderLine.key(ex);
         if (key) existingIndex[key] = idx;
       });
 
@@ -10198,26 +10284,69 @@ class SalesRepository {
         const rawId = item.product_id || item.item_id || '';
         if (!rawId) continue;
         const productId = String(rawId);
+        const lineKey = orderLine.key(item);
+        const previousLine = existingItems[existingIndex[lineKey]];
+        if (previousLine && orderLine.product(previousLine) !== productId) {
+          throw new Error('invalid_order_line');
+        }
+        // Existing held food is released only through the idempotent fire action.
+        if (previousLine) item.held = previousLine.held === true;
+        const preparation = serviceLine.metadata({ ...previousLine, ...item });
+        const newNote =
+          item.item_description != null
+            ? String(item.item_description)
+            : String(previousLine?.item_description || '');
+        if (
+          previousLine &&
+          (JSON.stringify(preparation) !== JSON.stringify(serviceLine.metadata(previousLine)) ||
+            newNote !== String(previousLine.item_description || ''))
+        ) {
+          changesItems.push({
+            ...preparation,
+            item_id: productId,
+            item_name: previousLine.item_name || item.name || '',
+            item_quantity: Number(previousLine.item_quantity || previousLine.quantity || 0),
+            item_description: newNote,
+            process: 'amend',
+            instruction_only: true,
+            spice_level: spiceLevel.levelOf(item.spice_level ?? previousLine.spice_level),
+          });
+        }
         const qty = parseFloat(item.quantity || item.item_quantity || 0);
-        const price = parseFloat(item.price || item.unit_price || item.item_base_price || 0);
+        const price = Number(
+          item.price ??
+            item.unit_price ??
+            item.item_base_price ??
+            item.item_price ??
+            previousLine?.unit_price ??
+            previousLine?.item_price ??
+            0
+        );
         if (!productId || qty <= 0 || price < 0) continue;
 
-        const oldQty = oldItemsData[productId] ? parseFloat(oldItemsData[productId].quantity) : 0;
-        if (oldItemsData[productId]) delete oldItemsData[productId];
+        const oldQty = oldItemsData[lineKey] ? parseFloat(oldItemsData[lineKey].quantity) : 0;
+        if (oldItemsData[lineKey]) delete oldItemsData[lineKey];
 
         let itemDoc = null;
         if (mongoose.Types.ObjectId.isValid(productId)) {
           itemDoc = await itemCollection.findOne({
             _id: new mongoose.Types.ObjectId(productId),
+            license: orderDoc.license,
           });
         }
         if (!itemDoc) {
+          if (!previousLine)
+            throw new Error(
+              'This product has already been removed, so you can not modify anything.'
+            );
           // Item not in catalog (e.g. KOT order item) - update in-place using existing data
-          if (existingIndex[productId] !== undefined) {
-            const i = existingIndex[productId];
+          if (existingIndex[lineKey] !== undefined) {
+            const i = existingIndex[lineKey];
             updatedItems[i] = {
-              ...updatedItems[i],
+              ...this._scaleOrderLine(updatedItems[i], oldQty, qty, monetary),
+              ...serviceLine.metadata({ ...updatedItems[i], ...item }),
               item_quantity: qty,
+              quantity: qty,
               ...(item.item_description != null
                 ? { item_description: String(item.item_description) }
                 : {}),
@@ -10227,7 +10356,17 @@ class SalesRepository {
                 ? { spice_level: spiceLevel.levelOf(item.spice_level) }
                 : {}),
             };
-            incomingProductIds.push(productId);
+            if (qty !== oldQty)
+              changesItems.push({
+                ...preparation,
+                item_id: productId,
+                item_name: previousLine.item_name || '',
+                item_quantity: Math.abs(qty - oldQty),
+                item_description: newNote,
+                spice_level: spiceLevel.levelOf(updatedItems[i].spice_level),
+                process: qty > oldQty ? 'add' : 'cancel',
+              });
+            incomingProductIds.push(lineKey);
           }
           continue;
         }
@@ -10245,6 +10384,7 @@ class SalesRepository {
         if (changeQty > 0) {
           changesItems.push({
             item_id: productId,
+            ...preparation,
             item_name: String(itemDoc.name || item.name || ''),
             ...itemText.snapshot(itemDoc),
             item_quantity: changeQty,
@@ -10259,7 +10399,7 @@ class SalesRepository {
             spice_level: spiceLevel.levelOf(
               item.spice_level != null
                 ? item.spice_level
-                : (updatedItems[existingIndex[productId]] || {}).spice_level
+                : (updatedItems[existingIndex[lineKey]] || {}).spice_level
             ),
             process: changeProcess,
             item_code: String(itemDoc.itemid || ''),
@@ -10269,12 +10409,12 @@ class SalesRepository {
           });
         }
 
-        incomingProductIds.push(productId);
+        incomingProductIds.push(lineKey);
         const itemTaxRate = parseFloat(itemDoc.tax || 0);
         const taxType = itemDoc.tax_type || 'exclusive';
 
-        if (existingIndex[productId] !== undefined) {
-          const i = existingIndex[productId];
+        if (existingIndex[lineKey] !== undefined) {
+          const i = existingIndex[lineKey];
           const existing = updatedItems[i];
           const itemAmount = qty * price;
           const itemDiscountPer = parseFloat(existing.item_discount_percentage || 0);
@@ -10294,8 +10434,15 @@ class SalesRepository {
 
           updatedItems[i] = {
             ...existing,
+            ...serviceLine.metadata({ ...existing, ...item }),
             item_quantity: qty,
+            quantity: qty,
             item_price: price,
+            unit_price: price,
+            item_base_price: price,
+            item_total: lineTotal,
+            total: lineTotal,
+            item_tax: taxAmount,
             item_discount: lineDiscount,
             total_amount: lineTotal,
             tax: itemTaxRate,
@@ -10304,7 +10451,7 @@ class SalesRepository {
             cgst_tax: taxAmount / 2,
             sgst_tax: taxAmount / 2,
           };
-          if (item.item_description)
+          if (item.item_description != null)
             updatedItems[i].item_description = String(item.item_description);
           /* The ticket is printed from the change record above; THIS is what
              the customer sees back on their own order and what a shop counts
@@ -10344,8 +10491,15 @@ class SalesRepository {
             item_sku: itemDoc.itemid || '',
             item_price: sellingPrice,
             item_quantity: itemQuantity,
+            quantity: itemQuantity,
+            unit_price: sellingPrice,
+            item_base_price: sellingPrice,
+            item_total: lineTotal,
+            total: lineTotal,
+            item_tax: taxAmount,
             item_available_quantity: parseFloat(itemDoc.available_quantity || 0),
             item_id: productId,
+            ...preparation,
             item_unit: itemDoc.unit || 'qty',
             total_amount: lineTotal,
             barcode_id: itemDoc.barcode_id || '',
@@ -10389,12 +10543,13 @@ class SalesRepository {
         }
       }
 
-      for (const [remItemId, remItemData] of Object.entries(oldItemsData)) {
+      for (const remItemData of Object.values(oldItemsData)) {
         const remQty = parseFloat(remItemData.quantity || 0);
         if (remQty <= 0) continue;
         const remPrice = parseFloat(remItemData.price || 0);
         changesItems.push({
-          item_id: String(remItemId),
+          item_id: remItemData.item_id,
+          ...serviceLine.metadata(remItemData),
           item_name: String(remItemData.name || ''),
           ...itemText.snapshot(remItemData),
           item_quantity: remQty,
@@ -10410,7 +10565,7 @@ class SalesRepository {
 
       const finalItems = updatedItems.filter((ex) => {
         if (!ex.item_id) return false;
-        return incomingProductIds.includes(String(ex.item_id));
+        return incomingProductIds.includes(orderLine.key(ex));
       });
 
       let itemsSub = 0;
@@ -10439,15 +10594,23 @@ class SalesRepository {
       const salesTotal = itemsSub - extraDiscountAmount;
       const mongoDate = new Date();
       if (changesItems.length > 0) {
-        existingChanges.push({ timestamp: mongoDate, items: changesItems });
+        existingChanges.push({
+          timestamp: mongoDate,
+          items: changesItems,
+          actor,
+          reason: audit.reason,
+          kitchen_actor: kitchenActor(),
+        });
       }
 
       const updateFields = {
         items: finalItems,
         changes: existingChanges,
+        kitchen_required: true,
+        kitchen_closed: false,
         sales_sub_total: baseSubtotal,
         items_subtotal: baseSubtotal,
-        sales_total: Math.round(salesTotal * 100) / 100,
+        sales_total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
         items_total: salesTotal,
         tax: taxTotal,
         discount: itemDiscountTotal,
@@ -10455,7 +10618,7 @@ class SalesRepository {
         return_discount: 0,
         number_of_items: finalItems.length,
         updated_date: mongoDate,
-        updated_by: 'System',
+        updated_by: actor.name,
         sale_process: 'KOT',
       };
 
@@ -10497,10 +10660,10 @@ class SalesRepository {
       if (personCount !== null && personCount !== '')
         updateFields.person_count = parseInt(personCount, 10);
 
-      const updateResult = await salesCollection.updateOne(
-        { _id: orderObjectId, captain_payment_plan: { $exists: false } },
-        { $set: updateFields }
-      );
+      const updateResult = await salesCollection.updateOne(editFilter, {
+        $set: updateFields,
+        $push: { captain_audit: audit },
+      });
 
       /* An amended table order needs a fresh ticket in the kitchen just as much
          as a new one does, and the same event carries it. */
@@ -10527,7 +10690,7 @@ class SalesRepository {
           }
         : {
             status: false,
-            message: 'No changes made to the order',
+            message: 'order_changed',
             data: [],
           };
     } catch (error) {
@@ -10699,6 +10862,8 @@ class SalesRepository {
       orderMinutes,
       servicePoint,
     } = where;
+    const monetary = Money.policy(branchDoc);
+    const round = (value) => Money.fromMinor(Money.toMinor(value, monetary), monetary);
     const qty = Number(item.item_quantity) || 1;
     const itemId = String(item.item_id || '');
     if (!ObjectId.isValid(itemId)) {
@@ -10887,6 +11052,7 @@ class SalesRepository {
     return {
       line: {
         item_id: itemId,
+        ...serviceLine.metadata(item),
         item_name: itemDoc.name || item.item_name || '',
         ...itemText.snapshot(itemDoc),
         name: itemDoc.name || item.item_name || '',
@@ -11238,10 +11404,13 @@ class SalesRepository {
    * the price they were quoted rather than to whatever the catalogue says by
    * the time they change their mind.
    */
-  _scaleOrderLine(line, was, now) {
+  _scaleOrderLine(line, was, now, monetary) {
     if (!(was > 0) || now === was) return { ...line, item_quantity: now, quantity: now };
     const factor = now / was;
-    const scale = (value) => round(Number(value || 0) * factor);
+    const scale = (value) =>
+      monetary
+        ? Money.fromMinor(Money.toMinor(Number(value || 0) * factor, monetary), monetary)
+        : round(Number(value || 0) * factor);
     const scaled = { ...line, item_quantity: now, quantity: now };
     for (const field of [
       'tax_amount',
@@ -13059,6 +13228,7 @@ class SalesRepository {
         data: {
           list: docs.map((sale) => ({
             ...sale,
+            assigned_staff: sale.assigned_staff,
             kitchen_rounds: require('../helpers/kitchen-rounds').rounds(sale),
           })),
           total,

@@ -3928,5 +3928,8 @@
   "lang_pm_image_help": "PNG, JPEG of WebP, maximaal 10 MB. Afbeeldingen worden aan de pagina aangepast en geoptimaliseerd voor afdrukken. Een geüploade afbeelding vervangt het patroon.",
   "lang_pm_intro": "Maak van het menu van deze vestiging menukaarten voor uw tafels. Pas het ontwerp aan en download vervolgens een PDF of druk het af.",
   "lang_print": "Afdrukken",
-  "lang_printable_menu": "Afdrukbare menukaart"
+  "lang_printable_menu": "Afdrukbare menukaart",
+  "lang_changes_not_saved": "Wijzigingen zijn niet opgeslagen.",
+  "lang_continue": "Doorgaan",
+  "lang_reason": "Reden"
 }

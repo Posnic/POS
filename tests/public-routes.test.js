@@ -53,6 +53,10 @@ function openRoutes(file) {
  * what strangers may do to a shop's data, so it should take a code review.
  */
 const ALLOWED_ANONYMOUS = {
+  'kitchen-board.routes.js': [
+    // Consumes a short-lived, single-use manager pairing code under a rate limit.
+    '/devices/pair',
+  ],
   'captain-access.routes.js': [
     // Bootstrap endpoints run before a bearer exists. Pairing consumes a
     // short-lived manager secret; refresh verifies the rotating renewal secret.
