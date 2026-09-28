@@ -69,3 +69,26 @@ arrays or cash variance. Three unit tests and two real-Mongo tests pass, includi
 the actual register open/close repository, refused wrong-device close, duplicate
 close, another session on the same register, lost access and changed/deleted
 source. Worker scheduling, prepared totals and mobile settings remain next.
+
+## Session financial preparation checkpoint
+
+The desktop-only preparer now scans the branch under the existing 100,000-document,
+30-second and cooperative-yield budgets. It waits through the ten-minute grace,
+reads only projected financial fields, checks the source close again before
+returning and produces explicitly incomplete-source session metrics. It is not
+yet scheduled or published. Cloud execution is rejected before source reads.
+
+Invoices use their stored `cashregister_id`. The scan includes other sessions
+because a refund may refer to an older invoice. Returns need their own verified
+`returnArray.cashregister_id`; the current refund writer does not yet supply it.
+Missing attribution within the session period fails with
+`return_register_unavailable`, not zero refunds. Invoices without register scope,
+uncertain settlement timing or changes after close also fail rather than claim a
+historical amount. The future writer must bind return scope to the current
+authorized register session, not trust an arbitrary submitted identifier.
+
+Four financial unit tests and three real-Mongo close/preparation tests pass. The
+return-session success case is an explicit contract fixture, not evidence that
+the current refund writer supplies this metadata. Actual writer attribution,
+immutable financial history, publisher negotiation, scheduling and mobile
+delivery remain required. Existing source completeness remains unproven.

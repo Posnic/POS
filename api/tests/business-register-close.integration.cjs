@@ -6,6 +6,7 @@ const { MongoClient, ObjectId } = require('mongodb');
 const BaseModel = require('../src/models/base.model');
 const { createBusinessAccess } = require('../src/services/business-access');
 const { readRegisterClose } = require('../src/services/business-register-close');
+const { prepareDesktopRegisterSummary } = require('../src/services/business-register-summary');
 let mongo, client, db, RegisterRepository;
 before(async () => {
   mongo = await MongoMemoryServer.create({
@@ -140,4 +141,90 @@ test('source rechecks reject lost access and withdraw a reopened or removed clos
   assert.equal(await readRegisterClose(db, f.context, f.branchId, f.sessionId), null);
   await db.collection('cashregister').deleteOne({ _id: new ObjectId(f.sessionId) });
   assert.equal(await readRegisterClose(db, f.context, f.branchId, f.sessionId), null);
+});
+
+test('desktop preparation observes grace, includes older-invoice refunds and rejects ambiguous return sessions', async () => {
+  const f = await fixture(),
+    priorDesktop = process.env.POSNIC_DESKTOP;
+  const branch = { ...f.context.branches[0], license: f.context.businessId };
+  try {
+    delete process.env.POSNIC_DESKTOP;
+    await assert.rejects(prepareDesktopRegisterSummary(db, branch, f.sessionId), {
+      code: 'desktop_required',
+    });
+    process.env.POSNIC_DESKTOP = '1';
+    const source = await db.collection('cashregister').findOne({ _id: new ObjectId(f.sessionId) });
+    await db.collection('sales').insertOne({
+      _id: new ObjectId(),
+      license: source.license,
+      branch_id: source.branch_id,
+      cashregister_id: f.sessionId,
+      date: source.register_opendate,
+      updated_date: source.register_opendate,
+      sale_process: 'Add',
+      sales_total: '100.00',
+      items_return_total: 0,
+      items_return: [],
+    });
+    const closed = await f.repository.registercloseUpdate({
+      cash_register_id: f.sessionId,
+      lock_device_id: 'till-a',
+    });
+    assert.equal(closed.status, true);
+    await assert.rejects(prepareDesktopRegisterSummary(db, branch, f.sessionId), {
+      code: 'close_grace_pending',
+    });
+    const now = () => closed.data.register_closedate.getTime() + 11 * 60000;
+    const first = await prepareDesktopRegisterSummary(db, branch, f.sessionId, { now });
+    assert.equal(first.billedSalesMinor, 10000);
+    assert.equal(first.completedSales, 1);
+    assert.equal(first.sourceComplete, false);
+    const oldId = new ObjectId(),
+      oldDate = new Date(source.register_opendate.getTime() - 86400000);
+    await db.collection('sales').insertOne({
+      _id: oldId,
+      license: source.license,
+      branch_id: source.branch_id,
+      cashregister_id: String(new ObjectId()),
+      date: oldDate,
+      updated_date: closed.data.register_closedate,
+      sale_process: 'PartialReturn',
+      sales_total: '50.00',
+      items_return_total: '20.00',
+      items_return: [
+        {
+          returnArray: {
+            returnObjId: new ObjectId(),
+            returnDate: closed.data.register_closedate,
+            itemsTotalAmount: '20.00',
+          },
+        },
+      ],
+    });
+    await assert.rejects(prepareDesktopRegisterSummary(db, branch, f.sessionId, { now }), {
+      code: 'return_register_unavailable',
+    });
+    // Contract fixture only: the current refund writer does not yet provide this field.
+    await db
+      .collection('sales')
+      .updateOne(
+        { _id: oldId },
+        { $set: { 'items_return.0.returnArray.cashregister_id': f.sessionId } }
+      );
+    const second = await prepareDesktopRegisterSummary(db, branch, f.sessionId, { now });
+    assert.equal(second.billedSalesMinor, 10000);
+    assert.equal(second.refundsMinor, 2000);
+    assert.equal(second.salesAfterReturnsMinor, 8000);
+    assert.equal(second.completedSales, 1);
+    assert.equal(second.sourceDocuments, 2);
+    const cancelled = new AbortController();
+    cancelled.abort();
+    await assert.rejects(
+      prepareDesktopRegisterSummary(db, branch, f.sessionId, { now, signal: cancelled.signal }),
+      { code: 'cancelled' }
+    );
+  } finally {
+    if (priorDesktop === undefined) delete process.env.POSNIC_DESKTOP;
+    else process.env.POSNIC_DESKTOP = priorDesktop;
+  }
 });
