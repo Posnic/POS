@@ -245,28 +245,26 @@ test('same-product preparations survive edits and cancellation with their own no
 test('editing a removed catalogue dish keeps quantity and receipt fields consistent at shop precision', async () => {
   const id = await anOrder(CHANGED_AT);
   await db.collection('branches').updateOne({ _id: BRANCH }, { $set: { currency_code: 'KWD' } });
-  await db
-    .collection('sales')
-    .updateOne(
-      { _id: new mongoose.Types.ObjectId(id) },
-      {
-        $set: {
-          items: [
-            {
-              item_id: NAAN,
-              item_name: 'Naan',
-              quantity: 2,
-              item_quantity: 2,
-              item_price: 40.005,
-              unit_price: 40.005,
-              total: 80.01,
-              item_total: 80.01,
-              total_amount: 80.01,
-            },
-          ],
-        },
-      }
-    );
+  await db.collection('sales').updateOne(
+    { _id: new mongoose.Types.ObjectId(id) },
+    {
+      $set: {
+        items: [
+          {
+            item_id: NAAN,
+            item_name: 'Naan',
+            quantity: 2,
+            item_quantity: 2,
+            item_price: 40.005,
+            unit_price: 40.005,
+            total: 80.01,
+            item_total: 80.01,
+            total_amount: 80.01,
+          },
+        ],
+      },
+    }
+  );
   await db.collection('items').deleteOne({ _id: NAAN });
   const result = await repo.updateOrderModel(
     id,
