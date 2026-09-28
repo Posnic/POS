@@ -42,6 +42,7 @@
     "business_push_deliveries": "Push retry leases and provider receipts belong only to the notification-delivery server.",
     "business_decisions": "Approval state and application receipts use the dedicated decision protocol, never generic collection sync.",
     "business_notification_preferences": "Per-account delivery preferences and scheduler leases belong to the authorizing Business server.",
+    "business_approval_notification_preferences": "Private approval-alert opt-ins, quiet hours and scan leases belong to the authorizing Business server, never generic device sync.",
     "business_inbox": "Private account notifications and read receipts must never use generic device synchronization.",
     "business_reporting_requests": "Short-lived Business read requests are consumed by the assigned reporting desktop through a dedicated protocol.",
     "business_reporting_candidates": "Short-lived reporting desktop presence is verified by Gateway and must not use generic synchronization.",

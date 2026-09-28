@@ -172,14 +172,12 @@ async function listInbox(db, context, { before, now = Date.now, includeApprovals
 async function markRead(db, context, id) {
   if (typeof id !== 'string' || !/^[a-f\d]{24}$/.test(id)) fail('invalid_request');
   if (!context.capabilities.includes('overview.read')) fail('access_denied', 403);
-  const row = await db
-    .collection('business_inbox')
-    .findOne({
-      _id: new ObjectId(id),
-      accountId: context.accountId,
-      license: new ObjectId(context.businessId),
-      branchId: { $in: context.branches.map((branch) => branch.id) },
-    });
+  const row = await db.collection('business_inbox').findOne({
+    _id: new ObjectId(id),
+    accountId: context.accountId,
+    license: new ObjectId(context.businessId),
+    branchId: { $in: context.branches.map((branch) => branch.id) },
+  });
   if (!row) fail('entry_unavailable', 404);
   if (row.kind === 'approval_requested')
     await require('./business-approval-notifications').approvalAlertScope(
