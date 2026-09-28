@@ -125,6 +125,32 @@ test('concurrent delivery is private, durable and tracks provider acceptance sep
   assert.equal(JSON.stringify(status).includes(token), false);
 });
 
+test('actual scheduled Inbox materialization enters the push queue exactly once', async () => {
+  const f = await fixture();
+  await db.collection('business_inbox').deleteOne({ _id: f.event._id });
+  const { drainDue } = require('../src/services/business-notifications');
+  await drainDue(db, {
+    now: () => at,
+    readSummary: async () => {
+      throw Object.assign(new Error('summary_unavailable'), { code: 'summary_unavailable' });
+    },
+  });
+  const event = await db.collection('business_inbox').findOne({ accountId: String(f.user._id) });
+  assert.equal(event.kind, 'daily_unavailable');
+  assert.equal(event.pushPending, true);
+  let sends = 0;
+  const transport = {
+    send: async (_token, eventId) => {
+      sends++;
+      assert.equal(eventId, String(event._id));
+      return '22222222-2222-4222-8222-222222222222';
+    },
+  };
+  await push.drainPush(db, { config, now: () => at, transport });
+  await push.drainPush(db, { config, now: () => at, transport });
+  assert.equal(sends, 1);
+});
+
 test('recipient languages belong to each session device and legacy renewal preserves the preference', async () => {
   const f = await fixture();
   const registration = { token, platform: 'android', projectId: config.projectId };

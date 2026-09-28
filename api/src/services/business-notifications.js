@@ -255,6 +255,7 @@ async function drainDue(
             expiresAt: new Date(now() + 90 * 86400000),
             locale: job.locale,
             channel: 'inApp',
+            pushPending: true,
           },
         },
         { upsert: true }

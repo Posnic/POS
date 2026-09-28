@@ -7,6 +7,7 @@ const {
   getApprovalPreference,
   saveApprovalPreference,
   canReceiveApproval,
+  drainApprovalAlerts,
 } = require('../src/services/business-approval-notifications');
 let mongo, client, db;
 const oldFlag = process.env.POSNIC_BUSINESS_DECISIONS;
@@ -46,6 +47,106 @@ function fixture() {
   return { user, context, branchId };
 }
 const quiet = { enabled: true, start: '22:00', end: '07:00' };
+async function deliveryFixture() {
+  const f = fixture(),
+    local = client.db('alerts_' + f.branchId);
+  let at = Date.now();
+  const now = () => at;
+  f.user.activate = true;
+  f.user.branch_access = [{ branch_id: new ObjectId(f.branchId) }];
+  await local.collection('users').insertOne(f.user);
+  await local
+    .collection('branches')
+    .insertOne({
+      _id: new ObjectId(f.branchId),
+      license: f.user.license,
+      branch_name: 'Test',
+      currency: 'INR',
+      time_zone: 'Asia/Kolkata',
+    });
+  await saveApprovalPreference(
+    local,
+    f.context,
+    f.branchId,
+    { enabled: true, quiet, expectedRevision: 0 },
+    { now }
+  );
+  at++;
+  const request = () => ({
+    _id: new ObjectId(),
+    license: f.user.license,
+    branchId: f.branchId,
+    requesterId: String(new ObjectId()),
+    state: 'pending',
+    createdAt: new Date(at),
+    expiresAt: new Date(at + 300000),
+    summary: { beforeDiscountMinor: 10000, discountMinor: 1000 },
+  });
+  return {
+    ...f,
+    local,
+    now,
+    request,
+    advance: (ms) => {
+      at += ms;
+    },
+  };
+}
+test('bounded scans deduplicate pages and reset to discover late ledger writes', async () => {
+  const f = await deliveryFixture();
+  const requests = Array.from({ length: 28 }, f.request);
+  await f.local.collection('business_decisions').insertMany(requests);
+  await drainApprovalAlerts(f.local, { now: f.now });
+  assert.equal(await f.local.collection('business_inbox').countDocuments(), 25);
+  f.advance(1001);
+  await drainApprovalAlerts(f.local, { now: f.now });
+  assert.equal(await f.local.collection('business_inbox').countDocuments(), 28);
+  const late = {
+    ...f.request(),
+    _id: new ObjectId('000000000000000000000001'),
+    createdAt: requests[0].createdAt,
+  };
+  await f.local.collection('business_decisions').insertOne(late);
+  f.advance(15001);
+  await drainApprovalAlerts(f.local, { now: f.now });
+  assert.equal(await f.local.collection('business_inbox').countDocuments(), 29);
+  const event = await f.local.collection('business_inbox').findOne({ requestId: String(late._id) });
+  assert.equal(event.kind, 'approval_requested');
+  assert.equal(event.summary, null);
+  assert.equal(event.pushPending, true);
+});
+test('crash after insertion replays safely and revoked recipients cannot receive later events', async () => {
+  const f = await deliveryFixture();
+  await f.local.collection('business_decisions').insertOne(f.request());
+  let crash = true;
+  const broken = {
+    collection(name) {
+      const collection = f.local.collection(name);
+      if (name !== 'business_inbox') return collection;
+      return {
+        createIndex: (...args) => collection.createIndex(...args),
+        async updateOne(...args) {
+          const result = await collection.updateOne(...args);
+          if (crash) {
+            crash = false;
+            throw new Error('interrupted after insertion');
+          }
+          return result;
+        },
+      };
+    },
+  };
+  await drainApprovalAlerts(broken, { now: f.now });
+  assert.equal(await f.local.collection('business_inbox').countDocuments(), 1);
+  f.advance(30001);
+  await drainApprovalAlerts(f.local, { now: f.now });
+  assert.equal(await f.local.collection('business_inbox').countDocuments(), 1);
+  await f.local.collection('business_decisions').insertOne(f.request());
+  await f.local.collection('users').updateOne({ _id: f.user._id }, { $set: { activate: false } });
+  f.advance(15001);
+  await drainApprovalAlerts(f.local, { now: f.now });
+  assert.equal(await f.local.collection('business_inbox').countDocuments(), 1);
+});
 test('approval opt-in is separate from daily summaries, scoped and protected against concurrent edits', async () => {
   const f = fixture();
   assert.equal((await getApprovalPreference(db, f.context, f.branchId)).enabled, false);
