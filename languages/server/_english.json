@@ -2411,6 +2411,12 @@
   "Unknown settings group: ": [
     "src/repositories/settings.repository.js"
   ],
+  "Unsupported decision commit": [
+    "src/services/sale.service.js"
+  ],
+  "Unsupported decision preview": [
+    "src/services/sale.service.js"
+  ],
   "Update info": [
     "src/models/setting.model.js"
   ],
