@@ -5143,21 +5143,25 @@ class SalesRepository {
           ...licenseFilter,
           'return_refund_lock.token': lockToken,
         },
-        {
-          $push: {
-            items_return: itemsReturnData,
-            return_refund_transactions: {
-              signature: returnSignature,
-              return_obj_id: returnObjId,
-              return_id: itemsReturnData.returnArray.returnId,
-              amount: round(returnItemsTotalAmount, 2),
-              item_count: itemsReturn.length,
-              created_at: now,
-              created_by: BaseModel.loggedUser || null,
-              created_by_name: BaseModel.loggedUserName || 'System',
+        require('../services/business-item-origin').withOriginalItemFacts(
+          saleDocument,
+          {
+            $push: {
+              items_return: itemsReturnData,
+              return_refund_transactions: {
+                signature: returnSignature,
+                return_obj_id: returnObjId,
+                return_id: itemsReturnData.returnArray.returnId,
+                amount: round(returnItemsTotalAmount, 2),
+                item_count: itemsReturn.length,
+                created_at: now,
+                created_by: BaseModel.loggedUser || null,
+                created_by_name: BaseModel.loggedUserName || 'System',
+              },
             },
           },
-        }
+          now
+        )
       );
 
       if (!pushReturnResult.modifiedCount) {

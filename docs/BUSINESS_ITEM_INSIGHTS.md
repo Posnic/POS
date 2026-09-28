@@ -18,6 +18,21 @@ also insufficient proof of original prices and line discounts. This must be
 resolved through an original-item snapshot and explicit legacy-data handling
 before ranking is published. Analytics must not make a valid refund fail.
 
+The return writer now stores `business_item_origin` in the same locked update
+that appends the first return. The snapshot keeps invoice identity/date/total
+and bounded original item IDs, names, units, decimal quantities and gross line
+amounts. Core/legacy aliases must agree. Later returns cannot replace it.
+Pre-existing returned records without a snapshot remain unproven; remaining
+items are not promoted to originals. Invalid, oversized or contradictory source
+facts skip optional analytics metadata without stopping the refund. The helper
+also checks the resulting BSON size including the pending return writes.
+
+Actual MongoDB return-writer tests cover partial/full returns, a second return,
+fully discounted returns and ambiguous historical state. The sync agent and
+Gateway currently transfer complete sales documents, so no field allowlist
+change is indicated by source inspection; an actual snapshot sync round-trip
+and downstream validation remain required before publishing ranking data.
+
 ## Exact allocation primitive
 
 `business-item-allocation.js` allocates an already recorded, nonnegative invoice
@@ -40,8 +55,8 @@ unit of each exact proportional share.
 
 ## Remaining delivery
 
-- Preserve and validate original item facts before return mutation, including
-  synchronization and explicit handling of pre-existing returns without proof.
+- Qualify original-item snapshot synchronization and downstream validation,
+  with explicit handling of pre-existing returns without proof.
 - Reconcile item allocations to the canonical invoice and dated refund totals.
 - Prepare bounded per-item summaries on the assigned desktop, with publisher
   fencing, completeness metadata and no item scan during mobile/server reads.

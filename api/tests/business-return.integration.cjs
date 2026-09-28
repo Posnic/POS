@@ -34,6 +34,7 @@ async function returned({
   extra = 0,
   roundOff = false,
   original = amount * quantity,
+  storedExtra = {},
 } = {}) {
   const license = new ObjectId(),
     branchId = new ObjectId(),
@@ -46,15 +47,13 @@ async function returned({
   await db
     .collection('branches')
     .insertOne({ _id: branchId, license, currency: 'INR', time_zone: 'Asia/Kolkata' });
-  await db
-    .collection('items')
-    .insertOne({
-      _id: itemId,
-      license,
-      item_name: 'Test item',
-      available_quantity: 10,
-      company_price: 20,
-    });
+  await db.collection('items').insertOne({
+    _id: itemId,
+    license,
+    item_name: 'Test item',
+    available_quantity: 10,
+    company_price: 20,
+  });
   const line = {
     item_id: String(itemId),
     item_name: 'Test item',
@@ -65,22 +64,21 @@ async function returned({
     tax_type: 'inclusive',
   };
   const invoiceDate = new Date(Date.now() - 7 * 86400000);
-  await db
-    .collection('sales')
-    .insertOne({
-      _id: saleId,
-      license,
-      branch_id: branchId,
-      sale_process: 'Add',
-      payment_status: 'Paid',
-      date: invoiceDate,
-      updated_date: invoiceDate,
-      sales_total: original,
-      extra_discount: extra,
-      items: [line],
-      items_return: [],
-      items_return_total: 0,
-    });
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    license,
+    branch_id: branchId,
+    sale_process: 'Add',
+    payment_status: 'Paid',
+    date: invoiceDate,
+    updated_date: invoiceDate,
+    sales_total: original,
+    extra_discount: extra,
+    items: [line],
+    items_return: [],
+    items_return_total: 0,
+    ...storedExtra,
+  });
   const result = await repository.returnSalesOrder({
     sales_id: String(saleId),
     items:
@@ -120,11 +118,36 @@ test('actual partial/full return writes reconcile with Business and preserve the
     const f = await returned({ returnedQuantity });
     assert.equal(f.stored.sales_total, 200);
     assert.equal(f.stored.items_return_total, returnedQuantity * 100);
+    assert.equal(f.stored.business_item_origin.salesTotal, '200');
+    assert.equal(f.stored.business_item_origin.lines[0].quantity, '2');
+    assert.equal(f.stored.business_item_origin.lines[0].grossAmount, '200');
+    assert.equal(f.stored.business_item_origin.invoiceDate, f.stored.date.toISOString());
     const entries = saleContribution(f.stored, f.branch).entries;
     assert.equal(entries[0].billedSalesMinor, 20000);
     assert.equal(entries[1].businessDate, businessDate(new Date(), f.branch.timezone));
     assert.equal(entries[1].refundsMinor, returnedQuantity * 10000);
   }
+});
+
+test('a later return retains the original snapshot and pre-existing ambiguous history is not fabricated', async () => {
+  const f = await returned({ quantity: 3 });
+  const origin = f.stored.business_item_origin;
+  const result = await repository.returnSalesOrder({
+    sales_id: String(f.stored._id),
+    items: [],
+    items_return: f.stored.items,
+    extra_discount: 0,
+    extra_discount_type: 'percent',
+    round_off_check: false,
+    print: false,
+  });
+  assert.equal(result.status, true, JSON.stringify(result));
+  const stored = await db.collection('sales').findOne({ _id: f.stored._id });
+  assert.deepEqual(stored.business_item_origin, origin);
+  assert.equal(stored.items.length, 0);
+  const ambiguous = await returned({ storedExtra: { sale_process: 'PartialReturn' } });
+  assert.equal(ambiguous.result.status, true);
+  assert.equal(Object.hasOwn(ambiguous.stored, 'business_item_origin'), false);
 });
 test('actual return rounding reconciles, including a fully discounted zero-value return', async () => {
   const rounded = await returned({ amount: 18.75, roundOff: true });
