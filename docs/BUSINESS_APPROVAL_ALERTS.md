@@ -1,8 +1,8 @@
 # Business approval alerts
 
-Status: in progress; backend preferences, event materialization, scheduled worker
-and read/push eligibility are implemented in the local review branch. Mobile UI
-and physical provider/device qualification remain pending.
+Status: backend preferences, event materialization, scheduled worker and read/push
+eligibility are implemented with the paired mobile settings and Inbox navigation.
+Production deployment and physical provider/device qualification remain pending.
 
 With `POSNIC_BUSINESS_DECISIONS=1`, authenticated GET/POST requests to
 `/api/business/v1/notifications/approvals/:branchId` read or update the separate
@@ -55,11 +55,22 @@ recipient revocation, separate settings, first-save races, revisions, opt-in
 windows, invalid quiet hours, scope, self-approval, closed/expired requests and
 discount limits. Additional tests cover negotiated Inbox visibility, mark-read,
 closed requests, permission/limit changes before retries, independent opt-in and
-quiet-hour expiry. Remaining work: settings and navigation in the mobile app,
-localized copy and actual provider/device tests.
+quiet-hour expiry. The paired mobile app has independent settings, all 18 working language packs,
+expiry removal and navigation to fresh authenticated decision review. Actual
+provider/device tests and qualified language review remain required.
 
 Notification-path review also found and corrected the missing `pushPending`
 marker on actual daily Inbox writes. A real scheduler-to-push-queue test now
 verifies that a scheduled unavailable-summary notice produces one delivery,
 including repeated worker runs. Daily notifications and provider acceptance
 remain distinct from verified delivery to a physical device.
+
+The public daily-preference response now omits internal queue state. Its exact
+field shape is checked so strict existing mobile clients can still read it.
+The queue marker belongs only on durable Inbox writes.
+
+Local paired validation: 38 real-Mongo access/notification/push integration
+tests, 71 mobile tests and 31 browser flows pass. Browser coverage includes
+independent approval preferences, quiet-hour validation, unsaved edits, filtered
+empty-page pagination, live request expiry and secure decision review. Provider
+transport is controlled in these tests; no real phone delivery is claimed.
