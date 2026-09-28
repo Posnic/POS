@@ -3656,5 +3656,8 @@
   "lang_pm_option_coffee": "Cafeteria",
   "lang_pm_option_herbs": "Jardim de ervas",
   "lang_pm_option_pizza": "Pizzaria",
-  "lang_pm_option_grill": "Churrasqueira"
+  "lang_pm_option_grill": "Churrasqueira",
+  "lang_changes_not_saved": "As alterações não foram guardadas.",
+  "lang_continue": "Continuar",
+  "lang_reason": "Motivo"
 }

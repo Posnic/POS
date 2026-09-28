@@ -165,22 +165,11 @@ test('an amendment says so, because a cook must not start it twice', () => {
   assert.match(said, /order changed/);
 });
 
-test('a long ticket is cut short, and says how much it cut', () => {
-  /*
-   * Six courses from a table of six arrive within seconds. Read in full that
-   * is a minute of talking, and a kitchen that stopped listening does not hear
-   * the next one either. The paper ticket still has the detail.
-   */
-  const items = Array.from({ length: 9 }, (_, i) => ({
-    item_name: `Dish ${i + 1}`,
-    item_quantity: 1,
-  }));
-
-  const said = kitchenCall.say({ table: '9', items });
-
-  assert.match(said, /One Dish 6\./);
-  assert.ok(!said.includes('Dish 7'), 'stops after six');
-  assert.match(said, /And three more\./);
+test('a queued long ticket reads every item, including later cancellations and allergies', () => {
+  const items = Array.from({ length: 10 }, (_, i) => ({item_name: `Dish ${i + 1}`,item_quantity: 1,allergies:i===9?['milk']:[]}));
+  const said=kitchenCall.say({table:'9',items});
+  assert.match(said,/One Dish 10/);assert.match(said,/Allergy: milk/);
+  assert.ok(!said.includes('more.'));
 });
 
 test('the name is the shop own, brackets and all', () => {

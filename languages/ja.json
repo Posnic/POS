@@ -95,5 +95,8 @@
   "lang_total_title": "合計",
   "lang_yes": "はい",
   "lang_ai_describe_hint": "商品情報をもとに説明文の下書きを作成",
-  "lang_walk_in_customer_click_to_choose_or_add": "未登録のお客様。クリックして選択または追加"
+  "lang_walk_in_customer_click_to_choose_or_add": "未登録のお客様。クリックして選択または追加",
+  "lang_changes_not_saved": "変更は保存されませんでした。",
+  "lang_continue": "続ける",
+  "lang_reason": "理由"
 }

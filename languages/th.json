@@ -3656,5 +3656,8 @@
   "lang_pm_option_coffee": "ร้านกาแฟ",
   "lang_pm_option_herbs": "สวนสมุนไพร",
   "lang_pm_option_pizza": "ร้านพิซซ่า",
-  "lang_pm_option_grill": "เตาบาร์บีคิว"
+  "lang_pm_option_grill": "เตาบาร์บีคิว",
+  "lang_changes_not_saved": "ไม่ได้บันทึกการเปลี่ยนแปลง",
+  "lang_continue": "ดำเนินการต่อ",
+  "lang_reason": "เหตุผล"
 }

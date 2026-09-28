@@ -1,6 +1,6 @@
 {
   "name": "posnic-frontend",
-  "version": "1.0.0",
+  "version": "1.8.4",
   "description": "Build pipeline for the Posnic web assets (gulp: sass, JS, HTML).",
   "main": "index.js",
   "scripts": {

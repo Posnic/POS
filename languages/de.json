@@ -3656,5 +3656,8 @@
   "lang_pm_option_coffee": "Café",
   "lang_pm_option_herbs": "Kräutergarten",
   "lang_pm_option_pizza": "Pizzeria",
-  "lang_pm_option_grill": "Grill"
+  "lang_pm_option_grill": "Grill",
+  "lang_changes_not_saved": "Änderungen wurden nicht gespeichert.",
+  "lang_continue": "Weiter",
+  "lang_reason": "Grund"
 }

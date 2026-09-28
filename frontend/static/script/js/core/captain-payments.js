@@ -116,8 +116,10 @@
     received = "",
     reference = "",
     verified = false;
-  const money = (n) =>
-    `${plan?.currency || ""}${(Number(n || 0) / 100).toFixed(2)}`;
+  const monetary = () => CaptainMoney.snapshot(plan || {});
+  const money = n => CaptainMoney.format(CaptainMoney.fromMinor(Number(n || 0), monetary()), monetary());
+  const cashMinor = () => { try { return CaptainMoney.toMinor(received || 0, monetary()); } catch { return NaN; } };
+  const receivedDefault = () => CaptainMoney.fromMinor(amount(), monetary()).toFixed(monetary().currencyDigits);
   const amount = () =>
     selected === ""
       ? plan?.dueMinor || 0
@@ -142,7 +144,7 @@
         body += `
         ${plan.guests.filter((g) => !g.paid).length > 1 ? `<label>${esc(t("Guest"))}<select id="cp-guest"><option value="">${esc(t("All remaining guests"))}</option>${plan.guests.map((g, i) => (g.paid ? "" : `<option value="${i}" ${selected === String(i) ? "selected" : ""} translate="no">${esc(g.name)} · ${esc(money(g.totalMinor))}</option>`)).join("")}</select></label>` : ""}
         <div class="cp-methods" role="group" aria-label="${esc(t("Collect payment"))}">${plan.methods.map((m) => `<button type="button" data-method="${m}" aria-pressed="${method === m}">${esc(t(m === "Upi" ? "UPI" : m))}</button>`).join("")}</div>
-        ${method === "Cash" ? `<label>${esc(t("Amount received"))}<input id="cp-received" inputmode="decimal" type="number" min="0" step="0.01" value="${esc(received)}"></label><div class="cp-change"><span>${esc(t("Change to return"))}</span><strong id="cp-change" translate="no">${esc(money(Math.max(0, Math.round(Number(received) * 100) - amount())))}</strong></div>` : `<label>${esc(t("Payment reference (optional)"))}<input id="cp-reference" maxlength="100" value="${esc(reference)}"></label><label class="cp-confirm"><input type="checkbox" id="cp-verified" ${verified ? "checked" : ""}><span>${esc(t("I verified this payment on the terminal or bank app."))}</span></label>`}
+        ${method === "Cash" ? `<label>${esc(t("Amount received"))}<input id="cp-received" inputmode="decimal" type="number" min="0" step="${1 / monetary().factor}" value="${esc(received)}"></label><div class="cp-change"><span>${esc(t("Change to return"))}</span><strong id="cp-change" translate="no">${esc(money(Math.max(0, cashMinor() - amount())))}</strong></div>` : `<label>${esc(t("Payment reference (optional)"))}<input id="cp-reference" maxlength="100" value="${esc(reference)}"></label><label class="cp-confirm"><input type="checkbox" id="cp-verified" ${verified ? "checked" : ""}><span>${esc(t("I verified this payment on the terminal or bank app."))}</span></label>`}
         <p class="cp-help">${esc(t("Confirm only after receiving the money. This does not charge a card or bank account."))}</p>`;
       if (plan.dueMinor === 0)
         body += `<p role="status">${esc(t("Payment recorded"))}</p>`;
@@ -169,7 +171,7 @@
         throw Object.assign(new Error("Disabled"), { status: 403 });
       method = plan.methods.includes(method) ? method : plan.methods[0];
       selected = "";
-      received = (amount() / 100).toFixed(2);
+      received = receivedDefault();
       verified = false;
     } catch (e) {
       plan = null;
@@ -191,7 +193,7 @@
     }
     if (!pending) {
       const paid = amount(),
-        cash = Math.round(Number(received) * 100);
+        cash = cashMinor();
       if (method === "Cash" && (!Number.isFinite(cash) || cash < paid)) {
         error = "Enter an amount at least equal to the bill.";
         render();
@@ -238,7 +240,7 @@
       pending = null;
       localStorage.removeItem(key);
       selected = "";
-      received = (amount() / 100).toFixed(2);
+      received = receivedDefault();
       verified = false;
       reference = "";
       error = "";
@@ -302,7 +304,7 @@
     dialog.addEventListener("change", (e) => {
       if (e.target.id === "cp-guest") {
         selected = e.target.value;
-        received = (amount() / 100).toFixed(2);
+        received = receivedDefault();
         verified = false;
         render();
       }
@@ -313,7 +315,7 @@
       if (e.target.id === "cp-received") {
         received = e.target.value;
         dialog.querySelector("#cp-change").textContent = money(
-          Math.max(0, Math.round(Number(received) * 100) - amount()),
+          Math.max(0, cashMinor() - amount()),
         );
       }
     });

@@ -3691,5 +3691,8 @@
   "lang_pm_option_coffee": "காபிக் கடை",
   "lang_pm_option_herbs": "மூலிகைத் தோட்டம்",
   "lang_pm_option_pizza": "பீட்சா கடை",
-  "lang_pm_option_grill": "பார்பிக்யூ கிரில்"
+  "lang_pm_option_grill": "பார்பிக்யூ கிரில்",
+  "lang_changes_not_saved": "மாற்றங்கள் சேமிக்கப்படவில்லை.",
+  "lang_continue": "தொடர்",
+  "lang_reason": "காரணம்"
 }

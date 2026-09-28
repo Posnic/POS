@@ -3656,5 +3656,8 @@
   "lang_pm_option_coffee": "कफी पसल",
   "lang_pm_option_herbs": "जडीबुटी बगैंचा",
   "lang_pm_option_pizza": "पिज्जा पसल",
-  "lang_pm_option_grill": "बार्बेक्यु ग्रिल"
+  "lang_pm_option_grill": "बार्बेक्यु ग्रिल",
+  "lang_changes_not_saved": "परिवर्तनहरू सेभ भएनन्।",
+  "lang_continue": "जारी राख्नुहोस्",
+  "lang_reason": "कारण"
 }

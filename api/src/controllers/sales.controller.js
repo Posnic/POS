@@ -7053,6 +7053,69 @@ class SalesController extends BaseController {
    * wall showed an empty list for ever, while setup mode filled itself with
    * samples and looked perfect. This is what feeds it.
    */
+  async kitchenDeliveryReport(req, res) {
+    try {
+      return this.success(
+        res,
+        await require('../services/kitchen-delivery').report(req),
+        'Received'
+      );
+    } catch (error) {
+      return this.error(res, error.message, error.status || 500);
+    }
+  }
+  async kitchenDisplayReport(req, res) {
+    try {
+      return this.success(
+        res,
+        await require('../services/kitchen-delivery').displayReport(req),
+        'Received'
+      );
+    } catch (error) {
+      return this.error(res, error.message, error.status || 500);
+    }
+  }
+  async kitchenDeliveryStatus(req, res) {
+    try {
+      return this.success(
+        res,
+        await require('../services/kitchen-delivery').status(req),
+        'Delivery status'
+      );
+    } catch (error) {
+      return this.error(res, error.message, error.status || 500);
+    }
+  }
+  async handoverStaff(req, res) {
+    try {
+      return this.success(res, await require('../services/captain-service').staff(req), 'Staff');
+    } catch (error) {
+      return this.error(res, error.message, error.status || 500);
+    }
+  }
+  async handoverOrder(req, res) {
+    try {
+      return this.success(
+        res,
+        await require('../services/captain-service').handover(req),
+        'Order handed over'
+      );
+    } catch (error) {
+      return this.error(res, error.message, error.status || 500);
+    }
+  }
+  async fireKitchenItems(req, res) {
+    try {
+      return this.success(
+        res,
+        await require('../services/captain-service').fire(req),
+        'Course sent to kitchen'
+      );
+    } catch (error) {
+      return this.error(res, error.message, error.status || 500);
+    }
+  }
+
   async serveKitchenItems(req, res) {
     try {
       const out = await require('../repositories/sale.repository').serveKitchenItems({
@@ -7516,6 +7579,7 @@ class SalesController extends BaseController {
    */
   async updateOrder(req, res) {
     try {
+      const editPolicy = await require('../services/captain-edit-policy').authorize(req);
       const orderId = req.body.order_id;
       const items = req.body.items || [];
       const totalAmount = req.body.total_amount || 0;
@@ -7551,7 +7615,7 @@ class SalesController extends BaseController {
         newTableNo,
         dineType,
         personCount,
-        { SaleModel, newTableId, seenAt }
+        { SaleModel, newTableId, seenAt, editPolicy }
       );
 
       if (response.status === true) {
@@ -7561,7 +7625,7 @@ class SalesController extends BaseController {
       }
     } catch (error) {
       console.error('Error in updateOrder:', error);
-      return this.error(res, error.message, 500);
+      return this.error(res, error.message, error.status || 500);
     }
   }
 

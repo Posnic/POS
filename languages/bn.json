@@ -95,5 +95,8 @@
   "lang_total_title": "মোট",
   "lang_yes": "হ্যাঁ",
   "lang_ai_describe_hint": "পণ্যের তথ্য থেকে বিবরণের খসড়া তৈরি করুন",
-  "lang_walk_in_customer_click_to_choose_or_add": "অনিবন্ধিত গ্রাহক। বেছে নিতে বা যোগ করতে ক্লিক করুন"
+  "lang_walk_in_customer_click_to_choose_or_add": "অনিবন্ধিত গ্রাহক। বেছে নিতে বা যোগ করতে ক্লিক করুন",
+  "lang_changes_not_saved": "পরিবর্তনগুলি সেভ হয়নি।",
+  "lang_continue": "এগিয়ে যান",
+  "lang_reason": "কারণ"
 }

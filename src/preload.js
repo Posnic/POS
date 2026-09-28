@@ -415,7 +415,7 @@ contextBridge.exposeInMainWorld('posnicKitchenScreen', {
     return () => ipcRenderer.removeListener('kitchen-screen:config', h);
   },
   onTickets: (cb) => {
-    const h = (_e, d) => cb(d);
+    const h = (_e, d, receipt) => { cb(d); if(receipt) ipcRenderer.invoke('kitchen-screen:rendered',receipt).catch(()=>{}); };
     ipcRenderer.on('kitchen-screen:tickets', h);
     return () => ipcRenderer.removeListener('kitchen-screen:tickets', h);
   }

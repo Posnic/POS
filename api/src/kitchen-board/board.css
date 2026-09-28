@@ -349,3 +349,5 @@ footer {
     }
   }
 }
+
+.allergy {display:block;grid-column:1/-1;color:#fff;background:#8b1717;padding:6px 10px;border-radius:6px;font-size:1rem;}

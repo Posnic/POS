@@ -1,10 +1,11 @@
 'use strict';
 const crypto = require('node:crypto');
+const Money = require('../utils/currency');
 const { buildBillPayload } = require('../helpers/bill-payload');
 const { allocate, split } = require('../utils/guest-bill-split');
 const hash = (value) => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
-const minor = (value) => {
-  const n = Math.round(Number(value || 0) * 100);
+const amountMinor = (value, policy) => {
+  const n = Money.toMinor(value || 0, policy);
   if (!Number.isSafeInteger(n) || Math.abs(n) > 1e12) throw problem('Invalid bill amount.', 422);
   return n;
 };
@@ -12,6 +13,8 @@ function problem(message, status = 400) {
   return Object.assign(new Error(message), { status });
 }
 function snapshotFrom(sales, branch, table) {
+  const monetary = Money.policy(branch);
+  const minor = (value) => amountMinor(value, monetary);
   const lines = [],
     labels = { base: 'Subtotal', discount: 'Discount', adjustment: 'Adjustments' };
   let totalMinor = 0;
@@ -55,6 +58,7 @@ function snapshotFrom(sales, branch, table) {
         name: item.name,
         ...require('../utils/item-localization').snapshot(item),
         quantity: Number(item.qty),
+        seat: Number(live[i]?.seat) || 0,
         components: parts,
         amountMinor: parts.reduce((n, c) => n + c.minor, 0),
       });
@@ -76,12 +80,12 @@ function snapshotFrom(sales, branch, table) {
         round: s.round_off,
         payment: s.payment_status,
       }))
-      .concat([{ lines, totalMinor }])
+      .concat([{ lines, totalMinor, ...monetary }])
   );
   return {
     table,
     revision,
-    currency: String(branch.currency || ''),
+    ...monetary,
     totalMinor,
     labels,
     lines,
@@ -90,9 +94,14 @@ function snapshotFrom(sales, branch, table) {
 }
 function billForGuest(snapshot, guest, branch, sale, batchId) {
   const base = buildBillPayload(sale, branch);
-  const value = (key) => (guest.components[key] || 0) / 100;
+  const monetary = Money.snapshot(snapshot);
+  const factor = monetary.factor;
+  const value = (key) => (guest.components[key] || 0) / factor;
   return {
     ...base,
+    currency: monetary.currencySymbol,
+    currencyCode: monetary.currencyCode,
+    currencyDigits: monetary.currencyDigits,
     title: 'GUEST BILL',
     billNo: batchId.slice(-8) + '-' + (guest.index + 1),
     customer: '',
@@ -108,18 +117,21 @@ function billForGuest(snapshot, guest, branch, sale, batchId) {
           ? String(line.quantity)
           : `${line.weight}/${line.weightTotal} x ${line.quantity}`,
       rate: '',
-      amount: (line.components.base || 0) / 100,
+      amount: (line.components.base || 0) / factor,
     })),
     subTotal: value('base'),
     discount: -value('discount'),
     roundOff: value('adjustment'),
-    total: guest.totalMinor / 100,
+    total: guest.totalMinor / factor,
     taxes: Object.entries(guest.components)
       .filter(([key]) => key.startsWith('tax:'))
-      .map(([key, n]) => ({ label: snapshot.labels[key], amount: n / 100 })),
+      .map(([key, n]) => ({ label: snapshot.labels[key], amount: n / factor })),
     extras: [
       { label: 'Payment', value: 'Pay at counter' },
-      { label: 'Table total', value: (snapshot.totalMinor / 100).toFixed(2) },
+      {
+        label: 'Table total',
+        value: (snapshot.totalMinor / factor).toFixed(monetary.currencyDigits),
+      },
     ],
     footer: 'Guest share of the table bill. Not a payment receipt.',
     footerImage: null,
@@ -278,7 +290,7 @@ function createService(deps = {}) {
     return {
       guests: batch.payload.guests.map((g) => ({ name: g.name, totalMinor: g.totalMinor })),
       totalMinor: batch.payload.snapshot.totalMinor,
-      currency: batch.payload.snapshot.currency,
+      ...Money.snapshot(batch.payload.snapshot),
       stale: snapshot.revision !== batch.payload.revision,
     };
   }

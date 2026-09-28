@@ -87,8 +87,15 @@ async function tick({ branchId, fetchImpl, displayId, isCurrent = () => true } =
     const tickets = answer.data;
     if (!isCurrent()) return { ok: false, why: 'superseded' };
     lastGood.set(branch, tickets);
-    if (displayId) screens().setTickets(tickets, displayId);
-    else screens().setTickets(tickets);
+    const rendered = displayId ? await screens().setTickets(tickets, displayId) : await screens().setTickets(tickets);
+    if (Array.isArray(rendered) && rendered.length && isCurrent()) {
+      try {
+        await doFetch(`${apiUrl()}/sales/kitchenDisplayReport`, {method:'POST',signal:AbortSignal.timeout(3000),
+          headers:{'Content-Type':'application/json',kioskkey:process.env.KIOSK_API_KEY || ''},
+          body:JSON.stringify({branchId:branch,till:require('os').hostname(),screens:rendered,
+            saleIds:[...new Set(tickets.map(ticket=>String(ticket.id || '').split(':')[0]))]})});
+      } catch {} // Status delivery must never clear an already rendered ticket.
+    }
     return { ok: true, count: tickets.length };
   } catch (e) {
     /*
@@ -99,7 +106,7 @@ async function tick({ branchId, fetchImpl, displayId, isCurrent = () => true } =
      */
     if (KEEP_LAST_ON_FAILURE && lastGood.has(branch) && isCurrent()) {
       try {
-        screens().setTickets(lastGood.get(branch), displayId);
+        await screens().setTickets(lastGood.get(branch), displayId);
       } catch (err) {
         /* nothing to do */
       }

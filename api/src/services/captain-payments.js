@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('node:crypto');
+const Money = require('../utils/currency');
 const { ObjectId } = require('mongodb');
 const { context, allowed, fail } = require('../utils/branch-access');
 const { snapshotFrom, billForGuest } = require('./guest-bill.service');
@@ -111,7 +112,7 @@ function view(plan, options) {
   return {
     id: plan._id,
     table: plan.table,
-    currency: plan.snapshot.currency,
+    ...Money.snapshot(plan.snapshot),
     totalMinor: plan.snapshot.totalMinor,
     paidMinor,
     dueMinor: plan.snapshot.totalMinor - paidMinor,
@@ -137,6 +138,8 @@ function view(plan, options) {
 // Every effect is derived from the durable payment journal. Replaying repairs
 // an interrupted write without incrementing money, touching stock or reprinting.
 async function reconcile(db, c, plan) {
+  const monetary = Money.snapshot(plan.snapshot),
+    factor = monetary.factor;
   const payments = plan.payments || [];
   if (!payments.length) return;
   for (const sale of plan.sales) {
@@ -146,7 +149,8 @@ async function reconcile(db, c, plan) {
       const amount = payment.allocations[String(sale._id)] || 0;
       if (!amount) continue;
       paid += amount;
-      multi[payment.method] = Math.round(((multi[payment.method] || 0) + amount / 100) * 100) / 100;
+      multi[payment.method] =
+        Math.round(((multi[payment.method] || 0) + amount / factor) * factor) / factor;
     }
     const total = plan.saleTotals[String(sale._id)];
     const due = total - paid;
@@ -165,10 +169,10 @@ async function reconcile(db, c, plan) {
       {
         $set: {
           captain_payment_version: plan.version,
-          paid_amount: paid / 100,
-          partial_balance: paid / 100,
-          payment_pending: due / 100,
-          balance: due / 100,
+          paid_amount: paid / factor,
+          partial_balance: paid / factor,
+          payment_pending: due / factor,
+          balance: due / factor,
           payment_status: due ? 'Unpaid' : 'Paid',
           kitchen_required: true,
           partial_check: due > 0 && paid > 0,
@@ -183,7 +187,7 @@ async function reconcile(db, c, plan) {
             .map((p) => ({
               id: p.id,
               method: p.method,
-              amount: p.allocations[String(sale._id)] / 100,
+              amount: p.allocations[String(sale._id)] / factor,
               reference: p.reference,
               staffId: p.staffId,
               staffName: p.staffName,
@@ -256,8 +260,11 @@ async function reconcile(db, c, plan) {
       payload.footer = 'Payment received. Keep this receipt.';
       payload.extras = [
         { label: 'Payment', value: payment.method },
-        { label: 'Received', value: (payment.receivedMinor / 100).toFixed(2) },
-        { label: 'Change', value: (payment.changeMinor / 100).toFixed(2) },
+        {
+          label: 'Received',
+          value: (payment.receivedMinor / factor).toFixed(monetary.currencyDigits),
+        },
+        { label: 'Change', value: (payment.changeMinor / factor).toFixed(monetary.currencyDigits) },
         { label: 'Staff', value: payment.staffName },
       ];
       const copies = Math.max(1, Math.min(3, Number(c.branch.bill_print_copies) || 1));

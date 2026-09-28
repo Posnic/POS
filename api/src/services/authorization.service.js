@@ -102,6 +102,7 @@ class AuthorizationService {
           approved_by_name: approverName,
           action,
           approval_token: signApproval({
+            entity_id: entityId ? String(entityId) : null,
             action,
             approved_by_user_id: String(m._id),
             cashier_user_id: cashierId ? String(cashierId) : null,
@@ -200,6 +201,7 @@ class AuthorizationService {
         action,
         method: 'rfid',
         approval_token: signApproval({
+          entity_id: entityId ? String(entityId) : null,
           action,
           approved_by_user_id: String(m._id),
           cashier_user_id: cashierId ? String(cashierId) : null,

@@ -3656,5 +3656,8 @@
   "lang_pm_option_coffee": "കോഫി ഷോപ്പ്",
   "lang_pm_option_herbs": "ഔഷധത്തോട്ടം",
   "lang_pm_option_pizza": "പിസ്സ കട",
-  "lang_pm_option_grill": "ബാർബിക്യൂ ഗ്രിൽ"
+  "lang_pm_option_grill": "ബാർബിക്യൂ ഗ്രിൽ",
+  "lang_changes_not_saved": "മാറ്റങ്ങൾ സേവ് ചെയ്തിട്ടില്ല.",
+  "lang_continue": "തുടരുക",
+  "lang_reason": "കാരണം"
 }

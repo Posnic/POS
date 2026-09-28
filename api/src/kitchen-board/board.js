@@ -155,6 +155,19 @@
           const li = node('li');
           li.append(node('span', 'quantity', item.qty + '×'), node('span', 'name', item.name));
           if (item.note) li.append(node('span', 'note', item.note));
+          if (item.seat || item.course)
+            li.append(
+              node(
+                'span',
+                'note',
+                [item.seat ? 'Seat ' + item.seat : '', item.course || '']
+                  .filter(Boolean)
+                  .join(' · ')
+              )
+            );
+          const allergies = [...(item.allergies || []), item.allergy_note || ''].filter(Boolean);
+          if (allergies.length)
+            li.append(node('strong', 'allergy', 'ALLERGY: ' + allergies.join(', ')));
           const total = item.total ?? item.qty,
             ready = item.ready ?? (stage === 'ready' ? total : 0);
           const collected = item.collected || 0,

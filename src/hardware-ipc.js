@@ -963,6 +963,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   });
 
   /* The page says it has loaded and asks for its content. */
+  ipcMain.handle('kitchen-screen:rendered',(event,receipt)=>require('./kitchen-screen').acknowledgeRender(event.sender,receipt));
   ipcMain.handle('kitchen-screen:ready', (event, displayId) => {
     const screens = require('./kitchen-screen');
     const setup = !screens.configFor(displayId).enabled;

@@ -53,6 +53,7 @@ function electron() {
 
 /* One window per display id. */
 const windows = new Map();
+const renderReceipts = new Map();
 let _watching = false;
 
 /* ------------------------------------------------------------------ config */
@@ -486,17 +487,26 @@ function push(displayId, { setupMode = false } = {}) {
  * display so a pass screen and a hot-kitchen screen can later be given
  * different lists without changing anything here.
  */
-function setTickets(list, displayId = null) {
+async function setTickets(list, displayId = null) {
   const value = Array.isArray(list) ? list : [];
-  if (displayId) {
-    feeds.set(String(displayId), value);
-    push(displayId);
-    return;
-  }
-  for (const id of windows.keys()) {
-    feeds.set(id, value);
-    push(id);
-  }
+  const targets = displayId ? [String(displayId)] : [...windows.keys()];
+  return Promise.all(targets.map(id => {
+    feeds.set(id,value);
+    const win=windows.get(id);
+    if(!win || win.isDestroyed() || !configFor(id).enabled)return Promise.resolve(null);
+    return new Promise(resolve=>{
+      const token=require('crypto').randomUUID();
+      const timer=setTimeout(()=>{renderReceipts.delete(token);resolve(null);},1500);
+      renderReceipts.set(token,{sender:win.webContents,resolve:()=>{clearTimeout(timer);renderReceipts.delete(token);resolve(id);}});
+      try { push(id); win.webContents.send('kitchen-screen:tickets',value,token); }
+      catch {clearTimeout(timer);renderReceipts.delete(token);resolve(null);}
+    });
+  })).then(ids=>ids.filter(Boolean));
+}
+function acknowledgeRender(sender,token) {
+  const receipt=renderReceipts.get(String(token));
+  if(!receipt || receipt.sender!==sender)return false;
+  receipt.resolve();return true;
 }
 
 module.exports = {
@@ -505,6 +515,7 @@ module.exports = {
   displays,
   push,
   setTickets,
+  acknowledgeRender,
   sampleTickets,
   configFor,
   configuredIds,

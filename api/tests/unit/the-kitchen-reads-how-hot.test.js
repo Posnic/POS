@@ -94,7 +94,7 @@ test('an amendment prefers the level just chosen over the stored one', () => {
    * that only shows up when somebody actually changes an order.
    */
   expect(REPO).toMatch(/item\.spice_level != null\s*\?\s*item\.spice_level/);
-  expect(REPO).toMatch(/updatedItems\[existingIndex\[productId\]\] \|\| \{\}\)\.spice_level/);
+  expect(REPO).toMatch(/updatedItems\[existingIndex\[lineKey\]\] \|\| \{\}\)\.spice_level/);
 });
 
 test('every level is cleaned on the way in, never trusted', () => {

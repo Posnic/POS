@@ -197,6 +197,7 @@
   }
   #setup b { color: var(--ink); }
   #setup.bad { border-color: var(--late); }
+.allergy{font-weight:800;color:#8d2800;background:#fff0d6;padding:6px;border:2px solid currentColor;border-radius:5px}
 </style>
 </head>
 <body>
@@ -353,6 +354,9 @@
         list.appendChild(row);
         /* NEVER dropped to save space. "less spicy" is the line that costs a
            plate of food when it is missed. */
+        if (item.seat || item.course) list.appendChild(el('div', 'note', [item.seat ? 'Seat ' + item.seat : '', item.course || ''].filter(Boolean).join(' · ')));
+        var allergies = (item.allergies || []).concat(item.allergy_note || '').filter(Boolean);
+        if (allergies.length) list.appendChild(el('div', 'allergy', 'ALLERGY: ' + allergies.join(', ')));
         if (item.note && cfg.showItemNotes !== false) {
           list.appendChild(el('div', 'note', item.note));
         }
