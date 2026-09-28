@@ -1120,6 +1120,7 @@ app.use(
 );
 app.use(['/api/captain/v1', '/captain/v1'], require('./src/routes/captain-access.routes'));
 app.use(['/api/mobile/v1', '/mobile/v1'], require('./src/routes/mobile-pos.routes'));
+app.use(['/api/business/v1', '/business/v1'], require('./src/routes/business-access.routes'));
 for (const extension of ['html', 'js', 'css']) {
   const suffix = extension === 'html' ? '' : '.' + extension;
   app.get(['/api/captain-setup' + suffix, '/captain-setup' + suffix], (req, res) => {
