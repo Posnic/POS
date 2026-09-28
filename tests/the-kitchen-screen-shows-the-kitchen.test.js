@@ -83,9 +83,8 @@ test('A SCREEN SHOWS WHAT IS OPEN, not what has yet to print', () => {
   const body = method.slice(0, method.indexOf('\n  }\n'));
   assert.ok(!/last_printed_change_index/.test(body), 'the screen is reading the print queue');
   assert.ok(!/kot_claimed_by/.test(body), "the screen is subject to another till's claim");
-  /* It leaves the wall when the table is settled, which is the only boundary
-     this product actually has - nothing marks a dish done. */
-  assert.match(body, /payment_status: \{ \$nin: \['Paid', 'Cancelled'\] \}/);
+  // Paid kitchen work stays visible until served; counter sales are excluded.
+  assert.match(body, /kitchenEligibility/);
 });
 
 test('and it carries nothing a kitchen wall should not show', () => {

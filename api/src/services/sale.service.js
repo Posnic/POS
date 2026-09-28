@@ -992,7 +992,8 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       date: mongo_date,
       sale_process: saleProcess,
       // Only the server's KOT path enrolls kitchen work; caller flags are ignored.
-      kitchen_required: existingSale?.kitchen_required === true ||
+      kitchen_required:
+        existingSale?.kitchen_required === true ||
         (!existingSale && saleProcess === 'KOT') ||
         (existingSale?.sale_process === 'KOT' && existingSale.payment_status !== 'Paid'),
       user_id: String(userId),
@@ -1173,8 +1174,9 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
 
     const finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
     if (finalSaleData.kitchen_required) {
-      finalSaleData.kitchen_closed = !require('../helpers/kitchen-rounds').rounds({ ...existingSale, ...finalSaleData })
-        .some(round => round.items.some(item => item.remaining > 0));
+      finalSaleData.kitchen_closed = !require('../helpers/kitchen-rounds')
+        .rounds({ ...existingSale, ...finalSaleData })
+        .some((round) => round.items.some((item) => item.remaining > 0));
     }
 
     // Inventory Verification BEFORE Insert (PHP lines 653-690)

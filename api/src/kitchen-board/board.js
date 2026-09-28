@@ -119,8 +119,8 @@
                     : stage === 'ready'
                       ? 'orders ready'
                       : 'orders preparing')
-              : 'Waiting for connection',
-          ),
+              : 'Waiting for connection'
+          )
         );
       for (const ticket of list) {
         const age = ticket.placedAt ? Date.now() - new Date(ticket.placedAt).getTime() : 0;
@@ -131,7 +131,7 @@
               ? ' overdue' + (settings.pulse ? ' pulse' : '')
               : age >= settings.orangeMinutes * 60000
                 ? ' aging'
-                : ''),
+                : '')
         );
         card.dataset.id = ticket.id;
         const top = node('div', 'top'),
@@ -163,8 +163,8 @@
             node(
               'span',
               'item-progress',
-              `${Math.max(0, ready - collected)} ready to collect · ${Math.max(0, collected - served)} collected`,
-            ),
+              `${Math.max(0, ready - collected)} ready to collect · ${Math.max(0, collected - served)} collected`
+            )
           );
           if (item.collectorName && collected > served)
             li.append(node('span', 'note', 'Collected by ' + item.collectorName));
@@ -204,7 +204,7 @@
           const b = node(
             'button',
             'advance' + (stage === 'preparing' ? ' ready-action' : ''),
-            stage === 'new' ? 'Start preparing →' : 'Ready all →',
+            stage === 'new' ? 'Start preparing →' : 'Ready all →'
           );
           b.disabled = !online || mutating;
           b.onclick = () => advance(ticket, stages[stages.indexOf(stage) + 1]);
@@ -283,7 +283,7 @@
             actionId: actionId(),
           });
       tickets = tickets.map((t) => (t.id === ticket.id ? result.ticket : t));
-      $('message').textContent = demo ? 'Demo updated — no real order changed.' : 'Saved';
+      $('message').textContent = demo ? 'Demo updated - no real order changed.' : 'Saved';
       clearTimeout(undoTimer);
       undo = isUndo
         ? null

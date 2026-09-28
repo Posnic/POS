@@ -6972,7 +6972,8 @@ class SalesRepository {
           $set: {
             partial_balance: parseFloat(saleData.amount) + parseFloat(saleData.paidamount || 0),
             payment_status: 'Paid',
-            kitchen_required: saleDetails.kitchen_required === true || saleDetails.sale_process === 'KOT',
+            kitchen_required:
+              saleDetails.kitchen_required === true || saleDetails.sale_process === 'KOT',
             payment_pending: 0.0,
             updated_date: new Date(),
             updated_by: loggedUserName,
@@ -7914,7 +7915,14 @@ class SalesRepository {
         kitchen_service:
           sale.kitchen_service === undefined ? { $exists: false } : sale.kitchen_service,
       },
-      { $set: { kitchen_service: service, kitchen_closed: !rounds({ ...sale, kitchen_service: service }).some(r => r.items.some(i => i.remaining > 0)) } }
+      {
+        $set: {
+          kitchen_service: service,
+          kitchen_closed: !rounds({ ...sale, kitchen_service: service }).some((r) =>
+            r.items.some((i) => i.remaining > 0)
+          ),
+        },
+      }
     );
     if (!result.matchedCount)
       return { status: false, message: 'Order changed. Refresh before marking items served.' };
@@ -8775,7 +8783,15 @@ class SalesRepository {
         ...(clientRecord ? { client: clientRecord } : {}),
         // Initial change log entry for KOT printing
         kitchen_actor: staffOrder ? kitchenActor() : null,
-        changes: changesItems.length ? [{ timestamp: now, items: changesItems, kitchen_actor: staffOrder ? kitchenActor() : null }] : [],
+        changes: changesItems.length
+          ? [
+              {
+                timestamp: now,
+                items: changesItems,
+                kitchen_actor: staffOrder ? kitchenActor() : null,
+              },
+            ]
+          : [],
         /*
          * HOW LONG THE KITCHEN SHOULD TAKE, worked out once and kept.
          *
@@ -10111,7 +10127,11 @@ class SalesRepository {
         }
 
         if (changesItems.length > 0) {
-          existingChanges.push({ timestamp: mongoDate, items: changesItems, kitchen_actor: kitchenActor() });
+          existingChanges.push({
+            timestamp: mongoDate,
+            items: changesItems,
+            kitchen_actor: kitchenActor(),
+          });
           updateFields.changes = existingChanges;
           updateFields.kitchen_closed = false;
         }
@@ -10445,7 +10465,11 @@ class SalesRepository {
       const salesTotal = itemsSub - extraDiscountAmount;
       const mongoDate = new Date();
       if (changesItems.length > 0) {
-        existingChanges.push({ timestamp: mongoDate, items: changesItems, kitchen_actor: kitchenActor() });
+        existingChanges.push({
+          timestamp: mongoDate,
+          items: changesItems,
+          kitchen_actor: kitchenActor(),
+        });
       }
 
       const updateFields = {

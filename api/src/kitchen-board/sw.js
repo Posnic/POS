@@ -8,7 +8,7 @@ const FILES = [
   '/kitchen/icon.svg',
 ];
 self.addEventListener('install', (event) =>
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(FILES))),
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(FILES)))
 );
 self.addEventListener('activate', (event) =>
   event.waitUntil(
@@ -18,10 +18,10 @@ self.addEventListener('activate', (event) =>
         Promise.all(
           keys
             .filter((key) => key.startsWith('posnic-kitchen-shell-') && key !== CACHE)
-            .map((key) => caches.delete(key)),
-        ),
-      ),
-  ),
+            .map((key) => caches.delete(key))
+        )
+      )
+  )
 );
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
@@ -41,6 +41,6 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(event.request)),
+      .catch(() => caches.match(event.request))
   );
 });

@@ -44,6 +44,13 @@ function readMounts() {
     if (!mounts.has(file)) mounts.set(file, []);
     mounts.get(file).push({ path: mountPath, note });
   }
+  // These dedicated routers are mounted directly by app.js, outside /api routes.
+  const app = fs.readFileSync(path.join(ROUTES_DIR, '..', '..', 'app.js'), 'utf8');
+  for (const m of app.matchAll(/app\.use\(\s*(\[[^\]]+\]|["'][^"']+["'])\s*,\s*require\(["']\.\/src\/routes\/([\w.-]+)["']\)\)/g)) {
+    const file = m[2].replace(/\.js$/, '') + '.js';
+    const paths = [...m[1].matchAll(/["']([^"']+)["']/g)].map((p) => ({ path: p[1], note: null }));
+    mounts.set(file, paths);
+  }
   return mounts;
 }
 

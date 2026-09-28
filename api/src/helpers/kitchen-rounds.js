@@ -100,7 +100,9 @@ function rounds(sale, { descriptions = true } = {}) {
   return [...groups.values()];
 }
 function tickets(sale) {
-  const closed = sale.kitchen_required ? null : date(sale.bill_requested_at || sale.bill_printed_at);
+  const closed = sale.kitchen_required
+    ? null
+    : date(sale.bill_requested_at || sale.bill_printed_at);
   return rounds(sale, { descriptions: false }).flatMap((round) => {
     if (closed && (!round.ordered_at || round.ordered_at <= closed)) return [];
     const items = round.items

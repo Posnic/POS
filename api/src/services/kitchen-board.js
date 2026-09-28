@@ -24,10 +24,7 @@ function project(sale) {
         const line = work.lines?.[i.id] || {};
         const ready = Math.max(
           i.served,
-          Math.min(
-            i.quantity,
-            Number(line.ready ?? (work.state === 'ready' ? i.quantity : 0)) || 0,
-          ),
+          Math.min(i.quantity, Number(line.ready ?? (work.state === 'ready' ? i.quantity : 0)) || 0)
         );
         const collected = Math.max(i.served, Math.min(ready, Number(line.collected) || 0));
         return {
@@ -89,7 +86,7 @@ async function list(req) {
           kitchen_work: 1,
           kitchen_actor: 1,
         },
-      },
+      }
     )
     .sort({ created_date: 1 });
   const tickets = [];
@@ -99,7 +96,7 @@ async function list(req) {
       if (tickets.length > 500)
         fail(
           'More than 500 open kitchen tickets. Complete old tickets before using this board.',
-          409,
+          409
         );
     }
   } finally {
@@ -227,7 +224,7 @@ async function mutate(req, captain = false) {
         kitchen_work: work,
         ...(b.operation === 'serve' ? { kitchen_service: service } : {}),
       },
-    },
+    }
   );
   if (!result.matchedCount) fail('Order changed. Refresh before trying again.', 409);
   try {
@@ -238,7 +235,7 @@ async function mutate(req, captain = false) {
   return {
     ticket:
       project({ ...sale, kitchen_work: work, kitchen_service: service }).find(
-        (t) => t.roundId === b.roundId,
+        (t) => t.roundId === b.roundId
       ) || null,
   };
 }
@@ -277,7 +274,7 @@ async function saveSettings(req) {
     .collection('branches')
     .updateOne(
       { _id: c.branchId, license: c.license },
-      { $set: { kitchen_board_settings: settings } },
+      { $set: { kitchen_board_settings: settings } }
     );
   return { settings };
 }

@@ -45,7 +45,7 @@ test('concurrent Captains cannot collect the same quantity', async () => {
   ]);
   expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
   await expect(
-    service.captainAction(lineAction('collect', 2, 2, new ObjectId())),
+    service.captainAction(lineAction('collect', 2, 2, new ObjectId()))
   ).rejects.toMatchObject({ status: 409 });
 });
 test('round ownership follows each ordering Captain, with shared fallback for legacy rounds', async () => {
@@ -159,7 +159,7 @@ test('counter sales never appear, even before payment; explicit walk-in KOTs sti
   });
   expect((await service.list(request())).tickets.map((t) => t.saleId)).toEqual([String(saleId)]);
   await expect(
-    service.transition(action({ saleId: String(counterId), roundId: 'legacy' })),
+    service.transition(action({ saleId: String(counterId), roundId: 'legacy' }))
   ).rejects.toMatchObject({ status: 409 });
   await sales.updateOne({ _id: counterId }, { $set: { payment_status: 'Paid' } });
   expect((await service.list(request())).tickets.map((t) => t.saleId)).toEqual([String(saleId)]);
@@ -188,22 +188,22 @@ test('persists stages, idempotent retry, undo and revision conflicts', async () 
   expect(started.ticket.state).toBe('preparing');
   expect((await service.transition(action())).ticket.revision).toBe(1);
   await expect(
-    service.transition(action({ actionId: 'different-action-123' })),
+    service.transition(action({ actionId: 'different-action-123' }))
   ).rejects.toMatchObject({ status: 409 });
   expect(
     (
       await service.transition(
-        action({ state: 'ready', revision: 1, actionId: 'ready-action-12345' }),
+        action({ state: 'ready', revision: 1, actionId: 'ready-action-12345' })
       )
-    ).ticket.state,
+    ).ticket.state
   ).toBe('ready');
   expect((await service.list(request())).tickets[0].state).toBe('ready');
   expect(
     (
       await service.transition(
-        action({ state: 'preparing', revision: 2, actionId: 'undo-action-123456' }),
+        action({ state: 'preparing', revision: 2, actionId: 'undo-action-123456' })
       )
-    ).ticket.revision,
+    ).ticket.revision
   ).toBe(3);
 });
 test('simultaneous screens cannot both advance the same revision', async () => {
@@ -220,7 +220,7 @@ test('serving, cancellation, new rounds and billing reconcile without merging ro
     .collection('sales')
     .updateOne(
       { _id: saleId },
-      { $set: { 'kitchen_service.c0i0': { quantity: 1 }, bill_requested_at: new Date() } },
+      { $set: { 'kitchen_service.c0i0': { quantity: 1 }, bill_requested_at: new Date() } }
     );
   expect((await service.list(request())).tickets[0].items[0].qty).toBe(1);
   await db.collection('sales').updateOne(
@@ -234,7 +234,7 @@ test('serving, cancellation, new rounds and billing reconcile without merging ro
           items: [{ item_id: 'tea', item_name: 'Tea', item_quantity: 1, process: 'add' }],
         },
       },
-    },
+    }
   );
   const tickets = (await service.list(request())).tickets;
   expect(tickets).toHaveLength(1);
@@ -312,7 +312,7 @@ test('manager pairing is single-use, restricted to its branch and immediately re
   expect(String(screen.tenantContext.branchId)).toBe(String(branch));
   expect((await service.list(screen)).tickets).toHaveLength(1);
   expect((await service.transition({ ...screen, body: action().body })).ticket.state).toBe(
-    'preparing',
+    'preparing'
   );
   await expect(devices.create({ ...screen, body: { name: 'another' } })).rejects.toMatchObject({
     status: 403,
@@ -334,14 +334,18 @@ test('expired codes, disabled authorizers and foreign managers cannot keep a dev
   const paired = await devices.pair({ ...manager, body: { code: code.code } });
   await db.collection('users').updateOne({ _id: userId }, { $set: { activate: false } });
   await expect(
-    devices.authenticate({ db, headers: { 'x-kitchen-device': paired.token } }),
+    devices.authenticate({ db, headers: { 'x-kitchen-device': paired.token } })
   ).rejects.toMatchObject({ status: 401 });
 });
 
 test('branch delay settings validate thresholds and require manager access', async () => {
-  const req={...request(),body:{orangeMinutes:7,redMinutes:15,pulse:false}};
+  const req = { ...request(), body: { orangeMinutes: 7, redMinutes: 15, pulse: false } };
   await service.saveSettings(req);
   expect((await service.list(request())).settings).toEqual(req.body);
-  await expect(service.saveSettings({...req,body:{orangeMinutes:10,redMinutes:5,pulse:true}})).rejects.toMatchObject({status:400});
-  await expect(service.saveSettings({...req,user:{_id:userId,access:{sales:{write:true}}}})).rejects.toMatchObject({status:403});
+  await expect(
+    service.saveSettings({ ...req, body: { orangeMinutes: 10, redMinutes: 5, pulse: true } })
+  ).rejects.toMatchObject({ status: 400 });
+  await expect(
+    service.saveSettings({ ...req, user: { _id: userId, access: { sales: { write: true } } } })
+  ).rejects.toMatchObject({ status: 403 });
 });

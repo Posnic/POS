@@ -26,7 +26,7 @@
   $('device-create').onclick = run('device-manager-result', async () => {
     const result = await deviceRequest('/code', { name: $('device-name').value });
     $('device-manager-result').textContent =
-      'Code: ' + result.code + ' — ' + result.branch + '. Valid for five minutes, one screen only.';
+      'Code: ' + result.code + ' - ' + result.branch + '. Valid for five minutes, one screen only.';
   });
   $('device-pair').onclick = run('device-result', async () => {
     const result = await deviceRequest('/pair', { code: $('device-code').value });

@@ -45,23 +45,21 @@ async function pair(req) {
   await principal(req.db, row);
   const result = await codes.updateOne(
     { _id: row._id, used: { $ne: true } },
-    { $set: { used: true } },
+    { $set: { used: true } }
   );
   if (!result.modifiedCount) fail('Pairing code was already used.', 409);
   const token = crypto.randomBytes(32).toString('base64url');
-  await req.db
-    .collection('kitchen_devices')
-    .insertOne({
-      _id: hash(token),
-      name: row.name,
-      branchId: row.branchId,
-      license: row.license,
-      manager: row.manager,
-      authVersion: row.authVersion,
-      created: new Date(),
-      expires: new Date(Date.now() + lifetime),
-      revoked: false,
-    });
+  await req.db.collection('kitchen_devices').insertOne({
+    _id: hash(token),
+    name: row.name,
+    branchId: row.branchId,
+    license: row.license,
+    manager: row.manager,
+    authVersion: row.authVersion,
+    created: new Date(),
+    expires: new Date(Date.now() + lifetime),
+    revoked: false,
+  });
   return { token, name: row.name };
 }
 async function principal(db, row) {
@@ -99,7 +97,7 @@ async function authenticate(req) {
   if (row.expires.getTime() < Date.now() + lifetime - 86400000)
     await devices.updateOne(
       { _id: row._id, revoked: false },
-      { $set: { expires: new Date(Date.now() + lifetime) } },
+      { $set: { expires: new Date(Date.now() + lifetime) } }
     );
 }
 async function list(req) {
@@ -108,7 +106,7 @@ async function list(req) {
     .collection('kitchen_devices')
     .find(
       { branchId: c.branchId, license: c.license, revoked: false },
-      { projection: { name: 1, created: 1, expires: 1 } },
+      { projection: { name: 1, created: 1, expires: 1 } }
     )
     .toArray();
   return {
@@ -127,7 +125,7 @@ async function revoke(req) {
     .collection('kitchen_devices')
     .updateOne(
       { _id: req.body.id, branchId: c.branchId, license: c.license },
-      { $set: { revoked: true } },
+      { $set: { revoked: true } }
     );
   return { revoked: true };
 }

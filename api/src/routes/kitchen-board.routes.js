@@ -20,7 +20,7 @@ router.post('/settings', protect, wrap(service.saveSettings));
 router.post('/devices/code', protect, wrap(devices.create));
 router.get('/devices', protect, wrap(devices.list));
 router.post('/devices/revoke', protect, wrap(devices.revoke));
-router.use(async (req, res, next) => {
+const authenticateKitchen = async (req, res, next) => {
   if (!req.headers['x-kitchen-device']) return protect(req, res, next);
   try {
     await devices.authenticate(req);
@@ -30,7 +30,7 @@ router.use(async (req, res, next) => {
       .status(error.status || 500)
       .json({ message: error.status ? error.message : 'Kitchen access unavailable.' });
   }
-});
-router.get('/', wrap(service.list));
-router.post('/transition', wrap(service.transition));
+};
+router.get('/', authenticateKitchen, wrap(service.list));
+router.post('/transition', authenticateKitchen, wrap(service.transition));
 module.exports = router;

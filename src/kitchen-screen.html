@@ -286,7 +286,13 @@
       icon.setAttribute('viewBox', '0 0 48 48');
       icon.setAttribute('class', 'table-icon');
       icon.setAttribute('aria-hidden', 'true');
-      icon.innerHTML = '<path d="M8 18h32v8H8zM12 26v14m24-14v14M16 8h16v6H16z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>';
+      var shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      shape.setAttribute('d', 'M8 18h32v8H8zM12 26v14m24-14v14M16 8h16v6H16z');
+      shape.setAttribute('fill', 'none');
+      shape.setAttribute('stroke', 'currentColor');
+      shape.setAttribute('stroke-width', '4');
+      shape.setAttribute('stroke-linejoin', 'round');
+      icon.appendChild(shape);
       node.appendChild(icon);
       node.appendChild(el('span', 'table', ticket.table || ''));
       node.setAttribute('aria-label', (ticket.table || '') + ', ' + state);
@@ -300,7 +306,12 @@
       icon.setAttribute('viewBox', '0 0 48 48');
       icon.setAttribute('aria-hidden', 'true');
       icon.style.cssText = 'width:.7em;height:.7em;margin-right:.25em';
-      icon.innerHTML = '<path d="M8 18h32v8H8zM12 26v14m24-14v14M16 8h16v6H16z" fill="none" stroke="currentColor" stroke-width="4"/>';
+      var shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      shape.setAttribute('d', 'M8 18h32v8H8zM12 26v14m24-14v14M16 8h16v6H16z');
+      shape.setAttribute('fill', 'none');
+      shape.setAttribute('stroke', 'currentColor');
+      shape.setAttribute('stroke-width', '4');
+      icon.appendChild(shape);
       heading.appendChild(icon);
       heading.appendChild(document.createTextNode(ticket.table || ''));
       top.appendChild(heading);

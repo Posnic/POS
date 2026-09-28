@@ -4309,12 +4309,12 @@
                         if (said && said.reason === 'off') {
                             result.textContent = 'Turn one of these on first.';
                         } else if (!said || !said.played) {
-                            result.textContent = 'This computer could not play it.';
+                            result.textContent = 'This computer could not play it. Please check the volume and selected speaker connection.';
                         } else {
                             result.textContent = 'Announcement queued. Check speaker playback status above.';
                         }
                     }).catch(function () {
-                        result.textContent = 'This computer could not play it.';
+                        result.textContent = 'This computer could not play it. Please check the volume and selected speaker connection.';
                     });
                 });
             }
