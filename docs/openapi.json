@@ -1734,7 +1734,7 @@
     },
     "/business/v1/device-decisions/{action}": {
       "post": {
-        "summary": "body",
+        "summary": "protectDeviceDecision",
         "operationId": "post_business_v1_device_decisions_action",
         "tags": [
           "Business access"
