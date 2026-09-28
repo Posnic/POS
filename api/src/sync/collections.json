@@ -36,6 +36,8 @@
     "settings": "global"
   },
   "local_only": {
+    "business_authorizations": "Proof-bound browser consent requests belong only to the Business issuer; replication would permit cross-server replay.",
+    "business_sessions": "Business token hashes and device revocation belong only to the issuing server and must never sync to another installation.",
     "captain_sessions": "Rotating device credentials and revocation belong only to the API that authorized the Captain phone.",
     "captain_pair_codes": "Single-use Captain approvals are issued or delivered explicitly to one server; they must never be replicated as shop data.",
     "handsets": "Handset token grants and revocation belong to the API that authorized the phone; copying them to an independent sale authority would permit cross-server access.",
