@@ -40,7 +40,8 @@ function ipc(prefs, file, fileSystem = fs) {
   const end = source.indexOf('\n  /*', from);
   new Function('ipcMain', 'require', 'preferences', 'fs', '_prefsPath', source.slice(from, end))(
     { handle: (key, fn) => { handlers[key] = fn; } },
-    () => ({ documentPrintSettings, validateDocumentPrintSettings }), prefs, fileSystem, file);
+    () => ({ documentPrintSettings, validateDocumentPrintSettings,
+      saveJson: fileSystem === fs ? require('../src/device-preferences').saveJson : fileSystem.writeFileSync }), prefs, fileSystem, file);
   return handlers;
 }
 
@@ -237,4 +238,29 @@ test('invoice and quotation PDFs use actual A4, A5 and Letter pages with content
         paper + ': text outside paper: ' + JSON.stringify(pos));
     }
   }
+});
+
+test('item print languages persist independently of each other and printer destinations', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'item-print-languages-')), file = path.join(dir, 'preferences.json');
+  t.after(() => { fs.unlinkSync(file); fs.rmdirSync(dir); });
+  const policy = { receipt:'nl', kot:'ar', bilingual:true };
+  const profiles = {...initial(),itemLanguages:policy};
+  const prefs = {}, handlers = ipc(prefs,file);
+  assert.equal(handlers['printer:save-document-settings']({},profiles).success,true);
+  assert.deepEqual(documentPrintSettings(JSON.parse(fs.readFileSync(file,'utf8'))).itemLanguages,policy);
+  assert.equal(prefs.receipt_printer,'Counter');
+  assert.equal(handlers['printer:save-document-settings']({},initial()).success,true);
+  assert.deepEqual(prefs.item_print_languages,policy,'saving from an older screen preserves language choices');
+  assert.throws(()=>validateDocumentPrintSettings({...profiles,itemLanguages:{...policy,kot:'../bad'}}));
+});
+
+
+test('API-side bill workers can load device preferences without an Electron dependency', () => {
+  const loaded = {exports:{}};
+  new Function('require','module','exports',read('src/device-preferences.js'))(name => {
+    if (name === 'electron') throw Object.assign(new Error('No Electron in API runtime'), {code:'MODULE_NOT_FOUND'});
+    return require(name);
+  },loaded,loaded.exports);
+  assert.deepEqual(loaded.exports.all(),{});
+  assert.equal(loaded.exports.get('item_print_languages'),null);
 });

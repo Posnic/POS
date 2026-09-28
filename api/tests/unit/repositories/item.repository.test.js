@@ -187,6 +187,33 @@ describe('ItemRepository', () => {
       available_quantity: '100',
     };
 
+    test('translations are stored on the existing item without new stock records', async () => {
+      col.findOne.mockResolvedValueOnce(null);
+      const translated = {
+        ...data,
+        default_language: 'en',
+        translations: [{ locale: 'nl', name: 'Pen Nederlands', description: 'Menu only' }],
+      };
+      const result = await repo.upsertItem(translated, '', ctx);
+      expect(result.status).toBe(true);
+      expect(col.insertOne).toHaveBeenCalledTimes(1);
+      const inserted = col.insertOne.mock.calls[0][0];
+      expect(inserted.translations).toEqual(translated.translations);
+      expect(inserted.default_language).toBe('en');
+      expect(inserted.available_quantity).toBe(100);
+    });
+    test('an old client editing without translations leaves the saved translations untouched', async () => {
+      col.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ name: 'Pen', translations: [{ locale: 'nl', name: 'Balpen' }] });
+      const result = await repo.upsertItem(data, FAKE_ID, ctx);
+      expect(result.status).toBe(true);
+      const changes = col.updateOne.mock.calls.map((call) => call[1].$set).filter(Boolean);
+      expect(changes.length).toBeGreaterThan(0);
+      changes.forEach((change) => expect(change).not.toHaveProperty('translations'));
+    });
+
     test('create returns success', async () => {
       col.findOne.mockResolvedValueOnce(null);
       const r = await repo.upsertItem(data, '', ctx);

@@ -1,0 +1,103 @@
+{
+  "provider": "prestashop",
+  "store": "synthetic_prestashop_store",
+  "orders": [
+    {
+      "externalOrderId": "SYNTH-PS-ORD-1001",
+      "current_state": {
+        "id": 4,
+        "name": "Shipped",
+        "delivery": true,
+        "shipped": true,
+        "paid": true,
+        "deleted": false
+      },
+      "carrier": {
+        "id": 12,
+        "name": "Synthetic Carrier",
+        "active": true
+      },
+      "order_carrier": {
+        "id_order": "SYNTH-PS-ORD-1001",
+        "id_carrier": 12,
+        "tracking_number": "SYNTH-TRACK-1001"
+      },
+      "expected": {
+        "shipping_metadata": {
+          "carrier": {
+            "id": 12,
+            "name": "Synthetic Carrier"
+          },
+          "tracking_reference": "SYNTH-TRACK-1001",
+          "shipping_state": "SHIPPED"
+        },
+        "review": false
+      }
+    },
+    {
+      "externalOrderId": "SYNTH-PS-ORD-1002",
+      "current_state": {
+        "id": 5,
+        "name": "Cancelled",
+        "delivery": false,
+        "shipped": false,
+        "paid": false,
+        "deleted": false
+      },
+      "carrier": {
+        "id": 13,
+        "name": "Synthetic Cancelled Carrier",
+        "active": true
+      },
+      "order_carrier": {
+        "id_order": "SYNTH-PS-ORD-1002",
+        "id_carrier": 13,
+        "tracking_number": ""
+      },
+      "expected": {
+        "shipping_metadata": {
+          "carrier": {
+            "id": 13,
+            "name": "Synthetic Cancelled Carrier"
+          },
+          "tracking_reference": null,
+          "shipping_state": "CANCELLED"
+        },
+        "review": false
+      }
+    },
+    {
+      "externalOrderId": "SYNTH-PS-ORD-1003",
+      "current_state": {
+        "id": 99,
+        "name": "Synthetic Custom State",
+        "delivery": false,
+        "shipped": false,
+        "paid": false,
+        "deleted": false
+      },
+      "carrier": {
+        "id": 14,
+        "name": "Synthetic Manual Review Carrier",
+        "active": true
+      },
+      "order_carrier": {
+        "id_order": "SYNTH-PS-ORD-1003",
+        "id_carrier": 14,
+        "tracking_number": "SYNTH-TRACK-1003"
+      },
+      "expected": {
+        "shipping_metadata": {
+          "carrier": {
+            "id": 14,
+            "name": "Synthetic Manual Review Carrier"
+          },
+          "tracking_reference": "SYNTH-TRACK-1003",
+          "shipping_state": null
+        },
+        "review": true,
+        "review_reason": "UNSUPPORTED_PRESTASHOP_ORDER_STATE"
+      }
+    }
+  ]
+}

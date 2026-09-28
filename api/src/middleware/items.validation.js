@@ -1,12 +1,27 @@
 const { body, param } = require('express-validator');
 const { ObjectId } = require('mongodb');
 const { FIELD_LIMITS, ERROR_MESSAGES } = require('../constants/items.constants');
+const itemText = require('../utils/item-localization');
+const translationRules = () => [
+  body('translations')
+    .optional()
+    .isArray({ max: 60 })
+    .custom((value) => {
+      itemText.normalize(value);
+      return true;
+    }),
+  body('default_language')
+    .optional()
+    .custom((value) => value === '' || !!itemText.locale(value))
+    .withMessage('Choose a valid original item language'),
+];
 
 /**
  * Validation middleware for creating an item
  * Applied to the modern POST /items endpoint (ItemsController.add)
  */
 const validateCreateItem = [
+  ...translationRules(),
   body('name')
     .trim()
     .notEmpty()
@@ -49,6 +64,7 @@ const validateCreateItem = [
  * Applied to the modern PUT /items/:id endpoint (ItemsController.edit)
  */
 const validateUpdateItem = [
+  ...translationRules(),
   param('id')
     .notEmpty()
     .withMessage(ERROR_MESSAGES.ITEM_ID_REQUIRED)

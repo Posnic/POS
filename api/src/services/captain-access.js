@@ -252,7 +252,7 @@ async function verifySession(req, user) {
     .replace(/^\/api/, '')
     .replace(/\/$/, '');
   if (
-    !/^\/(captain\/v1\/(session|logout)|items\/(accessQr|aiAvailability|soldOut|instanceItemInsert)|sales\/(qrOrder|myDay|requestBillPrint|getTablesWithActiveOrders|getOrderHistory|updateOrder|getFrequentItems|pendingOnlineOrders|getListKot|[a-fA-F0-9]{24}\/(approval|print)|waiterCalls\/[^/]+\/seen|transcribe|voiceIntent))$/.test(
+    !/^\/(captain\/v1\/(session|logout|payment-options|payments\/(table|record|release))|items\/(accessQr|aiAvailability|soldOut|instanceItemInsert)|sales\/(qrOrder|myDay|guestBills\/(table|latest|print)|requestBillPrint|getTablesWithActiveOrders|getOrderHistory|updateOrder|getFrequentItems|pendingOnlineOrders|getListKot|[a-fA-F0-9]{24}\/(approval|print)|waiterCalls\/[^/]+\/seen|transcribe|voiceIntent))$/.test(
       path
     )
   )

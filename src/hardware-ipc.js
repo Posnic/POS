@@ -175,6 +175,25 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   });
 
   // Printer Handlers
+  ipcMain.handle('printer:recovery-status', async () => {
+    const queue = hardwareManager.getWindowsPrintQueue();
+    let systemSettings;
+    if (queue) {
+      try { systemSettings = await queue.transport.systemSettings(); }
+      catch (_) { systemSettings = { guidance: ['Windows power settings could not be checked. Review Sleep, Hibernate and USB selective suspend manually in Power Options.'] }; }
+    }
+    return queue ? { supported: true, systemSettings, bindings: queue.bindings,
+      health: [...queue.health.values()].map(item => item.value), keepAlive: queue.keepAlive, jobs: queue.list() } : { supported: false };
+  });
+  ipcMain.handle('printer:recovery-configure', async (_event, printer, binding) => {
+    const queue = hardwareManager.getWindowsPrintQueue();
+    if (!queue) return { success: false, error: 'Windows only' };
+    if (!(await hardwareManager.listPrinters({ fresh: true })).some(item => item.name === printer)) return { success: false, error: 'Printer queue not found' };
+    try {
+      queue.configure(printer, binding || {});
+      return { success: true };
+    } catch (error) { return { success: false, error: error.message }; }
+  });
   /* Hardware Manager's chooser, and anything else asking a person to pick:
      always the real list, never a remembered one. */
   ipcMain.handle('printer:list', async () => {
@@ -338,6 +357,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         return raster;
       }
 
+      const requestId = options.jobId || 'receipt:' + require('crypto').createHash('sha256').update(JSON.stringify(sale || {})).digest('hex');
       const results = [];
       for (const target of targets) {
         /* Rendered per target: an 80mm roll is 48 columns and a 58mm roll is
@@ -366,7 +386,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
             + (target.copies > 1 ? ` (${copy + 1}/${target.copies})` : '');
           /* eslint-disable-next-line no-await-in-loop -- printers are serial
              devices; two jobs sent at once interleave on the same roll. */
-          const r = await hardwareManager.sendRawToPrinter(target.name, bytes, label);
+          const r = await hardwareManager.sendRawToPrinter(target.name, bytes, label, { jobId: requestId + ":" + targets.indexOf(target) + ":" + copy });
           results.push({ printer: target.name || '(default)', copy: copy + 1, sent: bytes.length, ...r });
         }
       }
@@ -398,6 +418,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         ms: Date.now() - startedAt,
         printers: results.map((r) => ({
           name: r.printer,
+          jobId: r.jobId,
           copy: r.copy,
           status: r.success ? 'success' : 'failed',
           reason: r.success ? undefined : (r.error || 'unknown'),
@@ -407,6 +428,9 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
 
       return {
         success: results.some((r) => r.success),
+        pending: results.some(r => r.pending),
+        status: results.every(r => r.success) ? 'Sent to printer' : (results.find(r => !r.success)?.status || 'Failed'),
+        jobs: results,
         bytes: sentBytes,
         printed: results.length - failed.length,
         attempted: results.length,
@@ -437,7 +461,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   });
 
   /* The day's receipts, for the Hardware Manager screen. */
-  ipcMain.handle('receipt:get-logs', (event, date) => require('./receipt-log').forDate(date));
+  ipcMain.handle('receipt:get-logs', (event, date) => hardwareManager.reconcilePrintLogs(require('./receipt-log').forDate(date)));
 
   ipcMain.handle('receipt:delete-log', (event, date, id) => ({
     success: require('./receipt-log').remove(date, id),
@@ -458,7 +482,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         cut: options.cut !== false,
       });
       return await hardwareManager.sendRawToPrinter(
-        options.printerName, bytes, options.docName || 'Posnic Report');
+        options.printerName, bytes, options.docName || 'Posnic Report', { jobId: options.jobId });
     } catch (err) {
       console.error('[Print] report render failed:', err.message);
       return { success: false, error: err.message };
@@ -469,9 +493,10 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     return await hardwareManager.printHTML(htmlContent, options);
   });
 
-  ipcMain.handle('printer:print-pdf', async (event, bytes, kind) => {
+  ipcMain.handle('printer:print-pdf', async (event, bytes, kind, paperSize) => {
     const saved = require('./device-preferences').documentPrintSettings();
-    const profile = kind === 'invoice' || kind === 'quotation' ? saved[kind] : {};
+    const profile = kind === 'invoice' || kind === 'quotation' ? saved[kind] :
+      kind === 'menu' ? { paperSize: ['a4', 'a5', 'letter'].includes(paperSize) ? paperSize : 'a4' } : {};
     if (profile.printerName && profile.printerName !== 'default') {
       const printers = await hardwareManager.listPrinters();
       if (!printers.some((printer) => printer.name === profile.printerName)) {
@@ -497,9 +522,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   }
 
   function _savePrefs(prefs) {
-    try {
-      fs.writeFileSync(_prefsPath, JSON.stringify(prefs, null, 2), 'utf8');
-    } catch (e) { /* ignore */ }
+    require('./device-preferences').saveJson(_prefsPath, prefs);
   }
 
   const preferences = _loadPrefs();
@@ -509,10 +532,10 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   ipcMain.handle('printer:save-document-settings', (_event, value) => {
     try {
       const settings = require('./device-preferences').validateDocumentPrintSettings(value);
-      const next = { ...preferences, receipt_printers: JSON.stringify(settings.sales),
+      const next = { ...preferences, item_print_languages: settings.itemLanguages || preferences.item_print_languages, receipt_printers: JSON.stringify(settings.sales),
         receipt_printer: settings.sales[0].name, print_width: settings.sales[0].pageSize,
         document_print_profiles: { invoice: settings.invoice, quotation: settings.quotation } };
-      fs.writeFileSync(_prefsPath, JSON.stringify(next, null, 2));
+      require('./device-preferences').saveJson(_prefsPath, next);
       Object.assign(preferences, next);
       return { success: true, settings };
     } catch (error) { return { success: false, error: error.message }; }
@@ -564,8 +587,10 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
    */
   if (!preferences.cloud_print_key) {
     preferences.cloud_print_key = require('crypto').randomBytes(32).toString('hex');
-    _savePrefs(preferences);
-    console.log('[BILL] made this till a printing key for the cloud');
+    try {
+      _savePrefs(preferences);
+      console.log('[BILL] made this till a printing key for the cloud');
+    } catch (error) { console.error('[hardware] Could not persist relay key:', error.message); }
   }
 
   ipcMain.handle('preferences:get', (event, key) => {
@@ -573,8 +598,9 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   });
 
   ipcMain.handle('preferences:set', (event, key, value) => {
-    preferences[key] = value;
-    _savePrefs(preferences);
+    const next = { ...preferences, [key]: value };
+    _savePrefs(next);
+    Object.assign(preferences, next);
     if (key === 'mobile.maxDevices' && global.mobileTracker) {
       global.mobileTracker.maxDevices = Math.max(1, parseInt(value, 10) || 6);
     }
@@ -838,7 +864,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
 
   ipcMain.handle('kot:get-logs', (event, date) => {
     if (!kotManager) return [];
-    return kotManager.getLogs(date);
+    return hardwareManager.reconcilePrintLogs(kotManager.getLogs(date));
   });
 
   ipcMain.handle('kot:delete-log', (event, date, logId) => {

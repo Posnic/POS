@@ -28,7 +28,17 @@ test('manual printing uses the kitchen bridge and confirms only after success', 
   assert.equal(s.prints.length, 1);
   assert.deepEqual(s.calls.map(c => c.action), ['prepare', 'renew', 'confirm']);
   assert.equal(s.$('#kot-print-feedback button').length, 0);
-  assert.match(s.$('#kot-print-feedback').text(), /KOT printed/);
+  assert.match(s.$('#kot-print-feedback').text(), /Sent to printer/);
+  s.dom.window.close();
+});
+
+test('a queued Windows job is not confirmed as printed or offered a duplicate', async () => {
+  const s = setup();
+  s.w.electronAPI.kot.printTicket = async () => ({ available: true, success: false, pending: true, status: 'Queued', error: 'Printer disconnected' });
+  await s.api.print('id');
+  assert.deepEqual(s.calls.map(c => c.action), ['prepare', 'renew']);
+  assert.match(s.$('#kot-print-feedback').text(), /Printer disconnected/);
+  assert.equal(s.$('#kot-print-confirm').length, 0);
   s.dom.window.close();
 });
 test('auto is off by default; enabling it affects only this branch and counter', async () => {

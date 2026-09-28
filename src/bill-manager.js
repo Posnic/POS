@@ -514,7 +514,7 @@ class BillManager {
     for (const job of jobs) {
       /* eslint-disable-next-line no-await-in-loop -- printers are serial
          devices; two jobs sent at once interleave on the same roll. */
-      const printed = await this._printOne(job.payload || {});
+      const printed = await this._printOne({ ...(job.payload || {}), _windowsBillJob: this._idOf(job) });
       if (printed.ok) {
         this.printedCount += 1;
         this.lastPrintedAt = new Date().toISOString();
@@ -779,6 +779,9 @@ class BillManager {
       const { resolvePictures } = require('./escpos-logo');
       const paperWidth = columnsFor(this.paperSize) <= 32 ? '58' : '80';
       const withPictures = await resolvePictures(sale || {}, paperWidth);
+      const itemLanguage = require('./device-preferences').get('item_print_languages') || {};
+      withPictures.items = (withPictures.items || []).map(item => ({ ...item,
+        name: require('./item-localization').name(item, itemLanguage.receipt || '', itemLanguage.bilingual) }));
 
       const bytes = await renderReceipt(
         { ...withPictures, title: gstin ? 'TAX INVOICE' : 'BILL' },
@@ -791,7 +794,7 @@ class BillManager {
       );
 
       const startedAt = Date.now();
-      const result = await this.hardware.sendRawToPrinter(name, bytes, 'Posnic Bill');
+      const result = await this.hardware.sendRawToPrinter(name, bytes, 'Posnic Bill', { jobId: sale._windowsBillJob ? 'bill:' + sale._windowsBillJob : undefined });
 
       /*
        * Written down whether it printed or not, in the same day log the
@@ -813,7 +816,7 @@ class BillManager {
           total: sale && (sale.total ?? sale.sales_total),
           source: 'Floor bill',
           ms: Date.now() - startedAt,
-          printers: [{ name, status: ok ? 'success' : 'failed', reason: ok ? undefined : why, bytes: bytes.length }],
+          printers: [{ name, jobId: result?.jobId, status: ok ? 'success' : 'failed', reason: ok ? undefined : why, bytes: bytes.length }],
         });
       } catch (e) { /* a log that cannot be written must not lose the bill */ }
 

@@ -435,3 +435,28 @@ test('the observer does nothing for a shop in English', async () => {
   assert.equal(dom.window.document.querySelector('lang').hasAttribute('data-en'), false, 'nothing should have been touched');
   observer.disconnect();
 });
+
+
+test('regional Chinese choices survive selection, persistence and direction changes', async () => {
+  const dom = new JSDOM('<html><body></body></html>');
+  const { PosnicPro, store } = loadI18n(dom, {});
+  await PosnicPro.i18n.change('zh-TW');
+  assert.equal(store.language_code, 'zh-TW');
+  assert.equal(dom.window.document.documentElement.lang, 'zh-TW');
+  await PosnicPro.i18n.change('ur');
+  assert.equal(dom.window.document.documentElement.dir, 'rtl');
+  await PosnicPro.i18n.change('nl');
+  assert.equal(dom.window.document.documentElement.dir, 'ltr');
+  dom.window.close();
+});
+
+test('browser language detection keeps Chinese scripts and language aliases distinct', () => {
+  const dom = new JSDOM('');
+  const { PosnicPro } = loadI18n(dom, {});
+  const offered = ['en', 'zh-CN', 'zh-TW', 'nb', 'tl', 'he'].map(code => ({ code }));
+  for (const [locale, expected] of [['zh-Hant-HK', 'zh-TW'], ['zh-Hans', 'zh-CN'],
+    ['zh-TW', 'zh-TW'], ['zh', 'zh-CN'], ['fil-PH', 'tl'], ['no-NO', 'nb'], ['iw-IL', 'he']]) {
+    assert.equal(PosnicPro.i18n.detect(offered, [locale]), expected, locale);
+  }
+  dom.window.close();
+});

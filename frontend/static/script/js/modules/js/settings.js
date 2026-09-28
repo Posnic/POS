@@ -2558,6 +2558,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 if (response.type === 'success') {
                     $("#branch_name option[value='" + branch_no + "']").prop("selected", "selected");
                     PosnicPro.local.set("branch_id_set", branch_no);
+                    $(document).trigger('posnic:branch-changed');
                     if (PosnicPro.sales && PosnicPro.sales.itemCache) {
                         PosnicPro.sales.itemCache.clear();
                     }
@@ -2616,6 +2617,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 $("#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-inventory-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab,#v-pills-manage-tab,#v-pills-branch-tab").removeClass("active");
                 PosnicPro.getBranchTaxList();
                 PosnicPro.local.set("branch_id_set", id);
+                $(document).trigger('posnic:branch-changed');
                 // Cached items carry the OLD branch's stock and pricing.
                 if (PosnicPro.sales && PosnicPro.sales.itemCache) {
                     PosnicPro.sales.itemCache.clear();
@@ -10133,3 +10135,22 @@ window.addEventListener('message', function (event) {
     location.hash = '#/settings/' + data.section;
 });
 $(document).on('click', '#captain_devices_link', function () { PosnicPro.handsets.filter = 'captain'; });
+
+// Captain owns these settings; the Features card remains only its on/off switch.
+$(document).on('shown.bs.tab', '#captainpayments-tab-line', function () {
+    $('#save_captain_payments').prop('disabled',true);
+    PosnicPro.get({url:'captain/v1/payment-settings'}, function (data) {
+        $('#save_captain_payments').prop('disabled',false);
+        $('#captain_payments_message').empty();
+        $('#captain_payments_enabled').prop('checked',data.enabled === true);
+        $('#captain_payment_receipt').prop('checked',data.printReceipt !== false);
+        $('#captain_payment_methods input').each(function () { $(this).prop('checked',(data.methods || []).indexOf(this.value) >= 0); });
+    }, function () { $('#captain_payments_message').text(PosnicPro.i18n.t('lang_captain_payment_settings_failed','Could not load payment settings. Please retry.')); });
+});
+$(document).on('click', '#save_captain_payments', function () {
+    var button=$(this).prop('disabled',true);
+    PosnicPro.post({url:'captain/v1/payment-settings',processData:false,data:JSON.stringify({enabled:$('#captain_payments_enabled').is(':checked'),printReceipt:$('#captain_payment_receipt').is(':checked'),methods:$('#captain_payment_methods input:checked').map(function(){return this.value;}).get()})}, function (data) {
+        button.prop('disabled',false);
+        $('#captain_payments_message').text(data.saved ? PosnicPro.i18n.t('lang_successfully_completed','Successfully Completed') : PosnicPro.i18n.t('lang_captain_payment_settings_failed','Could not load payment settings. Please retry.'));
+    }, function () { button.prop('disabled',false); $('#captain_payments_message').text(PosnicPro.i18n.t('lang_captain_payment_save_failed','Could not save payment settings. Please retry.')); });
+});

@@ -34,6 +34,7 @@ jest.mock('express-validator', () => {
        arrived with the sold-out validator. */
     isBoolean: jest.fn().mockReturnThis(),
     isInt: jest.fn().mockReturnThis(),
+    isArray: jest.fn().mockReturnThis(),
     isString: jest.fn().mockReturnThis(),
     isIn: jest.fn().mockReturnThis(),
     toBoolean: jest.fn().mockReturnThis(),

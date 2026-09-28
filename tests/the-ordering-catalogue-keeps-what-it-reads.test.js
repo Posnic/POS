@@ -241,3 +241,12 @@ test('a flag that arrives as the word "false" is still off', () => {
   assert.strictEqual(kept.spice_choice, false);
   assert.strictEqual(kept.daily_price, false);
 });
+
+
+test('catalogue translation metadata survives storage without a browser global', () => {
+  const translations = [{locale:'nl',name:'Kip',description:'Menu description'}];
+  const kept = catalogueItem()({...DISH,default_language:'en',translations},'Mains');
+  assert.strictEqual(kept.default_language,'en');
+  assert.deepStrictEqual(kept.translations,translations);
+  assert.deepStrictEqual(catalogueItem()(DISH,'Mains').translations,[]);
+});

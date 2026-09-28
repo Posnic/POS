@@ -37,3 +37,21 @@ on and what is off, and that is the only question it answers.
 Integrations is for what genuinely faces outward on its own - API tokens,
 webhooks, signed connectors, the shop's own analytics property - not for any
 feature that happens to call somebody else's API.
+
+
+## Local verification and CI costs
+
+GitHub Actions spending is constrained. Prefer local verification.
+
+- Run relevant tests, lint, packaging checks and attribution checks locally
+  before pushing. Report the commands, results and anything not verified.
+- Do not create GitHub Actions workflows or add CI jobs, matrix entries,
+  scheduled runs, runners or broader triggers unless the user explicitly
+  requests that CI expansion. A feature or bug-fix request is not authorization.
+- Keep regression tests in the repository and run them locally, including
+  Windows-specific printer checks on Windows. Removing a workflow does not
+  mean removing its tests.
+- Batch changes and push after local checks pass. Do not repeatedly push or
+  rerun unchanged CI jobs for experimentation; reproduce failures locally.
+- Preserve existing required checks and security protections. Do not disable
+  them or bypass branch protection without explicit user authorization.

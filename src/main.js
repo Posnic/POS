@@ -4559,6 +4559,10 @@ app.whenReady().then(async () => {
 
   // Initialize hardware manager
   hardwareManager = new HardwareManager();
+  if (process.platform === 'win32') {
+    try { hardwareManager.getWindowsPrintQueue(); }
+    catch (error) { console.error('[Print] Recovery state needs attention:', error.message); }
+  }
   console.log('HardwareManager initialized');
 
   /*
@@ -4570,7 +4574,7 @@ app.whenReady().then(async () => {
    * print path falls back to a per-job spawn exactly as it always did.
    */
   require('./raw-print-service').warm().then((ok) => {
-    console.log(ok ? 'Raw print helper warm' : 'Raw print helper unavailable; prints will start their own');
+    console.log(ok ? 'Raw print helper warm' : 'Raw print helper unavailable; pending jobs remain in recovery');
   });
 
   // Initialize KOT manager
@@ -4813,7 +4817,7 @@ app.whenReady().then(async () => {
    */
   try {
     const power = require('./till-stays-awake');
-    power.start();
+    power.start(!!kotManager?.isPolling);
     power.whenWokenUp(() => {
       /* Every path that collects work, not only the local one: a till that
          slept through a cloud-relayed bill has to ask for that too. */

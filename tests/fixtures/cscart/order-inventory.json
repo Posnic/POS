@@ -1,0 +1,23 @@
+{
+  "provider": "cscart",
+  "store": "synthetic_cscart_store",
+  "order": {
+    "order_id": "SYNTH-CSCART-ORD-1001",
+    "status": "O",
+    "products": {
+      "SYNTH-CSCART-PROD-1001": {
+        "amount": "3"
+      }
+    }
+  },
+  "inventory": {
+    "product_id": "SYNTH-CSCART-PROD-1001",
+    "amount": "12"
+  },
+  "expected": {
+    "channel": "CSCART",
+    "order_import": true,
+    "inventory_update": true,
+    "review": false
+  }
+}

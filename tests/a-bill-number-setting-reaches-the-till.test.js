@@ -236,7 +236,7 @@ test('every word the control uses can be said in every language', () => {
   for (const key of keys) {
     assert.ok(english[key], `${key} has no English`);
     for (const pack of packs) {
-      const words = JSON.parse(read('languages', pack));
+      const words = require(path.join(ROOT, 'tests/helpers/language-pack'))(ROOT, pack);
       assert.ok(words[key], `${key} is missing from ${pack}`);
     }
   }
