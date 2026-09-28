@@ -85,6 +85,8 @@ router.get(
   '/authorize',
   limiter('business-consent-pages', 30),
   wrap(async (req, res) => {
+    if (typeof req.query.request !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(req.query.request))
+      return res.status(400).json({ error: { code: 'invalid_request' } });
     const row = await req.businessAccess.pending(req.query.request);
     if (!req.session) return res.status(503).json({ error: { code: 'server_unavailable' } });
     const csrf = opaque(),
@@ -154,9 +156,20 @@ const token = (req) =>
   /^Bearer pb1_[A-Za-z0-9_-]{43}$/.test(req.get('authorization') || '')
     ? req.get('authorization').slice(7)
     : '';
+const protectBusiness = async (req, res, next) => {
+  try {
+    req.businessIdentity = await req.businessAccess.authenticate(token(req));
+    next();
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json({ error: { code: error.status ? error.code : 'server_unavailable' } });
+  }
+};
+router.use(protectBusiness);
 router.get(
   '/context',
-  wrap(async (req, res) => res.json(await req.businessAccess.context(token(req))))
+  wrap(async (req, res) => res.json(await req.businessAccess.contextFor(req.businessIdentity.user)))
 );
 router.post(
   '/session/rotate',

@@ -131,6 +131,7 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
     return row;
   }
   async function authenticate(token) {
+    await ready();
     if (typeof token !== 'string' || !/^pb1_[A-Za-z0-9_-]{43}$/.test(token))
       fail('sign_in_required', 401);
     const session = await sessions.findOne({
@@ -208,6 +209,7 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
       return { status: decision === 'allow' ? 'approved' : 'denied' };
     },
     async exchange(request, verifier) {
+      await ready();
       if (!validOpaque(request) || !validOpaque(verifier)) fail('invalid_request');
       const filter = {
         _id: hash(request),

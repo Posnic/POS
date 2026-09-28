@@ -27,9 +27,13 @@ before(async () => {
   const app = require('express')();
   app.set('trust proxy', 'loopback');
   app.use(require('express').json());
-  app.use(require('cookie-parser')());
   app.use(
-    require('express-session')({ secret: opaque(), resave: false, saveUninitialized: false })
+    require('express-session')({
+      secret: opaque(),
+      resave: false,
+      saveUninitialized: false,
+      cookie: { secure: true, httpOnly: true, sameSite: 'strict' },
+    })
   );
   app.use(require('../src/middleware/csrf').protect);
   app.use((req, _res, next) => {
@@ -37,8 +41,11 @@ before(async () => {
     next();
   });
   app.use('/api/business/v1', require('../src/routes/business-access.routes'));
-  app.get('/pos-only', require('../src/middleware/auth').protect, (_req, res) =>
-    res.json({ selling: true })
+  app.get(
+    '/pos-only',
+    require('express-rate-limit')({ windowMs: 60_000, limit: 50 }),
+    require('../src/middleware/auth').protect,
+    (_req, res) => res.json({ selling: true })
   );
   app.use((error, _req, res, _next) =>
     res.status(error.statusCode || 500).json({ error: 'unauthorized' })

@@ -44,6 +44,21 @@ function readMounts() {
     if (!mounts.has(file)) mounts.set(file, []);
     mounts.get(file).push({ path: mountPath, note });
   }
+  // Infrastructure routers are mounted directly by app.js. Their filename is
+  // not their public path (Business is /business/v1, not /business-access).
+  const app = fs.readFileSync(path.join(ROUTES_DIR, '..', '..', 'app.js'), 'utf8');
+  for (const match of app.matchAll(
+    /app\.use\(\s*\[([^\]]+)\]\s*,\s*require\(['"]\.\/src\/routes\/([\w.-]+)['"]\)\s*\)/g
+  )) {
+    const file = match[2].replace(/\.js$/, '') + '.js';
+    const paths = [...match[1].matchAll(/['"]([^'"]+)['"]/g)].map((m) =>
+      m[1].replace(/^\/api(?=\/)/, '')
+    );
+    mounts.set(
+      file,
+      [...new Set(paths)].map((p) => ({ path: p, note: null }))
+    );
+  }
   return mounts;
 }
 
@@ -186,6 +201,14 @@ function buildSpec(groups, validators) {
           'Adding validation improves both runtime safety and this document.';
       }
 
+      if (g.file === 'business-access.routes.js') {
+        op.security = /^\/(context|sessions?|session\/rotate)/.test(r.path)
+          ? [{ bearerAuth: [] }]
+          : [];
+        op.description =
+          (op.description || '') +
+          ' Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.';
+      }
       paths[full] = paths[full] || {};
       paths[full][r.method.toLowerCase()] = op;
     }
