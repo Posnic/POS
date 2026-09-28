@@ -169,6 +169,31 @@ const protectBusiness = async (req, res, next) => {
 router.use(protectBusiness);
 router.use(limiter('business-private', 120));
 router.get(
+  '/reporting/publishers/:branchId',
+  wrap(async (req, res) => {
+    res.json(
+      await require('../services/business-publishers').listPublishers(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.params.branchId
+      )
+    );
+  })
+);
+router.post(
+  '/reporting/publishers/:branchId',
+  wrap(async (req, res) => {
+    res.json(
+      await require('../services/business-publishers').changePublisher(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.params.branchId,
+        req.body
+      )
+    );
+  })
+);
+router.get(
   '/overview',
   wrap(async (req, res) =>
     res.json(

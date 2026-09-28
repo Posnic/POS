@@ -34,6 +34,7 @@ function capabilities(user) {
   const financials =
     owner || (access.dashboard?.read === true && access.dashboard?.financials === true);
   return [
+    ...(owner ? ['reporting.manage'] : []),
     ...(financials ? ['overview.read', 'tenders.read'] : []),
     ...((owner || access.item?.read === true) && financials ? ['items.read'] : []),
     ...(owner || access.item?.read === true ? ['stock.read'] : []),

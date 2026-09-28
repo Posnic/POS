@@ -37,6 +37,8 @@
   },
   "local_only": {
     "business_reporting_requests": "Short-lived Business read requests are consumed by the assigned reporting desktop through a dedicated protocol.",
+    "business_reporting_candidates": "Short-lived reporting desktop presence is verified by Gateway and must not use generic synchronization.",
+    "business_reporting_audit": "Publisher changes belong to the authorizing Business server and retain an atomic assignment audit journal.",
     "business_reporting_local": "Local reporting assignments, snapshots and retry state belong to this desktop only.",
     "business_reporting_publishers": "Gateway-owned desktop reporting assignments must not be changed through generic device synchronization.",
     "business_prepared_summaries": "Prepared Business summaries enter through the assigned-publisher protocol, never last-writer-wins generic sync.",

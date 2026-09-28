@@ -204,7 +204,7 @@ test('browser approval requires HTTPS, same-origin and browser-bound consent bef
   ).json();
   assert.equal(discovery.audience, 'posnic-business');
   assert.equal(discovery.issuer, origin);
-  assert.equal(discovery.reporting, 'unavailable');
+  assert.equal(discovery.reporting, 'bounded-summary-v2');
   const page = await fetch(base + '/api/business/v1/authorize?request=' + f.request, {
     headers: common,
   });
@@ -257,6 +257,117 @@ test('browser approval requires HTTPS, same-origin and browser-bound consent bef
 });
 
 const reportDay = new Date().toISOString().slice(0, 10);
+test('only an owner with branch membership can replace a live reporting publisher; concurrent changes have one winner', async () => {
+  const f = await fixture(),
+    value = await grant(f),
+    branchId = String(f.branch._id);
+  const { listPublishers, changePublisher } = require('../src/services/business-publishers');
+  await assert.rejects(listPublishers(db, value.context, branchId), is('access_denied'));
+  const headers = { 'x-forwarded-proto': 'https', authorization: 'Bearer ' + value.token };
+  assert.equal(
+    (await fetch(base + '/api/business/v1/reporting/publishers/' + branchId, { headers })).status,
+    403
+  );
+  await db.collection('users').updateOne({ _id: f.user._id }, { $set: { usertype: 'admin' } });
+  const owner = await f.access.contextFor({ ...f.user, usertype: 'admin' });
+  assert.ok(owner.capabilities.includes('reporting.manage'));
+  for (const deviceId of ['till-a', 'till-b'])
+    await db
+      .collection('business_reporting_candidates')
+      .insertOne({
+        _id: branchId + ':' + deviceId,
+        license: f.license,
+        branchId,
+        deviceId,
+        name: deviceId,
+        lastSeenAt: new Date(),
+        expiresAt: new Date(Date.now() + 60000),
+      });
+  assert.equal((await listPublishers(db, owner, branchId)).candidates.length, 2);
+  const results = await Promise.allSettled(
+    ['till-a', 'till-b'].map((deviceId) =>
+      changePublisher(db, owner, branchId, { deviceId, expectedEpoch: 0 })
+    )
+  );
+  assert.equal(results.filter((result) => result.status === 'fulfilled').length, 1);
+  const state = await listPublishers(db, owner, branchId),
+    current = state.publisher.deviceId;
+  assert.equal(state.publisher.epoch, 1);
+  await assert.rejects(
+    changePublisher(db, owner, branchId, { deviceId: 'unknown', expectedEpoch: 1 }),
+    is('desktop_unavailable')
+  );
+  await assert.rejects(
+    changePublisher(db, owner, String(new ObjectId()), { deviceId: current, expectedEpoch: 1 }),
+    is('access_denied')
+  );
+  const next = current === 'till-a' ? 'till-b' : 'till-a';
+  await db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: branchId }, { $set: { pending: { sequence: 1 } } });
+  await assert.rejects(
+    changePublisher(db, owner, branchId, { deviceId: next, expectedEpoch: 1 }),
+    is('publisher_changed')
+  );
+  await db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: branchId }, { $unset: { pending: '' } });
+  await changePublisher(db, owner, branchId, { deviceId: next, expectedEpoch: 1 });
+  assert.equal((await listPublishers(db, owner, branchId)).publisher.epoch, 2);
+  const audit = await db
+    .collection('business_reporting_audit')
+    .find({ branchId })
+    .sort({ epoch: 1 })
+    .toArray();
+  assert.equal(audit.length, 2);
+  assert.equal(audit[1].fromDeviceId, current);
+  assert.equal(audit[1].toDeviceId, next);
+  assert.equal(audit[1].accountId, owner.accountId);
+});
+test('publisher assignment retains its audit event across a write failure and replays it exactly once', async () => {
+  const f = await fixture(),
+    branchId = String(f.branch._id);
+  const owner = await f.access.contextFor({ ...f.user, usertype: 'admin' });
+  const { listPublishers, changePublisher } = require('../src/services/business-publishers');
+  await db
+    .collection('business_reporting_candidates')
+    .insertOne({
+      _id: branchId + ':a',
+      license: f.license,
+      branchId,
+      deviceId: 'a',
+      name: 'A',
+      lastSeenAt: new Date(),
+      expiresAt: new Date(Date.now() + 60000),
+    });
+  const broken = {
+    collection(name) {
+      return name === 'business_reporting_audit'
+        ? {
+            updateOne: async () => {
+              throw new Error('write interrupted');
+            },
+          }
+        : db.collection(name);
+    },
+  };
+  await assert.rejects(
+    changePublisher(broken, owner, branchId, { deviceId: 'a', expectedEpoch: 0 }),
+    /write interrupted/
+  );
+  assert.ok(
+    (await db.collection('business_reporting_publishers').findOne({ _id: branchId }))
+      .pendingTransition
+  );
+  await listPublishers(db, owner, branchId);
+  await listPublishers(db, owner, branchId);
+  assert.equal(await db.collection('business_reporting_audit').countDocuments({ branchId }), 1);
+  assert.equal(
+    (await db.collection('business_reporting_publishers').findOne({ _id: branchId }))
+      .pendingTransition,
+    undefined
+  );
+});
 async function prepared(f) {
   const id = String(f.branch._id),
     assignmentId = opaque(),
