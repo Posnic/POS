@@ -166,20 +166,24 @@ const protectBusiness = async (req, res, next) => {
       .json({ error: { code: error.status ? error.code : 'server_unavailable' } });
   }
 };
+// This authenticated handler consumes the exact-operation device grant before
+// returning any data. It is separate from phone-session authentication because
+// phone credentials must never authorize the till execution boundary.
+const protectDeviceDecision = wrap(async (req, res) => {
+  const authorization = req.get('authorization') || '';
+  res.json(
+    await require('../services/business-device-decisions').useDeviceGrant(
+      req.db,
+      authorization.startsWith('Bearer ') ? authorization.slice(7) : '',
+      req.params.action,
+      req.body
+    )
+  );
+});
 router.post(
   '/device-decisions/:action',
   limiter('business-device-decisions', 240),
-  wrap(async (req, res) => {
-    const authorization = req.get('authorization') || '';
-    res.json(
-      await require('../services/business-device-decisions').useDeviceGrant(
-        req.db,
-        authorization.startsWith('Bearer ') ? authorization.slice(7) : '',
-        req.params.action,
-        req.body
-      )
-    );
-  })
+  protectDeviceDecision
 );
 router.use(protectBusiness);
 router.use(limiter('business-private', 120));
