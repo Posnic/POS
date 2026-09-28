@@ -36,6 +36,8 @@
     "settings": "global"
   },
   "local_only": {
+    "business_notification_preferences": "Per-account delivery preferences and scheduler leases belong to the authorizing Business server.",
+    "business_inbox": "Private account notifications and read receipts must never use generic device synchronization.",
     "business_reporting_requests": "Short-lived Business read requests are consumed by the assigned reporting desktop through a dedicated protocol.",
     "business_reporting_candidates": "Short-lived reporting desktop presence is verified by Gateway and must not use generic synchronization.",
     "business_reporting_audit": "Publisher changes belong to the authorizing Business server and retain an atomic assignment audit journal.",

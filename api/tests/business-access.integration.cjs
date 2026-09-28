@@ -272,17 +272,15 @@ test('only an owner with branch membership can replace a live reporting publishe
   const owner = await f.access.contextFor({ ...f.user, usertype: 'admin' });
   assert.ok(owner.capabilities.includes('reporting.manage'));
   for (const deviceId of ['till-a', 'till-b'])
-    await db
-      .collection('business_reporting_candidates')
-      .insertOne({
-        _id: branchId + ':' + deviceId,
-        license: f.license,
-        branchId,
-        deviceId,
-        name: deviceId,
-        lastSeenAt: new Date(),
-        expiresAt: new Date(Date.now() + 60000),
-      });
+    await db.collection('business_reporting_candidates').insertOne({
+      _id: branchId + ':' + deviceId,
+      license: f.license,
+      branchId,
+      deviceId,
+      name: deviceId,
+      lastSeenAt: new Date(),
+      expiresAt: new Date(Date.now() + 60000),
+    });
   assert.equal((await listPublishers(db, owner, branchId)).candidates.length, 2);
   const results = await Promise.allSettled(
     ['till-a', 'till-b'].map((deviceId) =>
@@ -329,17 +327,15 @@ test('publisher assignment retains its audit event across a write failure and re
     branchId = String(f.branch._id);
   const owner = await f.access.contextFor({ ...f.user, usertype: 'admin' });
   const { listPublishers, changePublisher } = require('../src/services/business-publishers');
-  await db
-    .collection('business_reporting_candidates')
-    .insertOne({
-      _id: branchId + ':a',
-      license: f.license,
-      branchId,
-      deviceId: 'a',
-      name: 'A',
-      lastSeenAt: new Date(),
-      expiresAt: new Date(Date.now() + 60000),
-    });
+  await db.collection('business_reporting_candidates').insertOne({
+    _id: branchId + ':a',
+    license: f.license,
+    branchId,
+    deviceId: 'a',
+    name: 'A',
+    lastSeenAt: new Date(),
+    expiresAt: new Date(Date.now() + 60000),
+  });
   const broken = {
     collection(name) {
       return name === 'business_reporting_audit'
@@ -408,6 +404,38 @@ async function prepared(f) {
   });
   return id;
 }
+test('Business notification routes require their own session and enforce current branch access', async () => {
+  const f = await fixture(),
+    value = await grant(f),
+    branchId = String(f.branch._id);
+  const url = base + '/api/business/v1/notifications/preferences/' + branchId;
+  assert.equal((await fetch(url, { headers: { 'x-forwarded-proto': 'https' } })).status, 401);
+  const headers = {
+    'x-forwarded-proto': 'https',
+    authorization: 'Bearer ' + value.token,
+    'content-type': 'application/json',
+  };
+  assert.equal((await fetch(url, { headers })).status, 200);
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      expectedRevision: 0,
+      enabled: true,
+      time: '23:00',
+      locale: 'en',
+      quiet: { enabled: false, start: '22:00', end: '07:00' },
+    }),
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).channel, 'inApp');
+  assert.deepEqual(await (await fetch(base + '/api/business/v1/inbox', { headers })).json(), {
+    entries: [],
+    next: null,
+  });
+  await db.collection('users').updateOne({ _id: f.user._id }, { $set: { branch_access: [] } });
+  assert.equal((await fetch(url, { headers })).status, 403);
+});
 test('prepared overview enforces live ACL and branch scope and never substitutes missing summaries with zero', async () => {
   const f = await fixture(),
     value = await grant(f),

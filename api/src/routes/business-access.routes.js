@@ -169,6 +169,55 @@ const protectBusiness = async (req, res, next) => {
 router.use(protectBusiness);
 router.use(limiter('business-private', 120));
 router.get(
+  '/notifications/preferences/:branchId',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-notifications').getPreference(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.params.branchId
+      )
+    )
+  )
+);
+router.post(
+  '/notifications/preferences/:branchId',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-notifications').savePreference(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.params.branchId,
+        req.body
+      )
+    )
+  )
+);
+router.get(
+  '/inbox',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-notifications').listInbox(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        { before: req.query.before }
+      )
+    )
+  )
+);
+router.post(
+  '/inbox/:id/read',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-notifications').markRead(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.params.id
+      )
+    )
+  )
+);
+router.get(
   '/reporting/publishers/:branchId',
   wrap(async (req, res) => {
     res.json(

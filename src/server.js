@@ -519,6 +519,16 @@ module.exports = async function startServer(options = {}) {
 
     // Do not redirect the Electron window until Express accepts requests.
     await serverReady;
+    if (process.env.POSNIC_BUSINESS_LOCAL_REPORTING === '1') {
+      try {
+        const stopNotifications = require(path.join(apiPath, 'src/services/business-notification-worker')).startNotifications({
+          tenants: () => [{ db: mongoose.connection.db }],
+        });
+        server.once('close', stopNotifications);
+      } catch {
+        console.warn('Business notification scheduling could not start.');
+      }
+    }
     try {
       const stopBusinessReporting = require(path.join(apiPath, 'src/services/business-reporting-worker')).startDesktopReporting(mongoose.connection.db);
       server.once('close', stopBusinessReporting);
