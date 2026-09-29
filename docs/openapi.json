@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Posnic API",
-    "version": "1.8.3",
+    "version": "1.8.4",
     "description": "REST API for the Posnic point of sale.\n\nGenerated from the route table and express-validator chains by `npm run docs:api`. Do not edit by hand.\n\nRequest schemas are present for endpoints that carry validation middleware. The rest are listed with their path, method and handler but no body schema, because inventing one would be worse than the gap.",
     "license": {
       "name": "AGPL-3.0-only",
@@ -124,6 +124,10 @@
     {
       "name": "Items",
       "description": "Mounted at /items"
+    },
+    {
+      "name": "Kitchen board",
+      "description": "Mounted at /kitchen"
     },
     {
       "name": "Loyalty",
@@ -2853,6 +2857,85 @@
         "operationId": "post_captain_v1_route_proof",
         "tags": [
           "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain/v1/kitchen-ready": {
+      "get": {
+        "summary": "board",
+        "operationId": "get_captain_v1_kitchen_ready",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "board",
+        "operationId": "post_captain_v1_kitchen_ready",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain/v1/kitchen-audio/{action}": {
+      "post": {
+        "summary": "value",
+        "operationId": "post_captain_v1_kitchen_audio_action",
+        "tags": [
+          "Captain access"
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -9443,6 +9526,172 @@
         }
       }
     },
+    "/kitchen/devices/pair": {
+      "post": {
+        "summary": "pair",
+        "operationId": "post_kitchen_devices_pair",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/kitchen/settings": {
+      "post": {
+        "summary": "saveSettings",
+        "operationId": "post_kitchen_settings",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/kitchen/devices/code": {
+      "post": {
+        "summary": "create",
+        "operationId": "post_kitchen_devices_code",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/kitchen/devices": {
+      "get": {
+        "summary": "list",
+        "operationId": "get_kitchen_devices",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/kitchen/devices/revoke": {
+      "post": {
+        "summary": "revoke",
+        "operationId": "post_kitchen_devices_revoke",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/kitchen": {
+      "get": {
+        "summary": "list",
+        "operationId": "get_kitchen",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/kitchen/transition": {
+      "post": {
+        "summary": "transition",
+        "operationId": "post_kitchen_transition",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/loyalty/config": {
       "get": {
         "summary": "getConfig",
@@ -13591,6 +13840,148 @@
       "post": {
         "summary": "getFrequentItems",
         "operationId": "post_sales_getFrequentItems",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/kitchenDisplayReport": {
+      "post": {
+        "summary": "kitchenDisplayReport",
+        "operationId": "post_sales_kitchenDisplayReport",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/kitchenDeliveryReport": {
+      "post": {
+        "summary": "kitchenDeliveryReport",
+        "operationId": "post_sales_kitchenDeliveryReport",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/kitchenDeliveryStatus": {
+      "get": {
+        "summary": "kitchenDeliveryStatus",
+        "operationId": "get_sales_kitchenDeliveryStatus",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/sales/handoverStaff": {
+      "get": {
+        "summary": "handoverStaff",
+        "operationId": "get_sales_handoverStaff",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/sales/handoverOrder": {
+      "post": {
+        "summary": "handoverOrder",
+        "operationId": "post_sales_handoverOrder",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/fireKitchenItems": {
+      "post": {
+        "summary": "fireKitchenItems",
+        "operationId": "post_sales_fireKitchenItems",
         "tags": [
           "Sales"
         ],

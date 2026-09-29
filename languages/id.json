@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "Tagihan ini memerlukan manajer di lokasi. Persetujuan jarak jauh belum tersedia untuk kombinasi ini.",
   "lang_business_use_manager_pin": "Gunakan PIN manajer",
   "lang_business_valid_until": "Berlaku hingga",
-  "lang_business_waiting_owner": "Menunggu pemilik"
+  "lang_business_waiting_owner": "Menunggu pemilik",
+  "lang_changes_not_saved": "Perubahan tidak disimpan.",
+  "lang_continue": "Lanjutkan",
+  "lang_reason": "Alasan"
 }

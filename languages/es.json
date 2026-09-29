@@ -3705,5 +3705,8 @@
   "lang_business_unsupported_bill": "Este ticket necesita un encargado presente. La aprobación remota aún no está disponible para esta combinación.",
   "lang_business_use_manager_pin": "Usar PIN del encargado",
   "lang_business_valid_until": "Válido hasta",
-  "lang_business_waiting_owner": "Esperando a un propietario"
+  "lang_business_waiting_owner": "Esperando a un propietario",
+  "lang_changes_not_saved": "No se guardaron los cambios.",
+  "lang_continue": "Continuar",
+  "lang_reason": "Motivo"
 }

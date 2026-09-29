@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "Ce ticket nécessite un responsable sur place. L’approbation à distance n’est pas encore disponible pour cette combinaison.",
   "lang_business_use_manager_pin": "Utiliser le PIN du responsable",
   "lang_business_valid_until": "Valable jusqu’à",
-  "lang_business_waiting_owner": "En attente d’un propriétaire"
+  "lang_business_waiting_owner": "En attente d’un propriétaire",
+  "lang_changes_not_saved": "Les modifications n’ont pas été enregistrées.",
+  "lang_continue": "Continuer",
+  "lang_reason": "Motif"
 }

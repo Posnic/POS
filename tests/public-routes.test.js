@@ -60,6 +60,10 @@ const ALLOWED_ANONYMOUS = {
     // The remaining routes run behind protectBusiness and never accept POS JWTs.
     '/discovery', '/requests', '/authorize', '/approve', '/token',
   ],
+  'kitchen-board.routes.js': [
+    // Consumes a short-lived, single-use manager pairing code under a rate limit.
+    '/devices/pair',
+  ],
   'captain-access.routes.js': [
     // Bootstrap endpoints run before a bearer exists. Pairing consumes a
     // short-lived manager secret; refresh verifies the rotating renewal secret.

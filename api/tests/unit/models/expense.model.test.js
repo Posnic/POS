@@ -448,6 +448,13 @@ describe('ExpenseModel — deleteExpenseCollectionData()', () => {
 // 6. importExpensesModel()
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('ExpenseModel — importExpensesModel()', () => {
+  test.each(['oops', '12oops', '-1', 'Infinity'])('rejects invalid amount %s without writes', async (amount) => {
+    const col = makeCollection();
+    jest.spyOn(em, 'getCollection').mockResolvedValue(col);
+    const result = await em.importExpensesModel([{ amount, type: 'Operating' }]);
+    expect(result.message).toBe('CSV');
+    expect(col.insertMany).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     jest.spyOn(em, 'checkPlan').mockResolvedValue(-1);
     jest.spyOn(em, 'toObjectId').mockImplementation((v) => (v ? new ObjectId(strId()) : null));

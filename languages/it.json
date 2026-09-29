@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "Questo conto richiede un responsabile presente in negozio. L’approvazione da remoto non è ancora disponibile per questa combinazione.",
   "lang_business_use_manager_pin": "Usa PIN del responsabile",
   "lang_business_valid_until": "Valido fino alle",
-  "lang_business_waiting_owner": "In attesa di un titolare"
+  "lang_business_waiting_owner": "In attesa di un titolare",
+  "lang_changes_not_saved": "Le modifiche non sono state salvate.",
+  "lang_continue": "Continua",
+  "lang_reason": "Motivo"
 }

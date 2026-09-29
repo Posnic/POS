@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "ಈ ಬಿಲ್‌ಗೆ ಸ್ಥಳದಲ್ಲಿರುವ ವ್ಯವಸ್ಥಾಪಕರ ಅಗತ್ಯವಿದೆ. ಈ ಸಂಯೋಜನೆಗೆ ದೂರದಿಂದ ಅನುಮೋದನೆ ನೀಡುವ ಸೌಲಭ್ಯ ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ.",
   "lang_business_use_manager_pin": "ವ್ಯವಸ್ಥಾಪಕರ PIN ಬಳಸಿ",
   "lang_business_valid_until": "ಈ ಸಮಯದವರೆಗೆ ಮಾನ್ಯ",
-  "lang_business_waiting_owner": "ಮಾಲೀಕರಿಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ"
+  "lang_business_waiting_owner": "ಮಾಲೀಕರಿಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ",
+  "lang_changes_not_saved": "ಬದಲಾವಣೆಗಳು ಉಳಿಸಲ್ಪಟ್ಟಿಲ್ಲ.",
+  "lang_continue": "ಮುಂದುವರಿಸಿ",
+  "lang_reason": "ಕಾರಣ"
 }

@@ -78,7 +78,9 @@
     "mobile_sales": "Mobile device grants and durable ingestion journal belong to the issuing server. Moving them independently would permit cross-server replay; completed sales use the normal sales sync.",
     "mobile_grants": "Mobile device grants and durable ingestion journal belong to the issuing server. Moving them independently would permit cross-server replay; completed sales use the normal sales sync.",
     "mobile_pair_codes": "Mobile device grants and durable ingestion journal belong to the issuing server. Moving them independently would permit cross-server replay; completed sales use the normal sales sync.",
-    "captain_payment_plans": "Durable table payment journal belongs to the server receiving payment. Amounts and staff audit entries project onto sales and follow normal sales sync; retrying a payment must return to its issuing server."
+    "captain_payment_plans": "Durable table payment journal belongs to the server receiving payment. Amounts and staff audit entries project onto sales and follow normal sales sync; retrying a payment must return to its issuing server.",
+    "kitchen_devices": "Kitchen screen credentials belong to the issuing server and must not authorize devices on other installations.",
+    "kitchen_device_codes": "Single-use kitchen pairing codes expire on their issuing server; copying them would enable cross-server replay."
   },
   "undecided": {
     "_note": "Shop data that today stays where it was written. Each needs a decision and, if synced, a check that rows carry branch_id and license and that deletes leave a tombstone. Until decided, a till and the cloud can disagree on these exactly as they did on tables.",

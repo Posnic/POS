@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "यो बिलका लागि पसलमै उपस्थित व्यवस्थापक चाहिन्छ। यो संयोजनका लागि टाढाबाट स्वीकृति दिने सुविधा अझै उपलब्ध छैन।",
   "lang_business_use_manager_pin": "व्यवस्थापकको PIN प्रयोग गर्नुहोस्",
   "lang_business_valid_until": "यो समयसम्म मान्य",
-  "lang_business_waiting_owner": "मालिकको प्रतीक्षा गर्दै"
+  "lang_business_waiting_owner": "मालिकको प्रतीक्षा गर्दै",
+  "lang_changes_not_saved": "परिवर्तनहरू सेभ भएनन्।",
+  "lang_continue": "जारी राख्नुहोस्",
+  "lang_reason": "कारण"
 }

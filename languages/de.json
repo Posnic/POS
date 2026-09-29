@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "Dieser Beleg erfordert eine Führungskraft vor Ort. Eine Ferngenehmigung ist für diese Kombination noch nicht verfügbar.",
   "lang_business_use_manager_pin": "Manager-PIN verwenden",
   "lang_business_valid_until": "Gültig bis",
-  "lang_business_waiting_owner": "Warten auf einen Inhaber"
+  "lang_business_waiting_owner": "Warten auf einen Inhaber",
+  "lang_changes_not_saved": "Änderungen wurden nicht gespeichert.",
+  "lang_continue": "Weiter",
+  "lang_reason": "Grund"
 }

@@ -64,7 +64,7 @@ test('sound save waits for persistence and reports failures instead of claiming 
   const nodes={};let resolve, saved;
   const at=id=>nodes[id]||(nodes[id]={value:'',checked:true,disabled:false,textContent:'',addEventListener:()=>{}});
   at('kitchenVoice').value='Voice A';
-  const context={at,bridge:{set:value=>{saved=value;return new Promise(r=>{resolve=r;});}},Error};
+  const context={window:{},at,bridge:{set:value=>{saved=value;return new Promise(r=>{resolve=r;});}},Error};
   vm.createContext(context);vm.runInContext(html.slice(from,to),context);
   const first=context.save();assert.equal(at('kitchenSoundSave').disabled,true);
   assert.equal(saved.speak,true);assert.equal(saved.voice,'Voice A');

@@ -653,6 +653,7 @@ describe('SupplierService', () => {
   // ── bulkImport ────────────────────────────────────────────────────────────────
 
   describe('bulkImport', () => {
+    beforeEach(() => mockRepositoryInstance.findByEmail.mockResolvedValue(null));
     const makeImportRow = (o = {}) => ({
       name: 'Import Supplier',
       phone: '9876543210',
@@ -683,17 +684,17 @@ describe('SupplierService', () => {
       mockCheckPlan.mockResolvedValue(1);
       mockRepositoryInstance.findByNamePhoneBranch.mockResolvedValue(null);
       mockRepositoryInstance.bulkCreate.mockResolvedValue([makeImportRow()]);
-      await service.bulkImport([makeImportRow(), makeImportRow({ name: 'Second' })]);
+      await service.bulkImport([makeImportRow(), makeImportRow({ name: 'Second', email: 'second@test.com' })]);
       // Only 1 should be processed — but dedup by name-phone means first passes
-      expect(mockRepositoryInstance.bulkCreate).toHaveBeenCalled();
+      expect(mockRepositoryInstance.bulkCreate).not.toHaveBeenCalled();
     });
 
-    test('returns validation errors (status:true, message:"CSV") for rows missing name', async () => {
+    test('rejects missing supplier names before writing', async () => {
       const r = await service.bulkImport([{ phone: '9876543210' }]);
-      expect(r.status).toBe(true);
-      expect(r.message).toBe('CSV');
+      expect(r.status).toBe(false);
+      expect(r.message).toContain('Nothing was imported');
       expect(Array.isArray(r.data)).toBe(true);
-      expect(r.data[0].status).toContain('name');
+      expect(r.data[0].status).toMatch(/name/i);
     });
 
     test('returns status:false when all suppliers already exist', async () => {

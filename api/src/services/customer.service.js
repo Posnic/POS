@@ -646,6 +646,10 @@ class CustomerService {
         };
       }
 
+      const checked = require('../helpers/import-values').contactRows(customersData, true);
+      if (checked.errors.length) return { status: false, data: checked.errors,
+        message: 'Correct the listed customer rows. Nothing was imported.' };
+      customersData = checked.rows;
       // Check for duplicates in database (matching PHP implementation)
       const alreadyExists = [];
       const newCustomers = [];
@@ -675,10 +679,13 @@ class CustomerService {
             status: 'Already exists',
           });
         } else {
-          newCustomers.push(customer);
+          if (customer.email && await this.repository.findByEmail(customer.email)) {
+            errors.push({ row: i + 2, name: customer.name, status: 'Email is already used by another customer' });
+          } else newCustomers.push(customer);
         }
       }
 
+      if (errors.length) return { status: false, data: errors, message: 'Correct the listed customer rows. Nothing was imported.' };
       if (newCustomers.length === 0) {
         return {
           status: false,
@@ -708,7 +715,7 @@ class CustomerService {
       return {
         status: false,
         data: null,
-        message: error.message,
+        message: require('../helpers/import-values').importFailure(error),
       };
     }
   }

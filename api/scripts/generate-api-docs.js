@@ -48,7 +48,7 @@ function readMounts() {
   // not their public path (Business is /business/v1, not /business-access).
   const app = fs.readFileSync(path.join(ROUTES_DIR, '..', '..', 'app.js'), 'utf8');
   for (const match of app.matchAll(
-    /app\.use\(\s*\[([^\]]+)\]\s*,\s*require\(['"]\.\/src\/routes\/([\w.-]+)['"]\)\s*\)/g
+    /app\.use\(\s*(\[[^\]]+\]|["\'][^"\']+["\'])\s*,\s*require\(['"]\.\/src\/routes\/([\w.-]+)['"]\)\s*\)/g
   )) {
     const file = match[2].replace(/\.js$/, '') + '.js';
     const paths = [...match[1].matchAll(/['"]([^'"]+)['"]/g)].map((m) =>

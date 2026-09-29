@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "ഈ ബില്ലിന് സ്ഥലത്തുള്ള മാനേജർ ആവശ്യമാണ്. ഈ കൂട്ടായ്മയ്ക്ക് വിദൂര അംഗീകാരം ഇതുവരെ ലഭ്യമല്ല.",
   "lang_business_use_manager_pin": "മാനേജരുടെ PIN ഉപയോഗിക്കുക",
   "lang_business_valid_until": "ഈ സമയം വരെ സാധുവാണ്",
-  "lang_business_waiting_owner": "ഉടമയ്ക്കായി കാത്തിരിക്കുന്നു"
+  "lang_business_waiting_owner": "ഉടമയ്ക്കായി കാത്തിരിക്കുന്നു",
+  "lang_changes_not_saved": "മാറ്റങ്ങൾ സേവ് ചെയ്തിട്ടില്ല.",
+  "lang_continue": "തുടരുക",
+  "lang_reason": "കാരണം"
 }

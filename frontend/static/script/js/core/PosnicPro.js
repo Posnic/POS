@@ -1812,19 +1812,73 @@ PosnicPro = {
     },
 
     /*Import files*/
+    parseImportCsv: function (input) {
+        var text = String(input || '').replace(/^\uFEFF/, ''), rows = [], row = [], value = '', quoted = false, closed = false;
+        // Excel can include a separator directive. Otherwise detect only from
+        // the header, never from decimal commas in data rows.
+        var directive = /^sep=([,;\t])\r?\n/i.exec(text);
+        var delimiter = directive ? directive[1] : ',';
+        if (directive) text = text.slice(directive[0].length);
+        else {
+            var counts = { ',': 0, ';': 0, '\t': 0 }, inQuote = false;
+            for (var h = 0; h < text.length; h++) {
+                if (text[h] === '"') {
+                    if (inQuote && text[h + 1] === '"') h++;
+                    else inQuote = !inQuote;
+                } else if (!inQuote) {
+                    if (text[h] === '\r' || text[h] === '\n') break;
+                    if (Object.prototype.hasOwnProperty.call(counts, text[h])) counts[text[h]]++;
+                }
+            }
+            var separators = Object.keys(counts).filter(function (key) { return counts[key] > 0; });
+            if (separators.length > 1) throw new Error('Ambiguous CSV separator. Use a consistent comma, semicolon or tab separator.');
+            if (separators.length) delimiter = separators[0];
+        }
+        var cell = function () { row.push(value); value = ''; closed = false; };
+        var record = function () { cell(); if (row.some(function (v) { return v.trim() !== ''; })) rows.push(row); row = []; };
+        for (var i = 0; i < text.length; i++) {
+            var ch = text[i];
+            if (quoted) {
+                if (ch === '"' && text[i + 1] === '"') { value += '"'; i++; }
+                else if (ch === '"') { quoted = false; closed = true; }
+                else value += ch;
+            } else if (ch === delimiter) cell();
+            else if (ch === '\n' || ch === '\r') { record(); if (ch === '\r' && text[i + 1] === '\n') i++; }
+            else if (ch === '"' && !value.trim() && !closed) { value = ''; quoted = true; }
+            else if (closed && /\s/.test(ch)) continue;
+            else if (closed || ch === '"') throw new Error('Invalid CSV quoting. Check the file before importing.');
+            else value += ch;
+        }
+        if (quoted) throw new Error('Unclosed quote in CSV. Nothing was imported.');
+        if (value || row.length || closed) record();
+        if (rows.length) {
+            var headers = rows[0].map(function (h) { return h.trim().toLowerCase(); });
+            if (headers.some(function (h) { return !h; }) || new Set(headers).size !== headers.length) throw new Error('CSV headers must be non-empty and unique.');
+            rows.slice(1).forEach(function (r, index) {
+                if (r.length !== headers.length) throw new Error('CSV record ' + (index + 2) + ' has a different number of columns than the header.');
+            });
+        }
+        return rows;
+    },
     importTableFile: function (importform) {
         PosnicPro.importAction = importform;
         $('#import_modal').modal('show');
         $('#errorTable').hide();
         $('#errorMessages').empty();
         $('#importHeading').html(importform);
+        $('#importNumberHelp').remove();
+        $('<p id="importNumberHelp" class="small text-muted">').text(
+            'CSV accepts comma, semicolon or tab separators. Decimal examples: 1234.56 or 1234,56. ' +
+            'Use semicolons or quote values containing commas. Ambiguous values such as 1,234 or 1.234 are rejected: ' +
+            'write 1234 for a whole number, or 1,2340 / 1.2340 for a decimal.'
+        ).insertBefore('#errorMessages');
         $('#importHeading').css('textTransform', 'capitalize');
         $('.hide-import-table').hide();
         $('.importFileFormat').attr('href', './static/Import_sample_files/' + importform + '.csv');
     },
     // Import failures stay visible until another file is selected.
     showItemImportErrors: function (response) {
-        if (PosnicPro.importAction !== 'items' || !response || !Array.isArray(response.data)) return;
+        if (!response || !Array.isArray(response.data)) return;
         var rows = response.data.filter(function (row) { return row && row.row && row.status; });
         if (!rows.length) return;
         // The API escapes these three characters for the legacy toast. Decode
@@ -2035,7 +2089,12 @@ PosnicPro = {
         $('#manager_pin_error').addClass('d-none').text('');
         $('#manager_pin_prompt').text(opts.prompt || "This action needs a manager's approval.");
         $('#manager_pin_submit').prop('disabled', false);
-        $('#manager_pin_modal').modal('show');
+        $('#manager_pin_modal').off('hidden.bs.modal.orderApproval').on('hidden.bs.modal.orderApproval', function () {
+            var pending = PosnicPro._pendingApproval;
+            PosnicPro._pendingApproval = null;
+            $('#manager_pin_input, #manager_card_input').val('');
+            if (pending && typeof pending.onDenied === 'function') pending.onDenied();
+        }).modal('show');
         setTimeout(function () { $('#manager_pin_input').trigger('focus'); }, 400);
     },
     _setApprovalMode: function (mode) {
@@ -2077,9 +2136,10 @@ PosnicPro = {
             url: byCard ? 'authorizations/verify-card' : 'authorizations/verify-pin',
             data: JSON.stringify(payload),
         }, function (response) {
+            if (PosnicPro._pendingApproval !== pending) return;
             if (response && response.type === 'success') {
-                $('#manager_pin_modal').modal('hide');
                 PosnicPro._pendingApproval = null;
+                $('#manager_pin_modal').modal('hide');
                 if (typeof pending.onApproved === 'function') pending.onApproved(response.data);
             } else {
                 reEnable();
@@ -5187,11 +5247,12 @@ $(document).ready(function () {
 
 /*Import Csv File Into Table By Type of Table Request*/
 $(".files").on('change', function (e) {
+    if (!this.files || !this.files.length) return;
     var fileSize = this.files[0].size;
     if (fileSize < '337920') {
         var validExtensions = ['csv'];
         var fileName = this.files[0].name;
-        var fileNameExt = fileName.substr(fileName.lastIndexOf('.') + 1);
+        var fileNameExt = fileName.substr(fileName.lastIndexOf('.') + 1).toLowerCase();
         if ($.inArray(fileNameExt, validExtensions) === -1) {
             this.type = ''
             this.type = 'file'
@@ -5202,50 +5263,11 @@ $(".files").on('change', function (e) {
                 var reader = new FileReader();
                 reader.onload = function (e) {
                     var csv = e.target.result;
-                    var lines = (csv && typeof csv === 'string') ? csv.split(/\r\n|\n/) : [];
-
-                    // drop completely empty lines
-                    lines = lines.filter(function (line) {
-                        return line && line.trim() !== '';
-                    });
-
-                    if (!lines || lines.length === 0) {
-                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_empty_csv_file', 'Empty CSV file'));
-                        return false;
-                    }
-
-                    // CSV row parser that respects double quotes so that
-                    // fields containing commas (for example HSN descriptions)
-                    // remain in a single column when importing.
-                    var parseCsvRow = function (line) {
-                        var cells = [];
-                        var value = '';
-                        var insideQuotes = false;
-
-                        for (var idx = 0; idx < line.length; idx++) {
-                            var ch = line[idx];
-                            var nextCh = line[idx + 1];
-
-                            if (ch === '"') {
-                                if (insideQuotes && nextCh === '"') {
-                                    value += '"';
-                                    idx++;
-                                } else {
-                                    insideQuotes = !insideQuotes;
-                                }
-                            } else if (ch === ',' && !insideQuotes) {
-                                cells.push(value);
-                                value = '';
-                            } else {
-                                value += ch;
-                            }
-                        }
-
-                        cells.push(value);
-                        return cells;
-                    };
-
-                    var headers = parseCsvRow(lines[0]);
+                    var lines;
+                    try { lines = PosnicPro.parseImportCsv(csv); }
+                    catch (error) { PosnicPro.alert('error', error.message); return false; }
+                    if (!lines.length) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_empty_csv_file', 'Empty CSV file')); return false; }
+                    var headers = lines[0];
                     var TableHead = PosnicPro.importTableHeader(PosnicPro.importAction);
 
                     // Normalize expected headers once (trim + lowercase) so that
@@ -5258,10 +5280,19 @@ $(".files").on('change', function (e) {
                     // "MRP", "Rate", "SKU"...) land on the right field instead of
                     // being dropped.
                     var importAliasMap = PosnicPro.importHeaderAlias(PosnicPro.importAction);
+                    var mappedHeaders = headers.map(function (header) {
+                        var lookup = String(header).trim().toLowerCase();
+                        var index = normalizedTableHead.indexOf(lookup);
+                        return index !== -1 ? TableHead[index] : (importAliasMap[lookup] || null);
+                    }).filter(Boolean);
+                    if (new Set(mappedHeaders).size !== mappedHeaders.length) {
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_two_csv_columns_map_to_the_same_field_keep', 'Two CSV columns map to the same field. Keep only one column for each field.'));
+                        return false;
+                    }
 
                     for (var i = 1; i < lines.length; i++) {
                         var obj = {};
-                        var currentline = parseCsvRow(lines[i]);
+                        var currentline = lines[i];
 
                         for (var j = 0; j < headers.length; j++) {
                             if (typeof (currentline[j]) !== 'undefined' && currentline[j] !== '') {
@@ -5285,7 +5316,7 @@ $(".files").on('change', function (e) {
                                     : (importAliasMap[lookupTitle] || null);
 
                                 if (keyName) {
-                                    obj[keyName] = String(currentline[j]).replace(/\"/g, "");
+                                    obj[keyName] = String(currentline[j]);
                                 } else {
                                     // Unknown / extra column - ignored gracefully; the server
                                     // validates required fields and reports issues row-by-row.
@@ -5307,6 +5338,11 @@ $(".files").on('change', function (e) {
                     $('#errorMessages').empty();
                     $('#errorTable').hide();
                     PosnicPro.post(params, function (response) {
+                        var importText = function (value) {
+                            return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+                                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+                            });
+                        };
                         if (response.type === 'success') {
                             var responseData = response.data;
                             $('.import-table tbody').children("tr").remove();
@@ -5317,12 +5353,12 @@ $(".files").on('change', function (e) {
                                 var message = response.message;
                                 if (message === 'CSV') {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].name + '</td> <td><a href="tel:' + row[i].phone + '">' + row[i].phone + '</a><td><a href="mailto:' + row.email + '">' + row[i].email + '</a></td><td>' + row[i].address + '</td><td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + row[i].status + '</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].name) + '</td> <td><a href="tel:' + importText(row[i].phone) + '">' + importText(row[i].phone) + '</a><td><a href="mailto:' + importText(row[i].email) + '">' + importText(row[i].email) + '</a></td><td>' + importText(row[i].address) + '</td><td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + importText(row[i].status) + '</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 } else {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].name + '</td> <td><a href="tel:' + row[i].phone + '">' + row[i].phone + '</a><td><a href="mailto:' + row.email + '">' + row[i].email + '</a></td><td>' + row[i].address + '</td><td><i class="fa fa-check text-success"></i> Import</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].name) + '</td> <td><a href="tel:' + importText(row[i].phone) + '">' + importText(row[i].phone) + '</a><td><a href="mailto:' + importText(row[i].email) + '">' + importText(row[i].email) + '</a></td><td>' + importText(row[i].address) + '</td><td><i class="fa fa-check text-success"></i> Import</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 }
@@ -5332,12 +5368,12 @@ $(".files").on('change', function (e) {
                                 var message = response.message;
                                 if (message === 'CSV') {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].name + '</td> <td><a href="tel:' + row[i].phone + '">' + row[i].phone + '</a><td><a href="mailto:' + row.email + '">' + row[i].email + '</a></td><td>' + row[i].address + '</td><td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + row[i].status + '</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].name) + '</td> <td><a href="tel:' + importText(row[i].phone) + '">' + importText(row[i].phone) + '</a><td><a href="mailto:' + importText(row[i].email) + '">' + importText(row[i].email) + '</a></td><td>' + importText(row[i].address) + '</td><td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + importText(row[i].status) + '</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 } else {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].name + '</td> <td><a href="tel:' + row[i].phone + '">' + row[i].phone + '</a><td><a href="mailto:' + row.email + '">' + row[i].email + '</a></td><td>' + row[i].address + '</td><td><i class="fa fa-check text-success"></i> Import</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].name) + '</td> <td><a href="tel:' + importText(row[i].phone) + '">' + importText(row[i].phone) + '</a><td><a href="mailto:' + importText(row[i].email) + '">' + importText(row[i].email) + '</a></td><td>' + importText(row[i].address) + '</td><td><i class="fa fa-check text-success"></i> Import</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 }
@@ -5347,12 +5383,12 @@ $(".files").on('change', function (e) {
                                 var message = response.message;
                                 if (message === 'CSV') {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].name + '</td> <td>' + row[i].discount_amount + '<td>' + row[i].discount_percentage + '</td>  <td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + row[i].status + '</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].name) + '</td> <td>' + importText(row[i].discount_amount) + '<td>' + importText(row[i].discount_percentage) + '</td>  <td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + importText(row[i].status) + '</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 } else {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].name + '</td> <td>' + row[i].discount_amount + '<td>' + row[i].discount_percentage + '</td> <td><i class="fa fa-check text-success"></i> Import</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].name) + '</td> <td>' + importText(row[i].discount_amount) + '<td>' + importText(row[i].discount_percentage) + '</td> <td><i class="fa fa-check text-success"></i> Import</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 }
@@ -5363,12 +5399,12 @@ $(".files").on('change', function (e) {
                                 var message = response.message;
                                 if (message === 'CSV') {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].name + '</td><td>' + row[i].description + '</td> <td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + row[i].status + '</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].name) + '</td><td>' + importText(row[i].description) + '</td> <td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + importText(row[i].status) + '</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 } else {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].name + '</td><td>' + row[i].description + '</td><td><i class="fa fa-check text-success"></i> Import</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].name) + '</td><td>' + importText(row[i].description) + '</td><td><i class="fa fa-check text-success"></i> Import</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 }
@@ -5380,12 +5416,12 @@ $(".files").on('change', function (e) {
                                 var message = response.message;
                                 if (message === 'CSV') {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].name + '</td> <td>' + row[i].category_name + '</td> <td>' + row[i].selling_price + '</td> <td>' + row[i].available_quantity + '</td> <td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + row[i].status + '</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].name) + '</td> <td>' + importText(row[i].category_name) + '</td> <td>' + importText(row[i].selling_price) + '</td> <td>' + importText(row[i].available_quantity) + '</td> <td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + importText(row[i].status) + '</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 } else {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].name + '</td> <td>' + row[i].category_name + '</td> <td>' + row[i].selling_price + '</td> <td>' + row[i].available_quantity + '</td> <td><i class="fa fa-check text-success"></i> Import</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].name) + '</td> <td>' + importText(row[i].category_name) + '</td> <td>' + importText(row[i].selling_price) + '</td> <td>' + importText(row[i].available_quantity) + '</td> <td><i class="fa fa-check text-success"></i> Import</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 }
@@ -5396,12 +5432,12 @@ $(".files").on('change', function (e) {
                                 var message = response.message;
                                 if (message === 'CSV') {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].type + '</td> <td>' + row[i].amount + '</td> <td>' + row[i].category + '</td> <td>' + row[i].description + '</td>  <td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + row[i].status + '</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].type) + '</td> <td>' + importText(row[i].amount) + '</td> <td>' + importText(row[i].category) + '</td> <td>' + importText(row[i].description) + '</td>  <td><i class="feather icon-x-circle mr-2 text-danger"></i> CSV Field Missing ' + importText(row[i].status) + '</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 } else {
                                     for (var i = 0; i < row.length; i++) {
-                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + row[i].type + '</td> <td>' + row[i].amount + '</td> <td>' + row[i].category + '</td> <td>' + row[i].description + '</td>  <td><i class="fa fa-check text-success"></i> Import</td></tr>';
+                                        var trow = '<tr> <td>' + (i + 1) + '</td> <td>' + importText(row[i].type) + '</td> <td>' + importText(row[i].amount) + '</td> <td>' + importText(row[i].category) + '</td> <td>' + importText(row[i].description) + '</td>  <td><i class="fa fa-check text-success"></i> Import</td></tr>';
                                         $('.import-table').children('tbody').append(trow);
                                     }
                                 }

@@ -49,11 +49,10 @@ test('SOMETHING CALLS setTickets, which nothing did', () => {
 
 test('and the feed is started with the screens, and stopped with them', () => {
   assert.match(MAIN, /require\('\.\/kitchen-screen-feed'\)/);
-  assert.match(MAIN, /feed\.start\(\{ branchId \}\)/);
+  assert.match(MAIN, /feed\.start\(\{ resolveBranch:/);
   assert.match(MAIN, /require\('\.\/kitchen-screen-feed'\)\.stop\(\);/);
-  /* Started only once a branch is known: a poll with no branch asks a
-     question with no answer, every five seconds, for ever. */
-  assert.match(MAIN, /if \(branchId\) \{\n\s*feed\.start/);
+  /* Resolve again after startup so a screen-only till can become ready. */
+  assert.match(MAIN, /branches.length === 1/);
 });
 
 test('there is an endpoint for it to ask', () => {
@@ -84,9 +83,8 @@ test('A SCREEN SHOWS WHAT IS OPEN, not what has yet to print', () => {
   const body = method.slice(0, method.indexOf('\n  }\n'));
   assert.ok(!/last_printed_change_index/.test(body), 'the screen is reading the print queue');
   assert.ok(!/kot_claimed_by/.test(body), "the screen is subject to another till's claim");
-  /* It leaves the wall when the table is settled, which is the only boundary
-     this product actually has - nothing marks a dish done. */
-  assert.match(body, /payment_status: \{ \$nin: \['Paid', 'Cancelled'\] \}/);
+  // Paid kitchen work stays visible until served; counter sales are excluded.
+  assert.match(body, /kitchenEligibility/);
 });
 
 test('and it carries nothing a kitchen wall should not show', () => {
@@ -193,4 +191,21 @@ test('starting twice leaves one timer, and stopping releases it', () => {
   feed.stop();
   /* And a shop with no branch never starts one. */
   assert.strictEqual(feed.start({ branchId: '' }), null);
+});
+
+test('only a renderer acknowledgment produces a kitchen display report', async () => {
+  const screens = require(path.join(ROOT, 'src', 'kitchen-screen.js'));
+  const real = screens.setTickets;
+  const calls=[];
+  const fetchImpl=async (url,opts)=>{calls.push({url,body:JSON.parse(opts.body)});return {ok:true,json:async()=>({data:[{id:'507f1f77bcf86cd799439011:c0',items:[]}]})};};
+  try {
+    screens.setTickets=async()=>[];
+    await feed.tick({branchId:'branch',fetchImpl});
+    assert.equal(calls.length,1);
+    screens.setTickets=async()=>['display-1'];
+    await feed.tick({branchId:'branch',fetchImpl});
+    assert.equal(calls.length,3);
+    assert.ok(calls[2].url.endsWith('/sales/kitchenDisplayReport'));
+    assert.deepEqual(calls[2].body.saleIds,['507f1f77bcf86cd799439011']);
+  } finally { screens.setTickets=real; }
 });

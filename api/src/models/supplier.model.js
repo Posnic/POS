@@ -14,8 +14,6 @@ const supplierSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      unique: true,
-      sparse: true,
       trim: true,
       lowercase: true,
       validate(value) {
@@ -78,9 +76,11 @@ supplierSchema.plugin(paginate);
 
 // Indexes
 supplierSchema.index({ name: 'text', phone: 'text' });
+supplierSchema.index({ email: 1 }, require('../database/migrations/supplier-email-index').options);
 
 // Static method to check if email is taken
 supplierSchema.statics.isEmailTaken = async function (email, excludeSupplierId) {
+  if (!email || !String(email).trim()) return false;
   const supplier = await this.findOne({
     email,
     _id: { $ne: excludeSupplierId },

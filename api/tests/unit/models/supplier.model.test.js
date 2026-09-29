@@ -138,12 +138,13 @@ describe('Supplier — email field', () => {
     expect(p('email').isRequired).toBeFalsy();
   });
 
-  test('email has unique:true', () => {
-    expect(p('email').options.unique).toBe(true);
+  test('email uniqueness is declared on the partial index', () => {
+    expect(schema.indexes().find(([keys]) => keys.email === 1)[1].unique).toBe(true);
   });
 
-  test('email unique index is sparse so missing values do not collide', () => {
-    expect(p('email').options.sparse).toBe(true);
+  test('email unique index excludes empty strings as well as missing values', () => {
+    expect(schema.indexes().find(([keys]) => keys.email === 1)[1].partialFilterExpression)
+      .toEqual({ email: { $type: 'string', $gt: '' } });
   });
 
   test('email has lowercase:true', () => {
@@ -562,8 +563,8 @@ describe('Supplier — instance canBeDeleted', () => {
 // 17. schema indexes
 // ══════════════════════════════════════════════════════════════════════════════
 describe('Supplier — schema indexes', () => {
-  test('email field has unique:true option', () => {
-    expect(p('email').options.unique).toBe(true);
+  test('email field does not recreate the old sparse unique index', () => {
+    expect(p('email').options.unique).toBeUndefined();
   });
 
   test('schema has a text index on name and phone (defined via schema.index)', () => {

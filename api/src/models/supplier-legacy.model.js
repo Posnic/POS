@@ -388,7 +388,7 @@ class SupplierModel extends BaseModel {
       for (const item of uniqueValue) {
         const name = item.name || '';
         const phone = item.phone || '';
-        const email = item.email || '';
+        const email = String(item.email || '').trim();
         const address = item.address || '';
         const key = `${name}-${phone}`;
         if (!uniqueCSVRecords[key]) {

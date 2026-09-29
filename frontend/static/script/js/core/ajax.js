@@ -141,6 +141,9 @@ PosnicPro.request = function (params, callback, failure = null) {
                 }
             }
 
+            if (xhr.status === 422 && String(params.url).replace(/^\//, '') === 'sales/updateOrder' &&
+                PosnicPro.retryOrderApproval && PosnicPro.retryOrderApproval(params, callback, failure, response)) return;
+
             // login.html / forgotpassword.html have no session by definition.
             // Redirecting to login from here just reloads the page and wipes
             // the error message before it can be read.
@@ -326,4 +329,28 @@ PosnicPro.patch = function (params, callback, failure) {
     }
     parameters.method = 'PATCH';
     PosnicPro.request(parameters, callback, failure);
+};
+
+// Approval is requested only after the server has refused the unchanged order.
+PosnicPro.retryOrderApproval = function (params, callback, failure, response) {
+    var message = response && response.message;
+    if (['Enter a reason for this change.', 'Manager approval required: cancellation', 'Manager approval required: discount'].indexOf(message) < 0 || (params.orderApprovalAttempts || 0) >= 4) return false;
+    var body;
+    try { body = typeof params.data === 'string' ? JSON.parse(params.data) : Object.assign({}, params.data); } catch (_) { return false; }
+    var retry = function () { PosnicPro.request(Object.assign({}, params, { data: JSON.stringify(body), orderApprovalAttempts: (params.orderApprovalAttempts || 0) + 1 }), callback, failure); };
+    var cancel = function () { callback({type:'error',message:PosnicPro.i18n.t('lang_changes_not_saved', 'Changes were not saved.')}); };
+    if (message !== 'Enter a reason for this change.') {
+        var action = message.endsWith('cancellation') ? 'void_sale' : 'discount_apply';
+        PosnicPro.requireManagerApproval(action, {saleId:body.order_id, force:true}, function (approval) {
+            if (!approval || !approval.approval_token) return cancel();
+            body.approval_tokens = Object.assign({}, body.approval_tokens); body.approval_tokens[action] = approval.approval_token; retry();
+        }, cancel);
+        return true;
+    }
+    var dialog=document.createElement('dialog'), form=document.createElement('form'), label=document.createElement('label'), input=document.createElement('textarea'), footer=document.createElement('div'), save=document.createElement('button'), close=document.createElement('button');
+    dialog.style.cssText='width: min(440px, 92vw);border:0;border-radius:12px;padding:24px;box-shadow:0 12px 60px #0005';
+    label.textContent=PosnicPro.i18n.t('lang_reason', 'Reason'); input.required=true; input.minLength=3;input.maxLength=200;input.style.cssText='display:block;width:100%;min-height:90px;margin:12px 0'; label.append(input);
+    save.type='submit';save.className='btn btn-primary';save.textContent=PosnicPro.i18n.t('lang_continue','Continue');close.type='button';close.className='btn btn-light';close.textContent=PosnicPro.i18n.t('lang_cancel','Cancel');footer.append(close,save);form.append(label,footer);dialog.append(form);document.body.append(dialog);
+    var finish=function(){dialog.close();dialog.remove();};close.onclick=function(){finish();cancel();};dialog.oncancel=function(event){event.preventDefault();finish();cancel();};
+    form.onsubmit=function(event){event.preventDefault();if(input.value.trim().length<3)return;body.change_reason=input.value.trim();finish();retry();};dialog.showModal();input.focus();return true;
 };

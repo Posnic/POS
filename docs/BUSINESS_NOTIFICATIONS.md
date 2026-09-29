@@ -113,3 +113,7 @@ Local validation: 16 push integration cases, two focused stock-push cases and fo
 provider unit tests pass, including legacy renewal, both summary modes and generic
 category routing. The companion mobile source has 99 passing tests, including
 mute inheritance, category overrides and failed native-settings lookup recovery.
+
+## Provider ownership
+
+Posnic operates the push project and credentials for Posnic Cloud; shop owners do not configure a provider. Community owners may choose their own provider project (with a separately built app) or Posnic-managed delivery. The latter requires an authenticated, scoped relay before it is available in the official app; this relay is not implemented yet. Never share Posnic provider credentials with Community servers. Missing delivery configuration leaves the authenticated Inbox usable.

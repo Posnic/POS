@@ -24,6 +24,53 @@ router.post('/pair', limit, wrap(access.pair));
 router.post('/refresh', limit, wrap(access.refresh));
 router.post('/route-proof', rateLimit({ windowMs: 60000, limit: 180 }), wrap(access.routeProof));
 router.use(protect);
+router.get('/kitchen-ready', wrap(require('../services/kitchen-board').captainList));
+router.post(
+  '/kitchen-ready',
+  rateLimit({ windowMs: 60000, limit: 180 }),
+  wrap(require('../services/kitchen-board').captainAction)
+);
+router.post(
+  '/kitchen-audio/:action',
+  rateLimit({ windowMs: 60000, limit: 40 }),
+  wrap(async (req) => {
+    const { allowed, context } = require('../utils/branch-access');
+    if (!allowed(req.user, 'sales')) access.fail('FORBIDDEN', 'Order access is required.', 403);
+    const c = await context(req);
+    if (c.branch.module_captain_enable === false)
+      access.fail('DISABLED', 'Captain is disabled.', 403);
+    if (!['start', 'cancel', 'voice'].includes(req.params.action))
+      access.fail('INVALID_ACTION', 'Unknown audio action.', 400);
+    if (!process.listenerCount('posnic:kitchen-audio'))
+      access.fail('UNAVAILABLE', 'Connect to the local POS with Kitchen Sound enabled.', 503);
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () =>
+          reject(
+            Object.assign(new Error('Kitchen audio did not respond. Please retry.'), {
+              status: 503,
+            })
+          ),
+        10000
+      );
+      process.emit(
+        'posnic:kitchen-audio',
+        {
+          action: req.params.action,
+          branchId: String(c.branchId),
+          owner: String(c.license) + ':' + String(req.user._id),
+          id: req.body.id,
+          data: req.body.data,
+        },
+        (error, value) => {
+          clearTimeout(timer);
+          if (error) reject(Object.assign(error, { status: 409 }));
+          else resolve(value);
+        }
+      );
+    });
+  })
+);
 router.post(
   '/pair-codes',
   wrap(async (req) => {

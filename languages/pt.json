@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "Esta conta precisa de um gerente no local. A aprovação remota ainda não está disponível para esta combinação.",
   "lang_business_use_manager_pin": "Usar PIN do gerente",
   "lang_business_valid_until": "Válido até",
-  "lang_business_waiting_owner": "A aguardar um proprietário"
+  "lang_business_waiting_owner": "A aguardar um proprietário",
+  "lang_changes_not_saved": "As alterações não foram guardadas.",
+  "lang_continue": "Continuar",
+  "lang_reason": "Motivo"
 }

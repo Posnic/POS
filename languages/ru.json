@@ -95,5 +95,8 @@
   "lang_total_title": "Итого",
   "lang_yes": "Да",
   "lang_ai_describe_hint": "Создать описание на основе данных товара",
-  "lang_walk_in_customer_click_to_choose_or_add": "Незарегистрированный клиент. Нажмите, чтобы выбрать или добавить"
+  "lang_walk_in_customer_click_to_choose_or_add": "Незарегистрированный клиент. Нажмите, чтобы выбрать или добавить",
+  "lang_changes_not_saved": "Изменения не сохранены.",
+  "lang_continue": "Продолжить",
+  "lang_reason": "Причина"
 }

@@ -3731,5 +3731,8 @@
   "lang_business_unsupported_bill": "இந்தப் பில்லுக்கு நேரில் உள்ள மேலாளர் தேவை. இந்தச் சேர்க்கைக்கு தொலைநிலை ஒப்புதல் இன்னும் கிடைக்கவில்லை.",
   "lang_business_use_manager_pin": "மேலாளர் PIN-ஐப் பயன்படுத்து",
   "lang_business_valid_until": "செல்லுபடியாகும் நேரம் வரை",
-  "lang_business_waiting_owner": "உரிமையாளருக்காகக் காத்திருக்கிறது"
+  "lang_business_waiting_owner": "உரிமையாளருக்காகக் காத்திருக்கிறது",
+  "lang_changes_not_saved": "மாற்றங்கள் சேமிக்கப்படவில்லை.",
+  "lang_continue": "தொடர்",
+  "lang_reason": "காரணம்"
 }

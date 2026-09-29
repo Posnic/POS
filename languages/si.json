@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "මෙම බිල සඳහා එම ස්ථානයේ සිටින කළමනාකරුවෙකු අවශ්‍යයි. මෙම සංයෝජනය සඳහා දුරස්ථ අනුමැතිය තවමත් නොමැත.",
   "lang_business_use_manager_pin": "කළමනාකරුගේ PIN භාවිත කරන්න",
   "lang_business_valid_until": "වලංගු වන්නේ",
-  "lang_business_waiting_owner": "හිමිකරුවෙකු බලාපොරොත්තුවෙන්"
+  "lang_business_waiting_owner": "හිමිකරුවෙකු බලාපොරොත්තුවෙන්",
+  "lang_changes_not_saved": "වෙනස්කම් සුරැකුණේ නැත.",
+  "lang_continue": "ඉදිරියට",
+  "lang_reason": "හේතුව"
 }

@@ -95,5 +95,8 @@
   "lang_total_title": "合计",
   "lang_yes": "是",
   "lang_ai_describe_hint": "根据商品详情生成描述草稿",
-  "lang_walk_in_customer_click_to_choose_or_add": "散客。点击选择或添加"
+  "lang_walk_in_customer_click_to_choose_or_add": "散客。点击选择或添加",
+  "lang_changes_not_saved": "更改未保存。",
+  "lang_continue": "继续",
+  "lang_reason": "原因"
 }

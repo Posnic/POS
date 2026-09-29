@@ -523,6 +523,17 @@ function announceKitchenTicket(getWindow, ticket, wants) {
   if (!said.length && !ting) return false;
 
   try {
+    const audio = require('./kitchen-audio');
+    if (audio.enabled()) {
+      const steps = [];
+      if (ting) steps.push({audio:dataUri(TING(wants && wants.arrivalBell))});
+      said.forEach((text,index)=>{
+        if (ting && (!wants || wants.itemTing !== false) && index >= parts.head.length) steps.push({audio:dataUri(ITEM_BELL(wants && wants.itemBell))});
+        steps.push({text,voice:(wants && wants.voice)||''});
+      });
+      audio.enqueue(steps);
+      return true;
+    }
     const win = typeof getWindow === "function" ? getWindow() : null;
     if (!win || win.isDestroyed()) return false;
 
@@ -540,7 +551,7 @@ function announceKitchenTicket(getWindow, ticket, wants) {
        * by counting sentences, because the page would be guessing and the
        * guess would break the first time the wording changed.
        */
-      itemSound: ting ? dataUri(ITEM_BELL(wants && wants.itemBell)) : "",
+      itemSound: ting && (!wants || wants.itemTing !== false) ? dataUri(ITEM_BELL(wants && wants.itemBell)) : "",
       head: parts.head.length,
       /*
        * WHOSE VOICE, by name.

@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "تحتاج هذه الفاتورة إلى مدير موجود في الموقع. الموافقة عن بُعد غير متاحة لهذه التركيبة بعد.",
   "lang_business_use_manager_pin": "استخدام رمز PIN للمدير",
   "lang_business_valid_until": "صالحة حتى",
-  "lang_business_waiting_owner": "بانتظار أحد المالكين"
+  "lang_business_waiting_owner": "بانتظار أحد المالكين",
+  "lang_changes_not_saved": "لم تُحفظ التغييرات.",
+  "lang_continue": "متابعة",
+  "lang_reason": "السبب"
 }

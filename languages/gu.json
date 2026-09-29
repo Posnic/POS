@@ -95,5 +95,8 @@
   "lang_total_title": "કુલ",
   "lang_yes": "હા",
   "lang_ai_describe_hint": "વસ્તુની વિગતો પરથી વર્ણનનો ડ્રાફ્ટ બનાવો",
-  "lang_walk_in_customer_click_to_choose_or_add": "નોંધણી વગરનો ગ્રાહક. પસંદ કરવા અથવા ઉમેરવા ક્લિક કરો"
+  "lang_walk_in_customer_click_to_choose_or_add": "નોંધણી વગરનો ગ્રાહક. પસંદ કરવા અથવા ઉમેરવા ક્લિક કરો",
+  "lang_changes_not_saved": "ફેરફારો સેવ થયા નથી.",
+  "lang_continue": "આગળ વધો",
+  "lang_reason": "કારણ"
 }

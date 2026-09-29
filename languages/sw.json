@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "Bili hii inahitaji meneja aliyepo dukani. Idhini ya mbali bado haipatikani kwa mchanganyiko huu.",
   "lang_business_use_manager_pin": "Tumia PIN ya meneja",
   "lang_business_valid_until": "Halali hadi",
-  "lang_business_waiting_owner": "Inasubiri mmiliki"
+  "lang_business_waiting_owner": "Inasubiri mmiliki",
+  "lang_changes_not_saved": "Mabadiliko hayakuhifadhiwa.",
+  "lang_continue": "Endelea",
+  "lang_reason": "Sababu"
 }

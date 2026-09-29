@@ -252,7 +252,7 @@ class CustomerCategoryModel extends BaseModel {
       const collection = await this.getCollection();
       const uniqueValue = [];
       const validationErrors = [];
-      const uniqueCSVRecords = {};
+      const uniqueCSVRecords = Object.create(null);
 
       // Filter unique records from input data
       for (const item of data) {
@@ -264,12 +264,14 @@ class CustomerCategoryModel extends BaseModel {
       // Filter unique records from CSV data based on 'name'
       for (const item of uniqueValue) {
         const normalizedItem = {
-          name: item.name || '',
+          name: String(item.name ?? '').trim(),
           description: item.description || '',
         };
         const key = normalizedItem.name;
         if (!uniqueCSVRecords[key]) {
           uniqueCSVRecords[key] = normalizedItem;
+        } else if (uniqueCSVRecords[key].description !== normalizedItem.description) {
+          validationErrors.push({ ...normalizedItem, status: 'Conflicting rows with the same category name' });
         }
       }
 

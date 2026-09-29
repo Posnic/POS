@@ -5754,20 +5754,32 @@ PosnicPro.pricelists = {
         $('#pricelist_editor_modal').modal('show');
         $('#pl_ov_add').on('click', function () { $('#pl_edit_overrides').append(overrideRow()); });
         $('#pricelist_editor_modal').on('click', '.pl-ov-remove', function () { $(this).closest('.pl-ov-row').remove(); });
-        // Item search on override rows: first match by name wins on blur.
-        $('#pricelist_editor_modal').on('change', '.pl-ov-name', function () {
-            var $inp = $(this);
-            var q = ($inp.val() || '').trim();
-            if (!q) { $inp.data('itemid', ''); return; }
-            PosnicPro.get({ url: 'items/search', data: { q: q, limit: 1 } }, function (r) {
-                var hit = r && r.data && r.data.list && r.data.list[0];
-                if (hit) {
-                    $inp.val(hit.name).data('itemid', String(hit._id || hit.id || ''));
-                } else {
-                    $inp.data('itemid', '');
-                    PosnicPro.alert('warning', 'No item matches "' + q + '".');
+        // Use the same item endpoint and explicit selection as the sales picker.
+        $('#pricelist_editor_modal').on('focus', '.pl-ov-name', function () {
+            var input = $(this);
+            if (input.data('pricePickerReady') || !$.fn.autocomplete) return;
+            input.data('pricePickerReady', true).autocomplete({
+                appendTo: '#pricelist_editor_modal',
+                zIndex: 1060,
+                deferRequestBy: 150,
+                autoSelectFirst: false,
+                triggerSelectOnValidInput: false,
+                lookup: function (query, done) {
+                    PosnicPro.get({ url: 'items/getOnlineItemsAjaxList', data: 'query=' + encodeURIComponent(query) + '&type=normal' }, function (r) {
+                        done({ suggestions: ((r && r.suggestions) || []).filter(function (item) {
+                            return item.item_id || item.id;
+                        }).map(function (item) {
+                            return { value: item.item_name || item.name || '', data: item };
+                        }) });
+                    }, function () { done({ suggestions: [] }); });
+                },
+                onSelect: function (selection) {
+                    input.data('itemid', String(selection.data.item_id || selection.data.id));
+                    input.val(selection.value);
                 }
-            }, function () { $inp.data('itemid', ''); });
+            });
+        }).on('input', '.pl-ov-name', function () {
+            $(this).data('itemid', '');
         });
         // Categories dropdown from the same source the customer form uses.
         PosnicPro.get({ url: 'customerCategory/getCustomerCategoryAjaxList', data: 'query=' }, function (response) {
@@ -5788,7 +5800,15 @@ PosnicPro.pricelists = {
                 item_name: $(this).find('.pl-ov-name').val(),
                 price: $(this).find('.pl-ov-price').val()
             };
-        }).get().filter(function (o) { return o.item_id; });
+        }).get();
+        if (overrides.some(function (o) { return !o.item_id || !String(o.price).trim() || !Number.isFinite(Number(o.price)) || Number(o.price) < 0; })) {
+            PosnicPro.alert('warning', 'Select an item from the suggestions and enter a valid price for every row, or remove the row.');
+            return;
+        }
+        if (new Set(overrides.map(function (o) { return String(o.item_id); })).size !== overrides.length) {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_each_item_can_have_only_one_price_in_this', 'Each item can have only one price in this list.'));
+            return;
+        }
         var payload = {
             customer_category_id: $('#pl_edit_category').val(),
             customer_category_name: $('#pl_edit_category option:selected').data('name') || '',
@@ -5800,6 +5820,7 @@ PosnicPro.pricelists = {
                 $('#pricelist_editor_modal').modal('hide');
                 PosnicPro.alert('success', r.message);
                 PosnicPro.pricelists.load();
+                if (PosnicPro.sales) { PosnicPro.sales._priceListsAt = 0; PosnicPro.sales._priceLists = null; PosnicPro.sales._loadPriceLists(); }
             } else {
                 PosnicPro.alert((r && r.type) || 'error', (r && r.message) || 'Could not save the list.');
             }

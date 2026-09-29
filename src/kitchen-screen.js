@@ -53,6 +53,7 @@ function electron() {
 
 /* One window per display id. */
 const windows = new Map();
+const renderReceipts = new Map();
 let _watching = false;
 
 /* ------------------------------------------------------------------ config */
@@ -69,6 +70,7 @@ let _watching = false;
  */
 const DEFAULTS = Object.freeze({
   enabled: false,
+  branchId: '',
   viewingDistanceM: 2.5,
   diagonalInches: 43,
   /* The visual angle to aim for. A shop with older staff, or more steam, or a
@@ -78,6 +80,7 @@ const DEFAULTS = Object.freeze({
      on the panel. */
   safeAreaPercent: 3,
   /* What a card carries. Each one costs a line. */
+  tableOnly: false,
   showTable: true,
   showItems: true,
   showItemNotes: true,
@@ -90,6 +93,8 @@ const DEFAULTS = Object.freeze({
      it is late and moves to the front. */
   amberAfterMin: 5,
   redAfterMin: 10,
+  pulseAfterMin: 15,
+  pulseAlerts: true,
   /* Switch to compact cards - table and item count only, same text size -
      rather than shrinking text, once this many tickets are live. */
   compactAfter: 8,
@@ -215,16 +220,23 @@ function open(displayId) {
     const existing = windows.get(id);
     if (existing && !existing.isDestroyed()) {
       existing.setBounds(target.bounds);
+      existing.showInactive();
       return true;
     }
 
     const win = new e.BrowserWindow({
       ...target.bounds,
       frame: false,
+      // Windows thick-frame margins otherwise extend beyond the monitor.
+      thickFrame: false,
       /* Not kiosk: kiosk on Windows can take focus and can sit above dialogs
          the till needs. Frameless and positioned is enough for a screen nobody
          touches. */
       fullscreen: false,
+      show: false,
+      resizable: false,
+      // Cover the taskbar on this selected display without taking keyboard focus.
+      alwaysOnTop: true,
       autoHideMenuBar: true,
       /* THE FOCUS RULES. showInactive() below does the real work; these stop
          the window taking focus later, when a display event re-shows it. */
@@ -249,6 +261,8 @@ function open(displayId) {
     /* Shown WITHOUT focus. A waiter mid-order must not lose the keyboard. */
     win.once('ready-to-show', () => {
       try {
+        win.setBounds(target.bounds);
+
         win.showInactive();
       } catch (err) {
         /* ignored: a display removed between creation and show */
@@ -324,7 +338,10 @@ function watch() {
       /* Still here but moved or resized. */
       for (const [id, win] of windows) {
         const d = (e.screen.getAllDisplays() || []).find((x) => String(x.id) === id);
-        if (d && win && !win.isDestroyed()) win.setBounds(d.bounds);
+        if (d && win && !win.isDestroyed()) {
+          win.setBounds(d.bounds);
+          push(id);
+        }
       }
     } catch (err) {
       console.warn('[kitchen-screen] display change not handled:', err.message);
@@ -418,6 +435,12 @@ function sampleTickets(now = Date.now()) {
 
 /** What is currently on each screen, so a reconnect can be given it again. */
 const feeds = new Map();
+const feedStatuses = new Map();
+function setFeedStatus(message, displayId) {
+  feedStatuses.set(String(displayId), message);
+  push(displayId);
+}
+
 
 /**
  * Send a screen its configuration and its tickets.
@@ -449,8 +472,8 @@ function push(displayId, { setupMode = false } = {}) {
   });
 
   try {
-    win.webContents.send('kitchen-screen:config', { ...cfg, setupMode, _fit: computed });
-    win.webContents.send('kitchen-screen:tickets', feeds.get(id) || (setupMode ? sampleTickets() : []));
+    win.webContents.send('kitchen-screen:config', { ...cfg, setupMode, _fit: computed, _feedStatus: feedStatuses.has(id) ? feedStatuses.get(id) : 'Connecting to kitchen orders...' });
+    win.webContents.send('kitchen-screen:tickets', setupMode ? sampleTickets() : (feeds.get(id) || []));
     return true;
   } catch (err) {
     return false;
@@ -464,24 +487,35 @@ function push(displayId, { setupMode = false } = {}) {
  * display so a pass screen and a hot-kitchen screen can later be given
  * different lists without changing anything here.
  */
-function setTickets(list, displayId = null) {
+async function setTickets(list, displayId = null) {
   const value = Array.isArray(list) ? list : [];
-  if (displayId) {
-    feeds.set(String(displayId), value);
-    push(displayId);
-    return;
-  }
-  for (const id of windows.keys()) {
-    feeds.set(id, value);
-    push(id);
-  }
+  const targets = displayId ? [String(displayId)] : [...windows.keys()];
+  return Promise.all(targets.map(id => {
+    feeds.set(id,value);
+    const win=windows.get(id);
+    if(!win || win.isDestroyed() || !configFor(id).enabled)return Promise.resolve(null);
+    return new Promise(resolve=>{
+      const token=require('crypto').randomUUID();
+      const timer=setTimeout(()=>{renderReceipts.delete(token);resolve(null);},1500);
+      renderReceipts.set(token,{sender:win.webContents,resolve:()=>{clearTimeout(timer);renderReceipts.delete(token);resolve(id);}});
+      try { push(id); win.webContents.send('kitchen-screen:tickets',value,token); }
+      catch {clearTimeout(timer);renderReceipts.delete(token);resolve(null);}
+    });
+  })).then(ids=>ids.filter(Boolean));
+}
+function acknowledgeRender(sender,token) {
+  const receipt=renderReceipts.get(String(token));
+  if(!receipt || receipt.sender!==sender)return false;
+  receipt.resolve();return true;
 }
 
 module.exports = {
   DEFAULTS,
+  setFeedStatus,
   displays,
   push,
   setTickets,
+  acknowledgeRender,
   sampleTickets,
   configFor,
   configuredIds,

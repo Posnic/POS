@@ -135,7 +135,12 @@ describeIfDb('every route in the API', () => {
     process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '0123456789abcdef0123456789abcdef';
     process.env.ENCRYPTION_IV = process.env.ENCRYPTION_IV || '0123456789abcdef';
 
-    client = new MongoClient(base, { serverSelectionTimeoutMS: 20000 });
+    // MongoDB 7.6 loads its OS adapter through dynamic import. Jest's CJS VM
+    // does not enable that loader; use the real OS adapter explicitly here.
+    client = new MongoClient(base, {
+      serverSelectionTimeoutMS: 20000,
+      runtimeAdapters: { os: require('node:os') },
+    });
     await client.connect();
 
     mongoose = require('mongoose');

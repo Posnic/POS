@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#101719" />
+    <title>Posnic Kitchen</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="board.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <small>POSNIC / KITCHEN</small>
+        <h1 id="branch">Kitchen board</h1>
+      </div>
+      <div class="tools">
+        <time id="clock"></time><button id="refresh">Refresh</button
+        ><button id="fullscreen">Fullscreen</button
+        ><button id="setup-toggle" aria-expanded="false">Device setup</button>
+      </div>
+    </header>
+    <section class="notice">
+      <span id="connection" role="status">Connecting…</span
+      ><span id="help">Swipe right to advance • buttons work too</span>
+    </section>
+    <p id="message" role="alert"></p>
+    <section id="signin" hidden>
+      <h2>Sign in on this device</h2>
+      <p>
+        Open Device setup and enter the pairing code from your manager, or sign in to POS and select
+        your branch.
+      </p>
+      <a href="/login.html" target="_blank" rel="noopener">Open POS sign-in</a>
+    </section>
+    <section id="device-setup" hidden class="device-setup">
+      <h2>Kitchen device setup</h2>
+      <h3>Connect this kitchen screen</h3>
+      <p>
+        On a manager's signed-in POS browser, create a code below. Enter it on the kitchen tablet.
+        The paired tablet can only view and update kitchen work.
+      </p>
+      <label>Pairing code <input id="device-code" maxlength="16" autocomplete="off" /></label>
+      <button id="device-pair">Connect screen</button
+      ><button id="device-forget">Disconnect this screen</button>
+      <p id="device-result" role="status"></p>
+      <details>
+        <summary>Manager: authorize or disconnect screens</summary>
+        <label
+          >Screen name <input id="device-name" maxlength="60" placeholder="Kitchen pass"
+        /></label>
+        <button id="device-create">Create pairing code</button
+        ><button id="device-list">Refresh connected screens</button>
+        <p id="device-manager-result" role="status"></p>
+        <div id="device-list-items"></div>
+      </details>
+      <button id="keep-awake">Keep screen awake</button
+      ><span id="awake-status" role="status"></span>
+      <button id="install-board" hidden>Install kitchen screen</button>
+      <p id="install-help">
+        Android: open the browser menu → Add to Home screen / Install app. Open that shortcut for a
+        standalone screen.
+      </p>
+      <p>
+        For automatic opening after a restart, configure your Android device's managed kiosk
+        launcher with this page as its start URL. A web page cannot set Android startup or lock
+        other apps. Keep the tablet powered, set screen sleep to Never while plugged in where
+        available, and allow the kiosk browser to run without battery restrictions during service.
+      </p>
+      <details>
+        <summary>Manager: order delay colours</summary>
+        <label
+          >Orange after
+          <input id="orange-minutes" type="number" min="1" max="239" value="5" /> minutes</label
+        >
+        <label
+          >Red after
+          <input id="red-minutes" type="number" min="2" max="240" value="10" /> minutes</label
+        >
+        <label
+          ><input id="pulse-orders" type="checkbox" checked /> Gently pulse overdue borders</label
+        >
+        <button id="save-delay-settings">Save for this branch</button>
+        <p id="delay-result" role="status"></p>
+      </details>
+      <p id="device-address"></p>
+      <p>
+        Disconnected? Check shop Wi-Fi and that POS is running. Orders remain visible, but actions
+        pause until the connection returns.
+      </p>
+    </section>
+    <main id="board" aria-label="Kitchen orders">
+      <section class="lane">
+        <h2><span class="dot new"></span>New <span id="count-new">0</span></h2>
+        <div id="new" class="cards"></div>
+      </section>
+      <section class="lane">
+        <h2><span class="dot preparing"></span>Preparing <span id="count-preparing">0</span></h2>
+        <div id="preparing" class="cards"></div>
+      </section>
+      <section class="lane">
+        <h2><span class="dot ready"></span>Ready <span id="count-ready">0</span></h2>
+        <div id="ready" class="cards"></div>
+      </section>
+    </main>
+    <footer>
+      <span>Ready means food can be collected. Captain marks it Served.</span
+      ><span id="updated"></span>
+    </footer>
+    <aside id="undoBox" hidden><span id="undoLabel"></span><button id="undo">Undo</button></aside>
+    <script src="board.js"></script>
+    <script src="device.js"></script>
+  </body>
+</html>

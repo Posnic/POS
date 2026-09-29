@@ -97,6 +97,7 @@ function qtyText(value) {
  * and its amount is already inside the total.
  */
 function itemLines(sale, branch) {
+  const monetary = require('../utils/currency').policy(branch || {});
   const rows = Array.isArray(sale && sale.items) ? sale.items : [];
   return rows
     .filter((it) => it && !it.return && String(it.name || it.item_name || '').trim())
@@ -142,9 +143,12 @@ function itemLines(sale, branch) {
          * blank stripe down a year of old bills.
          */
         hsn: wants(branch, 'bill_print_hsn') ? String(it.hsncode || '').trim() : '',
-        rate: rate > 0 ? rate.toFixed(2) : '',
+        rate: rate > 0 ? rate.toFixed(monetary.currencyDigits) : '',
         qty: qtyText(qty),
-        amount: Math.round(rate * qty * 100) / 100,
+        amount: require('../utils/currency').fromMinor(
+          require('../utils/currency').toMinor(rate * qty, monetary),
+          monetary
+        ),
       };
     });
 }
@@ -522,6 +526,8 @@ function buildBillPayload(sale = {}, branch = {}) {
      * Empty for a shop that has not set one, which prints bare numbers, as
      * it always has.
      */
+    currencyCode: require('../utils/currency').policy(branch || {}).currencyCode,
+    currencyDigits: require('../utils/currency').policy(branch || {}).currencyDigits,
     currency: String((branch && branch.currency) || '')
       .trim()
       .slice(0, 4),

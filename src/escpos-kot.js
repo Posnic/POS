@@ -194,15 +194,20 @@ function renderKitchenTicket(ticket = {}, options = {}) {
     const worth = item && item.priced_at_table;
     if (worth !== undefined && worth !== null && Number(worth) > 0) {
       const amount = Number(worth);
-      const shown = Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
+      const digits = Number.isInteger(ticket.money?.currencyDigits) ? ticket.money.currencyDigits : 2;
+      const shown = Number.isInteger(amount) ? String(amount) : amount.toFixed(digits);
       /* Bold like the name, because on these lines the amount IS part of what
          to cook. r.line takes no options - bold is set around it, the way the
          name line above does it. */
       r.bold(true);
-      r.line('   Rs ' + shown);
+      r.line('   ' + (ticket.money?.currencyCode || ticket.money?.currency || 'Rs') + ' ' + shown);
       r.bold(false);
     }
 
+    if (item.instruction_only) { r.bold(true); r.line('PREPARATION UPDATE'); r.line('Do not add another item'); r.bold(false); }
+    if (item.seat || item.course) r.line('   ' + [item.seat ? 'Seat ' + item.seat : '', item.course || ''].filter(Boolean).join(' / '));
+    const allergies = [...(item.allergies || []), item.allergy_note || ''].filter(Boolean);
+    if (allergies.length) { r.bold(true); r.line('   ALLERGY: ' + allergies.join(', ')); r.bold(false); }
     const hot = spiceLine(item && (item.spice_level != null ? item.spice_level : item.spice));
     if (hot) r.line('   ' + hot);
     const note = String((item && (item.description || item.item_description)) || '').trim();

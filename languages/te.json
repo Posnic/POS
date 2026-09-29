@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "ఈ బిల్లుకు అక్కడే ఉన్న మేనేజర్ అవసరం. ఈ కలయికకు దూరం నుంచి ఆమోదించే సదుపాయం ఇంకా అందుబాటులో లేదు.",
   "lang_business_use_manager_pin": "మేనేజర్ PIN ఉపయోగించండి",
   "lang_business_valid_until": "ఈ సమయం వరకు చెల్లుతుంది",
-  "lang_business_waiting_owner": "యజమాని కోసం వేచి ఉంది"
+  "lang_business_waiting_owner": "యజమాని కోసం వేచి ఉంది",
+  "lang_changes_not_saved": "మార్పులు సేవ్ కాలేదు.",
+  "lang_continue": "కొనసాగించండి",
+  "lang_reason": "కారణం"
 }

@@ -663,6 +663,7 @@ class KOTManager {
     // restart that lands on a different port keeps working.
     const { branchId, printerNames } = this.config;
     const apiUrl = kotApiUrl();
+    void this._flushDeliveryReports();
 
     try {
       console.log('[KOT] Polling server...');
@@ -874,6 +875,7 @@ class KOTManager {
           dineType: f.dineType,
           saleId: f.saleIdDisplay,
           deliverTo: f.deliverTo,
+          money: sale.money,
           note: f.orderNote,
           items: f.items.map((it) => ({
             name: require('./item-localization').name(it, itemLanguage) || it.product_name || it.itemName || '',
@@ -884,6 +886,9 @@ class KOTManager {
             /* Carried through so the thermal renderer can print it; see
                spiceLine in escpos-kot.js. */
             spice_level: it.spice_level != null ? it.spice_level : it.spice,
+            priced_at_table: it.priced_at_table,
+            instruction_only: it.instruction_only === true,
+            seat: it.seat, course: it.course, allergies: it.allergies, allergy_note: it.allergy_note,
           })),
           /* The HTML ticket has struck out cancelled dishes for as long as it
              has existed; the bytes could not, until strikeLine. Same field
@@ -975,6 +980,40 @@ class KOTManager {
    * @param {string} [timing.via]   'bytes' for ESC/POS, 'window' for the PDF
    *                                fallback, which is about ten times slower
    */
+  _queueDeliveryReport(sale, results) {
+    if (!sale._deliveryKey || !sale._id || !this.config?.branchId) return;
+    try {
+      const file=path.join(this.logsDir,'delivery-pending.json');
+      fs.mkdirSync(this.logsDir,{recursive:true});
+      let pending={};try{pending=JSON.parse(fs.readFileSync(file,'utf8'));}catch{}
+      const key=crypto.createHash('sha256').update(sale._deliveryKey).digest('hex');
+      pending[key]={key:sale._deliveryKey,saleId:String(sale._id),branchId:String(this.config.branchId),till:this.tillId,
+        at:new Date().toISOString(),printers:results.map(result=>({name:result.name,copy:result.copy || 1,
+          state:result.status==='success'?'accepted':result.status==='failed'?'failed':result.reason?.includes('unknown')?'unknown':'pending',reason:result.reason || ''}))};
+      fs.writeFileSync(file+'.tmp',JSON.stringify(pending));fs.renameSync(file+'.tmp',file);
+      void this._flushDeliveryReports();
+    } catch(error) {console.warn('[KOT] Delivery report retained in ticket log:',error.message);}
+  }
+
+  async _flushDeliveryReports() {
+    if(this._reportingDelivery)return;
+    this._reportingDelivery=true;
+    const file=path.join(this.logsDir,'delivery-pending.json');
+    try {
+      let pending={};try{pending=JSON.parse(fs.readFileSync(file,'utf8'));}catch{return;}
+      for(const [key,report] of Object.entries(pending).slice(0,20)) {
+        const result=await fetch(kotApiUrl()+'/sales/kitchenDeliveryReport',{method:'POST',
+          headers:{'Content-Type':'application/json',kioskkey:process.env.KIOSK_API_KEY || ''},
+          body:JSON.stringify(report),signal:AbortSignal.timeout(5000)});
+        if(!result.ok)break;
+        const current=JSON.parse(fs.readFileSync(file,'utf8'));
+        if(current[key]?.at===report.at)delete current[key];
+        fs.writeFileSync(file+'.tmp',JSON.stringify(current));fs.renameSync(file+'.tmp',file);
+      }
+    } catch(error) {console.warn('[KOT] Delivery status will retry:',error.message);}
+    finally {this._reportingDelivery=false;}
+  }
+
   _logTicket(sale, printKind, kotNumber, saleDispId, saleDbId, printerResults, timing = {}) {
     if (printerResults.length && printerResults.every(r => r.cached || r.deferred)) return;
     const uid = crypto.randomUUID ? crypto.randomUUID()
@@ -1151,6 +1190,7 @@ class KOTManager {
           this._logTicket(sale, printKind, kotNumber, saleDispId, saleDbId, rawResults,
             { ms: Date.now() - ticketStartedAt, via: 'bytes' });
         }
+        this._queueDeliveryReport(sale, rawResults);
         return rawResults;
       }
     }
@@ -1214,6 +1254,7 @@ class KOTManager {
         { ms: Date.now() - ticketStartedAt, via: 'window' });
     }
 
+    this._queueDeliveryReport(sale, printerResults);
     return printerResults;
   }
 
@@ -1361,6 +1402,9 @@ class KOTManager {
           <div class="in ${isCancelled ? 'cx' : ''}">${this._esc(String(name))}</div>
           <div class="iq">x${qty}</div>
         </div>
+        ${it.instruction_only ? '<div class="nt">PREPARATION UPDATE — do not add another item</div>' : ''}
+        ${it.seat || it.course ? `<div class="is">${this._esc([it.seat ? 'Seat ' + it.seat : '', it.course || ''].filter(Boolean).join(' · '))}</div>` : ''}
+        ${(it.allergies || []).length || it.allergy_note ? `<div class="nt">ALLERGY: ${this._esc([...(it.allergies || []), it.allergy_note || ''].filter(Boolean).join(', '))}</div>` : ''}
         ${hot ? `<div class="is">${this._esc(hot)}</div>` : ''}
         ${desc ? `<div class="id">** ${this._esc(String(desc))} **</div>` : ''}
       </div>`;

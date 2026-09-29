@@ -9,24 +9,25 @@ Module._load=function(name,...args){if(name==='electron')return {app:{getPath:()
 const KOT=require('../src/kot-manager'),ledger=require('../src/print-ledger'),{kotJobKey}=require('../src/kot-job-key');Module._load=load;
 function rig(t,{windowPath=false,legacy=false}={}){
  const dir=fs.mkdtempSync(path.join(root,'case-'));let now=Date.now();t.mock.method(Date,'now',()=>now);
- const calls=[],marks=[];let behavior=()=>({success:true}),ack=true;
+ const calls=[],marks=[],reports=[];let behavior=()=>({success:true}),ack=true;
  const sale={_id:'sale1',sales_id:'S1',sale_process:'KOT',table_number:'23',items:[{item_name:'Rice',item_quantity:2}]};
  if(!legacy)sale.print_jobs=[{type:'new',timestamp:'2026-09-26T17:00:00Z',items:sale.items}];
  const config={branchId:'b1',printerNames:['Kitchen','Pass'],printers:[{name:'Kitchen',copies:2,pageSize:'80mm'},{name:'Pass',copies:1,pageSize:'58mm'}]};
  let announced=0;
  function make(){
   const manager=new KOT({hardware:windowPath?null:{sendRawToPrinter:async(name,bytes,label)=>{calls.push({name,label});return behavior(name,calls.length);}}});
-  ledger.setDir(dir);manager.config=structuredClone(config);manager._announceToKitchen=()=>announced++;
+  manager.logsDir=path.join(dir,'logs');ledger.setDir(dir);manager.config=structuredClone(config);manager._announceToKitchen=()=>announced++;
   manager._waitForPrintPage=async()=>{};
   manager._printToDeviceWithFallback=async(_w,name,size,strict)=>{calls.push({name,size,strict});return behavior(name,calls.length);};
   return manager;
  }
  const manager=make();
  t.mock.method(global,'fetch',async(url,init)=>{
+  if(url.includes('kitchenDeliveryReport')){reports.push(JSON.parse(init.body));return {ok:true};}
   if(url.includes('multiKitchenPrint'))return {ok:true,json:async()=>({data:[sale]})};
   marks.push(JSON.parse(init.body));return {ok:ack,status:ack?200:500};
  });
- return {manager,calls,marks,sale,dir,make,set(fn){behavior=fn;},tick(ms=300001){now+=ms;},get announced(){return announced;},ack(value){ack=value;}};
+ return {manager,calls,marks,reports,sale,dir,make,set(fn){behavior=fn;},tick(ms=300001){now+=ms;},get announced(){return announced;},ack(value){ack=value;}};
 }
 test('partial failure retries only missing copies after restart and retains original targets',async t=>{
  const r=rig(t);r.set((_name,n)=>({success:n!==2,error:'offline'}));
@@ -81,4 +82,15 @@ test('a layout fallback is decided before sending any raw copy',async t=>{
  await r.manager._pollOnce();assert.equal(r.calls.length,3);
  assert.ok(r.calls.every(c=>c.strict===true),'some copies were sent raw before the window fallback');
  assert.equal(r.marks.length,1);
+});
+
+
+test('delivery reports distinguish each printer copy and never label acceptance as paper printed',async t=>{
+ const r=rig(t);r.set(name=>({success:name==='Pass',error:'offline'}));
+ await r.manager._pollOnce();
+ await r.manager._flushDeliveryReports();
+ assert.ok(r.reports.length>0);
+ const report=r.reports.at(-1);assert.equal(report.printers.length,3);
+ assert.deepEqual(report.printers.map(printer=>printer.state),['failed','failed','accepted']);
+ assert.equal(r.marks.length,0);
 });

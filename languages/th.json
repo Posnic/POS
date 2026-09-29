@@ -3696,5 +3696,8 @@
   "lang_business_unsupported_bill": "บิลนี้ต้องให้ผู้จัดการที่อยู่ในร้านดำเนินการ ยังไม่รองรับการอนุมัติทางไกลสำหรับรายการในรูปแบบนี้",
   "lang_business_use_manager_pin": "ใช้ PIN ของผู้จัดการ",
   "lang_business_valid_until": "ใช้ได้ถึง",
-  "lang_business_waiting_owner": "กำลังรอเจ้าของ"
+  "lang_business_waiting_owner": "กำลังรอเจ้าของ",
+  "lang_changes_not_saved": "ไม่ได้บันทึกการเปลี่ยนแปลง",
+  "lang_continue": "ดำเนินการต่อ",
+  "lang_reason": "เหตุผล"
 }

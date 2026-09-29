@@ -26,6 +26,9 @@
   "A sale id is required": [
     "src/repositories/invoice.repository.js"
   ],
+  "A supplier email already exists. Nothing was imported.": [
+    "src/services/supplier.service.js"
+  ],
   "A username and password are both required": [
     "src/controllers/users.controller.js"
   ],
@@ -286,7 +289,7 @@
   "Branches retrieved successfully": [
     "src/controllers/branches.controller.js"
   ],
-  "CSV validation failed: Missing required fields. Please ensure all items have name, category_name, selling_price, and available_quantity.": [
+  "CSV validation failed. Correct the listed required fields and numbers; nothing was imported.": [
     "src/repositories/item.repository.js"
   ],
   "Calling": [
@@ -399,6 +402,15 @@
   ],
   "Common settings updated": [
     "src/controllers/settings.controller.js"
+  ],
+  "Conflicting duplicate items in CSV. Nothing was imported.": [
+    "src/repositories/item.repository.js"
+  ],
+  "Correct the listed customer rows. Nothing was imported.": [
+    "src/services/customer.service.js"
+  ],
+  "Correct the listed supplier rows. Nothing was imported.": [
+    "src/services/supplier.service.js"
   ],
   "Could not allow that till": [
     "src/repositories/print-till.repository.js"
@@ -1184,9 +1196,6 @@
   "No changes made or item not found": [
     "src/repositories/item.repository.js"
   ],
-  "No changes made to the order": [
-    "src/repositories/sale.repository.js"
-  ],
   "No data to import": [
     "src/controllers/customer-categories.controller.js"
   ],
@@ -1842,6 +1851,9 @@
   ],
   "Shift updated": [
     "src/repositories/shift.repository.js"
+  ],
+  "Sign in to hold a course.": [
+    "src/repositories/sale.repository.js"
   ],
   "Something went wrong!": [
     "src/middleware/errorHandler.js"
