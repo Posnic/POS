@@ -1,6 +1,6 @@
 # Business close-triggered summaries
 
-Status: source validation, desktop preparation and Community/Cloud publication implemented locally. No close-trigger setting or
+Status: source validation, desktop preparation, Community/Cloud publication and ACL-scoped reads implemented locally. No close-trigger setting or
 delivery is enabled by this branch yet. Fixed-time daily summaries continue to
 use their existing contract.
 
@@ -154,3 +154,28 @@ The latter include actual desktop session preparation through the agent and
 Gateway, lost acknowledgement recovery, and rejecting a reopened Cloud close
 without accessing Cloud sales. These transport checks do not establish source
 completeness, immutable financial history or notification delivery readiness.
+
+## Permission-controlled session reads
+
+`GET /api/business/v1/register-summaries?branchId=...&sessionId=...` uses the
+separate Business session, fresh server-derived branch scope, `overview.read`
+and `notifications.self.manage`. Discovery advertises
+`registerReporting: bounded-register-session-v1` only when the client requests
+`registerSessions=1`; older discovery responses remain unchanged.
+
+The reader accepts only the two scope identifiers. It verifies the live close,
+waits through the ten-minute grace and rejects closes older than 32 days. It
+upserts an expiring, versioned desktop request; missing prepared data returns
+`summary_unavailable` rather than running a report on the server. Publisher
+ownership is checked before and after reading the snapshot, and the source close
+is checked again. Pending publication, reassignment, rejected sequence, changed
+close, malformed totals or mismatched currency fail closed. The response omits
+publisher internals and source document counts, uses no-store headers, and
+always identifies source completeness as unverified (`complete: false`). A
+snapshot older than fifteen minutes is explicitly delayed.
+
+Nine real-Mongo reader/publication tests and eighteen Business HTTP integration
+tests cover bounded collection access, request metadata, malformed snapshots,
+source/publisher races, authentication, ACL loss, branch isolation, reopening,
+strict query scope and opt-in discovery. Automatic request scheduling,
+versioned preferences, mobile settings and notification delivery remain open.

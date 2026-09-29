@@ -914,22 +914,126 @@ test('item reads require live item ACL, one authorized branch and a validated pu
   );
 });
 
+test('register-summary HTTP reads negotiate separately and enforce current source and financial access', async () => {
+  const f = await fixture(),
+    value = await grant(f),
+    id = String(f.branch._id);
+  const at = Date.now();
+  const close = {
+    _id: new ObjectId(),
+    license: f.branch.license,
+    branch_id: f.branch._id,
+    register_id: new ObjectId(),
+    register_name: 'Counter 1',
+    register_status: 'Closed',
+    register_opendate: new Date(at - 3 * 3600000),
+    register_closedate: new Date(at - 3600000),
+  };
+  await db.collection('cashregister').insertOne(close);
+  await db.collection('sales').insertOne({
+    license: f.branch.license,
+    branch_id: f.branch._id,
+    cashregister_id: String(close._id),
+    sale_process: 'Add',
+    payment_status: 'Paid',
+    sales_total: 50,
+    date: new Date(at - 2 * 3600000),
+    updated_date: new Date(at - 2 * 3600000),
+  });
+  const url =
+    base + '/api/business/v1/register-summaries?branchId=' + id + '&sessionId=' + close._id;
+  const headers = { 'x-forwarded-proto': 'https', authorization: 'Bearer ' + value.token };
+  assert.equal((await fetch(url, { headers: { 'x-forwarded-proto': 'https' } })).status, 401);
+  assert.equal((await fetch(url, { headers })).status, 503);
+  const key = id + ':session:' + close._id;
+  assert.equal(
+    (await db.collection('business_reporting_requests').findOne({ _id: key })).summaryKind,
+    'register-session'
+  );
+  const previous = process.env.POSNIC_DESKTOP;
+  process.env.POSNIC_DESKTOP = '1';
+  let summary;
+  try {
+    summary =
+      await require('../src/services/business-register-summary').prepareDesktopRegisterSummary(
+        db,
+        {
+          id,
+          license: String(f.branch.license),
+          currency: 'INR',
+          currencyDigits: 2,
+          timezone: f.branch.time_zone,
+        },
+        String(close._id)
+      );
+  } finally {
+    if (previous === undefined) delete process.env.POSNIC_DESKTOP;
+    else process.env.POSNIC_DESKTOP = previous;
+  }
+  const assignmentId = opaque();
+  await db.collection('business_reporting_publishers').insertOne({
+    _id: id,
+    license: f.branch.license,
+    assignmentId,
+    deviceId: 'desktop',
+    epoch: 1,
+    lastSequence: 1,
+  });
+  await db.collection('business_prepared_summaries').insertOne({
+    _id: key,
+    branch_id: f.branch._id,
+    license: f.branch.license,
+    publisherAssignmentId: assignmentId,
+    publisherDeviceId: 'desktop',
+    publisherEpoch: 1,
+    sequence: 1,
+    receivedAt: new Date(),
+    summary,
+  });
+  const response = await fetch(url, { headers });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('cache-control'), /no-store/);
+  const result = await response.json();
+  assert.equal(result.salesAfterReturnsMinor, 5000);
+  assert.equal(result.freshness.complete, false);
+  assert.equal(result.close.sessionId, String(close._id));
+  assert.equal((await fetch(url.replace(id, String(new ObjectId())), { headers })).status, 403);
+  assert.equal((await fetch(url + '&license=override', { headers })).status, 400);
+  const discovery = await (
+    await fetch(base + '/api/business/v1/discovery?registerSessions=1', { headers })
+  ).json();
+  assert.equal(discovery.registerReporting, 'bounded-register-session-v1');
+  assert.equal(
+    Object.hasOwn(
+      await (await fetch(base + '/api/business/v1/discovery', { headers })).json(),
+      'registerReporting'
+    ),
+    false
+  );
+  await db
+    .collection('cashregister')
+    .updateOne({ _id: close._id }, { $set: { register_status: 'Opened' } });
+  assert.equal((await fetch(url, { headers })).status, 404);
+  await db
+    .collection('users')
+    .updateOne({ _id: f.user._id }, { $set: { 'access.dashboard.financials': false } });
+  assert.equal((await fetch(url, { headers })).status, 403);
+});
+
 test('approval-alert HTTP preferences and background Inbox delivery retain live ACL and legacy negotiation', async () => {
   const prior = process.env.POSNIC_BUSINESS_DECISIONS;
   process.env.POSNIC_BUSINESS_DECISIONS = '1';
   try {
     const f = await fixture();
-    await db
-      .collection('users')
-      .updateOne(
-        { _id: f.user._id },
-        {
-          $set: {
-            'access.pos.discount_approve_remote': true,
-            'access.pos.discount_max_percent': 20,
-          },
-        }
-      );
+    await db.collection('users').updateOne(
+      { _id: f.user._id },
+      {
+        $set: {
+          'access.pos.discount_approve_remote': true,
+          'access.pos.discount_max_percent': 20,
+        },
+      }
+    );
     const value = await grant(f),
       id = String(f.branch._id);
     const url = base + '/api/business/v1/notifications/approvals/' + id;

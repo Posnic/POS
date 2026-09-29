@@ -6,6 +6,7 @@ const { MongoClient, ObjectId } = require('mongodb');
 const { createDesktopReportingWorker } = require('../src/services/business-reporting-worker');
 const { prepareDesktopRegisterSummary } = require('../src/services/business-register-summary');
 const { registerCloseFact } = require('../src/services/business-register-close');
+const { readRegisterSummary } = require('../src/services/business-register-reports');
 const at = Date.parse('2026-09-29T12:00:00Z'),
   now = () => at;
 const previous = {
@@ -91,6 +92,175 @@ async function fixture() {
   await db.collection('business_reporting_local').insertOne(job);
   return { db, branch, close, job };
 }
+
+const readContext = (f) => ({
+  businessId: f.branch.license,
+  accountId: String(new ObjectId()),
+  branches: [f.branch],
+  capabilities: ['overview.read', 'notifications.self.manage'],
+});
+const readQuery = (f) => ({ branchId: f.branch.id, sessionId: f.job.sessionId });
+function guardedReads(db) {
+  return {
+    collection(name) {
+      assert.ok(
+        [
+          'cashregister',
+          'business_reporting_requests',
+          'business_reporting_publishers',
+          'business_prepared_summaries',
+        ].includes(name),
+        'reads may not calculate financial reports'
+      );
+      return db.collection(name);
+    },
+  };
+}
+async function publishedFixture() {
+  const f = await fixture(),
+    context = readContext(f);
+  await assert.rejects(readRegisterSummary(guardedReads(f.db), context, readQuery(f), { now }), {
+    code: 'summary_unavailable',
+  });
+  process.env.POSNIC_BUSINESS_LOCAL_REPORTING = '1';
+  const worker = createDesktopReportingWorker(f.db, { now });
+  try {
+    await worker.tick();
+  } finally {
+    worker.stop();
+    delete process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+  }
+  return { ...f, context };
+}
+test('bounded reads request actual desktop preparation and return only scoped partial or delayed totals', async () => {
+  const f = await publishedFixture();
+  const readDb = guardedReads(f.db);
+  const result = await readRegisterSummary(readDb, f.context, readQuery(f), { now });
+  assert.equal(result.salesAfterReturnsMinor, 10000);
+  assert.equal(result.close.sessionId, f.job.sessionId);
+  assert.equal(result.businessId, f.branch.license);
+  assert.equal(result.freshness.state, 'partial');
+  assert.equal(result.freshness.complete, false);
+  assert.equal(result.publisherAssignmentId, undefined);
+  assert.equal(result.sourceDocuments, undefined);
+  const request = await f.db.collection('business_reporting_requests').findOne({ _id: f.job._id });
+  assert.equal(request.summaryKind, 'register-session');
+  assert.equal(request.closeRevision, result.close.closeRevision);
+  assert.equal(request.expiresAt - request.requestedAt, 1800000);
+  assert.equal(
+    (await readRegisterSummary(readDb, f.context, readQuery(f), { now: () => at + 16 * 60000 }))
+      .freshness.state,
+    'delayed'
+  );
+});
+test('register reads enforce permission and branch scope before I/O and do not queue ineligible closes', async () => {
+  const f = await fixture(),
+    context = readContext(f);
+  const noIo = {
+    collection() {
+      throw new Error('unauthorized database access');
+    },
+  };
+  for (const capabilities of [[], ['overview.read'], ['notifications.self.manage']])
+    await assert.rejects(
+      readRegisterSummary(noIo, { ...context, capabilities }, readQuery(f), { now }),
+      { code: 'access_denied' }
+    );
+  await assert.rejects(
+    readRegisterSummary(noIo, { ...context, branches: [] }, readQuery(f), { now }),
+    { code: 'access_denied' }
+  );
+  await assert.rejects(
+    readRegisterSummary(noIo, context, { ...readQuery(f), license: 'override' }, { now }),
+    { code: 'invalid_request' }
+  );
+  await assert.rejects(
+    readRegisterSummary(f.db, context, readQuery(f), { now: () => at - 55 * 60000 }),
+    { code: 'close_grace_pending' }
+  );
+  await assert.rejects(
+    readRegisterSummary(f.db, context, readQuery(f), { now: () => at + 33 * 86400000 }),
+    { code: 'date_out_of_range' }
+  );
+  assert.equal(await f.db.collection('business_reporting_requests').countDocuments({}), 0);
+});
+test('register reads reject corrupt metrics and unexpected payloads without returning plausible totals', async () => {
+  const f = await publishedFixture(),
+    snapshots = f.db.collection('business_prepared_summaries');
+  const row = await snapshots.findOne({ _id: f.job._id });
+  for (const mutate of [
+    (s) => {
+      s.salesAfterReturnsMinor++;
+    },
+    (s) => {
+      s.sourceComplete = true;
+    },
+    (s) => {
+      s.sourceDocuments = 100001;
+    },
+    (s) => {
+      s.close.sessionId = String(new ObjectId());
+    },
+    (s) => {
+      s.close.privateData = 'hidden';
+    },
+    (s) => {
+      s.secret = 'hidden';
+    },
+    (s) => {
+      s.currencyDigits = 3;
+    },
+    (s) => {
+      s.preparedAt = s.close.closedAt;
+    },
+    (s) => {
+      s.billedSalesMinor = Number.MAX_SAFE_INTEGER + 1;
+    },
+  ]) {
+    const summary = structuredClone(row.summary);
+    mutate(summary);
+    await snapshots.updateOne({ _id: f.job._id }, { $set: { summary } });
+    await assert.rejects(
+      readRegisterSummary(guardedReads(f.db), f.context, readQuery(f), { now }),
+      { code: 'summary_unavailable' }
+    );
+  }
+});
+test('register reads recheck publisher and close state after fetching the snapshot', async () => {
+  for (const change of ['publisher', 'source']) {
+    const f = await publishedFixture();
+    let changed = false;
+    const racing = {
+      collection(name) {
+        const c = guardedReads(f.db).collection(name);
+        if (name !== 'business_prepared_summaries') return c;
+        return {
+          async findOne(...args) {
+            const row = await c.findOne(...args);
+            if (!changed) {
+              changed = true;
+              if (change === 'publisher')
+                await f.db
+                  .collection('business_reporting_publishers')
+                  .updateOne(
+                    { _id: f.branch.id },
+                    { $set: { assignmentId: 'x'.repeat(43), epoch: 2 } }
+                  );
+              else
+                await f.db
+                  .collection('cashregister')
+                  .updateOne({ _id: f.close._id }, { $set: { register_status: 'Opened' } });
+            }
+            return row;
+          },
+        };
+      },
+    };
+    await assert.rejects(readRegisterSummary(racing, f.context, readQuery(f), { now }), {
+      code: 'summary_unavailable',
+    });
+  }
+});
 test('a negotiated session job prepares its own totals and stages once without running the daily preparer', async () => {
   const f = await fixture();
   let scans = 0;

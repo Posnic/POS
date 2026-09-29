@@ -69,6 +69,9 @@ router.get('/discovery', (_req, res) =>
     audience: 'posnic-business',
     reporting: 'bounded-summary-v2',
     ...(_req.query.items === '1' ? { itemReporting: 'bounded-items-v1' } : {}),
+    ...(_req.query.registerSessions === '1'
+      ? { registerReporting: 'bounded-register-session-v1' }
+      : {}),
     ...(_req.query.approvals === '1' && process.env.POSNIC_BUSINESS_DECISIONS === '1'
       ? { approvalAlerts: 'inbox-approval-v1' }
       : {}),
@@ -386,6 +389,18 @@ router.get(
 router.get(
   '/context',
   wrap(async (req, res) => res.json(await req.businessAccess.contextFor(req.businessIdentity.user)))
+);
+router.get(
+  '/register-summaries',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-register-reports').readRegisterSummary(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.query
+      )
+    )
+  )
 );
 router.post(
   '/session/rotate',
