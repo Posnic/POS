@@ -3765,7 +3765,13 @@ PosnicPro.sales._manualDiscountPct = function (data) {
 // discount, or this user may apply it within their cap; otherwise the
 // manager PIN/card modal runs first and the token is attached to the
 // payload for the server-side check.
-PosnicPro.sales.guardDiscountApproval = function (params, proceed) {
+PosnicPro.sales.guardDiscountApproval = function (params, proceed, checkedPending) {
+    if (!checkedPending && PosnicPro.businessApproval && PosnicPro.businessApproval.hasPending()) {
+        PosnicPro.businessApproval.offer(params, proceed, function () {
+            PosnicPro.sales.guardDiscountApproval(params, proceed, true);
+        }, true);
+        return;
+    }
     var data;
     try { data = JSON.parse(params.data); } catch (e) { proceed(); return; }
     if (!data || !PosnicPro.sales._manualDiscountOn(data)) { proceed(); return; }
@@ -3777,15 +3783,21 @@ PosnicPro.sales.guardDiscountApproval = function (params, proceed) {
             return;
         }
     }
-    PosnicPro.requireManagerApproval('discount_apply',
-        { prompt: "This discount needs a manager's approval." },
+    var localApproval = function () { PosnicPro.requireManagerApproval('discount_apply',
+        { prompt: "This discount needs a manager's approval.", force: true },
         function (approval) {
             if (approval && approval.approval_token) {
                 data.approval_token = approval.approval_token;
                 params.data = JSON.stringify(data);
             }
             proceed();
-        });
+        }, function () {
+            PosnicPro.sales.submissionInProgress = false;
+            $('#save_btn').prop('disabled', false);
+            $('#save_submit').removeClass('disabled');
+        }); };
+    if (PosnicPro.businessApproval) PosnicPro.businessApproval.offer(params, proceed, localApproval);
+    else localApproval();
 };
 
 /*********** START - ADD NEW SALES ***********/
@@ -4047,6 +4059,7 @@ PosnicPro.sales.addSale = {
                 // ✅ Clear submission flag
     PosnicPro.sales.submissionInProgress = false;
                 if (response.type === 'success') {
+                    if (PosnicPro.businessApproval) PosnicPro.businessApproval.saved();
                     // Stock just changed on the server; cached items are stale.
                     PosnicPro.sales.itemCache.clear();
                     (sendSms.cust_phone || { setCountry: function () {} }).setCountry(response.data.country_sort);
@@ -4131,12 +4144,14 @@ PosnicPro.sales.addSale = {
                         }
                     }
                 } else {
+                    if (PosnicPro.businessApproval && PosnicPro.businessApproval.failed({ responseJSON: response })) return;
                     // ✅ Re-enable on error response
                     $("#save_btn").prop('disabled', false);
                     $("#save_submit").removeClass('disabled');
                     PosnicPro.alert(response.type, response.message);
                 }
             }, function (xhr) {
+                if (PosnicPro.businessApproval && PosnicPro.businessApproval.failed(xhr)) return;
                 // ✅ Clear submission flag and re-enable button on error
                 PosnicPro.sales.submissionInProgress = false;
                 $("#save_btn").prop('disabled', false);
@@ -4419,6 +4434,7 @@ PosnicPro.sales.editSale = {
             SalesDocumentId = (PosnicPro.sales.salesExchange === true) ? PosnicPro.sales.refundSaleId : SalesDocumentId;
             var data = {
                 sale_process: process_status,
+                return_register_id: PosnicPro.sales.saleRegisterId(),
                 date: $('#time-format').val(),
                 sales_id: SalesDocumentId,
                 alternative_id: PosnicPro.sales.salesId,
@@ -6592,8 +6608,10 @@ $(document).on('click', '#sale_add_discount', function () {
         }, 60);
     };
     if (PosnicPro.posCan && !PosnicPro.posCan('discount_apply')) {
-        PosnicPro.requireManagerApproval('discount_apply',
-            { prompt: "Applying a discount needs a manager's approval." }, open);
+        var local = function () { PosnicPro.requireManagerApproval('discount_apply',
+            { prompt: "Applying a discount needs a manager's approval." }, open); };
+        if (PosnicPro.businessApproval) PosnicPro.businessApproval.editOrLocal(open, local);
+        else local();
         return;
     }
     open();
@@ -11008,12 +11026,11 @@ document.addEventListener('click', function (e) {
     if (PosnicPro.posCan && !PosnicPro.posCan('discount_apply')) {
         e.preventDefault();
         e.stopPropagation();
-        PosnicPro.requireManagerApproval('discount_apply',
-            { prompt: "Applying a discount needs a manager's approval." },
-            function () {
-                PosnicPro._discountApproved = true;
-                t.click();
-            });
+        var open = function () { PosnicPro._discountApproved = true; t.click(); };
+        var local = function () { PosnicPro.requireManagerApproval('discount_apply',
+            { prompt: "Applying a discount needs a manager's approval." }, open); };
+        if (PosnicPro.businessApproval) PosnicPro.businessApproval.editOrLocal(open, local);
+        else local();
     }
 }, true);
 

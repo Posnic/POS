@@ -469,6 +469,43 @@ router.post(
 
 router.use(protect);
 
+const businessDecisionLimit = rateLimit({
+  windowMs: 60000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => String(req.user?._id || 'unknown'),
+  handler: (_req, res) => res.status(429).json({ error: { code: 'decision_rate_limited' } }),
+});
+const businessDecisionCreateLimit = rateLimit({
+  windowMs: 60000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => String(req.user?._id || 'unknown'),
+  handler: (_req, res) => res.status(429).json({ error: { code: 'decision_rate_limited' } }),
+});
+router.post(
+  '/business-decisions',
+  businessDecisionCreateLimit,
+  bindController(salesController.businessDiscountDecision)
+);
+router.get(
+  '/business-decisions/operation/:operationId',
+  businessDecisionLimit,
+  bindController(salesController.businessDiscountDecision)
+);
+router.get(
+  '/business-decisions/:requestId',
+  businessDecisionLimit,
+  bindController(salesController.businessDiscountDecision)
+);
+router.post(
+  '/business-decisions/:requestId/cancel',
+  businessDecisionLimit,
+  bindController(salesController.businessDiscountDecision)
+);
+
 router.post(
   '/:id/kotPrint',
   ensureValidSaleIdParam,

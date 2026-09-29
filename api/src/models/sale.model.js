@@ -284,6 +284,28 @@ const saleSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    business_decision_receipt: {
+      type: new mongoose.Schema(
+        {
+          version: { type: Number, enum: [1], required: true, immutable: true },
+          decisionId: { type: String, match: /^[a-f\d]{24}$/, required: true, immutable: true },
+          revisionHash: { type: String, match: /^[a-f\d]{64}$/, required: true, immutable: true },
+          executionId: { type: String, required: true, immutable: true },
+          operationId: { type: String, required: true, immutable: true },
+          approverId: { type: String, match: /^[a-f\d]{24}$/, required: true, immutable: true },
+          requesterId: { type: String, match: /^[a-f\d]{24}$/, required: true, immutable: true },
+          deviceId: { type: String, required: true, immutable: true },
+          recordedAt: { type: Date, required: true, immutable: true },
+          currency: { type: String, match: /^[A-Z]{3}$/, required: true, immutable: true },
+          currencyDigits: { type: Number, enum: [2], required: true, immutable: true },
+          payableMinor: { type: Number, required: true, immutable: true },
+          discountMinor: { type: Number, required: true, immutable: true },
+        },
+        { _id: false, strict: 'throw' }
+      ),
+      default: undefined,
+      immutable: true,
+    },
     wallet_amount: {
       type: Number,
       default: 0,

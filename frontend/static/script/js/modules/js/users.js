@@ -780,7 +780,7 @@ PosnicPro.users = {
     },
     // The granular till permissions shown on the user form. Mirrors
     // POS_PERMISSIONS in api/src/constants/roles.constants.js.
-    POS_ACTION_KEYS: ['discount_apply', 'price_override', 'void_line', 'void_sale', 'refund',
+    POS_ACTION_KEYS: ['discount_apply', 'discount_approve_remote', 'price_override', 'void_line', 'void_sale', 'refund',
         'reprint_receipt', 'no_sale_open_drawer', 'register_open', 'register_close',
         'cash_in_out', 'cash_drop', 'quick_sale'],
     // Fill the Till/POS Actions section from a pos object; locked = driven by a

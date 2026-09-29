@@ -2077,7 +2077,7 @@ PosnicPro = {
     _approvalMode: 'pin', // 'pin' | 'card'
     requireManagerApproval: function (action, opts, onApproved, onDenied) {
         opts = opts || {};
-        if (!opts.force && PosnicPro.posCan(action)) {
+        if (PosnicPro.posCan(action) && !opts.force) {
             if (typeof onApproved === 'function') onApproved(null);
             return;
         }

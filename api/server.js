@@ -99,6 +99,11 @@ const startServer = async () => {
     const PORT = process.env.PORT || 5000;
     const HOST = process.env.HOST || config.server?.host || config.host || '0.0.0.0';
     const server = app.listen(PORT, HOST, () => {
+      const stopNotifications =
+        require('./src/services/business-notification-worker').startNotifications({
+          tenants: () => [{ db: mongoose.connection.db }],
+        });
+      server.once('close', stopNotifications);
       console.log('🚀 =====================================');
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);

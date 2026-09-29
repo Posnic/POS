@@ -119,6 +119,11 @@ function admit({
    */
   if (health) return { allow: true, register: false, code: '', message: '' };
 
+  // Business uses its own scoped, revocable sessions, not selling-handset slots.
+  // Explicit IP blocks above still apply; the API still authenticates each call.
+  if (/^\/(?:api\/)?business\/v1(?:\/|\?|$)/.test(String(url)))
+    return { allow: true, register: false, code: '', message: '' };
+
   if (devices[ip]) return { allow: true, register: true, code: '', message: '' };
 
   releaseIdle(devices, now);

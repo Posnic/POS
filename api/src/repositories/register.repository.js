@@ -14,7 +14,7 @@ class RegisterRepository {
     this.model = model || new RegisterModel();
   }
 
-  async validateSessionOwner(registerId, userId, deviceId) {
+  async validateSessionOwner(registerId, userId, deviceId, { acquire = true } = {}) {
     if (!registerId || !ObjectId.isValid(registerId)) {
       return { status: false, message: ERROR_MESSAGES.INVALID_REGISTER_ID };
     }
@@ -42,7 +42,7 @@ class RegisterRepository {
       };
     }
 
-    if (!document.lock_device_id) {
+    if (!document.lock_device_id && acquire) {
       await collection.updateOne(
         {
           _id: document._id,
