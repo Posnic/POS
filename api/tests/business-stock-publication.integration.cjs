@@ -781,3 +781,128 @@ test('opted-in Community recipient triggers desktop preparation and Inbox withou
       desktop.stop();
     }
   }));
+
+test(
+  'automatic Cloud stock demand crosses desktop, agent and Gateway and recovers a lost receipt',
+  { skip: !process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT },
+  async () =>
+    withStockRuntime(async () => {
+      const root = process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT;
+      const path = require('node:path');
+      const { MongoClient: GatewayClient } = require(
+        path.join(root, 'apps/sync-gateway/node_modules/mongodb')
+      );
+      const { createBusinessPublisher } = require(
+        path.join(root, 'apps/sync-agent/src/business-reporting')
+      );
+      const { createBusinessReporting } = require(
+        path.join(root, 'apps/sync-gateway/src/business-reporting')
+      );
+      const { receiveStockSnapshot } = require(
+        path.join(root, 'apps/sync-gateway/src/business-stock-snapshots')
+      );
+      const f = await fixture();
+      const cloud = client.db('automatic_cloud_' + new ObjectId());
+      await cloud.collection('branches').insertOne(await f.db.collection('branches').findOne({}));
+      let at = Date.now();
+      const now = () => at;
+      const user = {
+        _id: new ObjectId(),
+        license: new ObjectId(f.branch.license),
+        activate: true,
+        usertype: 'manager',
+        access: { item: { read: true } },
+        branch_access: [{ branch_id: new ObjectId(f.branch.id) }],
+      };
+      await cloud.collection('users').insertOne(user);
+      const context = await require('../src/services/business-access')
+        .createBusinessAccess(cloud, { now })
+        .contextFor(user);
+      await require('../src/services/business-stock-notification-preferences').saveStockPreference(
+        cloud,
+        context,
+        f.branch.id,
+        {
+          expectedRevision: 0,
+          enabled: true,
+          minimumIntervalMinutes: 15,
+          quiet: { enabled: false, start: '22:00', end: '07:00' },
+        },
+        { now }
+      );
+      const guarded = (db) => ({
+        collection(name) {
+          assert.notEqual(name, 'items');
+          assert.notEqual(name, 'sales');
+          return db.collection(name);
+        },
+      });
+      const connection = await GatewayClient.connect(mongo.getUri());
+      const gatewayDb = guarded(connection.db(cloud.databaseName));
+      const reporting = createBusinessReporting(gatewayDb, { now });
+      const device = { deviceId: 'automatic-cloud-desktop', branches: [f.branch.id] };
+      const publications = [];
+      let loseReceipt = true;
+      const send = async (endpoint, body) => {
+        if (endpoint.endsWith('/work')) return reporting.work(device, body);
+        if (endpoint.endsWith('/claim')) return reporting.claim(device, body.branchId);
+        if (endpoint.endsWith('/stock-snapshot')) {
+          publications.push(structuredClone(body));
+          const receipt = await receiveStockSnapshot(gatewayDb, device, body, { now });
+          if (loseReceipt) {
+            loseReceipt = false;
+            throw new Error('lost snapshot receipt');
+          }
+          return receipt;
+        }
+        assert.ok(endpoint.endsWith('/summaries'));
+        return reporting.publish(device, body);
+      };
+      const previousLocal = process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+      delete process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+      const desktop = createDesktopReportingWorker(f.db, { now });
+      const recipient =
+        require('../src/services/business-stock-notification-worker').createStockNotificationWorker(
+          guarded(cloud),
+          { now }
+        );
+      const agent = createBusinessPublisher({ db: connection.db(f.db.databaseName), send, now });
+      try {
+        assert.equal(await cloud.collection('business_reporting_requests').countDocuments({}), 0);
+        assert.equal((await recipient.tick()).scan.state, 'unavailable');
+        await desktop.tick();
+        await agent.tick();
+        await desktop.tick();
+        await agent.tick();
+        assert.equal(publications.length, 1);
+        // A lost response leaves durable agent progress at the same page.
+        at += 10001;
+        await agent.tick();
+        assert.equal(publications.length, 2);
+        assert.deepEqual(publications[1], publications[0]);
+        await desktop.tick();
+        assert.equal(
+          (await f.db.collection('business_stock_alert_local').findOne({ kind: 'snapshot' }))
+            .observation,
+          undefined
+        );
+        at += 5001;
+        const result = await recipient.tick();
+        assert.equal(result.scan.state, 'complete');
+        assert.equal(result.delivery, 'materialized');
+        const event = await cloud.collection('business_inbox').findOne({});
+        assert.equal(event.accountId, String(user._id));
+        assert.equal(event.kind, 'stock_low');
+        assert.equal(event.stock.newLowItemCount, 1);
+        assert.equal(event.pushPending, true);
+        await recipient.tick();
+        assert.equal(await cloud.collection('business_inbox').countDocuments({}), 1);
+      } finally {
+        desktop.stop();
+        recipient.stop();
+        await connection.close();
+        if (previousLocal === undefined) delete process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+        else process.env.POSNIC_BUSINESS_LOCAL_REPORTING = previousLocal;
+      }
+    })
+);

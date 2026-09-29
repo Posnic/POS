@@ -629,3 +629,21 @@ without an interactive stock read. The final end-to-end case was repeated after
 adding a healthy-stock refresh during notification cadence. Lint, formatting and
 attribution pass. Multi-branch fairness, slow-network throughput, real deployment
 and provider qualification remain open; no production flags were changed.
+
+## Automatic Cloud path qualification
+
+An integration case now starts with an opted-in Cloud recipient and no Cloud
+reporting request. The recipient scheduler creates demand, the real desktop
+reporting worker emits its heartbeat, the actual sync agent discovers/claims work,
+and the desktop stages both summary and full snapshot. The real Gateway receiver
+commits the snapshot. A deliberately lost first receipt forces the agent to replay
+the identical publication; desktop receipt cleanup then releases retained facts.
+The Cloud recipient reads the committed observation and creates exactly one scoped
+Inbox entry eligible for the separately qualified push consumer.
+
+Both Cloud database adapters reject inventory and sales collection access in this
+test. Only the desktop holds and scans the catalogue. No publisher assignment,
+heartbeat or private snapshot is manually seeded. All 23 stock publication tests
+pass, along with lint, formatting and attribution. The transport is in-process,
+so this proves protocol composition and recovery, not deployed TLS/device auth,
+real provider delivery, network latency or many-branch capacity.
