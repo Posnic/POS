@@ -1,9 +1,11 @@
 # Business close-triggered summaries
 
-Status: source validation, desktop preparation, Community/Cloud publication and ACL-scoped reads implemented locally. No close-trigger setting or
-delivery is enabled by this branch yet. Fixed-time daily summaries continue to
-use their existing contract.
-
+Status: register-session preparation, Community/Cloud publication, permission-controlled
+reads, versioned schedules, bounded discovery, private Inbox and generic push are
+implemented in review branches, with companion mobile controls. Source completeness,
+immutable historical amounts and physical-device notification qualification remain
+unproven. The checkpoints below record the incremental implementation; later sections
+supersede earlier statements about unfinished controls or delivery.
 ## Verified source
 
 `RegisterRepository.registercloseUpdate` atomically changes a scoped
