@@ -340,7 +340,8 @@ test('automatic close preparation is bounded, catches delayed sync and never rea
   assert.ok(
     await db.collection('business_reporting_requests').findOne({ sessionId: String(late._id) })
   );
-  assert.equal(await db.collection('business_inbox').countDocuments(), 0);
+  assert.ok((await db.collection('business_inbox').countDocuments()) > 0);
+  assert.equal((await readInbox(db, f.context)).entries.length, 0);
 });
 
 test('close preparation revokes lost access and a changed preference stops the claimed page', async () => {
@@ -420,4 +421,137 @@ test('close preparation retries database failures without advancing past the fai
     .collection('business_notification_preferences')
     .findOne({ accountId: f.context.accountId });
   assert.equal(pref.closeScanError, undefined);
+});
+
+test('close Inbox materialization obeys quiet hours and survives a lost scan checkpoint exactly once', async () => {
+  const f = await closeFixture();
+  const row = await f.close();
+  await db
+    .collection('business_notification_preferences')
+    .updateOne(
+      { accountId: f.context.accountId },
+      { $set: { quiet: { enabled: true, start: '22:00', end: '07:00' } } }
+    );
+  await prepareRegisterCloses(db, { now: () => due });
+  assert.equal(await db.collection('business_inbox').countDocuments(), 0);
+  const morning = Date.parse('2026-09-29T01:30:00Z');
+  let interrupted = true;
+  const crash = {
+    collection(name) {
+      const c = db.collection(name);
+      if (name !== 'business_notification_preferences') return c;
+      return new Proxy(c, {
+        get(target, prop) {
+          if (prop === 'updateOne')
+            return async (filter, update, ...args) => {
+              if (interrupted && update.$set?.closeCursor) {
+                interrupted = false;
+                throw new Error('checkpoint interrupted');
+              }
+              return target.updateOne(filter, update, ...args);
+            };
+          const value = target[prop];
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+    },
+  };
+  await prepareRegisterCloses(crash, { now: () => morning });
+  assert.equal(await db.collection('business_inbox').countDocuments(), 1);
+  await prepareRegisterCloses(db, { now: () => morning + 60000 });
+  assert.equal(await db.collection('business_inbox').countDocuments(), 1);
+  const event = await db.collection('business_inbox').findOne({});
+  assert.equal(event.kind, 'register_unavailable');
+  assert.equal(event.summary, null);
+  assert.equal(event.sessionId, String(row._id));
+  assert.equal(event.scheduleRevision, 1);
+});
+
+test('close materialization rechecks source, permission and preparation wait before inserting', async () => {
+  for (const change of ['reopen', 'permission', 'wait']) {
+    const f = await closeFixture();
+    const row = await f.close(
+      0,
+      change === 'wait' ? { register_closedate: new Date(due - 15 * 60000) } : {}
+    );
+    await prepareRegisterCloses(db, {
+      now: () => due,
+      readSummary: async () => {
+        if (change === 'reopen')
+          await db
+            .collection('cashregister')
+            .updateOne({ _id: row._id }, { $set: { register_status: 'Opened' } });
+        if (change === 'permission')
+          await db
+            .collection('users')
+            .updateOne({ _id: f.user._id }, { $set: { branch_access: [] } });
+        throw Object.assign(new Error('not ready'), { code: 'summary_unavailable' });
+      },
+    });
+    assert.equal(
+      await db.collection('business_inbox').countDocuments({ accountId: f.context.accountId }),
+      0
+    );
+    await db
+      .collection('business_notification_preferences')
+      .updateOne({ accountId: f.context.accountId }, { $set: { enabled: false } });
+  }
+});
+
+test('an actual desktop-prepared session becomes one incomplete-source Inbox summary', async () => {
+  const f = await closeFixture();
+  const row = await f.close();
+  await db.collection('sales').insertOne({
+    license: row.license,
+    branch_id: row.branch_id,
+    cashregister_id: String(row._id),
+    sale_process: 'Add',
+    payment_status: 'Paid',
+    sales_total: 125,
+    date: new Date(due - 2 * 3600000),
+    updated_date: new Date(due - 2 * 3600000),
+  });
+  const old = process.env.POSNIC_DESKTOP;
+  let prepared;
+  try {
+    process.env.POSNIC_DESKTOP = '1';
+    const branch = { ...f.context.branches[0], license: f.context.businessId };
+    prepared =
+      await require('../src/services/business-register-summary').prepareDesktopRegisterSummary(
+        db,
+        branch,
+        String(row._id),
+        { now: () => due }
+      );
+  } finally {
+    if (old === undefined) delete process.env.POSNIC_DESKTOP;
+    else process.env.POSNIC_DESKTOP = old;
+  }
+  await db.collection('business_reporting_publishers').insertOne({
+    _id: f.branchId,
+    license: row.license,
+    assignmentId: 'assignment',
+    deviceId: 'desktop',
+    epoch: 1,
+    lastSequence: 1,
+  });
+  await db.collection('business_prepared_summaries').insertOne({
+    _id: f.branchId + ':session:' + row._id,
+    license: row.license,
+    branch_id: row.branch_id,
+    publisherAssignmentId: 'assignment',
+    publisherDeviceId: 'desktop',
+    publisherEpoch: 1,
+    sequence: 1,
+    receivedAt: new Date(due),
+    summary: prepared,
+  });
+  await prepareRegisterCloses(db, { now: () => due });
+  await prepareRegisterCloses(db, { now: () => due + 60000 });
+  const events = await db.collection('business_inbox').find({}).toArray();
+  assert.equal(events.length, 1);
+  assert.equal(events[0].kind, 'register_summary');
+  assert.equal(events[0].summary.salesAfterReturnsMinor, 12500);
+  assert.equal(events[0].summary.freshness.complete, false);
+  assert.equal(events[0].summary.close.closeRevision, events[0].closeRevision);
 });

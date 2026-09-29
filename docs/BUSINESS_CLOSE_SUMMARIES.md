@@ -215,3 +215,21 @@ worker unit tests pass, including concurrent workers, pagination, delayed sync,
 grace/activation/branch exclusion, preference changes and database recovery.
 Inbox materialization, delivery revalidation, push and mobile negotiation remain
 unfinished; no public close-mode setting is enabled yet.
+## Durable close Inbox foundation
+
+Eligible scans now persist a private register-summary or register-unavailable
+entry before advancing the scan checkpoint. Identity includes the recipient,
+branch, schedule revision, session and close revision; the unique Inbox index
+makes replay after an interrupted checkpoint idempotent. The server re-reads the
+account ACL, source close and revision-bound preference before insertion. Quiet
+hours use the current branch timezone. Missing prepared data waits twenty minutes
+after the ten-minute synchronization grace, then creates an explicit unavailable
+entry rather than inventing a zero. Discovery and insertion both retain the
+24-hour late-delivery bound.
+
+Twelve notification integration tests pass, including actual desktop financial
+preparation through strict snapshot reading into Inbox, permission/source changes,
+quiet hours and checkpoint recovery. Source completeness remains false. These new
+kinds are still hidden from legacy Inbox readers and do not enqueue push yet;
+versioned reads, delivery-time source validation, close push support and mobile
+controls remain required before user-facing activation.

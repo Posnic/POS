@@ -3,11 +3,14 @@ const crypto = require('node:crypto');
 const { ObjectId } = require('mongodb');
 const { createBusinessAccess } = require('./business-access');
 const { readRegisterSummary } = require('./business-register-reports');
-const { CLOSE_GRACE_MS } = require('./business-register-close');
+const { deferQuiet } = require('./business-notification-time');
+const { CLOSE_GRACE_MS, readRegisterClose } = require('./business-register-close');
 const indexes = new WeakMap();
 async function ready(db) {
   if (!indexes.has(db)) {
     const promise = Promise.all([
+      db.collection('business_inbox').createIndex({ eventKey: 1 }, { unique: true }),
+      db.collection('business_inbox').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
       db
         .collection('business_notification_preferences')
         .createIndex({ mode: 1, enabled: 1, closeScanAt: 1 }),
@@ -103,8 +106,10 @@ async function prepareRegisterCloses(
         if (now() - started >= 3000) break;
         // A changed preference invalidates the claimed page before another request.
         if (!(await preferences.findOne(lease, { projection: { _id: 1 }, maxTimeMS: 250 }))) break;
+        let summary = null,
+          eligible = true;
         try {
-          await readSummary(
+          summary = await readSummary(
             db,
             context,
             { branchId: job.branchId, sessionId: String(row._id) },
@@ -117,7 +122,9 @@ async function prepareRegisterCloses(
             !['close_unavailable', 'close_grace_pending', 'date_out_of_range'].includes(error.code)
           )
             throw error;
+          else eligible = false;
         }
+        if (eligible) await materializeClose(db, job, lease, String(row._id), summary, { now });
         cursor = { at: row.register_closedate, id: String(row._id) };
         await preferences.updateOne(lease, { $set: { closeCursor: cursor } });
       }
@@ -148,5 +155,72 @@ async function prepareRegisterCloses(
     }
   }
   return { requested };
+}
+/** Persist an event before the scan checkpoint. Unique identity permits replay
+ * after a crash; quiet periods are retried on the next bounded sweep. */
+async function materializeClose(db, job, lease, sessionId, summary, { now = Date.now } = {}) {
+  const user = await db
+    .collection('users')
+    .findOne({ _id: new ObjectId(job.accountId), license: job.license }, { maxTimeMS: 250 });
+  const context = await createBusinessAccess(db, { now }).contextFor(user);
+  const close = await readRegisterClose(db, context, job.branchId, sessionId, { now });
+  if (
+    !close ||
+    Date.parse(close.closedAt) < job.closeNotBefore.getTime() ||
+    now() - Date.parse(close.closedAt) > 86400000 ||
+    now() < Date.parse(close.eligibleAt)
+  )
+    return;
+  // Never attach a previously prepared amount to a changed source close.
+  if (
+    summary &&
+    (summary.close?.closeRevision !== close.closeRevision ||
+      summary.branchId !== job.branchId ||
+      summary.businessId !== context.businessId)
+  )
+    return;
+  // Allow twenty minutes after the sync grace for the assigned desktop to prepare.
+  if (!summary && now() < Date.parse(close.eligibleAt) + 20 * 60000) return;
+  const branch = context.branches.find((b) => b.id === job.branchId);
+  const schedule = { time: job.time, quiet: job.quiet, timezone: branch.timezone };
+  const at = new Date(now());
+  if (deferQuiet(at, schedule) > at) return;
+  if (
+    !(await db
+      .collection('business_notification_preferences')
+      .findOne(lease, { projection: { _id: 1 }, maxTimeMS: 250 }))
+  )
+    return;
+  const eventKey = [
+    job.accountId,
+    job.branchId,
+    'register',
+    job.revision,
+    sessionId,
+    close.closeRevision,
+  ].join(':');
+  await db.collection('business_inbox').updateOne(
+    { eventKey },
+    {
+      $setOnInsert: {
+        accountId: job.accountId,
+        license: job.license,
+        branchId: job.branchId,
+        kind: summary ? 'register_summary' : 'register_unavailable',
+        scheduleRevision: job.revision,
+        sessionId,
+        closeRevision: close.closeRevision,
+        close,
+        businessDate: close.businessDate,
+        summary: summary ?? null,
+        createdAt: at,
+        expiresAt: new Date(now() + 90 * 86400000),
+        locale: job.locale,
+        channel: 'inApp',
+        pushPending: false,
+      },
+    },
+    { upsert: true }
+  );
 }
 module.exports = { prepareRegisterCloses };
