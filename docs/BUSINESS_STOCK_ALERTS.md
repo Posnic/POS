@@ -770,3 +770,22 @@ Validation: all 98 snapshot/preferences cases passed, followed by an additional
 focused account-restoration-during-cleanup race test. The latter verifies no item
 is deleted when the account reappears before the first removal. Lint, formatting
 and attribution checks pass.
+
+## Never-enabled preference lifecycle
+
+Cleanup also covers an explicitly disabled preference saved before its first opt-in,
+where no activation field exists. Live users retain these saved settings. Missing
+accounts receive the same recorded thirty-day grace period before the preference
+is removed. A first opt-in changes the revision and activation and fences an
+in-flight removal. Missing activation on an enabled record, or a null activation,
+is not interpreted as evidence that the user never enabled alerts.
+
+No item state is selected for a never-enabled preference before the applicable
+retention boundary. Existing scoped deletion budgets and reservation protections
+remain in force. Branch removal and general account erasure remain separate gaps.
+
+Validation: 96 snapshot/preferences cases passed, then the six Gateway-dependent
+cases passed with the companion checkout configured (102 total). The new cases
+exercise initial disabled saves through the preference service, exact absence
+grace, corrupt activation exclusions and first opt-in during removal. Lint,
+formatting and attribution checks pass.

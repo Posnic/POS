@@ -789,7 +789,7 @@ test(
   }
 );
 
-async function recipientFixture() {
+async function recipientFixture(enabled = true) {
   const f = await fixture();
   const user = {
     _id: new ObjectId(),
@@ -818,7 +818,7 @@ async function recipientFixture() {
     f.branch.id,
     {
       expectedRevision: 0,
-      enabled: true,
+      enabled,
       minimumIntervalMinutes: 15,
       quiet: { enabled: false, start: '22:00', end: '07:00' },
     },
@@ -2865,4 +2865,77 @@ test('account restoration during orphan cleanup stops deletion before the first 
   );
   assert.equal((await scanPreference(f)).missingAccountSince, undefined);
   assert.equal((await recipientRows(f)).length, 103);
+});
+
+test('never-enabled preferences retain live settings and erase missing accounts only after the grace period', async () => {
+  const f = await recipientFixture(false);
+  assert.equal(Object.hasOwn(await scanPreference(f), 'activationId'), false);
+  f.advance(31 * 86400000);
+  assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 0 });
+  assert.equal((await scanPreference(f)).revision, 1);
+  await f.db.collection('users').deleteOne({ _id: f.user._id });
+  f.advance(86400000);
+  assert.deepEqual(await cleanupStock(f), { status: 'orphaned', deleted: 0 });
+  assert.equal((await scanPreference(f)).revision, 2);
+  f.advance(29 * 86400000);
+  assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 0 });
+  assert.ok(await scanPreference(f));
+  f.advance(86400000);
+  assert.deepEqual(await cleanupStock(f), { status: 'removed', deleted: 0 });
+  assert.equal(await scanPreference(f), null);
+});
+
+test('cleanup does not infer never-enabled consent from missing active or null activation records', async () => {
+  for (const patch of [{ enabled: true }, { enabled: false, activationId: null }]) {
+    const f = await recipientFixture(false);
+    await f.db
+      .collection('business_stock_notification_preferences')
+      .updateOne({ _id: f.context.accountId + ':' + f.branch.id }, { $set: patch });
+    await f.db.collection('users').deleteOne({ _id: f.user._id });
+    f.advance(31 * 86400000);
+    assert.deepEqual(await cleanupStock(f), { status: 'idle' });
+    assert.equal((await scanPreference(f)).revision, 1);
+  }
+});
+
+test('first opt-in during never-enabled orphan cleanup fences preference removal', async () => {
+  const f = await recipientFixture(false);
+  await f.db.collection('users').deleteOne({ _id: f.user._id });
+  await cleanupStock(f);
+  f.advance(30 * 86400000);
+  const preferences = f.db.collection('business_stock_notification_preferences');
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_notification_preferences' && property === 'deleteOne')
+            return async (...args) => {
+              await f.db.collection('users').insertOne(f.user);
+              await require('../src/services/business-stock-notification-preferences').saveStockPreference(
+                f.db,
+                f.context,
+                f.branch.id,
+                {
+                  expectedRevision: 2,
+                  enabled: true,
+                  minimumIntervalMinutes: 15,
+                  quiet: { enabled: false, start: '22:00', end: '07:00' },
+                },
+                { now: f.now }
+              );
+              return preferences.deleteOne(...args);
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  assert.deepEqual(await cleanupStock(f, {}, database), { status: 'changed', deleted: 0 });
+  const pref = await scanPreference(f);
+  assert.equal(pref.enabled, true);
+  assert.equal(pref.revision, 3);
+  assert.equal(typeof pref.activationId, 'string');
 });

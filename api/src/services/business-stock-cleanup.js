@@ -27,7 +27,10 @@ async function drainStockRecipientCleanup(
   await states.createIndex({ license: 1, accountId: 1, branchId: 1, activationId: 1, _id: 1 });
   const job = await preferences.findOneAndUpdate(
     {
-      activationId: { $type: 'string' },
+      $or: [
+        { activationId: { $type: 'string' } },
+        { enabled: false, activationId: { $exists: false } },
+      ],
       $and: [
         {
           $or: [
@@ -47,6 +50,7 @@ async function drainStockRecipientCleanup(
     { sort: { nextCleanupAt: 1, _id: 1 }, returnDocument: 'after', maxTimeMS: 500 }
   );
   if (!job) return { status: 'idle' };
+  const neverActivated = job.enabled === false && !Object.hasOwn(job, 'activationId');
   const purgeDisabled =
     job.enabled === false &&
     job.updatedAt instanceof Date &&
@@ -57,7 +61,7 @@ async function drainStockRecipientCleanup(
   const lease = () => ({
     _id: job._id,
     revision: job.revision,
-    activationId: job.activationId,
+    activationId: neverActivated ? { $exists: false } : job.activationId,
     cleanupLeaseId: job.cleanupLeaseId,
     cleanupLeaseUntil: { $gt: new Date(now()) },
     ...(purgeOrphan
@@ -71,7 +75,7 @@ async function drainStockRecipientCleanup(
     if (
       job._id !== job.accountId + ':' + job.branchId ||
       ![job.accountId, job.branchId, String(job.license)].every(validId) ||
-      !/^[a-f\d-]{36}$/.test(job.activationId) ||
+      (!neverActivated && !/^[a-f\d-]{36}$/.test(job.activationId)) ||
       !Number.isSafeInteger(job.revision) ||
       job.revision < 1
     )
@@ -126,15 +130,20 @@ async function drainStockRecipientCleanup(
       purgeOrphan = true;
     }
 
-    const rows = await states
-      .find({
-        ...scope,
-        ...(!(purgeDisabled || purgeOrphan) ? { activationId: { $ne: job.activationId } } : {}),
-      })
-      .sort({ _id: 1 })
-      .limit(limit + 1)
-      .maxTimeMS(250)
-      .toArray();
+    const rows =
+      neverActivated && !(purgeDisabled || purgeOrphan)
+        ? []
+        : await states
+            .find({
+              ...scope,
+              ...(!(purgeDisabled || purgeOrphan)
+                ? { activationId: { $ne: job.activationId } }
+                : {}),
+            })
+            .sort({ _id: 1 })
+            .limit(limit + 1)
+            .maxTimeMS(250)
+            .toArray();
     let deleted = 0,
       visited = 0;
     const started = now();
