@@ -10,9 +10,18 @@ async function migrateContactEmailIndex(db, name, indexOptions) {
   if (!(await db.listCollections({ name }, { nameOnly: true }).hasNext())) return;
   const collection = db.collection(name);
   const indexes = await collection.listIndexes().toArray();
-  // Build the replacement first. If existing nonblank emails conflict, retain
-  // the old constraint and all records rather than silently weakening it.
-  await collection.createIndex({ email: 1 }, indexOptions);
+  // Build first; never delete contacts or remove existing constraints to make
+  // a new uniqueness rule fit historical data. A duplicate is a deferred
+  // migration, not a reason to take the entire till offline.
+  try {
+    await collection.createIndex({ email: 1 }, indexOptions);
+  } catch (error) {
+    if (error?.code !== 11000) throw error;
+    console.warn(
+      '[startup] ' + name + ': email uniqueness migration deferred; existing duplicate emails require review. Contacts and existing indexes are unchanged.'
+    );
+    return { status: 'deferred', reason: 'duplicate-email', collection: name };
+  }
   for (const index of indexes) {
     if (
       index.name !== indexOptions.name &&
