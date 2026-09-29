@@ -156,8 +156,8 @@
         var page = flow.recoveryPage;
         if (page && !page.references.length) flow.details.appendChild(element('p', PosnicPro.i18n.t('lang_business_recovery_empty', 'No unconfirmed checkout references on this page.')));
         if (page) page.references.forEach(function (row) {
-            var label = new Date(row.startedAt).toLocaleString(document.documentElement.lang || 'en') + ' · ' + row.requestId.slice(-8);
-            var item = button(flow, label, function () { selectRecovery(flow, row.requestId); });
+            var label = new Date(row.startedAt).toLocaleString(document.documentElement.lang || 'en') + ' · ' + (row.requestId || row.operationId).slice(-8);
+            var item = button(flow, label, function () { selectRecovery(flow, row); });
             item.classList.add('business-approval-recovery-row'); item.dir = 'auto';
         });
         button(flow, PosnicPro.i18n.t('lang_business_check_status', 'Check status'), function () { loadRecoveries(flow, flow.recoveryCursor); });
@@ -169,23 +169,39 @@
         flow.reference = null; flow.record = null; flow.errorMessage = ''; flow.recoveryCursor = cursor;
         flow.busy = true; render(flow);
         try {
-            var page = await request('get', '/recoveries' + (cursor ? '?cursor=' + encodeURIComponent(cursor) : ''));
+            var query = flow.scope.requestRecovery === true ? '?requests=1' : '';
+            if (cursor) query += (query ? '&' : '?') + 'cursor=' + encodeURIComponent(cursor);
+            var page = await request('get', '/recoveries' + query);
+            var cursorPattern = flow.scope.requestRecovery === true ? /^(?:[a-f\d]{64}|requests(?::(?:[a-f\d]{24}|[a-f\d]{64}))?)$/ : /^[a-f\d]{64}$/;
             if (!page || !Array.isArray(page.references) || page.references.length > 20 ||
-                (page.nextCursor !== null && (typeof page.nextCursor !== 'string' || !/^[a-f\d]{64}$/.test(page.nextCursor) || page.nextCursor === cursor)) ||
-                page.references.some(function (row) { return !row || typeof row.requestId !== 'string' || !/^[a-f\d]{24}$/.test(row.requestId) || typeof row.startedAt !== 'string' || !Number.isFinite(Date.parse(row.startedAt)); }) ||
-                new Set(page.references.map(function (row) { return row.requestId; })).size !== page.references.length) throw new Error('invalid_recovery_page');
+                (page.nextCursor !== null && (typeof page.nextCursor !== 'string' || !cursorPattern.test(page.nextCursor) || page.nextCursor === cursor)) ||
+                page.references.some(function (row) {
+                    if (!row || typeof row.startedAt !== 'string' || !Number.isFinite(Date.parse(row.startedAt))) return true;
+                    var known = typeof row.requestId === 'string' && /^[a-f\d]{24}$/.test(row.requestId);
+                    var operation = typeof row.operationId === 'string' && /^[A-Za-z0-9_-]{16,128}$/.test(row.operationId);
+                    return (!known && !(flow.scope.requestRecovery === true && row.requestId === null && operation)) ||
+                        (row.operationId !== undefined && !operation);
+                }) ||
+                new Set(page.references.map(function (row) { return row.requestId ? 'request:' + row.requestId : 'operation:' + row.operationId; })).size !== page.references.length) throw new Error('invalid_recovery_page');
             flow.recoveryPage = page;
         } catch (error) { flow.errorMessage = errorText(error); }
         finally { flow.busy = false; render(flow); if (active === flow) flow.title.focus(); }
     }
-    async function selectRecovery(flow, requestId) {
+    async function selectRecovery(flow, reference) {
         if (active !== flow || flow.busy || !flow.recoveryMode) return;
         flow.busy = true; flow.errorMessage = ''; render(flow);
         try {
-            var record = await request('get', '/' + requestId);
+            var record = await request('get', reference.requestId ? '/' + reference.requestId : '/operation/' + reference.operationId);
+            if (!record && reference.requestId === null) {
+                flow.reference = { requestId: null, operationId: reference.operationId };
+                flow.record = null; flow.recoveryMode = false;
+                flow.errorMessage = errorText(null);
+                return;
+            }
             if (!record || typeof record.operationId !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(record.operationId)) throw new Error('invalid_recovery_record');
-            flow.reference = { requestId: requestId, operationId: record.operationId };
+            flow.reference = { requestId: reference.requestId, operationId: reference.operationId || record.operationId };
             if (!validRecord(flow, record)) throw new Error('mismatched_request');
+            flow.reference.requestId = record.id;
             flow.record = record; flow.recoveryMode = false;
         } catch (error) { flow.reference = null; flow.record = null; flow.errorMessage = errorText(error); }
         finally { flow.busy = false; render(flow); if (active === flow) flow.title.focus(); schedule(flow); }

@@ -390,3 +390,86 @@ test('recovery lookup rechecks cashier access after the read and never returns r
   await assert.rejects(checkout.recoveries(context, user), { code: 'cashier_access_denied' });
   assert.equal(calls, 1);
 });
+
+test('Cloud request recovery retains unacknowledged operation references and skips already claimed requests', async () => {
+  const flags = ['POSNIC_DESKTOP', 'POSNIC_SYNC_PAIRED'];
+  const previous = Object.fromEntries(flags.map((key) => [key, process.env[key]]));
+  try {
+    for (const key of flags) process.env[key] = '1';
+    const f = await fixture();
+    await f.local.deleteOne({ _id: f.command.commandId });
+    await f.local.insertOne({
+      _id: 'agent-runtime',
+      protocolVersion: 1,
+      deviceId: f.deviceId,
+      expiresAt: new Date(f.now() + 120000),
+    });
+    const expected = new Set();
+    for (let i = 0; i < 24; i++) {
+      const operationId = crypto.randomUUID();
+      const commandId = await f.broker.enqueue(f.deviceId, 'create', {
+        branchId: f.body.branchId,
+        requesterId: f.body.requesterId,
+        request: { operationId },
+      });
+      if (i === 5) {
+        const requestId = String(new ObjectId());
+        await f.local.updateOne(
+          { _id: commandId },
+          { $set: { state: 'done', response: { id: requestId } } }
+        );
+        const claim = await f.broker.claim(f.deviceId, { ...f.body, requestId });
+        await f.local.updateOne({ _id: claim.commandId }, { $set: { executionState: 'applied' } });
+      } else expected.add(operationId);
+    }
+    for (const [deviceId, patch] of [
+      [f.deviceId, { branchId: String(new ObjectId()) }],
+      ['other-device-123456', {}],
+      [f.deviceId, { requesterId: String(new ObjectId()) }],
+    ])
+      await f.broker.enqueue(deviceId, 'create', {
+        branchId: f.body.branchId,
+        requesterId: f.body.requesterId,
+        ...patch,
+        request: { operationId: crypto.randomUUID() },
+      });
+    const source = { branchId: f.body.branchId, requesterId: f.body.requesterId };
+    const channel = () =>
+      require('../src/services/business-checkout-transport').createCheckoutTransport(f.db, {
+        now: f.now,
+      });
+    assert.deepEqual(await channel().recoveries(source), { references: [], nextCursor: null });
+    let cursor;
+    const references = [];
+    do {
+      const page = await channel().recoveries(source, cursor, true);
+      assert.ok(page.references.length <= 20);
+      references.push(...page.references);
+      cursor = page.nextCursor;
+    } while (cursor);
+    assert.equal(references.length, 23);
+    assert.deepEqual(new Set(references.map((row) => row.operationId)), expected);
+    assert.ok(references.every((row) => row.requestId === null));
+    await assert.rejects(channel().recoveries(source, 'requests'), {
+      code: 'invalid_recovery_cursor',
+    });
+    await assert.rejects(channel().recoveries(source, 'requests:' + 'a'.repeat(24), true), {
+      code: 'invalid_recovery_cursor',
+    });
+    f.advance(8 * 86400000);
+    await f.local.updateOne(
+      { _id: 'agent-runtime' },
+      { $set: { expiresAt: new Date(f.now() + 120000) } }
+    );
+    assert.deepEqual(await channel().recoveries(source, undefined, true), {
+      references: [],
+      nextCursor: null,
+    });
+    assert.equal(await f.db.collection('sales').countDocuments({}), 0);
+  } finally {
+    for (const key of flags) {
+      if (previous[key] === undefined) delete process.env[key];
+      else process.env[key] = previous[key];
+    }
+  }
+});

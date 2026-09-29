@@ -137,12 +137,22 @@ that execution started, succeeded or failed. A fresh scoped read establishes the
 current record and any matching local receipt. Review-only navigation cannot
 submit, cancel, overwrite the current bill or replace its session reference.
 
-This does not yet discover pre-claim requests after loss of their session
-reference, provide cross-cashier escalation, or resolve a consumed claim with no
+When capabilities also advertise `requestRecovery: true`, the client opts into
+`?requests=1`. After claim pages, the opaque cursor enters request pages. Community
+lists unexpired pending/approved requests; Cloud lists retained create commands
+within their existing seven-day lifetime. These use the same installation,
+branch and cashier scope. Requests already represented by scoped claims are
+excluded. Request pages include the original operation ID and may have a null
+request ID when Cloud acknowledgement has not arrived. Opening that row polls
+the original operation; an unknown response never resends creation or checkout.
+An empty filtered page may still have a next cursor. Legacy callers retain the
+claim-only response. No new financial write or storage collection is introduced.
+
+This does not provide cross-cashier escalation or resolve a consumed claim with no
 verified receipt. The operational gates in BUSINESS_APPROVAL_OPERATIONS.md remain.
 Four new labels have draft translations in all 18 cashier language packs.
 
-Validation: ten real Mongo checkout/outbox cases and ten cashier UI cases pass.
+Validation: eleven real Mongo checkout/outbox cases and twelve cashier UI cases pass.
 Coverage includes installation/branch/cashier isolation, 20+3 pagination across
 service recreation, live revocation, controller routing, malformed list rejection,
 foreign-record rejection and zero checkout writes from review. English/Arabic

@@ -61,6 +61,7 @@ function createCheckoutDecisions(db, { now = Date.now, transport } = {}) {
         enabled: true,
         protocolVersion: 1,
         recoveryVersion: 1,
+        requestRecovery: true,
         branchId: source.branchId,
         requesterId: source.requesterId,
         mode: require('./business-checkout-transport').checkoutMode(),
@@ -68,11 +69,12 @@ function createCheckoutDecisions(db, { now = Date.now, transport } = {}) {
           .currencyDigits,
       };
     },
-    async recoveries(context, user, cursor) {
+    async recoveries(context, user, cursor, includeRequests = false) {
       const source = await cashier(context, user);
       const result = await channel.recoveries(
         { branchId: source.branchId, requesterId: source.requesterId },
-        cursor
+        cursor,
+        includeRequests
       );
       await cashier(context, user);
       return result;

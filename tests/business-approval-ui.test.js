@@ -16,7 +16,7 @@ function fixture() {
   const caps = { enabled: true, currencyDigits: 2, branchId: 'a'.repeat(24), requesterId: 'b'.repeat(24) };
   const payload = { sale_process: 'add', extra_discount: 10, payment_mode: 'Cash', items: [{ item_id: 'c'.repeat(24), item_quantity: 1 }] };
   const params = { data: JSON.stringify(payload) };
-  let recoveryPage;
+  let recoveryPage, unknownLookup = false;
   let record = null, saves = 0, local = 0, failCreate = false, failRead = false;
   const calls = [], alerts = [];
   window.PosnicPro = { sales: { SaleAction: 'add', saleProcess: 'add' }, i18n: { t: (_key, fallback) => fallback }, alert: (...args) => alerts.push(args) };
@@ -30,6 +30,7 @@ function fixture() {
         summary: { currency: 'INR', currencyDigits: 2, beforeDiscountMinor: 10000, discountMinor: 1000, payableMinor: 9000, roundingMinor: 0, reason: body.reason } };
       return failCreate ? failure({ status: 0 }) : success({ data: record });
     }
+    if (unknownLookup && options.url.includes('/operation/')) return success({ data: null });
     if (options.url.endsWith('/cancel')) { record = { ...record, state: 'cancelled' }; return success({ data: record }); }
     if (failRead) return failure({ status: 0 });
     return success({ data: record });
@@ -46,7 +47,7 @@ function fixture() {
     button('Send request').click(); await settle();
   }
   return { dom, window, document, api, caps, params, calls, alerts, offer, send, button, saves: () => saves, local: () => local,
-    recoveries: page => { recoveryPage = page; }, record: () => record, change: change => { record = { ...record, ...change }; }, failCreate: () => { failCreate = true; }, failRead: () => { failRead = true; } };
+    unknownLookup: value => { unknownLookup = value; }, recoveries: page => { recoveryPage = page; }, record: () => record, change: change => { record = { ...record, ...change }; }, failCreate: () => { failCreate = true; }, failRead: () => { failRead = true; } };
 }
 test('requesting and receiving approval never saves automatically; an explicit save uses the same operation', async () => {
   const f = fixture();
@@ -195,5 +196,47 @@ test('recovery pages are bounded and malformed or foreign records cannot become 
     f.failRead(); f.button('Check status').click(); await settle();
     assert.equal(f.document.querySelector('.business-approval-recovery-row'), null);
     assert.ok(f.document.querySelector('.business-approval-error').textContent);
+  } finally { f.dom.window.close(); }
+});
+
+
+test('a pre-claim request survives session loss as a read-only unknown operation until its response arrives', async () => {
+  const f = fixture();
+  try {
+    await f.send(); f.document.querySelector('.business-approval-close').click(); f.window.sessionStorage.clear();
+    f.caps.recoveryVersion = 1; f.caps.requestRecovery = true;
+    const operationId = f.record().operationId;
+    f.recoveries({ references: [{ requestId: null, operationId, startedAt: new Date().toISOString() }], nextCursor: null });
+    f.unknownLookup(true);
+    const originalBill = f.params.data;
+    await f.offer(); f.button('Earlier checkout attempts').click(); await settle();
+    assert.ok(f.calls.some(call => call.url.endsWith('/recoveries?requests=1')));
+    f.document.querySelector('.business-approval-recovery-row').click(); await settle();
+    assert.ok(f.document.querySelector('.business-approval-error').textContent);
+    assert.equal(f.button('Send request'), undefined);
+    f.unknownLookup(false); f.button('Check status').click(); await settle();
+    assert.match(f.document.querySelector('h2').textContent, /Waiting/);
+    f.change({ state: 'approved' }); f.button('Check status').click(); await settle();
+    assert.equal(f.button('Save approved bill'), undefined);
+    assert.equal(f.button('Cancel request'), undefined);
+    assert.equal(f.params.data, originalBill);
+    assert.equal(f.window.sessionStorage.length, 0);
+    assert.equal(f.calls.filter(call => call.method === 'post').length, 1);
+  } finally { f.dom.window.close(); }
+});
+
+test('request recovery binds the operation identity and accepts the negotiated request-page cursor only', async () => {
+  const f = fixture();
+  try {
+    await f.send(); f.document.querySelector('.business-approval-close').click(); f.window.sessionStorage.clear();
+    f.caps.recoveryVersion = 1; f.caps.requestRecovery = true;
+    f.recoveries({ references: [{ requestId: f.record().id, operationId: 'different-operation-1234', startedAt: new Date().toISOString() }], nextCursor: 'requests' });
+    await f.offer(); f.button('Earlier checkout attempts').click(); await settle();
+    f.document.querySelector('.business-approval-recovery-row').click(); await settle();
+    assert.ok(f.document.querySelector('.business-approval-error').textContent);
+    assert.equal(f.button('Save approved bill'), undefined);
+    f.recoveries({ references: [], nextCursor: null });
+    f.button('More references').click(); await settle();
+    assert.ok(f.calls.some(call => call.url.endsWith('/recoveries?requests=1&cursor=requests')));
   } finally { f.dom.window.close(); }
 });

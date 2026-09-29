@@ -6,6 +6,12 @@ function ensureLocalDecisionIndexes(db) {
     pending.set(
       db,
       Promise.all([
+        db
+          .collection('business_decisions')
+          .createIndex(
+            { deviceId: 1, branchId: 1, requesterId: 1, _id: 1 },
+            { name: 'business_decision_request_recovery' }
+          ),
         local.createIndex(
           { kind: 1, action: 1, deviceId: 1, 'body.branchId': 1, 'body.requesterId': 1, _id: 1 },
           { name: 'business_decision_recovery_lookup' }

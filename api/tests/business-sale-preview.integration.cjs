@@ -151,6 +151,16 @@ test('Community checkout uses authenticated owner approval, final pricing and on
     const capabilities = await checkout.capabilities(context, cashier);
     assert.equal(capabilities.enabled, true);
     assert.equal(capabilities.recoveryVersion, 1);
+    assert.equal(capabilities.requestRecovery, true);
+    const earlier = await checkout.recoveries(context, cashier, undefined, true);
+    assert.equal(earlier.references.length, 1);
+    assert.deepEqual(earlier.references[0], {
+      requestId: row.id,
+      operationId: payload.billing_transaction_id,
+      startedAt: earlier.references[0].startedAt,
+    });
+    assert.equal(earlier.nextCursor, null);
+
     assert.equal(capabilities.requesterId, String(cashier._id));
     const resumed = await checkout.lookup(context, cashier, payload.billing_transaction_id);
     assert.equal(resumed.id, row.id);

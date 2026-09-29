@@ -739,7 +739,12 @@ class SalesController extends BaseController {
       } else if (req.params.requestId === 'capabilities' && req.method === 'GET') {
         record = await decisions.capabilities(context, req.user);
       } else if (req.params.requestId === 'recoveries' && req.method === 'GET') {
-        record = await decisions.recoveries(context, req.user, req.query?.cursor);
+        record = await decisions.recoveries(
+          context,
+          req.user,
+          req.query?.cursor,
+          req.query?.requests === '1'
+        );
       } else if (req.method === 'GET') {
         record = await decisions.read(context, req.user, req.params.requestId);
       } else if (req.params.requestId) {

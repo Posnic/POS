@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('node:crypto');
+const { ObjectId } = require('mongodb');
 const { isMultiTenant } = require('../db/tenant-context');
 const { createDecisionOutbox } = require('./business-decision-outbox');
 const { createBusinessDeviceDecisions } = require('./business-device-decisions');
@@ -184,16 +185,107 @@ function createCheckoutTransport(db, { now = Date.now, wait = sleep } = {}) {
     if (!requestId) return null; // Unknown/pending is never proof that a bill failed.
     return exchange('read', { ...source, requestId });
   }
-  async function recoveries(source, cursor) {
+  async function recoveries(source, cursor, includeRequests = false) {
+    const requestPage =
+      includeRequests && typeof cursor === 'string' && cursor.startsWith('requests');
+    const requestCursor = requestPage ? cursor.slice('requests'.length) : '';
     if (
       !source ||
       !/^[a-f\d]{24}$/.test(source.branchId || '') ||
       !/^[a-f\d]{24}$/.test(source.requesterId || '') ||
-      (cursor !== undefined && (typeof cursor !== 'string' || !/^[a-f\d]{64}$/.test(cursor)))
+      (cursor !== undefined &&
+        (typeof cursor !== 'string' ||
+          (requestPage
+            ? !/^(?::(?:[a-f\d]{24}|[a-f\d]{64}))?$/.test(requestCursor)
+            : !/^[a-f\d]{64}$/.test(cursor))))
     )
       fail('invalid_recovery_cursor', 400);
     const deviceId = await identity();
     await require('./business-decision-local').ensureLocalDecisionIndexes(db);
+    if (requestPage) {
+      const after = requestCursor.slice(1);
+      if (after && after.length !== (community ? 24 : 64)) fail('invalid_recovery_cursor', 400);
+      const requests = community ? db.collection('business_decisions') : local;
+      const rows = await requests
+        .find(
+          community
+            ? {
+                deviceId,
+                branchId: source.branchId,
+                requesterId: source.requesterId,
+                state: { $in: ['pending', 'approved'] },
+                expiresAt: { $gt: new Date(now()) },
+                ...(after ? { _id: { $gt: new ObjectId(after) } } : {}),
+              }
+            : {
+                kind: 'command',
+                protocolVersion: 1,
+                action: 'create',
+                deviceId,
+                'body.branchId': source.branchId,
+                'body.requesterId': source.requesterId,
+                // Match the existing create-command retention even before Mongo TTL runs.
+                purgeAt: { $gt: new Date(now()) },
+                ...(after ? { _id: { $gt: after } } : {}),
+              },
+          {
+            projection: community
+              ? { _id: 1, operationId: 1, createdAt: 1 }
+              : { _id: 1, 'body.request.operationId': 1, 'response.id': 1, createdAt: 1 },
+          }
+        )
+        .sort({ _id: 1 })
+        .limit(21)
+        .maxTimeMS(250)
+        .toArray();
+      const page = rows.slice(0, 20);
+      const references = page.map((row) => ({
+        requestId: community ? String(row._id) : (row.response?.id ?? null),
+        operationId: community ? row.operationId : row.body?.request?.operationId,
+        startedAt:
+          row.createdAt instanceof Date && Number.isFinite(row.createdAt.getTime())
+            ? row.createdAt.toISOString()
+            : null,
+      }));
+      if (
+        rows.some(
+          (row) => !(community ? /^[a-f\d]{24}$/ : /^[a-f\d]{64}$/).test(String(row._id))
+        ) ||
+        references.some(
+          (row) =>
+            (row.requestId !== null &&
+              (typeof row.requestId !== 'string' || !/^[a-f\d]{24}$/.test(row.requestId))) ||
+            typeof row.operationId !== 'string' ||
+            !/^[A-Za-z0-9_-]{16,128}$/.test(row.operationId) ||
+            !row.startedAt
+        )
+      )
+        fail('decision_recovery_unavailable');
+      const knownIds = references.map((row) => row.requestId).filter(Boolean);
+      const claimed = knownIds.length
+        ? await local
+            .find(
+              {
+                kind: 'command',
+                protocolVersion: 1,
+                action: 'claim',
+                deviceId,
+                'body.branchId': source.branchId,
+                'body.requesterId': source.requesterId,
+                'body.requestId': { $in: knownIds },
+              },
+              { projection: { 'body.requestId': 1 } }
+            )
+            .limit(21)
+            .maxTimeMS(250)
+            .toArray()
+        : [];
+      const claimedIds = new Set(claimed.map((row) => row.body.requestId));
+      return {
+        references: references.filter((row) => !claimedIds.has(row.requestId)),
+        nextCursor: rows.length > 20 ? 'requests:' + String(page[page.length - 1]._id) : null,
+      };
+    }
     // Claims survive process restart and have no TTL. This is a list of
     // references to investigate, never proof of a sale or permission to retry.
     const rows = await local
@@ -214,6 +306,7 @@ function createCheckoutTransport(db, { now = Date.now, wait = sleep } = {}) {
       .limit(21)
       .maxTimeMS(250)
       .toArray();
+    if (includeRequests && !rows.length) return recoveries(source, 'requests', true);
     const page = rows.slice(0, 20);
     if (
       rows.some(
@@ -230,7 +323,8 @@ function createCheckoutTransport(db, { now = Date.now, wait = sleep } = {}) {
         requestId: row.body.requestId,
         startedAt: row.createdAt.toISOString(),
       })),
-      nextCursor: rows.length > 20 ? page[page.length - 1]._id : null,
+      nextCursor:
+        rows.length > 20 ? page[page.length - 1]._id : includeRequests ? 'requests' : null,
     };
   }
   return { exchange, start, recover, lookup, recoveries };

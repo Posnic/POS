@@ -25,8 +25,11 @@ checkout attempts** to review durable execution references for the signed-in
 cashier and current branch. This works without the old browser session. The
 review shows the request reference and a sale ID only when locally verified;
 it does not offer another save or cancel action. Keep the original POS session
-available when possible: requests that never reached an execution claim still
-rely on the original session reference. This is not a cross-cashier support queue.
+available when possible. With request recovery supported, the list also finds
+unexpired pending/approved Community requests and Cloud create commands retained
+for seven days. A Cloud row without an acknowledged request ID keeps its original
+operation reference and an unknown outcome; Check status does not resend it.
+Older servers still list claims only. This is not a cross-cashier support queue.
 
 ## Owner/support investigation
 
@@ -74,8 +77,9 @@ receipt identity, and cashier/phone observations for each scenario:
 4. Remove approver access after execution starts. Receipt reconciliation remains
    possible without granting new execution authority.
 5. Close/reopen the dialog, restart the app and change cashier. Verify scoped
-   recovery visibility, including durable execution-reference discovery and the remaining session-storage
-   limitation for requests that never reached an execution claim.
+   recovery visibility, including durable execution references, unexpired Community
+   requests and retained Cloud commands before acknowledgement. An unknown
+   operation must remain read-only and must never create a replacement sale.
 
 The first two scenarios have local integration coverage. This document does not
 replace deployed fault injection or physical acceptance. No supported operator
