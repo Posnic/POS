@@ -516,3 +516,39 @@ release failure. ESLint, formatting and attribution pass. Production timer wirin
 retention cleanup and real provider/relay validation remain unfinished. Stock
 entries still leave materialization with `pushPending: false`; no feature flag,
 production runtime or published Android artifact was changed.
+
+## Obsolete activation cleanup
+
+`drainStockRecipientCleanup` now claims one preference and removes up to one
+hundred recipient-state records from older opt-in activations per pass, yielding
+after a three-second budget between records. It retains every record of the current
+activation regardless of age, including already acknowledged low episodes. Those
+records cannot receive an unconditional TTL without causing repeat alerts while
+stock remains low. The combined callable worker runs one cleanup pass between
+scanning and materialization; cleanup errors have separate backoff and do not
+starve notification work.
+
+Every delete is scoped to license, account and branch and matched to the observed
+record's activation and revision. A concurrent scan that replaces the record with
+current state defeats the delete. Preference revision/activation and a live cleanup
+lease are checked before each delete; lease replacement stops the old worker and
+preserves its successor's schedule. Partial work resumes promptly by selecting
+remaining obsolete rows. Completion schedules another sweep after a day, errors
+back off one minute, and preference edits invalidate old leases and deferrals.
+Cancellation and a lost delete acknowledgement safely resume from retained rows.
+Malformed obsolete activation metadata can be removed without resetting active
+classification.
+
+This cleanup does not remove current-activation records merely because access is
+revoked or a preference is disabled. Account/tenant erasure, orphaned preferences,
+stale pending-candidate expiry and current disabled-activation retention still need
+explicit policies and qualification. Existing snapshot, Inbox and push delivery
+TTL boundaries remain separate. Production scheduling and push activation remain
+inactive; this change starts no timer or deployment.
+
+Validation: 77 snapshot/pipeline plus six preference integration tests pass, as
+do ESLint, formatting and attribution. Six new cleanup cases exercise preservation
+across age, bounded obsolete removal, tenant isolation, concurrent replacement,
+lease replacement, cancellation/lost acknowledgements and malformed old metadata.
+The Inbox pagination fixture now explicitly orders its IDs instead of assuming
+same-second client and server ObjectIds share chronological order.

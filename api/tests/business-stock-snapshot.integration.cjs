@@ -1582,7 +1582,10 @@ test('stock Inbox pagination advances through invisible entries and caps each pa
   for (let i = 0; i < 12; i++)
     await f.db.collection('business_inbox').insertOne({
       ...original,
-      _id: new ObjectId(),
+      // Upsert IDs can be server-generated; same-second client IDs need not sort later.
+      _id: new ObjectId(
+        (BigInt('0x' + String(original._id)) + BigInt(i + 1)).toString(16).padStart(24, '0')
+      ),
       eventKey: 'page-' + i,
       materializationPending: true,
     });
@@ -2246,4 +2249,194 @@ test('a failed schedule lease release does not leave the combined worker permane
   await assert.rejects(worker.tick(), /release unavailable/);
   assert.equal((await worker.tick()).delivery, 'idle');
   assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
+});
+
+const cleanupStock = (f, options = {}, database = f.db) =>
+  require('../src/services/business-stock-cleanup').drainStockRecipientCleanup(database, {
+    now: f.now,
+    ...options,
+  });
+async function obsoleteFixture() {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  const save =
+    require('../src/services/business-stock-notification-preferences').saveStockPreference;
+  for (const [expectedRevision, enabled] of [
+    [1, false],
+    [2, true],
+  ])
+    await save(
+      f.db,
+      f.context,
+      f.branch.id,
+      {
+        expectedRevision,
+        enabled,
+        minimumIntervalMinutes: 15,
+        quiet: { enabled: false, start: '22:00', end: '07:00' },
+      },
+      { now: f.now }
+    );
+  f.advance();
+  for (const page of await f.pages()) await f.send(page);
+  return f;
+}
+
+test('cleanup preserves active acknowledged low episodes regardless of age and never re-arms them', async () => {
+  const f = await inboxFixture();
+  f.advance(31 * 86400000);
+  assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 0 });
+  assert.equal((await recipientRows(f)).length, 103);
+  for (const page of await f.pages()) await f.send(page);
+  let scan = await journalRecipient(f);
+  while (scan.next) scan = await journalRecipient(f, scan.next);
+  assert.ok((await recipientRows(f)).every((row) => !row.pending));
+});
+
+test('obsolete activation cleanup is bounded and preserves newly observed current records and other tenants', async () => {
+  const f = await obsoleteFixture();
+  await journalRecipient(f, { limit: 1 });
+  const current = (await recipientRows(f))[0];
+  const foreign = {
+    ...current,
+    _id: 'foreign',
+    license: new ObjectId(),
+    activationId: '0'.repeat(36),
+  };
+  await f.db.collection('business_stock_recipient_state').insertOne(foreign);
+  assert.deepEqual(await cleanupStock(f), { status: 'partial', deleted: 100 });
+  f.advance(1);
+  assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 2 });
+  const rows = await f.db.collection('business_stock_recipient_state').find({}).toArray();
+  assert.equal(rows.length, 2);
+  assert.ok(
+    rows.some((row) => row._id === current._id && row.activationId === current.activationId)
+  );
+  assert.ok(rows.some((row) => row._id === 'foreign'));
+});
+
+test('cleanup cannot delete a row replaced by a concurrent scan of the new activation', async () => {
+  const f = await obsoleteFixture();
+  let replaced = false;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_recipient_state' && property === 'deleteOne')
+            return async (...args) => {
+              if (!replaced) {
+                replaced = true;
+                await journalRecipient(f, { limit: 1 });
+              }
+              return target.deleteOne(...args);
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  const result = await cleanupStock(f, {}, database);
+  assert.equal(result.deleted, 99);
+  assert.equal((await recipientRows(f))[0].activationId, (await scanPreference(f)).activationId);
+  f.advance(1);
+  await cleanupStock(f);
+  assert.equal((await recipientRows(f)).length, 1);
+});
+
+test('cleanup stops on a replaced preference lease and leaves the successor schedule intact', async () => {
+  const f = await obsoleteFixture();
+  const later = new Date(f.now() + 123000);
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_notification_preferences' && property === 'findOne')
+            return async (...args) => {
+              if (args[0].cleanupLeaseId)
+                await target.updateOne(
+                  { _id: args[0]._id },
+                  {
+                    $set: {
+                      cleanupLeaseId: 'successor',
+                      cleanupLeaseUntil: later,
+                      nextCleanupAt: later,
+                    },
+                  }
+                );
+              return target.findOne(...args);
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  assert.deepEqual(await cleanupStock(f, {}, database), { status: 'changed', deleted: 0 });
+  assert.equal((await recipientRows(f)).length, 103);
+  assert.equal((await scanPreference(f)).cleanupLeaseId, 'successor');
+  assert.equal((await scanPreference(f)).nextCleanupAt.getTime(), later.getTime());
+});
+
+test('cleanup cancellation and lost delete acknowledgements resume without removing current state', async () => {
+  for (const mode of ['cancel', 'lost']) {
+    const f = await obsoleteFixture(),
+      controller = new AbortController();
+    let interrupted = false;
+    const database = {
+      collection(name) {
+        const collection = f.db.collection(name);
+        return new Proxy(collection, {
+          get(target, property) {
+            if (name === 'business_stock_recipient_state' && property === 'deleteOne')
+              return async (...args) => {
+                const result = await target.deleteOne(...args);
+                if (!interrupted) {
+                  interrupted = true;
+                  if (mode === 'cancel') controller.abort();
+                  else throw new Error('lost delete acknowledgement');
+                }
+                return result;
+              };
+            return typeof target[property] === 'function'
+              ? target[property].bind(target)
+              : target[property];
+          },
+        });
+      },
+    };
+    if (mode === 'cancel')
+      assert.equal(
+        (await cleanupStock(f, { signal: controller.signal }, database)).status,
+        'cancelled'
+      );
+    else await assert.rejects(cleanupStock(f, {}, database), /lost delete acknowledgement/);
+    assert.equal((await recipientRows(f)).length, 102);
+    f.advance(60000);
+    assert.equal((await cleanupStock(f)).deleted, 100);
+    f.advance(1);
+    assert.equal((await cleanupStock(f)).deleted, 2);
+    assert.equal((await recipientRows(f)).length, 0);
+  }
+});
+
+test('cleanup drains malformed obsolete activation metadata without touching the active identity', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  const first = (await recipientRows(f))[0];
+  await f.db.collection('business_stock_recipient_state').insertMany([
+    { ...first, _id: 'legacy-null', activationId: null, revision: null },
+    {
+      license: first.license,
+      accountId: first.accountId,
+      branchId: first.branchId,
+      _id: 'legacy-missing',
+    },
+  ]);
+  assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 2 });
+  assert.equal((await recipientRows(f)).length, 103);
 });

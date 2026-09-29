@@ -1,13 +1,19 @@
 'use strict';
 const crypto = require('node:crypto');
+const { drainStockRecipientCleanup } = require('./business-stock-cleanup');
 const { createStockRecipientWorker } = require('./business-stock-recipient-worker');
 const { materializeStockAlert } = require('./business-stock-materializer');
 
-/** One recipient scan and one due materialization per tick, with independent
- * durable cursors/leases. This factory starts no timer and sends no push. */
+/** One recipient scan, cleanup pass and due materialization per tick, with
+ * independent durable cursors/leases. This factory starts no timer and sends no push. */
 function createStockNotificationWorker(
   db,
-  { now = Date.now, scan, materialize = materializeStockAlert } = {}
+  {
+    now = Date.now,
+    scan,
+    materialize = materializeStockAlert,
+    cleanup = drainStockRecipientCleanup,
+  } = {}
 ) {
   const scanner = scan ?? createStockRecipientWorker(db, { now });
   const preferences = db.collection('business_stock_notification_preferences');
@@ -33,6 +39,12 @@ function createStockNotificationWorker(
           scanResult = await scanner.tick();
         } catch {
           scanResult = { state: 'error' };
+        }
+        if (stopped) return;
+        try {
+          await cleanup(db, { now, signal: controller.signal });
+        } catch {
+          // Cleanup has its own durable backoff; it must not starve delivery.
         }
         if (stopped) return;
         await preferences.createIndex({ nextMaterializeAt: 1, materializeLeaseUntil: 1 });
