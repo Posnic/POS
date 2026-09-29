@@ -1,10 +1,12 @@
 'use strict';
 const crypto = require('node:crypto');
+const { requestRecipientStock } = require('./business-stock-demand');
 const { journalRecipientStockPage } = require('./business-stock-recipient-journal');
 const fail = (code) => {
   throw Object.assign(new Error(code), { code });
 };
-/** Durable recipient scan scheduling only. No Inbox writes, pushes or timer.
+/** Durable recipient scans and lightweight desktop refresh requests.
+ * No Inbox writes, pushes or timer.
  * Save the cursor after journal writes; losing the save replays idempotently. */
 function createStockRecipientWorker(
   db,
@@ -65,6 +67,11 @@ function createStockRecipientWorker(
           queued = 0;
         const started = now();
         controller = new AbortController();
+        await requestRecipientStock(db, target, {
+          now,
+          signal: controller.signal,
+          preference: job,
+        });
         while (pages < maxPages && now() - started < 3000 && !stopped) {
           const remaining = Math.max(1, Math.floor(3000 - (now() - started)));
           if (

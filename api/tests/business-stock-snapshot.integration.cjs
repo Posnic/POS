@@ -2501,3 +2501,63 @@ test('committed cleanup recovery never requeues a consumed push event', async ()
   assert.equal(f.sends.length, 1);
   assert.equal(await f.db.collection('business_push_deliveries').countDocuments({}), 1);
 });
+
+const requestStock = (f, options = {}) =>
+  require('../src/services/business-stock-demand').requestRecipientStock(f.db, f.target, {
+    now: f.now,
+    ...options,
+  });
+test('recipient stock demand coalesces concurrent branch requests and renews after one minute', async () => {
+  const f = await recipientFixture();
+  const results = await Promise.all([requestStock(f), requestStock(f), requestStock(f)]);
+  assert.equal(results.filter((r) => r.status === 'requested').length, 1);
+  assert.equal(await f.db.collection('business_reporting_requests').countDocuments({}), 1);
+  const prior = await f.db.collection('business_reporting_requests').findOne({});
+  assert.equal(prior.summaryKind, 'stock');
+  assert.equal(String(prior.license), f.branch.license);
+  f.advance(59999);
+  assert.equal((await requestStock(f)).status, 'coalesced');
+  f.advance(1);
+  assert.equal((await requestStock(f)).status, 'requested');
+  const next = await f.db.collection('business_reporting_requests').findOne({});
+  assert.equal(next.requestedAt.getTime(), prior.requestedAt.getTime() + 60000);
+});
+test('stock demand rejects cancellation, outdated preference and revoked access', async () => {
+  const f = await recipientFixture();
+  const controller = new AbortController();
+  controller.abort();
+  assert.equal((await requestStock(f, { signal: controller.signal })).status, 'cancelled');
+  assert.equal(
+    (await requestStock(f, { preference: { revision: -1, activationId: 'obsolete' } })).status,
+    'changed'
+  );
+  await f.db.collection('users').updateOne({ _id: f.user._id }, { $set: { access: {} } });
+  assert.equal((await requestStock(f)).status, 'denied');
+  assert.equal(await f.db.collection('business_reporting_requests').countDocuments({}), 0);
+});
+test('recipient worker requests preparation when the source is absent without reading catalogue data', async () => {
+  const f = await recipientFixture();
+  await f.db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: f.branch.id }, { $unset: { stockSnapshot: '' } });
+  const guarded = {
+    collection(name) {
+      assert.notEqual(name, 'items');
+      assert.notEqual(name, 'sales');
+      return f.db.collection(name);
+    },
+  };
+  const worker =
+    require('../src/services/business-stock-recipient-worker').createStockRecipientWorker(guarded, {
+      now: f.now,
+    });
+  try {
+    assert.equal((await worker.tick()).state, 'unavailable');
+    assert.equal(
+      await f.db.collection('business_reporting_requests').countDocuments({ summaryKind: 'stock' }),
+      1
+    );
+  } finally {
+    worker.stop();
+  }
+});

@@ -717,3 +717,67 @@ test('shutdown after a desktop observation prevents staging and public publicati
     );
     assert.equal(await f.db.collection('business_prepared_summaries').countDocuments({}), 0);
   }));
+
+test('opted-in Community recipient triggers desktop preparation and Inbox without an interactive stock read', async () =>
+  withStockRuntime(async () => {
+    const f = await fixture();
+    await f.db.collection('business_reporting_requests').deleteOne({ _id: f.key });
+    let at = Date.now();
+    const now = () => at;
+    const user = {
+      _id: new ObjectId(),
+      license: new ObjectId(f.branch.license),
+      activate: true,
+      usertype: 'manager',
+      access: { item: { read: true } },
+      branch_access: [{ branch_id: new ObjectId(f.branch.id) }],
+    };
+    await f.db.collection('users').insertOne(user);
+    const context = await require('../src/services/business-access')
+      .createBusinessAccess(f.db, { now })
+      .contextFor(user);
+    await require('../src/services/business-stock-notification-preferences').saveStockPreference(
+      f.db,
+      context,
+      f.branch.id,
+      {
+        expectedRevision: 0,
+        enabled: true,
+        minimumIntervalMinutes: 15,
+        quiet: { enabled: false, start: '22:00', end: '07:00' },
+      },
+      { now }
+    );
+    const recipient =
+      require('../src/services/business-stock-notification-worker').createStockNotificationWorker(
+        f.db,
+        { now }
+      );
+    const desktop = createDesktopReportingWorker(f.db, { now });
+    try {
+      assert.equal((await recipient.tick()).scan.state, 'unavailable');
+      assert.ok(await f.db.collection('business_reporting_requests').findOne({ _id: f.key }));
+      await desktop.tick();
+      at += 15001;
+      const result = await recipient.tick();
+      assert.equal(result.scan.state, 'complete');
+      assert.equal(result.delivery, 'materialized');
+      const event = await f.db.collection('business_inbox').findOne({});
+      assert.equal(event.kind, 'stock_low');
+      assert.equal(event.stock.newLowItemCount, 1);
+      assert.equal(event.pushPending, true);
+      // Notification cadence must not stop observation of a later healthy state.
+      at += 60001;
+      await f.db.collection('items').updateMany({}, { $set: { available_quantity: 9 } });
+      await recipient.tick();
+      await desktop.tick();
+      const owner = await f.db
+        .collection('business_reporting_publishers')
+        .findOne({ _id: f.branch.id });
+      assert.equal(owner.stockSnapshot.summary.preparedAt, new Date(at).toISOString());
+      assert.equal(owner.stockSnapshot.summary.lowItemCount, 0);
+    } finally {
+      recipient.stop();
+      desktop.stop();
+    }
+  }));

@@ -605,3 +605,27 @@ daily-summary integration tests pass, including five new desktop runtime cases.
 ESLint, formatting and attribution checks pass. The twelve-page test exercises
 more than the standalone default page allowance; it does not establish production
 network throughput or many-branch scheduling capacity.
+
+## Automatic recipient refresh demand
+
+Before scanning, an enabled recipient now requests desktop stock preparation
+using the same branch-scoped reporting request consumed by Cloud and Community.
+The helper rechecks current account/branch/stock permission and opt-in, rejects an
+outdated preference activation/revision, and honors cancellation. Observation is
+independent of notification cadence and quiet hours so healthy transitions can
+still re-arm later low episodes. No server inventory or sales scan is introduced.
+
+Concurrent recipients and interactive requests share one branch request. An atomic
+conditional upsert coalesces requests inside one minute; subsequent requests renew
+the existing thirty-minute expiry. Under the stock-alert flag, stock jobs may be
+prepared again after one minute instead of the ordinary five-minute retry floor.
+Other report kinds retain their existing preparation cadence. Pending summaries,
+assignment fencing and immutable snapshot transfer still govern publication.
+
+Validation: 104 stock publication/snapshot integration tests pass, with four new
+cases for concurrent demand, cancellation/stale preference/revoked access, missing
+source without catalogue reads, and an opted-in Community recipient reaching Inbox
+without an interactive stock read. The final end-to-end case was repeated after
+adding a healthy-stock refresh during notification cadence. Lint, formatting and
+attribution pass. Multi-branch fairness, slow-network throughput, real deployment
+and provider qualification remain open; no production flags were changed.

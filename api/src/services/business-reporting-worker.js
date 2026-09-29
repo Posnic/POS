@@ -114,6 +114,9 @@ function createDesktopReportingWorker(
                 $or: [
                   { lastAttemptAt: { $exists: false } },
                   { lastAttemptAt: { $lt: new Date(now() - 5 * 60000) } },
+                  ...(stockEnabled()
+                    ? [{ summaryKind: 'stock', lastAttemptAt: { $lt: new Date(now() - 60000) } }]
+                    : []),
                 ],
               },
               { $or: [{ leaseUntil: { $exists: false } }, { leaseUntil: { $lt: at } }] },
