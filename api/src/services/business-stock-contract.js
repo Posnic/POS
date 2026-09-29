@@ -31,6 +31,31 @@ const label = (value, max) =>
 const fail = () => {
   throw new MetricError('invalid_stock_summary');
 };
+/** A verified item observation; never infer a fact from an absent list row. */
+function validateStockFact(item) {
+  if (
+    !exact(item, [
+      'itemId',
+      'name',
+      'unit',
+      'availableMilli',
+      'thresholdMilli',
+      'thresholdSource',
+      'low',
+    ]) ||
+    !id(item.itemId) ||
+    !label(item.name, 200) ||
+    !label(item.unit, 40) ||
+    !Number.isSafeInteger(item.availableMilli) ||
+    !Number.isSafeInteger(item.thresholdMilli) ||
+    item.thresholdMilli < 0 ||
+    typeof item.low !== 'boolean' ||
+    item.low !== item.availableMilli <= item.thresholdMilli ||
+    !['item', 'branch'].includes(item.thresholdSource)
+  )
+    fail();
+  return item;
+}
 /** Strict wire contract shared by desktop preparation and subsequent publication
  * and read boundaries. Unknown coverage never permits a completeness claim. */
 function validateStockSummary(value, branch, { now = Date.now } = {}) {
@@ -89,34 +114,15 @@ function validateStockSummary(value, branch, { now = Date.now } = {}) {
     fail();
   let previous = '';
   for (const item of value.lowItems) {
-    if (
-      !exact(item, [
-        'itemId',
-        'name',
-        'unit',
-        'availableMilli',
-        'thresholdMilli',
-        'thresholdSource',
-        'low',
-      ]) ||
-      !id(item.itemId) ||
-      item.itemId <= previous ||
-      !label(item.name, 200) ||
-      !label(item.unit, 40) ||
-      !Number.isSafeInteger(item.availableMilli) ||
-      !Number.isSafeInteger(item.thresholdMilli) ||
-      item.thresholdMilli < 0 ||
-      item.availableMilli > item.thresholdMilli ||
-      item.low !== true ||
-      !['item', 'branch'].includes(item.thresholdSource)
-    )
-      fail();
+    validateStockFact(item);
+    if (item.itemId <= previous || item.low !== true) fail();
     previous = item.itemId;
   }
   return value;
 }
 module.exports = {
   validateStockSummary,
+  validateStockFact,
   STOCK_REASONS,
   MAX_DOCUMENTS,
   MAX_DURATION_MS,

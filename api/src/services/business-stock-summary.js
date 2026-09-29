@@ -29,7 +29,7 @@ const projection = {
 const reasons = new Set(STOCK_REASONS);
 /** Desktop-only stored-stock observation. A completed scan is not proof of
  * source completeness, a point-in-time balance, or sync convergence. */
-async function prepareDesktopStockSummary(db, branch, { signal, now = Date.now } = {}) {
+async function prepareStock(db, branch, { signal, now = Date.now } = {}, retainFacts = false) {
   if (process.env.POSNIC_DESKTOP !== '1' || isMultiTenant())
     throw new MetricError('desktop_required');
   if (
@@ -61,6 +61,7 @@ async function prepareDesktopStockSummary(db, branch, { signal, now = Date.now }
   };
   let lowItemCount = 0;
   const lowItems = [];
+  const facts = retainFacts ? [] : null;
   const seen = new Set();
   const cursor = db
     .collection('items')
@@ -80,6 +81,11 @@ async function prepareDesktopStockSummary(db, branch, { signal, now = Date.now }
       checkBudget();
       if (++coverage.scannedItems > MAX_DOCUMENTS)
         throw new MetricError('preparation_budget_exceeded');
+      const identity = String(item._id ?? '');
+      if (/^[a-f\d]{24}$/.test(identity)) {
+        if (seen.has(identity)) throw new MetricError('duplicate_stock_item');
+        seen.add(identity);
+      }
       let fact;
       try {
         fact = stockFact(item, factBranch);
@@ -90,9 +96,8 @@ async function prepareDesktopStockSummary(db, branch, { signal, now = Date.now }
       }
       if (fact === null) coverage.excludedItems++;
       else if (fact) {
-        if (seen.has(fact.itemId)) throw new MetricError('duplicate_stock_item');
-        seen.add(fact.itemId);
         coverage.verifiedItems++;
+        facts?.push(fact);
         if (fact.low) {
           lowItemCount++;
           // Mongo sorts string IDs before ObjectIds. Keep wire order canonical
@@ -114,7 +119,7 @@ async function prepareDesktopStockSummary(db, branch, { signal, now = Date.now }
       JSON.stringify(after.notification_range) !== JSON.stringify(settings.notification_range)
     )
       throw new MetricError('stock_settings_changed');
-    return validateStockSummary(
+    const summary = validateStockSummary(
       {
         schemaVersion: 1,
         metricDefinitionVersion: 'stored-stock-v1',
@@ -131,8 +136,25 @@ async function prepareDesktopStockSummary(db, branch, { signal, now = Date.now }
       branch,
       { now }
     );
+    if (!facts) return summary;
+    facts.sort((a, b) => a.itemId.localeCompare(b.itemId));
+    return { summary, facts };
   } finally {
     await cursor.close();
   }
 }
-module.exports = { prepareDesktopStockSummary, MAX_DOCUMENTS, MAX_DURATION_MS, MAX_LOW_ITEMS };
+function prepareDesktopStockSummary(db, branch, options) {
+  return prepareStock(db, branch, options);
+}
+// Local-only input for alert evaluation. Retain every verified fact, including
+// healthy items outside the public low-stock list. No result escapes a failed scan.
+function prepareDesktopStockObservation(db, branch, options) {
+  return prepareStock(db, branch, options, true);
+}
+module.exports = {
+  prepareDesktopStockSummary,
+  prepareDesktopStockObservation,
+  MAX_DOCUMENTS,
+  MAX_DURATION_MS,
+  MAX_LOW_ITEMS,
+};
