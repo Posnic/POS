@@ -42,6 +42,7 @@ test('unknown quantities or thresholds never become zero or a guessed reorder le
     true,
     '0.0001',
     Number.MAX_SAFE_INTEGER,
+    1000000000000.0001,
   ])
     expect(() => stockFact({ ...item(), available_quantity: value }, branch)).toThrow();
   for (const value of ['', 'bad', -1, false, '1.0001'])
@@ -77,7 +78,7 @@ test('deleted, nontracked and inactive products are excluded while unknown track
     expect(stockFact({ ...item(), ...changed }, branch)).toBeNull();
   for (const changed of [
     { track_inventory: undefined },
-    { track_inventory: 'true' },
+    { track_inventory: 'yes' },
     { unit: '' },
     { item_status: 'unknown' },
   ])

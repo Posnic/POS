@@ -9,6 +9,20 @@ function quantity(value, signed = false) {
   const raw = String(value),
     negative = raw.startsWith('-');
   if (negative && !signed) fail('invalid_stock_threshold');
+  if (typeof value === 'number') {
+    // Legacy $inc writes use BSON doubles. Accept only rounding noise within
+    // four floating-point ULPs, capped below one millionth of a stock unit.
+    const absolute = Math.abs(value),
+      scaled = Math.round(absolute * 1000);
+    if (
+      !Number.isSafeInteger(scaled) ||
+      (scaled === 0 && absolute !== 0) ||
+      Math.abs(scaled / 1000 - absolute) > Math.min(Number.EPSILON * absolute * 4, 0.0000001)
+    )
+      fail('invalid_stock_quantity');
+    return negative && scaled ? -scaled : scaled;
+  }
+
   try {
     const amount = minorUnits(negative ? raw.slice(1) : raw, 3);
     return negative && amount ? -amount : amount;
@@ -38,10 +52,10 @@ function stockFact(item, branch) {
   if (
     [1, '1', true].includes(item.del_status) ||
     ['instant', 'inactive', 'draft'].includes(item.item_status) ||
-    item.track_inventory === false
+    [false, 'false'].includes(item.track_inventory)
   )
     return null;
-  if (item.track_inventory !== true) fail('stock_tracking_unknown');
+  if (![true, 'true'].includes(item.track_inventory)) fail('stock_tracking_unknown');
   if (!['active', 'regular'].includes(item.item_status)) fail('stock_status_unknown');
   if (scope.size !== 1) fail('ambiguous_branch_stock');
   if (

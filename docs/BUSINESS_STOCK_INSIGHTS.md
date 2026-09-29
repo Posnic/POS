@@ -34,7 +34,35 @@ default. Low means on-hand quantity is at or below the selected threshold.
 
 Four unit tests cover decimal precision and overflow, per-item precedence, zero
 and negative quantities, unknown settings, exclusion and ambiguous branch scope.
-This establishes parsing rules, not inventory truth or source completeness.
+Explicit legacy tracking strings `"true"` and `"false"` have the same meaning as
+their boolean equivalents. BSON-double quantities may contain arithmetic noise:
+accept at most four floating-point ULPs, capped at 0.0000001 stock units, around an
+exact thousandth. Strings remain exact; genuine finer precision is unavailable,
+including at large magnitudes where a purely relative tolerance would be unsafe.
+
+## Actual writer verification
+
+Eight MongoDB integration tests invoke real repositories/model methods and read
+the resulting stock facts. They cover reorder crossings and restocking, competing
+conditional deductions, legacy tracking, double arithmetic, scope changes, and
+independent variant-family rows. The controller's `receivingInsertUpdate`,
+`receivePartial`, `voidReceiving` and `returnReceivingOrder` methods are exercised:
+full arrivals, edit differences, repeat edits, reductions, partial arrivals,
+void/repeat void and supplier returns preserve the expected quantities.
+
+These tests use the configured local MongoDB 7.0.14 binary. They establish these
+stored-quantity transitions, not inventory truth, source completeness, concurrent
+receiving safety or transport convergence.
+
+The route audit matters: current receiving controllers call the model methods,
+not `ReceivingService`. That unused service passes a closing balance to the
+repository's delta-based `updateStock`, and must not be activated unchanged.
+Likewise `ItemRepository.updateQuantity` has no callers in `api/src`; the separate
+Mongoose receiving post-save hook increments `quantity`, whereas the controller's
+model statics write `available_quantity`. A future route using that hook needs an
+explicit stock-contract migration; these two fields must not be merged by guess.
+Variant families use separate item rows with `variant_group_id`, `variant_axis`
+and `variant_value`; the dimension-definition model is not their stock ledger.
 
 ## Remaining implementation and verification
 
