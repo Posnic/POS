@@ -1469,3 +1469,137 @@ test('permission revoked during Inbox insertion leaves the stock group uncommitt
   assert.equal(event.pushPending, false);
   assert.equal((await scanPreference(f)).lastNotifiedAt, undefined);
 });
+
+const stockInbox = (f, options = {}) =>
+  require('../src/services/business-notifications').listInbox(f.db, f.context, {
+    includeStock: true,
+    now: f.now,
+    ...options,
+  });
+const readStockEvent = (f, id) =>
+  require('../src/services/business-notifications').markRead(f.db, f.context, id, { now: f.now });
+async function inboxFixture() {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  const event = await materializeStock(f);
+  return { ...f, eventId: event.eventId };
+}
+
+test('stock-only Inbox requires negotiation, excludes financial entries and reads historical observations during cadence', async () => {
+  const f = await inboxFixture();
+  assert.equal(f.context.capabilities.includes('overview.read'), false);
+  const original = await f.db.collection('business_inbox').findOne({});
+  await f.db.collection('business_inbox').insertOne({
+    ...original,
+    _id: new ObjectId(),
+    eventKey: 'financial',
+    kind: 'daily_summary',
+    summary: { privateFinancial: 12345 },
+  });
+  assert.deepEqual(await stockInbox(f, { includeStock: false }), { entries: [], next: null });
+  const result = await stockInbox(f);
+  assert.equal(result.entries.length, 1);
+  assert.equal(result.entries[0].id, f.eventId);
+  assert.equal(result.entries[0].summary, null);
+  assert.equal(result.entries[0].stock.newLowItemCount, 103);
+  assert.equal(result.entries[0].stock.sourceComplete, false);
+  assert.match(result.entries[0].businessDate, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(result.entries[0].stockDigest, undefined);
+  assert.deepEqual(await readStockEvent(f, f.eventId), { read: true });
+  assert.equal((await stockInbox(f)).entries[0].read, true);
+  f.advance(60000);
+  await f.db.collection('items').updateMany({}, { $set: { available_quantity: 9 } });
+  for (const page of await f.pages()) await f.send(page);
+  assert.equal((await stockInbox(f)).entries[0].stock.newLowItemCount, 103);
+});
+
+test('stock Inbox and read acknowledgement recheck live ACL, branch, activation and opt-in', async () => {
+  for (const mode of ['acl', 'branch', 'activation', 'disabled', 'inactive', 'feature']) {
+    const f = await inboxFixture();
+    if (mode === 'acl')
+      await f.db
+        .collection('users')
+        .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
+    if (mode === 'branch')
+      await f.db
+        .collection('users')
+        .updateOne({ _id: f.user._id }, { $set: { branch_access: [] } });
+    if (mode === 'inactive')
+      await f.db.collection('users').updateOne({ _id: f.user._id }, { $set: { activate: false } });
+    if (mode === 'activation')
+      await f.db
+        .collection('business_stock_notification_preferences')
+        .updateOne({}, { $set: { activationId: require('node:crypto').randomUUID() } });
+    if (mode === 'disabled')
+      await f.db
+        .collection('business_stock_notification_preferences')
+        .updateOne({}, { $set: { enabled: false } });
+    const prior = process.env.POSNIC_BUSINESS_STOCK_ALERTS;
+    if (mode === 'feature') process.env.POSNIC_BUSINESS_STOCK_ALERTS = '0';
+    try {
+      assert.equal((await stockInbox(f)).entries.length, 0, mode);
+      await assert.rejects(readStockEvent(f, f.eventId), { code: 'entry_unavailable' }, mode);
+    } finally {
+      process.env.POSNIC_BUSINESS_STOCK_ALERTS = prior;
+    }
+  }
+});
+
+test('stock Inbox hides corrupt, partial, expired and out-of-scope entries and rejects marking them read', async () => {
+  const f = await inboxFixture();
+  const original = await f.db.collection('business_inbox').findOne({});
+  const { digestOf } = require('../src/services/business-stock-snapshot-contract');
+  for (const change of [
+    { materializationPending: true },
+    { stockDigest: 'bad' },
+    { expiresAt: new Date(f.now() - 1) },
+    { createdAt: new Date(f.now() + 1) },
+    { accountId: String(new ObjectId()) },
+    { branchId: String(new ObjectId()) },
+    { license: new ObjectId() },
+    ...[
+      { sourceComplete: true },
+      { newLowItemCount: 104 },
+      { items: original.stock.items.slice(1) },
+      { extra: 'private' },
+      { coverage: { ...original.stock.coverage, unavailableItems: 1 } },
+    ].map((patch) => {
+      const stock = { ...original.stock, ...patch };
+      return { stock, stockDigest: digestOf(stock) };
+    }),
+  ]) {
+    await f.db
+      .collection('business_inbox')
+      .replaceOne({ _id: original._id }, { ...original, ...change });
+    assert.equal((await stockInbox(f)).entries.length, 0, JSON.stringify(change));
+    await assert.rejects(readStockEvent(f, f.eventId), { code: 'entry_unavailable' });
+  }
+});
+
+test('stock Inbox pagination advances through invisible entries and caps each page at ten', async () => {
+  const f = await inboxFixture();
+  const original = await f.db.collection('business_inbox').findOne({});
+  for (let i = 0; i < 12; i++)
+    await f.db.collection('business_inbox').insertOne({
+      ...original,
+      _id: new ObjectId(),
+      eventKey: 'page-' + i,
+      materializationPending: true,
+    });
+  const first = await stockInbox(f);
+  assert.equal(first.entries.length, 0);
+  assert.ok(first.next);
+  const second = await stockInbox(f, { before: first.next });
+  assert.equal(second.entries.length, 1);
+  assert.equal(second.entries[0].id, f.eventId);
+  assert.equal(second.next, null);
+});
+
+test('read acknowledgement rejects financial and unknown kinds even when the caller knows their IDs', async () => {
+  const f = await inboxFixture();
+  const row = await f.db.collection('business_inbox').findOne({});
+  for (const kind of ['daily_summary', 'register_summary', 'unsupported_notification']) {
+    await f.db.collection('business_inbox').updateOne({ _id: row._id }, { $set: { kind } });
+    await assert.rejects(readStockEvent(f, f.eventId), { code: 'access_denied' });
+  }
+});

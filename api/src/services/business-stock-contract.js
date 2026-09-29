@@ -56,6 +56,25 @@ function validateStockFact(item) {
     fail();
   return item;
 }
+/** Coverage is shared by full observations and bounded historical Inbox samples. */
+function validateStockCoverage(c) {
+  if (
+    !exact(c, ['scannedItems', 'excludedItems', 'verifiedItems', 'unavailableItems', 'reasons']) ||
+    ![c.scannedItems, c.excludedItems, c.verifiedItems, c.unavailableItems].every(count) ||
+    c.excludedItems + c.verifiedItems + c.unavailableItems !== c.scannedItems ||
+    !c.reasons ||
+    typeof c.reasons !== 'object' ||
+    Array.isArray(c.reasons)
+  )
+    fail();
+  let unavailable = 0;
+  for (const [reason, amount] of Object.entries(c.reasons)) {
+    if (!STOCK_REASONS.includes(reason) || !count(amount) || amount === 0) fail();
+    unavailable += amount;
+  }
+  if (unavailable !== c.unavailableItems) fail();
+  return c;
+}
 /** Strict wire contract shared by desktop preparation and subsequent publication
  * and read boundaries. Unknown coverage never permits a completeness claim. */
 function validateStockSummary(value, branch, { now = Date.now } = {}) {
@@ -88,23 +107,8 @@ function validateStockSummary(value, branch, { now = Date.now } = {}) {
     end = Date.parse(value.preparedAt),
     at = now();
   if (!Number.isFinite(at) || start > end || end > at || end - start > MAX_DURATION_MS) fail();
-  const c = value.coverage;
+  const c = validateStockCoverage(value.coverage);
   if (
-    !exact(c, ['scannedItems', 'excludedItems', 'verifiedItems', 'unavailableItems', 'reasons']) ||
-    ![c.scannedItems, c.excludedItems, c.verifiedItems, c.unavailableItems].every(count) ||
-    c.excludedItems + c.verifiedItems + c.unavailableItems !== c.scannedItems ||
-    !c.reasons ||
-    typeof c.reasons !== 'object' ||
-    Array.isArray(c.reasons)
-  )
-    fail();
-  let unavailable = 0;
-  for (const [reason, amount] of Object.entries(c.reasons)) {
-    if (!STOCK_REASONS.includes(reason) || !count(amount) || amount === 0) fail();
-    unavailable += amount;
-  }
-  if (
-    unavailable !== c.unavailableItems ||
     !count(value.lowItemCount) ||
     value.lowItemCount > c.verifiedItems ||
     !Array.isArray(value.lowItems) ||
@@ -122,6 +126,7 @@ function validateStockSummary(value, branch, { now = Date.now } = {}) {
 }
 module.exports = {
   validateStockSummary,
+  validateStockCoverage,
   validateStockFact,
   STOCK_REASONS,
   MAX_DOCUMENTS,

@@ -145,13 +145,32 @@ async function savePreference(
 async function listInbox(
   db,
   context,
-  { before, now = Date.now, includeApprovals = false, includeRegisters = false } = {}
+  {
+    before,
+    now = Date.now,
+    includeApprovals = false,
+    includeRegisters = false,
+    includeStock = false,
+  } = {}
 ) {
-  if (!context.capabilities.includes('overview.read')) return { entries: [], next: null };
+  const financial = context.capabilities.includes('overview.read');
+  const kinds = [
+    ...(financial ? ['daily_summary', 'daily_unavailable'] : []),
+    ...(financial && includeRegisters ? ['register_summary', 'register_unavailable'] : []),
+    ...(includeApprovals && context.capabilities.includes('approvals.read')
+      ? ['approval_requested']
+      : []),
+    ...(includeStock &&
+    context.capabilities.includes('stock.read') &&
+    process.env.POSNIC_BUSINESS_STOCK_ALERTS === '1'
+      ? ['stock_low']
+      : []),
+  ];
   if (before !== undefined && (typeof before !== 'string' || !/^[a-f\d]{24}$/.test(before)))
     fail('invalid_cursor');
+  if (!kinds.length) return { entries: [], next: null };
   await ready(db);
-  const pageSize = includeRegisters ? 10 : 50;
+  const pageSize = includeRegisters || includeStock ? 10 : 50;
   const rows = await db
     .collection('business_inbox')
     .find({
@@ -159,16 +178,7 @@ async function listInbox(
       license: new ObjectId(context.businessId),
       branchId: { $in: context.branches.map((branch) => branch.id) },
       expiresAt: { $gt: new Date(now()) },
-      kind: {
-        $in: [
-          'daily_summary',
-          'daily_unavailable',
-          ...(includeRegisters ? ['register_summary', 'register_unavailable'] : []),
-          ...(includeApprovals && context.capabilities.includes('approvals.read')
-            ? ['approval_requested']
-            : []),
-        ],
-      },
+      kind: { $in: kinds },
       ...(before ? { _id: { $lt: new ObjectId(before) } } : {}),
     })
     .sort({ _id: -1 })
@@ -192,11 +202,15 @@ async function listInbox(
         now
       )
     : new Map();
+  const stock = includeStock
+    ? await require('./business-stock-inbox').visibleStockEvents(db, context, page, now)
+    : new Map();
   return {
     entries: page
       .filter(
         (row) =>
           (row.kind !== 'approval_requested' || visible.has(String(row._id))) &&
+          (row.kind !== 'stock_low' || stock.has(String(row._id))) &&
           (!['register_summary', 'register_unavailable'].includes(row.kind) ||
             registers.has(String(row._id)))
       )
@@ -207,7 +221,10 @@ async function listInbox(
         businessDate: row.businessDate,
         createdAt: row.createdAt.toISOString(),
         read: !!row.readAt,
-        summary: row.kind === 'approval_requested' ? null : (row.summary ?? null),
+        summary: ['approval_requested', 'stock_low'].includes(row.kind)
+          ? null
+          : (row.summary ?? null),
+        ...(stock.get(String(row._id)) ?? {}),
         ...(registers.has(String(row._id))
           ? { ...registers.get(String(row._id)), sessionId: row.sessionId }
           : {}),
@@ -218,21 +235,40 @@ async function listInbox(
     next: rows.length > pageSize ? String(rows[pageSize - 1]._id) : null,
   };
 }
-async function markRead(db, context, id) {
+async function markRead(db, context, id, { now = Date.now } = {}) {
   if (typeof id !== 'string' || !/^[a-f\d]{24}$/.test(id)) fail('invalid_request');
-  if (!context.capabilities.includes('overview.read')) fail('access_denied', 403);
   const row = await db.collection('business_inbox').findOne({
     _id: new ObjectId(id),
     accountId: context.accountId,
     license: new ObjectId(context.businessId),
     branchId: { $in: context.branches.map((branch) => branch.id) },
   });
-  if (!row) fail('entry_unavailable', 404);
+  if (!row || !(row.expiresAt instanceof Date) || !(row.expiresAt.getTime() > now()))
+    fail('entry_unavailable', 404);
+  const capability = {
+    daily_summary: 'overview.read',
+    daily_unavailable: 'overview.read',
+    register_summary: 'overview.read',
+    register_unavailable: 'overview.read',
+    approval_requested: 'approvals.read',
+    stock_low: 'stock.read',
+  }[row.kind];
+  if (!capability || !context.capabilities.includes(capability)) fail('access_denied', 403);
+  if (row.kind === 'stock_low') {
+    const stock = await require('./business-stock-inbox').visibleStockEvents(
+      db,
+      context,
+      [row],
+      now
+    );
+    if (!stock.has(String(row._id))) fail('entry_unavailable', 404);
+  }
   if (['register_summary', 'register_unavailable'].includes(row.kind)) {
     const visible = await require('./business-register-notifications').visibleRegisterEvents(
       db,
       context,
-      [row]
+      [row],
+      now
     );
     if (!visible.has(String(row._id))) fail('entry_unavailable', 404);
   }
@@ -242,16 +278,26 @@ async function markRead(db, context, id) {
       context.accountId,
       row.license,
       row.branchId,
-      row.requestId
+      row.requestId,
+      now
     );
   const result = await db.collection('business_inbox').updateOne(
     {
       _id: new ObjectId(id),
+      kind: row.kind,
+      expiresAt: { $gt: new Date(now()) },
+      ...(row.kind === 'stock_low'
+        ? {
+            stockDigest: row.stockDigest,
+            activationId: row.activationId,
+            materializationPending: false,
+          }
+        : {}),
       accountId: context.accountId,
       license: new ObjectId(context.businessId),
       branchId: { $in: context.branches.map((branch) => branch.id) },
     },
-    { $set: { readAt: new Date() } }
+    { $set: { readAt: new Date(now()) } }
   );
   if (!result.matchedCount) fail('entry_unavailable', 404);
   return { read: true };

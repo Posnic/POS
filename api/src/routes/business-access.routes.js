@@ -73,6 +73,9 @@ router.get('/discovery', (_req, res) =>
     ...(_req.query.stockAlertPreferences === '1' && process.env.POSNIC_BUSINESS_STOCK_ALERTS === '1'
       ? { stockAlertPreferences: 'stock-alert-preferences-v1' }
       : {}),
+    ...(_req.query.stockAlerts === '1' && process.env.POSNIC_BUSINESS_STOCK_ALERTS === '1'
+      ? { stockAlerts: 'inbox-stock-v1' }
+      : {}),
     ...(_req.query.registerSessions === '1'
       ? {
           registerReporting: 'bounded-register-session-v1',
@@ -359,6 +362,7 @@ router.get(
           before: req.query.before,
           includeApprovals: req.query.approvals === '1',
           includeRegisters: req.query.registerSessions === '1',
+          includeStock: req.query.stockAlerts === '1',
         }
       )
     )

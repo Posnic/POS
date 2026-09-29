@@ -2137,7 +2137,7 @@
     },
     "/business/v1/inbox": {
       "get": {
-        "summary": "registerSessions",
+        "summary": "stockAlerts",
         "operationId": "get_business_v1_inbox",
         "tags": [
           "Business access"

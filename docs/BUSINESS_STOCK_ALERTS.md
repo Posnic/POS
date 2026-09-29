@@ -376,3 +376,43 @@ cover a 103-item single group, lost insert acknowledgement, interrupted committe
 cleanup, a later episode, snapshot cancellation, settings changes and access
 revocation during insertion. All 44 snapshot plus six preference tests pass, with
 lint, formatting, attribution and sync-classification checks.
+
+## Authenticated stock Inbox history
+
+Clients explicitly request `GET /api/business/v1/discovery?stockAlerts=1` and
+require `stockAlerts: "inbox-stock-v1"` before adding `stockAlerts=1` to Inbox
+requests. The capability is advertised only while the stock-alert feature flag
+is enabled. Older clients keep their existing response kinds. Stock negotiation
+limits the raw Inbox page to ten entries; clients must follow `next` even when
+live visibility checks leave a page empty.
+
+`stock_low` entries require stock access independently of financial access.
+Daily/register entries still require financial access; approval entries require
+approval access. Every stock list/read acknowledgement checks the current user,
+branch membership, stock ACL, opt-in and activation. Uncommitted, expired,
+out-of-scope or corrupt payloads are hidden. Unknown notification kinds cannot
+be marked read. The authenticated route retains HTTPS and no-store behavior.
+
+The public entry has the ordinary ID, branch, created time, business date and
+read status, `summary: null`, and `stock` with schema version 1, snapshot ID,
+observation interval, `sourceComplete: false`, coverage, total/new low counts,
+at most twenty ordered verified-low item facts and an explicit truncation flag.
+Internal activation, digest, lease and materialization fields are not returned.
+Counts, coverage, timestamps, item facts and the canonical digest are validated
+before exposure. The business date uses the entry creation time in the current
+branch timezone.
+
+These are historical observations. They remain readable during quiet hours,
+minimum-interval deferral and after a subsequent stock change, with their original
+observation timestamps. This read path never claims the items are still low or
+authorizes a push. Disabling and re-enabling invalidates the former activation's
+history. Delivery-time stock revalidation, mobile negotiation/rendering, push,
+retention cleanup and production scheduling remain open. Stock entries still
+have `pushPending: false`; this change activates no timer or deployment.
+
+Validation: 150 integration tests passed across authentication/HTTP, daily and
+approval notifications, source stock, publication, journal, preferences and full
+snapshot delivery. Five stock-contract unit tests, ESLint, Prettier and attribution
+checks passed. The broad parallel run encountered a MongoDB startup fassert;
+the complete integration set passed with file concurrency set to one. Generated
+API documentation was refreshed. No CI runs or deployments were triggered.

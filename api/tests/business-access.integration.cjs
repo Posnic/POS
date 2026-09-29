@@ -1356,3 +1356,130 @@ test('stock-alert HTTP preferences require dedicated auth and current stock ACL 
     else process.env.POSNIC_BUSINESS_STOCK_ALERTS = prior;
   }
 });
+
+test('stock Inbox HTTP negotiates historical entries and enforces dedicated auth and live stock scope', async () => {
+  const prior = process.env.POSNIC_BUSINESS_STOCK_ALERTS;
+  process.env.POSNIC_BUSINESS_STOCK_ALERTS = '1';
+  try {
+    const f = await fixture();
+    await db
+      .collection('users')
+      .updateOne({ _id: f.user._id }, { $set: { 'access.dashboard.financials': false } });
+    const value = await grant(f),
+      branchId = String(f.branch._id);
+    const headers = {
+      'x-forwarded-proto': 'https',
+      authorization: 'Bearer ' + value.token,
+      'content-type': 'application/json',
+    };
+    const discoveryUrl = base + '/api/business/v1/discovery';
+    assert.equal((await (await fetch(discoveryUrl, { headers })).json()).stockAlerts, undefined);
+    assert.equal(
+      (await (await fetch(discoveryUrl + '?stockAlerts=1', { headers })).json()).stockAlerts,
+      'inbox-stock-v1'
+    );
+    const preferenceUrl = base + '/api/business/v1/notifications/stock/' + branchId;
+    assert.equal(
+      (
+        await fetch(preferenceUrl, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            enabled: true,
+            expectedRevision: 0,
+            minimumIntervalMinutes: 15,
+            quiet: { enabled: false, start: '22:00', end: '07:00' },
+          }),
+        })
+      ).status,
+      200
+    );
+    const preference = await db
+      .collection('business_stock_notification_preferences')
+      .findOne({ _id: String(f.user._id) + ':' + branchId });
+    const at = new Date(),
+      stock = {
+        schemaVersion: 1,
+        snapshotId: 'a'.repeat(64),
+        observedFrom: at.toISOString(),
+        preparedAt: at.toISOString(),
+        sourceComplete: false,
+        coverage: {
+          scannedItems: 1,
+          excludedItems: 0,
+          verifiedItems: 1,
+          unavailableItems: 0,
+          reasons: {},
+        },
+        totalLowItemCount: 1,
+        newLowItemCount: 1,
+        items: [
+          {
+            itemId: String(new ObjectId()),
+            name: 'Rice',
+            unit: 'kg',
+            availableMilli: 1000,
+            thresholdMilli: 2000,
+            thresholdSource: 'item',
+            low: true,
+          },
+        ],
+        listTruncated: false,
+      };
+    const event = {
+      _id: new ObjectId(),
+      eventKey: 'stock-http-' + f.user._id,
+      accountId: String(f.user._id),
+      license: f.license,
+      branchId,
+      kind: 'stock_low',
+      activationId: preference.activationId,
+      stock,
+      stockDigest: require('../src/services/business-stock-snapshot-contract').digestOf(stock),
+      createdAt: at,
+      expiresAt: new Date(at.getTime() + 86400000),
+      materializationPending: false,
+      pushPending: false,
+      summary: null,
+    };
+    await db.collection('business_inbox').insertOne(event);
+    const inboxUrl = base + '/api/business/v1/inbox',
+      readUrl = inboxUrl + '/' + event._id + '/read';
+    assert.equal(
+      (await fetch(inboxUrl + '?stockAlerts=1', { headers: { 'x-forwarded-proto': 'https' } }))
+        .status,
+      401
+    );
+    assert.equal(
+      (
+        await fetch(inboxUrl + '?stockAlerts=1', {
+          headers: { authorization: headers.authorization },
+        })
+      ).status,
+      426
+    );
+    assert.equal((await (await fetch(inboxUrl, { headers })).json()).entries.length, 0);
+    const response = await fetch(inboxUrl + '?stockAlerts=1', { headers });
+    assert.equal(response.headers.get('cache-control'), 'no-store');
+    const inbox = await response.json();
+    assert.equal(inbox.entries.length, 1);
+    assert.deepEqual(inbox.entries[0].stock, stock);
+    assert.equal((await fetch(readUrl, { method: 'POST', headers })).status, 200);
+    await db
+      .collection('users')
+      .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
+    assert.equal(
+      (await (await fetch(inboxUrl + '?stockAlerts=1', { headers })).json()).entries.length,
+      0
+    );
+    assert.equal((await fetch(readUrl, { method: 'POST', headers })).status, 403);
+    process.env.POSNIC_BUSINESS_STOCK_ALERTS = '0';
+    assert.equal(
+      (await (await fetch(discoveryUrl + '?stockAlerts=1', { headers })).json()).stockAlerts,
+      undefined
+    );
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_STOCK_ALERTS;
+    else process.env.POSNIC_BUSINESS_STOCK_ALERTS = prior;
+  }
+});
