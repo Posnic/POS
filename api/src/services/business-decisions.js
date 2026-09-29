@@ -88,6 +88,21 @@ function view(row, current, names, now) {
       .concat(state === 'expired' ? [{ state: 'expired', at: row.expiresAt.toISOString() }] : []),
   };
 }
+// Name resolution is asynchronous too. Recheck live identity and scope after
+// all reads, and render current policy/expiry rather than the initial snapshot.
+async function recheckRead(db, sessionId, previous, rows, branchId, now) {
+  const time = now();
+  const current = await actor(db, sessionId, time);
+  const branches = new Set(current.context.branches.map((branch) => branch.id));
+  if (
+    current.context.businessId !== previous.context.businessId ||
+    current.context.accountId !== previous.context.accountId ||
+    (branchId && !branches.has(branchId)) ||
+    rows.some((row) => !branches.has(row.branchId))
+  )
+    fail('access_denied', 403);
+  return { current, time };
+}
 async function listDecisions(db, sessionId, query = {}, { now = Date.now } = {}) {
   if (
     Object.keys(query).some((key) => !['before', 'branchId', 'history'].includes(key)) ||
@@ -125,9 +140,10 @@ async function listDecisions(db, sessionId, query = {}, { now = Date.now } = {})
     .toArray();
   const page = rows.slice(0, 50),
     names = await namesFor(db, page, filter.license);
+  const fresh = await recheckRead(db, sessionId, current, page, query.branchId, now);
   return {
     schemaVersion: 1,
-    entries: page.map((row) => view(row, current, names, time)),
+    entries: page.map((row) => view(row, fresh.current, names, fresh.time)),
     nextCursor: rows.length > 50 ? String(page[49]._id) : null,
   };
 }
@@ -143,7 +159,9 @@ async function readDecision(db, sessionId, requestId, { now = Date.now } = {}) {
   const time = now(),
     current = await actor(db, sessionId, time),
     row = await detail(db, current, requestId);
-  return view(row, current, await namesFor(db, [row], row.license), time);
+  const names = await namesFor(db, [row], row.license);
+  const fresh = await recheckRead(db, sessionId, current, [row], row.branchId, now);
+  return view(row, fresh.current, names, fresh.time);
 }
 async function decide(db, sessionId, requestId, input, { now = Date.now } = {}) {
   if (

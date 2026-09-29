@@ -1483,3 +1483,113 @@ test('stock Inbox HTTP negotiates historical entries and enforces dedicated auth
     else process.env.POSNIC_BUSINESS_STOCK_ALERTS = prior;
   }
 });
+test('approval reads recheck revocation, branch scope and discount policy after requester-name resolution', async () => {
+  const prior = process.env.POSNIC_BUSINESS_DECISIONS;
+  process.env.POSNIC_BUSINESS_DECISIONS = '1';
+  try {
+    for (const mode of ['list', 'detail']) {
+      for (const change of ['revoke', 'branch', 'policy']) {
+        const f = await fixture();
+        await db.collection('users').updateOne(
+          { _id: f.user._id },
+          {
+            $set: {
+              'access.pos': {
+                discount_apply: true,
+                discount_approve_remote: true,
+                discount_max_percent: 50,
+              },
+            },
+          }
+        );
+        const session = await grant(f);
+        const identity = await f.access.authenticate(session.token);
+        const row = await require('../src/services/business-decision-ledger')
+          .createDecisionLedger(db)
+          .create(
+            {
+              businessId: String(f.license),
+              branchId: String(f.branch._id),
+              requesterId: String(new ObjectId()),
+              deviceId: 'desktop-00000000001',
+            },
+            {
+              operationId: 'read-race-operation-01',
+              revisionHash: 'a'.repeat(64),
+              summary: {
+                currency: 'INR',
+                currencyDigits: 2,
+                beforeDiscountMinor: 10000,
+                discountMinor: 2000,
+                payableMinor: 8000,
+                roundingMinor: 0,
+                itemCount: 1,
+                reason: 'Read race regression',
+              },
+            }
+          );
+        let changed = false;
+        const raced = {
+          collection(name) {
+            const collection = db.collection(name);
+            if (name !== 'users') return collection;
+            return new Proxy(collection, {
+              get(target, key) {
+                if (key !== 'find') {
+                  const value = target[key];
+                  return typeof value === 'function' ? value.bind(target) : value;
+                }
+                return (filter, options) => {
+                  const cursor = target.find(filter, options);
+                  if (options?.projection?.firstname === 1) {
+                    const toArray = cursor.toArray.bind(cursor);
+                    cursor.toArray = async () => {
+                      const rows = await toArray();
+                      if (!changed) {
+                        changed = true;
+                        if (change === 'revoke') await f.access.revoke(session.token);
+                        else
+                          await db.collection('users').updateOne(
+                            { _id: f.user._id },
+                            {
+                              $set:
+                                change === 'branch'
+                                  ? { branch_access: [] }
+                                  : { 'access.pos.discount_max_percent': 10 },
+                            }
+                          );
+                      }
+                      return rows;
+                    };
+                  }
+                  return cursor;
+                };
+              },
+            });
+          },
+        };
+        const api = require('../src/services/business-decisions');
+        const read = () =>
+          mode === 'list'
+            ? api.listDecisions(raced, identity.session._id, { branchId: String(f.branch._id) })
+            : api.readDecision(raced, identity.session._id, String(row._id));
+        if (change === 'policy') {
+          const result = await read();
+          const entry = mode === 'list' ? result.entries[0] : result;
+          assert.equal(entry.canDecide, false);
+          assert.equal(entry.unavailableReason, 'discount_limit');
+        } else
+          await assert.rejects(read(), {
+            code: change === 'revoke' ? 'sign_in_required' : 'access_denied',
+          });
+        assert.equal(changed, true, 'the authority change happened after data/name lookup');
+        const saved = await db.collection('business_decisions').findOne({ _id: row._id });
+        assert.equal(saved.state, 'pending');
+        assert.equal(saved.revision, 0);
+      }
+    }
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_DECISIONS;
+    else process.env.POSNIC_BUSINESS_DECISIONS = prior;
+  }
+});

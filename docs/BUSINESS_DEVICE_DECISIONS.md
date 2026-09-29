@@ -5,6 +5,17 @@ checkout routes, cashier UI and receipt recovery are implemented. Operator
 resolution of a missing receipt, broader bill combinations and native release
 qualification remain incomplete. Keep the production flag disabled.
 
+## Mobile read authority
+
+Approval list and detail reads recheck the Business session, account, tenant and
+returned branch scope after loading records and resolving requester names. A
+revocation or branch removal observed during that work rejects the response.
+The returned decision controls use the final discount policy and expiry time,
+so a newly lowered approval limit does not leave an enabled action in the view.
+This complements the separate checks performed when actually deciding or applying
+an approval. Real Mongo race cases cover both list and detail reads; deployed
+revocation testing remains part of qualification.
+
 ## Trust boundary
 
 The enrolled till sends its existing device credential to the Gateway. The Gateway
