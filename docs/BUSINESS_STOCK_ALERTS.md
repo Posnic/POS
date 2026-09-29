@@ -789,3 +789,26 @@ cases passed with the companion checkout configured (102 total). The new cases
 exercise initial disabled saves through the preference service, exact absence
 grace, corrupt activation exclusions and first opt-in during removal. Lint,
 formatting and attribution checks pass.
+
+## Removed-branch stock cleanup
+
+Cleanup checks for the branch record in the preference's license as well as its
+account. A missing branch retires the opt-in and records `missingBranchSince`
+before erasure. After thirty days, with no delivery reservation, it removes the
+scoped item state in existing bounded passes and then the preference. Branch
+presence is rechecked during orphan removal; restoration stops that removal and
+leaves alerts disabled until an explicit new opt-in.
+
+Loss of a user's branch permission is not branch deletion and does not expire
+active episode identity. Delivery still performs its independent live ACL check.
+If an account and branch disappear at different times, cleanup uses the absence
+it actually observed; a change of missing scope starts a conservative new grace
+period. A fresh opt-in followed by another deletion also starts a new grace even
+when an earlier absence marker has not yet been cleared. Corrupt timestamps are
+not guessed. Removed-item history and general account erasure remain separate.
+
+Validation: all 106 snapshot/preferences cases passed with Gateway-dependent
+cases enabled, followed by one additional passing account-to-branch absence
+transition case. Coverage includes the thirty-day boundary, bounded 100+3
+removal, branch restoration before deletion, ACL-only changes and a later opt-in.
+Lint, formatting and attribution checks pass. This change is not deployed.

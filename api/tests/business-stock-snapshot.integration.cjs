@@ -2939,3 +2939,103 @@ test('first opt-in during never-enabled orphan cleanup fences preference removal
   assert.equal(pref.revision, 3);
   assert.equal(typeof pref.activationId, 'string');
 });
+
+test('removed branches retire stock preferences and clean scoped state after thirty days', async () => {
+  const f = await inboxFixture();
+  await f.db.collection('branches').deleteOne({ _id: new ObjectId(f.branch.id) });
+  assert.deepEqual(await cleanupStock(f), { status: 'orphaned', deleted: 0 });
+  const pref = await scanPreference(f);
+  assert.equal(pref.enabled, false);
+  assert.equal(pref.missingBranchSince.getTime(), f.now());
+  assert.equal(pref.missingAccountSince, undefined);
+  f.advance(29 * 86400000);
+  assert.equal((await cleanupStock(f)).deleted, 0);
+  assert.equal((await recipientRows(f)).length, 103);
+  f.advance(86400000);
+  assert.deepEqual(await cleanupStock(f), { status: 'partial', deleted: 100 });
+  f.advance(1);
+  assert.deepEqual(await cleanupStock(f), { status: 'removed', deleted: 3 });
+  assert.equal(await scanPreference(f), null);
+  assert.ok(await f.db.collection('users').findOne({ _id: f.user._id }));
+});
+
+test('branch restoration during orphan cleanup stops deletion and keeps opt-in disabled', async () => {
+  const f = await inboxFixture();
+  const branch = await f.db.collection('branches').findOne({ _id: new ObjectId(f.branch.id) });
+  await f.db.collection('branches').deleteOne({ _id: branch._id });
+  await cleanupStock(f);
+  f.advance(30 * 86400000);
+  let reads = 0;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'branches' && property === 'findOne')
+            return async (...args) => {
+              if (++reads === 2) await f.db.collection('branches').insertOne(branch);
+              return target.findOne(...args);
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  assert.deepEqual(await cleanupStock(f, {}, database), { status: 'changed', deleted: 0 });
+  assert.equal((await recipientRows(f)).length, 103);
+  assert.equal((await scanPreference(f)).enabled, false);
+  assert.equal((await scanPreference(f)).missingBranchSince, undefined);
+});
+
+test('removing branch access alone does not erase active stock episode state', async () => {
+  const f = await inboxFixture();
+  await f.db.collection('users').updateOne({ _id: f.user._id }, { $set: { branch_access: [] } });
+  f.advance(31 * 86400000);
+  assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 0 });
+  assert.equal((await recipientRows(f)).length, 103);
+  assert.equal((await scanPreference(f)).missingBranchSince, undefined);
+});
+
+test('a new opt-in with an old absence marker starts a fresh grace period on later deletion', async () => {
+  const f = await recipientFixture(false);
+  const branch = await f.db.collection('branches').findOne({ _id: new ObjectId(f.branch.id) });
+  await f.db.collection('branches').deleteOne({ _id: branch._id });
+  await cleanupStock(f);
+  f.advance(31 * 86400000);
+  await f.db.collection('branches').insertOne(branch);
+  await require('../src/services/business-stock-notification-preferences').saveStockPreference(
+    f.db,
+    f.context,
+    f.branch.id,
+    {
+      expectedRevision: 2,
+      enabled: true,
+      minimumIntervalMinutes: 15,
+      quiet: { enabled: false, start: '22:00', end: '07:00' },
+    },
+    { now: f.now }
+  );
+  await f.db.collection('branches').deleteOne({ _id: branch._id });
+  assert.deepEqual(await cleanupStock(f), { status: 'orphaned', deleted: 0 });
+  assert.equal((await scanPreference(f)).missingBranchSince.getTime(), f.now());
+  assert.equal((await scanPreference(f)).enabled, false);
+  assert.equal((await scanPreference(f)).revision, 4);
+});
+
+test('switching from a missing account to a missing branch starts a separately observed grace period', async () => {
+  const f = await recipientFixture(false);
+  await f.db.collection('users').deleteOne({ _id: f.user._id });
+  await cleanupStock(f);
+  f.advance(31 * 86400000);
+  await f.db.collection('users').insertOne(f.user);
+  await f.db.collection('branches').deleteOne({ _id: new ObjectId(f.branch.id) });
+  assert.deepEqual(await cleanupStock(f), { status: 'orphaned', deleted: 0 });
+  const pref = await scanPreference(f);
+  assert.equal(pref.missingAccountSince, undefined);
+  assert.equal(pref.missingBranchSince.getTime(), f.now());
+  f.advance(86400000);
+  assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 0 });
+  assert.ok(await scanPreference(f));
+});

@@ -57,7 +57,8 @@ async function drainStockRecipientCleanup(
     Number.isFinite(job.updatedAt.getTime()) &&
     job.updatedAt.getTime() <= now() - 30 * 86400000 &&
     !Object.hasOwn(job, 'stockDelivery');
-  let purgeOrphan = false;
+  let purgeOrphan = false,
+    missingField = 'missingAccountSince';
   const lease = () => ({
     _id: job._id,
     revision: job.revision,
@@ -65,7 +66,7 @@ async function drainStockRecipientCleanup(
     cleanupLeaseId: job.cleanupLeaseId,
     cleanupLeaseUntil: { $gt: new Date(now()) },
     ...(purgeOrphan
-      ? { missingAccountSince: job.missingAccountSince, stockDelivery: { $exists: false } }
+      ? { [missingField]: job[missingField], stockDelivery: { $exists: false } }
       : {}),
     ...(purgeDisabled
       ? { enabled: false, updatedAt: job.updatedAt, stockDelivery: { $exists: false } }
@@ -88,27 +89,40 @@ async function drainStockRecipientCleanup(
           { _id: new ObjectId(job.accountId), license: job.license },
           { projection: { _id: 1 }, maxTimeMS: 250 }
         );
-    const exists = await account();
+    const branch = () =>
+      db
+        .collection('branches')
+        .findOne(
+          { _id: new ObjectId(job.branchId), license: job.license },
+          { projection: { _id: 1 }, maxTimeMS: 250 }
+        );
+    const accountPresent = await account();
+    const branchPresent = await branch();
+    missingField = accountPresent ? 'missingBranchSince' : 'missingAccountSince';
+    const scopeRecord = accountPresent ? branch : account;
+    const exists = accountPresent && branchPresent;
     if (exists) {
       await preferences.updateOne(
         lease(),
-        { $unset: { missingAccountSince: '' } },
+        { $unset: { missingAccountSince: '', missingBranchSince: '' } },
         { maxTimeMS: 500 }
       );
-    } else if (!Object.hasOwn(job, 'missingAccountSince')) {
-      // Retire opt-in before erasing any state. A restored account must opt in
+    } else if (!Object.hasOwn(job, missingField) || job.enabled === true) {
+      // Retire opt-in before erasing any state. A restored scope must opt in
       // again, creating a new activation and fencing this cleanup's old rows.
-      await preferences.updateOne(
+      const retired = await preferences.updateOne(
         lease(),
         {
           $set: {
-            missingAccountSince: new Date(now()),
+            [missingField]: new Date(now()),
             enabled: false,
             updatedAt: new Date(now()),
             nextCleanupAt: new Date(now() + 86400000),
           },
           $inc: { revision: 1 },
           $unset: {
+            [missingField === 'missingAccountSince' ? 'missingBranchSince' : 'missingAccountSince']:
+              '',
             leaseId: '',
             leaseUntil: '',
             deliveryLeaseId: '',
@@ -119,12 +133,12 @@ async function drainStockRecipientCleanup(
         },
         { maxTimeMS: 500 }
       );
-      return { status: 'orphaned', deleted: 0 };
+      return { status: retired.modifiedCount ? 'orphaned' : 'changed', deleted: 0 };
     } else if (
       job.enabled === false &&
-      job.missingAccountSince instanceof Date &&
-      Number.isFinite(job.missingAccountSince.getTime()) &&
-      job.missingAccountSince.getTime() <= now() - 30 * 86400000 &&
+      job[missingField] instanceof Date &&
+      Number.isFinite(job[missingField].getTime()) &&
+      job[missingField].getTime() <= now() - 30 * 86400000 &&
       !Object.hasOwn(job, 'stockDelivery')
     ) {
       purgeOrphan = true;
@@ -152,10 +166,10 @@ async function drainStockRecipientCleanup(
       if (now() - started >= budgetMs) break;
       if (!(await preferences.findOne(lease(), { projection: { _id: 1 }, maxTimeMS: 250 })))
         return { status: 'changed', deleted };
-      if (purgeOrphan && (await account())) {
+      if (purgeOrphan && (await scopeRecord())) {
         await preferences.updateOne(
           lease(),
-          { $unset: { missingAccountSince: '' } },
+          { $unset: { missingAccountSince: '', missingBranchSince: '' } },
           { maxTimeMS: 500 }
         );
         return { status: 'changed', deleted };
@@ -177,7 +191,7 @@ async function drainStockRecipientCleanup(
     if (
       purgeOrphan &&
       !more &&
-      !(await account()) &&
+      !(await scopeRecord()) &&
       !(await states.findOne(scope, { projection: { _id: 1 }, maxTimeMS: 250 }))
     ) {
       const removed = await preferences.deleteOne(lease(), { maxTimeMS: 500 });
