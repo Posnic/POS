@@ -5481,76 +5481,9 @@ function startServer() {
       console.error(' Server failed to start - MongoDB not available');
       if (mainWindow) {
         if (!mainWindow.isVisible()) mainWindow.show();
-        mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body {
-                font-family: Arial, sans-serif;
-                margin: 0;
-                padding: 40px;
-                background: #f5f7fa;
-                color: #17233c;
-              }
-              .container {
-                max-width: 700px;
-                margin: 0 auto;
-                background: #fff;
-                padding: 40px;
-                border: 1px solid #d8e0eb;
-                border-radius: 8px;
-              }
-              h1 { 
-                margin-bottom: 20px; 
-                font-size: 32px;
-                text-align: center;
-              }
-              .option {
-                background: #f8fafc;
-                padding: 20px;
-                margin: 15px 0;
-                border-radius: 6px;
-                border-left: 4px solid #3f8fd2;
-              }
-              .option h3 {
-                margin-top: 0;
-                color: #17233c;
-              }
-              .option ol {
-                text-align: left;
-                line-height: 1.8;
-              }
-              .detail { color: #52627a; line-height: 1.6; }
-              button { border-radius: 6px !important; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1>Posnic could not start its local database</h1>
-              <p class="detail">Your data has not been removed. Posnic includes its own database, so you do not need to install MongoDB or run the app as an administrator.</p>
-
-              <div class="option recommended">
-                <h3>Try again</h3>
-                <ol>
-                  <li>Close Posnic and open it once more.</li>
-                  <li>If it still does not start, open the log below.</li>
-                  <li>Send the log to <strong>support@posnic.com</strong> so the exact cause can be fixed.</li>
-                </ol>
-              </div>
-
-              <div class="option">
-                <h3>What to include</h3>
-                <p class="detail">Mention your operating system, what happened immediately before this screen, and attach the application log. Do not send a database backup unless support specifically requests it.</p>
-              </div>
-              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-                <button onclick="window.electronAPI?.startup?.retry()" style="background:#3f8fd2;color:#fff;border:none;padding:12px 20px;font-weight:600;cursor:pointer">Restart Posnic</button>
-                <button onclick="window.electronAPI?.desktop?.open('log')" style="background:#fff;color:#17233c;border:1px solid #b8c4d4;padding:12px 20px;cursor:pointer">Open Log</button>
-              </div>
-            </div>
-          </body>
-          </html>
-        `)}`);
+        mainWindow.loadFile(path.join(__dirname, 'loading.html'), {
+          query: { startupError: 'Posnic could not start its local database', details: 'Your data has not been removed. Open Log for details or restart Posnic to try again.' }
+        }).catch(error => console.error('Could not display startup recovery:', error));
       }
     }
   }).catch((error) => {
@@ -5571,23 +5504,9 @@ function startServer() {
     console.error('Error stack:', error.stack);
     if (mainWindow && !mainWindow.isDestroyed()) {
       if (!mainWindow.isVisible()) mainWindow.show();
-      mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
-        <html>
-          <body style="font-family:Arial;padding:40px;background:#f5f6fa;color:#222">
-            <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.08)">
-              <h2 style="margin-top:0">Posnic could not start</h2>
-              <p style="color:#555">${String(error.message || error)}</p>
-              <p style="color:#555">Try restarting the app. If it keeps happening, the log file helps support fix it fast.</p>
-              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-                <button onclick="window.electronAPI?.startup?.retry()" style="background:#667eea;color:#fff;border:none;border-radius:8px;padding:12px 20px;font-weight:600;cursor:pointer">Restart App</button>
-                <button onclick="window.electronAPI?.desktop?.open('hardware')" style="background:#eef;border:1px solid #ccd;border-radius:8px;padding:12px 20px;cursor:pointer">Hardware Manager</button>
-                <button onclick="window.electronAPI?.desktop?.open('backup')" style="background:#eef;border:1px solid #ccd;border-radius:8px;padding:12px 20px;cursor:pointer">Backup Manager</button>
-                <button onclick="window.electronAPI?.desktop?.open('log')" style="background:#eef;border:1px solid #ccd;border-radius:8px;padding:12px 20px;cursor:pointer">Open Log</button>
-              </div>
-            </div>
-          </body>
-        </html>
-      `)}`);
+      mainWindow.loadFile(path.join(__dirname, 'loading.html'), {
+        query: { startupError: 'Posnic could not start', details: String(error.message || error) }
+      }).catch(loadError => console.error('Could not display startup recovery:', loadError));
     }
   });
 }
