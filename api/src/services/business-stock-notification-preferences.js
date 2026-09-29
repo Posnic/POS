@@ -68,7 +68,7 @@ function publicPreference(branch, row) {
     quiet: row?.quiet ?? { enabled: false, start: '22:00', end: '07:00' },
   };
 }
-async function getStockPreference(db, context, branchId) {
+async function readStockPreferenceState(db, context, branchId) {
   const branch = branchFor(context, branchId);
   const row = await db.collection('business_stock_notification_preferences').findOne(
     {
@@ -78,6 +78,10 @@ async function getStockPreference(db, context, branchId) {
     { maxTimeMS: 500 }
   );
   validateStored(row, context, branch);
+  return { branch, row };
+}
+async function getStockPreference(db, context, branchId) {
+  const { branch, row } = await readStockPreferenceState(db, context, branchId);
   return publicPreference(branch, row);
 }
 async function saveStockPreference(db, context, branchId, input, { now = Date.now } = {}) {
@@ -137,4 +141,4 @@ async function saveStockPreference(db, context, branchId, input, { now = Date.no
   if (!row) fail('preference_changed', 409);
   return publicPreference(branch, row);
 }
-module.exports = { getStockPreference, saveStockPreference, INTERVALS };
+module.exports = { getStockPreference, saveStockPreference, readStockPreferenceState, INTERVALS };

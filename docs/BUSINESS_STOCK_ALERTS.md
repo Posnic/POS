@@ -247,3 +247,36 @@ continues work discovery after the snapshot lane. Gateway's 38 reporting/receive
 tests also pass. Cloud recipient snapshot lookup, baseline/deduplication, live ACL,
 quiet hours and notification delivery remain unfinished. No production activation
 or packaged/HTTPS deployment qualification is implied by these in-process tests.
+
+## Live recipient selection and shared snapshot reads
+
+Cloud and Community notification workers now share `readStockSnapshotPage` and
+`readStockSnapshotFact`. These private readers validate the prepared summary,
+publisher identity, page index/ranges and digest, load at most one retained fact
+page, and recheck the publisher/snapshot afterward. They do not scan inventory.
+Corrupt indexes, a newer pending transfer, stale facts or a changed publisher are
+unavailable. Pagination requires the original snapshot ID after page zero so a
+worker cannot combine different observations. The Community compatibility wrapper
+retains its desktop/local-reporting boundary.
+
+`readRecipientStockPage` reloads the actual user and current Business context,
+then validates the branch-scoped stock preference. It requires stock access and
+notification self-management, explicit branch membership, an active account and
+opt-in. Financial access is not required. Minimum intervals and quiet hours use
+the current branch timezone and defer before loading stock pages. A malformed or
+future notification timestamp is unavailable rather than silently bypassing cadence.
+The activation marker and preference revision bind the cursor. A new activation
+requires an observation that started after opt-in; old observations are not replayed.
+After the page read, user access and preferences are checked again and changed
+scope/settings discard the candidate. Source completeness remains explicitly false.
+
+This is read-only candidate selection, not an Inbox write or push authority. The
+materializer and delivery consumer must repeat live checks at their respective
+boundaries, persist deduplication/activation state and enforce notification cadence
+atomically. Those components remain unfinished; no timer or delivery is enabled.
+
+Validation: 28 snapshot tests plus six stock-preference tests pass. New cases
+cover server-side reads without desktop mode, stock-only permissions, user/branch/
+tenant revocation, activation-bound paging, observation replacement, pre-opt-in
+suppression, cadence/quiet-hour deferral, changes during reads and corrupted state.
+Lint, formatting, 24 README/sync-classification checks and attribution pass.

@@ -788,3 +788,206 @@ test(
     }
   }
 );
+
+async function recipientFixture() {
+  const f = await fixture();
+  const user = {
+    _id: new ObjectId(),
+    license: new ObjectId(f.branch.license),
+    activate: true,
+    usertype: 'manager',
+    access: { item: { read: true } },
+    branch_access: [{ branch_id: new ObjectId(f.branch.id) }],
+  };
+  await f.db.collection('users').insertOne(user);
+  await f.db
+    .collection('branches')
+    .updateOne(
+      { _id: new ObjectId(f.branch.id) },
+      { $set: { branch_name: 'Central', currency: 'INR', time_zone: 'Asia/Kolkata' } }
+    );
+  const context = await require('../src/services/business-access')
+    .createBusinessAccess(f.db, { now: f.now })
+    .contextFor(user);
+  const {
+    saveStockPreference,
+  } = require('../src/services/business-stock-notification-preferences');
+  await saveStockPreference(
+    f.db,
+    context,
+    f.branch.id,
+    {
+      expectedRevision: 0,
+      enabled: true,
+      minimumIntervalMinutes: 15,
+      quiet: { enabled: false, start: '22:00', end: '07:00' },
+    },
+    { now: f.now }
+  );
+  for (const page of await f.pages()) await f.send(page);
+  const target = {
+    accountId: String(user._id),
+    businessId: f.branch.license,
+    branchId: f.branch.id,
+  };
+  const readPage = (options = {}, database = f.db) =>
+    require('../src/services/business-stock-recipient').readRecipientStockPage(database, target, {
+      now: f.now,
+      ...options,
+    });
+  return { ...f, user, context, target, readPage };
+}
+test('stock-only recipients page the complete verified set on Cloud without desktop mode', async () => {
+  const f = await recipientFixture();
+  assert.equal(f.context.capabilities.includes('overview.read'), false);
+  process.env.POSNIC_DESKTOP = '0';
+  try {
+    const first = await f.readPage();
+    assert.equal(first.status, 'ready');
+    assert.equal(first.facts.length, 100);
+    assert.equal(first.summary.sourceComplete, false);
+    const last = await f.readPage({ cursor: first.nextCursor });
+    assert.equal(last.facts.length, 3);
+    assert.equal(last.nextCursor, null);
+  } finally {
+    process.env.POSNIC_DESKTOP = '1';
+  }
+});
+test('recipient selection enforces current ACL, branch membership, account activation and tenant', async () => {
+  const f = await recipientFixture();
+  for (const change of [
+    { 'access.item.read': false },
+    { 'access.item.read': true, branch_access: [] },
+    { branch_access: f.user.branch_access, activate: false },
+  ]) {
+    await f.db.collection('users').updateOne({ _id: f.user._id }, { $set: change });
+    assert.equal((await f.readPage()).status, 'denied');
+  }
+  await f.db.collection('users').updateOne({ _id: f.user._id }, { $set: { activate: true } });
+  const read = require('../src/services/business-stock-recipient').readRecipientStockPage;
+  assert.equal(
+    (await read(f.db, { ...f.target, businessId: String(new ObjectId()) }, { now: f.now })).status,
+    'denied'
+  );
+});
+test('recipient snapshot cursors cannot combine observations or cross opt-in activations', async () => {
+  const f = await recipientFixture();
+  const first = await f.readPage();
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateOne({ _id: f.rows[0]._id }, { $set: { available_quantity: 9 } });
+  for (const page of await f.pages()) await f.send(page);
+  assert.equal((await f.readPage({ cursor: first.nextCursor })).status, 'unavailable');
+  const {
+    saveStockPreference,
+  } = require('../src/services/business-stock-notification-preferences');
+  const settings = {
+    minimumIntervalMinutes: 15,
+    quiet: { enabled: false, start: '22:00', end: '07:00' },
+  };
+  await saveStockPreference(
+    f.db,
+    f.context,
+    f.branch.id,
+    { ...settings, enabled: false, expectedRevision: 1 },
+    { now: f.now }
+  );
+  assert.equal((await f.readPage()).status, 'disabled');
+  f.advance();
+  await saveStockPreference(
+    f.db,
+    f.context,
+    f.branch.id,
+    { ...settings, enabled: true, expectedRevision: 2 },
+    { now: f.now }
+  );
+  assert.equal((await f.readPage({ cursor: first.nextCursor })).status, 'changed');
+  assert.equal((await f.readPage()).status, 'unavailable');
+  for (const page of await f.pages()) await f.send(page);
+  assert.equal((await f.readPage()).status, 'ready');
+});
+test('recipient cadence and branch-time quiet hours defer without loading stock pages', async () => {
+  const f = await recipientFixture();
+  const prefs = f.db.collection('business_stock_notification_preferences');
+  await prefs.updateOne(
+    { accountId: f.target.accountId },
+    { $set: { lastNotifiedAt: new Date(f.now() - 5 * 60000) } }
+  );
+  const result = await f.readPage();
+  assert.equal(result.status, 'deferred');
+  assert.equal(result.retryAt.getTime(), f.now() + 10 * 60000);
+  const moment = require('moment-timezone'),
+    local = moment(f.now()).tz('Asia/Kolkata');
+  await prefs.updateOne(
+    { accountId: f.target.accountId },
+    {
+      $unset: { lastNotifiedAt: '' },
+      $set: {
+        quiet: {
+          enabled: true,
+          start: local.format('HH:mm'),
+          end: local.clone().add(30, 'minutes').format('HH:mm'),
+        },
+      },
+    }
+  );
+  const guarded = {
+    collection(name) {
+      if (name === 'business_stock_snapshot_pages')
+        throw new Error('quiet recipients must not load stock');
+      return f.db.collection(name);
+    },
+  };
+  const quiet = await f.readPage({}, guarded);
+  assert.equal(quiet.status, 'deferred');
+  assert.ok(quiet.retryAt.getTime() > f.now());
+});
+test('recipient permission or preference changes during the snapshot read discard the candidate', async () => {
+  for (const mode of ['acl', 'revision']) {
+    const f = await recipientFixture();
+    const guarded = {
+      collection(name) {
+        const collection = f.db.collection(name);
+        return new Proxy(collection, {
+          get(target, property) {
+            if (name === 'business_stock_snapshot_pages' && property === 'findOne')
+              return async (...args) => {
+                const row = await target.findOne(...args);
+                if (mode === 'acl')
+                  await f.db
+                    .collection('users')
+                    .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
+                else
+                  await f.db
+                    .collection('business_stock_notification_preferences')
+                    .updateOne({ accountId: f.target.accountId }, { $inc: { revision: 1 } });
+                return row;
+              };
+            return typeof target[property] === 'function'
+              ? target[property].bind(target)
+              : target[property];
+          },
+        });
+      },
+    };
+    assert.equal((await f.readPage({}, guarded)).status, mode === 'acl' ? 'denied' : 'changed');
+  }
+});
+test('corrupt snapshot page indexes and future recipient cadence fail closed', async () => {
+  const f = await recipientFixture();
+  await f.db
+    .collection('business_reporting_publishers')
+    .updateOne(
+      { _id: f.branch.id },
+      { $set: { 'stockSnapshot.pages.0.first': String(new ObjectId()) } }
+    );
+  assert.equal((await f.readPage()).status, 'unavailable');
+  await f.db
+    .collection('business_stock_notification_preferences')
+    .updateOne(
+      { accountId: f.target.accountId },
+      { $set: { lastNotifiedAt: new Date(f.now() + 1) } }
+    );
+  await assert.rejects(f.readPage(), /preference_unavailable/);
+});

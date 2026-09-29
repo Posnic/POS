@@ -197,71 +197,14 @@ async function receiveCommunityStockSnapshot(db, device, body, { now = Date.now 
     fail('stock_snapshot_busy');
   return receipt(true);
 }
-/** Private worker lookup, not a user endpoint: its caller must separately enforce
- * live recipient ACL/opt-in. Missing facts are unknown, never healthy/recovered. */
-async function readCommunityStockSnapshotFact(db, branch, itemId, { now = Date.now } = {}) {
+/** Community compatibility wrapper; shared lookup also serves Cloud workers. */
+async function readCommunityStockSnapshotFact(db, branch, itemId, options) {
   localOnly();
-  if (
-    ![branch?.id, branch?.license, itemId].every(
-      (id) => typeof id === 'string' && /^[a-f\d]{24}$/.test(id)
-    )
-  )
-    fail('invalid_stock_scope', 400);
-  const filter = { _id: branch.id, license: new ObjectId(branch.license) };
-  const owners = db.collection('business_reporting_publishers');
-  const owner = await owners.findOne(filter, { maxTimeMS: 250 });
-  const snapshot = owner?.stockSnapshot;
-  if (
-    !owner ||
-    owner.pendingStockSnapshot ||
-    !samePublisher(snapshot, owner) ||
-    !fresh(snapshot.summary, now())
-  )
-    return { status: 'unavailable' };
-  const descriptor = snapshot.pages.find(
-    (page) => page.first && page.first <= itemId && itemId <= page.last
+  return require('./business-stock-snapshot-read').readStockSnapshotFact(
+    db,
+    branch,
+    itemId,
+    options
   );
-  let fact;
-  if (descriptor) {
-    const row = await db.collection('business_stock_snapshot_pages').findOne(
-      {
-        _id: keyOf(branch.id, owner.assignmentId, snapshot.snapshotId) + ':' + descriptor.pageIndex,
-      },
-      { maxTimeMS: 250 }
-    );
-    if (
-      !row ||
-      row.digest !== descriptor.digest ||
-      digestOf(row.page) !== descriptor.digest ||
-      row.page.snapshotId !== snapshot.snapshotId ||
-      row.page.pageIndex !== descriptor.pageIndex ||
-      digestOf(row.page.summary) !== digestOf(snapshot.summary)
-    )
-      return { status: 'unavailable' };
-    validateSnapshotPage(row.page, branch, { now });
-    fact = row.page.facts.find((value) => value.itemId === itemId);
-  }
-  // Recheck after the page read so a handover or a newer in-flight observation
-  // cannot be represented as a current fact from the former publisher.
-  const stillCurrent = await owners.findOne(
-    {
-      ...filter,
-      assignmentId: owner.assignmentId,
-      epoch: owner.epoch,
-      deviceId: owner.deviceId,
-      'stockSnapshot.snapshotId': snapshot.snapshotId,
-      pendingStockSnapshot: { $exists: false },
-    },
-    { maxTimeMS: 250 }
-  );
-  if (!stillCurrent || !fresh(snapshot.summary, now())) return { status: 'unavailable' };
-  return {
-    status: fact ? (fact.low ? 'low' : 'healthy') : 'unknown',
-    ...(fact ? { fact } : {}),
-    snapshotId: snapshot.snapshotId,
-    observedFrom: snapshot.summary.observedFrom,
-    preparedAt: snapshot.summary.preparedAt,
-    sourceComplete: false,
-  };
 }
 module.exports = { receiveCommunityStockSnapshot, readCommunityStockSnapshotFact };
