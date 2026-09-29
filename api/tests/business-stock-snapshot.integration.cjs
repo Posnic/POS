@@ -2066,3 +2066,184 @@ test('stock source is checked again after the final device lookup before provide
   assert.equal((await f.delivery()).error, 'push_stock_changed');
   assert.equal((await f.delivery()).stockCursor, undefined);
 });
+
+const notificationWorker = (f, options = {}, database = f.db) =>
+  require('../src/services/business-stock-notification-worker').createStockNotificationWorker(
+    database,
+    { now: f.now, ...options }
+  );
+
+test('combined stock worker scans and materializes once, with durable cadence across recreation', async () => {
+  const f = await recipientFixture();
+  const result = await notificationWorker(f).tick();
+  assert.equal(result.scan.state, 'complete');
+  assert.equal(result.delivery, 'materialized');
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
+  assert.equal((await f.db.collection('business_inbox').findOne({})).pushPending, false);
+  assert.equal((await notificationWorker(f).tick()).delivery, 'idle');
+  f.advance(60000);
+  assert.equal((await notificationWorker(f).tick()).delivery, 'deferred');
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
+  assert.equal(
+    (await scanPreference(f)).nextMaterializeAt.getTime(),
+    (await scanPreference(f)).lastNotifiedAt.getTime() + 15 * 60000
+  );
+});
+
+test('a scan error does not starve an already scanned recipient materialization', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  const worker = notificationWorker(f, {
+    scan: {
+      tick: async () => {
+        throw new Error('source unavailable');
+      },
+      stop() {},
+    },
+  });
+  const result = await worker.tick();
+  assert.equal(result.scan.state, 'error');
+  assert.equal(result.delivery, 'materialized');
+});
+
+test('stopping combined stock work during insertion prevents late commit and restart resumes the group', async () => {
+  const f = await recipientFixture();
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_inbox' && property === 'updateOne')
+            return async (...args) => {
+              const result = await target.updateOne(...args);
+              if (args[1].$setOnInsert) worker.stop();
+              return result;
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  const worker = notificationWorker(f, {}, database);
+  await worker.tick();
+  assert.equal((await f.db.collection('business_inbox').findOne({})).materializationPending, true);
+  assert.equal((await scanPreference(f)).lastNotifiedAt, undefined);
+  assert.equal(await worker.tick(), undefined);
+  assert.equal((await notificationWorker(f).tick()).delivery, 'materialized');
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
+});
+
+test('materialization scheduling cannot overwrite a successor lease', async () => {
+  const f = await recipientFixture();
+  const later = new Date(f.now() + 123000);
+  const worker = notificationWorker(f, {
+    materialize: async () => {
+      await f.db.collection('business_stock_notification_preferences').updateOne(
+        {},
+        {
+          $set: {
+            materializeLeaseId: 'successor',
+            materializeLeaseUntil: later,
+            nextMaterializeAt: later,
+          },
+        }
+      );
+      return { status: 'empty' };
+    },
+  });
+  await worker.tick();
+  const row = await scanPreference(f);
+  assert.equal(row.materializeLeaseId, 'successor');
+  assert.equal(row.nextMaterializeAt.getTime(), later.getTime());
+});
+
+test('disabled recipients still recover committed group cleanup without creating another alert', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_recipient_state' && property === 'updateMany')
+            return async (...args) => {
+              if (args[1].$unset?.pending === '') throw new Error('cleanup interrupted');
+              return target.updateMany(...args);
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  await assert.rejects(materializeStock(f, database), /cleanup interrupted/);
+  await f.db
+    .collection('business_stock_notification_preferences')
+    .updateOne({}, { $set: { enabled: false } });
+  assert.equal((await notificationWorker(f).tick()).delivery, 'materialized');
+  assert.equal((await scanPreference(f)).stockDelivery, undefined);
+  assert.ok((await recipientRows(f)).every((row) => !row.pending));
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
+});
+
+test('settings edits invalidate materialization scheduling leases and long deferrals', async () => {
+  const f = await recipientFixture();
+  await f.db.collection('business_stock_notification_preferences').updateOne(
+    {},
+    {
+      $set: {
+        materializeLeaseId: 'old-worker',
+        materializeLeaseUntil: new Date(f.now() + 30000),
+        nextMaterializeAt: new Date(f.now() + 86400000),
+      },
+    }
+  );
+  await require('../src/services/business-stock-notification-preferences').saveStockPreference(
+    f.db,
+    f.context,
+    f.branch.id,
+    {
+      expectedRevision: 1,
+      enabled: true,
+      minimumIntervalMinutes: 30,
+      quiet: { enabled: false, start: '22:00', end: '07:00' },
+    },
+    { now: f.now }
+  );
+  const row = await scanPreference(f);
+  assert.equal(row.materializeLeaseId, undefined);
+  assert.equal(row.nextMaterializeAt, undefined);
+  assert.equal((await notificationWorker(f).tick()).delivery, 'materialized');
+});
+
+test('a failed schedule lease release does not leave the combined worker permanently running', async () => {
+  const f = await recipientFixture();
+  let failed = false;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_notification_preferences' && property === 'updateOne')
+            return async (...args) => {
+              if (!failed && args[0].materializeLeaseId && !args[0].revision) {
+                failed = true;
+                throw new Error('release unavailable');
+              }
+              return target.updateOne(...args);
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  const worker = notificationWorker(f, {}, database);
+  await assert.rejects(worker.tick(), /release unavailable/);
+  assert.equal((await worker.tick()).delivery, 'idle');
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
+});

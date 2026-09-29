@@ -489,3 +489,30 @@ worker cases cover generic payload/receipt state, durable paging, superseded sou
 lease/device revocation, lost cursor acknowledgement, opt-out before provider retry,
 and a publisher change after the final device lookup. Existing daily, approval and
 register-close push regressions pass with the stronger live-lease write checks.
+
+## Combined recipient scheduling
+
+`createStockNotificationWorker` composes one bounded recipient scan and one due
+Inbox materialization per tick. It starts no timer and does not call the push
+provider. Scanning and materialization retain independent persisted progress and
+leases, so a failed scan does not starve recovery of an already committed group.
+Materialization stores its next eligible time and last state on the preference.
+Quiet/cadence deferrals retain their retry time; unavailable/changed work retries
+in fifteen seconds, denied work in five minutes, and completed/empty work in one
+minute. Errors back off one minute. A replacement worker resumes from stored state.
+
+Settings edits invalidate scheduling leases and old deferrals. Disabled recipients
+remain selectable only for finishing an already committed group's cleanup; this
+does not create a new notification. Revision, activation and lease identity fence
+schedule updates. Shutdown aborts the scanner and signals materialization before
+Inbox insertion and before commit. An interrupted uncommitted group remains
+recoverable, and committed cleanup may finish its already-authorized bounded writes.
+A failed final lease release cannot leave the process permanently marked running.
+
+Validation: 71 snapshot/pipeline and six preference integration tests pass, with
+seven new coordinator cases for recreation/cadence, scan errors, stop during
+insertion, successor leases, cleanup after opt-out, settings edits and database
+release failure. ESLint, formatting and attribution pass. Production timer wiring,
+retention cleanup and real provider/relay validation remain unfinished. Stock
+entries still leave materialization with `pushPending: false`; no feature flag,
+production runtime or published Android artifact was changed.

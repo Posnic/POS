@@ -9,7 +9,8 @@ const fail = (code) => {
 };
 /** Private grouped Inbox materialization. Entries remain push-ineligible until
  * the dedicated read/push consumers are connected and qualified. */
-async function materializeStockAlert(db, target, { now = Date.now } = {}) {
+async function materializeStockAlert(db, target, { now = Date.now, signal } = {}) {
+  if (signal?.aborted) return { status: 'cancelled' };
   if (process.env.POSNIC_BUSINESS_STOCK_ALERTS !== '1') return { status: 'disabled' };
   if (
     ![target?.accountId, target?.businessId, target?.branchId].every(
@@ -252,6 +253,7 @@ async function materializeStockAlert(db, target, { now = Date.now } = {}) {
       return await cancel();
     if (!(await preferences.findOne(liveLease(), { projection: { _id: 1 }, maxTimeMS: 250 })))
       return { status: 'changed' };
+    if (signal?.aborted) return { status: 'cancelled' };
     await inbox.updateOne(
       { eventKey: eventKey() },
       {
@@ -282,6 +284,7 @@ async function materializeStockAlert(db, target, { now = Date.now } = {}) {
       finalCheck.preferenceRevision !== pref.revision
     )
       return await cancel();
+    if (signal?.aborted) return { status: 'cancelled' };
     const committed = await preferences.updateOne(
       {
         ...liveLease(),
