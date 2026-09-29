@@ -1172,3 +1172,101 @@ test('acknowledged recipient candidates do not return while the same item remain
   assert.equal((await recipientRows(f))[0].pending, undefined);
   assert.equal((await recipientRows(f))[0].episode, 1);
 });
+
+const recipientWorker = (f, options = {}) =>
+  require('../src/services/business-stock-recipient-worker').createStockRecipientWorker(f.db, {
+    now: f.now,
+    ...options,
+  });
+const scanPreference = (f) =>
+  f.db
+    .collection('business_stock_notification_preferences')
+    .findOne({ accountId: f.target.accountId });
+test('recipient scan worker persists a page cursor and resumes after process recreation', async () => {
+  const f = await recipientFixture();
+  assert.deepEqual(await recipientWorker(f).tick({ maxPages: 1 }), {
+    pages: 1,
+    queued: 100,
+    state: 'partial',
+  });
+  assert.equal((await scanPreference(f)).cursor.cursor.pageIndex, 1);
+  f.advance();
+  assert.deepEqual(await recipientWorker(f).tick(), { pages: 1, queued: 3, state: 'complete' });
+  const preference = await scanPreference(f);
+  assert.equal(preference.cursor, undefined);
+  assert.ok(preference.lastScannedSnapshotId);
+  assert.equal(preference.nextScanAt.getTime(), f.now() + 60000);
+  assert.equal((await recipientRows(f)).length, 103);
+});
+test('recipient scan crash after journalling replays safely without losing a page or duplicating candidates', async () => {
+  const f = await recipientFixture();
+  const { journalRecipientStockPage } = require('../src/services/business-stock-recipient-journal');
+  const worker = recipientWorker(f, {
+    journal: async (...args) => {
+      await journalRecipientStockPage(...args);
+      throw new Error('crash before cursor');
+    },
+  });
+  await assert.rejects(worker.tick(), /crash before cursor/);
+  assert.equal((await scanPreference(f)).cursor, undefined);
+  const before = (await recipientRows(f)).map((row) => row.pending.id);
+  f.advance(60000);
+  assert.deepEqual(await recipientWorker(f).tick(), { pages: 2, queued: 3, state: 'complete' });
+  assert.deepEqual(
+    (await recipientRows(f)).slice(0, 100).map((row) => row.pending.id),
+    before
+  );
+});
+test('recipient scan cannot overwrite successor leases or preferences edited during work', async () => {
+  for (const mode of ['lease', 'settings', 'stop']) {
+    const f = await recipientFixture();
+    const {
+      journalRecipientStockPage,
+    } = require('../src/services/business-stock-recipient-journal');
+    const worker = recipientWorker(f, {
+      journal: async (...args) => {
+        const result = await journalRecipientStockPage(...args);
+        if (mode === 'lease')
+          await f.db
+            .collection('business_stock_notification_preferences')
+            .updateOne({ accountId: f.target.accountId }, { $set: { leaseId: 'successor' } });
+        else if (mode === 'stop') worker.stop();
+        else
+          await require('../src/services/business-stock-notification-preferences').saveStockPreference(
+            f.db,
+            f.context,
+            f.branch.id,
+            {
+              enabled: true,
+              expectedRevision: 1,
+              minimumIntervalMinutes: 30,
+              quiet: { enabled: false, start: '22:00', end: '07:00' },
+            },
+            { now: f.now }
+          );
+        return result;
+      },
+    });
+    await worker.tick();
+    assert.equal((await scanPreference(f)).cursor, undefined);
+    if (mode === 'lease') assert.equal((await scanPreference(f)).leaseId, 'successor');
+    if (mode === 'settings') assert.equal((await scanPreference(f)).revision, 2);
+    f.advance(31000);
+    assert.equal((await recipientWorker(f).tick()).state, 'complete');
+    assert.equal((await recipientRows(f)).length, 103);
+  }
+});
+test('recipient scan restarts a superseded snapshot cursor instead of combining snapshots', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick({ maxPages: 1 });
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateOne({ _id: f.rows[0]._id }, { $set: { available_quantity: 9 } });
+  for (const page of await f.pages()) await f.send(page);
+  assert.equal((await recipientWorker(f).tick()).state, 'unavailable');
+  assert.equal((await scanPreference(f)).cursor, undefined);
+  f.advance(15000);
+  assert.equal((await recipientWorker(f).tick()).state, 'complete');
+  assert.equal((await recipientRows(f))[0].pending, undefined);
+});

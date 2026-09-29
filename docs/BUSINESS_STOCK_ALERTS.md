@@ -319,3 +319,26 @@ is applied to active recipient classification: expiring it blindly could repeat
 an already acknowledged low episode. Activation-aware cleanup and stale pending
 candidate expiry must be implemented before rollout. This checkpoint starts no
 producer, recipient timer or notification delivery.
+
+## Durable recipient scan scheduling
+
+`createStockRecipientWorker` now claims a recipient preference with a 30-second
+lease and saves its snapshot/page/item continuation after journal writes. Each
+tick handles at most ten pages under a three-second elapsed budget, passed down
+to the journal. Partial progress resumes promptly; a completed scan records its
+snapshot and schedules another observation check after one minute. Restart after
+journal writes but before cursor persistence replays the same identities safely.
+
+Preference revision, activation, enabled state and lease identity fence progress.
+Stop, lease replacement or a settings edit cannot save a late cursor. A superseded
+or unavailable snapshot clears the obsolete continuation and retries after fifteen
+seconds. Access denial backs off five minutes without silently changing the user's
+opt-in; errors retain diagnostic state and back off one minute. Normal delivery
+quiet-hour and cadence checks remain separate from observation scheduling.
+
+The worker exposes a tick/stop interface but is not attached to a production timer
+until the complete notification pipeline is qualified. It creates no Inbox entries
+or pushes. Four new scheduling integration cases cover restart, crash replay,
+lease/settings/stop races and snapshot replacement. All 38 snapshot plus six
+preference tests pass, along with lint and formatting. Grouped materialization,
+delivery-time revalidation, retention and runtime/deployment activation remain open.

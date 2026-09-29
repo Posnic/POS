@@ -56,9 +56,19 @@ function validateState(row, key, target, itemId) {
 async function journalRecipientStockPage(
   db,
   target,
-  { cursor, afterItemId = null, limit = 100, now = Date.now } = {}
+  { cursor, afterItemId = null, limit = 100, budgetMs = 3000, signal, now = Date.now } = {}
 ) {
-  if (!Number.isInteger(limit) || limit < 1 || limit > 100) fail('invalid_stock_recipient_cursor');
+  const started = now();
+  if (
+    !Number.isInteger(limit) ||
+    limit < 1 ||
+    limit > 100 ||
+    !Number.isInteger(budgetMs) ||
+    budgetMs < 1 ||
+    budgetMs > 3000
+  )
+    fail('invalid_stock_recipient_cursor');
+  if (signal?.aborted) return { status: 'cancelled' };
   const frame = await readRecipientStockPage(db, target, { cursor, now, observeOnly: true });
   if (frame.status !== 'ready') return frame;
   if (afterItemId !== null && !frame.facts.some((fact) => fact.itemId === afterItemId))
@@ -72,8 +82,7 @@ async function journalRecipientStockPage(
     'pending.id': 1,
     itemId: 1,
   });
-  const started = now(),
-    remaining = frame.facts.filter((fact) => afterItemId === null || fact.itemId > afterItemId);
+  const remaining = frame.facts.filter((fact) => afterItemId === null || fact.itemId > afterItemId);
   let processed = 0,
     queued = 0,
     last = afterItemId;
@@ -85,6 +94,8 @@ async function journalRecipientStockPage(
   };
   const progress = () => ({
     status: 'processed',
+    snapshotId: frame.snapshotId,
+    preparedAt: frame.summary.preparedAt,
     processed,
     queued,
     next:
@@ -95,13 +106,15 @@ async function journalRecipientStockPage(
         : { cursor: frameCursor, afterItemId: last },
   });
   for (const fact of remaining) {
-    if (processed >= limit || now() - started >= 3000) return progress();
+    if (signal?.aborted) return { status: 'cancelled' };
+    if (processed >= limit || now() - started >= budgetMs) return progress();
     if (now() - Date.parse(frame.summary.preparedAt) >= FRESHNESS_MS)
       return { status: 'unavailable' };
     const key = [target.businessId, target.accountId, target.branchId, fact.itemId].join(':');
     let saved = false;
     for (let attempt = 0; attempt < 8; attempt++) {
-      if (now() - started >= 3000) return progress();
+      if (signal?.aborted) return { status: 'cancelled' };
+      if (now() - started >= budgetMs) return progress();
       // The preference edit/activation check prevents ordinary stale work. A
       // racing edit can leave only an old tagged candidate, which cannot pass
       // the materializer's mandatory live activation/revision checks.
