@@ -318,7 +318,13 @@ module.exports = async function startServer(options = {}) {
       }
     });
     console.log('✅ MongoDB Connected Successfully!');
-    console.log(`📊 Database: ${mongoose.connection.name}`);
+      console.log(`📊 Database: ${mongoose.connection.name}`);
+      // Desktop does not execute api/server.js. Repair legacy supplier email
+      // indexes here too, before imports or other writes can reach the API.
+      await require(path.join(apiPath, 'src/database/migrations/supplier-email-index'))
+        .migrateSupplierEmailIndex(mongoose.connection.db);
+      await require(path.join(apiPath, 'src/database/migrations/supplier-email-index'))
+        .migrateCustomerEmailIndex(mongoose.connection.db);
     
     // Add mongoClient to app.locals for session filter utility
     app.locals.mongoClient = mongoClient;

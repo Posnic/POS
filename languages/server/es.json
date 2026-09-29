@@ -80,7 +80,6 @@
   "Branch not found.": "No se encontró la sucursal.",
   "Branch updated successfully": "Sucursal actualizada correctamente",
   "Branches retrieved successfully": "Sucursales obtenidas correctamente",
-  "CSV validation failed: Missing required fields. Please ensure all items have name, category_name, selling_price, and available_quantity.": "Error de validación del CSV: faltan campos obligatorios. Asegúrese de que todos los artículos tengan name, category_name, selling_price y available_quantity.",
   "Campaigns": "Campañas",
   "Cancelling a sale requires POST": "Cancelar una venta requiere POST",
   "Card is required": "La tarjeta es obligatoria",

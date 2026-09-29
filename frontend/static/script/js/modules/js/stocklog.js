@@ -170,6 +170,7 @@ PosnicPro.stocklogs = {
         $('#stocklogs_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'stocklogs',
+            onRefresh: function () { return PosnicPro.stocklogs.loadList(); },
             container: '#stocklogs_filter_panel',
             button: '#stocklogs_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_item_activity_or_reference', 'Search item, activity or reference'),

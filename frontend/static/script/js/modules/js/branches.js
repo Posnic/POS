@@ -208,6 +208,7 @@ PosnicPro.branches = {
         $('#branches_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'branches',
+            onRefresh: function () { return PosnicPro.branches.loadList(); },
             container: '#branches_filter_panel',
             button: '#branches_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_name_phone_or_email', 'Search name, phone or email'),

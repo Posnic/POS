@@ -1148,6 +1148,7 @@ describe('CustomerService', () => {
   // importCustomers
   // ══════════════════════════════════════════════════════════════════════════
   describe('importCustomers', () => {
+    beforeEach(() => repo.findByEmail.mockResolvedValue(null));
     const makeRow = (overrides = {}) => ({
       name: 'Import Customer',
       phone: '9999999999',
@@ -1170,7 +1171,7 @@ describe('CustomerService', () => {
       expect(result.status).toBe(false);
     });
 
-    test('skips rows missing name or phone (does NOT add to newCustomers)', async () => {
+    test('rejects the whole file when a row lacks name or phone', async () => {
       repo.findByNameAndPhone.mockResolvedValue(null);
       repo.bulkCreate.mockResolvedValue([makeRow()]);
 
@@ -1179,11 +1180,10 @@ describe('CustomerService', () => {
         { email: 'no-name@example.com' }, // missing name + phone — skipped
       ];
 
-      await service.importCustomers(rows, BRANCH_ID);
-
-      // Only 1 valid row should be passed to bulkCreate
-      const [newCustomers] = repo.bulkCreate.mock.calls[0];
-      expect(newCustomers).toHaveLength(1);
+      const result = await service.importCustomers(rows, BRANCH_ID);
+      expect(result.status).toBe(false);
+      expect(result.data[0].row).toBe(3);
+      expect(repo.bulkCreate).not.toHaveBeenCalled();
     });
 
     test('returns "All customers already imported" when all rows exist', async () => {
@@ -1222,7 +1222,7 @@ describe('CustomerService', () => {
       repo.bulkCreate.mockResolvedValue([makeRow({ name: 'Second' })]);
 
       const result = await service.importCustomers(
-        [makeRow(), makeRow({ name: 'Second', phone: '888' })],
+        [makeRow(), makeRow({ name: 'Second', phone: '888', email: 'second@example.com' })],
         BRANCH_ID
       );
 
@@ -1268,7 +1268,10 @@ describe('CustomerService', () => {
       repo.findByNameAndPhone.mockResolvedValue(null);
       repo.bulkCreate.mockResolvedValue([makeMockCustomer(), makeMockCustomer()]);
 
-      const rows = [makeRow(), makeRow({ name: 'Second', phone: '888' })];
+      const rows = [
+        makeRow(),
+        makeRow({ name: 'Second', phone: '888', email: 'second@example.com' }),
+      ];
       const result = await service.importCustomers(rows, BRANCH_ID);
 
       expect(result.message).toBe('2 customers imported successfully');

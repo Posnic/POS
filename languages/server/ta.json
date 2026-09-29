@@ -80,7 +80,6 @@
   "Branch not found.": "கிளை கிடைக்கவில்லை.",
   "Branch updated successfully": "கிளை வெற்றிகரமாகப் புதுப்பிக்கப்பட்டது",
   "Branches retrieved successfully": "கிளைகள் வெற்றிகரமாகப் பெறப்பட்டன",
-  "CSV validation failed: Missing required fields. Please ensure all items have name, category_name, selling_price, and available_quantity.": "CSV சரிபார்ப்பு தோல்வியடைந்தது: தேவையான புலங்கள் இல்லை. எல்லா பொருட்களிலும் name, category_name, selling_price மற்றும் available_quantity உள்ளதா என்பதை உறுதிப்படுத்தவும்.",
   "Campaigns": "பிரச்சாரங்கள்",
   "Cancelling a sale requires POST": "விற்பனையை ரத்துசெய்ய POST தேவை",
   "Card is required": "அட்டை தேவை",

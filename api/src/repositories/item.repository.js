@@ -6390,6 +6390,8 @@ class ItemRepository extends BaseModel {
   }
 
   async _importItems(data, context = {}) {
+    const insertedIds = [],
+      updatedIds = [];
     try {
       if (!Array.isArray(data) || data.length === 0) {
         return { status: false, data: null, message: 'No items to import' };
@@ -6418,6 +6420,12 @@ class ItemRepository extends BaseModel {
           ? Math.min(maxImport, data.length)
           : data.length;
 
+      if (limitCount < data.length)
+        return {
+          status: false,
+          data: null,
+          message: `This import allows ${limitCount} rows. Split the file before importing; nothing was imported.`,
+        };
       const limitedRows = data.slice(0, limitCount);
 
       // Step 1: Filter unique records from CSV data based on 'name' and 'itemid'
@@ -6425,10 +6433,26 @@ class ItemRepository extends BaseModel {
       const rowNumbers = new Map();
       for (const [index, raw] of limitedRows.entries()) {
         const item = { ...(raw || {}) };
-        item.name = item.name || '';
-        item.itemid = item.itemid || '';
+        item.name = String(item.name ?? '').trim();
+        item.itemid = String(item.itemid ?? '').trim();
         item.barcode_id = itemBarcodes.normalize(item.barcode_id);
-        const key = `${item.name}-${item.itemid}`;
+        const key = JSON.stringify([item.name, item.itemid]);
+        if (
+          uniqueCSVRecords.has(key) &&
+          JSON.stringify(uniqueCSVRecords.get(key)) !== JSON.stringify(item)
+        ) {
+          return {
+            status: false,
+            data: [
+              {
+                row: index + 2,
+                name: item.name,
+                status: 'Conflicting rows for the same item name and item ID.',
+              },
+            ],
+            message: 'Conflicting duplicate items in CSV. Nothing was imported.',
+          };
+        }
         if (!uniqueCSVRecords.has(key)) {
           uniqueCSVRecords.set(key, item);
           rowNumbers.set(item, index + 2); // header occupies the first CSV row
@@ -6463,31 +6487,15 @@ class ItemRepository extends BaseModel {
         'sort_order',
       ];
 
-      const toNumberFromCsv = (raw) => {
-        if (raw === undefined || raw === null) {
-          return 0;
-        }
-        if (typeof raw === 'number') {
-          return Number.isFinite(raw) ? raw : 0;
-        }
-        if (typeof raw === 'string') {
-          const trimmed = raw.trim();
-          if (!trimmed) {
-            return 0;
-          }
-          const match = trimmed.match(/[+-]?\d+(?:\.\d+)?/);
-          if (!match) {
-            return 0;
-          }
-          const num = Number(match[0]);
-          return Number.isFinite(num) ? num : 0;
-        }
-        const num = Number(raw);
-        return Number.isFinite(num) ? num : 0;
-      };
+      const toNumberFromCsv = require('../helpers/import-values').importNumber;
 
       for (const item of uniqueCSVRecords.values()) {
         const errorFields = [];
+        item.tax_type = String(item.tax_type ?? '')
+          .trim()
+          .toLowerCase();
+        if (!['inclusive', 'exclusive'].includes(item.tax_type))
+          errorFields.push('tax_type: use inclusive or exclusive');
 
         for (const field of requiredFields) {
           const value = item[field];
@@ -6498,6 +6506,16 @@ class ItemRepository extends BaseModel {
 
           if (numericFields.includes(field)) {
             const num = toNumberFromCsv(value);
+            if (
+              !isEmpty &&
+              (!Number.isFinite(num) ||
+                (field !== 'available_quantity' && num < 0) ||
+                (['discount_percentage', 'tax'].includes(field) && num > 100))
+            ) {
+              errorFields.push(
+                `${field}: invalid, ambiguous or out-of-range number. Use 1234 for a whole number; 1234.56 or 1234,56 for decimals. For three decimal places, add a trailing zero (1.2340 or 1,2340).`
+              );
+            }
             item[field] = num;
           }
         }
@@ -6505,6 +6523,7 @@ class ItemRepository extends BaseModel {
         if (errorFields.length > 0) {
           validationErrors.push({
             ...item,
+            row: rowNumbers.get(item),
             status: errorFields.join(', '),
           });
         }
@@ -6516,7 +6535,7 @@ class ItemRepository extends BaseModel {
           type: 'error',
           data: validationErrors,
           message:
-            'CSV validation failed: Missing required fields. Please ensure all items have name, category_name, selling_price, and available_quantity.',
+            'CSV validation failed. Correct the listed required fields and numbers; nothing was imported.',
         };
       }
 
@@ -6614,9 +6633,6 @@ class ItemRepository extends BaseModel {
       const categoryCollection = await this.getCollection('categories');
       const taxCollection = await this.getCollection('grouptax');
       const unitCollection = await this.getCollection('unit');
-
-      const insertedIds = [];
-      const updatedIds = [];
 
       /* What the file said that could not be used, in the shop's words. A
          cell that vanishes quietly is how somebody spends an afternoon
@@ -7200,7 +7216,11 @@ class ItemRepository extends BaseModel {
       };
     } catch (error) {
       console.error('Error in ItemRepository.importItems:', error);
-      return { status: false, data: null, message: error.message };
+      const progress =
+        insertedIds.length || updatedIds.length
+          ? `${insertedIds.length} items added and ${updatedIds.length} updated before the failure. Review these items before retrying. `
+          : '';
+      return { status: false, data: null, message: progress + error.message };
     }
   }
 

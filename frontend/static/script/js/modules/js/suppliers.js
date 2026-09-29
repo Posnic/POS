@@ -75,6 +75,7 @@ PosnicPro.suppliers = {
         $('#suppliers_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'suppliers',
+            onRefresh: function () { return PosnicPro.suppliers.loadList(); },
             container: '#suppliers_filter_panel',
             button: '#suppliers_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_name_phone_or_email', 'Search name, phone or email'),

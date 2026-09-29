@@ -80,7 +80,6 @@
   "Branch not found.": "शाखा नहीं मिली।",
   "Branch updated successfully": "शाखा सफलतापूर्वक अपडेट हुई",
   "Branches retrieved successfully": "शाखाएं सफलतापूर्वक मिल गईं",
-  "CSV validation failed: Missing required fields. Please ensure all items have name, category_name, selling_price, and available_quantity.": "CSV जांच विफल: ज़रूरी फ़ील्ड नहीं हैं। कृपया देख लें कि हर वस्तु में name, category_name, selling_price और available_quantity हों।",
   "Campaigns": "अभियान",
   "Cancelling a sale requires POST": "बिक्री रद्द करने के लिए POST ज़रूरी है",
   "Card is required": "कार्ड ज़रूरी है",

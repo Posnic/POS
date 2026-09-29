@@ -1874,6 +1874,7 @@ PosnicPro.purchaseorders = {
         $('#purchases_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'receivings',
+            onRefresh: function () { return PosnicPro.purchaseorders.loadList(); },
             container: '#purchases_filter_panel',
             button: '#purchases_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_purchase_no_supplier_or_phone', 'Search purchase no, supplier or phone'),

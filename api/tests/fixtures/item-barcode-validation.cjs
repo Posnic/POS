@@ -101,6 +101,53 @@ test('creation names the existing item and refuses a primary/alternate collision
   expect(await db.collection('items').countDocuments()).toBe(1);
 });
 
+test('CSV validates all numeric rows before writing any item or reference data', async () => {
+  for (const value of ['garbage', '12oops', '1,2,3', '1,234', '1.234', 'Infinity', '-1']) {
+    const result = await repo.importItems([csv(), csv({ name: 'Bad', itemid: 'BAD', barcode_id: 'BAD', selling_price: value })], ctx);
+    expect(result.status).toBe(false);
+    expect(result.data[0].row).toBe(3);
+    expect(await db.collection('items').countDocuments()).toBe(0);
+    expect(await db.collection('suppliers').countDocuments()).toBe(0);
+  }
+});
+
+test('CSV grouped prices import accurately and re-import retains item images', async () => {
+  const old = await seed({ image: 'keep.jpg', selling_price: 8 });
+  const result = await repo.importItems([csv({ selling_price: '1,200.50', company_price: '1,000.00', mrp_price: '1,500.00' })], ctx);
+  expect(result.status).toBe(true);
+  const saved = await db.collection('items').findOne({ _id: old._id });
+  expect(saved.selling_price).toBe(1200.5);
+  expect(saved.image).toBe('keep.jpg');
+  expect(await db.collection('items').countDocuments()).toBe(1);
+});
+
+test('European semicolon CSV reaches Mongo with exact prices, tax and fractional stock', async () => {
+  const fs = require('fs');
+  const path = require('path');
+  const source = fs.readFileSync(path.join(__dirname, '../../../frontend/static/script/js/core/PosnicPro.js'), 'utf8');
+  const start = source.indexOf('parseImportCsv: function (input)');
+  const method = source.slice(start, source.indexOf('    importTableFile:', start)).trim().replace(/,$/, '');
+  const parse = Function('return ({' + method + '}).parseImportCsv')();
+  const [headers, values] = parse('name;selling_price;company_price;mrp_price;tax;available_quantity\r\nCoffee;1.234,56;900,50;1 500,00;19,5;0,125');
+  const row = Object.fromEntries(headers.map((key,i) => [key,values[i]]));
+  const result = await repo.importItems([csv(row)],ctx);
+  expect(result.status).toBe(true);
+  const saved = await db.collection('items').findOne({ name: 'Coffee' });
+  expect(saved.selling_price).toBe(1234.56);
+  expect(saved.company_price).toBe(900.5);
+  expect(saved.tax).toBe(19.5);
+  expect(saved.available_quantity).toBe(0.125);
+});
+
+test('CSV conflicting item rows and over-limit files do not partially import', async () => {
+  const conflict = await repo.importItems([csv(), csv({ selling_price: 99 })], ctx);
+  expect(conflict.status).toBe(false);
+  repo.checkPlan.mockResolvedValue(1);
+  const limited = await repo.importItems([csv(), csv({ name: 'Other', itemid: 'OTHER', barcode_id: 'OTHER' })], ctx);
+  expect(limited.status).toBe(false);
+  expect(await db.collection('items').countDocuments()).toBe(0);
+});
+
 test('editing excludes itself in Mongo and still finds a second legacy duplicate', async () => {
   const own = await seed(); // this row is returned first by an unscoped findOne
   await seed({ name: 'Other milk', itemid: 'OTHER' });

@@ -1141,6 +1141,7 @@ PosnicPro.invoices.mountFilters = function () {
     if (!$('#invoices_filter_panel').length) { return; }
     PosnicPro.listFilter.mount({
         key: 'invoices',
+            onRefresh: function () { return PosnicPro.invoices.load(true); },
         container: '#invoices_filter_panel',
         button: '#invoices_filter_btn',
         searchPlaceholder: PosnicPro.i18n.t('lang_search_customer_or_invoice', 'Search customer or invoice #'),

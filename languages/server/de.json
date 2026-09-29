@@ -80,7 +80,6 @@
   "Branch not found.": "Filiale nicht gefunden.",
   "Branch updated successfully": "Filiale erfolgreich aktualisiert",
   "Branches retrieved successfully": "Filialen erfolgreich abgerufen",
-  "CSV validation failed: Missing required fields. Please ensure all items have name, category_name, selling_price, and available_quantity.": "CSV-Prüfung fehlgeschlagen: Pflichtfelder fehlen. Bitte stellen Sie sicher, dass alle Artikel name, category_name, selling_price und available_quantity enthalten.",
   "Campaigns": "Kampagnen",
   "Cancelling a sale requires POST": "Zum Stornieren eines Verkaufs ist POST erforderlich",
   "Card is required": "Karte ist erforderlich",

@@ -507,6 +507,7 @@
         if (!$('#sales_filter_panel').length) { return; }
         PosnicPro.listFilter.mount({
             key: 'sales',
+            onRefresh: function () { return PosnicPro.sales.loadHistory(); },
             container: '#sales_filter_panel',
             button: '#sales_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_bill_no_customer_or_phone', 'Search bill no, customer or phone'),
@@ -1614,6 +1615,7 @@
         // walk-in sales must not be refused: fill from the cached default
         // customer when nothing was chosen (see ensureCustomer)
         if (PosnicPro.sales.ensureCustomer) { PosnicPro.sales.ensureCustomer(); }
+        PosnicPro.sales.refreshCustomerAccount();
         var customer_name = $("#sales_new_customer_name").val();
         // In payment-only tender (opened from Add Payment icon), align Unpaid toggle with
         // the existing sale payment_status so that Paid/Unpaid from history is reflected.
@@ -6686,6 +6688,12 @@ PosnicPro.sales.calculation = {
             };
         }).get();
         var addSalesCompanyPrice = 0;
+        var cartQuantity = PosnicPro.sales.addLineTable.reduce(function (sum, row) {
+            var quantity = Number(row.item_quantity);
+            return sum + (Number.isFinite(quantity) ? quantity : 0);
+        }, 0);
+        $('.sale-cart-quantity').text(Number(cartQuantity.toFixed(6)).toLocaleString(undefined, { maximumFractionDigits: 6 }));
+        $('.sale-cart-lines').text(PosnicPro.sales.addLineTable.length);
         var addSalesSubTotal = 0;
         var addSalesLineGstTaxTotal = 0;
         var addSalesLineSubTotal = 0;
@@ -7004,6 +7012,9 @@ PosnicPro.sales.setDefaults = function () {
     }
 
     $('#discount_sale_amount,#tax').text('0.00');
+    $('.sale-cart-quantity,.sale-cart-lines').text('0');
+    $('.sale-customer-account').empty().hide();
+    PosnicPro.sales._accountRequest = (PosnicPro.sales._accountRequest || 0) + 1;
     $('.sales_price_fields').text('0.00').val('0.00');
 
     // Reset extra discount value and icon state when starting from a clean
@@ -11325,6 +11336,34 @@ PosnicPro.sales._recentPush = function (key, entry, idField) {
     PosnicPro.local.set(key, JSON.stringify(list.slice(0, 10)));
 };
 /* ONE customer-pick path: search results and recent rows both land here. */
+// Read the same ledger totals used by Customer Details. Preserve their sign;
+// never add this account balance to the current invoice or tender amount.
+PosnicPro.sales.refreshCustomerAccount = function () {
+    var id = String($('#sales_new_customer_id').val() || '');
+    var request = PosnicPro.sales._accountRequest = (PosnicPro.sales._accountRequest || 0) + 1;
+    var target = $('.sale-customer-account').empty().hide();
+    if (!/^[a-f0-9]{24}$/i.test(id)) return;
+    var t = function (key, fallback) { return PosnicPro.i18n.t(key, fallback); };
+    target.text(t('lang_loading', 'Loading…')).show();
+    var current = function () { return request === PosnicPro.sales._accountRequest && String($('#sales_new_customer_id').val()) === id; };
+    var failed = function () {
+        if (current()) target.text(t('lang_account_balance_unavailable', 'Previous account balance unavailable. Check customer details.')).show();
+    };
+    PosnicPro.get({ url: 'customers/transactionDetails', data: {
+        customer_id: id, branch: [PosnicPro.local.get('branch_id_set')], page: 1, limit: 1
+    } }, function (response) {
+        if (!current()) return;
+        if (!response || response.type !== 'success' || !response.data) { failed(); return; }
+        var pending = Number(response.data.pending), wallet = Number(response.data.wallet);
+        if (!Number.isFinite(pending) || !Number.isFinite(wallet)) { failed(); return; }
+        var balance = wallet < 0 && pending >= 0 ? pending + Math.abs(wallet) : pending;
+        target.empty().show().append($('<span>').text(
+            t('lang_previous_account_balance', 'Previous account balance') + ': ' +
+            (PosnicPro.local.get('currencySign') || '') + ' ' + balance.toFixed(2) + ' '
+        ));
+        target.append($('<a>').attr('href', '#/customers/' + id).text(t('lang_view_details', 'View details')));
+    }, failed);
+};
 PosnicPro.sales.applyCustomerPick = function (data) {
     var customerRecord = [];
     PosnicPro.local.set('customerName', data.name);
@@ -11342,12 +11381,13 @@ PosnicPro.sales.applyCustomerPick = function (data) {
     $('#sales_new_customer_gst_number').val(data.gst_number);
     $('#sales_new_customer_partial_balance').val(data.partial_balance);
     $('#customer_current_balance').val(data.balance);
+    PosnicPro.sales.refreshCustomerAccount();
     // Price lists (V4): remember this customer's category so newly added
     // lines price from their list; fetch when the payload lacks it.
     PosnicPro.sales._customerCategoryId = String(data.category_id || '');
     if (!PosnicPro.sales._customerCategoryId && data.id) {
         PosnicPro.get('customers/' + data.id, function (r) {
-            if (r && r.data) {
+            if (r && r.data && String($('#sales_new_customer_id').val()) === String(data.id)) {
                 PosnicPro.sales._customerCategoryId = String(r.data.category_id || '');
             }
         }, function () { /* no category, no list */ });
@@ -11418,6 +11458,7 @@ PosnicPro.quotes.mountFilters = function () {
     if (!$('#quotes_filter_panel').length) { return; }
     PosnicPro.listFilter.mount({
         key: 'quotes',
+            onRefresh: function () { return PosnicPro.quotes.load(true); },
         container: '#quotes_filter_panel',
         button: '#quotes_filter_btn',
         searchPlaceholder: PosnicPro.i18n.t('lang_search_customer_or_quote', 'Search customer or quote #'),

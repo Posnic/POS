@@ -4,10 +4,14 @@ const OPTIONAL_EMAIL_COLLECTIONS = ['suppliers', 'customers', 'users'];
  * Align optional email storage with MongoDB uniqueness semantics.
  * A normal unique index treats "" (and, depending on index shape, missing
  * values) as a real duplicate value. Blank optional emails must therefore be
- * absent and the unique index must be sparse.
+ * absent and the unique index must be sparse. Suppliers use a partial index
+ * instead: their native CSV and sync writers also legitimately store "".
  */
 async function migrateOptionalEmailIndexes(db) {
+  await require('./supplier-email-index').migrateSupplierEmailIndex(db);
+  await require('./supplier-email-index').migrateCustomerEmailIndex(db);
   for (const collectionName of OPTIONAL_EMAIL_COLLECTIONS) {
+    if (collectionName === 'suppliers' || collectionName === 'customers') continue;
     const exists = await db.listCollections({ name: collectionName }, { nameOnly: true }).hasNext();
     if (!exists) continue;
 

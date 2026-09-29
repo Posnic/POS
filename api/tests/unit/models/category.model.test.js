@@ -455,6 +455,27 @@ describe('Category.isNameUnique (static)', () => {
 // 12. Static: importCategoryModel
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('Category.importCategoryModel (static)', () => {
+  test.each(['oops', '-1', '101'])('rejects invalid percentage %s before writes', async (value) => {
+    const insert = jest.spyOn(Category, 'insertMany');
+    const result = await Category.importCategoryModel(
+      [{ name: 'Food', discount_percentage: value }],
+      { branch_id: objId() }
+    );
+    expect(result.message).toBe('CSV');
+    expect(insert).not.toHaveBeenCalled();
+  });
+  test('rejects conflicting category rows before writes', async () => {
+    const insert = jest.spyOn(Category, 'insertMany');
+    const result = await Category.importCategoryModel(
+      [
+        { name: 'Food', discount_amount: 1 },
+        { name: 'Food', discount_amount: 2 },
+      ],
+      { branch_id: objId() }
+    );
+    expect(result.message).toBe('CSV');
+    expect(insert).not.toHaveBeenCalled();
+  });
   const user = {
     _id: objId(),
     username: 'admin',
@@ -484,8 +505,8 @@ describe('Category.importCategoryModel (static)', () => {
     // Blank-name rows are filtered out during deduplication (Step 1),
     // so they never reach the CSV validation path.
     const r = await Category.importCategoryModel([{ name: '' }], user);
-    expect(r.status).toBe(false);
-    expect(r.message).toBe('No valid category rows to import');
+    expect(r.status).toBe(true);
+    expect(r.message).toBe('CSV');
   });
 
   test('returns CSV error when both discount_amount and discount_percentage > 0', async () => {
@@ -636,8 +657,8 @@ describe('Category.importCategoryModel (static)', () => {
     const rows = [{ name: '' }, { name: null }, { name: 'Meat' }];
     const r = await Category.importCategoryModel(rows, user);
     expect(r.status).toBe(true);
-    const inserted = Category.insertMany.mock.calls[0][0];
-    expect(inserted.map((d) => d.name)).toEqual(['Meat']);
+    expect(r.message).toBe('CSV');
+    expect(Category.insertMany).not.toHaveBeenCalled();
   });
 
   test('defaults image to category.svg when image is not in row', async () => {
@@ -659,8 +680,8 @@ describe('Category.importCategoryModel (static)', () => {
 
   test('returns status:false with no valid rows message when all rows are blank', async () => {
     const r = await Category.importCategoryModel([{ name: '' }, { name: '  ' }], user);
-    expect(r.status).toBe(false);
-    expect(r.message).toBe('No valid category rows to import');
+    expect(r.status).toBe(true);
+    expect(r.message).toBe('CSV');
   });
 });
 

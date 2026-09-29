@@ -241,6 +241,7 @@ PosnicPro.users = {
         $('#users_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'users',
+            onRefresh: function () { return PosnicPro.users.loadList(); },
             container: '#users_filter_panel',
             button: '#users_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_name_or_email', 'Search name or email'),

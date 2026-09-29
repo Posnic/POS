@@ -288,6 +288,7 @@ PosnicPro.listFilter = {
      */
     LF.mount = function (cfg) {
         var key = cfg.key;
+        LF.mountRefresh(cfg);
         var existing = LF._mounted[key];
         if (existing && existing.cfg.container === cfg.container) {
             /* Config can legitimately change between mounts (a screen adding a
@@ -311,6 +312,28 @@ PosnicPro.listFilter = {
         };
         LF.render(key);
         return LF._mounted[key];
+    };
+
+    // Refresh is not a filter change: the list keeps its page, search and sort.
+    // Callers supply a loader (including lists whose normal search is local).
+    LF.mountRefresh = function (cfg) {
+        var button = $(cfg.button);
+        if (!button.length || typeof cfg.onRefresh !== 'function') return;
+        var id = 'lf-refresh-' + cfg.key;
+        var refresh = document.getElementById(id);
+        if (!refresh) {
+            refresh = $('<button type="button" class="btn btn-outline-secondary btn-sm mr-2">')
+                .attr('id', id).attr('title', PosnicPro.i18n.t('lang_wf_refresh', 'Refresh'))
+                .append('<i class="feather icon-refresh-cw" aria-hidden="true"></i> ')
+                .append($('<span>').text(PosnicPro.i18n.t('lang_wf_refresh', 'Refresh')))
+                .insertBefore(button)[0];
+        }
+        $(refresh).off('click.listRefresh').on('click.listRefresh', function () {
+            var now = Date.now();
+            if (this._lastRefresh && now - this._lastRefresh < 500) return;
+            this._lastRefresh = now;
+            cfg.onRefresh();
+        });
     };
 
     LF.render = function (key) {

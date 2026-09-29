@@ -539,7 +539,7 @@ class SupplierService {
    */
   async bulkImport(suppliersData) {
     try {
-      if (!suppliersData || suppliersData.length === 0) {
+      if (!Array.isArray(suppliersData) || suppliersData.length === 0) {
         return {
           status: false,
           data: null,
@@ -547,12 +547,26 @@ class SupplierService {
         };
       }
 
+      const checked = require('../helpers/import-values').contactRows(suppliersData);
+      if (checked.errors.length)
+        return {
+          status: false,
+          data: checked.errors,
+          message: 'Correct the listed supplier rows. Nothing was imported.',
+        };
+      suppliersData = checked.rows;
       const baseModel = new BaseModel();
       const maxImport = await baseModel.checkPlan('suppliers', 'import');
       const count =
         maxImport > 0 ? Math.min(maxImport, suppliersData.length) : suppliersData.length;
 
       const limitedSuppliers = suppliersData.slice(0, count);
+      if (count < suppliersData.length)
+        return {
+          status: false,
+          data: null,
+          message: `This import allows ${count} rows. Split the file; nothing was imported.`,
+        };
 
       const uniqueValue = [];
       const seenRecords = new Set();
@@ -571,7 +585,7 @@ class SupplierService {
         }
       }
 
-      const uniqueCSVRecords = {};
+      const uniqueCSVRecords = Object.create(null);
       for (const supplier of uniqueValue) {
         const normalizedSupplier = {
           ...supplier,
@@ -580,7 +594,7 @@ class SupplierService {
           email: supplier?.email || '',
           address: supplier?.address || '',
         };
-        const key = `${normalizedSupplier.name}-${normalizedSupplier.phone}`;
+        const key = JSON.stringify([normalizedSupplier.name, normalizedSupplier.phone]);
         if (!uniqueCSVRecords[key]) {
           uniqueCSVRecords[key] = normalizedSupplier;
         }
@@ -636,10 +650,21 @@ class SupplierService {
             address: existingSupplier.address || '',
           });
         } else {
-          newData.push(sanitizeSupplierData(supplier));
+          if (supplier.email && (await this.repository.findByEmail(supplier.email))) {
+            validationErrors.push({
+              name: supplier.name,
+              status: 'Email is already used by another supplier',
+            });
+          } else newData.push(sanitizeSupplierData(supplier));
         }
       }
 
+      if (validationErrors.length)
+        return {
+          status: false,
+          data: validationErrors,
+          message: 'A supplier email already exists. Nothing was imported.',
+        };
       if (newData.length === 0) {
         return {
           status: false,
@@ -668,7 +693,7 @@ class SupplierService {
       return {
         status: false,
         data: null,
-        message: error.message,
+        message: require('../helpers/import-values').importFailure(error),
       };
     }
   }

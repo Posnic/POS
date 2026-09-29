@@ -183,13 +183,19 @@ class ExpenseModel extends BaseModel {
           ? Math.min(maxImport, data.length)
           : data.length;
 
+      if (count < data.length)
+        return {
+          status: false,
+          data: null,
+          message: `This import allows ${count} rows. Split the file; nothing was imported.`,
+        };
       // Step 2: Filter unique records from input data (normalize amount)
       const uniqueMap = new Map();
       for (let i = 0; i < count; i++) {
         const row = { ...data[i] };
         row.amount =
           row.amount !== undefined && row.amount !== null && row.amount !== ''
-            ? parseFloat(row.amount)
+            ? require('../helpers/import-values').importNumber(row.amount)
             : '';
         const key = JSON.stringify(row);
         if (!uniqueMap.has(key)) {
@@ -200,24 +206,24 @@ class ExpenseModel extends BaseModel {
 
       // Step 3: Filter unique records from CSV data based on
       // amount-type-category-recipientname-approvedby-description
-      const uniqueCSVRecords = {};
+      const uniqueCSVRecords = Object.create(null);
       for (const src of uniqueValue) {
         const item = {
           amount: src.amount ?? '',
-          type: src.type ?? '',
+          type: String(src.type ?? '').trim(),
           category: src.category ?? '',
           recipientname: src.recipientname ?? '',
           approvedby: src.approvedby ?? '',
           description: src.description ?? '',
         };
-        const key = [
+        const key = JSON.stringify([
           item.amount,
           item.type,
           item.category,
           item.recipientname,
           item.approvedby,
           item.description,
-        ].join('-');
+        ]);
         if (!uniqueCSVRecords[key]) {
           uniqueCSVRecords[key] = item;
         }
@@ -232,6 +238,8 @@ class ExpenseModel extends BaseModel {
       for (const key of Object.keys(uniqueCSVRecords)) {
         const item = uniqueCSVRecords[key];
         const errorFields = [];
+        if (!Number.isFinite(item.amount) || item.amount < 0)
+          errorFields.push('amount: enter a valid non-negative number');
 
         for (const field of requiredFields) {
           const value = item[field];
