@@ -991,3 +991,184 @@ test('corrupt snapshot page indexes and future recipient cadence fail closed', a
     );
   await assert.rejects(f.readPage(), /preference_unavailable/);
 });
+
+const journalRecipient = (f, options = {}, database = f.db) =>
+  require('../src/services/business-stock-recipient-journal').journalRecipientStockPage(
+    database,
+    f.target,
+    { now: f.now, ...options }
+  );
+const recipientRows = (f) =>
+  f.db
+    .collection('business_stock_recipient_state')
+    .find({ accountId: f.target.accountId })
+    .sort({ itemId: 1 })
+    .toArray();
+test('recipient journal creates a full baseline, resumes partial pages and deduplicates concurrent replay', async () => {
+  const f = await recipientFixture();
+  const first = await journalRecipient(f, { limit: 1 });
+  assert.equal(first.queued, 1);
+  assert.equal(first.processed, 1);
+  assert.equal(first.next.afterItemId, String(f.rows[0]._id));
+  const rest = await journalRecipient(f, first.next);
+  assert.equal(rest.processed, 99);
+  const end = await journalRecipient(f, rest.next);
+  assert.equal(end.queued, 3);
+  assert.equal(end.next, null);
+  const before = await recipientRows(f);
+  assert.equal(before.length, 103);
+  assert.ok(before.every((row) => row.pending && row.episode === 1));
+  const replay = await Promise.all([journalRecipient(f), journalRecipient(f)]);
+  assert.ok(replay.every((result) => result.queued === 0));
+  assert.deepEqual(
+    (await recipientRows(f)).map((row) => row.pending.id),
+    before.map((row) => row.pending.id)
+  );
+});
+test('recipient journal observes healthy transitions during quiet hours, while unknown stock cannot re-arm', async () => {
+  const f = await recipientFixture();
+  await journalRecipient(f, { limit: 1 });
+  const original = (await recipientRows(f))[0].pending.id;
+  const moment = require('moment-timezone'),
+    local = moment(f.now()).tz('Asia/Kolkata');
+  await f.db.collection('business_stock_notification_preferences').updateOne(
+    { accountId: f.target.accountId },
+    {
+      $set: {
+        quiet: {
+          enabled: true,
+          start: local.format('HH:mm'),
+          end: local.clone().add(30, 'minutes').format('HH:mm'),
+        },
+      },
+    }
+  );
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateOne({ _id: f.rows[0]._id }, { $unset: { available_quantity: '' } });
+  for (const page of await f.pages()) await f.send(page);
+  assert.equal((await f.readPage()).status, 'deferred');
+  await journalRecipient(f);
+  assert.equal((await recipientRows(f))[0].pending.id, original);
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateOne({ _id: f.rows[0]._id }, { $set: { available_quantity: 9 } });
+  for (const page of await f.pages()) await f.send(page);
+  await journalRecipient(f);
+  let state = (await recipientRows(f))[0];
+  assert.equal(state.pending, undefined);
+  assert.equal(state.lastSuppressed.reason, 'verified_healthy');
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateOne({ _id: f.rows[0]._id }, { $set: { available_quantity: 1 } });
+  for (const page of await f.pages()) await f.send(page);
+  await journalRecipient(f);
+  state = (await recipientRows(f))[0];
+  assert.equal(state.episode, 2);
+  assert.notEqual(state.pending.id, original);
+  assert.equal((await f.readPage()).status, 'deferred');
+});
+test('a reporting publisher handover cannot repeat a recipient low episode', async () => {
+  const f = await recipientFixture();
+  await journalRecipient(f);
+  const before = (await recipientRows(f)).map((row) => row.pending.id);
+  f.owner.assignmentId = 'q'.repeat(43);
+  f.owner.epoch = 2;
+  await f.db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: f.branch.id }, { $set: { assignmentId: f.owner.assignmentId, epoch: 2 } });
+  f.advance();
+  for (const page of await f.pages()) await f.send(page);
+  assert.equal((await journalRecipient(f)).queued, 0);
+  assert.deepEqual(
+    (await recipientRows(f)).map((row) => row.pending.id),
+    before
+  );
+});
+test('recipient replay after a lost database acknowledgement cannot duplicate pending identities', async () => {
+  const f = await recipientFixture();
+  let failed = false;
+  const guarded = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_recipient_state' && property === 'updateOne')
+            return async (...args) => {
+              const result = await target.updateOne(...args);
+              if (!failed) {
+                failed = true;
+                throw new Error('lost recipient write');
+              }
+              return result;
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  await assert.rejects(journalRecipient(f, {}, guarded), /lost recipient write/);
+  const persisted = (await recipientRows(f))[0].pending.id;
+  const resumed = await journalRecipient(f);
+  assert.equal(resumed.queued, 99);
+  assert.equal((await recipientRows(f))[0].pending.id, persisted);
+});
+test('new opt-in replaces old recipient identities while corrupt state cannot be overwritten', async () => {
+  const f = await recipientFixture();
+  await journalRecipient(f, { limit: 1 });
+  const old = (await recipientRows(f))[0];
+  const {
+    saveStockPreference,
+  } = require('../src/services/business-stock-notification-preferences');
+  const settings = {
+    minimumIntervalMinutes: 15,
+    quiet: { enabled: false, start: '22:00', end: '07:00' },
+  };
+  await saveStockPreference(
+    f.db,
+    f.context,
+    f.branch.id,
+    { ...settings, enabled: false, expectedRevision: 1 },
+    { now: f.now }
+  );
+  f.advance();
+  await saveStockPreference(
+    f.db,
+    f.context,
+    f.branch.id,
+    { ...settings, enabled: true, expectedRevision: 2 },
+    { now: f.now }
+  );
+  for (const page of await f.pages()) await f.send(page);
+  await journalRecipient(f, { limit: 1 });
+  const next = (await recipientRows(f))[0];
+  assert.notEqual(next.pending.id, old.pending.id);
+  assert.notEqual(next.activationId, old.activationId);
+  assert.equal(next.episode, 1);
+  await f.db
+    .collection('business_stock_recipient_state')
+    .updateOne({ _id: next._id }, { $set: { 'pending.id': 'forged' } });
+  await assert.rejects(journalRecipient(f), /invalid_stock_recipient_state/);
+});
+
+test('acknowledged recipient candidates do not return while the same item remains low', async () => {
+  const f = await recipientFixture();
+  await journalRecipient(f, { limit: 1 });
+  const row = (await recipientRows(f))[0];
+  await f.db
+    .collection('business_stock_recipient_state')
+    .updateOne(
+      { _id: row._id, 'pending.id': row.pending.id },
+      { $unset: { pending: '' }, $set: { lastDelivered: row.pending.id } }
+    );
+  f.advance();
+  for (const page of await f.pages()) await f.send(page);
+  assert.equal((await journalRecipient(f, { limit: 1 })).queued, 0);
+  assert.equal((await recipientRows(f))[0].pending, undefined);
+  assert.equal((await recipientRows(f))[0].episode, 1);
+});

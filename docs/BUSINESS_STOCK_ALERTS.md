@@ -280,3 +280,42 @@ cover server-side reads without desktop mode, stock-only permissions, user/branc
 tenant revocation, activation-bound paging, observation replacement, pre-opt-in
 suppression, cadence/quiet-hour deferral, changes during reads and corrupted state.
 Lint, formatting, 24 README/sync-classification checks and attribution pass.
+
+## Recipient episode deduplication
+
+`journalRecipientStockPage` stores one classification record per tenant, account,
+branch and item in private `business_stock_recipient_state`, excluded from generic
+sync. Its pending candidate identity binds that scope, the current opt-in activation
+and a recipient episode counter, independently of the reporting desktop. The
+initial verified-low baseline creates candidates beyond the public 100-row list.
+Repeated low observations, replay and publisher handover cannot create another
+episode. Only an explicit verified healthy observation re-arms the item; unknown,
+excluded or missing facts do nothing. Healthy observations suppress an undelivered
+candidate with an explicit reason. A new activation supersedes the old identity.
+
+Observation uses the live recipient ACL/opt-in gate while allowing classification
+updates during quiet hours and minimum-interval deferral. This avoids missing a
+healthy transition merely because notification delivery is currently deferred.
+The ordinary delivery gate still enforces both controls. Journal candidates are
+not Inbox entries or push authority, and no delivery control is bypassed.
+
+Writes use per-item revision compare-and-swap and at most eight contention retries.
+Each call visits at most 100 facts within a three-second budget; a snapshot-bound
+page/item cursor resumes partial progress. Lost write acknowledgement replays the
+same candidate identity. Newer preference revisions/activations cannot be replaced
+by older work. Preferences are checked before each item, and any concurrent edit
+can leave only an old tagged candidate that must fail the materializer's later
+live checks. Corrupt persisted state fails rather than silently resetting deduplication.
+Acknowledged candidates remain absent while the same item stays low.
+
+Validation: 34 snapshot tests plus six preference tests pass, with six new cases
+for full baseline/paging, concurrent replay, quiet-hour healthy/unknown transitions,
+publisher handover, lost writes, new activation, corruption and acknowledged-state
+replay. Lint, formatting, attribution and sync classification pass.
+
+The durable scan scheduler, grouped Inbox materializer, delivery-time stock/ACL
+revalidation, acknowledgement/audit retention and cleanup remain unfinished. No TTL
+is applied to active recipient classification: expiring it blindly could repeat
+an already acknowledged low episode. Activation-aware cleanup and stale pending
+candidate expiry must be implemented before rollout. This checkpoint starts no
+producer, recipient timer or notification delivery.

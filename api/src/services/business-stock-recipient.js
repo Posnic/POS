@@ -13,7 +13,7 @@ const invalid = () => {
     status: 503,
   });
 };
-async function recipientState(db, target, now) {
+async function recipientState(db, target, now, { observeOnly = false } = {}) {
   if (process.env.POSNIC_BUSINESS_STOCK_ALERTS !== '1') return { status: 'disabled' };
   if (![target?.accountId, target?.businessId, target?.branchId].every(validId))
     return { status: 'denied' };
@@ -50,13 +50,17 @@ async function recipientState(db, target, now) {
     timezone: branch.timezone,
     quiet: row.quiet,
   });
-  if (retryAt.getTime() > at) return { status: 'deferred', retryAt };
+  if (!observeOnly && retryAt.getTime() > at) return { status: 'deferred', retryAt };
   return { status: 'eligible', branch, preference: row, context };
 }
 /** Read-only candidate selection, not authority to publish an Inbox event. The
  * materializer and push consumer must repeat these live checks at their writes. */
-async function readRecipientStockPage(db, target, { cursor, now = Date.now } = {}) {
-  const before = await recipientState(db, target, now);
+async function readRecipientStockPage(
+  db,
+  target,
+  { cursor, now = Date.now, observeOnly = false } = {}
+) {
+  const before = await recipientState(db, target, now, { observeOnly });
   if (before.status !== 'eligible') return before;
   const preference = before.preference;
   if (
@@ -75,7 +79,7 @@ async function readRecipientStockPage(db, target, { cursor, now = Date.now } = {
   // First opt-in uses a fresh baseline, never a replay of observations prepared
   // before this activation. Missing facts remain unknown to downstream state.
   if (Date.parse(frame.summary.observedFrom) < preference.enabledAt.getTime()) return unavailable();
-  const after = await recipientState(db, target, now);
+  const after = await recipientState(db, target, now, { observeOnly });
   if (after.status !== 'eligible') return after;
   if (
     after.preference.activationId !== preference.activationId ||
