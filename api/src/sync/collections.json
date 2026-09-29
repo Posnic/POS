@@ -48,6 +48,7 @@
     "business_reporting_candidates": "Short-lived reporting desktop presence is verified by Gateway and must not use generic synchronization.",
     "business_reporting_audit": "Publisher changes belong to the authorizing Business server and retain an atomic assignment audit journal.",
     "business_stock_notification_preferences": "Per-account stock-alert opt-ins, quiet hours and delivery cadence are private to the Business server and never use device sync.",
+    "business_stock_snapshot_pages": "Private bounded stock-observation transfer pages for notification revalidation; excluded from generic device sync.",
     "business_stock_alert_batches": "Private stock-alert ingestion batches and receipts belong to the Business notification server; never use generic device sync.",
     "business_stock_alert_local": "Desktop stock threshold state and pending episodes belong to this installation; never replicate through generic sync.",
     "business_reporting_local": "Local reporting assignments, snapshots and retry state belong to this desktop only.",

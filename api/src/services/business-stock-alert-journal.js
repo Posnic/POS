@@ -2,11 +2,7 @@
 const crypto = require('node:crypto');
 const { isMultiTenant } = require('../db/tenant-context');
 const { MetricError } = require('./business-metrics');
-const {
-  validateStockSummary,
-  validateStockFact,
-  MAX_LOW_ITEMS,
-} = require('./business-stock-contract');
+const { validateStockObservation } = require('./business-stock-observation-contract');
 const MAX_PENDING_EVENTS = 20;
 const fail = (code) => {
   throw new MetricError(code);
@@ -22,31 +18,6 @@ const factDigest = (fact) =>
     fact.thresholdSource,
     fact.low,
   ]);
-/** Internal desktop contract, not a public response. The complete verified set
- * must agree with coverage and the capped public list before any state changes. */
-function validateStockObservation(value, branch, options) {
-  if (!value || Object.keys(value).sort().join(',') !== 'facts,summary')
-    fail('invalid_stock_observation');
-  validateStockSummary(value.summary, branch, options);
-  if (!Array.isArray(value.facts) || value.facts.length !== value.summary.coverage.verifiedItems)
-    fail('invalid_stock_observation');
-  let previous = '';
-  const low = [];
-  for (const fact of value.facts) {
-    validateStockFact(fact);
-    if (fact.itemId <= previous) fail('invalid_stock_observation');
-    previous = fact.itemId;
-    if (fact.low) low.push(fact);
-  }
-  if (
-    low.length !== value.summary.lowItemCount ||
-    low
-      .slice(0, MAX_LOW_ITEMS)
-      .some((fact, i) => factDigest(fact) !== factDigest(value.summary.lowItems[i]))
-  )
-    fail('invalid_stock_observation');
-  return value;
-}
 /** Persist classification and its event together in one Mongo document. A crash
  * can replay a completed observation without losing or duplicating an episode.
  * This journals low episodes only: healthy observations re-arm, but never assert
