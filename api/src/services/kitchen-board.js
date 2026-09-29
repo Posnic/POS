@@ -30,6 +30,7 @@ function project(sale) {
         return {
           id: i.id,
           name: i.name,
+          ...require('../utils/kitchen-amount').snapshot(i),
           qty: i.remaining,
           total: i.quantity,
           served: i.served,

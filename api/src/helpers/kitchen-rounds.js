@@ -2,6 +2,7 @@
 const { createHash } = require('crypto');
 const orderLine = require('../utils/order-line');
 const serviceLine = require('../utils/service-line');
+const kitchenAmount = require('../utils/kitchen-amount');
 
 // Change positions are append-only ticket identities, independent of product IDs.
 function date(value) {
@@ -64,6 +65,7 @@ function rounds(sale, { descriptions = true } = {}) {
           product: product(line),
           line_key: key,
           ...serviceLine.metadata(line),
+          ...kitchenAmount.snapshot(line),
           ordered_at: date(change.timestamp) || date(sale.created_date),
           quantity: qty,
           name: String(line.item_name || line.name || ''),
@@ -102,6 +104,7 @@ function rounds(sale, { descriptions = true } = {}) {
         product: product(line),
         line_key: key,
         ...serviceLine.metadata(line),
+        ...kitchenAmount.snapshot(line),
         ordered_at: date(sale.created_date),
         quantity: missing,
         name: String(line.item_name || line.name || line.sale_inline_item_name || ''),
@@ -144,6 +147,7 @@ function tickets(sale) {
         id: line.id,
         qty: line.remaining,
         name: line.name,
+        ...kitchenAmount.snapshot(line),
         note: line.note,
         seat: line.seat,
         course: line.course,

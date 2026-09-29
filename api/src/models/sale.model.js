@@ -206,6 +206,7 @@ const saleItemSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    priced_at_table: { type: Number, min: 0 },
     item_description: {
       type: String,
       trim: true,
@@ -966,6 +967,7 @@ saleSchema.pre('save', async function () {
         item_name: src.item_name != null ? src.item_name : '',
         ...itemText.snapshot(src),
         item_sku: src.item_sku != null ? src.item_sku : '',
+        ...require('../utils/kitchen-amount').snapshot(src),
         item_price: src.item_price != null ? src.item_price : 0,
         item_discount: src.item_discount != null ? src.item_discount : 0,
         item_discount_percentage:

@@ -482,6 +482,7 @@ const processSale = async (
           process: changeProcess,
           item_code: document.itemid,
           unit: item.item_unit || 'qty',
+          ...require('../utils/kitchen-amount').forSaleItem(document, item, sellingPrice),
           price: sellingPrice,
           total: sellingPrice * changeQty,
         });
@@ -584,6 +585,7 @@ const processSale = async (
         item: new ObjectId(itemId),
         name: document.name,
         quantity: itemQuantity,
+        ...require('../utils/kitchen-amount').forSaleItem(document, item, sellingPrice),
         unit_price: sellingPrice,
         tax_rate: effectiveItemTax,
         // tax_amount is defined below in the PHP-legacy block to avoid

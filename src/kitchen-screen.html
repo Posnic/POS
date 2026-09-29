@@ -155,6 +155,7 @@
   .ticket.late .bar > i { background: var(--late); }
 
   .items { display: flex; flex-direction: column; gap: calc(var(--gap) * 0.15); }
+  .preparation-amount { font-weight: 800; color: #fff; }
   .item { display: flex; gap: calc(var(--gap) * 0.5); align-items: baseline; }
   .qty { font-weight: 800; min-width: 2.1em; font-variant-numeric: tabular-nums; }
   .name { flex: 1; overflow-wrap: anywhere; font-weight: 700; }
@@ -352,6 +353,9 @@
         row.appendChild(el('span', 'qty', (item.qty || 1) + '×'));
         row.appendChild(el('span', 'name', item.name || ''));
         list.appendChild(row);
+        if (Number.isFinite(Number(item.priced_at_table)) && Number(item.priced_at_table) > 0) {
+          list.appendChild(el('div', 'note preparation-amount', 'Amount: ' + Number(item.priced_at_table).toLocaleString(undefined, { maximumFractionDigits: 3 }) + ' each'));
+        }
         /* NEVER dropped to save space. "less spicy" is the line that costs a
            plate of food when it is missed. */
         if (item.seat || item.course) list.appendChild(el('div', 'note', [item.seat ? 'Seat ' + item.seat : '', item.course || ''].filter(Boolean).join(' · ')));

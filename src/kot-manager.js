@@ -1402,6 +1402,7 @@ class KOTManager {
           <div class="in ${isCancelled ? 'cx' : ''}">${this._esc(String(name))}</div>
           <div class="iq">x${qty}</div>
         </div>
+        ${Number.isFinite(Number(it.priced_at_table)) && Number(it.priced_at_table) > 0 ? '<div class="nt">Amount: ' + this._esc(String(Number(it.priced_at_table))) + ' each</div>' : ''}
         ${it.instruction_only ? '<div class="nt">PREPARATION UPDATE — do not add another item</div>' : ''}
         ${it.seat || it.course ? `<div class="is">${this._esc([it.seat ? 'Seat ' + it.seat : '', it.course || ''].filter(Boolean).join(' · '))}</div>` : ''}
         ${(it.allergies || []).length || it.allergy_note ? `<div class="nt">ALLERGY: ${this._esc([...(it.allergies || []), it.allergy_note || ''].filter(Boolean).join(', '))}</div>` : ''}

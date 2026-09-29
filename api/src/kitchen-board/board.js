@@ -154,6 +154,9 @@
         for (const item of ticket.items) {
           const li = node('li');
           li.append(node('span', 'quantity', item.qty + '×'), node('span', 'name', item.name));
+          if (Number.isFinite(Number(item.priced_at_table)) && Number(item.priced_at_table) > 0) {
+            li.append(node('strong', 'note', 'Amount: ' + Number(item.priced_at_table).toLocaleString(undefined, { maximumFractionDigits: 3 }) + ' each'));
+          }
           if (item.note) li.append(node('span', 'note', item.note));
           if (item.seat || item.course)
             li.append(

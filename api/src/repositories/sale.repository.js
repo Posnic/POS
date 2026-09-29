@@ -8012,8 +8012,7 @@ class SalesRepository {
         .toArray();
 
       /* The shape the screen draws, and nothing else. A kitchen screen hangs
-         where customers and staff can both see it, so prices, customers and
-         phone numbers have no business travelling to it. */
+         where staff need preparation amounts, but never customer contact details. */
       const tickets = rows.flatMap(require('../helpers/kitchen-rounds').tickets);
 
       return { status: true, message: 'success', data: tickets };
@@ -11104,7 +11103,7 @@ class SalesRepository {
          * a dish the shop prices on the day, and a one-off somebody invented
          * for this bill.
          */
-        ...(dynamic || oneOff ? { priced_at_table: round(finalUnit) } : {}),
+        ...(dynamic || oneOff ? { priced_at_table: round(dynamic ? asked : catalogue) } : {}),
         /*
          * What the table actually asked for, kept beside the money it cost.
          * The kitchen ticket needs it to cook the right thing and the bill
