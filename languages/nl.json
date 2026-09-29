@@ -3972,5 +3972,7 @@
   "lang_printable_menu": "Afdrukbare menukaart",
   "lang_changes_not_saved": "Wijzigingen zijn niet opgeslagen.",
   "lang_continue": "Doorgaan",
-  "lang_reason": "Reden"
+  "lang_reason": "Reden",
+  "lang_each_item_can_have_only_one_price_in_this": "Elk artikel kan in deze lijst maar één prijs hebben.",
+  "lang_two_csv_columns_map_to_the_same_field_keep": "Twee CSV-kolommen verwijzen naar hetzelfde veld. Behoud slechts één kolom per veld."
 }
