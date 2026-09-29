@@ -183,8 +183,12 @@ class ExpenseModel extends BaseModel {
           ? Math.min(maxImport, data.length)
           : data.length;
 
-      if (count < data.length) return { status: false, data: null,
-        message: `This import allows ${count} rows. Split the file; nothing was imported.` };
+      if (count < data.length)
+        return {
+          status: false,
+          data: null,
+          message: `This import allows ${count} rows. Split the file; nothing was imported.`,
+        };
       // Step 2: Filter unique records from input data (normalize amount)
       const uniqueMap = new Map();
       for (let i = 0; i < count; i++) {
@@ -234,7 +238,8 @@ class ExpenseModel extends BaseModel {
       for (const key of Object.keys(uniqueCSVRecords)) {
         const item = uniqueCSVRecords[key];
         const errorFields = [];
-        if (!Number.isFinite(item.amount) || item.amount < 0) errorFields.push('amount: enter a valid non-negative number');
+        if (!Number.isFinite(item.amount) || item.amount < 0)
+          errorFields.push('amount: enter a valid non-negative number');
 
         for (const field of requiredFields) {
           const value = item[field];

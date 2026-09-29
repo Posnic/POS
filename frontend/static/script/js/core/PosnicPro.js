@@ -5266,7 +5266,7 @@ $(".files").on('change', function (e) {
                     var lines;
                     try { lines = PosnicPro.parseImportCsv(csv); }
                     catch (error) { PosnicPro.alert('error', error.message); return false; }
-                    if (!lines.length) { PosnicPro.alert('error', 'Empty CSV file'); return false; }
+                    if (!lines.length) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_empty_csv_file', 'Empty CSV file')); return false; }
                     var headers = lines[0];
                     var TableHead = PosnicPro.importTableHeader(PosnicPro.importAction);
 
@@ -5286,7 +5286,7 @@ $(".files").on('change', function (e) {
                         return index !== -1 ? TableHead[index] : (importAliasMap[lookup] || null);
                     }).filter(Boolean);
                     if (new Set(mappedHeaders).size !== mappedHeaders.length) {
-                        PosnicPro.alert('error', 'Two CSV columns map to the same field. Keep only one column for each field.');
+                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_two_csv_columns_map_to_the_same_field_keep', 'Two CSV columns map to the same field. Keep only one column for each field.'));
                         return false;
                     }
 

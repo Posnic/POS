@@ -30,11 +30,18 @@ describe('migrateOptionalEmailIndexes', () => {
     await migrateOptionalEmailIndexes(db);
 
     for (const collection of collections.values()) {
-      if (collection === collections.get('suppliers') || collection === collections.get('customers')) {
+      if (
+        collection === collections.get('suppliers') ||
+        collection === collections.get('customers')
+      ) {
         expect(collection.updateMany).not.toHaveBeenCalled();
-        expect(collection.createIndex).toHaveBeenCalledWith({ email: 1 }, expect.objectContaining({
-          unique: true, partialFilterExpression: { email: { $type: 'string', $gt: '' } },
-        }));
+        expect(collection.createIndex).toHaveBeenCalledWith(
+          { email: 1 },
+          expect.objectContaining({
+            unique: true,
+            partialFilterExpression: { email: { $type: 'string', $gt: '' } },
+          })
+        );
         expect(collection.dropIndex).toHaveBeenCalledWith('email_1');
         continue;
       }
@@ -59,7 +66,10 @@ describe('migrateOptionalEmailIndexes', () => {
     });
     await migrateOptionalEmailIndexes(db);
     for (const collection of collections.values()) {
-      if (collection === collections.get('suppliers') || collection === collections.get('customers')) {
+      if (
+        collection === collections.get('suppliers') ||
+        collection === collections.get('customers')
+      ) {
         expect(collection.dropIndex).toHaveBeenCalledWith('email_1');
         continue;
       }

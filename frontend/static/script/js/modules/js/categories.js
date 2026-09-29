@@ -190,6 +190,7 @@ PosnicPro.categories = {
         $('#categories_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'categories',
+            onRefresh: function () { return PosnicPro.categories.loadList(); },
             container: '#categories_filter_panel',
             button: '#categories_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_category_name', 'Search category name'),

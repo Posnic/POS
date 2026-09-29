@@ -80,7 +80,6 @@
   "Branch not found.": "لم يتم العثور على الفرع.",
   "Branch updated successfully": "تم تحديث الفرع بنجاح",
   "Branches retrieved successfully": "تم جلب الفروع بنجاح",
-  "CSV validation failed: Missing required fields. Please ensure all items have name, category_name, selling_price, and available_quantity.": "فشل التحقق من ملف CSV: توجد حقول مطلوبة مفقودة. يرجى التأكد من أن كل الأصناف تحتوي على name وcategory_name وselling_price وavailable_quantity.",
   "Campaigns": "الحملات",
   "Cancelling a sale requires POST": "يتطلب إلغاء البيع طلب POST",
   "Card is required": "البطاقة مطلوبة",

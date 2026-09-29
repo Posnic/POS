@@ -271,7 +271,10 @@ class CustomerCategoryModel extends BaseModel {
         if (!uniqueCSVRecords[key]) {
           uniqueCSVRecords[key] = normalizedItem;
         } else if (uniqueCSVRecords[key].description !== normalizedItem.description) {
-          validationErrors.push({ ...normalizedItem, status: 'Conflicting rows with the same category name' });
+          validationErrors.push({
+            ...normalizedItem,
+            status: 'Conflicting rows with the same category name',
+          });
         }
       }
 

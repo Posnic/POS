@@ -53,6 +53,7 @@ PosnicPro.units = {
         $('#units_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'units',
+            onRefresh: function () { return PosnicPro.units.loadList(); },
             container: '#units_filter_panel',
             button: '#units_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_unit_name', 'Search unit name'),

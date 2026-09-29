@@ -88,6 +88,7 @@ PosnicPro.lowstockitems = {
         $('#lowstockitems_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'lowstockitems',
+            onRefresh: function () { return PosnicPro.lowstockitems.loadList(); },
             container: '#lowstockitems_filter_panel',
             button: '#lowstockitems_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_item_sku_supplier_or_category', 'Search item, SKU, supplier or category'),

@@ -5806,7 +5806,7 @@ PosnicPro.pricelists = {
             return;
         }
         if (new Set(overrides.map(function (o) { return String(o.item_id); })).size !== overrides.length) {
-            PosnicPro.alert('warning', 'Each item can have only one price in this list.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_each_item_can_have_only_one_price_in_this', 'Each item can have only one price in this list.'));
             return;
         }
         var payload = {
