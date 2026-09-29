@@ -647,3 +647,21 @@ heartbeat or private snapshot is manually seeded. All 23 stock publication tests
 pass, along with lint, formatting and attribution. The transport is in-process,
 so this proves protocol composition and recovery, not deployed TLS/device auth,
 real provider delivery, network latency or many-branch capacity.
+
+## Bounded discovery rotation
+
+Cloud work discovery now selects the least recently inspected request window,
+then rotates the four offered jobs independently of preparation success. The
+request records retain inspection/offer times across process recreation. Community
+also rotates its hundred-request discovery window. Metadata updates match the
+observed request identity, tenant and requestedAt, so a renewed request defeats a
+stale scheduling write. Monotonic timestamps avoid regressing concurrent progress.
+No scheduler metadata is included in the device work contract.
+
+The limits remain one hundred discovered requests and four Cloud offers per call;
+indexes support the new inspection order. Tests cover 105 branches across worker
+recreation, including Cloud jobs that never complete. All 39 Gateway reporting/
+snapshot tests and 42 POS publication/summary tests pass, with formatting and
+attribution checks. This establishes discovery fairness, not production throughput
+or a freshness guarantee at that branch count. Network/device and capacity
+qualification remain open.

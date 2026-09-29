@@ -906,3 +906,39 @@ test(
       }
     })
 );
+
+test('Community discovery rotates beyond one hundred requests across bridge recreation', async () => {
+  const isolated = client.db('community_rotation_' + new ObjectId());
+  let at = Date.now();
+  const now = () => at;
+  const license = new ObjectId();
+  const branches = Array.from({ length: 105 }, () => ({
+    _id: new ObjectId(),
+    license,
+    currency: 'INR',
+    time_zone: 'Asia/Kolkata',
+  }));
+  await isolated.collection('branches').insertMany(branches);
+  await isolated.collection('business_reporting_requests').insertMany(
+    branches.map((branch) => ({
+      _id: String(branch._id) + ':stock',
+      branchId: String(branch._id),
+      license,
+      summaryKind: 'stock',
+      stockSummaryVersion: 1,
+      requestedAt: new Date(at),
+      expiresAt: new Date(at + 1800000),
+    }))
+  );
+  await createLocalReportingBridge(isolated, { now }).enqueue();
+  assert.equal(
+    await isolated.collection('business_reporting_local').countDocuments({ kind: 'job' }),
+    100
+  );
+  at += 1000;
+  await createLocalReportingBridge(isolated, { now }).enqueue();
+  assert.equal(
+    await isolated.collection('business_reporting_local').countDocuments({ kind: 'job' }),
+    105
+  );
+});

@@ -147,6 +147,9 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
         await db
           .collection('business_reporting_candidates')
           .createIndex({ branchId: 1, license: 1, expiresAt: 1 });
+        await db
+          .collection('business_reporting_requests')
+          .createIndex({ communitySeenAt: 1, _id: 1 });
         indexed = true;
       }
       // Switching to Community mode must stop the Cloud agent from claiming
@@ -155,10 +158,20 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
       const requests = await db
         .collection('business_reporting_requests')
         .find({ expiresAt: { $gt: new Date(now()) } })
-        .sort({ requestedAt: -1 })
+        .sort({ communitySeenAt: 1, _id: 1 })
         .limit(100)
         .maxTimeMS(250)
         .toArray();
+      if (requests.length)
+        await db.collection('business_reporting_requests').bulkWrite(
+          requests.map((row) => ({
+            updateOne: {
+              filter: { _id: row._id, license: row.license, requestedAt: row.requestedAt },
+              update: { $max: { communitySeenAt: new Date(now()) } },
+            },
+          })),
+          { ordered: false, maxTimeMS: 500 }
+        );
       for (const request of requests) {
         let summaryKind;
         try {
