@@ -715,3 +715,31 @@ the sole failure expected the former disabled-reservation behavior. That regress
 now asserts cancellation, reservation/Inbox removal and retained pending episodes,
 and passes on focused rerun. The three new recovery cases and six runtime unit
 tests pass. ESLint, formatting and attribution checks pass.
+
+## Pending episode retention policy
+
+An enabled recipient retains one outstanding candidate identity per observed item
+until current verified stock becomes healthy, the episode is committed to an Inbox
+group, or the opt-in activation changes. It is deduplication state, not a provider
+message queue: candidates alone never authorize an alert. There is no time-based
+expiry of active classification or its outstanding candidate. Expiring it would
+silently lose an unsent episode; deleting the whole state could instead re-arm the
+same still-low item and duplicate an alert.
+
+Delivery requires a complete recipient scan of a currently fresh, assigned snapshot
+and current ACL/preference checks. After a long outage, stale source data produces
+no Inbox entry. Fresh low evidence can deliver the retained episode once; fresh
+healthy evidence suppresses it. Unknown/missing evidence never means healthy. The
+Inbox and provider queues retain their independent expiry rules. Disabled state
+has the documented thirty-day cleanup, and obsolete activations are removed in
+bounded passes. Account erasure and removed-item state lifecycle remain separate
+retention work; this policy does not claim a fixed bound on historical item count.
+
+Two thirty-one-day outage tests verify withheld delivery until fresh evidence,
+identity preservation, one delivery across later scans, and healthy suppression.
+This resolves the earlier pending-candidate expiry question without introducing
+an arbitrary age-based loss of a still-valid episode.
+
+The final combined snapshot/preferences/push run passes all 110 cases, including
+the updated disabled-reservation regression and the two outage cases. Lint,
+formatting and attribution checks pass.

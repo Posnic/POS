@@ -2752,3 +2752,41 @@ test('disabled and stale uncommitted stock reservations are cancelled without er
     assert.ok((await recipientRows(f)).every((row) => row.pending && !row.pending.groupId));
   }
 });
+
+test('long-offline pending episodes require fresh source evidence and retain one identity until delivered', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  const before = (await recipientRows(f)).map((row) => row.pending.id).sort();
+  assert.equal(before.length, 103);
+  f.advance(31 * 86400000);
+  assert.equal((await materializeStock(f)).status, 'unavailable');
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 0);
+  assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 0 });
+  for (const page of await f.pages()) await f.send(page);
+  await recipientWorker(f).tick();
+  assert.deepEqual((await recipientRows(f)).map((row) => row.pending.id).sort(), before);
+  assert.equal((await materializeStock(f)).status, 'materialized');
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
+  assert.ok((await recipientRows(f)).every((row) => !row.pending));
+  f.advance(15 * 60000);
+  for (const page of await f.pages()) await f.send(page);
+  await recipientWorker(f).tick();
+  assert.equal((await materializeStock(f)).status, 'empty');
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
+});
+
+test('long-offline pending episodes are suppressed when fresh evidence shows healthy stock', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  f.advance(31 * 86400000);
+  await f.db.collection('items').updateMany({}, { $set: { available_quantity: 99 } });
+  for (const page of await f.pages()) await f.send(page);
+  await recipientWorker(f).tick();
+  assert.ok(
+    (await recipientRows(f)).every(
+      (row) => !row.pending && row.lastSuppressed?.reason === 'verified_healthy'
+    )
+  );
+  assert.equal((await materializeStock(f)).status, 'empty');
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 0);
+});
