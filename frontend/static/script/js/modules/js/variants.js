@@ -99,6 +99,7 @@ PosnicPro.variants = {
         $('#variants_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'variants',
+            onRefresh: function () { return PosnicPro.variants.loadList(); },
             container: '#variants_filter_panel',
             button: '#variants_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_variant_name', 'Search variant name'),

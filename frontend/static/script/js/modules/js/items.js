@@ -482,6 +482,7 @@ PosnicPro.items = {
         if (!$('#items_filter_panel').length) { return; }
         PosnicPro.listFilter.mount({
             key: 'items',
+            onRefresh: function () { return PosnicPro.items.loadList(); },
             container: '#items_filter_panel',
             button: '#items_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_name_sku_or_barcode', 'Search name, SKU or barcode'),

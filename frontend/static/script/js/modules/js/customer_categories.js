@@ -157,6 +157,7 @@ PosnicPro.customercategory = {
         $('#customercategory_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'customercategory',
+            onRefresh: function () { return PosnicPro.customercategory.loadList(); },
             container: '#customercategory_filter_panel',
             button: '#customercategory_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_category_name', 'Search category name'),

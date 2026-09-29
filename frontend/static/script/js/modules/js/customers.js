@@ -76,6 +76,7 @@ PosnicPro.customers = {
         $('#customers_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'customers',
+            onRefresh: function () { return PosnicPro.customers.loadList(); },
             container: '#customers_filter_panel',
             button: '#customers_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_name_phone_or_email', 'Search name, phone or email'),

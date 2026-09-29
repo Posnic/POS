@@ -507,6 +507,7 @@
         if (!$('#sales_filter_panel').length) { return; }
         PosnicPro.listFilter.mount({
             key: 'sales',
+            onRefresh: function () { return PosnicPro.sales.loadHistory(); },
             container: '#sales_filter_panel',
             button: '#sales_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_bill_no_customer_or_phone', 'Search bill no, customer or phone'),
@@ -11474,6 +11475,7 @@ PosnicPro.quotes.mountFilters = function () {
     if (!$('#quotes_filter_panel').length) { return; }
     PosnicPro.listFilter.mount({
         key: 'quotes',
+            onRefresh: function () { return PosnicPro.quotes.load(true); },
         container: '#quotes_filter_panel',
         button: '#quotes_filter_btn',
         searchPlaceholder: PosnicPro.i18n.t('lang_search_customer_or_quote', 'Search customer or quote #'),
