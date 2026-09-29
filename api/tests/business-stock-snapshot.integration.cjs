@@ -1823,3 +1823,246 @@ test('quiet hours are rechecked if their start is crossed during stock validatio
   assert.ok(result.retryAt.getTime() > f.now());
   assert.equal((await stockPushCheck(f)).status, 'deferred');
 });
+
+const stockPushConfig = {
+  enabled: true,
+  projectId: '11111111-1111-4111-8111-111111111111',
+  accessToken: 'synthetic-only',
+};
+async function pushFixture() {
+  const f = await inboxFixture(),
+    { opaque } = require('../src/services/business-access');
+  const session = {
+    _id: opaque(),
+    userId: f.user._id,
+    license: f.user.license,
+    tokenHash: opaque(),
+    authVersion: 0,
+    issuedAt: new Date(f.now() - 60000),
+    expiresAt: new Date(f.now() + 86400000),
+  };
+  await f.db.collection('business_sessions').insertOne(session);
+  await require('../src/services/business-push').registerDevice(
+    f.db,
+    { user: f.user, session },
+    {
+      token: 'ExpoPushToken[syntheticstocktoken]',
+      platform: 'android',
+      projectId: stockPushConfig.projectId,
+      locale: 'ta',
+    },
+    { config: stockPushConfig, now: () => f.now() - 1000 }
+  );
+  // Production materialization remains gated. These tests explicitly enqueue
+  // synthetic events to exercise the full delivery path without a provider.
+  await f.db
+    .collection('business_inbox')
+    .updateOne({ _id: new ObjectId(f.eventId) }, { $set: { pushPending: true } });
+  const sends = [],
+    transport = {
+      send: async (...args) => {
+        sends.push(args);
+        return '22222222-2222-4222-8222-222222222222';
+      },
+      receipt: async () => 'provider_accepted',
+    };
+  const drain = (options = {}, database = f.db) =>
+    require('../src/services/business-push').drainPush(database, {
+      config: stockPushConfig,
+      now: f.now,
+      transport,
+      ...options,
+    });
+  const delivery = () => f.db.collection('business_push_deliveries').findOne({});
+  return { ...f, session, sends, transport, drain, delivery };
+}
+
+test('stock push fanout uses the dedicated device session and a generic private payload', async () => {
+  const f = await pushFixture();
+  await Promise.all([f.drain(), f.drain()]);
+  assert.deepEqual(f.sends, [['ExpoPushToken[syntheticstocktoken]', f.eventId, 'ta']]);
+  assert.equal((await f.delivery()).state, 'receipt');
+  assert.equal((await f.delivery()).stock, undefined);
+  f.advance(15 * 60000);
+  await f.drain();
+  assert.equal((await f.delivery()).state, 'provider_accepted');
+  assert.equal(f.sends.length, 1);
+});
+
+test('stock push persists a continuation and resumes later items on another worker invocation', async () => {
+  const f = await pushFixture();
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateMany(
+      { _id: { $in: f.rows.slice(0, 102).map((row) => row._id) } },
+      { $set: { available_quantity: 9 } }
+    );
+  for (const page of await f.pages()) await f.send(page);
+  await f.drain({ stockPageLimit: 1 });
+  assert.equal(f.sends.length, 0);
+  assert.equal((await f.delivery()).stockCursor.pageIndex, 1);
+  assert.equal((await f.delivery()).attempts, 0);
+  f.advance(1);
+  await f.drain({ stockPageLimit: 1 });
+  assert.equal(f.sends.length, 1);
+  assert.equal((await f.delivery()).stockCursor, undefined);
+});
+
+test('queued stock push restarts a superseded snapshot and suppresses restocked groups', async () => {
+  const f = await pushFixture();
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateMany(
+      { _id: { $in: f.rows.slice(0, 100).map((row) => row._id) } },
+      { $set: { available_quantity: 9 } }
+    );
+  for (const page of await f.pages()) await f.send(page);
+  await f.drain({ stockPageLimit: 1 });
+  f.advance();
+  await f.db.collection('items').updateMany({}, { $set: { available_quantity: 9 } });
+  for (const page of await f.pages()) await f.send(page);
+  await f.drain();
+  assert.equal((await f.delivery()).stockCursor, undefined);
+  assert.equal((await f.delivery()).attempts, 0);
+  f.advance(15000);
+  await f.drain();
+  assert.equal((await f.delivery()).state, 'stopped');
+  assert.equal(f.sends.length, 0);
+});
+
+test('stock delivery cannot send or overwrite progress after lease or device revocation during validation', async () => {
+  for (const mode of ['lease', 'device']) {
+    const f = await pushFixture();
+    const database = {
+      collection(name) {
+        const collection = f.db.collection(name);
+        return new Proxy(collection, {
+          get(target, property) {
+            if (name === 'business_stock_recipient_state' && property === 'find')
+              return (...args) => {
+                const cursor = target.find(...args),
+                  original = cursor.toArray.bind(cursor);
+                cursor.toArray = async () => {
+                  const rows = await original();
+                  if (mode === 'lease')
+                    await f.db
+                      .collection('business_push_deliveries')
+                      .updateMany(
+                        {},
+                        { $set: { leaseId: 'successor', leaseUntil: new Date(f.now() + 60000) } }
+                      );
+                  else await f.db.collection('business_push_devices').deleteMany({});
+                  return rows;
+                };
+                return cursor;
+              };
+            return typeof target[property] === 'function'
+              ? target[property].bind(target)
+              : target[property];
+          },
+        });
+      },
+    };
+    await f.drain({}, database);
+    assert.equal(f.sends.length, 0, mode);
+    if (mode === 'lease') assert.equal((await f.delivery()).leaseId, 'successor');
+    else assert.equal((await f.delivery()).state, 'stopped');
+  }
+});
+
+test('a lost stock cursor acknowledgement preserves durable progress for the retry', async () => {
+  const f = await pushFixture();
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateMany(
+      { _id: { $in: f.rows.slice(0, 102).map((row) => row._id) } },
+      { $set: { available_quantity: 9 } }
+    );
+  for (const page of await f.pages()) await f.send(page);
+  let failed = false;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_push_deliveries' && property === 'updateOne')
+            return async (...args) => {
+              const result = await target.updateOne(...args);
+              if (!failed && args[1].$set?.stockCursor) {
+                failed = true;
+                throw new Error('lost cursor acknowledgement');
+              }
+              return result;
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  await f.drain({}, database);
+  assert.equal((await f.delivery()).stockCursor.pageIndex, 1);
+  assert.equal(f.sends.length, 0);
+  f.advance(30000);
+  await f.drain();
+  assert.equal(f.sends.length, 1);
+});
+
+test('provider retry rechecks stock opt-in and cannot send an old group after it is disabled', async () => {
+  const f = await pushFixture();
+  let attempts = 0;
+  const transport = {
+    ...f.transport,
+    send: async () => {
+      attempts++;
+      throw Object.assign(new Error('temporary provider failure'), {
+        retryable: true,
+        code: 'push_provider_unavailable',
+      });
+    },
+  };
+  await f.drain({ transport });
+  assert.equal(attempts, 1);
+  await f.db
+    .collection('business_stock_notification_preferences')
+    .updateOne({}, { $set: { enabled: false } });
+  f.advance(30000);
+  await f.drain({ transport });
+  assert.equal(attempts, 1);
+  assert.equal((await f.delivery()).state, 'stopped');
+});
+
+test('stock source is checked again after the final device lookup before provider handoff', async () => {
+  const f = await pushFixture();
+  let lookups = 0;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_push_devices' && property === 'findOne')
+            return async (...args) => {
+              const result = await target.findOne(...args);
+              if (++lookups === 2)
+                await f.db
+                  .collection('business_reporting_publishers')
+                  .updateOne({}, { $inc: { epoch: 1 } });
+              return result;
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  await f.drain({}, database);
+  assert.equal(lookups, 2);
+  assert.equal(f.sends.length, 0);
+  assert.equal((await f.delivery()).error, 'push_stock_changed');
+  assert.equal((await f.delivery()).stockCursor, undefined);
+});

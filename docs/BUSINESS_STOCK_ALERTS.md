@@ -451,3 +451,41 @@ provider handoff revalidation, retention cleanup and production scheduling remai
 unfinished. `pushPending` remains false on stock events, and no provider or runtime
 feature flag is activated. Validation evidence must never be reused as permanent
 permission to send after a delay.
+
+## Durable stock push consumer
+
+The existing push worker now supports explicitly queued `stock_low` events.
+Fanout requires the committed historical Inbox scope under stock ACL, independently
+of financial access. Per-device deliveries keep their existing immutable event/
+device identity and live dedicated session binding. No stock values are copied
+into provider messages: the transport still receives only device token, event ID
+and device language.
+
+Delivery validation processes at most ten current-stock pages per pass, yielding
+after three seconds between pages. Each continuation is persisted under the live
+lease before another page starts, so a lost checkpoint acknowledgement can resume
+on retry. Pending pages do not consume provider retry attempts. Changed or stale
+snapshots clear the obsolete cursor and wait fifteen seconds; quiet hours defer
+to their boundary. Disabled, read, expired, revoked or no-longer-low groups stop.
+The original one-hour delivery age limit still bounds retries.
+
+Device registration/session and current stock are checked again before provider
+handoff. Lease identity and expiry fence all delivery/receipt progress writes;
+a send requires over eleven seconds remaining on the thirty-second lease to
+cover the transport's ten-second timeout. A replaced lease cannot send or overwrite
+its successor. Provider acceptance and provider receipt remain separate states.
+Network ambiguity after provider acceptance still follows the existing retry and
+collapse-ID behavior; this is not an exactly-once display guarantee.
+
+This consumer is tested with synthetic transport and explicitly enqueued events.
+Stock materialization still leaves `pushPending: false`; runtime stock scheduling,
+retention cleanup, real provider/relay qualification and production feature
+activation remain unfinished. No production credential, timer, flag or deployment
+was changed. The published Android preview is unchanged.
+
+Validation: 84 integration tests pass (64 snapshot/stock pipeline, fourteen push
+and six preference cases), along with ESLint, Prettier and attribution. Seven new
+worker cases cover generic payload/receipt state, durable paging, superseded source,
+lease/device revocation, lost cursor acknowledgement, opt-out before provider retry,
+and a publisher change after the final device lookup. Existing daily, approval and
+register-close push regressions pass with the stronger live-lease write checks.
