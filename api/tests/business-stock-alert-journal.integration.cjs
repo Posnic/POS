@@ -264,3 +264,190 @@ test('an invalid legacy duplicate cannot leave a healthy fact available to re-ar
   await assert.rejects(f.scan(), /duplicate_stock_item/);
   assert.equal((await f.states()).length, 0);
 });
+
+const { createStockAlertWorker } = require('../src/services/business-stock-alert-worker');
+const observationRow = (branch) =>
+  db
+    .collection('business_stock_alert_local')
+    .findOne({ _id: 'observation:' + branch.license + ':' + branch.id });
+test('worker persists an immutable observation, resumes page cursors after restart and releases completed facts', async () => {
+  const f = await fixture(102);
+  const observation = await prepareDesktopStockObservation(db, f.branch);
+  const worker = createStockAlertWorker(db);
+  const staged = await worker.stage(observation, f.branch);
+  assert.equal(staged.duplicate, false);
+  const reordered = {
+    facts: observation.facts.map((fact) => Object.fromEntries(Object.entries(fact).reverse())),
+    summary: observation.summary,
+  };
+  assert.equal((await worker.stage(reordered, f.branch)).duplicate, true);
+  const other = structuredClone(observation);
+  other.summary.preparedAt = new Date(Date.parse(observation.summary.preparedAt) + 1).toISOString();
+  await assert.rejects(
+    createStockAlertWorker(db, { now: () => Date.now() + 1000 }).stage(other, f.branch),
+    /stock_observation_pending/
+  );
+  const first = await worker.tick();
+  assert.equal(first.processed, 100);
+  assert.equal(first.complete, false);
+  assert.equal((await observationRow(f.branch)).afterItemId, observation.facts[99].itemId);
+  worker.stop();
+  const restarted = createStockAlertWorker(db);
+  assert.equal((await restarted.tick()).complete, true);
+  const row = await observationRow(f.branch);
+  assert.equal(row.observation, undefined);
+  assert.ok(row.completedAt instanceof Date);
+  assert.equal((await restarted.stage(observation, f.branch)).duplicate, true);
+  const items = (await f.states()).filter((state) => state.itemId);
+  assert.equal(items.length, 102);
+  assert.ok(items.every((state) => state.pendingEvents.length === 1));
+});
+test('worker replays journal writes after a crash before saving its cursor', async () => {
+  const f = await fixture(2),
+    observation = await f.scan();
+  let at = now();
+  const worker = createStockAlertWorker(db, {
+    now: () => at,
+    journal: async (...args) => {
+      await journalStockObservation(...args);
+      throw new Error('crash_before_cursor');
+    },
+  });
+  await worker.stage(observation, f.branch);
+  await assert.rejects(worker.tick(), /crash_before_cursor/);
+  const interrupted = await observationRow(f.branch);
+  assert.equal(interrupted.afterItemId, null);
+  assert.ok(interrupted.observation);
+  at += 300001;
+  await createStockAlertWorker(db, { now: () => at }).tick();
+  assert.equal((await observationRow(f.branch)).observation, undefined);
+  assert.ok(
+    (await f.states())
+      .filter((state) => state.itemId)
+      .every((state) => state.pendingEvents.length === 1)
+  );
+});
+test('a worker that loses its lease cannot overwrite a successor cursor or completion', async () => {
+  const f = await fixture(),
+    observation = await f.scan();
+  let at = now(),
+    entered,
+    resume;
+  const started = new Promise((resolve) => {
+    entered = resolve;
+  });
+  const paused = new Promise((resolve) => {
+    resume = resolve;
+  });
+  const worker = createStockAlertWorker(db, {
+    now: () => at,
+    journal: async (...args) => {
+      entered();
+      await paused;
+      return journalStockObservation(...args);
+    },
+  });
+  await worker.stage(observation, f.branch);
+  const pending = worker.tick();
+  await started;
+  at += 30001;
+  await createStockAlertWorker(db, { now: () => at }).tick();
+  const completed = await observationRow(f.branch);
+  resume();
+  await pending;
+  assert.deepEqual(await observationRow(f.branch), completed);
+  assert.equal((await f.states()).find((state) => state.itemId).pendingEvents.length, 1);
+});
+test('expired staged observations are explicitly discarded without erasing pending events', async () => {
+  const f = await fixture(),
+    observation = await f.scan();
+  let at = now();
+  const worker = createStockAlertWorker(db, { now: () => at });
+  await f.journal(observation);
+  await worker.stage(observation, f.branch);
+  at += 86400001;
+  await worker.tick();
+  const row = await observationRow(f.branch);
+  assert.equal(row.observation, undefined);
+  assert.equal(row.lastDiscarded.reason, 'stale_stock_observation');
+  assert.equal((await f.states()).find((state) => state.itemId).pendingEvents.length, 1);
+});
+test('tampered staged facts cannot be journalled and Cloud cannot stage an observation', async () => {
+  const f = await fixture(),
+    observation = await f.scan();
+  const worker = createStockAlertWorker(db, { now });
+  await worker.stage(observation, f.branch);
+  const row = await observationRow(f.branch);
+  await db.collection('business_stock_alert_local').updateOne(
+    { _id: row._id },
+    {
+      $set: {
+        'observation.facts.0.availableMilli': 0,
+        'observation.summary.lowItems.0.availableMilli': 0,
+      },
+    }
+  );
+  await assert.rejects(worker.tick(), /invalid_stock_observation_state/);
+  assert.equal((await f.states()).filter((state) => state.itemId).length, 0);
+  process.env.POSNIC_DESKTOP = '0';
+  try {
+    await assert.rejects(worker.stage(observation, f.branch), /desktop_required/);
+  } finally {
+    process.env.POSNIC_DESKTOP = '1';
+  }
+});
+
+test('a corrupt queue record backs off so another branch can continue', async () => {
+  const f = await fixture(),
+    g = await fixture();
+  const worker = createStockAlertWorker(db, { now });
+  await worker.stage(await f.scan(), f.branch);
+  await worker.stage(await g.scan(), g.branch);
+  const row = await observationRow(f.branch);
+  await db
+    .collection('business_stock_alert_local')
+    .updateOne(
+      { _id: row._id },
+      { $set: { revision: 'invalid', nextAttemptAt: new Date(now() - 1) } }
+    );
+  await assert.rejects(worker.tick(), /invalid_stock_observation_state/);
+  const corrupt = await observationRow(f.branch);
+  assert.equal(corrupt.leaseId, undefined);
+  assert.equal(corrupt.nextAttemptAt.getTime(), now() + 300000);
+  assert.equal((await worker.tick()).complete, true);
+  assert.equal((await observationRow(g.branch)).observation, undefined);
+});
+test('a stopped worker preserves its observation for replay and does not advance a cursor', async () => {
+  const f = await fixture(),
+    observation = await f.scan();
+  let at = now(),
+    entered,
+    resume;
+  const started = new Promise((resolve) => {
+    entered = resolve;
+  });
+  const paused = new Promise((resolve) => {
+    resume = resolve;
+  });
+  const worker = createStockAlertWorker(db, {
+    now: () => at,
+    journal: async (...args) => {
+      const result = await journalStockObservation(...args);
+      entered();
+      await paused;
+      return result;
+    },
+  });
+  await worker.stage(observation, f.branch);
+  const pending = worker.tick();
+  await started;
+  worker.stop();
+  resume();
+  await pending;
+  assert.ok((await observationRow(f.branch)).observation);
+  await assert.rejects(worker.stage(observation, f.branch), /worker_stopped/);
+  at += 30001;
+  await createStockAlertWorker(db, { now: () => at }).tick();
+  assert.equal((await observationRow(f.branch)).observation, undefined);
+  assert.equal((await f.states()).find((state) => state.itemId).pendingEvents.length, 1);
+});
