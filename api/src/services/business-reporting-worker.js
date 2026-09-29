@@ -5,7 +5,15 @@ const { isMultiTenant } = require('../db/tenant-context');
 const { branchInfo } = require('./business-access');
 const { prepareDesktopSummary } = require('./business-summary-preparer');
 const { prepareDesktopRegisterSummary } = require('./business-register-summary');
-const { prepareDesktopStockSummary } = require('./business-stock-summary');
+const {
+  prepareDesktopStockSummary,
+  prepareDesktopStockObservation,
+} = require('./business-stock-summary');
+const {
+  createStockSnapshotSender,
+  createCommunityStockSnapshotTransport,
+} = require('./business-stock-snapshot-sender');
+const { createStockSnapshotAgentTransport } = require('./business-stock-snapshot-agent-transport');
 const { validateStockSummary } = require('./business-stock-contract');
 const { reportingJobKind } = require('./business-reporting-job');
 const { MetricError } = require('./business-metrics');
@@ -17,6 +25,7 @@ function createDesktopReportingWorker(
     prepare = prepareDesktopSummary,
     prepareRegister = prepareDesktopRegisterSummary,
     prepareStock = prepareDesktopStockSummary,
+    prepareObservation = prepareDesktopStockObservation,
   } = {}
 ) {
   const local = db.collection('business_reporting_local');
@@ -24,6 +33,23 @@ function createDesktopReportingWorker(
     process.env.POSNIC_BUSINESS_LOCAL_REPORTING === '1'
       ? require('./business-local-reporting').createLocalReportingBridge(db, { now })
       : null;
+  let snapshots;
+  const stockEnabled = () => process.env.POSNIC_BUSINESS_STOCK_ALERTS === '1';
+  const sender = () =>
+    (snapshots ??= createStockSnapshotSender(db, {
+      now,
+      send: community
+        ? createCommunityStockSnapshotTransport(db, { now })
+        : createStockSnapshotAgentTransport(db, { now }),
+    }));
+  const drainSnapshots = async () => {
+    if (!stockEnabled() || stopped) return;
+    try {
+      await sender().tick({ maxPages: 100 });
+    } catch {
+      /* Durable transfer backoff is independent of reporting jobs. */
+    }
+  };
   let running = false,
     stopped = false,
     controller = null,
@@ -33,6 +59,7 @@ function createDesktopReportingWorker(
     stop() {
       stopped = true;
       controller?.abort();
+      snapshots?.stop();
     },
     async tick() {
       if (running || stopped || process.env.POSNIC_DESKTOP !== '1' || isMultiTenant()) return;
@@ -52,13 +79,24 @@ function createDesktopReportingWorker(
                 itemSummaryVersion: 1,
                 registerSummaryVersion: 1,
                 stockSummaryVersion: 1,
+                ...(stockEnabled()
+                  ? {
+                      stockSnapshotVersion: 1,
+                      stockSnapshotExpiresAt: new Date(at.getTime() + 120000),
+                    }
+                  : {}),
                 stockSummaryExpiresAt: new Date(at.getTime() + 120000),
                 registerSummaryExpiresAt: new Date(at.getTime() + 120000),
                 expiresAt: new Date(at.getTime() + 120000),
               },
+              ...(!stockEnabled()
+                ? { $unset: { stockSnapshotVersion: '', stockSnapshotExpiresAt: '' } }
+                : {}),
             },
             { upsert: true }
           );
+        await drainSnapshots();
+        if (stopped) return;
         job = await local.findOneAndUpdate(
           {
             kind: 'job',
@@ -113,14 +151,23 @@ function createDesktopReportingWorker(
           indexReady = true;
         }
         controller = new AbortController();
+        const observation =
+          summaryKind === 'stock' && stockEnabled()
+            ? await prepareObservation(
+                db,
+                { ...info, license: job.license },
+                { signal: controller.signal, now }
+              )
+            : null;
         const summary =
           summaryKind === 'stock'
             ? validateStockSummary(
-                await prepareStock(
-                  db,
-                  { ...info, license: job.license },
-                  { signal: controller.signal, now }
-                ),
+                observation?.summary ??
+                  (await prepareStock(
+                    db,
+                    { ...info, license: job.license },
+                    { signal: controller.signal, now }
+                  )),
                 { id: job.branchId, license: job.license },
                 { now }
               )
@@ -144,6 +191,16 @@ function createDesktopReportingWorker(
             summary.close?.businessDate !== job.businessDate)
         )
           throw new MetricError('close_changed');
+        if (stopped) return;
+        if (observation) {
+          await sender().stage(
+            observation,
+            { ...info, license: job.license },
+            community ? 'community' : 'cloud',
+            { assignmentId: job.assignmentId, epoch: job.epoch }
+          );
+          await drainSnapshots();
+        }
         if (stopped) return;
         await local.updateOne(
           {

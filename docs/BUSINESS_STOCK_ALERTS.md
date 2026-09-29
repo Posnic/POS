@@ -577,3 +577,31 @@ a synthetic provider. A separate interrupted-cleanup case verifies one delivery
 and no requeue after recovery. Lint, formatting and attribution checks pass.
 These tests do not qualify a real provider, deploy servers, advertise producer
 capabilities, enable feature flags or change the published Android APK.
+
+## Desktop producer runtime
+
+With stock alerts enabled, the existing desktop reporting worker prepares the
+full verified observation for requested stock jobs and derives the public summary
+from that same scan. It stages the private snapshot under the assignment and epoch
+observed when claiming the job; a replaced assignment cannot be adopted during
+preparation. Community uses the installed local publisher transport. Cloud writes
+the existing agent mailbox and advertises expiring `stockSnapshotVersion: 1`
+support. Turning the flag off removes that capability from the next heartbeat.
+
+The existing reporting loop resumes staged transfers even without a new reporting
+job. Its sender pass accepts up to one hundred pages under the existing twenty-
+second budget, preventing the default ten-page receipt limit from unnecessarily
+stretching a large transfer across ten reporting ticks. The sender's standalone
+default remains ten pages. Shutdown stops the sender and prevents staging an
+observation that completes after cancellation. No additional timer is introduced.
+
+This connects requested stock jobs; automatic source-refresh demand for opted-in
+recipients, fairness/throughput across many branches and slow networks, retention,
+real provider qualification and controlled deployment remain open. No production
+flag is enabled by this source change.
+
+Validation: all 118 stock publication, snapshot/pipeline, register publication and
+daily-summary integration tests pass, including five new desktop runtime cases.
+ESLint, formatting and attribution checks pass. The twelve-page test exercises
+more than the standalone default page allowance; it does not establish production
+network throughput or many-branch scheduling capacity.

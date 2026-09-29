@@ -64,7 +64,7 @@ function createStockSnapshotSender(db, { send, now = Date.now } = {}) {
     stopped = false,
     controller;
   return {
-    async stage(input, branch, mode) {
+    async stage(input, branch, mode, expectedAssignment) {
       localOnly();
       if (stopped) fail('worker_stopped');
       if (
@@ -108,6 +108,13 @@ function createStockSnapshotSender(db, { send, now = Date.now } = {}) {
         { maxTimeMS: 500 }
       );
       if (!validAssignment(job)) fail('stock_snapshot_assignment_required');
+      if (
+        expectedAssignment &&
+        (!validAssignment(expectedAssignment) ||
+          job.assignmentId !== expectedAssignment.assignmentId ||
+          job.epoch !== expectedAssignment.epoch)
+      )
+        fail('stock_snapshot_assignment_changed');
       const result = await local.updateOne(
         { _id: key, snapshotId: prior ? prior.snapshotId : { $exists: false } },
         {
@@ -158,8 +165,10 @@ function createStockSnapshotSender(db, { send, now = Date.now } = {}) {
       stopped = true;
       controller?.abort();
     },
-    async tick() {
+    async tick({ maxPages = 10 } = {}) {
       localOnly();
+      if (!Number.isInteger(maxPages) || maxPages < 1 || maxPages > 100)
+        fail('invalid_stock_snapshot_page_limit');
       if (running || stopped) return;
       running = true;
       let lease;
@@ -216,7 +225,7 @@ function createStockSnapshotSender(db, { send, now = Date.now } = {}) {
         }
         const started = now();
         let sent = 0;
-        for (let index = row.nextPage; index < pages.length && sent < 10; index++) {
+        for (let index = row.nextPage; index < pages.length && sent < maxPages; index++) {
           const remaining = 20000 - (now() - started);
           if (remaining <= 0 || stopped) break;
           if (now() - Date.parse(row.preparedAt) >= FRESHNESS_MS) fail('stale_stock_snapshot');

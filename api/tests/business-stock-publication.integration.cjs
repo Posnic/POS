@@ -546,3 +546,174 @@ test('Community alert transport cannot accept an unbacked batch or switch an exi
   assert.equal((await f.pending()).length, 1);
   assert.equal(await f.db.collection('business_stock_alert_batches').countDocuments({}), 0);
 });
+
+async function withStockRuntime(work) {
+  const previousFlag = process.env.POSNIC_BUSINESS_STOCK_ALERTS;
+  process.env.POSNIC_BUSINESS_STOCK_ALERTS = '1';
+  try {
+    await work();
+  } finally {
+    if (previousFlag === undefined) delete process.env.POSNIC_BUSINESS_STOCK_ALERTS;
+    else process.env.POSNIC_BUSINESS_STOCK_ALERTS = previousFlag;
+  }
+}
+
+test('desktop Community runtime publishes full alert facts and public summary from one scan', async () =>
+  withStockRuntime(async () => {
+    const f = await fixture();
+    let scans = 0;
+    const worker = createDesktopReportingWorker(f.db, {
+      prepareStock: async () => {
+        throw new Error('duplicate scan');
+      },
+      prepareObservation: async (...args) => {
+        scans++;
+        return require('../src/services/business-stock-summary').prepareDesktopStockObservation(
+          ...args
+        );
+      },
+    });
+    try {
+      await worker.tick();
+      const owner = await f.db
+        .collection('business_reporting_publishers')
+        .findOne({ _id: f.branch.id });
+      const saved = await f.db.collection('business_prepared_summaries').findOne({ _id: f.key });
+      assert.equal(scans, 1);
+      assert.deepEqual(owner.stockSnapshot.summary, saved.summary);
+      const frame =
+        await require('../src/services/business-stock-snapshot-read').readStockSnapshotPage(
+          f.db,
+          f.branch
+        );
+      assert.equal(frame.status, 'ready');
+      assert.equal(frame.facts.length, 1);
+      const staged = await f.db
+        .collection('business_stock_alert_local')
+        .findOne({ kind: 'snapshot' });
+      assert.equal(staged.observation, undefined);
+      assert.ok(staged.completedAt);
+      await worker.tick();
+      assert.equal(scans, 1);
+    } finally {
+      worker.stop();
+    }
+  }));
+
+test('desktop stock observation cannot adopt an assignment replaced during preparation', async () =>
+  withStockRuntime(async () => {
+    const f = await fixture();
+    const worker = createDesktopReportingWorker(f.db, {
+      prepareObservation: async (...args) => {
+        const observation =
+          await require('../src/services/business-stock-summary').prepareDesktopStockObservation(
+            ...args
+          );
+        await f.db
+          .collection('business_reporting_local')
+          .updateOne({ _id: f.key }, { $set: { assignmentId: 'x'.repeat(43), epoch: 2 } });
+        return observation;
+      },
+    });
+    try {
+      await worker.tick();
+      assert.equal(
+        await f.db.collection('business_stock_alert_local').countDocuments({ kind: 'snapshot' }),
+        0
+      );
+      assert.equal(await f.db.collection('business_prepared_summaries').countDocuments({}), 0);
+      assert.equal(
+        (await f.db.collection('business_reporting_local').findOne({ _id: f.key })).error,
+        'stock_snapshot_assignment_changed'
+      );
+    } finally {
+      worker.stop();
+    }
+  }));
+
+test('Cloud desktop runtime advertises snapshot support and stages the agent mailbox without credentials', async () =>
+  withStockRuntime(async () => {
+    const f = await fixture();
+    await createLocalReportingBridge(f.db).enqueue();
+    await f.db
+      .collection('business_reporting_local')
+      .updateOne({ _id: f.key }, { $set: { publisherMode: 'cloud' } });
+    const previousLocal = process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+    delete process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+    const worker = createDesktopReportingWorker(f.db);
+    try {
+      await worker.tick();
+      const runtime = await f.db
+        .collection('business_reporting_local')
+        .findOne({ _id: 'desktop-runtime' });
+      assert.equal(runtime.stockSnapshotVersion, 1);
+      assert.equal(runtime.stockSnapshotExpiresAt.getTime(), runtime.expiresAt.getTime());
+      const staged = await f.db
+        .collection('business_stock_alert_local')
+        .findOne({ kind: 'snapshot' });
+      assert.equal(staged.mode, 'cloud');
+      assert.ok(staged.nextTransportAt);
+      assert.equal(staged.error, 'stock_snapshot_awaiting_agent');
+      assert.equal(staged.observation.facts.length, 1);
+      assert.ok(
+        (await f.db.collection('business_reporting_local').findOne({ _id: f.key })).pendingSummary
+      );
+      delete process.env.POSNIC_BUSINESS_STOCK_ALERTS;
+      await worker.tick();
+      const disabled = await f.db
+        .collection('business_reporting_local')
+        .findOne({ _id: 'desktop-runtime' });
+      assert.equal(disabled.stockSnapshotVersion, undefined);
+      assert.equal(disabled.stockSnapshotExpiresAt, undefined);
+    } finally {
+      worker.stop();
+      if (previousLocal === undefined) delete process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+      else process.env.POSNIC_BUSINESS_LOCAL_REPORTING = previousLocal;
+    }
+  }));
+
+test('desktop runtime drains more than ten stock pages within one bounded reporting tick', async () =>
+  withStockRuntime(async () => {
+    const f = await fixture();
+    const first = await f.db.collection('items').findOne({});
+    await f.db
+      .collection('items')
+      .insertMany(Array.from({ length: 1100 }, () => ({ ...first, _id: new ObjectId() })));
+    const worker = createDesktopReportingWorker(f.db);
+    try {
+      await worker.tick();
+      const staged = await f.db
+        .collection('business_stock_alert_local')
+        .findOne({ kind: 'snapshot' });
+      assert.equal(staged.observation, undefined);
+      assert.ok(staged.completedAt);
+      const owner = await f.db
+        .collection('business_reporting_publishers')
+        .findOne({ _id: f.branch.id });
+      assert.equal(owner.stockSnapshot.pages.length, 12);
+      assert.equal(owner.stockSnapshot.summary.coverage.verifiedItems, 1101);
+    } finally {
+      worker.stop();
+    }
+  }));
+
+test('shutdown after a desktop observation prevents staging and public publication', async () =>
+  withStockRuntime(async () => {
+    const f = await fixture();
+    const worker = createDesktopReportingWorker(f.db, {
+      prepareObservation: async (...args) => {
+        const observation =
+          await require('../src/services/business-stock-summary').prepareDesktopStockObservation(
+            ...args
+          );
+        worker.stop();
+        return observation;
+      },
+    });
+    await worker.tick();
+    assert.equal(
+      await f.db.collection('business_stock_alert_local').countDocuments({ kind: 'snapshot' }),
+      0
+    );
+    assert.equal(await f.db.collection('business_prepared_summaries').countDocuments({}), 0);
+  }));
