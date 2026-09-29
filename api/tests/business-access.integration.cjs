@@ -1277,6 +1277,21 @@ test('stock-alert HTTP preferences require dedicated auth and current stock ACL 
     const value = await grant(f),
       branchId = String(f.branch._id);
     const url = base + '/api/business/v1/notifications/stock/' + branchId;
+    const discoveryUrl = base + '/api/business/v1/discovery';
+    const discoveryHeaders = { 'x-forwarded-proto': 'https' };
+    assert.equal(
+      (await (await fetch(discoveryUrl, { headers: discoveryHeaders })).json())
+        .stockAlertPreferences,
+      undefined
+    );
+    assert.equal(
+      (
+        await (
+          await fetch(discoveryUrl + '?stockAlertPreferences=1', { headers: discoveryHeaders })
+        ).json()
+      ).stockAlertPreferences,
+      'stock-alert-preferences-v1'
+    );
     const headers = {
       'x-forwarded-proto': 'https',
       authorization: 'Bearer ' + value.token,
@@ -1328,6 +1343,14 @@ test('stock-alert HTTP preferences require dedicated auth and current stock ACL 
       .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': true } });
     process.env.POSNIC_BUSINESS_STOCK_ALERTS = '0';
     assert.equal((await fetch(url, { headers })).status, 404);
+    assert.equal(
+      (
+        await (
+          await fetch(discoveryUrl + '?stockAlertPreferences=1', { headers: discoveryHeaders })
+        ).json()
+      ).stockAlertPreferences,
+      undefined
+    );
   } finally {
     if (prior === undefined) delete process.env.POSNIC_BUSINESS_STOCK_ALERTS;
     else process.env.POSNIC_BUSINESS_STOCK_ALERTS = prior;

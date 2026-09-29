@@ -70,6 +70,9 @@ router.get('/discovery', (_req, res) =>
     reporting: 'bounded-summary-v2',
     ...(_req.query.items === '1' ? { itemReporting: 'bounded-items-v1' } : {}),
     ...(_req.query.stock === '1' ? { stockReporting: 'bounded-stock-v1' } : {}),
+    ...(_req.query.stockAlertPreferences === '1' && process.env.POSNIC_BUSINESS_STOCK_ALERTS === '1'
+      ? { stockAlertPreferences: 'stock-alert-preferences-v1' }
+      : {}),
     ...(_req.query.registerSessions === '1'
       ? {
           registerReporting: 'bounded-register-session-v1',

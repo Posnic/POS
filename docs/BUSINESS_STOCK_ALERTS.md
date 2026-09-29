@@ -108,9 +108,9 @@ transport activates the producer or sends an Inbox notification itself.
 `GET` and `POST /api/business/v1/notifications/stock/:branchId` now manage a
 separate per-account stock-alert opt-in. Both require a dedicated Business session,
 HTTPS, current branch membership, `stock.read` and `notifications.self.manage`.
-Financial access is not required. The rollout flag must be enabled; discovery does
-not advertise stock alerts yet because delivery is unfinished. Responses are
-private and no-store.
+Financial access is not required. The rollout flag must be enabled. Discovery advertises only the preference
+contract when `stockAlertPreferences=1` is explicitly requested; it does not claim
+that recipient delivery is complete. Responses are private and no-store.
 
 New preferences default to disabled, a 60-minute minimum notification interval,
 and quiet hours disabled (22:00-07:00 values ready for opt-in). Supported minimum
