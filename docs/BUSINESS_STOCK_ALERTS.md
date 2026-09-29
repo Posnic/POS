@@ -342,3 +342,37 @@ or pushes. Four new scheduling integration cases cover restart, crash replay,
 lease/settings/stop races and snapshot replacement. All 38 snapshot plus six
 preference tests pass, along with lint and formatting. Grouped materialization,
 delivery-time revalidation, retention and runtime/deployment activation remain open.
+
+## Grouped private Inbox materialization
+
+`materializeStockAlert` now requires a completed recipient scan of the current
+fresh snapshot. It rechecks live scope, opt-in, quiet hours and cadence, reserves
+an immutable group on the preference, and claims the current verified-low pending
+identities. A monotonic group sequence prevents older claims from replacing a
+newer group. Work is bounded to the 10,000-fact source limit and indexed private
+recipient state; it never scans stock transactions or sales.
+
+One `stock_low` Inbox record contains all new candidate counts, the total verified
+low count, explicit partial coverage/observation time and up to twenty item details.
+It is not one notification per twenty items. The candidate rows and content are
+validated before insertion. Exact event keys and content digests make lost insert
+acknowledgements replayable. The event remains `materializationPending` until fresh
+recipient/snapshot checks and a preference revision/activation/lease-fenced commit.
+Cadence starts at commit time, not the earlier reservation time.
+
+Committed recovery acknowledges only rows still carrying that group's identity,
+so an intervening healthy/low transition keeps its newer episode. Candidate cleanup
+increments row revisions to make racing journal writers retry. Cancellation records
+its intent before releasing claims and deleting an uncommitted private event; a
+changed snapshot cannot be combined into the original group. Settings edits clear
+the delivery lease, preventing a late commit under the old revision. Inbox records
+use the existing thirty-day TTL; active classification retention remains separate.
+
+These entries are deliberately not exposed by the current Inbox query and have
+`pushPending: false`. Stock-specific mobile/API negotiation, authenticated history
+visibility, delivery-time current-stock validation and private push payloads remain
+unfinished. No scheduler or feature flag is activated. Six new integration cases
+cover a 103-item single group, lost insert acknowledgement, interrupted committed
+cleanup, a later episode, snapshot cancellation, settings changes and access
+revocation during insertion. All 44 snapshot plus six preference tests pass, with
+lint, formatting, attribution and sync-classification checks.

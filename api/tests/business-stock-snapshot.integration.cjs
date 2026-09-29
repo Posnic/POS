@@ -1270,3 +1270,202 @@ test('recipient scan restarts a superseded snapshot cursor instead of combining 
   assert.equal((await recipientWorker(f).tick()).state, 'complete');
   assert.equal((await recipientRows(f))[0].pending, undefined);
 });
+
+const materializeStock = (f, database = f.db) =>
+  require('../src/services/business-stock-materializer').materializeStockAlert(database, f.target, {
+    now: f.now,
+  });
+test('one grouped Inbox entry covers the entire verified-low baseline and acknowledges all its candidates', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  const result = await materializeStock(f);
+  assert.equal(result.status, 'materialized');
+  assert.equal(result.newLowItemCount, 103);
+  const entries = await f.db.collection('business_inbox').find({}).toArray();
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].stock.items.length, 20);
+  assert.equal(entries[0].stock.listTruncated, true);
+  assert.equal(entries[0].stock.totalLowItemCount, 103);
+  assert.equal(entries[0].stock.sourceComplete, false);
+  assert.equal(entries[0].pushPending, false);
+  assert.equal(entries[0].materializationPending, false);
+  assert.ok((await recipientRows(f)).every((row) => row.pending === undefined));
+  assert.equal((await materializeStock(f)).status, 'deferred');
+});
+test('lost Inbox insertion acknowledgement retries the immutable group without duplication', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  let failed = false;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_inbox' && property === 'updateOne')
+            return async (...args) => {
+              const result = await target.updateOne(...args);
+              if (!failed && args[1].$setOnInsert) {
+                failed = true;
+                throw new Error('lost Inbox acknowledgement');
+              }
+              return result;
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  await assert.rejects(materializeStock(f, database), /lost Inbox acknowledgement/);
+  const before = await f.db.collection('business_inbox').findOne({});
+  assert.equal(before.materializationPending, true);
+  assert.equal((await materializeStock(f)).eventId, String(before._id));
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
+});
+test('committed group cleanup resumes despite cadence deferral and does not acknowledge a later episode', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  let failed = false;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_recipient_state' && property === 'updateMany')
+            return async (...args) => {
+              if (!failed && args[1].$unset?.pending === '') {
+                failed = true;
+                throw new Error('cleanup interrupted');
+              }
+              return target.updateMany(...args);
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  await assert.rejects(materializeStock(f, database), /cleanup interrupted/);
+  assert.ok((await scanPreference(f)).stockDelivery.committedAt);
+  // A healthy/low transition creates a different candidate while cleanup is pending.
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateOne({ _id: f.rows[0]._id }, { $set: { available_quantity: 9 } });
+  for (const page of await f.pages()) await f.send(page);
+  await journalRecipient(f, { limit: 1 });
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateOne({ _id: f.rows[0]._id }, { $set: { available_quantity: 1 } });
+  for (const page of await f.pages()) await f.send(page);
+  await journalRecipient(f, { limit: 1 });
+  const pending = (await recipientRows(f))[0].pending;
+  assert.equal(pending.episode, 2);
+  assert.equal((await materializeStock(f)).status, 'materialized');
+  assert.equal((await recipientRows(f))[0].pending.id, pending.id);
+  assert.equal((await scanPreference(f)).stockDelivery, undefined);
+});
+test('uncommitted groups are cancelled when their snapshot changes and current candidates remain available', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_inbox' && property === 'updateOne')
+            return async () => {
+              throw new Error('before Inbox');
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  await assert.rejects(materializeStock(f, database), /before Inbox/);
+  const oldGroup = (await scanPreference(f)).stockDelivery.id;
+  f.advance(60000);
+  for (const page of await f.pages()) await f.send(page);
+  await recipientWorker(f).tick();
+  assert.equal((await materializeStock(f)).status, 'changed');
+  assert.ok((await recipientRows(f)).every((row) => row.pending && !row.pending.groupId));
+  const result = await materializeStock(f);
+  assert.equal(result.status, 'materialized');
+  const event = await f.db.collection('business_inbox').findOne({});
+  assert.equal(event.eventKey.endsWith(oldGroup), false);
+});
+test('group materialization requires a complete scan, live permission and a matching settings revision', async () => {
+  const f = await recipientFixture();
+  assert.equal((await materializeStock(f)).status, 'scan_required');
+  await recipientWorker(f).tick();
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_inbox' && property === 'updateOne')
+            return async (...args) => {
+              const result = await target.updateOne(...args);
+              if (args[1].$setOnInsert)
+                await require('../src/services/business-stock-notification-preferences').saveStockPreference(
+                  f.db,
+                  f.context,
+                  f.branch.id,
+                  {
+                    enabled: false,
+                    expectedRevision: 1,
+                    minimumIntervalMinutes: 15,
+                    quiet: { enabled: false, start: '22:00', end: '07:00' },
+                  },
+                  { now: f.now }
+                );
+              return result;
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  assert.equal((await materializeStock(f, database)).status, 'disabled');
+  assert.equal((await f.db.collection('business_inbox').findOne({})).materializationPending, true);
+  assert.equal((await materializeStock(f)).status, 'disabled');
+  assert.ok((await recipientRows(f)).some((row) => row.pending));
+});
+
+test('permission revoked during Inbox insertion leaves the stock group uncommitted and push-ineligible', async () => {
+  const f = await recipientFixture();
+  await recipientWorker(f).tick();
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_inbox' && property === 'updateOne')
+            return async (...args) => {
+              const result = await target.updateOne(...args);
+              if (args[1].$setOnInsert)
+                await f.db
+                  .collection('users')
+                  .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
+              return result;
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  assert.equal((await materializeStock(f, database)).status, 'denied');
+  const event = await f.db.collection('business_inbox').findOne({});
+  assert.equal(event.materializationPending, true);
+  assert.equal(event.pushPending, false);
+  assert.equal((await scanPreference(f)).lastNotifiedAt, undefined);
+});

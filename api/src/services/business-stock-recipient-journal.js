@@ -38,7 +38,14 @@ function validateState(row, key, target, itemId) {
     fail('invalid_stock_recipient_state');
   if (
     row.pending &&
-    (Object.keys(row.pending).sort().join(',') !== 'episode,id,observedAt' ||
+    (!['episode,id,observedAt', 'episode,groupId,groupSequence,id,observedAt'].includes(
+      Object.keys(row.pending).sort().join(',')
+    ) ||
+      (row.pending.groupId !== undefined &&
+        (typeof row.pending.groupId !== 'string' ||
+          !/^[a-f\d-]{36}$/.test(row.pending.groupId) ||
+          !Number.isSafeInteger(row.pending.groupSequence) ||
+          row.pending.groupSequence < 1)) ||
       row.pending.id !== candidateId(key, row.activationId, row.episode) ||
       row.pending.episode !== row.episode ||
       row.fact.low !== true ||
@@ -211,4 +218,4 @@ async function journalRecipientStockPage(
   }
   return progress();
 }
-module.exports = { journalRecipientStockPage, candidateId };
+module.exports = { journalRecipientStockPage, candidateId, validateState };

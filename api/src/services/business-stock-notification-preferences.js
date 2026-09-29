@@ -128,6 +128,8 @@ async function saveStockPreference(db, context, branchId, input, { now = Date.no
         $unset: {
           leaseId: '',
           leaseUntil: '',
+          deliveryLeaseId: '',
+          deliveryLeaseUntil: '',
           ...(enabling ? { cursor: '', lastNotifiedAt: '' } : {}),
           ...(!input.enabled ? { nextScanAt: '' } : {}),
         },
