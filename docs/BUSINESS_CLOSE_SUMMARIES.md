@@ -195,3 +195,23 @@ twelve push integration tests and eighteen Business HTTP tests pass, including a
 queued daily retry stopped after a mode switch. The version-2 option is internal
 only: HTTP negotiation and mobile controls must wait for the close scheduler and
 delivery implementation. No user-facing close notification is enabled yet.
+## Automatic preparation checkpoint
+
+The notification worker now visits enabled version-2 close preferences without
+requiring an open phone. Each stage claims at most five preferences and reads at
+most ten indexed close metadata rows per preference, with 250 ms query limits,
+a three-second cooperative budget and a one-minute rescan delay. It considers
+only closes after activation, within the last 24 hours, and beyond the ten-minute
+grace. A persisted date/ID cursor pages equal-time sessions; completed sweeps
+restart so late-synced records behind a prior cursor are still found.
+
+Each candidate uses the strict session reader to request assigned-desktop work.
+No sale arrays are read. Current account/branch ACL is checked before discovery;
+a revision-bound lease is checked before each request. Preference changes clear
+scan leases/cursors, access loss disables the preference, and temporary failures
+retry without advancing past the failed candidate. The scan cursor is never a
+delivery checkpoint. Nine notification integration tests and seven scheduling/
+worker unit tests pass, including concurrent workers, pagination, delayed sync,
+grace/activation/branch exclusion, preference changes and database recovery.
+Inbox materialization, delivery revalidation, push and mobile negotiation remain
+unfinished; no public close-mode setting is enabled yet.

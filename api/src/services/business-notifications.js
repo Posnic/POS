@@ -123,7 +123,15 @@ async function savePreference(
           scheduledAt: planned.scheduledAt,
           updatedAt: new Date(now()),
         },
-        $unset: { leaseId: '', leaseUntil: '' },
+        $unset: {
+          leaseId: '',
+          leaseUntil: '',
+          closeLeaseId: '',
+          closeLeaseUntil: '',
+          closeCursor: '',
+          closeScanAt: '',
+          closeScanError: '',
+        },
       },
       { upsert: input.expectedRevision === 0, returnDocument: 'after' }
     );

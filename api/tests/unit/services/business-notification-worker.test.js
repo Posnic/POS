@@ -61,10 +61,13 @@ test('approval materialization precedes push and one channel failure cannot supp
     prepare: async () => {
       calls.push('prepare');
     },
+    prepareCloses: async () => {
+      calls.push('prepareCloses');
+    },
     push: async () => {
       calls.push('push');
     },
   });
   await worker.tick();
-  expect(calls).toEqual(['approvals', 'daily', 'prepare', 'push']);
+  expect(calls).toEqual(['approvals', 'daily', 'prepare', 'prepareCloses', 'push']);
 });

@@ -276,3 +276,148 @@ test('versioned close mode prevents legacy overwrite and daily delivery, with on
     { code: 'invalid_preference' }
   );
 });
+
+async function closeFixture() {
+  const f = await fixture();
+  const start = due - 3 * 3600000;
+  await service.savePreference(
+    db,
+    f.context,
+    f.branchId,
+    {
+      ...input(),
+      mode: 'register-close',
+      scheduleVersion: 2,
+    },
+    { now: () => start, scheduleVersion: 2 }
+  );
+  const close = async (offset = 0, fields = {}) => {
+    const row = {
+      _id: new ObjectId(),
+      license: new ObjectId(f.context.businessId),
+      branch_id: new ObjectId(f.branchId),
+      register_id: new ObjectId(),
+      register_name: 'Counter',
+      register_status: 'Closed',
+      register_opendate: new Date(start - 3600000),
+      register_closedate: new Date(due - 3600000 + offset),
+      ...fields,
+    };
+    await db.collection('cashregister').insertOne(row);
+    return row;
+  };
+  return { ...f, close };
+}
+const { prepareRegisterCloses } = require('../src/services/business-register-notifications');
+
+test('automatic close preparation is bounded, catches delayed sync and never reads sales', async () => {
+  const f = await closeFixture();
+  for (let i = 0; i < 12; i++) await f.close();
+  await f.close(0, { register_status: 'Opened' });
+  await f.close(0, { register_closedate: new Date(due - 5 * 60000) });
+  await f.close(0, { register_closedate: new Date(due - 4 * 3600000) });
+  await f.close(0, { branch_id: new ObjectId() });
+  const guarded = {
+    collection: (name) => {
+      assert.notEqual(name, 'sales');
+      return db.collection(name);
+    },
+  };
+  const first = await Promise.all([
+    prepareRegisterCloses(guarded, { now: () => due }),
+    prepareRegisterCloses(guarded, { now: () => due }),
+  ]);
+  assert.equal(
+    first.reduce((n, r) => n + r.requested, 0),
+    10
+  );
+  assert.equal(await db.collection('business_reporting_requests').countDocuments(), 10);
+  await prepareRegisterCloses(guarded, { now: () => due + 60000 });
+  assert.equal(await db.collection('business_reporting_requests').countDocuments(), 12);
+  // An old close arriving behind the previous cursor is found by the next sweep.
+  const late = await f.close(-60000);
+  await prepareRegisterCloses(guarded, { now: () => due + 120000 });
+  assert.ok(
+    await db.collection('business_reporting_requests').findOne({ sessionId: String(late._id) })
+  );
+  assert.equal(await db.collection('business_inbox').countDocuments(), 0);
+});
+
+test('close preparation revokes lost access and a changed preference stops the claimed page', async () => {
+  const f = await closeFixture();
+  await f.close();
+  await f.close();
+  let calls = 0;
+  await prepareRegisterCloses(db, {
+    now: () => due,
+    readSummary: async () => {
+      calls++;
+      await service.savePreference(
+        db,
+        f.context,
+        f.branchId,
+        {
+          ...input(),
+          expectedRevision: 1,
+          mode: 'daily',
+          scheduleVersion: 2,
+        },
+        { now: () => due, scheduleVersion: 2 }
+      );
+    },
+  });
+  assert.equal(calls, 1);
+  const preference = await db
+    .collection('business_notification_preferences')
+    .findOne({ accountId: f.context.accountId });
+  assert.equal(preference.closeCursor, undefined);
+  assert.equal(preference.mode, 'daily');
+  await service.savePreference(
+    db,
+    f.context,
+    f.branchId,
+    {
+      ...input(),
+      expectedRevision: 2,
+      mode: 'register-close',
+      scheduleVersion: 2,
+    },
+    { now: () => due, scheduleVersion: 2 }
+  );
+  await db.collection('users').updateOne({ _id: f.user._id }, { $set: { branch_access: [] } });
+  await prepareRegisterCloses(db, {
+    now: () => due + 60000,
+    readSummary: () => assert.fail('revoked access'),
+  });
+  assert.equal(
+    (
+      await db
+        .collection('business_notification_preferences')
+        .findOne({ accountId: f.context.accountId })
+    ).enabled,
+    false
+  );
+});
+
+test('close preparation retries database failures without advancing past the failed session', async () => {
+  const f = await closeFixture();
+  await f.close();
+  await prepareRegisterCloses(db, {
+    now: () => due,
+    readSummary: () => {
+      throw new Error('temporary database failure');
+    },
+  });
+  let pref = await db
+    .collection('business_notification_preferences')
+    .findOne({ accountId: f.context.accountId });
+  assert.equal(pref.enabled, true);
+  assert.equal(pref.closeCursor, undefined);
+  assert.equal(pref.closeScanError, 'preparation_unavailable');
+  await prepareRegisterCloses(db, { now: () => due + 60000 });
+  assert.equal(await db.collection('business_reporting_requests').countDocuments(), 1);
+  pref = await db
+    .collection('business_notification_preferences')
+    .findOne({ accountId: f.context.accountId });
+  assert.equal(pref.closeScanError, undefined);
+});

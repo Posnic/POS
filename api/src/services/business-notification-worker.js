@@ -1,5 +1,6 @@
 'use strict';
 const { drainDue, prepareUpcoming } = require('./business-notifications');
+const { prepareRegisterCloses } = require('./business-register-notifications');
 const { drainPush } = require('./business-push');
 const { drainApprovalAlerts } = require('./business-approval-notifications');
 
@@ -10,6 +11,7 @@ function createNotificationWorker({
   run = (_tenant, work) => work(),
   drain = drainDue,
   prepare = prepareUpcoming,
+  prepareCloses = prepareRegisterCloses,
   push = drainPush,
   approvals = drainApprovalAlerts,
 }) {
@@ -37,7 +39,7 @@ function createNotificationWorker({
           cursor = (cursor + 1) % rows.length;
           try {
             await run(tenant, async () => {
-              for (const stage of [approvals, drain, prepare, push]) {
+              for (const stage of [approvals, drain, prepare, prepareCloses, push]) {
                 if (stopped) break;
                 try {
                   await stage(tenant.db, { limit: 5 });
