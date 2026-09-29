@@ -25,8 +25,127 @@ const { createBusinessReporting } = require(
 );
 const { createDesktopReportingWorker } = require('../src/services/business-reporting-worker');
 const { readBusinessItems } = require('../src/services/business-reports');
+const { registerCloseFact } = require('../src/services/business-register-close');
 let mongo, client, syncClient, server, source, syncSource, destination, cloud, gatewayUrl;
 const branchId = new ObjectId();
+
+test('actual register preparation passes negotiated agent/Gateway validation and discards a reopened Cloud source', async () => {
+  const priorDesktop = process.env.POSNIC_DESKTOP;
+  process.env.POSNIC_DESKTOP = '1';
+  const localDb = client.db('register_source'),
+    remoteDb = client.db('register_cloud');
+  const branch = {
+    _id: new ObjectId(),
+    license: new ObjectId(),
+    currency: 'INR',
+    time_zone: 'Asia/Kolkata',
+  };
+  let at = Date.now();
+  const now = () => at;
+  const sourceClose = {
+    _id: new ObjectId(),
+    license: branch.license,
+    branch_id: branch._id,
+    register_id: new ObjectId(),
+    register_name: 'Counter 1',
+    register_status: 'Closed',
+    register_opendate: new Date(at - 3 * 3600000),
+    register_closedate: new Date(at - 3600000),
+  };
+  for (const database of [localDb, remoteDb]) {
+    await database.collection('branches').insertOne(branch);
+    await database.collection('cashregister').insertOne(sourceClose);
+  }
+  await localDb.collection('sales').insertOne({
+    license: branch.license,
+    branch_id: branch._id,
+    cashregister_id: String(sourceClose._id),
+    sale_process: 'Add',
+    payment_status: 'Paid',
+    sales_total: 125,
+    date: new Date(at - 2 * 3600000),
+    updated_date: new Date(at - 2 * 3600000),
+  });
+  const close = registerCloseFact(
+    sourceClose,
+    { id: String(branch._id), license: String(branch.license), timezone: branch.time_zone },
+    { now }
+  );
+  const key = String(branch._id) + ':session:' + sourceClose._id;
+  await remoteDb.collection('business_reporting_requests').insertOne({
+    _id: key,
+    branchId: String(branch._id),
+    license: branch.license,
+    summaryKind: 'register-session',
+    registerSummaryVersion: 1,
+    sessionId: close.sessionId,
+    closeRevision: close.closeRevision,
+    businessDate: close.businessDate,
+    requestedAt: new Date(at),
+    expiresAt: new Date(at + 1800000),
+  });
+  const service = createBusinessReporting(
+    {
+      collection(name) {
+        assert.notEqual(name, 'sales', 'Cloud publication must not scan invoices');
+        return syncClient.db(remoteDb.databaseName).collection(name);
+      },
+    },
+    { now }
+  );
+  const device = { deviceId: 'register-desktop', branches: [String(branch._id)] };
+  let lose = true;
+  const publisher = createBusinessPublisher({
+    db: syncClient.db(localDb.databaseName),
+    now,
+    send: async (path, body) => {
+      if (path.endsWith('/work')) return service.work(device, body);
+      if (path.endsWith('/claim')) return service.claim(device, body.branchId);
+      const accepted = await service.publish(device, body);
+      if (lose) {
+        lose = false;
+        throw new Error('lost register acknowledgement');
+      }
+      return accepted;
+    },
+  });
+  const worker = createDesktopReportingWorker(localDb, { now });
+  try {
+    await worker.tick();
+    await publisher.tick();
+    await worker.tick();
+    await assert.rejects(publisher.tick(), /lost register acknowledgement/);
+    await publisher.tick();
+    const first = await remoteDb.collection('business_prepared_summaries').findOne({ _id: key });
+    assert.equal(first.summary.close.closeRevision, close.closeRevision);
+    assert.equal(first.summary.salesAfterReturnsMinor, 12500);
+    assert.equal(first.sequence, 1);
+    assert.equal(first.summary.sourceComplete, false);
+    at += 6 * 60000;
+    await remoteDb
+      .collection('cashregister')
+      .updateOne({ _id: sourceClose._id }, { $set: { register_status: 'Opened' } });
+    await remoteDb
+      .collection('business_reporting_requests')
+      .updateOne({ _id: key }, { $set: { requestedAt: new Date(at) } });
+    await worker.tick();
+    await publisher.tick();
+    await worker.tick();
+    await publisher.tick();
+    const dropped = await localDb.collection('business_reporting_local').findOne({ _id: key });
+    assert.equal(dropped.error, 'close_changed');
+    assert.equal(dropped.pendingSummary, undefined);
+    assert.equal(dropped.publication, undefined);
+    assert.equal(
+      (await remoteDb.collection('business_prepared_summaries').findOne({ _id: key })).sequence,
+      1
+    );
+  } finally {
+    worker.stop();
+    if (priorDesktop === undefined) delete process.env.POSNIC_DESKTOP;
+    else process.env.POSNIC_DESKTOP = priorDesktop;
+  }
+});
 before(async () => {
   mongo = await MongoMemoryServer.create({
     binary: process.env.MONGOMS_SYSTEM_BINARY
