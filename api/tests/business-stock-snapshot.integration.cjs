@@ -1435,7 +1435,9 @@ test('group materialization requires a complete scan, live permission and a matc
   };
   assert.equal((await materializeStock(f, database)).status, 'disabled');
   assert.equal((await f.db.collection('business_inbox').findOne({})).materializationPending, true);
-  assert.equal((await materializeStock(f)).status, 'disabled');
+  assert.equal((await materializeStock(f)).status, 'changed');
+  assert.equal((await scanPreference(f)).stockDelivery, undefined);
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 0);
   assert.ok((await recipientRows(f)).some((row) => row.pending));
 });
 
@@ -2668,4 +2670,85 @@ test('re-enabling stock alerts invalidates a disabled-retention cleanup before d
   assert.deepEqual(result, { status: 'changed', deleted: 0 });
   assert.equal((await scanPreference(f)).enabled, true);
   assert.equal((await recipientRows(f)).length, 103);
+});
+
+async function interruptStockMaterialization(f, committed) {
+  await recipientWorker(f).tick();
+  let interrupted = false;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (committed && name === 'business_stock_recipient_state' && property === 'updateMany')
+            return async (...args) => {
+              if (!interrupted && args[1].$unset?.pending === '') {
+                interrupted = true;
+                throw new Error('interrupted stock group');
+              }
+              return target.updateMany(...args);
+            };
+          if (!committed && name === 'business_inbox' && property === 'updateOne')
+            return async (...args) => {
+              const result = await target.updateOne(...args);
+              if (!interrupted && args[1].$setOnInsert) {
+                interrupted = true;
+                throw new Error('interrupted stock group');
+              }
+              return result;
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  await assert.rejects(materializeStock(f, database), /interrupted stock group/);
+  return (await scanPreference(f)).stockDelivery;
+}
+
+test('expired committed groups recover with or without their TTL-removed Inbox entry and never re-alert', async () => {
+  for (const removeInbox of [false, true]) {
+    const f = await recipientFixture();
+    const group = await interruptStockMaterialization(f, true);
+    assert.ok(group.committedAt);
+    if (removeInbox) await f.db.collection('business_inbox').deleteMany({});
+    f.advance(30 * 86400000);
+    assert.deepEqual(await materializeStock(f), { status: 'expired' });
+    assert.equal((await scanPreference(f)).stockDelivery, undefined);
+    assert.equal(await f.db.collection('business_inbox').countDocuments({}), 0);
+    assert.ok(
+      (await recipientRows(f)).every((row) => !row.pending && row.lastDeliveredGroup === group.id)
+    );
+    for (const page of await f.pages()) await f.send(page);
+    await recipientWorker(f).tick();
+    assert.equal((await materializeStock(f)).status, 'empty');
+  }
+});
+
+test('a missing unexpired committed Inbox entry remains an error instead of silently losing delivery evidence', async () => {
+  const f = await recipientFixture();
+  const group = await interruptStockMaterialization(f, true);
+  await f.db.collection('business_inbox').deleteMany({});
+  await assert.rejects(materializeStock(f), /invalid_stock_delivery_record/);
+  assert.equal((await scanPreference(f)).stockDelivery.id, group.id);
+  assert.ok((await recipientRows(f)).some((row) => row.pending?.groupId === group.id));
+});
+
+test('disabled and stale uncommitted stock reservations are cancelled without erasing low episodes', async () => {
+  for (const disabled of [false, true]) {
+    const f = await recipientFixture();
+    const group = await interruptStockMaterialization(f, false);
+    assert.equal(group.committedAt, undefined);
+    if (disabled) await disableStock(f);
+    else f.advance(5 * 60000);
+    const result = disabled
+      ? await notificationWorker(f).tick()
+      : { delivery: (await materializeStock(f)).status };
+    assert.equal(result.delivery, 'changed');
+    assert.equal((await scanPreference(f)).stockDelivery, undefined);
+    assert.equal(await f.db.collection('business_inbox').countDocuments({}), 0);
+    assert.ok((await recipientRows(f)).every((row) => row.pending && !row.pending.groupId));
+  }
 });

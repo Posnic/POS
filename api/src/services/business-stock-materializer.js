@@ -3,7 +3,8 @@ const crypto = require('node:crypto');
 const { ObjectId } = require('mongodb');
 const { recipientState, readRecipientStockPage } = require('./business-stock-recipient');
 const { validateState } = require('./business-stock-recipient-journal');
-const { digestOf } = require('./business-stock-snapshot-contract');
+const { digestOf, FRESHNESS_MS } = require('./business-stock-snapshot-contract');
+const INBOX_RETENTION_MS = 30 * 86400000;
 const fail = (code) => {
   throw Object.assign(new Error(code), { code });
 };
@@ -58,7 +59,35 @@ async function materializeStockAlert(db, target, { now = Date.now, signal } = {}
     'pending.groupId': group.id,
   });
   const eventKey = () => pref._id + ':stock:' + group.id;
+  async function acknowledgeGroup() {
+    // Revision increments make concurrent observation writers retry instead of
+    // restoring a pending identity that was just acknowledged by this group.
+    await states.updateMany(
+      groupRows(),
+      { $set: { lastDeliveredGroup: group.id }, $unset: { pending: '' }, $inc: { revision: 1 } },
+      { maxTimeMS: 1000 }
+    );
+    await preferences.updateOne(
+      { ...liveLease(), 'stockDelivery.id': group.id },
+      { $unset: { stockDelivery: '', deliveryError: '' } },
+      { maxTimeMS: 500 }
+    );
+  }
   async function finish() {
+    if (now() - group.createdAt.getTime() >= INBOX_RETENTION_MS) {
+      await inbox.deleteOne(
+        {
+          eventKey: eventKey(),
+          ...scope,
+          activationId: group.activationId,
+          createdAt: group.createdAt,
+        },
+        { maxTimeMS: 500 }
+      );
+      await acknowledgeGroup();
+      return { status: 'expired' };
+    }
+
     const event = await inbox.findOne({ eventKey: eventKey(), ...scope }, { maxTimeMS: 500 });
     if (
       !event ||
@@ -77,18 +106,7 @@ async function materializeStockAlert(db, target, { now = Date.now, signal } = {}
       { $set: { materializationPending: false, pushPending: true } },
       { maxTimeMS: 500 }
     );
-    // Revision increments make concurrent observation writers retry instead of
-    // restoring a pending identity that was just acknowledged by this group.
-    await states.updateMany(
-      groupRows(),
-      { $set: { lastDeliveredGroup: group.id }, $unset: { pending: '' }, $inc: { revision: 1 } },
-      { maxTimeMS: 1000 }
-    );
-    await preferences.updateOne(
-      { ...liveLease(), 'stockDelivery.id': group.id },
-      { $unset: { stockDelivery: '', deliveryError: '' } },
-      { maxTimeMS: 500 }
-    );
+    await acknowledgeGroup();
     return {
       status: 'materialized',
       eventId: String(event._id),
@@ -137,7 +155,9 @@ async function materializeStockAlert(db, target, { now = Date.now, signal } = {}
         group.createdAt.getTime() > now() ||
         (group.committedAt &&
           (!(group.committedAt instanceof Date) ||
-            !Number.isFinite(group.committedAt.getTime()))) ||
+            !Number.isFinite(group.committedAt.getTime()) ||
+            group.committedAt.getTime() < group.createdAt.getTime() ||
+            group.committedAt.getTime() > now())) ||
         typeof group.id !== 'string' ||
         !/^[a-f\d-]{36}$/.test(group.id) ||
         typeof group.activationId !== 'string' ||
@@ -149,9 +169,13 @@ async function materializeStockAlert(db, target, { now = Date.now, signal } = {}
     // Recovery only acknowledges an already committed event; it does not create
     // another notification or consume the new activation's cadence.
     if (group?.committedAt) return await finish();
-    if (group?.cancelling) return await cancel();
+    if (group?.cancelling || (group && now() - group.createdAt.getTime() >= FRESHNESS_MS))
+      return await cancel();
     const eligibility = await recipientState(db, target, now);
-    if (eligibility.status !== 'eligible') return eligibility;
+    if (eligibility.status !== 'eligible') {
+      if (group && ['disabled', 'denied'].includes(eligibility.status)) return await cancel();
+      return eligibility;
+    }
     if (group && group.activationId !== eligibility.preference.activationId) return await cancel();
     const frame = await readRecipientStockPage(db, target, { now });
     if (frame.status !== 'ready') return frame;
@@ -270,7 +294,7 @@ async function materializeStockAlert(db, target, { now = Date.now, signal } = {}
           stockDigest,
           summary: null,
           createdAt: group.createdAt,
-          expiresAt: new Date(group.createdAt.getTime() + 30 * 86400000),
+          expiresAt: new Date(group.createdAt.getTime() + INBOX_RETENTION_MS),
           channel: 'inApp',
           pushPending: false,
           materializationPending: true,

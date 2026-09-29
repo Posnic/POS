@@ -688,3 +688,30 @@ implementing this change; verification uses isolated test databases.
 
 Validation: 91 snapshot/pipeline and preference integration tests pass, including
 three new retention cases. ESLint, formatting and attribution checks pass.
+
+## Abandoned reservation recovery
+
+Committed groups older than the Inbox's thirty-day retention boundary now finish
+journal acknowledgement and release their reservation even if MongoDB has already
+removed the Inbox entry. A matching expired entry still present is removed. This
+path never requeues push or creates another Inbox event. A missing entry before
+expiry remains an integrity error and retains the recovery evidence.
+
+Uncommitted reservations are cancelled when their recipient is disabled/denied or
+when the reservation reaches the five-minute snapshot freshness bound. Cancellation
+releases only that group's claims and removes its uncommitted Inbox entry; pending
+low episodes remain available to a later authorized observation. The scheduler now
+visits disabled preferences with any reserved group, allowing both committed
+cleanup and uncommitted cancellation. It does not create new disabled-recipient
+notifications. Commit times must be valid, no earlier than group creation and no
+later than the current clock.
+
+This closes the normal abandoned-reservation retention path. Corrupt reservation
+records still fail closed rather than being silently erased. Orphaned preferences,
+account erasure and stale pending-candidate policy remain separate work.
+
+Validation: the combined snapshot/preferences/push run passed 107 of 108 cases;
+the sole failure expected the former disabled-reservation behavior. That regression
+now asserts cancellation, reservation/Inbox removal and retained pending episodes,
+and passes on focused rerun. The three new recovery cases and six runtime unit
+tests pass. ESLint, formatting and attribution checks pass.

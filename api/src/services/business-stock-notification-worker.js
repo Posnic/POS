@@ -51,7 +51,7 @@ function createStockNotificationWorker(
         job = await preferences.findOneAndUpdate(
           {
             $and: [
-              { $or: [{ enabled: true }, { 'stockDelivery.committedAt': { $exists: true } }] },
+              { $or: [{ enabled: true }, { stockDelivery: { $exists: true } }] },
               {
                 $or: [
                   { nextMaterializeAt: { $exists: false } },
