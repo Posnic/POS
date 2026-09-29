@@ -1,7 +1,8 @@
 # Business low-stock reporting
 
-Status: source audit and strict stock-fact validation only. There is no mobile
-low-stock endpoint, prepared snapshot, schedule or alert enabled yet.
+Status: source audit, strict stock facts and a desktop preparation primitive.
+There is no mobile low-stock endpoint, scheduled preparation, publisher transport
+or alert enabled yet.
 
 ## Source findings
 
@@ -64,12 +65,33 @@ explicit stock-contract migration; these two fields must not be merged by guess.
 Variant families use separate item rows with `variant_group_id`, `variant_axis`
 and `variant_value`; the dimension-definition model is not their stock ledger.
 
+## Bounded desktop observation
+
+`prepareDesktopStockSummary` refuses non-desktop and multi-tenant runtimes before
+I/O. It reads the branch threshold from storage, then scans only that tenant's
+branch-visible items with a narrow projection, 100-row batches, a 10,000-document
+limit, a 15-second elapsed budget, 1.5-second cursor budget and cooperative yields.
+Cancellation and budget exhaustion produce no snapshot. A changed/missing branch
+setting at the final recheck also discards the observation.
+
+The observation includes scan/excluded/verified/unavailable counts and fixed
+reason codes, plus up to 100 low-stock rows in stable item-ID order, an exact
+low count among verified rows, and explicit list truncation. A zero low count
+with unavailable rows is not an all-clear result. Even an empty or fully parsed
+scan always has `sourceComplete: false`: mutable item reads are not a consistent
+point-in-time stock ledger, and sync convergence has not been established.
+`observedFrom` and `preparedAt` describe the collection interval, not the last
+stock-change time. No database writes or Cloud scan are introduced.
+
+Five additional database tests cover mixed coverage, foreign scope, truncation,
+10,001-row refusal, Cloud/cancellation/time-budget refusal, empty observations,
+stored branch thresholds and settings changes during preparation.
+
 ## Remaining implementation and verification
 
 Trace actual sale, receiving, adjustment, return and variant stock writes through
-sync before defining completeness. Prepare bounded desktop snapshots with explicit
-unavailable/excluded coverage and publisher fencing; do not calculate stock scans
-on Cloud. Add a negotiated `stock.read` endpoint and accessible mobile list with
+sync before defining completeness. Connect the bounded desktop observation to the assigned publisher with
+versioned validation and fencing; do not calculate stock scans on Cloud. Add a negotiated `stock.read` endpoint and accessible mobile list with
 units, threshold origin and freshness. Notification settings belong on the stock
 notification page and need threshold-crossing/recovery identity, quiet hours,
 recipient ACL rechecks and durable generic push retries. Test offline/reconnect,

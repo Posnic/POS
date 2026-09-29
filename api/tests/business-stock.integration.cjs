@@ -212,3 +212,150 @@ test('variant family members retain their own stock and reorder state', async ()
   assert.equal(sibling.availableMilli, 10000);
   assert.equal(sibling.low, false);
 });
+
+const {
+  prepareDesktopStockSummary,
+  MAX_DOCUMENTS,
+} = require('../src/services/business-stock-summary');
+async function desktopStock(f, options) {
+  const previous = process.env.POSNIC_DESKTOP;
+  process.env.POSNIC_DESKTOP = '1';
+  try {
+    return await prepareDesktopStockSummary(db, f.branch, options);
+  } finally {
+    if (previous === undefined) delete process.env.POSNIC_DESKTOP;
+    else process.env.POSNIC_DESKTOP = previous;
+  }
+}
+test('desktop stock preparation keeps unknown coverage separate from verified low stock and excludes foreign scope', async () => {
+  const f = await purchaseFixture();
+  await db.collection('items').insertMany([
+    { ...f.row, _id: new ObjectId(), available_quantity: 2 },
+    { ...f.row, _id: new ObjectId(), available_quantity: 'bad' },
+    { ...f.row, _id: new ObjectId(), track_inventory: false },
+    { ...f.row, _id: new ObjectId(), branch_access: [{ branch_id: new ObjectId() }] },
+    { ...f.row, _id: new ObjectId(), license: new ObjectId(), available_quantity: -100 },
+    {
+      ...f.row,
+      _id: new ObjectId(),
+      branch_id: new ObjectId(),
+      branch_access: [],
+      available_quantity: -100,
+    },
+  ]);
+  const result = await desktopStock(f);
+  assert.equal(result.sourceComplete, false);
+  assert.equal(result.lowItemCount, 1);
+  assert.equal(result.lowItems.length, 1);
+  assert.equal(result.listTruncated, false);
+  assert.deepEqual(result.coverage, {
+    scannedItems: 5,
+    excludedItems: 1,
+    verifiedItems: 2,
+    unavailableItems: 2,
+    reasons: { invalid_stock_quantity: 1, ambiguous_branch_stock: 1 },
+  });
+  assert.ok(Date.parse(result.preparedAt) >= Date.parse(result.observedFrom));
+});
+test('desktop stock preparation caps the list without misrepresenting the low count and refuses an over-budget scan', async () => {
+  const f = await purchaseFixture();
+  const rows = Array.from({ length: 105 }, () => ({
+    ...f.row,
+    _id: new ObjectId(),
+    available_quantity: 0,
+  }));
+  await db.collection('items').insertMany(rows);
+  const result = await desktopStock(f);
+  assert.equal(result.lowItemCount, 105);
+  assert.equal(result.lowItems.length, 100);
+  assert.equal(result.listTruncated, true);
+  assert.equal(result.sourceComplete, false);
+  await db.collection('items').insertMany(
+    Array.from({ length: MAX_DOCUMENTS - 105 }, () => ({
+      ...f.row,
+      _id: new ObjectId(),
+      track_inventory: false,
+    }))
+  );
+  await assert.rejects(desktopStock(f), { code: 'preparation_budget_exceeded' });
+});
+test('desktop stock preparation refuses Cloud execution before I/O and supports cancellation and elapsed budget', async () => {
+  const f = await purchaseFixture();
+  const previous = process.env.POSNIC_DESKTOP;
+  delete process.env.POSNIC_DESKTOP;
+  try {
+    await assert.rejects(
+      prepareDesktopStockSummary(
+        {
+          collection: () => {
+            throw new Error('I/O');
+          },
+        },
+        f.branch
+      ),
+      { code: 'desktop_required' }
+    );
+  } finally {
+    if (previous !== undefined) process.env.POSNIC_DESKTOP = previous;
+  }
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(desktopStock(f, { signal: controller.signal }), { code: 'cancelled' });
+  let time = 0;
+  await assert.rejects(
+    desktopStock(f, {
+      now: () => {
+        time += 16000;
+        return time;
+      },
+    }),
+    { code: 'preparation_budget_exceeded' }
+  );
+});
+
+test('empty stock observations never claim completeness and configured branch thresholds come from storage', async () => {
+  const f = await purchaseFixture();
+  await db
+    .collection('items')
+    .updateOne(
+      { _id: f.row._id },
+      { $unset: { reorder_point: '' }, $set: { available_quantity: 3 } }
+    );
+  f.branch.notificationRange = '99';
+  let result = await desktopStock(f);
+  assert.equal(result.lowItemCount, 0);
+  assert.equal(result.coverage.verifiedItems, 1);
+  await db.collection('items').deleteOne({ _id: f.row._id });
+  result = await desktopStock(f);
+  assert.equal(result.coverage.scannedItems, 0);
+  assert.equal(result.lowItemCount, 0);
+  assert.equal(result.sourceComplete, false);
+});
+test('changing the branch reorder setting during preparation prevents publishing a mixed observation', async () => {
+  const f = await purchaseFixture();
+  let reads = 0;
+  const interceptedDb = {
+    collection(name) {
+      if (name !== 'branches') return db.collection(name);
+      return {
+        async findOne(...args) {
+          if (++reads === 2)
+            await db
+              .collection(name)
+              .updateOne({ _id: f.row.branch_id }, { $set: { notification_range: '99' } });
+          return db.collection(name).findOne(...args);
+        },
+      };
+    },
+  };
+  const previous = process.env.POSNIC_DESKTOP;
+  process.env.POSNIC_DESKTOP = '1';
+  try {
+    await assert.rejects(prepareDesktopStockSummary(interceptedDb, f.branch), {
+      code: 'stock_settings_changed',
+    });
+  } finally {
+    if (previous === undefined) delete process.env.POSNIC_DESKTOP;
+    else process.env.POSNIC_DESKTOP = previous;
+  }
+});
