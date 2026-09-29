@@ -1,6 +1,6 @@
 # Business discount decision ledger
 
-Status: authenticated mobile review API, disabled unless `POSNIC_BUSINESS_DECISIONS=1`. The till/controller and Cloud device transport are still pending, so this is not enabled for live sales. Existing local manager PIN approval remains unchanged.
+Status: disabled unless `POSNIC_BUSINESS_DECISIONS=1`. The ledger, authenticated mobile review, till/controller and Cloud/Community device transport are implemented; see [current device integration evidence](BUSINESS_DEVICE_DECISIONS.md). This document also preserves earlier design-stage integration notes below. Those notes are not the current completion checklist. Deployed checkout qualification and the [unresolved-execution operator procedure](BUSINESS_APPROVAL_OPERATIONS.md) remain release gates. Existing local manager PIN approval remains unchanged.
 
 ## Authenticated review
 

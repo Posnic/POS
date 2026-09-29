@@ -112,3 +112,10 @@ The companion Gateway contract suite is `tests/business-decisions.integration.cj
 with `POSNIC_BUSINESS_TEST_API_ROOT` pointing to this checkout's `api` directory.
 It exercises real Gateway HTTP handling and the tenant service through a
 controlled HTTPS adapter; it is not physical-device or deployed-network evidence.
+
+## Operator procedure
+
+See [Unresolved Business approval](BUSINESS_APPROVAL_OPERATIONS.md) for cashier
+actions, receipt-based investigation and the required pilot rehearsal. The
+procedure is documented but not deployment-qualified. Durable support tracking
+and resolution of a consumed execution without a verified receipt remain open.
