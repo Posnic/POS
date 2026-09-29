@@ -70,7 +70,7 @@ router.get('/discovery', (_req, res) =>
     reporting: 'bounded-summary-v2',
     ...(_req.query.items === '1' ? { itemReporting: 'bounded-items-v1' } : {}),
     ...(_req.query.registerSessions === '1'
-      ? { registerReporting: 'bounded-register-session-v1' }
+      ? { registerReporting: 'bounded-register-session-v1', registerInbox: 'inbox-register-v1' }
       : {}),
     ...(_req.query.approvals === '1' && process.env.POSNIC_BUSINESS_DECISIONS === '1'
       ? { approvalAlerts: 'inbox-approval-v1' }
@@ -320,7 +320,11 @@ router.get(
       await require('../services/business-notifications').listInbox(
         req.db,
         await req.businessAccess.contextFor(req.businessIdentity.user),
-        { before: req.query.before, includeApprovals: req.query.approvals === '1' }
+        {
+          before: req.query.before,
+          includeApprovals: req.query.approvals === '1',
+          includeRegisters: req.query.registerSessions === '1',
+        }
       )
     )
   )

@@ -2069,7 +2069,7 @@
     },
     "/business/v1/inbox": {
       "get": {
-        "summary": "approvals",
+        "summary": "registerSessions",
         "operationId": "get_business_v1_inbox",
         "tags": [
           "Business access"

@@ -223,4 +223,53 @@ async function materializeClose(db, job, lease, sessionId, summary, { now = Date
     { upsert: true }
   );
 }
-module.exports = { prepareRegisterCloses };
+async function visibleRegisterEvents(db, context, rows, now = Date.now) {
+  const visible = new Map();
+  for (const row of rows) {
+    if (!['register_summary', 'register_unavailable'].includes(row.kind)) continue;
+    if (
+      row.accountId !== context.accountId ||
+      String(row.license) !== context.businessId ||
+      !(row.expiresAt instanceof Date) ||
+      row.expiresAt.getTime() <= now()
+    )
+      continue;
+    try {
+      const close = await readRegisterClose(db, context, row.branchId, row.sessionId, { now });
+      if (
+        !close ||
+        close.closeRevision !== row.closeRevision ||
+        !row.close ||
+        Object.keys(close).some((k) => close[k] !== row.close[k])
+      )
+        continue;
+      let summary = null;
+      if (row.kind === 'register_summary') {
+        try {
+          summary = await readRegisterSummary(
+            db,
+            context,
+            { branchId: row.branchId, sessionId: row.sessionId },
+            { now }
+          );
+        } catch (error) {
+          if (!['summary_unavailable', 'date_out_of_range'].includes(error.code)) throw error;
+        }
+        if (summary && Object.keys(close).some((k) => summary.close[k] !== close[k])) continue;
+      }
+      visible.set(String(row._id), {
+        close,
+        summary,
+        kind: summary ? 'register_summary' : 'register_unavailable',
+      });
+    } catch (error) {
+      if (
+        ![401, 403, 404].includes(error.status) &&
+        !['close_unavailable', 'close_grace_pending'].includes(error.code)
+      )
+        throw error;
+    }
+  }
+  return visible;
+}
+module.exports = { prepareRegisterCloses, visibleRegisterEvents };

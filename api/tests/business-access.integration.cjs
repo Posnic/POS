@@ -1003,6 +1003,31 @@ test('register-summary HTTP reads negotiate separately and enforce current sourc
     await fetch(base + '/api/business/v1/discovery?registerSessions=1', { headers })
   ).json();
   assert.equal(discovery.registerReporting, 'bounded-register-session-v1');
+  assert.equal(discovery.registerInbox, 'inbox-register-v1');
+  const eventId = new ObjectId();
+  await db.collection('business_inbox').insertOne({
+    _id: eventId,
+    eventKey: opaque(),
+    accountId: String(f.user._id),
+    license: f.branch.license,
+    branchId: id,
+    kind: 'register_summary',
+    sessionId: String(close._id),
+    closeRevision: summary.close.closeRevision,
+    close: summary.close,
+    summary: { salesAfterReturnsMinor: 999999 },
+    businessDate: summary.close.businessDate,
+    createdAt: new Date(),
+    expiresAt: new Date(Date.now() + 86400000),
+  });
+  const inboxUrl = base + '/api/business/v1/inbox';
+  assert.equal((await (await fetch(inboxUrl, { headers })).json()).entries.length, 0);
+  const inboxResponse = await fetch(inboxUrl + '?registerSessions=1', { headers });
+  assert.match(inboxResponse.headers.get('cache-control'), /no-store/);
+  const inbox = await inboxResponse.json();
+  assert.equal(inbox.entries[0].summary.salesAfterReturnsMinor, 5000);
+  assert.equal(inbox.entries[0].sessionId, String(close._id));
+
   assert.equal(
     Object.hasOwn(
       await (await fetch(base + '/api/business/v1/discovery', { headers })).json(),

@@ -554,4 +554,46 @@ test('an actual desktop-prepared session becomes one incomplete-source Inbox sum
   assert.equal(events[0].summary.salesAfterReturnsMinor, 12500);
   assert.equal(events[0].summary.freshness.complete, false);
   assert.equal(events[0].summary.close.closeRevision, events[0].closeRevision);
+  const options = { now: () => due + 60000, includeRegisters: true };
+  assert.equal((await readInbox(db, f.context)).entries.length, 0);
+  const visible = await service.listInbox(db, f.context, options);
+  assert.equal(visible.entries[0].summary.salesAfterReturnsMinor, 12500);
+  assert.equal(visible.entries[0].close.sessionId, String(row._id));
+  assert.equal(
+    (await service.listInbox(db, { ...f.context, capabilities: ['overview.read'] }, options))
+      .entries.length,
+    0
+  );
+  // Stored financial data must not outlive the assigned publisher on a fresh read.
+  await db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: f.branchId }, { $set: { epoch: 2 } });
+  const invalidated = await service.listInbox(db, f.context, options);
+  assert.equal(invalidated.entries[0].kind, 'register_unavailable');
+  assert.equal(invalidated.entries[0].summary, null);
+  await db
+    .collection('cashregister')
+    .updateOne({ _id: row._id }, { $set: { register_status: 'Opened' } });
+  assert.equal((await service.listInbox(db, f.context, options)).entries.length, 0);
+  await assert.rejects(service.markRead(db, f.context, String(events[0]._id)), {
+    code: 'entry_unavailable',
+  });
+});
+
+test('negotiated close Inbox uses bounded pages and keeps a cursor through hidden events', async () => {
+  const f = await closeFixture();
+  for (let i = 0; i < 12; i++) await f.close();
+  await prepareRegisterCloses(db, { now: () => due });
+  await prepareRegisterCloses(db, { now: () => due + 60000 });
+  const options = { now: () => due + 60000, includeRegisters: true };
+  const page = await service.listInbox(db, f.context, options);
+  assert.equal(page.entries.length, 10);
+  assert.ok(page.next);
+  const next = await service.listInbox(db, f.context, { ...options, before: page.next });
+  assert.equal(next.entries.length, 2);
+  assert.equal(next.next, null);
+  await db.collection('cashregister').updateMany({}, { $set: { register_status: 'Opened' } });
+  const hidden = await service.listInbox(db, f.context, options);
+  assert.equal(hidden.entries.length, 0);
+  assert.equal(hidden.next, page.next);
 });

@@ -233,3 +233,19 @@ quiet hours and checkpoint recovery. Source completeness remains false. These ne
 kinds are still hidden from legacy Inbox readers and do not enqueue push yet;
 versioned reads, delivery-time source validation, close push support and mobile
 controls remain required before user-facing activation.
+## Negotiated Inbox reads
+
+`GET /api/business/v1/inbox?registerSessions=1` opts into register entries;
+discovery with the same option advertises `registerInbox: inbox-register-v1`.
+Legacy clients keep their existing kinds and response fields. Negotiated pages
+contain at most ten entries and retain a continuation cursor even when current
+validation hides rows. Each register entry checks current branch/financial and
+notification permissions, expiry and the live source close. Reopened, missing or
+changed sources are hidden, including from mark-read operations.
+
+Financial responses come from the strict current prepared-summary reader, never
+from the Inbox's stored amounts. An invalidated publisher or unavailable snapshot
+produces a null summary and register-unavailable kind. Thirteen notification and
+eighteen HTTP integration tests pass, including corrupted stored amounts,
+publisher changes, permission loss, source reopening and hidden-page pagination.
+Push delivery and public schedule negotiation/mobile controls remain incomplete.

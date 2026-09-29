@@ -142,11 +142,16 @@ async function savePreference(
   if (!row) fail('preference_changed', 409);
   return publicPreference(branch, row, scheduleVersion);
 }
-async function listInbox(db, context, { before, now = Date.now, includeApprovals = false } = {}) {
+async function listInbox(
+  db,
+  context,
+  { before, now = Date.now, includeApprovals = false, includeRegisters = false } = {}
+) {
   if (!context.capabilities.includes('overview.read')) return { entries: [], next: null };
   if (before !== undefined && (typeof before !== 'string' || !/^[a-f\d]{24}$/.test(before)))
     fail('invalid_cursor');
   await ready(db);
+  const pageSize = includeRegisters ? 10 : 50;
   const rows = await db
     .collection('business_inbox')
     .find({
@@ -158,6 +163,7 @@ async function listInbox(db, context, { before, now = Date.now, includeApprovals
         $in: [
           'daily_summary',
           'daily_unavailable',
+          ...(includeRegisters ? ['register_summary', 'register_unavailable'] : []),
           ...(includeApprovals && context.capabilities.includes('approvals.read')
             ? ['approval_requested']
             : []),
@@ -166,10 +172,10 @@ async function listInbox(db, context, { before, now = Date.now, includeApprovals
       ...(before ? { _id: { $lt: new ObjectId(before) } } : {}),
     })
     .sort({ _id: -1 })
-    .limit(51)
+    .limit(pageSize + 1)
     .maxTimeMS(250)
     .toArray();
-  const page = rows.slice(0, 50);
+  const page = rows.slice(0, pageSize);
   const visible = includeApprovals
     ? await require('./business-approval-notifications').visibleApprovalEvents(
         db,
@@ -178,9 +184,22 @@ async function listInbox(db, context, { before, now = Date.now, includeApprovals
         now
       )
     : new Set();
+  const registers = includeRegisters
+    ? await require('./business-register-notifications').visibleRegisterEvents(
+        db,
+        context,
+        page,
+        now
+      )
+    : new Map();
   return {
     entries: page
-      .filter((row) => row.kind !== 'approval_requested' || visible.has(String(row._id)))
+      .filter(
+        (row) =>
+          (row.kind !== 'approval_requested' || visible.has(String(row._id))) &&
+          (!['register_summary', 'register_unavailable'].includes(row.kind) ||
+            registers.has(String(row._id)))
+      )
       .map((row) => ({
         id: String(row._id),
         branchId: row.branchId,
@@ -189,11 +208,14 @@ async function listInbox(db, context, { before, now = Date.now, includeApprovals
         createdAt: row.createdAt.toISOString(),
         read: !!row.readAt,
         summary: row.kind === 'approval_requested' ? null : (row.summary ?? null),
+        ...(registers.has(String(row._id))
+          ? { ...registers.get(String(row._id)), sessionId: row.sessionId }
+          : {}),
         ...(row.kind === 'approval_requested'
           ? { requestId: row.requestId, requestExpiresAt: row.expiresAt.toISOString() }
           : {}),
       })),
-    next: rows.length > 50 ? String(rows[49]._id) : null,
+    next: rows.length > pageSize ? String(rows[pageSize - 1]._id) : null,
   };
 }
 async function markRead(db, context, id) {
@@ -206,6 +228,14 @@ async function markRead(db, context, id) {
     branchId: { $in: context.branches.map((branch) => branch.id) },
   });
   if (!row) fail('entry_unavailable', 404);
+  if (['register_summary', 'register_unavailable'].includes(row.kind)) {
+    const visible = await require('./business-register-notifications').visibleRegisterEvents(
+      db,
+      context,
+      [row]
+    );
+    if (!visible.has(String(row._id))) fail('entry_unavailable', 404);
+  }
   if (row.kind === 'approval_requested')
     await require('./business-approval-notifications').approvalAlertScope(
       db,
