@@ -2,8 +2,8 @@
 
 Status: source audit, strict stock facts and a desktop preparation primitive.
 The desktop worker and Community publication support the versioned stock job.
-There is no public stock endpoint, Cloud stock transport, mobile stock UI or alert
-enabled yet.
+Cloud agent/Gateway stock transport is implemented in the paired review batch.
+There is no public stock endpoint, mobile stock UI or alert enabled yet.
 
 ## Source findings
 
@@ -115,14 +115,30 @@ The nine existing register-publication tests still pass.
 Preparation additionally handles mixed legacy string/ObjectId ordering while
 retaining only the first 100 canonical IDs. A duplicate logical ID rejects the
 whole observation rather than inflating a count. Fourteen stock-source/preparation
-database tests now pass. This work does not advertise a Cloud heartbeat capability
-or expose stock reads to mobile clients yet.
+database tests now pass. Public stock reads remain unavailable to mobile clients.
+
+## Cloud publication
+
+The desktop heartbeat advertises stock version 1 with an expiry tied to that
+heartbeat. The paired Gateway branch negotiates this with the agent, stages a
+separate stock job and validates the same bounded contract before reservation
+and again during recovery. Unknown or stale capabilities do not receive stock
+work. Uploads preserve explicit coverage and false source completeness; retries
+retain the identical reserved envelope. Gateway rejects corrupt scope, counts,
+quantities, future timestamps and observations older than 24 hours.
+
+The eight stock-publication tests include an actual desktop -> agent -> Gateway
+round trip with Cloud item/sales access forbidden. Tests use each application's
+own MongoDB driver against the same test server so BSON-version differences do
+not get confused with wire-contract failures. Gateway additionally passes 23
+reporting tests covering legacy daily/session behavior, stock capability
+withdrawal, malformed publications and interrupted/rejected recovery.
 
 ## Remaining implementation and verification
 
 Trace actual sale, receiving, adjustment, return and variant stock writes through
-sync before defining completeness. Extend negotiated Cloud-agent/Gateway publication with the same strict contract
-and assigned-publisher fencing; do not calculate stock scans on Cloud. Add a negotiated `stock.read` endpoint and accessible mobile list with
+sync before defining completeness. Keep preparation on the desktop and qualify publication against actual sync
+and concurrent stock changes; do not calculate stock scans on Cloud. Add a negotiated `stock.read` endpoint and accessible mobile list with
 units, threshold origin and freshness. Notification settings belong on the stock
 notification page and need threshold-crossing/recovery identity, quiet hours,
 recipient ACL rechecks and durable generic push retries. Test offline/reconnect,

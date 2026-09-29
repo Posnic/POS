@@ -7,7 +7,7 @@ const { createDesktopReportingWorker } = require('../src/services/business-repor
 const { createLocalReportingBridge } = require('../src/services/business-local-reporting');
 const { prepareDesktopStockSummary } = require('../src/services/business-stock-summary');
 const { reportingJobKind } = require('../src/services/business-reporting-job');
-let mongo, client;
+let mongo, client, gatewayClient;
 const previous = {
   desktop: process.env.POSNIC_DESKTOP,
   local: process.env.POSNIC_BUSINESS_LOCAL_REPORTING,
@@ -23,6 +23,7 @@ before(async () => {
   process.env.POSNIC_BUSINESS_LOCAL_REPORTING = '1';
 });
 after(async () => {
+  await gatewayClient?.close();
   await client?.close();
   await mongo?.stop();
   for (const [name, value] of [
@@ -195,3 +196,72 @@ test('Community reserved recovery discards a corrupt stock observation', async (
   assert.equal(owner.pending, undefined);
   assert.equal(owner.lastPublicationError, 'invalid_stock_summary');
 });
+
+test(
+  'actual desktop stock snapshot traverses the Cloud agent and Gateway without a Cloud catalogue scan',
+  {
+    skip: !process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT,
+  },
+  async () => {
+    const path = require('node:path');
+    const root = process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT;
+    const { createBusinessPublisher } = require(
+      path.join(root, 'apps/sync-agent/src/business-reporting')
+    );
+    const { createBusinessReporting } = require(
+      path.join(root, 'apps/sync-gateway/src/business-reporting')
+    );
+    const f = await fixture();
+    const cloudDb = client.db('stock_cloud_' + new ObjectId());
+    await cloudDb
+      .collection('branches')
+      .insertOne(await f.db.collection('branches').findOne({ _id: new ObjectId(f.branch.id) }));
+    await cloudDb
+      .collection('business_reporting_requests')
+      .insertOne(await f.db.collection('business_reporting_requests').findOne({ _id: f.key }));
+    const { MongoClient: GatewayClient } = require(
+      path.join(root, 'apps/sync-gateway/node_modules/mongodb')
+    );
+    gatewayClient = await GatewayClient.connect(mongo.getUri());
+    const gatewayDb = gatewayClient.db(cloudDb.databaseName);
+    const guarded = {
+      collection(name) {
+        assert.notEqual(name, 'items');
+        assert.notEqual(name, 'sales');
+        return gatewayDb.collection(name);
+      },
+    };
+    const gateway = createBusinessReporting(guarded);
+    const device = { deviceId: 'stock-cloud-desktop', branches: [f.branch.id] };
+    const send = (endpoint, body) =>
+      endpoint.endsWith('/work')
+        ? gateway.work(device, body)
+        : endpoint.endsWith('/claim')
+          ? gateway.claim(device, body.branchId)
+          : gateway.publish(device, body);
+    const previousLocal = process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+    delete process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+    try {
+      const worker = createDesktopReportingWorker(f.db);
+      const agent = createBusinessPublisher({ db: f.db, send });
+      await worker.tick();
+      await agent.tick();
+      await worker.tick();
+      const staged = await f.db.collection('business_reporting_local').findOne({ _id: f.key });
+      assert.equal(staged.pendingSummary.lowItems[0].availableMilli, 2000);
+      await agent.tick();
+      const published = await cloudDb
+        .collection('business_prepared_summaries')
+        .findOne({ _id: f.key });
+      assert.deepEqual(published.summary, staged.pendingSummary);
+      assert.equal(published.summary.sourceComplete, false);
+      assert.equal(
+        (await f.db.collection('business_reporting_local').findOne({ _id: f.key })).pendingSummary,
+        undefined
+      );
+    } finally {
+      if (previousLocal === undefined) delete process.env.POSNIC_BUSINESS_LOCAL_REPORTING;
+      else process.env.POSNIC_BUSINESS_LOCAL_REPORTING = previousLocal;
+    }
+  }
+);

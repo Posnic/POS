@@ -51,6 +51,8 @@ function createDesktopReportingWorker(
                 protocolVersion: 2,
                 itemSummaryVersion: 1,
                 registerSummaryVersion: 1,
+                stockSummaryVersion: 1,
+                stockSummaryExpiresAt: new Date(at.getTime() + 120000),
                 registerSummaryExpiresAt: new Date(at.getTime() + 120000),
                 expiresAt: new Date(at.getTime() + 120000),
               },
