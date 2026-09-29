@@ -59,11 +59,27 @@ back off for a minute. Old episodes are retained until accepted; the receiver mu
 record expiry/suppression decisions rather than asking the sender to invent a
 successful delivery.
 
-The handoff is tested against an injected receiver with durable Mongo receipts,
-not the deployed Gateway or Community API. Its `send` adapter must perform the
-assigned-publisher authentication and scope checks. Neither the receipt shape nor
-the content digest is authentication. There is no production transport adapter or
-activation timer yet.
+The handoff is tested both with a durable test receiver and against the actual
+Gateway receiver implementation. The cross-repository test prepares a real desktop
+observation, journals it, accepts it through Gateway, loses the acknowledgement,
+and retries without duplicating the server batch. This runs in-process against
+Mongo; it is not a deployed HTTPS or production sync-agent qualification.
+
+Gateway now exposes `POST /v1/business/reporting/stock-alerts` behind
+`POSNIC_BUSINESS_STOCK_ALERTS=1`, disabled by default. The existing device auth and
+fresh directory checks enforce revocation, tenant suspension and server instance.
+The receiver additionally validates branch scope, assigned desktop, assignment ID
+and epoch. It reserves a batch in the publisher record, writes its private queue
+record, then acknowledges. Reservation recovery and canonical digests preserve
+idempotency across lost database/network acknowledgements. Expired events retain
+explicit expiry markers. This endpoint creates no Inbox event or push. Queued
+batches retain publisher identity; a notification consumer must reject obsolete
+publisher generations. Cross-publisher episode deduplication remains unfinished.
+
+The sender's `send` adapter must use the assigned-publisher authenticated transport.
+Neither the receipt shape nor content digest is authentication. Production agent
+wiring, Community acceptance and producer activation are still outstanding. Queue
+retention and consumer rate limits must be settled before activation.
 
 Before activation, implement and qualify:
 

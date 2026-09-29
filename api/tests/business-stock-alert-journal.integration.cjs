@@ -688,3 +688,60 @@ test('late acknowledgement from an expired handoff lease cannot erase a newer ba
   assert.deepEqual(await handoffRow(f.branch), replacement);
   assert.equal((await pendingFor(f))[0].episode, 2);
 });
+
+test('actual desktop observation and acknowledged handoff traverse the Gateway contract after a lost acknowledgement', async (t) => {
+  const gatewayRoot = process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT;
+  if (!gatewayRoot)
+    return t.skip(
+      'Set POSNIC_BUSINESS_TEST_GATEWAY_ROOT for the cross-repository Gateway contract test'
+    );
+  const path = require('node:path');
+  const { MongoClient: GatewayClient } = require(
+    path.join(gatewayRoot, 'apps/sync-gateway/node_modules/mongodb')
+  );
+  const { createBusinessReporting } = require(
+    path.join(gatewayRoot, 'apps/sync-gateway/src/business-reporting')
+  );
+  const gatewayClient = await GatewayClient.connect(mongo.getUri());
+  process.env.POSNIC_BUSINESS_STOCK_ALERTS = '1';
+  try {
+    const gatewayDb = gatewayClient.db(db.databaseName);
+    const f = await fixture();
+    await f.journal(await f.scan());
+    const device = { deviceId: 'stock-test-desktop', branches: [f.branch.id] };
+    const gateway = createBusinessReporting(gatewayDb, { now });
+    const assignment = await gateway.claim(device, f.branch.id);
+    let at = now(),
+      calls = 0;
+    const send = async (batch) => {
+      const accepted = await gateway.stockAlerts(device, {
+        assignmentId: assignment.assignmentId,
+        epoch: assignment.epoch,
+        batch,
+      });
+      if (++calls === 1) throw new Error('network_ack_lost');
+      return accepted;
+    };
+    await assert.rejects(
+      createStockAlertHandoff(db, { now: () => at, send }).tick(f.branch),
+      /network_ack_lost/
+    );
+    assert.equal((await pendingFor(f)).length, 1);
+    at += 60001;
+    await createStockAlertHandoff(db, { now: () => at, send }).tick(f.branch);
+    assert.equal((await pendingFor(f)).length, 0);
+    const batches = await gatewayDb
+      .collection('business_stock_alert_batches')
+      .find({ branchId: f.branch.id })
+      .toArray();
+    assert.equal(batches.length, 1);
+    assert.equal(batches[0].batch.events[0].fact.availableMilli, 1000);
+    assert.equal(batches[0].publisherDeviceId, device.deviceId);
+    assert.equal(
+      batches[0].digest,
+      (await handoffRow(f.branch)).lastAccepted ? receiptFor(batches[0].batch).digest : 'missing'
+    );
+  } finally {
+    await gatewayClient.close();
+  }
+});
