@@ -196,6 +196,20 @@ async function useDeviceGrant(db, token, action, body, { now = Date.now } = {}) 
     expiresAt: { $gt: new Date(now()), $lte: new Date(now() + 6000) },
   });
   if (!grant) fail('device_grant_required', 401);
-  return createBusinessDeviceDecisions(db, { now })[action](grant.device, body);
+  const decisions = createBusinessDeviceDecisions(db, { now });
+  switch (action) {
+    case 'create':
+      return decisions.create(grant.device, body);
+    case 'read':
+      return decisions.read(grant.device, body);
+    case 'cancel':
+      return decisions.cancel(grant.device, body);
+    case 'claim':
+      return decisions.claim(grant.device, body);
+    case 'acknowledge':
+      return decisions.acknowledge(grant.device, body);
+    default:
+      fail('device_grant_required', 401);
+  }
 }
 module.exports = { protocolVersion: 1, createBusinessDeviceDecisions, useDeviceGrant };
