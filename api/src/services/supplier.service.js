@@ -548,8 +548,12 @@ class SupplierService {
       }
 
       const checked = require('../helpers/import-values').contactRows(suppliersData);
-      if (checked.errors.length) return { status: false, data: checked.errors,
-        message: 'Correct the listed supplier rows. Nothing was imported.' };
+      if (checked.errors.length)
+        return {
+          status: false,
+          data: checked.errors,
+          message: 'Correct the listed supplier rows. Nothing was imported.',
+        };
       suppliersData = checked.rows;
       const baseModel = new BaseModel();
       const maxImport = await baseModel.checkPlan('suppliers', 'import');
@@ -557,8 +561,12 @@ class SupplierService {
         maxImport > 0 ? Math.min(maxImport, suppliersData.length) : suppliersData.length;
 
       const limitedSuppliers = suppliersData.slice(0, count);
-      if (count < suppliersData.length) return { status: false, data: null,
-        message: `This import allows ${count} rows. Split the file; nothing was imported.` };
+      if (count < suppliersData.length)
+        return {
+          status: false,
+          data: null,
+          message: `This import allows ${count} rows. Split the file; nothing was imported.`,
+        };
 
       const uniqueValue = [];
       const seenRecords = new Set();
@@ -642,14 +650,21 @@ class SupplierService {
             address: existingSupplier.address || '',
           });
         } else {
-          if (supplier.email && await this.repository.findByEmail(supplier.email)) {
-            validationErrors.push({ name: supplier.name, status: 'Email is already used by another supplier' });
+          if (supplier.email && (await this.repository.findByEmail(supplier.email))) {
+            validationErrors.push({
+              name: supplier.name,
+              status: 'Email is already used by another supplier',
+            });
           } else newData.push(sanitizeSupplierData(supplier));
         }
       }
 
-      if (validationErrors.length) return { status: false, data: validationErrors,
-        message: 'A supplier email already exists. Nothing was imported.' };
+      if (validationErrors.length)
+        return {
+          status: false,
+          data: validationErrors,
+          message: 'A supplier email already exists. Nothing was imported.',
+        };
       if (newData.length === 0) {
         return {
           status: false,

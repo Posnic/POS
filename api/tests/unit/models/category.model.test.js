@@ -455,15 +455,24 @@ describe('Category.isNameUnique (static)', () => {
 // 12. Static: importCategoryModel
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('Category.importCategoryModel (static)', () => {
-  test.each(['oops', '-1', '101'])('rejects invalid percentage %s before writes', async value => {
+  test.each(['oops', '-1', '101'])('rejects invalid percentage %s before writes', async (value) => {
     const insert = jest.spyOn(Category, 'insertMany');
-    const result = await Category.importCategoryModel([{ name: 'Food', discount_percentage: value }], { branch_id: objId() });
+    const result = await Category.importCategoryModel(
+      [{ name: 'Food', discount_percentage: value }],
+      { branch_id: objId() }
+    );
     expect(result.message).toBe('CSV');
     expect(insert).not.toHaveBeenCalled();
   });
   test('rejects conflicting category rows before writes', async () => {
     const insert = jest.spyOn(Category, 'insertMany');
-    const result = await Category.importCategoryModel([{ name: 'Food', discount_amount: 1 }, { name: 'Food', discount_amount: 2 }], { branch_id: objId() });
+    const result = await Category.importCategoryModel(
+      [
+        { name: 'Food', discount_amount: 1 },
+        { name: 'Food', discount_amount: 2 },
+      ],
+      { branch_id: objId() }
+    );
     expect(result.message).toBe('CSV');
     expect(insert).not.toHaveBeenCalled();
   });

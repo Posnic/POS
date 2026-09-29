@@ -143,8 +143,9 @@ describe('Supplier — email field', () => {
   });
 
   test('email unique index excludes empty strings as well as missing values', () => {
-    expect(schema.indexes().find(([keys]) => keys.email === 1)[1].partialFilterExpression)
-      .toEqual({ email: { $type: 'string', $gt: '' } });
+    expect(schema.indexes().find(([keys]) => keys.email === 1)[1].partialFilterExpression).toEqual({
+      email: { $type: 'string', $gt: '' },
+    });
   });
 
   test('email has lowercase:true', () => {

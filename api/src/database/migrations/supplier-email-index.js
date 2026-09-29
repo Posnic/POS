@@ -14,15 +14,21 @@ async function migrateContactEmailIndex(db, name, indexOptions) {
   // the old constraint and all records rather than silently weakening it.
   await collection.createIndex({ email: 1 }, indexOptions);
   for (const index of indexes) {
-    if (index.name !== indexOptions.name && index.unique === true &&
-        Object.keys(index.key).length === 1 && index.key.email === 1) {
+    if (
+      index.name !== indexOptions.name &&
+      index.unique === true &&
+      Object.keys(index.key).length === 1 &&
+      index.key.email === 1
+    ) {
       await collection.dropIndex(index.name);
     }
   }
 }
 
-const migrateSupplierEmailIndex = db => migrateContactEmailIndex(db, 'suppliers', options);
-const migrateCustomerEmailIndex = db => migrateContactEmailIndex(db, 'customers', {
-  ...options, name: 'customer_nonempty_email',
-});
+const migrateSupplierEmailIndex = (db) => migrateContactEmailIndex(db, 'suppliers', options);
+const migrateCustomerEmailIndex = (db) =>
+  migrateContactEmailIndex(db, 'customers', {
+    ...options,
+    name: 'customer_nonempty_email',
+  });
 module.exports = { migrateSupplierEmailIndex, migrateCustomerEmailIndex, options };

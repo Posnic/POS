@@ -173,15 +173,26 @@ categorySchema.statics = {
       const uniqueByName = new Map();
       for (const [index, row] of rows.entries()) {
         const name = String(row?.name ?? '').trim();
-        if (!name) return { status: true, message: 'CSV', data: [{ row: index + 2, name, status: 'name' }] };
+        if (!name)
+          return { status: true, message: 'CSV', data: [{ row: index + 2, name, status: 'name' }] };
         const key = name.toLowerCase();
         if (!uniqueByName.has(key)) {
           uniqueByName.set(key, row);
         } else {
           const previous = uniqueByName.get(key);
           const fields = ['description', 'discount_amount', 'discount_percentage'];
-          if (fields.some(field => String(previous[field] ?? '').trim() !== String(row[field] ?? '').trim())) {
-            return { status: true, message: 'CSV', data: [{ ...row, row: index + 2, status: 'Conflicting rows with the same category name' }] };
+          if (
+            fields.some(
+              (field) => String(previous[field] ?? '').trim() !== String(row[field] ?? '').trim()
+            )
+          ) {
+            return {
+              status: true,
+              message: 'CSV',
+              data: [
+                { ...row, row: index + 2, status: 'Conflicting rows with the same category name' },
+              ],
+            };
           }
         }
       }
@@ -210,8 +221,14 @@ categorySchema.statics = {
         const discount_percentage = importNumber(discount_percentage_raw, 0);
 
         const errorFields = [];
-        if (!Number.isFinite(discount_amount) || discount_amount < 0) errorFields.push('discount_amount');
-        if (!Number.isFinite(discount_percentage) || discount_percentage < 0 || discount_percentage > 100) errorFields.push('discount_percentage');
+        if (!Number.isFinite(discount_amount) || discount_amount < 0)
+          errorFields.push('discount_amount');
+        if (
+          !Number.isFinite(discount_percentage) ||
+          discount_percentage < 0 ||
+          discount_percentage > 100
+        )
+          errorFields.push('discount_percentage');
 
         if (!name) {
           errorFields.push('name');

@@ -684,7 +684,10 @@ describe('SupplierService', () => {
       mockCheckPlan.mockResolvedValue(1);
       mockRepositoryInstance.findByNamePhoneBranch.mockResolvedValue(null);
       mockRepositoryInstance.bulkCreate.mockResolvedValue([makeImportRow()]);
-      await service.bulkImport([makeImportRow(), makeImportRow({ name: 'Second', email: 'second@test.com' })]);
+      await service.bulkImport([
+        makeImportRow(),
+        makeImportRow({ name: 'Second', email: 'second@test.com' }),
+      ]);
       // Only 1 should be processed — but dedup by name-phone means first passes
       expect(mockRepositoryInstance.bulkCreate).not.toHaveBeenCalled();
     });

@@ -1268,7 +1268,10 @@ describe('CustomerService', () => {
       repo.findByNameAndPhone.mockResolvedValue(null);
       repo.bulkCreate.mockResolvedValue([makeMockCustomer(), makeMockCustomer()]);
 
-      const rows = [makeRow(), makeRow({ name: 'Second', phone: '888', email: 'second@example.com' })];
+      const rows = [
+        makeRow(),
+        makeRow({ name: 'Second', phone: '888', email: 'second@example.com' }),
+      ];
       const result = await service.importCustomers(rows, BRANCH_ID);
 
       expect(result.message).toBe('2 customers imported successfully');
