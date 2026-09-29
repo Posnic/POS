@@ -152,3 +152,43 @@
 @media (prefers-reduced-motion: reduce) {
   .desktop-window *, .desktop-window *::before { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+/* Receipt printer workspace: actions first, setup and troubleshooting on separate pages. */
+.desktop-window #receiptTab { min-width: 0; }
+.desktop-window .printer-nav { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--w-border); }
+.desktop-window .printer-nav button[aria-selected="true"] { background: var(--w-accent) !important; color: var(--w-on-accent, #fff) !important; border-color: var(--w-accent) !important; }
+.desktop-window .printer-nav button:focus-visible, .desktop-window .printer-panel button:focus-visible { outline: 2px solid var(--w-accent); outline-offset: 3px; }
+.desktop-window .printer-panel[hidden] { display: none !important; }
+.desktop-window .printer-card { background: var(--w-card-bg); border: 1px solid var(--w-border); border-radius: 10px; padding: 20px; margin-bottom: 16px; min-width: 0; }
+.desktop-window .printer-card h2 { margin: 0 0 8px; font-size: 17px; }
+.desktop-window .printer-card h3 { font-size: 13px; margin: 16px 0 8px; }
+.desktop-window .printer-note { color: var(--w-muted); font-size: 13px; line-height: 1.5; margin: 0; }
+.desktop-window .printer-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.desktop-window .printer-heading button { flex-shrink: 0; }
+.desktop-window #rpPrinterList { max-height: 360px; overflow: auto; border: 1px solid var(--w-border); border-radius: 6px; padding: 6px; }
+.desktop-window .printer-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
+.desktop-window .printer-health-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; background: var(--w-raised); border: 1px solid var(--w-border); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; }
+.desktop-window .printer-health-strip.needs-attention { border-inline-start: 4px solid var(--w-danger, #b42318); }
+.desktop-window #rpStatus { padding: 12px 16px; border: 1px solid var(--w-border); border-radius: 8px; margin-bottom: 16px; }
+.desktop-window .printer-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 18px 0; }
+.desktop-window .printer-fields label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.desktop-window .printer-fields input, .desktop-window .printer-fields select { width: 100%; min-width: 0; }
+.desktop-window .printer-wide { grid-column: 1 / -1; }
+.desktop-window .printer-check { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
+.desktop-window .printer-check input { width: auto; margin: 0; }
+.desktop-window .printer-check ~ .printer-note { margin-bottom: 16px; }
+.desktop-window .printer-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--w-raised); padding: 12px; border-radius: 6px; font-size: 12px; }
+.desktop-window #wrJobs { max-height: 340px; overflow: auto; overflow-wrap: anywhere; margin-top: 12px; }
+.desktop-window #wrJobs p { padding: 12px 0; border-top: 1px solid var(--w-border); }
+.desktop-window #wrJobs button { display: block; margin-top: 8px; }
+.desktop-window #printerEnvironmentChecks p { padding: 10px 0; border-bottom: 1px solid var(--w-border); font-size: 13px; }
+.desktop-window .printer-guide { line-height: 1.65; }
+.desktop-window .printer-guide p { margin: 12px 0; }
+.desktop-window .printer-guide ol { padding-inline-start: 22px; }
+.desktop-window .printer-guide li { padding: 6px 0; }
+@media (max-width: 600px) {
+  .desktop-window .printer-card { padding: 16px; }
+  .desktop-window .printer-heading { flex-direction: column; }
+  .desktop-window .printer-fields { grid-template-columns: minmax(0, 1fr); }
+}
+.desktop-window #receiptTab .printer-card h2 { color: var(--w-text); }
+.desktop-window #receiptTab button.btn-primary { background: var(--w-accent) !important; color: var(--w-on-accent, #fff) !important; border-color: var(--w-accent) !important; }

@@ -387,110 +387,85 @@
               tax lines - stays in Settings, because that is a shop decision.
             -->
             <div id="receiptTab" class="tab-content active">
-                <details id="printerEnvironment" open style="padding:16px;margin-bottom:16px;background:white;border-radius:10px;">
-                    <summary>Printer readiness &amp; idle troubleshooting</summary>
-                    <p>Checks run on this computer without printing or changing system settings. A listed printer is not proof that paper will come out.</p>
-                    <div id="printerEnvironmentStatus" role="status">Checking power and printer settings…</div>
-                    <div id="printerEnvironmentChecks"></div>
-                    <h4>What to do if printing stops after idle</h4>
-                    <ol id="printerEnvironmentSteps"></ol>
-                    <p>Checks are refreshed automatically while this page is open; system results are cached for up to one minute. USB recovery controls below are available on Windows only.</p>
-                </details>
-                <details id="windowsRecovery" style="display:none;padding:16px;margin-bottom:16px;background:white;border-radius:10px;">
-                    <summary>Windows printer health &amp; recovery</summary>
-                    <p>Jobs stay on their chosen printer. Status “Sent to printer” means Windows released the job; check the paper to confirm output.</p>
-                    <label>Printer queue <select id="wrPrinter" onchange="wrSelection()"></select></label>
-                    <label>Expected port <input id="wrPort" placeholder="Detected on first use" maxlength="128"></label>
-                    <label>Physical USB instance ID (optional) <input id="wrPnp" placeholder="USBPRINT\…" maxlength="512"></label>
-                    <label><input type="checkbox" id="wrInitialize" checked> Initialize ESC/POS before sending</label>
-                    <label><input type="checkbox" id="wrKeepAlive" checked> Send idle ESC/POS initialization (supported printers only)</label>
-                    <p>Sends ESC @ after 30 seconds idle, without feed or cut. This resets printer state and is not a guaranteed wake command. Enable only if your printer supports it. Pauses during app printing or disconnection. Do not run the separate diagnostic keep-alive helper alongside it.</p>
-                    <button type="button" onclick="wrSave()">Save recovery settings</button>
-                    <p>Changing these settings affects new jobs only. Pending jobs retain their original printer and port. No ports are swapped automatically.</p>
-                    <div id="wrMessage" role="status"></div>
-                    <h4>Windows settings for reliable printing</h4>
-                    <div id="wrPower" role="status"></div>
-                    <p>Recommended for a dedicated counter: keep it plugged in and prevent sleep/hibernate while serving. Battery settings affect battery life. These checks do not change Windows settings.</p>
-                    <p>If a USB printer still disappears: in Device Manager, inspect its USB hub → Properties → Power Management, where available, and temporarily test with “Allow the computer to turn off this device to save power” cleared. Restore it if there is no improvement. Posnic cannot verify every hub or printer firmware setting.</p>
-                    <p>For an extender connection, test the same printer with a short direct USB cable across the usual idle period. Check extender power and cables. Initialization cannot restore a device that Windows cannot see.</p>
-                    <pre id="wrHealth" style="white-space:pre-wrap;"></pre>
-                    <pre id="wrKeepAliveStatus" style="white-space:pre-wrap;"></pre>
-                    <div id="wrJobs" role="status" style="max-height:240px;overflow:auto;"></div>
-                </details>
-                <div id="rpStatus" style="display:none;padding:16px 20px;border-radius:12px;margin-bottom:20px;font-weight:600;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.1);"></div>
-
-                <div style="background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
-                    <div style="font-weight:700;color:#2c3e50;margin-bottom:14px;">
-                        🖨️ Printer for sale receipts
+                <nav class="printer-nav" role="tablist" aria-label="Receipt printer settings"><button type="button" id="printer-nav-0" role="tab" aria-controls="printer-panel-0" aria-selected="true" tabindex="0" onclick="showPrinterPanel(0)">Printers</button>
+<button type="button" id="printer-nav-1" role="tab" aria-controls="printer-panel-1" aria-selected="false" tabindex="-1" onclick="showPrinterPanel(1)">Remote printing</button>
+<button type="button" id="printer-nav-2" role="tab" aria-controls="printer-panel-2" aria-selected="false" tabindex="-1" onclick="showPrinterPanel(2)">Diagnostics</button>
+<button type="button" id="printer-nav-3" role="tab" aria-controls="printer-panel-3" aria-selected="false" tabindex="-1" onclick="showPrinterPanel(3)">Help</button></nav>
+                <div id="rpStatus" role="status" style="display:none;"></div>
+                <section id="printer-panel-0" class="printer-panel" role="tabpanel" aria-labelledby="printer-nav-0">
+                    <div class="printer-card">
+                        <div class="printer-heading"><div><h2>Receipt printers</h2><p class="printer-note">Choose printers, paper size and copies for this computer.</p></div>
+                            <button type="button" onclick="rpLoadPrinters()">Reload printers</button></div>
+                        <div id="rpPrinterList"><p class="printer-note">Loading printers…</p></div>
+                        <div class="printer-actions"><button class="btn btn-primary" onclick="rpSave()">Save settings</button>
+                            <button id="rpTestBtn" onclick="rpTestPrint()">Print test receipt</button>
+                            <span id="rpSummary" role="status" class="printer-note"></span></div>
                     </div>
-                    <div style="font-size:13px;color:#9ca3af;margin-bottom:12px;">
-                        Tick every printer a receipt should go to. Each one keeps its own
-                        paper and its own number of copies, so a counter roll and an
-                        office copy can come off the same sale.
+                    <div class="printer-health-strip"><span id="printerHealthSummary" role="status">Checking print service…</span><button type="button" onclick="showPrinterPanel(2, true)">View diagnostics</button></div>
+                    <div class="printer-card">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;">
+                        <div style="font-weight:700;color:#2c3e50;">Captain bill requests</div>
+                        <span id="bpPrinted" style="font-size:13px;color:#6b7280;"></span>
                     </div>
-                    <div id="rpPrinterList"
-                        style="max-height:230px;overflow-y:auto;border:2px solid #e9ecef;border-radius:10px;background:#fff;padding:6px;">
-                        <div style="padding:14px;color:#9ca3af;font-size:13px;text-align:center;">
-                            Press Reload to list the printers on this computer.
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:12px;align-items:center;margin-top:12px;">
-                        <button class="btn btn-secondary" onclick="rpLoadPrinters()"
-                            style="padding:12px 20px;border-radius:10px;">🔄 Reload</button>
-                        <span id="rpSummary" style="font-size:13px;color:#6b7280;"></span>
-                    </div>
-                    <div style="font-size:13px;color:#9ca3af;margin-top:10px;">
-                        Applies to this computer only. Other counters keep their own.
-                        Paper width is what stops the amount column printing off the right edge.
+                    <div id="bpRows" style="font-size:14px;color:#2c3e50;"></div>
+                    <div id="bpTrouble" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;
+                                               background:#fef3f2;border:1px solid #fecdca;color:#b42318;font-size:13px;"></div>
+                    <!--
+                        THE BILLS NOBODY CAN ACCOUNT FOR.
+                        The queue parks a job here when the till that took it went
+                        quiet, or when it failed every attempt: it may be on paper,
+                        it may not, and only somebody standing at the printer knows.
+                        The queue has asked that question since it was written and
+                        there was nowhere at all to answer it.
+                    -->
+                    <div id="bpWaiting" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;
+                                               background:#fffaeb;border:1px solid #fedf89;color:#93370d;font-size:13px;">
+                        <div style="font-weight:700;margin-bottom:8px;">Confirm delivery</div>
+                        <div id="bpWaitingRows"></div>
                     </div>
                 </div>
-
-                <!--
-                    BILLS THAT COME IN FROM OUTSIDE THE SHOP.
-
-                    Owner: "may be configuration or toggle to poll cloud. it
-                    needs to be on only when required. otherwise let app connect
-                    via lan and give print."
-
-                    A waiter on the shop's own Wi-Fi needs nothing here: the
-                    handset talks straight to this computer and the paper starts
-                    in the same moment. This switch is only for the shop whose
-                    waiters are on mobile data or a guest network that cannot
-                    see this computer at all.
-
-                    It is off by default and should stay off unless a shop needs
-                    it, which is the honest thing to tell a shopkeeper rather
-                    than a setting dressed up as an upgrade.
-                -->
-                <div style="background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
-                    <div style="font-weight:700;color:#2c3e50;margin-bottom:14px;">
-                        ☁️ Bills asked for from outside the shop
+            <div class="printer-card">
+                <div class="printer-heading">
+                    <div style="font-size:15px;font-weight:700;color:#374151;">🧾 Receipt &amp; Bill Prints</div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="date" id="rcptLogDate" aria-label="Receipt log date" style="padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                        <button onclick="rcptLoadLogs()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;">🔍 Load</button>
                     </div>
-                    <div style="font-size:13px;color:#9ca3af;margin-bottom:14px;">
-                        Leave this off if your waiters' phones are on the shop's own Wi-Fi.
-                        They already reach this computer directly, which is faster and keeps
-                        working if the internet goes down.
-                    </div>
+                </div>
+                <div style="background:#fff;border:2px solid #e9ecef;border-radius:12px;overflow:auto;">
+                    <div id="rcptLogsEmpty" style="padding:32px;text-align:center;color:#9ca3af;font-size:14px;">Select a date and click Load to view receipt prints.</div>
+                    <table id="rcptLogsTable" style="display:none;width:100%;border-collapse:collapse;font-size:13px;">
+                        <thead>
+                            <tr style="background:#f8f9fa;border-bottom:2px solid #e9ecef;">
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Time</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Bill</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Document</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">From</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Printers</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Speed</th>
+                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Result</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rcptLogsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+                </section>
+                <section id="printer-panel-1" class="printer-panel" role="tabpanel" aria-labelledby="printer-nav-1" hidden><div class="printer-card">
+                    <div style="font-weight:700;color:#2c3e50;margin-bottom:14px;">Remote printing</div>
+                    <div style="font-size:13px;color:#9ca3af;margin-bottom:14px;">For captain devices using mobile data or another network. Devices on shop Wi-Fi connect directly.</div>
                     <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;">
                         <input type="checkbox" id="cpEnabled" style="margin-top:3px;width:18px;height:18px;">
-                        <span style="font-size:14px;color:#2c3e50;">
-                            Print bills that waiters ask for over the internet
-                            <span style="display:block;font-size:12px;color:#9ca3af;margin-top:3px;">
-                                Turn this on only if the phones use mobile data or a different network.
-                                One computer per shop, the one beside the customer's printer.
-                            </span>
+                        <span style="font-size:14px;color:#2c3e50;">Enable printing over the internet<span style="display:block;font-size:12px;color:#9ca3af;margin-top:3px;">Enable on one receipt-printing computer per shop.</span>
                         </span>
                     </label>
                     <div style="margin-top:14px;">
-                        <label style="display:block;font-size:13px;color:#6b7280;margin-bottom:6px;">
+                        <label style="display:block;font-size:13px;color:#6b7280;margin-bottom:6px;" for="cpApiUrl">
                             Your shop's internet address
                         </label>
-                        <input type="text" id="cpApiUrl" placeholder="https://yourshop.posnic.io/api"
-                            style="width:100%;padding:12px 14px;border:2px solid #e9ecef;border-radius:10px;font-size:14px;">
-                        <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
-                            The same address the phones use. Leave blank if you are not sure -
-                            nothing is sent anywhere until both of these are filled in.
-                        </div>
+                        <input type="text" id="cpApiUrl" placeholder="https://yourshop.posnic.io/api" style="width:100%;padding:12px 14px;border:2px solid #e9ecef;border-radius:10px;font-size:14px;">
+                        <div style="font-size:12px;color:#9ca3af;margin-top:6px;">Use the same shop address as the captain app.</div>
                     </div>
                     <!--
                         THIS COMPUTER'S KEY, FOR PASTING INTO THE SHOP.
@@ -508,81 +483,41 @@
                         never puts a server secret into a web page.
                     -->
                     <div style="margin-top:14px;">
-                        <label style="display:block;font-size:13px;color:#6b7280;margin-bottom:6px;">
+                        <label style="display:block;font-size:13px;color:#6b7280;margin-bottom:6px;" for="cpTillKey">
                             This computer's printing key
                         </label>
                         <div style="display:flex;gap:10px;align-items:center;">
-                            <input type="text" id="cpTillKey" readonly
-                                style="flex:1 1 auto;min-width:0;padding:12px 14px;border:2px solid #e9ecef;
+                            <input type="text" id="cpTillKey" readonly="" style="flex:1 1 auto;min-width:0;padding:12px 14px;border:2px solid #e9ecef;
                                        border-radius:10px;font-size:13px;font-family:ui-monospace,Consolas,monospace;
                                        background:#f9fafb;color:#374151;">
-                            <button class="btn btn-secondary" id="cpCopyKey" onclick="cpCopyKey()"
-                                style="padding:12px 18px;border-radius:10px;white-space:nowrap;">Copy</button>
+                            <button class="btn btn-secondary" id="cpCopyKey" onclick="cpCopyKey()" style="padding:12px 18px;border-radius:10px;white-space:nowrap;">Copy</button>
                         </div>
-                        <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
-                            Open your shop in a browser, go to Settings, and allow this key under
-                            bill printing. Until you do, your shop will turn this computer away.
-                        </div>
+                        <div style="font-size:12px;color:#9ca3af;margin-top:6px;">In your online shop’s Settings → Bill printing, allow this computer’s key.</div>
                     </div>
                     <div style="display:flex;gap:12px;align-items:center;margin-top:14px;">
-                        <button class="btn btn-secondary" onclick="cpSave()"
-                            style="padding:12px 20px;border-radius:10px;">💾 Save</button>
+                        <button class="btn btn-secondary" onclick="cpSave()" style="padding:12px 20px;border-radius:10px;">💾 Save</button>
                         <span id="cpSummary" style="font-size:13px;color:#6b7280;"></span>
                     </div>
-                </div>
-
-                <!--
-                    WHAT THE BILL PRINTER IS ACTUALLY DOING.
-
-                    A waiter taps Print bill and nothing comes out. Until now
-                    the reason lived in a console window nobody has open on a
-                    shop floor, so "it is not printing" and "no receipt printer
-                    is set on this till" were the same sentence to the person
-                    standing at the counter.
-
-                    Two lines because there are two doors and they fail
-                    separately: a shop can have a perfectly working counter
-                    printer and a cloud address with a typo in it.
-                -->
-                <div style="background:#fff;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);margin-bottom:20px;">
-                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;">
-                        <div style="font-weight:700;color:#2c3e50;">🧾 Bills asked for by waiters</div>
-                        <span id="bpPrinted" style="font-size:13px;color:#6b7280;"></span>
+                </div></section>
+                <section id="printer-panel-2" class="printer-panel" role="tabpanel" aria-labelledby="printer-nav-2" hidden>
+                    <div class="printer-card" id="printerEnvironment"><h2>Computer readiness</h2><p class="printer-note">Read-only checks. No printer data is sent.</p><div id="printerEnvironmentStatus" role="status"></div><div id="printerEnvironmentChecks"></div></div>
+                    <div id="windowsRecovery" style="display:none;">
+                        <div class="printer-card"><h2>Print jobs &amp; recovery</h2><p class="printer-note">“Sent to printer” confirms software delivery. Check the paper to confirm printing.</p><div id="wrMessage" role="status"></div><div id="wrJobs" role="status"></div></div>
+                        <div class="printer-card"><h2>Windows printer binding</h2><p class="printer-note">Changes apply to new jobs. Pending jobs keep their original printer and port.</p>
+                            <div class="printer-fields"><label for="wrPrinter">Printer queue<select id="wrPrinter" onchange="wrSelection()"></select></label><label for="wrPort">Expected port<input id="wrPort" placeholder="Detected on first use" maxlength="128"></label><label class="printer-wide" for="wrPnp">Physical USB instance ID (optional)<input id="wrPnp" placeholder="USBPRINT\…" maxlength="512"></label></div>
+                            <label class="printer-check"><input type="checkbox" id="wrInitialize" checked> Initialize ESC/POS before sending</label>
+                            <label class="printer-check"><input type="checkbox" id="wrKeepAlive" checked> Send idle ESC/POS initialization</label>
+                            <p class="printer-note">Supported printers only. Sends a reset after 30 seconds idle, without feed or cut. See Help before enabling.</p>
+                            <button type="button" onclick="wrSave()">Save recovery settings</button>
+                        </div>
+                        <div class="printer-card"><h2>Technical details</h2><h3>Windows queues</h3><pre id="wrHealth"></pre><h3>Idle initialization</h3><pre id="wrKeepAliveStatus"></pre><h3>Last helper diagnostic</h3><pre id="wrDiagnostic"></pre></div>
                     </div>
-                    <div id="bpRows" style="font-size:14px;color:#2c3e50;"></div>
-                    <div id="bpTrouble" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;
-                                               background:#fef3f2;border:1px solid #fecdca;color:#b42318;font-size:13px;"></div>
-                    <!--
-                        THE BILLS NOBODY CAN ACCOUNT FOR.
-                        The queue parks a job here when the till that took it went
-                        quiet, or when it failed every attempt: it may be on paper,
-                        it may not, and only somebody standing at the printer knows.
-                        The queue has asked that question since it was written and
-                        there was nowhere at all to answer it.
-                    -->
-                    <div id="bpWaiting" style="display:none;margin-top:14px;padding:12px 14px;border-radius:10px;
-                                               background:#fffaeb;border:1px solid #fedf89;color:#93370d;font-size:13px;">
-                        <div style="font-weight:700;margin-bottom:8px;">Waiting for somebody to say what happened</div>
-                        <div id="bpWaitingRows"></div>
-                    </div>
-                </div>
-
-                <div style="text-align:center;margin:26px 0;">
-                    <button id="rpTestBtn" onclick="rpTestPrint()"
-                        style="background:linear-gradient(135deg,#43cea2,#185a9d);color:#fff;border:none;
-                               padding:18px 46px;border-radius:14px;font-size:18px;font-weight:700;cursor:pointer;
-                               box-shadow:0 6px 18px rgba(24,90,157,.3);">
-                        🧾 PRINT A TEST RECEIPT
-                    </button>
-                    <div style="color:#9ca3af;font-size:13px;margin-top:10px;">
-                        Prints a sample on the paper you have loaded, so you find out here rather than at the till
-                    </div>
-                </div>
-
-                <div style="border-top:1px solid #e9ecef;padding-top:16px;text-align:right;">
-                    <button class="btn btn-primary" onclick="rpSave()"
-                        style="padding:14px 28px;border-radius:10px;">💾 Save Settings</button>
-                </div>
+                </section>
+                <section id="printer-panel-3" class="printer-panel" role="tabpanel" aria-labelledby="printer-nav-3" hidden>
+                    <div class="printer-card printer-guide"><h2>Printing stops after idle</h2><p class="printer-note">Change one setting at a time and record its original value. Check the queue before sending another copy.</p><ol id="printerEnvironmentSteps"></ol></div>
+                    <div class="printer-card printer-guide"><h2>Power &amp; connections</h2><div id="wrPower"></div><p>For a dedicated counter, keep the computer plugged in and prevent sleep or hibernate while serving. Battery settings affect battery life. Posnic does not change these Windows settings.</p><p>If USB disconnects, inspect the affected USB hub in Device Manager → Properties → Power Management. Temporarily test without “Allow the computer to turn off this device to save power”, where available. Restore it if there is no improvement.</p><p>For extender connections, test with a short direct USB cable across the usual idle period. Initialization cannot restore a device Windows cannot see.</p></div>
+                    <div class="printer-card printer-guide"><h2>About idle initialization</h2><p>ESC @ resets printer state; it is not a guaranteed wake command. Enable only for compatible ESC/POS printers. It pauses during app printing or disconnection. Do not run a separate keep-alive helper alongside it.</p><p class="printer-note">Checks refresh while this page is open. System results may be cached for one minute. Windows recovery controls are available on Windows only.</p></div>
+                </section>
             </div>
 
             <div id="cashTab" class="tab-content">
@@ -903,33 +838,6 @@
                 rather than left out. A log of successes only is silent at
                 exactly the moment somebody needs it.
             -->
-            <div style="margin-top:26px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                    <div style="font-size:15px;font-weight:700;color:#374151;">🧾 Receipt &amp; Bill Prints</div>
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <input type="date" id="rcptLogDate" style="padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:13px;">
-                        <button onclick="rcptLoadLogs()" class="btn btn-primary" style="padding:8px 16px;font-size:13px;">🔍 Load</button>
-                    </div>
-                </div>
-                <div style="background:#fff;border:2px solid #e9ecef;border-radius:12px;overflow:hidden;">
-                    <div id="rcptLogsEmpty" style="padding:32px;text-align:center;color:#9ca3af;font-size:14px;">Select a date and click Load to view receipt prints.</div>
-                    <table id="rcptLogsTable" style="display:none;width:100%;border-collapse:collapse;font-size:13px;">
-                        <thead>
-                            <tr style="background:#f8f9fa;border-bottom:2px solid #e9ecef;">
-                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Time</th>
-                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Bill</th>
-                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Document</th>
-                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">From</th>
-                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Printers</th>
-                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Speed</th>
-                                <th style="padding:10px 12px;text-align:left;font-weight:700;color:#374151;">Result</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rcptLogsBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
             <!-- KOT Delete Confirm Modal -->
             <div id="kotDeleteConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:center;justify-content:center;">
                 <div style="background:#fff;width:360px;max-width:92%;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;">
@@ -1368,6 +1276,26 @@
         // ===========================
         // TAB SWITCHING
         // ===========================
+        function showPrinterPanel(index, focus = false) {
+            const tabs = Array.from(document.querySelectorAll('.printer-nav [role="tab"]'));
+            if (!tabs[index]) return;
+            tabs.forEach((tab, i) => {
+                tab.setAttribute('aria-selected', String(i === index));
+                tab.tabIndex = i === index ? 0 : -1;
+                document.getElementById(tab.getAttribute('aria-controls')).hidden = i !== index;
+            });
+            if (focus) tabs[index].focus();
+        }
+        document.querySelector('.printer-nav').addEventListener('keydown', event => {
+            const tabs = Array.from(document.querySelectorAll('.printer-nav [role="tab"]'));
+            const current = tabs.indexOf(event.target);
+            if (current < 0) return;
+            const next = { ArrowRight: (current + 1) % tabs.length, ArrowLeft: (current + tabs.length - 1) % tabs.length, Home: 0, End: tabs.length - 1 }[event.key];
+            if (next === undefined) return;
+            event.preventDefault();
+            showPrinterPanel(next, true);
+        });
+
         function switchTab(tabName) {
             const selectedButton = Array.from(document.querySelectorAll('.tabs .tab')).find(button => button.getAttribute('onclick') === "switchTab('" + tabName + "')");
             if (!selectedButton || selectedButton.classList.contains('tab-disabled')) {
@@ -2197,11 +2125,19 @@
                         const row = document.createElement('li'); row.textContent = message; steps.appendChild(row);
                     });
                 }
+                const summary = document.getElementById('printerHealthSummary');
+                const pending = (status.jobs || []).filter(job => job.canRecover || /failed|uncertain|unknown|offline/i.test(job.status || '')).length;
+                summary.textContent = !status.supported ? 'Windows recovery is not available on this platform.'
+                    : pending ? pending + ' print job(s) need attention. Review diagnostics before retrying.'
+                    : status.helper?.state === 'ready' ? 'Print service ready · Confirm output at the printer.'
+                    : 'Print service: ' + (status.helper?.state || 'not checked') + ' · Open diagnostics for details.';
+                summary.parentElement.classList.toggle('needs-attention', pending > 0 || status.helper?.state === 'backoff');
                 if (!status.supported) return;
                 document.getElementById('windowsRecovery').style.display = 'block';
                 wrBindings = status.bindings || {};
                 document.getElementById('wrMessage').textContent = status.helper
-                    ? 'Print helper: ' + status.helper.state + (status.helper.diagnostic ? ' | Last diagnostic: ' + JSON.stringify(status.helper.diagnostic) : '') : '';
+                    ? 'Print helper: ' + status.helper.state : '';
+                document.getElementById('wrDiagnostic').textContent = status.helper?.diagnostic ? JSON.stringify(status.helper.diagnostic, null, 2) : 'No startup diagnostic recorded.';
                 const power = document.getElementById('wrPower');
                 power.replaceChildren();
                 const messages = status.systemSettings?.guidance || ['Power settings have not been checked.'];
@@ -2234,6 +2170,7 @@
                 });
             } catch (error) {
                 document.getElementById('wrMessage').textContent = error.message;
+                document.getElementById('printerHealthSummary').textContent = 'Unable to check print service. Open diagnostics for details.';
                 const status = document.getElementById('printerEnvironmentStatus');
                 if (status) status.textContent = 'Could not check settings. Open your system printer queue and Power settings; check paper, cover and connection. ' + error.message;
             }
