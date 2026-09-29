@@ -249,3 +249,22 @@ produces a null summary and register-unavailable kind. Thirteen notification and
 eighteen HTTP integration tests pass, including corrupted stored amounts,
 publisher changes, permission loss, source reopening and hidden-page pagination.
 Push delivery and public schedule negotiation/mobile controls remain incomplete.
+## Close push and schedule API checkpoint
+
+Register Inbox entries now enter the existing per-device push queue. Both queue
+creation and every pending send/retry reload the Inbox event and current account
+scope, source close and matching schedule revision. Deleted events, reopened or
+changed closes, permission removal, disabled/revised preferences, closes before
+activation or beyond the 24-hour window stop delivery. Existing session/device
+revocation, one-hour push staleness, quiet hours, backoff and provider receipts
+remain in force. Only the generic localized text and opaque event ID reach the
+provider; financial amounts and register details remain inside authenticated
+Inbox reads. Provider receipt polling does not send another notification.
+
+Preference GET/POST requests with `scheduleVersion=2` now opt into the versioned
+mode contract. Discovery with `registerSessions=1` advertises
+`registerSchedules: register-close-v1`. Legacy clients keep the daily contract and
+cannot reset a newer close preference. Fourteen push, thirteen notification and
+eighteen HTTP integration tests pass. The new push checks use a fake transport;
+no real provider notification or physical-device delivery has been qualified.
+Mobile schedule controls and close Inbox rendering remain to be implemented.

@@ -125,6 +125,15 @@ async function unregisterDevice(db, identity) {
   return { enabled: false };
 }
 async function currentScope(db, accountId, license, branchId, now, event = {}) {
+  if (['register_summary', 'register_unavailable'].includes(event.kind))
+    return require('./business-register-notifications').registerPushScope(
+      db,
+      accountId,
+      license,
+      branchId,
+      event,
+      now
+    );
   if (event.kind === 'approval_requested')
     return require('./business-approval-notifications').approvalAlertScope(
       db,

@@ -481,3 +481,101 @@ test('switching to close mode cancels an already queued daily push retry', async
   assert.equal(sends, 1);
   assert.equal((await db.collection('business_push_deliveries').findOne({})).state, 'stopped');
 });
+
+async function registerFixture() {
+  const f = await fixture();
+  await db.collection('business_inbox').deleteOne({ _id: f.event._id });
+  const context = await createBusinessAccess(db, { now: () => at }).contextFor(f.user);
+  await savePreference(
+    db,
+    context,
+    f.event.branchId,
+    {
+      expectedRevision: 1,
+      enabled: true,
+      time: '23:00',
+      locale: 'en',
+      quiet: { enabled: false, start: '22:00', end: '07:00' },
+      scheduleVersion: 2,
+      mode: 'register-close',
+    },
+    { now: () => at - 3 * 3600000, scheduleVersion: 2 }
+  );
+  const close = {
+    _id: new ObjectId(),
+    license: f.user.license,
+    branch_id: new ObjectId(f.event.branchId),
+    register_id: new ObjectId(),
+    register_name: 'Counter',
+    register_status: 'Closed',
+    register_opendate: new Date(at - 2 * 3600000),
+    register_closedate: new Date(at - 3600000),
+  };
+  await db.collection('cashregister').insertOne(close);
+  await require('../src/services/business-register-notifications').prepareRegisterCloses(db, {
+    now: () => at,
+  });
+  const event = await db.collection('business_inbox').findOne({ accountId: String(f.user._id) });
+  assert.equal(event.kind, 'register_unavailable');
+  assert.equal(event.pushPending, true);
+  return { ...f, context, close, event };
+}
+
+test('actual close Inbox materialization sends one private push across concurrent workers', async () => {
+  const f = await registerFixture();
+  let sends = 0;
+  const options = {
+    config,
+    now: () => at,
+    transport: {
+      send: async (...args) => {
+        sends++;
+        assert.deepEqual(args, [token, String(f.event._id), 'en']);
+        return '22222222-2222-4222-8222-222222222222';
+      },
+    },
+  };
+  await Promise.all([push.drainPush(db, options), push.drainPush(db, options)]);
+  assert.equal(sends, 1);
+  assert.equal((await db.collection('business_push_deliveries').findOne({})).state, 'receipt');
+});
+
+test('close push retries recheck source, schedule revision, account access and Inbox existence', async () => {
+  for (const change of ['reopen', 'revision', 'access', 'deleted', 'changed-close']) {
+    db = client.db('close_retry_' + new ObjectId());
+    const f = await registerFixture();
+    let sends = 0;
+    const transport = {
+      send: async () => {
+        sends++;
+        throw new Error('temporary');
+      },
+    };
+    await push.drainPush(db, { config, now: () => at, transport });
+    assert.equal(sends, 1);
+    if (change === 'reopen')
+      await db
+        .collection('cashregister')
+        .updateOne({ _id: f.close._id }, { $set: { register_status: 'Opened' } });
+    if (change === 'changed-close')
+      await db
+        .collection('cashregister')
+        .updateOne(
+          { _id: f.close._id },
+          { $set: { register_closedate: new Date(at - 2 * 3600000) } }
+        );
+    if (change === 'revision')
+      await db
+        .collection('business_notification_preferences')
+        .updateOne({ accountId: String(f.user._id) }, { $inc: { revision: 1 } });
+    if (change === 'access')
+      await db.collection('users').updateOne({ _id: f.user._id }, { $set: { branch_access: [] } });
+    if (change === 'deleted') await db.collection('business_inbox').deleteOne({ _id: f.event._id });
+    await push.drainPush(db, { config, now: () => at + 60000, transport });
+    assert.equal(sends, 1, change);
+    const delivery = await db
+      .collection('business_push_deliveries')
+      .findOne({ eventId: String(f.event._id) });
+    assert.equal(delivery.state, 'stopped', change);
+  }
+});

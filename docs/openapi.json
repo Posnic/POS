@@ -1933,7 +1933,7 @@
     },
     "/business/v1/notifications/preferences/{branchId}": {
       "get": {
-        "summary": "branchId",
+        "summary": "scheduleVersion",
         "operationId": "get_business_v1_notifications_preferences_branchId",
         "tags": [
           "Business access"
@@ -1966,7 +1966,7 @@
         "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
       },
       "post": {
-        "summary": "body",
+        "summary": "scheduleVersion",
         "operationId": "post_business_v1_notifications_preferences_branchId",
         "tags": [
           "Business access"

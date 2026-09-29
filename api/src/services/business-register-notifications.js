@@ -217,7 +217,7 @@ async function materializeClose(db, job, lease, sessionId, summary, { now = Date
         expiresAt: new Date(now() + 90 * 86400000),
         locale: job.locale,
         channel: 'inApp',
-        pushPending: false,
+        pushPending: true,
       },
     },
     { upsert: true }
@@ -272,4 +272,63 @@ async function visibleRegisterEvents(db, context, rows, now = Date.now) {
   }
   return visible;
 }
-module.exports = { prepareRegisterCloses, visibleRegisterEvents };
+async function registerPushScope(db, accountId, license, branchId, event, now = Date.now) {
+  const denied = () => {
+    throw Object.assign(new Error('access_denied'), { status: 403, code: 'access_denied' });
+  };
+  const eventId = String(event.eventId ?? event._id ?? '');
+  if (!/^[a-f\d]{24}$/.test(eventId)) denied();
+  const row = await db.collection('business_inbox').findOne(
+    {
+      _id: new ObjectId(eventId),
+      accountId,
+      license,
+      branchId,
+      kind: event.kind,
+      expiresAt: { $gt: new Date(now()) },
+    },
+    { maxTimeMS: 250 }
+  );
+  if (!row || !['register_summary', 'register_unavailable'].includes(row.kind)) denied();
+  const user = await db
+    .collection('users')
+    .findOne({ _id: new ObjectId(accountId), license }, { maxTimeMS: 250 });
+  const context = await createBusinessAccess(db, { now }).contextFor(user);
+  let close;
+  try {
+    close = await readRegisterClose(db, context, branchId, row.sessionId, { now });
+  } catch (error) {
+    if (['close_unavailable', 'access_denied', 'invalid_scope'].includes(error.code)) denied();
+    throw error;
+  }
+  if (
+    !close ||
+    !row.close ||
+    close.closeRevision !== row.closeRevision ||
+    Object.keys(close).some((k) => row.close[k] !== close[k]) ||
+    now() < Date.parse(close.eligibleAt) ||
+    now() - Date.parse(close.closedAt) > 86400000
+  )
+    denied();
+  const preference = await db.collection('business_notification_preferences').findOne(
+    {
+      _id: accountId + ':' + branchId,
+      license,
+      enabled: true,
+      mode: 'register-close',
+      scheduleVersion: 2,
+      revision: row.scheduleRevision,
+    },
+    { maxTimeMS: 250 }
+  );
+  if (
+    !preference ||
+    !(preference.closeNotBefore instanceof Date) ||
+    !Number.isFinite(preference.closeNotBefore.getTime()) ||
+    Date.parse(close.closedAt) < preference.closeNotBefore.getTime()
+  )
+    denied();
+  const branch = context.branches.find((b) => b.id === branchId);
+  return { context, preference, branch };
+}
+module.exports = { prepareRegisterCloses, visibleRegisterEvents, registerPushScope };

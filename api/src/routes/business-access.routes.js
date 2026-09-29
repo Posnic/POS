@@ -70,7 +70,11 @@ router.get('/discovery', (_req, res) =>
     reporting: 'bounded-summary-v2',
     ...(_req.query.items === '1' ? { itemReporting: 'bounded-items-v1' } : {}),
     ...(_req.query.registerSessions === '1'
-      ? { registerReporting: 'bounded-register-session-v1', registerInbox: 'inbox-register-v1' }
+      ? {
+          registerReporting: 'bounded-register-session-v1',
+          registerInbox: 'inbox-register-v1',
+          registerSchedules: 'register-close-v1',
+        }
       : {}),
     ...(_req.query.approvals === '1' && process.env.POSNIC_BUSINESS_DECISIONS === '1'
       ? { approvalAlerts: 'inbox-approval-v1' }
@@ -270,7 +274,8 @@ router.get(
       await require('../services/business-notifications').getPreference(
         req.db,
         await req.businessAccess.contextFor(req.businessIdentity.user),
-        req.params.branchId
+        req.params.branchId,
+        { scheduleVersion: req.query.scheduleVersion === '2' ? 2 : 1 }
       )
     )
   )
@@ -283,7 +288,8 @@ router.post(
         req.db,
         await req.businessAccess.contextFor(req.businessIdentity.user),
         req.params.branchId,
-        req.body
+        req.body,
+        { scheduleVersion: req.query.scheduleVersion === '2' ? 2 : 1 }
       )
     )
   )

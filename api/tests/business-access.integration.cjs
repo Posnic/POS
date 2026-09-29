@@ -1004,6 +1004,30 @@ test('register-summary HTTP reads negotiate separately and enforce current sourc
   ).json();
   assert.equal(discovery.registerReporting, 'bounded-register-session-v1');
   assert.equal(discovery.registerInbox, 'inbox-register-v1');
+  assert.equal(discovery.registerSchedules, 'register-close-v1');
+  const preferenceUrl = base + '/api/business/v1/notifications/preferences/' + id;
+  const closePreference = {
+    expectedRevision: 0,
+    enabled: true,
+    time: '23:00',
+    locale: 'en',
+    quiet: { enabled: false, start: '22:00', end: '07:00' },
+    mode: 'register-close',
+    scheduleVersion: 2,
+  };
+  const save = await fetch(preferenceUrl + '?scheduleVersion=2', {
+    method: 'POST',
+    headers: { ...headers, 'content-type': 'application/json' },
+    body: JSON.stringify(closePreference),
+  });
+  assert.equal(save.status, 200);
+  assert.equal((await save.json()).mode, 'register-close');
+  assert.equal((await fetch(preferenceUrl, { headers })).status, 409);
+  const preference = await (await fetch(preferenceUrl + '?scheduleVersion=2', { headers })).json();
+  assert.equal(preference.scheduleVersion, 2);
+  assert.equal(preference.nextSendAt, null);
+  assert.equal(preference.revision, 1);
+
   const eventId = new ObjectId();
   await db.collection('business_inbox').insertOne({
     _id: eventId,
