@@ -80,6 +80,14 @@ PosnicPro.request = function (params, callback, failure = null) {
     {
         // JWT Token support for Electron cross-origin requests
         var headers = {};
+        var activeBranch = PosnicPro.local.get('branch_id_set');
+        if (activeBranch && params.url !== 'users/changeBranch') headers['X-Branch-Id'] = activeBranch;
+        if (typeof billingWindowId !== 'undefined' && billingWindowId && params.url === 'users/changeBranch') {
+            window.alert('This window belongs to one branch. Open another outlet from the main window.'); return;
+        }
+        if (PosnicPro.billingoutlets && /^(POST|PUT)$/i.test(method) && /^sales(?:$|\/(?:hold|[a-f0-9]{24})$)/.test(params.url)) {
+            data = PosnicPro.billingoutlets.payload(data);
+        }
         var deviceId = PosnicPro.requestDeviceId();
         if (deviceId) { headers['X-Device-Id'] = deviceId; }
         /* The API returns this derived token on any cookie-authenticated

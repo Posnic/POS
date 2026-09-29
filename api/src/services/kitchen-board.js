@@ -65,6 +65,8 @@ function project(sale) {
         saleId: String(sale._id),
         roundId: round.id,
         table: String(sale.table_number || ''),
+        outlet: String(sale.outlet_snapshot?.name || ''),
+        roomReference: String(sale.room_reference || ''),
         placedAt: round.fired_at || round.ordered_at,
         state,
         owner: String(owner.id || ''),
@@ -84,6 +86,8 @@ async function list(req) {
       {
         projection: {
           table_number: 1,
+          'outlet_snapshot.name': 1,
+          room_reference: 1,
           created_date: 1,
           items: 1,
           changes: 1,

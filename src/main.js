@@ -27,6 +27,7 @@ const {
  * at event.senderFrame. backup:restore and backup:delete were among them.
  */
 const ipcMain = require('./ipc-guard').guard(rawIpcMain);
+require('./billing-windows').register({ ipcMain, BrowserWindow });
 const {
   showSplash,
   closeSplash,

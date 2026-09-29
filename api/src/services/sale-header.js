@@ -57,6 +57,8 @@ function calculateSaleHeader(data, sale_tot_amount, context) {
     itemsTotAmount = itemsTotAmount - loyaltyRedeemValue;
   }
 
+  itemsTotAmount += Number(context.outletCharge) || 0;
+
   // Fetch Branch Settings for Round Off
   const roundOffSetting = context.roundOff === true;
 

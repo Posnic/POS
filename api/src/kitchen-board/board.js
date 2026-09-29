@@ -150,6 +150,7 @@
         }
         top.append(table, node('span', 'arrival', time(ticket.placedAt)));
         card.append(top);
+        if (ticket.outlet || ticket.roomReference) card.append(node('div', 'note', [ticket.outlet, ticket.roomReference ? 'Room / reference: ' + ticket.roomReference : ''].filter(Boolean).join(' · ')));
         const items = node('ul', 'items');
         for (const item of ticket.items) {
           const li = node('li');
