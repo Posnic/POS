@@ -560,3 +560,231 @@ test('tampered source snapshots cannot be retried, silently overwritten or trans
   assert.equal(sent, false);
   assert.equal((await f.state()).nextPage, 0);
 });
+
+async function cloudSenderFixture(count = 103, transform) {
+  const f = await senderFixture(count);
+  const path = require('node:path'),
+    root = process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT;
+  const { MongoClient: GatewayClient } = require(
+    path.join(root, 'apps/sync-gateway/node_modules/mongodb')
+  );
+  const { createStockSnapshotPublisher } = require(
+    path.join(root, 'apps/sync-agent/src/business-stock-snapshots')
+  );
+  const { receiveStockSnapshot } = require(
+    path.join(root, 'apps/sync-gateway/src/business-stock-snapshots')
+  );
+  const {
+    createStockSnapshotAgentTransport,
+  } = require('../src/services/business-stock-snapshot-agent-transport');
+  const { createStockSnapshotSender } = require('../src/services/business-stock-snapshot-sender');
+  const gateway = await GatewayClient.connect(mongo.getUri());
+  const agentDb = gateway.db(f.db.databaseName),
+    cloud = gateway.db('cloud_sender_' + f.db.databaseName);
+  await cloud.collection('branches').insertOne(await agentDb.collection('branches').findOne({}));
+  await cloud
+    .collection('business_reporting_publishers')
+    .insertOne(await agentDb.collection('business_reporting_publishers').findOne({}));
+  await f.db
+    .collection('business_reporting_local')
+    .updateOne({ kind: 'job' }, { $set: { publisherMode: 'cloud' } });
+  await f.db.collection('business_reporting_local').insertOne({
+    _id: 'desktop-runtime',
+    protocolVersion: 2,
+    stockSnapshotVersion: 1,
+    expiresAt: new Date(f.now() + 1200000),
+    stockSnapshotExpiresAt: new Date(f.now() + 1200000),
+  });
+  const publications = [];
+  const request = async (route, body) => {
+    if (route === '/v1/business/reporting/claim')
+      return { branchId: f.branch.id, assignmentId: f.owner.assignmentId, epoch: f.owner.epoch };
+    assert.equal(route, '/v1/business/reporting/stock-snapshot');
+    publications.push(structuredClone(body));
+    return receiveStockSnapshot(cloud, f.device, body, { now: f.now });
+  };
+  const sender = createStockSnapshotSender(f.db, {
+    now: f.now,
+    send: createStockSnapshotAgentTransport(f.db, { now: f.now }),
+  });
+  const agent = (hook) =>
+    createStockSnapshotPublisher({
+      db: agentDb,
+      now: f.now,
+      send: hook ? (route, body) => hook(route, body, request) : request,
+    });
+  return { ...f, gateway, cloud, sender, agent, publications, transform };
+}
+const cloudTest = { skip: !process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT };
+test(
+  'real desktop mailbox, agent and Gateway resume after lost acknowledgement and consume exact saved receipts',
+  cloudTest,
+  async () => {
+    const f = await cloudSenderFixture();
+    try {
+      await f.sender.stage(await f.scan(), f.branch, 'cloud');
+      await assert.rejects(f.sender.tick(), /stock_snapshot_awaiting_agent/);
+      let lost = false;
+      const first = f.agent(async (route, body, request) => {
+        const response = await request(route, body);
+        if (route.endsWith('/stock-snapshot') && !lost) {
+          lost = true;
+          throw new Error('lost cloud response');
+        }
+        return response;
+      });
+      await assert.rejects(first.tick(), /lost cloud response/);
+      assert.equal((await f.state()).transportNextPage, 0);
+      f.advance(10000);
+      assert.deepEqual(await f.agent().tick(), { sent: 2, complete: true });
+      assert.deepEqual(f.publications[0], f.publications[1]);
+      assert.deepEqual(await f.sender.tick(), { sent: 2, complete: true });
+      assert.equal((await f.state()).observation, undefined);
+      assert.equal((await f.state()).transportReceipts, undefined);
+      assert.equal((await f.state()).nextTransportAt, undefined);
+      const ready = await f.cloud
+        .collection('business_reporting_publishers')
+        .findOne({ _id: f.branch.id });
+      assert.equal(ready.stockSnapshot.summary.coverage.verifiedItems, 103);
+      f.advance();
+      await f.sender.stage(await f.scan(), f.branch, 'cloud');
+      await assert.rejects(f.sender.tick(), /stock_snapshot_awaiting_agent/);
+      assert.equal((await f.state()).transportNextPage, 0);
+      assert.equal((await f.state()).transportBinding, undefined);
+    } finally {
+      await f.gateway.close();
+    }
+  }
+);
+test(
+  'Cloud snapshot capability is rechecked after assignment lookup and stale heartbeat fields cannot authorize upload',
+  cloudTest,
+  async () => {
+    const f = await cloudSenderFixture(1);
+    try {
+      await f.sender.stage(await f.scan(), f.branch, 'cloud');
+      await assert.rejects(f.sender.tick(), /stock_snapshot_awaiting_agent/);
+      const agent = f.agent(async (route, body, request) => {
+        const result = await request(route, body);
+        if (route.endsWith('/claim'))
+          await f.db
+            .collection('business_reporting_local')
+            .updateOne(
+              { _id: 'desktop-runtime' },
+              { $set: { expiresAt: new Date(f.now() + 1300000) } }
+            );
+        return result;
+      });
+      await assert.rejects(agent.tick(), /stock_snapshot_worker_unavailable/);
+      assert.equal(f.publications.length, 0);
+      f.advance(10000);
+      assert.equal(await f.agent().tick(), undefined);
+      assert.equal(await f.cloud.collection('business_stock_snapshot_pages').countDocuments({}), 0);
+    } finally {
+      await f.gateway.close();
+    }
+  }
+);
+test(
+  'Cloud snapshot agent does not acknowledge malformed receipts or late responses after a lease replacement',
+  cloudTest,
+  async () => {
+    for (const mode of ['receipt', 'lease']) {
+      const f = await cloudSenderFixture(1);
+      try {
+        await f.sender.stage(await f.scan(), f.branch, 'cloud');
+        await assert.rejects(f.sender.tick(), /stock_snapshot_awaiting_agent/);
+        const agent = f.agent(async (route, body, request) => {
+          const result = await request(route, body);
+          if (route.endsWith('/stock-snapshot')) {
+            if (mode === 'receipt') return { ...result, complete: false };
+            await f.db
+              .collection('business_stock_alert_local')
+              .updateOne({ kind: 'snapshot' }, { $set: { transportLeaseId: 'successor' } });
+          }
+          return result;
+        });
+        if (mode === 'receipt')
+          await assert.rejects(agent.tick(), /invalid_stock_snapshot_receipt/);
+        else await agent.tick();
+        assert.equal((await f.state()).transportNextPage, 0);
+        assert.equal((await f.state()).transportReceipts, undefined);
+        f.advance(31000);
+        assert.deepEqual(await f.agent().tick(), { sent: 1, complete: true });
+        assert.deepEqual(await f.sender.tick(), { sent: 1, complete: true });
+      } finally {
+        await f.gateway.close();
+      }
+    }
+  }
+);
+test(
+  'Cloud snapshot agent cannot adopt a replacement assignment when binding its staged observation',
+  cloudTest,
+  async () => {
+    const f = await cloudSenderFixture(1);
+    try {
+      await f.sender.stage(await f.scan(), f.branch, 'cloud');
+      await assert.rejects(f.sender.tick(), /stock_snapshot_awaiting_agent/);
+      const agent = f.agent(async (route, body, request) =>
+        route.endsWith('/claim')
+          ? { branchId: f.branch.id, assignmentId: 'z'.repeat(43), epoch: 2 }
+          : request(route, body)
+      );
+      await assert.rejects(agent.tick(), /publisher_not_assigned/);
+      assert.equal((await f.state()).assignmentId, f.owner.assignmentId);
+      assert.equal(f.publications.length, 0);
+    } finally {
+      await f.gateway.close();
+    }
+  }
+);
+
+test(
+  'existing agent reporting tick drains the snapshot mailbox and keeps ordinary work discovery',
+  cloudTest,
+  async () => {
+    const f = await cloudSenderFixture(1);
+    try {
+      await f.sender.stage(await f.scan(), f.branch, 'cloud');
+      await assert.rejects(f.sender.tick(), /stock_snapshot_awaiting_agent/);
+      const path = require('node:path');
+      const { createBusinessPublisher } = require(
+        path.join(
+          process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT,
+          'apps/sync-agent/src/business-reporting'
+        )
+      );
+      const { receiveStockSnapshot } = require(
+        path.join(
+          process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT,
+          'apps/sync-gateway/src/business-stock-snapshots'
+        )
+      );
+      let work = 0;
+      const publisher = createBusinessPublisher({
+        db: f.db,
+        now: f.now,
+        send: async (route, body) => {
+          if (route.endsWith('/work')) {
+            work++;
+            return [];
+          }
+          if (route.endsWith('/claim'))
+            return {
+              branchId: f.branch.id,
+              assignmentId: f.owner.assignmentId,
+              epoch: f.owner.epoch,
+            };
+          assert.equal(route, '/v1/business/reporting/stock-snapshot');
+          return receiveStockSnapshot(f.cloud, f.device, body, { now: f.now });
+        },
+      });
+      await publisher.tick();
+      assert.equal(work, 1);
+      assert.equal((await f.state()).transportReceipts['0'].complete, true);
+    } finally {
+      await f.gateway.close();
+    }
+  }
+);

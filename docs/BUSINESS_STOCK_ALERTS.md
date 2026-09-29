@@ -231,3 +231,19 @@ invalid final receipts, frozen assignment, expiry, absent live jobs, stop/lease
 loss and corrupted staged facts. Existing cross-repository receipt equivalence
 remains covered. Lint and formatting pass. Recipient notification delivery remains
 unfinished.
+
+Cloud snapshot mailbox checkpoint: the desktop now queues its staged observation
+for the credential-owning sync agent and consumes exact durable page receipts.
+Agent upload progress is independent of desktop receipt consumption, with strict
+snapshot identity, assignment binding and lease-fenced updates. Completion and
+successor staging clear obsolete transport state. The agent uses the existing
+reporting tick and a current, explicitly advertised snapshot capability; production
+heartbeats do not advertise it yet.
+
+Twenty-two snapshot integration tests pass, including the actual desktop mailbox,
+agent and Gateway under lost acknowledgement, capability withdrawal, malformed
+receipt, lease replacement and publisher replacement. The ordinary reporting tick
+continues work discovery after the snapshot lane. Gateway's 38 reporting/receiver
+tests also pass. Cloud recipient snapshot lookup, baseline/deduplication, live ACL,
+quiet hours and notification delivery remain unfinished. No production activation
+or packaged/HTTPS deployment qualification is implied by these in-process tests.

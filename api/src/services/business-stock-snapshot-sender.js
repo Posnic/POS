@@ -133,7 +133,21 @@ function createStockSnapshotSender(db, { send, now = Date.now } = {}) {
                 }
               : {}),
           },
-          $unset: { leaseId: '', leaseUntil: '', error: '', lastReceipt: '', completedAt: '' },
+          $unset: {
+            leaseId: '',
+            leaseUntil: '',
+            error: '',
+            lastReceipt: '',
+            completedAt: '',
+            nextTransportAt: '',
+            transportNextPage: '',
+            transportReceipts: '',
+            transportCompletedAt: '',
+            transportBinding: '',
+            transportLeaseId: '',
+            transportLeaseUntil: '',
+            transportError: '',
+          },
         },
         { upsert: !prior, maxTimeMS: 500 }
       );
@@ -248,6 +262,14 @@ function createStockSnapshotSender(db, { send, now = Date.now } = {}) {
                 ? {
                     $unset: {
                       observation: '',
+                      nextTransportAt: '',
+                      transportNextPage: '',
+                      transportReceipts: '',
+                      transportCompletedAt: '',
+                      transportBinding: '',
+                      transportLeaseId: '',
+                      transportLeaseUntil: '',
+                      transportError: '',
                       nextAttemptAt: '',
                       leaseId: '',
                       leaseUntil: '',
