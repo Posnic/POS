@@ -745,3 +745,96 @@ test('actual desktop observation and acknowledged handoff traverse the Gateway c
     await gatewayClient.close();
   }
 });
+
+test('desktop mailbox and real sync-agent publisher preserve assignment and batch through a lost acknowledgement', async (t) => {
+  const gatewayRoot = process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT;
+  if (!gatewayRoot)
+    return t.skip('Set POSNIC_BUSINESS_TEST_GATEWAY_ROOT for sync-agent integration');
+  const path = require('node:path');
+  const { MongoClient: GatewayClient } = require(
+    path.join(gatewayRoot, 'apps/sync-gateway/node_modules/mongodb')
+  );
+  const { createBusinessReporting } = require(
+    path.join(gatewayRoot, 'apps/sync-gateway/src/business-reporting')
+  );
+  const { createBusinessPublisher } = require(
+    path.join(gatewayRoot, 'apps/sync-agent/src/business-reporting')
+  );
+  const {
+    createStockAlertAgentTransport,
+  } = require('../src/services/business-stock-alert-agent-transport');
+  const gatewayClient = await GatewayClient.connect(mongo.getUri());
+  process.env.POSNIC_BUSINESS_STOCK_ALERTS = '1';
+  let at = now();
+  try {
+    const gatewayDb = gatewayClient.db(db.databaseName),
+      f = await fixture();
+    await f.journal(await f.scan());
+    const device = { deviceId: 'mailbox-test-desktop', branches: [f.branch.id] };
+    const gateway = createBusinessReporting(gatewayDb, { now: () => at });
+    const assignment = await gateway.claim(device, f.branch.id);
+    await db.collection('business_reporting_local').insertOne({
+      _id: f.branch.id + ':stock',
+      kind: 'job',
+      publisherMode: 'cloud',
+      summaryKind: 'stock',
+      license: f.branch.license,
+      branchId: f.branch.id,
+      assignmentId: assignment.assignmentId,
+      epoch: assignment.epoch,
+      expiresAt: new Date(at + 1800000),
+    });
+    await db.collection('business_reporting_local').updateOne(
+      { _id: 'desktop-runtime' },
+      {
+        $set: {
+          protocolVersion: 2,
+          expiresAt: new Date(at + 120000),
+          stockAlertVersion: 1,
+          stockAlertExpiresAt: new Date(at + 120000),
+        },
+      },
+      { upsert: true }
+    );
+    const handoff = createStockAlertHandoff(db, {
+      now: () => at,
+      send: createStockAlertAgentTransport(db, { now: () => at }),
+    });
+    await assert.rejects(handoff.tick(f.branch), /stock_alert_awaiting_agent/);
+    const uploads = [];
+    let claims = 0;
+    const send = async (route, body) => {
+      if (route.endsWith('/work')) return [];
+      if (route.endsWith('/claim')) {
+        claims++;
+        return gateway.claim(device, body.branchId);
+      }
+      assert.equal(route, '/v1/business/reporting/stock-alerts');
+      uploads.push(body);
+      const receipt = await gateway.stockAlerts(device, body);
+      if (uploads.length === 1) throw new Error('lost_http_ack');
+      return receipt;
+    };
+    await createBusinessPublisher({ db: gatewayDb, send, now: () => at }).tick();
+    assert.equal((await handoffRow(f.branch)).receipt, undefined);
+    assert.ok((await handoffRow(f.branch)).transportPublication);
+    assert.equal((await pendingFor(f)).length, 1);
+    at += 60001;
+    await createBusinessPublisher({ db: gatewayDb, send, now: () => at }).tick();
+    assert.deepEqual(uploads[0], uploads[1]);
+    assert.equal(claims, 1);
+    assert.equal((await handoff.tick(f.branch)).accepted, 1);
+    const completed = await handoffRow(f.branch);
+    assert.equal(completed.transportPublication, undefined);
+    assert.equal(completed.transportAssignmentId, undefined);
+    assert.equal((await pendingFor(f)).length, 0);
+    assert.equal(
+      await gatewayDb
+        .collection('business_stock_alert_batches')
+        .countDocuments({ branchId: f.branch.id }),
+      1
+    );
+  } finally {
+    await gatewayClient.close();
+  }
+});

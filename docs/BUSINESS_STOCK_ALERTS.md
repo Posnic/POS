@@ -77,9 +77,20 @@ batches retain publisher identity; a notification consumer must reject obsolete
 publisher generations. Cross-publisher episode deduplication remains unfinished.
 
 The sender's `send` adapter must use the assigned-publisher authenticated transport.
-Neither the receipt shape nor content digest is authentication. Production agent
-wiring, Community acceptance and producer activation are still outstanding. Queue
+Neither the receipt shape nor content digest is authentication. Community acceptance, deployment qualification and producer activation are still
+outstanding. Queue
 retention and consumer rate limits must be settled before activation.
+
+`createStockAlertAgentTransport` now connects the local handoff to the sync-agent
+mailbox without copying credentials. Before queueing a new batch, it requires a
+live Cloud stock reporting job and freezes its assignment/epoch. It returns only a
+validated durable receipt; a queued request remains unacknowledged. The agent
+checks the current desktop stock-alert heartbeat, uploads the frozen envelope
+through its existing authenticated connection, and saves the receipt for desktop
+cleanup. Cleanup clears the completed batch's transport fields so a subsequent
+batch can bind to the then-current reporting job. Capability withdrawal during
+assignment lookup prevents upload. No production heartbeat advertises this new
+capability yet; activation awaits the remaining delivery controls.
 
 Before activation, implement and qualify:
 
