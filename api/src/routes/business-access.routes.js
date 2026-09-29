@@ -296,6 +296,31 @@ router.post(
   )
 );
 router.get(
+  '/notifications/stock/:branchId',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-stock-notification-preferences').getStockPreference(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.params.branchId
+      )
+    )
+  )
+);
+router.post(
+  '/notifications/stock/:branchId',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-stock-notification-preferences').saveStockPreference(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.params.branchId,
+        req.body
+      )
+    )
+  )
+);
+router.get(
   '/notifications/approvals/:branchId',
   wrap(async (req, res) =>
     res.json(

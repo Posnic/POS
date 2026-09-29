@@ -1265,3 +1265,71 @@ test('stock HTTP reads negotiate explicitly and enforce current item ACL without
     .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
   assert.equal((await fetch(url, { headers })).status, 403);
 });
+
+test('stock-alert HTTP preferences require dedicated auth and current stock ACL without financial access', async () => {
+  const prior = process.env.POSNIC_BUSINESS_STOCK_ALERTS;
+  process.env.POSNIC_BUSINESS_STOCK_ALERTS = '1';
+  try {
+    const f = await fixture();
+    await db
+      .collection('users')
+      .updateOne({ _id: f.user._id }, { $set: { 'access.dashboard.financials': false } });
+    const value = await grant(f),
+      branchId = String(f.branch._id);
+    const url = base + '/api/business/v1/notifications/stock/' + branchId;
+    const headers = {
+      'x-forwarded-proto': 'https',
+      authorization: 'Bearer ' + value.token,
+      'content-type': 'application/json',
+    };
+    assert.equal((await fetch(url, { headers: { 'x-forwarded-proto': 'https' } })).status, 401);
+    assert.equal(
+      (await fetch(url, { headers: { authorization: headers.authorization } })).status,
+      426
+    );
+    const read = await fetch(url, { headers });
+    assert.equal(read.status, 200);
+    assert.equal(read.headers.get('cache-control'), 'no-store');
+    assert.equal((await read.json()).enabled, false);
+    const input = {
+      enabled: true,
+      expectedRevision: 0,
+      minimumIntervalMinutes: 30,
+      quiet: { enabled: true, start: '22:00', end: '07:00' },
+    };
+    assert.equal(
+      (await fetch(url, { method: 'POST', headers, body: JSON.stringify(input) })).status,
+      200
+    );
+    assert.equal(
+      (await fetch(url, { method: 'POST', headers, body: JSON.stringify(input) })).status,
+      409
+    );
+    assert.equal(
+      (await fetch(url.replace(branchId, String(new ObjectId())), { headers })).status,
+      403
+    );
+    await db
+      .collection('users')
+      .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
+    assert.equal((await fetch(url, { headers })).status, 403);
+    assert.equal(
+      (
+        await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ ...input, expectedRevision: 1 }),
+        })
+      ).status,
+      403
+    );
+    await db
+      .collection('users')
+      .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': true } });
+    process.env.POSNIC_BUSINESS_STOCK_ALERTS = '0';
+    assert.equal((await fetch(url, { headers })).status, 404);
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_STOCK_ALERTS;
+    else process.env.POSNIC_BUSINESS_STOCK_ALERTS = prior;
+  }
+});
