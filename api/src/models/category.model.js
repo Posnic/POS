@@ -148,7 +148,7 @@ categorySchema.statics = {
 
       const branch_id =
         user.branch_id ||
-        user.branch ||
+        (typeof user.branch === 'string' ? user.branch : user.branch?._id) ||
         user.default_branch_id ||
         (user.branch && user.branch._id) ||
         null;
@@ -171,12 +171,18 @@ categorySchema.statics = {
 
       // Step 1: Deduplicate by name (case-insensitive)
       const uniqueByName = new Map();
-      for (const row of rows) {
-        const name = (row.name || '').trim();
-        if (!name) continue;
+      for (const [index, row] of rows.entries()) {
+        const name = String(row?.name ?? '').trim();
+        if (!name) return { status: true, message: 'CSV', data: [{ row: index + 2, name, status: 'name' }] };
         const key = name.toLowerCase();
         if (!uniqueByName.has(key)) {
           uniqueByName.set(key, row);
+        } else {
+          const previous = uniqueByName.get(key);
+          const fields = ['description', 'discount_amount', 'discount_percentage'];
+          if (fields.some(field => String(previous[field] ?? '').trim() !== String(row[field] ?? '').trim())) {
+            return { status: true, message: 'CSV', data: [{ ...row, row: index + 2, status: 'Conflicting rows with the same category name' }] };
+          }
         }
       }
 
@@ -187,8 +193,8 @@ categorySchema.statics = {
       const validRecords = [];
 
       for (const row of records) {
-        const name = (row.name || '').trim();
-        const description = (row.description || '').trim();
+        const name = String(row.name ?? '').trim();
+        const description = String(row.description ?? '').trim();
 
         const discount_amount_raw =
           row.discount_amount !== undefined && row.discount_amount !== null
@@ -199,10 +205,13 @@ categorySchema.statics = {
             ? String(row.discount_percentage).trim()
             : '0';
 
-        const discount_amount = Number(discount_amount_raw) || 0;
-        const discount_percentage = Number(discount_percentage_raw) || 0;
+        const { importNumber } = require('../helpers/import-values');
+        const discount_amount = importNumber(discount_amount_raw, 0);
+        const discount_percentage = importNumber(discount_percentage_raw, 0);
 
         const errorFields = [];
+        if (!Number.isFinite(discount_amount) || discount_amount < 0) errorFields.push('discount_amount');
+        if (!Number.isFinite(discount_percentage) || discount_percentage < 0 || discount_percentage > 100) errorFields.push('discount_percentage');
 
         if (!name) {
           errorFields.push('name');
