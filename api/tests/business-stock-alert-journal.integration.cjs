@@ -451,3 +451,240 @@ test('a stopped worker preserves its observation for replay and does not advance
   assert.equal((await observationRow(f.branch)).observation, undefined);
   assert.equal((await f.states()).find((state) => state.itemId).pendingEvents.length, 1);
 });
+
+const {
+  createStockAlertHandoff,
+  digestOf,
+} = require('../src/services/business-stock-alert-handoff');
+const receiptFor = (batch) => ({
+  schemaVersion: 1,
+  batchId: batch.batchId,
+  digest: digestOf(batch),
+  accepted: true,
+});
+const handoffRow = (branch) =>
+  db
+    .collection('business_stock_alert_local')
+    .findOne({ _id: 'handoff:' + branch.license + ':' + branch.id });
+const pendingFor = async (f) =>
+  (await f.states()).filter((row) => row.itemId).flatMap((row) => row.pendingEvents);
+test('handoff retries the same persisted batch after server acceptance with a lost acknowledgement', async () => {
+  const f = await fixture(2);
+  await f.journal(await f.scan());
+  let at = now(),
+    calls = 0;
+  const payloads = [];
+  const send = async (batch) => {
+    payloads.push(batch);
+    const receipts = db.collection('test_stock_receipts');
+    await receipts.updateOne(
+      { _id: batch.batchId },
+      { $setOnInsert: { receipt: receiptFor(batch), batch } },
+      { upsert: true }
+    );
+    if (++calls === 1) throw new Error('acknowledgement_lost');
+    return (await receipts.findOne({ _id: batch.batchId })).receipt;
+  };
+  await assert.rejects(
+    createStockAlertHandoff(db, { now: () => at, send }).tick(f.branch),
+    /acknowledgement_lost/
+  );
+  assert.equal((await pendingFor(f)).length, 2);
+  const staged = await handoffRow(f.branch);
+  assert.ok(staged.batch);
+  at += 60001;
+  await createStockAlertHandoff(db, { now: () => at, send }).tick(f.branch);
+  assert.deepEqual(payloads[0], payloads[1]);
+  assert.equal(
+    await db.collection('test_stock_receipts').countDocuments({ _id: staged.batch.batchId }),
+    1
+  );
+  assert.equal((await pendingFor(f)).length, 0);
+  assert.equal((await handoffRow(f.branch)).batch, undefined);
+});
+test('wrong or partial receipts never remove local events', async () => {
+  const f = await fixture();
+  await f.journal(await f.scan());
+  let at = now();
+  for (const corrupt of [
+    (r) => ({ ...r, digest: '0'.repeat(64) }),
+    (r) => ({ ...r, batchId: 'foreign' }),
+    (r) => ({ ...r, accepted: false }),
+    (r) => ({ ...r, extra: true }),
+  ]) {
+    await assert.rejects(
+      createStockAlertHandoff(db, {
+        now: () => at,
+        send: async (batch) => corrupt(receiptFor(batch)),
+      }).tick(f.branch),
+      /invalid_stock_alert_receipt/
+    );
+    assert.equal((await pendingFor(f)).length, 1);
+    at += 60001;
+  }
+});
+test('restart after partial local cleanup uses the durable receipt without resending', async () => {
+  const f = await fixture(2);
+  await f.journal(await f.scan());
+  let at = now(),
+    interrupted = false,
+    calls = 0;
+  const wrappedDb = {
+    collection(name) {
+      const collection = db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (property === 'updateOne')
+            return async (...args) => {
+              const result = await target.updateOne(...args);
+              if (args[1].$pull && !interrupted) {
+                interrupted = true;
+                throw new Error('cleanup_crash');
+              }
+              return result;
+            };
+          const value = target[property];
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+    },
+  };
+  const send = async (batch) => {
+    calls++;
+    return receiptFor(batch);
+  };
+  await assert.rejects(
+    createStockAlertHandoff(wrappedDb, { now: () => at, send }).tick(f.branch),
+    /cleanup_crash/
+  );
+  assert.equal((await pendingFor(f)).length, 1);
+  assert.ok((await handoffRow(f.branch)).receipt);
+  at += 60001;
+  await createStockAlertHandoff(db, { now: () => at, send }).tick(f.branch);
+  assert.equal(calls, 1);
+  assert.equal((await pendingFor(f)).length, 0);
+});
+test('acknowledging an older episode preserves a newly appended low episode', async () => {
+  const f = await fixture();
+  await f.journal(await f.scan());
+  const sender = createStockAlertHandoff(db, {
+    now,
+    send: async (batch) => {
+      await db
+        .collection('items')
+        .updateOne({ _id: f.rows[0]._id }, { $set: { available_quantity: 5 } });
+      await f.journal(await f.scan());
+      await db
+        .collection('items')
+        .updateOne({ _id: f.rows[0]._id }, { $set: { available_quantity: 0 } });
+      await f.journal(await f.scan());
+      return receiptFor(batch);
+    },
+  });
+  await sender.tick(f.branch);
+  const events = await pendingFor(f);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].episode, 2);
+});
+test('handoff limits each batch to 50 item episodes and keeps the rest pending', async () => {
+  const f = await fixture(51);
+  const observation = await prepareDesktopStockObservation(db, f.branch);
+  await journalStockObservation(db, observation, f.branch);
+  const sent = [];
+  const sender = createStockAlertHandoff(db, {
+    send: async (batch) => {
+      sent.push(batch);
+      return receiptFor(batch);
+    },
+  });
+  await sender.tick(f.branch);
+  assert.equal(sent[0].events.length, 50);
+  assert.equal((await pendingFor(f)).length, 1);
+  await sender.tick(f.branch);
+  assert.equal(sent[1].events.length, 1);
+  assert.equal((await pendingFor(f)).length, 0);
+});
+test('cleanup yields at its time budget and resumes from the saved position without another send', async () => {
+  const f = await fixture(2);
+  await f.journal(await f.scan());
+  let at = now(),
+    calls = 0;
+  const wrappedDb = {
+    collection(name) {
+      const collection = db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (property === 'updateOne')
+            return async (...args) => {
+              const result = await target.updateOne(...args);
+              if (args[1].$pull) at += 3001;
+              return result;
+            };
+          const value = target[property];
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+    },
+  };
+  const send = async (batch) => {
+    calls++;
+    return receiptFor(batch);
+  };
+  const result = await createStockAlertHandoff(wrappedDb, { now: () => at, send }).tick(f.branch);
+  assert.equal(result.pendingCleanup, true);
+  assert.equal((await handoffRow(f.branch)).cleanupAfter, 1);
+  await createStockAlertHandoff(db, { now: () => at, send }).tick(f.branch);
+  assert.equal(calls, 1);
+  assert.equal((await pendingFor(f)).length, 0);
+});
+
+test('late acknowledgement from an expired handoff lease cannot erase a newer batch', async () => {
+  const f = await fixture();
+  await f.journal(await f.scan());
+  let at = now(),
+    entered,
+    resume;
+  const started = new Promise((resolve) => {
+    entered = resolve;
+  });
+  const paused = new Promise((resolve) => {
+    resume = resolve;
+  });
+  const slow = createStockAlertHandoff(db, {
+    now: () => at,
+    send: async (batch) => {
+      entered();
+      await paused;
+      return receiptFor(batch);
+    },
+  });
+  const pending = slow.tick(f.branch);
+  await started;
+  at += 30001;
+  await createStockAlertHandoff(db, {
+    now: () => at,
+    send: async (batch) => receiptFor(batch),
+  }).tick(f.branch);
+  await db
+    .collection('items')
+    .updateOne({ _id: f.rows[0]._id }, { $set: { available_quantity: 5 } });
+  await f.journal(await f.scan());
+  await db
+    .collection('items')
+    .updateOne({ _id: f.rows[0]._id }, { $set: { available_quantity: 0 } });
+  await f.journal(await f.scan());
+  await assert.rejects(
+    createStockAlertHandoff(db, {
+      now: () => at,
+      send: async () => {
+        throw new Error('offline');
+      },
+    }).tick(f.branch),
+    /offline/
+  );
+  const replacement = await handoffRow(f.branch);
+  resume();
+  await pending;
+  assert.deepEqual(await handoffRow(f.branch), replacement);
+  assert.equal((await pendingFor(f))[0].episode, 2);
+});
