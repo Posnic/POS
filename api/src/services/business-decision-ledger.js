@@ -68,9 +68,9 @@ function sourceFilter(source) {
     fail('invalid_source', 400);
   return {
     license: new ObjectId(source.businessId),
-    branchId: source.branchId,
-    deviceId: source.deviceId,
-    requesterId: source.requesterId,
+    branchId: String(source.branchId),
+    deviceId: String(source.deviceId),
+    requesterId: String(source.requesterId),
   };
 }
 function requestInput(input) {
@@ -78,6 +78,7 @@ function requestInput(input) {
     !input ||
     Object.keys(input).sort().join(',') !== 'operationId,revisionHash,summary' ||
     !key(input.operationId) ||
+    typeof input.revisionHash !== 'string' ||
     !/^[a-f\d]{64}$/.test(input.revisionHash || '')
   )
     fail('invalid_request', 400);
@@ -86,7 +87,8 @@ function requestInput(input) {
     !summary ||
     Object.keys(summary).sort().join(',') !==
       'beforeDiscountMinor,currency,currencyDigits,discountMinor,itemCount,payableMinor,reason,roundingMinor' ||
-    !/^[A-Z]{3}$/.test(summary.currency || '') ||
+    typeof summary.currency !== 'string' ||
+    !/^[A-Z]{3}$/.test(summary.currency) ||
     !Number.isInteger(summary.currencyDigits) ||
     summary.currencyDigits < 0 ||
     summary.currencyDigits > 3 ||
@@ -110,6 +112,20 @@ function requestInput(input) {
       summary.beforeDiscountMinor - summary.discountMinor + summary.roundingMinor
   )
     fail('invalid_summary', 400);
+  return {
+    operationId: String(input.operationId),
+    revisionHash: String(input.revisionHash),
+    summary: {
+      beforeDiscountMinor: Number(summary.beforeDiscountMinor),
+      currency: String(summary.currency),
+      currencyDigits: Number(summary.currencyDigits),
+      discountMinor: Number(summary.discountMinor),
+      itemCount: Number(summary.itemCount),
+      payableMinor: Number(summary.payableMinor),
+      reason: String(summary.reason),
+      roundingMinor: Number(summary.roundingMinor),
+    },
+  };
 }
 /** Durable mechanics only. Callers must authenticate sources, derive the price
  * preview with the sale authority, and re-read ACL/step-up before every action.
@@ -179,7 +195,7 @@ function createDecisionLedger(db, { now = Date.now, authorizeDecision, authorize
     },
     async create(source, input) {
       const filter = sourceFilter(source);
-      requestInput(input);
+      input = requestInput(input);
       await ready();
       const at = new Date(now());
       const identity = {
@@ -303,7 +319,7 @@ function createDecisionLedger(db, { now = Date.now, authorizeDecision, authorize
           'business_decision_receipt.version': 1,
           'business_decision_receipt.decisionId': String(row._id),
           'business_decision_receipt.revisionHash': row.revisionHash,
-          'business_decision_receipt.executionId': executionId,
+          'business_decision_receipt.executionId': String(executionId),
           'business_decision_receipt.operationId': row.operationId,
           'business_decision_receipt.deviceId': row.deviceId,
           'business_decision_receipt.requesterId': row.requesterId,

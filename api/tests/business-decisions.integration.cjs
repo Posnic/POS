@@ -60,6 +60,32 @@ function fixture() {
   };
   return { source, context, input, intent };
 }
+test('ledger rejects query operators and scalar coercion before creating a request', async () => {
+  const f = fixture();
+  for (const field of ['businessId', 'branchId', 'requesterId', 'deviceId']) {
+    await assert.rejects(
+      ledger.create({ ...f.source, [field]: { $ne: null } }, f.input),
+      { code: 'invalid_source' }
+    );
+  }
+  for (const field of ['operationId', 'revisionHash']) {
+    for (const value of [{ $ne: null }, [f.input[field]]]) {
+      await assert.rejects(ledger.create(f.source, { ...f.input, [field]: value }), {
+        code: 'invalid_request',
+      });
+    }
+  }
+  for (const currency of [{ $ne: null }, ['INR']]) {
+    await assert.rejects(
+      ledger.create(f.source, { ...f.input, summary: { ...f.input.summary, currency } }),
+      { code: 'invalid_summary' }
+    );
+  }
+  assert.equal(await db.collection('business_decisions').countDocuments(), 0);
+  const row = await ledger.create(f.source, f.input);
+  assert.deepEqual(row.summary, f.input.summary);
+});
+
 const decision = (overrides = {}) => ({
   decisionId: 'decision-0000000001',
   expectedRevision: 0,
