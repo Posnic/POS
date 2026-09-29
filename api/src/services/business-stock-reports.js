@@ -46,22 +46,20 @@ async function readStockSummary(db, context, query, { now = Date.now } = {}) {
     { upsert: true }
   );
   const readOwner = () =>
-    db
-      .collection('business_reporting_publishers')
-      .findOne(
-        { _id: branch.id, license },
-        {
-          projection: {
-            assignmentId: 1,
-            deviceId: 1,
-            epoch: 1,
-            lastSequence: 1,
-            'pending.sequence': 1,
-            lastRejectedSequence: 1,
-          },
-          maxTimeMS: 250,
-        }
-      );
+    db.collection('business_reporting_publishers').findOne(
+      { _id: branch.id, license },
+      {
+        projection: {
+          assignmentId: 1,
+          deviceId: 1,
+          epoch: 1,
+          lastSequence: 1,
+          'pending.sequence': 1,
+          lastRejectedSequence: 1,
+        },
+        maxTimeMS: 250,
+      }
+    );
   const owner = await readOwner();
   if (
     !owner ||
