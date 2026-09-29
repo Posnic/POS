@@ -264,3 +264,129 @@ test('receipt recovery is bounded, fair, and never reclaims a missing sale', asy
     }
   }
 });
+
+test('durable recovery references page after restart and remain isolated by installation, branch and cashier', async () => {
+  const flags = ['POSNIC_DESKTOP', 'POSNIC_SYNC_PAIRED', 'POSNIC_BUSINESS_LOCAL_DECISIONS'];
+  const previous = Object.fromEntries(flags.map((key) => [key, process.env[key]]));
+  try {
+    for (const mode of ['cloud', 'community']) {
+      process.env.POSNIC_DESKTOP = '1';
+      process.env.POSNIC_SYNC_PAIRED = mode === 'cloud' ? '1' : '0';
+      process.env.POSNIC_BUSINESS_LOCAL_DECISIONS = mode === 'community' ? '1' : '0';
+      const f = await fixture();
+      const deviceId = mode === 'cloud' ? f.deviceId : 'community-' + crypto.randomUUID();
+      if (mode === 'cloud')
+        await f.local.updateOne(
+          { _id: 'agent-runtime' },
+          {
+            $set: { protocolVersion: 1, deviceId, expiresAt: new Date(f.now() + 120000) },
+          },
+          { upsert: true }
+        );
+      else await f.local.insertOne({ _id: 'community-installation', deviceId });
+      await f.local.deleteOne({ _id: f.command.commandId });
+      const expected = new Set();
+      for (let i = 0; i < 23; i++) {
+        const body = { ...f.body, requestId: String(new ObjectId()) };
+        expected.add(body.requestId);
+        await f.broker.claim(deviceId, body);
+      }
+      for (const [otherDevice, patch, applied] of [
+        ['other-installation-1234', {}, false],
+        [deviceId, { branchId: String(new ObjectId()) }, false],
+        [deviceId, { requesterId: String(new ObjectId()) }, false],
+        [deviceId, {}, true],
+      ]) {
+        const claim = await f.broker.claim(otherDevice, {
+          ...f.body,
+          ...patch,
+          requestId: String(new ObjectId()),
+        });
+        if (applied)
+          await f.local.updateOne(
+            { _id: claim.commandId },
+            { $set: { executionState: 'applied' } }
+          );
+      }
+      const source = { branchId: f.body.branchId, requesterId: f.body.requesterId };
+      const transport = () =>
+        require('../src/services/business-checkout-transport').createCheckoutTransport(f.db, {
+          now: f.now,
+        });
+      const first = await transport().recoveries(source);
+      assert.equal(first.references.length, 20);
+      assert.match(first.nextCursor, /^[a-f\d]{64}$/);
+      const second = await transport().recoveries(source, first.nextCursor);
+      assert.equal(second.references.length, 3);
+      assert.equal(second.nextCursor, null);
+      assert.deepEqual(
+        new Set([...first.references, ...second.references].map((row) => row.requestId)),
+        expected
+      );
+      for (const row of [...first.references, ...second.references]) {
+        assert.deepEqual(Object.keys(row).sort(), ['requestId', 'startedAt']);
+        assert.equal(row.startedAt, new Date(f.now()).toISOString());
+      }
+      for (const cursor of ['', 'foreign', { $ne: null }])
+        await assert.rejects(transport().recoveries(source, cursor), {
+          code: 'invalid_recovery_cursor',
+        });
+      assert.equal(await f.db.collection('sales').countDocuments({}), 0);
+      assert.equal(await f.local.countDocuments({ consumedAt: { $exists: true } }), 0);
+    }
+  } finally {
+    for (const key of flags) {
+      if (previous[key] === undefined) delete process.env[key];
+      else process.env[key] = previous[key];
+    }
+  }
+});
+
+test('recovery lookup rechecks cashier access after the read and never returns revoked scope', async () => {
+  const f = await fixture();
+  const license = new ObjectId(),
+    branchId = new ObjectId(),
+    userId = new ObjectId();
+  const user = {
+    _id: userId,
+    license,
+    activate: true,
+    authVersion: 1,
+    usertype: 'cashier',
+    branch_access: [{ branch_id: branchId }],
+    access: { sales: { write: true } },
+  };
+  await f.db.collection('users').insertOne(user);
+  await f.db.collection('branches').insertOne({ _id: branchId, license });
+  const context = {
+    licenseId: String(license),
+    branchId: String(branchId),
+    userId: String(userId),
+  };
+  let calls = 0;
+  const checkout = require('../src/services/business-checkout-decisions').createCheckoutDecisions(
+    f.db,
+    {
+      now: f.now,
+      transport: {
+        recoveries: async (source) => {
+          calls++;
+          assert.deepEqual(source, { branchId: String(branchId), requesterId: String(userId) });
+          await f.db
+            .collection('users')
+            .updateOne({ _id: userId }, { $set: { branch_access: [] } });
+          return {
+            references: [
+              { requestId: f.body.requestId, startedAt: new Date(f.now()).toISOString() },
+            ],
+            nextCursor: null,
+          };
+        },
+      },
+    }
+  );
+  await assert.rejects(checkout.recoveries(context, user), { code: 'cashier_access_denied' });
+  assert.equal(calls, 1);
+  await assert.rejects(checkout.recoveries(context, user), { code: 'cashier_access_denied' });
+  assert.equal(calls, 1);
+});

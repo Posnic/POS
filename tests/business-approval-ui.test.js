@@ -16,6 +16,7 @@ function fixture() {
   const caps = { enabled: true, currencyDigits: 2, branchId: 'a'.repeat(24), requesterId: 'b'.repeat(24) };
   const payload = { sale_process: 'add', extra_discount: 10, payment_mode: 'Cash', items: [{ item_id: 'c'.repeat(24), item_quantity: 1 }] };
   const params = { data: JSON.stringify(payload) };
+  let recoveryPage;
   let record = null, saves = 0, local = 0, failCreate = false, failRead = false;
   const calls = [], alerts = [];
   window.PosnicPro = { sales: { SaleAction: 'add', saleProcess: 'add' }, i18n: { t: (_key, fallback) => fallback }, alert: (...args) => alerts.push(args) };
@@ -23,6 +24,7 @@ function fixture() {
     const body = options.data ? JSON.parse(options.data) : null;
     calls.push({ method, url: options.url, body });
     if (options.url.endsWith('/capabilities')) return success({ data: caps });
+    if (options.url.includes('/recoveries')) return failRead ? failure({ status: 0 }) : success({ data: recoveryPage });
     if (method === 'post' && options.url === 'sales/business-decisions') {
       record = { id: 'd'.repeat(24), branchId: caps.branchId, requesterId: caps.requesterId, operationId: body.sale.billing_transaction_id, state: 'pending', expiresAt: new Date(Date.now() + 300000).toISOString(),
         summary: { currency: 'INR', currencyDigits: 2, beforeDiscountMinor: 10000, discountMinor: 1000, payableMinor: 9000, roundingMinor: 0, reason: body.reason } };
@@ -44,7 +46,7 @@ function fixture() {
     button('Send request').click(); await settle();
   }
   return { dom, window, document, api, caps, params, calls, alerts, offer, send, button, saves: () => saves, local: () => local,
-    record: () => record, change: change => { record = { ...record, ...change }; }, failCreate: () => { failCreate = true; }, failRead: () => { failRead = true; } };
+    recoveries: page => { recoveryPage = page; }, record: () => record, change: change => { record = { ...record, ...change }; }, failCreate: () => { failCreate = true; }, failRead: () => { failRead = true; } };
 }
 test('requesting and receiving approval never saves automatically; an explicit save uses the same operation', async () => {
   const f = fixture();
@@ -134,9 +136,64 @@ test('local reconciliation overrides an approved owner status and never offers a
 
 test('every cashier approval message is present in the initial 18 language packs', () => {
   const keys = [...new Set([...source.matchAll(/PosnicPro\.i18n\.t\('(lang_business_[^']+)'/g)].map(match => match[1]))];
-  assert.equal(keys.length, 36);
+  assert.equal(keys.length, 40);
   for (const locale of ['_english', 'ta', 'hi', 'ml', 'kn', 'te', 'si', 'ne', 'ar', 'fr', 'es', 'pt', 'id', 'th', 'de', 'sw', 'nl', 'it']) {
     const dictionary = JSON.parse(fs.readFileSync(path.join(__dirname, '../languages', locale + '.json'), 'utf8'));
     for (const key of keys) assert.ok(typeof dictionary[key] === 'string' && dictionary[key].trim(), locale + ': ' + key);
   }
+});
+
+
+test('restart recovery reads durable references without changing the current bill or creating another execution', async () => {
+  const f = fixture();
+  try {
+    await f.send();
+    f.change({ state: 'applying', checkout: { state: 'reconciling', saleId: null } });
+    f.document.querySelector('.business-approval-close').click();
+    f.window.sessionStorage.clear();
+    f.caps.recoveryVersion = 1;
+    f.recoveries({ references: [{ requestId: f.record().id, startedAt: new Date().toISOString() }], nextCursor: null });
+    const original = f.params.data;
+    const writes = f.calls.filter(call => call.method === 'post').length;
+    await f.offer(); f.button('Earlier checkout attempts').click(); await settle();
+    f.document.querySelector('.business-approval-recovery-row').click(); await settle();
+    assert.match(f.document.querySelector('h2').textContent, /receipt/);
+    assert.match(f.document.querySelector('.business-approval-message').textContent, /Review only/);
+    assert.equal(f.button('Save approved bill'), undefined);
+    assert.equal(f.button('Recover saved bill'), undefined);
+    assert.equal(f.button('Cancel request'), undefined);
+    f.change({ state: 'applied', checkout: { state: 'applied', saleId: 'e'.repeat(24) } });
+    f.button('Check status').click(); await settle();
+    assert.equal(f.button('Recover saved bill'), undefined);
+    assert.equal(f.params.data, original);
+    assert.equal(f.window.sessionStorage.length, 0);
+    assert.equal(f.calls.filter(call => call.method === 'post').length, writes);
+    assert.equal(f.saves(), 0);
+  } finally { f.dom.window.close(); }
+});
+
+test('recovery pages are bounded and malformed or foreign records cannot become review authority', async () => {
+  const f = fixture();
+  try {
+    await f.send(); f.document.querySelector('.business-approval-close').click(); f.window.sessionStorage.clear();
+    f.caps.recoveryVersion = 1;
+    const reference = { requestId: f.record().id, startedAt: new Date().toISOString() };
+    f.recoveries({ references: [reference, reference], nextCursor: null });
+    await f.offer(); f.button('Earlier checkout attempts').click(); await settle();
+    assert.equal(f.document.querySelector('.business-approval-recovery-row'), null);
+    const cursor = 'a'.repeat(64);
+    f.recoveries({ references: [reference], nextCursor: cursor });
+    f.button('Check status').click(); await settle();
+    f.change({ branchId: 'e'.repeat(24) });
+    f.document.querySelector('.business-approval-recovery-row').click(); await settle();
+    assert.equal(f.button('Save approved bill'), undefined);
+    assert.equal(f.document.querySelector('.business-approval-reason'), null);
+    f.recoveries({ references: [], nextCursor: null });
+    f.button('More references').click(); await settle();
+    assert.ok(f.calls.some(call => call.url.endsWith('/recoveries?cursor=' + cursor)));
+    assert.match(f.document.querySelector('.business-approval-details').textContent, /No unconfirmed/);
+    f.failRead(); f.button('Check status').click(); await settle();
+    assert.equal(f.document.querySelector('.business-approval-recovery-row'), null);
+    assert.ok(f.document.querySelector('.business-approval-error').textContent);
+  } finally { f.dom.window.close(); }
 });

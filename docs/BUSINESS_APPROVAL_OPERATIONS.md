@@ -20,9 +20,13 @@ because the phone still says applying.
 If no receipt is confirmed, ask the owner/support operator to investigate the
 original till, branch, cashier, approximate time and bill amount. Keep these
 business details in the controlled support channel. Do not send passwords,
-session tokens or an unrestricted database export. Keep the originating POS
-session available: its pending reference is currently held in session storage
-and is not a durable cross-restart support queue.
+session tokens or an unrestricted database export. On the originating till, open the owner-approval dialog and choose **Earlier
+checkout attempts** to review durable execution references for the signed-in
+cashier and current branch. This works without the old browser session. The
+review shows the request reference and a sale ID only when locally verified;
+it does not offer another save or cancel action. Keep the original POS session
+available when possible: requests that never reached an execution claim still
+rely on the original session reference. This is not a cross-cashier support queue.
 
 ## Owner/support investigation
 
@@ -70,12 +74,13 @@ receipt identity, and cashier/phone observations for each scenario:
 4. Remove approver access after execution starts. Receipt reconciliation remains
    possible without granting new execution authority.
 5. Close/reopen the dialog, restart the app and change cashier. Verify scoped
-   recovery visibility, especially the known session-storage limitation.
+   recovery visibility, including durable execution-reference discovery and the remaining session-storage
+   limitation for requests that never reached an execution claim.
 
 The first two scenarios have local integration coverage. This document does not
 replace deployed fault injection or physical acceptance. No supported operator
 command currently proves a missing receipt means a failed sale, releases an
-uncertain execution, or safely authorizes a replacement. A durable incident
+uncertain execution, or safely authorizes a replacement. A cross-cashier incident
 queue, explicit escalation ownership and a reviewed resolution policy for that
 case remain production gates. Do not mark an incident resolved solely because a
 request expired or a timeout elapsed.

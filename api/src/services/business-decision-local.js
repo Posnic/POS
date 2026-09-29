@@ -7,6 +7,10 @@ function ensureLocalDecisionIndexes(db) {
       db,
       Promise.all([
         local.createIndex(
+          { kind: 1, action: 1, deviceId: 1, 'body.branchId': 1, 'body.requesterId': 1, _id: 1 },
+          { name: 'business_decision_recovery_lookup' }
+        ),
+        local.createIndex(
           {
             kind: 1,
             action: 1,

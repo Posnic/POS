@@ -184,6 +184,55 @@ function createCheckoutTransport(db, { now = Date.now, wait = sleep } = {}) {
     if (!requestId) return null; // Unknown/pending is never proof that a bill failed.
     return exchange('read', { ...source, requestId });
   }
-  return { exchange, start, recover, lookup };
+  async function recoveries(source, cursor) {
+    if (
+      !source ||
+      !/^[a-f\d]{24}$/.test(source.branchId || '') ||
+      !/^[a-f\d]{24}$/.test(source.requesterId || '') ||
+      (cursor !== undefined && (typeof cursor !== 'string' || !/^[a-f\d]{64}$/.test(cursor)))
+    )
+      fail('invalid_recovery_cursor', 400);
+    const deviceId = await identity();
+    await require('./business-decision-local').ensureLocalDecisionIndexes(db);
+    // Claims survive process restart and have no TTL. This is a list of
+    // references to investigate, never proof of a sale or permission to retry.
+    const rows = await local
+      .find(
+        {
+          kind: 'command',
+          protocolVersion: 1,
+          action: 'claim',
+          deviceId,
+          'body.branchId': source.branchId,
+          'body.requesterId': source.requesterId,
+          executionState: { $ne: 'applied' },
+          ...(cursor ? { _id: { $gt: cursor } } : {}),
+        },
+        { projection: { _id: 1, 'body.requestId': 1, createdAt: 1 } }
+      )
+      .sort({ _id: 1 })
+      .limit(21)
+      .maxTimeMS(250)
+      .toArray();
+    const page = rows.slice(0, 20);
+    if (
+      rows.some(
+        (row) =>
+          !/^[a-f\d]{64}$/.test(row._id || '') ||
+          !/^[a-f\d]{24}$/.test(row.body?.requestId || '') ||
+          !(row.createdAt instanceof Date) ||
+          !Number.isFinite(row.createdAt.getTime())
+      )
+    )
+      fail('decision_recovery_unavailable');
+    return {
+      references: page.map((row) => ({
+        requestId: row.body.requestId,
+        startedAt: row.createdAt.toISOString(),
+      })),
+      nextCursor: rows.length > 20 ? page[page.length - 1]._id : null,
+    };
+  }
+  return { exchange, start, recover, lookup, recoveries };
 }
 module.exports = { createCheckoutTransport, checkoutMode };

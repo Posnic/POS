@@ -150,6 +150,7 @@ test('Community checkout uses authenticated owner approval, final pricing and on
     assert.equal(row.state, 'pending');
     const capabilities = await checkout.capabilities(context, cashier);
     assert.equal(capabilities.enabled, true);
+    assert.equal(capabilities.recoveryVersion, 1);
     assert.equal(capabilities.requesterId, String(cashier._id));
     const resumed = await checkout.lookup(context, cashier, payload.billing_transaction_id);
     assert.equal(resumed.id, row.id);
@@ -196,6 +197,23 @@ test('Community checkout uses authenticated owner approval, final pricing and on
     assert.equal(context.deviceId, 'register-browser-0001');
     const locallySaved = await checkout.read(context, cashier, row.id);
     assert.equal(locallySaved.checkout.state, 'saved');
+    const recoveryResponse = {
+      json(value) {
+        this.body = value;
+        return this;
+      },
+    };
+    await controller.businessDiscountDecision(
+      { ...req, method: 'GET', params: { requestId: 'recoveries' }, query: {} },
+      recoveryResponse,
+      (error) => {
+        throw error;
+      }
+    );
+    assert.equal(recoveryResponse.body.data.references.length, 1);
+    assert.equal(recoveryResponse.body.data.references[0].requestId, row.id);
+    assert.equal(recoveryResponse.body.data.nextCursor, null);
+
     assert.equal(locallySaved.checkout.saleId, String(sale._id));
     const retry = await invoke('create', original);
     assert.equal(retry.code, 200);

@@ -119,3 +119,32 @@ See [Unresolved Business approval](BUSINESS_APPROVAL_OPERATIONS.md) for cashier
 actions, receipt-based investigation and the required pilot rehearsal. The
 procedure is documented but not deployment-qualified. Durable support tracking
 and resolution of a consumed execution without a verified receipt remain open.
+
+## Restart discovery of checkout attempts
+
+With `recoveryVersion: 1` advertised by checkout capabilities, the cashier dialog
+provides **Earlier checkout attempts**. `GET /api/sales/business-decisions/recoveries`
+returns at most 20 durable claim references and an opaque next cursor. It uses the
+current server-owned installation identity and live cashier/branch authority,
+rechecked after the indexed read. It exposes only request IDs and claim timestamps,
+not execution proof, tokens, bill bodies or device identifiers. A claim timestamp
+is the start of an attempt, not a sale-completion time.
+
+Cloud and Community claims have no TTL, so discovery survives a browser/process
+restart and expiration of temporary create/read commands. Confirmed local claims
+are excluded. Other claims remain candidates for review; inclusion is not proof
+that execution started, succeeded or failed. A fresh scoped read establishes the
+current record and any matching local receipt. Review-only navigation cannot
+submit, cancel, overwrite the current bill or replace its session reference.
+
+This does not yet discover pre-claim requests after loss of their session
+reference, provide cross-cashier escalation, or resolve a consumed claim with no
+verified receipt. The operational gates in BUSINESS_APPROVAL_OPERATIONS.md remain.
+Four new labels have draft translations in all 18 cashier language packs.
+
+Validation: ten real Mongo checkout/outbox cases and ten cashier UI cases pass.
+Coverage includes installation/branch/cashier isolation, 20+3 pagination across
+service recreation, live revocation, controller routing, malformed list rejection,
+foreign-record rejection and zero checkout writes from review. English/Arabic
+browser fixtures at 320px with enlarged text show no horizontal overflow and
+reachable pagination. These fixtures do not replace a deployed till rehearsal.

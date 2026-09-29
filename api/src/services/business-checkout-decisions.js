@@ -60,12 +60,22 @@ function createCheckoutDecisions(db, { now = Date.now, transport } = {}) {
       return {
         enabled: true,
         protocolVersion: 1,
+        recoveryVersion: 1,
         branchId: source.branchId,
         requesterId: source.requesterId,
         mode: require('./business-checkout-transport').checkoutMode(),
         currencyDigits: require('./business-access').branchInfo(context.branchSettings)
           .currencyDigits,
       };
+    },
+    async recoveries(context, user, cursor) {
+      const source = await cashier(context, user);
+      const result = await channel.recoveries(
+        { branchId: source.branchId, requesterId: source.requesterId },
+        cursor
+      );
+      await cashier(context, user);
+      return result;
     },
     async request(context, user, payload, reason) {
       const source = await cashier(context, user);

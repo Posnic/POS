@@ -28,3 +28,5 @@
   .business-approval-secondary { background: #283b50; color: #eef4fc; border-color: #476079; }
   .business-approval-error { color: #ffb3ae; }
 }
+
+.business-approval-actions .business-approval-recovery-row { flex: 1 1 100%; overflow-wrap: anywhere; text-align: start; }
