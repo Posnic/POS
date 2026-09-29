@@ -337,3 +337,67 @@ test('maximum observation remains 100 bounded pages and incomplete receipt avoid
   invalid.facts.push(invalid.facts[0]);
   await assert.rejects(f.send(invalid), /invalid_stock_snapshot/);
 });
+
+test(
+  'actual desktop snapshot pages traverse Gateway and match Community receipts and retained state',
+  { skip: !process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT },
+  async () => {
+    const path = require('node:path');
+    const gatewayRoot = process.env.POSNIC_BUSINESS_TEST_GATEWAY_ROOT;
+    const { MongoClient: GatewayClient } = require(
+      path.join(gatewayRoot, 'apps/sync-gateway/node_modules/mongodb')
+    );
+    const { receiveStockSnapshot } = require(
+      path.join(gatewayRoot, 'apps/sync-gateway/src/business-stock-snapshots')
+    );
+    const gateway = await GatewayClient.connect(mongo.getUri());
+    try {
+      const f = await fixture();
+      await f.db
+        .collection('items')
+        .updateOne({ _id: f.rows[102]._id }, { $set: { available_quantity: 10 } });
+      const pages = await f.pages();
+      const cloud = gateway.db('cloud_' + f.db.databaseName);
+      // Read through each driver's own BSON implementation.
+      const source = gateway.db(f.db.databaseName);
+      await cloud.collection('branches').insertOne(await source.collection('branches').findOne({}));
+      await cloud
+        .collection('business_reporting_publishers')
+        .insertOne(await source.collection('business_reporting_publishers').findOne({}));
+      for (const page of [...pages].reverse()) {
+        const localReceipt = await f.send(page);
+        const cloudReceipt = await receiveStockSnapshot(
+          cloud,
+          f.device,
+          { assignmentId: f.owner.assignmentId, epoch: f.owner.epoch, page },
+          { now: f.now }
+        );
+        assert.deepEqual(cloudReceipt, localReceipt);
+      }
+      const localOwner = await f.db
+        .collection('business_reporting_publishers')
+        .findOne({ _id: f.branch.id });
+      const cloudOwner = await cloud
+        .collection('business_reporting_publishers')
+        .findOne({ _id: f.branch.id });
+      assert.deepEqual(cloudOwner.stockSnapshot, localOwner.stockSnapshot);
+      assert.equal(cloudOwner.stockSnapshot.summary.coverage.verifiedItems, 103);
+      assert.equal(cloudOwner.stockSnapshot.summary.lowItemCount, 102);
+      const healthyPage = await cloud
+        .collection('business_stock_snapshot_pages')
+        .findOne({ 'page.pageIndex': 1 });
+      assert.equal(healthyPage.page.facts.at(-1).low, false);
+      await assert.rejects(
+        receiveStockSnapshot(
+          cloud,
+          { ...f.device, deviceId: 'other' },
+          { assignmentId: f.owner.assignmentId, epoch: f.owner.epoch, page: pages[0] },
+          { now: f.now }
+        ),
+        /publisher_not_assigned/
+      );
+    } finally {
+      await gateway.close();
+    }
+  }
+);

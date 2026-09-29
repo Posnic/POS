@@ -190,3 +190,13 @@ Before activation, implement and qualify:
 
 This observes stored inventory. Receiving concurrency, synchronization convergence
 and reconstructed inventory truth remain separate unresolved qualification work.
+
+Cloud receiver checkpoint: Gateway now accepts the same snapshot page contract
+through its authenticated reporting route, with fresh directory revocation,
+suspension, provisioning and instance checks. The cross-repository test prepares
+an actual desktop observation and verifies identical Community/Gateway receipts
+and committed state, including healthy facts and low items beyond 100. All eleven
+snapshot tests pass; the 42 prior stock pipeline tests passed at the preceding
+checkpoint. Gateway's five new receiver/route cases and 33 existing reporting
+cases also pass. This remains in-process evidence; snapshot mailbox/sync-agent
+transport, Cloud recipient lookup and notification delivery are not connected.
