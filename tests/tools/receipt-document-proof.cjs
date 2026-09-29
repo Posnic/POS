@@ -1,5 +1,5 @@
 'use strict';
-// Run with Electron, not Node. Uses real Chromium windows but never a printer.
+// Launch with node tests/tools/run-receipt-document-proof.cjs. Never submits to a printer.
 const { app, BrowserWindow } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -11,10 +11,14 @@ const { hardenPrintWindow } = require('../../src/print-window-guard');
 app.on('window-all-closed', () => {});
 const root = path.join(__dirname, '../..');
 const output = process.argv[2] || path.join(app.getPath('temp'), 'posnic-receipt-document-proof.json');
+// Electron can outlive the terminal pipe that launched it on Windows. Keep
+// diagnostic output in a file; never forward production console calls to it.
+const proofConsole = Object.fromEntries(['log', 'warn', 'error', 'info'].map(level =>
+  [level, (...args) => fs.appendFileSync(output + '.log', level + ': ' + require('node:util').format(...args) + '\n')]));
 const source = fs.readFileSync(path.join(root, 'src/hardware-manager.js'), 'utf8');
 const at = source.indexOf('  async printHTML(');
 const method = vm.runInNewContext('({' + source.slice(at, source.indexOf('\n  async getDefaultPrinter', at)) + '}).printHTML', {
-  BrowserWindow, hardenPrintWindow, fitDocument, prepareDocument, setTimeout, console,
+  BrowserWindow, hardenPrintWindow, fitDocument, prepareDocument, setTimeout, console: proofConsole,
 });
 const waitAt = source.indexOf('  async _waitForPrintPage(');
 const waitForPage = vm.runInNewContext('({' + source.slice(waitAt, source.indexOf('\n  _sendPrintJob', waitAt)) + '})._waitForPrintPage', { setTimeout });

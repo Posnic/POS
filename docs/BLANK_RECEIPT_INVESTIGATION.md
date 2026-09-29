@@ -38,8 +38,10 @@ blank-document rejection. Each successful case submits exactly once, contains
 the sale identifier and total, and generates a PDF through Chromium. Blank
 input submits zero times. All windows are cleaned up.
 
-Run using Electron, with `ELECTRON_RUN_AS_NODE` unset. The optional first argument
-is a JSON results path; the default is the OS temp directory. No physical print
+Run `node tests/tools/run-receipt-document-proof.cjs [results.json]`. The launcher
+uses a separate Electron process, unsets `ELECTRON_RUN_AS_NODE`, waits for exit
+and checks the results file. Diagnostic logs go to `results.json.log`, avoiding
+EPIPE dialogs when a Windows terminal closes its output pipe. No physical print
 jobs are produced. No CI workflow was added.
 
 These changes are in source only, not released. A client test with the failing
