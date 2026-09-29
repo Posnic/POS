@@ -3039,3 +3039,23 @@ test('switching from a missing account to a missing branch starts a separately o
   assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 0 });
   assert.ok(await scanPreference(f));
 });
+
+test('negotiated Android stock pushes use the stock channel without exposing inventory data', async () => {
+  const f = await pushFixture();
+  await require('../src/services/business-push').registerDevice(
+    f.db,
+    { user: f.user, session: f.session },
+    {
+      token: 'ExpoPushToken[syntheticstocktoken]',
+      platform: 'android',
+      projectId: stockPushConfig.projectId,
+      locale: 'ta',
+      channelVersion: 2,
+    },
+    { config: stockPushConfig, now: () => f.now() - 1000 }
+  );
+  await f.drain();
+  assert.deepEqual(f.sends, [
+    ['ExpoPushToken[syntheticstocktoken]', f.eventId, 'ta', 'business-stock'],
+  ]);
+});

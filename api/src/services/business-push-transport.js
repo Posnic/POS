@@ -76,8 +76,17 @@ function createExpoTransport({ accessToken, fetcher = fetch } = {}) {
     throw failure('push_invalid_response', true);
   }
   return {
-    async send(token, eventId, locale = 'en') {
-      if (!tokenPattern.test(token) || !/^[a-f\d]{24}$/.test(eventId))
+    async send(token, eventId, locale = 'en', channelId = 'business-updates') {
+      if (
+        !tokenPattern.test(token) ||
+        !/^[a-f\d]{24}$/.test(eventId) ||
+        ![
+          'business-updates',
+          'business-decisions',
+          'business-summaries',
+          'business-stock',
+        ].includes(channelId)
+      )
         throw failure('push_invalid_request');
       // Never put business figures, account identifiers, URLs, or decisions on a lock screen.
       const data = checked(
@@ -89,7 +98,7 @@ function createExpoTransport({ accessToken, fetcher = fetch } = {}) {
               ? messages[locale]
               : messages.en,
           data: { kind: 'business-inbox', eventId },
-          channelId: 'business-updates',
+          channelId,
           priority: 'normal',
           ttl: 3600,
           collapseId: eventId,

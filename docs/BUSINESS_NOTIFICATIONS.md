@@ -87,3 +87,29 @@ Each language has fixed generic lock-screen wording; business names, figures and
 decisions remain inside the authenticated Inbox. Missing or unsupported stored
 languages fall back to English. Translation review and signed-device delivery
 qualification remain release requirements.
+
+## Negotiated Android notification channels
+
+Clients request `GET /notifications/device?language=1&channels=2`. Only that
+negotiation adds `channelVersion: 2` to the status response; legacy responses keep
+their shape. A supporting client creates its native channels before registering
+with optional `channelVersion: 2`. Omission on a later registration explicitly
+returns that device to the legacy shared channel, including app downgrade.
+
+For negotiated Android devices the server derives the channel from the verified
+Inbox event kind: `business-decisions` for approval requests, `business-summaries`
+for daily/register summary or unavailable notices, and `business-stock` for stock
+alerts. Older devices and iOS use the existing `business-updates` provider field.
+The provider adapter rejects arbitrary channel IDs. Payloads remain generic with
+only the Inbox event hint; category selection grants no decision or data access.
+
+Channel creation inherits the legacy channel's current importance, including a
+muted setting. Later language refreshes preserve each category's own importance.
+Quiet hours, opt-in, live scope validation, normal priority and best-effort delivery
+are unchanged. The OS controls actual delivery. Native mute migration and physical
+provider delivery still require qualification; no production settings are enabled.
+
+Local validation: 16 push integration cases, two focused stock-push cases and four
+provider unit tests pass, including legacy renewal, both summary modes and generic
+category routing. The companion mobile source has 99 passing tests, including
+mute inheritance, category overrides and failed native-settings lookup recovery.

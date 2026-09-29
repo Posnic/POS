@@ -579,3 +579,69 @@ test('close push retries recheck source, schedule revision, account access and I
     assert.equal(delivery.state, 'stopped', change);
   }
 });
+
+test('channel support is negotiated and legacy device renewal explicitly returns to the shared channel', async () => {
+  const f = await fixture();
+  const registration = { token, platform: 'android', projectId: config.projectId };
+  assert.equal((await push.deviceStatus(db, f.identity, { config })).channelVersion, undefined);
+  assert.equal(
+    (await push.deviceStatus(db, f.identity, { config, includeChannels: true })).channelVersion,
+    2
+  );
+  for (const channelVersion of [1, 3, '2', null, {}])
+    await assert.rejects(
+      push.registerDevice(db, f.identity, { ...registration, channelVersion }, { config }),
+      { code: 'invalid_request' }
+    );
+  await push.registerDevice(db, f.identity, { ...registration, channelVersion: 2 }, { config });
+  assert.equal((await db.collection('business_push_devices').findOne({ token })).channelVersion, 2);
+  await push.registerDevice(db, f.identity, registration, { config });
+  assert.equal((await db.collection('business_push_devices').findOne({ token })).channelVersion, 1);
+  await push.drainPush(db, {
+    config,
+    now: () => at,
+    transport: {
+      send: async (...args) => {
+        assert.equal(args.length, 3);
+        return '22222222-2222-4222-8222-222222222222';
+      },
+    },
+  });
+});
+
+test('negotiated Android decisions and both summary schedules use their category channels', async () => {
+  const prior = process.env.POSNIC_BUSINESS_DECISIONS;
+  process.env.POSNIC_BUSINESS_DECISIONS = '1';
+  try {
+    for (const [make, expected] of [
+      [fixture, 'business-summaries'],
+      [approvalFixture, 'business-decisions'],
+      [registerFixture, 'business-summaries'],
+    ]) {
+      db = client.db('push_channels_' + new ObjectId());
+      const f = await make();
+      await push.registerDevice(
+        db,
+        f.identity,
+        { token, platform: 'android', projectId: config.projectId, channelVersion: 2 },
+        { config, now: () => at - 1000 }
+      );
+      let sent = 0;
+      await push.drainPush(db, {
+        config,
+        now: () => at,
+        transport: {
+          send: async (...args) => {
+            sent++;
+            assert.deepEqual(args, [token, String(f.event._id), 'en', expected]);
+            return '22222222-2222-4222-8222-222222222222';
+          },
+        },
+      });
+      assert.equal(sent, 1);
+    }
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_DECISIONS;
+    else process.env.POSNIC_BUSINESS_DECISIONS = prior;
+  }
+});

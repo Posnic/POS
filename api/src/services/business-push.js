@@ -7,6 +7,18 @@ const { deferQuiet } = require('./business-notification-time');
 const indexes = new WeakMap();
 const pushMessages = require('./business-push-messages.json');
 const supportedLanguages = Object.freeze(Object.keys(pushMessages));
+function pushChannel(device, kind) {
+  if (device.platform !== 'android' || device.channelVersion !== 2) return 'business-updates';
+  if (kind === 'approval_requested') return 'business-decisions';
+  if (kind === 'stock_low') return 'business-stock';
+  if (
+    ['daily_summary', 'daily_unavailable', 'register_summary', 'register_unavailable'].includes(
+      kind
+    )
+  )
+    return 'business-summaries';
+  return 'business-updates';
+}
 function configuration() {
   const projectId = process.env.POSNIC_BUSINESS_EXPO_PROJECT_ID;
   const accessToken = process.env.POSNIC_BUSINESS_EXPO_ACCESS_TOKEN;
@@ -46,7 +58,7 @@ async function ready(db) {
 async function deviceStatus(
   db,
   identity,
-  { config = configuration(), includeLanguages = false } = {}
+  { config = configuration(), includeLanguages = false, includeChannels = false } = {}
 ) {
   const row = await db.collection('business_push_devices').findOne({
     sessionId: identity.session._id,
@@ -54,6 +66,7 @@ async function deviceStatus(
     license: identity.user.license,
   });
   return {
+    ...(includeChannels ? { channelVersion: 2 } : {}),
     available: config.enabled,
     projectId: config.projectId,
     enabled: config.enabled && !!row,
@@ -71,9 +84,13 @@ async function registerDevice(
   if (!config.enabled) fail('push_unavailable', 503);
   if (
     !input ||
-    !['platform,projectId,token', 'locale,platform,projectId,token'].includes(
-      Object.keys(input).sort().join(',')
-    ) ||
+    ![
+      'platform,projectId,token',
+      'locale,platform,projectId,token',
+      'channelVersion,platform,projectId,token',
+      'channelVersion,locale,platform,projectId,token',
+    ].includes(Object.keys(input).sort().join(',')) ||
+    (Object.hasOwn(input, 'channelVersion') && input.channelVersion !== 2) ||
     (Object.hasOwn(input, 'locale') &&
       (typeof input.locale !== 'string' || !supportedLanguages.includes(input.locale))) ||
     !['android', 'ios'].includes(input.platform) ||
@@ -100,6 +117,7 @@ async function registerDevice(
           sessionId,
           token: input.token,
           platform: input.platform,
+          channelVersion: input.channelVersion === 2 ? 2 : 1,
           locale:
             input.locale || (previous?.sessionId === sessionId ? previous.locale : null) || 'en',
           projectId: input.projectId,
@@ -418,7 +436,13 @@ async function drainPush(
         ))
       )
         continue;
-      const ticketId = await transport.send(device.token, job.eventId, device.locale || 'en');
+      const channel = pushChannel(device, job.kind);
+      const ticketId = await transport.send(
+        device.token,
+        job.eventId,
+        device.locale || 'en',
+        ...(channel === 'business-updates' ? [] : [channel])
+      );
       await deliveries.updateOne(lease(), {
         $set: {
           state: 'receipt',

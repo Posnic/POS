@@ -68,3 +68,34 @@ test('provider throttling retries, invalid registrations stop, and receipts are 
   });
   expect(await transport.receipt(id)).toBe('provider_accepted');
 });
+
+test('provider permits only known native channel IDs and keeps the payload generic', async () => {
+  for (const channel of [
+    'business-updates',
+    'business-decisions',
+    'business-summaries',
+    'business-stock',
+  ]) {
+    const transport = createExpoTransport({
+      accessToken: 'test',
+      fetcher: async (_url, options) => {
+        const payload = JSON.parse(options.body);
+        expect(payload.channelId).toBe(channel);
+        expect(payload.data).toEqual({ kind: 'business-inbox', eventId: 'a'.repeat(24) });
+        expect(payload.priority).toBe('normal');
+        return json({ data: { status: 'ok', id } });
+      },
+    });
+    await transport.send('ExpoPushToken[abcdefghij]', 'a'.repeat(24), 'en', channel);
+  }
+  const fetcher = jest.fn();
+  await expect(
+    createExpoTransport({ accessToken: 'test', fetcher }).send(
+      'ExpoPushToken[abcdefghij]',
+      'a'.repeat(24),
+      'en',
+      'arbitrary-channel'
+    )
+  ).rejects.toMatchObject({ code: 'push_invalid_request' });
+  expect(fetcher).not.toHaveBeenCalled();
+});

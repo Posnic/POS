@@ -249,6 +249,7 @@ router.get(
     res.json(
       await require('../services/business-push').deviceStatus(req.db, req.businessIdentity, {
         includeLanguages: req.query.language === '1',
+        includeChannels: req.query.channels === '2',
       })
     );
   })
