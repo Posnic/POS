@@ -179,3 +179,19 @@ tests cover bounded collection access, request metadata, malformed snapshots,
 source/publisher races, authentication, ACL loss, branch isolation, reopening,
 strict query scope and opt-in discovery. Automatic request scheduling,
 versioned preferences, mobile settings and notification delivery remain open.
+## Versioned preference foundation
+
+The internal preference service accepts an explicit version-2 contract with one
+mode (`daily` or `register-close`) on the existing account/branch row. Revisions
+remain compare-and-swap, including concurrent first saves. Close mode has no
+fixed next-send instant; its activation timestamp bounds future source discovery.
+Legacy daily responses retain their exact shape. A legacy client cannot read a
+close preference as a daily schedule or overwrite it with a daily save.
+
+Daily preparation and delivery exclude close mode, and pending daily push retries
+recheck this mode before contacting the provider. Switching back to daily creates
+a new daily schedule and invalidates the old lease. Six preference/delivery tests,
+twelve push integration tests and eighteen Business HTTP tests pass, including a
+queued daily retry stopped after a mode switch. The version-2 option is internal
+only: HTTP negotiation and mobile controls must wait for the close scheduler and
+delivery implementation. No user-facing close notification is enabled yet.

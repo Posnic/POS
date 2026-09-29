@@ -36,8 +36,11 @@ function branchFor(context, branchId) {
 }
 const key = (context, branchId) => context.accountId + ':' + branchId;
 const defaultQuiet = () => ({ enabled: false, start: '22:00', end: '07:00' });
-function publicPreference(branch, row) {
+function publicPreference(branch, row, scheduleVersion = 1) {
+  if (scheduleVersion !== 2 && row?.mode === 'register-close')
+    fail('schedule_version_required', 409);
   return {
+    ...(scheduleVersion === 2 ? { scheduleVersion: 2, mode: row?.mode ?? 'daily' } : {}),
     branchId: branch.id,
     timezone: branch.timezone,
     revision: row?.revision ?? 0,
@@ -46,21 +49,32 @@ function publicPreference(branch, row) {
     quiet: row?.quiet ?? defaultQuiet(),
     locale: row?.locale ?? 'en',
     channel: 'inApp',
-    nextSendAt: row?.enabled ? row.nextRunAt.toISOString() : null,
+    nextSendAt: row?.enabled && row?.mode !== 'register-close' ? row.nextRunAt.toISOString() : null,
   };
 }
-async function getPreference(db, context, branchId) {
+async function getPreference(db, context, branchId, { scheduleVersion = 1 } = {}) {
   const branch = branchFor(context, branchId);
   const row = await db
     .collection('business_notification_preferences')
     .findOne({ _id: key(context, branchId), license: new ObjectId(context.businessId) });
-  return publicPreference(branch, row);
+  return publicPreference(branch, row, scheduleVersion);
 }
-async function savePreference(db, context, branchId, input, { now = Date.now } = {}) {
+async function savePreference(
+  db,
+  context,
+  branchId,
+  input,
+  { now = Date.now, scheduleVersion = 1 } = {}
+) {
   const branch = branchFor(context, branchId);
   if (
     !input ||
-    Object.keys(input).sort().join(',') !== 'enabled,expectedRevision,locale,quiet,time' ||
+    Object.keys(input).sort().join(',') !==
+      (scheduleVersion === 2
+        ? 'enabled,expectedRevision,locale,mode,quiet,scheduleVersion,time'
+        : 'enabled,expectedRevision,locale,quiet,time') ||
+    (scheduleVersion === 2 &&
+      (input.scheduleVersion !== 2 || !['daily', 'register-close'].includes(input.mode))) ||
     typeof input.enabled !== 'boolean' ||
     !languages.has(input.locale) ||
     !Number.isSafeInteger(input.expectedRevision) ||
@@ -76,6 +90,7 @@ async function savePreference(db, context, branchId, input, { now = Date.now } =
   } catch {
     fail('invalid_preference');
   }
+  const mode = scheduleVersion === 2 ? input.mode : 'daily';
   await ready(db);
   const planned = nextDaily(schedule, new Date(now())),
     license = new ObjectId(context.businessId);
@@ -84,6 +99,7 @@ async function savePreference(db, context, branchId, input, { now = Date.now } =
     row = await db.collection('business_notification_preferences').findOneAndUpdate(
       {
         _id: key(context, branchId),
+        ...(scheduleVersion === 2 ? {} : { mode: { $ne: 'register-close' } }),
         ...(input.expectedRevision
           ? { license, revision: input.expectedRevision }
           : { revision: { $exists: false } }),
@@ -94,12 +110,15 @@ async function savePreference(db, context, branchId, input, { now = Date.now } =
           accountId: context.accountId,
           branchId,
           enabled: input.enabled,
+          mode,
+          scheduleVersion: 2,
+          closeNotBefore: new Date(now()),
           time: input.time,
           quiet: input.quiet,
           locale: input.locale,
           timezone: branch.timezone,
           revision: input.expectedRevision + 1,
-          nextRunAt: planned.deliverAt,
+          nextRunAt: mode === 'daily' ? planned.deliverAt : null,
           businessDate: planned.businessDate,
           scheduledAt: planned.scheduledAt,
           updatedAt: new Date(now()),
@@ -113,7 +132,7 @@ async function savePreference(db, context, branchId, input, { now = Date.now } =
     throw error;
   }
   if (!row) fail('preference_changed', 409);
-  return publicPreference(branch, row);
+  return publicPreference(branch, row, scheduleVersion);
 }
 async function listInbox(db, context, { before, now = Date.now, includeApprovals = false } = {}) {
   if (!context.capabilities.includes('overview.read')) return { entries: [], next: null };
@@ -216,6 +235,7 @@ async function drainDue(
     const job = await preferences.findOneAndUpdate(
       {
         enabled: true,
+        mode: { $ne: 'register-close' },
         nextRunAt: { $lte: at },
         $or: [{ leaseUntil: { $exists: false } }, { leaseUntil: { $lt: at } }],
       },
@@ -324,6 +344,7 @@ async function prepareUpcoming(db, { now = Date.now, readSummary = readBusinessO
   const jobs = await preferences
     .find({
       enabled: true,
+      mode: { $ne: 'register-close' },
       nextRunAt: { $gt: at, $lte: new Date(now() + 10 * 60000) },
       $or: [
         { preparationRequestedAt: { $exists: false } },

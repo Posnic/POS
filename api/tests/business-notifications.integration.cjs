@@ -219,3 +219,60 @@ test('quiet hours defer delivery and an interrupted checkpoint does not insert t
   await service.drainDue(db, { now: () => deferred, readSummary: async () => summary(f) });
   assert.equal((await readInbox(db, f.context)).entries.length, 1);
 });
+
+test('versioned close mode prevents legacy overwrite and daily delivery, with one winner per revision', async () => {
+  const f = await fixture();
+  const options = { now: () => beforeDue, scheduleVersion: 2 };
+  const closeInput = { ...input(), scheduleVersion: 2, mode: 'register-close' };
+  const results = await Promise.allSettled([
+    service.savePreference(db, f.context, f.branchId, closeInput, options),
+    service.savePreference(db, f.context, f.branchId, closeInput, options),
+  ]);
+  assert.equal(results.filter((r) => r.status === 'fulfilled').length, 1);
+  assert.equal(results.find((r) => r.status === 'rejected').reason.code, 'preference_changed');
+  const saved = await service.getPreference(db, f.context, f.branchId, options);
+  assert.equal(saved.mode, 'register-close');
+  assert.equal(saved.nextSendAt, null);
+  await assert.rejects(service.getPreference(db, f.context, f.branchId), {
+    code: 'schedule_version_required',
+  });
+  await assert.rejects(
+    service.savePreference(db, f.context, f.branchId, { ...input(), expectedRevision: 1 }),
+    { code: 'preference_changed' }
+  );
+  await db
+    .collection('business_notification_preferences')
+    .updateOne({ accountId: f.context.accountId }, { $set: { nextRunAt: new Date(due) } });
+  await service.drainDue(db, {
+    now: () => due,
+    readSummary: () => assert.fail('close mode must not deliver daily'),
+  });
+  await service.prepareUpcoming(db, {
+    now: () => due - 60000,
+    readSummary: () => assert.fail('close mode must not prepare daily'),
+  });
+  assert.equal((await readInbox(db, f.context)).entries.length, 0);
+  const daily = await service.savePreference(
+    db,
+    f.context,
+    f.branchId,
+    { ...closeInput, mode: 'daily', expectedRevision: 1 },
+    options
+  );
+  assert.equal(daily.nextSendAt, '2026-09-28T17:30:00.000Z');
+  assert.equal((await service.getPreference(db, f.context, f.branchId)).revision, 2);
+  const stored = await db
+    .collection('business_notification_preferences')
+    .findOne({ accountId: f.context.accountId });
+  assert.equal(stored.closeNotBefore.toISOString(), new Date(beforeDue).toISOString());
+  await assert.rejects(
+    service.savePreference(
+      db,
+      f.context,
+      f.branchId,
+      { ...closeInput, mode: 'both', expectedRevision: 2 },
+      options
+    ),
+    { code: 'invalid_preference' }
+  );
+});

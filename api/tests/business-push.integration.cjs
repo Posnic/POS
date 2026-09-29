@@ -449,3 +449,35 @@ test('a delayed invalid-device receipt cannot remove a newer registration', asyn
   await push.drainPush(db, { config, now: () => at + 16 * 60000, transport });
   assert.equal(await db.collection('business_push_devices').countDocuments({}), 1);
 });
+
+test('switching to close mode cancels an already queued daily push retry', async () => {
+  const f = await fixture();
+  let sends = 0;
+  const transport = {
+    send: async () => {
+      sends++;
+      throw new Error('temporary');
+    },
+  };
+  await push.drainPush(db, { config, now: () => at, transport });
+  assert.equal(sends, 1);
+  const context = await createBusinessAccess(db, { now: () => at }).contextFor(f.user);
+  await savePreference(
+    db,
+    context,
+    f.event.branchId,
+    {
+      expectedRevision: 1,
+      enabled: true,
+      time: '23:00',
+      locale: 'en',
+      quiet: { enabled: false, start: '22:00', end: '07:00' },
+      scheduleVersion: 2,
+      mode: 'register-close',
+    },
+    { scheduleVersion: 2, now: () => at + 1000 }
+  );
+  await push.drainPush(db, { config, now: () => at + 10 * 60000, transport });
+  assert.equal(sends, 1);
+  assert.equal((await db.collection('business_push_deliveries').findOne({})).state, 'stopped');
+});

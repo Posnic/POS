@@ -144,9 +144,12 @@ async function currentScope(db, accountId, license, branchId, now, event = {}) {
     !context.branches.some((branch) => branch.id === branchId)
   )
     fail('access_denied', 403);
-  const preference = await db
-    .collection('business_notification_preferences')
-    .findOne({ _id: accountId + ':' + branchId, license, enabled: true });
+  const preference = await db.collection('business_notification_preferences').findOne({
+    _id: accountId + ':' + branchId,
+    license,
+    enabled: true,
+    mode: { $ne: 'register-close' },
+  });
   if (!preference) fail('access_denied', 403);
   const branch = context.branches.find((branch) => branch.id === branchId);
   return { context, preference, branch };
