@@ -178,6 +178,7 @@ async function decide(db, sessionId, requestId, input, { now = Date.now } = {}) 
   if (row.requesterId === current.context.accountId) fail('self_approval_denied', 409);
   if (!withinDiscountLimit(current.policy, row.summary)) fail('discount_limit_exceeded', 409);
   let authenticatedAt = current.session.authenticatedAt;
+  let confirmationSessionId;
   if (row.decisionId !== input?.decisionId && !recentAuthentication(current.session, time)) {
     let confirmation;
     try {
@@ -200,6 +201,7 @@ async function decide(db, sessionId, requestId, input, { now = Date.now } = {}) 
       fail('access_denied', 403);
     if (!withinDiscountLimit(confirmedPolicy, row.summary)) fail('discount_limit_exceeded', 409);
     authenticatedAt = confirmation.session.authenticatedAt;
+    confirmationSessionId = confirmation.session._id;
   }
   const decisionInput = {
     decisionId: input.decisionId,
@@ -207,7 +209,47 @@ async function decide(db, sessionId, requestId, input, { now = Date.now } = {}) 
     outcome: input.outcome,
     reason: input.reason,
   };
-  const updated = await createDecisionLedger(db, { now }).decide(
+  const updated = await createDecisionLedger(db, {
+    now,
+    // Run after the ledger's own asynchronous lookup, immediately before its
+    // revision-bound transition. No phone-supplied authority enters this hook.
+    async authorizeDecision(latest) {
+      const fresh = await recheckRead(db, sessionId, current, [latest], latest.branchId, now);
+      if (latest.requesterId === fresh.current.context.accountId) fail('self_approval_denied', 409);
+      if (!withinDiscountLimit(fresh.current.policy, latest.summary))
+        fail('discount_limit_exceeded', 409);
+      authenticatedAt = fresh.current.session.authenticatedAt;
+      if (
+        latest.decisionId !== input.decisionId &&
+        !recentAuthentication(fresh.current.session, fresh.time)
+      ) {
+        if (!confirmationSessionId) fail('step_up_required', 428);
+        let confirmation;
+        try {
+          confirmation = await actor(db, confirmationSessionId, now());
+        } catch (error) {
+          if ([401, 403].includes(error.status)) fail('step_up_required', 428);
+          throw error;
+        }
+        if (
+          confirmation.context.accountId !== current.context.accountId ||
+          confirmation.context.businessId !== current.context.businessId
+        )
+          fail('confirmation_account_mismatch', 409);
+        if (!confirmation.context.branches.some((branch) => branch.id === latest.branchId))
+          fail('access_denied', 403);
+        if (!withinDiscountLimit(confirmation.policy, latest.summary))
+          fail('discount_limit_exceeded', 409);
+        if (!recentAuthentication(confirmation.session, now())) fail('step_up_required', 428);
+        authenticatedAt = confirmation.session.authenticatedAt;
+      }
+      return {
+        ...fresh.current.context,
+        approvalSessionId: fresh.current.session._id,
+        approvalAuthenticatedAt: authenticatedAt,
+      };
+    },
+  }).decide(
     {
       ...current.context,
       approvalSessionId: current.session._id,
@@ -233,7 +275,9 @@ async function decide(db, sessionId, requestId, input, { now = Date.now } = {}) 
     if (!refreshed.matchedCount) fail('sign_in_required', 401);
     current.session.authenticatedAt = authenticatedAt;
   }
-  return view(updated, current, await namesFor(db, [updated], updated.license), now());
+  const names = await namesFor(db, [updated], updated.license);
+  const fresh = await recheckRead(db, sessionId, current, [updated], updated.branchId, now);
+  return view(updated, fresh.current, names, fresh.time);
 }
 /** Internal till bridge only; source identity must come from its authenticated
  * device/cashier channel, never from the Business phone request body. */

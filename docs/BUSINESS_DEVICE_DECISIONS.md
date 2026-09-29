@@ -16,6 +16,15 @@ This complements the separate checks performed when actually deciding or applyin
 an approval. Real Mongo race cases cover both list and detail reads; deployed
 revocation testing remains part of qualification.
 
+Approval writes also run their live authority check after the ledger lookup and
+before the revision-checked transition. A required confirmation session is checked
+again rather than trusting a token verified earlier in the request. Regression
+cases revoke either session, remove branch access or lower the discount limit
+during the lookup and verify that the request stays pending with revision zero.
+These checks reduce asynchronous authorization windows; they do not claim a
+cross-collection transaction with concurrent account administration. Execution
+still independently rechecks the approver before allowing a new till claim.
+
 ## Trust boundary
 
 The enrolled till sends its existing device credential to the Gateway. The Gateway

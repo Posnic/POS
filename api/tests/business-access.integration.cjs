@@ -1593,3 +1593,129 @@ test('approval reads recheck revocation, branch scope and discount policy after 
     else process.env.POSNIC_BUSINESS_DECISIONS = prior;
   }
 });
+test('approval writes recheck primary authority after the ledger lookup and leave rejected requests pending', async () => {
+  const prior = process.env.POSNIC_BUSINESS_DECISIONS;
+  process.env.POSNIC_BUSINESS_DECISIONS = '1';
+  try {
+    for (const change of ['revoke', 'branch', 'policy', 'confirmation', 'unchanged']) {
+      const f = await fixture();
+      await db.collection('users').updateOne(
+        { _id: f.user._id },
+        {
+          $set: {
+            'access.pos': {
+              discount_apply: true,
+              discount_approve_remote: true,
+              discount_max_percent: 50,
+            },
+          },
+        }
+      );
+      const session = await grant(f);
+      const identity = await f.access.authenticate(session.token);
+      let confirmation;
+      if (change === 'confirmation') {
+        await db.collection('business_sessions').updateOne(
+          { _id: identity.session._id },
+          {
+            $set: { authenticatedAt: new Date(Date.now() - 6 * 60_000) },
+          }
+        );
+        const verifier = opaque();
+        const request = await f.access.request({
+          codeChallenge: proof(verifier),
+          deviceName: 'Test confirmation',
+          stepUp: true,
+        });
+        confirmation = await grant({ ...f, request: request.request, verifier });
+      }
+      const row = await require('../src/services/business-decision-ledger')
+        .createDecisionLedger(db)
+        .create(
+          {
+            businessId: String(f.license),
+            branchId: String(f.branch._id),
+            requesterId: String(new ObjectId()),
+            deviceId: 'desktop-00000000001',
+          },
+          {
+            operationId: 'write-race-operation-01',
+            revisionHash: 'a'.repeat(64),
+            summary: {
+              currency: 'INR',
+              currencyDigits: 2,
+              beforeDiscountMinor: 10000,
+              discountMinor: 2000,
+              payableMinor: 8000,
+              roundingMinor: 0,
+              itemCount: 1,
+              reason: 'Write race regression',
+            },
+          }
+        );
+      let reads = 0;
+      const raced = {
+        collection(name) {
+          const collection = db.collection(name);
+          if (name !== 'business_decisions') return collection;
+          return new Proxy(collection, {
+            get(target, key) {
+              if (key !== 'findOne') {
+                const value = target[key];
+                return typeof value === 'function' ? value.bind(target) : value;
+              }
+              return async (...args) => {
+                const value = await target.findOne(...args);
+                if (++reads === 2) {
+                  if (change === 'revoke') await f.access.revoke(session.token);
+                  if (change === 'confirmation') await f.access.revoke(confirmation.token);
+                  if (change === 'branch' || change === 'policy')
+                    await db.collection('users').updateOne(
+                      { _id: f.user._id },
+                      {
+                        $set:
+                          change === 'branch'
+                            ? { branch_access: [] }
+                            : { 'access.pos.discount_max_percent': 10 },
+                      }
+                    );
+                }
+                return value;
+              };
+            },
+          });
+        },
+      };
+      const action = () =>
+        require('../src/services/business-decisions').decide(
+          raced,
+          identity.session._id,
+          String(row._id),
+          {
+            decisionId: 'write-race-decision-01',
+            ...(confirmation ? { confirmationToken: confirmation.token } : {}),
+            expectedRevision: 0,
+            outcome: 'approved',
+            reason: '',
+          }
+        );
+      if (change === 'unchanged') assert.equal((await action()).state, 'approved');
+      else
+        await assert.rejects(action(), {
+          code: {
+            revoke: 'sign_in_required',
+            branch: 'access_denied',
+            policy: 'discount_limit_exceeded',
+            confirmation: 'step_up_required',
+          }[change],
+        });
+      assert.equal(reads, 2);
+      const saved = await db.collection('business_decisions').findOne({ _id: row._id });
+      assert.equal(saved.state, change === 'unchanged' ? 'approved' : 'pending');
+      assert.equal(saved.revision, change === 'unchanged' ? 1 : 0);
+    }
+  } finally {
+    if (prior === undefined) delete process.env.POSNIC_BUSINESS_DECISIONS;
+    else process.env.POSNIC_BUSINESS_DECISIONS = prior;
+  }
+});

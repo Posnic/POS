@@ -114,7 +114,7 @@ function requestInput(input) {
 /** Durable mechanics only. Callers must authenticate sources, derive the price
  * preview with the sale authority, and re-read ACL/step-up before every action.
  * No route exposes this ledger until the complete till consume path is wired. */
-function createDecisionLedger(db, { now = Date.now } = {}) {
+function createDecisionLedger(db, { now = Date.now, authorizeDecision } = {}) {
   const rows = db.collection('business_decisions');
   async function ready() {
     if (!indexes.has(db)) {
@@ -235,6 +235,7 @@ function createDecisionLedger(db, { now = Date.now } = {}) {
       )
         fail('invalid_decision', 400);
       const row = await get({ _id: new ObjectId(requestId) });
+      if (authorizeDecision) context = await authorizeDecision(row);
       approver(context, row);
       if (row.decisionId === input.decisionId) {
         if (
