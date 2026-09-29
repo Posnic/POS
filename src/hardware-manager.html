@@ -2200,6 +2200,8 @@
                 if (!status.supported) return;
                 document.getElementById('windowsRecovery').style.display = 'block';
                 wrBindings = status.bindings || {};
+                document.getElementById('wrMessage').textContent = status.helper
+                    ? 'Print helper: ' + status.helper.state + (status.helper.diagnostic ? ' | Last diagnostic: ' + JSON.stringify(status.helper.diagnostic) : '') : '';
                 const power = document.getElementById('wrPower');
                 power.replaceChildren();
                 const messages = status.systemSettings?.guidance || ['Power settings have not been checked.'];
@@ -2215,6 +2217,19 @@
                 (status.jobs || []).slice().reverse().forEach(job => {
                     const row = document.createElement('p');
                     row.textContent = job.printer + ' | ' + job.status + (job.error ? ' - ' + job.error : '') + ' | Job ' + job.jobId.slice(0, 12) + (job.spoolerJobId ? ' | Windows ' + job.spoolerJobId : '');
+                    if (job.canRecover) {
+                        const retry = document.createElement('button');
+                        retry.type = 'button'; retry.textContent = 'Retry verified unsubmitted receipt';
+                        retry.onclick = async () => {
+                            retry.disabled = true;
+                            try {
+                                const result = await window.electronAPI.printer.recoverUnsubmitted(job.jobId);
+                                await wrRefresh();
+                                document.getElementById('wrMessage').textContent = result.error || result.status || 'Recovery requested';
+                            } catch (error) { retry.disabled = false; document.getElementById('wrMessage').textContent = error.message; }
+                        };
+                        row.appendChild(retry);
+                    }
                     list.appendChild(row);
                 });
             } catch (error) {

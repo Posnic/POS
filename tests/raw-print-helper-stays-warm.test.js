@@ -72,11 +72,11 @@ test('it gives up rather than hanging, and stays up rather than sleeping', () =>
    * Owner: "i want always awake. i dont want idel stuff."
    */
   assert.ok(!/IDLE_SHUTDOWN_MS/.test(SVC), 'the idle shutdown is back');
-  assert.match(SVC, /this\.child\.kill\(\);[\s\S]{0,200}The printer did not answer in time/,
-    'a job that never comes back leaves the helper wedged for the next one');
+  assert.match(SVC, /this\._down\(new Error\(ping \? 'Heartbeat timed out'/,
+    'a missing response must retire its own generation');
   /* Every reply carries its own id, so a slow job cannot be mistaken for the
      next one's answer. */
-  assert.match(SVC, /const waiting = this\.pending\.get\(String\(id\)\);/);
+  assert.match(SVC, /const waiting = this\.pending\.get\(id\);/);
 });
 
 test('the helper starts, answers, and is fast once warm', { skip: !onWindows && 'Windows only: there is no spooler to talk to' }, async () => {

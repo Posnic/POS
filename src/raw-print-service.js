@@ -38,6 +38,12 @@
  * starts in a few milliseconds, so there is nothing to keep warm.
  */
 const { spawn } = require('child_process');
+const path = require('node:path');
+const STARTUP_TIMEOUT_MS = 20000; // Cold Add-Type compilation can exceed eight seconds.
+function powershellPath(env = process.env) {
+  const root = env.SystemRoot || env.WINDIR || 'C:\\Windows';
+  return path.win32.join(root, process.arch === 'ia32' && env.PROCESSOR_ARCHITEW6432 ? 'Sysnative' : 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+}
 
 /* Long enough for a real receipt on a slow spooler, and the same ceiling the
    per-job spawn has always used. */
@@ -108,6 +114,7 @@ while ($true) {
     if ($null -eq $line) { break }
     if ($line.Length -eq 0) { continue }
     $id = ''
+    $submitted = $false
     try {
         $job = $line | ConvertFrom-Json
         $id = $job.id
@@ -125,6 +132,7 @@ while ($true) {
         [System.Runtime.InteropServices.Marshal]::StructureToPtr($di, $diPtr, $false)
         try {
             if ([PosnicRawPrint]::OpenPrinter($job.printer, [ref]$hPrinter, [IntPtr]::Zero)) {
+                $submitted = $true
                 $docId = [PosnicRawPrint]::StartDocPrinter($hPrinter, 1, $diPtr)
                 if ($docId -gt 0) {
                     # EVERY ONE OF THESE RETURN VALUES IS CHECKED, and the count
@@ -154,11 +162,11 @@ while ($true) {
                     }
                 } else {
                     [PosnicRawPrint]::ClosePrinter($hPrinter) | Out-Null
-                    [Console]::Out.WriteLine("ERR $id StartDocPrinter failed")
+                    [Console]::Out.WriteLine("NOTSENT $id StartDocPrinter failed")
                 }
             } else {
                 $code = [System.Runtime.InteropServices.Marshal]::GetLastWin32Error()
-                [Console]::Out.WriteLine("ERR $id Could not open printer (win32 $code)")
+                [Console]::Out.WriteLine("NOTSENT $id Could not open printer (win32 $code)")
             }
         } finally {
             [System.Runtime.InteropServices.Marshal]::FreeHGlobal($ptr)
@@ -166,235 +174,226 @@ while ($true) {
         }
     } catch {
         $msg = $_.Exception.Message -replace "\\r|\\n", ' '
-        [Console]::Out.WriteLine("ERR $id $msg")
+        if ($submitted) { [Console]::Out.WriteLine("ERR $id $msg") }
+        else { [Console]::Out.WriteLine("NOTSENT $id $msg") }
     }
     [Console]::Out.Flush()
 }`;
 
 class RawPrintService {
-  constructor() {
+  constructor(options = {}) {
+    this.spawn = options.spawn || spawn;
+    this.platform = options.platform || process.platform;
+    this.startupMs = options.startupMs || STARTUP_TIMEOUT_MS;
+    this.jobMs = options.jobMs || JOB_TIMEOUT_MS;
+    this.heartbeatMs = options.heartbeatMs || HEARTBEAT_MS;
+    this.delays = options.delays || RESTART_DELAYS_MS;
+    this.executable = options.executable || powershellPath();
+    this.state = 'stopped';
+    this.stopped = false;
     this.child = null;
     this.ready = null;
+    this.attempt = null;
+    this.generation = 0;
     this.pending = new Map();
     this.nextId = 1;
-    this.unavailable = false;
-    /* Kept so a crash loop backs off instead of spawning PowerShell forever on
-       a machine where it can never work. Reset by the first job that answers. */
     this.restarts = 0;
     this.restartTimer = null;
     this.heartbeatTimer = null;
-    this.stopped = false;
+    this.lastDiagnostic = null;
   }
 
-  /** Start it before the first sale, so the first receipt does not pay for it. */
   warm() {
-    if (process.platform !== 'win32') return Promise.resolve(false);
+    if (this.platform !== 'win32') return Promise.resolve(false);
     this.stopped = false;
-    return this._ensure()
-      .then(() => { this._startHeartbeat(); return true; })
-      .catch(() => false);
+    return this._ensure().then(() => true).catch(() => false);
   }
+
+  status() { return { state: this.state, generation: this.generation, diagnostic: this.lastDiagnostic }; }
 
   _ensure() {
-    if (this.child && this.ready) return this.ready;
-
-    this.ready = new Promise((resolve, reject) => {
-      let child;
-      try {
-        child = spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command', LOOP_SCRIPT], {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          windowsHide: true,
-        });
-      } catch (error) {
-        return reject(error);
-      }
-      this.child = child;
-      child.stdin.on('error', error => { settleStart(error); this._down(error); });
-
+    if (this.stopped) return Promise.reject(new Error('Print helper is stopped'));
+    if (this.state === 'ready') return Promise.resolve(this.attempt);
+    if (this.state === 'starting') return this.ready;
+    if (this.state === 'backoff') return Promise.reject(new Error(this.lastDiagnostic?.error || 'Print helper startup failed: recovery backoff'));
+    if (this.child && !this.attempt?.exited) {
+      this.state = 'backoff'; this._scheduleRestart();
+      return Promise.reject(new Error('Print helper startup failed: waiting for previous helper to exit'));
+    }
+    this.state = 'starting';
+    const a = this.attempt = { generation: ++this.generation, startedAt: Date.now(), stderr: '', active: true };
+    // Allocate the shared promise before spawn: synchronous errors must also clear it.
+    const promise = this.ready = new Promise((resolve, reject) => { a.resolve = resolve; a.reject = reject; });
+    const current = () => this.attempt === a && a.active;
+    a.timer = setTimeout(() => this._down(new Error('READY deadline exceeded'), a), this.startupMs);
+    try {
+      const child = a.child = this.child = this.spawn(this.executable,
+        ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', LOOP_SCRIPT],
+        { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
       let buffer = '';
-      let started = false;
-      const settleStart = (error) => {
-        if (started) return;
-        started = true;
-        if (error) reject(error);
-        else resolve(true);
-      };
-
+      child.stdin.on('error', error => { if (current()) this._down(error, a); });
       child.stdout.setEncoding('utf8');
-      child.stdout.on('data', (chunk) => {
+      child.stdout.on('data', chunk => {
+        if (!current()) return;
         buffer += chunk;
+        if (buffer.length > 65536) return this._down(new Error('Invalid helper output'), a);
         let at;
         while ((at = buffer.indexOf('\n')) !== -1) {
-          const line = buffer.slice(0, at).trim();
-          buffer = buffer.slice(at + 1);
-          if (!line) continue;
-          if (line === 'READY') {
-            settleStart(null);
-            continue;
-          }
-          this._answer(line);
+          const line = buffer.slice(0, at).trim(); buffer = buffer.slice(at + 1);
+          if (line === 'READY' && this.state === 'starting') {
+            clearTimeout(a.timer); a.timer = null;
+            this.state = 'ready'; this.ready = null; a.resolve(a);
+            this._startHeartbeat();
+          } else if (this.state === 'ready') this._answer(line);
         }
       });
-      child.stderr.on('data', (d) => console.warn('[RawPrint]', String(d).trim()));
-
-      child.on('error', (error) => {
-        settleStart(error);
-        this._down(error);
+      child.stdout.on('error', error => { if (current()) this._down(error, a); });
+      child.stderr.on('error', error => { if (current()) this._down(error, a); });
+      child.stderr.on('data', chunk => {
+        if (!current()) return;
+        a.stderr = (a.stderr + String(chunk)).slice(-4096);
       });
-      child.on('exit', (code) => {
-        settleStart(new Error(`the print helper exited (${code})`));
-        this._down(new Error('the print helper stopped'));
+      child.on('error', error => {
+        if (!current()) return;
+        if (!child.pid) { a.exited = true; this.child = null; }
+        this._down(error, a);
       });
-
-      /* A helper that never says READY is a helper that will never print.
-         Give up quickly and let the recovery queue report the failure. */
-      setTimeout(() => settleStart(new Error('the print helper did not start')), 8000);
-    });
-
-    return this.ready;
+      child.on('exit', (code, signal) => {
+        if (this.attempt !== a) return;
+        a.exited = true;
+        if (this.child === child) this.child = null;
+        if (a.active) this._down(new Error('Helper exited: code=' + code + ', signal=' + signal), a);
+      });
+    } catch (error) {
+      a.exited = !a.child;
+      this._down(error, a);
+    }
+    return promise;
   }
 
-  /** One answer line: "OK 4" or "ERR 4 something went wrong". */
   _answer(line) {
-    const space = line.indexOf(' ');
-    const verb = space === -1 ? line : line.slice(0, space);
-    const rest = space === -1 ? '' : line.slice(space + 1).trim();
-    const idAt = rest.indexOf(' ');
-    const id = idAt === -1 ? rest : rest.slice(0, idAt);
-    const message = idAt === -1 ? '' : rest.slice(idAt + 1);
-    const waiting = this.pending.get(String(id));
+    const match = /^(OK|ERR|NOTSENT) (\S+)(?: (.*))?$/.exec(line);
+    if (!match) return;
+    const [, verb, id, message] = match;
+    const waiting = this.pending.get(id);
     if (!waiting) return;
-    this.pending.delete(String(id));
-    clearTimeout(waiting.timer);
-    /* It answered, so whatever was wrong is over: a later crash should retry
-       quickly rather than inherit the backoff from an old bad spell. */
+    this.pending.delete(id); clearTimeout(waiting.timer);
     this.restarts = 0;
     if (verb === 'OK') waiting.resolve(message ? { success: true, spoolerJobId: Number(message) } : { success: true });
-    else waiting.resolve({ success: false, error: message || 'The spooler did not confirm the job' });
+    else waiting.resolve({ success: false, submission: verb === 'NOTSENT' ? 'not-submitted' : 'uncertain',
+      error: message || 'The spooler did not confirm the job' });
   }
 
-  /**
-   * The helper is gone.
-   *
-   * Everyone waiting is told at once - a print that will never answer must not
-   * hold a sale open - and then it is brought back WITHOUT waiting for the next
-   * ticket to find out. That is the difference between always awake and merely
-   * restarted on demand: the order that arrives in the gap is the one that
-   * would otherwise wait.
-   */
-  _down(error) {
-    for (const [, waiting] of this.pending) {
-      clearTimeout(waiting.timer);
-      waiting.resolve({ success: false, error: error ? error.message : 'the print helper stopped' });
+  _down(error, a = this.attempt) {
+    if (!a || this.attempt !== a || !a.active) return;
+    const startup = this.state === 'starting';
+    a.active = false;
+    clearTimeout(a.timer); a.timer = null;
+    const details = { phase: startup ? 'startup' : 'runtime', generation: a.generation,
+      pid: a.child?.pid, executable: this.executable, elapsedMs: Date.now() - a.startedAt,
+      deadlineMs: this.startupMs, stderr: a.stderr, cause: error?.message || 'Helper stopped' };
+    details.error = (startup ? 'Print helper startup failed: ' : 'Print helper failed: ') + details.cause +
+      (a.stderr ? '; stderr: ' + a.stderr.trim() : '');
+    if (!this.stopped) {
+      this.lastDiagnostic = details;
+      console.warn('[RawPrint]', JSON.stringify(details));
     }
-    this.pending.clear();
-    this.child = null;
+    if (startup) a.reject(new Error(details.error));
     this.ready = null;
     this._stopHeartbeat();
+    for (const waiting of this.pending.values()) {
+      clearTimeout(waiting.timer);
+      waiting.resolve({ success: false, submission: waiting.ping ? 'not-submitted' : 'uncertain', error: details.error });
+    }
+    this.pending.clear();
+    // Do not start a replacement until exit confirms that this process is gone.
+    // kill() returning true means a signal was sent, not that the child exited.
+    if (a.child && !a.exited) {
+      try { a.child.stdin.end(); } catch (_) { /* already closed */ }
+      try { a.child.kill(); } catch (_) { /* retry retirement during backoff */ }
+    }
+    this.state = this.stopped ? 'stopped' : 'backoff';
     if (!this.stopped) this._scheduleRestart();
   }
 
-  /* Backed off, because a machine where PowerShell cannot run at all would
-     otherwise spawn it in a tight loop for as long as the till is on. */
   _scheduleRestart() {
-    if (this.restartTimer) return;
-    const wait = RESTART_DELAYS_MS[Math.min(this.restarts, RESTART_DELAYS_MS.length - 1)];
-    this.restarts += 1;
+    if (this.restartTimer || this.stopped) return;
+    const delay = this.delays[Math.min(this.restarts++, this.delays.length - 1)];
     this.restartTimer = setTimeout(() => {
       this.restartTimer = null;
       if (this.stopped) return;
-      this._ensure().catch(() => { /* _down has already queued the next try */ });
-    }, wait);
-    if (this.restartTimer.unref) this.restartTimer.unref();
+      if (this.child && !this.attempt?.exited) {
+        try { this.child.kill(); } catch (_) { /* never overlap helpers */ }
+        this._scheduleRestart(); return;
+      }
+      this.state = 'stopped';
+      this._ensure().catch(() => {});
+    }, delay);
+    this.restartTimer.unref?.();
   }
 
-  /*
-   * A heartbeat, because a process can be alive and deaf.
-   *
-   * PowerShell can be running with its loop wedged - a driver call that never
-   * returns is the usual way - and from the outside that looks identical to a
-   * helper waiting for work. The ping is answered without opening a printer, so
-   * proving it costs nothing and no paper.
-   */
   _startHeartbeat() {
     this._stopHeartbeat();
     this.heartbeatTimer = setInterval(() => {
-      if (!this.child || this.pending.size) return;   // busy is its own proof
-      this.send({ ping: true }).then((r) => {
-        if (!r.success && !r.unavailable) {
-          console.warn('[RawPrint] the helper stopped answering; restarting it');
-          try { if (this.child) this.child.kill(); } catch (e) { /* already gone */ }
+      if (!this.child || this.pending.size) return;
+      const a = this.attempt;
+      this.send({ ping: true }).then(result => {
+        if (!result.success && this.attempt === a && a.active && !this.pending.size) {
+          this._down(new Error(result.error || 'Heartbeat failed'), a);
         }
-      }).catch(() => { /* the restart path handles it */ });
-    }, HEARTBEAT_MS);
-    if (this.heartbeatTimer.unref) this.heartbeatTimer.unref();
+      }).catch(error => this._down(error, a));
+    }, this.heartbeatMs);
+    this.heartbeatTimer.unref?.();
   }
+  _stopHeartbeat() { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
 
-  _stopHeartbeat() {
-    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
-    this.heartbeatTimer = null;
-  }
-
-  /**
-   * Print one already-written file.
-   *
-   * @returns {Promise<{success: boolean, error?: string, unavailable?: boolean}>}
-   *   `unavailable` means the helper could not be used at all, and the caller
-   *   should fall back rather than treat it as a printer fault.
-   */
   async send({ printer, file, doc, ping = false }) {
-    if (process.platform !== 'win32') return { success: false, unavailable: true };
-    try {
-      await this._ensure();
-    } catch (error) {
-      return { success: false, unavailable: true, error: error && error.message };
+    const notSent = error => ({ success: false, unavailable: true, submission: 'not-submitted', error });
+    if (this.platform !== 'win32') return notSent('Windows helper is not supported on this platform');
+    let a;
+    try { a = await this._ensure(); }
+    catch (error) { return notSent(error.message); }
+    if (this.attempt !== a || !a.active || this.state !== 'ready' || !a.child.stdin?.writable) {
+      if (a.active) this._down(new Error('Helper stdin is not writable'), a);
+      return notSent('Print helper unavailable before submission');
     }
-    if (!this.child || !this.child.stdin || !this.child.stdin.writable) {
-      return { success: false, unavailable: true };
-    }
-
     const id = String(this.nextId++);
-    const payload = ping
-      ? JSON.stringify({ id, ping: true })
-      : JSON.stringify({ id, printer: String(printer), file: String(file), doc: String(doc || 'Posnic Receipt') });
-
-    return new Promise((resolve) => {
+    const payload = ping ? { id, ping: true } : { id, printer: String(printer), file: String(file), doc: String(doc || 'Posnic Receipt') };
+    return new Promise(resolve => {
       const timer = setTimeout(() => {
-        this.pending.delete(id);
-        /* A job that never came back means the helper is wedged. Take it down
-           so the next receipt gets a fresh one rather than queueing behind a
-           process that has stopped answering. */
-        try { if (this.child) this.child.kill(); } catch (e) { /* already gone */ }
-        resolve({ success: false, error: 'The printer did not answer in time' });
-      }, JOB_TIMEOUT_MS);
-      this.pending.set(id, { resolve, timer });
+        // A ping must not terminate receipts that arrived while it was waiting.
+        if (ping && [...this.pending.values()].some(job => !job.ping)) {
+          this.pending.delete(id);
+          resolve({ success: false, submission: 'not-submitted', error: 'Heartbeat timed out while receipts were active' });
+          return;
+        }
+        this._down(new Error(ping ? 'Heartbeat timed out' : 'Print helper response timed out; submission outcome uncertain'), a);
+      }, this.jobMs);
+      this.pending.set(id, { resolve, timer, ping });
       try {
-        this.child.stdin.write(payload + '\n');
-      } catch (error) {
-        this.pending.delete(id);
-        clearTimeout(timer);
-        resolve({ success: false, error: error && error.message });
-      }
+        // Once write is attempted, EPIPE/timeout/exit cannot prove non-submission.
+        a.child.stdin.write(JSON.stringify(payload) + '\n', error => { if (error) this._down(error, a); });
+      } catch (error) { this._down(error, a); }
     });
   }
 
-  /** Deliberate shutdown, at quit. Nothing else may stop the helper. */
   stop() {
     this.stopped = true;
+    clearTimeout(this.restartTimer); this.restartTimer = null;
     this._stopHeartbeat();
-    if (this.restartTimer) clearTimeout(this.restartTimer);
-    this.restartTimer = null;
-    const child = this.child;
-    this.child = null;
+    this._down(new Error('App shutdown'), this.attempt);
+    if (this.child && !this.attempt?.exited) {
+      try { this.child.kill(); } catch (_) { /* no replacement during shutdown */ }
+    }
     this.ready = null;
-    if (!child) return;
-    try { child.stdin.end(); } catch (e) { /* already closed */ }
-    try { child.kill(); } catch (e) { /* already gone */ }
+    this.state = 'stopped';
   }
 }
 
 module.exports = new RawPrintService();
 module.exports.RawPrintService = RawPrintService;
 module.exports.JOB_TIMEOUT_MS = JOB_TIMEOUT_MS;
+module.exports.STARTUP_TIMEOUT_MS = STARTUP_TIMEOUT_MS;
 module.exports.HEARTBEAT_MS = HEARTBEAT_MS;
 module.exports.RESTART_DELAYS_MS = RESTART_DELAYS_MS;
+module.exports.powershellPath = powershellPath;

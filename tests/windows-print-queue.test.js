@@ -228,7 +228,7 @@ test('queued idle pulse survives restart without accumulating another job', asyn
   r.queue.stop(); const restored = r.make();
   await r.tick(60000, restored); await r.tick(60000, restored);
   assert.equal(r.initialized.length, 1);
-  assert.equal((await r.send('receipt', 'Kitchen_Printer', restored)).status, 'Waiting');
+  assert.equal((await r.send('receipt', 'Kitchen_Printer', restored)).status, 'Printer offline');
   assert.equal(r.calls.length, 0);
   r.health.jobs = [];
   // The real receipt runs after the old pulse drains, without duplicating it.
@@ -397,4 +397,63 @@ test('missing legacy payload is not automatically recreated or replayed', async 
   fs.unlinkSync(path.join(r.dir, job.id + '.bin')); r.queue.stop();
   const next = r.make(); await r.tick(0,next); assert.equal(r.calls.length,0);
   assert.equal(next.jobs.get(job.id).state,'failed');
+});
+
+test('startup failure is diagnosed accurately and pre-submission retries are bounded', async t => {
+ const r=rig(t);let attempts=0;
+ r.transport.initialize=async()=>{attempts++;return {success:false,unavailable:true,submission:'not-submitted',error:'Print helper startup failed: READY deadline exceeded'};};
+ await r.send();for(let i=0;i<6;i++)await r.tick(60000);
+ assert.equal(attempts,4);assert.equal(r.calls.length,0);
+ const job=r.queue.jobs.get(idFor('kot-1'));
+ assert.equal(job.state,'failed');assert.equal(job.submitted,false);assert.equal(r.queue.canRecover(job),true);
+ assert.match(job.reason,/Print helper startup failed/);assert.doesNotMatch(job.reason,/check Windows queue/);
+});
+test('controlled legacy recovery preserves a successful Reception copy and Kitchen identity', async t => {
+ const r=rig(t);await r.send('reception','Reception');
+ const submit=r.transport.submit;
+ r.transport.initialize=async()=>({success:false,unavailable:true,error:'Print helper startup failed'});
+ await r.send('kitchen','Kitchen_New');
+ const job=r.queue.jobs.get(idFor('kitchen'));
+ job.state='failed';job.reason='Printer initialization failed; check Windows queue';delete job.nonSubmissionVerified;
+ r.queue.write(job.id+'.json',job);
+ r.queue.stop();const restored=r.make();
+ r.transport.initialize=async()=>({success:true});r.transport.submit=submit;
+ const before={...job.binding};
+ const result=await restored.recoverUnsubmitted(job.id);
+ assert.equal(result.success,true);assert.equal(result.jobId,job.id);
+ assert.deepEqual(restored.jobs.get(job.id).binding,before);
+ assert.deepEqual(r.calls.map(j=>j.printer),['Reception','Kitchen_New']);
+ await restored.recoverUnsubmitted(job.id);await r.send('reception','Reception',restored);
+ assert.equal(r.calls.length,2);
+});
+test('uncertain, accepted and partial receipts are never eligible for controlled recovery',async t=>{
+ const r=rig(t);r.transport.submit=async()=>({success:false,submission:'uncertain',error:'partial write'});
+ await r.send();const job=r.queue.jobs.get(idFor('kot-1'));
+ assert.equal(job.submitted,true);assert.equal(r.queue.canRecover(job),false);
+ assert.equal((await r.queue.recoverUnsubmitted(job.id)).success,false);
+ // Contradictory old records must also fail closed, even with a legacy reason.
+ job.submitted=false;job.reason='Printer initialization failed; check Windows queue';job.accepted=true;
+ assert.equal(r.queue.canRecover(job),false);job.accepted=false;job.spoolerId=7;assert.equal(r.queue.canRecover(job),false);
+});
+test('failure before receipt submission is retried once helper recovers; failures after write are not',async t=>{
+ const r=rig(t);const submit=r.transport.submit;let tries=0;
+ r.transport.submit=async job=>++tries===1?{success:false,unavailable:true,submission:'not-submitted',error:'Print helper startup failed'}:submit(job);
+ await r.send();assert.equal(r.queue.jobs.get(idFor('kot-1')).submitted,false);
+ await r.tick();assert.equal(r.calls.length,1);await r.tick();assert.equal(r.calls.length,1);
+});
+test('optional retained initialization cannot starve healthy receipts indefinitely',async t=>{
+ const r=rig(t);r.transport.initialize=async job=>{r.initialized.push(job);r.health.jobs.push({id:99,document:job.document,status:'Spooling',error:false});return {success:true};};
+ await r.send();assert.equal(r.calls.length,0);await r.tick(30001);
+ assert.equal(r.calls.length,1);assert.equal(r.initialized.length,1);
+});
+test('unknown idle pulse suppresses further optional traffic but not healthy receipts',async t=>{
+ const r=rig(t);r.queue.keepAlive.kitchen_printer={at:0,pending:true,document:'Posnic-idle-old',status:'unknown'};
+ await r.send();assert.equal(r.calls.length,0);await r.tick(30001);
+ assert.equal(r.calls.length,1);assert.equal(r.queue.keepAlive.kitchen_printer.suppressed,true);
+});
+test('a failed Windows queue job still blocks receipts after optional wake deadline',async t=>{
+ const r=rig(t);r.queue.keepAlive.kitchen_printer={at:0,pending:true,document:'Posnic-idle-old',status:'unknown'};
+ r.health.jobs=[{id:1,document:'Posnic-idle-old',error:true,status:'Error'}];
+ await r.send();await r.tick(30001);assert.equal(r.calls.length,0);
+ assert.match(r.queue.jobs.get(idFor('kot-1')).reason,/failed job/);
 });

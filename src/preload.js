@@ -114,6 +114,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   printer: {
     recoveryStatus: () => ipcRenderer.invoke('printer:recovery-status'),
+    recoverUnsubmitted: (id) => ipcRenderer.invoke('printer:recover-unsubmitted', id),
     configureRecovery: (printer, binding) => ipcRenderer.invoke('printer:recovery-configure', printer, binding),
     onJobStatus: callback => {
       const handler = (_event, status) => callback(status);
