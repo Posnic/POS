@@ -507,6 +507,7 @@
         if (!$('#sales_filter_panel').length) { return; }
         PosnicPro.listFilter.mount({
             key: 'sales',
+            rows: '#sales_list_rows',
             onRefresh: function () { return PosnicPro.sales.loadHistory(); },
             container: '#sales_filter_panel',
             button: '#sales_filter_btn',
@@ -545,7 +546,7 @@
         if (page) { self._histPage = page; }
         var filters = PosnicPro.listFilter.legacyFilters('sales', { dateKey: 'updated_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('sales', {
             url: 'sales',
             data: (function () {
                 var d = { page: self._histPage, limit: self.HIST_PAGE_SIZE, filters: JSON.stringify(filters) };
@@ -9257,7 +9258,7 @@ PosnicPro.quotes = {
         $.extend(params, PosnicPro.listFilter.params('quotes'));
         var qsort = PosnicPro.listSort.value('quotes');
         if (qsort) { params.sort = qsort; }
-        PosnicPro.get({ url: 'quotes', data: params }, function (r) {
+        PosnicPro.listFilter.request('quotes', { url: 'quotes', data: params }, function (r) {
             if (mine !== PosnicPro.quotes._seq) { return; }
             PosnicPro.quotes._rows = (r && r.data) || [];
             PosnicPro.quotes._meta = (r && r.meta) || null;
@@ -11458,6 +11459,7 @@ PosnicPro.quotes.mountFilters = function () {
     if (!$('#quotes_filter_panel').length) { return; }
     PosnicPro.listFilter.mount({
         key: 'quotes',
+            rows: '#quotes_list_rows',
             onRefresh: function () { return PosnicPro.quotes.load(true); },
         container: '#quotes_filter_panel',
         button: '#quotes_filter_btn',

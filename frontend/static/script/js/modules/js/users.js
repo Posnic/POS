@@ -241,6 +241,7 @@ PosnicPro.users = {
         $('#users_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'users',
+            rows: '#users_list_rows',
             onRefresh: function () { return PosnicPro.users.loadList(); },
             container: '#users_filter_panel',
             button: '#users_filter_btn',
@@ -259,7 +260,7 @@ PosnicPro.users = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('users', {});
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('users', {
             url: 'users',
             data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
         }, function (response) {

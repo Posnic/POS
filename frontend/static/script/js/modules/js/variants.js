@@ -99,6 +99,7 @@ PosnicPro.variants = {
         $('#variants_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'variants',
+            rows: '#variants_list_rows',
             onRefresh: function () { return PosnicPro.variants.loadList(); },
             container: '#variants_filter_panel',
             button: '#variants_filter_btn',
@@ -115,7 +116,7 @@ PosnicPro.variants = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('variants', {});
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('variants', {
             url: 'variants',
             data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
         }, function (response) {

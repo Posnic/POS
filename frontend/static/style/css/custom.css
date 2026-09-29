@@ -7669,3 +7669,25 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
     grid-column: 2;
   }
 }
+
+/* Shared list refresh: readable in every theme, with request-bound feedback. */
+.lf-refresh.btn {
+    background: var(--theme-card-bg, #fff) !important;
+    color: var(--theme-text-primary, #16203a) !important;
+    border: 2px solid currentColor !important;
+    font-weight: 600;
+    opacity: 1;
+    min-width: 108px;
+}
+.lf-refresh.btn:hover { box-shadow: 0 0 0 2px var(--theme-border-color, #c9d2df); }
+.lf-refresh.btn:focus-visible { outline: 3px solid var(--theme-primary-color, #506fe4); outline-offset: 3px; }
+.lf-refresh[aria-disabled="true"] { cursor: progress; }
+.lf-refresh.is-refreshing i { display: inline-block; animation: lf-spin 900ms linear infinite; }
+.lf-refreshing { opacity: .6; transition: opacity 150ms ease; }
+.lf-refreshed { animation: lf-reveal 650ms ease-out; }
+@keyframes lf-spin { to { transform: rotate(360deg); } }
+@keyframes lf-reveal { from { opacity: .6; box-shadow: inset 0 3px var(--theme-primary-color, #506fe4); } to { opacity: 1; box-shadow: inset 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) {
+    .lf-refresh.is-refreshing i, .lf-refreshed { animation: none; }
+    .lf-refreshing { transition: none; }
+}

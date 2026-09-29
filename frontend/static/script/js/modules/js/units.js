@@ -53,6 +53,7 @@ PosnicPro.units = {
         $('#units_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'units',
+            rows: '#units_list_rows',
             onRefresh: function () { return PosnicPro.units.loadList(); },
             container: '#units_filter_panel',
             button: '#units_filter_btn',
@@ -72,7 +73,7 @@ PosnicPro.units = {
        run client-side, the endpoint takes no params. */
     loadList: function (page, then) {
         PosnicPro.units.mountFilters();
-        PosnicPro.get({ url: 'setting/getUnitAll' }, function (response) {
+        PosnicPro.listFilter.request('units', { url: 'setting/getUnitAll' }, function (response) {
             if (response.type !== 'success') {
                 $('#units_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_units_try_again">Could not load units - try again.</lang></div>');
                 return;

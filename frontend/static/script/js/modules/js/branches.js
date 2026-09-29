@@ -208,6 +208,7 @@ PosnicPro.branches = {
         $('#branches_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'branches',
+            rows: '#branches_list_rows',
             onRefresh: function () { return PosnicPro.branches.loadList(); },
             container: '#branches_filter_panel',
             button: '#branches_filter_btn',
@@ -228,7 +229,7 @@ PosnicPro.branches = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('branches', {});
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('branches', {
             url: 'branches',
             data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
         }, function (response) {

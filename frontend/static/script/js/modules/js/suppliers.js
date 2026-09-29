@@ -75,6 +75,7 @@ PosnicPro.suppliers = {
         $('#suppliers_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'suppliers',
+            rows: '#suppliers_list_rows',
             onRefresh: function () { return PosnicPro.suppliers.loadList(); },
             container: '#suppliers_filter_panel',
             button: '#suppliers_filter_btn',
@@ -96,7 +97,7 @@ PosnicPro.suppliers = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('suppliers', { dateKey: 'created_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('suppliers', {
             url: 'suppliers',
             data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
         }, function (response) {

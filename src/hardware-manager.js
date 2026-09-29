@@ -6,7 +6,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
-const { fitDocument } = require('./receipt-page-layout');
+const { fitDocument, prepareDocument } = require('./receipt-page-layout');
 
 /* How long the printer list may be remembered. Long enough that a receipt
    never pays the spooler for it, short enough that a printer plugged in
@@ -443,17 +443,17 @@ class HardwareManager {
 
   async _waitForPrintPage(webContents) {
     await webContents.executeJavaScript(`
-      new Promise((resolve) => {
-        if (document.readyState === 'complete') {
-          requestAnimationFrame(() => requestAnimationFrame(resolve));
-        } else {
-          window.addEventListener('load', () => {
-            requestAnimationFrame(() => requestAnimationFrame(resolve));
-          }, { once: true });
-        }
+      new Promise((resolve, reject) => {
+        if (document.readyState === 'complete') return resolve();
+        const timeout = setTimeout(() => reject(new Error('Receipt loading timed out.')), 10000);
+        window.addEventListener('load', () => {
+          clearTimeout(timeout);
+          resolve();
+        }, { once: true });
       })
     `);
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Hidden windows can suspend animation frames indefinitely. Asset decoding
+    // and layout measurement below provide readiness without waiting for one.
   }
 
   _sendPrintJob(printWindow, printOpts) {
@@ -558,6 +558,7 @@ class HardwareManager {
   }
 
   async printHTML(htmlContent, options = {}) {
+    let printWindow;
     try {
       // Paper size dimensions in microns (1mm = 1000 microns)
       // Window width in pixels at 96dpi: px = mm / 25.4 * 96
@@ -590,7 +591,7 @@ class HardwareManager {
        */
       const route = this._resolvePrintRoute(htmlContent);
 
-      const printWindow = new BrowserWindow({
+      printWindow = new BrowserWindow({
         show: false,
         width: pageSize.windowWidth,
         height: 600,
@@ -607,8 +608,16 @@ class HardwareManager {
 
       const deviceName = await this._resolvePrinterName(options.printerName);
 
+      const expectedReceipt = /data-receipt-design\s*=/.test(htmlContent);
+      const prepare = async () => {
+        await this._waitForPrintPage(printWindow.webContents);
+        await printWindow.webContents.executeJavaScript(
+          `(${prepareDocument.toString()})(document, ${expectedReceipt})`
+        );
+      };
       try {
         await printWindow.loadURL(route.url);
+        await prepare();
       } catch (loadError) {
         /* The local route was reachable a moment ago and is not now. Rather
            than fail the job, fall back to the document itself - the window was
@@ -619,12 +628,11 @@ class HardwareManager {
           await printWindow.loadURL(
             `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`
           );
+          await prepare();
         } else {
           throw loadError;
         }
       }
-      await this._waitForPrintPage(printWindow.webContents);
-
       // Designed thermal receipts end at their content instead of feeding a
       // metre of paper (the fallback page size used by older HTML templates).
       if (options.fitReceipt === true && (sizeKey === '58mm' || sizeKey === '80mm')) {
@@ -671,9 +679,6 @@ class HardwareManager {
         result = await this._printWithSystemDefaultFallback(printWindow, options);
       }
 
-      setTimeout(() => {
-        if (!printWindow.isDestroyed()) printWindow.close();
-      }, 100);
 
       if (result.success) {
         console.log('Print job sent successfully');
@@ -685,6 +690,8 @@ class HardwareManager {
     } catch (error) {
       console.error('Failed to print:', error);
       return { success: false, error: error.message };
+    } finally {
+      if (printWindow && !printWindow.isDestroyed()) printWindow.destroy();
     }
   }
 

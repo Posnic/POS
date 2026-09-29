@@ -76,6 +76,7 @@ PosnicPro.customers = {
         $('#customers_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'customers',
+            rows: '#customers_list_rows',
             onRefresh: function () { return PosnicPro.customers.loadList(); },
             container: '#customers_filter_panel',
             button: '#customers_filter_btn',
@@ -103,7 +104,7 @@ PosnicPro.customers = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('customers', { dateKey: 'created_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('customers', {
             url: 'customers',
             data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
         }, function (response) {
