@@ -5,6 +5,8 @@ const { isMultiTenant } = require('../db/tenant-context');
 const { branchInfo } = require('./business-access');
 const { prepareDesktopSummary } = require('./business-summary-preparer');
 const { prepareDesktopRegisterSummary } = require('./business-register-summary');
+const { prepareDesktopStockSummary } = require('./business-stock-summary');
+const { validateStockSummary } = require('./business-stock-contract');
 const { reportingJobKind } = require('./business-reporting-job');
 const { MetricError } = require('./business-metrics');
 
@@ -14,6 +16,7 @@ function createDesktopReportingWorker(
     now = Date.now,
     prepare = prepareDesktopSummary,
     prepareRegister = prepareDesktopRegisterSummary,
+    prepareStock = prepareDesktopStockSummary,
   } = {}
 ) {
   const local = db.collection('business_reporting_local');
@@ -24,7 +27,8 @@ function createDesktopReportingWorker(
   let running = false,
     stopped = false,
     controller = null,
-    indexReady = false;
+    indexReady = false,
+    stockIndexReady = false;
   return {
     stop() {
       stopped = true;
@@ -95,21 +99,39 @@ function createDesktopReportingWorker(
         const info = branchInfo(branch);
         if (info.currency !== job.currency || info.timezone !== job.timezone)
           throw new Error('reporting_branch_changed');
-        if (!indexReady) {
+        if (!stockIndexReady && summaryKind === 'stock') {
+          await db.collection('items').createIndex({ license: 1, branch_id: 1, _id: 1 });
+          await db
+            .collection('items')
+            .createIndex({ license: 1, 'branch_access.branch_id': 1, _id: 1 });
+          stockIndexReady = true;
+        }
+        if (!indexReady && summaryKind !== 'stock') {
           await db.collection('sales').createIndex({ license: 1, branch_id: 1, _id: 1 });
           indexReady = true;
         }
         controller = new AbortController();
-        const summary = await (summaryKind === 'register-session' ? prepareRegister : prepare)(
-          db,
-          { ...info, license: job.license },
-          summaryKind === 'register-session' ? job.sessionId : job.businessDate,
-          {
-            signal: controller.signal,
-            now,
-            includeItems: job.includeItems === true,
-          }
-        );
+        const summary =
+          summaryKind === 'stock'
+            ? validateStockSummary(
+                await prepareStock(
+                  db,
+                  { ...info, license: job.license },
+                  { signal: controller.signal, now }
+                ),
+                { id: job.branchId, license: job.license },
+                { now }
+              )
+            : await (summaryKind === 'register-session' ? prepareRegister : prepare)(
+                db,
+                { ...info, license: job.license },
+                summaryKind === 'register-session' ? job.sessionId : job.businessDate,
+                {
+                  signal: controller.signal,
+                  now,
+                  includeItems: job.includeItems === true,
+                }
+              );
         if (
           summaryKind === 'register-session' &&
           (summary.metricDefinitionVersion !== 'register-session-v1' ||
@@ -126,6 +148,7 @@ function createDesktopReportingWorker(
             _id: job._id,
             assignmentId: job.assignmentId,
             leaseId: job.leaseId,
+            ...(summaryKind === 'stock' ? { summaryKind: 'stock', stockSummaryVersion: 1 } : {}),
             ...(summaryKind === 'register-session'
               ? { closeRevision: job.closeRevision, sessionId: job.sessionId }
               : {}),

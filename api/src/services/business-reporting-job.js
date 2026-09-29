@@ -1,9 +1,24 @@
 'use strict';
 const { MetricError } = require('./business-metrics');
+const { validateStockSummary } = require('./business-stock-contract');
 const id = (value) => typeof value === 'string' && /^[a-f\d]{24}$/.test(value);
 
 function reportingJobKind(job) {
   const kind = job.summaryKind ?? 'daily';
+  if (kind === 'stock') {
+    if (
+      !id(job.branchId) ||
+      job._id !== job.branchId + ':stock' ||
+      job.stockSummaryVersion !== 1 ||
+      job.businessDate !== undefined ||
+      job.sessionId !== undefined ||
+      job.closeRevision !== undefined ||
+      job.registerSummaryVersion !== undefined
+    )
+      throw new MetricError('invalid_reporting_job');
+    return kind;
+  }
+  if (job.stockSummaryVersion !== undefined) throw new MetricError('invalid_reporting_job');
   if (!id(job.branchId) || !/^\d{4}-\d{2}-\d{2}$/.test(job.businessDate || ''))
     throw new MetricError('invalid_reporting_job');
   const day = new Date(job.businessDate + 'T00:00:00.000Z');
@@ -28,7 +43,11 @@ function reportingJobKind(job) {
   return kind;
 }
 
-function preparedSummaryKey(branchId, summary) {
+function preparedSummaryKey(branchId, summary, { now = Date.now } = {}) {
+  if (summary?.metricDefinitionVersion === 'stored-stock-v1') {
+    validateStockSummary(summary, { id: branchId, license: summary.license }, { now });
+    return branchId + ':stock';
+  }
   if (summary?.metricDefinitionVersion === 'register-session-v1') {
     if (
       !id(branchId) ||

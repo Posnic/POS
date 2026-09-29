@@ -1,8 +1,9 @@
 # Business low-stock reporting
 
 Status: source audit, strict stock facts and a desktop preparation primitive.
-There is no mobile low-stock endpoint, scheduled preparation, publisher transport
-or alert enabled yet.
+The desktop worker and Community publication support the versioned stock job.
+There is no public stock endpoint, Cloud stock transport, mobile stock UI or alert
+enabled yet.
 
 ## Source findings
 
@@ -87,11 +88,41 @@ Five additional database tests cover mixed coverage, foreign scope, truncation,
 10,001-row refusal, Cloud/cancellation/time-budget refusal, empty observations,
 stored branch thresholds and settings changes during preparation.
 
+## Contract and Community publication
+
+`validateStockSummary` validates exact fields, scope, canonical observation times,
+the 15-second interval, safe quantities, fixed reason codes and reconciled coverage.
+The known low count cannot exceed verified rows. A truncated list must contain
+exactly 100 rows; otherwise it must contain every known low row. IDs are unique
+and ordered, units are required, and every listed quantity must satisfy its stated
+threshold. Five unit tests exercise valid partial/empty observations and corrupt
+scope, totals, quantities, versions, timestamps, duplicates and truncation.
+
+Stock jobs require `summaryKind: stock`, `stockSummaryVersion: 1` and the key
+`branchId:stock`. Date/session fields are forbidden, and stock-specific fields
+cannot leak into the existing daily/register job kinds. The desktop worker uses
+item scope indexes and invokes the stock preparer without creating a sales cursor.
+It validates before staging and retains assignment/lease/version conditions.
+
+Community enqueue/publish uses the existing assigned owner, reserved sequence and
+publisher epoch. It validates staged and recovered stock payloads against that
+owner's branch and tenant. Invalid observations are discarded with an explicit
+error. Seven database tests cover actual preparation/publication, invalid staged
+payloads, cross-tenant tampering, ownership replacement, future/aliased jobs and
+interrupted reserved publication, including separation from daily snapshots.
+The nine existing register-publication tests still pass.
+
+Preparation additionally handles mixed legacy string/ObjectId ordering while
+retaining only the first 100 canonical IDs. A duplicate logical ID rejects the
+whole observation rather than inflating a count. Fourteen stock-source/preparation
+database tests now pass. This work does not advertise a Cloud heartbeat capability
+or expose stock reads to mobile clients yet.
+
 ## Remaining implementation and verification
 
 Trace actual sale, receiving, adjustment, return and variant stock writes through
-sync before defining completeness. Connect the bounded desktop observation to the assigned publisher with
-versioned validation and fencing; do not calculate stock scans on Cloud. Add a negotiated `stock.read` endpoint and accessible mobile list with
+sync before defining completeness. Extend negotiated Cloud-agent/Gateway publication with the same strict contract
+and assigned-publisher fencing; do not calculate stock scans on Cloud. Add a negotiated `stock.read` endpoint and accessible mobile list with
 units, threshold origin and freshness. Notification settings belong on the stock
 notification page and need threshold-crossing/recovery identity, quiet hours,
 recipient ACL rechecks and durable generic push retries. Test offline/reconnect,

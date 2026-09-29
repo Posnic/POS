@@ -5,6 +5,7 @@ const { ObjectId } = require('mongodb');
 const { branchInfo } = require('./business-access');
 const { isMultiTenant } = require('../db/tenant-context');
 const { reportingJobKind, preparedSummaryKey } = require('./business-reporting-job');
+const { validateStockSummary } = require('./business-stock-contract');
 const { registerCloseFact } = require('./business-register-close');
 
 /** Community mode is opt-in, desktop-only and never advertises a Cloud-agent
@@ -34,7 +35,22 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
   async function finish(row) {
     if (!row.pending) return;
     const pending = row.pending;
-    const key = preparedSummaryKey(row._id, pending.summary);
+    if (pending.summary?.metricDefinitionVersion === 'stored-stock-v1') {
+      try {
+        validateStockSummary(
+          pending.summary,
+          { id: row._id, license: String(row.license) },
+          { now }
+        );
+      } catch {
+        await owners.updateOne(
+          { _id: row._id, assignmentId: row.assignmentId, 'pending.sequence': pending.sequence },
+          { $unset: { pending: '' }, $set: { lastPublicationError: 'invalid_stock_summary' } }
+        );
+        return false;
+      }
+    }
+    const key = preparedSummaryKey(row._id, pending.summary, { now });
     if (pending.summary.metricDefinitionVersion === 'register-session-v1') {
       const branch = await db
         .collection('branches')
@@ -212,7 +228,9 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
             publisherMode: 'community',
             branchId: request.branchId,
             license: String(branch.license),
-            businessDate: request.businessDate,
+            ...(summaryKind === 'stock'
+              ? { stockSummaryVersion: 1 }
+              : { businessDate: request.businessDate }),
             currency: info.currency,
             timezone: info.timezone,
             requestedAt: request.requestedAt,
@@ -250,9 +268,24 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
         const filter = { _id: job.branchId, deviceId: id, assignmentId: job.assignmentId };
         const owner = await owners.findOne(filter);
         if (!owner) continue;
+        if (job.summaryKind === 'stock') {
+          try {
+            validateStockSummary(
+              job.pendingSummary,
+              { id: job.branchId, license: String(owner.license) },
+              { now }
+            );
+          } catch {
+            await local.updateOne(
+              { _id: job._id, assignmentId: job.assignmentId, preparedAt: job.preparedAt },
+              { $unset: { pendingSummary: '' }, $set: { error: 'invalid_stock_summary' } }
+            );
+            continue;
+          }
+        }
         // Do not publish a stale staged result after the requested close changed.
         if (
-          preparedSummaryKey(job.branchId, job.pendingSummary) !== job._id ||
+          preparedSummaryKey(job.branchId, job.pendingSummary, { now }) !== job._id ||
           (job.summaryKind === 'register-session' &&
             job.pendingSummary.close.closeRevision !== job.closeRevision)
         )

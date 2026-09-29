@@ -4,10 +4,14 @@ const { setTimeout: pause } = require('node:timers/promises');
 const { isMultiTenant } = require('../db/tenant-context');
 const { MetricError } = require('./business-metrics');
 const { stockFact } = require('./business-stock-facts');
-const MAX_DOCUMENTS = 10000,
-  MAX_DURATION_MS = 15000,
-  PAGE_SIZE = 100,
-  MAX_LOW_ITEMS = 100;
+const {
+  validateStockSummary,
+  STOCK_REASONS,
+  MAX_DOCUMENTS,
+  MAX_DURATION_MS,
+  MAX_LOW_ITEMS,
+} = require('./business-stock-contract');
+const PAGE_SIZE = 100;
 const scope = (value) => ({ $in: [new ObjectId(value), value] });
 const projection = {
   _id: 1,
@@ -22,16 +26,7 @@ const projection = {
   available_quantity: 1,
   reorder_point: 1,
 };
-const reasons = new Set([
-  'invalid_stock_scope',
-  'stock_tracking_unknown',
-  'stock_status_unknown',
-  'ambiguous_branch_stock',
-  'invalid_stock_item',
-  'stock_threshold_unconfigured',
-  'invalid_stock_quantity',
-  'invalid_stock_threshold',
-]);
+const reasons = new Set(STOCK_REASONS);
 /** Desktop-only stored-stock observation. A completed scan is not proof of
  * source completeness, a point-in-time balance, or sync convergence. */
 async function prepareDesktopStockSummary(db, branch, { signal, now = Date.now } = {}) {
@@ -66,6 +61,7 @@ async function prepareDesktopStockSummary(db, branch, { signal, now = Date.now }
   };
   let lowItemCount = 0;
   const lowItems = [];
+  const seen = new Set();
   const cursor = db
     .collection('items')
     .find(
@@ -94,10 +90,18 @@ async function prepareDesktopStockSummary(db, branch, { signal, now = Date.now }
       }
       if (fact === null) coverage.excludedItems++;
       else if (fact) {
+        if (seen.has(fact.itemId)) throw new MetricError('duplicate_stock_item');
+        seen.add(fact.itemId);
         coverage.verifiedItems++;
         if (fact.low) {
           lowItemCount++;
-          if (lowItems.length < MAX_LOW_ITEMS) lowItems.push(fact);
+          // Mongo sorts string IDs before ObjectIds. Keep wire order canonical
+          // across both legacy representations without retaining an unbounded list.
+          if (lowItems.length < MAX_LOW_ITEMS || fact.itemId < lowItems.at(-1).itemId) {
+            lowItems.push(fact);
+            lowItems.sort((a, b) => (a.itemId < b.itemId ? -1 : a.itemId > b.itemId ? 1 : 0));
+            if (lowItems.length > MAX_LOW_ITEMS) lowItems.pop();
+          }
         }
       }
       if (coverage.scannedItems % PAGE_SIZE === 0) await pause(10, undefined, { signal });
@@ -110,19 +114,23 @@ async function prepareDesktopStockSummary(db, branch, { signal, now = Date.now }
       JSON.stringify(after.notification_range) !== JSON.stringify(settings.notification_range)
     )
       throw new MetricError('stock_settings_changed');
-    return {
-      schemaVersion: 1,
-      metricDefinitionVersion: 'stored-stock-v1',
-      license: branch.license,
-      branchId: branch.id,
-      observedFrom: new Date(started).toISOString(),
-      preparedAt: new Date(now()).toISOString(),
-      sourceComplete: false,
-      coverage,
-      lowItemCount,
-      lowItems,
-      listTruncated: lowItemCount > lowItems.length,
-    };
+    return validateStockSummary(
+      {
+        schemaVersion: 1,
+        metricDefinitionVersion: 'stored-stock-v1',
+        license: branch.license,
+        branchId: branch.id,
+        observedFrom: new Date(started).toISOString(),
+        preparedAt: new Date(now()).toISOString(),
+        sourceComplete: false,
+        coverage,
+        lowItemCount,
+        lowItems,
+        listTruncated: lowItemCount > lowItems.length,
+      },
+      branch,
+      { now }
+    );
   } finally {
     await cursor.close();
   }

@@ -359,3 +359,18 @@ test('changing the branch reorder setting during preparation prevents publishing
     else process.env.POSNIC_DESKTOP = previous;
   }
 });
+
+test('legacy string and ObjectId stock identities sort canonically and duplicate logical items reject the snapshot', async () => {
+  const f = await purchaseFixture();
+  await db.collection('items').insertMany([
+    { ...f.row, _id: 'f'.repeat(24), available_quantity: 0 },
+    { ...f.row, _id: new ObjectId('0'.repeat(23) + '1'), available_quantity: 0 },
+  ]);
+  const result = await desktopStock(f);
+  assert.deepEqual(
+    result.lowItems.map((item) => item.itemId),
+    ['0'.repeat(23) + '1', 'f'.repeat(24)]
+  );
+  await db.collection('items').insertOne({ ...f.row, _id: String(f.row._id) });
+  await assert.rejects(desktopStock(f), { code: 'duplicate_stock_item' });
+});
