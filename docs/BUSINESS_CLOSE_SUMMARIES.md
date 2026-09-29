@@ -111,3 +111,29 @@ refund records on rejection, and legacy compatibility. The related controller,
 service and repository suites pass all 337 tests. Targeted formatting and lint
 pass with existing legacy warnings. Source publication, immutable close history,
 scheduling and mobile close delivery are still incomplete.
+
+## Assigned desktop and Community publication
+
+The desktop worker accepts explicit `register-session` jobs only with version 1,
+a valid session ID, close fingerprint and calendar date. Unknown job kinds and
+malformed contracts fail before source scans. The prepared result must match the
+requested close, and staging is conditional on both the publisher assignment and
+the unchanged close fingerprint. The runtime advertises `registerSummaryVersion: 1`;
+the Cloud agent and Gateway still need to negotiate and carry that contract.
+
+Community mode can enqueue these requests and publish through the existing
+reserved-sequence recovery path. Session keys use `branch:session:sessionId` in
+`business_prepared_summaries`, separate from daily keys. Before completing a
+reserved session write, publication rechecks the source close and branch settings
+with bounded primary-key reads. A changed, missing or reopened close discards the
+reservation and records `close_changed`. Source reads during later delivery must
+still revalidate it; this is not proof of immutable financial history.
+
+Five real-Mongo publication tests cover actual session preparation, malformed or
+future contracts, source/job revision changes, interrupted publication, separate
+sessions on one till, daily-key preservation and reopened-source recovery. The
+nine existing summary/worker tests, three source/preparation tests and two actual
+agent/Gateway item-sync tests also pass. No notification schedule or mobile close
+screen is enabled by this change. Cloud session transport, request scheduling,
+strict read contracts, immutable financial-history assurance and delivery remain
+required.

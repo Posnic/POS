@@ -4,6 +4,8 @@ const os = require('node:os');
 const { ObjectId } = require('mongodb');
 const { branchInfo } = require('./business-access');
 const { isMultiTenant } = require('../db/tenant-context');
+const { reportingJobKind, preparedSummaryKey } = require('./business-reporting-job');
+const { registerCloseFact } = require('./business-register-close');
 
 /** Community mode is opt-in, desktop-only and never advertises a Cloud-agent
  * runtime. The same HTTPS Business API reads these prepared local snapshots. */
@@ -32,10 +34,62 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
   async function finish(row) {
     if (!row.pending) return;
     const pending = row.pending;
+    const key = preparedSummaryKey(row._id, pending.summary);
+    if (pending.summary.metricDefinitionVersion === 'register-session-v1') {
+      const branch = await db
+        .collection('branches')
+        .findOne({ _id: new ObjectId(row._id), license: row.license }, { maxTimeMS: 250 });
+      const source = await db.collection('cashregister').findOne(
+        {
+          _id: new ObjectId(pending.summary.close.sessionId),
+          license: { $in: [row.license, String(row.license)] },
+          branch_id: { $in: [new ObjectId(row._id), row._id] },
+        },
+        {
+          projection: {
+            _id: 1,
+            license: 1,
+            branch_id: 1,
+            register_id: 1,
+            register_name: 1,
+            register_status: 1,
+            register_opendate: 1,
+            register_closedate: 1,
+          },
+          maxTimeMS: 250,
+        }
+      );
+      let valid = false;
+      if (branch) {
+        try {
+          const info = branchInfo(branch);
+          const close = registerCloseFact(
+            source,
+            { ...info, license: String(row.license) },
+            { now }
+          );
+          valid =
+            close?.closeRevision === pending.summary.close.closeRevision &&
+            close.businessDate === pending.summary.close.businessDate &&
+            info.currency === pending.summary.currency &&
+            info.currencyDigits === pending.summary.currencyDigits &&
+            info.timezone === pending.summary.close.timezone;
+        } catch {
+          /* An invalid or reopened source cannot finish a reserved publication. */
+        }
+      }
+      if (!valid) {
+        await owners.updateOne(
+          { _id: row._id, assignmentId: row.assignmentId, 'pending.sequence': pending.sequence },
+          { $unset: { pending: '' }, $set: { lastPublicationError: 'close_changed' } }
+        );
+        return false;
+      }
+    }
     try {
       await db.collection('business_prepared_summaries').replaceOne(
         {
-          _id: row._id + ':' + pending.summary.businessDate,
+          _id: key,
           $or: [
             { publisherEpoch: { $lt: row.epoch } },
             { publisherEpoch: row.epoch, sequence: { $lte: pending.sequence } },
@@ -43,7 +97,7 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
           ],
         },
         {
-          _id: row._id + ':' + pending.summary.businessDate,
+          _id: key,
           branch_id: new ObjectId(row._id),
           license: row.license,
           publisherDeviceId: row.deviceId,
@@ -60,8 +114,12 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
     }
     await owners.updateOne(
       { _id: row._id, assignmentId: row.assignmentId, 'pending.sequence': pending.sequence },
-      { $unset: { pending: '' }, $set: { lastPublishedAt: pending.receivedAt } }
+      {
+        $unset: { pending: '', lastPublicationError: '' },
+        $set: { lastPublishedAt: pending.receivedAt },
+      }
     );
+    return true;
   }
   return {
     async enqueue() {
@@ -86,6 +144,12 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
         .maxTimeMS(250)
         .toArray();
       for (const request of requests) {
+        let summaryKind;
+        try {
+          summaryKind = reportingJobKind(request);
+        } catch {
+          continue;
+        }
         if (!/^[a-f\d]{24}$/.test(request.branchId || '') || !ObjectId.isValid(request.license))
           continue;
         const branch = await db
@@ -136,7 +200,15 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
         const update = {
           $set: {
             kind: 'job',
-            includeItems: true,
+            summaryKind,
+            includeItems: summaryKind === 'daily',
+            ...(summaryKind === 'register-session'
+              ? {
+                  sessionId: request.sessionId,
+                  closeRevision: request.closeRevision,
+                  registerSummaryVersion: 1,
+                }
+              : {}),
             publisherMode: 'community',
             branchId: request.branchId,
             license: String(branch.license),
@@ -149,7 +221,11 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
             epoch: owner.epoch,
           },
         };
-        if (prior && prior.assignmentId !== owner.assignmentId)
+        if (
+          prior &&
+          (prior.assignmentId !== owner.assignmentId ||
+            (summaryKind === 'register-session' && prior.closeRevision !== request.closeRevision))
+        )
           update.$unset = {
             pendingSummary: '',
             publication: '',
@@ -174,6 +250,13 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
         const filter = { _id: job.branchId, deviceId: id, assignmentId: job.assignmentId };
         const owner = await owners.findOne(filter);
         if (!owner) continue;
+        // Do not publish a stale staged result after the requested close changed.
+        if (
+          preparedSummaryKey(job.branchId, job.pendingSummary) !== job._id ||
+          (job.summaryKind === 'register-session' &&
+            job.pendingSummary.close.closeRevision !== job.closeRevision)
+        )
+          continue;
         await finish(owner);
         const fresh = await owners.findOne(filter);
         if (
@@ -193,10 +276,15 @@ function createLocalReportingBridge(db, { now = Date.now } = {}) {
           { returnDocument: 'after' }
         );
         if (!reserved) continue;
-        await finish(reserved);
+        const published = await finish(reserved);
         await local.updateOne(
           { _id: job._id, assignmentId: job.assignmentId, preparedAt: job.preparedAt },
-          { $unset: { pendingSummary: '', error: '' }, $set: { lastPublishedAt: new Date(now()) } }
+          published
+            ? {
+                $unset: { pendingSummary: '', error: '' },
+                $set: { lastPublishedAt: new Date(now()) },
+              }
+            : { $unset: { pendingSummary: '' }, $set: { error: 'close_changed' } }
         );
       }
     },

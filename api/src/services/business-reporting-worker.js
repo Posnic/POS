@@ -4,10 +4,17 @@ const { ObjectId } = require('mongodb');
 const { isMultiTenant } = require('../db/tenant-context');
 const { branchInfo } = require('./business-access');
 const { prepareDesktopSummary } = require('./business-summary-preparer');
+const { prepareDesktopRegisterSummary } = require('./business-register-summary');
+const { reportingJobKind } = require('./business-reporting-job');
+const { MetricError } = require('./business-metrics');
 
 function createDesktopReportingWorker(
   db,
-  { now = Date.now, prepare = prepareDesktopSummary } = {}
+  {
+    now = Date.now,
+    prepare = prepareDesktopSummary,
+    prepareRegister = prepareDesktopRegisterSummary,
+  } = {}
 ) {
   const local = db.collection('business_reporting_local');
   const community =
@@ -39,6 +46,7 @@ function createDesktopReportingWorker(
               $set: {
                 protocolVersion: 2,
                 itemSummaryVersion: 1,
+                registerSummaryVersion: 1,
                 expiresAt: new Date(now() + 120000),
               },
             },
@@ -76,6 +84,7 @@ function createDesktopReportingWorker(
           { sort: { lastAttemptAt: 1, _id: 1 }, returnDocument: 'after' }
         );
         if (!job) return;
+        const summaryKind = reportingJobKind(job);
         if (!/^[a-f\d]{24}$/.test(job.branchId || '') || !/^[a-f\d]{24}$/.test(job.license || ''))
           throw new Error('invalid_reporting_scope');
         const branch = await db
@@ -90,17 +99,35 @@ function createDesktopReportingWorker(
           indexReady = true;
         }
         controller = new AbortController();
-        const summary = await prepare(db, { ...info, license: job.license }, job.businessDate, {
-          signal: controller.signal,
-          now,
-          includeItems: job.includeItems === true,
-        });
+        const summary = await (summaryKind === 'register-session' ? prepareRegister : prepare)(
+          db,
+          { ...info, license: job.license },
+          summaryKind === 'register-session' ? job.sessionId : job.businessDate,
+          {
+            signal: controller.signal,
+            now,
+            includeItems: job.includeItems === true,
+          }
+        );
+        if (
+          summaryKind === 'register-session' &&
+          (summary.metricDefinitionVersion !== 'register-session-v1' ||
+            summary.branchId !== job.branchId ||
+            summary.license !== job.license ||
+            summary.close?.sessionId !== job.sessionId ||
+            summary.close?.closeRevision !== job.closeRevision ||
+            summary.close?.businessDate !== job.businessDate)
+        )
+          throw new MetricError('close_changed');
         if (stopped) return;
         await local.updateOne(
           {
             _id: job._id,
             assignmentId: job.assignmentId,
             leaseId: job.leaseId,
+            ...(summaryKind === 'register-session'
+              ? { closeRevision: job.closeRevision, sessionId: job.sessionId }
+              : {}),
             pendingSummary: { $exists: false },
           },
           {
