@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('node:crypto');
+const { ObjectId } = require('mongodb');
 const validId = (value) => typeof value === 'string' && /^[a-f\d]{24}$/.test(value);
 
 /** Delete obsolete activations and dormant opted-out state after thirty days.
@@ -52,12 +53,16 @@ async function drainStockRecipientCleanup(
     Number.isFinite(job.updatedAt.getTime()) &&
     job.updatedAt.getTime() <= now() - 30 * 86400000 &&
     !Object.hasOwn(job, 'stockDelivery');
+  let purgeOrphan = false;
   const lease = () => ({
     _id: job._id,
     revision: job.revision,
     activationId: job.activationId,
     cleanupLeaseId: job.cleanupLeaseId,
     cleanupLeaseUntil: { $gt: new Date(now()) },
+    ...(purgeOrphan
+      ? { missingAccountSince: job.missingAccountSince, stockDelivery: { $exists: false } }
+      : {}),
     ...(purgeDisabled
       ? { enabled: false, updatedAt: job.updatedAt, stockDelivery: { $exists: false } }
       : {}),
@@ -72,8 +77,60 @@ async function drainStockRecipientCleanup(
     )
       throw new Error('invalid_stock_cleanup_scope');
     const scope = { license: job.license, accountId: job.accountId, branchId: job.branchId };
+    const account = () =>
+      db
+        .collection('users')
+        .findOne(
+          { _id: new ObjectId(job.accountId), license: job.license },
+          { projection: { _id: 1 }, maxTimeMS: 250 }
+        );
+    const exists = await account();
+    if (exists) {
+      await preferences.updateOne(
+        lease(),
+        { $unset: { missingAccountSince: '' } },
+        { maxTimeMS: 500 }
+      );
+    } else if (!Object.hasOwn(job, 'missingAccountSince')) {
+      // Retire opt-in before erasing any state. A restored account must opt in
+      // again, creating a new activation and fencing this cleanup's old rows.
+      await preferences.updateOne(
+        lease(),
+        {
+          $set: {
+            missingAccountSince: new Date(now()),
+            enabled: false,
+            updatedAt: new Date(now()),
+            nextCleanupAt: new Date(now() + 86400000),
+          },
+          $inc: { revision: 1 },
+          $unset: {
+            leaseId: '',
+            leaseUntil: '',
+            deliveryLeaseId: '',
+            deliveryLeaseUntil: '',
+            materializeLeaseId: '',
+            materializeLeaseUntil: '',
+          },
+        },
+        { maxTimeMS: 500 }
+      );
+      return { status: 'orphaned', deleted: 0 };
+    } else if (
+      job.enabled === false &&
+      job.missingAccountSince instanceof Date &&
+      Number.isFinite(job.missingAccountSince.getTime()) &&
+      job.missingAccountSince.getTime() <= now() - 30 * 86400000 &&
+      !Object.hasOwn(job, 'stockDelivery')
+    ) {
+      purgeOrphan = true;
+    }
+
     const rows = await states
-      .find({ ...scope, ...(!purgeDisabled ? { activationId: { $ne: job.activationId } } : {}) })
+      .find({
+        ...scope,
+        ...(!(purgeDisabled || purgeOrphan) ? { activationId: { $ne: job.activationId } } : {}),
+      })
       .sort({ _id: 1 })
       .limit(limit + 1)
       .maxTimeMS(250)
@@ -86,6 +143,14 @@ async function drainStockRecipientCleanup(
       if (now() - started >= budgetMs) break;
       if (!(await preferences.findOne(lease(), { projection: { _id: 1 }, maxTimeMS: 250 })))
         return { status: 'changed', deleted };
+      if (purgeOrphan && (await account())) {
+        await preferences.updateOne(
+          lease(),
+          { $unset: { missingAccountSince: '' } },
+          { maxTimeMS: 500 }
+        );
+        return { status: 'changed', deleted };
+      }
       const result = await states.deleteOne(
         {
           ...scope,
@@ -100,6 +165,16 @@ async function drainStockRecipientCleanup(
     }
     if (signal?.aborted) return { status: 'cancelled', deleted };
     const more = rows.length > limit || visited < rows.length || deleted < visited;
+    if (
+      purgeOrphan &&
+      !more &&
+      !(await account()) &&
+      !(await states.findOne(scope, { projection: { _id: 1 }, maxTimeMS: 250 }))
+    ) {
+      const removed = await preferences.deleteOne(lease(), { maxTimeMS: 500 });
+      return { status: removed.deletedCount ? 'removed' : 'changed', deleted };
+    }
+
     await preferences.updateOne(
       lease(),
       {

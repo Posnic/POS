@@ -743,3 +743,30 @@ an arbitrary age-based loss of a still-valid episode.
 The final combined snapshot/preferences/push run passes all 110 cases, including
 the updated disabled-reservation regression and the two outage cases. Lint,
 formatting and attribution checks pass.
+
+## Missing-account stock cleanup
+
+For previously activated stock preferences, cleanup now checks the scoped user
+record. On first observing a missing account, it disables the old opt-in, increments
+the preference revision and invalidates scanner/delivery/materialization leases.
+It records the missing-account time before deleting item state. Existing reserved
+groups remain available to normal cancellation or committed recovery.
+
+After thirty days of recorded absence, with no delivery reservation, the same
+bounded cleanup removes the account/branch's state and then the matching preference
+once no state remains. Each deletion retains preference lease and record revision
+checks. Account presence is rechecked before orphan deletion and before preference
+removal. Reappearance clears the absence marker but does not silently restore
+opt-in; explicit re-enabling creates a new activation. This avoids restoring an
+old consent while its deduplication records are being retired.
+
+This is scoped stock-state cleanup, not a general account-erasure implementation.
+Authorization/session/device/Inbox data have their existing rejection and expiry
+rules; business transactions and approval audit records are untouched. Never-enabled
+preferences without an activation, branch removal and explicit whole-account erasure
+still need lifecycle coverage. Corrupt retention timestamps are not guessed.
+
+Validation: all 98 snapshot/preferences cases passed, followed by an additional
+focused account-restoration-during-cleanup race test. The latter verifies no item
+is deleted when the account reappears before the first removal. Lint, formatting
+and attribution checks pass.

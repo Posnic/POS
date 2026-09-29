@@ -2790,3 +2790,79 @@ test('long-offline pending episodes are suppressed when fresh evidence shows hea
   assert.equal((await materializeStock(f)).status, 'empty');
   assert.equal(await f.db.collection('business_inbox').countDocuments({}), 0);
 });
+
+test('missing accounts retire stock opt-in before bounded erasure after thirty days', async () => {
+  const f = await inboxFixture();
+  await f.db.collection('users').deleteOne({ _id: f.user._id });
+  assert.deepEqual(await cleanupStock(f), { status: 'orphaned', deleted: 0 });
+  const retired = await scanPreference(f);
+  assert.equal(retired.enabled, false);
+  assert.equal(retired.revision, 2);
+  assert.equal((await recipientRows(f)).length, 103);
+  f.advance(30 * 86400000);
+  assert.deepEqual(await cleanupStock(f), { status: 'partial', deleted: 100 });
+  f.advance(1);
+  assert.deepEqual(await cleanupStock(f), { status: 'removed', deleted: 3 });
+  assert.equal(await scanPreference(f), null);
+  assert.equal((await recipientRows(f)).length, 0);
+});
+
+test('restored accounts retain disabled preferences and need fresh opt-in before stock alerts resume', async () => {
+  const f = await inboxFixture();
+  await f.db.collection('users').deleteOne({ _id: f.user._id });
+  await cleanupStock(f);
+  await f.db.collection('users').insertOne(f.user);
+  f.advance(86400000);
+  assert.equal((await cleanupStock(f)).deleted, 0);
+  const pref = await scanPreference(f);
+  assert.equal(pref.missingAccountSince, undefined);
+  assert.equal(pref.enabled, false);
+  assert.equal((await recipientRows(f)).length, 103);
+  await require('../src/services/business-stock-notification-preferences').saveStockPreference(
+    f.db,
+    f.context,
+    f.branch.id,
+    {
+      expectedRevision: pref.revision,
+      enabled: true,
+      minimumIntervalMinutes: 15,
+      quiet: { enabled: false, start: '22:00', end: '07:00' },
+    },
+    { now: f.now }
+  );
+  assert.notEqual((await scanPreference(f)).activationId, pref.activationId);
+});
+
+test('account restoration during orphan cleanup stops deletion before the first item', async () => {
+  const f = await inboxFixture();
+  await f.db.collection('users').deleteOne({ _id: f.user._id });
+  await cleanupStock(f);
+  f.advance(30 * 86400000);
+  let reads = 0;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'users' && property === 'findOne')
+            return async (...args) => {
+              reads++;
+              if (reads === 2) await f.db.collection('users').insertOne(f.user);
+              return target.findOne(...args);
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  assert.deepEqual(
+    await require('../src/services/business-stock-cleanup').drainStockRecipientCleanup(database, {
+      now: f.now,
+    }),
+    { status: 'changed', deleted: 0 }
+  );
+  assert.equal((await scanPreference(f)).missingAccountSince, undefined);
+  assert.equal((await recipientRows(f)).length, 103);
+});
