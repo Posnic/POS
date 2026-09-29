@@ -665,3 +665,26 @@ snapshot tests and 42 POS publication/summary tests pass, with formatting and
 attribution checks. This establishes discovery fairness, not production throughput
 or a freshness guarantee at that branch count. Network/device and capacity
 qualification remain open.
+
+## Disabled recipient retention
+
+The bounded recipient cleanup now also removes current-activation state when the
+preference is explicitly disabled and its last edit is at least thirty days old.
+It requires a valid stored edit timestamp and no reserved delivery group. Unfinished
+materialization recovery retains its records. Active preferences never lose their
+low/healthy classification through this age rule.
+
+Deletion keeps the existing hundred-record/three-second limits and record revision
+checks. The preference lease additionally matches disabled state, edit time and
+absence of a delivery reservation. Re-enabling invalidates the lease and creates
+a new activation. After cleanup, opting in again establishes a fresh baseline,
+consistent with the existing opt-in contract. A daily cleanup cadence means eligible
+records are removed on a later scheduled pass, not precisely at the thirty-day mark.
+
+This supersedes the earlier open policy for current disabled-activation records.
+Orphaned preferences/account erasure, stale pending candidates and abandoned
+reservation retention still need handling. No production data was removed while
+implementing this change; verification uses isolated test databases.
+
+Validation: 91 snapshot/pipeline and preference integration tests pass, including
+three new retention cases. ESLint, formatting and attribution checks pass.

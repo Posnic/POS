@@ -2,7 +2,8 @@
 const crypto = require('node:crypto');
 const validId = (value) => typeof value === 'string' && /^[a-f\d]{24}$/.test(value);
 
-/** Delete only obsolete activation records. Never expire an active low episode:
+/** Delete obsolete activations and dormant opted-out state after thirty days.
+ * Never expire an active low episode:
  * losing that classification could create another alert without restocking. */
 async function drainStockRecipientCleanup(
   db,
@@ -45,12 +46,21 @@ async function drainStockRecipientCleanup(
     { sort: { nextCleanupAt: 1, _id: 1 }, returnDocument: 'after', maxTimeMS: 500 }
   );
   if (!job) return { status: 'idle' };
+  const purgeDisabled =
+    job.enabled === false &&
+    job.updatedAt instanceof Date &&
+    Number.isFinite(job.updatedAt.getTime()) &&
+    job.updatedAt.getTime() <= now() - 30 * 86400000 &&
+    !Object.hasOwn(job, 'stockDelivery');
   const lease = () => ({
     _id: job._id,
     revision: job.revision,
     activationId: job.activationId,
     cleanupLeaseId: job.cleanupLeaseId,
     cleanupLeaseUntil: { $gt: new Date(now()) },
+    ...(purgeDisabled
+      ? { enabled: false, updatedAt: job.updatedAt, stockDelivery: { $exists: false } }
+      : {}),
   });
   try {
     if (
@@ -63,7 +73,7 @@ async function drainStockRecipientCleanup(
       throw new Error('invalid_stock_cleanup_scope');
     const scope = { license: job.license, accountId: job.accountId, branchId: job.branchId };
     const rows = await states
-      .find({ ...scope, activationId: { $ne: job.activationId } })
+      .find({ ...scope, ...(!purgeDisabled ? { activationId: { $ne: job.activationId } } : {}) })
       .sort({ _id: 1 })
       .limit(limit + 1)
       .maxTimeMS(250)

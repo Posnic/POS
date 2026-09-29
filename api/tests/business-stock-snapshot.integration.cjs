@@ -2561,3 +2561,111 @@ test('recipient worker requests preparation when the source is absent without re
     worker.stop();
   }
 });
+
+async function disableStock(f) {
+  const pref = await scanPreference(f);
+  return require('../src/services/business-stock-notification-preferences').saveStockPreference(
+    f.db,
+    f.context,
+    f.branch.id,
+    {
+      expectedRevision: pref.revision,
+      enabled: false,
+      minimumIntervalMinutes: 15,
+      quiet: { enabled: false, start: '22:00', end: '07:00' },
+    },
+    { now: f.now }
+  );
+}
+test('disabled recipient state is retained for thirty days then removed in bounded passes', async () => {
+  const f = await inboxFixture();
+  await disableStock(f);
+  f.advance(30 * 86400000 - 1);
+  assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 0 });
+  assert.equal((await recipientRows(f)).length, 103);
+  f.advance(1);
+  await f.db
+    .collection('business_stock_notification_preferences')
+    .updateOne({ _id: f.target.accountId + ':' + f.branch.id }, { $unset: { nextCleanupAt: '' } });
+  assert.deepEqual(await cleanupStock(f), { status: 'partial', deleted: 100 });
+  f.advance(1);
+  assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 3 });
+  assert.equal((await recipientRows(f)).length, 0);
+  const pref = await scanPreference(f);
+  await require('../src/services/business-stock-notification-preferences').saveStockPreference(
+    f.db,
+    f.context,
+    f.branch.id,
+    {
+      expectedRevision: pref.revision,
+      enabled: true,
+      minimumIntervalMinutes: 15,
+      quiet: { enabled: false, start: '22:00', end: '07:00' },
+    },
+    { now: f.now }
+  );
+  assert.notEqual((await scanPreference(f)).activationId, pref.activationId);
+  f.advance();
+  for (const page of await f.pages()) await f.send(page);
+  await recipientWorker(f).tick();
+  assert.equal((await materializeStock(f)).newLowItemCount, 103);
+});
+
+test('disabled retention preserves delivery recovery and refuses invalid retention timestamps', async () => {
+  for (const change of [{ updatedAt: 'invalid' }, { stockDelivery: { id: 'recovery' } }]) {
+    const f = await inboxFixture();
+    await disableStock(f);
+    f.advance(31 * 86400000);
+    await f.db
+      .collection('business_stock_notification_preferences')
+      .updateOne({ _id: f.target.accountId + ':' + f.branch.id }, { $set: change });
+    assert.equal((await cleanupStock(f)).deleted, 0);
+    assert.equal((await recipientRows(f)).length, 103);
+  }
+});
+
+test('re-enabling stock alerts invalidates a disabled-retention cleanup before deletion', async () => {
+  const f = await inboxFixture();
+  await disableStock(f);
+  f.advance(31 * 86400000);
+  let changed = false;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_notification_preferences' && property === 'findOne')
+            return async (...args) => {
+              if (!changed && args[0].cleanupLeaseId) {
+                changed = true;
+                const pref = await scanPreference(f);
+                await require('../src/services/business-stock-notification-preferences').saveStockPreference(
+                  f.db,
+                  f.context,
+                  f.branch.id,
+                  {
+                    expectedRevision: pref.revision,
+                    enabled: true,
+                    minimumIntervalMinutes: 15,
+                    quiet: { enabled: false, start: '22:00', end: '07:00' },
+                  },
+                  { now: f.now }
+                );
+              }
+              return target.findOne(...args);
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  const result = await require('../src/services/business-stock-cleanup').drainStockRecipientCleanup(
+    database,
+    { now: f.now }
+  );
+  assert.deepEqual(result, { status: 'changed', deleted: 0 });
+  assert.equal((await scanPreference(f)).enabled, true);
+  assert.equal((await recipientRows(f)).length, 103);
+});
