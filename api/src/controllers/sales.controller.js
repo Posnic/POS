@@ -695,6 +695,71 @@ class SalesController extends BaseController {
     return !isApprovedFor(token, 'discount_apply', req.user && req.user._id);
   }
 
+  async buildSaleContext(req) {
+    const { branch_id, branch_name } = this.resolveBranchContext(req);
+    const user = req.user || {};
+    return salesService.enrichSaleContext({
+      branchId: branch_id,
+      branchName: branch_name,
+      licenseId: BaseModel.license || user.license || user.license_id,
+      userId: user._id,
+      userName: user.username || user.name || 'System',
+      deviceId: getRequestDeviceId(req),
+      salesPrefix: 'INV',
+      stockManagement: true,
+      stockLogStatus: true,
+      roundOff: true,
+      branchSettings: {},
+      branchState: '',
+    });
+  }
+
+  async businessDiscountDecision(req, res, next) {
+    try {
+      await this.ensureContext(req);
+      if (
+        req.params.requestId === 'capabilities' &&
+        req.method === 'GET' &&
+        !require('../services/business-checkout-transport').checkoutMode()
+      )
+        return res.json({
+          data: {
+            enabled: false,
+            branchId: String(this.resolveBranchContext(req).branch_id || ''),
+            requesterId: String(req.user?._id || ''),
+          },
+        });
+      const context = await this.buildSaleContext(req);
+      const decisions = require('../services/business-checkout-decisions').createCheckoutDecisions(
+        await BaseModel.getDb()
+      );
+      let record;
+      if (req.params.operationId && req.method === 'GET') {
+        record = await decisions.lookup(context, req.user, req.params.operationId);
+      } else if (req.params.requestId === 'capabilities' && req.method === 'GET') {
+        record = await decisions.capabilities(context, req.user);
+      } else if (req.params.requestId === 'recoveries' && req.method === 'GET') {
+        record = await decisions.recoveries(
+          context,
+          req.user,
+          req.query?.cursor,
+          req.query?.requests === '1'
+        );
+      } else if (req.method === 'GET') {
+        record = await decisions.read(context, req.user, req.params.requestId);
+      } else if (req.params.requestId) {
+        record = await decisions.cancel(context, req.user, req.params.requestId);
+      } else {
+        record = await decisions.request(context, req.user, req.body?.sale, req.body?.reason);
+      }
+      return res.json({ data: record });
+    } catch (error) {
+      if (error.status && error.code)
+        return res.status(error.status).json({ error: { code: error.code } });
+      next(error);
+    }
+  }
+
   async createOrHoldInternal(
     req,
     res,
@@ -711,7 +776,6 @@ class SalesController extends BaseController {
       }
 
       await this.ensureContext(req); // Ensure BaseModel globals are set
-      const { branch_id, branch_name } = this.resolveBranchContext(req);
       const user = req.user || {};
       const billingTransactionId = String(payload.billing_transaction_id || '').trim();
       if (billingTransactionId) {
@@ -731,23 +795,7 @@ class SalesController extends BaseController {
       }
 
       // Build Context for Service
-      let context = {
-        branchId: branch_id,
-        branchName: branch_name,
-        licenseId: BaseModel.license || user.license || user.license_id,
-        userId: user._id,
-        userName: user.username || user.name || 'System',
-        deviceId: getRequestDeviceId(req),
-        salesPrefix: 'INV',
-        stockManagement: true,
-        stockLogStatus: true,
-        roundOff: true,
-        branchSettings: {},
-        branchState: '',
-      };
-
-      // Enrich the context with branch-specific settings via the service
-      context = await salesService.enrichSaleContext(context);
+      const context = await this.buildSaleContext(req);
 
       // Delegate core Add / Hold business logic to salesService.processSale,
       // which is a line-by-line port of PHP sales_model::salesInsertUpdate.
@@ -758,7 +806,14 @@ class SalesController extends BaseController {
           ? { priceChanges: [], discounts: [] }
           : await collectSaleAuditChanges(payload);
 
-      if (processValue !== 'Hold' && this.discountNeedsApproval(req, payload, auditChanges)) {
+      if (payload.business_decision_id && processValue !== 'Add') {
+        return res.status(422).json({ error: { code: 'unsupported_discount_combination' } });
+      }
+      if (
+        processValue !== 'Hold' &&
+        !payload.business_decision_id &&
+        this.discountNeedsApproval(req, payload, auditChanges)
+      ) {
         return this.error(res, ERROR_MESSAGES.DISCOUNT_NEEDS_APPROVAL, 403);
       }
 
@@ -775,13 +830,28 @@ class SalesController extends BaseController {
         }
       }
 
-      const result = await salesService.processSale(payload, '', processValue, context);
+      let decisionOptions;
+      if (payload.business_decision_id) {
+        const decisions =
+          require('../services/business-checkout-decisions').createCheckoutDecisions(
+            await BaseModel.getDb()
+          );
+        decisionOptions = { beforeCommit: await decisions.gate(context, user, payload) };
+      }
+      const result = decisionOptions
+        ? await salesService.processSale(payload, '', processValue, context, decisionOptions)
+        : await salesService.processSale(payload, '', processValue, context);
 
       if (!result || typeof result !== 'object') {
         return this.error(res, ERROR_MESSAGES.FAILED_TO_SAVE_SALE_UNEXPECTED, 500);
       }
 
       if (result.status !== true) {
+        if (decisionOptions && result.decisionError) {
+          return res
+            .status(result.decisionError.status)
+            .json({ error: { code: result.decisionError.code } });
+        }
         if (billingTransactionId && /duplicate key|E11000/i.test(result.message || '')) {
           const existingSale = await findSaleByBillingTransaction(
             BaseModel.license || user.license || user.license_id,
@@ -841,6 +911,8 @@ class SalesController extends BaseController {
 
       return this.success(res, result.data, message, 200);
     } catch (error) {
+      if (Number.isInteger(error.status) && typeof error.code === 'string')
+        return res.status(error.status).json({ error: { code: error.code } });
       next(error);
     }
   }
@@ -5631,7 +5703,10 @@ class SalesController extends BaseController {
 
       const data = req.body;
       const SaleModel = this.model || Sale;
-      const result = await salesService.returnSalesOrder(data, { SaleModel });
+      const result = await salesService.returnSalesOrder(data, {
+        SaleModel,
+        deviceId: getRequestDeviceId(req),
+      });
 
       if (result.status === true) {
         const returnedItems = Array.isArray(result.data?.returned_items)

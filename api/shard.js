@@ -136,7 +136,9 @@ const REGISTRY_FILE = String(process.env.SHARD_REGISTRY_FILE || '').trim();
 
 /* Lower-cased once: node lower-cases incoming header names, and comparing
    against a mixed-case env value would simply never match. */
-const SHOP_HEADER = String(process.env.SHARD_SHOP_HEADER || '').trim().toLowerCase();
+const SHOP_HEADER = String(process.env.SHARD_SHOP_HEADER || '')
+  .trim()
+  .toLowerCase();
 
 function loadRegistryFromFile() {
   const raw = JSON.parse(require('fs').readFileSync(REGISTRY_FILE, 'utf8'));
@@ -188,7 +190,7 @@ async function loadRegistry() {
   const next = new Map();
 
   for (const t of tenants) {
-    let secrets = {};
+    const secrets = {};
     try {
       for (const [name, blob] of Object.entries(t.secrets || {})) {
         secrets[name] = decryptSecret(blob, key);
@@ -226,8 +228,10 @@ async function loadRegistry() {
   byHost.clear();
   for (const [k, v] of next) byHost.set(k, v);
   lastLoad = Date.now();
-  console.log(`[shard] serving ${next.size} hostname(s) across ${tenants.length} shop(s)`
-    + (SHARD_INSTANCE ? ` on ${SHARD_INSTANCE}` : ''));
+  console.log(
+    `[shard] serving ${next.size} hostname(s) across ${tenants.length} shop(s)` +
+      (SHARD_INSTANCE ? ` on ${SHARD_INSTANCE}` : '')
+  );
 }
 
 /** The shop a request belongs to, or null. */
@@ -327,6 +331,12 @@ async function main() {
   });
 
   server.listen(PORT, HOST, () => {
+    const stopNotifications =
+      require('./src/services/business-notification-worker').startNotifications({
+        tenants: () => [...byHost.values()],
+        run: runWithTenant,
+      });
+    server.once('close', stopNotifications);
     console.log(`[shard] listening on http://${HOST}:${PORT}`);
     console.log(`[shard] pool ${POOL_SIZE}, registry refresh ${RELOAD_MS / 1000}s`);
   });

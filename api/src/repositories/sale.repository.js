@@ -4644,7 +4644,7 @@ class SalesRepository {
     }
   }
 
-  async returnSalesOrder(payload = {}, { SaleModel } = {}) {
+  async returnSalesOrder(payload = {}, { SaleModel, deviceId } = {}) {
     let returnLockContext = null;
     const releaseReturnLock = async () => {
       if (!returnLockContext) return;
@@ -5123,6 +5123,15 @@ class SalesRepository {
         : itemsTotMinusExtraDisc;
 
       const returnObjId = new MongooseObjectId();
+      const returnRegisterId =
+        await require('../services/business-return-register').verifiedReturnRegister(db, {
+          sessionId: payload.return_register_id,
+          license: licenseId,
+          branchId,
+          actorId: BaseModel.loggedUser,
+          deviceId,
+          at: now,
+        });
 
       const itemsReturnData = {
         returnArray: {
@@ -5133,6 +5142,7 @@ class SalesRepository {
             day: '2-digit',
           }).replace(/[^0-9]/g, '')}${Math.floor(Math.random() * 1e4)}`,
           returnDate: now,
+          ...(returnRegisterId ? { cashregister_id: returnRegisterId } : {}),
           returnValue: itemsReturn,
           roundOff: round(roundOffValue, 2),
           itemsTotalAmount: round(returnItemsTotalAmount, 2),
@@ -5147,21 +5157,26 @@ class SalesRepository {
           ...licenseFilter,
           'return_refund_lock.token': lockToken,
         },
-        {
-          $push: {
-            items_return: itemsReturnData,
-            return_refund_transactions: {
-              signature: returnSignature,
-              return_obj_id: returnObjId,
-              return_id: itemsReturnData.returnArray.returnId,
-              amount: round(returnItemsTotalAmount, 2),
-              item_count: itemsReturn.length,
-              created_at: now,
-              created_by: BaseModel.loggedUser || null,
-              created_by_name: BaseModel.loggedUserName || 'System',
+        require('../services/business-item-origin').withOriginalItemFacts(
+          saleDocument,
+          {
+            $push: {
+              items_return: itemsReturnData,
+              return_refund_transactions: {
+                signature: returnSignature,
+                return_obj_id: returnObjId,
+                return_id: itemsReturnData.returnArray.returnId,
+                amount: round(returnItemsTotalAmount, 2),
+                item_count: itemsReturn.length,
+                created_at: now,
+                ...(returnRegisterId ? { cashregister_id: returnRegisterId } : {}),
+                created_by: BaseModel.loggedUser || null,
+                created_by_name: BaseModel.loggedUserName || 'System',
+              },
             },
           },
-        }
+          now
+        )
       );
 
       if (!pushReturnResult.modifiedCount) {
@@ -5444,7 +5459,16 @@ class SalesRepository {
           extraDiscSubReturnExtradisc = sale_total_amount * (extra_discount / 100);
         }
 
-        if (return_sale_amount_round !== 0) {
+        // Zero is a recorded refund too. A fully discounted return must not
+        // fall back to the undiscounted line sum merely because its total is 0.
+        const recordedReturnTotals =
+          itemsReturnBlocks.length > 0 &&
+          itemsReturnBlocks.every(
+            (block) =>
+              typeof block?.returnArray?.itemsTotalAmount === 'number' &&
+              Number.isFinite(block.returnArray.itemsTotalAmount)
+          );
+        if (return_sale_amount_round !== 0 || recordedReturnTotals) {
           return_sale_amount = return_sale_amount_round;
         }
 
@@ -5588,6 +5612,7 @@ class SalesRepository {
       await releaseReturnLock();
       return {
         status: false,
+        ...(error.status === 409 ? { statusCode: 409 } : {}),
         data: null,
         message: error.message,
       };

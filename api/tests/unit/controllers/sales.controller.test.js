@@ -2,6 +2,9 @@
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 jest.mock('../../../src/services/sale.service');
+jest.mock('../../../src/services/business-checkout-decisions', () => ({
+  createCheckoutDecisions: jest.fn(),
+}));
 jest.mock('../../../src/models/sale.model');
 jest.mock('../../../src/services/item.service');
 jest.mock('../../../src/repositories/sale.repository');
@@ -13,6 +16,9 @@ jest.mock('../../../src/utils/activityLogger', () => ({
 jest.mock('../../../src/models/base.model', () => {
   const s = {};
   return class MockBaseModel {
+    static async getDb() {
+      return {};
+    }
     static get currentBranch() {
       return s.currentBranch;
     }
@@ -448,6 +454,57 @@ describe('SalesController', () => {
         expect.objectContaining({ message: ERROR_MESSAGES.DISCOUNT_NEEDS_APPROVAL })
       );
       expect(salesService.processSale).not.toHaveBeenCalled();
+    });
+
+    test('a supplied remote decision cannot bypass the verified checkout gate', async () => {
+      const {
+        createCheckoutDecisions,
+      } = require('../../../src/services/business-checkout-decisions');
+      const gate = jest.fn().mockRejectedValue(
+        Object.assign(new Error('cashier_access_denied'), {
+          code: 'cashier_access_denied',
+          status: 403,
+        })
+      );
+      createCheckoutDecisions.mockReturnValue({ gate });
+      const res = mockRes();
+      await ctrl.create(
+        mockReq({ user: cashier(), body: discountedBody({ business_decision_id: VALID_ID }) }),
+        res,
+        mockNext()
+      );
+      expect(gate).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(salesService.processSale).not.toHaveBeenCalled();
+    });
+
+    test('remote approval passes a server pre-commit hook and preserves a reconciliation response', async () => {
+      const {
+        createCheckoutDecisions,
+      } = require('../../../src/services/business-checkout-decisions');
+      const beforeCommit = jest.fn();
+      createCheckoutDecisions.mockReturnValue({ gate: jest.fn().mockResolvedValue(beforeCommit) });
+      salesService.processSale.mockResolvedValue({
+        status: false,
+        decisionError: { code: 'decision_reconciliation_required', status: 409 },
+      });
+      const res = mockRes();
+      await ctrl.create(
+        mockReq({ user: cashier(), body: discountedBody({ business_decision_id: VALID_ID }) }),
+        res,
+        mockNext()
+      );
+      expect(salesService.processSale).toHaveBeenCalledWith(
+        expect.any(Object),
+        '',
+        'Add',
+        expect.any(Object),
+        { beforeCommit }
+      );
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith({
+        error: { code: 'decision_reconciliation_required' },
+      });
     });
 
     test('passes with a valid manager-approval token bound to this cashier', async () => {

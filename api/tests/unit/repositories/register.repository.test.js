@@ -908,6 +908,19 @@ describe('RegisterRepository', () => {
       expect(col.updateOne).not.toHaveBeenCalled();
     });
 
+    test('a decision preview checks a legacy register without acquiring its device lock', async () => {
+      const session = openSession(FAKE_USER);
+      delete session.lock_device_id;
+      col.findOne.mockResolvedValue(session);
+      const result = await repo.validateSessionOwner(FAKE_ID, FAKE_USER, 'device-A', {
+        acquire: false,
+      });
+      expect(result.status).toBe(true);
+      expect(col.updateOne).not.toHaveBeenCalled();
+      await repo.validateSessionOwner(FAKE_ID, FAKE_USER, 'device-A');
+      expect(col.updateOne).toHaveBeenCalledTimes(1);
+    });
+
     test('a stale device cannot save and is told how to resume', async () => {
       col.findOne.mockResolvedValue(openSession(FAKE_USER));
       const result = await repo.validateSessionOwner(FAKE_ID, FAKE_USER, 'device-B');

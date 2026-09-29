@@ -50,12 +50,16 @@
       "description": "Mounted at /branches"
     },
     {
+      "name": "Business access",
+      "description": "Mounted at /business/v1"
+    },
+    {
       "name": "Campaign",
       "description": "Mounted at /campaigns"
     },
     {
       "name": "Captain access",
-      "description": "Mounted at /api/captain/v1"
+      "description": "Mounted at /captain/v1"
     },
     {
       "name": "Cashback",
@@ -123,7 +127,7 @@
     },
     {
       "name": "Kitchen board",
-      "description": "Mounted at /api/kitchen"
+      "description": "Mounted at /kitchen"
     },
     {
       "name": "Loyalty",
@@ -135,7 +139,7 @@
     },
     {
       "name": "Mobile pos",
-      "description": "Mounted at /api/mobile/v1"
+      "description": "Mounted at /mobile/v1"
     },
     {
       "name": "Online ordering",
@@ -1607,6 +1611,917 @@
         }
       }
     },
+    "/business/v1/discovery": {
+      "get": {
+        "summary": "v1",
+        "operationId": "get_business_v1_discovery",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/requests": {
+      "post": {
+        "summary": "request",
+        "operationId": "post_business_v1_requests",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      }
+    },
+    "/business/v1/authorize": {
+      "get": {
+        "summary": "html",
+        "operationId": "get_business_v1_authorize",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/approve": {
+      "post": {
+        "summary": "result",
+        "operationId": "post_business_v1_approve",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      }
+    },
+    "/business/v1/token": {
+      "post": {
+        "summary": "body",
+        "operationId": "post_business_v1_token",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      }
+    },
+    "/business/v1/device-decisions/{action}": {
+      "post": {
+        "summary": "protectDeviceDecision",
+        "operationId": "post_business_v1_device_decisions_action",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      }
+    },
+    "/business/v1/decisions": {
+      "get": {
+        "summary": "query",
+        "operationId": "get_business_v1_decisions",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/decisions/{id}": {
+      "get": {
+        "summary": "id",
+        "operationId": "get_business_v1_decisions_id",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      },
+      "post": {
+        "summary": "body",
+        "operationId": "post_business_v1_decisions_id",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      }
+    },
+    "/business/v1/notifications/device": {
+      "get": {
+        "summary": "channels",
+        "operationId": "get_business_v1_notifications_device",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      },
+      "post": {
+        "summary": "body",
+        "operationId": "post_business_v1_notifications_device",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      },
+      "delete": {
+        "summary": "businessIdentity",
+        "operationId": "delete_business_v1_notifications_device",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/notifications/preferences/{branchId}": {
+      "get": {
+        "summary": "scheduleVersion",
+        "operationId": "get_business_v1_notifications_preferences_branchId",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      },
+      "post": {
+        "summary": "scheduleVersion",
+        "operationId": "post_business_v1_notifications_preferences_branchId",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      }
+    },
+    "/business/v1/notifications/stock/{branchId}": {
+      "get": {
+        "summary": "branchId",
+        "operationId": "get_business_v1_notifications_stock_branchId",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      },
+      "post": {
+        "summary": "body",
+        "operationId": "post_business_v1_notifications_stock_branchId",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      }
+    },
+    "/business/v1/notifications/approvals/{branchId}": {
+      "get": {
+        "summary": "branchId",
+        "operationId": "get_business_v1_notifications_approvals_branchId",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      },
+      "post": {
+        "summary": "body",
+        "operationId": "post_business_v1_notifications_approvals_branchId",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      }
+    },
+    "/business/v1/inbox": {
+      "get": {
+        "summary": "stockAlerts",
+        "operationId": "get_business_v1_inbox",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/inbox/{id}/read": {
+      "post": {
+        "summary": "id",
+        "operationId": "post_business_v1_inbox_id_read",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      }
+    },
+    "/business/v1/reporting/publishers/{branchId}": {
+      "get": {
+        "summary": "branchId",
+        "operationId": "get_business_v1_reporting_publishers_branchId",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      },
+      "post": {
+        "summary": "body",
+        "operationId": "post_business_v1_reporting_publishers_branchId",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "branchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": []
+      }
+    },
+    "/business/v1/overview": {
+      "get": {
+        "summary": "query",
+        "operationId": "get_business_v1_overview",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/items": {
+      "get": {
+        "summary": "query",
+        "operationId": "get_business_v1_items",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/context": {
+      "get": {
+        "summary": "user",
+        "operationId": "get_business_v1_context",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/stock": {
+      "get": {
+        "summary": "query",
+        "operationId": "get_business_v1_stock",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/register-summaries": {
+      "get": {
+        "summary": "query",
+        "operationId": "get_business_v1_register_summaries",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/session/rotate": {
+      "post": {
+        "summary": "token",
+        "operationId": "post_business_v1_session_rotate",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document. Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/business/v1/session": {
+      "delete": {
+        "summary": "token",
+        "operationId": "delete_business_v1_session",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/sessions": {
+      "get": {
+        "summary": "token",
+        "operationId": "get_business_v1_sessions",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
+    "/business/v1/sessions/{id}": {
+      "delete": {
+        "summary": "id",
+        "operationId": "delete_business_v1_sessions_id",
+        "tags": [
+          "Business access"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
     "/campaigns/preview": {
       "post": {
         "summary": "preview",
@@ -1864,10 +2779,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/enrolment-proof": {
+    "/captain/v1/enrolment-proof": {
       "post": {
         "summary": "proof",
-        "operationId": "post_api_captain_v1_enrolment_proof",
+        "operationId": "post_captain_v1_enrolment_proof",
         "tags": [
           "Captain access"
         ],
@@ -1888,10 +2803,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/pair": {
+    "/captain/v1/pair": {
       "post": {
         "summary": "pair",
-        "operationId": "post_api_captain_v1_pair",
+        "operationId": "post_captain_v1_pair",
         "tags": [
           "Captain access"
         ],
@@ -1912,10 +2827,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/refresh": {
+    "/captain/v1/refresh": {
       "post": {
         "summary": "refresh",
-        "operationId": "post_api_captain_v1_refresh",
+        "operationId": "post_captain_v1_refresh",
         "tags": [
           "Captain access"
         ],
@@ -1936,10 +2851,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/route-proof": {
+    "/captain/v1/route-proof": {
       "post": {
         "summary": "routeProof",
-        "operationId": "post_api_captain_v1_route_proof",
+        "operationId": "post_captain_v1_route_proof",
         "tags": [
           "Captain access"
         ],
@@ -1960,10 +2875,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/kitchen-ready": {
+    "/captain/v1/kitchen-ready": {
       "get": {
         "summary": "board",
-        "operationId": "get_api_captain_v1_kitchen_ready",
+        "operationId": "get_captain_v1_kitchen_ready",
         "tags": [
           "Captain access"
         ],
@@ -1984,7 +2899,7 @@
       },
       "post": {
         "summary": "board",
-        "operationId": "post_api_captain_v1_kitchen_ready",
+        "operationId": "post_captain_v1_kitchen_ready",
         "tags": [
           "Captain access"
         ],
@@ -2005,10 +2920,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/kitchen-audio/{action}": {
+    "/captain/v1/kitchen-audio/{action}": {
       "post": {
         "summary": "value",
-        "operationId": "post_api_captain_v1_kitchen_audio_action",
+        "operationId": "post_captain_v1_kitchen_audio_action",
         "tags": [
           "Captain access"
         ],
@@ -2039,10 +2954,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/pair-codes": {
+    "/captain/v1/pair-codes": {
       "post": {
         "summary": "result",
-        "operationId": "post_api_captain_v1_pair_codes",
+        "operationId": "post_captain_v1_pair_codes",
         "tags": [
           "Captain access"
         ],
@@ -2063,10 +2978,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/settings": {
+    "/captain/v1/settings": {
       "get": {
         "summary": "name",
-        "operationId": "get_api_captain_v1_settings",
+        "operationId": "get_captain_v1_settings",
         "tags": [
           "Captain access"
         ],
@@ -2086,10 +3001,10 @@
         }
       }
     },
-    "/api/captain/v1/connection-settings": {
+    "/captain/v1/connection-settings": {
       "post": {
         "summary": "saved",
-        "operationId": "post_api_captain_v1_connection_settings",
+        "operationId": "post_captain_v1_connection_settings",
         "tags": [
           "Captain access"
         ],
@@ -2110,10 +3025,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/session": {
+    "/captain/v1/session": {
       "get": {
         "summary": "branchId",
-        "operationId": "get_api_captain_v1_session",
+        "operationId": "get_captain_v1_session",
         "tags": [
           "Captain access"
         ],
@@ -2133,10 +3048,10 @@
         }
       }
     },
-    "/api/captain/v1/logout": {
+    "/captain/v1/logout": {
       "post": {
         "summary": "signedOut",
-        "operationId": "post_api_captain_v1_logout",
+        "operationId": "post_captain_v1_logout",
         "tags": [
           "Captain access"
         ],
@@ -2157,10 +3072,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/payment-options": {
+    "/captain/v1/payment-options": {
       "get": {
         "summary": "scope",
-        "operationId": "get_api_captain_v1_payment_options",
+        "operationId": "get_captain_v1_payment_options",
         "tags": [
           "Captain access"
         ],
@@ -2180,10 +3095,10 @@
         }
       }
     },
-    "/api/captain/v1/payments/table": {
+    "/captain/v1/payments/table": {
       "post": {
         "summary": "prepare",
-        "operationId": "post_api_captain_v1_payments_table",
+        "operationId": "post_captain_v1_payments_table",
         "tags": [
           "Captain access"
         ],
@@ -2204,10 +3119,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/payments/record": {
+    "/captain/v1/payments/record": {
       "post": {
         "summary": "record",
-        "operationId": "post_api_captain_v1_payments_record",
+        "operationId": "post_captain_v1_payments_record",
         "tags": [
           "Captain access"
         ],
@@ -2228,10 +3143,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/payments/release": {
+    "/captain/v1/payments/release": {
       "post": {
         "summary": "release",
-        "operationId": "post_api_captain_v1_payments_release",
+        "operationId": "post_captain_v1_payments_release",
         "tags": [
           "Captain access"
         ],
@@ -2252,10 +3167,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/captain/v1/payment-settings": {
+    "/captain/v1/payment-settings": {
       "get": {
         "summary": "access",
-        "operationId": "get_api_captain_v1_payment_settings",
+        "operationId": "get_captain_v1_payment_settings",
         "tags": [
           "Captain access"
         ],
@@ -2276,7 +3191,7 @@
       },
       "post": {
         "summary": "saved",
-        "operationId": "post_api_captain_v1_payment_settings",
+        "operationId": "post_captain_v1_payment_settings",
         "tags": [
           "Captain access"
         ],
@@ -8611,10 +9526,10 @@
         }
       }
     },
-    "/api/kitchen/devices/pair": {
+    "/kitchen/devices/pair": {
       "post": {
         "summary": "pair",
-        "operationId": "post_api_kitchen_devices_pair",
+        "operationId": "post_kitchen_devices_pair",
         "tags": [
           "Kitchen board"
         ],
@@ -8635,10 +9550,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/kitchen/settings": {
+    "/kitchen/settings": {
       "post": {
         "summary": "saveSettings",
-        "operationId": "post_api_kitchen_settings",
+        "operationId": "post_kitchen_settings",
         "tags": [
           "Kitchen board"
         ],
@@ -8659,10 +9574,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/kitchen/devices/code": {
+    "/kitchen/devices/code": {
       "post": {
         "summary": "create",
-        "operationId": "post_api_kitchen_devices_code",
+        "operationId": "post_kitchen_devices_code",
         "tags": [
           "Kitchen board"
         ],
@@ -8683,10 +9598,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/kitchen/devices": {
+    "/kitchen/devices": {
       "get": {
         "summary": "list",
-        "operationId": "get_api_kitchen_devices",
+        "operationId": "get_kitchen_devices",
         "tags": [
           "Kitchen board"
         ],
@@ -8706,10 +9621,10 @@
         }
       }
     },
-    "/api/kitchen/devices/revoke": {
+    "/kitchen/devices/revoke": {
       "post": {
         "summary": "revoke",
-        "operationId": "post_api_kitchen_devices_revoke",
+        "operationId": "post_kitchen_devices_revoke",
         "tags": [
           "Kitchen board"
         ],
@@ -8730,10 +9645,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/kitchen": {
+    "/kitchen": {
       "get": {
         "summary": "list",
-        "operationId": "get_api_kitchen",
+        "operationId": "get_kitchen",
         "tags": [
           "Kitchen board"
         ],
@@ -8753,10 +9668,10 @@
         }
       }
     },
-    "/api/kitchen/transition": {
+    "/kitchen/transition": {
       "post": {
         "summary": "transition",
-        "operationId": "post_api_kitchen_transition",
+        "operationId": "post_kitchen_transition",
         "tags": [
           "Kitchen board"
         ],
@@ -9038,10 +9953,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/mobile/v1/enrolment-proof": {
+    "/mobile/v1/enrolment-proof": {
       "post": {
         "summary": "hex",
-        "operationId": "post_api_mobile_v1_enrolment_proof",
+        "operationId": "post_mobile_v1_enrolment_proof",
         "tags": [
           "Mobile pos"
         ],
@@ -9062,10 +9977,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/mobile/v1/pair": {
+    "/mobile/v1/pair": {
       "post": {
         "summary": "handsetLifetimeSeconds",
-        "operationId": "post_api_mobile_v1_pair",
+        "operationId": "post_mobile_v1_pair",
         "tags": [
           "Mobile pos"
         ],
@@ -9086,10 +10001,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/mobile/v1/bootstrap": {
+    "/mobile/v1/bootstrap": {
       "get": {
         "summary": "bootstrap",
-        "operationId": "get_api_mobile_v1_bootstrap",
+        "operationId": "get_mobile_v1_bootstrap",
         "tags": [
           "Mobile pos"
         ],
@@ -9109,10 +10024,10 @@
         }
       }
     },
-    "/api/mobile/v1/sales": {
+    "/mobile/v1/sales": {
       "post": {
         "summary": "ingest",
-        "operationId": "post_api_mobile_v1_sales",
+        "operationId": "post_mobile_v1_sales",
         "tags": [
           "Mobile pos"
         ],
@@ -9133,10 +10048,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/mobile/v1/settings": {
+    "/mobile/v1/settings": {
       "get": {
         "summary": "branchId",
-        "operationId": "get_api_mobile_v1_settings",
+        "operationId": "get_mobile_v1_settings",
         "tags": [
           "Mobile pos"
         ],
@@ -9157,7 +10072,7 @@
       },
       "post": {
         "summary": "saved",
-        "operationId": "post_api_mobile_v1_settings",
+        "operationId": "post_mobile_v1_settings",
         "tags": [
           "Mobile pos"
         ],
@@ -9178,10 +10093,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/mobile/v1/recover": {
+    "/mobile/v1/recover": {
       "post": {
         "summary": "length",
-        "operationId": "post_api_mobile_v1_recover",
+        "operationId": "post_mobile_v1_recover",
         "tags": [
           "Mobile pos"
         ],
@@ -9202,10 +10117,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/mobile/v1/pair-codes": {
+    "/mobile/v1/pair-codes": {
       "post": {
         "summary": "name",
-        "operationId": "post_api_mobile_v1_pair_codes",
+        "operationId": "post_mobile_v1_pair_codes",
         "tags": [
           "Mobile pos"
         ],
@@ -9226,10 +10141,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/mobile/v1/devices/revoke": {
+    "/mobile/v1/devices/revoke": {
       "post": {
         "summary": "revoked",
-        "operationId": "post_api_mobile_v1_devices_revoke",
+        "operationId": "post_mobile_v1_devices_revoke",
         "tags": [
           "Mobile pos"
         ],
@@ -9250,10 +10165,10 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
-    "/api/mobile/v1/print-jobs": {
+    "/mobile/v1/print-jobs": {
       "post": {
         "summary": "queued",
-        "operationId": "post_api_mobile_v1_print_jobs",
+        "operationId": "post_mobile_v1_print_jobs",
         "tags": [
           "Mobile pos"
         ],
@@ -13187,6 +14102,130 @@
         "operationId": "post_sales_voiceIntent",
         "tags": [
           "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/business-decisions": {
+      "post": {
+        "summary": "businessDiscountDecision",
+        "operationId": "post_sales_business_decisions",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/business-decisions/operation/{operationId}": {
+      "get": {
+        "summary": "businessDiscountDecision",
+        "operationId": "get_sales_business_decisions_operation_operationId",
+        "tags": [
+          "Sales"
+        ],
+        "parameters": [
+          {
+            "name": "operationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/sales/business-decisions/{requestId}": {
+      "get": {
+        "summary": "businessDiscountDecision",
+        "operationId": "get_sales_business_decisions_requestId",
+        "tags": [
+          "Sales"
+        ],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/sales/business-decisions/{requestId}/cancel": {
+      "post": {
+        "summary": "businessDiscountDecision",
+        "operationId": "post_sales_business_decisions_requestId_cancel",
+        "tags": [
+          "Sales"
+        ],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
