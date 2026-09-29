@@ -1287,7 +1287,7 @@ test('one grouped Inbox entry covers the entire verified-low baseline and acknow
   assert.equal(entries[0].stock.listTruncated, true);
   assert.equal(entries[0].stock.totalLowItemCount, 103);
   assert.equal(entries[0].stock.sourceComplete, false);
-  assert.equal(entries[0].pushPending, false);
+  assert.equal(entries[0].pushPending, true);
   assert.equal(entries[0].materializationPending, false);
   assert.ok((await recipientRows(f)).every((row) => row.pending === undefined));
   assert.equal((await materializeStock(f)).status, 'deferred');
@@ -1623,7 +1623,7 @@ test('stock push evidence checks current group members independently of financia
   assert.equal(result.itemId, String(f.rows[0]._id));
   assert.equal(result.preference.time, '23:00');
   assert.equal((await materializeStock(f)).status, 'deferred');
-  assert.equal((await f.db.collection('business_inbox').findOne({})).pushPending, false);
+  assert.equal((await f.db.collection('business_inbox').findOne({})).pushPending, true);
 });
 
 test('stock push scans beyond the public sample and resumes later current-stock pages', async () => {
@@ -1832,8 +1832,8 @@ const stockPushConfig = {
   projectId: '11111111-1111-4111-8111-111111111111',
   accessToken: 'synthetic-only',
 };
-async function pushFixture() {
-  const f = await inboxFixture(),
+async function pushFixture(base) {
+  const f = base ?? (await inboxFixture()),
     { opaque } = require('../src/services/business-access');
   const session = {
     _id: opaque(),
@@ -1856,11 +1856,7 @@ async function pushFixture() {
     },
     { config: stockPushConfig, now: () => f.now() - 1000 }
   );
-  // Production materialization remains gated. These tests explicitly enqueue
-  // synthetic events to exercise the full delivery path without a provider.
-  await f.db
-    .collection('business_inbox')
-    .updateOne({ _id: new ObjectId(f.eventId) }, { $set: { pushPending: true } });
+  // The stock feature flag is enabled only in this isolated test database.
   const sends = [],
     transport = {
       send: async (...args) => {
@@ -2082,7 +2078,7 @@ test('combined stock worker scans and materializes once, with durable cadence ac
   assert.equal(result.scan.state, 'complete');
   assert.equal(result.delivery, 'materialized');
   assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
-  assert.equal((await f.db.collection('business_inbox').findOne({})).pushPending, false);
+  assert.equal((await f.db.collection('business_inbox').findOne({})).pushPending, true);
   assert.equal((await notificationWorker(f).tick()).delivery, 'idle');
   f.advance(60000);
   assert.equal((await notificationWorker(f).tick()).delivery, 'deferred');
@@ -2439,4 +2435,69 @@ test('cleanup drains malformed obsolete activation metadata without touching the
   ]);
   assert.deepEqual(await cleanupStock(f), { status: 'complete', deleted: 2 });
   assert.equal((await recipientRows(f)).length, 103);
+});
+
+test('notification runtime scans, commits and sends stock without manual queue mutation', async () => {
+  const f = await pushFixture(await recipientFixture());
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 0);
+  const worker = require('../src/services/business-notification-worker').createNotificationWorker({
+    tenants: () => [{ db: f.db }],
+    approvals: async () => {},
+    drain: async () => {},
+    prepare: async () => {},
+    prepareCloses: async () => {},
+    stockFactory: (db) => notificationWorker(f, {}, db),
+    push: (db) => f.drain({}, db),
+  });
+  try {
+    await worker.tick();
+    const event = await f.db.collection('business_inbox').findOne({});
+    assert.equal(event.materializationPending, false);
+    assert.equal(event.pushPending, false);
+    assert.deepEqual(f.sends, [['ExpoPushToken[syntheticstocktoken]', String(event._id), 'ta']]);
+    assert.equal((await f.delivery()).state, 'receipt');
+    await worker.tick();
+    assert.equal(f.sends.length, 1);
+    assert.equal(await f.db.collection('business_inbox').countDocuments({}), 1);
+  } finally {
+    worker.stop();
+  }
+});
+
+test('committed cleanup recovery never requeues a consumed push event', async () => {
+  const f = await pushFixture(await recipientFixture());
+  await recipientWorker(f).tick();
+  let failed = false;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_recipient_state' && property === 'updateMany')
+            return async (...args) => {
+              if (!failed && args[1].$unset?.pending === '') {
+                failed = true;
+                throw new Error('cleanup interrupted');
+              }
+              return target.updateMany(...args);
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  await assert.rejects(materializeStock(f, database), /cleanup interrupted/);
+  const event = await f.db.collection('business_inbox').findOne({});
+  assert.equal(event.pushPending, true);
+  await f.drain();
+  assert.equal(f.sends.length, 1);
+  assert.equal((await f.db.collection('business_inbox').findOne({})).pushPending, false);
+  assert.equal((await materializeStock(f)).eventId, String(event._id));
+  assert.equal((await f.db.collection('business_inbox').findOne({})).pushPending, false);
+  assert.equal((await scanPreference(f)).stockDelivery, undefined);
+  await f.drain();
+  assert.equal(f.sends.length, 1);
+  assert.equal(await f.db.collection('business_push_deliveries').countDocuments({}), 1);
 });

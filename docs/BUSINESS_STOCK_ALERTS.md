@@ -552,3 +552,28 @@ across age, bounded obsolete removal, tenant isolation, concurrent replacement,
 lease replacement, cancellation/lost acknowledgements and malformed old metadata.
 The Inbox pagination fixture now explicitly orders its IDs instead of assuming
 same-second client and server ObjectIds share chronological order.
+
+## Notification runtime integration
+
+The existing fifteen-second notification loop now visits the combined stock
+worker before push delivery when `POSNIC_BUSINESS_STOCK_ALERTS=1`. It caches one
+worker per active tenant database, deduplicates host aliases, and stops cached
+workers when a tenant disappears, is suspended, the flag is disabled or the
+notification runtime shuts down. Stock errors do not suppress other channels.
+This integration adds no timer, workflow or deployment configuration.
+
+A committed Inbox transition now sets `materializationPending: false` and
+`pushPending: true` together. The transition is conditional on still being pending;
+recovery after interrupted journal cleanup cannot requeue a push already consumed
+by the delivery worker. This supersedes earlier checkpoints describing stock
+entries as always push-ineligible. Actual provider delivery still requires the
+existing push configuration and current recipient/device/stock checks.
+
+Validation: 99 integration tests pass (79 snapshot/pipeline, six preferences,
+fourteen push), plus six notification-runtime unit tests. The runtime integration
+test starts from a published snapshot and registered dedicated device session,
+then scans, commits and sends a generic event through the real push consumer using
+a synthetic provider. A separate interrupted-cleanup case verifies one delivery
+and no requeue after recovery. Lint, formatting and attribution checks pass.
+These tests do not qualify a real provider, deploy servers, advertise producer
+capabilities, enable feature flags or change the published Android APK.

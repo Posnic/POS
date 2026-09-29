@@ -7,8 +7,8 @@ const { digestOf } = require('./business-stock-snapshot-contract');
 const fail = (code) => {
   throw Object.assign(new Error(code), { code });
 };
-/** Private grouped Inbox materialization. Entries remain push-ineligible until
- * the dedicated read/push consumers are connected and qualified. */
+/** Grouped Inbox materialization under the opt-in stock feature flag.
+ * Only a committed transition can enqueue a private provider notification. */
 async function materializeStockAlert(db, target, { now = Date.now, signal } = {}) {
   if (signal?.aborted) return { status: 'cancelled' };
   if (process.env.POSNIC_BUSINESS_STOCK_ALERTS !== '1') return { status: 'disabled' };
@@ -68,8 +68,13 @@ async function materializeStockAlert(db, target, { now = Date.now, signal } = {}
     )
       fail('invalid_stock_delivery_record');
     await inbox.updateOne(
-      { _id: event._id, eventKey: eventKey(), stockDigest: event.stockDigest },
-      { $set: { materializationPending: false } },
+      {
+        _id: event._id,
+        eventKey: eventKey(),
+        stockDigest: event.stockDigest,
+        materializationPending: true,
+      },
+      { $set: { materializationPending: false, pushPending: true } },
       { maxTimeMS: 500 }
     );
     // Revision increments make concurrent observation writers retry instead of
