@@ -401,3 +401,162 @@ test(
     }
   }
 );
+
+async function senderFixture(count = 103) {
+  const f = await fixture(count);
+  const crypto = require('node:crypto');
+  const {
+    createStockSnapshotSender,
+    createCommunityStockSnapshotTransport,
+  } = require('../src/services/business-stock-snapshot-sender');
+  f.device.deviceId = f.owner.deviceId = 'community-' + crypto.randomUUID();
+  await f.db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: f.branch.id }, { $set: { deviceId: f.device.deviceId } });
+  await f.db.collection('business_reporting_local').insertMany([
+    { _id: 'community-installation', deviceId: f.device.deviceId },
+    {
+      _id: f.branch.id + ':stock',
+      kind: 'job',
+      publisherMode: 'community',
+      summaryKind: 'stock',
+      license: f.branch.license,
+      branchId: f.branch.id,
+      assignmentId: f.owner.assignmentId,
+      epoch: f.owner.epoch,
+      expiresAt: new Date(f.now() + 600000),
+    },
+  ]);
+  const send = createCommunityStockSnapshotTransport(f.db, { now: f.now });
+  const sender = (transport = send, database = f.db) =>
+    createStockSnapshotSender(database, { now: f.now, send: transport });
+  const state = () => f.db.collection('business_stock_alert_local').findOne({ kind: 'snapshot' });
+  return { ...f, send, sender, state };
+}
+
+test('durable sender resumes the identical page after a lost server acknowledgement and releases completed facts', async () => {
+  const f = await senderFixture();
+  const observation = await f.scan();
+  let lost = false;
+  const sent = [];
+  const first = f.sender(async (publication, options) => {
+    sent.push(structuredClone(publication));
+    const receipt = await f.send(publication, options);
+    if (!lost) {
+      lost = true;
+      throw new Error('lost response');
+    }
+    return receipt;
+  });
+  await first.stage(observation, f.branch, 'community');
+  await assert.rejects(first.tick(), /lost response/);
+  assert.equal((await f.state()).nextPage, 0);
+  f.advance(10000);
+  const resumed = f.sender(async (publication, options) => {
+    sent.push(structuredClone(publication));
+    return f.send(publication, options);
+  });
+  assert.deepEqual(await resumed.tick(), { sent: 2, complete: true });
+  assert.deepEqual(sent[0], sent[1]);
+  assert.equal((await f.state()).observation, undefined);
+  assert.equal((await f.state()).lastReceipt.complete, true);
+  assert.equal((await f.get(f.rows[102]._id)).status, 'low');
+  assert.equal((await resumed.stage(observation, f.branch, 'community')).duplicate, true);
+});
+
+test('sender persists a bounded cursor and restart sends remaining pages, not a new snapshot', async () => {
+  const f = await senderFixture(1003);
+  const sender = f.sender();
+  await sender.stage(await f.scan(), f.branch, 'community');
+  assert.deepEqual(await sender.tick(), { sent: 10, complete: false });
+  assert.equal((await f.state()).nextPage, 10);
+  assert.equal((await f.get(f.rows[0]._id)).status, 'unavailable');
+  assert.deepEqual(await f.sender().tick(), { sent: 1, complete: true });
+  assert.equal((await f.get(f.rows[1002]._id)).status, 'low');
+});
+
+test('sender refuses invalid or incomplete final receipts and preserves the frozen publisher after reassignment', async () => {
+  const f = await senderFixture(1);
+  const sender = f.sender(async (publication, options) => ({
+    ...(await f.send(publication, options)),
+    complete: false,
+  }));
+  await sender.stage(await f.scan(), f.branch, 'community');
+  await assert.rejects(sender.tick(), /invalid_stock_snapshot_receipt/);
+  assert.equal((await f.state()).nextPage, 0);
+  await f.db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: f.branch.id }, { $inc: { epoch: 1 } });
+  await f.db
+    .collection('business_reporting_local')
+    .updateOne({ kind: 'job' }, { $inc: { epoch: 1 } });
+  f.advance(10000);
+  await assert.rejects(f.sender().tick(), /publisher_not_assigned/);
+  assert.equal((await f.state()).epoch, 1);
+});
+
+test('expired sender observations are discarded explicitly and fresh staging requires a live assignment', async () => {
+  const f = await senderFixture(1);
+  const sender = f.sender();
+  const old = await f.scan();
+  await sender.stage(old, f.branch, 'community');
+  f.advance();
+  await assert.rejects(
+    sender.stage(await f.scan(), f.branch, 'community'),
+    /stock_snapshot_pending/
+  );
+  f.advance(FRESHNESS_MS);
+  assert.deepEqual(await sender.tick(), { discarded: true });
+  assert.equal((await f.state()).lastDiscarded.reason, 'stale_stock_snapshot');
+  assert.equal((await f.state()).observation, undefined);
+  await f.db
+    .collection('business_reporting_local')
+    .updateOne({ kind: 'job' }, { $set: { expiresAt: new Date(0) } });
+  await assert.rejects(
+    sender.stage(await f.scan(), f.branch, 'community'),
+    /stock_snapshot_assignment_required/
+  );
+  assert.equal(await f.db.collection('business_stock_snapshot_pages').countDocuments({}), 0);
+});
+
+test('late responses after lease loss or stop cannot advance a snapshot cursor', async () => {
+  for (const mode of ['lease-loss', 'stop']) {
+    const f = await senderFixture(1);
+    const sender = f.sender(async (publication, options) => {
+      const receipt = await f.send(publication, options);
+      if (mode === 'stop') sender.stop();
+      else
+        await f.db
+          .collection('business_stock_alert_local')
+          .updateOne({ kind: 'snapshot' }, { $set: { leaseId: 'successor' } });
+      return receipt;
+    });
+    await sender.stage(await f.scan(), f.branch, 'community');
+    await sender.tick();
+    assert.equal((await f.state()).nextPage, 0);
+    assert.ok((await f.state()).observation);
+    f.advance(31000);
+    assert.deepEqual(await f.sender().tick(), { sent: 1, complete: true });
+  }
+});
+
+test('tampered source snapshots cannot be retried, silently overwritten or transmitted', async () => {
+  const f = await senderFixture(1);
+  let sent = false;
+  const sender = f.sender(async () => {
+    sent = true;
+    throw new Error('unexpected send');
+  });
+  const observation = await f.scan();
+  await sender.stage(observation, f.branch, 'community');
+  await f.db
+    .collection('business_stock_alert_local')
+    .updateOne({ kind: 'snapshot' }, { $set: { 'observation.facts.0.name': 'Changed' } });
+  await assert.rejects(
+    sender.stage(observation, f.branch, 'community'),
+    /invalid_stock_snapshot_state/
+  );
+  await assert.rejects(sender.tick());
+  assert.equal(sent, false);
+  assert.equal((await f.state()).nextPage, 0);
+});

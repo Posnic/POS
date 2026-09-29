@@ -200,3 +200,34 @@ snapshot tests pass; the 42 prior stock pipeline tests passed at the preceding
 checkpoint. Gateway's five new receiver/route cases and 33 existing reporting
 cases also pass. This remains in-process evidence; snapshot mailbox/sync-agent
 transport, Cloud recipient lookup and notification delivery are not connected.
+
+## Durable snapshot sender
+
+`createStockSnapshotSender` now stages the immutable observation with the current
+live stock reporting job's publisher mode, assignment and epoch. It keeps one
+observation per branch in the existing sync-excluded local stock-alert collection.
+A live unfinished observation cannot be replaced; an expired one records an
+explicit discard. A completed observation releases its facts and retains the final
+receipt and identity. Corrupt local content cannot be silently reused or replaced.
+
+Each tick claims a 30-second lease and sends at most ten pages within a 20-second
+operation budget. Every page receipt must match its schema, snapshot ID, index and
+canonical digest; the final page requires confirmed complete assembly. The saved
+cursor advances only while the same lease and snapshot remain current. A crash or
+lost response retries the identical page against the original assignment. Stop or
+lease loss cannot advance the cursor on a late response. Transport errors retain
+the observation and back off ten seconds. Stale snapshots are explicitly discarded,
+not described as delivered.
+
+`createCommunityStockSnapshotTransport` resolves the private installation identity
+and calls the internal Community receiver without Cloud credentials. Community
+mode and local reporting must be enabled. The sender is dependency-injected and
+has no timer: its Cloud mailbox adapter and production scheduling are not connected.
+No production heartbeat or rollout flag is enabled.
+
+Seventeen snapshot integration cases pass, including six sender cases covering
+lost acknowledgements, a 1,003-fact transfer across a ten-page tick boundary,
+invalid final receipts, frozen assignment, expiry, absent live jobs, stop/lease
+loss and corrupted staged facts. Existing cross-repository receipt equivalence
+remains covered. Lint and formatting pass. Recipient notification delivery remains
+unfinished.
