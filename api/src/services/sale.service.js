@@ -3824,9 +3824,10 @@ module.exports = {
   },
   // Thin wrappers around additional legacy static helpers used by
   // the controller outside of the main reporting endpoints.
-  returnSalesOrder: async (data, { SaleModel } = {}) =>
+  returnSalesOrder: async (data, { SaleModel, deviceId } = {}) =>
     salesRepository.returnSalesOrder(data, {
       SaleModel: getModel(SaleModel),
+      deviceId,
     }),
   exportSalesOrder: async (ids, { SaleModel } = {}) =>
     salesRepository.exportSalesOrder(ids, {

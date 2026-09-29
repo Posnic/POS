@@ -4432,6 +4432,7 @@ PosnicPro.sales.editSale = {
             SalesDocumentId = (PosnicPro.sales.salesExchange === true) ? PosnicPro.sales.refundSaleId : SalesDocumentId;
             var data = {
                 sale_process: process_status,
+                return_register_id: PosnicPro.sales.saleRegisterId(),
                 date: $('#time-format').val(),
                 sales_id: SalesDocumentId,
                 alternative_id: PosnicPro.sales.salesId,

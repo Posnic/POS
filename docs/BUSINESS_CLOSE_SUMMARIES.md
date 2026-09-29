@@ -80,7 +80,7 @@ yet scheduled or published. Cloud execution is rejected before source reads.
 
 Invoices use their stored `cashregister_id`. The scan includes other sessions
 because a refund may refer to an older invoice. Returns need their own verified
-`returnArray.cashregister_id`; the current refund writer does not yet supply it.
+`returnArray.cashregister_id`; the refund writer now supplies it when the till sends a verified active session.
 Missing attribution within the session period fails with
 `return_register_unavailable`, not zero refunds. Invoices without register scope,
 uncertain settlement timing or changes after close also fail rather than claim a
@@ -92,3 +92,22 @@ return-session success case is an explicit contract fixture, not evidence that
 the current refund writer supplies this metadata. Actual writer attribution,
 immutable financial history, publisher negotiation, scheduling and mobile
 delivery remain required. Existing source completeness remains unproven.
+
+## Verified refund-session attribution
+
+The till refund payload now includes its current register-session selection. The
+controller derives the device identity using the existing device resolver and
+passes it outside the request payload. Before persisting a return, the repository
+checks the supplied session by primary key against invoice tenant/branch, current
+actor, device, open state and opening time. Only the verified ID is stored on both
+the return fact and refund transaction, in the same sale update. A failed check
+returns 409 and releases the refund lease without appending financial records.
+An omitted session remains valid for older clients and register-disabled shops;
+no session is invented for those refunds.
+
+Four real-Mongo refund tests pass, including the actual writer feeding session
+metrics for an older invoice, wrong device/owner/branch, closed session, no partial
+refund records on rejection, and legacy compatibility. The related controller,
+service and repository suites pass all 337 tests. Targeted formatting and lint
+pass with existing legacy warnings. Source publication, immutable close history,
+scheduling and mobile close delivery are still incomplete.

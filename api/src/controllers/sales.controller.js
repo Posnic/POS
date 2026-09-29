@@ -5696,7 +5696,10 @@ class SalesController extends BaseController {
 
       const data = req.body;
       const SaleModel = this.model || Sale;
-      const result = await salesService.returnSalesOrder(data, { SaleModel });
+      const result = await salesService.returnSalesOrder(data, {
+        SaleModel,
+        deviceId: getRequestDeviceId(req),
+      });
 
       if (result.status === true) {
         const returnedItems = Array.isArray(result.data?.returned_items)

@@ -5,6 +5,7 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 const { saleContribution, businessDate } = require('../src/services/business-metrics');
 const { itemSaleContribution } = require('../src/services/business-item-metrics');
+const { registerSaleContribution } = require('../src/services/business-register-metrics');
 let mongo, client, db, BaseModel, repository;
 before(async () => {
   mongo = await MongoMemoryServer.create({
@@ -36,6 +37,7 @@ async function returned({
   roundOff = false,
   original = amount * quantity,
   storedExtra = {},
+  registerMode,
 } = {}) {
   const license = new ObjectId(),
     branchId = new ObjectId(),
@@ -80,31 +82,47 @@ async function returned({
     items_return_total: 0,
     ...storedExtra,
   });
-  const result = await repository.returnSalesOrder({
-    sales_id: String(saleId),
-    items:
-      quantity > returnedQuantity
-        ? [
-            {
-              ...line,
-              item_quantity: quantity - returnedQuantity,
-              total_amount: amount * (quantity - returnedQuantity),
-            },
-          ]
-        : [],
-    items_return: [
-      { ...line, item_quantity: returnedQuantity, total_amount: amount * returnedQuantity },
-    ],
-    extra_discount: extra,
-    extra_discount_type: 'percent',
-    round_off_check: roundOff,
-    print: false,
-  });
-  assert.equal(result.status, true, JSON.stringify(result));
+  const registerId = new ObjectId();
+  if (registerMode)
+    await db.collection('cashregister').insertOne({
+      _id: registerId,
+      license,
+      branch_id: registerMode === 'foreign-branch' ? new ObjectId() : branchId,
+      current_user_id: registerMode === 'other-owner' ? new ObjectId() : BaseModel.loggedUser,
+      lock_device_id: 'refund-till',
+      register_status: registerMode === 'closed' ? 'Closed' : 'Opened',
+      register_opendate: new Date(Date.now() - 60000),
+    });
+  const result = await repository.returnSalesOrder(
+    {
+      ...(registerMode ? { return_register_id: String(registerId) } : {}),
+      sales_id: String(saleId),
+      items:
+        quantity > returnedQuantity
+          ? [
+              {
+                ...line,
+                item_quantity: quantity - returnedQuantity,
+                total_amount: amount * (quantity - returnedQuantity),
+              },
+            ]
+          : [],
+      items_return: [
+        { ...line, item_quantity: returnedQuantity, total_amount: amount * returnedQuantity },
+      ],
+      extra_discount: extra,
+      extra_discount_type: 'percent',
+      round_off_check: roundOff,
+      print: false,
+    },
+    { deviceId: registerMode === 'wrong-device' ? 'other-till' : 'refund-till' }
+  );
+  assert.equal(result.status, !registerMode || registerMode === 'valid', JSON.stringify(result));
   const stored = await db.collection('sales').findOne({ _id: saleId });
   return {
     result,
     stored,
+    registerId: String(registerId),
     branch: {
       id: String(branchId),
       license: String(license),
@@ -133,6 +151,33 @@ test('actual partial/full return writes reconcile with Business and preserve the
     assert.equal(itemEntries[1].refundsMinor, returnedQuantity * 10000);
     assert.equal(itemEntries[1].quantities[0].returnedMilli, returnedQuantity * 1000);
   }
+});
+
+test('the actual refund writer persists only verified register attribution and rejects foreign or stale sessions', async () => {
+  const f = await returned({ registerMode: 'valid' });
+  const refund = f.stored.items_return[0].returnArray;
+  assert.equal(refund.cashregister_id, f.registerId);
+  assert.equal(f.stored.return_refund_transactions[0].cashregister_id, f.registerId);
+  const at = refund.returnDate.getTime();
+  assert.deepEqual(
+    registerSaleContribution(f.stored, f.branch, {
+      branchId: f.branch.id,
+      sessionId: f.registerId,
+      openedAt: new Date(at - 60000).toISOString(),
+      closedAt: new Date(at + 60000).toISOString(),
+    }),
+    { billedSalesMinor: 0, refundsMinor: 10000, completedSales: 0 }
+  );
+  for (const registerMode of ['wrong-device', 'other-owner', 'foreign-branch', 'closed']) {
+    const denied = await returned({ registerMode });
+    assert.equal(denied.result.statusCode, 409);
+    assert.equal(denied.stored.items_return.length, 0);
+    assert.equal(denied.stored.return_refund_transactions, undefined);
+    assert.equal(denied.stored.return_refund_lock, undefined);
+    assert.equal(denied.stored.items_return_total, 0);
+  }
+  const legacy = await returned();
+  assert.equal(legacy.stored.items_return[0].returnArray.cashregister_id, undefined);
 });
 
 test('a later return retains the original snapshot and pre-existing ambiguous history is not fabricated', async () => {
