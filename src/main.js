@@ -4346,6 +4346,7 @@ async function awaitPreviousShutdown(previous) {
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 app.whenReady().then(async () => {
+  require('./print-temp-files').cleanup(app.getPath('temp'));
   console.log('='.repeat(55));
   /* Named the platform it is actually on. The banner said "Windows" in
      every log, including the ones a Linux and macOS shop send us when

@@ -9,7 +9,8 @@ const { computeLineTax } = require('./tax-engine');
 const id = (v) => String(v || '');
 const oid = (v) => new ObjectId(id(v));
 const hash = (v) => crypto.createHash('sha256').update(v).digest('hex');
-const { allowed, fail } = require('../utils/branch-access');
+const { fail } = require('../utils/branch-access');
+const { allowed } = require('../utils/mobile-pos-access');
 const minor = (n) => Math.round(Number(n || 0) * 100);
 function canonical(v) {
   if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
@@ -158,9 +159,9 @@ async function bootstrap(req) {
     quickTaxInclusive: c.config.quickTaxInclusive,
     permissions: {
       sell: true,
-      quickSale:
-        c.config.quickSale &&
-        require('../utils/pos-permission.util').canPos(req.user, 'quick_sale'),
+      quickSale: c.config.quickSale && allowed(req.user, 'pos', 'quick_sale'),
+      voidLine: allowed(req.user, 'pos', 'void_line'),
+      receiptPrint: allowed(req.user, 'pos', 'reprint_receipt'),
       customerWrite: allowed(req.user, 'customer'),
       itemWrite: false,
       priceOverride: false,
@@ -168,7 +169,13 @@ async function bootstrap(req) {
     },
     upiAccounts: c.config.upiAccounts,
     defaultUpiAccountId: c.config.defaultUpiAccountId || undefined,
-    capabilities: { saleSync: true, devicePairing: true, tillPrint: true, terminal: false },
+    capabilities: {
+      saleSync: true,
+      devicePairing: true,
+      tillPrint: true,
+      printStatus: true,
+      terminal: false,
+    },
   };
   await req.db.collection('mobile_grants').updateOne(
     { _id: key },
@@ -200,6 +207,7 @@ async function bootstrap(req) {
   return { shop, items };
 }
 function validateSale(sale, grant, c, grants = new Map()) {
+  if (grant.shop.permissions.sell !== true) fail('Selling is not permitted.', 403);
   if (
     !sale ||
     sale.training !== false ||
@@ -286,6 +294,7 @@ function validateSale(sale, grant, c, grants = new Map()) {
     if (!Number.isSafeInteger(p.received) || p.received < total || p.change !== p.received - total)
       fail('Cash payment does not match.');
   } else if (p?.method === 'upi') {
+    if (grant.shop.permissions.manualUpi !== true) fail('UPI confirmation is not permitted.', 403);
     const account = grant.shop.upiAccounts.find(
       (a) =>
         a.id === p.account?.id &&
@@ -330,6 +339,14 @@ async function ingest(req, dependencies = {}) {
     fail('This sale identity was already used for different data.', 409);
   if (intent?.state === 'complete') return intent.ack;
   if (!intent) {
+    if (
+      Array.isArray(sale.cart?.lines) &&
+      sale.cart.lines.some((line) => !line.itemId) &&
+      (!c.config.quickSale || !allowed(req.user, 'pos', 'quick_sale'))
+    )
+      fail('Quick sales are not permitted for this user.', 403);
+    if (sale.cart?.customer && !allowed(req.user, 'customer'))
+      fail('Customer creation is not permitted for this user.', 403);
     if (typeof sale.snapshotVersion !== 'string' || !/^[a-f0-9]{64}$/.test(sale.snapshotVersion))
       fail('Refresh the catalogue before selling.', 409);
     const grant = await req.db.collection('mobile_grants').findOne({

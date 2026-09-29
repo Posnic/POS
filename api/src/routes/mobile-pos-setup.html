@@ -33,9 +33,13 @@
           </p>
           <div id="addresses"></div>
           <p>
-            Sign in on the phone with the staff member’s account, or generate a one-use code for
-            your current account.
+            Sign in with the staff member’s account, or select that person below and generate a
+            one-use code. The phone receives the selected person's permissions.
           </p>
+          <label
+            >Staff account
+            <select id="pair-staff" aria-label="Staff account"></select
+          ></label>
           <button type="button" id="pair">Generate pairing code</button><output id="code"></output>
           <p id="code-help"></p>
         </section>

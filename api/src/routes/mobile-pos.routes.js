@@ -6,6 +6,7 @@ const { rateLimit } = require('express-rate-limit');
 const { protect, signLegacyToken, handsetLifetimeSeconds } = require('../middleware/auth');
 const handsets = require('../utils/handsets');
 const mobile = require('../services/mobile-pos');
+const { canProvisionOtherStaff } = require('../utils/mobile-pos-access');
 const router = express.Router();
 const wrap = (fn) => async (req, res) => {
   try {
@@ -134,6 +135,30 @@ router.get(
       .toArray();
     return {
       branch: c.branch.branch_name,
+      pairingStaff: canProvisionOtherStaff(req.user)
+        ? (
+            await req.db
+              .collection('users')
+              .find(
+                {
+                  license: c.license,
+                  activate: true,
+                  $or: [
+                    { branch_id: c.branchId },
+                    { branch_id: String(c.branchId) },
+                    { 'branch_access.branch_id': c.branchId },
+                    { 'branch_access.branch_id': String(c.branchId) },
+                  ],
+                },
+                { projection: { _id: 1, username: 1, name: 1, usertype: 1, role: 1, access: 1 } }
+              )
+              .limit(500)
+              .toArray()
+          )
+            .filter((user) => mobile.allowed(user, 'sales'))
+            .map((user) => ({ id: String(user._id), name: user.username || user.name || 'Staff' }))
+        : [{ id: String(c.userId), name: req.user.username || req.user.name || 'Staff' }],
+      currentStaffId: String(c.userId),
       ...c.config,
       addresses,
       attention,
@@ -204,6 +229,21 @@ router.post(
     if (!mobile.allowed(req.user, 'settings') || !mobile.allowed(req.user, 'sales'))
       mobile.fail('Manager access is required.', 403);
     const c = await mobile.context(req);
+    const targetId = req.body?.staffId || String(c.userId);
+    if (typeof targetId !== 'string' || !/^[a-f0-9]{24}$/i.test(targetId))
+      mobile.fail('Choose a valid staff account.');
+    if (targetId !== String(c.userId) && !canProvisionOtherStaff(req.user))
+      mobile.fail('Only an owner or administrator can pair another staff account.', 403);
+    const target = await req.db
+      .collection('users')
+      .findOne({ _id: new ObjectId(targetId), license: c.license, activate: true });
+    if (
+      !target ||
+      !mobile.allowed(target, 'sales') ||
+      (String(target.branch_id) !== String(c.branchId) &&
+        !target.branch_access?.some((b) => String(b.branch_id) === String(c.branchId)))
+    )
+      mobile.fail('This staff account cannot sell in this branch.', 403);
     const code = crypto.randomBytes(6).toString('hex').toUpperCase();
     const expires = new Date(Date.now() + 5 * 60000);
     await req.db
@@ -211,8 +251,8 @@ router.post(
       .createIndex({ expires: 1 }, { expireAfterSeconds: 0 });
     await req.db.collection('mobile_pair_codes').insertOne({
       _id: mobile.hash(code),
-      userId: c.userId,
-      authVersion: require('../utils/auth-version').version(req.user),
+      userId: target._id,
+      authVersion: require('../utils/auth-version').version(target),
       branchId: c.branchId,
       license: c.license,
       expires,
@@ -220,7 +260,8 @@ router.post(
     return {
       code: code.match(/.{4}/g).join('-'),
       expires,
-      staffName: req.user.username || req.user.name || '',
+      staffId: String(target._id),
+      staffName: target.username || target.name || '',
     };
   })
 );
@@ -245,6 +286,8 @@ router.post(
     const c = await mobile.context(req);
     if (!mobile.allowed(req.user, 'sales') || !req.handsetDevice)
       mobile.fail('This device cannot print.', 403);
+    if (!mobile.allowed(req.user, 'pos', 'reprint_receipt'))
+      mobile.fail('Receipt printing is not permitted for this user.', 403);
     const { id, saleId, document } = req.body || {};
     if (typeof id !== 'string' || id.length > 120 || !['receipt', 'test'].includes(document))
       mobile.fail('Invalid print request.');
@@ -256,7 +299,7 @@ router.post(
       );
       const intent = await req.db
         .collection('mobile_sales')
-        .findOne({ _id: key, state: 'complete' });
+        .findOne({ _id: key, state: 'complete', userId: c.userId });
       if (!intent) mobile.fail('Sync this sale before sending its receipt to the till.', 409);
       const sale = await req.db
         .collection('sales')
@@ -301,6 +344,39 @@ router.post(
     require('../helpers/print-pace').announceJob(c.branchId);
     require('../helpers/bill-notify').notifyBillRequested({ branchId: c.branchId, count: 1 });
     return { id: String(jobId), status: 'queued' };
+  })
+);
+router.get(
+  '/print-jobs/:saleId',
+  wrap(async (req) => {
+    const c = await mobile.context(req);
+    if (
+      !req.handsetDevice ||
+      !mobile.allowed(req.user, 'sales') ||
+      !mobile.allowed(req.user, 'pos', 'reprint_receipt')
+    )
+      mobile.fail('This device cannot inspect receipt jobs.', 403);
+    const saleId = req.params.saleId;
+    if (!/^[A-Za-z0-9_-]{6,80}$/.test(saleId)) mobile.fail('Invalid sale identity.');
+    const key = mobile.hash(
+      [String(c.license), String(c.branchId), req.handsetDevice, saleId].join(':')
+    );
+    const intent = await req.db.collection('mobile_sales').findOne({
+      _id: key,
+      state: 'complete',
+      userId: c.userId,
+      license: c.license,
+      branchId: c.branchId,
+    });
+    if (!intent) mobile.fail('Receipt not available to this user.', 404);
+    const jobId = new ObjectId(
+      mobile.hash(String(c.branchId) + ':' + req.handsetDevice + ':receipt:' + saleId).slice(0, 24)
+    );
+    const job = await require('../models/print-job.model')
+      .findOne({ _id: jobId, branch_id: c.branchId })
+      .lean();
+    const states = ['queued', 'printing', 'needs_attention', 'done', 'failed'];
+    return { saleId, state: job && states.includes(job.status) ? job.status : 'not_found' };
   })
 );
 module.exports = router;

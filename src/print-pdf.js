@@ -25,6 +25,7 @@
  */
 
 const { execFile } = require('child_process');
+const printTempFiles = require('./print-temp-files');
 
 /*
  * Print `file` on `printer`, `copies` times.
@@ -43,8 +44,12 @@ async function printPdfFile(file, { printer, copies = 1 } = {}) {
     const { print: printPdf } = require('pdf-to-printer');
     const opts = { silent: true, copies: count, scale: 'fit' };
     if (printer) opts.printer = printer;
-    await printPdf(file, opts);
-    return;
+    const spooler = require('./windows-spooler');
+    const documentName = require('path').basename(file);
+    return spooler.submit({ printerName: printer, documentName, submit: async () => {
+      await printPdf(file, opts);
+      return { success: true };
+    } });
   }
 
   const args = [];
@@ -120,7 +125,8 @@ async function printPdfDocument(bytes, { parent, printerName = '', paperSize = '
     return { success: false, error: err.message };
   } finally {
     if (file) {
-      try { fs.unlinkSync(file); } catch (_) { /* a driver may still hold it */ }
+      if (process.platform === 'win32') printTempFiles.retain(file);
+      else try { fs.unlinkSync(file); } catch (_) { /* a driver may still hold it */ }
     }
   }
 }

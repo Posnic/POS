@@ -102,6 +102,18 @@ async function load() {
     ? 'Mobile POS is enabled for this branch.'
     : 'Mobile POS is off. Enable it in Settings → Features.';
   $('pair').disabled = !state.enabled;
+  $('pair-staff').replaceChildren();
+  (state.pairingStaff || []).forEach((staff) => {
+    const option = document.createElement('option');
+    option.value = staff.id;
+    option.textContent = staff.name;
+    option.selected = staff.id === state.currentStaffId;
+    $('pair-staff').append(option);
+  });
+  $('pair-staff').onchange = () => {
+    $('code').textContent = '';
+    $('code-help').textContent = '';
+  };
   $('hours').value = state.offlineHours;
   $('quick').checked = state.quickSale;
   $('tax').value = state.quickTaxBps / 100;
@@ -173,8 +185,12 @@ $('settings').onsubmit = async (e) => {
   }
 };
 $('pair').onclick = async () => {
+  $('pair').disabled = true;
+  $('pair-staff').disabled = true;
+  $('code').textContent = '';
+  $('code-help').textContent = '';
   try {
-    const result = await call('pair-codes', {});
+    const result = await call('pair-codes', { staffId: $('pair-staff').value });
     $('code').textContent = result.code;
     $('code-help').textContent =
       'Signs in as ' +
@@ -184,6 +200,9 @@ $('pair').onclick = async () => {
       '. Use once on the phone.';
   } catch (e) {
     message(e);
+  } finally {
+    $('pair').disabled = !state.enabled;
+    $('pair-staff').disabled = false;
   }
 };
 load().catch(message);

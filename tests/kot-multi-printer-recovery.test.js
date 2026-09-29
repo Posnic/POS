@@ -3,8 +3,10 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path'),Module=require('node:module');
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'kot-delivery-'));
 const load=Module._load;
-Module._load=function(name,...args){if(name==='electron')return {app:{getPath:()=>root},BrowserWindow:class {
- constructor(){this.webContents={on(){},setWindowOpenHandler(){}};} async loadURL(){} close(){} on(){}
+Module._load=function(name,...args){
+ if(name==='./windows-spooler'){const actual=load.call(this,path.resolve('src/windows-spooler.js'));return {...actual,...actual.createSpooler({platform:'test'})};}
+ if(name==='electron')return {app:{getPath:()=>root},BrowserWindow:class {
+ constructor(){this.webContents={on(){},setWindowOpenHandler(){},async executeJavaScript(){}};} async loadURL(){} close(){} on(){}
 }};return load.call(this,name,...args);};
 const KOT=require('../src/kot-manager'),ledger=require('../src/print-ledger'),{kotJobKey}=require('../src/kot-job-key');Module._load=load;
 function rig(t,{windowPath=false,legacy=false}={}){
@@ -38,15 +40,15 @@ test('partial failure retries only missing copies after restart and retains orig
  assert.equal(r.calls[3].label,r.calls[1].label,'retry changed the KOT number or copy number');
  await restarted._pollOnce();assert.equal(r.calls.length,4,'lost acknowledgement must not duplicate');
 });
-test('a driver exception does not stop later printers and only the failed copy retries',async t=>{
+test('an uncertain driver exception does not stop later printers or resubmit the uncertain copy',async t=>{
  const r=rig(t);r.set((_name,n)=>{if(n===1)throw Error('driver disconnected');return {success:true};});
  await r.manager._pollOnce();assert.equal(r.calls.length,3);assert.equal(r.marks.length,0);
- r.tick();await r.manager._pollOnce();assert.equal(r.calls.length,4);assert.equal(r.marks.length,1);assert.equal(r.announced,1);
+ r.tick();await r.manager._pollOnce();assert.equal(r.calls.length,3);assert.equal(r.marks.length,0);assert.equal(r.announced,1);
 });
 test('window path keeps all copies and paper sizes, catches errors, and never uses a default printer',async t=>{
  const r=rig(t,{windowPath:true});r.set((_name,n)=>{if(n===1)throw Error('driver disconnected');return {success:true};});
  await r.manager._pollOnce();assert.deepEqual(r.calls.map(x=>[x.name,x.size,x.strict]),[['Kitchen','80mm',true],['Kitchen','80mm',true],['Pass','58mm',true]]);assert.equal(r.marks.length,0);
- r.tick();await r.manager._pollOnce();assert.equal(r.calls.length,4);assert.equal(r.marks.length,1);
+ r.tick();await r.manager._pollOnce();assert.equal(r.calls.length,3);assert.equal(r.marks.length,0);
 });
 test('a long outage stays queued after more than three attempts and eventually recovers',async t=>{
  const r=rig(t);r.set(name=>({success:name==='Pass',error:'offline'}));

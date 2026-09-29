@@ -1144,7 +1144,7 @@ for (const extension of ['html', 'js', 'css']) {
   const suffix = extension === 'html' ? '' : '.' + extension;
   app.get(['/api/mobile-pos-setup' + suffix, '/mobile-pos-setup' + suffix], (req, res) => {
     res.set('Cache-Control', 'no-store');
-    res.sendFile(require('path').join(__dirname, 'src/routes/mobile-pos-setup.' + extension));
+    res.sendFile('mobile-pos-setup.' + extension, { root: require('path').join(__dirname, 'src/routes') });
   });
 }
 

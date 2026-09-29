@@ -228,6 +228,15 @@ test('paid cash sale lands in normal desktop sales and concurrent retry deducts 
   });
   assert.equal(duplicate.data.id, printed.data.id);
   assert.equal(await db.collection('printjobs').countDocuments(), 1);
+  assert.equal((await call('/mobile/v1/print-jobs/' + s.id)).data.state, 'queued');
+  for (const status of ['printing', 'needs_attention', 'done', 'failed']) {
+    await db.collection('printjobs').updateOne({ _id: new ObjectId(printed.data.id) }, { $set: { status } });
+    const observed = await call('/mobile/v1/print-jobs/' + s.id);
+    assert.equal(observed.status, 200);
+    assert.deepEqual(observed.data, { saleId: s.id, state: status });
+  }
+  assert.equal(await db.collection('printjobs').countDocuments(), 1);
+
 });
 test('server interruption after stock effects resumes without another sale or decrement', async () => {
   const s = sale();
@@ -324,6 +333,21 @@ test('cashier permissions and device revocation are enforced by the server', asy
   assert.equal(result.status, 200, JSON.stringify(result.data));
   assert.equal(result.data.shop.permissions.quickSale, false);
   assert.equal(result.data.shop.permissions.customerWrite, false);
+  assert.equal(result.data.shop.permissions.receiptPrint, false);
+  assert.equal(result.data.shop.permissions.voidLine, false);
+  assert.equal(
+    (
+      await call(
+        '/mobile/v1/print-jobs',
+        {
+          id: 'denied-print-test',
+          document: 'test',
+        },
+        login.data.token
+      )
+    ).status,
+    403
+  );
   assert.equal(
     (await call('/mobile/v1/settings', { enabled: true }, login.data.token)).status,
     403
@@ -583,4 +607,87 @@ test('Features API persists Mobile POS independently and branch read returns the
   const enabled = await call('/setting/updateCommonSettings', { modules_only: true, module_mobile_pos_enable: true }, token, 'PUT');
   assert.equal(enabled.status, 200, JSON.stringify(enabled.data));
   assert.equal((await call('/mobile/v1/bootstrap')).status, 200);
+});
+
+test('manager denials and current user overrides protect mobile bootstrap and ingestion', async () => {
+  const restricted = {
+    ...user,
+    usertype: 'manager',
+    access: {
+      sales: { write: true },
+      customer: { write: false },
+      pos: { quick_sale: false, void_line: false, reprint_receipt: false },
+    },
+  };
+  const staffReq = { ...req, user: restricted };
+  const result = await mobile.bootstrap(staffReq);
+  assert.equal(result.shop.permissions.quickSale, false);
+  assert.equal(result.shop.permissions.customerWrite, false);
+  assert.equal(result.shop.permissions.voidLine, false);
+  assert.equal(result.shop.permissions.receiptPrint, false);
+  // A previously issued owner snapshot must not bypass current user denials.
+  const quick = sale();
+  delete quick.cart.lines[0].itemId;
+  const customers = sale();
+  customers.cart.customer = { id: 'test-customer', name: 'Test', phone: '' };
+  const count = await db.collection('mobile_sales').countDocuments();
+  await assert.rejects(
+    () => mobile.ingest({ ...staffReq, body: { idempotencyKey: quick.id, sale: quick } }),
+    /Quick sales are not permitted/
+  );
+  await assert.rejects(
+    () => mobile.ingest({ ...staffReq, body: { idempotencyKey: customers.id, sale: customers } }),
+    /Customer creation is not permitted/
+  );
+  assert.equal(await db.collection('mobile_sales').countDocuments(), count);
+  await assert.rejects(
+    () =>
+      mobile.bootstrap({
+        ...staffReq,
+        user: { ...restricted, access: { sales: { write: false } } },
+      }),
+    /cannot sell/
+  );
+});
+
+test('a shared device cannot print another staff member receipt', async () => {
+  const saleId = crypto.randomUUID();
+  await db.collection('mobile_sales').insertOne({
+    _id: mobile.hash(
+      [String(branch.license), String(branch._id), device.device_id, saleId].join(':')
+    ),
+    state: 'complete',
+    userId: new ObjectId(),
+    serverId: new ObjectId(),
+  });
+  const result = await call('/mobile/v1/print-jobs', {
+    id: 'receipt:' + saleId,
+    saleId,
+    document: 'receipt',
+  });
+  assert.equal(result.status, 409);
+  assert.equal((await call('/mobile/v1/print-jobs/' + saleId)).status, 404);
+});
+
+
+test('owner pairs the selected staff identity without transferring owner privileges', async () => {
+  const cashier = { ...user, _id: new ObjectId(), usertype: 'custom', username: 'pilot-cashier', email: 'pilot@example.test', access: { sales: { write: true }, pos: { quick_sale: false, reprint_receipt: false } } };
+  await db.collection('users').insertOne(cashier);
+  const settings = await call('/mobile/v1/settings');
+  assert.ok(settings.data.pairingStaff.some(s => s.id === String(cashier._id)));
+  const issued = await call('/mobile/v1/pair-codes', { staffId: String(cashier._id) });
+  assert.equal(issued.status, 200, JSON.stringify(issued.data));
+  assert.equal(issued.data.staffId, String(cashier._id));
+  const paired = await call('/mobile/v1/pair', { code: issued.data.code, device: { device_id: 'staff-pair-pilot' } }, null);
+  assert.equal(paired.status, 200);
+  const bootstrap = await call('/mobile/v1/bootstrap', undefined, paired.data.token);
+  assert.equal(bootstrap.data.shop.staffId, String(cashier._id));
+  assert.equal(bootstrap.data.shop.permissions.quickSale, false);
+  assert.equal(bootstrap.data.shop.permissions.receiptPrint, false);
+  assert.equal((await call('/mobile/v1/pair-codes', { staffId: String(user._id) }, paired.data.token)).status, 403);
+  const foreign = { ...cashier, _id: new ObjectId(), license: new ObjectId(), username: 'foreign-pilot', email: 'foreign-pilot@example.test' };
+  await db.collection('users').insertOne(foreign);
+  assert.equal((await call('/mobile/v1/pair-codes', { staffId: String(foreign._id) })).status, 403);
+  await db.collection('users').updateOne({ _id: cashier._id }, { $set: { branch_access: [] } });
+  assert.equal((await call('/mobile/v1/pair-codes', { staffId: String(cashier._id) })).status, 403);
 });

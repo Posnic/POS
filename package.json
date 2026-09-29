@@ -151,6 +151,8 @@
       "src/print-window-guard.js",
       "src/receipt-page-layout.js",
       "src/print-pdf.js",
+      "src/windows-spooler.js",
+      "src/print-temp-files.js",
       "src/escpos-receipt.js",
       "src/escpos-unicode.js",
       "src/receipt-fonts.js",

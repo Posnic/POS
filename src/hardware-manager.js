@@ -7,6 +7,8 @@ const { execSync } = require('child_process');
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
 const { fitDocument, prepareDocument } = require('./receipt-page-layout');
+const spooler = require('./windows-spooler');
+const printTempFiles = require('./print-temp-files');
 
 /* How long the printer list may be remembered. Long enough that a receipt
    never pays the spooler for it, short enough that a printer plugged in
@@ -456,12 +458,20 @@ class HardwareManager {
     // and layout measurement below provide readiness without waiting for one.
   }
 
-  _sendPrintJob(printWindow, printOpts) {
-    return new Promise((resolve) => {
+  async _sendPrintJob(printWindow, printOpts) {
+    const submit = () => new Promise((resolve) => {
+      const timer = setTimeout(() => resolve({ success: false, error: 'Print callback timed out' }), 5000);
       printWindow.webContents.print(printOpts, (success, errorType) => {
+        clearTimeout(timer);
         resolve({ success, error: errorType || '' });
       });
     });
+    if (process.platform !== 'win32') return submit();
+    const printerName = printOpts.deviceName || (await this.getDefaultPrinter())?.name;
+    printOpts = { ...printOpts, deviceName: printerName };
+    const documentName = 'Posnic-' + require('crypto').randomUUID();
+    await printWindow.webContents.executeJavaScript(`document.title = ${JSON.stringify(documentName)}`);
+    return spooler.submit({ printerName, documentName, submit });
   }
 
   async _printViaPdfFallback(printWindow, deviceName, options = {}) {
@@ -477,38 +487,18 @@ class HardwareManager {
       });
       fs.writeFileSync(tmpPdf, pdfBuffer);
 
-      await this._printPdfFile(tmpPdf, {
+      const result = await this._printPdfFile(tmpPdf, {
         printer: deviceName,
         copies: parseInt(options.copies, 10) || 1,
       });
-      console.log('Print job sent successfully via PDF fallback');
-      return { success: true };
+      if (!result || result.success) console.log('PDF print submission confirmed');
+      return result || { success: true };
     } catch (error) {
       console.error('PDF print fallback failed:', error.message);
       return { success: false, error: error.message || 'PDF print fallback failed' };
     } finally {
-      try {
-        if (fs.existsSync(tmpPdf)) fs.unlinkSync(tmpPdf);
-      } catch (_) {}
+      printTempFiles.retain(tmpPdf);
     }
-  }
-
-  async _printWithSystemDefaultFallback(printWindow, options = {}) {
-    console.warn('Retrying print with Windows default printer');
-
-    let result = await this._sendPrintJob(printWindow, {
-      silent: options.silent !== false,
-      printBackground: true,
-      margins: { marginType: 'none' },
-      copies: Math.max(1, parseInt(options.copies, 10) || 1)
-    });
-
-    if (!result.success) {
-      console.warn('Windows default Electron print failed, retrying default PDF fallback:', result.error || 'unknown');
-      result = await this._printViaPdfFallback(printWindow, '', options);
-    }
-
-    return result;
   }
 
   /*
@@ -657,7 +647,7 @@ class HardwareManager {
 
       let result = await this._sendPrintJob(printWindow, printOpts);
 
-      if (!result.success) {
+      if (!result.success && result.retryable !== false) {
         console.warn('Print failed with receipt page size, retrying with printer defaults:', result.error || 'unknown');
         const fallbackOpts = {
           silent: printOpts.silent,
@@ -669,14 +659,9 @@ class HardwareManager {
         result = await this._sendPrintJob(printWindow, fallbackOpts);
       }
 
-      if (!result.success) {
+      if (!result.success && result.retryable !== false) {
         console.warn('Electron print failed, retrying through PDF fallback:', result.error || 'unknown');
         result = await this._printViaPdfFallback(printWindow, deviceName, options);
-      }
-
-      if (!result.success && deviceName && options.strictPrinter !== true) {
-        console.warn(`Named printer "${deviceName}" failed, falling back to Windows default printer`);
-        result = await this._printWithSystemDefaultFallback(printWindow, options);
       }
 
 
