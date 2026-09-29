@@ -374,3 +374,175 @@ test('stock reads reject corrupted snapshots and publisher changes rather than r
     code: 'summary_unavailable',
   });
 });
+
+const { prepareDesktopStockObservation } = require('../src/services/business-stock-summary');
+const { journalStockObservation } = require('../src/services/business-stock-alert-journal');
+const { createStockAlertHandoff } = require('../src/services/business-stock-alert-handoff');
+const {
+  createCommunityStockAlertTransport,
+} = require('../src/services/business-stock-alert-community-transport');
+async function communityAlertFixture() {
+  process.env.POSNIC_BUSINESS_STOCK_ALERTS = '1';
+  const f = await fixture();
+  await createDesktopReportingWorker(f.db).tick();
+  await journalStockObservation(
+    f.db,
+    await prepareDesktopStockObservation(f.db, f.branch),
+    f.branch
+  );
+  const pending = async () =>
+    (
+      await f.db
+        .collection('business_stock_alert_local')
+        .find({ itemId: { $exists: true } })
+        .toArray()
+    ).flatMap((row) => row.pendingEvents);
+  const handoff = () =>
+    f.db
+      .collection('business_stock_alert_local')
+      .findOne({ _id: 'handoff:' + f.branch.license + ':' + f.branch.id });
+  return { ...f, pending, handoff };
+}
+test('Community stock alerts use the actual local publisher and produce durable private receipts without Cloud credentials', async () => {
+  const f = await communityAlertFixture();
+  const sender = createStockAlertHandoff(f.db, { send: createCommunityStockAlertTransport(f.db) });
+  assert.equal((await sender.tick(f.branch)).accepted, 1);
+  assert.equal((await f.pending()).length, 0);
+  const batches = await f.db.collection('business_stock_alert_batches').find({}).toArray();
+  assert.equal(batches.length, 1);
+  const installation = await f.db
+    .collection('business_reporting_local')
+    .findOne({ _id: 'community-installation' });
+  assert.equal(batches[0].publisherDeviceId, installation.deviceId);
+  assert.equal(batches[0].batch.events[0].fact.availableMilli, 2000);
+  assert.equal((await f.handoff()).transport, 'community');
+  assert.equal(await f.db.collection('business_inbox').countDocuments({}), 0);
+});
+test('Community stock alert reservation recovers a lost database acknowledgement without losing local episodes', async () => {
+  const f = await communityAlertFixture();
+  let at = Date.now(),
+    interrupted = false;
+  const wrappedDb = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_alert_batches' && property === 'updateOne')
+            return async (...args) => {
+              const result = await target.updateOne(...args);
+              if (!interrupted) {
+                interrupted = true;
+                throw new Error('community_ack_lost');
+              }
+              return result;
+            };
+          const value = target[property];
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+    },
+  };
+  const sender = createStockAlertHandoff(wrappedDb, {
+    now: () => at,
+    send: createCommunityStockAlertTransport(wrappedDb, { now: () => at }),
+  });
+  await assert.rejects(sender.tick(f.branch), /community_ack_lost/);
+  assert.equal((await f.pending()).length, 1);
+  const initialBatch = (await f.handoff()).batch;
+  at += 60001;
+  await createStockAlertHandoff(f.db, {
+    now: () => at,
+    send: createCommunityStockAlertTransport(f.db, { now: () => at }),
+  }).tick(f.branch);
+  assert.equal((await f.pending()).length, 0);
+  const batches = await f.db.collection('business_stock_alert_batches').find({}).toArray();
+  assert.equal(batches.length, 1);
+  assert.deepEqual(batches[0].batch, initialBatch);
+});
+test('Community retries keep their original assignment even if the local job is replaced', async () => {
+  const f = await communityAlertFixture();
+  let at = Date.now();
+  const wrappedDb = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_alert_batches' && property === 'updateOne')
+            return async () => {
+              throw new Error('before_queue_write');
+            };
+          const value = target[property];
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+    },
+  };
+  await assert.rejects(
+    createStockAlertHandoff(wrappedDb, {
+      now: () => at,
+      send: createCommunityStockAlertTransport(wrappedDb, { now: () => at }),
+    }).tick(f.branch),
+    /before_queue_write/
+  );
+  const original = (await f.handoff()).transportPublication;
+  await f.db
+    .collection('business_reporting_publishers')
+    .updateOne({ _id: f.branch.id }, { $set: { assignmentId: 'n'.repeat(43), epoch: 2 } });
+  await f.db
+    .collection('business_reporting_local')
+    .updateOne({ _id: f.key }, { $set: { assignmentId: 'n'.repeat(43), epoch: 2 } });
+  at += 60001;
+  await assert.rejects(
+    createStockAlertHandoff(f.db, {
+      now: () => at,
+      send: createCommunityStockAlertTransport(f.db, { now: () => at }),
+    }).tick(f.branch),
+    { code: 'publisher_not_assigned' }
+  );
+  assert.deepEqual((await f.handoff()).transportPublication, original);
+  assert.equal((await f.pending()).length, 1);
+  assert.equal(await f.db.collection('business_stock_alert_batches').countDocuments({}), 0);
+});
+test('Community alert transport refuses Cloud mode and disabled activation before database access', async () => {
+  const transport = createCommunityStockAlertTransport({
+    collection() {
+      throw new Error('unexpected_io');
+    },
+  });
+  process.env.POSNIC_BUSINESS_LOCAL_REPORTING = '0';
+  try {
+    await assert.rejects(transport({}), { code: 'desktop_required' });
+  } finally {
+    process.env.POSNIC_BUSINESS_LOCAL_REPORTING = '1';
+  }
+  process.env.POSNIC_BUSINESS_STOCK_ALERTS = '0';
+  try {
+    await assert.rejects(transport({}), { code: 'stock_alerts_disabled' });
+  } finally {
+    process.env.POSNIC_BUSINESS_STOCK_ALERTS = '1';
+  }
+});
+
+test('Community alert transport cannot accept an unbacked batch or switch an existing Cloud handoff', async () => {
+  const f = await communityAlertFixture();
+  // Queue a real handoff without publishing it, then attempt to cross its mode.
+  await assert.rejects(
+    createStockAlertHandoff(f.db, {
+      send: async () => {
+        throw new Error('hold_batch');
+      },
+    }).tick(f.branch),
+    /hold_batch/
+  );
+  const row = await f.handoff(),
+    transport = createCommunityStockAlertTransport(f.db);
+  await f.db
+    .collection('business_stock_alert_local')
+    .updateOne({ _id: row._id }, { $set: { transport: 'cloud' } });
+  await assert.rejects(transport(row.batch), { code: 'stock_alert_transport_changed' });
+  const foreign = structuredClone(row.batch);
+  foreign.batchId = require('node:crypto').randomUUID();
+  await assert.rejects(transport(foreign), { code: 'stock_alert_handoff_changed' });
+  assert.equal((await f.pending()).length, 1);
+  assert.equal(await f.db.collection('business_stock_alert_batches').countDocuments({}), 0);
+});
