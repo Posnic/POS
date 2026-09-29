@@ -416,3 +416,38 @@ snapshot delivery. Five stock-contract unit tests, ESLint, Prettier and attribut
 checks passed. The broad parallel run encountered a MongoDB startup fassert;
 the complete integration set passed with file concurrency set to one. Generated
 API documentation was refreshed. No CI runs or deployments were triggered.
+
+## Current-stock push eligibility
+
+`stockPushScope` now checks the persisted, committed Inbox event under live stock
+ACL, branch membership and opt-in activation. Read entries and events at least one
+hour old are suppressed. Quiet hours are checked both before and after validation.
+The event's own `lastNotifiedAt` does not defer it behind its own cadence interval;
+that interval was already enforced when the Inbox event was committed.
+
+Each call examines one current snapshot page (at most 100 facts), using the
+recipient journal to identify members of the original group. It checks both
+committed cleanup-in-progress membership and acknowledged membership, and excludes
+a later pending low episode. This is not limited to the twenty visible item details.
+If no qualifying member exists on a page, an event/activation/preference-revision/
+snapshot-bound cursor continues to the next page. A current verified-low member
+provides eligibility evidence. Healthy or missing/unknown facts never do.
+
+Publisher identity, snapshot freshness and scope are rechecked after membership
+lookup. The event must still be unread and committed, and the candidate's revision
+must still match. Changed settings, group membership or publishers cannot authorize
+a stale result. A scope/activation/item index bounds membership lookup; no stock
+transaction or sale scan is performed. The generic push payload must not include
+these private item facts or stock quantities.
+
+Validation: all 57 snapshot and six preference integration tests pass. Eight new
+cases cover stock-only scope/own cadence, a qualifying 103rd item beyond the sample,
+healthy/unknown suppression, bound cursors and stale source, read/expired/revoked
+entries, later low episodes, concurrent publisher/ACL/settings/membership changes,
+and crossing a quiet-hour boundary. ESLint, formatting and attribution pass.
+
+This is a validator, not an active push consumer. Durable continuation/retry wiring,
+provider handoff revalidation, retention cleanup and production scheduling remain
+unfinished. `pushPending` remains false on stock events, and no provider or runtime
+feature flag is activated. Validation evidence must never be reused as permanent
+permission to send after a delay.

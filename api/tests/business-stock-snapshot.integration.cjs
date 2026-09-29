@@ -1603,3 +1603,223 @@ test('read acknowledgement rejects financial and unknown kinds even when the cal
     await assert.rejects(readStockEvent(f, f.eventId), { code: 'access_denied' });
   }
 });
+
+const stockPushCheck = (f, options = {}, database = f.db) =>
+  require('../src/services/business-stock-push-scope').stockPushScope(
+    database,
+    f.target,
+    f.eventId,
+    { now: f.now, ...options }
+  );
+
+test('stock push evidence checks current group members independently of financial access and own cadence', async () => {
+  const f = await inboxFixture();
+  assert.equal(f.context.capabilities.includes('overview.read'), false);
+  const result = await stockPushCheck(f);
+  assert.equal(result.status, 'eligible');
+  assert.equal(result.itemId, String(f.rows[0]._id));
+  assert.equal(result.preference.time, '23:00');
+  assert.equal((await materializeStock(f)).status, 'deferred');
+  assert.equal((await f.db.collection('business_inbox').findOne({})).pushPending, false);
+});
+
+test('stock push scans beyond the public sample and resumes later current-stock pages', async () => {
+  const f = await inboxFixture();
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateMany(
+      { _id: { $in: f.rows.slice(0, 102).map((row) => row._id) } },
+      { $set: { available_quantity: 9 } }
+    );
+  for (const page of await f.pages()) await f.send(page);
+  const first = await stockPushCheck(f);
+  assert.equal(first.status, 'pending');
+  assert.equal(first.cursor.pageIndex, 1);
+  const second = await stockPushCheck(f, { cursor: first.cursor });
+  assert.equal(second.status, 'eligible');
+  assert.equal(second.itemId, String(f.rows[102]._id));
+});
+
+test('healthy and unknown stock suppress delivery without erasing historical Inbox content', async () => {
+  for (const update of [
+    { $set: { available_quantity: 9 } },
+    { $unset: { available_quantity: '' } },
+  ]) {
+    const f = await inboxFixture();
+    f.advance();
+    await f.db.collection('items').updateMany({}, update);
+    for (const page of await f.pages()) await f.send(page);
+    let result = await stockPushCheck(f);
+    if (result.status === 'pending') result = await stockPushCheck(f, { cursor: result.cursor });
+    assert.equal(result.status, 'suppressed');
+    assert.equal((await stockInbox(f)).entries.length, 1);
+  }
+});
+
+test('stock push cursor cannot cross snapshots, events or settings and stale source stays unavailable', async () => {
+  const f = await inboxFixture();
+  f.advance();
+  await f.db
+    .collection('items')
+    .updateMany(
+      { _id: { $in: f.rows.slice(0, 100).map((row) => row._id) } },
+      { $set: { available_quantity: 9 } }
+    );
+  for (const page of await f.pages()) await f.send(page);
+  const first = await stockPushCheck(f);
+  assert.equal(first.status, 'pending');
+  for (const patch of [
+    { eventId: String(new ObjectId()) },
+    { revision: 999 },
+    { activationId: 'changed' },
+    { pageIndex: -1 },
+  ])
+    assert.equal(
+      (await stockPushCheck(f, { cursor: { ...first.cursor, ...patch } })).status,
+      'changed'
+    );
+  f.advance();
+  for (const page of await f.pages()) await f.send(page);
+  assert.equal((await stockPushCheck(f, { cursor: first.cursor })).status, 'unavailable');
+  f.advance(FRESHNESS_MS);
+  assert.equal((await stockPushCheck(f)).status, 'unavailable');
+});
+
+test('read, expired, disabled, uncommitted and revoked stock events cannot authorize a push', async () => {
+  for (const mode of ['read', 'expired', 'disabled', 'uncommitted', 'revoked']) {
+    const f = await inboxFixture();
+    if (mode === 'read') await readStockEvent(f, f.eventId);
+    if (mode === 'expired') f.advance(3600000);
+    if (mode === 'disabled')
+      await f.db
+        .collection('business_stock_notification_preferences')
+        .updateOne({}, { $set: { enabled: false } });
+    if (mode === 'uncommitted')
+      await f.db
+        .collection('business_inbox')
+        .updateOne({}, { $set: { materializationPending: true } });
+    if (mode === 'revoked')
+      await f.db
+        .collection('users')
+        .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
+    assert.notEqual((await stockPushCheck(f)).status, 'eligible', mode);
+  }
+});
+
+test('a subsequent low episode cannot be mistaken for its already delivered group', async () => {
+  const f = await inboxFixture();
+  f.advance();
+  await f.db.collection('items').updateMany({}, { $set: { available_quantity: 9 } });
+  for (const page of await f.pages()) await f.send(page);
+  let scan = await journalRecipient(f);
+  while (scan.next) scan = await journalRecipient(f, scan.next);
+  f.advance();
+  await f.db.collection('items').updateMany({}, { $set: { available_quantity: 1 } });
+  for (const page of await f.pages()) await f.send(page);
+  scan = await journalRecipient(f);
+  while (scan.next) scan = await journalRecipient(f, scan.next);
+  let result = await stockPushCheck(f);
+  while (result.status === 'pending') result = await stockPushCheck(f, { cursor: result.cursor });
+  assert.equal(result.status, 'suppressed');
+  assert.ok((await recipientRows(f)).every((row) => row.pending.episode === 2));
+});
+
+test('stock push rejects publisher, ACL, settings and membership changes during membership lookup', async () => {
+  for (const mode of ['publisher', 'acl', 'settings', 'membership']) {
+    const f = await inboxFixture();
+    const database = {
+      collection(name) {
+        const collection = f.db.collection(name);
+        return new Proxy(collection, {
+          get(target, property) {
+            if (name === 'business_stock_recipient_state' && property === 'find')
+              return (...args) => {
+                const cursor = target.find(...args),
+                  original = cursor.toArray.bind(cursor);
+                cursor.toArray = async () => {
+                  const rows = await original();
+                  if (mode === 'publisher')
+                    await f.db
+                      .collection('business_reporting_publishers')
+                      .updateOne({}, { $inc: { epoch: 1 } });
+                  else if (mode === 'settings')
+                    await f.db
+                      .collection('business_stock_notification_preferences')
+                      .updateOne({}, { $inc: { revision: 1 } });
+                  else if (mode === 'membership')
+                    await f.db
+                      .collection('business_stock_recipient_state')
+                      .updateMany({}, { $inc: { revision: 1 } });
+                  else
+                    await f.db
+                      .collection('users')
+                      .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
+                  return rows;
+                };
+                return cursor;
+              };
+            return typeof target[property] === 'function'
+              ? target[property].bind(target)
+              : target[property];
+          },
+        });
+      },
+    };
+    assert.notEqual((await stockPushCheck(f, {}, database)).status, 'eligible', mode);
+  }
+});
+
+test('quiet hours are rechecked if their start is crossed during stock validation', async () => {
+  const f = await inboxFixture();
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(f.now()));
+  const minutes =
+    Number(parts.find((part) => part.type === 'hour').value) * 60 +
+    Number(parts.find((part) => part.type === 'minute').value);
+  const hhmm = (value) =>
+    String(Math.floor((value % 1440) / 60)).padStart(2, '0') +
+    ':' +
+    String(value % 60).padStart(2, '0');
+  await f.db
+    .collection('business_stock_notification_preferences')
+    .updateOne(
+      {},
+      { $set: { quiet: { enabled: true, start: hhmm(minutes + 1), end: hhmm(minutes + 2) } } }
+    );
+  let advanced = false;
+  const database = {
+    collection(name) {
+      const collection = f.db.collection(name);
+      return new Proxy(collection, {
+        get(target, property) {
+          if (name === 'business_stock_recipient_state' && property === 'find')
+            return (...args) => {
+              const cursor = target.find(...args),
+                original = cursor.toArray.bind(cursor);
+              cursor.toArray = async () => {
+                const rows = await original();
+                if (!advanced) {
+                  f.advance(60000);
+                  advanced = true;
+                }
+                return rows;
+              };
+              return cursor;
+            };
+          return typeof target[property] === 'function'
+            ? target[property].bind(target)
+            : target[property];
+        },
+      });
+    },
+  };
+  const result = await stockPushCheck(f, {}, database);
+  assert.equal(result.status, 'deferred');
+  assert.ok(result.retryAt.getTime() > f.now());
+  assert.equal((await stockPushCheck(f)).status, 'deferred');
+});
