@@ -204,25 +204,23 @@ test('a new claim rechecks cashier/approver access and never reissues an executi
     saleId: String(saleId),
   };
   await assert.rejects(f.bridge.acknowledge(f.device, ack), is('sale_receipt_unconfirmed'));
-  await f.db
-    .collection('sales')
-    .insertOne({
-      _id: saleId,
-      license: f.license,
-      branch_id: f.branch._id,
-      billing_transaction_id: row.operationId,
-      business_decision_receipt: {
-        version: 1,
-        ...winner.proof,
-        operationId: row.operationId,
-        deviceId: f.device.deviceId,
-        requesterId: f.body.requesterId,
-        currency: 'INR',
-        currencyDigits: 2,
-        payableMinor: 8000,
-        discountMinor: 2000,
-      },
-    });
+  await f.db.collection('sales').insertOne({
+    _id: saleId,
+    license: f.license,
+    branch_id: f.branch._id,
+    billing_transaction_id: row.operationId,
+    business_decision_receipt: {
+      version: 1,
+      ...winner.proof,
+      operationId: row.operationId,
+      deviceId: f.device.deviceId,
+      requesterId: f.body.requesterId,
+      currency: 'INR',
+      currencyDigits: 2,
+      payableMinor: 8000,
+      discountMinor: 2000,
+    },
+  });
   assert.equal((await f.bridge.acknowledge(f.device, ack)).state, 'applied');
   assert.equal((await f.bridge.claim(f.device, input)).executionPermit, 'complete');
   assert.equal((await f.bridge.claim(f.device, input)).proof, null);
@@ -260,4 +258,87 @@ test('Gateway grants are exact-operation, short-lived, tenant-bound and atomical
     await f.db.collection('business_device_grants').countDocuments({ _id: hash(token) }),
     0
   );
+});
+
+test('new execution claims recheck owner authority after their final ledger read', async () => {
+  for (const change of ['session', 'branch', 'limit']) {
+    const f = await fixture();
+    await f.db.collection('users').updateOne(
+      { _id: f.owner._id },
+      {
+        $set: {
+          usertype: 'manager',
+          access: {
+            dashboard: { read: true, financials: true },
+            pos: { discount_apply: true, discount_approve_remote: true, discount_max_percent: 50 },
+          },
+        },
+      }
+    );
+    const request = await f.bridge.create(f.device, f.body);
+    await f.approval(request);
+    let reads = 0;
+    const raced = {
+      collection(name) {
+        const collection = f.db.collection(name);
+        if (name !== 'business_decisions') return collection;
+        return new Proxy(collection, {
+          get(target, key) {
+            if (key !== 'findOne') {
+              const value = target[key];
+              return typeof value === 'function' ? value.bind(target) : value;
+            }
+            return async (...args) => {
+              const row = await target.findOne(...args);
+              if (++reads === 2) {
+                if (change === 'session')
+                  await f.db
+                    .collection('business_sessions')
+                    .updateOne({ _id: row.approverSessionId }, { $set: { revokedAt: new Date() } });
+                else
+                  await f.db.collection('users').updateOne(
+                    { _id: f.owner._id },
+                    {
+                      $set:
+                        change === 'branch'
+                          ? { branch_access: [] }
+                          : { 'access.pos.discount_max_percent': 10 },
+                    }
+                  );
+              }
+              return row;
+            };
+          },
+        });
+      },
+    };
+    await assert.rejects(
+      require('../src/services/business-decisions').claimDecision(
+        raced,
+        {
+          businessId: String(f.license),
+          branchId: String(f.branch._id),
+          requesterId: String(f.cashier._id),
+          deviceId: f.device.deviceId,
+        },
+        request.id,
+        f.body.request.revisionHash,
+        'claim-race-execution-01'
+      ),
+      {
+        code: {
+          session: 'sign_in_required',
+          branch: 'access_denied',
+          limit: 'approval_access_changed',
+        }[change],
+      }
+    );
+    assert.equal(reads, 2);
+    const saved = await f.db
+      .collection('business_decisions')
+      .findOne({ _id: new ObjectId(request.id) });
+    assert.equal(saved.state, 'approved');
+    assert.equal(saved.revision, 1);
+    assert.equal(saved.executionId, undefined);
+  }
 });

@@ -290,18 +290,25 @@ async function claimDecision(
   { now = Date.now } = {}
 ) {
   if (process.env.POSNIC_BUSINESS_DECISIONS !== '1') fail('decisions_unavailable', 404);
-  const ledger = createDecisionLedger(db, { now });
+  const ledger = createDecisionLedger(db, {
+    now,
+    async authorizeClaim(row) {
+      const current = await actor(db, row.approverSessionId, now());
+      if (
+        current.context.accountId !== row.approverId ||
+        !withinDiscountLimit(current.policy, row.summary)
+      )
+        fail('approval_access_changed', 409);
+      return current.context;
+    },
+  });
   const row = await ledger.sourceRequest(source, requestId);
   if (['applying', 'applied'].includes(row.state) && row.executionId === executionId)
     return ledger.claim(source, requestId, revisionHash, executionId, null);
   if (row.state !== 'approved') fail('decision_changed', 409);
-  const current = await actor(db, row.approverSessionId, now());
-  if (
-    current.context.accountId !== row.approverId ||
-    !withinDiscountLimit(current.policy, row.summary)
-  )
-    fail('approval_access_changed', 409);
-  return ledger.claim(source, requestId, revisionHash, executionId, current.context);
+  // The ledger resolves current authority after its own lookup. Reconciliation
+  // of this exact execution returns before that hook and never grants a start.
+  return ledger.claim(source, requestId, revisionHash, executionId, null);
 }
 module.exports = {
   listDecisions,

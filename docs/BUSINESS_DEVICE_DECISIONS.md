@@ -23,7 +23,12 @@ cases revoke either session, remove branch access or lower the discount limit
 during the lookup and verify that the request stays pending with revision zero.
 These checks reduce asynchronous authorization windows; they do not claim a
 cross-collection transaction with concurrent account administration. Execution
-still independently rechecks the approver before allowing a new till claim.
+independently rechecks the approver after its final ledger lookup before allowing
+a new till claim. Revocation, branch removal and a reduced limit during that lookup
+leave the decision approved without assigning an execution ID. Reconciliation of
+an already-started exact execution bypasses new-claim authority and can only return
+reconcile/complete, never another start. The combined authentication, approval,
+checkout and outbox regression run passes 43 real-database cases.
 
 ## Trust boundary
 

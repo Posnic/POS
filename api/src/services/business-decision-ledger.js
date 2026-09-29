@@ -114,7 +114,7 @@ function requestInput(input) {
 /** Durable mechanics only. Callers must authenticate sources, derive the price
  * preview with the sale authority, and re-read ACL/step-up before every action.
  * No route exposes this ledger until the complete till consume path is wired. */
-function createDecisionLedger(db, { now = Date.now, authorizeDecision } = {}) {
+function createDecisionLedger(db, { now = Date.now, authorizeDecision, authorizeClaim } = {}) {
   const rows = db.collection('business_decisions');
   async function ready() {
     if (!indexes.has(db)) {
@@ -275,6 +275,7 @@ function createDecisionLedger(db, { now = Date.now, authorizeDecision } = {}) {
       if (row.revisionHash !== hash) fail('bill_changed');
       if (['applying', 'applied'].includes(row.state) && row.executionId === executionId)
         return { record: row, executionPermit: row.state === 'applied' ? 'complete' : 'reconcile' };
+      if (authorizeClaim) currentApprover = await authorizeClaim(row);
       fresh(row);
       if (row.state !== 'approved') fail('decision_changed');
       approver(currentApprover, row);
