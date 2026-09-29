@@ -1175,3 +1175,93 @@ test('prepared reads reject an in-progress publisher, wrong generation and false
     is('invalid_request')
   );
 });
+
+test('stock HTTP reads negotiate explicitly and enforce current item ACL without financial permission', async () => {
+  const f = await fixture(),
+    value = await grant(f),
+    branchId = String(f.branch._id);
+  const url = base + '/api/business/v1/stock?branchId=' + branchId;
+  const headers = { 'x-forwarded-proto': 'https', authorization: 'Bearer ' + value.token };
+  assert.equal((await fetch(url)).status, 426);
+  assert.equal((await fetch(url, { headers: { 'x-forwarded-proto': 'https' } })).status, 401);
+  assert.equal((await fetch(url, { headers })).status, 503);
+  const request = await db
+    .collection('business_reporting_requests')
+    .findOne({ _id: branchId + ':stock' });
+  assert.equal(request.summaryKind, 'stock');
+  assert.equal(request.stockSummaryVersion, 1);
+  const at = new Date().toISOString(),
+    assignmentId = opaque();
+  await db.collection('business_reporting_publishers').insertOne({
+    _id: branchId,
+    license: f.license,
+    assignmentId,
+    deviceId: 'stock-desktop',
+    epoch: 1,
+    lastSequence: 1,
+  });
+  await db.collection('business_prepared_summaries').insertOne({
+    _id: branchId + ':stock',
+    branch_id: f.branch._id,
+    license: f.license,
+    publisherAssignmentId: assignmentId,
+    publisherDeviceId: 'stock-desktop',
+    publisherEpoch: 1,
+    sequence: 1,
+    receivedAt: new Date(),
+    summary: {
+      schemaVersion: 1,
+      metricDefinitionVersion: 'stored-stock-v1',
+      branchId,
+      license: String(f.license),
+      observedFrom: at,
+      preparedAt: at,
+      sourceComplete: false,
+      coverage: {
+        scannedItems: 1,
+        excludedItems: 0,
+        verifiedItems: 1,
+        unavailableItems: 0,
+        reasons: {},
+      },
+      lowItemCount: 1,
+      listTruncated: false,
+      lowItems: [
+        {
+          itemId: String(new ObjectId()),
+          name: 'Rice',
+          unit: 'kg',
+          availableMilli: 125,
+          thresholdMilli: 2000,
+          thresholdSource: 'item',
+          low: true,
+        },
+      ],
+    },
+  });
+  await db
+    .collection('users')
+    .updateOne({ _id: f.user._id }, { $set: { 'access.dashboard.financials': false } });
+  const response = await fetch(url, { headers });
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('cache-control'), /no-store/);
+  const result = await response.json();
+  assert.equal(result.lowItemCount, 1);
+  assert.equal(result.freshness.complete, false);
+  assert.equal(result.lowItems[0].unit, 'kg');
+  assert.equal((await fetch(url + '&license=override', { headers })).status, 400);
+  assert.equal(
+    (await fetch(url.replace(branchId, String(new ObjectId())), { headers })).status,
+    403
+  );
+  const discovered = await (
+    await fetch(base + '/api/business/v1/discovery?stock=1', { headers })
+  ).json();
+  assert.equal(discovered.stockReporting, 'bounded-stock-v1');
+  const legacy = await (await fetch(base + '/api/business/v1/discovery', { headers })).json();
+  assert.equal(Object.hasOwn(legacy, 'stockReporting'), false);
+  await db
+    .collection('users')
+    .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
+  assert.equal((await fetch(url, { headers })).status, 403);
+});

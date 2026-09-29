@@ -3,7 +3,8 @@
 Status: source audit, strict stock facts and a desktop preparation primitive.
 The desktop worker and Community publication support the versioned stock job.
 Cloud agent/Gateway stock transport is implemented in the paired review batch.
-There is no public stock endpoint, mobile stock UI or alert enabled yet.
+The authenticated stock read endpoint is implemented; mobile stock UI and
+alerts remain unavailable.
 
 ## Source findings
 
@@ -115,7 +116,7 @@ The nine existing register-publication tests still pass.
 Preparation additionally handles mixed legacy string/ObjectId ordering while
 retaining only the first 100 canonical IDs. A duplicate logical ID rejects the
 whole observation rather than inflating a count. Fourteen stock-source/preparation
-database tests now pass. Public stock reads remain unavailable to mobile clients.
+database tests now pass. Stock discovery and reads are explicitly negotiated as described below.
 
 ## Cloud publication
 
@@ -134,11 +135,35 @@ not get confused with wire-contract failures. Gateway additionally passes 23
 reporting tests covering legacy daily/session behavior, stock capability
 withdrawal, malformed publications and interrupted/rejected recovery.
 
+## Authenticated read API
+
+`GET /api/business/v1/discovery?stock=1` advertises
+`stockReporting: bounded-stock-v1`; legacy discovery remains unchanged.
+`GET /api/business/v1/stock?branchId=<id>` uses the separate Business session,
+HTTPS and no-store response headers. It requires current `stock.read` and branch
+membership, independently of financial access; item ACL removal takes effect on
+the next request. Extra query fields and inaccessible branches are rejected.
+
+The service queues a versioned 30-minute desktop request and performs bounded
+request/publisher/snapshot metadata I/O only. It never reads items or sales. It
+checks the assigned publisher before and after reading, then revalidates the full
+stock contract, receipt time and sequence/epoch. Missing, corrupt, rejected,
+reassigned or older-than-24-hour observations are unavailable, never zero stock.
+Responses expose coverage, bounded low items and observation times without
+publisher credentials. Freshness is always incomplete: `partial`, or `delayed`
+after 15 minutes, with no invented source update timestamp.
+
+Eleven stock-publication/read database tests pass, including guarded I/O,
+permission rejection before I/O, stale and corrupt data, and an owner change
+between reads. All nineteen Business HTTP integration tests pass, including
+HTTPS, separate authentication, opt-in discovery, no-store, branch/query scope,
+stock-only access and live ACL revocation for the new route.
+
 ## Remaining implementation and verification
 
 Trace actual sale, receiving, adjustment, return and variant stock writes through
 sync before defining completeness. Keep preparation on the desktop and qualify publication against actual sync
-and concurrent stock changes; do not calculate stock scans on Cloud. Add a negotiated `stock.read` endpoint and accessible mobile list with
+and concurrent stock changes; do not calculate stock scans on Cloud. Add the negotiated mobile read client and accessible list with
 units, threshold origin and freshness. Notification settings belong on the stock
 notification page and need threshold-crossing/recovery identity, quiet hours,
 recipient ACL rechecks and durable generic push retries. Test offline/reconnect,

@@ -69,6 +69,7 @@ router.get('/discovery', (_req, res) =>
     audience: 'posnic-business',
     reporting: 'bounded-summary-v2',
     ...(_req.query.items === '1' ? { itemReporting: 'bounded-items-v1' } : {}),
+    ...(_req.query.stock === '1' ? { stockReporting: 'bounded-stock-v1' } : {}),
     ...(_req.query.registerSessions === '1'
       ? {
           registerReporting: 'bounded-register-session-v1',
@@ -399,6 +400,18 @@ router.get(
 router.get(
   '/context',
   wrap(async (req, res) => res.json(await req.businessAccess.contextFor(req.businessIdentity.user)))
+);
+router.get(
+  '/stock',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-stock-reports').readStockSummary(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.query
+      )
+    )
+  )
 );
 router.get(
   '/register-summaries',

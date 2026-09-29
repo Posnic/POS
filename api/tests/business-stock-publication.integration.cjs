@@ -265,3 +265,112 @@ test(
     }
   }
 );
+
+const { readStockSummary } = require('../src/services/business-stock-reports');
+const stockContext = (f) => ({
+  businessId: f.branch.license,
+  capabilities: ['stock.read'],
+  branches: [f.branch],
+});
+const stockQuery = (f) => ({ branchId: f.branch.id });
+function stockReadDb(db) {
+  return {
+    collection(name) {
+      assert.ok(
+        [
+          'business_reporting_requests',
+          'business_reporting_publishers',
+          'business_prepared_summaries',
+        ].includes(name),
+        'stock reads must not query ' + name
+      );
+      return db.collection(name);
+    },
+  };
+}
+test('bounded stock reads request desktop work and return explicit partial coverage without financial permission', async () => {
+  const f = await fixture(),
+    guarded = stockReadDb(f.db),
+    context = stockContext(f);
+  await assert.rejects(readStockSummary(guarded, context, stockQuery(f)), {
+    code: 'summary_unavailable',
+  });
+  await createDesktopReportingWorker(f.db).tick();
+  const result = await readStockSummary(guarded, context, stockQuery(f));
+  assert.equal(result.businessId, f.branch.license);
+  assert.equal(result.lowItems[0].availableMilli, 2000);
+  assert.equal(result.coverage.verifiedItems, 1);
+  assert.equal(result.freshness.state, 'partial');
+  assert.equal(result.freshness.complete, false);
+  assert.equal(result.freshness.sourceUpdatedAt, null);
+  assert.equal(result.license, undefined);
+  assert.equal(result.publisherAssignmentId, undefined);
+  const delayed = await readStockSummary(guarded, context, stockQuery(f), {
+    now: () => Date.parse(result.preparedAt) + 16 * 60000,
+  });
+  assert.equal(delayed.freshness.state, 'delayed');
+  await assert.rejects(
+    readStockSummary(guarded, context, stockQuery(f), {
+      now: () => Date.parse(result.preparedAt) + 25 * 3600000,
+    }),
+    { code: 'summary_unavailable' }
+  );
+});
+test('stock reads reject absent stock ACL, inaccessible branches and unexpected query fields before I/O', async () => {
+  const f = await fixture(),
+    context = stockContext(f);
+  const noIo = {
+    collection() {
+      throw new Error('Unauthorized I/O');
+    },
+  };
+  for (const changed of [
+    { capabilities: ['overview.read'] },
+    { branches: [] },
+    { businessId: 'invalid' },
+  ])
+    await assert.rejects(readStockSummary(noIo, { ...context, ...changed }, stockQuery(f)), {
+      code: 'access_denied',
+    });
+  for (const query of [{ branchId: f.branch.id, page: 'all' }, {}, { branchId: [f.branch.id] }])
+    await assert.rejects(readStockSummary(noIo, context, query), { code: 'invalid_request' });
+});
+test('stock reads reject corrupted snapshots and publisher changes rather than returning plausible stock counts', async () => {
+  const f = await fixture();
+  await createDesktopReportingWorker(f.db).tick();
+  const collection = f.db.collection('business_prepared_summaries');
+  const original = await collection.findOne({ _id: f.key });
+  for (const changed of [
+    { 'summary.sourceComplete': true },
+    { 'summary.coverage.verifiedItems': 100 },
+    { 'summary.lowItemCount': 0 },
+    { 'summary.license': String(new ObjectId()) },
+    { publisherAssignmentId: 'old' },
+    { publisherEpoch: 0 },
+    { sequence: 999 },
+    { receivedAt: new Date(Date.now() + 100000) },
+  ]) {
+    await collection.replaceOne({ _id: f.key }, original);
+    await collection.updateOne({ _id: f.key }, { $set: changed });
+    await assert.rejects(readStockSummary(stockReadDb(f.db), stockContext(f), stockQuery(f)), {
+      code: 'summary_unavailable',
+    });
+  }
+  await collection.replaceOne({ _id: f.key }, original);
+  let reads = 0;
+  const racing = {
+    collection(name) {
+      const real = stockReadDb(f.db).collection(name);
+      if (name !== 'business_reporting_publishers') return real;
+      return {
+        async findOne(...args) {
+          if (++reads === 2) await real.updateOne({ _id: f.branch.id }, { $inc: { epoch: 1 } });
+          return real.findOne(...args);
+        },
+      };
+    },
+  };
+  await assert.rejects(readStockSummary(racing, stockContext(f), stockQuery(f)), {
+    code: 'summary_unavailable',
+  });
+});
