@@ -56,3 +56,15 @@ test('preview revision changes when another staff member serves an item', async 
   expect(next.revision).not.toBe(first.revision);
   expect(next.destination.rounds[0].served).toBe(1);
 });
+
+test.each([['table_number','2'],['table_id','new-table'],['person_count',4],['dine_type','Take away'],
+  ['seating_request_id','changed-request'],['seating_primary_id','new-primary'],
+  ['seating_table_ids',['new-primary']],['seating_capacity_revision','changed-capacity']])(
+  'preview revision detects a changed %s without relying on updated_date', async (field,value) => {
+    const first = await service.preview(req());
+    await db.collection('sales').updateOne({ _id:sale._id }, { $set:{ [field]:value } });
+    const next = await service.preview(req());
+    expect(next.revision).not.toBe(first.revision);
+    expect(next.totalMinor).toBe(first.totalMinor);
+    expect(next.destination.lines).toEqual(first.destination.lines);
+  });
