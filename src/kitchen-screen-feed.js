@@ -66,6 +66,8 @@ async function tick({ branchId, fetchImpl, displayId, isCurrent = () => true } =
 
   const doFetch = fetchImpl || (typeof fetch === 'function' ? fetch : null);
   if (!doFetch) return { ok: false, why: 'no fetch' };
+  // Never send an anonymous device request during incomplete desktop startup.
+  if (!fetchImpl && !process.env.KIOSK_API_KEY) return { ok: false, why: 'authentication' };
 
   try {
     const response = await doFetch(`${apiUrl()}/sales/kitchenScreenTickets`, {
@@ -78,7 +80,7 @@ async function tick({ branchId, fetchImpl, displayId, isCurrent = () => true } =
       },
       body: JSON.stringify({ branchId: branch }),
     });
-    if (!response || !response.ok) return { ok: false, why: 'refused' };
+    if (!response || !response.ok) return { ok: false, why: response?.status === 401 ? 'authentication' : 'refused' };
 
     const answer = await response.json();
     if (!answer || answer.type === 'error' || answer.status === false || !Array.isArray(answer.data)) {
@@ -137,7 +139,8 @@ async function pollScreens({ resolveBranch, fetchImpl, isCurrent = () => true } 
       screens().setFeedStatus('Connecting to kitchen orders...', d.id);
     }
     const result = await tick({ branchId, displayId: d.id, fetchImpl, isCurrent: current });
-    if (current()) screens().setFeedStatus(result.ok ? '' :
+    if (current()) screens().setFeedStatus(result.ok ? '' : result.why === 'authentication' ?
+      'Kitchen authentication failed. Contact support; displayed orders may be out of date.' :
       'Orders connection unavailable. Retrying; any orders shown may be out of date.', d.id);
   }));
 }

@@ -771,6 +771,7 @@ function withTimeout(label, operation, timeoutMs) {
 }
 
 function closeApiServer() {
+  process.emit('posnic:api-shutdown');
   const server = global.apiServer || apiServer;
   if (!server || typeof server.close !== 'function') return Promise.resolve();
 
@@ -2088,8 +2089,9 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
 
   mainWindow.webContents.on(
     'console-message',
-    (_event, level, message, line, sourceId) => {
-      if (level >= 2) {
+    (event) => {
+      const { level, message, lineNumber: line, sourceId } = event;
+      if (level === 'warning' || level === 'error') {
         console.warn('[Renderer console]', { level, message, line, sourceId });
       }
     }
@@ -2839,26 +2841,7 @@ function rememberedChrome() {
 function applyWindowChrome(theme) {
   try {
     const chrome = chromeFor(theme || {});
-    /*
-     * The overlay is a Windows feature.
-     *
-     * The method exists on every platform, so the `setTitleBarOverlay` check
-     * above passed on Linux and then threw "Titlebar overlay is not enabled" -
-     * an error logged on every theme change, for a call that was never going
-     * to do anything there. macOS and Linux draw their own controls, which is
-     * why titleBarStyle differs per platform in createWindow.
-     *
-     * The colours still reach the page either way; this is only the strip
-     * Windows paints itself.
-     */
-    if (process.platform === 'win32'
-        && mainWindow && !mainWindow.isDestroyed() && mainWindow.setTitleBarOverlay) {
-      mainWindow.setTitleBarOverlay({
-        color: chrome.color,
-        symbolColor: chrome.symbolColor,
-        height: TITLEBAR_HEIGHT - 1,
-      });
-    }
+    // This window uses custom controls, not a native titlebar overlay.
     fs.writeFileSync(CHROME_FILE, JSON.stringify({ ...chrome, palette: theme || null }));
     for (const win of BrowserWindow.getAllWindows()) {
       if (!win.isDestroyed()) win.webContents.send('theme:changed', theme || null);
@@ -4724,8 +4707,7 @@ app.whenReady().then(async () => {
       return '';
     },
   });
-  billManager.start();
-  console.log('BillManager started');
+  // Polling begins after the local API has successfully started.
 
   /*
    * The sound an online order makes.
@@ -4896,18 +4878,6 @@ app.whenReady().then(async () => {
    * the feed. Resolve the branch lazily: the local server may not be ready
    * yet and a kitchen screen does not require a configured kitchen printer.
    */
-  try {
-    const feed = require('./kitchen-screen-feed');
-    feed.start({ resolveBranch: async () => {
-      const cfg = kotManager ? await kotManager.loadConfig() : null;
-      if (cfg && cfg.branchId) return String(cfg.branchId);
-      const branches = await require('./hardware-ipc').readLocalBranches();
-      return branches.length === 1 ? branches[0].id : '';
-    } });
-    console.log('Kitchen screen feed started');
-  } catch (e) {
-    console.warn('[kitchen-screen] nothing to show on it:', e && e.message);
-  }
 
   // Start server
   startServer();
@@ -4944,7 +4914,7 @@ async function reportHandsetReachability() {
   if (!handsets.captainIsOn(branches)) return;  // no handsets in this shop
 
   const exePath = process.execPath;
-  const result = await handsets.check({ exePath, port: apiPort(), lanIp: getLocalIP() });
+  const result = await handsets.check({ exePath, port: apiPort(), lanIp: require('./hardware-ipc').getLocalIP() });
   console.log(`[Handsets] ${result.kind} on ${result.network || 'this network'} (${result.category || 'unknown'})`);
   if (result.ok) return;
 
@@ -4997,7 +4967,7 @@ async function reportHandsetReachability() {
   }
 
   /* Say whether it worked, by looking again rather than by assuming. */
-  const after = await handsets.check({ exePath, port: apiPort(), lanIp: getLocalIP() });
+  const after = await handsets.check({ exePath, port: apiPort(), lanIp: require('./hardware-ipc').getLocalIP() });
   console.log(`[Handsets] after repair: ${after.kind}`);
   await dialog.showMessageBox(target, {
     type: after.ok ? 'info' : 'warning',
@@ -5340,6 +5310,22 @@ function startServer() {
     }
   }).then(async (result) => {
     if (result && result.success) {
+      if (!shutdownInProgress) {
+        billManager?.start();
+  try {
+    const feed = require('./kitchen-screen-feed');
+    feed.start({ resolveBranch: async () => {
+      const cfg = kotManager ? await kotManager.loadConfig() : null;
+      if (cfg && cfg.branchId) return String(cfg.branchId);
+      const branches = await require('./hardware-ipc').readLocalBranches();
+      return branches.length === 1 ? branches[0].id : '';
+    } });
+    console.log('Kitchen screen feed started');
+  } catch (e) {
+    console.warn('[kitchen-screen] nothing to show on it:', e && e.message);
+  }
+
+      }
       updateHealthStatus({
         api: 'ready',
         apiReadyAt: new Date().toISOString()
@@ -5551,6 +5537,8 @@ app.on('child-process-gone', (_event, details) => {
 app.on('before-quit', async event => {
   browserCloudAuth.cancel();
   if (shutdownInProgress) return;
+  billManager?.stop();
+  kotManager?.stopPolling();
 
   /* Let the machine sleep again. Holding a power block past shutdown is how a
      till that looks off still refuses to suspend. */
