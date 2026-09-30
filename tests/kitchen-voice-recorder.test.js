@@ -4,11 +4,12 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {JSDOM}=require('jsdom');
 const tick=()=>new Promise(r=>setImmediate(r));
-async function setup(t){
+async function setup(t, initial = {}){
  const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/hardware-manager.html'),'utf8'),{runScripts:'outside-only'});t.after(()=>dom.window.close());
  const w=dom.window,d=w.document,calls=[];let sequence=0,fail=false,stopped=0;
  w.HTMLMediaElement.prototype.pause=function(){};
- w.electronAPI={kitchenCall:{get:async()=>({outputs:[{id:'speaker',label:'Kitchen'}]}),bells:async()=>({arrival:[]})},kot:{getConfig:async()=>({branches:[]})},kitchenAudio:{
+ let saved={outputs:[{id:'speaker',label:'Kitchen'}],talkEnabled:true,...initial};
+ w.electronAPI={kitchenCall:{get:async()=>saved,set:async value=>{saved={...saved,...value};return true;},bells:async()=>({arrival:[]})},kot:{getConfig:async()=>({branches:[]})},kitchenAudio:{
  start:async()=>{const id='session-'+(++sequence);calls.push(['start',id]);return {id};},
  cancel:async(id)=>calls.push(['cancel',id]),voice:async(id,data)=>{calls.push(['voice',id,data]);if(fail){fail=false;throw Error('Response lost');}return {id,queued:true};}
  }};
@@ -34,4 +35,24 @@ test('desktop stops for review, releases the recording pause, and retries one im
 test('discarding a desktop draft never broadcasts it',async t=>{
  const {d,calls}=await setup(t);d.getElementById('kitchenTalk').click();await tick();d.getElementById('kitchenTalk').click();await tick();
  d.getElementById('kitchenTalkDiscard').click();assert.equal(d.getElementById('kitchenTalkSend').hidden,true);assert.equal(calls.some(c=>c[0]==='voice'),false);
+});
+
+test('disabled voice messages block IPC until enabled and saved', async t => {
+ const {w,d,calls}=await setup(t,{talkEnabled:false});const button=d.getElementById('kitchenTalk');
+ assert.equal(button.disabled,true);assert.match(d.getElementById('kitchenTalkSetup').textContent,/Voice messages are off/);
+ button.click();await tick();assert.equal(calls.length,0);
+ const enable=d.getElementById('kitchenTalkEnabled');enable.checked=true;enable.dispatchEvent(new w.Event('change',{bubbles:true}));
+ assert.equal(button.disabled,true);assert.match(d.getElementById('kitchenTalkSetup').textContent,/Save changes/);
+ await w.saveKitchenAudioSettings();assert.equal(button.disabled,false);assert.equal(d.getElementById('kitchenTalkSetup').hidden,true);
+ button.click();await tick();assert.equal(calls.filter(c=>c[0]==='start').length,1);button.click();await tick();
+});
+test('missing speakers block recording and backend state is rechecked before requesting a microphone', async t => {
+ const {w,d,calls}=await setup(t,{outputs:[]});
+ assert.equal(d.getElementById('kitchenTalk').disabled,true);assert.match(d.getElementById('kitchenTalkSetup').textContent,/Select a kitchen speaker/);
+ d.getElementById('kitchenTalk').click();assert.equal(calls.length,0);
+});
+test('a setting disabled elsewhere is handled without calling the audio start IPC', async t => {
+ const {w,d,calls}=await setup(t);
+ w.electronAPI.kitchenCall.get=async()=>({talkEnabled:false,outputs:[{id:'speaker'}]});
+ d.getElementById('kitchenTalk').click();await tick();assert.equal(calls.length,0);assert.equal(d.getElementById('kitchenTalk').disabled,true);
 });
