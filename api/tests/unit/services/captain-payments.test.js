@@ -336,3 +336,35 @@ test('a restructure reservation cannot become a payment or be released as an emp
   await locks.cancel(db,{branchId:branch,license},'transfer-request-0001',String(user));
   expect((await service.prepare(req())).dueMinor).toBe(10500);
 });
+
+
+test('closed transfer sources do not block collecting the next table bill', async () => {
+  const closed = { ...sale, _id: new ObjectId(), items: [], sales_total: 0,
+    sales_sub_total: 0, tax: 0, floor_closed_at: new Date() };
+  await db.collection('sales').insertOne(closed);
+  const plan = await service.prepare(req());
+  expect(plan.dueMinor).toBe(10500);
+  await service.record(pay(plan));
+  expect(await db.collection('sales').findOne({ _id: closed._id })).toEqual(closed);
+  expect((await db.collection('sales').findOne({ _id: sale._id })).payment_status).toBe('Paid');
+});
+
+test('a table containing only a closed check cannot start collection', async () => {
+  await db.collection('sales').updateOne({ _id: sale._id }, { $set: { floor_closed_at: new Date() } });
+  await expect(service.prepare(req())).rejects.toMatchObject({ status: 409 });
+  expect(await db.collection('captain_payment_plans').countDocuments({})).toBe(0);
+});
+
+test('closure after payment snapshot cannot acquire a collection fence', async () => {
+  const original = db.collection.bind(db);
+  const plans = original('captain_payment_plans');
+  const insert = plans.insertOne.bind(plans);
+  plans.insertOne = async (...args) => {
+    await original('sales').updateOne({ _id: sale._id }, { $set: { floor_closed_at: new Date() } });
+    return insert(...args);
+  };
+  const input = req();
+  input.db = { collection: name => name === 'captain_payment_plans' ? plans : original(name) };
+  await expect(service.prepare(input)).rejects.toMatchObject({ status: 409 });
+  expect((await original('sales').findOne({ _id: sale._id })).captain_payment_plan).toBeUndefined();
+});

@@ -837,7 +837,7 @@ test.each([
  ['INR',100,5,10,0.01],['JPY',100,5,10,1],['KWD',100.001,5.003,10.001,0.002],
 ])('persisted %s transfer agrees across bills, receipt payload and guest splits',async(currencyCode,base,tax,discount,round)=>{
  const money=require('../../../src/utils/currency');
- await db.collection('branches').updateOne({_id:branch},{$set:{currencyCode}});
+ await db.collection('branches').updateOne({_id:branch},{$set:{currencyCode,captain_payments:{enabled:true,methods:['Cash'],printReceipt:false}}});
  const shop=await db.collection('branches').findOne({_id:branch}),policy=money.policy(shop);
  const total=money.fromMinor(money.toMinor(base,policy)+money.toMinor(tax,policy)-money.toMinor(discount,policy)+money.toMinor(round,policy),policy);
  await db.collection('sales').updateOne({_id:sale._id},{$set:{sales_sub_total:base,sales_total:total,tax,discount,round_off:round,
@@ -862,6 +862,19 @@ test.each([
   const guests=require('../../../src/utils/guest-bill-split').split(snapshot,{mode:'equal',guests:['Guest 1','Guest 2','Guest 3']});
   expect(guests.reduce((n,guest)=>n+guest.totalMinor,0)).toBe(bill.totalMinor);
   sum.base+=minor(payload.subTotal);sum.tax+=taxes;sum.discount+=minor(payload.discount);sum.total+=minor(payload.total);sum.round+=minor(payload.roundOff);
+  const payments=require('../../../src/services/captain-payments');
+  const collection=await payments.prepare({...input,body:{table_number:check.table_number}});
+  expect(collection.dueMinor).toBe(bill.dueMinor);
+  const paymentRequest={...input,body:{planId:collection.id,version:collection.version,
+   amountMinor:collection.dueMinor,receivedMinor:collection.dueMinor,method:'Cash',request_id:require('crypto').randomUUID()}};
+  const recorded=await payments.record(paymentRequest);
+  expect(recorded.dueMinor).toBe(0);
+  expect((await payments.record(paymentRequest)).payments).toEqual(recorded.payments);
+  const settled=await db.collection('sales').findOne({_id:check._id});
+  expect(settled.payment_status).toBe('Paid');expect(minor(settled.paid_amount)).toBe(bill.totalMinor);
+  expect(settled.items).toEqual(check.items);
+  expect(require('../../../src/helpers/bill-payload').buildBillPayload(settled,shop)).toEqual(payload);
+  expect((await require('../../../src/services/captain-bill').read(request)).dueMinor).toBe(0);
  }
  expect(sum).toEqual({base:money.toMinor(base,policy),tax:money.toMinor(tax,policy),discount:money.toMinor(discount,policy),total:money.toMinor(total,policy),round:money.toMinor(round,policy)});
  expect(await service.complete(input)).toEqual(completed);

@@ -72,7 +72,13 @@ function wholeGuest(snapshot) {
 async function fresh(db, c, table, input) {
   const sales = await db
     .collection('sales')
-    .find({ ...baseFilter(c), table_number: table, sale_process: 'KOT', payment_status: 'Unpaid' })
+    .find({
+      ...baseFilter(c),
+      table_number: table,
+      sale_process: 'KOT',
+      payment_status: 'Unpaid',
+      floor_closed_at: { $exists: false },
+    })
     .sort({ _id: 1 })
     .limit(201)
     .toArray();
@@ -360,6 +366,7 @@ async function prepare(req) {
         _id: sale._id,
         payment_status: 'Unpaid',
         sale_process: 'KOT',
+        floor_closed_at: { $exists: false },
         captain_payment_plan: { $exists: false },
         $or: [
           { captain_edit_until: { $exists: false } },
