@@ -158,6 +158,18 @@ describe('SalesRepository', () => {
       expect(result.recent.filter(row => row.cancelled)).toHaveLength(3);
       expect(result.recent[3].total_amount).toBe(0);
     });
+    test('paid totals combine full payments and desktop/Captain partial payments without cancelled amounts', async () => {
+      const docs = [
+        { _id: '1', sales_total: 100, payment_status: 'Paid' },
+        { _id: '2', sales_total: 100, payment_status: 'Unpaid', partial_balance: '25' },
+        { _id: '3', sales_total: 100, payment_status: 'Unpaid', paid_amount: 40, partial_balance: 40 },
+        { _id: '4', sales_total: 100, payment_status: 'Cancelled', paid_amount: 100 },
+        { _id: '5', sales_total: 100, payment_status: 'Unpaid', paid_amount: 0, partial_balance: 75 },
+        { _id: '6', sales_total: 100, payment_status: 'Unpaid', paid_amount: 150 },
+      ];
+      const result = await salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), { SaleModel: { find: () => createQueryMock(docs) } });
+      expect(result).toMatchObject({ total: 500, paid_total: 265, orders: 5, cancelled: 1 });
+    });
     test('database failure propagates instead of reporting an empty day', async () => {
       const query = createQueryMock([]);
       query.lean.mockRejectedValue(new Error('database offline'));

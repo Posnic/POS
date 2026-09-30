@@ -9949,7 +9949,7 @@ class SalesRepository {
       const { ObjectId } = require('mongodb');
       const Model = this.getModel(SaleModel);
 
-      if (!userId) return { total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
+      if (!userId) return { total: 0, paid_total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
 
       const who = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
       const from = new Date(day);
@@ -9971,7 +9971,7 @@ class SalesRepository {
       if (BaseModel.license) query.license = BaseModel.license;
 
       const docs = await Model.find(query)
-        .select('_id token_id sales_id sales_total total table_number created_date date sale_process payment_status order_state')
+        .select('_id token_id sales_id sales_total total table_number created_date date sale_process payment_status order_state paid_amount partial_balance')
         .sort({ created_date: -1, date: -1 })
         .lean();
       const isCancelled = (doc) => [doc.sale_process, doc.payment_status, doc.order_state]
@@ -9979,6 +9979,7 @@ class SalesRepository {
 
       const tables = new Map();
       let total = 0;
+      let paidTotal = 0;
       let orders = 0;
       let cancelled = 0;
 
@@ -9990,6 +9991,11 @@ class SalesRepository {
 
         const amount = Number(doc.sales_total ?? doc.total ?? 0) || 0;
         total += amount;
+        // This is the paid portion of these orders, not cash collected during this day.
+        const recordedPaid = String(doc.payment_status || '').toLowerCase() === 'paid'
+          ? amount
+          : Number(doc.paid_amount ?? doc.partial_balance ?? 0);
+        paidTotal += Math.min(Math.max(0, amount), Math.max(0, Number.isFinite(recordedPaid) ? recordedPaid : 0));
         orders += 1;
 
         /* A takeaway has no table and still has money in it, so it is a row
@@ -10011,6 +10017,7 @@ class SalesRepository {
 
       return {
         total,
+        paid_total: paidTotal,
         orders,
         cancelled,
         /* Biggest table first: the question behind this screen is usually
