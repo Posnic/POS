@@ -24,6 +24,11 @@ router.post('/pair', limit, wrap(access.pair));
 router.post('/refresh', limit, wrap(access.refresh));
 router.post('/route-proof', rateLimit({ windowMs: 60000, limit: 180 }), wrap(access.routeProof));
 router.use(protect);
+const profile = require('../services/captain-profile');
+router.get('/profile', wrap(profile.get));
+router.post('/profile', limit, wrap(profile.update));
+router.post('/password', rateLimit({ windowMs: 15 * 60000, limit: 8 }), wrap(profile.password));
+
 router.get('/kitchen-ready', wrap(require('../services/kitchen-board').captainList));
 router.post(
   '/kitchen-ready',
