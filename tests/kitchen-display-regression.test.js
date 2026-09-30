@@ -285,9 +285,11 @@ test('ready and picked-up food use explicit labels without cancellation strike-t
    {name:'Fish',qty:3,preparing:1,readyToCollect:1,pickedUp:1,started:true}
   ]};
   w.kitchenScreen.setTickets([ticket]);
-  assert.match(board.textContent,/1 Cooking/);
-  assert.match(board.textContent,/✓ 1 Ready to collect/);
-  assert.match(board.textContent,/↗ 1 Picked up/);
+  assert.equal(board.querySelector('.name .progress-cooking').getAttribute('aria-label'),'1 Cooking');
+  assert.equal(board.querySelector('.name .progress-ready').getAttribute('aria-label'),'1 Ready to collect');
+  assert.equal(board.querySelector('.name .progress-picked').getAttribute('aria-label'),'1 Collected, not yet served');
+  assert.equal(board.querySelector('.items > .item-progress'),null);
+  assert.equal(w.document.getElementById('status-key').hidden,false);
   assert.equal(board.querySelector('.cancelled'),null);
   w.kitchenScreen.setTickets([{...ticket,items:[{name:'Fish',qty:1,preparing:0,readyToCollect:1,pickedUp:0}]}]);
   assert.ok(board.querySelector('.ready-state .line-ready'));
@@ -315,6 +317,9 @@ test('one table has one box across rounds, all dishes and cancellations; untable
   assert.equal(board.querySelectorAll('.ticket').length,3);
   const table=board.querySelector('.table').closest('.ticket');
   assert.equal(table.querySelectorAll('.name').length,10);
+  assert.ok(table.querySelector('.ticket-meta > .top .table'),'table details belong beside the dishes');
+  assert.ok(table.querySelector('.ticket-body > .items'),'full dish list belongs in the remaining width');
+  assert.equal(table.querySelector('.ticket-meta .items'),null);
   assert.match(table.textContent,/Dish 7/);
   assert.match(table.textContent,/Added fish/);
   assert.match(table.textContent,/No salt/);

@@ -109,6 +109,7 @@ async function list(req) {
   } finally {
     await cursor.close();
   }
+  await require('./kitchen-voice').listForTickets(req, c, tickets);
   return {
     branch: String(c.branch.branch_name || ''),
     settings: c.branch.kitchen_board_settings || { orangeMinutes: 5, redMinutes: 10, pulse: true },

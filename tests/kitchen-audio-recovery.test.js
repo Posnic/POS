@@ -65,6 +65,7 @@ test('recording pauses order queue; only its owner can upload; retried upload is
   const data = 'data:audio/webm;base64,YQ==';
   q.voice('alice', lease.id, data);
   q.voice('alice', lease.id, data);
+  assert.throws(() => q.voice('alice', lease.id, 'data:audio/webm;base64,Yg=='), /different recording/);
   assert.equal(q.jobs.length, 2);
   assert.equal(q.next().jobId, q.jobs[0].id);
 });

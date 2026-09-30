@@ -48,9 +48,13 @@ class KitchenAudioQueue {
   cancel(owner, id) {
     if (this.recordings.get(id)?.owner === owner) this.recordings.delete(id);
   }
-  voice(owner, id, data) {
+  validateVoice(owner, id, data) {
     const existing = this.jobs.find((j) => j.id === id && j.owner === owner);
-    if (existing) return { id, queued: true };
+    if (existing) {
+      if (existing.kind !== 'voice' || existing.steps.at(-1)?.audio !== data)
+        throw Error('This message ID already contains a different recording.');
+      return { id, queued: true };
+    }
     this.paused();
     if (this.recordings.get(id)?.owner !== owner)
       throw Error('Talk session expired. Please record again.');
@@ -62,8 +66,13 @@ class KitchenAudioQueue {
       )
     )
       throw Error('Invalid or oversized voice message.');
+    if (!this.settings().talkEnabled) throw Error('Kitchen voice messages are disabled.');
+    return { id, queued: false };
+  }
+  voice(owner, id, data) {
+    const validated = this.validateVoice(owner, id, data);
+    if (validated.queued) return validated;
     const config = this.settings();
-    if (!config.talkEnabled) throw Error('Kitchen voice messages are disabled.');
     const steps = [];
     if (config.talkTing) steps.push({audio:require('./order-alert').bellSound('arrival',config.talkBell)});
     steps.push({audio:data});

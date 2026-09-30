@@ -32,7 +32,7 @@ test('Kitchen Sound saves both source choices and their independent sound option
  w.electronAPI={kitchenCall:{get:async()=>saved,bells:async()=>({arrival:['rising','soft']}),set:async value=>{submitted=value;saved={...saved,...value};return true;}},kitchenAudio:{},kot:{getConfig:async()=>({branches:[]})}};
  Object.defineProperty(w.navigator,'mediaDevices',{value:{enumerateDevices:async()=>[{kind:'audiooutput',deviceId:'speaker',label:'Kitchen'}]}});let poll;w.setInterval=fn=>{poll=fn;return 1;};
  w.eval(fs.readFileSync(path.join(__dirname,'../src/kitchen-audio-controls.js'),'utf8'));await new Promise(r=>setImmediate(r));
- assert.equal(typeof d.getElementById('kitchenTalk').onpointerdown,'function','recording remains wired with the single save button');
+ assert.equal(typeof d.getElementById('kitchenTalk').onclick,'function','recording remains wired with the single save button');
  assert.equal(d.querySelector('.sound-diagnostics').open,false);assert.equal(d.querySelector('.sound-speaker button').textContent,'Test');
  d.getElementById('kitchenAudioVolume').value=.45;d.getElementById('kitchenAudioVolume').dispatchEvent(new w.Event('input'));assert.equal(d.getElementById('kitchenVolumeValue').textContent,'45%');
  w.electronAPI.kitchenAudio.status=async()=>({jobs:[{kind:'voice',complete:false,targets:[{label:'Kitchen',status:'Unsupported source'}]}]});await poll();assert.match(d.getElementById('kitchenPlaybackSummary').textContent,/needs attention/);assert.match(d.getElementById('kitchenAudioJobs').textContent,/Unsupported source/);

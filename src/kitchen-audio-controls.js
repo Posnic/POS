@@ -6,7 +6,9 @@
   const host = document.getElementById('kitchenAudioOutputs');
   if (!host) return;
   const status = document.getElementById('kitchenAudioStatus');
+  const friendlyError = e => String(e?.message || e || 'Kitchen audio is unavailable.').replace(/^Error invoking remote method '[^']+': (?:Error: )?/, '');
   let saved = await settings.get();
+  let updateRecordingState = () => {};
   const volume = document.getElementById('kitchenAudioVolume'),
     enabled = document.getElementById('kitchenTalkEnabled'),
     branch = document.getElementById('kitchenAudioBranch');
@@ -65,7 +67,7 @@
           const r = await bridge.test(d.id);
           status.textContent = 'Speaker test queued.';
         } catch (e) {
-          status.textContent = e.message;
+          status.textContent = friendlyError(e);
         }
       };
       row.append(label, test);
@@ -73,6 +75,7 @@
     }
     if (!list.length)
       host.textContent = 'No audio outputs found. Connect your speaker and refresh.';
+    updateRecordingState();
   }
   async function save() {
     const outputs = [...host.querySelectorAll('input:checked')].map((cb) => ({
@@ -97,112 +100,135 @@
     saved = await settings.get();
     window.dispatchEvent(new CustomEvent('kitchen-audio-saved'));
     status.textContent = 'Settings saved for new messages.';
+    updateRecordingState();
     return true;
   }
   window.saveKitchenAudioSettings=save;
   document.getElementById('soundTab').addEventListener('change', () => {
     document.getElementById('kitchenSoundSaveResult').textContent = 'Unsaved changes';
+    updateRecordingState();
   });
   document.getElementById('kitchenAudioRefresh').onclick = () =>
-    refresh().catch((e) => (status.textContent = e.message));
+    refresh().catch((e) => (status.textContent = friendlyError(e)));
   await refresh();
   const button = document.getElementById('kitchenTalk');
-  let busy = false,
-    held = false,
-    session,
-    recorder,
-    stream,
-    limit,
-    cancelled = false;
+  const preview = document.getElementById('kitchenTalkPreview');
+  const send = document.getElementById('kitchenTalkSend');
+  const discard = document.getElementById('kitchenTalkDiscard');
+  const timer = document.getElementById('kitchenTalkTimer');
+  const setup = document.getElementById('kitchenTalkSetup');
+  function recordingBlocker() {
+    if (!enabled.checked) return 'Voice messages are off. Turn on Allow voice messages below, then choose Save changes.';
+    const selected = [...host.querySelectorAll('input:checked')].map(cb => cb.dataset.id).sort();
+    if (!selected.length) return 'Select a kitchen speaker below, then choose Save changes.';
+    if (!saved.talkEnabled || JSON.stringify(selected) !== JSON.stringify((saved.outputs || []).map(o => o.id).sort()))
+      return 'Save changes below to apply your choices before recording.';
+    return '';
+  }
+  let busy = false, recorder, stream, session, draft, uploadId, limit, ticker,
+    started = 0, generation = 0, cancelled = false;
+  function renderMessage() {
+    const recording = recorder?.state === 'recording';
+    button.hidden = !!draft;
+    const blocker = recordingBlocker();
+    setup.textContent = blocker;
+    setup.hidden = !blocker;
+    button.disabled = busy || (!recording && !!blocker);
+    button.textContent = recording ? 'Stop recording' : 'Record message';
+    button.dataset.recording = String(recording);
+    timer.hidden = !recording;
+    preview.hidden = !draft;
+    send.hidden = discard.hidden = !draft;
+    send.disabled = busy || !!blocker;
+    discard.disabled = busy;
+  }
   function stop(cancel = false) {
-    held = false;
     cancelled = cancelled || cancel;
     clearTimeout(limit);
-    if (recorder?.state === 'recording') recorder.stop();
-    else if (session) bridge.cancel(session.id).catch(() => {});
-    button.textContent = 'Hold to talk';
-    button.dataset.recording = 'false';
+    clearInterval(ticker);
+    if (recorder?.state === 'recording') { busy = true; renderMessage(); recorder.stop(); }
+    stream?.getTracks().forEach(t => t.stop());
   }
-  button.onpointerdown = async (e) => {
+  button.onclick = async () => {
     if (busy) return;
+    if (recorder?.state === 'recording') { stop(); return; }
+    if (recordingBlocker()) { renderMessage(); return; }
     busy = true;
-    held = true;
     cancelled = false;
-    if (e.pointerId !== null) button.setPointerCapture(e.pointerId);
+    const current = ++generation;
+    renderMessage();
+    status.textContent = 'Opening microphone…';
     try {
+      saved = await settings.get();
+      if (recordingBlocker()) { renderMessage(); return; }
       session = await bridge.start();
-      if (!held) {
-        await bridge.cancel(session.id);
-        busy = false;
-        return;
-      }
+      if (current !== generation) { await bridge.cancel(session.id); return; }
       stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      if (!held) {
-        stream.getTracks().forEach((t) => t.stop());
-        await bridge.cancel(session.id);
-        busy = false;
-        return;
-      }
+      if (current !== generation) { stop(true); await bridge.cancel(session.id); return; }
       const parts = [];
       recorder = new MediaRecorder(stream, { audioBitsPerSecond: 32000 });
-      recorder.ondataavailable = (e) => {
-        if (e.data.size) parts.push(e.data);
-      };
+      recorder.ondataavailable = e => { if (e.data.size) parts.push(e.data); };
+      recorder.onerror = () => { status.textContent = 'Recording failed. Please try again.'; stop(true); };
       recorder.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
+        busy = true;
+        stream.getTracks().forEach(t => t.stop());
+        clearTimeout(limit); clearInterval(ticker);
+        renderMessage();
         try {
-          if (cancelled) return await bridge.cancel(session.id);
+          // Listening to a draft must not pause the shared kitchen speaker queue.
+          await bridge.cancel(session.id);
+          if (cancelled || current !== generation) return;
           const blob = new Blob(parts, { type: recorder.mimeType });
+          if (!blob.size || blob.size > 1000000) throw Error('Recording failed. Please record again.');
           const data = await new Promise((resolve, reject) => {
-            const r = new FileReader();
-            r.onload = () => resolve(r.result);
-            r.onerror = reject;
-            r.readAsDataURL(blob);
+            const reader = new FileReader(); reader.onload = () => resolve(reader.result);
+            reader.onerror = reject; reader.readAsDataURL(blob);
           });
-          if (cancelled) return await bridge.cancel(session.id);
-          await bridge.voice(session.id, data);
-          status.textContent = 'Voice message queued for the kitchen.';
-        } catch (e) {
-          status.textContent = e.message;
-        } finally {
-          session = null;
-          recorder = null;
-          busy = false;
-        }
+          if (cancelled || current !== generation) return;
+          draft = data; uploadId = null; preview.src = draft;
+          status.textContent = 'Listen to your message, then send or discard.';
+        } catch (e) { status.textContent = friendlyError(e); }
+        finally { session = null; recorder = null; busy = false; renderMessage(); }
       };
-      recorder.onerror = () => {
-        status.textContent = 'Microphone recording failed.';
-        stop(true);
-      };
-      recorder.start();
-      button.textContent = 'Recording — release to send';
-      button.dataset.recording = 'true';
+      recorder.start(); started = Date.now(); timer.textContent = '0:00';
+      ticker = setInterval(() => { timer.textContent = '0:' + String(Math.floor((Date.now()-started)/1000)).padStart(2,'0'); }, 250);
       limit = setTimeout(() => stop(), 30000);
+      status.textContent = 'Recording… Tap Stop when finished.';
     } catch (e) {
-      status.textContent = e.message;
+      status.textContent = friendlyError(e);
       stop(true);
-      if (stream) stream.getTracks().forEach((t) => t.stop());
-      busy = false;
-    }
+      if (session) await bridge.cancel(session.id).catch(() => {});
+      session = null;
+    } finally { busy = false; renderMessage(); }
   };
-  button.onkeydown = (e) => {
-    if (e.code === 'Space' && !e.repeat) {
-      e.preventDefault();
-      button.onpointerdown({ pointerId: null });
-    }
+  send.onclick = async () => {
+    if (busy || !draft || recordingBlocker()) return;
+    busy = true; preview.pause(); renderMessage();
+    status.textContent = 'Sending message…';
+    try {
+      saved = await settings.get();
+      if (recordingBlocker()) return;
+      if (!uploadId) uploadId = (await bridge.start()).id;
+      // Retry an uncertain response with the same ID; never create a second broadcast.
+      await bridge.voice(uploadId, draft);
+      draft = null; uploadId = null; preview.removeAttribute('src');
+      status.textContent = 'Voice message queued for the kitchen.';
+    } catch (e) { status.textContent = friendlyError(e) + ' Your recording is kept here; retry Send.'; }
+    finally { busy = false; renderMessage(); }
   };
-  button.onkeyup = (e) => {
-    if (e.code === 'Space') {
-      e.preventDefault();
-      stop();
-    }
+  discard.onclick = () => {
+    if (busy) return;
+    preview.pause(); preview.removeAttribute('src'); draft = null;
+    if (uploadId) bridge.cancel(uploadId).catch(() => {});
+    uploadId = null; status.textContent = 'Recording discarded.'; renderMessage();
   };
-  button.onpointerup = () => stop();
-  button.onpointercancel = () => stop(true);
-  window.addEventListener('blur', () => {
-    if (recorder?.state === 'recording') stop(true);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+  window.addEventListener('pagehide', () => {
+    generation++; stop(true); preview.pause();
+    if (session) bridge.cancel(session.id).catch(() => {});
   });
-  window.addEventListener('pagehide', () => stop(true));
+  updateRecordingState = renderMessage;
+  renderMessage();
   const report = document.getElementById('kitchenAudioJobs');
   const summary = document.getElementById('kitchenPlaybackSummary');
   setInterval(async () => {
@@ -231,5 +257,5 @@
   }, 2000);
 })().catch((e) => {
   const status = document.getElementById('kitchenAudioStatus');
-  if (status) status.textContent = e.message;
+  if (status) status.textContent = friendlyError(e);
 });

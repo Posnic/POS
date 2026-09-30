@@ -90,3 +90,17 @@ test('recommended layout resets confusing overrides only in the draft and preser
   assert.equal(message.config.branchId,'shop');assert.equal(message.config.orderSort,'oldest');
   assert.match(card.textContent,/Unsaved changes/);
 });
+
+test('portrait Full HD preview represents a 32 inch monitor without changing the connected display', t => {
+  const {w,d,html}=setup(t);
+  w.eval('var screenState={displays:[],branches:[]};'+html.slice(html.indexOf('        function esc(t)'),html.indexOf('        function numOr')));
+  w.screenState.displays=[{id:7,widthPx:2560,heightPx:1440,scaleFactor:1,config:{diagonalInches:32},fit:{}}];w.drawScreens();
+  const card=d.querySelector('.hw-screen-card'),frame=card.querySelector('iframe');let message;
+  frame.contentWindow.postMessage=value=>message=value;
+  const orientation=d.getElementById('hw-preview-orientation-7');orientation.value='portrait';orientation.dispatchEvent(new w.Event('change',{bubbles:true}));
+  const resolution=d.getElementById('hw-preview-resolution-7');resolution.value='1920x1080';resolution.dispatchEvent(new w.Event('change',{bubbles:true}));
+  assert.equal(frame.style.width,'1080px');assert.equal(frame.style.height,'1920px');
+  assert.equal(message.config._previewScenario,'busy');assert.equal(message.config.diagonalInches,32);
+  assert.match(card.textContent,/40 × 71 cm/);assert.doesNotMatch(card.querySelector('.hw-screen-actions').textContent,/Unsaved/);
+  assert.equal(w.screenState.displays[0].widthPx,2560);
+});

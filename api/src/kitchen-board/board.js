@@ -97,6 +97,98 @@
     }
     return data;
   }
+  let voicePanel,
+    voiceAudio,
+    voiceRequest = 0,
+    voiceFocus,
+    voiceSiblings = [];
+  function closeVoice() {
+    voiceRequest++;
+    voiceAudio?.pause();
+    voicePanel?.remove();
+    for (const [element, wasInert] of voiceSiblings) element.inert = wasInert;
+    voiceSiblings = [];
+    if (voiceFocus?.isConnected) voiceFocus.focus();
+    voicePanel = null;
+    voiceAudio = null;
+  }
+  function openVoice(ticket) {
+    closeVoice();
+    voiceFocus = document.activeElement;
+    const panel = node('section', 'order-voice-dialog');
+    voicePanel = panel;
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-label', 'Order voice messages');
+    panel.append(
+      node(
+        'h2',
+        '',
+        ticket.table ? 'Table ' + ticket.table + ' · Voice messages' : 'Order voice messages'
+      )
+    );
+    const close = node('button', '', 'Close');
+    close.onclick = closeVoice;
+    panel.append(close);
+    const select = node('select', 'voice-note-choice');
+    select.setAttribute('aria-label', 'Choose a recording');
+    for (const [index, note] of ticket.voiceNotes.entries()) {
+      const option = node('option', '', 'Message ' + (index + 1) + ' · ' + time(note.created));
+      option.value = note.id;
+      select.append(option);
+    }
+    select.value = ticket.voiceNotes[ticket.voiceNotes.length - 1].id;
+    const audio = document.createElement('audio');
+    voiceAudio = audio;
+    audio.controls = true;
+    const status = node('p', '', '');
+    status.setAttribute('role', 'status');
+    const play = async () => {
+      const generation = ++voiceRequest;
+      audio.pause();
+      audio.removeAttribute('src');
+      status.textContent = 'Loading recording…';
+      try {
+        const result = await request(
+          '/api/kitchen/voice/' +
+            encodeURIComponent(ticket.saleId) +
+            '/' +
+            encodeURIComponent(select.value)
+        );
+        if (generation !== voiceRequest) return;
+        audio.src = result.data;
+        status.textContent = 'Replay on this screen only.';
+        try {
+          await audio.play();
+        } catch (_) {
+          status.textContent = 'Press Play to hear this recording.';
+        }
+      } catch (e) {
+        if (generation === voiceRequest) status.textContent = e.message;
+      }
+    };
+    select.onchange = play;
+    panel.append(select, audio, status);
+    panel.onkeydown = (e) => {
+      if (e.key === 'Escape') closeVoice();
+      if (e.key === 'Tab') {
+        const focusable = [close, select, audio],
+          index = focusable.indexOf(document.activeElement);
+        if ((e.shiftKey && index <= 0) || (!e.shiftKey && index === focusable.length - 1)) {
+          e.preventDefault();
+          focusable[e.shiftKey ? focusable.length - 1 : 0].focus();
+        }
+      }
+    };
+    voiceSiblings = [...document.body.children].map((element) => [element, element.inert]);
+    voiceSiblings.forEach(([element]) => {
+      element.inert = true;
+    });
+    document.body.append(panel);
+    close.focus();
+    void play();
+  }
+  window.addEventListener('pagehide', closeVoice);
   function render() {
     if (
       gesture ||
@@ -150,6 +242,16 @@
         }
         top.append(table, node('span', 'arrival', time(ticket.placedAt)));
         card.append(top);
+        if (ticket.voiceNotes?.length) {
+          const voice = node(
+            'button',
+            'order-voice-play',
+            '▶ Voice (' + ticket.voiceNotes.length + ')'
+          );
+          voice.type = 'button';
+          voice.onclick = () => openVoice(ticket);
+          card.append(voice);
+        }
         if (ticket.outlet || ticket.roomReference)
           card.append(
             node(
@@ -202,18 +304,18 @@
             waiting = Math.max(0, ready - collected),
             picked = Math.max(0, collected - served);
           const progress = node('div', 'item-progress');
-          if (cooking)
-            progress.append(
-              node(
-                'span',
-                'progress-cooking',
-                `${cooking} ${stage === 'new' ? 'To prepare' : 'Cooking'}`
-              )
-            );
-          if (waiting)
-            progress.append(node('span', 'progress-ready', `✓ ${waiting} Ready to collect`));
-          if (picked) progress.append(node('span', 'progress-picked', `↗ ${picked} Picked up`));
-          li.append(progress);
+          function badge(kind, symbol, quantity, label) {
+            const value = node('span', 'progress-' + kind, `${symbol} ${quantity}`);
+            value.setAttribute('role', 'img');
+            value.setAttribute('aria-label', `${quantity} ${label}`);
+            value.title = `${quantity} ${label}`;
+            return value;
+          }
+          if (cooking) progress.append(badge('cooking', '◷', cooking, stage === 'new' ? 'To prepare' : 'Cooking'));
+          if (waiting) progress.append(badge('ready', '✓', waiting, 'Ready to collect'));
+          if (picked) progress.append(badge('picked', '↗', picked, 'Collected, not yet served'));
+          if (served) progress.append(badge('served', '✓✓', served, 'Served'));
+          li.querySelector('.name').append(progress);
           if (!cooking) li.classList.add(waiting ? 'line-ready' : 'line-picked');
           if (item.collectorName && collected > served)
             li.append(node('span', 'note', 'Collected by ' + item.collectorName));
@@ -227,7 +329,7 @@
             input.step = 'any';
             input.value = String(Math.min(1, total - ready));
             input.setAttribute('aria-label', 'Quantity ready: ' + item.name);
-            const b = node('button', 'item-ready', 'Ready');
+            const b = node('button', 'item-ready', '✓ Ready');
             b.disabled = !online || mutating;
             b.onclick = () => {
               const quantity = Number(input.value);
