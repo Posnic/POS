@@ -192,4 +192,40 @@ async function applySales(req) {
   const source = await verify(original._id, projection.source, 'source');
   return { ...prepared, source, destination };
 }
-module.exports = { preview, reserve, prepareDestination, cancel, beginCommit, applySales };
+async function complete(req) {
+  const prepared = await reserve(req), c = await scope(req), { journal } = prepared;
+  if (journal.stage === 'completed') {
+    if (!journal.result) fail('Reconcile this transfer before continuing.', 409);
+    await restructure.complete(req.db, c, journal.requestId, journal.actor);
+    return journal.result;
+  }
+  const applied = await applySales(req);
+  const sourceClosed = applied.projection.source.items.every(line => !line || line.return || line.cancelled ||
+    ['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) ||
+    !(Number(line.quantity ?? line.item_quantity ?? line.qty) > 0));
+  if (sourceClosed) {
+    const collection = req.db.collection('sales');
+    await collection.updateOne({ _id: applied.source._id, branch_id: c.branchId, license: c.license,
+      captain_payment_plan: journal._id,
+      $or: [{ floor_closed_at: { $exists: false } }, { floor_closed_transfer_id: journal._id }],
+    }, { $set: { floor_closed_at: journal.createdAt, floor_closed_by: journal.actor,
+      floor_closed_transfer_id: journal._id } });
+    if (!await collection.findOne({ _id: applied.source._id, branch_id: c.branchId, license: c.license,
+      captain_payment_plan: journal._id, floor_closed_transfer_id: journal._id, floor_closed_at: journal.createdAt }))
+      fail('Reconcile the transferred source before continuing.', 409);
+    // Older checks have no seating claim to release. Closing just that check
+    // removes it from floor occupancy without changing another guest's table.
+    if (applied.source.seating_request_id)
+      await seating.release(req.db, c, applied.source.seating_request_id, { transferId: journal._id });
+  }
+  const result = { requestId: journal.requestId, sourceId: String(applied.source._id),
+    destinationId: String(applied.destination._id), sourceClosed, state: 'completed' };
+  await req.db.collection('captain_payment_plans').updateOne({ _id: journal._id,
+    branch_id: c.branchId, license: c.license, stage: 'applying',
+  }, { $set: { result } });
+  const recorded = await restructure.read(req.db, c, journal.requestId, journal.actor);
+  if (!isDeepStrictEqual(recorded.result, result)) fail('Reconcile this transfer before continuing.', 409);
+  await restructure.complete(req.db, c, journal.requestId, journal.actor);
+  return result;
+}
+module.exports = { preview, reserve, prepareDestination, cancel, beginCommit, applySales, complete };

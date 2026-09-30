@@ -64,6 +64,78 @@ async function confirmation() {
   input.body.requestId = 'transfer-confirmation-0001';
   return input;
 }
+test.each([1, 2])('complete transfer of %s items releases both sale fences and closes only an empty source', async quantity => {
+  const input = await confirmation(); input.body.items[0].quantity = quantity;
+  const result = await service.complete(input);
+  expect(result).toMatchObject({ state: 'completed', sourceClosed: quantity === 2 });
+  const source = await db.collection('sales').findOne({ _id: sale._id });
+  const destination = await db.collection('sales').findOne({ _id: new ObjectId(result.destinationId) });
+  expect(source.captain_payment_plan).toBeUndefined();
+  expect(destination.captain_payment_plan).toBeUndefined();
+  expect(!!source.floor_closed_at).toBe(quantity === 2);
+  expect(destination.floor_closed_at).toBeUndefined();
+  expect(destination.items[0].item_quantity).toBe(quantity);
+  await db.collection('sales').updateOne({ _id: destination._id }, { $set: { notes: 'Later staff edit' } });
+  expect(await service.complete(input)).toEqual(result);
+  expect((await db.collection('sales').findOne({ _id: destination._id })).notes).toBe('Later staff edit');
+  expect(await db.collection('sales').countDocuments()).toBe(2);
+});
+test('completed journal retries fence cleanup after its acknowledgement is lost', async () => {
+  const input = await confirmation(), original = restructure.complete;
+  let interrupted = false;
+  jest.spyOn(restructure, 'complete').mockImplementation(async (...args) => {
+    const answer = await original(...args);
+    if (!interrupted) { interrupted = true; throw new Error('Completion acknowledgement lost'); }
+    return answer;
+  });
+  await expect(service.complete(input)).rejects.toThrow('Completion acknowledgement lost');
+  const result = await service.complete(input);
+  expect(result.state).toBe('completed');
+  expect(await db.collection('sales').countDocuments({ captain_payment_plan: { $exists: true } })).toBe(0);
+  expect(await db.collection('sales').countDocuments()).toBe(2);
+});
+test('a completed journal with interrupted lock cleanup clears its locks on retry', async () => {
+  const input = await confirmation(), original = db.collection.bind(db);
+  let interrupted = false;
+  jest.spyOn(db, 'collection').mockImplementation((name, ...rest) => {
+    const collection = original(name, ...rest);
+    if (name !== 'sales') return collection;
+    return new Proxy(collection, { get(target, property) {
+      if (property === 'updateMany') return async (...args) => {
+        if (args[1].$unset?.captain_payment_plan !== undefined && !interrupted) {
+          interrupted = true;
+          throw new Error('Lock cleanup interrupted');
+        }
+        return target.updateMany(...args);
+      };
+      const value = target[property]; return typeof value === 'function' ? value.bind(target) : value;
+    } });
+  });
+  await expect(service.complete(input)).rejects.toThrow('Lock cleanup interrupted');
+  expect((await original('captain_payment_plans').findOne({})).stage).toBe('completed');
+  expect(await original('sales').countDocuments({ captain_payment_plan: { $exists: true } })).toBe(2);
+  expect((await service.complete(input)).state).toBe('completed');
+  expect(await original('sales').countDocuments({ captain_payment_plan: { $exists: true } })).toBe(0);
+});
+test('full transfer releases a claimed source without marking an occupied shared table for cleaning', async () => {
+  const sourceTable = new ObjectId();
+  await db.collection('branches').updateOne({ _id: branch }, { $set: { table_order_limit: 0 } });
+  await db.collection('tableorder').insertOne({ _id: sourceTable, branch_id: branch, license,
+    tableorder_value: '1', capacity: 6, max_capacity: 6 });
+  const claim = await seating.reserve(db, { branchId: branch, license }, { request_id: 'source-seating-0001',
+    actor: 'source-staff', table_ids: [String(sourceTable)], primary_id: String(sourceTable), guests: 2 });
+  await seating.bind(db, { branchId: branch, license }, claim.id, claim.actor, String(sale._id));
+  await db.collection('sales').updateOne({ _id: sale._id }, { $set: { seating_request_id: claim.id, person_count: 2 } });
+  const neighbour = { ...sale, _id: new ObjectId(), person_count: 1 };
+  await db.collection('sales').insertOne(neighbour);
+  const input = await confirmation(); input.body.items[0].quantity = 2;
+  const result = await service.complete(input);
+  expect(result.sourceClosed).toBe(true);
+  expect((await seating.find(db, { branchId: branch, license }, claim.id)).state).toBe('released');
+  expect((await db.collection('tableorder').findOne({ _id: sourceTable })).service_state).toBeUndefined();
+  expect((await db.collection('sales').findOne({ _id: neighbour._id })).floor_closed_at).toBeUndefined();
+  expect(await service.complete(input)).toEqual(result);
+});
 test('two-sale projection conserves money and items and remains fenced for finalization', async () => {
   const input = await confirmation();
   await db.collection('sales').updateOne({ _id: sale._id }, { $set: {

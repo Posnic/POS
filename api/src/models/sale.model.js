@@ -343,6 +343,7 @@ const saleSchema = new mongoose.Schema(
     seating_primary_id: { type: String },
     seating_table_ids: { type: [String], default: undefined },
     floor_closed_at: { type: Date },
+    floor_closed_transfer_id: { type: String },
     floor_closed_by: { type: String },
     sale_process: {
       type: String,
