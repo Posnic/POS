@@ -94,7 +94,9 @@ stops automatic updates for everyone, with no error anywhere.
    and size of all six files. Dispatch `windows-release-verify.yml` from main
    with the tag, source commit and locally checked manifest SHA-256. It verifies
    the files and records verification provenance; it does not claim a hosted
-   Windows build. Verify those attestations using VERIFY_RELEASE.md and merge
+   Windows build. Verify those attestations using the explicit Windows custom
+   predicate type in VERIFY_RELEASE.md (the default SLSA predicate is for the
+   hosted macOS/Linux builds) and merge
    all Windows file checksums into the release's SHA256SUMS.txt before publishing.
 
 8. **Update the download page.** `download.html` in the `web-frontend` repository

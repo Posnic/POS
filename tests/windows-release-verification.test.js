@@ -84,3 +84,12 @@ test('provenance explicitly identifies verification rather than a hosted build',
   assert.match(result.buildDefinition.externalParameters.scope, /not a GitHub-hosted build/);
   assert.equal(result.buildDefinition.resolvedDependencies[0].digest.gitCommit, f.manifest.sourceCommit);
 });
+
+test('hosted verifier and user instructions use the supported custom predicate type', () => {
+  const workflow = fs.readFileSync(path.join(__dirname, '../.github/workflows/windows-release-verify.yml'), 'utf8');
+  const guide = fs.readFileSync(path.join(__dirname, '../docs/VERIFY_RELEASE.md'), 'utf8');
+  const type = 'https://posnic.com/attestations/windows-release-verification/v1';
+  assert.ok(workflow.includes(`predicate-type: ${type}`));
+  assert.ok(guide.includes(`--predicate-type ${type}`));
+  assert.ok(!workflow.includes('predicate-type: https://slsa.dev/provenance/v1'));
+});
