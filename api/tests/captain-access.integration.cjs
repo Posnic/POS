@@ -547,3 +547,53 @@ test('paired Captain can preview an edit over HTTP without modifying the sale', 
   await db.collection('sales').updateOne({ _id: id }, { $set: { branch_id: new ObjectId() } });
   assert.equal((await fetch(url, { method: 'POST', headers, body })).status, 404);
 });
+
+
+test('paired Captain reaches bill, kitchen and guest recovery routes with scoped audio ownership', async () => {
+  const { grant } = await paired();
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  const call = (path, body) => fetch(base + '/captain/v1/' + path, { method: body ? 'POST' : 'GET', headers,
+    ...(body ? { body: JSON.stringify(body) } : {}) });
+  const order = { branch_id: branch._id, license: branch.license, sale_process: 'KOT', payment_status: 'Unpaid',
+    table_number: 'ROUTE-BILL', sales_total: 10, sales_sub_total: 10,
+    items: [{ item_name: 'Tea', item_quantity: 1, item_base_price: 10 }] };
+  await db.collection('sales').insertOne(order);
+  const bill = await call('bill?table=ROUTE-BILL');
+  assert.equal(bill.status, 200, await bill.clone().text());
+  assert.equal((await bill.json()).totalMinor, 1000);
+  const ready = await call('kitchen-ready');
+  assert.equal(ready.status, 200, await ready.clone().text());
+  const guest = await call('tables/guests/status', { request_id: 'missing-guest-request-1234' });
+  assert.equal(guest.status, 200);
+  assert.equal((await guest.json()).state, 'unknown');
+  // Malformed mutations reach their own validation, never mutate a sale.
+  for (const path of ['tables/guests', 'kitchen-ready']) {
+    const response = await call(path, {});
+    assert.equal(response.status, path === 'kitchen-ready' ? 400 : 422, await response.clone().text());
+  }
+  // A paired device still needs the staff member's merge permission.
+  for (const path of ['tables/merge/prepare', 'tables/transfer/preview']) {
+    const response = await call(path, {});
+    assert.equal(response.status, 403);
+    assert.notEqual((await response.json()).error.code, 'CAPTAIN_SCOPE');
+  }
+  const events = [];
+  const listener = (event, reply) => { events.push(event); reply(null, { accepted: true }); };
+  process.on('posnic:kitchen-audio', listener);
+  try {
+    for (const action of ['start', 'cancel', 'voice', 'status']) {
+      const response = await call('kitchen-audio/' + action, { id: 'recording-test', owner: 'forged', branchId: 'forged' });
+      assert.equal(response.status, 200, await response.clone().text());
+    }
+    assert.equal(events.length, 4);
+    for (const event of events) {
+      assert.equal(event.branchId, String(branch._id));
+      assert.equal(event.owner, String(branch.license) + ':' + String(staff._id));
+    }
+  } finally { process.removeListener('posnic:kitchen-audio', listener); }
+  for (const path of ['kitchen-audio/delete', 'tables/transfer/commit', 'tables/merge/delete', 'pair-codes']) {
+    const response = await call(path, {});
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).error.code, 'CAPTAIN_SCOPE');
+  }
+});
