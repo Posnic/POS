@@ -57,6 +57,23 @@ edit("codemeta.json", [
   [/^(\s*"softwareVersion":\s*")[^"]+(")/m, `$1${version}$2`],
 ]);
 
+edit("codemeta.json", [[/("releaseNotes":\s*")[^"]+("\s*,?)/, `$1https://github.com/Posnic/POS/releases/tag/v${version}$2`]]);
+edit("frontend/login.html", [[/("softwareVersion":\s*")[^"]+(")/, `$1${version}$2`]]);
+for (const file of ["package-lock.json", "api/package-lock.json"]) {
+  edit(file, [
+    [/^(  "version":\s*")[^"]+(")/m, `$1${version}$2`],
+    [/^(      "version":\s*")[^"]+(")/m, `$1${version}$2`],
+  ]);
+}
+const citation = fs.readFileSync(path.join(ROOT, "CITATION.cff"), "utf8");
+const releaseDate = /^date-released:\s*(\d{4}-\d{2}-\d{2})$/m.exec(citation)?.[1];
+if (!releaseDate) throw new Error("CITATION.cff must specify the release date");
+edit("builds/linux/com.posnic.app.metainfo.xml", [[
+  /(<releases>\s*)(<release version="([^"]+)" date="[^"]+"\s*\/>)/,
+  (_match, prefix, existing, previousVersion) => prefix + `<release version="${version}" date="${releaseDate}"/>` +
+    (previousVersion === version ? "" : "\n    " + existing),
+]]);
+
 edit("CITATION.cff", [[/^(version:\s*).+$/m, `$1${version}`]]);
 
 /*
