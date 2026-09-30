@@ -142,6 +142,16 @@ describe('SalesRepository', () => {
     expect(result.data.orders[0]).toMatchObject({created_date:created,updated_date:updated,seating_request_id:doc.seating_request_id,seating_primary_id:'table-1',seating_table_ids:['table-1','table-2']});
   });
 
+  test('history exposes the tracked transfer discount and preservation capability',async()=>{
+    const doc={_id:FAKE_ID,extra_discount:0,sale_extra_discount:0,items:[{item_id:FAKE_ITEM,item_name:'Corn',item_quantity:1,item_base_price:100}]};
+    const side={lines:[{lineKey:FAKE_ITEM,quantity:1,amountMinor:9000,billDiscountMinor:1000,
+      components:[{key:'base',minor:10000},{key:'discount',minor:-1000}]}],components:{base:10000,discount:-1000},totalMinor:9000};
+    require('../../../src/services/captain-transfer-projection').applyMoney(doc,doc,{currencyCode:'INR'},side);
+    const result=await salesRepository.getOrderHistoryModel(FAKE_BRANCH,50,1,'pending',FAKE_ID,{SaleModel:{find:()=>createQueryMock([doc])}});
+    expect(result.data.orders[0]).toMatchObject({transfer_allocated:true,extra_discount:10,extra_discount_type:'amount',total_amount:90});
+    expect(doc.extra_discount).toBe(0);
+  });
+
   describe('myDayModel complete totals', () => {
     test('counts every sale after 300 while limiting only the recent list', async () => {
       const docs = Array.from({ length: 325 }, (_, i) => ({ _id: String(i), sales_total: 10, table_number: 'T1' }));
