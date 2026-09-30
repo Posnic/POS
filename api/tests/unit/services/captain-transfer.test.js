@@ -634,3 +634,73 @@ test('ordinary editor replaces, retries and clears an allocated bill discount wi
     expect(snapshotFrom([result],{currencyCode:'INR'},result.table_number).totalMinor).toBe(Math.round(total*100));
   }
 });
+
+test('combined item and discount edits conserve existing amounts across retry, reduction and replacement',async()=>{
+  const input=await confirmation(),completed=await service.complete(input),id=new ObjectId(completed.destinationId),soup=new ObjectId();
+  await db.collection('items').insertMany([
+    {_id:sale.items[0].item_id,license,name:'Corn',tax:5,tax_type:'exclusive'},
+    {_id:soup,license,name:'Soup',tax:10,tax_type:'exclusive'}
+  ]);
+  jest.spyOn(BaseModel,'getDb').mockResolvedValue(db);
+  const apply=async(corn,soups,discount=null,type=null)=>{
+    const items=[{product_id:String(sale.items[0].item_id),quantity:corn,price:50}];
+    if(soups)items.push({product_id:String(soup),quantity:soups,price:20});
+    const answer=await runWithRequestContext({license,currentBranch:branch,loggedUser:String(input.user._id)},()=>
+      sales.updateOrderModel(String(id),items,0,'modified',type,discount,'Customer requested',null,null,null));
+    expect(answer).toMatchObject({status:true});
+    return db.collection('sales').findOne({_id:id});
+  };
+  expect((await apply(1,0,10,'amount')).sales_total).toBe(42.5);
+  const combined=await apply(2,1,10,'percent');
+  expect(combined.sales_total).toBe(115);
+  expect(combined.tax).toBe(7);
+  const retry=await apply(2,1,10,'percent');
+  expect(retry.sales_total).toBe(115);
+  expect(retry.changes).toEqual(combined.changes);
+  const reduced=await apply(1,1);
+  expect(reduced.sales_total).toBe(67.46);
+  expect(reduced.tax).toBe(4.5);
+  expect(require('../../../src/services/captain-transfer-discount').editorValue(reduced).extra_discount).toBe(7.04);
+  const replaced=await apply(1,1,5,'amount');
+  expect(replaced.sales_total).toBe(69.5);
+  expect(replaced.tax).toBe(4.5);
+  expect(snapshotFrom([replaced],{currencyCode:'INR'},replaced.table_number).totalMinor).toBe(6950);
+  const changes=replaced.changes.flatMap(change=>change.items);
+  expect(changes.filter(item=>item.process==='add').map(item=>item.item_quantity)).toEqual([1,1]);
+  expect(changes.filter(item=>item.process==='cancel').map(item=>item.item_quantity)).toEqual([1]);
+});
+
+
+test('internal item preview matches the eventual save and performs no database writes',async()=>{
+  const input=await confirmation(),completed=await service.complete(input),id=new ObjectId(completed.destinationId);
+  await db.collection('items').insertOne({_id:sale.items[0].item_id,license,name:'Corn',tax:5,tax_type:'exclusive'});
+  jest.spyOn(BaseModel,'getDb').mockResolvedValue(db);
+  const snapshot=async()=>{
+    const names=(await db.listCollections().toArray()).map(row=>row.name).sort();
+    return Promise.all(names.map(async name=>[name,await db.collection(name).find({}).sort({_id:1}).toArray()]));
+  };
+  const before=await snapshot();
+  const run=preview=>runWithRequestContext({license,currentBranch:branch,loggedUser:String(input.user._id)},()=>
+    sales.updateOrderModel(String(id),[{product_id:String(sale.items[0].item_id),quantity:2,price:50}],0,'modified','amount',10,'Customer requested',null,null,null,{preview}));
+  const projected=await run(true);
+  expect(projected).toMatchObject({status:true,data:{total_amount:95,tax:5}});
+  expect(projected.data.revision).toMatch(/^[a-f0-9]{64}$/);
+  expect(await snapshot()).toEqual(before);
+  expect(await run(false)).toMatchObject({status:true});
+  const saved=await db.collection('sales').findOne({_id:id});
+  expect(saved.sales_total).toBe(projected.data.total_amount);
+  expect(saved.tax).toBe(projected.data.tax);
+  expect(saved.items).toEqual(projected.data.items);
+});
+
+
+test('preview cannot invoke cancellation or change seating',async()=>{
+  jest.spyOn(BaseModel,'getDb').mockResolvedValue(db);
+  const before=await db.collection('sales').findOne({_id:sale._id});
+  for(const [status,table] of [['cancelled',null],['modified','2']]){
+    const result=await runWithRequestContext({license,currentBranch:branch},()=>
+      sales.updateOrderModel(String(sale._id),[],0,status,null,null,null,table,null,null,{preview:true}));
+    expect(result.status).toBe(false);
+  }
+  expect(await db.collection('sales').findOne({_id:sale._id})).toEqual(before);
+});

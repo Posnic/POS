@@ -10182,10 +10182,14 @@ class SalesRepository {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel, newTableId, seenAt, editPolicy } = {}
+    { SaleModel, newTableId, seenAt, editPolicy, preview = false } = {}
   ) {
     let finishCaptainEdit;
     try {
+      // Preview is an internal read-only calculation, never a cancellation or
+      // seating operation. Its HTTP adapter must supply authenticated scope.
+      if (preview && (status !== 'modified' || newTableNo != null || dineType != null || personCount != null || newTableId !== undefined))
+        throw new Error('Only item and discount changes can be previewed.');
       const db = await BaseModel.getDb();
       const salesCollection = db.collection('sales');
       const itemCollection = db.collection('items');
@@ -10199,6 +10203,10 @@ class SalesRepository {
       if (!orderDoc) {
         return { status: false, message: 'Order not found', data: [] };
       }
+
+      if (preview && (orderDoc.sale_process !== 'KOT' || orderDoc.payment_status !== 'Unpaid' ||
+          orderDoc.floor_closed_at || Object.prototype.hasOwnProperty.call(orderDoc,'captain_payment_plan')))
+        throw new Error('Order changed. Refresh before continuing.');
 
       if (status === 'cancelled' && String(orderDoc.sale_process).toLowerCase() === 'cancelled') {
         if (orderDoc.seating_request_id) {
@@ -10276,7 +10284,7 @@ class SalesRepository {
           return { status: false, message: 'Choose a table with enough seats.', data: null };
       }
 
-      finishCaptainEdit = await require('../services/captain-payment-guard').beginEdit(
+      if (!preview) finishCaptainEdit = await require('../services/captain-payment-guard').beginEdit(
         db,
         orderDoc
       );
@@ -10874,6 +10882,20 @@ class SalesRepository {
         if (!reconciled) throw new Error('Transferred item amounts need reconciliation before this edit can be saved.');
         for (const key of Object.keys(updateFields)) delete updateFields[key];
         Object.assign(updateFields, reconciled);
+      }
+
+      if (preview) {
+        // Detect an order change during catalogue reads without taking a lease.
+        const financialFields = Object.fromEntries(['sales_total','sales_sub_total','tax','discount','round_off',
+          'extra_discount','sale_extra_discount','extra_discount_type','captain_transfer_allocation']
+          .map(key=>[key,orderDoc[key] === undefined ? {$exists:false} : orderDoc[key]]));
+        if (!await salesCollection.findOne({...editFilter,...financialFields,payment_status:'Unpaid',sale_process:'KOT',
+          floor_closed_at:{$exists:false}}))
+          return { status: false, message: 'order_changed', data: [] };
+        return { status: true, data: { items: updateFields.items, subtotal: updateFields.sales_sub_total,
+          tax: updateFields.tax, discount: updateFields.discount,
+          total_amount: updateFields.sales_total, currency: monetary,
+          revision: require('node:crypto').createHash('sha256').update(JSON.stringify(orderDoc)).digest('hex') } };
       }
 
       const updateResult = await salesCollection.updateOne(editFilter, {
