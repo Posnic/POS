@@ -32,7 +32,9 @@ function view(row, orders = [], claim = null) {
       (!row.floor_close.completed ||
         (claim?.order_id && row.floor_close.orders.includes(claim.order_id)))
         ? { request_id: row.floor_close.id, orderIds: row.floor_close.orders }
-        : null,
+        : claim?.closing
+          ? { request_id: claim.closing.id, orderIds: claim.closing.orders }
+          : null,
     status: orders.length ? 'occupied' : claim ? 'held' : row.service_state || 'available',
     ...(claim
       ? {
@@ -258,6 +260,7 @@ async function close(req) {
       )
     )
       fail('Record the remaining payment first.', 409);
+    await seating.beginClose(req.db, c, ids, body.request_id);
     operation = {
       id: body.request_id,
       orders: ids,
@@ -281,6 +284,7 @@ async function close(req) {
     if (!claimed.matchedCount) fail('Table changed. Refresh and try again.', 409);
   }
   if (!operation.completed) {
+    await seating.beginClose(req.db, c, ids, body.request_id);
     // The saved intent survives a lost reply or an interrupted projection.
     // Payment and stock records are never changed by floor closure.
     await sales.updateMany(

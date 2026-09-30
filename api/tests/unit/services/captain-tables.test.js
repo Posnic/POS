@@ -342,17 +342,15 @@ test('interrupted group release remains retryable after the sale leaves active o
   });
   const orderId = new ObjectId();
   await seating.bind(db, scope, claim.id, String(user), String(orderId));
-  await db
-    .collection('sales')
-    .insertOne({
-      _id: orderId,
-      branch_id: branch,
-      license,
-      table_number: 'T1',
-      sale_process: 'KOT',
-      payment_status: 'Paid',
-      floor_lifecycle: true,
-    });
+  await db.collection('sales').insertOne({
+    _id: orderId,
+    branch_id: branch,
+    license,
+    table_number: 'T1',
+    sale_process: 'KOT',
+    payment_status: 'Paid',
+    floor_lifecycle: true,
+  });
   const body = {
     id: first.id,
     version: 0,
@@ -372,4 +370,58 @@ test('interrupted group release remains retryable after the sale leaves active o
       (table) => table.status === 'cleaning' && !table.closing
     )
   ).toBe(true);
+});
+
+test('close intent survives interruption before table write and is exposed for screen recovery', async () => {
+  const seating = require('../../../src/services/seating-claims');
+  const table = await service.update(req({ tableorder_value: 'T1', capacity: 4, max_capacity: 4 }));
+  const scope = { branchId: branch, license };
+  const claim = await seating.reserve(db, scope, {
+    request_id: 'seating-close-0001',
+    actor: String(user),
+    table_ids: [table.id],
+    primary_id: table.id,
+    guests: 2,
+  });
+  const id = new ObjectId();
+  await seating.bind(db, scope, claim.id, String(user), String(id));
+  await db
+    .collection('sales')
+    .insertOne({
+      _id: id,
+      branch_id: branch,
+      license,
+      table_number: 'T1',
+      seating_request_id: claim.id,
+      sale_process: 'KOT',
+      payment_status: 'Paid',
+      floor_lifecycle: true,
+    });
+  const body = {
+    id: table.id,
+    version: 0,
+    request_id: 'closing-request-0001',
+    orderIds: [String(id)],
+  };
+  const input = req(body),
+    tables = db.collection('tableorder');
+  input.db = {
+    collection(name) {
+      return name === 'tableorder'
+        ? {
+            findOne: (...args) => tables.findOne(...args),
+            updateOne: async () => {
+              throw new Error('interrupted');
+            },
+          }
+        : db.collection(name);
+    },
+  };
+  await expect(service.close(input)).rejects.toThrow('interrupted');
+  const pending = (await service.list(req())).tables[0];
+  expect(pending.closing).toEqual({ request_id: body.request_id, orderIds: body.orderIds });
+  await service.close(req({ ...body, version: pending.version }));
+  const closed = (await service.list(req())).tables[0];
+  expect(closed.status).toBe('cleaning');
+  expect(closed.closing).toBeNull();
 });
