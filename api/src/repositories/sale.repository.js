@@ -8880,16 +8880,17 @@ class SalesRepository {
       let insertResult;
       // Opt-in at the server dispatcher only after every table writer supports
       // the protocol. Old handsets need no new field to participate.
-      if (!seatingClaim && seatingProtocol && staffOrder && seatingTable) {
-        const actorId = kitchenActor().id;
-        if (!actorId) throw new Error('Sign in to reserve a table.');
+      if (!seatingClaim && seatingProtocol && seatingTable) {
+        if (!staffOrder && !idempotencyKey) throw new Error('An order request ID is required.');
         const requestKey =
-          'order-' +
+          (staffOrder ? 'order-' : 'customer-') +
           crypto
             .createHash('sha256')
             .update(String(idempotencyKey || crypto.randomUUID()))
             .digest('hex')
             .slice(0, 40);
+        const actorId = staffOrder ? kitchenActor().id : requestKey;
+        if (!actorId) throw new Error('Sign in to reserve a table.');
         seatingClaim = await seating.reserve(db, seatingScope, {
           request_id: requestKey,
           actor: actorId,
@@ -9948,7 +9949,8 @@ class SalesRepository {
       const { ObjectId } = require('mongodb');
       const Model = this.getModel(SaleModel);
 
-      if (!userId) return { total: 0, paid_total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
+      if (!userId)
+        return { total: 0, paid_total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
 
       const from = new Date(day);
       from.setHours(0, 0, 0, 0);
@@ -9969,11 +9971,15 @@ class SalesRepository {
       if (BaseModel.license) query.license = BaseModel.license;
 
       const docs = await Model.find(query)
-        .select('_id token_id sales_id sales_total total table_number created_date date sale_process payment_status order_state paid_amount partial_balance')
+        .select(
+          '_id token_id sales_id sales_total total table_number created_date date sale_process payment_status order_state paid_amount partial_balance'
+        )
         .sort({ created_date: -1, date: -1 })
         .lean();
-      const isCancelled = (doc) => [doc.sale_process, doc.payment_status, doc.order_state]
-        .some((value) => ['cancel', 'cancelled'].includes(String(value || '').toLowerCase()));
+      const isCancelled = (doc) =>
+        [doc.sale_process, doc.payment_status, doc.order_state].some((value) =>
+          ['cancel', 'cancelled'].includes(String(value || '').toLowerCase())
+        );
 
       const tables = new Map();
       let total = 0;
@@ -9990,10 +9996,14 @@ class SalesRepository {
         const amount = Number(doc.sales_total ?? doc.total ?? 0) || 0;
         total += amount;
         // This is the paid portion of these orders, not cash collected during this day.
-        const recordedPaid = String(doc.payment_status || '').toLowerCase() === 'paid'
-          ? amount
-          : Number(doc.paid_amount ?? doc.partial_balance ?? 0);
-        paidTotal += Math.min(Math.max(0, amount), Math.max(0, Number.isFinite(recordedPaid) ? recordedPaid : 0));
+        const recordedPaid =
+          String(doc.payment_status || '').toLowerCase() === 'paid'
+            ? amount
+            : Number(doc.paid_amount ?? doc.partial_balance ?? 0);
+        paidTotal += Math.min(
+          Math.max(0, amount),
+          Math.max(0, Number.isFinite(recordedPaid) ? recordedPaid : 0)
+        );
         orders += 1;
 
         /* A takeaway has no table and still has money in it, so it is a row
@@ -10094,11 +10104,13 @@ class SalesRepository {
           created_at: doc.created_date || doc.date,
           created_date: doc.created_date || doc.date,
           updated_date: doc.updated_date || doc.created_date || doc.date,
-          ...(doc.seating_request_id ? {
-            seating_request_id: doc.seating_request_id,
-            seating_primary_id: doc.seating_primary_id,
-            seating_table_ids: doc.seating_table_ids,
-          } : {}),
+          ...(doc.seating_request_id
+            ? {
+                seating_request_id: doc.seating_request_id,
+                seating_primary_id: doc.seating_primary_id,
+                seating_table_ids: doc.seating_table_ids,
+              }
+            : {}),
           assigned_staff: doc.assigned_staff,
           kitchen_rounds: require('../helpers/kitchen-rounds').rounds(doc),
           total_amount: doc.sales_total || doc.total || 0,

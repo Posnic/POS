@@ -303,3 +303,55 @@ test('concurrent old Captain retries share one claim and sale', async () => {
   expect(await seating.read(db, { branchId: branch, license })).toHaveLength(1);
   expect(await db.collection('sales').countDocuments({})).toBe(1);
 });
+
+test('customer table requests respect combined reservations without adopting staff identity', async () => {
+  const result = await submit(
+    { seating_request_id: undefined, person_count: 2, idempotencyKey: 'customer-held' },
+    null,
+    false,
+    true
+  );
+  expect(result.status).toBe(false);
+  expect(await db.collection('sales').countDocuments({})).toBe(0);
+});
+test('customer and Captain requests compete atomically for the same table', async () => {
+  await seating.cancel(db, { branchId: branch, license }, claim.id, actor);
+  const customer = () =>
+    submit(
+      { seating_request_id: undefined, person_count: 2, idempotencyKey: 'customer-one' },
+      null,
+      false,
+      true
+    );
+  const staff = () =>
+    submit(
+      { seating_request_id: undefined, person_count: 2, idempotencyKey: 'captain-one' },
+      actor,
+      true,
+      true
+    );
+  const results = await Promise.all([customer(), staff()]);
+  expect(results.filter((result) => result.status)).toHaveLength(1);
+  expect(await db.collection('sales').countDocuments({})).toBe(1);
+});
+test('customer retry after interrupted insert recovers the same bound order', async () => {
+  await seating.cancel(db, { branchId: branch, license }, claim.id, actor);
+  const send = () =>
+    submit(
+      { seating_request_id: undefined, person_count: 2, idempotencyKey: 'customer-retry' },
+      null,
+      false,
+      true
+    );
+  const insert = jest
+    .spyOn(repo, 'insertSaleWithFreshNumber')
+    .mockRejectedValueOnce(new Error('lost connection'));
+  expect((await send()).status).toBe(false);
+  insert.mockRestore();
+  const claims = await seating.read(db, { branchId: branch, license });
+  expect(claims).toHaveLength(1);
+  expect(claims[0].actor).toMatch(/^customer-/);
+  const result = await send();
+  expect(result.status).toBe(true);
+  expect(result.data.sale_id).toBe(claims[0].order_id);
+});
