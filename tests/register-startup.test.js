@@ -72,7 +72,7 @@ function registerScreen({ moduleOn = true, branchHasNoRegisters = 'false' } = {}
     },
     db: { currentregister: { put: (record) => { indexed.push(record); return Promise.resolve(); } } },
     window: { location: '' },
-    $: (selector) => ({ toggle() {}, show() { shown.push([selector, 'show']); }, hide() {},
+    $: (selector) => ({ val(value) { if (value !== undefined) state.set(selector, value); return state.get(selector); }, toggle() {}, show() { shown.push([selector, 'show']); }, hide() {},
       find() { return { remove() {} }; }, modal(action) { shown.push([selector, action]); } }),
   };
   const restore = users.slice(users.indexOf('    restoreRegisterSession: function'), users.indexOf('    selectedRegisterActiveBranchUser: function'));

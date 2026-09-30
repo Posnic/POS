@@ -876,6 +876,7 @@
     _applyPriceList: function (params) {
         if (params._priceListApplied) { return params; }
         params._priceListApplied = true;
+        if (PosnicPro.billingoutlets && (PosnicPro.billingoutlets.current || (PosnicPro.sales.EditRecentSaleParams && PosnicPro.sales.EditRecentSaleParams.outlet_snapshot))) return PosnicPro.billingoutlets.price(params);
         var catId = PosnicPro.sales._customerCategoryId;
         var lists = PosnicPro.sales._priceLists;
         if (!catId || !lists || !lists.length) { return params; }
@@ -1073,6 +1074,9 @@
                 price: params.selling_price,
                 image: params.image || 'item.svg'
             }, 'id');
+        }
+        if (billingWindowId && (!PosnicPro.billingoutlets || !PosnicPro.billingoutlets.current)) {
+            window.alert('Outlet settings are not ready. Open Billing outlets and retry.'); return;
         }
         // Price list first, so modifier deltas ride the customer's price.
         if (PosnicPro.sales.SaleAction !== 'return'
@@ -6550,6 +6554,7 @@ PosnicPro.sales.chargeTax = {
     },
     amountFor: function (c) {
         if (!c || c.taxed !== true) { return 0; }
+        if (c.source === 'outlet') return Number(c.tax_amount) || 0;
         return Math.round((Number(c.amount) || 0) * PosnicPro.sales.chargeTax.rate()) / 100;
     }
 };
@@ -6577,15 +6582,15 @@ PosnicPro.sales.renderCharges = function () {
     list.forEach(function (c, i) {
         // keep the payload fields current: the sale save sends these objects as-is
         c.tax_amount = PosnicPro.sales.chargeTax.amountFor(c);
-        c.tax_name = c.taxed === true ? PosnicPro.sales.chargeTax.taxName() : '';
+        if (c.source !== 'outlet') c.tax_name = c.taxed === true ? PosnicPro.sales.chargeTax.taxName() : '';
         html += '<div class="sale-charge-row"><span>' + $('<i>').text(c.name).html() + '</span>'
-            + (rate > 0
+            + (rate > 0 && c.source !== 'outlet'
                 ? '<a href="javascript:void(0)" class="sale-charge-tax badge ' + (c.taxed === true ? 'badge-primary' : 'badge-light') + '" data-i="' + i
                     + '" title="Tax on this charge (' + rate + '%)">'
                     + (c.taxed === true ? '+tax ' + c.tax_amount.toFixed(2) : '+tax') + '</a>'
                 : '')
             + '<b>' + Number(c.amount).toFixed(2) + '</b>'
-            + '<a href="javascript:void(0)" class="sale-charge-del text-danger" data-i="' + i + '">&times;</a></div>';
+            + (c.source === 'outlet' ? '<span class="text-muted"><lang class="lang_outlet_rule">Outlet rule</lang></span>' : '<a href="javascript:void(0)" class="sale-charge-del text-danger" data-i="' + i + '">&times;</a>') + '</div>';
     });
     $('#sale_charges_list').html(html);
     $('#sale_add_charge').toggle(PosnicPro.sales.chargesEnabled() || list.length > 0);
@@ -6799,6 +6804,7 @@ PosnicPro.sales.calculation = {
         $('#return_discount').toggleClass('disc-solo', !showTaxCol);
         // named charges join the payable after discounts, before round-off;
         // a taxed charge brings its tax with it
+        if (PosnicPro.billingoutlets) PosnicPro.billingoutlets.charge(outputVal);
         var chargesSum = PosnicPro.sales.chargesTotal();
         var chargesTax = PosnicPro.sales.chargesTax();
         if (chargesSum > 0) { outputVal = outputVal + chargesSum + chargesTax; }
@@ -6886,6 +6892,7 @@ PosnicPro.sales.calculation = {
 
 // Initialize fields for a brand new sale (/sales/new)
 PosnicPro.sales.setSaleDefaults = function () {
+    $('#billing_room_reference').val('');
 
     // A fresh sale carries no picked modifiers and no customer pricing.
     PosnicPro.sales._lineModifiers = {};
@@ -8223,7 +8230,11 @@ PosnicPro.sales.recentMenu = {
         }
         $("#sales_new_customer_state").val(result.customer_state);
         $("#sales_new_customer_country").val(result.customer_country);
+        $('#billing_room_reference').val(result.room_reference || '');
+        if (result.outlet_snapshot) { $('#billing_outlet_label').text(result.outlet_snapshot.name); $('#billing_room_wrap').show(); }
         PosnicPro.sales.EditRecentSaleParams = {
+            outlet_id: result.outlet_id,
+            outlet_snapshot: result.outlet_snapshot,
 
             "sale_inline_item_price": result.item_price,
             "sale_inline_discount_value": result.sale_inline_discount_value,

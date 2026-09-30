@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "En attente d’un propriétaire",
   "lang_changes_not_saved": "Les modifications n’ont pas été enregistrées.",
   "lang_continue": "Continuer",
-  "lang_reason": "Motif"
+  "lang_reason": "Motif",
+  "lang_ai_assistant_how_title": "Comment ça marche",
+  "lang_ai_key_remove": "Retirer",
+  "lang_ai_key_remove_q": "Supprimer la clé enregistrée ?",
+  "lang_ai_key_replace": "Remplacer",
+  "lang_amount": "Montant",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "Prix de vente",
+  "lang_int_voice_key": "Clé API",
+  "lang_int_voice_key_saved": "Une clé est enregistrée. Saisissez-en une nouvelle pour la remplacer.",
+  "lang_int_voice_language": "Langue",
+  "lang_print": "Impression",
+  "lang_receipt_text_size": "Taille du texte",
+  "lang_show_matching": "Afficher"
 }

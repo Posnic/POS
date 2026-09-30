@@ -2,6 +2,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose hardware and printer APIs to renderer
 contextBridge.exposeInMainWorld('electronAPI', {
+  billing: {
+    openOutlet: value => ipcRenderer.invoke('billing:open-outlet', value)
+  },
   kitchenAudio: {
     voices: () => ipcRenderer.invoke('kitchen-audio:voices'),
     preview: (kind, which) => ipcRenderer.invoke('kitchen-audio:preview', kind, which),

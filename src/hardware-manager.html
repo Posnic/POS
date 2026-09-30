@@ -3909,8 +3909,23 @@
                 +   '</div>'
 
                 /* THE ANSWER, in orders. */
+                +   '<div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:18px;align-items:start;">'
+                +     '<div><label for="portrait-' + d.id + '" style="display:block;font-size:13px;margin-bottom:6px;">Portrait columns</label>'
+                +       '<select id="portrait-' + d.id + '" style="padding:8px;border:1px solid #cbd5e1;border-radius:7px;">'
+                +       [0,1,2].map(function (n) { return '<option value="' + n + '"' + (Number(c.portraitColumns || 0) === n ? ' selected' : '') + '>' + (n ? n + (n === 1 ? ' column' : ' columns') : 'Auto') + '</option>'; }).join('')
+                +       '</select></div>'
+                +     '<div>' + field('visible-dishes-' + d.id, 'Visible dishes per box', c.visibleDishesPerBox || 0, 'dishes', '0 = automatic; 1–20 sets the preferred visible rows. Extra items scroll inside the same table box. Wrapped names may use more space.') + '</div>'
+                +     '<div>' + field('font-px-' + d.id, 'Item font size', c.fontSizePx || 0, 'px', '0 = automatic; custom size 24–96 px.') + '</div>'
+                +     '<div><label for="order-sort-' + d.id + '" style="display:block;font-size:13px;margin-bottom:6px;">Order display order</label>'
+                +       '<select id="order-sort-' + d.id + '" style="padding:8px;border:1px solid #cbd5e1;border-radius:7px;">'
+                +       '<option value="oldest"' + (c.orderSort !== 'newest' ? ' selected' : '') + '>Oldest first</option>'
+                +       '<option value="newest"' + (c.orderSort === 'newest' ? ' selected' : '') + '>Newest first</option></select></div>'
+                +     '<div>' + check('glow-' + d.id, 'Soft white text glow', c.textGlow === true, 'Optional emphasis on dark screens. Monitor brightness is set on the display itself.') + '</div>'
+                +     '<div>' + field('cancel-seconds-' + d.id, 'Show cancelled items for', c.cancelledDisplaySeconds || 30, 'seconds', '1–300 seconds. Cancelled quantities stay crossed out before disappearing.') + '</div>'
+                +     '<div>' + check('cancel-pulse-' + d.id, 'Pulse cancellation border', c.cancelledPulse !== false, 'Text stays readable while the border pulses.') + '</div>'
+                +   '</div>'
                 +   '<div style="margin-top:16px;padding:14px 16px;border-radius:10px;background:' + v.bg + ';color:' + v.fg + ';">'
-                +     '<div style="font-size:15px;font-weight:800;">' + v.word + ' &middot; about '
+                +     '<div style="font-size:15px;font-weight:800;">Automatic layout estimate: ' + v.word + ' &middot; about '
                 +       (f.cards || 0) + ' order' + (f.cards === 1 ? '' : 's') + ' on screen</div>'
                 +     '<div style="font-size:13px;margin-top:4px;">'
                 +       'Text would be <b>' + (f.capHeightMm || 0) + ' mm</b> tall ('
@@ -3929,8 +3944,6 @@
                 +         check('a-' + d.id, 'How long it has been waiting', c.showAge !== false)
                 +       '</div>'
                 +       '<div>'
-                +         field('items-' + d.id, 'Dishes per card', c.maxItemsPerCard, 'then "+n more"')
-                +         '<div style="height:10px;"></div>'
                 +         field('amber-' + d.id, 'Turns amber after', c.amberAfterMin, 'min')
                 +       '</div>'
                 +       '<div>'
@@ -3939,7 +3952,7 @@
                 + '<label><input type="checkbox" id="pulse-on-' + d.id + '" ' + (c.pulseAlerts !== false ? 'checked' : '') + '> Pulse very late alerts</label>'
                 +         '<div style="height:10px;"></div>'
                 +         field('dwell-' + d.id, 'Each page shows for', c.pageDwellSeconds, 'sec',
-                                'Only when there are more orders than fit.')
+                                '1–300 seconds (for example, 3 or 20). Applies when orders span multiple pages.')
                 +       '</div>'
                 +     '</div>'
                 +   '</details>'
@@ -3999,17 +4012,23 @@
                 viewingDistanceM: numOr('dist-' + id, 2.5),
                 diagonalInches:   numOr('diag-' + id, 43),
                 targetArcmin:     numOr('arc-' + id, 20),
+                portraitColumns: Number((document.getElementById('portrait-' + id) || {}).value) || 0,
+                visibleDishesPerBox: Math.max(0, Math.min(20, Math.floor(numOr('visible-dishes-' + id, 0)))),
+                fontSizePx:       Math.max(0, Math.min(96, numOr('font-px-' + id, 0))),
+                textGlow:         onOff('glow-' + id, false),
+                cancelledDisplaySeconds: Math.max(1, Math.min(300, numOr('cancel-seconds-' + id, 30))),
+                cancelledPulse:   onOff('cancel-pulse-' + id, true),
+                orderSort:        (document.getElementById('order-sort-' + id) || {}).value === 'newest' ? 'newest' : 'oldest',
                 safeAreaPercent:  numOr('safe-' + id, 3),
                 showTable:        onOff('t-' + id, true),
                 showItems:        onOff('i-' + id, true),
                 showItemNotes:    onOff('n-' + id, true),
                 showAge:          onOff('a-' + id, true),
-                maxItemsPerCard:  numOr('items-' + id, 3),
                 amberAfterMin:    numOr('amber-' + id, 5),
                 redAfterMin:      numOr('red-' + id, 10),
                 pulseAfterMin:    numOr('pulse-' + id, 15),
                 pulseAlerts:      onOff('pulse-on-' + id, true),
-                pageDwellSeconds: numOr('dwell-' + id, 8)
+                pageDwellSeconds: Math.max(1, Math.min(300, numOr('dwell-' + id, 8)))
             };
             try {
                 var res = await window.posnicKitchenScreen.configure(id, patch);

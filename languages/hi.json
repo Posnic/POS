@@ -3712,5 +3712,18 @@
   "lang_business_waiting_owner": "मालिक की प्रतीक्षा है",
   "lang_changes_not_saved": "बदलाव सेव नहीं हुए।",
   "lang_continue": "आगे बढ़ें",
-  "lang_reason": "कारण"
+  "lang_reason": "कारण",
+  "lang_ai_assistant_how_title": "यह कैसे काम करता है",
+  "lang_ai_key_remove": "हटाएं",
+  "lang_ai_key_remove_q": "सहेजी गई कुंजी हटाएँ?",
+  "lang_ai_key_replace": "बदलें",
+  "lang_amount": "राशि",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "बिक्री कीमत",
+  "lang_int_voice_key": "एपीआई कुंजी",
+  "lang_int_voice_key_saved": "एक कुंजी सहेजी हुई है। बदलने के लिए नई कुंजी टाइप करें।",
+  "lang_int_voice_language": "भाषा",
+  "lang_print": "प्रिंट",
+  "lang_receipt_text_size": "टेक्स्ट का आकार",
+  "lang_show_matching": "दिखाएं"
 }

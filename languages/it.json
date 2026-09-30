@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "In attesa di un titolare",
   "lang_changes_not_saved": "Le modifiche non sono state salvate.",
   "lang_continue": "Continua",
-  "lang_reason": "Motivo"
+  "lang_reason": "Motivo",
+  "lang_ai_assistant_how_title": "Come funziona",
+  "lang_ai_key_remove": "Rimuovi",
+  "lang_ai_key_remove_q": "Rimuovere la chiave salvata?",
+  "lang_ai_key_replace": "Sostituisci",
+  "lang_amount": "Importo",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "Prezzo di vendita",
+  "lang_int_voice_key": "Chiave API",
+  "lang_int_voice_key_saved": "Una chiave è salvata. Digitane una nuova per sostituirla.",
+  "lang_int_voice_language": "Lingua",
+  "lang_print": "Stampa",
+  "lang_receipt_text_size": "Dimensione del testo",
+  "lang_show_matching": "Mostra"
 }

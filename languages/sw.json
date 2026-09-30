@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "Inasubiri mmiliki",
   "lang_changes_not_saved": "Mabadiliko hayakuhifadhiwa.",
   "lang_continue": "Endelea",
-  "lang_reason": "Sababu"
+  "lang_reason": "Sababu",
+  "lang_ai_assistant_how_title": "Jinsi inavyofanya kazi",
+  "lang_ai_key_remove": "Ondoa",
+  "lang_ai_key_remove_q": "Ondoa ufunguo uliohifadhiwa?",
+  "lang_ai_key_replace": "Badilisha",
+  "lang_amount": "Kiasi",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "Bei ya kuuza",
+  "lang_int_voice_key": "Ufunguo wa API",
+  "lang_int_voice_key_saved": "Ufunguo umehifadhiwa. Andika mpya ili kuubadilisha.",
+  "lang_int_voice_language": "Lugha",
+  "lang_print": "Chapisha",
+  "lang_receipt_text_size": "Ukubwa wa maandishi",
+  "lang_show_matching": "Onyesha"
 }

@@ -98,5 +98,9 @@
   "lang_walk_in_customer_click_to_choose_or_add": "नोंदणी नसलेला ग्राहक. निवडण्यासाठी किंवा जोडण्यासाठी क्लिक करा",
   "lang_changes_not_saved": "बदल जतन झाले नाहीत.",
   "lang_continue": "पुढे जा",
-  "lang_reason": "कारण"
+  "lang_reason": "कारण",
+  "lang_business_discount": "सवलत",
+  "lang_cash": "रोख",
+  "lang_print": "प्रिंट करा",
+  "lang_stock_adjust_reason": "कारण"
 }

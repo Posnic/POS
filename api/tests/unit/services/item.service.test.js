@@ -1382,7 +1382,7 @@ describe('ItemService', () => {
 
       const result = await service.updateItemQuantity(ITEM_ID, 5);
 
-      expect(repo.updateItemQuantity).toHaveBeenCalledWith(ITEM_ID, 5);
+      expect(repo.updateItemQuantity).toHaveBeenCalledWith(ITEM_ID, 5, undefined);
       expect(result).toEqual(mockResult);
     });
 
@@ -1391,7 +1391,7 @@ describe('ItemService', () => {
 
       await service.updateItemQuantity(ITEM_ID, -3);
 
-      expect(repo.updateItemQuantity).toHaveBeenCalledWith(ITEM_ID, -3);
+      expect(repo.updateItemQuantity).toHaveBeenCalledWith(ITEM_ID, -3, undefined);
     });
 
     test('handles zero quantity change', async () => {
@@ -1399,7 +1399,7 @@ describe('ItemService', () => {
 
       await service.updateItemQuantity(ITEM_ID, 0);
 
-      expect(repo.updateItemQuantity).toHaveBeenCalledWith(ITEM_ID, 0);
+      expect(repo.updateItemQuantity).toHaveBeenCalledWith(ITEM_ID, 0, undefined);
     });
 
     test('returns error when repository throws', async () => {

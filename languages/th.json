@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "กำลังรอเจ้าของ",
   "lang_changes_not_saved": "ไม่ได้บันทึกการเปลี่ยนแปลง",
   "lang_continue": "ดำเนินการต่อ",
-  "lang_reason": "เหตุผล"
+  "lang_reason": "เหตุผล",
+  "lang_ai_assistant_how_title": "วิธีการทำงาน",
+  "lang_ai_key_remove": "นำออก",
+  "lang_ai_key_remove_q": "ลบคีย์ที่บันทึกไว้?",
+  "lang_ai_key_replace": "แทนที่",
+  "lang_amount": "จำนวนเงิน",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "ราคาขาย",
+  "lang_int_voice_key": "คีย์ API",
+  "lang_int_voice_key_saved": "มีคีย์บันทึกไว้แล้ว พิมพ์คีย์ใหม่เพื่อแทนที่",
+  "lang_int_voice_language": "ภาษา",
+  "lang_print": "การพิมพ์",
+  "lang_receipt_text_size": "ขนาดตัวอักษร",
+  "lang_show_matching": "แสดง"
 }

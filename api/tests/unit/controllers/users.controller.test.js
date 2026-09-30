@@ -63,6 +63,7 @@ const mockUserModel = {
   findById: jest.fn(),
   find: jest.fn(),
   findByIdAndUpdate: jest.fn(),
+  findOneAndUpdate: jest.fn(),
   updateOne: jest.fn(),
   deleteMany: jest.fn(),
   userPage: jest.fn(),
@@ -155,6 +156,10 @@ const mockRes = () => {
   return res;
 };
 
+const scopedReq = (overrides = {}) => ({
+  ...mockReq(overrides),
+  tenantContext: { licenseId: '64f9a1c2e3b4d5e6f7000099', branchId: '64f9a1c2e3b4d5e6f7000098' },
+});
 const mockReq = (overrides = {}) => ({
   body: {},
   query: {},
@@ -812,22 +817,25 @@ describe('getAll', () => {
 // getOne
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('getOne', () => {
-  const lean = (v) => ({ lean: jest.fn().mockResolvedValue(v) });
+  const lean = (v) => ({
+    select: jest.fn().mockReturnThis(),
+    lean: jest.fn().mockResolvedValue(v),
+  });
 
   test('400 when no id provided', async () => {
     const res = mockRes();
-    await ctrl.getOne(mockReq({ params: {}, query: {} }), res);
+    await ctrl.getOne(scopedReq({ params: {}, query: {} }), res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
   test('400 when id is not valid 24-char hex', async () => {
     const res = mockRes();
-    await ctrl.getOne(mockReq({ params: { id: 'invalid-id' } }), res);
+    await ctrl.getOne(scopedReq({ params: { id: 'invalid-id' } }), res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
   test('403 when no read permission', async () => {
-    const req = mockReq({
+    const req = scopedReq({
       params: { id: 'aabbccddeeff001122334455' },
       user: { usertype: 'user', access: { user: { read: false } } },
     });
@@ -837,8 +845,8 @@ describe('getOne', () => {
   });
 
   test('404 when user not found', async () => {
-    mockUserModel.findById.mockReturnValue(lean(null));
-    const req = mockReq({ params: { id: 'aabbccddeeff001122334455' } });
+    mockUserModel.findOne.mockReturnValue(lean(null));
+    const req = scopedReq({ params: { id: 'aabbccddeeff001122334455' } });
     const res = mockRes();
     await ctrl.getOne(req, res);
     expect(res.status).toHaveBeenCalledWith(404);
@@ -846,8 +854,8 @@ describe('getOne', () => {
 
   test('200 with user data and defaults applied', async () => {
     const user = { _id: 'aabbccddeeff001122334455', name: 'Test' };
-    mockUserModel.findById.mockReturnValue(lean(user));
-    const req = mockReq({ params: { id: 'aabbccddeeff001122334455' } });
+    mockUserModel.findOne.mockReturnValue(lean(user));
+    const req = scopedReq({ params: { id: 'aabbccddeeff001122334455' } });
     const res = mockRes();
     await ctrl.getOne(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
@@ -855,10 +863,11 @@ describe('getOne', () => {
   });
 
   test('500 on exception', async () => {
-    mockUserModel.findById.mockReturnValue({
+    mockUserModel.findOne.mockReturnValue({
+      select: jest.fn().mockReturnThis(),
       lean: jest.fn().mockRejectedValue(new Error('DB error')),
     });
-    const req = mockReq({ params: { id: 'aabbccddeeff001122334455' } });
+    const req = scopedReq({ params: { id: 'aabbccddeeff001122334455' } });
     const res = mockRes();
     await ctrl.getOne(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
@@ -1236,8 +1245,14 @@ describe('uploadUserImage', () => {
 // userImageDelete
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('userImageDelete', () => {
+  beforeEach(() => {
+    mockUserModel.findOne.mockReturnValue({
+      select: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue({ image: 'user.svg' }),
+    });
+  });
   test('200 when imageUrl is empty (idempotent)', async () => {
-    const req = mockReq({ body: { data: '', id: 'u1' } });
+    const req = scopedReq({ body: { data: '', id: 'u1' } });
     const res = mockRes();
     await ctrl.userImageDelete(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
@@ -1245,24 +1260,28 @@ describe('userImageDelete', () => {
   });
 
   test('200 when imageUrl is default user.svg', async () => {
-    const req = mockReq({ body: { data: 'user.svg', id: 'u1' } });
+    const req = scopedReq({ body: { data: 'user.svg', id: 'u1' } });
     const res = mockRes();
     await ctrl.userImageDelete(req, res);
 
-    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
-    expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(mockUserModel.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() })
+    );
+    expect(mockUserModel.findOneAndUpdate).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   test('404 when user not found', async () => {
     const userChain = chainable(null);
-    mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findOne.mockReturnValue(userChain);
 
-    const req = mockReq({ body: { data: 'http://localhost/uploads/img.jpg', id: 'u1' } });
+    const req = scopedReq({ body: { data: 'http://localhost/uploads/img.jpg', id: 'u1' } });
     const res = mockRes();
     await ctrl.userImageDelete(req, res);
 
-    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(mockUserModel.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() })
+    );
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
@@ -1277,17 +1296,22 @@ describe('userImageDelete', () => {
     const filename = '2025-12-25T14-30-45-posnic_user-old123xyz.jpg';
     const storedUrl = `https://bucket.s3.ap-south-1.amazonaws.com/${filename}`;
     const userChain = chainable({ image: storedUrl });
-    mockUserModel.findById.mockReturnValue(userChain);
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOne.mockReturnValue(userChain);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
 
-    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const req = scopedReq({ body: { data: storedUrl, id: 'u1' } });
     const res = mockRes();
 
     await ctrl.userImageDelete(req, res);
 
-    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(mockUserModel.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() })
+    );
     expect(deleteSpy).toHaveBeenCalledWith(filename);
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
     expect(res.status).toHaveBeenCalledWith(200);
 
     deleteSpy.mockRestore();
@@ -1306,19 +1330,24 @@ describe('userImageDelete', () => {
     const requestedUrl =
       'https://bucket.s3.ap-south-1.amazonaws.com/uploads/user_images/different.jpg';
     const userChain = chainable({ image: storedUrl });
-    mockUserModel.findById.mockReturnValue(userChain);
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOne.mockReturnValue(userChain);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
 
-    const req = mockReq({ body: { data: requestedUrl, id: 'u1' } });
+    const req = scopedReq({ body: { data: requestedUrl, id: 'u1' } });
     const res = mockRes();
 
     await ctrl.userImageDelete(req, res);
 
-    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(mockUserModel.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() })
+    );
     // Nothing is removed from the bucket: we cannot tell which object it is.
     expect(deleteSpy).not.toHaveBeenCalled();
     // But the person is not left stuck with a picture they cannot remove.
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
     expect(res.status).toHaveBeenCalledWith(200);
 
     deleteSpy.mockRestore();
@@ -1335,18 +1364,23 @@ describe('userImageDelete', () => {
 
     const storedUrl = 'https://bucket.s3.ap-south-1.amazonaws.com/backups/old.jpg';
     const userChain = chainable({ image: storedUrl });
-    mockUserModel.findById.mockReturnValue(userChain);
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOne.mockReturnValue(userChain);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
 
-    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const req = scopedReq({ body: { data: storedUrl, id: 'u1' } });
     const res = mockRes();
 
     await ctrl.userImageDelete(req, res);
 
-    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(mockUserModel.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() })
+    );
     // Nothing is removed from the bucket: this key is not one of ours.
     expect(deleteSpy).not.toHaveBeenCalled();
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
     expect(res.status).toHaveBeenCalledWith(200);
 
     deleteSpy.mockRestore();
@@ -1364,18 +1398,23 @@ describe('userImageDelete', () => {
 
     const storedUrl = 'https://example.com/uploads/user_images/old.jpg';
     const userChain = chainable({ image: storedUrl });
-    mockUserModel.findById.mockReturnValue(userChain);
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOne.mockReturnValue(userChain);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
 
-    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const req = scopedReq({ body: { data: storedUrl, id: 'u1' } });
     const res = mockRes();
 
     await ctrl.userImageDelete(req, res);
 
-    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(mockUserModel.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() })
+    );
     // Nothing is removed from the bucket: this key is not one of ours.
     expect(deleteSpy).not.toHaveBeenCalled();
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
     expect(res.status).toHaveBeenCalledWith(200);
 
     deleteSpy.mockRestore();
@@ -1396,45 +1435,54 @@ describe('userImageDelete', () => {
     const filename = '2025-09-02T15-22-08-posnic_user-cdn123xyz.jpg';
     const storedUrl = `https://cdn.example.com/${filename}`;
     const userChain = chainable({ image: storedUrl });
-    mockUserModel.findById.mockReturnValue(userChain);
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOne.mockReturnValue(userChain);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
 
-    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const req = scopedReq({ body: { data: storedUrl, id: 'u1' } });
     const res = mockRes();
 
     await ctrl.userImageDelete(req, res);
 
     expect(deleteSpy).toHaveBeenCalledWith(filename);
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   test('200 and updates user record when valid imageUrl and userId', async () => {
     process.env.STORAGE_TYPE = 'local';
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
     const userChain = chainable({ image: 'http://localhost/uploads/img.jpg' });
-    mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findOne.mockReturnValue(userChain);
 
-    const req = mockReq({ body: { data: 'http://localhost/uploads/img.jpg', id: 'u1' } });
+    const req = scopedReq({ body: { data: 'http://localhost/uploads/img.jpg', id: 'u1' } });
     const res = mockRes();
     await ctrl.userImageDelete(req, res);
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   test('200 and uses req.user when no userId in body', async () => {
     process.env.STORAGE_TYPE = 'local';
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
     const userChain = chainable({ image: 'http://localhost/uploads/img.jpg' });
-    mockUserModel.findById.mockReturnValue(userChain);
+    mockUserModel.findOne.mockReturnValue(userChain);
 
-    const req = mockReq({
+    const req = scopedReq({
       body: { data: 'http://localhost/uploads/img.jpg', id: '' },
       user: { _id: 'reqUser1' },
     });
     const res = mockRes();
     await ctrl.userImageDelete(req, res);
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('reqUser1', { image: 'user.svg' });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'reqUser1', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
   });
 
   test('a bucket that refuses the delete does not stop somebody clearing their picture', async () => {
@@ -1450,10 +1498,10 @@ describe('userImageDelete', () => {
     const filename = '2025-09-02T12-34-56-posnic_user-fail123xyz.jpg';
     const storedUrl = `https://bucket.s3.ap-south-1.amazonaws.com/${filename}`;
     const userChain = chainable({ image: storedUrl });
-    mockUserModel.findById.mockReturnValue(userChain);
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOne.mockReturnValue(userChain);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
 
-    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const req = scopedReq({ body: { data: storedUrl, id: 'u1' } });
     const res = mockRes();
 
     await ctrl.userImageDelete(req, res);
@@ -1466,7 +1514,10 @@ describe('userImageDelete', () => {
     // The failure is logged and stepped over. An orphaned object in the
     // bucket is a smaller problem than a person unable to remove their photo,
     // and an IAM policy without DeleteObject would otherwise strand everybody.
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
     expect(res.status).toHaveBeenCalledWith(200);
 
     deleteSpy.mockRestore();
@@ -1485,10 +1536,10 @@ describe('userImageDelete', () => {
   test('a cashier can always clear their own picture', async () => {
     process.env.STORAGE_TYPE = 'local';
     const userChain = chainable({ image: 'http://localhost/uploads/img.jpg' });
-    mockUserModel.findById.mockReturnValue(userChain);
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOne.mockReturnValue(userChain);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
 
-    const req = mockReq({
+    const req = scopedReq({
       body: { data: 'http://localhost/uploads/img.jpg', id: 'dddddddddddddddddddddddd' },
       user: {
         _id: 'dddddddddddddddddddddddd',
@@ -1500,9 +1551,10 @@ describe('userImageDelete', () => {
     await ctrl.userImageDelete(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('dddddddddddddddddddddddd', {
-      image: 'user.svg',
-    });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'dddddddddddddddddddddddd', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
   });
 
   test('a cashier cannot destroy a colleague picture', async () => {
@@ -1512,7 +1564,7 @@ describe('userImageDelete', () => {
     process.env.AWS_S3_BUCKET = 'bucket';
     process.env.AWS_REGION = 'ap-south-1';
 
-    const req = mockReq({
+    const req = scopedReq({
       body: { data: 'x', id: 'eeeeeeeeeeeeeeeeeeeeeeee' },
       user: {
         _id: 'dddddddddddddddddddddddd',
@@ -1525,9 +1577,9 @@ describe('userImageDelete', () => {
 
     expect(res.status).toHaveBeenCalledWith(403);
     expect(deleteSpy).not.toHaveBeenCalled();
-    expect(mockUserModel.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(mockUserModel.findOneAndUpdate).not.toHaveBeenCalled();
     // Refused before the record is even read.
-    expect(mockUserModel.findById).not.toHaveBeenCalled();
+    expect(mockUserModel.findOne).not.toHaveBeenCalled();
 
     deleteSpy.mockRestore();
     delete process.env.STORAGE_TYPE;
@@ -1536,7 +1588,7 @@ describe('userImageDelete', () => {
   });
 
   test('401 when no user is resolved from body or request', async () => {
-    const req = mockReq({
+    const req = scopedReq({
       body: { data: 'http://localhost/uploads/img.jpg', id: '' },
       user: undefined,
     });
@@ -1558,17 +1610,22 @@ describe('userImageDelete', () => {
     const s3Url = `https://bucket.s3.ap-south-1.amazonaws.com/${generatedFilename}`;
 
     const userChain = chainable({ image: s3Url });
-    mockUserModel.findById.mockReturnValue(userChain);
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOne.mockReturnValue(userChain);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
 
-    const req = mockReq({ body: { data: s3Url, id: 'u1' } });
+    const req = scopedReq({ body: { data: s3Url, id: 'u1' } });
     const res = mockRes();
 
     await ctrl.userImageDelete(req, res);
 
-    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(mockUserModel.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() })
+    );
     expect(deleteSpy).toHaveBeenCalledWith(generatedFilename);
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
     expect(res.status).toHaveBeenCalledWith(200);
 
     deleteSpy.mockRestore();
@@ -1580,7 +1637,7 @@ describe('userImageDelete', () => {
   test('never deletes an object it cannot identify as this user picture', async () => {
     const s3 = require('../../../src/utils/s3');
     const deleteSpy = jest.spyOn(s3, 'deleteObject').mockResolvedValue();
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
     process.env.STORAGE_TYPE = 's3';
     process.env.AWS_S3_BUCKET = 'bucket';
     process.env.AWS_REGION = 'ap-south-1';
@@ -1611,9 +1668,9 @@ describe('userImageDelete', () => {
 
     for (const testCase of testCases) {
       const userChain = chainable({ image: testCase.url });
-      mockUserModel.findById.mockReturnValue(userChain);
+      mockUserModel.findOne.mockReturnValue(userChain);
 
-      const req = mockReq({ body: { data: testCase.url, id: 'u1' } });
+      const req = scopedReq({ body: { data: testCase.url, id: 'u1' } });
       const res = mockRes();
 
       await ctrl.userImageDelete(req, res);
@@ -1644,19 +1701,24 @@ describe('userImageDelete', () => {
     const storedUrl =
       'https://bucket.s3.ap-south-1.amazonaws.com/uploads/user_images/2025-12-25T14-30-45-posnic_user-abc123.jpg';
     const userChain = chainable({ image: storedUrl });
-    mockUserModel.findById.mockReturnValue(userChain);
-    mockUserModel.findByIdAndUpdate.mockResolvedValue(true);
+    mockUserModel.findOne.mockReturnValue(userChain);
+    mockUserModel.findOneAndUpdate.mockResolvedValue(true);
 
-    const req = mockReq({ body: { data: storedUrl, id: 'u1' } });
+    const req = scopedReq({ body: { data: storedUrl, id: 'u1' } });
     const res = mockRes();
 
     await ctrl.userImageDelete(req, res);
 
-    expect(mockUserModel.findById).toHaveBeenCalledWith('u1');
+    expect(mockUserModel.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() })
+    );
     expect(deleteSpy).toHaveBeenCalledWith(
       'uploads/user_images/2025-12-25T14-30-45-posnic_user-abc123.jpg'
     );
-    expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith('u1', { image: 'user.svg' });
+    expect(mockUserModel.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1', license: expect.anything() }),
+      { $set: { image: 'user.svg' } }
+    );
     expect(res.status).toHaveBeenCalledWith(200);
 
     deleteSpy.mockRestore();

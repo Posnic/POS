@@ -149,16 +149,14 @@ describe('a hostile body cannot cost the server the request', () => {
   test('a cycle does not loop for ever', () => {
     const body = { a: 1 };
     body.self = body;
-    expect(() => guard.strip(body)).not.toThrow();
+    expect(() => guard.strip(body)).toThrow('Cyclic request body');
   });
 
   test('a structure built to be walked is bounded', () => {
-    /* Deeper than the limit: the levels above it are still cleaned, which is
-       where an operator has to be to do anything. */
+    /* An incomplete walk must reject instead of passing uninspected data. */
     let deep = { $ne: null };
     for (let i = 0; i < guard.DEEPEST + 20; i += 1) deep = { down: deep };
-    const removed = guard.strip(deep);
-    expect(Array.isArray(removed)).toBe(true);
+    expect(() => guard.strip(deep)).toThrow('inspection limit');
   });
 
   test('prototype keys go too, because a key that reaches an assignment is its own problem', () => {

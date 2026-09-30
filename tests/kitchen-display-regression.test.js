@@ -162,3 +162,182 @@ test('arrival is AM/PM time only, unassigned table is blank, and lateness has no
   assert.ok(card.classList.contains('urgent'));
  }finally{dom.window.close();}
 });
+
+test('portrait column and font choices survive resize while dishes remain visible', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try {
+  const w=dom.window, board=w.document.getElementById('board');
+  w.innerWidth=1080; w.innerHeight=1920;
+  Object.defineProperty(board,'clientWidth',{get:()=>w.innerWidth-64});
+  Object.defineProperty(board,'clientHeight',{get:()=>w.innerHeight-180});
+  const cfg={portraitColumns:2,fontSizePx:52,textGlow:true,_fit:{fontPx:40,columns:4,cards:8}};
+  w.kitchenScreen.setConfig(cfg);
+  w.kitchenScreen.setTickets([{table:'12',placedAt:new Date().toISOString(),items:[{name:'Grilled fish with lemon butter sauce',qty:2}]}]);
+  assert.equal(board.style.getPropertyValue('--columns'),'2');
+  assert.equal(w.document.documentElement.style.getPropertyValue('--font'),'52px');
+  assert.equal(w.document.documentElement.getAttribute('data-glow'),'true');
+  assert.equal(board.querySelector('.name').textContent,'Grilled fish with lemon butter sauce');
+  w.kitchenScreen.setConfig({...cfg,portraitColumns:1});
+  assert.equal(board.style.getPropertyValue('--columns'),'1');
+  w.innerWidth=1920; w.innerHeight=1080; w.dispatchEvent(new w.Event('resize'));
+  assert.ok(Number(board.style.getPropertyValue('--columns'))>1);
+  w.kitchenScreen.setConfig({...cfg,fontSizePx:1000,textGlow:false});
+  assert.equal(w.document.documentElement.style.getPropertyValue('--font'),'96px');
+  assert.equal(w.document.documentElement.getAttribute('data-glow'),'false');
+ } finally {dom.window.close();}
+});
+
+test('page rotation applies saved timing, replaces old timers and survives repeated config delivery', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const intervals=new Map(); let nextId=0;
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{
+  runScripts:'dangerously',beforeParse(w){
+   w.setInterval=(fn,ms)=>{const id=++nextId;intervals.set(id,{fn,ms});return id;};
+   w.clearInterval=id=>intervals.delete(id);
+  }
+ });
+ try {
+  const w=dom.window, board=w.document.getElementById('board');
+  Object.defineProperty(board,'clientWidth',{value:450});
+  Object.defineProperty(board,'clientHeight',{value:400});
+  const cfg={pageDwellSeconds:3,_fit:{fontPx:40,columns:1,cards:1}};
+  w.kitchenScreen.setConfig(cfg);
+  w.kitchenScreen.setTickets([{table:'1',items:[{name:'Soup'}]},{table:'2',items:[{name:'Rice'}]}]);
+  assert.equal(w.document.getElementById('pager').textContent,'1 of 2');
+  const first=[...intervals].find(([,v])=>v.ms===3000);
+  assert.ok(first);
+  first[1].fn();
+  assert.equal(w.document.getElementById('pager').textContent,'2 of 2');
+  w.kitchenScreen.setConfig(cfg);
+  assert.ok(intervals.has(first[0]),'unchanged config must not delay rotation');
+  w.kitchenScreen.setConfig({...cfg,pageDwellSeconds:20});
+  assert.equal(intervals.has(first[0]),false);
+  const second=[...intervals.values()].find(v=>v.ms===20000);
+  assert.ok(second);
+  second.fn();
+  assert.equal(w.document.getElementById('pager').textContent,'1 of 2');
+ } finally {dom.window.close();}
+});
+
+test('arrival sorting defaults to oldest, applies before pagination and keeps unknown times last', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try {
+  const w=dom.window, board=w.document.getElementById('board');
+  Object.defineProperty(board,'clientWidth',{value:450});
+  Object.defineProperty(board,'clientHeight',{value:400});
+  const cfg={_fit:{fontPx:40,columns:1,cards:1}};
+  w.kitchenScreen.setConfig(cfg);
+  w.kitchenScreen.setTickets([
+   {table:'Unknown',items:[]},
+   {table:'New',placedAt:'2026-09-30T10:00:00Z',items:[]},
+   {table:'Old',placedAt:'2026-09-30T09:00:00Z',items:[]}
+  ]);
+  assert.equal(board.querySelector('.table').textContent,'Old');
+  assert.equal(w.document.getElementById('pager').textContent,'1 of 3');
+  w.kitchenScreen.setConfig({...cfg,orderSort:'newest'});
+  assert.equal(board.querySelector('.table').textContent,'New');
+  w.kitchenScreen.setConfig({...cfg,orderSort:'oldest'});
+  assert.equal(board.querySelector('.table').textContent,'Old');
+ } finally {dom.window.close();}
+});
+
+test('cancellation expires on schedule, does not restart on polls, and keeps active quantities', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ let now=Date.now();const timers=[];
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{
+  runScripts:'dangerously',beforeParse(w){w.Date.now=()=>now;w.setInterval=(fn,ms)=>{timers.push({fn,ms});return timers.length;};w.clearInterval=()=>{};}
+ });
+ try {
+  const w=dom.window,board=w.document.getElementById('board');
+  Object.defineProperty(board,'clientWidth',{value:1200});Object.defineProperty(board,'clientHeight',{value:1600});
+  const cfg={cancelledDisplaySeconds:3,cancelledPulse:true,_fit:{fontPx:40,columns:2}};
+  w.kitchenScreen.setConfig(cfg);
+  const list=[{id:'active',table:'T1',items:[{qty:1,name:'Fish'}]}, {id:'cancel',cancelled:true,table:'T1',items:[{qty:2,name:'Fish'}]}];
+  w.kitchenScreen.setTickets(list);
+  assert.match(board.querySelector('.cancelled-section').textContent,/CANCELLED.*2×Fish/);
+  assert.equal(board.querySelectorAll('.ticket').length,1);
+  assert.ok(board.querySelector('.cancel-pulse'));
+  assert.match(board.querySelector('.ticket:not(.cancelled)').textContent,/1×Fish/);
+  assert.equal(w.document.getElementById('count').textContent,'1');
+  now+=2000;w.kitchenScreen.setTickets(list);
+  now+=1100;timers.find(t=>t.ms===250).fn();
+  assert.equal(board.querySelector('.cancelled-section'),null);
+  w.kitchenScreen.setTickets(list);
+  assert.equal(board.querySelector('.cancelled'),null);
+  w.kitchenScreen.setTickets([]);
+  assert.equal(board.querySelector('.cancelled'),null,'served/removed is not a cancellation');
+  w.kitchenScreen.setConfig({...cfg,cancelledPulse:false});
+  w.kitchenScreen.setTickets([{...list[1],id:'another-cancel'}]);
+  assert.ok(board.querySelector('.cancelled'));
+  assert.equal(board.querySelector('.cancel-pulse'),null);
+ } finally {dom.window.close();}
+});
+
+test('ready and picked-up food use explicit labels without cancellation strike-through or overdue pulses', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try {
+  const w=dom.window,board=w.document.getElementById('board');
+  w.kitchenScreen.setConfig({_fit:{fontPx:40,columns:2},pulseAlerts:true});
+  const ticket={id:'one',table:'4',placedAt:new Date(Date.now()-3600000).toISOString(),items:[
+   {name:'Fish',qty:3,preparing:1,readyToCollect:1,pickedUp:1,started:true}
+  ]};
+  w.kitchenScreen.setTickets([ticket]);
+  assert.match(board.textContent,/1 Cooking/);
+  assert.match(board.textContent,/✓ 1 Ready to collect/);
+  assert.match(board.textContent,/↗ 1 Picked up/);
+  assert.equal(board.querySelector('.cancelled'),null);
+  w.kitchenScreen.setTickets([{...ticket,items:[{name:'Fish',qty:1,preparing:0,readyToCollect:1,pickedUp:0}]}]);
+  assert.ok(board.querySelector('.ready-state .line-ready'));
+  assert.equal(board.querySelector('.urgent'),null);
+  w.kitchenScreen.setTickets([]);
+  assert.equal(board.querySelector('.ticket'),null);
+ } finally {dom.window.close();}
+});
+
+test('one table has one box across rounds, all dishes and cancellations; untabled orders remain separate',()=>{
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try{
+  const w=dom.window,board=w.document.getElementById('board');
+  Object.defineProperty(board,'clientWidth',{value:2400});Object.defineProperty(board,'clientHeight',{value:4000});
+  w.kitchenScreen.setConfig({maxItemsPerCard:3,_fit:{fontPx:32,columns:4}});
+  w.kitchenScreen.setTickets([
+   {id:'sale1:c0',table:'7',items:Array.from({length:8},(_,i)=>({name:'Dish '+i,qty:1}))},
+   {id:'sale1:c1',table:'7',items:[{name:'Added fish',qty:2,note:'No salt'}]},
+   {id:'sale1:cancel2',table:'7',cancelled:true,items:[{name:'Cancelled tea',qty:1}]},
+   {id:'takeaway1:c0',table:'',items:[{name:'Parcel one',qty:1}]},
+   {id:'takeaway1:c1',table:'',items:[{name:'Parcel extra',qty:1}]},
+   {id:'takeaway2:c0',table:'',items:[{name:'Parcel two',qty:1}]}
+  ]);
+  assert.equal(board.querySelectorAll('.ticket').length,3);
+  const table=board.querySelector('.table').closest('.ticket');
+  assert.equal(table.querySelectorAll('.name').length,10);
+  assert.match(table.textContent,/Dish 7/);
+  assert.match(table.textContent,/Added fish/);
+  assert.match(table.textContent,/No salt/);
+  assert.match(table.querySelector('.cancelled-section').textContent,/Cancelled tea/);
+  assert.equal(board.querySelectorAll('.table').length,1);
+ }finally{dom.window.close();}
+});
+
+
+test('visible dish setting limits the list height without splitting or dropping items',()=>{
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try{
+  const w=dom.window,board=w.document.getElementById('board');
+  w.kitchenScreen.setConfig({visibleDishesPerBox:3,fontSizePx:32});
+  w.kitchenScreen.setTickets([{id:'large:c0',table:'9',items:Array.from({length:12},(_,i)=>({name:'Dish '+i,qty:1}))}]);
+  assert.equal(board.querySelectorAll('.ticket').length,1);
+  assert.equal(board.querySelectorAll('.name').length,12);
+  assert.equal(board.querySelector('.items').style.maxHeight,'192px');
+  w.kitchenScreen.setConfig({visibleDishesPerBox:6,fontSizePx:32});
+  assert.equal(board.querySelector('.items').style.maxHeight,'384px');
+  assert.equal(board.querySelectorAll('.name').length,12);
+  w.kitchenScreen.setConfig({visibleDishesPerBox:0,fontSizePx:32});
+  assert.equal(board.querySelector('.items').style.maxHeight,'');
+ }finally{dom.window.close();}
+});

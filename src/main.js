@@ -27,6 +27,7 @@ const {
  * at event.senderFrame. backup:restore and backup:delete were among them.
  */
 const ipcMain = require('./ipc-guard').guard(rawIpcMain);
+require('./billing-windows').register({ ipcMain, BrowserWindow });
 const {
   showSplash,
   closeSplash,
@@ -3803,8 +3804,18 @@ function showBackupNotification(result) {
   notification.show();
 }
 
+function requireBackupWindow(event, managerOnly = false) {
+  // Setup and desktop settings live in the main window. Restore and deletion
+  // belong exclusively to the dedicated manager; subframes never qualify.
+  const windows = managerOnly ? [backupWindow] : [backupWindow, mainWindow];
+  const allowed = windows.some(win => win && !win.isDestroyed() &&
+    event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame);
+  if (!allowed) throw new Error('Open Backup Manager to use this action');
+}
+
 // Get default backup path (Documents/Posnic-Backups)
-ipcMain.handle('backup:get-default-path', () => {
+ipcMain.handle('backup:get-default-path', (event) => {
+  requireBackupWindow(event);
   try {
     const documentsPath = app.getPath('documents');
     return path.join(documentsPath, 'Posnic-Backups');
@@ -3814,7 +3825,8 @@ ipcMain.handle('backup:get-default-path', () => {
 });
 
 // Open folder picker
-ipcMain.handle('backup:browse-folder', async () => {
+ipcMain.handle('backup:browse-folder', async (event) => {
+  requireBackupWindow(event);
   const { dialog } = require('electron');
   const focused = BrowserWindow.getFocusedWindow() || mainWindow;
 
@@ -3841,12 +3853,14 @@ ipcMain.handle('backup:browse-folder', async () => {
    * A renderer cannot add to this list; it can only name something already on
    * it. See backupManager.grantRestorePath.
    */
-  if (backupManager) backupManager.grantRestorePath(result.filePaths[0]);
+  getBackupManager().grantRestorePath(result.filePaths[0]);
+  getBackupManager().grantBackupPath(result.filePaths[0]);
   return result.filePaths[0];
 });
 
 // Save backup config
 ipcMain.handle('backup:save-config', (event, config) => {
+  requireBackupWindow(event);
   try {
     const mgr = getBackupManager();
     const saved = mgr.saveConfig(config);
@@ -3864,7 +3878,8 @@ ipcMain.handle('backup:save-config', (event, config) => {
 });
 
 // Get backup config
-ipcMain.handle('backup:get-config', () => {
+ipcMain.handle('backup:get-config', (event) => {
+  requireBackupWindow(event);
   try {
     return { success: true, config: getBackupManager().loadConfig() };
   } catch (err) {
@@ -3883,6 +3898,7 @@ ipcMain.handle('backup:get-config', () => {
  * the exact line is generated here to be copied rather than typed.
  */
 ipcMain.handle('backup:schedule-instructions', (event, options) => {
+  requireBackupWindow(event);
   try {
     const scheduled = require('./scheduled-task');
     const config = getBackupManager().loadConfig();
@@ -3907,6 +3923,7 @@ ipcMain.handle('backup:schedule-instructions', (event, options) => {
 
 // Run backup now (manual trigger)
 ipcMain.handle('backup:run-now', async (event, force) => {
+  requireBackupWindow(event);
   try {
     return await getBackupManager().runBackup({ force: !!force, _manual: true });
   } catch (err) {
@@ -3915,7 +3932,8 @@ ipcMain.handle('backup:run-now', async (event, force) => {
 });
 
 // List all backups
-ipcMain.handle('backup:list', () => {
+ipcMain.handle('backup:list', (event) => {
+  requireBackupWindow(event);
   try {
     return { success: true, backups: getBackupManager().listBackups() };
   } catch (err) {
@@ -3925,6 +3943,7 @@ ipcMain.handle('backup:list', () => {
 
 // Restore from backup
 ipcMain.handle('backup:restore', async (event, folderPath, options) => {
+  requireBackupWindow(event, true);
   try {
     const result = await getBackupManager().restoreBackup(folderPath, options || {});
 
@@ -3966,6 +3985,7 @@ ipcMain.handle('backup:restore', async (event, folderPath, options) => {
 
 // Delete a backup
 ipcMain.handle('backup:delete', (event, folderPath) => {
+  requireBackupWindow(event, true);
   try {
     return getBackupManager().deleteBackup(folderPath);
   } catch (err) {
@@ -3974,7 +3994,8 @@ ipcMain.handle('backup:delete', (event, folderPath) => {
 });
 
 // Get backup history
-ipcMain.handle('backup:get-history', () => {
+ipcMain.handle('backup:get-history', (event) => {
+  requireBackupWindow(event);
   try {
     return { success: true, history: getBackupManager().loadHistory() };
   } catch (err) {

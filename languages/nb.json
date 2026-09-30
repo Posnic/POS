@@ -95,5 +95,8 @@
   "lang_total_title": "Totalt",
   "lang_yes": "Ja",
   "lang_ai_describe_hint": "Lag et beskrivelsesutkast ut fra varens opplysninger",
-  "lang_walk_in_customer_click_to_choose_or_add": "Uregistrert kunde. Klikk for å velge eller legge til"
+  "lang_walk_in_customer_click_to_choose_or_add": "Uregistrert kunde. Klikk for å velge eller legge til",
+  "lang_business_discount": "Rabatt",
+  "lang_cash": "Kontant",
+  "lang_print": "Skriv ut"
 }

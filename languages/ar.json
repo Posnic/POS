@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "بانتظار أحد المالكين",
   "lang_changes_not_saved": "لم تُحفظ التغييرات.",
   "lang_continue": "متابعة",
-  "lang_reason": "السبب"
+  "lang_reason": "السبب",
+  "lang_ai_assistant_how_title": "كيف يعمل",
+  "lang_ai_key_remove": "إزالة",
+  "lang_ai_key_remove_q": "إزالة المفتاح المحفوظ؟",
+  "lang_ai_key_replace": "استبدال",
+  "lang_amount": "المبلغ",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "سعر البيع",
+  "lang_int_voice_key": "مفتاح API",
+  "lang_int_voice_key_saved": "هناك مفتاح محفوظ. اكتب مفتاحًا جديدًا لاستبداله.",
+  "lang_int_voice_language": "اللغة",
+  "lang_print": "الطباعة",
+  "lang_receipt_text_size": "حجم النص",
+  "lang_show_matching": "عرض"
 }

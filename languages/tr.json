@@ -98,5 +98,9 @@
   "lang_walk_in_customer_click_to_choose_or_add": "Kayıtsız müşteri. Seçmek veya eklemek için tıklayın",
   "lang_changes_not_saved": "Değişiklikler kaydedilmedi.",
   "lang_continue": "Devam et",
-  "lang_reason": "Neden"
+  "lang_reason": "Neden",
+  "lang_business_discount": "İndirim",
+  "lang_cash": "Nakit",
+  "lang_print": "Yazdır",
+  "lang_stock_adjust_reason": "Neden"
 }

@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "యజమాని కోసం వేచి ఉంది",
   "lang_changes_not_saved": "మార్పులు సేవ్ కాలేదు.",
   "lang_continue": "కొనసాగించండి",
-  "lang_reason": "కారణం"
+  "lang_reason": "కారణం",
+  "lang_ai_assistant_how_title": "ఇది ఎలా పనిచేస్తుంది",
+  "lang_ai_key_remove": "తీసివేయి",
+  "lang_ai_key_remove_q": "భద్రపరచిన కీని తొలగించాలా?",
+  "lang_ai_key_replace": "మార్చు",
+  "lang_amount": "మొత్తం",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "అమ్మకపు ధర",
+  "lang_int_voice_key": "API కీ",
+  "lang_int_voice_key_saved": "ఒక కీ సేవ్ చేయబడింది. మార్చడానికి కొత్తది టైప్ చేయండి.",
+  "lang_int_voice_language": "భాష",
+  "lang_print": "ముద్రణ",
+  "lang_receipt_text_size": "వచన పరిమాణం",
+  "lang_show_matching": "చూపు"
 }

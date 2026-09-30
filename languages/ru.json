@@ -98,5 +98,9 @@
   "lang_walk_in_customer_click_to_choose_or_add": "Незарегистрированный клиент. Нажмите, чтобы выбрать или добавить",
   "lang_changes_not_saved": "Изменения не сохранены.",
   "lang_continue": "Продолжить",
-  "lang_reason": "Причина"
+  "lang_reason": "Причина",
+  "lang_business_discount": "Скидка",
+  "lang_cash": "Наличные",
+  "lang_print": "Печать",
+  "lang_stock_adjust_reason": "Причина"
 }

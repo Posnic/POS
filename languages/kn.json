@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "ಮಾಲೀಕರಿಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ",
   "lang_changes_not_saved": "ಬದಲಾವಣೆಗಳು ಉಳಿಸಲ್ಪಟ್ಟಿಲ್ಲ.",
   "lang_continue": "ಮುಂದುವರಿಸಿ",
-  "lang_reason": "ಕಾರಣ"
+  "lang_reason": "ಕಾರಣ",
+  "lang_ai_assistant_how_title": "ಇದು ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ",
+  "lang_ai_key_remove": "ತೆಗೆದುಹಾಕಿ",
+  "lang_ai_key_remove_q": "ಉಳಿಸಿದ ಕೀ ತೆಗೆಯುವುದೇ?",
+  "lang_ai_key_replace": "ಬದಲಾಯಿಸಿ",
+  "lang_amount": "ಮೊತ್ತ",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "ಮಾರಾಟ ಬೆಲೆ",
+  "lang_int_voice_key": "API ಕೀಲಿ",
+  "lang_int_voice_key_saved": "ಒಂದು ಕೀಲಿ ಉಳಿಸಲಾಗಿದೆ. ಬದಲಾಯಿಸಲು ಹೊಸದನ್ನು ಟೈಪ್ ಮಾಡಿ.",
+  "lang_int_voice_language": "ಭಾಷೆ",
+  "lang_print": "ಮುದ್ರಣ",
+  "lang_receipt_text_size": "ಪಠ್ಯದ ಗಾತ್ರ",
+  "lang_show_matching": "ತೋರಿಸಿ"
 }

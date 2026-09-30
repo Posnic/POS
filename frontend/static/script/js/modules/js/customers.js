@@ -1,6 +1,11 @@
 PosnicPro.customers = {
     customerAction: 'add',
     customer_phone: null,
+    setPhone: function (number) {
+        var input = PosnicPro.customers.customer_phone;
+        if (input) input.setNumber(number || '');
+        else $('#customer_phone').val(number || '');
+    },
     showAdd: function () {
         PosnicPro.customers.loadSelectCustomerState(PosnicPro.local.get('countryid'), 'add');
         $(".infobar-settings-sidebar-overlay").css({"background": "transparent", "position": "initial"});
@@ -392,10 +397,10 @@ PosnicPro.customers = {
             let salesValue = $('#sales_new_customer_name').val();
             if (regex.test(salesValue)) {
                 $('#customer_name').val($('#sales_new_customer_name').val());
-                $('#customer_phone').val('');
+                PosnicPro.customers.setPhone('');
             } else {
                 $('#customer_name').val('Mob' + $('#sales_new_customer_name').val());
-                $('#customer_phone').val($('#sales_new_customer_name').val());
+                PosnicPro.customers.setPhone($('#sales_new_customer_name').val());
             }
         }
         $('#customer_reset').show();
@@ -415,6 +420,9 @@ PosnicPro.customers = {
                 url += '/' + $('#customer_id').val();
             }
             var formData = PosnicPro.getFormData($('#customer_add_form'));
+            var phoneInput = PosnicPro.customers.customer_phone;
+            formData.phone = $('#customer_phone').val().trim() && phoneInput ? phoneInput.getNumber() : '';
+            delete formData.full;
             var categoryDetail = $("#customer_category").select2("data");
             var categoryData = {
                 category_id: categoryDetail.length > 0 ? categoryDetail[0].element.attributes['data-category-id'].value : '',
@@ -594,7 +602,7 @@ PosnicPro.customers = {
                 PosnicPro.record_id = id;
                 $('#customer_id').val(PosnicPro.record_id);
                 $('#customer_name').val(data.name);
-                $('#customer_phone').val(data.phone);
+                PosnicPro.customers.setPhone(data.phone);
                 $('#customer_email').val(data.email);
                 $('#customer_address').val(data.address);
                 $('#customer_city').val(data.city);
@@ -605,7 +613,7 @@ PosnicPro.customers = {
                 $('#partial_balance').prop("checked", data.partial_balance);
                 PosnicPro.local.set('edit_customer_state', data.state);
                 var countryDetail = $('#customer_country').select2("data");
-                PosnicPro.customers.loadSelectCustomerState(countryDetail[0].element.attributes['data-setting-id'].value, 'edit');
+                PosnicPro.customers.loadSelectCustomerState(countryDetail[0].element.attributes['data-setting-id'].value, 'edit', data.phone);
 
                 $('.indian-gstr').hide();
                 if (PosnicPro.local.get('gst_action') === 'enable' && data.gst === 'enable') {
@@ -766,7 +774,7 @@ PosnicPro.customers = {
         PosnicPro.local.set('edit_customer_state', PosnicPro.local.get("state_setting"));        
         $('.error_customer').css('display', 'none')
     },
-    loadSelectCustomerState: function (id, action) {
+    loadSelectCustomerState: function (id, action, savedPhone) {
         var stateSelect = $('#customer_state');
         var params = {
             url: 'setting/getJSONState',
@@ -783,9 +791,11 @@ PosnicPro.customers = {
             if (PosnicPro.local.get('edit_customer_state') !== '' && action === 'edit') {
                 stateSelect.val(PosnicPro.local.get('edit_customer_state')).trigger('change.select2');
                 (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
+                if (action === 'edit' && savedPhone !== undefined) PosnicPro.customers.setPhone(savedPhone);
             } else {
                 $('#customer_state option:eq(0)').prop('selected', true);
                 (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
+                if (action === 'edit' && savedPhone !== undefined) PosnicPro.customers.setPhone(savedPhone);
             }
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -867,14 +877,9 @@ PosnicPro.customers = {
             if (!phone_number) {
                 return true;  // Allow blank phone number
             }
-            let valid = PosnicPro.customers.customer_phone.isValidNumber();
-            let num = PosnicPro.customers.customer_phone.getNumber();
-            if (valid === true) {
-                $('#customer_phone').val(num);
-                return true;
-            } else {
-                return false;
-            }
+            var input = PosnicPro.customers.customer_phone;
+            // Validation must not put the international prefix back into the visible field.
+            return !!input && input.isValidNumber() === true;
 
         }, "Enter a valid phone number");
         jQuery.validator.addMethod("gst", function (value, element) {
@@ -1419,7 +1424,6 @@ $(function () {
     PosnicPro.lazyPhoneInput('#customer_phone', PosnicPro.customers, 'customer_phone', {
         separateDialCode: true,
         preferredCountries: ['in'],
-        hiddenInput: "full",
         utilsScript: "../static/script/js/utils.js"
     });
 });

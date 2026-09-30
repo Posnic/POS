@@ -235,7 +235,10 @@ class VariantsController {
   static async getOne(req, res) {
     try {
       const id = req.params.id || req.query.id;
-      const result = await variantsService.getVariantById(id);
+      const result = await variantsService.getVariantById(
+        id,
+        require('../utils/record-scope').requestScope(req)
+      );
 
       if (result.status) {
         return res.status(HTTP_STATUS.OK).json({
@@ -267,7 +270,10 @@ class VariantsController {
   static async getVariantDetails(req, res) {
     try {
       const id = req.query.id || req.params.id;
-      const result = await variantsService.getVariantById(id);
+      const result = await variantsService.getVariantById(
+        id,
+        require('../utils/record-scope').requestScope(req)
+      );
 
       if (result.status) {
         return res.status(HTTP_STATUS.OK).json({

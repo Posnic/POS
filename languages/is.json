@@ -95,5 +95,8 @@
   "lang_total_title": "Samtals",
   "lang_yes": "Já",
   "lang_ai_describe_hint": "Búðu til drög að lýsingu út frá upplýsingum vörunnar",
-  "lang_walk_in_customer_click_to_choose_or_add": "Óskráður viðskiptavinur. Smelltu til að velja eða bæta við"
+  "lang_walk_in_customer_click_to_choose_or_add": "Óskráður viðskiptavinur. Smelltu til að velja eða bæta við",
+  "lang_business_discount": "Afsláttur",
+  "lang_cash": "Reiðufé",
+  "lang_print": "Prenta"
 }

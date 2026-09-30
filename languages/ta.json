@@ -3734,5 +3734,17 @@
   "lang_business_waiting_owner": "உரிமையாளருக்காகக் காத்திருக்கிறது",
   "lang_changes_not_saved": "மாற்றங்கள் சேமிக்கப்படவில்லை.",
   "lang_continue": "தொடர்",
-  "lang_reason": "காரணம்"
+  "lang_reason": "காரணம்",
+  "lang_ai_key_remove": "நீக்கு",
+  "lang_ai_key_remove_q": "சேமித்த கீயை நீக்கவா?",
+  "lang_ai_key_replace": "மாற்று",
+  "lang_amount": "தொகை",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "விற்பனை விலை",
+  "lang_int_voice_key": "API சாவி",
+  "lang_int_voice_key_saved": "ஒரு சாவி சேமிக்கப்பட்டுள்ளது. மாற்ற புதியதைத் தட்டச்சு செய்யவும்.",
+  "lang_int_voice_language": "மொழி",
+  "lang_print": "அச்சிடுதல்",
+  "lang_receipt_text_size": "எழுத்தின் அளவு",
+  "lang_show_matching": "காட்டு"
 }

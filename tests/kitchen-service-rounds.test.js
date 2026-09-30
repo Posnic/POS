@@ -53,71 +53,19 @@ test('missing timestamps never become epoch service dates', () => {
 });
 const vm = require('node:vm');
 const fs = require('node:fs');
-test('every dish on long kitchen tickets rotates into view, including a busy kitchen', () => {
-  const source = fs
-    .readFileSync('src/kitchen-screen.html', 'utf8')
-    .split('<script>')[1]
-    .split('</script>')[0];
-  const nodes = {},
-    timers = [];
-  const node = () => ({
-    children: [],
-    style: { setProperty() {}, removeProperty() {} },
-    setAttribute() {},
-    appendChild(child) {
-      this.children.push(child);
-    },
-    set textContent(value) {
-      this.text = value;
-      this.children = [];
-    },
-    get textContent() {
-      return this.text;
-    },
-  });
-  const document = {
-    createElement: node,
-    createElementNS: node,
-    createTextNode: (text) => {
-      const n = node();
-      n.textContent = text;
-      return n;
-    },
-    documentElement: node(),
-    getElementById: (id) => nodes[id] || (nodes[id] = node()),
-  };
-  const context = {
-    document,
-    window: { addEventListener() {} },
-    location: { search: '' },
-    URLSearchParams,
-    Date,
-    setInterval: (fn) => timers.push(fn),
-  };
-  vm.runInNewContext(source, context);
-  context.window.kitchenScreen.setConfig({
-    _fit: { cards: 1, columns: 1 },
-    maxItemsPerCard: 3,
-    compactAfter: 1,
-  });
-  context.window.kitchenScreen.setTickets([
-    {
-      table: '6',
-      placedAt: new Date().toISOString(),
-      items: Array.from({ length: 10 }, (_, i) => ({ qty: 1, name: `Dish ${i}` })),
-    },
-  ]);
-  const seen = new Set();
-  const collect = (n) => {
-    if (n.className === 'name') seen.add(n.textContent);
-    n.children.forEach(collect);
-  };
-  for (let i = 0; i < 4; i++) {
-    collect(nodes.board);
-    timers.forEach((fn) => fn());
-  }
-  assert.equal(seen.size, 10);
-  assert.equal(nodes.count.textContent, 1);
+test('every dish on a long kitchen ticket stays in one scrollable table box', () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(fs.readFileSync('src/kitchen-screen.html', 'utf8'), { runScripts: 'dangerously' });
+  try {
+    const { window } = dom;
+    window.kitchenScreen.setConfig({ visibleDishesPerBox: 3, fontSizePx: 32 });
+    window.kitchenScreen.setTickets([{ id: 'sale:0', table: '6', placedAt: new Date().toISOString(),
+      items: Array.from({ length: 10 }, (_, i) => ({ qty: 1, name: `Dish ${i}` })) }]);
+    assert.equal(window.document.querySelectorAll('.ticket').length, 1);
+    assert.equal(window.document.querySelectorAll('.name').length, 10);
+    assert.equal(window.document.querySelector('.items').style.maxHeight, '192px');
+    assert.equal(window.document.getElementById('count').textContent, '1');
+  } finally { dom.window.close(); }
 });
 
 test('tracked kitchen work stays visible after bill printing until physically served', () => {

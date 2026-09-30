@@ -232,5 +232,5 @@ than simply deleting, since ten of them are in use.
 ## Reporting an omission
 
 If something is distributed here without its notice, that is a mistake and it
-will be fixed. Open an issue, or write to security@posnic.com if you would rather
+will be fixed. Open an issue, or write to info@posnic.com if you would rather
 not do so publicly.
