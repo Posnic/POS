@@ -1,5 +1,6 @@
 'use strict';
-const { test } = require('node:test');
+// Run the same assertions under the API's Jest suite and the standalone Node runner.
+const test = typeof globalThis.test === 'function' ? globalThis.test : require('node:test').test;
 const assert = require('node:assert/strict');
 const { allowed } = require('../src/utils/mobile-pos-access');
 

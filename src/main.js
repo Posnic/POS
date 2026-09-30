@@ -5483,7 +5483,7 @@ function startServer() {
       if (mainWindow) {
         if (!mainWindow.isVisible()) mainWindow.show();
         mainWindow.loadFile(path.join(__dirname, 'loading.html'), {
-          query: { startupError: 'Posnic could not start its local database', details: 'Your data has not been removed. Open Log for details or restart Posnic to try again.' }
+          query: { startupError: 'Posnic could not start its local database', details: 'Posnic includes its own database. Your data has not been removed. Open Log for details or restart Posnic to try again.' }
         }).catch(error => console.error('Could not display startup recovery:', error));
       }
     }
