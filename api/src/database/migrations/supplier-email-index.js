@@ -18,7 +18,9 @@ async function migrateContactEmailIndex(db, name, indexOptions) {
   } catch (error) {
     if (error?.code !== 11000) throw error;
     console.warn(
-      '[startup] ' + name + ': email uniqueness migration deferred; existing duplicate emails require review. Contacts and existing indexes are unchanged.'
+      '[startup] ' +
+        name +
+        ': email uniqueness migration deferred; existing duplicate emails require review. Contacts and existing indexes are unchanged.'
     );
     return { status: 'deferred', reason: 'duplicate-email', collection: name };
   }

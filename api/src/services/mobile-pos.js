@@ -33,6 +33,8 @@ function settings(branch) {
         ? s.enabled === true
         : branch.module_mobile_pos_enable === true,
     offlineHours: s.offlineHours || 24,
+    historyDays: s.historyDays || 90,
+    historyMaxReceipts: s.historyMaxReceipts || 10000,
     quickSale: s.quickSale !== false,
     quickTaxBps: s.quickTaxBps || 0,
     quickTaxInclusive: s.quickTaxInclusive !== false,
@@ -155,6 +157,7 @@ async function bootstrap(req) {
     staffName: req.user.username || req.user.name || '',
     snapshotVersion: key,
     offlineUntil: until.toISOString(),
+    historyPolicy: { days: c.config.historyDays, maxReceipts: c.config.historyMaxReceipts },
     quickTaxBps: c.config.quickTaxBps,
     quickTaxInclusive: c.config.quickTaxInclusive,
     permissions: {

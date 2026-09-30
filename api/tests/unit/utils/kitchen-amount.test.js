@@ -12,13 +12,27 @@ test.each([
 test('normal product prices stay hidden even with a caller-supplied flag', () => {
   expect(forSaleItem({ selling_price: 200 }, { priced_at_table: 1 }, 100)).toEqual({});
 });
-test.each([null, undefined, '', 0, -1, Infinity, 'bad'])('invalid amount %s is omitted', value => {
-  expect(snapshot({ priced_at_table: value })).toEqual({});
-});
+test.each([null, undefined, '', 0, -1, Infinity, 'bad'])(
+  'invalid amount %s is omitted',
+  (value) => {
+    expect(snapshot({ priced_at_table: value })).toEqual({});
+  }
+);
 test('screen and service rounds retain amounts for both logged and legacy items', () => {
   const cake = { item_id: 'cake', item_name: 'Cake', item_quantity: 2, priced_at_table: 200 };
   const regular = { item_id: 'tea', item_name: 'Tea', item_quantity: 1, item_price: 20 };
-  for (const changes of [[], [{ timestamp: new Date(), items: [{ ...cake, process: 'add' }, { ...regular, process: 'add' }] }]]) {
+  for (const changes of [
+    [],
+    [
+      {
+        timestamp: new Date(),
+        items: [
+          { ...cake, process: 'add' },
+          { ...regular, process: 'add' },
+        ],
+      },
+    ],
+  ]) {
     const sale = { _id: 'sale', items: [cake, regular], changes, created_date: new Date() };
     expect(rounds(sale)[0].items[0].priced_at_table).toBe(200);
     const items = tickets(sale)[0].items;

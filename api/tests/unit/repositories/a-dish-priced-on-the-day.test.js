@@ -437,7 +437,12 @@ describe('an ordinary dish', () => {
  */
 describe('the price the kitchen is told', () => {
   test('preparation amount stays at the entered price before tax and discount, per item', async () => {
-    const doc = await anItem({ selling_price: 0, tax: 10, tax_type: 'exclusive', discount_percentage: 20 });
+    const doc = await anItem({
+      selling_price: 0,
+      tax: 10,
+      tax_type: 'exclusive',
+      discount_percentage: 20,
+    });
     const out = await price(doc, { item_id: String(doc._id), item_quantity: 2, item_price: 500 });
     expect(out.line.priced_at_table).toBe(500);
   });

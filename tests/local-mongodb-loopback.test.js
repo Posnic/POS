@@ -61,11 +61,11 @@ test('credential migration preserves explicitly configured remote hosts', () => 
 
 test('database failure help does not give Windows-only or false install advice', () => {
   const source = fs.readFileSync(path.join(ROOT, 'src', 'main.js'), 'utf8');
-  const start = source.indexOf('<h1>Posnic could not start its local database</h1>');
-  const end = source.indexOf('`)}`);', start);
-
-  assert.ok(start >= 0 && end > start, 'database failure help was not found');
-  const help = source.slice(start, end);
+  const message = source.match(/startupError: 'Posnic could not start its local database', details: '([^']+)'/);
+  assert.ok(message, 'database failure help was not found');
+  const help = message[1];
+  const loading = fs.readFileSync(path.join(ROOT, 'src', 'loading.html'), 'utf8');
+  assert.match(loading, /startupQuery\.get\('details'\)/);
   assert.match(help, /includes its own database/i);
   assert.doesNotMatch(help, /\.bat|net start MongoDB|download from:|install with/i);
 });
