@@ -252,7 +252,7 @@ async function verifySession(req, user) {
     .replace(/^\/api/, '')
     .replace(/\/$/, '');
   if (
-    !/^\/(authorizations\/verify-pin|captain\/v1\/(session|logout|profile|password|payment-options|payments\/(table|record|release))|items\/(accessQr|aiAvailability|soldOut|instanceItemInsert)|sales\/(qrOrder|myDay|guestBills\/(table|latest|print)|requestBillPrint|serveKitchenItems|fireKitchenItems|kitchenDeliveryStatus|handoverStaff|handoverOrder|getTablesWithActiveOrders|getOrderHistory|updateOrder|getFrequentItems|pendingOnlineOrders|getListKot|[a-fA-F0-9]{24}\/(approval|print)|waiterCalls\/[^/]+\/seen|transcribe|voiceIntent))$/.test(
+    !/^\/(authorizations\/verify-pin|captain\/v1\/(session|logout|profile|password|branch-details|tables(?:\/state)?|payment-options|payments\/(table|record|release))|items\/(accessQr|aiAvailability|soldOut|instanceItemInsert)|sales\/(qrOrder|myDay|guestBills\/(table|latest|print)|requestBillPrint|serveKitchenItems|fireKitchenItems|kitchenDeliveryStatus|handoverStaff|handoverOrder|getTablesWithActiveOrders|getOrderHistory|updateOrder|getFrequentItems|pendingOnlineOrders|getListKot|[a-fA-F0-9]{24}\/(approval|print)|waiterCalls\/[^/]+\/seen|transcribe|voiceIntent))$/.test(
       path
     )
   )

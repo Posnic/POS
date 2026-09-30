@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "බාබකියු ග්‍රිල්",
   "lang_changes_not_saved": "වෙනස්කම් සුරැකුණේ නැත.",
   "lang_continue": "ඉදිරියට",
-  "lang_reason": "හේතුව"
+  "lang_reason": "හේතුව",
+  "lang_table_capacity": "ආසන ධාරිතාව",
+  "lang_table_max_capacity": "උපරිම ආසන",
+  "lang_table_area": "භෝජන ප්‍රදේශය",
+  "lang_table_shape": "මේසයේ හැඩය",
+  "lang_table_square": "හතරැස්",
+  "lang_table_round": "වටකුරු",
+  "lang_table_rectangle": "සෘජුකෝණාස්‍ර",
+  "lang_table_choose_capacity": "ප්‍රමාණවත් ආසන සහිත මේසයක් තෝරන්න."
 }

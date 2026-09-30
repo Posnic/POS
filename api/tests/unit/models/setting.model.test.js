@@ -66,6 +66,7 @@ function makeMockCollection(overrides = {}) {
     toArray: jest.fn().mockResolvedValue([]),
   };
   return {
+    createIndex: jest.fn().mockResolvedValue('table-identity'),
     findOne: jest.fn().mockResolvedValue(null),
     find: jest.fn().mockReturnValue({ ...cursorBase }),
     insertOne: jest.fn().mockResolvedValue({ insertedId: new MockObjectId(TAX_ID) }),

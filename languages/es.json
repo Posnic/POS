@@ -3668,5 +3668,13 @@
   "lang_pm_option_grill": "Parrilla",
   "lang_changes_not_saved": "No se guardaron los cambios.",
   "lang_continue": "Continuar",
-  "lang_reason": "Motivo"
+  "lang_reason": "Motivo",
+  "lang_table_capacity": "Capacidad de asientos",
+  "lang_table_max_capacity": "Asientos máximos",
+  "lang_table_area": "Zona de comedor",
+  "lang_table_shape": "Forma de mesa",
+  "lang_table_square": "Cuadrada",
+  "lang_table_round": "Redonda",
+  "lang_table_rectangle": "Rectangular",
+  "lang_table_choose_capacity": "Elija una mesa con suficientes asientos."
 }

@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "未登録のお客様。クリックして選択または追加",
   "lang_changes_not_saved": "変更は保存されませんでした。",
   "lang_continue": "続ける",
-  "lang_reason": "理由"
+  "lang_reason": "理由",
+  "lang_table_capacity": "座席数",
+  "lang_table_max_capacity": "最大座席数",
+  "lang_table_area": "ダイニングエリア",
+  "lang_table_shape": "テーブルの形",
+  "lang_table_square": "正方形",
+  "lang_table_round": "円形",
+  "lang_table_rectangle": "長方形",
+  "lang_table_choose_capacity": "十分な席数のあるテーブルを選んでください。"
 }

@@ -26,6 +26,14 @@ router.post('/route-proof', rateLimit({ windowMs: 60000, limit: 180 }), wrap(acc
 router.use(protect);
 const profile = require('../services/captain-profile');
 router.get('/profile', wrap(profile.get));
+const branchDetails = require('../services/captain-branch-details');
+router.get('/branch-details', wrap(branchDetails.get));
+router.post('/branch-details', limit, wrap(branchDetails.update));
+const tables = require('../services/captain-tables');
+router.get('/tables', wrap(tables.list));
+router.post('/tables', limit, wrap(tables.update));
+router.post('/tables/state', limit, wrap(tables.state));
+
 router.post('/profile', limit, wrap(profile.update));
 router.post('/password', rateLimit({ windowMs: 15 * 60000, limit: 8 }), wrap(profile.password));
 

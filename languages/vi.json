@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "Khách lẻ. Nhấn để chọn hoặc thêm",
   "lang_changes_not_saved": "Chưa lưu thay đổi.",
   "lang_continue": "Tiếp tục",
-  "lang_reason": "Lý do"
+  "lang_reason": "Lý do",
+  "lang_table_capacity": "Số chỗ ngồi",
+  "lang_table_max_capacity": "Số chỗ tối đa",
+  "lang_table_area": "Khu vực ăn uống",
+  "lang_table_shape": "Hình dạng bàn",
+  "lang_table_square": "Vuông",
+  "lang_table_round": "Tròn",
+  "lang_table_rectangle": "Chữ nhật",
+  "lang_table_choose_capacity": "Chọn bàn có đủ chỗ ngồi."
 }

@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "नोंदणी नसलेला ग्राहक. निवडण्यासाठी किंवा जोडण्यासाठी क्लिक करा",
   "lang_changes_not_saved": "बदल जतन झाले नाहीत.",
   "lang_continue": "पुढे जा",
-  "lang_reason": "कारण"
+  "lang_reason": "कारण",
+  "lang_table_capacity": "आसन क्षमता",
+  "lang_table_max_capacity": "जास्तीत जास्त आसने",
+  "lang_table_area": "बसण्याचा विभाग",
+  "lang_table_shape": "टेबलचा आकार",
+  "lang_table_square": "चौकोनी",
+  "lang_table_round": "गोल",
+  "lang_table_rectangle": "आयताकृती",
+  "lang_table_choose_capacity": "पुरेशी आसने असलेले टेबल निवडा."
 }

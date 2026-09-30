@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "เตาบาร์บีคิว",
   "lang_changes_not_saved": "ไม่ได้บันทึกการเปลี่ยนแปลง",
   "lang_continue": "ดำเนินการต่อ",
-  "lang_reason": "เหตุผล"
+  "lang_reason": "เหตุผล",
+  "lang_table_capacity": "จำนวนที่นั่ง",
+  "lang_table_max_capacity": "ที่นั่งสูงสุด",
+  "lang_table_area": "พื้นที่รับประทานอาหาร",
+  "lang_table_shape": "รูปทรงโต๊ะ",
+  "lang_table_square": "สี่เหลี่ยมจัตุรัส",
+  "lang_table_round": "วงกลม",
+  "lang_table_rectangle": "สี่เหลี่ยมผืนผ้า",
+  "lang_table_choose_capacity": "เลือกโต๊ะที่มีที่นั่งเพียงพอ"
 }

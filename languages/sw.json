@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "Jiko la kuchoma",
   "lang_changes_not_saved": "Mabadiliko hayakuhifadhiwa.",
   "lang_continue": "Endelea",
-  "lang_reason": "Sababu"
+  "lang_reason": "Sababu",
+  "lang_table_capacity": "Idadi ya viti",
+  "lang_table_max_capacity": "Kiwango cha juu cha viti",
+  "lang_table_area": "Sehemu ya kulia",
+  "lang_table_shape": "Umbo la meza",
+  "lang_table_square": "Mraba",
+  "lang_table_round": "Duara",
+  "lang_table_rectangle": "Mstatili",
+  "lang_table_choose_capacity": "Chagua meza yenye viti vya kutosha."
 }

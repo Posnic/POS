@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "Незарегистрированный клиент. Нажмите, чтобы выбрать или добавить",
   "lang_changes_not_saved": "Изменения не сохранены.",
   "lang_continue": "Продолжить",
-  "lang_reason": "Причина"
+  "lang_reason": "Причина",
+  "lang_table_capacity": "Количество мест",
+  "lang_table_max_capacity": "Максимум мест",
+  "lang_table_area": "Обеденная зона",
+  "lang_table_shape": "Форма стола",
+  "lang_table_square": "Квадратный",
+  "lang_table_round": "Круглый",
+  "lang_table_rectangle": "Прямоугольный",
+  "lang_table_choose_capacity": "Выберите стол с достаточным количеством мест."
 }

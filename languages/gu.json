@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "નોંધણી વગરનો ગ્રાહક. પસંદ કરવા અથવા ઉમેરવા ક્લિક કરો",
   "lang_changes_not_saved": "ફેરફારો સેવ થયા નથી.",
   "lang_continue": "આગળ વધો",
-  "lang_reason": "કારણ"
+  "lang_reason": "કારણ",
+  "lang_table_capacity": "બેઠક ક્ષમતા",
+  "lang_table_max_capacity": "મહત્તમ બેઠકો",
+  "lang_table_area": "બેસવાનો વિસ્તાર",
+  "lang_table_shape": "ટેબલનો આકાર",
+  "lang_table_square": "ચોરસ",
+  "lang_table_round": "ગોળ",
+  "lang_table_rectangle": "લંબચોરસ",
+  "lang_table_choose_capacity": "પૂરતી બેઠકો ધરાવતું ટેબલ પસંદ કરો."
 }

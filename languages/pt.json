@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "Churrasqueira",
   "lang_changes_not_saved": "As alterações não foram guardadas.",
   "lang_continue": "Continuar",
-  "lang_reason": "Motivo"
+  "lang_reason": "Motivo",
+  "lang_table_capacity": "Capacidade de assentos",
+  "lang_table_max_capacity": "Assentos máximos",
+  "lang_table_area": "Área de refeições",
+  "lang_table_shape": "Formato da mesa",
+  "lang_table_square": "Quadrada",
+  "lang_table_round": "Redonda",
+  "lang_table_rectangle": "Retangular",
+  "lang_table_choose_capacity": "Escolha uma mesa com assentos suficientes."
 }

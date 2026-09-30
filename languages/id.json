@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "Panggangan",
   "lang_changes_not_saved": "Perubahan tidak disimpan.",
   "lang_continue": "Lanjutkan",
-  "lang_reason": "Alasan"
+  "lang_reason": "Alasan",
+  "lang_table_capacity": "Kapasitas kursi",
+  "lang_table_max_capacity": "Kursi maksimum",
+  "lang_table_area": "Area makan",
+  "lang_table_shape": "Bentuk meja",
+  "lang_table_square": "Persegi",
+  "lang_table_round": "Bulat",
+  "lang_table_rectangle": "Persegi panjang",
+  "lang_table_choose_capacity": "Pilih meja dengan kursi yang cukup."
 }

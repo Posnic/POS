@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "Grill",
   "lang_changes_not_saved": "Änderungen wurden nicht gespeichert.",
   "lang_continue": "Weiter",
-  "lang_reason": "Grund"
+  "lang_reason": "Grund",
+  "lang_table_capacity": "Sitzplätze",
+  "lang_table_max_capacity": "Maximale Sitzplätze",
+  "lang_table_area": "Speisebereich",
+  "lang_table_shape": "Tischform",
+  "lang_table_square": "Quadratisch",
+  "lang_table_round": "Rund",
+  "lang_table_rectangle": "Rechteckig",
+  "lang_table_choose_capacity": "Wählen Sie einen Tisch mit genügend Sitzplätzen."
 }

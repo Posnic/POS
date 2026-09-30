@@ -5288,6 +5288,8 @@ class ItemRepository extends BaseModel {
           .sort({ tableorder_value: 1 })
           .toArray();
         tableorders = tableList.map((doc) => ({
+          ...require('../utils/table-details').view(doc),
+          service_state: doc.service_state || 'available',
           id: doc._id.toString(),
           tableorder_value: doc.tableorder_value,
           tableorder_fields: doc.tableorder_fields || [],

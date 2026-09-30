@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "Kayıtsız müşteri. Seçmek veya eklemek için tıklayın",
   "lang_changes_not_saved": "Değişiklikler kaydedilmedi.",
   "lang_continue": "Devam et",
-  "lang_reason": "Neden"
+  "lang_reason": "Neden",
+  "lang_table_capacity": "Oturma kapasitesi",
+  "lang_table_max_capacity": "Azami koltuk",
+  "lang_table_area": "Yemek alanı",
+  "lang_table_shape": "Masa şekli",
+  "lang_table_square": "Kare",
+  "lang_table_round": "Yuvarlak",
+  "lang_table_rectangle": "Dikdörtgen",
+  "lang_table_choose_capacity": "Yeterli koltuğu olan bir masa seçin."
 }

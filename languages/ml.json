@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "ബാർബിക്യൂ ഗ്രിൽ",
   "lang_changes_not_saved": "മാറ്റങ്ങൾ സേവ് ചെയ്തിട്ടില്ല.",
   "lang_continue": "തുടരുക",
-  "lang_reason": "കാരണം"
+  "lang_reason": "കാരണം",
+  "lang_table_capacity": "ഇരിപ്പിട ശേഷി",
+  "lang_table_max_capacity": "പരമാവധി ഇരിപ്പിടങ്ങൾ",
+  "lang_table_area": "ഭക്ഷണ മേഖല",
+  "lang_table_shape": "മേശയുടെ ആകൃതി",
+  "lang_table_square": "ചതുരം",
+  "lang_table_round": "വൃത്തം",
+  "lang_table_rectangle": "ദീർഘചതുരം",
+  "lang_table_choose_capacity": "മതിയായ ഇരിപ്പിടങ്ങളുള്ള മേശ തിരഞ്ഞെടുക്കുക."
 }

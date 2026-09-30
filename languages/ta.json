@@ -3694,5 +3694,13 @@
   "lang_pm_option_grill": "பார்பிக்யூ கிரில்",
   "lang_changes_not_saved": "மாற்றங்கள் சேமிக்கப்படவில்லை.",
   "lang_continue": "தொடர்",
-  "lang_reason": "காரணம்"
+  "lang_reason": "காரணம்",
+  "lang_table_capacity": "இருக்கை எண்ணிக்கை",
+  "lang_table_max_capacity": "அதிகபட்ச இருக்கைகள்",
+  "lang_table_area": "உணவருந்தும் பகுதி",
+  "lang_table_shape": "மேசையின் வடிவம்",
+  "lang_table_square": "சதுரம்",
+  "lang_table_round": "வட்டம்",
+  "lang_table_rectangle": "செவ்வகம்",
+  "lang_table_choose_capacity": "போதுமான இருக்கைகள் உள்ள மேசையைத் தேர்ந்தெடுக்கவும்."
 }

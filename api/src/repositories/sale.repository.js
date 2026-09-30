@@ -8390,6 +8390,21 @@ class SalesRepository {
       const runsTableService = branchDoc.table_options === true;
       const openTableLimit = Number(branchDoc.table_order_limit ?? 1);
       const wantsTable = String(servicePoint.label || kiosk_table_no || table || '').trim();
+      if (runsTableService && wantsTable) {
+        const configuredTable = await db.collection('tableorder').findOne({
+          branch_id: branchObjectId,
+          license: branchDoc.license,
+          tableorder_value: wantsTable,
+        });
+        if (configuredTable && ['held', 'cleaning'].includes(configuredTable.service_state))
+          return { status: false, message: 'This table is not available.', data: null };
+        if (
+          configuredTable &&
+          !require('../utils/table-details').accommodates(configuredTable, person_count || 1)
+        )
+          return { status: false, message: 'Choose a table with enough seats.', data: null };
+      }
+
       if (runsTableService && openTableLimit > 0 && wantsTable) {
         const openNow = await db.collection('sales').countDocuments({
           branch_id: branchObjectId,
@@ -10084,6 +10099,29 @@ class SalesRepository {
         .collection('branches')
         .findOne({ _id: orderDoc.branch_id, license: orderDoc.license });
       const monetary = Money.policy(shop || {});
+      if (shop?.table_options === true && (newTableNo || personCount)) {
+        const destination = String(newTableNo || orderDoc.table_number || '');
+        const configuredTable = await db.collection('tableorder').findOne({
+          branch_id: orderDoc.branch_id,
+          license: orderDoc.license,
+          tableorder_value: destination,
+        });
+        if (
+          destination !== String(orderDoc.table_number || '') &&
+          ['held', 'cleaning'].includes(configuredTable?.service_state)
+        ) {
+          return { status: false, message: 'This table is not available.', data: null };
+        }
+        if (
+          configuredTable &&
+          !require('../utils/table-details').accommodates(
+            configuredTable,
+            personCount || orderDoc.person_count || 1
+          )
+        )
+          return { status: false, message: 'Choose a table with enough seats.', data: null };
+      }
+
       finishCaptainEdit = await require('../services/captain-payment-guard').beginEdit(
         db,
         orderDoc

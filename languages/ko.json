@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "미등록 고객. 클릭하여 선택하거나 추가",
   "lang_changes_not_saved": "변경 사항이 저장되지 않았습니다.",
   "lang_continue": "계속",
-  "lang_reason": "사유"
+  "lang_reason": "사유",
+  "lang_table_capacity": "좌석 수",
+  "lang_table_max_capacity": "최대 좌석 수",
+  "lang_table_area": "식사 구역",
+  "lang_table_shape": "테이블 모양",
+  "lang_table_square": "정사각형",
+  "lang_table_round": "원형",
+  "lang_table_rectangle": "직사각형",
+  "lang_table_choose_capacity": "좌석이 충분한 테이블을 선택하세요."
 }

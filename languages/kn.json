@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "ಬಾರ್ಬೆಕ್ಯೂ ಗ್ರಿಲ್",
   "lang_changes_not_saved": "ಬದಲಾವಣೆಗಳು ಉಳಿಸಲ್ಪಟ್ಟಿಲ್ಲ.",
   "lang_continue": "ಮುಂದುವರಿಸಿ",
-  "lang_reason": "ಕಾರಣ"
+  "lang_reason": "ಕಾರಣ",
+  "lang_table_capacity": "ಆಸನ ಸಾಮರ್ಥ್ಯ",
+  "lang_table_max_capacity": "ಗರಿಷ್ಠ ಆಸನಗಳು",
+  "lang_table_area": "ಊಟದ ಪ್ರದೇಶ",
+  "lang_table_shape": "ಮೇಜಿನ ಆಕಾರ",
+  "lang_table_square": "ಚೌಕ",
+  "lang_table_round": "ವೃತ್ತ",
+  "lang_table_rectangle": "ಆಯತ",
+  "lang_table_choose_capacity": "ಸಾಕಷ್ಟು ಆಸನಗಳಿರುವ ಮೇಜನ್ನು ಆಯ್ಕೆಮಾಡಿ."
 }

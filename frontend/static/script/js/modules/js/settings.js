@@ -3278,6 +3278,7 @@ PosnicPro.tableOrders = {
     },
     triggerModules: function () {
         PosnicPro.showAddModal('tableorder');
+        $('#tableorder_add_form').trigger('reset');
         $('#tableorder_id').val('');
             $('#tableorder-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
             $('#tableorder_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
@@ -3291,6 +3292,12 @@ PosnicPro.tableOrders = {
         PosnicPro.showAddModal('tableorder');
         $('#tableorder_id').val(id);
         $('#tableorder_value').val(module.data('tableordervalue'));
+        var row = PosnicPro.tableOrders.allData.find(function (entry) { return String(entry.tableorder_id) === String(id); }) || {};
+        $('#table_capacity').val(row.capacity || '');
+        $('#table_max_capacity').val(row.max_capacity || '');
+        $('#table_area').val(row.area || '');
+        $('#table_shape').val(row.shape || 'square');
+
             $('#tableorder-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
             $('#tableorder_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         $('#tableorder_reset').hide();

@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "غیر رجسٹرڈ گاہک۔ منتخب کرنے یا شامل کرنے کے لیے کلک کریں",
   "lang_changes_not_saved": "تبدیلیاں محفوظ نہیں ہوئیں۔",
   "lang_continue": "جاری رکھیں",
-  "lang_reason": "وجہ"
+  "lang_reason": "وجہ",
+  "lang_table_capacity": "نشستوں کی گنجائش",
+  "lang_table_max_capacity": "زیادہ سے زیادہ نشستیں",
+  "lang_table_area": "کھانے کا حصہ",
+  "lang_table_shape": "میز کی شکل",
+  "lang_table_square": "مربع",
+  "lang_table_round": "گول",
+  "lang_table_rectangle": "مستطیل",
+  "lang_table_choose_capacity": "کافی نشستوں والی میز منتخب کریں۔"
 }

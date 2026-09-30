@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "অনিবন্ধিত গ্রাহক। বেছে নিতে বা যোগ করতে ক্লিক করুন",
   "lang_changes_not_saved": "পরিবর্তনগুলি সেভ হয়নি।",
   "lang_continue": "এগিয়ে যান",
-  "lang_reason": "কারণ"
+  "lang_reason": "কারণ",
+  "lang_table_capacity": "আসন সংখ্যা",
+  "lang_table_max_capacity": "সর্বোচ্চ আসন",
+  "lang_table_area": "বসার এলাকা",
+  "lang_table_shape": "টেবিলের আকৃতি",
+  "lang_table_square": "বর্গাকার",
+  "lang_table_round": "গোলাকার",
+  "lang_table_rectangle": "আয়তাকার",
+  "lang_table_choose_capacity": "পর্যাপ্ত আসন আছে এমন টেবিল বেছে নিন।"
 }

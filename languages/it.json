@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "Barbecue",
   "lang_changes_not_saved": "Le modifiche non sono state salvate.",
   "lang_continue": "Continua",
-  "lang_reason": "Motivo"
+  "lang_reason": "Motivo",
+  "lang_table_capacity": "Posti a sedere",
+  "lang_table_max_capacity": "Posti massimi",
+  "lang_table_area": "Zona pranzo",
+  "lang_table_shape": "Forma del tavolo",
+  "lang_table_square": "Quadrata",
+  "lang_table_round": "Rotonda",
+  "lang_table_rectangle": "Rettangolare",
+  "lang_table_choose_capacity": "Scegli un tavolo con posti sufficienti."
 }

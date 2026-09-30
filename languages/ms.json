@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "Pelanggan tanpa akaun. Klik untuk memilih atau menambah",
   "lang_changes_not_saved": "Perubahan tidak disimpan.",
   "lang_continue": "Teruskan",
-  "lang_reason": "Sebab"
+  "lang_reason": "Sebab",
+  "lang_table_capacity": "Kapasiti tempat duduk",
+  "lang_table_max_capacity": "Tempat duduk maksimum",
+  "lang_table_area": "Ruang makan",
+  "lang_table_shape": "Bentuk meja",
+  "lang_table_square": "Segi empat sama",
+  "lang_table_round": "Bulat",
+  "lang_table_rectangle": "Segi empat tepat",
+  "lang_table_choose_capacity": "Pilih meja dengan tempat duduk yang mencukupi."
 }

@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "Grill barbecue",
   "lang_changes_not_saved": "Les modifications n’ont pas été enregistrées.",
   "lang_continue": "Continuer",
-  "lang_reason": "Motif"
+  "lang_reason": "Motif",
+  "lang_table_capacity": "Nombre de places",
+  "lang_table_max_capacity": "Places maximales",
+  "lang_table_area": "Zone de restauration",
+  "lang_table_shape": "Forme de table",
+  "lang_table_square": "Carrée",
+  "lang_table_round": "Ronde",
+  "lang_table_rectangle": "Rectangulaire",
+  "lang_table_choose_capacity": "Choisissez une table avec suffisamment de places."
 }

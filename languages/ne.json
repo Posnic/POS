@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "बार्बेक्यु ग्रिल",
   "lang_changes_not_saved": "परिवर्तनहरू सेभ भएनन्।",
   "lang_continue": "जारी राख्नुहोस्",
-  "lang_reason": "कारण"
+  "lang_reason": "कारण",
+  "lang_table_capacity": "सिट क्षमता",
+  "lang_table_max_capacity": "अधिकतम सिट",
+  "lang_table_area": "भोजन क्षेत्र",
+  "lang_table_shape": "टेबलको आकार",
+  "lang_table_square": "वर्गाकार",
+  "lang_table_round": "गोलाकार",
+  "lang_table_rectangle": "आयताकार",
+  "lang_table_choose_capacity": "पर्याप्त सिट भएको टेबल रोज्नुहोस्।"
 }

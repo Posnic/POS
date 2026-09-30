@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "شواية",
   "lang_changes_not_saved": "لم تُحفظ التغييرات.",
   "lang_continue": "متابعة",
-  "lang_reason": "السبب"
+  "lang_reason": "السبب",
+  "lang_table_capacity": "عدد المقاعد",
+  "lang_table_max_capacity": "الحد الأقصى للمقاعد",
+  "lang_table_area": "منطقة الجلوس",
+  "lang_table_shape": "شكل الطاولة",
+  "lang_table_square": "مربع",
+  "lang_table_round": "دائري",
+  "lang_table_rectangle": "مستطيل",
+  "lang_table_choose_capacity": "اختر طاولة بها مقاعد كافية."
 }

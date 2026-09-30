@@ -3659,5 +3659,13 @@
   "lang_pm_option_grill": "బార్బెక్యూ గ్రిల్",
   "lang_changes_not_saved": "మార్పులు సేవ్ కాలేదు.",
   "lang_continue": "కొనసాగించండి",
-  "lang_reason": "కారణం"
+  "lang_reason": "కారణం",
+  "lang_table_capacity": "సీట్ల సామర్థ్యం",
+  "lang_table_max_capacity": "గరిష్ట సీట్లు",
+  "lang_table_area": "భోజన ప్రాంతం",
+  "lang_table_shape": "టేబుల్ ఆకారం",
+  "lang_table_square": "చతురస్రం",
+  "lang_table_round": "వృత్తం",
+  "lang_table_rectangle": "దీర్ఘచతురస్రం",
+  "lang_table_choose_capacity": "తగినన్ని సీట్లు ఉన్న టేబుల్‌ను ఎంచుకోండి."
 }

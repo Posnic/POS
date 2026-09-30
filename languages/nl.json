@@ -3933,5 +3933,13 @@
   "lang_continue": "Doorgaan",
   "lang_reason": "Reden",
   "lang_each_item_can_have_only_one_price_in_this": "Elk artikel kan maar één prijs in deze lijst hebben.",
-  "lang_two_csv_columns_map_to_the_same_field_keep": "Twee CSV-kolommen verwijzen naar hetzelfde veld. Behoud slechts één kolom per veld."
+  "lang_two_csv_columns_map_to_the_same_field_keep": "Twee CSV-kolommen verwijzen naar hetzelfde veld. Behoud slechts één kolom per veld.",
+  "lang_table_capacity": "Zitplaatsen",
+  "lang_table_max_capacity": "Maximaal aantal zitplaatsen",
+  "lang_table_area": "Eetgedeelte",
+  "lang_table_shape": "Tafelvorm",
+  "lang_table_square": "Vierkant",
+  "lang_table_round": "Rond",
+  "lang_table_rectangle": "Rechthoekig",
+  "lang_table_choose_capacity": "Kies een tafel met voldoende zitplaatsen."
 }

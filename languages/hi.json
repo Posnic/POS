@@ -3672,5 +3672,13 @@
   "lang_pm_option_grill": "बारबेक्यू ग्रिल",
   "lang_changes_not_saved": "बदलाव सेव नहीं हुए।",
   "lang_continue": "आगे बढ़ें",
-  "lang_reason": "कारण"
+  "lang_reason": "कारण",
+  "lang_table_capacity": "बैठने की क्षमता",
+  "lang_table_max_capacity": "अधिकतम सीटें",
+  "lang_table_area": "बैठने का क्षेत्र",
+  "lang_table_shape": "टेबल का आकार",
+  "lang_table_square": "चौकोर",
+  "lang_table_round": "गोल",
+  "lang_table_rectangle": "आयताकार",
+  "lang_table_choose_capacity": "पर्याप्त सीटों वाली टेबल चुनें।"
 }

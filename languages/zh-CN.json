@@ -98,5 +98,13 @@
   "lang_walk_in_customer_click_to_choose_or_add": "散客。点击选择或添加",
   "lang_changes_not_saved": "更改未保存。",
   "lang_continue": "继续",
-  "lang_reason": "原因"
+  "lang_reason": "原因",
+  "lang_table_capacity": "座位数",
+  "lang_table_max_capacity": "最多座位数",
+  "lang_table_area": "用餐区域",
+  "lang_table_shape": "餐桌形状",
+  "lang_table_square": "正方形",
+  "lang_table_round": "圆形",
+  "lang_table_rectangle": "长方形",
+  "lang_table_choose_capacity": "请选择座位足够的餐桌。"
 }
