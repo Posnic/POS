@@ -5311,7 +5311,7 @@ function startServer() {
   }).then(async (result) => {
     if (result && result.success) {
       if (!shutdownInProgress) {
-        billManager?.start();
+        if (billManager) billManager.start();
   try {
     const feed = require('./kitchen-screen-feed');
     feed.start({ resolveBranch: async () => {
