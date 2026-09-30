@@ -10871,7 +10871,8 @@ class SalesRepository {
       if (orderDoc.captain_transfer_allocation) {
         const transferEdit = require('../services/captain-transfer-edit');
         const reconciled = transferEdit.metadata(orderDoc, updateFields, shop || {}) ||
-          transferEdit.reduce(orderDoc, updateFields, shop || {});
+          transferEdit.reduce(orderDoc, updateFields, shop || {}) ||
+          transferEdit.additions(orderDoc, updateFields, shop || {});
         if (!reconciled) throw new Error('Transferred item amounts need reconciliation before this edit can be saved.');
         for (const key of Object.keys(updateFields)) delete updateFields[key];
         Object.assign(updateFields, reconciled);

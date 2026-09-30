@@ -102,6 +102,30 @@ test.each([1, 0])('ordinary editor reduces transferred quantity to %s without ca
   expect(cancellation[0].item_quantity).toBe(2 - quantity);
 });
 
+test('ordinary editor adds a new dish while preserving transferred tax and only adding its kitchen quantity', async () => {
+  const input = await confirmation(), completed = await service.complete(input), id = new ObjectId(completed.destinationId);
+  const product = new ObjectId();
+  await db.collection('items').insertMany([
+    { _id: sale.items[0].item_id, license, name: 'Corn', tax: 99, tax_type: 'exclusive' },
+    { _id: product, license, name: 'Soup', tax: 10, tax_type: 'exclusive' }
+  ]);
+  jest.spyOn(BaseModel, 'getDb').mockResolvedValue(db);
+  const answer = await runWithRequestContext({ license, currentBranch: branch, loggedUser: String(input.user._id) }, () =>
+    sales.updateOrderModel(String(id), [
+      { product_id: String(sale.items[0].item_id), quantity: 1, price: 50 },
+      { product_id: String(product), quantity: 2, price: 20 }
+    ], 96.5, 'modified', null, null, null, null, null, null));
+  expect(answer).toMatchObject({ status: true });
+  const after = await db.collection('sales').findOne({ _id: id });
+  expect(after.sales_total).toBe(96.5);
+  expect(after.tax).toBe(6.5);
+  expect(snapshotFrom([after], { currencyCode: 'INR' }, after.table_number).totalMinor).toBe(9650);
+  const added = after.changes.flatMap(change => change.items).filter(item => item.process === 'add');
+  expect(added).toHaveLength(1);
+  expect(String(added[0].item_id)).toBe(String(product));
+  expect(added[0].item_quantity).toBe(2);
+});
+
 test.each([1, 2])('complete transfer of %s items releases both sale fences and closes only an empty source', async quantity => {
   const input = await confirmation(); input.body.items[0].quantity = quantity;
   const result = await service.complete(input);

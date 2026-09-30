@@ -236,3 +236,41 @@ test.each(['increase','product','duplicate','discount'])('reduction reconciliati
   if(kind==='discount')proposed.extra_discount=10;
   expect(transferEdit.reduce(transferred,proposed,branch)).toBeNull();
 });
+
+
+test.each(['JPY','INR','KWD'])('adding a new preparation preserves old allocated pennies in %s',currencyCode=>{
+  const original=sale(),branch={currencyCode},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.destination};
+  const fresh={item_id:'soup',line_id:'new-soup',item_name:'Soup',item_quantity:2,item_price:10,
+    item_tax:1,item_discount:0,total_amount:21,tax_type:'exclusive',tax:5};
+  const result=transferEdit.additions(transferred,{items:[fresh,{...transferred.items[0],item_tax:999,item_base_price:999}]},branch);
+  const saved=result.captain_transfer_allocation;
+  expect(saved.lines[1].components).toEqual(transferred.captain_transfer_allocation.lines[0].components.map(row=>({...row,minor:row.minor || 0})));
+  expect(result.items[1].item_base_price).toBe(transferred.items[0].item_base_price);
+  expect(saved.totalMinor).toBe(transferred.captain_transfer_allocation.totalMinor+Money.toMinor(21,Money.policy(branch)));
+  expect(snapshotFrom([{...transferred,...result}],branch,'1').lines[0].name).toBe('Soup');
+  expect(result.items[0].item_quantity).toBe(2);
+});
+
+test('inclusive tax on a new preparation is not hidden as a negative round-off',()=>{
+  const original=sale(),branch={currencyCode:'INR'},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.destination};
+  const result=transferEdit.additions(transferred,{items:[...transferred.items,{item_id:'soup',item_name:'Soup',
+    item_quantity:1,item_price:105,item_tax:5,item_discount:0,total_amount:105,tax_type:'inclusive'}]},branch);
+  const parts=Object.fromEntries(result.captain_transfer_allocation.lines[1].components.map(row=>[row.key,row.minor]));
+  expect(parts).toEqual({base:10000,discount:0,'tax:Tax':500,adjustment:0});
+});
+
+
+test.each(['inclusive','exclusive'])('new discounted %s dish keeps the actual GST rate labels',tax_type=>{
+  const original=sale(),branch={currencyCode:'INR',indian_gst:'enable'},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.destination};
+  const fresh={item_id:'soup',item_name:'Soup',item_quantity:1,item_price:tax_type==='inclusive'?105:100,
+    item_discount:tax_type==='inclusive'?10.5:10,item_tax:4.5,total_amount:94.5,tax_type,tax:5};
+  const result=transferEdit.additions(transferred,{items:[...transferred.items,fresh]},branch);
+  const parts=Object.fromEntries(result.captain_transfer_allocation.lines[1].components.map(row=>[row.key,row.minor]));
+  expect(parts['tax:CGST 2.5%']).toBe(225);
+  expect(parts['tax:SGST 2.5%']).toBe(225);
+  expect(parts.adjustment).toBe(0);
+  expect(result.items[1].item_price).toBe(fresh.item_price);
+});

@@ -78,4 +78,46 @@ function reduce(sale, proposed, branch) {
   if (side.totalMinor < 0) return null;
   return applyMoney(sale, result, branch, side);
 }
-module.exports = { metadata, reduce };
+// New preparations use the ordinary editor's server-priced line. Reconcile
+// existing preparations separately so a new dish cannot reprice old food.
+function additions(sale, proposed, branch) {
+  const before = new Set((sale.items || []).filter(Boolean).map(orderLine.key));
+  const after = proposed.items || [];
+  if (after.some(line => !line)) return null;
+  const fresh = after.filter(line => !before.has(orderLine.key(line)));
+  if (!fresh.length) return null;
+  const keys = after.map(orderLine.key);
+  if (new Set(keys).size !== keys.length) return null;
+  const retained = reduce(sale, { ...proposed, items: after.filter(line => before.has(orderLine.key(line))) }, branch);
+  if (!retained) return null;
+  const { snapshotFrom } = require('./guest-bill.service');
+  const { units } = require('./captain-transfer-plan');
+  const reconciled = new Map(retained.items.map(line => [orderLine.key(line), line]));
+  const allocated = new Map(retained.captain_transfer_allocation.lines.map(line => [line.lineKey, line]));
+  for (const line of fresh) {
+    if (line.return || line.cancelled || ['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) ||
+        !units(quantity(line))) return null;
+    const gross = Number(line.item_price ?? line.unit_price ?? line.item_base_price) * quantity(line);
+    const total = Number(line.total_amount ?? line.item_total ?? line.total);
+    const tax = Number(line.item_tax ?? line.tax_amount ?? 0), discount = Number(line.item_discount || 0);
+    const base = gross - (line.tax_type === 'inclusive' ? tax : 0);
+    if (![base, total, tax, discount].every(value => Number.isFinite(value) && value >= 0)) return null;
+    // Tax labels infer their rate from the taxable base, not a gross
+    // inclusive price or the amount before a line discount. Only this
+    // one-line snapshot uses that basis; the sale retains its selling price.
+    const taxableLine = { ...line, item_base_price: (base - discount) / quantity(line) };
+    const snapshot = snapshotFrom([{ _id: sale._id, items: [taxableLine], sales_sub_total: base,
+      sales_total: total, tax, discount, round_off: 0 }], branch, sale.table_number || '', { allowZero: true });
+    const key = orderLine.key(line);
+    reconciled.set(key, clone(line));
+    allocated.set(key, { ...snapshot.lines[0], lineKey: key });
+  }
+  const side = { lines: keys.map(key => allocated.get(key)), components: {}, totalMinor: 0 };
+  for (const line of side.lines) {
+    side.totalMinor += line.amountMinor;
+    for (const row of line.components) side.components[row.key] = (side.components[row.key] || 0) + row.minor;
+  }
+  const result = { ...proposed, items: keys.map(key => reconciled.get(key)) };
+  return require('./captain-transfer-projection').applyMoney(sale, result, branch, side);
+}
+module.exports = { metadata, reduce, additions };
