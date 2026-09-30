@@ -1176,11 +1176,48 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       denomination_values: data.denomination_values ?? (existingSale?.denomination_values || []),
     };
 
+    const savedAnswer = (saleId, saleNumber, duplicate = false) => ({
+      status: true,
+      data: {
+        _id: saleId,
+        sales_id: saleId,
+        sale_number: saleNumber,
+        sms: context.branchSettings?.sales_sms || false,
+        whatsapp: context.branchSettings?.whatsapp_receipt || false,
+        print: context.branchSettings?.printall || false,
+        mail: context.branchSettings?.sales_mail || false,
+        waring: 'success',
+        name: (data.customer_name || '').trim(),
+        phone: (data.customer_phone || '').trim(),
+        customer_balance: customer ? customer.balance || 0 : 0,
+        country_sort: context.branchSettings?.sortname || 'in',
+        ...(duplicate ? { duplicate: true } : {}),
+      },
+      message: 'Sale saved successfully',
+    });
     const finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
     if (finalSaleData.kitchen_required) {
       finalSaleData.kitchen_closed = !require('../helpers/kitchen-rounds')
         .rounds({ ...existingSale, ...finalSaleData })
         .some((round) => round.items.some((item) => item.remaining > 0));
+    }
+
+    let seatingAttempt = null;
+    let seatingDb = null;
+    const useSeating =
+      context.seatingProtocol === true &&
+      id === '' &&
+      process !== 'Hold' &&
+      context.branchSettings?.table_options === true &&
+      finalSaleData.table_number;
+    if (useSeating) {
+      seatingDb = await BaseModel.getDb();
+      const existing = await require('./desktop-seating').lookup(
+        seatingDb,
+        { branchId, license: licenseId },
+        { actor: String(userId || ''), request_id: data.idempotencyKey }
+      );
+      if (existing) return savedAnswer(existing._id, existing.sales_id, true);
     }
 
     // Inventory Verification BEFORE Insert (PHP lines 653-690)
@@ -1204,6 +1241,19 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
           message: 'Your sales item quantity is mismatched.',
         };
       }
+    }
+
+    // Kept behind the internal rollout switch until moves and every writer
+    // participate. Claim the table before any stock is deducted.
+    if (useSeating) {
+      seatingAttempt = await require('./desktop-seating').prepare(
+        seatingDb,
+        { branchId, license: licenseId },
+        { actor: String(userId || ''), request_id: data.idempotencyKey },
+        finalSaleData
+      );
+      if (seatingAttempt?.existing)
+        return savedAnswer(seatingAttempt.existing._id, seatingAttempt.existing.sales_id, true);
     }
 
     // Reserve tracked stock atomically before creating the sale. A normal
@@ -1271,6 +1321,15 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       } catch (error) {
         for (const reservation of stockReservations.values()) {
           await itemRepository.updateStock(reservation.itemId, reservation.quantity);
+        }
+        if (seatingAttempt && error.code === 11000) {
+          const existing = await seatingDb.collection('sales').findOne({
+            _id: finalSaleData._id,
+            branch_id: branchId,
+            license: licenseId,
+            seating_request_id: seatingAttempt.claim.id,
+          });
+          if (existing) return savedAnswer(existing._id, existing.sales_id, true);
         }
         throw error;
       }
@@ -1635,24 +1694,7 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       }
     }
 
-    return {
-      status: true,
-      data: {
-        _id: saleId,
-        sales_id: saleId,
-        sale_number: salePrefixedId,
-        sms: context.branchSettings?.sales_sms || false,
-        whatsapp: context.branchSettings?.whatsapp_receipt || false,
-        print: context.branchSettings?.printall || false,
-        mail: context.branchSettings?.sales_mail || false,
-        waring: 'success', // Matches PHP misspelled field name
-        name: (data.customer_name || '').trim(),
-        phone: (data.customer_phone || '').trim(),
-        customer_balance: customer ? customer.balance || 0 : 0,
-        country_sort: context.branchSettings?.sortname || 'in',
-      },
-      message: 'Sale saved successfully',
-    };
+    return savedAnswer(saleId, salePrefixedId);
   } catch (error) {
     console.error('processSale Error:', error);
     return { status: false, message: error.message, data: null };

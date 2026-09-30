@@ -371,18 +371,38 @@ test('cancelling one ticket releases only its claim and does not dirty a shared 
   );
   const saleId = new ObjectId();
   await seating.bind(db, scope, first.id, 'staff-1', String(saleId));
-  await db
-    .collection('sales')
-    .insertOne({
-      _id: saleId,
-      branch_id: scope.branchId,
-      license: scope.license,
-      table_number: 'T1',
-      sale_process: 'cancelled',
-      floor_closed_at: new Date(),
-    });
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    table_number: 'T1',
+    sale_process: 'cancelled',
+    floor_closed_at: new Date(),
+  });
   await seating.release(db, scope, first.id);
   expect((await seating.find(db, scope, first.id)).state).toBe('released');
   expect((await seating.find(db, scope, second.id)).state).toBe('reserved');
   expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(0);
+});
+test('desktop adapter shares Captain reservations and stable sale identities', async () => {
+  const desktop = require('../../../src/services/desktop-seating');
+  const input = { actor: 'cashier-1', request_id: 'desktop-retry-0001' };
+  const document = {
+    branch_id: scope.branchId,
+    license: scope.license,
+    table_number: 'T1',
+    person_count: 2,
+    sales_id: 'INV-1',
+  };
+  const prepared = await desktop.prepare(db, scope, input, document);
+  expect(document.seating_table_ids).toEqual([ids[0]]);
+  expect(document.floor_lifecycle).toBe(true);
+  await expect(seating.reserve(db, scope, request())).rejects.toThrow('Table changed');
+  await db.collection('sales').insertOne(document);
+  const retry = await desktop.lookup(db, scope, input);
+  expect(String(retry._id)).toBe(String(document._id));
+  await expect(desktop.lookup(db, scope, { ...input, actor: 'cashier-2' })).rejects.toThrow(
+    'Permission'
+  );
+  expect(prepared.claim.id).toMatch(/^desktop-/);
 });

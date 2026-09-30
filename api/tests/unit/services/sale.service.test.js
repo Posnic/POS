@@ -186,6 +186,87 @@ describe('SalesService', () => {
     consoleWarnSpy.mockRestore();
   });
 
+  test('seating retry returns a saved sale before rechecking or deducting stock', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(
+      makeItemDoc({ available_quantity: 0 })
+    );
+    const lookup = jest
+      .spyOn(require('../../../src/services/desktop-seating'), 'lookup')
+      .mockResolvedValue({ _id: 'saved-seat-sale', sales_id: 'INV-SAVED' });
+    try {
+      const result = await salesService.processSale(
+        makeSaleData({ table_number: 'T1', person_count: 2, idempotencyKey: 'desktop-retry' }),
+        '',
+        'KOT',
+        makeContext({ seatingProtocol: true, branchSettings: { table_options: true } })
+      );
+      expect(result).toMatchObject({
+        status: true,
+        data: { _id: 'saved-seat-sale', duplicate: true, sale_number: 'INV-SAVED' },
+      });
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+      expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
+      expect(mockRegisterRepositoryInstance.addSaleRegisterEntry).not.toHaveBeenCalled();
+    } finally {
+      lookup.mockRestore();
+    }
+  });
+  test('seating conflict prevents any stock deduction or desktop sale', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    const adapter = require('../../../src/services/desktop-seating');
+    const lookup = jest.spyOn(adapter, 'lookup').mockResolvedValue(null);
+    const prepare = jest.spyOn(adapter, 'prepare').mockRejectedValue(new Error('Table changed'));
+    try {
+      const result = await salesService.processSale(
+        makeSaleData({ table_number: 'T1', person_count: 2, idempotencyKey: 'desktop-new' }),
+        '',
+        'KOT',
+        makeContext({ seatingProtocol: true, branchSettings: { table_options: true } })
+      );
+      expect(result).toMatchObject({ status: false, message: 'Table changed' });
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+      expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
+    } finally {
+      lookup.mockRestore();
+      prepare.mockRestore();
+    }
+  });
+
+  test('a concurrent desktop seating retry restores its temporary stock reservation', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    const adapter = require('../../../src/services/desktop-seating');
+    const lookup = jest.spyOn(adapter, 'lookup').mockResolvedValue(null);
+    const prepare = jest
+      .spyOn(adapter, 'prepare')
+      .mockImplementation(async (db, scope, input, document) => {
+        document._id = 'same-sale';
+        return { claim: { id: 'same-claim' }, existing: null };
+      });
+    BaseModel.getDb.mockResolvedValue({
+      collection: () => ({ findOne: async () => ({ _id: 'same-sale', sales_id: 'INV-EXISTS' }) }),
+    });
+    salesRepository.createSaleUnique.mockRejectedValueOnce(
+      Object.assign(new Error('duplicate'), { code: 11000 })
+    );
+    try {
+      const result = await salesService.processSale(
+        makeSaleData({ table_number: 'T1', person_count: 2, idempotencyKey: 'desktop-race' }),
+        '',
+        'KOT',
+        makeContext({ seatingProtocol: true, branchSettings: { table_options: true } })
+      );
+      expect(result).toMatchObject({ status: true, data: { _id: 'same-sale', duplicate: true } });
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).toHaveBeenCalledTimes(1);
+      expect(mockItemRepositoryInstance.updateStock).toHaveBeenCalledWith(expect.anything(), 2);
+      expect(mockRegisterRepositoryInstance.addSaleRegisterEntry).not.toHaveBeenCalled();
+      expect(mockStockLogsRepositoryInstance.createStockLog).not.toHaveBeenCalled();
+    } finally {
+      lookup.mockRestore();
+      prepare.mockRestore();
+      BaseModel.getDb.mockReset();
+    }
+  });
+
   describe('desktop KOT printing starts when the order is saved', () => {
     beforeEach(() => {
       mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
