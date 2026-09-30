@@ -10092,6 +10092,13 @@ class SalesRepository {
           dine_type: doc.dine_type || 'Dine-in',
           status: derivedStatus,
           created_at: doc.created_date || doc.date,
+          created_date: doc.created_date || doc.date,
+          updated_date: doc.updated_date || doc.created_date || doc.date,
+          ...(doc.seating_request_id ? {
+            seating_request_id: doc.seating_request_id,
+            seating_primary_id: doc.seating_primary_id,
+            seating_table_ids: doc.seating_table_ids,
+          } : {}),
           assigned_staff: doc.assigned_staff,
           kitchen_rounds: require('../helpers/kitchen-rounds').rounds(doc),
           total_amount: doc.sales_total || doc.total || 0,

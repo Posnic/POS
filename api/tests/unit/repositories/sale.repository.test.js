@@ -134,6 +134,14 @@ const FAKE_CUSTOMER = '64f9a1c2e3b4d5e6f7000004';
 const FAKE_ITEM = '64f9a1c2e3b4d5e6f7000005';
 
 describe('SalesRepository', () => {
+  test('history preserves edit version and combined seating identity for Captain',async()=>{
+    const created=new Date('2026-09-30T10:00:00Z'),updated=new Date('2026-09-30T10:10:00Z');
+    const doc={_id:FAKE_ID,created_date:created,updated_date:updated,seating_request_id:'seating-request-0001',seating_primary_id:'table-1',seating_table_ids:['table-1','table-2'],items:[]};
+    const result=await salesRepository.getOrderHistoryModel(FAKE_BRANCH,50,1,'pending',FAKE_ID,{SaleModel:{find:()=>createQueryMock([doc])}});
+    expect(result.status).toBe(true);
+    expect(result.data.orders[0]).toMatchObject({created_date:created,updated_date:updated,seating_request_id:doc.seating_request_id,seating_primary_id:'table-1',seating_table_ids:['table-1','table-2']});
+  });
+
   describe('myDayModel complete totals', () => {
     test('counts every sale after 300 while limiting only the recent list', async () => {
       const docs = Array.from({ length: 325 }, (_, i) => ({ _id: String(i), sales_total: 10, table_number: 'T1' }));
