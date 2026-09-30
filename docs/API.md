@@ -1230,5 +1230,8 @@ guest count is pinned in the enrollment journal. A definite enrollment rejection
 records a cancelled parent intent, allowing the client to clear that request.
 An uncertain or applying enrollment remains pending recovery and cannot be
 discarded. Rejection is insert-only and cannot cancel a concurrent accepted
-guest update. Captain legacy-order guest UI routing and migration of all existing
-cover-edit writers remain required before enabling the full flow.
+guest update. Table discovery advertises `capabilities.legacyGuestUpdate: true`.
+Captain checks this before opening the separate guest Save flow for an older
+order; saved retries remain available even before seating metadata reaches order
+history. Servers without the capability keep the compatible staged guest edit.
+Migration of all existing direct cover-edit writers remains outstanding.
