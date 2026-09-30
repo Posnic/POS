@@ -623,7 +623,73 @@ async function finish(db, intent, c, deps = {}) {
     /* periodic scanner remains available */
   }
 }
+// Receipt lookup is scoped to the signed-in cashier and branch, including owners.
+// It cannot expose another cashier's receipts through a client-supplied identity.
+async function receipts(req) {
+  const c = await context(req);
+  if (!req.handsetDevice || !allowed(req.user, 'sales', 'read'))
+    fail('Receipt access is required.', 403);
+  const query = req.query?.q ?? '';
+  const before = req.query?.before;
+  if (
+    typeof query !== 'string' ||
+    query.length > 100 ||
+    (before !== undefined &&
+      (typeof before !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}T[\d:.]+Z\|[a-f0-9]{64}$/.test(before) ||
+        !Number.isFinite(Date.parse(before.split('|')[0]))))
+  )
+    fail('Invalid receipt search.', 400);
+  const filter = { license: c.license, branchId: c.branchId, userId: c.userId, state: 'complete' };
+  if (before) {
+    const [time, key] = before.split('|');
+    filter.$and = [
+      {
+        $or: [{ created: { $lt: new Date(time) } }, { created: new Date(time), _id: { $lt: key } }],
+      },
+    ];
+  }
+  if (query.trim()) {
+    const literal = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filter.$or = [
+      { 'sale.receipt': { $regex: literal, $options: 'i' } },
+      { 'sale.cart.customer.name': { $regex: literal, $options: 'i' } },
+    ];
+  }
+  const rows = await req.db
+    .collection('mobile_sales')
+    .find(filter, { projection: { _id: 1, sale: 1, created: 1 } })
+    .sort({ created: -1, _id: -1 })
+    .limit(51)
+    .toArray();
+  const page = rows.slice(0, 50);
+  return {
+    shopId: c.shopId,
+    branchId: id(c.branchId),
+    staffId: id(c.userId),
+    receipts: page.map((row) => ({
+      id: row.sale.id,
+      receipt: row.sale.receipt,
+      createdAt: row.sale.createdAt,
+      total: row.sale.total,
+      tax: row.sale.tax,
+      currency: row.sale.currency,
+      customer: row.sale.cart.customer?.name || '',
+      method: row.sale.payment.method,
+      lines: row.sale.cart.lines.map((line) => ({
+        name: line.name,
+        quantity: line.quantity,
+        price: line.price,
+      })),
+    })),
+    next:
+      rows.length > 50
+        ? page[page.length - 1].created.toISOString() + '|' + page[page.length - 1]._id
+        : null,
+  };
+}
 module.exports = {
+  receipts,
   bootstrap,
   ingest,
   finish,
