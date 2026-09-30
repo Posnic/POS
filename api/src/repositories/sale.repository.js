@@ -10198,11 +10198,11 @@ class SalesRepository {
           license: orderDoc.license,
           tableorder_value: destination,
         });
-        if (
-          destination !== String(orderDoc.table_number || '') &&
-          ['held', 'cleaning'].includes(configuredTable?.service_state)
-        ) {
-          return { status: false, message: 'This table is not available.', data: null };
+        if (destination !== String(orderDoc.table_number || '')) {
+          await require('../services/table-move-check').check(db, orderDoc, configuredTable, {
+            id: newTableId,
+            guests: personCount,
+          });
         }
         if (
           configuredTable &&
