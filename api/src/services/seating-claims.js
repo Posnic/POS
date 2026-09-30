@@ -852,15 +852,14 @@ async function changeGuests(db, scope, orderId, input) {
     });
     if (!sale?.seating_request_id) fail('Refresh this order before changing its seating.', 409);
     const claim = await find(db, scope, sale.seating_request_id);
-    if (!claim?.labels?.length) fail('The seating group changed. Refresh this order.', 409);
     // Capacity is shared across checks. Fence all existing occupants, so a
     // desktop save that passed its preflight cannot change a neighbour's covers
     // while this operation validates and commits the group's capacity.
-    const others = await db.collection('sales').find({
+    const others = claim?.labels?.length ? await db.collection('sales').find({
       branch_id: scope.branchId, license: scope.license,
       ...require('../helpers/floor-eligibility').floorEligibility(),
       table_number: { $in: claim.labels }, _id: { $ne: sale._id },
-    }).limit(200).toArray();
+    }).limit(200).toArray() : [];
     journal = await restructure.reserve(db, scope, { requestId: id, actor, intent, sales: [sale, ...others] });
   }
   if (journal.stage === 'reserving')

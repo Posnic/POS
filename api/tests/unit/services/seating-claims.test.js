@@ -1282,3 +1282,52 @@ test('cover updates protect more than two checks sharing a table',async()=>{
   expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
   expect((await db.collection('sales').find().toArray()).reduce((sum,row)=>sum+row.person_count,0)).toBe(7);
 });
+
+test('a stale guest screen after takeaway conversion receives a cancellation tombstone for safe client recovery',async()=>{
+  const order=await movableOrder();
+  const move=await seating.prepareMove(db,scope,String(order._id),request({request_id:'takeaway-before-covers',table_ids:[],primary_id:'',guests:0,dine_type:'Take away'}));
+  await seating.completeMove(db,scope,move.id,'staff-1');
+  const input={request_id:'stale-guest-after-type',actor:'staff-1',guests:5};
+  await expect(seating.changeGuests(db,scope,String(order._id),input)).rejects.toThrow('seating group');
+  const journal=await require('../../../src/services/captain-restructure-lock').read(db,scope,input.request_id,'staff-1');
+  expect(journal.stage).toBe('cancelled');
+  const current=await db.collection('sales').findOne({_id:order._id});
+  expect(current.person_count).toBe(0);expect(current.dine_type).toBe('Take away');
+  expect(current.captain_payment_plan).toBeUndefined();
+});
+
+test.each(['capacity-reserved','applying','revision-written','capacity-released','completed','fence-released'])(
+  'guest change recovers a lost acknowledgement after %s without leaving blocked seating',async(point)=>{
+    const order=await movableOrder(),input={request_id:'cover-recovery-check-1',actor:'staff-1',guests:5};
+    let injected=false;
+    const interrupted={collection(name){
+      const collection=db.collection(name);
+      return new Proxy(collection,{get(target,key){
+        if(['updateOne','updateMany'].includes(key))return async(filter,update,...rest)=>{
+          const result=await target[key](filter,update,...rest);
+          const matches={
+            'capacity-reserved':name==='table_seating'&&update.$set?.['claims.$.guest_update'],
+            applying:name==='captain_payment_plans'&&update.$set?.stage==='applying',
+            'revision-written':name==='sales'&&update.$set?.seating_capacity_revision,
+            'capacity-released':name==='table_seating'&&update.$unset?.['claims.$.guest_update']==='',
+            completed:name==='captain_payment_plans'&&update.$set?.stage==='completed',
+            'fence-released':name==='sales'&&update.$unset?.captain_payment_plan==='',
+          };
+          if(!injected&&matches[point]){injected=true;throw new Error('lost database acknowledgement');}
+          return result;
+        };
+        const value=target[key];return typeof value==='function'?value.bind(target):value;
+      }});
+    }};
+    await expect(seating.changeGuests(interrupted,scope,String(order._id),input)).rejects.toThrow('lost database acknowledgement');
+    expect(injected).toBe(true);
+    await seating.changeGuests(db,scope,String(order._id),input);
+    await seating.changeGuests(db,scope,String(order._id),input);
+    const saved=await db.collection('sales').findOne({_id:order._id});
+    expect(saved.person_count).toBe(5);expect(saved.captain_audit).toHaveLength(1);
+    expect(saved.captain_payment_plan).toBeUndefined();
+    expect(saved.seating_capacity_revision).toBe(input.request_id);
+    expect((await seating.find(db,scope,order.seating_request_id)).guest_update).toBeUndefined();
+    expect((await require('../../../src/services/captain-restructure-lock').read(db,scope,input.request_id,'staff-1')).stage).toBe('completed');
+  }
+);
