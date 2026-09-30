@@ -7,6 +7,8 @@ const restructure = require('../../../src/services/captain-restructure-lock');
 const seating = require('../../../src/services/seating-claims');
 const sales = require('../../../src/repositories/sale.repository');
 const { snapshotFrom } = require('../../../src/services/guest-bill.service');
+const BaseModel = require('../../../src/models/base.model');
+const { runWithRequestContext } = require('../../../src/utils/request-context');
 let server, db, branch, license, sale;
 beforeAll(async () => {
   server = await MongoMemoryServer.create();
@@ -64,6 +66,22 @@ async function confirmation() {
   input.body.requestId = 'transfer-confirmation-0001';
   return input;
 }
+test('ordinary order editor saves a transferred dish note without using current catalogue tax', async () => {
+  const input = await confirmation(), completed = await service.complete(input);
+  const id = new ObjectId(completed.destinationId);
+  const before = await db.collection('sales').findOne({ _id: id });
+  await db.collection('items').insertOne({ _id: sale.items[0].item_id, license, name: 'Corn', tax: 99, tax_type: 'exclusive' });
+  jest.spyOn(BaseModel, 'getDb').mockResolvedValue(db);
+  const answer = await runWithRequestContext({ license, currentBranch: branch, loggedUser: String(input.user._id) }, () =>
+    sales.updateOrderModel(String(id), [{ product_id: String(sale.items[0].item_id), quantity: 1,
+      price: 50, item_description: 'Less salt' }], 52.5, 'modified', null, null, null, null, null, null));
+  expect(answer).toMatchObject({ status: true });
+  const after = await db.collection('sales').findOne({ _id: id });
+  expect(after.items[0].item_description).toBe('Less salt');
+  expect(after.sales_total).toBe(before.sales_total);
+  expect(after.tax).toBe(before.tax);
+  expect(snapshotFrom([after], { currencyCode: 'INR' }, after.table_number).totalMinor).toBe(5250);
+});
 test.each([1, 2])('complete transfer of %s items releases both sale fences and closes only an empty source', async quantity => {
   const input = await confirmation(); input.body.items[0].quantity = quantity;
   const result = await service.complete(input);

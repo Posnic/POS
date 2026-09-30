@@ -10868,6 +10868,13 @@ class SalesRepository {
       if (personCount !== null && personCount !== '')
         updateFields.person_count = parseInt(personCount, 10);
 
+      if (orderDoc.captain_transfer_allocation) {
+        const reconciled = require('../services/captain-transfer-edit').metadata(orderDoc, updateFields, shop || {});
+        if (!reconciled) throw new Error('Transferred item amounts need reconciliation before this edit can be saved.');
+        for (const key of Object.keys(updateFields)) delete updateFields[key];
+        Object.assign(updateFields, reconciled);
+      }
+
       const updateResult = await salesCollection.updateOne(editFilter, {
         $set: updateFields,
         $push: { captain_audit: audit },

@@ -4,10 +4,38 @@ const {buildBillPayload}=require('../../../src/helpers/bill-payload');
 const {snapshotFrom}=require('../../../src/services/guest-bill.service');
 const Money=require('../../../src/utils/currency');
 const {ObjectId,BSON}=require('mongodb');
+const transferEdit=require('../../../src/services/captain-transfer-edit');
 const at='2026-09-30T14:00:00Z';
 function sale(){return {_id:'source',table_number:'1',created_date:at,sales_sub_total:100.01,discount:3.17,tax:5.01,sales_total:101.84,
   items:[{item_id:'corn',line_id:'salt',item_name:'Corn',item_quantity:3,item_base_price:33.3366667,item_tax:5.01}],
   changes:[{timestamp:at,items:[{item_id:'corn',line_id:'salt',item_name:'Corn',item_quantity:3,process:'add'}]}]};}
+
+test.each(['JPY','INR','KWD'])('metadata edits preserve transferred components despite catalogue recalculation in %s',currencyCode=>{
+  const original=sale(),branch={currencyCode},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.destination};
+  const proposed={items:transferred.items.map(item=>({...item,item_description:'Less salt',seat:2,
+    item_tax:999,tax:99,total_amount:999,unit_price:999})),sales_total:999,tax:999,
+    items_total:999,sales_sub_total:999,discount:0,changes:[...transferred.changes,{timestamp:at,items:[]} ]};
+  const result=transferEdit.metadata(transferred,proposed,branch);
+  expect(result.items[0].item_description).toBe('Less salt');
+  expect(result.items[0].seat).toBe(2);
+  expect(result.items[0].item_tax).toBe(transferred.items[0].item_tax);
+  expect(result.items[0].unit_price).toBe(transferred.items[0].unit_price);
+  expect(result.changes).toEqual(proposed.changes);
+  const snapshot=snapshotFrom([{...transferred,...result}],branch,'1');
+  expect(snapshot.totalMinor).toBe(split.preview.destination.totalMinor);
+  expect(snapshot.lines[0].components).toEqual(split.preview.destination.lines[0].components);
+  expect(snapshot.lines[0].seat).toBe(2);
+});
+test.each(['quantity','product','remove','discount'])('metadata reconciliation does not pretend a %s edit is metadata',kind=>{
+  const original=sale(),branch={currencyCode:'INR'},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.destination},proposed={items:structuredClone(transferred.items)};
+  if(kind==='quantity')proposed.items[0].item_quantity=2;
+  if(kind==='product')proposed.items[0].item_id='different';
+  if(kind==='remove')proposed.items=[];
+  if(kind==='discount')proposed.extra_discount=5;
+  expect(transferEdit.metadata(transferred,proposed,branch)).toBeNull();
+});
 test.each(['JPY','INR','KWD'])('financial projection conserves every component in printed and split bills for %s',currencyCode=>{
   const original=sale(),before=structuredClone(original),branch={currencyCode,indian_gst:'enable'},policy=Money.policy(branch);
   const result=project(original,branch,[{id:'c0i0',quantity:1}],at);
