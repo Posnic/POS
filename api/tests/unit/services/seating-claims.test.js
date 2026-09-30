@@ -136,7 +136,7 @@ test('a simultaneous cancellation cannot release a claim bound to a sale', async
     seating.cancel(db, scope, request().request_id, 'staff-1'),
   ]);
   expect(results.filter((row) => row.status === 'fulfilled')).toHaveLength(1);
-  const claim = (await seating.read(db, scope))[0];
+  const claim = await seating.find(db, scope, request().request_id);
   expect(['submitting', 'cancelled']).toContain(claim.state);
   if (claim.state === 'submitting') expect(claim.order_id).toBeTruthy();
 });
@@ -148,4 +148,113 @@ test('held and cleaning tables cannot enter a seating group', async () => {
     await expect(seating.reserve(db, scope, request())).rejects.toThrow('not available');
   }
   expect(await seating.read(db, scope)).toEqual([]);
+});
+
+test('closed sale releases every member for cleaning and archives the retry record', async () => {
+  const claim = await seating.reserve(db, scope, request());
+  const saleId = new ObjectId();
+  await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    payment_status: 'Paid',
+    floor_closed_at: new Date(),
+    items: [{ name: 'Dish', qty: 2 }],
+  });
+  await seating.release(db, scope, claim.id);
+  expect(await seating.read(db, scope)).toEqual([]);
+  expect((await seating.find(db, scope, claim.id)).state).toBe('released');
+  const tables = await db
+    .collection('tableorder')
+    .find({ _id: { $in: claim.tables.map((id) => new ObjectId(id)) } })
+    .toArray();
+  expect(tables.every((table) => table.service_state === 'cleaning')).toBe(true);
+  await db.collection('tableorder').updateMany({}, { $set: { service_state: 'available' } });
+  await seating.release(db, scope, claim.id);
+  expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(0);
+  await expect(seating.reserve(db, scope, request())).rejects.toThrow('already been used');
+  expect((await db.collection('sales').findOne({ _id: saleId })).items).toEqual([
+    { name: 'Dish', qty: 2 },
+  ]);
+});
+test('paid alone, missing sale and other-branch sale cannot release the claim', async () => {
+  const claim = await seating.reserve(db, scope, request());
+  const saleId = new ObjectId();
+  await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
+  await expect(seating.release(db, scope, claim.id)).rejects.toThrow('Close the order');
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    payment_status: 'Paid',
+  });
+  await expect(seating.release(db, scope, claim.id)).rejects.toThrow('Close the order');
+  await db
+    .collection('sales')
+    .updateOne(
+      { _id: saleId },
+      { $set: { branch_id: new ObjectId(), floor_closed_at: new Date() } }
+    );
+  await expect(seating.release(db, scope, claim.id)).rejects.toThrow('Close the order');
+  expect((await seating.read(db, scope))[0].state).toBe('submitting');
+});
+test('interrupted archival keeps a terminal claim recoverable without accumulating branch history', async () => {
+  const claim = await seating.reserve(db, scope, request());
+  const collection = db.collection('table_seating_history');
+  const original = db.collection.bind(db);
+  const spy = jest
+    .spyOn(db, 'collection')
+    .mockImplementation((name) => (name === 'table_seating_history' ? collection : original(name)));
+  const write = jest
+    .spyOn(collection, 'updateOne')
+    .mockRejectedValueOnce(new Error('disk unavailable'));
+  await expect(seating.cancel(db, scope, claim.id, 'staff-1')).rejects.toThrow('disk unavailable');
+  expect((await seating.read(db, scope))[0].state).toBe('cancelled');
+  write.mockRestore();
+  spy.mockRestore();
+  await seating.cancel(db, scope, claim.id, 'staff-1');
+  expect(await seating.read(db, scope)).toEqual([]);
+  expect((await seating.find(db, scope, claim.id)).state).toBe('cancelled');
+});
+test('a delayed concurrent release cannot dirty tables already cleaned after closure', async () => {
+  const claim = await seating.reserve(db, scope, request());
+  const saleId = new ObjectId();
+  await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
+  await db
+    .collection('sales')
+    .insertOne({
+      _id: saleId,
+      branch_id: scope.branchId,
+      license: scope.license,
+      floor_closed_at: new Date(),
+    });
+  const tables = db.collection('tableorder'),
+    originalCollection = db.collection.bind(db),
+    originalUpdate = tables.updateMany.bind(tables);
+  let unblock, entered;
+  const paused = new Promise((resolve) => {
+    entered = resolve;
+  });
+  const gate = new Promise((resolve) => {
+    unblock = resolve;
+  });
+  const collectionSpy = jest
+    .spyOn(db, 'collection')
+    .mockImplementation((name) => (name === 'tableorder' ? tables : originalCollection(name)));
+  const updateSpy = jest.spyOn(tables, 'updateMany').mockImplementationOnce(async (...args) => {
+    entered();
+    await gate;
+    return originalUpdate(...args);
+  });
+  const slow = seating.release(db, scope, claim.id);
+  await paused;
+  await seating.release(db, scope, claim.id);
+  await originalUpdate({}, { $set: { service_state: 'available' } });
+  unblock();
+  await slow;
+  updateSpy.mockRestore();
+  collectionSpy.mockRestore();
+  expect(await tables.countDocuments({ service_state: 'cleaning' })).toBe(0);
+  expect((await seating.find(db, scope, claim.id)).state).toBe('released');
 });

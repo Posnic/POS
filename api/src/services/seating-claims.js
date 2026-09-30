@@ -8,6 +8,8 @@ const details = require('../utils/table-details');
 // Claims do not expire silently: an interrupted submission must be reconciled or
 // cancelled explicitly, otherwise a delayed sale could seat the same table twice.
 const store = (db) => db.collection('table_seating');
+const history = (db) => db.collection('table_seating_history');
+const terminal = (claim) => ['cancelled', 'released'].includes(claim.state);
 function scopeKey(scope) {
   return `${String(scope.license)}:${String(scope.branchId)}`;
 }
@@ -32,6 +34,33 @@ async function read(db, scope) {
   const state = await store(db).findOne({ _id: scopeKey(scope) });
   return state?.claims || [];
 }
+async function find(db, scope, id) {
+  return (
+    (await read(db, scope)).find((row) => row.id === id) ||
+    (await history(db).findOne({ _id: `${scopeKey(scope)}:${id}` }))?.claim ||
+    null
+  );
+}
+async function archive(db, scope, id) {
+  const claim = (await read(db, scope)).find((row) => row.id === id);
+  if (!claim || !terminal(claim)) return;
+  // Persist the retry tombstone first. Revision guards prevent a reservation
+  // which read before this archive from recreating the same request afterward.
+  await history(db).updateOne(
+    { _id: `${scopeKey(scope)}:${id}` },
+    {
+      $setOnInsert: { branch_id: scope.branchId, license: scope.license, claim },
+    },
+    { upsert: true }
+  );
+  await store(db).updateOne(
+    { _id: scopeKey(scope) },
+    {
+      $pull: { claims: { id, state: { $in: ['cancelled', 'released'] } } },
+      $inc: { revision: 1 },
+    }
+  );
+}
 async function reserve(db, scope, input) {
   const id = requestId(input.request_id);
   if (!Array.isArray(input.table_ids) || !input.table_ids.length || input.table_ids.length > 20)
@@ -51,9 +80,9 @@ async function reserve(db, scope, input) {
     state: 'reserved',
     at: new Date(),
   };
-  const previous = (await read(db, scope)).find((row) => row.id === id);
+  const previous = await find(db, scope, id);
   if (previous) {
-    if (previous.state === 'cancelled' || !sameRequest(previous, claim))
+    if (terminal(previous) || !sameRequest(previous, claim))
       fail('This seating request has already been used.', 409);
     return previous;
   }
@@ -115,23 +144,37 @@ async function reserve(db, scope, input) {
   try {
     await store(db).updateOne(
       { _id: key },
-      { $setOnInsert: { branch_id: scope.branchId, license: scope.license, claims: [] } },
+      {
+        $setOnInsert: {
+          branch_id: scope.branchId,
+          license: scope.license,
+          claims: [],
+          revision: 0,
+        },
+      },
       { upsert: true }
     );
   } catch (error) {
     if (error.code !== 11000) throw error;
   }
+  const snapshot = await store(db).findOne({ _id: key });
+  if (await history(db).findOne({ _id: `${key}:${id}` }))
+    fail('This seating request has already been used.', 409);
+  claim.generation = (snapshot.revision || 0) + 1;
   const result = await store(db).updateOne(
     {
       _id: key,
+      revision: snapshot.revision === undefined ? { $exists: false } : snapshot.revision,
       'claims.id': { $ne: id },
-      claims: { $not: { $elemMatch: { tables: { $in: ids }, state: { $ne: 'cancelled' } } } },
+      claims: {
+        $not: { $elemMatch: { tables: { $in: ids }, state: { $nin: ['cancelled', 'released'] } } },
+      },
     },
-    { $push: { claims: claim } }
+    { $push: { claims: claim }, $inc: { revision: 1 } }
   );
   if (!result.matchedCount) {
     const saved = (await read(db, scope)).find((row) => row.id === id);
-    if (saved && saved.state !== 'cancelled' && sameRequest(saved, claim)) return saved;
+    if (saved && !terminal(saved) && sameRequest(saved, claim)) return saved;
     fail('Table changed. Refresh and try again.', 409);
   }
   return claim;
@@ -158,11 +201,13 @@ async function bind(db, scope, id, actor, orderId) {
 }
 async function cancel(db, scope, id, actor) {
   requestId(id);
-  const claims = await read(db, scope),
-    saved = claims.find((row) => row.id === id);
+  const saved = await find(db, scope, id);
   if (!saved) return;
   if (saved.actor !== String(actor)) fail('Permission is required.', 403);
-  if (saved.state === 'cancelled') return;
+  if (saved.state === 'cancelled') {
+    await archive(db, scope, id);
+    return;
+  }
   if (saved.state !== 'reserved')
     fail('Reconcile the submitted order before releasing its tables.', 409);
   // The element match is checked again at the write, so a simultaneous bind
@@ -177,5 +222,52 @@ async function cancel(db, scope, id, actor) {
   const remaining = (await read(db, scope)).find((row) => row.id === id);
   if (remaining && remaining.state !== 'cancelled')
     fail('Reconcile the submitted order before releasing its tables.', 409);
+  await archive(db, scope, id);
 }
-module.exports = { reserve, bind, cancel, read };
+async function release(db, scope, id) {
+  requestId(id);
+  const claim = await find(db, scope, id);
+  if (!claim) fail('Seating request not found.', 404);
+  if (claim.state === 'released') {
+    await archive(db, scope, id);
+    return;
+  }
+  if (claim.state !== 'submitting' || !claim.order_id)
+    fail('Reconcile the submitted order before releasing its tables.', 409);
+  const sale = await db.collection('sales').findOne({
+    _id: new ObjectId(claim.order_id),
+    branch_id: scope.branchId,
+    license: scope.license,
+  });
+  if (!sale?.floor_closed_at) fail('Close the order before releasing its tables.', 409);
+  // The claim keeps all member tables unavailable while this projection runs.
+  // Retrying after interruption repeats only the cleaning projection, never the
+  // payment, item, kitchen or stock operations.
+  await db.collection('tableorder').updateMany(
+    {
+      branch_id: scope.branchId,
+      license: scope.license,
+      _id: { $in: claim.tables.map((value) => new ObjectId(value)) },
+      $or: [
+        { last_seating_release_generation: { $exists: false } },
+        { last_seating_release_generation: { $lt: claim.generation } },
+      ],
+    },
+    {
+      $set: {
+        service_state: 'cleaning',
+        last_seating_release_generation: claim.generation,
+        updated_date: new Date(),
+      },
+    }
+  );
+  await store(db).updateOne(
+    {
+      _id: scopeKey(scope),
+      claims: { $elemMatch: { id, state: 'submitting', order_id: claim.order_id } },
+    },
+    { $set: { 'claims.$.state': 'released' } }
+  );
+  await archive(db, scope, id);
+}
+module.exports = { reserve, bind, cancel, read, find, archive, release };
