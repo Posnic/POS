@@ -23,14 +23,14 @@ beforeEach(async () => {
   await db.collection('branches').insertOne({ _id: branch, license });
   await db
     .collection('users')
-    .insertOne({ _id: user, license, activate: true, phone: '+919000000000' });
+    .insertOne({ _id: user, license, activate: true, phone: '+919000000000', password: await require('bcryptjs').hash('staff-password', 4) });
   sender.sendSms.mockReset().mockResolvedValue({ ok: true });
 });
 const req = (body) => ({
   db,
   tenantContext: { branchId: branch, licenseId: license },
   user: { _id: user },
-  body,
+  body: { currentPassword: 'staff-password', ...body },
 });
 async function begin() {
   const result = await service.start(req({ phone: '+91 90000 00001' }));
@@ -129,4 +129,13 @@ test('a delayed verification cannot overwrite a superseding phone challenge', as
   expect((await users.findOne({ _id: user })).phone).toBe('+919000000000');
   const code = sender.sendSms.mock.calls[1][2].match(/\b\d{6}\b/)[0];
   expect(await service.verify(req({ ...replacement, code }))).toEqual({ saved: true, phone: '+919000000002' });
+});
+
+
+test('missing or incorrect password cannot send a code or reserve a challenge', async () => {
+  for (const currentPassword of [undefined, 'wrong']) {
+    await expect(service.start(req({phone:'+919000000001',currentPassword}))).rejects.toMatchObject({status:400});
+  }
+  expect(sender.sendSms).not.toHaveBeenCalled();
+  expect(await db.collection('captain_phone_verifications').countDocuments()).toBe(0);
 });

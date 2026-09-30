@@ -445,6 +445,7 @@ test('paired Captain can split and record payments but cannot change settings or
 
 
 test('paired Captain verifies its own phone through scoped routes', async () => {
+  await db.collection('users').updateOne({_id:staff._id},{$set:{password:await require('bcryptjs').hash('staff-password',4)}});
   const { grant } = await paired();
   const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
   const messaging = require('../src/services/messaging.service');
@@ -454,7 +455,7 @@ test('paired Captain verifies its own phone through scoped routes', async () => 
   try {
     const unauthorized = await fetch(base + '/captain/v1/profile/phone/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     assert.equal(unauthorized.status, 401);
-    const sent = await fetch(base + '/captain/v1/profile/phone/start', { method: 'POST', headers, body: JSON.stringify({ phone: '+919000000001' }) });
+    const sent = await fetch(base + '/captain/v1/profile/phone/start', { method: 'POST', headers, body: JSON.stringify({ phone: '+919000000001', currentPassword:'staff-password' }) });
     assert.equal(sent.status, 200);
     const challenge = await sent.json();
     assert.equal(challenge.code, undefined);

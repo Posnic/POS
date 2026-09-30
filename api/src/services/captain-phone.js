@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('crypto');
+const { passwordMatches } = require('../utils/password-match');
 const { self } = require('./captain-profile');
 const { fail } = require('../utils/branch-access');
 const messaging = require('./messaging.service');
@@ -12,6 +13,8 @@ const key = (c, user) => String(c.license) + ':' + String(user._id);
 
 async function start(req) {
   const { c, user, filter } = await self(req);
+  if (!(await passwordMatches(req.body?.currentPassword, user.password)))
+    fail('The current password is incorrect.', 400);
   const phone = typeof req.body?.phone === 'string' ? req.body.phone.replace(/[ ()-]/g, '') : '';
   if (!/^\+[1-9]\d{7,14}$/.test(phone)) fail('Enter a phone number with country code.');
   const collection = req.db.collection('captain_phone_verifications');
