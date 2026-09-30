@@ -3668,5 +3668,17 @@
   "lang_table_round": "Bulat",
   "lang_table_rectangle": "Persegi panjang",
   "lang_table_choose_capacity": "Pilih meja dengan kursi yang cukup.",
-  "lang_table_combine_with": "Dapat digabung dengan"
+  "lang_table_combine_with": "Dapat digabung dengan",
+  "lang_pending_submissions": "Pengiriman tertunda",
+  "lang_review_pending_submissions": "Pesanan ini mungkin sudah tersimpan. Mencoba lagi akan memeriksa permintaan awal tanpa membuat pesanan lain.",
+  "lang_no_pending_submissions": "Tidak ada pengiriman tertunda.",
+  "lang_submission_sign_in": "Masuk sebelum menyimpan pesanan.",
+  "lang_submission_unreadable": "Pesanan yang tersimpan tidak dapat dibaca.",
+  "lang_submission_id_required": "ID permintaan pesanan diperlukan.",
+  "lang_submission_resolve_first": "Selesaikan pengiriman sebelumnya sebelum mengirim perubahan.",
+  "lang_submission_confirmation_required": "Konfirmasi pesanan diperlukan.",
+  "lang_submission_original_account": "Masuk ke akun dan cabang semula untuk mencoba lagi pesanan ini.",
+  "lang_submission_save_failed": "Tidak dapat menyimpan pesanan.",
+  "lang_submission_saved": "Pesanan tersimpan",
+  "lang_submission_already_saved": "Pesanan ini sudah tersimpan. Muat ulang daftar penjualan."
 }

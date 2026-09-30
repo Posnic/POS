@@ -3668,5 +3668,17 @@
   "lang_table_round": "دائري",
   "lang_table_rectangle": "مستطيل",
   "lang_table_choose_capacity": "اختر طاولة بها مقاعد كافية.",
-  "lang_table_combine_with": "يمكن ضمها إلى"
+  "lang_table_combine_with": "يمكن ضمها إلى",
+  "lang_pending_submissions": "عمليات الإرسال المعلّقة",
+  "lang_review_pending_submissions": "قد تكون هذه الطلبات محفوظة بالفعل. تتحقق إعادة المحاولة من الطلب الأصلي دون إنشاء طلب آخر.",
+  "lang_no_pending_submissions": "لا توجد عمليات إرسال معلّقة.",
+  "lang_submission_sign_in": "سجّل الدخول قبل حفظ الطلب.",
+  "lang_submission_unreadable": "تعذّرت قراءة الطلب المحفوظ.",
+  "lang_submission_id_required": "معرّف طلب الإرسال مطلوب.",
+  "lang_submission_resolve_first": "عالج عملية الإرسال السابقة قبل إرسال التغييرات.",
+  "lang_submission_confirmation_required": "تأكيد الطلب مطلوب.",
+  "lang_submission_original_account": "سجّل الدخول إلى الحساب والفرع الأصليين لإعادة محاولة إرسال هذا الطلب.",
+  "lang_submission_save_failed": "تعذّر حفظ الطلب.",
+  "lang_submission_saved": "تم حفظ الطلب",
+  "lang_submission_already_saved": "تم حفظ هذا الطلب بالفعل. حدّث قائمة المبيعات."
 }

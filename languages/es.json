@@ -3677,5 +3677,17 @@
   "lang_table_round": "Redonda",
   "lang_table_rectangle": "Rectangular",
   "lang_table_choose_capacity": "Elija una mesa con suficientes asientos.",
-  "lang_table_combine_with": "Se puede combinar con"
+  "lang_table_combine_with": "Se puede combinar con",
+  "lang_pending_submissions": "Envíos pendientes",
+  "lang_review_pending_submissions": "Es posible que estos pedidos ya estén guardados. Al reintentar se comprueba la solicitud original sin crear otro pedido.",
+  "lang_no_pending_submissions": "No hay envíos pendientes.",
+  "lang_submission_sign_in": "Inicie sesión antes de guardar un pedido.",
+  "lang_submission_unreadable": "No se pudo leer el pedido guardado.",
+  "lang_submission_id_required": "Se requiere un ID de solicitud de pedido.",
+  "lang_submission_resolve_first": "Resuelva el envío anterior antes de enviar cambios.",
+  "lang_submission_confirmation_required": "Se requiere la confirmación del pedido.",
+  "lang_submission_original_account": "Inicie sesión en la cuenta y la sucursal originales para reintentar este pedido.",
+  "lang_submission_save_failed": "No se pudo guardar el pedido.",
+  "lang_submission_saved": "Pedido guardado",
+  "lang_submission_already_saved": "Este pedido ya se ha guardado. Actualice la lista de ventas."
 }

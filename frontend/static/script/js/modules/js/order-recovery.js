@@ -2,11 +2,14 @@
 (function () {
     'use strict';
     var busy = new Set(), dialog;
-    function t(key, fallback) { return PosnicPro.i18n ? PosnicPro.i18n.t(key, fallback) : fallback; }
+    function t(key, fallback) { return String(PosnicPro.i18n ? PosnicPro.i18n.t(key, fallback) : fallback).replace(/&nbsp;/g, ' '); }
     function node(tag, text, className) {
         var el = document.createElement(tag);
         if (text !== undefined) el.textContent = text;
         if (className) el.className = className;
+        if (/^h[1-6]$/.test(tag)) el.style.color = 'inherit';
+        if (tag === 'button') el.style.minHeight = '44px';
+        if (tag === 'li') el.dir = 'auto';
         return el;
     }
     function entries() { return PosnicPro.sales.submissionJournal().pending(); }
@@ -30,7 +33,7 @@
         var key = identity(entry);
         if (busy.has(key) || PosnicPro.sales.submissionInProgress) return;
         try {
-            if (!current(entry)) throw new Error('Sign in to the original account and branch to retry this order.');
+            if (!current(entry)) throw new Error(t('lang_submission_original_account','Sign in to the original account and branch to retry this order.'));
             var params = {url:'sales', data:JSON.stringify(entry.payload)};
             PosnicPro.sales.guardDiscountApproval(params, function () {
                 try {
@@ -40,9 +43,9 @@
                     busy.add(key); render();
                     PosnicPro.post(params, function (response) {
                         try {
-                            if (response.type !== 'success') throw new Error(response.message || 'Could not save the order.');
+                            if (response.type !== 'success') throw new Error(response.message || t('lang_submission_save_failed','Could not save the order.'));
                             PosnicPro.sales.submissionJournal().confirm(entry, response);
-                            PosnicPro.alert('success', response.message || 'Order saved');
+                            PosnicPro.alert('success', response.message || t('lang_submission_saved','Order saved'));
                         } catch (error) { PosnicPro.alert('error', error.message); }
                         finally { busy.delete(key); render(); refresh(); }
                     }, function () {
@@ -57,6 +60,7 @@
         dialog.replaceChildren();
         var heading=node('h4',t('lang_pending_submissions','Pending submissions'));
         heading.id='desktop-recovery-title';dialog.appendChild(heading);
+        dialog.dir=document.documentElement.dir || 'ltr';
         dialog.appendChild(node('p',t('lang_review_pending_submissions','These orders may already be saved. Retry checks the original request without creating another order.'),'text-muted'));
         try {
             var saved=entries();
@@ -79,7 +83,7 @@
     function show() {
         if(!dialog){
             dialog=node('dialog');dialog.id='desktop-order-recovery';dialog.setAttribute('aria-labelledby','desktop-recovery-title');
-            dialog.style.cssText='width: min(600px, calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid #adb5bd;border-radius:12px;padding:24px;';
+            dialog.style.cssText='width: min(600px, calc(100% - 32px));max-height:85vh;overflow:auto;border:1px solid var(--theme-border-color,#adb5bd);color:var(--theme-text-primary,#222);background:var(--theme-card-bg,#fff);border-radius:12px;padding:24px;';
             document.body.appendChild(dialog);
         }
         render();if(!dialog.open)dialog.showModal();

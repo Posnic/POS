@@ -3668,5 +3668,17 @@
   "lang_table_round": "วงกลม",
   "lang_table_rectangle": "สี่เหลี่ยมผืนผ้า",
   "lang_table_choose_capacity": "เลือกโต๊ะที่มีที่นั่งเพียงพอ",
-  "lang_table_combine_with": "สามารถรวมกับโต๊ะ"
+  "lang_table_combine_with": "สามารถรวมกับโต๊ะ",
+  "lang_pending_submissions": "รายการส่งที่รอดำเนินการ",
+  "lang_review_pending_submissions": "คำสั่งซื้อเหล่านี้อาจถูกบันทึกแล้ว การลองอีกครั้งจะตรวจสอบคำขอเดิมโดยไม่สร้างคำสั่งซื้อใหม่",
+  "lang_no_pending_submissions": "ไม่มีรายการส่งที่รอดำเนินการ",
+  "lang_submission_sign_in": "ลงชื่อเข้าใช้ก่อนบันทึกคำสั่งซื้อ",
+  "lang_submission_unreadable": "ไม่สามารถอ่านคำสั่งซื้อที่บันทึกไว้ได้",
+  "lang_submission_id_required": "ต้องระบุรหัสคำขอคำสั่งซื้อ",
+  "lang_submission_resolve_first": "จัดการรายการส่งก่อนหน้าให้เรียบร้อยก่อนส่งการเปลี่ยนแปลง",
+  "lang_submission_confirmation_required": "ต้องยืนยันคำสั่งซื้อ",
+  "lang_submission_original_account": "ลงชื่อเข้าใช้บัญชีและสาขาเดิมเพื่อลองคำสั่งซื้อนี้อีกครั้ง",
+  "lang_submission_save_failed": "ไม่สามารถบันทึกคำสั่งซื้อได้",
+  "lang_submission_saved": "บันทึกคำสั่งซื้อแล้ว",
+  "lang_submission_already_saved": "คำสั่งซื้อนี้ถูกบันทึกแล้ว โปรดรีเฟรชรายการขาย"
 }

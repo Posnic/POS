@@ -107,5 +107,17 @@
   "lang_table_round": "圆形",
   "lang_table_rectangle": "长方形",
   "lang_table_choose_capacity": "请选择座位足够的餐桌。",
-  "lang_table_combine_with": "可拼接的餐桌"
+  "lang_table_combine_with": "可拼接的餐桌",
+  "lang_pending_submissions": "待处理的提交",
+  "lang_review_pending_submissions": "这些订单可能已经保存。重试会检查原始请求，而不会创建另一个订单。",
+  "lang_no_pending_submissions": "没有待处理的提交。",
+  "lang_submission_sign_in": "请先登录再保存订单。",
+  "lang_submission_unreadable": "无法读取已保存的订单。",
+  "lang_submission_id_required": "需要提供订单请求 ID。",
+  "lang_submission_resolve_first": "请先处理上一次提交，再发送更改。",
+  "lang_submission_confirmation_required": "需要确认订单。",
+  "lang_submission_original_account": "请登录原来的账户和分店，以重试此订单。",
+  "lang_submission_save_failed": "无法保存订单。",
+  "lang_submission_saved": "订单已保存",
+  "lang_submission_already_saved": "此订单已保存。请刷新销售列表。"
 }

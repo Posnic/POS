@@ -107,5 +107,17 @@
   "lang_table_round": "圓形",
   "lang_table_rectangle": "長方形",
   "lang_table_choose_capacity": "請選擇座位足夠的餐桌。",
-  "lang_table_combine_with": "可併桌的餐桌"
+  "lang_table_combine_with": "可併桌的餐桌",
+  "lang_pending_submissions": "待處理的提交",
+  "lang_review_pending_submissions": "這些訂單可能已儲存。重試會檢查原始請求，不會建立另一筆訂單。",
+  "lang_no_pending_submissions": "沒有待處理的提交。",
+  "lang_submission_sign_in": "儲存訂單前請先登入。",
+  "lang_submission_unreadable": "無法讀取已儲存的訂單。",
+  "lang_submission_id_required": "需要訂單請求 ID。",
+  "lang_submission_resolve_first": "傳送變更前，請先處理上一次提交。",
+  "lang_submission_confirmation_required": "需要確認訂單。",
+  "lang_submission_original_account": "請登入原本的帳戶與分店，以重試此訂單。",
+  "lang_submission_save_failed": "無法儲存訂單。",
+  "lang_submission_saved": "訂單已儲存",
+  "lang_submission_already_saved": "此訂單已儲存。請重新整理銷售清單。"
 }

@@ -3681,5 +3681,17 @@
   "lang_table_round": "गोल",
   "lang_table_rectangle": "आयताकार",
   "lang_table_choose_capacity": "पर्याप्त सीटों वाली टेबल चुनें।",
-  "lang_table_combine_with": "इन टेबलों के साथ जोड़ सकते हैं"
+  "lang_table_combine_with": "इन टेबलों के साथ जोड़ सकते हैं",
+  "lang_pending_submissions": "लंबित सबमिशन",
+  "lang_review_pending_submissions": "ये ऑर्डर पहले ही सेव हो चुके हो सकते हैं। दोबारा कोशिश करने पर नया ऑर्डर बनाए बिना मूल अनुरोध की जाँच होती है।",
+  "lang_no_pending_submissions": "कोई लंबित सबमिशन नहीं है।",
+  "lang_submission_sign_in": "ऑर्डर सेव करने से पहले साइन इन करें।",
+  "lang_submission_unreadable": "सेव किया गया ऑर्डर पढ़ा नहीं जा सका।",
+  "lang_submission_id_required": "ऑर्डर अनुरोध की आईडी ज़रूरी है।",
+  "lang_submission_resolve_first": "बदलाव भेजने से पहले पिछले सबमिशन का निपटारा करें।",
+  "lang_submission_confirmation_required": "ऑर्डर की पुष्टि ज़रूरी है।",
+  "lang_submission_original_account": "इस ऑर्डर के लिए दोबारा कोशिश करने हेतु मूल खाते और शाखा में साइन इन करें।",
+  "lang_submission_save_failed": "ऑर्डर सेव नहीं हो सका।",
+  "lang_submission_saved": "ऑर्डर सेव हो गया",
+  "lang_submission_already_saved": "यह ऑर्डर पहले ही सेव हो चुका है। बिक्री सूची रीफ़्रेश करें।"
 }

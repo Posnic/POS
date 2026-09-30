@@ -52,3 +52,8 @@ test('desktop submission stores before posting and acknowledges only success',()
  const map=JSON.parse(fs.readFileSync('frontend/pages_css_js_map.json','utf8'));
  assert.ok(JSON.stringify(map).includes('modules/js/order-journal.js'));
 });
+
+test('journal validation messages use the supplied translator',()=>{
+ const a=setup();const journal=create(a.storage,()=>a.scope,(key)=>'translated:'+key);
+ assert.throws(()=>journal.save({}),/translated:lang_submission_id_required/);
+});

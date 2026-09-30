@@ -3668,5 +3668,17 @@
   "lang_table_round": "වටකුරු",
   "lang_table_rectangle": "සෘජුකෝණාස්‍ර",
   "lang_table_choose_capacity": "ප්‍රමාණවත් ආසන සහිත මේසයක් තෝරන්න.",
-  "lang_table_combine_with": "මේවා සමඟ එක් කළ හැක"
+  "lang_table_combine_with": "මේවා සමඟ එක් කළ හැක",
+  "lang_pending_submissions": "පොරොත්තුවෙන් ඇති ඉදිරිපත් කිරීම්",
+  "lang_review_pending_submissions": "මෙම ඇණවුම් දැනටමත් සුරැකී තිබිය හැක. නැවත උත්සාහ කිරීමේදී තවත් ඇණවුමක් සෑදීමකින් තොරව මුල් ඉල්ලීම පරීක්ෂා කරයි.",
+  "lang_no_pending_submissions": "පොරොත්තුවෙන් ඇති ඉදිරිපත් කිරීම් නැත.",
+  "lang_submission_sign_in": "ඇණවුමක් සුරැකීමට පෙර පුරනය වන්න.",
+  "lang_submission_unreadable": "සුරැකි ඇණවුම කියවිය නොහැකි විය.",
+  "lang_submission_id_required": "ඇණවුම් ඉල්ලීමේ හැඳුනුම් අංකය අවශ්‍යයි.",
+  "lang_submission_resolve_first": "වෙනස්කම් යැවීමට පෙර පෙර ඉදිරිපත් කිරීම විසඳන්න.",
+  "lang_submission_confirmation_required": "ඇණවුම තහවුරු කිරීම අවශ්‍යයි.",
+  "lang_submission_original_account": "මෙම ඇණවුම නැවත උත්සාහ කිරීමට මුල් ගිණුමට සහ ශාඛාවට පුරනය වන්න.",
+  "lang_submission_save_failed": "ඇණවුම සුරැකිය නොහැකි විය.",
+  "lang_submission_saved": "ඇණවුම සුරැකිණි",
+  "lang_submission_already_saved": "මෙම ඇණවුම දැනටමත් සුරැකී ඇත. විකුණුම් ලැයිස්තුව නැවුම් කරන්න."
 }

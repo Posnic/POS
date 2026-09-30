@@ -96,5 +96,17 @@
   "lang_yes": "Oo",
   "lang_ai_describe_hint": "Gumawa ng draft na paglalarawan mula sa detalye ng produkto",
   "lang_walk_in_customer_click_to_choose_or_add": "Customer na walang account. I-click upang pumili o magdagdag",
-  "lang_table_combine_with": "Maaaring pagsamahin sa"
+  "lang_table_combine_with": "Maaaring pagsamahin sa",
+  "lang_pending_submissions": "Mga nakabinbing pagsusumite",
+  "lang_review_pending_submissions": "Maaaring na-save na ang mga order na ito. Sinusuri ng muling pagsubok ang orihinal na kahilingan nang hindi gumagawa ng panibagong order.",
+  "lang_no_pending_submissions": "Walang nakabinbing pagsusumite.",
+  "lang_submission_sign_in": "Mag-sign in bago mag-save ng order.",
+  "lang_submission_unreadable": "Hindi mabasa ang na-save na order.",
+  "lang_submission_id_required": "Kailangan ang ID ng kahilingan sa order.",
+  "lang_submission_resolve_first": "Ayusin ang nakaraang pagsusumite bago magpadala ng mga pagbabago.",
+  "lang_submission_confirmation_required": "Kailangan ang kumpirmasyon ng order.",
+  "lang_submission_original_account": "Mag-sign in sa orihinal na account at sangay upang subukang muli ang order na ito.",
+  "lang_submission_save_failed": "Hindi ma-save ang order.",
+  "lang_submission_saved": "Na-save ang order",
+  "lang_submission_already_saved": "Na-save na ang order na ito. I-refresh ang listahan ng mga benta."
 }

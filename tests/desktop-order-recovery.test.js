@@ -38,3 +38,12 @@ test('account change while manager approval is open prevents submission',()=>{
 test('normal sale submission in flight cannot be resent from recovery',()=>{
  const a=app();a.w.PosnicPro.sales.submissionInProgress=true;a.recovery.retry(a.entry);assert.equal(a.calls.length,0);a.dom.window.close();
 });
+
+test('recovery uses localized labels and readable inherited headings in RTL',()=>{
+ const a=app();a.w.document.documentElement.dir='rtl';
+ a.w.PosnicPro.i18n={t:(key,fallback)=>key==='lang_pending_submissions'?'طلبات معلقة':fallback};
+ a.recovery.show();const dialog=a.w.document.querySelector('dialog');
+ assert.equal(dialog.dir,'rtl');assert.equal(dialog.querySelector('h4').textContent,'طلبات معلقة');
+ assert.equal(dialog.querySelector('h4').style.color,'inherit');
+ assert.equal(dialog.querySelector('button').style.minHeight,'44px');a.dom.window.close();
+});

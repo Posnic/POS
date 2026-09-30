@@ -3668,5 +3668,17 @@
   "lang_table_round": "गोलाकार",
   "lang_table_rectangle": "आयताकार",
   "lang_table_choose_capacity": "पर्याप्त सिट भएको टेबल रोज्नुहोस्।",
-  "lang_table_combine_with": "यी टेबलसँग जोड्न सकिन्छ"
+  "lang_table_combine_with": "यी टेबलसँग जोड्न सकिन्छ",
+  "lang_pending_submissions": "विचाराधीन पठाइएका अनुरोधहरू",
+  "lang_review_pending_submissions": "यी अर्डरहरू पहिले नै सुरक्षित भएका हुन सक्छन्। फेरि प्रयास गर्दा अर्को अर्डर सिर्जना नगरी मूल अनुरोध जाँच गरिन्छ।",
+  "lang_no_pending_submissions": "कुनै पठाइएका अनुरोध विचाराधीन छैनन्।",
+  "lang_submission_sign_in": "अर्डर सुरक्षित गर्नुअघि साइन इन गर्नुहोस्।",
+  "lang_submission_unreadable": "सुरक्षित गरिएको अर्डर पढ्न सकिएन।",
+  "lang_submission_id_required": "अर्डर अनुरोधको ID आवश्यक छ।",
+  "lang_submission_resolve_first": "परिवर्तनहरू पठाउनुअघि अघिल्लो अनुरोधको समस्या समाधान गर्नुहोस्।",
+  "lang_submission_confirmation_required": "अर्डरको पुष्टि आवश्यक छ।",
+  "lang_submission_original_account": "यो अर्डर फेरि प्रयास गर्न मूल खाता र शाखामा साइन इन गर्नुहोस्।",
+  "lang_submission_save_failed": "अर्डर सुरक्षित गर्न सकिएन।",
+  "lang_submission_saved": "अर्डर सुरक्षित गरियो",
+  "lang_submission_already_saved": "यो अर्डर पहिले नै सुरक्षित गरिएको थियो। बिक्री सूची रिफ्रेस गर्नुहोस्।"
 }

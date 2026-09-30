@@ -107,5 +107,17 @@
   "lang_table_round": "Yuvarlak",
   "lang_table_rectangle": "Dikdörtgen",
   "lang_table_choose_capacity": "Yeterli koltuğu olan bir masa seçin.",
-  "lang_table_combine_with": "Birleştirilebilecek masalar"
+  "lang_table_combine_with": "Birleştirilebilecek masalar",
+  "lang_pending_submissions": "Bekleyen gönderimler",
+  "lang_review_pending_submissions": "Bu siparişler zaten kaydedilmiş olabilir. Yeniden deneme, başka bir sipariş oluşturmadan asıl isteği kontrol eder.",
+  "lang_no_pending_submissions": "Bekleyen gönderim yok.",
+  "lang_submission_sign_in": "Siparişi kaydetmeden önce oturum açın.",
+  "lang_submission_unreadable": "Kaydedilen sipariş okunamadı.",
+  "lang_submission_id_required": "Sipariş isteği kimliği gereklidir.",
+  "lang_submission_resolve_first": "Değişiklikleri göndermeden önce önceki gönderimi çözüme kavuşturun.",
+  "lang_submission_confirmation_required": "Sipariş onayı gereklidir.",
+  "lang_submission_original_account": "Bu siparişi yeniden denemek için asıl hesap ve şubede oturum açın.",
+  "lang_submission_save_failed": "Sipariş kaydedilemedi.",
+  "lang_submission_saved": "Sipariş kaydedildi",
+  "lang_submission_already_saved": "Bu sipariş zaten kaydedilmiş. Satış listesini yenileyin."
 }

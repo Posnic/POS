@@ -33,7 +33,7 @@
                 branch: PosnicPro.local.get('branch_id_set'),
                 user: PosnicPro.local.get('userid')
             };
-        });
+        }, function (key, fallback) { return PosnicPro.i18n.t(key, fallback); });
     },
     SaleDenomination: [],
     tablesList: [],
@@ -4077,7 +4077,7 @@ PosnicPro.sales.addSale = {
                 savedSubmission = PosnicPro.sales.submissionJournal().save(JSON.parse(params.data));
                 if (PosnicPro.orderRecovery) PosnicPro.orderRecovery.refresh();
                 if (savedSubmission.state === 'confirmed') {
-                    throw new Error('This order was already saved. Refresh the sales list.');
+                    throw new Error(PosnicPro.i18n.t('lang_submission_already_saved', 'This order was already saved. Refresh the sales list.'));
                 }
             } catch (error) {
                 PosnicPro.sales.submissionInProgress = false;

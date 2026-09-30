@@ -107,5 +107,17 @@
   "lang_table_round": "円形",
   "lang_table_rectangle": "長方形",
   "lang_table_choose_capacity": "十分な席数のあるテーブルを選んでください。",
-  "lang_table_combine_with": "結合できるテーブル"
+  "lang_table_combine_with": "結合できるテーブル",
+  "lang_pending_submissions": "保留中の送信",
+  "lang_review_pending_submissions": "これらの注文はすでに保存されている可能性があります。再試行では、別の注文を作成せずに元のリクエストを確認します。",
+  "lang_no_pending_submissions": "保留中の送信はありません。",
+  "lang_submission_sign_in": "注文を保存する前にサインインしてください。",
+  "lang_submission_unreadable": "保存済みの注文を読み取れませんでした。",
+  "lang_submission_id_required": "注文リクエストIDが必要です。",
+  "lang_submission_resolve_first": "変更を送信する前に、前回の送信を解決してください。",
+  "lang_submission_confirmation_required": "注文の確認が必要です。",
+  "lang_submission_original_account": "この注文を再試行するには、元のアカウントと店舗でサインインしてください。",
+  "lang_submission_save_failed": "注文を保存できませんでした。",
+  "lang_submission_saved": "注文を保存しました",
+  "lang_submission_already_saved": "この注文はすでに保存されています。売上一覧を更新してください。"
 }

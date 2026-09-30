@@ -3668,5 +3668,17 @@
   "lang_table_round": "ವೃತ್ತ",
   "lang_table_rectangle": "ಆಯತ",
   "lang_table_choose_capacity": "ಸಾಕಷ್ಟು ಆಸನಗಳಿರುವ ಮೇಜನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
-  "lang_table_combine_with": "ಇವುಗಳೊಂದಿಗೆ ಸೇರಿಸಬಹುದು"
+  "lang_table_combine_with": "ಇವುಗಳೊಂದಿಗೆ ಸೇರಿಸಬಹುದು",
+  "lang_pending_submissions": "ಬಾಕಿ ಇರುವ ಸಲ್ಲಿಕೆಗಳು",
+  "lang_review_pending_submissions": "ಈ ಆರ್ಡರ್‌ಗಳು ಈಗಾಗಲೇ ಉಳಿದಿರಬಹುದು. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿದಾಗ ಮತ್ತೊಂದು ಆರ್ಡರ್ ರಚಿಸದೆ ಮೂಲ ವಿನಂತಿಯನ್ನು ಪರಿಶೀಲಿಸಲಾಗುತ್ತದೆ.",
+  "lang_no_pending_submissions": "ಯಾವುದೇ ಸಲ್ಲಿಕೆಗಳು ಬಾಕಿ ಇಲ್ಲ.",
+  "lang_submission_sign_in": "ಆರ್ಡರ್ ಉಳಿಸುವ ಮೊದಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.",
+  "lang_submission_unreadable": "ಉಳಿಸಿದ ಆರ್ಡರ್ ಅನ್ನು ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "lang_submission_id_required": "ಆರ್ಡರ್ ವಿನಂತಿಯ ಐಡಿ ಅಗತ್ಯವಿದೆ.",
+  "lang_submission_resolve_first": "ಬದಲಾವಣೆಗಳನ್ನು ಕಳುಹಿಸುವ ಮೊದಲು ಹಿಂದಿನ ಸಲ್ಲಿಕೆಯನ್ನು ಪರಿಹರಿಸಿ.",
+  "lang_submission_confirmation_required": "ಆರ್ಡರ್ ದೃಢೀಕರಣ ಅಗತ್ಯವಿದೆ.",
+  "lang_submission_original_account": "ಈ ಆರ್ಡರ್‌ಗಾಗಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಮೂಲ ಖಾತೆ ಮತ್ತು ಶಾಖೆಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.",
+  "lang_submission_save_failed": "ಆರ್ಡರ್ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "lang_submission_saved": "ಆರ್ಡರ್ ಉಳಿಸಲಾಗಿದೆ",
+  "lang_submission_already_saved": "ಈ ಆರ್ಡರ್ ಅನ್ನು ಈಗಾಗಲೇ ಉಳಿಸಲಾಗಿದೆ. ಮಾರಾಟದ ಪಟ್ಟಿಯನ್ನು ರಿಫ್ರೆಶ್ ಮಾಡಿ."
 }

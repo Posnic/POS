@@ -3668,5 +3668,17 @@
   "lang_table_round": "వృత్తం",
   "lang_table_rectangle": "దీర్ఘచతురస్రం",
   "lang_table_choose_capacity": "తగినన్ని సీట్లు ఉన్న టేబుల్‌ను ఎంచుకోండి.",
-  "lang_table_combine_with": "వీటితో కలపవచ్చు"
+  "lang_table_combine_with": "వీటితో కలపవచ్చు",
+  "lang_pending_submissions": "పెండింగ్‌లో ఉన్న సమర్పణలు",
+  "lang_review_pending_submissions": "ఈ ఆర్డర్‌లు ఇప్పటికే సేవ్ అయి ఉండవచ్చు. మళ్లీ ప్రయత్నిస్తే మరో ఆర్డర్‌ను సృష్టించకుండా అసలు అభ్యర్థనను తనిఖీ చేస్తుంది.",
+  "lang_no_pending_submissions": "పెండింగ్‌లో ఉన్న సమర్పణలు లేవు.",
+  "lang_submission_sign_in": "ఆర్డర్‌ను సేవ్ చేసే ముందు సైన్ ఇన్ చేయండి.",
+  "lang_submission_unreadable": "సేవ్ చేసిన ఆర్డర్‌ను చదవడం సాధ్యం కాలేదు.",
+  "lang_submission_id_required": "ఆర్డర్ అభ్యర్థన ID అవసరం.",
+  "lang_submission_resolve_first": "మార్పులను పంపే ముందు మునుపటి సమర్పణను పరిష్కరించండి.",
+  "lang_submission_confirmation_required": "ఆర్డర్ నిర్ధారణ అవసరం.",
+  "lang_submission_original_account": "ఈ ఆర్డర్‌ను మళ్లీ ప్రయత్నించడానికి అసలు ఖాతా మరియు శాఖలో సైన్ ఇన్ చేయండి.",
+  "lang_submission_save_failed": "ఆర్డర్‌ను సేవ్ చేయడం సాధ్యం కాలేదు.",
+  "lang_submission_saved": "ఆర్డర్ సేవ్ అయింది",
+  "lang_submission_already_saved": "ఈ ఆర్డర్ ఇప్పటికే సేవ్ అయింది. విక్రయాల జాబితాను రిఫ్రెష్ చేయండి."
 }

@@ -3668,5 +3668,17 @@
   "lang_table_round": "Rotonda",
   "lang_table_rectangle": "Rettangolare",
   "lang_table_choose_capacity": "Scegli un tavolo con posti sufficienti.",
-  "lang_table_combine_with": "Può essere unito a"
+  "lang_table_combine_with": "Può essere unito a",
+  "lang_pending_submissions": "Invii in sospeso",
+  "lang_review_pending_submissions": "Questi ordini potrebbero essere già stati salvati. Un nuovo tentativo verifica la richiesta originale senza creare un altro ordine.",
+  "lang_no_pending_submissions": "Nessun invio in sospeso.",
+  "lang_submission_sign_in": "Accedi prima di salvare un ordine.",
+  "lang_submission_unreadable": "Impossibile leggere l’ordine salvato.",
+  "lang_submission_id_required": "È richiesto un ID della richiesta d’ordine.",
+  "lang_submission_resolve_first": "Risolvi l’invio precedente prima di inviare modifiche.",
+  "lang_submission_confirmation_required": "È richiesta la conferma dell’ordine.",
+  "lang_submission_original_account": "Accedi all’account e alla filiale originali per riprovare a inviare questo ordine.",
+  "lang_submission_save_failed": "Impossibile salvare l’ordine.",
+  "lang_submission_saved": "Ordine salvato",
+  "lang_submission_already_saved": "Questo ordine è già stato salvato. Aggiorna l’elenco delle vendite."
 }

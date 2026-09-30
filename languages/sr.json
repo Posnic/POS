@@ -96,5 +96,17 @@
   "lang_yes": "Да",
   "lang_ai_describe_hint": "Направи опис на основу података о артиклу",
   "lang_walk_in_customer_click_to_choose_or_add": "Нерегистровани купац. Кликните за избор или додавање",
-  "lang_table_combine_with": "Може се спојити са"
+  "lang_table_combine_with": "Може се спојити са",
+  "lang_pending_submissions": "Слања на чекању",
+  "lang_review_pending_submissions": "Ове поруџбине су можда већ сачуване. Поновни покушај проверава првобитни захтев без прављења нове поруџбине.",
+  "lang_no_pending_submissions": "Нема слања на чекању.",
+  "lang_submission_sign_in": "Пријавите се пре чувања поруџбине.",
+  "lang_submission_unreadable": "Сачувана поруџбина није могла да се прочита.",
+  "lang_submission_id_required": "Потребан је ИД захтева за поруџбину.",
+  "lang_submission_resolve_first": "Решите претходно слање пре слања измена.",
+  "lang_submission_confirmation_required": "Потребна је потврда поруџбине.",
+  "lang_submission_original_account": "Пријавите се на првобитни налог и у првобитну пословницу да бисте поново покушали да пошаљете ову поруџбину.",
+  "lang_submission_save_failed": "Поруџбина није могла да се сачува.",
+  "lang_submission_saved": "Поруџбина је сачувана",
+  "lang_submission_already_saved": "Ова поруџбина је већ сачувана. Освежите листу продаја."
 }

@@ -3668,5 +3668,17 @@
   "lang_table_round": "Ronde",
   "lang_table_rectangle": "Rectangulaire",
   "lang_table_choose_capacity": "Choisissez une table avec suffisamment de places.",
-  "lang_table_combine_with": "Peut être combinée avec"
+  "lang_table_combine_with": "Peut être combinée avec",
+  "lang_pending_submissions": "Envois en attente",
+  "lang_review_pending_submissions": "Ces commandes sont peut-être déjà enregistrées. Réessayer permet de vérifier la requête d’origine sans créer une autre commande.",
+  "lang_no_pending_submissions": "Aucun envoi en attente.",
+  "lang_submission_sign_in": "Connectez-vous avant d’enregistrer une commande.",
+  "lang_submission_unreadable": "Impossible de lire la commande enregistrée.",
+  "lang_submission_id_required": "Un identifiant de requête de commande est requis.",
+  "lang_submission_resolve_first": "Résolvez l’envoi précédent avant d’envoyer des modifications.",
+  "lang_submission_confirmation_required": "Une confirmation de commande est requise.",
+  "lang_submission_original_account": "Connectez-vous au compte et à l’établissement d’origine pour réessayer d’envoyer cette commande.",
+  "lang_submission_save_failed": "Impossible d’enregistrer la commande.",
+  "lang_submission_saved": "Commande enregistrée",
+  "lang_submission_already_saved": "Cette commande a déjà été enregistrée. Actualisez la liste des ventes."
 }

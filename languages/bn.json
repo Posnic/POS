@@ -107,5 +107,17 @@
   "lang_table_round": "গোলাকার",
   "lang_table_rectangle": "আয়তাকার",
   "lang_table_choose_capacity": "পর্যাপ্ত আসন আছে এমন টেবিল বেছে নিন।",
-  "lang_table_combine_with": "যে টেবিলের সঙ্গে যুক্ত করা যাবে"
+  "lang_table_combine_with": "যে টেবিলের সঙ্গে যুক্ত করা যাবে",
+  "lang_pending_submissions": "অপেক্ষমাণ জমা",
+  "lang_review_pending_submissions": "এই অর্ডারগুলি ইতিমধ্যেই সংরক্ষিত হয়ে থাকতে পারে। আবার চেষ্টা করলে নতুন অর্ডার তৈরি না করে মূল অনুরোধটি পরীক্ষা করা হয়।",
+  "lang_no_pending_submissions": "কোনো অপেক্ষমাণ জমা নেই।",
+  "lang_submission_sign_in": "অর্ডার সংরক্ষণ করার আগে সাইন ইন করুন।",
+  "lang_submission_unreadable": "সংরক্ষিত অর্ডারটি পড়া যায়নি।",
+  "lang_submission_id_required": "অর্ডার অনুরোধের আইডি প্রয়োজন।",
+  "lang_submission_resolve_first": "পরিবর্তন পাঠানোর আগে আগের জমার সমস্যাটি সমাধান করুন।",
+  "lang_submission_confirmation_required": "অর্ডারের নিশ্চয়তা প্রয়োজন।",
+  "lang_submission_original_account": "এই অর্ডারটি আবার চেষ্টা করতে মূল অ্যাকাউন্ট ও শাখায় সাইন ইন করুন।",
+  "lang_submission_save_failed": "অর্ডারটি সংরক্ষণ করা যায়নি।",
+  "lang_submission_saved": "অর্ডার সংরক্ষিত হয়েছে",
+  "lang_submission_already_saved": "এই অর্ডারটি ইতিমধ্যেই সংরক্ষিত হয়েছে। বিক্রয়ের তালিকা রিফ্রেশ করুন।"
 }

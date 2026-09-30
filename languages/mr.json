@@ -107,5 +107,17 @@
   "lang_table_round": "गोल",
   "lang_table_rectangle": "आयताकृती",
   "lang_table_choose_capacity": "पुरेशी आसने असलेले टेबल निवडा.",
-  "lang_table_combine_with": "या टेबलांसोबत जोडता येईल"
+  "lang_table_combine_with": "या टेबलांसोबत जोडता येईल",
+  "lang_pending_submissions": "प्रलंबित सादरीकरणे",
+  "lang_review_pending_submissions": "या ऑर्डर आधीच जतन झालेल्या असू शकतात. पुन्हा प्रयत्न केल्यावर दुसरी ऑर्डर तयार न करता मूळ विनंती तपासली जाते.",
+  "lang_no_pending_submissions": "कोणतीही प्रलंबित सादरीकरणे नाहीत.",
+  "lang_submission_sign_in": "ऑर्डर जतन करण्यापूर्वी साइन इन करा.",
+  "lang_submission_unreadable": "जतन केलेली ऑर्डर वाचता आली नाही.",
+  "lang_submission_id_required": "ऑर्डर विनंतीचा आयडी आवश्यक आहे.",
+  "lang_submission_resolve_first": "बदल पाठवण्यापूर्वी मागील सादरीकरणाचे निराकरण करा.",
+  "lang_submission_confirmation_required": "ऑर्डरची पुष्टी आवश्यक आहे.",
+  "lang_submission_original_account": "या ऑर्डरसाठी पुन्हा प्रयत्न करण्यासाठी मूळ खाते आणि शाखेत साइन इन करा.",
+  "lang_submission_save_failed": "ऑर्डर जतन करता आली नाही.",
+  "lang_submission_saved": "ऑर्डर जतन केली",
+  "lang_submission_already_saved": "ही ऑर्डर आधीच जतन केलेली आहे. विक्रीची यादी रिफ्रेश करा."
 }

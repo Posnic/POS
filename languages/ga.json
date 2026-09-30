@@ -96,5 +96,17 @@
   "lang_yes": "Tá",
   "lang_ai_describe_hint": "Dréachtaigh cur síos ó shonraí an earra",
   "lang_walk_in_customer_click_to_choose_or_add": "Custaiméir gan chuntas. Cliceáil chun roghnú nó cur leis",
-  "lang_table_combine_with": "Is féidir a chur le"
+  "lang_table_combine_with": "Is féidir a chur le",
+  "lang_pending_submissions": "Aighneachtaí ar feitheamh",
+  "lang_review_pending_submissions": "Seans go bhfuil na horduithe seo sábháilte cheana féin. Seiceálann an atriail an buniarratas gan ordú eile a chruthú.",
+  "lang_no_pending_submissions": "Níl aon aighneachtaí ar feitheamh.",
+  "lang_submission_sign_in": "Sínigh isteach sula sábhálann tú ordú.",
+  "lang_submission_unreadable": "Níorbh fhéidir an t-ordú sábháilte a léamh.",
+  "lang_submission_id_required": "Tá aitheantas iarratais an ordaithe ag teastáil.",
+  "lang_submission_resolve_first": "Réitigh an aighneacht roimhe seo sula seolann tú athruithe.",
+  "lang_submission_confirmation_required": "Tá deimhniú an ordaithe ag teastáil.",
+  "lang_submission_original_account": "Sínigh isteach sa chuntas agus sa bhrainse bunaidh chun an t-ordú seo a thriail arís.",
+  "lang_submission_save_failed": "Níorbh fhéidir an t-ordú a shábháil.",
+  "lang_submission_saved": "Ordú sábháilte",
+  "lang_submission_already_saved": "Sábháladh an t-ordú seo cheana féin. Athnuaigh an liosta díolachán."
 }

@@ -3899,5 +3899,17 @@
   "lang_table_round": "Round",
   "lang_table_rectangle": "Rectangle",
   "lang_table_choose_capacity": "Choose a table with enough seats.",
-  "lang_table_combine_with": "Can combine with"
+  "lang_table_combine_with": "Can combine with",
+  "lang_pending_submissions": "Pending submissions",
+  "lang_review_pending_submissions": "These orders may already be saved. Retry checks the original request without creating another order.",
+  "lang_no_pending_submissions": "No pending submissions.",
+  "lang_submission_sign_in": "Sign in before saving an order.",
+  "lang_submission_unreadable": "The saved order could not be read.",
+  "lang_submission_id_required": "An order request ID is required.",
+  "lang_submission_resolve_first": "Resolve the previous submission before sending changes.",
+  "lang_submission_confirmation_required": "Order confirmation is required.",
+  "lang_submission_original_account": "Sign in to the original account and branch to retry this order.",
+  "lang_submission_save_failed": "Could not save the order.",
+  "lang_submission_saved": "Order saved",
+  "lang_submission_already_saved": "This order was already saved. Refresh the sales list."
 }

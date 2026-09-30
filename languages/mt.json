@@ -96,5 +96,17 @@
   "lang_yes": "Iva",
   "lang_ai_describe_hint": "Oħloq abbozz ta’ deskrizzjoni mid-dettalji tal-oġġett",
   "lang_walk_in_customer_click_to_choose_or_add": "Klijent mingħajr kont. Ikklikkja biex tagħżel jew iżżid",
-  "lang_table_combine_with": "Jista’ jingħaqad ma’"
+  "lang_table_combine_with": "Jista’ jingħaqad ma’",
+  "lang_pending_submissions": "Sottomissjonijiet pendenti",
+  "lang_review_pending_submissions": "Dawn l-ordnijiet jistgħu jkunu diġà ssejvjati. Meta terġa’ tipprova, it-talba oriġinali tiġi ċċekkjata mingħajr ma tinħoloq ordni oħra.",
+  "lang_no_pending_submissions": "M’hemmx sottomissjonijiet pendenti.",
+  "lang_submission_sign_in": "Idħol fil-kont qabel ma tissejvja ordni.",
+  "lang_submission_unreadable": "L-ordni ssejvjata ma setgħetx tinqara.",
+  "lang_submission_id_required": "Huwa meħtieġ l-ID tat-talba tal-ordni.",
+  "lang_submission_resolve_first": "Irrisolvi s-sottomissjoni preċedenti qabel ma tibgħat il-bidliet.",
+  "lang_submission_confirmation_required": "Hija meħtieġa konferma tal-ordni.",
+  "lang_submission_original_account": "Idħol fil-kont u fil-fergħa oriġinali biex terġa’ tipprova din l-ordni.",
+  "lang_submission_save_failed": "L-ordni ma setgħetx tiġi ssejvjata.",
+  "lang_submission_saved": "Ordni ssejvjata",
+  "lang_submission_already_saved": "Din l-ordni diġà ġiet issejvjata. Aġġorna l-lista tal-bejgħ."
 }

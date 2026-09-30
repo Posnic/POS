@@ -96,5 +96,17 @@
   "lang_yes": "Da",
   "lang_ai_describe_hint": "Pripravi opis na podlagi podatkov o artiklu",
   "lang_walk_in_customer_click_to_choose_or_add": "Neregistrirana stranka. Kliknite za izbiro ali dodajanje",
-  "lang_table_combine_with": "Lahko se združi z"
+  "lang_table_combine_with": "Lahko se združi z",
+  "lang_pending_submissions": "Pošiljanja na čakanju",
+  "lang_review_pending_submissions": "Ta naročila so morda že shranjena. Ponovni poskus preveri prvotno zahtevo, ne da bi ustvaril novo naročilo.",
+  "lang_no_pending_submissions": "Ni pošiljanj na čakanju.",
+  "lang_submission_sign_in": "Pred shranjevanjem naročila se prijavite.",
+  "lang_submission_unreadable": "Shranjenega naročila ni bilo mogoče prebrati.",
+  "lang_submission_id_required": "Potreben je ID zahteve za naročilo.",
+  "lang_submission_resolve_first": "Pred pošiljanjem sprememb razrešite prejšnje pošiljanje.",
+  "lang_submission_confirmation_required": "Potrebna je potrditev naročila.",
+  "lang_submission_original_account": "Za ponovni poskus pošiljanja tega naročila se prijavite v prvotni račun in poslovalnico.",
+  "lang_submission_save_failed": "Naročila ni bilo mogoče shraniti.",
+  "lang_submission_saved": "Naročilo je shranjeno",
+  "lang_submission_already_saved": "To naročilo je že shranjeno. Osvežite seznam prodaje."
 }

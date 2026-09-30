@@ -96,5 +96,17 @@
   "lang_yes": "Ja",
   "lang_ai_describe_hint": "Skapa ett beskrivningsutkast utifrån artikelns uppgifter",
   "lang_walk_in_customer_click_to_choose_or_add": "Oregistrerad kund. Klicka för att välja eller lägga till",
-  "lang_table_combine_with": "Kan kombineras med"
+  "lang_table_combine_with": "Kan kombineras med",
+  "lang_pending_submissions": "Väntande inskickningar",
+  "lang_review_pending_submissions": "Dessa beställningar kan redan vara sparade. Ett nytt försök kontrollerar den ursprungliga begäran utan att skapa en ny beställning.",
+  "lang_no_pending_submissions": "Inga väntande inskickningar.",
+  "lang_submission_sign_in": "Logga in innan du sparar en beställning.",
+  "lang_submission_unreadable": "Den sparade beställningen kunde inte läsas.",
+  "lang_submission_id_required": "Ett ID för beställningsbegäran krävs.",
+  "lang_submission_resolve_first": "Lös den föregående inskickningen innan du skickar ändringar.",
+  "lang_submission_confirmation_required": "Beställningsbekräftelse krävs.",
+  "lang_submission_original_account": "Logga in på det ursprungliga kontot och den ursprungliga filialen för att försöka skicka den här beställningen igen.",
+  "lang_submission_save_failed": "Det gick inte att spara beställningen.",
+  "lang_submission_saved": "Beställningen har sparats",
+  "lang_submission_already_saved": "Den här beställningen har redan sparats. Uppdatera försäljningslistan."
 }

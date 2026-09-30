@@ -96,5 +96,17 @@
   "lang_yes": "Da",
   "lang_ai_describe_hint": "Izradi opis na temelju podataka o artiklu",
   "lang_walk_in_customer_click_to_choose_or_add": "Neregistrirani kupac. Kliknite za odabir ili dodavanje",
-  "lang_table_combine_with": "Može se spojiti s"
+  "lang_table_combine_with": "Može se spojiti s",
+  "lang_pending_submissions": "Slanja na čekanju",
+  "lang_review_pending_submissions": "Ove su narudžbe možda već spremljene. Ponovni pokušaj provjerava izvorni zahtjev bez stvaranja nove narudžbe.",
+  "lang_no_pending_submissions": "Nema slanja na čekanju.",
+  "lang_submission_sign_in": "Prijavite se prije spremanja narudžbe.",
+  "lang_submission_unreadable": "Spremljenu narudžbu nije moguće pročitati.",
+  "lang_submission_id_required": "Potreban je ID zahtjeva za narudžbu.",
+  "lang_submission_resolve_first": "Riješite prethodno slanje prije slanja promjena.",
+  "lang_submission_confirmation_required": "Potrebna je potvrda narudžbe.",
+  "lang_submission_original_account": "Prijavite se na izvorni račun i u izvornu poslovnicu kako biste ponovno pokušali poslati ovu narudžbu.",
+  "lang_submission_save_failed": "Narudžbu nije moguće spremiti.",
+  "lang_submission_saved": "Narudžba je spremljena",
+  "lang_submission_already_saved": "Ova je narudžba već spremljena. Osvježite popis prodaja."
 }

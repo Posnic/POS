@@ -96,5 +96,17 @@
   "lang_yes": "Igen",
   "lang_ai_describe_hint": "Leírás készítése a tétel adatai alapján",
   "lang_walk_in_customer_click_to_choose_or_add": "Nem regisztrált vevő. Kattintson a kiválasztáshoz vagy hozzáadáshoz",
-  "lang_table_combine_with": "Összevonható ezekkel"
+  "lang_table_combine_with": "Összevonható ezekkel",
+  "lang_pending_submissions": "Függőben lévő beküldések",
+  "lang_review_pending_submissions": "Lehet, hogy ezeket a rendeléseket már mentette a rendszer. Az újrapróbálkozás az eredeti kérést ellenőrzi, új rendelés létrehozása nélkül.",
+  "lang_no_pending_submissions": "Nincsenek függőben lévő beküldések.",
+  "lang_submission_sign_in": "Rendelés mentése előtt jelentkezzen be.",
+  "lang_submission_unreadable": "A mentett rendelést nem sikerült beolvasni.",
+  "lang_submission_id_required": "A rendelési kérés azonosítója kötelező.",
+  "lang_submission_resolve_first": "A módosítások küldése előtt rendezze az előző beküldést.",
+  "lang_submission_confirmation_required": "A rendelés megerősítése szükséges.",
+  "lang_submission_original_account": "A rendelés újbóli beküldéséhez jelentkezzen be az eredeti fiókba és üzletbe.",
+  "lang_submission_save_failed": "Nem sikerült menteni a rendelést.",
+  "lang_submission_saved": "Rendelés mentve",
+  "lang_submission_already_saved": "Ezt a rendelést már mentette a rendszer. Frissítse az értékesítési listát."
 }

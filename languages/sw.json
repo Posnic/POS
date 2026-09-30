@@ -3668,5 +3668,17 @@
   "lang_table_round": "Duara",
   "lang_table_rectangle": "Mstatili",
   "lang_table_choose_capacity": "Chagua meza yenye viti vya kutosha.",
-  "lang_table_combine_with": "Inaweza kuunganishwa na"
+  "lang_table_combine_with": "Inaweza kuunganishwa na",
+  "lang_pending_submissions": "Mawasilisho yanayosubiri",
+  "lang_review_pending_submissions": "Huenda maagizo haya tayari yamehifadhiwa. Kujaribu tena hukagua ombi la awali bila kuunda agizo jingine.",
+  "lang_no_pending_submissions": "Hakuna mawasilisho yanayosubiri.",
+  "lang_submission_sign_in": "Ingia kabla ya kuhifadhi agizo.",
+  "lang_submission_unreadable": "Agizo lililohifadhiwa halikuweza kusomwa.",
+  "lang_submission_id_required": "Kitambulisho cha ombi la agizo kinahitajika.",
+  "lang_submission_resolve_first": "Shughulikia wasilisho la awali kabla ya kutuma mabadiliko.",
+  "lang_submission_confirmation_required": "Uthibitisho wa agizo unahitajika.",
+  "lang_submission_original_account": "Ingia kwenye akaunti na tawi la awali ili ujaribu agizo hili tena.",
+  "lang_submission_save_failed": "Imeshindikana kuhifadhi agizo.",
+  "lang_submission_saved": "Agizo limehifadhiwa",
+  "lang_submission_already_saved": "Agizo hili tayari limehifadhiwa. Onyesha upya orodha ya mauzo."
 }

@@ -3668,5 +3668,17 @@
   "lang_table_round": "Rund",
   "lang_table_rectangle": "Rechteckig",
   "lang_table_choose_capacity": "Wählen Sie einen Tisch mit genügend Sitzplätzen.",
-  "lang_table_combine_with": "Kombinierbar mit"
+  "lang_table_combine_with": "Kombinierbar mit",
+  "lang_pending_submissions": "Ausstehende Übermittlungen",
+  "lang_review_pending_submissions": "Diese Bestellungen wurden möglicherweise bereits gespeichert. Ein erneuter Versuch prüft die ursprüngliche Anfrage, ohne eine weitere Bestellung anzulegen.",
+  "lang_no_pending_submissions": "Keine ausstehenden Übermittlungen.",
+  "lang_submission_sign_in": "Melden Sie sich an, bevor Sie eine Bestellung speichern.",
+  "lang_submission_unreadable": "Die gespeicherte Bestellung konnte nicht gelesen werden.",
+  "lang_submission_id_required": "Eine ID für die Bestellanfrage ist erforderlich.",
+  "lang_submission_resolve_first": "Klären Sie die vorherige Übermittlung, bevor Sie Änderungen senden.",
+  "lang_submission_confirmation_required": "Eine Bestellbestätigung ist erforderlich.",
+  "lang_submission_original_account": "Melden Sie sich beim ursprünglichen Konto und in der ursprünglichen Filiale an, um diese Bestellung erneut zu übermitteln.",
+  "lang_submission_save_failed": "Die Bestellung konnte nicht gespeichert werden.",
+  "lang_submission_saved": "Bestellung gespeichert",
+  "lang_submission_already_saved": "Diese Bestellung wurde bereits gespeichert. Aktualisieren Sie die Verkaufsliste."
 }

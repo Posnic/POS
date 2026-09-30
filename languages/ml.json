@@ -3668,5 +3668,17 @@
   "lang_table_round": "വൃത്തം",
   "lang_table_rectangle": "ദീർഘചതുരം",
   "lang_table_choose_capacity": "മതിയായ ഇരിപ്പിടങ്ങളുള്ള മേശ തിരഞ്ഞെടുക്കുക.",
-  "lang_table_combine_with": "ഇവയുമായി ചേർക്കാം"
+  "lang_table_combine_with": "ഇവയുമായി ചേർക്കാം",
+  "lang_pending_submissions": "തീർപ്പാകാത്ത സമർപ്പണങ്ങൾ",
+  "lang_review_pending_submissions": "ഈ ഓർഡറുകൾ ഇതിനകം സേവ് ചെയ്തിട്ടുണ്ടാകാം. വീണ്ടും ശ്രമിക്കുമ്പോൾ മറ്റൊരു ഓർഡർ സൃഷ്ടിക്കാതെ ആദ്യത്തെ അഭ്യർത്ഥന പരിശോധിക്കുന്നു.",
+  "lang_no_pending_submissions": "തീർപ്പാകാത്ത സമർപ്പണങ്ങളില്ല.",
+  "lang_submission_sign_in": "ഓർഡർ സേവ് ചെയ്യുന്നതിനുമുമ്പ് സൈൻ ഇൻ ചെയ്യുക.",
+  "lang_submission_unreadable": "സേവ് ചെയ്ത ഓർഡർ വായിക്കാനായില്ല.",
+  "lang_submission_id_required": "ഓർഡർ അഭ്യർത്ഥനയുടെ ഐഡി ആവശ്യമാണ്.",
+  "lang_submission_resolve_first": "മാറ്റങ്ങൾ അയയ്ക്കുന്നതിന് മുമ്പ് മുൻ സമർപ്പണം തീർപ്പാക്കുക.",
+  "lang_submission_confirmation_required": "ഓർഡർ സ്ഥിരീകരണം ആവശ്യമാണ്.",
+  "lang_submission_original_account": "ഈ ഓർഡർ വീണ്ടും ശ്രമിക്കാൻ ആദ്യത്തെ അക്കൗണ്ടിലും ശാഖയിലും സൈൻ ഇൻ ചെയ്യുക.",
+  "lang_submission_save_failed": "ഓർഡർ സേവ് ചെയ്യാനായില്ല.",
+  "lang_submission_saved": "ഓർഡർ സേവ് ചെയ്തു",
+  "lang_submission_already_saved": "ഈ ഓർഡർ ഇതിനകം സേവ് ചെയ്തിട്ടുണ്ട്. വിൽപ്പന പട്ടിക പുതുക്കുക."
 }

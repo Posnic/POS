@@ -3703,5 +3703,17 @@
   "lang_table_round": "வட்டம்",
   "lang_table_rectangle": "செவ்வகம்",
   "lang_table_choose_capacity": "போதுமான இருக்கைகள் உள்ள மேசையைத் தேர்ந்தெடுக்கவும்.",
-  "lang_table_combine_with": "இணைக்கக்கூடிய மேசைகள்"
+  "lang_table_combine_with": "இணைக்கக்கூடிய மேசைகள்",
+  "lang_pending_submissions": "நிலுவையிலுள்ள சமர்ப்பிப்புகள்",
+  "lang_review_pending_submissions": "இந்த ஆர்டர்கள் ஏற்கனவே சேமிக்கப்பட்டிருக்கலாம். மீண்டும் முயலும்போது மற்றொரு ஆர்டரை உருவாக்காமல் அசல் கோரிக்கை சரிபார்க்கப்படும்.",
+  "lang_no_pending_submissions": "நிலுவையில் சமர்ப்பிப்புகள் எதுவும் இல்லை.",
+  "lang_submission_sign_in": "ஆர்டரைச் சேமிக்கும் முன் உள்நுழையவும்.",
+  "lang_submission_unreadable": "சேமிக்கப்பட்ட ஆர்டரைப் படிக்க முடியவில்லை.",
+  "lang_submission_id_required": "ஆர்டர் கோரிக்கை ஐடி தேவை.",
+  "lang_submission_resolve_first": "மாற்றங்களை அனுப்பும் முன் முந்தைய சமர்ப்பிப்பைத் தீர்க்கவும்.",
+  "lang_submission_confirmation_required": "ஆர்டர் உறுதிப்படுத்தல் தேவை.",
+  "lang_submission_original_account": "இந்த ஆர்டரை மீண்டும் முயற்சிக்க அசல் கணக்கிலும் கிளையிலும் உள்நுழையவும்.",
+  "lang_submission_save_failed": "ஆர்டரைச் சேமிக்க முடியவில்லை.",
+  "lang_submission_saved": "ஆர்டர் சேமிக்கப்பட்டது",
+  "lang_submission_already_saved": "இந்த ஆர்டர் ஏற்கனவே சேமிக்கப்பட்டுள்ளது. விற்பனைப் பட்டியலைப் புதுப்பிக்கவும்."
 }

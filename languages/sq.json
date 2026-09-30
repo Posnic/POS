@@ -96,5 +96,17 @@
   "lang_yes": "Po",
   "lang_ai_describe_hint": "Krijo një përshkrim nga të dhënat e artikullit",
   "lang_walk_in_customer_click_to_choose_or_add": "Klient i paregjistruar. Klikoni për të zgjedhur ose shtuar",
-  "lang_table_combine_with": "Mund të bashkohet me"
+  "lang_table_combine_with": "Mund të bashkohet me",
+  "lang_pending_submissions": "Dërgime në pritje",
+  "lang_review_pending_submissions": "Këto porosi mund të jenë ruajtur tashmë. Riprovimi kontrollon kërkesën fillestare pa krijuar një porosi tjetër.",
+  "lang_no_pending_submissions": "Nuk ka dërgime në pritje.",
+  "lang_submission_sign_in": "Hyni në llogari përpara se të ruani një porosi.",
+  "lang_submission_unreadable": "Porosia e ruajtur nuk mund të lexohej.",
+  "lang_submission_id_required": "Kërkohet ID-ja e kërkesës së porosisë.",
+  "lang_submission_resolve_first": "Zgjidhni dërgimin e mëparshëm përpara se të dërgoni ndryshime.",
+  "lang_submission_confirmation_required": "Kërkohet konfirmimi i porosisë.",
+  "lang_submission_original_account": "Hyni në llogarinë dhe degën fillestare për ta riprovuar këtë porosi.",
+  "lang_submission_save_failed": "Porosia nuk mund të ruhej.",
+  "lang_submission_saved": "Porosia u ruajt",
+  "lang_submission_already_saved": "Kjo porosi është ruajtur tashmë. Rifreskoni listën e shitjeve."
 }

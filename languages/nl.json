@@ -3942,5 +3942,17 @@
   "lang_table_round": "Rond",
   "lang_table_rectangle": "Rechthoekig",
   "lang_table_choose_capacity": "Kies een tafel met voldoende zitplaatsen.",
-  "lang_table_combine_with": "Te combineren met"
+  "lang_table_combine_with": "Te combineren met",
+  "lang_pending_submissions": "Openstaande inzendingen",
+  "lang_review_pending_submissions": "Deze bestellingen zijn mogelijk al opgeslagen. Opnieuw proberen controleert het oorspronkelijke verzoek zonder een nieuwe bestelling aan te maken.",
+  "lang_no_pending_submissions": "Geen openstaande inzendingen.",
+  "lang_submission_sign_in": "Meld u aan voordat u een bestelling opslaat.",
+  "lang_submission_unreadable": "De opgeslagen bestelling kon niet worden gelezen.",
+  "lang_submission_id_required": "Een ID voor het bestelverzoek is vereist.",
+  "lang_submission_resolve_first": "Handel de vorige inzending af voordat u wijzigingen verzendt.",
+  "lang_submission_confirmation_required": "Bevestiging van de bestelling is vereist.",
+  "lang_submission_original_account": "Meld u aan bij het oorspronkelijke account en filiaal om deze bestelling opnieuw te proberen.",
+  "lang_submission_save_failed": "De bestelling kon niet worden opgeslagen.",
+  "lang_submission_saved": "Bestelling opgeslagen",
+  "lang_submission_already_saved": "Deze bestelling is al opgeslagen. Vernieuw de verkooplijst."
 }
