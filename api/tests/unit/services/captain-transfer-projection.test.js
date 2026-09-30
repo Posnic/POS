@@ -70,3 +70,26 @@ test('projected per-item tax aliases and components agree with each allocated bi
   }
   expect(Money.toMinor(result.source.tax,policy)+Money.toMinor(result.destination.tax,policy)).toBe(501);
 });
+
+test('seat and language updates refresh guest bills without changing allocated money',()=>{
+  const original=sale(),branch={currencyCode:'INR'};
+  Object.assign(original.items[0],{seat:1,default_language:'en',translations:[{locale:'ta',name:'Original translation'}]});
+  const result=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const changed={...original,...structuredClone(result.source)};
+  Object.assign(changed.items[0],{seat:2,translations:[{locale:'ta',name:'Updated translation'}]});
+  const snapshot=snapshotFrom([changed],branch,'1');
+  expect(snapshot.lines[0].seat).toBe(2);
+  expect(snapshot.lines[0].translations).toEqual([{locale:'ta',name:'Updated translation'}]);
+  expect(snapshot.lines[0].components).toEqual(result.preview.source.lines[0].components);
+  expect(snapshot.totalMinor).toBe(result.preview.source.totalMinor);
+  const next=project(changed,branch,[{id:'c0i0',quantity:1}],at);
+  expect(next.preview.destination.lines[0].seat).toBe(2);
+  delete changed.items[0].seat;
+  delete changed.items[0].default_language;
+  delete changed.items[0].translations;
+  const cleared=snapshotFrom([changed],branch,'1');
+  expect(cleared.lines[0].seat).toBe(0);
+  expect(cleared.lines[0]).not.toHaveProperty('translations');
+  expect(cleared.lines[0]).not.toHaveProperty('default_language');
+  expect(cleared.totalMinor).toBe(snapshot.totalMinor);
+});

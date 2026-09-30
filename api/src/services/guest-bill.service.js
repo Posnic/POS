@@ -21,7 +21,18 @@ function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
   for (const sale of sales) {
     const allocation = require('../utils/transfer-allocation').read(sale, branch);
     if (allocation) {
-      allocation.lines.forEach((line,index)=>lines.push({...structuredClone(line),id:String(sale._id)+':'+index}));
+      const live = (sale.items || []).filter(it => it && !it.return && !it.cancelled &&
+        !['cancelled', 'canceled'].includes(String(it.status || '').toLowerCase()) &&
+        Number(it.quantity ?? it.item_quantity ?? it.qty) > 0 && String(it.name || it.item_name || '').trim());
+      allocation.lines.forEach((line,index)=>{
+        // The allocation fixes money, not guest assignment or display text.
+        // Those details can change without repricing the transferred dishes.
+        const current = structuredClone(line);
+        delete current.default_language;
+        delete current.translations;
+        lines.push({...current, ...require('../utils/item-localization').snapshot(live[index]),
+          seat:Number(live[index].seat)||0, id:String(sale._id)+':'+index});
+      });
       for (const key of Object.keys(allocation.components)) if(key.startsWith('tax:'))labels[key]=key.slice(4);
       totalMinor+=allocation.totalMinor;
       continue;
