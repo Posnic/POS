@@ -582,3 +582,81 @@ test('cancel and complete race reaches one consistent seating result', async () 
     );
   }
 });
+
+test('prepare retry after completion returns its receipt but changed payload or another order cannot replay it', async () => {
+  const { order, move } = await movingGroup();
+  const input = request({ request_id: move.id, table_ids: ids.slice(1), primary_id: ids[1] });
+  await seating.completeMove(db, scope, move.id, 'staff-1');
+  const replay = await seating.prepareMove(db, scope, String(order._id), input);
+  expect(replay.state).toBe('submitting');
+  expect(replay.id).toBe(move.id);
+  for (const patch of [
+    { guests: 5 },
+    { actor: 'staff-2' },
+    { primary_id: ids[2] },
+    { table_ids: ids },
+  ])
+    await expect(
+      seating.prepareMove(db, scope, String(order._id), { ...input, ...patch })
+    ).rejects.toMatchObject({ status: 409 });
+  const other = { ...order, _id: new ObjectId() };
+  await db.collection('sales').insertOne(other);
+  await expect(seating.prepareMove(db, scope, String(other._id), input)).rejects.toMatchObject({
+    status: 409,
+  });
+  expect((await db.collection('sales').findOne({ _id: order._id })).captain_audit).toHaveLength(1);
+});
+
+test('prepare retry recovers an applying move after order projection', async () => {
+  const { order, move } = await movingGroup();
+  const failing = {
+    collection(name) {
+      return name === 'tableorder'
+        ? {
+            updateMany: async () => {
+              throw new Error('interrupted');
+            },
+          }
+        : db.collection(name);
+    },
+  };
+  await expect(seating.completeMove(failing, scope, move.id, 'staff-1')).rejects.toThrow(
+    'interrupted'
+  );
+  const recovered = await seating.prepareMove(
+    db,
+    scope,
+    String(order._id),
+    request({ request_id: move.id, table_ids: ids.slice(1), primary_id: ids[1] })
+  );
+  expect(recovered.state).toBe('applying');
+  await seating.completeMove(db, scope, recovered.id, 'staff-1');
+  expect((await db.collection('sales').findOne({ _id: order._id })).captain_audit).toHaveLength(1);
+});
+
+test('interrupted floor release retains a lock and retries cleaning once', async () => {
+  const order = await movableOrder();
+  await db
+    .collection('sales')
+    .updateOne({ _id: order._id }, { $set: { floor_closed_at: new Date() } });
+  const failing = {
+    collection(name) {
+      return name === 'tableorder'
+        ? {
+            updateMany: async () => {
+              throw new Error('interrupted');
+            },
+          }
+        : db.collection(name);
+    },
+  };
+  await expect(seating.release(failing, scope, order.seating_request_id)).rejects.toThrow(
+    'interrupted'
+  );
+  expect((await seating.find(db, scope, order.seating_request_id)).state).toBe('releasing');
+  await seating.release(db, scope, order.seating_request_id);
+  await seating.release(db, scope, order.seating_request_id);
+  expect(
+    (await db.collection('tableorder').findOne({ _id: new ObjectId(ids[0]) })).captain_table_version
+  ).toBe(1);
+});

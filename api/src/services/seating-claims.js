@@ -244,6 +244,16 @@ async function reserveClaim(db, scope, input, moving = null) {
   return claim;
 }
 async function prepareMove(db, scope, orderId, input) {
+  const id = requestId(input.request_id);
+  if (!Array.isArray(input.table_ids) || !input.table_ids.length || input.table_ids.length > 20)
+    fail('Choose up to 20 tables.');
+  const expected = {
+    actor: String(input.actor || ''),
+    primary: identity(input.primary_id),
+    tables: [...new Set(input.table_ids.map(identity))].sort(),
+    guests: input.guests,
+    ...(input.payload_hash ? { payload_hash: input.payload_hash } : {}),
+  };
   const order = await db.collection('sales').findOne({
     _id: new ObjectId(identity(orderId)),
     branch_id: scope.branchId,
@@ -251,6 +261,20 @@ async function prepareMove(db, scope, orderId, input) {
     ...require('../helpers/floor-eligibility').floorEligibility(),
   });
   if (!order?.seating_request_id) fail('Refresh this order before changing its seating.', 409);
+  const previous = await find(db, scope, id);
+  if (previous) {
+    if (
+      !previous.move_from ||
+      terminal(previous) ||
+      previous.order_id !== String(order._id) ||
+      !sameRequest(previous, { ...expected, move_from: previous.move_from }) ||
+      ![previous.id, previous.move_from].includes(order.seating_request_id) ||
+      (previous.state === 'submitting' && order.seating_request_id !== previous.id)
+    )
+      fail('This seating request has already been used.', 409);
+    return previous;
+  }
+
   const source = await find(db, scope, order.seating_request_id);
   if (!source || source.state !== 'submitting' || source.order_id !== String(order._id))
     fail('The seating group changed. Refresh this order.', 409);
@@ -324,28 +348,26 @@ async function completeMove(db, scope, id, actor) {
     person_count: move.guests,
     updated_date: new Date(),
   };
-  const changed = await db
-    .collection('sales')
-    .updateOne(
-      {
-        ...selector,
-        seating_request_id: move.move_from,
-        captain_payment_plan: { $exists: false },
-        ...require('../helpers/floor-eligibility').floorEligibility(),
-      },
-      {
-        $set: fields,
-        $push: {
-          captain_audit: {
-            action: 'move',
-            request_id: id,
-            at: move.at,
-            actor: { id: String(actor) },
-            table: fields.table_number,
-          },
+  const changed = await db.collection('sales').updateOne(
+    {
+      ...selector,
+      seating_request_id: move.move_from,
+      captain_payment_plan: { $exists: false },
+      ...require('../helpers/floor-eligibility').floorEligibility(),
+    },
+    {
+      $set: fields,
+      $push: {
+        captain_audit: {
+          action: 'move',
+          request_id: id,
+          at: move.at,
+          actor: { id: String(actor) },
+          table: fields.table_number,
         },
-      }
-    );
+      },
+    }
+  );
   if (!changed.matchedCount) {
     const latest = await db.collection('sales').findOne(selector);
     if (latest?.seating_request_id !== id) fail('Reconcile the table move before continuing.', 409);
@@ -355,23 +377,21 @@ async function completeMove(db, scope, id, actor) {
     fail('The seating group changed. Refresh this order.', 409);
   const released = source.tables.filter((table) => !move.tables.includes(table));
   if (released.length)
-    await db
-      .collection('tableorder')
-      .updateMany(
-        {
-          branch_id: scope.branchId,
-          license: scope.license,
-          _id: { $in: released.map((value) => new ObjectId(value)) },
-          $or: [
-            { last_seating_release_generation: { $exists: false } },
-            { last_seating_release_generation: { $lt: move.generation } },
-          ],
-        },
-        {
-          $set: { service_state: 'cleaning', last_seating_release_generation: move.generation },
-          $inc: { captain_table_version: 1 },
-        }
-      );
+    await db.collection('tableorder').updateMany(
+      {
+        branch_id: scope.branchId,
+        license: scope.license,
+        _id: { $in: released.map((value) => new ObjectId(value)) },
+        $or: [
+          { last_seating_release_generation: { $exists: false } },
+          { last_seating_release_generation: { $lt: move.generation } },
+        ],
+      },
+      {
+        $set: { service_state: 'cleaning', last_seating_release_generation: move.generation },
+        $inc: { captain_table_version: 1 },
+      }
+    );
   const snapshot = await store(db).findOne({ _id: scopeKey(scope) });
   const current = snapshot.claims.find((row) => row.id === id);
   if (current?.state === 'submitting') return current;
@@ -451,12 +471,12 @@ async function release(db, scope, id) {
   requestId(id);
   const claim = await find(db, scope, id);
   if (!claim) fail('Seating request not found.', 404);
-  if (claim.moving_to) fail('Reconcile the table move before releasing its tables.', 409);
   if (claim.state === 'released') {
     await archive(db, scope, id);
     return;
   }
-  if (claim.state !== 'submitting' || !claim.order_id)
+  if (claim.moving_to) fail('Reconcile the table move before releasing its tables.', 409);
+  if (!['submitting', 'releasing'].includes(claim.state) || !claim.order_id)
     fail('Reconcile the submitted order before releasing its tables.', 409);
   const sale = await db.collection('sales').findOne({
     _id: new ObjectId(claim.order_id),
@@ -482,6 +502,22 @@ async function release(db, scope, id) {
         other.tables.some((table) => claim.tables.includes(table))
     );
   const stillOccupied = cancelled && (remainingOrders > 0 || otherClaims);
+  if (claim.state !== 'releasing') {
+    const locked = await store(db).updateOne(
+      {
+        _id: scopeKey(scope),
+        claims: { $elemMatch: { id, state: 'submitting', moving_to: { $exists: false } } },
+      },
+      { $set: { 'claims.$.state': 'releasing' }, $inc: { revision: 1 } }
+    );
+    if (!locked.matchedCount) {
+      const latest = await find(db, scope, id);
+      if (latest?.state === 'released') return;
+      if (latest?.state !== 'releasing')
+        fail('Reconcile the table move before releasing its tables.', 409);
+    }
+  }
+
   // The claim keeps all member tables unavailable while this projection runs.
   // Retrying after interruption repeats only the cleaning projection, never the
   // payment, item, kitchen or stock operations.
@@ -511,7 +547,7 @@ async function release(db, scope, id) {
       claims: {
         $elemMatch: {
           id,
-          state: 'submitting',
+          state: 'releasing',
           order_id: claim.order_id,
           moving_to: { $exists: false },
         },
@@ -562,6 +598,7 @@ async function forEdit(db, scope, order, next) {
   const destination = String(next.table || order.table_number || '');
   const claims = await read(db, scope);
   const own = claims.find((claim) => !terminal(claim) && claim.order_id === String(order._id));
+  if (own?.state === 'releasing') fail('Close is in progress. Refresh this order.', 409);
   if (own?.moving_to) fail('Reconcile the table move before editing this order.', 409);
   if (order.seating_request_id && !own) fail('The seating group changed. Refresh this order.', 409);
   if (
