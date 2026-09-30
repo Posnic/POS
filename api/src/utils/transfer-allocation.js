@@ -44,6 +44,9 @@ function read(sale,branch) {
       keys.add(component.key);amount+=component.minor;
       totals[component.key]=(totals[component.key]||0)+component.minor;
     }
+    if(line.billDiscountMinor!==undefined && (!Number.isSafeInteger(line.billDiscountMinor) ||
+        line.billDiscountMinor<0 || line.billDiscountMinor>1e12 ||
+        line.billDiscountMinor>-(line.components.find(row=>row.key==='discount')?.minor||0)))fail();
     if(amount!==line.amountMinor)fail();total+=amount;
   }
   if(total!==value.totalMinor||total!==Money.toMinor(sale.sales_total,policy)||

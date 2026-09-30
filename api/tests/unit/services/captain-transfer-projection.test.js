@@ -310,3 +310,36 @@ test('combined additions, reductions and increases keep each preparation allocat
   expect(result.items.map(item=>item.item_id)).toEqual(['tea','soup','corn']);
   expect(snapshotFrom([{...withSoup,...result}],branch,'1').totalMinor).toBe(Object.values(amounts).reduce((sum,n)=>sum+n,0));
 });
+
+
+test('tracked bill discount follows transferred portions and clearing cannot restore it twice',()=>{
+  const original=sale(),branch={currencyCode:'INR'};
+  const split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const base={...original,...split.source};
+  const discounts=require('../../../src/services/captain-transfer-discount');
+  const {applyMoney}=require('../../../src/services/captain-transfer-projection');
+  const discounted=applyMoney(base,structuredClone(split.source),branch,discounts.plan(base.captain_transfer_allocation,11));
+  const next=project({...base,...discounted},branch,[{id:'c0i0',quantity:1}],at);
+  const left=next.source.captain_transfer_allocation,right=next.destination.captain_transfer_allocation;
+  expect(left.lines[0].billDiscountMinor).toBe(6);
+  expect(right.lines[0].billDiscountMinor).toBe(5);
+  expect(discounts.plan(left,0).totalMinor+discounts.plan(right,0).totalMinor).toBe(base.captain_transfer_allocation.totalMinor);
+});
+
+test('reducing discounted portions reduces only their tracked bill discount',()=>{
+  const original=sale(),branch={currencyCode:'INR'},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const base={...original,...split.source};
+  const discounts=require('../../../src/services/captain-transfer-discount');
+  const {applyMoney}=require('../../../src/services/captain-transfer-projection');
+  const discounted=applyMoney(base,structuredClone(split.source),branch,discounts.plan(base.captain_transfer_allocation,11));
+  const current={...base,...discounted};
+  const reduced=transferEdit.reduce(current,{items:current.items.map(line=>({...line,item_quantity:1}))},branch);
+  expect(reduced.captain_transfer_allocation.lines[0].billDiscountMinor).toBe(6);
+  expect(discounts.plan(reduced.captain_transfer_allocation,0).totalMinor).toBe(reduced.captain_transfer_allocation.totalMinor+6);
+});
+
+test.each([-1,0.5,999999])('allocation sealing rejects an invalid tracked discount %s',minor=>{
+  const original=sale(),branch={currencyCode:'INR'},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const side=structuredClone(split.preview.source);side.lines[0].billDiscountMinor=minor;
+  expect(()=>require('../../../src/utils/transfer-allocation').seal({...original,...split.source},branch,side)).toThrow('bill changed');
+});

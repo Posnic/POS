@@ -71,7 +71,9 @@ function reduce(sale, proposed, branch) {
     const components = allocated.components.map(row => ({ key: row.key,
       minor: divide(row.minor, count, previous - count)[0] }));
     const amountMinor = components.reduce((sum, row) => sum + row.minor, 0);
-    side.lines.push({ ...clone(allocated), quantity: count / 1000, components, amountMinor });
+    side.lines.push({ ...clone(allocated), quantity: count / 1000, components, amountMinor,
+      ...(allocated.billDiscountMinor !== undefined ?
+        { billDiscountMinor: divide(allocated.billDiscountMinor, count, previous - count)[0] } : {}) });
     side.totalMinor += amountMinor;
     for (const row of components) side.components[row.key] = (side.components[row.key] || 0) + row.minor;
   }

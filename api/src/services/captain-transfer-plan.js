@@ -120,6 +120,8 @@ function plan(sale, branch, requested) {
       if (!quantity) return;
       const target = side ? destination : source, view = views[side];
       view.quantity = quantity / 1000;
+      if (line.billDiscountMinor !== undefined)
+        view.billDiscountMinor = divide(line.billDiscountMinor, total - moved, moved)[side];
       target.lines.push(view);
       target.totalMinor += view.amountMinor;
       for (const component of view.components)
