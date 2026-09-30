@@ -294,6 +294,14 @@ async function close(req) {
         _id: { $in: ids.map((id) => new ObjectId(id)) },
         table_number: table.tableorder_value,
         payment_status: 'Paid',
+        $expr: {
+          $and: ['payment_pending', 'balance'].map((field) => ({
+            $lte: [
+              { $convert: { input: { $ifNull: ['$' + field, 0] }, to: 'double', onError: 1 } },
+              0,
+            ],
+          })),
+        },
         floor_closed_at: { $exists: false },
       },
       {
@@ -312,17 +320,8 @@ async function close(req) {
       floor_closed_at: { $exists: false },
     });
     if (remaining) {
-      await tables.updateOne(
-        { ...filter, 'floor_close.id': body.request_id },
-        {
-          $set: {
-            'floor_close.completed': true,
-            'floor_close.failed': true,
-            service_state: 'available',
-            updated_date: new Date(),
-          },
-        }
-      );
+      // Keep the durable intent and reservation. A changed payment may leave
+      // some orders open; retry must finish those rather than free the table.
       fail('Table changed. Refresh and try again.', 409);
     }
     await tables.updateOne(

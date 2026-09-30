@@ -385,18 +385,16 @@ test('close intent survives interruption before table write and is exposed for s
   });
   const id = new ObjectId();
   await seating.bind(db, scope, claim.id, String(user), String(id));
-  await db
-    .collection('sales')
-    .insertOne({
-      _id: id,
-      branch_id: branch,
-      license,
-      table_number: 'T1',
-      seating_request_id: claim.id,
-      sale_process: 'KOT',
-      payment_status: 'Paid',
-      floor_lifecycle: true,
-    });
+  await db.collection('sales').insertOne({
+    _id: id,
+    branch_id: branch,
+    license,
+    table_number: 'T1',
+    seating_request_id: claim.id,
+    sale_process: 'KOT',
+    payment_status: 'Paid',
+    floor_lifecycle: true,
+  });
   const body = {
     id: table.id,
     version: 0,
@@ -424,4 +422,46 @@ test('close intent survives interruption before table write and is exposed for s
   const closed = (await service.list(req())).tables[0];
   expect(closed.status).toBe('cleaning');
   expect(closed.closing).toBeNull();
+});
+
+test('payment change during close leaves a recoverable partial close and never frees the table', async () => {
+  const { body, orderId } = await paidTable();
+  const sales = db.collection('sales');
+  const second = new ObjectId();
+  const original = await sales.findOne({ _id: orderId });
+  await sales.insertOne({ ...original, _id: second });
+  body.orderIds.push(String(second));
+  const input = req(body);
+  let changed = false;
+  input.db = {
+    collection(name) {
+      const collection = db.collection(name);
+      if (name !== 'sales') return collection;
+      return new Proxy(collection, {
+        get(target, key) {
+          if (key === 'updateMany')
+            return async (...args) => {
+              if (!changed) {
+                changed = true;
+                await sales.updateOne({ _id: second }, { $set: { balance: 50 } });
+              }
+              return sales.updateMany(...args);
+            };
+          const value = target[key];
+          return typeof value === 'function' ? value.bind(target) : value;
+        },
+      });
+    },
+  };
+  await expect(service.close(input)).rejects.toMatchObject({ status: 409 });
+  const first = await sales.findOne({ _id: orderId });
+  expect(first.floor_closed_at).toBeDefined();
+  expect((await sales.findOne({ _id: second })).floor_closed_at).toBeUndefined();
+  const pending = (await service.list(req())).tables[0];
+  expect(pending.status).toBe('occupied');
+  expect(pending.closing.request_id).toBe(body.request_id);
+  await sales.updateOne({ _id: second }, { $set: { balance: 0 } });
+  await service.close(req({ ...body, version: pending.version }));
+  expect((await sales.findOne({ _id: orderId })).floor_closed_at).toEqual(first.floor_closed_at);
+  expect((await service.list(req())).tables[0].closing).toBeNull();
 });
