@@ -584,22 +584,18 @@ test(
       const cloudIntent = await db
         .collection('mobile_sales')
         .findOne({ 'sale.receipt': receiptNumber });
-      await db
-        .collection('mobile_cloud_capabilities')
-        .insertOne({
-          _id: 'delivery:' + String(branch.license),
-          protocol: 1,
-          authority: 'test-gateway',
-        });
-      await db
-        .collection('mobile_cloud_receipts')
-        .insertOne({
-          _id: 'mobile:' + cloudIntent._id,
-          saleId: String(cloudIntent.serverId),
-          branchId: String(branch._id),
-          authority: 'test-gateway',
-          receivedAt: new Date().toISOString(),
-        });
+      await db.collection('mobile_cloud_capabilities').insertOne({
+        _id: 'delivery:' + String(branch.license),
+        protocol: 1,
+        authority: 'test-gateway',
+      });
+      await db.collection('mobile_cloud_receipts').insertOne({
+        _id: 'mobile:' + cloudIntent._id,
+        saleId: String(cloudIntent.serverId),
+        branchId: String(branch._id),
+        authority: 'test-gateway',
+        receivedAt: new Date().toISOString(),
+      });
       await page.getByRole('button', { name: 'Connection & sync', exact: true }).click();
       const delivery = page.waitForResponse((response) =>
         response.url().endsWith('/mobile/v1/delivery-status')
@@ -1079,5 +1075,99 @@ test('cloud delivery requires explicit matching evidence and stays scoped to its
   } finally {
     await db.collection('mobile_cloud_receipts').deleteOne({ _id: proof._id });
     await db.collection('mobile_cloud_capabilities').deleteOne({ _id: cap._id });
+  }
+});
+
+test('weighed items opt in to fixed quantities and replay has one stock effect', async () => {
+  assert.equal(mobile.mapItem({ ...item, open_price: true }).requiresConfiguration, true);
+  const weighted = {
+    ...item,
+    _id: new ObjectId(),
+    name: 'Weighed rice',
+    selling_price: 12.35,
+    tax: 5,
+    tax_type: 'exclusive',
+    item_weight_machine_based: true,
+    unit: 'kg',
+    available_quantity: 10,
+  };
+  await db.collection('items').insertOne(weighted);
+  try {
+    const legacy = await mobile.bootstrap(req);
+    assert.equal(
+      legacy.items.find((row) => row.id === String(weighted._id)).requiresConfiguration,
+      true
+    );
+    const modern = await mobile.bootstrap({ ...req, query: { quantity: 'fixed3' } });
+    const product = modern.items.find((row) => row.id === String(weighted._id));
+    assert.equal(product.requiresConfiguration, false);
+    assert.equal(product.quantityScale, 1000);
+    const transaction = sale({
+      snapshotVersion: modern.shop.snapshotVersion,
+      total: 162,
+      tax: 8,
+      cart: {
+        id: crypto.randomUUID(),
+        lines: [
+          {
+            id: crypto.randomUUID(),
+            itemId: product.id,
+            name: product.name,
+            price: 1235,
+            taxBps: 500,
+            taxInclusive: false,
+            quantity: 0.125,
+            quantityScale: 1000,
+            unit: 'kg',
+          },
+        ],
+      },
+      payment: { method: 'cash', received: 200, change: 38 },
+    });
+    const send = (paid) => mobile.ingest({ ...req, body: { idempotencyKey: paid.id, sale: paid } });
+    const wrong = {
+      ...transaction,
+      id: crypto.randomUUID(),
+      snapshotVersion: legacy.shop.snapshotVersion,
+    };
+    await assert.rejects(send(wrong), /catalogue/);
+    const precision = {
+      ...transaction,
+      id: crypto.randomUUID(),
+      cart: { ...transaction.cart, lines: [{ ...transaction.cart.lines[0], quantity: 0.1251 }] },
+    };
+    await assert.rejects(send(precision), /Quantity/);
+    const ordinary = modern.items.find((row) => row.id === String(item._id));
+    const forged = {
+      ...transaction,
+      id: crypto.randomUUID(),
+      cart: {
+        ...transaction.cart,
+        lines: [
+          {
+            ...transaction.cart.lines[0],
+            itemId: ordinary.id,
+            price: ordinary.price,
+            name: ordinary.name,
+            taxBps: ordinary.taxBps,
+            taxInclusive: ordinary.taxInclusive,
+          },
+        ],
+      },
+    };
+    await assert.rejects(send(forged), /Quantity/);
+    const ack = await send(transaction);
+    assert.deepEqual(await send(transaction), ack);
+    assert.equal(
+      (await db.collection('items').findOne({ _id: weighted._id })).available_quantity,
+      9.875
+    );
+    const stored = await db.collection('sales').findOne({ _id: new ObjectId(ack.serverId) });
+    const line = stored.items[0];
+    assert.equal(line.item_quantity, 0.125);
+    assert.equal(line.item_unit, 'kg');
+    assert.equal(line.total_amount, 1.62);
+  } finally {
+    await db.collection('items').deleteOne({ _id: weighted._id });
   }
 });
