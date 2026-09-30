@@ -113,6 +113,15 @@
     overflow: hidden;
   }
 
+  .ticket.details-card { display:grid;grid-template-columns:clamp(70px,2.9em,112px) minmax(0,1fr);gap:12px;align-items:stretch;grid-template-rows:minmax(0,1fr); }
+  .ticket-meta { min-width:0;display:flex;flex-direction:column;gap:8px;border-right:1px solid var(--rule);padding-right:10px;align-self:stretch; }
+  .ticket-meta .top { flex-direction:column;align-items:flex-start;gap:5px; }
+  .ticket-meta .note { margin:0;padding:0;font-size:.52em;overflow-wrap:anywhere; }
+  .ticket-meta .item-progress,.ticket-meta .cancellation-label { font-size:.52em;overflow-wrap:anywhere; }
+  .ticket-body { min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden; }
+  .details-card .qty { min-width:1.5em; }
+  .details-card .note { overflow-wrap:anywhere; }
+
   /* Warm and late also thicken the rule and fill the bar, so the state reads
      without colour vision. */
   .ticket.calm { border-left-color:#4ade80; }
@@ -327,6 +336,15 @@
     return n;
   }
 
+  function detailsCard(node) {
+    var meta = el('div', 'ticket-meta'), body = el('div', 'ticket-body');
+    Array.from(node.children).forEach(function (child) {
+      (child.classList.contains('items') || child.classList.contains('count') ? body : meta).appendChild(child);
+    });
+    node.classList.add('details-card');node.appendChild(meta);node.appendChild(body);
+    return node;
+  }
+
   function card(ticket, cfg, compact) {
     if (ticket.cancelled) {
       var cancelledCard = el('div', 'ticket cancelled' + (cfg.cancelledPulse !== false ? ' cancel-pulse' : ''));
@@ -340,7 +358,7 @@
         cancelledList.appendChild(cancelledRow);
       });
       cancelledCard.appendChild(cancelledList);
-      return cancelledCard;
+      return detailsCard(cancelledCard);
     }
     var mins = minutesSince(ticket.placedAt);
     var state = stateFor(mins, cfg);
@@ -402,7 +420,7 @@
     if (compact) {
       var n = (ticket.items || []).reduce(function (s, i) { return s + (Number(i.qty) || 1); }, 0);
       node.appendChild(el('div', 'count', n + (n === 1 ? ' item' : ' items')));
-      return node;
+      return detailsCard(node);
     }
 
     /* The bar repeats the age as a shape, so the state survives a cook who
@@ -461,7 +479,7 @@
       node.appendChild(list);
     }
 
-    return node;
+    return detailsCard(node);
   }
 
   function updateClock() {
@@ -547,18 +565,20 @@
     // Prefer fewer, wider boxes to a clipped list. Explicit row limits remain an advanced option.
     if (!cfg.tableOnly && !visibleDishes && live.length && board.clientWidth) {
       if (!fixedColumns) ceiling = Math.max(1, Math.min(live.length, Math.floor(width / (font * 14))));
-      var measuredHeight = 0;
-      function measureOrders() {
+      var measuredHeight = 0, measured = new Map();
+      var measureOrders = function () {
         var cardWidth = (width - 18 * (ceiling - 1)) / ceiling;
-        measuredHeight = 0;
+        measuredHeight = 0; measured.clear();
         live.forEach(function (ticket) {
           var probe = card(ticket, cfg, compact);
           probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:' + cardWidth + 'px;';
           board.appendChild(probe);
-          measuredHeight = Math.max(measuredHeight, probe.getBoundingClientRect().height);
+          var naturalHeight = Math.ceil(probe.getBoundingClientRect().height);
+          measured.set(ticket.id, naturalHeight);
+          measuredHeight = Math.max(measuredHeight, naturalHeight);
           probe.remove();
         });
-      }
+      };
       measureOrders();
       while (measuredHeight > height - 18 && ceiling > 1 && !fixedColumns) { ceiling--; measureOrders(); }
       while (measuredHeight > height - 18 && font > 24 && !(customFont > 0)) {
@@ -571,21 +591,54 @@
       if (measuredHeight > 0) rows = Math.max(1, Math.floor(height / (measuredHeight + 18)));
       perPage = Math.max(1, ceiling * rows);
     }
-    var pages = Math.max(1, Math.ceil(live.length / perPage));
+    // Pack complete rows at their measured heights. A long order must not give
+    // every other row an equally tall box or force a six-item list to scroll.
+    var packedPages = null;
+    if (!cfg.tableOnly && !visibleDishes && measured && measuredHeight > 0) {
+      function packRows() {
+        var result = [], packed = [], used = 0;
+        for (var start = 0; start < live.length; start += ceiling) {
+          var rowTickets = live.slice(start, start + ceiling);
+          var rowHeight = Math.max.apply(null, rowTickets.map(function(t){return measured.get(t.id);}));
+          if (packed.length && used + rowHeight + 18 > height - 18) {
+            result.push(packed); packed = []; used = 0;
+          }
+          packed = packed.concat(rowTickets);used += rowHeight + (used ? 18 : 0);
+        }
+        if (packed.length) result.push(packed);
+        return result;
+      }
+      packedPages = packRows();
+      if (!fixedColumns && packedPages.length > 1) {
+        var bestColumns = ceiling, bestPages = packedPages;
+        // Wider boxes can fit more orders because dish names wrap less.
+        for (var candidate = ceiling - 1; candidate >= 1; candidate--) {
+          ceiling = candidate;measureOrders();var trialPages = packRows();
+          if (trialPages.length < bestPages.length ||
+              (trialPages.length === bestPages.length && trialPages[0].length > bestPages[0].length)) {
+            bestColumns = candidate;bestPages = trialPages;
+          }
+          if (bestPages.length === 1) break;
+        }
+        ceiling = bestColumns;packedPages = bestPages;
+      }
+    }
+    var pages = packedPages ? packedPages.length : Math.max(1, Math.ceil(live.length / perPage));
     if (page >= pages) page = 0;
 
     // Rotate complete pages of whole orders, oldest page first.
-    var shown = pages > 1 ? live.slice(page * perPage, page * perPage + perPage) : live;
+    var shown = packedPages ? packedPages[page] : (pages > 1 ? live.slice(page * perPage, page * perPage + perPage) : live);
     board.style.setProperty('--columns', String(fixedColumns ? ceiling : Math.max(1, Math.min(ceiling, shown.length))));
     shown.forEach(function (t) {
       var node = card(t, cfg, compact);
       node.dataset.tableKey = t.id;
-      node.style.maxHeight = Math.max(font * 5, (height - 18 * rows) / rows) + 'px';
+      node.style.maxHeight = (packedPages ? height - 18 : Math.max(font * 5, (height - 18 * rows) / rows)) + 'px';
+      if (packedPages) node.style.alignSelf = 'start';
       board.appendChild(node);
       var list = node.querySelector('.items'), saved = itemScroll.get(t.id);
       if (list && visibleDishes) list.style.maxHeight = (font * 2 * visibleDishes) + 'px';
       if (list && saved) list.scrollTop = saved.top;
-      if (list && list.scrollHeight > list.clientHeight + 2) node.appendChild(el('div', 'more', 'Long order · remaining items scroll automatically'));
+      if (list && list.scrollHeight > list.clientHeight + 2) (node.querySelector('.ticket-body') || node).appendChild(el('div', 'more', 'Long order · remaining items scroll automatically'));
       else if (list) list.style.overflowY = 'hidden';
     });
 
