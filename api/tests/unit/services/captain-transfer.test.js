@@ -802,3 +802,24 @@ test('edit preview rejects a stale handset view and disabled Captain',async()=>{
   await db.collection('branches').updateOne({_id:branch},{$set:{module_captain_enable:false}});
   await expect(editPreview.preview(input)).rejects.toMatchObject({status:403});
 });
+
+
+test('transfer status recovers unknown, pending and completed results without exposing the journal',async()=>{
+ const input=await confirmation();
+ expect(await service.status(input)).toEqual({requestId:input.body.requestId,state:'unknown'});
+ const {journal}=await service.reserve(input);
+ const snapshot=await db.collection('captain_payment_plans').findOne({_id:journal._id});
+ expect(await service.status(input)).toEqual({requestId:input.body.requestId,sourceId:input.body.orderId,state:'pending'});
+ expect(await db.collection('captain_payment_plans').findOne({_id:journal._id})).toEqual(snapshot);
+ const completed=await service.complete(input);
+ expect(await service.status(input)).toEqual(completed);
+});
+test('transfer status is actor and order bound and reports cancellation',async()=>{
+ const input=await confirmation();await service.reserve(input);
+ await expect(service.status({...input,user:{...input.user,_id:new ObjectId()}})).rejects.toMatchObject({status:409});
+ await expect(service.status({...input,body:{...input.body,orderId:String(new ObjectId())}})).rejects.toMatchObject({status:409});
+ await service.cancel(input);
+ expect(await service.status(input)).toMatchObject({state:'cancelled'});
+ input.user.access.sales.merge=false;
+ await expect(service.status(input)).rejects.toMatchObject({status:403});
+});

@@ -1278,3 +1278,12 @@ stock changes or kitchen notifications. A concurrent order/payment/lease change
 returns a conflict; malformed drafts are rejected before pricing. This is a
 read-only preview, not a save or price guarantee: saving still revalidates the
 order and permissions. Captain integration remains under development.
+
+
+`POST /captain/v1/tables/transfer/status` accepts `orderId` and the original
+`requestId`. It requires sales write/merge permission and the original actor.
+It returns `unknown`, `pending`, `cancelled`, or the stored completed result;
+it never replays writes or returns the internal journal. Unknown means no
+record was found in this issuer's scope, not permission to create another
+request ID. Transfer mutation routes and the Captain transfer UI remain under
+development.

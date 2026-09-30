@@ -102,6 +102,24 @@ async function prepareDestination(req) {
   if (current.stage !== 'reserved') fail('Reconcile this transfer before continuing.', 409);
   return { ...prepared, claim };
 }
+// Read-only recovery: an unknown request is not permission to start a second
+// transfer. The caller must retry the same durable request ID.
+async function status(req) {
+  const c = await scope(req), body = req.body;
+  if (typeof body.requestId !== 'string' || !/^[a-zA-Z0-9_-]{16,80}$/.test(body.requestId))
+    fail('A transfer request ID is required.');
+  const journal = await restructure.read(req.db, c, body.requestId, String(req.user._id), { optional: true });
+  if (!journal) return { requestId: body.requestId, state: 'unknown' };
+  if (journal.intent.kind !== 'transfer' || journal.intent.orderId !== body.orderId.toLowerCase())
+    fail('This transfer request has already been used.', 409);
+  if (journal.stage === 'completed') {
+    if (!journal.result) fail('Reconcile this transfer before continuing.', 409);
+    return journal.result;
+  }
+  return { requestId: body.requestId, sourceId: journal.intent.orderId,
+    state: journal.stage === 'cancelled' ? 'cancelled' : 'pending' };
+}
+
 async function cancel(req) {
   const c = await scope(req), body = req.body, actor = String(req.user._id);
   if (typeof body.requestId !== 'string' || !/^[a-zA-Z0-9_-]{16,80}$/.test(body.requestId))
@@ -249,4 +267,4 @@ async function complete(req) {
   await restructure.complete(req.db, c, journal.requestId, journal.actor);
   return result;
 }
-module.exports = { preview, reserve, prepareDestination, cancel, beginCommit, applySales, complete };
+module.exports = { preview, status, reserve, prepareDestination, cancel, beginCommit, applySales, complete };

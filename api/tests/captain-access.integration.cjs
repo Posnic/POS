@@ -597,3 +597,18 @@ test('paired Captain reaches bill, kitchen and guest recovery routes with scoped
     assert.equal((await response.json()).error.code, 'CAPTAIN_SCOPE');
   }
 });
+
+
+test('paired transfer status requires merge permission and returns scoped unknown recovery',async()=>{
+ const {grant}=await paired();
+ const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+ const body=JSON.stringify({orderId:String(new ObjectId()),requestId:'unknown-transfer-123456'});
+ const send=()=>fetch(base+'/captain/v1/tables/transfer/status',{method:'POST',headers,body});
+ assert.equal((await send()).status,403);
+ await db.collection('users').updateOne({_id:staff._id},{$set:{'access.sales.merge':true}});
+ try {
+  const response=await send();assert.equal(response.status,200,await response.clone().text());
+  assert.equal(response.headers.get('cache-control'),'no-store');
+  assert.deepEqual(await response.json(),{requestId:'unknown-transfer-123456',state:'unknown'});
+ } finally {await db.collection('users').updateOne({_id:staff._id},{$unset:{'access.sales.merge':''}});}
+});
