@@ -38,6 +38,13 @@ test('stale source data cancels the attempt and clears any earlier reservation',
   expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
   expect((await locks.read(db,scope,input().requestId,'staff-1')).stage).toBe('cancelled');
 });
+
+test('legacy cover eligibility still requires the exact payment snapshot read by the caller',async()=>{
+  await db.collection('sales').updateOne({_id:sales[0]._id},{$set:{payment_status:''}});
+  await expect(locks.reserve(db,scope,{...input(),intent:{kind:'covers'}})).rejects.toMatchObject({status:409});
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  expect((await db.collection('sales').findOne({_id:sales[0]._id})).payment_status).toBe('');
+});
 test('two competing requests have one winner without clearing the winner reservations',async()=>{
   const results=await Promise.allSettled([locks.reserve(db,scope,input()),locks.reserve(db,scope,input('transfer-request-0002'))]);
   expect(results.filter(result=>result.status==='fulfilled')).toHaveLength(1);

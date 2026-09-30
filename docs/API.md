@@ -1191,6 +1191,9 @@ transfer endpoint.
 permission are required. The actor comes from the authenticated staff session;
 an actor supplied in the body is ignored. The order must have an active seating
 claim and an unpaid KOT check. Takeaway orders must first be moved to a table.
+Legacy KOT checks with a missing, null or empty payment status are treated as
+unpaid for this cover-only operation; their payment field is preserved exactly.
+Paid, cancelled and partially paid checks are not reopened by this compatibility.
 
 The server reserves the order against payment/editing and serializes capacity
 changes with other seating reservations. It updates only covers and the audit;

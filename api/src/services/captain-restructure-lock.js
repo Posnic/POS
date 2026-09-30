@@ -61,12 +61,15 @@ async function reserve(db, scope, { requestId, actor, intent, sales }) {
       for (const key of ['items', 'changes', 'kitchen_service', 'kitchen_work', 'sales_total', 'updated_date', 'payment_status', 'sale_process',
         'person_count', 'table_number', 'table_id', 'dine_type', 'seating_request_id', 'seating_primary_id', 'seating_table_ids', 'seating_capacity_revision'])
         expected[key] = sale[key] === undefined ? { $exists: false } : sale[key];
+      const eligibility = journal.intent.kind === 'move'
+        ? require('../helpers/floor-eligibility').floorEligibility()
+        : { sale_process: 'KOT', payment_status: journal.intent.kind === 'covers'
+          ? { $in: ['Unpaid', null, ''] } : 'Unpaid' };
       const result = await db.collection('sales').updateOne({ ...scopeFilter(scope),
         _id: new ObjectId(id), ...expected,
-        ...(journal.intent.kind === 'move' ? {} : { sale_process: 'KOT', payment_status: 'Unpaid' }),
         floor_closed_at: { $exists: false }, order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
         $and: [
-          ...(journal.intent.kind === 'move' ? [require('../helpers/floor-eligibility').floorEligibility()] : []),
+          eligibility,
           { $or: [{ captain_payment_plan: { $exists: false } }, { captain_payment_plan: journal._id }] },
           { $or: [{ captain_edit_until: { $exists: false } }, { captain_edit_until: { $lt: new Date() } }] },
         ],

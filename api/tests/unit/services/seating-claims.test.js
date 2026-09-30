@@ -1296,6 +1296,23 @@ test('a stale guest screen after takeaway conversion receives a cancellation tom
   expect(current.captain_payment_plan).toBeUndefined();
 });
 
+test.each([undefined,null,''])('legacy unpaid cover changes preserve the original payment field: %s',async(payment)=>{
+  const order=await movableOrder();
+  await db.collection('sales').updateOne({_id:order._id},payment===undefined?{$unset:{payment_status:''}}:{$set:{payment_status:payment}});
+  await seating.changeGuests(db,scope,String(order._id),{request_id:'legacy-covers-request',actor:'staff-1',guests:5});
+  const saved=await db.collection('sales').findOne({_id:order._id});
+  expect(saved.person_count).toBe(5);expect(saved.payment_status).toBe(payment);
+  expect(saved.captain_payment_plan).toBeUndefined();
+});
+
+test.each(['Paid','Cancelled','Partial'])('cover compatibility never reopens %s checks',async(payment)=>{
+  const order=await movableOrder();
+  await db.collection('sales').updateOne({_id:order._id},{$set:{payment_status:payment}});
+  const before=await db.collection('sales').findOne({_id:order._id});
+  await expect(seating.changeGuests(db,scope,String(order._id),{request_id:'paid-covers-request-1',actor:'staff-1',guests:5})).rejects.toMatchObject({status:409});
+  expect(await db.collection('sales').findOne({_id:order._id})).toEqual(before);
+});
+
 test.each(['capacity-reserved','applying','revision-written','capacity-released','completed','fence-released'])(
   'guest change recovers a lost acknowledgement after %s without leaving blocked seating',async(point)=>{
     const order=await movableOrder(),input={request_id:'cover-recovery-check-1',actor:'staff-1',guests:5};
