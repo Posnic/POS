@@ -10142,6 +10142,47 @@
         }
       }
     },
+    "/mobile/v1/catalogue/{version}/{page}": {
+      "get": {
+        "summary": "cataloguePage",
+        "operationId": "get_mobile_v1_catalogue_version_page",
+        "tags": [
+          "Mobile pos"
+        ],
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/mobile/v1/sales": {
       "post": {
         "summary": "ingest",

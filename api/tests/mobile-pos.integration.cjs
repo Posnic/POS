@@ -85,6 +85,15 @@ before(
     BaseModel.currentBranch = branchId;
     const express = require('express'),
       app = express();
+    app.get('/api/uploads/mobile-test-image.png', (r, s) => {
+      assert.equal(r.headers.authorization, undefined);
+      s.type('png').send(
+        Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',
+          'base64'
+        )
+      );
+    });
     app.use(express.json());
     app.use((req, res, next) => {
       res.on('finish', () => {
@@ -513,8 +522,19 @@ test(
       );
       page.on('response', async (r) => {
         if (r.url().includes('/api/'))
-          console.log('API RESPONSE', r.status(), r.url(), r.status() >= 400 ? await r.text() : '');
+          console.log(
+            'API RESPONSE',
+            r.status(),
+            r.url(),
+            r.status() >= 400 ? await r.text().catch(() => '[navigation completed]') : ''
+          );
       });
+      await db.collection('items').updateOne(
+        { _id: item._id },
+        {
+          $set: { image: '/uploads/mobile-test-image.png' },
+        }
+      );
       await page.goto(base.replace(/\/api$/, '/'));
       await page
         .getByRole('button', { name: 'Connect a local or Community shop', exact: true })
@@ -537,6 +557,8 @@ test(
       }
       await page.getByRole('textbox', { name: 'Confirm PIN', exact: true }).fill('4829');
       await page.getByRole('button', { name: 'Save', exact: true }).click();
+      const product = page.getByTestId('item-' + String(item._id));
+      await expect(product.locator('img')).toHaveAttribute('src', /^data:image\/png/);
       await page.getByTestId('item-' + String(item._id)).click();
       const before = await db.collection('sales').countDocuments();
       await context.setOffline(true);
@@ -567,6 +589,11 @@ test(
       await page.screenshot({
         path: path.resolve(__dirname, '../../tmp/mobile-server-receipt.png'),
       });
+      // Web preview intentionally never persists bearer/PIN secrets. Reload with
+      // API/image access unavailable verifies the durable non-secret image cache.
+      await page.route('**/api/**', (route) => route.abort());
+      await page.reload();
+      await expect(product.locator('img')).toHaveAttribute('src', /^data:image\/png/);
       assert.deepEqual(errors, []);
     } finally {
       await browser.close();
@@ -896,5 +923,81 @@ test('older receipt search is literal, paginated and limited to the cashier and 
     );
   } finally {
     await db.collection('mobile_sales').deleteMany({ _id: { $in: ids } });
+  }
+});
+
+test('paged catalogue exceeds 10k items, remains immutable, and binds pages to the authorized device', async () => {
+  const added = Array.from({ length: 10017 }, (_, n) => ({
+    _id: new ObjectId(),
+    license: branch.license,
+    branch_id: branch._id,
+    name: 'Paged item ' + n,
+    selling_price: 10,
+    tax: 0,
+    activate: true,
+  }));
+  await db.collection('items').insertMany(added);
+  try {
+    const first = await mobile.bootstrap({ ...req, query: { catalogue: 'paged' } });
+    assert.ok(first.catalogue.count > 10000);
+    assert.equal(
+      first.catalogue.pages.reduce((n, p) => n + p.count, 0),
+      first.catalogue.count
+    );
+    const grant = await db.collection('mobile_grants').findOne({ _id: first.shop.snapshotVersion });
+    assert.equal(grant.items, undefined);
+    assert.ok(grant.pages.length > 39);
+    const params = { version: first.shop.snapshotVersion, page: '0' };
+    const page = await mobile.cataloguePage({ ...req, params });
+    assert.ok(page.items.length <= 256);
+    await assert.rejects(
+      mobile.cataloguePage({ ...req, params, handsetDevice: 'other-device' }),
+      /Refresh the catalogue/
+    );
+    const target = added[0];
+    const originalPrice = (
+      await require('../src/services/mobile-catalogue').hydrate(db, grant, [String(target._id)])
+    ).items[0].price;
+    await db.collection('items').updateOne({ _id: target._id }, { $set: { selling_price: 20 } });
+    const unchanged = (
+      await require('../src/services/mobile-catalogue').hydrate(db, grant, [String(target._id)])
+    ).items[0].price;
+    assert.equal(unchanged, originalPrice);
+    const fresh = await mobile.bootstrap({ ...req, query: { catalogue: 'paged' } });
+    assert.notEqual(fresh.shop.snapshotVersion, first.shop.snapshotVersion);
+    assert.ok(
+      fresh.catalogue.pages.filter((p, index) => p.id === first.catalogue.pages[index]?.id).length >
+        38
+    );
+    const transaction = sale({
+      snapshotVersion: first.shop.snapshotVersion,
+      total: 1000,
+      tax: 0,
+      cart: {
+        id: crypto.randomUUID(),
+        lines: [
+          {
+            id: crypto.randomUUID(),
+            itemId: String(target._id),
+            name: target.name,
+            quantity: 1,
+            price: 1000,
+            taxBps: 0,
+            taxInclusive: false,
+          },
+        ],
+      },
+      payment: { method: 'cash', received: 1000, change: 0 },
+    });
+    const accepted = await mobile.ingest({
+      ...req,
+      body: { idempotencyKey: transaction.id, sale: transaction },
+    });
+    assert.equal(accepted.saleId, transaction.id);
+    await db.collection('items').updateOne({ _id: target._id }, { $set: { is_deleted: true } });
+    const deleted = await mobile.bootstrap({ ...req, query: { catalogue: 'paged' } });
+    assert.equal(deleted.catalogue.count, first.catalogue.count - 1);
+  } finally {
+    await db.collection('items').deleteMany({ _id: { $in: added.map((row) => row._id) } });
   }
 });
