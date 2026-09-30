@@ -39,7 +39,13 @@ function plan(sale, branch, requested) {
     !['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) &&
     Number(line.quantity ?? line.item_quantity ?? line.qty) > 0 && String(line.name || line.item_name || '').trim());
   orderLine.validate(live);
-  const snapshot = snapshotFrom([sale], branch, sale.table_number || '', { allowZero: true });
+  const discount = require('./captain-transfer-discount');
+  const legacyDiscount = sale.captain_transfer_allocation ? null : discount.legacy(sale, branch);
+  const Money = require('../utils/currency');
+  const billingSale = legacyDiscount?.billDiscountMinor ? { ...sale,
+    discount: Money.fromMinor(legacyDiscount.totalDiscountMinor, Money.policy(branch)) } : sale;
+  const snapshot = snapshotFrom([billingSale], branch, sale.table_number || '', { allowZero: true });
+  if (legacyDiscount?.billDiscountMinor) discount.track(snapshot.lines, legacyDiscount.billDiscountMinor);
   // Billing excludes cancelled/returned lines; kitchen history must use that
   // same live set or a mixed selection could move non-billable ghost dishes.
   const service = rounds({ ...sale, items: live }).flatMap(round => round.items);

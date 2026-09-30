@@ -17,7 +17,7 @@ function fingerprint(sale,policy,allocation) {
         'item_total','total','total_amount','item_discount','item_tax','tax_amount','tax','tax_type',
         'cgst_tax','sgst_tax','igst_tax','tax_components'])})),
     subtotal:sale.sales_sub_total,discount:sale.discount,tax:sale.tax,round:sale.round_off,total:sale.sales_total,
-    financial:fields(sale,['subtotal','total','items_subtotal','items_total','sales_tax','sales_round_off']),
+    financial:fields(sale,['subtotal','total','items_subtotal','items_total','sales_tax','sales_round_off','extra_discount','sale_extra_discount','extra_discount_type']),
     allocation:{lines:allocation.lines,components:allocation.components,totalMinor:allocation.totalMinor},
   })).digest('hex');
 }

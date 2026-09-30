@@ -192,7 +192,7 @@ test.each(['qty','unit_price','item_price','item_total','total','total_amount','
   }
 );
 
-test.each(['subtotal','total','items_subtotal','items_total','sales_tax','sales_round_off'])(
+test.each(['subtotal','total','items_subtotal','items_total','sales_tax','sales_round_off','extra_discount','sale_extra_discount','extra_discount_type'])(
   'changing desktop bill field %s invalidates allocated amounts',field=>{
     const original=sale(),branch={currencyCode:'INR'};
     const result=project(original,branch,[{id:'c0i0',quantity:1}],at);
@@ -342,4 +342,24 @@ test.each([-1,0.5,999999])('allocation sealing rejects an invalid tracked discou
   const original=sale(),branch={currencyCode:'INR'},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
   const side=structuredClone(split.preview.source);side.lines[0].billDiscountMinor=minor;
   expect(()=>require('../../../src/utils/transfer-allocation').seal({...original,...split.source},branch,side)).toThrow('bill changed');
+});
+
+
+test.each(['separate','combined'])('transfer normalizes %s legacy bill discounts without inventing round-off',storage=>{
+  const original=sale(),branch={currencyCode:'INR'};
+  Object.assign(original,{sales_sub_total:100,discount:storage==='separate'?0:10,tax:5,sales_total:95,
+    extra_discount:10,sale_extra_discount:10,extra_discount_type:'amount'});
+  Object.assign(original.items[0],{item_quantity:2,item_base_price:50,item_tax:5,item_discount:0});
+  original.changes[0].items[0].item_quantity=2;
+  const result=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  for(const name of ['source','destination']){
+    const view=result[name];
+    expect(view.sales_total).toBe(47.5);
+    expect(view.discount).toBe(5);
+    expect(view.round_off).toBe(0);
+    expect(view.extra_discount).toBe(0);
+    expect(view.sale_extra_discount).toBe(0);
+    expect(view.captain_transfer_allocation.lines[0].billDiscountMinor).toBe(500);
+  }
+  expect(original.sale_extra_discount).toBe(10);
 });

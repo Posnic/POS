@@ -8,6 +8,11 @@ const orderLine=require('../utils/order-line');
 function project(sale,branch,requested,at) {
   const result=kitchen.project(sale,branch,requested,at);
   for(const name of ['source','destination']) {
+    // The allocation now carries both item and bill discounts. Clear the old
+    // input fields on each resulting bill so legacy readers cannot subtract
+    // the original full-order amount again after a partial transfer.
+    if (['extra_discount','sale_extra_discount','extra_discount_type'].some(key=>sale[key]!==undefined))
+      Object.assign(result[name],{extra_discount:0,sale_extra_discount:0,extra_discount_type:'amount'});
     applyMoney(sale,result[name],branch,result.preview[name]);
   }
   return result;

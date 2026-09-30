@@ -59,3 +59,32 @@ test('rejects a stale aggregate bill total',()=>{
   const side=fixture();side.totalMinor++;
   expect(()=>plan(side,1)).toThrow('Invalid bill discount');
 });
+
+
+describe('legacy discount formats',()=>{
+  const {legacy}=require('../../../src/services/captain-transfer-discount');
+  const bill=()=>({sales_sub_total:100,discount:5,extra_discount:10,extra_discount_type:'amount',sale_extra_discount:10,
+    items:[{item_name:'Corn',item_quantity:2,item_discount:5}]});
+  test.each(['JPY','INR','KWD'])('separate and combined formats normalize identically in %s',currencyCode=>{
+    const policy=require('../../../src/utils/currency').policy({currencyCode}),factor=policy.factor;
+    const original=bill(),separate=legacy(original,{currencyCode}),combined=legacy({...original,discount:15},{currencyCode});
+    expect(separate).toEqual({storage:'separate',itemDiscountMinor:5*factor,billDiscountMinor:10*factor,totalDiscountMinor:15*factor});
+    expect({...combined,storage:'separate'}).toEqual(separate);
+    expect(original).toEqual(bill());
+  });
+  test('legacy percentage input uses the discounted subtotal rather than treating the rate as money',()=>{
+    const original=bill();delete original.sale_extra_discount;original.extra_discount_type='percentage';
+    expect(legacy(original,{currencyCode:'INR'}).billDiscountMinor).toBe(950);
+  });
+  test('stored final discount amount takes precedence over percentage input',()=>{
+    const original=bill();original.extra_discount_type='percent';original.extra_discount=10;original.sale_extra_discount=8;
+    expect(legacy(original,{currencyCode:'INR'}).billDiscountMinor).toBe(800);
+  });
+  test('inactive lines do not change the inferred storage convention',()=>{
+    const original=bill();original.items.push({item_quantity:1,item_discount:999,cancelled:true});
+    expect(legacy(original,{currencyCode:'INR'}).storage).toBe('separate');
+  });
+  test.each([{discount:7},{extra_discount:-1},{sale_extra_discount:NaN},{sale_extra_discount:-1}])('ambiguous or invalid stored data fails closed: %j',change=>{
+    expect(()=>legacy({...bill(),...change},{currencyCode:'INR'})).toThrow('needs reconciliation');
+  });
+});

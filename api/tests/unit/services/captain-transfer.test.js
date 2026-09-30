@@ -590,3 +590,19 @@ test('ordinary editor increases transferred portions and sends only the extra qu
   expect(added).toHaveLength(1);
   expect(added[0].item_quantity).toBe(2);
 });
+
+test('persisted transfer of a separately discounted bill retains the discount once on both checks', async () => {
+  await db.collection('sales').updateOne({_id:sale._id},{$set:{discount:0,extra_discount:10,sale_extra_discount:10,
+    extra_discount_type:'amount',sales_total:95,'items.0.item_discount':0}});
+  const input=await confirmation(),result=await service.complete(input);
+  const source=await db.collection('sales').findOne({_id:sale._id});
+  const destination=await db.collection('sales').findOne({_id:new ObjectId(result.destinationId)});
+  for(const check of [source,destination]){
+    expect(check.sales_total).toBe(47.5);
+    expect(check.discount).toBe(5);
+    expect(check.sale_extra_discount).toBe(0);
+    expect(check.round_off).toBe(0);
+    expect(snapshotFrom([check],{currencyCode:'INR'},check.table_number).totalMinor).toBe(4750);
+  }
+  expect(await service.complete(input)).toEqual(result);
+});
