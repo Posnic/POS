@@ -488,3 +488,32 @@ test('paired Captain verifies a new email through scoped routes', async () => {
     assert.equal((await profile.json()).email,'new@example.test');
   } finally { mail.resolveShopTransport = original; }
 });
+
+
+test('paired Captain moves a reserved group through scoped API without accepting another actor',async()=>{
+ const seating=require('../src/services/seating-claims');
+ const scope={branchId:branch._id,license:branch.license};
+ const ids=[new ObjectId(),new ObjectId(),new ObjectId()];
+ await db.collection('tableorder').insertMany(ids.map((id,index)=>({_id:id,branch_id:branch._id,license:branch.license,tableorder_value:'G'+index,capacity:2,max_capacity:3,adjacent_table_ids:ids[index+1]?[String(ids[index+1])]:[]})));
+ const claim=await seating.reserve(db,scope,{request_id:'route-seating-0001',actor:String(staff._id),table_ids:ids.slice(0,2).map(String),primary_id:String(ids[0]),guests:4});
+ const sale=new ObjectId();
+ await seating.bind(db,scope,claim.id,String(staff._id),String(sale));
+ await db.collection('sales').insertOne({_id:sale,branch_id:branch._id,license:branch.license,seating_request_id:claim.id,table_number:'G0',person_count:4,sale_process:'KOT'});
+ const {grant}=await paired();
+ const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+ const payload={orderId:String(sale),request_id:'route-moving-0001',tableIds:ids.slice(1).map(String),primaryId:String(ids[1]),guests:4,actor:String(manager._id)};
+ const send=(action,body,auth=headers)=>fetch(base+'/captain/v1/tables/move/'+action,{method:'POST',headers:auth,body:JSON.stringify(body)});
+ assert.equal((await send('prepare',payload,{'Content-Type':'application/json'})).status,401);
+ const prepared=await send('prepare',payload);assert.equal(prepared.status,200);
+ assert.equal((await seating.find(db,scope,payload.request_id)).actor,String(staff._id));
+ const completed=await send('complete',{request_id:payload.request_id});assert.equal(completed.status,200);
+ assert.equal((await completed.json()).state,'submitting');
+ assert.equal((await send('prepare',payload)).status,200);
+ assert.equal((await db.collection('sales').findOne({_id:sale})).table_number,'G1');
+ const cancelled={...payload,request_id:'route-moving-0002',primaryId:String(ids[2])};
+ assert.equal((await send('prepare',cancelled)).status,200);
+ const cancelledReply=await send('cancel',{request_id:cancelled.request_id});
+ assert.equal(cancelledReply.status,200);
+ assert.equal((await cancelledReply.json()).state,'cancelled');
+ assert.equal((await db.collection('sales').findOne({_id:sale})).table_number,'G1');
+});

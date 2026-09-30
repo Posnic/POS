@@ -40,6 +40,10 @@ router.get('/tables', wrap(tables.list));
 router.post('/tables', limit, wrap(tables.update));
 router.post('/tables/state', limit, wrap(tables.state));
 router.post('/tables/close', limit, wrap(tables.close));
+const seating = require('../services/captain-seating');
+router.post('/tables/move/prepare', limit, wrap(seating.prepare));
+router.post('/tables/move/complete', limit, wrap(seating.complete));
+router.post('/tables/move/cancel', limit, wrap(seating.cancel));
 
 router.post('/profile', limit, wrap(profile.update));
 router.post('/password', rateLimit({ windowMs: 15 * 60000, limit: 8 }), wrap(profile.password));
