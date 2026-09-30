@@ -87,6 +87,11 @@ function qtyText(value) {
   const n = num(value);
   return Number.isInteger(n) ? String(n) : String(Number(n.toFixed(3)));
 }
+function billable(line) {
+  return line && !line.return && !line.cancelled &&
+    !['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) &&
+    num(line.quantity ?? line.item_quantity ?? line.qty) > 0;
+}
 
 /**
  * The lines of the bill.
@@ -100,7 +105,7 @@ function itemLines(sale, branch) {
   const monetary = require('../utils/currency').policy(branch || {});
   const rows = Array.isArray(sale && sale.items) ? sale.items : [];
   return rows
-    .filter((it) => it && !it.return && String(it.name || it.item_name || '').trim())
+    .filter((it) => billable(it) && String(it.name || it.item_name || '').trim())
     .map((it) => {
       /* Three spellings because three writers exist: a priced online line sets
          both `quantity` and `item_quantity`, the till's own path sets
@@ -169,7 +174,7 @@ function gstRate(sale) {
   const lines = Array.isArray(sale && sale.items) ? sale.items : [];
   const rates = new Set();
   for (const line of lines) {
-    if (!line || line.return) continue;
+    if (!billable(line)) continue;
     const taxOn = num(line.item_tax != null ? line.item_tax : line.tax_amount);
     if (taxOn <= 0) continue;
     const qty = num(line.item_quantity != null ? line.item_quantity : line.quantity) || 1;

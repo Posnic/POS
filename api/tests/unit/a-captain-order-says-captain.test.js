@@ -74,7 +74,7 @@ test('the flag is carried through the service untouched', () => {
 test('absent means customer, which is the safe direction', () => {
   /* An order whose origin we cannot establish is a customer's. Guessing the
      other way would file a stranger's order as a member of staff's. */
-  expect(REPO).toMatch(/staffOrder = false \} = \{\}\) \{/);
+  expect(REPO).toMatch(/async createOnlineOrder\(data, \{[^}]*staffOrder = false(?:,[^}]*)? \} = \{\}\) \{/);
 });
 
 /* ---------------------------------------------------------------- the rate */
