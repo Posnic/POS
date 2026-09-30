@@ -73,4 +73,4 @@ async function password(req) {
   });
   return { saved: true, reauthenticate: true };
 }
-module.exports = { get, update, password };
+module.exports = { get, update, password, self };
