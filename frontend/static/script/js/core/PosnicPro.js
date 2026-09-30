@@ -4611,7 +4611,8 @@ if (!/^[a-f0-9]{24}$/.test(billingWindowId)) billingWindowId = '';
 var billingWindowStore = null;
 if (billingWindowId) {
     var billingStoreKey = 'posnic.outlet.window.' + billingWindowId;
-    try { billingWindowStore = JSON.parse(sessionStorage.getItem(billingStoreKey) || 'null'); } catch (e) { }
+    // Old builds persisted the whole window snapshot, including contact details.
+    sessionStorage.removeItem(billingStoreKey);
     if (!billingWindowStore) {
         billingWindowStore = {};
         for (var storageIndex = 0; storageIndex < localStorage.length; storageIndex++) {
@@ -4624,21 +4625,29 @@ if (billingWindowId) {
     if (/^[a-f0-9]{24}$/.test(lockedBranch || '')) billingWindowStore.branch_id_set = lockedBranch;
 }
 PosnicPro.local = {
+    volatile: Object.create(null),
+    setVolatile: function (key, value) {
+        this.volatile[key] = String(value);
+        if (billingWindowStore) billingWindowStore[key] = String(value);
+        localStorage.removeItem(key);
+    },
     set: function (key, value) {
         if (billingWindowStore) {
             if (key === 'branch_id_set' && String(value) !== billingWindowStore.branch_id_set) return;
             billingWindowStore[key] = String(value);
-            sessionStorage.setItem(billingStoreKey, JSON.stringify(billingWindowStore));
+            // Window state stays in memory; reopening revalidates the register through the API.
         } else localStorage.setItem(key, value);
     },
     get: function (key) {
+        if (Object.prototype.hasOwnProperty.call(this.volatile, key)) return this.volatile[key];
         return billingWindowStore ? (billingWindowStore[key] ?? null) : localStorage.getItem(key);
     },
     // Needed to put a setting back to "never chosen" rather than to an empty
     // string, which is a different thing: code here falls back on absence, and
     // an empty value would defeat that.
     remove: function (key) {
-        if (billingWindowStore) { delete billingWindowStore[key]; sessionStorage.setItem(billingStoreKey, JSON.stringify(billingWindowStore)); }
+        delete this.volatile[key];
+        if (billingWindowStore) { delete billingWindowStore[key]; }
         else localStorage.removeItem(key);
     }
 };

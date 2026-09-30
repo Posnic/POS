@@ -394,7 +394,7 @@ PosnicPro.branches = {
                         }
                         PosnicPro.local.set('branchname', response.data['branch_name']);
                         PosnicPro.local.set('branchemail', response.data['store_email']);
-                        PosnicPro.local.set('branchphone', response.data['store_telephone']);
+                        PosnicPro.local.setVolatile('branchphone', response.data['store_telephone']);
                         PosnicPro.local.set('branchaddress', response.data['store_address']);
                     PosnicPro.local.set('branchgstin', response.data['branch_gstin_number'] || '');
                         let branchRecord = [];
