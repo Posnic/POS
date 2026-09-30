@@ -10182,7 +10182,7 @@ class SalesRepository {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel, newTableId, seenAt, editPolicy, preview = false } = {}
+    { SaleModel, newTableId, seenAt, editPolicy, preview = false, previewContext } = {}
   ) {
     let finishCaptainEdit;
     try {
@@ -10190,14 +10190,19 @@ class SalesRepository {
       // seating operation. Its HTTP adapter must supply authenticated scope.
       if (preview && (status !== 'modified' || newTableNo != null || dineType != null || personCount != null || newTableId !== undefined))
         throw new Error('Only item and discount changes can be previewed.');
-      const db = await BaseModel.getDb();
+      if (previewContext && (!preview || !previewContext.db || !previewContext.branchId || !previewContext.license))
+        throw new Error('Invalid preview scope.');
+      const db = previewContext ? previewContext.db : await BaseModel.getDb();
+      const previewScope = previewContext
+        ? { branch_id: previewContext.branchId, license: previewContext.license }
+        : activeTenantFilter();
       const salesCollection = db.collection('sales');
       const itemCollection = db.collection('items');
 
       const orderObjectId = new mongoose.Types.ObjectId(orderId);
       const orderDoc = await salesCollection.findOne({
         _id: orderObjectId,
-        ...activeTenantFilter(),
+        ...previewScope,
       });
 
       if (!orderDoc) {
@@ -10205,7 +10210,10 @@ class SalesRepository {
       }
 
       if (preview && (orderDoc.sale_process !== 'KOT' || orderDoc.payment_status !== 'Unpaid' ||
-          orderDoc.floor_closed_at || Object.prototype.hasOwnProperty.call(orderDoc,'captain_payment_plan')))
+          Object.prototype.hasOwnProperty.call(orderDoc,'floor_closed_at') ||
+          ['pending','rejected','cancelled'].includes(orderDoc.order_state) ||
+          new Date(orderDoc.captain_edit_until || 0).getTime() >= Date.now() ||
+          Object.prototype.hasOwnProperty.call(orderDoc,'captain_payment_plan')))
         throw new Error('Order changed. Refresh before continuing.');
 
       if (status === 'cancelled' && String(orderDoc.sale_process).toLowerCase() === 'cancelled') {
@@ -10220,6 +10228,7 @@ class SalesRepository {
       }
 
       const editFilter = {
+        ...(preview ? previewScope : {}),
         _id: orderObjectId,
         captain_payment_plan: { $exists: false },
         seating_capacity_revision: orderDoc.seating_capacity_revision ?? { $exists: false },
@@ -10887,7 +10896,8 @@ class SalesRepository {
       if (preview) {
         // Detect an order change during catalogue reads without taking a lease.
         const financialFields = Object.fromEntries(['sales_total','sales_sub_total','tax','discount','round_off',
-          'extra_discount','sale_extra_discount','extra_discount_type','captain_transfer_allocation']
+          'extra_discount','sale_extra_discount','extra_discount_type','captain_transfer_allocation',
+          'items_subtotal','items_total','order_state','updated_date','captain_edit_until']
           .map(key=>[key,orderDoc[key] === undefined ? {$exists:false} : orderDoc[key]]));
         if (!await salesCollection.findOne({...editFilter,...financialFields,payment_status:'Unpaid',sale_process:'KOT',
           floor_closed_at:{$exists:false}}))

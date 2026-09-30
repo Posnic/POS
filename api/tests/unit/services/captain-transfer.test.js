@@ -704,3 +704,41 @@ test('preview cannot invoke cancellation or change seating',async()=>{
   }
   expect(await db.collection('sales').findOne({_id:sale._id})).toEqual(before);
 });
+
+async function scopedItemPreview(database = db, scope = {}) {
+  return sales.updateOrderModel(String(sale._id),
+    [{product_id:String(sale.items[0].item_id),quantity:2,price:50}],0,
+    'modified',null,null,null,null,null,null,
+    {preview:true,previewContext:{db:database,branchId:branch,license,...scope}});
+}
+test('explicit preview scope ignores ambient database and tenant state',async()=>{
+  const ambient=jest.spyOn(BaseModel,'getDb').mockRejectedValue(new Error('Wrong database'));
+  const result=await runWithRequestContext({license:new ObjectId(),currentBranch:new ObjectId()},()=>scopedItemPreview());
+  expect(result.status).toBe(true);
+  expect(ambient).not.toHaveBeenCalled();
+  expect((await scopedItemPreview(db,{branchId:new ObjectId()})).status).toBe(false);
+  expect((await scopedItemPreview(db,{license:new ObjectId()})).status).toBe(false);
+});
+test.each([
+  {items_total:99},{items_subtotal:88},{order_state:'cancelled'},
+  {branch_id:new ObjectId()},{license:new ObjectId()},
+  {captain_edit_until:new Date(Date.now()+60000)},
+  {captain_payment_plan:null},{floor_closed_at:new Date()},
+])('item preview rejects a concurrent change %j',async changed=>{
+  const database={collection(name){
+    const collection=db.collection(name);
+    if(name!=='branches') return collection;
+    return {async findOne(query){
+      await db.collection('sales').updateOne({_id:sale._id},{$set:changed});
+      return collection.findOne(query);
+    }};
+  }};
+  expect(await scopedItemPreview(database)).toMatchObject({status:false,message:'order_changed'});
+  expect(await db.collection('sales').findOne({_id:sale._id})).toMatchObject(changed);
+});
+test.each([{order_state:'pending'},{order_state:'rejected'},
+  {floor_closed_at:null},{captain_edit_until:new Date(Date.now()+60000)}])(
+  'item preview refuses unavailable state %j',async changed=>{
+    await db.collection('sales').updateOne({_id:sale._id},{$set:changed});
+    expect((await scopedItemPreview()).status).toBe(false);
+  });
