@@ -1320,6 +1320,49 @@ async function legacySale(guests=2) {
     kitchen_service:{c0i0:{quantity:1}},kitchen_work:{c0:{state:'ready'}}};
   await db.collection('sales').insertOne(sale);return sale;
 }
+
+test('legacy guest changes enroll once and preserve dishes and kitchen history',async()=>{
+  const sale=await legacySale(),input={request_id:'legacy-cover-change-01',actor:'staff-1',guests:3};
+  await seating.changeGuests(db,scope,String(sale._id),input);
+  await seating.changeGuests(db,scope,String(sale._id),input);
+  const saved=await db.collection('sales').findOne({_id:sale._id});
+  expect(saved.person_count).toBe(3);expect(saved.captain_audit).toHaveLength(1);
+  for(const key of ['items','changes','sales_total','payment_status','kitchen_service','kitchen_work'])expect(saved[key]).toEqual(sale[key]);
+  expect(saved.captain_payment_plan).toBeUndefined();
+});
+
+test.each(['missing-table','paid','capacity'])('legacy guest rejection has a recoverable parent status: %s',async(reason)=>{
+  const sale=await legacySale(),input={request_id:'legacy-cover-reject-01',actor:'staff-1',guests:4};
+  if(reason==='missing-table')await db.collection('tableorder').deleteMany({});
+  if(reason==='paid')await db.collection('sales').updateOne({_id:sale._id},{$set:{payment_status:'Paid'}});
+  await expect(seating.changeGuests(db,scope,String(sale._id),input)).rejects.toMatchObject({status:409});
+  const journal=await require('../../../src/services/captain-restructure-lock').read(db,scope,input.request_id,'staff-1');
+  expect(journal.stage).toBe('cancelled');expect(journal.intent.guests).toBe(4);
+  const saved=await db.collection('sales').findOne({_id:sale._id});
+  expect(saved.person_count).toBe(2);expect(saved.captain_payment_plan).toBeUndefined();
+  if(reason!=='capacity')expect(saved.seating_request_id).toBeUndefined();
+});
+
+test('guest retry finishes interrupted legacy enrollment without losing its original request',async()=>{
+  const sale=await legacySale(),input={request_id:'legacy-cover-recover-1',actor:'staff-1',guests:3};
+  const interrupted={collection(name){
+    const collection=db.collection(name);
+    return new Proxy(collection,{get(target,key){
+      if(name==='sales'&&key==='updateOne')return async(filter,update,...rest)=>{
+        if(update.$set?.seating_request_id)throw Object.assign(new Error('interrupted enrollment'),{status:409});
+        return target.updateOne(filter,update,...rest);
+      };
+      const value=target[key];return typeof value==='function'?value.bind(target):value;
+    }});
+  }};
+  await expect(seating.changeGuests(interrupted,scope,String(sale._id),input)).rejects.toThrow('interrupted enrollment');
+  expect(await require('../../../src/services/captain-restructure-lock').read(db,scope,input.request_id,'staff-1',{optional:true})).toBeNull();
+  await expect(seating.changeGuests(db,scope,String(sale._id),{...input,guests:1})).rejects.toMatchObject({status:409});
+  await seating.changeGuests(db,scope,String(sale._id),input);
+  const saved=await db.collection('sales').findOne({_id:sale._id});
+  expect(saved.person_count).toBe(3);expect(saved.captain_audit).toHaveLength(1);
+  expect(saved.captain_payment_plan).toBeUndefined();
+});
 test('legacy enrollment preserves the existing sale and kitchen data even when already over capacity',async()=>{
   const sale=await legacySale(9),input={request_id:'legacy-enrollment-001',actor:'staff-1'};
   const claim=await seating.enrollExisting(db,scope,String(sale._id),input);

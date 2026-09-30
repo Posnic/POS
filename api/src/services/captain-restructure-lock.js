@@ -24,6 +24,20 @@ async function clear(db, scope, journal) {
     captain_payment_plan: journal._id,
   }, { $unset: { captain_payment_plan: '' } });
 }
+// Record a definitive validation rejection before any parent sale reservation.
+// Insert-only: a concurrent accepted request must never be cancelled here.
+async function rejectIntent(db, scope, { requestId, actor, intent }) {
+  if (typeof requestId !== 'string' || !/^[a-zA-Z0-9_-]{16,80}$/.test(requestId) || !actor || !intent)
+    throw problem();
+  try {
+    await journals(db).insertOne({ _id: journalId(scope, requestId), ...scopeFilter(scope), purpose,
+      requestId, actor: String(actor), intent, orderIds: [], sales: [], payments: [], guests: [],
+      version: 0, state: 'restructuring', stage: 'cancelled', createdAt: new Date(), cancelledAt: new Date() });
+  } catch (error) { if (error.code !== 11000) throw error; }
+  const journal = await read(db, scope, requestId, actor);
+  if (JSON.stringify(journal.intent) !== JSON.stringify(intent)) throw problem();
+  return journal.stage === 'cancelled';
+}
 async function cancel(db, scope, requestId, actor) {
   const journal = await read(db, scope, requestId, actor);
   if (!['reserving', 'reserved', 'cancelled'].includes(journal.stage)) throw problem();
@@ -110,4 +124,4 @@ async function complete(db, scope, requestId, actor) {
   await clear(db, scope, journal);
   return { requestId, stage: 'completed' };
 }
-module.exports = { reserve, read, cancel, applying, complete };
+module.exports = { reserve, read, cancel, applying, complete, rejectIntent };

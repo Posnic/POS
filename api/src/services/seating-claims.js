@@ -82,16 +82,17 @@ async function archive(db, scope, id) {
 async function reserve(db, scope, input) {
   return reserveClaim(db, scope, input);
 }
-async function reconcileEnrollment(db, scope, parentId, order, actor, start = false) {
-  const childId = 'enroll-' + require('crypto').createHash('sha256')
-    .update(JSON.stringify([parentId, String(order._id)])).digest('hex').slice(0,40);
+const enrollmentId = (parentId, orderId) => 'enroll-' + require('crypto').createHash('sha256')
+  .update(JSON.stringify([parentId, String(orderId)])).digest('hex').slice(0,40);
+async function reconcileEnrollment(db, scope, parentId, order, actor, start = false, parentIntent) {
+  const childId = enrollmentId(parentId, order._id);
   const child = await restructure.read(db,scope,childId,actor,{optional:true});
   if (child?.stage === 'cancelled') {
     if(start)fail('This seating request has already been used.',409);
     return order;
   }
   if(child || (start && !order.seating_request_id)) {
-    await enrollExisting(db,scope,String(order._id),{request_id:childId,actor});
+    await enrollExisting(db,scope,String(order._id),{request_id:childId,actor,...(parentIntent ? {parent_intent:parentIntent} : {})});
     return db.collection('sales').findOne({_id:order._id,branch_id:scope.branchId,license:scope.license});
   }
   return order;
@@ -870,7 +871,8 @@ async function enrollExisting(db, scope, orderId, input) {
   const id=requestId(input.request_id), actor=String(input.actor||''), orderKey=identity(orderId);
   if (!actor) fail('Permission is required.',403);
   let journal=await restructure.read(db,scope,id,actor,{optional:true});
-  if (journal && (journal.intent.kind!=='enroll'||journal.intent.orderId!==orderKey||journal.stage==='cancelled'))
+  if (journal && (journal.intent.kind!=='enroll'||journal.intent.orderId!==orderKey||journal.stage==='cancelled'||
+      JSON.stringify(journal.intent.parentIntent)!==JSON.stringify(input.parent_intent)))
     fail('This seating request has already been used.',409);
   if (!journal) {
     const sale=await db.collection('sales').findOne({_id:new ObjectId(orderKey),branch_id:scope.branchId,license:scope.license});
@@ -881,7 +883,8 @@ async function enrollExisting(db, scope, orderId, input) {
       ...(/^[a-f0-9]{24}$/i.test(String(sale.table_id||''))?{_id:new ObjectId(sale.table_id)}:{}),
     }).limit(2).toArray();
     if(tables.length!==1)fail('Choose tables from this branch.',409);
-    const intent={kind:'enroll',orderId:orderKey,tableId:String(tables[0]._id)};
+    const intent={kind:'enroll',orderId:orderKey,tableId:String(tables[0]._id),
+      ...(input.parent_intent ? {parentIntent:input.parent_intent} : {})};
     journal=await restructure.reserve(db,scope,{requestId:id,actor,intent,sales:[sale]});
   }
   if(journal.stage==='reserving')
@@ -929,10 +932,26 @@ async function changeGuests(db, scope, orderId, input) {
   if (journal && (JSON.stringify(journal.intent) !== JSON.stringify(intent) || journal.stage === 'cancelled'))
     fail('This seating request has already been used.', 409);
   if (!journal) {
-    const sale = await db.collection('sales').findOne({
+    let sale = await db.collection('sales').findOne({
       _id: new ObjectId(orderKey), branch_id: scope.branchId, license: scope.license,
     });
-    if (!sale?.seating_request_id) fail('Refresh this order before changing its seating.', 409);
+    if (!sale) fail('Refresh this order before changing its seating.', 409);
+    if (!sale.seating_request_id && (sale.sale_process !== 'KOT' || ![undefined, null, '', 'Unpaid'].includes(sale.payment_status))) {
+      await restructure.rejectIntent(db, scope, { requestId: id, actor, intent });
+      fail('The seating group changed. Refresh this order.', 409);
+    }
+    try {
+      sale = await reconcileEnrollment(db, scope, id, sale, actor, true, intent);
+    } catch (error) {
+      if (error.status === 409) {
+        const child = await restructure.read(db, scope, enrollmentId(id, orderKey), actor, { optional: true });
+        // An applying child must stay recoverable. Only a rejection with no
+        // pending enrollment is safe for Captain to discard and edit again.
+        if (!child || child.stage === 'cancelled')
+          await restructure.rejectIntent(db, scope, { requestId: id, actor, intent });
+      }
+      throw error;
+    }
     const claim = await find(db, scope, sale.seating_request_id);
     // Capacity is shared across checks. Fence all existing occupants, so a
     // desktop save that passed its preflight cannot change a neighbour's covers

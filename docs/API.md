@@ -1203,8 +1203,10 @@ Automatic destination enrollment remains pending.
 `POST /captain/v1/tables/guests` accepts `request_id`, `orderId` and integer
 `guests` (1–1000). Authentication, the active tenant/branch and `sales.write`
 permission are required. The actor comes from the authenticated staff session;
-an actor supplied in the body is ignored. The order must have an active seating
-claim and an unpaid KOT check. Takeaway orders must first be moved to a table.
+an actor supplied in the body is ignored. The order must have an unpaid KOT
+check. An older dine-in order without a seating claim is first enrolled on its
+existing, unambiguous branch table, without resubmitting any dishes. Takeaway
+orders must first be moved to a table.
 Legacy KOT checks with a missing, null or empty payment status are treated as
 unpaid for this cover-only operation; their payment field is preserved exactly.
 Paid, cancelled and partially paid checks are not reopened by this compatibility.
@@ -1223,5 +1225,10 @@ returns `pending`, `completed`, `cancelled` or `unknown`, with the original
 order and count when a journal exists. It requires the same staff and branch.
 Only a confirmed `cancelled` tombstone makes a failed request safe to discard;
 `unknown` does not rule out a delayed request and must be retained for retry.
-Captain recovery UI and migration of all existing cover-edit writers remain
-required before enabling the full flow; legacy orders are not enrolled here.
+Interrupted enrollment is recovered through the same guest request; its original
+guest count is pinned in the enrollment journal. A definite enrollment rejection
+records a cancelled parent intent, allowing the client to clear that request.
+An uncertain or applying enrollment remains pending recovery and cannot be
+discarded. Rejection is insert-only and cannot cancel a concurrent accepted
+guest update. Captain legacy-order guest UI routing and migration of all existing
+cover-edit writers remain required before enabling the full flow.

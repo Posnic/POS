@@ -15,6 +15,21 @@ beforeEach(async()=>{
   await db.collection('sales').insertMany(sales);
 });
 const input=(requestId='transfer-request-0001')=>({requestId,actor:'staff-1',intent:{kind:'transfer',quantity:1},sales});
+
+test('validation rejection prevents a late reservation without touching sales',async()=>{
+  expect(await locks.rejectIntent(db,scope,input())).toBe(true);
+  await expect(locks.reserve(db,scope,input())).rejects.toMatchObject({status:409});
+  expect(await db.collection('sales').find().toArray()).toEqual(sales);
+  await expect(locks.rejectIntent(db,scope,{...input(),actor:'staff-2'})).rejects.toMatchObject({status:409});
+  await expect(locks.rejectIntent(db,scope,{...input(),intent:{kind:'move'}})).rejects.toMatchObject({status:409});
+});
+
+test('validation rejection cannot overwrite a concurrent accepted reservation',async()=>{
+  const journal=await locks.reserve(db,scope,input());
+  expect(await locks.rejectIntent(db,scope,input())).toBe(false);
+  expect((await locks.read(db,scope,input().requestId,'staff-1')).stage).toBe('reserved');
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:journal._id})).toBe(2);
+});
 test('reservation fences both orders from the existing payment and edit writers',async()=>{
   const journal=await locks.reserve(db,scope,input());
   expect(journal.stage).toBe('reserved');
