@@ -1079,6 +1079,7 @@ test('cloud delivery requires explicit matching evidence and stays scoped to its
 });
 
 test('weighed items opt in to fixed quantities and replay has one stock effect', async () => {
+  assert.equal(mobile.mapItem({ ...item, open_price: true }).requiresConfiguration, true);
   const weighted = {
     ...item,
     _id: new ObjectId(),

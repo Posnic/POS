@@ -129,6 +129,7 @@ function mapItem(row, options = {}) {
       Number(row.discount_amount || 0) > 0 ||
       Number(row.discount_percentage || 0) > 0 ||
       Boolean(
+        row.open_price ||
         row.modifiers?.length ||
         row.variants?.length ||
         row.modifier_groups?.length ||
