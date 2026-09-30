@@ -406,3 +406,31 @@ test('desktop adapter shares Captain reservations and stable sale identities', a
   );
   expect(prepared.claim.id).toMatch(/^desktop-/);
 });
+test('desktop retries with changed items cannot return the old sale or replace a bound draft', async () => {
+  const desktop = require('../../../src/services/desktop-seating');
+  const input = {
+    actor: 'cashier-1',
+    request_id: 'desktop-payload-0001',
+    payload: { items: [{ id: 'dish', quantity: 1, note: 'no salt' }], payment_mode: 'Cash' },
+  };
+  const document = {
+    branch_id: scope.branchId,
+    license: scope.license,
+    table_number: 'T1',
+    person_count: 2,
+    sales_id: 'INV-1',
+  };
+  await desktop.prepare(db, scope, input, document);
+  const changed = {
+    ...input,
+    payload: { ...input.payload, items: [{ id: 'dish', quantity: 2, note: 'no salt' }] },
+  };
+  await expect(desktop.lookup(db, scope, changed)).rejects.toThrow('different order');
+  await expect(desktop.prepare(db, scope, changed, { ...document })).rejects.toThrow(
+    'already been used'
+  );
+  await db.collection('sales').insertOne(document);
+  await expect(desktop.lookup(db, scope, changed)).rejects.toThrow('different order');
+  expect(String((await desktop.lookup(db, scope, input))._id)).toBe(String(document._id));
+  expect(await db.collection('sales').countDocuments({})).toBe(1);
+});

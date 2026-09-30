@@ -27,6 +27,7 @@ function sameRequest(saved, input) {
     saved.actor === input.actor &&
     saved.primary === input.primary &&
     saved.guests === input.guests &&
+    (saved.payload_hash || null) === (input.payload_hash || null) &&
     JSON.stringify(saved.tables) === JSON.stringify(input.tables)
   );
 }
@@ -78,6 +79,7 @@ async function reserve(db, scope, input) {
     actor,
     guests: input.guests,
     state: 'reserved',
+    ...(input.payload_hash ? { payload_hash: input.payload_hash } : {}),
     at: new Date(),
   };
   const previous = await find(db, scope, id);

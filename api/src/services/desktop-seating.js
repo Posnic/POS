@@ -1,6 +1,7 @@
 'use strict';
 const crypto = require('crypto');
 const seating = require('./seating-claims');
+const fingerprint = require('../utils/order-request-fingerprint');
 const { fail } = require('../utils/branch-access');
 const key = (value) =>
   'desktop-' + crypto.createHash('sha256').update(String(value)).digest('hex').slice(0, 40);
@@ -10,6 +11,11 @@ async function lookup(db, scope, input) {
   const claim = await seating.find(db, scope, key(input.request_id));
   if (!claim) return null;
   if (claim.actor !== String(input.actor)) fail('Permission is required.', 403);
+  if (claim.payload_hash && claim.payload_hash !== fingerprint(input.payload))
+    fail(
+      'This request belongs to a different order. Resolve the previous submission before sending changes.',
+      409
+    );
   if (!claim.order_id) return null;
   return db.collection('sales').findOne({
     _id: new (require('mongodb').ObjectId)(claim.order_id),
@@ -32,6 +38,7 @@ async function prepare(db, scope, input, document) {
     crypto.createHash('sha256').update(String(input.request_id)).digest('hex').slice(0, 40);
   const claim = await seating.reserve(db, scope, {
     request_id: id,
+    payload_hash: fingerprint(input.payload),
     actor: String(input.actor),
     table_ids: [String(table._id)],
     primary_id: String(table._id),

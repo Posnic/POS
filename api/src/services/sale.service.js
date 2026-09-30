@@ -1215,7 +1215,7 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       const existing = await require('./desktop-seating').lookup(
         seatingDb,
         { branchId, license: licenseId },
-        { actor: String(userId || ''), request_id: data.idempotencyKey }
+        { actor: String(userId || ''), request_id: data.idempotencyKey, payload: data }
       );
       if (existing) return savedAnswer(existing._id, existing.sales_id, true);
     }
@@ -1249,7 +1249,7 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       seatingAttempt = await require('./desktop-seating').prepare(
         seatingDb,
         { branchId, license: licenseId },
-        { actor: String(userId || ''), request_id: data.idempotencyKey },
+        { actor: String(userId || ''), request_id: data.idempotencyKey, payload: data },
         finalSaleData
       );
       if (seatingAttempt?.existing)
