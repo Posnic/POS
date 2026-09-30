@@ -495,9 +495,9 @@ test('paired Captain moves a reserved group through scoped API without accepting
  const scope={branchId:branch._id,license:branch.license};
  const ids=[new ObjectId(),new ObjectId(),new ObjectId()];
  await db.collection('tableorder').insertMany(ids.map((id,index)=>({_id:id,branch_id:branch._id,license:branch.license,tableorder_value:'G'+index,capacity:2,max_capacity:3,adjacent_table_ids:ids[index+1]?[String(ids[index+1])]:[]})));
- const claim=await seating.reserve(db,scope,{request_id:'route-seating-0001',actor:String(staff._id),table_ids:ids.slice(0,2).map(String),primary_id:String(ids[0]),guests:4});
+ const claim=await seating.reserve(db,scope,{request_id:'route-seating-0001',actor:String(manager._id),table_ids:ids.slice(0,2).map(String),primary_id:String(ids[0]),guests:4});
  const sale=new ObjectId();
- await seating.bind(db,scope,claim.id,String(staff._id),String(sale));
+ await seating.bind(db,scope,claim.id,String(manager._id),String(sale));
  await db.collection('sales').insertOne({_id:sale,branch_id:branch._id,license:branch.license,seating_request_id:claim.id,table_number:'G0',person_count:4,sale_process:'KOT'});
  const {grant}=await paired();
  const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};

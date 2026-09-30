@@ -778,3 +778,36 @@ test('desktop guarded edit saves normally when seating is unchanged', async () =
   await require('../../../src/repositories/sale.repository').save(doc);
   expect((await db.collection('sales').findOne({ _id: order._id })).total_amount).toBe(999);
 });
+
+test('authorized staff handover keeps the new move request owned by its initiating staff', async () => {
+  const order = await movableOrder();
+  const input = request({
+    request_id: 'handover-move-0001',
+    actor: 'staff-2',
+    table_ids: ids.slice(1),
+    primary_id: ids[1],
+  });
+  await expect(seating.prepareMove(db, scope, String(order._id), input)).rejects.toMatchObject({
+    status: 403,
+  });
+  const move = await seating.prepareMove(db, scope, String(order._id), input, {
+    staffHandover: true,
+  });
+  expect(move.actor).toBe('staff-2');
+  await expect(
+    seating.cancelMove(db, scope, move.id, 'staff-1', String(order._id), { staffHandover: true })
+  ).rejects.toMatchObject({ status: 403 });
+  await expect(seating.completeMove(db, scope, move.id, 'staff-1')).rejects.toMatchObject({
+    status: 403,
+  });
+  await seating.completeMove(db, scope, move.id, 'staff-2');
+  expect((await db.collection('sales').findOne({ _id: order._id })).table_number).toBe('T2');
+});
+test('staff can abandon their unprepared move of an order owned by another staff member', async () => {
+  const order = await movableOrder();
+  await seating.cancelMove(db, scope, 'handover-move-0001', 'staff-2', String(order._id), {
+    staffHandover: true,
+  });
+  expect((await seating.find(db, scope, 'handover-move-0001')).actor).toBe('staff-2');
+  expect((await seating.find(db, scope, order.seating_request_id)).moving_to).toBeUndefined();
+});

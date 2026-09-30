@@ -18,13 +18,19 @@ async function prepare(req) {
   const c = await scope(req),
     body = req.body || {};
   return view(
-    await seating.prepareMove(req.db, c, body.orderId, {
-      request_id: body.request_id,
-      table_ids: body.tableIds,
-      primary_id: body.primaryId,
-      guests: body.guests,
-      actor: String(req.user._id),
-    })
+    await seating.prepareMove(
+      req.db,
+      c,
+      body.orderId,
+      {
+        request_id: body.request_id,
+        table_ids: body.tableIds,
+        primary_id: body.primaryId,
+        guests: body.guests,
+        actor: String(req.user._id),
+      },
+      { staffHandover: true }
+    )
   );
 }
 async function complete(req) {
@@ -48,7 +54,8 @@ async function cancel(req) {
     c,
     req.body?.request_id,
     String(req.user._id),
-    req.body?.orderId
+    req.body?.orderId,
+    { staffHandover: true }
   );
   return { request_id: req.body.request_id, state: 'cancelled' };
 }

@@ -244,7 +244,7 @@ async function reserveClaim(db, scope, input, moving = null) {
   }
   return claim;
 }
-async function prepareMove(db, scope, orderId, input) {
+async function prepareMove(db, scope, orderId, input, { staffHandover = false } = {}) {
   const id = requestId(input.request_id);
   if (!Array.isArray(input.table_ids) || !input.table_ids.length || input.table_ids.length > 20)
     fail('Choose up to 20 tables.');
@@ -279,7 +279,8 @@ async function prepareMove(db, scope, orderId, input) {
   const source = await find(db, scope, order.seating_request_id);
   if (!source || source.state !== 'submitting' || source.order_id !== String(order._id))
     fail('The seating group changed. Refresh this order.', 409);
-  if (String(input.actor || '') !== source.actor) fail('Permission is required.', 403);
+  if (!staffHandover && String(input.actor || '') !== source.actor)
+    fail('Permission is required.', 403);
   return reserveClaim(db, scope, input, source);
 }
 
@@ -318,7 +319,7 @@ async function beginClose(db, scope, orderIds, closeId) {
   if (!result.matchedCount) fail('The seating group changed. Refresh this order.', 409);
 }
 
-async function cancelMove(db, scope, id, actor, orderId) {
+async function cancelMove(db, scope, id, actor, orderId, { staffHandover = false } = {}) {
   requestId(id);
   let saved = await find(db, scope, id);
   if (!saved && orderId) {
@@ -328,7 +329,11 @@ async function cancelMove(db, scope, id, actor, orderId) {
       license: scope.license,
     });
     const source = order?.seating_request_id && (await find(db, scope, order.seating_request_id));
-    if (!source || source.actor !== String(actor) || source.order_id !== String(order._id))
+    if (
+      !source ||
+      (!staffHandover && source.actor !== String(actor)) ||
+      source.order_id !== String(order._id)
+    )
       fail('Permission is required.', 403);
     const snapshot = await store(db).findOne({ _id: scopeKey(scope) });
     saved = snapshot?.claims.find((row) => row.id === id) || (await find(db, scope, id));
