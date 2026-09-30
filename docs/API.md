@@ -227,6 +227,7 @@ Mounted at `/captain/v1`. Source: `api/src/routes/captain-access.routes.js`.
 | POST | `/captain/v1/tables/move/cancel` | — | `seating.cancel` |
 | POST | `/captain/v1/tables/guests` | — | `seating.guests` |
 | POST | `/captain/v1/tables/guests/status` | — | `seating.guestsStatus` |
+| POST | `/captain/v1/tables/transfer/preview` | — | `captain-transfer.preview` |
 | POST | `/captain/v1/profile` | — | `profile.update` |
 | POST | `/captain/v1/password` | — | `profile.password` |
 | GET | `/captain/v1/kitchen-ready` | — | `board` |
@@ -1241,3 +1242,20 @@ Captain checks this before opening the separate guest Save flow for an older
 order; saved retries remain available even before seating metadata reaches order
 history. Servers without the capability keep the compatible staged guest edit.
 Migration of all existing direct cover-edit writers remains outstanding.
+
+### Item-transfer preview (development protocol)
+
+`POST /captain/v1/tables/transfer/preview` accepts `orderId` and `items`, an
+array of `{ id, quantity, servedQuantity? }` using kitchen round-line IDs.
+It requires both sales write and merge permission. Branch and license come
+from the authenticated context; request-body scope values are not trusted.
+Only unpaid KOTs without a closed floor, pending/rejected/cancelled state,
+payment/restructure reservation or active edit lease are eligible.
+
+The response contains a `revision`, source/destination line and kitchen-round
+views, currency precision and amounts in minor units. Partly served rounds
+require an explicit served quantity when the selection is ambiguous.
+Preview does not reserve capacity or mutate sales, stock, service or print jobs.
+It is not a transfer confirmation. The production commit/recovery endpoint and
+Captain submission UI remain unfinished; a future commit must re-read and fence
+the order and validate this revision before applying either side.

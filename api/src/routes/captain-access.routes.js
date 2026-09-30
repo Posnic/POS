@@ -48,6 +48,7 @@ router.post('/tables/move/complete', limit, wrap(seating.complete));
 router.post('/tables/move/cancel', limit, wrap(seating.cancel));
 router.post('/tables/guests', limit, wrap(seating.guests));
 router.post('/tables/guests/status', limit, wrap(seating.guestsStatus));
+router.post('/tables/transfer/preview', limit, wrap(require('../services/captain-transfer').preview));
 
 router.post('/profile', limit, wrap(profile.update));
 router.post('/password', rateLimit({ windowMs: 15 * 60000, limit: 8 }), wrap(profile.password));
