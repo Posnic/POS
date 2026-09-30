@@ -40,7 +40,18 @@ function plan(sale, branch, requested) {
     Number(line.quantity ?? line.item_quantity ?? line.qty) > 0 && String(line.name || line.item_name || '').trim());
   orderLine.validate(live);
   const snapshot = snapshotFrom([sale], branch, sale.table_number || '', { allowZero: true });
-  const service = rounds(sale).flatMap(round => round.items);
+  // Billing excludes cancelled/returned lines; kitchen history must use that
+  // same live set or a mixed selection could move non-billable ghost dishes.
+  const service = rounds({ ...sale, items: live }).flatMap(round => round.items);
+  const serviceTotals = new Map();
+  for (const line of service)
+    serviceTotals.set(line.line_key, (serviceTotals.get(line.line_key) || 0) + units(line.quantity));
+  snapshot.lines.forEach((line, index) => {
+    // Legacy aliases may disagree (quantity vs item_quantity). Do not choose
+    // one silently and create a bill/service mismatch during a transfer.
+    if (serviceTotals.get(orderLine.key(live[index])) !== units(line.quantity))
+      fail('Order changed. Refresh before transferring items.');
+  });
   const selections = new Map();
   for (const request of requested) {
     if (!request || typeof request.id !== 'string' || selections.has(request.id))

@@ -61,6 +61,21 @@ test('duplicate product preparations retain distinct line identities and notes',
   expect(result.destination.rounds[0].note).toBe('No pepper');
   expect(result.source.lines[0].lineKey).toBe('corn-salt');
 });
+
+test.each([{cancelled:true},{return:true},{status:'cancelled'}])('non-billable historical dishes cannot be included with a valid transfer: %j',flags=>{
+  const original=sale();
+  original.items.push({...original.items[0],line_id:'cancelled-corn',quantity:1,...flags});
+  original.changes.push({timestamp:'2026-09-30T08:30:00Z',items:[{item_id:'corn',line_id:'cancelled-corn',item_name:'Corn',item_quantity:1,process:'add'}]});
+  expect(()=>plan(original,branch,[{id:'c1i0',quantity:1},{id:'c2i0',quantity:1}])).toThrow('Order changed');
+  const preview=plan(original,branch,[{id:'c1i0',quantity:1}]);
+  expect([...preview.source.rounds,...preview.destination.rounds].some(line=>line.line_key==='cancelled-corn')).toBe(false);
+});
+
+test('disagreeing billing and kitchen quantity aliases cannot create a mismatched transfer',()=>{
+  const original=sale();
+  original.items[0].item_quantity=7;
+  expect(()=>plan(original,branch,[{id:'c1i0',quantity:1}])).toThrow('Order changed');
+});
 test.each(['JPY','INR','KWD'])('fractional quantities conserve the original minor units for %s',currencyCode=>{
   const original=sale();
   original.items[0].quantity=0.003;
