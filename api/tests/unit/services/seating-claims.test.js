@@ -434,3 +434,67 @@ test('desktop retries with changed items cannot return the old sale or replace a
   expect(String((await desktop.lookup(db, scope, input))._id)).toBe(String(document._id));
   expect(await db.collection('sales').countDocuments({})).toBe(1);
 });
+
+async function movableOrder() {
+  const claim = await seating.reserve(db, scope, request());
+  const id = new ObjectId();
+  await seating.bind(db, scope, claim.id, 'staff-1', String(id));
+  const order = {
+    _id: id,
+    branch_id: scope.branchId,
+    license: scope.license,
+    seating_request_id: claim.id,
+    table_number: 'T1',
+    person_count: 4,
+    sale_process: 'KOT',
+  };
+  await db.collection('sales').insertOne(order);
+  return order;
+}
+test('preparing an overlapping group move reserves both old and new seats atomically', async () => {
+  const order = await movableOrder();
+  const input = request({
+    request_id: 'moving-request-0001',
+    table_ids: ids.slice(1),
+    primary_id: ids[1],
+  });
+  const move = await seating.prepareMove(db, scope, String(order._id), input);
+  expect(move.move_from).toBe(order.seating_request_id);
+  expect(await seating.prepareMove(db, scope, String(order._id), input)).toEqual(move);
+  expect((await seating.find(db, scope, order.seating_request_id)).moving_to).toBe(move.id);
+  await expect(
+    seating.reserve(
+      db,
+      scope,
+      request({
+        request_id: 'another-request-0001',
+        table_ids: [ids[0]],
+        primary_id: ids[0],
+        guests: 1,
+      })
+    )
+  ).rejects.toMatchObject({ status: 409 });
+  await expect(seating.forEdit(db, scope, order, {})).rejects.toMatchObject({ status: 409 });
+  await expect(seating.cancel(db, scope, move.id, 'staff-1')).rejects.toMatchObject({
+    status: 409,
+  });
+});
+test('two simultaneous moves cannot replace the same group twice', async () => {
+  const order = await movableOrder();
+  const results = await Promise.allSettled(
+    [1, 2].map((n) =>
+      seating.prepareMove(
+        db,
+        scope,
+        String(order._id),
+        request({
+          request_id: 'moving-request-000' + n,
+          table_ids: ids.slice(1),
+          primary_id: ids[1],
+        })
+      )
+    )
+  );
+  expect(results.filter((row) => row.status === 'fulfilled')).toHaveLength(1);
+  expect(await seating.read(db, scope)).toHaveLength(2);
+});

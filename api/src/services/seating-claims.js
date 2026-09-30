@@ -28,6 +28,7 @@ function sameRequest(saved, input) {
     saved.primary === input.primary &&
     saved.guests === input.guests &&
     (saved.payload_hash || null) === (input.payload_hash || null) &&
+    (saved.move_from || null) === (input.move_from || null) &&
     JSON.stringify(saved.tables) === JSON.stringify(input.tables)
   );
 }
@@ -63,6 +64,9 @@ async function archive(db, scope, id) {
   );
 }
 async function reserve(db, scope, input) {
+  return reserveClaim(db, scope, input);
+}
+async function reserveClaim(db, scope, input, moving = null) {
   const id = requestId(input.request_id);
   if (!Array.isArray(input.table_ids) || !input.table_ids.length || input.table_ids.length > 20)
     fail('Choose up to 20 tables.');
@@ -79,6 +83,7 @@ async function reserve(db, scope, input) {
     actor,
     guests: input.guests,
     state: 'reserved',
+    ...(moving ? { move_from: moving.id, order_id: moving.order_id } : {}),
     ...(input.payload_hash ? { payload_hash: input.payload_hash } : {}),
     at: new Date(),
   };
@@ -159,8 +164,20 @@ async function reserve(db, scope, input) {
       fail('This seating request has already been used.', 409);
     return concurrent;
   }
+  if (
+    moving &&
+    !snapshot.claims.some(
+      (row) =>
+        row.id === moving.id &&
+        row.order_id === moving.order_id &&
+        row.state === 'submitting' &&
+        !row.moving_to
+    )
+  )
+    fail('The seating group changed. Refresh this order.', 409);
   const overlaps = snapshot.claims.filter(
-    (row) => !terminal(row) && row.tables.some((table) => ids.includes(table))
+    (row) =>
+      !terminal(row) && row.id !== moving?.id && row.tables.some((table) => ids.includes(table))
   );
   if (overlaps.some((row) => ids.length > 1 || row.tables.length > 1))
     fail('Table changed. Refresh and try again.', 409);
@@ -172,6 +189,7 @@ async function reserve(db, scope, input) {
         license: scope.license,
         ...require('../helpers/floor-eligibility').floorEligibility(),
         table_number: { $in: tables.map((row) => row.tableorder_value) },
+        ...(moving ? { _id: { $ne: new ObjectId(moving.order_id) } } : {}),
       },
       { projection: { _id: 1 } }
     )
@@ -204,7 +222,19 @@ async function reserve(db, scope, input) {
       revision: snapshot.revision === undefined ? { $exists: false } : snapshot.revision,
       'claims.id': { $ne: id },
     },
-    { $push: { claims: claim }, $inc: { revision: 1 } }
+    moving
+      ? {
+          $set: {
+            claims: [
+              ...snapshot.claims.map((row) =>
+                row.id === moving.id ? { ...row, moving_to: id } : row
+              ),
+              claim,
+            ],
+          },
+          $inc: { revision: 1 },
+        }
+      : { $push: { claims: claim }, $inc: { revision: 1 } }
   );
   if (!result.matchedCount) {
     const saved = (await read(db, scope)).find((row) => row.id === id);
@@ -213,15 +243,32 @@ async function reserve(db, scope, input) {
   }
   return claim;
 }
+async function prepareMove(db, scope, orderId, input) {
+  const order = await db.collection('sales').findOne({
+    _id: new ObjectId(identity(orderId)),
+    branch_id: scope.branchId,
+    license: scope.license,
+    ...require('../helpers/floor-eligibility').floorEligibility(),
+  });
+  if (!order?.seating_request_id) fail('Refresh this order before changing its seating.', 409);
+  const source = await find(db, scope, order.seating_request_id);
+  if (!source || source.state !== 'submitting' || source.order_id !== String(order._id))
+    fail('The seating group changed. Refresh this order.', 409);
+  if (String(input.actor || '') !== source.actor) fail('Permission is required.', 403);
+  return reserveClaim(db, scope, input, source);
+}
+
 async function bind(db, scope, id, actor, orderId) {
   requestId(id);
   const sale = identity(orderId);
   const result = await store(db).updateOne(
     {
       _id: scopeKey(scope),
-      claims: { $elemMatch: { id, actor: String(actor), state: 'reserved' } },
+      claims: {
+        $elemMatch: { id, actor: String(actor), state: 'reserved', move_from: { $exists: false } },
+      },
     },
-    { $set: { 'claims.$.state': 'submitting', 'claims.$.order_id': sale } }
+    { $set: { 'claims.$.state': 'submitting', 'claims.$.order_id': sale }, $inc: { revision: 1 } }
   );
   if (result.matchedCount) return;
   const existing = (await read(db, scope)).find((row) => row.id === id);
@@ -238,6 +285,7 @@ async function cancel(db, scope, id, actor) {
   const saved = await find(db, scope, id);
   if (!saved) return;
   if (saved.actor !== String(actor)) fail('Permission is required.', 403);
+  if (saved.move_from) fail('Reconcile the table move before releasing its tables.', 409);
   if (saved.state === 'cancelled') {
     await archive(db, scope, id);
     return;
@@ -251,7 +299,7 @@ async function cancel(db, scope, id, actor) {
       _id: scopeKey(scope),
       claims: { $elemMatch: { id, actor: String(actor), state: 'reserved' } },
     },
-    { $set: { 'claims.$.state': 'cancelled' } }
+    { $set: { 'claims.$.state': 'cancelled' }, $inc: { revision: 1 } }
   );
   const remaining = (await read(db, scope)).find((row) => row.id === id);
   if (remaining && remaining.state !== 'cancelled')
@@ -262,6 +310,7 @@ async function release(db, scope, id) {
   requestId(id);
   const claim = await find(db, scope, id);
   if (!claim) fail('Seating request not found.', 404);
+  if (claim.moving_to) fail('Reconcile the table move before releasing its tables.', 409);
   if (claim.state === 'released') {
     await archive(db, scope, id);
     return;
@@ -318,16 +367,24 @@ async function release(db, scope, id) {
   await store(db).updateOne(
     {
       _id: scopeKey(scope),
-      claims: { $elemMatch: { id, state: 'submitting', order_id: claim.order_id } },
+      claims: {
+        $elemMatch: {
+          id,
+          state: 'submitting',
+          order_id: claim.order_id,
+          moving_to: { $exists: false },
+        },
+      },
     },
-    { $set: { 'claims.$.state': 'released' } }
+    { $set: { 'claims.$.state': 'released' }, $inc: { revision: 1 } }
   );
   await archive(db, scope, id);
 }
 async function forOrder(db, scope, input) {
   const id = requestId(input.request_id);
   const claim = await find(db, scope, id);
-  if (!claim || terminal(claim)) fail('This seating request is no longer available.', 409);
+  if (!claim || terminal(claim) || claim.move_from || claim.moving_to)
+    fail('This seating request is no longer available.', 409);
   if (!input.actor || claim.actor !== String(input.actor)) fail('Permission is required.', 403);
   const primaryLabel = claim.labels[claim.tables.indexOf(claim.primary)];
   if (
@@ -364,6 +421,7 @@ async function forEdit(db, scope, order, next) {
   const destination = String(next.table || order.table_number || '');
   const claims = await read(db, scope);
   const own = claims.find((claim) => !terminal(claim) && claim.order_id === String(order._id));
+  if (own?.moving_to) fail('Reconcile the table move before editing this order.', 409);
   if (order.seating_request_id && !own) fail('The seating group changed. Refresh this order.', 409);
   if (
     own &&
@@ -387,6 +445,7 @@ async function forEdit(db, scope, order, next) {
 }
 module.exports = {
   reserve,
+  prepareMove,
   bind,
   cancel,
   read,
