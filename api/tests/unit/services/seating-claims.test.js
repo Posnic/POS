@@ -257,6 +257,7 @@ test('a delayed concurrent release cannot dirty tables already cleaned after clo
   expect((await seating.find(db, scope, claim.id)).state).toBe('released');
 });
 test('single-table seating honours a branch limit and counts a bound sale only once', async () => {
+  await db.collection('tableorder').updateMany({}, {$set:{max_capacity:6}});
   await db
     .collection('branches')
     .insertOne({ _id: scope.branchId, license: scope.license, table_order_limit: 2 });
@@ -284,7 +285,31 @@ test('single-table seating honours a branch limit and counts a bound sale only o
     )
   ).rejects.toThrow('open order limit');
 });
+
+test('unlimited order count does not bypass shared seating capacity, including pending claims', async () => {
+  await db.collection('branches').insertOne({_id:scope.branchId,license:scope.license,table_order_limit:0});
+  await seating.reserve(db,scope,request({table_ids:[ids[0]],guests:2}));
+  const second=request({request_id:'capacity-second-request',table_ids:[ids[0]],guests:2});
+  await expect(seating.reserve(db,scope,second)).rejects.toThrow('enough seats');
+  const saleId=new ObjectId();
+  await seating.bind(db,scope,request().request_id,'staff-1',String(saleId));
+  await db.collection('sales').insertOne({_id:saleId,branch_id:scope.branchId,license:scope.license,table_number:'T1',sale_process:'KOT',payment_status:'Unpaid'});
+  await expect(seating.reserve(db,scope,second)).rejects.toThrow('enough seats');
+  await db.collection('sales').updateOne({_id:saleId},{$set:{person_count:1}});
+  await expect(seating.reserve(db,scope,second)).resolves.toMatchObject({guests:2});
+});
+
+test('concurrent reservations cannot both consume the last seats with an unlimited order count', async () => {
+  await db.collection('branches').insertOne({_id:scope.branchId,license:scope.license,table_order_limit:0});
+  await seating.reserve(db,scope,request({table_ids:[ids[0]],guests:1}));
+  const results=await Promise.allSettled([1,2].map(index=>seating.reserve(db,scope,request({
+    request_id:`concurrent-covers-${index}`,table_ids:[ids[0]],guests:2,
+  }))));
+  expect(results.filter(result=>result.status==='fulfilled')).toHaveLength(1);
+  expect((await seating.read(db,scope)).reduce((sum,claim)=>sum+claim.guests,0)).toBe(3);
+});
 test('unlimited single-table orders still cannot take a member of a combined group', async () => {
+  await db.collection('tableorder').updateMany({}, {$set:{max_capacity:6}});
   await db
     .collection('branches')
     .insertOne({ _id: scope.branchId, license: scope.license, table_order_limit: 0 });
@@ -309,6 +334,7 @@ test('unlimited single-table orders still cannot take a member of a combined gro
   ).rejects.toThrow('Table changed');
 });
 test('two concurrent requests cannot take the final permitted single-table slot', async () => {
+  await db.collection('tableorder').updateMany({}, {$set:{max_capacity:6}});
   await db
     .collection('branches')
     .insertOne({ _id: scope.branchId, license: scope.license, table_order_limit: 2 });
@@ -326,6 +352,7 @@ test('two concurrent requests cannot take the final permitted single-table slot'
   expect(await seating.read(db, scope)).toHaveLength(2);
 });
 test('closing one of multiple orders cannot mark the shared table for cleaning', async () => {
+  await db.collection('tableorder').updateMany({}, {$set:{max_capacity:6}});
   await db
     .collection('branches')
     .insertOne({ _id: scope.branchId, license: scope.license, table_order_limit: 2 });
@@ -360,6 +387,7 @@ test('closing one of multiple orders cannot mark the shared table for cleaning',
   expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(0);
 });
 test('cancelling one ticket releases only its claim and does not dirty a shared table', async () => {
+  await db.collection('tableorder').updateMany({}, {$set:{max_capacity:6}});
   await db
     .collection('branches')
     .insertOne({ _id: scope.branchId, license: scope.license, table_order_limit: 2 });

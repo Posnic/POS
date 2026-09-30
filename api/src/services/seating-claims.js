@@ -11,6 +11,18 @@ const restructure = require('./captain-restructure-lock');
 const store = (db) => db.collection('table_seating');
 const history = (db) => db.collection('table_seating_history');
 const terminal = (claim) => ['cancelled', 'released'].includes(claim.state);
+function occupiedGuests(claims, sales) {
+  const counts = new Map();
+  for (const claim of claims)
+    counts.set(claim.order_id || `claim:${claim.id}`, Math.max(1, Number(claim.guests) || 1));
+  for (const sale of sales) {
+    const key = String(sale._id), guests = Number(sale.person_count);
+    // Legacy sales may omit covers. Keep their reservation's count in that
+    // case, and count an unclaimed legacy check as at least one guest.
+    counts.set(key, Number.isFinite(guests) && guests >= 1 ? guests : counts.get(key) || 1);
+  }
+  return [...counts.values()].reduce((sum, value) => sum + value, 0);
+}
 function scopeKey(scope) {
   return `${String(scope.license)}:${String(scope.branchId)}`;
 }
@@ -206,7 +218,7 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
         table_number: { $in: tables.map((row) => row.tableorder_value) },
         ...(moving ? { _id: { $ne: new ObjectId(moving.order_id) } } : {}),
       },
-      { projection: { _id: 1 } }
+      { projection: { _id: 1, person_count: 1 } }
     )
     .toArray();
   if (ids.length > 1 && open.length) fail('This table has an open order.', 409);
@@ -232,6 +244,8 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
           tables[0].tableorder_value !== mergeTarget.table_number)
         fail('The seating group changed. Refresh this order.', 409);
     } else if (limit && count >= limit) fail('This table has reached its open order limit.', 409);
+    if (maximum && input.guests + occupiedGuests(overlaps, open) > maximum)
+      fail('Choose a table with enough seats.', 409);
   }
   if (await history(db).findOne({ _id: `${key}:${id}` }))
     fail('This seating request has already been used.', 409);
@@ -783,13 +797,10 @@ async function forEdit(db, scope, order, next) {
     const takeaway = own.tables.length === 0 && own.dine_type === 'Take away';
     if (!Number.isInteger(guests) || (takeaway ? guests !== 0 : guests < 1 || guests > 1000))
       fail('Enter the number of guests.');
-    const otherGuests = new Map();
+    let otherGuests = 0;
     if (!takeaway) {
-      for (const claim of claims) {
-        if (terminal(claim) || claim.id === own.id || claim.order_id === String(order._id) ||
-            !claim.tables.some(table => own.tables.includes(table))) continue;
-        otherGuests.set(claim.order_id || `claim:${claim.id}`, Math.max(1, Number(claim.guests) || 1));
-      }
+      const overlaps = claims.filter(claim => !terminal(claim) && claim.id !== own.id &&
+        claim.order_id !== String(order._id) && claim.tables.some(table => own.tables.includes(table)));
       const others = await db.collection('sales').find({
         branch_id: scope.branchId, license: scope.license,
         ...require('../helpers/floor-eligibility').floorEligibility(),
@@ -797,9 +808,9 @@ async function forEdit(db, scope, order, next) {
       }, { projection: { _id: 1, person_count: 1 } }).toArray();
       // A committed sale replaces its reservation's original cover count.
       // Count unclaimed legacy checks and pending reservations as well.
-      for (const other of others) otherGuests.set(String(other._id), Math.max(1, Number(other.person_count) || 1));
+      otherGuests = occupiedGuests(overlaps, others);
     }
-    const total = guests + [...otherGuests.values()].reduce((sum, value) => sum + value, 0);
+    const total = guests + otherGuests;
     if (!details.accommodates(own, total)) fail('Choose a table with enough seats.', 409);
   }
   if (
