@@ -202,7 +202,7 @@ router.post(
       historyMaxReceipts > 100000
     )
       mobile.fail(
-        'Choose 1–365 history days and 100–100000 local receipts. Pending sales are always retained.'
+        'Choose 1 to 365 history days and 100 to 100000 local receipts. Pending sales are always retained.'
       );
     if (
       !Number.isInteger(s.offlineHours) ||
