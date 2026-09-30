@@ -122,6 +122,7 @@ function editorValue(sale) {
   const saved = require('../utils/transfer-allocation').read(sale,sale.captain_transfer_allocation);
   const minor = saved.lines.reduce((sum,line)=>sum+(line.billDiscountMinor || 0),0);
   const Money = require('../utils/currency');
-  return { extra_discount: Money.fromMinor(minor,Money.policy(saved)), extra_discount_type:'amount' };
+  return { extra_discount: Money.fromMinor(minor,Money.policy(saved)), extra_discount_type:'amount',
+    discount_basis: Money.fromMinor((saved.components.base || 0)+(saved.components.discount || 0)+minor,Money.policy(saved)) };
 }
 module.exports = { plan, legacy, track, editorValue };

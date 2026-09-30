@@ -624,7 +624,7 @@ test('ordinary editor replaces, retries and clears an allocated bill discount wi
     expect(result.sales_total).toBe(total);
     expect(result.tax).toBe(2.5);
     expect(result.sale_extra_discount).toBe(0);
-    expect(require('../../../src/services/captain-transfer-discount').editorValue(result)).toEqual({extra_discount:52.5-total,extra_discount_type:'amount'});
+    expect(require('../../../src/services/captain-transfer-discount').editorValue(result)).toMatchObject({extra_discount:52.5-total,extra_discount_type:'amount',discount_basis:50});
     const policyRequest={...input,body:{order_id:String(id),items:[{product_id:String(sale.items[0].item_id),quantity:1}],
       extra_discount:52.5-total,extra_discount_type:'amount'}};
     await expect(require('../../../src/services/captain-edit-policy').authorize(policyRequest)).resolves.toBeDefined();
