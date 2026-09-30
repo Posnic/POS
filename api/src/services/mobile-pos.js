@@ -75,7 +75,7 @@ async function context(req, requireEnabled = true) {
     shopId: hash(id(t.licenseId)).slice(0, 24),
   };
 }
-function mapItem(row) {
+function mapItem(row, options = {}) {
   const taxBps = Math.round(Number(row.tax || 0) * 100);
   const price = minor(row.selling_price);
   const code = String(row.plu_code || '');
@@ -88,6 +88,14 @@ function mapItem(row) {
   return {
     id: id(row._id),
     name: String(row.name || row.item_name || 'Item'),
+    ...(options.decimal && row.item_weight_machine_based
+      ? {
+          quantityScale: 1000,
+          unit: String(row.unit || '')
+            .trim()
+            .slice(0, 30),
+        }
+      : {}),
     price: Number.isSafeInteger(price) && price >= 0 && price <= 99999999999 ? price : 0,
     code: /^\d{1,6}$/.test(code) ? code : '',
     barcode: String(row.barcode_id || ''),
@@ -125,7 +133,7 @@ function mapItem(row) {
         row.variants?.length ||
         row.modifier_groups?.length ||
         row.modifier_group_ids?.length ||
-        row.item_weight_machine_based
+        (row.item_weight_machine_based && (!options.decimal || !String(row.unit || '').trim()))
       ),
   };
 }
@@ -147,7 +155,8 @@ async function bootstrap(req) {
   );
   const paged = req.query?.catalogue === 'paged';
   const catalogue = require('./mobile-catalogue');
-  const manifest = paged ? await catalogue.prepare(req.db, c, mapItem) : null;
+  const itemMapper = (row) => mapItem(row, { decimal: req.query?.quantity === 'fixed3' });
+  const manifest = paged ? await catalogue.prepare(req.db, c, itemMapper) : null;
   const rows = paged
     ? []
     : await req.db
@@ -155,7 +164,7 @@ async function bootstrap(req) {
         .find({ branch_id: c.branchId, license: c.license, is_deleted: { $ne: true } })
         .sort({ _id: 1 })
         .toArray();
-  const items = rows.map(mapItem);
+  const items = rows.map(itemMapper);
   const version = hash(
     canonical({
       items: manifest ? manifest.digest : items,
@@ -305,8 +314,8 @@ function validateSale(sale, grant, c, grants = new Map()) {
       !Number.isSafeInteger(line.price) ||
       line.price < 0 ||
       line.price > 99999999999 ||
-      !Number.isInteger(line.quantity) ||
-      line.quantity < 1 ||
+      !Number.isFinite(line.quantity) ||
+      line.quantity <= 0 ||
       line.quantity > 100000
     )
       fail('Invalid price or quantity.');
@@ -336,6 +345,13 @@ function validateSale(sale, grant, c, grants = new Map()) {
         line.taxInclusive !== lineGrant.shop.quickTaxInclusive)
     )
       fail('Quick sale is not permitted.', 403);
+    const quantityScale = item?.quantityScale === 1000 ? 1000 : 1;
+    const quantityUnits = Math.round(line.quantity * quantityScale);
+    if (
+      quantityUnits / quantityScale !== line.quantity ||
+      (line.quantityScale || 1) !== quantityScale
+    )
+      fail('Quantity does not match the item unit.', 409);
     const result = computeLineTax({
       itemAmount: (line.price * line.quantity) / 100,
       sellingPrice: line.price / 100,
@@ -345,14 +361,19 @@ function validateSale(sale, grant, c, grants = new Map()) {
       discountAmount: 0,
       discountPercentage: 0,
     });
-    const part = minor(result.tax),
-      amount = line.price * line.quantity + (line.taxInclusive ? 0 : part);
+    const fixed =
+      quantityScale === 1000
+        ? require('./mobile-amounts').lineAmounts({ ...line, quantityScale })
+        : null;
+    const part = fixed ? fixed.tax : minor(result.tax),
+      amount = fixed ? fixed.amount : line.price * line.quantity + (line.taxInclusive ? 0 : part);
     if (!Number.isSafeInteger(amount)) fail('Sale amount is too large.');
     total += amount;
     tax += part;
     return {
       ...line,
       name: item?.name || line.name.trim(),
+      unit: item?.unit || 'qty',
       amount,
       taxAmount: part,
       facts: lineGrant.facts?.[line.itemId] || {},
@@ -541,7 +562,7 @@ async function finish(db, intent, c, deps = {}) {
       item_price: line.price / 100,
       sale_inline_item_price: line.price / 100,
       total_amount: line.amount / 100,
-      item_unit: 'qty',
+      item_unit: line.unit || 'qty',
       tax: line.taxBps / 100,
       tax_type: line.taxInclusive ? 'inclusive' : 'exclusive',
       tax_amount: line.taxAmount / 100,
@@ -736,7 +757,7 @@ async function receipts(req) {
   }
   const rows = await req.db
     .collection('mobile_sales')
-    .find(filter, { projection: { _id: 1, sale: 1, created: 1 } })
+    .find(filter, { projection: { _id: 1, sale: 1, lines: 1, created: 1 } })
     .sort({ created: -1, _id: -1 })
     .limit(51)
     .toArray();
@@ -754,10 +775,11 @@ async function receipts(req) {
       currency: row.sale.currency,
       customer: row.sale.cart.customer?.name || '',
       method: row.sale.payment.method,
-      lines: row.sale.cart.lines.map((line) => ({
+      lines: (row.lines || row.sale.cart.lines).map((line) => ({
         name: line.name,
         quantity: line.quantity,
         price: line.price,
+        ...(line.unit ? { unit: line.unit } : {}),
       })),
     })),
     next:
