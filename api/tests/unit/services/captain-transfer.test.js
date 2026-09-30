@@ -6,6 +6,7 @@ const service = require('../../../src/services/captain-transfer');
 const restructure = require('../../../src/services/captain-restructure-lock');
 const seating = require('../../../src/services/seating-claims');
 const sales = require('../../../src/repositories/sale.repository');
+const { snapshotFrom } = require('../../../src/services/guest-bill.service');
 let server, db, branch, license, sale;
 beforeAll(async () => {
   server = await MongoMemoryServer.create();
@@ -63,6 +64,65 @@ async function confirmation() {
   input.body.requestId = 'transfer-confirmation-0001';
   return input;
 }
+test('two-sale projection conserves money and items and remains fenced for finalization', async () => {
+  const input = await confirmation();
+  await db.collection('sales').updateOne({ _id: sale._id }, { $set: {
+    transaction_id: 'original-payment', idempotency_key: 'original-order', invoice_number: 'OLD',
+  } });
+  const result = await service.applySales(input), repeated = await service.applySales(input);
+  expect(await db.collection('sales').countDocuments()).toBe(2);
+  expect(result.source.items[0].item_quantity).toBe(1);
+  expect(result.destination.items[0].item_quantity).toBe(1);
+  expect(repeated.source).toEqual(result.source);
+  expect(repeated.destination).toEqual(result.destination);
+  expect(result.destination.transaction_id).toBeUndefined();
+  expect(result.destination.idempotency_key).toBeUndefined();
+  expect(result.destination.invoice_number).not.toBe('OLD');
+  expect(result.destination.payment_status).toBe('Unpaid');
+  const policy = { currencyCode: 'INR' };
+  expect(snapshotFrom([result.source], policy, '1').totalMinor +
+    snapshotFrom([result.destination], policy, result.destination.table_number).totalMinor).toBe(10500);
+  for (const order of [result.source, result.destination]) {
+    expect(order.captain_payment_plan).toBe(result.journal._id);
+    expect(order.captain_transfer_operations).toHaveLength(1);
+  }
+  expect(result.journal.stage).toBe('applying');
+});
+test.each(['destination', 'source'])('interruption after %s write retries without duplicate food or subtraction', async side => {
+  const input = await confirmation(), original = db.collection.bind(db);
+  let interrupted = false;
+  jest.spyOn(db, 'collection').mockImplementation((name, ...rest) => {
+    const collection = original(name, ...rest);
+    if (name !== 'sales') return collection;
+    return new Proxy(collection, { get(target, property) {
+      if (property === 'updateOne') return async (...args) => {
+        const result = await target.updateOne(...args);
+        const transferWrite = side === 'destination' ? args[1].$setOnInsert?.captain_transfer_operations : args[1].$push?.captain_transfer_operations;
+        if (transferWrite && !interrupted) {
+          interrupted = true;
+          throw new Error('Transfer acknowledgement lost');
+        }
+        return result;
+      };
+      const value = target[property]; return typeof value === 'function' ? value.bind(target) : value;
+    } });
+  });
+  await expect(service.applySales(input)).rejects.toThrow('Transfer acknowledgement lost');
+  expect((await original('sales').findOne({ _id: sale._id })).items[0].item_quantity).toBe(side === 'destination' ? 2 : 1);
+  const recovered = await service.applySales(input);
+  expect(await original('sales').countDocuments()).toBe(2);
+  expect(recovered.source.items[0].item_quantity).toBe(1);
+  expect(recovered.destination.items[0].item_quantity).toBe(1);
+});
+test('a changed source behind its fence is not overwritten by transfer projection', async () => {
+  const input = await confirmation();
+  await service.beginCommit(input);
+  await db.collection('sales').updateOne({ _id: sale._id }, { $set: { 'items.0.item_note': 'Concurrent note' } });
+  await expect(service.applySales(input)).rejects.toMatchObject({ status: 409 });
+  const retained = await db.collection('sales').findOne({ _id: sale._id });
+  expect(retained.items[0].item_note).toBe('Concurrent note');
+  expect(retained.items[0].item_quantity).toBe(2);
+});
 test('commit preparation keeps one destination identity and bill number across retries', async () => {
   const input = await confirmation();
   const first = await service.beginCommit(input), next = await service.beginCommit(input);

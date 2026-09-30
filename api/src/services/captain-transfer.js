@@ -7,6 +7,8 @@ const restructure = require('./captain-restructure-lock');
 const Money = require('../utils/currency');
 const seating = require('./seating-claims');
 const { createHash } = require('node:crypto');
+const { BSON } = require('mongodb');
+const { isDeepStrictEqual } = require('node:util');
 const destinationId = id => 'transfer-' + createHash('sha256').update(id).digest('hex').slice(0, 40);
 function destination(value) {
   if (!value || !Array.isArray(value.tableIds) || !value.tableIds.length || value.tableIds.length > 20 ||
@@ -149,4 +151,45 @@ async function beginCommit(req) {
   // before releasing these fences, including full-source seating closure.
   return { ...prepared, journal, claim, identity, existing };
 }
-module.exports = { preview, reserve, prepareDestination, cancel, beginCommit };
+// Both records remain fenced until the later seating/finalization stage. Raw
+// writes intentionally avoid ordinary order-entry stock, print and voice effects.
+async function applySales(req) {
+  const prepared = await beginCommit(req), c = await scope(req);
+  const { journal, projection, identity } = prepared, original = journal.sales[0];
+  const metadata = {};
+  for (const key of ['branch_name', 'customer_id', 'customer_name', 'customer_phone', 'customer_email'])
+    if (original[key] !== undefined) metadata[key] = original[key];
+  const event = side => ({ id: journal._id, side, at: journal.createdAt, actor: journal.actor,
+    other_order_id: String(side === 'source' ? identity._id : original._id) });
+  const document = { ...metadata, ...projection.destination, ...identity,
+    branch: c.branchId, branch_id: c.branchId, license: c.license,
+    ...require('../utils/sales-channels').describeSale({ channel: 'tableside', fulfilment: 'dine_in' }),
+    sale_process: 'KOT', payment_status: 'Unpaid', payment_mode: '', dine_type: 'Dine-in',
+    person_count: journal.intent.destination.guests, kitchen_required: true, floor_lifecycle: true,
+    date: journal.createdAt, created_date: journal.createdAt, updated_date: journal.createdAt,
+    captain_transfer_operations: [event('destination')] };
+  const collection = req.db.collection('sales');
+  // Deterministic _id is the insertion fence. Never replace an existing record.
+  await collection.updateOne({ _id: identity._id }, { $setOnInsert: document }, { upsert: true });
+  const same = (left, right) => isDeepStrictEqual(
+    BSON.deserialize(BSON.serialize({ value: left }, { ignoreUndefined: false })),
+    BSON.deserialize(BSON.serialize({ value: right }, { ignoreUndefined: false })));
+  async function verify(id, expected, side) {
+    const saved = await collection.findOne({ _id: id, branch_id: c.branchId, license: c.license,
+      captain_payment_plan: journal._id, captain_transfer_operations: { $elemMatch: event(side) } });
+    if (!saved || Object.entries(expected).some(([key, value]) => !same(saved[key], value)))
+      fail('The transfer records changed. Reconcile this transfer.', 409);
+    return saved;
+  }
+  const destination = await verify(identity._id, document, 'destination');
+  const originalFields = Object.fromEntries(Object.keys(projection.source).map(key =>
+    [key, original[key] === undefined ? { $exists: false } : original[key]]));
+  await collection.updateOne({ _id: original._id, branch_id: c.branchId, license: c.license,
+    ...originalFields,
+    captain_payment_plan: journal._id, 'captain_transfer_operations.id': { $ne: journal._id },
+  }, { $set: { ...projection.source, updated_date: journal.createdAt },
+    $push: { captain_transfer_operations: event('source') } });
+  const source = await verify(original._id, projection.source, 'source');
+  return { ...prepared, source, destination };
+}
+module.exports = { preview, reserve, prepareDestination, cancel, beginCommit, applySales };
