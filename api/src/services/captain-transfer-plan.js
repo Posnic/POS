@@ -102,7 +102,7 @@ function plan(sale, branch, requested) {
         ready: readyCount / 1000, collected: collectedCount / 1000,
         collector: status.collector || '', collectorName: status.collectorName || '',
         readyVersion: status.readyVersion || 0, kitchenState: work.state || 'new',
-        origin: { saleId: String(sale._id), roundLineId: line.id } });
+        origin: line.origin ? structuredClone(line.origin) : { saleId: String(sale._id), roundLineId: line.id } });
     }
   }
   snapshot.lines.forEach((line, index) => {

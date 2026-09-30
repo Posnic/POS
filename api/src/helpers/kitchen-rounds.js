@@ -50,6 +50,11 @@ function rounds(sale, { descriptions = true } = {}) {
           original.fired_at = date(change.timestamp);
           original.round = `c${c}`;
         }
+      } else if (String(line.process).toLowerCase() === 'transfer-out') {
+        // A transfer names the original round; cancelling newest-first would
+        // move the wrong plates when the customer orders the same dish again.
+        const original = result.find(row => row.id === line.source_round_line && row.line_key === key);
+        if (original) original.quantity = Math.max(0, original.quantity - qty);
       } else if (String(line.process).toLowerCase() === 'cancel') {
         let remaining = qty;
         // Cancel the newest outstanding additions first, keeping earlier service history.
@@ -58,7 +63,8 @@ function rounds(sale, { descriptions = true } = {}) {
           previous.quantity -= removed;
           remaining -= removed;
         }
-      } else if (String(line.process).toLowerCase() === 'add' && qty > 0) {
+      } else if (['add', 'transfer-in'].includes(String(line.process).toLowerCase()) && qty > 0) {
+        const transferred = String(line.process).toLowerCase() === 'transfer-in';
         result.push({
           id: `c${c}i${i}`,
           round: `c${c}`,
@@ -66,7 +72,9 @@ function rounds(sale, { descriptions = true } = {}) {
           line_key: key,
           ...serviceLine.metadata(line),
           ...kitchenAmount.snapshot(line),
-          ordered_at: date(change.timestamp) || date(sale.created_date),
+          ordered_at: (transferred && date(line.original_ordered_at)) || date(change.timestamp) || date(sale.created_date),
+          ...(transferred && line.transfer_origin ? { origin: { ...line.transfer_origin } } : {}),
+          ...(transferred && date(line.original_fired_at) ? { fired_at: date(line.original_fired_at) } : {}),
           quantity: qty,
           name: String(line.item_name || line.name || ''),
           note: String(
