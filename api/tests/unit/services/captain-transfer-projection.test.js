@@ -93,3 +93,25 @@ test('seat and language updates refresh guest bills without changing allocated m
   expect(cleared.lines[0]).not.toHaveProperty('default_language');
   expect(cleared.totalMinor).toBe(snapshot.totalMinor);
 });
+
+test.each(['JPY','INR','KWD'])('desktop amount aliases reflect the allocated quantity in %s',currencyCode=>{
+  const original=sale(),branch={currencyCode,indian_gst:'enable'},policy=Money.policy(branch);
+  Object.assign(original,{sales_tax:original.tax,sales_round_off:0,items_subtotal:100.01,items_total:101.85});
+  Object.assign(original.items[0],{item_total:101.85,total:101.85,total_amount:101.85,item_discount:3.17,
+    cgst_tax:2.505,sgst_tax:2.505,igst_tax:0,tax:5});
+  const result=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  for(const side of ['source','destination']) {
+    const view=result[side],item=view.items[0],expected=result.preview[side];
+    const lineMinor=expected.totalMinor-(expected.components.adjustment||0);
+    for(const field of ['item_total','total','total_amount'])expect(Money.toMinor(item[field],policy)).toBe(lineMinor);
+    expect(Money.toMinor(item.item_discount,policy)).toBe(-expected.components.discount);
+    expect(Money.toMinor(item.cgst_tax,policy)+Money.toMinor(item.sgst_tax,policy)).toBe(Money.toMinor(item.item_tax,policy));
+    expect(item.igst_tax).toBe(0);
+    expect(item.tax).toBe(5); // Stored percentage remains a rate.
+    expect(view.sales_tax).toBe(view.tax);
+    expect(view.sales_round_off).toBe(view.round_off);
+    expect(view.items_subtotal).toBe(view.sales_sub_total);
+    expect(Money.toMinor(view.items_total,policy)+Money.toMinor(view.round_off,policy)).toBe(expected.totalMinor);
+    expect(item.item_base_price).toBe(original.items[0].item_base_price);
+  }
+});
