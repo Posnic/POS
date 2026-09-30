@@ -8392,6 +8392,29 @@ class SalesRepository {
       const runsTableService = branchDoc.table_options === true;
       const openTableLimit = Number(branchDoc.table_order_limit ?? 1);
       const wantsTable = String(servicePoint.label || kiosk_table_no || table || '').trim();
+      const seating = require('../services/seating-claims');
+      const seatingScope = { branchId: branchObjectId, license: branchDoc.license };
+      let seatingClaim = null;
+      if (data.seating_request_id) {
+        if (!staffOrder || !runsTableService)
+          throw new Error('Sign in to submit a seating request.');
+        seatingClaim = await seating.forOrder(db, seatingScope, {
+          request_id: data.seating_request_id,
+          actor: kitchenActor().id,
+          table: wantsTable,
+          table_id: kiosk_table_id,
+          guests: person_count,
+        });
+        if (seatingClaim.order_id) {
+          const previous = await db.collection('sales').findOne({
+            _id: new ObjectId(seatingClaim.order_id),
+            branch_id: branchObjectId,
+            license: branchDoc.license,
+            seating_request_id: seatingClaim.id,
+          });
+          if (previous) return this._duplicateOrderAnswer(previous);
+        }
+      }
       if (runsTableService && wantsTable) {
         const configuredTable = await db.collection('tableorder').findOne({
           branch_id: branchObjectId,
@@ -8402,7 +8425,10 @@ class SalesRepository {
           return { status: false, message: 'This table is not available.', data: null };
         if (
           configuredTable &&
-          !require('../utils/table-details').accommodates(configuredTable, person_count || 1)
+          !require('../utils/table-details').accommodates(
+            seatingClaim || configuredTable,
+            person_count || 1
+          )
         )
           return { status: false, message: 'Choose a table with enough seats.', data: null };
       }
@@ -8654,13 +8680,13 @@ class SalesRepository {
       try {
         let queueMinutes = 0;
         if (branchDoc.table_options === true) {
-          const tableCount = await (
-            await this.getCollection('tableorder')
-          ).countDocuments(
-            branchDoc.license
-              ? { branch_id: branchObjectId, license: branchDoc.license }
-              : { branch_id: branchObjectId }
-          );
+          const tableCount = await db
+            .collection('tableorder')
+            .countDocuments(
+              branchDoc.license
+                ? { branch_id: branchObjectId, license: branchDoc.license }
+                : { branch_id: branchObjectId }
+            );
           const openFilter = {
             sale_process: { $regex: 'KOT', $options: 'i' },
             payment_status: 'Unpaid',
@@ -8850,6 +8876,10 @@ class SalesRepository {
       /* A number taken a moment ago is taken again, not handed to the
          customer as a database error. */
       let insertResult;
+      if (seatingClaim) {
+        const previous = await seating.prepareOrder(db, seatingScope, seatingClaim, saleDocument);
+        if (previous) return this._duplicateOrderAnswer(previous);
+      }
       try {
         insertResult = await this.insertSaleWithFreshNumber(
           salesCollection,
@@ -8857,6 +8887,15 @@ class SalesRepository {
           branchObjectId
         );
       } catch (error) {
+        if (seatingClaim && error.code === 11000) {
+          const previous = await salesCollection.findOne({
+            _id: saleDocument._id,
+            branch_id: branchObjectId,
+            license: branchDoc.license,
+            seating_request_id: seatingClaim.id,
+          });
+          if (previous) return this._duplicateOrderAnswer(previous);
+        }
         /*
          * TWO TAPS AT THE SAME INSTANT.
          *

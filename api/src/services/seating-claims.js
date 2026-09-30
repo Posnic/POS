@@ -310,4 +310,40 @@ async function release(db, scope, id) {
   );
   await archive(db, scope, id);
 }
-module.exports = { reserve, bind, cancel, read, find, archive, release };
+async function forOrder(db, scope, input) {
+  const id = requestId(input.request_id);
+  const claim = await find(db, scope, id);
+  if (!claim || terminal(claim)) fail('This seating request is no longer available.', 409);
+  if (!input.actor || claim.actor !== String(input.actor)) fail('Permission is required.', 403);
+  const primaryLabel = claim.labels[claim.tables.indexOf(claim.primary)];
+  if (
+    String(input.table || '').trim() !== primaryLabel ||
+    (input.table_id && String(input.table_id) !== claim.primary) ||
+    Number(input.guests) !== claim.guests
+  )
+    fail('The order does not match its seating request.', 409);
+  return claim;
+}
+async function prepareOrder(db, scope, claim, document) {
+  const orderId =
+    claim.order_id ||
+    require('crypto')
+      .createHash('sha256')
+      .update(`${scopeKey(scope)}:${claim.id}`)
+      .digest('hex')
+      .slice(0, 24);
+  await bind(db, scope, claim.id, claim.actor, orderId);
+  document._id = new ObjectId(orderId);
+  document.seating_request_id = claim.id;
+  document.seating_table_ids = claim.tables;
+  document.seating_primary_id = claim.primary;
+  document.table_id = claim.primary;
+  document.table_number = claim.labels[claim.tables.indexOf(claim.primary)];
+  const existing = await db
+    .collection('sales')
+    .findOne({ _id: document._id, branch_id: scope.branchId, license: scope.license });
+  if (existing && existing.seating_request_id !== claim.id)
+    fail('The sale identity is already in use.', 409);
+  return existing;
+}
+module.exports = { reserve, bind, cancel, read, find, archive, release, forOrder, prepareOrder };
