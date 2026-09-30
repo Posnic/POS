@@ -72,3 +72,22 @@ test.each(['JPY','INR','KWD'])('fractional quantities conserve the original mino
   expect(result.destination.lines[0].quantity).toBe(0.001);
   expect(result.source.totalMinor+result.destination.totalMinor).toBe(result.totalMinor);
 });
+test('large amounts and thousandth quantities retain every minor unit',()=>{
+  const original=sale();
+  original.sales_total=9999999999.99;original.sales_sub_total=9999999999.99;
+  original.discount=0;original.tax=0;original.items[0].quantity=999999.999;
+  original.changes=[];original.kitchen_service={};
+  const {rounds}=require('../../../src/helpers/kitchen-rounds');
+  const id=rounds(original)[0].items[0].id;
+  const result=plan(original,branch,[{id,quantity:333333.333}]);
+  expect(result.source.totalMinor).toBe(666666666666);
+  expect(result.destination.totalMinor).toBe(333333333333);
+});
+test('serving an item invalidates the preview even without a billing timestamp change',()=>{
+  const original=sale();
+  const before=plan(original,branch,[{id:'c1i0',quantity:1}]);
+  original.kitchen_service.c1i0={quantity:1,at:'2026-09-30T08:40:00Z'};
+  const after=plan(original,branch,[{id:'c1i0',quantity:1}]);
+  expect(after.revision).not.toBe(before.revision);
+  expect(after.destination.rounds[0].served).toBe(1);
+});

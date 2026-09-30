@@ -2,6 +2,7 @@
 const { snapshotFrom } = require('./guest-bill.service');
 const { rounds } = require('../helpers/kitchen-rounds');
 const orderLine = require('../utils/order-line');
+const { createHash } = require('node:crypto');
 
 function fail(message) {
   throw Object.assign(new Error(message), { status: 409 });
@@ -103,7 +104,8 @@ function plan(sale, branch, requested) {
   if (!destination.lines.length || source.totalMinor < 0 || destination.totalMinor < 0 ||
     source.totalMinor + destination.totalMinor !== snapshot.totalMinor)
     fail('The bill totals do not match. Refresh and try again.');
-  return { sourceId: String(sale._id), revision: snapshot.revision, currencyCode: snapshot.currencyCode,
+  const revision = createHash('sha256').update(JSON.stringify({ bill: snapshot.revision, service })).digest('hex');
+  return { sourceId: String(sale._id), revision, currencyCode: snapshot.currencyCode,
     currencyDigits: snapshot.currencyDigits, currencySymbol: snapshot.currencySymbol,
     totalMinor: snapshot.totalMinor, source, destination };
 }
