@@ -134,6 +134,37 @@ const FAKE_CUSTOMER = '64f9a1c2e3b4d5e6f7000004';
 const FAKE_ITEM = '64f9a1c2e3b4d5e6f7000005';
 
 describe('SalesRepository', () => {
+  describe('myDayModel complete totals', () => {
+    test('counts every sale after 300 while limiting only the recent list', async () => {
+      const docs = Array.from({ length: 325 }, (_, i) => ({ _id: String(i), sales_total: 10, table_number: 'T1' }));
+      const query = createQueryMock(docs);
+      query.limit.mockImplementation((limit) => { query.lean.mockResolvedValue(docs.slice(0, limit)); return query; });
+      const model = { find: jest.fn(() => query) };
+      const result = await salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), { SaleModel: model });
+      expect(result).toMatchObject({ total: 3250, orders: 325, cancelled: 0 });
+      expect(result.tables).toEqual([{ table: 'T1', total: 3250, orders: 325 }]);
+      expect(result.recent).toHaveLength(20);
+      expect(model.find.mock.calls[0][0].license).toBe(FAKE_LICENSE);
+    });
+    test('cancellation representations never increase sales and explicit zero totals stay zero', async () => {
+      const docs = [
+        { _id: '1', sales_total: 100, payment_status: 'Cancelled' },
+        { _id: '2', sales_total: 100, order_state: 'cancelled' },
+        { _id: '3', sales_total: 100, sale_process: 'Cancel' },
+        { _id: '4', sales_total: 0, total: 99 },
+      ];
+      const result = await salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), { SaleModel: { find: () => createQueryMock(docs) } });
+      expect(result).toMatchObject({ total: 0, orders: 1, cancelled: 3 });
+      expect(result.recent.filter(row => row.cancelled)).toHaveLength(3);
+      expect(result.recent[3].total_amount).toBe(0);
+    });
+    test('database failure propagates instead of reporting an empty day', async () => {
+      const query = createQueryMock([]);
+      query.lean.mockRejectedValue(new Error('database offline'));
+      await expect(salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), { SaleModel: { find: () => query } })).rejects.toThrow('database offline');
+    });
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, 'log').mockImplementation(() => {});

@@ -9970,7 +9970,12 @@ class SalesRepository {
       }
       if (BaseModel.license) query.license = BaseModel.license;
 
-      const docs = await Model.find(query).sort({ created_date: -1, date: -1 }).limit(300).lean();
+      const docs = await Model.find(query)
+        .select('_id token_id sales_id sales_total total table_number created_date date sale_process payment_status order_state')
+        .sort({ created_date: -1, date: -1 })
+        .lean();
+      const isCancelled = (doc) => [doc.sale_process, doc.payment_status, doc.order_state]
+        .some((value) => ['cancel', 'cancelled'].includes(String(value || '').toLowerCase()));
 
       const tables = new Map();
       let total = 0;
@@ -9978,13 +9983,12 @@ class SalesRepository {
       let cancelled = 0;
 
       for (const doc of docs) {
-        const process = String(doc.sale_process || '').toLowerCase();
-        if (process === 'cancel' || process === 'cancelled') {
+        if (isCancelled(doc)) {
           cancelled += 1;
           continue;
         }
 
-        const amount = Number(doc.sales_total || doc.total || 0) || 0;
+        const amount = Number(doc.sales_total ?? doc.total ?? 0) || 0;
         total += amount;
         orders += 1;
 
@@ -10000,9 +10004,9 @@ class SalesRepository {
       const recent = docs.slice(0, 20).map((doc) => ({
         order_id: doc.token_id || doc.sales_id || String(doc._id).slice(-6),
         table_number: doc.table_number || '',
-        total_amount: Number(doc.sales_total || doc.total || 0) || 0,
+        total_amount: Number(doc.sales_total ?? doc.total ?? 0) || 0,
         created_at: doc.created_date || doc.date,
-        cancelled: ['cancel', 'cancelled'].includes(String(doc.sale_process || '').toLowerCase()),
+        cancelled: isCancelled(doc),
       }));
 
       return {
@@ -10016,7 +10020,7 @@ class SalesRepository {
       };
     } catch (error) {
       console.error('myDayModel failed:', error);
-      return { total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
+      throw error;
     }
   }
 
