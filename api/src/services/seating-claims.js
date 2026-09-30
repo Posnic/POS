@@ -92,10 +92,30 @@ async function reconcileEnrollment(db, scope, parentId, order, actor, start = fa
     return order;
   }
   if(child || (start && !order.seating_request_id)) {
-    await enrollExisting(db,scope,String(order._id),{request_id:childId,actor,...(parentIntent ? {parent_intent:parentIntent} : {})});
+    await enrollExisting(db,scope,String(order._id),{request_id:childId,actor,parent_request_id:parentId,...(parentIntent ? {parent_intent:parentIntent} : {})});
     return db.collection('sales').findOne({_id:order._id,branch_id:scope.branchId,license:scope.license});
   }
   return order;
+}
+async function reconcileMergeTarget(db, scope, parentId, sourceId, actor, target = null) {
+  // One fixed child per parent pins the destination even before the parent
+  // reservation exists, and lets cancellation discover interrupted enrollment.
+  const childId = enrollmentId(parentId, 'merge-target');
+  const child = await restructure.read(db, scope, childId, actor, { optional: true });
+  const parentIntent = { kind: 'merge-target', sourceId: String(sourceId) };
+  if (child && (JSON.stringify(child.intent.parentIntent) !== JSON.stringify(parentIntent) ||
+      (target && child.intent.orderId !== String(target._id))))
+    fail('This seating request has already been used.', 409);
+  if (child?.stage === 'cancelled') {
+    if (target) fail('This seating request has already been used.', 409);
+    return null;
+  }
+  if (child || (target && !target.seating_request_id)) {
+    const targetId = child?.intent.orderId || String(target._id);
+    await enrollExisting(db, scope, targetId, { request_id: childId, actor, parent_request_id: parentId, parent_intent: parentIntent });
+    return db.collection('sales').findOne({ _id: new ObjectId(targetId), branch_id: scope.branchId, license: scope.license });
+  }
+  return target;
 }
 async function reserveClaim(db, scope, input, moving = null, operationLock = null, mergeTarget = null, adopting = null) {
   const id = requestId(input.request_id);
@@ -358,6 +378,8 @@ async function prepareMove(db, scope, orderId, input, { staffHandover = false, m
       sale_process: 'KOT', payment_status: 'Unpaid', floor_closed_at: { $exists: false },
       order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
     });
+    if (mergeTarget && staffHandover)
+      mergeTarget = await reconcileMergeTarget(db, scope, id, order._id, expected.actor, mergeTarget);
     const targetClaim = mergeTarget?.seating_request_id && await find(db, scope, mergeTarget.seating_request_id);
     if (!targetClaim || targetClaim.state !== 'submitting' || targetClaim.moving_to || targetClaim.closing ||
         targetClaim.tables.length !== 1 || targetClaim.primary !== expected.primary ||
@@ -433,6 +455,8 @@ async function cancelMove(db, scope, id, actor, orderId, { staffHandover = false
     const original=await db.collection('sales').findOne({_id:new ObjectId(identity(orderId)),branch_id:scope.branchId,license:scope.license});
     if(original)await reconcileEnrollment(db,scope,id,original,String(actor));
   }
+  if (staffHandover && (orderId || saved?.order_id))
+    await reconcileMergeTarget(db, scope, id, orderId || saved.order_id, String(actor));
   if (!saved && orderId) {
     const order = await db.collection('sales').findOne({
       _id: new ObjectId(identity(orderId)),
@@ -896,6 +920,12 @@ async function enrollExisting(db, scope, orderId, input) {
   const original=journal.sales[0],tableId=journal.intent.tableId;
   if(journal.stage==='reserved') {
     try {
+      // The child journal exists before this check. Cancellation either sees
+      // and recovers it, or has already published the parent tombstone.
+      if (input.parent_request_id && !await find(db,scope,id)) {
+        const parent = await find(db,scope,input.parent_request_id);
+        if (parent && terminal(parent)) fail('This seating request has already been used.',409);
+      }
       await reserveClaim(db,scope,{request_id:id,actor,table_ids:[tableId],primary_id:tableId,
         guests:Number(original.person_count)||1},null,journal._id,null,original);
     } catch(error) {

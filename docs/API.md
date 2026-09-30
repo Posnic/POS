@@ -1167,8 +1167,8 @@ Mounted at `/whatsapp`. Source: `api/src/routes/whatsapp.routes.js`.
 
 `POST /captain/v1/tables/merge/prepare` takes the move request fields plus
 `targetOrderId`. It requires the manager/owner role or an explicit
-`sales.merge` permission. Both existing orders must have unpaid checks; the
-destination must already have an active seating claim. Only a single destination table with one existing check is
+`sales.merge` permission. Both existing orders must have unpaid checks.
+Only a single destination table with one existing check is
 accepted. The server validates the combined guest count against configured
 maximum capacity and reserves both checks against payment or editing.
 
@@ -1196,7 +1196,13 @@ completion or confirmed cancellation. Authenticated table discovery advertises
 dine-in orders through the durable move endpoints. Older servers keep the
 compatible single-table operation. A saved move always retains its recovery
 path even before the order history includes its new seating metadata.
-Automatic destination enrollment remains pending.
+Merge preparation also enrolls an older destination. Its fixed child request
+pins the destination before the parent reservation exists, allowing cancellation
+to recover an interrupted destination enrollment. A cancelled parent prevents
+late child enrollment from leaving a sale fence. Discovery advertises
+`capabilities.legacyTargetMerge: true`; Captain exposes older source/destination
+merges only with this support and the existing merge permission. Capacity and
+payment protections still apply, and no items are resubmitted.
 
 ### Captain guest-count updates
 

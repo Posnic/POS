@@ -27,7 +27,7 @@ const req = (body = {}, role = 'manager') => ({
 });
 
 test('authenticated table discovery advertises recoverable legacy source moves', async () => {
-  expect((await service.list(req({}, 'staff'))).capabilities).toEqual({ legacySourceMove: true, legacyGuestUpdate: true });
+  expect((await service.list(req({}, 'staff'))).capabilities).toEqual({ legacySourceMove: true, legacyGuestUpdate: true, legacyTargetMerge: true });
   await expect(service.list({ ...req(), user: null })).rejects.toMatchObject({ status: 403 });
 });
 test('manager creates and updates table metadata with optimistic conflict checks', async () => {

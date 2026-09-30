@@ -1321,6 +1321,78 @@ async function legacySale(guests=2) {
   await db.collection('sales').insertOne(sale);return sale;
 }
 
+async function legacyMergePair() {
+  const source=await legacySale(1),target=await legacySale(2);
+  await db.collection('sales').updateMany({},{$set:{payment_status:'Unpaid'}});
+  await db.collection('sales').updateOne({_id:target._id},{$set:{table_number:'T3'}});
+  return {source,target,input:request({request_id:'legacy-pair-merge-001',table_ids:[ids[2]],primary_id:ids[2],guests:1}),options:{staffHandover:true,mergeTargetId:String(target._id)}};
+}
+
+test('merge enrolls both older checks while preserving their original dishes and totals',async()=>{
+  const {source,target,input,options}=await legacyMergePair();
+  const move=await seating.prepareMove(db,scope,String(source._id),input,options);
+  await seating.completeMove(db,scope,move.id,'staff-1');
+  await seating.prepareMove(db,scope,String(source._id),input,options);
+  const rows=await db.collection('sales').find().toArray();
+  expect(rows).toHaveLength(2);
+  for(const original of [source,target]) {
+    const saved=rows.find(row=>String(row._id)===String(original._id));
+    expect(saved.table_number).toBe('T3');expect(saved.items).toEqual(original.items);
+    expect(saved.changes).toEqual(original.changes);expect(saved.sales_total).toBe(original.sales_total);
+    expect(saved.kitchen_service).toEqual(original.kitchen_service);expect(saved.captain_payment_plan).toBeUndefined();
+  }
+});
+
+test('cancel recovers interrupted destination enrollment without moving either check',async()=>{
+  const {source,target,input,options}=await legacyMergePair();
+  const interrupted={collection(name){
+    const collection=db.collection(name);
+    return new Proxy(collection,{get(targetCollection,key){
+      if(name==='sales'&&key==='updateOne')return async(filter,update,...rest)=>{
+        if(String(filter._id)===String(target._id)&&update.$set?.seating_request_id)throw new Error('interrupted destination');
+        return targetCollection.updateOne(filter,update,...rest);
+      };
+      const value=targetCollection[key];return typeof value==='function'?value.bind(targetCollection):value;
+    }});
+  }};
+  await expect(seating.prepareMove(interrupted,scope,String(source._id),input,options)).rejects.toThrow('interrupted destination');
+  const other=await legacySale();
+  await db.collection('sales').updateOne({_id:other._id},{$set:{payment_status:'Unpaid'}});
+  await expect(seating.prepareMove(db,scope,String(source._id),input,{...options,mergeTargetId:String(other._id)})).rejects.toMatchObject({status:409});
+  await seating.cancelMove(db,scope,input.request_id,'staff-1',String(source._id),{staffHandover:true});
+  await seating.cancelMove(db,scope,input.request_id,'staff-1',String(source._id),{staffHandover:true});
+  expect((await db.collection('sales').findOne({_id:source._id})).table_number).toBe('T1');
+  expect((await db.collection('sales').findOne({_id:target._id})).table_number).toBe('T3');
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  await expect(seating.prepareMove(db,scope,String(source._id),input,options)).rejects.toMatchObject({status:409});
+});
+
+test.each(['source','target'])('cancellation before the %s enrollment journal arrives prevents a late seating fence',async(which)=>{
+  const pair=await legacyMergePair(),{source,target,input,options}=pair;
+  let release,started;
+  const gate=new Promise(resolve=>{release=resolve;});
+  const reached=new Promise(resolve=>{started=resolve;});
+  const delayed={collection(name){
+    const collection=db.collection(name);
+    return new Proxy(collection,{get(targetCollection,key){
+      if(name==='captain_payment_plans'&&key==='insertOne')return async(entry,...rest)=>{
+        if(entry.intent?.kind==='enroll'&&entry.intent.orderId===String(pair[which]._id)){started();await gate;}
+        return targetCollection.insertOne(entry,...rest);
+      };
+      const value=targetCollection[key];return typeof value==='function'?value.bind(targetCollection):value;
+    }});
+  }};
+  const attempt=seating.prepareMove(delayed,scope,String(source._id),input,options).catch(error=>error);
+  await reached;
+  await seating.cancelMove(db,scope,input.request_id,'staff-1',String(source._id),{staffHandover:true});
+  release();
+  expect(await attempt).toMatchObject({status:409});
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  expect((await db.collection('sales').findOne({_id:source._id})).table_number).toBe('T1');
+  expect((await db.collection('sales').findOne({_id:target._id})).table_number).toBe('T3');
+  expect((await seating.read(db,scope)).some(row=>row.state==='reserved')).toBe(false);
+});
+
 test('legacy guest changes enroll once and preserve dishes and kitchen history',async()=>{
   const sale=await legacySale(),input={request_id:'legacy-cover-change-01',actor:'staff-1',guests:3};
   await seating.changeGuests(db,scope,String(sale._id),input);

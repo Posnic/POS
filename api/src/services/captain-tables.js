@@ -71,7 +71,7 @@ async function list(req) {
   return {
     canManage: allowed(req.user, 'settings'),
     canMerge: allowed(req.user, 'sales', 'merge'),
-    capabilities: { legacySourceMove: true, legacyGuestUpdate: true },
+    capabilities: { legacySourceMove: true, legacyGuestUpdate: true, legacyTargetMerge: true },
     tables: tables.map((row) => {
       const claim = claims.find((entry) => entry.tables.includes(String(row._id)));
       const primary = claim && tables.find((entry) => String(entry._id) === claim.primary);
