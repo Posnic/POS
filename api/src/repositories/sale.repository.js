@@ -10191,6 +10191,7 @@ class SalesRepository {
       // seating operation. Its HTTP adapter must supply authenticated scope.
       if (preview && (status !== 'modified' || newTableNo != null || dineType != null || personCount != null || newTableId !== undefined))
         throw new Error('Only item and discount changes can be previewed.');
+      if (editPolicy?.previewOnly && !preview) throw new Error('Preview cannot authorize a save.');
       if (previewContext && (!preview || !previewContext.db || !previewContext.branchId || !previewContext.license))
         throw new Error('Invalid preview scope.');
       const db = previewContext ? previewContext.db : await BaseModel.getDb();

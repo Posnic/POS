@@ -31,7 +31,7 @@ async function preview(req) {
     fail('Refresh the order before continuing.', 409);
   const c = await context(req);
   if (c.branch.module_captain_enable === false) fail('Captain is disabled.', 403);
-  const editPolicy = await policy.authorize({ ...req, body: { ...body, status: 'modified' } });
+  const editPolicy = await policy.authorize({ ...req, body: { ...body, status: 'modified' } }, { preview: true });
   const result = await sales.updateOrderModel(body.order_id, body.items.map(line => ({ ...line })), 0,
     'modified', body.extra_discount_type, body.extra_discount, body.discount_description,
     null, null, null, { preview: true, previewContext: { db: req.db, branchId: c.branchId, license: c.license },

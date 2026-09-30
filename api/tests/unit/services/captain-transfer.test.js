@@ -776,14 +776,24 @@ test.each([{status:'cancelled'},{table_number:'2'},{items:[]},
     const input=previewRequest(); Object.assign(input.body,values);
     await expect(editPreview.preview(input)).rejects.toHaveProperty('status');
   });
-test('edit preview requires reason and existing manager permissions for reductions',async()=>{
+test.each(['reduction','discount'])('preview prices %s before approval but never authorizes a save',async kind=>{
   await db.collection('items').insertOne({_id:sale.items[0].item_id,license,name:'Corn',tax:5,tax_type:'exclusive'});
-  const input=previewRequest(); input.body.items[0].quantity=1;
-  await expect(editPreview.preview(input)).rejects.toMatchObject({status:422,message:'Enter a reason for this change.'});
-  input.body.change_reason='Customer requested'; input.user.access.pos={void_sale:false};
-  await expect(editPreview.preview(input)).rejects.toMatchObject({status:422,message:'Manager approval required: cancellation'});
-  input.user.access.pos.void_sale=true;
-  expect((await editPreview.preview(input)).total_amount).toBe(52.5);
+  const before=await db.collection('sales').findOne({_id:sale._id});
+  const input=previewRequest(); input.user.access.pos={void_sale:false,discount_apply:false};
+  if(kind==='reduction') input.body.items[0].quantity=1;
+  else Object.assign(input.body,{extra_discount:10,extra_discount_type:'amount'});
+  // Body flags cannot bypass the ordinary save authorization.
+  input.body.preview=true;
+  const policy=require('../../../src/services/captain-edit-policy');
+  await expect(policy.authorize(input)).rejects.toMatchObject({status:422,message:'Enter a reason for this change.'});
+  expect((await editPreview.preview(input)).total_amount).toBe(kind==='reduction'?52.5:95);
+  input.body.change_reason='Customer requested';
+  await expect(policy.authorize(input)).rejects.toMatchObject({status:422,message:kind==='reduction'?'Manager approval required: cancellation':'Manager approval required: discount'});
+  const readPolicy=await policy.authorize(input,{preview:true});
+  expect(readPolicy.previewOnly).toBe(true);
+  const result=await sales.updateOrderModel(String(sale._id),input.body.items,0,'modified',null,null,null,null,null,null,{editPolicy:readPolicy});
+  expect(result).toMatchObject({status:false,message:'Preview cannot authorize a save.'});
+  expect(await db.collection('sales').findOne({_id:sale._id})).toEqual(before);
 });
 test('edit preview rejects a stale handset view and disabled Captain',async()=>{
   const input=previewRequest();input.body.seen_at='2026-01-01T00:00:00Z';

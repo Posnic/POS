@@ -1267,7 +1267,9 @@ the order and validate this revision before applying either side.
 `items` (at most 200, each with product/preparation identity, numeric `quantity`
 and `price`), optional `seen_at`, discount values, reason and approval tokens.
 It requires an authenticated Captain session with sales write permission and
-uses the same reduction/discount authorization as saving. Seating changes and
+permits read-only pricing before a reason or manager approval is supplied;
+saving still requires both where applicable. Preview authorization cannot be
+used for a save. Seating changes and
 cancellation are rejected. Database, license and branch are server-derived.
 
 The response contains reconciled `items`, `subtotal`, `tax`, `discount`,
