@@ -169,3 +169,37 @@ test('kitchen board hides held food and carries seat and allergy details after f
   });
   expect(board.project(after)[0].placedAt).toBe(after.changes[1].timestamp.toISOString());
 });
+
+
+test('simultaneous handover retries create one assignment and one audit entry', async () => {
+  const input = req({ staffId: String(other), requestId: require('crypto').randomUUID() });
+  const results = await Promise.all([service.handover(input), service.handover(input)]);
+  expect(results[0]).toEqual(results[1]);
+  const saved = await db.collection('sales').findOne({ _id: sale._id });
+  expect(saved.captain_audit).toHaveLength(1);
+});
+
+test('a handover request ID cannot be reused with a different recipient or actor', async () => {
+  const input = req({ staffId: String(other), requestId: require('crypto').randomUUID() });
+  await service.handover(input);
+  await expect(service.handover(req({ ...input.body, staffId: String(actor) })))
+    .rejects.toMatchObject({ status: 409 });
+  const differentActor = req(input.body);
+  differentActor.user._id = other;
+  await expect(service.handover(differentActor)).rejects.toMatchObject({ status: 409 });
+  const saved = await db.collection('sales').findOne({ _id: sale._id });
+  expect(saved.assigned_staff.id).toBe(String(other));
+  expect(saved.captain_audit).toHaveLength(1);
+});
+
+test('a delayed retry cannot report success for an assignment superseded by a later handover', async () => {
+  const input = req({ staffId: String(other), requestId: require('crypto').randomUUID() });
+  await service.handover(input);
+  const returnToOriginal = req({ staffId: String(actor), requestId: require('crypto').randomUUID() });
+  returnToOriginal.user._id = other;
+  await service.handover(returnToOriginal);
+  await expect(service.handover(input)).rejects.toMatchObject({ status: 409 });
+  const saved = await db.collection('sales').findOne({ _id: sale._id });
+  expect(saved.assigned_staff.id).toBe(String(actor));
+  expect(saved.captain_audit).toHaveLength(2);
+});
