@@ -76,6 +76,10 @@ const DEFAULTS = Object.freeze({
   /* The visual angle to aim for. A shop with older staff, or more steam, or a
      darker kitchen, raises this and accepts fewer tickets on screen. */
   targetArcmin: 20,
+  portraitColumns: 0,
+  fontSizePx: 0,
+  textGlow: false,
+  orderSort: 'oldest',
   /* Televisions crop the edges. This is the margin that keeps a card's border
      on the panel. */
   safeAreaPercent: 3,

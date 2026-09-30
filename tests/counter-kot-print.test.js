@@ -154,3 +154,14 @@ test('an unfinished ticket retains only the confirmation recovery action', async
   assert.equal(s.$('#kot-print-feedback button').length, 0);
   s.dom.window.close();
 });
+
+test('browser KOT shows preparation amount without adding prices to ordinary dishes', () => {
+ const s=setup();
+ const html=s.api.render({print_jobs:[{type:'new',items:[
+  {item_name:'Fish',item_quantity:2,priced_at_table:500},
+  {item_name:'Tea',item_quantity:1,item_price:20}
+ ]}]},'80');
+ assert.match(html,/Amount: 500 each/);
+ assert.doesNotMatch(html,/Amount: 20/);
+ s.dom.window.close();
+});

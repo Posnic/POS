@@ -162,3 +162,83 @@ test('arrival is AM/PM time only, unassigned table is blank, and lateness has no
   assert.ok(card.classList.contains('urgent'));
  }finally{dom.window.close();}
 });
+
+test('portrait column and font choices survive resize while dishes remain visible', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try {
+  const w=dom.window, board=w.document.getElementById('board');
+  w.innerWidth=1080; w.innerHeight=1920;
+  Object.defineProperty(board,'clientWidth',{get:()=>w.innerWidth-64});
+  Object.defineProperty(board,'clientHeight',{get:()=>w.innerHeight-180});
+  const cfg={portraitColumns:2,fontSizePx:52,textGlow:true,_fit:{fontPx:40,columns:4,cards:8}};
+  w.kitchenScreen.setConfig(cfg);
+  w.kitchenScreen.setTickets([{table:'12',placedAt:new Date().toISOString(),items:[{name:'Grilled fish with lemon butter sauce',qty:2}]}]);
+  assert.equal(board.style.getPropertyValue('--columns'),'2');
+  assert.equal(w.document.documentElement.style.getPropertyValue('--font'),'52px');
+  assert.equal(w.document.documentElement.getAttribute('data-glow'),'true');
+  assert.equal(board.querySelector('.name').textContent,'Grilled fish with lemon butter sauce');
+  w.kitchenScreen.setConfig({...cfg,portraitColumns:1});
+  assert.equal(board.style.getPropertyValue('--columns'),'1');
+  w.innerWidth=1920; w.innerHeight=1080; w.dispatchEvent(new w.Event('resize'));
+  assert.ok(Number(board.style.getPropertyValue('--columns'))>1);
+  w.kitchenScreen.setConfig({...cfg,fontSizePx:1000,textGlow:false});
+  assert.equal(w.document.documentElement.style.getPropertyValue('--font'),'96px');
+  assert.equal(w.document.documentElement.getAttribute('data-glow'),'false');
+ } finally {dom.window.close();}
+});
+
+test('page rotation applies saved timing, replaces old timers and survives repeated config delivery', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const intervals=new Map(); let nextId=0;
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{
+  runScripts:'dangerously',beforeParse(w){
+   w.setInterval=(fn,ms)=>{const id=++nextId;intervals.set(id,{fn,ms});return id;};
+   w.clearInterval=id=>intervals.delete(id);
+  }
+ });
+ try {
+  const w=dom.window, board=w.document.getElementById('board');
+  Object.defineProperty(board,'clientWidth',{value:450});
+  Object.defineProperty(board,'clientHeight',{value:400});
+  const cfg={pageDwellSeconds:3,_fit:{fontPx:40,columns:1,cards:1}};
+  w.kitchenScreen.setConfig(cfg);
+  w.kitchenScreen.setTickets([{table:'1',items:[{name:'Soup'}]},{table:'2',items:[{name:'Rice'}]}]);
+  assert.equal(w.document.getElementById('pager').textContent,'1 of 2');
+  const first=[...intervals].find(([,v])=>v.ms===3000);
+  assert.ok(first);
+  first[1].fn();
+  assert.equal(w.document.getElementById('pager').textContent,'2 of 2');
+  w.kitchenScreen.setConfig(cfg);
+  assert.ok(intervals.has(first[0]),'unchanged config must not delay rotation');
+  w.kitchenScreen.setConfig({...cfg,pageDwellSeconds:20});
+  assert.equal(intervals.has(first[0]),false);
+  const second=[...intervals.values()].find(v=>v.ms===20000);
+  assert.ok(second);
+  second.fn();
+  assert.equal(w.document.getElementById('pager').textContent,'1 of 2');
+ } finally {dom.window.close();}
+});
+
+test('arrival sorting defaults to oldest, applies before pagination and keeps unknown times last', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try {
+  const w=dom.window, board=w.document.getElementById('board');
+  Object.defineProperty(board,'clientWidth',{value:450});
+  Object.defineProperty(board,'clientHeight',{value:400});
+  const cfg={_fit:{fontPx:40,columns:1,cards:1}};
+  w.kitchenScreen.setConfig(cfg);
+  w.kitchenScreen.setTickets([
+   {table:'Unknown',items:[]},
+   {table:'New',placedAt:'2026-09-30T10:00:00Z',items:[]},
+   {table:'Old',placedAt:'2026-09-30T09:00:00Z',items:[]}
+  ]);
+  assert.equal(board.querySelector('.table').textContent,'Old');
+  assert.equal(w.document.getElementById('pager').textContent,'1 of 3');
+  w.kitchenScreen.setConfig({...cfg,orderSort:'newest'});
+  assert.equal(board.querySelector('.table').textContent,'New');
+  w.kitchenScreen.setConfig({...cfg,orderSort:'oldest'});
+  assert.equal(board.querySelector('.table').textContent,'Old');
+ } finally {dom.window.close();}
+});

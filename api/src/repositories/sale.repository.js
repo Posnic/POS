@@ -8580,6 +8580,7 @@ class SalesRepository {
           return {
             item_id: String(si.item_id || ''),
             ...serviceLine.metadata(si),
+            ...require('../utils/kitchen-amount').snapshot(si),
             item_name: String(si.item_name || ''),
             ...itemText.snapshot(si),
             item_quantity: qty,
@@ -10385,6 +10386,7 @@ class SalesRepository {
                 ...preparation,
                 item_id: productId,
                 item_name: previousLine.item_name || '',
+                ...require('../utils/kitchen-amount').snapshot(previousLine),
                 item_quantity: Math.abs(qty - oldQty),
                 item_description: newNote,
                 spice_level: spiceLevel.levelOf(updatedItems[i].spice_level),
@@ -10410,6 +10412,7 @@ class SalesRepository {
             item_id: productId,
             ...preparation,
             item_name: String(itemDoc.name || item.name || ''),
+            ...require('../utils/kitchen-amount').forSaleItem(itemDoc, item, price),
             ...itemText.snapshot(itemDoc),
             item_quantity: changeQty,
             /* From the request first: an amendment carries the note the person
@@ -10459,6 +10462,7 @@ class SalesRepository {
           updatedItems[i] = {
             ...existing,
             ...serviceLine.metadata({ ...existing, ...item }),
+            ...require('../utils/kitchen-amount').forSaleItem(itemDoc, item, price),
             item_quantity: qty,
             quantity: qty,
             item_price: price,
@@ -10504,6 +10508,7 @@ class SalesRepository {
 
           updatedItems.push({
             sale_inline_item_price: sellingPrice,
+            ...require('../utils/kitchen-amount').forSaleItem(itemDoc, item, sellingPrice),
             sale_inline_discount_value: discountAmt,
             sale_inline_discount_pervalue: discountPer,
             item_discount: lineDiscount,
@@ -11522,6 +11527,7 @@ class SalesRepository {
         changes.push({
           item_id: id,
           item_name: String(line.item_name || line.name || ''),
+          ...require('../utils/kitchen-amount').snapshot(line),
           item_quantity: moved,
           process: now > was ? 'add' : 'cancel',
           item_code: String(line.item_sku || ''),
@@ -11539,6 +11545,7 @@ class SalesRepository {
       changes.push({
         item_id: String(line.item_id || ''),
         item_name: String(line.item_name || line.name || ''),
+        ...require('../utils/kitchen-amount').snapshot(line),
         item_quantity: qty,
         process: 'add',
         item_code: String(line.item_sku || ''),

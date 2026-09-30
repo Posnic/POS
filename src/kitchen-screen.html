@@ -31,7 +31,7 @@
     --gap: 18px;
     --safe: 3%;
 
-    --ground: #101114;
+    --ground: #000000;
     --card: #1b1d22;
     --ink: #ffffff;
     --muted: #cbd5e1;
@@ -94,7 +94,7 @@
     flex: 1;
     display: grid;
     gap: var(--gap);
-    grid-template-columns: repeat(var(--columns, 4), 1fr);
+    grid-template-columns: repeat(var(--columns, 4), minmax(0, 1fr));
     align-content: start;
     padding-top: var(--gap);
     min-height: 0;
@@ -159,6 +159,13 @@
   .item { display: flex; gap: calc(var(--gap) * 0.5); align-items: baseline; }
   .qty { font-weight: 800; min-width: 2.1em; font-variant-numeric: tabular-nums; }
   .name { flex: 1; overflow-wrap: anywhere; font-weight: 700; }
+  .name { min-width: 0; }
+  .ticket { min-width: 0; }
+  html[data-glow="true"]:not([data-theme="light"]) .name,
+  html[data-glow="true"]:not([data-theme="light"]) .qty,
+  html[data-glow="true"]:not([data-theme="light"]) .table {
+    text-shadow: 0 0 2px rgba(255,255,255,.35);
+  }
 
   /* A note is the line that costs money when missed. Never dimmed, never
      dropped when space runs short. */
@@ -228,6 +235,20 @@
   var config = null;
   var tickets = [];
   var page = 0;
+  var rotationTimer = null;
+  var rotationMs = 0;
+
+  function updateRotation() {
+    var seconds = Number((config || {}).pageDwellSeconds);
+    var nextMs = (Number.isFinite(seconds) && seconds > 0 ? Math.max(1, Math.min(300, seconds)) : 8) * 1000;
+    if (rotationTimer !== null && rotationMs === nextMs) return;
+    if (rotationTimer !== null) clearInterval(rotationTimer);
+    rotationMs = nextMs;
+    rotationTimer = setInterval(function () {
+      page += 1;
+      render();
+    }, rotationMs);
+  }
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -249,6 +270,7 @@
     root.setProperty('--columns', Math.max(1, fit.columns));
     root.setProperty('--safe', (cfg && cfg.safeAreaPercent != null ? cfg.safeAreaPercent : 3) + '%');
     document.documentElement.setAttribute('data-theme', (cfg && cfg.theme) || 'dark');
+    document.documentElement.setAttribute('data-glow', String(!!(cfg && cfg.textGlow)));
   }
 
   /* ---------------------------------------------------------------- render */
@@ -388,9 +410,14 @@
     var board = $('board');
     board.textContent = '';
 
-    var live = tickets.slice().sort(function (a, b) {
-      return Date.parse(a.placedAt || 0) - Date.parse(b.placedAt || 0);
-    });
+    function compareArrival(a, b, newest) {
+      var left = Date.parse(a.placedAt), right = Date.parse(b.placedAt);
+      if (!Number.isFinite(left)) return Number.isFinite(right) ? 1 : 0;
+      if (!Number.isFinite(right)) return -1;
+      return newest ? right - left : left - right;
+    }
+    // Group tables by their oldest waiting ticket, regardless of display order.
+    var live = tickets.slice().sort(function (a, b) { return compareArrival(a, b, false); });
 
     if (cfg.tableOnly) {
       var seenTables = new Set();
@@ -402,6 +429,7 @@
         return true;
       });
     }
+    if (cfg.orderSort === 'newest') live.sort(function (a, b) { return compareArrival(a, b, true); });
     $('count').textContent = live.length;
     $('word').textContent = cfg.tableOnly ? (live.length === 1 ? 'table' : 'tables') : (live.length === 1 ? 'order' : 'orders');
     $('empty').hidden = live.length > 0 || !!cfg._feedStatus;
@@ -420,15 +448,20 @@
     });
     var compact = cfg.showItems === false && live.length > (Number(cfg.compactAfter) || 8);
     var font = Math.max(24, Math.min(Number(fitInfo.fontPx) || 40, (window.innerWidth || 1100) / 18));
+    var customFont = Number(cfg.fontSizePx);
+    if (Number.isFinite(customFont) && customFont > 0) font = Math.max(24, Math.min(96, customFont));
     document.documentElement.style.setProperty('--font', font + 'px');
     var width = board.clientWidth || window.innerWidth || 1100;
     var ceiling = Math.max(1, Math.min(Number(fitInfo.columns) || 4, Math.floor(width / (font * (cfg.tableOnly ? 7 : 12)))));
     var height = board.clientHeight || window.innerHeight || 700;
+    var portraitColumns = Number(cfg.portraitColumns);
+    var fixedColumns = window.innerHeight > window.innerWidth && (portraitColumns === 1 || portraitColumns === 2);
+    if (fixedColumns) ceiling = portraitColumns;
     var rows = Math.max(1, Math.floor(height / (font * (cfg.tableOnly ? 6 : maxItems * 1.5 + 4))));
     var perPage = Math.max(1, ceiling * rows);
     if (cfg.tableOnly) {
       // Size from both dimensions, not a monitor's saved orientation or dish layout.
-      ceiling = Math.max(1, Math.floor(width / Math.max(220, font * 6)));
+      if (!fixedColumns) ceiling = Math.max(1, Math.floor(width / Math.max(220, font * 6)));
       rows = Math.max(1, Math.floor(height / Math.max(190, font * 5)));
       perPage = ceiling * rows;
     }
@@ -468,7 +501,7 @@
     board.style.removeProperty('font-size');
     if (cfg.tableOnly && shown.length) {
       var best = Infinity, tileRows = 1;
-      for (var c = 1; c <= Math.min(ceiling, shown.length); c++) {
+      for (var c = fixedColumns ? ceiling : 1; c <= (fixedColumns ? ceiling : Math.min(ceiling, shown.length)); c++) {
         var r = Math.ceil(shown.length / c);
         if (r > rows) continue;
         var score = Math.abs(Math.log((width / c) / (height / r) / 1.2)) + (c * r - shown.length) * .15;
@@ -477,6 +510,7 @@
       board.style.gridTemplateRows = 'repeat(' + tileRows + ', minmax(0, 1fr))';
       board.style.alignContent = 'stretch';
       var tileFont = Math.max(24, Math.min(96, (width / columns - 36) / 5, (height / tileRows - 40) / 4.5));
+      if (customFont > 0 && Number.isFinite(customFont)) tileFont = font;
       board.style.fontSize = tileFont + 'px';
       board.style.setProperty('--font', tileFont + 'px');
     } else {
@@ -490,7 +524,9 @@
   /* ------------------------------------------------------------------ data */
 
   function setConfig(cfg) {
+    if (((config || {}).orderSort || 'oldest') !== ((cfg || {}).orderSort || 'oldest')) page = 0;
     config = cfg || {};
+    updateRotation();
     $('connection').textContent = config.setupMode ? 'Preview - sample orders' : (config._feedStatus || '');
     applyFit(config._fit, config);
     $('title').textContent = config.name || 'Kitchen';
@@ -539,10 +575,7 @@
   window.addEventListener('resize', render);
 
   /* Page rotation, only ever reached when there is more than one page. */
-  setInterval(function () {
-    page += 1;
-    render();
-  }, Math.max(4, Number((config || {}).pageDwellSeconds) || 8) * 1000);
+  updateRotation();
 }());
 </script>
 </body>
