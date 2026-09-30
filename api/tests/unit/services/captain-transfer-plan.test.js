@@ -102,3 +102,35 @@ test('readiness and pickup changes invalidate a transfer preview without changin
   original.kitchen_work.c1.lines.c1i0.collected=1;
   expect(plan(original,branch,[{id:'c1i0',quantity:1}]).revision).not.toBe(ready.revision);
 });
+
+
+test('partial transfer preserves ready and collected quantities and pickup ownership',()=>{
+  const original=sale();
+  original.items[0].quantity=5;
+  original.changes[0].items[0].item_quantity=4;
+  original.kitchen_work={c0:{state:'preparing',lines:{c0i0:{ready:3,collected:2,collector:'staff-4',collectorName:'Priya',readyVersion:2}}}};
+  const result=plan(original,branch,[{id:'c0i0',quantity:2,servedQuantity:0}]);
+  expect(result.destination.rounds[0]).toMatchObject({quantity:2,served:0,collected:1,ready:2,collector:'staff-4',collectorName:'Priya',readyVersion:2,kitchenState:'preparing'});
+  expect(result.source.rounds[0]).toMatchObject({quantity:2,served:1,collected:1,ready:1});
+  for(const field of ['ready','collected','served'])
+    expect(result.source.rounds[0][field]+result.destination.rounds[0][field]).toBe({ready:3,collected:2,served:1}[field]);
+});
+
+test('whole-round transfer carries legacy ready state without losing pending pickup',()=>{
+  const original=sale();original.kitchen_work={c1:{state:'ready'}};
+  const result=plan(original,branch,[{id:'c1i0',quantity:1}]);
+  expect(result.destination.rounds[0]).toMatchObject({ready:1,collected:0,served:0,kitchenState:'ready'});
+});
+
+test('all partial selections preserve the service ordering and total counts',()=>{
+  for(let quantity=1;quantity<=5;quantity++) for(let served=0;served<=quantity;served++) {
+    const original=sale();original.items[0].quantity=5;original.changes=[original.changes[0]];
+    original.changes[0].items[0].item_quantity=5;original.kitchen_service.c0i0.quantity=2;
+    original.kitchen_work={c0:{state:'preparing',lines:{c0i0:{ready:4,collected:3}}}};
+    if(served>2 || quantity-served>3)continue;
+    const result=plan(original,branch,[{id:'c0i0',quantity,servedQuantity:served}]);
+    const rows=[...result.source.rounds,...result.destination.rounds];
+    for(const row of rows){expect(row.served).toBeLessThanOrEqual(row.collected);expect(row.collected).toBeLessThanOrEqual(row.ready);expect(row.ready).toBeLessThanOrEqual(row.quantity);}
+    for(const [field,total] of Object.entries({quantity:5,served:2,collected:3,ready:4}))expect(rows.reduce((n,row)=>n+row[field],0)).toBe(total);
+  }
+});

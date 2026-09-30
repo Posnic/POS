@@ -1,6 +1,6 @@
 'use strict';
 const { snapshotFrom } = require('./guest-bill.service');
-const { rounds } = require('../helpers/kitchen-rounds');
+const { rounds, progress } = require('../helpers/kitchen-rounds');
 const orderLine = require('../utils/order-line');
 const { createHash } = require('node:crypto');
 
@@ -70,13 +70,27 @@ function plan(sale, branch, requested) {
   for (const line of service) {
     const selected = selections.get(line.id) || { quantity: 0, served: 0 };
     movedByLine.set(line.line_key, (movedByLine.get(line.line_key) || 0) + selected.quantity);
-    for (const [target, quantity, served] of [
-      [source, units(line.quantity) - selected.quantity, units(line.served) - selected.served],
-      [destination, selected.quantity, selected.served],
+    const work = sale.kitchen_work?.[line.round] || {};
+    const status = work.lines?.[line.id] || {};
+    const current = progress(line, work);
+    // Within the selected unserved plates, move collected plates first, then
+    // ready plates. The preview exposes these counts; no plate goes backwards
+    // from collected to preparing and neither table gains new cooked food.
+    const collected = units(current.collected), ready = units(current.ready);
+    const picked = Math.min(selected.quantity - selected.served, collected - units(line.served));
+    const readyOnly = Math.min(selected.quantity - selected.served - picked, ready - collected);
+    const movedCollected = selected.served + picked;
+    const movedReady = movedCollected + readyOnly;
+    for (const [target, quantity, served, readyCount, collectedCount] of [
+      [source, units(line.quantity) - selected.quantity, units(line.served) - selected.served, ready - movedReady, collected - movedCollected],
+      [destination, selected.quantity, selected.served, movedReady, movedCollected],
     ]) {
       if (!quantity) continue;
       target.rounds.push({ ...structuredClone(line), quantity: quantity / 1000,
         served: served / 1000, remaining: (quantity - served) / 1000,
+        ready: readyCount / 1000, collected: collectedCount / 1000,
+        collector: status.collector || '', collectorName: status.collectorName || '',
+        readyVersion: status.readyVersion || 0, kitchenState: work.state || 'new',
         origin: { saleId: String(sale._id), roundLineId: line.id } });
     }
   }
