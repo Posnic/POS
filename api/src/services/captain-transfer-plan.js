@@ -139,4 +139,4 @@ function plan(sale, branch, requested) {
     currencyDigits: snapshot.currencyDigits, currencySymbol: snapshot.currencySymbol,
     totalMinor: snapshot.totalMinor, source, destination };
 }
-module.exports = { plan };
+module.exports = { plan, divide, units };

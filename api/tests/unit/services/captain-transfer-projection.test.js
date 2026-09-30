@@ -199,3 +199,40 @@ test.each(['subtotal','total','items_subtotal','items_total','sales_tax','sales_
     expect(()=>buildBillPayload({...original,...result.destination,[field]:999},branch)).toThrow('bill changed');
   }
 );
+
+test.each(['JPY','INR','KWD'])('quantity reductions retain exact allocated components in %s',currencyCode=>{
+  const original=sale(),branch={currencyCode},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.source};
+  const proposed={items:transferred.items.map(item=>({...item,item_quantity:1,item_tax:999,
+    item_base_price:999,total_amount:999,item_description:'Less salt'})),sales_total:999};
+  const result=transferEdit.reduce(transferred,proposed,branch);
+  const expected=project(transferred,branch,[{id:'c0i0',quantity:1}],at).preview.source;
+  const snapshot=snapshotFrom([{...transferred,...result}],branch,'1');
+  expect(snapshot.totalMinor).toBe(expected.totalMinor);
+  expect(snapshot.lines[0].components).toEqual(expected.lines[0].components);
+  expect(result.items[0].item_base_price).toBe(transferred.items[0].item_base_price);
+  expect(result.items[0].item_description).toBe('Less salt');
+  expect(transferred.items[0].item_quantity).toBe(2);
+  const persisted=BSON.deserialize(BSON.serialize({...transferred,...result}));
+  expect(snapshotFrom([persisted],branch,'1').totalMinor).toBe(expected.totalMinor);
+});
+
+test('removing all transferred lines clears all allocated monetary components',()=>{
+  const original=sale(),branch={currencyCode:'INR'},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.source};
+  const result=transferEdit.reduce(transferred,{items:[]},branch);
+  expect(result.sales_total).toBe(0);
+  expect(result.tax).toBe(0);
+  expect(result.captain_transfer_allocation.lines).toEqual([]);
+  expect(result.captain_transfer_allocation.components).toEqual({});
+});
+
+test.each(['increase','product','duplicate','discount'])('reduction reconciliation rejects %s',kind=>{
+  const original=sale(),branch={currencyCode:'INR'},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.source},proposed={items:structuredClone(transferred.items)};
+  if(kind==='increase')proposed.items[0].item_quantity=3;
+  if(kind==='product')proposed.items[0].item_id='other';
+  if(kind==='duplicate')proposed.items.push({...proposed.items[0]});
+  if(kind==='discount')proposed.extra_discount=10;
+  expect(transferEdit.reduce(transferred,proposed,branch)).toBeNull();
+});

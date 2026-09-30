@@ -82,6 +82,26 @@ test('ordinary order editor saves a transferred dish note without using current 
   expect(after.tax).toBe(before.tax);
   expect(snapshotFrom([after], { currencyCode: 'INR' }, after.table_number).totalMinor).toBe(5250);
 });
+test.each([1, 0])('ordinary editor reduces transferred quantity to %s without catalogue repricing', async quantity => {
+  const input = await confirmation(); input.body.items[0].quantity = 2;
+  const completed = await service.complete(input), id = new ObjectId(completed.destinationId);
+  await db.collection('items').insertOne({ _id: sale.items[0].item_id, license, name: 'Corn', tax: 99, tax_type: 'exclusive' });
+  jest.spyOn(BaseModel, 'getDb').mockResolvedValue(db);
+  const answer = await runWithRequestContext({ license, currentBranch: branch, loggedUser: String(input.user._id) }, () =>
+    sales.updateOrderModel(String(id), quantity ? [{ product_id: String(sale.items[0].item_id), quantity,
+      price: 50 }] : [], 52.5 * quantity, 'modified', null, null, null, null, null, null));
+  expect(answer).toMatchObject({ status: true });
+  const after = await db.collection('sales').findOne({ _id: id });
+  expect(after.items).toHaveLength(quantity);
+  if(quantity)expect(after.items[0].item_quantity).toBe(quantity);
+  expect(after.tax).toBe(2.5 * quantity);
+  expect(after.captain_transfer_allocation.totalMinor).toBe(5250 * quantity);
+  expect(after.sales_total).toBe(52.5 * quantity);
+  const cancellation = after.changes.flatMap(change => change.items).filter(item => item.process === 'cancel');
+  expect(cancellation).toHaveLength(1);
+  expect(cancellation[0].item_quantity).toBe(2 - quantity);
+});
+
 test.each([1, 2])('complete transfer of %s items releases both sale fences and closes only an empty source', async quantity => {
   const input = await confirmation(); input.body.items[0].quantity = quantity;
   const result = await service.complete(input);
