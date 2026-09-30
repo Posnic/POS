@@ -311,7 +311,10 @@
             value.title = `${quantity} ${label}`;
             return value;
           }
-          if (cooking) progress.append(badge('cooking', '◷', cooking, stage === 'new' ? 'To prepare' : 'Cooking'));
+          if (cooking)
+            progress.append(
+              badge('cooking', '◷', cooking, stage === 'new' ? 'To prepare' : 'Cooking')
+            );
           if (waiting) progress.append(badge('ready', '✓', waiting, 'Ready to collect'));
           if (picked) progress.append(badge('picked', '↗', picked, 'Collected, not yet served'));
           if (served) progress.append(badge('served', '✓✓', served, 'Served'));
