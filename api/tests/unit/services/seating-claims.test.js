@@ -1321,6 +1321,21 @@ async function legacySale(guests=2) {
   await db.collection('sales').insertOne(sale);return sale;
 }
 
+test.each([['person_count',3],['table_number','T3'],['table_id','different'],['dine_type','Take away'],
+  ['seating_primary_id','different'],['seating_table_ids',['different']]])(
+  'desktop edit rejects a concurrent %s change even without a timestamp update',async(field,value)=>{
+    const sale=await legacySale();
+    const snapshot={...sale};
+    await require('../../../src/services/desktop-seating').guardEdit(db,scope,snapshot,{
+      table_number:sale.table_number,person_count:sale.person_count,dine_type:sale.dine_type,
+    });
+    await db.collection('sales').updateOne({_id:sale._id},{$set:{[field]:value}});
+    const result=await db.collection('sales').updateOne({_id:sale._id,...snapshot.$where},{$set:{person_count:1}});
+    expect(result.matchedCount).toBe(0);
+    expect((await db.collection('sales').findOne({_id:sale._id}))[field]).toEqual(value);
+  }
+);
+
 async function legacyMergePair() {
   const source=await legacySale(1),target=await legacySale(2);
   await db.collection('sales').updateMany({},{$set:{payment_status:'Unpaid'}});

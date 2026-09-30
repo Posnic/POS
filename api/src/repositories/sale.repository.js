@@ -10243,6 +10243,11 @@ class SalesRepository {
               : orderDoc.changes,
         ...(editPolicy ? { branch_id: editPolicy.branchId, license: editPolicy.license } : {}),
       };
+      // Legacy seating writers may leave updated_date unchanged. Never apply
+      // a delayed item/cover save against a different seating snapshot.
+      for (const field of ['person_count', 'table_number', 'table_id', 'dine_type',
+        'seating_request_id', 'seating_primary_id', 'seating_table_ids'])
+        editFilter[field] = orderDoc[field] === undefined ? { $exists: false } : orderDoc[field];
       const actor = editPolicy?.actor || {
         id: String(BaseModel.loggedUser || ''),
         name: BaseModel.loggedUserName || 'Staff',

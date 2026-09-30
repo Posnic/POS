@@ -105,6 +105,22 @@ beforeEach(async () => {
 
 afterEach(() => jest.restoreAllMocks());
 
+test.each([['person_count',5],['table_number','9'],['table_id','other-table'],['dine_type','Take away'],
+  ['seating_request_id','new-seating-request'],['seating_primary_id','new-primary'],['seating_table_ids',['new-table']]])(
+  'a concurrent %s change cannot be overwritten by a delayed legacy item save',async(field,value)=>{
+    const id=await anOrder(CHANGED_AT);
+    const before=await stored(id);
+    jest.spyOn(require('../../../src/services/captain-payment-guard'),'beginEdit').mockImplementation(async()=>{
+      await db.collection('sales').updateOne({_id:before._id},{$set:{[field]:value}});
+      return null;
+    });
+    const result=await saveWithoutTheBiryani(id);
+    expect(result.status).toBe(false);expect(result.message).toBe('order_changed');
+    const after=await stored(id);
+    expect(after[field]).toEqual(value);expect(after.items).toEqual(before.items);
+  }
+);
+
 describe('a save written against an order that has moved on', () => {
   test('IS REFUSED, and the dish the other waiter added is still there', async () => {
     const id = await anOrder(CHANGED_AT);

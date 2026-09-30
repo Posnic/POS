@@ -61,5 +61,7 @@ async function guardEdit(db, scope, doc, next) {
     seating_capacity_revision: doc.seating_capacity_revision ?? { $exists: false },
     ...(doc.updated_date !== undefined ? { updated_date: doc.updated_date } : {}),
   };
+  for (const field of ['person_count', 'table_number', 'table_id', 'dine_type', 'seating_primary_id', 'seating_table_ids'])
+    doc.$where[field] = doc[field] === undefined ? { $exists: false } : doc[field];
 }
 module.exports = { prepare, lookup, guardEdit };
