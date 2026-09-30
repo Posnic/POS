@@ -103,3 +103,30 @@ test('simultaneous service cannot overwrite another staff update', async () => {
   expect(final.status).toBe(true);
   expect((await repository.kitchenScreenTickets(String(branch))).data).toEqual([]);
 });
+
+test('partial and whole cancellations remain visible without showing served food as cancelled', async () => {
+ const at=new Date();
+ await collection.updateOne({_id:id},{$set:{kitchen_required:true,'items.0.item_quantity':1},$push:{changes:{timestamp:at,items:[{item_id:'rice',item_name:'Rice',item_quantity:1,process:'cancel'}]}}});
+ let result=await repository.kitchenScreenTickets(String(branch));
+ expect(result.data.find(t=>!t.cancelled).items[0].qty).toBe(1);
+ expect(result.data.find(t=>t.cancelled)).toMatchObject({id:`${id}:cancel1`,items:[{name:'Rice',qty:1}]});
+ await collection.updateOne({_id:id},{$set:{sale_process:'cancelled',payment_status:'Cancelled'},$push:{changes:{timestamp:new Date(),items:[{item_id:'rice',item_name:'Rice',item_quantity:1,process:'cancel'}]}}});
+ result=await repository.kitchenScreenTickets(String(branch));
+ expect(result.data.filter(t=>!t.cancelled)).toHaveLength(0);
+ expect(result.data.filter(t=>t.cancelled)).toHaveLength(2);
+ expect((await repository.kitchenScreenTickets(String(new mongoose.Types.ObjectId()))).data).toEqual([]);
+ await collection.updateOne({_id:id},{$set:{'changes.1.timestamp':new Date(Date.now()-301000),'changes.2.timestamp':new Date(Date.now()-301000)}});
+ expect((await repository.kitchenScreenTickets(String(branch))).data).toEqual([]);
+});
+
+test('wall display carries partial ready, picked-up and served quantities from the touch workflow', async () => {
+ await collection.updateOne({_id:id},{$set:{'items.0.item_quantity':4,'changes.0.items.0.item_quantity':4,
+  kitchen_work:{c0:{state:'preparing',lines:{c0i0:{ready:3,collected:2}}}},
+  kitchen_service:{c0i0:{quantity:1,at:new Date()}}
+ }});
+ let result=await repository.kitchenScreenTickets(String(branch));
+ expect(result.data[0].items[0]).toMatchObject({qty:3,preparing:1,readyToCollect:1,pickedUp:1,served:1,started:true});
+ await collection.updateOne({_id:id},{$set:{kitchen_service:{c0i0:{quantity:4,at:new Date()}}}});
+ result=await repository.kitchenScreenTickets(String(branch));
+ expect(result.data).toEqual([]);
+});

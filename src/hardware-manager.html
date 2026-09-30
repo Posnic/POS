@@ -3920,6 +3920,8 @@
                 +       '<option value="oldest"' + (c.orderSort !== 'newest' ? ' selected' : '') + '>Oldest first</option>'
                 +       '<option value="newest"' + (c.orderSort === 'newest' ? ' selected' : '') + '>Newest first</option></select></div>'
                 +     '<div>' + check('glow-' + d.id, 'Soft white text glow', c.textGlow === true, 'Optional emphasis on dark screens. Monitor brightness is set on the display itself.') + '</div>'
+                +     '<div>' + field('cancel-seconds-' + d.id, 'Show cancelled items for', c.cancelledDisplaySeconds || 30, 'seconds', '1–300 seconds. Cancelled quantities stay crossed out before disappearing.') + '</div>'
+                +     '<div>' + check('cancel-pulse-' + d.id, 'Pulse cancellation border', c.cancelledPulse !== false, 'Text stays readable while the border pulses.') + '</div>'
                 +   '</div>'
                 +   '<div style="margin-top:16px;padding:14px 16px;border-radius:10px;background:' + v.bg + ';color:' + v.fg + ';">'
                 +     '<div style="font-size:15px;font-weight:800;">Automatic layout estimate: ' + v.word + ' &middot; about '
@@ -4014,6 +4016,8 @@
                 portraitColumns: Number((document.getElementById('portrait-' + id) || {}).value) || 0,
                 fontSizePx:       Math.max(0, Math.min(96, numOr('font-px-' + id, 0))),
                 textGlow:         onOff('glow-' + id, false),
+                cancelledDisplaySeconds: Math.max(1, Math.min(300, numOr('cancel-seconds-' + id, 30))),
+                cancelledPulse:   onOff('cancel-pulse-' + id, true),
                 orderSort:        (document.getElementById('order-sort-' + id) || {}).value === 'newest' ? 'newest' : 'oldest',
                 safeAreaPercent:  numOr('safe-' + id, 3),
                 showTable:        onOff('t-' + id, true),

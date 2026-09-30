@@ -242,3 +242,56 @@ test('arrival sorting defaults to oldest, applies before pagination and keeps un
   assert.equal(board.querySelector('.table').textContent,'Old');
  } finally {dom.window.close();}
 });
+
+test('cancellation expires on schedule, does not restart on polls, and keeps active quantities', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ let now=Date.now();const timers=[];
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{
+  runScripts:'dangerously',beforeParse(w){w.Date.now=()=>now;w.setInterval=(fn,ms)=>{timers.push({fn,ms});return timers.length;};w.clearInterval=()=>{};}
+ });
+ try {
+  const w=dom.window,board=w.document.getElementById('board');
+  Object.defineProperty(board,'clientWidth',{value:1200});Object.defineProperty(board,'clientHeight',{value:1600});
+  const cfg={cancelledDisplaySeconds:3,cancelledPulse:true,_fit:{fontPx:40,columns:2}};
+  w.kitchenScreen.setConfig(cfg);
+  const list=[{id:'active',table:'T1',items:[{qty:1,name:'Fish'}]}, {id:'cancel',cancelled:true,table:'T1',items:[{qty:2,name:'Fish'}]}];
+  w.kitchenScreen.setTickets(list);
+  assert.match(board.querySelector('.cancelled').textContent,/CANCELLED.*2×Fish/);
+  assert.ok(board.querySelector('.cancel-pulse'));
+  assert.match(board.querySelector('.ticket:not(.cancelled)').textContent,/1×Fish/);
+  assert.equal(w.document.getElementById('count').textContent,'1');
+  now+=2000;w.kitchenScreen.setTickets(list);
+  now+=1100;timers.find(t=>t.ms===250).fn();
+  assert.equal(board.querySelector('.cancelled'),null);
+  w.kitchenScreen.setTickets(list);
+  assert.equal(board.querySelector('.cancelled'),null);
+  w.kitchenScreen.setTickets([]);
+  assert.equal(board.querySelector('.cancelled'),null,'served/removed is not a cancellation');
+  w.kitchenScreen.setConfig({...cfg,cancelledPulse:false});
+  w.kitchenScreen.setTickets([{...list[1],id:'another-cancel'}]);
+  assert.ok(board.querySelector('.cancelled'));
+  assert.equal(board.querySelector('.cancel-pulse'),null);
+ } finally {dom.window.close();}
+});
+
+test('ready and picked-up food use explicit labels without cancellation strike-through or overdue pulses', () => {
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try {
+  const w=dom.window,board=w.document.getElementById('board');
+  w.kitchenScreen.setConfig({_fit:{fontPx:40,columns:2},pulseAlerts:true});
+  const ticket={id:'one',table:'4',placedAt:new Date(Date.now()-3600000).toISOString(),items:[
+   {name:'Fish',qty:3,preparing:1,readyToCollect:1,pickedUp:1,started:true}
+  ]};
+  w.kitchenScreen.setTickets([ticket]);
+  assert.match(board.textContent,/1 Cooking/);
+  assert.match(board.textContent,/✓ 1 Ready to collect/);
+  assert.match(board.textContent,/↗ 1 Picked up/);
+  assert.equal(board.querySelector('.cancelled'),null);
+  w.kitchenScreen.setTickets([{...ticket,items:[{name:'Fish',qty:1,preparing:0,readyToCollect:1,pickedUp:0}]}]);
+  assert.ok(board.querySelector('.ready-state .line-ready'));
+  assert.equal(board.querySelector('.urgent'),null);
+  w.kitchenScreen.setTickets([]);
+  assert.equal(board.querySelector('.ticket'),null);
+ } finally {dom.window.close();}
+});

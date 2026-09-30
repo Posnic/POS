@@ -1,7 +1,7 @@
 'use strict';
 const { ObjectId } = require('mongodb');
 const { context, allowed, fail } = require('../utils/branch-access');
-const { rounds } = require('../helpers/kitchen-rounds');
+const { rounds, progress } = require('../helpers/kitchen-rounds');
 const states = ['new', 'preparing', 'ready'];
 const filter = (c) => ({
   license: c.license,
@@ -22,13 +22,11 @@ function project(sale) {
       .filter((i) => !i.held && i.remaining > 0)
       .map((i) => {
         const line = work.lines?.[i.id] || {};
-        const ready = Math.max(
-          i.served,
-          Math.min(i.quantity, Number(line.ready ?? (work.state === 'ready' ? i.quantity : 0)) || 0)
-        );
-        const collected = Math.max(i.served, Math.min(ready, Number(line.collected) || 0));
+        const quantities = progress(i, work);
+        const { ready, collected } = quantities;
         return {
           id: i.id,
+          ...quantities,
           name: i.name,
           ...require('../utils/kitchen-amount').snapshot(i),
           qty: i.remaining,

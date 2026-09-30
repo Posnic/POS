@@ -80,6 +80,8 @@ const DEFAULTS = Object.freeze({
   fontSizePx: 0,
   textGlow: false,
   orderSort: 'oldest',
+  cancelledDisplaySeconds: 30,
+  cancelledPulse: true,
   /* Televisions crop the edges. This is the margin that keeps a card's border
      on the panel. */
   safeAreaPercent: 3,
