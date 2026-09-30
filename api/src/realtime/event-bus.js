@@ -88,9 +88,14 @@ function subscriberCount(dbName) {
 
 // End only event streams; ordinary API requests can finish during shutdown.
 function closeAll() {
-  for (const subs of tenants.values()) for (const res of subs) {
-    try { res.end(); } catch (_) { /* connection already closed */ }
-  }
+  for (const subs of tenants.values())
+    for (const res of subs) {
+      try {
+        res.end();
+      } catch (_) {
+        /* connection already closed */
+      }
+    }
   resetForTests();
 }
 
