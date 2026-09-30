@@ -729,3 +729,52 @@ test('concurrent cancellation and preparation cannot resurrect a cancelled reque
   expect((await seating.find(db, scope, id)).state).toBe('cancelled');
   expect((await seating.find(db, scope, order.seating_request_id)).moving_to).toBeUndefined();
 });
+
+test('desktop save cannot restore seating after a concurrent completed move', async () => {
+  const order = await movableOrder();
+  const Model =
+    mongoose.models.SeatingEditProof ||
+    mongoose.model(
+      'SeatingEditProof',
+      new mongoose.Schema({}, { strict: false, collection: 'sales', versionKey: false })
+    );
+  const doc = await Model.findById(order._id);
+  const desktop = require('../../../src/services/desktop-seating');
+  await desktop.guardEdit(db, scope, doc, { table_number: 'T1', person_count: 4 });
+  const move = await seating.prepareMove(
+    db,
+    scope,
+    String(order._id),
+    request({
+      request_id: 'moving-request-0001',
+      table_ids: ids.slice(1),
+      primary_id: ids[1],
+    })
+  );
+  await seating.completeMove(db, scope, move.id, 'staff-1');
+  doc.set({ table_number: 'T1', total_amount: 999 });
+  await expect(
+    require('../../../src/repositories/sale.repository').save(doc)
+  ).rejects.toMatchObject({ name: 'DocumentNotFoundError' });
+  const saved = await db.collection('sales').findOne({ _id: order._id });
+  expect(saved.table_number).toBe('T2');
+  expect(saved.total_amount).not.toBe(999);
+  expect(saved.seating_request_id).toBe(move.id);
+});
+test('desktop guarded edit saves normally when seating is unchanged', async () => {
+  const order = await movableOrder();
+  const Model =
+    mongoose.models.SeatingEditProof ||
+    mongoose.model(
+      'SeatingEditProof',
+      new mongoose.Schema({}, { strict: false, collection: 'sales', versionKey: false })
+    );
+  const doc = await Model.findById(order._id);
+  await require('../../../src/services/desktop-seating').guardEdit(db, scope, doc, {
+    table_number: 'T1',
+    person_count: 4,
+  });
+  doc.set({ total_amount: 999 });
+  await require('../../../src/repositories/sale.repository').save(doc);
+  expect((await db.collection('sales').findOne({ _id: order._id })).total_amount).toBe(999);
+});

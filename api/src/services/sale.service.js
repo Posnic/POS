@@ -1346,23 +1346,12 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         };
       }
       if (doc.seating_request_id || context.branchSettings?.table_options === true) {
-        await require('./seating-claims').forEdit(
+        await require('./desktop-seating').guardEdit(
           await BaseModel.getDb(),
           { branchId, license: licenseId },
           doc,
-          {
-            table: updateData.table_number,
-            guests: updateData.person_count,
-            dine_type: updateData.dine_type,
-          }
+          updateData
         );
-        // Mongoose adds $where to the save filter. A move completed after this
-        // read must make the edit fail instead of restoring its old seating.
-        doc.$where = {
-          ...(doc.$where || {}),
-          seating_request_id: doc.seating_request_id || { $exists: false },
-          ...(doc.updated_date !== undefined ? { updated_date: doc.updated_date } : {}),
-        };
       }
       doc.set(updateData);
       result = await salesRepository.save(doc);

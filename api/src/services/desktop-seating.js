@@ -48,4 +48,17 @@ async function prepare(db, scope, input, document) {
   document.floor_lifecycle = true;
   return { claim, existing };
 }
-module.exports = { prepare, lookup };
+async function guardEdit(db, scope, doc, next) {
+  await seating.forEdit(db, scope, doc, {
+    table: next.table_number,
+    guests: next.person_count,
+    dine_type: next.dine_type,
+  });
+  // Mongoose merges these conditions into the atomic save filter.
+  doc.$where = {
+    ...(doc.$where || {}),
+    seating_request_id: doc.seating_request_id || { $exists: false },
+    ...(doc.updated_date !== undefined ? { updated_date: doc.updated_date } : {}),
+  };
+}
+module.exports = { prepare, lookup, guardEdit };
