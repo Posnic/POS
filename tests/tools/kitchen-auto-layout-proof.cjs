@@ -33,5 +33,15 @@ app.whenReady().then(async()=>{
  if(dishes===-1)fs.writeFileSync(path.join(app.getPath('temp'),'posnic-kitchen-smart-columns.png'),(await win.webContents.capturePage()).toPNG());
  if(width===1080 && count===10)fs.writeFileSync(path.join(app.getPath('temp'),'posnic-kitchen-auto.png'),(await win.webContents.capturePage()).toPNG());
  }
+ win.setContentSize(1080,1920);
+ await win.webContents.executeJavaScript(`kitchenScreen.setTickets([{id:'states',table:'12',placedAt:new Date().toISOString(),items:[
+ {qty:3,name:'Grilled fish',started:true,preparing:1,readyToCollect:1,pickedUp:1},
+ {qty:2,name:'Vegetable fried rice',preparing:0,readyToCollect:2,pickedUp:0},
+ {qty:1,name:'Lime soda',preparing:0,readyToCollect:0,pickedUp:1}
+ ]}]);`);
+ await new Promise(resolve=>setTimeout(resolve,150));
+ const badges=await win.webContents.executeJavaScript(`({count:document.querySelectorAll('.name .item-progress span').length,extraRows:document.querySelectorAll('.items > .item-progress').length,overflow:document.getElementById('board').scrollHeight-document.getElementById('board').clientHeight})`);
+ assert.equal(badges.count,5);assert.equal(badges.extraRows,0);assert.ok(badges.overflow<=1);
+ fs.writeFileSync(path.join(app.getPath('temp'),'posnic-kitchen-status.png'),(await win.webContents.capturePage()).toPNG());
  }finally{win.destroy();app.quit();}
 }).catch(e=>{console.error(e);app.exit(1);});

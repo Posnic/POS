@@ -423,3 +423,11 @@ footer {
   border: 1px solid #91accc;
   border-radius: 8px;
 }
+
+/* Status stays beside the dish, with one legend for the whole screen. */
+.items .name { min-width:0; overflow-wrap:anywhere; }
+.items .name > .item-progress { display:inline-flex; vertical-align:middle; margin-left:.4em; gap:4px; }
+.items .name > .item-progress span { white-space:nowrap; padding:2px 5px; }
+.progress-served { background:#28333b; color:#d7e1e8; }
+.status-key { display:flex; flex-wrap:wrap; gap:12px; font-size:14px; }
+.status-key span { white-space:nowrap; }

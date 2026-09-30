@@ -33,13 +33,14 @@ test('chef marks part of a dish ready, can undo it, and can ready the remaining 
     card.querySelector('.item-ready').click();
     await tick();
     card = d.querySelector('[data-id="demo-1:c0"]');
-    assert.match(card.textContent, /✓ 1 Ready to collect/);
+    assert.equal(card.querySelector('.name .progress-ready').getAttribute('aria-label'), '1 Ready to collect');
+    assert.equal(card.querySelector('li > .item-progress'), null);
     assert.ok(d.querySelector('#preparing [data-id="demo-1:c0"]'));
     d.getElementById('undo').click();
     await tick();
     card = d.querySelector('[data-id="demo-1:c0"]');
     assert.equal(card.querySelector('.progress-ready'), null);
-    assert.match(card.textContent, /2 Cooking/);
+    assert.equal(card.querySelector('.name .progress-cooking').getAttribute('aria-label'), '2 Cooking');
     card.querySelector('.advance').click();
     await tick();
     assert.ok(d.querySelector('#ready [data-id="demo-1:c0"]'));
@@ -236,4 +237,19 @@ test('touch board fetches recordings only on request and closing cancels a late 
   d.querySelector('.order-voice-play').click();await tick();resolveAudio();await tick();assert.equal(plays,1);
   assert.equal(d.querySelector('.order-voice-dialog audio').getAttribute('controls'),'');
  }finally{dom.window.close();}
+});
+
+
+test('compact badges distinguish ready, collected and served quantities', async () => {
+  const ticket = {...liveTicket, state:'preparing', items:[{id:'rice',name:'Rice',qty:3,total:4,ready:3,collected:2,served:1}]};
+  const dom=setup(false,async()=>response([ticket]));
+  try {
+    await tick();
+    const d=dom.window.document, name=d.querySelector('.items .name');
+    assert.equal(name.querySelector('.progress-cooking').getAttribute('aria-label'),'1 Cooking');
+    assert.equal(name.querySelector('.progress-ready').getAttribute('aria-label'),'1 Ready to collect');
+    assert.equal(name.querySelector('.progress-picked').getAttribute('aria-label'),'1 Collected, not yet served');
+    assert.equal(name.querySelector('.progress-served').getAttribute('aria-label'),'1 Served');
+    assert.equal(name.querySelectorAll('button').length,0,'Status badges are not accidental touch actions');
+  } finally {dom.window.close();}
 });

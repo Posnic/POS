@@ -304,18 +304,18 @@
             waiting = Math.max(0, ready - collected),
             picked = Math.max(0, collected - served);
           const progress = node('div', 'item-progress');
-          if (cooking)
-            progress.append(
-              node(
-                'span',
-                'progress-cooking',
-                `${cooking} ${stage === 'new' ? 'To prepare' : 'Cooking'}`
-              )
-            );
-          if (waiting)
-            progress.append(node('span', 'progress-ready', `✓ ${waiting} Ready to collect`));
-          if (picked) progress.append(node('span', 'progress-picked', `↗ ${picked} Picked up`));
-          li.append(progress);
+          function badge(kind, symbol, quantity, label) {
+            const value = node('span', 'progress-' + kind, `${symbol} ${quantity}`);
+            value.setAttribute('role', 'img');
+            value.setAttribute('aria-label', `${quantity} ${label}`);
+            value.title = `${quantity} ${label}`;
+            return value;
+          }
+          if (cooking) progress.append(badge('cooking', '◷', cooking, stage === 'new' ? 'To prepare' : 'Cooking'));
+          if (waiting) progress.append(badge('ready', '✓', waiting, 'Ready to collect'));
+          if (picked) progress.append(badge('picked', '↗', picked, 'Collected, not yet served'));
+          if (served) progress.append(badge('served', '✓✓', served, 'Served'));
+          li.querySelector('.name').append(progress);
           if (!cooking) li.classList.add(waiting ? 'line-ready' : 'line-picked');
           if (item.collectorName && collected > served)
             li.append(node('span', 'note', 'Collected by ' + item.collectorName));
@@ -329,7 +329,7 @@
             input.step = 'any';
             input.value = String(Math.min(1, total - ready));
             input.setAttribute('aria-label', 'Quantity ready: ' + item.name);
-            const b = node('button', 'item-ready', 'Ready');
+            const b = node('button', 'item-ready', '✓ Ready');
             b.disabled = !online || mutating;
             b.onclick = () => {
               const quantity = Number(input.value);
