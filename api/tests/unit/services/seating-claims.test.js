@@ -1108,3 +1108,84 @@ test('merge API requires separate permission and rechecks it before completion',
   await service.cancel(req);
   expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
 });
+
+test('durable cover changes preserve items and reservation identity and replay only once',async()=>{
+  const order=await movableOrder();
+  const input={request_id:'durable-covers-request-1',actor:'staff-1',guests:5};
+  await seating.changeGuests(db,scope,String(order._id),input);
+  await seating.changeGuests(db,scope,String(order._id),input);
+  const saved=await db.collection('sales').findOne({_id:order._id});
+  expect(saved.person_count).toBe(5);expect(saved.captain_audit).toHaveLength(1);
+  expect(saved.seating_request_id).toBe(order.seating_request_id);
+  expect(saved.captain_payment_plan).toBeUndefined();
+  expect((await seating.find(db,scope,order.seating_request_id)).guest_update).toBeUndefined();
+  await expect(seating.changeGuests(db,scope,String(order._id),{...input,guests:4})).rejects.toMatchObject({status:409});
+  await expect(seating.changeGuests(db,scope,String(order._id),{...input,actor:'staff-2'})).rejects.toMatchObject({status:409});
+});
+
+test('concurrent durable cover increases cannot exceed a shared table capacity',async()=>{
+  const {source,target,input}=await mergeOrders();
+  const move=await seating.prepareMove(db,scope,String(source._id),input,{mergeTargetId:String(target._id)});
+  await seating.completeMove(db,scope,move.id,'staff-1');
+  // Both claims must see the same four-seat group capacity.
+  await db.collection('table_seating').updateOne({},{$set:{'claims.$[].max_capacity':4}});
+  const results=await Promise.allSettled([source,target].map((order,index)=>
+    seating.changeGuests(db,scope,String(order._id),{request_id:`concurrent-guest-edit-${index}`,actor:'staff-1',guests:index+2})));
+  expect(results.filter(result=>result.status==='fulfilled')).toHaveLength(1);
+  const rows=await db.collection('sales').find({table_number:'T3'}).toArray();
+  expect(rows.reduce((sum,row)=>sum+row.person_count,0)).toBe(4);
+  expect(rows.every(row=>!row.captain_payment_plan)).toBe(true);
+});
+
+test('interrupted durable cover projection keeps the reservation and completes on retry',async()=>{
+  const order=await movableOrder(), input={request_id:'interrupted-guest-edit',actor:'staff-1',guests:5};
+  const interrupted={collection(name){
+    const collection=db.collection(name);
+    return new Proxy(collection,{get(target,key){
+      if(name==='sales'&&key==='updateOne')return async(filter,update,...rest)=>{
+        if(update.$set?.person_count===5)throw new Error('connection lost');
+        return target.updateOne(filter,update,...rest);
+      };
+      const value=target[key];return typeof value==='function'?value.bind(target):value;
+    }});
+  }};
+  await expect(seating.changeGuests(interrupted,scope,String(order._id),input)).rejects.toThrow('connection lost');
+  expect((await seating.find(db,scope,order.seating_request_id)).guest_update).toBe(input.request_id);
+  await expect(seating.forEdit(db,scope,order,{guests:4})).rejects.toMatchObject({status:409});
+  await expect(seating.beginClose(db,scope,[String(order._id)],'close-during-guest-edit')).rejects.toMatchObject({status:409});
+  await seating.changeGuests(db,scope,String(order._id),input);
+  const saved=await db.collection('sales').findOne({_id:order._id});
+  expect(saved.person_count).toBe(5);expect(saved.captain_payment_plan).toBeUndefined();
+  expect(saved.captain_audit).toHaveLength(1);
+});
+
+test('a lost cover-save acknowledgement replays without a duplicate audit or kitchen change',async()=>{
+  const order=await movableOrder(), input={request_id:'lost-cover-ack-request',actor:'staff-1',guests:5};
+  const kitchen={rounds:[{id:'original-round',items:[{id:'corn',quantity:1}]}]};
+  await db.collection('sales').updateOne({_id:order._id},{$set:{kitchen_service:kitchen,items:[{item_name:'Corn',item_quantity:1,item_note:'Less salt'}]}});
+  const original=await db.collection('sales').findOne({_id:order._id});
+  const lost={collection(name){
+    const collection=db.collection(name);
+    return new Proxy(collection,{get(target,key){
+      if(name==='sales'&&key==='updateOne')return async(filter,update,...rest)=>{
+        const result=await target.updateOne(filter,update,...rest);
+        if(update.$set?.person_count===5)throw new Error('acknowledgement lost');
+        return result;
+      };
+      const value=target[key];return typeof value==='function'?value.bind(target):value;
+    }});
+  }};
+  await expect(seating.changeGuests(lost,scope,String(order._id),input)).rejects.toThrow('acknowledgement lost');
+  await seating.changeGuests(db,scope,String(order._id),input);
+  const saved=await db.collection('sales').findOne({_id:order._id});
+  expect(saved.items).toEqual(original.items);expect(saved.kitchen_service).toEqual(kitchen);
+  expect(saved.captain_audit).toHaveLength(1);expect(saved.captain_payment_plan).toBeUndefined();
+});
+
+test('cover updates reject foreign scope and failed capacity without retaining a payment fence',async()=>{
+  const order=await movableOrder(),input={request_id:'invalid-cover-request',actor:'staff-1',guests:7};
+  await expect(seating.changeGuests(db,{...scope,branchId:new ObjectId()},String(order._id),input)).rejects.toMatchObject({status:409});
+  await expect(seating.changeGuests(db,scope,String(order._id),input)).rejects.toThrow('enough seats');
+  expect((await db.collection('sales').findOne({_id:order._id})).captain_payment_plan).toBeUndefined();
+  expect((await seating.find(db,scope,order.seating_request_id)).guest_update).toBeUndefined();
+});

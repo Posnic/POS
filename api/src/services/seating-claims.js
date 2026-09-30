@@ -204,7 +204,7 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
     (row) =>
       !terminal(row) && row.id !== moving?.id && row.tables.some((table) => ids.includes(table))
   );
-  if (overlaps.some(row => row.moving_to || row.closing || ['applying', 'releasing'].includes(row.state) || (row.move_from && row.state === 'reserved')))
+  if (overlaps.some(row => row.guest_update || row.moving_to || row.closing || ['applying', 'releasing'].includes(row.state) || (row.move_from && row.state === 'reserved')))
     fail('Table changed. Refresh and try again.', 409);
   if (overlaps.some((row) => ids.length > 1 || row.tables.length > 1))
     fail('Table changed. Refresh and try again.', 409);
@@ -324,7 +324,7 @@ async function prepareMove(db, scope, orderId, input, { staffHandover = false, m
   }
 
   const source = await find(db, scope, order.seating_request_id);
-  if (!source || source.state !== 'submitting' || source.order_id !== String(order._id))
+  if (!source || source.guest_update || source.state !== 'submitting' || source.order_id !== String(order._id))
     fail('The seating group changed. Refresh this order.', 409);
   if (!staffHandover && String(input.actor || '') !== source.actor)
     fail('Permission is required.', 403);
@@ -377,7 +377,7 @@ async function beginClose(db, scope, orderIds, closeId) {
   if (
     selected.some(
       (row) =>
-        row.moving_to ||
+        row.guest_update || row.moving_to ||
         !['submitting', 'releasing'].includes(row.state) ||
         (row.closing &&
           (row.closing.id !== closeId ||
@@ -780,6 +780,7 @@ async function forEdit(db, scope, order, next) {
   const destination = String(next.table || order.table_number || '');
   const claims = await read(db, scope);
   const own = claims.find((claim) => !terminal(claim) && claim.order_id === String(order._id));
+  if (own?.guest_update) fail('This order is being updated. Please retry.', 409);
   if (own?.closing) fail('Close is in progress. Refresh this order.', 409);
   if (own?.state === 'releasing') fail('Close is in progress. Refresh this order.', 409);
   if (own?.moving_to) fail('Reconcile the table move before editing this order.', 409);
@@ -807,6 +808,8 @@ async function forEdit(db, scope, order, next) {
     if (!takeaway) {
       const overlaps = claims.filter(claim => !terminal(claim) && claim.id !== own.id &&
         claim.order_id !== String(order._id) && claim.tables.some(table => own.tables.includes(table)));
+      if (overlaps.some(claim => claim.guest_update))
+        fail('This order is being updated. Please retry.', 409);
       const others = await db.collection('sales').find({
         branch_id: scope.branchId, license: scope.license,
         ...require('../helpers/floor-eligibility').floorEligibility(),
@@ -832,7 +835,85 @@ async function forEdit(db, scope, order, next) {
     fail('This table is reserved for another order.', 409);
   return own || null;
 }
+// Durable cover-only update. Callers must keep the request ID until a retry
+// confirms completion. No item, pricing, stock or kitchen projection is made.
+async function changeGuests(db, scope, orderId, input) {
+  const id = requestId(input.request_id), actor = String(input.actor || '');
+  const orderKey = identity(orderId), guests = input.guests;
+  if (!actor || !Number.isInteger(guests) || guests < 1 || guests > 1000)
+    fail('Enter the number of guests.');
+  const intent = { kind: 'covers', orderId: orderKey, guests };
+  let journal = await restructure.read(db, scope, id, actor, { optional: true });
+  if (journal && (JSON.stringify(journal.intent) !== JSON.stringify(intent) || journal.stage === 'cancelled'))
+    fail('This seating request has already been used.', 409);
+  if (!journal) {
+    const sale = await db.collection('sales').findOne({
+      _id: new ObjectId(orderKey), branch_id: scope.branchId, license: scope.license,
+    });
+    if (!sale?.seating_request_id) fail('Refresh this order before changing its seating.', 409);
+    journal = await restructure.reserve(db, scope, { requestId: id, actor, intent, sales: [sale] });
+  }
+  if (journal.stage === 'reserving')
+    journal = await restructure.reserve(db, scope, { requestId: id, actor, intent, sales: journal.sales });
+  const answer = { request_id: id, orderId: orderKey, guests, state: 'completed' };
+  if (journal.stage === 'completed') {
+    await restructure.complete(db, scope, id, actor);
+    return answer;
+  }
+  const original = journal.sales[0];
+  if (journal.stage === 'reserved') {
+    try {
+      const snapshot = await store(db).findOne({ _id: scopeKey(scope) });
+      const own = snapshot?.claims.find(row => row.id === original.seating_request_id);
+      if (!own || own.order_id !== orderKey || own.state !== 'submitting' || own.moving_to || own.closing || !own.tables.length)
+        fail('The seating group changed. Refresh this order.', 409);
+      if (own.guest_update && own.guest_update !== id)
+        fail('This order is being updated. Please retry.', 409);
+      if (!own.guest_update) {
+        const overlaps = snapshot.claims.filter(row => !terminal(row) && row.id !== own.id &&
+          row.tables.some(table => own.tables.includes(table)));
+        if (overlaps.some(row => row.guest_update || row.moving_to || row.closing || row.state !== 'submitting'))
+          fail('This order is being updated. Please retry.', 409);
+        const others = await db.collection('sales').find({
+          branch_id: scope.branchId, license: scope.license,
+          ...require('../helpers/floor-eligibility').floorEligibility(),
+          table_number: { $in: own.labels }, _id: { $ne: original._id },
+        }, { projection: { _id: 1, person_count: 1 } }).toArray();
+        if (guests > Number(original.person_count || 0) &&
+            !details.accommodates(own, guests + occupiedGuests(overlaps, others)))
+          fail('Choose a table with enough seats.', 409);
+        const reserved = await store(db).updateOne({ _id: scopeKey(scope), revision: snapshot.revision,
+          claims: { $elemMatch: { id: own.id, guest_update: { $exists: false } } },
+        }, { $set: { 'claims.$.guest_update': id }, $inc: { revision: 1 } });
+        if (!reserved.matchedCount) fail('Table changed. Refresh and try again.', 409);
+      }
+    } catch (error) {
+      // Keep a published reservation durable after an uncertain acknowledgement.
+      const own = await find(db, scope, original.seating_request_id);
+      if (own?.guest_update !== id) await restructure.cancel(db, scope, id, actor);
+      throw error;
+    }
+    await restructure.applying(db, scope, id, actor);
+  }
+  const updated = await db.collection('sales').updateOne({
+    _id: original._id, branch_id: scope.branchId, license: scope.license,
+    captain_payment_plan: journal._id, seating_request_id: original.seating_request_id,
+    'captain_audit.request_id': { $ne: id },
+  }, { $set: { person_count: guests, updated_date: new Date() },
+    $push: { captain_audit: { action: 'guests', request_id: id, actor: { id: actor },
+      at: journal.createdAt, previous_guests: original.person_count, guests } } });
+  if (!updated.matchedCount && !await db.collection('sales').findOne({
+    _id: original._id, branch_id: scope.branchId, license: scope.license,
+    captain_payment_plan: journal._id, person_count: guests, 'captain_audit.request_id': id,
+  })) fail('This order is being updated. Please retry.', 409);
+  await store(db).updateOne({ _id: scopeKey(scope),
+    claims: { $elemMatch: { id: original.seating_request_id, guest_update: id } },
+  }, { $unset: { 'claims.$.guest_update': '' }, $inc: { revision: 1 } });
+  await restructure.complete(db, scope, id, actor);
+  return answer;
+}
 module.exports = {
+  changeGuests,
   reserve,
   prepareMove,
   beginClose,
