@@ -1639,6 +1639,19 @@ ipcMain.handle('cloud:authorize-browser', async (_event, { intent = 'login' } = 
     const activation = await browserCloudAuth.authorize({
       intent, machineId: getMachineId(), deviceName: require('os').hostname(),
     });
+    // Return to the exact window that started approval, including first-run setup.
+    // Focusing is best-effort and must never turn a valid authorization into a failure.
+    try {
+      const authorizationWindow = BrowserWindow.fromWebContents(_event.sender);
+      if (authorizationWindow && !authorizationWindow.isDestroyed()) {
+        if (authorizationWindow.isMinimized()) authorizationWindow.restore();
+        authorizationWindow.show();
+        authorizationWindow.focus();
+        if (!authorizationWindow.isFocused()) authorizationWindow.flashFrame(true);
+      }
+    } catch (error) {
+      console.warn('[Cloud] Could not foreground the authorization window:', error.message);
+    }
     return await connectCloudDevice(activation, 'https://gateway.posnic.com');
   } catch (error) {
     return { ok: false, error: /fetch failed|ENOTFOUND|abort/i.test(error.message)
