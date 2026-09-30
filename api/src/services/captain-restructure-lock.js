@@ -61,7 +61,7 @@ async function reserve(db, scope, { requestId, actor, intent, sales }) {
       for (const key of ['items', 'changes', 'kitchen_service', 'kitchen_work', 'sales_total', 'updated_date', 'payment_status', 'sale_process',
         'person_count', 'table_number', 'table_id', 'dine_type', 'seating_request_id', 'seating_primary_id', 'seating_table_ids', 'seating_capacity_revision'])
         expected[key] = sale[key] === undefined ? { $exists: false } : sale[key];
-      const eligibility = journal.intent.kind === 'move'
+      const eligibility = ['move', 'enroll'].includes(journal.intent.kind)
         ? require('../helpers/floor-eligibility').floorEligibility()
         : { sale_process: 'KOT', payment_status: journal.intent.kind === 'covers'
           ? { $in: ['Unpaid', null, ''] } : 'Unpaid' };

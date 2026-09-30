@@ -1313,6 +1313,62 @@ test.each(['Paid','Cancelled','Partial'])('cover compatibility never reopens %s 
   expect(await db.collection('sales').findOne({_id:order._id})).toEqual(before);
 });
 
+async function legacySale(guests=2) {
+  const sale={_id:new ObjectId(),branch_id:scope.branchId,license:scope.license,table_number:'T1',
+    person_count:guests,sale_process:'KOT',items:[{item_id:'corn',item_quantity:2,item_note:'Less salt'}],
+    sales_total:120,changes:[{timestamp:new Date('2026-09-30T08:00:00Z'),items:[]}],
+    kitchen_service:{c0i0:{quantity:1}},kitchen_work:{c0:{state:'ready'}}};
+  await db.collection('sales').insertOne(sale);return sale;
+}
+test('legacy enrollment preserves the existing sale and kitchen data even when already over capacity',async()=>{
+  const sale=await legacySale(9),input={request_id:'legacy-enrollment-001',actor:'staff-1'};
+  const claim=await seating.enrollExisting(db,scope,String(sale._id),input);
+  expect(claim).toMatchObject({state:'submitting',adopt_order:String(sale._id),order_id:String(sale._id),guests:9});
+  await seating.enrollExisting(db,scope,String(sale._id),input);
+  const saved=await db.collection('sales').findOne({_id:sale._id});
+  expect(saved).toMatchObject(sale);expect(saved.payment_status).toBeUndefined();
+  expect(saved.seating_request_id).toBe(input.request_id);expect(saved.captain_payment_plan).toBeUndefined();
+  expect(await db.collection('sales').countDocuments({})).toBe(1);
+  expect(await db.collection('tableorder').countDocuments({service_state:'cleaning'})).toBe(0);
+});
+test('enrolled legacy orders can use the normal durable move flow',async()=>{
+  const sale=await legacySale();
+  await seating.enrollExisting(db,scope,String(sale._id),{request_id:'legacy-enrollment-002',actor:'staff-1'});
+  const move=await seating.prepareMove(db,scope,String(sale._id),request({request_id:'move-after-enrollment',table_ids:[ids[2]],primary_id:ids[2],guests:2}));
+  await seating.completeMove(db,scope,move.id,'staff-1');
+  const saved=await db.collection('sales').findOne({_id:sale._id});
+  expect(saved.table_number).toBe('T3');expect(saved.items).toEqual(sale.items);
+  expect(saved.changes).toEqual(sale.changes);expect(saved.sales_total).toBe(120);
+});
+test('interrupted enrollment resumes its existing claim without duplicating the sale',async()=>{
+  const sale=await legacySale(),input={request_id:'legacy-enrollment-003',actor:'staff-1'};
+  const interrupted={collection(name){
+    const collection=db.collection(name);
+    return new Proxy(collection,{get(target,key){
+      if(name==='sales'&&key==='updateOne')return async(filter,update,...rest)=>{
+        if(update.$set?.seating_request_id)throw new Error('interrupted enrollment');
+        return target.updateOne(filter,update,...rest);
+      };
+      const value=target[key];return typeof value==='function'?value.bind(target):value;
+    }});
+  }};
+  await expect(seating.enrollExisting(interrupted,scope,String(sale._id),input)).rejects.toThrow('interrupted enrollment');
+  expect((await seating.find(db,scope,input.request_id)).state).toBe('reserved');
+  await expect(seating.bind(db,scope,input.request_id,'staff-1',String(sale._id))).rejects.toMatchObject({status:409});
+  await expect(seating.cancel(db,scope,input.request_id,'staff-1')).rejects.toMatchObject({status:409});
+  await expect(seating.forOrder(db,scope,{request_id:input.request_id,actor:'staff-1',table:'T1',guests:2})).rejects.toMatchObject({status:409});
+  await expect(seating.forEdit(db,scope,sale,{guests:2})).rejects.toMatchObject({status:409});
+  await seating.enrollExisting(db,scope,String(sale._id),input);
+  expect((await seating.read(db,scope)).filter(row=>row.adopt_order===String(sale._id))).toHaveLength(1);
+  expect((await db.collection('sales').findOne({_id:sale._id})).captain_payment_plan).toBeUndefined();
+});
+test('legacy enrollment rejects foreign scope and cannot reuse another staff request',async()=>{
+  const sale=await legacySale(),input={request_id:'legacy-enrollment-004',actor:'staff-1'};
+  await expect(seating.enrollExisting(db,{...scope,branchId:new ObjectId()},String(sale._id),input)).rejects.toMatchObject({status:409});
+  await seating.enrollExisting(db,scope,String(sale._id),input);
+  await expect(seating.enrollExisting(db,scope,String(sale._id),{...input,actor:'staff-2'})).rejects.toMatchObject({status:409});
+});
+
 test.each(['capacity-reserved','applying','revision-written','capacity-released','completed','fence-released'])(
   'guest change recovers a lost acknowledgement after %s without leaving blocked seating',async(point)=>{
     const order=await movableOrder(),input={request_id:'cover-recovery-check-1',actor:'staff-1',guests:5};

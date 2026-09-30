@@ -37,6 +37,7 @@ function requestId(value) {
 }
 function sameRequest(saved, input) {
   return (
+    (saved.adopt_order || null) === (input.adopt_order || null) &&
     (saved.merge_target || null) === (input.merge_target || null) &&
     saved.actor === input.actor &&
     saved.primary === input.primary &&
@@ -81,7 +82,7 @@ async function archive(db, scope, id) {
 async function reserve(db, scope, input) {
   return reserveClaim(db, scope, input);
 }
-async function reserveClaim(db, scope, input, moving = null, operationLock = null, mergeTarget = null) {
+async function reserveClaim(db, scope, input, moving = null, operationLock = null, mergeTarget = null, adopting = null) {
   const id = requestId(input.request_id);
   const takeaway = moving && input.dine_type === 'Take away';
   if (input.dine_type && !['Dine-in', 'Take away'].includes(input.dine_type)) fail('Choose an order type.');
@@ -103,6 +104,7 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
     dine_type: takeaway ? 'Take away' : 'Dine-in',
     state: 'reserved',
     ...(moving ? { move_from: moving.id, order_id: moving.order_id } : {}),
+    ...(adopting ? { adopt_order: String(adopting._id), order_id: String(adopting._id) } : {}),
     ...(operationLock ? { operation_lock: operationLock } : {}),
     ...(mergeTarget ? { merge_target: String(mergeTarget._id) } : {}),
     ...(input.payload_hash ? { payload_hash: input.payload_hash } : {}),
@@ -160,7 +162,7 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
   const party = input.guests + (mergeTarget ? Number(mergeTarget.person_count) : 0);
   if (mergeTarget && (!Number.isInteger(party) || party < 2 || !maximum))
     fail('Set the seating capacity before combining tables.');
-  if (maximum && party > maximum) fail('Choose a table with enough seats.');
+  if (!adopting && maximum && party > maximum) fail('Choose a table with enough seats.');
   claim.capacity = capacity;
   claim.max_capacity = maximum;
   claim.labels = ids.map((id) => tables.find((row) => String(row._id) === id).tableorder_value);
@@ -204,7 +206,7 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
     (row) =>
       !terminal(row) && row.id !== moving?.id && row.tables.some((table) => ids.includes(table))
   );
-  if (overlaps.some(row => row.guest_update || row.moving_to || row.closing || ['applying', 'releasing'].includes(row.state) || (row.move_from && row.state === 'reserved')))
+  if (overlaps.some(row => row.guest_update || row.moving_to || row.closing || ['applying', 'releasing'].includes(row.state) || ((row.move_from || row.adopt_order) && row.state === 'reserved')))
     fail('Table changed. Refresh and try again.', 409);
   if (overlaps.some((row) => ids.length > 1 || row.tables.length > 1))
     fail('Table changed. Refresh and try again.', 409);
@@ -217,6 +219,7 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
         ...require('../helpers/floor-eligibility').floorEligibility(),
         table_number: { $in: tables.map((row) => row.tableorder_value) },
         ...(moving ? { _id: { $ne: new ObjectId(moving.order_id) } } : {}),
+        ...(adopting ? { _id: { $ne: adopting._id } } : {}),
       },
       { projection: { _id: 1, person_count: 1 } }
     )
@@ -243,8 +246,8 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
           overlaps.some(row => row.order_id !== String(mergeTarget._id)) ||
           tables[0].tableorder_value !== mergeTarget.table_number)
         fail('The seating group changed. Refresh this order.', 409);
-    } else if (limit && count >= limit) fail('This table has reached its open order limit.', 409);
-    if (maximum && input.guests + occupiedGuests(overlaps, open) > maximum)
+    } else if (!adopting && limit && count >= limit) fail('This table has reached its open order limit.', 409);
+    if (!adopting && maximum && input.guests + occupiedGuests(overlaps, open) > maximum)
       fail('Choose a table with enough seats.', 409);
   }
   if (await history(db).findOne({ _id: `${key}:${id}` }))
@@ -608,7 +611,7 @@ async function bind(db, scope, id, actor, orderId) {
     {
       _id: scopeKey(scope),
       claims: {
-        $elemMatch: { id, actor: String(actor), state: 'reserved', move_from: { $exists: false } },
+        $elemMatch: { id, actor: String(actor), state: 'reserved', move_from: { $exists: false }, adopt_order: { $exists: false } },
       },
     },
     { $set: { 'claims.$.state': 'submitting', 'claims.$.order_id': sale }, $inc: { revision: 1 } }
@@ -617,6 +620,7 @@ async function bind(db, scope, id, actor, orderId) {
   const existing = (await read(db, scope)).find((row) => row.id === id);
   if (
     existing?.actor === String(actor) &&
+    !existing.adopt_order &&
     existing.order_id === sale &&
     existing.state === 'submitting'
   )
@@ -629,6 +633,7 @@ async function cancel(db, scope, id, actor) {
   if (!saved) return;
   if (saved.actor !== String(actor)) fail('Permission is required.', 403);
   if (saved.move_from) fail('Reconcile the table move before releasing its tables.', 409);
+  if (saved.adopt_order) fail('Reconcile the submitted order before releasing its tables.', 409);
   if (saved.state === 'cancelled') {
     await archive(db, scope, id);
     return;
@@ -742,7 +747,7 @@ async function release(db, scope, id) {
 async function forOrder(db, scope, input) {
   const id = requestId(input.request_id);
   const claim = await find(db, scope, id);
-  if (!claim || terminal(claim) || claim.move_from || claim.moving_to)
+  if (!claim || terminal(claim) || claim.move_from || claim.moving_to || claim.adopt_order)
     fail('This seating request is no longer available.', 409);
   if (!input.actor || claim.actor !== String(input.actor)) fail('Permission is required.', 403);
   const primaryLabel = claim.labels[claim.tables.indexOf(claim.primary)];
@@ -781,6 +786,7 @@ async function forEdit(db, scope, order, next) {
   const claims = await read(db, scope);
   const own = claims.find((claim) => !terminal(claim) && claim.order_id === String(order._id));
   if (own?.guest_update) fail('This order is being updated. Please retry.', 409);
+  if (own?.adopt_order && own.state === 'reserved') fail('This order is being updated. Please retry.', 409);
   if (own?.closing) fail('Close is in progress. Refresh this order.', 409);
   if (own?.state === 'releasing') fail('Close is in progress. Refresh this order.', 409);
   if (own?.moving_to) fail('Reconcile the table move before editing this order.', 409);
@@ -835,6 +841,60 @@ async function forEdit(db, scope, order, next) {
     fail('This table is reserved for another order.', 409);
   return own || null;
 }
+// Enroll an existing sale in the seating protocol without recreating its items
+// or financial/kitchen history. Kept separate from new-order reservation: the
+// party is already seated and must not be rejected for historical overcapacity.
+async function enrollExisting(db, scope, orderId, input) {
+  const id=requestId(input.request_id), actor=String(input.actor||''), orderKey=identity(orderId);
+  if (!actor) fail('Permission is required.',403);
+  let journal=await restructure.read(db,scope,id,actor,{optional:true});
+  if (journal && (journal.intent.kind!=='enroll'||journal.intent.orderId!==orderKey||journal.stage==='cancelled'))
+    fail('This seating request has already been used.',409);
+  if (!journal) {
+    const sale=await db.collection('sales').findOne({_id:new ObjectId(orderKey),branch_id:scope.branchId,license:scope.license});
+    if (!sale || sale.seating_request_id || !String(sale.table_number||'').trim())
+      fail('The seating group changed. Refresh this order.',409);
+    const tables=await db.collection('tableorder').find({branch_id:scope.branchId,license:scope.license,
+      tableorder_value:String(sale.table_number),
+      ...(/^[a-f0-9]{24}$/i.test(String(sale.table_id||''))?{_id:new ObjectId(sale.table_id)}:{}),
+    }).limit(2).toArray();
+    if(tables.length!==1)fail('Choose tables from this branch.',409);
+    const intent={kind:'enroll',orderId:orderKey,tableId:String(tables[0]._id)};
+    journal=await restructure.reserve(db,scope,{requestId:id,actor,intent,sales:[sale]});
+  }
+  if(journal.stage==='reserving')
+    journal=await restructure.reserve(db,scope,{requestId:id,actor,intent:journal.intent,sales:journal.sales});
+  if(journal.stage==='completed') {
+    await restructure.complete(db,scope,id,actor);
+    return find(db,scope,id);
+  }
+  const original=journal.sales[0],tableId=journal.intent.tableId;
+  if(journal.stage==='reserved') {
+    try {
+      await reserveClaim(db,scope,{request_id:id,actor,table_ids:[tableId],primary_id:tableId,
+        guests:Number(original.person_count)||1},null,journal._id,null,original);
+    } catch(error) {
+      const published=await find(db,scope,id);
+      if(published?.adopt_order!==orderKey)await restructure.cancel(db,scope,id,actor);
+      throw error;
+    }
+    await restructure.applying(db,scope,id,actor);
+  }
+  const selector={_id:original._id,branch_id:scope.branchId,license:scope.license,captain_payment_plan:journal._id};
+  const updated=await db.collection('sales').updateOne({...selector,
+    seating_request_id:original.seating_request_id===undefined?{$exists:false}:original.seating_request_id,
+  },{$set:{seating_request_id:id,seating_table_ids:[tableId],seating_primary_id:tableId,
+    table_id:tableId,seating_capacity_revision:id,updated_date:new Date()}});
+  if(!updated.matchedCount&&!await db.collection('sales').findOne({...selector,seating_request_id:id}))
+    fail('The seating group changed. Refresh this order.',409);
+  const activated=await store(db).updateOne({_id:scopeKey(scope),
+    claims:{$elemMatch:{id,adopt_order:orderKey,state:{$in:['reserved','submitting']}}},
+  },{$set:{'claims.$.state':'submitting'},$inc:{revision:1}});
+  if(!activated.matchedCount)fail('The seating group changed. Refresh this order.',409);
+  await restructure.complete(db,scope,id,actor);
+  return find(db,scope,id);
+}
+
 // Durable cover-only update. Callers must keep the request ID until a retry
 // confirms completion. No item, pricing, stock or kitchen projection is made.
 async function changeGuests(db, scope, orderId, input) {
@@ -930,6 +990,7 @@ async function changeGuests(db, scope, orderId, input) {
   return answer;
 }
 module.exports = {
+  enrollExisting,
   changeGuests,
   reserve,
   prepareMove,
