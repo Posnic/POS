@@ -3040,7 +3040,7 @@
     },
     "/captain/v1/kitchen-audio/{action}": {
       "post": {
-        "summary": "value",
+        "summary": "result",
         "operationId": "post_captain_v1_kitchen_audio_action",
         "tags": [
           "Captain access"
@@ -9769,6 +9769,47 @@
         "operationId": "get_kitchen",
         "tags": [
           "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/kitchen/voice/{saleId}/{voiceId}": {
+      "get": {
+        "summary": "voice",
+        "operationId": "get_kitchen_voice_saleId_voiceId",
+        "tags": [
+          "Kitchen board"
+        ],
+        "parameters": [
+          {
+            "name": "saleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "voiceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
           "200": {
