@@ -1797,7 +1797,7 @@
   "lang_kiosk_printer_help": "Only the self-service machine in your shop uses this. Everything else on this page is your storefront, which the machine and your customers' phones both show.",
   "lang_kiosk_report": "Kiosk Report",
   "lang_kot_print": "KOT print",
-  "lang_kot_print_additional": "Additional Order",
+  "lang_kot_print_additional": "Running Order",
   "lang_kot_print_already": "This KOT has already been printed.",
   "lang_kot_print_auto": "Automatically print KOTs after saving an order",
   "lang_kot_print_auto_help": "Applies to orders saved on this browser or desktop. Desktop uses your kitchen printers; otherwise a print dialog opens. Orders already handled by a kitchen printer are not printed again.",

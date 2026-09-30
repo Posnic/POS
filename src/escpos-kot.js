@@ -73,7 +73,7 @@ function qtyText(value) {
  * One kitchen ticket.
  *
  * @param {object} ticket
- *   title        what kind of sheet: New Order, Additional Order, Item Cancelled...
+ *   title        what kind of sheet: New Order, Running Order, Item Cancelled...
  *   number       the daily serial the pass calls out
  *   dateText     already formatted, because the caller owns the shop's format
  *   tableNo      may be empty for a takeaway

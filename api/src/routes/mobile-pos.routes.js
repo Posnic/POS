@@ -104,7 +104,10 @@ router.post(
 );
 router.use(protect);
 router.get('/bootstrap', wrap(mobile.bootstrap));
+router.get('/catalogue/:version/:page', wrap(mobile.cataloguePage));
 router.post('/sales', wrap(mobile.ingest));
+router.get('/receipts', wrap(mobile.receipts));
+router.post('/delivery-status', wrap(mobile.deliveryStatus));
 router.get(
   '/settings',
   wrap(async (req) => {

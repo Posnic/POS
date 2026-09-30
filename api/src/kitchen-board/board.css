@@ -350,11 +350,84 @@ footer {
   }
 }
 
-.allergy {display:block;grid-column:1/-1;color:#fff;background:#8b1717;padding:6px 10px;border-radius:6px;font-size:1rem;}
-.item-progress { display:flex; flex-wrap:wrap; gap:6px; font-size:16px; font-weight:700; }
-.item-progress span { padding:4px 8px; border-radius:6px; }
-.progress-cooking { background:#374151; color:#fff; }
-.progress-ready { background:#14532d; color:#d8ffe7; }
-.progress-picked { background:#173b65; color:#dceeff; }
-.line-ready > .name { color:#b3ffd0; }
-.line-picked > .name { color:#b9dcff; }
+.allergy {
+  display: block;
+  grid-column: 1/-1;
+  color: #fff;
+  background: #8b1717;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+.item-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.item-progress span {
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.progress-cooking {
+  background: #374151;
+  color: #fff;
+}
+.progress-ready {
+  background: #14532d;
+  color: #d8ffe7;
+}
+.progress-picked {
+  background: #173b65;
+  color: #dceeff;
+}
+.line-ready > .name {
+  color: #b3ffd0;
+}
+.line-picked > .name {
+  color: #b9dcff;
+}
+
+.order-voice-play {
+  min-height: 44px;
+  margin-block: 8px;
+}
+.order-voice-dialog {
+  position: fixed;
+  z-index: 100;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 90vw);
+  padding: 24px;
+  background: #17202c;
+  color: #fff;
+  border: 2px solid #91accc;
+  border-radius: 16px;
+  box-shadow: 0 0 0 100vmax #000b;
+  display: grid;
+  gap: 16px;
+}
+.order-voice-dialog h2 {
+  font-size: 22px;
+  margin: 0;
+}
+.order-voice-dialog audio {
+  width: 100%;
+}
+.order-voice-dialog select {
+  min-height: 48px;
+  padding: 8px;
+  color: #fff;
+  background: #243349;
+  border: 1px solid #91accc;
+  border-radius: 8px;
+}
+
+/* Status stays beside the dish, with one legend for the whole screen. */
+.items .name { min-width:0; overflow-wrap:anywhere; }
+.items .name > .item-progress { display:inline-flex; vertical-align:middle; margin-left:.4em; gap:4px; }
+.items .name > .item-progress span { white-space:nowrap; padding:2px 5px; }
+.progress-served { background:#28333b; color:#d7e1e8; }
+.status-key { display:flex; flex-wrap:wrap; gap:12px; font-size:14px; }
+.status-key span { white-space:nowrap; }

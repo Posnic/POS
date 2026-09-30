@@ -1104,7 +1104,8 @@ app.use(attachDb);
  * fetched itself; see src/realtime/ for both halves.
  */
 const { changeEvents } = require('./src/realtime/change-events');
-const { subscribe: sseSubscribe } = require('./src/realtime/event-bus');
+const { subscribe: sseSubscribe, closeAll: closeEventStreams } = require('./src/realtime/event-bus');
+process.once('posnic:api-shutdown', closeEventStreams);
 const { protect: sseProtect } = require('./src/middleware/auth');
 app.use(changeEvents);
 

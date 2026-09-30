@@ -119,6 +119,8 @@ function install({ app, BrowserWindow, ipcMain }) {
         queue.cancel(owner, request.id);
         return done(null, { cancelled: true });
       }
+      if (request.action === 'validateVoice')
+        return done(null, queue.validateVoice(owner, request.id, request.data));
       if (request.action === 'voice')
         return done(null, queue.voice(owner, request.id, request.data));
       throw Error('Unknown kitchen audio action.');

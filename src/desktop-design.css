@@ -192,3 +192,49 @@
 }
 .desktop-window #receiptTab .printer-card h2 { color: var(--w-text); }
 .desktop-window #receiptTab button.btn-primary { background: var(--w-accent) !important; color: var(--w-on-accent, #fff) !important; border-color: var(--w-accent) !important; }
+
+/* Kitchen sound: daily actions first; setup and diagnostics have their own space. */
+#soundTab .sound-heading, #soundTab .sound-section-heading { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px; }
+#soundTab h2 { margin:0 0 5px;color:var(--w-text);font-size:23px; }
+#soundTab h3 { margin:0 0 5px;font-size:16px;color:var(--w-text); }
+#soundTab p { margin:0;color:var(--w-muted);font-size:13px;line-height:1.55; }
+#soundTab .sound-tag { font-size:11px;white-space:nowrap;padding:5px 9px;border-radius:20px;background:var(--w-raised);color:var(--w-muted); }
+#soundTab .sound-panel { padding:22px;margin-bottom:18px;border:1px solid var(--w-border);border-radius:12px;background:var(--w-card-bg);min-width:0; }
+#soundTab .sound-send { display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px;border-top:3px solid var(--w-accent); }
+#soundTab .sound-record { margin-top:16px;min-height:48px;padding:12px 20px;font-weight:650;background:var(--w-accent)!important;color:#fff!important;border-color:var(--w-accent)!important;touch-action:none;user-select:none; }
+#soundTab .sound-record[data-recording="true"] { background:#b42335!important;border-color:#b42335!important; }
+#soundTab .sound-feedback:not(:empty) { margin-top:10px;color:var(--w-text); }
+#soundTab .sound-playback { padding-left:24px;border-left:1px solid var(--w-border);min-width:0; }
+#soundTab .sound-eyebrow { display:block;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--w-muted);margin-bottom:7px; }
+#soundTab #kitchenPlaybackSummary { display:block;font-size:15px;margin-bottom:5px; }
+#soundTab #kitchenPlaybackSummary[data-attention="true"] { color:var(--w-danger,#b42335); }
+#soundTab .sound-settings-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px; }
+#soundTab .sound-switch { display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0;padding:14px 0;border-bottom:1px solid var(--w-border);cursor:pointer; }
+#soundTab input[type="checkbox"] { width:18px;height:18px;flex:0 0 18px;margin:0;accent-color:var(--w-accent); }
+#soundTab .sound-switch input[type="checkbox"] { appearance:none;width:40px!important;height:24px!important;flex:0 0 40px;min-height:24px;padding:0!important;border:1px solid var(--w-muted)!important;border-radius:20px;background:var(--w-raised)!important;position:relative;cursor:pointer; }
+#soundTab .sound-switch input[type="checkbox"]::before { content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:var(--w-text);transition:transform .15s; }
+#soundTab .sound-switch input[type="checkbox"]:checked { background:var(--w-accent)!important;border-color:var(--w-accent)!important; }
+#soundTab .sound-switch input[type="checkbox"]:checked::before { transform:translateX(16px);background:var(--w-on-accent,#fff); }
+#soundTab .sound-switch input[type="checkbox"]:focus-visible { outline:2px solid var(--w-accent);outline-offset:3px; }
+@media (forced-colors:active) { #soundTab .sound-switch input[type="checkbox"] { appearance:auto; } #soundTab .sound-switch input[type="checkbox"]::before { content:none; } }
+#soundTab .sound-speaker { display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--w-border);border-radius:8px;margin:8px 0;background:var(--w-raised); }
+#soundTab .sound-speaker label { display:flex;align-items:center;gap:10px;flex:1;min-width:0;margin:0;overflow-wrap:anywhere; }
+#soundTab .sound-speaker .btn { flex-shrink:0; }
+#soundTab .sound-volume { display:flex;align-items:center;gap:16px;margin:18px 0 8px; }
+#soundTab .sound-volume label { margin:0; }
+#soundTab .sound-volume input { max-width:300px;flex:1;width:auto;accent-color:var(--w-accent); }
+#soundTab .sound-volume output { min-width:42px;font-variant-numeric:tabular-nums;color:var(--w-muted); }
+#soundTab summary { cursor:pointer;font-weight:550;font-size:13px;padding:12px 0;color:var(--w-text); }
+#soundTab .sound-picker { display:flex;align-items:center;gap:8px; }
+#soundTab select { min-width:0;width:100%;margin:0; }
+#soundTab .sound-picker select { flex:1; }
+#soundTab .sound-field { display:block;margin:14px 0 6px;font-size:13px; }
+#soundTab .sound-check { display:flex;gap:10px;align-items:center;margin:16px 0 6px; }
+#soundTab .sound-hint { font-size:12px;margin-top:6px; }
+#soundTab #kitchenVoiceGet { margin-top:12px; }
+#soundTab .sound-diagnostics pre { white-space:pre-wrap;overflow-wrap:anywhere;max-height:200px;overflow:auto;font:12px/1.6 monospace;padding:12px;background:var(--w-raised);border-radius:6px;margin-bottom:8px; }
+#soundTab .sound-savebar { position:sticky;bottom:0;display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:16px 0;background:var(--w-card-bg);border-top:1px solid var(--w-border);font-size:13px; }
+#soundTab .sound-savebar>div { display:flex;flex-wrap:wrap;gap:8px; }
+#soundTab :focus-visible { outline:2px solid var(--w-accent);outline-offset:3px; }
+@media (max-width:900px) { #soundTab .sound-send,#soundTab .sound-settings-grid { grid-template-columns:1fr; } #soundTab .sound-playback { padding:16px 0 0;border-left:0;border-top:1px solid var(--w-border); } }
+@media (max-width:520px) { #soundTab .sound-heading { align-items:flex-start; } #soundTab .sound-panel { padding:16px; } #soundTab .sound-speaker { flex-wrap:wrap; } #soundTab .sound-speaker label { flex-basis:100%; } }

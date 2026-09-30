@@ -86,6 +86,19 @@ function subscriberCount(dbName) {
   return subs ? subs.size : 0;
 }
 
+// End only event streams; ordinary API requests can finish during shutdown.
+function closeAll() {
+  for (const subs of tenants.values())
+    for (const res of subs) {
+      try {
+        res.end();
+      } catch (_) {
+        /* connection already closed */
+      }
+    }
+  resetForTests();
+}
+
 /* test hook */
 function resetForTests() {
   tenants.clear();
@@ -95,6 +108,7 @@ function resetForTests() {
 
 module.exports = {
   subscribe,
+  closeAll,
   publish,
   subscriberCount,
   resetForTests,

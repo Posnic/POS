@@ -124,6 +124,8 @@
       "src/window-theme.js",
       "src/window-theme.css",
       "src/desktop-design.css",
+      "src/hardware-workspace.css",
+      "src/hardware-workspace.js",
       "frontend/static/fonts/dmsans/*.woff2",
       "frontend/static/fonts/lexend/*.woff2",
       "src/cloud-setup.html",

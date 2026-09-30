@@ -861,3 +861,20 @@ test('signature editor saves only the optional block and keeps each format indep
     assert.equal(sent.receipt_designs.layouts.a4.blocks.some(b => b.type === 'signature'), false);
     dom.window.close();
 });
+
+ test('designer sample dates retain local date and minute precision without seconds', () => {
+    const { dom, w, $, branch } = setup();
+    let options;
+    w.Date.prototype.toLocaleString = function (_locale, value) {
+        options = value;
+        return value && value.minute && !value.second ? '09/30/2026, 07:34 PM' : '09/30/2026, 07:34:47 PM';
+    };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    const preview = $('.rd-preview-page iframe').attr('srcdoc');
+    assert.match(preview, /07:34 PM/);
+    assert.doesNotMatch(preview, /07:34:47/);
+    assert.equal(options.year, 'numeric');
+    assert.equal(options.minute, '2-digit');
+    assert.equal(options.second, undefined);
+    dom.window.close();
+});

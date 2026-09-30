@@ -85,6 +85,15 @@ before(
     BaseModel.currentBranch = branchId;
     const express = require('express'),
       app = express();
+    app.get('/api/uploads/mobile-test-image.png', (r, s) => {
+      assert.equal(r.headers.authorization, undefined);
+      s.type('png').send(
+        Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',
+          'base64'
+        )
+      );
+    });
     app.use(express.json());
     app.use((req, res, next) => {
       res.on('finish', () => {
@@ -133,6 +142,7 @@ after(async () => {
   if (BaseModel?.mongoClient) await BaseModel.mongoClient.close();
   if (mongo) await mongo.stop();
 });
+
 async function call(route, body, credential = token, method) {
   const response = await fetch(base + route, {
     method: method || (body === undefined ? 'GET' : 'POST'),
@@ -513,8 +523,19 @@ test(
       );
       page.on('response', async (r) => {
         if (r.url().includes('/api/'))
-          console.log('API RESPONSE', r.status(), r.url(), r.status() >= 400 ? await r.text() : '');
+          console.log(
+            'API RESPONSE',
+            r.status(),
+            r.url(),
+            r.status() >= 400 ? await r.text().catch(() => '[navigation completed]') : ''
+          );
       });
+      await db.collection('items').updateOne(
+        { _id: item._id },
+        {
+          $set: { image: '/uploads/mobile-test-image.png' },
+        }
+      );
       await page.goto(base.replace(/\/api$/, '/'));
       await page
         .getByRole('button', { name: 'Connect a local or Community shop', exact: true })
@@ -537,6 +558,8 @@ test(
       }
       await page.getByRole('textbox', { name: 'Confirm PIN', exact: true }).fill('4829');
       await page.getByRole('button', { name: 'Save', exact: true }).click();
+      const product = page.getByTestId('item-' + String(item._id));
+      await expect(product.locator('img')).toHaveAttribute('src', /^data:image\/png/);
       await page.getByTestId('item-' + String(item._id)).click();
       const before = await db.collection('sales').countDocuments();
       await context.setOffline(true);
@@ -557,9 +580,51 @@ test(
       await page.screenshot({
         path: path.resolve(__dirname, '../../tmp/mobile-pos-live-sale.png'),
       });
+      const receiptNumber = await page.getByTestId('receipt-number').innerText();
+      const cloudIntent = await db
+        .collection('mobile_sales')
+        .findOne({ 'sale.receipt': receiptNumber });
+      await db.collection('mobile_cloud_capabilities').insertOne({
+        _id: 'delivery:' + String(branch.license),
+        protocol: 1,
+        authority: 'test-gateway',
+      });
+      await db.collection('mobile_cloud_receipts').insertOne({
+        _id: 'mobile:' + cloudIntent._id,
+        saleId: String(cloudIntent.serverId),
+        branchId: String(branch._id),
+        authority: 'test-gateway',
+        receivedAt: new Date().toISOString(),
+      });
+      await page.getByRole('button', { name: 'Connection & sync', exact: true }).click();
+      const delivery = page.waitForResponse((response) =>
+        response.url().endsWith('/mobile/v1/delivery-status')
+      );
+      await page.getByRole('button', { name: 'Sync now', exact: true }).click();
+      assert.equal((await (await delivery).json()).receipts.length, 1);
+      await expect(page.getByText('Received in cloud', { exact: true })).toBeVisible();
+      await page.screenshot({
+        path: path.resolve(__dirname, '../../tmp/mobile-cloud-delivery.png'),
+      });
+      await page.getByRole('tab', { name: 'Receipts', exact: true }).click();
+      await page.getByText('Find an older receipt', { exact: true }).click();
+      await page.getByRole('textbox').fill(receiptNumber);
+      await page.getByRole('button', { name: 'Find an older receipt', exact: true }).click();
+      await page.getByRole('button', { name: receiptNumber, exact: true }).click();
+      await expect(page.getByRole('heading', { name: receiptNumber, exact: true })).toBeVisible();
+      await page.screenshot({
+        path: path.resolve(__dirname, '../../tmp/mobile-server-receipt.png'),
+      });
+      // Web preview intentionally never persists bearer/PIN secrets. Reload with
+      // API/image access unavailable verifies the durable non-secret image cache.
+      await page.route('**/api/**', (route) => route.abort());
+      await page.reload();
+      await expect(product.locator('img')).toHaveAttribute('src', /^data:image\/png/);
       assert.deepEqual(errors, []);
     } finally {
       await browser.close();
+      await db.collection('mobile_cloud_receipts').deleteMany({});
+      await db.collection('mobile_cloud_capabilities').deleteMany({});
     }
   }
 );
@@ -829,4 +894,280 @@ test('owner pairs the selected staff identity without transferring owner privile
   assert.equal((await call('/mobile/v1/pair-codes', { staffId: String(foreign._id) })).status, 403);
   await db.collection('users').updateOne({ _id: cashier._id }, { $set: { branch_access: [] } });
   assert.equal((await call('/mobile/v1/pair-codes', { staffId: String(cashier._id) })).status, 403);
+});
+
+test('older receipt search is literal, paginated and limited to the cashier and branch', async () => {
+  const prefix = 'receipt-lookup-';
+  const ids = [];
+  for (let n = 0; n < 53; n++) {
+    const key = mobile.hash(prefix + n);
+    ids.push(key);
+    await db.collection('mobile_sales').insertOne({
+      _id: key,
+      license: branch.license,
+      branchId: branch._id,
+      userId: user._id,
+      state: 'complete',
+      created: new Date(1700000000000 + n),
+      sale: sale({ receipt: prefix + '[literal].' + n }),
+      serverId: new ObjectId(),
+    });
+  }
+  const foreign = mobile.hash(prefix + 'foreign');
+  ids.push(foreign);
+  await db.collection('mobile_sales').insertOne({
+    _id: foreign,
+    license: branch.license,
+    branchId: branch._id,
+    userId: new ObjectId(),
+    state: 'complete',
+    created: new Date(),
+    sale: sale({ receipt: prefix + '[literal].secret' }),
+    serverId: new ObjectId(),
+  });
+  try {
+    const first = await mobile.receipts({ ...req, query: { q: prefix + '[literal].' } });
+    assert.equal(first.receipts.length, 50);
+    assert.equal(first.receipts[0].receipt, prefix + '[literal].52');
+    assert.ok(first.next);
+    const second = await mobile.receipts({
+      ...req,
+      query: { q: prefix + '[literal].', before: first.next },
+    });
+    assert.equal(second.receipts.length, 3);
+    assert.equal(second.next, null);
+    assert.equal(new Set([...first.receipts, ...second.receipts].map((r) => r.id)).size, 53);
+    assert.ok(!first.receipts.some((r) => r.receipt.includes('secret')));
+    const none = await mobile.receipts({ ...req, query: { q: prefix + '.*' } });
+    assert.equal(none.receipts.length, 0);
+    await assert.rejects(mobile.receipts({ ...req, query: { before: 'bad' } }), /Invalid receipt/);
+    await assert.rejects(
+      mobile.receipts({ ...req, handsetDevice: null, query: {} }),
+      /Receipt access/
+    );
+    await assert.rejects(
+      mobile.receipts({ ...req, user: { ...user, usertype: 'staff', access: {} }, query: {} }),
+      /Receipt access/
+    );
+  } finally {
+    await db.collection('mobile_sales').deleteMany({ _id: { $in: ids } });
+  }
+});
+
+test('paged catalogue exceeds 10k items, remains immutable, and binds pages to the authorized device', async () => {
+  const added = Array.from({ length: 10017 }, (_, n) => ({
+    _id: new ObjectId(),
+    license: branch.license,
+    branch_id: branch._id,
+    name: 'Paged item ' + n,
+    selling_price: 10,
+    tax: 0,
+    activate: true,
+  }));
+  await db.collection('items').insertMany(added);
+  try {
+    const first = await mobile.bootstrap({ ...req, query: { catalogue: 'paged' } });
+    assert.ok(first.catalogue.count > 10000);
+    assert.equal(
+      first.catalogue.pages.reduce((n, p) => n + p.count, 0),
+      first.catalogue.count
+    );
+    const grant = await db.collection('mobile_grants').findOne({ _id: first.shop.snapshotVersion });
+    assert.equal(grant.items, undefined);
+    assert.ok(grant.pages.length > 39);
+    const params = { version: first.shop.snapshotVersion, page: '0' };
+    const page = await mobile.cataloguePage({ ...req, params });
+    assert.ok(page.items.length <= 256);
+    await assert.rejects(
+      mobile.cataloguePage({ ...req, params, handsetDevice: 'other-device' }),
+      /Refresh the catalogue/
+    );
+    const target = added[0];
+    const originalPrice = (
+      await require('../src/services/mobile-catalogue').hydrate(db, grant, [String(target._id)])
+    ).items[0].price;
+    await db.collection('items').updateOne({ _id: target._id }, { $set: { selling_price: 20 } });
+    const unchanged = (
+      await require('../src/services/mobile-catalogue').hydrate(db, grant, [String(target._id)])
+    ).items[0].price;
+    assert.equal(unchanged, originalPrice);
+    const fresh = await mobile.bootstrap({ ...req, query: { catalogue: 'paged' } });
+    assert.notEqual(fresh.shop.snapshotVersion, first.shop.snapshotVersion);
+    assert.ok(
+      fresh.catalogue.pages.filter((p, index) => p.id === first.catalogue.pages[index]?.id).length >
+        38
+    );
+    const transaction = sale({
+      snapshotVersion: first.shop.snapshotVersion,
+      total: 1000,
+      tax: 0,
+      cart: {
+        id: crypto.randomUUID(),
+        lines: [
+          {
+            id: crypto.randomUUID(),
+            itemId: String(target._id),
+            name: target.name,
+            quantity: 1,
+            price: 1000,
+            taxBps: 0,
+            taxInclusive: false,
+          },
+        ],
+      },
+      payment: { method: 'cash', received: 1000, change: 0 },
+    });
+    const accepted = await mobile.ingest({
+      ...req,
+      body: { idempotencyKey: transaction.id, sale: transaction },
+    });
+    assert.equal(accepted.saleId, transaction.id);
+    await db.collection('items').updateOne({ _id: target._id }, { $set: { is_deleted: true } });
+    const deleted = await mobile.bootstrap({ ...req, query: { catalogue: 'paged' } });
+    assert.equal(deleted.catalogue.count, first.catalogue.count - 1);
+  } finally {
+    await db.collection('items').deleteMany({ _id: { $in: added.map((row) => row._id) } });
+  }
+});
+
+test('cloud delivery requires explicit matching evidence and stays scoped to its issuing device', async () => {
+  const intent = await db
+    .collection('mobile_sales')
+    .findOne({ userId: user._id, branchId: branch._id, state: 'complete' });
+  const paid = intent.sale;
+  const ack = intent.ack;
+  const query = { ...req, body: { ids: [paid.id] } };
+  assert.equal((await mobile.deliveryStatus(query)).available, false);
+  const cap = {
+    _id: 'delivery:' + String(branch.license),
+    protocol: 1,
+    authority: 'verified-gateway',
+  };
+  const proof = {
+    _id: 'mobile:' + intent._id,
+    saleId: ack.serverId,
+    branchId: String(branch._id),
+    authority: cap.authority,
+    receivedAt: new Date().toISOString(),
+  };
+  try {
+    await db.collection('mobile_cloud_capabilities').insertOne(cap);
+    assert.deepEqual((await mobile.deliveryStatus(query)).receipts, []);
+    await db.collection('mobile_cloud_receipts').insertOne({ ...proof, branchId: 'other' });
+    assert.deepEqual((await mobile.deliveryStatus(query)).receipts, []);
+    await db
+      .collection('mobile_cloud_receipts')
+      .updateOne({ _id: proof._id }, { $set: { branchId: proof.branchId, saleId: 'wrong' } });
+    assert.deepEqual((await mobile.deliveryStatus(query)).receipts, []);
+    await db.collection('mobile_cloud_receipts').updateOne({ _id: proof._id }, { $set: proof });
+    assert.deepEqual((await mobile.deliveryStatus(query)).receipts, [
+      { id: paid.id, serverId: ack.serverId, receivedAt: proof.receivedAt },
+    ]);
+    assert.deepEqual(
+      (await mobile.deliveryStatus({ ...query, handsetDevice: 'other-device' })).receipts,
+      []
+    );
+    assert.deepEqual(
+      (await mobile.deliveryStatus({ ...query, user: { ...user, _id: new ObjectId() } })).receipts,
+      []
+    );
+    assert.equal((await mobile.bootstrap(req)).shop.capabilities.cloudDelivery, true);
+  } finally {
+    await db.collection('mobile_cloud_receipts').deleteOne({ _id: proof._id });
+    await db.collection('mobile_cloud_capabilities').deleteOne({ _id: cap._id });
+  }
+});
+
+test('weighed items opt in to fixed quantities and replay has one stock effect', async () => {
+  assert.equal(mobile.mapItem({ ...item, open_price: true }).requiresConfiguration, true);
+  const weighted = {
+    ...item,
+    _id: new ObjectId(),
+    name: 'Weighed rice',
+    selling_price: 12.35,
+    tax: 5,
+    tax_type: 'exclusive',
+    item_weight_machine_based: true,
+    unit: 'kg',
+    available_quantity: 10,
+  };
+  await db.collection('items').insertOne(weighted);
+  try {
+    const legacy = await mobile.bootstrap(req);
+    assert.equal(
+      legacy.items.find((row) => row.id === String(weighted._id)).requiresConfiguration,
+      true
+    );
+    const modern = await mobile.bootstrap({ ...req, query: { quantity: 'fixed3' } });
+    const product = modern.items.find((row) => row.id === String(weighted._id));
+    assert.equal(product.requiresConfiguration, false);
+    assert.equal(product.quantityScale, 1000);
+    const transaction = sale({
+      snapshotVersion: modern.shop.snapshotVersion,
+      total: 162,
+      tax: 8,
+      cart: {
+        id: crypto.randomUUID(),
+        lines: [
+          {
+            id: crypto.randomUUID(),
+            itemId: product.id,
+            name: product.name,
+            price: 1235,
+            taxBps: 500,
+            taxInclusive: false,
+            quantity: 0.125,
+            quantityScale: 1000,
+            unit: 'kg',
+          },
+        ],
+      },
+      payment: { method: 'cash', received: 200, change: 38 },
+    });
+    const send = (paid) => mobile.ingest({ ...req, body: { idempotencyKey: paid.id, sale: paid } });
+    const wrong = {
+      ...transaction,
+      id: crypto.randomUUID(),
+      snapshotVersion: legacy.shop.snapshotVersion,
+    };
+    await assert.rejects(send(wrong), /catalogue/);
+    const precision = {
+      ...transaction,
+      id: crypto.randomUUID(),
+      cart: { ...transaction.cart, lines: [{ ...transaction.cart.lines[0], quantity: 0.1251 }] },
+    };
+    await assert.rejects(send(precision), /Quantity/);
+    const ordinary = modern.items.find((row) => row.id === String(item._id));
+    const forged = {
+      ...transaction,
+      id: crypto.randomUUID(),
+      cart: {
+        ...transaction.cart,
+        lines: [
+          {
+            ...transaction.cart.lines[0],
+            itemId: ordinary.id,
+            price: ordinary.price,
+            name: ordinary.name,
+            taxBps: ordinary.taxBps,
+            taxInclusive: ordinary.taxInclusive,
+          },
+        ],
+      },
+    };
+    await assert.rejects(send(forged), /Quantity/);
+    const ack = await send(transaction);
+    assert.deepEqual(await send(transaction), ack);
+    assert.equal(
+      (await db.collection('items').findOne({ _id: weighted._id })).available_quantity,
+      9.875
+    );
+    const stored = await db.collection('sales').findOne({ _id: new ObjectId(ack.serverId) });
+    const line = stored.items[0];
+    assert.equal(line.item_quantity, 0.125);
+    assert.equal(line.item_unit, 'kg');
+    assert.equal(line.total_amount, 1.62);
+  } finally {
+    await db.collection('items').deleteOne({ _id: weighted._id });
+  }
 });

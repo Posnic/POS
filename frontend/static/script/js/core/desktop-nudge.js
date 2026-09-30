@@ -258,7 +258,7 @@
         if (get(DONE) || get(LOGIN_CARD_DISMISSED)) { return; }
 
         var req = new XMLHttpRequest();
-        req.open('GET', 'runtime-info', true);
+        req.open('GET', ((typeof API_URL === 'string' && API_URL) || '/') .replace(/\/?$/, '/') + 'runtime-info', true);
         req.onload = function () {
             try {
                 var info = JSON.parse(req.responseText || '{}');

@@ -1,0 +1,78 @@
+/* Hardware Manager: common device workflow, with the shop's own theme. */
+.desktop-window.hardware-workspace .container { max-width:1280px; }
+.desktop-window.hardware-workspace .content { background:var(--w-body-bg);padding:28px; }
+.desktop-window.hardware-workspace .tab-content {animation:none!important;}
+.desktop-window.hardware-workspace .hw-action-row {display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+.desktop-window.hardware-workspace .hw-panel>div {min-width:0;}
+.desktop-window.hardware-workspace .hw-preview-viewport {margin:12px auto;}
+.desktop-window.hardware-workspace .hw-screen-card.hw-preview-expanded .hw-screen-grid {grid-template-columns:1fr;}
+.desktop-window.hardware-workspace .hw-screen-card.hw-preview-expanded .hw-screen-controls {display:none;}
+.desktop-window.hardware-workspace .hw-nav-group { color:var(--w-muted);font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:14px 12px 6px; }
+.desktop-window.hardware-workspace .hw-heading {padding:0!important;border:0!important;background:transparent!important;margin:0 0 24px!important;}
+.desktop-window.hardware-workspace .hw-heading h2 {font-size:25px;letter-spacing:-.5px;margin:0 0 5px;color:var(--w-text);}
+.desktop-window.hardware-workspace .hw-heading p,.desktop-window.hardware-workspace .hw-note {font-size:13px;color:var(--w-muted);line-height:1.6;}
+.desktop-window.hardware-workspace .hw-panel,.desktop-window.hardware-workspace .printer-card,.desktop-window.hardware-workspace #scannerTab .card,.desktop-window.hardware-workspace .hw-screen-card {padding:20px!important;margin:0 0 18px!important;border:1px solid var(--w-border)!important;border-radius:10px!important;background:var(--w-card-bg)!important;box-shadow:none!important;}
+.desktop-window.hardware-workspace .hw-panel h3 {font-size:16px;margin:0 0 14px;color:var(--w-text);}
+.desktop-window.hardware-workspace .hw-panel p {margin:8px 0 14px;}
+.desktop-window.hardware-workspace .hw-panel #cdPrinterConfig {padding:0!important;margin:0!important;border:0!important;}
+.desktop-window.hardware-workspace .hw-details {border-top:1px solid var(--w-border);padding-top:14px;margin:16px 0;}
+.desktop-window.hardware-workspace .hw-details summary {font-size:13px;color:var(--w-muted);cursor:pointer; padding:4px 0 12px;}
+.desktop-window.hardware-workspace .hw-subnav,.desktop-window.hardware-workspace .printer-nav {display:flex;gap:20px;flex-wrap:wrap;border-bottom:1px solid var(--w-border);margin:0 0 20px;padding:0;}
+.desktop-window.hardware-workspace .hw-subnav button,.desktop-window.hardware-workspace .printer-nav button {border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;padding:8px 0!important;color:var(--w-muted)!important;}
+.desktop-window.hardware-workspace .hw-subnav button[aria-selected=true],.desktop-window.hardware-workspace .printer-nav button[aria-selected=true] {color:var(--w-accent)!important;border-bottom-color:var(--w-accent)!important;}
+.desktop-window.hardware-workspace [hidden] {display:none!important;}
+.desktop-window.hardware-workspace label {font-weight:500;}
+.desktop-window.hardware-workspace input:not([type=checkbox]):not([type=radio]):not([type=range]),.desktop-window.hardware-workspace select {border:1px solid var(--w-border)!important;border-radius:6px!important;background:var(--w-card-bg)!important;color:var(--w-text)!important;min-height:38px;max-width:100%;padding:8px 10px!important;}
+.desktop-window.hardware-workspace input[type=checkbox],.desktop-window.hardware-workspace input[type=radio],.desktop-window.hardware-workspace input[type=range] {accent-color:var(--w-accent);}
+.desktop-window.hardware-workspace button:disabled {opacity:.5;cursor:not-allowed;}
+.desktop-window.hardware-workspace button:focus-visible,.desktop-window.hardware-workspace summary:focus-visible {outline:2px solid var(--w-accent);outline-offset:3px;}
+.desktop-window.hardware-workspace #cdOpenBtn {padding:10px 16px!important;font-size:14px!important;letter-spacing:0!important;}
+.desktop-window.hardware-workspace .hw-weight {background:var(--w-raised)!important;color:var(--w-text)!important;border:0!important;border-radius:8px;padding:24px;}
+.desktop-window.hardware-workspace #weightValue {font-size:44px;font-weight:600;color:var(--w-text)!important;}
+.desktop-window.hardware-workspace .hw-table-scroll {overflow-x:auto!important;max-width:100%;}
+.desktop-window.hardware-workspace .hw-table {width:100%;font-size:13px;border-collapse:collapse;}
+.desktop-window.hardware-workspace .hw-table td,.desktop-window.hardware-workspace .hw-table th {padding:12px!important;border-bottom:1px solid var(--w-border)!important;color:var(--w-text)!important;overflow-wrap:anywhere;}
+.desktop-window.hardware-workspace .hw-table th {background:var(--w-raised)!important;font-weight:500!important;}
+.desktop-window.hardware-workspace #mobileApiUrl {overflow-wrap:anywhere;min-width:0;}
+.desktop-window.hardware-workspace #mobileTab .hw-panel {overflow:visible;}
+.desktop-window.hardware-workspace .hw-pane:empty {display:none;}
+.desktop-window.hardware-workspace .hw-screen-card>div:first-child {padding-bottom:16px;border-bottom:1px solid var(--w-border);margin-bottom:18px;}
+.desktop-window.hardware-workspace .hw-screen-grid {display:grid;grid-template-columns:minmax(260px,1fr) minmax(280px,1fr);gap:22px;align-items:start;}
+.desktop-window.hardware-workspace .hw-screen-controls {min-width:0;}
+.desktop-window.hardware-workspace .hw-screen-fields {display:flex;flex-direction:column;gap:16px;}
+.desktop-window.hardware-workspace .hw-screen-fields>div,.desktop-window.hardware-workspace .hw-screen-fields>label {margin:0!important;}
+.desktop-window.hardware-workspace .hw-screen-fields label {color:var(--w-text)!important;font-size:13px!important;}
+.desktop-window.hardware-workspace .hw-screen-fields input[type=number] {width:100px!important;}
+.desktop-window.hardware-workspace .hw-screen-preview {position:sticky;top:16px;min-width:0;}
+.desktop-window.hardware-workspace .hw-screen-preview h3 {margin:0;font-size:14px;}
+.desktop-window.hardware-workspace .hw-preview-viewport {width:100%;overflow:hidden;background:#101114;border-radius:8px;position:relative;}
+.desktop-window.hardware-workspace .hw-preview-viewport iframe {border:0;transform-origin:top left;display:block;max-width:none!important;}
+.desktop-window.hardware-workspace .hw-screen-actions {border-top:1px solid var(--w-border);padding-top:16px;}
+.desktop-window.hardware-workspace .hw-screen-actions>span {display:block;flex-basis:100%;}
+.desktop-window.hardware-workspace #kotPrinterList {max-height:none!important;overflow:visible!important;background:var(--w-card-bg)!important;}
+.desktop-window.hardware-workspace #screenTab>.status {background:transparent!important;border:0!important;padding:0 0 18px!important;color:var(--w-muted)!important;}
+.desktop-window.hardware-workspace .hw-panel pre {white-space:pre-wrap;overflow-wrap:anywhere;max-height:250px;overflow:auto;}
+@media(max-width:1100px){.desktop-window.hardware-workspace .hw-screen-grid {grid-template-columns:1fr;}.desktop-window.hardware-workspace .hw-screen-preview {position:static;}.desktop-window.hardware-workspace .hw-screen-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:700px){.desktop-window.hardware-workspace.desktop-window[data-desktop-window=hardware] .container{grid-template-columns:1fr;}.desktop-window.hardware-workspace.desktop-window[data-desktop-window=hardware] .tabs {flex-direction:row;flex-wrap:wrap;padding:10px;border-right:0;}.desktop-window.hardware-workspace .hw-nav-group {display:none;}.desktop-window.hardware-workspace .content{padding:16px;}.desktop-window.hardware-workspace .hw-screen-fields {grid-template-columns:1fr;}.desktop-window.hardware-workspace .hw-panel{padding:16px!important;}.desktop-window.hardware-workspace .hw-subnav{gap:14px;}}
+
+.desktop-window.hardware-workspace .tab-content {background:transparent!important;}
+.desktop-window.hardware-workspace .btn-primary {background:var(--w-accent)!important;border-color:var(--w-accent)!important;color:#fff!important;}
+.desktop-window.hardware-workspace[data-desktop-window=hardware] .tabs .tab.active {background:var(--w-raised)!important;color:var(--w-text)!important;border-color:var(--w-border)!important;}
+.desktop-window.hardware-workspace #maxDevicesSelect {width:auto;min-width:72px;}
+.desktop-window.hardware-workspace #screenSaveStatus:empty {display:none;}
+.desktop-window.hardware-workspace #screenSaveStatus {padding:12px 16px;background:var(--w-raised);border-radius:6px;margin-bottom:16px;}
+.desktop-window.hardware-workspace .hw-preview-scenario {display:block;margin:12px 0;}
+.desktop-window.hardware-workspace .hw-screen-actions {position:sticky;bottom:0;background:var(--w-card-bg);z-index:2;padding-bottom:12px;}
+.desktop-window.hardware-workspace #mobileTab>.hw-heading {display:grid;grid-template-columns:1fr auto;gap:4px 16px;}
+.desktop-window.hardware-workspace #mobileTab>.hw-heading h2 {grid-column:1;}
+.desktop-window.hardware-workspace #mobileTab>.hw-heading p {grid-column:1;}
+.desktop-window.hardware-workspace #mobileTab>.hw-heading button {grid-column:2;grid-row:1 / 3;align-self:center;}
+
+.sound-message-actions { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin-block:12px; }
+#kitchenTalkPreview { width:min(100%,420px); margin-block:8px; }
+#kitchenTalkTimer { font-variant-numeric:tabular-nums; font-weight:700; }
+#soundTab [hidden] { display:none !important; }
+
+.hw-preview-format { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.hw-preview-format label { min-width:0; }
+@media(max-width:600px) { .hw-preview-format { grid-template-columns:1fr; gap:0; } }

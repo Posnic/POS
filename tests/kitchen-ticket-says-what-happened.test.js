@@ -54,11 +54,11 @@ const atTable = (extra) => ({
   ...extra,
 });
 
-test('a first ticket is a new order, and a later one is an additional order', () => {
+test('a first ticket is a new order, and a later one is a running order', () => {
   /* Not "Modified Order": the kitchen already cooked from the first sheet and
      threw it away, so there is nothing on their side being modified. */
   assert.strictEqual(headingOf(ticket(atTable({ items: [biryani] }), 'new')), 'New Order');
-  assert.strictEqual(headingOf(ticket(atTable({ items: [biryani] }), 'edit')), 'Additional Order');
+  assert.strictEqual(headingOf(ticket(atTable({ items: [biryani] }), 'edit')), 'Running Order');
   assert.ok(!/Modified Order/.test(ticket(atTable({ items: [biryani] }), 'edit')));
 });
 

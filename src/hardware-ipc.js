@@ -981,4 +981,4 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   console.log('Hardware IPC handlers registered');
 }
 
-module.exports = { setupHardwareIPC, readLocalBranches };
+module.exports = { setupHardwareIPC, readLocalBranches, getLocalIP };
