@@ -25,6 +25,11 @@ const req = (body = {}, role = 'manager') => ({
   user: { _id: user, role, access: { sales: { write: true } } },
   tenantContext: { branchId: branch, licenseId: license },
 });
+
+test('authenticated table discovery advertises recoverable legacy source moves', async () => {
+  expect((await service.list(req({}, 'staff'))).capabilities).toEqual({ legacySourceMove: true });
+  await expect(service.list({ ...req(), user: null })).rejects.toMatchObject({ status: 403 });
+});
 test('manager creates and updates table metadata with optimistic conflict checks', async () => {
   const row = await service.update(
     req({ tableorder_value: 'T1', capacity: 4, max_capacity: 6, shape: 'round', area: 'Garden' })

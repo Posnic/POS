@@ -1191,8 +1191,12 @@ recovers interrupted enrollment; cancelling the parent recovers any existing
 child before recording cancellation. Cancelling before preparation prevents a
 delayed preparation from moving the order and does not enroll it unnecessarily.
 Clients must retain the parent request and original server/staff identity until
-completion or confirmed cancellation. Automatic destination enrollment and
-Captain legacy-order UI routing remain pending.
+completion or confirmed cancellation. Authenticated table discovery advertises
+`capabilities.legacySourceMove: true`; Captain uses this flag to route older
+dine-in orders through the durable move endpoints. Older servers keep the
+compatible single-table operation. A saved move always retains its recovery
+path even before the order history includes its new seating metadata.
+Automatic destination enrollment remains pending.
 
 ### Captain guest-count updates
 
