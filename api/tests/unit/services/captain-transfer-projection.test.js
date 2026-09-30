@@ -149,3 +149,23 @@ test('substituting a product under the same preparation ID invalidates its finan
   expect(()=>buildBillPayload(changed,branch)).toThrow('bill changed');
   expect(()=>snapshotFrom([changed],branch,'1')).toThrow('bill changed');
 });
+
+test.each(['qty','unit_price','item_price','item_total','total','total_amount','item_discount',
+  'tax_amount','tax','tax_type','cgst_tax','sgst_tax','igst_tax','tax_components'])(
+  'changing desktop item field %s cannot silently reuse allocated amounts',field=>{
+    const original=sale(),branch={currencyCode:'INR',indian_gst:'enable'};
+    const result=project(original,branch,[{id:'c0i0',quantity:1}],at);
+    const changed={...original,...result.destination};
+    changed.items[0][field]=field==='tax_components'?[{name:'Tax',amount:999}]:field==='tax_type'?'changed':999;
+    expect(()=>buildBillPayload(changed,branch)).toThrow('bill changed');
+    expect(()=>snapshotFrom([changed],branch,'1')).toThrow('bill changed');
+  }
+);
+
+test.each(['items_subtotal','items_total','sales_tax','sales_round_off'])(
+  'changing desktop bill field %s invalidates allocated amounts',field=>{
+    const original=sale(),branch={currencyCode:'INR'};
+    const result=project(original,branch,[{id:'c0i0',quantity:1}],at);
+    expect(()=>buildBillPayload({...original,...result.destination,[field]:999},branch)).toThrow('bill changed');
+  }
+);

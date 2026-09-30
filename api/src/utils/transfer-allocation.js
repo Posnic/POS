@@ -6,11 +6,18 @@ const active=items=>(items||[]).filter(line=>line&&!line.return&&!line.cancelled
   !['cancelled','canceled'].includes(String(line.status||'').toLowerCase())&&
   Number(line.quantity??line.item_quantity??line.qty)>0&&String(line.name||line.item_name||'').trim());
 const fail=()=>{throw Object.assign(new Error('The bill changed. Refresh before continuing.'),{status:409});};
+const fields=(value,keys)=>Object.fromEntries(keys.map(key=>[key,value[key]]));
 function fingerprint(sale,policy,allocation) {
   return createHash('sha256').update(JSON.stringify({currency:policy.currencyCode,digits:policy.currencyDigits,
     lines:active(sale.items).map(line=>({key:orderLine.key(line),product:orderLine.product(line),name:String(line.name||line.item_name||'').trim(),quantity:Number(line.quantity??line.item_quantity??line.qty),
-      rate:line.unit_price??line.item_base_price??line.item_price,tax:line.item_tax??line.tax_amount})),
+      rate:line.unit_price??line.item_base_price??line.item_price,tax:line.item_tax??line.tax_amount,
+      // Desktop readers use different aliases from the Captain bill reader.
+      // Bind every stored amount/quantity alias, not just the first one found.
+      financial:fields(line,['quantity','item_quantity','qty','unit_price','item_base_price','item_price',
+        'item_total','total','total_amount','item_discount','item_tax','tax_amount','tax','tax_type',
+        'cgst_tax','sgst_tax','igst_tax','tax_components'])})),
     subtotal:sale.sales_sub_total,discount:sale.discount,tax:sale.tax,round:sale.round_off,total:sale.sales_total,
+    financial:fields(sale,['items_subtotal','items_total','sales_tax','sales_round_off']),
     allocation:{lines:allocation.lines,components:allocation.components,totalMinor:allocation.totalMinor},
   })).digest('hex');
 }
