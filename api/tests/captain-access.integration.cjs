@@ -516,4 +516,12 @@ test('paired Captain moves a reserved group through scoped API without accepting
  assert.equal(cancelledReply.status,200);
  assert.equal((await cancelledReply.json()).state,'cancelled');
  assert.equal((await db.collection('sales').findOne({_id:sale})).table_number,'G1');
+ const unprepared={...payload,request_id:'route-moving-0003'};
+ const abandoned=await send('cancel',{request_id:unprepared.request_id,orderId:String(sale)});
+ assert.equal(abandoned.status,200);
+ assert.equal((await abandoned.json()).state,'cancelled');
+ assert.equal((await send('prepare',unprepared)).status,409);
+ assert.equal((await send('cancel',{request_id:unprepared.request_id,orderId:String(sale)})).status,200);
+ assert.equal((await db.collection('sales').findOne({_id:sale})).table_number,'G1');
+
 });
