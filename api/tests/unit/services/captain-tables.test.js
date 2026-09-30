@@ -233,3 +233,34 @@ test('paid legacy receipts stay closed on upgrade while newly paid floor orders 
   });
   expect((await service.list(req())).tables[0].status).toBe('occupied');
 });
+
+test('neighbour settings use table identities and survive renaming and unrelated edits', async () => {
+  const neighbour = await service.update(req({ tableorder_value: 'T2' }));
+  const table = await service.update(
+    req({ tableorder_value: 'T1', adjacent_table_ids: [neighbour.id, neighbour.id] })
+  );
+  expect(table.adjacent_table_ids).toEqual([neighbour.id]);
+  await service.update(req({ ...neighbour, tableorder_value: 'T3' }));
+  await service.update(req({ id: table.id, version: 0, tableorder_value: 'T1', capacity: 4 }));
+  expect(
+    (await service.list(req())).tables.find((row) => row.id === table.id).adjacent_table_ids
+  ).toEqual([neighbour.id]);
+  const cleared = await service.update(
+    req({ id: table.id, version: 1, tableorder_value: 'T1', adjacent_table_ids: [] })
+  );
+  expect(cleared.adjacent_table_ids).toEqual([]);
+});
+
+test('neighbour settings reject self, missing, malformed and other-branch identities', async () => {
+  const table = await service.update(req({ tableorder_value: 'T1' }));
+  const foreign = new ObjectId();
+  await db
+    .collection('tableorder')
+    .insertOne({ _id: foreign, branch_id: new ObjectId(), license, tableorder_value: 'T2' });
+  for (const ids of [[table.id], [String(foreign)], [String(new ObjectId())], ['T2'], 'T2', null]) {
+    await expect(service.update(req({ ...table, adjacent_table_ids: ids }))).rejects.toThrow();
+  }
+  const saved = await db.collection('tableorder').findOne({ _id: new ObjectId(table.id) });
+  expect(saved.captain_table_version).toBe(0);
+  expect(saved.adjacent_table_ids).toBeUndefined();
+});

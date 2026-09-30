@@ -10,6 +10,9 @@ function view(row = {}) {
         : capacity,
     area: typeof row.area === 'string' ? row.area : '',
     shape: shapes.includes(row.shape) ? row.shape : 'square',
+    ...(Array.isArray(row.adjacent_table_ids)
+      ? { adjacent_table_ids: row.adjacent_table_ids.map(String) }
+      : {}),
   };
 }
 function update(data, previous = {}) {
@@ -49,6 +52,28 @@ function accommodates(row, guests) {
   const { max_capacity } = view(row);
   return !max_capacity || Number(guests) <= max_capacity;
 }
+async function adjacentTables(collection, data, scope, ownId) {
+  if (data.adjacent_table_ids === undefined) return {};
+  const ids = data.adjacent_table_ids;
+  if (
+    !Array.isArray(ids) ||
+    ids.length > 100 ||
+    ids.some((id) => typeof id !== 'string' || !/^[a-f0-9]{24}$/i.test(id))
+  )
+    throw new Error('Choose neighbouring tables from this branch.');
+  const unique = [...new Set(ids.map((id) => id.toLowerCase()))].sort();
+  if (unique.includes(String(ownId || '').toLowerCase()))
+    throw new Error('A table cannot combine with itself.');
+  const { ObjectId } = require('mongodb');
+  const count = unique.length
+    ? await collection.countDocuments({
+        ...scope,
+        _id: { $in: unique.map((id) => new ObjectId(id)) },
+      })
+    : 0;
+  if (count !== unique.length) throw new Error('Choose neighbouring tables from this branch.');
+  return { adjacent_table_ids: unique };
+}
 async function ensureIdentity(collection) {
   await collection.createIndex(
     { branch_id: 1, license: 1, tableorder_key: 1 },
@@ -59,4 +84,4 @@ const key = (value) =>
   String(value || '')
     .trim()
     .toUpperCase();
-module.exports = { view, update, accommodates, ensureIdentity, key };
+module.exports = { view, update, accommodates, ensureIdentity, key, adjacentTables };

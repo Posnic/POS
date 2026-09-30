@@ -3916,6 +3916,10 @@ class SettingModel extends BaseModel {
         branch_id: this.normalizeId(this.branchId),
         branch_name: branchName,
         ...require('../utils/table-details').update(data),
+        ...(await require('../utils/table-details').adjacentTables(collection, data, {
+          branch_id: this.normalizeId(this.branchId),
+          license: this.normalizeId(this.licenseId),
+        })),
         tableorder_key: require('../utils/table-details').key(data.tableorder_value),
         captain_table_version: 0,
         tableorder_value: data.tableorder_value,
@@ -3984,6 +3988,12 @@ class SettingModel extends BaseModel {
       const mongoDate = new Date();
       const updateData = {
         ...require('../utils/table-details').update(data, previous),
+        ...(await require('../utils/table-details').adjacentTables(
+          collection,
+          data,
+          { branch_id: this.normalizeId(this.branchId), license: this.normalizeId(this.licenseId) },
+          previous._id
+        )),
         tableorder_key: require('../utils/table-details').key(data.tableorder_value),
         tableorder_value: data.tableorder_value,
         tableorder_fields: tableorder_data,

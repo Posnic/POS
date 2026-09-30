@@ -94,7 +94,15 @@ async function update(req) {
     fail('Close the table before renaming it.', 409);
   let metadata;
   try {
-    metadata = details.update(body, previous || {});
+    metadata = {
+      ...details.update(body, previous || {}),
+      ...(await details.adjacentTables(
+        tables,
+        body,
+        { branch_id: c.branchId, license: c.license },
+        previous?._id
+      )),
+    };
   } catch (error) {
     fail(error.message);
   }
