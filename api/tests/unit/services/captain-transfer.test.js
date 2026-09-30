@@ -823,3 +823,11 @@ test('transfer status is actor and order bound and reports cancellation',async()
  input.user.access.sales.merge=false;
  await expect(service.status(input)).rejects.toMatchObject({status:403});
 });
+
+
+test.each([false,0,'0','false'])('disabled Captain refuses transfer operations (%s)',async value=>{
+ const input=await confirmation();
+ await db.collection('branches').updateOne({_id:branch},{$set:{module_captain_enable:value}});
+ for(const action of ['preview','status','complete']) await expect(service[action](input)).rejects.toMatchObject({status:403});
+ expect(await db.collection('captain_payment_plans').countDocuments({})).toBe(0);
+});

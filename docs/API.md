@@ -1256,9 +1256,9 @@ The response contains a `revision`, source/destination line and kitchen-round
 views, currency precision and amounts in minor units. Partly served rounds
 require an explicit served quantity when the selection is ambiguous.
 Preview does not reserve capacity or mutate sales, stock, service or print jobs.
-It is not a transfer confirmation. The production commit/recovery endpoint and
-Captain submission UI remain unfinished; a future commit must re-read and fence
-the order and validate this revision before applying either side.
+It is not a transfer confirmation. The completion endpoint below re-reads and
+fences the order and validates this revision before applying either side.
+Captain submission UI and full fiscal acceptance remain unfinished.
 
 
 ### Order-edit pricing preview (development protocol)
@@ -1285,5 +1285,19 @@ order and permissions. Captain integration remains under development.
 It returns `unknown`, `pending`, `cancelled`, or the stored completed result;
 it never replays writes or returns the internal journal. Unknown means no
 record was found in this issuer's scope, not permission to create another
-request ID. Transfer mutation routes and the Captain transfer UI remain under
-development.
+request ID. The Captain transfer UI and full fiscal acceptance remain under development.
+
+
+`POST /captain/v1/tables/transfer/complete` accepts the preview's original
+`orderId`, `items`, `revision`, a stable `requestId` (16–80 letters, digits,
+underscore or hyphen), and `destination: { tableIds, primaryId, guests }`.
+It requires sales write/merge permission and enabled Captain access. It reserves
+source/destination seating, writes the exact allocation and returns
+`{ requestId, sourceId, destinationId, sourceClosed, state: "completed" }`.
+
+After any uncertain response, retry the identical body and request ID against
+the same issuer. A completed retry returns the stored destination; reusing the
+request ID with a different intent is rejected. Status reads do not finish an
+interrupted write; completion retries perform recovery. Internal journals and
+source documents are never returned by these endpoints. Native Captain UI,
+fiscal/report acceptance and release packaging are still unfinished.

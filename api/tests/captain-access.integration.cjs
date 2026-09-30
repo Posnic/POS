@@ -612,3 +612,37 @@ test('paired transfer status requires merge permission and returns scoped unknow
   assert.deepEqual(await response.json(),{requestId:'unknown-transfer-123456',state:'unknown'});
  } finally {await db.collection('users').updateOne({_id:staff._id},{$unset:{'access.sales.merge':''}});}
 });
+
+
+test('paired transfer completion conserves totals and replays the same destination',async()=>{
+ const {grant}=await paired();
+ const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+ const post=(action,body,auth=headers)=>fetch(base+'/captain/v1/tables/transfer/'+action,{method:'POST',headers:auth,body:JSON.stringify(body)});
+ const id=new ObjectId(),product=new ObjectId(),table=new ObjectId();
+ await db.collection('tableorder').insertOne({_id:table,branch_id:branch._id,license:branch.license,tableorder_value:'TRANSFER-TARGET',capacity:4,max_capacity:4});
+ await db.collection('sales').insertOne({_id:id,branch_id:branch._id,license:branch.license,sale_process:'KOT',payment_status:'Unpaid',
+  table_number:'TRANSFER-SOURCE',sales_sub_total:100,sales_total:105,tax:5,
+  items:[{item_id:product,item_name:'Corn',item_quantity:2,item_base_price:50,item_tax:5}],
+  changes:[{timestamp:new Date(),items:[{item_id:product,item_name:'Corn',item_quantity:2,process:'add'}]}]});
+ const body={orderId:String(id),items:[{id:'c0i0',quantity:1}],requestId:'http-transfer-complete-123',
+  destination:{tableIds:[String(table)],primaryId:String(table),guests:2}};
+ assert.equal((await post('complete',body,{'Content-Type':'application/json'})).status,401);
+ assert.equal((await post('complete',body)).status,403);
+ await db.collection('users').updateOne({_id:staff._id},{$set:{'access.sales.merge':true}});
+ try {
+  const preview=await post('preview',body);assert.equal(preview.status,200);
+  body.revision=(await preview.json()).revision;
+  const response=await post('complete',body);assert.equal(response.status,200,await response.clone().text());
+  const result=await response.json();assert.equal(result.state,'completed');
+  const retry=await post('complete',body);assert.equal(retry.status,200);
+  assert.deepEqual(await retry.json(),result);
+  const status=await post('status',{orderId:body.orderId,requestId:body.requestId});
+  assert.deepEqual(await status.json(),result);
+  const source=await db.collection('sales').findOne({_id:id});
+  const destination=await db.collection('sales').findOne({_id:new ObjectId(result.destinationId)});
+  assert.equal(source.sales_total+destination.sales_total,105);
+  assert.equal(source.captain_payment_plan,undefined);assert.equal(destination.captain_payment_plan,undefined);
+  assert.equal(await db.collection('sales').countDocuments({'captain_transfer_operations.id':destination.captain_transfer_operations[0].id}),2);
+  const changed=await post('complete',{...body,items:[{id:'c0i0',quantity:2}]});assert.equal(changed.status,409);
+ } finally {await db.collection('users').updateOne({_id:staff._id},{$unset:{'access.sales.merge':''}});}
+});

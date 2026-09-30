@@ -27,7 +27,9 @@ async function scope(req) {
   const body = req.body || {};
   if (typeof body.orderId !== 'string' || !/^[a-f0-9]{24}$/i.test(body.orderId))
     fail('Choose an order.');
-  return context(req);
+  const c = await context(req);
+  if ([false, 0, '0', 'false'].includes(c.branch.module_captain_enable)) fail('Captain is disabled.', 403);
+  return c;
 }
 async function available(req, c) {
   const sale = await req.db.collection('sales').findOne({

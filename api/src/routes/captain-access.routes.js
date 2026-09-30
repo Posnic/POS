@@ -50,6 +50,7 @@ router.post('/tables/move/complete', limit, wrap(seating.complete));
 router.post('/tables/move/cancel', limit, wrap(seating.cancel));
 router.post('/tables/guests', limit, wrap(seating.guests));
 router.post('/tables/guests/status', limit, wrap(seating.guestsStatus));
+router.post('/tables/transfer/complete', limit, wrap(require('../services/captain-transfer').complete));
 router.post('/tables/transfer/status', rateLimit({ windowMs: 60000, limit: 120 }), wrap(require('../services/captain-transfer').status));
 router.post('/tables/transfer/preview', limit, wrap(require('../services/captain-transfer').preview));
 
