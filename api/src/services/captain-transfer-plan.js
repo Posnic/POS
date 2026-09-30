@@ -104,7 +104,7 @@ function plan(sale, branch, requested) {
   if (!destination.lines.length || source.totalMinor < 0 || destination.totalMinor < 0 ||
     source.totalMinor + destination.totalMinor !== snapshot.totalMinor)
     fail('The bill totals do not match. Refresh and try again.');
-  const revision = createHash('sha256').update(JSON.stringify({ bill: snapshot.revision, service })).digest('hex');
+  const revision = createHash('sha256').update(JSON.stringify({ bill: snapshot.revision, service, work: sale.kitchen_work || {} })).digest('hex');
   return { sourceId: String(sale._id), revision, currencyCode: snapshot.currencyCode,
     currencyDigits: snapshot.currencyDigits, currencySymbol: snapshot.currencySymbol,
     totalMinor: snapshot.totalMinor, source, destination };

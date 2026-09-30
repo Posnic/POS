@@ -56,7 +56,7 @@ async function reserve(db, scope, { requestId, actor, intent, sales }) {
     for (const id of journal.orderIds) {
       const sale = journal.sales.find(row => String(row._id) === id);
       const expected = {};
-      for (const key of ['items', 'changes', 'kitchen_service', 'sales_total', 'updated_date', 'payment_status', 'sale_process'])
+      for (const key of ['items', 'changes', 'kitchen_service', 'kitchen_work', 'sales_total', 'updated_date', 'payment_status', 'sale_process'])
         expected[key] = sale[key] === undefined ? { $exists: false } : sale[key];
       const result = await db.collection('sales').updateOne({ ...scopeFilter(scope),
         _id: new ObjectId(id), ...expected,

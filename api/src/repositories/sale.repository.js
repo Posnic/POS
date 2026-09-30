@@ -7950,6 +7950,7 @@ class SalesRepository {
     const result = await collection.updateOne(
       {
         ...scope,
+        captain_payment_plan: { $not: /^restructure:/ },
         changes: sale.changes === undefined ? { $exists: false } : sale.changes,
         items: sale.items,
         kitchen_service:

@@ -91,3 +91,14 @@ test('serving an item invalidates the preview even without a billing timestamp c
   expect(after.revision).not.toBe(before.revision);
   expect(after.destination.rounds[0].served).toBe(1);
 });
+
+
+test('readiness and pickup changes invalidate a transfer preview without changing the bill',()=>{
+  const original=sale();
+  const before=plan(original,branch,[{id:'c1i0',quantity:1}]);
+  original.kitchen_work={c1:{state:'preparing',revision:1,lines:{c1i0:{ready:1,collected:0}}}};
+  const ready=plan(original,branch,[{id:'c1i0',quantity:1}]);
+  expect(ready.revision).not.toBe(before.revision);
+  original.kitchen_work.c1.lines.c1i0.collected=1;
+  expect(plan(original,branch,[{id:'c1i0',quantity:1}]).revision).not.toBe(ready.revision);
+});
