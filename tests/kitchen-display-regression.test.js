@@ -256,13 +256,14 @@ test('cancellation expires on schedule, does not restart on polls, and keeps act
   w.kitchenScreen.setConfig(cfg);
   const list=[{id:'active',table:'T1',items:[{qty:1,name:'Fish'}]}, {id:'cancel',cancelled:true,table:'T1',items:[{qty:2,name:'Fish'}]}];
   w.kitchenScreen.setTickets(list);
-  assert.match(board.querySelector('.cancelled').textContent,/CANCELLED.*2×Fish/);
+  assert.match(board.querySelector('.cancelled-section').textContent,/CANCELLED.*2×Fish/);
+  assert.equal(board.querySelectorAll('.ticket').length,1);
   assert.ok(board.querySelector('.cancel-pulse'));
   assert.match(board.querySelector('.ticket:not(.cancelled)').textContent,/1×Fish/);
   assert.equal(w.document.getElementById('count').textContent,'1');
   now+=2000;w.kitchenScreen.setTickets(list);
   now+=1100;timers.find(t=>t.ms===250).fn();
-  assert.equal(board.querySelector('.cancelled'),null);
+  assert.equal(board.querySelector('.cancelled-section'),null);
   w.kitchenScreen.setTickets(list);
   assert.equal(board.querySelector('.cancelled'),null);
   w.kitchenScreen.setTickets([]);
@@ -294,4 +295,49 @@ test('ready and picked-up food use explicit labels without cancellation strike-t
   w.kitchenScreen.setTickets([]);
   assert.equal(board.querySelector('.ticket'),null);
  } finally {dom.window.close();}
+});
+
+test('one table has one box across rounds, all dishes and cancellations; untabled orders remain separate',()=>{
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try{
+  const w=dom.window,board=w.document.getElementById('board');
+  Object.defineProperty(board,'clientWidth',{value:2400});Object.defineProperty(board,'clientHeight',{value:4000});
+  w.kitchenScreen.setConfig({maxItemsPerCard:3,_fit:{fontPx:32,columns:4}});
+  w.kitchenScreen.setTickets([
+   {id:'sale1:c0',table:'7',items:Array.from({length:8},(_,i)=>({name:'Dish '+i,qty:1}))},
+   {id:'sale1:c1',table:'7',items:[{name:'Added fish',qty:2,note:'No salt'}]},
+   {id:'sale1:cancel2',table:'7',cancelled:true,items:[{name:'Cancelled tea',qty:1}]},
+   {id:'takeaway1:c0',table:'',items:[{name:'Parcel one',qty:1}]},
+   {id:'takeaway1:c1',table:'',items:[{name:'Parcel extra',qty:1}]},
+   {id:'takeaway2:c0',table:'',items:[{name:'Parcel two',qty:1}]}
+  ]);
+  assert.equal(board.querySelectorAll('.ticket').length,3);
+  const table=board.querySelector('.table').closest('.ticket');
+  assert.equal(table.querySelectorAll('.name').length,10);
+  assert.match(table.textContent,/Dish 7/);
+  assert.match(table.textContent,/Added fish/);
+  assert.match(table.textContent,/No salt/);
+  assert.match(table.querySelector('.cancelled-section').textContent,/Cancelled tea/);
+  assert.equal(board.querySelectorAll('.table').length,1);
+ }finally{dom.window.close();}
+});
+
+
+test('visible dish setting limits the list height without splitting or dropping items',()=>{
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try{
+  const w=dom.window,board=w.document.getElementById('board');
+  w.kitchenScreen.setConfig({visibleDishesPerBox:3,fontSizePx:32});
+  w.kitchenScreen.setTickets([{id:'large:c0',table:'9',items:Array.from({length:12},(_,i)=>({name:'Dish '+i,qty:1}))}]);
+  assert.equal(board.querySelectorAll('.ticket').length,1);
+  assert.equal(board.querySelectorAll('.name').length,12);
+  assert.equal(board.querySelector('.items').style.maxHeight,'192px');
+  w.kitchenScreen.setConfig({visibleDishesPerBox:6,fontSizePx:32});
+  assert.equal(board.querySelector('.items').style.maxHeight,'384px');
+  assert.equal(board.querySelectorAll('.name').length,12);
+  w.kitchenScreen.setConfig({visibleDishesPerBox:0,fontSizePx:32});
+  assert.equal(board.querySelector('.items').style.maxHeight,'');
+ }finally{dom.window.close();}
 });

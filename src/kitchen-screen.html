@@ -154,7 +154,11 @@
   .ticket.warm .bar > i { background: var(--warm); }
   .ticket.late .bar > i { background: var(--late); }
 
-  .items { display: flex; flex-direction: column; gap: calc(var(--gap) * 0.15); }
+  .items { display: flex; flex-direction: column; gap: calc(var(--gap) * 0.15); min-height: 0; overflow-y: auto; }
+  .items > * { flex-shrink: 0; }
+  .cancelled-section { border-top: 2px solid #ff737b; padding-top: .3em; margin-top: .3em; }
+  .cancelled-section .item { text-decoration: line-through; text-decoration-thickness: 3px; color: #ffb4b9; }
+  .round-arrival { color: var(--muted); font-size: .55em; border-top: 1px solid var(--rule); padding-top: .4em; }
   .preparation-amount { font-weight: 800; color: #fff; }
   .item { display: flex; gap: calc(var(--gap) * 0.5); align-items: baseline; }
   .qty { font-weight: 800; min-width: 2.1em; font-variant-numeric: tabular-nums; }
@@ -174,9 +178,9 @@
   .ticket.cancelled { border-color: #ff737b; background: #321418; color: #fff; }
   .ticket.cancelled .item { text-decoration: line-through; text-decoration-thickness: 3px; }
   .cancellation-label { color: #ffb4b9; font-weight: 800; font-size: .7em; }
-  .ticket.cancelled.cancel-pulse { animation: cancel-pulse 2s ease-in-out infinite; }
+  .ticket.cancel-pulse { animation: cancel-pulse 2s ease-in-out infinite; }
   @keyframes cancel-pulse { 50% { box-shadow: inset 0 0 0 4px #ff737b; } }
-  @media (prefers-reduced-motion: reduce) { .ticket.cancelled.cancel-pulse { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .ticket.cancel-pulse { animation: none; } }
   html[data-glow="true"]:not([data-theme="light"]) .name,
   html[data-glow="true"]:not([data-theme="light"]) .qty,
   html[data-glow="true"]:not([data-theme="light"]) .table {
@@ -253,6 +257,7 @@
   var page = 0;
   var cancellationSeen = new Map();
   var cancellationExpiry = new Map();
+  var itemScroll = new Map();
 
   function cancelledSeconds() {
     var seconds = Number((config || {}).cancelledDisplaySeconds);
@@ -326,12 +331,14 @@
       var cancelledCard = el('div', 'ticket cancelled' + (cfg.cancelledPulse !== false ? ' cancel-pulse' : ''));
       cancelledCard.appendChild(el('div', 'cancellation-label', 'CANCELLED — do not prepare'));
       if (ticket.table) cancelledCard.appendChild(el('div', 'table', ticket.table));
+      var cancelledList = el('div', 'items');
       (ticket.items || []).forEach(function (item) {
         var cancelledRow = el('div', 'item');
         cancelledRow.appendChild(el('span', 'qty', item.qty + '×'));
         cancelledRow.appendChild(el('span', 'name', item.name || ''));
-        cancelledCard.appendChild(cancelledRow);
+        cancelledList.appendChild(cancelledRow);
       });
+      cancelledCard.appendChild(cancelledList);
       return cancelledCard;
     }
     var mins = minutesSince(ticket.placedAt);
@@ -407,8 +414,13 @@
 
     if (cfg.showItems !== false) {
       var list = el('div', 'items');
-      var max = Number(cfg.maxItemsPerCard) || 3;
-      (ticket.items || []).slice(0, max).forEach(function (item) {
+      var lastRound = null;
+      (ticket.items || []).forEach(function (item) {
+        if (lastRound !== null && item.roundId !== lastRound && item.roundTime) {
+          var roundTime = new Date(item.roundTime);
+          if (Number.isFinite(roundTime.getTime())) list.appendChild(el('div', 'round-arrival', 'Added ' + roundTime.toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit',hour12:true})));
+        }
+        lastRound = item.roundId;
         var row = el('div', 'item');
         if (item.preparing === 0) row.classList.add(item.readyToCollect > 0 ? 'line-ready' : 'line-picked');
         row.appendChild(el('span', 'qty', (item.qty || 1) + '×'));
@@ -432,8 +444,18 @@
           list.appendChild(el('div', 'note', item.note));
         }
       });
-      var rest = (ticket.items || []).length - max;
-      if (rest > 0) list.appendChild(el('div', 'more', '+' + rest + ' more'));
+      if ((ticket.cancelledItems || []).length) {
+        var cancelledSection = el('div', 'cancelled-section');
+        cancelledSection.appendChild(el('div', 'cancellation-label', 'CANCELLED — do not prepare'));
+        ticket.cancelledItems.forEach(function (item) {
+          var row = el('div', 'item');
+          row.appendChild(el('span', 'qty', item.qty + '×'));
+          row.appendChild(el('span', 'name', item.name || ''));
+          cancelledSection.appendChild(row);
+        });
+        list.insertBefore(cancelledSection, list.firstChild);
+        if (cfg.cancelledPulse !== false) node.classList.add('cancel-pulse');
+      }
       node.appendChild(list);
     }
 
@@ -461,20 +483,28 @@
       if (!Number.isFinite(right)) return -1;
       return newest ? right - left : left - right;
     }
-    // Group tables by their oldest waiting ticket, regardless of display order.
+    // One box per table (within an outlet), keeping each preparation round intact.
     var cancelled = tickets.filter(function (t) { return t.cancelled && cancellationExpiry.get(t.id) > Date.now(); });
     var live = tickets.filter(function (t) { return !t.cancelled; }).sort(function (a, b) { return compareArrival(a, b, false); });
 
-    if (cfg.tableOnly) {
-      var seenTables = new Set();
-      live = live.filter(function(ticket) {
-        if (!ticket.table) return true;
-        var key = String(ticket.table).trim();
-        if (seenTables.has(key)) return false;
-        seenTables.add(key);
-        return true;
+    var grouped = new Map();
+    live.concat(cancelled).forEach(function (ticket, index) {
+      var table = String(ticket.table || '').trim();
+      var key = table ? JSON.stringify([ticket.outletId || ticket.outlet || '', table]) : 'order:' + (ticket.saleId || String(ticket.id || 'unknown-' + index).split(':')[0]);
+      if (!grouped.has(key)) grouped.set(key, Object.assign({}, ticket, {id:key,items:[],cancelledItems:[],cancelled:false,hasActive:false}));
+      var group = grouped.get(key);
+      if (!ticket.cancelled) group.hasActive = true;
+      (ticket.items || []).forEach(function (item) {
+        if (ticket.cancelled) group.cancelledItems.push(item);
+        else group.items.push(Object.assign({}, item, {roundId:ticket.id,roundTime:ticket.placedAt}));
       });
-    }
+    });
+    live = []; cancelled = [];
+    grouped.forEach(function (group) {
+      if (group.hasActive) live.push(group);
+      else if (group.cancelledItems.length) cancelled.push(Object.assign({},group,{cancelled:true,items:group.cancelledItems}));
+    });
+    itemScroll.forEach(function (_, key) { if (!grouped.has(key)) itemScroll.delete(key); });
     if (cfg.orderSort === 'newest') live.sort(function (a, b) { return compareArrival(a, b, true); });
     $('count').textContent = live.length;
     $('word').textContent = cfg.tableOnly ? (live.length === 1 ? 'table' : 'tables') : (live.length === 1 ? 'order' : 'orders');
@@ -482,17 +512,11 @@
     board.hidden = live.length === 0 && cancelled.length === 0;
     live = cancelled.concat(live);
 
-    // Rotate every dish into view instead of permanently hiding it under +more.
-    var maxItems = Math.max(1, Number(cfg.maxItemsPerCard) || 3);
-    live = live.flatMap(function (ticket) {
-      if (cfg.tableOnly && !ticket.cancelled) return [ticket];
-      var parts = [];
-      var items = ticket.items || [];
-      for (var offset = 0; offset < items.length; offset += maxItems) {
-        parts.push(Object.assign({}, ticket, {items: items.slice(offset, offset + maxItems)}));
-      }
-      return parts.length ? parts : [ticket];
-    });
+    // Paginate whole tables, never slices of a table's dishes.
+    var maxItems = Math.min(6, Math.max(3, ...live.map(function(t) { return t.items.length + (t.cancelled ? 0 : (t.cancelledItems || []).length); })));
+    var visibleDishes = Number(cfg.visibleDishesPerBox);
+    visibleDishes = Number.isFinite(visibleDishes) ? Math.max(0, Math.min(20, Math.floor(visibleDishes))) : 0;
+    if (visibleDishes) maxItems = visibleDishes;
     var compact = cfg.showItems === false && live.length > (Number(cfg.compactAfter) || 8);
     var font = Math.max(24, Math.min(Number(fitInfo.fontPx) || 40, (window.innerWidth || 1100) / 18));
     var customFont = Number(cfg.fontSizePx);
@@ -523,7 +547,16 @@
      * screen is never mistaken for an empty kitchen.
      */
     var shown = pages > 1 ? live.slice(page * perPage, page * perPage + perPage) : live;
-    shown.forEach(function (t) { board.appendChild(card(t, cfg, compact)); });
+    shown.forEach(function (t) {
+      var node = card(t, cfg, compact);
+      node.dataset.tableKey = t.id;
+      node.style.maxHeight = Math.max(font * 5, (height - 18 * rows) / rows) + 'px';
+      board.appendChild(node);
+      var list = node.querySelector('.items'), saved = itemScroll.get(t.id);
+      if (list && visibleDishes) list.style.maxHeight = (font * 2 * visibleDishes) + 'px';
+      if (list && saved) list.scrollTop = saved.top;
+      if (list && list.scrollHeight > list.clientHeight) node.appendChild(el('div', 'more', 'More items · scrolls automatically'));
+    });
 
     /*
      * A QUIET KITCHEN GETS WIDE CARDS.
@@ -572,7 +605,7 @@
 
   function setConfig(cfg) {
     if (config && cfg && config.branchId !== cfg.branchId) {
-      cancellationSeen.clear(); cancellationExpiry.clear(); tickets = [];
+      cancellationSeen.clear(); cancellationExpiry.clear(); itemScroll.clear(); tickets = [];
     }
     if (((config || {}).orderSort || 'oldest') !== ((cfg || {}).orderSort || 'oldest')) page = 0;
     config = cfg || {};
@@ -614,6 +647,7 @@
       newCancellation = true;
     });
     var present = new Set(tickets.map(function (t) { return t.id; }));
+    if (!tickets.length) itemScroll.clear();
     cancellationSeen.forEach(function (at, id) {
       if (!present.has(id) && now - at > 300000) { cancellationSeen.delete(id); cancellationExpiry.delete(id); }
     });
@@ -635,6 +669,18 @@
   /* The clock moves even when nothing arrives, and a ticket going from amber
      to red is the whole point of the colour. */
   setInterval(render, 15000);
+  // Large tables stay in one box; reveal their lower dishes without touch input.
+  setInterval(function () {
+    document.querySelectorAll('#board .ticket').forEach(function (card) {
+      var list = card.querySelector('.items');
+      if (!list || list.scrollHeight <= list.clientHeight) return;
+      var key = card.dataset.tableKey, state = itemScroll.get(key) || {top:0,hold:4};
+      if (state.hold > 0) state.hold -= 1;
+      else if (list.scrollTop >= list.scrollHeight - list.clientHeight - 1) { list.scrollTop = 0; state.hold = 4; }
+      else { list.scrollTop += 32; if (list.scrollTop >= list.scrollHeight - list.clientHeight - 1) state.hold = 4; }
+      state.top = list.scrollTop; itemScroll.set(key, state);
+    });
+  }, 1000);
   setInterval(function () {
     var expired = false;
     cancellationExpiry.forEach(function (at, id) {

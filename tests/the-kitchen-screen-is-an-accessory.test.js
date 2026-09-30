@@ -144,7 +144,7 @@ test('EVERY NUMBER ON THE SCREEN IS A SETTING', () => {
   for (const key of [
     'viewingDistanceM', 'diagonalInches', 'targetArcmin', 'safeAreaPercent',
     'showTable', 'showItems', 'showItemNotes', 'showAge',
-    'maxItemsPerCard', 'amberAfterMin', 'redAfterMin',
+    'visibleDishesPerBox', 'amberAfterMin', 'redAfterMin',
     'compactAfter', 'pageDwellSeconds', 'greyAfterMin', 'theme',
   ]) {
     assert.ok(key in screens.DEFAULTS, key + ' is not configurable');

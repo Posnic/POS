@@ -195,6 +195,14 @@ function toPack(dataset, imageFor, people) {
   if (!products.length) return null;
   const customers = peopleFrom(people && people.customers, 'customers');
   const suppliers = peopleFrom(people && people.suppliers, 'suppliers');
+  // Correct the old INR sample generator's eight-digit placeholder only.
+  // This handles cached dataset archives; never pad real customer/import data.
+  if (String(dataset.currency || '').toUpperCase() === 'INR') {
+    for (const person of [...customers, ...suppliers]) {
+      person.phone = person.phone.replace(/^\+91 90000 (\d{3})$/, '+91 90000 00$1');
+    }
+  }
+
   return {
     datasetId: String(dataset.datasetId || ''),
     currency: String(dataset.currency || ''),

@@ -93,8 +93,8 @@ const DEFAULTS = Object.freeze({
   showAge: true,
   showOrderNumber: false,
   showSource: false,
-  /* How many dishes before the card says "+3 more". */
-  maxItemsPerCard: 3,
+  /* Preferred visible dish rows; overflow scrolls inside the same table box. */
+  visibleDishesPerBox: 0,
   /* Minutes. A ticket past `amberAfterMin` is warming up, past `redAfterMin`
      it is late and moves to the front. */
   amberAfterMin: 5,

@@ -3914,6 +3914,7 @@
                 +       '<select id="portrait-' + d.id + '" style="padding:8px;border:1px solid #cbd5e1;border-radius:7px;">'
                 +       [0,1,2].map(function (n) { return '<option value="' + n + '"' + (Number(c.portraitColumns || 0) === n ? ' selected' : '') + '>' + (n ? n + (n === 1 ? ' column' : ' columns') : 'Auto') + '</option>'; }).join('')
                 +       '</select></div>'
+                +     '<div>' + field('visible-dishes-' + d.id, 'Visible dishes per box', c.visibleDishesPerBox || 0, 'dishes', '0 = automatic; 1–20 sets the preferred visible rows. Extra items scroll inside the same table box. Wrapped names may use more space.') + '</div>'
                 +     '<div>' + field('font-px-' + d.id, 'Item font size', c.fontSizePx || 0, 'px', '0 = automatic; custom size 24–96 px.') + '</div>'
                 +     '<div><label for="order-sort-' + d.id + '" style="display:block;font-size:13px;margin-bottom:6px;">Order display order</label>'
                 +       '<select id="order-sort-' + d.id + '" style="padding:8px;border:1px solid #cbd5e1;border-radius:7px;">'
@@ -3943,8 +3944,6 @@
                 +         check('a-' + d.id, 'How long it has been waiting', c.showAge !== false)
                 +       '</div>'
                 +       '<div>'
-                +         field('items-' + d.id, 'Dishes per card', c.maxItemsPerCard, 'then "+n more"')
-                +         '<div style="height:10px;"></div>'
                 +         field('amber-' + d.id, 'Turns amber after', c.amberAfterMin, 'min')
                 +       '</div>'
                 +       '<div>'
@@ -4014,6 +4013,7 @@
                 diagonalInches:   numOr('diag-' + id, 43),
                 targetArcmin:     numOr('arc-' + id, 20),
                 portraitColumns: Number((document.getElementById('portrait-' + id) || {}).value) || 0,
+                visibleDishesPerBox: Math.max(0, Math.min(20, Math.floor(numOr('visible-dishes-' + id, 0)))),
                 fontSizePx:       Math.max(0, Math.min(96, numOr('font-px-' + id, 0))),
                 textGlow:         onOff('glow-' + id, false),
                 cancelledDisplaySeconds: Math.max(1, Math.min(300, numOr('cancel-seconds-' + id, 30))),
@@ -4024,7 +4024,6 @@
                 showItems:        onOff('i-' + id, true),
                 showItemNotes:    onOff('n-' + id, true),
                 showAge:          onOff('a-' + id, true),
-                maxItemsPerCard:  numOr('items-' + id, 3),
                 amberAfterMin:    numOr('amber-' + id, 5),
                 redAfterMin:      numOr('red-' + id, 10),
                 pulseAfterMin:    numOr('pulse-' + id, 15),
