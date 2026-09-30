@@ -225,6 +225,7 @@ Mounted at `/captain/v1`. Source: `api/src/routes/captain-access.routes.js`.
 | POST | `/captain/v1/tables/merge/prepare` | — | `seating.merge` |
 | POST | `/captain/v1/tables/move/complete` | — | `seating.complete` |
 | POST | `/captain/v1/tables/move/cancel` | — | `seating.cancel` |
+| POST | `/captain/v1/tables/guests` | — | `seating.guests` |
 | POST | `/captain/v1/profile` | — | `profile.update` |
 | POST | `/captain/v1/password` | — | `profile.password` |
 | GET | `/captain/v1/kitchen-ready` | — | `board` |
@@ -1181,3 +1182,23 @@ rounds and totals remain intact. No new KOT, stock deduction or new-sale operati
 is issued. The vacated source table becomes available for cleaning. This API does
 not yet enroll legacy orders without seating claims and is not a partial-item
 transfer endpoint.
+
+### Captain guest-count updates
+
+`POST /captain/v1/tables/guests` accepts `request_id`, `orderId` and integer
+`guests` (1–1000). Authentication, the active tenant/branch and `sales.write`
+permission are required. The actor comes from the authenticated staff session;
+an actor supplied in the body is ignored. The order must have an active seating
+claim and an unpaid KOT check. Takeaway orders must first be moved to a table.
+
+The server reserves the order against payment/editing and serializes capacity
+changes with other seating reservations. It updates only covers and the audit;
+items, prices, kitchen rounds and stock are preserved. Successful responses have
+`request_id`, `orderId`, `guests` and `state: "completed"`.
+
+Persist the request before sending. After a timeout or lost response, retry the
+identical request on its original server with the same staff/branch identity.
+Do not substitute a new ID or change the guest count during recovery. Replaying
+a completed request returns its original result without applying it again.
+Captain recovery UI and migration of all existing cover-edit writers remain
+required before enabling the full flow; legacy orders are not enrolled here.

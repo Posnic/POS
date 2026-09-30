@@ -69,4 +69,18 @@ async function cancel(req) {
   );
   return { request_id: req.body.request_id, state: 'cancelled' };
 }
-module.exports = { prepare, merge, complete, cancel };
+async function guests(req) {
+  const c = await scope(req), body = req.body || {};
+  const result = await seating.changeGuests(req.db, c, body.orderId, {
+    request_id: body.request_id, guests: body.guests, actor: String(req.user._id),
+  });
+  try {
+    require('../sync/outbox').enqueue({
+      collection: 'sales', documentId: new ObjectId(result.orderId), reason: 'sale',
+    });
+  } catch {
+    /* Periodic sync discovers the updated order. */
+  }
+  return result;
+}
+module.exports = { prepare, merge, complete, cancel, guests };

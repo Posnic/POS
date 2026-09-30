@@ -1189,3 +1189,32 @@ test('cover updates reject foreign scope and failed capacity without retaining a
   expect((await db.collection('sales').findOne({_id:order._id})).captain_payment_plan).toBeUndefined();
   expect((await seating.find(db,scope,order.seating_request_id)).guest_update).toBeUndefined();
 });
+
+test('guest API enforces write permission and uses session identity instead of a supplied actor',async()=>{
+  const order=await movableOrder();
+  await db.collection('branches').insertOne({_id:scope.branchId,license:scope.license});
+  const service=require('../../../src/services/captain-seating');
+  const req={db,user:{_id:'staff-1',role:'staff',access:{sales:{read:true}}},
+    tenantContext:{branchId:String(scope.branchId),licenseId:String(scope.license)},
+    body:{request_id:'guest-api-request-001',orderId:String(order._id),guests:5,actor:'someone-else'}};
+  await expect(service.guests(req)).rejects.toMatchObject({status:403});
+  req.user.access.sales.write=true;
+  await expect(service.guests(req)).resolves.toMatchObject({request_id:req.body.request_id,orderId:String(order._id),guests:5,state:'completed'});
+  await service.guests(req);
+  const saved=await db.collection('sales').findOne({_id:order._id});
+  expect(saved.captain_audit).toHaveLength(1);expect(saved.captain_audit[0].actor.id).toBe('staff-1');
+  req.user._id='someone-else';
+  await expect(service.guests(req)).rejects.toMatchObject({status:409});
+});
+
+test('guest API refuses missing branch context and invalid guest counts',async()=>{
+  const order=await movableOrder();
+  await db.collection('branches').insertOne({_id:scope.branchId,license:scope.license});
+  const service=require('../../../src/services/captain-seating');
+  const req={db,user:{_id:'staff-1',role:'manager'},body:{request_id:'guest-api-invalid-01',orderId:String(order._id),guests:2}};
+  await expect(service.guests(req)).rejects.toMatchObject({status:403});
+  req.tenantContext={branchId:String(scope.branchId),licenseId:String(scope.license)};
+  for(const guests of [0,-1,1.5,1001,'2'])
+    await expect(service.guests({...req,body:{...req.body,guests}})).rejects.toMatchObject({status:422});
+  expect((await db.collection('sales').findOne({_id:order._id})).captain_payment_plan).toBeUndefined();
+});
