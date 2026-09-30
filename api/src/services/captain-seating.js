@@ -13,6 +13,7 @@ const view = (claim) => ({
   tableIds: claim.tables,
   primaryId: claim.primary,
   guests: claim.guests,
+  dineType: claim.dine_type || 'Dine-in',
 });
 async function prepare(req) {
   const c = await scope(req),
@@ -27,6 +28,7 @@ async function prepare(req) {
         table_ids: body.tableIds,
         primary_id: body.primaryId,
         guests: body.guests,
+        dine_type: body.dineType,
         actor: String(req.user._id),
       },
       { staffHandover: true }

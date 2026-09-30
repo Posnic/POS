@@ -43,7 +43,7 @@ function view(row, orders = [], claim = null) {
             primary_id: claim.primary,
             table_ids: claim.tables,
             labels: claim.labels,
-            guests: claim.guests,
+            guests: Number(orders.find(order => String(order._id) === claim.order_id)?.person_count) || claim.guests,
           },
         }
       : {}),

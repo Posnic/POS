@@ -302,7 +302,10 @@ test('seating claims are visible on every member and block table edits and manua
     floor_lifecycle: true,
     person_count: 4,
   });
+  await db.collection('sales').updateOne({_id:orderId},{$set:{person_count:3}});
   const occupied = (await service.list(req())).tables;
+  expect(occupied.every(table => table.seating.guests === 3)).toBe(true);
+  expect((await seating.find(db, scope, claim.id)).guests).toBe(4);
   expect(
     occupied.every((table) => table.status === 'occupied' && table.orders[0].id === String(orderId))
   ).toBe(true);
@@ -464,4 +467,25 @@ test('payment change during close leaves a recoverable partial close and never f
   await service.close(req({ ...body, version: pending.version }));
   expect((await sales.findOne({ _id: orderId })).floor_closed_at).toEqual(first.floor_closed_at);
   expect((await service.list(req())).tables[0].closing).toBeNull();
+});
+
+test('the Captain seating endpoint forwards order type and confirms a retryable takeaway conversion', async () => {
+  const seating = require('../../../src/services/seating-claims');
+  const endpoint = require('../../../src/services/captain-seating');
+  const table = await service.update(req({tableorder_value:'T1',capacity:2,max_capacity:4}));
+  const scope = {branchId:branch,license};
+  const claim = await seating.reserve(db,scope,{request_id:'initial-type-seat-1',actor:String(user),table_ids:[table.id],primary_id:table.id,guests:2});
+  const orderId = new ObjectId();
+  await seating.bind(db,scope,claim.id,String(user),String(orderId));
+  await db.collection('sales').insertOne({_id:orderId,branch_id:branch,license,seating_request_id:claim.id,table_number:'T1',dine_type:'Dine-in',person_count:2,sale_process:'KOT',payment_status:'Unpaid',items:[{item_name:'Soup',item_quantity:2}],sales_total:90});
+  const request = {orderId:String(orderId),request_id:'public-takeaway-0001',tableIds:[],primaryId:'',guests:0,dineType:'Take away'};
+  expect(await endpoint.prepare(req(request,'staff'))).toMatchObject({dineType:'Take away',state:'reserved'});
+  const sync = jest.spyOn(require('../../../src/sync/outbox'),'enqueue').mockImplementation(()=>{});
+  try {
+    expect(await endpoint.complete(req({request_id:request.request_id},'staff'))).toMatchObject({dineType:'Take away',state:'submitting',tableIds:[]});
+    expect(await endpoint.complete(req({request_id:request.request_id},'staff'))).toMatchObject({dineType:'Take away',state:'submitting'});
+  } finally { sync.mockRestore(); }
+  expect((await service.list(req())).tables[0]).toMatchObject({status:'cleaning',orders:[]});
+  expect(await db.collection('sales').findOne({_id:orderId})).toMatchObject({dine_type:'Take away',sales_total:90,items:[{item_name:'Soup',item_quantity:2}]});
+  expect(await db.collection('print_jobs').countDocuments({})).toBe(0);
 });

@@ -846,3 +846,65 @@ test('desktop submission identity prevents duplicates across concurrent inserts 
   ).rejects.toMatchObject({ status: 409 });
   expect(await submission.lookup(db, scope, 'staff-2', payload)).toBeNull();
 });
+
+test('guest edits use the reserved group capacity without changing the original reservation request', async () => {
+  const order = await movableOrder();
+  const before = await seating.find(db, scope, order.seating_request_id);
+  const checked = await seating.forEdit(db, scope, order, { guests: 5 });
+  expect(checked.id).toBe(before.id);
+  expect(await seating.find(db, scope, before.id)).toEqual(before);
+  await expect(seating.forEdit(db, scope, order, { guests: 7 })).rejects.toThrow('enough seats');
+  for (const guests of [0, -1, 1.5, 'abc', 1001])
+    await expect(seating.forEdit(db, scope, order, { guests })).rejects.toThrow('number of guests');
+  await expect(seating.forEdit(db, scope, order, { guests: 3, table: 'T3' })).rejects.toMatchObject({status:409});
+  await expect(seating.forEdit(db, scope, order, { guests: 3, dine_type: 'Take away' })).rejects.toMatchObject({status:409});
+});
+
+test('a claimed party can become takeaway and return to a suitable table without new kitchen or money effects', async () => {
+  const order = await movableOrder();
+  const items = [{item_name:'Soup', item_quantity:2, item_note:'Less salt', line_id:'line-1'}];
+  const changes = [{timestamp:new Date('2026-09-30T10:00:00Z'),items:[{...items[0],process:'add'}]}];
+  await db.collection('sales').updateOne({_id:order._id},{$set:{items,changes,sales_total:120}});
+  const input=request({request_id:'takeaway-request-0001',table_ids:[],primary_id:'',guests:0,dine_type:'Take away'});
+  const pending=await seating.prepareMove(db,scope,String(order._id),input);
+  expect(pending.tables).toEqual([]);
+  expect((await db.collection('sales').findOne({_id:order._id})).table_number).toBe('T1');
+  await seating.completeMove(db,scope,pending.id,'staff-1');
+  const takeaway=await db.collection('sales').findOne({_id:order._id});
+  expect(takeaway).toMatchObject({table_number:'',dine_type:'Take away',person_count:0,items,changes,sales_total:120});
+  expect((await seating.prepareMove(db,scope,String(order._id),input)).state).toBe('submitting');
+  await seating.completeMove(db,scope,pending.id,'staff-1');
+  expect((await db.collection('sales').findOne({_id:order._id})).captain_audit).toHaveLength(1);
+  expect(await db.collection('tableorder').countDocuments({service_state:'cleaning'})).toBe(2);
+  const seated=await seating.prepareMove(db,scope,String(order._id),request({request_id:'return-table-request-1',table_ids:[ids[2]],primary_id:ids[2],guests:2}));
+  await seating.completeMove(db,scope,seated.id,'staff-1');
+  const returned=await db.collection('sales').findOne({_id:order._id});
+  expect(returned).toMatchObject({table_number:'T3',dine_type:'Dine-in',person_count:2,items,changes,sales_total:120});
+  expect(returned.captain_audit).toHaveLength(2);
+});
+test('takeaway conversion rejects table-bearing, guest-bearing and changed-type retries', async()=>{
+  const order=await movableOrder();
+  const input=request({request_id:'takeaway-request-0002',table_ids:[],primary_id:'',guests:0,dine_type:'Take away'});
+  await expect(seating.prepareMove(db,scope,String(order._id),{...input,table_ids:[ids[0]]})).rejects.toThrow('tables');
+  await expect(seating.prepareMove(db,scope,String(order._id),{...input,guests:2})).rejects.toThrow('guests');
+  await seating.prepareMove(db,scope,String(order._id),input);
+  await expect(seating.prepareMove(db,scope,String(order._id),request({request_id:input.request_id}))).rejects.toThrow('already been used');
+  await seating.cancelMove(db,scope,input.request_id,'staff-1',String(order._id));
+  expect((await db.collection('sales').findOne({_id:order._id})).table_number).toBe('T1');
+});
+
+test('moving one check preserves an occupied source and blocks new seating during the transition even with no order limit', async () => {
+  await db.collection('branches').insertOne({_id:scope.branchId,license:scope.license,table_order_limit:0});
+  const orders=[];
+  for(const n of [1,2]){
+    const claim=await seating.reserve(db,scope,request({request_id:'shared-source-seat-'+n,table_ids:[ids[0]],primary_id:ids[0],guests:1}));
+    const _id=new ObjectId();await seating.bind(db,scope,claim.id,'staff-1',String(_id));
+    const order={_id,branch_id:scope.branchId,license:scope.license,seating_request_id:claim.id,table_number:'T1',person_count:1,sale_process:'KOT',payment_status:'Unpaid'};
+    await db.collection('sales').insertOne(order);orders.push(order);
+  }
+  const move=await seating.prepareMove(db,scope,String(orders[0]._id),request({request_id:'shared-source-move-1',table_ids:[ids[1]],primary_id:ids[1],guests:1}));
+  for(const target of [ids[0],ids[1]]) await expect(seating.reserve(db,scope,request({request_id:'concurrent-seat-'+target,table_ids:[target],primary_id:target,guests:1}))).rejects.toMatchObject({status:409});
+  await seating.completeMove(db,scope,move.id,'staff-1');
+  expect((await db.collection('tableorder').findOne({_id:new ObjectId(ids[0])})).service_state).not.toBe('cleaning');
+  expect((await db.collection('sales').findOne({_id:orders[1]._id})).table_number).toBe('T1');
+});

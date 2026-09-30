@@ -27,6 +27,7 @@ function sameRequest(saved, input) {
     saved.actor === input.actor &&
     saved.primary === input.primary &&
     saved.guests === input.guests &&
+    (saved.dine_type || 'Dine-in') === (input.dine_type || 'Dine-in') &&
     (saved.payload_hash || null) === (input.payload_hash || null) &&
     (saved.move_from || null) === (input.move_from || null) &&
     JSON.stringify(saved.tables) === JSON.stringify(input.tables)
@@ -68,13 +69,16 @@ async function reserve(db, scope, input) {
 }
 async function reserveClaim(db, scope, input, moving = null) {
   const id = requestId(input.request_id);
-  if (!Array.isArray(input.table_ids) || !input.table_ids.length || input.table_ids.length > 20)
+  const takeaway = moving && input.dine_type === 'Take away';
+  if (input.dine_type && !['Dine-in', 'Take away'].includes(input.dine_type)) fail('Choose an order type.');
+  if (!Array.isArray(input.table_ids) || input.table_ids.length > 20 ||
+      (takeaway ? input.table_ids.length !== 0 : !input.table_ids.length))
     fail('Choose up to 20 tables.');
   const ids = [...new Set(input.table_ids.map(identity))].sort();
-  const primary = identity(input.primary_id);
+  const primary = takeaway ? '' : identity(input.primary_id);
   const actor = String(input.actor || '');
-  if (!actor || !ids.includes(primary)) fail('Choose a primary table.');
-  if (!Number.isInteger(input.guests) || input.guests < 1 || input.guests > 1000)
+  if (!actor || (!takeaway && !ids.includes(primary))) fail('Choose a primary table.');
+  if (!Number.isInteger(input.guests) || (takeaway ? input.guests !== 0 : input.guests < 1 || input.guests > 1000))
     fail('Enter the number of guests.');
   const claim = {
     id,
@@ -82,6 +86,7 @@ async function reserveClaim(db, scope, input, moving = null) {
     primary,
     actor,
     guests: input.guests,
+    dine_type: takeaway ? 'Take away' : 'Dine-in',
     state: 'reserved',
     ...(moving ? { move_from: moving.id, order_id: moving.order_id } : {}),
     ...(input.payload_hash ? { payload_hash: input.payload_hash } : {}),
@@ -112,7 +117,7 @@ async function reserveClaim(db, scope, input, moving = null) {
     fail('This table is not available.', 409);
   // A connected chain is sufficient; tables need not all touch each other.
   // An edge configured from either end represents the same physical adjacency.
-  const reached = new Set([primary]);
+  const reached = new Set(takeaway ? [] : [primary]);
   let changed = true;
   while (changed) {
     changed = false;
@@ -180,6 +185,8 @@ async function reserveClaim(db, scope, input, moving = null) {
     (row) =>
       !terminal(row) && row.id !== moving?.id && row.tables.some((table) => ids.includes(table))
   );
+  if (overlaps.some(row => row.moving_to || row.closing || ['applying', 'releasing'].includes(row.state) || (row.move_from && row.state === 'reserved')))
+    fail('Table changed. Refresh and try again.', 409);
   if (overlaps.some((row) => ids.length > 1 || row.tables.length > 1))
     fail('Table changed. Refresh and try again.', 409);
   const open = await db
@@ -246,13 +253,17 @@ async function reserveClaim(db, scope, input, moving = null) {
 }
 async function prepareMove(db, scope, orderId, input, { staffHandover = false } = {}) {
   const id = requestId(input.request_id);
-  if (!Array.isArray(input.table_ids) || !input.table_ids.length || input.table_ids.length > 20)
+  const takeaway = input.dine_type === 'Take away';
+  if (input.dine_type && !['Dine-in', 'Take away'].includes(input.dine_type)) fail('Choose an order type.');
+  if (!Array.isArray(input.table_ids) || input.table_ids.length > 20 ||
+      (takeaway ? input.table_ids.length !== 0 : !input.table_ids.length))
     fail('Choose up to 20 tables.');
   const expected = {
     actor: String(input.actor || ''),
-    primary: identity(input.primary_id),
+    primary: takeaway ? '' : identity(input.primary_id),
     tables: [...new Set(input.table_ids.map(identity))].sort(),
     guests: input.guests,
+    dine_type: takeaway ? 'Take away' : 'Dine-in',
     ...(input.payload_hash ? { payload_hash: input.payload_hash } : {}),
   };
   const order = await db.collection('sales').findOne({
@@ -415,7 +426,8 @@ async function completeMove(db, scope, id, actor) {
     seating_table_ids: move.tables,
     seating_primary_id: move.primary,
     table_id: move.primary,
-    table_number: move.labels[move.tables.indexOf(move.primary)],
+    table_number: move.dine_type === 'Take away' ? '' : move.labels[move.tables.indexOf(move.primary)],
+    dine_type: move.dine_type || 'Dine-in',
     person_count: move.guests,
     updated_date: new Date(),
   };
@@ -446,7 +458,18 @@ async function completeMove(db, scope, id, actor) {
   const source = await find(db, scope, move.move_from);
   if (!source || source.moving_to !== id)
     fail('The seating group changed. Refresh this order.', 409);
-  const released = source.tables.filter((table) => !move.tables.includes(table));
+  // A table may contain multiple checks. Moving one must not put the guests
+  // still seated there into cleaning. Source/target transition claims also
+  // prevent new seating between this occupancy read and the projection.
+  const otherClaims = (await read(db, scope)).filter(row => !terminal(row) && row.id !== source.id && row.id !== id);
+  const remainingOrders = await db.collection('sales').find({
+    branch_id: scope.branchId, license: scope.license,
+    ...require('../helpers/floor-eligibility').floorEligibility(),
+    table_number: { $in: source.labels },
+  }, { projection: { table_number: 1 } }).toArray();
+  const released = source.tables.filter((table, index) => !move.tables.includes(table) &&
+    !otherClaims.some(row => row.tables.includes(table)) &&
+    !remainingOrders.some(order => String(order.table_number) === String(source.labels[index])));
   if (released.length)
     await db.collection('tableorder').updateMany(
       {
@@ -676,10 +699,17 @@ async function forEdit(db, scope, order, next) {
   if (
     own &&
     (destination !== String(order.table_number || '') ||
-      (next.guests && Number(next.guests) !== Number(order.person_count)) ||
       (next.dine_type && next.dine_type !== order.dine_type))
   )
-    fail('Change the seating group before changing its table or guests.', 409);
+    fail('Change the seating group before changing its table or order type.', 409);
+  // The claim is the immutable reservation request, not the mutable cover count.
+  // The sale owns current guests; keeping the original request allows safe replay.
+  if (own && next.guests !== undefined && next.guests !== '') {
+    const guests = Number(next.guests);
+    if (!Number.isInteger(guests) || guests < 1 || guests > 1000)
+      fail('Enter the number of guests.');
+    if (!details.accommodates(own, guests)) fail('Choose a table with enough seats.', 409);
+  }
   if (
     !own &&
     destination !== String(order.table_number || '') &&
