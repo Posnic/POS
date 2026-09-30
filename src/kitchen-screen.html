@@ -102,6 +102,9 @@
     overflow-y: auto;
   }
 
+  #board { position:relative; }
+  #board.packed { display:block; }
+
   .ticket {
     background: var(--card);
     border-left: calc(var(--font) * 0.18) solid var(--calm);
@@ -591,29 +594,32 @@
       if (measuredHeight > 0) rows = Math.max(1, Math.floor(height / (measuredHeight + 18)));
       perPage = Math.max(1, ceiling * rows);
     }
-    // Pack complete rows at their measured heights. A long order must not give
-    // every other row an equally tall box or force a six-item list to scroll.
+    // Place each whole order in the shortest column, retaining arrival priority.
+    // Start a new page when the next order cannot fit; never skip older work.
     var packedPages = null;
     if (!cfg.tableOnly && !visibleDishes && measured && measuredHeight > 0) {
-      function packRows() {
-        var result = [], packed = [], used = 0;
-        for (var start = 0; start < live.length; start += ceiling) {
-          var rowTickets = live.slice(start, start + ceiling);
-          var rowHeight = Math.max.apply(null, rowTickets.map(function(t){return measured.get(t.id);}));
-          if (packed.length && used + rowHeight + 18 > height - 18) {
-            result.push(packed); packed = []; used = 0;
+      function packColumns() {
+        var result = [], packed = [], used = Array(ceiling).fill(0);
+        packed.positions = new Map();
+        live.forEach(function (ticket) {
+          var column = used.indexOf(Math.min.apply(null, used));
+          var orderHeight = Math.min(measured.get(ticket.id), height - 18);
+          if (packed.length && used[column] + orderHeight > height - 18) {
+            result.push(packed); packed = []; packed.positions = new Map();
+            used = Array(ceiling).fill(0); column = 0;
           }
-          packed = packed.concat(rowTickets);used += rowHeight + (used ? 18 : 0);
-        }
+          packed.positions.set(ticket.id, {column:column, top:used[column]});
+          packed.push(ticket); used[column] += orderHeight + 18;
+        });
         if (packed.length) result.push(packed);
         return result;
       }
-      packedPages = packRows();
+      packedPages = packColumns();
       if (!fixedColumns && packedPages.length > 1) {
         var bestColumns = ceiling, bestPages = packedPages;
         // Wider boxes can fit more orders because dish names wrap less.
         for (var candidate = ceiling - 1; candidate >= 1; candidate--) {
-          ceiling = candidate;measureOrders();var trialPages = packRows();
+          ceiling = candidate;measureOrders();var trialPages = packColumns();
           if (trialPages.length < bestPages.length ||
               (trialPages.length === bestPages.length && trialPages[0].length > bestPages[0].length)) {
             bestColumns = candidate;bestPages = trialPages;
@@ -628,12 +634,20 @@
 
     // Rotate complete pages of whole orders, oldest page first.
     var shown = packedPages ? packedPages[page] : (pages > 1 ? live.slice(page * perPage, page * perPage + perPage) : live);
+    board.classList.toggle('packed', !!packedPages);
     board.style.setProperty('--columns', String(fixedColumns ? ceiling : Math.max(1, Math.min(ceiling, shown.length))));
     shown.forEach(function (t) {
       var node = card(t, cfg, compact);
       node.dataset.tableKey = t.id;
       node.style.maxHeight = (packedPages ? height - 18 : Math.max(font * 5, (height - 18 * rows) / rows)) + 'px';
-      if (packedPages) node.style.alignSelf = 'start';
+      if (packedPages) {
+        var position = shown.positions.get(t.id);
+        var packedWidth = (width - 18 * (ceiling - 1)) / ceiling;
+        node.style.position = 'absolute';
+        node.style.width = packedWidth + 'px';
+        node.style.left = (position.column * (packedWidth + 18)) + 'px';
+        node.style.top = (18 + position.top) + 'px';
+      }
       board.appendChild(node);
       var list = node.querySelector('.items'), saved = itemScroll.get(t.id);
       if (list && visibleDishes) list.style.maxHeight = (font * 2 * visibleDishes) + 'px';
