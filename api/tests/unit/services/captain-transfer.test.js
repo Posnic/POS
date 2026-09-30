@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose');
 const service = require('../../../src/services/captain-transfer');
 const restructure = require('../../../src/services/captain-restructure-lock');
+const seating = require('../../../src/services/seating-claims');
 let server, db, branch, license, sale;
 beforeAll(async () => {
   server = await MongoMemoryServer.create();
@@ -53,10 +54,82 @@ test.each([{ payment_status: 'Paid' }, { payment_status: 'Partial' }, { captain_
 
 async function confirmation() {
   const input = req();
+  const table = new ObjectId();
+  await db.collection('tableorder').insertOne({ _id: table, branch_id: branch, license,
+    tableorder_value: String(table), capacity: 4, max_capacity: 4 });
+  input.body.destination = { tableIds: [String(table)], primaryId: String(table), guests: 2 };
   input.body.revision = (await service.preview(input)).revision;
   input.body.requestId = 'transfer-confirmation-0001';
   return input;
 }
+test('destination preparation reserves capacity once without creating an order', async () => {
+  const input = await confirmation();
+  const first = await service.prepareDestination(input), repeated = await service.prepareDestination(input);
+  expect(first.claim.state).toBe('reserved');
+  expect(first.claim.tables).toEqual(input.body.destination.tableIds);
+  expect(repeated.claim.id).toBe(first.claim.id);
+  expect((await seating.read(db, { branchId: branch, license })).length).toBe(1);
+  expect(await db.collection('sales').countDocuments()).toBe(1);
+  await service.cancel(input);
+  await service.cancel(input);
+  expect(await seating.read(db, { branchId: branch, license })).toEqual([]);
+  expect((await db.collection('sales').findOne({ _id: sale._id })).captain_payment_plan).toBeUndefined();
+});
+test.each(['guests', 'tableIds'])('a prepared transfer cannot change destination %s on retry', async field => {
+  const input = await confirmation();
+  const first = await service.prepareDestination(input);
+  if (field === 'guests') input.body.destination.guests = 3;
+  else {
+    const id = String(new ObjectId());
+    input.body.destination.tableIds = [id]; input.body.destination.primaryId = id;
+  }
+  await expect(service.prepareDestination(input)).rejects.toMatchObject({ status: 409 });
+  expect((await seating.read(db, { branchId: branch, license }))[0].id).toBe(first.claim.id);
+});
+test('lost destination acknowledgement recovers the same capacity claim', async () => {
+  const input = await confirmation(), original = seating.reserve;
+  let accepted;
+  jest.spyOn(seating, 'reserve').mockImplementationOnce(async (...args) => {
+    accepted = await original(...args);
+    throw new Error('Lost seating acknowledgement');
+  });
+  await expect(service.prepareDestination(input)).rejects.toThrow('Lost seating acknowledgement');
+  const retried = await service.prepareDestination(input);
+  expect(retried.claim.id).toBe(accepted.id);
+  expect((await seating.read(db, { branchId: branch, license })).length).toBe(1);
+});
+test('cancellation rejects and cleans a destination claim published after cancellation', async () => {
+  const input = await confirmation(), original = seating.reserve;
+  jest.spyOn(seating, 'reserve').mockImplementationOnce(async (...args) => {
+    await service.cancel(input);
+    return original(...args);
+  });
+  await expect(service.prepareDestination(input)).rejects.toMatchObject({ status: 409 });
+  expect(await seating.read(db, { branchId: branch, license })).toEqual([]);
+  expect((await db.collection('sales').findOne({ _id: sale._id })).captain_payment_plan).toBeUndefined();
+  await expect(service.prepareDestination(input)).rejects.toMatchObject({ status: 409 });
+});
+test('cancel retry cleans a late claim after interruption before post-reservation reconciliation', async () => {
+  const input = await confirmation(), original = seating.reserve;
+  jest.spyOn(seating, 'reserve').mockImplementationOnce(async (...args) => {
+    await service.cancel(input);
+    await original(...args);
+    throw new Error('Interrupted after seating write');
+  });
+  await expect(service.prepareDestination(input)).rejects.toThrow('Interrupted after seating write');
+  expect((await seating.read(db, { branchId: branch, license })).length).toBe(1);
+  await service.cancel(input);
+  expect(await seating.read(db, { branchId: branch, license })).toEqual([]);
+});
+test.each(['capacity', 'scope', 'cleaning'])('unavailable destination (%s) leaves a cancellable source reservation', async reason => {
+  const input = await confirmation(), table = new ObjectId(input.body.destination.primaryId);
+  const change = reason === 'capacity' ? { capacity: 1, max_capacity: 1 } : reason === 'scope' ? { branch_id: new ObjectId() } : { service_state: 'cleaning' };
+  await db.collection('tableorder').updateOne({ _id: table }, { $set: change });
+  await expect(service.prepareDestination(input)).rejects.toHaveProperty('status');
+  expect(await seating.read(db, { branchId: branch, license })).toEqual([]);
+  await service.cancel(input);
+  expect((await db.collection('sales').findOne({ _id: sale._id })).captain_payment_plan).toBeUndefined();
+});
 test('reservation fences the source without moving food, charging, stock or KOT effects', async () => {
   const input = await confirmation();
   const before = await db.collection('sales').findOne({ _id: sale._id });
@@ -68,7 +141,7 @@ test('reservation fences the source without moving food, charging, stock or KOT 
   delete stored.captain_payment_plan;
   expect(stored).toEqual(before);
   expect(await db.collection('sales').countDocuments()).toBe(1);
-  expect((await db.listCollections().toArray()).map(row => row.name).sort()).toEqual(['branches', 'captain_payment_plans', 'sales']);
+  expect((await db.listCollections().toArray()).map(row => row.name).sort()).toEqual(['branches', 'captain_payment_plans', 'sales', 'tableorder']);
 });
 test('lost reservation acknowledgement retries the same snapshot, currency and history timestamp', async () => {
   const input = await confirmation(), original = restructure.reserve;
