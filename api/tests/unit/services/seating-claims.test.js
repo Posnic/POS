@@ -811,3 +811,38 @@ test('staff can abandon their unprepared move of an order owned by another staff
   expect((await seating.find(db, scope, 'handover-move-0001')).actor).toBe('staff-2');
   expect((await seating.find(db, scope, order.seating_request_id)).moving_to).toBeUndefined();
 });
+
+test('desktop submission identity prevents duplicates across concurrent inserts and preserves retry payload', async () => {
+  const submission = require('../../../src/services/desktop-submission');
+  const payload = {
+    idempotencyKey: 'desktop-request-1',
+    items: [{ id: 'dish', quantity: 2 }],
+    sales_total: 20,
+  };
+  const first = {},
+    second = {};
+  await submission.prepare(db, scope, 'staff-1', payload, first);
+  await submission.prepare(db, scope, 'staff-1', payload, second);
+  const documents = [first, second].map((doc) => ({
+    ...doc,
+    branch_id: scope.branchId,
+    license: scope.license,
+    sales_id: 'INV1',
+  }));
+  const results = await Promise.allSettled(
+    documents.map((doc) => db.collection('sales').insertOne(doc))
+  );
+  expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+  const saved = await submission.prepare(
+    db,
+    scope,
+    'staff-1',
+    { ...payload, approval_token: 'renewed' },
+    {}
+  );
+  expect(saved.sales_id).toBe('INV1');
+  await expect(
+    submission.lookup(db, scope, 'staff-1', { ...payload, sales_total: 21 })
+  ).rejects.toMatchObject({ status: 409 });
+  expect(await submission.lookup(db, scope, 'staff-2', payload)).toBeNull();
+});

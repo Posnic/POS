@@ -1,3 +1,7 @@
+jest.mock('../../../src/services/desktop-submission', () => ({
+  prepare: jest.fn(async () => null),
+  lookup: jest.fn(async () => null),
+}));
 // ─── Mocks (must be declared before requires) ─────────────────────────────────
 
 const mockItemRepositoryInstance = {
@@ -348,6 +352,16 @@ describe('SalesService', () => {
   });
 
   // ── processSale – validation ──────────────────────────────────────────────
+
+  test('a recovered desktop submission returns its sale before stock is deducted again', async () => {
+    require('../../../src/services/desktop-submission').prepare.mockResolvedValueOnce({_id:'saved-sale',sales_id:'INV-SAVED'});
+    const result=await salesService.processSale(makeSaleData({idempotencyKey:'saved-request'}),'','Add',makeContext());
+    expect(result.status).toBe(true);
+    expect(result.data._id).toBe('saved-sale');
+    expect(result.data.duplicate).toBe(true);
+    expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+    expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
+  });
 
   describe('processSale – validation', () => {
     test('returns PAY_TOTAL_INVALID when sales_total is negative', async () => {

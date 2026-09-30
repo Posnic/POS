@@ -315,6 +315,8 @@ const saleSchema = new mongoose.Schema(
     kitchen_required: { type: Boolean, default: false },
     floor_lifecycle: { type: Boolean, default: false },
     seating_request_id: { type: String },
+    idempotency_key: { type: String },
+    submission_payload_hash: { type: String },
     seating_primary_id: { type: String },
     seating_table_ids: { type: [String], default: undefined },
     floor_closed_at: { type: Date },

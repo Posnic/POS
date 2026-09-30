@@ -1202,6 +1202,19 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         .some((round) => round.items.some((item) => item.remaining > 0));
     }
 
+    let submissionDb = null;
+    if (id === '' && data.idempotencyKey) {
+      submissionDb = await BaseModel.getDb();
+      const existing = await require('./desktop-submission').prepare(
+        submissionDb,
+        { branchId, license: licenseId },
+        String(userId || ''),
+        data,
+        finalSaleData
+      );
+      if (existing) return savedAnswer(existing._id, existing.sales_id, true);
+    }
+
     let seatingAttempt = null;
     let seatingDb = null;
     const useSeating =
@@ -1321,6 +1334,15 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       } catch (error) {
         for (const reservation of stockReservations.values()) {
           await itemRepository.updateStock(reservation.itemId, reservation.quantity);
+        }
+        if (submissionDb && error.code === 11000) {
+          const existing = await require('./desktop-submission').lookup(
+            submissionDb,
+            { branchId, license: licenseId },
+            String(userId || ''),
+            data
+          );
+          if (existing) return savedAnswer(existing._id, existing.sales_id, true);
         }
         if (seatingAttempt && error.code === 11000) {
           const existing = await seatingDb.collection('sales').findOne({
