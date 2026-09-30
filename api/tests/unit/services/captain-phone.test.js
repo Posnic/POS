@@ -92,3 +92,41 @@ test('retry recovers a confirmed user update when the verification receipt was i
   expect(await service.verify(req(challenge))).toEqual({ saved: true, phone: '+919000000001' });
   expect((await db.collection('captain_phone_verifications').findOne({})).state).toBe('verified');
 });
+
+
+test('simultaneous resend requests send only one code', async () => {
+  const results = await Promise.allSettled([
+    service.start(req({ phone: '+919000000001' })),
+    service.start(req({ phone: '+919000000002' })),
+  ]);
+  expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+  expect(sender.sendSms).toHaveBeenCalledTimes(1);
+});
+
+test('a delayed verification cannot overwrite a superseding phone challenge', async () => {
+  const original = await begin();
+  let release, arrived;
+  const waiting = new Promise(resolve => { arrived = resolve; });
+  const users = db.collection('users');
+  const delayed = req(original);
+  delayed.db = { collection(name) {
+    if (name !== 'users') return db.collection(name);
+    return {
+      findOne: (...args) => users.findOne(...args),
+      updateOne: async (...args) => {
+        arrived();
+        await new Promise(resolve => { release = resolve; });
+        return users.updateOne(...args);
+      },
+    };
+  } };
+  const outcome = service.verify(delayed).catch(error => error);
+  await waiting;
+  await db.collection('captain_phone_verifications').updateOne({}, { $set: { expiresAt: new Date(0), nextSendAt: new Date(0) } });
+  const replacement = await service.start(req({ phone: '+919000000002' }));
+  release();
+  expect(await outcome).toMatchObject({ status: 409 });
+  expect((await users.findOne({ _id: user })).phone).toBe('+919000000000');
+  const code = sender.sendSms.mock.calls[1][2].match(/\b\d{6}\b/)[0];
+  expect(await service.verify(req({ ...replacement, code }))).toEqual({ saved: true, phone: '+919000000002' });
+});

@@ -442,3 +442,26 @@ test('paired Captain can split and record payments but cannot change settings or
   assert.equal(response.status, 200);
   assert.equal((await response.json()).dueMinor, 0);
 });
+
+
+test('paired Captain verifies its own phone through scoped routes', async () => {
+  const { grant } = await paired();
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  const messaging = require('../src/services/messaging.service');
+  const original = messaging.sendSms;
+  let code;
+  messaging.sendSms = async (_branch, _phone, message) => { code = message.match(/\b\d{6}\b/)[0]; return { ok: true }; };
+  try {
+    const unauthorized = await fetch(base + '/captain/v1/profile/phone/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    assert.equal(unauthorized.status, 401);
+    const sent = await fetch(base + '/captain/v1/profile/phone/start', { method: 'POST', headers, body: JSON.stringify({ phone: '+919000000001' }) });
+    assert.equal(sent.status, 200);
+    const challenge = await sent.json();
+    assert.equal(challenge.code, undefined);
+    const verified = await fetch(base + '/captain/v1/profile/phone/verify', { method: 'POST', headers, body: JSON.stringify({ challenge: challenge.challenge, code }) });
+    assert.equal(verified.status, 200);
+    assert.deepEqual(await verified.json(), { saved: true, phone: '+919000000001' });
+    const profile = await fetch(base + '/captain/v1/profile', { headers });
+    assert.equal((await profile.json()).phone, '+919000000001');
+  } finally { messaging.sendSms = original; }
+});

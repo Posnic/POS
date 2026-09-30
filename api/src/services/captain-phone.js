@@ -11,7 +11,7 @@ const digest = (id, code) =>
 const key = (c, user) => String(c.license) + ':' + String(user._id);
 
 async function start(req) {
-  const { c, user } = await self(req);
+  const { c, user, filter } = await self(req);
   const phone = typeof req.body?.phone === 'string' ? req.body.phone.replace(/[ ()-]/g, '') : '';
   if (!/^\+[1-9]\d{7,14}$/.test(phone)) fail('Enter a phone number with country code.');
   const collection = req.db.collection('captain_phone_verifications');
@@ -52,6 +52,12 @@ async function start(req) {
   );
   if (!reserved.matchedCount) fail('Wait before requesting another code.', 429);
   try {
+    const marked = await req.db.collection('users').updateOne({
+      ...filter,
+      phone: user.phone || { $in: [null, ''] },
+      phone_verification_id: user.phone_verification_id ?? { $exists: false },
+    }, { $set: { phone_verification_id: challenge } });
+    if (!marked.matchedCount) fail('Your account changed. Sign in again.', 409);
     const sent = await messaging.sendSms(
       c.branchId,
       phone,
@@ -82,7 +88,7 @@ async function verify(req) {
   const selector = { _id: key(c, user), challenge, branchId: c.branchId };
   const current = await collection.findOne(selector);
   if (!current) fail('Request a new verification code.', 409);
-  if (current.state === 'verified' && user.phone === current.phone)
+  if (current.state === 'verified' && user.phone === current.phone && user.phone_verification_id === challenge)
     return { saved: true, phone: current.phone };
   if (current.state !== 'applying') {
     const reserved = await collection.updateOne(
@@ -98,7 +104,7 @@ async function verify(req) {
   // Claim the challenge before changing the user; only one verifier may apply it.
   if (current.state !== 'applying') {
     const claimed = await collection.updateOne(
-      { ...selector, state: 'ready' },
+      { ...selector, state: 'ready', expiresAt: { $gt: new Date() } },
       { $set: { state: 'applying' } }
     );
     if (!claimed.matchedCount) fail('Request a new verification code.', 409);
@@ -106,12 +112,12 @@ async function verify(req) {
   const changed = await req.db
     .collection('users')
     .updateOne(
-      { ...filter, phone: current.previousPhone || { $in: [null, ''] } },
+      { ...filter, phone_verification_id: challenge, phone: current.previousPhone || { $in: [null, ''] } },
       { $set: { phone: current.phone, phone_verified_at: new Date(), updated_date: new Date() } }
     );
   if (!changed.matchedCount) {
     const latest = await req.db.collection('users').findOne(filter);
-    if (latest?.phone !== current.phone) {
+    if (latest?.phone !== current.phone || latest?.phone_verification_id !== challenge) {
       await collection.updateOne(selector, { $set: { state: 'failed' }, $unset: { codeHash: '' } });
       fail('Your account changed. Sign in again.', 409);
     }

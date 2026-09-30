@@ -26,6 +26,9 @@ router.post('/route-proof', rateLimit({ windowMs: 60000, limit: 180 }), wrap(acc
 router.use(protect);
 const profile = require('../services/captain-profile');
 router.get('/profile', wrap(profile.get));
+const phone = require('../services/captain-phone');
+router.post('/profile/phone/start', rateLimit({ windowMs: 15 * 60000, limit: 20 }), wrap(phone.start));
+router.post('/profile/phone/verify', limit, wrap(phone.verify));
 const branchDetails = require('../services/captain-branch-details');
 router.get('/branch-details', wrap(branchDetails.get));
 router.post('/branch-details', limit, wrap(branchDetails.update));
