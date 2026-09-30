@@ -694,3 +694,38 @@ test('close and prepare move cannot both acquire the source group', async () => 
   const source = await seating.find(db, scope, order.seating_request_id);
   expect(Boolean(source.closing) !== Boolean(source.moving_to)).toBe(true);
 });
+
+test('cancel before prepare records a tombstone and prevents a delayed move', async () => {
+  const order = await movableOrder();
+  const id = 'moving-request-0001';
+  await seating.cancelMove(db, scope, id, 'staff-1', String(order._id));
+  await seating.cancelMove(db, scope, id, 'staff-1', String(order._id));
+  expect((await seating.find(db, scope, id)).state).toBe('cancelled');
+  await expect(
+    seating.prepareMove(db, scope, String(order._id), request({ request_id: id }))
+  ).rejects.toMatchObject({ status: 409 });
+  expect((await seating.find(db, scope, order.seating_request_id)).moving_to).toBeUndefined();
+});
+test('another staff cannot preempt an unprepared move', async () => {
+  const order = await movableOrder();
+  await expect(
+    seating.cancelMove(db, scope, 'moving-request-0001', 'staff-2', String(order._id))
+  ).rejects.toMatchObject({ status: 403 });
+  expect(await seating.find(db, scope, 'moving-request-0001')).toBeNull();
+});
+test('concurrent cancellation and preparation cannot resurrect a cancelled request', async () => {
+  const order = await movableOrder();
+  const id = 'moving-request-0001';
+  await Promise.allSettled([
+    seating.cancelMove(db, scope, id, 'staff-1', String(order._id)),
+    seating.prepareMove(
+      db,
+      scope,
+      String(order._id),
+      request({ request_id: id, table_ids: ids.slice(1), primary_id: ids[1] })
+    ),
+  ]);
+  await seating.cancelMove(db, scope, id, 'staff-1', String(order._id));
+  expect((await seating.find(db, scope, id)).state).toBe('cancelled');
+  expect((await seating.find(db, scope, order.seating_request_id)).moving_to).toBeUndefined();
+});

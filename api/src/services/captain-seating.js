@@ -43,7 +43,13 @@ async function complete(req) {
 }
 async function cancel(req) {
   const c = await scope(req);
-  await seating.cancelMove(req.db, c, req.body?.request_id, String(req.user._id));
+  await seating.cancelMove(
+    req.db,
+    c,
+    req.body?.request_id,
+    String(req.user._id),
+    req.body?.orderId
+  );
   return { request_id: req.body.request_id, state: 'cancelled' };
 }
 module.exports = { prepare, complete, cancel };

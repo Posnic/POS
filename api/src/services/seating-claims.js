@@ -318,9 +318,39 @@ async function beginClose(db, scope, orderIds, closeId) {
   if (!result.matchedCount) fail('The seating group changed. Refresh this order.', 409);
 }
 
-async function cancelMove(db, scope, id, actor) {
+async function cancelMove(db, scope, id, actor, orderId) {
   requestId(id);
-  const saved = await find(db, scope, id);
+  let saved = await find(db, scope, id);
+  if (!saved && orderId) {
+    const order = await db.collection('sales').findOne({
+      _id: new ObjectId(identity(orderId)),
+      branch_id: scope.branchId,
+      license: scope.license,
+    });
+    const source = order?.seating_request_id && (await find(db, scope, order.seating_request_id));
+    if (!source || source.actor !== String(actor) || source.order_id !== String(order._id))
+      fail('Permission is required.', 403);
+    const snapshot = await store(db).findOne({ _id: scopeKey(scope) });
+    saved = snapshot?.claims.find((row) => row.id === id) || (await find(db, scope, id));
+    if (!saved) {
+      const tombstone = {
+        id,
+        actor: String(actor),
+        order_id: String(order._id),
+        move_from: source.id,
+        tables: [],
+        state: 'cancelled',
+        at: new Date(),
+      };
+      const result = await store(db).updateOne(
+        { _id: scopeKey(scope), revision: snapshot.revision, 'claims.id': { $ne: id } },
+        { $push: { claims: tombstone }, $inc: { revision: 1 } }
+      );
+      if (!result.matchedCount) fail('The seating group changed. Refresh this order.', 409);
+      await archive(db, scope, id);
+      return;
+    }
+  }
   if (!saved?.move_from || saved.actor !== String(actor)) fail('Permission is required.', 403);
   if (saved.state === 'cancelled') return;
   if (saved.state !== 'reserved') fail('Reconcile the table move before cancelling it.', 409);
