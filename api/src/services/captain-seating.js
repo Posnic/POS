@@ -83,4 +83,14 @@ async function guests(req) {
   }
   return result;
 }
-module.exports = { prepare, merge, complete, cancel, guests };
+async function guestsStatus(req) {
+  const c = await scope(req), id = req.body?.request_id;
+  if (typeof id !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(id))
+    fail('A seating request ID is required.');
+  const journal = await require('./captain-restructure-lock').read(req.db, c, id, String(req.user._id), { optional: true });
+  if (!journal) return { request_id: id, state: 'unknown' };
+  if (journal.intent.kind !== 'covers') fail('This seating request has already been used.', 409);
+  return { request_id: id, orderId: journal.intent.orderId, guests: journal.intent.guests,
+    state: ['completed', 'cancelled'].includes(journal.stage) ? journal.stage : 'pending' };
+}
+module.exports = { prepare, merge, complete, cancel, guests, guestsStatus };

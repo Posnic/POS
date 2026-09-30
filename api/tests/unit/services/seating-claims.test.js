@@ -1218,3 +1218,19 @@ test('guest API refuses missing branch context and invalid guest counts',async()
     await expect(service.guests({...req,body:{...req.body,guests}})).rejects.toMatchObject({status:422});
   expect((await db.collection('sales').findOne({_id:order._id})).captain_payment_plan).toBeUndefined();
 });
+
+test('guest status distinguishes unknown, completed and cancelled requests without exposing another staff journal',async()=>{
+  const order=await movableOrder();
+  await db.collection('branches').insertOne({_id:scope.branchId,license:scope.license});
+  const service=require('../../../src/services/captain-seating');
+  const req={db,user:{_id:'staff-1',role:'manager'},
+    tenantContext:{branchId:String(scope.branchId),licenseId:String(scope.license)},
+    body:{request_id:'guest-status-request-1',orderId:String(order._id),guests:5}};
+  expect((await service.guestsStatus(req)).state).toBe('unknown');
+  await service.guests(req);
+  expect(await service.guestsStatus(req)).toMatchObject({state:'completed',orderId:String(order._id),guests:5});
+  req.body={...req.body,request_id:'guest-status-request-2',guests:7};
+  await expect(service.guests(req)).rejects.toThrow('enough seats');
+  expect((await service.guestsStatus(req)).state).toBe('cancelled');
+  req.user._id='staff-2';await expect(service.guestsStatus(req)).rejects.toMatchObject({status:409});
+});

@@ -226,6 +226,7 @@ Mounted at `/captain/v1`. Source: `api/src/routes/captain-access.routes.js`.
 | POST | `/captain/v1/tables/move/complete` | — | `seating.complete` |
 | POST | `/captain/v1/tables/move/cancel` | — | `seating.cancel` |
 | POST | `/captain/v1/tables/guests` | — | `seating.guests` |
+| POST | `/captain/v1/tables/guests/status` | — | `seating.guestsStatus` |
 | POST | `/captain/v1/profile` | — | `profile.update` |
 | POST | `/captain/v1/password` | — | `profile.password` |
 | GET | `/captain/v1/kitchen-ready` | — | `board` |
@@ -1200,5 +1201,10 @@ Persist the request before sending. After a timeout or lost response, retry the
 identical request on its original server with the same staff/branch identity.
 Do not substitute a new ID or change the guest count during recovery. Replaying
 a completed request returns its original result without applying it again.
+`POST /captain/v1/tables/guests/status` accepts the saved `request_id` and
+returns `pending`, `completed`, `cancelled` or `unknown`, with the original
+order and count when a journal exists. It requires the same staff and branch.
+Only a confirmed `cancelled` tombstone makes a failed request safe to discard;
+`unknown` does not rule out a delayed request and must be retained for retry.
 Captain recovery UI and migration of all existing cover-edit writers remain
 required before enabling the full flow; legacy orders are not enrolled here.
