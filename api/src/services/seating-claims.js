@@ -701,7 +701,7 @@ async function cancel(db, scope, id, actor) {
     fail('Reconcile the submitted order before releasing its tables.', 409);
   await archive(db, scope, id);
 }
-async function release(db, scope, id) {
+async function release(db, scope, id, { transferId } = {}) {
   requestId(id);
   const claim = await find(db, scope, id);
   if (!claim) fail('Seating request not found.', 404);
@@ -718,6 +718,18 @@ async function release(db, scope, id) {
     license: scope.license,
   });
   if (!sale?.floor_closed_at) fail('Close the order before releasing its tables.', 409);
+  let transferred = false;
+  if (transferId) {
+    const journal = await db.collection('captain_payment_plans').findOne({ _id: transferId,
+      branch_id: scope.branchId, license: scope.license, purpose: 'order-restructure',
+      'intent.kind': 'transfer', 'intent.orderId': String(sale._id), orderIds: String(sale._id), stage: 'applying' });
+    transferred = !!journal && sale.captain_payment_plan === transferId && Number(sale.sales_total) === 0 &&
+      sale.captain_transfer_allocation?.totalMinor === 0 && sale.captain_transfer_allocation?.lines?.length === 0 &&
+      Array.isArray(sale.items) && !sale.items.some(line => line && !line.return && !line.cancelled &&
+        !['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) && Number(line.quantity ?? line.item_quantity ?? line.qty) > 0) &&
+      sale.captain_transfer_operations?.some(row => row.id === transferId && row.side === 'source');
+    if (!transferred) fail('Reconcile this transfer before releasing its tables.', 409);
+  }
   const remainingOrders = await db.collection('sales').countDocuments({
     branch_id: scope.branchId,
     license: scope.license,
@@ -725,17 +737,18 @@ async function release(db, scope, id) {
     table_number: { $in: claim.labels },
   });
   const cancelled = String(sale.sale_process).toLowerCase() === 'cancelled';
-  if (remainingOrders && !cancelled)
+  const detached = cancelled || transferred;
+  if (remainingOrders && !detached)
     fail('Close the remaining orders before releasing this table.', 409);
   const otherClaims =
-    cancelled &&
+    detached &&
     (await read(db, scope)).some(
       (other) =>
         other.id !== claim.id &&
         !terminal(other) &&
         other.tables.some((table) => claim.tables.includes(table))
     );
-  const stillOccupied = cancelled && (remainingOrders > 0 || otherClaims);
+  let stillOccupied = detached && (remainingOrders > 0 || otherClaims);
   if (claim.state !== 'releasing') {
     const locked = await store(db).updateOne(
       {
@@ -750,6 +763,19 @@ async function release(db, scope, id) {
       if (latest?.state !== 'releasing')
         fail('Reconcile the table move before releasing its tables.', 409);
     }
+  }
+
+  if (detached) {
+    // Read occupancy again AFTER acquiring the releasing claim. A shared check
+    // may have arrived after the first read. New reservations now see the fence,
+    // and any reservation using an older branch revision fails its own CAS.
+    const remaining = await db.collection('sales').countDocuments({
+      branch_id: scope.branchId, license: scope.license,
+      ...require('../helpers/floor-eligibility').floorEligibility(), table_number: { $in: claim.labels },
+    });
+    const neighbours = (await read(db, scope)).some(other => other.id !== claim.id && !terminal(other) &&
+      other.tables.some(table => claim.tables.includes(table)));
+    stillOccupied = remaining > 0 || neighbours;
   }
 
   // The claim keeps all member tables unavailable while this projection runs.

@@ -480,6 +480,60 @@ async function movableOrder() {
   await db.collection('sales').insertOne(order);
   return order;
 }
+
+async function transferredSource() {
+  const order = await movableOrder(), transferId = 'restructure:full-source-transfer';
+  await db.collection('captain_payment_plans').insertOne({ _id: transferId, branch_id: scope.branchId,
+    license: scope.license, purpose: 'order-restructure', stage: 'applying', orderIds: [String(order._id)],
+    intent: { kind: 'transfer', orderId: String(order._id) } });
+  await db.collection('sales').updateOne({ _id: order._id }, { $set: { floor_closed_at: new Date(),
+    sales_total: 0, items: [], captain_payment_plan: transferId,
+    captain_transfer_allocation: { totalMinor: 0, lines: [] },
+    captain_transfer_operations: [{ id: transferId, side: 'source' }] } });
+  return { order, transferId };
+}
+test.each([true, false])('full transfer releases only its seating claim (other check present: %s)', async occupied => {
+  const { order, transferId } = await transferredSource();
+  let neighbour;
+  if (occupied) {
+    neighbour = { ...order, _id: new ObjectId(), seating_request_id: undefined, person_count: 1 };
+    await db.collection('sales').insertOne(neighbour);
+  }
+  await seating.release(db, scope, order.seating_request_id, { transferId });
+  await seating.release(db, scope, order.seating_request_id, { transferId });
+  expect((await seating.find(db, scope, order.seating_request_id)).state).toBe('released');
+  const table = await db.collection('tableorder').findOne({ _id: new ObjectId(ids[0]) });
+  expect(table.service_state).toBe(occupied ? undefined : 'cleaning');
+  if (neighbour) expect((await db.collection('sales').findOne({ _id: neighbour._id })).floor_closed_at).toBeUndefined();
+});
+test.each([{ sales_total: 1 }, { items: [{ item_quantity: 1 }] }, { captain_payment_plan: 'wrong-transfer' }])(
+  'transfer release refuses an unverified empty source %j', async patch => {
+    const { order, transferId } = await transferredSource();
+    await db.collection('sales').updateOne({ _id: order._id }, { $set: patch });
+    await expect(seating.release(db, scope, order.seating_request_id, { transferId })).rejects.toMatchObject({ status: 409 });
+    expect((await seating.find(db, scope, order.seating_request_id)).state).toBe('submitting');
+  });
+test('a check arriving during release preflight is not marked for cleaning', async () => {
+  const { order, transferId } = await transferredSource();
+  let arrived = false;
+  const racing = { collection(name) {
+    const collection = db.collection(name);
+    if (name !== 'sales') return collection;
+    return new Proxy(collection, { get(target, property) {
+      if (property === 'countDocuments') return async (...args) => {
+        const count = await target.countDocuments(...args);
+        if (!arrived) {
+          arrived = true;
+          await target.insertOne({ ...order, _id: new ObjectId(), seating_request_id: undefined, person_count: 1 });
+        }
+        return count;
+      };
+      const value = target[property]; return typeof value === 'function' ? value.bind(target) : value;
+    } });
+  } };
+  await seating.release(racing, scope, order.seating_request_id, { transferId });
+  expect((await db.collection('tableorder').findOne({ _id: new ObjectId(ids[0]) })).service_state).toBeUndefined();
+});
 test('preparing an overlapping group move reserves both old and new seats atomically', async () => {
   const order = await movableOrder();
   const input = request({
