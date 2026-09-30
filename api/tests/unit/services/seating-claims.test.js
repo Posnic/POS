@@ -1369,6 +1369,59 @@ test('legacy enrollment rejects foreign scope and cannot reuse another staff req
   await expect(seating.enrollExisting(db,scope,String(sale._id),{...input,actor:'staff-2'})).rejects.toMatchObject({status:409});
 });
 
+test('staff table move enrolls an older sale without resubmitting its dishes',async()=>{
+  const sale=await legacySale();
+  const input=request({request_id:'legacy-auto-move-001',table_ids:[ids[2]],primary_id:ids[2],guests:2});
+  const move=await seating.prepareMove(db,scope,String(sale._id),input,{staffHandover:true});
+  await seating.completeMove(db,scope,move.id,'staff-1');
+  expect((await seating.prepareMove(db,scope,String(sale._id),input,{staffHandover:true})).id).toBe(move.id);
+  await seating.completeMove(db,scope,move.id,'staff-1');
+  const saved=await db.collection('sales').findOne({_id:sale._id});
+  expect(saved.table_number).toBe('T3');
+  for(const key of ['items','changes','sales_total','payment_status','kitchen_service','kitchen_work'])expect(saved[key]).toEqual(sale[key]);
+  expect(saved.captain_payment_plan).toBeUndefined();
+  expect(await db.collection('sales').countDocuments()).toBe(1);
+});
+
+test('cancelling an older order move before preparation prevents late enrollment',async()=>{
+  const sale=await legacySale(),id='legacy-auto-cancel-001';
+  await seating.cancelMove(db,scope,id,'staff-1',String(sale._id),{staffHandover:true});
+  await seating.cancelMove(db,scope,id,'staff-1',String(sale._id),{staffHandover:true});
+  await expect(seating.prepareMove(db,scope,String(sale._id),request({request_id:id,table_ids:[ids[2]],primary_id:ids[2],guests:2}),{staffHandover:true})).rejects.toMatchObject({status:409});
+  expect(await db.collection('sales').findOne({_id:sale._id})).toEqual(sale);
+});
+
+test('legacy auto-enrollment requires authorized staff handover and the original branch',async()=>{
+  const sale=await legacySale();
+  const input=request({request_id:'legacy-auto-scope-001',table_ids:[ids[2]],primary_id:ids[2],guests:2});
+  await expect(seating.prepareMove(db,scope,String(sale._id),input)).rejects.toMatchObject({status:409});
+  await expect(seating.prepareMove(db,{...scope,branchId:new ObjectId()},String(sale._id),input,{staffHandover:true})).rejects.toMatchObject({status:409});
+  await expect(seating.cancelMove(db,scope,input.request_id,'staff-1',String(sale._id))).rejects.toMatchObject({status:403});
+  expect(await db.collection('sales').findOne({_id:sale._id})).toEqual(sale);
+});
+
+test('cancelling an interrupted legacy move recovers enrollment and releases the sale',async()=>{
+  const sale=await legacySale(),id='legacy-auto-recover-001';
+  const interrupted={collection(name){
+    const collection=db.collection(name);
+    return new Proxy(collection,{get(target,key){
+      if(name==='sales'&&key==='updateOne')return async(filter,update,...rest)=>{
+        if(update.$set?.seating_request_id)throw new Error('interrupted enrollment');
+        return target.updateOne(filter,update,...rest);
+      };
+      const value=target[key];return typeof value==='function'?value.bind(target):value;
+    }});
+  }};
+  await expect(seating.prepareMove(interrupted,scope,String(sale._id),request({request_id:id,table_ids:[ids[2]],primary_id:ids[2],guests:2}),{staffHandover:true})).rejects.toThrow('interrupted enrollment');
+  await seating.cancelMove(db,scope,id,'staff-1',String(sale._id),{staffHandover:true});
+  await seating.cancelMove(db,scope,id,'staff-1',String(sale._id),{staffHandover:true});
+  const saved=await db.collection('sales').findOne({_id:sale._id});
+  expect(saved.table_number).toBe('T1');expect(saved.items).toEqual(sale.items);
+  expect(saved.captain_payment_plan).toBeUndefined();
+  expect((await seating.find(db,scope,id)).state).toBe('cancelled');
+  expect((await seating.read(db,scope)).filter(row=>row.adopt_order===String(sale._id))).toHaveLength(1);
+});
+
 test.each(['capacity-reserved','applying','revision-written','capacity-released','completed','fence-released'])(
   'guest change recovers a lost acknowledgement after %s without leaving blocked seating',async(point)=>{
     const order=await movableOrder(),input={request_id:'cover-recovery-check-1',actor:'staff-1',guests:5};

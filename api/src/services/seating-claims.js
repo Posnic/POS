@@ -82,6 +82,20 @@ async function archive(db, scope, id) {
 async function reserve(db, scope, input) {
   return reserveClaim(db, scope, input);
 }
+async function reconcileEnrollment(db, scope, parentId, order, actor, start = false) {
+  const childId = 'enroll-' + require('crypto').createHash('sha256')
+    .update(JSON.stringify([parentId, String(order._id)])).digest('hex').slice(0,40);
+  const child = await restructure.read(db,scope,childId,actor,{optional:true});
+  if (child?.stage === 'cancelled') {
+    if(start)fail('This seating request has already been used.',409);
+    return order;
+  }
+  if(child || (start && !order.seating_request_id)) {
+    await enrollExisting(db,scope,String(order._id),{request_id:childId,actor});
+    return db.collection('sales').findOne({_id:order._id,branch_id:scope.branchId,license:scope.license});
+  }
+  return order;
+}
 async function reserveClaim(db, scope, input, moving = null, operationLock = null, mergeTarget = null, adopting = null) {
   const id = requestId(input.request_id);
   const takeaway = moving && input.dine_type === 'Take away';
@@ -298,14 +312,16 @@ async function prepareMove(db, scope, orderId, input, { staffHandover = false, m
     dine_type: takeaway ? 'Take away' : 'Dine-in',
     ...(input.payload_hash ? { payload_hash: input.payload_hash } : {}),
   };
-  const order = await db.collection('sales').findOne({
+  let order = await db.collection('sales').findOne({
     _id: new ObjectId(identity(orderId)),
     branch_id: scope.branchId,
     license: scope.license,
     ...require('../helpers/floor-eligibility').floorEligibility(),
   });
-  if (!order?.seating_request_id) fail('Refresh this order before changing its seating.', 409);
   const previous = await find(db, scope, id);
+  if (previous && terminal(previous)) fail('This seating request has already been used.',409);
+  if(order && staffHandover)order=await reconcileEnrollment(db,scope,id,order,expected.actor,true);
+  if (!order?.seating_request_id) fail('Refresh this order before changing its seating.', 409);
   if (previous) {
     if (
       !previous.move_from ||
@@ -412,6 +428,10 @@ async function cancelMove(db, scope, id, actor, orderId, { staffHandover = false
   if (lock && (lock.intent.kind !== 'move' ||
       (orderId && !lock.orderIds.includes(String(orderId)))))
     fail('This seating request has already been used.', 409);
+  if (orderId && staffHandover) {
+    const original=await db.collection('sales').findOne({_id:new ObjectId(identity(orderId)),branch_id:scope.branchId,license:scope.license});
+    if(original)await reconcileEnrollment(db,scope,id,original,String(actor));
+  }
   if (!saved && orderId) {
     const order = await db.collection('sales').findOne({
       _id: new ObjectId(identity(orderId)),
@@ -419,12 +439,14 @@ async function cancelMove(db, scope, id, actor, orderId, { staffHandover = false
       license: scope.license,
     });
     const source = order?.seating_request_id && (await find(db, scope, order.seating_request_id));
-    if (
-      !source ||
-      (!staffHandover && source.actor !== String(actor)) ||
-      source.order_id !== String(order._id)
-    )
+    if (!order || (!source && (!staffHandover || order.seating_request_id)) ||
+      (source && ((!staffHandover && source.actor !== String(actor)) || source.order_id !== String(order._id))))
       fail('Permission is required.', 403);
+    if (!source) {
+      try {
+        await store(db).updateOne({_id:scopeKey(scope)},{$setOnInsert:{branch_id:scope.branchId,license:scope.license,claims:[],revision:0}},{upsert:true});
+      } catch(error) { if(error.code!==11000)throw error; }
+    }
     const snapshot = await store(db).findOne({ _id: scopeKey(scope) });
     saved = snapshot?.claims.find((row) => row.id === id) || (await find(db, scope, id));
     if (!saved) {
@@ -433,7 +455,7 @@ async function cancelMove(db, scope, id, actor, orderId, { staffHandover = false
         id,
         actor: String(actor),
         order_id: String(order._id),
-        move_from: source.id,
+        move_from: source?.id || `legacy-${String(order._id)}`,
         tables: [],
         state: 'cancelled',
         at: new Date(),

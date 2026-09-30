@@ -1167,8 +1167,8 @@ Mounted at `/whatsapp`. Source: `api/src/routes/whatsapp.routes.js`.
 
 `POST /captain/v1/tables/merge/prepare` takes the move request fields plus
 `targetOrderId`. It requires the manager/owner role or an explicit
-`sales.merge` permission. Both existing orders must have active seating claims
-and unpaid checks. Only a single destination table with one existing check is
+`sales.merge` permission. Both existing orders must have unpaid checks; the
+destination must already have an active seating claim. Only a single destination table with one existing check is
 accepted. The server validates the combined guest count against configured
 maximum capacity and reserves both checks against payment or editing.
 
@@ -1180,9 +1180,19 @@ original server, shop, branch and initiating staff member.
 Completion groups the original checks at the destination table. The bill reader
 and payment flow aggregate both checks there; their original IDs, items, kitchen
 rounds and totals remain intact. No new KOT, stock deduction or new-sale operation
-is issued. The vacated source table becomes available for cleaning. This API does
-not yet enroll legacy orders without seating claims and is not a partial-item
-transfer endpoint.
+is issued. The vacated source table becomes available for cleaning. This is not
+a partial-item transfer endpoint.
+
+Authorized move/merge preparation now enrolls an older source order on its
+existing table when its seating claim is missing. Enrollment changes seating
+metadata only and uses a stable child request derived from the parent request
+and original sale. Ambiguous or missing original tables are rejected. A retry
+recovers interrupted enrollment; cancelling the parent recovers any existing
+child before recording cancellation. Cancelling before preparation prevents a
+delayed preparation from moving the order and does not enroll it unnecessarily.
+Clients must retain the parent request and original server/staff identity until
+completion or confirmed cancellation. Automatic destination enrollment and
+Captain legacy-order UI routing remain pending.
 
 ### Captain guest-count updates
 
