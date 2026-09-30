@@ -9935,10 +9935,9 @@ class SalesRepository {
    * controller passes the id off the token, so a handset cannot ask for
    * somebody else's figures by typing a different number.
    *
-   * A sale names its waiter in two places depending on how old it is:
-   * `user_id` on the sale, and `created_by_id` on rows written by the till's
-   * own flow. Both are asked, because a shop's history is older than either
-   * of them.
+   * Tableside orders retain the original captain in client.staff_id.
+   * That identity takes precedence over cashier fields after payment.
+   * Older desktop rows use user_id or created_by_id instead.
    *
    * Cancelled sales are left out of the money and counted separately: a day
    * that reads higher because somebody cancelled four orders is a day nobody
@@ -9951,14 +9950,13 @@ class SalesRepository {
 
       if (!userId) return { total: 0, paid_total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
 
-      const who = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
       const from = new Date(day);
       from.setHours(0, 0, 0, 0);
       const to = new Date(from);
       to.setDate(to.getDate() + 1);
 
       const query = {
-        $or: [{ user_id: who }, { created_by_id: who }],
+        ...require('../helpers/captain-sales-owner')(userId),
         $and: [
           {
             $or: [{ created_date: { $gte: from, $lt: to } }, { date: { $gte: from, $lt: to } }],
