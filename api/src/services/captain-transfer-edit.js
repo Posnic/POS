@@ -90,27 +90,14 @@ function additions(sale, proposed, branch) {
   if (new Set(keys).size !== keys.length) return null;
   const retained = reduce(sale, { ...proposed, items: after.filter(line => before.has(orderLine.key(line))) }, branch);
   if (!retained) return null;
-  const { snapshotFrom } = require('./guest-bill.service');
-  const { units } = require('./captain-transfer-plan');
   const reconciled = new Map(retained.items.map(line => [orderLine.key(line), line]));
   const allocated = new Map(retained.captain_transfer_allocation.lines.map(line => [line.lineKey, line]));
   for (const line of fresh) {
-    if (line.return || line.cancelled || ['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) ||
-        !units(quantity(line))) return null;
-    const gross = Number(line.item_price ?? line.unit_price ?? line.item_base_price) * quantity(line);
-    const total = Number(line.total_amount ?? line.item_total ?? line.total);
-    const tax = Number(line.item_tax ?? line.tax_amount ?? 0), discount = Number(line.item_discount || 0);
-    const base = gross - (line.tax_type === 'inclusive' ? tax : 0);
-    if (![base, total, tax, discount].every(value => Number.isFinite(value) && value >= 0)) return null;
-    // Tax labels infer their rate from the taxable base, not a gross
-    // inclusive price or the amount before a line discount. Only this
-    // one-line snapshot uses that basis; the sale retains its selling price.
-    const taxableLine = { ...line, item_base_price: (base - discount) / quantity(line) };
-    const snapshot = snapshotFrom([{ _id: sale._id, items: [taxableLine], sales_sub_total: base,
-      sales_total: total, tax, discount, round_off: 0 }], branch, sale.table_number || '', { allowZero: true });
+    const priced = priceLine(sale, line, branch);
+    if (!priced) return null;
     const key = orderLine.key(line);
     reconciled.set(key, clone(line));
-    allocated.set(key, { ...snapshot.lines[0], lineKey: key });
+    allocated.set(key, priced);
   }
   const side = { lines: keys.map(key => allocated.get(key)), components: {}, totalMinor: 0 };
   for (const line of side.lines) {
@@ -120,4 +107,73 @@ function additions(sale, proposed, branch) {
   const result = { ...proposed, items: keys.map(key => reconciled.get(key)) };
   return require('./captain-transfer-projection').applyMoney(sale, result, branch, side);
 }
-module.exports = { metadata, reduce, additions };
+function priceLine(sale, line, branch) {
+  const { snapshotFrom } = require('./guest-bill.service');
+  const { units } = require('./captain-transfer-plan');
+  if (line.return || line.cancelled || ['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) ||
+    !units(quantity(line))) return null;
+  const gross = Number(line.item_price ?? line.unit_price ?? line.item_base_price) * quantity(line);
+  const total = Number(line.total_amount ?? line.item_total ?? line.total);
+  const tax = Number(line.item_tax ?? line.tax_amount ?? 0), discount = Number(line.item_discount || 0);
+  const base = gross - (line.tax_type === 'inclusive' ? tax : 0);
+  if (![base, total, tax, discount].every(value => Number.isFinite(value) && value >= 0)) return null;
+  // Tax labels infer their rate from the taxable base, not a gross
+  // inclusive price or the amount before a line discount. Only this
+  // one-line snapshot uses that basis; the sale retains its selling price.
+  const taxableLine = { ...line, item_base_price: (base - discount) / quantity(line) };
+  const snapshot = snapshotFrom([{ _id: sale._id, items: [taxableLine], sales_sub_total: base,
+    sales_total: total, tax, discount, round_off: 0 }], branch, sale.table_number || '', { allowZero: true });
+  return { ...snapshot.lines[0], lineKey: orderLine.key(line) };
+}
+
+// Add only the incremental portions at the editor's price. The original
+// allocation (including rounding) belongs to the portions already ordered.
+function increases(sale, proposed, branch) {
+  const before = new Map((sale.items || []).filter(Boolean).map(line => [orderLine.key(line), line]));
+  const after = proposed.items || [];
+  if (after.some(line => !line)) return null;
+  const growing = after.filter(line => before.has(orderLine.key(line)) && quantity(line) > quantity(before.get(orderLine.key(line))));
+  if (!growing.length) return null;
+  const capped = after.map(line => {
+    const old = before.get(orderLine.key(line));
+    if (!old || quantity(line) <= quantity(old)) return line;
+    const result = { ...line };
+    for (const field of ['quantity', 'item_quantity', 'qty']) if (result[field] !== undefined) result[field] = quantity(old);
+    return result;
+  });
+  const retained = additions(sale, { ...proposed, items: capped }, branch) || reduce(sale, { ...proposed, items: capped }, branch);
+  if (!retained) return null;
+  const side = clone(retained.captain_transfer_allocation);
+  const { units } = require('./captain-transfer-plan');
+  const Money = require('../utils/currency'), policy = Money.policy(branch);
+  for (const line of growing) {
+    const key = orderLine.key(line), old = before.get(key);
+    // A different price/rate needs a separate preparation to keep receipt
+    // unit prices and tax percentages unambiguous for existing portions.
+    const rate = item => Number(item.item_price ?? item.unit_price ?? item.item_base_price);
+    if (rate(line) !== rate(old) || (old.tax !== undefined && Number(old.tax) !== Number(line.tax)) ||
+        (old.tax_type !== undefined && old.tax_type !== line.tax_type)) return null;
+    const count = units(quantity(line)), previous = units(quantity(old)), extra = count - previous;
+    const increment = clone(line);
+    for (const field of ['quantity', 'item_quantity', 'qty']) if (increment[field] !== undefined) increment[field] = extra / 1000;
+    for (const field of ['total_amount', 'item_total', 'total', 'item_tax', 'tax_amount', 'item_discount'])
+      if (increment[field] !== undefined) increment[field] = Money.fromMinor(Money.toMinor(Number(increment[field]) * extra / count, policy), policy);
+    const priced = priceLine(sale, increment, branch);
+    if (!priced) return null;
+    const allocated = side.lines.find(row => row.lineKey === key);
+    const parts = new Map(allocated.components.map(row => [row.key, row.minor]));
+    for (const row of priced.components) parts.set(row.key, (parts.get(row.key) || 0) + row.minor);
+    allocated.components = [...parts].map(([key, minor]) => ({ key, minor }));
+    allocated.amountMinor += priced.amountMinor;
+    allocated.quantity = count / 1000;
+    const item = retained.items.find(row => orderLine.key(row) === key);
+    for (const field of ['quantity', 'item_quantity', 'qty']) if (item[field] !== undefined) item[field] = count / 1000;
+  }
+  side.totalMinor = 0; side.components = {};
+  for (const line of side.lines) {
+    side.totalMinor += line.amountMinor;
+    for (const row of line.components) side.components[row.key] = (side.components[row.key] || 0) + row.minor;
+  }
+  return require('./captain-transfer-projection').applyMoney(sale, retained, branch, side);
+}
+module.exports = { metadata, reduce, additions, increases };

@@ -574,3 +574,19 @@ test.each(['interrupted','concurrent'])('bill-number collision recovery handles 
   expect(await original('sales').countDocuments()).toBe(3);
   expect((await original('captain_payment_plans').findOne({})).destination_number).toBe(answers[0].destination.sales_id);
 });
+
+test('ordinary editor increases transferred portions and sends only the extra quantity to kitchen', async () => {
+  const input=await confirmation(), completed=await service.complete(input),id=new ObjectId(completed.destinationId);
+  await db.collection('items').insertOne({_id:sale.items[0].item_id,license,name:'Corn',tax:5,tax_type:'exclusive'});
+  jest.spyOn(BaseModel,'getDb').mockResolvedValue(db);
+  const answer=await runWithRequestContext({license,currentBranch:branch,loggedUser:String(input.user._id)},()=>
+    sales.updateOrderModel(String(id),[{product_id:String(sale.items[0].item_id),quantity:3,price:50}],157.5,'modified',null,null,null,null,null,null));
+  expect(answer).toMatchObject({status:true});
+  const after=await db.collection('sales').findOne({_id:id});
+  expect(after.sales_total).toBe(157.5);
+  expect(after.items[0].item_quantity).toBe(3);
+  expect(snapshotFrom([after],{currencyCode:'INR'},after.table_number).totalMinor).toBe(15750);
+  const added=after.changes.flatMap(change=>change.items).filter(item=>item.process==='add');
+  expect(added).toHaveLength(1);
+  expect(added[0].item_quantity).toBe(2);
+});

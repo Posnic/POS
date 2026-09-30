@@ -274,3 +274,39 @@ test.each(['inclusive','exclusive'])('new discounted %s dish keeps the actual GS
   expect(parts.adjustment).toBe(0);
   expect(result.items[1].item_price).toBe(fresh.item_price);
 });
+
+test.each(['JPY','INR','KWD'])('quantity increase adds only extra portions to allocated amounts in %s',currencyCode=>{
+  const original=sale(),branch={currencyCode},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.destination},old=transferred.items[0];
+  const proposed={items:[{...old,item_quantity:2,item_price:old.item_base_price,
+    tax:5,tax_type:'exclusive',item_discount:0,item_tax:4,total_amount:70.67}]};
+  const result=transferEdit.increases(transferred,proposed,branch),policy=Money.policy(branch);
+  expect(result.items[0].item_quantity).toBe(2);
+  expect(result.captain_transfer_allocation.totalMinor).toBe(transferred.captain_transfer_allocation.totalMinor+Money.toMinor(35.335,policy));
+  expect(snapshotFrom([{...transferred,...result}],branch,'1').totalMinor).toBe(result.captain_transfer_allocation.totalMinor);
+  expect(transferred.items[0].item_quantity).toBe(1);
+});
+
+test('quantity increase rejects changing the price of already allocated portions',()=>{
+  const original=sale(),branch={currencyCode:'INR'},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.destination};
+  expect(transferEdit.increases(transferred,{items:[{...transferred.items[0],item_quantity:2,item_price:999}]},branch)).toBeNull();
+});
+
+test('combined additions, reductions and increases keep each preparation allocation attached to its identity',()=>{
+  const original=sale(),branch={currencyCode:'INR'},split=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const transferred={...original,...split.destination};
+  const soup={item_id:'soup',line_id:'soup',item_name:'Soup',item_quantity:2,item_price:10,
+    item_tax:1,item_discount:0,total_amount:21,tax_type:'exclusive',tax:5};
+  const withSoup={...transferred,...transferEdit.additions(transferred,{items:[...transferred.items,soup]},branch)};
+  const proposed={items:[{item_id:'tea',item_name:'Tea',item_quantity:1,item_price:5,item_tax:0,item_discount:0,total_amount:5},
+    {...withSoup.items[1],item_quantity:1},
+    {...withSoup.items[0],item_quantity:2,item_price:withSoup.items[0].item_base_price,item_tax:4,item_discount:0,total_amount:70.67}]};
+  const result=transferEdit.increases(withSoup,proposed,branch);
+  const amounts=Object.fromEntries(result.captain_transfer_allocation.lines.map(line=>[line.lineKey,line.amountMinor]));
+  expect(amounts.tea).toBe(500);
+  expect(amounts.soup).toBe(1050);
+  expect(amounts.salt).toBe(transferred.captain_transfer_allocation.totalMinor+3534);
+  expect(result.items.map(item=>item.item_id)).toEqual(['tea','soup','corn']);
+  expect(snapshotFrom([{...withSoup,...result}],branch,'1').totalMinor).toBe(Object.values(amounts).reduce((sum,n)=>sum+n,0));
+});
