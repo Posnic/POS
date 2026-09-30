@@ -1069,6 +1069,18 @@ test('guest edits count unclaimed checks at the table and ignore another branch'
   await expect(seating.forEdit(db,scope,order,{guests:5})).rejects.toThrow('enough seats');
 });
 
+test('legacy over-capacity parties can edit dishes and reduce covers without bypassing a pending move',async()=>{
+  const order=await movableOrder();
+  order.person_count=9;
+  await db.collection('sales').updateOne({_id:order._id},{$set:{person_count:9}});
+  await expect(seating.forEdit(db,scope,order,{guests:9})).resolves.toBeTruthy();
+  await expect(seating.forEdit(db,scope,order,{guests:8})).resolves.toBeTruthy();
+  await expect(seating.forEdit(db,scope,order,{guests:10})).rejects.toThrow('enough seats');
+  await db.collection('table_seating').updateOne(
+    {'claims.id':order.seating_request_id},{$set:{'claims.$.moving_to':'pending-table-move'}});
+  await expect(seating.forEdit(db,scope,order,{guests:9})).rejects.toThrow('Reconcile');
+});
+
 test('merge capacity accounts for both parties and cannot be understated by the caller',async()=>{
   const {source,target,input}=await mergeOrders(), options={mergeTargetId:String(target._id)};
   await expect(seating.prepareMove(db,scope,String(source._id),{...input,guests:2},options)).rejects.toMatchObject({status:409});

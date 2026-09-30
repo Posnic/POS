@@ -797,6 +797,12 @@ async function forEdit(db, scope, order, next) {
     const takeaway = own.tables.length === 0 && own.dine_type === 'Take away';
     if (!Number.isInteger(guests) || (takeaway ? guests !== 0 : guests < 1 || guests > 1000))
       fail('Enter the number of guests.');
+    // Existing over-capacity data must not block adding/correcting dishes or
+    // reducing covers. Only an increase can consume additional seats. Keep
+    // the ownership, close and move checks above in effect for every edit.
+    const currentGuests = Number(order.person_count);
+    if (Number.isInteger(currentGuests) && currentGuests >= 0 && guests <= currentGuests)
+      return own;
     let otherGuests = 0;
     if (!takeaway) {
       const overlaps = claims.filter(claim => !terminal(claim) && claim.id !== own.id &&
