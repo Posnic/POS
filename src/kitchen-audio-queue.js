@@ -159,12 +159,12 @@ class KitchenAudioQueue {
     }
     return true;
   }
-  status() {
+  status(owner) {
     return {
       paused: this.paused(),
-      jobs: this.jobs
+      jobs: this.jobs.filter((j) => !owner || j.owner === owner)
         .filter((j) => !j.complete)
-        .concat(this.jobs.filter((j) => j.complete).slice(-5))
+        .concat(this.jobs.filter((j) => j.complete && (!owner || j.owner === owner)).slice(-5))
         .map((j) => ({
           id: j.id,
           kind: j.kind,
