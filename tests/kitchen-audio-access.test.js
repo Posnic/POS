@@ -10,6 +10,7 @@ test('Captain route requires authentication, sales permission, and authenticated
   if(name.endsWith('/auth'))return {protect};
   if(name.endsWith('/branch-access'))return {allowed:()=>allow,context:async()=>({license:'license',branchId:'trusted-branch',branch:{}})};
   if(name.endsWith('/captain-access'))return {fail:(_c,message,status)=>{throw Object.assign(Error(message),{status});}};
+  if(name.endsWith('/kitchen-voice'))return {prepare:async()=>null,markQueued:async()=>{}};
   return {};
  }};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../api/src/routes/captain-access.routes.js'),'utf8'),context);
