@@ -338,7 +338,7 @@ PosnicPro.listFilter = {
         var refresh = document.getElementById(id);
         var label = PosnicPro.i18n.t('lang_wf_refresh', 'Refresh');
         if (!refresh) {
-            refresh = $('<button type="button" class="btn btn-sm mr-2 lf-refresh">')
+            refresh = $('<button type="button" class="btn btn-primary-rgba mr-2 lf-refresh">')
                 .attr('id', id).attr('title', label)
                 .append('<i class="feather icon-refresh-cw" aria-hidden="true"></i> ')
                 .append($('<span>').text(label))
