@@ -24,15 +24,13 @@ beforeEach(async () => {
   branch = new ObjectId();
   license = new ObjectId();
   await db.collection('branches').insertOne({ _id: branch, license });
-  await db
-    .collection('users')
-    .insertOne({
-      _id: user,
-      license,
-      activate: true,
-      email: 'old@example.test',
-      password: await require('bcryptjs').hash('staff-password', 4),
-    });
+  await db.collection('users').insertOne({
+    _id: user,
+    license,
+    activate: true,
+    email: 'old@example.test',
+    password: await require('bcryptjs').hash('staff-password', 4),
+  });
   sender.sendMail.mockReset().mockResolvedValue({ messageId: 'test' });
   sender.resolveShopTransport.mockReturnValue({
     from: 'shop@example.test',
@@ -184,4 +182,79 @@ test('console transport cannot pretend a verification email was delivered', asyn
     status: 503,
   });
   expect(sender.sendMail).not.toHaveBeenCalled();
+});
+
+test('verified email invalidates both reset-link formats atomically and retry does not rotate again', async () => {
+  await db
+    .collection('users')
+    .updateOne(
+      { _id: user },
+      {
+        $set: {
+          userkey: 'old-reset-link',
+          expire_date: new Date(Date.now() + 60000),
+          passwordResetToken: 'old-token',
+          passwordResetExpires: new Date(Date.now() + 60000),
+        },
+      }
+    );
+  const challenge = await begin();
+  await service.verify(req(challenge));
+  const changed = await db.collection('users').findOne({ _id: user });
+  expect(changed.userkey).not.toBe('old-reset-link');
+  expect(changed.userkey).toMatch(/^[a-f0-9]{64}$/);
+  expect(changed.expire_date).toBeUndefined();
+  expect(changed.passwordResetToken).toBeUndefined();
+  expect(changed.passwordResetExpires).toBeUndefined();
+  await service.verify(req(challenge));
+  expect((await db.collection('users').findOne({ _id: user })).userkey).toBe(changed.userkey);
+});
+
+test('password change invalidates an outstanding email verification', async () => {
+  const challenge = await begin();
+  await db
+    .collection('users')
+    .updateOne(
+      { _id: user },
+      { $set: { password: await require('bcryptjs').hash('replacement-password', 4) } }
+    );
+  await expect(service.verify(req(challenge))).rejects.toMatchObject({ status: 409 });
+  expect((await db.collection('users').findOne({ _id: user })).email).toBe('old@example.test');
+});
+
+test('password change racing the final email write prevents that write', async () => {
+  const challenge = await begin();
+  const users = db.collection('users');
+  let reached, release;
+  const ready = new Promise((resolve) => {
+    reached = resolve;
+  });
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  const request = req(challenge);
+  request.db = {
+    collection(name) {
+      if (name !== 'users') return db.collection(name);
+      return {
+        findOne: (...args) => users.findOne(...args),
+        updateOne: async (filter, update) => {
+          if (update.$set?.email) {
+            reached();
+            await gate;
+          }
+          return users.updateOne(filter, update);
+        },
+      };
+    },
+  };
+  const result = service.verify(request).catch((error) => error);
+  await ready;
+  await users.updateOne(
+    { _id: user },
+    { $set: { password: await require('bcryptjs').hash('replacement-password', 4) } }
+  );
+  release();
+  expect(await result).toMatchObject({ status: 409 });
+  expect((await users.findOne({ _id: user })).email).toBe('old@example.test');
 });

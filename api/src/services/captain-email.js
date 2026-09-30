@@ -47,6 +47,7 @@ async function start(req) {
         challenge,
         email,
         previousEmail: user.email || '',
+        credentialHash: digest('credential', user.password),
         branchId: c.branchId,
         codeHash: digest(challenge, code),
         expiresAt,
@@ -63,6 +64,7 @@ async function start(req) {
         ...filter,
         email: user.email || { $in: [null, ''] },
         email_verification_id: user.email_verification_id ?? { $exists: false },
+        password: user.password,
       },
       { $set: { email_verification_id: challenge } }
     );
@@ -99,7 +101,8 @@ async function verify(req) {
   const collection = req.db.collection('captain_email_verifications');
   const selector = { _id: key(c, user), challenge, branchId: c.branchId };
   const current = await collection.findOne(selector);
-  if (!current) fail('Request a new verification code.', 409);
+  if (!current || current.credentialHash !== digest('credential', user.password))
+    fail('Request a new verification code.', 409);
   if (
     current.state === 'verified' &&
     user.email === current.email &&
@@ -131,16 +134,23 @@ async function verify(req) {
   }
   let changed;
   try {
-    changed = await req.db
-      .collection('users')
-      .updateOne(
-        {
-          ...filter,
-          email_verification_id: challenge,
-          email: current.previousEmail || { $in: [null, ''] },
+    changed = await req.db.collection('users').updateOne(
+      {
+        ...filter,
+        email_verification_id: challenge,
+        password: user.password,
+        email: current.previousEmail || { $in: [null, ''] },
+      },
+      {
+        $set: {
+          email: current.email,
+          email_verified_at: new Date(),
+          updated_date: new Date(),
+          userkey: crypto.randomBytes(32).toString('hex'),
         },
-        { $set: { email: current.email, email_verified_at: new Date(), updated_date: new Date() } }
-      );
+        $unset: { passwordResetToken: '', passwordResetExpires: '', expire_date: '' },
+      }
+    );
   } catch (error) {
     if (error.code !== 11000) throw error;
     await collection.updateOne(selector, { $set: { state: 'failed' }, $unset: { codeHash: '' } });
