@@ -219,3 +219,21 @@ test('device setup reports wake-lock support and releases it when staff switches
   assert.equal(released, true);
   dom.window.close();
 });
+
+test('touch board fetches recordings only on request and closing cancels a late playback', async () => {
+ let reads=0,resolveAudio,plays=0,pauses=0;
+ const dom=setup(false,async(url)=>{
+  if(url.includes('/voice/')){reads++;return new Promise(resolve=>{resolveAudio=()=>resolve({ok:true,json:async()=>({data:'data:audio/webm;base64,YQ=='})});});}
+  return response([{...liveTicket,voiceNotes:[{id:'recording-1',created:new Date().toISOString()}]}]);
+ });
+ try {
+  dom.window.HTMLMediaElement.prototype.pause=function(){pauses++;};
+  dom.window.HTMLMediaElement.prototype.play=async function(){plays++;};
+  await tick();const d=dom.window.document;assert.equal(reads,0);
+  d.querySelector('.order-voice-play').click();await tick();assert.equal(reads,1);
+  assert.ok(d.querySelector('.order-voice-dialog'));d.querySelector('.order-voice-dialog button').click();
+  resolveAudio();await tick();assert.equal(plays,0);assert.ok(pauses);assert.equal(d.querySelector('.order-voice-dialog'),null);
+  d.querySelector('.order-voice-play').click();await tick();resolveAudio();await tick();assert.equal(plays,1);
+  assert.equal(d.querySelector('.order-voice-dialog audio').getAttribute('controls'),'');
+ }finally{dom.window.close();}
+});

@@ -132,14 +132,20 @@
     }));
     layout.append(make('p','hw-note','Auto fits complete orders and turns pages when the screen is full. Save to apply.'));
     move(['order-sort'],flow);numeric(['cancel-seconds'],flow);move(['cancel-pulse'],flow);
-    move(['branch'],connection);numeric(['dist','diag','arc','safe'],connection);
+    numeric(['diag'],layout);layout.insertBefore(layout.lastElementChild,advancedLayout);move(['branch'],connection);numeric(['dist','arc','safe'],connection);
     const measure=at('w-'+id);if(measure)connection.append(measure.parentElement.parentElement);
     if(options)flow.append(options);
     const estimate=[...card.children].find(el=>el.textContent.startsWith('Automatic layout estimate:'));if(estimate)connection.append(estimate);
     const primaryWarning=[...card.children].find(el=>el.textContent.startsWith('This is the screen the till'));if(primaryWarning)connection.prepend(primaryWarning);
     const controls=make('div','hw-screen-controls');controls.id='hw-screen-'+id;sections(controls,[['Layout',[layout]],['Order flow',[flow]],['Screen setup',[connection]]]);
     const preview=make('div','hw-screen-preview');preview.append(make('h3','','Live preview'),make('p','hw-note','Sample orders · scaled to this display'));
-    const scenarioLabel=make('label','hw-preview-scenario','Sample order state');const scenario=make('select','');[['new','New orders'],['ready','Item ready'],['cancelled','Cancelled order']].forEach(([value,label])=>{const option=make('option','',label);option.value=value;scenario.append(option);});scenarioLabel.append(scenario);preview.append(scenarioLabel);scenario.addEventListener('change',event=>{event.stopPropagation();update();});
+    const orientationLabel=make('label','hw-preview-scenario','Preview orientation');const orientation=make('select','');orientation.id='hw-preview-orientation-'+id;
+    [['actual','Connected display'],['portrait','Portrait (vertical)'],['landscape','Landscape (horizontal)']].forEach(([value,label])=>{const option=make('option','',label);option.value=value;orientation.append(option);});orientationLabel.append(orientation);const previewFormat=make('div','hw-preview-format');preview.append(previewFormat);previewFormat.append(orientationLabel);
+    orientation.addEventListener('change',event=>{event.stopPropagation();update();});
+    const resolutionLabel=make('label','hw-preview-scenario','Preview resolution');const resolution=make('select','');resolution.id='hw-preview-resolution-'+id;
+    [['actual','Connected display'],['1920x1080','Full HD · 1920 × 1080'],['2560x1440','QHD · 2560 × 1440'],['3840x2160','4K · 3840 × 2160']].forEach(([value,label])=>{const option=make('option','',label);option.value=value;resolution.append(option);});resolutionLabel.append(resolution);previewFormat.append(resolutionLabel);
+    resolution.addEventListener('change',event=>{event.stopPropagation();update();});
+    const scenarioLabel=make('label','hw-preview-scenario','Sample service');const scenario=make('select','');[['busy','10 orders · 6 items each'],['added','10 orders · later additions'],['new','3 short orders'],['ready','Item ready'],['cancelled','Cancelled order']].forEach(([value,label])=>{const option=make('option','',label);option.value=value;scenario.append(option);});scenarioLabel.append(scenario);preview.append(scenarioLabel);scenario.addEventListener('change',event=>{event.stopPropagation();update();});
     const viewport=make('div','hw-preview-viewport');const frame=make('iframe','');frame.title='Kitchen screen live preview';frame.setAttribute('sandbox','allow-scripts');frame.src='kitchen-screen.html?hardwarePreview=1';viewport.append(frame);preview.append(viewport);
     const summary=make('p','hw-note');preview.append(summary);
     const expand=button('Enlarge preview',()=>{card.classList.toggle('hw-preview-expanded');expand.textContent=card.classList.contains('hw-preview-expanded')?'Back to settings':'Enlarge preview';update();});preview.append(expand);
@@ -152,13 +158,17 @@
       Object.entries(keys).forEach(([key,prefix])=>cfg[key]=number(prefix,cfg[key]));
       Object.entries({tableOnly:'table-only',showTable:'t',showItems:'i',showItemNotes:'n',showAge:'a',textGlow:'glow',cancelledPulse:'cancel-pulse',pulseAlerts:'pulse-on'}).forEach(([key,prefix])=>cfg[key]=at(prefix+'-'+id)?.checked??cfg[key]);
       cfg.orderSort=at('order-sort-'+id)?.value||'oldest';
-      const dpi=Number(display.scaleFactor)||1;const width=Math.round((Number(display.widthPx)||1920)/dpi),height=Math.round((Number(display.heightPx)||1080)/dpi);
+      const dpi=Number(display.scaleFactor)||1;let width=Math.round((Number(display.widthPx)||1920)/dpi),height=Math.round((Number(display.heightPx)||1080)/dpi);
+      if(resolution.value!=='actual')[width,height]=resolution.value.split('x').map(Number);
+      if(orientation.value==='portrait')[width,height]=[Math.min(width,height),Math.max(width,height)];
+      if(orientation.value==='landscape')[width,height]=[Math.max(width,height),Math.min(width,height)];
       const fit=window.PosnicScreenFit.fit({widthPx:width,heightPx:height,diagonalInches:cfg.diagonalInches,distanceM:cfg.viewingDistanceM,targetArcmin:cfg.targetArcmin,safeArea:cfg.safeAreaPercent/100});
       cfg._previewScenario=scenario.value;cfg._fit=fit;cfg._feedStatus='Sample orders';cfg.name='Kitchen preview';cfg.setupMode=false;
       viewport.style.width=Math.min(preview.clientWidth||360,(card.classList.contains('hw-preview-expanded')?720:420)*width/height)+'px';
       const scale=Math.min(1,(viewport.clientWidth||360)/width);frame.style.width=width+'px';frame.style.height=height+'px';frame.style.transform='scale('+scale+')';viewport.style.height=(height*scale)+'px';
       frame.contentWindow?.postMessage({type:'posnic-hardware-preview',config:cfg},'*');
-      summary.textContent='Whole orders stay together. Check text size on the kitchen display.';
+      const diagonal=Number(cfg.diagonalInches)||32,unit=diagonal*2.54/Math.hypot(width,height);
+      summary.textContent=diagonal+'″ · '+Math.round(width*unit)+' × '+Math.round(height*unit)+' cm screen area · '+width+' × '+height+'. Scaled preview; rotate the actual display in Windows display settings.';
     }
     frame.addEventListener('load',update);card.addEventListener('input',()=>{status.textContent='Unsaved changes';update();});card.addEventListener('change',()=>{status.textContent='Unsaved changes';update();});
     if(window.ResizeObserver){const observer=new ResizeObserver(()=>{if(card.isConnected)update();else observer.disconnect();});observer.observe(viewport);}

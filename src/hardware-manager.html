@@ -989,8 +989,10 @@
             <div id="soundTab" class="tab-content">
                 <div class="sound-heading"><div><h2>Kitchen Sound</h2><p>Send a voice message or read new orders through your kitchen speakers.</p></div><span class="sound-tag">This computer</span></div>
                 <section class="sound-send sound-panel" aria-labelledby="sound-send-title">
-                    <div><h3 id="sound-send-title">Talk to the kitchen</h3><p>Hold to record. Release to send. Up to 30 seconds.</p>
-                    <button type="button" class="btn sound-record" id="kitchenTalk">Hold to talk</button>
+                    <div><h3 id="sound-send-title">Talk to the kitchen</h3><p>Record, listen, then send. Up to 30 seconds.</p>
+                    <div class="sound-message-actions"><button type="button" class="btn sound-record" id="kitchenTalk">Record message</button><span id="kitchenTalkTimer" role="timer" hidden>0:00</span></div>
+                    <audio id="kitchenTalkPreview" controls hidden aria-label="Recorded message preview"></audio>
+                    <div class="sound-message-actions"><button type="button" class="btn" id="kitchenTalkSend" hidden>Send to kitchen</button><button type="button" class="btn" id="kitchenTalkDiscard" hidden>Discard</button></div>
                     <p id="kitchenAudioStatus" class="sound-feedback" role="status" aria-live="polite"></p></div>
                     <div class="sound-playback"><span class="sound-eyebrow">Playback</span><strong id="kitchenPlaybackSummary" role="status">Checking speakers…</strong><p>Messages and orders play one at a time.</p><details class="sound-diagnostics"><summary>Playback details</summary><pre id="kitchenAudioJobs">Checking playback status...</pre><p>Completed means the computer finished playback. Confirm sound at the speaker.</p></details></div>
                 </section>

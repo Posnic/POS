@@ -144,7 +144,7 @@
 
   /* The table number is the thing being matched, so it is the biggest thing
      on the card. A cook finds the ticket by table, not by dish. */
-  .table { font-size: calc(var(--font) * 1.55); font-weight: 800; letter-spacing: -0.01em; }
+  .table { font-size: calc(var(--font) * 1.2); font-weight: 800; letter-spacing: -0.01em; }
 
   .age { font-size: calc(var(--font) * 0.78); color: var(--muted); font-variant-numeric: tabular-nums; }
   .ticket.warm .age { color: var(--warm); font-weight: 700; }
@@ -395,7 +395,7 @@
     if (isFinite(arrived.getTime())) {
       var arrival = el('div', 'arrival', arrived.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}));
       arrival.style.cssText = 'font-size:.55em;color:var(--muted)';
-      node.appendChild(arrival);
+      top.appendChild(arrival);
     }
     if (state === 'urgent' && cfg.pulseAlerts !== false) node.classList.add('pulse');
 
@@ -525,7 +525,7 @@
     if (visibleDishes) maxItems = visibleDishes;
     var compact = cfg.showItems === false && live.length > (Number(cfg.compactAfter) || 8);
     // Auto uses CSS pixels, not the physical-pixel distance estimate.
-    var font = Math.max(24, Math.min(36, Math.round((window.innerHeight || 900) / 28)));
+    var font = Math.max(24, Math.min(window.innerHeight > window.innerWidth ? 28 : 32, Math.round((window.innerHeight || 900) / 28)));
     var customFont = Number(cfg.fontSizePx);
     if (Number.isFinite(customFont) && customFont > 0) font = Math.max(24, Math.min(96, customFont));
     document.documentElement.style.setProperty('--font', font + 'px');
@@ -680,11 +680,21 @@
       if (event.source !== parent || !event.data || event.data.type !== 'posnic-hardware-preview') return;
       setConfig(event.data.config);
       var scenario = event.data.config._previewScenario || 'new';
-      if (!tickets.length || previewScenario !== scenario) setTickets([
-        { id:'preview-1', table:'05', orderNumber:'KOT-0028', placedAt:new Date(Date.now()-240000).toISOString(), items:[{qty:2,name:'Grilled fish',note:'No chilli',priced_at_table:500},{qty:1,name:'Steamed rice'}] },
-        { id:'preview-2', table:'08', orderNumber:'KOT-0029', placedAt:new Date(Date.now()-120000).toISOString(), items:[{qty:1,name:'Vegetable fried rice',preparing:scenario==='ready'?0:1,readyToCollect:scenario==='ready'?1:0},{qty:2,name:'Lime soda'}] },
-        { id:'preview-3', table:'12', orderNumber:'KOT-0030', placedAt:new Date(Date.now()-60000).toISOString(), cancelled:scenario==='cancelled', items:[{qty:1,name:'Butter naan'}] }
-      ]);
+      if (!tickets.length || previewScenario !== scenario) {
+        if (scenario === 'busy' || scenario === 'added') {
+          var dishes = ['Chicken biryani','Grilled fish','Steamed rice','Butter naan','Vegetable curry','Lime soda'];
+          var samples = Array.from({length:10}, function (_, index) {
+            return {id:'preview-'+index+':c0',table:String(index+1).padStart(2,'0'),placedAt:new Date(Date.now()-(10-index)*60000).toISOString(),
+              items:dishes.map(function(name,i){return {name:name,qty:i===3?2:1,note:index===2&&i===1?'No chilli':'',priced_at_table:index===2&&i===1?500:undefined};})};
+          });
+          if(scenario==='added') samples.push({id:'preview-2:c1',table:'03',placedAt:new Date().toISOString(),items:[{name:'Fish fry',qty:1,note:'Extra crispy'},{name:'Lime soda',qty:2}]});
+          setTickets(samples);
+        } else setTickets([
+          {id:'preview-1',table:'05',placedAt:new Date(Date.now()-240000).toISOString(),items:[{qty:2,name:'Grilled fish',note:'No chilli',priced_at_table:500},{qty:1,name:'Steamed rice'}]},
+          {id:'preview-2',table:'08',placedAt:new Date(Date.now()-120000).toISOString(),items:[{qty:1,name:'Vegetable fried rice',preparing:scenario==='ready'?0:1,readyToCollect:scenario==='ready'?1:0},{qty:2,name:'Lime soda'}]},
+          {id:'preview-3',table:'12',placedAt:new Date(Date.now()-60000).toISOString(),cancelled:scenario==='cancelled',items:[{qty:1,name:'Butter naan'}]}
+        ]);
+      }
       previewScenario = scenario;
     });
   }
