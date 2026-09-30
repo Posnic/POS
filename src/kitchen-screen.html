@@ -82,6 +82,7 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
+    gap: 18px;
     padding-bottom: calc(var(--gap) / 2);
     border-bottom: 2px solid var(--rule);
     color: var(--muted);
@@ -429,10 +430,10 @@
         list.appendChild(row);
         var progress = el('div', 'item-progress');
         var cooking = item.preparing == null ? Number(item.qty) || 1 : item.preparing;
-        if (cooking > 0) progress.appendChild(el('span', 'progress-cooking', cooking + (item.started ? ' Cooking' : ' To prepare')));
+        if (cooking > 0 && (item.started || item.readyToCollect > 0 || item.pickedUp > 0)) progress.appendChild(el('span', 'progress-cooking', cooking + (item.started ? ' Cooking' : ' To prepare')));
         if (item.readyToCollect > 0) progress.appendChild(el('span', 'progress-ready', '✓ ' + item.readyToCollect + ' Ready to collect'));
         if (item.pickedUp > 0) progress.appendChild(el('span', 'progress-picked', '↗ ' + item.pickedUp + ' Picked up'));
-        list.appendChild(progress);
+        if (progress.childElementCount) list.appendChild(progress);
         if (Number.isFinite(Number(item.priced_at_table)) && Number(item.priced_at_table) > 0) {
           list.appendChild(el('div', 'note preparation-amount', 'Amount: ' + Number(item.priced_at_table).toLocaleString(undefined, { maximumFractionDigits: 3 }) + ' each'));
         }
@@ -477,6 +478,10 @@
     var fitInfo = cfg._fit || {};
     var board = $('board');
     board.textContent = '';
+    board.style.removeProperty('--font');
+    board.style.removeProperty('font-size');
+    board.style.gridTemplateRows = '';
+    board.style.alignContent = 'start';
 
     function compareArrival(a, b, newest) {
       var left = Date.parse(a.placedAt), right = Date.parse(b.placedAt);
@@ -519,7 +524,8 @@
     visibleDishes = Number.isFinite(visibleDishes) ? Math.max(0, Math.min(20, Math.floor(visibleDishes))) : 0;
     if (visibleDishes) maxItems = visibleDishes;
     var compact = cfg.showItems === false && live.length > (Number(cfg.compactAfter) || 8);
-    var font = Math.max(24, Math.min(Number(fitInfo.fontPx) || 40, (window.innerWidth || 1100) / 18));
+    // Auto uses CSS pixels, not the physical-pixel distance estimate.
+    var font = Math.max(24, Math.min(36, Math.round((window.innerHeight || 900) / 28)));
     var customFont = Number(cfg.fontSizePx);
     if (Number.isFinite(customFont) && customFont > 0) font = Math.max(24, Math.min(96, customFont));
     document.documentElement.style.setProperty('--font', font + 'px');
@@ -537,17 +543,40 @@
       rows = Math.max(1, Math.floor(height / Math.max(190, font * 5)));
       perPage = ceiling * rows;
     }
+    // Auto measures whole orders with their wrapped names, notes and status rows.
+    // Prefer fewer, wider boxes to a clipped list. Explicit row limits remain an advanced option.
+    if (!cfg.tableOnly && !visibleDishes && live.length && board.clientWidth) {
+      if (!fixedColumns) ceiling = Math.max(1, Math.min(live.length, Math.floor(width / (font * 14))));
+      var measuredHeight = 0;
+      function measureOrders() {
+        var cardWidth = (width - 18 * (ceiling - 1)) / ceiling;
+        measuredHeight = 0;
+        live.forEach(function (ticket) {
+          var probe = card(ticket, cfg, compact);
+          probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:' + cardWidth + 'px;';
+          board.appendChild(probe);
+          measuredHeight = Math.max(measuredHeight, probe.getBoundingClientRect().height);
+          probe.remove();
+        });
+      }
+      measureOrders();
+      while (measuredHeight > height - 18 && ceiling > 1 && !fixedColumns) { ceiling--; measureOrders(); }
+      while (measuredHeight > height - 18 && font > 24 && !(customFont > 0)) {
+        font = Math.max(24, font - 2);
+        document.documentElement.style.setProperty('--font', font + 'px');
+        height = board.clientHeight || height;
+        measureOrders();
+      }
+      // Layout-less test environments have no measured height.
+      if (measuredHeight > 0) rows = Math.max(1, Math.floor(height / (measuredHeight + 18)));
+      perPage = Math.max(1, ceiling * rows);
+    }
     var pages = Math.max(1, Math.ceil(live.length / perPage));
     if (page >= pages) page = 0;
 
-    /*
-     * Paging, done so it cannot hide an order.
-     *
-     * The oldest always occupy the first slots and never rotate; only the
-     * overflow pages. And the pager is always visible, so an empty-looking
-     * screen is never mistaken for an empty kitchen.
-     */
+    // Rotate complete pages of whole orders, oldest page first.
     var shown = pages > 1 ? live.slice(page * perPage, page * perPage + perPage) : live;
+    board.style.setProperty('--columns', String(fixedColumns ? ceiling : Math.max(1, Math.min(ceiling, shown.length))));
     shown.forEach(function (t) {
       var node = card(t, cfg, compact);
       node.dataset.tableKey = t.id;
@@ -556,27 +585,11 @@
       var list = node.querySelector('.items'), saved = itemScroll.get(t.id);
       if (list && visibleDishes) list.style.maxHeight = (font * 2 * visibleDishes) + 'px';
       if (list && saved) list.scrollTop = saved.top;
-      if (list && list.scrollHeight > list.clientHeight) node.appendChild(el('div', 'more', 'More items · scrolls automatically'));
+      if (list && list.scrollHeight > list.clientHeight + 2) node.appendChild(el('div', 'more', 'Long order · remaining items scroll automatically'));
+      else if (list) list.style.overflowY = 'hidden';
     });
 
-    /*
-     * A QUIET KITCHEN GETS WIDE CARDS.
-     *
-     * The grid was a fixed number of columns however many orders were on it,
-     * so one order sat in a quarter-width card: "Chicken Tikka 1 plate"
-     * wrapped onto three lines, and the card clips what it cannot fit, so the
-     * third dish disappeared off the bottom. The owner photographed exactly
-     * that - a single ticket, its own items cut off, on an otherwise empty
-     * screen.
-     *
-     * The fit gives the MOST columns this screen can carry at a readable
-     * size; it is a ceiling, not a quota. With fewer orders than that, the
-     * cards spread into the room they already have and the names fit on one
-     * line. The moment the kitchen fills up the ceiling applies again and
-     * nothing about the busy case changes.
-     */
-
-    var columns = ceiling;
+    var columns = fixedColumns ? ceiling : Math.max(1, Math.min(ceiling, shown.length));
     board.style.gridTemplateRows = '';
     board.style.alignContent = 'start';
     board.style.removeProperty('font-size');
@@ -692,7 +705,7 @@
   setInterval(function () {
     document.querySelectorAll('#board .ticket').forEach(function (card) {
       var list = card.querySelector('.items');
-      if (!list || list.scrollHeight <= list.clientHeight) return;
+      if (!list || list.scrollHeight <= list.clientHeight + 2) return;
       var key = card.dataset.tableKey, state = itemScroll.get(key) || {top:0,hold:4};
       if (state.hold > 0) state.hold -= 1;
       else if (list.scrollTop >= list.scrollHeight - list.clientHeight - 1) { list.scrollTop = 0; state.hold = 4; }

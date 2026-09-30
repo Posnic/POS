@@ -181,7 +181,7 @@ test('portrait column and font choices survive resize while dishes remain visibl
   w.kitchenScreen.setConfig({...cfg,portraitColumns:1});
   assert.equal(board.style.getPropertyValue('--columns'),'1');
   w.innerWidth=1920; w.innerHeight=1080; w.dispatchEvent(new w.Event('resize'));
-  assert.ok(Number(board.style.getPropertyValue('--columns'))>1);
+  assert.equal(board.style.getPropertyValue('--columns'),'1', 'a single order uses the available width');
   w.kitchenScreen.setConfig({...cfg,fontSizePx:1000,textGlow:false});
   assert.equal(w.document.documentElement.style.getPropertyValue('--font'),'96px');
   assert.equal(w.document.documentElement.getAttribute('data-glow'),'false');

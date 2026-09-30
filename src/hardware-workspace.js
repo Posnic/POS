@@ -116,7 +116,21 @@
     const move=(keys,target)=>keys.forEach(key=>{const el=at(key+'-'+id);if(!el)return;let wrapper=el.closest('label');if(!wrapper||wrapper.contains(enabled))wrapper=el.parentElement; if(wrapper.tagName==='SELECT'||wrapper===card)wrapper=el; if(wrapper.parentElement?.firstElementChild?.tagName==='LABEL'&&wrapper.parentElement!==card&&wrapper.parentElement.childElementCount<=3)wrapper=wrapper.parentElement;target.append(wrapper);});
     // Numeric helper fields have a separate label, value row and hint; move the whole field container.
     const numeric=(keys,target)=>keys.forEach(key=>{const el=at(key+'-'+id);if(el)target.append(el.parentElement.parentElement);});
-    move(['portrait'],layout);numeric(['visible-dishes','font-px'],layout);move(['glow','table-only'],layout);
+    move(['portrait'],layout);
+    const textLabel=make('label','','Text size');const textSize=make('select','');textSize.id='hw-text-size-'+id;
+    [['0','Auto (recommended)'],['32','Standard'],['40','Large'],['52','Extra large'],['custom','Custom']].forEach(([value,label])=>{const option=make('option','',label);option.value=value;textSize.append(option);});
+    const savedFont=String(Number(at('font-px-'+id)?.value)||0);textSize.value=['0','32','40','52'].includes(savedFont)?savedFont:'custom';
+    textLabel.append(textSize);layout.append(textLabel);
+    const advancedLayout=make('details','');advancedLayout.append(make('summary','','Advanced layout'));
+    numeric(['visible-dishes','font-px'],advancedLayout);move(['glow','table-only'],advancedLayout);layout.append(advancedLayout);
+    textSize.addEventListener('change',()=>{if(textSize.value==='custom'){advancedLayout.open=true;at('font-px-'+id).focus();}else at('font-px-'+id).value=textSize.value;});
+    layout.append(button('Use recommended layout',()=>{
+      at('portrait-'+id).value='0';at('font-px-'+id).value='0';at('visible-dishes-'+id).value='0';at('table-only-'+id).checked=false;textSize.value='0';
+      ['t','i','n','a'].forEach(key=>{if(at(key+'-'+id))at(key+'-'+id).checked=true;});
+      at('order-sort-'+id).value='oldest';advancedLayout.open=false;
+      card.dispatchEvent(new Event('change',{bubbles:true}));
+    }));
+    layout.append(make('p','hw-note','Auto fits complete orders and turns pages when the screen is full. Save to apply.'));
     move(['order-sort'],flow);numeric(['cancel-seconds'],flow);move(['cancel-pulse'],flow);
     move(['branch'],connection);numeric(['dist','diag','arc','safe'],connection);
     const measure=at('w-'+id);if(measure)connection.append(measure.parentElement.parentElement);
@@ -138,13 +152,13 @@
       Object.entries(keys).forEach(([key,prefix])=>cfg[key]=number(prefix,cfg[key]));
       Object.entries({tableOnly:'table-only',showTable:'t',showItems:'i',showItemNotes:'n',showAge:'a',textGlow:'glow',cancelledPulse:'cancel-pulse',pulseAlerts:'pulse-on'}).forEach(([key,prefix])=>cfg[key]=at(prefix+'-'+id)?.checked??cfg[key]);
       cfg.orderSort=at('order-sort-'+id)?.value||'oldest';
-      const width=Number(display.widthPx)||1920,height=Number(display.heightPx)||1080;
+      const dpi=Number(display.scaleFactor)||1;const width=Math.round((Number(display.widthPx)||1920)/dpi),height=Math.round((Number(display.heightPx)||1080)/dpi);
       const fit=window.PosnicScreenFit.fit({widthPx:width,heightPx:height,diagonalInches:cfg.diagonalInches,distanceM:cfg.viewingDistanceM,targetArcmin:cfg.targetArcmin,safeArea:cfg.safeAreaPercent/100});
       cfg._previewScenario=scenario.value;cfg._fit=fit;cfg._feedStatus='Sample orders';cfg.name='Kitchen preview';cfg.setupMode=false;
       viewport.style.width=Math.min(preview.clientWidth||360,(card.classList.contains('hw-preview-expanded')?720:420)*width/height)+'px';
       const scale=Math.min(1,(viewport.clientWidth||360)/width);frame.style.width=width+'px';frame.style.height=height+'px';frame.style.transform='scale('+scale+')';viewport.style.height=(height*scale)+'px';
       frame.contentWindow?.postMessage({type:'posnic-hardware-preview',config:cfg},'*');
-      summary.textContent='Automatic layout estimate: '+fit.cards+' orders. Check readability on the actual screen.';
+      summary.textContent='Whole orders stay together. Check text size on the kitchen display.';
     }
     frame.addEventListener('load',update);card.addEventListener('input',()=>{status.textContent='Unsaved changes';update();});card.addEventListener('change',()=>{status.textContent='Unsaved changes';update();});
     if(window.ResizeObserver){const observer=new ResizeObserver(()=>{if(card.isConnected)update();else observer.disconnect();});observer.observe(viewport);}

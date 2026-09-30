@@ -74,3 +74,19 @@ test('screen Save persists the draft; test service does not open if saving fails
   w.posnicKitchenScreen.configure=async()=>{throw Error('Disconnected');};
   await w.previewScreen('5');assert.equal(opened,0);assert.match(d.getElementById('screenSaveStatus').textContent,/Could not save/);
 });
+
+
+test('recommended layout resets confusing overrides only in the draft and preserves the branch', t => {
+  const {w,d,html}=setup(t);
+  w.eval('var screenState={displays:[],branches:[]};'+html.slice(html.indexOf('        function esc(t)'),html.indexOf('        function numOr')));
+  w.screenState.displays=[{id:9,widthPx:1920,heightPx:1080,config:{fontSizePx:96,portraitColumns:2,visibleDishesPerBox:3,tableOnly:true,branchId:'shop'},fit:{}}];
+  w.drawScreens();
+  const card=d.querySelector('.hw-screen-card');
+  assert.ok(d.getElementById('visible-dishes-9').closest('details'));
+  let message;card.querySelector('iframe').contentWindow.postMessage=data=>message=data;
+  [...card.querySelectorAll('button')].find(b=>b.textContent==='Use recommended layout').click();
+  assert.equal(message.config.fontSizePx,0);assert.equal(message.config.visibleDishesPerBox,0);
+  assert.equal(message.config.portraitColumns,0);assert.equal(message.config.tableOnly,false);
+  assert.equal(message.config.branchId,'shop');assert.equal(message.config.orderSort,'oldest');
+  assert.match(card.textContent,/Unsaved changes/);
+});
