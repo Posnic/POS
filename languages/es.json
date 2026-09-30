@@ -3676,5 +3676,6 @@
   "lang_table_square": "Cuadrada",
   "lang_table_round": "Redonda",
   "lang_table_rectangle": "Rectangular",
-  "lang_table_choose_capacity": "Elija una mesa con suficientes asientos."
+  "lang_table_choose_capacity": "Elija una mesa con suficientes asientos.",
+  "lang_table_combine_with": "Se puede combinar con"
 }

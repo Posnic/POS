@@ -95,5 +95,6 @@
   "lang_total_title": "Укупно",
   "lang_yes": "Да",
   "lang_ai_describe_hint": "Направи опис на основу података о артиклу",
-  "lang_walk_in_customer_click_to_choose_or_add": "Нерегистровани купац. Кликните за избор или додавање"
+  "lang_walk_in_customer_click_to_choose_or_add": "Нерегистровани купац. Кликните за избор или додавање",
+  "lang_table_combine_with": "Може се спојити са"
 }

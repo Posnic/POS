@@ -3667,5 +3667,6 @@
   "lang_table_square": "สี่เหลี่ยมจัตุรัส",
   "lang_table_round": "วงกลม",
   "lang_table_rectangle": "สี่เหลี่ยมผืนผ้า",
-  "lang_table_choose_capacity": "เลือกโต๊ะที่มีที่นั่งเพียงพอ"
+  "lang_table_choose_capacity": "เลือกโต๊ะที่มีที่นั่งเพียงพอ",
+  "lang_table_combine_with": "สามารถรวมกับโต๊ะ"
 }

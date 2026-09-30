@@ -3667,5 +3667,6 @@
   "lang_table_square": "वर्गाकार",
   "lang_table_round": "गोलाकार",
   "lang_table_rectangle": "आयताकार",
-  "lang_table_choose_capacity": "पर्याप्त सिट भएको टेबल रोज्नुहोस्।"
+  "lang_table_choose_capacity": "पर्याप्त सिट भएको टेबल रोज्नुहोस्।",
+  "lang_table_combine_with": "यी टेबलसँग जोड्न सकिन्छ"
 }

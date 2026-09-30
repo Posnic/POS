@@ -106,5 +106,6 @@
   "lang_table_square": "বর্গাকার",
   "lang_table_round": "গোলাকার",
   "lang_table_rectangle": "আয়তাকার",
-  "lang_table_choose_capacity": "পর্যাপ্ত আসন আছে এমন টেবিল বেছে নিন।"
+  "lang_table_choose_capacity": "পর্যাপ্ত আসন আছে এমন টেবিল বেছে নিন।",
+  "lang_table_combine_with": "যে টেবিলের সঙ্গে যুক্ত করা যাবে"
 }

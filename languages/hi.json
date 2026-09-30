@@ -3680,5 +3680,6 @@
   "lang_table_square": "चौकोर",
   "lang_table_round": "गोल",
   "lang_table_rectangle": "आयताकार",
-  "lang_table_choose_capacity": "पर्याप्त सीटों वाली टेबल चुनें।"
+  "lang_table_choose_capacity": "पर्याप्त सीटों वाली टेबल चुनें।",
+  "lang_table_combine_with": "इन टेबलों के साथ जोड़ सकते हैं"
 }

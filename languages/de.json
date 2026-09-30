@@ -3667,5 +3667,6 @@
   "lang_table_square": "Quadratisch",
   "lang_table_round": "Rund",
   "lang_table_rectangle": "Rechteckig",
-  "lang_table_choose_capacity": "Wählen Sie einen Tisch mit genügend Sitzplätzen."
+  "lang_table_choose_capacity": "Wählen Sie einen Tisch mit genügend Sitzplätzen.",
+  "lang_table_combine_with": "Kombinierbar mit"
 }

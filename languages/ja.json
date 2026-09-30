@@ -106,5 +106,6 @@
   "lang_table_square": "正方形",
   "lang_table_round": "円形",
   "lang_table_rectangle": "長方形",
-  "lang_table_choose_capacity": "十分な席数のあるテーブルを選んでください。"
+  "lang_table_choose_capacity": "十分な席数のあるテーブルを選んでください。",
+  "lang_table_combine_with": "結合できるテーブル"
 }

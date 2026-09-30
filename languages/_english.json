@@ -3898,5 +3898,6 @@
   "lang_table_square": "Square",
   "lang_table_round": "Round",
   "lang_table_rectangle": "Rectangle",
-  "lang_table_choose_capacity": "Choose a table with enough seats."
+  "lang_table_choose_capacity": "Choose a table with enough seats.",
+  "lang_table_combine_with": "Can combine with"
 }

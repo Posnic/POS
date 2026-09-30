@@ -3667,5 +3667,6 @@
   "lang_table_square": "Carrée",
   "lang_table_round": "Ronde",
   "lang_table_rectangle": "Rectangulaire",
-  "lang_table_choose_capacity": "Choisissez une table avec suffisamment de places."
+  "lang_table_choose_capacity": "Choisissez une table avec suffisamment de places.",
+  "lang_table_combine_with": "Peut être combinée avec"
 }

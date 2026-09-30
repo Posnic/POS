@@ -106,5 +106,6 @@
   "lang_table_square": "Квадратный",
   "lang_table_round": "Круглый",
   "lang_table_rectangle": "Прямоугольный",
-  "lang_table_choose_capacity": "Выберите стол с достаточным количеством мест."
+  "lang_table_choose_capacity": "Выберите стол с достаточным количеством мест.",
+  "lang_table_combine_with": "Можно объединить с"
 }

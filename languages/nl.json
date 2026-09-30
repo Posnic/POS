@@ -3941,5 +3941,6 @@
   "lang_table_square": "Vierkant",
   "lang_table_round": "Rond",
   "lang_table_rectangle": "Rechthoekig",
-  "lang_table_choose_capacity": "Kies een tafel met voldoende zitplaatsen."
+  "lang_table_choose_capacity": "Kies een tafel met voldoende zitplaatsen.",
+  "lang_table_combine_with": "Te combineren met"
 }

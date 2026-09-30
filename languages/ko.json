@@ -106,5 +106,6 @@
   "lang_table_square": "정사각형",
   "lang_table_round": "원형",
   "lang_table_rectangle": "직사각형",
-  "lang_table_choose_capacity": "좌석이 충분한 테이블을 선택하세요."
+  "lang_table_choose_capacity": "좌석이 충분한 테이블을 선택하세요.",
+  "lang_table_combine_with": "합칠 수 있는 테이블"
 }

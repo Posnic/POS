@@ -106,5 +106,6 @@
   "lang_table_square": "正方形",
   "lang_table_round": "圓形",
   "lang_table_rectangle": "長方形",
-  "lang_table_choose_capacity": "請選擇座位足夠的餐桌。"
+  "lang_table_choose_capacity": "請選擇座位足夠的餐桌。",
+  "lang_table_combine_with": "可併桌的餐桌"
 }
