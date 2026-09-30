@@ -11,6 +11,10 @@ unsuitable.
 
 They do not implement a Squarespace connector or CSV importer.
 
+These column names and values are a Squarespace-like synthetic schema for
+fixture and validation purposes, not a claim about the exact format of an
+official Squarespace export.
+
 ## Files
 
 * `orders.csv` - valid synthetic order records.
