@@ -8,7 +8,7 @@ const active=items=>(items||[]).filter(line=>line&&!line.return&&!line.cancelled
 const fail=()=>{throw Object.assign(new Error('The bill changed. Refresh before continuing.'),{status:409});};
 function fingerprint(sale,policy,allocation) {
   return createHash('sha256').update(JSON.stringify({currency:policy.currencyCode,digits:policy.currencyDigits,
-    lines:active(sale.items).map(line=>({key:orderLine.key(line),name:String(line.name||line.item_name||'').trim(),quantity:Number(line.quantity??line.item_quantity??line.qty),
+    lines:active(sale.items).map(line=>({key:orderLine.key(line),product:orderLine.product(line),name:String(line.name||line.item_name||'').trim(),quantity:Number(line.quantity??line.item_quantity??line.qty),
       rate:line.unit_price??line.item_base_price??line.item_price,tax:line.item_tax??line.tax_amount})),
     subtotal:sale.sales_sub_total,discount:sale.discount,tax:sale.tax,round:sale.round_off,total:sale.sales_total,
     allocation:{lines:allocation.lines,components:allocation.components,totalMinor:allocation.totalMinor},

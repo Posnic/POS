@@ -3,7 +3,10 @@ const {plan}=require('./captain-transfer-plan');
 const {rounds,progress}=require('../helpers/kitchen-rounds');
 const orderLine=require('../utils/order-line');
 const serviceLine=require('../utils/service-line');
-const clone=value=>structuredClone(value);
+const {BSON}=require('mongodb');
+// Native structuredClone drops BSON prototypes, turning ObjectIds in legacy
+// item/history records into plain objects. Preserve their database identity.
+const clone=value=>BSON.EJSON.deserialize(BSON.EJSON.serialize(value));
 const live=line=>line&&!line.return&&!line.cancelled&&
   !['cancelled','canceled'].includes(String(line.status||'').toLowerCase())&&
   Number(line.quantity??line.item_quantity??line.qty)>0&&String(line.name||line.item_name||'').trim();

@@ -3,6 +3,7 @@ const {project}=require('../../../src/services/captain-transfer-projection');
 const {buildBillPayload}=require('../../../src/helpers/bill-payload');
 const {snapshotFrom}=require('../../../src/services/guest-bill.service');
 const Money=require('../../../src/utils/currency');
+const {ObjectId,BSON}=require('mongodb');
 const at='2026-09-30T14:00:00Z';
 function sale(){return {_id:'source',table_number:'1',created_date:at,sales_sub_total:100.01,discount:3.17,tax:5.01,sales_total:101.84,
   items:[{item_id:'corn',line_id:'salt',item_name:'Corn',item_quantity:3,item_base_price:33.3366667,item_tax:5.01}],
@@ -114,4 +115,37 @@ test.each(['JPY','INR','KWD'])('desktop amount aliases reflect the allocated qua
     expect(Money.toMinor(view.items_total,policy)+Money.toMinor(view.round_off,policy)).toBe(expected.totalMinor);
     expect(item.item_base_price).toBe(original.items[0].item_base_price);
   }
+});
+
+test.each([true,false])('database item identities survive transfer and another transfer (explicit line: %s)',explicit=>{
+  const original=sale(),branch={currencyCode:'INR'},productId=new ObjectId();
+  original._id=new ObjectId();
+  original.items[0].item_id=productId;
+  original.changes[0].items[0].item_id=productId;
+  original.changes[0].timestamp=new Date(at);
+  if(!explicit){delete original.items[0].line_id;delete original.changes[0].items[0].line_id;}
+  const result=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  for(const side of ['source','destination']) {
+    const item=result[side].items[0];
+    expect(item.item_id).toBeInstanceOf(ObjectId);
+    expect(item.item_id.equals(productId)).toBe(true);
+    for(const change of result[side].changes)
+      expect(change.items[0].item_id.equals(productId)).toBe(true);
+    expect(snapshotFrom([{...original,...result[side]}],branch,'1').totalMinor).toBe(result.preview[side].totalMinor);
+    const persisted=BSON.deserialize(BSON.serialize({...original,...result[side]}));
+    expect(snapshotFrom([persisted],branch,'1').totalMinor).toBe(result.preview[side].totalMinor);
+  }
+  expect(result.source.changes[0].timestamp).toBeInstanceOf(Date);
+  const next=project({...original,...result.source},branch,[{id:'c0i0',quantity:1}],at);
+  expect(next.destination.items[0].item_id.equals(productId)).toBe(true);
+  expect(original.items[0].item_quantity).toBe(3);
+});
+
+test('substituting a product under the same preparation ID invalidates its financial allocation',()=>{
+  const original=sale(),branch={currencyCode:'INR'};
+  const result=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  const changed={...original,...result.destination};
+  changed.items[0].item_id='another-product';
+  expect(()=>buildBillPayload(changed,branch)).toThrow('bill changed');
+  expect(()=>snapshotFrom([changed],branch,'1')).toThrow('bill changed');
 });
