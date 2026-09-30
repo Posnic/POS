@@ -4162,8 +4162,16 @@ PosnicPro.sales.addSale = {
                 PosnicPro.sales.submissionInProgress = false;
                 $("#save_btn").prop('disabled', false);
                 $("#save_submit").removeClass('disabled');
-                var response = jQuery.parseJSON(xhr.responseText);
-                $.each(response.data, function (key, val) {
+                var response = xhr && xhr.responseJSON;
+                if (!response && xhr && xhr.responseText) {
+                    try { response = JSON.parse(xhr.responseText); } catch (error) { response = null; }
+                }
+                // A dropped connection has no stock correction payload. Keep
+                // the cart and retry identity intact instead of throwing here.
+                var corrections = response && Array.isArray(response.data) ? response.data : [];
+                $.each(corrections, function (key, val) {
+                    if (!val || !val.item_id || val.item_quantity == null ||
+                        !Number.isFinite(Number(val.item_quantity)) || Number(val.item_quantity) < 0) return;
                     let row = "touch_row_" + val.item_id;
                     $("#" + row + '').removeAttr("style");
                     $("#" + row + '').addClass('table-highlight-row');
