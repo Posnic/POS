@@ -222,6 +222,7 @@ Mounted at `/captain/v1`. Source: `api/src/routes/captain-access.routes.js`.
 | POST | `/captain/v1/tables/state` | — | `tables.state` |
 | POST | `/captain/v1/tables/close` | — | `tables.close` |
 | POST | `/captain/v1/tables/move/prepare` | — | `seating.prepare` |
+| POST | `/captain/v1/tables/merge/prepare` | — | `seating.merge` |
 | POST | `/captain/v1/tables/move/complete` | — | `seating.complete` |
 | POST | `/captain/v1/tables/move/cancel` | — | `seating.cancel` |
 | POST | `/captain/v1/profile` | — | `profile.update` |
@@ -1158,3 +1159,25 @@ Mounted at `/whatsapp`. Source: `api/src/routes/whatsapp.routes.js`.
 | POST | `/whatsapp/deleteTemplate` | — | `whatsappController.deleteTemplate` |
 | POST | `/whatsapp/getSalesReceiptTemplate` | — | `whatsappController.getSalesReceiptTemplate` |
 
+
+
+### Captain occupied-table merges
+
+`POST /captain/v1/tables/merge/prepare` takes the move request fields plus
+`targetOrderId`. It requires the manager/owner role or an explicit
+`sales.merge` permission. Both existing orders must have active seating claims
+and unpaid checks. Only a single destination table with one existing check is
+accepted. The server validates the combined guest count against configured
+maximum capacity and reserves both checks against payment or editing.
+
+Use the existing move completion/cancellation endpoints with the same request ID.
+The response includes `mergeTargetId`; clients must verify it before completion
+and after acknowledgement. An interrupted request remains attached to its
+original server, shop, branch and initiating staff member.
+
+Completion groups the original checks at the destination table. The bill reader
+and payment flow aggregate both checks there; their original IDs, items, kitchen
+rounds and totals remain intact. No new KOT, stock deduction or new-sale operation
+is issued. The vacated source table becomes available for cleaning. This API does
+not yet enroll legacy orders without seating claims and is not a partial-item
+transfer endpoint.

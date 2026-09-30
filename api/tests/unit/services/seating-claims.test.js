@@ -978,3 +978,67 @@ test('legacy unpaid orders without a payment status can still move without chang
   expect(sale.captain_payment_plan).toBeUndefined();
   expect(sale.seating_request_id).toBe(move.id);
 });
+
+
+async function mergeOrders() {
+  const orders=[];
+  for(const [index,guests] of [[0,1],[2,2]]) {
+    const claim=await seating.reserve(db,scope,request({request_id:'merge-existing-seat-'+index,table_ids:[ids[index]],primary_id:ids[index],guests}));
+    const order={_id:new ObjectId(),branch_id:scope.branchId,license:scope.license,seating_request_id:claim.id,table_number:'T'+(index+1),person_count:guests,sale_process:'KOT',payment_status:'Unpaid',items:[{item_id:'dish-'+index,item_name:'Soup',item_quantity:1,item_price:10+index,item_note:'Note '+index}],sales_sub_total:10+index,sales_total:10+index,changes:[{timestamp:new Date(),items:[]}]};
+    await seating.bind(db,scope,claim.id,'staff-1',String(order._id));await db.collection('sales').insertOne(order);orders.push(order);
+  }
+  return {source:orders[0],target:orders[1],input:request({request_id:'merge-orders-request-1',table_ids:[ids[2]],primary_id:ids[2],guests:1})};
+}
+
+test('authorized merge groups existing checks for one table bill without recooking or changing their totals',async()=>{
+  const {source,target,input}=await mergeOrders();
+  await expect(seating.prepareMove(db,scope,String(source._id),{...input,request_id:'ordinary-move-target-1'})).rejects.toThrow('open order limit');
+  const options={mergeTargetId:String(target._id)};
+  const prepared=await seating.prepareMove(db,scope,String(source._id),input,options);
+  expect(prepared.merge_target).toBe(String(target._id));
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:prepared.operation_lock})).toBe(2);
+  await seating.completeMove(db,scope,prepared.id,'staff-1');
+  await seating.completeMove(db,scope,prepared.id,'staff-1');
+  expect(await db.collection('sales').countDocuments({table_number:'T3'})).toBe(2);
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  const moved=await db.collection('sales').findOne({_id:source._id});
+  expect(moved).toMatchObject({items:source.items,changes:source.changes,sales_total:source.sales_total});
+  expect(moved.captain_audit).toHaveLength(1);expect(moved.captain_audit[0].action).toBe('merge');
+  expect(await db.collection('sales').findOne({_id:target._id})).toEqual(target);
+  expect((await db.collection('tableorder').findOne({_id:new ObjectId(ids[0])})).service_state).toBe('cleaning');
+  expect((await seating.prepareMove(db,scope,String(source._id),input,options)).state).toBe('submitting');
+  await db.collection('branches').insertOne({_id:scope.branchId,license:scope.license,currencyCode:'INR'});
+  const req={db,user:{_id:'staff-1',role:'manager'},tenantContext:{branchId:String(scope.branchId),licenseId:String(scope.license)},query:{table:'T3'}};
+  const bill=await require('../../../src/services/captain-bill').read(req);
+  expect(bill.totalMinor).toBe(2200);expect(bill.dueMinor).toBe(2200);expect(bill.orderIds).toHaveLength(2);expect(bill.guests).toBe(3);
+  const floor=await require('../../../src/services/captain-tables').list(req);
+  expect(floor.tables.find(row=>row.tableorder_value==='T3').seating.guests).toBe(3);
+});
+
+test('merge capacity accounts for both parties and cannot be understated by the caller',async()=>{
+  const {source,target,input}=await mergeOrders(), options={mergeTargetId:String(target._id)};
+  await expect(seating.prepareMove(db,scope,String(source._id),{...input,guests:2},options)).rejects.toMatchObject({status:409});
+  await db.collection('tableorder').updateOne({_id:new ObjectId(ids[2])},{$set:{max_capacity:2}});
+  await expect(seating.prepareMove(db,scope,String(source._id),input,options)).rejects.toThrow('enough seats');
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+});
+
+test('cancelled merge preserves both tables and releases both payment fences',async()=>{
+  const {source,target,input}=await mergeOrders();
+  const prepared=await seating.prepareMove(db,scope,String(source._id),input,{mergeTargetId:String(target._id)});
+  await seating.cancelMove(db,scope,prepared.id,'staff-1',String(source._id));
+  expect(await db.collection('sales').findOne({_id:source._id})).toEqual(source);
+  expect(await db.collection('sales').findOne({_id:target._id})).toEqual(target);
+});
+
+test('merge API requires separate permission and rechecks it before completion',async()=>{
+  const {source,target,input}=await mergeOrders();
+  await db.collection('branches').insertOne({_id:scope.branchId,license:scope.license});
+  const service=require('../../../src/services/captain-seating');
+  const req={db,user:{_id:'staff-1',role:'staff',access:{sales:{write:true}}},tenantContext:{branchId:String(scope.branchId),licenseId:String(scope.license)},body:{request_id:input.request_id,orderId:String(source._id),targetOrderId:String(target._id),tableIds:input.table_ids,primaryId:input.primary_id,guests:1}};
+  await expect(service.merge(req)).rejects.toMatchObject({status:403});
+  req.user.role='manager';const result=await service.merge(req);expect(result.mergeTargetId).toBe(String(target._id));
+  req.user.role='staff';await expect(service.complete(req)).rejects.toMatchObject({status:403});
+  await service.cancel(req);
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+});

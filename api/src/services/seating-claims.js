@@ -25,6 +25,7 @@ function requestId(value) {
 }
 function sameRequest(saved, input) {
   return (
+    (saved.merge_target || null) === (input.merge_target || null) &&
     saved.actor === input.actor &&
     saved.primary === input.primary &&
     saved.guests === input.guests &&
@@ -68,7 +69,7 @@ async function archive(db, scope, id) {
 async function reserve(db, scope, input) {
   return reserveClaim(db, scope, input);
 }
-async function reserveClaim(db, scope, input, moving = null, operationLock = null) {
+async function reserveClaim(db, scope, input, moving = null, operationLock = null, mergeTarget = null) {
   const id = requestId(input.request_id);
   const takeaway = moving && input.dine_type === 'Take away';
   if (input.dine_type && !['Dine-in', 'Take away'].includes(input.dine_type)) fail('Choose an order type.');
@@ -91,6 +92,7 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
     state: 'reserved',
     ...(moving ? { move_from: moving.id, order_id: moving.order_id } : {}),
     ...(operationLock ? { operation_lock: operationLock } : {}),
+    ...(mergeTarget ? { merge_target: String(mergeTarget._id) } : {}),
     ...(input.payload_hash ? { payload_hash: input.payload_hash } : {}),
     at: new Date(),
   };
@@ -143,7 +145,10 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
     fail('Set the seating capacity before combining tables.');
   const capacity = metadata.reduce((sum, row) => sum + row.capacity, 0);
   const maximum = metadata.reduce((sum, row) => sum + row.max_capacity, 0);
-  if (maximum && input.guests > maximum) fail('Choose a table with enough seats.');
+  const party = input.guests + (mergeTarget ? Number(mergeTarget.person_count) : 0);
+  if (mergeTarget && (!Number.isInteger(party) || party < 2 || !maximum))
+    fail('Set the seating capacity before combining tables.');
+  if (maximum && party > maximum) fail('Choose a table with enough seats.');
   claim.capacity = capacity;
   claim.max_capacity = maximum;
   claim.labels = ids.map((id) => tables.find((row) => String(row._id) === id).tableorder_value);
@@ -221,7 +226,12 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
       ...open.map((order) => `sale:${String(order._id)}`),
       ...overlaps.map((row) => (row.order_id ? `sale:${row.order_id}` : `claim:${row.id}`)),
     ]).size;
-    if (limit && count >= limit) fail('This table has reached its open order limit.', 409);
+    if (mergeTarget) {
+      if (open.length !== 1 || String(open[0]._id) !== String(mergeTarget._id) ||
+          overlaps.some(row => row.order_id !== String(mergeTarget._id)) ||
+          tables[0].tableorder_value !== mergeTarget.table_number)
+        fail('The seating group changed. Refresh this order.', 409);
+    } else if (limit && count >= limit) fail('This table has reached its open order limit.', 409);
   }
   if (await history(db).findOne({ _id: `${key}:${id}` }))
     fail('This seating request has already been used.', 409);
@@ -253,7 +263,7 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
   }
   return claim;
 }
-async function prepareMove(db, scope, orderId, input, { staffHandover = false } = {}) {
+async function prepareMove(db, scope, orderId, input, { staffHandover = false, mergeTargetId = null } = {}) {
   const id = requestId(input.request_id);
   const takeaway = input.dine_type === 'Take away';
   if (input.dine_type && !['Dine-in', 'Take away'].includes(input.dine_type)) fail('Choose an order type.');
@@ -264,6 +274,7 @@ async function prepareMove(db, scope, orderId, input, { staffHandover = false } 
     fail('Enter the number of guests.');
   const expected = {
     actor: String(input.actor || ''),
+    ...(mergeTargetId ? { merge_target: identity(mergeTargetId) } : {}),
     primary: takeaway ? '' : identity(input.primary_id),
     tables: [...new Set(input.table_ids.map(identity))].sort(),
     guests: input.guests,
@@ -303,12 +314,28 @@ async function prepareMove(db, scope, orderId, input, { staffHandover = false } 
     fail('The seating group changed. Refresh this order.', 409);
   if (!staffHandover && String(input.actor || '') !== source.actor)
     fail('Permission is required.', 403);
+  let mergeTarget = null;
+  if (mergeTargetId) {
+    if (takeaway || expected.tables.length !== 1 || mergeTargetId === String(order._id) ||
+        order.payment_status !== 'Unpaid' || Number(order.person_count) !== input.guests)
+      fail('The seating group changed. Refresh this order.', 409);
+    mergeTarget = await db.collection('sales').findOne({
+      _id: new ObjectId(identity(mergeTargetId)), branch_id: scope.branchId, license: scope.license,
+      sale_process: 'KOT', payment_status: 'Unpaid', floor_closed_at: { $exists: false },
+      order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
+    });
+    const targetClaim = mergeTarget?.seating_request_id && await find(db, scope, mergeTarget.seating_request_id);
+    if (!targetClaim || targetClaim.state !== 'submitting' || targetClaim.moving_to || targetClaim.closing ||
+        targetClaim.tables.length !== 1 || targetClaim.primary !== expected.primary ||
+        targetClaim.order_id !== String(mergeTarget._id) || targetClaim.id === source.id)
+      fail('The seating group changed. Refresh this order.', 409);
+  }
   const lock = await restructure.reserve(db, scope, {
     requestId: id, actor: expected.actor,
-    intent: { kind: 'move', source: source.id, ...expected }, sales: [order],
+    intent: { kind: 'move', source: source.id, ...expected }, sales: mergeTarget ? [order, mergeTarget] : [order],
   });
   try {
-    const claim = await reserveClaim(db, scope, input, source, lock._id);
+    const claim = await reserveClaim(db, scope, input, source, lock._id, mergeTarget);
     const journal = await restructure.read(db, scope, id, expected.actor);
     if (journal.stage === 'cancelled') {
       await cancelMove(db, scope, id, expected.actor, String(order._id), { staffHandover });
@@ -488,7 +515,8 @@ async function completeMove(db, scope, id, actor) {
       $set: fields,
       $push: {
         captain_audit: {
-          action: 'move',
+          action: move.merge_target ? 'merge' : 'move',
+          ...(move.merge_target ? { target_order_id: move.merge_target } : {}),
           request_id: id,
           at: move.at,
           actor: { id: String(actor) },

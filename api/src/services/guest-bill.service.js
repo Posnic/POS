@@ -89,7 +89,7 @@ function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
     totalMinor,
     labels,
     lines,
-    guests: Math.max(2, Math.min(20, Number(sales[0].person_count) || 2)),
+    guests: Math.max(2, Math.min(20, sales.reduce((sum, sale) => sum + (Number(sale.person_count) || 0), 0) || 2)),
   };
 }
 function billForGuest(snapshot, guest, branch, sale, batchId) {

@@ -14,8 +14,9 @@ const view = (claim) => ({
   primaryId: claim.primary,
   guests: claim.guests,
   dineType: claim.dine_type || 'Dine-in',
+  ...(claim.merge_target ? { mergeTargetId: claim.merge_target } : {}),
 });
-async function prepare(req) {
+async function prepare(req, mergeTargetId = null) {
   const c = await scope(req),
     body = req.body || {};
   return view(
@@ -31,12 +32,19 @@ async function prepare(req) {
         dine_type: body.dineType,
         actor: String(req.user._id),
       },
-      { staffHandover: true }
+      { staffHandover: true, mergeTargetId }
     )
   );
 }
+async function merge(req) {
+  if (!req.user || !allowed(req.user, 'sales', 'merge')) fail('Permission is required.', 403);
+  if (!/^[a-f0-9]{24}$/i.test(req.body?.targetOrderId || '')) fail('Choose an order.');
+  return prepare(req, req.body.targetOrderId);
+}
 async function complete(req) {
   const c = await scope(req);
+  const pending = await seating.find(req.db, c, req.body?.request_id);
+  if (pending?.merge_target && !allowed(req.user, 'sales', 'merge')) fail('Permission is required.', 403);
   const claim = await seating.completeMove(req.db, c, req.body?.request_id, String(req.user._id));
   try {
     require('../sync/outbox').enqueue({
@@ -61,4 +69,4 @@ async function cancel(req) {
   );
   return { request_id: req.body.request_id, state: 'cancelled' };
 }
-module.exports = { prepare, complete, cancel };
+module.exports = { prepare, merge, complete, cancel };

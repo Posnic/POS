@@ -43,7 +43,7 @@ function view(row, orders = [], claim = null) {
             primary_id: claim.primary,
             table_ids: claim.tables,
             labels: claim.labels,
-            guests: Number(orders.find(order => String(order._id) === claim.order_id)?.person_count) || claim.guests,
+            guests: orders.length ? orders.reduce((sum, order) => sum + (Number(order.person_count) || 0), 0) : claim.guests,
           },
         }
       : {}),
@@ -70,6 +70,7 @@ async function list(req) {
   ]);
   return {
     canManage: allowed(req.user, 'settings'),
+    canMerge: allowed(req.user, 'sales', 'merge'),
     tables: tables.map((row) => {
       const claim = claims.find((entry) => entry.tables.includes(String(row._id)));
       const primary = claim && tables.find((entry) => String(entry._id) === claim.primary);

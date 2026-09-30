@@ -43,6 +43,7 @@ router.post('/tables/state', limit, wrap(tables.state));
 router.post('/tables/close', limit, wrap(tables.close));
 const seating = require('../services/captain-seating');
 router.post('/tables/move/prepare', limit, wrap(seating.prepare));
+router.post('/tables/merge/prepare', limit, wrap(seating.merge));
 router.post('/tables/move/complete', limit, wrap(seating.complete));
 router.post('/tables/move/cancel', limit, wrap(seating.cancel));
 
