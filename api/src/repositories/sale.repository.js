@@ -8019,20 +8019,30 @@ class SalesRepository {
       const tickets = rows.flatMap(require('../helpers/kitchen-rounds').tickets);
 
       // Explicit cancellation events only: served or paid dishes must not look cancelled.
-      const cancelled = await db.collection('sales').find({
-        branch_id: branchObjectId,
-        ...activeTenantFilter(),
-        $or: [
-          { kitchen_required: true },
-          { sale_process: { $regex: 'KOT', $options: 'i' } },
-          { table_number: { $exists: true, $nin: ['', null] } },
-        ],
-        changes: { $elemMatch: {
-          timestamp: { $gte: new Date(Date.now() - 300000) },
-          items: { $elemMatch: { process: 'cancel', held: { $ne: true } } },
-        } },
-      }, { projection: { table_number: 1, changes: 1 } }).toArray();
-      tickets.push(...cancelled.flatMap(sale => require('../helpers/kitchen-rounds').cancellations(sale)));
+      const cancelled = await db
+        .collection('sales')
+        .find(
+          {
+            branch_id: branchObjectId,
+            ...activeTenantFilter(),
+            $or: [
+              { kitchen_required: true },
+              { sale_process: { $regex: 'KOT', $options: 'i' } },
+              { table_number: { $exists: true, $nin: ['', null] } },
+            ],
+            changes: {
+              $elemMatch: {
+                timestamp: { $gte: new Date(Date.now() - 300000) },
+                items: { $elemMatch: { process: 'cancel', held: { $ne: true } } },
+              },
+            },
+          },
+          { projection: { table_number: 1, changes: 1 } }
+        )
+        .toArray();
+      tickets.push(
+        ...cancelled.flatMap((sale) => require('../helpers/kitchen-rounds').cancellations(sale))
+      );
 
       return { status: true, message: 'success', data: tickets };
     } catch (error) {

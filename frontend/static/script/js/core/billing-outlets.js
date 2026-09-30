@@ -20,7 +20,7 @@
                 ui.current = data.outlets.find(function (o) { return String(o._id) === billingWindowId; }) || null;
                 if (!ui.current) throw new Error('This outlet is unavailable or your access has changed.');
                 if (previous && previous.updated_at !== ui.current.updated_at && PosnicPro.sales && PosnicPro.sales.addSalesLineTable && PosnicPro.sales.addSalesLineTable.length) { ui.current = previous; throw new Error('Outlet settings changed while this cart was open. Clear this unsaved cart and reload the outlet before using the new prices.'); }
-                document.title = ui.current.name + ' — ' + data.branch.name + ' — Posnic';
+                document.title = ui.current.name + ' - ' + data.branch.name + ' - Posnic';
                 $('#billing_outlet_label').text(ui.current.name + ' · ' + data.branch.name);
                 $('#billing_room_wrap').show();
             }
@@ -31,7 +31,7 @@
         var outlet = ui.data.outlets.find(function (o) { return String(o._id) === id; });
         if (!outlet) return;
         if (window.electronAPI && window.electronAPI.billing) {
-            window.electronAPI.billing.openOutlet({ branchId: ui.data.branch.id, outletId: id, name: outlet.name + ' — ' + ui.data.branch.name }).catch(error);
+            window.electronAPI.billing.openOutlet({ branchId: ui.data.branch.id, outletId: id, name: outlet.name + ' - ' + ui.data.branch.name }).catch(error);
             return;
         }
         var url = new URL(window.location.href);
@@ -84,7 +84,7 @@
     ui.showDataTablePage = ui.show = function () {
         ui.previousPages = $('.page_loader:visible').not('#billing_outlets_page');
         $('.page_loader').hide();
-        if (!$('#billing_outlets_page').length) $('body').append('<main id="billing_outlets_page" class="page_loader" style="position:fixed;inset:65px 0 0 0;overflow:auto;background:var(--theme-body-bg,#fff);color:var(--theme-text-primary,#172b4d);z-index:100;padding:24px"><div style="max-width:1100px;margin:auto"><div class="d-flex justify-content-between"><h3>Billing outlets</h3><button class="btn btn-outline-secondary" id="billing_back">Back to billing</button></div><p id="billing_message" role="status"></p><div class="nav nav-tabs mb-3"><button class="btn btn-link" data-billing-tab="windows">Billing windows</button><button class="btn btn-link" data-billing-tab="summary">Daily summary</button><button class="btn btn-link" data-billing-tab="setup">Outlet settings</button></div><section id="billing_content"></section></div></main>');
+        if (!$('#billing_outlets_page').length) $('body').append('<main id="billing_outlets_page" class="page_loader" style="position:fixed;inset:65px 0 0 0;overflow:auto;background:var(--theme-body-bg,#fff);color:var(--theme-text-primary,#172b4d);z-index:100;padding:24px"><div style="max-width:1100px;margin:auto"><div class="d-flex justify-content-between"><h3><lang class="lang_billing_outlets">Billing outlets</lang></h3><button class="btn btn-outline-secondary" id="billing_back"><lang class="lang_back_to_billing">Back to billing</lang></button></div><p id="billing_message" role="status"></p><div class="nav nav-tabs mb-3"><button class="btn btn-link" data-billing-tab="windows"><lang class="lang_billing_windows">Billing windows</lang></button><button class="btn btn-link" data-billing-tab="summary"><lang class="lang_daily_summary">Daily summary</lang></button><button class="btn btn-link" data-billing-tab="setup"><lang class="lang_outlet_settings">Outlet settings</lang></button></div><section id="billing_content"></section></div></main>');
         $('#billing_outlets_page').show();
         $('#billing_message').removeClass('text-danger').text('Loading…');
         ui.load().then(function () { $('#billing_message').text(ui.data.branch.name); ui.tab('windows'); }).catch(error);
@@ -96,19 +96,19 @@
             ui.data.outlets.forEach(function (o) {
                 box.append('<button class="btn btn-outline-primary m-2" data-billing-open="' + escape(o._id) + '">' + escape(o.name) + ' ↗</button>');
             });
-            if (!ui.data.outlets.length) box.append('<p>No outlets are configured for your access.</p>');
+            if (!ui.data.outlets.length) box.append('<p><lang class="lang_no_outlets_are_configured_for_your_access">No outlets are configured for your access.</lang></p>');
         } else if (tab === 'setup') {
-            if (!ui.data.manage) { box.text('Your account cannot change outlet settings.'); return; }
-            box.append('<p>Outlets share this branch’s product catalogue and stock. Exact item prices override the percentage. Service charge applies after discounts, before tax. Existing bills retain their saved rules.</p><select class="form-control mb-3" id="billing_edit"><option value="">New outlet</option></select><form id="billing_form"><input type="hidden" name="id"><label class="d-block">Outlet name<input name="name" required maxlength="60" class="form-control"></label><div class="row"><label class="col-md-4">Price adjustment %<input name="markup_percent" type="number" min="-100" max="1000" step="0.01" value="0" class="form-control"></label><label class="col-md-4">Service charge %<input name="service_percent" type="number" min="0" max="100" step="0.01" value="0" class="form-control"></label><label class="col-md-4">Tax on service charge %<input name="service_tax_percent" type="number" min="0" max="100" step="0.01" value="0" class="form-control"></label></div><label><input name="active" type="checkbox" checked> Active for new bills</label><label class="d-block">Allowed billing staff (leave unselected for everyone with branch access)<select id="billing_members" multiple class="form-control"></select></label><h5>Exact item prices</h5><div id="billing_prices"></div><button class="btn btn-outline-secondary" type="button" id="billing_add_price">Add item price</button><button class="btn btn-primary ml-2" type="submit">Save outlet</button></form>');
+            if (!ui.data.manage) { box.text(PosnicPro.i18n.t('lang_your_account_cannot_change_outlet_settings', 'Your account cannot change outlet settings.')); return; }
+            box.append('<p>Outlets share this branch’s product catalogue and stock. Exact item prices override the percentage. Service charge applies after discounts, before tax. Existing bills retain their saved rules.</p><select class="form-control mb-3" id="billing_edit"><option value="" data-t="lang_new_outlet">New outlet</option></select><form id="billing_form"><input type="hidden" name="id"><label class="d-block">Outlet name<input name="name" required maxlength="60" class="form-control"></label><div class="row"><label class="col-md-4">Price adjustment %<input name="markup_percent" type="number" min="-100" max="1000" step="0.01" value="0" class="form-control"></label><label class="col-md-4">Service charge %<input name="service_percent" type="number" min="0" max="100" step="0.01" value="0" class="form-control"></label><label class="col-md-4">Tax on service charge %<input name="service_tax_percent" type="number" min="0" max="100" step="0.01" value="0" class="form-control"></label></div><label><input name="active" type="checkbox" checked> Active for new bills</label><label class="d-block">Allowed billing staff (leave unselected for everyone with branch access)<select id="billing_members" multiple class="form-control"></select></label><h5><lang class="lang_exact_item_prices">Exact item prices</lang></h5><div id="billing_prices"></div><button class="btn btn-outline-secondary" type="button" id="billing_add_price"><lang class="lang_add_item_price">Add item price</lang></button><button class="btn btn-primary ml-2" type="submit"><lang class="lang_save_outlet">Save outlet</lang></button></form>');
             (ui.data.configuration || []).forEach(function (o) { $('#billing_edit').append($('<option>').val(o._id).text(o.name)); });
             request('/staff').then(function (staff) { staff.forEach(function (u) { $('#billing_members').append($('<option>').val(u._id).text(u.name || u.username)); }); }).catch(error);
         } else if (tab === 'summary') {
-            box.append('<p>One branch report combines Restaurant, Bar and other outlets. Payment totals describe settlement of the selected day’s bills; use register closing for cash float, payouts and collections against older bills.</p><label>Report date<input id="billing_day" type="date" class="form-control"></label> <button class="btn btn-primary" id="billing_report">Generate summary</button> <button class="btn btn-outline-primary" id="billing_print" disabled>Print summary</button><div id="billing_report_body" class="mt-3"></div>');
+            box.append('<p>One branch report combines Restaurant, Bar and other outlets. Payment totals describe settlement of the selected day’s bills; use register closing for cash float, payouts and collections against older bills.</p><label>Report date<input id="billing_day" type="date" class="form-control"></label> <button class="btn btn-primary" id="billing_report"><lang class="lang_generate_summary">Generate summary</lang></button> <button class="btn btn-outline-primary" id="billing_print" disabled><lang class="lang_print_summary">Print summary</lang></button><div id="billing_report_body" class="mt-3"></div>');
             var now = new Date(); $('#billing_day').val(now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0'));
         }
     };
     function priceRow(value) {
-        var row = $('<div class="d-flex mb-2" style="gap:8px"><select class="form-control billing_item" aria-label="Item"></select><input type="number" class="form-control billing_price" min="0" max="1000000" step="0.01" aria-label="Price" required><button type="button" class="btn btn-outline-danger billing_remove">Remove</button></div>');
+        var row = $('<div class="d-flex mb-2" style="gap:8px"><select class="form-control billing_item" aria-label="Item" data-t-aria-label="lang_newitem_title"></select><input type="number" class="form-control billing_price" min="0" max="1000000" step="0.01" aria-label="Price" data-t-aria-label="lang_price_title" required><button type="button" class="btn btn-outline-danger billing_remove"><lang class="lang_remove">Remove</lang></button></div>');
         $('#billing_prices').append(row);
         row.find('select').select2({ minimumInputLength: 1, ajax: { url: API_URL + 'billing-outlets/items', dataType: 'json', xhrFields: { withCredentials: true },
             transport: function (opts) { request('/items', opts.data).then(function (data) { opts.success({ data: data }); }).catch(error); },
@@ -132,24 +132,24 @@
             $(this).serializeArray().forEach(function (p) { values[p.name] = p.value; });
             values.active = $('#billing_form [name=active]').prop('checked'); values.members = $('#billing_members').val() || [];
             values.prices = []; $('#billing_prices > div').each(function () { values.prices.push({ item_id: $(this).find('select').val(), price: $(this).find('input').val() }); });
-            request('', values, 'POST').then(function () { return ui.load(); }).then(function () { ui.tab('setup'); $('#billing_message').removeClass('text-danger').text('Outlet saved.'); }).catch(error).finally(function () { submit.prop('disabled', false); });
+            request('', values, 'POST').then(function () { return ui.load(); }).then(function () { ui.tab('setup'); $('#billing_message').removeClass('text-danger').text(PosnicPro.i18n.t('lang_outlet_saved', 'Outlet saved.')); }).catch(error).finally(function () { submit.prop('disabled', false); });
         }).on('click', '#billing_report', function () {
             $('#billing_print').prop('disabled', true); $('#billing_report_body').text('Loading…');
             request('/summary', { day: $('#billing_day').val() }).then(function (r) {
                 var money = function (v) { return (v / Math.pow(10, r.currencyDigits)).toLocaleString(undefined, { minimumFractionDigits: r.currencyDigits, maximumFractionDigits: r.currencyDigits }); };
-                var html = '<h3>' + escape(r.branch) + ' — Daily outlet summary</h3><p>' + escape(r.day + ' · ' + r.timezone + ' · ' + r.currency) + '</p><table class="table"><thead><tr><th>Outlet</th><th>Bills</th><th>Sales</th><th>Refunds</th><th>Outstanding</th></tr></thead><tbody>';
+                var html = '<h3>' + escape(r.branch) + ' - Daily outlet summary</h3><p>' + escape(r.day + ' · ' + r.timezone + ' · ' + r.currency) + '</p><table class="table"><thead><tr><th><lang class="lang_outlet">Outlet</lang></th><th><lang class="lang_bills">Bills</lang></th><th><lang class="lang_rgrp_sales">Sales</lang></th><th><lang class="lang_refund">Refunds</lang></th><th><lang class="lang_po_outstanding">Outstanding</lang></th></tr></thead><tbody>';
                 r.outlets.concat([{ name: 'Total', bills: r.bills, sales: r.sales, refunds: r.refunds, outstanding: r.outstanding }]).forEach(function (o) { html += '<tr><td>' + escape(o.name) + '</td><td>' + o.bills + '</td><td>' + money(o.sales) + '</td><td>' + money(o.refunds) + '</td><td>' + money(o.outstanding) + '</td></tr>'; });
-                html += '</tbody></table><h4>Payments recorded against these bills</h4><table class="table">';
+                html += '</tbody></table><h4><lang class="lang_payments_recorded_against_these_bills">Payments recorded against these bills</lang></h4><table class="table">';
                 r.payments.forEach(function (p) { html += '<tr><td>' + escape(p.name) + '</td><td>' + money(p.amount) + '</td></tr>'; });
                 html += '</table><p>' + escape(r.settlementBasis) + '</p><p>Prepared at ' + escape(new Date(r.generatedAt).toLocaleString()) + '</p>';
                 if (r.closings && r.closings.length) {
-                    html += '<h4>Register handover — closed on this date</h4><table class="table"><tr><th>Register</th><th>Expected cash</th><th>Counted cash</th></tr>';
+                    html += '<h4><lang class="lang_register_handover_closed_on_this_date">Register handover - closed on this date</lang></h4><table class="table"><tr><th><lang class="lang_register">Register</lang></th><th><lang class="lang_expected_cash">Expected cash</lang></th><th><lang class="lang_counted_cash">Counted cash</lang></th></tr>';
                     r.closings.forEach(function (c) { html += '<tr><td>' + escape(c.name) + '</td><td>' + (c.expected == null ? 'Unavailable' : money(c.expected)) + '</td><td>' + (c.counted == null ? 'Not counted' : money(c.counted)) + '</td></tr>'; });
-                    html += '<tr><th>Total</th><th>' + (r.cashExpected == null ? 'Incomplete' : money(r.cashExpected)) + '</th><th>' + (r.cashCounted == null ? 'Incomplete' : money(r.cashCounted)) + '</th></tr></table><p>Saved register closing figures. Open registers are not included. Includes the register’s opening cash and recorded cash movements.</p>';
+                    html += '<tr><th><lang class="lang_total_title">Total</lang></th><th>' + (r.cashExpected == null ? 'Incomplete' : money(r.cashExpected)) + '</th><th>' + (r.cashCounted == null ? 'Incomplete' : money(r.cashCounted)) + '</th></tr></table><p>Saved register closing figures. Open registers are not included. Includes the register’s opening cash and recorded cash movements.</p>';
                     if (r.countedPayments && r.countedPayments.length) {
-                        html += '<h5>Recorded closing counts by payment type</h5><table class="table">';
+                        html += '<h5><lang class="lang_recorded_closing_counts_by_payment_type">Recorded closing counts by payment type</lang></h5><table class="table">';
                         r.countedPayments.forEach(function (p) { html += '<tr><td>' + escape(p.name) + '</td><td>' + money(p.amount) + '</td></tr>'; });
-                        html += '</table><p>Combined declarations from closed registers; unentered counts are not inferred.</p>';
+                        html += '</table><p><lang class="lang_combined_declarations_from_closed_register">Combined declarations from closed registers; unentered counts are not inferred.</lang></p>';
                     }
                 } else html += '<p>No register closing is recorded for this date. Close and count the registers to include cash handover figures.</p>';
                 if (r.unresolved.length) html += '<p class="text-danger">Payment breakdown needs reconciliation for: ' + escape(r.unresolved.join(', ')) + '</p>';

@@ -95,5 +95,8 @@
   "lang_total_title": "Totalt",
   "lang_yes": "Ja",
   "lang_ai_describe_hint": "Skapa ett beskrivningsutkast utifrån artikelns uppgifter",
-  "lang_walk_in_customer_click_to_choose_or_add": "Oregistrerad kund. Klicka för att välja eller lägga till"
+  "lang_walk_in_customer_click_to_choose_or_add": "Oregistrerad kund. Klicka för att välja eller lägga till",
+  "lang_business_discount": "Rabatt",
+  "lang_cash": "Kontant",
+  "lang_print": "Skriv ut"
 }

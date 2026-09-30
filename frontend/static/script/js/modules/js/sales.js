@@ -6590,7 +6590,7 @@ PosnicPro.sales.renderCharges = function () {
                     + (c.taxed === true ? '+tax ' + c.tax_amount.toFixed(2) : '+tax') + '</a>'
                 : '')
             + '<b>' + Number(c.amount).toFixed(2) + '</b>'
-            + (c.source === 'outlet' ? '<span class="text-muted">Outlet rule</span>' : '<a href="javascript:void(0)" class="sale-charge-del text-danger" data-i="' + i + '">&times;</a>') + '</div>';
+            + (c.source === 'outlet' ? '<span class="text-muted"><lang class="lang_outlet_rule">Outlet rule</lang></span>' : '<a href="javascript:void(0)" class="sale-charge-del text-danger" data-i="' + i + '">&times;</a>') + '</div>';
     });
     $('#sale_charges_list').html(html);
     $('#sale_add_charge').toggle(PosnicPro.sales.chargesEnabled() || list.length > 0);

@@ -98,5 +98,9 @@
   "lang_walk_in_customer_click_to_choose_or_add": "অনিবন্ধিত গ্রাহক। বেছে নিতে বা যোগ করতে ক্লিক করুন",
   "lang_changes_not_saved": "পরিবর্তনগুলি সেভ হয়নি।",
   "lang_continue": "এগিয়ে যান",
-  "lang_reason": "কারণ"
+  "lang_reason": "কারণ",
+  "lang_business_discount": "ছাড়",
+  "lang_cash": "নগদ",
+  "lang_print": "প্রিন্ট করুন",
+  "lang_stock_adjust_reason": "কারণ"
 }

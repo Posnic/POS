@@ -97,13 +97,21 @@ describe('the pack the installer receives', () => {
   };
 
   it('repairs only the known truncated INR demo placeholders', () => {
-    const people = { customers: { customers: [
-      { name: 'Sample', phone: '+91 90000 121' },
-      { name: 'Already valid', phone: '+919000000122' },
-      { name: 'Other', phone: '+919008427481' }
-    ] } };
+    const people = {
+      customers: {
+        customers: [
+          { name: 'Sample', phone: '+91 90000 121' },
+          { name: 'Already valid', phone: '+919000000122' },
+          { name: 'Other', phone: '+919008427481' },
+        ],
+      },
+    };
     const pack = toPack({ ...dataset, currency: 'INR' }, null, people);
-    expect(pack.customers.map(p => p.phone)).toEqual(['+91 90000 00121', '+919000000122', '+919008427481']);
+    expect(pack.customers.map((p) => p.phone)).toEqual([
+      '+91 90000 00121',
+      '+919000000122',
+      '+919008427481',
+    ]);
     expect(toPack(dataset, null, people).customers[0].phone).toBe('+91 90000 121');
   });
 

@@ -79,25 +79,21 @@ router.post(
     const value = outlets.validate(req.body);
     if (
       value.members.length &&
-      (await db
-        .collection('users')
-        .countDocuments({
-          license: scope.license,
-          'branch_access.branch_id': scope.branch_id,
-          _id: { $in: value.members.map((id) => new ObjectId(id)) },
-        })) !== value.members.length
+      (await db.collection('users').countDocuments({
+        license: scope.license,
+        'branch_access.branch_id': scope.branch_id,
+        _id: { $in: value.members.map((id) => new ObjectId(id)) },
+      })) !== value.members.length
     )
       throw Object.assign(new Error('Choose staff who have access to this branch.'), {
         statusCode: 400,
       });
     if (
       value.prices.length &&
-      (await db
-        .collection('items')
-        .countDocuments({
-          ...scope,
-          _id: { $in: value.prices.map((p) => new ObjectId(p.item_id)) },
-        })) !== value.prices.length
+      (await db.collection('items').countDocuments({
+        ...scope,
+        _id: { $in: value.prices.map((p) => new ObjectId(p.item_id)) },
+      })) !== value.prices.length
     )
       throw Object.assign(new Error('Choose items belonging to this branch.'), { statusCode: 400 });
     const collection = db.collection('billing_outlets');

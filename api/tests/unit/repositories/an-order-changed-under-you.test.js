@@ -314,18 +314,35 @@ test('a newly added unknown dish refuses the whole edit instead of silently drop
 });
 
 test('adding custom-priced fish to an existing order preserves its kitchen amount', async () => {
- const id=await anOrder(CHANGED_AT), fish=new mongoose.Types.ObjectId();
- await db.collection('items').insertOne({_id:fish,license:LICENSE,name:'Fish',selling_price:0,tax:0});
- const result=await repo.updateOrderModel(id,[
-  {item_id:String(NAAN),quantity:1,item_price:40},
-  {item_id:String(BIRYANI),quantity:1,item_price:220},
-  {item_id:String(fish),quantity:2,item_price:500}
- ],1260,null,null,null,null,'4','Dine-in',2,{});
- expect(result.status).not.toBe(false);
- const saved=await stored(id);
- expect(saved.items.find(line=>String(line.item_id)===String(fish)).priced_at_table).toBe(500);
- const change=saved.changes.at(-1).items.find(line=>String(line.item_id)===String(fish));
- expect(change.priced_at_table).toBe(500);
- const printed=require('../../../../src/escpos-kot').renderKitchenTicket({items:[change]});
- expect(Buffer.from(printed).toString('latin1')).toContain('Rs 500');
+  const id = await anOrder(CHANGED_AT),
+    fish = new mongoose.Types.ObjectId();
+  await db
+    .collection('items')
+    .insertOne({ _id: fish, license: LICENSE, name: 'Fish', selling_price: 0, tax: 0 });
+  const result = await repo.updateOrderModel(
+    id,
+    [
+      { item_id: String(NAAN), quantity: 1, item_price: 40 },
+      { item_id: String(BIRYANI), quantity: 1, item_price: 220 },
+      { item_id: String(fish), quantity: 2, item_price: 500 },
+    ],
+    1260,
+    null,
+    null,
+    null,
+    null,
+    '4',
+    'Dine-in',
+    2,
+    {}
+  );
+  expect(result.status).not.toBe(false);
+  const saved = await stored(id);
+  expect(saved.items.find((line) => String(line.item_id) === String(fish)).priced_at_table).toBe(
+    500
+  );
+  const change = saved.changes.at(-1).items.find((line) => String(line.item_id) === String(fish));
+  expect(change.priced_at_table).toBe(500);
+  const printed = require('../../../../src/escpos-kot').renderKitchenTicket({ items: [change] });
+  expect(Buffer.from(printed).toString('latin1')).toContain('Rs 500');
 });

@@ -95,5 +95,8 @@
   "lang_total_title": "Усього",
   "lang_yes": "Так",
   "lang_ai_describe_hint": "Створити опис на основі даних товару",
-  "lang_walk_in_customer_click_to_choose_or_add": "Незареєстрований клієнт. Натисніть, щоб вибрати або додати"
+  "lang_walk_in_customer_click_to_choose_or_add": "Незареєстрований клієнт. Натисніть, щоб вибрати або додати",
+  "lang_business_discount": "Знижка",
+  "lang_cash": "Готівка",
+  "lang_print": "Друкувати"
 }

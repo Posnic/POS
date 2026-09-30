@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "Warten auf einen Inhaber",
   "lang_changes_not_saved": "Änderungen wurden nicht gespeichert.",
   "lang_continue": "Weiter",
-  "lang_reason": "Grund"
+  "lang_reason": "Grund",
+  "lang_ai_assistant_how_title": "So funktioniert es",
+  "lang_ai_key_remove": "Entfernen",
+  "lang_ai_key_remove_q": "Gespeicherten Schlüssel entfernen?",
+  "lang_ai_key_replace": "Ersetzen",
+  "lang_amount": "Betrag",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "Verkaufspreis",
+  "lang_int_voice_key": "API-Schlüssel",
+  "lang_int_voice_key_saved": "Ein Schlüssel ist gespeichert. Geben Sie einen neuen ein, um ihn zu ersetzen.",
+  "lang_int_voice_language": "Sprache",
+  "lang_print": "Drucken",
+  "lang_receipt_text_size": "Textgröße",
+  "lang_show_matching": "Anzeigen"
 }

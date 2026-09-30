@@ -46,7 +46,7 @@ describe('mongo-guard', () => {
     let deep = { $where: '1' };
     for (let i = 0; i < 40; i += 1) deep = { nest: deep };
     expect(() => findCodeOperator(deep)).not.toThrow();
-    expect(findCodeOperator(deep)).toBeNull();
+    expect(findCodeOperator(deep)).toBe('DEPTH_LIMIT');
   });
 
   test('nothing sensible trips it', () => {

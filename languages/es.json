@@ -3708,5 +3708,18 @@
   "lang_business_waiting_owner": "Esperando a un propietario",
   "lang_changes_not_saved": "No se guardaron los cambios.",
   "lang_continue": "Continuar",
-  "lang_reason": "Motivo"
+  "lang_reason": "Motivo",
+  "lang_ai_assistant_how_title": "Cómo funciona",
+  "lang_ai_key_remove": "Quitar",
+  "lang_ai_key_remove_q": "¿Quitar la clave guardada?",
+  "lang_ai_key_replace": "Reemplazar",
+  "lang_amount": "Importe",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "Precio de venta",
+  "lang_int_voice_key": "Clave API",
+  "lang_int_voice_key_saved": "Hay una clave guardada. Escriba una nueva para reemplazarla.",
+  "lang_int_voice_language": "Idioma",
+  "lang_print": "Impresión",
+  "lang_receipt_text_size": "Tamaño del texto",
+  "lang_show_matching": "Mostrar"
 }

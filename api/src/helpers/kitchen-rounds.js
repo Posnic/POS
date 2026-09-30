@@ -172,11 +172,18 @@ function tickets(sale) {
 }
 function progress(line, work = {}) {
   const status = work.lines?.[line.id] || {};
-  const ready = Math.max(line.served, Math.min(line.quantity,
-    Number(status.ready ?? (work.state === 'ready' ? line.quantity : 0)) || 0));
+  const ready = Math.max(
+    line.served,
+    Math.min(
+      line.quantity,
+      Number(status.ready ?? (work.state === 'ready' ? line.quantity : 0)) || 0
+    )
+  );
   const collected = Math.max(line.served, Math.min(ready, Number(status.collected) || 0));
   return {
-    ready, collected, served: line.served,
+    ready,
+    collected,
+    served: line.served,
     preparing: Math.max(0, line.quantity - ready),
     readyToCollect: Math.max(0, ready - collected),
     pickedUp: Math.max(0, collected - line.served),
@@ -187,15 +194,29 @@ function cancellations(sale, now = Date.now()) {
   return (sale.changes || []).flatMap((change, index) => {
     const at = date(change.timestamp);
     if (!at || now - Date.parse(at) > 300000 || Date.parse(at) > now) return [];
-    const items = (change.items || []).filter(line =>
-      String(line.process).toLowerCase() === 'cancel' && !line.held && quantity(line) > 0
-    ).map((line, itemIndex) => ({
-      id: `cancel${index}i${itemIndex}`, qty: quantity(line),
-      name: String(line.item_name || line.name || ''),
-      ...kitchenAmount.snapshot(line),
-    }));
-    return items.length ? [{id: `${sale._id}:cancel${index}`, cancelled: true,
-      cancelledAt: at, placedAt: at, table: String(sale.table_number || ''), items}] : [];
+    const items = (change.items || [])
+      .filter(
+        (line) =>
+          String(line.process).toLowerCase() === 'cancel' && !line.held && quantity(line) > 0
+      )
+      .map((line, itemIndex) => ({
+        id: `cancel${index}i${itemIndex}`,
+        qty: quantity(line),
+        name: String(line.item_name || line.name || ''),
+        ...kitchenAmount.snapshot(line),
+      }));
+    return items.length
+      ? [
+          {
+            id: `${sale._id}:cancel${index}`,
+            cancelled: true,
+            cancelledAt: at,
+            placedAt: at,
+            table: String(sale.table_number || ''),
+            items,
+          },
+        ]
+      : [];
   });
 }
 module.exports = { rounds, tickets, cancellations, progress };

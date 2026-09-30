@@ -65,6 +65,11 @@ const mockReq = (overrides = {}) => ({
   ...overrides,
 });
 
+const scopedReq = (overrides = {}) => ({
+  ...mockReq(overrides),
+  tenantContext: { licenseId: '64f9a1c2e3b4d5e6f7000099', branchId: '64f9a1c2e3b4d5e6f7000098' },
+});
+
 // Shorthand service result builders
 const ok = (data = null, message = 'ok', type = 'success') => ({
   status: true,
@@ -176,7 +181,7 @@ describe('getOne', () => {
   test('200 with variant data', async () => {
     mockService.getVariantById.mockResolvedValue(ok({ _id: 'v1', name: 'Color', fields: [] }));
     const res = mockRes();
-    await ctrl.getOne(mockReq({ params: { id: 'v1' } }), res);
+    await ctrl.getOne(scopedReq({ params: { id: 'v1' } }), res);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -189,21 +194,27 @@ describe('getOne', () => {
   test('uses query.id when params.id missing', async () => {
     mockService.getVariantById.mockResolvedValue(ok({ _id: 'v2' }));
     const res = mockRes();
-    await ctrl.getOne(mockReq({ params: {}, query: { id: 'v2' } }), res);
-    expect(mockService.getVariantById).toHaveBeenCalledWith('v2');
+    await ctrl.getOne(scopedReq({ params: {}, query: { id: 'v2' } }), res);
+    expect(mockService.getVariantById).toHaveBeenCalledWith(
+      'v2',
+      expect.objectContaining({ license: expect.anything(), branch_id: expect.anything() })
+    );
   });
 
   test('uses params.id preferentially', async () => {
     mockService.getVariantById.mockResolvedValue(ok({ _id: 'v3' }));
     const res = mockRes();
-    await ctrl.getOne(mockReq({ params: { id: 'v3' }, query: { id: 'v99' } }), res);
-    expect(mockService.getVariantById).toHaveBeenCalledWith('v3');
+    await ctrl.getOne(scopedReq({ params: { id: 'v3' }, query: { id: 'v99' } }), res);
+    expect(mockService.getVariantById).toHaveBeenCalledWith(
+      'v3',
+      expect.objectContaining({ license: expect.anything(), branch_id: expect.anything() })
+    );
   });
 
   test('404 when service returns status false', async () => {
     mockService.getVariantById.mockResolvedValue(notFound('Variant not found'));
     const res = mockRes();
-    await ctrl.getOne(mockReq({ params: { id: 'bad' } }), res);
+    await ctrl.getOne(scopedReq({ params: { id: 'bad' } }), res);
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
   });
@@ -211,7 +222,7 @@ describe('getOne', () => {
   test('500 on exception', async () => {
     mockService.getVariantById.mockRejectedValue(new Error('fail'));
     const res = mockRes();
-    await ctrl.getOne(mockReq({ params: { id: 'v1' } }), res);
+    await ctrl.getOne(scopedReq({ params: { id: 'v1' } }), res);
     expect(res.status).toHaveBeenCalledWith(500);
   });
 });
@@ -223,36 +234,45 @@ describe('getVariantDetails', () => {
   test('200 using query.id', async () => {
     mockService.getVariantById.mockResolvedValue(ok({ _id: 'vd1', name: 'Size' }));
     const res = mockRes();
-    await ctrl.getVariantDetails(mockReq({ query: { id: 'vd1' } }), res);
+    await ctrl.getVariantDetails(scopedReq({ query: { id: 'vd1' } }), res);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(mockService.getVariantById).toHaveBeenCalledWith('vd1');
+    expect(mockService.getVariantById).toHaveBeenCalledWith(
+      'vd1',
+      expect.objectContaining({ license: expect.anything(), branch_id: expect.anything() })
+    );
   });
 
   test('200 using params.id as fallback', async () => {
     mockService.getVariantById.mockResolvedValue(ok({ _id: 'vd2' }));
     const res = mockRes();
-    await ctrl.getVariantDetails(mockReq({ params: { id: 'vd2' }, query: {} }), res);
-    expect(mockService.getVariantById).toHaveBeenCalledWith('vd2');
+    await ctrl.getVariantDetails(scopedReq({ params: { id: 'vd2' }, query: {} }), res);
+    expect(mockService.getVariantById).toHaveBeenCalledWith(
+      'vd2',
+      expect.objectContaining({ license: expect.anything(), branch_id: expect.anything() })
+    );
   });
 
   test('prefers query.id over params.id', async () => {
     mockService.getVariantById.mockResolvedValue(ok({ _id: 'qid' }));
     const res = mockRes();
-    await ctrl.getVariantDetails(mockReq({ query: { id: 'qid' }, params: { id: 'pid' } }), res);
-    expect(mockService.getVariantById).toHaveBeenCalledWith('qid');
+    await ctrl.getVariantDetails(scopedReq({ query: { id: 'qid' }, params: { id: 'pid' } }), res);
+    expect(mockService.getVariantById).toHaveBeenCalledWith(
+      'qid',
+      expect.objectContaining({ license: expect.anything(), branch_id: expect.anything() })
+    );
   });
 
   test('404 when not found', async () => {
     mockService.getVariantById.mockResolvedValue(notFound());
     const res = mockRes();
-    await ctrl.getVariantDetails(mockReq({ query: { id: 'nope' } }), res);
+    await ctrl.getVariantDetails(scopedReq({ query: { id: 'nope' } }), res);
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
   test('500 on exception', async () => {
     mockService.getVariantById.mockRejectedValue(new Error('err'));
     const res = mockRes();
-    await ctrl.getVariantDetails(mockReq({ query: { id: 'x' } }), res);
+    await ctrl.getVariantDetails(scopedReq({ query: { id: 'x' } }), res);
     expect(res.status).toHaveBeenCalledWith(500);
   });
 });

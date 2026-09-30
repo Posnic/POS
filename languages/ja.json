@@ -98,5 +98,9 @@
   "lang_walk_in_customer_click_to_choose_or_add": "未登録のお客様。クリックして選択または追加",
   "lang_changes_not_saved": "変更は保存されませんでした。",
   "lang_continue": "続ける",
-  "lang_reason": "理由"
+  "lang_reason": "理由",
+  "lang_business_discount": "値引き",
+  "lang_cash": "現金",
+  "lang_print": "印刷",
+  "lang_stock_adjust_reason": "理由"
 }

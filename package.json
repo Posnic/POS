@@ -84,6 +84,7 @@
     },
     "files": [
       "src/main.js",
+      "src/billing-windows.js",
       "src/ipc-guard.js",
       "src/order-alert.js",
       "src/kitchen-call.js",

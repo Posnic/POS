@@ -95,5 +95,8 @@
   "lang_total_title": "جمع کل",
   "lang_yes": "بله",
   "lang_ai_describe_hint": "تهیه پیش‌نویس توضیحات از اطلاعات کالا",
-  "lang_walk_in_customer_click_to_choose_or_add": "مشتری ثبت‌نشده. برای انتخاب یا افزودن کلیک کنید"
+  "lang_walk_in_customer_click_to_choose_or_add": "مشتری ثبت‌نشده. برای انتخاب یا افزودن کلیک کنید",
+  "lang_business_discount": "تخفیف",
+  "lang_cash": "نقد",
+  "lang_print": "چاپ"
 }

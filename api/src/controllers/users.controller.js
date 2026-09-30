@@ -1214,7 +1214,10 @@ class UsersController extends BaseController {
         return this.error(res, 'Unauthorized', 403);
       }
 
-      const user = await this.userModel.findById(userId).lean();
+      const user = await this.userModel
+        .findOne({ _id: userId, ...require('../utils/record-scope').requestScope(req, false) })
+        .select('-password -apikey -sso_token -sso_key -sso_secret')
+        .lean();
 
       if (!user) {
         return this.error(res, 'User Not Found', 404);
@@ -1865,7 +1868,11 @@ class UsersController extends BaseController {
       }
 
       const User = this.userModel;
-      const user = await User.findById(userId).select('image').lean();
+      const userFilter = {
+        _id: userId,
+        ...require('../utils/record-scope').requestScope(req, false),
+      };
+      const user = await User.findOne(userFilter).select('image').lean();
 
       if (!user) {
         return this.error(res, 'User not found', 404);
@@ -1906,7 +1913,7 @@ class UsersController extends BaseController {
         }
       }
 
-      await User.findByIdAndUpdate(userId, { image: 'user.svg' });
+      await User.findOneAndUpdate(userFilter, { $set: { image: 'user.svg' } });
 
       return this.success(res, 'user.svg', 'Image was deleted');
     } catch (error) {

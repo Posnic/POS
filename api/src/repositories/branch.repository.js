@@ -1,3 +1,4 @@
+const { currentScope } = require('../utils/record-scope');
 const { searchPattern } = require('../utils/safe-search');
 const Branch = require('../models/branch.model');
 
@@ -15,7 +16,7 @@ class BranchesRepository {
    */
   async findById(id, options = {}) {
     try {
-      let query = this.branchModel.findById(id);
+      let query = this.branchModel.findOne({ _id: id, ...currentScope(false) });
 
       if (options.select) {
         query = query.select(options.select);
@@ -117,7 +118,7 @@ class BranchesRepository {
    */
   async updateById(id, data, options = {}) {
     try {
-      return await this.branchModel.findByIdAndUpdate(id, data, {
+      return await this.branchModel.findOneAndUpdate({ _id: id, ...currentScope(false) }, data, {
         new: true,
         runValidators: true,
         ...options,
@@ -132,7 +133,7 @@ class BranchesRepository {
    */
   async deleteById(id) {
     try {
-      return await this.branchModel.findByIdAndDelete(id);
+      return await this.branchModel.findOneAndDelete({ _id: id, ...currentScope(false) });
     } catch (error) {
       throw error;
     }

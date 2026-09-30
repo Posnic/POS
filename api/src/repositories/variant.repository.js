@@ -41,11 +41,15 @@ class VariantsRepository {
    * Find variant by ID
    * Matches PHP: getVariantTableRow()
    */
-  async findById(id) {
+  async findById(id, scope) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return null;
     }
-    return await this.model.findById(id).lean();
+    const tenant = require('../utils/record-scope').scope({
+      licenseId: scope?.license,
+      branchId: scope?.branch_id,
+    });
+    return await this.model.findOne({ _id: id, ...tenant }).lean();
   }
 
   /**

@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "A aguardar um proprietário",
   "lang_changes_not_saved": "As alterações não foram guardadas.",
   "lang_continue": "Continuar",
-  "lang_reason": "Motivo"
+  "lang_reason": "Motivo",
+  "lang_ai_assistant_how_title": "Como funciona",
+  "lang_ai_key_remove": "Remover",
+  "lang_ai_key_remove_q": "Remover a chave guardada?",
+  "lang_ai_key_replace": "Substituir",
+  "lang_amount": "Valor",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "Preço de venda",
+  "lang_int_voice_key": "Chave API",
+  "lang_int_voice_key_saved": "Existe uma chave guardada. Escreva uma nova para a substituir.",
+  "lang_int_voice_language": "Idioma",
+  "lang_print": "Impressão",
+  "lang_receipt_text_size": "Tamanho do texto",
+  "lang_show_matching": "Mostrar"
 }

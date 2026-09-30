@@ -103,6 +103,7 @@
     "branch_preferences": "per-branch preferences set in one place do not reach the other",
     "transaction": "customer credit transactions on the till are unknown to the cloud",
     "payment": "payment records on the till are unknown to the cloud",
-    "purchase_orders": "a purchase order raised on the till is unknown to the cloud, and the reverse; receivings already sync"
+    "purchase_orders": "a purchase order raised on the till is unknown to the cloud, and the reverse; receivings already sync",
+    "billing_outlets": "Outlet configuration is currently scoped to its API database; cloud-to-desktop configuration sync is not yet implemented. Sales retain outlet snapshots."
   }
 }

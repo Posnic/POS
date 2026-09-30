@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "Menunggu pemilik",
   "lang_changes_not_saved": "Perubahan tidak disimpan.",
   "lang_continue": "Lanjutkan",
-  "lang_reason": "Alasan"
+  "lang_reason": "Alasan",
+  "lang_ai_assistant_how_title": "Cara kerjanya",
+  "lang_ai_key_remove": "Hapus",
+  "lang_ai_key_remove_q": "Hapus kunci yang tersimpan?",
+  "lang_ai_key_replace": "Ganti",
+  "lang_amount": "Jumlah",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "Harga jual",
+  "lang_int_voice_key": "Kunci API",
+  "lang_int_voice_key_saved": "Sebuah kunci sudah tersimpan. Ketik yang baru untuk menggantinya.",
+  "lang_int_voice_language": "Bahasa",
+  "lang_print": "Cetak",
+  "lang_receipt_text_size": "Ukuran teks",
+  "lang_show_matching": "Tampilkan"
 }

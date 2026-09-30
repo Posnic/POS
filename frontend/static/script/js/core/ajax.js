@@ -80,7 +80,7 @@ PosnicPro.request = function (params, callback, failure = null) {
     {
         // JWT Token support for Electron cross-origin requests
         var headers = {};
-        var activeBranch = PosnicPro.local.get('branch_id_set');
+        var activeBranch = PosnicPro.local && PosnicPro.local.get('branch_id_set');
         if (activeBranch && params.url !== 'users/changeBranch') headers['X-Branch-Id'] = activeBranch;
         if (typeof billingWindowId !== 'undefined' && billingWindowId && params.url === 'users/changeBranch') {
             window.alert('This window belongs to one branch. Open another outlet from the main window.'); return;

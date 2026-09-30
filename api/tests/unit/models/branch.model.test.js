@@ -907,8 +907,8 @@ describe('BranchModel.getBranchById', () => {
   });
 
   test('returns status:false when branch not found', async () => {
-    mockModel.findById.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
-    const r = await bm.getBranchById(validId());
+    mockModel.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+    const r = await bm.getBranchById(validId(), { license: validObjId() });
     expect(r.status).toBe(false);
     expect(r.message).toBe('Branch not found');
   });
@@ -916,8 +916,8 @@ describe('BranchModel.getBranchById', () => {
   test('returns status:true with simplified document', async () => {
     const id = validObjId();
     const doc = { _id: id, branch_name: 'Branch A', created_date: new Date() };
-    mockModel.findById.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
-    const r = await bm.getBranchById(id.toString());
+    mockModel.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+    const r = await bm.getBranchById(id.toString(), { license: validObjId() });
     expect(r.status).toBe(true);
     expect(r.data._id).toBe(id.toString());
   });
@@ -925,8 +925,8 @@ describe('BranchModel.getBranchById', () => {
   test('simplifies ObjectId to string in returned data', async () => {
     const id = validObjId();
     const doc = { _id: id, branch_name: 'X' };
-    mockModel.findById.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
-    const r = await bm.getBranchById(id.toString());
+    mockModel.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(doc) });
+    const r = await bm.getBranchById(id.toString(), { license: validObjId() });
     expect(typeof r.data._id).toBe('string');
   });
 });
@@ -1011,6 +1011,9 @@ describe('BranchModel.createBranch', () => {
 // 17. updateBranch
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('BranchModel.updateBranch', () => {
+  beforeEach(() => {
+    mockModel.findOneAndUpdate = jest.fn();
+  });
   const user = { _id: validObjId(), username: 'admin', license: validObjId() };
   const data = {
     name: 'Updated Branch',
@@ -1034,7 +1037,7 @@ describe('BranchModel.updateBranch', () => {
   });
 
   test('returns status:false when branch not found after update', async () => {
-    mockModel.findByIdAndUpdate.mockReturnValue({
+    mockModel.findOneAndUpdate.mockReturnValue({
       lean: jest.fn().mockResolvedValue(null),
     });
     const r = await bm.updateBranch(validId(), data, user);
@@ -1045,7 +1048,7 @@ describe('BranchModel.updateBranch', () => {
   test('returns status:true with message on success', async () => {
     const id = validObjId();
     const doc = { _id: id, branch_name: 'Updated Branch' };
-    mockModel.findByIdAndUpdate.mockReturnValue({
+    mockModel.findOneAndUpdate.mockReturnValue({
       lean: jest.fn().mockResolvedValue(doc),
     });
     mockUserUpdateMany.mockResolvedValue({});
@@ -1057,7 +1060,7 @@ describe('BranchModel.updateBranch', () => {
 
   test('calls updateBranchNameInCollections on success', async () => {
     const id = validObjId();
-    mockModel.findByIdAndUpdate.mockReturnValue({
+    mockModel.findOneAndUpdate.mockReturnValue({
       lean: jest.fn().mockResolvedValue({ _id: id, branch_name: 'Updated' }),
     });
     mockUserUpdateMany.mockResolvedValue({});
@@ -1069,14 +1072,14 @@ describe('BranchModel.updateBranch', () => {
   test('an existing register keeps its register_id across edits; new names get new ids', async () => {
     const id = validObjId();
     const keptId = validObjId();
-    mockModel.findById = jest.fn().mockReturnValue({
+    mockModel.findOne = jest.fn().mockReturnValue({
       select: jest.fn().mockReturnValue({
         lean: jest.fn().mockResolvedValue({
           register: [{ register_id: keptId, register_name: 'Counter 1' }],
         }),
       }),
     });
-    mockModel.findByIdAndUpdate.mockReturnValue({
+    mockModel.findOneAndUpdate.mockReturnValue({
       lean: jest.fn().mockResolvedValue({ _id: id, branch_name: 'Updated' }),
     });
     mockUserUpdateMany.mockResolvedValue({});
@@ -1084,7 +1087,7 @@ describe('BranchModel.updateBranch', () => {
 
     await bm.updateBranch(id.toString(), { ...data, register: ['Counter 1', 'Counter 2'] }, user);
 
-    const saved = mockModel.findByIdAndUpdate.mock.calls[0][1].$set.register;
+    const saved = mockModel.findOneAndUpdate.mock.calls[0][1].$set.register;
     expect(saved).toHaveLength(2);
     expect(String(saved[0].register_id)).toBe(String(keptId)); // preserved
     expect(saved[0].register_name).toBe('Counter 1');
@@ -1093,7 +1096,7 @@ describe('BranchModel.updateBranch', () => {
   });
 
   test('returns status:false when an exception is thrown', async () => {
-    mockModel.findByIdAndUpdate.mockImplementation(() => {
+    mockModel.findOneAndUpdate.mockImplementation(() => {
       throw new Error('fail');
     });
     const r = await bm.updateBranch(validId(), data, user);

@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "मालिकको प्रतीक्षा गर्दै",
   "lang_changes_not_saved": "परिवर्तनहरू सेभ भएनन्।",
   "lang_continue": "जारी राख्नुहोस्",
-  "lang_reason": "कारण"
+  "lang_reason": "कारण",
+  "lang_ai_assistant_how_title": "यो कसरी काम गर्छ",
+  "lang_ai_key_remove": "हटाउनुहोस्",
+  "lang_ai_key_remove_q": "सुरक्षित कुञ्जी हटाउने?",
+  "lang_ai_key_replace": "प्रतिस्थापन गर्नुहोस्",
+  "lang_amount": "रकम",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "बिक्री मूल्य",
+  "lang_int_voice_key": "एपीआई कुञ्जी",
+  "lang_int_voice_key_saved": "एउटा कुञ्जी सुरक्षित छ। बदल्न नयाँ टाइप गर्नुहोस्।",
+  "lang_int_voice_language": "भाषा",
+  "lang_print": "प्रिन्ट",
+  "lang_receipt_text_size": "अक्षरको आकार",
+  "lang_show_matching": "देखाउनुहोस्"
 }

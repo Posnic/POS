@@ -416,7 +416,7 @@ describe('VariantsService (singleton)', () => {
     test('calls repository.findById with the provided id', async () => {
       repository.findById.mockResolvedValue(mockVariantDoc);
       await service.getVariantById(FAKE_ID);
-      expect(repository.findById).toHaveBeenCalledWith(FAKE_ID);
+      expect(repository.findById).toHaveBeenCalledWith(FAKE_ID, undefined);
     });
 
     test('returns status:false on repository throw', async () => {

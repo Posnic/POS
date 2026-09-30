@@ -98,5 +98,9 @@
   "lang_walk_in_customer_click_to_choose_or_add": "미등록 고객. 클릭하여 선택하거나 추가",
   "lang_changes_not_saved": "변경 사항이 저장되지 않았습니다.",
   "lang_continue": "계속",
-  "lang_reason": "사유"
+  "lang_reason": "사유",
+  "lang_business_discount": "할인",
+  "lang_cash": "현금",
+  "lang_print": "인쇄",
+  "lang_stock_adjust_reason": "사유"
 }

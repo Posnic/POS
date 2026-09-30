@@ -150,7 +150,19 @@
         }
         top.append(table, node('span', 'arrival', time(ticket.placedAt)));
         card.append(top);
-        if (ticket.outlet || ticket.roomReference) card.append(node('div', 'note', [ticket.outlet, ticket.roomReference ? 'Room / reference: ' + ticket.roomReference : ''].filter(Boolean).join(' · ')));
+        if (ticket.outlet || ticket.roomReference)
+          card.append(
+            node(
+              'div',
+              'note',
+              [
+                ticket.outlet,
+                ticket.roomReference ? 'Room / reference: ' + ticket.roomReference : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')
+            )
+          );
         const items = node('ul', 'items');
         for (const item of ticket.items) {
           const li = node('li');
@@ -186,10 +198,20 @@
             ready = item.ready ?? (stage === 'ready' ? total : 0);
           const collected = item.collected || 0,
             served = item.served || 0;
-          const cooking = Math.max(0, total - ready), waiting = Math.max(0, ready - collected), picked = Math.max(0, collected - served);
+          const cooking = Math.max(0, total - ready),
+            waiting = Math.max(0, ready - collected),
+            picked = Math.max(0, collected - served);
           const progress = node('div', 'item-progress');
-          if (cooking) progress.append(node('span', 'progress-cooking', `${cooking} ${stage === 'new' ? 'To prepare' : 'Cooking'}`));
-          if (waiting) progress.append(node('span', 'progress-ready', `✓ ${waiting} Ready to collect`));
+          if (cooking)
+            progress.append(
+              node(
+                'span',
+                'progress-cooking',
+                `${cooking} ${stage === 'new' ? 'To prepare' : 'Cooking'}`
+              )
+            );
+          if (waiting)
+            progress.append(node('span', 'progress-ready', `✓ ${waiting} Ready to collect`));
           if (picked) progress.append(node('span', 'progress-picked', `↗ ${picked} Picked up`));
           li.append(progress);
           if (!cooking) li.classList.add(waiting ? 'line-ready' : 'line-picked');

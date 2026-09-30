@@ -95,5 +95,8 @@
   "lang_total_title": "Total",
   "lang_yes": "Da",
   "lang_ai_describe_hint": "Generează o descriere pe baza detaliilor articolului",
-  "lang_walk_in_customer_click_to_choose_or_add": "Client neînregistrat. Apasă pentru a selecta sau adăuga"
+  "lang_walk_in_customer_click_to_choose_or_add": "Client neînregistrat. Apasă pentru a selecta sau adăuga",
+  "lang_business_discount": "Reducere",
+  "lang_cash": "Numerar",
+  "lang_print": "Tipărește"
 }

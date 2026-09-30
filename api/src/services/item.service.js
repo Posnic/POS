@@ -863,18 +863,18 @@ class ItemService {
     }
   }
 
-  async quickPatch(id, fields) {
+  async quickPatch(id, fields, context) {
     try {
-      return await this.repository.quickPatch(id, fields || {});
+      return await this.repository.quickPatch(id, fields || {}, context);
     } catch (error) {
       console.error('Error in ItemService.quickPatch:', error);
       return { status: false, data: null, message: error.message };
     }
   }
 
-  async updateItemQuantity(id, value) {
+  async updateItemQuantity(id, value, context) {
     try {
-      const result = await this.repository.updateItemQuantity(id, value);
+      const result = await this.repository.updateItemQuantity(id, value, context);
       return result;
     } catch (error) {
       console.error('Error in ItemService.updateItemQuantity:', error);

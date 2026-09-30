@@ -42,6 +42,10 @@
       "description": "Mounted at /base"
     },
     {
+      "name": "Billing outlets",
+      "description": "Mounted at /billing-outlets"
+    },
+    {
       "name": "Branch payments",
       "description": "Mounted at /branch-payments"
     },
@@ -902,6 +906,120 @@
         "operationId": "get_base_getDefaultSuggest",
         "tags": [
           "Base"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/billing-outlets": {
+      "get": {
+        "summary": "undefined",
+        "operationId": "get_billing_outlets",
+        "tags": [
+          "Billing outlets"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "id",
+        "operationId": "post_billing_outlets",
+        "tags": [
+          "Billing outlets"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/billing-outlets/staff": {
+      "get": {
+        "summary": "name",
+        "operationId": "get_billing_outlets_staff",
+        "tags": [
+          "Billing outlets"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/billing-outlets/items": {
+      "get": {
+        "summary": "name",
+        "operationId": "get_billing_outlets_items",
+        "tags": [
+          "Billing outlets"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/billing-outlets/summary": {
+      "get": {
+        "summary": "day",
+        "operationId": "get_billing_outlets_summary",
+        "tags": [
+          "Billing outlets"
         ],
         "responses": {
           "200": {

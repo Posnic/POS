@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "ഉടമയ്ക്കായി കാത്തിരിക്കുന്നു",
   "lang_changes_not_saved": "മാറ്റങ്ങൾ സേവ് ചെയ്തിട്ടില്ല.",
   "lang_continue": "തുടരുക",
-  "lang_reason": "കാരണം"
+  "lang_reason": "കാരണം",
+  "lang_ai_assistant_how_title": "ഇത് എങ്ങനെ പ്രവർത്തിക്കുന്നു",
+  "lang_ai_key_remove": "നീക്കം ചെയ്യുക",
+  "lang_ai_key_remove_q": "സൂക്ഷിച്ച കീ നീക്കണോ?",
+  "lang_ai_key_replace": "മാറ്റിവെക്കുക",
+  "lang_amount": "തുക",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "വിൽപ്പന വില",
+  "lang_int_voice_key": "API കീ",
+  "lang_int_voice_key_saved": "ഒരു കീ സംരക്ഷിച്ചിട്ടുണ്ട്. മാറ്റാൻ പുതിയത് ടൈപ്പ് ചെയ്യുക.",
+  "lang_int_voice_language": "ഭാഷ",
+  "lang_print": "അച്ചടി",
+  "lang_receipt_text_size": "അക്ഷരങ്ങളുടെ വലുപ്പം",
+  "lang_show_matching": "കാണിക്കുക"
 }

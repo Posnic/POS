@@ -95,5 +95,8 @@
   "lang_total_title": "Razem",
   "lang_yes": "Tak",
   "lang_ai_describe_hint": "Utwórz opis na podstawie danych produktu",
-  "lang_walk_in_customer_click_to_choose_or_add": "Klient bez rejestracji. Kliknij, aby wybrać lub dodać"
+  "lang_walk_in_customer_click_to_choose_or_add": "Klient bez rejestracji. Kliknij, aby wybrać lub dodać",
+  "lang_business_discount": "Rabat",
+  "lang_cash": "Gotówka",
+  "lang_print": "Drukuj"
 }

@@ -194,9 +194,9 @@ class VariantsService {
    * Get single variant by ID
    * Matches PHP: getOne()
    */
-  async getVariantById(id) {
+  async getVariantById(id, scope) {
     try {
-      const variant = await variantsRepository.findById(id);
+      const variant = await variantsRepository.findById(id, scope);
 
       if (!variant) {
         return {

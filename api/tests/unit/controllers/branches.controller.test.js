@@ -285,7 +285,7 @@ describe('BranchesController — getOne', () => {
     const req = mockReq({ params: { id: 'b1' } });
     const res = mockRes();
     await ctrl.getOne(req, res);
-    expect(bm.getBranchById).toHaveBeenCalledWith('b1');
+    expect(bm.getBranchById).toHaveBeenCalledWith('b1', req.user);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 

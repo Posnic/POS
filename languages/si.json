@@ -3699,5 +3699,18 @@
   "lang_business_waiting_owner": "හිමිකරුවෙකු බලාපොරොත්තුවෙන්",
   "lang_changes_not_saved": "වෙනස්කම් සුරැකුණේ නැත.",
   "lang_continue": "ඉදිරියට",
-  "lang_reason": "හේතුව"
+  "lang_reason": "හේතුව",
+  "lang_ai_assistant_how_title": "එය ක්‍රියා කරන ආකාරය",
+  "lang_ai_key_remove": "ඉවත් කරන්න",
+  "lang_ai_key_remove_q": "සුරැකි යතුර ඉවත් කරන්නද?",
+  "lang_ai_key_replace": "වෙනුවට යොදන්න",
+  "lang_amount": "මුදල",
+  "lang_channel_whatsapp": "WhatsApp",
+  "lang_fg_selling": "විකුණුම් මිල",
+  "lang_int_voice_key": "API යතුර",
+  "lang_int_voice_key_saved": "යතුරක් සුරැකී ඇත. ප්‍රතිස්ථාපනය කිරීමට නවයක් ටයිප් කරන්න.",
+  "lang_int_voice_language": "භාෂාව",
+  "lang_print": "මුද්‍රණය",
+  "lang_receipt_text_size": "අකුරු ප්‍රමාණය",
+  "lang_show_matching": "පෙන්වන්න"
 }

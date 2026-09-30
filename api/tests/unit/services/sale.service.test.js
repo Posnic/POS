@@ -547,38 +547,79 @@ describe('SalesService', () => {
     });
 
     test('outlet checkout persists prices, service charge, tax and actual payable together', async () => {
-      const outlet = { id: '000000000000000000000003', name: 'Bar', markup_percent: 25, service_percent: 10, service_tax_percent: 5, prices: [] };
-      const spy = jest.spyOn(require('../../../src/services/billing-outlets'), 'resolve').mockResolvedValue(outlet);
+      const outlet = {
+        id: '000000000000000000000003',
+        name: 'Bar',
+        markup_percent: 25,
+        service_percent: 10,
+        service_tax_percent: 5,
+        prices: [],
+      };
+      const spy = jest
+        .spyOn(require('../../../src/services/billing-outlets'), 'resolve')
+        .mockResolvedValue(outlet);
       try {
-        const result = await salesService.processSale(makeSaleData({ outlet_id: outlet.id }), '', 'Add', makeContext());
+        const result = await salesService.processSale(
+          makeSaleData({ outlet_id: outlet.id }),
+          '',
+          'Add',
+          makeContext()
+        );
         expect(result.status).toBe(true);
-        expect(salesRepository.create).toHaveBeenCalledWith(expect.objectContaining({ outlet_id: outlet.id,
-          sales_total: 276.25, items_total: 276.25, partial_balance: 276.25,
-          charges: [expect.objectContaining({ source: 'outlet', amount: 25, tax_amount: 1.25 })],
-          items: [expect.objectContaining({ item_price: 125, item_quantity: 2 })] }));
-      } finally { spy.mockRestore(); }
+        expect(salesRepository.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            outlet_id: outlet.id,
+            sales_total: 276.25,
+            items_total: 276.25,
+            partial_balance: 276.25,
+            charges: [expect.objectContaining({ source: 'outlet', amount: 25, tax_amount: 1.25 })],
+            items: [expect.objectContaining({ item_price: 125, item_quantity: 2 })],
+          })
+        );
+      } finally {
+        spy.mockRestore();
+      }
     });
 
     test('a denied outlet cannot create a bill, allocate stock or submit a kitchen print', async () => {
-      const spy = jest.spyOn(require('../../../src/services/billing-outlets'), 'resolve').mockRejectedValue(new Error('Outlet access denied'));
+      const spy = jest
+        .spyOn(require('../../../src/services/billing-outlets'), 'resolve')
+        .mockRejectedValue(new Error('Outlet access denied'));
       try {
         const result = await salesService.processSale(makeSaleData(), '', 'Add', makeContext());
         expect(result).toMatchObject({ status: false, message: 'Outlet access denied' });
         expect(salesRepository.create).not.toHaveBeenCalled();
         expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
         expect(kotNotifications).toHaveLength(0);
-      } finally { spy.mockRestore(); }
+      } finally {
+        spy.mockRestore();
+      }
     });
 
     test('a mismatch with the displayed outlet total stops before saving or deducting stock', async () => {
-      const spy = jest.spyOn(require('../../../src/services/billing-outlets'), 'resolve').mockResolvedValue({ id: '000000000000000000000003', name: 'Bar', markup_percent: 25, service_percent: 10, service_tax_percent: 0 });
+      const spy = jest
+        .spyOn(require('../../../src/services/billing-outlets'), 'resolve')
+        .mockResolvedValue({
+          id: '000000000000000000000003',
+          name: 'Bar',
+          markup_percent: 25,
+          service_percent: 10,
+          service_tax_percent: 0,
+        });
       try {
-        const result = await salesService.processSale(makeSaleData({ outlet_expected_total: 200 }), '', 'Add', makeContext());
+        const result = await salesService.processSale(
+          makeSaleData({ outlet_expected_total: 200 }),
+          '',
+          'Add',
+          makeContext()
+        );
         expect(result.status).toBe(false);
         expect(result.message).toMatch(/differs from the displayed bill/);
         expect(salesRepository.create).not.toHaveBeenCalled();
         expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
-      } finally { spy.mockRestore(); }
+      } finally {
+        spy.mockRestore();
+      }
     });
 
     test('returns status true and sale data on successful create', async () => {

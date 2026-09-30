@@ -115,7 +115,7 @@ to be trusted with a shop's takings should be readable about its failures.
 **Security vulnerabilities:** [SECURITY.md](../.github/SECURITY.md) — privately, never a
 public issue. Acknowledged within 3 working days.
 
-**Suspected breach of your data:** security@posnic.com, marked urgent.
+**Suspected breach of your data:** info@posnic.com, marked urgent.
 
 **Service problems:** info@posnic.com.
 
