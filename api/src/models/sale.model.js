@@ -313,6 +313,9 @@ const saleSchema = new mongoose.Schema(
     },
     kitchen_closed: { type: Boolean, default: false },
     kitchen_required: { type: Boolean, default: false },
+    floor_lifecycle: { type: Boolean, default: false },
+    floor_closed_at: { type: Date },
+    floor_closed_by: { type: String },
     sale_process: {
       type: String,
       enum: SALE_PROCESS_VALUES,

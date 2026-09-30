@@ -5,9 +5,7 @@ const details = require('../utils/table-details');
 const active = (c) => ({
   branch_id: c.branchId,
   license: c.license,
-  sale_process: 'KOT',
-  payment_status: { $nin: ['Cancelled'] },
-  order_state: { $nin: ['rejected', 'cancelled'] },
+  ...require('../helpers/floor-eligibility').floorEligibility(),
 });
 async function scope(req, manage = false) {
   if (!req.user || !allowed(req.user, manage ? 'settings' : 'sales'))
@@ -20,6 +18,10 @@ function view(row, orders = []) {
     tableorder_value: row.tableorder_value,
     ...details.view(row),
     version: row.captain_table_version || 0,
+    closing:
+      row.floor_close && !row.floor_close.completed
+        ? { request_id: row.floor_close.id, orderIds: row.floor_close.orders }
+        : null,
     status: orders.length ? 'occupied' : row.service_state || 'available',
     orders: orders.map((o) => ({
       id: String(o._id),
@@ -150,6 +152,8 @@ async function state(req) {
   const filter = { _id: new ObjectId(body.id), branch_id: c.branchId, license: c.license };
   const row = await req.db.collection('tableorder').findOne(filter);
   if (!row) fail('Table not found.', 404);
+  if (row.floor_close && !row.floor_close.completed)
+    fail('Table changed. Refresh and try again.', 409);
   if (!Number.isSafeInteger(body.version) || body.version !== (row.captain_table_version || 0))
     fail('Table changed. Refresh and try again.', 409);
   if (
@@ -172,4 +176,129 @@ async function state(req) {
   if (!changed.matchedCount) fail('Table changed. Refresh and try again.', 409);
   return view({ ...row, service_state: body.status, captain_table_version: body.version + 1 });
 }
-module.exports = { list, update, state };
+async function close(req) {
+  const c = await scope(req),
+    body = req.body || {};
+  if (
+    !ObjectId.isValid(String(body.id)) ||
+    typeof body.request_id !== 'string' ||
+    !/^[a-zA-Z0-9-]{16,80}$/.test(body.request_id) ||
+    !Array.isArray(body.orderIds) ||
+    !body.orderIds.length ||
+    body.orderIds.length > 200 ||
+    body.orderIds.some((id) => !ObjectId.isValid(String(id)))
+  )
+    fail('Choose the orders to close.');
+  const ids = [...new Set(body.orderIds.map(String))].sort();
+  const tables = req.db.collection('tableorder'),
+    sales = req.db.collection('sales');
+  const filter = { _id: new ObjectId(body.id), branch_id: c.branchId, license: c.license };
+  let table = await tables.findOne(filter);
+  if (!table) fail('Table not found.', 404);
+  let operation = table.floor_close;
+  if (operation?.id === body.request_id) {
+    if (operation.failed) fail('Table changed. Refresh and try again.', 409);
+    if (JSON.stringify(operation.orders) !== JSON.stringify(ids))
+      fail('Table changed. Refresh and try again.', 409);
+  } else {
+    if (operation && !operation.completed) fail('Table changed. Refresh and try again.', 409);
+    if (!Number.isSafeInteger(body.version) || body.version !== (table.captain_table_version || 0))
+      fail('Table changed. Refresh and try again.', 409);
+    const orders = await sales
+      .find({ ...active(c), table_number: table.tableorder_value })
+      .toArray();
+    if (JSON.stringify(orders.map((order) => String(order._id)).sort()) !== JSON.stringify(ids))
+      fail('Table changed. Refresh and try again.', 409);
+    if (
+      orders.some(
+        (order) =>
+          order.payment_status !== 'Paid' ||
+          Number(order.payment_pending || 0) > 0 ||
+          Number(order.balance || 0) > 0
+      )
+    )
+      fail('Record the remaining payment first.', 409);
+    operation = {
+      id: body.request_id,
+      orders: ids,
+      at: new Date(),
+      actor: String(req.user._id),
+      completed: false,
+    };
+    const claimed = await tables.updateOne(
+      {
+        ...filter,
+        captain_table_version:
+          table.captain_table_version === undefined
+            ? { $exists: false }
+            : table.captain_table_version,
+      },
+      {
+        $set: { floor_close: operation, service_state: 'cleaning', updated_date: new Date() },
+        $inc: { captain_table_version: 1 },
+      }
+    );
+    if (!claimed.matchedCount) fail('Table changed. Refresh and try again.', 409);
+  }
+  if (!operation.completed) {
+    // The saved intent survives a lost reply or an interrupted projection.
+    // Payment and stock records are never changed by floor closure.
+    await sales.updateMany(
+      {
+        branch_id: c.branchId,
+        license: c.license,
+        _id: { $in: ids.map((id) => new ObjectId(id)) },
+        table_number: table.tableorder_value,
+        payment_status: 'Paid',
+        floor_closed_at: { $exists: false },
+      },
+      {
+        $set: {
+          floor_closed_at: operation.at,
+          floor_closed_by: operation.actor,
+          kitchen_closed: true,
+          updated_date: new Date(),
+        },
+      }
+    );
+    const remaining = await sales.countDocuments({
+      branch_id: c.branchId,
+      license: c.license,
+      _id: { $in: ids.map((id) => new ObjectId(id)) },
+      floor_closed_at: { $exists: false },
+    });
+    if (remaining) {
+      await tables.updateOne(
+        { ...filter, 'floor_close.id': body.request_id },
+        {
+          $set: {
+            'floor_close.completed': true,
+            'floor_close.failed': true,
+            service_state: 'available',
+            updated_date: new Date(),
+          },
+        }
+      );
+      fail('Table changed. Refresh and try again.', 409);
+    }
+    await tables.updateOne(
+      { ...filter, 'floor_close.id': body.request_id },
+      { $set: { 'floor_close.completed': true, updated_date: new Date() } }
+    );
+    for (const id of ids) {
+      try {
+        require('../sync/outbox').enqueue({
+          collection: 'sales',
+          documentId: new ObjectId(id),
+          reason: 'sale',
+        });
+      } catch {
+        /* Periodic sync also discovers updated rows. */
+      }
+    }
+  }
+  table = await tables.findOne(filter);
+  const open = await sales.find({ ...active(c), table_number: table.tableorder_value }).toArray();
+  return view(table, open);
+}
+module.exports = { list, update, state, close };

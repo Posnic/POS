@@ -4000,9 +4000,7 @@ class SettingModel extends BaseModel {
             branch_id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
             table_number: previous.tableorder_value,
-            sale_process: 'KOT',
-            payment_status: { $nin: ['Cancelled'] },
-            order_state: { $nin: ['rejected', 'cancelled'] },
+            ...require('../helpers/floor-eligibility').floorEligibility(),
           },
           { projection: { person_count: 1 } }
         )

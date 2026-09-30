@@ -6975,6 +6975,8 @@ class SalesRepository {
           $set: {
             partial_balance: parseFloat(saleData.amount) + parseFloat(saleData.paidamount || 0),
             payment_status: 'Paid',
+            floor_lifecycle:
+              saleDetails.floor_lifecycle === true || saleDetails.sale_process === 'KOT',
             kitchen_required:
               saleDetails.kitchen_required === true || saleDetails.sale_process === 'KOT',
             payment_pending: 0.0,
@@ -8408,8 +8410,7 @@ class SalesRepository {
       if (runsTableService && openTableLimit > 0 && wantsTable) {
         const openNow = await db.collection('sales').countDocuments({
           branch_id: branchObjectId,
-          sale_process: 'KOT',
-          payment_status: 'Unpaid',
+          ...require('../helpers/floor-eligibility').floorEligibility(),
           table_number: wantsTable,
         });
         if (openNow >= openTableLimit) {
@@ -8689,6 +8690,7 @@ class SalesRepository {
         license: branchDoc.license || BaseModel.license,
         sales_id: salesId,
         kitchen_required: true,
+        floor_lifecycle: true,
         sale_process: 'KOT',
         /*
          * A KOT IS NOT PAID. It is a ticket for a kitchen.
@@ -10645,6 +10647,7 @@ class SalesRepository {
         items: finalItems,
         changes: existingChanges,
         kitchen_required: true,
+        floor_lifecycle: true,
         kitchen_closed: false,
         sales_sub_total: baseSubtotal,
         items_subtotal: baseSubtotal,

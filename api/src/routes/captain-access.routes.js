@@ -33,6 +33,7 @@ const tables = require('../services/captain-tables');
 router.get('/tables', wrap(tables.list));
 router.post('/tables', limit, wrap(tables.update));
 router.post('/tables/state', limit, wrap(tables.state));
+router.post('/tables/close', limit, wrap(tables.close));
 
 router.post('/profile', limit, wrap(profile.update));
 router.post('/password', rateLimit({ windowMs: 15 * 60000, limit: 8 }), wrap(profile.password));

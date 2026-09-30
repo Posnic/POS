@@ -667,6 +667,7 @@ describe('SalesService', () => {
       expect(Number(saved.payment_pending)).toBe(0);
       /* Still a table order in history; the STATUS is what clears the floor. */
       expect(saved.sale_process).toBe('KOT');
+      expect(saved.floor_lifecycle).toBe(true);
       expect(kotNotifications).toEqual([]);
     });
 
@@ -966,6 +967,15 @@ describe('SalesService', () => {
       expect(result.status).toBe(true);
       expect(result.data.has_takeaway).toBe(true);
       expect(result.data.tables).toEqual(['1', '3']);
+    });
+
+    test('fully paid floor groups carry a close action but mixed groups do not', async () => {
+      salesRepository.aggregate.mockResolvedValue([
+        { dine_type: 'Dine-in', table_number: '1', orders: 2, paidOrders: 2 },
+        { dine_type: 'Dine-in', table_number: '2', orders: 2, paidOrders: 1 },
+      ]);
+      const result = await salesService.getTablesWithActiveOrders(BRANCH_ID);
+      expect(result.data.table_details.map((table) => table.awaiting_close)).toEqual([true, false]);
     });
 
     test('returns unique sorted tables', async () => {

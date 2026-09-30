@@ -992,6 +992,10 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       date: mongo_date,
       sale_process: saleProcess,
       // Only the server's KOT path enrolls kitchen work; caller flags are ignored.
+      floor_lifecycle:
+        existingSale?.floor_lifecycle === true ||
+        (!existingSale && saleProcess === 'KOT') ||
+        (existingSale?.sale_process === 'KOT' && existingSale.payment_status !== 'Paid'),
       kitchen_required:
         existingSale?.kitchen_required === true ||
         (!existingSale && saleProcess === 'KOT') ||
@@ -1686,8 +1690,7 @@ const getTablesWithActiveOrders = async (branchId) => {
       {
         $match: {
           branch_id: branchObjectId,
-          sale_process: 'KOT',
-          payment_status: 'Unpaid',
+          ...require('../helpers/floor-eligibility').floorEligibility(),
         },
       },
       {
@@ -1710,6 +1713,7 @@ const getTablesWithActiveOrders = async (branchId) => {
            * that was happening anyway - no second query and no extra index.
            */
           orders: { $sum: 1 },
+          paidOrders: { $sum: { $cond: [{ $eq: ['$payment_status', 'Paid'] }, 1, 0] } },
           since: { $min: { $ifNull: ['$created_date', '$date'] } },
           amount: { $sum: { $ifNull: ['$sales_total', 0] } },
         },
@@ -1720,6 +1724,7 @@ const getTablesWithActiveOrders = async (branchId) => {
           table_number: '$_id.table_number',
           dine_type: '$_id.dine_type',
           orders: 1,
+          paidOrders: 1,
           since: 1,
           amount: 1,
         },
@@ -1776,7 +1781,12 @@ const getTablesWithActiveOrders = async (branchId) => {
          most recent one. */
       const since =
         was && was.since && (!res.since || was.since <= res.since) ? was.since : res.since || null;
-      detail.set(key, { orders, amount, since });
+      detail.set(key, {
+        orders,
+        amount,
+        since,
+        paidOrders: (was?.paidOrders || 0) + (Number(res.paidOrders) || 0),
+      });
     };
 
     results.forEach((res) => {
@@ -1812,6 +1822,7 @@ const getTablesWithActiveOrders = async (branchId) => {
       return {
         table_number: name,
         orders: row.orders || 0,
+        awaiting_close: row.orders > 0 && row.paidOrders === row.orders,
         /* ISO, so a phone in a different timezone reads the same instant. */
         since: row.since ? new Date(row.since).toISOString() : null,
         amount: Number(row.amount) || 0,
