@@ -599,6 +599,7 @@
                 + '<th class="text-right sl-col-items"><lang class="lang_itemdetail_title">Items</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
                 + '<th class="text-center"><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
+                var digits = Number.isInteger(r.currencyDigits) && r.currencyDigits >= 0 && r.currencyDigits <= 4 ? r.currencyDigits : 2;
                 var unpaid = String(r.payment_status || '').toLowerCase() === 'unpaid';
                 var proc = String(r.sale_process || '');
                 var pill = /return/i.test(proc)
@@ -612,7 +613,7 @@
                     + '<td>' + esc(r.customer_name || 'Walk-in') + '</td>'
                     + '<td class="sl-col-date">' + esc(r.string_date ? PosnicPro.convertDate(r.string_date) : (r.date ? String(r.date).slice(0, 10) : '-')) + '</td>'
                     + '<td class="text-right sl-col-items">' + esc(r.number_of_items != null ? r.number_of_items : (r.items || []).length) + '</td>'
-                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.sales_total) || 0).toFixed(2) + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.sales_total) || 0).toFixed(digits) + '</td>'
                     + '<td class="text-center">' + pill + '</td>'
                     + '</tr>';
             });

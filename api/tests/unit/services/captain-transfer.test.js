@@ -874,6 +874,14 @@ test.each([
   expect(settled.payment_status).toBe('Paid');expect(minor(settled.paid_amount)).toBe(bill.totalMinor);
   expect(settled.items).toEqual(check.items);
   expect(require('../../../src/helpers/bill-payload').buildBillPayload(settled,shop)).toEqual(payload);
+  const listed=require('../../../src/helpers/sales.helper').formatSaleListEntry(settled);
+  expect(listed.currencyCode).toBe(currencyCode);expect(listed.currencyDigits).toBe(policy.currencyDigits);
+  expect(minor(listed.sales_total)).toBe(bill.totalMinor);
+  expect(minor(listed.sales_sub_total)).toBe(minor(payload.subTotal));
+  expect(minor(listed.tax)).toBe(taxes);expect(minor(listed.discount)).toBe(minor(payload.discount));
+  expect(minor(listed.round_off)).toBe(minor(payload.roundOff));
+  expect(minor(listed.items_total)+minor(listed.round_off)).toBe(bill.totalMinor);
+
   expect((await require('../../../src/services/captain-bill').read(request)).dueMinor).toBe(0);
  }
  expect(sum).toEqual({base:money.toMinor(base,policy),tax:money.toMinor(tax,policy),discount:money.toMinor(discount,policy),total:money.toMinor(total,policy),round:money.toMinor(round,policy)});
