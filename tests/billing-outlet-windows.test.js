@@ -58,6 +58,10 @@ test('window-scoped branch and register preferences do not overwrite the shared 
   w.eval(source.slice(start, end));
   assert.equal(w.PosnicPro.local.get('branch_id_set'), id(9));
   assert.equal(w.PosnicPro.local.get('cash_register_id'), null);
+  w.PosnicPro.local.setVolatile('branchphone', '+919000000121');
+  assert.equal(w.PosnicPro.local.get('branchphone'), '+919000000121');
+  assert.equal(w.localStorage.getItem('branchphone'), null);
+  assert.equal(w.sessionStorage.length, 0);
   w.PosnicPro.local.set('cash_register_id', 'bar-register'); w.PosnicPro.local.set('branch_id_set', id(7));
   assert.equal(w.localStorage.getItem('cash_register_id'), 'main-register');
   assert.equal(w.PosnicPro.local.get('cash_register_id'), 'bar-register');

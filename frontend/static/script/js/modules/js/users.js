@@ -1386,7 +1386,7 @@ PosnicPro.users = {
                         PosnicPro.local.set('usertype', response.data['usertype']);
                         PosnicPro.local.set('branchimage', response.data['branch_image']);
                         PosnicPro.local.set('branchname', response.data['branch_name']);
-                        PosnicPro.local.set('branchphone', response.data['branch_phone']);
+                        PosnicPro.local.setVolatile('branchphone', response.data['branch_phone']);
                         PosnicPro.local.set('branchemail', response.data['branch_email']);
                         PosnicPro.local.set('branchaddress', response.data['branch_address']);
                         PosnicPro.local.set('timezone', response.data['branch_timezone']);
@@ -1520,7 +1520,7 @@ PosnicPro.users = {
                 PosnicPro.local.set('usertype', '');
                 PosnicPro.local.set('branchimage', '');
                 PosnicPro.local.set('branchname', '');
-                PosnicPro.local.set('branchphone', '');
+                PosnicPro.local.setVolatile('branchphone', '');
                 PosnicPro.local.set('branchemail', '');
                 PosnicPro.local.set('branchaddress', '');
                 PosnicPro.local.set('timezone', '');
