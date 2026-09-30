@@ -354,6 +354,7 @@
   <link rel="stylesheet" href="window-theme.css">
   <script src="window-theme.js"></script>
   <link rel="stylesheet" href="desktop-design.css">
+  <link rel="stylesheet" href="hardware-workspace.css">
 </head>
 <body class="desktop-window" data-desktop-window="hardware">
     <div class="container">
@@ -985,114 +986,44 @@
                 speaker is on.
             -->
             <div id="soundTab" class="tab-content">
-                <h2>🔔 Kitchen Sound</h2>
-                <div class="card">
-                  <h3>Speakers &amp; shared playback</h3>
-                  <p>Automatic order reading and staff voice messages play one at a time, in received order. Choose either source below, or enable both.</p>
-                  <p>Select every output that should hear orders and kitchen messages. Pair Bluetooth speakers in your computer settings first.</p>
-                  <div id="kitchenAudioOutputs"></div>
-                  <button class="btn" id="kitchenAudioRefresh">Refresh outputs</button>
-                  <label>Volume <input id="kitchenAudioVolume" type="range" min="0" max="1" step="0.05"></label>
-                  <p><label><input type="checkbox" id="kitchenPauseRecording"> Pause playback while someone records (helps prevent microphone feedback)</label></p>
+                <div class="sound-heading"><div><h2>Kitchen Sound</h2><p>Send a voice message or read new orders through your kitchen speakers.</p></div><span class="sound-tag">This computer</span></div>
+                <section class="sound-send sound-panel" aria-labelledby="sound-send-title">
+                    <div><h3 id="sound-send-title">Talk to the kitchen</h3><p>Hold to record. Release to send. Up to 30 seconds.</p>
+                    <button type="button" class="btn sound-record" id="kitchenTalk">Hold to talk</button>
+                    <p id="kitchenAudioStatus" class="sound-feedback" role="status" aria-live="polite"></p></div>
+                    <div class="sound-playback"><span class="sound-eyebrow">Playback</span><strong id="kitchenPlaybackSummary" role="status">Checking speakers…</strong><p>Messages and orders play one at a time.</p><details class="sound-diagnostics"><summary>Playback details</summary><pre id="kitchenAudioJobs">Checking playback status...</pre><p>Completed means the computer finished playback. Confirm sound at the speaker.</p></details></div>
+                </section>
+                <section class="sound-panel" aria-labelledby="sound-speakers-title">
+                    <div class="sound-section-heading"><div><h3 id="sound-speakers-title">Kitchen speakers</h3><p>Select one or more outputs.</p></div><button type="button" class="btn" id="kitchenAudioRefresh">Refresh speakers</button></div>
+                    <div id="kitchenAudioOutputs"></div>
+                    <div class="sound-volume"><label for="kitchenAudioVolume">Volume</label><input id="kitchenAudioVolume" type="range" min="0" max="1" step="0.05"><output id="kitchenVolumeValue" for="kitchenAudioVolume">100%</output></div>
+                    <p class="sound-hint">For Bluetooth, pair the speaker in Windows first.</p>
+                </section>
+                <div class="sound-settings-grid">
+                    <section class="sound-panel" aria-labelledby="sound-staff-title">
+                        <h3 id="sound-staff-title">Staff voice messages</h3><p>From this desktop and the Captain app.</p>
+                        <label class="sound-switch"><span>Allow voice messages</span><input id="kitchenTalkEnabled" type="checkbox"></label>
+                        <label class="sound-switch"><span>Play a chime before messages</span><input id="kitchenTalkTing" type="checkbox"></label>
+                        <details class="sound-options"><summary>Voice message settings</summary>
+                            <label class="sound-field" for="kitchenTalkBell">Message chime</label><div class="sound-picker"><select id="kitchenTalkBell"></select><button type="button" class="btn" id="kitchenTalkBellTest">Test</button></div>
+                            <label class="sound-field" for="kitchenAudioBranch">Captain branch</label><select id="kitchenAudioBranch"><option value="">Automatic (one local branch)</option></select>
+                            <label class="sound-check"><input type="checkbox" id="kitchenPauseRecording"><span>Pause playback while recording</span></label><p class="sound-hint">Reduces microphone feedback.</p>
+                        </details>
+                    </section>
+                    <section class="sound-panel" aria-labelledby="sound-orders-title">
+                        <h3 id="sound-orders-title">Automatic orders</h3><p>Announce incoming kitchen tickets.</p>
+                        <label class="sound-switch"><span>Chime for a new order</span><input type="checkbox" id="kitchenTing"></label>
+                        <label class="sound-switch"><span>Read the order aloud</span><input type="checkbox" id="kitchenSpeak"></label>
+                        <details class="sound-options"><summary>Order sound settings</summary>
+                            <label class="sound-field" for="kitchenArrivalBell">New order chime</label><div class="sound-picker"><select id="kitchenArrivalBell"></select><button type="button" class="btn" data-kitchen-play="arrival">Play</button></div>
+                            <label class="sound-check"><input type="checkbox" id="kitchenItemTing"><span>Chime before each dish</span></label>
+                            <label class="sound-field" for="kitchenItemBell">Dish chime</label><div class="sound-picker"><select id="kitchenItemBell"></select><button type="button" class="btn" data-kitchen-play="item">Play</button></div>
+                            <label class="sound-field" for="kitchenVoice">Reading voice</label><div class="sound-picker"><select id="kitchenVoice"></select><button type="button" class="btn" id="kitchenVoicePlay">Play</button></div>
+                            <button type="button" class="btn" id="kitchenVoiceGet">Get more voices</button><p class="sound-hint">In Windows speech settings, choose Add voices. Restart Posnic after installing.</p>
+                        </details>
+                    </section>
                 </div>
-                <div class="card" style="margin-top:16px">
-                  <h3>Staff voice messages — Captain &amp; POS</h3>
-                  <p><label><input id="kitchenTalkEnabled" type="checkbox"> Allow recorded voice messages</label></p>
-                  <p><label><input type="checkbox" id="kitchenTalkTing"> Play a ting before each voice message</label></p>
-                  <label>Voice-message ting <select id="kitchenTalkBell"></select></label>
-                  <button type="button" class="btn" id="kitchenTalkBellTest">Test voice-message ting</button>
-                  <p><small>This sound belongs to staff recordings only. Automatic orders have separate sound controls below.</small></p>
-                  <label>Captain branch <select id="kitchenAudioBranch"><option value="">Automatic when there is one local branch</option></select></label>
-                  <button class="btn btn-primary" id="kitchenAudioSave">Save Kitchen Sound</button>
-                  <p><button class="btn" id="kitchenTalk" style="touch-action:none;user-select:none">Hold to record kitchen message</button> Release to send, up to 30 seconds. Playback follows your recording-pause setting.</p>
-                  <p id="kitchenAudioStatus" role="status"></p>
-                  <pre id="kitchenAudioJobs" style="white-space:pre-wrap;max-height:250px;overflow:auto">Checking playback status...</pre>
-                  <p>Playback completed means the computer finished sending audio. Check the speaker's own volume. Disconnected outputs keep their pending audio and retry; they never switch to another speaker.</p>
-                </div>
-
-                <div class="status" style="background:#e7f1ff;color:#1e3a8a;display:block;">
-                    Turn this on only on the machine by the pass, the one with the speaker.
-                    It rings when a ticket arrives and reads the order out, so a cook with
-                    their hands full hears it without looking at anything.
-                    Saved on this computer only.
-                </div>
-
-                <div class="card" style="margin-top:20px;">
-                    <h3 style="margin-top:0;">Automatic order announcements</h3>
-
-                    <label style="display:flex;align-items:center;gap:12px;margin:14px 0;cursor:pointer;">
-                        <input type="checkbox" id="kitchenTing" style="width:18px;height:18px;">
-                        <span><b>Play a ting when an order arrives</b><br>
-                            <span style="color:#666;font-size:13px;">Says a ticket landed. Costs a second.</span>
-                        </span>
-                    </label>
-
-                    <label style="display:flex;align-items:center;gap:12px;margin:14px 0;cursor:pointer;">
-                        <input type="checkbox" id="kitchenSpeak" style="width:18px;height:18px;">
-                        <span><b>Read new orders automatically</b><br>
-                            <span style="color:#666;font-size:13px;">Table, how many plates, then each dish. Costs about ten seconds.</span>
-                        </span>
-                    </label>
-
-                    <p style="color:#666;font-size:13px;margin:6px 0 0;">
-                        A kitchen that can see its printer usually wants the bell only.
-                        One across the room wants both.
-                    </p>
-                </div>
-
-                <div class="card" style="margin-top:16px;">
-                    <h3 style="margin-top:0;">Automatic order sounds &amp; voice</h3>
-                    <p><label><input type="checkbox" id="kitchenItemTing"> Also play a ting before each dish (when order ting is enabled)</label></p>
-
-                    <div style="display:flex;align-items:center;gap:10px;margin:12px 0;">
-                        <label style="width:190px;">Bell when the order arrives</label>
-                        <select id="kitchenArrivalBell" style="flex:1;padding:8px;"></select>
-                        <button type="button" class="btn" data-kitchen-play="arrival">Play</button>
-                    </div>
-
-                    <div style="display:flex;align-items:center;gap:10px;margin:12px 0;">
-                        <label style="width:190px;">Bell before each dish</label>
-                        <select id="kitchenItemBell" style="flex:1;padding:8px;"></select>
-                        <button type="button" class="btn" data-kitchen-play="item">Play</button>
-                    </div>
-
-                    <div style="display:flex;align-items:center;gap:10px;margin:12px 0;">
-                        <label style="width:190px;">Voice</label>
-                        <select id="kitchenVoice" style="flex:1;padding:8px;"></select>
-                        <button type="button" class="btn" id="kitchenVoicePlay">Play</button>
-                    </div>
-
-                    <!--
-                        Owner: "if user can install more show the way to do."
-                        A note saying more exist is a note somebody reads and
-                        then does not know where to go. The button goes there.
-                    -->
-                    <p style="color:#666;font-size:13px;margin:6px 0 0;">
-                        These are the voices installed on this computer. Windows ships
-                        more, including Indian English, and they appear in this list
-                        once they are installed.
-                    </p>
-                    <button type="button" class="btn" id="kitchenVoiceGet" style="margin-top:8px;">
-                        Get more voices
-                    </button>
-                    <p style="color:#666;font-size:12px;margin:6px 0 0;">
-                        Opens Windows speech settings. Choose <b>Add voices</b>, pick a
-                        language, then come back and press Play. A voice that has just
-                        been installed shows up after the app is restarted.
-                    </p>
-                </div>
-
-                <div class="card" style="margin-top:16px;">
-                    <h3 style="margin-top:0;">Hear the whole thing</h3>
-                    <p style="color:#555;font-size:14px;margin:0 0 12px;">
-                        Plays a real ticket through the speaker on this computer, exactly as a
-                        kitchen would hear it. Nothing is ordered and nothing is printed.
-                    </p>
-                    <button type="button" class="btn btn-primary" id="kitchenSoundSave">Save Kitchen Sound</button>
-                    <span id="kitchenSoundSaveResult" role="status" aria-live="polite" style="margin:0 12px;"></span>
-                    <button type="button" class="btn btn-secondary" id="kitchenSoundTest">Save and test sound</button>
-                    <span id="kitchenSoundTestResult" style="margin-left:12px;color:#555;font-size:14px;"></span>
-                </div>
+                <div class="sound-savebar"><div><button type="button" class="btn btn-primary" id="kitchenSoundSave">Save changes</button><button type="button" class="btn" id="kitchenSoundTest">Save &amp; test an order</button></div><span id="kitchenSoundSaveResult" role="status" aria-live="polite"></span><span id="kitchenSoundTestResult" role="status"></span></div>
             </div>
 
             <!-- Mobile Devices Tab -->
@@ -1224,6 +1155,8 @@
         </div>
     </div>
 
+    <script src="kitchen-screen-fit.js"></script>
+    <script src="hardware-workspace.js"></script>
     <script>
         /*
          * What this operating system calls its default printer.
@@ -3969,6 +3902,7 @@
                 +   '</div>'
                 + '</div>';
             }).join('');
+            if (typeof window !== 'undefined' && window.hardwareWorkspace) screenState.displays.forEach(window.hardwareWorkspace.decorateScreen);
         }
 
         function numOr(id, fallback) {
@@ -4004,7 +3938,9 @@
         }
 
         async function saveScreen(id) {
-            if (!screensAvailable()) return;
+            if (!screensAvailable()) return false;
+            var saveStatus = document.getElementById('screenSaveStatus');
+            if (saveStatus) saveStatus.textContent = 'Saving kitchen screen settings…';
             var patch = {
                 enabled:          onOff('use-' + id, false),
                 tableOnly:        onOff('table-only-' + id, false),
@@ -4035,15 +3971,21 @@
                 if (res && res.displays) {
                     screenState.displays = res.displays;
                     drawScreens();
+                    if (saveStatus) saveStatus.textContent = 'Kitchen screen settings saved.';
+                    return true;
                 }
+                throw new Error('The display did not confirm the new settings.');
             } catch (e) {
+                if (saveStatus) saveStatus.textContent = 'Could not save kitchen screen settings.';
                 alert('Could not save that: ' + (e && e.message ? e.message : e));
+                return false;
             }
         }
 
         async function previewScreen(id) {
             if (!screensAvailable()) return;
             try {
+                if (!await saveScreen(id)) return;
                 await window.posnicKitchenScreen.preview(id, true);
             } catch (e) {
                 alert('Could not show the test service: ' + (e && e.message ? e.message : e));

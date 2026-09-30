@@ -659,6 +659,24 @@
   /* Exposed so the main process can drive the screen, and so a test can. */
   window.kitchenScreen = { setConfig: setConfig, setTickets: setTickets, render: render };
 
+  // The sandboxed Hardware Manager preview accepts sample configuration only.
+  // It has no preload/IPC bridge and never subscribes to live orders.
+  if (new URLSearchParams(location.search).get('hardwarePreview') === '1' && parent !== window) {
+    var previewScenario;
+    window.addEventListener('message', function (event) {
+      if (event.source !== parent || !event.data || event.data.type !== 'posnic-hardware-preview') return;
+      setConfig(event.data.config);
+      var scenario = event.data.config._previewScenario || 'new';
+      if (!tickets.length || previewScenario !== scenario) setTickets([
+        { id:'preview-1', table:'05', orderNumber:'KOT-0028', placedAt:new Date(Date.now()-240000).toISOString(), items:[{qty:2,name:'Grilled fish',note:'No chilli',priced_at_table:500},{qty:1,name:'Steamed rice'}] },
+        { id:'preview-2', table:'08', orderNumber:'KOT-0029', placedAt:new Date(Date.now()-120000).toISOString(), items:[{qty:1,name:'Vegetable fried rice',preparing:scenario==='ready'?0:1,readyToCollect:scenario==='ready'?1:0},{qty:2,name:'Lime soda'}] },
+        { id:'preview-3', table:'12', orderNumber:'KOT-0030', placedAt:new Date(Date.now()-60000).toISOString(), cancelled:scenario==='cancelled', items:[{qty:1,name:'Butter naan'}] }
+      ]);
+      previewScenario = scenario;
+    });
+  }
+
+
   if (window.posnicKitchenScreen && window.posnicKitchenScreen.onConfig) {
     window.posnicKitchenScreen.onConfig(setConfig);
     window.posnicKitchenScreen.onTickets(setTickets);

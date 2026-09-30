@@ -16,6 +16,10 @@
   talkBell.value=saved.talkBell||'rising';
   document.getElementById('kitchenTalkBellTest').onclick=async()=>{try{await save();await bridge.preview('arrival',talkBell.value);status.textContent='Voice-message ting queued for selected speakers.';}catch(e){status.textContent=e.message;}};
   volume.value = saved.volume ?? 1;
+  const volumeValue = document.getElementById('kitchenVolumeValue');
+  const updateVolume = () => { volumeValue.textContent = Math.round(Number(volume.value) * 100) + '%'; };
+  volume.addEventListener('input', updateVolume);
+  updateVolume();
   enabled.checked = !!saved.talkEnabled;
   const branches = (await api.kot.getConfig()).branches || [];
   for (const b of branches) {
@@ -40,7 +44,7 @@
       if (!list.some((d) => d.id === o.id)) list.push({ ...o, present: false });
     for (const d of list) {
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:12px;margin:10px 0';
+      row.className = 'sound-speaker';
       const label = document.createElement('label'),
         cb = document.createElement('input');
       cb.type = 'checkbox';
@@ -53,12 +57,13 @@
       );
       const test = document.createElement('button');
       test.className = 'btn';
-      test.textContent = 'Test this speaker';
+      test.textContent = 'Test';
+      test.setAttribute('aria-label', 'Test ' + d.label);
       test.onclick = async () => {
         try {
           await save();
           const r = await bridge.test(d.id);
-          status.textContent = 'Test queued. Check playback status below.';
+          status.textContent = 'Speaker test queued.';
         } catch (e) {
           status.textContent = e.message;
         }
@@ -91,12 +96,13 @@
     if (!ok) throw Error('Could not save kitchen audio settings.');
     saved = await settings.get();
     window.dispatchEvent(new CustomEvent('kitchen-audio-saved'));
-    status.textContent = 'Kitchen Sound saved. Changes apply to new messages; already queued audio is retained.';
+    status.textContent = 'Settings saved for new messages.';
     return true;
   }
   window.saveKitchenAudioSettings=save;
-  document.getElementById('kitchenAudioSave').onclick = () =>
-    save().catch((e) => (status.textContent = e.message));
+  document.getElementById('soundTab').addEventListener('change', () => {
+    document.getElementById('kitchenSoundSaveResult').textContent = 'Unsaved changes';
+  });
   document.getElementById('kitchenAudioRefresh').onclick = () =>
     refresh().catch((e) => (status.textContent = e.message));
   await refresh();
@@ -114,7 +120,8 @@
     clearTimeout(limit);
     if (recorder?.state === 'recording') recorder.stop();
     else if (session) bridge.cancel(session.id).catch(() => {});
-    button.textContent = 'Hold to record kitchen message';
+    button.textContent = 'Hold to talk';
+    button.dataset.recording = 'false';
   }
   button.onpointerdown = async (e) => {
     if (busy) return;
@@ -154,7 +161,7 @@
           });
           if (cancelled) return await bridge.cancel(session.id);
           await bridge.voice(session.id, data);
-          status.textContent = 'Voice message queued. Check each speaker below.';
+          status.textContent = 'Voice message queued for the kitchen.';
         } catch (e) {
           status.textContent = e.message;
         } finally {
@@ -169,6 +176,7 @@
       };
       recorder.start();
       button.textContent = 'Recording — release to send';
+      button.dataset.recording = 'true';
       limit = setTimeout(() => stop(), 30000);
     } catch (e) {
       status.textContent = e.message;
@@ -196,9 +204,14 @@
   });
   window.addEventListener('pagehide', () => stop(true));
   const report = document.getElementById('kitchenAudioJobs');
+  const summary = document.getElementById('kitchenPlaybackSummary');
   setInterval(async () => {
     try {
       const value = await bridge.status();
+      const pending = value.jobs.filter((j) => !j.complete);
+      const failed = pending.some((j) => j.targets.some((t) => t.status !== 'Waiting' && t.status !== 'Playback completed'));
+      summary.textContent = value.error || failed ? 'Playback needs attention — open details' : pending.length ? pending.length + ' queued for playback' : 'No messages waiting';
+      summary.dataset.attention = String(!!value.error || failed);
       report.textContent =
         (value.error ? value.error + '\n' : '') +
         value.jobs
@@ -212,6 +225,8 @@
         'No queued audio.';
     } catch (e) {
       report.textContent = 'Audio service unavailable.';
+      summary.textContent = 'Audio service unavailable';
+      summary.dataset.attention = 'true';
     }
   }, 2000);
 })().catch((e) => {

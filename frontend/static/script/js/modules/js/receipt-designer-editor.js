@@ -26,7 +26,7 @@
     function changed() { status(t('Unsaved changes')); box.find('[data-action="undo"]').prop('disabled', !undo.length); schedulePreview(); }
     function sample() {
         var item = function (name, price, qty) { return { item_name: name, item_price: price, item_quantity: qty, item_unit: 'ea', total_amount: price * qty, hsn_code: '1234' }; };
-        return Object.assign({}, branch, printOptions(), { receipt_designs: design, sales_id: 'S-000128', created_date: new Date().toLocaleString(),
+        return Object.assign({}, branch, printOptions(), { receipt_designs: design, sales_id: 'S-000128', created_date: new Date().toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
             customer_name: 'Alex Morgan', customer_phone: '+1 202 555 0148', customer_email: 'alex@example.com', customer_address: '24 Market Street',
             customer_gstin: '', customer_tax_number: layout().blocks.some(function (b) { return b.field === 'customer_tax_number'; }) ? 'TAX-123456' : '',
             items: [item('Everyday notebook', 12, 2), item('Reusable travel cup', 18, 1), item('Gift wrap', 3, 1)],

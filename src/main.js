@@ -1807,6 +1807,11 @@ ipcMain.handle('desktop:open', (_event, target) => {
     openHardwareManager(target.split(':')[1]);
     return true;
   }
+  if (['shop:print', 'shop:captainapp', 'shop:devices', 'shop:tableorder'].includes(target)) {
+    if (!mainWindow || mainWindow.isDestroyed()) return false;
+    openAppSettings(target);
+    return true;
+  }
   switch (target) {
     case 'hardware': openHardwareManager(); break;
     case 'backup': if (!fs.existsSync(CLOUD_CONFIG_FILE)) openBackupManager(); break;

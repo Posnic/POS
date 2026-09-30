@@ -283,6 +283,10 @@
     $(function () {
         $('[data-desktop-only]').toggle(!!(api && api.desktop));
         if (api && api.desktop && api.desktop.onNavigate) api.desktop.onNavigate(function (section) {
+            if (['shop:print', 'shop:captainapp', 'shop:devices', 'shop:tableorder'].indexOf(section) !== -1) {
+                if (allowed()) hasher.setHash('settings/' + section.slice(5));
+                return;
+            }
             if (sections[section] && section !== 'kitchen') hasher.setHash('settings/' + section);
         });
     });

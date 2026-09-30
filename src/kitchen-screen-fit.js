@@ -255,7 +255,7 @@ function advice(options = {}) {
   return out;
 }
 
-module.exports = {
+const screenFitExports = {
   fit,
   advice,
   diagonalFrom,
@@ -269,3 +269,6 @@ module.exports = {
   CAP_RATIO,
   LINE_HEIGHT,
 };
+
+if (typeof module !== 'undefined' && module.exports) module.exports = screenFitExports;
+else window.PosnicScreenFit = screenFitExports;
