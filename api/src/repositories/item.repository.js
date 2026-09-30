@@ -5584,7 +5584,7 @@ class ItemRepository extends BaseModel {
       .toArray();
   }
 
-  async quickPatch(id, fields) {
+  async quickPatch(id, fields, context) {
     try {
       const collection = await this.getCollection(this.collectionName);
       const objectId = ObjectId.isValid(id) ? new ObjectId(id) : id;
@@ -5615,7 +5615,10 @@ class ItemRepository extends BaseModel {
         return { status: false, message: 'Nothing to update' };
       }
       set.updated_date = new Date();
-      const result = await collection.updateOne({ _id: objectId }, { $set: set });
+      const result = await collection.updateOne(
+        { _id: objectId, ...require('../utils/record-scope').scope(context) },
+        { $set: set }
+      );
       if (!result.matchedCount) return { status: false, message: 'Item not found' };
       return { status: true, message: 'Item updated' };
     } catch (error) {
@@ -5624,15 +5627,19 @@ class ItemRepository extends BaseModel {
     }
   }
 
-  async updateItemQuantity(id, value) {
+  async updateItemQuantity(id, value, context) {
     try {
       const collection = await this.getCollection(this.collectionName);
       const objectId = ObjectId.isValid(id) ? new ObjectId(id) : id;
 
-      await collection.updateOne(
-        { _id: objectId },
-        { $set: { available_quantity: parseFloat(value) } }
+      const quantity = Number(value);
+      if (value === '' || value === null || !Number.isFinite(quantity))
+        throw new Error('Invalid quantity');
+      const result = await collection.updateOne(
+        { _id: objectId, ...require('../utils/record-scope').scope(context) },
+        { $set: { available_quantity: quantity } }
       );
+      if (!result.matchedCount) return { status: false, message: 'Item not found' };
 
       return { status: true, message: 'Quantity updated' };
     } catch (error) {

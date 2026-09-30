@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Za ponovni poskus pošiljanja tega naročila se prijavite v prvotni račun in poslovalnico.",
   "lang_submission_save_failed": "Naročila ni bilo mogoče shraniti.",
   "lang_submission_saved": "Naročilo je shranjeno",
-  "lang_submission_already_saved": "To naročilo je že shranjeno. Osvežite seznam prodaje."
+  "lang_submission_already_saved": "To naročilo je že shranjeno. Osvežite seznam prodaje.",
+  "lang_business_discount": "Popust",
+  "lang_cash": "Gotovina",
+  "lang_print": "Natisni"
 }

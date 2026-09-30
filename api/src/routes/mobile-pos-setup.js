@@ -10,6 +10,7 @@ if (paymentView) {
     el.hidden = el.id !== 'payments-section';
   });
   $('device-links').hidden = true;
+  document.querySelector('.setup-summary').hidden = true;
 } else {
   $('payments-section').hidden = true;
 }
@@ -31,7 +32,16 @@ document.querySelectorAll('[data-nav]').forEach((button) => {
   };
 });
 let csrf = '',
-  state;
+  state,
+  pairingQr = [],
+  pairingExpiry;
+function clearPairing() {
+  clearTimeout(pairingExpiry);
+  pairingQr = [];
+  $('code').textContent = '';
+  $('code-help').textContent = '';
+  $('addresses').querySelector('select')?.dispatchEvent(new Event('change'));
+}
 async function call(path, body) {
   const response = await fetch(api + path, {
     credentials: 'same-origin',
@@ -102,7 +112,20 @@ async function load() {
     ? 'Mobile POS is enabled for this branch.'
     : 'Mobile POS is off. Enable it in Settings → Features.';
   $('pair').disabled = !state.enabled;
+  $('pair-staff').replaceChildren();
+  (state.pairingStaff || []).forEach((staff) => {
+    const option = document.createElement('option');
+    option.value = staff.id;
+    option.textContent = staff.name;
+    option.selected = staff.id === state.currentStaffId;
+    $('pair-staff').append(option);
+  });
+  $('pair-staff').onchange = () => {
+    clearPairing();
+  };
   $('hours').value = state.offlineHours;
+  $('history-days').value = state.historyDays || 90;
+  $('history-max').value = state.historyMaxReceipts || 10000;
   $('quick').checked = state.quickSale;
   $('tax').value = state.quickTaxBps / 100;
   $('inclusive').checked = state.quickTaxInclusive;
@@ -125,8 +148,11 @@ async function load() {
   const showAddress = () => {
     const a = addresses[Number(select.value)];
     if (a) {
-      image.src = a.qr;
-      image.alt = 'Scan to connect to ' + a.url;
+      const paired = pairingQr.find((row) => row.url === a.url);
+      image.src = paired?.qr || a.qr;
+      image.alt = paired
+        ? 'Scan to authorize the selected staff account'
+        : 'Scan to connect to ' + a.url;
     }
   };
   select.onchange = showAddress;
@@ -162,6 +188,8 @@ $('settings').onsubmit = async (e) => {
     }
     await call('settings', {
       offlineHours: Number($('hours').value),
+      historyDays: Number($('history-days').value),
+      historyMaxReceipts: Number($('history-max').value),
       quickSale: $('quick').checked,
       quickTaxBps: Math.round(Number($('tax').value) * 100),
       quickTaxInclusive: $('inclusive').checked,
@@ -173,8 +201,20 @@ $('settings').onsubmit = async (e) => {
   }
 };
 $('pair').onclick = async () => {
+  $('pair').disabled = true;
+  $('pair-staff').disabled = true;
+  clearPairing();
   try {
-    const result = await call('pair-codes', {});
+    const result = await call('pair-codes', { staffId: $('pair-staff').value });
+    pairingQr = result.pairingQr || [];
+    $('addresses').querySelector('select')?.dispatchEvent(new Event('change'));
+    pairingExpiry = setTimeout(
+      () => {
+        clearPairing();
+        $('code-help').textContent = 'Code expired. Generate a new code to authorize a phone.';
+      },
+      Math.max(0, new Date(result.expires).getTime() - Date.now())
+    );
     $('code').textContent = result.code;
     $('code-help').textContent =
       'Signs in as ' +
@@ -184,6 +224,9 @@ $('pair').onclick = async () => {
       '. Use once on the phone.';
   } catch (e) {
     message(e);
+  } finally {
+    $('pair').disabled = !state.enabled;
+    $('pair-staff').disabled = false;
   }
 };
 load().catch(message);

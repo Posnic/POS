@@ -119,5 +119,9 @@
   "lang_submission_original_account": "આ ઓર્ડર માટે ફરી પ્રયાસ કરવા મૂળ ખાતા અને શાખામાં સાઇન ઇન કરો.",
   "lang_submission_save_failed": "ઓર્ડર સાચવી શકાયો નહીં.",
   "lang_submission_saved": "ઓર્ડર સાચવ્યો",
-  "lang_submission_already_saved": "આ ઓર્ડર પહેલેથી જ સાચવેલો છે. વેચાણની યાદી રિફ્રેશ કરો."
+  "lang_submission_already_saved": "આ ઓર્ડર પહેલેથી જ સાચવેલો છે. વેચાણની યાદી રિફ્રેશ કરો.",
+  "lang_business_discount": "છૂટ",
+  "lang_cash": "રોકડ",
+  "lang_print": "પ્રિન્ટ કરો",
+  "lang_stock_adjust_reason": "કારણ"
 }

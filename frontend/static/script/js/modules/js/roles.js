@@ -10,11 +10,12 @@ PosnicPro.roles = {
     MODULES: ['dashboard', 'sales', 'receiving', 'customer', 'supplier',
         'category', 'item', 'expense', 'branch', 'report', 'user'],
     // Till actions mirror POS_PERMISSIONS in api/src/constants/roles.constants.js.
-    POS_KEYS: ['discount_apply', 'price_override', 'void_line', 'void_sale', 'refund',
+    POS_KEYS: ['discount_apply', 'discount_approve_remote', 'price_override', 'void_line', 'void_sale', 'refund',
         'reprint_receipt', 'no_sale_open_drawer', 'register_open', 'register_close',
         'cash_in_out', 'cash_drop', 'quick_sale'],
     POS_LABELS: {
         discount_apply: 'Apply discount', price_override: 'Price override',
+        discount_approve_remote: 'Approve remote discounts in Business (discount limit applies)',
         void_line: 'Void a line', void_sale: 'Void a sale', refund: 'Refund / return',
         reprint_receipt: 'Reprint receipt', no_sale_open_drawer: 'No-sale open drawer',
         register_open: 'Open register', register_close: 'Close register',
@@ -22,6 +23,12 @@ PosnicPro.roles = {
         cash_in_out: 'Cash in / out', cash_drop: 'Cash drop',
     },
     listCache: [],
+    _posLabel: function (key) {
+        if (key === 'discount_approve_remote') {
+            return PosnicPro.i18n.t('lang_approve_remote_discounts', 'Approve remote discounts in Business (discount limit applies)');
+        }
+        return PosnicPro.roles.POS_LABELS[key] || key;
+    },
     _esc: function (s) {
         return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
             return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -97,9 +104,9 @@ PosnicPro.roles = {
         if (!r) { return; }
         var pos = r.pos || {};
         var allowed = PosnicPro.roles.POS_KEYS.filter(function (k) { return pos[k] === true; })
-            .map(function (k) { return '<span class="badge badge-secondary-inverse mr-1">' + esc(PosnicPro.roles.POS_LABELS[k]) + '</span>'; });
+            .map(function (k) { return '<span class="badge badge-secondary-inverse mr-1">' + esc(PosnicPro.roles._posLabel(k)) + '</span>'; });
         var mgr = (r.requires_manager_approval || [])
-            .map(function (k) { return '<span class="badge badge-warning-inverse mr-1">' + esc(PosnicPro.roles.POS_LABELS[k] || k) + '</span>'; });
+            .map(function (k) { return '<span class="badge badge-warning-inverse mr-1">' + esc(PosnicPro.roles._posLabel(k)) + '</span>'; });
         var caps = [];
         if (pos.discount_max_percent > 0) { caps.push('Discount up to ' + pos.discount_max_percent + '%'); }
         if (pos.refund_max_amount > 0) { caps.push('Refund up to ' + pos.refund_max_amount); }
@@ -137,7 +144,7 @@ PosnicPro.roles = {
         $('#role_editor_acl_body').html(acl);
         var pos = '';
         PosnicPro.roles.POS_KEYS.forEach(function (k) {
-            pos += '<tr><td>' + PosnicPro.roles.POS_LABELS[k] + '</td>'
+            pos += '<tr><td>' + PosnicPro.roles._esc(PosnicPro.roles._posLabel(k)) + '</td>'
                 + '<td class="text-center"><input type="checkbox" id="role_pos_' + k + '"></td>'
                 + '<td class="text-center"><input type="checkbox" id="role_mgr_' + k + '"></td>'
                 + '</tr>';

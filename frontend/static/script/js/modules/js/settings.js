@@ -623,7 +623,7 @@ PosnicPro.settings = {
                     $(".branch-name").text(response.data['branch_name']);
                     PosnicPro.local.set('branchname', response.data['branch_name']);
                     PosnicPro.local.set('branchemail', response.data['store_email']);
-                    PosnicPro.local.set('branchphone', response.data['store_telephone']);
+                    PosnicPro.local.setVolatile('branchphone', response.data['store_telephone']);
                     PosnicPro.local.set('branchaddress', response.data['store_address']);
                     PosnicPro.local.set('branchgstin', response.data['branch_gstin_number'] || '');
                     
@@ -2631,7 +2631,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 $('.display-current-branch').select2('val', [branchOption]);
                 PosnicPro.local.set('branchname', data.branch_name);
                 PosnicPro.local.set('branchemail', data.branch_email);
-                PosnicPro.local.set('branchphone', data.branch_phone);
+                PosnicPro.local.setVolatile('branchphone', data.branch_phone);
                 PosnicPro.local.set('branchaddress', data.branch_address);
                 PosnicPro.local.set('branchimage', data.branch_logo);
                 var branchRecord = [];

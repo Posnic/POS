@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Kirjaudu alkuperäiselle tilille ja alkuperäiseen toimipisteeseen yrittääksesi tätä tilausta uudelleen.",
   "lang_submission_save_failed": "Tilausta ei voitu tallentaa.",
   "lang_submission_saved": "Tilaus tallennettu",
-  "lang_submission_already_saved": "Tämä tilaus on jo tallennettu. Päivitä myyntiluettelo."
+  "lang_submission_already_saved": "Tämä tilaus on jo tallennettu. Päivitä myyntiluettelo.",
+  "lang_business_discount": "Alennus",
+  "lang_cash": "Käteinen",
+  "lang_print": "Tulosta"
 }

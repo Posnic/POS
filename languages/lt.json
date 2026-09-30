@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Norėdami dar kartą bandyti pateikti šį užsakymą, prisijunkite prie pradinės paskyros ir padalinio.",
   "lang_submission_save_failed": "Nepavyko išsaugoti užsakymo.",
   "lang_submission_saved": "Užsakymas išsaugotas",
-  "lang_submission_already_saved": "Šis užsakymas jau išsaugotas. Atnaujinkite pardavimų sąrašą."
+  "lang_submission_already_saved": "Šis užsakymas jau išsaugotas. Atnaujinkite pardavimų sąrašą.",
+  "lang_business_discount": "Nuolaida",
+  "lang_cash": "Grynieji",
+  "lang_print": "Spausdinti"
 }

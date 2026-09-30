@@ -108,5 +108,8 @@
   "lang_submission_original_account": "برای تلاش مجدد این سفارش، وارد حساب و شعبه اصلی شوید.",
   "lang_submission_save_failed": "ذخیره سفارش امکان‌پذیر نبود.",
   "lang_submission_saved": "سفارش ذخیره شد",
-  "lang_submission_already_saved": "این سفارش قبلاً ذخیره شده است. فهرست فروش را تازه‌سازی کنید."
+  "lang_submission_already_saved": "این سفارش قبلاً ذخیره شده است. فهرست فروش را تازه‌سازی کنید.",
+  "lang_business_discount": "تخفیف",
+  "lang_cash": "نقد",
+  "lang_print": "چاپ"
 }

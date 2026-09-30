@@ -53,6 +53,13 @@ function openRoutes(file) {
  * what strangers may do to a shop's data, so it should take a code review.
  */
 const ALLOWED_ANONYMOUS = {
+  'business-access.routes.js': [
+    // HTTPS-only metadata and rate-limited authorization entry points.
+    // Approval verifies browser-bound consent, origin and active credentials;
+    // token exchange verifies S256 proof and consumes a one-use request.
+    // The remaining routes run behind protectBusiness and never accept POS JWTs.
+    '/discovery', '/requests', '/authorize', '/approve', '/token',
+  ],
   'kitchen-board.routes.js': [
     // Consumes a short-lived, single-use manager pairing code under a rate limit.
     '/devices/pair',

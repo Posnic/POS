@@ -119,5 +119,9 @@
   "lang_submission_original_account": "Bu siparişi yeniden denemek için asıl hesap ve şubede oturum açın.",
   "lang_submission_save_failed": "Sipariş kaydedilemedi.",
   "lang_submission_saved": "Sipariş kaydedildi",
-  "lang_submission_already_saved": "Bu sipariş zaten kaydedilmiş. Satış listesini yenileyin."
+  "lang_submission_already_saved": "Bu sipariş zaten kaydedilmiş. Satış listesini yenileyin.",
+  "lang_business_discount": "İndirim",
+  "lang_cash": "Nakit",
+  "lang_print": "Yazdır",
+  "lang_stock_adjust_reason": "Neden"
 }

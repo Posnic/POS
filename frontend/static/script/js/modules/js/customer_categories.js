@@ -157,6 +157,7 @@ PosnicPro.customercategory = {
         $('#customercategory_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'customercategory',
+            rows: '#customercategory_list_rows',
             onRefresh: function () { return PosnicPro.customercategory.loadList(); },
             container: '#customercategory_filter_panel',
             button: '#customercategory_filter_btn',
@@ -175,7 +176,7 @@ PosnicPro.customercategory = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('customercategory', {});
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('customercategory', {
             url: 'customerCategory',
             data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
         }, function (response) {

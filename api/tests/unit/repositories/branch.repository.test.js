@@ -51,12 +51,12 @@ jest.mock('../../../src/models/branch.model', () => {
   });
 
   MockBranch.__mockSave = mockSave;
-  MockBranch.findById = jest.fn();
+  MockBranch.findOne = jest.fn();
   MockBranch.findOne = jest.fn();
   MockBranch.find = jest.fn();
   MockBranch.countDocuments = jest.fn();
-  MockBranch.findByIdAndUpdate = jest.fn();
-  MockBranch.findByIdAndDelete = jest.fn();
+  MockBranch.findOneAndUpdate = jest.fn();
+  MockBranch.findOneAndDelete = jest.fn();
 
   return MockBranch;
 });
@@ -65,6 +65,10 @@ jest.mock('../../../src/models/branch.model', () => {
 
 const Branch = require('../../../src/models/branch.model');
 const repository = require('../../../src/repositories/branch.repository');
+jest.mock('../../../src/utils/request-context', () => ({
+  getRequestContext: () => ({ license: '64f9a1c2e3b4d5e6f7000099' }),
+}));
+const tenantLicense = new (require('mongodb').ObjectId)('64f9a1c2e3b4d5e6f7000099');
 
 // ─── Chainable query mock helper ──────────────────────────────────────────────
 
@@ -115,8 +119,8 @@ describe('BranchesRepository (singleton)', () => {
 
     // Restore default resolved values after clearAllMocks
     Branch.countDocuments.mockResolvedValue(0);
-    Branch.findByIdAndUpdate.mockResolvedValue(FAKE_BRANCH);
-    Branch.findByIdAndDelete.mockResolvedValue(FAKE_BRANCH);
+    Branch.findOneAndUpdate.mockResolvedValue(FAKE_BRANCH);
+    Branch.findOneAndDelete.mockResolvedValue(FAKE_BRANCH);
     Branch.__mockSave.mockResolvedValue(FAKE_BRANCH);
   });
 
@@ -148,47 +152,47 @@ describe('BranchesRepository (singleton)', () => {
   // ── findById ──────────────────────────────────────────────────────────────
 
   describe('findById', () => {
-    test('calls Branch.findById with the given id', async () => {
-      Branch.findById.mockReturnValue(mkChain(FAKE_BRANCH));
+    test('calls Branch.findOne with the given id', async () => {
+      Branch.findOne.mockReturnValue(mkChain(FAKE_BRANCH));
       await repository.findById(FAKE_ID);
-      expect(Branch.findById).toHaveBeenCalledWith(FAKE_ID);
+      expect(Branch.findOne).toHaveBeenCalledWith({ _id: FAKE_ID, license: tenantLicense });
     });
 
     test('returns the found branch document', async () => {
-      Branch.findById.mockReturnValue(mkChain(FAKE_BRANCH));
+      Branch.findOne.mockReturnValue(mkChain(FAKE_BRANCH));
       const r = await repository.findById(FAKE_ID);
       expect(r).toEqual(FAKE_BRANCH);
     });
 
     test('applies select option when provided', async () => {
       const chain = mkChain(FAKE_BRANCH);
-      Branch.findById.mockReturnValue(chain);
+      Branch.findOne.mockReturnValue(chain);
       await repository.findById(FAKE_ID, { select: 'branch_name address' });
       expect(chain.select).toHaveBeenCalledWith('branch_name address');
     });
 
     test('applies lean option when provided', async () => {
       const chain = mkChain(FAKE_BRANCH);
-      Branch.findById.mockReturnValue(chain);
+      Branch.findOne.mockReturnValue(chain);
       await repository.findById(FAKE_ID, { lean: true });
       expect(chain.lean).toHaveBeenCalled();
     });
 
     test('does NOT call select when not in options', async () => {
       const chain = mkChain(FAKE_BRANCH);
-      Branch.findById.mockReturnValue(chain);
+      Branch.findOne.mockReturnValue(chain);
       await repository.findById(FAKE_ID, {});
       expect(chain.select).not.toHaveBeenCalled();
     });
 
     test('returns null when branch is not found', async () => {
-      Branch.findById.mockReturnValue(mkChain(null));
+      Branch.findOne.mockReturnValue(mkChain(null));
       const r = await repository.findById('nonexistent');
       expect(r).toBeNull();
     });
 
-    test('rethrows error from Branch.findById', async () => {
-      Branch.findById.mockImplementationOnce(() => {
+    test('rethrows error from Branch.findOne', async () => {
+      Branch.findOne.mockImplementationOnce(() => {
         throw new Error('DB error');
       });
       await expect(repository.findById(FAKE_ID)).rejects.toThrow('DB error');
@@ -403,10 +407,10 @@ describe('BranchesRepository (singleton)', () => {
   describe('updateById', () => {
     const UPDATE_DATA = { branch_name: 'Updated Branch' };
 
-    test('calls Branch.findByIdAndUpdate with id and data', async () => {
+    test('calls Branch.findOneAndUpdate with id and data', async () => {
       await repository.updateById(FAKE_ID, UPDATE_DATA);
-      expect(Branch.findByIdAndUpdate).toHaveBeenCalledWith(
-        FAKE_ID,
+      expect(Branch.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: FAKE_ID, license: tenantLicense },
         UPDATE_DATA,
         expect.objectContaining({ new: true, runValidators: true })
       );
@@ -414,32 +418,32 @@ describe('BranchesRepository (singleton)', () => {
 
     test('always passes new:true and runValidators:true', async () => {
       await repository.updateById(FAKE_ID, UPDATE_DATA, {});
-      const callArgs = Branch.findByIdAndUpdate.mock.calls[0][2];
+      const callArgs = Branch.findOneAndUpdate.mock.calls[0][2];
       expect(callArgs.new).toBe(true);
       expect(callArgs.runValidators).toBe(true);
     });
 
     test('merges extra options with defaults', async () => {
       await repository.updateById(FAKE_ID, UPDATE_DATA, { upsert: true });
-      const callArgs = Branch.findByIdAndUpdate.mock.calls[0][2];
+      const callArgs = Branch.findOneAndUpdate.mock.calls[0][2];
       expect(callArgs.upsert).toBe(true);
       expect(callArgs.new).toBe(true);
     });
 
     test('returns the updated branch document', async () => {
-      Branch.findByIdAndUpdate.mockResolvedValueOnce({ ...FAKE_BRANCH, branch_name: 'Updated' });
+      Branch.findOneAndUpdate.mockResolvedValueOnce({ ...FAKE_BRANCH, branch_name: 'Updated' });
       const r = await repository.updateById(FAKE_ID, UPDATE_DATA);
       expect(r.branch_name).toBe('Updated');
     });
 
     test('returns null when branch is not found', async () => {
-      Branch.findByIdAndUpdate.mockResolvedValueOnce(null);
+      Branch.findOneAndUpdate.mockResolvedValueOnce(null);
       const r = await repository.updateById('nonexistent', UPDATE_DATA);
       expect(r).toBeNull();
     });
 
     test('rethrows error from findByIdAndUpdate', async () => {
-      Branch.findByIdAndUpdate.mockRejectedValueOnce(new Error('Update failed'));
+      Branch.findOneAndUpdate.mockRejectedValueOnce(new Error('Update failed'));
       await expect(repository.updateById(FAKE_ID, UPDATE_DATA)).rejects.toThrow('Update failed');
     });
   });
@@ -447,25 +451,28 @@ describe('BranchesRepository (singleton)', () => {
   // ── deleteById ────────────────────────────────────────────────────────────
 
   describe('deleteById', () => {
-    test('calls Branch.findByIdAndDelete with the given id', async () => {
+    test('calls Branch.findOneAndDelete with the given id', async () => {
       await repository.deleteById(FAKE_ID);
-      expect(Branch.findByIdAndDelete).toHaveBeenCalledWith(FAKE_ID);
+      expect(Branch.findOneAndDelete).toHaveBeenCalledWith({
+        _id: FAKE_ID,
+        license: tenantLicense,
+      });
     });
 
     test('returns the deleted branch document', async () => {
-      Branch.findByIdAndDelete.mockResolvedValueOnce(FAKE_BRANCH);
+      Branch.findOneAndDelete.mockResolvedValueOnce(FAKE_BRANCH);
       const r = await repository.deleteById(FAKE_ID);
       expect(r).toEqual(FAKE_BRANCH);
     });
 
     test('returns null when branch does not exist', async () => {
-      Branch.findByIdAndDelete.mockResolvedValueOnce(null);
+      Branch.findOneAndDelete.mockResolvedValueOnce(null);
       const r = await repository.deleteById('nonexistent');
       expect(r).toBeNull();
     });
 
     test('rethrows error from findByIdAndDelete', async () => {
-      Branch.findByIdAndDelete.mockRejectedValueOnce(new Error('Delete failed'));
+      Branch.findOneAndDelete.mockRejectedValueOnce(new Error('Delete failed'));
       await expect(repository.deleteById(FAKE_ID)).rejects.toThrow('Delete failed');
     });
   });

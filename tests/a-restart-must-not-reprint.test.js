@@ -44,6 +44,10 @@ const ledger = require(path.join(ROOT, 'src', 'print-ledger.js'));
 /* KOTManager reaches for electron at load. It never touches a window here. */
 const load = Module._load;
 Module._load = function (request, ...rest) {
+  if (request === './windows-spooler') {
+    const actual = load.call(this, path.join(ROOT, 'src/windows-spooler.js'));
+    return { ...actual, ...actual.createSpooler({ platform: 'test' }) };
+  }
   if (request === 'electron') {
     return {
       BrowserWindow: class { constructor() { throw new Error('the window path was used'); } },

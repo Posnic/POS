@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Влезте в първоначалния профил и клон, за да опитате отново тази поръчка.",
   "lang_submission_save_failed": "Поръчката не можа да бъде запазена.",
   "lang_submission_saved": "Поръчката е запазена",
-  "lang_submission_already_saved": "Тази поръчка вече е запазена. Обновете списъка с продажби."
+  "lang_submission_already_saved": "Тази поръчка вече е запазена. Обновете списъка с продажби.",
+  "lang_business_discount": "Отстъпка",
+  "lang_cash": "В брой",
+  "lang_print": "Печат"
 }

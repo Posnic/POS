@@ -869,14 +869,14 @@ describe('bulkUpdateKioskStatus', () => {
 describe('updateItemQuantity', () => {
   test('returns 200 on success', async () => {
     svc.updateItemQuantity.mockResolvedValue({ status: true });
-    const req = mockReq({ body: { id: VALID_ID, value: 10 } });
+    const req = mockReq({ user: adminUser(), body: { id: VALID_ID, value: 10 } });
     const res = mockRes();
     await ctrl.updateItemQuantity(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 
   test('returns 400 when id is missing', async () => {
-    const req = mockReq({ body: { value: 5 } });
+    const req = mockReq({ user: adminUser(), body: { value: 5 } });
     const res = mockRes();
     await ctrl.updateItemQuantity(req, res);
     expect(svc.updateItemQuantity).not.toHaveBeenCalled();
@@ -884,7 +884,7 @@ describe('updateItemQuantity', () => {
   });
 
   test('returns 400 when value is undefined', async () => {
-    const req = mockReq({ body: { id: VALID_ID } });
+    const req = mockReq({ user: adminUser(), body: { id: VALID_ID } });
     const res = mockRes();
     await ctrl.updateItemQuantity(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
@@ -892,7 +892,7 @@ describe('updateItemQuantity', () => {
 
   test('returns 500 when service returns status !== true', async () => {
     svc.updateItemQuantity.mockResolvedValue({ status: false, message: 'failed' });
-    const req = mockReq({ body: { id: VALID_ID, value: 5 } });
+    const req = mockReq({ user: adminUser(), body: { id: VALID_ID, value: 5 } });
     const res = mockRes();
     await ctrl.updateItemQuantity(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
@@ -900,7 +900,7 @@ describe('updateItemQuantity', () => {
 
   test('accepts zero as valid quantity', async () => {
     svc.updateItemQuantity.mockResolvedValue({ status: true });
-    const req = mockReq({ body: { id: VALID_ID, value: 0 } });
+    const req = mockReq({ user: adminUser(), body: { id: VALID_ID, value: 0 } });
     const res = mockRes();
     await ctrl.updateItemQuantity(req, res);
     expect(res.status).toHaveBeenCalledWith(200);

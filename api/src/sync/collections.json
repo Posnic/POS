@@ -36,6 +36,27 @@
     "settings": "global"
   },
   "local_only": {
+    "business_device_grants": "Five-second one-use Gateway device grants and counters belong only to the tenant API; never copy them to a till or another issuer.",
+    "business_decision_local": "Desktop decision command outbox, one-use execution delivery and recovery journal belong to the originating installation, not generic sync.",
+    "business_push_devices": "Private push registrations are bound to a Business session and never travel through device synchronization.",
+    "business_push_deliveries": "Push retry leases and provider receipts belong only to the notification-delivery server.",
+    "business_decisions": "Approval state and application receipts use the dedicated decision protocol, never generic collection sync.",
+    "business_notification_preferences": "Per-account delivery preferences and scheduler leases belong to the authorizing Business server.",
+    "business_approval_notification_preferences": "Private approval-alert opt-ins, quiet hours and scan leases belong to the authorizing Business server, never generic device sync.",
+    "business_inbox": "Private account notifications and read receipts must never use generic device synchronization.",
+    "business_reporting_requests": "Short-lived Business read requests are consumed by the assigned reporting desktop through a dedicated protocol.",
+    "business_reporting_candidates": "Short-lived reporting desktop presence is verified by Gateway and must not use generic synchronization.",
+    "business_reporting_audit": "Publisher changes belong to the authorizing Business server and retain an atomic assignment audit journal.",
+    "business_stock_notification_preferences": "Per-account stock-alert opt-ins, quiet hours and delivery cadence are private to the Business server and never use device sync.",
+    "business_stock_recipient_state": "Private per-recipient stock classification, opt-in activation and pending deduplication identities; never generic device sync.",
+    "business_stock_snapshot_pages": "Private bounded stock-observation transfer pages for notification revalidation; excluded from generic device sync.",
+    "business_stock_alert_batches": "Private stock-alert ingestion batches and receipts belong to the Business notification server; never use generic device sync.",
+    "business_stock_alert_local": "Desktop stock threshold state and pending episodes belong to this installation; never replicate through generic sync.",
+    "business_reporting_local": "Local reporting assignments, snapshots and retry state belong to this desktop only.",
+    "business_reporting_publishers": "Gateway-owned desktop reporting assignments must not be changed through generic device synchronization.",
+    "business_prepared_summaries": "Prepared Business summaries enter through the assigned-publisher protocol, never last-writer-wins generic sync.",
+    "business_authorizations": "Proof-bound browser consent requests belong only to the Business issuer; replication would permit cross-server replay.",
+    "business_sessions": "Business token hashes and device revocation belong only to the issuing server and must never sync to another installation.",
     "captain_sessions": "Rotating device credentials and revocation belong only to the API that authorized the Captain phone.",
     "captain_pair_codes": "Single-use Captain approvals are issued or delivered explicitly to one server; they must never be replicated as shop data.",
     "handsets": "Handset token grants and revocation belong to the API that authorized the phone; copying them to an independent sale authority would permit cross-server access.",
@@ -82,6 +103,7 @@
     "branch_preferences": "per-branch preferences set in one place do not reach the other",
     "transaction": "customer credit transactions on the till are unknown to the cloud",
     "payment": "payment records on the till are unknown to the cloud",
-    "purchase_orders": "a purchase order raised on the till is unknown to the cloud, and the reverse; receivings already sync"
+    "purchase_orders": "a purchase order raised on the till is unknown to the cloud, and the reverse; receivings already sync",
+    "billing_outlets": "Outlet configuration is currently scoped to its API database; cloud-to-desktop configuration sync is not yet implemented. Sales retain outlet snapshots."
   }
 }

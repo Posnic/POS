@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Logga in på det ursprungliga kontot och den ursprungliga filialen för att försöka skicka den här beställningen igen.",
   "lang_submission_save_failed": "Det gick inte att spara beställningen.",
   "lang_submission_saved": "Beställningen har sparats",
-  "lang_submission_already_saved": "Den här beställningen har redan sparats. Uppdatera försäljningslistan."
+  "lang_submission_already_saved": "Den här beställningen har redan sparats. Uppdatera försäljningslistan.",
+  "lang_business_discount": "Rabatt",
+  "lang_cash": "Kontant",
+  "lang_print": "Skriv ut"
 }

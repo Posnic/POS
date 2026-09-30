@@ -2,6 +2,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 // Expose hardware and printer APIs to renderer
 contextBridge.exposeInMainWorld('electronAPI', {
+  billing: {
+    openOutlet: value => ipcRenderer.invoke('billing:open-outlet', value)
+  },
   kitchenAudio: {
     voices: () => ipcRenderer.invoke('kitchen-audio:voices'),
     preview: (kind, which) => ipcRenderer.invoke('kitchen-audio:preview', kind, which),
@@ -114,6 +117,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   printer: {
     recoveryStatus: () => ipcRenderer.invoke('printer:recovery-status'),
+    recoverUnsubmitted: (id) => ipcRenderer.invoke('printer:recover-unsubmitted', id),
     configureRecovery: (printer, binding) => ipcRenderer.invoke('printer:recovery-configure', printer, binding),
     onJobStatus: callback => {
       const handler = (_event, status) => callback(status);

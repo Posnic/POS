@@ -64,6 +64,36 @@ class WindowsPrintQueue {
     this.log({ jobId: job.id, printer: job.printer, event: 'recover-legacy-identity-failure' });
   }
 
+  canRecover(job) {
+    return !!job && job.state === 'failed' && job.submitted === false &&
+      !job.accepted && !job.observed && !job.spoolerId && !this.live.has(job.id) &&
+      (job.nonSubmissionVerified === true ||
+       job.reason === 'Printer initialization failed; check Windows queue' ||
+       /^Print helper unavailable:/.test(job.reason || '')) &&
+      fs.existsSync(path.join(this.dir, job.id + '.bin'));
+  }
+
+  async recoverUnsubmitted(id) {
+    const job = this.jobs.get(id);
+    if (!this.canRecover(job)) return { success: false, error: 'Recovery refused: non-submission is not verified' };
+    // Retain identity and frozen destination. Never create a replacement copy.
+    job.retries = 0; job.nextAt = 0; job.reconnect = false;
+    job.nonSubmissionVerified = true;
+    delete job.wakeDocument; delete job.wakeStartedAt;
+    this.log({ event: 'operator-recover-unsubmitted', jobId: id, printer: job.printer });
+    this.transition(job, 'waiting', 'Retry requested: receipt was not submitted');
+    this.start();
+    await this.run(job.printer);
+    return this.result(job);
+  }
+
+  helperFailure(job, result) {
+    job.submitted = false;
+    job.nonSubmissionVerified = true;
+    const error = result.error || 'Print helper startup failed';
+    return this.defer(job, error, job.retries < this.delays.length);
+  }
+
   read(file, fallback) {
     try { return JSON.parse(fs.readFileSync(path.join(this.dir, file), 'utf8')); }
     catch (error) { if (error.code === 'ENOENT' && fallback !== undefined) return fallback; throw error; }
@@ -235,7 +265,11 @@ class WindowsPrintQueue {
     // An idle initialization must finish before a receipt is submitted.
     const pulse = this.keepAlive[job.printer.toLowerCase()];
     if (pulse?.pending && this.pulsePending(pulse, health)) {
-      return this.transition(job, 'waiting', pulse.status);
+      if (this.now() - pulse.at < 30000) return this.transition(job, 'waiting', pulse.status);
+      // Do not bypass an actual failed Windows job: readiness still applies.
+      // Optional ESC @ traffic alone cannot permanently starve real receipts.
+      pulse.pending = false; pulse.suppressed = true;
+      this.write('keep-alive.json', this.keepAlive);
     }
     if (job.state === 'failed') {
       if (!job.reconnect || reason) return;
@@ -246,32 +280,45 @@ class WindowsPrintQueue {
     if (canWake && job.binding.initialize !== false && this.transport.initialize) {
       if (!job.wakeDocument) {
         job.wakeDocument = 'Posnic-initialize-' + job.id;
+        job.wakeStartedAt = this.now();
         this.write(job.id + '.json', job);
-        const wake = await this.transport.initialize({ printer: job.printer,
-          file: path.join(this.dir, 'initialize.bin'), document: job.wakeDocument });
-        if (!wake.success) return this.defer(job, 'Printer initialization failed; check Windows queue', false);
+        let wake;
+        try { wake = await this.transport.initialize({ printer: job.printer,
+          file: path.join(this.dir, 'initialize-' + job.id + '.bin'), document: job.wakeDocument }); }
+        catch (error) { wake = { success: false, error: error.message }; }
+        if (!wake.success) {
+          // Only initialization bytes were attempted; receipt payload never crossed stdin.
+          job.nonSubmissionVerified = true;
+          if (wake.submission === 'not-submitted' || wake.unavailable) {
+            delete job.wakeDocument; delete job.wakeStartedAt;
+            return this.helperFailure(job, wake);
+          }
+          return this.defer(job, 'Optional printer initialization outcome uncertain: ' + (wake.error || 'No answer'), false);
+        }
         await this.wait(300);
         health = await this.snapshot(job.printer, job.binding);
         reason = readiness(health, job.binding);
         if (reason) return this.defer(job, reason);
       }
       if (health.jobs.some(item => item.document === job.wakeDocument)) {
-        return this.transition(job, 'waiting', 'Waiting for printer initialization');
+        if (job.wakeStartedAt == null) { job.wakeStartedAt = this.now(); this.write(job.id + '.json', job); }
+        if (this.now() - job.wakeStartedAt < 30000) return this.transition(job, 'waiting', 'Waiting for printer initialization');
+        // Receipt already contains ESC @ in the same job; no new wake is sent.
       }
     }
     if (reason) return this.defer(job, reason, /offline|disconnected|Printer error|failed job|USB discovery failed|could not be identified|Multiple connected USB|Saved USB device is absent|Printer status unknown/i.test(reason));
     // Persist BEFORE crossing the spooler boundary. A crash in the following
     // call is ambiguous, not permission to submit a second copy.
+    job.nonSubmissionVerified = false;
     job.submitted = true;
     this.activity.set(job.printer.toLowerCase(), this.now());
     this.transition(job, 'queued');
     let result;
     try { result = await this.transport.submit({ printer: job.printer, document: job.document, file: path.join(this.dir, job.id + '.bin') }); }
     catch (error) { result = { success: false, error: error.message }; }
-    if (result.unavailable && !result.spoolerJobId) {
+    if ((result.submission === 'not-submitted' || result.unavailable) && !result.spoolerJobId) {
       // The resident helper guarantees unavailable only BEFORE writing stdin.
-      job.submitted = false;
-      return this.defer(job, 'Print helper unavailable: ' + (result.error || ''), false);
+      return this.helperFailure(job, result);
     }
     job.spoolerId = result.spoolerJobId || null;
     job.accepted = !!result.success;
@@ -293,7 +340,9 @@ class WindowsPrintQueue {
         await this.step(job);
         if (['waiting', 'offline', 'queued'].includes(job.state)) return;
       }
-      if (idle) await this.idle(printer, this.bindings[key]);
+      if (idle && ![...this.jobs.values()].some(job => job.printer.toLowerCase() === key && job.state !== 'sent')) {
+        await this.idle(printer, this.bindings[key]);
+      }
     }).finally(() => { if (this.running.get(key) === promise) this.running.delete(key); });
     this.running.set(key, promise);
     return promise;
@@ -331,6 +380,7 @@ class WindowsPrintQueue {
       reason = readiness(health, binding);
     }
     const prior = this.keepAlive[key];
+    if (prior?.suppressed) return;
     if (prior?.pending && this.pulsePending(prior, health)) return;
     // ESC @ resets the print buffer. Only send after a quiet period, an empty
     // spooler and explicitly Idle status, never between queued receipt jobs.
@@ -399,7 +449,7 @@ class WindowsPrintQueue {
   }
 
   stop() { this.stopped = true; clearTimeout(this.timer); this.timer = null; }
-  list() { return [...this.jobs.values()].slice(-200).map(job => ({ ...this.result(job), port: job.binding.port, retries: job.retries })); }
+  list() { return [...this.jobs.values()].slice(-200).map(job => ({ ...this.result(job), port: job.binding.port, retries: job.retries, canRecover: this.canRecover(job) })); }
 }
 
 module.exports = { WindowsPrintQueue, readiness, idFor };

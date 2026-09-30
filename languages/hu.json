@@ -108,5 +108,8 @@
   "lang_submission_original_account": "A rendelés újbóli beküldéséhez jelentkezzen be az eredeti fiókba és üzletbe.",
   "lang_submission_save_failed": "Nem sikerült menteni a rendelést.",
   "lang_submission_saved": "Rendelés mentve",
-  "lang_submission_already_saved": "Ezt a rendelést már mentette a rendszer. Frissítse az értékesítési listát."
+  "lang_submission_already_saved": "Ezt a rendelést már mentette a rendszer. Frissítse az értékesítési listát.",
+  "lang_business_discount": "Kedvezmény",
+  "lang_cash": "Készpénz",
+  "lang_print": "Nyomtatás"
 }

@@ -1874,6 +1874,7 @@ PosnicPro.purchaseorders = {
         $('#purchases_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'receivings',
+            rows: '#po_list_rows',
             onRefresh: function () { return PosnicPro.purchaseorders.loadList(); },
             container: '#purchases_filter_panel',
             button: '#purchases_filter_btn',
@@ -2022,7 +2023,7 @@ PosnicPro.purchaseorders = {
             $('#po_list_rows').html(html);
             self.renderPager(filtered.length, chip || expChip ? null : totals.po + totals.rec);
         };
-        PosnicPro.get({ url: 'purchaseOrders', data: 'page=1&limit=' + fetchLimit }, function (response) {
+        PosnicPro.listFilter.request('receivings', { url: 'purchaseOrders', data: 'page=1&limit=' + fetchLimit }, function (response) {
             var data = (response && response.data) || {};
             totals.po = Number(data.total) || 0;
             done.po = (data.list || []).map(function (po) {

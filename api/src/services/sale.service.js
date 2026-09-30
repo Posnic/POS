@@ -19,12 +19,7 @@ const { notifyKotReady } = require('../helpers/kot-notify');
 const getModel = (SaleModel) => SaleModel || Sale;
 
 const { computeLineTax } = require('./tax-engine');
-const round2 = (value, decimals = 2) => {
-  const num = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(num)) return 0;
-  const factor = Math.pow(10, decimals);
-  return Math.round(num * factor) / factor;
-};
+const { calculateSaleHeader, round2 } = require('./sale-header');
 
 // Shared aggregation pipeline for daily payment/tender breakdown.
 //
@@ -195,9 +190,29 @@ const enrichSaleContext = async (context = {}) => {
  * @param {String} process - 'Add' | 'Edit' | 'Hold' | 'KOT'
  * @param {Object} context - { branchId, licenseId, userId, userName, ... }
  */
-const processSale = async (data, id = '', process = 'Add', context = {}) => {
+const processSale = async (
+  data,
+  id = '',
+  process = 'Add',
+  context = {},
+  { preview = false, beforeCommit } = {}
+) => {
   let finishCaptainEdit;
   try {
+    if (
+      beforeCommit !== undefined &&
+      (typeof beforeCommit !== 'function' || id !== '' || process !== 'Add')
+    )
+      return { status: false, message: 'Unsupported decision commit' };
+    if (
+      preview &&
+      (id !== '' ||
+        process !== 'Add' ||
+        !Array.isArray(data?.items) ||
+        data.items.length < 1 ||
+        data.items.length > 100)
+    )
+      return { status: false, message: 'Unsupported decision preview' };
     // 1. Basic Validation
     if ((parseFloat(data.sales_total) || 0) < 0) {
       // PHP checks < 1, but let's say 0 for safety, PHP said < 1
@@ -233,7 +248,8 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       const registerSession = await registerRepository.validateSessionOwner(
         data.register_id,
         context.userId,
-        context.deviceId
+        context.deviceId,
+        ...(preview ? [{ acquire: false }] : [])
       );
       if (!registerSession.status) {
         return {
@@ -306,6 +322,13 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       }
     }
 
+    const billingOutlets = require('./billing-outlets');
+    const outlet = await billingOutlets.resolve(
+      context,
+      data.outlet_id,
+      existingSale,
+      data.outlet_revision
+    );
     const itemsale = [];
     const total_available_qty_map = {}; // To track simulated deductions within this batch
 
@@ -350,12 +373,25 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         0;
 
       // Selling Price Resolution
-      const sellingPrice =
+      let sellingPrice =
         parseLegacyNumber(item.sale_inline_item_price) ??
         parseLegacyNumber(item.item_price_total) ??
         parseLegacyNumber(document.selling_price) ??
         0;
 
+      if (outlet && !existingSale) {
+        const extras = (Array.isArray(item.modifiers) ? item.modifiers : []).reduce(
+          (sum, m) => sum + (Number(m.price_delta) || 0),
+          0
+        );
+        sellingPrice = billingOutlets.price(outlet, document, sellingPrice);
+        if (
+          document.open_price !== true &&
+          Number(document.selling_price) > 0 &&
+          document.item_status !== 'instant'
+        )
+          sellingPrice += extras;
+      }
       const itemAmount = sellingPrice * itemQuantity;
 
       // Prefer payload-provided company_price_total when available, otherwise
@@ -466,6 +502,7 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
           process: changeProcess,
           item_code: document.itemid,
           unit: item.item_unit || 'qty',
+          ...require('../utils/kitchen-amount').forSaleItem(document, item, sellingPrice),
           price: sellingPrice,
           total: sellingPrice * changeQty,
         });
@@ -568,6 +605,7 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
         item: new ObjectId(itemId),
         name: document.name,
         quantity: itemQuantity,
+        ...require('../utils/kitchen-amount').forSaleItem(document, item, sellingPrice),
         unit_price: sellingPrice,
         tax_rate: effectiveItemTax,
         // tax_amount is defined below in the PHP-legacy block to avoid
@@ -690,6 +728,79 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       });
     }
 
+    // Stop before numbering, stock, payment or sale writes. This internal
+    // preview uses the exact checkout tax and header calculations above/below.
+    if (outlet) {
+      const base = calculateSaleHeader(data, sale_tot_amount, {
+        ...context,
+        roundOff: false,
+      }).finalSaleTotAmount;
+      const automatic = billingOutlets.charge(
+        outlet,
+        sale_tot_amount > 0 ? Math.max(0, base * (1 - sale_tax_amount / sale_tot_amount)) : 0
+      );
+      data = {
+        ...data,
+        charges: [
+          ...(Array.isArray(data.charges) ? data.charges : []).filter((c) => c.source !== 'outlet'),
+          ...(automatic ? [automatic] : []),
+        ],
+      };
+      // Charges are added after bill discounts, without discounting the charge again.
+      const manual = data.charges.filter((c) => c.source !== 'outlet');
+      const manualAmount = manual.reduce(
+        (n, c) => n + Math.max(0, round2(Number(c.amount) || 0)),
+        0
+      );
+      const manualTax = manual.reduce(
+        (n, c) =>
+          n +
+          (c.taxed === true || c.taxed === 'true'
+            ? Math.max(0, round2(Number(c.tax_amount) || 0))
+            : 0),
+        0
+      );
+      context = {
+        ...context,
+        outletCharge:
+          (automatic ? automatic.amount + automatic.tax_amount : 0) + manualAmount + manualTax,
+      };
+      sale_tax_amount += (automatic ? automatic.tax_amount : 0) + manualTax;
+      if (data.outlet_expected_total !== undefined) {
+        const expected = Number(data.outlet_expected_total);
+        const payable = calculateSaleHeader(data, sale_tot_amount, context).salesTotalForDoc;
+        if (!Number.isFinite(expected) || Math.abs(expected - payable) > 0.005)
+          return {
+            status: false,
+            message:
+              'The outlet total differs from the displayed bill. Review prices and charges before saving.',
+          };
+      }
+    }
+    const decisionPricing =
+      preview || beforeCommit
+        ? {
+            header: calculateSaleHeader(data, sale_tot_amount, context),
+            roundOff: context.roundOff === true,
+            subtotal: sale_subtotal_amount,
+            tax: sale_tax_amount,
+            lineDiscount: sale_discount_amount,
+            items: itemsale.map((item) => ({
+              itemId: String(item.item_id),
+              name: item.item_name,
+              quantity: item.item_quantity,
+              unitPrice: item.item_price,
+              discountAmount: item.item_discount,
+              discountPercent: item.item_discount_percentage,
+              taxRate: item.tax,
+              taxType: item.tax_type,
+              taxAmount: item.tax_amount,
+              total: item.total_amount,
+            })),
+          }
+        : null;
+    if (preview) return { status: true, data: decisionPricing };
+
     // Generate Sales ID if New.
     //
     // Allocated from the atomic per-branch counter rather than by reading the
@@ -716,70 +827,18 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       });
     }
 
-    // Extra Discount & Round Off
-    const extraDiscountRaw = data.extra_discount ? Math.abs(parseFloat(data.extra_discount)) : 0;
-    const extraDiscount = round2(extraDiscountRaw, 2);
-    let itemsTotAmount = sale_tot_amount - extraDiscount;
-    let salesExtraDiscount = extraDiscount;
-
-    if (data.extra_discount_type === 'percent') {
-      const discAmt = sale_tot_amount * (extraDiscount / 100);
-      itemsTotAmount = sale_tot_amount - discAmt;
-      salesExtraDiscount = discAmt;
-    }
-
-    /*
-     * Coupon discount - a code the cashier applied. Validated in the controller
-     * against this branch's coupons (active, in date, within its usage limits,
-     * over its minimum spend), so here it is simply a fixed amount that reduces
-     * the payable total. A coupon and a loyalty redemption may both apply to one
-     * bill; each is clamped so the running total can never go below zero.
-     */
-    const couponCode = (data.coupon_code || '').toString().trim().toUpperCase();
-    const couponDiscountValue = round2(
-      Math.min(Math.abs(parseFloat(data.coupon_discount_value) || 0), itemsTotAmount),
-      2
-    );
-    if (couponDiscountValue > 0) {
-      itemsTotAmount = itemsTotAmount - couponDiscountValue;
-    }
-
-    /*
-     * Loyalty redemption - a discount the cashier chose to spend points on.
-     *
-     * The points and the currency value were already validated in the
-     * controller against this branch's loyalty rules and the customer's
-     * balance, so here it is simply a fixed amount that reduces the payable
-     * total, exactly like the extra discount above, and then rides the same
-     * round-off and payment logic below. It is a plain number in the branch's
-     * own currency, so it carries no assumption about symbol or country. Clamped
-     * so a redemption can never push a bill below zero.
-     */
-    const loyaltyRedeemValue = round2(
-      Math.min(Math.abs(parseFloat(data.loyalty_redeem_value) || 0), itemsTotAmount),
-      2
-    );
-    const loyaltyRedeemPoints = Math.max(0, parseInt(data.loyalty_redeem_points, 10) || 0);
-    if (loyaltyRedeemValue > 0) {
-      itemsTotAmount = itemsTotAmount - loyaltyRedeemValue;
-    }
-
-    // Fetch Branch Settings for Round Off
-    const roundOffSetting = context.roundOff === true;
-
-    let roundOffValue = 0;
-    let finalSaleTotAmount = itemsTotAmount;
-
-    if (roundOffSetting) {
-      finalSaleTotAmount = Math.round(itemsTotAmount);
-      roundOffValue = finalSaleTotAmount - itemsTotAmount;
-    }
-
-    const salesTotalForDoc = round2(finalSaleTotAmount, 2);
-    const roundOffForDoc = round2(roundOffValue, 2);
-    const itemsTotalForDoc = roundOffSetting
-      ? Math.round(itemsTotAmount)
-      : round2(itemsTotAmount, 2);
+    const {
+      extraDiscount,
+      salesExtraDiscount,
+      couponCode,
+      couponDiscountValue,
+      loyaltyRedeemPoints,
+      loyaltyRedeemValue,
+      finalSaleTotAmount,
+      salesTotalForDoc,
+      roundOffForDoc,
+      itemsTotalForDoc,
+    } = calculateSaleHeader(data, sale_tot_amount, context);
 
     // PHP-like helper functions for exact logic parity
     const isset = (value) => value !== undefined && value !== null;
@@ -1010,6 +1069,22 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       customer_name: (data.customer_name || '').trim(),
       customer_address: (data.customer_address || '').trim(),
       customer_phone: (data.customer_phone || '').trim(),
+      ...(outlet
+        ? {
+            outlet_id: outlet.id,
+            outlet_snapshot: {
+              id: outlet.id,
+              name: outlet.name,
+              markup_percent: outlet.markup_percent,
+              service_percent: outlet.service_percent,
+              service_tax_percent: outlet.service_tax_percent,
+              prices: outlet.prices,
+            },
+            room_reference: String(data.room_reference ?? existingSale?.room_reference ?? '')
+              .trim()
+              .slice(0, 80),
+          }
+        : {}),
       customer_email: (data.customer_email || '').trim(),
       customer_state: (data.customer_state || '').trim(),
       customer_country: (data.customer_country || '').trim(),
@@ -1119,7 +1194,12 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
                         .slice(0, 40)
                     : '',
                   tax_amount: taxed ? round2(parseFloat(c && c.tax_amount) || 0, 2) : 0,
-                  source: c && c.source === 'quote' ? 'quote' : 'manual',
+                  source:
+                    outlet && c.source === 'outlet'
+                      ? 'outlet'
+                      : c && c.source === 'quote'
+                        ? 'quote'
+                        : 'manual',
                 },
               ];
             }),
@@ -1325,6 +1405,16 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
       // ADD: create a new Sale document so that the pre-save hook can
       // normalize the payload into a PHP-style 1:1 document.
       try {
+        if (beforeCommit) {
+          const proof = await beforeCommit(decisionPricing);
+          finalSaleData.business_decision_receipt =
+            require('./business-decision-receipt').decisionReceipt(
+              proof,
+              context,
+              data.billing_transaction_id,
+              decisionPricing
+            );
+        }
         // If the unique bill-number index catches a one-in-a-million clash,
         // take the next number and retry rather than fail the sale.
         result = await salesRepository.createSaleUnique(finalSaleData, async () => {
@@ -1727,7 +1817,14 @@ const processSale = async (data, id = '', process = 'Add', context = {}) => {
     return savedAnswer(saleId, salePrefixedId);
   } catch (error) {
     console.error('processSale Error:', error);
-    return { status: false, message: error.message, data: null };
+    return {
+      status: false,
+      message: error.message,
+      data: null,
+      ...(beforeCommit && typeof error.code === 'string' && Number.isInteger(error.status)
+        ? { decisionError: { code: error.code, status: error.status } }
+        : {}),
+    };
   } finally {
     if (finishCaptainEdit) await finishCaptainEdit();
   }
@@ -2782,6 +2879,7 @@ const getSalesSummaryReportsData = async ({ match, branchObjectIds }, { SaleMode
 
 module.exports = {
   processSale,
+  previewSale: (data, context) => processSale(data, '', 'Add', context, { preview: true }),
   getTablesWithActiveOrders,
   enrichSaleContext,
   getSaleById,
@@ -3909,9 +4007,10 @@ module.exports = {
   },
   // Thin wrappers around additional legacy static helpers used by
   // the controller outside of the main reporting endpoints.
-  returnSalesOrder: async (data, { SaleModel } = {}) =>
+  returnSalesOrder: async (data, { SaleModel, deviceId } = {}) =>
     salesRepository.returnSalesOrder(data, {
       SaleModel: getModel(SaleModel),
+      deviceId,
     }),
   exportSalesOrder: async (ids, { SaleModel } = {}) =>
     salesRepository.exportSalesOrder(ids, {

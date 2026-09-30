@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Autentificați-vă în contul și sucursala inițiale pentru a reîncerca această comandă.",
   "lang_submission_save_failed": "Comanda nu a putut fi salvată.",
   "lang_submission_saved": "Comandă salvată",
-  "lang_submission_already_saved": "Această comandă a fost deja salvată. Reîmprospătați lista de vânzări."
+  "lang_submission_already_saved": "Această comandă a fost deja salvată. Reîmprospătați lista de vânzări.",
+  "lang_business_discount": "Reducere",
+  "lang_cash": "Numerar",
+  "lang_print": "Tipărește"
 }

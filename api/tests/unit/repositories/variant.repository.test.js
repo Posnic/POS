@@ -94,8 +94,15 @@ describe('VariantsRepository', () => {
     });
 
     test('returns variant by id', async () => {
-      const result = await repository.findById(FAKE_ID);
-      expect(mockModel.findById).toHaveBeenCalledWith(FAKE_ID);
+      const result = await repository.findById(FAKE_ID, {
+        license: FAKE_ID,
+        branch_id: FAKE_BRANCH_ID,
+      });
+      expect(mockModel.findOne).toHaveBeenCalledWith({
+        _id: FAKE_ID,
+        license: new (require('mongodb').ObjectId)(FAKE_ID),
+        branch_id: new (require('mongodb').ObjectId)(FAKE_BRANCH_ID),
+      });
       expect(result).toEqual(mockVariant);
     });
   });

@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Mag-sign in sa orihinal na account at sangay upang subukang muli ang order na ito.",
   "lang_submission_save_failed": "Hindi ma-save ang order.",
   "lang_submission_saved": "Na-save ang order",
-  "lang_submission_already_saved": "Na-save na ang order na ito. I-refresh ang listahan ng mga benta."
+  "lang_submission_already_saved": "Na-save na ang order na ito. I-refresh ang listahan ng mga benta.",
+  "lang_business_discount": "Diskuwento",
+  "lang_cash": "Cash",
+  "lang_print": "I-print"
 }

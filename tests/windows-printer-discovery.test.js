@@ -66,7 +66,7 @@ test('power parser accepts localized labels and reports command failure as unkno
 test('Hardware Manager renders power guidance and discovery states as text', async () => {
   const { JSDOM } = require('jsdom');
   const html = fs.readFileSync(path.join(__dirname, '../src/hardware-manager.html'), 'utf8');
-  const dom = new JSDOM('<div id="windowsRecovery"></div><div id="wrPower"></div><div id="wrKeepAliveStatus"></div><div id="wrHealth"></div><div id="wrJobs"></div><div id="wrMessage"></div>', {runScripts:'outside-only'});
+  const dom = new JSDOM(html, {runScripts:'outside-only'});
   try {
     const w = dom.window;
     w.electronAPI = {printer:{recoveryStatus:async()=>({supported:true, systemSettings:{guidance:['Sleep: Never <test>']}, health:[{printer:'Kitchen',port:'USB003',discovery:'ambiguous',workOffline:false,printerStatus:3}], jobs:[]})}};

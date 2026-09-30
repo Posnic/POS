@@ -841,13 +841,14 @@ class ReceivingsController extends BaseController {
    */
   async addAttachment(req, res) {
     try {
-      if (req.user?.access?.receiving?.write === false) {
+      if (!this.checkPermission('receiving', 'write', req.user)) {
         return this.error(res, 'Unauthorized', 403);
       }
       if (!req.file) {
         return this.error(res, 'Attach a PDF or an image file.', 400);
       }
       const { ObjectId } = require('mongodb');
+      const tenant = require('../utils/record-scope').requestScope(req);
       const id = String(req.params.id || '');
       if (!ObjectId.isValid(id)) return this.error(res, 'Purchase not found', 404);
       const meta = {
@@ -861,13 +862,13 @@ class ReceivingsController extends BaseController {
       };
       const r = await req.db
         .collection('receivings')
-        .updateOne({ _id: new ObjectId(id) }, { $push: { attachments: meta } });
+        .updateOne({ _id: new ObjectId(id), ...tenant }, { $push: { attachments: meta } });
       if (!r.matchedCount) {
         /* A purchase ORDER id can arrive here too - the one purchases door
            attaches to either record. */
         const po = await req.db
           .collection('purchase_orders')
-          .updateOne({ _id: new ObjectId(id) }, { $push: { attachments: meta } });
+          .updateOne({ _id: new ObjectId(id), ...tenant }, { $push: { attachments: meta } });
         if (!po.matchedCount) return this.error(res, 'Purchase not found', 404);
       }
       return this.success(res, meta, 'Attached');
@@ -879,17 +880,23 @@ class ReceivingsController extends BaseController {
 
   async removeAttachment(req, res) {
     try {
-      if (req.user?.access?.receiving?.write === false) {
+      if (!this.checkPermission('receiving', 'write', req.user)) {
         return this.error(res, 'Unauthorized', 403);
       }
       const { ObjectId } = require('mongodb');
+      const tenant = require('../utils/record-scope').requestScope(req);
       const id = String(req.params.id || '');
       const attId = String(req.params.attId || '');
       if (!ObjectId.isValid(id) || !attId) return this.error(res, 'Not found', 404);
       const pull = { $pull: { attachments: { id: attId } } };
-      const r = await req.db.collection('receivings').updateOne({ _id: new ObjectId(id) }, pull);
+      const r = await req.db
+        .collection('receivings')
+        .updateOne({ _id: new ObjectId(id), ...tenant }, pull);
       if (!r.modifiedCount) {
-        await req.db.collection('purchase_orders').updateOne({ _id: new ObjectId(id) }, pull);
+        const po = await req.db
+          .collection('purchase_orders')
+          .updateOne({ _id: new ObjectId(id), ...tenant }, pull);
+        if (!r.matchedCount && !po.matchedCount) return this.error(res, 'Purchase not found', 404);
       }
       /* The file itself stays on disk deliberately: a removed listing must
          be recoverable by support, and disk is cheaper than a regret. */

@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Sínigh isteach sa chuntas agus sa bhrainse bunaidh chun an t-ordú seo a thriail arís.",
   "lang_submission_save_failed": "Níorbh fhéidir an t-ordú a shábháil.",
   "lang_submission_saved": "Ordú sábháilte",
-  "lang_submission_already_saved": "Sábháladh an t-ordú seo cheana féin. Athnuaigh an liosta díolachán."
+  "lang_submission_already_saved": "Sábháladh an t-ordú seo cheana féin. Athnuaigh an liosta díolachán.",
+  "lang_business_discount": "Lascaine",
+  "lang_cash": "Airgead tirim",
+  "lang_print": "Priontáil"
 }

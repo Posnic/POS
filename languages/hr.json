@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Prijavite se na izvorni račun i u izvornu poslovnicu kako biste ponovno pokušali poslati ovu narudžbu.",
   "lang_submission_save_failed": "Narudžbu nije moguće spremiti.",
   "lang_submission_saved": "Narudžba je spremljena",
-  "lang_submission_already_saved": "Ova je narudžba već spremljena. Osvježite popis prodaja."
+  "lang_submission_already_saved": "Ova je narudžba već spremljena. Osvježite popis prodaja.",
+  "lang_business_discount": "Popust",
+  "lang_cash": "Gotovina",
+  "lang_print": "Ispiši"
 }

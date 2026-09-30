@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Log ind på den oprindelige konto og i den oprindelige afdeling for at prøve denne ordre igen.",
   "lang_submission_save_failed": "Ordren kunne ikke gemmes.",
   "lang_submission_saved": "Ordren er gemt",
-  "lang_submission_already_saved": "Denne ordre er allerede gemt. Opdater salgslisten."
+  "lang_submission_already_saved": "Denne ordre er allerede gemt. Opdater salgslisten.",
+  "lang_business_discount": "Rabat",
+  "lang_cash": "Kontant",
+  "lang_print": "Udskriv"
 }

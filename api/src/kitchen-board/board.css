@@ -351,3 +351,10 @@ footer {
 }
 
 .allergy {display:block;grid-column:1/-1;color:#fff;background:#8b1717;padding:6px 10px;border-radius:6px;font-size:1rem;}
+.item-progress { display:flex; flex-wrap:wrap; gap:6px; font-size:16px; font-weight:700; }
+.item-progress span { padding:4px 8px; border-radius:6px; }
+.progress-cooking { background:#374151; color:#fff; }
+.progress-ready { background:#14532d; color:#d8ffe7; }
+.progress-picked { background:#173b65; color:#dceeff; }
+.line-ready > .name { color:#b3ffd0; }
+.line-picked > .name { color:#b9dcff; }

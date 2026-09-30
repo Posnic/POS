@@ -164,4 +164,4 @@ details. We will confirm the version, sign it, and note the execution date.
 
 **Posnic Innovations**, Tamil Nadu, India
 **Data protection contact:** info@posnic.com
-**Security:** security@posnic.com
+**Security:** info@posnic.com

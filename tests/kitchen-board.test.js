@@ -33,12 +33,13 @@ test('chef marks part of a dish ready, can undo it, and can ready the remaining 
     card.querySelector('.item-ready').click();
     await tick();
     card = d.querySelector('[data-id="demo-1:c0"]');
-    assert.match(card.textContent, /1 ready to collect/);
+    assert.match(card.textContent, /✓ 1 Ready to collect/);
     assert.ok(d.querySelector('#preparing [data-id="demo-1:c0"]'));
     d.getElementById('undo').click();
     await tick();
     card = d.querySelector('[data-id="demo-1:c0"]');
-    assert.match(card.textContent, /0 ready to collect/);
+    assert.equal(card.querySelector('.progress-ready'), null);
+    assert.match(card.textContent, /2 Cooking/);
     card.querySelector('.advance').click();
     await tick();
     assert.ok(d.querySelector('#ready [data-id="demo-1:c0"]'));

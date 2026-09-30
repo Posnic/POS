@@ -190,6 +190,7 @@ PosnicPro.categories = {
         $('#categories_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'categories',
+            rows: '#categories_list_rows',
             onRefresh: function () { return PosnicPro.categories.loadList(); },
             container: '#categories_filter_panel',
             button: '#categories_filter_btn',
@@ -207,7 +208,7 @@ PosnicPro.categories = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('categories', { dateKey: 'created_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('categories', {
             url: 'categories',
             data: {
                 page: self._page,

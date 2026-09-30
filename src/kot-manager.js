@@ -15,6 +15,8 @@ const orderAlert = require('./order-alert');
 const kitchenAnnounce = require('./kitchen-announce');
 const { renderKitchenTicket, spiceLine } = require('./escpos-kot');
 const printLedger = require('./print-ledger');
+const spooler = require('./windows-spooler');
+const printTempFiles = require('./print-temp-files');
 
 /*
  * What a print attempt came back as.
@@ -241,7 +243,9 @@ class KOTManager {
 
   _sendPrintJob(printWindow, printOpts) {
     return new Promise((resolve) => {
+      const timer = setTimeout(() => resolve({ success: false, reason: 'Print callback timed out' }), 5000);
       printWindow.webContents.print(printOpts, (success, reason) => {
+        clearTimeout(timer);
         resolve({ success, reason: reason || '' });
       });
     });
@@ -263,34 +267,15 @@ class KOTManager {
       const pdfOptions = {};
       if (deviceName) pdfOptions.printer = deviceName;
 
-      await printPdfFile(tmpPdf, pdfOptions);
-      console.log(`[KOT] Printed via PDF fallback -> ${deviceName || 'default printer'}`);
-      return { success: true, reason: '' };
+      const result = await printPdfFile(tmpPdf, pdfOptions);
+      if (!result || result.success) console.log(`[KOT] PDF submission confirmed -> ${deviceName}`);
+      return result || { success: true, reason: '' };
     } catch (error) {
       console.error(`[KOT] PDF print fallback failed (${deviceName}):`, error.message);
       return { success: false, reason: error.message || 'PDF print fallback failed' };
     } finally {
-      try {
-        if (fs.existsSync(tmpPdf)) fs.unlinkSync(tmpPdf);
-      } catch (_) {}
+      printTempFiles.retain(tmpPdf);
     }
-  }
-
-  async _printWithSystemDefaultFallback(printWindow) {
-    console.warn('[KOT] Retrying with Windows default printer');
-
-    let result = await this._sendPrintJob(printWindow, {
-      silent: true,
-      printBackground: true,
-      margins: { marginType: 'none' }
-    });
-
-    if (!result.success) {
-      console.warn('[KOT] Windows default Electron print failed, retrying default PDF fallback:', result.reason || 'unknown');
-      result = await this._printViaPdfFallback(printWindow, '');
-    }
-
-    return result;
   }
 
   async _printToDeviceWithFallback(printWindow, deviceName, pageSizeKey, strictPrinter = false) {
@@ -309,6 +294,10 @@ class KOTManager {
       pageSize: pageSizeFor(pageSizeKey)
     });
 
+    // Windows submission is verified by _deliverCopy. A rejected or missing
+    // callback can still have created a job, so do not try another transport.
+    if (process.platform === 'win32') return result;
+
     if (!result.success) {
       console.warn(`[KOT] Receipt page size rejected (${deviceName}), retrying with printer defaults:`, result.reason || 'unknown');
       result = await this._sendPrintJob(printWindow, baseOptions);
@@ -317,11 +306,6 @@ class KOTManager {
     if (!result.success) {
       console.warn(`[KOT] Electron print failed (${deviceName}), retrying through PDF fallback:`, result.reason || 'unknown');
       result = await this._printViaPdfFallback(printWindow, deviceName);
-    }
-
-    if (!result.success && deviceName && !strictPrinter) {
-      console.warn(`[KOT] Named printer "${deviceName}" failed, falling back to Windows default printer`);
-      result = await this._printWithSystemDefaultFallback(printWindow);
     }
 
     return result;
@@ -471,7 +455,6 @@ class KOTManager {
      * first print falls straight through to the claim below.
      */
     if (printLedger.retry(key)) {
-      this.printedJobs.add(key);
       console.warn(`[KOT] did not print last time, trying again: ${about.saleId || key}`);
       return true;
     }
@@ -480,11 +463,10 @@ class KOTManager {
        before this existed, so it is worth saying out loud rather than passing
        over in silence. */
     if (!printLedger.claim(key, about)) {
-      this.printedJobs.add(key);
+      if (printLedger.state(key) === 'printed') this.printedJobs.add(key);
       console.warn(`[KOT] already printed on an earlier run, not printing again: ${about.saleId || key}`);
       return false;
     }
-    this.printedJobs.add(key);
     return true;
   }
 
@@ -753,7 +735,7 @@ class KOTManager {
             /* Named for the server's shadow queue. Only when paper actually
                came out - reporting a failed ticket as printed would close a
                row that SHOULD be showing up as a disagreement. */
-            if (cameOut) printedKeys.push(jobKey);
+            if (cameOut) { this.printedJobs.add(jobKey); printedKeys.push(jobKey); }
             else { stillOwed = true; this.lastPollStatus = 'Printing pending: check Kitchen Printing logs'; }
           }
 
@@ -799,7 +781,7 @@ class KOTManager {
         const results = await this.silentPrint({ ...sale, _deliveryKey: key }, printerNames);
         const cameOut = _allPrinted(results);
         printLedger.settle(key, cameOut, _firstReason(results));
-        if (cameOut) printedKeys.push(key);
+        if (cameOut) { this.printedJobs.add(key); printedKeys.push(key); }
         if (!cameOut) this.lastPollStatus = 'Printing pending: check Kitchen Printing logs';
         if (cameOut) printedSaleIds.push(saleId);
       }
@@ -933,7 +915,7 @@ class KOTManager {
       })));
   }
 
-  async _deliverCopy(sale, jobs, index, via, send) {
+  async _deliverTrackedCopy(sale, jobs, index, via, send) {
     const job = jobs[index];
     const key = sale._deliveryKey;
     const windowsTracked = via === 'bytes' && process.platform === 'win32' && typeof this.hardware?.getWindowsPrintQueue === 'function';
@@ -952,6 +934,41 @@ class KOTManager {
     const reason = ok ? '' : (result?.error || result?.reason || 'Printer did not confirm printing');
     printLedger.finishDelivery(key, index, ok, reason);
     return { name: job.name, copy: job.copy, status: ok ? 'success' : (result?.pending ? 'pending' : 'failed'), reason, ms: Date.now() - started, via, jobId: result?.jobId, printStatus: result?.status };
+  }
+
+  async _deliverCopy(sale, jobs, index, via, send) {
+    // The durable Windows RAW queue already verifies spooler evidence and owns retries.
+    if (via === 'bytes' && process.platform === 'win32' && typeof this.hardware?.getWindowsPrintQueue === 'function') {
+      return this._deliverTrackedCopy(sale, jobs, index, via, send);
+    }
+    const job = jobs[index];
+    const key = sale._deliveryKey;
+    const documentName = spooler.documentName(key || crypto.randomUUID(), index);
+    if (printLedger.deliveryPlan(key)) {
+      if (job.state === 'printed') return { ...spooler.result(job.name, { state: 'spooled', success: true, submitted: true, retryable: false }), ...job.result, name: job.name, copy: job.copy, status: 'success', cached: true, via };
+      if (job.state === 'attempted' && process.platform === 'win32') {
+        // Reconcile a crash/unknown outcome with the exact earlier document.
+        let observed;
+        try { observed = await spooler.find(job.name, documentName); } catch (_) {}
+        if (observed?.success) {
+          printLedger.finishDelivery(key, index, true, '', observed);
+          return { ...observed, name: job.name, copy: job.copy, status: 'success', cached: true, via };
+        }
+      }
+      if (!printLedger.beginDelivery(key, index)) return {
+        ...spooler.result(job.name, { state: job.state === 'attempted' ? 'unknown' : 'failed', retryable: job.state !== 'attempted', error: job.reason || 'Waiting for printer reconciliation or retry' }),
+        name: job.name, copy: job.copy, status: 'pending', deferred: true, via,
+        reason: job.state === 'attempted' ? 'Previous print outcome unknown. Check the printer before reprinting.' : 'Waiting to retry failed printer',
+      };
+    }
+    const started = Date.now();
+    let result;
+    try { result = await spooler.submit({ printerName: job.name, documentName, submit: send }); }
+    catch (error) { result = spooler.result(job.name, { state: 'unknown', retryable: false, error: error.message || String(error) }); }
+    const ok = !!result?.success;
+    const reason = ok ? '' : (result?.error || result?.reason || 'Printer did not confirm printing');
+    printLedger.finishDelivery(key, index, ok, reason, result);
+    return { ...spooler.result(job.name), ...result, name: job.name, copy: job.copy, status: ok ? 'success' : 'failed', reason, ms: Date.now() - started, via };
   }
 
   async _printRaw(sale, printKind, kotNumber, printerNames) {
@@ -1239,8 +1256,10 @@ class KOTManager {
       const jobs = this._deliveryJobs(sale, printerNames);
       for (let index = 0; index < jobs.length; index += 1) {
         const job = jobs[index];
-        printerResults.push(await this._deliverCopy(sale, jobs, index, 'window', () =>
-          this._printToDeviceWithFallback(printWindow, job.name, job.pageSize, true)));
+        printerResults.push(await this._deliverCopy(sale, jobs, index, 'window', async (documentName) => {
+          await printWindow.webContents.executeJavaScript(`document.title = ${JSON.stringify(documentName)}`);
+          return this._printToDeviceWithFallback(printWindow, job.name, job.pageSize, true);
+        }));
       }
     } finally {
       printWindow.close();
@@ -1350,7 +1369,7 @@ class KOTManager {
     const placeLine = placeParts.join('   ');
     /* What the customer said about the whole order, and - for a delivery -
        where it is going. Both were on the sale and neither was printed. */
-    const orderNote   = String(sale.notes || sale.note || '').trim();
+    const orderNote   = [sale.outlet_snapshot?.name, sale.room_reference ? 'Room / reference: ' + sale.room_reference : '', String(sale.notes || sale.note || '').trim()].filter(Boolean).join(' · ');
     const deliverTo   = String(sale.fulfilment || '') === 'delivery'
       ? [sale.customer_name, sale.customer_address, sale.customer_phone].filter(Boolean).map(String).join(' / ')
       : '';
@@ -1402,6 +1421,7 @@ class KOTManager {
           <div class="in ${isCancelled ? 'cx' : ''}">${this._esc(String(name))}</div>
           <div class="iq">x${qty}</div>
         </div>
+        ${Number.isFinite(Number(it.priced_at_table)) && Number(it.priced_at_table) > 0 ? '<div class="nt">Amount: ' + this._esc(String(Number(it.priced_at_table))) + ' each</div>' : ''}
         ${it.instruction_only ? '<div class="nt">PREPARATION UPDATE — do not add another item</div>' : ''}
         ${it.seat || it.course ? `<div class="is">${this._esc([it.seat ? 'Seat ' + it.seat : '', it.course || ''].filter(Boolean).join(' · '))}</div>` : ''}
         ${(it.allergies || []).length || it.allergy_note ? `<div class="nt">ALLERGY: ${this._esc([...(it.allergies || []), it.allergy_note || ''].filter(Boolean).join(', '))}</div>` : ''}

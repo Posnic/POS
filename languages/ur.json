@@ -119,5 +119,9 @@
   "lang_submission_original_account": "اس آرڈر کے لیے دوبارہ کوشش کرنے کی خاطر اصل اکاؤنٹ اور برانچ میں سائن ان کریں۔",
   "lang_submission_save_failed": "آرڈر محفوظ نہیں کیا جا سکا۔",
   "lang_submission_saved": "آرڈر محفوظ ہو گیا",
-  "lang_submission_already_saved": "یہ آرڈر پہلے ہی محفوظ ہو چکا ہے۔ فروخت کی فہرست ریفریش کریں۔"
+  "lang_submission_already_saved": "یہ آرڈر پہلے ہی محفوظ ہو چکا ہے۔ فروخت کی فہرست ریفریش کریں۔",
+  "lang_business_discount": "رعایت",
+  "lang_cash": "نقد",
+  "lang_print": "پرنٹ کریں",
+  "lang_stock_adjust_reason": "وجہ"
 }

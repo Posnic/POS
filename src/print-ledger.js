@@ -43,9 +43,9 @@
  * the measurement this area has never had. Nobody currently knows whether
  * duplicates happen four times a week or forty.
  *
- * NOTHING HERE MAY THROW. A ledger problem must never become a printing
- * problem: a customer is standing there and the ticket matters more than the
- * bookkeeping.
+ * Legacy bookkeeping methods do not throw. Per-copy delivery is stricter:
+ * beginDelivery must save its attempt before allowing submission, otherwise
+ * a restart could duplicate a ticket whose attempt was never recorded.
  */
 
 const fs = require('fs');
@@ -105,7 +105,7 @@ function _load() {
  * the exact race this file exists to close.
  */
 function _save() {
-  if (!_dir || !_cache) return;
+  if (!_dir || !_cache) return false;
   try {
     const keys = Object.keys(_cache.entries);
     if (keys.length > MAX_ENTRIES) {
@@ -121,10 +121,12 @@ function _save() {
     const tmp = _file() + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(_cache), 'utf8');
     fs.renameSync(tmp, _file());
+    return true;
   } catch (e) {
     /* Swallowed. See the header: a ledger problem must not stop a ticket. The
        in-memory copy still guards this run. */
     console.warn('[PrintLedger] could not be written:', e.message);
+    return false;
   }
 }
 
@@ -297,14 +299,21 @@ function beginDelivery(key, index) {
   if (item.retryAt && Date.now() < item.retryAt) return false;
   item.state = 'attempted';
   item.attempts += 1;
-  _save();
+  if (!_save()) {
+    // A copy must not reach the spooler without a durable attempt record.
+    item.state = 'pending';
+    item.attempts -= 1;
+    item.reason = 'Could not save the print attempt; check available disk space and permissions';
+    return false;
+  }
   return true;
 }
 
-function finishDelivery(key, index, ok, reason) {
+function finishDelivery(key, index, ok, reason, result) {
   const item = deliveryPlan(key)?.[index];
   if (!item) return;
-  item.state = ok ? 'printed' : 'failed';
+  item.state = ok ? 'printed' : result?.retryable === false ? 'attempted' : 'failed';
+  if (result) item.result = result;
   item.reason = String(reason || '').slice(0, 200);
   // Known failures retry in the background, with a five-minute ceiling.
   item.retryAt = ok ? 0 : Date.now() + Math.min(300000, 30000 * 2 ** Math.min(item.attempts - 1, 4));

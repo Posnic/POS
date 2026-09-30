@@ -88,6 +88,7 @@ PosnicPro.lowstockitems = {
         $('#lowstockitems_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'lowstockitems',
+            rows: '#lowstockitems_list_rows',
             onRefresh: function () { return PosnicPro.lowstockitems.loadList(); },
             container: '#lowstockitems_filter_panel',
             button: '#lowstockitems_filter_btn',
@@ -108,7 +109,7 @@ PosnicPro.lowstockitems = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('lowstockitems', {});
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('lowstockitems', {
             url: 'items/itemLowStockTable',
             data: {
                 page: self._page,

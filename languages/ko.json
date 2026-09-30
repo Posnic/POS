@@ -119,5 +119,9 @@
   "lang_submission_original_account": "이 주문을 다시 시도하려면 원래 계정과 지점으로 로그인하세요.",
   "lang_submission_save_failed": "주문을 저장할 수 없습니다.",
   "lang_submission_saved": "주문 저장됨",
-  "lang_submission_already_saved": "이 주문은 이미 저장되었습니다. 판매 목록을 새로 고침하세요."
+  "lang_submission_already_saved": "이 주문은 이미 저장되었습니다. 판매 목록을 새로 고침하세요.",
+  "lang_business_discount": "할인",
+  "lang_cash": "현금",
+  "lang_print": "인쇄",
+  "lang_stock_adjust_reason": "사유"
 }

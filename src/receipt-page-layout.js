@@ -37,5 +37,30 @@
     (doc.body || doc.head).appendChild(style);
     return { width: width * 1000, height: Math.round(heightMm * 1000) };
   }
-  return { fitDocument: fitDocument };
+  // Serialized into the hidden Electron window. A completed HTTP load can
+  // still be an empty 404 response, so readiness must include actual content.
+  async function prepareDocument(doc, expectedReceipt) {
+    var wait = function (promise) {
+      return new Promise(function (resolve) {
+        var timer = setTimeout(resolve, 5000);
+        Promise.resolve(promise).catch(function () {}).then(function () { clearTimeout(timer); resolve(); });
+      });
+    };
+    await Promise.all([
+      wait(doc.fonts ? doc.fonts.ready : Promise.resolve()),
+      wait(Promise.all(Array.from(doc.images).map(function (img) {
+        return img.decode ? img.decode().catch(function () {}) : Promise.resolve();
+      })))
+    ]);
+    var content = expectedReceipt ? doc.querySelector('.rd-document[data-receipt-design]') : doc.body;
+    if (!content) throw new Error('The receipt document did not load.');
+    var text = (content.innerText || '').trim();
+    var image = Array.from(content.querySelectorAll('img')).some(function (img) {
+      var rect = img.getBoundingClientRect();
+      return img.naturalWidth > 0 && rect.width > 0 && rect.height > 0;
+    });
+    if (!text && !image) throw new Error('The print document is blank.');
+    if (expectedReceipt && content.getBoundingClientRect().height <= 0) throw new Error('The receipt is not visible.');
+  }
+  return { fitDocument: fitDocument, prepareDocument: prepareDocument };
 }));

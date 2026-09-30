@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Συνδεθείτε στον αρχικό λογαριασμό και υποκατάστημα για να δοκιμάσετε ξανά αυτήν την παραγγελία.",
   "lang_submission_save_failed": "Δεν ήταν δυνατή η αποθήκευση της παραγγελίας.",
   "lang_submission_saved": "Η παραγγελία αποθηκεύτηκε",
-  "lang_submission_already_saved": "Αυτή η παραγγελία έχει ήδη αποθηκευτεί. Ανανεώστε τη λίστα πωλήσεων."
+  "lang_submission_already_saved": "Αυτή η παραγγελία έχει ήδη αποθηκευτεί. Ανανεώστε τη λίστα πωλήσεων.",
+  "lang_business_discount": "Έκπτωση",
+  "lang_cash": "Μετρητά",
+  "lang_print": "Εκτύπωση"
 }

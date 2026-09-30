@@ -119,5 +119,9 @@
   "lang_submission_original_account": "Войдите в исходную учётную запись и филиал, чтобы повторить отправку этого заказа.",
   "lang_submission_save_failed": "Не удалось сохранить заказ.",
   "lang_submission_saved": "Заказ сохранён",
-  "lang_submission_already_saved": "Этот заказ уже сохранён. Обновите список продаж."
+  "lang_submission_already_saved": "Этот заказ уже сохранён. Обновите список продаж.",
+  "lang_business_discount": "Скидка",
+  "lang_cash": "Наличные",
+  "lang_print": "Печать",
+  "lang_stock_adjust_reason": "Причина"
 }

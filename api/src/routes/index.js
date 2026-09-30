@@ -98,6 +98,7 @@ router.use('/quotes', quotesRoutes);
 router.use('/receivings', receivingsRoutes);
 router.use('/handsets', handsetsRoutes);
 router.use('/registers', registersRoutes);
+router.use('/billing-outlets', require('./billing-outlets.routes'));
 router.use('/roles', rolesRoutes);
 router.use('/authorizations', authorizationsRoutes);
 router.use('/shifts', shiftsRoutes);

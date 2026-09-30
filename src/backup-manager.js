@@ -73,7 +73,35 @@ class BackupManager {
     return { ...this.defaultConfig };
   }
 
+  grantBackupPath(folder) {
+    if (!folder || !path.isAbsolute(folder)) throw new Error('Choose an absolute backup folder');
+    if (!this._grantedBackupPaths) this._grantedBackupPaths = new Set();
+    this._grantedBackupPaths.add(fs.realpathSync(folder));
+  }
+
   saveConfig(config) {
+    if (!config || typeof config !== 'object' || Array.isArray(config)) throw new Error('Invalid backup settings');
+    const allowed = new Set(['enabled', 'path', 'frequency', 'time', 'dayOfWeek', 'retentionDays']);
+    for (const key of Object.keys(config)) if (!allowed.has(key)) throw new Error('Unknown backup setting: ' + key);
+    if ('enabled' in config && typeof config.enabled !== 'boolean') throw new Error('Invalid enabled setting');
+    if ('frequency' in config && !['hourly', 'daily', 'weekly'].includes(config.frequency)) throw new Error('Invalid backup frequency');
+    if ('time' in config && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(config.time)) throw new Error('Invalid backup time');
+    if ('dayOfWeek' in config && (!Number.isInteger(config.dayOfWeek) || config.dayOfWeek < 0 || config.dayOfWeek > 6)) throw new Error('Invalid backup day');
+    if ('retentionDays' in config && (!Number.isInteger(config.retentionDays) || config.retentionDays < 1 || config.retentionDays > 365)) throw new Error('Invalid retention');
+    const next = { ...config };
+    if ('path' in next) {
+      if (typeof next.path !== 'string' || !path.isAbsolute(next.path)) throw new Error('Choose a backup folder using Browse');
+      const current = path.resolve(this.loadConfig().path);
+      if (path.resolve(next.path) !== current) {
+        const selected = fs.existsSync(next.path) && fs.realpathSync(next.path);
+        if (!selected || !this._grantedBackupPaths?.has(selected)) throw new Error('Choose a backup folder using Browse');
+        next.path = selected;
+      }
+    }
+    return this._saveConfig(next);
+  }
+
+  _saveConfig(config) {
     try {
       const merged = { ...this.loadConfig(), ...config };
       fs.writeFileSync(this.configPath, JSON.stringify(merged, null, 2));
@@ -121,7 +149,7 @@ class BackupManager {
     }
     
     this.isRunning = true;
-    this.saveConfig({ status: 'running', lastError: null });
+    this._saveConfig({ status: 'running', lastError: null });
     
     const startTime = Date.now();
     const timestamp = this._formatTimestamp(new Date());
@@ -154,7 +182,7 @@ class BackupManager {
           duration: Date.now() - startTime
         });
         
-        this.saveConfig({ 
+        this._saveConfig({
           status: 'success', 
           lastBackup: new Date().toISOString() 
         });
@@ -183,7 +211,7 @@ class BackupManager {
       );
       
       // Update config
-      this.saveConfig({
+      this._saveConfig({
         status: 'success',
         lastBackup: new Date().toISOString(),
         lastBackupHash: dataHash,
@@ -218,7 +246,7 @@ class BackupManager {
     } catch (err) {
       console.error('[BackupManager] ❌ Backup failed:', err.message);
       
-      this.saveConfig({
+      this._saveConfig({
         status: 'failed',
         lastError: err.message
       });
@@ -489,6 +517,14 @@ class BackupManager {
       }
       
       const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      if (!Array.isArray(manifest.collections) || manifest.collections.some(c =>
+        !c || typeof c.name !== 'string' || !c.name || /[\\/\0]/.test(c.name) || c.name === '..')) {
+        throw new Error('Invalid backup collection manifest');
+      }
+      for (const c of manifest.collections) {
+        const file = path.join(backupFolder, `${c.name}.json.gz`);
+        if (fs.existsSync(file) && !this._isInside(backupFolder, file)) throw new Error('Backup file escapes selected folder');
+      }
       const backupSize = this._getFolderSize(backupFolder);
       console.log(`[BackupManager] Restoring backup from ${manifest.timestamp} (${(backupSize / 1024 / 1024).toFixed(2)} MB)`);
       
@@ -770,8 +806,7 @@ class BackupManager {
         try {
           const stat = fs.statSync(folderPath);
           if (stat.isDirectory() && stat.mtime.getTime() < cutoff) {
-            this._deleteFolder(folderPath);
-            removedCount++;
+            if (this.deleteBackup(folderPath).success) removedCount++;
           }
         } catch (e) {
           // Skip on error
@@ -800,7 +835,8 @@ class BackupManager {
       const files = fs.readdirSync(folderPath);
       for (const file of files) {
         const filePath = path.join(folderPath, file);
-        const stat = fs.statSync(filePath);
+        const stat = fs.lstatSync(filePath);
+        if (stat.isSymbolicLink()) continue;
         if (stat.isFile()) {
           size += stat.size;
         } else if (stat.isDirectory()) {
@@ -825,7 +861,7 @@ class BackupManager {
   grantRestorePath(folder) {
     if (!folder) return;
     if (!this._grantedRestorePaths) this._grantedRestorePaths = new Set();
-    this._grantedRestorePaths.add(path.resolve(folder));
+    this._grantedRestorePaths.add(fs.existsSync(folder) ? fs.realpathSync(folder) : path.resolve(folder));
   }
 
   /**
@@ -841,7 +877,7 @@ class BackupManager {
   _mayRestoreFrom(folder) {
     if (!folder) return false;
 
-    const resolved = path.resolve(folder);
+    const resolved = fs.existsSync(folder) ? fs.realpathSync(folder) : path.resolve(folder);
     if (this._grantedRestorePaths && this._grantedRestorePaths.has(resolved)) return true;
 
     // A folder inside one the user picked counts: the dialog selects the parent
@@ -870,8 +906,8 @@ class BackupManager {
   _isInside(root, target) {
     if (!root || !target) return false;
 
-    const from = path.resolve(root);
-    const to = path.resolve(target);
+    const from = fs.existsSync(root) ? fs.realpathSync(root) : path.resolve(root);
+    const to = fs.existsSync(target) ? fs.realpathSync(target) : path.resolve(target);
     if (from === to) return true;
 
     const rel = path.relative(from, to);
@@ -912,7 +948,16 @@ class BackupManager {
         return { success: false, error: 'Backup folder does not exist' };
       }
       
-      this._deleteFolder(backupPath);
+      const root = fs.realpathSync(config.path);
+      const target = fs.realpathSync(backupPath);
+      if (target === root || !this._isInside(root, target) || path.dirname(target) !== root || fs.lstatSync(backupPath).isSymbolicLink()) {
+        return { success: false, error: 'Invalid backup path (outside backup root or root itself)' };
+      }
+      const manifest = JSON.parse(fs.readFileSync(path.join(target, 'manifest.json'), 'utf8'));
+      if (!path.basename(target).startsWith('posnic-backup-') || !Array.isArray(manifest.collections) || !manifest.timestamp) {
+        return { success: false, error: 'Invalid backup manifest' };
+      }
+      this._deleteFolder(target);
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };

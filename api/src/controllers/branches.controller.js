@@ -103,7 +103,7 @@ class BranchesController extends BaseController {
         return this.error(res, 'Unauthorized', 403);
       }
 
-      const result = await this.branchModel.getBranchById(id);
+      const result = await this.branchModel.getBranchById(id, req.user);
 
       if (!result.status) {
         return this.error(res, 'Branch Not found', 404);

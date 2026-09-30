@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Увійдіть у початковий обліковий запис і філію, щоб повторити спробу для цього замовлення.",
   "lang_submission_save_failed": "Не вдалося зберегти замовлення.",
   "lang_submission_saved": "Замовлення збережено",
-  "lang_submission_already_saved": "Це замовлення вже збережено. Оновіть список продажів."
+  "lang_submission_already_saved": "Це замовлення вже збережено. Оновіть список продажів.",
+  "lang_business_discount": "Знижка",
+  "lang_cash": "Готівка",
+  "lang_print": "Друкувати"
 }

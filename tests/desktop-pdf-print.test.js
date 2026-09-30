@@ -124,7 +124,7 @@ test('normal browser printing retains its PDF print action and blocked-popup mes
 
 function desktop(t, platform, options = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'posnic-pdf-test-'));
-  t.after(() => fs.rmdirSync(dir));
+  t.after(() => { for (const name of fs.readdirSync(dir)) fs.unlinkSync(path.join(dir, name)); fs.rmdirSync(dir); });
   const native = [], windows = [];
   class PrintWindow extends EventEmitter {
     constructor(config) {
@@ -153,6 +153,7 @@ function desktop(t, platform, options = {}) {
         native.push({ bytes: fs.readFileSync(file), settings });
         if (options.nativeError) throw new Error('Print service unavailable');
       } };
+      if (name.startsWith('./')) return require(path.join(ROOT, 'src', name));
       return require(name);
     },
   };
@@ -170,7 +171,7 @@ test('Windows opens the native PDF printer chooser without selecting the receipt
   assert.equal(d.native[0].settings.scale, 'noscale');
   assert.equal(d.native[0].settings.printer, undefined);
   assert.equal(d.windows.length, 0);
-  assert.deepEqual(fs.readdirSync(d.dir), []);
+  assert.equal(fs.readdirSync(d.dir).length, 1);
 });
 
 test('PDF validation refuses paths, URLs, non-PDF content and oversized documents before printing', async (t) => {
@@ -182,12 +183,12 @@ test('PDF validation refuses paths, URLs, non-PDF content and oversized document
   assert.deepEqual(fs.readdirSync(d.dir), []);
 });
 
-test('native printing failures clean up the temporary PDF and return an error', async (t) => {
+test('native printing failures retain the temporary PDF and return an error', async (t) => {
   const d = desktop(t, 'win32', { nativeError: true });
   const result = await d.print(pdf);
   assert.equal(result.success, false);
   assert.match(result.error, /unavailable/);
-  assert.deepEqual(fs.readdirSync(d.dir), []);
+  assert.equal(fs.readdirSync(d.dir).length, 1);
 });
 
 test('saved document settings select the Windows printer, paper and copies without a chooser', async (t) => {

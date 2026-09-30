@@ -52,15 +52,15 @@ test('readiness guidance renders on macOS and Linux even without Windows recover
   const { JSDOM }=require('jsdom'),fs=require('fs'),path=require('path');
   const html=fs.readFileSync(path.join(__dirname,'../src/hardware-manager.html'),'utf8');
   for(const platform of ['darwin','linux','win32']) {
-    const dom=new JSDOM('<div id="printerEnvironmentStatus"></div><div id="printerEnvironmentChecks"></div><ol id="printerEnvironmentSteps"></ol><div id="wrMessage"></div>',{runScripts:'outside-only'});
+    const dom=new JSDOM(html,{runScripts:'outside-only'});
     try {
       const w=dom.window;
       w.electronAPI={printer:{recoveryStatus:async()=>({supported:false,environment:{platform,checkedAt:Date.now(),awake:true,checks:[{label:'Queue',status:'review',detail:'<img src=x>'}],instructions:['Step one'],common:['Step two']}})}};
       w.eval(html.slice(html.indexOf('let wrBindings ='),html.indexOf('async function wrSave()')));
       await w.wrRefresh();
       assert.match(w.document.getElementById('printerEnvironmentStatus').textContent,/active for KOT/);
-      assert.equal(w.document.querySelectorAll('li').length,2);
-      assert.equal(w.document.querySelector('img'),null);
+      assert.equal(w.document.querySelectorAll('#printerEnvironmentSteps li').length,2);
+      assert.equal(w.document.querySelector('#printerEnvironmentChecks img'),null);
       assert.match(w.document.getElementById('printerEnvironmentChecks').textContent,/<img src=x>/);
     }finally{dom.window.close();}
   }

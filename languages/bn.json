@@ -119,5 +119,9 @@
   "lang_submission_original_account": "এই অর্ডারটি আবার চেষ্টা করতে মূল অ্যাকাউন্ট ও শাখায় সাইন ইন করুন।",
   "lang_submission_save_failed": "অর্ডারটি সংরক্ষণ করা যায়নি।",
   "lang_submission_saved": "অর্ডার সংরক্ষিত হয়েছে",
-  "lang_submission_already_saved": "এই অর্ডারটি ইতিমধ্যেই সংরক্ষিত হয়েছে। বিক্রয়ের তালিকা রিফ্রেশ করুন।"
+  "lang_submission_already_saved": "এই অর্ডারটি ইতিমধ্যেই সংরক্ষিত হয়েছে। বিক্রয়ের তালিকা রিফ্রেশ করুন।",
+  "lang_business_discount": "ছাড়",
+  "lang_cash": "নগদ",
+  "lang_print": "প্রিন্ট করুন",
+  "lang_stock_adjust_reason": "কারণ"
 }

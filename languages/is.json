@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Skráðu þig inn á upprunalega reikninginn og útibúið til að reyna aftur með þessa pöntun.",
   "lang_submission_save_failed": "Ekki tókst að vista pöntunina.",
   "lang_submission_saved": "Pöntun vistuð",
-  "lang_submission_already_saved": "Þessi pöntun hefur þegar verið vistuð. Endurnýjaðu sölulistann."
+  "lang_submission_already_saved": "Þessi pöntun hefur þegar verið vistuð. Endurnýjaðu sölulistann.",
+  "lang_business_discount": "Afsláttur",
+  "lang_cash": "Reiðufé",
+  "lang_print": "Prenta"
 }

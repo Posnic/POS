@@ -108,5 +108,8 @@
   "lang_submission_original_account": "יש להתחבר לחשבון ולסניף המקוריים כדי לנסות לשלוח שוב את ההזמנה הזו.",
   "lang_submission_save_failed": "לא ניתן לשמור את ההזמנה.",
   "lang_submission_saved": "ההזמנה נשמרה",
-  "lang_submission_already_saved": "ההזמנה הזו כבר נשמרה. יש לרענן את רשימת המכירות."
+  "lang_submission_already_saved": "ההזמנה הזו כבר נשמרה. יש לרענן את רשימת המכירות.",
+  "lang_business_discount": "הנחה",
+  "lang_cash": "מזומן",
+  "lang_print": "הדפסה"
 }

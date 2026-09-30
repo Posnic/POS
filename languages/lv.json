@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Lai atkārtoti mēģinātu nosūtīt šo pasūtījumu, pierakstieties sākotnējā kontā un filiālē.",
   "lang_submission_save_failed": "Neizdevās saglabāt pasūtījumu.",
   "lang_submission_saved": "Pasūtījums saglabāts",
-  "lang_submission_already_saved": "Šis pasūtījums jau ir saglabāts. Atsvaidziniet pārdošanas sarakstu."
+  "lang_submission_already_saved": "Šis pasūtījums jau ir saglabāts. Atsvaidziniet pārdošanas sarakstu.",
+  "lang_business_discount": "Atlaide",
+  "lang_cash": "Skaidra nauda",
+  "lang_print": "Drukāt"
 }

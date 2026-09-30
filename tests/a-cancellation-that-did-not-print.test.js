@@ -47,6 +47,10 @@ const ledger = require(path.join(ROOT, 'src', 'print-ledger.js'));
    ticket fell back to the slow HTML path, which is a failure of its own. */
 const load = Module._load;
 Module._load = function (request, ...rest) {
+  if (request === './windows-spooler') {
+    const actual = load.call(this, path.join(ROOT, 'src/windows-spooler.js'));
+    return { ...actual, ...actual.createSpooler({ platform: 'test' }) };
+  }
   if (request === 'electron') {
     return {
       BrowserWindow: class { constructor() { throw new Error('the window path was used'); } },

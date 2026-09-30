@@ -119,5 +119,9 @@
   "lang_submission_original_account": "Log masuk ke akaun dan cawangan asal untuk mencuba semula pesanan ini.",
   "lang_submission_save_failed": "Pesanan tidak dapat disimpan.",
   "lang_submission_saved": "Pesanan disimpan",
-  "lang_submission_already_saved": "Pesanan ini sudah disimpan. Muat semula senarai jualan."
+  "lang_submission_already_saved": "Pesanan ini sudah disimpan. Muat semula senarai jualan.",
+  "lang_business_discount": "Diskaun",
+  "lang_cash": "Tunai",
+  "lang_print": "Cetak",
+  "lang_stock_adjust_reason": "Sebab"
 }

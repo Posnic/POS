@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Пријавите се на првобитни налог и у првобитну пословницу да бисте поново покушали да пошаљете ову поруџбину.",
   "lang_submission_save_failed": "Поруџбина није могла да се сачува.",
   "lang_submission_saved": "Поруџбина је сачувана",
-  "lang_submission_already_saved": "Ова поруџбина је већ сачувана. Освежите листу продаја."
+  "lang_submission_already_saved": "Ова поруџбина је већ сачувана. Освежите листу продаја.",
+  "lang_business_discount": "Попуст",
+  "lang_cash": "Готовина",
+  "lang_print": "Штампај"
 }

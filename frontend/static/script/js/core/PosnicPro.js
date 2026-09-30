@@ -2077,7 +2077,7 @@ PosnicPro = {
     _approvalMode: 'pin', // 'pin' | 'card'
     requireManagerApproval: function (action, opts, onApproved, onDenied) {
         opts = opts || {};
-        if (!opts.force && PosnicPro.posCan(action)) {
+        if (PosnicPro.posCan(action) && !opts.force) {
             if (typeof onApproved === 'function') onApproved(null);
             return;
         }
@@ -4605,18 +4605,50 @@ PosnicPro.lazyPhoneInput = function (selector, target, prop, opts) {
     return build;
 };
 
+// Outlet windows own their billing preferences; authentication remains shared.
+var billingWindowId = new URLSearchParams(window.location.search).get('billing_window') || '';
+if (!/^[a-f0-9]{24}$/.test(billingWindowId)) billingWindowId = '';
+var billingWindowStore = null;
+if (billingWindowId) {
+    var billingStoreKey = 'posnic.outlet.window.' + billingWindowId;
+    // Old builds persisted the whole window snapshot, including contact details.
+    sessionStorage.removeItem(billingStoreKey);
+    if (!billingWindowStore) {
+        billingWindowStore = {};
+        for (var storageIndex = 0; storageIndex < localStorage.length; storageIndex++) {
+            var storageKey = localStorage.key(storageIndex);
+            if (!/token|password|secret/i.test(storageKey)) billingWindowStore[storageKey] = localStorage.getItem(storageKey);
+        }
+        delete billingWindowStore.cash_register_id;
+    }
+    var lockedBranch = new URLSearchParams(window.location.search).get('billing_branch');
+    if (/^[a-f0-9]{24}$/.test(lockedBranch || '')) billingWindowStore.branch_id_set = lockedBranch;
+}
 PosnicPro.local = {
+    volatile: Object.create(null),
+    setVolatile: function (key, value) {
+        this.volatile[key] = String(value);
+        if (billingWindowStore) billingWindowStore[key] = String(value);
+        localStorage.removeItem(key);
+    },
     set: function (key, value) {
-        localStorage.setItem(key, value);
+        if (billingWindowStore) {
+            if (key === 'branch_id_set' && String(value) !== billingWindowStore.branch_id_set) return;
+            billingWindowStore[key] = String(value);
+            // Window state stays in memory; reopening revalidates the register through the API.
+        } else localStorage.setItem(key, value);
     },
     get: function (key) {
-        return localStorage.getItem(key);
+        if (Object.prototype.hasOwnProperty.call(this.volatile, key)) return this.volatile[key];
+        return billingWindowStore ? (billingWindowStore[key] ?? null) : localStorage.getItem(key);
     },
     // Needed to put a setting back to "never chosen" rather than to an empty
     // string, which is a different thing: code here falls back on absence, and
     // an empty value would defeat that.
     remove: function (key) {
-        localStorage.removeItem(key);
+        delete this.volatile[key];
+        if (billingWindowStore) { delete billingWindowStore[key]; }
+        else localStorage.removeItem(key);
     }
 };
 
@@ -5541,7 +5573,7 @@ if (window.__mobileSafeMode) {
         return stub;
     })();
 } else {
-    db = new Dexie("posnicpro");
+    db = new Dexie(billingWindowId ? "posnicpro-outlet-" + billingWindowId : "posnicpro");
 }
 // Define Database Schema
 db.version(1).stores({

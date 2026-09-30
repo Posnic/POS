@@ -119,5 +119,9 @@
   "lang_submission_original_account": "या ऑर्डरसाठी पुन्हा प्रयत्न करण्यासाठी मूळ खाते आणि शाखेत साइन इन करा.",
   "lang_submission_save_failed": "ऑर्डर जतन करता आली नाही.",
   "lang_submission_saved": "ऑर्डर जतन केली",
-  "lang_submission_already_saved": "ही ऑर्डर आधीच जतन केलेली आहे. विक्रीची यादी रिफ्रेश करा."
+  "lang_submission_already_saved": "ही ऑर्डर आधीच जतन केलेली आहे. विक्रीची यादी रिफ्रेश करा.",
+  "lang_business_discount": "सवलत",
+  "lang_cash": "रोख",
+  "lang_print": "प्रिंट करा",
+  "lang_stock_adjust_reason": "कारण"
 }

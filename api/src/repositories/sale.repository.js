@@ -4644,7 +4644,7 @@ class SalesRepository {
     }
   }
 
-  async returnSalesOrder(payload = {}, { SaleModel } = {}) {
+  async returnSalesOrder(payload = {}, { SaleModel, deviceId } = {}) {
     let returnLockContext = null;
     const releaseReturnLock = async () => {
       if (!returnLockContext) return;
@@ -5123,6 +5123,15 @@ class SalesRepository {
         : itemsTotMinusExtraDisc;
 
       const returnObjId = new MongooseObjectId();
+      const returnRegisterId =
+        await require('../services/business-return-register').verifiedReturnRegister(db, {
+          sessionId: payload.return_register_id,
+          license: licenseId,
+          branchId,
+          actorId: BaseModel.loggedUser,
+          deviceId,
+          at: now,
+        });
 
       const itemsReturnData = {
         returnArray: {
@@ -5133,6 +5142,7 @@ class SalesRepository {
             day: '2-digit',
           }).replace(/[^0-9]/g, '')}${Math.floor(Math.random() * 1e4)}`,
           returnDate: now,
+          ...(returnRegisterId ? { cashregister_id: returnRegisterId } : {}),
           returnValue: itemsReturn,
           roundOff: round(roundOffValue, 2),
           itemsTotalAmount: round(returnItemsTotalAmount, 2),
@@ -5147,21 +5157,26 @@ class SalesRepository {
           ...licenseFilter,
           'return_refund_lock.token': lockToken,
         },
-        {
-          $push: {
-            items_return: itemsReturnData,
-            return_refund_transactions: {
-              signature: returnSignature,
-              return_obj_id: returnObjId,
-              return_id: itemsReturnData.returnArray.returnId,
-              amount: round(returnItemsTotalAmount, 2),
-              item_count: itemsReturn.length,
-              created_at: now,
-              created_by: BaseModel.loggedUser || null,
-              created_by_name: BaseModel.loggedUserName || 'System',
+        require('../services/business-item-origin').withOriginalItemFacts(
+          saleDocument,
+          {
+            $push: {
+              items_return: itemsReturnData,
+              return_refund_transactions: {
+                signature: returnSignature,
+                return_obj_id: returnObjId,
+                return_id: itemsReturnData.returnArray.returnId,
+                amount: round(returnItemsTotalAmount, 2),
+                item_count: itemsReturn.length,
+                created_at: now,
+                ...(returnRegisterId ? { cashregister_id: returnRegisterId } : {}),
+                created_by: BaseModel.loggedUser || null,
+                created_by_name: BaseModel.loggedUserName || 'System',
+              },
             },
           },
-        }
+          now
+        )
       );
 
       if (!pushReturnResult.modifiedCount) {
@@ -5444,7 +5459,16 @@ class SalesRepository {
           extraDiscSubReturnExtradisc = sale_total_amount * (extra_discount / 100);
         }
 
-        if (return_sale_amount_round !== 0) {
+        // Zero is a recorded refund too. A fully discounted return must not
+        // fall back to the undiscounted line sum merely because its total is 0.
+        const recordedReturnTotals =
+          itemsReturnBlocks.length > 0 &&
+          itemsReturnBlocks.every(
+            (block) =>
+              typeof block?.returnArray?.itemsTotalAmount === 'number' &&
+              Number.isFinite(block.returnArray.itemsTotalAmount)
+          );
+        if (return_sale_amount_round !== 0 || recordedReturnTotals) {
           return_sale_amount = return_sale_amount_round;
         }
 
@@ -5588,6 +5612,7 @@ class SalesRepository {
       await releaseReturnLock();
       return {
         status: false,
+        ...(error.status === 409 ? { statusCode: 409 } : {}),
         data: null,
         message: error.message,
       };
@@ -7975,11 +8000,14 @@ class SalesRepository {
               sales_id: 1,
               token_id: 1,
               table_number: 1,
+              'outlet_snapshot.name': 1,
+              room_reference: 1,
               created_date: 1,
               date: 1,
               items: 1,
               changes: 1,
               kitchen_service: 1,
+              kitchen_work: 1,
               kitchen_required: 1,
               bill_requested_at: 1,
               bill_printed_at: 1,
@@ -7989,9 +8017,34 @@ class SalesRepository {
         .toArray();
 
       /* The shape the screen draws, and nothing else. A kitchen screen hangs
-         where customers and staff can both see it, so prices, customers and
-         phone numbers have no business travelling to it. */
+         where staff need preparation amounts, but never customer contact details. */
       const tickets = rows.flatMap(require('../helpers/kitchen-rounds').tickets);
+
+      // Explicit cancellation events only: served or paid dishes must not look cancelled.
+      const cancelled = await db
+        .collection('sales')
+        .find(
+          {
+            branch_id: branchObjectId,
+            ...activeTenantFilter(),
+            $or: [
+              { kitchen_required: true },
+              { sale_process: { $regex: 'KOT', $options: 'i' } },
+              { table_number: { $exists: true, $nin: ['', null] } },
+            ],
+            changes: {
+              $elemMatch: {
+                timestamp: { $gte: new Date(Date.now() - 300000) },
+                items: { $elemMatch: { process: 'cancel', held: { $ne: true } } },
+              },
+            },
+          },
+          { projection: { table_number: 1, changes: 1 } }
+        )
+        .toArray();
+      tickets.push(
+        ...cancelled.flatMap((sale) => require('../helpers/kitchen-rounds').cancellations(sale))
+      );
 
       return { status: true, message: 'success', data: tickets };
     } catch (error) {
@@ -8600,6 +8653,7 @@ class SalesRepository {
           return {
             item_id: String(si.item_id || ''),
             ...serviceLine.metadata(si),
+            ...require('../utils/kitchen-amount').snapshot(si),
             item_name: String(si.item_name || ''),
             ...itemText.snapshot(si),
             item_quantity: qty,
@@ -10521,6 +10575,7 @@ class SalesRepository {
                 ...preparation,
                 item_id: productId,
                 item_name: previousLine.item_name || '',
+                ...require('../utils/kitchen-amount').snapshot(previousLine),
                 item_quantity: Math.abs(qty - oldQty),
                 item_description: newNote,
                 spice_level: spiceLevel.levelOf(updatedItems[i].spice_level),
@@ -10546,6 +10601,7 @@ class SalesRepository {
             item_id: productId,
             ...preparation,
             item_name: String(itemDoc.name || item.name || ''),
+            ...require('../utils/kitchen-amount').forSaleItem(itemDoc, item, price),
             ...itemText.snapshot(itemDoc),
             item_quantity: changeQty,
             /* From the request first: an amendment carries the note the person
@@ -10595,6 +10651,7 @@ class SalesRepository {
           updatedItems[i] = {
             ...existing,
             ...serviceLine.metadata({ ...existing, ...item }),
+            ...require('../utils/kitchen-amount').forSaleItem(itemDoc, item, price),
             item_quantity: qty,
             quantity: qty,
             item_price: price,
@@ -10640,6 +10697,7 @@ class SalesRepository {
 
           updatedItems.push({
             sale_inline_item_price: sellingPrice,
+            ...require('../utils/kitchen-amount').forSaleItem(itemDoc, item, sellingPrice),
             sale_inline_discount_value: discountAmt,
             sale_inline_discount_pervalue: discountPer,
             item_discount: lineDiscount,
@@ -11240,7 +11298,7 @@ class SalesRepository {
          * a dish the shop prices on the day, and a one-off somebody invented
          * for this bill.
          */
-        ...(dynamic || oneOff ? { priced_at_table: round(finalUnit) } : {}),
+        ...(dynamic || oneOff ? { priced_at_table: round(dynamic ? asked : catalogue) } : {}),
         /*
          * What the table actually asked for, kept beside the money it cost.
          * The kitchen ticket needs it to cook the right thing and the bill
@@ -11659,6 +11717,7 @@ class SalesRepository {
         changes.push({
           item_id: id,
           item_name: String(line.item_name || line.name || ''),
+          ...require('../utils/kitchen-amount').snapshot(line),
           item_quantity: moved,
           process: now > was ? 'add' : 'cancel',
           item_code: String(line.item_sku || ''),
@@ -11676,6 +11735,7 @@ class SalesRepository {
       changes.push({
         item_id: String(line.item_id || ''),
         item_name: String(line.item_name || line.name || ''),
+        ...require('../utils/kitchen-amount').snapshot(line),
         item_quantity: qty,
         process: 'add',
         item_code: String(line.item_sku || ''),

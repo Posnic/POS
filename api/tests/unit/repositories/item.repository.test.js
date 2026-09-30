@@ -734,17 +734,26 @@ describe('ItemRepository', () => {
 
   describe('updateItemQuantity', () => {
     test('updates quantity', async () => {
-      const r = await repo.updateItemQuantity(FAKE_ID, 10);
+      col.updateOne.mockResolvedValueOnce({ matchedCount: 1 });
+      const r = await repo.updateItemQuantity(FAKE_ID, 10, {
+        licenseId: FAKE_ID,
+        branchId: FAKE_BRANCH,
+      });
       expect(r.status).toBe(true);
     });
-    test('returns true even with invalid id', async () => {
-      ObjectId.isValid.mockReturnValueOnce(false);
-      const r = await repo.updateItemQuantity('bad', 10);
-      expect(r.status).toBe(true);
+    test('returns false when no scoped item matches', async () => {
+      col.updateOne.mockResolvedValueOnce({ matchedCount: 0 });
+      const r = await repo.updateItemQuantity('bad', 10, {
+        licenseId: FAKE_ID,
+        branchId: FAKE_BRANCH,
+      });
+      expect(r.status).toBe(false);
     });
     test('rethrows error on exception', async () => {
       repo.getCollection.mockRejectedValueOnce(new Error('fail'));
-      await expect(repo.updateItemQuantity(FAKE_ID, 10)).rejects.toThrow('fail');
+      await expect(
+        repo.updateItemQuantity(FAKE_ID, 10, { licenseId: FAKE_ID, branchId: FAKE_BRANCH })
+      ).rejects.toThrow('fail');
     });
   });
 

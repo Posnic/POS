@@ -119,5 +119,9 @@
   "lang_submission_original_account": "Đăng nhập vào tài khoản và chi nhánh ban đầu để thử lại đơn hàng này.",
   "lang_submission_save_failed": "Không thể lưu đơn hàng.",
   "lang_submission_saved": "Đã lưu đơn hàng",
-  "lang_submission_already_saved": "Đơn hàng này đã được lưu. Hãy làm mới danh sách bán hàng."
+  "lang_submission_already_saved": "Đơn hàng này đã được lưu. Hãy làm mới danh sách bán hàng.",
+  "lang_business_discount": "Giảm giá",
+  "lang_cash": "Tiền mặt",
+  "lang_print": "In",
+  "lang_stock_adjust_reason": "Lý do"
 }

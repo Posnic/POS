@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Logg inn på den opprinnelige kontoen og i den opprinnelige avdelingen for å prøve denne bestillingen på nytt.",
   "lang_submission_save_failed": "Kunne ikke lagre bestillingen.",
   "lang_submission_saved": "Bestillingen er lagret",
-  "lang_submission_already_saved": "Denne bestillingen er allerede lagret. Oppdater salgslisten."
+  "lang_submission_already_saved": "Denne bestillingen er allerede lagret. Oppdater salgslisten.",
+  "lang_business_discount": "Rabatt",
+  "lang_cash": "Kontant",
+  "lang_print": "Skriv ut"
 }

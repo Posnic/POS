@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Chcete-li tuto objednávku zkusit znovu, přihlaste se k původnímu účtu a pobočce.",
   "lang_submission_save_failed": "Objednávku se nepodařilo uložit.",
   "lang_submission_saved": "Objednávka uložena",
-  "lang_submission_already_saved": "Tato objednávka již byla uložena. Obnovte seznam prodejů."
+  "lang_submission_already_saved": "Tato objednávka již byla uložena. Obnovte seznam prodejů.",
+  "lang_business_discount": "Sleva",
+  "lang_cash": "Hotovost",
+  "lang_print": "Tisknout"
 }

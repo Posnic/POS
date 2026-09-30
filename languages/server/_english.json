@@ -52,6 +52,9 @@
   "API v2": [
     "src/routes/index.js"
   ],
+  "Access denied.": [
+    "src/routes/billing-outlets.routes.js"
+  ],
   "Account created successfully": [
     "src/models/install.model.js"
   ],
@@ -1720,6 +1723,9 @@
   "Report failed": [
     "app.js"
   ],
+  "Request body is too complex or invalid": [
+    "src/middleware/no-mongo-operators.js"
+  ],
   "Return id is required": [
     "src/repositories/sale.repository.js"
   ],
@@ -1826,6 +1832,9 @@
   ],
   "Search term is required": [
     "src/services/customer.service.js"
+  ],
+  "Select a branch first.": [
+    "src/routes/billing-outlets.routes.js"
   ],
   "Select at least one item": [
     "src/repositories/item.repository.js"
@@ -2105,6 +2114,9 @@
   ],
   "The order stands": [
     "src/repositories/sale.repository.js"
+  ],
+  "The outlet total differs from the displayed bill. Review prices and charges before saving.": [
+    "src/services/sale.service.js"
   ],
   "The sale behind this invoice was not found": [
     "src/services/invoice-sync.js"
@@ -2422,6 +2434,12 @@
   ],
   "Unknown settings group: ": [
     "src/repositories/settings.repository.js"
+  ],
+  "Unsupported decision commit": [
+    "src/services/sale.service.js"
+  ],
+  "Unsupported decision preview": [
+    "src/services/sale.service.js"
   ],
   "Update info": [
     "src/models/setting.model.js"

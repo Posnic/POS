@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Zaloguj się na pierwotne konto i do pierwotnego oddziału, aby ponowić wysłanie tego zamówienia.",
   "lang_submission_save_failed": "Nie można zapisać zamówienia.",
   "lang_submission_saved": "Zamówienie zapisane",
-  "lang_submission_already_saved": "To zamówienie zostało już zapisane. Odśwież listę sprzedaży."
+  "lang_submission_already_saved": "To zamówienie zostało już zapisane. Odśwież listę sprzedaży.",
+  "lang_business_discount": "Rabat",
+  "lang_cash": "Gotówka",
+  "lang_print": "Drukuj"
 }

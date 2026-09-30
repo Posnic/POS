@@ -27,6 +27,7 @@ const {
  * at event.senderFrame. backup:restore and backup:delete were among them.
  */
 const ipcMain = require('./ipc-guard').guard(rawIpcMain);
+require('./billing-windows').register({ ipcMain, BrowserWindow });
 const {
   showSplash,
   closeSplash,
@@ -3803,8 +3804,18 @@ function showBackupNotification(result) {
   notification.show();
 }
 
+function requireBackupWindow(event, managerOnly = false) {
+  // Setup and desktop settings live in the main window. Restore and deletion
+  // belong exclusively to the dedicated manager; subframes never qualify.
+  const windows = managerOnly ? [backupWindow] : [backupWindow, mainWindow];
+  const allowed = windows.some(win => win && !win.isDestroyed() &&
+    event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame);
+  if (!allowed) throw new Error('Open Backup Manager to use this action');
+}
+
 // Get default backup path (Documents/Posnic-Backups)
-ipcMain.handle('backup:get-default-path', () => {
+ipcMain.handle('backup:get-default-path', (event) => {
+  requireBackupWindow(event);
   try {
     const documentsPath = app.getPath('documents');
     return path.join(documentsPath, 'Posnic-Backups');
@@ -3814,7 +3825,8 @@ ipcMain.handle('backup:get-default-path', () => {
 });
 
 // Open folder picker
-ipcMain.handle('backup:browse-folder', async () => {
+ipcMain.handle('backup:browse-folder', async (event) => {
+  requireBackupWindow(event);
   const { dialog } = require('electron');
   const focused = BrowserWindow.getFocusedWindow() || mainWindow;
 
@@ -3841,12 +3853,14 @@ ipcMain.handle('backup:browse-folder', async () => {
    * A renderer cannot add to this list; it can only name something already on
    * it. See backupManager.grantRestorePath.
    */
-  if (backupManager) backupManager.grantRestorePath(result.filePaths[0]);
+  getBackupManager().grantRestorePath(result.filePaths[0]);
+  getBackupManager().grantBackupPath(result.filePaths[0]);
   return result.filePaths[0];
 });
 
 // Save backup config
 ipcMain.handle('backup:save-config', (event, config) => {
+  requireBackupWindow(event);
   try {
     const mgr = getBackupManager();
     const saved = mgr.saveConfig(config);
@@ -3864,7 +3878,8 @@ ipcMain.handle('backup:save-config', (event, config) => {
 });
 
 // Get backup config
-ipcMain.handle('backup:get-config', () => {
+ipcMain.handle('backup:get-config', (event) => {
+  requireBackupWindow(event);
   try {
     return { success: true, config: getBackupManager().loadConfig() };
   } catch (err) {
@@ -3883,6 +3898,7 @@ ipcMain.handle('backup:get-config', () => {
  * the exact line is generated here to be copied rather than typed.
  */
 ipcMain.handle('backup:schedule-instructions', (event, options) => {
+  requireBackupWindow(event);
   try {
     const scheduled = require('./scheduled-task');
     const config = getBackupManager().loadConfig();
@@ -3907,6 +3923,7 @@ ipcMain.handle('backup:schedule-instructions', (event, options) => {
 
 // Run backup now (manual trigger)
 ipcMain.handle('backup:run-now', async (event, force) => {
+  requireBackupWindow(event);
   try {
     return await getBackupManager().runBackup({ force: !!force, _manual: true });
   } catch (err) {
@@ -3915,7 +3932,8 @@ ipcMain.handle('backup:run-now', async (event, force) => {
 });
 
 // List all backups
-ipcMain.handle('backup:list', () => {
+ipcMain.handle('backup:list', (event) => {
+  requireBackupWindow(event);
   try {
     return { success: true, backups: getBackupManager().listBackups() };
   } catch (err) {
@@ -3925,6 +3943,7 @@ ipcMain.handle('backup:list', () => {
 
 // Restore from backup
 ipcMain.handle('backup:restore', async (event, folderPath, options) => {
+  requireBackupWindow(event, true);
   try {
     const result = await getBackupManager().restoreBackup(folderPath, options || {});
 
@@ -3966,6 +3985,7 @@ ipcMain.handle('backup:restore', async (event, folderPath, options) => {
 
 // Delete a backup
 ipcMain.handle('backup:delete', (event, folderPath) => {
+  requireBackupWindow(event, true);
   try {
     return getBackupManager().deleteBackup(folderPath);
   } catch (err) {
@@ -3974,7 +3994,8 @@ ipcMain.handle('backup:delete', (event, folderPath) => {
 });
 
 // Get backup history
-ipcMain.handle('backup:get-history', () => {
+ipcMain.handle('backup:get-history', (event) => {
+  requireBackupWindow(event);
   try {
     return { success: true, history: getBackupManager().loadHistory() };
   } catch (err) {
@@ -4346,6 +4367,7 @@ async function awaitPreviousShutdown(previous) {
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 app.whenReady().then(async () => {
+  require('./print-temp-files').cleanup(app.getPath('temp'));
   console.log('='.repeat(55));
   /* Named the platform it is actually on. The banner said "Windows" in
      every log, including the ones a Linux and macOS shop send us when
@@ -5481,76 +5503,9 @@ function startServer() {
       console.error(' Server failed to start - MongoDB not available');
       if (mainWindow) {
         if (!mainWindow.isVisible()) mainWindow.show();
-        mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body {
-                font-family: Arial, sans-serif;
-                margin: 0;
-                padding: 40px;
-                background: #f5f7fa;
-                color: #17233c;
-              }
-              .container {
-                max-width: 700px;
-                margin: 0 auto;
-                background: #fff;
-                padding: 40px;
-                border: 1px solid #d8e0eb;
-                border-radius: 8px;
-              }
-              h1 { 
-                margin-bottom: 20px; 
-                font-size: 32px;
-                text-align: center;
-              }
-              .option {
-                background: #f8fafc;
-                padding: 20px;
-                margin: 15px 0;
-                border-radius: 6px;
-                border-left: 4px solid #3f8fd2;
-              }
-              .option h3 {
-                margin-top: 0;
-                color: #17233c;
-              }
-              .option ol {
-                text-align: left;
-                line-height: 1.8;
-              }
-              .detail { color: #52627a; line-height: 1.6; }
-              button { border-radius: 6px !important; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1>Posnic could not start its local database</h1>
-              <p class="detail">Your data has not been removed. Posnic includes its own database, so you do not need to install MongoDB or run the app as an administrator.</p>
-
-              <div class="option recommended">
-                <h3>Try again</h3>
-                <ol>
-                  <li>Close Posnic and open it once more.</li>
-                  <li>If it still does not start, open the log below.</li>
-                  <li>Send the log to <strong>support@posnic.com</strong> so the exact cause can be fixed.</li>
-                </ol>
-              </div>
-
-              <div class="option">
-                <h3>What to include</h3>
-                <p class="detail">Mention your operating system, what happened immediately before this screen, and attach the application log. Do not send a database backup unless support specifically requests it.</p>
-              </div>
-              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-                <button onclick="window.electronAPI?.startup?.retry()" style="background:#3f8fd2;color:#fff;border:none;padding:12px 20px;font-weight:600;cursor:pointer">Restart Posnic</button>
-                <button onclick="window.electronAPI?.desktop?.open('log')" style="background:#fff;color:#17233c;border:1px solid #b8c4d4;padding:12px 20px;cursor:pointer">Open Log</button>
-              </div>
-            </div>
-          </body>
-          </html>
-        `)}`);
+        mainWindow.loadFile(path.join(__dirname, 'loading.html'), {
+          query: { startupError: 'Posnic could not start its local database', details: 'Posnic includes its own database. Your data has not been removed. Open Log for details or restart Posnic to try again.' }
+        }).catch(error => console.error('Could not display startup recovery:', error));
       }
     }
   }).catch((error) => {
@@ -5571,23 +5526,9 @@ function startServer() {
     console.error('Error stack:', error.stack);
     if (mainWindow && !mainWindow.isDestroyed()) {
       if (!mainWindow.isVisible()) mainWindow.show();
-      mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
-        <html>
-          <body style="font-family:Arial;padding:40px;background:#f5f6fa;color:#222">
-            <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.08)">
-              <h2 style="margin-top:0">Posnic could not start</h2>
-              <p style="color:#555">${String(error.message || error)}</p>
-              <p style="color:#555">Try restarting the app. If it keeps happening, the log file helps support fix it fast.</p>
-              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-                <button onclick="window.electronAPI?.startup?.retry()" style="background:#667eea;color:#fff;border:none;border-radius:8px;padding:12px 20px;font-weight:600;cursor:pointer">Restart App</button>
-                <button onclick="window.electronAPI?.desktop?.open('hardware')" style="background:#eef;border:1px solid #ccd;border-radius:8px;padding:12px 20px;cursor:pointer">Hardware Manager</button>
-                <button onclick="window.electronAPI?.desktop?.open('backup')" style="background:#eef;border:1px solid #ccd;border-radius:8px;padding:12px 20px;cursor:pointer">Backup Manager</button>
-                <button onclick="window.electronAPI?.desktop?.open('log')" style="background:#eef;border:1px solid #ccd;border-radius:8px;padding:12px 20px;cursor:pointer">Open Log</button>
-              </div>
-            </div>
-          </body>
-        </html>
-      `)}`);
+      mainWindow.loadFile(path.join(__dirname, 'loading.html'), {
+        query: { startupError: 'Posnic could not start', details: String(error.message || error) }
+      }).catch(loadError => console.error('Could not display startup recovery:', loadError));
     }
   });
 }

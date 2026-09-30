@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Selle tellimuse uuesti saatmiseks logige sisse algse konto ja filiaaliga.",
   "lang_submission_save_failed": "Tellimust ei saanud salvestada.",
   "lang_submission_saved": "Tellimus salvestatud",
-  "lang_submission_already_saved": "See tellimus on juba salvestatud. Värskendage müüginimekirja."
+  "lang_submission_already_saved": "See tellimus on juba salvestatud. Värskendage müüginimekirja.",
+  "lang_business_discount": "Allahindlus",
+  "lang_cash": "Sularaha",
+  "lang_print": "Prindi"
 }

@@ -119,5 +119,9 @@
   "lang_submission_original_account": "この注文を再試行するには、元のアカウントと店舗でサインインしてください。",
   "lang_submission_save_failed": "注文を保存できませんでした。",
   "lang_submission_saved": "注文を保存しました",
-  "lang_submission_already_saved": "この注文はすでに保存されています。売上一覧を更新してください。"
+  "lang_submission_already_saved": "この注文はすでに保存されています。売上一覧を更新してください。",
+  "lang_business_discount": "値引き",
+  "lang_cash": "現金",
+  "lang_print": "印刷",
+  "lang_stock_adjust_reason": "理由"
 }

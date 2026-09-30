@@ -207,9 +207,12 @@
 
         <div class="error-actions" id="errorActions">
             <button class="primary" id="btnRetry">Restart App</button>
-            <button id="btnOpenLog">Open Log File</button>
+            <button id="btnHardware">Hardware Manager</button>
+            <button id="btnBackup">Backup Manager</button>
+            <button id="btnOpenLog">Open Log</button>
         </div>
 
+        <p id="recoveryFeedback" role="status" aria-live="polite"></p>
         <div class="status-list">
             <div class="status-item active" id="status-mongo">
                 <div class="status-icon">○</div>
@@ -266,11 +269,26 @@
             }
         };
 
-        document.getElementById('btnRetry').addEventListener('click', () => {
-            window.electronAPI?.startup?.retry();
-        });
-        document.getElementById('btnOpenLog').addEventListener('click', () => {
-            window.electronAPI?.startup?.openLog();
+        const recoveryActions = {
+            btnRetry: () => window.electronAPI.startup.retry(),
+            btnHardware: () => window.electronAPI.desktop.open('hardware'),
+            btnBackup: () => window.electronAPI.desktop.open('backup'),
+            btnOpenLog: () => window.electronAPI.desktop.open('log')
+        };
+        Object.entries(recoveryActions).forEach(([id, action]) => {
+            const button = document.getElementById(id);
+            button.addEventListener('click', async () => {
+                const feedback = document.getElementById('recoveryFeedback');
+                button.disabled = true;
+                feedback.textContent = 'Opening ' + button.textContent + '...';
+                try {
+                    const result = await action();
+                    if (result === false || result?.success === false || result?.ok === false) throw new Error(result?.error || 'This action is unavailable.');
+                    feedback.textContent = id === 'btnRetry' ? 'Restart requested.' : button.textContent + ' opened.';
+                } catch (error) {
+                    feedback.textContent = 'Could not open ' + button.textContent + ': ' + error.message;
+                } finally { button.disabled = false; }
+            });
         });
 
         // Before the backend reports real numbers there is nothing to measure,
@@ -283,6 +301,10 @@
                 progressFill.style.width = progress + '%';
             }
         }, 250);
+        const startupQuery = new URLSearchParams(window.location.search);
+        if (startupQuery.has('startupError')) {
+            window.updateStartupStatus('error', startupQuery.get('startupError'), startupQuery.get('details'));
+        }
     </script>
 </body>
 </html>

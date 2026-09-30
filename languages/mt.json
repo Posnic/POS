@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Idħol fil-kont u fil-fergħa oriġinali biex terġa’ tipprova din l-ordni.",
   "lang_submission_save_failed": "L-ordni ma setgħetx tiġi ssejvjata.",
   "lang_submission_saved": "Ordni ssejvjata",
-  "lang_submission_already_saved": "Din l-ordni diġà ġiet issejvjata. Aġġorna l-lista tal-bejgħ."
+  "lang_submission_already_saved": "Din l-ordni diġà ġiet issejvjata. Aġġorna l-lista tal-bejgħ.",
+  "lang_business_discount": "Skont",
+  "lang_cash": "Flus kontanti",
+  "lang_print": "Stampa"
 }

@@ -108,5 +108,8 @@
   "lang_submission_original_account": "Најавете се на првичната сметка и филијала за повторно да се обидете да ја испратите оваа нарачка.",
   "lang_submission_save_failed": "Нарачката не можеше да се зачува.",
   "lang_submission_saved": "Нарачката е зачувана",
-  "lang_submission_already_saved": "Оваа нарачка веќе е зачувана. Освежете ја листата на продажби."
+  "lang_submission_already_saved": "Оваа нарачка веќе е зачувана. Освежете ја листата на продажби.",
+  "lang_business_discount": "Попуст",
+  "lang_cash": "Готовина",
+  "lang_print": "Печати"
 }
