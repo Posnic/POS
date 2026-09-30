@@ -426,6 +426,7 @@ async function record(req) {
   if (used && used._id !== input.planId) fail('This payment request was already used.', 409);
   let plan = await plans.findOne({ ...baseFilter(c), _id: String(input.planId || '') });
   if (!plan) fail('Refresh the table payment details.', 409);
+  if (plan.purpose === 'order-restructure') fail('This order is being updated. Please retry.', 409);
   const signature = hash({
     planId: input.planId,
     guest: input.guest ?? null,

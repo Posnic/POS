@@ -41,3 +41,11 @@ test('complimentary bills can be reviewed without creating a payment plan', asyn
   expect(await service.read(req())).toMatchObject({totalMinor:0,paidMinor:0,dueMinor:0});
   expect(await db.collection('captain_payment_plans').countDocuments()).toBe(0);
 });
+
+test('a bill cannot expose an intermediate transfer projection as a final amount due',async()=>{
+ const locks=require('../../../src/services/captain-restructure-lock');
+ await locks.reserve(db,{branchId:branch,license},{requestId:'transfer-request-0001',actor:'manager',intent:{kind:'transfer'},sales:[sale]});
+ await expect(service.read(req())).rejects.toMatchObject({status:409,message:'This order is being updated. Please retry.'});
+ await locks.cancel(db,{branchId:branch,license},'transfer-request-0001','manager');
+ expect(await service.read(req())).toMatchObject({totalMinor:10500,dueMinor:10500});
+});

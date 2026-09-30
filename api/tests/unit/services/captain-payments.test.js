@@ -324,3 +324,15 @@ test('UPI QR rejects stale receiving account and non-INR bills', async () => {
     service.record(pay(plan, { method: 'Upi', upi: { ...plan.upiPayee, verified: true } }))
   ).rejects.toThrow('Verify the received');
 });
+
+test('a restructure reservation cannot become a payment or be released as an empty bill',async()=>{
+  const locks=require('../../../src/services/captain-restructure-lock');
+  const operation=await locks.reserve(db,{branchId:branch,license},{requestId:'transfer-request-0001',actor:String(user),intent:{kind:'transfer'},sales:[sale]});
+  await expect(service.prepare(req())).rejects.toMatchObject({status:409});
+  await expect(service.record(req({planId:operation._id,version:0,request_id:'payment-request-0001',guest:null,amountMinor:10500,receivedMinor:10500,method:'Cash'}))).rejects.toMatchObject({status:409,message:'This order is being updated. Please retry.'});
+  await expect(guard.mutable(db,await db.collection('sales').findOne({_id:sale._id}))).rejects.toMatchObject({status:409,message:'This order is being updated. Please retry.'});
+  const retained=await db.collection('captain_payment_plans').findOne({_id:operation._id});
+  expect(retained.payments).toEqual([]);expect(retained.stage).toBe('reserved');
+  await locks.cancel(db,{branchId:branch,license},'transfer-request-0001',String(user));
+  expect((await service.prepare(req())).dueMinor).toBe(10500);
+});

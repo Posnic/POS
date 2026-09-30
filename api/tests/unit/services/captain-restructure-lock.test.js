@@ -1,0 +1,105 @@
+'use strict';
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const mongoose = require('mongoose');
+const { ObjectId } = require('mongodb');
+const locks = require('../../../src/services/captain-restructure-lock');
+const paymentGuard = require('../../../src/services/captain-payment-guard');
+let server, db, scope, sales;
+beforeAll(async()=>{server=await MongoMemoryServer.create();await mongoose.connect(server.getUri('restructure-lock'));db=mongoose.connection.db;},60000);
+afterAll(async()=>{await mongoose.disconnect();await server?.stop();});
+beforeEach(async()=>{
+  await db.dropDatabase();scope={branchId:new ObjectId(),license:new ObjectId()};
+  sales=[0,1].map(()=>({_id:new ObjectId(),branch_id:scope.branchId,license:scope.license,
+    sale_process:'KOT',payment_status:'Unpaid',order_state:'accepted',sales_total:120,
+    items:[{item_id:'corn',quantity:1}],updated_date:new Date('2026-09-30T09:00:00Z')}));
+  await db.collection('sales').insertMany(sales);
+});
+const input=(requestId='transfer-request-0001')=>({requestId,actor:'staff-1',intent:{kind:'transfer',quantity:1},sales});
+test('reservation fences both orders from the existing payment and edit writers',async()=>{
+  const journal=await locks.reserve(db,scope,input());
+  expect(journal.stage).toBe('reserved');
+  for(const sale of await db.collection('sales').find().toArray()){
+    expect(sale.captain_payment_plan).toBe(journal._id);
+    await expect(paymentGuard.mutable(db,sale)).rejects.toMatchObject({status:409});
+    expect((await db.collection('sales').updateOne({_id:sale._id,captain_payment_plan:{$exists:false}},{$set:{payment_status:'Paid'}})).matchedCount).toBe(0);
+  }
+  expect(journal.payments).toEqual([]);
+});
+test('same request resumes, but changed intent and another staff member cannot reuse it',async()=>{
+  const first=await locks.reserve(db,scope,input());
+  expect((await locks.reserve(db,scope,input()))._id).toBe(first._id);
+  await expect(locks.reserve(db,scope,{...input(),intent:{kind:'merge'}})).rejects.toMatchObject({status:409});
+  await expect(locks.reserve(db,scope,{...input(),actor:'staff-2'})).rejects.toMatchObject({status:409});
+});
+test('stale source data cancels the attempt and clears any earlier reservation',async()=>{
+  const last=[...sales].sort((a,b)=>String(a._id).localeCompare(String(b._id))).at(-1);
+  await db.collection('sales').updateOne({_id:last._id},{$set:{sales_total:121}});
+  await expect(locks.reserve(db,scope,input())).rejects.toMatchObject({status:409});
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  expect((await locks.read(db,scope,input().requestId,'staff-1')).stage).toBe('cancelled');
+});
+test('two competing requests have one winner without clearing the winner reservations',async()=>{
+  const results=await Promise.allSettled([locks.reserve(db,scope,input()),locks.reserve(db,scope,input('transfer-request-0002'))]);
+  expect(results.filter(result=>result.status==='fulfilled')).toHaveLength(1);
+  const winner=results.find(result=>result.status==='fulfilled').value;
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:winner._id})).toBe(2);
+});
+test('cancellation is idempotent and its tombstone refuses another reservation',async()=>{
+  await locks.reserve(db,scope,input());
+  await locks.cancel(db,scope,input().requestId,'staff-1');
+  await locks.cancel(db,scope,input().requestId,'staff-1');
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  await expect(locks.reserve(db,scope,input())).rejects.toMatchObject({status:409});
+});
+test('an applying operation cannot be cancelled and completion retries release its own locks',async()=>{
+  const journal=await locks.reserve(db,scope,input());
+  await locks.applying(db,scope,input().requestId,'staff-1');
+  await expect(locks.cancel(db,scope,input().requestId,'staff-1')).rejects.toMatchObject({status:409});
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:journal._id})).toBe(2);
+  await locks.complete(db,scope,input().requestId,'staff-1');
+  await locks.complete(db,scope,input().requestId,'staff-1');
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  expect((await locks.read(db,scope,input().requestId,'staff-1')).stage).toBe('completed');
+});
+test('foreign branch cleanup cannot release an authorized branch reservation',async()=>{
+  const journal=await locks.reserve(db,scope,input());
+  await expect(locks.cancel(db,{...scope,branchId:new ObjectId()},input().requestId,'staff-1')).rejects.toMatchObject({status:409});
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:journal._id})).toBe(2);
+});
+test('recorded payments and an active edit lease are never replaced',async()=>{
+  await db.collection('sales').updateOne({_id:sales[0]._id},{$set:{captain_payment_plan:'real-payment'}});
+  await expect(locks.reserve(db,scope,input())).rejects.toMatchObject({status:409});
+  expect((await db.collection('sales').findOne({_id:sales[0]._id})).captain_payment_plan).toBe('real-payment');
+  await db.collection('sales').updateOne({_id:sales[0]._id},{$unset:{captain_payment_plan:''},$set:{captain_edit_until:new Date(Date.now()+60000)}});
+  await expect(locks.reserve(db,scope,input('transfer-request-0002'))).rejects.toMatchObject({status:409});
+});
+test('completion releases a newly projected destination with the same operation fence',async()=>{
+  const journal=await locks.reserve(db,scope,{...input(),sales:[sales[0]]});
+  await locks.applying(db,scope,input().requestId,'staff-1');
+  await db.collection('sales').insertOne({...sales[0],_id:new ObjectId(),captain_payment_plan:journal._id});
+  await locks.complete(db,scope,input().requestId,'staff-1');
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:journal._id})).toBe(0);
+});
+test('cancelling during acquisition removes a late reservation without reviving the request',async()=>{
+  let release,started;
+  const waiting=new Promise(resolve=>started=resolve),gate=new Promise(resolve=>release=resolve);
+  let intercepted=false;
+  const delayed={collection(name){
+    const collection=db.collection(name);
+    if(name!=='sales')return collection;
+    return new Proxy(collection,{get(target,key){
+      if(key==='updateOne')return async(...args)=>{
+        if(!intercepted){intercepted=true;started();await gate;}
+        return target.updateOne(...args);
+      };
+      const value=target[key];return typeof value==='function'?value.bind(target):value;
+    }});
+  }};
+  const acquiring=locks.reserve(delayed,scope,input());
+  const rejected=expect(acquiring).rejects.toMatchObject({status:409});
+  await waiting;
+  await locks.cancel(db,scope,input().requestId,'staff-1');
+  release();await rejected;
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  expect((await locks.read(db,scope,input().requestId,'staff-1')).stage).toBe('cancelled');
+});

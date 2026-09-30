@@ -22,6 +22,8 @@ async function read(req) {
   const ids = sales.map(sale => sale.captain_payment_plan).filter(Boolean);
   const plans = ids.length ? await req.db.collection('captain_payment_plans')
     .find({ ...scope, _id: { $in: ids } }).toArray() : [];
+  if (plans.some(plan => plan.purpose === 'order-restructure'))
+    fail('This order is being updated. Please retry.', 409);
   let paidMinor = 0;
   for (const sale of sales) {
     const total = snapshotFrom([sale], c.branch, table.trim(), { allowZero: true }).totalMinor;
