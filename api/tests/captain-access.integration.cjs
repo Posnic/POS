@@ -466,3 +466,25 @@ test('paired Captain verifies its own phone through scoped routes', async () => 
     assert.equal((await profile.json()).phone, '+919000000001');
   } finally { messaging.sendSms = original; }
 });
+
+
+test('paired Captain verifies a new email through scoped routes', async () => {
+  await db.collection('users').updateOne({_id:staff._id},{$set:{password:await require('bcryptjs').hash('staff-password',4)}});
+  const {grant} = await paired();
+  const headers = {Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+  const mail = require('../src/utils/email');
+  const original = mail.resolveShopTransport;
+  let code;
+  mail.resolveShopTransport = () => ({from:'shop@example.test',transporter:{sendMail:async message=>{code=message.text.match(/\b\d{6}\b/)[0];}}});
+  try {
+    const sent = await fetch(base+'/captain/v1/profile/email/start',{method:'POST',headers,body:JSON.stringify({email:'NEW@EXAMPLE.TEST',currentPassword:'staff-password'})});
+    assert.equal(sent.status,200);
+    const challenge = await sent.json();
+    assert.equal(challenge.code,undefined);
+    const verified = await fetch(base+'/captain/v1/profile/email/verify',{method:'POST',headers,body:JSON.stringify({challenge:challenge.challenge,code})});
+    assert.equal(verified.status,200);
+    assert.deepEqual(await verified.json(),{saved:true,email:'new@example.test'});
+    const profile = await fetch(base+'/captain/v1/profile',{headers});
+    assert.equal((await profile.json()).email,'new@example.test');
+  } finally { mail.resolveShopTransport = original; }
+});
