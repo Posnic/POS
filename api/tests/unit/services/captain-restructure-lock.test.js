@@ -44,6 +44,19 @@ test('two competing requests have one winner without clearing the winner reserva
   const winner=results.find(result=>result.status==='fulfilled').value;
   expect(await db.collection('sales').countDocuments({captain_payment_plan:winner._id})).toBe(2);
 });
+
+test.each([
+  ['person_count', 8], ['table_number', 'T9'], ['table_id', 'changed-table'],
+  ['dine_type', 'Take away'], ['seating_request_id', 'changed-request'],
+  ['seating_primary_id', 'changed-primary'], ['seating_table_ids', ['changed-table']],
+])('a stale %s rejects the move even when the update timestamp is unchanged',async(field,value)=>{
+  const last=[...sales].sort((a,b)=>String(a._id).localeCompare(String(b._id))).at(-1);
+  await db.collection('sales').updateOne({_id:last._id},{$set:{[field]:value}});
+  await expect(locks.reserve(db,scope,{...input(),intent:{kind:'move'}})).rejects.toMatchObject({status:409});
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  expect((await db.collection('sales').findOne({_id:last._id}))[field]).toEqual(value);
+  expect((await locks.read(db,scope,input().requestId,'staff-1')).stage).toBe('cancelled');
+});
 test('cancellation is idempotent and its tombstone refuses another reservation',async()=>{
   await locks.reserve(db,scope,input());
   await locks.cancel(db,scope,input().requestId,'staff-1');

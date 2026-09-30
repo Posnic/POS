@@ -56,7 +56,10 @@ async function reserve(db, scope, { requestId, actor, intent, sales }) {
     for (const id of journal.orderIds) {
       const sale = journal.sales.find(row => String(row._id) === id);
       const expected = {};
-      for (const key of ['items', 'changes', 'kitchen_service', 'kitchen_work', 'sales_total', 'updated_date', 'payment_status', 'sale_process'])
+      // Capacity and destination decisions use this snapshot too. Some legacy
+      // writers do not advance updated_date when changing covers or seating.
+      for (const key of ['items', 'changes', 'kitchen_service', 'kitchen_work', 'sales_total', 'updated_date', 'payment_status', 'sale_process',
+        'person_count', 'table_number', 'table_id', 'dine_type', 'seating_request_id', 'seating_primary_id', 'seating_table_ids'])
         expected[key] = sale[key] === undefined ? { $exists: false } : sale[key];
       const result = await db.collection('sales').updateOne({ ...scopeFilter(scope),
         _id: new ObjectId(id), ...expected,
