@@ -20,7 +20,7 @@ test('new desktop sales send the identity and clear it on success, not on error'
  const start=source.indexOf('var isKotNewSale =');
  const send=source.slice(start,source.indexOf("url: 'setting/salesSmsReceipt'",start));
  assert.match(send,/idempotencyKey:\s*PosnicPro\.sales\.orderRequestId\(\)/);
- assert.match(send,/if \(response\.type === 'success'\) \{\s*PosnicPro\.sales\.resetOrderRequest\(\);/);
+ assert.ok(send.indexOf('submissionJournal().confirm(savedSubmission, response)') < send.indexOf('resetOrderRequest()'));
  assert.equal((send.match(/resetOrderRequest\(\)/g)||[]).length,1);
  assert.match(source,/showAdd: function \(\) \{\s*PosnicPro\.sales\.resetOrderRequest\(\);/);
  assert.match(source,/clear\.cartItems = function \(isFalse\) \{\s*PosnicPro\.sales\.resetOrderRequest\(\);/);

@@ -26,6 +26,15 @@
     resetOrderRequest: function () {
         PosnicPro.sales._orderRequestId = null;
     },
+    submissionJournal: function () {
+        return window.PosnicOrderJournal.create(window.localStorage, function () {
+            return {
+                server: API_URL,
+                branch: PosnicPro.local.get('branch_id_set'),
+                user: PosnicPro.local.get('userid')
+            };
+        });
+    },
     SaleDenomination: [],
     tablesList: [],
     selectedTable: null,
@@ -4063,10 +4072,30 @@ PosnicPro.sales.addSale = {
                 })
             };
             PosnicPro.sales.guardDiscountApproval(params, function () {
+            var savedSubmission;
+            try {
+                savedSubmission = PosnicPro.sales.submissionJournal().save(JSON.parse(params.data));
+                if (savedSubmission.state === 'confirmed') {
+                    throw new Error('This order was already saved. Refresh the sales list.');
+                }
+            } catch (error) {
+                PosnicPro.sales.submissionInProgress = false;
+                $("#save_btn").prop('disabled', false);
+                $("#save_submit").removeClass('disabled');
+                PosnicPro.alert('error', error.message);
+                return;
+            }
             PosnicPro.post(params, function (response) {
                 // ✅ Clear submission flag
     PosnicPro.sales.submissionInProgress = false;
                 if (response.type === 'success') {
+                    try {
+                        PosnicPro.sales.submissionJournal().confirm(savedSubmission, response);
+                    } catch (error) {
+                        // The sale succeeded. Keep the original journal entry for
+                        // reconciliation if storage or the signed-in account changed.
+                        console.warn('Order journal confirmation remains pending:', error.message);
+                    }
                     PosnicPro.sales.resetOrderRequest();
                     // Stock just changed on the server; cached items are stale.
                     PosnicPro.sales.itemCache.clear();

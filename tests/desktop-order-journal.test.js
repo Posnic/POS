@@ -42,3 +42,13 @@ test('failed removal retains a confirmed marker rather than an unsent order',()=
  journal.confirm(entry,{type:'success',data:{_id:'sale-1'}});assert.equal(a.data.size,1);assert.equal(journal.pending().length,0);
  assert.equal(journal.save(payload()).state,'confirmed');
 });
+
+test('desktop submission stores before posting and acknowledges only success',()=>{
+ const fs=require('node:fs');const source=fs.readFileSync('frontend/static/script/js/modules/js/sales.js','utf8');
+ const start=source.indexOf('            var savedSubmission;');
+ const part=source.slice(start,source.indexOf("url: 'setting/salesSmsReceipt'",start));
+ assert.ok(part.indexOf('submissionJournal().save(JSON.parse(params.data))') < part.indexOf('PosnicPro.post(params'));
+ assert.ok(part.indexOf("if (response.type === 'success')") < part.indexOf('submissionJournal().confirm(savedSubmission, response)'));
+ const map=JSON.parse(fs.readFileSync('frontend/pages_css_js_map.json','utf8'));
+ assert.ok(JSON.stringify(map).includes('modules/js/order-journal.js'));
+});
