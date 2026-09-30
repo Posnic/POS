@@ -79,6 +79,12 @@ function mapItem(row) {
   const taxBps = Math.round(Number(row.tax || 0) * 100);
   const price = minor(row.selling_price);
   const code = String(row.plu_code || '');
+  const rawImage =
+    typeof row.image === 'string'
+      ? require('../utils/image-store').resolve(row.image) || row.image
+      : '';
+  const image =
+    /^(https?:\/\/|\/uploads\/)/.test(rawImage) && rawImage.length <= 2048 ? rawImage : undefined;
   return {
     id: id(row._id),
     name: String(row.name || row.item_name || 'Item'),
@@ -87,6 +93,17 @@ function mapItem(row) {
     barcode: String(row.barcode_id || ''),
     category: String(row.category_name || 'Items'),
     visual: typeof row.icon === 'string' && row.icon ? row.icon : '■',
+    ...(image
+      ? {
+          image,
+          ...(!/[a-f0-9]{64}/.test(image)
+            ? {
+                imageRevision: String(row.image_updated_at || row.updated_date || '').slice(0, 100),
+              }
+            : {}),
+        }
+      : {}),
+    ...(['circle', 'square', 'diamond'].includes(row.tile_shape) ? { shape: row.tile_shape } : {}),
     taxBps: Number.isInteger(taxBps) ? Math.min(10000, Math.max(0, taxBps)) : 0,
     taxInclusive: row.tax_type === 'inclusive',
     active:
@@ -128,14 +145,20 @@ async function bootstrap(req) {
       },
     }
   );
-  const rows = await req.db
-    .collection('items')
-    .find({ branch_id: c.branchId, license: c.license, is_deleted: { $ne: true } })
-    .toArray();
+  const paged = req.query?.catalogue === 'paged';
+  const catalogue = require('./mobile-catalogue');
+  const manifest = paged ? await catalogue.prepare(req.db, c, mapItem) : null;
+  const rows = paged
+    ? []
+    : await req.db
+        .collection('items')
+        .find({ branch_id: c.branchId, license: c.license, is_deleted: { $ne: true } })
+        .sort({ _id: 1 })
+        .toArray();
   const items = rows.map(mapItem);
   const version = hash(
     canonical({
-      items,
+      items: manifest ? manifest.digest : items,
       config: c.config,
       currency: currency(c.branch),
       access: req.user.access || {},
@@ -189,7 +212,9 @@ async function bootstrap(req) {
         branchId: c.branchId,
         userId: c.userId,
         device: req.handsetDevice,
-        items,
+        ...(manifest
+          ? { pages: manifest.pages, counts: manifest.counts, count: manifest.count }
+          : { items }),
         facts: Object.fromEntries(
           rows.map((r) => [
             id(r._id),
@@ -207,7 +232,46 @@ async function bootstrap(req) {
     },
     { upsert: true }
   );
-  return { shop, items };
+  return manifest
+    ? {
+        shop,
+        catalogue: {
+          protocol: 1,
+          version: key,
+          count: manifest.count,
+          pages: manifest.pages.map((page, index) => ({ id: page, count: manifest.counts[index] })),
+        },
+      }
+    : { shop, items };
+}
+async function cataloguePage(req) {
+  const c = await context(req);
+  if (!req.handsetDevice || !allowed(req.user, 'sales')) fail('Catalogue access is required.', 403);
+  const { version, page } = req.params;
+  if (!/^[a-f0-9]{64}$/.test(version) || !/^\d{1,8}$/.test(page))
+    fail('Invalid catalogue page.', 400);
+  const grant = await req.db.collection('mobile_grants').findOne({
+    _id: version,
+    license: c.license,
+    branchId: c.branchId,
+    userId: c.userId,
+    device: req.handsetDevice,
+  });
+  if (!grant || !grant.pages || +grant.until <= Date.now())
+    fail('Refresh the catalogue permission.', 403);
+  const key = grant.pages[Number(page)];
+  if (!key) fail('Catalogue page not found.', 404);
+  const saved = await req.db.collection('mobile_catalogue_pages').findOne({ _id: key });
+  if (!saved) fail('Catalogue page not found.', 404);
+  return {
+    version,
+    index: Number(page),
+    id: key,
+    shopId: c.shopId,
+    branchId: id(c.branchId),
+    staffId: id(c.userId),
+    items: saved.items,
+  };
 }
 function validateSale(sale, grant, c, grants = new Map()) {
   if (grant.shop.permissions.sell !== true) fail('Selling is not permitted.', 403);
@@ -352,7 +416,7 @@ async function ingest(req, dependencies = {}) {
       fail('Customer creation is not permitted for this user.', 403);
     if (typeof sale.snapshotVersion !== 'string' || !/^[a-f0-9]{64}$/.test(sale.snapshotVersion))
       fail('Refresh the catalogue before selling.', 409);
-    const grant = await req.db.collection('mobile_grants').findOne({
+    let grant = await req.db.collection('mobile_grants').findOne({
       _id: sale.snapshotVersion,
       license: c.license,
       branchId: c.branchId,
@@ -380,7 +444,16 @@ async function ingest(req, dependencies = {}) {
         device: req.handsetDevice,
       })
       .toArray();
-    const lines = validateSale(sale, grant, c, new Map(previous.map((g) => [g._id, g])));
+    const itemIds = Array.isArray(sale.cart?.lines)
+      ? sale.cart.lines
+          .slice(0, 500)
+          .map((l) => l.itemId)
+          .filter((v) => typeof v === 'string')
+      : [];
+    const catalogue = require('./mobile-catalogue');
+    grant = await catalogue.hydrate(req.db, grant, itemIds);
+    const hydrated = await Promise.all(previous.map((g) => catalogue.hydrate(req.db, g, itemIds)));
+    const lines = validateSale(sale, grant, c, new Map(hydrated.map((g) => [g._id, g])));
     const serverId = new ObjectId();
     const ack = {
       saleId: localId,
@@ -623,7 +696,74 @@ async function finish(db, intent, c, deps = {}) {
     /* periodic scanner remains available */
   }
 }
+// Receipt lookup is scoped to the signed-in cashier and branch, including owners.
+// It cannot expose another cashier's receipts through a client-supplied identity.
+async function receipts(req) {
+  const c = await context(req);
+  if (!req.handsetDevice || !allowed(req.user, 'sales', 'read'))
+    fail('Receipt access is required.', 403);
+  const query = req.query?.q ?? '';
+  const before = req.query?.before;
+  if (
+    typeof query !== 'string' ||
+    query.length > 100 ||
+    (before !== undefined &&
+      (typeof before !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}T[\d:.]+Z\|[a-f0-9]{64}$/.test(before) ||
+        !Number.isFinite(Date.parse(before.split('|')[0]))))
+  )
+    fail('Invalid receipt search.', 400);
+  const filter = { license: c.license, branchId: c.branchId, userId: c.userId, state: 'complete' };
+  if (before) {
+    const [time, key] = before.split('|');
+    filter.$and = [
+      {
+        $or: [{ created: { $lt: new Date(time) } }, { created: new Date(time), _id: { $lt: key } }],
+      },
+    ];
+  }
+  if (query.trim()) {
+    const literal = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filter.$or = [
+      { 'sale.receipt': { $regex: literal, $options: 'i' } },
+      { 'sale.cart.customer.name': { $regex: literal, $options: 'i' } },
+    ];
+  }
+  const rows = await req.db
+    .collection('mobile_sales')
+    .find(filter, { projection: { _id: 1, sale: 1, created: 1 } })
+    .sort({ created: -1, _id: -1 })
+    .limit(51)
+    .toArray();
+  const page = rows.slice(0, 50);
+  return {
+    shopId: c.shopId,
+    branchId: id(c.branchId),
+    staffId: id(c.userId),
+    receipts: page.map((row) => ({
+      id: row.sale.id,
+      receipt: row.sale.receipt,
+      createdAt: row.sale.createdAt,
+      total: row.sale.total,
+      tax: row.sale.tax,
+      currency: row.sale.currency,
+      customer: row.sale.cart.customer?.name || '',
+      method: row.sale.payment.method,
+      lines: row.sale.cart.lines.map((line) => ({
+        name: line.name,
+        quantity: line.quantity,
+        price: line.price,
+      })),
+    })),
+    next:
+      rows.length > 50
+        ? page[page.length - 1].created.toISOString() + '|' + page[page.length - 1]._id
+        : null,
+  };
+}
 module.exports = {
+  cataloguePage,
+  receipts,
   bootstrap,
   ingest,
   finish,

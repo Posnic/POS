@@ -10142,6 +10142,47 @@
         }
       }
     },
+    "/mobile/v1/catalogue/{version}/{page}": {
+      "get": {
+        "summary": "cataloguePage",
+        "operationId": "get_mobile_v1_catalogue_version_page",
+        "tags": [
+          "Mobile pos"
+        ],
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/mobile/v1/sales": {
       "post": {
         "summary": "ingest",
@@ -10164,6 +10205,29 @@
           }
         },
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile/v1/receipts": {
+      "get": {
+        "summary": "receipts",
+        "operationId": "get_mobile_v1_receipts",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
       }
     },
     "/mobile/v1/settings": {

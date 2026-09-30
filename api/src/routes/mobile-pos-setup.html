@@ -212,7 +212,8 @@
           <h2>Receipt printing</h2>
           <p>
             On the phone, open More → Devices and choose the Till printer or the phone’s print
-            service. Android and iOS show their own supported printer choices.
+            service. Android also supports direct Bluetooth ESC/POS printing after pairing in phone
+            settings and a successful compatibility test.
           </p>
           <label
             >Receipt till ID (optional)<input
@@ -222,7 +223,10 @@
           /></label>
           <p>
             Configure the physical printer in the desktop Hardware settings. The first available
-            till claims each job unless a till ID is specified.
+            till claims each job unless a till ID is specified. Direct mobile printing and Till
+            printing are separate routes: syncing a directly printed sale does not queue another
+            copy at the Till. If output is uncertain, check the paper before explicitly allowing
+            another copy.
           </p>
         </section>
         <button type="submit">Save settings</button>
