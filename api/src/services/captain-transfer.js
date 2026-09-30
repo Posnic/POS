@@ -111,4 +111,42 @@ async function cancel(req) {
   await seating.cancel(req.db, c, destinationId(journal._id), actor);
   return result;
 }
-module.exports = { preview, reserve, prepareDestination, cancel };
+// Irreversible preparation for the eventual two-sale writer. Once applying,
+// cancellation is forbidden: a lost bind acknowledgement must recover the same
+// destination, not free seats which a delayed sale could still occupy.
+async function beginCommit(req) {
+  let prepared = await reserve(req);
+  const c = await scope(req);
+  let { journal } = prepared;
+  if (journal.stage === 'reserved') {
+    prepared = await prepareDestination(req);
+    journal = await restructure.applying(req.db, c, journal.requestId, journal.actor);
+  }
+  if (journal.stage !== 'applying') fail('Reconcile this transfer before continuing.', 409);
+  const claim = await seating.find(req.db, c, destinationId(journal._id));
+  const target = journal.intent.destination;
+  if (!claim || claim.actor !== journal.actor || claim.payload_hash !== journal.signature ||
+      !['reserved', 'submitting'].includes(claim.state) || claim.primary !== target.primaryId ||
+      claim.guests !== target.guests || JSON.stringify(claim.tables) !== JSON.stringify(target.tableIds))
+    fail('The destination seating changed. Reconcile this transfer.', 409);
+  if (!journal.destination_number) {
+    const number = await require('../repositories/sale.repository').generateSalesIdForBranch(c.branchId,
+      { numberingContext: { db: req.db, license: c.license } });
+    await req.db.collection('captain_payment_plans').updateOne({ _id: journal._id,
+      branch_id: c.branchId, license: c.license, stage: 'applying', destination_number: { $exists: false },
+    }, { $set: { destination_number: number } });
+    // A concurrent retry may have won the CAS. Always return the durable winner.
+    journal = await restructure.read(req.db, c, journal.requestId, journal.actor);
+  }
+  if (!journal.destination_number || journal.stage !== 'applying')
+    fail('Reconcile this transfer before continuing.', 409);
+  const identity = { sales_id: journal.destination_number, invoice_number: journal.destination_number,
+    sale_no: journal.destination_number, captain_payment_plan: journal._id };
+  const existing = await seating.prepareOrder(req.db, c, claim, identity);
+  if (existing && (existing.captain_payment_plan !== journal._id || existing.sales_id !== journal.destination_number))
+    fail('The destination sale changed. Reconcile this transfer.', 409);
+  // No sale is inserted here. The commit must write and verify both projections
+  // before releasing these fences, including full-source seating closure.
+  return { ...prepared, journal, claim, identity, existing };
+}
+module.exports = { preview, reserve, prepareDestination, cancel, beginCommit };

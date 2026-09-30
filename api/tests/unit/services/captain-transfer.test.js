@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const service = require('../../../src/services/captain-transfer');
 const restructure = require('../../../src/services/captain-restructure-lock');
 const seating = require('../../../src/services/seating-claims');
+const sales = require('../../../src/repositories/sale.repository');
 let server, db, branch, license, sale;
 beforeAll(async () => {
   server = await MongoMemoryServer.create();
@@ -62,6 +63,74 @@ async function confirmation() {
   input.body.requestId = 'transfer-confirmation-0001';
   return input;
 }
+test('commit preparation keeps one destination identity and bill number across retries', async () => {
+  const input = await confirmation();
+  const first = await service.beginCommit(input), next = await service.beginCommit(input);
+  expect(first.journal.stage).toBe('applying');
+  expect(next.identity).toEqual(first.identity);
+  expect(first.identity._id).not.toEqual(sale._id);
+  expect(first.identity.sales_id).toBe(first.identity.invoice_number);
+  expect(first.identity.sales_id).toBe(first.identity.sale_no);
+  expect(first.existing).toBeNull();
+  expect(await db.collection('sales').countDocuments()).toBe(1);
+  expect((await seating.read(db, { branchId: branch, license }))[0].order_id).toBe(String(first.identity._id));
+  expect((await db.collection('counters').findOne({ kind: 'sales_id' })).seq).toBe(1);
+  await expect(service.cancel(input)).rejects.toMatchObject({ status: 409 });
+});
+test('lost destination binding acknowledgement does not allocate another bill on retry', async () => {
+  const input = await confirmation(), original = seating.prepareOrder;
+  let bound;
+  jest.spyOn(seating, 'prepareOrder').mockImplementationOnce(async (...args) => {
+    await original(...args); bound = { ...args[3] };
+    throw new Error('Lost binding acknowledgement');
+  });
+  await expect(service.beginCommit(input)).rejects.toThrow('Lost binding acknowledgement');
+  const retried = await service.beginCommit(input);
+  expect(retried.identity).toEqual(bound);
+  expect((await db.collection('counters').findOne({ kind: 'sales_id' })).seq).toBe(1);
+});
+test('number allocation failure keeps the applying transfer recoverable', async () => {
+  const input = await confirmation();
+  jest.spyOn(sales, 'generateSalesIdForBranch').mockRejectedValueOnce(new Error('Counter unavailable'));
+  await expect(service.beginCommit(input)).rejects.toThrow('Counter unavailable');
+  await expect(service.cancel(input)).rejects.toMatchObject({ status: 409 });
+  const recovered = await service.beginCommit(input);
+  expect(recovered.journal.stage).toBe('applying');
+  expect(recovered.identity.sales_id).toBeTruthy();
+  expect(await db.collection('sales').countDocuments()).toBe(1);
+});
+test('concurrent commit retries agree on the stored number and destination identity', async () => {
+  const input = await confirmation(), prepared = await service.prepareDestination(input);
+  await restructure.applying(db, { branchId: branch, license }, input.body.requestId, input.user._id);
+  const [first, second] = await Promise.all([service.beginCommit(input), service.beginCommit(input)]);
+  expect(first.identity).toEqual(second.identity);
+  expect(first.journal._id).toBe(prepared.journal._id);
+  expect((await seating.read(db, { branchId: branch, license })).length).toBe(1);
+  expect(await db.collection('sales').countDocuments()).toBe(1);
+});
+test('interruption after saving the bill number reuses it without allocating again', async () => {
+  const input = await confirmation(), original = restructure.read;
+  let interrupted = false;
+  jest.spyOn(restructure, 'read').mockImplementation(async (...args) => {
+    const journal = await original(...args);
+    if (journal?.destination_number && !interrupted) {
+      interrupted = true;
+      throw new Error('Interrupted after number persisted');
+    }
+    return journal;
+  });
+  await expect(service.beginCommit(input)).rejects.toThrow('Interrupted after number persisted');
+  const recovered = await service.beginCommit(input);
+  expect(recovered.identity.sales_id).toBe((await db.collection('captain_payment_plans').findOne({})).destination_number);
+  expect((await db.collection('counters').findOne({ kind: 'sales_id' })).seq).toBe(1);
+});
+test('an unexpected sale at the bound identity is never adopted as a transfer destination', async () => {
+  const input = await confirmation(), prepared = await service.beginCommit(input);
+  await db.collection('sales').insertOne({ ...prepared.identity, branch_id: branch, license,
+    captain_payment_plan: 'another-operation' });
+  await expect(service.beginCommit(input)).rejects.toMatchObject({ status: 409 });
+  expect((await db.collection('sales').findOne({ _id: prepared.identity._id })).captain_payment_plan).toBe('another-operation');
+});
 test('destination preparation reserves capacity once without creating an order', async () => {
   const input = await confirmation();
   const first = await service.prepareDestination(input), repeated = await service.prepareDestination(input);
