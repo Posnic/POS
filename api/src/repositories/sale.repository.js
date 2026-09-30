@@ -7655,26 +7655,7 @@ class SalesRepository {
        * Read defensively: last_printed_change_index is -1 on a sale that has
        * never printed, and some older documents carry it as a string.
        */
-      const hasUnprintedChanges = {
-        $expr: {
-          $gt: [
-            { $size: { $ifNull: ['$changes', []] } },
-            {
-              $add: [
-                {
-                  $convert: {
-                    input: { $ifNull: ['$last_printed_change_index', -1] },
-                    to: 'int',
-                    onError: -1,
-                    onNull: -1,
-                  },
-                },
-                1,
-              ],
-            },
-          ],
-        },
-      };
+      const hasUnprintedChanges = require('../helpers/unprinted-kitchen-changes')();
 
       const mine = String(tillId || '').trim();
       const ordinaryClaim = mine
