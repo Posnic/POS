@@ -105,6 +105,7 @@ router.post(
 router.use(protect);
 router.get('/bootstrap', wrap(mobile.bootstrap));
 router.post('/sales', wrap(mobile.ingest));
+router.get('/receipts', wrap(mobile.receipts));
 router.get(
   '/settings',
   wrap(async (req) => {

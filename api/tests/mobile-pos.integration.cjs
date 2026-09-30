@@ -557,6 +557,16 @@ test(
       await page.screenshot({
         path: path.resolve(__dirname, '../../tmp/mobile-pos-live-sale.png'),
       });
+      const receiptNumber = await page.getByTestId('receipt-number').innerText();
+      await page.getByRole('tab', { name: 'Receipts', exact: true }).click();
+      await page.getByText('Find an older receipt', { exact: true }).click();
+      await page.getByRole('textbox').fill(receiptNumber);
+      await page.getByRole('button', { name: 'Find an older receipt', exact: true }).click();
+      await page.getByRole('button', { name: receiptNumber, exact: true }).click();
+      await expect(page.getByRole('heading', { name: receiptNumber, exact: true })).toBeVisible();
+      await page.screenshot({
+        path: path.resolve(__dirname, '../../tmp/mobile-server-receipt.png'),
+      });
       assert.deepEqual(errors, []);
     } finally {
       await browser.close();
@@ -829,4 +839,62 @@ test('owner pairs the selected staff identity without transferring owner privile
   assert.equal((await call('/mobile/v1/pair-codes', { staffId: String(foreign._id) })).status, 403);
   await db.collection('users').updateOne({ _id: cashier._id }, { $set: { branch_access: [] } });
   assert.equal((await call('/mobile/v1/pair-codes', { staffId: String(cashier._id) })).status, 403);
+});
+
+test('older receipt search is literal, paginated and limited to the cashier and branch', async () => {
+  const prefix = 'receipt-lookup-';
+  const ids = [];
+  for (let n = 0; n < 53; n++) {
+    const key = mobile.hash(prefix + n);
+    ids.push(key);
+    await db.collection('mobile_sales').insertOne({
+      _id: key,
+      license: branch.license,
+      branchId: branch._id,
+      userId: user._id,
+      state: 'complete',
+      created: new Date(1700000000000 + n),
+      sale: sale({ receipt: prefix + '[literal].' + n }),
+      serverId: new ObjectId(),
+    });
+  }
+  const foreign = mobile.hash(prefix + 'foreign');
+  ids.push(foreign);
+  await db.collection('mobile_sales').insertOne({
+    _id: foreign,
+    license: branch.license,
+    branchId: branch._id,
+    userId: new ObjectId(),
+    state: 'complete',
+    created: new Date(),
+    sale: sale({ receipt: prefix + '[literal].secret' }),
+    serverId: new ObjectId(),
+  });
+  try {
+    const first = await mobile.receipts({ ...req, query: { q: prefix + '[literal].' } });
+    assert.equal(first.receipts.length, 50);
+    assert.equal(first.receipts[0].receipt, prefix + '[literal].52');
+    assert.ok(first.next);
+    const second = await mobile.receipts({
+      ...req,
+      query: { q: prefix + '[literal].', before: first.next },
+    });
+    assert.equal(second.receipts.length, 3);
+    assert.equal(second.next, null);
+    assert.equal(new Set([...first.receipts, ...second.receipts].map((r) => r.id)).size, 53);
+    assert.ok(!first.receipts.some((r) => r.receipt.includes('secret')));
+    const none = await mobile.receipts({ ...req, query: { q: prefix + '.*' } });
+    assert.equal(none.receipts.length, 0);
+    await assert.rejects(mobile.receipts({ ...req, query: { before: 'bad' } }), /Invalid receipt/);
+    await assert.rejects(
+      mobile.receipts({ ...req, handsetDevice: null, query: {} }),
+      /Receipt access/
+    );
+    await assert.rejects(
+      mobile.receipts({ ...req, user: { ...user, usertype: 'staff', access: {} }, query: {} }),
+      /Receipt access/
+    );
+  } finally {
+    await db.collection('mobile_sales').deleteMany({ _id: { $in: ids } });
+  }
 });
