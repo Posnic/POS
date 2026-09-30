@@ -147,6 +147,18 @@
       <p id="message" role="status"></p>
       <form id="settings" hidden>
         <section id="access-section">
+          <h2>Local receipt history</h2>
+          <p>
+            All branch items remain available. These limits apply only to acknowledged receipts on
+            the phone; server history is unchanged. Pending sales and unresolved direct printing are
+            protected.
+          </p>
+          <label
+            >History days <input type="number" id="history-days" min="1" max="365" required
+          /></label>
+          <label
+            >Maximum receipts <input type="number" id="history-max" min="100" max="100000" required
+          /></label>
           <h2>Access</h2>
           <p id="feature-status"></p>
           <button type="button" data-nav="modules">Open Features</button>

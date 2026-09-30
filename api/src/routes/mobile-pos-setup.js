@@ -124,6 +124,8 @@ async function load() {
     clearPairing();
   };
   $('hours').value = state.offlineHours;
+  $('history-days').value = state.historyDays || 90;
+  $('history-max').value = state.historyMaxReceipts || 10000;
   $('quick').checked = state.quickSale;
   $('tax').value = state.quickTaxBps / 100;
   $('inclusive').checked = state.quickTaxInclusive;
@@ -186,6 +188,8 @@ $('settings').onsubmit = async (e) => {
     }
     await call('settings', {
       offlineHours: Number($('hours').value),
+      historyDays: Number($('history-days').value),
+      historyMaxReceipts: Number($('history-max').value),
       quickSale: $('quick').checked,
       quickTaxBps: Math.round(Number($('tax').value) * 100),
       quickTaxInclusive: $('inclusive').checked,

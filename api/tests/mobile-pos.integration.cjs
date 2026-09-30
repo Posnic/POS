@@ -191,6 +191,39 @@ test('real password login registers phone and downloads live branch catalogue', 
   assert.equal(snapshot.items[0].code, '12');
   assert.equal(snapshot.items[0].price, 1000);
   assert.equal(snapshot.shop.capabilities.saleSync, true);
+  assert.deepEqual(snapshot.shop.historyPolicy, { days: 90, maxReceipts: 10000 });
+});
+
+test('mobile retention settings are validated and delivered in authenticated bootstrap', async () => {
+  const original = await call('/mobile/v1/settings');
+  const settings = {
+    offlineHours: original.data.offlineHours,
+    quickSale: original.data.quickSale,
+    quickTaxBps: original.data.quickTaxBps,
+    quickTaxInclusive: original.data.quickTaxInclusive,
+    tillId: original.data.tillId,
+  };
+  assert.equal(
+    (await call('/mobile/v1/settings', { ...settings, historyDays: 0, historyMaxReceipts: 10000 }))
+      .status,
+    422
+  );
+  assert.equal(
+    (await call('/mobile/v1/settings', { ...settings, historyDays: 30, historyMaxReceipts: 99 }))
+      .status,
+    422
+  );
+  assert.equal(
+    (await call('/mobile/v1/settings', { ...settings, historyDays: 30, historyMaxReceipts: 5000 }))
+      .status,
+    200
+  );
+  const updated = await call('/mobile/v1/bootstrap');
+  assert.deepEqual(updated.data.shop.historyPolicy, { days: 30, maxReceipts: 5000 });
+  // Legacy clients omit the fields; saving their other settings must preserve policy.
+  assert.equal((await call('/mobile/v1/settings', settings)).status, 200);
+  assert.equal((await call('/mobile/v1/settings')).data.historyDays, 30);
+  await call('/mobile/v1/settings', { ...settings, historyDays: 90, historyMaxReceipts: 10000 });
 });
 test('paid cash sale lands in normal desktop sales and concurrent retry deducts stock once', async () => {
   const s = sale();
@@ -600,18 +633,16 @@ for (const useLocal of [false, true])
             crypto.createHash('sha256').update(body.codeVerifier).digest('base64url'),
             request.codeChallenge
           );
-          await db
-            .collection('mobile_pair_codes')
-            .insertOne({
-              _id: mobile.hash(code),
-              enrolmentId,
-              userId: user._id,
-              branchId: branch._id,
-              license: branch.license,
-              expires: new Date(Date.now() + 60000),
-              deviceId: request.deviceId,
-              codeChallenge: request.codeChallenge,
-            });
+          await db.collection('mobile_pair_codes').insertOne({
+            _id: mobile.hash(code),
+            enrolmentId,
+            userId: user._id,
+            branchId: branch._id,
+            license: branch.license,
+            expires: new Date(Date.now() + 60000),
+            deviceId: request.deviceId,
+            codeChallenge: request.codeChallenge,
+          });
           return route.fulfill({
             json: {
               baseUrl: 'https://mobile-test.example/api',

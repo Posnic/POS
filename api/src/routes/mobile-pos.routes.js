@@ -191,6 +191,19 @@ router.post(
       mobile.fail('Settings write permission is required.', 403);
     const c = await mobile.context(req, false),
       s = req.body || {};
+    const historyDays = s.historyDays ?? c.config.historyDays;
+    const historyMaxReceipts = s.historyMaxReceipts ?? c.config.historyMaxReceipts;
+    if (
+      !Number.isInteger(historyDays) ||
+      historyDays < 1 ||
+      historyDays > 365 ||
+      !Number.isInteger(historyMaxReceipts) ||
+      historyMaxReceipts < 100 ||
+      historyMaxReceipts > 100000
+    )
+      mobile.fail(
+        'Choose 1–365 history days and 100–100000 local receipts. Pending sales are always retained.'
+      );
     if (
       !Number.isInteger(s.offlineHours) ||
       s.offlineHours < 1 ||
@@ -201,6 +214,8 @@ router.post(
     )
       mobile.fail('Choose an offline period of 1 to 72 hours and a valid tax rate.');
     const config = {
+      historyDays,
+      historyMaxReceipts,
       offlineHours: s.offlineHours,
       quickSale: s.quickSale === true,
       quickTaxBps: s.quickTaxBps,
