@@ -37,6 +37,7 @@ router.get('/branch-details', wrap(branchDetails.get));
 router.post('/branch-details', limit, wrap(branchDetails.update));
 const tables = require('../services/captain-tables');
 router.get('/tables', wrap(tables.list));
+router.get('/bill', wrap(require('../services/captain-bill').read));
 router.post('/tables', limit, wrap(tables.update));
 router.post('/tables/state', limit, wrap(tables.state));
 router.post('/tables/close', limit, wrap(tables.close));

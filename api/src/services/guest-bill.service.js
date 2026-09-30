@@ -12,7 +12,7 @@ const amountMinor = (value, policy) => {
 function problem(message, status = 400) {
   return Object.assign(new Error(message), { status });
 }
-function snapshotFrom(sales, branch, table) {
+function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
   const monetary = Money.policy(branch);
   const minor = (value) => amountMinor(value, monetary);
   const lines = [],
@@ -65,7 +65,7 @@ function snapshotFrom(sales, branch, table) {
     });
     totalMinor += total;
   }
-  if (!lines.length || totalMinor <= 0)
+  if (!lines.length || totalMinor < 0 || (totalMinor === 0 && !allowZero))
     throw problem('There is no unpaid bill to split on this table.', 409);
   const revision = hash(
     sales
