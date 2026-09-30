@@ -78,7 +78,7 @@
   const screen=at('screenTab');screen.querySelector('h2').remove();const screenHelp=screen.querySelector('.card');const screenHelpBox=details('Screen size and viewing distance',[]);screenHelp.before(screenHelpBox);screenHelpBox.append(screenHelp);
   screen.querySelector('.status').textContent='Preview changes here, then save them to the selected kitchen display.';
   heading('screenTab','Kitchen screen','Keep each table in one box, readable from across the kitchen.');
-  const screenSaveStatus=make('div','hw-note');screenSaveStatus.id='screenSaveStatus';screenSaveStatus.setAttribute('role','status');screen.querySelector('.hw-heading').after(screenSaveStatus);
+  const screenSaveStatus=at('screenSaveStatus')||make('div','hw-note');screenSaveStatus.id='screenSaveStatus';screenSaveStatus.setAttribute('role','status');screen.querySelector('.hw-heading').after(screenSaveStatus);
 
   const mobile=at('mobileTab');const network=outer('mobileApiUrl',mobile), devices=outer('deviceTableBody',mobile), blocked=outer('blockedDeviceBody',mobile), login=outer('loginLogBody',mobile);
   [network,devices,blocked,login].forEach(n=>{n.classList.add('hw-panel');n.remove();});
