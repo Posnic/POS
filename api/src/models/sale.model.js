@@ -704,6 +704,7 @@ const saleSchema = new mongoose.Schema(
 
     captain_payment_plan: { type: String },
     seating_capacity_revision: { type: String },
+    captain_transfer_allocation: { type: mongoose.Schema.Types.Mixed },
     captain_payment_version: { type: Number },
     captain_payments: { type: mongoose.Schema.Types.Mixed },
     denomination_values: {

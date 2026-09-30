@@ -101,12 +101,12 @@ function billable(line) {
  * the bill. Anything with no name is skipped too - it cannot be read on paper
  * and its amount is already inside the total.
  */
-function itemLines(sale, branch) {
+function itemLines(sale, branch, allocation = null) {
   const monetary = require('../utils/currency').policy(branch || {});
   const rows = Array.isArray(sale && sale.items) ? sale.items : [];
   return rows
     .filter((it) => billable(it) && String(it.name || it.item_name || '').trim())
-    .map((it) => {
+    .map((it, index) => {
       /* Three spellings because three writers exist: a priced online line sets
          both `quantity` and `item_quantity`, the till's own path sets
          `item_quantity`, and `qty` is what a hand-built row reaches for.
@@ -151,7 +151,7 @@ function itemLines(sale, branch) {
         rate: rate > 0 ? rate.toFixed(monetary.currencyDigits) : '',
         qty: qtyText(qty),
         amount: require('../utils/currency').fromMinor(
-          require('../utils/currency').toMinor(rate * qty, monetary),
+          allocation ? (allocation.lines[index].components.find(row=>row.key==='base')?.minor || 0) : require('../utils/currency').toMinor(rate * qty, monetary),
           monetary
         ),
       };
@@ -204,7 +204,9 @@ function trimRate(value) {
  * is not something that happens at a table, and it settles at the counter
  * where the shop's own template runs and knows better than this does.
  */
-function taxRows(sale, branch) {
+function taxRows(sale, branch, allocation = null) {
+  if (allocation) return Object.entries(allocation.components).filter(([key])=>key.startsWith('tax:'))
+    .map(([key,minor])=>({label:key.slice(4),amount:require('../utils/currency').fromMinor(minor,require('../utils/currency').policy(branch))}));
   const tax = num(sale && sale.tax);
   if (tax <= 0) return [];
   const indian = String((branch && branch.indian_gst) || '').toLowerCase();
@@ -463,7 +465,8 @@ function totalQuantity(branch, items) {
  *                        guest their bill over a cosmetic failure.
  */
 function buildBillPayload(sale = {}, branch = {}) {
-  const items = itemLines(sale, branch);
+  const allocation = require('../utils/transfer-allocation').read(sale, branch);
+  const items = itemLines(sale, branch, allocation);
   const subTotal =
     sale.sales_sub_total != null && sale.sales_sub_total !== ''
       ? num(sale.sales_sub_total)
@@ -576,7 +579,7 @@ function buildBillPayload(sale = {}, branch = {}) {
     items,
 
     subTotal,
-    taxes: taxRows(sale, branch),
+    taxes: taxRows(sale, branch, allocation),
     discount: num(sale.discount),
     roundOff: num(sale.round_off || sale.sales_round_off),
     total: num(sale.sales_total != null ? sale.sales_total : sale.total),

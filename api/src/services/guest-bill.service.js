@@ -19,6 +19,13 @@ function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
     labels = { base: 'Subtotal', discount: 'Discount', adjustment: 'Adjustments' };
   let totalMinor = 0;
   for (const sale of sales) {
+    const allocation = require('../utils/transfer-allocation').read(sale, branch);
+    if (allocation) {
+      allocation.lines.forEach((line,index)=>lines.push({...structuredClone(line),id:String(sale._id)+':'+index}));
+      for (const key of Object.keys(allocation.components)) if(key.startsWith('tax:'))labels[key]=key.slice(4);
+      totalMinor+=allocation.totalMinor;
+      continue;
+    }
     const live = (sale.items || []).filter(
       (it) =>
         it &&
