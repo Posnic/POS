@@ -63,14 +63,14 @@ const readable = (buffer) => {
 };
 
 const ticket = {
-  title: 'Additional Order', number: 7, dateText: '13-09-2026 8:41:15 PM',
+  title: 'Running Order', number: 7, dateText: '13-09-2026 8:41:15 PM',
   dineType: 'Dine in', saleId: 'SID1042', tableNo: '5', personCount: '4',
   items: [{ name: 'Sweet Corn Soup - Chicken', quantity: 2, description: 'no coriander' }],
 };
 
 test('the ticket says what it is, which table, and what to make', () => {
   const paper = readable(renderKitchenTicket(ticket, { paperWidth: '48' }));
-  assert.match(paper, /Additional Order/);
+  assert.match(paper, /Running Order/);
   assert.match(paper, /#7/);
   assert.match(paper, /TABLE 5/, 'the table is not called out');
   assert.match(paper, /Pax: 4/);
@@ -196,7 +196,7 @@ test('reprinting a logged ticket labels every printer copy and keeps its KOT num
     const paper = readable(bytes);
     assert.match(paper, /DUPLICATE KOT/);
     assert.match(paper, /Do not\s+prepare again/);
-    assert.match(paper, /Original: Additional Order/);
+    assert.match(paper, /Original: Running Order/);
     assert.match(paper, /#42/);
     assert.match(paper, /TABLE 5/);
   }

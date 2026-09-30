@@ -1350,7 +1350,7 @@ class KOTManager {
       ? (cancelledWholeOrder
           ? 'Order Cancelled'
           : (cancelledLines > 1 ? 'Items Cancelled' : 'Item Cancelled'))
-      : (printKind === 'copy' ? 'DUPLICATE KOT' : printKind === 'edit' ? 'Additional Order' : 'New Order');
+      : (printKind === 'copy' ? 'DUPLICATE KOT' : printKind === 'edit' ? 'Running Order' : 'New Order');
     const duplicate = printKind === 'copy' || sale._isReprint === true;
 
     const dateText    = this._fmtDate(sale.updated_date || sale.updated_at || sale.created_date || sale.created_at || '');
