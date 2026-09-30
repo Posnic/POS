@@ -18,6 +18,8 @@ test.each(['JPY','INR','KWD'])('financial projection conserves every component i
     expect(Money.toMinor(bill.subTotal,policy)).toBe(expected.components.base);
     expect(snapshot.lines.map(row=>row.components)).toEqual(expected.lines.map(row=>row.components));
     expect(snapshot.totalMinor).toBe(expected.totalMinor);
+    expect(projected.items.reduce((sum,item)=>sum+Money.toMinor(item.item_tax,policy),0)).toBe(Money.toMinor(projected.tax,policy));
+    expect(projected.items[0].item_base_price).toBe(original.items[0].item_base_price);
     for(const tax of bill.taxes)expect(Money.toMinor(tax.amount,policy)).toBe(expected.components['tax:'+tax.label]);
   }
 });
@@ -54,4 +56,17 @@ test('per-line allocations and tax labels remain exact across multiple preparati
   const corrupted={...original,...structuredClone(result.destination)};
   corrupted.captain_transfer_allocation.lines[0].name='Changed allocation';
   expect(()=>buildBillPayload(corrupted,branch)).toThrow('bill changed');
+});
+
+test('projected per-item tax aliases and components agree with each allocated bill',()=>{
+  const original=sale(),branch={currencyCode:'INR',indian_gst:'enable'},policy=Money.policy(branch);
+  original.items[0].tax_amount=original.items[0].item_tax;
+  original.items[0].tax_components=[{name:'CGST',amount:2.505},{name:'SGST',amount:2.505}];
+  const result=project(original,branch,[{id:'c0i0',quantity:1}],at);
+  for(const side of ['source','destination']) {
+    const item=result[side].items[0];
+    expect(item.tax_amount).toBe(item.item_tax);
+    expect(item.tax_components.reduce((sum,row)=>sum+Money.toMinor(row.amount,policy),0)).toBe(Money.toMinor(item.item_tax,policy));
+  }
+  expect(Money.toMinor(result.source.tax,policy)+Money.toMinor(result.destination.tax,policy)).toBe(501);
 });

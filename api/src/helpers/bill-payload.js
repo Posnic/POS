@@ -211,7 +211,10 @@ function taxRows(sale, branch, allocation = null) {
   if (tax <= 0) return [];
   const indian = String((branch && branch.indian_gst) || '').toLowerCase();
   if (indian && indian !== 'disable' && indian !== 'false' && indian !== '0') {
-    const half = tax / 2;
+    const money = require('../utils/currency');
+    const policy = money.policy(branch || {});
+    const taxMinor = money.toMinor(tax, policy);
+    const firstHalf = Math.ceil(taxMinor / 2);
     const rate = gstRate(sale);
     /*
      * THE RATE, BESIDE THE AMOUNT.
@@ -237,8 +240,8 @@ function taxRows(sale, branch, allocation = null) {
      */
     const shown = rate === null ? '' : ' ' + trimRate(rate / 2) + '%';
     return [
-      { label: 'CGST' + shown, amount: half },
-      { label: 'SGST' + shown, amount: half },
+      { label: 'CGST' + shown, amount: money.fromMinor(firstHalf, policy) },
+      { label: 'SGST' + shown, amount: money.fromMinor(taxMinor - firstHalf, policy) },
     ];
   }
   return [{ label: 'Tax', amount: tax }];

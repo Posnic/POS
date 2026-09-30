@@ -21,3 +21,14 @@ test('subtotal fallback and quantity count use only active items without changin
   expect(bill.subTotal).toBe(200);expect(bill.totalQty).toBe('2');
   expect(bill.total).toBe(195);expect(bill.discount).toBe(5);
 });
+
+test.each([['INR',5.01],['JPY',5],['KWD',5.001]])('split tax rows conserve odd minor units for %s', (currencyCode,tax)=>{
+  const Money=require('../../../src/utils/currency'),shop={...branch,currencyCode},policy=Money.policy(shop);
+  const sale={_id:'source',items:[{...active,item_tax:tax}],sales_sub_total:200,sales_total:200+tax,tax};
+  const bill=buildBillPayload(sale,shop);
+  const components=bill.taxes.map(row=>Money.toMinor(row.amount,policy));
+  expect(components.reduce((sum,value)=>sum+value,0)).toBe(Money.toMinor(tax,policy));
+  expect(Math.abs(components[0]-components[1])).toBeLessThanOrEqual(1);
+  const snapshot=snapshotFrom([sale],shop,'1');
+  expect(snapshot.lines[0].components.find(row=>row.key==='adjustment').minor).toBe(0);
+});

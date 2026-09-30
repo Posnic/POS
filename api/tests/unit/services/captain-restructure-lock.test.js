@@ -86,6 +86,17 @@ test('cancellation is idempotent and its tombstone refuses another reservation',
   expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
   await expect(locks.reserve(db,scope,input())).rejects.toMatchObject({status:409});
 });
+
+test.each([['sales_sub_total',100],['discount',3],['tax',5],['sales_tax',5],['round_off',0.01],
+  ['sales_round_off',0.01],['captain_transfer_allocation',{version:1,totalMinor:12000}]])(
+  'a changed %s cannot use an earlier financial snapshot even when total and timestamp match',async(field,value)=>{
+    const last=[...sales].sort((a,b)=>String(a._id).localeCompare(String(b._id))).at(-1);
+    await db.collection('sales').updateOne({_id:last._id},{$set:{[field]:value}});
+    await expect(locks.reserve(db,scope,input())).rejects.toMatchObject({status:409});
+    expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+    expect((await db.collection('sales').findOne({_id:last._id}))[field]).toEqual(value);
+  }
+);
 test('an applying operation cannot be cancelled and completion retries release its own locks',async()=>{
   const journal=await locks.reserve(db,scope,input());
   await locks.applying(db,scope,input().requestId,'staff-1');
