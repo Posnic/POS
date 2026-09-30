@@ -1,0 +1,5 @@
+Order ID,Order Date,Product Name,Quantity,Unit Price,Currency,Order Status,SKU,Customer Name,Customer Email
+SYNTH-SS-1001,2026-09-01,Cotton Tote,2,24.00,USD,paid,SYNTH-TOTE-001,Alex Morgan,alex.morgan@example.test
+SYNTH-SS-1002,2026-09-02,Ceramic Mug,1,18.50,USD,fulfilled,SYNTH-MUG-001,Sam Lee,sam.lee@example.test
+SYNTH-SS-1003,2026-09-03,Canvas Pouch,3,12.00,USD,refunded,SYNTH-POUCH-001,Jordan Patel,jordan.patel@example.test
+SYNTH-SS-1004,2026-09-04,Notebook,1,9.75,USD,pending,SYNTH-NOTE-001,Casey Brown,casey.brown@example.test
