@@ -10154,6 +10154,7 @@ class SalesRepository {
           subtotal: doc.sales_sub_total || doc.subtotal || 0,
           tax: doc.tax || 0,
           discount: doc.discount || 0,
+          pricing_preview: true,
           transfer_allocated: !!doc.captain_transfer_allocation,
           ...require('../services/captain-transfer-discount').editorValue(doc),
           customer_name: doc.customer_name || '',
