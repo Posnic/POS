@@ -851,7 +851,17 @@ async function changeGuests(db, scope, orderId, input) {
       _id: new ObjectId(orderKey), branch_id: scope.branchId, license: scope.license,
     });
     if (!sale?.seating_request_id) fail('Refresh this order before changing its seating.', 409);
-    journal = await restructure.reserve(db, scope, { requestId: id, actor, intent, sales: [sale] });
+    const claim = await find(db, scope, sale.seating_request_id);
+    if (!claim?.labels?.length) fail('The seating group changed. Refresh this order.', 409);
+    // Capacity is shared across checks. Fence all existing occupants, so a
+    // desktop save that passed its preflight cannot change a neighbour's covers
+    // while this operation validates and commits the group's capacity.
+    const others = await db.collection('sales').find({
+      branch_id: scope.branchId, license: scope.license,
+      ...require('../helpers/floor-eligibility').floorEligibility(),
+      table_number: { $in: claim.labels }, _id: { $ne: sale._id },
+    }).limit(200).toArray();
+    journal = await restructure.reserve(db, scope, { requestId: id, actor, intent, sales: [sale, ...others] });
   }
   if (journal.stage === 'reserving')
     journal = await restructure.reserve(db, scope, { requestId: id, actor, intent, sales: journal.sales });
@@ -878,7 +888,10 @@ async function changeGuests(db, scope, orderId, input) {
           branch_id: scope.branchId, license: scope.license,
           ...require('../helpers/floor-eligibility').floorEligibility(),
           table_number: { $in: own.labels }, _id: { $ne: original._id },
-        }, { projection: { _id: 1, person_count: 1 } }).toArray();
+        }, { projection: { _id: 1, person_count: 1, captain_payment_plan: 1 } }).toArray();
+        if (others.some(other => other.captain_payment_plan !== journal._id ||
+            !journal.orderIds.includes(String(other._id))))
+          fail('Table changed. Refresh and try again.', 409);
         if (guests > Number(original.person_count || 0) &&
             !details.accommodates(own, guests + occupiedGuests(overlaps, others)))
           fail('Choose a table with enough seats.', 409);
@@ -906,6 +919,11 @@ async function changeGuests(db, scope, orderId, input) {
     _id: original._id, branch_id: scope.branchId, license: scope.license,
     captain_payment_plan: journal._id, person_count: guests, 'captain_audit.request_id': id,
   })) fail('This order is being updated. Please retry.', 409);
+  // Invalidate preflight reads on every occupant before releasing their fences.
+  // A delayed desktop/order write must not pass simply because the temporary
+  // fence has been removed again. This revision is stable across retries.
+  await db.collection('sales').updateMany({ branch_id: scope.branchId, license: scope.license,
+    captain_payment_plan: journal._id }, { $set: { seating_capacity_revision: id } });
   await store(db).updateOne({ _id: scopeKey(scope),
     claims: { $elemMatch: { id: original.seating_request_id, guest_update: id } },
   }, { $unset: { 'claims.$.guest_update': '' }, $inc: { revision: 1 } });

@@ -58,6 +58,7 @@ async function guardEdit(db, scope, doc, next) {
   doc.$where = {
     ...(doc.$where || {}),
     seating_request_id: doc.seating_request_id || { $exists: false },
+    seating_capacity_revision: doc.seating_capacity_revision ?? { $exists: false },
     ...(doc.updated_date !== undefined ? { updated_date: doc.updated_date } : {}),
   };
 }

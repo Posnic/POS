@@ -1234,3 +1234,51 @@ test('guest status distinguishes unknown, completed and cancelled requests witho
   expect((await service.guestsStatus(req)).state).toBe('cancelled');
   req.user._id='staff-2';await expect(service.guestsStatus(req)).rejects.toMatchObject({status:409});
 });
+
+test('cover updates fence neighbouring checks from desktop writes until interrupted work is reconciled',async()=>{
+  const {source,target,input}=await mergeOrders();
+  const move=await seating.prepareMove(db,scope,String(source._id),input,{mergeTargetId:String(target._id)});
+  await seating.completeMove(db,scope,move.id,'staff-1');
+  await db.collection('table_seating').updateOne({},{$set:{'claims.$[].max_capacity':4}});
+  const change={request_id:'shared-covers-fence-1',actor:'staff-1',guests:2};
+  const interrupted={collection(name){
+    const collection=db.collection(name);
+    return new Proxy(collection,{get(target,key){
+      if(name==='sales'&&key==='updateOne')return async(filter,update,...rest)=>{
+        if(update.$push?.captain_audit?.action==='guests')throw new Error('interrupted');
+        return target.updateOne(filter,update,...rest);
+      };
+      const value=target[key];return typeof value==='function'?value.bind(target):value;
+    }});
+  }};
+  await expect(seating.changeGuests(interrupted,scope,String(source._id),change)).rejects.toThrow('interrupted');
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(2);
+  const neighbour=await db.collection('sales').findOne({_id:target._id});
+  await expect(require('../../../src/services/captain-payment-guard').mutable(db,neighbour)).rejects.toMatchObject({status:409});
+  // This is the same final-write fence used by desktop save and order edits.
+  const stale=await db.collection('sales').updateOne({_id:target._id,captain_payment_plan:{$exists:false}},{$set:{person_count:3}});
+  expect(stale.matchedCount).toBe(0);
+  await seating.changeGuests(db,scope,String(source._id),change);
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  expect((await db.collection('sales').findOne({_id:target._id})).person_count).toBe(2);
+  const delayed=await db.collection('sales').updateOne({_id:target._id,
+    captain_payment_plan:{$exists:false},seating_capacity_revision:{$exists:false}},{$set:{person_count:3}});
+  expect(delayed.matchedCount).toBe(0);
+  expect((await db.collection('sales').findOne({_id:target._id})).seating_capacity_revision).toBe(change.request_id);
+});
+
+test('cover updates protect more than two checks sharing a table',async()=>{
+  await db.collection('branches').insertOne({_id:scope.branchId,license:scope.license,table_order_limit:0});
+  await db.collection('tableorder').updateOne({_id:new ObjectId(ids[0])},{$set:{max_capacity:8}});
+  const orders=[];
+  for(let index=0;index<3;index++){
+    const claim=await seating.reserve(db,scope,request({request_id:`three-check-seating-${index}`,table_ids:[ids[0]],guests:2}));
+    const sale={_id:new ObjectId(),branch_id:scope.branchId,license:scope.license,seating_request_id:claim.id,table_number:'T1',person_count:2,sale_process:'KOT',payment_status:'Unpaid'};
+    await seating.bind(db,scope,claim.id,'staff-1',String(sale._id));await db.collection('sales').insertOne(sale);orders.push(sale);
+  }
+  await seating.changeGuests(db,scope,String(orders[0]._id),{request_id:'three-check-guest-edit',actor:'staff-1',guests:3});
+  const journal=await require('../../../src/services/captain-restructure-lock').read(db,scope,'three-check-guest-edit','staff-1');
+  expect(journal.orderIds).toHaveLength(3);expect(journal.stage).toBe('completed');
+  expect(await db.collection('sales').countDocuments({captain_payment_plan:{$exists:true}})).toBe(0);
+  expect((await db.collection('sales').find().toArray()).reduce((sum,row)=>sum+row.person_count,0)).toBe(7);
+});

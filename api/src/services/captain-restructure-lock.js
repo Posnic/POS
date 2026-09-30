@@ -38,7 +38,7 @@ async function cancel(db, scope, requestId, actor) {
 }
 async function reserve(db, scope, { requestId, actor, intent, sales }) {
   if (typeof requestId !== 'string' || !/^[a-zA-Z0-9_-]{16,80}$/.test(requestId) ||
-      !actor || !intent || !Array.isArray(sales) || !sales.length || sales.length > 2)
+      !actor || !intent || !Array.isArray(sales) || !sales.length || sales.length > (intent.kind === 'covers' ? 200 : 2))
     throw problem();
   const ids = sales.map(sale => String(sale._id)).sort();
   if (new Set(ids).size !== ids.length || ids.some(id => !/^[a-f0-9]{24}$/i.test(id))) throw problem();
@@ -59,7 +59,7 @@ async function reserve(db, scope, { requestId, actor, intent, sales }) {
       // Capacity and destination decisions use this snapshot too. Some legacy
       // writers do not advance updated_date when changing covers or seating.
       for (const key of ['items', 'changes', 'kitchen_service', 'kitchen_work', 'sales_total', 'updated_date', 'payment_status', 'sale_process',
-        'person_count', 'table_number', 'table_id', 'dine_type', 'seating_request_id', 'seating_primary_id', 'seating_table_ids'])
+        'person_count', 'table_number', 'table_id', 'dine_type', 'seating_request_id', 'seating_primary_id', 'seating_table_ids', 'seating_capacity_revision'])
         expected[key] = sale[key] === undefined ? { $exists: false } : sale[key];
       const result = await db.collection('sales').updateOne({ ...scopeFilter(scope),
         _id: new ObjectId(id), ...expected,

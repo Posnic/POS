@@ -1969,7 +1969,8 @@ class SalesRepository {
         await require('../services/captain-payment-guard').mutable(await BaseModel.getDb(), sale);
         sale.set('captain_payment_plan', undefined);
       }
-      sale.$where = { ...(sale.$where || {}), captain_payment_plan: { $exists: false } };
+      sale.$where = { ...(sale.$where || {}), captain_payment_plan: { $exists: false },
+        seating_capacity_revision: sale.seating_capacity_revision ?? { $exists: false } };
     }
     return sale.save();
   }
@@ -10232,6 +10233,7 @@ class SalesRepository {
       const editFilter = {
         _id: orderObjectId,
         captain_payment_plan: { $exists: false },
+        seating_capacity_revision: orderDoc.seating_capacity_revision ?? { $exists: false },
         items: editPolicy?.expectedItems || orderDoc.items,
         changes:
           (editPolicy ? editPolicy.expectedChanges : orderDoc.changes) === undefined
