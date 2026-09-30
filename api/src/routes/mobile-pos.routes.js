@@ -257,7 +257,21 @@ router.post(
       license: c.license,
       expires,
     });
+    const { localAddresses, pairingTargets } = require('../utils/pairing');
+    const pairingQr = await Promise.all(
+      pairingTargets(
+        { host: req.headers.host, port: process.env.PORT || 5555 },
+        localAddresses()
+      ).targets.map(async (target) => ({
+        url: target.url,
+        qr: await require('qrcode').toDataURL(JSON.stringify({ server: target.url, code }), {
+          width: 240,
+          margin: 2,
+        }),
+      }))
+    );
     return {
+      pairingQr,
       code: code.match(/.{4}/g).join('-'),
       expires,
       staffId: String(target._id),

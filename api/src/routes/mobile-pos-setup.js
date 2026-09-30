@@ -10,6 +10,7 @@ if (paymentView) {
     el.hidden = el.id !== 'payments-section';
   });
   $('device-links').hidden = true;
+  document.querySelector('.setup-summary').hidden = true;
 } else {
   $('payments-section').hidden = true;
 }
@@ -31,7 +32,16 @@ document.querySelectorAll('[data-nav]').forEach((button) => {
   };
 });
 let csrf = '',
-  state;
+  state,
+  pairingQr = [],
+  pairingExpiry;
+function clearPairing() {
+  clearTimeout(pairingExpiry);
+  pairingQr = [];
+  $('code').textContent = '';
+  $('code-help').textContent = '';
+  $('addresses').querySelector('select')?.dispatchEvent(new Event('change'));
+}
 async function call(path, body) {
   const response = await fetch(api + path, {
     credentials: 'same-origin',
@@ -111,8 +121,7 @@ async function load() {
     $('pair-staff').append(option);
   });
   $('pair-staff').onchange = () => {
-    $('code').textContent = '';
-    $('code-help').textContent = '';
+    clearPairing();
   };
   $('hours').value = state.offlineHours;
   $('quick').checked = state.quickSale;
@@ -137,8 +146,11 @@ async function load() {
   const showAddress = () => {
     const a = addresses[Number(select.value)];
     if (a) {
-      image.src = a.qr;
-      image.alt = 'Scan to connect to ' + a.url;
+      const paired = pairingQr.find((row) => row.url === a.url);
+      image.src = paired?.qr || a.qr;
+      image.alt = paired
+        ? 'Scan to authorize the selected staff account'
+        : 'Scan to connect to ' + a.url;
     }
   };
   select.onchange = showAddress;
@@ -187,10 +199,18 @@ $('settings').onsubmit = async (e) => {
 $('pair').onclick = async () => {
   $('pair').disabled = true;
   $('pair-staff').disabled = true;
-  $('code').textContent = '';
-  $('code-help').textContent = '';
+  clearPairing();
   try {
     const result = await call('pair-codes', { staffId: $('pair-staff').value });
+    pairingQr = result.pairingQr || [];
+    $('addresses').querySelector('select')?.dispatchEvent(new Event('change'));
+    pairingExpiry = setTimeout(
+      () => {
+        clearPairing();
+        $('code-help').textContent = 'Code expired. Generate a new code to authorize a phone.';
+      },
+      Math.max(0, new Date(result.expires).getTime() - Date.now())
+    );
     $('code').textContent = result.code;
     $('code-help').textContent =
       'Signs in as ' +
