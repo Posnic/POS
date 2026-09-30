@@ -76,6 +76,12 @@ const DEFAULTS = Object.freeze({
   /* The visual angle to aim for. A shop with older staff, or more steam, or a
      darker kitchen, raises this and accepts fewer tickets on screen. */
   targetArcmin: 20,
+  portraitColumns: 0,
+  fontSizePx: 0,
+  textGlow: false,
+  orderSort: 'oldest',
+  cancelledDisplaySeconds: 30,
+  cancelledPulse: true,
   /* Televisions crop the edges. This is the margin that keeps a card's border
      on the panel. */
   safeAreaPercent: 3,
@@ -87,8 +93,8 @@ const DEFAULTS = Object.freeze({
   showAge: true,
   showOrderNumber: false,
   showSource: false,
-  /* How many dishes before the card says "+3 more". */
-  maxItemsPerCard: 3,
+  /* Preferred visible dish rows; overflow scrolls inside the same table box. */
+  visibleDishesPerBox: 0,
   /* Minutes. A ticket past `amberAfterMin` is warming up, past `redAfterMin`
      it is late and moves to the front. */
   amberAfterMin: 5,

@@ -6,7 +6,9 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { printPdfFile } = require('./print-pdf');
 const { hardenPrintWindow } = require('./print-window-guard');
-const { fitDocument } = require('./receipt-page-layout');
+const { fitDocument, prepareDocument } = require('./receipt-page-layout');
+const spooler = require('./windows-spooler');
+const printTempFiles = require('./print-temp-files');
 
 /* How long the printer list may be remembered. Long enough that a receipt
    never pays the spooler for it, short enough that a printer plugged in
@@ -443,25 +445,33 @@ class HardwareManager {
 
   async _waitForPrintPage(webContents) {
     await webContents.executeJavaScript(`
-      new Promise((resolve) => {
-        if (document.readyState === 'complete') {
-          requestAnimationFrame(() => requestAnimationFrame(resolve));
-        } else {
-          window.addEventListener('load', () => {
-            requestAnimationFrame(() => requestAnimationFrame(resolve));
-          }, { once: true });
-        }
+      new Promise((resolve, reject) => {
+        if (document.readyState === 'complete') return resolve();
+        const timeout = setTimeout(() => reject(new Error('Receipt loading timed out.')), 10000);
+        window.addEventListener('load', () => {
+          clearTimeout(timeout);
+          resolve();
+        }, { once: true });
       })
     `);
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Hidden windows can suspend animation frames indefinitely. Asset decoding
+    // and layout measurement below provide readiness without waiting for one.
   }
 
-  _sendPrintJob(printWindow, printOpts) {
-    return new Promise((resolve) => {
+  async _sendPrintJob(printWindow, printOpts) {
+    const submit = () => new Promise((resolve) => {
+      const timer = setTimeout(() => resolve({ success: false, error: 'Print callback timed out' }), 5000);
       printWindow.webContents.print(printOpts, (success, errorType) => {
+        clearTimeout(timer);
         resolve({ success, error: errorType || '' });
       });
     });
+    if (process.platform !== 'win32') return submit();
+    const printerName = printOpts.deviceName || (await this.getDefaultPrinter())?.name;
+    printOpts = { ...printOpts, deviceName: printerName };
+    const documentName = 'Posnic-' + require('crypto').randomUUID();
+    await printWindow.webContents.executeJavaScript(`document.title = ${JSON.stringify(documentName)}`);
+    return spooler.submit({ printerName, documentName, submit });
   }
 
   async _printViaPdfFallback(printWindow, deviceName, options = {}) {
@@ -477,38 +487,18 @@ class HardwareManager {
       });
       fs.writeFileSync(tmpPdf, pdfBuffer);
 
-      await this._printPdfFile(tmpPdf, {
+      const result = await this._printPdfFile(tmpPdf, {
         printer: deviceName,
         copies: parseInt(options.copies, 10) || 1,
       });
-      console.log('Print job sent successfully via PDF fallback');
-      return { success: true };
+      if (!result || result.success) console.log('PDF print submission confirmed');
+      return result || { success: true };
     } catch (error) {
       console.error('PDF print fallback failed:', error.message);
       return { success: false, error: error.message || 'PDF print fallback failed' };
     } finally {
-      try {
-        if (fs.existsSync(tmpPdf)) fs.unlinkSync(tmpPdf);
-      } catch (_) {}
+      printTempFiles.retain(tmpPdf);
     }
-  }
-
-  async _printWithSystemDefaultFallback(printWindow, options = {}) {
-    console.warn('Retrying print with Windows default printer');
-
-    let result = await this._sendPrintJob(printWindow, {
-      silent: options.silent !== false,
-      printBackground: true,
-      margins: { marginType: 'none' },
-      copies: Math.max(1, parseInt(options.copies, 10) || 1)
-    });
-
-    if (!result.success) {
-      console.warn('Windows default Electron print failed, retrying default PDF fallback:', result.error || 'unknown');
-      result = await this._printViaPdfFallback(printWindow, '', options);
-    }
-
-    return result;
   }
 
   /*
@@ -558,6 +548,7 @@ class HardwareManager {
   }
 
   async printHTML(htmlContent, options = {}) {
+    let printWindow;
     try {
       // Paper size dimensions in microns (1mm = 1000 microns)
       // Window width in pixels at 96dpi: px = mm / 25.4 * 96
@@ -590,7 +581,7 @@ class HardwareManager {
        */
       const route = this._resolvePrintRoute(htmlContent);
 
-      const printWindow = new BrowserWindow({
+      printWindow = new BrowserWindow({
         show: false,
         width: pageSize.windowWidth,
         height: 600,
@@ -607,8 +598,16 @@ class HardwareManager {
 
       const deviceName = await this._resolvePrinterName(options.printerName);
 
+      const expectedReceipt = /data-receipt-design\s*=/.test(htmlContent);
+      const prepare = async () => {
+        await this._waitForPrintPage(printWindow.webContents);
+        await printWindow.webContents.executeJavaScript(
+          `(${prepareDocument.toString()})(document, ${expectedReceipt})`
+        );
+      };
       try {
         await printWindow.loadURL(route.url);
+        await prepare();
       } catch (loadError) {
         /* The local route was reachable a moment ago and is not now. Rather
            than fail the job, fall back to the document itself - the window was
@@ -619,12 +618,11 @@ class HardwareManager {
           await printWindow.loadURL(
             `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`
           );
+          await prepare();
         } else {
           throw loadError;
         }
       }
-      await this._waitForPrintPage(printWindow.webContents);
-
       // Designed thermal receipts end at their content instead of feeding a
       // metre of paper (the fallback page size used by older HTML templates).
       if (options.fitReceipt === true && (sizeKey === '58mm' || sizeKey === '80mm')) {
@@ -649,7 +647,7 @@ class HardwareManager {
 
       let result = await this._sendPrintJob(printWindow, printOpts);
 
-      if (!result.success) {
+      if (!result.success && result.retryable !== false) {
         console.warn('Print failed with receipt page size, retrying with printer defaults:', result.error || 'unknown');
         const fallbackOpts = {
           silent: printOpts.silent,
@@ -661,19 +659,11 @@ class HardwareManager {
         result = await this._sendPrintJob(printWindow, fallbackOpts);
       }
 
-      if (!result.success) {
+      if (!result.success && result.retryable !== false) {
         console.warn('Electron print failed, retrying through PDF fallback:', result.error || 'unknown');
         result = await this._printViaPdfFallback(printWindow, deviceName, options);
       }
 
-      if (!result.success && deviceName && options.strictPrinter !== true) {
-        console.warn(`Named printer "${deviceName}" failed, falling back to Windows default printer`);
-        result = await this._printWithSystemDefaultFallback(printWindow, options);
-      }
-
-      setTimeout(() => {
-        if (!printWindow.isDestroyed()) printWindow.close();
-      }, 100);
 
       if (result.success) {
         console.log('Print job sent successfully');
@@ -685,6 +675,8 @@ class HardwareManager {
     } catch (error) {
       console.error('Failed to print:', error);
       return { success: false, error: error.message };
+    } finally {
+      if (printWindow && !printWindow.isDestroyed()) printWindow.destroy();
     }
   }
 

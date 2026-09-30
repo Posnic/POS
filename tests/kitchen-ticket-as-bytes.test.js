@@ -35,6 +35,10 @@ const ROOT = path.join(__dirname, '..');
    was not taken and the test says so instead of quietly passing. */
 const load = Module._load;
 Module._load = function (request, ...rest) {
+  if (request === './windows-spooler') {
+    const actual = load.call(this, path.join(ROOT, 'src/windows-spooler.js'));
+    return { ...actual, ...actual.createSpooler({ platform: 'test' }) };
+  }
   if (request === 'electron') {
     return {
       BrowserWindow: class { constructor() { throw new Error('the window path was used'); } },
@@ -235,7 +239,7 @@ test('counter HTML fallback cannot silently switch to the system default printer
   const win = { webContents: { printToPDF: async () => { throw new Error('no PDF'); } } };
   const result = await kot._printToDeviceWithFallback(win, 'Kitchen', '80', true);
   assert.equal(result.success, false);
-  assert.equal(devices.length, 2);
+  assert.equal(devices.length, process.platform === 'win32' ? 1 : 2);
   assert.ok(devices.every(d => d === 'Kitchen'));
 });
 

@@ -183,12 +183,12 @@ test('an explicitly chosen sales printer never falls back to the system default'
   const start = source.indexOf('  async printHTML('), end = source.indexOf('\n  async getDefaultPrinter', start);
   const names = [];
   class Window {
-    constructor() { this.webContents = {}; }
+    constructor() { this.webContents = { executeJavaScript: async () => {} }; }
     async loadURL() {}
     isDestroyed() { return true; }
   }
   const method = vm.runInNewContext('({' + source.slice(start, end) + '}).printHTML', {
-    BrowserWindow: Window, hardenPrintWindow() {}, setTimeout() {}, console: { log() {}, warn() {}, error() {} },
+    BrowserWindow: Window, prepareDocument: require('../src/receipt-page-layout').prepareDocument, hardenPrintWindow() {}, setTimeout() {}, console: { log() {}, warn() {}, error() {} },
   });
   const context = {
     _resolvePrintRoute: () => ({ url: 'data:text/html,test', secure: false }),

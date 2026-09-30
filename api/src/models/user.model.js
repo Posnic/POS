@@ -727,7 +727,7 @@ userSchema.statics.userPage = async function (filters = {}, options = {}, contex
       .sort(sort)
       .skip(skip)
       .limit(limit)
-      .select('-password -sso_token -sso_key -sso_secret') // Exclude sensitive fields by default
+      .select('-password -apikey -sso_token -sso_key -sso_secret') // Exclude sensitive fields by default
       .lean();
 
     const rawList = await query.exec();
@@ -1057,7 +1057,12 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       }).lean();
     } else {
       recordsFiltered = await this.findOne({
-        $or: [{ username: data.app_name }, { apikey: data.app_key }],
+        $or: [
+          { username: data.app_name },
+          ...(typeof data.app_key === 'string' && data.app_key.trim()
+            ? [{ apikey: data.app_key.trim() }]
+            : []),
+        ],
         license: context.license,
       }).lean();
     }
@@ -1272,7 +1277,7 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       appKey = '';
     } else {
       userName = data.app_name;
-      appKey = data.app_key;
+      appKey = typeof data.app_key === 'string' ? data.app_key : '';
       userPass = '';
       userEmail = '';
     }
@@ -1329,6 +1334,9 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       updated_by_id: context.user._id,
       license: context.license,
     };
+
+    // Existing API credentials are write-only: a blank edit keeps the key.
+    if (id && data.usertype === 'api' && !appKey.trim()) delete updateData.apikey;
 
     // PHP line 312: Merge insertData and updateData
     const userCollectionData = { ...insertData, ...updateData };

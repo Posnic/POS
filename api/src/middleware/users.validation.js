@@ -68,7 +68,10 @@ const validateUser = [
     .withMessage('The App Name field needs to be between 3 and 20 characters in length'),
 
   body('app_key')
-    .if(body('usertype').equals('api'))
+    .if(
+      (value, { req }) =>
+        req.body.usertype === 'api' && !(req.params.id && !String(value || '').trim())
+    )
     .trim()
     .notEmpty()
     .withMessage('The App Key field is required')

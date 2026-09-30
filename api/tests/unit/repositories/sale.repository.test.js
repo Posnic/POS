@@ -910,6 +910,51 @@ describe('SalesRepository', () => {
   });
 
   describe('createOnlineOrder', () => {
+    test.each([
+      ['zero-price fish', { selling_price: 0 }, 500],
+      ['open-price fish', { selling_price: 100, open_price: true }, 500],
+      ['quick-sale cake', { selling_price: 200, item_status: 'instant' }, 200],
+    ])(
+      'Captain %s keeps the amount through the automatic kitchen ticket',
+      async (_label, product, entered) => {
+        collections.branches = mkCol();
+        collections.branches.findOne.mockResolvedValue({
+          _id: FAKE_BRANCH,
+          name: 'Main',
+          online_ordering: { store_id: 'SHOP1', mode: 'order' },
+        });
+        collections.sales = mkCol();
+        collections.sales.insertOne.mockResolvedValue({ insertedId: FAKE_ID });
+        collections.items = mkCol();
+        collections.items.findOne.mockResolvedValue({
+          _id: FAKE_ITEM,
+          name: 'Custom dish',
+          tax: 0,
+          tax_type: 'exclusive',
+          branch_id: FAKE_BRANCH,
+          ...product,
+        });
+        const result = await salesRepository.createOnlineOrder(
+          {
+            branch: FAKE_BRANCH,
+            items: [{ item_id: FAKE_ITEM, item_quantity: 2, item_price: entered }],
+          },
+          { staffOrder: true }
+        );
+        expect(result.status).toBe(true);
+        const saved = collections.sales.insertOne.mock.calls[0][0];
+        expect(saved.items[0].priced_at_table).toBe(entered);
+        expect(saved.changes[0].items[0].priced_at_table).toBe(entered);
+        const printed = require('../../../../src/escpos-kot').renderKitchenTicket({
+          title: 'New Order',
+          items: saved.changes[0].items,
+        });
+        expect(Buffer.from(printed).toString('latin1')).toContain('Rs ' + entered);
+        const screen = require('../../../src/helpers/kitchen-rounds').tickets(saved);
+        expect(screen[0].items[0].priced_at_table).toBe(entered);
+      }
+    );
+
     test('returns error when no branch', async () => {
       const r = await salesRepository.createOnlineOrder({});
       expect(r.status).toBe(false);

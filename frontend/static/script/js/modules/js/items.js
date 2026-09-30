@@ -482,6 +482,7 @@ PosnicPro.items = {
         if (!$('#items_filter_panel').length) { return; }
         PosnicPro.listFilter.mount({
             key: 'items',
+            rows: '#items_list_rows',
             onRefresh: function () { return PosnicPro.items.loadList(); },
             container: '#items_filter_panel',
             button: '#items_filter_btn',
@@ -528,7 +529,7 @@ PosnicPro.items = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('items', { dateKey: 'updated_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('items', {
             url: 'items',
             data: (function () {
                 var d = { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) };

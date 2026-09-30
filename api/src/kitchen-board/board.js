@@ -127,9 +127,9 @@
         const card = node(
           'article',
           'ticket' +
-            (age >= settings.redMinutes * 60000
+            (stage !== 'ready' && age >= settings.redMinutes * 60000
               ? ' overdue' + (settings.pulse ? ' pulse' : '')
-              : age >= settings.orangeMinutes * 60000
+              : stage !== 'ready' && age >= settings.orangeMinutes * 60000
                 ? ' aging'
                 : '')
         );
@@ -150,10 +150,36 @@
         }
         top.append(table, node('span', 'arrival', time(ticket.placedAt)));
         card.append(top);
+        if (ticket.outlet || ticket.roomReference)
+          card.append(
+            node(
+              'div',
+              'note',
+              [
+                ticket.outlet,
+                ticket.roomReference ? 'Room / reference: ' + ticket.roomReference : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')
+            )
+          );
         const items = node('ul', 'items');
         for (const item of ticket.items) {
           const li = node('li');
           li.append(node('span', 'quantity', item.qty + '×'), node('span', 'name', item.name));
+          if (Number.isFinite(Number(item.priced_at_table)) && Number(item.priced_at_table) > 0) {
+            li.append(
+              node(
+                'strong',
+                'note',
+                'Amount: ' +
+                  Number(item.priced_at_table).toLocaleString(undefined, {
+                    maximumFractionDigits: 3,
+                  }) +
+                  ' each'
+              )
+            );
+          }
           if (item.note) li.append(node('span', 'note', item.note));
           if (item.seat || item.course)
             li.append(
@@ -172,13 +198,23 @@
             ready = item.ready ?? (stage === 'ready' ? total : 0);
           const collected = item.collected || 0,
             served = item.served || 0;
-          li.append(
-            node(
-              'span',
-              'item-progress',
-              `${Math.max(0, ready - collected)} ready to collect · ${Math.max(0, collected - served)} collected`
-            )
-          );
+          const cooking = Math.max(0, total - ready),
+            waiting = Math.max(0, ready - collected),
+            picked = Math.max(0, collected - served);
+          const progress = node('div', 'item-progress');
+          if (cooking)
+            progress.append(
+              node(
+                'span',
+                'progress-cooking',
+                `${cooking} ${stage === 'new' ? 'To prepare' : 'Cooking'}`
+              )
+            );
+          if (waiting)
+            progress.append(node('span', 'progress-ready', `✓ ${waiting} Ready to collect`));
+          if (picked) progress.append(node('span', 'progress-picked', `↗ ${picked} Picked up`));
+          li.append(progress);
+          if (!cooking) li.classList.add(waiting ? 'line-ready' : 'line-picked');
           if (item.collectorName && collected > served)
             li.append(node('span', 'note', 'Collected by ' + item.collectorName));
           if (stage === 'preparing' && ready < total) {

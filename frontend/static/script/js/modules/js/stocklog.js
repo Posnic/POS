@@ -170,6 +170,7 @@ PosnicPro.stocklogs = {
         $('#stocklogs_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'stocklogs',
+            rows: '#stocklogs_list_rows',
             onRefresh: function () { return PosnicPro.stocklogs.loadList(); },
             container: '#stocklogs_filter_panel',
             button: '#stocklogs_filter_btn',
@@ -207,7 +208,7 @@ PosnicPro.stocklogs = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('stocklogs', { dateKey: 'date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('stocklogs', {
             url: 'stocklogs',
             data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
         }, function (response) {

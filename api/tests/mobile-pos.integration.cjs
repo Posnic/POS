@@ -99,10 +99,8 @@ before(
       r.db = db;
       n();
     });
-    app.post(
-      '/api/users/kioskMobileLogin',
-      rateLimit({ windowMs: 60000, limit: 30 }),
-      (r, s) => require('../src/controllers/users.controller').kioskMobileLogin(r, s)
+    app.post('/api/users/kioskMobileLogin', rateLimit({ windowMs: 60000, limit: 30 }), (r, s) =>
+      require('../src/controllers/users.controller').kioskMobileLogin(r, s)
     );
     app.use('/api/branch-payments', require('../src/routes/branch-payments.routes'));
     app.use('/api/mobile/v1', require('../src/routes/mobile-pos.routes'));
@@ -193,6 +191,39 @@ test('real password login registers phone and downloads live branch catalogue', 
   assert.equal(snapshot.items[0].code, '12');
   assert.equal(snapshot.items[0].price, 1000);
   assert.equal(snapshot.shop.capabilities.saleSync, true);
+  assert.deepEqual(snapshot.shop.historyPolicy, { days: 90, maxReceipts: 10000 });
+});
+
+test('mobile retention settings are validated and delivered in authenticated bootstrap', async () => {
+  const original = await call('/mobile/v1/settings');
+  const settings = {
+    offlineHours: original.data.offlineHours,
+    quickSale: original.data.quickSale,
+    quickTaxBps: original.data.quickTaxBps,
+    quickTaxInclusive: original.data.quickTaxInclusive,
+    tillId: original.data.tillId,
+  };
+  assert.equal(
+    (await call('/mobile/v1/settings', { ...settings, historyDays: 0, historyMaxReceipts: 10000 }))
+      .status,
+    422
+  );
+  assert.equal(
+    (await call('/mobile/v1/settings', { ...settings, historyDays: 30, historyMaxReceipts: 99 }))
+      .status,
+    422
+  );
+  assert.equal(
+    (await call('/mobile/v1/settings', { ...settings, historyDays: 30, historyMaxReceipts: 5000 }))
+      .status,
+    200
+  );
+  const updated = await call('/mobile/v1/bootstrap');
+  assert.deepEqual(updated.data.shop.historyPolicy, { days: 30, maxReceipts: 5000 });
+  // Legacy clients omit the fields; saving their other settings must preserve policy.
+  assert.equal((await call('/mobile/v1/settings', settings)).status, 200);
+  assert.equal((await call('/mobile/v1/settings')).data.historyDays, 30);
+  await call('/mobile/v1/settings', { ...settings, historyDays: 90, historyMaxReceipts: 10000 });
 });
 test('paid cash sale lands in normal desktop sales and concurrent retry deducts stock once', async () => {
   const s = sale();
@@ -227,6 +258,16 @@ test('paid cash sale lands in normal desktop sales and concurrent retry deducts 
     document: 'receipt',
   });
   assert.equal(duplicate.data.id, printed.data.id);
+  assert.equal(await db.collection('printjobs').countDocuments(), 1);
+  assert.equal((await call('/mobile/v1/print-jobs/' + s.id)).data.state, 'queued');
+  for (const status of ['printing', 'needs_attention', 'done', 'failed']) {
+    await db
+      .collection('printjobs')
+      .updateOne({ _id: new ObjectId(printed.data.id) }, { $set: { status } });
+    const observed = await call('/mobile/v1/print-jobs/' + s.id);
+    assert.equal(observed.status, 200);
+    assert.deepEqual(observed.data, { saleId: s.id, state: status });
+  }
   assert.equal(await db.collection('printjobs').countDocuments(), 1);
 });
 test('server interruption after stock effects resumes without another sale or decrement', async () => {
@@ -324,6 +365,21 @@ test('cashier permissions and device revocation are enforced by the server', asy
   assert.equal(result.status, 200, JSON.stringify(result.data));
   assert.equal(result.data.shop.permissions.quickSale, false);
   assert.equal(result.data.shop.permissions.customerWrite, false);
+  assert.equal(result.data.shop.permissions.receiptPrint, false);
+  assert.equal(result.data.shop.permissions.voidLine, false);
+  assert.equal(
+    (
+      await call(
+        '/mobile/v1/print-jobs',
+        {
+          id: 'denied-print-test',
+          document: 'test',
+        },
+        login.data.token
+      )
+    ).status,
+    403
+  );
   assert.equal(
     (await call('/mobile/v1/settings', { enabled: true }, login.data.token)).status,
     403
@@ -335,14 +391,22 @@ test('cashier permissions and device revocation are enforced by the server', asy
   assert.equal((await call('/mobile/v1/bootstrap', undefined, login.data.token)).status, 403);
 });
 test('cloud authorization is bound to the approved phone and proof and is consumed once', async () => {
-  const code = 'AABB1122CCDD', verifier = 'v'.repeat(43);
+  const code = 'AABB1122CCDD',
+    verifier = 'v'.repeat(43);
   await db.collection('mobile_pair_codes').insertOne({
-    _id: mobile.hash(code), userId: user._id, branchId: branch._id, license: branch.license,
-    expires: new Date(Date.now() + 60000), deviceId: 'cloud-phone-123',
+    _id: mobile.hash(code),
+    userId: user._id,
+    branchId: branch._id,
+    license: branch.license,
+    expires: new Date(Date.now() + 60000),
+    deviceId: 'cloud-phone-123',
     codeChallenge: crypto.createHash('sha256').update(verifier).digest('base64url'),
   });
   const payload = { code, codeVerifier: verifier, device: { device_id: 'cloud-phone-123' } };
-  assert.equal((await call('/mobile/v1/pair', { ...payload, codeVerifier: 'x'.repeat(43) }, null)).status, 401);
+  assert.equal(
+    (await call('/mobile/v1/pair', { ...payload, codeVerifier: 'x'.repeat(43) }, null)).status,
+    401
+  );
   assert.equal((await call('/mobile/v1/pair', { ...payload, device }, null)).status, 401);
   const pair = await call('/mobile/v1/pair', payload, null);
   assert.equal(pair.status, 200, JSON.stringify(pair.data));
@@ -399,6 +463,9 @@ test(
       await page.getByRole('status').filter({ hasText: 'Saved.' }).waitFor();
       await page.getByRole('button', { name: 'Generate pairing code' }).click();
       await page.waitForFunction(() => document.getElementById('code').textContent.length > 8);
+      await page
+        .getByRole('img', { name: 'Scan to authorize the selected staff account' })
+        .waitFor();
       await page.screenshot({
         path: path.resolve(__dirname, '../../tmp/mobile-pos-desktop-setup.png'),
         fullPage: true,
@@ -449,7 +516,10 @@ test(
           console.log('API RESPONSE', r.status(), r.url(), r.status() >= 400 ? await r.text() : '');
       });
       await page.goto(base.replace(/\/api$/, '/'));
-      await page.getByRole('button', { name: 'Connect a local or Community shop', exact: true }).click();
+      await page
+        .getByRole('button', { name: 'Connect a local or Community shop', exact: true })
+        .click();
+      await page.getByTestId('manual-server').click();
       await page.getByTestId('server-input').fill(base);
       await page.getByRole('textbox', { name: 'Username', exact: true }).fill(user.username);
       await page.getByRole('textbox', { name: 'Password', exact: true }).fill('test-password');
@@ -471,6 +541,7 @@ test(
       const before = await db.collection('sales').countDocuments();
       await context.setOffline(true);
       await page.getByTestId('view-cart').click();
+      await page.getByTestId('take-payment').click();
       await page.getByRole('button', { name: /^Cash ·/ }).click();
       await page.getByTestId('cash-received').fill('20');
       await page.getByTestId('finish-cash').click();
@@ -527,60 +598,235 @@ test('branch payments migrate legacy data and mobile settings cannot overwrite f
   assert.equal((await call('/mobile/v1/bootstrap')).data.shop.defaultUpiAccountId, 'shared');
 });
 
-for (const useLocal of [false, true]) test('account-first mobile UI reaches PIN using ' + (useLocal ? 'the authenticated LAN till' : 'the cloud shop'),
-  { skip: !process.env.MOBILE_PREVIEW_DIR || !process.env.MOBILE_PLAYWRIGHT_PATH }, async () => {
-    const { chromium, expect } = require(process.env.MOBILE_PLAYWRIGHT_PATH.replace(/playwright$/, '@playwright/test'));
-    const browser = await chromium.launch({ headless: true });
-    try {
-      const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-      let request, pairedAt;
-      const code = useLocal ? '112233445566' : 'ABCDEF123456';
-      const enrolmentId = crypto.randomUUID();
-      await context.route('https://www.posnic.com/api/mobile/**', async route => {
-        const path = new URL(route.request().url()).pathname;
-        if (path.endsWith('/authorize')) return route.fulfill({ contentType: 'text/html', body: '<p>Approved test device</p>' });
-        const body = route.request().postDataJSON();
-        if (path.endsWith('/requests')) {
-          request = body;
-          return route.fulfill({ json: { request: 'r'.repeat(43), expiresIn: 900,
-            authorizationUrl: 'https://www.posnic.com/api/mobile/authorize?request=' + 'r'.repeat(43) } });
-        }
-        assert.equal(crypto.createHash('sha256').update(body.codeVerifier).digest('base64url'), request.codeChallenge);
-        await db.collection('mobile_pair_codes').insertOne({ _id: mobile.hash(code), enrolmentId, userId: user._id,
-          branchId: branch._id, license: branch.license, expires: new Date(Date.now() + 60000),
-          deviceId: request.deviceId, codeChallenge: request.codeChallenge });
-        return route.fulfill({ json: { baseUrl: 'https://mobile-test.example/api', code, localServers: useLocal ? [{ name: 'Nearby till', addresses: ['http://192.168.50.4:42590/api'], code, enrolmentId }] : [] } });
-      });
-      await context.route(/^(https:\/\/mobile-test\.example|http:\/\/192\.168\.50\.4:42590)\/api\//, async route => {
-        const r = route.request();
-        if (r.url().endsWith('/pair')) pairedAt = new URL(r.url()).hostname;
-        const response = await fetch(base + new URL(r.url()).pathname.replace(/^\/api/, ''), {
-          method: r.method(), headers: { 'content-type': 'application/json', ...(r.headers().authorization ? { authorization: r.headers().authorization } : {}) },
-          body: r.postData() || undefined,
+for (const useLocal of [false, true])
+  test(
+    'account-first mobile UI reaches PIN using ' +
+      (useLocal ? 'the authenticated LAN till' : 'the cloud shop'),
+    { skip: !process.env.MOBILE_PREVIEW_DIR || !process.env.MOBILE_PLAYWRIGHT_PATH },
+    async () => {
+      const { chromium, expect } = require(
+        process.env.MOBILE_PLAYWRIGHT_PATH.replace(/playwright$/, '@playwright/test')
+      );
+      const browser = await chromium.launch({ headless: true });
+      try {
+        const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+        let request, pairedAt;
+        const code = useLocal ? '112233445566' : 'ABCDEF123456';
+        const enrolmentId = crypto.randomUUID();
+        await context.route('https://www.posnic.com/api/mobile/**', async (route) => {
+          const path = new URL(route.request().url()).pathname;
+          if (path.endsWith('/authorize'))
+            return route.fulfill({ contentType: 'text/html', body: '<p>Approved test device</p>' });
+          const body = route.request().postDataJSON();
+          if (path.endsWith('/requests')) {
+            request = body;
+            return route.fulfill({
+              json: {
+                request: 'r'.repeat(43),
+                expiresIn: 900,
+                authorizationUrl:
+                  'https://www.posnic.com/api/mobile/authorize?request=' + 'r'.repeat(43),
+              },
+            });
+          }
+          assert.equal(
+            crypto.createHash('sha256').update(body.codeVerifier).digest('base64url'),
+            request.codeChallenge
+          );
+          await db.collection('mobile_pair_codes').insertOne({
+            _id: mobile.hash(code),
+            enrolmentId,
+            userId: user._id,
+            branchId: branch._id,
+            license: branch.license,
+            expires: new Date(Date.now() + 60000),
+            deviceId: request.deviceId,
+            codeChallenge: request.codeChallenge,
+          });
+          return route.fulfill({
+            json: {
+              baseUrl: 'https://mobile-test.example/api',
+              code,
+              localServers: useLocal
+                ? [
+                    {
+                      name: 'Nearby till',
+                      addresses: ['http://192.168.50.4:42590/api'],
+                      code,
+                      enrolmentId,
+                    },
+                  ]
+                : [],
+            },
+          });
         });
-        await route.fulfill({ status: response.status, contentType: 'application/json', body: await response.text() });
-      });
-      const page = await context.newPage();
-      await page.goto(base.replace(/\/api$/, '/'));
-      await expect(page.getByTestId('server-input')).toHaveCount(0);
-      await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-      await expect(page.getByRole('textbox', { name: 'PIN', exact: true })).toBeVisible({ timeout: 15000 });
-      assert.equal(request.intent, 'login');
-      assert.equal(pairedAt, useLocal ? '192.168.50.4' : 'mobile-test.example');
-    } finally { await browser.close(); }
-  });
+        await context.route(
+          /^(https:\/\/mobile-test\.example|http:\/\/192\.168\.50\.4:42590)\/api\//,
+          async (route) => {
+            const r = route.request();
+            if (r.url().endsWith('/pair')) pairedAt = new URL(r.url()).hostname;
+            const response = await fetch(base + new URL(r.url()).pathname.replace(/^\/api/, ''), {
+              method: r.method(),
+              headers: {
+                'content-type': 'application/json',
+                ...(r.headers().authorization ? { authorization: r.headers().authorization } : {}),
+              },
+              body: r.postData() || undefined,
+            });
+            await route.fulfill({
+              status: response.status,
+              contentType: 'application/json',
+              body: await response.text(),
+            });
+          }
+        );
+        const page = await context.newPage();
+        await page.goto(base.replace(/\/api$/, '/'));
+        await expect(page.getByTestId('server-input')).toHaveCount(0);
+        await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+        await expect(page.getByRole('textbox', { name: 'PIN', exact: true })).toBeVisible({
+          timeout: 15000,
+        });
+        assert.equal(request.intent, 'login');
+        assert.equal(pairedAt, useLocal ? '192.168.50.4' : 'mobile-test.example');
+      } finally {
+        await browser.close();
+      }
+    }
+  );
 
-test('Features API persists Mobile POS independently and branch read returns the saved switch', { skip: process.env.MOBILE_FULL_APP !== '1' }, async () => {
-  const result = await call('/setting/updateCommonSettings', { module_mobile_pos_enable: 'false', module_captain_enable: 'true', sales_prefix: 'M', receiving_prefix: 'R' }, token, 'PUT');
-  assert.equal(result.status, 200, JSON.stringify(result.data));
-  const read = await call('/branches/getOneStore?id=' + branch._id);
-  assert.equal(read.status, 200, JSON.stringify(read.data));
-  assert.equal(read.data.data.module_mobile_pos_enable, false);
-  assert.equal(read.data.data.module_captain_enable, true);
-  assert.equal((await call('/mobile/v1/bootstrap')).status, 403);
-  const payments = await call('/branch-payments');
-  assert.equal(payments.data.defaultUpiAccountId, 'shared');
-  const enabled = await call('/setting/updateCommonSettings', { modules_only: true, module_mobile_pos_enable: true }, token, 'PUT');
-  assert.equal(enabled.status, 200, JSON.stringify(enabled.data));
-  assert.equal((await call('/mobile/v1/bootstrap')).status, 200);
+test(
+  'Features API persists Mobile POS independently and branch read returns the saved switch',
+  { skip: process.env.MOBILE_FULL_APP !== '1' },
+  async () => {
+    const result = await call(
+      '/setting/updateCommonSettings',
+      {
+        module_mobile_pos_enable: 'false',
+        module_captain_enable: 'true',
+        sales_prefix: 'M',
+        receiving_prefix: 'R',
+      },
+      token,
+      'PUT'
+    );
+    assert.equal(result.status, 200, JSON.stringify(result.data));
+    const read = await call('/branches/getOneStore?id=' + branch._id);
+    assert.equal(read.status, 200, JSON.stringify(read.data));
+    assert.equal(read.data.data.module_mobile_pos_enable, false);
+    assert.equal(read.data.data.module_captain_enable, true);
+    assert.equal((await call('/mobile/v1/bootstrap')).status, 403);
+    const payments = await call('/branch-payments');
+    assert.equal(payments.data.defaultUpiAccountId, 'shared');
+    const enabled = await call(
+      '/setting/updateCommonSettings',
+      { modules_only: true, module_mobile_pos_enable: true },
+      token,
+      'PUT'
+    );
+    assert.equal(enabled.status, 200, JSON.stringify(enabled.data));
+    assert.equal((await call('/mobile/v1/bootstrap')).status, 200);
+  }
+);
+
+test('manager denials and current user overrides protect mobile bootstrap and ingestion', async () => {
+  const restricted = {
+    ...user,
+    usertype: 'manager',
+    access: {
+      sales: { write: true },
+      customer: { write: false },
+      pos: { quick_sale: false, void_line: false, reprint_receipt: false },
+    },
+  };
+  const staffReq = { ...req, user: restricted };
+  const result = await mobile.bootstrap(staffReq);
+  assert.equal(result.shop.permissions.quickSale, false);
+  assert.equal(result.shop.permissions.customerWrite, false);
+  assert.equal(result.shop.permissions.voidLine, false);
+  assert.equal(result.shop.permissions.receiptPrint, false);
+  // A previously issued owner snapshot must not bypass current user denials.
+  const quick = sale();
+  delete quick.cart.lines[0].itemId;
+  const customers = sale();
+  customers.cart.customer = { id: 'test-customer', name: 'Test', phone: '' };
+  const count = await db.collection('mobile_sales').countDocuments();
+  await assert.rejects(
+    () => mobile.ingest({ ...staffReq, body: { idempotencyKey: quick.id, sale: quick } }),
+    /Quick sales are not permitted/
+  );
+  await assert.rejects(
+    () => mobile.ingest({ ...staffReq, body: { idempotencyKey: customers.id, sale: customers } }),
+    /Customer creation is not permitted/
+  );
+  assert.equal(await db.collection('mobile_sales').countDocuments(), count);
+  await assert.rejects(
+    () =>
+      mobile.bootstrap({
+        ...staffReq,
+        user: { ...restricted, access: { sales: { write: false } } },
+      }),
+    /cannot sell/
+  );
+});
+
+test('a shared device cannot print another staff member receipt', async () => {
+  const saleId = crypto.randomUUID();
+  await db.collection('mobile_sales').insertOne({
+    _id: mobile.hash(
+      [String(branch.license), String(branch._id), device.device_id, saleId].join(':')
+    ),
+    state: 'complete',
+    userId: new ObjectId(),
+    serverId: new ObjectId(),
+  });
+  const result = await call('/mobile/v1/print-jobs', {
+    id: 'receipt:' + saleId,
+    saleId,
+    document: 'receipt',
+  });
+  assert.equal(result.status, 409);
+  assert.equal((await call('/mobile/v1/print-jobs/' + saleId)).status, 404);
+});
+
+test('owner pairs the selected staff identity without transferring owner privileges', async () => {
+  const cashier = {
+    ...user,
+    _id: new ObjectId(),
+    usertype: 'custom',
+    username: 'pilot-cashier',
+    email: 'pilot@example.test',
+    access: { sales: { write: true }, pos: { quick_sale: false, reprint_receipt: false } },
+  };
+  await db.collection('users').insertOne(cashier);
+  const settings = await call('/mobile/v1/settings');
+  assert.ok(settings.data.pairingStaff.some((s) => s.id === String(cashier._id)));
+  const issued = await call('/mobile/v1/pair-codes', { staffId: String(cashier._id) });
+  assert.equal(issued.status, 200, JSON.stringify(issued.data));
+  assert.equal(issued.data.staffId, String(cashier._id));
+  const paired = await call(
+    '/mobile/v1/pair',
+    { code: issued.data.code, device: { device_id: 'staff-pair-pilot' } },
+    null
+  );
+  assert.equal(paired.status, 200);
+  const bootstrap = await call('/mobile/v1/bootstrap', undefined, paired.data.token);
+  assert.equal(bootstrap.data.shop.staffId, String(cashier._id));
+  assert.equal(bootstrap.data.shop.permissions.quickSale, false);
+  assert.equal(bootstrap.data.shop.permissions.receiptPrint, false);
+  assert.equal(
+    (await call('/mobile/v1/pair-codes', { staffId: String(user._id) }, paired.data.token)).status,
+    403
+  );
+  const foreign = {
+    ...cashier,
+    _id: new ObjectId(),
+    license: new ObjectId(),
+    username: 'foreign-pilot',
+    email: 'foreign-pilot@example.test',
+  };
+  await db.collection('users').insertOne(foreign);
+  assert.equal((await call('/mobile/v1/pair-codes', { staffId: String(foreign._id) })).status, 403);
+  await db.collection('users').updateOne({ _id: cashier._id }, { $set: { branch_access: [] } });
+  assert.equal((await call('/mobile/v1/pair-codes', { staffId: String(cashier._id) })).status, 403);
 });

@@ -44,6 +44,7 @@
         ['Add User', 'users/new', ['user', 'write'], 'staff create'],
         ['Staff Report', 'userreport', ['report', 'read'], 'user analytics'],
         ['Cash Register', 'registers', ['sales', 'read'], 'till drawer open close denomination'],
+        ['Billing outlets', 'billingoutlets', ['sales', 'read'], 'bar restaurant room service windows daily summary handover'],
         ['Register Report', 'registerreport', ['report', 'read'], 'till sessions'],
         ['Branches', 'branches', ['branch', 'read'], 'outlets stores'],
         ['Roles', 'roles', ['user', 'write'], 'permissions access'],

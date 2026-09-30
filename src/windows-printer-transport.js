@@ -8,7 +8,7 @@ const script = fs.readFileSync(path.join(__dirname, 'windows-printer-health.ps1'
 
 function inspect(printer, binding = {}, recover = false, action) {
   return new Promise((resolve, reject) => {
-    const child = execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script],
+    const child = execFile(raw.powershellPath(), ['-NoProfile', '-NonInteractive', '-Command', script],
       { windowsHide: true, timeout: 12000, maxBuffer: 2 * 1024 * 1024, encoding: 'utf8' }, (error, stdout) => {
         try {
           const result = JSON.parse(stdout.replace(/^\uFEFF/, '').trim());

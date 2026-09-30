@@ -7,7 +7,8 @@ seriously and appreciate responsible disclosure.
 
 **Please do not open a public issue for security problems.**
 
-Email **security@posnic.com** with:
+Email **[info@posnic.com](mailto:info@posnic.com?subject=Private%20Posnic%20security%20report)**
+with the subject **Private Posnic security report** and include:
 
 - A description of the issue and its impact
 - Steps to reproduce (proof of concept if possible)

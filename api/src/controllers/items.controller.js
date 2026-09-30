@@ -1061,12 +1061,12 @@ class ItemsController extends BaseController {
    */
   async quickPatch(req, res) {
     try {
-      if (req.user?.access?.item?.write === false) {
+      if (!this.checkPermission('item', 'write', req.user)) {
         return this.error(res, 'Unauthorized access', 403);
       }
       const { id } = req.body || {};
       if (!id) return this.error(res, 'Item id is required', 400);
-      const result = await this.service.quickPatch(id, req.body);
+      const result = await this.service.quickPatch(id, req.body, this.setRequestContext(req));
       if (!result || result.status !== true) {
         return this.error(res, (result && result.message) || 'Could not update the item', 400);
       }
@@ -1105,13 +1105,15 @@ class ItemsController extends BaseController {
 
   async updateItemQuantity(req, res) {
     try {
+      if (!this.checkPermission('item', 'write', req.user))
+        return this.error(res, 'Unauthorized', 403);
       const { id, value } = req.body;
 
       if (!id || value === undefined) {
         return this.error(res, ERROR_MESSAGES.INVALID_ID_AND_QUANTITY_REQUIRED, 400);
       }
 
-      const result = await this.service.updateItemQuantity(id, value);
+      const result = await this.service.updateItemQuantity(id, value, this.setRequestContext(req));
 
       if (!result || result.status !== true) {
         const message =

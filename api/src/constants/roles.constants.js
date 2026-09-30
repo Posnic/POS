@@ -61,6 +61,7 @@ const access = ({
 // actions a role cannot self-perform but a manager may authorise on the spot.
 const POS_PERMISSIONS = {
   DISCOUNT_APPLY: 'discount_apply',
+  DISCOUNT_APPROVE_REMOTE: 'discount_approve_remote',
   PRICE_OVERRIDE: 'price_override',
   VOID_LINE: 'void_line',
   VOID_SALE: 'void_sale',
@@ -77,6 +78,7 @@ const POS_PERMISSIONS = {
 
 const pos = (o = {}) => ({
   discount_apply: !!o.discount_apply,
+  discount_approve_remote: o.discount_approve_remote === true,
   discount_max_percent: o.discount_max_percent != null ? o.discount_max_percent : 0,
   price_override: !!o.price_override,
   void_line: !!o.void_line,
@@ -275,8 +277,8 @@ const DEFAULT_ROLES = [
 // Cashier can only reprint; voids/refunds/discounts/no-sale/register-close need
 // a manager. Supervisor can do most within limits (a full void needs a manager).
 const ROLE_POS = {
-  owner: pos(POS_FULL),
-  admin: pos(POS_FULL),
+  owner: pos({ ...POS_FULL, discount_approve_remote: true }),
+  admin: pos({ ...POS_FULL, discount_approve_remote: true }),
   store_manager: pos(POS_FULL),
   shift_supervisor: pos({
     discount_apply: true,

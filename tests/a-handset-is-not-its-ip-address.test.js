@@ -46,6 +46,17 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '..');
 const slots = require(path.join(ROOT, 'src', 'handset-slots.js'));
 
+test('Business sessions do not consume selling slots, but explicit IP blocks still apply', () => {
+  const options = { devices: { old: { lastSeen: new Date().toISOString() } }, maxDevices: 1, ip: 'new' };
+  for (const url of ['/api/business/v1/context', '/business/v1/overview?branchId=x']) {
+    assert.equal(slots.admit({ ...options, url }).allow, true);
+    assert.equal(slots.admit({ ...options, url }).register, false);
+    assert.equal(slots.admit({ ...options, url, blocked: new Set(['new']) }).code, 'DEVICE_BLOCKED');
+  }
+  for (const url of ['/api/business/v10/sale', '/api/sale', '/other/business/v1/context'])
+    assert.equal(slots.admit({ ...options, url }).code, 'DEVICE_LIMIT_REACHED');
+});
+
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 

@@ -183,8 +183,15 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
       try { systemSettings = await queue.transport.systemSettings(); }
       catch (_) { systemSettings = { guidance: ['Windows power settings could not be checked. Review Sleep, Hibernate and USB selective suspend manually in Power Options.'] }; }
     }
-    return queue ? { supported: true, environment, systemSettings, bindings: queue.bindings,
+    return queue ? { supported: true, environment, systemSettings, helper: require('./raw-print-service').status(), bindings: queue.bindings,
       health: [...queue.health.values()].map(item => item.value), keepAlive: queue.keepAlive, jobs: queue.list() } : { supported: false, environment };
+  });
+  ipcMain.handle('printer:recover-unsubmitted', async (_event, id) => {
+    if (typeof id !== 'string' || !/^[a-f0-9]{64}$/.test(id)) return { success: false, error: 'Invalid recovery job' };
+    const queue = hardwareManager.getWindowsPrintQueue();
+    if (!queue) return { success: false, error: 'Windows only' };
+    try { return await queue.recoverUnsubmitted(id); }
+    catch (error) { return { success: false, error: error.message }; }
   });
   ipcMain.handle('printer:recovery-configure', async (_event, printer, binding) => {
     const queue = hardwareManager.getWindowsPrintQueue();

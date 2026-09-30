@@ -241,6 +241,7 @@ PosnicPro.users = {
         $('#users_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'users',
+            rows: '#users_list_rows',
             onRefresh: function () { return PosnicPro.users.loadList(); },
             container: '#users_filter_panel',
             button: '#users_filter_btn',
@@ -259,7 +260,7 @@ PosnicPro.users = {
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('users', {});
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        PosnicPro.get({
+        PosnicPro.listFilter.request('users', {
             url: 'users',
             data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
         }, function (response) {
@@ -495,7 +496,7 @@ PosnicPro.users = {
         });
         if (data.usertype === 'api') {
             $('.text-change-user').text('apikey');
-            $('#user_view_email').text(data.apikey);
+            $('#user_view_email').text(PosnicPro.i18n.t('lang_hidden_for_security', 'Hidden for security'));
             $('.hide-username').hide();
         }
         if (data.activate === true) {
@@ -594,7 +595,7 @@ PosnicPro.users = {
                 }
                 if (data.usertype === 'api') {
                     $('#app_name').val(data.username);
-                    $('#users_api').val(data.apikey);
+                    $('#users_api').val('').attr('placeholder', PosnicPro.i18n.t('lang_leave_blank_to_keep_the_existing_api_key', 'Leave blank to keep the existing API key'));
                     $('.hide_show_user_api').show();
                     $('.hide_show_user_password').hide();
                     // Don't set apiMethod radio here - it will trigger apiMethodAccess() which clears checkboxes
@@ -780,7 +781,7 @@ PosnicPro.users = {
     },
     // The granular till permissions shown on the user form. Mirrors
     // POS_PERMISSIONS in api/src/constants/roles.constants.js.
-    POS_ACTION_KEYS: ['discount_apply', 'price_override', 'void_line', 'void_sale', 'refund',
+    POS_ACTION_KEYS: ['discount_apply', 'discount_approve_remote', 'price_override', 'void_line', 'void_sale', 'refund',
         'reprint_receipt', 'no_sale_open_drawer', 'register_open', 'register_close',
         'cash_in_out', 'cash_drop', 'quick_sale'],
     // Fill the Till/POS Actions section from a pos object; locked = driven by a
@@ -1385,7 +1386,7 @@ PosnicPro.users = {
                         PosnicPro.local.set('usertype', response.data['usertype']);
                         PosnicPro.local.set('branchimage', response.data['branch_image']);
                         PosnicPro.local.set('branchname', response.data['branch_name']);
-                        PosnicPro.local.set('branchphone', response.data['branch_phone']);
+                        PosnicPro.local.setVolatile('branchphone', response.data['branch_phone']);
                         PosnicPro.local.set('branchemail', response.data['branch_email']);
                         PosnicPro.local.set('branchaddress', response.data['branch_address']);
                         PosnicPro.local.set('timezone', response.data['branch_timezone']);
@@ -1519,7 +1520,7 @@ PosnicPro.users = {
                 PosnicPro.local.set('usertype', '');
                 PosnicPro.local.set('branchimage', '');
                 PosnicPro.local.set('branchname', '');
-                PosnicPro.local.set('branchphone', '');
+                PosnicPro.local.setVolatile('branchphone', '');
                 PosnicPro.local.set('branchemail', '');
                 PosnicPro.local.set('branchaddress', '');
                 PosnicPro.local.set('timezone', '');
@@ -1962,7 +1963,7 @@ PosnicPro.users = {
                 $("#error_app_name").show();
                 $("#error_app_name").html('<label for="app_name" class="error" style=""><lang class="lang_app_name_must_be_at_least_3_characters">App Name must be at least 3 Characters</lang></label>');
                 $("#app_name").css('border-color', 'rgb(249, 97, 109)').focus();
-            } else if ($("#users_api").val().length <= 29) {
+            } else if ($("#users_api").val().length <= 29 && !( $("#users_id").val() && !$("#users_api").val() )) {
                 $("#error_users_api").show();
                 $("#error_users_api").html('<label for="app_name" class="error" style=""><lang class="lang_api_key_must_be_at_least_30_characters">Api key must be at least 30 Characters</lang></label>');
                 $("#users_api").css('border-color', 'rgb(249, 97, 109)').focus();
@@ -1984,7 +1985,7 @@ PosnicPro.users = {
                 $("#error_app_name").html('<label for="app_name" class="error" style=""><lang class="lang_app_name_must_be_at_least_3_characters">App Name must be at least 3 Characters</lang></label>');
                 $("#app_name").css('border-color', 'rgb(249, 97, 109)').focus();
             }
-            if ($("#users_api").val() === '') {
+            if ($("#users_api").val() === '' && !$("#users_id").val()) {
                 $("#error_users_api").show();
                 $("#error_users_api").html('<label for="app_name" class="error" style=""><lang class="lang_api_key_must_be_at_least_30_characters">Api key must be at least 30 Characters</lang></label>');
                 $("#users_api").css('border-color', 'rgb(249, 97, 109)').focus();

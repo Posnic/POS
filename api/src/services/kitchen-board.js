@@ -1,7 +1,7 @@
 'use strict';
 const { ObjectId } = require('mongodb');
 const { context, allowed, fail } = require('../utils/branch-access');
-const { rounds } = require('../helpers/kitchen-rounds');
+const { rounds, progress } = require('../helpers/kitchen-rounds');
 const states = ['new', 'preparing', 'ready'];
 const filter = (c) => ({
   license: c.license,
@@ -22,14 +22,13 @@ function project(sale) {
       .filter((i) => !i.held && i.remaining > 0)
       .map((i) => {
         const line = work.lines?.[i.id] || {};
-        const ready = Math.max(
-          i.served,
-          Math.min(i.quantity, Number(line.ready ?? (work.state === 'ready' ? i.quantity : 0)) || 0)
-        );
-        const collected = Math.max(i.served, Math.min(ready, Number(line.collected) || 0));
+        const quantities = progress(i, work);
+        const { ready, collected } = quantities;
         return {
           id: i.id,
+          ...quantities,
           name: i.name,
+          ...require('../utils/kitchen-amount').snapshot(i),
           qty: i.remaining,
           total: i.quantity,
           served: i.served,
@@ -64,6 +63,8 @@ function project(sale) {
         saleId: String(sale._id),
         roundId: round.id,
         table: String(sale.table_number || ''),
+        outlet: String(sale.outlet_snapshot?.name || ''),
+        roomReference: String(sale.room_reference || ''),
         placedAt: round.fired_at || round.ordered_at,
         state,
         owner: String(owner.id || ''),
@@ -83,6 +84,8 @@ async function list(req) {
       {
         projection: {
           table_number: 1,
+          'outlet_snapshot.name': 1,
+          room_reference: 1,
           created_date: 1,
           items: 1,
           changes: 1,

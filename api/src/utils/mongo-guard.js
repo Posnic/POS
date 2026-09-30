@@ -44,20 +44,25 @@
  */
 const CODE_OPERATORS = new Set(['$where', '$function', '$accumulator', '$expr']);
 
-function findCodeOperator(value, depth = 0) {
-  if (depth > 8 || !value || typeof value !== 'object') return null;
-  if (Array.isArray(value)) {
-    for (const v of value) {
-      const hit = findCodeOperator(v, depth + 1);
-      if (hit) return hit;
-    }
-    return null;
-  }
-  for (const [key, v] of Object.entries(value)) {
+const MAX_FILTER_DEPTH = 8;
+const MAX_FILTER_NODES = 200000;
+
+function findCodeOperator(
+  value,
+  depth = 0,
+  state = { left: MAX_FILTER_NODES, seen: new WeakSet() }
+) {
+  if (state.left-- <= 0) return 'NODE_LIMIT';
+  if (!value || typeof value !== 'object') return null;
+  if (depth > MAX_FILTER_DEPTH) return 'DEPTH_LIMIT';
+  if (state.seen.has(value)) return 'CYCLIC_FILTER';
+  state.seen.add(value);
+  for (const key of Object.keys(value)) {
     if (CODE_OPERATORS.has(key)) return key;
-    const hit = findCodeOperator(v, depth + 1);
+    const hit = findCodeOperator(value[key], depth + 1, state);
     if (hit) return hit;
   }
+  state.seen.delete(value);
   return null;
 }
 
@@ -65,7 +70,8 @@ function findCodeOperator(value, depth = 0) {
  * Parse a client-supplied filter string and refuse the dangerous shapes.
  *
  * Returns { filters, rejected }. `rejected` is the operator's name when one was
- * found, so the caller can answer 400 and say which - a filter silently
+ * found, or a limit/cycle marker if inspection cannot finish, so the caller
+ * can answer 400 and say which - a filter silently
  * emptied would look like "no results" and send someone hunting for missing
  * data instead of fixing their request.
  *
@@ -91,4 +97,10 @@ function parseFilterParam(raw) {
   return { filters: parsed, rejected: null };
 }
 
-module.exports = { CODE_OPERATORS, findCodeOperator, parseFilterParam };
+module.exports = {
+  CODE_OPERATORS,
+  findCodeOperator,
+  parseFilterParam,
+  MAX_FILTER_DEPTH,
+  MAX_FILTER_NODES,
+};

@@ -956,13 +956,21 @@ class BranchModel {
    * @param {string} id - Branch ID
    * @returns {Promise<Object>} - Branch data
    */
-  async getBranchById(id) {
+  async getBranchById(id, user = {}) {
     try {
       if (!id || !Types.ObjectId.isValid(id)) {
         return { status: false, message: 'Branch id is required' };
       }
 
-      const branch = await this.model.findById(id).lean();
+      const branch = await this.model
+        .findOne({
+          _id: id,
+          ...require('../utils/record-scope').scope(
+            { licenseId: user.license || user.license_id },
+            false
+          ),
+        })
+        .lean();
       if (!branch) {
         return { status: false, message: 'Branch not found' };
       }
@@ -974,7 +982,7 @@ class BranchModel {
         try {
           const customersCollection = BaseModel.database.collection('customers');
           const customer = await customersCollection.findOne(
-            { _id: new Types.ObjectId(branch.default_customer) },
+            { _id: new Types.ObjectId(branch.default_customer), license: branch.license },
             { projection: { name: 1 } }
           );
           if (customer && customer.name) {
@@ -989,7 +997,7 @@ class BranchModel {
         try {
           const suppliersCollection = BaseModel.database.collection('suppliers');
           const supplier = await suppliersCollection.findOne(
-            { _id: new Types.ObjectId(branch.default_supplier) },
+            { _id: new Types.ObjectId(branch.default_supplier), license: branch.license },
             { projection: { name: 1 } }
           );
           if (supplier && supplier.name) {
@@ -1511,7 +1519,16 @@ class BranchModel {
       // rather than failing the update.
       let currentRegisters = [];
       try {
-        const existing = await this.model.findById(id).select('register').lean();
+        const existing = await this.model
+          .findOne({
+            _id: id,
+            ...require('../utils/record-scope').scope(
+              { licenseId: user.license || user.license_id },
+              false
+            ),
+          })
+          .select('register')
+          .lean();
         currentRegisters = (existing && existing.register) || [];
       } catch (lookupErr) {
         currentRegisters = [];
@@ -1555,7 +1572,17 @@ class BranchModel {
       };
 
       const branch = await this.model
-        .findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true })
+        .findOneAndUpdate(
+          {
+            _id: id,
+            ...require('../utils/record-scope').scope(
+              { licenseId: user.license || user.license_id },
+              false
+            ),
+          },
+          { $set: updateData },
+          { new: true, runValidators: true }
+        )
         .lean();
 
       if (!branch) {

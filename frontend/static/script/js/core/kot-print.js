@@ -49,7 +49,9 @@
                     job.items.map(function (item) {
                         var note = item.item_note || item.item_description || '';
                         var spice = item.spice_level != null && item.spice_level !== '' ? String(item.spice_level) : '';
+                        var amount = Number(item.priced_at_table);
                         return '<div class="item ' + (job.type === 'cancel' ? 'cancel' : '') + '"><div class="name"><strong>' + esc(PosnicPro.printItemName ? PosnicPro.printItemName(item, 'kot') : item.item_name) + '</strong>' +
+                            (Number.isFinite(amount) && amount > 0 ? '<p><strong>' + esc(PosnicPro.i18n.t('lang_amount', 'Amount')) + ': ' + esc(amount) + ' ' + esc(PosnicPro.i18n.t('lang_each', 'each')) + '</strong></p>' : '') +
                             (note ? '<p class="note">' + esc(note) + '</p>' : '') + (spice ? '<p class="note">' + esc(PosnicPro.i18n.t('lang_kot_print_spice', 'Spice')) + ': ' + esc(spice) + '</p>' : '') +
                             '</div><div class="qty">× ' + esc(item.item_quantity) + '</div></div>';
                     }).join('') + (sale.sales_description ? '<p>' + esc(sale.sales_description) + '</p>' : '') + '</section>';

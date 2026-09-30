@@ -206,6 +206,7 @@ const saleItemSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    priced_at_table: { type: Number, min: 0 },
     item_description: {
       type: String,
       trim: true,
@@ -283,6 +284,28 @@ const saleSchema = new mongoose.Schema(
     billing_transaction_id: {
       type: String,
       trim: true,
+    },
+    business_decision_receipt: {
+      type: new mongoose.Schema(
+        {
+          version: { type: Number, enum: [1], required: true, immutable: true },
+          decisionId: { type: String, match: /^[a-f\d]{24}$/, required: true, immutable: true },
+          revisionHash: { type: String, match: /^[a-f\d]{64}$/, required: true, immutable: true },
+          executionId: { type: String, required: true, immutable: true },
+          operationId: { type: String, required: true, immutable: true },
+          approverId: { type: String, match: /^[a-f\d]{24}$/, required: true, immutable: true },
+          requesterId: { type: String, match: /^[a-f\d]{24}$/, required: true, immutable: true },
+          deviceId: { type: String, required: true, immutable: true },
+          recordedAt: { type: Date, required: true, immutable: true },
+          currency: { type: String, match: /^[A-Z]{3}$/, required: true, immutable: true },
+          currencyDigits: { type: Number, enum: [2], required: true, immutable: true },
+          payableMinor: { type: Number, required: true, immutable: true },
+          discountMinor: { type: Number, required: true, immutable: true },
+        },
+        { _id: false, strict: 'throw' }
+      ),
+      default: undefined,
+      immutable: true,
     },
     wallet_amount: {
       type: Number,
@@ -944,6 +967,7 @@ saleSchema.pre('save', async function () {
         item_name: src.item_name != null ? src.item_name : '',
         ...itemText.snapshot(src),
         item_sku: src.item_sku != null ? src.item_sku : '',
+        ...require('../utils/kitchen-amount').snapshot(src),
         item_price: src.item_price != null ? src.item_price : 0,
         item_discount: src.item_discount != null ? src.item_discount : 0,
         item_discount_percentage:
@@ -1130,6 +1154,9 @@ class LegacySaleModel {
     quote_price_honoured: { type: 'Boolean', select: true },
     source_invoice_id: { type: 'ObjectId', select: true },
     charges: { type: 'Mixed', select: true },
+    outlet_id: { type: 'String', select: true },
+    outlet_snapshot: { type: 'Mixed', select: true },
+    room_reference: { type: 'String', select: true },
     discount_description: { type: 'String', select: true },
     return_extra_discount: { type: 'Number', select: true },
     extra_discount_type: { type: 'String', select: true },

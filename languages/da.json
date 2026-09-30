@@ -95,5 +95,8 @@
   "lang_total_title": "I alt",
   "lang_yes": "Ja",
   "lang_ai_describe_hint": "Lav et udkast til en beskrivelse ud fra varens oplysninger",
-  "lang_walk_in_customer_click_to_choose_or_add": "Kunde uden registrering. Klik for at vælge eller tilføje"
+  "lang_walk_in_customer_click_to_choose_or_add": "Kunde uden registrering. Klik for at vælge eller tilføje",
+  "lang_business_discount": "Rabat",
+  "lang_cash": "Kontant",
+  "lang_print": "Udskriv"
 }

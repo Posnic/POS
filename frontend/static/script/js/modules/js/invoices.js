@@ -451,7 +451,7 @@ PosnicPro.invoices = {
         $.extend(params, PosnicPro.listFilter.params('invoices'));
         var sort = PosnicPro.listSort.value('invoices');
         if (sort) { params.sort = sort; }
-        PosnicPro.get({ url: 'invoices', data: params }, function (r) {
+        PosnicPro.listFilter.request('invoices', { url: 'invoices', data: params }, function (r) {
             if (mine !== PosnicPro.invoices._seq) { return; }
             PosnicPro.invoices._rows = (r && r.data) || [];
             PosnicPro.invoices._meta = (r && r.meta) || null;
@@ -1141,6 +1141,7 @@ PosnicPro.invoices.mountFilters = function () {
     if (!$('#invoices_filter_panel').length) { return; }
     PosnicPro.listFilter.mount({
         key: 'invoices',
+            rows: '#invoices_list_rows',
             onRefresh: function () { return PosnicPro.invoices.load(true); },
         container: '#invoices_filter_panel',
         button: '#invoices_filter_btn',

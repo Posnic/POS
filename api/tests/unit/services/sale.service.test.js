@@ -186,6 +186,136 @@ describe('SalesService', () => {
     consoleWarnSpy.mockRestore();
   });
 
+  describe('Business decision pricing preview', () => {
+    test('a rejected pre-commit decision restores reserved stock and never writes the sale', async () => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      const beforeCommit = jest.fn(async () => {
+        throw new Error('bill_changed');
+      });
+      const result = await salesService.processSale(makeSaleData(), '', 'Add', makeContext(), {
+        beforeCommit,
+      });
+      expect(result.status).toBe(false);
+      expect(beforeCommit).toHaveBeenCalledTimes(1);
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).toHaveBeenCalled();
+      expect(mockItemRepositoryInstance.updateStock).toHaveBeenCalledWith(expect.anything(), 2);
+      expect(salesRepository.create).not.toHaveBeenCalled();
+      expect(kotNotifications).toHaveLength(0);
+    });
+
+    test('a bill-level decision binds the actual checkout preview and explains rounding in exact minor units', async () => {
+      const { prepareDiscountIntent } = require('../../../src/services/business-discount-intent');
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      const context = makeContext({
+        roundOff: true,
+        branchSettings: {
+          _id: BRANCH_ID,
+          branch_name: 'Central',
+          currency: 'INR',
+          time_zone: 'Asia/Kolkata',
+        },
+      });
+      const data = makeSaleData({
+        billing_transaction_id: 'billing-operation-001',
+        items: [makeItemPayload({ item_price_total: '100.27' })],
+        extra_discount: 10,
+        extra_discount_type: 'percent',
+        approval_token: 'old-local-proof',
+      });
+      const prepared = await prepareDiscountIntent(data, context, 'Regular customer');
+      expect(prepared.summary).toEqual({
+        currency: 'INR',
+        currencyDigits: 2,
+        beforeDiscountMinor: 20054,
+        discountMinor: 2005,
+        payableMinor: 18000,
+        roundingMinor: -49,
+        itemCount: 1,
+        reason: 'Regular customer',
+      });
+      expect(
+        (
+          await prepareDiscountIntent(
+            { ...data, approval_token: 'another-proof' },
+            context,
+            'Regular customer'
+          )
+        ).revisionHash
+      ).toBe(prepared.revisionHash);
+      expect(
+        (
+          await prepareDiscountIntent(
+            { ...data, customer_id: 'different-customer' },
+            context,
+            'Regular customer'
+          )
+        ).revisionHash
+      ).not.toBe(prepared.revisionHash);
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(
+        makeItemDoc({ tax: 10, tax_type: 'exclusive' })
+      );
+      expect(
+        (await prepareDiscountIntent(data, context, 'Regular customer')).revisionHash
+      ).not.toBe(prepared.revisionHash);
+      expect(salesRepository.create).not.toHaveBeenCalled();
+      for (const change of [
+        { coupon_code: 'WELCOME' },
+        { tip_amount: 1 },
+        { partial_check: 'true' },
+        { unpaid: 'true' },
+        { items: [makeItemPayload({ item_discount: 1 })] },
+      ])
+        await expect(
+          prepareDiscountIntent({ ...data, ...change }, context, 'Reason')
+        ).rejects.toMatchObject({ code: 'unsupported_discount_combination' });
+      await expect(
+        prepareDiscountIntent(
+          data,
+          { ...context, branchSettings: { ...context.branchSettings, currency: 'JPY' } },
+          'Reason'
+        )
+      ).rejects.toMatchObject({ code: 'unsupported_discount_currency' });
+    });
+
+    test('uses checkout prices without allocating a bill, locking a register, writing stock or notifying the kitchen', async () => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      const data = makeSaleData({
+        register_id: '64f8f2f4c2b9c0a1e4b33333',
+        extra_discount: 10,
+        extra_discount_type: 'percent',
+      });
+      const preview = await salesService.previewSale(data, makeContext());
+      expect(preview.status).toBe(true);
+      expect(preview.data.items).toHaveLength(1);
+      expect(preview.data).not.toHaveProperty('customer_phone');
+      expect(mockRegisterRepositoryInstance.validateSessionOwner).toHaveBeenCalledWith(
+        data.register_id,
+        makeContext().userId,
+        makeContext().deviceId,
+        { acquire: false }
+      );
+      expect(salesRepository.generateSalesIdForBranch).not.toHaveBeenCalled();
+      expect(salesRepository.create).not.toHaveBeenCalled();
+      expect(salesRepository.save).not.toHaveBeenCalled();
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+      expect(mockRegisterRepositoryInstance.addSaleRegisterEntry).not.toHaveBeenCalled();
+      expect(kotNotifications).toHaveLength(0);
+      await salesService.processSale(data, '', 'Add', makeContext());
+      const written = salesRepository.create.mock.calls[0][0];
+      expect(written.sales_total).toBe(preview.data.header.salesTotalForDoc);
+      expect(written.sale_extra_discount).toBe(preview.data.header.salesExtraDiscount);
+      expect(written.tax).toBe(preview.data.tax);
+    });
+    test('rejects an unbounded preview before item queries', async () => {
+      const result = await salesService.previewSale(
+        makeSaleData({ items: Array.from({ length: 101 }, () => makeItemPayload()) }),
+        makeContext()
+      );
+      expect(result.status).toBe(false);
+      expect(mockItemRepositoryInstance.findItemById).not.toHaveBeenCalled();
+    });
+  });
+
   describe('desktop KOT printing starts when the order is saved', () => {
     beforeEach(() => {
       mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
@@ -262,6 +392,65 @@ describe('SalesService', () => {
       expect(result.status).toBe(true);
       expect(kotNotifications).toEqual([
         { branchId: BRANCH_ID, saleId, reason: 'updated', at: expect.any(Number) },
+      ]);
+    });
+  });
+
+  describe('Business billed-sales reconciliation uses the actual sale writer', () => {
+    test.each([
+      {
+        name: 'coupon, loyalty and extra discount',
+        data: { extra_discount: '10', coupon_discount_value: '15', loyalty_redeem_value: '5' },
+        expected: 17000,
+      },
+      {
+        name: 'part-paid bill',
+        data: { partial_check: 'true', partial_balance: '50' },
+        expected: 20000,
+      },
+      {
+        name: 'tip stays outside sales',
+        data: { tip_amount: '30', tip_in_total: 'true' },
+        expected: 20000,
+      },
+      {
+        name: 'exclusive tax is included once',
+        item: { tax: 18, tax_type: 'exclusive' },
+        expected: 23600,
+      },
+      {
+        name: 'bill rounding is already applied',
+        data: { items: [makeItemPayload({ item_price_total: '100.24' })] },
+        context: { roundOff: true },
+        expected: 20000,
+      },
+    ])('$name', async ({ data, item, context, expected }) => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc(item));
+      await salesService.processSale(
+        makeSaleData({ ...data, date: '2026-09-28T01:00:00.000Z' }),
+        '',
+        'Add',
+        makeContext(context)
+      );
+      const written = salesRepository.create.mock.calls[0][0];
+      const { saleContribution } = require('../../../src/services/business-metrics');
+      const result = saleContribution(
+        { ...written, _id: 'c'.repeat(24) },
+        {
+          id: BRANCH_ID,
+          license: LICENSE_ID,
+          currency: 'INR',
+          currencyDigits: 2,
+          timezone: 'Asia/Kolkata',
+        }
+      );
+      expect(result.entries).toEqual([
+        {
+          businessDate: '2026-09-28',
+          billedSalesMinor: expected,
+          refundsMinor: 0,
+          completedSales: 1,
+        },
       ]);
     });
   });
@@ -355,6 +544,82 @@ describe('SalesService', () => {
   describe('processSale – Add mode', () => {
     beforeEach(() => {
       mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    });
+
+    test('outlet checkout persists prices, service charge, tax and actual payable together', async () => {
+      const outlet = {
+        id: '000000000000000000000003',
+        name: 'Bar',
+        markup_percent: 25,
+        service_percent: 10,
+        service_tax_percent: 5,
+        prices: [],
+      };
+      const spy = jest
+        .spyOn(require('../../../src/services/billing-outlets'), 'resolve')
+        .mockResolvedValue(outlet);
+      try {
+        const result = await salesService.processSale(
+          makeSaleData({ outlet_id: outlet.id }),
+          '',
+          'Add',
+          makeContext()
+        );
+        expect(result.status).toBe(true);
+        expect(salesRepository.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            outlet_id: outlet.id,
+            sales_total: 276.25,
+            items_total: 276.25,
+            partial_balance: 276.25,
+            charges: [expect.objectContaining({ source: 'outlet', amount: 25, tax_amount: 1.25 })],
+            items: [expect.objectContaining({ item_price: 125, item_quantity: 2 })],
+          })
+        );
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    test('a denied outlet cannot create a bill, allocate stock or submit a kitchen print', async () => {
+      const spy = jest
+        .spyOn(require('../../../src/services/billing-outlets'), 'resolve')
+        .mockRejectedValue(new Error('Outlet access denied'));
+      try {
+        const result = await salesService.processSale(makeSaleData(), '', 'Add', makeContext());
+        expect(result).toMatchObject({ status: false, message: 'Outlet access denied' });
+        expect(salesRepository.create).not.toHaveBeenCalled();
+        expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+        expect(kotNotifications).toHaveLength(0);
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    test('a mismatch with the displayed outlet total stops before saving or deducting stock', async () => {
+      const spy = jest
+        .spyOn(require('../../../src/services/billing-outlets'), 'resolve')
+        .mockResolvedValue({
+          id: '000000000000000000000003',
+          name: 'Bar',
+          markup_percent: 25,
+          service_percent: 10,
+          service_tax_percent: 0,
+        });
+      try {
+        const result = await salesService.processSale(
+          makeSaleData({ outlet_expected_total: 200 }),
+          '',
+          'Add',
+          makeContext()
+        );
+        expect(result.status).toBe(false);
+        expect(result.message).toMatch(/differs from the displayed bill/);
+        expect(salesRepository.create).not.toHaveBeenCalled();
+        expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+      } finally {
+        spy.mockRestore();
+      }
     });
 
     test('returns status true and sale data on successful create', async () => {

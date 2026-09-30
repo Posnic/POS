@@ -316,23 +316,74 @@ PosnicPro.listFilter = {
 
     // Refresh is not a filter change: the list keeps its page, search and sort.
     // Callers supply a loader (including lists whose normal search is local).
+    // Capture the refresh token when the request starts: an older/background
+    // request must never complete a newer manual refresh.
+    LF.request = function (key, params, render, failure) {
+        var button = document.getElementById('lf-refresh-' + key);
+        var token = button && button._refreshToken;
+        return PosnicPro.get(params, function (response) {
+            var ok = !!response && (!response.type || response.type === 'success');
+            try { render(response); } catch (error) { ok = false; throw error; }
+            finally { if (token) token.finish(ok); }
+        }, function () {
+            try { if (failure) failure.apply(this, arguments); }
+            finally { if (token) token.finish(false); }
+        });
+    };
+
     LF.mountRefresh = function (cfg) {
         var button = $(cfg.button);
         if (!button.length || typeof cfg.onRefresh !== 'function') return;
         var id = 'lf-refresh-' + cfg.key;
         var refresh = document.getElementById(id);
+        var label = PosnicPro.i18n.t('lang_wf_refresh', 'Refresh');
         if (!refresh) {
-            refresh = $('<button type="button" class="btn btn-outline-secondary btn-sm mr-2">')
-                .attr('id', id).attr('title', PosnicPro.i18n.t('lang_wf_refresh', 'Refresh'))
+            refresh = $('<button type="button" class="btn btn-primary-rgba mr-2 lf-refresh">')
+                .attr('id', id).attr('title', label)
                 .append('<i class="feather icon-refresh-cw" aria-hidden="true"></i> ')
-                .append($('<span>').text(PosnicPro.i18n.t('lang_wf_refresh', 'Refresh')))
+                .append($('<span>').text(label))
                 .insertBefore(button)[0];
+            $('<span class="lf-refresh-status sr-only" role="status" aria-live="polite">').insertAfter(refresh);
         }
         $(refresh).off('click.listRefresh').on('click.listRefresh', function () {
-            var now = Date.now();
-            if (this._lastRefresh && now - this._lastRefresh < 500) return;
-            this._lastRefresh = now;
-            cfg.onRefresh();
+            if (refresh._refreshToken) return;
+            clearTimeout(refresh._resetRefresh);
+            var $button = $(refresh), $rows = $(cfg.rows);
+            var $status = $button.next('.lf-refresh-status');
+            var started = Date.now(), finished = false;
+            var loading = PosnicPro.i18n.t('lang_refreshing', 'Refreshing…');
+            $button.removeClass('is-complete is-error').addClass('is-refreshing')
+                .attr('aria-busy', 'true').attr('aria-disabled', 'true');
+            $button.find('i').attr('class', 'feather icon-refresh-cw');
+            $button.find('span').text(loading);
+            $status.text(loading);
+            $rows.removeClass('lf-refreshed').addClass('lf-refreshing').attr('aria-busy', 'true');
+            var token = { finish: function (ok) {
+                if (finished || refresh._refreshToken !== token) return;
+                finished = true;
+                clearTimeout(token.timeout);
+                setTimeout(function () {
+                    if (refresh._refreshToken !== token) return;
+                    refresh._refreshToken = null;
+                    $rows.removeClass('lf-refreshing').removeAttr('aria-busy');
+                    $button.removeClass('is-refreshing').removeAttr('aria-busy aria-disabled')
+                        .addClass(ok ? 'is-complete' : 'is-error');
+                    var message = ok ? PosnicPro.i18n.t('lang_refreshed', 'Refreshed')
+                        : PosnicPro.i18n.t('lang_refresh_failed', 'Refresh failed');
+                    $button.find('span').text(message);
+                    $button.find('i').attr('class', 'feather ' + (ok ? 'icon-check' : 'icon-alert-circle'));
+                    $status.text(message);
+                    if (ok) $rows.addClass('lf-refreshed');
+                    refresh._resetRefresh = setTimeout(function () {
+                        $rows.removeClass('lf-refreshed');
+                        $button.removeClass('is-complete is-error').find('span').text(label);
+                        $button.find('i').attr('class', 'feather icon-refresh-cw');
+                    }, 2500);
+                }, Math.max(0, 400 - (Date.now() - started)));
+            }};
+            refresh._refreshToken = token;
+            token.timeout = setTimeout(function () { token.finish(false); }, 30000);
+            try { cfg.onRefresh(); } catch (_) { token.finish(false); }
         });
     };
 

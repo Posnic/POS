@@ -95,5 +95,8 @@
   "lang_total_title": "Ukupno",
   "lang_yes": "Da",
   "lang_ai_describe_hint": "Napravi opis na osnovu podataka o artiklu",
-  "lang_walk_in_customer_click_to_choose_or_add": "Neregistrovani kupac. Kliknite za odabir ili dodavanje"
+  "lang_walk_in_customer_click_to_choose_or_add": "Neregistrovani kupac. Kliknite za odabir ili dodavanje",
+  "lang_business_discount": "Popust",
+  "lang_cash": "Gotovina",
+  "lang_print": "Štampaj"
 }
