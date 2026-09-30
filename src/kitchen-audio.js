@@ -113,6 +113,7 @@ function install({ app, BrowserWindow, ipcMain }) {
       if (!branch || String(branch) !== String(request.branchId))
         throw Error('This kitchen speaker is not configured for your branch.');
       const owner = 'captain:' + request.owner;
+      if (request.action === 'status') return done(null, queue.status(owner));
       if (request.action === 'start') return done(null, queue.start(owner));
       if (request.action === 'cancel') {
         queue.cancel(owner, request.id);

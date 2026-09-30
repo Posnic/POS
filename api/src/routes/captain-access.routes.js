@@ -39,7 +39,7 @@ router.post(
     const c = await context(req);
     if (c.branch.module_captain_enable === false)
       access.fail('DISABLED', 'Captain is disabled.', 403);
-    if (!['start', 'cancel', 'voice'].includes(req.params.action))
+    if (!['start', 'cancel', 'voice', 'status'].includes(req.params.action))
       access.fail('INVALID_ACTION', 'Unknown audio action.', 400);
     if (!process.listenerCount('posnic:kitchen-audio'))
       access.fail('UNAVAILABLE', 'Connect to the local POS with Kitchen Sound enabled.', 503);

@@ -22,6 +22,17 @@ function fixture(t) {
 function done(q, task, error) {
   return q.ack({ jobId: task.jobId, targetId: task.target.id, index: task.index, error });
 }
+test('Captain playback history is scoped to its sender and contains no audio',t=>{
+ const {q}=fixture(t);
+ const a=q.start('captain:a'),b=q.start('captain:b');
+ q.voice('captain:a',a.id,'data:audio/webm;base64,YQ==');
+ q.voice('captain:b',b.id,'data:audio/webm;base64,Yg==');
+ const visible=q.status('captain:a');
+ assert.deepEqual(visible.jobs.map(j=>j.id),[a.id]);
+ assert.equal(JSON.stringify(visible).includes('base64'),false);
+ assert.equal(q.status('captain:unknown').jobs.length,0);
+ assert.equal(q.status().jobs.length,2);
+});
 test('speakers complete independently; disconnected output retries without repeating completed output', (t) => {
   const { q } = fixture(t);
   q.enqueue({ steps: [{ text: 'Table 5' }] }, 'order-5');
