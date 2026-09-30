@@ -10140,6 +10140,15 @@ class SalesRepository {
         .collection('branches')
         .findOne({ _id: orderDoc.branch_id, license: orderDoc.license });
       const monetary = Money.policy(shop || {});
+      const orderSeating =
+        orderDoc.seating_request_id || shop?.table_options === true
+          ? await require('../services/seating-claims').forEdit(
+              db,
+              { branchId: orderDoc.branch_id, license: orderDoc.license },
+              orderDoc,
+              { table: newTableNo, guests: personCount, dine_type: dineType }
+            )
+          : null;
       if (shop?.table_options === true && (newTableNo || personCount)) {
         const destination = String(newTableNo || orderDoc.table_number || '');
         const configuredTable = await db.collection('tableorder').findOne({
@@ -10156,7 +10165,7 @@ class SalesRepository {
         if (
           configuredTable &&
           !require('../utils/table-details').accommodates(
-            configuredTable,
+            orderSeating || configuredTable,
             personCount || orderDoc.person_count || 1
           )
         )

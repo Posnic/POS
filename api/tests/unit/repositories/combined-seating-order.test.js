@@ -139,3 +139,65 @@ test('retry after an interrupted insert uses the already-bound sale identity', a
   expect(retry.data.sale_id).toBe(bound.order_id);
   expect(await db.collection('sales').countDocuments({})).toBe(1);
 });
+test('item edits retain the group capacity and cannot detach its table metadata', async () => {
+  const created = await submit();
+  if (!created.status) throw new Error(created.message);
+  const sale = await db.collection('sales').findOne({ _id: new ObjectId(created.data.sale_id) });
+  const edit = async (table = 'T1', guests = 4) =>
+    repo.updateOrderModel(
+      String(sale._id),
+      sale.items,
+      sale.sales_total,
+      null,
+      null,
+      null,
+      null,
+      table,
+      'Dine-in',
+      guests,
+      {}
+    );
+  const saved = await edit();
+  if (!saved.status) throw new Error(saved.message);
+  const moved = await edit('T2');
+  expect(moved.status).toBe(false);
+  expect(moved.message).toContain('seating group');
+  const changedParty = await edit('T1', 2);
+  expect(changedParty.status).toBe(false);
+  const stored = await db.collection('sales').findOne({ _id: sale._id });
+  expect(stored.table_number).toBe('T1');
+  expect(stored.person_count).toBe(4);
+  expect(stored.seating_table_ids).toEqual(claim.tables);
+});
+test('another existing order cannot move into a reserved group', async () => {
+  const otherId = new ObjectId();
+  await db
+    .collection('sales')
+    .insertOne({
+      _id: otherId,
+      branch_id: branch,
+      license,
+      table_number: 'T3',
+      table_id: '',
+      dine_type: 'Dine-in',
+      person_count: 2,
+      sale_process: 'KOT',
+      items: [],
+    });
+  const result = await repo.updateOrderModel(
+    String(otherId),
+    [],
+    0,
+    null,
+    null,
+    null,
+    null,
+    'T2',
+    'Dine-in',
+    2,
+    {}
+  );
+  expect(result.status).toBe(false);
+  expect(result.message).toContain('reserved');
+  expect((await db.collection('sales').findOne({ _id: otherId })).table_number).toBe('T3');
+});

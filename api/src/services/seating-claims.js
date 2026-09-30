@@ -346,4 +346,40 @@ async function prepareOrder(db, scope, claim, document) {
     fail('The sale identity is already in use.', 409);
   return existing;
 }
-module.exports = { reserve, bind, cancel, read, find, archive, release, forOrder, prepareOrder };
+async function forEdit(db, scope, order, next) {
+  const destination = String(next.table || order.table_number || '');
+  const claims = await read(db, scope);
+  const own = claims.find((claim) => !terminal(claim) && claim.order_id === String(order._id));
+  if (order.seating_request_id && !own) fail('The seating group changed. Refresh this order.', 409);
+  if (
+    own &&
+    (destination !== String(order.table_number || '') ||
+      (next.guests && Number(next.guests) !== Number(order.person_count)) ||
+      (next.dine_type && next.dine_type !== order.dine_type))
+  )
+    fail('Change the seating group before changing its table or guests.', 409);
+  if (
+    !own &&
+    destination !== String(order.table_number || '') &&
+    claims.some(
+      (claim) =>
+        !terminal(claim) &&
+        claim.order_id !== String(order._id) &&
+        claim.labels.includes(destination)
+    )
+  )
+    fail('This table is reserved for another order.', 409);
+  return own || null;
+}
+module.exports = {
+  reserve,
+  bind,
+  cancel,
+  read,
+  find,
+  archive,
+  release,
+  forOrder,
+  prepareOrder,
+  forEdit,
+};
