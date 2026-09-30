@@ -1,0 +1,71 @@
+name: Verify locally signed Windows release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing unpublished release tag (vX.Y.Z)
+        required: true
+        type: string
+      source_commit:
+        description: Exact 40-character source commit used for the local build
+        required: true
+        type: string
+      manifest_sha256:
+        description: Locally verified SHA-256 of WINDOWS-RELEASE.json
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-release-verify-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      RELEASE_COMMIT: ${{ inputs.source_commit }}
+      MANIFEST_SHA256: ${{ inputs.manifest_sha256 }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Verify draft assets against approved manifest
+        run: node scripts/verify-windows-release.js
+      - name: Verify publisher signatures and timestamps
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(Get-ChildItem -LiteralPath windows-release -Filter *.exe)
+          if ($files.Count -ne 2) { throw 'Expected installer and portable EXE' }
+          foreach ($file in $files) {
+            $signature = Get-AuthenticodeSignature -LiteralPath $file.FullName
+            if ($signature.Status -ne 'Valid') { throw "Invalid signature: $($file.Name)" }
+            if ($signature.SignerCertificate.Thumbprint -ne '83060C7C0D82E51BEAB269854288AC62CFA37D24') {
+              throw "Unexpected signing certificate: $($file.Name)"
+            }
+            if (-not $signature.TimeStamperCertificate) { throw "Missing timestamp: $($file.Name)" }
+            Write-Output "Verified BillMax signature and timestamp: $($file.Name)"
+          }
+      # Records verification of a local build. It does NOT claim that this
+      # runner compiled the packages. The source declaration remains explicit.
+      - name: Attest verified Windows release files
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-checksums: windows-release/SHA256SUMS.txt
+          predicate-type: https://slsa.dev/provenance/v1
+          predicate-path: windows-release/verification-predicate.json

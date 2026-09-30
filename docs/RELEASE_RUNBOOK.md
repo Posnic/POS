@@ -87,6 +87,16 @@ stops automatic updates for everyone, with no error anywhere.
 
 7. **Publish.** Every installed till finds it at its next check.
 
+   Windows is built and card-signed locally. Before this step, upload its
+   installer, portable package, blockmap, `latest.yml`, both SBOMs and
+   `WINDOWS-RELEASE.json` to the unpublished draft. The JSON manifest must name
+   the exact tag, source commit, `local-certum-card` build origin and SHA-256
+   and size of all six files. Dispatch `windows-release-verify.yml` from main
+   with the tag, source commit and locally checked manifest SHA-256. It verifies
+   the files and records verification provenance; it does not claim a hosted
+   Windows build. Verify those attestations using VERIFY_RELEASE.md and merge
+   all Windows file checksums into the release's SHA256SUMS.txt before publishing.
+
 8. **Update the download page.** `download.html` in the `web-frontend` repository
    carries the version in every link, every filename and every size, because
    GitHub's asset URLs contain the version and there is no "latest" form of them
