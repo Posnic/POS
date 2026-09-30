@@ -4075,6 +4075,7 @@ PosnicPro.sales.addSale = {
             var savedSubmission;
             try {
                 savedSubmission = PosnicPro.sales.submissionJournal().save(JSON.parse(params.data));
+                if (PosnicPro.orderRecovery) PosnicPro.orderRecovery.refresh();
                 if (savedSubmission.state === 'confirmed') {
                     throw new Error('This order was already saved. Refresh the sales list.');
                 }
@@ -4091,6 +4092,7 @@ PosnicPro.sales.addSale = {
                 if (response.type === 'success') {
                     try {
                         PosnicPro.sales.submissionJournal().confirm(savedSubmission, response);
+                        if (PosnicPro.orderRecovery) PosnicPro.orderRecovery.refresh();
                     } catch (error) {
                         // The sale succeeded. Keep the original journal entry for
                         // reconciliation if storage or the signed-in account changed.
