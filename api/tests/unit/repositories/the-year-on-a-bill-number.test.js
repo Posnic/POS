@@ -78,6 +78,51 @@ beforeEach(async () => {
 
 afterEach(() => jest.restoreAllMocks());
 
+describe('explicit database scope for transfer numbering', () => {
+  test('concurrent shops use their own device codes, counters and database indexes', async () => {
+    const other = mongoose.connection.getClient().db('numbering-other-shop');
+    await other.dropDatabase();
+    try {
+      await other.collection('branches').insertOne(shop());
+      await other.collection('device_meta').insertOne({ _id: 'device_code', code: 'D88' });
+      await db.collection('sales').insertOne({ branch_id: BRANCH, license: LICENSE, sales_id: 'S-000010' });
+      await other.collection('sales').insertOne({ branch_id: BRANCH, license: LICENSE, sales_id: 'S-000090' });
+      repo.constructor._deviceCode = 'WRONG';
+      repo.constructor._branchCodes = { [String(BRANCH)]: 'B99' };
+      repo.constructor._countersIndexEnsured = true;
+      BaseModel.getDb.mockRejectedValue(new Error('Ambient database must not be used'));
+      const [first, second] = await Promise.all([
+        repo.generateSalesIdForBranch(BRANCH, { numberingContext: { db, license: LICENSE } }),
+        repo.generateSalesIdForBranch(BRANCH, { numberingContext: { db: other, license: LICENSE } }),
+      ]);
+      expect(first).toBe('SB1D14-000011');
+      expect(second).toBe('SB1D88-000091');
+      for (const database of [db, other]) {
+        expect((await database.collection('counters').indexes()).some(row => row.name === 'one_counter_per_scope' && row.unique)).toBe(true);
+        expect((await database.collection('sales').indexes()).some(row => row.name === 'unique_sales_id_per_license' && row.unique)).toBe(true);
+      }
+      expect(BaseModel.getDb).not.toHaveBeenCalled();
+    } finally { await other.dropDatabase(); }
+  });
+  test('wrong scoped licence cannot allocate or fall back to a generic branch prefix', async () => {
+    await expect(repo.generateSalesIdForBranch(BRANCH, {
+      numberingContext: { db, license: new mongoose.Types.ObjectId() },
+    })).rejects.toThrow('Branch not found');
+    expect(await db.collection('counters').countDocuments()).toBe(0);
+  });
+  test('fallback tag and reseeding remain in the explicit database', async () => {
+    await db.collection('device_meta').deleteMany({});
+    await db.collection('device_meta').insertOne({ _id: 'device_tag', tag: 'LOCAL' });
+    repo.constructor._deviceTag = 'WRONG';
+    BaseModel.getDb.mockRejectedValue(new Error('Ambient database must not be used'));
+    const options = { numberingContext: { db, license: LICENSE } };
+    expect(await repo.generateSalesIdForBranch(BRANCH, options)).toBe('S-LOCAL-000001');
+    await db.collection('sales').insertOne({ branch_id: BRANCH, license: LICENSE, sales_id: 'S-LOCAL-000040' });
+    expect(await repo.generateSalesIdForBranch(BRANCH, { ...options, reseed: true })).toBe('S-LOCAL-000041');
+    expect(BaseModel.getDb).not.toHaveBeenCalled();
+  });
+});
+
 /* ------------------------------------------------------ whose midnight */
 
 describe('which year a bill belongs to', () => {

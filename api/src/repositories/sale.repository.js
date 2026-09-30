@@ -13485,12 +13485,14 @@ class SalesRepository {
    * already and would rather not have this read the branch to find the same
    * answer twice.
    */
-  async generateSalesIdForBranch(branchIdRaw, { reseed = false, fallbackPrefix } = {}) {
+  async generateSalesIdForBranch(branchIdRaw, { reseed = false, fallbackPrefix, numberingContext } = {}) {
     if (!branchIdRaw) {
       throw new Error('branchId is required to generate sales_id');
     }
 
-    const db = await BaseModel.getDb();
+    if (numberingContext && (!numberingContext.db || !numberingContext.license))
+      throw new Error('A database and licence are required for scoped bill numbering');
+    const db = numberingContext?.db || await BaseModel.getDb();
     const branches = db.collection('branches');
     const salesCollection = db.collection('sales');
 
@@ -13503,8 +13505,9 @@ class SalesRepository {
 
     const branchDoc = await branches.findOne({
       _id: branchId,
-      ...(BaseModel.license ? { license: BaseModel.license } : {}),
+      ...(numberingContext ? { license: numberingContext.license } : BaseModel.license ? { license: BaseModel.license } : {}),
     });
+    if (numberingContext && !branchDoc) throw new Error('Branch not found for scoped bill numbering');
     // The prefix comes from the branch config. An empty prefix is honoured - a
     // shop may want plain numbers - so only a branch that never set the field
     // falls back to the default 'S'.
@@ -13533,11 +13536,12 @@ class SalesRepository {
     const n = await this.nextSalesNumberForBranch(
       branchId,
       (branchDoc && branchDoc.license) || BaseModel.license,
-      { reseed, period }
+      { reseed, period, numberingContext }
     );
     return this.buildDocNumber('S', branchId, n, {
       fallbackPrefix: prefix,
       period: period.label,
+      numberingContext,
     });
   }
 
@@ -13599,8 +13603,8 @@ class SalesRepository {
    * collection that does not ride the sync wire, so each side numbers its own
    * writes and never inherits a counter that went backwards.
    */
-  async nextSalesNumberForBranch(branchIdRaw, licenseRaw, { reseed = false, period = null } = {}) {
-    const db = await BaseModel.getDb();
+  async nextSalesNumberForBranch(branchIdRaw, licenseRaw, { reseed = false, period = null, numberingContext } = {}) {
+    const db = numberingContext?.db || await BaseModel.getDb();
     const counters = db.collection('counters');
 
     /*
@@ -13646,7 +13650,10 @@ class SalesRepository {
     /* Idempotent and cheap; the unique index is what makes the concurrent
        seed below safe, so it is ensured before first use rather than hoped
        for. A failure leaves the flag unset so the next call tries again. */
-    if (!this.constructor._countersIndexEnsured) {
+    if (numberingContext) {
+      await ensureIndexOnce(counters, { kind: 1, branch_key: 1, license_key: 1 },
+        { unique: true, name: 'one_counter_per_scope' });
+    } else if (!this.constructor._countersIndexEnsured) {
       this.constructor._countersIndexEnsured = true;
       try {
         await counters.createIndex(
@@ -13680,6 +13687,7 @@ class SalesRepository {
     if (!existing) {
       const seed = await this.maxIssuedSalesNumber(branchIdRaw, licenseRaw, {
         periodLabel: (period && period.label) || '',
+        numberingContext,
       });
       /* With the unique index, one of two concurrent seeders inserts and the
          other's upsert errors; both then increment the same row. */
@@ -13700,6 +13708,7 @@ class SalesRepository {
     if (reseed) {
       const behind = await this.maxIssuedSalesNumber(branchIdRaw, license, {
         periodLabel: (period && period.label) || '',
+        numberingContext,
       });
       if (behind > 0) {
         /*
@@ -13775,10 +13784,10 @@ class SalesRepository {
    * ~1.68M codes; with 35 tills the chance any two share one is ~0.04%, and the
    * unique index below turns even that into a caught retry, never a silent dup.
    */
-  async deviceTag() {
-    if (this.constructor._deviceTag) return this.constructor._deviceTag;
+  async deviceTag(numberingContext) {
+    if (!numberingContext && this.constructor._deviceTag) return this.constructor._deviceTag;
     try {
-      const db = await BaseModel.getDb();
+      const db = numberingContext?.db || await BaseModel.getDb();
       const meta = db.collection('device_meta');
       let doc = await meta.findOne({ _id: 'device_tag' });
       if (!doc || !doc.tag) {
@@ -13796,8 +13805,10 @@ class SalesRepository {
           .catch(() => {});
         doc = await meta.findOne({ _id: 'device_tag' });
       }
+      if (numberingContext) return (doc && doc.tag) || '';
       this.constructor._deviceTag = (doc && doc.tag) || '';
     } catch (e) {
+      if (numberingContext) throw e;
       // No tag rather than a failed sale. An untagged number is the old
       // behaviour, no worse than before; the next sale tries again.
       this.constructor._deviceTag = '';
@@ -13811,8 +13822,8 @@ class SalesRepository {
    * kiosk/QR path can never drift apart. Falls back to the old untagged form
    * only if a till code could not be read, which must never fail a sale.
    */
-  async buildSalesId(prefix, n, { period = '' } = {}) {
-    const tag = await this.deviceTag();
+  async buildSalesId(prefix, n, { period = '', numberingContext } = {}) {
+    const tag = await this.deviceTag(numberingContext);
     const p = (prefix || '').toString().trim();
     /*
      * The one shape utils/bill-number.js cannot express: a prefix glued
@@ -13843,15 +13854,16 @@ class SalesRepository {
    * the gateway. Only a real code is cached, so it is picked up the moment it
    * arrives, without a restart.
    */
-  async deviceCode() {
-    if (this.constructor._deviceCode) return this.constructor._deviceCode;
+  async deviceCode(numberingContext) {
+    if (!numberingContext && this.constructor._deviceCode) return this.constructor._deviceCode;
     try {
-      const db = await BaseModel.getDb();
+      const db = numberingContext?.db || await BaseModel.getDb();
       const doc = await db.collection('device_meta').findOne({ _id: 'device_code' });
       const code = (doc && doc.code) || '';
-      if (code) this.constructor._deviceCode = code;
+      if (code && !numberingContext) this.constructor._deviceCode = code;
       return code;
     } catch (e) {
+      if (numberingContext) throw e;
       return '';
     }
   }
@@ -13863,16 +13875,17 @@ class SalesRepository {
    * a newer branch only ever appends. It is a label only: the device code is
    * what makes a number unique, so a rare mid-sync disagreement is cosmetic.
    */
-  async branchCode(branchId) {
+  async branchCode(branchId, numberingContext) {
     if (!branchId) return '';
     const id = String(branchId);
-    const cached = this.constructor._branchCodes;
+    const cached = numberingContext ? null : this.constructor._branchCodes;
     if (cached && cached[id]) return cached[id];
     try {
-      const db = await BaseModel.getDb();
+      const db = numberingContext?.db || await BaseModel.getDb();
       const branches = db.collection('branches');
       const filter = {};
-      if (BaseModel.license) filter.license = BaseModel.license;
+      if (numberingContext) filter.license = numberingContext.license;
+      else if (BaseModel.license) filter.license = BaseModel.license;
       const rows = await branches
         .find(filter, { projection: { _id: 1, created_date: 1 } })
         .toArray();
@@ -13886,9 +13899,10 @@ class SalesRepository {
       rows.forEach((r, i) => {
         map[String(r._id)] = 'B' + (i + 1);
       });
-      this.constructor._branchCodes = map;
+      if (!numberingContext) this.constructor._branchCodes = map;
       return map[id] || '';
     } catch (e) {
+      if (numberingContext) throw e;
       return '';
     }
   }
@@ -13924,11 +13938,11 @@ class SalesRepository {
     typeLetter,
     branchId,
     n,
-    { isReturn = false, fallbackPrefix = 'S', period = '' } = {}
+    { isReturn = false, fallbackPrefix = 'S', period = '', numberingContext } = {}
   ) {
     const [branchCode, deviceCode] = await Promise.all([
-      this.branchCode(branchId),
-      this.deviceCode(),
+      this.branchCode(branchId, numberingContext),
+      this.deviceCode(numberingContext),
     ]);
     if (branchCode && deviceCode) {
       const built = billNumber.compose({
@@ -13944,7 +13958,7 @@ class SalesRepository {
       if (built.warning) console.warn('[bill-number]', built.warning);
       return built.number;
     }
-    return this.buildSalesId(fallbackPrefix, n, { period });
+    return this.buildSalesId(fallbackPrefix, n, { period, numberingContext });
   }
 
   /*
@@ -14102,8 +14116,8 @@ class SalesRepository {
     }
   }
 
-  async maxIssuedSalesNumber(branchIdRaw, licenseRaw, { periodLabel = '' } = {}) {
-    const db = await BaseModel.getDb();
+  async maxIssuedSalesNumber(branchIdRaw, licenseRaw, { periodLabel = '', numberingContext } = {}) {
+    const db = numberingContext?.db || await BaseModel.getDb();
     const asObjectId = (v) =>
       v instanceof mongoose.Types.ObjectId
         ? v
