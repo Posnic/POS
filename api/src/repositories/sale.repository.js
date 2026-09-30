@@ -7998,6 +7998,8 @@ class SalesRepository {
               sales_id: 1,
               token_id: 1,
               table_number: 1,
+              'outlet_snapshot.name': 1,
+              room_reference: 1,
               created_date: 1,
               date: 1,
               items: 1,

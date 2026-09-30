@@ -160,6 +160,8 @@ function tickets(sale) {
           {
             id: `${sale._id}:${round.id}`,
             table: String(sale.table_number || ''),
+            outlet: String(sale.outlet_snapshot?.name || ''),
+            roomReference: String(sale.room_reference || ''),
             orderNumber: String(sale.sales_id || sale.token_id || ''),
             placedAt: kitchenTime,
             items,

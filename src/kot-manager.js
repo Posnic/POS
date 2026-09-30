@@ -1369,7 +1369,7 @@ class KOTManager {
     const placeLine = placeParts.join('   ');
     /* What the customer said about the whole order, and - for a delivery -
        where it is going. Both were on the sale and neither was printed. */
-    const orderNote   = String(sale.notes || sale.note || '').trim();
+    const orderNote   = [sale.outlet_snapshot?.name, sale.room_reference ? 'Room / reference: ' + sale.room_reference : '', String(sale.notes || sale.note || '').trim()].filter(Boolean).join(' · ');
     const deliverTo   = String(sale.fulfilment || '') === 'delivery'
       ? [sale.customer_name, sale.customer_address, sale.customer_phone].filter(Boolean).map(String).join(' / ')
       : '';

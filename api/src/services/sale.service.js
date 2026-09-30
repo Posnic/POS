@@ -322,6 +322,8 @@ const processSale = async (
       }
     }
 
+    const billingOutlets = require('./billing-outlets');
+    const outlet = await billingOutlets.resolve(context, data.outlet_id, existingSale, data.outlet_revision);
     const itemsale = [];
     const total_available_qty_map = {}; // To track simulated deductions within this batch
 
@@ -366,12 +368,17 @@ const processSale = async (
         0;
 
       // Selling Price Resolution
-      const sellingPrice =
+      let sellingPrice =
         parseLegacyNumber(item.sale_inline_item_price) ??
         parseLegacyNumber(item.item_price_total) ??
         parseLegacyNumber(document.selling_price) ??
         0;
 
+      if (outlet && !existingSale) {
+        const extras = (Array.isArray(item.modifiers) ? item.modifiers : []).reduce((sum, m) => sum + (Number(m.price_delta) || 0), 0);
+        sellingPrice = billingOutlets.price(outlet, document, sellingPrice);
+        if (document.open_price !== true && Number(document.selling_price) > 0 && document.item_status !== 'instant') sellingPrice += extras;
+      }
       const itemAmount = sellingPrice * itemQuantity;
 
       // Prefer payload-provided company_price_total when available, otherwise
@@ -710,6 +717,23 @@ const processSale = async (
 
     // Stop before numbering, stock, payment or sale writes. This internal
     // preview uses the exact checkout tax and header calculations above/below.
+    if (outlet) {
+      const base = calculateSaleHeader(data, sale_tot_amount, { ...context, roundOff: false }).finalSaleTotAmount;
+      const automatic = billingOutlets.charge(outlet, sale_tot_amount > 0 ? Math.max(0, base * (1 - sale_tax_amount / sale_tot_amount)) : 0);
+      data = { ...data, charges: [...(Array.isArray(data.charges) ? data.charges : []).filter(c => c.source !== 'outlet'), ...(automatic ? [automatic] : [])] };
+      // Charges are added after bill discounts, without discounting the charge again.
+      const manual = data.charges.filter(c => c.source !== 'outlet');
+      const manualAmount = manual.reduce((n, c) => n + Math.max(0, round2(Number(c.amount) || 0)), 0);
+      const manualTax = manual.reduce((n, c) => n + ((c.taxed === true || c.taxed === 'true') ? Math.max(0, round2(Number(c.tax_amount) || 0)) : 0), 0);
+      context = { ...context, outletCharge: (automatic ? automatic.amount + automatic.tax_amount : 0) + manualAmount + manualTax };
+      sale_tax_amount += (automatic ? automatic.tax_amount : 0) + manualTax;
+      if (data.outlet_expected_total !== undefined) {
+        const expected = Number(data.outlet_expected_total);
+        const payable = calculateSaleHeader(data, sale_tot_amount, context).salesTotalForDoc;
+        if (!Number.isFinite(expected) || Math.abs(expected - payable) > 0.005)
+          return { status: false, message: 'The outlet total differs from the displayed bill. Review prices and charges before saving.' };
+      }
+    }
     const decisionPricing =
       preview || beforeCommit
         ? {
@@ -998,6 +1022,7 @@ const processSale = async (
       customer_name: (data.customer_name || '').trim(),
       customer_address: (data.customer_address || '').trim(),
       customer_phone: (data.customer_phone || '').trim(),
+      ...(outlet ? { outlet_id: outlet.id, outlet_snapshot: { id: outlet.id, name: outlet.name, markup_percent: outlet.markup_percent, service_percent: outlet.service_percent, service_tax_percent: outlet.service_tax_percent, prices: outlet.prices }, room_reference: String(data.room_reference ?? existingSale?.room_reference ?? '').trim().slice(0, 80) } : {}),
       customer_email: (data.customer_email || '').trim(),
       customer_state: (data.customer_state || '').trim(),
       customer_country: (data.customer_country || '').trim(),
@@ -1107,7 +1132,7 @@ const processSale = async (
                         .slice(0, 40)
                     : '',
                   tax_amount: taxed ? round2(parseFloat(c && c.tax_amount) || 0, 2) : 0,
-                  source: c && c.source === 'quote' ? 'quote' : 'manual',
+                  source: outlet && c.source === 'outlet' ? 'outlet' : c && c.source === 'quote' ? 'quote' : 'manual',
                 },
               ];
             }),
