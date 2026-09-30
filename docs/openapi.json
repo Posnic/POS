@@ -10189,6 +10189,39 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/mobile/v1/print-jobs/{saleId}": {
+      "get": {
+        "summary": "not_found",
+        "operationId": "get_mobile_v1_print_jobs_saleId",
+        "tags": [
+          "Mobile pos"
+        ],
+        "parameters": [
+          {
+            "name": "saleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/online-ordering": {
       "get": {
         "summary": "defaultStorefront",
