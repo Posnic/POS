@@ -259,6 +259,7 @@ async function release(db, scope, id) {
         last_seating_release_generation: claim.generation,
         updated_date: new Date(),
       },
+      $inc: { captain_table_version: 1 },
     }
   );
   await store(db).updateOne(

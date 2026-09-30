@@ -264,3 +264,112 @@ test('neighbour settings reject self, missing, malformed and other-branch identi
   expect(saved.captain_table_version).toBe(0);
   expect(saved.adjacent_table_ids).toBeUndefined();
 });
+test('seating claims are visible on every member and block table edits and manual release', async () => {
+  const seating = require('../../../src/services/seating-claims');
+  const second = await service.update(
+    req({ tableorder_value: 'T2', capacity: 2, max_capacity: 2 })
+  );
+  const first = await service.update(
+    req({ tableorder_value: 'T1', capacity: 2, max_capacity: 2, adjacent_table_ids: [second.id] })
+  );
+  const scope = { branchId: branch, license };
+  const claim = await seating.reserve(db, scope, {
+    request_id: 'combined-seating-0001',
+    actor: String(user),
+    table_ids: [first.id, second.id],
+    primary_id: first.id,
+    guests: 4,
+  });
+  const held = (await service.list(req())).tables;
+  expect(
+    held.every((table) => table.status === 'held' && table.seating.primary_id === first.id)
+  ).toBe(true);
+  await expect(service.update(req({ ...second, capacity: 3, max_capacity: 3 }))).rejects.toThrow(
+    'active seating group'
+  );
+  await expect(
+    service.state(req({ id: second.id, version: 0, status: 'available' }))
+  ).rejects.toThrow('active seating group');
+  const orderId = new ObjectId();
+  await seating.bind(db, scope, claim.id, String(user), String(orderId));
+  await db.collection('sales').insertOne({
+    _id: orderId,
+    branch_id: branch,
+    license,
+    table_number: 'T1',
+    sale_process: 'KOT',
+    payment_status: 'Paid',
+    floor_lifecycle: true,
+    person_count: 4,
+  });
+  const occupied = (await service.list(req())).tables;
+  expect(
+    occupied.every((table) => table.status === 'occupied' && table.orders[0].id === String(orderId))
+  ).toBe(true);
+  await service.close(
+    req({
+      id: first.id,
+      version: 0,
+      request_id: 'combined-close-0001',
+      orderIds: [String(orderId)],
+    })
+  );
+  const closed = (await service.list(req())).tables;
+  expect(
+    closed.every((table) => table.status === 'cleaning' && !table.seating && !table.orders.length)
+  ).toBe(true);
+  expect(closed.find((table) => table.id === second.id).version).toBe(1);
+  await expect(
+    service.state(req({ id: second.id, version: 0, status: 'available' }))
+  ).rejects.toThrow('Table changed');
+  await service.state(req({ id: second.id, version: 1, status: 'available' }));
+});
+test('interrupted group release remains retryable after the sale leaves active orders', async () => {
+  const seating = require('../../../src/services/seating-claims');
+  const second = await service.update(
+    req({ tableorder_value: 'T2', capacity: 2, max_capacity: 2 })
+  );
+  const first = await service.update(
+    req({ tableorder_value: 'T1', capacity: 2, max_capacity: 2, adjacent_table_ids: [second.id] })
+  );
+  const scope = { branchId: branch, license };
+  const claim = await seating.reserve(db, scope, {
+    request_id: 'combined-seating-0001',
+    actor: String(user),
+    table_ids: [first.id, second.id],
+    primary_id: first.id,
+    guests: 4,
+  });
+  const orderId = new ObjectId();
+  await seating.bind(db, scope, claim.id, String(user), String(orderId));
+  await db
+    .collection('sales')
+    .insertOne({
+      _id: orderId,
+      branch_id: branch,
+      license,
+      table_number: 'T1',
+      sale_process: 'KOT',
+      payment_status: 'Paid',
+      floor_lifecycle: true,
+    });
+  const body = {
+    id: first.id,
+    version: 0,
+    request_id: 'combined-close-0001',
+    orderIds: [String(orderId)],
+  };
+  const release = jest
+    .spyOn(seating, 'release')
+    .mockRejectedValueOnce(new Error('connection lost'));
+  await expect(service.close(req(body))).rejects.toThrow('connection lost');
+  release.mockRestore();
+  const pending = (await service.list(req())).tables;
+  expect(pending.every((table) => table.closing?.request_id === body.request_id)).toBe(true);
+  await service.close(req(body));
+  expect(
+    (await service.list(req())).tables.every(
+      (table) => table.status === 'cleaning' && !table.closing
+    )
+  ).toBe(true);
+});

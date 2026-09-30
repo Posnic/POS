@@ -2,6 +2,15 @@
 const { ObjectId } = require('mongodb');
 const { context, allowed, fail } = require('../utils/branch-access');
 const details = require('../utils/table-details');
+const seating = require('./seating-claims');
+const activeClaims = async (db, scope) =>
+  (await seating.read(db, scope)).filter((claim) =>
+    ['reserved', 'submitting'].includes(claim.state)
+  );
+async function assertUnclaimed(db, scope, id) {
+  if ((await activeClaims(db, scope)).some((claim) => claim.tables.includes(String(id))))
+    fail('This table is part of an active seating group.', 409);
+}
 const active = (c) => ({
   branch_id: c.branchId,
   license: c.license,
@@ -12,17 +21,30 @@ async function scope(req, manage = false) {
     fail('Permission is required.', 403);
   return context(req);
 }
-function view(row, orders = []) {
+function view(row, orders = [], claim = null) {
   return {
     id: String(row._id),
     tableorder_value: row.tableorder_value,
     ...details.view(row),
     version: row.captain_table_version || 0,
     closing:
-      row.floor_close && !row.floor_close.completed
+      row.floor_close &&
+      (!row.floor_close.completed ||
+        (claim?.order_id && row.floor_close.orders.includes(claim.order_id)))
         ? { request_id: row.floor_close.id, orderIds: row.floor_close.orders }
         : null,
-    status: orders.length ? 'occupied' : row.service_state || 'available',
+    status: orders.length ? 'occupied' : claim ? 'held' : row.service_state || 'available',
+    ...(claim
+      ? {
+          seating: {
+            id: claim.id,
+            primary_id: claim.primary,
+            table_ids: claim.tables,
+            labels: claim.labels,
+            guests: claim.guests,
+          },
+        }
+      : {}),
     orders: orders.map((o) => ({
       id: String(o._id),
       guests: Number(o.person_count) || 0,
@@ -32,7 +54,7 @@ function view(row, orders = []) {
 }
 async function list(req) {
   const c = await scope(req);
-  const [tables, orders] = await Promise.all([
+  const [tables, orders, claims] = await Promise.all([
     req.db
       .collection('tableorder')
       .find({ branch_id: c.branchId, license: c.license })
@@ -42,15 +64,23 @@ async function list(req) {
       .collection('sales')
       .find(active(c), { projection: { table_number: 1, person_count: 1, payment_status: 1 } })
       .toArray(),
+    activeClaims(req.db, c),
   ]);
   return {
     canManage: allowed(req.user, 'settings'),
-    tables: tables.map((row) =>
-      view(
-        row,
-        orders.filter((o) => String(o.table_number) === String(row.tableorder_value))
-      )
-    ),
+    tables: tables.map((row) => {
+      const claim = claims.find((entry) => entry.tables.includes(String(row._id)));
+      const primary = claim && tables.find((entry) => String(entry._id) === claim.primary);
+      return view(
+        primary?.floor_close ? { ...row, floor_close: primary.floor_close } : row,
+        orders.filter(
+          (order) =>
+            String(order.table_number) === String(row.tableorder_value) ||
+            (claim?.order_id && String(order._id) === claim.order_id)
+        ),
+        claim
+      );
+    }),
   };
 }
 async function update(req) {
@@ -68,6 +98,7 @@ async function update(req) {
   };
   const previous = body.id ? await tables.findOne(filter) : null;
   if (body.id && !previous) fail('Table not found.', 404);
+  if (previous) await assertUnclaimed(req.db, c, previous._id);
   if (
     previous &&
     (!Number.isSafeInteger(body.version) || body.version !== (previous.captain_table_version || 0))
@@ -160,6 +191,7 @@ async function state(req) {
   const filter = { _id: new ObjectId(body.id), branch_id: c.branchId, license: c.license };
   const row = await req.db.collection('tableorder').findOne(filter);
   if (!row) fail('Table not found.', 404);
+  await assertUnclaimed(req.db, c, row._id);
   if (row.floor_close && !row.floor_close.completed)
     fail('Table changed. Refresh and try again.', 409);
   if (!Number.isSafeInteger(body.version) || body.version !== (row.captain_table_version || 0))
@@ -304,6 +336,11 @@ async function close(req) {
         /* Periodic sync also discovers updated rows. */
       }
     }
+  }
+  const claims = await activeClaims(req.db, c);
+  for (const claim of claims) {
+    if (claim.primary === String(table._id) && ids.includes(claim.order_id))
+      await seating.release(req.db, c, claim.id);
   }
   table = await tables.findOne(filter);
   const open = await sales.find({ ...active(c), table_number: table.tableorder_value }).toArray();
