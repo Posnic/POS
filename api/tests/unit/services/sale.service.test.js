@@ -701,6 +701,81 @@ describe('SalesService', () => {
       expect(result.status).toBe(true);
     });
 
+    test('desktop edit cannot bypass the seating move protocol', async () => {
+      const doc = {
+        _id: SALE_ID,
+        items: [],
+        changes: [],
+        set: jest.fn(),
+        sales_id: 'INV1',
+        seating_request_id: 'claim-1',
+        table_number: 'T1',
+        person_count: 2,
+        dine_type: 'Dine-in',
+      };
+      salesRepository.getById.mockResolvedValue(doc);
+      BaseModel.getDb.mockResolvedValue({
+        collection: () => ({
+          findOne: async () => ({
+            claims: [
+              {
+                id: 'claim-1',
+                order_id: SALE_ID,
+                state: 'submitting',
+                tables: ['t1'],
+                labels: ['T1'],
+              },
+            ],
+          }),
+        }),
+      });
+      const result = await salesService.processSale(
+        makeSaleData({ table_number: 'T2' }),
+        SALE_ID,
+        'Edit',
+        makeContext()
+      );
+      expect(result.status).toBe(false);
+      expect(result.message).toContain('Change the seating group');
+      expect(doc.set).not.toHaveBeenCalled();
+      expect(salesRepository.save).not.toHaveBeenCalled();
+    });
+    test('ordinary desktop item edits retain an atomic seating identity condition', async () => {
+      const at = new Date('2026-09-30T10:00:00Z');
+      const doc = {
+        _id: SALE_ID,
+        items: [],
+        changes: [],
+        set: jest.fn(),
+        sales_id: 'INV1',
+        updated_date: at,
+        seating_request_id: 'claim-1',
+        table_number: 'T1',
+        person_count: 2,
+        dine_type: 'Dine-in',
+      };
+      salesRepository.getById.mockResolvedValue(doc);
+      BaseModel.getDb.mockResolvedValue({
+        collection: () => ({
+          findOne: async () => ({
+            claims: [
+              {
+                id: 'claim-1',
+                order_id: SALE_ID,
+                state: 'submitting',
+                tables: ['t1'],
+                labels: ['T1'],
+              },
+            ],
+          }),
+        }),
+      });
+      const result = await salesService.processSale(makeSaleData(), SALE_ID, 'Edit', makeContext());
+      expect(result.status).toBe(true);
+      expect(doc.$where).toMatchObject({ seating_request_id: 'claim-1', updated_date: at });
+      expect(salesRepository.save).toHaveBeenCalledWith(doc);
+    });
+
     test('settling an open table records the payment instead of erasing it', async () => {
       /*
        * Owner, twice: "when payment done table not cleared from active order
