@@ -498,3 +498,87 @@ test('two simultaneous moves cannot replace the same group twice', async () => {
   expect(results.filter((row) => row.status === 'fulfilled')).toHaveLength(1);
   expect(await seating.read(db, scope)).toHaveLength(2);
 });
+
+async function movingGroup() {
+  const order = await movableOrder();
+  const move = await seating.prepareMove(
+    db,
+    scope,
+    String(order._id),
+    request({ request_id: 'moving-request-0001', table_ids: ids.slice(1), primary_id: ids[1] })
+  );
+  return { order, move };
+}
+test('cancelling a prepared group move keeps original order and releases only destination reservation', async () => {
+  const { order, move } = await movingGroup();
+  await seating.cancelMove(db, scope, move.id, 'staff-1');
+  await seating.cancelMove(db, scope, move.id, 'staff-1');
+  expect((await db.collection('sales').findOne({ _id: order._id })).seating_request_id).toBe(
+    order.seating_request_id
+  );
+  expect((await seating.find(db, scope, order.seating_request_id)).moving_to).toBeUndefined();
+  expect((await seating.find(db, scope, move.id)).state).toBe('cancelled');
+  await expect(seating.completeMove(db, scope, move.id, 'staff-1')).rejects.toMatchObject({
+    status: 409,
+  });
+});
+test('completing a group move updates the same order once and cleans only vacated tables', async () => {
+  const { order, move } = await movingGroup();
+  await db
+    .collection('sales')
+    .updateOne({ _id: order._id }, { $set: { items: [{ name: 'Soup', quantity: 2 }] } });
+  await seating.completeMove(db, scope, move.id, 'staff-1');
+  await seating.completeMove(db, scope, move.id, 'staff-1');
+  const sale = await db.collection('sales').findOne({ _id: order._id });
+  expect(sale.table_number).toBe('T2');
+  expect(sale.items).toEqual([{ name: 'Soup', quantity: 2 }]);
+  expect(sale.captain_audit).toHaveLength(1);
+  expect((await seating.find(db, scope, order.seating_request_id)).state).toBe('released');
+  expect(
+    (await db.collection('tableorder').findOne({ _id: new ObjectId(ids[0]) })).service_state
+  ).toBe('cleaning');
+  expect(
+    (await db.collection('tableorder').findOne({ _id: new ObjectId(ids[1]) })).service_state
+  ).toBeUndefined();
+});
+test('interrupted move after sale update resumes without repeating the order change', async () => {
+  const { order, move } = await movingGroup();
+  const tables = db.collection('tableorder');
+  const failing = {
+    collection(name) {
+      return name === 'tableorder'
+        ? {
+            updateMany: async () => {
+              throw new Error('interrupted');
+            },
+          }
+        : db.collection(name);
+    },
+  };
+  await expect(seating.completeMove(failing, scope, move.id, 'staff-1')).rejects.toThrow(
+    'interrupted'
+  );
+  await expect(seating.cancelMove(db, scope, move.id, 'staff-1')).rejects.toMatchObject({
+    status: 409,
+  });
+  await seating.completeMove(db, scope, move.id, 'staff-1');
+  expect((await db.collection('sales').findOne({ _id: order._id })).captain_audit).toHaveLength(1);
+  expect((await tables.findOne({ _id: new ObjectId(ids[0]) })).captain_table_version).toBe(1);
+});
+
+test('cancel and complete race reaches one consistent seating result', async () => {
+  const { order, move } = await movingGroup();
+  await Promise.allSettled([
+    seating.cancelMove(db, scope, move.id, 'staff-1'),
+    seating.completeMove(db, scope, move.id, 'staff-1'),
+  ]);
+  const claim = await seating.find(db, scope, move.id);
+  const sale = await db.collection('sales').findOne({ _id: order._id });
+  if (claim.state === 'cancelled') expect(sale.seating_request_id).toBe(order.seating_request_id);
+  else {
+    await seating.completeMove(db, scope, move.id, 'staff-1');
+    expect((await db.collection('sales').findOne({ _id: order._id })).seating_request_id).toBe(
+      move.id
+    );
+  }
+});

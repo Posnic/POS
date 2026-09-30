@@ -5,7 +5,7 @@ const details = require('../utils/table-details');
 const seating = require('./seating-claims');
 const activeClaims = async (db, scope) =>
   (await seating.read(db, scope)).filter((claim) =>
-    ['reserved', 'submitting'].includes(claim.state)
+    ['reserved', 'submitting', 'applying'].includes(claim.state)
   );
 async function assertUnclaimed(db, scope, id) {
   if ((await activeClaims(db, scope)).some((claim) => claim.tables.includes(String(id))))
