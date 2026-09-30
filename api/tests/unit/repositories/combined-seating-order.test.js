@@ -171,19 +171,17 @@ test('item edits retain the group capacity and cannot detach its table metadata'
 });
 test('another existing order cannot move into a reserved group', async () => {
   const otherId = new ObjectId();
-  await db
-    .collection('sales')
-    .insertOne({
-      _id: otherId,
-      branch_id: branch,
-      license,
-      table_number: 'T3',
-      table_id: '',
-      dine_type: 'Dine-in',
-      person_count: 2,
-      sale_process: 'KOT',
-      items: [],
-    });
+  await db.collection('sales').insertOne({
+    _id: otherId,
+    branch_id: branch,
+    license,
+    table_number: 'T3',
+    table_id: '',
+    dine_type: 'Dine-in',
+    person_count: 2,
+    sale_process: 'KOT',
+    items: [],
+  });
   const result = await repo.updateOrderModel(
     String(otherId),
     [],
@@ -200,4 +198,63 @@ test('another existing order cannot move into a reserved group', async () => {
   expect(result.status).toBe(false);
   expect(result.message).toContain('reserved');
   expect((await db.collection('sales').findOne({ _id: otherId })).table_number).toBe('T3');
+});
+test('group cancellation releases the tables and retries do not repeat the kitchen change', async () => {
+  const created = await submit();
+  if (!created.status) throw new Error(created.message);
+  const cancel = () =>
+    repo.updateOrderModel(
+      created.data.sale_id,
+      [],
+      0,
+      'cancelled',
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {}
+    );
+  const first = await cancel();
+  if (!first.status) throw new Error(first.message);
+  const stored = await db.collection('sales').findOne({ _id: new ObjectId(created.data.sale_id) });
+  expect(stored.sale_process).toBe('cancelled');
+  expect(stored.floor_closed_at).toBeInstanceOf(Date);
+  expect((await seating.find(db, { branchId: branch, license }, claim.id)).state).toBe('released');
+  expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(2);
+  await db.collection('tableorder').updateMany({}, { $set: { service_state: 'available' } });
+  const count = stored.changes.length;
+  expect((await cancel()).status).toBe(true);
+  expect((await db.collection('sales').findOne({ _id: stored._id })).changes).toHaveLength(count);
+  expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(0);
+});
+test('an interrupted cancellation release retries without writing another kitchen cancellation', async () => {
+  const created = await submit();
+  if (!created.status) throw new Error(created.message);
+  const cancel = () =>
+    repo.updateOrderModel(
+      created.data.sale_id,
+      [],
+      0,
+      'cancelled',
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {}
+    );
+  const release = jest
+    .spyOn(seating, 'release')
+    .mockRejectedValueOnce(new Error('lost connection'));
+  expect((await cancel()).status).toBe(false);
+  release.mockRestore();
+  const saved = await db.collection('sales').findOne({ _id: new ObjectId(created.data.sale_id) });
+  expect((await cancel()).status).toBe(true);
+  expect((await db.collection('sales').findOne({ _id: saved._id })).changes).toHaveLength(
+    saved.changes.length
+  );
+  expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(2);
 });

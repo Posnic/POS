@@ -10113,6 +10113,17 @@ class SalesRepository {
         return { status: false, message: 'Order not found', data: [] };
       }
 
+      if (status === 'cancelled' && String(orderDoc.sale_process).toLowerCase() === 'cancelled') {
+        if (orderDoc.seating_request_id) {
+          await require('../services/seating-claims').release(
+            db,
+            { branchId: orderDoc.branch_id, license: orderDoc.license },
+            orderDoc.seating_request_id
+          );
+        }
+        return { status: true, message: 'Order cancelled', data: { order_id: orderId } };
+      }
+
       const editFilter = {
         _id: orderObjectId,
         captain_payment_plan: { $exists: false },
@@ -10219,6 +10230,9 @@ class SalesRepository {
         const mongoDate = new Date();
         const updateFields = {
           sale_process: 'cancelled',
+          ...(orderDoc.seating_request_id
+            ? { floor_closed_at: mongoDate, floor_closed_by: actor.id || null }
+            : {}),
           payment_status: 'Cancelled',
           payment_pending: 0.0,
           updated_date: mongoDate,
@@ -10227,7 +10241,7 @@ class SalesRepository {
         };
 
         const existingItems = Array.isArray(orderDoc.items) ? orderDoc.items : [];
-        const existingChanges = Array.isArray(orderDoc.changes) ? orderDoc.changes : [];
+        const existingChanges = Array.isArray(orderDoc.changes) ? [...orderDoc.changes] : [];
         const changesItems = [];
 
         for (const ex of existingItems) {
@@ -10318,6 +10332,14 @@ class SalesRepository {
           });
         }
 
+        if (updateResult.modifiedCount > 0 && orderDoc.seating_request_id) {
+          await require('../services/seating-claims').release(
+            db,
+            { branchId: orderDoc.branch_id, license: orderDoc.license },
+            orderDoc.seating_request_id
+          );
+        }
+
         return updateResult.modifiedCount > 0
           ? {
               status: true,
@@ -10357,7 +10379,7 @@ class SalesRepository {
       }
 
       const changesItems = [];
-      const existingChanges = Array.isArray(orderDoc.changes) ? orderDoc.changes : [];
+      const existingChanges = Array.isArray(orderDoc.changes) ? [...orderDoc.changes] : [];
       const existingIndex = {};
       existingItems.forEach((ex, idx) => {
         const key = orderLine.key(ex);

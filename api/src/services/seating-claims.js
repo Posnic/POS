@@ -278,29 +278,41 @@ async function release(db, scope, id) {
     ...require('../helpers/floor-eligibility').floorEligibility(),
     table_number: { $in: claim.labels },
   });
-  if (remainingOrders) fail('Close the remaining orders before releasing this table.', 409);
+  const cancelled = String(sale.sale_process).toLowerCase() === 'cancelled';
+  if (remainingOrders && !cancelled)
+    fail('Close the remaining orders before releasing this table.', 409);
+  const otherClaims =
+    cancelled &&
+    (await read(db, scope)).some(
+      (other) =>
+        other.id !== claim.id &&
+        !terminal(other) &&
+        other.tables.some((table) => claim.tables.includes(table))
+    );
+  const stillOccupied = cancelled && (remainingOrders > 0 || otherClaims);
   // The claim keeps all member tables unavailable while this projection runs.
   // Retrying after interruption repeats only the cleaning projection, never the
   // payment, item, kitchen or stock operations.
-  await db.collection('tableorder').updateMany(
-    {
-      branch_id: scope.branchId,
-      license: scope.license,
-      _id: { $in: claim.tables.map((value) => new ObjectId(value)) },
-      $or: [
-        { last_seating_release_generation: { $exists: false } },
-        { last_seating_release_generation: { $lt: claim.generation } },
-      ],
-    },
-    {
-      $set: {
-        service_state: 'cleaning',
-        last_seating_release_generation: claim.generation,
-        updated_date: new Date(),
+  if (!stillOccupied)
+    await db.collection('tableorder').updateMany(
+      {
+        branch_id: scope.branchId,
+        license: scope.license,
+        _id: { $in: claim.tables.map((value) => new ObjectId(value)) },
+        $or: [
+          { last_seating_release_generation: { $exists: false } },
+          { last_seating_release_generation: { $lt: claim.generation } },
+        ],
       },
-      $inc: { captain_table_version: 1 },
-    }
-  );
+      {
+        $set: {
+          service_state: 'cleaning',
+          last_seating_release_generation: claim.generation,
+          updated_date: new Date(),
+        },
+        $inc: { captain_table_version: 1 },
+      }
+    );
   await store(db).updateOne(
     {
       _id: scopeKey(scope),

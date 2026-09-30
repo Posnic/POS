@@ -359,3 +359,30 @@ test('closing one of multiple orders cannot mark the shared table for cleaning',
   await expect(seating.release(db, scope, first.id)).rejects.toThrow('remaining orders');
   expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(0);
 });
+test('cancelling one ticket releases only its claim and does not dirty a shared table', async () => {
+  await db
+    .collection('branches')
+    .insertOne({ _id: scope.branchId, license: scope.license, table_order_limit: 2 });
+  const first = await seating.reserve(db, scope, request({ table_ids: [ids[0]], guests: 2 }));
+  const second = await seating.reserve(
+    db,
+    scope,
+    request({ request_id: 'seating-request-0002', table_ids: [ids[0]], guests: 2 })
+  );
+  const saleId = new ObjectId();
+  await seating.bind(db, scope, first.id, 'staff-1', String(saleId));
+  await db
+    .collection('sales')
+    .insertOne({
+      _id: saleId,
+      branch_id: scope.branchId,
+      license: scope.license,
+      table_number: 'T1',
+      sale_process: 'cancelled',
+      floor_closed_at: new Date(),
+    });
+  await seating.release(db, scope, first.id);
+  expect((await seating.find(db, scope, first.id)).state).toBe('released');
+  expect((await seating.find(db, scope, second.id)).state).toBe('reserved');
+  expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(0);
+});
