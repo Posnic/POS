@@ -236,12 +236,14 @@ router.post(
       access.fail('MANAGER_REQUIRED', 'Settings permission is required.');
     const c = await require('../utils/branch-access').context(req);
     const value = payments.validateSettings(req.body || {});
-    await req.db
+    const result = await req.db
       .collection('branches')
       .updateOne(
         { _id: c.branchId, license: c.license },
         { $set: { captain_payments: value, updated_date: new Date() } }
       );
+    if (result.matchedCount !== 1)
+      require('../utils/branch-access').fail('Settings changed. Refresh and try again.', 409);
     return { saved: true, ...value };
   })
 );
