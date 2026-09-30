@@ -259,3 +259,68 @@ test.each([
     expect(saved.paid_amount).toBe(105);
   }
 );
+
+test('UPI QR requires manual verification, captures payee and retries after settings change', async () => {
+  const upiPayee = { id: 'captain-test@invalid', name: 'Test Branch' };
+  await db.collection('branches').updateOne(
+    { _id: branch },
+    {
+      $set: {
+        branch_upi_id: upiPayee.id,
+        branch_upi_name: upiPayee.name,
+      },
+    }
+  );
+  const plan = await service.prepare(req());
+  expect(plan.upiPayee).toEqual(upiPayee);
+  const input = pay(plan, {
+    method: 'Upi',
+    upi: { ...upiPayee, verified: false },
+    reference: 'test-utr',
+  });
+  await expect(service.record(input)).rejects.toThrow('Verify the received');
+  input.body.upi.verified = true;
+  const result = await service.record(input);
+  expect(result.dueMinor).toBe(0);
+  expect(result.payments[0].upi).toEqual({ ...upiPayee, verified: true });
+  expect(result.payments[0].staff).toBe('Staff');
+  expect(result.payments[0].reference).toBe('test-utr');
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { branch_upi_id: 'changed@invalid' } });
+  const retry = await service.record(input);
+  expect(retry.payments).toHaveLength(1);
+  input.body.upi.id = 'changed@invalid';
+  await expect(service.record(input)).rejects.toThrow('already used');
+});
+
+test('UPI QR rejects stale receiving account and non-INR bills', async () => {
+  await db.collection('branches').updateOne(
+    { _id: branch },
+    {
+      $set: {
+        branch_upi_id: 'captain-test@invalid',
+        branch_upi_name: 'Test Branch',
+      },
+    }
+  );
+  const plan = await service.prepare(req());
+  await expect(
+    service.record(
+      pay(plan, {
+        method: 'Upi',
+        upi: {
+          id: 'other@invalid',
+          name: 'Other Branch',
+          verified: true,
+        },
+      })
+    )
+  ).rejects.toThrow('UPI details changed');
+  await db
+    .collection('captain_payment_plans')
+    .updateOne({ _id: plan.id }, { $set: { 'snapshot.currencyCode': 'USD' } });
+  await expect(
+    service.record(pay(plan, { method: 'Upi', upi: { ...plan.upiPayee, verified: true } }))
+  ).rejects.toThrow('Verify the received');
+});

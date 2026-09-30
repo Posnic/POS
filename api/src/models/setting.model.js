@@ -880,6 +880,7 @@ class SettingModel extends BaseModel {
       }
 
       const updateData = {
+        ...require('../utils/branch-upi').update(data),
         branch_name: data.store_name?.trim() || '',
         store_address: data.store_address?.trim() || '',
         store_email: data.store_email?.trim() || '',

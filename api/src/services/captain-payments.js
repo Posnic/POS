@@ -6,6 +6,7 @@ const { context, allowed, fail } = require('../utils/branch-access');
 const { snapshotFrom, billForGuest } = require('./guest-bill.service');
 const hash = (value) => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const oid = (value) => new ObjectId(String(value));
+const branchUpi = require('../utils/branch-upi');
 const METHODS = ['Cash', 'Card', 'Upi'];
 function settings(branch) {
   const saved = branch.captain_payments || {};
@@ -14,6 +15,7 @@ function settings(branch) {
       saved.enabled === true && ![false, 0, '0', 'false'].includes(branch.module_captain_enable),
     methods: METHODS.filter((method) => (saved.methods || METHODS).includes(method)),
     printReceipt: saved.printReceipt !== false,
+    upiPayee: branchUpi.payee(branch),
   };
 }
 function validateSettings(value) {
@@ -131,6 +133,7 @@ function view(plan, options) {
       staff: p.staffName,
       at: p.at,
       reference: p.reference,
+      ...(p.upi ? { upi: p.upi } : {}),
     })),
     ...options,
   };
@@ -189,6 +192,7 @@ async function reconcile(db, c, plan) {
               method: p.method,
               amount: p.allocations[String(sale._id)] / factor,
               reference: p.reference,
+              ...(p.upi ? { upi: p.upi } : {}),
               staffId: p.staffId,
               staffName: p.staffName,
               at: p.at,
@@ -428,6 +432,7 @@ async function record(req) {
     method: input.method,
     receivedMinor: input.receivedMinor,
     reference: input.reference || '',
+    ...(input.upi ? { upi: input.upi } : {}),
   });
   const previous = (plan.payments || []).find((p) => p.id === input.request_id);
   if (previous) {
@@ -461,6 +466,25 @@ async function record(req) {
     fail('Enter the amount received.');
   if (typeof (input.reference || '') !== 'string' || (input.reference || '').length > 100)
     fail('Invalid payment reference.');
+  if (input.upi) {
+    const currency = Money.snapshot(plan.snapshot);
+    const inr =
+      currency.currencyCode === 'INR' ||
+      (!currency.currencyCode && currency.currencySymbol === '₹');
+    if (
+      input.method !== 'Upi' ||
+      input.upi.verified !== true ||
+      !inr ||
+      currency.currencyDigits !== 2
+    )
+      fail('Verify the received UPI payment in the bank app.');
+    if (
+      !c.options.upiPayee ||
+      input.upi.id !== c.options.upiPayee.id ||
+      input.upi.name !== c.options.upiPayee.name
+    )
+      fail('The branch UPI details changed. Ask the cashier to verify this payment.', 409);
+  }
   const allocations = {};
   for (const index of indexes)
     for (const line of plan.guests[index].lines) {
@@ -482,6 +506,7 @@ async function record(req) {
     changeMinor: input.receivedMinor - amount,
     method: input.method,
     reference: (input.reference || '').trim(),
+    ...(input.upi ? { upi: { ...c.options.upiPayee, verified: true } } : {}),
     allocations,
     at: new Date(),
     staffId: String(req.user._id || req.user.id),

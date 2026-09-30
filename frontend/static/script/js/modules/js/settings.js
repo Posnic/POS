@@ -824,6 +824,8 @@ PosnicPro.settings = {
                 $('#razor_key').text(data.razorKey);
                 $('#razor_url').text(data.razorUrl);
                 $('#store_name').val(data.branch_name);
+                $('#branch_upi_id').val(data.branch_upi_id || '');
+                $('#branch_upi_name').val(data.branch_upi_name || '');
                 $('#store_address').val(data.store_address);
                 $('#address').val(data.address);
                 $('#store_email').val(data.store_email);
