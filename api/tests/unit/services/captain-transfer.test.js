@@ -606,3 +606,31 @@ test('persisted transfer of a separately discounted bill retains the discount on
   }
   expect(await service.complete(input)).toEqual(result);
 });
+
+
+test('ordinary editor replaces, retries and clears an allocated bill discount without extra kitchen tickets',async()=>{
+  const input=await confirmation(),completed=await service.complete(input),id=new ObjectId(completed.destinationId);
+  await db.collection('items').insertOne({_id:sale.items[0].item_id,license,name:'Corn',tax:99,tax_type:'exclusive'});
+  jest.spyOn(BaseModel,'getDb').mockResolvedValue(db);
+  const apply=async(value,type='amount')=>{
+    const answer=await runWithRequestContext({license,currentBranch:branch,loggedUser:String(input.user._id)},()=>
+      sales.updateOrderModel(String(id),[{product_id:String(sale.items[0].item_id),quantity:1,price:50}],52.5,'modified',type,value,null,null,null,null));
+    expect(answer).toMatchObject({status:true});
+    return db.collection('sales').findOne({_id:id});
+  };
+  const before=await db.collection('sales').findOne({_id:id});
+  for(const [value,type,total] of [[10,'amount',42.5],[10,'amount',42.5],[20,'percent',42.5],[5,'amount',47.5],[0,'amount',52.5]]){
+    const result=await apply(value,type);
+    expect(result.sales_total).toBe(total);
+    expect(result.tax).toBe(2.5);
+    expect(result.sale_extra_discount).toBe(0);
+    expect(require('../../../src/services/captain-transfer-discount').editorValue(result)).toEqual({extra_discount:52.5-total,extra_discount_type:'amount'});
+    const policyRequest={...input,body:{order_id:String(id),items:[{product_id:String(sale.items[0].item_id),quantity:1}],
+      extra_discount:52.5-total,extra_discount_type:'amount'}};
+    await expect(require('../../../src/services/captain-edit-policy').authorize(policyRequest)).resolves.toBeDefined();
+    policyRequest.body.extra_discount++;
+    await expect(require('../../../src/services/captain-edit-policy').authorize(policyRequest)).rejects.toMatchObject({status:422});
+    expect(result.changes).toEqual(before.changes);
+    expect(snapshotFrom([result],{currencyCode:'INR'},result.table_number).totalMinor).toBe(Math.round(total*100));
+  }
+});

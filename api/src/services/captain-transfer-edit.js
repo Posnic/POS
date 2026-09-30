@@ -178,4 +178,35 @@ function increases(sale, proposed, branch) {
   }
   return require('./captain-transfer-projection').applyMoney(sale, retained, branch, side);
 }
-module.exports = { metadata, reduce, additions, increases };
+function reconcile(sale, proposed, branch) {
+  const explicit = proposed.extra_discount !== undefined;
+  const candidate = { ...proposed };
+  if (explicit) {
+    for (const field of ['extra_discount','extra_discount_type','sale_extra_discount']) {
+      if (sale[field] === undefined) delete candidate[field];
+      else candidate[field] = sale[field];
+    }
+  }
+  const result = metadata(sale,candidate,branch) || reduce(sale,candidate,branch) ||
+    additions(sale,candidate,branch) || increases(sale,candidate,branch);
+  if (!result || !explicit) return result;
+  const value = Number(proposed.extra_discount);
+  const type = String(proposed.extra_discount_type ?? sale.extra_discount_type ?? 'amount').toLowerCase();
+  if (!Number.isFinite(value) || value < 0 ||
+      !['amount','price','fixed','percent','percentage'].includes(type)) return null;
+  const percentage = ['percent','percentage'].includes(type);
+  if (percentage && value > 100) return null;
+  const discounts = require('./captain-transfer-discount');
+  const clear = discounts.plan(result.captain_transfer_allocation,0);
+  const Money = require('../utils/currency'), policy = Money.policy(branch);
+  const base = Math.max(0,(clear.components.base || 0)+(clear.components.discount || 0));
+  const amount = percentage ? Money.toMinor(Money.fromMinor(base,policy)*value/100,policy) : Money.toMinor(value,policy);
+  if (!Number.isSafeInteger(amount) || amount < 0 || amount > 1e12) return null;
+  const side = discounts.plan(clear,Math.min(amount,clear.totalMinor));
+  // The allocated discount is already included in line/root amounts. Keep
+  // legacy extra inputs zero so receipt/report readers cannot deduct it again.
+  // Current bill-discount value is the sum of the tracked allocation shares.
+  Object.assign(result,{extra_discount:0,sale_extra_discount:0,extra_discount_type:'amount'});
+  return require('./captain-transfer-projection').applyMoney(sale,result,branch,side);
+}
+module.exports = { metadata, reduce, additions, increases, reconcile };

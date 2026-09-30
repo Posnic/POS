@@ -26,10 +26,11 @@ async function authorize(req) {
         (incoming.get(lineIdentity.key(line)) || 0) <
         Number(line.item_quantity ?? line.quantity ?? 0)
     );
+  const currentDiscount = sale.captain_transfer_allocation ? require('./captain-transfer-discount').editorValue(sale) : sale;
   const discount =
     body.extra_discount != null &&
-    (Number(body.extra_discount) !== Number(sale.extra_discount || 0) ||
-      (Number(body.extra_discount) !== 0 && body.extra_discount_type !== sale.extra_discount_type));
+    (Number(body.extra_discount) !== Number(currentDiscount.extra_discount || 0) ||
+      (Number(body.extra_discount) !== 0 && body.extra_discount_type !== currentDiscount.extra_discount_type));
   const reason = String(body.change_reason || body.discount_description || '').trim();
   if ((reduced || discount) && (reason.length < 3 || reason.length > 200))
     fail('Enter a reason for this change.', 422);

@@ -2,7 +2,7 @@
 
 // Pure bill-discount projection. Callers must normalize legacy extra-discount
 // fields before use and persist the result through the transfer allocation seal.
-// No route/editor uses this until those legacy formats are reconciled.
+// The editor uses this after transfer normalization has sealed those formats.
 function plan(side, amountMinor) {
   const fail = () => { throw new Error('Invalid bill discount allocation.'); };
   if (!Number.isSafeInteger(amountMinor) || amountMinor < 0 || amountMinor > 1e12 ||
@@ -116,4 +116,12 @@ function track(lines, amountMinor) {
   for (let i=0;i<remaining;i++) ranked[i].minor++;
   for (const row of shares) lines[row.index].billDiscountMinor=row.minor;
 }
-module.exports = { plan, legacy, track };
+function editorValue(sale) {
+  if (!sale.captain_transfer_allocation)
+    return { extra_discount: sale.extra_discount || 0, extra_discount_type: sale.extra_discount_type || 'price' };
+  const saved = require('../utils/transfer-allocation').read(sale,sale.captain_transfer_allocation);
+  const minor = saved.lines.reduce((sum,line)=>sum+(line.billDiscountMinor || 0),0);
+  const Money = require('../utils/currency');
+  return { extra_discount: Money.fromMinor(minor,Money.policy(saved)), extra_discount_type:'amount' };
+}
+module.exports = { plan, legacy, track, editorValue };
