@@ -742,3 +742,53 @@ test.each([{order_state:'pending'},{order_state:'rejected'},
     await db.collection('sales').updateOne({_id:sale._id},{$set:changed});
     expect((await scopedItemPreview()).status).toBe(false);
   });
+
+const editPreview = require('../../../src/services/captain-order-preview');
+function previewRequest() {
+  const input=req();
+  input.body={order_id:String(sale._id),items:[{product_id:String(sale.items[0].item_id),quantity:2,price:50}]};
+  return input;
+}
+test('edit preview API service returns scoped totals without writes or ambient database',async()=>{
+  await db.collection('items').insertOne({_id:sale.items[0].item_id,license,name:'Corn',tax:5,tax_type:'exclusive'});
+  const before=await db.collection('sales').findOne({_id:sale._id});
+  const ambient=jest.spyOn(BaseModel,'getDb').mockRejectedValue(new Error('Wrong database'));
+  const result=await editPreview.preview(previewRequest());
+  expect(result.total_amount).toBe(105);
+  expect(result.revision).toMatch(/^[a-f0-9]{64}$/);
+  expect(ambient).not.toHaveBeenCalled();
+  expect(await db.collection('sales').findOne({_id:sale._id})).toEqual(before);
+  expect((await db.listCollections().toArray()).map(row=>row.name).sort()).toEqual(['branches','items','sales']);
+});
+test.each([null,{_id:new ObjectId(),role:'staff',access:{sales:{write:false}}}])(
+  'edit preview requires authenticated sales permission',async user=>{
+    const input=previewRequest(); input.user=user;
+    await expect(editPreview.preview(input)).rejects.toMatchObject({status:403});
+  });
+test.each(['branch_id','license'])('edit preview API isolates %s',async field=>{
+  await db.collection('sales').updateOne({_id:sale._id},{$set:{[field]:new ObjectId()}});
+  await expect(editPreview.preview(previewRequest())).rejects.toMatchObject({status:404});
+});
+test.each([{status:'cancelled'},{table_number:'2'},{items:[]},
+  {items:[{product_id:'bad',quantity:1,price:50}]},{extra_discount:-1,extra_discount_type:'amount'},
+  {extra_discount:101,extra_discount_type:'percent'},{seen_at:'yesterday'}])(
+  'edit preview rejects invalid draft %j',async values=>{
+    const input=previewRequest(); Object.assign(input.body,values);
+    await expect(editPreview.preview(input)).rejects.toHaveProperty('status');
+  });
+test('edit preview requires reason and existing manager permissions for reductions',async()=>{
+  await db.collection('items').insertOne({_id:sale.items[0].item_id,license,name:'Corn',tax:5,tax_type:'exclusive'});
+  const input=previewRequest(); input.body.items[0].quantity=1;
+  await expect(editPreview.preview(input)).rejects.toMatchObject({status:422,message:'Enter a reason for this change.'});
+  input.body.change_reason='Customer requested'; input.user.access.pos={void_sale:false};
+  await expect(editPreview.preview(input)).rejects.toMatchObject({status:422,message:'Manager approval required: cancellation'});
+  input.user.access.pos.void_sale=true;
+  expect((await editPreview.preview(input)).total_amount).toBe(52.5);
+});
+test('edit preview rejects a stale handset view and disabled Captain',async()=>{
+  const input=previewRequest();input.body.seen_at='2026-01-01T00:00:00Z';
+  await db.collection('sales').updateOne({_id:sale._id},{$set:{updated_date:new Date('2026-02-01')}});
+  await expect(editPreview.preview(input)).rejects.toMatchObject({status:409,message:'order_changed'});
+  await db.collection('branches').updateOne({_id:branch},{$set:{module_captain_enable:false}});
+  await expect(editPreview.preview(input)).rejects.toMatchObject({status:403});
+});

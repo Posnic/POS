@@ -525,3 +525,25 @@ test('paired Captain moves a reserved group through scoped API without accepting
  assert.equal((await db.collection('sales').findOne({_id:sale})).table_number,'G1');
 
 });
+
+
+test('paired Captain can preview an edit over HTTP without modifying the sale', async () => {
+  const { grant } = await paired();
+  const product = new ObjectId(), id = new ObjectId();
+  await db.collection('items').insertOne({ _id: product, license: branch.license, name: 'Soup', tax: 5, tax_type: 'exclusive' });
+  const order = { _id: id, branch_id: branch._id, license: branch.license, sale_process: 'KOT', payment_status: 'Unpaid',
+    sales_total: 105, sales_sub_total: 100, tax: 5, table_number: '1',
+    items: [{ item_id: product, item_name: 'Soup', item_quantity: 2, item_price: 50 }], changes: [] };
+  await db.collection('sales').insertOne(order);
+  const url = base + '/captain/v1/orders/edit/preview';
+  const body = JSON.stringify({ order_id: String(id), items: [{ product_id: String(product), quantity: 3, price: 50 }] });
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  assert.equal((await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })).status, 401);
+  const answer = await fetch(url, { method: 'POST', headers, body });
+  assert.equal(answer.status, 200, await answer.clone().text());
+  assert.equal(answer.headers.get('cache-control'), 'no-store');
+  assert.equal((await answer.json()).total_amount, 157.5);
+  assert.deepEqual(await db.collection('sales').findOne({ _id: id }), order);
+  await db.collection('sales').updateOne({ _id: id }, { $set: { branch_id: new ObjectId() } });
+  assert.equal((await fetch(url, { method: 'POST', headers, body })).status, 404);
+});

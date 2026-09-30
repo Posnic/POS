@@ -1259,3 +1259,20 @@ Preview does not reserve capacity or mutate sales, stock, service or print jobs.
 It is not a transfer confirmation. The production commit/recovery endpoint and
 Captain submission UI remain unfinished; a future commit must re-read and fence
 the order and validate this revision before applying either side.
+
+
+### Order-edit pricing preview (development protocol)
+
+`POST /captain/v1/orders/edit/preview` accepts the ordinary editor's `order_id`,
+`items` (at most 200, each with product/preparation identity, numeric `quantity`
+and `price`), optional `seen_at`, discount values, reason and approval tokens.
+It requires an authenticated Captain session with sales write permission and
+uses the same reduction/discount authorization as saving. Seating changes and
+cancellation are rejected. Database, license and branch are server-derived.
+
+The response contains reconciled `items`, `subtotal`, `tax`, `discount`,
+`total_amount`, currency policy and a `revision`. It performs no writes, leases,
+stock changes or kitchen notifications. A concurrent order/payment/lease change
+returns a conflict; malformed drafts are rejected before pricing. This is a
+read-only preview, not a save or price guarantee: saving still revalidates the
+order and permissions. Captain integration remains under development.

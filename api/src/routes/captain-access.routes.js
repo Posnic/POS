@@ -24,6 +24,8 @@ router.post('/pair', limit, wrap(access.pair));
 router.post('/refresh', limit, wrap(access.refresh));
 router.post('/route-proof', rateLimit({ windowMs: 60000, limit: 180 }), wrap(access.routeProof));
 router.use(protect);
+router.post('/orders/edit/preview', rateLimit({ windowMs: 60000, limit: 120 }),
+  wrap(require('../services/captain-order-preview').preview));
 const profile = require('../services/captain-profile');
 router.get('/profile', wrap(profile.get));
 const phone = require('../services/captain-phone');
