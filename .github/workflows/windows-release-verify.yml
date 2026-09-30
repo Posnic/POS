@@ -29,7 +29,9 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     permissions:
-      contents: read
+      # GitHub hides draft releases from tokens without push access. This
+      # job reads the draft; no step edits or publishes the release.
+      contents: write
       id-token: write
       attestations: write
     env:
