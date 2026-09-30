@@ -163,11 +163,15 @@ test('item edits retain the group capacity and cannot detach its table metadata'
   expect(moved.status).toBe(false);
   expect(moved.message).toContain('seating group');
   const changedParty = await edit('T1', 2);
-  expect(changedParty.status).toBe(false);
+  expect(changedParty.status).toBe(true);
+  const overCapacity = await edit('T1', 5);
+  expect(overCapacity.status).toBe(false);
+  expect(overCapacity.message).toContain('enough seats');
   const stored = await db.collection('sales').findOne({ _id: sale._id });
   expect(stored.table_number).toBe('T1');
-  expect(stored.person_count).toBe(4);
+  expect(stored.person_count).toBe(2);
   expect(stored.seating_table_ids).toEqual(claim.tables);
+  expect((await seating.find(db, {branchId:branch,license}, claim.id)).guests).toBe(4);
 });
 test('another existing order cannot move into a reserved group', async () => {
   const otherId = new ObjectId();

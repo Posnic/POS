@@ -853,6 +853,8 @@ test('guest edits use the reserved group capacity without changing the original 
   const before = await seating.find(db, scope, order.seating_request_id);
   const checked = await seating.forEdit(db, scope, order, { guests: 5 });
   expect(checked.id).toBe(before.id);
+  for (const guests of [undefined, null, ''])
+    await expect(seating.forEdit(db, scope, order, { guests })).resolves.toMatchObject({id:before.id});
   expect(await seating.find(db, scope, before.id)).toEqual(before);
   await expect(seating.forEdit(db, scope, order, { guests: 7 })).rejects.toThrow('enough seats');
   for (const guests of [0, -1, 1.5, 'abc', 1001])
@@ -873,6 +875,8 @@ test('a claimed party can become takeaway and return to a suitable table without
   await seating.completeMove(db,scope,pending.id,'staff-1');
   const takeaway=await db.collection('sales').findOne({_id:order._id});
   expect(takeaway).toMatchObject({table_number:'',dine_type:'Take away',person_count:0,items,changes,sales_total:120});
+  await expect(seating.forEdit(db,scope,takeaway,{guests:0,dine_type:'Take away'})).resolves.toMatchObject({id:pending.id});
+  await expect(seating.forEdit(db,scope,takeaway,{guests:1})).rejects.toThrow('number of guests');
   expect((await seating.prepareMove(db,scope,String(order._id),input)).state).toBe('submitting');
   await seating.completeMove(db,scope,pending.id,'staff-1');
   expect((await db.collection('sales').findOne({_id:order._id})).captain_audit).toHaveLength(1);
@@ -1013,6 +1017,28 @@ test('authorized merge groups existing checks for one table bill without recooki
   expect(bill.totalMinor).toBe(2200);expect(bill.dueMinor).toBe(2200);expect(bill.orderIds).toHaveLength(2);expect(bill.guests).toBe(3);
   const floor=await require('../../../src/services/captain-tables').list(req);
   expect(floor.tables.find(row=>row.tableorder_value==='T3').seating.guests).toBe(3);
+});
+
+test('guest edits after a merge count the other check once using its current covers',async()=>{
+  const {source,target,input}=await mergeOrders();
+  const prepared=await seating.prepareMove(db,scope,String(source._id),input,{mergeTargetId:String(target._id)});
+  await seating.completeMove(db,scope,prepared.id,'staff-1');
+  const moved=await db.collection('sales').findOne({_id:source._id});
+  await expect(seating.forEdit(db,scope,moved,{guests:1})).resolves.toMatchObject({id:prepared.id});
+  await expect(seating.forEdit(db,scope,moved,{guests:2})).rejects.toThrow('enough seats');
+  await db.collection('sales').updateOne({_id:target._id},{$set:{person_count:1}});
+  await expect(seating.forEdit(db,scope,moved,{guests:2})).resolves.toMatchObject({id:prepared.id});
+  expect((await seating.find(db,scope,prepared.id)).guests).toBe(1);
+});
+
+test('guest edits count unclaimed checks at the table and ignore another branch',async()=>{
+  const order=await movableOrder();
+  await db.collection('sales').insertMany([
+    {_id:new ObjectId(),branch_id:scope.branchId,license:scope.license,table_number:'T1',person_count:2,sale_process:'KOT',payment_status:'Unpaid'},
+    {_id:new ObjectId(),branch_id:new ObjectId(),license:scope.license,table_number:'T1',person_count:100,sale_process:'KOT',payment_status:'Unpaid'},
+  ]);
+  await expect(seating.forEdit(db,scope,order,{guests:4})).resolves.toBeTruthy();
+  await expect(seating.forEdit(db,scope,order,{guests:5})).rejects.toThrow('enough seats');
 });
 
 test('merge capacity accounts for both parties and cannot be understated by the caller',async()=>{

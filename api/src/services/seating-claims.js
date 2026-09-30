@@ -778,11 +778,29 @@ async function forEdit(db, scope, order, next) {
     fail('Change the seating group before changing its table or order type.', 409);
   // The claim is the immutable reservation request, not the mutable cover count.
   // The sale owns current guests; keeping the original request allows safe replay.
-  if (own && next.guests !== undefined && next.guests !== '') {
+  if (own && next.guests !== undefined && next.guests !== null && next.guests !== '') {
     const guests = Number(next.guests);
-    if (!Number.isInteger(guests) || guests < 1 || guests > 1000)
+    const takeaway = own.tables.length === 0 && own.dine_type === 'Take away';
+    if (!Number.isInteger(guests) || (takeaway ? guests !== 0 : guests < 1 || guests > 1000))
       fail('Enter the number of guests.');
-    if (!details.accommodates(own, guests)) fail('Choose a table with enough seats.', 409);
+    const otherGuests = new Map();
+    if (!takeaway) {
+      for (const claim of claims) {
+        if (terminal(claim) || claim.id === own.id || claim.order_id === String(order._id) ||
+            !claim.tables.some(table => own.tables.includes(table))) continue;
+        otherGuests.set(claim.order_id || `claim:${claim.id}`, Math.max(1, Number(claim.guests) || 1));
+      }
+      const others = await db.collection('sales').find({
+        branch_id: scope.branchId, license: scope.license,
+        ...require('../helpers/floor-eligibility').floorEligibility(),
+        _id: { $ne: order._id }, table_number: { $in: own.labels },
+      }, { projection: { _id: 1, person_count: 1 } }).toArray();
+      // A committed sale replaces its reservation's original cover count.
+      // Count unclaimed legacy checks and pending reservations as well.
+      for (const other of others) otherGuests.set(String(other._id), Math.max(1, Number(other.person_count) || 1));
+    }
+    const total = guests + [...otherGuests.values()].reduce((sum, value) => sum + value, 0);
+    if (!details.accommodates(own, total)) fail('Choose a table with enough seats.', 409);
   }
   if (
     !own &&
