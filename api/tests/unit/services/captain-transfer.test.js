@@ -831,3 +831,38 @@ test.each([false,0,'0','false'])('disabled Captain refuses transfer operations (
  for(const action of ['preview','status','complete']) await expect(service[action](input)).rejects.toMatchObject({status:403});
  expect(await db.collection('captain_payment_plans').countDocuments({})).toBe(0);
 });
+
+
+test.each([
+ ['INR',100,5,10,0.01],['JPY',100,5,10,1],['KWD',100.001,5.003,10.001,0.002],
+])('persisted %s transfer agrees across bills, receipt payload and guest splits',async(currencyCode,base,tax,discount,round)=>{
+ const money=require('../../../src/utils/currency');
+ await db.collection('branches').updateOne({_id:branch},{$set:{currencyCode}});
+ const shop=await db.collection('branches').findOne({_id:branch}),policy=money.policy(shop);
+ const total=money.fromMinor(money.toMinor(base,policy)+money.toMinor(tax,policy)-money.toMinor(discount,policy)+money.toMinor(round,policy),policy);
+ await db.collection('sales').updateOne({_id:sale._id},{$set:{sales_sub_total:base,sales_total:total,tax,discount,round_off:round,
+  'items.0.item_quantity':3,'items.0.item_base_price':base/3,'items.0.item_tax':tax,'items.0.item_discount':discount,
+  'changes.0.items.0.item_quantity':3}});
+ const input=await confirmation();const completed=await service.complete(input);
+ const original=await db.collection('sales').findOne({_id:sale._id});
+ const moved=await db.collection('sales').findOne({_id:new ObjectId(completed.destinationId)});
+ const checks=[original,moved];const sum={base:0,tax:0,discount:0,total:0,round:0};
+ for(const check of checks){
+  const payload=require('../../../src/helpers/bill-payload').buildBillPayload(check,shop);
+  const minor=value=>money.toMinor(value,policy);
+  const printed=require('../../../../src/escpos-receipt').renderSale(payload,{paperWidth:'48'});
+  expect(Buffer.from(printed).toString('latin1')).toContain(payload.total.toFixed(policy.currencyDigits));
+  const taxes=payload.taxes.reduce((n,row)=>n+minor(row.amount),0);
+  expect(payload.items.reduce((n,row)=>n+minor(row.amount),0)).toBe(minor(payload.subTotal));
+  expect(minor(payload.subTotal)+taxes-minor(payload.discount)+minor(payload.roundOff)).toBe(minor(payload.total));
+  const request={...input,query:{table:check.table_number}};
+  const bill=await require('../../../src/services/captain-bill').read(request);
+  expect(bill.totalMinor).toBe(minor(payload.total));expect(bill.dueMinor).toBe(bill.totalMinor);
+  const snapshot=snapshotFrom([check],shop,check.table_number);
+  const guests=require('../../../src/utils/guest-bill-split').split(snapshot,{mode:'equal',guests:['Guest 1','Guest 2','Guest 3']});
+  expect(guests.reduce((n,guest)=>n+guest.totalMinor,0)).toBe(bill.totalMinor);
+  sum.base+=minor(payload.subTotal);sum.tax+=taxes;sum.discount+=minor(payload.discount);sum.total+=minor(payload.total);sum.round+=minor(payload.roundOff);
+ }
+ expect(sum).toEqual({base:money.toMinor(base,policy),tax:money.toMinor(tax,policy),discount:money.toMinor(discount,policy),total:money.toMinor(total,policy),round:money.toMinor(round,policy)});
+ expect(await service.complete(input)).toEqual(completed);
+});
