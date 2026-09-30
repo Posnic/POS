@@ -153,7 +153,7 @@ async function beginCommit(req) {
 }
 // Both records remain fenced until the later seating/finalization stage. Raw
 // writes intentionally avoid ordinary order-entry stock, print and voice effects.
-async function applySales(req) {
+async function applySales(req, attempt = 0) {
   const prepared = await beginCommit(req), c = await scope(req);
   const { journal, projection, identity } = prepared, original = journal.sales[0];
   const metadata = {};
@@ -169,8 +169,29 @@ async function applySales(req) {
     date: journal.createdAt, created_date: journal.createdAt, updated_date: journal.createdAt,
     captain_transfer_operations: [event('destination')] };
   const collection = req.db.collection('sales');
-  // Deterministic _id is the insertion fence. Never replace an existing record.
-  await collection.updateOne({ _id: identity._id }, { $setOnInsert: document }, { upsert: true });
+  // Enforce bill-number uniqueness even when no ordinary sale has yet been
+  // written in this database. Deterministic _id remains the insertion fence.
+  const repository = require('../repositories/sale.repository');
+  await repository._ensureSalesIdIndex(req.db);
+  try {
+    await collection.updateOne({ _id: identity._id }, { $setOnInsert: document }, { upsert: true });
+  } catch (error) {
+    if (attempt >= 4 || !repository.isDuplicateSalesIdError(error)) throw error;
+    // Never renumber a destination which already exists (including a lost
+    // acknowledgement). Only a confirmed different bill can consume this number.
+    const existing = await collection.findOne({ _id: identity._id });
+    const conflict = await collection.findOne({ license: c.license, sales_id: identity.sales_id,
+      _id: { $ne: identity._id } });
+    if (existing || !conflict) throw error;
+    const number = await repository.generateSalesIdForBranch(c.branchId,
+      { reseed: true, numberingContext: { db: req.db, license: c.license } });
+    await req.db.collection('captain_payment_plans').updateOne({ _id: journal._id,
+      branch_id: c.branchId, license: c.license, stage: 'applying', destination_number: identity.sales_id,
+    }, { $set: { destination_number: number } });
+    // A competing retry may have chosen another number. Re-read its durable
+    // winner, keeping the destination ID, seating claim and source unchanged.
+    return applySales(req, attempt + 1);
+  }
   const same = (left, right) => isDeepStrictEqual(
     BSON.deserialize(BSON.serialize({ value: left }, { ignoreUndefined: false })),
     BSON.deserialize(BSON.serialize({ value: right }, { ignoreUndefined: false })));

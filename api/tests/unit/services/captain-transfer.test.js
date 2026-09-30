@@ -499,3 +499,78 @@ test.each([['table_number','2'],['table_id','new-table'],['person_count',4],['di
     expect(next.totalMinor).toBe(first.totalMinor);
     expect(next.destination.lines).toEqual(first.destination.lines);
   });
+
+
+test('a conflicting bill number is replaced without changing destination identity or repeating the transfer', async () => {
+  const input = await confirmation(), prepared = await service.beginCommit(input);
+  await db.collection('sales').createIndex({license:1,sales_id:1},{unique:true,
+    partialFilterExpression:{sales_id:{$type:'string'}},name:'unique_sales_id_per_license'});
+  const conflicting = { _id:new ObjectId(), license, branch_id:branch, sales_id:prepared.identity.sales_id, items:[] };
+  await db.collection('sales').insertOne(conflicting);
+  const result = await service.applySales(input);
+  expect(result.destination._id).toEqual(prepared.identity._id);
+  expect(result.destination.sales_id).not.toBe(conflicting.sales_id);
+  expect(result.destination.invoice_number).toBe(result.destination.sales_id);
+  expect(result.destination.sale_no).toBe(result.destination.sales_id);
+  expect((await db.collection('captain_payment_plans').findOne({})).destination_number).toBe(result.destination.sales_id);
+  expect(await db.collection('sales').findOne({_id:conflicting._id})).toEqual(conflicting);
+  const retried = await service.applySales(input);
+  expect(retried.destination.sales_id).toBe(result.destination.sales_id);
+  expect(retried.source.items[0].item_quantity).toBe(1);
+  expect(await db.collection('sales').countDocuments()).toBe(3);
+});
+
+test('non-number insertion errors preserve the reserved number and the source order', async () => {
+  const input = await confirmation(), prepared = await service.beginCommit(input);
+  const original = db.collection.bind(db);
+  jest.spyOn(db,'collection').mockImplementation((name,...rest)=>{
+    const collection=original(name,...rest);
+    if(name!=='sales')return collection;
+    return new Proxy(collection,{get(target,property){
+      if(property==='updateOne')return async (...args)=>{
+        if(args[1].$setOnInsert?.captain_transfer_operations)
+          throw Object.assign(new Error('duplicate idempotency_key'),{code:11000,keyPattern:{idempotency_key:1}});
+        return target.updateOne(...args);
+      };
+      const value=target[property];return typeof value==='function'?value.bind(target):value;
+    }});
+  });
+  await expect(service.applySales(input)).rejects.toThrow('duplicate idempotency_key');
+  expect((await original('captain_payment_plans').findOne({})).destination_number).toBe(prepared.identity.sales_id);
+  expect((await original('sales').findOne({_id:sale._id})).items[0].item_quantity).toBe(2);
+});
+
+test.each(['interrupted','concurrent'])('bill-number collision recovery handles %s retries', async mode => {
+  const input=await confirmation(), prepared=await service.beginCommit(input);
+  await db.collection('sales').createIndex({license:1,sales_id:1},{unique:true,
+    partialFilterExpression:{sales_id:{$type:'string'}},name:'unique_sales_id_per_license'});
+  await db.collection('sales').insertOne({_id:new ObjectId(),license,branch_id:branch,sales_id:prepared.identity.sales_id});
+  const original=db.collection.bind(db);
+  let interrupted=false;
+  if(mode==='interrupted'){
+    jest.spyOn(db,'collection').mockImplementation((name,...rest)=>{
+      const collection=original(name,...rest);
+      if(name!=='captain_payment_plans')return collection;
+      return new Proxy(collection,{get(target,property){
+        if(property==='updateOne')return async (...args)=>{
+          const result=await target.updateOne(...args);
+          if(args[1].$set?.destination_number && !interrupted){
+            interrupted=true;throw new Error('Replacement acknowledgement lost');
+          }
+          return result;
+        };
+        const value=target[property];return typeof value==='function'?value.bind(target):value;
+      }});
+    });
+    await expect(service.applySales(input)).rejects.toThrow('Replacement acknowledgement lost');
+    expect((await original('sales').findOne({_id:sale._id})).items[0].item_quantity).toBe(2);
+    expect(await original('sales').findOne({_id:prepared.identity._id})).toBeNull();
+  }
+  const answers=await Promise.all([service.applySales(input),service.applySales(input)]);
+  expect(answers[0].destination).toEqual(answers[1].destination);
+  expect(answers[0].destination._id).toEqual(prepared.identity._id);
+  expect(answers[0].destination.sales_id).not.toBe(prepared.identity.sales_id);
+  expect(answers[0].source.items[0].item_quantity).toBe(1);
+  expect(await original('sales').countDocuments()).toBe(3);
+  expect((await original('captain_payment_plans').findOne({})).destination_number).toBe(answers[0].destination.sales_id);
+});
