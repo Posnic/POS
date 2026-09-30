@@ -69,5 +69,5 @@ jobs:
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-checksums: windows-release/SHA256SUMS.txt
-          predicate-type: https://slsa.dev/provenance/v1
+          predicate-type: https://posnic.com/attestations/windows-release-verification/v1
           predicate-path: windows-release/verification-predicate.json

@@ -112,8 +112,13 @@ workflow itself runs from reviewed `main`, which may be newer than the release
 tag. This record proves verification by that workflow, not that GitHub built
 the Windows package or independently reproduced its declared source.
 
-Use `--signer-workflow Posnic/POS/.github/workflows/windows-release-verify.yml`
-with `gh attestation verify` to restrict the Windows verifier identity.
+Windows uses a custom verification predicate, not GitHub's hosted-build SLSA
+predicate. Verify both files with the explicit type and workflow restriction:
+
+```powershell
+gh attestation verify "$artifact" -R Posnic/POS --predicate-type https://posnic.com/attestations/windows-release-verification/v1 --signer-workflow Posnic/POS/.github/workflows/windows-release-verify.yml
+gh attestation verify "$artifact.cdx.json" -R Posnic/POS --predicate-type https://posnic.com/attestations/windows-release-verification/v1 --signer-workflow Posnic/POS/.github/workflows/windows-release-verify.yml
+```
 
 ## 4. Read the package licence material
 
