@@ -80,7 +80,7 @@ beforeEach(async () => {
     }
   );
 });
-function submit(extra = {}, who = actor, staff = true) {
+function submit(extra = {}, who = actor, staff = true, protocol = false) {
   return runWithRequestContext({ loggedUser: who }, () =>
     repo.createOnlineOrder(
       {
@@ -92,7 +92,7 @@ function submit(extra = {}, who = actor, staff = true) {
         items: [{ item_id: String(item), item_quantity: 1, item_note: 'less salt' }],
         ...extra,
       },
-      { staffOrder: staff }
+      { staffOrder: staff, seatingProtocol: protocol }
     )
   );
 }
@@ -257,4 +257,49 @@ test('an interrupted cancellation release retries without writing another kitche
     saved.changes.length
   );
   expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(2);
+});
+
+test('protocol-enrolled old Captain requests cannot bypass a combined reservation', async () => {
+  const result = await submit(
+    { seating_request_id: undefined, person_count: 2, idempotencyKey: 'old-captain-1' },
+    actor,
+    true,
+    true
+  );
+  expect(result.status).toBe(false);
+  expect(result.message).toContain('Table changed');
+  expect(await db.collection('sales').countDocuments({})).toBe(0);
+});
+test('old Captain requests atomically compete for one table and retry the winning order', async () => {
+  await seating.cancel(db, { branchId: branch, license }, claim.id, actor);
+  const send = (key) =>
+    submit(
+      { seating_request_id: undefined, person_count: 2, idempotencyKey: key },
+      actor,
+      true,
+      true
+    );
+  const results = await Promise.all([send('old-one'), send('old-two')]);
+  expect(results.filter((result) => result.status)).toHaveLength(1);
+  const sales = await db.collection('sales').find({}).toArray();
+  expect(sales).toHaveLength(1);
+  expect(sales[0].seating_request_id).toMatch(/^order-/);
+  const retry = await send(sales[0].idempotency_key);
+  expect(retry.status).toBe(true);
+  expect(retry.data.sale_id).toBe(String(sales[0]._id));
+});
+test('concurrent old Captain retries share one claim and sale', async () => {
+  await seating.cancel(db, { branchId: branch, license }, claim.id, actor);
+  const send = () =>
+    submit(
+      { seating_request_id: undefined, person_count: 2, idempotencyKey: 'same-old-tap' },
+      actor,
+      true,
+      true
+    );
+  const results = await Promise.all([send(), send()]);
+  expect(results.every((result) => result.status)).toBe(true);
+  expect(results[0].data.sale_id).toBe(results[1].data.sale_id);
+  expect(await seating.read(db, { branchId: branch, license })).toHaveLength(1);
+  expect(await db.collection('sales').countDocuments({})).toBe(1);
 });

@@ -8147,7 +8147,7 @@ class SalesRepository {
     return { id: null, name };
   }
 
-  async createOnlineOrder(data, { SaleModel, staffOrder = false } = {}) {
+  async createOnlineOrder(data, { SaleModel, staffOrder = false, seatingProtocol = false } = {}) {
     try {
       const db = await BaseModel.getDb();
 
@@ -8395,6 +8395,7 @@ class SalesRepository {
       const seating = require('../services/seating-claims');
       const seatingScope = { branchId: branchObjectId, license: branchDoc.license };
       let seatingClaim = null;
+      let seatingTable = null;
       if (data.seating_request_id) {
         if (!staffOrder || !runsTableService)
           throw new Error('Sign in to submit a seating request.');
@@ -8421,6 +8422,7 @@ class SalesRepository {
           license: branchDoc.license,
           tableorder_value: wantsTable,
         });
+        seatingTable = configuredTable;
         if (configuredTable && ['held', 'cleaning'].includes(configuredTable.service_state))
           return { status: false, message: 'This table is not available.', data: null };
         if (
@@ -8876,6 +8878,26 @@ class SalesRepository {
       /* A number taken a moment ago is taken again, not handed to the
          customer as a database error. */
       let insertResult;
+      // Opt-in at the server dispatcher only after every table writer supports
+      // the protocol. Old handsets need no new field to participate.
+      if (!seatingClaim && seatingProtocol && staffOrder && seatingTable) {
+        const actorId = kitchenActor().id;
+        if (!actorId) throw new Error('Sign in to reserve a table.');
+        const requestKey =
+          'order-' +
+          crypto
+            .createHash('sha256')
+            .update(String(idempotencyKey || crypto.randomUUID()))
+            .digest('hex')
+            .slice(0, 40);
+        seatingClaim = await seating.reserve(db, seatingScope, {
+          request_id: requestKey,
+          actor: actorId,
+          table_ids: [String(seatingTable._id)],
+          primary_id: String(seatingTable._id),
+          guests: Number(person_count) || 1,
+        });
+      }
       if (seatingClaim) {
         const previous = await seating.prepareOrder(db, seatingScope, seatingClaim, saleDocument);
         if (previous) return this._duplicateOrderAnswer(previous);
