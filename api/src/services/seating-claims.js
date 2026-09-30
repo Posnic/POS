@@ -2,6 +2,7 @@
 const { ObjectId } = require('mongodb');
 const { fail } = require('../utils/branch-access');
 const details = require('../utils/table-details');
+const restructure = require('./captain-restructure-lock');
 
 // All order-entry paths must use these claims before combined seating is exposed.
 // One branch document makes a multi-table claim atomic on standalone MongoDB too.
@@ -67,7 +68,7 @@ async function archive(db, scope, id) {
 async function reserve(db, scope, input) {
   return reserveClaim(db, scope, input);
 }
-async function reserveClaim(db, scope, input, moving = null) {
+async function reserveClaim(db, scope, input, moving = null, operationLock = null) {
   const id = requestId(input.request_id);
   const takeaway = moving && input.dine_type === 'Take away';
   if (input.dine_type && !['Dine-in', 'Take away'].includes(input.dine_type)) fail('Choose an order type.');
@@ -89,6 +90,7 @@ async function reserveClaim(db, scope, input, moving = null) {
     dine_type: takeaway ? 'Take away' : 'Dine-in',
     state: 'reserved',
     ...(moving ? { move_from: moving.id, order_id: moving.order_id } : {}),
+    ...(operationLock ? { operation_lock: operationLock } : {}),
     ...(input.payload_hash ? { payload_hash: input.payload_hash } : {}),
     at: new Date(),
   };
@@ -258,6 +260,8 @@ async function prepareMove(db, scope, orderId, input, { staffHandover = false } 
   if (!Array.isArray(input.table_ids) || input.table_ids.length > 20 ||
       (takeaway ? input.table_ids.length !== 0 : !input.table_ids.length))
     fail('Choose up to 20 tables.');
+  if (!Number.isInteger(input.guests) || (takeaway ? input.guests !== 0 : input.guests < 1 || input.guests > 1000))
+    fail('Enter the number of guests.');
   const expected = {
     actor: String(input.actor || ''),
     primary: takeaway ? '' : identity(input.primary_id),
@@ -284,6 +288,13 @@ async function prepareMove(db, scope, orderId, input, { staffHandover = false } 
       (previous.state === 'submitting' && order.seating_request_id !== previous.id)
     )
       fail('This seating request has already been used.', 409);
+    if (previous.operation_lock) {
+      const journal = await restructure.read(db, scope, id, expected.actor);
+      if (journal.stage === 'cancelled') {
+        await cancelMove(db, scope, id, expected.actor, String(order._id), { staffHandover });
+        fail('This seating request has already been used.', 409);
+      }
+    }
     return previous;
   }
 
@@ -292,7 +303,26 @@ async function prepareMove(db, scope, orderId, input, { staffHandover = false } 
     fail('The seating group changed. Refresh this order.', 409);
   if (!staffHandover && String(input.actor || '') !== source.actor)
     fail('Permission is required.', 403);
-  return reserveClaim(db, scope, input, source);
+  const lock = await restructure.reserve(db, scope, {
+    requestId: id, actor: expected.actor,
+    intent: { kind: 'move', source: source.id, ...expected }, sales: [order],
+  });
+  try {
+    const claim = await reserveClaim(db, scope, input, source, lock._id);
+    const journal = await restructure.read(db, scope, id, expected.actor);
+    if (journal.stage === 'cancelled') {
+      await cancelMove(db, scope, id, expected.actor, String(order._id), { staffHandover });
+      fail('This seating request has already been used.', 409);
+    }
+    return claim;
+  } catch (error) {
+    // A competing retry may already have published this exact reservation.
+    const saved = await find(db, scope, id);
+    if (saved && !terminal(saved) && saved.operation_lock === lock._id &&
+        sameRequest(saved, { ...expected, move_from: source.id })) return saved;
+    await restructure.cancel(db, scope, id, expected.actor);
+    throw error;
+  }
 }
 
 async function beginClose(db, scope, orderIds, closeId) {
@@ -333,6 +363,11 @@ async function beginClose(db, scope, orderIds, closeId) {
 async function cancelMove(db, scope, id, actor, orderId, { staffHandover = false } = {}) {
   requestId(id);
   let saved = await find(db, scope, id);
+  if (saved && saved.actor !== String(actor)) fail('Permission is required.', 403);
+  const lock = await restructure.read(db, scope, id, actor, { optional: true });
+  if (lock && (lock.intent.kind !== 'move' ||
+      (orderId && !lock.orderIds.includes(String(orderId)))))
+    fail('This seating request has already been used.', 409);
   if (!saved && orderId) {
     const order = await db.collection('sales').findOne({
       _id: new ObjectId(identity(orderId)),
@@ -349,6 +384,7 @@ async function cancelMove(db, scope, id, actor, orderId, { staffHandover = false
     const snapshot = await store(db).findOne({ _id: scopeKey(scope) });
     saved = snapshot?.claims.find((row) => row.id === id) || (await find(db, scope, id));
     if (!saved) {
+      if (lock) await restructure.cancel(db, scope, id, actor);
       const tombstone = {
         id,
         actor: String(actor),
@@ -368,11 +404,16 @@ async function cancelMove(db, scope, id, actor, orderId, { staffHandover = false
     }
   }
   if (!saved?.move_from || saved.actor !== String(actor)) fail('Permission is required.', 403);
-  if (saved.state === 'cancelled') return;
+  if (saved.state === 'cancelled') {
+    if (lock) await restructure.cancel(db, scope, id, actor);
+    return;
+  }
   if (saved.state !== 'reserved') fail('Reconcile the table move before cancelling it.', 409);
   const snapshot = await store(db).findOne({ _id: scopeKey(scope) });
   const source = snapshot?.claims.find((row) => row.id === saved.move_from);
   if (source?.moving_to !== id) fail('The seating group changed. Refresh this order.', 409);
+  // Decide cancellation versus completion at the sale fence before touching seats.
+  if (lock) await restructure.cancel(db, scope, id, actor);
   const result = await store(db).updateOne(
     {
       _id: scopeKey(scope),
@@ -402,9 +443,14 @@ async function completeMove(db, scope, id, actor) {
   requestId(id);
   let move = await find(db, scope, id);
   if (!move?.move_from || move.actor !== String(actor)) fail('Permission is required.', 403);
-  if (move.state === 'submitting') return move;
+  const finish = async (claim) => {
+    if (claim.operation_lock) await restructure.complete(db, scope, id, actor);
+    return claim;
+  };
+  if (move.state === 'submitting') return finish(move);
   if (!['reserved', 'applying'].includes(move.state))
     fail('This move is no longer available.', 409);
+  if (move.operation_lock) await restructure.applying(db, scope, id, actor);
   if (move.state === 'reserved') {
     const claimed = await store(db).updateOne(
       { _id: scopeKey(scope), claims: { $elemMatch: { id, state: 'reserved' } } },
@@ -412,7 +458,7 @@ async function completeMove(db, scope, id, actor) {
     );
     if (!claimed.matchedCount) {
       move = await find(db, scope, id);
-      if (move?.state === 'submitting') return move;
+      if (move?.state === 'submitting') return finish(move);
       if (move?.state !== 'applying') fail('This move is no longer available.', 409);
     }
   }
@@ -435,7 +481,7 @@ async function completeMove(db, scope, id, actor) {
     {
       ...selector,
       seating_request_id: move.move_from,
-      captain_payment_plan: { $exists: false },
+      captain_payment_plan: move.operation_lock || { $exists: false },
       ...require('../helpers/floor-eligibility').floorEligibility(),
     },
     {
@@ -488,7 +534,7 @@ async function completeMove(db, scope, id, actor) {
     );
   const snapshot = await store(db).findOne({ _id: scopeKey(scope) });
   const current = snapshot.claims.find((row) => row.id === id);
-  if (current?.state === 'submitting') return current;
+  if (current?.state === 'submitting') return finish(current);
   const finished = await store(db).updateOne(
     {
       _id: scopeKey(scope),
@@ -510,7 +556,7 @@ async function completeMove(db, scope, id, actor) {
   );
   if (!finished.matchedCount) fail('Retry this table move to finish updating the floor.', 409);
   await archive(db, scope, source.id);
-  return find(db, scope, id);
+  return finish(await find(db, scope, id));
 }
 
 async function bind(db, scope, id, actor, orderId) {

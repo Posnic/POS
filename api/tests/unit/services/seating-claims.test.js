@@ -446,6 +446,7 @@ async function movableOrder() {
     seating_request_id: claim.id,
     table_number: 'T1',
     person_count: 4,
+    payment_status: 'Unpaid',
     sale_process: 'KOT',
   };
   await db.collection('sales').insertOne(order);
@@ -907,4 +908,73 @@ test('moving one check preserves an occupied source and blocks new seating durin
   await seating.completeMove(db,scope,move.id,'staff-1');
   expect((await db.collection('tableorder').findOne({_id:new ObjectId(ids[0])})).service_state).not.toBe('cleaning');
   expect((await db.collection('sales').findOne({_id:orders[1]._id})).table_number).toBe('T1');
+});
+
+
+test('prepared moves fence payment and release that fence on cancellation or completion', async () => {
+  const { order, move } = await movingGroup();
+  const guard = require('../../../src/services/captain-payment-guard');
+  let sale = await db.collection('sales').findOne({_id:order._id});
+  expect(sale.captain_payment_plan).toBe(move.operation_lock);
+  await expect(guard.mutable(db, sale)).rejects.toMatchObject({status:409});
+  await seating.cancelMove(db,scope,move.id,'staff-1');
+  sale=await db.collection('sales').findOne({_id:order._id});
+  expect(sale.captain_payment_plan).toBeUndefined();
+  const next=await seating.prepareMove(db,scope,String(order._id),request({request_id:'after-cancel-move-1',table_ids:ids.slice(1),primary_id:ids[1]}));
+  await seating.completeMove(db,scope,next.id,'staff-1');
+  await seating.completeMove(db,scope,next.id,'staff-1');
+  sale=await db.collection('sales').findOne({_id:order._id});
+  expect(sale.captain_payment_plan).toBeUndefined();
+  expect(sale.captain_audit).toHaveLength(1);
+});
+
+test('a payment reservation prevents a move without reserving destination seats', async () => {
+  const order=await movableOrder();
+  await db.collection('sales').updateOne({_id:order._id},{$set:{captain_payment_plan:'cashier-payment'}});
+  await expect(seating.prepareMove(db,scope,String(order._id),request({request_id:'payment-race-move-1',table_ids:ids.slice(1),primary_id:ids[1]}))).rejects.toMatchObject({status:409});
+  expect((await seating.find(db,scope,order.seating_request_id)).moving_to).toBeUndefined();
+  expect((await db.collection('sales').findOne({_id:order._id})).captain_payment_plan).toBe('cashier-payment');
+});
+
+test('simultaneous cancellation and completion cannot leave a moved order with cancelled seats', async () => {
+  const {order,move}=await movingGroup();
+  const results=await Promise.allSettled([
+    seating.cancelMove(db,scope,move.id,'staff-1',String(order._id)),
+    seating.completeMove(db,scope,move.id,'staff-1'),
+  ]);
+  expect(results.filter(row=>row.status==='fulfilled')).toHaveLength(1);
+  const current=await seating.find(db,scope,move.id);
+  const sale=await db.collection('sales').findOne({_id:order._id});
+  expect(sale.captain_payment_plan).toBeUndefined();
+  expect(sale.seating_request_id).toBe(current.state==='cancelled'?order.seating_request_id:move.id);
+});
+
+test('an interrupted completion retains its payment fence until retry finishes the floor', async () => {
+  const {order,move}=await movingGroup();
+  const locks=require('../../../src/services/captain-restructure-lock');
+  await locks.applying(db,scope,move.id,'staff-1');
+  await expect(seating.cancelMove(db,scope,move.id,'staff-1')).rejects.toMatchObject({status:409});
+  expect((await seating.find(db,scope,move.id)).state).toBe('reserved');
+  await seating.completeMove(db,scope,move.id,'staff-1');
+  expect((await db.collection('sales').findOne({_id:order._id})).captain_payment_plan).toBeUndefined();
+});
+
+
+test('retry after cancellation was interrupted releases reserved seats instead of reviving the move', async () => {
+  const {order,move}=await movingGroup();
+  await require('../../../src/services/captain-restructure-lock').cancel(db,scope,move.id,'staff-1');
+  await expect(seating.prepareMove(db,scope,String(order._id),request({request_id:move.id,table_ids:ids.slice(1),primary_id:ids[1]}))).rejects.toMatchObject({status:409});
+  expect((await seating.find(db,scope,move.id)).state).toBe('cancelled');
+  expect((await seating.find(db,scope,order.seating_request_id)).moving_to).toBeUndefined();
+});
+
+test('legacy unpaid orders without a payment status can still move without changing their payment data', async () => {
+  const order=await movableOrder();
+  await db.collection('sales').updateOne({_id:order._id},{$unset:{payment_status:''}});
+  const move=await seating.prepareMove(db,scope,String(order._id),request({request_id:'legacy-unpaid-move-1',table_ids:ids.slice(1),primary_id:ids[1]}));
+  await seating.completeMove(db,scope,move.id,'staff-1');
+  const sale=await db.collection('sales').findOne({_id:order._id});
+  expect(sale.payment_status).toBeUndefined();
+  expect(sale.captain_payment_plan).toBeUndefined();
+  expect(sale.seating_request_id).toBe(move.id);
 });

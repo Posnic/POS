@@ -12,8 +12,9 @@ const journals = db => db.collection('captain_payment_plans');
 // write on captain_payment_plan being absent. Reserve through that same fence,
 // with an explicit non-payment purpose and no monetary entries. Generic sync
 // must never copy this journal to another issuer.
-async function read(db, scope, requestId, actor) {
+async function read(db, scope, requestId, actor, { optional = false } = {}) {
   const journal = await journals(db).findOne({ _id: journalId(scope, requestId), ...scopeFilter(scope), purpose });
+  if (!journal && optional) return null;
   if (!journal || journal.actor !== String(actor)) throw problem();
   return journal;
 }
@@ -55,12 +56,14 @@ async function reserve(db, scope, { requestId, actor, intent, sales }) {
     for (const id of journal.orderIds) {
       const sale = journal.sales.find(row => String(row._id) === id);
       const expected = {};
-      for (const key of ['items', 'changes', 'kitchen_service', 'sales_total', 'updated_date'])
+      for (const key of ['items', 'changes', 'kitchen_service', 'sales_total', 'updated_date', 'payment_status', 'sale_process'])
         expected[key] = sale[key] === undefined ? { $exists: false } : sale[key];
       const result = await db.collection('sales').updateOne({ ...scopeFilter(scope),
-        _id: new ObjectId(id), ...expected, sale_process: 'KOT', payment_status: 'Unpaid',
+        _id: new ObjectId(id), ...expected,
+        ...(journal.intent.kind === 'move' ? {} : { sale_process: 'KOT', payment_status: 'Unpaid' }),
         floor_closed_at: { $exists: false }, order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
         $and: [
+          ...(journal.intent.kind === 'move' ? [require('../helpers/floor-eligibility').floorEligibility()] : []),
           { $or: [{ captain_payment_plan: { $exists: false } }, { captain_payment_plan: journal._id }] },
           { $or: [{ captain_edit_until: { $exists: false } }, { captain_edit_until: { $lt: new Date() } }] },
         ],
