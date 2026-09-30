@@ -15,6 +15,8 @@ function project(sale,branch,requested,at) {
       tax:amount(tax),round_off:amount(components.adjustment),sales_total:amount(side.totalMinor)});
     view.items_subtotal=view.sales_sub_total;
     view.items_total=amount(side.totalMinor-(components.adjustment||0));
+    if('subtotal' in sale)view.subtotal=view.sales_sub_total;
+    if('total' in sale)view.total=view.sales_total;
     // Legacy receipt/report readers use these aliases directly.
     if('sales_tax' in sale)view.sales_tax=view.tax;
     if('sales_round_off' in sale)view.sales_round_off=view.round_off;

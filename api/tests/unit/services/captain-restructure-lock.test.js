@@ -87,7 +87,7 @@ test('cancellation is idempotent and its tombstone refuses another reservation',
   await expect(locks.reserve(db,scope,input())).rejects.toMatchObject({status:409});
 });
 
-test.each([['sales_sub_total',100],['items_subtotal',100],['items_total',105],['discount',3],['tax',5],['sales_tax',5],['round_off',0.01],
+test.each([['sales_sub_total',100],['subtotal',100],['total',105],['items_subtotal',100],['items_total',105],['discount',3],['tax',5],['sales_tax',5],['round_off',0.01],
   ['sales_round_off',0.01],['captain_transfer_allocation',{version:1,totalMinor:12000}]])(
   'a changed %s cannot use an earlier financial snapshot even when total and timestamp match',async(field,value)=>{
     const last=[...sales].sort((a,b)=>String(a._id).localeCompare(String(b._id))).at(-1);

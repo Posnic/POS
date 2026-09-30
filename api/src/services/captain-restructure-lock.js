@@ -73,7 +73,7 @@ async function reserve(db, scope, { requestId, actor, intent, sales }) {
       // Capacity and destination decisions use this snapshot too. Some legacy
       // writers do not advance updated_date when changing covers or seating.
       for (const key of ['items', 'changes', 'kitchen_service', 'kitchen_work', 'sales_total', 'updated_date', 'payment_status', 'sale_process',
-        'sales_sub_total', 'items_subtotal', 'items_total', 'discount', 'tax', 'sales_tax', 'round_off', 'sales_round_off', 'captain_transfer_allocation',
+        'sales_sub_total', 'subtotal', 'total', 'items_subtotal', 'items_total', 'discount', 'tax', 'sales_tax', 'round_off', 'sales_round_off', 'captain_transfer_allocation',
         'person_count', 'table_number', 'table_id', 'dine_type', 'seating_request_id', 'seating_primary_id', 'seating_table_ids', 'seating_capacity_revision'])
         expected[key] = sale[key] === undefined ? { $exists: false } : sale[key];
       const eligibility = ['move', 'enroll'].includes(journal.intent.kind)
