@@ -3040,7 +3040,7 @@
     },
     "/captain/v1/kitchen-audio/{action}": {
       "post": {
-        "summary": "value",
+        "summary": "result",
         "operationId": "post_captain_v1_kitchen_audio_action",
         "tags": [
           "Captain access"
@@ -9786,6 +9786,47 @@
         }
       }
     },
+    "/kitchen/voice/{saleId}/{voiceId}": {
+      "get": {
+        "summary": "voice",
+        "operationId": "get_kitchen_voice_saleId_voiceId",
+        "tags": [
+          "Kitchen board"
+        ],
+        "parameters": [
+          {
+            "name": "saleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "voiceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/kitchen/transition": {
       "post": {
         "summary": "transition",
@@ -10228,6 +10269,30 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/mobile/v1/delivery-status": {
+      "post": {
+        "summary": "deliveryStatus",
+        "operationId": "post_mobile_v1_delivery_status",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/mobile/v1/settings": {

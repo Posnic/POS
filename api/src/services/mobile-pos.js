@@ -166,6 +166,9 @@ async function bootstrap(req) {
     })
   );
   const now = new Date();
+  const cloudDelivery = await req.db
+    .collection('mobile_cloud_capabilities')
+    .findOne({ _id: 'delivery:' + id(c.license), protocol: 1 });
   const until = new Date(+now + c.config.offlineHours * 3600000);
   const key = hash(
     [id(c.license), id(c.branchId), id(c.userId), req.handsetDevice, version].join(':')
@@ -200,6 +203,7 @@ async function bootstrap(req) {
       devicePairing: true,
       tillPrint: true,
       printStatus: true,
+      cloudDelivery: Boolean(cloudDelivery),
       terminal: false,
     },
   };
@@ -397,6 +401,7 @@ async function ingest(req, dependencies = {}) {
   const immutable = { ...sale };
   delete immutable.sync;
   delete immutable.serverId;
+  delete immutable.cloudReceivedAt;
   const digest = hash(canonical(immutable));
   const journal = req.db.collection('mobile_sales');
   let intent = await journal.findOne({ _id: key });
@@ -761,7 +766,61 @@ async function receipts(req) {
         : null,
   };
 }
+async function deliveryStatus(req) {
+  const c = await context(req);
+  if (!req.handsetDevice || !allowed(req.user, 'sales', 'read'))
+    fail('Receipt access is required.', 403);
+  const ids = req.body?.ids;
+  if (
+    !Array.isArray(ids) ||
+    ids.length > 50 ||
+    ids.some((value) => typeof value !== 'string' || !/^[A-Za-z0-9_-]{6,80}$/.test(value))
+  )
+    fail('Provide up to 50 receipt identities.', 400);
+  const capability = await req.db
+    .collection('mobile_cloud_capabilities')
+    .findOne({ _id: 'delivery:' + id(c.license), protocol: 1 });
+  const result = {
+    shopId: c.shopId,
+    branchId: id(c.branchId),
+    staffId: id(c.userId),
+    available: Boolean(capability),
+    receipts: [],
+  };
+  if (!capability || !ids.length) return result;
+  const receipts = await req.db
+    .collection('mobile_sales')
+    .find({
+      license: c.license,
+      branchId: c.branchId,
+      userId: c.userId,
+      state: 'complete',
+      _id: {
+        $in: ids.map((localId) =>
+          hash([id(c.license), id(c.branchId), req.handsetDevice, localId].join(':'))
+        ),
+      },
+    })
+    .limit(50)
+    .toArray();
+  for (const receipt of receipts) {
+    const proof = await req.db.collection('mobile_cloud_receipts').findOne({
+      _id: 'mobile:' + receipt._id,
+      saleId: id(receipt.serverId),
+      branchId: id(c.branchId),
+      authority: capability.authority,
+    });
+    if (proof && Number.isFinite(Date.parse(proof.receivedAt)))
+      result.receipts.push({
+        id: receipt.sale.id,
+        serverId: id(receipt.serverId),
+        receivedAt: proof.receivedAt,
+      });
+  }
+  return result;
+}
 module.exports = {
+  deliveryStatus,
   cataloguePage,
   receipts,
   bootstrap,

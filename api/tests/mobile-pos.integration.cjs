@@ -142,6 +142,7 @@ after(async () => {
   if (BaseModel?.mongoClient) await BaseModel.mongoClient.close();
   if (mongo) await mongo.stop();
 });
+
 async function call(route, body, credential = token, method) {
   const response = await fetch(base + route, {
     method: method || (body === undefined ? 'GET' : 'POST'),
@@ -580,6 +581,35 @@ test(
         path: path.resolve(__dirname, '../../tmp/mobile-pos-live-sale.png'),
       });
       const receiptNumber = await page.getByTestId('receipt-number').innerText();
+      const cloudIntent = await db
+        .collection('mobile_sales')
+        .findOne({ 'sale.receipt': receiptNumber });
+      await db
+        .collection('mobile_cloud_capabilities')
+        .insertOne({
+          _id: 'delivery:' + String(branch.license),
+          protocol: 1,
+          authority: 'test-gateway',
+        });
+      await db
+        .collection('mobile_cloud_receipts')
+        .insertOne({
+          _id: 'mobile:' + cloudIntent._id,
+          saleId: String(cloudIntent.serverId),
+          branchId: String(branch._id),
+          authority: 'test-gateway',
+          receivedAt: new Date().toISOString(),
+        });
+      await page.getByRole('button', { name: 'Connection & sync', exact: true }).click();
+      const delivery = page.waitForResponse((response) =>
+        response.url().endsWith('/mobile/v1/delivery-status')
+      );
+      await page.getByRole('button', { name: 'Sync now', exact: true }).click();
+      assert.equal((await (await delivery).json()).receipts.length, 1);
+      await expect(page.getByText('Received in cloud', { exact: true })).toBeVisible();
+      await page.screenshot({
+        path: path.resolve(__dirname, '../../tmp/mobile-cloud-delivery.png'),
+      });
       await page.getByRole('tab', { name: 'Receipts', exact: true }).click();
       await page.getByText('Find an older receipt', { exact: true }).click();
       await page.getByRole('textbox').fill(receiptNumber);
@@ -597,6 +627,8 @@ test(
       assert.deepEqual(errors, []);
     } finally {
       await browser.close();
+      await db.collection('mobile_cloud_receipts').deleteMany({});
+      await db.collection('mobile_cloud_capabilities').deleteMany({});
     }
   }
 );
@@ -999,5 +1031,53 @@ test('paged catalogue exceeds 10k items, remains immutable, and binds pages to t
     assert.equal(deleted.catalogue.count, first.catalogue.count - 1);
   } finally {
     await db.collection('items').deleteMany({ _id: { $in: added.map((row) => row._id) } });
+  }
+});
+
+test('cloud delivery requires explicit matching evidence and stays scoped to its issuing device', async () => {
+  const intent = await db
+    .collection('mobile_sales')
+    .findOne({ userId: user._id, branchId: branch._id, state: 'complete' });
+  const paid = intent.sale;
+  const ack = intent.ack;
+  const query = { ...req, body: { ids: [paid.id] } };
+  assert.equal((await mobile.deliveryStatus(query)).available, false);
+  const cap = {
+    _id: 'delivery:' + String(branch.license),
+    protocol: 1,
+    authority: 'verified-gateway',
+  };
+  const proof = {
+    _id: 'mobile:' + intent._id,
+    saleId: ack.serverId,
+    branchId: String(branch._id),
+    authority: cap.authority,
+    receivedAt: new Date().toISOString(),
+  };
+  try {
+    await db.collection('mobile_cloud_capabilities').insertOne(cap);
+    assert.deepEqual((await mobile.deliveryStatus(query)).receipts, []);
+    await db.collection('mobile_cloud_receipts').insertOne({ ...proof, branchId: 'other' });
+    assert.deepEqual((await mobile.deliveryStatus(query)).receipts, []);
+    await db
+      .collection('mobile_cloud_receipts')
+      .updateOne({ _id: proof._id }, { $set: { branchId: proof.branchId, saleId: 'wrong' } });
+    assert.deepEqual((await mobile.deliveryStatus(query)).receipts, []);
+    await db.collection('mobile_cloud_receipts').updateOne({ _id: proof._id }, { $set: proof });
+    assert.deepEqual((await mobile.deliveryStatus(query)).receipts, [
+      { id: paid.id, serverId: ack.serverId, receivedAt: proof.receivedAt },
+    ]);
+    assert.deepEqual(
+      (await mobile.deliveryStatus({ ...query, handsetDevice: 'other-device' })).receipts,
+      []
+    );
+    assert.deepEqual(
+      (await mobile.deliveryStatus({ ...query, user: { ...user, _id: new ObjectId() } })).receipts,
+      []
+    );
+    assert.equal((await mobile.bootstrap(req)).shop.capabilities.cloudDelivery, true);
+  } finally {
+    await db.collection('mobile_cloud_receipts').deleteOne({ _id: proof._id });
+    await db.collection('mobile_cloud_capabilities').deleteOne({ _id: cap._id });
   }
 });
