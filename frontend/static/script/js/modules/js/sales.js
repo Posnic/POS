@@ -8,6 +8,24 @@
     addSalesItemChars: [],
     EditRecentSaleParams: [],
     submissionInProgress: false,
+    _orderRequestId: null,
+    orderRequestId: function () {
+        if (!PosnicPro.sales._orderRequestId) {
+            if (typeof window.crypto.randomUUID === 'function') {
+                PosnicPro.sales._orderRequestId = window.crypto.randomUUID();
+            } else {
+                var bytes = new Uint8Array(16);
+                window.crypto.getRandomValues(bytes);
+                PosnicPro.sales._orderRequestId = Array.from(bytes, function (value) {
+                    return value.toString(16).padStart(2, '0');
+                }).join('');
+            }
+        }
+        return PosnicPro.sales._orderRequestId;
+    },
+    resetOrderRequest: function () {
+        PosnicPro.sales._orderRequestId = null;
+    },
     SaleDenomination: [],
     tablesList: [],
     selectedTable: null,
@@ -39,6 +57,7 @@
         return sub;
     },
     showAdd: function () {
+        PosnicPro.sales.resetOrderRequest();
         // ✅ Reset submission flag when opening new sale
         PosnicPro.sales.submissionInProgress = false;
         $("#save_btn").prop('disabled', false);
@@ -3992,6 +4011,7 @@ PosnicPro.sales.addSale = {
             var params = {
                 url: 'sales',
                 data: JSON.stringify({
+                    idempotencyKey: PosnicPro.sales.orderRequestId(),
                     items: PosnicPro.sales.addSalesLineTable,
                     sales_total: $("#grand_total").val(),
                     sales_sub_total: String($('#sales_new_subtotal').text() || '').replace(/,/g, ''),
@@ -4047,6 +4067,7 @@ PosnicPro.sales.addSale = {
                 // ✅ Clear submission flag
     PosnicPro.sales.submissionInProgress = false;
                 if (response.type === 'success') {
+                    PosnicPro.sales.resetOrderRequest();
                     // Stock just changed on the server; cached items are stale.
                     PosnicPro.sales.itemCache.clear();
                     (sendSms.cust_phone || { setCountry: function () {} }).setCountry(response.data.country_sort);
@@ -7081,6 +7102,7 @@ PosnicPro.sales.setDefaults = function () {
 // "Sales cancelled" notification when isFalse is not explicitly false.
 PosnicPro.sales.clear = PosnicPro.sales.clear || {};
 PosnicPro.sales.clear.cartItems = function (isFalse) {
+    PosnicPro.sales.resetOrderRequest();
     /*
      * setDefaults fills the walk-in customer, so NOTHING before it may
      * abort this function - a throw up here is exactly how the sale page
