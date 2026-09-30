@@ -130,13 +130,6 @@ async function reserve(db, scope, input) {
   const capacity = metadata.reduce((sum, row) => sum + row.capacity, 0);
   const maximum = metadata.reduce((sum, row) => sum + row.max_capacity, 0);
   if (maximum && input.guests > maximum) fail('Choose a table with enough seats.');
-  const open = await db.collection('sales').countDocuments({
-    branch_id: scope.branchId,
-    license: scope.license,
-    ...require('../helpers/floor-eligibility').floorEligibility(),
-    table_number: { $in: tables.map((row) => row.tableorder_value) },
-  });
-  if (open) fail('This table has an open order.', 409);
   claim.capacity = capacity;
   claim.max_capacity = maximum;
   claim.labels = ids.map((id) => tables.find((row) => String(row._id) === id).tableorder_value);
@@ -158,6 +151,48 @@ async function reserve(db, scope, input) {
     if (error.code !== 11000) throw error;
   }
   const snapshot = await store(db).findOne({ _id: key });
+  const concurrent = snapshot.claims.find((row) => row.id === id);
+  if (concurrent) {
+    if (terminal(concurrent) || !sameRequest(concurrent, claim))
+      fail('This seating request has already been used.', 409);
+    return concurrent;
+  }
+  const overlaps = snapshot.claims.filter(
+    (row) => !terminal(row) && row.tables.some((table) => ids.includes(table))
+  );
+  if (overlaps.some((row) => ids.length > 1 || row.tables.length > 1))
+    fail('Table changed. Refresh and try again.', 409);
+  const open = await db
+    .collection('sales')
+    .find(
+      {
+        branch_id: scope.branchId,
+        license: scope.license,
+        ...require('../helpers/floor-eligibility').floorEligibility(),
+        table_number: { $in: tables.map((row) => row.tableorder_value) },
+      },
+      { projection: { _id: 1 } }
+    )
+    .toArray();
+  if (ids.length > 1 && open.length) fail('This table has an open order.', 409);
+  if (ids.length === 1) {
+    const branch = await db
+      .collection('branches')
+      .findOne(
+        { _id: scope.branchId, license: scope.license },
+        { projection: { table_order_limit: 1 } }
+      );
+    const configured = Number(branch?.table_order_limit ?? 1);
+    const limit = Number.isSafeInteger(configured) && configured >= 0 ? configured : 1;
+    // A bound claim and its committed sale are one order, not two. A pending
+    // claim counts too, before its sale exists, so simultaneous staff cannot
+    // exceed the configured limit by submitting during that gap.
+    const count = new Set([
+      ...open.map((order) => `sale:${String(order._id)}`),
+      ...overlaps.map((row) => (row.order_id ? `sale:${row.order_id}` : `claim:${row.id}`)),
+    ]).size;
+    if (limit && count >= limit) fail('This table has reached its open order limit.', 409);
+  }
   if (await history(db).findOne({ _id: `${key}:${id}` }))
     fail('This seating request has already been used.', 409);
   claim.generation = (snapshot.revision || 0) + 1;
@@ -166,9 +201,6 @@ async function reserve(db, scope, input) {
       _id: key,
       revision: snapshot.revision === undefined ? { $exists: false } : snapshot.revision,
       'claims.id': { $ne: id },
-      claims: {
-        $not: { $elemMatch: { tables: { $in: ids }, state: { $nin: ['cancelled', 'released'] } } },
-      },
     },
     { $push: { claims: claim }, $inc: { revision: 1 } }
   );
@@ -240,6 +272,13 @@ async function release(db, scope, id) {
     license: scope.license,
   });
   if (!sale?.floor_closed_at) fail('Close the order before releasing its tables.', 409);
+  const remainingOrders = await db.collection('sales').countDocuments({
+    branch_id: scope.branchId,
+    license: scope.license,
+    ...require('../helpers/floor-eligibility').floorEligibility(),
+    table_number: { $in: claim.labels },
+  });
+  if (remainingOrders) fail('Close the remaining orders before releasing this table.', 409);
   // The claim keeps all member tables unavailable while this projection runs.
   // Retrying after interruption repeats only the cleaning projection, never the
   // payment, item, kitchen or stock operations.

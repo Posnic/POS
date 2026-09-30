@@ -221,14 +221,12 @@ test('a delayed concurrent release cannot dirty tables already cleaned after clo
   const claim = await seating.reserve(db, scope, request());
   const saleId = new ObjectId();
   await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
-  await db
-    .collection('sales')
-    .insertOne({
-      _id: saleId,
-      branch_id: scope.branchId,
-      license: scope.license,
-      floor_closed_at: new Date(),
-    });
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    floor_closed_at: new Date(),
+  });
   const tables = db.collection('tableorder'),
     originalCollection = db.collection.bind(db),
     originalUpdate = tables.updateMany.bind(tables);
@@ -257,4 +255,107 @@ test('a delayed concurrent release cannot dirty tables already cleaned after clo
   collectionSpy.mockRestore();
   expect(await tables.countDocuments({ service_state: 'cleaning' })).toBe(0);
   expect((await seating.find(db, scope, claim.id)).state).toBe('released');
+});
+test('single-table seating honours a branch limit and counts a bound sale only once', async () => {
+  await db
+    .collection('branches')
+    .insertOne({ _id: scope.branchId, license: scope.license, table_order_limit: 2 });
+  const first = await seating.reserve(db, scope, request({ table_ids: [ids[0]], guests: 2 }));
+  const saleId = new ObjectId();
+  await seating.bind(db, scope, first.id, 'staff-1', String(saleId));
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    table_number: 'T1',
+    sale_process: 'KOT',
+    payment_status: 'Unpaid',
+  });
+  await seating.reserve(
+    db,
+    scope,
+    request({ request_id: 'seating-request-0002', table_ids: [ids[0]], guests: 2 })
+  );
+  await expect(
+    seating.reserve(
+      db,
+      scope,
+      request({ request_id: 'seating-request-0003', table_ids: [ids[0]], guests: 2 })
+    )
+  ).rejects.toThrow('open order limit');
+});
+test('unlimited single-table orders still cannot take a member of a combined group', async () => {
+  await db
+    .collection('branches')
+    .insertOne({ _id: scope.branchId, license: scope.license, table_order_limit: 0 });
+  for (let index = 0; index < 3; index++)
+    await seating.reserve(
+      db,
+      scope,
+      request({
+        request_id: `seating-request-000${index}`,
+        table_ids: [ids[2]],
+        primary_id: ids[2],
+        guests: 2,
+      })
+    );
+  await seating.reserve(db, scope, request({ request_id: 'combined-request-0001' }));
+  await expect(
+    seating.reserve(
+      db,
+      scope,
+      request({ request_id: 'single-request-0004', table_ids: [ids[0]], guests: 2 })
+    )
+  ).rejects.toThrow('Table changed');
+});
+test('two concurrent requests cannot take the final permitted single-table slot', async () => {
+  await db
+    .collection('branches')
+    .insertOne({ _id: scope.branchId, license: scope.license, table_order_limit: 2 });
+  await seating.reserve(db, scope, request({ table_ids: [ids[0]], guests: 2 }));
+  const result = await Promise.allSettled(
+    [2, 3].map((index) =>
+      seating.reserve(
+        db,
+        scope,
+        request({ request_id: `seating-request-000${index}`, table_ids: [ids[0]], guests: 2 })
+      )
+    )
+  );
+  expect(result.filter((row) => row.status === 'fulfilled')).toHaveLength(1);
+  expect(await seating.read(db, scope)).toHaveLength(2);
+});
+test('closing one of multiple orders cannot mark the shared table for cleaning', async () => {
+  await db
+    .collection('branches')
+    .insertOne({ _id: scope.branchId, license: scope.license, table_order_limit: 2 });
+  const first = await seating.reserve(db, scope, request({ table_ids: [ids[0]], guests: 2 }));
+  const second = await seating.reserve(
+    db,
+    scope,
+    request({ request_id: 'seating-request-0002', table_ids: [ids[0]], guests: 2 })
+  );
+  const firstSale = new ObjectId(),
+    secondSale = new ObjectId();
+  await seating.bind(db, scope, first.id, 'staff-1', String(firstSale));
+  await seating.bind(db, scope, second.id, 'staff-1', String(secondSale));
+  await db.collection('sales').insertMany([
+    {
+      _id: firstSale,
+      branch_id: scope.branchId,
+      license: scope.license,
+      table_number: 'T1',
+      floor_closed_at: new Date(),
+    },
+    {
+      _id: secondSale,
+      branch_id: scope.branchId,
+      license: scope.license,
+      table_number: 'T1',
+      sale_process: 'KOT',
+      payment_status: 'Unpaid',
+    },
+  ]);
+  await expect(seating.release(db, scope, first.id)).rejects.toThrow('remaining orders');
+  expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(0);
 });
