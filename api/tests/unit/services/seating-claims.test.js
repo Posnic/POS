@@ -660,3 +660,37 @@ test('interrupted floor release retains a lock and retries cleaning once', async
     (await db.collection('tableorder').findOne({ _id: new ObjectId(ids[0]) })).captain_table_version
   ).toBe(1);
 });
+
+test('close intent blocks a group move and accepts only the same close retry', async () => {
+  const order = await movableOrder();
+  const closeId = 'closing-request-0001';
+  await seating.beginClose(db, scope, [String(order._id)], closeId);
+  await seating.beginClose(db, scope, [String(order._id)], closeId);
+  await expect(
+    seating.beginClose(db, scope, [String(order._id)], 'closing-request-0002')
+  ).rejects.toMatchObject({ status: 409 });
+  await expect(
+    seating.prepareMove(
+      db,
+      scope,
+      String(order._id),
+      request({ request_id: 'moving-request-0001', table_ids: ids.slice(1), primary_id: ids[1] })
+    )
+  ).rejects.toMatchObject({ status: 409 });
+  await expect(seating.forEdit(db, scope, order, {})).rejects.toMatchObject({ status: 409 });
+});
+test('close and prepare move cannot both acquire the source group', async () => {
+  const order = await movableOrder();
+  const results = await Promise.allSettled([
+    seating.beginClose(db, scope, [String(order._id)], 'closing-request-0001'),
+    seating.prepareMove(
+      db,
+      scope,
+      String(order._id),
+      request({ request_id: 'moving-request-0001', table_ids: ids.slice(1), primary_id: ids[1] })
+    ),
+  ]);
+  expect(results.filter((row) => row.status === 'fulfilled')).toHaveLength(1);
+  const source = await seating.find(db, scope, order.seating_request_id);
+  expect(Boolean(source.closing) !== Boolean(source.moving_to)).toBe(true);
+});

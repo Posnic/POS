@@ -171,7 +171,8 @@ async function reserveClaim(db, scope, input, moving = null) {
         row.id === moving.id &&
         row.order_id === moving.order_id &&
         row.state === 'submitting' &&
-        !row.moving_to
+        !row.moving_to &&
+        !row.closing
     )
   )
     fail('The seating group changed. Refresh this order.', 409);
@@ -280,6 +281,41 @@ async function prepareMove(db, scope, orderId, input) {
     fail('The seating group changed. Refresh this order.', 409);
   if (String(input.actor || '') !== source.actor) fail('Permission is required.', 403);
   return reserveClaim(db, scope, input, source);
+}
+
+async function beginClose(db, scope, orderIds, closeId) {
+  requestId(closeId);
+  if (!Array.isArray(orderIds) || !orderIds.length || orderIds.length > 200)
+    fail('Choose the orders to close.');
+  const ids = [...new Set(orderIds.map(identity))].sort();
+  const snapshot = await store(db).findOne({ _id: scopeKey(scope) });
+  if (!snapshot) return;
+  const selected = snapshot.claims.filter((row) => !terminal(row) && ids.includes(row.order_id));
+  if (
+    selected.some(
+      (row) =>
+        row.moving_to ||
+        !['submitting', 'releasing'].includes(row.state) ||
+        (row.closing &&
+          (row.closing.id !== closeId ||
+            JSON.stringify(row.closing.orders) !== JSON.stringify(ids)))
+    )
+  )
+    fail('The seating group changed. Refresh this order.', 409);
+  if (!selected.length || selected.every((row) => row.closing?.id === closeId)) return;
+  const selectedIds = new Set(selected.map((row) => row.id));
+  const result = await store(db).updateOne(
+    { _id: scopeKey(scope), revision: snapshot.revision },
+    {
+      $set: {
+        claims: snapshot.claims.map((row) =>
+          selectedIds.has(row.id) ? { ...row, closing: { id: closeId, orders: ids } } : row
+        ),
+      },
+      $inc: { revision: 1 },
+    }
+  );
+  if (!result.matchedCount) fail('The seating group changed. Refresh this order.', 409);
 }
 
 async function cancelMove(db, scope, id, actor) {
@@ -598,6 +634,7 @@ async function forEdit(db, scope, order, next) {
   const destination = String(next.table || order.table_number || '');
   const claims = await read(db, scope);
   const own = claims.find((claim) => !terminal(claim) && claim.order_id === String(order._id));
+  if (own?.closing) fail('Close is in progress. Refresh this order.', 409);
   if (own?.state === 'releasing') fail('Close is in progress. Refresh this order.', 409);
   if (own?.moving_to) fail('Reconcile the table move before editing this order.', 409);
   if (order.seating_request_id && !own) fail('The seating group changed. Refresh this order.', 409);
@@ -624,6 +661,7 @@ async function forEdit(db, scope, order, next) {
 module.exports = {
   reserve,
   prepareMove,
+  beginClose,
   cancelMove,
   completeMove,
   bind,
