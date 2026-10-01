@@ -26,9 +26,14 @@ async function check(db, order, table, input) {
       { projection: { person_count: 1 } }
     )
     .toArray();
-  const guests =
-    Number(input.guests || order.person_count || 1) +
-    other.reduce((sum, row) => sum + Math.max(0, Number(row.person_count) || 0), 0);
+  const supplied = input.guests !== undefined && input.guests !== null && input.guests !== '';
+  const requested = Number(supplied ? input.guests : order.person_count);
+  if (supplied && (!Number.isInteger(requested) || requested < 1 || requested > 1000))
+    fail('Enter the number of guests.');
+  // An old check without a recorded party size is still an occupied table.
+  // Use the same minimum as seating claims, never zero or a negative count.
+  const covers = value => Number.isFinite(Number(value)) && Number(value) >= 1 ? Number(value) : 1;
+  const guests = covers(requested) + other.reduce((sum, row) => sum + covers(row.person_count), 0);
   if (!accommodates(table, guests)) fail('Choose a table with enough seats.', 409);
 }
 module.exports = { check };
