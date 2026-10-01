@@ -949,9 +949,30 @@ describe('SalesService', () => {
         const mongoose = require('mongoose');
         server = await MongoMemoryServer.create();
         connection = await mongoose.createConnection(server.getUri('desktop-edit-fence')).asPromise();
-        Model = connection.model('EditFenceSale', new mongoose.Schema({}, { strict: false }));
+        Model = connection.model('EditFenceSale', new mongoose.Schema({
+          partial_balance: { type: Number, default: 0 },
+        }, { strict: false }));
       }, 60000);
       afterAll(async () => { await connection?.close(); await server?.stop(); });
+
+      test('legacy missing payment fields remain editable after Mongoose supplies defaults', async () => {
+        await Model.deleteMany({});
+        const { ObjectId } = require('mongodb');
+        await Model.collection.insertOne({
+          _id: new ObjectId(SALE_ID), branch_id: BRANCH_ID, license: LICENSE_ID,
+          sales_id: 'INV-LEGACY', payment_status: 'Unpaid', payment_pending: 100,
+          sale_process: 'KOT', items: [], changes: [],
+        });
+        const original = await Model.findById(SALE_ID);
+        expect(original.partial_balance).toBe(0);
+        expect(original.$isDefault('partial_balance')).toBe(true);
+        salesRepository.getById.mockResolvedValueOnce(original)
+          .mockImplementationOnce(() => Model.findById(SALE_ID));
+        salesRepository.save.mockImplementation(doc => doc.save());
+        const result = await salesService.processSale(makeSaleData(), SALE_ID, 'Edit', makeContext());
+        expect(result.status).toBe(true);
+        expect(salesRepository.save).toHaveBeenCalledTimes(1);
+      });
 
       test.each([
         ['payment_status', 'Paid'], ['paid_amount', 50], ['partial_balance', 50],

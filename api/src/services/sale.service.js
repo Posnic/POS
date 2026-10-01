@@ -1468,10 +1468,12 @@ const processSale = async (
       // Repricing used the first read. Reloading the Mongoose document must
       // not silently authorize writing over a payment/closure that happened
       // in between. Mongoose applies these conditions at the actual save too.
+      // A hydration default was not stored on a legacy document: compare
+      // absence rather than requiring that synthesized default in MongoDB.
       doc.$where = { ...(doc.$where || {}) };
       for (const field of ['payment_status', 'paid_amount', 'partial_balance',
         'partial_amounts', 'payment_pending', 'sale_process', 'floor_closed_at', 'order_state'])
-        doc.$where[field] = existingSale?.[field] === undefined
+        doc.$where[field] = existingSale?.[field] === undefined || existingSale?.$isDefault?.(field)
           ? { $exists: false } : existingSale[field];
       doc.set(updateData);
       result = await salesRepository.save(doc);
