@@ -23,29 +23,31 @@
  */
 
 const mongoose = require('mongoose');
+const { currentConnection, currentDb } = require('./tenant-context');
 
 /**
  * The mongoose Connection this request should use.
  *
- * `req.tenantConnection` is set by the caller that knows about tenants; nothing
- * in the open source path sets it, and the default connection is correct there.
+ * The cloud shard carries its shop in AsyncLocalStorage. Resolve that scope
+ * before considering a standalone caller's explicit or default connection.
  */
 function connectionFor(req) {
-  return (req && req.tenantConnection) || mongoose.connection;
+  return currentConnection((req && req.tenantConnection) || mongoose.connection);
 }
 
 /**
  * Express middleware: attach the request's database handle.
  *
- * Deliberately does not throw when the connection is not ready. Requests can
+ * Standalone does not throw when the connection is not ready. Requests can
  * arrive during startup or a reconnect, and a middleware that throws turns a
  * transient state into a 500 with no useful message. Handlers that need the
- * database already have to cope with it being unavailable.
+ * database already have to cope with it being unavailable. A cloud request
+ * without a shop scope must fail closed instead of reading the control database.
  */
 function attachDb(req, res, next) {
   const connection = connectionFor(req);
   req.dbConnection = connection;
-  req.db = connection && connection.db ? connection.db : undefined;
+  req.db = currentDb(connection && connection.db ? connection.db : undefined);
   next();
 }
 
