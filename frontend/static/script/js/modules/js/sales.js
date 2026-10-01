@@ -600,10 +600,13 @@
                 + '<th class="text-center"><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var digits = Number.isInteger(r.currencyDigits) && r.currencyDigits >= 0 && r.currencyDigits <= 4 ? r.currencyDigits : 2;
-                var unpaid = String(r.payment_status || '').toLowerCase() === 'unpaid';
+                var partial = /partial/i.test(String(r.payment_status || ''));
+                var unpaid = partial || String(r.payment_status || '').toLowerCase() === 'unpaid';
                 var proc = String(r.sale_process || '');
                 var pill = /return/i.test(proc)
                     ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
+                    : partial
+                        ? '<span class="rs-pill unpaid"><lang class="lang_partial">Partial</lang></span>'
                     : unpaid
                         ? '<span class="rs-pill unpaid"><lang class="lang_unpaid">Unpaid</lang></span>'
                         : '<span class="rs-pill paid"><lang class="lang_paid">Paid</lang></span>';
@@ -734,9 +737,11 @@
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(v) || 0).toFixed(2); };
         var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
-        var unpaid = String(d.payment_status || '').toLowerCase() === 'unpaid';
+        var unpaid = /partial|^unpaid$/i.test(String(d.payment_status || ''));
         var proc = String(d.sale_process || '');
-        var stamp = /return/i.test(proc) ? proc.toUpperCase() : unpaid ? PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID') : PosnicPro.i18n.t('lang_paid_2', 'PAID');
+        var stamp = /return/i.test(proc) ? proc.toUpperCase()
+            : /partial/i.test(String(d.payment_status || '')) ? PosnicPro.i18n.t('lang_partially_paid_3', 'PARTIALLY PAID')
+            : unpaid ? PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID') : PosnicPro.i18n.t('lang_paid_2', 'PAID');
         var logo = PosnicPro.local.get('branchimage');
         var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
         var seller = '<div class="q-seller">'
@@ -786,8 +791,8 @@
         var footer = '<div class="q-footer">';
         footer += '<div class="q-block"><div class="q-label"><lang class="lang_payment_2">Payment</lang></div>'
             + '<div>' + esc(d.payment_mode || '-') + '</div>'
-            + (unpaid && Number(d.partial_balance) > 0
-                ? '<div class="q-muted" style="color: var(--theme-danger-color, #c0392b);">Pending: ' + money(d.partial_balance) + '</div>'
+            + (unpaid && Number(d.payment_pending) > 0
+                ? '<div class="q-muted" style="color: var(--theme-danger-color, #c0392b);">Pending: ' + money(d.payment_pending) + '</div>'
                 : '')
             + (real(d.payment_description) ? '<div class="q-muted">' + esc(d.payment_description) + '</div>' : '')
             + '</div>';
@@ -825,10 +830,12 @@
     renderSaleDoc: function (d) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var id = String(d._id || d.id || PosnicPro.sales._openDocId);
-        var unpaid = String(d.payment_status || '').toLowerCase() === 'unpaid';
+        var partial = /partial/i.test(String(d.payment_status || ''));
+        var unpaid = partial || String(d.payment_status || '').toLowerCase() === 'unpaid';
         var proc = String(d.sale_process || '');
         var pill = /return/i.test(proc)
             ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
+            : partial ? '<span class="rs-pill unpaid"><lang class="lang_partial">Partial</lang></span>'
             : unpaid ? '<span class="rs-pill unpaid"><lang class="lang_unpaid">Unpaid</lang></span>' : '<span class="rs-pill paid"><lang class="lang_paid">Paid</lang></span>';
         var toolbar = '<div class="p-doc-toolbar">'
             + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" data-t-title="lang_show_or_hide_the_list" aria-label="Show or hide the list" data-t-aria-label="lang_show_or_hide_the_list" onclick="PosnicPro.masterDetail.toggleRail(\'#sales_split\');"><i class="feather icon-sidebar"></i></button>'
@@ -3001,6 +3008,13 @@
         PosnicPro.sales.customerViewDisplay();
     },
 
+    savedSellingPrice: function (line) {
+        // App orders store item_price as net; the saved pricing snapshot keeps
+        // the selling basis that the cart's tax calculator expects.
+        if (line.pricing && line.pricing.version === 1) return line.pricing.selling_price;
+        if (line.sale_inline_item_price != null && Number.isFinite(Number(line.sale_inline_item_price)) && String(line.sale_inline_item_price).trim() !== '') return Number(line.sale_inline_item_price);
+        return line.selling_price != null ? line.selling_price : line.item_price;
+    },
     getPaymentObject: function () {
         let paymentObj = {};
 
@@ -8480,11 +8494,11 @@ PosnicPro.sales.recentMenu = {
             PosnicPro.sales.salesId = result.sales_id;
             $.each(EditRecentSaleItems, function (key, val) {
                 lineItem = {
-                    "sale_inline_item_price": val.item_price,
+                    "sale_inline_item_price": PosnicPro.sales.savedSellingPrice(val),
                     "return": val.return,
                     "item_id": val.item_id,
                     "item_name": val.item_name,
-                    "selling_price": val.item_price,
+                    "selling_price": PosnicPro.sales.savedSellingPrice(val),
                     "itemid": val.barcode_id,
                     "item_quantity": val.item_quantity,
                     "item_available_quantity": val.item_available_quantity,
@@ -8518,10 +8532,10 @@ PosnicPro.sales.recentMenu = {
         PosnicPro.sales.salesId = result.sales_id;
         $.each(EditRecentSaleItems, function (key, val) {
             lineItem = {
-                "sale_inline_item_price": val.item_price,
+                "sale_inline_item_price": PosnicPro.sales.savedSellingPrice(val),
                 "item_id": val.item_id,
                 "item_name": val.item_name,
-                "selling_price": val.item_price,
+                "selling_price": PosnicPro.sales.savedSellingPrice(val),
                 "itemid": val.barcode_id,
                 "item_quantity": val.item_quantity,
                 "available_quantity": val.item_available_quantity,
