@@ -198,6 +198,7 @@ const processSale = async (
   { preview = false, beforeCommit } = {}
 ) => {
   let finishCaptainEdit;
+  let finishCapacityEdit;
   try {
     if (
       beforeCommit !== undefined &&
@@ -1051,6 +1052,10 @@ const processSale = async (
       date: mongo_date,
       sale_process: saleProcess,
       // Only the server's KOT path enrolls kitchen work; caller flags are ignored.
+      floor_lifecycle:
+        existingSale?.floor_lifecycle === true ||
+        (!existingSale && saleProcess === 'KOT') ||
+        (existingSale?.sale_process === 'KOT' && existingSale.payment_status !== 'Paid'),
       kitchen_required:
         existingSale?.kitchen_required === true ||
         (!existingSale && saleProcess === 'KOT') ||
@@ -1252,11 +1257,61 @@ const processSale = async (
       denomination_values: data.denomination_values ?? (existingSale?.denomination_values || []),
     };
 
+    const savedAnswer = (saleId, saleNumber, duplicate = false) => ({
+      status: true,
+      data: {
+        _id: saleId,
+        sales_id: saleId,
+        sale_number: saleNumber,
+        sms: context.branchSettings?.sales_sms || false,
+        whatsapp: context.branchSettings?.whatsapp_receipt || false,
+        print: context.branchSettings?.printall || false,
+        mail: context.branchSettings?.sales_mail || false,
+        waring: 'success',
+        name: (data.customer_name || '').trim(),
+        phone: (data.customer_phone || '').trim(),
+        customer_balance: customer ? customer.balance || 0 : 0,
+        country_sort: context.branchSettings?.sortname || 'in',
+        ...(duplicate ? { duplicate: true } : {}),
+      },
+      message: 'Sale saved successfully',
+    });
     const finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
     if (finalSaleData.kitchen_required) {
       finalSaleData.kitchen_closed = !require('../helpers/kitchen-rounds')
         .rounds({ ...existingSale, ...finalSaleData })
         .some((round) => round.items.some((item) => item.remaining > 0));
+    }
+
+    let submissionDb = null;
+    if (id === '' && data.idempotencyKey) {
+      submissionDb = await BaseModel.getDb();
+      const existing = await require('./desktop-submission').prepare(
+        submissionDb,
+        { branchId, license: licenseId },
+        String(userId || ''),
+        data,
+        finalSaleData
+      );
+      if (existing) return savedAnswer(existing._id, existing.sales_id, true);
+    }
+
+    let seatingAttempt = null;
+    let seatingDb = null;
+    const useSeating =
+      context.seatingProtocol === true &&
+      id === '' &&
+      process !== 'Hold' &&
+      context.branchSettings?.table_options === true &&
+      finalSaleData.table_number;
+    if (useSeating) {
+      seatingDb = await BaseModel.getDb();
+      const existing = await require('./desktop-seating').lookup(
+        seatingDb,
+        { branchId, license: licenseId },
+        { actor: String(userId || ''), request_id: data.idempotencyKey, payload: data }
+      );
+      if (existing) return savedAnswer(existing._id, existing.sales_id, true);
     }
 
     // Inventory Verification BEFORE Insert (PHP lines 653-690)
@@ -1348,6 +1403,21 @@ const processSale = async (
               decisionPricing
             );
         }
+        // Bind seating only after stock and approval checks pass. A rejected
+        // pre-commit request must not leave a bound table with no order.
+        if (useSeating) {
+          seatingAttempt = await require('./desktop-seating').prepare(
+            seatingDb,
+            { branchId, license: licenseId },
+            { actor: String(userId || ''), request_id: data.idempotencyKey, payload: data },
+            finalSaleData
+          );
+          if (seatingAttempt?.existing) {
+            for (const reservation of stockReservations.values())
+              await itemRepository.updateStock(reservation.itemId, reservation.quantity);
+            return savedAnswer(seatingAttempt.existing._id, seatingAttempt.existing.sales_id, true);
+          }
+        }
         // If the unique bill-number index catches a one-in-a-million clash,
         // take the next number and retry rather than fail the sale.
         result = await salesRepository.createSaleUnique(finalSaleData, async () => {
@@ -1357,6 +1427,24 @@ const processSale = async (
       } catch (error) {
         for (const reservation of stockReservations.values()) {
           await itemRepository.updateStock(reservation.itemId, reservation.quantity);
+        }
+        if (submissionDb && error.code === 11000) {
+          const existing = await require('./desktop-submission').lookup(
+            submissionDb,
+            { branchId, license: licenseId },
+            String(userId || ''),
+            data
+          );
+          if (existing) return savedAnswer(existing._id, existing.sales_id, true);
+        }
+        if (seatingAttempt && error.code === 11000) {
+          const existing = await seatingDb.collection('sales').findOne({
+            _id: finalSaleData._id,
+            branch_id: branchId,
+            license: licenseId,
+            seating_request_id: seatingAttempt.claim.id,
+          });
+          if (existing) return savedAnswer(existing._id, existing.sales_id, true);
         }
         throw error;
       }
@@ -1371,6 +1459,57 @@ const processSale = async (
           data: null,
           message: 'Sale not found for update',
         };
+      }
+      if (doc.seating_request_id || context.branchSettings?.table_options === true) {
+        await require('./desktop-seating').guardEdit(
+          await BaseModel.getDb(),
+          { branchId, license: licenseId },
+          doc,
+          updateData
+        );
+      }
+      // Repricing used the first read. Reloading the Mongoose document must
+      // not silently authorize writing over a payment/closure that happened
+      // in between. Mongoose applies these conditions at the actual save too.
+      // A hydration default was not stored on a legacy document: compare
+      // absence rather than requiring that synthesized default in MongoDB.
+      doc.$where = { ...(doc.$where || {}) };
+      for (const field of [
+        'payment_status',
+        'paid_amount',
+        'partial_balance',
+        'partial_amounts',
+        'payment_pending',
+        'sale_process',
+        'floor_closed_at',
+        'order_state',
+        'person_count',
+        'table_number',
+        'table_id',
+        'dine_type',
+        'seating_request_id',
+        'seating_primary_id',
+        'seating_table_ids',
+        'seating_capacity_revision',
+      ])
+        doc.$where[field] =
+          existingSale?.[field] === undefined || existingSale?.$isDefault?.(field)
+            ? { $exists: false }
+            : existingSale[field];
+      if (doc.seating_request_id || context.branchSettings?.table_options === true) {
+        const db = await BaseModel.getDb();
+        const scope = { branchId, license: licenseId };
+        const seating = require('./seating-claims');
+        const permit = await seating.reserveEditCapacity(db, scope, existingSale, {
+          table: updateData.table_number,
+          guests: updateData.person_count,
+          dine_type: updateData.dine_type,
+          sale_process: updateData.sale_process,
+        });
+        if (permit) {
+          updateData.seating_capacity_revision = permit.id;
+          finishCapacityEdit = () => seating.reconcileEditCapacity(db, scope, permit.id);
+        }
       }
       doc.set(updateData);
       result = await salesRepository.save(doc);
@@ -1721,24 +1860,7 @@ const processSale = async (
       }
     }
 
-    return {
-      status: true,
-      data: {
-        _id: saleId,
-        sales_id: saleId,
-        sale_number: salePrefixedId,
-        sms: context.branchSettings?.sales_sms || false,
-        whatsapp: context.branchSettings?.whatsapp_receipt || false,
-        print: context.branchSettings?.printall || false,
-        mail: context.branchSettings?.sales_mail || false,
-        waring: 'success', // Matches PHP misspelled field name
-        name: (data.customer_name || '').trim(),
-        phone: (data.customer_phone || '').trim(),
-        customer_balance: customer ? customer.balance || 0 : 0,
-        country_sort: context.branchSettings?.sortname || 'in',
-      },
-      message: 'Sale saved successfully',
-    };
+    return savedAnswer(saleId, salePrefixedId);
   } catch (error) {
     console.error('processSale Error:', error);
     return {
@@ -1750,6 +1872,13 @@ const processSale = async (
         : {}),
     };
   } finally {
+    if (finishCapacityEdit) {
+      try {
+        await finishCapacityEdit();
+      } catch (error) {
+        console.error('Order capacity reconciliation pending:', error);
+      }
+    }
     if (finishCaptainEdit) await finishCaptainEdit();
   }
 };
@@ -1783,8 +1912,7 @@ const getTablesWithActiveOrders = async (branchId) => {
       {
         $match: {
           branch_id: branchObjectId,
-          sale_process: 'KOT',
-          payment_status: 'Unpaid',
+          ...require('../helpers/floor-eligibility').floorEligibility(),
         },
       },
       {
@@ -1807,6 +1935,7 @@ const getTablesWithActiveOrders = async (branchId) => {
            * that was happening anyway - no second query and no extra index.
            */
           orders: { $sum: 1 },
+          paidOrders: { $sum: { $cond: [{ $eq: ['$payment_status', 'Paid'] }, 1, 0] } },
           since: { $min: { $ifNull: ['$created_date', '$date'] } },
           amount: { $sum: { $ifNull: ['$sales_total', 0] } },
         },
@@ -1817,6 +1946,7 @@ const getTablesWithActiveOrders = async (branchId) => {
           table_number: '$_id.table_number',
           dine_type: '$_id.dine_type',
           orders: 1,
+          paidOrders: 1,
           since: 1,
           amount: 1,
         },
@@ -1873,7 +2003,12 @@ const getTablesWithActiveOrders = async (branchId) => {
          most recent one. */
       const since =
         was && was.since && (!res.since || was.since <= res.since) ? was.since : res.since || null;
-      detail.set(key, { orders, amount, since });
+      detail.set(key, {
+        orders,
+        amount,
+        since,
+        paidOrders: (was?.paidOrders || 0) + (Number(res.paidOrders) || 0),
+      });
     };
 
     results.forEach((res) => {
@@ -1909,6 +2044,7 @@ const getTablesWithActiveOrders = async (branchId) => {
       return {
         table_number: name,
         orders: row.orders || 0,
+        awaiting_close: row.orders > 0 && row.paidOrders === row.orders,
         /* ISO, so a phone in a different timezone reads the same instant. */
         since: row.since ? new Date(row.since).toISOString() : null,
         amount: Number(row.amount) || 0,
@@ -4043,6 +4179,8 @@ module.exports = {
       SaleModel: getModel(SaleModel),
       /* Carried through untouched: the route decides it, nothing else may. */
       staffOrder,
+      // All configured-table submissions participate, including older clients.
+      seatingProtocol: true,
     }),
   /* What the shop owes its hotels and its aggregators over a date range. */
   commissionReport: async (params = {}) => salesRepository.commissionReport(params),

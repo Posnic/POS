@@ -8,6 +8,33 @@
     addSalesItemChars: [],
     EditRecentSaleParams: [],
     submissionInProgress: false,
+    _orderRequestId: null,
+    orderRequestId: function () {
+        if (!PosnicPro.sales._orderRequestId) {
+            if (typeof window.crypto.randomUUID === 'function') {
+                PosnicPro.sales._orderRequestId = window.crypto.randomUUID();
+            } else {
+                var bytes = new Uint8Array(16);
+                window.crypto.getRandomValues(bytes);
+                PosnicPro.sales._orderRequestId = Array.from(bytes, function (value) {
+                    return value.toString(16).padStart(2, '0');
+                }).join('');
+            }
+        }
+        return PosnicPro.sales._orderRequestId;
+    },
+    resetOrderRequest: function () {
+        PosnicPro.sales._orderRequestId = null;
+    },
+    submissionJournal: function () {
+        return window.PosnicOrderJournal.create(window.localStorage, function () {
+            return {
+                server: API_URL,
+                branch: PosnicPro.local.get('branch_id_set'),
+                user: PosnicPro.local.get('userid')
+            };
+        }, function (key, fallback) { return PosnicPro.i18n.t(key, fallback); });
+    },
     SaleDenomination: [],
     tablesList: [],
     selectedTable: null,
@@ -39,6 +66,7 @@
         return sub;
     },
     showAdd: function () {
+        PosnicPro.sales.resetOrderRequest();
         // ✅ Reset submission flag when opening new sale
         PosnicPro.sales.submissionInProgress = false;
         $("#save_btn").prop('disabled', false);
@@ -571,6 +599,7 @@
                 + '<th class="text-right sl-col-items"><lang class="lang_itemdetail_title">Items</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
                 + '<th class="text-center"><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
+                var digits = Number.isInteger(r.currencyDigits) && r.currencyDigits >= 0 && r.currencyDigits <= 4 ? r.currencyDigits : 2;
                 var unpaid = String(r.payment_status || '').toLowerCase() === 'unpaid';
                 var proc = String(r.sale_process || '');
                 var pill = /return/i.test(proc)
@@ -584,7 +613,7 @@
                     + '<td>' + esc(r.customer_name || 'Walk-in') + '</td>'
                     + '<td class="sl-col-date">' + esc(r.string_date ? PosnicPro.convertDate(r.string_date) : (r.date ? String(r.date).slice(0, 10) : '-')) + '</td>'
                     + '<td class="text-right sl-col-items">' + esc(r.number_of_items != null ? r.number_of_items : (r.items || []).length) + '</td>'
-                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.sales_total) || 0).toFixed(2) + '</td>'
+                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.sales_total) || 0).toFixed(digits) + '</td>'
                     + '<td class="text-center">' + pill + '</td>'
                     + '</tr>';
             });
@@ -4009,6 +4038,7 @@ PosnicPro.sales.addSale = {
             var params = {
                 url: 'sales',
                 data: JSON.stringify({
+                    idempotencyKey: PosnicPro.sales.orderRequestId(),
                     items: PosnicPro.sales.addSalesLineTable,
                     sales_total: $("#grand_total").val(),
                     sales_sub_total: String($('#sales_new_subtotal').text() || '').replace(/,/g, ''),
@@ -4060,10 +4090,33 @@ PosnicPro.sales.addSale = {
                 })
             };
             PosnicPro.sales.guardDiscountApproval(params, function () {
+            var savedSubmission;
+            try {
+                savedSubmission = PosnicPro.sales.submissionJournal().save(JSON.parse(params.data));
+                if (PosnicPro.orderRecovery) PosnicPro.orderRecovery.refresh();
+                if (savedSubmission.state === 'confirmed') {
+                    throw new Error(PosnicPro.i18n.t('lang_submission_already_saved', 'This order was already saved. Refresh the sales list.'));
+                }
+            } catch (error) {
+                PosnicPro.sales.submissionInProgress = false;
+                $("#save_btn").prop('disabled', false);
+                $("#save_submit").removeClass('disabled');
+                PosnicPro.alert('error', error.message);
+                return;
+            }
             PosnicPro.post(params, function (response) {
                 // ✅ Clear submission flag
     PosnicPro.sales.submissionInProgress = false;
                 if (response.type === 'success') {
+                    try {
+                        PosnicPro.sales.submissionJournal().confirm(savedSubmission, response);
+                        if (PosnicPro.orderRecovery) PosnicPro.orderRecovery.refresh();
+                    } catch (error) {
+                        // The sale succeeded. Keep the original journal entry for
+                        // reconciliation if storage or the signed-in account changed.
+                        console.warn('Order journal confirmation remains pending:', error.message);
+                    }
+                    PosnicPro.sales.resetOrderRequest();
                     if (PosnicPro.businessApproval) PosnicPro.businessApproval.saved();
                     // Stock just changed on the server; cached items are stale.
                     PosnicPro.sales.itemCache.clear();
@@ -4161,8 +4214,16 @@ PosnicPro.sales.addSale = {
                 PosnicPro.sales.submissionInProgress = false;
                 $("#save_btn").prop('disabled', false);
                 $("#save_submit").removeClass('disabled');
-                var response = jQuery.parseJSON(xhr.responseText);
-                $.each(response.data, function (key, val) {
+                var response = xhr && xhr.responseJSON;
+                if (!response && xhr && xhr.responseText) {
+                    try { response = JSON.parse(xhr.responseText); } catch (error) { response = null; }
+                }
+                // A dropped connection has no stock correction payload. Keep
+                // the cart and retry identity intact instead of throwing here.
+                var corrections = response && Array.isArray(response.data) ? response.data : [];
+                $.each(corrections, function (key, val) {
+                    if (!val || !val.item_id || val.item_quantity == null ||
+                        !Number.isFinite(Number(val.item_quantity)) || Number(val.item_quantity) < 0) return;
                     let row = "touch_row_" + val.item_id;
                     $("#" + row + '').removeAttr("style");
                     $("#" + row + '').addClass('table-highlight-row');
@@ -7107,6 +7168,7 @@ PosnicPro.sales.setDefaults = function () {
 // "Sales cancelled" notification when isFalse is not explicitly false.
 PosnicPro.sales.clear = PosnicPro.sales.clear || {};
 PosnicPro.sales.clear.cartItems = function (isFalse) {
+    PosnicPro.sales.resetOrderRequest();
     /*
      * setDefaults fills the walk-in customer, so NOTHING before it may
      * abort this function - a throw up here is exactly how the sale page

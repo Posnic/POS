@@ -40,11 +40,11 @@ test('no detail page renders a raw row total - one legacy sale must not white-pa
   }
   /* and the guarded form is actually present, so this is a rewrite, not a removal */
   const items = read('items.js');
-  assert.match(items, /rowSaleTotal\.toFixed\(2\)/);
-  assert.match(items, /rowReturnTotal\.toFixed\(2\)/);
+  assert.match(items, /rowSaleTotal\.toFixed\(/);
+  assert.match(items, /rowReturnTotal\.toFixed\(/);
   assert.match(items, /Number\(row\.items_total\) \|\| 0/);
   for (const f of DETAIL_PAGES) {
-    assert.match(read(f), /\(Number\(row\.items_total\) \|\| 0\)\.toFixed\(2\)/, f);
+    assert.match(read(f), /\(Number\(row\.items_total\) \|\| 0\)\.toFixed\(/, f);
   }
 });
 

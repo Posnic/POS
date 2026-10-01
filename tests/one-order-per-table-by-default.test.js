@@ -115,9 +115,15 @@ test('it travels with the feature it belongs to', () => {
 });
 
 test('the server refuses a second order on a full table, and says what to do', () => {
-  const guard = SALE_REPO.slice(SALE_REPO.indexOf('const openTableLimit'), SALE_REPO.indexOf('const openTableLimit') + 1800);
-  assert.match(guard, /sale_process: 'KOT'/, 'the count includes sales that are not table orders');
-  assert.match(guard, /payment_status: 'Unpaid'/, 'a settled table would still count as occupied');
+  const start = SALE_REPO.indexOf('if (runsTableService && openTableLimit > 0 && wantsTable)');
+  const end = SALE_REPO.indexOf('const monetary =', start);
+  assert.ok(start >= 0 && end > start, 'the table-limit query boundaries must be found');
+  const guard = SALE_REPO.slice(start, end);
+  assert.match(guard, /floorEligibility\(\)/, 'occupancy must use the shared open-service policy');
+  const filter = require('../api/src/helpers/floor-eligibility').floorEligibility();
+  assert.deepStrictEqual(filter.floor_closed_at, { $exists: false });
+  assert.deepStrictEqual(filter.order_state, { $nin: ['rejected', 'cancelled'] });
+  assert.strictEqual(filter.$or[1].floor_lifecycle, true, 'paid table service remains occupied until closed');
   assert.match(guard, /if \(openNow >= openTableLimit\)/);
   assert.match(guard, /Add to it, or settle it first/,
     'the refusal does not tell a waiter what to do instead');

@@ -102,6 +102,14 @@ function git(args, encoding = 'utf8') {
   return execFileSync('git', args, { encoding, maxBuffer: 1024 * 1024 * 512 });
 }
 
+// Reviewed UI fixture: its request handler is mocked locally and this literal
+// cannot authenticate to a service. Keep the exception tied to rule, value and
+// path; other values and credential-shaped tokens still require review.
+function isReviewedFixture(rule, value, paths) {
+  return rule === 'secret-shaped assignment' && value === 'synthetic-only' &&
+    paths.includes('api/scripts/ask-posnic-ui-check.js');
+}
+
 function main() {
   /*
    * Every object in the database, with its type.
@@ -191,7 +199,8 @@ function main() {
          'not-a-real-key' assigned to apiKey - is recognised as one. */
       const line = content.slice(0, m.index).split('\n').length;
       const context = content.split('\n')[line - 1] || '';
-      const declaredFake = SELF_DECLARED_FAKE.test(value) || SELF_DECLARED_FAKE.test(context);
+      const declaredFake = SELF_DECLARED_FAKE.test(value) || SELF_DECLARED_FAKE.test(context) ||
+        isReviewedFixture(rule.name, value, pathList);
 
       const serious =
         ALWAYS_SERIOUS.has(rule.name) ||
@@ -260,4 +269,5 @@ function main() {
   return 1;
 }
 
-process.exit(main());
+module.exports = { isReviewedFixture };
+if (require.main === module) process.exit(main());

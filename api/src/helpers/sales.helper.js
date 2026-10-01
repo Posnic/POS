@@ -992,6 +992,17 @@ const formatSaleListEntry = (saleDoc) => {
   if (!saleDoc) return null;
   const doc = typeof saleDoc.toObject === 'function' ? saleDoc.toObject() : saleDoc;
 
+  // A transferred bill carries the currency precision used when its exact
+  // amounts were allocated. Do not round a three-decimal bill to hundredths
+  // when presenting it in the desktop list.
+  const allocation = doc.captain_transfer_allocation;
+  const money = require('../utils/currency');
+  const currency = allocation ? money.policy(allocation) : null;
+  if (allocation) require('../utils/transfer-allocation').read(doc, currency);
+  const amount = currency
+    ? (value) => money.fromMinor(money.toMinor(value, currency), currency)
+    : roundToTwo;
+
   const mapPaymentStatusForUi = (status) => {
     const raw = (status ?? '').toString().trim().toLowerCase();
     if (!raw) return '';
@@ -1033,6 +1044,9 @@ const formatSaleListEntry = (saleDoc) => {
   const customer = doc.customer && typeof doc.customer === 'object' ? doc.customer : undefined;
 
   return {
+    ...(currency
+      ? { currencyCode: currency.currencyCode, currencyDigits: currency.currencyDigits }
+      : {}),
     _id: id,
     id,
     sales_id: doc.sales_id || doc.invoice_number || doc.alternative_id || '',
@@ -1045,13 +1059,13 @@ const formatSaleListEntry = (saleDoc) => {
     payment_status: mapPaymentStatusForUi(doc.payment_status || ''),
     payment_description: doc.payment_description || doc.notes || '',
     sales_description: doc.sales_description || doc.notes || '',
-    sales_total: roundToTwo(salesTotal),
-    sales_sub_total: roundToTwo(subtotal),
-    items_total: roundToTwo(doc.items_total ?? salesTotal),
-    items_return_total: roundToTwo(doc.items_return_total ?? 0),
-    items_subtotal: roundToTwo(doc.items_subtotal ?? subtotal),
-    tax: roundToTwo(doc.tax ?? 0),
-    discount: roundToTwo(doc.discount ?? 0),
+    sales_total: amount(salesTotal),
+    sales_sub_total: amount(subtotal),
+    items_total: amount(doc.items_total ?? salesTotal),
+    items_return_total: amount(doc.items_return_total ?? 0),
+    items_subtotal: amount(doc.items_subtotal ?? subtotal),
+    tax: amount(doc.tax ?? 0),
+    discount: amount(doc.discount ?? 0),
     number_of_items: doc.number_of_items ?? (Array.isArray(doc.items) ? doc.items.length : 0),
     string_date: stringDate,
     date: saleDate,
@@ -1096,9 +1110,9 @@ const formatSaleListEntry = (saleDoc) => {
     dine_type: doc.dine_type || null,
     sale_status: doc.sale_status || doc.payment_status || '',
     discount_percentage: roundToTwo(doc.discount_percentage ?? 0),
-    discount_amount: roundToTwo(doc.discount_amount ?? 0),
-    extra_discount: roundToTwo(doc.extra_discount ?? doc.extraDiscount ?? 0),
-    round_off: roundToTwo(doc.round_off ?? doc.roundOff ?? 0),
+    discount_amount: amount(doc.discount_amount ?? 0),
+    extra_discount: amount(doc.extra_discount ?? doc.extraDiscount ?? 0),
+    round_off: amount(doc.round_off ?? doc.roundOff ?? 0),
   };
 };
 

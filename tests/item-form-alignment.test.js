@@ -31,7 +31,7 @@ const css = fs.readFileSync(
 const itemsJs = fs.readFileSync(
   path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js', 'items.js'),
   'utf8',
-);
+).replace(/\r\n/g, '\n');
 const cssRule = cssReader(css);
 
 /* The column class wrapping a given field id. */

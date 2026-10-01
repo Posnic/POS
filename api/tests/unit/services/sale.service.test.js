@@ -1,3 +1,7 @@
+jest.mock('../../../src/services/desktop-submission', () => ({
+  prepare: jest.fn(async () => null),
+  lookup: jest.fn(async () => null),
+}));
 // ─── Mocks (must be declared before requires) ─────────────────────────────────
 
 const mockItemRepositoryInstance = {
@@ -184,6 +188,123 @@ describe('SalesService', () => {
     consoleErrorSpy.mockRestore();
     consoleLogSpy.mockRestore();
     consoleWarnSpy.mockRestore();
+  });
+
+  test('seating retry returns a saved sale before rechecking or deducting stock', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(
+      makeItemDoc({ available_quantity: 0 })
+    );
+    const lookup = jest
+      .spyOn(require('../../../src/services/desktop-seating'), 'lookup')
+      .mockResolvedValue({ _id: 'saved-seat-sale', sales_id: 'INV-SAVED' });
+    try {
+      const result = await salesService.processSale(
+        makeSaleData({ table_number: 'T1', person_count: 2, idempotencyKey: 'desktop-retry' }),
+        '',
+        'KOT',
+        makeContext({ seatingProtocol: true, branchSettings: { table_options: true } })
+      );
+      expect(result).toMatchObject({
+        status: true,
+        data: { _id: 'saved-seat-sale', duplicate: true, sale_number: 'INV-SAVED' },
+      });
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+      expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
+      expect(mockRegisterRepositoryInstance.addSaleRegisterEntry).not.toHaveBeenCalled();
+    } finally {
+      lookup.mockRestore();
+    }
+  });
+  test('seating conflict restores reserved stock and prevents a desktop sale', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    const adapter = require('../../../src/services/desktop-seating');
+    const lookup = jest.spyOn(adapter, 'lookup').mockResolvedValue(null);
+    const prepare = jest.spyOn(adapter, 'prepare').mockRejectedValue(new Error('Table changed'));
+    try {
+      const result = await salesService.processSale(
+        makeSaleData({ table_number: 'T1', person_count: 2, idempotencyKey: 'desktop-new' }),
+        '',
+        'KOT',
+        makeContext({ seatingProtocol: true, branchSettings: { table_options: true } })
+      );
+      expect(result).toMatchObject({ status: false, message: 'Table changed' });
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).toHaveBeenCalledTimes(1);
+      expect(mockItemRepositoryInstance.updateStock).toHaveBeenCalledWith(expect.anything(), 2);
+      expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
+    } finally {
+      lookup.mockRestore();
+      prepare.mockRestore();
+    }
+  });
+
+  test.each(['stock', 'approval'])(
+    'failed %s validation leaves no bound desktop table',
+    async (failure) => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      const adapter = require('../../../src/services/desktop-seating');
+      const lookup = jest.spyOn(adapter, 'lookup').mockResolvedValue(null);
+      const prepare = jest.spyOn(adapter, 'prepare');
+      if (failure === 'stock')
+        mockItemRepositoryInstance.deductStockIfAvailable.mockResolvedValue(null);
+      try {
+        const result = await salesService.processSale(
+          makeSaleData({ table_number: 'T1', person_count: 2, idempotencyKey: 'desktop-rejected' }),
+          '',
+          'Add',
+          makeContext({ seatingProtocol: true, branchSettings: { table_options: true } }),
+          failure === 'approval'
+            ? {
+                beforeCommit: async () => {
+                  throw new Error('Approval changed');
+                },
+              }
+            : {}
+        );
+        expect(result.status).toBe(false);
+        expect(prepare).not.toHaveBeenCalled();
+        expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
+        if (failure === 'approval')
+          expect(mockItemRepositoryInstance.updateStock).toHaveBeenCalledWith(expect.anything(), 2);
+      } finally {
+        lookup.mockRestore();
+        prepare.mockRestore();
+      }
+    }
+  );
+
+  test('a concurrent desktop seating retry restores its temporary stock reservation', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    const adapter = require('../../../src/services/desktop-seating');
+    const lookup = jest.spyOn(adapter, 'lookup').mockResolvedValue(null);
+    const prepare = jest
+      .spyOn(adapter, 'prepare')
+      .mockImplementation(async (db, scope, input, document) => {
+        document._id = 'same-sale';
+        return { claim: { id: 'same-claim' }, existing: null };
+      });
+    BaseModel.getDb.mockResolvedValue({
+      collection: () => ({ findOne: async () => ({ _id: 'same-sale', sales_id: 'INV-EXISTS' }) }),
+    });
+    salesRepository.createSaleUnique.mockRejectedValueOnce(
+      Object.assign(new Error('duplicate'), { code: 11000 })
+    );
+    try {
+      const result = await salesService.processSale(
+        makeSaleData({ table_number: 'T1', person_count: 2, idempotencyKey: 'desktop-race' }),
+        '',
+        'KOT',
+        makeContext({ seatingProtocol: true, branchSettings: { table_options: true } })
+      );
+      expect(result).toMatchObject({ status: true, data: { _id: 'same-sale', duplicate: true } });
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).toHaveBeenCalledTimes(1);
+      expect(mockItemRepositoryInstance.updateStock).toHaveBeenCalledWith(expect.anything(), 2);
+      expect(mockRegisterRepositoryInstance.addSaleRegisterEntry).not.toHaveBeenCalled();
+      expect(mockStockLogsRepositoryInstance.createStockLog).not.toHaveBeenCalled();
+    } finally {
+      lookup.mockRestore();
+      prepare.mockRestore();
+      BaseModel.getDb.mockReset();
+    }
   });
 
   describe('Business decision pricing preview', () => {
@@ -456,6 +577,24 @@ describe('SalesService', () => {
   });
 
   // ── processSale – validation ──────────────────────────────────────────────
+
+  test('a recovered desktop submission returns its sale before stock is deducted again', async () => {
+    require('../../../src/services/desktop-submission').prepare.mockResolvedValueOnce({
+      _id: 'saved-sale',
+      sales_id: 'INV-SAVED',
+    });
+    const result = await salesService.processSale(
+      makeSaleData({ idempotencyKey: 'saved-request' }),
+      '',
+      'Add',
+      makeContext()
+    );
+    expect(result.status).toBe(true);
+    expect(result.data._id).toBe('saved-sale');
+    expect(result.data.duplicate).toBe(true);
+    expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+    expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
+  });
 
   describe('processSale – validation', () => {
     test('returns PAY_TOTAL_INVALID when sales_total is negative', async () => {
@@ -847,6 +986,181 @@ describe('SalesService', () => {
   describe('processSale – Edit mode', () => {
     const SALE_ID = '64f8f2f4c2b9c0a1e4b55555';
 
+    describe('a payment changed while the edit was repriced', () => {
+      let server, connection, Model;
+      beforeAll(async () => {
+        const { MongoMemoryServer } = require('mongodb-memory-server');
+        const mongoose = require('mongoose');
+        server = await MongoMemoryServer.create();
+        connection = await mongoose
+          .createConnection(server.getUri('desktop-edit-fence'))
+          .asPromise();
+        Model = connection.model(
+          'EditFenceSale',
+          new mongoose.Schema(
+            {
+              partial_balance: { type: Number, default: 0 },
+            },
+            { strict: false }
+          ),
+          'sales'
+        );
+      }, 60000);
+      afterAll(async () => {
+        await connection?.close();
+        await server?.stop();
+      });
+
+      test.each(['KOT', 'Hold'])(
+        'two full desktop %s edits compete for capacity without losing either order',
+        async (initialProcess) => {
+          await connection.db.dropDatabase();
+          const { ObjectId } = require('mongodb');
+          const branchId = new ObjectId(BRANCH_ID),
+            license = new ObjectId(LICENSE_ID);
+          await connection.db
+            .collection('branches')
+            .insertOne({ _id: branchId, license, table_options: true, table_order_limit: 0 });
+          await connection.db.collection('tableorder').insertOne({
+            _id: new ObjectId(),
+            branch_id: branchId,
+            license,
+            tableorder_value: 'T1',
+            capacity: 3,
+            max_capacity: 3,
+          });
+          const ids = [SALE_ID, '64f8f2f4c2b9c0a1e4b55556'];
+          for (const id of ids)
+            await Model.create({
+              _id: id,
+              branch_id: branchId,
+              license,
+              sales_id: 'INV-' + id,
+              payment_status: 'Unpaid',
+              payment_pending: 100,
+              sale_process: initialProcess,
+              table_number: 'T1',
+              person_count: initialProcess === 'Hold' ? 2 : 1,
+              dine_type: 'Dine-in',
+              items: [],
+              changes: [],
+            });
+          BaseModel.getDb.mockResolvedValue(connection.db);
+          salesRepository.getById.mockImplementation((id) => Model.findById(id));
+          salesRepository.save.mockImplementation((doc) => doc.save());
+          const results = await Promise.all(
+            ids.map((id) =>
+              salesService.processSale(
+                makeSaleData({
+                  person_count: 2,
+                  table_number: 'T1',
+                  dine_type: 'Dine-in',
+                  sale_process: 'KOT',
+                  partial_balance: 0,
+                  payment_mode: '',
+                }),
+                id,
+                'Edit',
+                makeContext({ branchSettings: { table_options: true } })
+              )
+            )
+          );
+          expect(results.filter((result) => result.status)).toHaveLength(1);
+          const rows = await Model.collection.find({}).toArray();
+          expect(rows).toHaveLength(2);
+          expect(
+            rows
+              .filter((row) => row.sale_process === 'KOT')
+              .reduce((sum, row) => sum + row.person_count, 0)
+          ).toBe(initialProcess === 'Hold' ? 2 : 3);
+          const claims = await connection.db.collection('table_seating').findOne({});
+          expect(claims.claims.filter((row) => row.kind === 'legacy-edit')).toEqual([]);
+        }
+      );
+
+      test('legacy missing payment fields remain editable after Mongoose supplies defaults', async () => {
+        await Model.deleteMany({});
+        const { ObjectId } = require('mongodb');
+        await Model.collection.insertOne({
+          _id: new ObjectId(SALE_ID),
+          branch_id: BRANCH_ID,
+          license: LICENSE_ID,
+          sales_id: 'INV-LEGACY',
+          payment_status: 'Unpaid',
+          payment_pending: 100,
+          sale_process: 'KOT',
+          items: [],
+          changes: [],
+        });
+        const original = await Model.findById(SALE_ID);
+        expect(original.partial_balance).toBe(0);
+        expect(original.$isDefault('partial_balance')).toBe(true);
+        salesRepository.getById
+          .mockResolvedValueOnce(original)
+          .mockImplementationOnce(() => Model.findById(SALE_ID));
+        salesRepository.save.mockImplementation((doc) => doc.save());
+        const result = await salesService.processSale(
+          makeSaleData(),
+          SALE_ID,
+          'Edit',
+          makeContext()
+        );
+        expect(result.status).toBe(true);
+        expect(salesRepository.save).toHaveBeenCalledTimes(1);
+      });
+
+      test.each(
+        [
+          ['payment_status', 'Paid'],
+          ['paid_amount', 50],
+          ['partial_balance', 50],
+          ['partial_amounts', 50],
+          ['payment_pending', 0],
+          ['sale_process', 'Add'],
+          ['floor_closed_at', new Date('2026-10-01T06:00:00Z')],
+          ['order_state', 'cancelled'],
+        ].flatMap(([field, value]) => ['reload', 'save'].map((stage) => [stage, field, value]))
+      )('does not overwrite newer state at %s: %s or move stock', async (stage, field, value) => {
+        await Model.deleteMany({});
+        const original = await Model.create({
+          _id: SALE_ID,
+          branch_id: BRANCH_ID,
+          license: LICENSE_ID,
+          sales_id: 'INV-FENCE',
+          payment_status: 'Unpaid',
+          payment_pending: 100,
+          sale_process: 'KOT',
+          items: [],
+          changes: [],
+        });
+        salesRepository.getById.mockResolvedValueOnce(original).mockImplementationOnce(async () => {
+          if (stage === 'reload')
+            await Model.collection.updateOne({ _id: original._id }, { $set: { [field]: value } });
+          return Model.findById(original._id);
+        });
+        salesRepository.save.mockImplementation(async (doc) => {
+          if (stage === 'save')
+            await Model.collection.updateOne({ _id: original._id }, { $set: { [field]: value } });
+          return doc.save();
+        });
+        const result = await salesService.processSale(
+          makeSaleData(),
+          SALE_ID,
+          'Edit',
+          makeContext()
+        );
+        expect(result.status).toBe(false);
+        expect(salesRepository.save).toHaveBeenCalledTimes(1);
+        expect(await Model.collection.findOne({ _id: original._id })).toEqual({
+          ...original.toObject(),
+          [field]: value,
+        });
+        expect(mockItemRepositoryInstance.updateStock).not.toHaveBeenCalled();
+        expect(mockStockLogsRepositoryInstance.createStockLog).not.toHaveBeenCalled();
+        expect(mockRegisterRepositoryInstance.updateSaleRegisterEntry).not.toHaveBeenCalled();
+      });
+    });
+
     beforeEach(() => {
       mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
     });
@@ -883,6 +1197,81 @@ describe('SalesService', () => {
       const result = await salesService.processSale(makeSaleData(), SALE_ID, 'Edit', makeContext());
       expect(salesRepository.save).toHaveBeenCalledTimes(1);
       expect(result.status).toBe(true);
+    });
+
+    test('desktop edit cannot bypass the seating move protocol', async () => {
+      const doc = {
+        _id: SALE_ID,
+        items: [],
+        changes: [],
+        set: jest.fn(),
+        sales_id: 'INV1',
+        seating_request_id: 'claim-1',
+        table_number: 'T1',
+        person_count: 2,
+        dine_type: 'Dine-in',
+      };
+      salesRepository.getById.mockResolvedValue(doc);
+      BaseModel.getDb.mockResolvedValue({
+        collection: () => ({
+          findOne: async () => ({
+            claims: [
+              {
+                id: 'claim-1',
+                order_id: SALE_ID,
+                state: 'submitting',
+                tables: ['t1'],
+                labels: ['T1'],
+              },
+            ],
+          }),
+        }),
+      });
+      const result = await salesService.processSale(
+        makeSaleData({ table_number: 'T2' }),
+        SALE_ID,
+        'Edit',
+        makeContext()
+      );
+      expect(result.status).toBe(false);
+      expect(result.message).toContain('Change the seating group');
+      expect(doc.set).not.toHaveBeenCalled();
+      expect(salesRepository.save).not.toHaveBeenCalled();
+    });
+    test('ordinary desktop item edits retain an atomic seating identity condition', async () => {
+      const at = new Date('2026-09-30T10:00:00Z');
+      const doc = {
+        _id: SALE_ID,
+        items: [],
+        changes: [],
+        set: jest.fn(),
+        sales_id: 'INV1',
+        updated_date: at,
+        seating_request_id: 'claim-1',
+        table_number: 'T1',
+        person_count: 2,
+        dine_type: 'Dine-in',
+      };
+      salesRepository.getById.mockResolvedValue(doc);
+      BaseModel.getDb.mockResolvedValue({
+        collection: () => ({
+          findOne: async () => ({
+            claims: [
+              {
+                id: 'claim-1',
+                order_id: SALE_ID,
+                state: 'submitting',
+                tables: ['t1'],
+                labels: ['T1'],
+              },
+            ],
+          }),
+        }),
+      });
+      const result = await salesService.processSale(makeSaleData(), SALE_ID, 'Edit', makeContext());
+      expect(result.status).toBe(true);
+      expect(doc.$where).toMatchObject({ seating_request_id: 'claim-1', updated_date: at });
+      expect(salesRepository.save).toHaveBeenCalledWith(doc);
     });
 
     test('settling an open table records the payment instead of erasing it', async () => {
@@ -932,6 +1321,7 @@ describe('SalesService', () => {
       expect(Number(saved.payment_pending)).toBe(0);
       /* Still a table order in history; the STATUS is what clears the floor. */
       expect(saved.sale_process).toBe('KOT');
+      expect(saved.floor_lifecycle).toBe(true);
       expect(kotNotifications).toEqual([]);
     });
 
@@ -1233,6 +1623,15 @@ describe('SalesService', () => {
       expect(result.data.tables).toEqual(['1', '3']);
     });
 
+    test('fully paid floor groups carry a close action but mixed groups do not', async () => {
+      salesRepository.aggregate.mockResolvedValue([
+        { dine_type: 'Dine-in', table_number: '1', orders: 2, paidOrders: 2 },
+        { dine_type: 'Dine-in', table_number: '2', orders: 2, paidOrders: 1 },
+      ]);
+      const result = await salesService.getTablesWithActiveOrders(BRANCH_ID);
+      expect(result.data.table_details.map((table) => table.awaiting_close)).toEqual([true, false]);
+    });
+
     test('returns unique sorted tables', async () => {
       salesRepository.aggregate.mockResolvedValue([
         { dine_type: 'Dine-in', table_number: '10' },
@@ -1324,6 +1723,16 @@ describe('SalesService', () => {
       const result = await salesService.getBranchById(BRANCH_ID);
       expect(result).toBeNull();
     });
+  });
+
+  test('online dispatch requires the shared seating protocol without trusting a client override', async () => {
+    const payload = { branch: BRANCH_ID, seatingProtocol: false };
+    salesRepository.createOnlineOrder = jest.fn().mockResolvedValue({ status: true });
+    await salesService.createOnlineOrder(payload, { staffOrder: true, seatingProtocol: false });
+    expect(salesRepository.createOnlineOrder).toHaveBeenCalledWith(
+      payload,
+      expect.objectContaining({ staffOrder: true, seatingProtocol: true })
+    );
   });
 
   // ── pass-through delegations ──────────────────────────────────────────────
