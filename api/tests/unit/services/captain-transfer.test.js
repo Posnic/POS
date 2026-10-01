@@ -893,6 +893,14 @@ test.each([
   expect((await require('../../../src/services/captain-bill').read(request)).dueMinor).toBe(0);
  }
  expect(sum).toEqual({base:money.toMinor(base,policy),tax:money.toMinor(tax,policy),discount:money.toMinor(discount,policy),total:money.toMinor(total,policy),round:money.toMinor(round,policy)});
+ await db.collection('sales').updateMany({_id:{$in:checks.map(check=>check._id)}},{$set:{date:new Date('2026-09-30T12:00:00Z')}});
+ const reported=await runWithRequestContext({license,currentBranch:branch},()=>sales.getPaymentSaleTypeReport({
+  branchid:[String(branch)],starting_date:'2026-09-30T00:00:00Z',ending_date:'2026-09-30T23:59:59Z'}));
+ expect(reported.status).toBe(true);
+ const cash=reported.data.payment.find(row=>row.sales_payment_mode==='Cash');
+ expect(money.toMinor(cash.sales_payment,policy)).toBe(money.toMinor(total,policy));
+ expect(cash.sales_count).toBe(2);expect(cash.outstanding_amount).toBe(0);
+
  expect(await service.complete(input)).toEqual(completed);
 });
 

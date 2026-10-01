@@ -33,3 +33,26 @@ for (const [digits, amount, expected] of [[0, 95, '95'], [2, 31.67, '31.67'], [3
         dom.window.close();
     });
 }
+
+for (const digits of [2, 3, 4, undefined, 99]) {
+    test('payment report renders supplied precision ' + digits + ' without reformatting other screens', () => {
+        const dom = new JSDOM('<input class="payment_branch_value" value="branch"><input class="view_payment_report_daterange" value="from-to"><table id="salePaymentType"><tbody></tbody></table><span id="other" class="number">1.234</span>', { runScripts: 'outside-only' });
+        const win = dom.window;
+        win.$ = win.jQuery = require('jquery')(win);
+        win.eval(fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/jquery.number.min.js'), 'utf8'));
+        win.PosnicPro = {
+            local: { get: () => 'KWD' },
+            get: (_params, success) => success({ type: 'success', data: { currencyDigits: digits,
+                payment: [{ sales_payment_mode: 'Cash', sales_payment: 95.005, sales_count: 2 }] } })
+        };
+        const script = fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js/report_payment.js'), 'utf8');
+        const first = script.indexOf('    paymentSaleReportView: function');
+        const last = script.indexOf('    paymentTableTabClick:', first);
+        win.eval('PosnicPro.paymentreport = {' + script.slice(first, last).trim().replace(/,$/, '') + '};');
+        win.PosnicPro.paymentreport.paymentSaleReportView();
+        const expected = digits === 3 ? '95.005' : digits === 4 ? '95.0050' : '95.01';
+        assert.equal(win.document.querySelector('#salePaymentType .number').textContent, expected);
+        assert.equal(win.document.querySelector('#other').textContent, '1.234');
+        dom.window.close();
+    });
+}

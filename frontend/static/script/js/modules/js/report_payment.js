@@ -100,7 +100,8 @@ PosnicPro.paymentreport = {
                             $("#salePaymentType tbody").append(saleType);
                         });
 
-                        $('span.number').number(true, 2);
+                        var digits = Number.isInteger(data.currencyDigits) && data.currencyDigits >= 0 && data.currencyDigits <= 4 ? data.currencyDigits : 2;
+                        $('#salePaymentType span.number').number(true, digits);
                     } else {
                         $("#salePaymentType tbody").append('<tr><td colspan="4"><div class="text-center text-dark"><p class="table_cart_content text-primary"><lang class="lang_your_cash_details_are_empty">Your cash details are empty</lang></p></div></td></tr>');
                     }

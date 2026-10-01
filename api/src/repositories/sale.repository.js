@@ -3954,6 +3954,7 @@ class SalesRepository {
       const cursor = salesCollection.find(filters, {
         projection: {
           payment_mode: 1,
+          'captain_transfer_allocation.currencyDigits': 1,
           multi_payment: 1,
           items_total: 1,
           partial_balance: 1,
@@ -3967,6 +3968,14 @@ class SalesRepository {
       const methodTotals = {};
 
       const docs = await cursor.toArray();
+      // Retain the finest persisted precision in this report. Legacy payments
+      // remain in hundredths; transferred bills may require thousandths.
+      const reportDigits = docs.reduce((digits, doc) => {
+        const saved = doc.captain_transfer_allocation?.currencyDigits;
+        return Number.isInteger(saved) && saved >= 0 && saved <= 4
+          ? Math.max(digits, saved) : digits;
+      }, 2);
+
 
       const round = (value, decimals = 2) => {
         const num = typeof value === 'number' ? value : Number(value);
@@ -4083,10 +4092,10 @@ class SalesRepository {
         })
         .map((totals) => ({
           sales_payment_mode: totals.sales_payment_mode,
-          sales_payment: round(totals.sales_payment || 0, 2),
-          partial_amount: round(totals.partial_amount || 0, 2),
-          outstanding_amount: round(totals.outstanding_amount || 0, 2),
-          refund_payment: round(totals.refund_payment || 0, 2),
+          sales_payment: round(totals.sales_payment || 0, reportDigits),
+          partial_amount: round(totals.partial_amount || 0, reportDigits),
+          outstanding_amount: round(totals.outstanding_amount || 0, reportDigits),
+          refund_payment: round(totals.refund_payment || 0, reportDigits),
           sales_count: Number(totals.sales_count || 0),
         }));
 
@@ -4099,6 +4108,7 @@ class SalesRepository {
 
       const graphicalData = {
         payment: salesValues,
+        currencyDigits: reportDigits,
       };
 
       return {
