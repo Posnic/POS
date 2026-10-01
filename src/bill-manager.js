@@ -514,7 +514,7 @@ class BillManager {
     for (const job of jobs) {
       /* eslint-disable-next-line no-await-in-loop -- printers are serial
          devices; two jobs sent at once interleave on the same roll. */
-      const printed = await this._printOne({ ...(job.payload || {}), _windowsBillJob: this._idOf(job) });
+      const printed = await this._printOne({ ...(job.payload || {}), _windowsBillJob: this._idOf(job), _receiptBaseUrl: base });
       if (printed.ok) {
         this.printedCount += 1;
         this.lastPrintedAt = new Date().toISOString();
@@ -778,12 +778,14 @@ class BillManager {
        */
       const { resolvePictures } = require('./escpos-logo');
       const paperWidth = columnsFor(this.paperSize) <= 32 ? '58' : '80';
-      const withPictures = await resolvePictures(sale || {}, paperWidth);
+      const withPictures = sale.receiptDocument ? null : await resolvePictures(sale || {}, paperWidth);
       const itemLanguage = require('./device-preferences').get('item_print_languages') || {};
-      withPictures.items = (withPictures.items || []).map(item => ({ ...item,
+      if (withPictures) withPictures.items = (withPictures.items || []).map(item => ({ ...item,
         name: require('./item-localization').name(item, itemLanguage.receipt || '', itemLanguage.bilingual) }));
 
-      const bytes = await renderReceipt(
+      const bytes = sale.receiptDocument
+        ? await require('./bill-design').renderBill({ ...sale.receiptDocument, receipt_line_rows: sale.receiptDocument.receipt_line_rows?.map(item => ({ ...item, name: require('./item-localization').name(item, itemLanguage.receipt || '', itemLanguage.bilingual) })), items: (sale.receiptDocument.items || []).map(item => ({ ...item, item_name: require('./item-localization').name(item, itemLanguage.receipt || '', itemLanguage.bilingual) })) }, paperWidth, sale._receiptBaseUrl || apiUrl())
+        : await renderReceipt(
         { ...withPictures, title: gstin ? 'TAX INVOICE' : 'BILL' },
         {
           paperWidth,

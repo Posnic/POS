@@ -166,6 +166,7 @@
       "src/print-temp-files.js",
       "src/escpos-receipt.js",
       "src/escpos-unicode.js",
+      "src/bill-design.js",
       "src/receipt-fonts.js",
       "src/fonts/manifest.json",
       "src/fonts/NotoSans.ttf",

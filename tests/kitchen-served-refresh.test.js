@@ -61,3 +61,23 @@ test('stopping the feed resolves a waiting manual refresh', async t => {
  finish({ok:true,json:async()=>({data:[]})}); await flush();
  assert.equal((await feed.refresh()).ok,false);
 });
+
+
+test('wall refresh shows progress, blocks repeat clicks, and reports failure without clearing orders', async t => {
+ const {JSDOM}=require('jsdom');
+ let finish,calls=0;
+ const dom=new JSDOM(require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/kitchen-screen.html'),'utf8'),{
+  runScripts:'dangerously',beforeParse(w){
+   w.posnicKitchenScreen={onConfig(){},onTickets(){},ready:async()=>{},refresh:()=>{calls++;return new Promise(resolve=>finish=resolve);}};
+  }
+ });
+ t.after(()=>dom.window.close());
+ const button=dom.window.document.getElementById('refresh-orders');
+ button.click();button.click();assert.equal(calls,1);assert.equal(button.disabled,true);
+ assert.match(button.textContent,/Refreshing/);
+ finish({ok:true});await flush();assert.equal(button.disabled,false);
+ assert.match(dom.window.document.getElementById('connection').textContent,/Active orders updated/);
+ button.click();finish({ok:false,why:'offline'});await flush();
+ assert.equal(button.disabled,false);
+ assert.match(dom.window.document.getElementById('connection').textContent,/Showing previous orders/);
+});

@@ -1610,6 +1610,12 @@ class SalesRepository {
       }
 
       if (transferredBill) normalized.transferred_bill = transferredBill;
+      normalized.receipt_line_rows =
+        transferredBill?.items ||
+        require('../helpers/bill-payload').itemLines(saleDoc, branchDoc || {});
+      normalized.receipt_tax_rows =
+        transferredBill?.taxes ||
+        require('../helpers/bill-payload').taxRows(saleDoc, branchDoc || {});
 
       return {
         status: true,

@@ -13,7 +13,7 @@ if (!electron.app) {
     clearTimeout(timer);
     try {
       const result = JSON.parse(fs.readFileSync(output, 'utf8'));
-      if (code !== 0 || result.passed !== 6 || result.error) throw Error(result.error || 'Proof incomplete');
+      if (code !== 0 || result.passed !== 8 || result.error) throw Error(result.error || 'Proof incomplete');
       console.log(JSON.stringify(result, null, 2));
     } catch (error) { console.error(error.message); process.exitCode = 1; }
   });
@@ -72,11 +72,32 @@ app.whenReady().then(async () => {
         results.push({ paper, items: count, rows, bytes: bytes.length });
       }
     }
+    for (const paper of ['58', '80']) {
+      const { buildBillPayload } = require('../../api/src/helpers/bill-payload');
+      const bill = buildBillPayload({ sales_id: 'SB1D28-27-000123', date: '2026-10-01T07:27:00Z', sales_sub_total: 800, sales_total: 840, tax: 40,
+        items: [{ item_name: 'Chicken Biryani', item_quantity: 1, item_price: 290, item_base_price: 290, total_amount: 304.5 },
+          { item_name: 'South Indian Fish Curry', item_quantity: 1, item_price: 350, item_base_price: 350, total_amount: 367.5 },
+          { item_name: 'Boiled Rice', item_quantity: 1, item_price: 100, item_base_price: 100, total_amount: 105 },
+          { item_name: 'Chappathi', item_quantity: 2, item_price: 30, item_base_price: 30, total_amount: 63 }] },
+        { branch_name: 'Azure Coastal Kitchen', currency: 'Rs', indian_gst: 'gst_on', bill_print_total_qty: true });
+      const data = bill.receiptDocument;
+      data.receipt_designs = w.PosnicPro.receiptDesigner.defaults(data);
+      const expected = w.PosnicPro.receiptDesigner.render(data, paper, true);
+      const actual = await require('../../src/bill-design').documentFor(data, paper, 'http://localhost:3000/api');
+      assert.equal(actual, expected, 'Captain must use the exact desktop layout');
+      assert.match(actual, /840.00/);
+      assert.match(actual, /290.00/);
+      assert.doesNotMatch(actual, /304.50/);
+      const bytes = await require('../../src/bill-design').renderBill(data, paper);
+      assert.ok(bytes.length > 1000);
+      assert.equal(BrowserWindow.getAllWindows().length, 0);
+      results.push({ captainDesktopParity: paper, bytes: bytes.length });
+    }
     dom.window.close();
     await assert.rejects(renderDesignedReceipt('<article class="rd-document" data-receipt-design="80"></article>', '80'), /blank/);
     await assert.rejects(renderDesignedReceipt('<article class="rd-document" data-receipt-design="80" style="color:white;background:white">Invisible receipt</article>', '80'), /blank/);
     assert.equal(BrowserWindow.getAllWindows().length, 0);
-    fs.writeFileSync(output, JSON.stringify({ passed: 6, results }, null, 2));
+    fs.writeFileSync(output, JSON.stringify({ passed: 8, results }, null, 2));
   } catch (error) { fs.writeFileSync(output, JSON.stringify({ error: error.stack, results }, null, 2)); process.exitCode = 1; }
   finally { app.quit(); }
 });
