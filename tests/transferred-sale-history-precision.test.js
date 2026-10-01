@@ -102,12 +102,13 @@ for(const file of ['items','categories','customers','customer_categories']) {
     const line=source.split('\n').find(line=>line.includes("let trow =")&&line.includes('data-label="Return total"'));
     assert.ok(line);
     const render=new Function('row','rowSaleTotal','rowReturnTotal','row_no','updateDate','process_class','currency','returnQty','salesQty',line+'; return trow;');
-    for(const digits of [0,2,3,4,undefined,99]) {
+    for(const [code,label] of [['KWD','KWD'],['JPY','JPY'],[undefined,'$'],['<img src=x onerror=alert(1)>','$']]) for(const digits of [0,2,3,4,undefined,99]) {
       const precision=Number.isInteger(digits)&&digits>=0&&digits<=4?digits:2;
-      const dom=new JSDOM('<table><tbody>'+render({currencyDigits:digits,items_total:95.005,items_return_total:1.003,
-        sales_id:'B1',sale_process:'KOT'},95.005,1.003,1,'Today','','KWD',1,2)+'</tbody></table>');
-      assert.equal(dom.window.document.querySelector('[data-label="Total"]').textContent,'KWD\u00a0'+(95.005).toFixed(precision));
-      assert.equal(dom.window.document.querySelector('[data-label="Return total"]').textContent,'KWD\u00a0'+(1.003).toFixed(precision));
+      const dom=new JSDOM('<table><tbody>'+render({currencyCode:code,currencyDigits:digits,items_total:95.005,items_return_total:1.003,
+        sales_id:'B1',sale_process:'KOT'},95.005,1.003,1,'Today','','$',1,2)+'</tbody></table>');
+      assert.equal(dom.window.document.querySelector('[data-label="Total"]').textContent,label+'\u00a0'+(95.005).toFixed(precision));
+      assert.equal(dom.window.document.querySelector('[data-label="Return total"]').textContent,label+'\u00a0'+(1.003).toFixed(precision));
+      assert.equal(dom.window.document.querySelectorAll('img,script').length,0);
       dom.window.close();
     }
   });
