@@ -114,6 +114,8 @@ const buildDailyPaymentAggregationPipeline = (match) => [
   { $sort: { total: -1 } },
 ];
 
+const getReportServingPeriods = async () => new ItemRepository().shopDayparts();
+
 // Lightweight helpers for controllers that still need branch metadata
 // Delegates to the BranchesRepository so that all branch DB access stays
 // inside the repository layer.
@@ -2942,6 +2944,7 @@ module.exports = {
   getSalesByProduct,
   getLatestSales,
   getBranchById,
+  getReportServingPeriods,
   getDailySalesReportAggregates,
   getDailyReportPdfAggregates,
   getSalesGraphicalReportData,

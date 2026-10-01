@@ -912,7 +912,7 @@ describe('SalesController', () => {
     });
 
     test('uses the same meal window for totals and cancellations', async () => {
-      salesService.getBranchById.mockResolvedValue({ time_zone: 'Asia/Kolkata' });
+      salesService.getBranchById.mockResolvedValue({ time_zone: 'Asia/Kolkata', table_options: 'enable' });
       sessionFilterUtil.applySessionFilter.mockImplementation(async (_req, range) => range);
       const res = mockRes();
       await ctrl.dailySalesReports(mockReq({ query: {
@@ -925,7 +925,26 @@ describe('SalesController', () => {
       expect(match.$and[1].$or[0].date).toEqual({
         $gte: new Date('2026-10-01T06:30:00Z'), $lt: new Date('2026-10-01T12:30:00Z'),
       });
-      expect(res.json.mock.calls[0][0].data.branch_details.period_label).toContain('Lunch');
+      expect(res.json.mock.calls[0][0].data.branch_details.period_label).toContain('Custom time');
+    });
+
+    test('retail branches reject time and meal filters', async () => {
+      salesService.getBranchById.mockResolvedValue({ table_options: 'disable' });
+      const res = mockRes();
+      await ctrl.dailySalesReports(mockReq({ query: { ...q, serving_period: 'lunch' } }), res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(salesService.getDailySalesReportAggregates).not.toHaveBeenCalled();
+    });
+    test('reads configured session hours on the server', async () => {
+      salesService.getBranchById.mockResolvedValue({ table_options: 'enable', time_zone: 'Asia/Kolkata' });
+      salesService.getReportServingPeriods.mockResolvedValue([{ id: 'brunch', name: 'Brunch', hours: { thu: [{ open: 630, close: 810 }] } }]);
+      sessionFilterUtil.applySessionFilter.mockImplementation(async (_req, range) => range);
+      const res = mockRes();
+      await ctrl.dailySalesReports(mockReq({ query: { ...q, starting_date: '2026-10-01', ending_date: '2026-10-01', serving_period: 'brunch' } }), res);
+      expect(res.status).toHaveBeenCalledWith(200);
+      const { match } = salesService.getDailySalesReportAggregates.mock.calls[0][0];
+      expect(match.$and[1].$or[0].date).toEqual({ $gte: new Date('2026-10-01T05:00:00Z'), $lt: new Date('2026-10-01T08:00:00Z') });
+      expect(res.json.mock.calls[0][0].data.branch_details.restaurant_enabled).toBe(true);
     });
 
     test('applies sessionFilterUtil', async () => {

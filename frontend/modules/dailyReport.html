@@ -55,13 +55,11 @@
         #dailyreport_new .meal-help { font-size: 13px; margin: 8px 0 0; color: #526176; }
         @media(max-width: 600px) { #dailyreport_new .meal-filter { margin: 10px 12px 0; } #dailyreport_new .meal-button { flex: 1 1 40%; } }
     </style>
-    <section class="meal-filter" aria-label="Sales time filter">
+    <section class="meal-filter" id="daily-meal-filter" style="display:none" aria-label="Sales time filter">
         <strong>Sales period</strong>
         <div class="meal-buttons" role="group" aria-label="Choose a sales period">
             <button type="button" class="meal-button" data-meal="full" aria-pressed="true">Full Day<small>All 24 hours</small></button>
-            <button type="button" class="meal-button" data-meal="breakfast" aria-pressed="false">Breakfast<small>6 am – 12 pm</small></button>
-            <button type="button" class="meal-button" data-meal="lunch" aria-pressed="false">Lunch<small>12 pm – 6 pm</small></button>
-            <button type="button" class="meal-button" data-meal="dinner" aria-pressed="false">Dinner<small>6 pm – midnight</small></button>
+            <span id="daily-serving-periods" style="display:contents"></span>
             <button type="button" class="meal-button" data-meal="custom" aria-pressed="false">Custom Time<small>Choose your hours</small></button>
         </div>
         <div id="daily-meal-custom" class="meal-custom" style="display:none">
@@ -69,7 +67,7 @@
             <label for="daily-meal-to">To<input id="daily-meal-to" type="time" class="form-control" value="12:00" required></label>
             <button type="button" class="btn btn-primary" id="daily-meal-apply">Apply time</button>
         </div>
-        <p class="meal-help">Uses the shop’s local time on each selected date. An end time earlier than the start continues into the next day.</p>
+        <p class="meal-help">Sessions use Settings → Restaurant → Serving periods, in the shop’s local time on each selected date. An end time earlier than the start continues into the next day.</p>
         <p class="meal-help" id="daily-meal-status" role="status" aria-live="polite"></p>
     </section>
 

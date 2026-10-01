@@ -27,12 +27,21 @@ function setup() {
 }
 test("meal buttons set the request window and pressed state", () => {
   const { w, $, r, calls } = setup();
-  $('#dailyreport_new [data-meal="lunch"]').trigger("click");
-  assert.deepEqual(JSON.parse(JSON.stringify(calls[0])), {
-    start_time: "12:00",
-    end_time: "18:00",
+  r.renderPeriods({
+    restaurant_enabled: true,
+    serving_periods: [
+      {
+        id: "lunch",
+        name: "Lunch",
+        hours: { mon: [{ open: 750, close: 930 }] },
+      },
+    ],
   });
-  assert.equal($('[data-meal="lunch"]').attr("aria-pressed"), "true");
+  $('#dailyreport_new [data-meal="period:lunch"]').trigger("click");
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0])), {
+    serving_period: "lunch",
+  });
+  assert.equal($('[data-meal="period:lunch"]').attr("aria-pressed"), "true");
   assert.equal($('[data-meal="full"]').attr("aria-pressed"), "false");
   r.chooseMeal("full");
   assert.deepEqual(JSON.parse(JSON.stringify(calls[1])), {});
@@ -61,5 +70,32 @@ test("exports keep the applied period even after selecting custom", () => {
   w.PosnicPro.i18n = { t: (_, s) => s };
   r.chooseMeal("custom");
   assert.match(r._exportMeta().range, /Lunch/);
+  w.close();
+});
+
+test("period controls are hidden for retail and reset previous selections", () => {
+  const { w, $, r } = setup();
+  r.meal = "lunch";
+  r.renderPeriods({ restaurant_enabled: false });
+  assert.equal($("#daily-meal-filter").css("display"), "none");
+  assert.equal(r.meal, "full");
+  w.close();
+});
+test("configured names and hours replace hardcoded breakfast timings", () => {
+  const { w, $, r } = setup();
+  r.renderPeriods({
+    restaurant_enabled: true,
+    serving_periods: [
+      {
+        id: "brunch",
+        name: "Weekend brunch",
+        hours: { sun: [{ open: 600, close: 840 }] },
+      },
+      { id: "tea", name: "Tea" },
+    ],
+  });
+  assert.equal($('[data-meal="period:breakfast"]').length, 0);
+  assert.match($('[data-meal="period:brunch"]').text(), /10:00–14:00/);
+  assert.equal($('[data-meal="period:tea"]').prop("disabled"), true);
   w.close();
 });

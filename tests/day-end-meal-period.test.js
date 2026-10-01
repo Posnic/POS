@@ -76,3 +76,51 @@ test("reject incomplete, equal, invalid times and reversed dates", () => {
       (e) => e.statusCode === 400,
     );
 });
+
+test("saved meal hours support weekday schedules, gaps, and overnight windows", () => {
+  const saved = [
+    {
+      id: "dinner",
+      name: "Late dinner",
+      hours: {
+        thu: [{ open: 1200, close: 60 }],
+        fri: [
+          { open: 1080, close: 1200 },
+          { open: 1260, close: 1380 },
+        ],
+      },
+    },
+  ];
+  const p = dailyReportPeriod(
+    { ...q, ending_date: "2026-10-02", serving_period: "dinner" },
+    "Asia/Kolkata",
+    saved,
+  );
+  assert.equal(matches(p, "2026-10-01T18:45:00Z"), true);
+  assert.equal(matches(p, "2026-10-02T15:00:00Z"), false);
+  assert.equal(matches(p, "2026-10-02T16:00:00Z"), true);
+  assert.match(p.label, /Late dinner/);
+});
+test("closed session days match nothing and missing configured times are rejected", () => {
+  const p = dailyReportPeriod(
+    { ...q, serving_period: "breakfast" },
+    "Asia/Kolkata",
+    [
+      {
+        id: "breakfast",
+        name: "Breakfast",
+        hours: { mon: [{ open: 420, close: 660 }] },
+      },
+    ],
+  );
+  assert.equal(matches(p, "2026-10-01T03:00:00Z"), false);
+  assert.throws(
+    () =>
+      dailyReportPeriod(
+        { ...q, serving_period: "missing" },
+        "Asia/Kolkata",
+        [],
+      ),
+    (e) => e.statusCode === 400,
+  );
+});

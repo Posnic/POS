@@ -2,14 +2,29 @@ PosnicPro.quickreport = {
   meal: 'full',
   periodParams: function () {
     var meal = this.meal || 'full';
-    var presets = { breakfast: ['06:00', '12:00'], lunch: ['12:00', '18:00'], dinner: ['18:00', '00:00'] };
+
     if (meal === 'full') return {};
-    var times = meal === 'custom' ? [$('#daily-meal-from').val(), $('#daily-meal-to').val()] : presets[meal];
+    if (meal !== 'custom') return { serving_period: meal.replace(/^period:/, '') };
+    var times = [$('#daily-meal-from').val(), $('#daily-meal-to').val()];
     if (!times || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(times[0] || '') || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(times[1] || '') || times[0] === times[1]) {
       PosnicPro.alert('warning', 'Choose different valid start and end times.');
       return null;
     }
     return { start_time: times[0], end_time: times[1] };
+  },
+  renderPeriods: function (branch) {
+    var enabled = branch.restaurant_enabled === true;
+    $('#daily-meal-filter').toggle(enabled);
+    if (!enabled) { this.meal = 'full'; return; }
+    var host = $('#daily-serving-periods').empty();
+    if (!(branch.serving_periods || []).length) host.append($('<small>', { 'class': 'meal-help' }).text('Add sessions in Settings → Restaurant → Serving periods.'));
+    var clock = function (n) { return ('0' + Math.floor(n / 60)).slice(-2) + ':' + ('0' + (n % 60)).slice(-2); };
+    (branch.serving_periods || []).forEach(function (part) {
+      var days = part.hours ? Object.keys(part.hours).map(function (k) { return part.hours[k].map(function (w) { return clock(w.open) + '–' + clock(w.close); }).join(', '); }) : [];
+      var subtitle = !part.hours ? 'Set times in Restaurant' : days.every(function (v) { return v === days[0]; }) ? days[0] : 'Times vary by day';
+      var button = $('<button>', { type: 'button', 'class': 'meal-button', 'data-meal': 'period:' + part.id, 'aria-pressed': PosnicPro.quickreport.meal === 'period:' + part.id ? 'true' : 'false', disabled: !part.hours });
+      button.text(part.name).append($('<small>').text(subtitle)).appendTo(host);
+    });
   },
   chooseMeal: function (meal) {
     this.meal = meal;
@@ -107,6 +122,7 @@ PosnicPro.quickreport = {
         branch: branchId,
         starting_date: startDate,
         ending_date: endDate,
+        serving_period: periodParams.serving_period,
         start_time: periodParams.start_time,
         end_time: periodParams.end_time,
         type: type, // 'VIEW' | 'CSV' | 'PDF' etc.
@@ -134,6 +150,7 @@ PosnicPro.quickreport = {
         $("#daily_report_date").html(
           PosnicPro.convertDate(branchData.date || "")
         );
+        PosnicPro.quickreport.renderPeriods(branchData);
         $('#daily-report-period, #daily-meal-status').text(branchData.period_label || 'Full day');
         $("#daily_report_fromdate").text(startDate);
         $("#daily_report_todate").text(endDate);
@@ -1040,6 +1057,7 @@ PosnicPro.quickreport = {
         branch: branchId,
         starting_date: startDate,
         ending_date: endDate,
+        serving_period: periodParams.serving_period,
         start_time: periodParams.start_time,
         end_time: periodParams.end_time,
         type: "VIEW", // we just need the data payload for the email
@@ -1167,3 +1185,10 @@ $(document).on('click', '#dailyreport_new [data-meal]', function () {
   PosnicPro.quickreport.chooseMeal($(this).attr('data-meal'));
 });
 $(document).on('click', '#daily-meal-apply', function () { PosnicPro.quickreport.salereportTable('VIEW'); });
+
+$(document).on('change', '#dailysale_branch_value', function () {
+  PosnicPro.quickreport.meal = 'full';
+  $('#daily-meal-filter, #daily-meal-custom').hide();
+  $('#dailyreport_new [data-meal]').attr('aria-pressed', 'false');
+  $('#dailyreport_new [data-meal="full"]').attr('aria-pressed', 'true');
+});

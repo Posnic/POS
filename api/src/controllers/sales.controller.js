@@ -1415,8 +1415,12 @@ class SalesController extends BaseController {
         return this.error(res, ERROR_MESSAGES.BRANCH_NOT_FOUND, 404);
       }
 
+      const restaurantEnabled = [true, 'true', 'enable', 1, '1'].includes(branchDoc.table_options);
+      if (!restaurantEnabled && (req.query.serving_period || req.query.start_time || req.query.end_time))
+        return this.error(res, 'Serving-period filters require Restaurant to be enabled.', 400);
+      const servingPeriods = restaurantEnabled ? await salesService.getReportServingPeriods() : [];
       const period = require('../helpers/daily-report-period').dailyReportPeriod(
-        req.query, branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC'
+        req.query, branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC', servingPeriods || []
       );
       const start = period.start, end = period.end;
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, {
@@ -1635,6 +1639,8 @@ class SalesController extends BaseController {
         branch_email: branchDoc.store_email || '',
         sales_type: normalizedType,
         period_label: period.label,
+        restaurant_enabled: restaurantEnabled,
+        serving_periods: servingPeriods || [],
       };
 
       // ---- Build response data ----
@@ -1766,11 +1772,15 @@ class SalesController extends BaseController {
       const { branch } = req.query;
 
       // Validate before database access; resolve actual windows in the shop timezone below.
-      require('../helpers/daily-report-period').dailyReportPeriod(req.query, 'UTC');
+      require('../helpers/daily-report-period').dailyReportPeriod({ ...req.query, serving_period: undefined }, 'UTC');
       const branchDoc = await salesService.getBranchById(branch);
       if (!branchDoc) return this.error(res, ERROR_MESSAGES.BRANCH_NOT_FOUND, 404);
+      const restaurantEnabled = [true, 'true', 'enable', 1, '1'].includes(branchDoc.table_options);
+      if (!restaurantEnabled && (req.query.serving_period || req.query.start_time || req.query.end_time))
+        return this.error(res, 'Serving-period filters require Restaurant to be enabled.', 400);
+      const servingPeriods = restaurantEnabled ? await salesService.getReportServingPeriods() : [];
       const period = require('../helpers/daily-report-period').dailyReportPeriod(
-        req.query, branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC'
+        req.query, branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC', servingPeriods || []
       );
       const start = period.start, end = period.end;
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, {
