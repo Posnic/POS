@@ -1,9 +1,10 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
-const source=fs.readFileSync('frontend/static/script/js/modules/js/sales.js','utf8');
+const source=fs.readFileSync('frontend/static/script/js/modules/js/sales.js','utf8').replace(/\r\n/g,'\n');
 const start=source.indexOf('                var response = xhr && xhr.responseJSON;');
 const end=source.indexOf('\n            });\n            });',start);
+assert.ok(start >= 0 && end > start, 'retry handler boundaries must be found');
 const handler=new Function('xhr','$','setTimeout',source.slice(start,end));
 function run(xhr){
  const changes=[];
