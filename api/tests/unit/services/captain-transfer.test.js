@@ -884,6 +884,11 @@ test.each([
   expect(await db.collection('sales').findOne({_id:check._id})).toEqual(settled);
   const listed=require('../../../src/helpers/sales.helper').formatSaleListEntry(settled);
   expect(listed.currencyCode).toBe(currencyCode);expect(listed.currencyDigits).toBe(policy.currencyDigits);
+  const activity=sales._renderableSaleRows([settled])[0];
+  expect(activity.items_total).toBe(payload.total);
+  expect(activity.currencyCode).toBe(currencyCode);
+  expect(activity.currencyDigits).toBe(policy.currencyDigits);
+
   expect(minor(listed.sales_total)).toBe(bill.totalMinor);
   expect(minor(listed.sales_sub_total)).toBe(minor(payload.subTotal));
   expect(minor(listed.tax)).toBe(taxes);expect(minor(listed.discount)).toBe(minor(payload.discount));

@@ -3154,11 +3154,18 @@ class SalesRepository {
    */
   _renderableSaleRows(rawList) {
     const round2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
-    return (rawList || []).map((doc) => ({
-      ...doc,
-      items_total: round2(doc.items_total ?? doc.sales_total ?? doc.total ?? 0),
-      items_return_total: round2(doc.items_return_total ?? 0),
-    }));
+    return (rawList || []).map((doc) => {
+      if (doc.captain_transfer_allocation) {
+        const bill = buildBillPayload(doc, doc.captain_transfer_allocation);
+        const currency = Money.policy(doc.captain_transfer_allocation);
+        return { ...doc, items_total: bill.total,
+          items_return_total: Money.fromMinor(Money.toMinor(Number(doc.items_return_total) || 0, currency), currency),
+          currencyCode: currency.currencyCode, currencyDigits: currency.currencyDigits };
+      }
+      return { ...doc,
+        items_total: round2(doc.items_total ?? doc.sales_total ?? doc.total ?? 0),
+        items_return_total: round2(doc.items_return_total ?? 0) };
+    });
   }
 
   async itemSaleDetailsPage(value, options = {}, { SaleModel } = {}) {
