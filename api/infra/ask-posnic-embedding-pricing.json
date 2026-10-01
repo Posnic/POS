@@ -1,0 +1,14 @@
+{
+  "model": "amazon.titan-embed-text-v2:0",
+  "region": "ap-south-1",
+  "in": 0.024,
+  "out": 0,
+  "currency": "USD",
+  "unit": "million tokens",
+  "inputSku": "2XPPP4SFDN73K3D3",
+  "inputUsageType": "APS3-TitanEmbeddingV2-Text-input-tokens",
+  "effectiveDate": "2026-09-01T00:00:00Z",
+  "version": "20260930230255",
+  "verifiedOn": "2026-10-01",
+  "source": "AWS Price List Query API: AmazonBedrock GetProducts, us-east-1 endpoint"
+}

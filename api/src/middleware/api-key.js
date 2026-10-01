@@ -32,6 +32,7 @@ const { createHash, timingSafeEqual } = require('crypto');
  * circulation.
  */
 const MODULE_BY_PREFIX = {
+  'ask-posnic': 'dashboard',
   branches: 'branch',
   categories: 'category',
   customercategory: 'customer',
@@ -39,6 +40,7 @@ const MODULE_BY_PREFIX = {
   dashboard: 'dashboard',
   expenses: 'expense',
   items: 'item',
+  'inventory-counts': 'item',
   receivings: 'receiving',
   registers: 'register',
   sales: 'sales',

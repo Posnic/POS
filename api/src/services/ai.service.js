@@ -41,6 +41,8 @@
 
 const SettingsRepository = require('../repositories/settings.repository');
 const budget = require('./ai-budget');
+const managedCredits = require('./managed-ai-credits.service');
+const bedrock = require('./bedrock-provider');
 
 /*
  * The module exports the CLASS, not a ready-made instance.
@@ -86,6 +88,7 @@ const TIMEOUT_MS = 90000;
  *                                on a tier the default model is not on
  */
 const PROVIDERS = {
+  bedrock: bedrock.ask,
   /* Anthropic. First because the work this serves is reading documents -
      a menu, an invoice - and being careful about what is not on them. */
   async anthropic({ prompt, system, images, key, model }) {
@@ -215,6 +218,10 @@ async function settingsFor(context) {
   const chosen = (preferences && preferences.status && preferences.data.values) || {};
   const keys = (secrets && secrets.status && secrets.data.values) || {};
   const flags = (features && features.status && features.data.values) || {};
+  const ownKey = String(keys.ai_api_key || '').trim();
+  const managedKey = String(process.env.POSNIC_MANAGED_AI_KEY || '').trim();
+  const managedProvider = String(process.env.POSNIC_MANAGED_AI_PROVIDER || 'openai').trim().toLowerCase();
+  const managedReady = !!managedKey || managedProvider === 'bedrock';
   return {
     /*
      * The Features switch. Absent means ON, which is what offOnly means
@@ -227,19 +234,26 @@ async function settingsFor(context) {
     enabled: !(
       flags.ai_enabled === false || String(flags.ai_enabled).trim().toLowerCase() === 'false'
     ),
-    provider: String(chosen.ai_provider || '')
+    provider: String(ownKey ? chosen.ai_provider : managedReady ? managedProvider : chosen.ai_provider || '')
       .trim()
       .toLowerCase(),
-    model: String(chosen.ai_model || '').trim(),
-    key: String(keys.ai_api_key || '').trim(),
+    model: String(ownKey ? chosen.ai_model || '' : managedReady ? process.env.POSNIC_MANAGED_AI_MODEL || (managedProvider === 'bedrock' ? bedrock.DEFAULT_MODEL : '') : chosen.ai_model || '').trim(),
+    key: ownKey || managedKey,
     /* Read here rather than in a second trip of its own: this function has
        the preferences in hand already, and a model call is something a
        person is waiting at. */
     cap: (() => {
-      const n = Number(chosen.ai_monthly_cap);
+      const n = Number(chosen.ai_monthly_cap || (!ownKey && managedKey ? process.env.POSNIC_MANAGED_AI_MONTHLY_CAP : null));
       return Number.isFinite(n) && n > 0 ? n : null;
     })(),
   };
+}
+
+function modeFor(settings) {
+  if (settings?.provider === 'bedrock') return 'managed';
+  if (!settings?.key) return 'off';
+  const managedKey = String(process.env.POSNIC_MANAGED_AI_KEY || '').trim();
+  return managedKey && settings.key === managedKey ? 'managed' : 'own_key';
 }
 
 /**
@@ -253,7 +267,7 @@ async function settingsFor(context) {
 async function available(context) {
   try {
     const { provider, key, enabled } = await settingsFor(context);
-    return !!(enabled && provider && provider !== 'off' && PROVIDERS[provider] && key);
+    return !!(enabled && provider && provider !== 'off' && PROVIDERS[provider] && (key || provider === 'bedrock'));
   } catch (e) {
     return false;
   }
@@ -549,7 +563,9 @@ async function ask(request, context) {
      Unnamed callers are recorded together rather than refused: a missing
      label is our bug and must not cost a shopkeeper a working feature. */
   const feature = String(request.feature || 'unlabelled');
-  const { provider, key, model, cap, enabled } = await settingsFor(context);
+  const settings = await settingsFor(context);
+  const { provider, key, model, cap, enabled } = settings;
+  const mode = modeFor(settings);
 
   /* The Features switch, checked first. A shopkeeper who turned AI off
      expects it off, whatever else is still configured. */
@@ -564,7 +580,7 @@ async function ask(request, context) {
   if (!run) {
     return { status: false, message: `Unknown AI provider: ${provider}`, data: null };
   }
-  if (!key) {
+  if (!key && provider !== 'bedrock') {
     /* Named plainly. A shop that picked a provider and never pasted the key
        otherwise sees "could not do that" and has nothing to act on. */
     return { status: false, message: 'No API key is saved for the AI provider', data: null };
@@ -581,7 +597,7 @@ async function ask(request, context) {
   /* Only when a cap exists. A shop that set none has not asked to be
      stopped, and reading its month of usage to learn that would put a
      database round trip in front of every call for nothing. */
-  if (cap) {
+  if (cap && mode !== 'managed') {
     const room = await budget.withinCap(context, cap);
     if (!room.ok) {
       return {
@@ -601,10 +617,24 @@ async function ask(request, context) {
     return { status: false, message: 'That picture could not be read', data: null };
   }
 
+  // Managed text packs have a bounded text-token reservation. Image usage needs
+  // its own metering contract; existing shop-owned providers still support it.
+  if (mode === 'managed' && images.length) return { status: false, message: 'Managed AI currently supports text questions. Configure a shop-owned provider for image assistance.', data: null };
+
+  let reservation = null;
+  let providerReturned = false;
   try {
+    if (mode === 'managed') {
+      reservation = await managedCredits.reserve(context, { feature, model, promptChars: Buffer.byteLength(prompt + String(request.system || ''), 'utf8') * 3, maxOutputTokens: MAX_OUTPUT_TOKENS });
+      if (!reservation.ok) return { status: false, message: reservation.message, data: null };
+    }
     const answer = await run({ prompt, system: request.system, images, key, model });
+    providerReturned = true;
     const text = answer && answer.text;
-    if (!text) return { status: false, message: 'The AI service had no answer', data: null };
+    if (!text) {
+      if (reservation) await managedCredits.reconcile(context, reservation, { model, tokensIn: answer?.tokensIn || 0, tokensOut: answer?.tokensOut || 0 });
+      return { status: false, message: 'The AI service had no answer', data: null };
+    }
     /*
      * The meter is written down, and deliberately does not come back.
      *
@@ -619,14 +649,23 @@ async function ask(request, context) {
      * one call rather than losing an answer they have already paid for.
      */
     budget
-      .record({ feature, model, tokensIn: answer.tokensIn, tokensOut: answer.tokensOut }, context)
+      .record({ feature, model, tokensIn: answer.tokensIn, tokensOut: answer.tokensOut, payer: mode === 'managed' ? 'posnic' : 'shop' }, context)
       .catch((error) => console.error('[ai] could not record usage:', error.message));
+    if (reservation) await managedCredits.reconcile(context, reservation, { model, tokensIn: answer.tokensIn, tokensOut: answer.tokensOut });
     return { status: true, data: { text } };
   } catch (error) {
+    if (reservation && !providerReturned) {
+      // A network timeout can happen after inference was billed. Keep its hold
+      // until the outcome is known; only definite provider rejections release it.
+      const rejected = ['AccessDeniedException', 'ValidationException', 'ThrottlingException', 'ResourceNotFoundException', 'UnrecognizedClientException'].includes(error.name)
+        || [400, 401, 403, 404, 413, 422, 429].includes(error.$metadata?.httpStatusCode);
+      if (rejected) await managedCredits.release(context, reservation).catch(() => {});
+      else await managedCredits.markUncertain(context, reservation).catch(() => {});
+    }
     /* The provider's own message can carry the request, and sometimes the
        key, back to a browser. One sentence, and the detail stays in the log
        where the shop's own operator can see it. */
-    console.error('[ai] provider failed:', error.message);
+    console.error('[ai] provider failed:', error.name || 'ProviderError');
     return { status: false, message: 'The AI service did not answer', data: null };
   }
 }
@@ -713,6 +752,7 @@ module.exports = {
   ask,
   available,
   settingsFor,
+  modeFor,
   jsonFrom,
   cleanImage,
   _repo,

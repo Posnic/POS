@@ -9932,6 +9932,11 @@ PosnicPro.settings.ai = {
     featureLabel: function (feature) {
         var names = {
             item_description: PosnicPro.i18n.t('lang_ai_feature_item_description', 'Item descriptions'),
+            ask_posnic_help: PosnicPro.i18n.t('lang_ai_feature_ask_posnic_help', 'Ask Posnic answers'),
+            ask_posnic_grounding_check: PosnicPro.i18n.t('lang_ai_feature_ask_posnic_grounding_check', 'Ask Posnic source checks'),
+            ask_posnic_document_embedding: PosnicPro.i18n.t('lang_ai_feature_ask_posnic_document_embedding', 'Knowledge indexing'),
+            ask_posnic_query_embedding: PosnicPro.i18n.t('lang_ai_feature_ask_posnic_query_embedding', 'Knowledge search'),
+            ask_posnic_own_key_embedding: PosnicPro.i18n.t('lang_ai_feature_ask_posnic_own_key_embedding', 'Own-key knowledge indexing and search'),
             ordering_assistant: PosnicPro.i18n.t('lang_ai_feature_ordering_assistant', 'Ordering assistant, typed'),
             voice_order_live: PosnicPro.i18n.t('lang_ai_feature_voice_order_live', 'Talk to order, live voice'),
             voice_order: PosnicPro.i18n.t('lang_ai_feature_voice_order', 'Voice orders on the handset')

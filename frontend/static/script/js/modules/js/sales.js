@@ -8649,7 +8649,7 @@ PosnicPro.sales.loadDocumentIntoCart = function (spec) {
                 pending = pending.filter(function (l) {
                     var $qty = $('#touchsale_item_qty' + l.item_id);
                     if (!$qty.length) { return true; }
-                    if (l.qty > 1 && parseFloat($qty.val()) !== l.qty) {
+                    if (l.qty > 0 && parseFloat($qty.val()) !== l.qty) {
                         $qty.val(l.qty).trigger('keyup');
                     }
                     if (honour && l.dtype && l.dval > 0) {

@@ -287,7 +287,9 @@ describe('every provider keeps the same shape', () => {
       openai: { choices: [{ message: { content: 'said' } }] },
       google: { candidates: [{ content: { parts: [{ text: 'said' }] } }] },
     };
-    for (const name of Object.keys(service.PROVIDERS)) {
+    // IAM-backed Bedrock is covered by ask-posnic-bedrock.test.js; these
+    // providers use the shop's API key and the HTTP fetch contract below.
+    for (const name of Object.keys(replies)) {
       configured(name, 'sk-live');
       global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => replies[name] });
 
