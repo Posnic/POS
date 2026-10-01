@@ -215,7 +215,7 @@ describe('SalesService', () => {
       lookup.mockRestore();
     }
   });
-  test('seating conflict prevents any stock deduction or desktop sale', async () => {
+  test('seating conflict restores reserved stock and prevents a desktop sale', async () => {
     mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
     const adapter = require('../../../src/services/desktop-seating');
     const lookup = jest.spyOn(adapter, 'lookup').mockResolvedValue(null);
@@ -228,12 +228,33 @@ describe('SalesService', () => {
         makeContext({ seatingProtocol: true, branchSettings: { table_options: true } })
       );
       expect(result).toMatchObject({ status: false, message: 'Table changed' });
-      expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).toHaveBeenCalledTimes(1);
+      expect(mockItemRepositoryInstance.updateStock).toHaveBeenCalledWith(expect.anything(), 2);
       expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
     } finally {
       lookup.mockRestore();
       prepare.mockRestore();
     }
+  });
+
+  test.each(['stock', 'approval'])('failed %s validation leaves no bound desktop table', async (failure) => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    const adapter = require('../../../src/services/desktop-seating');
+    const lookup = jest.spyOn(adapter, 'lookup').mockResolvedValue(null);
+    const prepare = jest.spyOn(adapter, 'prepare');
+    if (failure === 'stock') mockItemRepositoryInstance.deductStockIfAvailable.mockResolvedValue(null);
+    try {
+      const result = await salesService.processSale(
+        makeSaleData({ table_number: 'T1', person_count: 2, idempotencyKey: 'desktop-rejected' }),
+        '', 'Add', makeContext({ seatingProtocol: true, branchSettings: { table_options: true } }),
+        failure === 'approval' ? { beforeCommit: async () => { throw new Error('Approval changed'); } } : {},
+      );
+      expect(result.status).toBe(false);
+      expect(prepare).not.toHaveBeenCalled();
+      expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
+      if (failure === 'approval')
+        expect(mockItemRepositoryInstance.updateStock).toHaveBeenCalledWith(expect.anything(), 2);
+    } finally { lookup.mockRestore(); prepare.mockRestore(); }
   });
 
   test('a concurrent desktop seating retry restores its temporary stock reservation', async () => {
@@ -1600,6 +1621,14 @@ describe('SalesService', () => {
       const result = await salesService.getBranchById(BRANCH_ID);
       expect(result).toBeNull();
     });
+  });
+
+  test('online dispatch requires the shared seating protocol without trusting a client override', async () => {
+    const payload = { branch: BRANCH_ID, seatingProtocol: false };
+    salesRepository.createOnlineOrder = jest.fn().mockResolvedValue({ status: true });
+    await salesService.createOnlineOrder(payload, { staffOrder: true, seatingProtocol: false });
+    expect(salesRepository.createOnlineOrder).toHaveBeenCalledWith(payload,
+      expect.objectContaining({ staffOrder: true, seatingProtocol: true }));
   });
 
   // ── pass-through delegations ──────────────────────────────────────────────

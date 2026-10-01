@@ -352,6 +352,12 @@ describe('SalesController', () => {
   });
 
   // ── create ──────────────────────────────────────────────────────────────────
+  test('server-built desktop context enables seating despite a payload opt-out', async () => {
+    const context = await ctrl.buildSaleContext(mockReq({ body: { seatingProtocol: false } }));
+    expect(context.seatingProtocol).toBe(true);
+    expect(context.userId).toBe(VALID_ID);
+  });
+
   describe('create', () => {
     test('200 success', async () => {
       const res = mockRes();

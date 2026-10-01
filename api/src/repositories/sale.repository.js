@@ -8999,8 +8999,8 @@ class SalesRepository {
       /* A number taken a moment ago is taken again, not handed to the
          customer as a database error. */
       let insertResult;
-      // Opt-in at the server dispatcher only after every table writer supports
-      // the protocol. Old handsets need no new field to participate.
+      // Enabled by the server dispatcher for configured tables. Old handsets
+      // need no new seating field to participate.
       if (!seatingClaim && seatingProtocol && seatingTable) {
         if (!staffOrder && !idempotencyKey) throw new Error('An order request ID is required.');
         const requestKey =

@@ -1337,19 +1337,6 @@ const processSale = async (
       }
     }
 
-    // Kept behind the internal rollout switch until moves and every writer
-    // participate. Claim the table before any stock is deducted.
-    if (useSeating) {
-      seatingAttempt = await require('./desktop-seating').prepare(
-        seatingDb,
-        { branchId, license: licenseId },
-        { actor: String(userId || ''), request_id: data.idempotencyKey, payload: data },
-        finalSaleData
-      );
-      if (seatingAttempt?.existing)
-        return savedAnswer(seatingAttempt.existing._id, seatingAttempt.existing.sales_id, true);
-    }
-
     // Reserve tracked stock atomically before creating the sale. A normal
     // read-then-update allows two counters to sell the same final quantity.
     const stockReservations = new Map();
@@ -1415,6 +1402,21 @@ const processSale = async (
               data.billing_transaction_id,
               decisionPricing
             );
+        }
+        // Bind seating only after stock and approval checks pass. A rejected
+        // pre-commit request must not leave a bound table with no order.
+        if (useSeating) {
+          seatingAttempt = await require('./desktop-seating').prepare(
+            seatingDb,
+            { branchId, license: licenseId },
+            { actor: String(userId || ''), request_id: data.idempotencyKey, payload: data },
+            finalSaleData
+          );
+          if (seatingAttempt?.existing) {
+            for (const reservation of stockReservations.values())
+              await itemRepository.updateStock(reservation.itemId, reservation.quantity);
+            return savedAnswer(seatingAttempt.existing._id, seatingAttempt.existing.sales_id, true);
+          }
         }
         // If the unique bill-number index catches a one-in-a-million clash,
         // take the next number and retry rather than fail the sale.
@@ -4156,6 +4158,8 @@ module.exports = {
       SaleModel: getModel(SaleModel),
       /* Carried through untouched: the route decides it, nothing else may. */
       staffOrder,
+      // All configured-table submissions participate, including older clients.
+      seatingProtocol: true,
     }),
   /* What the shop owes its hotels and its aggregators over a date range. */
   commissionReport: async (params = {}) => salesRepository.commissionReport(params),

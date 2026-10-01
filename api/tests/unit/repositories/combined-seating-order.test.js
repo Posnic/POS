@@ -81,8 +81,9 @@ beforeEach(async () => {
   );
 });
 function submit(extra = {}, who = actor, staff = true, protocol = false) {
+  const writer = protocol ? require('../../../src/services/sale.service') : repo;
   return runWithRequestContext({ loggedUser: who }, () =>
-    repo.createOnlineOrder(
+    writer.createOnlineOrder(
       {
         branch: String(branch),
         kiosk_table_no: 'T1',
