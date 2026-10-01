@@ -1171,3 +1171,65 @@ test('weighed items opt in to fixed quantities and replay has one stock effect',
     await db.collection('items').deleteOne({ _id: weighted._id });
   }
 });
+
+test('cloud pair uses the scoped shop database and cannot consume another shop code', async () => {
+  const express = require('express');
+  const { enableMultiTenant, runWithTenant } = require('../src/db/tenant-context');
+  const connection = mongoose.connection.useDb('mobile_cloud_pair_test', { useCache: true });
+  const shopDb = connection.db;
+  const code = 'ABCD99887766',
+    verifier = 'p'.repeat(43);
+  await shopDb.collection('users').insertOne({ ...user, usertype: 'owner', activate: true });
+  await shopDb.collection('branches').insertOne({ ...branch, module_mobile_pos_enable: true });
+  await shopDb.collection('mobile_pair_codes').insertOne({
+    _id: mobile.hash(code),
+    userId: user._id,
+    branchId: branch._id,
+    license: branch.license,
+    expires: new Date(Date.now() + 60000),
+    deviceId: 'cloud-scoped-phone',
+    codeChallenge: crypto.createHash('sha256').update(verifier).digest('base64url'),
+  });
+  const app = express();
+  app.use(express.json());
+  app.use((r, s, next) => {
+    const selected = r.headers['x-test-shop'] === 'correct' ? connection : mongoose.connection;
+    runWithTenant(
+      { db: selected.db, connection: selected, secrets: { JWT_SECRET: process.env.JWT_SECRET } },
+      next
+    );
+  });
+  app.use(require('../src/db/request-db').attachDb);
+  app.use('/mobile/v1', require('../src/routes/mobile-pos.routes'));
+  const srv = await new Promise((resolve) => {
+    const s = app.listen(0, '127.0.0.1', () => resolve(s));
+  });
+  enableMultiTenant();
+  try {
+    const send = (shop) =>
+      fetch('http://127.0.0.1:' + srv.address().port + '/mobile/v1/pair', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-test-shop': shop },
+        body: JSON.stringify({
+          code,
+          codeVerifier: verifier,
+          device: { device_id: 'cloud-scoped-phone' },
+        }),
+      });
+    assert.equal((await send('wrong')).status, 401);
+    assert.equal(
+      (await shopDb.collection('mobile_pair_codes').findOne({ _id: mobile.hash(code) })).usedAt,
+      undefined
+    );
+    const paired = await send('correct');
+    assert.equal(paired.status, 200, await paired.text());
+    assert.ok(
+      (await shopDb.collection('mobile_pair_codes').findOne({ _id: mobile.hash(code) })).usedAt
+    );
+    assert.equal((await send('correct')).status, 401);
+  } finally {
+    enableMultiTenant(false);
+    await new Promise((resolve) => srv.close(resolve));
+    await shopDb.dropDatabase();
+  }
+});
