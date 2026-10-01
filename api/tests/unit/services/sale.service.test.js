@@ -537,6 +537,26 @@ describe('SalesService', () => {
     expect(salesRepository.create).not.toHaveBeenCalled();
     expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
   });
+  test('retry fingerprints use the original request before charge normalization', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    mockCustomerRepositoryInstance.findById.mockResolvedValue({ balance: 0 });
+    const data = makeSaleData({
+      idempotencyKey: 'charge-retry',
+      charges: [{ name: 'Parcel', amount: '20', taxed: false }],
+      sales_total: '220',
+      multi_payment: { Cash: 220 },
+    });
+    const original = structuredClone(data);
+    await salesService.processSale(data, '', 'Add', makeContext());
+    const submission = require('../../../src/services/desktop-submission');
+    expect(submission.lookup.mock.calls[0][3]).toEqual(original);
+    expect(submission.prepare.mock.calls[0][3]).toEqual(original);
+    expect(salesRepository.create.mock.calls[0][0].charges[0]).toMatchObject({
+      amount: 20,
+      tax_amount: 0,
+      source: 'manual',
+    });
+  });
   describe('Additional charges in ordinary checkout', () => {
     test.each([
       [0, 'price', [{ name: 'Parcel', amount: 20, taxed: false }], 220],
