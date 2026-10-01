@@ -4154,5 +4154,10 @@
   "lang_weekly_delivery_day": "Wekelijkse leverdag",
   "lang_what_is_profit_this_month": "Wat is de winst deze maand?",
   "lang_what_would_you_like_to_know": "Wat wil je weten?",
-  "lang_which_items_are_low_in_stock": "Welke artikelen hebben een lage voorraad?"
+  "lang_which_items_are_low_in_stock": "Welke artikelen hebben een lage voorraad?",
+  "lang_ask_retention_days": "Bewaartermijn voor gesprekken en feedback (dagen)",
+  "lang_ask_retention_help": "Verlopen gesprekken en feedback worden verwijderd. Facturerings- en actielogboeken blijven bewaard. Een kortere termijn verwijdert oudere inhoud definitief.",
+  "lang_ask_delete_personal": "Mijn gesprekken en feedback verwijderen",
+  "lang_ask_delete_personal_confirm": "Je Ask Posnic-gesprekken en feedback voor deze vestiging verwijderen?",
+  "lang_ask_personal_deleted": "Gesprekken en feedback verwijderd."
 }

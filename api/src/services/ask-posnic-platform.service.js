@@ -11,6 +11,7 @@ const clean = (value, max = 20000) => String(value || '').replace(/\0/g, '').tri
 const { chunks, contextForChunk, normalizeQuestion, rank, privateCredentialQuestion } = require('./ask-posnic-retrieval');
 const semantic = require('./ask-posnic-semantic.service');
 const ownSemantic = require('./ask-posnic-own-key-semantic.service');
+const retention = require('./ask-posnic-retention.service');
 
 function scope(req) {
   const value = {
@@ -169,6 +170,7 @@ async function getPreferences(req) {
     insights_enabled: row?.insights_enabled !== false,
     actions_enabled: row?.actions_enabled !== false,
     store_conversations: row?.store_conversations !== false,
+    retention_days: retention.daysFor(row),
     own_key_semantic: row?.own_key_semantic === true,
     own_key_semantic_budget: Number(row?.own_key_semantic_budget) || 1,
     default_period: PERIOD_VALUE(row?.default_period, 'today'),
@@ -201,12 +203,17 @@ function normalizeRoles(input) {
 
 async function savePreferences(req, input) {
   const s = scope(req);
+  // Older clients omit this field; saving another setting must not shorten it.
+  const existing = await (await collection('ask_posnic_preferences')).findOne({ license: s.license });
+  const retentionDays = input.retention_days === undefined ? retention.daysFor(existing) : input.retention_days;
+  if (!retention.DAYS.includes(retentionDays)) throw new Error('Choose a retention period of 7, 30, 90 or 365 days.');
   const boolean = (key, fallback = true) => typeof input[key] === 'boolean' ? input[key] : fallback;
   const semanticBudget = input.own_key_semantic_budget == null ? 1 : Number(input.own_key_semantic_budget);
   if (!Number.isFinite(semanticBudget) || semanticBudget < 0.01 || semanticBudget > 10000) throw new Error('Choose a monthly knowledge-search budget between 0.01 and 10,000 in the outlet currency.');
   const value = {
     help_enabled: boolean('help_enabled'), insights_enabled: boolean('insights_enabled'), actions_enabled: boolean('actions_enabled'),
     store_conversations: boolean('store_conversations'), default_period: PERIOD_VALUE(input.default_period, 'today'),
+    retention_days: retentionDays,
     own_key_semantic: boolean('own_key_semantic', false), own_key_semantic_budget: semanticBudget,
     response_language: clean(input.response_language, 20) || 'auto', roles: normalizeRoles(input.roles),
     help_instructions: clean(input.help_instructions, 2000),
@@ -227,12 +234,16 @@ function capabilityAllowed(preferences, capability, user) {
 
 async function history(req) {
   const s = scope(req);
-  return (await collection('ask_posnic_conversations')).find(s, { projection: { messages: { $slice: -20 } } }).sort({ updated_at: -1 }).limit(20).toArray();
+  const cutoff = retention.cutoffFor(await getPreferences(req));
+  const rows = await (await collection('ask_posnic_conversations')).find({ ...s, messages: { $elemMatch: { at: { $type: 'date', $gte: cutoff } } } }, { projection: { messages: { $slice: -100 } } }).sort({ updated_at: -1 }).limit(20).toArray();
+  return rows.map(row => ({ ...row, messages: (row.messages || []).filter(message => retention.isCurrent(message, cutoff)).slice(-20) })).filter(row => row.messages.length);
 }
 
 async function deleteHistory(req) {
   const s = scope(req);
-  return (await collection('ask_posnic_conversations')).deleteMany(s);
+  const conversations = await (await collection('ask_posnic_conversations')).deleteMany(s);
+  const feedback = await (await collection('ask_posnic_feedback')).deleteMany(s);
+  return { deletedCount: conversations.deletedCount, feedbackDeletedCount: feedback.deletedCount };
 }
 
 function signingKey() {
@@ -362,12 +373,13 @@ async function listAudit(req) {
 
 async function usage(req) {
   const s = scope(req);
+  const cutoff = retention.cutoffFor(await getPreferences(req));
   const [questions, actions, documents, unanswered, feedback] = await Promise.all([
     (await collection('ask_posnic_audit')).countDocuments({ license: s.license, event: 'question' }),
     (await collection('ask_posnic_audit')).countDocuments({ license: s.license, event: 'action_confirmed' }),
     (await collection('ask_posnic_documents')).countDocuments({ license: s.license, status: 'published' }),
     (await collection('ask_posnic_audit')).countDocuments({ license: s.license, event: 'question', 'detail.intent': 'help', 'detail.citations.0': { $exists: false } }),
-    (await collection('ask_posnic_feedback')).countDocuments({ license: s.license }),
+    (await collection('ask_posnic_feedback')).countDocuments({ license: s.license, at: { $type: 'date', $gte: cutoff } }),
   ]);
   return { questions, confirmed_actions: actions, published_documents: documents, unanswered, feedback };
 }

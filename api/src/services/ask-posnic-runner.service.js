@@ -65,6 +65,8 @@ async function deliver(schedule, report) {
 // Called inside the database scope of exactly one tenant by both server modes.
 async function sweep({ db, at = new Date(), context, build = buildReport, send = deliver } = {}) {
   db = db || await BaseModel.getDb();
+  try { await require('./ask-posnic-retention.service').sweep(db, { licenseId: context?.licenseId, at }); }
+  catch (_error) { console.warn('[ask-posnic] retention cleanup failed'); }
   await schedules.reconcileQueued(db, { context, at });
   const filter = { enabled: true, next_run_at: { $lte: at }, ...(context ? { license: String(context.licenseId), branch_id: String(context.branchId) } : {}) };
   const due = await db.collection(schedules.COLLECTION).find(filter).limit(500).toArray();

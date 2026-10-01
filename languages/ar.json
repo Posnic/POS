@@ -3860,5 +3860,10 @@
   "lang_weekly_delivery_day": "يوم التوصيل الأسبوعي",
   "lang_what_is_profit_this_month": "ما هو الربح هذا الشهر؟",
   "lang_what_would_you_like_to_know": "ما الذي تود معرفته؟",
-  "lang_which_items_are_low_in_stock": "أي عناصر منخفضة في المخزون؟"
+  "lang_which_items_are_low_in_stock": "أي عناصر منخفضة في المخزون؟",
+  "lang_ask_retention_days": "مدة الاحتفاظ بالمحادثات والملاحظات (بالأيام)",
+  "lang_ask_retention_help": "تُحذف المحادثات والملاحظات المنتهية الصلاحية. تُحفظ سجلات الفوترة وتدقيق الإجراءات. يؤدي تقصير هذه المدة إلى حذف المحتوى الأقدم نهائيًا.",
+  "lang_ask_delete_personal": "حذف محادثاتي وملاحظاتي",
+  "lang_ask_delete_personal_confirm": "هل تريد حذف محادثاتك وملاحظاتك في Ask Posnic لهذا الفرع؟",
+  "lang_ask_personal_deleted": "تم حذف المحادثات والملاحظات."
 }

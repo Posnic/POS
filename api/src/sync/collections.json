@@ -84,6 +84,7 @@
     "managed_ai_credits": "Cloud allowance and reservations are billing authority state on the server that owns the managed provider credential.",
     "managed_ai_reservations": "Short-lived pre-call holds prevent concurrent managed model calls from overspending a shop allowance.",
     "ask_posnic_schedules": "Summary schedules execute on the server that owns their delivery channel; cloud and local installations operate independently.",
+    "whatsapp_outbox": "Delivery claims and acknowledgements belong to the server that owns the WhatsApp connector. Replicating queued messages could send financial summaries or other messages twice.",
     "ask_posnic_preferences": "Assistant retention and capability controls are enforced by the server where Ask Posnic runs; cross-installation rollout is explicit administration.",
     "inventory_counts": "A stock-count worksheet is local operational state until a reviewed synchronization contract is introduced; it never changes item stock by itself.",
     "printjobs": "work waiting for a particular printer, claimed over HTTP by whichever till is allowed to. Syncing it would hand the same bill to two databases and print it twice, which is the one thing the atomic claim exists to prevent",

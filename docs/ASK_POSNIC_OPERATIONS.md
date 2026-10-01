@@ -84,6 +84,40 @@ History rechecks current feature and financial permissions; revoked access
 redacts earlier protected answers. Direct report periods use the shop timezone,
 including complete previous weeks (Sunday start), months and years.
 
+### Conversation and feedback retention
+
+The default is 30 days. An owner can choose 7, 30, 90 or 365 days on the
+Ask Posnic module page. The policy applies across that shop's outlets; all users
+can see the current period beside their conversation controls. Older clients
+that omit the retention field preserve the saved policy. Invalid periods are
+rejected. Disabling conversation storage stops new messages being saved; existing
+messages still follow the retention policy. Feedback is voluntary and follows the
+same period even when conversation storage is disabled.
+
+Age is measured from each message or feedback record's timestamp, not the last
+activity in a conversation. History excludes expired or undated messages on every
+read, including while background cleanup is unavailable. The existing worker
+prunes expired messages, removes empty conversations and deletes expired feedback
+each minute while the server is running. It processes at most 500 conversations
+and 500 feedback records per shop per sweep; a backlog drains over later sweeps.
+Undated records with a valid shop scope are removed during cleanup. Records with
+no valid shop scope require operator review rather than guessing ownership.
+Stopped or suspended tenant workers cannot provide a physical deletion deadline;
+run cleanup before returning a restored tenant to service.
+
+Shortening the period hides older history immediately and removes it on cleanup.
+Increasing it cannot restore content already deleted. The personal delete control
+removes the requesting user's conversations and feedback in the current shop and
+outlet. Retrying deletion is safe. It does not delete another user's records.
+
+Retention cleanup never touches source documents, business records, action drafts,
+action/security audit or billing ledgers. Feedback audit retains its rating and
+intent, not the free-text note. These other records follow their separate business
+and operational policies; this feature does not establish a legal retention term.
+Backup copies remain subject to the deployment's backup-expiry policy. Restores
+must run the current cleanup policy before serving stored conversations. No
+production data was removed during implementation or acceptance tests.
+
 POS and Intranet parse PDFs in a short-lived child process, with at most two
 parsers per API process, a 30-second deadline, a 128 MB V8 old-space limit and
 bounded output. This heap limit does not cap native allocations at the OS level.
@@ -974,3 +1008,18 @@ After disabling Brevo retries, all 13 focused email/runner/SMTP tests passed.
 The Linux delivery overlay was checked separately from the older AWS model-check
 archive. Changed-file lint has zero errors and 18 existing warnings. Frontend
 files did not change in this follow-up.
+
+The later retention follow-up passed the full API suite: 466 suites and 11,715
+tests, with 13 existing skips. The final native MongoDB fixture passed 46 cases,
+including per-message expiry, independent shop periods, bounded cleanup, concurrent
+appends, preserved billing/action collections and scoped personal deletion.
+Authenticated application checks exercised owner-only retention changes and invalid
+period refusal. The frontend build is `7b23b6939aeac45e`; desktop/mobile controls
+and Tamil/Dutch/Arabic layouts passed, as did 98 language tests. Five new retention
+strings have English, Tamil, Dutch and Arabic entries; other packs use the existing
+English fallback until translated. These entries still need independent language
+review. Changed-file lint has zero errors and 11 console warnings, including the
+new neutral cleanup-failure diagnostic. No production cleanup was run.
+The root run passed 3,654 tests, skipped five and exposed one missing sync
+classification for the WhatsApp outbox. The queue is now explicitly local to its
+delivery server; all five classification checks pass after that correction.

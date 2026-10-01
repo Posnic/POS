@@ -328,7 +328,7 @@ class AskPosnicController {
 
   async deleteHistory(req, res) {
     await platform.deleteHistory(req);
-    return res.json({ type: 'success', data: null, message: 'Conversation history deleted' });
+    return res.json({ type: 'success', data: null, message: 'Conversations and feedback deleted' });
   }
 
   async feedback(req, res) {

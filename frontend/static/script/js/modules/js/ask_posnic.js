@@ -68,6 +68,8 @@ PosnicPro.askposnic = {
             $('#ask_pref_insights').prop('checked', preferences.insights_enabled !== false);
             $('#ask_pref_actions').prop('checked', preferences.actions_enabled !== false);
             $('#ask_pref_history').prop('checked', preferences.store_conversations !== false);
+            $('#ask_pref_retention').val(preferences.retention_days || 30);
+            $('#ask_retention_summary').text(preferences.retention_days || 30);
             $('#ask_pref_own_semantic').prop('checked', preferences.own_key_semantic === true);
             $('#ask_pref_embedding_budget').val(preferences.own_key_semantic_budget || 1);
             $('#ask_pref_period').val(preferences.default_period || 'today');
@@ -327,9 +329,9 @@ PosnicPro.askposnic = {
             reader.readAsText(file);
         });
         $('#ask_posnic_clear_history,#ask_delete_history').on('click', function () {
-            if (!window.confirm('Delete your Ask Posnic conversations?')) return;
+            if (!window.confirm(PosnicPro.i18n.t('lang_ask_delete_personal_confirm', 'Delete your Ask Posnic conversations and feedback for this outlet?'))) return;
             PosnicPro.request({ url: 'ask-posnic/history', method: 'DELETE' }, function (response) {
-                if (response && response.type === 'success') { self.conversationId = null; $('#ask_posnic_thread,#ask_history_list').empty(); PosnicPro.alert('success', PosnicPro.i18n.t('lang_conversation_history_deleted', 'Conversation history deleted.')); }
+                if (response && response.type === 'success') { self.conversationId = null; $('#ask_posnic_thread,#ask_history_list').empty(); PosnicPro.alert('success', PosnicPro.i18n.t('lang_ask_personal_deleted', 'Conversations and feedback deleted.')); }
             });
         });
         $('#ask_posnic_schedule_form').on('submit', function (event) {
@@ -341,8 +343,8 @@ PosnicPro.askposnic = {
         });
         $('#ask_posnic_preferences_form').on('submit', function (event) {
             event.preventDefault();
-            PosnicPro.request({ url: 'ask-posnic/preferences', method: 'PUT', data: JSON.stringify({ own_key_semantic: $('#ask_pref_own_semantic').is(':checked'), own_key_semantic_budget: Number($('#ask_pref_embedding_budget').val()), help_enabled: $('#ask_pref_help').is(':checked'), insights_enabled: $('#ask_pref_insights').is(':checked'), actions_enabled: $('#ask_pref_actions').is(':checked'), store_conversations: $('#ask_pref_history').is(':checked'), default_period: $('#ask_pref_period').val(), response_language: $('#ask_pref_language').val(), help_instructions: $('#ask_help_instructions').val(), roles: { help: $('#ask_pref_help_roles').val() || [], insights: $('#ask_pref_insight_roles').val() || [], actions: $('#ask_pref_action_roles').val() || [] }, allowed_actions: $('.ask-allowed-action:checked').map(function () { return this.value; }).get() }) }, function (response) {
-                if (response && response.type === 'success') PosnicPro.alert('success', response.message);
+            PosnicPro.request({ url: 'ask-posnic/preferences', method: 'PUT', data: JSON.stringify({ own_key_semantic: $('#ask_pref_own_semantic').is(':checked'), own_key_semantic_budget: Number($('#ask_pref_embedding_budget').val()), help_enabled: $('#ask_pref_help').is(':checked'), insights_enabled: $('#ask_pref_insights').is(':checked'), actions_enabled: $('#ask_pref_actions').is(':checked'), store_conversations: $('#ask_pref_history').is(':checked'), retention_days: Number($('#ask_pref_retention').val()), default_period: $('#ask_pref_period').val(), response_language: $('#ask_pref_language').val(), help_instructions: $('#ask_help_instructions').val(), roles: { help: $('#ask_pref_help_roles').val() || [], insights: $('#ask_pref_insight_roles').val() || [], actions: $('#ask_pref_action_roles').val() || [] }, allowed_actions: $('.ask-allowed-action:checked').map(function () { return this.value; }).get() }) }, function (response) {
+                if (response && response.type === 'success') { self.loadStatus(); PosnicPro.alert('success', response.message); }
                 else PosnicPro.alert('error', response.message || 'Could not save Ask Posnic settings.');
             });
         });

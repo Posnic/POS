@@ -44,11 +44,13 @@ async function main() {
         PosnicPro.request = (options, done) => { window.savedAskPreferences = JSON.parse(options.data); done({ type: 'success', message: 'Saved' }); };
         document.querySelector('#ask_pref_own_semantic').checked = true;
         document.querySelector('#ask_pref_embedding_budget').value = '2.50';
+        document.querySelector('#ask_pref_retention').value = '90';
       });
       await page.click('#ask_posnic_preferences_form button[type="submit"]');
       const savedPreferences = await page.evaluate(() => window.savedAskPreferences);
       assert.equal(savedPreferences.own_key_semantic, true);
       assert.equal(savedPreferences.own_key_semantic_budget, 2.5);
+      assert.equal(savedPreferences.retention_days, 90);
       await page.evaluate(() => {
         PosnicPro.get = (url, done) => {
           if (url === 'ask-posnic/recovery') return done({ data: { rows: [{ id: 'review-test', type: 'Knowledge indexing', label: 'Source <img src=x>', state: 'needs_review' }] } });

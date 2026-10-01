@@ -449,7 +449,7 @@
   "Conversation history": [
     "src/controllers/ask-posnic.controller.js"
   ],
-  "Conversation history deleted": [
+  "Conversations and feedback deleted": [
     "src/controllers/ask-posnic.controller.js"
   ],
   "Correct the listed customer rows. Nothing was imported.": [

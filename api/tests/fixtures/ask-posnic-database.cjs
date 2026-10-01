@@ -20,6 +20,7 @@ require.cache[require.resolve('../../src/services/ai-budget')] = { exports: {
 const platform = require('../../src/services/ask-posnic-platform.service');
 const credits = require('../../src/services/managed-ai-credits.service');
 const schedules = require('../../src/services/ask-posnic-schedule.service');
+const retention = require('../../src/services/ask-posnic-retention.service');
 const trends = require('../../src/services/ask-posnic-trends.service');
 const commerceInsights = require('../../src/services/ask-posnic-commerce-insights.service');
 const saleDrafts = require('../../src/services/ask-posnic-sale-draft.service');
@@ -44,6 +45,75 @@ beforeAll(async () => {
   process.env.ASK_POSNIC_ACTION_SECRET = 'isolated-test-secret-do-not-use-in-production';
 });
 beforeEach(async () => { await mockDb.dropDatabase(); process.env.POSNIC_MANAGED_AI_MONTHLY_CAP = '1'; delete process.env.ASK_POSNIC_BILLING_URL; delete process.env.ASK_POSNIC_BILLING_TOKEN; });
+
+test('retention trims individual old messages without extending them when a conversation continues', async () => {
+  const at = new Date(), recent = new Date(at.getTime() - 1000), old = new Date(at.getTime() - 31 * 86400000);
+  const scope = { license: 'shop-a', branch_id: 'outlet-a', user_id: 'owner-a' };
+  await mockDb.collection('ask_posnic_conversations').insertMany([
+    { ...scope, updated_at: recent, messages: [{ role: 'user', payload: 'Expired private question', at: old }, { role: 'assistant', payload: 'Current answer', at: recent }, { role: 'user', payload: 'Undated legacy data' }] },
+    { ...scope, updated_at: recent, messages: [{ role: 'user', at: old }] },
+    { ...scope, license: 'shop-b', messages: [{ role: 'user', at: old }] },
+  ]);
+  const visible = await platform.history(req());
+  expect(visible).toHaveLength(1);
+  expect(visible[0].messages.map(row => row.payload)).toEqual(['Current answer']);
+  const result = await retention.sweep(mockDb, { licenseId: 'shop-a', at });
+  expect(result).toMatchObject({ conversationsChanged: 2, conversationsDeleted: 1 });
+  expect(await mockDb.collection('ask_posnic_conversations').countDocuments({ license: 'shop-b' })).toBe(1);
+  expect((await mockDb.collection('ask_posnic_conversations').findOne({ license: 'shop-a' })).messages).toHaveLength(1);
+  expect(await retention.sweep(mockDb, { licenseId: 'shop-a', at })).toEqual({ conversationsChanged: 0, conversationsDeleted: 0, feedbackDeleted: 0 });
+});
+
+test('retention respects each shop policy, bounds a sweep and leaves accounting and action records intact', async () => {
+  const at = new Date(), old = new Date(at.getTime() - 31 * 86400000), scope = { license: 'shop-a', branch_id: 'outlet-a', user_id: 'owner-a' };
+  await mockDb.collection('ask_posnic_preferences').insertOne({ license: 'shop-b', retention_days: 90 });
+  await mockDb.collection('ask_posnic_feedback').insertMany([
+    ...Array.from({ length: 3 }, () => ({ ...scope, at: old, note: 'Expired feedback' })),
+    { ...scope, license: 'shop-b', at: old }, { ...scope, at: new Date(at.getTime() - 1000) },
+  ]);
+  for (const name of ['ask_posnic_audit', 'ask_posnic_action_drafts', 'managed_ai_credits', 'managed_ai_reservations']) await mockDb.collection(name).insertOne({ ...scope, at: old, sentinel: true });
+  expect((await platform.usage(req())).feedback).toBe(1);
+  expect((await retention.sweep(mockDb, { at, limit: 2 })).feedbackDeleted).toBe(2);
+  expect((await retention.sweep(mockDb, { at, limit: 2 })).feedbackDeleted).toBe(1);
+  expect(await mockDb.collection('ask_posnic_feedback').countDocuments()).toBe(2);
+  for (const name of ['ask_posnic_audit', 'ask_posnic_action_drafts', 'managed_ai_credits', 'managed_ai_reservations']) expect(await mockDb.collection(name).countDocuments({ sentinel: true })).toBe(1);
+});
+
+test('retention settings reject malformed values and older clients preserve the current policy', async () => {
+  expect((await platform.getPreferences(req())).retention_days).toBe(30);
+  for (const value of [0, -1, 8, '90', [30], null, 10000]) await expect(platform.savePreferences(req(), { retention_days: value })).rejects.toThrow('retention period');
+  await platform.savePreferences(req(), { retention_days: 90 });
+  await platform.savePreferences(req(), { store_conversations: false });
+  expect((await platform.getPreferences(req())).retention_days).toBe(90);
+  await platform.saveMessage(req(), '', 'user', 'Storage disabled');
+  expect(await mockDb.collection('ask_posnic_conversations').countDocuments()).toBe(0);
+  await platform.savePreferences(req(), { retention_days: 7 });
+  expect((await platform.getPreferences(req())).retention_days).toBe(7);
+});
+
+test('history deletion removes only the requesting user and outlet feedback, preserving other data', async () => {
+  const scope = { license: 'shop-a', branch_id: 'outlet-a', user_id: 'owner-a' }, at = new Date();
+  for (const name of ['ask_posnic_conversations', 'ask_posnic_feedback']) await mockDb.collection(name).insertMany([
+    { ...scope, at }, { ...scope, user_id: 'owner-b', at }, { ...scope, branch_id: 'outlet-b', at }, { ...scope, license: 'shop-b', at },
+  ]);
+  await mockDb.collection('ask_posnic_audit').insertOne({ ...scope, at, event: 'action_confirmed' });
+  expect(await platform.deleteHistory(req())).toEqual({ deletedCount: 1, feedbackDeletedCount: 1 });
+  for (const name of ['ask_posnic_conversations', 'ask_posnic_feedback']) expect(await mockDb.collection(name).countDocuments()).toBe(3);
+  expect(await mockDb.collection('ask_posnic_audit').countDocuments()).toBe(1);
+});
+
+test('cleanup preserves a message appended between selection and pruning', async () => {
+  const at = new Date(), old = new Date(at.getTime() - 366 * 86400000), col = mockDb.collection('ask_posnic_conversations');
+  const { insertedId } = await col.insertOne({ license: 'shop-a', messages: [{ at: old, payload: 'expired' }] });
+  const { Collection } = require('mongodb');
+  const original = Collection.prototype.updateMany;
+  const hooked = jest.spyOn(Collection.prototype, 'updateMany').mockImplementation(async function (...args) {
+    if (this.collectionName === 'ask_posnic_conversations') await col.updateOne({ _id: insertedId }, { $push: { messages: { at, payload: 'concurrent' } } });
+    return original.apply(this, args);
+  });
+  try { await retention.sweep(mockDb, { licenseId: 'shop-a', at }); } finally { hooked.mockRestore(); }
+  expect((await col.findOne({ _id: insertedId })).messages.map(row => row.payload)).toEqual(['concurrent']);
+});
 
 test('reorder planning uses complete local days, item thresholds and net open-order quantities within the outlet', async () => {
   const ids = Array.from({ length: 4 }, () => new ObjectId());

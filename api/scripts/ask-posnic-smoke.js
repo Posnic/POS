@@ -314,10 +314,12 @@ async function main() {
         return originalFetch(url, options);
       };
       try {
-        const prefs = { own_key_semantic: true, own_key_semantic_budget: 1 };
+        const prefs = { own_key_semantic: true, own_key_semantic_budget: 1, retention_days: 90 };
         assert.equal((await request('/preferences', prefs, cashier, 'PUT')).status, 403);
         assert.equal((await request('/preferences', { ...prefs, own_key_semantic_budget: -1 }, owner, 'PUT')).status, 400);
+        assert.equal((await request('/preferences', { ...prefs, retention_days: 0 }, owner, 'PUT')).status, 400);
         assert.equal((await request('/preferences', prefs, owner, 'PUT')).status, 200);
+        assert.equal((await request('/preferences')).body.data.retention_days, 90);
         await db.collection('ask_posnic_documents').updateMany({}, { $set: { status: 'retired' } });
         const ownDoc = await request('/documents', { title: 'Correcting mistaken transactions', kind: 'markdown', content: 'To reverse a mistaken transaction, open Sales and choose Return.', status: 'published' });
         assert.equal(ownDoc.status, 201, JSON.stringify(ownDoc.body));
