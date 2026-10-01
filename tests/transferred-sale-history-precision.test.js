@@ -56,3 +56,41 @@ for (const digits of [2, 3, 4, undefined, 99]) {
         dom.window.close();
     });
 }
+
+for (const exporting of [false, true]) {
+    test('payment transactions preserve collected amounts in ' + (exporting ? 'CSV data' : 'desktop rows'), () => {
+        const dom = new JSDOM('<input class="payment_branch_value" value="branch"><input class="view_payment_report_daterange" value="from-to"><select id="view_paymentransaction_per_page"><option selected>25</option></select><table id="view_paymentransaction"><tbody></tbody></table><span id="other" class="number">1.234</span>', { runScripts: 'outside-only' });
+        const win = dom.window;
+        win.$ = win.jQuery = require('jquery')(win);
+        win.eval(fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/jquery.number.min.js'), 'utf8'));
+        const base = { user_name: 'Staff', payment_mode: 'Cash', updated_date: { $date: { $numberLong: '1790769600000' } } };
+        const rows = [
+            { ...base, sales_id: 'KWD', items_total: 95.003, report_amount: 95.005, currencyDigits: 3 },
+            { ...base, sales_id: 'INR', items_total: 25, report_amount: 25.01, currencyDigits: 2 },
+            { ...base, sales_id: 'Legacy', items_total: 18.5 },
+            { ...base, sales_id: 'Zero', items_total: 10, report_amount: 0, currencyDigits: 0 }
+        ];
+        let exported;
+        win.moment = () => ({ tz: () => ({ format: () => '2026/09/30 12:00 PM' }) });
+        win.PosnicPro = {
+            appendReportTableBody() {}, paging() {}, timeZone: () => 'UTC', convertDate: value => value,
+            local: { get: () => 'Currency' },
+            JSONToCSVConvertor: values => { exported = values; },
+            get: (_params, success) => success({ type: 'success', data: {
+                total: rows.length, total_pages: 1, current_page: 1, per_page: 25, list: rows
+            } })
+        };
+        const script = fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js/report_payment.js'), 'utf8');
+        const first = script.indexOf('    paymentransactionTable: function');
+        const last = script.indexOf('    paymentransactionexport:', first);
+        win.eval('PosnicPro.paymentransaction = {' + script.slice(first, last).trim().replace(/,$/, '') + '};');
+        const run = win.PosnicPro.paymentransaction.paymentransactionTable;
+        // Export refreshes the table afterwards; isolate the exported rows.
+        if (exporting) win.PosnicPro.paymentransaction.paymentransactionTable = () => {};
+        run(exporting ? 'paymentransactionexport' : undefined);
+        if (exporting) assert.deepEqual(Array.from(exported, row => row.Amount), [95.005, 25.01, 18.5, 0]);
+        else assert.deepEqual(Array.from(win.document.querySelectorAll('#view_paymentransaction .number'), node => node.textContent), ['95.005', '25.01', '18.50', '0']);
+        assert.equal(win.document.querySelector('#other').textContent, '1.234');
+        dom.window.close();
+    });
+}
