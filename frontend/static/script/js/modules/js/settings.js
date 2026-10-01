@@ -133,7 +133,7 @@ PosnicPro.settings = {
             var base = (typeof API_URL === 'string' && API_URL) || '/api';
             $('#' + (key === 'mobilepos' ? 'mobile_pos_frame' : 'branch_payments_frame')).attr('src', base.replace(/\/+$/, '') + '/mobile-pos-setup' + (key === 'branchpayments' ? '?view=payments' : ''));
         }
-        if (key === 'ai') { PosnicPro.settings.ai.load(); }
+        if (key === 'ai') { PosnicPro.askposnic.showSettings(); }
     },
     /*
      * The branch's tax profile dresses the registration field (T2): every
@@ -10152,7 +10152,7 @@ PosnicPro.settings.ai = {
 };
 
 $(document).on('shown.bs.tab', 'a[href="#v-pills-ai"]', function () {
-    PosnicPro.settings.ai.load();
+    PosnicPro.askposnic.showSettings();
 });
 $(document).on('change', '#ai_provider', function () {
     PosnicPro.settings.ai.syncRows();
