@@ -19,7 +19,7 @@ async function extract(file) {
     const result = await parsePdf(file.buffer);
     const content = normalize(result.text);
     if (!content) throw new Error('No text could be extracted from this PDF. Scanned PDFs need OCR before publishing.');
-    return { content, kind: 'pdf', pages: result.pages };
+    return { content, kind: 'pdf', pages: result.pages, page_map: require('./knowledge-page-map').validate(content, result.page_map) };
   }
   if (['text/plain', 'text/markdown', 'text/x-markdown', 'application/octet-stream'].includes(mime)) {
     const content = normalize(file.buffer.toString('utf8'));

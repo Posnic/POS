@@ -84,6 +84,23 @@ History rechecks current feature and financial permissions; revoked access
 redacts earlier protected answers. Direct report periods use the shop timezone,
 including complete previous weeks (Sunday start), months and years.
 
+New PDF uploads also retain a content-hash-bound page map. Citation labels show
+the physical PDF page numbers covering the retrieved passage and its neighbouring
+evidence. These can differ from page labels printed inside the document. Clicking
+the citation opens the extracted text of those pages, with the same publication,
+shop and Help-permission checks; an old revision cannot silently open a newer one.
+This is a page-text view, not a stored original-PDF viewer.
+
+The map survives reviewed Intranet publication and bundle import, and is restored
+from the current source for keyword, managed-vector and own-key-vector matches.
+Blank pages keep their physical positions; repeated text does not confuse offsets.
+The server checks the text hash, ordered page numbers and bounded offsets before
+saving/importing metadata. Stale or malformed submitted maps are rejected before
+the bundle writes any source. Intranet editing clears page references when text
+changes; unchanged-text revisions preserve them. Re-upload the PDF to restore
+accurate references after editing. Existing sources without maps remain document
+citations until re-uploaded; the application never guesses their page numbers.
+
 ### Conversation and feedback retention
 
 The default is 30 days. An owner can choose 7, 30, 90 or 365 days on the
@@ -1023,3 +1040,20 @@ new neutral cleanup-failure diagnostic. No production cleanup was run.
 The root run passed 3,654 tests, skipped five and exposed one missing sync
 classification for the WhatsApp outbox. The queue is now explicitly local to its
 delivery server; all five classification checks pass after that correction.
+
+The PDF page-citation follow-up passed 27 extraction/retrieval/database tests,
+33 grounding/own-key checks, and 66 final native MongoDB/semantic cases. The real
+three-page PDF test preserves a blank second page; the same isolated parser's five
+extraction checks passed on AWS Linux. The Linux archive SHA-256 is
+`0ba3eb45c41e648475bbc816556fedc2375c6aa62cf49ea3a20fb3b92f7e1128`.
+All four shared parser/page-map/retrieval files match byte-for-byte across POS and
+Intranet. The Intranet suite passed 504 tests with seven skips. Cross-service
+publication/import/withdrawal and authenticated PDF citation opening passed.
+
+Frontend build `8b4fd03087368280`, desktop/mobile PDF source views, Intranet preview
+and edited-text map removal, and 98 language tests passed. Changed-file lint has
+zero errors and 16 warnings. The full API run passed 465 suites/11,706 tests and
+hit 12 failures in two timing-sensitive printer/MongoDB suites; both suites then
+passed all 18 tests on an unchanged isolated rerun. Thirteen existing tests remain
+skipped. The entire suite was not repeated after that rerun; the result is recorded
+as full-run failures resolved by focused reruns, not a single clean full-suite run.

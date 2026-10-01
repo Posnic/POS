@@ -156,6 +156,15 @@ async function main() {
     assert.equal(workflow.body.data.action, undefined);
     assert.equal(workflow.body.data.citations[0].document_id, workflowSource.body.data._id);
     assert.equal((await request(`/documents/${source.body.data._id}`)).status, 200);
+    const mappedPdf = require('../src/services/knowledge-page-map').fromPages([{ num: 2, text: 'To connect a receipt printer, open Print settings and choose the connected printer.' }], 3);
+    const pdfSource = await request('/documents', { title: 'PDF printer guide', kind: 'pdf', status: 'published', revision: 'pdf-r1', ...mappedPdf });
+    assert.equal(pdfSource.status, 201);
+    const pdfAnswer = await request('/ask', { question: 'How do I connect a receipt printer?' });
+    const pdfCitation = pdfAnswer.body.data.citations.find(citation => citation.document_id === pdfSource.body.data._id);
+    assert.deepEqual(pdfCitation.pages, [2]);
+    const pdfOpened = await request(`/documents/${pdfSource.body.data._id}?revision=pdf-r1&chunk=${pdfCitation.chunk}`);
+    assert.deepEqual(pdfOpened.body.data.sections, [{ page: 2, text: mappedPdf.content }]);
+    assert.equal((await request(`/documents/${pdfSource.body.data._id}?revision=old&chunk=0`)).status, 404);
     assert.equal((await request('/actions/draft', { type: 'stock_count' }, cashier)).status, 403);
     assert.equal((await request('/actions/draft', { type: 'purchase_order', payload: { orders: [] } })).status, 400);
     const draft = await request('/actions/draft', { type: 'stock_count' });

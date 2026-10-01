@@ -46,6 +46,27 @@ beforeAll(async () => {
 });
 beforeEach(async () => { await mockDb.dropDatabase(); process.env.POSNIC_MANAGED_AI_MONTHLY_CAP = '1'; delete process.env.ASK_POSNIC_BILLING_URL; delete process.env.ASK_POSNIC_BILLING_TOKEN; });
 
+test('PDF pages survive publication and bundle import, with revision and tenant checks at citation opening', async () => {
+  const mapped = require('../../src/services/knowledge-page-map').fromPages([{ num: 1, text: 'Receipt printer setup: choose Print settings.' }, { num: 2, text: '' }, { num: 3, text: 'Review printer connections before checkout.' }], 3);
+  const doc = await platform.saveDocument(req(), { title: 'Printer guide', kind: 'pdf', status: 'published', revision: 'r1', ...mapped });
+  const matches = await platform.retrieve(req(), 'Receipt printer setup');
+  expect(matches[0].pages).toEqual([1, 3]);
+  const opened = await platform.getDocument(req(), String(doc._id), { revision: 'r1', chunk: '0' });
+  expect(opened.sections.map(section => section.page)).toEqual([1, 3]);
+  expect(opened.sections[1].text).toBe('Review printer connections before checkout.');
+  expect(await platform.getDocument(req('shop-b'), String(doc._id), { revision: 'r1', chunk: '0' })).toBeNull();
+  expect(await platform.getDocument(req(), String(doc._id), { revision: 'r0', chunk: '0' })).toBeNull();
+  const bundle = { schema: 'posnic.ask-knowledge.v1', source: 'posnic-intranet', snapshot: true, documents: [{ seriesId: 'pdf-source', version: 1, title: 'Published PDF', kind: 'pdf', status: 'published', visibility: 'customer', ...mapped }] };
+  await platform.importBundle(req(), bundle);
+  const imported = await mockDb.collection('ask_posnic_documents').findOne({ central_id: 'pdf-source' });
+  expect(imported.page_map).toEqual(mapped.page_map);
+  const invalid = { ...bundle, documents: [{ ...bundle.documents[0], content: 'Changed without fresh page mapping' }] };
+  await expect(platform.importBundle(req(), invalid)).rejects.toThrow(/no longer matches/);
+  expect((await mockDb.collection('ask_posnic_documents').findOne({ _id: imported._id })).status).toBe('published');
+  await platform.setDocumentStatus(req(), String(doc._id), 'retired');
+  expect(await platform.getDocument(req(), String(doc._id), { revision: 'r1', chunk: '0' })).toBeNull();
+});
+
 test('retention trims individual old messages without extending them when a conversation continues', async () => {
   const at = new Date(), recent = new Date(at.getTime() - 1000), old = new Date(at.getTime() - 31 * 86400000);
   const scope = { license: 'shop-a', branch_id: 'outlet-a', user_id: 'owner-a' };
@@ -473,6 +494,21 @@ test('a reservation reconciles the account it was created in across month rollov
   await mockDb.collection(credits.COLLECTION).updateOne({ license: 'shop-a' }, { $set: { month: '2026-09' } });
   await credits.reconcile(context, { ...held, reservedMinor: 9999 }, { tokensOut: 100 });
   expect(await mockDb.collection(credits.COLLECTION).findOne({ month: '2026-09' })).toMatchObject({ reserved_minor: 0, used_minor: 1 });
+});
+
+test('managed semantic retrieval restores page references from the current permitted source', async () => {
+  const saved = [process.env.ASK_POSNIC_VECTOR_BUCKET, process.env.ASK_POSNIC_VECTOR_INDEX, process.env.ASK_POSNIC_VECTOR_NAMESPACE];
+  process.env.ASK_POSNIC_VECTOR_BUCKET = 'synthetic-bucket'; process.env.ASK_POSNIC_VECTOR_INDEX = 'synthetic-index'; process.env.ASK_POSNIC_VECTOR_NAMESPACE = 'synthetic-installation';
+  const data = new Map();
+  const vectors = { exists: async keys => keys.map(key => data.get(key)).filter(Boolean), put: async (key, vector, metadata) => data.set(key, { key, metadata, data: { float32: vector }, distance: 0.2 }), remove: async keys => keys.forEach(key => data.delete(key)), query: async () => [...data.values()] };
+  const embed = async () => ({ status: true, data: { vector: Array(256).fill(0.0625) } });
+  try {
+    const mapped = require('../../src/services/knowledge-page-map').fromPages([{ num: 4, text: 'Printer guidance from the approved PDF.' }], 5);
+    await platform.saveDocument(req(), { title: 'Printer guide', kind: 'pdf', status: 'published', ...mapped });
+    expect((await semantic.indexBatch(mockDb, { store: vectors, embed })).state).toBe('ready');
+    const matches = await semantic.retrieve(mockDb, 'shop-a', 'A paraphrase', { licenseId: 'shop-a' }, { store: vectors, embed });
+    expect(matches[0].pages).toEqual([4]);
+  } finally { ['ASK_POSNIC_VECTOR_BUCKET', 'ASK_POSNIC_VECTOR_INDEX', 'ASK_POSNIC_VECTOR_NAMESPACE'].forEach((key, index) => { if (saved[index] === undefined) delete process.env[key]; else process.env[key] = saved[index]; }); }
 });
 
 test('semantic indexing checkpoints bounded work and retrieval rechecks tenant, revision and publication', async () => {

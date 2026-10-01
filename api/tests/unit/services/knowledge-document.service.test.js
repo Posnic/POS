@@ -10,7 +10,7 @@ function pdfBuffer(text) {
     const chunks = [];
     doc.on('data', (chunk) => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.text(text);
+    (Array.isArray(text) ? text : [text]).forEach((page, index) => { if (index) doc.addPage(); if (page) doc.text(page); });
     doc.end();
   });
 }
@@ -23,13 +23,17 @@ describe('knowledge document extraction', () => {
   });
 
   test('extracts text from a real PDF', async () => {
-    const buffer = await pdfBuffer('Connect the receipt printer from Print settings.');
+    const buffer = await pdfBuffer(['Connect the receipt printer from Print settings.', '', 'தமிழ் is a source label. Review returns on the third page.']);
     const script = "const s=require('./src/services/knowledge-document.service');s.extract({buffer:Buffer.from(process.argv[1],'base64'),mimetype:'application/pdf',originalname:'printer.pdf'}).then(r=>process.stdout.write(JSON.stringify(r))).catch(e=>{console.error(e);process.exit(1)})";
     const run = spawnSync(process.execPath, ['-e', script, buffer.toString('base64')], { cwd: process.cwd(), encoding: 'utf8', maxBuffer: 1024 * 1024 });
     expect(run.status).toBe(0);
     const result = JSON.parse(run.stdout);
     expect(result.kind).toBe('pdf');
     expect(result.content).toContain('receipt printer');
+    expect(result.pages).toBe(3);
+    expect(result.page_map.spans.map(span => span.page)).toEqual([1, 3]);
+    const third = result.page_map.spans[1];
+    expect(result.content.slice(third.start, third.end)).toContain('returns on the third page');
   });
 
   test('rejects a forged PDF MIME type', async () => {

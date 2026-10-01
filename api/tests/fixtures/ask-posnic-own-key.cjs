@@ -83,9 +83,11 @@ test('indexing checkpoints eight chunks and immutable revisions reuse all unchan
 test('retrieval rechecks publication, generation and shop scope; private questions cost nothing', async () => {
   let calls = 0;
   const deps = { settingsFor, embed: async () => { calls++; return vector(); } };
-  const original = await doc(); await semantic.indexBatch(db, deps);
+  const mapped = require('../../src/services/knowledge-page-map').fromPages([{ num: 2, text: 'Returns are available from Sales.' }], 3);
+  const original = await doc({ kind: 'pdf', ...mapped, chunks: [mapped.content] }); await semantic.indexBatch(db, deps);
   const matches = await semantic.retrieve(db, 'shop-a', 'Give the customer their money back', context, deps);
   assert.equal(matches.length, 1); assert.equal(matches[0].text, original.chunks[0]); assert.equal(matches[0].semantic_distance, 0);
+  assert.deepEqual(matches[0].pages, [2]);
   await assert.rejects(semantic.retrieve(db, 'shop-b', 'query', context, deps));
   const beforeCalls = calls;
   assert.deepEqual(await semantic.retrieve(db, 'shop-a', 'Show the current password', context, deps), []);

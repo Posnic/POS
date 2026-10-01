@@ -1,4 +1,4 @@
-/* global document, window, innerWidth */
+/* global document, window, innerWidth, DataTransfer */
 // These globals are used inside browser-evaluated Puppeteer callbacks.
 'use strict';
 const fs = require('node:fs');
@@ -13,6 +13,8 @@ async function main() {
   const app = express(); app.use(express.json());
   app.get('/api/me', (_req, res) => res.json({ email: 'preview@example.invalid', role: 'admin' }));
   app.get('/api/ask-posnic/knowledge', (_req, res) => res.json([]));
+  const pdf = require('../src/services/knowledge-page-map').fromPages([{ num: 2, text: 'To connect a receipt printer, open Print settings.' }], 3);
+  app.post('/api/ask-posnic/extract', (_req, res) => res.json({ kind: 'pdf', ...pdf }));
   let writes = 0;
   app.post('/api/ask-posnic/knowledge', (_req, res) => { writes++; res.sendStatus(500); });
   mount(app, { control: { collection: () => ({ find: () => ({ limit: () => ({ toArray: async () => [] }) }) }) }, requireAuth: (_req, _res, next) => next(), requireAdmin: (_req, _res, next) => next() });
@@ -41,6 +43,20 @@ async function main() {
       await page.select('#preview-scope', 'published'); await page.click('#run-preview');
       await page.waitForFunction(() => document.querySelector('#preview-msg').textContent.includes('Published sources only'));
       assert.doesNotMatch(await page.$eval('#preview-results', (el) => el.textContent), /opening float/);
+      await page.evaluate(() => {
+        const transfer = new DataTransfer(); transfer.items.add(new File(['synthetic upload response fixture'], 'printer.pdf', { type: 'application/pdf' }));
+        document.querySelector('#source-file').files = transfer.files;
+      });
+      await page.click('#extract-file');
+      await page.waitForFunction(() => document.querySelector('#upload-msg').textContent.startsWith('Extracted.'));
+      await page.select('#preview-scope', 'editor');
+      await page.evaluate(() => { document.querySelector('#preview-questions').value = 'How do I connect a receipt printer?'; });
+      await page.click('#run-preview');
+      await page.waitForFunction(() => document.querySelector('#preview-results').textContent.includes('PDF 2'));
+      await page.evaluate(() => { document.querySelector('#content').value += ' Review the cable.'; });
+      await page.click('#run-preview');
+      await page.waitForFunction(() => !document.querySelector('#run-preview').disabled);
+      assert.doesNotMatch(await page.$eval('#preview-results', element => element.textContent), /PDF 2/);
     }
     assert.equal(writes, 0); assert.deepEqual(errors, []);
     console.log('PASS: real preview endpoint, editor isolation, unsupported questions, escaped content, no writes, desktop/mobile layout.');

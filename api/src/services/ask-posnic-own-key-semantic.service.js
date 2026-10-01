@@ -2,6 +2,7 @@
 
 const crypto = require('node:crypto');
 const { chunks, contextForChunk, privateCredentialQuestion } = require('./ask-posnic-retrieval');
+const pageMap = require('./knowledge-page-map');
 const embeddings = require('./ask-posnic-own-key-embedding.service');
 const vectorCollection = 'ask_posnic_local_vectors';
 const CAPACITY = 5000;
@@ -153,7 +154,7 @@ async function retrieve(db, license, question, context, dependencies = {}) {
   const { ObjectId } = require('mongodb');
   for (const match of best) {
     const fresh = await documents.findOne({ ...filter, _id: new ObjectId(match.document_id), 'own_semantic.generation': match.generation });
-    if (fresh && sourceHash(fresh) === match.generation) { delete match.generation; matches.push({ ...match, context: contextForChunk(fresh, match.chunk) }); }
+    if (fresh && sourceHash(fresh) === match.generation) { delete match.generation; matches.push({ ...match, context: contextForChunk(fresh, match.chunk), pages: pageMap.forChunk(fresh, match.chunk) }); }
   }
   return matches;
 }

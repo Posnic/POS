@@ -48,6 +48,7 @@ function createParser({ launch = spawn, timeoutMs = 30000, concurrency = 2 } = {
             const result = JSON.parse(Buffer.concat(chunks).toString('utf8'));
             if (result.error === 'too_large') return finish(new Error('Split this document into smaller sources (maximum 200,000 characters).'));
             if (typeof result.text !== 'string' || result.text.length > 200000 || !Number.isSafeInteger(result.pages) || result.pages < 0) throw new Error();
+            if (result.page_map) result.page_map = require('./knowledge-page-map').validate(result.text, result.page_map);
             finish(null, result);
           } catch (_error) { finish(new Error('PDF extraction returned invalid content.')); }
         });

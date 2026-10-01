@@ -75,6 +75,19 @@ async function main() {
     await sync.sync(req, { force: true });
     assert.deepEqual(await platform.currentMatches(req, matches), []);
 
+    const mapped = require('../src/services/knowledge-page-map').fromPages([{ num: 2, text: 'Receipt printer connection: open Print settings.' }], 3);
+    const pdfSource = await request('knowledge', { title: 'PDF printer manual', kind: 'pdf', visibility: 'customer', ...mapped });
+    await request(`knowledge/${pdfSource._id}/status`, { status: 'review' }, 'PATCH');
+    await request(`knowledge/${pdfSource._id}/status`, { status: 'published' }, 'PATCH');
+    await sync.sync(req, { force: true });
+    const pdfMatches = await platform.retrieve(req, 'Receipt printer connection');
+    assert.deepEqual(pdfMatches[0].pages, [2]);
+    const pdfPage = await platform.getDocument(req, pdfMatches[0].document_id, { revision: pdfMatches[0].revision, chunk: String(pdfMatches[0].chunk) });
+    assert.deepEqual(pdfPage.sections, [{ page: 2, text: mapped.content }]);
+    await request(`knowledge/${pdfSource._id}/status`, { status: 'retired' }, 'PATCH');
+    await sync.sync(req, { force: true });
+    assert.equal(await platform.getDocument(req, pdfMatches[0].document_id, { revision: pdfMatches[0].revision, chunk: '0' }), null);
+
     const start = new Date(Date.now() - 60000), end = new Date(Date.now() + 86400000);
     await control.collection('tenants').insertOne({ tenantDb: shop.databaseName });
     await control.collection('subscriptions').insertOne({ userId: owner, tenantDb: shop.databaseName, status: 'active', validUntil: end });

@@ -12,6 +12,7 @@ const { chunks, contextForChunk, normalizeQuestion, rank, privateCredentialQuest
 const semantic = require('./ask-posnic-semantic.service');
 const ownSemantic = require('./ask-posnic-own-key-semantic.service');
 const retention = require('./ask-posnic-retention.service');
+const pageMap = require('./knowledge-page-map');
 
 function scope(req) {
   const value = {
@@ -45,6 +46,7 @@ async function saveDocument(req, input) {
     title,
     kind,
     content,
+    ...(kind === 'pdf' && input.page_map ? { page_map: pageMap.validate(content, input.page_map) } : {}),
     revision: clean(input.revision, 80) || new Date().toISOString(),
     visibility: input.visibility === 'internal' ? 'internal' : 'customer',
     status: input.status === 'published' ? 'published' : 'draft',
@@ -61,12 +63,17 @@ async function saveDocument(req, input) {
 async function listDocuments(req, includeDrafts = false) {
   const s = scope(req);
   const filter = { license: s.license, ...(includeDrafts ? {} : { status: 'published', visibility: 'customer' }) };
-  return (await collection('ask_posnic_documents')).find(filter, { projection: { content: 0, chunks: 0, 'semantic.keys': 0, 'semantic.claim': 0, 'semantic.previous': 0, 'semantic.chunk_hashes': 0, 'semantic.execution_owner': 0, 'semantic.operation': 0, 'own_semantic.keys': 0, 'own_semantic.claim': 0, 'own_semantic.execution_owner': 0, 'own_semantic.operation': 0 } }).sort({ updated_at: -1 }).limit(200).toArray();
+  return (await collection('ask_posnic_documents')).find(filter, { projection: { content: 0, chunks: 0, page_map: 0, 'semantic.keys': 0, 'semantic.claim': 0, 'semantic.previous': 0, 'semantic.chunk_hashes': 0, 'semantic.execution_owner': 0, 'semantic.operation': 0, 'own_semantic.keys': 0, 'own_semantic.claim': 0, 'own_semantic.execution_owner': 0, 'own_semantic.operation': 0 } }).sort({ updated_at: -1 }).limit(200).toArray();
 }
 
-async function getDocument(req, id) {
+async function getDocument(req, id, options = {}) {
   if (!ObjectId.isValid(String(id))) return null;
-  return (await collection('ask_posnic_documents')).findOne({ _id: new ObjectId(String(id)), license: scope(req).license, status: 'published', visibility: 'customer' }, { projection: { title: 1, revision: 1, content: 1, kind: 1 } });
+  const doc = await (await collection('ask_posnic_documents')).findOne({ _id: new ObjectId(String(id)), license: scope(req).license, status: 'published', visibility: 'customer' }, { projection: { title: 1, revision: 1, content: 1, kind: 1, page_map: 1 } });
+  if (!doc || options.revision !== undefined && String(options.revision) !== String(doc.revision)) return null;
+  const chunk = typeof options.chunk === 'string' && /^\d+$/.test(options.chunk) ? Number(options.chunk) : options.chunk;
+  const pages = pageMap.forChunk(doc, chunk);
+  const sections = pages.length ? doc.page_map.spans.filter(span => pages.includes(span.page)).map(span => ({ page: span.page, text: doc.content.slice(span.start, span.end) })) : [];
+  return { ...doc, ...(sections.length ? { pages, sections } : {}) };
 }
 
 async function setDocumentStatus(req, id, status) {
@@ -93,6 +100,7 @@ async function importBundle(req, bundle) {
     documentText(source.content, 200000, 'Document text');
     documentText(source.seriesId, 250, 'Source identifier');
     documentText(source.version || source.revision, 80, 'Source revision');
+    if (source.page_map) pageMap.validate(documentText(source.content, 200000, 'Document text'), source.page_map);
   }
   const snapshot = bundle.snapshot === true && bundle.source === 'posnic-intranet';
   if (snapshot && bundle.documents.some((doc) => !doc.seriesId || !doc.title || !doc.content || doc.visibility !== 'customer' || doc.status !== 'published')) throw new Error('The published knowledge snapshot is incomplete.');
@@ -110,7 +118,7 @@ async function importBundle(req, bundle) {
     const ownSourceHash = ownSemantic.sourceHash({ title, content, revision });
     await docs.updateOne(
       { license: s.license, central_id: centralId, revision },
-      { $set: { ...s, origin: 'posnic-intranet', title, content, kind: ['faq', 'markdown', 'pdf', 'release_note'].includes(source.kind) ? source.kind : 'markdown', revision, visibility: 'customer', status: 'published', chunks: chunks(content), semantic_source_hash: semanticSourceHash, own_semantic_source_hash: ownSourceHash, updated_at: now(), published_at: now() }, $setOnInsert: { created_at: now() } },
+      { $set: { ...s, origin: 'posnic-intranet', title, content, page_map: source.kind === 'pdf' ? pageMap.validate(content, source.page_map) : null, kind: ['faq', 'markdown', 'pdf', 'release_note'].includes(source.kind) ? source.kind : 'markdown', revision, visibility: 'customer', status: 'published', chunks: chunks(content), semantic_source_hash: semanticSourceHash, own_semantic_source_hash: ownSourceHash, updated_at: now(), published_at: now() }, $setOnInsert: { created_at: now() } },
       { upsert: true }
     );
     await docs.updateMany({ license: s.license, central_id: centralId, revision: { $ne: revision }, status: 'published' }, { $set: { status: 'retired', updated_at: now() } });
@@ -157,7 +165,7 @@ async function currentMatches(req, matches) {
     const doc = await documents.findOne({ _id: new ObjectId(match.document_id), license: s.license, status: 'published', visibility: 'customer' });
     if (!doc || String(doc.revision || doc.version || 1) !== String(match.revision) || doc.title !== match.title) continue;
     const text = match.exact ? doc.content : (doc.chunks || chunks(doc.content))[match.chunk];
-    if (typeof text === 'string' && text.includes(match.text) && (!match.context || contextForChunk(doc, match.chunk) === match.context)) kept.push(match);
+    if (typeof text === 'string' && text.includes(match.text) && (!match.context || contextForChunk(doc, match.chunk) === match.context)) kept.push({ ...match, pages: pageMap.forChunk(doc, match.chunk) });
   }
   return kept;
 }

@@ -70,6 +70,23 @@ async function main() {
       await page.addScriptTag({ url: `http://127.0.0.1:${server.address().port}/static/style/js/popper.min.js` });
       await page.addScriptTag({ url: `http://127.0.0.1:${server.address().port}/static/style/js/bootstrap.min.js` });
       await page.evaluate(() => {
+        PosnicPro.askposnic.add('answer', 'Printer instructions.', { intent: 'help', citations: [{ document_id: 'pdf-check', revision: 'r1', title: 'PDF manual', chunk: 0, pages: [2, 3] }] });
+        PosnicPro.get = (url, done) => {
+          window.citationRequest = url;
+          done({ data: { title: 'PDF manual', revision: 'r1', sections: [{ page: 2, text: 'Connect printer <img src=x>' }, { page: 3, text: 'Review printer settings.' }] } });
+        };
+      });
+      await page.click('.ask-citation');
+      await page.waitForFunction(() => document.querySelector('#ask_source_modal').classList.contains('show'));
+      assert.equal(await page.evaluate(() => window.citationRequest), 'ask-posnic/documents/pdf-check?revision=r1&chunk=0');
+      assert.match(await page.$eval('.ask-citation', element => element.textContent), /PDF 2, 3/);
+      assert.match(await page.$eval('#ask_source_content', element => element.textContent), /PDF · 2[\s\S]*Connect printer[\s\S]*PDF · 3/);
+      assert.equal(await page.$$eval('#ask_source_content img', elements => elements.length), 0);
+      await page.waitForFunction(() => !$('#ask_source_modal').data('bs.modal')._isTransitioning);
+      await page.screenshot({ path: path.join(output, `pdf-pages-${name}.png`) });
+      await page.evaluate(() => $('#ask_source_modal').modal('hide'));
+      await page.waitForFunction(() => !document.querySelector('.modal-backdrop'));
+      await page.evaluate(() => {
         window.confirmCalls = 0;
         PosnicPro.request = (options, done) => {
           if (options.url !== 'ask-posnic/actions/confirm') throw new Error('Unexpected UI mutation');

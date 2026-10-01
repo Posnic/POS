@@ -25,7 +25,7 @@ PosnicPro.askposnic = {
         }
         if (data && data.source) details += '<span class="ask-posnic-source">Source: ' + self.esc(data.source) + '</span>';
         if (data && data.scope) details += '<span class="ask-posnic-source">' + (Array.isArray(data.scope.outlets) ? 'Outlets: ' + self.esc(data.scope.outlets.map(function (row) { return row.outlet; }).join(', ')) : 'Outlet: ' + self.esc(data.scope.outlet || 'Current outlet')) + (data.scope.from ? ' · ' + self.esc(new Date(data.scope.from).toLocaleString()) + ' to ' + self.esc(new Date(data.scope.to).toLocaleString()) : '') + (data.scope.as_of ? ' · as of ' + self.esc(new Date(data.scope.as_of).toLocaleString()) : '') + '</span>';
-        if (data && data.citations && data.citations.length) details += '<span class="ask-posnic-source">Sources: ' + data.citations.map(function (citation, index) { return '<button type="button" class="btn btn-sm btn-link ask-citation" data-id="' + self.esc(citation.document_id) + '">[' + (index + 1) + '] ' + self.esc(citation.title + ' · ' + citation.revision) + '</button>'; }).join(' ') + '</span>';
+        if (data && data.citations && data.citations.length) details += '<span class="ask-posnic-source">Sources: ' + data.citations.map(function (citation, index) { return '<button type="button" class="btn btn-sm btn-link ask-citation" data-id="' + self.esc(citation.document_id) + '" data-revision="' + self.esc(citation.revision) + '" data-chunk="' + self.esc(citation.chunk) + '">[' + (index + 1) + '] ' + self.esc(citation.title + ' · ' + citation.revision + (Array.isArray(citation.pages) && citation.pages.length ? ' · PDF ' + citation.pages.join(', ') : '')) + '</button>'; }).join(' ') + '</span>';
         if (data && data.link) details += '<a class="ask-posnic-source" href="' + self.esc(data.link) + '">Open source page</a>';
         if (data && data.intent === 'low_stock') details += '<button type="button" class="btn btn-sm btn-primary-rgba ask-posnic-action" id="ask_posnic_prepare_po"><lang class="lang_prepare_purchase_order_draft">Prepare purchase order draft</lang></button>';
         if (data && data.action) details += '<button type="button" class="btn btn-sm btn-primary-rgba ask-posnic-action ask-posnic-draft-action" data-action="' + self.esc(data.action.type) + '" data-source="' + self.esc(data.action.source || '') + '" data-lookback-days="' + self.esc(data.action.lookback_days || '') + '" data-coverage-days="' + self.esc(data.action.coverage_days || '') + '">' + self.esc(data.action.label) + '</button>';
@@ -276,10 +276,12 @@ PosnicPro.askposnic = {
             self.prepareAction('sale_draft', { customer_name: $('#ask_sale_customer').val(), lines_text: $('#ask_sale_lines').val() });
         });
         $('#ask_posnic_thread').on('click', '.ask-citation', function () {
-            PosnicPro.get('ask-posnic/documents/' + encodeURIComponent($(this).data('id')), function (response) {
+            var button = $(this);
+            var query = '?revision=' + encodeURIComponent(button.attr('data-revision')) + '&chunk=' + encodeURIComponent(button.attr('data-chunk'));
+            PosnicPro.get('ask-posnic/documents/' + encodeURIComponent(button.data('id')) + query, function (response) {
                 if (!response || !response.data) return PosnicPro.alert('error', response && response.message || 'Source is no longer available.');
                 $('#ask_source_title').text(response.data.title + ' · ' + response.data.revision);
-                $('#ask_source_content').text(response.data.content);
+                $('#ask_source_content').text(response.data.sections && response.data.sections.length ? response.data.sections.map(function (section) { return 'PDF · ' + section.page + '\n\n' + section.text; }).join('\n\n────────\n\n') : response.data.content);
                 $('#ask_source_modal').modal('show');
             });
         });

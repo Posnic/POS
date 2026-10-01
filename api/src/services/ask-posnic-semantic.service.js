@@ -5,6 +5,7 @@ const { ObjectId } = require('mongodb');
 const store = require('./ask-posnic-vector-store');
 const embeddings = require('./ask-posnic-embedding.service');
 const { chunks, contextForChunk } = require('./ask-posnic-retrieval');
+const pageMap = require('./knowledge-page-map');
 const { EMBEDDING_MODEL } = require('./bedrock-provider');
 const hash = (value) => crypto.createHash('sha256').update(value).digest('hex');
 const sourceHash = (doc) => hash(JSON.stringify([doc.title, String(doc.revision || doc.version || 1), doc.chunks || chunks(doc.content), EMBEDDING_MODEL]));
@@ -129,7 +130,7 @@ async function retrieve(db, license, question, context, dependencies = {}) {
     if (!doc || sourceHash(doc) !== meta.generation || candidate.key !== vectorKey(scope, doc._id, meta.generation, meta.chunk)) continue;
     const text = (doc.chunks || chunks(doc.content))[meta.chunk];
     if (!text) continue;
-    matches.push({ document_id: String(doc._id), revision: String(doc.revision || doc.version || 1), title: doc.title, chunk: meta.chunk, text, context: contextForChunk(doc, meta.chunk), semantic_distance: candidate.distance });
+    matches.push({ document_id: String(doc._id), revision: String(doc.revision || doc.version || 1), title: doc.title, chunk: meta.chunk, text, context: contextForChunk(doc, meta.chunk), pages: pageMap.forChunk(doc, meta.chunk), semantic_distance: candidate.distance });
   }
   return matches;
 }

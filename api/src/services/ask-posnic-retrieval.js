@@ -4,6 +4,7 @@
 // files byte-identical: draft previews and customer retrieval must rank alike.
 const STOP_WORDS = new Set('a an and are as at be by can could do does for from how i in is it me my of on or our please posnic should tell the this to we what when where which with would you your why many has have if then than after before another using happens need needs supported long much shown marked immediately'.split(' '));
 const clean = (value, max = 200000) => String(value || '').replace(/\0/g, '').trim().slice(0, max);
+const pageMap = require('./knowledge-page-map');
 const normalizeQuestion = (value) => clean(value, 1000).normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 function words(value) {
   return (clean(value).normalize('NFKC').toLowerCase().match(/[\p{L}\p{N}]{2,}/gu) || [])
@@ -112,7 +113,11 @@ function rank(documents, question, limit = 3) {
     const key = `${match.document_id}:${match.chunk}`;
     if (seen.has(key)) return false;
     seen.add(key); return true;
-  }).slice(0, Math.max(1, Math.min(10, limit))).map((match) => ({ ...match, ...(!match.exact ? { context: contextForChunk(documents.find((doc) => String(doc._id) === match.document_id), match.chunk) } : {}) }));
+  }).slice(0, Math.max(1, Math.min(10, limit))).map((match) => {
+    const doc = documents.find((source) => String(source._id) === match.document_id);
+    const pages = pageMap.forChunk(doc, match.chunk);
+    return { ...match, ...(!match.exact ? { context: contextForChunk(doc, match.chunk) } : {}), ...(pages.length ? { pages } : {}) };
+  });
 }
 
 // Keep every citation number aligned with the retrieval list. Several sources
