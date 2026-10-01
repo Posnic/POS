@@ -75,18 +75,43 @@ async function context(req, requireEnabled = true) {
     shopId: hash(id(t.licenseId)).slice(0, 24),
   };
 }
-function mapItem(row) {
+function mapItem(row, options = {}) {
   const taxBps = Math.round(Number(row.tax || 0) * 100);
   const price = minor(row.selling_price);
   const code = String(row.plu_code || '');
+  const rawImage =
+    typeof row.image === 'string'
+      ? require('../utils/image-store').resolve(row.image) || row.image
+      : '';
+  const image =
+    /^(https?:\/\/|\/uploads\/)/.test(rawImage) && rawImage.length <= 2048 ? rawImage : undefined;
   return {
     id: id(row._id),
     name: String(row.name || row.item_name || 'Item'),
+    ...(options.decimal && row.item_weight_machine_based
+      ? {
+          quantityScale: 1000,
+          unit: String(row.unit || '')
+            .trim()
+            .slice(0, 30),
+        }
+      : {}),
     price: Number.isSafeInteger(price) && price >= 0 && price <= 99999999999 ? price : 0,
     code: /^\d{1,6}$/.test(code) ? code : '',
     barcode: String(row.barcode_id || ''),
     category: String(row.category_name || 'Items'),
     visual: typeof row.icon === 'string' && row.icon ? row.icon : '■',
+    ...(image
+      ? {
+          image,
+          ...(!/[a-f0-9]{64}/.test(image)
+            ? {
+                imageRevision: String(row.image_updated_at || row.updated_date || '').slice(0, 100),
+              }
+            : {}),
+        }
+      : {}),
+    ...(['circle', 'square', 'diamond'].includes(row.tile_shape) ? { shape: row.tile_shape } : {}),
     taxBps: Number.isInteger(taxBps) ? Math.min(10000, Math.max(0, taxBps)) : 0,
     taxInclusive: row.tax_type === 'inclusive',
     active:
@@ -104,11 +129,12 @@ function mapItem(row) {
       Number(row.discount_amount || 0) > 0 ||
       Number(row.discount_percentage || 0) > 0 ||
       Boolean(
+        row.open_price ||
         row.modifiers?.length ||
         row.variants?.length ||
         row.modifier_groups?.length ||
         row.modifier_group_ids?.length ||
-        row.item_weight_machine_based
+        (row.item_weight_machine_based && (!options.decimal || !String(row.unit || '').trim()))
       ),
   };
 }
@@ -128,14 +154,21 @@ async function bootstrap(req) {
       },
     }
   );
-  const rows = await req.db
-    .collection('items')
-    .find({ branch_id: c.branchId, license: c.license, is_deleted: { $ne: true } })
-    .toArray();
-  const items = rows.map(mapItem);
+  const paged = req.query?.catalogue === 'paged';
+  const catalogue = require('./mobile-catalogue');
+  const itemMapper = (row) => mapItem(row, { decimal: req.query?.quantity === 'fixed3' });
+  const manifest = paged ? await catalogue.prepare(req.db, c, itemMapper) : null;
+  const rows = paged
+    ? []
+    : await req.db
+        .collection('items')
+        .find({ branch_id: c.branchId, license: c.license, is_deleted: { $ne: true } })
+        .sort({ _id: 1 })
+        .toArray();
+  const items = rows.map(itemMapper);
   const version = hash(
     canonical({
-      items,
+      items: manifest ? manifest.digest : items,
       config: c.config,
       currency: currency(c.branch),
       access: req.user.access || {},
@@ -143,6 +176,9 @@ async function bootstrap(req) {
     })
   );
   const now = new Date();
+  const cloudDelivery = await req.db
+    .collection('mobile_cloud_capabilities')
+    .findOne({ _id: 'delivery:' + id(c.license), protocol: 1 });
   const until = new Date(+now + c.config.offlineHours * 3600000);
   const key = hash(
     [id(c.license), id(c.branchId), id(c.userId), req.handsetDevice, version].join(':')
@@ -177,6 +213,7 @@ async function bootstrap(req) {
       devicePairing: true,
       tillPrint: true,
       printStatus: true,
+      cloudDelivery: Boolean(cloudDelivery),
       terminal: false,
     },
   };
@@ -189,7 +226,9 @@ async function bootstrap(req) {
         branchId: c.branchId,
         userId: c.userId,
         device: req.handsetDevice,
-        items,
+        ...(manifest
+          ? { pages: manifest.pages, counts: manifest.counts, count: manifest.count }
+          : { items }),
         facts: Object.fromEntries(
           rows.map((r) => [
             id(r._id),
@@ -207,7 +246,46 @@ async function bootstrap(req) {
     },
     { upsert: true }
   );
-  return { shop, items };
+  return manifest
+    ? {
+        shop,
+        catalogue: {
+          protocol: 1,
+          version: key,
+          count: manifest.count,
+          pages: manifest.pages.map((page, index) => ({ id: page, count: manifest.counts[index] })),
+        },
+      }
+    : { shop, items };
+}
+async function cataloguePage(req) {
+  const c = await context(req);
+  if (!req.handsetDevice || !allowed(req.user, 'sales')) fail('Catalogue access is required.', 403);
+  const { version, page } = req.params;
+  if (!/^[a-f0-9]{64}$/.test(version) || !/^\d{1,8}$/.test(page))
+    fail('Invalid catalogue page.', 400);
+  const grant = await req.db.collection('mobile_grants').findOne({
+    _id: version,
+    license: c.license,
+    branchId: c.branchId,
+    userId: c.userId,
+    device: req.handsetDevice,
+  });
+  if (!grant || !grant.pages || +grant.until <= Date.now())
+    fail('Refresh the catalogue permission.', 403);
+  const key = grant.pages[Number(page)];
+  if (!key) fail('Catalogue page not found.', 404);
+  const saved = await req.db.collection('mobile_catalogue_pages').findOne({ _id: key });
+  if (!saved) fail('Catalogue page not found.', 404);
+  return {
+    version,
+    index: Number(page),
+    id: key,
+    shopId: c.shopId,
+    branchId: id(c.branchId),
+    staffId: id(c.userId),
+    items: saved.items,
+  };
 }
 function validateSale(sale, grant, c, grants = new Map()) {
   if (grant.shop.permissions.sell !== true) fail('Selling is not permitted.', 403);
@@ -237,8 +315,8 @@ function validateSale(sale, grant, c, grants = new Map()) {
       !Number.isSafeInteger(line.price) ||
       line.price < 0 ||
       line.price > 99999999999 ||
-      !Number.isInteger(line.quantity) ||
-      line.quantity < 1 ||
+      !Number.isFinite(line.quantity) ||
+      line.quantity <= 0 ||
       line.quantity > 100000
     )
       fail('Invalid price or quantity.');
@@ -268,6 +346,13 @@ function validateSale(sale, grant, c, grants = new Map()) {
         line.taxInclusive !== lineGrant.shop.quickTaxInclusive)
     )
       fail('Quick sale is not permitted.', 403);
+    const quantityScale = item?.quantityScale === 1000 ? 1000 : 1;
+    const quantityUnits = Math.round(line.quantity * quantityScale);
+    if (
+      quantityUnits / quantityScale !== line.quantity ||
+      (line.quantityScale || 1) !== quantityScale
+    )
+      fail('Quantity does not match the item unit.', 409);
     const result = computeLineTax({
       itemAmount: (line.price * line.quantity) / 100,
       sellingPrice: line.price / 100,
@@ -277,14 +362,19 @@ function validateSale(sale, grant, c, grants = new Map()) {
       discountAmount: 0,
       discountPercentage: 0,
     });
-    const part = minor(result.tax),
-      amount = line.price * line.quantity + (line.taxInclusive ? 0 : part);
+    const fixed =
+      quantityScale === 1000
+        ? require('./mobile-amounts').lineAmounts({ ...line, quantityScale })
+        : null;
+    const part = fixed ? fixed.tax : minor(result.tax),
+      amount = fixed ? fixed.amount : line.price * line.quantity + (line.taxInclusive ? 0 : part);
     if (!Number.isSafeInteger(amount)) fail('Sale amount is too large.');
     total += amount;
     tax += part;
     return {
       ...line,
       name: item?.name || line.name.trim(),
+      unit: item?.unit || 'qty',
       amount,
       taxAmount: part,
       facts: lineGrant.facts?.[line.itemId] || {},
@@ -333,6 +423,7 @@ async function ingest(req, dependencies = {}) {
   const immutable = { ...sale };
   delete immutable.sync;
   delete immutable.serverId;
+  delete immutable.cloudReceivedAt;
   const digest = hash(canonical(immutable));
   const journal = req.db.collection('mobile_sales');
   let intent = await journal.findOne({ _id: key });
@@ -352,7 +443,7 @@ async function ingest(req, dependencies = {}) {
       fail('Customer creation is not permitted for this user.', 403);
     if (typeof sale.snapshotVersion !== 'string' || !/^[a-f0-9]{64}$/.test(sale.snapshotVersion))
       fail('Refresh the catalogue before selling.', 409);
-    const grant = await req.db.collection('mobile_grants').findOne({
+    let grant = await req.db.collection('mobile_grants').findOne({
       _id: sale.snapshotVersion,
       license: c.license,
       branchId: c.branchId,
@@ -380,7 +471,16 @@ async function ingest(req, dependencies = {}) {
         device: req.handsetDevice,
       })
       .toArray();
-    const lines = validateSale(sale, grant, c, new Map(previous.map((g) => [g._id, g])));
+    const itemIds = Array.isArray(sale.cart?.lines)
+      ? sale.cart.lines
+          .slice(0, 500)
+          .map((l) => l.itemId)
+          .filter((v) => typeof v === 'string')
+      : [];
+    const catalogue = require('./mobile-catalogue');
+    grant = await catalogue.hydrate(req.db, grant, itemIds);
+    const hydrated = await Promise.all(previous.map((g) => catalogue.hydrate(req.db, g, itemIds)));
+    const lines = validateSale(sale, grant, c, new Map(hydrated.map((g) => [g._id, g])));
     const serverId = new ObjectId();
     const ack = {
       saleId: localId,
@@ -463,7 +563,7 @@ async function finish(db, intent, c, deps = {}) {
       item_price: line.price / 100,
       sale_inline_item_price: line.price / 100,
       total_amount: line.amount / 100,
-      item_unit: 'qty',
+      item_unit: line.unit || 'qty',
       tax: line.taxBps / 100,
       tax_type: line.taxInclusive ? 'inclusive' : 'exclusive',
       tax_amount: line.taxAmount / 100,
@@ -623,7 +723,129 @@ async function finish(db, intent, c, deps = {}) {
     /* periodic scanner remains available */
   }
 }
+// Receipt lookup is scoped to the signed-in cashier and branch, including owners.
+// It cannot expose another cashier's receipts through a client-supplied identity.
+async function receipts(req) {
+  const c = await context(req);
+  if (!req.handsetDevice || !allowed(req.user, 'sales', 'read'))
+    fail('Receipt access is required.', 403);
+  const query = req.query?.q ?? '';
+  const before = req.query?.before;
+  if (
+    typeof query !== 'string' ||
+    query.length > 100 ||
+    (before !== undefined &&
+      (typeof before !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}T[\d:.]+Z\|[a-f0-9]{64}$/.test(before) ||
+        !Number.isFinite(Date.parse(before.split('|')[0]))))
+  )
+    fail('Invalid receipt search.', 400);
+  const filter = { license: c.license, branchId: c.branchId, userId: c.userId, state: 'complete' };
+  if (before) {
+    const [time, key] = before.split('|');
+    filter.$and = [
+      {
+        $or: [{ created: { $lt: new Date(time) } }, { created: new Date(time), _id: { $lt: key } }],
+      },
+    ];
+  }
+  if (query.trim()) {
+    const literal = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filter.$or = [
+      { 'sale.receipt': { $regex: literal, $options: 'i' } },
+      { 'sale.cart.customer.name': { $regex: literal, $options: 'i' } },
+    ];
+  }
+  const rows = await req.db
+    .collection('mobile_sales')
+    .find(filter, { projection: { _id: 1, sale: 1, lines: 1, created: 1 } })
+    .sort({ created: -1, _id: -1 })
+    .limit(51)
+    .toArray();
+  const page = rows.slice(0, 50);
+  return {
+    shopId: c.shopId,
+    branchId: id(c.branchId),
+    staffId: id(c.userId),
+    receipts: page.map((row) => ({
+      id: row.sale.id,
+      receipt: row.sale.receipt,
+      createdAt: row.sale.createdAt,
+      total: row.sale.total,
+      tax: row.sale.tax,
+      currency: row.sale.currency,
+      customer: row.sale.cart.customer?.name || '',
+      method: row.sale.payment.method,
+      lines: (row.lines || row.sale.cart.lines).map((line) => ({
+        name: line.name,
+        quantity: line.quantity,
+        price: line.price,
+        ...(line.unit ? { unit: line.unit } : {}),
+      })),
+    })),
+    next:
+      rows.length > 50
+        ? page[page.length - 1].created.toISOString() + '|' + page[page.length - 1]._id
+        : null,
+  };
+}
+async function deliveryStatus(req) {
+  const c = await context(req);
+  if (!req.handsetDevice || !allowed(req.user, 'sales', 'read'))
+    fail('Receipt access is required.', 403);
+  const ids = req.body?.ids;
+  if (
+    !Array.isArray(ids) ||
+    ids.length > 50 ||
+    ids.some((value) => typeof value !== 'string' || !/^[A-Za-z0-9_-]{6,80}$/.test(value))
+  )
+    fail('Provide up to 50 receipt identities.', 400);
+  const capability = await req.db
+    .collection('mobile_cloud_capabilities')
+    .findOne({ _id: 'delivery:' + id(c.license), protocol: 1 });
+  const result = {
+    shopId: c.shopId,
+    branchId: id(c.branchId),
+    staffId: id(c.userId),
+    available: Boolean(capability),
+    receipts: [],
+  };
+  if (!capability || !ids.length) return result;
+  const receipts = await req.db
+    .collection('mobile_sales')
+    .find({
+      license: c.license,
+      branchId: c.branchId,
+      userId: c.userId,
+      state: 'complete',
+      _id: {
+        $in: ids.map((localId) =>
+          hash([id(c.license), id(c.branchId), req.handsetDevice, localId].join(':'))
+        ),
+      },
+    })
+    .limit(50)
+    .toArray();
+  for (const receipt of receipts) {
+    const proof = await req.db.collection('mobile_cloud_receipts').findOne({
+      _id: 'mobile:' + receipt._id,
+      saleId: id(receipt.serverId),
+      branchId: id(c.branchId),
+      authority: capability.authority,
+    });
+    if (proof && Number.isFinite(Date.parse(proof.receivedAt)))
+      result.receipts.push({
+        id: receipt.sale.id,
+        serverId: id(receipt.serverId),
+        receivedAt: proof.receivedAt,
+      });
+  }
+  return result;
+}
 module.exports = {
+  deliveryStatus,
+  cataloguePage,
+  receipts,
   bootstrap,
   ingest,
   finish,

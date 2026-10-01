@@ -30,8 +30,13 @@ test('Kitchen Sound saves both source choices and their independent sound option
  const {JSDOM}=require('jsdom');const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/hardware-manager.html'),'utf8'),{runScripts:'outside-only'});t.after(()=>dom.window.close());
  const w=dom.window,d=w.document;let saved={outputs:[{id:'speaker',label:'Kitchen'}],talkEnabled:false,talkBell:'rising',volume:1},submitted;
  w.electronAPI={kitchenCall:{get:async()=>saved,bells:async()=>({arrival:['rising','soft']}),set:async value=>{submitted=value;saved={...saved,...value};return true;}},kitchenAudio:{},kot:{getConfig:async()=>({branches:[]})}};
- Object.defineProperty(w.navigator,'mediaDevices',{value:{enumerateDevices:async()=>[{kind:'audiooutput',deviceId:'speaker',label:'Kitchen'}]}});w.setInterval=()=>1;
+ Object.defineProperty(w.navigator,'mediaDevices',{value:{enumerateDevices:async()=>[{kind:'audiooutput',deviceId:'speaker',label:'Kitchen'}]}});let poll;w.setInterval=fn=>{poll=fn;return 1;};
  w.eval(fs.readFileSync(path.join(__dirname,'../src/kitchen-audio-controls.js'),'utf8'));await new Promise(r=>setImmediate(r));
+ assert.equal(typeof d.getElementById('kitchenTalk').onclick,'function','recording remains wired with the single save button');
+ assert.equal(d.querySelector('.sound-diagnostics').open,false);assert.equal(d.querySelector('.sound-speaker button').textContent,'Test');
+ d.getElementById('kitchenAudioVolume').value=.45;d.getElementById('kitchenAudioVolume').dispatchEvent(new w.Event('input'));assert.equal(d.getElementById('kitchenVolumeValue').textContent,'45%');
+ w.electronAPI.kitchenAudio.status=async()=>({jobs:[{kind:'voice',complete:false,targets:[{label:'Kitchen',status:'Unsupported source'}]}]});await poll();assert.match(d.getElementById('kitchenPlaybackSummary').textContent,/needs attention/);assert.match(d.getElementById('kitchenAudioJobs').textContent,/Unsupported source/);
+ w.electronAPI.kitchenAudio.status=async()=>({jobs:[]});await poll();assert.equal(d.getElementById('kitchenPlaybackSummary').textContent,'No messages waiting');
  d.getElementById('kitchenSpeak').checked=false;d.getElementById('kitchenTing').checked=false;d.getElementById('kitchenTalkEnabled').checked=true;d.getElementById('kitchenTalkTing').checked=true;d.getElementById('kitchenTalkBell').value='soft';
  await w.saveKitchenAudioSettings();assert.equal(submitted.speak,false);assert.equal(submitted.talkEnabled,true);assert.equal(submitted.talkTing,true);assert.equal(submitted.talkBell,'soft');
  d.getElementById('kitchenSpeak').checked=true;d.getElementById('kitchenTalkEnabled').checked=false;await w.saveKitchenAudioSettings();assert.equal(submitted.speak,true);assert.equal(submitted.talkEnabled,false);

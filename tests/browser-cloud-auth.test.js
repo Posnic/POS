@@ -38,7 +38,18 @@ test('browser approval returns through a random loopback port and exchanges PKCE
   assert.match(f.initial.redirectUri, /^http:\/\/127\.0\.0\.1:\d+\/posnic-authorized$/);
   assert.equal(f.initial.codeVerifier, undefined); assert.equal(f.initial.password, undefined);
   assert.match(f.opened, /^https:\/\/www\.posnic\.com\/api\/desktop\/authorize\?request=/);
-  assert.equal((await f.callback()).status, 200);
+  const callback = await f.callback();
+  assert.equal(callback.status, 200);
+  assert.match(callback.headers.get('content-type'), /text\/html/);
+  const html = await callback.text();
+  assert.match(html, /href="posnic:\/\/open"/);
+  assert.match(html, /Computer authorized/);
+  assert.match(callback.headers.get('content-security-policy'), /default-src 'none'/);
+  const nonce = html.match(/<style nonce="([^"]+)"/)[1];
+  assert.ok(callback.headers.get('content-security-policy').includes("'nonce-" + nonce + "'"));
+  for (const secret of [f.initial.state, f.tokenBody.codeVerifier, 'c'.repeat(43), 'a'.repeat(64)]) {
+    assert.ok(!html.includes(secret), 'The confirmation page must not disclose authorization credentials');
+  }
   assert.equal((await done).deviceId, 'test-device');
   assert.equal(f.client.active, null);
   await assert.rejects(fetch(f.initial.redirectUri));
@@ -88,4 +99,30 @@ test('shop identity permits a fresh install and same-shop reconnect, but never m
     assert.throws(() => assertSameShop({ ...clean, ...update }), /never merged automatically/);
   }
   assert.throws(() => assertSameShop({ ...clean, identity: { tenantDb: '../../bad', branchIds: [] } }), /Could not verify/);
+});
+
+
+test('successful browser approval restores its initiating window without blocking cloud setup', async () => {
+  const vm = require('node:vm'), fs = require('node:fs');
+  const main = fs.readFileSync(require.resolve('../src/main'), 'utf8');
+  const start = main.indexOf("ipcMain.handle('cloud:authorize-browser'");
+  const end = main.indexOf("ipcMain.handle('cloud:cancel-authorization'", start);
+  for (const focusFails of [false, true]) {
+    const calls = [], sender = {}, activation = { deviceId: 'approved' };
+    let handler;
+    vm.runInNewContext(main.slice(start, end), {
+      ipcMain: {handle(_name, callback) {handler = callback;}},
+      browserCloudAuth: {authorize: async () => activation},
+      getMachineId: () => 'machine', require,
+      BrowserWindow: {fromWebContents(value) {
+        assert.equal(value, sender);
+        return {isDestroyed:()=>false,isMinimized:()=>true,restore:()=>calls.push('restore'),
+          show:()=>calls.push('show'),focus:()=>{if(focusFails)throw Error('focus unavailable');calls.push('focus');},isFocused:()=>true};
+      }},
+      connectCloudDevice: async (value) => {assert.equal(value, activation);calls.push('connect');return {ok:true};},
+      console: {warn() {}},
+    });
+    assert.equal((await handler({sender})).ok, true);
+    assert.deepEqual(calls, focusFails ? ['restore','show','connect'] : ['restore','show','focus','connect']);
+  }
 });

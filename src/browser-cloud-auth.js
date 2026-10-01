@@ -61,7 +61,21 @@ class BrowserCloudAuth {
           });
           const result = await response.json();
           if (!response.ok) throw new Error(result.error || 'Authorization failed. Please start again.');
-          res.end('Computer authorized. Return to Posnic Desktop to finish downloading your shop.');
+          const nonce = crypto.randomBytes(18).toString('base64url');
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.setHeader('X-Content-Type-Options', 'nosniff');
+          res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'nonce-" + nonce + "'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+          res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Computer authorized · Posnic</title>
+<style nonce="${nonce}">
+:root{color-scheme:light dark;font-family:system-ui,sans-serif;color:#142438;background:#f3f6fa}
+body{min-height:100vh;margin:0;display:grid;place-items:center}main{box-sizing:border-box;width:min(92%,460px);padding:36px;background:#fff;border:1px solid #dce3ed;border-radius:20px}
+.brand{color:#0765df;font-weight:750;font-size:20px}h1{font-size:26px;margin:24px 0 12px}p{line-height:1.6;color:#506176}a{display:inline-block;margin:12px 0;padding:13px 22px;border-radius:9px;background:#0765df;color:white;font-weight:650;text-decoration:none}a:focus-visible{outline:3px solid #142438;outline-offset:4px}.hint{font-size:14px;margin-bottom:0}
+@media(prefers-color-scheme:dark){:root{background:#111820;color:#f4f7fc}main{background:#1c2632;border-color:#39485b}p{color:#bdcada}.brand{color:#7db5ff}a:focus-visible{outline-color:#fff}}
+</style></head><body><main><div class="brand">Posnic</div><h1>Computer authorized</h1>
+<p>We're bringing Posnic back to the front. Continue there to finish setting up your shop.</p>
+<a href="posnic://open">Open Posnic</a><p class="hint">If Posnic stays behind your browser, use the button or select Posnic from your taskbar. You can close this tab.</p>
+</main></body></html>`);
           finish(null, result);
         } catch (error) {
           res.writeHead(502); res.end('The connection could not finish. Return to Posnic Desktop and retry.');

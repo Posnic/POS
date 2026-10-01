@@ -59,6 +59,8 @@ PosnicPro.settings = {
         PosnicPro.settings.viewRecycleBinDetails(id);
     },
     openSection: function (key) {
+        var openReceiptDesign = key === 'print';
+        if (openReceiptDesign) key = 'general';
         if (!$('#settings').is(':visible')) {
             PosnicPro.settings.showDataTablePage();
         }
@@ -118,6 +120,10 @@ PosnicPro.settings = {
         $('.manage-settings-entry').removeClass('active');
         $('#manage_sec_' + key).addClass('active');
         if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
+        if (openReceiptDesign) {
+            $('#core_settings_tabs a[href="#core-tab-print"]').tab('show');
+            $('#print-design-tab').tab('show');
+        }
         if (PosnicPro.desktopSettings) { PosnicPro.desktopSettings.load(key); }
         if (key === 'taxmodule') { PosnicPro.settings.taxSystemLoad(); }
         /* A list has to be fetched every time it is opened: a phone that

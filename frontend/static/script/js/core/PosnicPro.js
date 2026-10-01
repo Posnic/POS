@@ -1410,7 +1410,7 @@ PosnicPro = {
         start: function () {
             if (PosnicPro.realtime._source || typeof EventSource === 'undefined') return;
             try {
-                var es = new EventSource('events');
+                var es = new EventSource(((typeof API_URL === 'string' && API_URL) || '/').replace(/\/?$/, '/') + 'events');
                 PosnicPro.realtime._source = es;
                 es.onopen = function () { PosnicPro.realtime.connected = true; };
                 es.onerror = function () { PosnicPro.realtime.connected = false; };

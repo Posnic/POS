@@ -86,3 +86,22 @@ For the two browser scenarios also set `MOBILE_PLAYWRIGHT_PATH` to an installed
 Playwright package and `MOBILE_PREVIEW_DIR` to the compiled Mobile-App `dist`
 directory. The integration test uses the bundled Windows mongod when available;
 on other platforms mongodb-memory-server downloads a matching binary.
+
+
+## Weighed items and fixed quantity opt-in
+
+A capable client requests `GET /mobile/v1/bootstrap?catalogue=paged&quantity=fixed3`.
+Items already configured as weight-machine based, with a non-empty selling unit,
+receive `quantityScale: 1000` and that unit. Old clients remain blocked from these
+items. Variant/modifier/discount restrictions remain in force.
+
+The phone asks for the quantity on product selection or barcode scan. It accepts
+up to three decimals in the configured unit, never infers weight from a generic
+barcode, and does not claim an attached-scale driver. Decreasing a basket quantity
+requires the existing void-line permission. Receipt history and printing carry the
+unit. Server ingestion validates the quantity against the issuing catalogue grant,
+uses integer minor-unit rounding and preserves the existing sale/stock idempotency.
+
+Test 0.125 kg, locale decimal separators, invalid precision, old-client bootstrap,
+forged decimal quantities on a piece-count item, offline save/restart and repeated
+upload. The integration suite checks one stock decrement and the stored sale unit.

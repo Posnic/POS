@@ -32,5 +32,10 @@ const authenticateKitchen = async (req, res, next) => {
   }
 };
 router.get('/', authenticateKitchen, wrap(service.list));
+router.get(
+  '/voice/:saleId/:voiceId',
+  authenticateKitchen,
+  wrap(require('../services/kitchen-voice').read)
+);
 router.post('/transition', authenticateKitchen, wrap(service.transition));
 module.exports = router;

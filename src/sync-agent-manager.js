@@ -379,7 +379,7 @@ class SyncAgentManager {
         total: 0,
         at: new Date().toISOString(),
       });
-      console.log(`[SyncAgent] ${rows} order(s) arrived from the cloud - printing now`);
+      console.log(`[SyncAgent] ${rows} order(s) synced from the cloud - checking pending kitchen work`);
       return true;
     } catch (e) {
       /* A ticket that misses this still prints on the poll underneath. */

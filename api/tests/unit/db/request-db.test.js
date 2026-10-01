@@ -15,6 +15,7 @@
 
 const mongoose = require('mongoose');
 const { attachDb, connectionFor } = require('../../../src/db/request-db');
+const { enableMultiTenant, runWithTenant } = require('../../../src/db/tenant-context');
 
 function run(req) {
   const next = jest.fn();
@@ -23,6 +24,42 @@ function run(req) {
 }
 
 describe('the database handle a request reads through', () => {
+  afterEach(() => enableMultiTenant(false));
+
+  test('cloud pairing reads the scoped shop even when no tenantConnection is on the request', () => {
+    enableMultiTenant();
+    const db = { databaseName: 'posnic_t_cloud_shop' };
+    const connection = { db };
+    runWithTenant({ db, connection }, () => {
+      const req = {};
+      run(req);
+      expect(req.db).toBe(db);
+      expect(req.dbConnection).toBe(connection);
+    });
+  });
+
+  test('concurrent cloud requests retain their own shop across awaits', async () => {
+    enableMultiTenant();
+    await Promise.all(
+      ['shop_a', 'shop_b'].map((name) => {
+        const db = { databaseName: name };
+        const connection = { db };
+        return runWithTenant({ db, connection }, async () => {
+          await new Promise((resolve) => setImmediate(resolve));
+          const req = { tenantConnection: { db: { databaseName: 'wrong_shop' } } };
+          run(req);
+          expect(req.db).toBe(db);
+          expect(req.dbConnection).toBe(connection);
+        });
+      })
+    );
+  });
+
+  test('cloud requests without a shop scope cannot use the default or an explicit fallback', () => {
+    enableMultiTenant();
+    expect(() => run({})).toThrow('no shop in context');
+    expect(() => run({ tenantConnection: { db: {} } })).toThrow('no shop in context');
+  });
   test('is set - the bug that made every easy-table route answer 500', () => {
     const req = {};
     const next = run(req);

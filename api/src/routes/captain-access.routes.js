@@ -76,32 +76,40 @@ router.post(
       access.fail('INVALID_ACTION', 'Unknown audio action.', 400);
     if (!process.listenerCount('posnic:kitchen-audio'))
       access.fail('UNAVAILABLE', 'Connect to the local POS with Kitchen Sound enabled.', 503);
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () =>
-          reject(
-            Object.assign(new Error('Kitchen audio did not respond. Please retry.'), {
-              status: 503,
-            })
-          ),
-        10000
-      );
-      process.emit(
-        'posnic:kitchen-audio',
-        {
-          action: req.params.action,
-          branchId: String(c.branchId),
-          owner: String(c.license) + ':' + String(req.user._id),
-          id: req.body.id,
-          data: req.body.data,
-        },
-        (error, value) => {
-          clearTimeout(timer);
-          if (error) reject(Object.assign(error, { status: 409 }));
-          else resolve(value);
-        }
-      );
-    });
+    const voice = require('../services/kitchen-voice');
+    const call = (action) =>
+      new Promise((resolve, reject) => {
+        const timer = setTimeout(
+          () =>
+            reject(
+              Object.assign(new Error('Kitchen audio did not respond. Please retry.'), {
+                status: 503,
+              })
+            ),
+          10000
+        );
+        process.emit(
+          'posnic:kitchen-audio',
+          {
+            action,
+            branchId: String(c.branchId),
+            owner: String(c.license) + ':' + String(req.user._id),
+            id: req.body.id,
+            data: req.body.data,
+          },
+          (error, value) => {
+            clearTimeout(timer);
+            if (error) reject(Object.assign(error, { status: 409 }));
+            else resolve(value);
+          }
+        );
+      });
+    const attachment =
+      req.params.action === 'voice' ? await voice.prepare(req, () => call('validateVoice')) : null;
+    if (attachment?.queued) return { id: attachment.id, queued: true };
+    const result = await call(req.params.action);
+    await voice.markQueued(attachment);
+    return result;
   })
 );
 router.post(
