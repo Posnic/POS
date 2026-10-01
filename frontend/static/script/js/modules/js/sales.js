@@ -1869,9 +1869,6 @@
         $('#render_amount').append(renderAmount);
         
         // Load saved denomination data if editing a sale
-        PosnicPro.sales.charges = (PosnicPro.sales.EditRecentSaleParams
-            && Array.isArray(PosnicPro.sales.EditRecentSaleParams.charges))
-            ? PosnicPro.sales.EditRecentSaleParams.charges.slice() : [];
         PosnicPro.sales.renderCharges();
         if (PosnicPro.sales.EditRecentSaleParams && PosnicPro.sales.EditRecentSaleParams.denomination_values) {
             let savedDenominations = PosnicPro.sales.EditRecentSaleParams.denomination_values;
@@ -4808,6 +4805,7 @@ PosnicPro.sales.editSale = {
                 wallet_check: ($('#wallet_balance').is(":checked")) ? 'true' : 'false',
                 extra_discount: parseFloat($('#extraDisc').text()),
                 extra_discount_type: !$('#percentIcon').hasClass('d-none') ? "percent" : "price",
+                charges: PosnicPro.sales.charges || [],
                 multi_payment: payments,
                 enable_multi_payment: PosnicPro.local.get('enable_multi_payment'),
                 table_number: editTableNumber,
@@ -5130,6 +5128,7 @@ PosnicPro.sales.holdSale = {
                 alternative_id: PosnicPro.sales.salesId,
                 register_id: register_id,
                 extra_discount_type: !$('#percentIcon').hasClass('d-none') ? "percent" : "price",
+                charges: PosnicPro.sales.charges || [],
                 // table_id: (PosnicPro.sales.selectedTable) ? PosnicPro.sales.selectedTable.id : '',
                 // table_number: (PosnicPro.sales.selectedTable) ? PosnicPro.sales.selectedTable.tableNumber : ''
             };
@@ -6698,7 +6697,7 @@ PosnicPro.sales.chargeTax = {
     },
     amountFor: function (c) {
         if (!c || c.taxed !== true) { return 0; }
-        if (c.source === 'outlet') return Number(c.tax_amount) || 0;
+        if (c.source === 'outlet' || PosnicPro.sales.paymentOnlyMode === true) return Number(c.tax_amount) || 0;
         return Math.round((Number(c.amount) || 0) * PosnicPro.sales.chargeTax.rate()) / 100;
     }
 };
@@ -6726,7 +6725,7 @@ PosnicPro.sales.renderCharges = function () {
     list.forEach(function (c, i) {
         // keep the payload fields current: the sale save sends these objects as-is
         c.tax_amount = PosnicPro.sales.chargeTax.amountFor(c);
-        if (c.source !== 'outlet') c.tax_name = c.taxed === true ? PosnicPro.sales.chargeTax.taxName() : '';
+        if (c.source !== 'outlet' && PosnicPro.sales.paymentOnlyMode !== true) c.tax_name = c.taxed === true ? PosnicPro.sales.chargeTax.taxName() : '';
         html += '<div class="sale-charge-row"><span>' + $('<i>').text(c.name).html() + '</span>'
             + (rate > 0 && c.source !== 'outlet'
                 ? '<a href="javascript:void(0)" class="sale-charge-tax badge ' + (c.taxed === true ? 'badge-primary' : 'badge-light') + '" data-i="' + i
@@ -8397,6 +8396,11 @@ PosnicPro.sales.recentMenu = {
         $("#sales_new_customer_country").val(result.customer_country);
         $('#billing_room_reference').val(result.room_reference || '');
         if (result.outlet_snapshot) { $('#billing_outlet_label').text(result.outlet_snapshot.name); $('#billing_room_wrap').show(); }
+        // Load once with the order, never when opening/reopening payment.
+        PosnicPro.sales.charges = (result.charges || []).map(function (charge) {
+            return Object.assign({}, charge);
+        });
+        if (PosnicPro.sales.renderCharges) PosnicPro.sales.renderCharges();
         PosnicPro.sales.EditRecentSaleParams = {
             outlet_id: result.outlet_id,
             outlet_snapshot: result.outlet_snapshot,
