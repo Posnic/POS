@@ -141,7 +141,8 @@ bounded output. This heap limit does not cap native allocations at the OS level.
 The child receives no provider credentials or application configuration. Uploads
 over 10 MB and extracted text over 200,000 characters are rejected; no instructions
 are silently truncated. Busy uploads receive a retry message without entering an
-unbounded queue. Scanned PDFs still require external OCR before upload. Keep both
+unbounded queue. Scanned PDFs can use the reviewed Intranet OCR workflow described
+below; direct POS uploads still require text extraction first. Keep both
 copies of `knowledge-pdf-parser.js` and `knowledge-pdf-worker.js` synchronized.
 
 Hourly/daily trends aggregate the same recorded sale totals and accepted statuses
@@ -1095,7 +1096,7 @@ Roll out the POS, Gateway and Intranet candidates together, ensuring the existin
 per-host control credentials and `INSTANCE_NAME` are configured. No extra AWS
 service, telemetry secret or external monitoring subscription is required. This
 follow-up has not restarted customer services or activated production telemetry.
-Paid scanned-PDF OCR, approved commercial pricing/payment lifecycle checks,
+At this fleet checkpoint, paid scanned-PDF OCR, approved commercial pricing/payment lifecycle checks,
 provider invoice reconciliation, real own-key and WhatsApp acceptance, and the
 independent multilingual pilot remain open.
 
@@ -1120,3 +1121,48 @@ $env:POSNIC_INTRANET_ROOT='C:/path/to/Intranet'
 $env:POSNIC_GATEWAY_ROOT='C:/path/to/Gateway'
 node scripts/ask-posnic-fleet-check.js
 ```
+
+## Scanned-PDF OCR follow-up, 1 October 2026
+
+Intranet now prepares scanned PDFs for review on the existing Ask Posnic knowledge
+page. Staff preview the physical page count and estimated cost, select a supported
+language and confirm paid extraction. A separate monthly page allowance defaults
+to zero. Atomic reservations, versioned policy updates and saved worker leases
+cover concurrent workers and interrupted saves. Recovered AWS calls reuse the
+same idempotency token; uncertain usage stays reserved. Complete results load
+into the editor with physical page references. Editing the text clears those
+references. Saving, reviewing and publishing remain explicit staff actions.
+
+The Mumbai CloudFormation stack `posnic-ask-ocr` is deployed with a private,
+encrypted bucket, a two-day lifecycle and a restricted IAM identity. One real
+two-page synthetic scan passed Textract extraction, physical-page mapping and
+source deletion. Its temporary credential was revoked and the identity has no
+remaining access keys. The OCR estimate is USD 0.003, excluding storage, requests
+and taxes; no invoice reconciliation is claimed. Production Intranet credentials,
+configuration and application activation remain pending.
+
+Textract's printed-text support covers English, French, German, Italian,
+Portuguese and Spanish; handwriting is English only. Tamil/Hindi scans need
+another OCR path. The UI states this limitation. Incomplete results never become
+importable sources. Intranet hides OCR results after eight days and removes them
+with TTL; published knowledge has its own lifecycle. The detailed setup and AWS
+references are in `Intranet/docs/ASK_POSNIC_OCR.md`.
+
+The Intranet suite passed 516 tests with seven existing skips. Ten OCR checks
+cover real MongoDB reservations, policy recovery, replay, expiry, pagination,
+missing pages, ownership and approval. Desktop/mobile browser checks use the real
+Intranet routes and MongoDB with a simulated OCR provider, verifying review-only
+import, escaped text, page citations and invalidation after editing. The existing
+knowledge preview browser checks also passed. POS application code and its built
+frontend are unchanged by this OCR follow-up; its previous full-suite evidence
+still applies to that code. The only POS additions are this note and the browser
+validation script.
+
+```powershell
+$env:POSNIC_INTRANET_ROOT='C:/path/to/Intranet'
+node api/scripts/ask-posnic-ocr-ui-check.js
+```
+
+Commercial pricing/payment lifecycle checks, provider invoice reconciliation,
+real own-key and WhatsApp acceptance, an independent multilingual pilot and
+coordinated production rollout remain open.
