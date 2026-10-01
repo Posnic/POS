@@ -942,6 +942,51 @@ describe('SalesService', () => {
   describe('processSale – Edit mode', () => {
     const SALE_ID = '64f8f2f4c2b9c0a1e4b55555';
 
+    describe('a payment changed while the edit was repriced', () => {
+      let server, connection, Model;
+      beforeAll(async () => {
+        const { MongoMemoryServer } = require('mongodb-memory-server');
+        const mongoose = require('mongoose');
+        server = await MongoMemoryServer.create();
+        connection = await mongoose.createConnection(server.getUri('desktop-edit-fence')).asPromise();
+        Model = connection.model('EditFenceSale', new mongoose.Schema({}, { strict: false }));
+      }, 60000);
+      afterAll(async () => { await connection?.close(); await server?.stop(); });
+
+      test.each([
+        ['payment_status', 'Paid'], ['paid_amount', 50], ['partial_balance', 50],
+        ['partial_amounts', 50], ['payment_pending', 0], ['sale_process', 'Add'],
+        ['floor_closed_at', new Date('2026-10-01T06:00:00Z')], ['order_state', 'cancelled'],
+      ].flatMap(([field, value]) => ['reload', 'save'].map(stage => [stage, field, value])))(
+        'does not overwrite newer state at %s: %s or move stock', async (stage, field, value) => {
+        await Model.deleteMany({});
+        const original = await Model.create({
+          _id: SALE_ID, branch_id: BRANCH_ID, license: LICENSE_ID,
+          sales_id: 'INV-FENCE', payment_status: 'Unpaid', payment_pending: 100,
+          sale_process: 'KOT', items: [], changes: [],
+        });
+        salesRepository.getById.mockResolvedValueOnce(original).mockImplementationOnce(async () => {
+          if (stage === 'reload')
+            await Model.collection.updateOne({ _id: original._id }, { $set: { [field]: value } });
+          return Model.findById(original._id);
+        });
+        salesRepository.save.mockImplementation(async doc => {
+          if (stage === 'save')
+            await Model.collection.updateOne({ _id: original._id }, { $set: { [field]: value } });
+          return doc.save();
+        });
+        const result = await salesService.processSale(makeSaleData(), SALE_ID, 'Edit', makeContext());
+        expect(result.status).toBe(false);
+        expect(salesRepository.save).toHaveBeenCalledTimes(1);
+        expect(await Model.collection.findOne({ _id: original._id })).toEqual({
+          ...original.toObject(), [field]: value,
+        });
+        expect(mockItemRepositoryInstance.updateStock).not.toHaveBeenCalled();
+        expect(mockStockLogsRepositoryInstance.createStockLog).not.toHaveBeenCalled();
+        expect(mockRegisterRepositoryInstance.updateSaleRegisterEntry).not.toHaveBeenCalled();
+      });
+    });
+
     beforeEach(() => {
       mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
     });
