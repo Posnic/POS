@@ -1,0 +1,81 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const output = process.argv[2] || path.join(os.tmpdir(), 'posnic-diagnostic-proof');
+if (!require('electron').app) {
+  const { spawnSync } = require('node:child_process');
+  const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
+  const result = spawnSync(require('electron'), [__filename, output], { windowsHide: true, env, stdio: 'ignore', timeout: 45000 });
+  if (fs.existsSync(path.join(output, 'result.json'))) process.stdout.write(fs.readFileSync(path.join(output, 'result.json')));
+  process.exit(result.status === 0 ? 0 : 1);
+} else {
+  const { app, BrowserWindow, ipcMain } = require('electron');
+  const assert = require('node:assert/strict');
+  fs.mkdirSync(output, { recursive: true });
+  app.setPath('userData', path.join(output, 'isolated-user-data'));
+  const checks = [];
+  const mark = text => { checks.push(text); fs.writeFileSync(path.join(output, 'progress.json'), JSON.stringify(checks)); };
+  app.whenReady().then(async () => {
+    try {
+      const { guard } = require('../../src/ipc-guard');
+      const { setup } = require('../../src/diagnostics');
+      const queueJob = { id: 'proof-job', printer: 'No real printer', state: 'failed', reason: 'Not submitted', retries: 2, submitted: false, accepted: false };
+      const { service, open } = setup({ ipcMain: guard(ipcMain), hardware: () => ({ listPrinters: async () => [], windowsPrintQueue: { jobs: new Map([['proof-job', queueJob]]) } }), sync: () => null, audio: () => null });
+      open();
+      const win = BrowserWindow.getAllWindows()[0];
+      win.webContents.on('console-message', (_e, level, message) => fs.appendFileSync(path.join(output, 'renderer.log'), String(message || level) + '\n'));
+      await new Promise(resolve => win.webContents.once('did-finish-load', resolve)); win.hide();
+      const execute = source => win.webContents.executeJavaScript(source);
+      await execute('window.electronAPI.diagnostics.start()');
+      const parts = service.snapshots[0].parts;
+      for (const name of ['system', 'configuration', 'printHelper', 'printQueue']) assert.equal(parts[name].status, 'ok', name);
+      assert.equal(parts.printQueue.data.jobs[0].submitted, false);
+      assert.equal(parts.printQueue.data.jobs[0].retries, 2);
+      checks.push('real system/configuration/helper providers and queue submission evidence are readable');
+      assert.equal((await execute('window.electronAPI.diagnostics.state()')).active, true); checks.push('sandboxed diagnostic page can start and read its session');
+      await execute('refresh()');
+      assert.equal(await execute("document.querySelectorAll('#health .check').length"), 8);
+      assert.equal(await execute("document.querySelector('details').open"), false);
+      assert.equal(await execute("document.getElementById('healthTitle').textContent.includes('attention')"), true);
+      win.showInactive(); await new Promise(r => setTimeout(r, 350));
+      fs.writeFileSync(path.join(output, 'support-overview.png'), (await win.webContents.capturePage({ x: 0, y: 0, width: 1040, height: 780 }, { stayHidden: true, stayAwake: true })).toPNG());
+      win.hide(); checks.push('readable health summary and collapsed technical details verified');
+      await execute('window.electronAPI.diagnostics.capture(true)'); assert.equal(service.holdPrint(), true);
+      checks.push('capture mode enabled');
+      service.setPreview('<h1>Sample receipt</h1><script>window.injected = true</script>');
+      await execute("document.getElementById('preview').click()");
+      await new Promise(r => setTimeout(r, 500));
+      assert.equal(await execute("document.getElementById('receipt').hidden"), false);
+      checks.push('preview visible');
+      const frame = win.webContents.mainFrame.frames[0];
+      assert.equal(frame.url, 'about:srcdoc');
+      assert.equal(await execute("document.getElementById('receipt').getAttribute('sandbox')"), 'allow-same-origin');
+      assert.equal(await execute("document.getElementById('receipt').contentWindow.injected === true"), false);
+      checks.push('captured receipt iframe renders with scripts disabled');
+      mark('before screenshot');
+      win.showInactive(); await new Promise(r => setTimeout(r, 300));
+      win.webContents.debugger.attach('1.3');
+      const targets = await win.webContents.debugger.sendCommand('Target.getTargets');
+      const child = targets.targetInfos.find(target => target.type === 'iframe' && target.url === 'about:srcdoc');
+      const attached = child ? await win.webContents.debugger.sendCommand('Target.attachToTarget', { targetId: child.targetId, flatten: true }) : null;
+      const dom = await win.webContents.debugger.sendCommand('DOM.getDocument', { depth: -1, pierce: true }, attached?.sessionId);
+      const texts = [];
+      function walk(node) { if (node.nodeType === 3) texts.push(node.nodeValue); for (const child of node.children || []) walk(child); if (node.contentDocument) walk(node.contentDocument); }
+      walk(dom.root); win.webContents.debugger.detach();
+      assert.ok(texts.includes('Sample receipt'), 'Receipt text must exist in the child document');
+      await execute("document.getElementById('receipt').scrollIntoView()"); await new Promise(r => setTimeout(r, 400));
+      fs.writeFileSync(path.join(output, 'diagnostic-window.png'), (await win.webContents.capturePage({ x: 0, y: 0, width: 1040, height: 780 }, { stayHidden: true, stayAwake: true })).toPNG());
+      win.hide();
+      mark('screenshot saved');
+      const intruder = new BrowserWindow({ show: false, webPreferences: { preload: path.resolve(__dirname, '../../src/preload.js'), sandbox: true, contextIsolation: true, nodeIntegration: false } });
+      await intruder.loadFile(path.resolve(__dirname, '../../src/diagnostics.html'));
+      mark('second page loaded');
+      const denied = await intruder.webContents.executeJavaScript("window.electronAPI.diagnostics.stop().then(() => false, () => true)");
+      assert.equal(denied, true); assert.equal(service.active, true); checks.push('another trusted page cannot control the diagnostic session');
+      intruder.destroy(); win.destroy(); assert.equal(service.active, false); assert.equal(service.holdPrint(), false);
+      checks.push('closing diagnostics stops recording and capture mode');
+      fs.writeFileSync(path.join(output, 'result.json'), JSON.stringify({ success: true, checks }, null, 2)); app.exit(0);
+    } catch (error) { fs.writeFileSync(path.join(output, 'result.json'), JSON.stringify({ success: false, checks, error: error?.stack || String(error) }, null, 2)); app.exit(1); }
+  });
+}

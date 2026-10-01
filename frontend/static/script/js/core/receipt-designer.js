@@ -310,6 +310,7 @@
                 pageSize: format === '58' || format === '80' ? format + 'mm' : format,
                 copies: options.target ? options.target.copies : 1,
                 fitReceipt: format === '58' || format === '80',
+                thermalRaster: format === '58' || format === '80',
                 silent: true, strictPrinter: true, forceHtml: true, printBackground: true, margins: { marginType: 'none' } }); })
                 .then(function (result) {
                     if (!result || !result.success) throw new Error(result && result.error || label('Print failed'));
@@ -334,18 +335,31 @@
         }).catch(failure);
     }
     async function printSale(data, requested, kitchenBill) {
+        var diagnostic = function (fields) { window.electronAPI?.diagnostics?.event('renderer', fields).catch(function () {}); };
+        diagnostic({ stage: 'sale-print-start', format: requested || 'configured' });
         try {
             if (PosnicPro.printSettings) await PosnicPro.printSettings.ready();
             if (!data.receipt_designs) data = Object.assign({}, data, { receipt_designs: defaults(data) });
             var targets = window.electronAPI && PosnicPro.printSettings ? PosnicPro.printSettings.get('sales') : [null];
+            if (window.electronAPI && PosnicPro.printSettings && ['a4', 'a5', 'letter'].indexOf(requested) !== -1) {
+                // An A4 override must not silently send a sheet to the counter roll.
+                targets = targets.filter(function (target) { return ['a4', 'a5', 'letter'].indexOf(target.pageSize) !== -1; });
+                if (!targets.length) {
+                    var invoice = PosnicPro.printSettings.get('invoice');
+                    if (invoice && invoice.printerName && invoice.printerName !== 'default') {
+                        targets = [{ name: invoice.printerName, pageSize: requested, copies: invoice.copies }];
+                    } else throw new Error('Choose a sheet printer in Printers & paper for A4 printing. Use Thermal for the receipt printer.');
+                }
+            }
             for (var target of targets) {
                 var paper = target ? target.pageSize.replace('mm', '') : null;
                 var chosen = formatFor(data, requested || paper);
+                diagnostic({ stage: 'sale-document-render', format: chosen });
                 // A format explicitly selected for this print takes precedence.
                 await print(render(data, chosen, kitchenBill), chosen, { target: target, batch: true, sample: true });
             }
             PosnicPro.afterPrint();
-        } catch (error) { PosnicPro.alert('error', error.message || label('Print failed')); }
+        } catch (error) { diagnostic({ stage: 'sale-print-failed', success: false, message: error.message }); PosnicPro.alert('error', error.message || label('Print failed')); }
     }
     PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, standardLayout: standardLayout, render: render, css: css, print: print, printSale: printSale, block: block, label: label, copy: copy, formatFor: formatFor };
 }());

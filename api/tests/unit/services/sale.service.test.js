@@ -190,6 +190,136 @@ describe('SalesService', () => {
     consoleWarnSpy.mockRestore();
   });
 
+  describe('tax-inclusive full-payment integrity', () => {
+    const taxableSale = (multi_payment, overrides = {}) =>
+      makeSaleData({
+        sales_total: '262.50',
+        payment_mode: 'Upi',
+        multi_payment,
+        items: [makeItemPayload({ item_quantity: '1', item_price_total: '250', tax: 5 })],
+        ...overrides,
+      });
+    beforeEach(() => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(
+        makeItemDoc({ selling_price: 250, tax: 5, tax_type: 'exclusive' })
+      );
+    });
+    test.each([250, 260, 262, 263])(
+      'refuses %s against a 262.50 bill before any stock or sale write',
+      async (amount) => {
+        const result = await salesService.processSale(
+          taxableSale({ Upi: amount }),
+          '',
+          'Add',
+          makeContext()
+        );
+        expect(result.status).toBe(false);
+        expect(result.message).toMatch(/Payment total.*262.50/);
+        expect(salesRepository.create).not.toHaveBeenCalled();
+        expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+        expect(mockRegisterRepositoryInstance.addSaleRegisterEntry).not.toHaveBeenCalled();
+      }
+    );
+    test.each([{ Upi: 262.5 }, { Cash: 100, Upi: 162.5 }, [{ method: 'Upi', amount: 262.5 }]])(
+      'accepts the exact full tender %j',
+      async (payments) => {
+        const result = await salesService.processSale(
+          taxableSale(payments),
+          '',
+          'Add',
+          makeContext()
+        );
+        expect(result.status).toBe(true);
+        expect(salesRepository.create.mock.calls[0][0]).toMatchObject({
+          sales_total: 262.5,
+          payment_status: 'Paid',
+          multi_payment: payments,
+        });
+      }
+    );
+    test('does not convert an explicit partial payment into a full payment', async () => {
+      BaseModel.getDb.mockResolvedValue({
+        collection: () => ({ insertOne: jest.fn().mockResolvedValue({}) }),
+      });
+      const result = await salesService.processSale(
+        taxableSale({ Upi: 100 }, { partial_check: 'true', partial_balance: '100' }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result.status).toBe(true);
+      expect(salesRepository.create.mock.calls[0][0]).toMatchObject({
+        payment_status: 'Partialy Paid',
+        payment_pending: 162.5,
+      });
+    });
+    test('a partial flag cannot hide an incorrect full tender', async () => {
+      const result = await salesService.processSale(
+        taxableSale({ Upi: 250 }, { partial_check: 'true', partial_balance: '262.50' }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result.status).toBe(false);
+      expect(salesRepository.create).not.toHaveBeenCalled();
+    });
+    test('rejects a mismatched settlement of an existing table without saving it', async () => {
+      const doc = {
+        _id: ITEM_ID,
+        sale_method: 'Table-Order',
+        sale_process: 'KOT',
+        payment_status: 'Unpaid',
+        items: [],
+        set: jest.fn(),
+      };
+      salesRepository.getById.mockResolvedValue(doc);
+      const result = await salesService.processSale(
+        taxableSale({ Upi: 260 }),
+        ITEM_ID,
+        'Edit',
+        makeContext()
+      );
+      expect(result.status).toBe(false);
+      expect(result.message).toMatch(/Payment total/);
+      expect(doc.set).not.toHaveBeenCalled();
+      expect(salesRepository.save).not.toHaveBeenCalled();
+      expect(mockItemRepositoryInstance.updateStock).not.toHaveBeenCalled();
+    });
+    test.each([{ Upi: -1, Cash: 263.5 }, { Upi: 'bad' }, [{ amount: null }]])(
+      'rejects malformed full tender %j',
+      async (payments) => {
+        const result = await salesService.processSale(
+          taxableSale(payments),
+          '',
+          'Add',
+          makeContext()
+        );
+        expect(result.status).toBe(false);
+        expect(salesRepository.create).not.toHaveBeenCalled();
+      }
+    );
+    test('includes an add-to-bill tip in the expected tender', async () => {
+      const result = await salesService.processSale(
+        taxableSale({ Upi: 262.5 }, { tip_amount: 10, tip_in_total: true }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result.status).toBe(false);
+      expect(result.message).toMatch(/272.50/);
+    });
+    test('an unpaid order can carry a provisional payment method', async () => {
+      const result = await salesService.processSale(
+        taxableSale({ Upi: 250 }, { unpaid: 'true' }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result.status).toBe(true);
+      expect(salesRepository.create.mock.calls[0][0].payment_status).toBe('Unpaid');
+    });
+  });
+
   test('seating retry returns a saved sale before rechecking or deducting stock', async () => {
     mockItemRepositoryInstance.findItemById.mockResolvedValue(
       makeItemDoc({ available_quantity: 0 })

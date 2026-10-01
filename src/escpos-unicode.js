@@ -130,7 +130,7 @@ async function loadDocument(win, plan) {
   const directory = fs.mkdtempSync(path.join(app.getPath('temp'), 'posnic-receipt-'));
   try {
     const file = path.join(directory, 'receipt.html');
-    fs.writeFileSync(file, documentFor(plan), { mode: 0o600, flag: 'wx' });
+    fs.writeFileSync(file, plan.document || documentFor(plan), { mode: 0o600, flag: 'wx' });
     await win.loadFile(file);
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
@@ -154,7 +154,21 @@ async function rasterize(plan) {
         await loadDocument(win, plan);
         win.webContents.setZoomFactor(1);
         stage = 'loading fonts';
-        const height = await win.webContents.executeJavaScript(`(async () => {
+        const height = plan.document ? await win.webContents.executeJavaScript(`(async () => {
+          await (${require('./receipt-page-layout').prepareDocument.toString()})(document, true);
+          const receipt = document.querySelector('.rd-document[data-receipt-design]');
+          if (receipt.dataset.receiptDesign !== ${JSON.stringify(plan.paper)}) throw new Error('Receipt paper does not match the selected printer');
+          const width = receipt.getBoundingClientRect().width;
+          if (!width) throw new Error('Receipt has no printable width');
+          const wrapper = document.createElement('div'); wrapper.id = 'receipt';
+          receipt.before(wrapper); wrapper.append(receipt);
+          receipt.style.margin = '0';
+          receipt.style.zoom = String(${plan.width} / width);
+          document.documentElement.style.cssText = 'margin:0;padding:0;overflow:hidden;background:white';
+          document.body.style.cssText = 'margin:0;padding:0;overflow:hidden;background:white';
+          wrapper.style.cssText = 'display:flow-root;width:${plan.width}px';
+          return Math.ceil(receipt.getBoundingClientRect().height);
+        })()`) : await win.webContents.executeJavaScript(`(async () => {
           const families = ${JSON.stringify(fontsFor(plan.body).map(family))};
           const fonts = (await Promise.all(families.map(name => document.fonts.load('24px ' + name)))).flat();
           await document.fonts.ready;
@@ -176,6 +190,7 @@ async function rasterize(plan) {
         })()`);
         if (!Number.isFinite(height) || height < 1 || height > MAX_ROWS) throw new Error('Receipt exceeds the supported print length');
         const strips = [];
+        let ink = false;
         for (let y = 0; y < height; y += STRIP_ROWS) {
           stage = `drawing receipt row ${y}`;
           const rows = Math.min(STRIP_ROWS, height - y);
@@ -188,9 +203,11 @@ async function rasterize(plan) {
           if (capture.isEmpty()) throw new Error('Could not render Unicode receipt');
           // Desktop display scaling must never change the number of printer dots.
           capture = capture.resize({ width: plan.width, height: rows, quality: 'best' });
-          strips.push({ width: plan.width, height: rows,
-            data: pack(capture.toBitmap(), plan.width, rows, plan.width, false).toString('base64') });
+          const dots = pack(capture.toBitmap(), plan.width, rows, plan.width, false);
+          if (dots.some(byte => byte !== 0)) ink = true;
+          strips.push({ width: plan.width, height: rows, data: dots.toString('base64') });
         }
+        if (!ink) throw new Error('The rendered receipt is blank; nothing was sent to the printer');
         return strips;
       })(),
       new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Receipt rendering timed out while ' + stage)), 30000); }),
@@ -212,4 +229,14 @@ async function renderReceipt(sale, options = {}, render = rasterize) {
   return receipt.build();
 }
 
-module.exports = { renderReceipt, needsRaster, layout, documentFor, loadDocument, rasterize };
+async function renderDesignedReceipt(document, paper, render = rasterize) {
+  if (!['58', '80'].includes(paper)) throw new Error('Designed raw receipts require thermal paper');
+  const strips = await render({ document, body: '', pictures: [], paper, width: DOTS[paper] });
+  const receipt = new Receipt(paper, { glyphs: false });
+  if (!strips.length) throw new Error('The rendered receipt is blank');
+  for (const strip of strips) receipt.raster(strip);
+  receipt.cut();
+  return receipt.build();
+}
+
+module.exports = { renderReceipt, renderDesignedReceipt, needsRaster, layout, documentFor, loadDocument, rasterize };

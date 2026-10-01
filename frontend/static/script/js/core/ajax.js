@@ -355,10 +355,17 @@ PosnicPro.retryOrderApproval = function (params, callback, failure, response) {
         }, cancel);
         return true;
     }
+    var cancelling = body.status === 'cancelled' || /sales\/cancel\//.test(params.url || '');
+    var t = function(key, text) { return PosnicPro.i18n.t(key, text); };
     var dialog=document.createElement('dialog'), form=document.createElement('form'), label=document.createElement('label'), input=document.createElement('textarea'), footer=document.createElement('div'), save=document.createElement('button'), close=document.createElement('button');
-    dialog.style.cssText='width: min(440px, 92vw);border:0;border-radius:12px;padding:24px;box-shadow:0 12px 60px #0005';
-    label.textContent=PosnicPro.i18n.t('lang_reason', 'Reason'); input.required=true; input.minLength=3;input.maxLength=200;input.style.cssText='display:block;width:100%;min-height:90px;margin:12px 0'; label.append(input);
-    save.type='submit';save.className='btn btn-primary';save.textContent=PosnicPro.i18n.t('lang_continue','Continue');close.type='button';close.className='btn btn-light';close.textContent=PosnicPro.i18n.t('lang_cancel','Cancel');footer.append(close,save);form.append(label,footer);dialog.append(form);document.body.append(dialog);
+    dialog.style.cssText='width:min(480px,92vw);border:0;border-radius:16px;padding:24px;background:var(--card-bg,#fff);color:var(--body-color,#182738);box-shadow:0 12px 60px #0005';
+    var title=document.createElement('h2');title.id='order-change-reason-title';title.style.cssText='font-size:20px;margin:0 0 16px';title.textContent=cancelling?t('lang_cancel_order','Cancel order'):t('lang_reason_for_change','Reason for this change');dialog.setAttribute('aria-labelledby',title.id);
+    var choices=document.createElement('div');choices.style.cssText='display:grid;gap:8px;margin-bottom:16px';
+    var reasons=cancelling?['Customer cancelled','Order entered by mistake','Duplicate order','Items unavailable','Wait was too long']:['Customer changed the order','Item entered by mistake','Items unavailable','Price or discount correction'];
+    reasons.forEach(function(reason){var button=document.createElement('button');button.type='button';button.className='btn btn-outline-primary';button.style.cssText='text-align:left;margin:0;white-space:normal';button.textContent=t('lang_reason_'+reason.toLowerCase().replace(/[^a-z]+/g,'_'),reason);button.setAttribute('aria-pressed','false');button.onclick=function(){input.value=button.textContent;Array.from(choices.children).forEach(function(b){b.setAttribute('aria-pressed',String(b===button));b.classList.toggle('active',b===button);});};choices.append(button);});
+    label.textContent=t('lang_reason_select_or_enter','Reason (select above or enter your own)');label.style.cssText='display:block;width:100%';input.required=true;input.minLength=3;input.maxLength=200;input.className='form-control';input.style.cssText='display:block;box-sizing:border-box;width:100%;min-height:80px;margin:8px 0 18px';label.append(input);
+    input.oninput=function(){Array.from(choices.children).forEach(function(b){b.setAttribute('aria-pressed','false');b.classList.remove('active');});};
+    footer.style.cssText='display:flex;justify-content:flex-end;gap:10px';save.type='submit';save.className=cancelling?'btn btn-danger':'btn btn-primary';save.textContent=cancelling?t('lang_cancel_order','Cancel order'):t('lang_save_changes','Save changes');close.type='button';close.className='btn btn-light';close.textContent=t('lang_go_back','Go back');footer.append(close,save);form.append(title,choices,label,footer);dialog.append(form);document.body.append(dialog);
     var finish=function(){dialog.close();dialog.remove();};close.onclick=function(){finish();cancel();};dialog.oncancel=function(event){event.preventDefault();finish();cancel();};
-    form.onsubmit=function(event){event.preventDefault();if(input.value.trim().length<3)return;body.change_reason=input.value.trim();finish();retry();};dialog.showModal();input.focus();return true;
+    form.onsubmit=function(event){event.preventDefault();if(input.value.trim().length<3 || input.value.trim().length>200)return;body.change_reason=input.value.trim();finish();retry();};dialog.showModal();choices.firstChild.focus();return true;
 };

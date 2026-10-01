@@ -1,7 +1,27 @@
 const { contextBridge, ipcRenderer } = require('electron');
+// Capture failure metadata, never event arguments, DOM content or request bodies.
+window.addEventListener('error', event => {
+  ipcRenderer.invoke('diagnostics:event', 'renderer', { stage: 'javascript-error', status: 'error', message: event.message }).catch(() => {});
+});
+window.addEventListener('unhandledrejection', event => {
+  ipcRenderer.invoke('diagnostics:event', 'renderer', { stage: 'unhandled-rejection', status: 'error', message: event.reason?.message || 'Unhandled renderer rejection' }).catch(() => {});
+});
 
 // Expose hardware and printer APIs to renderer
 contextBridge.exposeInMainWorld('electronAPI', {
+  diagnostics: {
+    state: () => ipcRenderer.invoke('diagnostics:state'),
+    start: () => ipcRenderer.invoke('diagnostics:start'),
+    stop: () => ipcRenderer.invoke('diagnostics:stop'),
+    capture: value => ipcRenderer.invoke('diagnostics:capture', value),
+    snapshot: () => ipcRenderer.invoke('diagnostics:snapshot'),
+    report: () => ipcRenderer.invoke('diagnostics:report'),
+    preview: () => ipcRenderer.invoke('diagnostics:preview'),
+    export: () => ipcRenderer.invoke('diagnostics:export'),
+    connect: value => ipcRenderer.invoke('diagnostics:connect', value),
+    upload: () => ipcRenderer.invoke('diagnostics:upload'),
+    event: (type, fields) => ipcRenderer.invoke('diagnostics:event', type, fields),
+  },
   billing: {
     openOutlet: value => ipcRenderer.invoke('billing:open-outlet', value)
   },
@@ -408,6 +428,7 @@ contextBridge.exposeInMainWorld('electron', {
 contextBridge.exposeInMainWorld('posnicKitchenScreen', {
   /* Hardware Manager: choosing and placing a screen. */
   list:      ()                 => ipcRenderer.invoke('kitchen-screen:list'),
+  refresh:   ()                 => ipcRenderer.invoke('kitchen-screen:refresh'),
   configure: (displayId, patch) => ipcRenderer.invoke('kitchen-screen:configure', displayId, patch),
   preview:   (displayId, on)    => ipcRenderer.invoke('kitchen-screen:preview', displayId, on),
 
