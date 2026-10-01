@@ -6,6 +6,9 @@ const capabilities = Object.freeze([
   'namespace.commands.v1',
   'stock.durable-debit.v1',
   'stock.lifecycle.v1',
+  'sales.adjusted-quantity.v1',
+  'payments.verified-result.v1',
+  'receipts.normal-template.v1',
 ]);
 function get(extensionId) {
   return installed.get(extensionId) || null;

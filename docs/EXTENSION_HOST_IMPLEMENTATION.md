@@ -61,6 +61,14 @@ The API and local activation coordinator acquire the same kernel-owned loopback 
 
 The private repository's real-package/Mongo integration tests verify install/update/rollback, runtime exclusion, pending-command refusal, interrupted pointer change, startup refusal and replay, preserving data and revisions. Customer installer UI, default trust-key/root configuration, packaged runtime wiring and physical hardware acceptance remain unfinished.
 
+## Installed workflow and Windows resource checkpoint
+
+The private package's installed-browser acceptance now passes using the default host capabilities, real JWT staff authentication/branch validation, normal extension and sales routes, MongoDB, signed worker, isolated frame and configured receipt rendering. It verifies partial cash sale, one stock deduction, deletion/report clearing and pending/paid receipts. The parent HTTP wrapper and physical printer are fixture adapters; this is not full desktop login/bootstrap or hardware acceptance. Sale/payment/receipt capabilities are now advertised.
+
+Desktop uses `src/server.js`, not `api/server.js`. Both startup paths now load installed extensions before listening. Desktop defaults to `<userData>/extensions` and the shipped dedicated publisher public key. Its `extraResources` include `src/extension-package.js`, `src/extension-worker.js` and `src/asset-updater.js` at the paths the external API requires. A private integration test materializes these declared resource paths and successfully executes the signed package through them. The publisher private key is outside the repository and must never ship to customers.
+
+Fresh lockfile installations (`npm ci --ignore-scripts` in root and API) passed. With those dependencies, 113 selected host checks and the private installed-browser/package/activation tests pass. Native install scripts, a complete Windows build/run, the installation UI, settings/permissions and physical printer/drawer checks remain release tasks.
+
 ## Signed ZIP staging
 
 `extension-archive.js` accepts an already bounded buffer (24 MiB maximum), reads entries with the existing yauzl dependency, and bounds both declared and actual decompressed bytes. It rejects unsafe/Windows-colliding paths, duplicates, file-as-parent collisions, symlinks/device entries, encrypted/unsupported encodings, unsigned/unlisted content and incompatible packages. All hashes and the Ed25519 signature are checked before filesystem staging. HTTP upload limits still need to be applied by the eventual installer route before buffering.

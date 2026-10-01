@@ -274,6 +274,22 @@
         "to": "server.js"
       },
       {
+        "from": "src/extension-signing-key.pub",
+        "to": "extension-signing-key.pub"
+      },
+      {
+        "from": "src/extension-package.js",
+        "to": "src/extension-package.js"
+      },
+      {
+        "from": "src/extension-worker.js",
+        "to": "src/extension-worker.js"
+      },
+      {
+        "from": "src/asset-updater.js",
+        "to": "src/asset-updater.js"
+      },
+      {
         "from": "src/handset-slots.js",
         "to": "handset-slots.js"
       },
