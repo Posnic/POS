@@ -806,7 +806,7 @@ PosnicPro.categorydetails = {
                         let saleId = val.sales_id;
                         let returnTotal = val.items_return_total;
                         let saleTotal = val.items_total;
-                        categorysalesreport.push({SalesId: saleId, Date: date, Process: process, NoOfReturn: returnQty, ReturnAmount: returnTotal, NoOfSale: salesQty, SaleAmount: saleTotal});
+                        categorysalesreport.push({SalesId: saleId, Date: date, Process: process, NoOfReturn: returnQty, ReturnAmount: returnTotal, NoOfSale: salesQty, SaleAmount: saleTotal, Currency: /^[A-Z]{3}$/.test(val.currencyCode || '') ? val.currencyCode : (PosnicPro.local.get('currencySign') || '')});
                     });
                     PosnicPro.JSONToCSVConvertor(categorysalesreport, 'category-sales-reports', true);
                     PosnicPro.categorydetails.categorydetailsTable();

@@ -136,3 +136,23 @@ test('staff activity preserves bill precision and keeps different currencies sep
   assert.equal(win.document.querySelectorAll('script').length,0);
   dom.window.close();
 });
+
+
+for (const file of ['items', 'categories', 'customers', 'customer_categories']) {
+  test(file + ' activity CSV preserves numeric amounts and their currency', () => {
+    const source = fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js/' + file + '.js'), 'utf8');
+    const line = source.split('\n').find(line => line.includes('salesreport.push('));
+    assert.ok(line);
+    const variable = /([a-z]+salesreport)\.push/.exec(line)[1];
+    const exportRow = new Function('val', 'PosnicPro', `const ${variable}=[];
+      const saleId='B1',date='Today',process='KOT',returnQty=1,returnTotal=1.003,salesQty=2,saleTotal=95.005;
+      ${line}
+      return ${variable}[0];`);
+    for (const [code, expected] of [['KWD', 'KWD'], ['JPY', 'JPY'], [undefined, '$'], ['=HYPERLINK("bad")', '$']]) {
+      const row = exportRow({ currencyCode: code }, { local: { get: () => '$' } });
+      assert.equal(row.Currency, expected);
+      assert.equal(row.SaleAmount, 95.005);
+      assert.equal(row.ReturnAmount, 1.003);
+    }
+  });
+}
