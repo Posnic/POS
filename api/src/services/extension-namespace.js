@@ -127,6 +127,11 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
       if (completed.status === 'rejected') fail(completed.failureCode);
     }
     if (row.revision !== input.expectedRevision) fail('extension_revision_conflict');
+    const resources = descriptor.contextNeeds?.[command.type] || [];
+    const selection =
+      resources.length && descriptor.readContext
+        ? json(await descriptor.readContext({ state: row.data, command }), 16 * 1024)
+        : undefined;
     const prepared = dependencies.prepareContext
       ? await dependencies.prepareContext({
           db,
@@ -134,7 +139,8 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
           state: row.data,
           command,
           extensionId: descriptor.id,
-          resources: descriptor.contextNeeds?.[command.type] || [],
+          resources,
+          selection,
         })
       : {};
     const plan = json(

@@ -30,10 +30,28 @@ function productSnapshot(product, branch, scope) {
     unit: product.unit,
   };
 }
-async function prepareContext({ db, scope, state, command, resources = [] }) {
+async function prepareContext({ db, scope, state, command, resources = [], selection }) {
   if (!resources.includes('catalog.products')) return {};
-  const ids = new Set((state.products || []).map((product) => product.id));
-  for (const line of command.lines || []) if (line.productId) ids.add(line.productId);
+  // A signed worker may name only the products required by this command.
+  // Never accept descriptions/prices/scope from that projection or the caller.
+  if (
+    selection !== undefined &&
+    (!selection ||
+      !Array.isArray(selection.productIds) ||
+      selection.productIds.length > 200 ||
+      Object.keys(selection).some((key) => key !== 'productIds'))
+  ) {
+    const error = new Error('extension_catalog_request_invalid');
+    error.status = 422;
+    throw error;
+  }
+  const ids = new Set(
+    selection === undefined
+      ? (state.products || []).map((product) => product.id)
+      : selection.productIds
+  );
+  if (selection === undefined)
+    for (const line of command.lines || []) if (line.productId) ids.add(line.productId);
   if (ids.size > 500 || [...ids].some((id) => !/^[a-f\d]{24}$/i.test(id))) {
     const error = new Error('extension_catalog_request_invalid');
     error.status = 422;
@@ -53,7 +71,10 @@ async function prepareContext({ db, scope, state, command, resources = [] }) {
     .toArray();
   const products = rows.map((product) => productSnapshot(product, branch, scope)).filter(Boolean);
   if (products.length !== ids.size) {
-    const error = new Error('extension_product_unavailable');
+    const error = new Error(
+      'A selected product is unavailable in this shop. Restore its catalogue entry or cancel the ordinary basket.'
+    );
+    error.code = 'extension_product_unavailable';
     error.status = 409;
     throw error;
   }

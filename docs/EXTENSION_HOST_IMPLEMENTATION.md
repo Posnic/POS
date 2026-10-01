@@ -69,6 +69,12 @@ Desktop uses `src/server.js`, not `api/server.js`. Both startup paths now load i
 
 Fresh lockfile installations (`npm ci --ignore-scripts` in root and API) passed. With those dependencies, 113 selected host checks and the private installed-browser/package/activation tests pass. Native install scripts, a complete Windows build/run, the installation UI, settings/permissions and physical printer/drawer checks remain release tasks.
 
+## Selected catalogue context
+
+Signed metadata can declare `contextProjection`; its pure worker supplies a bounded `{productIds}` projection before planning. The namespace passes it only for declared resources, and the core catalogue service rejects extra keys, excessive IDs and out-of-shop/missing products. Prices, quantities and scope never come from this projection. Legacy descriptors retain the original catalogue read. The new `catalog.command-selection.v1` capability is required by the private extension.
+
+The installed browser regression verifies that an unavailable product refuses its own adjustment without locking the namespace, while unrelated baskets and cancellation remain available. The private planner discards obsolete working product snapshots. Core-backed paid-history paging is still required separately.
+
 ## Signed ZIP staging
 
 `extension-archive.js` accepts an already bounded buffer (24 MiB maximum), reads entries with the existing yauzl dependency, and bounds both declared and actual decompressed bytes. It rejects unsafe/Windows-colliding paths, duplicates, file-as-parent collisions, symlinks/device entries, encrypted/unsupported encodings, unsigned/unlisted content and incompatible packages. All hashes and the Ed25519 signature are checked before filesystem staging. HTTP upload limits still need to be applied by the eventual installer route before buffering.
