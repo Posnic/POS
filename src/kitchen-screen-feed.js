@@ -38,6 +38,7 @@ let timer = null;
 const lastGood = new Map();
 let generation = 0;
 let servedListener = null;
+let requestRefresh = null;
 
 function screens() {
   return require('./kitchen-screen');
@@ -120,17 +121,17 @@ async function tick({ branchId, fetchImpl, displayId, isCurrent = () => true } =
 /** Start feeding, if this shop has a screen to feed. Idempotent. */
 async function pollScreens({ resolveBranch, fetchImpl, isCurrent = () => true } = {}) {
   const open = screens().displays().filter(d => d.open && d.configured);
-  if (!open.length) return;
+  if (!open.length) return { ok: false, why: 'No active kitchen screens. Enable a kitchen screen first.' };
   const fallback = open.some(d => !d.config.branchId) && resolveBranch ? await resolveBranch() : '';
   if (!isCurrent()) return;
-  await Promise.all(open.map(async d => {
+  const results = await Promise.all(open.map(async d => {
     const branchId = String(d.config.branchId || fallback || '');
     const current = () => isCurrent() && screens().configFor(d.id).enabled &&
       String(screens().configFor(d.id).branchId || '') === String(d.config.branchId || '');
     if (!branchId) {
       screens().setTickets([], d.id);
       screens().setFeedStatus('Choose an orders branch in Hardware Manager > Kitchen Screen.', d.id);
-      return;
+      return { ok: false, why: 'Choose an orders branch for every kitchen screen.' };
     }
     // A branch change must not leave the previous branch's tickets on the wall.
     if (screenBranches.get(d.id) !== branchId) {
@@ -142,7 +143,10 @@ async function pollScreens({ resolveBranch, fetchImpl, isCurrent = () => true } 
     if (current()) screens().setFeedStatus(result.ok ? '' : result.why === 'authentication' ?
       'Kitchen authentication failed. Contact support; displayed orders may be out of date.' :
       'Orders connection unavailable. Retrying; any orders shown may be out of date.', d.id);
+    return result;
   }));
+  return { ok: results.every(r => r.ok), count: results.reduce((n, r) => n + (r.count || 0), 0),
+    why: results.some(r => !r.ok) ? 'Could not update all kitchen screens. Check the connection and orders branch, then try again.' : undefined };
 }
 const screenBranches = new Map();
 
@@ -154,16 +158,20 @@ function start({ branchId, resolveBranch, everyMs = EVERY_MS, fetchImpl } = {}) 
   let busy = false;
   let revision = 0;
   let pending = false;
+  const waiters = [];
+  const finish = result => waiters.splice(0).forEach(resolve => resolve(result));
   const run = async () => {
     if (busy) return;
     busy = true;
     pending = false;
     const reading = revision;
     const isCurrent = () => epoch === generation && reading === revision;
+    let result;
     try {
-      if (resolveBranch) await pollScreens({ resolveBranch, fetchImpl, isCurrent });
-      else await tick({ branchId: branch, fetchImpl, isCurrent });
+      if (resolveBranch) result = await pollScreens({ resolveBranch, fetchImpl, isCurrent });
+      else result = await tick({ branchId: branch, fetchImpl, isCurrent });
     } catch (e) {
+      result = { ok: false, why: 'Orders connection unavailable. Please try again.' };
       if (epoch !== generation) return;
       for (const d of screens().displays().filter(d => d.open && d.configured)) {
         screens().setFeedStatus('Orders connection unavailable. Retrying...', d.id);
@@ -171,6 +179,7 @@ function start({ branchId, resolveBranch, everyMs = EVERY_MS, fetchImpl } = {}) 
     } finally {
       busy = false;
       if (pending && epoch === generation) void run();
+      else finish(result || { ok: false, why: 'Refresh stopped.' });
     }
   };
   servedListener = (event) => {
@@ -180,6 +189,13 @@ function start({ branchId, resolveBranch, everyMs = EVERY_MS, fetchImpl } = {}) 
     pending = true;
     void run();
   };
+  requestRefresh = () => new Promise(resolve => {
+    waiters.push(resolve);
+    revision += 1;
+    pending = true;
+    void run();
+  });
+  requestRefresh.stop = () => finish({ ok: false, why: 'Kitchen screen feed stopped.' });
   process.on('posnic:kitchen-served', servedListener);
   timer = setInterval(run, everyMs);
   if (typeof timer.unref === 'function') timer.unref();
@@ -188,6 +204,8 @@ function start({ branchId, resolveBranch, everyMs = EVERY_MS, fetchImpl } = {}) 
 }
 
 function stop() {
+  if (requestRefresh) requestRefresh.stop();
+  requestRefresh = null;
   generation += 1;
   if (servedListener) process.removeListener('posnic:kitchen-served', servedListener);
   servedListener = null;
@@ -195,4 +213,7 @@ function stop() {
   timer = null;
 }
 
-module.exports = { start, stop, tick, pollScreens, EVERY_MS };
+function refresh() {
+  return requestRefresh ? requestRefresh() : Promise.resolve({ ok: false, why: 'Kitchen orders are still starting. Please try again.' });
+}
+module.exports = { start, stop, tick, pollScreens, refresh, EVERY_MS };

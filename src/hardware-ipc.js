@@ -935,6 +935,8 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
    * things plugged into them. They live beside the printer choice in
    * preferences.json.
    */
+  ipcMain.handle('kitchen-screen:refresh', () => require('./kitchen-screen-feed').refresh());
+
   ipcMain.handle('kitchen-screen:list', async () => {
     const screens = require('./kitchen-screen');
     return { ok: true, displays: screens.displays(), defaults: screens.DEFAULTS, branches: await readLocalBranches() };

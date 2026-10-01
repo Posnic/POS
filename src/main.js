@@ -485,10 +485,12 @@ console.warn = (...args) => {
 
 // Catch uncaught errors
 process.on('uncaughtException', (err) => {
+  require('./diagnostic-session').record('renderer', { stage: 'main-uncaught-exception', success: false, code: err?.code, message: err?.message });
   writeLog('FATAL', 'Uncaught Exception:', err);
   console.error('FATAL Uncaught Exception:', err);
 });
 process.on('unhandledRejection', (reason, promise) => {
+  require('./diagnostic-session').record('renderer', { stage: 'main-unhandled-rejection', success: false, message: reason?.message || String(reason) });
   writeLog('FATAL', 'Unhandled Rejection:', reason, { promise: String(promise) });
   console.error('FATAL Unhandled Rejection:', reason);
 });
@@ -546,6 +548,9 @@ let hardwareWindow;
 let backupWindow;
 let mongoDBManager;
 let syncAgentManager = null;
+const supportDiagnostics = require('./diagnostics').setup({ ipcMain,
+  hardware: () => hardwareManager, sync: () => syncAgentManager,
+  audio: () => ({ enabled: require('./kitchen-audio').enabled() }) });
 let connectorSupervisor = null;
 let pendingSecondInstanceFocus = false;
 let shutdownInProgress = false;
@@ -2781,6 +2786,7 @@ function createMenu() {
           label: 'Contact Support…',
           click: () => { openSupportRequest(); }
         },
+        { label: 'Support diagnostics…', click: () => supportDiagnostics.open() },
         {
           /* The first thing support asks for, so it is one click from the
              menu bar rather than a path somebody has to be talked through. */

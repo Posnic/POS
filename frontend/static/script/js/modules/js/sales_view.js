@@ -1017,6 +1017,14 @@ PosnicPro.sales.view = {
             if (response.type === 'success') {
                 var data = response.data;
                 PosnicPro.record_id = id;
+                // The designer renders directly from sale data. Legacy templates
+                // and their barcode canvas may not exist on a fresh offline till.
+                if (name === 'sale' && PosnicPro.receiptDesigner && !/Return/.test(data.sale_process || '')) {
+                    PosnicPro.receiptDesigner.printSale(data, PosnicPro.sales.view._layoutOverride, !!isKotHistoryPrint);
+                    PosnicPro._printTypeOverride = null;
+                    PosnicPro.sales.view._layoutOverride = null;
+                    return;
+                }
                 PosnicPro.sales.view.renderSaleDocument(data, name, isKotHistoryPrint);
 
                 var contents = $(".print-modal-body").html();
@@ -1024,11 +1032,7 @@ PosnicPro.sales.view = {
                 var canvas = document.getElementById("canvasTarget");
                 var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
 
-                if (name === 'sale' && PosnicPro.receiptDesigner && !/Return/.test(data.sale_process || '')) {
-                    PosnicPro.receiptDesigner.printSale(data, PosnicPro.sales.view._layoutOverride, !!isKotHistoryPrint);
-                } else {
-                    PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
-                }
+                PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
                 // one print only - the next follows the shop setting again
                 PosnicPro._printTypeOverride = null;
                 PosnicPro.sales.view._layoutOverride = null;

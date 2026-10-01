@@ -549,7 +549,32 @@ class HardwareManager {
 
   async printHTML(htmlContent, options = {}) {
     let printWindow;
+    const diagnostics = this.diagnostic?.();
+    const trace = diagnostics?.active ? require('crypto').randomUUID() : undefined;
+    const started = Date.now();
+    diagnostics?.record('print.request', { trace, format: options.pageSize, printer: options.printerName, copies: options.copies, bytes: Buffer.byteLength(String(htmlContent || '')) });
     try {
+      // Designed rolls use the same raw queue as Hardware Manager's test.
+      // A text-only thermal driver may accept HTML/GDI and still feed blank paper.
+      // Render the complete design before submitting; never fall back after RAW acceptance.
+      if (options.thermalRaster === true && ['58mm', '80mm'].includes(options.pageSize)) {
+        const deviceName = await this._resolvePrinterName(options.printerName);
+        const bytes = await require('./escpos-unicode').renderDesignedReceipt(htmlContent, options.pageSize.replace('mm', ''));
+        diagnostics?.record('print.rendered', { trace, bytes: bytes.length, durationMs: Date.now() - started });
+        if (diagnostics?.holdPrint()) {
+          diagnostics.setPreview?.(htmlContent);
+          diagnostics.record('print.result', { trace, diagnosticOnly: true, submitted: false, stage: 'captured' });
+          return { success: false, diagnosticOnly: true, error: 'Receipt captured for diagnostics. Nothing was sent to the printer.' };
+        }
+        const copies = Math.max(1, Math.min(20, parseInt(options.copies, 10) || 1));
+        const requestId = require('crypto').randomUUID();
+        for (let copy = 0; copy < copies; copy++) {
+          const result = await this.sendRawToPrinter(deviceName, bytes, 'Posnic Receipt', { jobId: requestId + '-' + copy });
+          diagnostics?.record('print.result', { trace, jobId: requestId + '-' + copy, success: result.success, status: result.status, submitted: result.submitted, retryable: result.retryable, message: result.error });
+          if (!result.success) return result;
+        }
+        return { success: true };
+      }
       // Paper size dimensions in microns (1mm = 1000 microns)
       // Window width in pixels at 96dpi: px = mm / 25.4 * 96
       const paperSizes = {
@@ -608,6 +633,7 @@ class HardwareManager {
       try {
         await printWindow.loadURL(route.url);
         await prepare();
+        diagnostics?.record('print.document', { trace, stage: 'loaded', status: 'ready' });
       } catch (loadError) {
         /* The local route was reachable a moment ago and is not now. Rather
            than fail the job, fall back to the document itself - the window was
@@ -619,6 +645,7 @@ class HardwareManager {
             `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`
           );
           await prepare();
+          diagnostics?.record('print.document', { trace, stage: 'inline-recovery', status: 'ready' });
         } else {
           throw loadError;
         }
@@ -645,7 +672,14 @@ class HardwareManager {
         printOpts.deviceName = deviceName;
       }
 
+      if (diagnostics?.holdPrint()) {
+        diagnostics.setPreview?.(htmlContent);
+        diagnostics.record('print.result', { trace, diagnosticOnly: true, submitted: false, stage: 'captured' });
+        return { success: false, diagnosticOnly: true, error: 'Receipt captured for diagnostics. Nothing was sent to the printer.' };
+      }
+      diagnostics?.record('print.submit', { trace, printer: deviceName, format: sizeKey });
       let result = await this._sendPrintJob(printWindow, printOpts);
+      diagnostics?.record('print.result', { trace, success: result.success, message: result.error, retryable: result.retryable, submitted: result.submitted });
 
       if (!result.success && result.retryable !== false) {
         console.warn('Print failed with receipt page size, retrying with printer defaults:', result.error || 'unknown');
@@ -673,6 +707,7 @@ class HardwareManager {
       console.error('Print failed:', result.error || 'Print job failed');
       return { success: false, error: result.error || 'Print job failed' };
     } catch (error) {
+      diagnostics?.record('print.result', { trace, success: false, message: error.message, code: error.code, durationMs: Date.now() - started });
       console.error('Failed to print:', error);
       return { success: false, error: error.message };
     } finally {
@@ -816,6 +851,8 @@ class HardwareManager {
    * shared, which the alternatives all require.
    */
   async sendRawToPrinter(printerName, buffer, docName = 'Posnic Receipt', options = {}) {
+    const diagnostics = this.diagnostic?.();
+    diagnostics?.record('raw.request', { printer: printerName, bytes: buffer?.length, jobId: options.jobId });
     if (!printerName) return { success: false, error: 'No printer chosen' };
     if (!buffer || !buffer.length) return { success: false, error: 'Nothing to print' };
 
@@ -834,8 +871,10 @@ class HardwareManager {
     }
 
     try {
-      return await this.getWindowsPrintQueue().enqueue({ printer: printerName, bytes: buffer,
+      const result = await this.getWindowsPrintQueue().enqueue({ printer: printerName, bytes: buffer,
         jobId: options.jobId, binding: options.binding });
+      diagnostics?.record('raw.result', { jobId: options.jobId, printer: printerName, success: result.success, status: result.status, submitted: result.submitted, retryable: result.retryable, message: result.error });
+      return result;
     } catch (error) {
       return { success: false, status: 'Failed', error: error.message };
     }
@@ -873,6 +912,8 @@ class HardwareManager {
     }
     return this.windowsPrintQueue;
   }
+
+  diagnostic() { return require('./diagnostic-session').get(); }
 
   reconcilePrintLogs(rows) {
     if (!this.windowsPrintQueue) return rows;

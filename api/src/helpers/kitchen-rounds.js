@@ -134,13 +134,27 @@ function rounds(sale, { descriptions = true } = {}) {
   }
   return [...groups.values()];
 }
+// Billing closes the existing kitchen rounds even when staff skip Mark served.
+// A later addition has its own timestamp and can appear again on an unpaid bill.
+function activeRounds(sale, options) {
+  const status = String(sale.payment_status || '').trim().toLowerCase();
+  if (status === 'cancelled') return [];
+  const fulfilment = String(sale.fulfilment || sale.dine_type || '').trim().toLowerCase().replace(/[ _-]/g, '');
+  // Takeaway is billed before cooking; only service completion closes its rounds.
+  if (fulfilment === 'takeaway') return rounds(sale, options);
+  if (status === 'paid') return [];
+  const payments = (Array.isArray(sale.captain_payments) ? sale.captain_payments : []).filter(p => Number(p.amount) > 0);
+  const times = [sale.bill_requested_at, sale.bill_printed_at, ...payments.map(p => p.at)].map(date).filter(Boolean);
+  if (payments.some(p => !date(p.at))) return [];
+  const closed = times.sort().at(-1);
+  return rounds(sale, options).filter(round => {
+    const time = round.fired_at || round.ordered_at;
+    return !closed || (time && time > closed);
+  });
+}
 function tickets(sale) {
-  const closed = sale.kitchen_required
-    ? null
-    : date(sale.bill_requested_at || sale.bill_printed_at);
-  return rounds(sale, { descriptions: false }).flatMap((round) => {
+  return activeRounds(sale, { descriptions: false }).flatMap((round) => {
     const kitchenTime = round.fired_at || round.ordered_at;
-    if (closed && (!kitchenTime || kitchenTime <= closed)) return [];
     const items = round.items
       .filter((line) => !line.held && line.remaining > 0)
       .map((line) => ({
@@ -219,4 +233,4 @@ function cancellations(sale, now = Date.now()) {
       : [];
   });
 }
-module.exports = { rounds, tickets, cancellations, progress };
+module.exports = { rounds, activeRounds, tickets, cancellations, progress };

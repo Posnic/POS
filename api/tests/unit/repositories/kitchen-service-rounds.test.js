@@ -182,3 +182,27 @@ test('wall display carries partial ready, picked-up and served quantities from t
   result = await repository.kitchenScreenTickets(String(branch));
   expect(result.data).toEqual([]);
 });
+
+test.each([
+  { payment_status: 'Paid' },
+  { bill_requested_at: new Date(Date.now() + 10000) },
+  { bill_printed_at: new Date(Date.now() + 10000) },
+  { captain_payments: [{ amount: 10, at: new Date(Date.now() + 10000) }] },
+])('completed kitchen orders disappear without service edits: %j', async (fields) => {
+  await collection.updateOne({ _id: id }, { $set: { kitchen_required: true, ...fields } });
+  const result = await repository.kitchenScreenTickets(String(branch));
+  expect(result.status).toBe(true);
+  expect(result.data).toEqual([]);
+  const saved = await collection.findOne({ _id: id });
+  expect(saved.kitchen_service).toBeUndefined();
+  expect(saved.items[0].item_quantity).toBe(2);
+});
+
+test.each([{fulfilment:'takeaway'}, {dine_type:'Take away'}, {dine_type:'Takeaway'}])('paid takeaway stays on wall until served: %j', async (type) => {
+ await collection.updateOne({_id:id},{$set:{...type,kitchen_required:true,payment_status:'Paid',bill_requested_at:new Date(Date.now()+1000)}});
+ expect((await repository.kitchenScreenTickets(String(branch))).data).toHaveLength(1);
+ expect((await repository.serveKitchenItems(request())).status).toBe(true);
+ expect((await repository.kitchenScreenTickets(String(branch))).data[0].items[0].qty).toBe(1);
+ expect((await repository.serveKitchenItems({...request(),items:[{id:'c0i0',quantity:2}]})).status).toBe(true);
+ expect((await repository.kitchenScreenTickets(String(branch))).data).toEqual([]);
+});
