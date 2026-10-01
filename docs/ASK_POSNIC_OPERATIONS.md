@@ -919,3 +919,13 @@ internal material stays out of the shop. It rejects external requests and makes
 no model or payment-provider calls. This establishes the application contracts;
 production TLS, gateway test-mode lifecycle and live tenant acceptance remain
 separate deployment checks.
+
+The develop candidate at `3077e782` passed a fresh authenticated live AWS check
+on the existing host. Archive SHA-256:
+`1314f5e348257262ec2894797c1bebeaffb0549f794e749845b0f75c58662464`.
+It ran from an isolated validation directory and exercised Bedrock generation,
+Titan/S3 vector retrieval, confirmed actions and credit reconciliation. Subsequent
+ingestion changes passed 19 targeted tests, 50 language checks, the cross-service
+contract check and the shared PDF parser's five Linux checks. The Intranet suite
+passed 503 tests with seven skips. These later changes affect document extraction
+and length validation; the live AWS result is recorded against its original commit.

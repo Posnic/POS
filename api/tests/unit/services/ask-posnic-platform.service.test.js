@@ -4,6 +4,19 @@ jest.mock('../../../src/models/base.model', () => function MockBaseModel() {});
 const platform = require('../../../src/services/ask-posnic-platform.service');
 
 describe('Ask Posnic capability policy', () => {
+  const req = { user: { _id: 'user', license: 'shop', branch_id: 'outlet' } };
+
+  test('rejects oversized authored knowledge instead of truncating restrictions', async () => {
+    await expect(platform.saveDocument(req, { title: 'Policy', content: 'x'.repeat(200001) })).rejects.toThrow(/200,000/);
+    await expect(platform.saveDocument(req, { title: 'x'.repeat(201), content: 'Policy' })).rejects.toThrow(/title exceeds 200/);
+  });
+
+  test('validates every bundle source before opening a collection for writes', async () => {
+    const valid = { title: 'Policy', content: 'Complete instructions', status: 'published', visibility: 'customer' };
+    await expect(platform.importBundle(req, { schema: 'posnic.ask-knowledge.v1', documents: [valid, { ...valid, content: 'x'.repeat(200001) }] })).rejects.toThrow(/200,000/);
+    await expect(platform.importBundle(req, { schema: 'posnic.ask-knowledge.v1', documents: [valid, null] })).rejects.toThrow(/invalid source/);
+  });
+
   test('defaults to enabled when no role list is configured', () => {
     expect(platform.capabilityAllowed({ insights_enabled: true, roles: {} }, 'insights', { role: 'cashier' })).toBe(true);
   });

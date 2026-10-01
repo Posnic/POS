@@ -26,10 +26,16 @@ async function collection(name) {
   return db.getCollection(name);
 }
 
+function documentText(value, limit, label) {
+  const text = String(value || '').replace(/\0/g, '').trim();
+  if (text.length > limit) throw new Error(`${label} exceeds ${limit.toLocaleString('en-US')} characters. Split the source before saving.`);
+  return text;
+}
+
 async function saveDocument(req, input) {
   const s = scope(req);
-  const title = clean(input.title, 200);
-  const content = clean(input.content, 200000);
+  const title = documentText(input.title, 200, 'Document title');
+  const content = documentText(input.content, 200000, 'Document text');
   const kind = ['faq', 'markdown', 'pdf', 'release_note'].includes(input.kind) ? input.kind : 'markdown';
   if (!title || !content) throw new Error('Title and extracted document text are required.');
   const docs = await collection('ask_posnic_documents');
@@ -79,6 +85,14 @@ async function setDocumentStatus(req, id, status) {
 async function importBundle(req, bundle) {
   if (bundle?.schema !== 'posnic.ask-knowledge.v1' || !Array.isArray(bundle.documents)) throw new Error('This is not a Posnic knowledge bundle.');
   if (bundle.documents.length > 500) throw new Error('A knowledge bundle supports up to 500 published documents.');
+  // Validate the complete input before any revision is imported or retired.
+  for (const source of bundle.documents) {
+    if (!source || typeof source !== 'object') throw new Error('The knowledge bundle contains an invalid source.');
+    documentText(source.title, 200, 'Document title');
+    documentText(source.content, 200000, 'Document text');
+    documentText(source.seriesId, 250, 'Source identifier');
+    documentText(source.version || source.revision, 80, 'Source revision');
+  }
   const snapshot = bundle.snapshot === true && bundle.source === 'posnic-intranet';
   if (snapshot && bundle.documents.some((doc) => !doc.seriesId || !doc.title || !doc.content || doc.visibility !== 'customer' || doc.status !== 'published')) throw new Error('The published knowledge snapshot is incomplete.');
   const s = scope(req);
