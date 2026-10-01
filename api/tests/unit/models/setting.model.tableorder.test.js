@@ -83,3 +83,47 @@ test('a malformed table ID never reaches a Mongo query', async () => {
   expect(collection.findOne).not.toHaveBeenCalled();
   expect(collection.deleteOne).not.toHaveBeenCalled();
 });
+
+test('editing an occupied table cannot rename it or reduce seats below the party size', async () => {
+  const collection = {
+    createIndex: jest.fn(),
+    findOne: jest.fn(async () => ({
+      _id: TABLE,
+      tableorder_value: 'T1',
+      capacity: 6,
+      max_capacity: 6,
+    })),
+    updateOne: jest.fn(),
+  };
+  const model = modelOver(collection);
+  model.getCollection.mockImplementation(async (name) =>
+    name === 'sales' ? { find: () => ({ toArray: async () => [{ person_count: 5 }] }) } : collection
+  );
+  const rename = await model.editTableOrderFiledModel({ id: TABLE, tableorder_value: 'T2' });
+  expect(rename.status).toBe(false);
+  expect(rename.message).toContain('renaming');
+  const resize = await model.editTableOrderFiledModel({
+    id: TABLE,
+    tableorder_value: 'T1',
+    capacity: 2,
+    max_capacity: 2,
+  });
+  expect(resize.status).toBe(false);
+  expect(resize.message).toContain('enough seats');
+  expect(collection.updateOne).not.toHaveBeenCalled();
+});
+
+test.each(['tableorder_id', 'id', '_id'])(
+  'editing rejects a query operator in %s before querying',
+  async (field) => {
+    const collection = { findOne: jest.fn(), updateOne: jest.fn(), createIndex: jest.fn() };
+    const result = await modelOver(collection).editTableOrderFiledModel({
+      [field]: { $ne: null },
+      tableorder_value: 'T2',
+    });
+    expect(result.status).toBe(false);
+    expect(result.message).toMatch(/valid table order ID/i);
+    expect(collection.findOne).not.toHaveBeenCalled();
+    expect(collection.updateOne).not.toHaveBeenCalled();
+  }
+);

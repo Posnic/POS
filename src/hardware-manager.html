@@ -949,6 +949,10 @@
                     how many orders will actually be readable on it.
                 </div>
 
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0;">
+                    <button type="button" class="btn" id="screenOrdersRefresh" onclick="refreshKitchenOrders(this)">Refresh active orders</button>
+                    <span id="screenOrdersStatus" role="status" aria-live="polite"></span>
+                </div>
                 <p id="screenSaveStatus" role="status" aria-live="polite"></p>
                 <div id="screenList" style="margin-top:20px;">
                     <p style="color:#666;font-size:14px;">Looking for screens...</p>
@@ -3710,6 +3714,19 @@
 
         function screensAvailable() {
             return !!(window.posnicKitchenScreen && window.posnicKitchenScreen.list);
+        }
+
+        async function refreshKitchenOrders(button) {
+            var status = document.getElementById('screenOrdersStatus');
+            button.disabled = true;
+            button.textContent = 'Refreshing...';
+            status.textContent = 'Checking active kitchen orders...';
+            try {
+                var result = await window.posnicKitchenScreen.refresh();
+                status.textContent = result && result.ok ? 'Kitchen screens updated with active orders.' :
+                    ((result && result.why) || 'Could not refresh. Please try again.');
+            } catch (error) { status.textContent = 'Could not refresh. Please try again.'; }
+            finally { button.disabled = false; button.textContent = 'Refresh active orders'; }
         }
 
         async function refreshScreens() {

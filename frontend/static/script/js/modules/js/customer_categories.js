@@ -580,7 +580,7 @@ PosnicPro.customercategorydetails = {
                         // current time when no preformatted date is present.
                         let rawDate = row.string_date || row.date || row.created_date || row.updated_date;
                         let updateDate = rawDate ? PosnicPro.convertDate(rawDate) : '';
-                        let trow = '<tr> <td scope="row" data-label="#">' + row_no + '</td> <td data-label="Sale">' + row.sales_id + '</td> <td class="export-date" data-label="Date">' + updateDate + '</td> <td class="text-center" data-label="Process"><span class="' + process_class + '">' + (row.sale_process || 'Add') + '</span></td> <td class="text-center text-danger" data-label="Return qty">' + returnQty + '</td> <td class="text-right text-danger" data-label="Return total">' + currency + '&nbsp;' + (Number(row.items_return_total) || 0).toFixed(2) + '</td><td class="text-center text-success" data-label="Qty">' + salesQty + '</td><td class="text-right text-success" data-label="Total">' + currency + '&nbsp;' + (Number(row.items_total) || 0).toFixed(2) + '</td></tr>';
+                        let trow = '<tr> <td scope="row" data-label="#">' + row_no + '</td> <td data-label="Sale">' + row.sales_id + '</td> <td class="export-date" data-label="Date">' + updateDate + '</td> <td class="text-center" data-label="Process"><span class="' + process_class + '">' + (row.sale_process || 'Add') + '</span></td> <td class="text-center text-danger" data-label="Return qty">' + returnQty + '</td> <td class="text-right text-danger" data-label="Return total">' + (/^[A-Z]{3}$/.test(row.currencyCode || '') ? row.currencyCode : currency) + '&nbsp;' + (Number(row.items_return_total) || 0).toFixed(Number.isInteger(row.currencyDigits) && row.currencyDigits >= 0 && row.currencyDigits <= 4 ? row.currencyDigits : 2) + '</td><td class="text-center text-success" data-label="Qty">' + salesQty + '</td><td class="text-right text-success" data-label="Total">' + (/^[A-Z]{3}$/.test(row.currencyCode || '') ? row.currencyCode : currency) + '&nbsp;' + (Number(row.items_total) || 0).toFixed(Number.isInteger(row.currencyDigits) && row.currencyDigits >= 0 && row.currencyDigits <= 4 ? row.currencyDigits : 2) + '</td></tr>';
                         $('#view_customercategorydetails').children('tbody').append(trow);
                         $('span.number').number(true, 2);
                     }
@@ -602,6 +602,19 @@ PosnicPro.customercategorydetails = {
                     $('.customercategory_details_totalreturn').html(returnTotalQty);
                     $('.customercategory_details_saletotalvalue').html(saleTotalDisplay);
                     $('.customercategory_details_returntotalvalue').html(returnTotalDisplay);
+                    // Complete totals grouped by saved bill currency.
+                    if (Array.isArray(response.data.currency_totals)) {
+                        const formatTotals = field => response.data.currency_totals.map(group => {
+                            const label = /^[A-Z]{3}$/.test(group.currencyCode || '') ? group.currencyCode : currency;
+                            const digits = Number.isInteger(group.currencyDigits) && group.currencyDigits >= 0 && group.currencyDigits <= 4 ? group.currencyDigits : 2;
+                            return label + ' ' + (Number(group[field]) || 0).toFixed(digits);
+                        }).join(' · ') || currency + ' 0.00';
+                        $('.customercategory_details_saletotalvalue').text(formatTotals('total'));
+                        $('.customercategory_details_returntotalvalue').text(formatTotals('return_total'));
+                    }
+                    $('.customercategory_details_saletotalvalue, .customercategory_details_returntotalvalue')
+                        .siblings('.display-currency').toggle(!Array.isArray(response.data.currency_totals));
+
 
                 } else {
                     var customercategorysalesreport = [];
@@ -625,7 +638,7 @@ PosnicPro.customercategorydetails = {
                         let saleId = val.sales_id;
                         let returnTotal = val.items_return_total;
                         let saleTotal = val.items_total;
-                        customercategorysalesreport.push({SalesId: saleId, Date: date, Process: process, NoOfReturn: returnQty, ReturnAmount: returnTotal, NoOfSale: salesQty, SaleAmount: saleTotal});
+                        customercategorysalesreport.push({SalesId: saleId, Date: date, Process: process, NoOfReturn: returnQty, ReturnAmount: returnTotal, NoOfSale: salesQty, SaleAmount: saleTotal, Currency: /^[A-Z]{3}$/.test(val.currencyCode || '') ? val.currencyCode : (PosnicPro.local.get('currencySign') || '')});
                     });
                     PosnicPro.JSONToCSVConvertor(customercategorysalesreport, 'customercategory-sales-reports', true);
                     PosnicPro.customercategorydetails.customercategorydetailsTable();

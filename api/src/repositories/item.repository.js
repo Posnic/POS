@@ -5187,6 +5187,11 @@ class ItemRepository extends BaseModel {
             photos: onlineOrdering.photoList({ image: item.img, multi_image }),
             available: timing.available,
             served_in: timing.periods,
+            // Captain uses these facts for offline meal suggestions, never order authorization.
+            serving_periods: dayparts.filter((period) =>
+              (Array.isArray(daypart_ids) ? daypart_ids : []).map(String).includes(period.id)
+            ),
+            serving_time_zone: onlineOrdering.normalizeTimeZone(branchDoc.time_zone),
             /*
              * Cleaned facts, and the health claims DERIVED from them. The
              * three raw fields above are destructured away deliberately so
@@ -5288,6 +5293,8 @@ class ItemRepository extends BaseModel {
           .sort({ tableorder_value: 1 })
           .toArray();
         tableorders = tableList.map((doc) => ({
+          ...require('../utils/table-details').view(doc),
+          service_state: doc.service_state || 'available',
           id: doc._id.toString(),
           tableorder_value: doc.tableorder_value,
           tableorder_fields: doc.tableorder_fields || [],

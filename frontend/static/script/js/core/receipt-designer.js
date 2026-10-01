@@ -211,7 +211,10 @@
             } else if (b.type === 'items') {
                 var compact = !sheet && b.itemLayout === 'compact';
                 content = '<table><colgroup><col style="width:' + (sheet ? '46' : compact ? '68' : '60') + '%">' + (sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr><th>' + esc(compact ? label('Item') + ' × ' + label('Qty') : label('Item')) + '</th>' + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
-                items.forEach(function (item) {
+                var receiptItems = Array.isArray(data.receipt_line_rows) ? data.receipt_line_rows.map(function (line) {
+                    return Object.assign({}, line, { item_name: line.name, item_quantity: Number(line.qty), item_price: Number(line.rate), total_amount: line.amount, hsncode: line.hsn });
+                }) : items;
+                receiptItems.forEach(function (item) {
                     var qty = Number(item.item_quantity || 0);
                     var hsn = item.hsncode || item.hsn_code || item.hsn || (/^\d{4,8}$/.test(item.tax_name || '') ? item.tax_name : '');
                     content += '<tr><td>' + esc(PosnicPro.printItemName ? PosnicPro.printItemName(item, 'receipt') : item.item_name) + (compact ? ' × ' + esc(qty) : '') + (b.hsn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
@@ -226,7 +229,8 @@
                 if (Number(data.sale_extra_discount)) content += pair('Extra discount', money(-Number(data.sale_extra_discount)));
                 var igst = items.reduce(function (n, i) { return n + Number(i.igst_tax || 0); }, 0);
                 var cgst = items.reduce(function (n, i) { return n + Number(i.cgst_tax || 0); }, 0);
-                if (on(data.gst) && igst) content += pair('IGST', money(igst));
+                if (Array.isArray(data.receipt_tax_rows) && data.receipt_tax_rows.length) data.receipt_tax_rows.forEach(function (row) { content += pair(row.label, money(row.amount)); });
+                else if (on(data.gst) && igst) content += pair('IGST', money(igst));
                 else if (on(data.gst) && cgst) content += pair('CGST', money(cgst)) + pair('SGST', money(cgst));
                 else if (Number(data.tax)) content += pair('Tax', money(data.tax));
                 (data.charges || []).forEach(function (c) { content += pair(c.name || 'Charge', money(Number(c.amount || 0) + Number(c.tax_amount || 0))); });
@@ -310,6 +314,7 @@
                 pageSize: format === '58' || format === '80' ? format + 'mm' : format,
                 copies: options.target ? options.target.copies : 1,
                 fitReceipt: format === '58' || format === '80',
+                thermalRaster: format === '58' || format === '80',
                 silent: true, strictPrinter: true, forceHtml: true, printBackground: true, margins: { marginType: 'none' } }); })
                 .then(function (result) {
                     if (!result || !result.success) throw new Error(result && result.error || label('Print failed'));
@@ -334,18 +339,31 @@
         }).catch(failure);
     }
     async function printSale(data, requested, kitchenBill) {
+        var diagnostic = function (fields) { window.electronAPI?.diagnostics?.event('renderer', fields).catch(function () {}); };
+        diagnostic({ stage: 'sale-print-start', format: requested || 'configured' });
         try {
             if (PosnicPro.printSettings) await PosnicPro.printSettings.ready();
             if (!data.receipt_designs) data = Object.assign({}, data, { receipt_designs: defaults(data) });
             var targets = window.electronAPI && PosnicPro.printSettings ? PosnicPro.printSettings.get('sales') : [null];
+            if (window.electronAPI && PosnicPro.printSettings && ['a4', 'a5', 'letter'].indexOf(requested) !== -1) {
+                // An A4 override must not silently send a sheet to the counter roll.
+                targets = targets.filter(function (target) { return ['a4', 'a5', 'letter'].indexOf(target.pageSize) !== -1; });
+                if (!targets.length) {
+                    var invoice = PosnicPro.printSettings.get('invoice');
+                    if (invoice && invoice.printerName && invoice.printerName !== 'default') {
+                        targets = [{ name: invoice.printerName, pageSize: requested, copies: invoice.copies }];
+                    } else throw new Error('Choose a sheet printer in Printers & paper for A4 printing. Use Thermal for the receipt printer.');
+                }
+            }
             for (var target of targets) {
                 var paper = target ? target.pageSize.replace('mm', '') : null;
                 var chosen = formatFor(data, requested || paper);
+                diagnostic({ stage: 'sale-document-render', format: chosen });
                 // A format explicitly selected for this print takes precedence.
                 await print(render(data, chosen, kitchenBill), chosen, { target: target, batch: true, sample: true });
             }
             PosnicPro.afterPrint();
-        } catch (error) { PosnicPro.alert('error', error.message || label('Print failed')); }
+        } catch (error) { diagnostic({ stage: 'sale-print-failed', success: false, message: error.message }); PosnicPro.alert('error', error.message || label('Print failed')); }
     }
     PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, standardLayout: standardLayout, render: render, css: css, print: print, printSale: printSale, block: block, label: label, copy: copy, formatFor: formatFor };
 }());

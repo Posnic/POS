@@ -1,6 +1,9 @@
 (function () {
   "use strict";
   const messages = [
+    { label: "Back", t: "lang_back_title" },
+    { label: "Continue", t: "lang_continue" },
+    { label: "Total", t: "lang_total" },
     { label: 'Collect payment', t: 'lang_captain_collect_payment' },
     { label: 'Payment details', t: 'lang_captain_payment_details' },
     { label: 'Remaining balance', t: 'lang_captain_remaining_balance' },
@@ -107,6 +110,8 @@
     plan,
     pending,
     busy = false,
+    reviewing = false,
+    receipt = null,
     table = "",
     branchId = "",
     key = "",
@@ -150,7 +155,16 @@
         body += `<p role="status">${esc(t("Payment recorded"))}</p>`;
     } else
       body = `<p>${esc(t(busy ? "Loading..." : "Connect to the shop server before collecting payment. You can still take orders offline."))}</p>`;
-    dialog.innerHTML = `<header><h2>${esc(t("Collect payment"))} <small translate="no">${esc(table)}</small></h2><button type="button" data-action="close" aria-label="${esc(t("Close"))}">×</button></header><div class="cp-body">${body}${error ? `<p class="cp-error" role="status">${esc(t(error))}</p>` : ""}</div><footer><button type="button" data-action="close">${esc(t(plan?.dueMinor === 0 ? "Close" : "Cancel"))}</button>${plan?.dueMinor === 0 ? "" : `<button type="button" class="cp-primary" data-action="record" ${busy ? "disabled" : ""}>${esc(t(busy ? "Loading..." : pending || !plan ? "Retry" : "Record payment"))}${plan && !pending ? ` · <span translate="no">${esc(money(amount()))}</span>` : ""}</button>`}</footer>`;
+    if (reviewing && plan && !pending) {
+      const guest = selected === "" ? t("All remaining guests") : plan.guests[Number(selected)].name;
+      body = `<section class="cp-review"><h3>${esc(t("Payment details"))}</h3><div><span>${esc(t("Guest"))}</span><strong>${esc(guest)}</strong></div><div><span>${esc(t("Total"))}</span><strong>${esc(money(amount()))}</strong></div><div><span>${esc(t("Collect payment"))}</span><strong>${esc(t(method === "Upi" ? "UPI" : method))}</strong></div>${method === "Cash" ? `<div><span>${esc(t("Amount received"))}</span><strong>${esc(money(cashMinor()))}</strong></div><div><span>${esc(t("Change to return"))}</span><strong>${esc(money(cashMinor()-amount()))}</strong></div>` : `<div><span>${esc(t("Payment reference (optional)"))}</span><strong>${esc(reference || '—')}</strong></div>`}<p class="cp-help">${esc(t("Confirm only after receiving the money. This does not charge a card or bank account."))}</p></section>`;
+    }
+    if (receipt) {
+      const at = new Date(receipt.at);
+      body = `<section class="cp-review cp-receipt"><h3 role="status">${esc(t("Payment recorded"))}</h3><div><span>${esc(t("Total"))}</span><strong translate="no">${esc(money(receipt.amountMinor))}</strong></div><div><span>${esc(t("Collect payment"))}</span><strong>${esc(t(receipt.method === "Upi" ? "UPI" : receipt.method))}</strong></div>${receipt.method === "Cash" ? `<div><span>${esc(t("Amount received"))}</span><strong translate="no">${esc(money(receipt.receivedMinor))}</strong></div><div><span>${esc(t("Change to return"))}</span><strong translate="no">${esc(money(receipt.changeMinor))}</strong></div>` : ''}${receipt.reference ? `<div><span>${esc(t("Payment reference (optional)"))}</span><strong translate="no">${esc(receipt.reference)}</strong></div>` : ''}<div class="cp-balance"><span>${esc(t("Remaining balance"))}</span><strong translate="no">${esc(money(plan.dueMinor))}</strong></div>${Number.isFinite(at.getTime()) ? `<p translate="no">${esc(at.toLocaleString())}</p>` : ''}${receipt.staff ? `<p translate="no">${esc(receipt.staff)}</p>` : ''}</section>`;
+    }
+    dialog.innerHTML = `<header><h2>${esc(t("Collect payment"))} <small translate="no">${esc(table)}</small></h2><button type="button" data-action="close" aria-label="${esc(t("Close"))}">×</button></header><div class="cp-body">${body}${error ? `<p class="cp-error" role="status">${esc(t(error))}</p>` : ""}</div><footer><button type="button" data-action="${reviewing ? "back" : "close"}">${esc(t(reviewing ? "Back" : plan?.dueMinor === 0 ? "Close" : "Cancel"))}</button>${receipt ? (plan?.dueMinor > 0 ? `<button type="button" class="cp-primary" data-action="continue">${esc(t("Continue"))}</button>` : "") : plan?.dueMinor === 0 ? "" : `<button type="button" class="cp-primary" data-action="record" ${busy ? "disabled" : ""}>${esc(t(busy ? "Loading..." : pending || !plan ? "Retry" : reviewing ? "Record payment" : "Continue"))}${plan && !pending ? ` · <span translate="no">${esc(money(amount()))}</span>` : ""}</button>`}</footer>`;
+
     if (busy || pending)
       dialog
         .querySelectorAll("input,select,[data-method]")
@@ -204,6 +218,8 @@
         render();
         return;
       }
+      if (!reviewing) { reviewing = true; error = ""; render(); return; }
+      reviewing = false;
       pending = {
         base: base(),
         body: {
@@ -236,6 +252,9 @@
       const result = await request("post", root() + "/record", pending.body);
       if (result.confirmed !== pending.body.request_id)
         throw new Error("Unconfirmed");
+      receipt = result.payments?.find(payment => payment.id === result.confirmed) || {
+        ...pending.body, changeMinor: pending.body.receivedMinor - pending.body.amountMinor,
+      };
       plan = result;
       pending = null;
       localStorage.removeItem(key);
@@ -270,6 +289,7 @@
     }
   }
   async function close() {
+    reviewing = false;
     dialog.close();
     if (plan && !pending && !busy && plan.paidMinor === 0)
       request("post", root() + "/release", { planId: plan.id, branchId }).catch(
@@ -280,6 +300,7 @@
     if (dialog) return;
     const style = document.createElement("style");
     style.textContent = `#captain-payments{width:min(100vw,480px);max-width:100vw;max-height:100dvh;height: min(100dvh,780px);border:0;border-radius:18px;padding:0;color:#172033;background:#fff;font:inherit;box-shadow:0 16px 60px #0004}#captain-payments::backdrop{background:#15223b88}#captain-payments[open]{display:flex;flex-direction:column}#captain-payments *{box-sizing:border-box}#captain-payments header,#captain-payments footer{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid #e4e8ee}#captain-payments h2{font-size:20px;margin:0;flex:1}#captain-payments h2 small{font-size:14px;display:block;color:#667085;margin-top:4px}#captain-payments button{min-height:46px;padding:10px 16px;border:1px solid #dbe1eb;border-radius:10px;background:white;color:inherit;font:inherit;font-weight:600;cursor:pointer}#captain-payments button:disabled{opacity:.55;cursor:wait}#captain-payments .cp-body{padding:20px;overflow:auto;flex:1}#captain-payments footer{border-top:1px solid #e4e8ee;border-bottom:0;padding-bottom:max(16px,env(safe-area-inset-bottom))}#captain-payments .cp-primary{flex:1;background:#5146e5;color:white;border-color:#5146e5}#captain-payments .cp-balance{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}#captain-payments .cp-balance strong{font-size:26px}#captain-payments .cp-guests{margin-bottom:22px;border:1px solid #e4e8ee;border-radius:12px;padding:4px 14px}#captain-payments .cp-guests>div{display:flex;justify-content:space-between;padding:12px 0;gap:12px}#captain-payments label{display:block;margin:16px 0;font-weight:600}#captain-payments input:not([type=checkbox]),#captain-payments select{display:block;width:100%;min-height:48px;padding:10px;margin-top:8px;border:1px solid #cbd3df;border-radius:10px;font:inherit;background:white;color:inherit}#captain-payments .cp-methods{display:flex;gap:8px;flex-wrap:wrap}#captain-payments .cp-methods button{flex:1}#captain-payments [aria-pressed=true]{border-color:#5146e5;background:#efedff;color:#3529aa}#captain-payments .cp-change{display:flex;justify-content:space-between;gap:10px}#captain-payments .cp-confirm{display:flex;align-items:flex-start;gap:10px;line-height:1.5}#captain-payments .cp-confirm input{width:22px;height:22px;flex:none}#captain-payments .cp-help{color:#667085;font-size:13px;line-height:1.5;margin-top:22px}#captain-payments .cp-error{padding:12px;background:#fff5e6;color:#754700;border-radius:10px;line-height:1.5}@media(max-width:480px){#captain-payments{width:100%;height:100dvh;max-height:100dvh;border-radius:0;margin:0}}`;
+    style.textContent += `#captain-payments .cp-review>div{display:flex;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid #e4e8ee;overflow-wrap:anywhere}#captain-payments .cp-review strong{text-align:end}`;
     document.head.append(style);
     dialog = document.createElement("dialog");
     dialog.id = "captain-payments";
@@ -287,12 +308,14 @@
     document.body.append(dialog);
     dialog.addEventListener("cancel", (e) => {
       e.preventDefault();
-      close();
+      if (reviewing && !busy) { reviewing = false; render(); } else close();
     });
     dialog.addEventListener("click", (e) => {
       const action = e.target.closest("[data-action]")?.dataset.action;
       if (action === "close") close();
-      if (action === "record") record();
+      if (action === "back" && !busy) { reviewing = false; render(); }
+      if (action === "record" && !receipt) record();
+      if (action === "continue" && !busy) { receipt = null; render(); }
       const m = e.target.closest("[data-method]")?.dataset.method;
       if (m) {
         method = m;
@@ -326,6 +349,8 @@
       if (!dialog.open) dialog.showModal();
       return;
     }
+    reviewing = false;
+    receipt = null;
     splitDraft = draft || null;
     table = String(value);
     branchId = String(branchValue || branch());
@@ -392,10 +417,10 @@
     if (button) open(button.dataset.collectTable, button.dataset.branchId);
   });
   window.addEventListener("captain:back", (e) => {
-    if (dialog?.open) {
-      e.preventDefault();
-      close();
-    }
-  });
+    if (!dialog?.open) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (busy) return;
+    if (reviewing) { reviewing = false; render(); } else close();
+  }, true);
   window.CaptainPayments = { open, available };
 })();

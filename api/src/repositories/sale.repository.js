@@ -337,6 +337,14 @@ class SalesRepository {
       }
 
       const doc = { ...saleDoc };
+      // Preserve exact transferred amounts before legacy display normalization
+      // changes line aliases or derives totals from unit prices.
+      const transferredBill = saleDoc.captain_transfer_allocation
+        ? require('../helpers/bill-payload').buildBillPayload(
+            saleDoc,
+            saleDoc.captain_transfer_allocation
+          )
+        : null;
 
       // Normalise legacy extra discount fields so that the sales edit and
       // return screens always receive meaningful values, even for older
@@ -1601,6 +1609,14 @@ class SalesRepository {
         }
       }
 
+      if (transferredBill) normalized.transferred_bill = transferredBill;
+      normalized.receipt_line_rows =
+        transferredBill?.items ||
+        require('../helpers/bill-payload').itemLines(saleDoc, branchDoc || {});
+      normalized.receipt_tax_rows =
+        transferredBill?.taxes ||
+        require('../helpers/bill-payload').taxRows(saleDoc, branchDoc || {});
+
       return {
         status: true,
         data: normalized,
@@ -1969,7 +1985,17 @@ class SalesRepository {
         await require('../services/captain-payment-guard').mutable(await BaseModel.getDb(), sale);
         sale.set('captain_payment_plan', undefined);
       }
-      sale.$where = { ...(sale.$where || {}), captain_payment_plan: { $exists: false } };
+      const expectedCapacity = Object.prototype.hasOwnProperty.call(
+        sale.$where || {},
+        'seating_capacity_revision'
+      )
+        ? sale.$where.seating_capacity_revision
+        : (sale.seating_capacity_revision ?? { $exists: false });
+      sale.$where = {
+        ...(sale.$where || {}),
+        captain_payment_plan: { $exists: false },
+        seating_capacity_revision: expectedCapacity,
+      };
     }
     return sale.save();
   }
@@ -3143,11 +3169,111 @@ class SalesRepository {
    */
   _renderableSaleRows(rawList) {
     const round2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
-    return (rawList || []).map((doc) => ({
-      ...doc,
-      items_total: round2(doc.items_total ?? doc.sales_total ?? doc.total ?? 0),
-      items_return_total: round2(doc.items_return_total ?? 0),
-    }));
+    return (rawList || []).map((doc) => {
+      if (doc.captain_transfer_allocation) {
+        const bill = buildBillPayload(doc, doc.captain_transfer_allocation);
+        const currency = Money.policy(doc.captain_transfer_allocation);
+        return {
+          ...doc,
+          items_total: bill.total,
+          items_return_total: Money.fromMinor(
+            Money.toMinor(Number(doc.items_return_total) || 0, currency),
+            currency
+          ),
+          currencyCode: currency.currencyCode,
+          currencyDigits: currency.currencyDigits,
+        };
+      }
+      return {
+        ...doc,
+        items_total: round2(doc.items_total ?? doc.sales_total ?? doc.total ?? 0),
+        items_return_total: round2(doc.items_return_total ?? 0),
+      };
+    });
+  }
+
+  async _saleActivityTotals(Model, matchFilter) {
+    // Stream the complete history: page totals omit sales, while a raw Mongo
+    // sum bypasses the saved transfer allocation and its integrity checks.
+    const cursor = Model.find(matchFilter).lean().cursor();
+    const groups = new Map();
+    try {
+      for await (const doc of cursor) {
+        const [row] = this._renderableSaleRows([doc]);
+        const code = /^[A-Z]{3}$/.test(row.currencyCode || '') ? row.currencyCode : '';
+        const digits =
+          Number.isInteger(row.currencyDigits) && row.currencyDigits >= 0 && row.currencyDigits <= 4
+            ? row.currencyDigits
+            : 2;
+        const group = groups.get(code) || {
+          currencyCode: code,
+          currencyDigits: digits,
+          sale: 0n,
+          returned: 0n,
+        };
+        group.currencyDigits = Math.max(group.currencyDigits, digits);
+        // Four-place integer accumulation avoids floating point drift between
+        // bills. Keep legacy unknown currency separate from named currencies.
+        const minor = (amount) => {
+          const value = Math.round(Number(amount) * 10000);
+          if (!Number.isSafeInteger(value))
+            throw new Error('Activity amount is outside the supported range.');
+          return BigInt(value);
+        };
+        group.sale += minor(row.items_total);
+        group.returned += minor(row.items_return_total);
+        groups.set(code, group);
+      }
+    } finally {
+      await cursor.close();
+    }
+    const amount = (value) => {
+      const number = Number(value);
+      if (!Number.isSafeInteger(number))
+        throw new Error('Activity total is outside the supported range.');
+      return number / 10000;
+    };
+    return [...groups.values()]
+      .sort((a, b) => a.currencyCode.localeCompare(b.currencyCode))
+      .map((group) => ({
+        currencyCode: group.currencyCode,
+        currencyDigits: group.currencyDigits,
+        total: amount(group.sale),
+        return_total: amount(group.returned),
+      }));
+  }
+
+  _lineActivityCurrencyTotals(sales, returns) {
+    const groups = new Map();
+    for (const [rows, field] of [
+      [sales, 'total'],
+      [returns, 'return_total'],
+    ]) {
+      for (const row of rows) {
+        const code =
+          typeof row._id?.code === 'string' && /^[A-Z]{3}$/.test(row._id.code) ? row._id.code : '';
+        const digits =
+          Number.isInteger(row._id?.digits) && row._id.digits >= 0 && row._id.digits <= 4
+            ? row._id.digits
+            : 2;
+        const group = groups.get(code) || {
+          currencyCode: code,
+          currencyDigits: digits,
+          total: 0,
+          return_total: 0,
+        };
+        group.currencyDigits = Math.max(group.currencyDigits, digits);
+        group[field] += Number(row.total_amount) || 0;
+        groups.set(code, group);
+      }
+    }
+    return [...groups.values()]
+      .sort((a, b) => a.currencyCode.localeCompare(b.currencyCode))
+      .map((group) => ({
+        ...group,
+        total: Money.fromMinor(Money.toMinor(group.total, group), group),
+        return_total: Money.fromMinor(Money.toMinor(group.return_total, group), group),
+      }));
   }
 
   async itemSaleDetailsPage(value, options = {}, { SaleModel } = {}) {
@@ -3264,11 +3390,47 @@ class SalesRepository {
 
       // Aggregate total quantity for sales side
       const salesList = await Model.aggregate([
-        { $unwind: '$items' },
         { $match: filters },
+        { $unwind: '$items' },
+        {
+          $match: {
+            ...filters,
+            // Cancelled preparations stay in audit history but are not sales.
+            // Returns retain their separate existing gross/return accounting.
+            sale_process: { $not: /^(cancelled|canceled)$/i },
+            'items.cancelled': { $in: [null, false, 0, ''] },
+            'items.status': { $not: /^(cancelled|canceled)$/i },
+            $expr: {
+              $gt: [
+                {
+                  $convert: {
+                    input: { $ifNull: ['$items.item_quantity', '$items.quantity'] },
+                    to: 'double',
+                    onError: 0,
+                    onNull: 0,
+                  },
+                },
+                0,
+              ],
+            },
+          },
+        },
         {
           $group: {
-            _id: null,
+            _id: {
+              code: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyCode',
+                  { $ifNull: ['$currencyCode', ''] },
+                ],
+              },
+              digits: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyDigits',
+                  { $ifNull: ['$currencyDigits', 2] },
+                ],
+              },
+            },
             total_amount: {
               $sum: {
                 $ifNull: ['$items.total_amount', { $ifNull: ['$items.total', 0] }],
@@ -3283,9 +3445,9 @@ class SalesRepository {
         },
       ]);
 
-      const salesValues = salesList.map((doc) =>
-        typeof doc.total_qty === 'number' ? doc.total_qty : 0
-      );
+      const salesValues = salesList.length
+        ? [salesList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)]
+        : [];
 
       // Aggregate total quantity for returns side
       const returnList = await Model.aggregate([
@@ -3295,7 +3457,20 @@ class SalesRepository {
         { $match: returnFilters },
         {
           $group: {
-            _id: null,
+            _id: {
+              code: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyCode',
+                  { $ifNull: ['$currencyCode', ''] },
+                ],
+              },
+              digits: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyDigits',
+                  { $ifNull: ['$currencyDigits', 2] },
+                ],
+              },
+            },
             total_amount: {
               $sum: '$items_return.returnArray.returnValue.total_amount',
             },
@@ -3306,23 +3481,20 @@ class SalesRepository {
         },
       ]);
 
-      const returnValues = returnList.map((doc) =>
-        typeof doc.total_qty === 'number' ? doc.total_qty : 0
-      );
+      const returnValues = returnList.length
+        ? [returnList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)]
+        : [];
 
-      // The item/category's OWN revenue - the sum of its line totals across the
-      // matching sales (and returns) - shown as "Total Sales". Already aggregated
-      // above; it just was not returned, so the client fell back to summing each
-      // sale's whole-bill total over the loaded page, which counted every other
-      // item in those bills and changed as you paged. Rounded to 2dp.
-      const saleAmount = salesList.length ? Number(salesList[0].total_amount) || 0 : 0;
-      const returnAmount = returnList.length ? Number(returnList[0].total_amount) || 0 : 0;
+      const currencyTotals = this._lineActivityCurrencyTotals(salesList, returnList);
+      const saleAmount = currencyTotals.length === 1 ? currencyTotals[0].total : 0;
+      const returnAmount = currencyTotals.length === 1 ? currencyTotals[0].return_total : 0;
 
       const arrTableData = {
         sale: salesValues,
         return: returnValues,
-        sale_amount: Math.round(saleAmount * 100) / 100,
-        return_amount: Math.round(returnAmount * 100) / 100,
+        sale_amount: saleAmount,
+        currency_totals: currencyTotals,
+        return_amount: returnAmount,
         table: tableData,
       };
 
@@ -3419,11 +3591,47 @@ class SalesRepository {
 
       // Aggregate total quantity for sales side
       const salesList = await Model.aggregate([
-        { $unwind: '$items' },
         { $match: filters },
+        { $unwind: '$items' },
+        {
+          $match: {
+            ...filters,
+            // Cancelled preparations stay in audit history but are not sales.
+            // Returns retain their separate existing gross/return accounting.
+            sale_process: { $not: /^(cancelled|canceled)$/i },
+            'items.cancelled': { $in: [null, false, 0, ''] },
+            'items.status': { $not: /^(cancelled|canceled)$/i },
+            $expr: {
+              $gt: [
+                {
+                  $convert: {
+                    input: { $ifNull: ['$items.item_quantity', '$items.quantity'] },
+                    to: 'double',
+                    onError: 0,
+                    onNull: 0,
+                  },
+                },
+                0,
+              ],
+            },
+          },
+        },
         {
           $group: {
-            _id: null,
+            _id: {
+              code: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyCode',
+                  { $ifNull: ['$currencyCode', ''] },
+                ],
+              },
+              digits: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyDigits',
+                  { $ifNull: ['$currencyDigits', 2] },
+                ],
+              },
+            },
             total_amount: {
               $sum: {
                 $ifNull: ['$items.total_amount', { $ifNull: ['$items.total', 0] }],
@@ -3438,9 +3646,9 @@ class SalesRepository {
         },
       ]);
 
-      const salesValues = salesList.map((doc) =>
-        typeof doc.total_qty === 'number' ? doc.total_qty : 0
-      );
+      const salesValues = salesList.length
+        ? [salesList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)]
+        : [];
 
       // Aggregate total quantity for returns side
       const returnList = await Model.aggregate([
@@ -3450,7 +3658,20 @@ class SalesRepository {
         { $match: returnFilters },
         {
           $group: {
-            _id: null,
+            _id: {
+              code: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyCode',
+                  { $ifNull: ['$currencyCode', ''] },
+                ],
+              },
+              digits: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyDigits',
+                  { $ifNull: ['$currencyDigits', 2] },
+                ],
+              },
+            },
             total_amount: {
               $sum: '$items_return.returnArray.returnValue.total_amount',
             },
@@ -3461,23 +3682,20 @@ class SalesRepository {
         },
       ]);
 
-      const returnValues = returnList.map((doc) =>
-        typeof doc.total_qty === 'number' ? doc.total_qty : 0
-      );
+      const returnValues = returnList.length
+        ? [returnList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)]
+        : [];
 
-      // The item/category's OWN revenue - the sum of its line totals across the
-      // matching sales (and returns) - shown as "Total Sales". Already aggregated
-      // above; it just was not returned, so the client fell back to summing each
-      // sale's whole-bill total over the loaded page, which counted every other
-      // item in those bills and changed as you paged. Rounded to 2dp.
-      const saleAmount = salesList.length ? Number(salesList[0].total_amount) || 0 : 0;
-      const returnAmount = returnList.length ? Number(returnList[0].total_amount) || 0 : 0;
+      const currencyTotals = this._lineActivityCurrencyTotals(salesList, returnList);
+      const saleAmount = currencyTotals.length === 1 ? currencyTotals[0].total : 0;
+      const returnAmount = currencyTotals.length === 1 ? currencyTotals[0].return_total : 0;
 
       const arrTableData = {
         sale: salesValues,
         return: returnValues,
-        sale_amount: Math.round(saleAmount * 100) / 100,
-        return_amount: Math.round(returnAmount * 100) / 100,
+        sale_amount: saleAmount,
+        currency_totals: currencyTotals,
+        return_amount: returnAmount,
         table: tableData,
       };
 
@@ -3788,7 +4006,10 @@ class SalesRepository {
 
       const firstClause = {
         branch_id: { $in: objectBranchIds },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        $or: [
+          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          { sale_process: 'KOT', payment_status: 'Paid', 'captain_payments.0': { $exists: true } },
+        ],
       };
 
       const secondClause = {
@@ -3842,6 +4063,9 @@ class SalesRepository {
         return_round_off: 1,
         sales_sub_total: 1,
         items_total: 1,
+        paid_amount: 1,
+        captain_payments: 1,
+        'captain_transfer_allocation.currencyDigits': 1,
         items_return_total: 1,
         items_subtotal: 1,
         items_return_subtotal: 1,
@@ -3882,7 +4106,15 @@ class SalesRepository {
         .limit(limit)
         .lean();
 
-      const list = Array.isArray(rawList) ? rawList : [];
+      const list = (Array.isArray(rawList) ? rawList : []).map((row) => {
+        if (!row.captain_payments?.length || row.payment_status !== 'Paid') return row;
+        const digits = row.captain_transfer_allocation?.currencyDigits;
+        return {
+          ...row,
+          report_amount: row.paid_amount,
+          currencyDigits: Number.isInteger(digits) && digits >= 0 && digits <= 4 ? digits : 2,
+        };
+      });
 
       const total = await Model.countDocuments(filters);
 
@@ -3943,6 +4175,7 @@ class SalesRepository {
       const cursor = salesCollection.find(filters, {
         projection: {
           payment_mode: 1,
+          'captain_transfer_allocation.currencyDigits': 1,
           multi_payment: 1,
           items_total: 1,
           partial_balance: 1,
@@ -3956,6 +4189,14 @@ class SalesRepository {
       const methodTotals = {};
 
       const docs = await cursor.toArray();
+      // Retain the finest persisted precision in this report. Legacy payments
+      // remain in hundredths; transferred bills may require thousandths.
+      const reportDigits = docs.reduce((digits, doc) => {
+        const saved = doc.captain_transfer_allocation?.currencyDigits;
+        return Number.isInteger(saved) && saved >= 0 && saved <= 4
+          ? Math.max(digits, saved)
+          : digits;
+      }, 2);
 
       const round = (value, decimals = 2) => {
         const num = typeof value === 'number' ? value : Number(value);
@@ -4072,10 +4313,10 @@ class SalesRepository {
         })
         .map((totals) => ({
           sales_payment_mode: totals.sales_payment_mode,
-          sales_payment: round(totals.sales_payment || 0, 2),
-          partial_amount: round(totals.partial_amount || 0, 2),
-          outstanding_amount: round(totals.outstanding_amount || 0, 2),
-          refund_payment: round(totals.refund_payment || 0, 2),
+          sales_payment: round(totals.sales_payment || 0, reportDigits),
+          partial_amount: round(totals.partial_amount || 0, reportDigits),
+          outstanding_amount: round(totals.outstanding_amount || 0, reportDigits),
+          refund_payment: round(totals.refund_payment || 0, reportDigits),
           sales_count: Number(totals.sales_count || 0),
         }));
 
@@ -4088,6 +4329,7 @@ class SalesRepository {
 
       const graphicalData = {
         payment: salesValues,
+        currencyDigits: reportDigits,
       };
 
       return {
@@ -4498,34 +4740,15 @@ class SalesRepository {
         message: 'Get Successfully',
       };
 
-      // Aggregate total sales amount for this customer (similar to PHP)
-      const saleList = await Model.aggregate([
-        { $match: matchFilter },
-        {
-          $group: {
-            _id: '$customer_id',
-            total_amount: {
-              $sum: {
-                // Prefer items_total (legacy) but fall back to sales_total/total
-                $ifNull: ['$items_total', { $ifNull: ['$sales_total', '$total'] }],
-              },
-            },
-            return_amount: { $sum: { $ifNull: ['$items_return_total', 0] } },
-          },
-        },
-      ]);
-
-      const totals = saleList.map((doc) =>
-        typeof doc.total_amount === 'number' ? round(doc.total_amount, 2) : 0
-      );
-      // Complete return total too, so the client shows the real figure rather
-      // than a sum over just the loaded page.
-      const returnTotals = saleList.map((doc) =>
-        typeof doc.return_amount === 'number' ? round(doc.return_amount, 2) : 0
-      );
+      const currencyTotals = await this._saleActivityTotals(Model, matchFilter);
+      // Old clients receive a numeric total only when it represents one
+      // currency. Updated clients render every currency group explicitly.
+      const totals = currencyTotals.length === 1 ? [currencyTotals[0].total] : [];
+      const returnTotals = currencyTotals.length === 1 ? [currencyTotals[0].return_total] : [];
 
       const arrTableData = {
         table: tableData,
+        currency_totals: currencyTotals,
         total: totals,
         return_total: returnTotals,
       };
@@ -4600,31 +4823,15 @@ class SalesRepository {
         message: 'Get Successfully',
       };
 
-      // Aggregate total sales amount for this customer category
-      const saleList = await Model.aggregate([
-        { $match: matchFilter },
-        {
-          $group: {
-            _id: '$category_id',
-            total_amount: {
-              $sum: {
-                $ifNull: ['$items_total', { $ifNull: ['$sales_total', '$total'] }],
-              },
-            },
-            return_amount: { $sum: { $ifNull: ['$items_return_total', 0] } },
-          },
-        },
-      ]);
-
-      const totals = saleList.map((doc) =>
-        typeof doc.total_amount === 'number' ? round(doc.total_amount, 2) : 0
-      );
-      const returnTotals = saleList.map((doc) =>
-        typeof doc.return_amount === 'number' ? round(doc.return_amount, 2) : 0
-      );
+      const currencyTotals = await this._saleActivityTotals(Model, matchFilter);
+      // Old clients receive a numeric total only when it represents one
+      // currency. Updated clients render every currency group explicitly.
+      const totals = currencyTotals.length === 1 ? [currencyTotals[0].total] : [];
+      const returnTotals = currencyTotals.length === 1 ? [currencyTotals[0].return_total] : [];
 
       const arrTableData = {
         table: tableData,
+        currency_totals: currencyTotals,
         return_total: returnTotals,
         total: totals,
       };
@@ -7000,6 +7207,8 @@ class SalesRepository {
           $set: {
             partial_balance: parseFloat(saleData.amount) + parseFloat(saleData.paidamount || 0),
             payment_status: 'Paid',
+            floor_lifecycle:
+              saleDetails.floor_lifecycle === true || saleDetails.sale_process === 'KOT',
             kitchen_required:
               saleDetails.kitchen_required === true || saleDetails.sale_process === 'KOT',
             payment_pending: 0.0,
@@ -7652,26 +7861,7 @@ class SalesRepository {
        * Read defensively: last_printed_change_index is -1 on a sale that has
        * never printed, and some older documents carry it as a string.
        */
-      const hasUnprintedChanges = {
-        $expr: {
-          $gt: [
-            { $size: { $ifNull: ['$changes', []] } },
-            {
-              $add: [
-                {
-                  $convert: {
-                    input: { $ifNull: ['$last_printed_change_index', -1] },
-                    to: 'int',
-                    onError: -1,
-                    onNull: -1,
-                  },
-                },
-                1,
-              ],
-            },
-          ],
-        },
-      };
+      const hasUnprintedChanges = require('../helpers/unprinted-kitchen-changes')();
 
       const mine = String(tillId || '').trim();
       const ordinaryClaim = mine
@@ -7948,6 +8138,7 @@ class SalesRepository {
     const result = await collection.updateOne(
       {
         ...scope,
+        captain_payment_plan: { $not: /^restructure:/ },
         changes: sale.changes === undefined ? { $exists: false } : sale.changes,
         items: sale.items,
         kitchen_service:
@@ -8007,6 +8198,10 @@ class SalesRepository {
               kitchen_service: 1,
               kitchen_work: 1,
               kitchen_required: 1,
+              payment_status: 1,
+              fulfilment: 1,
+              dine_type: 1,
+              captain_payments: 1,
               bill_requested_at: 1,
               bill_printed_at: 1,
             },
@@ -8198,7 +8393,7 @@ class SalesRepository {
     return { id: null, name };
   }
 
-  async createOnlineOrder(data, { SaleModel, staffOrder = false } = {}) {
+  async createOnlineOrder(data, { SaleModel, staffOrder = false, seatingProtocol = false } = {}) {
     try {
       const db = await BaseModel.getDb();
 
@@ -8443,11 +8638,53 @@ class SalesRepository {
       const runsTableService = branchDoc.table_options === true;
       const openTableLimit = Number(branchDoc.table_order_limit ?? 1);
       const wantsTable = String(servicePoint.label || kiosk_table_no || table || '').trim();
+      const seating = require('../services/seating-claims');
+      const seatingScope = { branchId: branchObjectId, license: branchDoc.license };
+      let seatingClaim = null;
+      let seatingTable = null;
+      if (data.seating_request_id) {
+        if (!staffOrder || !runsTableService)
+          throw new Error('Sign in to submit a seating request.');
+        seatingClaim = await seating.forOrder(db, seatingScope, {
+          request_id: data.seating_request_id,
+          actor: kitchenActor().id,
+          table: wantsTable,
+          table_id: kiosk_table_id,
+          guests: person_count,
+        });
+        if (seatingClaim.order_id) {
+          const previous = await db.collection('sales').findOne({
+            _id: new ObjectId(seatingClaim.order_id),
+            branch_id: branchObjectId,
+            license: branchDoc.license,
+            seating_request_id: seatingClaim.id,
+          });
+          if (previous) return this._duplicateOrderAnswer(previous);
+        }
+      }
+      if (runsTableService && wantsTable) {
+        const configuredTable = await db.collection('tableorder').findOne({
+          branch_id: branchObjectId,
+          license: branchDoc.license,
+          tableorder_value: wantsTable,
+        });
+        seatingTable = configuredTable;
+        if (configuredTable && ['held', 'cleaning'].includes(configuredTable.service_state))
+          return { status: false, message: 'This table is not available.', data: null };
+        if (
+          configuredTable &&
+          !require('../utils/table-details').accommodates(
+            seatingClaim || configuredTable,
+            person_count || 1
+          )
+        )
+          return { status: false, message: 'Choose a table with enough seats.', data: null };
+      }
+
       if (runsTableService && openTableLimit > 0 && wantsTable) {
         const openNow = await db.collection('sales').countDocuments({
           branch_id: branchObjectId,
-          sale_process: 'KOT',
-          payment_status: 'Unpaid',
+          ...require('../helpers/floor-eligibility').floorEligibility(),
           table_number: wantsTable,
         });
         if (openNow >= openTableLimit) {
@@ -8692,13 +8929,13 @@ class SalesRepository {
       try {
         let queueMinutes = 0;
         if (branchDoc.table_options === true) {
-          const tableCount = await (
-            await this.getCollection('tableorder')
-          ).countDocuments(
-            branchDoc.license
-              ? { branch_id: branchObjectId, license: branchDoc.license }
-              : { branch_id: branchObjectId }
-          );
+          const tableCount = await db
+            .collection('tableorder')
+            .countDocuments(
+              branchDoc.license
+                ? { branch_id: branchObjectId, license: branchDoc.license }
+                : { branch_id: branchObjectId }
+            );
           const openFilter = {
             sale_process: { $regex: 'KOT', $options: 'i' },
             payment_status: 'Unpaid',
@@ -8728,6 +8965,7 @@ class SalesRepository {
         license: branchDoc.license || BaseModel.license,
         sales_id: salesId,
         kitchen_required: true,
+        floor_lifecycle: true,
         sale_process: 'KOT',
         /*
          * A KOT IS NOT PAID. It is a ticket for a kitchen.
@@ -8887,6 +9125,31 @@ class SalesRepository {
       /* A number taken a moment ago is taken again, not handed to the
          customer as a database error. */
       let insertResult;
+      // Enabled by the server dispatcher for configured tables. Old handsets
+      // need no new seating field to participate.
+      if (!seatingClaim && seatingProtocol && seatingTable) {
+        if (!staffOrder && !idempotencyKey) throw new Error('An order request ID is required.');
+        const requestKey =
+          (staffOrder ? 'order-' : 'customer-') +
+          crypto
+            .createHash('sha256')
+            .update(String(idempotencyKey || crypto.randomUUID()))
+            .digest('hex')
+            .slice(0, 40);
+        const actorId = staffOrder ? kitchenActor().id : requestKey;
+        if (!actorId) throw new Error('Sign in to reserve a table.');
+        seatingClaim = await seating.reserve(db, seatingScope, {
+          request_id: requestKey,
+          actor: actorId,
+          table_ids: [String(seatingTable._id)],
+          primary_id: String(seatingTable._id),
+          guests: Number(person_count) || 1,
+        });
+      }
+      if (seatingClaim) {
+        const previous = await seating.prepareOrder(db, seatingScope, seatingClaim, saleDocument);
+        if (previous) return this._duplicateOrderAnswer(previous);
+      }
       try {
         insertResult = await this.insertSaleWithFreshNumber(
           salesCollection,
@@ -8894,6 +9157,15 @@ class SalesRepository {
           branchObjectId
         );
       } catch (error) {
+        if (seatingClaim && error.code === 11000) {
+          const previous = await salesCollection.findOne({
+            _id: saleDocument._id,
+            branch_id: branchObjectId,
+            license: branchDoc.license,
+            seating_request_id: seatingClaim.id,
+          });
+          if (previous) return this._duplicateOrderAnswer(previous);
+        }
         /*
          * TWO TAPS AT THE SAME INSTANT.
          *
@@ -9911,10 +10183,9 @@ class SalesRepository {
    * controller passes the id off the token, so a handset cannot ask for
    * somebody else's figures by typing a different number.
    *
-   * A sale names its waiter in two places depending on how old it is:
-   * `user_id` on the sale, and `created_by_id` on rows written by the till's
-   * own flow. Both are asked, because a shop's history is older than either
-   * of them.
+   * Tableside orders retain the original captain in client.staff_id.
+   * That identity takes precedence over cashier fields after payment.
+   * Older desktop rows use user_id or created_by_id instead.
    *
    * Cancelled sales are left out of the money and counted separately: a day
    * that reads higher because somebody cancelled four orders is a day nobody
@@ -9925,16 +10196,16 @@ class SalesRepository {
       const { ObjectId } = require('mongodb');
       const Model = this.getModel(SaleModel);
 
-      if (!userId) return { total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
+      if (!userId)
+        return { total: 0, paid_total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
 
-      const who = ObjectId.isValid(userId) ? new ObjectId(userId) : userId;
       const from = new Date(day);
       from.setHours(0, 0, 0, 0);
       const to = new Date(from);
       to.setDate(to.getDate() + 1);
 
       const query = {
-        $or: [{ user_id: who }, { created_by_id: who }],
+        ...require('../helpers/captain-sales-owner')(userId),
         $and: [
           {
             $or: [{ created_date: { $gte: from, $lt: to } }, { date: { $gte: from, $lt: to } }],
@@ -9946,22 +10217,40 @@ class SalesRepository {
       }
       if (BaseModel.license) query.license = BaseModel.license;
 
-      const docs = await Model.find(query).sort({ created_date: -1, date: -1 }).limit(300).lean();
+      const docs = await Model.find(query)
+        .select(
+          '_id token_id sales_id sales_total total table_number created_date date sale_process payment_status order_state paid_amount partial_balance'
+        )
+        .sort({ created_date: -1, date: -1 })
+        .lean();
+      const isCancelled = (doc) =>
+        [doc.sale_process, doc.payment_status, doc.order_state].some((value) =>
+          ['cancel', 'cancelled'].includes(String(value || '').toLowerCase())
+        );
 
       const tables = new Map();
       let total = 0;
+      let paidTotal = 0;
       let orders = 0;
       let cancelled = 0;
 
       for (const doc of docs) {
-        const process = String(doc.sale_process || '').toLowerCase();
-        if (process === 'cancel' || process === 'cancelled') {
+        if (isCancelled(doc)) {
           cancelled += 1;
           continue;
         }
 
-        const amount = Number(doc.sales_total || doc.total || 0) || 0;
+        const amount = Number(doc.sales_total ?? doc.total ?? 0) || 0;
         total += amount;
+        // This is the paid portion of these orders, not cash collected during this day.
+        const recordedPaid =
+          String(doc.payment_status || '').toLowerCase() === 'paid'
+            ? amount
+            : Number(doc.paid_amount ?? doc.partial_balance ?? 0);
+        paidTotal += Math.min(
+          Math.max(0, amount),
+          Math.max(0, Number.isFinite(recordedPaid) ? recordedPaid : 0)
+        );
         orders += 1;
 
         /* A takeaway has no table and still has money in it, so it is a row
@@ -9976,13 +10265,14 @@ class SalesRepository {
       const recent = docs.slice(0, 20).map((doc) => ({
         order_id: doc.token_id || doc.sales_id || String(doc._id).slice(-6),
         table_number: doc.table_number || '',
-        total_amount: Number(doc.sales_total || doc.total || 0) || 0,
+        total_amount: Number(doc.sales_total ?? doc.total ?? 0) || 0,
         created_at: doc.created_date || doc.date,
-        cancelled: ['cancel', 'cancelled'].includes(String(doc.sale_process || '').toLowerCase()),
+        cancelled: isCancelled(doc),
       }));
 
       return {
         total,
+        paid_total: paidTotal,
         orders,
         cancelled,
         /* Biggest table first: the question behind this screen is usually
@@ -9992,7 +10282,7 @@ class SalesRepository {
       };
     } catch (error) {
       console.error('myDayModel failed:', error);
-      return { total: 0, orders: 0, cancelled: 0, tables: [], recent: [] };
+      throw error;
     }
   }
 
@@ -10059,14 +10349,25 @@ class SalesRepository {
           dine_type: doc.dine_type || 'Dine-in',
           status: derivedStatus,
           created_at: doc.created_date || doc.date,
+          created_date: doc.created_date || doc.date,
+          updated_date: doc.updated_date || doc.created_date || doc.date,
+          ...(doc.seating_request_id
+            ? {
+                seating_request_id: doc.seating_request_id,
+                seating_primary_id: doc.seating_primary_id,
+                seating_table_ids: doc.seating_table_ids,
+              }
+            : {}),
           assigned_staff: doc.assigned_staff,
           kitchen_rounds: require('../helpers/kitchen-rounds').rounds(doc),
+          item_transfer: true,
           total_amount: doc.sales_total || doc.total || 0,
           subtotal: doc.sales_sub_total || doc.subtotal || 0,
           tax: doc.tax || 0,
           discount: doc.discount || 0,
-          extra_discount: doc.extra_discount || 0,
-          extra_discount_type: doc.extra_discount_type || 'price',
+          pricing_preview: true,
+          transfer_allocated: !!doc.captain_transfer_allocation,
+          ...require('../services/captain-transfer-discount').editorValue(doc),
           customer_name: doc.customer_name || '',
           person_count: doc.person_count || '',
           kiosk_table_no: doc.table_number || '',
@@ -10093,27 +10394,72 @@ class SalesRepository {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel, newTableId, seenAt, editPolicy } = {}
+    { SaleModel, newTableId, seenAt, editPolicy, preview = false, previewContext } = {}
   ) {
     let finishCaptainEdit;
+    let finishCapacityEdit;
     try {
-      const db = await BaseModel.getDb();
+      // Preview is an internal read-only calculation, never a cancellation or
+      // seating operation. Its HTTP adapter must supply authenticated scope.
+      if (
+        preview &&
+        (status !== 'modified' ||
+          newTableNo != null ||
+          dineType != null ||
+          personCount != null ||
+          newTableId !== undefined)
+      )
+        throw new Error('Only item and discount changes can be previewed.');
+      if (editPolicy?.previewOnly && !preview) throw new Error('Preview cannot authorize a save.');
+      if (
+        previewContext &&
+        (!preview || !previewContext.db || !previewContext.branchId || !previewContext.license)
+      )
+        throw new Error('Invalid preview scope.');
+      const db = previewContext ? previewContext.db : await BaseModel.getDb();
+      const previewScope = previewContext
+        ? { branch_id: previewContext.branchId, license: previewContext.license }
+        : activeTenantFilter();
       const salesCollection = db.collection('sales');
       const itemCollection = db.collection('items');
 
       const orderObjectId = new mongoose.Types.ObjectId(orderId);
       const orderDoc = await salesCollection.findOne({
         _id: orderObjectId,
-        ...activeTenantFilter(),
+        ...previewScope,
       });
 
       if (!orderDoc) {
         return { status: false, message: 'Order not found', data: [] };
       }
 
+      if (
+        preview &&
+        (orderDoc.sale_process !== 'KOT' ||
+          orderDoc.payment_status !== 'Unpaid' ||
+          Object.prototype.hasOwnProperty.call(orderDoc, 'floor_closed_at') ||
+          ['pending', 'rejected', 'cancelled'].includes(orderDoc.order_state) ||
+          new Date(orderDoc.captain_edit_until || 0).getTime() >= Date.now() ||
+          Object.prototype.hasOwnProperty.call(orderDoc, 'captain_payment_plan'))
+      )
+        throw new Error('Order changed. Refresh before continuing.');
+
+      if (status === 'cancelled' && String(orderDoc.sale_process).toLowerCase() === 'cancelled') {
+        if (orderDoc.seating_request_id) {
+          await require('../services/seating-claims').release(
+            db,
+            { branchId: orderDoc.branch_id, license: orderDoc.license },
+            orderDoc.seating_request_id
+          );
+        }
+        return { status: true, message: 'Order cancelled', data: { order_id: orderId } };
+      }
+
       const editFilter = {
+        ...(preview ? previewScope : {}),
         _id: orderObjectId,
         captain_payment_plan: { $exists: false },
+        seating_capacity_revision: orderDoc.seating_capacity_revision ?? { $exists: false },
         items: editPolicy?.expectedItems || orderDoc.items,
         changes:
           (editPolicy ? editPolicy.expectedChanges : orderDoc.changes) === undefined
@@ -10123,6 +10469,32 @@ class SalesRepository {
               : orderDoc.changes,
         ...(editPolicy ? { branch_id: editPolicy.branchId, license: editPolicy.license } : {}),
       };
+      // Legacy seating writers may leave updated_date unchanged. Never apply
+      // a delayed item/cover save against a different seating snapshot.
+      for (const field of [
+        'person_count',
+        'table_number',
+        'table_id',
+        'dine_type',
+        'seating_request_id',
+        'seating_primary_id',
+        'seating_table_ids',
+      ])
+        editFilter[field] = orderDoc[field] === undefined ? { $exists: false } : orderDoc[field];
+      // Payment and closure can finish while this edit reads the catalogue,
+      // without changing its items or seating revision. Preserve that newer
+      // state instead of amending/cancelling a check from the older snapshot.
+      for (const field of [
+        'payment_status',
+        'paid_amount',
+        'partial_balance',
+        'partial_amounts',
+        'payment_pending',
+        'sale_process',
+        'floor_closed_at',
+        'order_state',
+      ])
+        editFilter[field] = orderDoc[field] === undefined ? { $exists: false } : orderDoc[field];
       const actor = editPolicy?.actor || {
         id: String(BaseModel.loggedUser || ''),
         name: BaseModel.loggedUserName || 'Staff',
@@ -10138,10 +10510,43 @@ class SalesRepository {
         .collection('branches')
         .findOne({ _id: orderDoc.branch_id, license: orderDoc.license });
       const monetary = Money.policy(shop || {});
-      finishCaptainEdit = await require('../services/captain-payment-guard').beginEdit(
-        db,
-        orderDoc
-      );
+      const orderSeating =
+        orderDoc.seating_request_id || shop?.table_options === true
+          ? await require('../services/seating-claims').forEdit(
+              db,
+              { branchId: orderDoc.branch_id, license: orderDoc.license },
+              orderDoc,
+              { table: newTableNo, guests: personCount, dine_type: dineType }
+            )
+          : null;
+      if (shop?.table_options === true && (newTableNo || personCount)) {
+        const destination = String(newTableNo || orderDoc.table_number || '');
+        const configuredTable = await db.collection('tableorder').findOne({
+          branch_id: orderDoc.branch_id,
+          license: orderDoc.license,
+          tableorder_value: destination,
+        });
+        if (destination !== String(orderDoc.table_number || '')) {
+          await require('../services/table-move-check').check(db, orderDoc, configuredTable, {
+            id: newTableId,
+            guests: personCount,
+          });
+        }
+        if (
+          configuredTable &&
+          !require('../utils/table-details').accommodates(
+            orderSeating || configuredTable,
+            personCount || orderDoc.person_count || 1
+          )
+        )
+          return { status: false, message: 'Choose a table with enough seats.', data: null };
+      }
+
+      if (!preview)
+        finishCaptainEdit = await require('../services/captain-payment-guard').beginEdit(
+          db,
+          orderDoc
+        );
 
       /*
        * A SAVE WRITTEN AGAINST A VIEW THAT HAS MOVED ON.
@@ -10185,6 +10590,9 @@ class SalesRepository {
         const mongoDate = new Date();
         const updateFields = {
           sale_process: 'cancelled',
+          ...(orderDoc.seating_request_id
+            ? { floor_closed_at: mongoDate, floor_closed_by: actor.id || null }
+            : {}),
           payment_status: 'Cancelled',
           payment_pending: 0.0,
           updated_date: mongoDate,
@@ -10193,7 +10601,7 @@ class SalesRepository {
         };
 
         const existingItems = Array.isArray(orderDoc.items) ? orderDoc.items : [];
-        const existingChanges = Array.isArray(orderDoc.changes) ? orderDoc.changes : [];
+        const existingChanges = Array.isArray(orderDoc.changes) ? [...orderDoc.changes] : [];
         const changesItems = [];
 
         for (const ex of existingItems) {
@@ -10284,6 +10692,14 @@ class SalesRepository {
           });
         }
 
+        if (updateResult.modifiedCount > 0 && orderDoc.seating_request_id) {
+          await require('../services/seating-claims').release(
+            db,
+            { branchId: orderDoc.branch_id, license: orderDoc.license },
+            orderDoc.seating_request_id
+          );
+        }
+
         return updateResult.modifiedCount > 0
           ? {
               status: true,
@@ -10323,7 +10739,7 @@ class SalesRepository {
       }
 
       const changesItems = [];
-      const existingChanges = Array.isArray(orderDoc.changes) ? orderDoc.changes : [];
+      const existingChanges = Array.isArray(orderDoc.changes) ? [...orderDoc.changes] : [];
       const existingIndex = {};
       existingItems.forEach((ex, idx) => {
         const key = orderLine.key(ex);
@@ -10665,6 +11081,7 @@ class SalesRepository {
         items: finalItems,
         changes: existingChanges,
         kitchen_required: true,
+        floor_lifecycle: true,
         kitchen_closed: false,
         sales_sub_total: baseSubtotal,
         items_subtotal: baseSubtotal,
@@ -10718,6 +11135,78 @@ class SalesRepository {
       if (personCount !== null && personCount !== '')
         updateFields.person_count = parseInt(personCount, 10);
 
+      if (orderDoc.captain_transfer_allocation) {
+        const transferEdit = require('../services/captain-transfer-edit');
+        const reconciled = transferEdit.reconcile(orderDoc, updateFields, shop || {});
+        if (!reconciled)
+          throw new Error(
+            'Transferred item amounts need reconciliation before this edit can be saved.'
+          );
+        for (const key of Object.keys(updateFields)) delete updateFields[key];
+        Object.assign(updateFields, reconciled);
+      }
+
+      if (preview) {
+        // Detect an order change during catalogue reads without taking a lease.
+        const financialFields = Object.fromEntries(
+          [
+            'sales_total',
+            'sales_sub_total',
+            'tax',
+            'discount',
+            'round_off',
+            'extra_discount',
+            'sale_extra_discount',
+            'extra_discount_type',
+            'captain_transfer_allocation',
+            'items_subtotal',
+            'items_total',
+            'order_state',
+            'updated_date',
+            'captain_edit_until',
+          ].map((key) => [key, orderDoc[key] === undefined ? { $exists: false } : orderDoc[key]])
+        );
+        if (
+          !(await salesCollection.findOne({
+            ...editFilter,
+            ...financialFields,
+            payment_status: 'Unpaid',
+            sale_process: 'KOT',
+            floor_closed_at: { $exists: false },
+          }))
+        )
+          return { status: false, message: 'order_changed', data: [] };
+        return {
+          status: true,
+          data: {
+            items: updateFields.items,
+            subtotal: updateFields.sales_sub_total,
+            tax: updateFields.tax,
+            discount: updateFields.discount,
+            total_amount: updateFields.sales_total,
+            currency: monetary,
+            revision: require('node:crypto')
+              .createHash('sha256')
+              .update(JSON.stringify(orderDoc))
+              .digest('hex'),
+          },
+        };
+      }
+
+      if (orderDoc.seating_request_id || shop?.table_options === true) {
+        const seating = require('../services/seating-claims');
+        const scope = { branchId: orderDoc.branch_id, license: orderDoc.license };
+        const permit = await seating.reserveEditCapacity(db, scope, orderDoc, {
+          table: updateFields.table_number,
+          guests: updateFields.person_count,
+          dine_type: updateFields.dine_type,
+          sale_process: updateFields.sale_process,
+        });
+        if (permit) {
+          updateFields.seating_capacity_revision = permit.id;
+          finishCapacityEdit = () => seating.reconcileEditCapacity(db, scope, permit.id);
+        }
+      }
       const updateResult = await salesCollection.updateOne(editFilter, {
         $set: updateFields,
         $push: { captain_audit: audit },
@@ -10759,6 +11248,13 @@ class SalesRepository {
         data: [],
       };
     } finally {
+      if (finishCapacityEdit) {
+        try {
+          await finishCapacityEdit();
+        } catch (error) {
+          console.error('Order capacity reconciliation pending:', error);
+        }
+      }
       if (finishCaptainEdit) await finishCaptainEdit();
     }
   }
@@ -13290,6 +13786,7 @@ class SalesRepository {
             ...sale,
             assigned_staff: sale.assigned_staff,
             kitchen_rounds: require('../helpers/kitchen-rounds').rounds(sale),
+            item_transfer: true,
           })),
           total,
           per_page: limit,
@@ -13316,12 +13813,17 @@ class SalesRepository {
    * already and would rather not have this read the branch to find the same
    * answer twice.
    */
-  async generateSalesIdForBranch(branchIdRaw, { reseed = false, fallbackPrefix } = {}) {
+  async generateSalesIdForBranch(
+    branchIdRaw,
+    { reseed = false, fallbackPrefix, numberingContext } = {}
+  ) {
     if (!branchIdRaw) {
       throw new Error('branchId is required to generate sales_id');
     }
 
-    const db = await BaseModel.getDb();
+    if (numberingContext && (!numberingContext.db || !numberingContext.license))
+      throw new Error('A database and licence are required for scoped bill numbering');
+    const db = numberingContext?.db || (await BaseModel.getDb());
     const branches = db.collection('branches');
     const salesCollection = db.collection('sales');
 
@@ -13334,8 +13836,14 @@ class SalesRepository {
 
     const branchDoc = await branches.findOne({
       _id: branchId,
-      ...(BaseModel.license ? { license: BaseModel.license } : {}),
+      ...(numberingContext
+        ? { license: numberingContext.license }
+        : BaseModel.license
+          ? { license: BaseModel.license }
+          : {}),
     });
+    if (numberingContext && !branchDoc)
+      throw new Error('Branch not found for scoped bill numbering');
     // The prefix comes from the branch config. An empty prefix is honoured - a
     // shop may want plain numbers - so only a branch that never set the field
     // falls back to the default 'S'.
@@ -13364,11 +13872,12 @@ class SalesRepository {
     const n = await this.nextSalesNumberForBranch(
       branchId,
       (branchDoc && branchDoc.license) || BaseModel.license,
-      { reseed, period }
+      { reseed, period, numberingContext }
     );
     return this.buildDocNumber('S', branchId, n, {
       fallbackPrefix: prefix,
       period: period.label,
+      numberingContext,
     });
   }
 
@@ -13430,8 +13939,12 @@ class SalesRepository {
    * collection that does not ride the sync wire, so each side numbers its own
    * writes and never inherits a counter that went backwards.
    */
-  async nextSalesNumberForBranch(branchIdRaw, licenseRaw, { reseed = false, period = null } = {}) {
-    const db = await BaseModel.getDb();
+  async nextSalesNumberForBranch(
+    branchIdRaw,
+    licenseRaw,
+    { reseed = false, period = null, numberingContext } = {}
+  ) {
+    const db = numberingContext?.db || (await BaseModel.getDb());
     const counters = db.collection('counters');
 
     /*
@@ -13477,7 +13990,13 @@ class SalesRepository {
     /* Idempotent and cheap; the unique index is what makes the concurrent
        seed below safe, so it is ensured before first use rather than hoped
        for. A failure leaves the flag unset so the next call tries again. */
-    if (!this.constructor._countersIndexEnsured) {
+    if (numberingContext) {
+      await ensureIndexOnce(
+        counters,
+        { kind: 1, branch_key: 1, license_key: 1 },
+        { unique: true, name: 'one_counter_per_scope' }
+      );
+    } else if (!this.constructor._countersIndexEnsured) {
       this.constructor._countersIndexEnsured = true;
       try {
         await counters.createIndex(
@@ -13511,6 +14030,7 @@ class SalesRepository {
     if (!existing) {
       const seed = await this.maxIssuedSalesNumber(branchIdRaw, licenseRaw, {
         periodLabel: (period && period.label) || '',
+        numberingContext,
       });
       /* With the unique index, one of two concurrent seeders inserts and the
          other's upsert errors; both then increment the same row. */
@@ -13531,6 +14051,7 @@ class SalesRepository {
     if (reseed) {
       const behind = await this.maxIssuedSalesNumber(branchIdRaw, license, {
         periodLabel: (period && period.label) || '',
+        numberingContext,
       });
       if (behind > 0) {
         /*
@@ -13606,10 +14127,10 @@ class SalesRepository {
    * ~1.68M codes; with 35 tills the chance any two share one is ~0.04%, and the
    * unique index below turns even that into a caught retry, never a silent dup.
    */
-  async deviceTag() {
-    if (this.constructor._deviceTag) return this.constructor._deviceTag;
+  async deviceTag(numberingContext) {
+    if (!numberingContext && this.constructor._deviceTag) return this.constructor._deviceTag;
     try {
-      const db = await BaseModel.getDb();
+      const db = numberingContext?.db || (await BaseModel.getDb());
       const meta = db.collection('device_meta');
       let doc = await meta.findOne({ _id: 'device_tag' });
       if (!doc || !doc.tag) {
@@ -13627,8 +14148,10 @@ class SalesRepository {
           .catch(() => {});
         doc = await meta.findOne({ _id: 'device_tag' });
       }
+      if (numberingContext) return (doc && doc.tag) || '';
       this.constructor._deviceTag = (doc && doc.tag) || '';
     } catch (e) {
+      if (numberingContext) throw e;
       // No tag rather than a failed sale. An untagged number is the old
       // behaviour, no worse than before; the next sale tries again.
       this.constructor._deviceTag = '';
@@ -13642,8 +14165,8 @@ class SalesRepository {
    * kiosk/QR path can never drift apart. Falls back to the old untagged form
    * only if a till code could not be read, which must never fail a sale.
    */
-  async buildSalesId(prefix, n, { period = '' } = {}) {
-    const tag = await this.deviceTag();
+  async buildSalesId(prefix, n, { period = '', numberingContext } = {}) {
+    const tag = await this.deviceTag(numberingContext);
     const p = (prefix || '').toString().trim();
     /*
      * The one shape utils/bill-number.js cannot express: a prefix glued
@@ -13674,15 +14197,16 @@ class SalesRepository {
    * the gateway. Only a real code is cached, so it is picked up the moment it
    * arrives, without a restart.
    */
-  async deviceCode() {
-    if (this.constructor._deviceCode) return this.constructor._deviceCode;
+  async deviceCode(numberingContext) {
+    if (!numberingContext && this.constructor._deviceCode) return this.constructor._deviceCode;
     try {
-      const db = await BaseModel.getDb();
+      const db = numberingContext?.db || (await BaseModel.getDb());
       const doc = await db.collection('device_meta').findOne({ _id: 'device_code' });
       const code = (doc && doc.code) || '';
-      if (code) this.constructor._deviceCode = code;
+      if (code && !numberingContext) this.constructor._deviceCode = code;
       return code;
     } catch (e) {
+      if (numberingContext) throw e;
       return '';
     }
   }
@@ -13694,16 +14218,17 @@ class SalesRepository {
    * a newer branch only ever appends. It is a label only: the device code is
    * what makes a number unique, so a rare mid-sync disagreement is cosmetic.
    */
-  async branchCode(branchId) {
+  async branchCode(branchId, numberingContext) {
     if (!branchId) return '';
     const id = String(branchId);
-    const cached = this.constructor._branchCodes;
+    const cached = numberingContext ? null : this.constructor._branchCodes;
     if (cached && cached[id]) return cached[id];
     try {
-      const db = await BaseModel.getDb();
+      const db = numberingContext?.db || (await BaseModel.getDb());
       const branches = db.collection('branches');
       const filter = {};
-      if (BaseModel.license) filter.license = BaseModel.license;
+      if (numberingContext) filter.license = numberingContext.license;
+      else if (BaseModel.license) filter.license = BaseModel.license;
       const rows = await branches
         .find(filter, { projection: { _id: 1, created_date: 1 } })
         .toArray();
@@ -13717,9 +14242,10 @@ class SalesRepository {
       rows.forEach((r, i) => {
         map[String(r._id)] = 'B' + (i + 1);
       });
-      this.constructor._branchCodes = map;
+      if (!numberingContext) this.constructor._branchCodes = map;
       return map[id] || '';
     } catch (e) {
+      if (numberingContext) throw e;
       return '';
     }
   }
@@ -13755,11 +14281,11 @@ class SalesRepository {
     typeLetter,
     branchId,
     n,
-    { isReturn = false, fallbackPrefix = 'S', period = '' } = {}
+    { isReturn = false, fallbackPrefix = 'S', period = '', numberingContext } = {}
   ) {
     const [branchCode, deviceCode] = await Promise.all([
-      this.branchCode(branchId),
-      this.deviceCode(),
+      this.branchCode(branchId, numberingContext),
+      this.deviceCode(numberingContext),
     ]);
     if (branchCode && deviceCode) {
       const built = billNumber.compose({
@@ -13775,7 +14301,7 @@ class SalesRepository {
       if (built.warning) console.warn('[bill-number]', built.warning);
       return built.number;
     }
-    return this.buildSalesId(fallbackPrefix, n, { period });
+    return this.buildSalesId(fallbackPrefix, n, { period, numberingContext });
   }
 
   /*
@@ -13933,8 +14459,8 @@ class SalesRepository {
     }
   }
 
-  async maxIssuedSalesNumber(branchIdRaw, licenseRaw, { periodLabel = '' } = {}) {
-    const db = await BaseModel.getDb();
+  async maxIssuedSalesNumber(branchIdRaw, licenseRaw, { periodLabel = '', numberingContext } = {}) {
+    const db = numberingContext?.db || (await BaseModel.getDb());
     const asObjectId = (v) =>
       v instanceof mongoose.Types.ObjectId
         ? v

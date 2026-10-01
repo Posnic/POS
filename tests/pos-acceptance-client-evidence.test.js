@@ -216,6 +216,9 @@ function bootPreCompletionVoid() {
     },
   };
 
+  PosnicPro.sales._orderRequestId = 'cancelled-basket-request';
+  const reset = blockAt(SALES_SOURCE, 'resetOrderRequest: function () {');
+  new dom.window.Function('PosnicPro', `PosnicPro.sales.${reset.replace(': function', ' = function')};`)(PosnicPro);
   const source = blockAt(
     SALES_SOURCE,
     'PosnicPro.sales.clear.cartItems = function (isFalse) {',
@@ -232,6 +235,7 @@ test('VOID-001 client handler clears an unsaved basket without a network posting
 
   assert.deepStrictEqual(PosnicPro.sales.charges, []);
   assert.deepStrictEqual(PosnicPro.sales.SaleTableLineItems, []);
+  assert.strictEqual(PosnicPro.sales._orderRequestId, null, 'the next basket needs a fresh request identity');
   assert.strictEqual($('#sales_new_item_name').val(), '');
   assert.strictEqual($('.tax-sales-line-total').html(), '0.00');
   assert.strictEqual($('#reset_modal').attr('data-modal-action'), 'hide');
@@ -249,6 +253,7 @@ test('VOID-001 client handler can clear silently without changing posting behavi
   PosnicPro.sales.clear.cartItems(false);
 
   assert.deepStrictEqual(PosnicPro.sales.SaleTableLineItems, []);
+  assert.strictEqual(PosnicPro.sales._orderRequestId, null, 'the next basket needs a fresh request identity');
   assert.deepStrictEqual(calls.alerts, []);
   assert.deepStrictEqual(calls.network, []);
 });

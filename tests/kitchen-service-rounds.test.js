@@ -68,7 +68,7 @@ test('every dish on a long kitchen ticket stays in one scrollable table box', ()
   } finally { dom.window.close(); }
 });
 
-test('tracked kitchen work stays visible after bill printing until physically served', () => {
+test('settled kitchen work disappears even when nobody marked it served', () => {
   const { tickets } = require('../api/src/helpers/kitchen-rounds');
   const sale = {
     _id: 'paid-order',
@@ -84,7 +84,7 @@ test('tracked kitchen work stays visible after bill printing until physically se
       },
     ],
   };
-  assert.equal(tickets(sale).length, 1);
+  assert.equal(tickets(sale).length, 0);
   sale.kitchen_service = { c0i0: { quantity: 2 } };
   assert.equal(tickets(sale).length, 0);
 });
@@ -112,4 +112,30 @@ test('held courses do not cook until fired and firing never adds chargeable quan
  assert.equal(rows.length,1);assert.equal(rows[0].id,'c0i0');assert.equal(rows[0].quantity,2);
  assert.equal(tickets(order)[0].placedAt,'2026-09-27T09:00:00.000Z');
  assert.deepEqual(tickets(order)[0].items[0].allergies,['milk']);
+});
+
+test('tracked bill cutoff keeps only additions after billing and honours the newest collection', () => {
+  const order = sale(); order.kitchen_required = true;
+  order.bill_requested_at = '2026-09-27T08:20:00Z';
+  assert.equal(tickets(order).length, 1);
+  assert.equal(tickets(order)[0].items[0].qty, 1);
+  order.captain_payments = [{amount: 50, at: '2026-09-27T08:30:00Z'}];
+  assert.deepEqual(tickets(order), []);
+  assert.equal(rounds(order).length, 2);
+  assert.equal(order.kitchen_service, undefined);
+});
+
+test('takeaway billing and collection never hide unserved dishes, while dine-in still closes', () => {
+ for (const type of [{fulfilment:'takeaway'}, {dine_type:'Take away'}, {dine_type:'Takeaway'}]) {
+  const order={...sale(), ...type, kitchen_required:true, payment_status:'Paid', bill_requested_at:'2026-09-27T09:00:00Z', bill_printed_at:'2026-09-27T09:01:00Z', captain_payments:[{amount:50,at:'2026-09-27T09:02:00Z'}]};
+  assert.equal(tickets(order).length,2);
+  order.kitchen_service={c0i0:{quantity:1}};
+  assert.equal(tickets(order)[0].items[0].qty,1);
+  order.kitchen_service={c0i0:{quantity:2},c1i0:{quantity:1}};
+  assert.deepEqual(tickets(order),[]);
+  order.kitchen_service={}; order.payment_status='Cancelled';
+  assert.deepEqual(tickets(order),[]);
+ }
+ const dineIn={...sale(),fulfilment:'dine_in',dine_type:'Takeaway',payment_status:'Paid'};
+ assert.deepEqual(tickets(dineIn),[]);
 });

@@ -93,6 +93,7 @@ beforeEach(async () => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
   await db.collection('sales').deleteMany({});
   await db.collection('items').deleteMany({});
+  await db.collection('tableorder').deleteMany({});
   await db.collection('branches').deleteMany({});
   await db.collection('branches').insertOne({ _id: BRANCH, license: LICENSE });
   await db.collection('items').insertOne({
@@ -155,4 +156,51 @@ describe('moving an order to another table', () => {
     expect(stored.table_number).toBe('4');
     expect(String(stored.table_id)).toBe(String(TABLE_FOUR));
   });
+});
+
+test('moving to a configured table checks seats on the server and preserves the source on refusal', async () => {
+  await db
+    .collection('branches')
+    .updateOne(
+      { _id: BRANCH },
+      { $set: { license: LICENSE, table_options: true } },
+      { upsert: true }
+    );
+  await db.collection('tableorder').insertOne({
+    _id: TABLE_TWELVE,
+    branch_id: BRANCH,
+    license: LICENSE,
+    tableorder_value: '12',
+    capacity: 1,
+    max_capacity: 1,
+  });
+  const id = await orderOnTableFour();
+  const result = await move(id, { number: '12', tableId: String(TABLE_TWELVE) });
+  expect(result.status).toBe(false);
+  expect(result.message).toContain('enough seats');
+  expect((await asStored(id)).table_number).toBe('4');
+});
+
+test.each(['held', 'cleaning'])('moving cannot occupy a table marked %s', async (service_state) => {
+  await db
+    .collection('branches')
+    .updateOne(
+      { _id: BRANCH },
+      { $set: { license: LICENSE, table_options: true } },
+      { upsert: true }
+    );
+  await db.collection('tableorder').insertOne({
+    _id: TABLE_TWELVE,
+    branch_id: BRANCH,
+    license: LICENSE,
+    tableorder_value: '12',
+    capacity: 6,
+    max_capacity: 6,
+    service_state,
+  });
+  const id = await orderOnTableFour();
+  const result = await move(id, { number: '12', tableId: String(TABLE_TWELVE) });
+  expect(result.status).toBe(false);
+  expect(result.message).toContain('not available');
+  expect((await asStored(id)).table_number).toBe('4');
 });

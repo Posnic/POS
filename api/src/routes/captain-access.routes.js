@@ -24,6 +24,62 @@ router.post('/pair', limit, wrap(access.pair));
 router.post('/refresh', limit, wrap(access.refresh));
 router.post('/route-proof', rateLimit({ windowMs: 60000, limit: 180 }), wrap(access.routeProof));
 router.use(protect);
+router.post(
+  '/orders/edit/preview',
+  rateLimit({ windowMs: 60000, limit: 120 }),
+  wrap(require('../services/captain-order-preview').preview)
+);
+const profile = require('../services/captain-profile');
+router.get('/profile', wrap(profile.get));
+const phone = require('../services/captain-phone');
+router.post(
+  '/profile/phone/start',
+  rateLimit({ windowMs: 15 * 60000, limit: 20 }),
+  wrap(phone.start)
+);
+router.post('/profile/phone/verify', limit, wrap(phone.verify));
+const email = require('../services/captain-email');
+router.post(
+  '/profile/email/start',
+  rateLimit({ windowMs: 15 * 60000, limit: 20 }),
+  wrap(email.start)
+);
+router.post('/profile/email/verify', limit, wrap(email.verify));
+const branchDetails = require('../services/captain-branch-details');
+router.get('/branch-details', wrap(branchDetails.get));
+router.post('/branch-details', limit, wrap(branchDetails.update));
+const tables = require('../services/captain-tables');
+router.get('/tables', wrap(tables.list));
+router.get('/bill', wrap(require('../services/captain-bill').read));
+router.post('/tables', limit, wrap(tables.update));
+router.post('/tables/state', limit, wrap(tables.state));
+router.post('/tables/close', limit, wrap(tables.close));
+const seating = require('../services/captain-seating');
+router.post('/tables/move/prepare', limit, wrap(seating.prepare));
+router.post('/tables/merge/prepare', limit, wrap(seating.merge));
+router.post('/tables/move/complete', limit, wrap(seating.complete));
+router.post('/tables/move/cancel', limit, wrap(seating.cancel));
+router.post('/tables/guests', limit, wrap(seating.guests));
+router.post('/tables/guests/status', limit, wrap(seating.guestsStatus));
+router.post(
+  '/tables/transfer/complete',
+  limit,
+  wrap(require('../services/captain-transfer').complete)
+);
+router.post(
+  '/tables/transfer/status',
+  rateLimit({ windowMs: 60000, limit: 120 }),
+  wrap(require('../services/captain-transfer').status)
+);
+router.post(
+  '/tables/transfer/preview',
+  limit,
+  wrap(require('../services/captain-transfer').preview)
+);
+
+router.post('/profile', limit, wrap(profile.update));
+router.post('/password', rateLimit({ windowMs: 15 * 60000, limit: 8 }), wrap(profile.password));
+
 router.get('/kitchen-ready', wrap(require('../services/kitchen-board').captainList));
 router.post(
   '/kitchen-ready',
@@ -216,12 +272,14 @@ router.post(
       access.fail('MANAGER_REQUIRED', 'Settings permission is required.');
     const c = await require('../utils/branch-access').context(req);
     const value = payments.validateSettings(req.body || {});
-    await req.db
+    const result = await req.db
       .collection('branches')
       .updateOne(
         { _id: c.branchId, license: c.license },
         { $set: { captain_payments: value, updated_date: new Date() } }
       );
+    if (result.matchedCount !== 1)
+      require('../utils/branch-access').fail('Settings changed. Refresh and try again.', 409);
     return { saved: true, ...value };
   })
 );

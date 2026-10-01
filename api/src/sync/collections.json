@@ -36,6 +36,10 @@
     "settings": "global"
   },
   "local_only": {
+    "captain_email_verifications": "One-use email verification challenges, attempt counters and expiry belong to the issuing account server; replication would permit replay.",
+    "captain_phone_verifications": "One-use phone verification challenges, attempt counters and expiry belong to the issuing account server; replication would permit replay.",
+    "table_seating": "Atomic branch seating reservations and in-flight move/close state belong to their issuing database. Last-writer-wins sync cannot merge reservation locks; retries must use that authority.",
+    "table_seating_history": "Completed or cancelled seating request tombstones prevent replay at the issuing database and must remain with its reservation journal.",
     "business_device_grants": "Five-second one-use Gateway device grants and counters belong only to the tenant API; never copy them to a till or another issuer.",
     "business_decision_local": "Desktop decision command outbox, one-use execution delivery and recovery journal belong to the originating installation, not generic sync.",
     "business_push_devices": "Private push registrations are bound to a Business session and never travel through device synchronization.",

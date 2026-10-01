@@ -106,6 +106,18 @@ async function staff(req) {
     .filter((user) => allowed(user, 'sales'))
     .map((user) => ({ id: String(user._id), name: String(user.name || user.username || '') }));
 }
+function handoverReplay(sale, body, actor) {
+  const entry = (sale.captain_audit || []).find((item) => item.request_id === body.requestId);
+  if (!entry) return null;
+  if (
+    entry.action !== 'handover' ||
+    entry.actor?.id !== actor ||
+    entry.to?.id !== String(body.staffId) ||
+    sale.assigned_staff?.id !== entry.to.id
+  )
+    fail('Order changed. Please refresh.', 409);
+  return { staff: sale.assigned_staff };
+}
 async function handover(req) {
   const c = await scope(req),
     body = req.body;
@@ -114,15 +126,15 @@ async function handover(req) {
     !/^[a-zA-Z0-9_-]{16,80}$/.test(body.requestId || '')
   )
     fail('Choose a staff member.');
-  const selected = (await staff(req)).find((user) => user.id === String(body.staffId));
-  if (!selected) fail('Choose an active staff member in this branch.', 403);
   const collection = req.db.collection('sales'),
     sale = await collection.findOne(c.filter);
   if (!sale) fail('Open order not found.', 404);
-  if ((sale.captain_audit || []).some((entry) => entry.request_id === body.requestId))
-    return { staff: sale.assigned_staff };
-  const actor = String(req.user._id || req.user.id),
-    current = String(sale.assigned_staff?.id || sale.client?.staff_id || '');
+  const actor = String(req.user._id || req.user.id);
+  const replay = handoverReplay(sale, body, actor);
+  if (replay) return replay;
+  const selected = (await staff(req)).find((user) => user.id === String(body.staffId));
+  if (!selected) fail('Choose an active staff member in this branch.', 403);
+  const current = String(sale.assigned_staff?.id || sale.client?.staff_id || '');
   const manager = [
     'owner',
     'admin',
@@ -138,6 +150,7 @@ async function handover(req) {
     {
       ...c.filter,
       assigned_staff: sale.assigned_staff === undefined ? { $exists: false } : sale.assigned_staff,
+      'captain_audit.request_id': { $ne: body.requestId },
     },
     {
       $set: { assigned_staff },
@@ -153,7 +166,12 @@ async function handover(req) {
       },
     }
   );
-  if (!result.matchedCount) fail('Order changed. Please refresh.', 409);
+  if (!result.matchedCount) {
+    const latest = await collection.findOne(c.filter);
+    const completed = latest && handoverReplay(latest, body, actor);
+    if (completed) return completed;
+    fail('Order changed. Please refresh.', 409);
+  }
   return { staff: assigned_staff };
 }
 module.exports = { fire, scope, staff, handover };

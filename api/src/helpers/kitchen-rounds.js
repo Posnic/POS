@@ -22,7 +22,14 @@ function quantity(line) {
 function rounds(sale, { descriptions = true } = {}) {
   const result = [];
   const current = new Map();
-  for (const line of sale.items || []) {
+  const items = (sale.items || []).filter(
+    (line) =>
+      line &&
+      !line.return &&
+      !line.cancelled &&
+      !['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase())
+  );
+  for (const line of items) {
     const key = orderLine.key(line) || product(line);
     current.set(key, (current.get(key) || 0) + quantity(line));
   }
@@ -50,6 +57,14 @@ function rounds(sale, { descriptions = true } = {}) {
           original.fired_at = date(change.timestamp);
           original.round = `c${c}`;
         }
+      } else if (String(line.process).toLowerCase() === 'transfer-out') {
+        // A transfer names the original round; cancelling newest-first would
+        // move the wrong plates when the customer orders the same dish again.
+        const original = result.find(
+          (row) => row.id === line.source_round_line && row.line_key === key
+        );
+        if (original)
+          original.quantity = Math.max(0, Math.round((original.quantity - qty) * 1000) / 1000);
       } else if (String(line.process).toLowerCase() === 'cancel') {
         let remaining = qty;
         // Cancel the newest outstanding additions first, keeping earlier service history.
@@ -58,7 +73,8 @@ function rounds(sale, { descriptions = true } = {}) {
           previous.quantity -= removed;
           remaining -= removed;
         }
-      } else if (String(line.process).toLowerCase() === 'add' && qty > 0) {
+      } else if (['add', 'transfer-in'].includes(String(line.process).toLowerCase()) && qty > 0) {
+        const transferred = String(line.process).toLowerCase() === 'transfer-in';
         result.push({
           id: `c${c}i${i}`,
           round: `c${c}`,
@@ -66,7 +82,14 @@ function rounds(sale, { descriptions = true } = {}) {
           line_key: key,
           ...serviceLine.metadata(line),
           ...kitchenAmount.snapshot(line),
-          ordered_at: date(change.timestamp) || date(sale.created_date),
+          ordered_at:
+            (transferred && date(line.original_ordered_at)) ||
+            date(change.timestamp) ||
+            date(sale.created_date),
+          ...(transferred && line.transfer_origin ? { origin: { ...line.transfer_origin } } : {}),
+          ...(transferred && date(line.original_fired_at)
+            ? { fired_at: date(line.original_fired_at) }
+            : {}),
           quantity: qty,
           name: String(line.item_name || line.name || ''),
           note: String(
@@ -78,8 +101,8 @@ function rounds(sale, { descriptions = true } = {}) {
     }
   }
   // Legacy tickets without complete change logs still appear and can be served.
-  for (let i = 0; i < (sale.items || []).length; i++) {
-    const line = sale.items[i],
+  for (let i = 0; i < items.length; i++) {
+    const line = items[i],
       key = orderLine.key(line) || product(line);
     const logged = result
       .filter((row) => row.line_key === key)
@@ -134,13 +157,36 @@ function rounds(sale, { descriptions = true } = {}) {
   }
   return [...groups.values()];
 }
+// Billing closes the existing kitchen rounds even when staff skip Mark served.
+// A later addition has its own timestamp and can appear again on an unpaid bill.
+function activeRounds(sale, options) {
+  const status = String(sale.payment_status || '')
+    .trim()
+    .toLowerCase();
+  if (status === 'cancelled') return [];
+  const fulfilment = String(sale.fulfilment || sale.dine_type || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[ _-]/g, '');
+  // Takeaway is billed before cooking; only service completion closes its rounds.
+  if (fulfilment === 'takeaway') return rounds(sale, options);
+  if (status === 'paid') return [];
+  const payments = (Array.isArray(sale.captain_payments) ? sale.captain_payments : []).filter(
+    (p) => Number(p.amount) > 0
+  );
+  const times = [sale.bill_requested_at, sale.bill_printed_at, ...payments.map((p) => p.at)]
+    .map(date)
+    .filter(Boolean);
+  if (payments.some((p) => !date(p.at))) return [];
+  const closed = times.sort().at(-1);
+  return rounds(sale, options).filter((round) => {
+    const time = round.fired_at || round.ordered_at;
+    return !closed || (time && time > closed);
+  });
+}
 function tickets(sale) {
-  const closed = sale.kitchen_required
-    ? null
-    : date(sale.bill_requested_at || sale.bill_printed_at);
-  return rounds(sale, { descriptions: false }).flatMap((round) => {
+  return activeRounds(sale, { descriptions: false }).flatMap((round) => {
     const kitchenTime = round.fired_at || round.ordered_at;
-    if (closed && (!kitchenTime || kitchenTime <= closed)) return [];
     const items = round.items
       .filter((line) => !line.held && line.remaining > 0)
       .map((line) => ({
@@ -219,4 +265,4 @@ function cancellations(sale, now = Date.now()) {
       : [];
   });
 }
-module.exports = { rounds, tickets, cancellations, progress };
+module.exports = { rounds, activeRounds, tickets, cancellations, progress };
