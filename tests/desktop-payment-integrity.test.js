@@ -392,3 +392,12 @@ test('saved receipt lists every discount, charge and split tender with pretax li
   assert.equal(Math.round(sum*100)/100,95.32);
   assert.match(sheet.find('.q-footer').text(),/Cash:.*20\.00.*Card:.*30\.00.*UPI:.*45\.32/);
 });
+test('charge action follows late-loaded settings on cart recalculation', (t) => {
+  const {dom,$,sales}=savedOrderSetup();t.after(()=>dom.window.close());
+  $('body').append('<a id="sale_add_charge" style="display:none">Add charge</a>');
+  let enabled=false;sales.chargesEnabled=()=>enabled;sales.charges=[];
+  sales.calculation.extraDiscoundCalculation();assert.equal($('#sale_add_charge').css('display'),'none');
+  enabled=true;sales.calculation.extraDiscoundCalculation();assert.notEqual($('#sale_add_charge').css('display'),'none');
+  enabled=false;sales.charges=[{name:'Saved charge',amount:10}];
+  sales.calculation.extraDiscoundCalculation();assert.notEqual($('#sale_add_charge').css('display'),'none');
+});

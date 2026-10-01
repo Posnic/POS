@@ -6938,6 +6938,11 @@ PosnicPro.sales.calculation = {
         PosnicPro.sales.calculation.extraDiscoundCalculation();
     },
     extraDiscoundCalculation: function () {
+        // Settings may arrive after the first cart render. Refresh the charge
+        // action during recalculation instead of requiring a payment-panel visit.
+        if (typeof PosnicPro.sales.chargesEnabled === 'function') {
+            $('#sale_add_charge').toggle(PosnicPro.sales.chargesEnabled() || (PosnicPro.sales.charges || []).length > 0);
+        }
         if ($('#sales_new_items_table tbody tr').find(':nth-child(10)').text() === '') {
             $('#grand_total').val('0');
         }
