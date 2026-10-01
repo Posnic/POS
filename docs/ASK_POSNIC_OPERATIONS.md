@@ -828,3 +828,29 @@ fixtures and refuses unrecorded provider calls; it is not a new live benchmark.
 The broader customer/multilingual pilot, production rollout and paid-plan/delivery
 acceptance remain open. The specific role-permission regression above is covered;
 the result does not establish that every possible qualifier error is solved.
+
+## Current-main integration checkpoint
+
+The initial candidate was subsequently rebased onto main commit
+`813fd1996d8f542588b641bf3c51ea25972b688c`. The current validated code commit is
+`099c4accfd933b5a605ebaa10df2ce73ba8d6686` on
+`codex/ask-posnic-release-20261001`. This supersedes the earlier base candidate
+for release integration. The newer business-notification worker and local-only
+sync entries were preserved, and main's archive builder was retained.
+
+Fresh dependency installation and the full API suite passed: 463 suites and
+11,691 tests, with two suites and 13 tests skipped. Lint on the 87 changed API
+JavaScript files reported zero errors and 90 warnings. Frontend build
+`47eb95ba97f7c4f1`, desktop/mobile checks, fractional sale-draft handling,
+authenticated synthetic-provider smoke, attribution and whitespace checks passed.
+
+The updated archive `output/ask-posnic-main-candidate-validation-20261001.tgz`
+has SHA-256
+`5117912e500bd2332c361e95e5e810a8477551acbf3cb041283ab9c48ddbf040`.
+It was verified and installed separately at
+`/home/ubuntu/.local/share/posnic-ai-validation/releases/ask-posnic-5117912e`.
+Its authenticated live AWS smoke passed generation, semantic indexing/retrieval,
+confirmed actions, permission checks and credit reconciliation with synthetic data.
+This is host validation, not production activation. The POS candidate is ready
+for coordinated review; Intranet, billing API, Cloud account UI, production
+configuration, payment/delivery acceptance and customer quality acceptance remain.
