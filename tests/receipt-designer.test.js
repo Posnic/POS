@@ -905,7 +905,7 @@ test('fixed thermal columns align quantity totals and shorten names; header omit
         assert.equal(output.find('.rd-total-quantity td').eq(1).text(), '2');
         assert.equal(output.find('.rd-field-total_quantity,.rd-field-fssai').length, 0);
         assert.match(output.find('.rd-store').text(), /GSTIN: GST123FSSAI: 13521001000125/);
-        assert.doesNotMatch(output.find('.rd-transaction').text(), /Tax invoice|Receipt|Bill/);
+        assert.doesNotMatch(output.find('.rd-transaction').text(), /Tax invoice|Receipt/);
         assert.match(output.find('.rd-transaction').text(), /S128/);
     }
     assert.throws(() => { design.layouts['80'].blocks.find(b => b.type === 'items').nameMaxChars = 0; contract.normalize(design); }, /Item name length/);
@@ -933,5 +933,21 @@ test('new thermal defaults and reset use dotted Item Rate Qty Amount with a quan
             assert.match(customized.find('style').text(), /border-top:1px dashed/);
         }
     }
+    dom.window.close();
+});
+
+
+test('short thermal headers label the bill only when space allows and never truncate its number', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.receipt_designs = engine.defaults(sale);
+    sale.sales_id = 'SB1D28-27-000130'; sale.created_date = '01/10/2026 03:03 pm';
+    const wide = $('<div>').html(engine.render(sale, '80', true));
+    assert.equal(wide.find('.rd-transaction strong').text(), 'Bill no: SB1D28-27-000130');
+    const narrow = $('<div>').html(engine.render(sale, '58', true));
+    assert.equal(narrow.find('.rd-transaction strong').text(), sale.sales_id);
+    sale.sales_id = 'A'.repeat(60);
+    const long = $('<div>').html(engine.render(sale, '80', true));
+    assert.equal(long.find('.rd-transaction strong').text(), sale.sales_id);
+    assert.equal(long.find('.rd-transaction-date').text(), sale.created_date);
     dom.window.close();
 });

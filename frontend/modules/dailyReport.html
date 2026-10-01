@@ -43,31 +43,53 @@
     </div>
 
     <style>
-        #dailyreport_new .meal-filter { margin: 12px 30px 0; padding: 18px 20px; background: var(--bs-body-bg, #fff); border: 1px solid #dbe3ef; border-radius: 14px; }
-        #dailyreport_new .meal-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-        #dailyreport_new .meal-button { background: transparent; color: inherit; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 18px; text-align: left; min-width: 125px; }
-        #dailyreport_new .meal-button small { display: block; margin-top: 3px; opacity: .8; }
+        #dailyreport_new .meal-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 30px 0; padding: 10px 14px; background: var(--bs-body-bg, #fff); border: 1px solid #dbe3ef; border-radius: 10px; }
+        #dailyreport_new .meal-filter > strong { font-size: 13px; }
+        #dailyreport_new .meal-buttons { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+        #dailyreport_new .meal-button { background: transparent; color: inherit; border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px 12px; text-align: left; font: inherit; cursor: pointer; }
+        #dailyreport_new .meal-button small { margin-left: 6px; opacity: .8; }
         #dailyreport_new .meal-button[aria-pressed="true"] { background: #eaf2ff; border-color: #1768cc; color: #124e96; box-shadow: inset 0 0 0 1px #1768cc; }
         #dailyreport_new .meal-button:focus-visible { outline: 3px solid #80b6ff; outline-offset: 2px; }
-        #dailyreport_new .meal-custom { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-top: 12px; }
-        #dailyreport_new .meal-custom label { margin: 0; }
-        #dailyreport_new .meal-custom input { width: 145px; }
-        #dailyreport_new .meal-help { font-size: 13px; margin: 8px 0 0; color: #526176; }
-        @media(max-width: 600px) { #dailyreport_new .meal-filter { margin: 10px 12px 0; } #dailyreport_new .meal-button { flex: 1 1 40%; } }
+        #dailyreport_new .meal-custom { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        #dailyreport_new .meal-custom label { display: flex; align-items: center; gap: 6px; margin: 0; }
+        #dailyreport_new .meal-custom input { width: 130px; height: 36px; padding: 5px 8px; }
+        #dailyreport_new .meal-custom .btn { padding: 6px 12px; min-height: 36px; }
+        #dailyreport_new .meal-help { font-size: 13px; margin: 0; color: #526176; }
+        #dailyreport_new .meal-guidance { margin-left: auto; font-size: 13px; }
+        #dailyreport_new .meal-guidance summary { cursor: pointer; color: #124e96; }
+        #dailyreport_new .meal-guidance[open] { flex-basis: 100%; }
+        #dailyreport_new .meal-guidance[open] .meal-help { margin-top: 6px; }
+        #dailyreport_new #daily-meal-status { flex-basis: 100%; }
+        #dailyreport_new #daily-meal-status:empty { display: none; }
+        @media screen {
+            #dailyreport_new > .contentbar { padding-top: 10px; }
+            #dailyreport_new > .contentbar > .row > .m-t-10 { margin-top: 0 !important; }
+            #dailyreport_new .loader-dailysale-report { padding: 12px; }
+            #dailyreport_new #dailysale-view-line > .card > .card-body { padding: 12px; }
+        }
+        @media(max-width: 600px) {
+            #dailyreport_new .meal-filter { margin: 8px 12px 0; padding: 10px; }
+            #dailyreport_new .meal-filter > strong { flex-basis: 100%; }
+            #dailyreport_new .meal-guidance { margin-left: 0; }
+            #dailyreport_new > .contentbar { padding-left: 12px; padding-right: 12px; }
+        }
     </style>
     <section class="meal-filter" id="daily-meal-filter" style="display:none" aria-label="Sales time filter" data-t-aria-label="lang_sales_time_filter">
         <strong><lang class="lang_sales_period">Sales period</lang></strong>
         <div class="meal-buttons" role="group" aria-label="Choose a sales period" data-t-aria-label="lang_choose_a_sales_period">
-            <button type="button" class="meal-button" data-meal="full" aria-pressed="true"><lang class="lang_full_day">Full Day</lang><small><lang class="lang_all_24_hours">All 24 hours</lang></small></button>
+            <button type="button" class="meal-button" data-meal="full" aria-pressed="true"><lang class="lang_full_day">Full Day</lang></button>
             <span id="daily-serving-periods" style="display:contents"></span>
-            <button type="button" class="meal-button" data-meal="custom" aria-pressed="false"><lang class="lang_custom_time">Custom Time</lang><small><lang class="lang_choose_your_hours">Choose your hours</lang></small></button>
+            <button type="button" class="meal-button" data-meal="custom" aria-pressed="false"><lang class="lang_custom_time">Custom Time</lang></button>
         </div>
         <div id="daily-meal-custom" class="meal-custom" style="display:none">
             <label for="daily-meal-from"><lang class="lang_from">From</lang><input id="daily-meal-from" type="time" class="form-control" value="06:00" required></label>
             <label for="daily-meal-to"><lang class="lang_to_2">To</lang><input id="daily-meal-to" type="time" class="form-control" value="12:00" required></label>
             <button type="button" class="btn btn-primary" id="daily-meal-apply"><lang class="lang_apply_time">Apply time</lang></button>
         </div>
-        <p class="meal-help"><lang class="lang_sessions_use_settings_restaurant_serving_p">Sessions use Settings → Restaurant → Serving periods, in the shop’s local time on each selected date. An end time earlier than the start continues into the next day.</lang></p>
+        <details class="meal-guidance">
+            <summary><lang class="lang_serving_periods">Serving periods</lang></summary>
+            <p class="meal-help" id="daily-meal-help"><lang class="lang_sessions_use_settings_restaurant_serving_p">Sessions use Settings → Restaurant → Serving periods, in the shop’s local time on each selected date. An end time earlier than the start continues into the next day.</lang></p>
+        </details>
         <p class="meal-help" id="daily-meal-status" role="status" aria-live="polite"></p>
     </section>
 

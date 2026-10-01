@@ -17,7 +17,9 @@ PosnicPro.quickreport = {
     $('#daily-meal-filter').toggle(enabled);
     if (!enabled) { this.meal = 'full'; return; }
     var host = $('#daily-serving-periods').empty();
-    if (!(branch.serving_periods || []).length) host.append($('<small>', { 'class': 'meal-help' }).text('Add sessions in Settings → Restaurant → Serving periods.'));
+    $('#daily-meal-help').text((branch.serving_periods || []).length
+      ? PosnicPro.i18n.t('lang_sessions_use_settings_restaurant_serving_p', 'Sessions use Settings → Restaurant → Serving periods, in the shop’s local time on each selected date. An end time earlier than the start continues into the next day.')
+      : PosnicPro.i18n.t('lang_no_dayparts_yet', 'No serving periods yet. Add breakfast, lunch or dinner in Settings, Restaurant, and they will appear here.'));
     var clock = function (n) { return ('0' + Math.floor(n / 60)).slice(-2) + ':' + ('0' + (n % 60)).slice(-2); };
     (branch.serving_periods || []).forEach(function (part) {
       var days = part.hours ? Object.keys(part.hours).map(function (k) { return part.hours[k].map(function (w) { return clock(w.open) + '–' + clock(w.close); }).join(', '); }) : [];

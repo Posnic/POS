@@ -211,7 +211,18 @@
                     content = '<div class="rd-invoice-meta"><div class="rd-invoice-title">' + esc(documentTitle) + '</div><dl>';
                     if (data.sales_id) content += '<dt>' + esc(beforePayment ? PosnicPro.i18n.t('lang_bill_no', 'Bill no') : PosnicPro.i18n.t('lang_rd_receipt_number', 'Receipt number')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
                     content += '<dt>' + esc(PosnicPro.i18n.t('lang_date_title', 'Date')) + '</dt><dd>' + esc(data.created_date || data.date || '') + '</dd></dl></div>';
-                } else content = '<div class="rd-transaction"><strong>' + (b.showTitle === false ? '' : esc(documentTitle)) + (data.sales_id ? (b.showTitle === false ? '' : ' ') + headerValue(data.sales_id) : '') + '</strong><span class="rd-transaction-date">' + thermalDate(data.created_date || data.date || '') + '</span></div>';
+                } else {
+                    var billPrefix = '';
+                    if (b.showTitle === false && data.sales_id) {
+                        var prefix = PosnicPro.i18n.t('lang_bill_no', 'Bill no') + ': ';
+                        var headerText = prefix + data.sales_id + (data.created_date || data.date || '');
+                        // Thermal headers use monospace. Reserve a small gap and allow
+                        // for bold glyphs; omit only the label when the row is too wide.
+                        var headerSize = Number(b.fontSize) || layout.fontSize;
+                        if (Array.from(headerText).length * headerSize * 0.605 + 4 <= contract.formats[format].content * 96 / 25.4) billPrefix = prefix;
+                    }
+                    content = '<div class="rd-transaction"' + (b.showTitle === false ? ' style="column-gap:4px"' : '') + '><strong>' + (b.showTitle === false ? esc(billPrefix) : esc(documentTitle)) + (data.sales_id ? (b.showTitle === false ? '' : ' ') + headerValue(data.sales_id) : '') + '</strong><span class="rd-transaction-date">' + thermalDate(data.created_date || data.date || '') + '</span></div>';
+                }
                 if (present(taxNumber) && !hasField('customer_tax_number')) content += '<p class="rd-customer-tax">' + esc(fieldLabel('customer_tax_number')) + ': ' + esc(String(taxNumber).trim()) + '</p>';
             } else if (b.type === 'items') {
                 var compact = !sheet && b.itemLayout === 'compact';
