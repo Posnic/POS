@@ -26,6 +26,10 @@
       "description": "Mounted at /activity-logs"
     },
     {
+      "name": "Ask posnic",
+      "description": "Mounted at /ask-posnic"
+    },
+    {
       "name": "Auth utils",
       "description": "Mounted at /auth-utils"
     },
@@ -120,6 +124,10 @@
     {
       "name": "Install",
       "description": "Mounted at /install"
+    },
+    {
+      "name": "Inventory counts",
+      "description": "Mounted at /inventory-counts"
     },
     {
       "name": "Invoices",
@@ -391,6 +399,646 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/ask-posnic/status": {
+      "get": {
+        "summary": "controller",
+        "operationId": "get_ask_posnic_status",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/ask-posnic/recovery": {
+      "get": {
+        "summary": "controller",
+        "operationId": "get_ask_posnic_recovery",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/ask-posnic/ask": {
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_ask",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/documents": {
+      "get": {
+        "summary": "controller",
+        "operationId": "get_ask_posnic_documents",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_documents",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/documents/{id}": {
+      "get": {
+        "summary": "controller",
+        "operationId": "get_ask_posnic_documents_id",
+        "tags": [
+          "Ask posnic"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/ask-posnic/documents/upload": {
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_documents_upload",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/documents/import-bundle": {
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_documents_import_bundle",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/documents/{id}/status": {
+      "patch": {
+        "summary": "controller",
+        "operationId": "patch_ask_posnic_documents_id_status",
+        "tags": [
+          "Ask posnic"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/history": {
+      "get": {
+        "summary": "controller",
+        "operationId": "get_ask_posnic_history",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "controller",
+        "operationId": "delete_ask_posnic_history",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/ask-posnic/audit": {
+      "get": {
+        "summary": "controller",
+        "operationId": "get_ask_posnic_audit",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/ask-posnic/feedback": {
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_feedback",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/actions/draft": {
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_actions_draft",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/actions/confirm": {
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_actions_confirm",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/actions/{id}": {
+      "get": {
+        "summary": "controller",
+        "operationId": "get_ask_posnic_actions_id",
+        "tags": [
+          "Ask posnic"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/ask-posnic/actions/{id}/resume": {
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_actions_id_resume",
+        "tags": [
+          "Ask posnic"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/supplier-messages": {
+      "get": {
+        "summary": "controller",
+        "operationId": "get_ask_posnic_supplier_messages",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/ask-posnic/preferences": {
+      "get": {
+        "summary": "controller",
+        "operationId": "get_ask_posnic_preferences",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "controller",
+        "operationId": "put_ask_posnic_preferences",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/schedules": {
+      "get": {
+        "summary": "controller",
+        "operationId": "get_ask_posnic_schedules",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_schedules",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/schedules/{id}": {
+      "delete": {
+        "summary": "controller",
+        "operationId": "delete_ask_posnic_schedules_id",
+        "tags": [
+          "Ask posnic"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/ask-posnic/schedules/{id}/resume": {
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_schedules_id_resume",
+        "tags": [
+          "Ask posnic"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/ask-posnic/schedules/run-due": {
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_schedules_run_due",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/auth-utils/sign-token": {
@@ -7418,6 +8066,84 @@
                 ]
               }
             }
+          }
+        }
+      }
+    },
+    "/inventory-counts": {
+      "post": {
+        "summary": "create",
+        "operationId": "post_inventory_counts",
+        "tags": [
+          "Inventory counts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      },
+      "get": {
+        "summary": "list",
+        "operationId": "get_inventory_counts",
+        "tags": [
+          "Inventory counts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/inventory-counts/{id}": {
+      "get": {
+        "summary": "get",
+        "operationId": "get_inventory_counts_id",
+        "tags": [
+          "Inventory counts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }
