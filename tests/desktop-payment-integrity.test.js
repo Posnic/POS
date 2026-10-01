@@ -36,6 +36,8 @@ test('split payment keeps configured method spelling in the submitted ledger', (
   $('#qacard_input').closest('.payment-method-card').find('button').trigger('click');
   $('#qacard_input').val('100').trigger('input');
   $('#upi_input').closest('.payment-method-card').find('button').trigger('click');
+  $('#UPI').prop('checked', true).trigger('change');
+  assert.equal($('#Cash').val(), 'UPI');
   assert.deepEqual(JSON.parse(JSON.stringify(sales.getPaymentObject())), {
     Cash: 100, 'QA Card': 100, UPI: 62.5
   });
