@@ -115,18 +115,23 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
   };
 }
 
-function initializeInstalledExtensions({
+async function initializeInstalledExtensions({
   root = process.env.POSNIC_EXTENSIONS_ROOT,
-  publicKey = process.env.POSNIC_EXTENSIONS_PUBLIC_KEY,
+  publicKey = process.env.POSNIC_EXTENSIONS_PUBLIC_KEY ||
+    (process.env.POSNIC_EXTENSIONS_PUBLIC_KEY_FILE &&
+      fs.readFileSync(process.env.POSNIC_EXTENSIONS_PUBLIC_KEY_FILE, 'utf8')),
 } = {}) {
   if (!root) return { loaded: [], failures: [] };
   if (!publicKey) return { loaded: [], failures: [{ code: 'extension_trust_key_missing' }] };
+  const lock = await require('./extension-runtime-lock').acquireRuntimeLock(root);
   const loaded = [],
     failures = [];
   for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
     if (!entry.isDirectory() || !/^[a-z][a-z0-9.-]{2,99}$/.test(entry.name)) continue;
     try {
       const directory = path.join(root, entry.name);
+      if (fs.existsSync(path.join(directory, 'activation.pending.json')))
+        throw new Error('extension_activation_recovery_required');
       const pointer = path.join(directory, 'current');
       if (fs.lstatSync(pointer).isSymbolicLink() || fs.statSync(pointer).size > 100)
         throw new Error('extension_pointer_invalid');
@@ -142,6 +147,6 @@ function initializeInstalledExtensions({
       failures.push({ id: entry.name, code: error.code || error.message });
     }
   }
-  return { loaded, failures };
+  return { loaded, failures, release: lock.release };
 }
 module.exports = { loadVerifiedDirectory, initializeInstalledExtensions };

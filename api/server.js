@@ -100,7 +100,8 @@ const startServer = async () => {
     const HOST = process.env.HOST || config.server?.host || config.host || '0.0.0.0';
     // An incompatible or damaged extension must not prevent the till starting.
     try {
-      const result = require('./src/services/extension-package-loader').initializeInstalledExtensions();
+      const result = await require('./src/services/extension-package-loader').initializeInstalledExtensions();
+      app.locals.releaseExtensionRuntime = result.release;
       for (const failure of result.failures)
         console.error('[EXTENSIONS] Package not activated:', failure.id || 'configuration', failure.code);
     } catch (error) {

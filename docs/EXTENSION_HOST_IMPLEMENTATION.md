@@ -30,7 +30,7 @@ Testing currently uses the installed dependencies from the separate active check
 - Complete private-page end-to-end verification through real login, module permissions/settings and receipt dispatch. The generic page/message bridge now exists.
 - Complete signed-runtime/browser verification of receipt dispatch and cash-drawer behavior. Normal template integration and pending receipt projection now exist.
 - Catalogue mutation/repair cases, stock notifications/sync and normal allocated-sale return verification. Payment ownership and authenticated manager cancellation now have regression coverage.
-- Activation, versioned update/rollback and offline distribution packaging. Signed ZIP validation and immutable staging now exist, but no activation UI/coordinator is complete.
+- Graphical installation, publisher trust-key distribution and packaged application update/rollback verification. The offline activation coordinator and local CLI now exist.
 - Isolated authenticated staging and compatible Windows/offline verification. No public staging or customer hardware compatibility is claimed by these tests.
 
 Provider-specific integration is separate from manual Card recording. Third-party terminal outcomes must be independently verified by their actual adapter.
@@ -52,6 +52,14 @@ The signed descriptor can expose a read-only receipt projection through its isol
 Pending goods use the existing receipt document builder and normal receipt designer, with the shop's configured layout, product descriptions, quantities, original retail value and local date/time. The designer always includes Payment pending for this document type, even if the selected layout omits totals; it does not label it as a tax invoice or claim cash/card was received. Paid receipts load the existing normal sales document. Parent-owned dispatch preserves the cashier's current workspace and propagates printer failure. Reprinting does not open the drawer or alter stock. Actual drawer-on-cash-sale behavior remains a separate handover item.
 
 Verification: 46 receipt designer/endpoint checks pass, including normal renderer regressions, omitted totals blocks, configured printer dispatch, failure propagation, scope and quantity checks, and deletion refusal. The browser page-transport check covers pending/paid dispatch. The private-worker/core smoke now reads a pending receipt before/after payment preparation, refuses it after deletion and still resolves the paid sale. Nineteen private tests remain passing. Signed-runtime browser acceptance and physical printer checks are still required before releasing.
+
+## Offline activation checkpoint
+
+The API and local activation coordinator acquire the same kernel-owned loopback listener keyed by canonical extension-root path. A running API or port collision refuses activation; a process exit releases the lock without stale PID-file cleanup. This is local exclusion, not online licensing or a network protocol. A stopped API's MongoDB must remain available during maintenance. Multi-host/shared-database activation is not supported by this local coordinator.
+
+`activateStagedVersion` re-verifies the staged package, branch scopes and namespace state versions and rejects pending commands. It journals current/previous pointer and digest-enablement changes without rewriting business data. An interrupted activation must resume with the same target and scope. Startup refuses an extension with an unfinished journal; rollback uses the same compatibility and pending-operation checks. The local `api/scripts/extensions.cjs` command exposes stage/activate/rollback with explicit trusted-key/root/database configuration.
+
+The private repository's real-package/Mongo integration tests verify install/update/rollback, runtime exclusion, pending-command refusal, interrupted pointer change, startup refusal and replay, preserving data and revisions. Customer installer UI, default trust-key/root configuration, packaged runtime wiring and physical hardware acceptance remain unfinished.
 
 ## Signed ZIP staging
 
