@@ -82,9 +82,10 @@
         body.room_reference = $('#billing_room_reference').val() || '';
         return JSON.stringify(body);
     };
-    ui.showDataTablePage = ui.show = function () {
+    ui.showDataTablePage = function () { return ui.show(true); };
+    ui.show = function (fromRoute) {
         if (!$('#billing_outlets_page').is(':visible')) {
-            ui.previousPages = $('.page_loader:visible').not('#billing_outlets_page');
+            ui.previousPages = fromRoute ? $() : $('.page_loader:visible').not('#billing_outlets_page');
             ui.previousHash = /billingoutlets/.test(window.location.hash) ? '#/sales/new' : window.location.hash;
         }
         $('.page_loader').hide();
@@ -125,8 +126,14 @@
         if (value) { row.find('select').append($('<option selected>').val(value.item_id).text(value.name || value.item_id)); row.find('input').val(value.price); }
     }
     $(document).on('click', '#billing_back', function () { $('#billing_outlets_page').hide();
-        if (/billingoutlets/.test(window.location.hash)) window.history.replaceState(null, '', ui.previousHash || '#/sales/new');
-        if (ui.previousPages && ui.previousPages.length) ui.previousPages.show(); else $('#sales_new').show(); })
+        if (ui.previousPages && ui.previousPages.length) {
+            if (/billingoutlets/.test(window.location.hash)) window.history.replaceState(null, '', ui.previousHash || '#/sales/new');
+            ui.previousPages.show();
+        } else {
+            // A direct route/reload has no initialized cart to restore. Run the
+            // sales route so products, totals and sale mode are initialized.
+            window.location.hash = '#/sales/new';
+        } })
         .on('click', '#billing_retry', function () { ui.show(); })
         .on('click', '#billing_features', function () { $('#billing_outlets_page').hide(); })
         .on('click', '[data-billing-tab]', function () { ui.tab($(this).attr('data-billing-tab')); })
