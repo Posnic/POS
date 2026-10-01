@@ -476,6 +476,13 @@ const saleSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Normalized by sale-charges before checkout. Keep the exact breakdown
+    // alongside the payable so reopening/printing never loses these amounts.
+    charges: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: undefined,
+    },
+
     // Totals and aggregates
     sales_total: {
       type: Number,

@@ -1066,3 +1066,32 @@ describe('item translation snapshots', () => {
     expect(stored.total_amount).toBe(40);
   });
 });
+const testCharges = [
+  {
+    name: 'Service',
+    amount: 20,
+    taxed: true,
+    tax_name: '0.25% Tax',
+    tax_amount: 0.05,
+    source: 'manual',
+  },
+  { name: 'Delivery', amount: 10, taxed: false, tax_name: '', tax_amount: 0, source: 'manual' },
+];
+test('Mongoose persistence retains the normalized additional charge breakdown', () => {
+  const doc = new Sale({
+    charges: testCharges,
+    sales_total: 95.32,
+    multi_payment: { Cash: 20, Card: 75.32 },
+  });
+  expect(doc.toObject().charges).toEqual(testCharges);
+  const reopened = Sale.hydrate(doc.toObject());
+  expect(reopened.toObject().charges).toEqual(testCharges);
+});
+test('charge snapshots can be cleared without inserting empty arrays on historical bills', () => {
+  const doc = new Sale({});
+  expect(doc.toObject()).not.toHaveProperty('charges');
+  doc.set({ charges: testCharges });
+  expect(doc.toObject().charges).toEqual(testCharges);
+  doc.set({ charges: [] });
+  expect(doc.toObject().charges).toEqual([]);
+});
