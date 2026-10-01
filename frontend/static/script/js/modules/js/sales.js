@@ -7201,6 +7201,13 @@ PosnicPro.sales.setSaleDefaults = function () {
 
 PosnicPro.sales.setDefaults = function () {
 
+    // Successful checkout calls this directly, without clear.cartItems.
+    // A new customer's bill must not inherit the previous sale's charges.
+    PosnicPro.sales.charges = [];
+    PosnicPro.sales._chargeTaxShown = false;
+    $('#sale_charges_list').empty();
+    $('#sale_charge_entry').remove();
+
     // For KOT edit opened via KOT History, prefer "Update" label; for
     // all other contexts (new sale, new KOT, returns, etc.) keep
     // "Save" as the primary action text.

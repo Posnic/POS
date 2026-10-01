@@ -401,3 +401,28 @@ test('charge action follows late-loaded settings on cart recalculation', (t) => 
   enabled=false;sales.charges=[{name:'Saved charge',amount:10}];
   sales.calculation.extraDiscoundCalculation();assert.notEqual($('#sale_add_charge').css('display'),'none');
 });
+
+test('successful-sale reset clears charges before the next customer is billed', (t) => {
+  const {dom,$,sales,win}=savedOrderSetup();t.after(()=>dom.window.close());
+  $('body').append('<div id="sale_charges_list">Previous service 20.05</div><div id="sale_charge_entry">Unfinished charge</div>');
+  win.db.customerDisplay.where=()=>({equals:()=>({delete:()=>{}})});
+  const start=source.indexOf('PosnicPro.sales.setDefaults = function');
+  const end=source.indexOf('\n};',start)+3;
+  win.eval(source.slice(start,end));
+  sales.charges=[{name:'Previous service',amount:20,taxed:true,tax_amount:.05}];
+  sales._chargeTaxShown=true;
+  sales.customerViewDisplay=()=>{};
+  sales.chargesTotal=()=>sales.charges.reduce((n,c)=>n+c.amount,0);
+  sales.chargesTax=()=>sales.charges.reduce((n,c)=>n+c.tax_amount,0);
+  sales.setDefaults();
+  assert.equal(sales.charges.length,0);
+  assert.equal($('#sale_charges_list').text(),'');
+  assert.equal($('#sale_charge_entry').length,0);
+  assert.equal(sales._chargeTaxShown,false);
+  sales.paymentOnlyMode=false;
+  $('#sales_new_items_table tbody').empty();
+  sales.addSalesLineItems({id:'next',name:'Next customer item',selling_price:100,company_price:0,
+    tax:0,tax_type:'exclusive',discount_amount:0,discount_percentage:0,quantity:1,item_quantity:1,unit:'pc'});
+  sales.calculation.salesTableRowCart();
+  assert.equal(sales.extraDiscount.sale_new_tot,100);
+});
