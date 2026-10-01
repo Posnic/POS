@@ -40,7 +40,7 @@ async function cachedVector(db, doc, text, context, preferences, dependencies) {
     const row = await vectors.findOneAndUpdate({ _id: id, state: 'retry' }, { $set: { license: doc.license, state: 'processing', claim, operation_id: context.operationId, execution_owner: require('./ask-posnic-execution-owner').current(), updated_at: new Date() } }, { upsert: true, returnDocument: 'after' });
     if (!row) throw new Error('Embedding claim unavailable.');
   } catch (error) {
-    if (error.code === 11000) throw new Error('Embedding already claimed.');
+    if (error.code === 11000) throw new Error('Embedding already claimed.', { cause: error });
     throw error;
   }
   try {

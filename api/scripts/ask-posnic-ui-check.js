@@ -1,3 +1,5 @@
+/* global document, window, innerWidth, PosnicPro, $ */
+// These globals are used inside browser-evaluated Puppeteer callbacks.
 'use strict';
 
 // Visual regression harness using the shipped Posnic styles and module.
@@ -98,7 +100,7 @@ async function main() {
         PosnicPro.askposnic.checkActionOutcome({ id: 'partial-test', type: 'purchase_order' });
       });
       await page.evaluate(() => Array.from(document.querySelectorAll('#ask_posnic_thread button')).find((button) => button.textContent === 'Review remaining work').click());
-      await page.waitForFunction(() => document.querySelector('#ask_draft_modal').classList.contains('show'), { timeout: 5000 }).catch(async (error) => { console.error(await page.evaluate(() => ({ recoveryCalls, content: $('#ask_draft_content').text(), modal: $('#ask_draft_modal').attr('style'), classes: $('#ask_draft_modal').attr('class'), transitioning: $('#ask_draft_modal').data('bs.modal')._isTransitioning })), errors); throw error; });
+      await page.waitForFunction(() => document.querySelector('#ask_draft_modal').classList.contains('show'), { timeout: 5000 }).catch(async (error) => { console.error(await page.evaluate(() => ({ recoveryCalls: window.recoveryCalls, content: $('#ask_draft_content').text(), modal: $('#ask_draft_modal').attr('style'), classes: $('#ask_draft_modal').attr('class'), transitioning: $('#ask_draft_modal').data('bs.modal')._isTransitioning })), errors); throw error; });
       await page.evaluate(async () => { await Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => {}))); });
       assert.equal(await page.evaluate(() => window.confirmCalls), 1);
       assert.equal(await page.evaluate(() => window.recoveryCalls), 1);

@@ -12,7 +12,7 @@ const current = () => ({ ...identity });
 
 function running(pid) {
   try { process.kill(pid, 0); return true; }
-  catch (error) { if (error.code === 'ESRCH') return false; throw new Error('The worker process state could not be verified.'); }
+  catch (error) { if (error.code === 'ESRCH') return false; throw new Error('The worker process state could not be verified.', { cause: error }); }
 }
 
 function requireStopped(owner, dependencies = {}) {

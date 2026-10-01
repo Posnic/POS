@@ -1,3 +1,5 @@
+/* global document, window, innerWidth */
+// These globals are used inside browser-evaluated Puppeteer callbacks.
 'use strict';
 const fs = require('node:fs');
 const path = require('node:path');

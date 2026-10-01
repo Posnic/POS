@@ -8,7 +8,7 @@ const PROFILE = process.env.AWS_PROFILE || 'posnic-admin';
 const apply = process.argv.includes('--apply');
 function aws(args, allowMissing = false) {
   try { return JSON.parse(execFileSync('aws', [...args, '--profile', PROFILE, '--region', REGION, '--output', 'json', '--no-cli-pager'], { encoding: 'utf8', timeout: 30000, stdio: ['ignore', 'pipe', 'pipe'] }) || '{}'); }
-  catch (error) { if (allowMissing && /NotFoundException|NoSuchEntity/.test(String(error.stderr))) return null; throw new Error(`AWS ${args.slice(0, 2).join(' ')} failed; inspect account permissions.`); }
+  catch (error) { if (allowMissing && /NotFoundException|NoSuchEntity/.test(String(error.stderr))) return null; throw new Error(`AWS ${args.slice(0, 2).join(' ')} failed; inspect account permissions.`, { cause: error }); }
 }
 assert.equal(aws(['sts', 'get-caller-identity']).Account, ACCOUNT);
 const host = aws(['lightsail', 'get-instance', '--instance-name', 'posnic-core-8gb']).instance;
