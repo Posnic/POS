@@ -158,7 +158,7 @@ for (const file of ['items', 'categories', 'customers', 'customer_categories']) 
 }
 
 
-for (const [file, prefix] of [['customers.js','customer'],['customer_categories.js','customercategory']]) {
+for (const [file, prefix] of [['customers.js','customer'],['customer_categories.js','customercategory'],['items.js','item'],['categories.js','category']]) {
     test(file + ' shows complete currency groups safely and restores legacy labels', () => {
         const script = fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js', file), 'utf8');
         const start = script.indexOf('                    // Complete totals grouped by saved bill currency.');
@@ -178,3 +178,23 @@ for (const [file, prefix] of [['customers.js','customer'],['customer_categories.
         dom.window.close();
     });
 }
+
+
+test('category activity panel renders saved row precision and complete currency groups', () => {
+    const script = fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js/categories.js'), 'utf8');
+    const start = script.indexOf('    loadActivity: function (id) {');
+    const end = script.indexOf('\n    },', start) + 6;
+    const dom = new JSDOM('<div id="cg_doc_stats"></div><div id="cg_doc_sales"></div>', {runScripts:'outside-only'});
+    const win=dom.window;
+    win.$=require('jquery')(win);
+    win.PosnicPro={local:{get:()=>'<Shop>'},i18n:{t:(_key,text)=>text},convertDate:v=>v,
+        get:(_request,success)=>success({data:{sale_amount:0,currency_totals:[
+            {currencyCode:'KWD',currencyDigits:3,total:95.005},
+            {currencyCode:'JPY',currencyDigits:0,total:95}],
+            table:{data:{total:10,list:[{_id:'bill',sales_id:'B1',items_total:31.669,currencyCode:'KWD',currencyDigits:3}]}}}})};
+    win.eval('PosnicPro.categories={'+script.slice(start,end)+'};');
+    win.PosnicPro.categories.loadActivity('category');
+    assert.equal(win.$('#cg_doc_sales td').last().text(),'KWD\u00a031.669');
+    assert.ok(win.$('#cg_doc_stats').text().includes('KWD 95.005 · JPY 95'));
+    dom.window.close();
+});

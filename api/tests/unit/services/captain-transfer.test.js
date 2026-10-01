@@ -843,6 +843,8 @@ test.each([
  await db.collection('sales').updateOne({_id:sale._id},{$set:{sales_sub_total:base,sales_total:total,tax,discount,round_off:round,
   'items.0.item_quantity':3,'items.0.item_base_price':base/3,'items.0.item_tax':tax,'items.0.item_discount':discount,
   'changes.0.items.0.item_quantity':3}});
+ const itemCategory=new ObjectId();
+ await db.collection('sales').updateOne({_id:sale._id},{$set:{'items.0.category_id':itemCategory}});
  const input=await confirmation();const completed=await service.complete(input);
  const original=await db.collection('sales').findOne({_id:sale._id});
  const moved=await db.collection('sales').findOne({_id:new ObjectId(completed.destinationId)});
@@ -913,6 +915,14 @@ test.each([
    {currencyCode,currencyDigits:policy.currencyDigits,total,return_total:0}
   ]);
   expect(result.data.total).toEqual([]);
+ }
+ for (const [method,value] of [['itemSaleDetailsPage',{item_id:String(sale.items[0].item_id)}],['categorySaleDetailsPage',{category_id:String(itemCategory)}]]) {
+  const report=await sales[method]({...value,branchid:[String(branch)]},{limit:1},{SaleModel:CustomerHistory});
+  expect(report.status).toBe(true);
+  expect(report.data.sale).toEqual([3]);
+  const lineAmount=money.fromMinor(money.toMinor(total,policy)-money.toMinor(round,policy),policy);
+  expect(report.data.sale_amount).toBe(lineAmount);
+  expect(report.data.currency_totals).toEqual([{currencyCode,currencyDigits:policy.currencyDigits,total:lineAmount,return_total:0}]);
  }
  expect(sum).toEqual({base:money.toMinor(base,policy),tax:money.toMinor(tax,policy),discount:money.toMinor(discount,policy),total:money.toMinor(total,policy),round:money.toMinor(round,policy)});
  await db.collection('sales').updateMany({_id:{$in:checks.map(check=>check._id)}},{$set:{date:new Date('2026-09-30T12:00:00Z')}});
@@ -1060,5 +1070,26 @@ test('item and category activity exclude cancelled historical dishes but retain 
   expect(response.data.return_amount).toBe(10);
   expect(response.data.table.data.total).toBe(2);
   expect(response.data.table.data.list).toHaveLength(1);
+ }
+});
+
+
+test('item and category summaries separate currencies while adding quantities across all groups', async () => {
+ const History=mongoose.models.CaptainActivityHistory || mongoose.model('CaptainActivityHistory',new mongoose.Schema({},{strict:false,collection:'sales'}));
+ const item=new ObjectId(),category=new ObjectId();
+ for(const [code,digits,value] of [['KWD',3,1.003],['JPY',0,100],['',2,2.25]]) {
+  await db.collection('sales').insertOne({_id:new ObjectId(),branch_id:branch,license,currencyCode:code,currencyDigits:digits,
+   items:[{item_id:item,category_id:category,item_quantity:1,total_amount:value}],
+   items_return:[{returnArray:[{returnValue:[{item_id:item,category_id:category,item_quantity:0.5,total_amount:value/2}]}]}]});
+ }
+ for(const [method,value] of [['itemSaleDetailsPage',{item_id:String(item)}],['categorySaleDetailsPage',{category_id:String(category)}]]) {
+  const result=await sales[method]({...value,branchid:[String(branch)]},{limit:1},{SaleModel:History});
+  expect(result.status).toBe(true);
+  expect(result.data.sale).toEqual([3]);expect(result.data.return).toEqual([1.5]);
+  expect(result.data.currency_totals).toEqual([
+   {currencyCode:'',currencyDigits:2,total:2.25,return_total:1.13},
+   {currencyCode:'JPY',currencyDigits:0,total:100,return_total:50},
+   {currencyCode:'KWD',currencyDigits:3,total:1.003,return_total:0.502},
+  ]);
  }
 });

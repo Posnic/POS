@@ -4191,6 +4191,18 @@ PosnicPro.itemdetails = {
                             : returnTotalValue;
                     $('.item_details_saletotalvalue').html(itemSaleValue.toFixed(2));
                     $('.item_details_returntotalvalue').html(itemReturnValue.toFixed(2));
+                    // Complete totals grouped by saved bill currency.
+                    if (Array.isArray(response.data.currency_totals)) {
+                        const formatTotals = field => response.data.currency_totals.map(group => {
+                            const label = /^[A-Z]{3}$/.test(group.currencyCode || '') ? group.currencyCode : currency;
+                            const digits = Number.isInteger(group.currencyDigits) && group.currencyDigits >= 0 && group.currencyDigits <= 4 ? group.currencyDigits : 2;
+                            return label + ' ' + (Number(group[field]) || 0).toFixed(digits);
+                        }).join(' · ') || currency + ' 0.00';
+                        $('.item_details_saletotalvalue').text(formatTotals('total'));
+                        $('.item_details_returntotalvalue').text(formatTotals('return_total'));
+                    }
+                    $('.item_details_saletotalvalue, .item_details_returntotalvalue')
+                        .siblings('.display-currency').toggle(!Array.isArray(response.data.currency_totals));
                 } else {
                     var itemsalesreport = [];
                     data = response.data.table.data.list;

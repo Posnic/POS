@@ -3206,6 +3206,25 @@ class SalesRepository {
     }));
   }
 
+  _lineActivityCurrencyTotals(sales, returns) {
+    const groups = new Map();
+    for (const [rows, field] of [[sales, 'total'], [returns, 'return_total']]) {
+      for (const row of rows) {
+        const code = typeof row._id?.code === 'string' && /^[A-Z]{3}$/.test(row._id.code) ? row._id.code : '';
+        const digits = Number.isInteger(row._id?.digits) && row._id.digits >= 0 && row._id.digits <= 4 ? row._id.digits : 2;
+        const group = groups.get(code) || {currencyCode:code,currencyDigits:digits,total:0,return_total:0};
+        group.currencyDigits = Math.max(group.currencyDigits,digits);
+        group[field] += Number(row.total_amount) || 0;
+        groups.set(code,group);
+      }
+    }
+    return [...groups.values()].sort((a,b)=>a.currencyCode.localeCompare(b.currencyCode)).map(group=>({
+      ...group,
+      total: Money.fromMinor(Money.toMinor(group.total,group),group),
+      return_total: Money.fromMinor(Money.toMinor(group.return_total,group),group),
+    }));
+  }
+
   async itemSaleDetailsPage(value, options = {}, { SaleModel } = {}) {
     try {
       const Model = this.getModel(SaleModel);
@@ -3336,7 +3355,10 @@ class SalesRepository {
         } },
         {
           $group: {
-            _id: null,
+            _id: {
+              code: { $ifNull: ['$captain_transfer_allocation.currencyCode', { $ifNull: ['$currencyCode', ''] }] },
+              digits: { $ifNull: ['$captain_transfer_allocation.currencyDigits', { $ifNull: ['$currencyDigits', 2] }] },
+            },
             total_amount: {
               $sum: {
                 $ifNull: ['$items.total_amount', { $ifNull: ['$items.total', 0] }],
@@ -3351,9 +3373,7 @@ class SalesRepository {
         },
       ]);
 
-      const salesValues = salesList.map((doc) =>
-        typeof doc.total_qty === 'number' ? doc.total_qty : 0
-      );
+      const salesValues = salesList.length ? [salesList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)] : [];
 
       // Aggregate total quantity for returns side
       const returnList = await Model.aggregate([
@@ -3363,7 +3383,10 @@ class SalesRepository {
         { $match: returnFilters },
         {
           $group: {
-            _id: null,
+            _id: {
+              code: { $ifNull: ['$captain_transfer_allocation.currencyCode', { $ifNull: ['$currencyCode', ''] }] },
+              digits: { $ifNull: ['$captain_transfer_allocation.currencyDigits', { $ifNull: ['$currencyDigits', 2] }] },
+            },
             total_amount: {
               $sum: '$items_return.returnArray.returnValue.total_amount',
             },
@@ -3374,23 +3397,18 @@ class SalesRepository {
         },
       ]);
 
-      const returnValues = returnList.map((doc) =>
-        typeof doc.total_qty === 'number' ? doc.total_qty : 0
-      );
+      const returnValues = returnList.length ? [returnList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)] : [];
 
-      // The item/category's OWN revenue - the sum of its line totals across the
-      // matching sales (and returns) - shown as "Total Sales". Already aggregated
-      // above; it just was not returned, so the client fell back to summing each
-      // sale's whole-bill total over the loaded page, which counted every other
-      // item in those bills and changed as you paged. Rounded to 2dp.
-      const saleAmount = salesList.length ? Number(salesList[0].total_amount) || 0 : 0;
-      const returnAmount = returnList.length ? Number(returnList[0].total_amount) || 0 : 0;
+      const currencyTotals = this._lineActivityCurrencyTotals(salesList, returnList);
+      const saleAmount = currencyTotals.length === 1 ? currencyTotals[0].total : 0;
+      const returnAmount = currencyTotals.length === 1 ? currencyTotals[0].return_total : 0;
 
       const arrTableData = {
         sale: salesValues,
         return: returnValues,
-        sale_amount: Math.round(saleAmount * 100) / 100,
-        return_amount: Math.round(returnAmount * 100) / 100,
+        sale_amount: saleAmount,
+        currency_totals: currencyTotals,
+        return_amount: returnAmount,
         table: tableData,
       };
 
@@ -3503,7 +3521,10 @@ class SalesRepository {
         } },
         {
           $group: {
-            _id: null,
+            _id: {
+              code: { $ifNull: ['$captain_transfer_allocation.currencyCode', { $ifNull: ['$currencyCode', ''] }] },
+              digits: { $ifNull: ['$captain_transfer_allocation.currencyDigits', { $ifNull: ['$currencyDigits', 2] }] },
+            },
             total_amount: {
               $sum: {
                 $ifNull: ['$items.total_amount', { $ifNull: ['$items.total', 0] }],
@@ -3518,9 +3539,7 @@ class SalesRepository {
         },
       ]);
 
-      const salesValues = salesList.map((doc) =>
-        typeof doc.total_qty === 'number' ? doc.total_qty : 0
-      );
+      const salesValues = salesList.length ? [salesList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)] : [];
 
       // Aggregate total quantity for returns side
       const returnList = await Model.aggregate([
@@ -3530,7 +3549,10 @@ class SalesRepository {
         { $match: returnFilters },
         {
           $group: {
-            _id: null,
+            _id: {
+              code: { $ifNull: ['$captain_transfer_allocation.currencyCode', { $ifNull: ['$currencyCode', ''] }] },
+              digits: { $ifNull: ['$captain_transfer_allocation.currencyDigits', { $ifNull: ['$currencyDigits', 2] }] },
+            },
             total_amount: {
               $sum: '$items_return.returnArray.returnValue.total_amount',
             },
@@ -3541,23 +3563,18 @@ class SalesRepository {
         },
       ]);
 
-      const returnValues = returnList.map((doc) =>
-        typeof doc.total_qty === 'number' ? doc.total_qty : 0
-      );
+      const returnValues = returnList.length ? [returnList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)] : [];
 
-      // The item/category's OWN revenue - the sum of its line totals across the
-      // matching sales (and returns) - shown as "Total Sales". Already aggregated
-      // above; it just was not returned, so the client fell back to summing each
-      // sale's whole-bill total over the loaded page, which counted every other
-      // item in those bills and changed as you paged. Rounded to 2dp.
-      const saleAmount = salesList.length ? Number(salesList[0].total_amount) || 0 : 0;
-      const returnAmount = returnList.length ? Number(returnList[0].total_amount) || 0 : 0;
+      const currencyTotals = this._lineActivityCurrencyTotals(salesList, returnList);
+      const saleAmount = currencyTotals.length === 1 ? currencyTotals[0].total : 0;
+      const returnAmount = currencyTotals.length === 1 ? currencyTotals[0].return_total : 0;
 
       const arrTableData = {
         sale: salesValues,
         return: returnValues,
-        sale_amount: Math.round(saleAmount * 100) / 100,
-        return_amount: Math.round(returnAmount * 100) / 100,
+        sale_amount: saleAmount,
+        currency_totals: currencyTotals,
+        return_amount: returnAmount,
         table: tableData,
       };
 
