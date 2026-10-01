@@ -952,3 +952,63 @@ test.each([50,60])('new preparation of a transferred product uses current tax at
  const added=saved.changes.flatMap(change=>change.items).filter(item=>item.process==='add');
  expect(added).toHaveLength(1);expect(added[0].item_quantity).toBe(1);
 });
+
+
+for (const shared of [false,true]) test(`full legacy transfer cleans only an empty source table (shared=${shared})`,async()=>{
+  const sourceTable=new ObjectId();
+  await db.collection('tableorder').insertOne({_id:sourceTable,branch_id:branch,license,
+    tableorder_value:'1',capacity:4,max_capacity:4});
+  if(shared)await db.collection('sales').insertOne({...sale,_id:new ObjectId(),person_count:1});
+  const input=await confirmation();input.body.items[0].quantity=2;
+  input.body.revision=(await service.preview(input)).revision;
+  const result=await service.complete(input);
+  expect(result.sourceClosed).toBe(true);
+  const table=await db.collection('tableorder').findOne({_id:sourceTable});
+  expect(table.service_state).toBe(shared?undefined:'cleaning');
+  expect(await service.complete(input)).toEqual(result);
+  expect(await db.collection('tableorder').findOne({_id:sourceTable})).toEqual(table);
+  expect((await seating.read(db,{branchId:branch,license})).some(c=>c.labels.includes('1'))).toBe(false);
+});
+
+test('lost acknowledgement during legacy source cleaning recovers without repeated cleaning',async()=>{
+  const sourceTable=new ObjectId();
+  await db.collection('tableorder').insertOne({_id:sourceTable,branch_id:branch,license,
+    tableorder_value:'1',capacity:4,max_capacity:4});
+  const input=await confirmation();input.body.items[0].quantity=2;
+  input.body.revision=(await service.preview(input)).revision;
+  const original=seating.releaseTransferredLegacy;
+  jest.spyOn(seating,'releaseTransferredLegacy').mockImplementationOnce(async(...args)=>{
+    await original(...args);throw Error('lost cleanup acknowledgement');
+  });
+  await expect(service.complete(input)).rejects.toThrow('lost cleanup');
+  const table=await db.collection('tableorder').findOne({_id:sourceTable});
+  await db.collection('tableorder').updateOne({_id:sourceTable},{$set:{service_state:'available'}});
+  expect((await service.complete(input)).sourceClosed).toBe(true);
+  expect(await db.collection('tableorder').findOne({_id:sourceTable})).toEqual({...table,service_state:'available'});
+});
+
+
+test('legacy transfer preserves a pending seating reservation at the source table',async()=>{
+  const table=new ObjectId(), scope={branchId:branch,license};
+  await db.collection('branches').updateOne({_id:branch},{$set:{table_order_limit:0}});
+  await db.collection('tableorder').insertOne({_id:table,branch_id:branch,license,tableorder_value:'1',capacity:4,max_capacity:4});
+  const claim=await seating.reserve(db,scope,{request_id:'shared-pending-source-0001',actor:'other-staff',
+    table_ids:[String(table)],primary_id:String(table),guests:1});
+  const input=await confirmation();input.body.items[0].quantity=2;
+  input.body.revision=(await service.preview(input)).revision;
+  await service.complete(input);
+  expect((await db.collection('tableorder').findOne({_id:table})).service_state).toBeUndefined();
+  expect(await seating.find(db,scope,claim.id)).toEqual(claim);
+});
+
+test.each(['held','cleaning','replaced-id','foreign-branch'])('legacy cleanup preserves %s table state',async mode=>{
+  const table=new ObjectId();
+  await db.collection('tableorder').insertOne({_id:table,branch_id:mode==='foreign-branch'?new ObjectId():branch,license,
+    tableorder_value:'1',capacity:4,max_capacity:4,service_state:mode==='held'||mode==='cleaning'?mode:'available'});
+  if(mode==='replaced-id')await db.collection('sales').updateOne({_id:sale._id},{$set:{table_id:String(new ObjectId())}});
+  const before=await db.collection('tableorder').findOne({_id:table});
+  const input=await confirmation();input.body.items[0].quantity=2;
+  input.body.revision=(await service.preview(input)).revision;
+  expect((await service.complete(input)).sourceClosed).toBe(true);
+  expect(await db.collection('tableorder').findOne({_id:table})).toEqual(before);
+});

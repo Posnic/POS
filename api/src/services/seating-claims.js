@@ -817,6 +817,48 @@ async function release(db, scope, id, { transferId } = {}) {
   );
   await archive(db, scope, id);
 }
+// A legacy source has no seating claim. Create a deterministic, temporary
+// release claim so the existing branch revision fence also protects cleanup.
+// No sale metadata or kitchen events are rewritten by this operation.
+async function releaseTransferredLegacy(db, scope, orderId, transferId) {
+  const sale = await db.collection('sales').findOne({
+    _id: new ObjectId(identity(String(orderId))), branch_id: scope.branchId, license: scope.license,
+    captain_payment_plan: transferId, floor_closed_transfer_id: transferId,
+    floor_closed_at: { $exists: true },
+  });
+  const journal = await db.collection('captain_payment_plans').findOne({
+    _id: transferId, branch_id: scope.branchId, license: scope.license,
+    purpose: 'order-restructure', 'intent.kind': 'transfer', 'intent.orderId': String(orderId), stage: 'applying',
+  });
+  if (!sale || !journal || sale.seating_request_id || Number(sale.sales_total) !== 0 ||
+      sale.captain_transfer_allocation?.totalMinor !== 0 || sale.captain_transfer_allocation?.lines?.length !== 0 ||
+      !Array.isArray(sale.items) || sale.items.some(line => line && !line.return && !line.cancelled &&
+        !['cancelled','canceled'].includes(String(line.status || '').toLowerCase()) &&
+        Number(line.quantity ?? line.item_quantity ?? line.qty) > 0))
+    fail('Reconcile this transfer before releasing its tables.', 409);
+  if (!String(sale.table_number || '').trim()) return;
+  const id = 'release-' + require('crypto').createHash('sha256').update(transferId).digest('hex').slice(0,40);
+  let claim = await find(db, scope, id);
+  if (!claim) {
+    const table = await db.collection('tableorder').findOne({
+      branch_id: scope.branchId, license: scope.license, tableorder_value: String(sale.table_number || ''),
+      ...(/^[a-f0-9]{24}$/i.test(String(sale.table_id || '')) ? {_id:new ObjectId(sale.table_id)} : {}),
+    });
+    // Manually named tables have no physical table to clean. Preserve a
+    // manager's existing hold or cleaning state rather than overwriting it.
+    if (!table || ['held','cleaning'].includes(table.service_state) ||
+        (table.floor_close && !table.floor_close.completed)) return;
+    const tableId = String(table._id);
+    claim = await reserveClaim(db, scope, {request_id:id,actor:journal.actor,
+      table_ids:[tableId],primary_id:tableId,guests:1},null,transferId,null,sale);
+  }
+  if (claim.operation_lock !== transferId || claim.order_id !== String(sale._id))
+    fail('Reconcile this transfer before releasing its tables.', 409);
+  if (claim.state === 'reserved')
+    await store(db).updateOne({_id:scopeKey(scope),claims:{$elemMatch:{id,state:'reserved',operation_lock:transferId}}},
+      {$set:{'claims.$.state':'submitting'},$inc:{revision:1}});
+  await release(db, scope, id, {transferId});
+}
 async function forOrder(db, scope, input) {
   const id = requestId(input.request_id);
   const claim = await find(db, scope, id);
@@ -1114,6 +1156,7 @@ async function changeGuests(db, scope, orderId, input) {
   return answer;
 }
 module.exports = {
+  releaseTransferredLegacy,
   enrollExisting,
   changeGuests,
   reserve,

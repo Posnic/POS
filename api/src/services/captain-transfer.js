@@ -254,10 +254,10 @@ async function complete(req) {
     if (!await collection.findOne({ _id: applied.source._id, branch_id: c.branchId, license: c.license,
       captain_payment_plan: journal._id, floor_closed_transfer_id: journal._id, floor_closed_at: journal.createdAt }))
       fail('Reconcile the transferred source before continuing.', 409);
-    // Older checks have no seating claim to release. Closing just that check
-    // removes it from floor occupancy without changing another guest's table.
     if (applied.source.seating_request_id)
       await seating.release(req.db, c, applied.source.seating_request_id, { transferId: journal._id });
+    else
+      await seating.releaseTransferredLegacy(req.db, c, applied.source._id, journal._id);
   }
   const result = { requestId: journal.requestId, sourceId: String(applied.source._id),
     destinationId: String(applied.destination._id), sourceClosed, state: 'completed' };
