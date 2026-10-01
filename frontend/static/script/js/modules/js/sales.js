@@ -2563,7 +2563,7 @@
             // ðŸ” Match value by normalized key (handles "Google pay", "googlepay", etc.)
             let storedValue = '';
             for (let key in multi_payment) {
-                if (normalizeKey(key) === normalizeKey(title)) {
+                if (normalizeKey(key) === normalizeKey(title) || normalizeKey(key) === normalizeKey(id)) {
                     storedValue = multi_payment[key];
                     break;
                 }

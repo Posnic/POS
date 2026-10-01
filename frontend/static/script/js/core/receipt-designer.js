@@ -10,10 +10,11 @@
     function block(type, extra) { return Object.assign({ id: 'b' + Math.random().toString(36).slice(2), type: type, align: 'left' }, extra || {}); }
     // A clean starting template, separate from migrating a shop's legacy settings.
     function standardLayout(format) {
+        var sheet = !!contract.formats[format].height;
         var align = contract.formats[format].height ? 'left' : 'center';
-        return { fontSize: contract.formats[format].font, blocks: [block('logo', { align: align }), block('store', { align: align }), block('transaction')]
+        return { fontSize: contract.formats[format].font, blocks: [block('logo', { align: align }), block('store', { align: align, fssaiInHeader: !sheet }), block('transaction', sheet ? {} : { showTitle: false, fontSize: 10 })]
             .concat(['customer_name', 'customer_phone', 'customer_email', 'customer_address', 'customer_tax_number'].map(function (field) { return block('field', { field: field }); }))
-            .concat([block('items'), block('totals'), block('text', { text: PosnicPro.i18n.t('lang_rd_thank_you', 'Thank you for shopping!'), align: 'center' })]) };
+            .concat([block('items', sheet ? {} : { itemLayout: 'columns', nameMaxChars: 20, lineStyle: 'dotted', fontSize: format === '58' ? 9 : 11 })].concat(sheet ? [] : [block('field', { field: 'total_quantity' })]).concat([block('totals'), block('text', { text: PosnicPro.i18n.t('lang_rd_thank_you', 'Thank you for shopping!'), align: 'center' })])) };
     }
     function defaults(branch) {
         var result = { version: 1, defaultFormat: branch.print_type === 'a4' ? 'a4' : branch.print_width === '58' ? '58' : '80', layouts: {} };
@@ -22,14 +23,14 @@
             var blocks = [];
             if (on(branch.print_logoimg)) blocks.push(block('logo', { align: sheet ? 'left' : 'center' }));
             if (branch.header_print && branch.header_print !== 'default') blocks.push(block('text', { text: plain(branch.header_print), align: 'center' }));
-            blocks.push(block('store', { align: sheet ? 'left' : 'center' }), block('transaction'));
+            blocks.push(block('store', { align: sheet ? 'left' : 'center', fssaiInHeader: !sheet }), block('transaction', sheet ? {} : { showTitle: false, fontSize: 10 }));
             if (on(branch.customer_print)) ['customer_name', 'customer_phone', 'customer_address'].forEach(function (field) { blocks.push(block('field', { field: field })); });
             Object.keys({ table: 1, order_type: 1, covers: 1, steward: 1, session: 1, fssai: 1, source: 1 }).forEach(function (field) {
                 var key = { order_type: 'dine_type' }[field] || field;
                 if (contract.fieldAvailable(field, branch) && on(branch['bill_print_' + key])) blocks.push(block('field', { field: field }));
             });
-            blocks.push(block('items', { hsn: on(branch.bill_print_hsn) }), block('totals'));
-            if (on(branch.bill_print_total_qty)) blocks.push(block('field', { field: 'total_quantity' }));
+            blocks.push(block('items', { hsn: on(branch.bill_print_hsn), itemLayout: sheet ? 'detailed' : 'columns', nameMaxChars: 20, lineStyle: 'dotted', fontSize: sheet ? undefined : format === '58' ? 9 : 11 }), block('totals'));
+            if (on(branch.bill_print_total_qty) || (!sheet && branch.bill_print_total_qty == null)) blocks.push(block('field', { field: 'total_quantity' }));
             if (on(branch.print_sale_notes)) blocks.push(block('field', { field: 'sale_note' }));
             if (branch.footer_print) blocks.push(block('text', { text: plain(branch.footer_print), align: 'center' }));
             if (branch.footer_image_caption) blocks.push(block('text', { text: branch.footer_image_caption, align: 'center' }));
@@ -215,7 +216,7 @@
             } else if (b.type === 'items') {
                 var compact = !sheet && b.itemLayout === 'compact';
                 var columns = !sheet && b.itemLayout === 'columns';
-                content = '<table><colgroup><col style="width:' + (sheet ? '46' : columns ? '56' : compact ? '68' : '60') + '%">' + (sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : columns ? '<col style="width:12%"><col style="width:32%">' : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr><th>' + esc(compact ? label('Item') + ' × ' + label('Qty') : label('Item')) + '</th>' + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : columns ? '<th class="rd-number">' + esc(label('Qty')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
+                content = '<table' + (columns ? ' class="rd-fixed-columns"' : '') + '><colgroup><col style="width:' + (sheet ? '46' : columns ? (format === '58' ? '40' : '46') : compact ? '68' : '60') + '%">' + (sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : columns ? (format === '58' ? '<col style="width:23%"><col style="width:12%"><col style="width:25%">' : '<col style="width:20%"><col style="width:10%"><col style="width:24%">') : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr><th>' + esc(compact ? label('Item') + ' × ' + label('Qty') : columns ? label('Item name') : label('Item')) + '</th>' + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : columns ? '<th class="rd-number">' + esc(label('Rate')) + '</th><th class="rd-number">' + esc(label('Qty')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
                 var receiptItems = Array.isArray(data.receipt_line_rows) ? data.receipt_line_rows.map(function (line) {
                     return Object.assign({}, line, { item_name: line.name, item_quantity: Number(line.qty), item_price: Number(line.rate), total_amount: line.amount, hsncode: line.hsn });
                 }) : items;
@@ -231,9 +232,9 @@
                     content += '<tr><td' + (columns ? ' class="rd-item-fixed"' : '') + '>' + esc(name) + (compact ? ' × ' + esc(qty) : '') + (b.hsn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
                     if (!sheet && !compact && !columns) content += '<div class="rd-line-detail">' + esc(qty + ' ' + (item.item_unit || '') + ' × ') + money(item.item_price) + '</div>';
                     if (Number(item.item_discount) || Number(item.item_discount_percentage)) content += '<div class="rd-line-detail">' + esc(label('Discount')) + ': ' + (Number(item.item_discount_percentage) ? esc(item.item_discount_percentage) + '%' : money(item.item_discount)) + '</div>';
-                    content += '</td>' + (sheet ? '<td class="rd-number">' + esc(qty + ' ' + (item.item_unit || '')) + '</td><td class="rd-number">' + money(item.item_price) + '</td>' : columns ? '<td class="rd-number">' + esc(qty) + '</td>' : '') + '<td class="rd-number">' + money(item.total_amount) + '</td></tr>';
+                    content += '</td>' + (sheet ? '<td class="rd-number">' + esc(qty + ' ' + (item.item_unit || '')) + '</td><td class="rd-number">' + money(item.item_price) + '</td>' : columns ? '<td class="rd-number">' + Number(item.item_price || 0).toFixed(2) + '</td><td class="rd-number">' + esc(qty) + '</td>' : '') + '<td class="rd-number">' + (columns ? Number(item.total_amount || 0).toFixed(2) : money(item.total_amount)) + '</td></tr>';
                 });
-                if (columns && hasField('total_quantity')) content += '<tr class="rd-total-quantity"><td>' + esc(label('Total quantity')) + '</td><td class="rd-number">' + esc(values.total_quantity) + '</td><td></td></tr>';
+                if (columns && hasField('total_quantity')) content += '<tr class="rd-total-quantity"><td colspan="2">' + esc(label('Total Items')) + ': ' + receiptItems.length + '</td><td class="rd-number">' + esc(values.total_quantity) + '</td><td></td></tr>';
                 content += '</tbody></table>';
             } else if (b.type === 'totals') {
                 content = '<div class="rd-totals">' + pair('Subtotal', money(data.items_subtotal));
@@ -298,7 +299,7 @@
             if (data.invoice_terms) notes += '<div class="rd-terms"><strong>' + esc(PosnicPro.i18n.t('lang_terms_conditions', 'Terms & conditions')) + '</strong><br>' + esc(data.invoice_terms) + '</div>';
             if (notes) html += '<div class="rd-invoice-end"><div class="rd-invoice-end-notes">' + notes + '</div></div>';
         }
-        return '<style>' + css(format, layout.fontSize) + '</style><article class="rd-document' + (sheet ? ' rd-sheet' : '') + '" data-receipt-design="' + format + '">' + html + '</article>';
+        return '<style>' + css(format, layout.fontSize) + (fixedItems ? '.rd-fixed-columns .rd-number{white-space:nowrap;}.rd-fixed-columns td{border-bottom:0;padding-top:2px;padding-bottom:2px;}.rd-fixed-columns th,.rd-total-quantity td,.rd-grand-total{border-color:#333;border-top-style:' + (fixedItems.lineStyle || 'dotted') + ';border-bottom-style:' + (fixedItems.lineStyle || 'dotted') + ';}.rd-transaction{border-bottom-style:' + (fixedItems.lineStyle || 'dotted') + ';}.rd-total-quantity td{border-top:1px ' + (fixedItems.lineStyle || 'dotted') + ' #333;padding-top:6px;}.rd-grand-total{border-top-width:1px;border-bottom:1px ' + (fixedItems.lineStyle || 'dotted') + ' #333;padding-bottom:6px;}' : '') + '</style><article class="rd-document' + (sheet ? ' rd-sheet' : '') + '" data-receipt-design="' + format + '">' + html + '</article>';
     }
     function print(html, format, options) {
         options = options || {};

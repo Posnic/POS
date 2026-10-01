@@ -118,6 +118,11 @@
         }
         if (block.type === 'items') {
           b.hsn = block.hsn === true;
+          if (block.lineStyle != null) {
+            if (!['solid', 'dashed', 'dotted'].includes(block.lineStyle))
+              throw new Error('Choose a valid separator style.');
+            b.lineStyle = block.lineStyle;
+          }
           b.itemLayout = block.itemLayout || 'detailed';
           if (!['detailed', 'compact', 'columns'].includes(b.itemLayout))
             throw new Error('Choose a valid item layout.');

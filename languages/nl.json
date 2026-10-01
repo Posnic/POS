@@ -4091,5 +4091,11 @@
   "lang_venue_kind": "Locatie",
   "lang_venue_markup": "Gast betaalt extra",
   "lang_venue_name": "Naam van de locatie",
-  "lang_venue_unit_label": "Benaming voor een eenheid"
+  "lang_venue_unit_label": "Benaming voor een eenheid",
+  "lang_long_names_are_shortened_to_keep_quantity": "Lange namen worden ingekort zodat het aantal in een eigen kolom blijft.",
+  "lang_rd_fixed_columns": "Vaste kolommen - artikel, stukprijs, aantal, bedrag",
+  "lang_rd_max_name_chars": "Maximumaantal tekens voor de artikelnaam",
+  "lang_rd_show_title": "Titel van factuur / bon tonen",
+  "lang_rd_fssai_header": "FSSAI onder GSTIN tonen",
+  "lang_rd_total_items": "Totaal artikelen"
 }

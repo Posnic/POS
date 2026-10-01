@@ -18,6 +18,12 @@ function setup() {
     w.eval(read('frontend/static/script/js/modules/js/receipt-designer-editor.js'));
     const branch = { branch_name: 'My Shop', logo: pixel, print_logoimg: true, footer_print: 'Thanks <b>again</b>', footer_qr_url: 'https://example.com/shop', footer_image: pixel, table_options: false };
     const design = w.PosnicPro.receiptDesigner.defaults(branch);
+    // Existing saved designs keep their legacy layout; default templates are tested separately.
+    for (const l of Object.values(design.layouts)) for (const b of l.blocks) {
+        if (b.type === 'items') { b.itemLayout = 'detailed'; delete b.fontSize; }
+        if (b.type === 'store') b.fssaiInHeader = false;
+        if (b.type === 'transaction') b.showTitle = true;
+    }
     const sale = { ...branch, receipt_designs: design, sales_id: 'S128', created_date: '19/09/2026', customer_name: '<script>bad()</script>', customer_gst_number: 'GST123',
         items: [{ item_name: 'Cup <em>large</em>', item_price: 12, item_quantity: 2, item_unit: 'ea', total_amount: 24 }], items_subtotal: 24, items_total: 26, tax: 2 };
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
@@ -340,7 +346,7 @@ test('editor saves half-width fields and compact items independently by format a
     assert.equal(JSON.stringify(sent.receipt_designs.layouts.a4), original);
     assert.equal(sent.receipt_designs.defaultFormat, '80');
     assert.equal(sent.receipt_designs.layouts['80'].blocks.some(b => b.type === 'qr'), false, 'Standard templates do not restore obsolete legacy customizations');
-    assert.equal(sent.receipt_designs.layouts['80'].blocks.find(b => b.type === 'items').itemLayout, 'detailed');
+    assert.equal(sent.receipt_designs.layouts['80'].blocks.find(b => b.type === 'items').itemLayout, 'columns');
     assert.equal(sent.receipt_designs.layouts['80'].blocks.filter(b => b.field?.startsWith('customer_')).length, 5);
     assert.match($('iframe[title="Receipt design preview"]').attr('srcdoc'), /Tax ID:<\/strong> TAX-123456/, 'Adding a tax field has sample data to preview');
     $('[data-format="a4"]').trigger('click');
@@ -893,9 +899,9 @@ test('fixed thermal columns align quantity totals and shorten names; header omit
         sale.items[0].item_name = 'Beach Style Full Fish Tawa Fry';
         sale.receipt_designs = contract.normalize(design);
         const output = $('<div>').html(engine.render(sale, format, true));
-        assert.deepEqual(output.find('thead th').map((_, el) => $(el).text()).get(), ['Item', 'Qty', 'Amount']);
+        assert.deepEqual(output.find('thead th').map((_, el) => $(el).text()).get(), ['Item name', 'Rate', 'Qty', 'Amount']);
         assert.equal(output.find('tbody tr:first td:first').text(), 'Beach Style Ful…');
-        assert.equal(output.find('tbody tr:first td').eq(1).text(), '2');
+        assert.equal(output.find('tbody tr:first td').eq(2).text(), '2');
         assert.equal(output.find('.rd-total-quantity td').eq(1).text(), '2');
         assert.equal(output.find('.rd-field-total_quantity,.rd-field-fssai').length, 0);
         assert.match(output.find('.rd-store').text(), /GSTIN: GST123FSSAI: 13521001000125/);
@@ -903,5 +909,29 @@ test('fixed thermal columns align quantity totals and shorten names; header omit
         assert.match(output.find('.rd-transaction').text(), /S128/);
     }
     assert.throws(() => { design.layouts['80'].blocks.find(b => b.type === 'items').nameMaxChars = 0; contract.normalize(design); }, /Item name length/);
+    dom.window.close();
+});
+
+
+test('new thermal defaults and reset use dotted Item Rate Qty Amount with a quantity-aligned summary', () => {
+    const { dom, engine, sale, $ } = setup();
+    for (const format of ['58', '80']) {
+        for (const design of [engine.defaults(sale), { ...engine.defaults(sale), layouts: { ...engine.defaults(sale).layouts, [format]: engine.standardLayout(format) } }]) {
+            const data = { ...sale, receipt_designs: contract.normalize(design), items: [
+                {item_name:'Chapathi', item_price:30, item_quantity:3, total_amount:90},
+                {item_name:'Garlic naan', item_price:90, item_quantity:2, total_amount:180}
+            ] };
+            const out = $('<div>').html(engine.render(data, format, true));
+            assert.deepEqual(out.find('thead th').map((_, el) => $(el).text()).get(), ['Item name','Rate','Qty','Amount']);
+            assert.deepEqual(out.find('tbody tr:first td').map((_, el) => $(el).text()).get(), ['Chapathi','30.00','3','90.00']);
+            assert.equal(out.find('.rd-total-quantity td').eq(0).attr('colspan'), '2');
+            assert.equal(out.find('.rd-total-quantity td').eq(0).text(), 'Total Items: 2');
+            assert.equal(out.find('.rd-total-quantity td').eq(1).text(), '5');
+            assert.match(out.find('style').text(), /border-top:1px dotted/);
+            design.layouts[format].blocks.find(b => b.type === 'items').lineStyle = 'dashed';
+            const customized = $('<div>').html(engine.render({...data, receipt_designs:contract.normalize(design)},format,true));
+            assert.match(customized.find('style').text(), /border-top:1px dashed/);
+        }
+    }
     dom.window.close();
 });

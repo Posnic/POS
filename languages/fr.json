@@ -3790,7 +3790,7 @@
   "lang_apply_time": "Appliquer les heures",
   "lang_sales_time_filter": "Filtrer les ventes par heure",
   "lang_choose_a_sales_period": "Choisir une période de vente",
-  "lang_rd_fixed_columns": "Colonnes fixes - article, quantité, montant",
+  "lang_rd_fixed_columns": "Colonnes fixes - article, prix unitaire, quantité, montant",
   "lang_rd_max_name_chars": "Nombre maximal de caractères du nom",
   "lang_rd_show_title": "Afficher le titre de la facture / du reçu",
   "lang_rd_fssai_header": "Afficher FSSAI sous GSTIN"

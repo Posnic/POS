@@ -97,3 +97,39 @@ test('Azure Table 6 payment sums full-precision lines before rounding, matching 
   assert.equal($('#save_btn').prop('disabled'), false);
   dom.window.close();
 });
+
+
+for (const method of ['Cash', 'Card', 'Upi', 'Google Pay', 'Bank Transfer', 'Qrpay', 'Razorpay']) {
+  test('full fractional payable survives payment method selection: ' + method, () => {
+    const { dom, $, win, sales } = setup('Unpaid', { [method]: 5397.5 });
+    win.PosnicPro.configPaymentType = ['Card','Upi','Google Pay','Bank Transfer'].map(payment_value => ({ payment_value }));
+    win.localStorage.setItem('payment_gateway', 'true');
+    sales.extraDiscount.sale_new_tot = sales.EditRecentSaleParams.sales_total = 5667.37;
+    $('#Partial_amount').val('5667.37');
+    sales.showMultiPaymentMode();
+    const id = ['Qrpay','Razorpay'].includes(method) ? 'qrpay' : method.toLowerCase().replace(/\s/g, '');
+    assert.equal(Number($('#' + id + '_input').val()), 5667.37);
+    for (const next of ['Cash','Card','Upi','Google Pay','Bank Transfer','Qrpay']) {
+      $(win.document.getElementById(next)).closest('button').trigger('click');
+      const sum = $('.payment-amount-input').get().reduce((n, el) => n + Number(el.value || 0), 0);
+      assert.equal(Math.round(sum * 100), 566737);
+      assert.equal($('#save_btn').prop('disabled'), false);
+    }
+    dom.window.close();
+  });
+}
+
+test('split and partial payments preserve recorded amounts and reject overpayment', () => {
+  const { dom, $, win, sales } = setup('Partialy Paid', { Cash: 1000, Card: 4667.37 });
+  win.PosnicPro.configPaymentType = [{payment_value:'Card'}, {payment_value:'Upi'}];
+  sales.extraDiscount.sale_new_tot = sales.EditRecentSaleParams.sales_total = 5667.37;
+  sales.EditRecentSaleParams.partial_amounts = 5667.37;
+  $('#Partial_amount').val('5667.37');
+  sales.showMultiPaymentMode();
+  assert.equal(Number($('#cash_input').val()), 1000);
+  assert.equal(Number($('#card_input').val()), 4667.37);
+  assert.equal($('#save_btn').prop('disabled'), false);
+  $('#card_input').val('4668.37').trigger('input');
+  assert.equal($('#save_btn').prop('disabled'), true);
+  dom.window.close();
+});

@@ -3790,7 +3790,7 @@
   "lang_apply_time": "تطبيق الوقت",
   "lang_sales_time_filter": "تصفية المبيعات حسب الوقت",
   "lang_choose_a_sales_period": "اختر فترة المبيعات",
-  "lang_rd_fixed_columns": "أعمدة ثابتة - الصنف والكمية والمبلغ",
+  "lang_rd_fixed_columns": "أعمدة ثابتة - الصنف وسعر الوحدة والكمية والمبلغ",
   "lang_rd_max_name_chars": "الحد الأقصى لأحرف اسم الصنف",
   "lang_rd_show_title": "إظهار عنوان الفاتورة / الإيصال",
   "lang_rd_fssai_header": "إظهار FSSAI أسفل GSTIN"
