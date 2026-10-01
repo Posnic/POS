@@ -1,3 +1,4 @@
+const pricingAuthority = require('../services/pricing-authority');
 const itemText = require('../utils/item-localization');
 const { searchPattern } = require('../utils/safe-search');
 const tradingDay = require('../utils/trading-day');
@@ -4322,6 +4323,10 @@ class ItemRepository extends BaseModel {
         { table: params.table, venue: params.venue, unit: params.unit },
         await this.shopVenues()
       );
+      if (params.venue && !servicePoint.venue)
+        throw new Error(
+          'Venue pricing is unavailable. Refresh the menu or contact the restaurant.'
+        );
 
       /* What sells and what sells beside it, from the last month of this
          branch's own sales. A new shop gets empty maps and simply shows no
@@ -4373,7 +4378,7 @@ class ItemRepository extends BaseModel {
            * in a list being scanned.
            */
           photos: onlineOrdering.photoList(row),
-          price: partnerVenues.priceFor(Number(row.selling_price) || 0, servicePoint.venue),
+          ...pricingAuthority.menuQuote(row, branchDoc, servicePoint.venue),
           diet: String(row.diet || ''),
           /*
            * A picture for a dish nobody photographed.
@@ -5222,28 +5227,20 @@ class ItemRepository extends BaseModel {
         { table: params.table, venue: params.venue, unit: params.unit },
         await this.shopVenues()
       );
+      if (params.venue && !servicePoint.venue)
+        throw new Error(
+          'Venue pricing is unavailable. Refresh the menu or contact the restaurant.'
+        );
 
-      if (servicePoint.venue) {
-        const money = (n) => Math.round((Number(n) || 0) * 100) / 100;
-        for (const group of results) {
-          group.items = (group.items || []).map((item) => {
-            const price = partnerVenues.priceFor(item.price, servicePoint.venue);
-            const fixed = Number(item.discount_amount) || 0;
-            const discount = money(
-              fixed > 0 ? fixed : price * ((Number(item.discount_percentage) || 0) / 100)
-            );
-            const taxable = price - discount;
-            const rate = (Number(item.tax) || 0) / 100;
-            const taxPrice = item.tax_type === 'inclusive' ? 0 : money(taxable * rate);
-            return {
-              ...item,
-              price,
-              discount_price: discount,
-              tax_price: taxPrice,
-              final_price: money(item.tax_type === 'exclusive' ? taxable + taxPrice : taxable),
-            };
-          });
-        }
+      for (const group of results) {
+        group.items = (group.items || []).map((item) => ({
+          ...item,
+          ...pricingAuthority.menuQuote(
+            { ...item, _id: item.id, selling_price: item.price },
+            branchDoc,
+            servicePoint.venue
+          ),
+        }));
       }
 
       /*

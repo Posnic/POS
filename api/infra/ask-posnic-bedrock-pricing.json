@@ -1,0 +1,19 @@
+{
+  "model": "global.amazon.nova-2-lite-v1:0",
+  "region": "ap-south-1",
+  "tier": "standard",
+  "currency": "USD",
+  "in": 0.35,
+  "out": 2.95,
+  "unit": "million tokens",
+  "inputSku": "MTBSGQWRNKQ3QZC5",
+  "outputSku": "9Q9UMCGCUY6FV5HT",
+  "inputUsageType": "APS3-Nova2.0Lite-input-tokens-cross-region-global",
+  "outputUsageType": "APS3-Nova2.0Lite-output-tokens-cross-region-global",
+  "effectiveDate": "2026-09-01T00:00:00Z",
+  "publicationDate": "2026-09-30T22:56:13Z",
+  "version": "20260930225613",
+  "verifiedOn": "2026-10-01",
+  "source": "AWS Price List Query API: AmazonBedrock GetProducts, us-east-1 endpoint",
+  "pricingPage": "https://aws.amazon.com/nova/pricing/"
+}

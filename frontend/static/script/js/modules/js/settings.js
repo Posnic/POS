@@ -133,7 +133,7 @@ PosnicPro.settings = {
             var base = (typeof API_URL === 'string' && API_URL) || '/api';
             $('#' + (key === 'mobilepos' ? 'mobile_pos_frame' : 'branch_payments_frame')).attr('src', base.replace(/\/+$/, '') + '/mobile-pos-setup' + (key === 'branchpayments' ? '?view=payments' : ''));
         }
-        if (key === 'ai') { PosnicPro.settings.ai.load(); }
+        if (key === 'ai') { PosnicPro.askposnic.showSettings(); }
     },
     /*
      * The branch's tax profile dresses the registration field (T2): every
@@ -651,6 +651,7 @@ PosnicPro.settings = {
                         module_kiosk_enable: response.data['module_kiosk_enable'] !== false,
                         module_captain_enable: response.data['module_captain_enable'] !== false,
                         module_mobile_pos_enable: response.data['module_mobile_pos_enable'] === true,
+                        module_billing_outlets_enable: response.data['module_billing_outlets_enable'] === true,
                         module_delivery_partners_enable: response.data['module_delivery_partners_enable'] !== false,
                         module_webshop_enable: response.data['module_webshop_enable'] !== false,
                         module_recyclebin_enable: response.data['module_recyclebin_enable'] !== false,
@@ -957,6 +958,7 @@ PosnicPro.settings = {
                 $('#module_kiosk_enable').prop('checked', data.module_kiosk_enable !== false);
                 $('#module_captain_enable').prop('checked', data.module_captain_enable !== false);
                 $('#module_mobile_pos_enable').prop('checked', data.module_mobile_pos_enable === undefined ? data.mobile_pos?.enabled === true : data.module_mobile_pos_enable === true);
+                $('#module_billing_outlets_enable').prop('checked', data.module_billing_outlets_enable === true);
                 $('#module_delivery_partners_enable').prop('checked', data.module_delivery_partners_enable !== false);
                 $('#module_webshop_enable').prop('checked', data.module_webshop_enable !== false);
                 $('#module_recyclebin_enable').prop('checked', data.module_recyclebin_enable !== false);
@@ -995,6 +997,7 @@ PosnicPro.settings = {
                     module_kiosk_enable: data.module_kiosk_enable !== false,
                     module_captain_enable: data.module_captain_enable !== false,
                     module_mobile_pos_enable: data.module_mobile_pos_enable === true,
+                    module_billing_outlets_enable: data.module_billing_outlets_enable === true,
                     module_delivery_partners_enable: data.module_delivery_partners_enable !== false,
                     module_webshop_enable: data.module_webshop_enable !== false,
                     module_recyclebin_enable: data.module_recyclebin_enable !== false,
@@ -2039,6 +2042,7 @@ if ($wrapper.length) {
         'module_tax_enable', 'module_credit_enable', 'module_marketing_enable',
         'module_messaging_enable',
         'module_online_ordering_enable', 'module_kiosk_enable', 'module_captain_enable', 'module_mobile_pos_enable',
+        'module_billing_outlets_enable',
         'module_delivery_partners_enable', 'module_webshop_enable',
         /* Derived from the five above, but still saved: the reports that span
            channels read it. */
@@ -2267,6 +2271,7 @@ if ($wrapper.length) {
                 module_kiosk_enable: $('#module_kiosk_enable').is(':checked') ? 'true' : 'false',
                 module_captain_enable: $('#module_captain_enable').is(':checked') ? 'true' : 'false',
                 module_mobile_pos_enable: $('#module_mobile_pos_enable').is(':checked') ? 'true' : 'false',
+                module_billing_outlets_enable: $('#module_billing_outlets_enable').is(':checked') ? 'true' : 'false',
                 module_delivery_partners_enable: $('#module_delivery_partners_enable').is(':checked') ? 'true' : 'false',
                 module_webshop_enable: $('#module_webshop_enable').is(':checked') ? 'true' : 'false',
                 module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked') ? 'true' : 'false',
@@ -2398,6 +2403,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_kiosk_enable: $('#module_kiosk_enable').is(':checked'),
                     module_captain_enable: $('#module_captain_enable').is(':checked'),
                     module_mobile_pos_enable: $('#module_mobile_pos_enable').is(':checked'),
+                    module_billing_outlets_enable: $('#module_billing_outlets_enable').is(':checked'),
                     module_delivery_partners_enable: $('#module_delivery_partners_enable').is(':checked'),
                     module_webshop_enable: $('#module_webshop_enable').is(':checked'),
                     module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked'),
@@ -7653,7 +7659,7 @@ PosnicPro.settings.openFeaturePage = function ($card) {
     var home = PosnicPro.settings.FEATURE_HOME[key];
     if (home) {
         infoHtml += '<div class="q-label"><lang class="lang_fp_configure">Configure</lang></div>'
-            + '<p class="fd-text"><a class="fp-configure-link" href="#/settings/' + esc(home[0]) + '">'
+            + '<p class="fd-text"><a class="fp-configure-link" href="#/' + (home[2] === 'page' ? '' : 'settings/') + esc(home[0]) + '">'
             + 'Manage &rarr; ' + esc(home[1]) + '</a></p>';
     }
     /* The generic line is TRUE for every feature except Demo Data, whose off
@@ -7689,6 +7695,7 @@ PosnicPro.settings.FEATURE_HOME = {
     module_kiosk_enable: ['kioskmachine', 'Kiosk Machine'],
     module_captain_enable: ['captainapp', 'Captain App'],
     module_mobile_pos_enable: ['mobilepos', 'Mobile POS'],
+    module_billing_outlets_enable: ['billingoutlets', 'Billing outlets', 'page'],
     module_delivery_partners_enable: ['deliverypartners', 'Delivery Partners'],
     module_webshop_enable: ['webshop', 'Webshop'],
     module_themes_enable: ['theme', 'Themes'],
@@ -9963,6 +9970,11 @@ PosnicPro.settings.ai = {
     featureLabel: function (feature) {
         var names = {
             item_description: PosnicPro.i18n.t('lang_ai_feature_item_description', 'Item descriptions'),
+            ask_posnic_help: PosnicPro.i18n.t('lang_ai_feature_ask_posnic_help', 'Ask Posnic answers'),
+            ask_posnic_grounding_check: PosnicPro.i18n.t('lang_ai_feature_ask_posnic_grounding_check', 'Ask Posnic source checks'),
+            ask_posnic_document_embedding: PosnicPro.i18n.t('lang_ai_feature_ask_posnic_document_embedding', 'Knowledge indexing'),
+            ask_posnic_query_embedding: PosnicPro.i18n.t('lang_ai_feature_ask_posnic_query_embedding', 'Knowledge search'),
+            ask_posnic_own_key_embedding: PosnicPro.i18n.t('lang_ai_feature_ask_posnic_own_key_embedding', 'Own-key knowledge indexing and search'),
             ordering_assistant: PosnicPro.i18n.t('lang_ai_feature_ordering_assistant', 'Ordering assistant, typed'),
             voice_order_live: PosnicPro.i18n.t('lang_ai_feature_voice_order_live', 'Talk to order, live voice'),
             voice_order: PosnicPro.i18n.t('lang_ai_feature_voice_order', 'Voice orders on the handset')
@@ -10140,7 +10152,7 @@ PosnicPro.settings.ai = {
 };
 
 $(document).on('shown.bs.tab', 'a[href="#v-pills-ai"]', function () {
-    PosnicPro.settings.ai.load();
+    PosnicPro.askposnic.showSettings();
 });
 $(document).on('change', '#ai_provider', function () {
     PosnicPro.settings.ai.syncRows();

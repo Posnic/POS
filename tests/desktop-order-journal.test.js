@@ -32,6 +32,24 @@ test('only confirmed success clears the pending order',()=>{
  assert.throws(()=>journal.confirm(entry,{type:'error'}));assert.equal(journal.pending().length,1);
  journal.confirm(entry,{type:'success',data:{_id:'sale-1'}});assert.equal(journal.pending().length,0);
 });
+
+test('only an explicit matching no-write rejection releases an uncertain submission',()=>{
+ const a=setup();const journal=a.open();const entry=journal.save(payload());
+ for(const response of [undefined,{type:'error'},{type:'error',data:{submission_outcome:'not_saved',request_id:'other'}}]){
+  assert.equal(journal.reject(entry,response),false);assert.equal(journal.pending().length,1);
+ }
+ assert.equal(journal.reject(entry,{type:'error',message:'Tender mismatch',data:{submission_outcome:'not_saved',request_id:entry.id}}),true);
+ assert.equal(journal.pending().length,0);assert.equal(a.data.size,1);
+ assert.equal(JSON.parse([...a.data.values()][0]).state,'rejected');
+ journal.save({...payload(),idempotencyKey:'corrected-request',sales_total:201});
+ assert.equal(journal.pending().length,1);
+});
+
+test('account switch cannot reject another user submission',()=>{
+ const a=setup();const journal=a.open();const entry=journal.save(payload());a.scope.user='other';
+ assert.throws(()=>journal.reject(entry,{type:'error',data:{submission_outcome:'not_saved',request_id:entry.id}}));
+ a.scope.user='staff-1';assert.equal(journal.pending().length,1);
+});
 test('account switch cannot acknowledge another user order',()=>{
  const a=setup();const journal=a.open();const entry=journal.save(payload());a.scope.user='staff-2';
  assert.throws(()=>journal.confirm(entry,{type:'success',data:{_id:'sale-1'}}));

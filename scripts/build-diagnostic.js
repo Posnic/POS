@@ -20,4 +20,3 @@ build({ projectDir: root, targets: Platform.WINDOWS.createTarget(['portable'], A
   config: { compression: 'store', extraMetadata: { posnicDiagnostic: marker }, portable: { splashImage: path.join(root, 'src/diagnostic-splash.bmp'), artifactName: 'Posnic-${version}-diagnostic-' + marker.buildId + '.exe' } } })
   .then(() => { fs.writeFileSync(path.join(root, 'dist/DIAGNOSTIC-BUILD.json'), JSON.stringify(marker, null, 2)); console.log('Private diagnostic portable built. Nothing published.'); })
   .catch(error => { console.error(error.message); process.exitCode = 1; });
-

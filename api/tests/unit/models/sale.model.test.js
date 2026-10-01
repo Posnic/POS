@@ -1015,6 +1015,35 @@ describe('invoice_key survives the strict schema', () => {
 });
 
 describe('item translation snapshots', () => {
+  test('the accepted pricing snapshot survives legacy live-order normalization', async () => {
+    const pricing = {
+      version: 1,
+      item_id: 'water',
+      source: 'catalogue',
+      selling_price: 30,
+      tax: 5,
+      tax_type: 'inclusive',
+    };
+    const sale = new Sale({
+      sale_method: 'Live-Order',
+      items: [
+        {
+          item_name: 'Water',
+          item_quantity: 1,
+          total_amount: 30,
+          pricing,
+          unit_price: 28.57,
+          item_base_price: 28.57,
+        },
+      ],
+    });
+    await getPreSaveFn().call(sale);
+    expect(sale.toObject().items[0]).toMatchObject({
+      pricing,
+      unit_price: 28.57,
+      item_base_price: 28.57,
+    });
+  });
   test('Mongoose and live-order normalization retain names without menu descriptions', async () => {
     const sale = new Sale({
       sale_method: 'Live-Order',
@@ -1036,4 +1065,33 @@ describe('item translation snapshots', () => {
     expect(stored.item_quantity).toBe(2);
     expect(stored.total_amount).toBe(40);
   });
+});
+const testCharges = [
+  {
+    name: 'Service',
+    amount: 20,
+    taxed: true,
+    tax_name: '0.25% Tax',
+    tax_amount: 0.05,
+    source: 'manual',
+  },
+  { name: 'Delivery', amount: 10, taxed: false, tax_name: '', tax_amount: 0, source: 'manual' },
+];
+test('Mongoose persistence retains the normalized additional charge breakdown', () => {
+  const doc = new Sale({
+    charges: testCharges,
+    sales_total: 95.32,
+    multi_payment: { Cash: 20, Card: 75.32 },
+  });
+  expect(doc.toObject().charges).toEqual(testCharges);
+  const reopened = Sale.hydrate(doc.toObject());
+  expect(reopened.toObject().charges).toEqual(testCharges);
+});
+test('charge snapshots can be cleared without inserting empty arrays on historical bills', () => {
+  const doc = new Sale({});
+  expect(doc.toObject()).not.toHaveProperty('charges');
+  doc.set({ charges: testCharges });
+  expect(doc.toObject().charges).toEqual(testCharges);
+  doc.set({ charges: [] });
+  expect(doc.toObject().charges).toEqual([]);
 });

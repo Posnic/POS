@@ -85,16 +85,17 @@ test('THE WINDOW IS SHOWN WITHOUT FOCUS, and cannot take it later', () => {
   assert.match(SOURCE, /skipTaskbar:\s*true/);
 });
 
-test('the read-only wall exposes only an explicit refresh control and no editable inputs', () => {
-  // Refresh re-reads orders; it must not add order-changing controls to the wall.
+test('the page remains read-only with only an explicit order refresh control', () => {
+  /* Refresh reads the active orders; the accessory has no order-editing form. */
   assert.match(PAGE, /user-select:\s*none/);
   assert.match(PAGE, /cursor:\s*none/);
   const buttons = PAGE.match(/<button\b[^>]*>/gi) || [];
-  assert.equal(buttons.length, 1);
+  assert.equal(buttons.length, 1, 'only the read-only refresh control belongs here');
   assert.match(buttons[0], /id="refresh-orders"/);
   assert.match(buttons[0], /type="button"/);
   assert.match(buttons[0], /aria-label="Refresh active orders"/);
   assert.ok(!/<input/i.test(PAGE), 'the kitchen screen grew an input');
+  assert.ok(!/<(?:form|textarea|select)\b/i.test(PAGE), 'the accessory grew an editing form');
 });
 
 test('it runs with the same sandbox as every other window', () => {

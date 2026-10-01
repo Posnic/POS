@@ -58,14 +58,29 @@
   "Account created successfully": [
     "src/models/install.model.js"
   ],
+  "Action available": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Action draft created.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Action not found.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Active branch does not belong to the current license": [
     "src/repositories/item.repository.js"
   ],
   "Active categories retrieved successfully": [
     "src/services/category.service.js"
   ],
+  "Add a separate line to change priced modifiers.": [
+    "src/services/sale.service.js"
+  ],
   "Add at least one item to adjust": [
     "src/repositories/item.repository.js"
+  ],
+  "Add at least one item to the stock count": [
+    "src/repositories/inventory-count.repository.js"
   ],
   "Add transaction successfully": [
     "src/controllers/customers.controller.js"
@@ -161,8 +176,29 @@
   "Another customer with this phone number already exists": [
     "src/services/customer.service.js"
   ],
+  "Answer": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Approved": [
     "src/services/authorization.service.js"
+  ],
+  "Ask Posnic actions are not enabled for your role.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Ask Posnic audit history": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Ask Posnic could not load the answer.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Ask Posnic is available": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Ask Posnic preferences": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Ask Posnic preferences saved.": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "At least one branch must be assigned to the user": [
     "src/models/user.model.js"
@@ -212,6 +248,7 @@
     "src/services/sale.service.js"
   ],
   "Branch ID not found": [
+    "src/repositories/inventory-count.repository.js",
     "src/repositories/invoice.repository.js",
     "src/repositories/item.repository.js",
     "src/repositories/purchase-order.repository.js",
@@ -387,6 +424,9 @@
     "src/models/setting.model.js",
     "src/repositories/settings.repository.js"
   ],
+  "Choose a purchase order to prepare a supplier message about availability or remaining delivery quantities. Review and confirm to save the text in Ask Posnic. You can then copy it into your normal messaging workflow.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Choose a supplier": [
     "src/repositories/purchase-order.repository.js"
   ],
@@ -411,6 +451,12 @@
   ],
   "Conflicting duplicate items in CSV. Nothing was imported.": [
     "src/repositories/item.repository.js"
+  ],
+  "Conversation history": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Conversations and feedback deleted": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "Correct the listed customer rows. Nothing was imported.": [
     "src/services/customer.service.js"
@@ -668,8 +714,17 @@
   "Document Restored successfully": [
     "src/models/setting.model.js"
   ],
+  "Document extracted and saved as a draft.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Document updated": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Draft deleted": [
     "src/repositories/purchase-order.repository.js"
+  ],
+  "Due schedules processed.": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "Duplicate key error": [
     "src/middleware/async.js"
@@ -686,11 +741,17 @@
   "Email settings updated successfully": [
     "src/models/setting.model.js"
   ],
+  "Embedding text exceeds its limit.": [
+    "src/services/ask-posnic-embedding.service.js"
+  ],
   "Enter a code": [
     "src/controllers/online-ordering.controller.js"
   ],
   "Enter a phone number to test": [
     "src/services/messaging.service.js"
+  ],
+  "Enter a question up to 1,000 characters.": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "Enter a valid email address": [
     "app.js"
@@ -813,6 +874,9 @@
   "Frequent items fetched": [
     "src/repositories/sale.repository.js"
   ],
+  "Future scheduled deliveries resumed.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "General Setting Not Updated": [
     "src/controllers/settings.controller.js"
   ],
@@ -865,6 +929,9 @@
     "src/routes/items.routes.js",
     "src/routes/receivings.routes.js",
     "src/routes/sales.routes.js"
+  ],
+  "Help is not enabled for your role.": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "Hourly rate must be a non-negative number": [
     "src/services/shift.service.js"
@@ -1088,6 +1155,12 @@
   "Kiosk settings updated successfully": [
     "src/models/setting.model.js"
   ],
+  "Knowledge document saved": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Knowledge documents": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "License ID required": [
     "src/models/branch.model.js"
   ],
@@ -1123,6 +1196,12 @@
   ],
   "Mail sent successfully": [
     "src/models/sale.model.js"
+  ],
+  "Managed AI currently supports text questions. Configure a shop-owned provider for image assistance.": [
+    "src/services/ai.service.js"
+  ],
+  "Managed Bedrock embeddings are not enabled.": [
+    "src/services/ask-posnic-embedding.service.js"
   ],
   "Message has been sent": [
     "src/services/sms.service.js"
@@ -1460,6 +1539,9 @@
   "Open order not found": [
     "src/repositories/sale.repository.js"
   ],
+  "Operator review must finish before resuming this schedule.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Order cancelled": [
     "src/repositories/sale.repository.js"
   ],
@@ -1481,12 +1563,18 @@
   "Order was cancelled by the customer": [
     "src/repositories/sale.repository.js"
   ],
+  "Outlet access changed. Request the comparison again.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Outstanding customers": [
     "src/services/credit.service.js"
   ],
   "Outstanding report retrieved successfully": [
     "src/services/customer.service.js",
     "src/services/supplier.service.js"
+  ],
+  "Owner access is required.": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "PIN is required": [
     "src/services/authorization.service.js"
@@ -1585,6 +1673,9 @@
   "Preferences updated successfully": [
     "src/services/customer.service.js"
   ],
+  "Prepare supplier message": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Preview ready": [
     "src/repositories/item.repository.js"
   ],
@@ -1593,6 +1684,9 @@
   ],
   "Price list saved": [
     "src/models/setting.model.js"
+  ],
+  "Pricing settings could not be loaded. Try again before placing the order.": [
+    "src/repositories/sale.repository.js"
   ],
   "Print setting retrieval failed": [
     "src/repositories/user.repository.js"
@@ -1605,6 +1699,9 @@
   ],
   "Print setting updated successfully": [
     "src/repositories/user.repository.js"
+  ],
+  "Published knowledge imported.": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "Purchase not found": [
     "src/models/receiving.model.js"
@@ -1747,6 +1844,12 @@
   "Return sales value is null": [
     "src/repositories/sale.repository.js"
   ],
+  "Review the remaining work before confirming.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Review this draft before confirming.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Role created": [
     "src/repositories/role.repository.js"
   ],
@@ -1813,6 +1916,9 @@
   "Saved": [
     "src/repositories/item.repository.js"
   ],
+  "Saved action status": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Schedule entry not found": [
     "src/repositories/shift.repository.js"
   ],
@@ -1824,6 +1930,9 @@
   ],
   "Scheduled run complete": [
     "src/services/campaign.service.js"
+  ],
+  "Schedules": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "Search completed successfully": [
     "src/services/category.service.js",
@@ -1847,6 +1956,9 @@
   ],
   "Selected collections processed": [
     "src/models/setting.model.js"
+  ],
+  "Semantic search is temporarily unavailable.": [
+    "src/services/ask-posnic-embedding.service.js"
   ],
   "Send failed": [
     "app.js"
@@ -1885,6 +1997,18 @@
   "Stock changed at another billing counter. Please refresh the item and try again.": [
     "src/services/sale.service.js"
   ],
+  "Stock count": [
+    "src/repositories/inventory-count.repository.js"
+  ],
+  "Stock count draft created": [
+    "src/repositories/inventory-count.repository.js"
+  ],
+  "Stock count not found": [
+    "src/repositories/inventory-count.repository.js"
+  ],
+  "Stock counts": [
+    "src/repositories/inventory-count.repository.js"
+  ],
   "Store details not found": [
     "src/models/setting.model.js"
   ],
@@ -1909,6 +2033,9 @@
   ],
   "Successfully updated": [
     "src/controllers/users.controller.js"
+  ],
+  "Summary schedule saved.": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "Supplier Data Exported": [
     "src/models/supplier-legacy.model.js"
@@ -2033,6 +2160,12 @@
   ],
   "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": [
     "src/models/setting.model.js"
+  ],
+  "Thanks for the feedback.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "That Ask Posnic action is disabled.": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "That branch already has items - nothing was copied": [
     "src/services/catalogue-copy.js"
@@ -2266,6 +2399,9 @@
   "This register needs to be resumed on this device. Open Cash Register and choose Resume.": [
     "src/repositories/register.repository.js"
   ],
+  "This shop has no active managed AI allowance.": [
+    "src/services/managed-ai-credits.service.js"
+  ],
   "This shop has not set up an AI provider": [
     "src/services/ai.service.js"
   ],
@@ -2275,6 +2411,9 @@
   "This shop has nothing on its menu yet": [
     "src/services/ordering-assistant.service.js",
     "src/services/voice-session.service.js"
+  ],
+  "This shop has reached its managed AI allowance.": [
+    "src/services/managed-ai-credits.service.js"
   ],
   "This shop has reached its monthly AI spending limit": [
     "src/controllers/online-ordering.controller.js",
@@ -2421,6 +2560,9 @@
     "src/controllers/settings.controller.js",
     "src/controllers/users.controller.js"
   ],
+  "Unauthorized access": [
+    "src/controllers/inventory-counts.controller.js"
+  ],
   "Unit Added Successfully": [
     "src/models/setting.model.js"
   ],
@@ -2542,6 +2684,9 @@
   "Variant value \"": [
     "src/services/item.service.js"
   ],
+  "Venue pricing is unavailable. Refresh the menu or contact the restaurant.": [
+    "src/repositories/sale.repository.js"
+  ],
   "Voice ordering is not set up for this shop": [
     "src/services/transcribe.service.js"
   ],
@@ -2600,6 +2745,9 @@
   "Your account is inactive. Please contact administrator.": [
     "src/controllers/users.controller.js"
   ],
+  "Your current session does not include that report period.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Your key deactivated, please contact posnic admin !": [
     "src/controllers/users.controller.js",
     "src/repositories/user.repository.js"
@@ -2611,8 +2759,38 @@
   "Your password was recently changed. Please log in again.": [
     "src/middleware/auth.js"
   ],
+  "Your role cannot prepare that action.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Your role cannot recover action drafts.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Your role cannot view commerce insights.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Your role cannot view profit.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Your role cannot view promotion totals.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Your role cannot view receivables.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Your role cannot view sales trend totals.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Your role cannot view supplier-message drafts.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
+  "Your role cannot view that action.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Your sales item quantity is mismatched.": [
     "src/services/sale.service.js"
+  ],
+  "Your saved supplier-message drafts": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "Your session has expired. Please log in again.": [
     "src/middleware/auth.js"
@@ -2772,6 +2950,9 @@
   ],
   "successfully loaded": [
     "src/controllers/users.controller.js"
+  ],
+  "supplier_message_drafts": [
+    "src/services/ask-posnic-action-identity.js"
   ],
   "tips must be a non-negative number": [
     "src/repositories/shift.repository.js"

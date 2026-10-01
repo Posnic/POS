@@ -1,0 +1,25 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EmbedApprovedKnowledgeFromPosnicCore",
+      "Effect": "Allow",
+      "Action": "bedrock:InvokeModel",
+      "Resource": "arn:aws:bedrock:ap-south-1::foundation-model/amazon.titan-embed-text-v2:0",
+      "Condition": {
+        "StringEquals": { "aws:RequestedRegion": "ap-south-1" },
+        "IpAddress": { "aws:SourceIp": ["13.207.75.191/32", "2406:da1a:816:a100:c61d:b8f1:54a5:4122/128"] }
+      }
+    },
+    {
+      "Sid": "UsePosnicKnowledgeIndexFromPosnicCore",
+      "Effect": "Allow",
+      "Action": ["s3vectors:PutVectors", "s3vectors:GetVectors", "s3vectors:QueryVectors", "s3vectors:DeleteVectors"],
+      "Resource": "arn:aws:s3vectors:ap-south-1:719443252592:bucket/posnic-ask-719443252592/index/knowledge-v1",
+      "Condition": {
+        "StringEquals": { "aws:RequestedRegion": "ap-south-1" },
+        "IpAddress": { "aws:SourceIp": ["13.207.75.191/32", "2406:da1a:816:a100:c61d:b8f1:54a5:4122/128"] }
+      }
+    }
+  ]
+}

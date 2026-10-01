@@ -1436,6 +1436,9 @@ test.each([
       { _id: sale._id },
       {
         $set: {
+          // A real sale has a timestamp. Without it, receipt rendering falls
+          // back to the wall clock and this comparison races minute boundaries.
+          date: new Date('2026-09-01T09:00:00Z'),
           sales_sub_total: base,
           sales_total: total,
           tax,

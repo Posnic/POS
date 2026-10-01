@@ -234,8 +234,12 @@ class WhatsAppService extends EventEmitter {
 
     try {
       const chatId = phoneNumber.includes('@c.us') ? phoneNumber : `${phoneNumber}@c.us`;
-      await client.sendMessage(chatId, message);
-      return { status: true, message: 'Message sent successfully' };
+      const sent = await client.sendMessage(chatId, message);
+      return {
+        status: true,
+        message: 'Message sent successfully',
+        messageId: sent?.id?._serialized,
+      };
     } catch (error) {
       console.error('Error sending message:', error);
       return { status: false, message: error.message };

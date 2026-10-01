@@ -16,12 +16,13 @@ test('repeated sends and failed-request retries keep the same identity',()=>{
  assert.equal(sales.orderRequestId(),first);
  sales.resetOrderRequest();assert.notEqual(sales.orderRequestId(),first);
 });
-test('new desktop sales send the identity and clear it on success, not on error',()=>{
+test('new desktop sales clear identity only on confirmation or explicit no-write rejection',()=>{
  const start=source.indexOf('var isKotNewSale =');
  const send=source.slice(start,source.indexOf("url: 'setting/salesSmsReceipt'",start));
  assert.match(send,/idempotencyKey:\s*PosnicPro\.sales\.orderRequestId\(\)/);
  assert.ok(send.indexOf('submissionJournal().confirm(savedSubmission, response)') < send.indexOf('resetOrderRequest()'));
- assert.equal((send.match(/resetOrderRequest\(\)/g)||[]).length,1);
+ assert.equal((send.match(/resetOrderRequest\(\)/g)||[]).length,2);
+ assert.match(send,/if \(PosnicPro\.sales\.submissionJournal\(\)\.reject\(savedSubmission, response\)\) \{\s*PosnicPro\.sales\.resetOrderRequest\(\)/);
  assert.match(source,/showAdd: function \(\) \{\s*PosnicPro\.sales\.resetOrderRequest\(\);/);
  assert.match(source,/clear\.cartItems = function \(isFalse\) \{\s*PosnicPro\.sales\.resetOrderRequest\(\);/);
 });

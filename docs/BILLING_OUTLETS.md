@@ -6,6 +6,10 @@ Sales channels (counter, captain, online) remain independent.
 
 ## Operation
 
+Billing outlets is **off by default**. Enable it in **Settings → Features → Billing outlets**, then save. The Features card contains only its on/off switch.
+
+Open **Manage → Billing outlets → Outlet settings** to configure outlets, even before enabling billing. With no outlets configured, the page offers **Set up an outlet**. The New Sale shortcut appears only while the feature is enabled. Switching it off prevents new outlet bills; existing bills retain their recorded outlet rules.
+
 From New Sale, open **Billing outlets**. The same page is available through the
 command palette. **Outlet settings** requires branch-write permission. Configure
 the name, percentage price adjustment, exact item prices, service-charge rate,

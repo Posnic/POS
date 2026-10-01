@@ -16,9 +16,9 @@
  * have printed anything.
  *
  * So this boots a real Express app on a real port, in front of a real MongoDB,
- * and points a real BillManager at it with a fake printer on the end. The only
- * things substituted here are the final raster renderer and the paper.
- * The Electron proof separately checks real rendering at both thermal widths.
+ * and points a real BillManager at it with a fake printer on the end. The
+ * Electron raster-rendering boundary is simulated; document contents, routing
+ * and queue acknowledgement still pass through the real API and desktop code.
  */
 
 const http = require('http');
@@ -27,22 +27,34 @@ const express = require('express');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 
+// The API suite runs in Node, without Electron's app/BrowserWindow. The desktop
+// design tests cover rendering; this contract verifies the exact document that
+// reaches that boundary and the bytes passed onward to the selected printer.
+jest.mock('../../../../src/bill-design', () => ({
+  renderBill: jest.fn(async (document, paper) => {
+    expect(['58', '80']).toContain(paper);
+    expect(document.sales_id).toBe('INV-9001');
+    expect(document.items_total).toBe(440);
+    expect(document.receipt_line_rows[0]).toMatchObject({
+      name: 'Chicken Biryani',
+      qty: '2',
+      amount: 440,
+    });
+    return Buffer.from(JSON.stringify(document));
+  }),
+}));
+const billDesign = require('../../../../src/bill-design');
+
 const Sale = require('../../../src/models/sale.model');
 const BaseModel = require('../../../src/models/base.model');
 const PrintJob = require('../../../src/models/print-job.model');
 const repo = require('../../../src/repositories/sale.repository');
-const salesController = require('../../../src/controllers/sales.controller');
+let salesController;
 const { ensureKioskKey } = require('../../../src/middleware/kiosk-key');
 
 /* The desktop's own file, not a copy of it. Four directories up is the repo
    root: api/tests/unit/repositories -> api/tests/unit -> api/tests -> api. */
 const BillManager = require(path.join(__dirname, '..', '..', '..', '..', 'src', 'bill-manager.js'));
-
-// This suite runs in the API-only Node job, without Electron. Keep the real
-// database, socket, payload builder, job ownership and submission code; replace
-// only the Electron raster boundary. Its input must be the printable snapshot.
-const billDesign = require('../../../../src/bill-design');
-let renderBill;
 
 const KEY = 'the-installation-key';
 const BRANCH = '64b7f1c2a1e2c3d4e5f60001';
@@ -141,19 +153,11 @@ const openTicket = (table = 'T4') =>
   });
 
 beforeAll(async () => {
-  renderBill = jest.spyOn(billDesign, 'renderBill').mockImplementation(async (document, paper) => {
-    expect(['58', '80']).toContain(paper);
-    expect(document.sales_id).toBe('INV-9001');
-    expect(document.items_total).toBe(440);
-    expect(document.receipt_line_rows[0]).toMatchObject({
-      name: 'Chicken Biryani',
-      qty: '2',
-      amount: 440,
-    });
-    return Buffer.from(JSON.stringify(document));
-  });
   mem = await MongoMemoryServer.create();
   await mongoose.connect(mem.getUri('posnic'));
+  BaseModel.mongoClient = mongoose.connection.getClient();
+  BaseModel.database = mongoose.connection.db;
+  salesController = require('../../../src/controllers/sales.controller');
 
   process.env.KIOSK_API_KEY = KEY;
 
@@ -182,10 +186,11 @@ beforeAll(async () => {
 }, 60000);
 
 afterAll(async () => {
-  renderBill?.mockRestore();
   delete process.env.KIOSK_API_KEY;
   if (server) await new Promise((r) => server.close(r));
   await mongoose.disconnect();
+  BaseModel.mongoClient = null;
+  BaseModel.database = null;
   if (mem) await mem.stop();
 });
 
@@ -193,7 +198,7 @@ beforeEach(async () => {
   await Sale.deleteMany({});
   await PrintJob.deleteMany({});
   BaseModel.license = null;
-  renderBill.mockClear();
+  billDesign.renderBill.mockClear();
 });
 
 describe('a bill asked for on the floor, printed by a till over the wire', () => {
@@ -205,10 +210,14 @@ describe('a bill asked for on the floor, printed by a till over the wire', () =>
     await oneCloudPass(aTill(hardware));
 
     expect(hardware.jobs).toHaveLength(1);
-    // Assert the actual API-produced printable snapshot reaches the renderer
-    // and its returned bytes reach the selected printer. Raster appearance is
-    // exercised by tests/tools/designed-thermal-proof.cjs under Electron.
-    expect(renderBill).toHaveBeenCalledTimes(1);
+    // Saved-design documents replaced the plain-text renderer for this path.
+    // Check the contents at that boundary, not just whether any bytes appeared.
+    expect(billDesign.renderBill).toHaveBeenCalledTimes(1);
+    const document = billDesign.renderBill.mock.calls[0][0];
+    expect(document.items).toEqual(
+      expect.arrayContaining([expect.objectContaining({ item_name: 'Chicken Biryani' })])
+    );
+    expect(Number(document.items_total)).toBe(440);
     expect(hardware.jobs[0].text).toContain('Chicken Biryani');
     expect(hardware.jobs[0].text).toContain('440');
     expect(hardware.jobs[0].name).toBe('EPSON TM-T82');

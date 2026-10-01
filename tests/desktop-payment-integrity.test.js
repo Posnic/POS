@@ -10,11 +10,12 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   const win = dom.window;
   const $ = require('jquery')(win);
   win.$ = win.jQuery = $;
+  win.PosnicTaxEngine = require('../frontend/static/script/js/core/tax-engine');
   win.setTimeout = (fn) => fn();
   win.PosnicPro = { local: { get: () => 'Rs.' }, configPaymentType: [{ payment_value: 'Upi' }], alert: (_type, message) => { win.lastError = message; }, sales: {
     extraDiscount: { sale_new_tot: 262.5 }, EditRecentSaleParams: { sales_total: 262.5, payment_status: status, multi_payment: payments }, paymentOnlyMode: true
   } };
-  for (const name of ['showMultiPaymentMode', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
+  for (const name of ['sub', 'showMultiPaymentMode', 'getPaymentObject', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
     const start = source.indexOf('    ' + name + ': function');
     const end = source.indexOf('\n    },', start);
     assert.ok(start >= 0 && end > start);
@@ -22,6 +23,28 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   }
   return { dom, win, $, sales: win.PosnicPro.sales };
 }
+
+test('split payment keeps configured method spelling in the submitted ledger', () => {
+  const { dom, win, $, sales } = setup('Unpaid', { Cash: 262.5 });
+  win.PosnicPro.configPaymentType = [{ payment_value: 'QA Card' }, { payment_value: 'UPI' }];
+  // Include the real delegated handler: selecting a tender rewrites radio values.
+  const handlerStart = source.indexOf('$(document).on(\'change\', \'.payment_mode\'');
+  const handlerEnd = source.indexOf('\n});', handlerStart) + 4;
+  assert.ok(handlerStart >= 0 && handlerEnd > handlerStart);
+  win.eval(source.slice(handlerStart, handlerEnd));
+  sales.showMultiPaymentMode();
+  $('#cash_input').val('100').trigger('input');
+  $('#qacard_input').closest('.payment-method-card').find('button').trigger('click');
+  $('#qacard_input').val('100').trigger('input');
+  $('#upi_input').closest('.payment-method-card').find('button').trigger('click');
+  $('#UPI').prop('checked', true).trigger('change');
+  assert.equal($('#Cash').val(), 'UPI');
+  assert.deepEqual(JSON.parse(JSON.stringify(sales.getPaymentObject())), {
+    Cash: 100, 'QA Card': 100, UPI: 62.5
+  });
+  assert.equal($('#save_btn').prop('disabled'), false);
+  dom.window.close();
+});
 test('unpaid bill renders full taxed UPI amount and method switching preserves it', () => {
   const { dom, $, sales } = setup();
   sales.showMultiPaymentMode();
@@ -136,7 +159,7 @@ test('split and partial payments preserve recorded amounts and reject overpaymen
 
 // Exercise the real saved-order loader and real row insertion, rather than
 // constructing an already-calculated DOM. Row order affects half-paisa sums.
-test('Azure saved Table 6 loads into payment at the printed total through real cart rows', () => {
+function savedOrderSetup() {
   const { dom, $, sales, win } = setup('Unpaid', {});
   $('body').append('<table id="sales_new_items_table"><tbody></tbody></table><input id="grand_total"><span id="extraDisc">0</span><span id="percentIcon" class="d-none"></span><span id="sales_new_grand_total"></span>');
   $.fn.number = function (value) { return this.text(Number(value).toFixed(2)); };
@@ -162,10 +185,16 @@ test('Azure saved Table 6 loads into payment at the printed total through real c
     const end = source.indexOf('\n    },', start);
     win.eval(owner + '.' + name + ' = ' + source.slice(source.indexOf('function', start), end + 6) + ';');
   }
+  load('PosnicPro.sales', 'savedSellingPrice');
   load('PosnicPro.sales', 'addSalesLineItems');
   load('PosnicPro.sales.recentMenu', 'editItems');
   load('PosnicPro.sales.calculation', 'salesTableRowCart');
   load('PosnicPro.sales.calculation', 'extraDiscoundCalculation');
+  return { dom, $, sales, win };
+}
+
+test('Azure saved Table 6 loads into payment at the printed total through real cart rows', () => {
+  const { dom, $, sales, win } = savedOrderSetup();
   const units = [350,300,300,380,340,360,350,340,60,100,250,30,300,294,47.25,31.5,136.5,136.5,136.5];
   const quantities = [1,1,1,1,1,1,2,1,2,3,1,2,2,1,2,2,1,1,2];
   const bill = {
@@ -225,4 +254,175 @@ test('failed payment-method reload keeps cached UPI and does not open a cash-onl
   assert.match(win.lastError, /Could not load payment settings/);
   assert.equal(sales._loadingPaymentMethods, false);
   dom.window.close();
+});
+
+test('partially paid history keeps a settlement action and shows the remaining balance', () => {
+  const { dom, win, $, sales } = setup();
+  win.PosnicPro.i18n = { t: (_key, fallback) => fallback };
+  win.PosnicPro.convertDate = value => value;
+  $('body').append('<div id="sales_doc"></div><div id="sales_list_rows"></div>');
+  const bill = { _id: 'abc', sales_id: 'QA-PARTIAL', payment_status: 'Partialy Paid', sales_total: 100,
+    sales_sub_total: 100, partial_balance: 40, payment_pending: 60, items: [] };
+  for (const name of ['buildSaleSheet', 'renderSaleDoc', 'loadHistory']) {
+    const start = source.indexOf('    ' + name + ': function');
+    const end = source.indexOf('\n    },', start);
+    win.eval('PosnicPro.sales.' + name + ' = ' + source.slice(source.indexOf('function', start), end + 6) + ';');
+  }
+  sales.mountHistoryFilters = () => {};
+  sales.renderHistoryPager = () => {};
+  win.PosnicPro.listFilter = { legacyFilters: () => ({}), request: (_key, _options, done) => done({ data: { list: [bill] } }) };
+  win.PosnicPro.listSort = { value: () => '' };
+  sales.loadHistory();
+  assert.equal($('#sales_list_rows .rs-pill').text(), 'Partial');
+  sales.renderSaleDoc(bill);
+  assert.match($('#sales_doc').text(), /Take Payment/);
+  assert.match($('#sales_doc').text(), /PARTIALLY PAID/);
+  assert.match($('#sales_doc').text(), /Pending: Rs\.\s*60\.00/);
+  assert.doesNotMatch($('#sales_doc').text(), /Pending: Rs\.\s*40\.00/);
+  dom.window.close();
+});
+
+
+test('app order with inclusive and exclusive tax keeps its saved payable when loaded for payment', () => {
+  const { dom, $, sales } = savedOrderSetup();
+  const bill = { sales_id: 'QA-APP', sales_total: 201.75, sales_sub_total: 192.14,
+    tax: 9.61, payment_status: 'Unpaid', sale_process: 'KOT', extra_discount: 0,
+    items: [
+      { item_id: 'paratha', item_name: 'Paratha', item_price: 45, item_quantity: 3, tax: 5,
+        tax_type: 'exclusive', pricing: { version: 1, selling_price: 45 } },
+      { item_id: 'water', item_name: 'Water', item_price: 28.57, item_quantity: 2, tax: 5,
+        tax_type: 'inclusive', pricing: { version: 1, selling_price: 30 } }
+    ].map(line => ({ item_discount: 0, item_discount_percentage: 0, company_price_total: 0, ...line })) };
+  let opened = false;
+  sales.openTenderModel = () => {
+    assert.equal(sales.extraDiscount.sale_new_tot, 201.75);
+    opened = true;
+  };
+  sales.recentMenu.editItems('qa-app', bill, 'edit');
+  assert.equal(opened, true);
+  assert.equal($('#saleInlineItemPrice_water').text(), '30');
+  assert.equal($('#addSalesLineItemSellingPrice_water').text(), '30');
+  dom.window.close();
+});
+
+for (const spec of [
+  {price:45,tax:5,type:'exclusive',pct:10,flat:0,qty:1,extra:0,percent:false,charges:0,expected:42.53},
+  {price:45,tax:5,type:'exclusive',pct:10,flat:0,qty:1,extra:10,percent:false,charges:20,expected:52.53},
+  {price:45,tax:5,type:'exclusive',pct:10,flat:0,qty:2,extra:10,percent:true,charges:30,expected:106.55},
+  {price:30,tax:5,type:'inclusive',pct:10,flat:0,qty:2,extra:10,percent:true,charges:20,expected:68.6},
+  {price:30,tax:5,type:'inclusive',pct:0,flat:5,qty:1,extra:0,percent:false,charges:0,expected:24.75},
+  {price:100,tax:0,type:'exclusive',pct:0,flat:5,qty:3,extra:10,percent:false,charges:20.05,expected:295.05}
+]) test('new cart canonical discounts and charges: '+JSON.stringify(spec), () => {
+  const {dom,$,sales,win} = savedOrderSetup();
+  sales.paymentOnlyMode = false;
+  sales.addSalesLineItems({id:'qa',name:'QA',selling_price:spec.price,company_price:0,
+    tax:spec.tax,tax_type:spec.type,discount_amount:spec.flat,discount_percentage:spec.pct,
+    quantity:spec.qty,item_quantity:spec.qty,unit:'pc'});
+  $('#touchsale_item_qtyqa').val(spec.qty);
+  $('#extraDisc').text(spec.extra);
+  $('#percentIcon').toggleClass('d-none',!spec.percent);
+  sales.chargesTotal = () => spec.charges;
+  sales.calculation.salesTableRowCart();
+  assert.equal(sales.extraDiscount.sale_new_tot,spec.expected);
+  $('#Partial_amount').val(spec.expected);
+  sales.EditRecentSaleParams = {};
+  sales.showMultiPaymentMode();
+  assert.equal(Number($('#cash_input').val()),spec.expected);
+  dom.window.close();
+});
+test('opening payment repeatedly preserves new charges and the collected total', (t) => {
+  const {dom,$,sales,win} = savedOrderSetup();
+  t.after(() => dom.window.close());
+  sales.customerViewDisplay = () => {};
+  win.PosnicPro.local.get = key => key === 'enable_multi_payment' ? 'enable' : key === 'general_settings' ? '{}' : '';
+  $('#Partial_amount').addClass('partial_amount');
+  const charges=[{name:'Service',amount:20,taxed:true,tax_amount:0.05},{name:'Delivery',amount:10,taxed:false,tax_amount:0}];
+  sales.paymentOnlyMode=false; sales.SaleAction='add'; sales.EditRecentSaleParams={};
+  $('body').append('<input id="sales_new_customer_name" value="Walk-in"><input id="customer_current_balance" value="0">');
+  Object.assign(sales,{charges,refreshCustomerAccount:()=>{},renderTenderReceiptPreview:()=>{},saleDoneTimer:{stop:()=>{}},defaultDenominations:()=>[],renderCharges:()=>{sales.calculation.extraDiscoundCalculation();}});
+  sales.chargesTotal=()=>sales.charges.reduce((n,c)=>n+c.amount,0);
+  sales.chargesTax=()=>sales.charges.reduce((n,c)=>n+c.tax_amount,0);
+  sales.addSalesLineItems({id:'qa',name:'QA',selling_price:45,company_price:0,tax:5,tax_type:'exclusive',discount_amount:0,discount_percentage:10,item_quantity:1,unit:'pc'});
+  sales.addSalesLineItems({id:'water',name:'Water',selling_price:30,company_price:0,tax:5,tax_type:'inclusive',discount_amount:0,discount_percentage:0,item_quantity:1,unit:'pc'});
+  $('#extraDisc').text(10); $('#percentIcon').removeClass('d-none'); sales.calculation.salesTableRowCart();
+  assert.equal(sales.extraDiscount.sale_new_tot,95.32);
+  for(let i=0;i<2;i++){
+    sales.openTenderModel(true);
+    assert.deepEqual(sales.charges,charges);
+    assert.equal(sales.extraDiscount.sale_new_tot,95.32);
+    assert.equal(Number($('#cash_input').val()),95.32);
+  }
+  dom.window.close();
+});
+test('saved order restores charges before checking its payable', (t) => {
+  const {dom,$,sales,win}=savedOrderSetup(); t.after(()=>dom.window.close());
+  const charges=[{name:'Service',amount:20,taxed:true,tax_amount:0.05,tax_name:'Old tax',source:'manual'}];
+  sales.chargesTotal=()=>sales.charges.reduce((n,c)=>n+c.amount,0);
+  sales.chargesTax=()=>sales.charges.reduce((n,c)=>n+c.tax_amount,0);
+  let opened=0;
+  sales.openTenderModel=()=>{assert.equal(sales.extraDiscount.sale_new_tot,120.05);opened++;};
+  sales.recentMenu.editItems('saved', {sales_id:'saved',sales_total:120.05,sales_sub_total:100,tax:.05,charges,
+    payment_status:'Unpaid',sale_process:'Add',extra_discount:0,extra_discount_type:'price',
+    items:[{item_id:'zero',item_name:'Zero',item_price:100,item_quantity:1,item_discount:0,item_discount_percentage:0,tax:0,tax_type:'exclusive',company_price_total:0}]},'edit');
+  assert.equal(opened,1); assert.equal(sales.charges[0].tax_amount,.05);
+  sales.charges[0].amount=30; assert.equal(charges[0].amount,20,'editing must not mutate the saved snapshot');
+  const start=source.indexOf('PosnicPro.sales.chargeTax = {');
+  const end=source.indexOf('PosnicPro.sales.chargesTax =',start);
+  win.eval(source.slice(start,end));
+  sales.chargeTax._tax={name:'New tax',value:5};
+  assert.equal(sales.chargeTax.amountFor(charges[0]),.05,'payment-only retains issued charge tax');
+});
+test('saved receipt lists every discount, charge and split tender with pretax lines', (t) => {
+  const {dom,$,win,sales}=savedOrderSetup(); t.after(()=>dom.window.close());
+  const start=source.indexOf('    buildSaleSheet: function'); const end=source.indexOf('\n    },',start);
+  win.eval('PosnicPro.sales.buildSaleSheet = '+source.slice(source.indexOf('function',start),end+6)+';');
+  const html=sales.buildSaleSheet({sales_id:'TEST',payment_status:'Paid',payment_mode:'Cash',
+    sales_sub_total:73.5714285714,discount:4.5,tax:3.50357142857,sale_extra_discount:7.2525,sales_total:95.32,
+    items:[{item_name:'Paratha',item_price:45,item_quantity:1,tax:5,tax_type:'exclusive',total_amount:42.525},
+      {item_name:'Water',item_price:30,item_quantity:1,tax:5,tax_type:'inclusive',total_amount:30}],
+    charges:[{name:'Service <test>',amount:20},{name:'Delivery',amount:10}],multi_payment:{Cash:20,Card:30,UPI:45.32}});
+  const sheet=$(html); const rows=sheet.find('tfoot tr').get().map(row=>$(row).text().trim());
+  assert.ok(rows.some(r=>r.includes('Additional discount') && r.includes('-7.25')));
+  assert.ok(rows.some(r=>r.includes('Service <test>') && r.includes('20.00')));
+  assert.ok(rows.some(r=>r.includes('Delivery') && r.includes('10.00')));
+  assert.equal(sheet.find('test').length,0);
+  assert.match(sheet.find('tbody tr').eq(0).text(),/45\.00.*45\.00/);
+  assert.match(sheet.find('tbody tr').eq(1).text(),/28\.57.*28\.57/);
+  const sum=sheet.find('tfoot tr.q-sub td:last-child').get().reduce((n,td)=>n+Number($(td).text().replace(/[^\d.-]/g,'')),0);
+  assert.equal(Math.round(sum*100)/100,95.32);
+  assert.match(sheet.find('.q-footer').text(),/Cash:.*20\.00.*Card:.*30\.00.*UPI:.*45\.32/);
+});
+test('charge action follows late-loaded settings on cart recalculation', (t) => {
+  const {dom,$,sales}=savedOrderSetup();t.after(()=>dom.window.close());
+  $('body').append('<a id="sale_add_charge" style="display:none">Add charge</a>');
+  let enabled=false;sales.chargesEnabled=()=>enabled;sales.charges=[];
+  sales.calculation.extraDiscoundCalculation();assert.equal($('#sale_add_charge').css('display'),'none');
+  enabled=true;sales.calculation.extraDiscoundCalculation();assert.notEqual($('#sale_add_charge').css('display'),'none');
+  enabled=false;sales.charges=[{name:'Saved charge',amount:10}];
+  sales.calculation.extraDiscoundCalculation();assert.notEqual($('#sale_add_charge').css('display'),'none');
+});
+
+test('successful-sale reset clears charges before the next customer is billed', (t) => {
+  const {dom,$,sales,win}=savedOrderSetup();t.after(()=>dom.window.close());
+  $('body').append('<div id="sale_charges_list">Previous service 20.05</div><div id="sale_charge_entry">Unfinished charge</div>');
+  win.db.customerDisplay.where=()=>({equals:()=>({delete:()=>{}})});
+  const start=source.indexOf('PosnicPro.sales.setDefaults = function');
+  const end=source.indexOf('\n};',start)+3;
+  win.eval(source.slice(start,end));
+  sales.charges=[{name:'Previous service',amount:20,taxed:true,tax_amount:.05}];
+  sales._chargeTaxShown=true;
+  sales.customerViewDisplay=()=>{};
+  sales.chargesTotal=()=>sales.charges.reduce((n,c)=>n+c.amount,0);
+  sales.chargesTax=()=>sales.charges.reduce((n,c)=>n+c.tax_amount,0);
+  sales.setDefaults();
+  assert.equal(sales.charges.length,0);
+  assert.equal($('#sale_charges_list').text(),'');
+  assert.equal($('#sale_charge_entry').length,0);
+  assert.equal(sales._chargeTaxShown,false);
+  sales.paymentOnlyMode=false;
+  $('#sales_new_items_table tbody').empty();
+  sales.addSalesLineItems({id:'next',name:'Next customer item',selling_price:100,company_price:0,
+    tax:0,tax_type:'exclusive',discount_amount:0,discount_percentage:0,quantity:1,item_quantity:1,unit:'pc'});
+  sales.calculation.salesTableRowCart();
+  assert.equal(sales.extraDiscount.sale_new_tot,100);
 });

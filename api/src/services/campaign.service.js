@@ -137,7 +137,7 @@ class CampaignService {
       branch_name: ctx.branchName || '',
       updated_date: now,
       updated_by: ctx.userName || '',
-      license: BaseModel.license,
+      license: ctx.licenseId ? oid(ctx.licenseId) : BaseModel.license,
     };
 
     if (id) {
@@ -160,8 +160,8 @@ class CampaignService {
       created_date: now,
       created_by: ctx.userName || '',
     };
-    const r = await col.insertOne(doc);
-    return { status: true, data: { ...doc, _id: r.insertedId }, message: MESSAGES.SAVED };
+    const r = await require('./ask-posnic-action-identity').insertOnce(col, doc, ctx);
+    return { status: true, data: { ...r.document, _id: r.insertedId }, message: MESSAGES.SAVED };
   }
 
   async remove(id) {

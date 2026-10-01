@@ -21,10 +21,11 @@ class Email {
     this.from = `${brandName} <${emailFrom}>`;
   }
 
-  newTransport() {
+  newTransport(transportOptions = {}) {
     if (process.env.NODE_ENV === 'production') {
       // Sendgrid
       return nodemailer.createTransport({
+        ...transportOptions,
         service: 'SendGrid',
         auth: {
           user: process.env.SENDGRID_USERNAME,
@@ -43,6 +44,7 @@ class Email {
 
     if (hasCustomCredentials) {
       return nodemailer.createTransport({
+        ...transportOptions,
         host: process.env.EMAIL_HOST,
         port: process.env.EMAIL_PORT,
         secure: String(process.env.EMAIL_SECURE).toLowerCase() === 'true',
@@ -161,13 +163,19 @@ const sendEmail = async (options) => {
  * chain above). Pass the branch doc (settings live on it) - absent or
  * incomplete config falls through to the platform chain.
  */
-const resolveShopTransport = (branchDoc) => {
+const resolveShopTransport = (branchDoc, { scheduledReport = false } = {}) => {
   const b = branchDoc || {};
+  // Keep a stalled SMTP peer from holding the shared schedule worker for ten
+  // minutes. A timeout after submission remains an uncertain delivery.
+  const transportOptions = scheduledReport
+    ? { connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 30000 }
+    : {};
   /* A HALF-filled card (password missing) must not outrank the working
      platform path - 'Missing credentials for PLAIN' taught this. */
   if (b.email_smtp_host && b.email_smtp_username && b.email_smtp_password) {
     return {
       transporter: nodemailer.createTransport({
+        ...transportOptions,
         host: String(b.email_smtp_host),
         port: parseInt(b.email_smtp_port, 10) || 587,
         secure: b.email_smtp_secure === true,
@@ -229,10 +237,17 @@ const resolveShopTransport = (branchDoc) => {
                 }
               : {}),
           };
-          const result = await client.transactionalEmails.sendTransacEmail(payload);
+          // An uncertain scheduled delivery needs review, never an automatic resend.
+          const requestOptions = mail.scheduledReport
+            ? { maxRetries: 0, timeoutInSeconds: 30 }
+            : undefined;
+          const result = await client.transactionalEmails.sendTransacEmail(payload, requestOptions);
+          const messageId = result && (result.messageId || (result.body && result.body.messageId));
+          if (!messageId) throw new Error('The email provider did not acknowledge this message.');
           return {
-            messageId:
-              (result && (result.messageId || (result.body && result.body.messageId))) || 'brevo',
+            messageId,
+            accepted: to.map((recipient) => recipient.email),
+            rejected: [],
           };
         },
       },
@@ -241,7 +256,9 @@ const resolveShopTransport = (branchDoc) => {
       branch: b,
     };
   }
-  const platform = new Email({ email: 'noreply', name: 'noreply' }, '').newTransport();
+  const platform = new Email({ email: 'noreply', name: 'noreply' }, '').newTransport(
+    transportOptions
+  );
   return {
     transporter: platform,
     from: whiteLabelFrom || process.env.EMAIL_FROM || 'no-reply@posnic.local',

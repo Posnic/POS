@@ -2193,3 +2193,15 @@ describe('getSelectUnitAjaxList', () => {
     expect(r.status).toBe(false);
   });
 });
+
+describe('billing outlets feature switch', () => {
+  test('defaults off and preserves explicit enabled/disabled values', () => {
+    const setting = SettingModel.moduleToggleMap().module_billing_outlets_enable;
+    expect(setting.dflt).toBe(false);
+    expect(setting.parse(true)).toBe(true);
+    expect(setting.parse('true')).toBe(true);
+    expect(setting.parse(false)).toBe(false);
+    expect(setting.parse('false')).toBe(false);
+    expect(setting.parse(undefined)).toBe(false);
+  });
+});

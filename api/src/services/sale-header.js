@@ -1,5 +1,7 @@
 'use strict';
 
+const { BadRequestError } = require('../utils/appError');
+
 const round2 = (value, decimals = 2) => {
   const num = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(num)) return 0;
@@ -10,7 +12,18 @@ const round2 = (value, decimals = 2) => {
 /** Canonical sale header calculation. Coupons and loyalty must already be validated by the controller. */
 function calculateSaleHeader(data, sale_tot_amount, context) {
   // Extra Discount & Round Off
-  const extraDiscountRaw = data.extra_discount ? Math.abs(parseFloat(data.extra_discount)) : 0;
+  const extraDiscountRaw =
+    data.extra_discount == null || data.extra_discount === '' ? 0 : Number(data.extra_discount);
+  if (
+    !Number.isFinite(extraDiscountRaw) ||
+    extraDiscountRaw < 0 ||
+    (data.extra_discount_type === 'percent'
+      ? extraDiscountRaw > 100
+      : extraDiscountRaw > sale_tot_amount)
+  )
+    throw new BadRequestError(
+      'Additional discount must be between zero and the bill amount (or 100%).'
+    );
   const extraDiscount = round2(extraDiscountRaw, 2);
   let itemsTotAmount = sale_tot_amount - extraDiscount;
   let salesExtraDiscount = extraDiscount;

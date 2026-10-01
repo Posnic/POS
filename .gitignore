@@ -131,3 +131,4 @@ cmsg.tmp
 *-patch.py
 *.py
 !scripts/**/*.py
+!api/scripts/provision-ask-posnic-bedrock.py

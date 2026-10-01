@@ -29,7 +29,7 @@ function page() {
   const w = dom.window;
   w.eval(fs.readFileSync('frontend/static/script/js/jquery.min.js', 'utf8'));
   w.billingWindowId = ''; w.API_URL = '/api/';
-  w.PosnicPro = { sales: { charges: [], cart: ['Fish'] }, local: { get: () => id(9) }, request: (p, cb) => cb({ status: true, data: { branch: { id: id(9), name: 'Hotel' }, outlets: [], manage: false } }) };
+  w.PosnicPro = { i18n: { t: (key, fallback) => fallback }, sales: { charges: [], cart: ['Fish'] }, local: { get: () => id(9) }, request: (p, cb) => cb({ status: true, data: { branch: { id: id(9), name: 'Hotel' }, outlets: [], manage: false } }) };
   w.eval(fs.readFileSync('frontend/static/script/js/core/billing-outlets.js', 'utf8'));
   return w;
 }
@@ -67,4 +67,54 @@ test('window-scoped branch and register preferences do not overwrite the shared 
   assert.equal(w.PosnicPro.local.get('cash_register_id'), 'bar-register');
   assert.equal(w.PosnicPro.local.get('branch_id_set'), id(9));
   w.close();
+});
+
+test('outlet page escapes legacy main positioning and offers setup when empty', async () => {
+ const w=page(); await w.PosnicPro.billingoutlets.show();
+ assert.equal(w.$('#billing_outlets_page')[0].tagName, 'SECTION');
+ assert.match(w.$('#billing_content').text(), /No billing outlets yet/);
+ w.PosnicPro.billingoutlets.data.manage=true; w.PosnicPro.billingoutlets.tab('windows');
+ assert.equal(w.$('#billing_content [data-billing-tab="setup"]').length,1);
+ w.$('#billing_content [data-billing-tab="setup"]').trigger('click');
+ assert.equal(w.$('#billing_form input[name="name"]').length,1);
+ w.close();
+});
+test('failed load shows recovery and cannot open uninitialized tabs', async () => {
+ const w=page(); w.PosnicPro.request=(p,cb,fail)=>fail({message:'Connection unavailable'});
+ await w.PosnicPro.billingoutlets.show();
+ assert.match(w.$('#billing_message').text(),/Connection unavailable/);
+ assert.equal(w.$('#billing_retry').length,1);
+ assert.equal(w.$('[data-billing-tab]:enabled').length,0);
+ assert.doesNotThrow(()=>w.PosnicPro.billingoutlets.tab('setup'));
+ w.close();
+});
+test('disabled outlets show Features guidance without opening billing windows', async () => {
+ const w=page(); await w.PosnicPro.billingoutlets.show();
+ w.PosnicPro.billingoutlets.data.enabled=false;
+ w.PosnicPro.billingoutlets.tab('windows');
+ assert.match(w.$('#billing_content').text(),/switched off/);
+ assert.equal(w.$('#billing_features').length,1);
+ w.close();
+});
+
+test('Back leaves the outlet route without reloading the existing cart', async () => {
+ const w=page(); w.location.hash='/billingoutlets'; await w.PosnicPro.billingoutlets.show();
+ w.PosnicPro.billingoutlets.previousPages=w.$('#sales_page');
+ w.$('#billing_back').trigger('click');
+ assert.equal(w.location.hash,'#/sales/new');
+ assert.deepEqual(w.PosnicPro.sales.cart,['Fish']); w.close();
+});
+
+test('Back after loading the outlet route initializes billing through the sales route', async () => {
+ const w=page(); w.location.hash='/billingoutlets';
+ w.$.expr.pseudos.visible=()=>true;
+ await w.PosnicPro.billingoutlets.showDataTablePage();
+ assert.equal(w.PosnicPro.billingoutlets.previousPages.length,0);
+ let silentReplacements=0;
+ w.history.replaceState=()=>{ silentReplacements++; };
+ w.$('#billing_back').trigger('click');
+ assert.equal(w.location.hash,'#/sales/new');
+ assert.equal(silentReplacements,0,'must dispatch a route change instead of exposing uninitialized sale markup');
+ assert.equal(w.$('#sales_page').css('display'),'none');
+ w.close();
 });
