@@ -36,6 +36,10 @@ jest.mock('../../../src/repositories/branch.repository', () => ({
   findById: jest.fn(),
 }));
 
+// Billing outlets imports this repository even for ordinary counter sales.
+// Keep it isolated from the BaseModel stub used by this service suite.
+jest.mock('../../../src/repositories/settings.repository', () => jest.fn());
+
 jest.mock('../../../src/repositories/sale.repository', () => ({
   create: jest.fn(),
   createSaleUnique: jest.fn(),

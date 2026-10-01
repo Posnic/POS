@@ -14,7 +14,7 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   win.PosnicPro = { local: { get: () => 'Rs.' }, configPaymentType: [{ payment_value: 'Upi' }], alert: (_type, message) => { win.lastError = message; }, sales: {
     extraDiscount: { sale_new_tot: 262.5 }, EditRecentSaleParams: { sales_total: 262.5, payment_status: status, multi_payment: payments }, paymentOnlyMode: true
   } };
-  for (const name of ['showMultiPaymentMode', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
+  for (const name of ['showMultiPaymentMode', 'getPaymentObject', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
     const start = source.indexOf('    ' + name + ': function');
     const end = source.indexOf('\n    },', start);
     assert.ok(start >= 0 && end > start);
@@ -22,6 +22,21 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   }
   return { dom, win, $, sales: win.PosnicPro.sales };
 }
+
+test('split payment keeps configured method spelling in the submitted ledger', () => {
+  const { dom, win, $, sales } = setup('Unpaid', { Cash: 262.5 });
+  win.PosnicPro.configPaymentType = [{ payment_value: 'QA Card' }, { payment_value: 'UPI' }];
+  sales.showMultiPaymentMode();
+  $('#cash_input').val('100').trigger('input');
+  $('#qacard_input').closest('.payment-method-card').find('button').trigger('click');
+  $('#qacard_input').val('100').trigger('input');
+  $('#upi_input').closest('.payment-method-card').find('button').trigger('click');
+  assert.deepEqual(JSON.parse(JSON.stringify(sales.getPaymentObject())), {
+    Cash: 100, 'QA Card': 100, UPI: 62.5
+  });
+  assert.equal($('#save_btn').prop('disabled'), false);
+  dom.window.close();
+});
 test('unpaid bill renders full taxed UPI amount and method switching preserves it', () => {
   const { dom, $, sales } = setup();
   sales.showMultiPaymentMode();
@@ -136,7 +151,7 @@ test('split and partial payments preserve recorded amounts and reject overpaymen
 
 // Exercise the real saved-order loader and real row insertion, rather than
 // constructing an already-calculated DOM. Row order affects half-paisa sums.
-test('Azure saved Table 6 loads into payment at the printed total through real cart rows', () => {
+function savedOrderSetup() {
   const { dom, $, sales, win } = setup('Unpaid', {});
   $('body').append('<table id="sales_new_items_table"><tbody></tbody></table><input id="grand_total"><span id="extraDisc">0</span><span id="percentIcon" class="d-none"></span><span id="sales_new_grand_total"></span>');
   $.fn.number = function (value) { return this.text(Number(value).toFixed(2)); };
@@ -162,10 +177,16 @@ test('Azure saved Table 6 loads into payment at the printed total through real c
     const end = source.indexOf('\n    },', start);
     win.eval(owner + '.' + name + ' = ' + source.slice(source.indexOf('function', start), end + 6) + ';');
   }
+  load('PosnicPro.sales', 'savedSellingPrice');
   load('PosnicPro.sales', 'addSalesLineItems');
   load('PosnicPro.sales.recentMenu', 'editItems');
   load('PosnicPro.sales.calculation', 'salesTableRowCart');
   load('PosnicPro.sales.calculation', 'extraDiscoundCalculation');
+  return { dom, $, sales, win };
+}
+
+test('Azure saved Table 6 loads into payment at the printed total through real cart rows', () => {
+  const { dom, $, sales, win } = savedOrderSetup();
   const units = [350,300,300,380,340,360,350,340,60,100,250,30,300,294,47.25,31.5,136.5,136.5,136.5];
   const quantities = [1,1,1,1,1,1,2,1,2,3,1,2,2,1,2,2,1,1,2];
   const bill = {
@@ -224,5 +245,54 @@ test('failed payment-method reload keeps cached UPI and does not open a cash-onl
   assert.equal(win.PosnicPro.configPaymentType[0].payment_value, 'Upi');
   assert.match(win.lastError, /Could not load payment settings/);
   assert.equal(sales._loadingPaymentMethods, false);
+  dom.window.close();
+});
+
+test('partially paid history keeps a settlement action and shows the remaining balance', () => {
+  const { dom, win, $, sales } = setup();
+  win.PosnicPro.i18n = { t: (_key, fallback) => fallback };
+  win.PosnicPro.convertDate = value => value;
+  $('body').append('<div id="sales_doc"></div><div id="sales_list_rows"></div>');
+  const bill = { _id: 'abc', sales_id: 'QA-PARTIAL', payment_status: 'Partialy Paid', sales_total: 100,
+    sales_sub_total: 100, partial_balance: 40, payment_pending: 60, items: [] };
+  for (const name of ['buildSaleSheet', 'renderSaleDoc', 'loadHistory']) {
+    const start = source.indexOf('    ' + name + ': function');
+    const end = source.indexOf('\n    },', start);
+    win.eval('PosnicPro.sales.' + name + ' = ' + source.slice(source.indexOf('function', start), end + 6) + ';');
+  }
+  sales.mountHistoryFilters = () => {};
+  sales.renderHistoryPager = () => {};
+  win.PosnicPro.listFilter = { legacyFilters: () => ({}), request: (_key, _options, done) => done({ data: { list: [bill] } }) };
+  win.PosnicPro.listSort = { value: () => '' };
+  sales.loadHistory();
+  assert.equal($('#sales_list_rows .rs-pill').text(), 'Partial');
+  sales.renderSaleDoc(bill);
+  assert.match($('#sales_doc').text(), /Take Payment/);
+  assert.match($('#sales_doc').text(), /PARTIALLY PAID/);
+  assert.match($('#sales_doc').text(), /Pending: Rs\.\s*60\.00/);
+  assert.doesNotMatch($('#sales_doc').text(), /Pending: Rs\.\s*40\.00/);
+  dom.window.close();
+});
+
+
+test('app order with inclusive and exclusive tax keeps its saved payable when loaded for payment', () => {
+  const { dom, $, sales } = savedOrderSetup();
+  const bill = { sales_id: 'QA-APP', sales_total: 201.75, sales_sub_total: 192.14,
+    tax: 9.61, payment_status: 'Unpaid', sale_process: 'KOT', extra_discount: 0,
+    items: [
+      { item_id: 'paratha', item_name: 'Paratha', item_price: 45, item_quantity: 3, tax: 5,
+        tax_type: 'exclusive', pricing: { version: 1, selling_price: 45 } },
+      { item_id: 'water', item_name: 'Water', item_price: 28.57, item_quantity: 2, tax: 5,
+        tax_type: 'inclusive', pricing: { version: 1, selling_price: 30 } }
+    ].map(line => ({ item_discount: 0, item_discount_percentage: 0, company_price_total: 0, ...line })) };
+  let opened = false;
+  sales.openTenderModel = () => {
+    assert.equal(sales.extraDiscount.sale_new_tot, 201.75);
+    opened = true;
+  };
+  sales.recentMenu.editItems('qa-app', bill, 'edit');
+  assert.equal(opened, true);
+  assert.equal($('#saleInlineItemPrice_water').text(), '30');
+  assert.equal($('#addSalesLineItemSellingPrice_water').text(), '30');
   dom.window.close();
 });
