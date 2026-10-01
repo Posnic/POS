@@ -99,7 +99,22 @@ test('disabled outlets show Features guidance without opening billing windows', 
 
 test('Back leaves the outlet route without reloading the existing cart', async () => {
  const w=page(); w.location.hash='/billingoutlets'; await w.PosnicPro.billingoutlets.show();
+ w.PosnicPro.billingoutlets.previousPages=w.$('#sales_page');
  w.$('#billing_back').trigger('click');
  assert.equal(w.location.hash,'#/sales/new');
  assert.deepEqual(w.PosnicPro.sales.cart,['Fish']); w.close();
+});
+
+test('Back after loading the outlet route initializes billing through the sales route', async () => {
+ const w=page(); w.location.hash='/billingoutlets';
+ w.$.expr.pseudos.visible=()=>true;
+ await w.PosnicPro.billingoutlets.showDataTablePage();
+ assert.equal(w.PosnicPro.billingoutlets.previousPages.length,0);
+ let silentReplacements=0;
+ w.history.replaceState=()=>{ silentReplacements++; };
+ w.$('#billing_back').trigger('click');
+ assert.equal(w.location.hash,'#/sales/new');
+ assert.equal(silentReplacements,0,'must dispatch a route change instead of exposing uninitialized sale markup');
+ assert.equal(w.$('#sales_page').css('display'),'none');
+ w.close();
 });

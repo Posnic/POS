@@ -86,7 +86,7 @@ test('every configurable feature names its sidebar home, and the home exists', (
   for (const r of routes) {
     if (r === 'billingoutlets') {
       assert.ok(settingsJs.includes("['billingoutlets', 'Billing outlets', 'page']"));
-      assert.match(fs.readFileSync(path.join(__dirname, '..', 'frontend/static/script/js/core/billing-outlets.js'), 'utf8'), /ui.showDataTablePage = ui.show/);
+      assert.match(fs.readFileSync(path.join(__dirname, '..', 'frontend/static/script/js/core/billing-outlets.js'), 'utf8'), /ui\.showDataTablePage\s*=/);
       continue;
     }
     assert.ok(
