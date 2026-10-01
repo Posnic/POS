@@ -1208,6 +1208,56 @@ describe('SalesService', () => {
         }
       );
 
+      test.each([false, true])(
+        'Captain raw order state survives hydration; concurrent cancellation=%s',
+        async (cancel) => {
+          const mongoose = require('mongoose');
+          const RawState =
+            connection.models.RawState ||
+            connection.model(
+              'RawState',
+              new mongoose.Schema({
+                payment_status: String,
+                sale_process: String,
+                partial_balance: { type: Number, default: 0 },
+              }),
+              'raw_state_sales'
+            );
+          await RawState.collection.deleteMany({});
+          await RawState.collection.insertOne({
+            _id: new mongoose.Types.ObjectId(SALE_ID),
+            payment_status: 'Unpaid',
+            sale_process: 'KOT',
+            order_state: 'accepted',
+            items: [],
+            changes: [],
+          });
+          const original = await RawState.findById(SALE_ID);
+          expect(original.order_state).toBeUndefined();
+          expect(original.get('order_state')).toBe('accepted');
+          salesRepository.getById
+            .mockResolvedValueOnce(original)
+            .mockImplementationOnce(() => RawState.findById(SALE_ID));
+          salesRepository.save.mockImplementation(async (doc) => {
+            if (cancel)
+              await RawState.collection.updateOne(
+                { _id: original._id },
+                { $set: { order_state: 'cancelled' } }
+              );
+            return doc.save();
+          });
+          const result = await salesService.processSale(
+            makeSaleData(),
+            SALE_ID,
+            'Edit',
+            makeContext()
+          );
+          expect(result.status).toBe(!cancel);
+          const stored = await RawState.collection.findOne({ _id: original._id });
+          expect(stored.order_state).toBe(cancel ? 'cancelled' : 'accepted');
+        }
+      );
+
       test('legacy missing payment fields remain editable after Mongoose supplies defaults', async () => {
         await Model.deleteMany({});
         const { ObjectId } = require('mongodb');

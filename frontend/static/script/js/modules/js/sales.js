@@ -1456,11 +1456,25 @@
         if ($('table#sales_new_items_table').find('#touch_row_' + id).length > 0) {
             $('#touch_row_' + id).replaceWith(rowHTMLLine);
             $('#touch_row_' + id).remove();
-            $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            // The API totals saved lines in their stored order. Reversing them
+            // during payment reload changes half-paisa floating-point rounding
+            // (Azure Table 6: 5667.37 becomes 5667.38).
+            if (PosnicPro.sales.paymentOnlyMode === true) {
+                $('#sales_new_items_table tbody').append(rowHTMLLine);
+            } else {
+                $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            }
             itemRecord.push({ name: item_name, qty: item_quantity, price: mrpPrice, discount: $('#addSalesLineItemDiscountprint_' + id).text(), tax: $('#addSalesLineItemTax_' + id).text(), total: line_total.toFixed(2) });
             db.customerDisplay.put({ id: id, 'clear': 'yes', 'get': 'yes', items: itemRecord });
         } else {
-            $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            // The API totals saved lines in their stored order. Reversing them
+            // during payment reload changes half-paisa floating-point rounding
+            // (Azure Table 6: 5667.37 becomes 5667.38).
+            if (PosnicPro.sales.paymentOnlyMode === true) {
+                $('#sales_new_items_table tbody').append(rowHTMLLine);
+            } else {
+                $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            }
             itemRecord.push({ name: item_name, qty: item_quantity, price: mrpPrice, discount: $('#addSalesLineItemDiscountprint_' + id).text(), tax: $('#addSalesLineItemTax_' + id).text(), total: line_total.toFixed(2) });
             db.customerDisplay.add({ id: id, 'clear': 'yes', 'get': 'yes', items: itemRecord });
         }
@@ -1636,7 +1650,26 @@
         }
         PosnicPro.sales.customerViewDisplay();
     },
-    openTenderModel: function () {
+    openTenderModel: function (methodsReady) {
+        // Load methods from this till's API each time. Startup may still be
+        // loading, or settings/sync may have changed since the screen opened.
+        if (methodsReady !== true && typeof PosnicPro.get === 'function') {
+            if (PosnicPro.sales._loadingPaymentMethods) return;
+            PosnicPro.sales._loadingPaymentMethods = true;
+            var paymentRoute = window.location.hash, paymentSale = PosnicPro.sales.editSaleId;
+            var failMethods = function () {
+                PosnicPro.sales._loadingPaymentMethods = false;
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_captain_payment_settings_failed', 'Could not load payment settings. Please retry.'));
+            };
+            PosnicPro.get('setting/getPaymentAll', function (response) {
+                PosnicPro.sales._loadingPaymentMethods = false;
+                if (!response || response.type !== 'success' || !Array.isArray(response.data)) { failMethods(); return; }
+                PosnicPro.configPaymentType = response.data.map(function (row) { return { payment_value: row.payment_value }; });
+                if (window.location.hash !== paymentRoute || PosnicPro.sales.editSaleId !== paymentSale) return;
+                PosnicPro.sales.openTenderModel(true);
+            }, failMethods);
+            return;
+        }
         // ✅ Reset submission flag when opening tender modal
         PosnicPro.sales.submissionInProgress = false;
         $("#save_btn").prop('disabled', false);

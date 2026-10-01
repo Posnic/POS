@@ -1530,11 +1530,17 @@ const processSale = async (
         'seating_primary_id',
         'seating_table_ids',
         'seating_capacity_revision',
-      ])
+      ]) {
+        // Captain writes lifecycle fields through the native driver. A field
+        // outside the Mongoose schema is available through get(), but not a
+        // direct property. Requiring its absence rejects every accepted order.
+        const storedValue =
+          typeof existingSale?.get === 'function' ? existingSale.get(field) : existingSale?.[field];
         doc.$where[field] =
-          existingSale?.[field] === undefined || existingSale?.$isDefault?.(field)
+          storedValue === undefined || existingSale?.$isDefault?.(field)
             ? { $exists: false }
-            : existingSale[field];
+            : storedValue;
+      }
       if (doc.seating_request_id || context.branchSettings?.table_options === true) {
         const db = await BaseModel.getDb();
         const scope = { branchId, license: licenseId };
@@ -1902,6 +1908,14 @@ const processSale = async (
     return savedAnswer(saleId, salePrefixedId);
   } catch (error) {
     console.error('processSale Error:', error);
+    if (error.name === 'DocumentNotFoundError') {
+      return {
+        status: false,
+        data: null,
+        message:
+          'This order changed while payment was being saved. Reopen the order and check its payment status before retrying.',
+      };
+    }
     return {
       status: false,
       message: error.message,

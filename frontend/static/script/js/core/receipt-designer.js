@@ -70,6 +70,27 @@
     function headerValue(value) {
         return '<span class="rd-header-value">' + esc(value) + '</span>';
     }
+    function transactionDate(value, block, dateOrder) {
+        var text = String(value || '');
+        if ((!block.dateFormat || block.dateFormat === 'auto') && (!block.timeFormat || block.timeFormat === 'auto')) return text;
+        // Receipt payloads use DD/MM/YYYY; do not let Date.parse reinterpret
+        // an ambiguous shop-local date or change its timezone.
+        var m = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ ,]+(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?)?$/i);
+        var iso = !m && text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?)?$/);
+        if (iso) m = [iso[0], iso[3], iso[2], iso[1], iso[4], iso[5]];
+        if (!m) return text;
+        if (!iso && dateOrder === 'mdy') { var swap = m[1]; m[1] = m[2]; m[2] = swap; }
+        var day = m[1].padStart(2, '0'), month = m[2].padStart(2, '0'), year = m[3];
+        var originalDate = text.split(/[T ,]/)[0];
+        var date = { dmy: day + '/' + month + '/' + year, 'dmy-short': day + '/' + month + '/' + year.slice(-2), mdy: month + '/' + day + '/' + year, ymd: year + '-' + month + '-' + day }[block.dateFormat] || originalDate;
+        if (!m[4] || block.timeFormat === 'none') return date;
+        var hour = Number(m[4]);
+        if (m[6]) hour = hour % 12 + (m[6].toLowerCase() === 'pm' ? 12 : 0);
+        var time = block.timeFormat === '12h' ? String(hour % 12 || 12).padStart(2, '0') + ':' + m[5] + (hour >= 12 ? ' PM' : ' AM')
+            : block.timeFormat === '24h' ? String(hour).padStart(2, '0') + ':' + m[5]
+            : m[4] + ':' + m[5] + (m[6] ? ' ' + m[6] : '');
+        return date + ' ' + time;
+    }
     function thermalDate(value) {
         // Keep the supplied locale and date order. A clock and its day period
         // travel together; narrow paper can wrap between the date and time.
@@ -207,6 +228,8 @@
                 if (contract.fieldAvailable('fssai', data) && present(data.branch_fssai_number) && (headerFssai || !hasField('fssai'))) content += '<p>' + esc(fieldLabel('fssai')) + ': ' + esc(String(data.branch_fssai_number).trim()) + '</p>';
                 content += '</div>';
             } else if (b.type === 'transaction') {
+                var formattedDate = transactionDate(data.created_date || data.date || '', b, data.receipt_date_order);
+                var customLabel = typeof b.labelText === 'string';
                 if (sheet) {
                     content = '<div class="rd-invoice-meta"><div class="rd-invoice-title">' + esc(documentTitle) + '</div><dl>';
                     if (data.sales_id) content += '<dt>' + esc(beforePayment ? PosnicPro.i18n.t('lang_bill_no', 'Bill no') : PosnicPro.i18n.t('lang_rd_receipt_number', 'Receipt number')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
@@ -215,13 +238,13 @@
                     var billPrefix = '';
                     if (b.showTitle === false && data.sales_id) {
                         var prefix = PosnicPro.i18n.t('lang_bill_no', 'Bill no') + ': ';
-                        var headerText = prefix + data.sales_id + (data.created_date || data.date || '');
+                        var headerText = prefix + data.sales_id + formattedDate;
                         // Thermal headers use monospace. Reserve a small gap and allow
                         // for bold glyphs; omit only the label when the row is too wide.
                         var headerSize = Number(b.fontSize) || layout.fontSize;
                         if (Array.from(headerText).length * headerSize * 0.605 + 4 <= contract.formats[format].content * 96 / 25.4) billPrefix = prefix;
                     }
-                    content = '<div class="rd-transaction"' + (b.showTitle === false ? ' style="column-gap:4px"' : '') + '><strong>' + (b.showTitle === false ? esc(billPrefix) : esc(documentTitle)) + (data.sales_id ? (b.showTitle === false ? '' : ' ') + headerValue(data.sales_id) : '') + '</strong><span class="rd-transaction-date">' + thermalDate(data.created_date || data.date || '') + '</span></div>';
+                    content = '<div class="rd-transaction"' + (b.showTitle === false ? ' style="column-gap:4px"' : '') + '><strong>' + (customLabel ? esc(b.labelText) + (b.labelText ? ' ' : '') : b.showTitle === false ? esc(billPrefix) : esc(documentTitle)) + (data.sales_id ? (customLabel || b.showTitle === false ? '' : ' ') + headerValue(data.sales_id) : '') + '</strong><span class="rd-transaction-date">' + thermalDate(formattedDate) + '</span></div>';
                 }
                 if (present(taxNumber) && !hasField('customer_tax_number')) content += '<p class="rd-customer-tax">' + esc(fieldLabel('customer_tax_number')) + ': ' + esc(String(taxNumber).trim()) + '</p>';
             } else if (b.type === 'items') {

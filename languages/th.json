@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "คอลัมน์คงที่ - รายการ ราคาต่อหน่วย จำนวน ยอดเงิน",
   "lang_rd_max_name_chars": "จำนวนอักขระสูงสุดของชื่อสินค้า",
   "lang_rd_show_title": "แสดงหัวข้อใบแจ้งหนี้ / ใบเสร็จ",
-  "lang_rd_fssai_header": "แสดง FSSAI ใต้ GSTIN"
+  "lang_rd_fssai_header": "แสดง FSSAI ใต้ GSTIN",
+  "lang_rd_left_label": "ข้อความด้านซ้ายที่กำหนดเอง",
+  "lang_rd_label_help": "ข้อความจะแทนที่หัวเรื่องใบเสร็จ ล้างเพื่อใช้ค่าเริ่มต้น",
+  "lang_rd_date_format": "รูปแบบวันที่",
+  "lang_rd_time_format": "รูปแบบเวลา"
 }

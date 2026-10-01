@@ -1,6 +1,11 @@
 /* Receipt designer labels are explicit so the language catalog can extract them. */
 PosnicPro.receiptDesignLabel = function (value) {
     switch (value) {
+    case "Custom left label": return PosnicPro.i18n.t('lang_rd_left_label', 'Custom left label');
+    case "Custom text replaces the receipt title. Clear to use the default.": return PosnicPro.i18n.t('lang_rd_label_help', 'Custom text replaces the receipt title. Clear to use the default.');
+    case "Date format": return PosnicPro.i18n.t('lang_rd_date_format', 'Date format');
+    case "Time format": return PosnicPro.i18n.t('lang_rd_time_format', 'Time format');
+    case "None": return PosnicPro.i18n.t('lang_none', 'None');
     case "Customer tax number": return PosnicPro.i18n.t('lang_rd_customer_tax_number', 'Customer tax number');
     case "Field width": return PosnicPro.i18n.t('lang_rd_field_width', 'Field width');
     case "Full width": return PosnicPro.i18n.t('lang_rd_full_width', 'Full width');

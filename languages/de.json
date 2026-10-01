@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "Feste Spalten - Artikel, Stückpreis, Menge, Betrag",
   "lang_rd_max_name_chars": "Maximale Zeichenanzahl des Artikelnamens",
   "lang_rd_show_title": "Rechnungs- / Belegtitel anzeigen",
-  "lang_rd_fssai_header": "FSSAI unter GSTIN anzeigen"
+  "lang_rd_fssai_header": "FSSAI unter GSTIN anzeigen",
+  "lang_rd_left_label": "Eigene Beschriftung links",
+  "lang_rd_label_help": "Eigener Text ersetzt den Belegtitel. Für den Standard leeren.",
+  "lang_rd_date_format": "Datumsformat",
+  "lang_rd_time_format": "Zeitformat"
 }

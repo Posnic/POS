@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "Colonnes fixes - article, prix unitaire, quantité, montant",
   "lang_rd_max_name_chars": "Nombre maximal de caractères du nom",
   "lang_rd_show_title": "Afficher le titre de la facture / du reçu",
-  "lang_rd_fssai_header": "Afficher FSSAI sous GSTIN"
+  "lang_rd_fssai_header": "Afficher FSSAI sous GSTIN",
+  "lang_rd_left_label": "Libellé personnalisé à gauche",
+  "lang_rd_label_help": "Le texte remplace le titre du reçu. Effacez-le pour utiliser la valeur par défaut.",
+  "lang_rd_date_format": "Format de date",
+  "lang_rd_time_format": "Format horaire"
 }

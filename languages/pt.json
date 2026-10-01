@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "Colunas fixas - item, preço unitário, quantidade, valor",
   "lang_rd_max_name_chars": "Máximo de caracteres no nome do item",
   "lang_rd_show_title": "Mostrar título da fatura / recibo",
-  "lang_rd_fssai_header": "Mostrar FSSAI abaixo de GSTIN"
+  "lang_rd_fssai_header": "Mostrar FSSAI abaixo de GSTIN",
+  "lang_rd_left_label": "Texto personalizado à esquerda",
+  "lang_rd_label_help": "O texto substitui o título do recibo. Limpe para usar o padrão.",
+  "lang_rd_date_format": "Formato da data",
+  "lang_rd_time_format": "Formato da hora"
 }

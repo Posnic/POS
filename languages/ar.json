@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "أعمدة ثابتة - الصنف وسعر الوحدة والكمية والمبلغ",
   "lang_rd_max_name_chars": "الحد الأقصى لأحرف اسم الصنف",
   "lang_rd_show_title": "إظهار عنوان الفاتورة / الإيصال",
-  "lang_rd_fssai_header": "إظهار FSSAI أسفل GSTIN"
+  "lang_rd_fssai_header": "إظهار FSSAI أسفل GSTIN",
+  "lang_rd_left_label": "نص مخصص يسارًا",
+  "lang_rd_label_help": "يستبدل النص المخصص عنوان الإيصال. امسحه لاستخدام الافتراضي.",
+  "lang_rd_date_format": "تنسيق التاريخ",
+  "lang_rd_time_format": "تنسيق الوقت"
 }

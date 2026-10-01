@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "ಸ್ಥಿರ ಕಾಲಮ್‌ಗಳು - ವಸ್ತು, ಘಟಕ ಬೆಲೆ, ಪ್ರಮಾಣ, ಮೊತ್ತ",
   "lang_rd_max_name_chars": "ವಸ್ತುವಿನ ಹೆಸರಿನ ಗರಿಷ್ಠ ಅಕ್ಷರಗಳು",
   "lang_rd_show_title": "ಬಿಲ್ / ರಸೀದಿ ಶೀರ್ಷಿಕೆ ತೋರಿಸಿ",
-  "lang_rd_fssai_header": "GSTIN ಕೆಳಗೆ FSSAI ತೋರಿಸಿ"
+  "lang_rd_fssai_header": "GSTIN ಕೆಳಗೆ FSSAI ತೋರಿಸಿ",
+  "lang_rd_left_label": "ಎಡಭಾಗದ ಕಸ್ಟಮ್ ಪಠ್ಯ",
+  "lang_rd_label_help": "ಕಸ್ಟಮ್ ಪಠ್ಯವು ರಸೀದಿ ಶೀರ್ಷಿಕೆಯನ್ನು ಬದಲಿಸುತ್ತದೆ. ಡೀಫಾಲ್ಟ್ ಬಳಸಲು ಖಾಲಿ ಬಿಡಿ.",
+  "lang_rd_date_format": "ದಿನಾಂಕ ಸ್ವರೂಪ",
+  "lang_rd_time_format": "ಸಮಯ ಸ್ವರೂಪ"
 }

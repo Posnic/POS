@@ -2959,6 +2959,8 @@ class SettingModel extends BaseModel {
 
       console.log('DEBUG - deletePaymentFiledModel filter:', filter);
 
+      const doc = await collection.findOne(filter);
+      if (doc) await BaseModel.deletedDocumentBackup(this.paymentCollection, doc);
       const result = await collection.deleteOne(filter);
 
       console.log('DEBUG - deletePaymentFiledModel result:', {
@@ -4301,12 +4303,11 @@ class SettingModel extends BaseModel {
           $group: {
             _id: {
               payment_id: '$_id',
-              payment_value: '$payment_field',
+              payment_value: { $ifNull: ['$payment_field', '$payment_value'] },
             },
           },
         },
         { $sort: { _id: 1 } },
-        { $limit: 10 },
       ];
 
       const paymentList = await collection.aggregate(pipeline).toArray();
