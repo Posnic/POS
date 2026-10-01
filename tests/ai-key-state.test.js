@@ -44,7 +44,7 @@ test('the box hides while a key is saved, unless somebody asked to replace it', 
   assert.match(ai, /\$\('#ai_api_key'\)\.toggle\(on && \(!saved \|\| replacing\)\)/);
   assert.match(ai, /\$\('#ai_key_cancel'\)\.toggle\(on && saved && replacing\)/);
   /* a visit starts from the saved state, never from a half-finished replace */
-  assert.match(ai, /_howtoOpen = false;\n\s*PosnicPro\.settings\.ai\._replacing = false;/);
+  assert.match(ai, /_howtoOpen = false;\r?\n\s*PosnicPro\.settings\.ai\._replacing = false;/);
 });
 
 test('remove says the word the API listens for, and only that word', () => {
