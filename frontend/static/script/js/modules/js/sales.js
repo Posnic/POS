@@ -735,7 +735,7 @@
        document in the product wears. */
     buildSaleSheet: function (d) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(v) || 0).toFixed(2); };
+        var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Math.round((Number(v) || 0) * 100) / 100).toFixed(2); };
         var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
         var unpaid = /partial|^unpaid$/i.test(String(d.payment_status || ''));
         var proc = String(d.sale_process || '');
@@ -771,10 +771,16 @@
             + '<th class="text-right"><lang class="lang_price_title">Price</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th>'
             + '</tr></thead><tbody>';
         (d.items || []).forEach(function (l, i) {
+            var unit = Number(l.item_base_price);
+            if (!Number.isFinite(unit)) {
+                unit = Number(l.item_price) || 0;
+                if (l.tax_type === 'inclusive' && Number(l.tax) > 0) unit /= 1 + Number(l.tax) / 100;
+            }
+
             items += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name) + '</td>'
                 + '<td class="text-right">' + esc(l.item_quantity) + ' ' + esc(l.item_unit || '') + '</td>'
-                + '<td class="text-right">' + money(l.item_price) + '</td>'
-                + '<td class="text-right">' + money(l.total_amount) + '</td></tr>';
+                + '<td class="text-right">' + money(unit) + '</td>'
+                + '<td class="text-right">' + money(unit * (Number(l.item_quantity) || 0)) + '</td></tr>';
         });
         items += '</tbody><tfoot>'
             + '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_subtotal">Subtotal</lang></td>'
@@ -785,12 +791,24 @@
             + (Number(d.tax) > 0
                 ? '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_module_tax">Tax</lang></td><td class="text-right">' + money(d.tax) + '</td></tr>'
                 : '')
+            + [
+                ['Additional discount', -(Number(d.sale_extra_discount) || 0)],
+                ['Coupon discount', -(Number(d.coupon_discount_value) || 0)],
+                ['Loyalty discount', -(Number(d.loyalty_redeem_value) || 0)],
+                ['Round off', Number(d.sales_round_off) || 0]
+            ].concat((d.charges || []).map(function (c) { return [c.name, Number(c.amount) || 0]; }))
+                .filter(function (row) { return row[1] !== 0; })
+                .map(function (row) { return '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(row[0])
+                    + '</td><td class="text-right">' + money(row[1]) + '</td></tr>'; }).join('')
             + '<tr class="q-grand"><th colspan="4" class="text-right"><lang class="lang_total">TOTAL</lang></th>'
             + '<th class="text-right">' + money(d.sales_total) + '</th></tr>'
             + '</tfoot></table></div>';
         var footer = '<div class="q-footer">';
         footer += '<div class="q-block"><div class="q-label"><lang class="lang_payment_2">Payment</lang></div>'
-            + '<div>' + esc(d.payment_mode || '-') + '</div>'
+            + (d.multi_payment && Object.keys(d.multi_payment).some(function (key) { return Number(d.multi_payment[key]) > 0; })
+                ? Object.keys(d.multi_payment).filter(function (key) { return Number(d.multi_payment[key]) > 0; })
+                    .map(function (key) { return '<div>' + esc(key) + ': ' + money(d.multi_payment[key]) + '</div>'; }).join('')
+                : '<div>' + esc(d.payment_mode || '-') + '</div>')
             + (unpaid && Number(d.payment_pending) > 0
                 ? '<div class="q-muted" style="color: var(--theme-danger-color, #c0392b);">Pending: ' + money(d.payment_pending) + '</div>'
                 : '')
@@ -1869,9 +1887,6 @@
         $('#render_amount').append(renderAmount);
         
         // Load saved denomination data if editing a sale
-        PosnicPro.sales.charges = (PosnicPro.sales.EditRecentSaleParams
-            && Array.isArray(PosnicPro.sales.EditRecentSaleParams.charges))
-            ? PosnicPro.sales.EditRecentSaleParams.charges.slice() : [];
         PosnicPro.sales.renderCharges();
         if (PosnicPro.sales.EditRecentSaleParams && PosnicPro.sales.EditRecentSaleParams.denomination_values) {
             let savedDenominations = PosnicPro.sales.EditRecentSaleParams.denomination_values;
@@ -4808,6 +4823,7 @@ PosnicPro.sales.editSale = {
                 wallet_check: ($('#wallet_balance').is(":checked")) ? 'true' : 'false',
                 extra_discount: parseFloat($('#extraDisc').text()),
                 extra_discount_type: !$('#percentIcon').hasClass('d-none') ? "percent" : "price",
+                charges: PosnicPro.sales.charges || [],
                 multi_payment: payments,
                 enable_multi_payment: PosnicPro.local.get('enable_multi_payment'),
                 table_number: editTableNumber,
@@ -5130,6 +5146,7 @@ PosnicPro.sales.holdSale = {
                 alternative_id: PosnicPro.sales.salesId,
                 register_id: register_id,
                 extra_discount_type: !$('#percentIcon').hasClass('d-none') ? "percent" : "price",
+                charges: PosnicPro.sales.charges || [],
                 // table_id: (PosnicPro.sales.selectedTable) ? PosnicPro.sales.selectedTable.id : '',
                 // table_number: (PosnicPro.sales.selectedTable) ? PosnicPro.sales.selectedTable.tableNumber : ''
             };
@@ -6698,7 +6715,7 @@ PosnicPro.sales.chargeTax = {
     },
     amountFor: function (c) {
         if (!c || c.taxed !== true) { return 0; }
-        if (c.source === 'outlet') return Number(c.tax_amount) || 0;
+        if (c.source === 'outlet' || PosnicPro.sales.paymentOnlyMode === true) return Number(c.tax_amount) || 0;
         return Math.round((Number(c.amount) || 0) * PosnicPro.sales.chargeTax.rate()) / 100;
     }
 };
@@ -6726,7 +6743,7 @@ PosnicPro.sales.renderCharges = function () {
     list.forEach(function (c, i) {
         // keep the payload fields current: the sale save sends these objects as-is
         c.tax_amount = PosnicPro.sales.chargeTax.amountFor(c);
-        if (c.source !== 'outlet') c.tax_name = c.taxed === true ? PosnicPro.sales.chargeTax.taxName() : '';
+        if (c.source !== 'outlet' && PosnicPro.sales.paymentOnlyMode !== true) c.tax_name = c.taxed === true ? PosnicPro.sales.chargeTax.taxName() : '';
         html += '<div class="sale-charge-row"><span>' + $('<i>').text(c.name).html() + '</span>'
             + (rate > 0 && c.source !== 'outlet'
                 ? '<a href="javascript:void(0)" class="sale-charge-tax badge ' + (c.taxed === true ? 'badge-primary' : 'badge-light') + '" data-i="' + i
@@ -6921,6 +6938,11 @@ PosnicPro.sales.calculation = {
         PosnicPro.sales.calculation.extraDiscoundCalculation();
     },
     extraDiscoundCalculation: function () {
+        // Settings may arrive after the first cart render. Refresh the charge
+        // action during recalculation instead of requiring a payment-panel visit.
+        if (typeof PosnicPro.sales.chargesEnabled === 'function') {
+            $('#sale_add_charge').toggle(PosnicPro.sales.chargesEnabled() || (PosnicPro.sales.charges || []).length > 0);
+        }
         if ($('#sales_new_items_table tbody tr').find(':nth-child(10)').text() === '') {
             $('#grand_total').val('0');
         }
@@ -8397,6 +8419,11 @@ PosnicPro.sales.recentMenu = {
         $("#sales_new_customer_country").val(result.customer_country);
         $('#billing_room_reference').val(result.room_reference || '');
         if (result.outlet_snapshot) { $('#billing_outlet_label').text(result.outlet_snapshot.name); $('#billing_room_wrap').show(); }
+        // Load once with the order, never when opening/reopening payment.
+        PosnicPro.sales.charges = (result.charges || []).map(function (charge) {
+            return Object.assign({}, charge);
+        });
+        if (PosnicPro.sales.renderCharges) PosnicPro.sales.renderCharges();
         PosnicPro.sales.EditRecentSaleParams = {
             outlet_id: result.outlet_id,
             outlet_snapshot: result.outlet_snapshot,

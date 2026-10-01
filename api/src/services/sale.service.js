@@ -201,6 +201,8 @@ const processSale = async (
   context = {},
   { preview = false, beforeCommit } = {}
 ) => {
+  // Retry identity describes the submitted request, not derived charge/tax fields.
+  const submittedPayload = structuredClone(data);
   let finishCaptainEdit;
   let finishCapacityEdit;
   try {
@@ -268,7 +270,7 @@ const processSale = async (
         await BaseModel.getDb(),
         { branchId, license: licenseId },
         String(userId || ''),
-        data
+        submittedPayload
       );
       if (existing) return savedAnswer(existing._id, existing.sales_id, true);
     }
@@ -1352,7 +1354,7 @@ const processSale = async (
         submissionDb,
         { branchId, license: licenseId },
         String(userId || ''),
-        data,
+        submittedPayload,
         finalSaleData
       );
       if (existing) return savedAnswer(existing._id, existing.sales_id, true);
@@ -1495,7 +1497,7 @@ const processSale = async (
             submissionDb,
             { branchId, license: licenseId },
             String(userId || ''),
-            data
+            submittedPayload
           );
           if (existing) return savedAnswer(existing._id, existing.sales_id, true);
         }

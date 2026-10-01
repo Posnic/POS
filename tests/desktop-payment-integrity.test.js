@@ -15,7 +15,7 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   win.PosnicPro = { local: { get: () => 'Rs.' }, configPaymentType: [{ payment_value: 'Upi' }], alert: (_type, message) => { win.lastError = message; }, sales: {
     extraDiscount: { sale_new_tot: 262.5 }, EditRecentSaleParams: { sales_total: 262.5, payment_status: status, multi_payment: payments }, paymentOnlyMode: true
   } };
-  for (const name of ['showMultiPaymentMode', 'getPaymentObject', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
+  for (const name of ['sub', 'showMultiPaymentMode', 'getPaymentObject', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
     const start = source.indexOf('    ' + name + ': function');
     const end = source.indexOf('\n    },', start);
     assert.ok(start >= 0 && end > start);
@@ -329,4 +329,75 @@ for (const spec of [
   sales.showMultiPaymentMode();
   assert.equal(Number($('#cash_input').val()),spec.expected);
   dom.window.close();
+});
+test('opening payment repeatedly preserves new charges and the collected total', (t) => {
+  const {dom,$,sales,win} = savedOrderSetup();
+  t.after(() => dom.window.close());
+  sales.customerViewDisplay = () => {};
+  win.PosnicPro.local.get = key => key === 'enable_multi_payment' ? 'enable' : key === 'general_settings' ? '{}' : '';
+  $('#Partial_amount').addClass('partial_amount');
+  const charges=[{name:'Service',amount:20,taxed:true,tax_amount:0.05},{name:'Delivery',amount:10,taxed:false,tax_amount:0}];
+  sales.paymentOnlyMode=false; sales.SaleAction='add'; sales.EditRecentSaleParams={};
+  $('body').append('<input id="sales_new_customer_name" value="Walk-in"><input id="customer_current_balance" value="0">');
+  Object.assign(sales,{charges,refreshCustomerAccount:()=>{},renderTenderReceiptPreview:()=>{},saleDoneTimer:{stop:()=>{}},defaultDenominations:()=>[],renderCharges:()=>{sales.calculation.extraDiscoundCalculation();}});
+  sales.chargesTotal=()=>sales.charges.reduce((n,c)=>n+c.amount,0);
+  sales.chargesTax=()=>sales.charges.reduce((n,c)=>n+c.tax_amount,0);
+  sales.addSalesLineItems({id:'qa',name:'QA',selling_price:45,company_price:0,tax:5,tax_type:'exclusive',discount_amount:0,discount_percentage:10,item_quantity:1,unit:'pc'});
+  sales.addSalesLineItems({id:'water',name:'Water',selling_price:30,company_price:0,tax:5,tax_type:'inclusive',discount_amount:0,discount_percentage:0,item_quantity:1,unit:'pc'});
+  $('#extraDisc').text(10); $('#percentIcon').removeClass('d-none'); sales.calculation.salesTableRowCart();
+  assert.equal(sales.extraDiscount.sale_new_tot,95.32);
+  for(let i=0;i<2;i++){
+    sales.openTenderModel(true);
+    assert.deepEqual(sales.charges,charges);
+    assert.equal(sales.extraDiscount.sale_new_tot,95.32);
+    assert.equal(Number($('#cash_input').val()),95.32);
+  }
+  dom.window.close();
+});
+test('saved order restores charges before checking its payable', (t) => {
+  const {dom,$,sales,win}=savedOrderSetup(); t.after(()=>dom.window.close());
+  const charges=[{name:'Service',amount:20,taxed:true,tax_amount:0.05,tax_name:'Old tax',source:'manual'}];
+  sales.chargesTotal=()=>sales.charges.reduce((n,c)=>n+c.amount,0);
+  sales.chargesTax=()=>sales.charges.reduce((n,c)=>n+c.tax_amount,0);
+  let opened=0;
+  sales.openTenderModel=()=>{assert.equal(sales.extraDiscount.sale_new_tot,120.05);opened++;};
+  sales.recentMenu.editItems('saved', {sales_id:'saved',sales_total:120.05,sales_sub_total:100,tax:.05,charges,
+    payment_status:'Unpaid',sale_process:'Add',extra_discount:0,extra_discount_type:'price',
+    items:[{item_id:'zero',item_name:'Zero',item_price:100,item_quantity:1,item_discount:0,item_discount_percentage:0,tax:0,tax_type:'exclusive',company_price_total:0}]},'edit');
+  assert.equal(opened,1); assert.equal(sales.charges[0].tax_amount,.05);
+  sales.charges[0].amount=30; assert.equal(charges[0].amount,20,'editing must not mutate the saved snapshot');
+  const start=source.indexOf('PosnicPro.sales.chargeTax = {');
+  const end=source.indexOf('PosnicPro.sales.chargesTax =',start);
+  win.eval(source.slice(start,end));
+  sales.chargeTax._tax={name:'New tax',value:5};
+  assert.equal(sales.chargeTax.amountFor(charges[0]),.05,'payment-only retains issued charge tax');
+});
+test('saved receipt lists every discount, charge and split tender with pretax lines', (t) => {
+  const {dom,$,win,sales}=savedOrderSetup(); t.after(()=>dom.window.close());
+  const start=source.indexOf('    buildSaleSheet: function'); const end=source.indexOf('\n    },',start);
+  win.eval('PosnicPro.sales.buildSaleSheet = '+source.slice(source.indexOf('function',start),end+6)+';');
+  const html=sales.buildSaleSheet({sales_id:'TEST',payment_status:'Paid',payment_mode:'Cash',
+    sales_sub_total:73.5714285714,discount:4.5,tax:3.50357142857,sale_extra_discount:7.2525,sales_total:95.32,
+    items:[{item_name:'Paratha',item_price:45,item_quantity:1,tax:5,tax_type:'exclusive',total_amount:42.525},
+      {item_name:'Water',item_price:30,item_quantity:1,tax:5,tax_type:'inclusive',total_amount:30}],
+    charges:[{name:'Service <test>',amount:20},{name:'Delivery',amount:10}],multi_payment:{Cash:20,Card:30,UPI:45.32}});
+  const sheet=$(html); const rows=sheet.find('tfoot tr').get().map(row=>$(row).text().trim());
+  assert.ok(rows.some(r=>r.includes('Additional discount') && r.includes('-7.25')));
+  assert.ok(rows.some(r=>r.includes('Service <test>') && r.includes('20.00')));
+  assert.ok(rows.some(r=>r.includes('Delivery') && r.includes('10.00')));
+  assert.equal(sheet.find('test').length,0);
+  assert.match(sheet.find('tbody tr').eq(0).text(),/45\.00.*45\.00/);
+  assert.match(sheet.find('tbody tr').eq(1).text(),/28\.57.*28\.57/);
+  const sum=sheet.find('tfoot tr.q-sub td:last-child').get().reduce((n,td)=>n+Number($(td).text().replace(/[^\d.-]/g,'')),0);
+  assert.equal(Math.round(sum*100)/100,95.32);
+  assert.match(sheet.find('.q-footer').text(),/Cash:.*20\.00.*Card:.*30\.00.*UPI:.*45\.32/);
+});
+test('charge action follows late-loaded settings on cart recalculation', (t) => {
+  const {dom,$,sales}=savedOrderSetup();t.after(()=>dom.window.close());
+  $('body').append('<a id="sale_add_charge" style="display:none">Add charge</a>');
+  let enabled=false;sales.chargesEnabled=()=>enabled;sales.charges=[];
+  sales.calculation.extraDiscoundCalculation();assert.equal($('#sale_add_charge').css('display'),'none');
+  enabled=true;sales.calculation.extraDiscoundCalculation();assert.notEqual($('#sale_add_charge').css('display'),'none');
+  enabled=false;sales.charges=[{name:'Saved charge',amount:10}];
+  sales.calculation.extraDiscoundCalculation();assert.notEqual($('#sale_add_charge').css('display'),'none');
 });
