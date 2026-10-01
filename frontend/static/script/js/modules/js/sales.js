@@ -3025,7 +3025,9 @@
             let amount = $(this).val().trim();
             if (amount !== '' && !isNaN(amount) && parseFloat(amount) > 0) {
                 // Element ids remove spaces and case; they are not tender names.
-                let mode = $(this).closest('.payment-method-card').find('.payment_mode').val();
+                // The legacy selection handler overwrites every radio's value.
+                // Its id retains the exact configured name, including spaces/case.
+                let mode = $(this).closest('.payment-method-card').find('.payment_mode').attr('id');
                 if (!mode) {
                     mode = $(this).attr('id').replace('_input', '');
                     mode = mode.charAt(0).toUpperCase() + mode.slice(1);
@@ -4293,6 +4295,12 @@ PosnicPro.sales.addSale = {
                 if (!response && xhr && xhr.responseText) {
                     try { response = JSON.parse(xhr.responseText); } catch (error) { response = null; }
                 }
+                try {
+                    if (PosnicPro.sales.submissionJournal().reject(savedSubmission, response)) {
+                        PosnicPro.sales.resetOrderRequest();
+                        if (PosnicPro.orderRecovery) PosnicPro.orderRecovery.refresh();
+                    }
+                } catch (error) { console.warn('Order rejection remains pending:', error.message); }
                 // A dropped connection has no stock correction payload. Keep
                 // the cart and retry identity intact instead of throwing here.
                 var corrections = response && Array.isArray(response.data) ? response.data : [];

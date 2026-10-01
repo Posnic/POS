@@ -1080,7 +1080,12 @@ const processSale = async (
       if (invalid || !Number.isSafeInteger(tenderMinor) || tenderMinor !== dueMinor) {
         return {
           status: false,
-          data: null,
+          // This validation precedes every sale, stock and payment write. The
+          // desktop may release this request from uncertain-submit recovery.
+          data:
+            id === '' && typeof data.idempotencyKey === 'string'
+              ? { submission_outcome: 'not_saved', request_id: data.idempotencyKey }
+              : null,
           message: `Payment total does not match the ${partialCheck ? 'payment amount' : 'bill total'} (${expectedTender.toFixed(2)}). Review the payment amount before saving.`,
         };
       }

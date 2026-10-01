@@ -26,6 +26,11 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
 test('split payment keeps configured method spelling in the submitted ledger', () => {
   const { dom, win, $, sales } = setup('Unpaid', { Cash: 262.5 });
   win.PosnicPro.configPaymentType = [{ payment_value: 'QA Card' }, { payment_value: 'UPI' }];
+  // Include the real delegated handler: selecting a tender rewrites radio values.
+  const handlerStart = source.indexOf('$(document).on(\'change\', \'.payment_mode\'');
+  const handlerEnd = source.indexOf('\n});', handlerStart) + 4;
+  assert.ok(handlerStart >= 0 && handlerEnd > handlerStart);
+  win.eval(source.slice(handlerStart, handlerEnd));
   sales.showMultiPaymentMode();
   $('#cash_input').val('100').trigger('input');
   $('#qacard_input').closest('.payment-method-card').find('button').trigger('click');
