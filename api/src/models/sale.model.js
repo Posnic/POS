@@ -340,6 +340,8 @@ const saleSchema = new mongoose.Schema(
     seating_request_id: { type: String },
     idempotency_key: { type: String },
     submission_payload_hash: { type: String },
+    extension_stock_operation: { type: String },
+    extension_id: { type: String },
     seating_primary_id: { type: String },
     seating_table_ids: { type: [String], default: undefined },
     floor_closed_at: { type: Date },
