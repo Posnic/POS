@@ -12,7 +12,9 @@ describe('Ask Posnic service', () => {
   });
   test('today and last week use outlet midnight rather than server midnight', () => {
     const at = new Date('2026-10-01T03:00:00Z');
-    expect(service.dateRange('today', 'Asia/Kolkata', at).start_date.toISOString()).toBe('2026-09-30T18:30:00.000Z');
+    expect(service.dateRange('today', 'Asia/Kolkata', at).start_date.toISOString()).toBe(
+      '2026-09-30T18:30:00.000Z'
+    );
     const week = service.dateRange('last_week', 'Asia/Kolkata', at);
     expect(week.start_date.toISOString()).toBe('2026-09-19T18:30:00.000Z');
     expect(week.end_date.toISOString()).toBe('2026-09-26T18:29:59.999Z');
@@ -44,8 +46,12 @@ describe('Ask Posnic service', () => {
     expect(service.intentFrom('Show category performance')).toBe('category_performance');
     expect(service.intentFrom('Show customer segments this month')).toBe('customer_segments');
     expect(service.intentFrom('What should I reorder this week?')).toBe('reorder_suggestions');
-    expect(service.intentFrom('Show reorder suggestions for next 14 days')).toBe('reorder_suggestions');
-    expect(service.intentFrom('Show coupon promotion performance this month')).toBe('promotion_performance');
+    expect(service.intentFrom('Show reorder suggestions for next 14 days')).toBe(
+      'reorder_suggestions'
+    );
+    expect(service.intentFrom('Show coupon promotion performance this month')).toBe(
+      'promotion_performance'
+    );
     expect(service.intentFrom('Coupon usage this week')).toBe('promotion_performance');
     expect(service.intentFrom('How do I create a coupon?')).toBe('unknown');
     expect(service.intentFrom('Prepare a sales draft')).toBe('sale_draft_action');
@@ -82,12 +88,23 @@ describe('Ask Posnic service', () => {
   });
 
   test('formats payment mix and top products from report output', () => {
-    const overview = { paymentMix: [{ mode: 'Cash', pct: 60 }], topItems: [{ item_name: 'Tea', total_qty: 9 }] };
-    expect(service.answerOverview('payment_mix', overview, 'today').metrics[0]).toEqual({ label: 'Cash', value: '60.00%' });
-    expect(service.answerOverview('top_items', overview, 'today').metrics[0]).toEqual({ label: 'Tea', value: 9 });
+    const overview = {
+      paymentMix: [{ mode: 'Cash', pct: 60 }],
+      topItems: [{ item_name: 'Tea', total_qty: 9 }],
+    };
+    expect(service.answerOverview('payment_mix', overview, 'today').metrics[0]).toEqual({
+      label: 'Cash',
+      value: '60.00%',
+    });
+    expect(service.answerOverview('top_items', overview, 'today').metrics[0]).toEqual({
+      label: 'Tea',
+      value: 9,
+    });
   });
 
   test('formats tax only from the report total', () => {
-    expect(service.answerOverview('tax', { kpis: { total_tax: 42.25 } }, 'today').metrics[0]).toEqual({ label: 'Tax collected', value: '42.25' });
+    expect(
+      service.answerOverview('tax', { kpis: { total_tax: 42.25 } }, 'today').metrics[0]
+    ).toEqual({ label: 'Tax collected', value: '42.25' });
   });
 });

@@ -35,7 +35,9 @@ describe('isolated PDF process limits', () => {
       f.children[1].stdout.emit('data', Buffer.from('{"text":"Next document","pages":1}'));
       f.children[1].emit('close', 0);
       await expect(second).resolves.toEqual({ text: 'Next document', pages: 1 });
-    } finally { jest.useRealTimers(); }
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test('starts with bounded heap and without AWS or application secrets', async () => {
@@ -92,7 +94,9 @@ describe('isolated PDF process limits', () => {
     const f = fixture({ concurrency: 1 });
     await expect(f.parse(Buffer.alloc(10 * 1024 * 1024 + 1))).rejects.toThrow(/10 MB/);
     expect(f.launch).not.toHaveBeenCalled();
-    f.launch.mockImplementationOnce(() => { throw new Error('unavailable'); });
+    f.launch.mockImplementationOnce(() => {
+      throw new Error('unavailable');
+    });
     await expect(f.parse(pdf)).rejects.toThrow(/could not start/);
     const result = f.parse(pdf);
     const rejected = expect(result).rejects.toThrow(/could not start/);

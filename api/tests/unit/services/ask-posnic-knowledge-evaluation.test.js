@@ -13,11 +13,14 @@ test('manual retrieval and fallback retain reviewed evidence and reject unsuppor
 }, 30000);
 
 test('100-question development benchmark retains expected source evidence for at least ninety percent of supported cases', () => {
-  const cases = retrievalCases(), supported = cases.filter((row) => !row.unsupported);
+  const cases = retrievalCases(),
+    supported = cases.filter((row) => !row.unsupported);
   expect(cases).toHaveLength(100);
   expect(supported).toHaveLength(80);
   expect(cases.filter((row) => row.unsupported)).toHaveLength(20);
-  expect(supported.filter((row) => row.evidence_recalled).length / supported.length).toBeGreaterThanOrEqual(0.9);
+  expect(
+    supported.filter((row) => row.evidence_recalled).length / supported.length
+  ).toBeGreaterThanOrEqual(0.9);
   // Checkout credit policy cannot substitute for the restriction on returns.
   const creditReturn = cases.find((row) => row.id === 'expanded-sales-return-exchange-sale-3');
   expect(creditReturn.matches[0].document_id).toBe(creditReturn.source);

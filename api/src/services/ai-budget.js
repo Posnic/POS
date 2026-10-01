@@ -66,8 +66,16 @@ const REALTIME_FALLBACK_MODEL = 'gpt-realtime';
 
 function priceFor(model) {
   const name = String(model || '');
-  if (name === BEDROCK_PRICE.model && (process.env.AWS_REGION || 'ap-south-1') === BEDROCK_PRICE.region) return { in: BEDROCK_PRICE.in, out: BEDROCK_PRICE.out };
-  if (name === EMBEDDING_PRICE.model && (process.env.AWS_REGION || 'ap-south-1') === EMBEDDING_PRICE.region) return { in: EMBEDDING_PRICE.in, out: EMBEDDING_PRICE.out };
+  if (
+    name === BEDROCK_PRICE.model &&
+    (process.env.AWS_REGION || 'ap-south-1') === BEDROCK_PRICE.region
+  )
+    return { in: BEDROCK_PRICE.in, out: BEDROCK_PRICE.out };
+  if (
+    name === EMBEDDING_PRICE.model &&
+    (process.env.AWS_REGION || 'ap-south-1') === EMBEDDING_PRICE.region
+  )
+    return { in: EMBEDDING_PRICE.in, out: EMBEDDING_PRICE.out };
   if (PRICES[name]) return PRICES[name];
   if (/realtime/i.test(name)) return PRICES[REALTIME_FALLBACK_MODEL];
   return FALLBACK_PRICE;
@@ -198,9 +206,15 @@ function costMinor({ model, tokensIn, tokensOut, rate }) {
 // RAG answer to whole cents would make an unlimited number of calls appear free.
 function costMicrominor({ model, tokensIn, tokensOut, rate, unitPrice }) {
   const price = unitPrice || priceFor(model);
-  if (![price.in, price.out].every((value) => Number.isFinite(value) && value >= 0)) throw new Error('Invalid model unit price.');
+  if (![price.in, price.out].every((value) => Number.isFinite(value) && value >= 0))
+    throw new Error('Invalid model unit price.');
   const perDollar = Number(rate) > 0 ? Number(rate) : USD_TO_INR;
-  return Math.ceil((Math.max(0, Number(tokensIn) || 0) * price.in + Math.max(0, Number(tokensOut) || 0) * price.out) * perDollar * 100);
+  return Math.ceil(
+    (Math.max(0, Number(tokensIn) || 0) * price.in +
+      Math.max(0, Number(tokensOut) || 0) * price.out) *
+      perDollar *
+      100
+  );
 }
 
 /** The audio tokens a stretch of open line is priced as. Rounded up. */
@@ -234,7 +248,10 @@ const currencyCache = new Map();
  */
 async function currencyOf(context) {
   const branchId = String((context && context.branchId) || '');
-  const cacheKey = JSON.stringify([String(context?.licenseId || BaseModel.license || ''), branchId]);
+  const cacheKey = JSON.stringify([
+    String(context?.licenseId || BaseModel.license || ''),
+    branchId,
+  ]);
   const hit = currencyCache.get(cacheKey);
   if (hit && Date.now() - hit.at < CURRENCY_TTL_MS) return hit.value;
   let value = DEFAULT_CURRENCY;
@@ -286,7 +303,8 @@ async function spentThisMonth(context) {
   const details = {};
   let total = 0;
   for (const row of rows) {
-    const minor = (Number(row.cost_minor) || 0) + (Number(row.cost_microminor_adjustment) || 0) / 1e6;
+    const minor =
+      (Number(row.cost_minor) || 0) + (Number(row.cost_microminor_adjustment) || 0) / 1e6;
     total += minor;
     byFeature[row.feature] = (byFeature[row.feature] || 0) + minor;
     const d = details[row.feature] || { minor: 0, calls: 0, seconds: 0, model: '' };
@@ -345,7 +363,8 @@ async function record({ feature, model, tokensIn, tokensOut, payer, seconds, cal
         cost_minor: minor,
         // Retain the fraction that legacy per-call rounding discarded. This
         // additive correction preserves old rows and concurrent atomic writes.
-        cost_microminor_adjustment: costMicrominor({ model, tokensIn, tokensOut, rate: currency.rate }) - minor * 1e6,
+        cost_microminor_adjustment:
+          costMicrominor({ model, tokensIn, tokensOut, rate: currency.rate }) - minor * 1e6,
       },
       $set: {
         last_at: new Date(),
@@ -357,11 +376,17 @@ async function record({ feature, model, tokensIn, tokensOut, payer, seconds, cal
     { upsert: true }
   );
   if (String(feature).startsWith('ask_posnic_')) {
-    void require('./ask-posnic-metrics.service').record(context, 'cost', {
-      calls: calls == null ? 1 : Number(calls) || 0,
-      tokens_in: Number(tokensIn) || 0, tokens_out: Number(tokensOut) || 0,
-      cost_microminor: costMicrominor({ model, tokensIn, tokensOut, rate: currency.rate }),
-    }, { currency: currency.code, payer });
+    void require('./ask-posnic-metrics.service').record(
+      context,
+      'cost',
+      {
+        calls: calls == null ? 1 : Number(calls) || 0,
+        tokens_in: Number(tokensIn) || 0,
+        tokens_out: Number(tokensOut) || 0,
+        cost_microminor: costMicrominor({ model, tokensIn, tokensOut, rate: currency.rate }),
+      },
+      { currency: currency.code, payer }
+    );
   }
   return minor;
 }

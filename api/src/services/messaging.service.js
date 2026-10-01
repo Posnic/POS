@@ -248,8 +248,19 @@ class MessagingService {
     if (transport === 'connector') {
       const outbox = require('./whatsapp-outbox');
       try {
-        const queued = await outbox.enqueue(db, BaseModel.license, { branch_id: branchId, phone, message, scheduled: delivery.scheduled });
-        return { ok: true, queued: true, provider: 'whatsapp_connector', messageId: String(queued.id), error: null };
+        const queued = await outbox.enqueue(db, BaseModel.license, {
+          branch_id: branchId,
+          phone,
+          message,
+          scheduled: delivery.scheduled,
+        });
+        return {
+          ok: true,
+          queued: true,
+          provider: 'whatsapp_connector',
+          messageId: String(queued.id),
+          error: null,
+        };
       } catch (e) {
         return { ok: false, error: 'Could not queue the message: ' + e.message };
       }
@@ -264,7 +275,12 @@ class MessagingService {
     let result;
     try {
       const r = await whatsappService.sendMessage(deviceId, branchId, phone, message);
-      result = { ok: r && r.status === true, error: r && r.message, provider: 'whatsapp_web', messageId: r && r.messageId };
+      result = {
+        ok: r && r.status === true,
+        error: r && r.message,
+        provider: 'whatsapp_web',
+        messageId: r && r.messageId,
+      };
     } catch (e) {
       result = { ok: false, error: e.message };
     }

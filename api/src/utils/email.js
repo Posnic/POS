@@ -238,7 +238,7 @@ const resolveShopTransport = (branchDoc) => {
           if (!messageId) throw new Error('The email provider did not acknowledge this message.');
           return {
             messageId,
-            accepted: to.map(recipient => recipient.email),
+            accepted: to.map((recipient) => recipient.email),
             rejected: [],
           };
         },

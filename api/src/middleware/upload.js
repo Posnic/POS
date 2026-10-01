@@ -131,7 +131,13 @@ const knowledgeUpload = multer({
   storage: typeof multer.memoryStorage === 'function' ? multer.memoryStorage() : undefined,
   limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 10 },
   fileFilter: (req, file, cb) => {
-    const allowed = ['application/pdf', 'text/plain', 'text/markdown', 'text/x-markdown', 'application/octet-stream'];
+    const allowed = [
+      'application/pdf',
+      'text/plain',
+      'text/markdown',
+      'text/x-markdown',
+      'application/octet-stream',
+    ];
     if (allowed.includes(String(file.mimetype || '').toLowerCase())) cb(null, true);
     else cb(new Error('Only PDF, Markdown, and text files are supported.'), false);
   },

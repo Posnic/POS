@@ -31,8 +31,19 @@ test('selected Bedrock profile uses verified Mumbai rates with sub-cent precisio
     expect(budget.costMicrominor({ model, tokensIn: 1000, tokensOut: 200, rate: 1 })).toBe(94000);
     process.env.AWS_REGION = 'us-east-1';
     expect(budget.priceFor(model)).toEqual(budget.FALLBACK_PRICE);
-    expect(budget.costMicrominor({ model, tokensIn: 1000, tokensOut: 200, rate: 1, unitPrice: { in: 0.35, out: 2.95 } })).toBe(94000);
-  } finally { if (region === undefined) delete process.env.AWS_REGION; else process.env.AWS_REGION = region; }
+    expect(
+      budget.costMicrominor({
+        model,
+        tokensIn: 1000,
+        tokensOut: 200,
+        rate: 1,
+        unitPrice: { in: 0.35, out: 2.95 },
+      })
+    ).toBe(94000);
+  } finally {
+    if (region === undefined) delete process.env.AWS_REGION;
+    else process.env.AWS_REGION = region;
+  }
 });
 
 test('managed cost precision retains a call that rounds to zero whole cents', () => {

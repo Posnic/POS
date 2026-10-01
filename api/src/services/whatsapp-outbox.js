@@ -36,7 +36,11 @@ const CLAIM_TTL_MS = 2 * 60_000;
 const oid = (v) => (v && ObjectId.isValid(String(v)) ? new ObjectId(String(v)) : v);
 
 /** Queue one message. shadow=true records parity data, never a send. */
-async function enqueue(db, license, { branch_id, phone, message, shadow, inprocess, scheduled } = {}) {
+async function enqueue(
+  db,
+  license,
+  { branch_id, phone, message, shadow, inprocess, scheduled } = {}
+) {
   const now = new Date();
   const row = {
     license: license || null,
@@ -55,14 +59,36 @@ async function enqueue(db, license, { branch_id, phone, message, shadow, inproce
     row.inprocess_error = inprocess.error || null;
   }
   if (scheduled) {
-    if (!ObjectId.isValid(scheduled.id) || !scheduled.license || String(scheduled.branch_id) !== String(branch_id) || !scheduled.user_id || !/^[a-f0-9-]{36}$/i.test(scheduled.claim || '')) throw new Error('Invalid scheduled delivery scope.');
-    row.scheduled = { id: String(scheduled.id), license: String(scheduled.license), branch_id: String(scheduled.branch_id), user_id: String(scheduled.user_id), claim: scheduled.claim };
+    if (
+      !ObjectId.isValid(scheduled.id) ||
+      !scheduled.license ||
+      String(scheduled.branch_id) !== String(branch_id) ||
+      !scheduled.user_id ||
+      !/^[a-f0-9-]{36}$/i.test(scheduled.claim || '')
+    )
+      throw new Error('Invalid scheduled delivery scope.');
+    row.scheduled = {
+      id: String(scheduled.id),
+      license: String(scheduled.license),
+      branch_id: String(scheduled.branch_id),
+      user_id: String(scheduled.user_id),
+      claim: scheduled.claim,
+    };
     row.license = row.scheduled.license;
-    row._id = new ObjectId(require('node:crypto').createHash('sha256').update(JSON.stringify(row.scheduled)).digest('hex').slice(0, 24));
+    row._id = new ObjectId(
+      require('node:crypto')
+        .createHash('sha256')
+        .update(JSON.stringify(row.scheduled))
+        .digest('hex')
+        .slice(0, 24)
+    );
     // An interrupted enqueue can be inspected/retried with the same identity.
-    await db.collection(OUTBOX).updateOne({ _id: row._id }, { $setOnInsert: row }, { upsert: true });
+    await db
+      .collection(OUTBOX)
+      .updateOne({ _id: row._id }, { $setOnInsert: row }, { upsert: true });
     const stored = await db.collection(OUTBOX).findOne({ _id: row._id });
-    if (stored.phone !== row.phone || stored.message !== row.message) throw new Error('Scheduled delivery content changed. Review the existing outbox record.');
+    if (stored.phone !== row.phone || stored.message !== row.message)
+      throw new Error('Scheduled delivery content changed. Review the existing outbox record.');
     return { id: row._id, status: stored.status };
   }
   const r = await db.collection(OUTBOX).insertOne(row);
@@ -83,7 +109,12 @@ async function claim(db, license, { limit = 10, now = new Date() } = {}) {
       {
         $and: [
           { $or: [{ status: 'pending' }, { status: 'claimed', claimed_at: { $lt: staleBefore } }] },
-          { $or: [{ scheduled: { $exists: false } }, { 'scheduled.license': String(license || '') }] },
+          {
+            $or: [
+              { scheduled: { $exists: false } },
+              { 'scheduled.license': String(license || '') },
+            ],
+          },
         ],
       },
       { $set: { status: 'claimed', claimed_at: now, updated_date: now } },
@@ -95,18 +126,57 @@ async function claim(db, license, { limit = 10, now = new Date() } = {}) {
       // Ordinary messaging retains its existing retries. A financial summary
       // never resends an expired claim whose provider outcome is unknown.
       if (doc.attempts > 0 || doc.scheduled_claimed) {
-        await db.collection(OUTBOX).updateOne({ _id: doc._id, status: 'claimed', claimed_at: now }, { $set: { status: 'needs_review', updated_date: now, error: 'Interrupted scheduled delivery requires review.' } });
+        await db.collection(OUTBOX).updateOne(
+          { _id: doc._id, status: 'claimed', claimed_at: now },
+          {
+            $set: {
+              status: 'needs_review',
+              updated_date: now,
+              error: 'Interrupted scheduled delivery requires review.',
+            },
+          }
+        );
         continue;
       }
       try {
         const scheduled = doc.scheduled;
-        const schedule = await db.collection('ask_posnic_schedules').findOne({ _id: new ObjectId(scheduled.id), license: scheduled.license, branch_id: scheduled.branch_id, user_id: scheduled.user_id, enabled: true });
-        if (!schedule || String(doc.branch_id) !== scheduled.branch_id || new Date(doc.created_date).getTime() < now.getTime() - 86400000 || !(schedule.running_claim === scheduled.claim || schedule.last_status === 'queued' && schedule.last_delivery?.reference === String(doc._id))) throw new Error('Schedule changed or expired.');
+        const schedule = await db.collection('ask_posnic_schedules').findOne({
+          _id: new ObjectId(scheduled.id),
+          license: scheduled.license,
+          branch_id: scheduled.branch_id,
+          user_id: scheduled.user_id,
+          enabled: true,
+        });
+        if (
+          !schedule ||
+          String(doc.branch_id) !== scheduled.branch_id ||
+          new Date(doc.created_date).getTime() < now.getTime() - 86400000 ||
+          !(
+            schedule.running_claim === scheduled.claim ||
+            (schedule.last_status === 'queued' &&
+              schedule.last_delivery?.reference === String(doc._id))
+          )
+        )
+          throw new Error('Schedule changed or expired.');
         await require('./ask-posnic-runner.service').authorize(db, schedule);
-        const approved = await db.collection(OUTBOX).updateOne({ _id: doc._id, status: 'claimed', claimed_at: now }, { $set: { scheduled_claimed: true } });
+        const approved = await db
+          .collection(OUTBOX)
+          .updateOne(
+            { _id: doc._id, status: 'claimed', claimed_at: now },
+            { $set: { scheduled_claimed: true } }
+          );
         if (approved.matchedCount !== 1) continue;
       } catch (_error) {
-        await db.collection(OUTBOX).updateOne({ _id: doc._id, status: 'claimed', claimed_at: now }, { $set: { status: 'needs_review', updated_date: now, error: 'Schedule permission or delivery state changed. Review before sending.' } });
+        await db.collection(OUTBOX).updateOne(
+          { _id: doc._id, status: 'claimed', claimed_at: now },
+          {
+            $set: {
+              status: 'needs_review',
+              updated_date: now,
+              error: 'Schedule permission or delivery state changed. Review before sending.',
+            },
+          }
+        );
         continue;
       }
     }
@@ -131,9 +201,21 @@ async function report(db, license, id, { ok, error, now = new Date() } = {}) {
   if (row.scheduled) {
     if (row.scheduled.license !== String(license || '')) return { ok: false, reason: 'not-found' };
     // A late connector response cannot clear a paused/reviewed delivery.
-    if (row.status !== 'claimed' || row.scheduled_claimed !== true) return { ok: false, reason: 'scheduled-delivery-needs-review' };
+    if (row.status !== 'claimed' || row.scheduled_claimed !== true)
+      return { ok: false, reason: 'scheduled-delivery-needs-review' };
     const status = ok === true ? 'sent' : 'needs_review';
-    const changed = await db.collection(OUTBOX).updateOne({ _id, status: 'claimed', claimed_at: row.claimed_at }, { $set: { status, updated_date: now, ...(ok === true ? { sent_at: now, error: null } : { error: 'Connector did not confirm scheduled delivery. Review before retrying.' }) } });
+    const changed = await db.collection(OUTBOX).updateOne(
+      { _id, status: 'claimed', claimed_at: row.claimed_at },
+      {
+        $set: {
+          status,
+          updated_date: now,
+          ...(ok === true
+            ? { sent_at: now, error: null }
+            : { error: 'Connector did not confirm scheduled delivery. Review before retrying.' }),
+        },
+      }
+    );
     return { ok: changed.matchedCount === 1, status };
   }
 

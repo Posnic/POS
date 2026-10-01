@@ -9,5 +9,8 @@ test('verified Mumbai embedding input rates retain sub-cent charges with no outp
     expect(budget.costMicrominor({ model, tokensIn: 1000, tokensOut: 0, rate: 1 })).toBe(2400);
     process.env.AWS_REGION = 'eu-west-1';
     expect(budget.priceFor(model)).toEqual({ in: 5, out: 25 });
-  } finally { if (old == null) delete process.env.AWS_REGION; else process.env.AWS_REGION = old; }
+  } finally {
+    if (old == null) delete process.env.AWS_REGION;
+    else process.env.AWS_REGION = old;
+  }
 });

@@ -237,7 +237,11 @@ class QuoteRepository extends BaseModel {
       doc.converted_sale_id = null;
       doc.created_date = now;
       doc.created_by = String(context.userName || '');
-      const inserted = await require('../services/ask-posnic-action-identity').insertOnce(collection, doc, context);
+      const inserted = await require('../services/ask-posnic-action-identity').insertOnce(
+        collection,
+        doc,
+        context
+      );
       return {
         status: true,
         data: { id: String(inserted.insertedId), quote_id: inserted.document.quote_id },

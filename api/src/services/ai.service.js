@@ -220,7 +220,9 @@ async function settingsFor(context) {
   const flags = (features && features.status && features.data.values) || {};
   const ownKey = String(keys.ai_api_key || '').trim();
   const managedKey = String(process.env.POSNIC_MANAGED_AI_KEY || '').trim();
-  const managedProvider = String(process.env.POSNIC_MANAGED_AI_PROVIDER || 'openai').trim().toLowerCase();
+  const managedProvider = String(process.env.POSNIC_MANAGED_AI_PROVIDER || 'openai')
+    .trim()
+    .toLowerCase();
   const managedReady = !!managedKey || managedProvider === 'bedrock';
   return {
     /*
@@ -234,16 +236,28 @@ async function settingsFor(context) {
     enabled: !(
       flags.ai_enabled === false || String(flags.ai_enabled).trim().toLowerCase() === 'false'
     ),
-    provider: String(ownKey ? chosen.ai_provider : managedReady ? managedProvider : chosen.ai_provider || '')
+    provider: String(
+      ownKey ? chosen.ai_provider : managedReady ? managedProvider : chosen.ai_provider || ''
+    )
       .trim()
       .toLowerCase(),
-    model: String(ownKey ? chosen.ai_model || '' : managedReady ? process.env.POSNIC_MANAGED_AI_MODEL || (managedProvider === 'bedrock' ? bedrock.DEFAULT_MODEL : '') : chosen.ai_model || '').trim(),
+    model: String(
+      ownKey
+        ? chosen.ai_model || ''
+        : managedReady
+          ? process.env.POSNIC_MANAGED_AI_MODEL ||
+            (managedProvider === 'bedrock' ? bedrock.DEFAULT_MODEL : '')
+          : chosen.ai_model || ''
+    ).trim(),
     key: ownKey || managedKey,
     /* Read here rather than in a second trip of its own: this function has
        the preferences in hand already, and a model call is something a
        person is waiting at. */
     cap: (() => {
-      const n = Number(chosen.ai_monthly_cap || (!ownKey && managedKey ? process.env.POSNIC_MANAGED_AI_MONTHLY_CAP : null));
+      const n = Number(
+        chosen.ai_monthly_cap ||
+          (!ownKey && managedKey ? process.env.POSNIC_MANAGED_AI_MONTHLY_CAP : null)
+      );
       return Number.isFinite(n) && n > 0 ? n : null;
     })(),
   };
@@ -267,7 +281,13 @@ function modeFor(settings) {
 async function available(context) {
   try {
     const { provider, key, enabled } = await settingsFor(context);
-    return !!(enabled && provider && provider !== 'off' && PROVIDERS[provider] && (key || provider === 'bedrock'));
+    return !!(
+      enabled &&
+      provider &&
+      provider !== 'off' &&
+      PROVIDERS[provider] &&
+      (key || provider === 'bedrock')
+    );
   } catch (e) {
     return false;
   }
@@ -619,20 +639,40 @@ async function ask(request, context) {
 
   // Managed text packs have a bounded text-token reservation. Image usage needs
   // its own metering contract; existing shop-owned providers still support it.
-  if (mode === 'managed' && images.length) return { status: false, message: 'Managed AI currently supports text questions. Configure a shop-owned provider for image assistance.', data: null };
+  if (mode === 'managed' && images.length)
+    return {
+      status: false,
+      message:
+        'Managed AI currently supports text questions. Configure a shop-owned provider for image assistance.',
+      data: null,
+    };
 
   let reservation = null;
   let providerReturned = false;
   try {
     if (mode === 'managed') {
-      reservation = await managedCredits.reserve(context, { feature, model, promptChars: Buffer.byteLength(prompt + String(request.system || ''), 'utf8') * 3, maxOutputTokens: MAX_OUTPUT_TOKENS });
+      reservation = await managedCredits.reserve(context, {
+        feature,
+        model,
+        promptChars: Buffer.byteLength(prompt + String(request.system || ''), 'utf8') * 3,
+        maxOutputTokens: MAX_OUTPUT_TOKENS,
+      });
       if (!reservation.ok) return { status: false, message: reservation.message, data: null };
     }
-    const answer = await require('./ask-posnic-metrics.service').providerCall(feature, context, () => run({ prompt, system: request.system, images, key, model }));
+    const answer = await require('./ask-posnic-metrics.service').providerCall(
+      feature,
+      context,
+      () => run({ prompt, system: request.system, images, key, model })
+    );
     providerReturned = true;
     const text = answer && answer.text;
     if (!text) {
-      if (reservation) await managedCredits.reconcile(context, reservation, { model, tokensIn: answer?.tokensIn || 0, tokensOut: answer?.tokensOut || 0 });
+      if (reservation)
+        await managedCredits.reconcile(context, reservation, {
+          model,
+          tokensIn: answer?.tokensIn || 0,
+          tokensOut: answer?.tokensOut || 0,
+        });
       return { status: false, message: 'The AI service had no answer', data: null };
     }
     /*
@@ -649,16 +689,37 @@ async function ask(request, context) {
      * one call rather than losing an answer they have already paid for.
      */
     budget
-      .record({ feature, model, tokensIn: answer.tokensIn, tokensOut: answer.tokensOut, payer: mode === 'managed' ? 'posnic' : 'shop' }, context)
+      .record(
+        {
+          feature,
+          model,
+          tokensIn: answer.tokensIn,
+          tokensOut: answer.tokensOut,
+          payer: mode === 'managed' ? 'posnic' : 'shop',
+        },
+        context
+      )
       .catch((error) => console.error('[ai] could not record usage:', error.message));
-    if (reservation) await managedCredits.reconcile(context, reservation, { model, tokensIn: answer.tokensIn, tokensOut: answer.tokensOut });
+    if (reservation)
+      await managedCredits.reconcile(context, reservation, {
+        model,
+        tokensIn: answer.tokensIn,
+        tokensOut: answer.tokensOut,
+      });
     return { status: true, data: { text } };
   } catch (error) {
     if (reservation && !providerReturned) {
       // A network timeout can happen after inference was billed. Keep its hold
       // until the outcome is known; only definite provider rejections release it.
-      const rejected = ['AccessDeniedException', 'ValidationException', 'ThrottlingException', 'ResourceNotFoundException', 'UnrecognizedClientException'].includes(error.name)
-        || [400, 401, 403, 404, 413, 422, 429].includes(error.$metadata?.httpStatusCode);
+      const rejected =
+        [
+          'AccessDeniedException',
+          'ValidationException',
+          'ThrottlingException',
+          'ResourceNotFoundException',
+          'UnrecognizedClientException',
+        ].includes(error.name) ||
+        [400, 401, 403, 404, 413, 422, 429].includes(error.$metadata?.httpStatusCode);
       if (rejected) await managedCredits.release(context, reservation).catch(() => {});
       else await managedCredits.markUncertain(context, reservation).catch(() => {});
     }
