@@ -6842,6 +6842,21 @@ PosnicPro.sales.calculation = {
             let itemid = $(this).find(':nth-child(9)').text();
             $('#sales_new_total_amount').val($('#addSalesLineTotal_' + itemid).text());
             $("#sales_total_company_price").val($('#addSalesLineItemCompanyPrice_' + itemid).text());
+            var canonicalLine = null;
+            if (PosnicPro.sales.paymentOnlyMode !== true) {
+                var selling = Number($('#addSalesLineItemSellingPrice_' + itemid).text());
+                var quantity = Number($('#touchsale_item_qty' + itemid).val());
+                canonicalLine = PosnicTaxEngine.computeLineTax({
+                    itemAmount: selling * quantity, sellingPrice: selling, itemQuantity: quantity,
+                    itemTax: parseFloat($('#addSalesLineItemTax_' + itemid).text()),
+                    taxType: $('#addSalesLineItemTaxType_' + itemid).text() === 'Exc' ? 'exclusive' : 'inclusive',
+                    discountAmount: Number($('#addSalesLineDiscountAmount_' + itemid).text()),
+                    discountPercentage: Number($('#addSalesLineDiscountPercentage_' + itemid).text())
+                });
+                $('#addSalesLineTotal_' + itemid).text((Math.round(canonicalLine.total * 100) / 100).toFixed(2));
+                $('#addSalesGstTax_' + itemid).text(canonicalLine.tax);
+                $('#addSalesDiscount_' + itemid).text(canonicalLine.discount);
+            }
             return {
                 item_id: $('#addSalesLineItemId_' + itemid).text(),
                 item_price: $('#addSalesLineItemPrice_' + itemid).text(),
@@ -6853,10 +6868,10 @@ PosnicPro.sales.calculation = {
                 // Visible cells are rounded for display and can lose a paisa per line.
                 Totalamount: PosnicPro.sales.paymentOnlyMode === true
                     ? $('#returnLineTotal_' + itemid).text()
-                    : $('#addSalesLineTotal_' + itemid).text(),
-                gsttaxamount: $('#addSalesGstTax_' + itemid).text(),
-                subtotalamount: $('#addSalesLineItemSubTotal_' + itemid).text() * $('#touchsale_item_qty' + itemid).val(),
-                discountamount: $('#addSalesDiscount_' + itemid).text()
+                    : canonicalLine.total,
+                gsttaxamount: canonicalLine ? canonicalLine.tax : $('#addSalesGstTax_' + itemid).text(),
+                subtotalamount: canonicalLine ? canonicalLine.subtotal : $('#addSalesLineItemSubTotal_' + itemid).text() * $('#touchsale_item_qty' + itemid).val(),
+                discountamount: canonicalLine ? canonicalLine.discount : $('#addSalesDiscount_' + itemid).text()
             };
         }).get();
         var addSalesCompanyPrice = 0;
@@ -6988,8 +7003,8 @@ PosnicPro.sales.calculation = {
         }
         $('#RoundOff').html(roundOff);
         outputVal = (PosnicPro.roundoff === true) ? Math.round(outputVal) : parseFloat(outputVal);
+        outputVal = Math.round(outputVal * 100) / 100;
         $('#sales_new_grand_total').number(outputVal, 2);
-        if (PosnicPro.sales.paymentOnlyMode === true) outputVal = Math.round(outputVal * 100) / 100;
         PosnicPro.sales.extraDiscount.sale_new_tot = outputVal;
         // Update customer display with extra discount
         var isPercent = !$('#percentIcon').hasClass('d-none');

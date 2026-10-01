@@ -521,6 +521,58 @@ describe('SalesService', () => {
     }
   });
 
+  test.each([
+    { sale_inline_discount_value: 101 },
+    { sale_inline_discount_pervalue: 101 },
+    { sale_inline_discount_value: -1 },
+  ])('invalid item discount fails before writes: %j', async (discount) => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    const result = await salesService.processSale(
+      makeSaleData({ items: [makeItemPayload(discount)] }),
+      '',
+      'Add',
+      makeContext()
+    );
+    expect(result.status).toBe(false);
+    expect(salesRepository.create).not.toHaveBeenCalled();
+    expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+  });
+  describe('Additional charges in ordinary checkout', () => {
+    test.each([
+      [0, 'price', [{ name: 'Parcel', amount: 20, taxed: false }], 220],
+      [10, 'price', [{ name: 'Parcel', amount: 20, taxed: false }], 210],
+      [
+        10,
+        'percent',
+        [
+          { name: 'Parcel', amount: 20, taxed: false },
+          { name: 'Delivery', amount: 10, taxed: false },
+        ],
+        210,
+      ],
+    ])(
+      'discount %s %s and charges reach preview, tender and saved sale',
+      async (extra, type, charges, total) => {
+        mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+        mockCustomerRepositoryInstance.findById.mockResolvedValue({ balance: 0 });
+        const data = makeSaleData({
+          extra_discount: extra,
+          extra_discount_type: type,
+          charges,
+          sales_total: String(total),
+          multi_payment: { Cash: 20, Card: total - 20 },
+        });
+        const preview = await salesService.previewSale(data, makeContext());
+        expect(preview.status).toBe(true);
+        expect(preview.data.header.salesTotalForDoc).toBe(total);
+        await salesService.processSale(data, '', 'Add', makeContext());
+        const written = salesRepository.create.mock.calls[0][0];
+        expect(written.sales_total).toBe(total);
+        expect(written.charges.map((c) => c.amount)).toEqual(charges.map((c) => c.amount));
+      }
+    );
+  });
+
   describe('Business decision pricing preview', () => {
     test('a rejected pre-commit decision restores reserved stock and never writes the sale', async () => {
       mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
@@ -1006,7 +1058,15 @@ describe('SalesService', () => {
           { name: 'Service', amount: '20', taxed: false, tax_name: 'GST 9%', tax_amount: '1.8' },
         ],
       });
-      await salesService.processSale(data, '', 'Add', makeContext());
+      BaseModel.getDb.mockResolvedValue({
+        collection: () => ({ findOne: async () => ({ rate: 9, name: 'GST 9%' }) }),
+      });
+      await salesService.processSale(
+        data,
+        '',
+        'Add',
+        makeContext({ branchSettings: { default_tax: ITEM_ID } })
+      );
       expect(salesRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           charges: [

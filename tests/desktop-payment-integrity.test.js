@@ -10,6 +10,7 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   const win = dom.window;
   const $ = require('jquery')(win);
   win.$ = win.jQuery = $;
+  win.PosnicTaxEngine = require('../frontend/static/script/js/core/tax-engine');
   win.setTimeout = (fn) => fn();
   win.PosnicPro = { local: { get: () => 'Rs.' }, configPaymentType: [{ payment_value: 'Upi' }], alert: (_type, message) => { win.lastError = message; }, sales: {
     extraDiscount: { sale_new_tot: 262.5 }, EditRecentSaleParams: { sales_total: 262.5, payment_status: status, multi_payment: payments }, paymentOnlyMode: true
@@ -301,5 +302,31 @@ test('app order with inclusive and exclusive tax keeps its saved payable when lo
   assert.equal(opened, true);
   assert.equal($('#saleInlineItemPrice_water').text(), '30');
   assert.equal($('#addSalesLineItemSellingPrice_water').text(), '30');
+  dom.window.close();
+});
+
+for (const spec of [
+  {price:45,tax:5,type:'exclusive',pct:10,flat:0,qty:1,extra:0,percent:false,charges:0,expected:42.53},
+  {price:45,tax:5,type:'exclusive',pct:10,flat:0,qty:1,extra:10,percent:false,charges:20,expected:52.53},
+  {price:45,tax:5,type:'exclusive',pct:10,flat:0,qty:2,extra:10,percent:true,charges:30,expected:106.55},
+  {price:30,tax:5,type:'inclusive',pct:10,flat:0,qty:2,extra:10,percent:true,charges:20,expected:68.6},
+  {price:30,tax:5,type:'inclusive',pct:0,flat:5,qty:1,extra:0,percent:false,charges:0,expected:24.75},
+  {price:100,tax:0,type:'exclusive',pct:0,flat:5,qty:3,extra:10,percent:false,charges:20.05,expected:295.05}
+]) test('new cart canonical discounts and charges: '+JSON.stringify(spec), () => {
+  const {dom,$,sales,win} = savedOrderSetup();
+  sales.paymentOnlyMode = false;
+  sales.addSalesLineItems({id:'qa',name:'QA',selling_price:spec.price,company_price:0,
+    tax:spec.tax,tax_type:spec.type,discount_amount:spec.flat,discount_percentage:spec.pct,
+    quantity:spec.qty,item_quantity:spec.qty,unit:'pc'});
+  $('#touchsale_item_qtyqa').val(spec.qty);
+  $('#extraDisc').text(spec.extra);
+  $('#percentIcon').toggleClass('d-none',!spec.percent);
+  sales.chargesTotal = () => spec.charges;
+  sales.calculation.salesTableRowCart();
+  assert.equal(sales.extraDiscount.sale_new_tot,spec.expected);
+  $('#Partial_amount').val(spec.expected);
+  sales.EditRecentSaleParams = {};
+  sales.showMultiPaymentMode();
+  assert.equal(Number($('#cash_input').val()),spec.expected);
   dom.window.close();
 });
