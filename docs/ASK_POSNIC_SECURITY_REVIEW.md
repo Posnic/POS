@@ -62,6 +62,20 @@ are eligible for a false-positive dismissal. No blanket suppression is added.
 - The four shared extraction/retrieval files were kept byte-identical in the
   Intranet companion. Its full suite passed 516 tests with seven existing skips.
 
-The GitHub CodeQL result on the pushed commit is the final remote check for the
-six changed findings; local tests alone do not prove those alerts are closed.
-The four identifier findings have a separate documented false-positive disposition.
+GitHub CodeQL analysis 1872890065, on merge commit
+`f473219779bf8a9097e5494e6764eafc5f3bc361` for head `7861ac10`, confirmed the six
+code findings fixed. Formatting caused three identifier findings to receive new
+alert numbers: 1052 (previously 1044), 1053 (1035), and 1054 (1037). Their fresh
+SARIF paths were checked individually and show the same license-only flows
+described above; each received its own evidence-based false-positive dismissal.
+The fourth identifier finding retained its prior dismissal. Security queries
+remain enabled.
+
+The full CI API suite then exposed a line-based guard failing on the formatter's
+multiline secret fallback. The action signer now lets `currentSecret` resolve
+the standalone session fallback itself. Regression coverage verifies unset,
+empty and explicit standalone action secrets, concurrent tenant-specific secrets,
+and refusal to write a draft when the tenant context or secret is missing.
+The final local API unit run passed all 488 selected suites and 12,353 tests;
+the targeted secret guard/action run passed 13 tests. Changed-file ESLint,
+Prettier, attribution and whitespace checks passed before pushing.

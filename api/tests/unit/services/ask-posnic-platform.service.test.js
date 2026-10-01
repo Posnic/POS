@@ -9,6 +9,57 @@ const platform = require('../../../src/services/ask-posnic-platform.service');
 describe('Ask Posnic capability policy', () => {
   const req = { user: { _id: 'user', license: 'shop', branch_id: 'outlet' } };
 
+  test('action signing keeps standalone fallbacks and isolates tenant secrets', async () => {
+    const crypto = require('node:crypto');
+    const ctx = require('../../../src/db/tenant-context');
+    const BaseModel = require('../../../src/models/base.model');
+    const names = ['ASK_POSNIC_ACTION_SECRET', 'SESSION_SECRET'];
+    const previous = names.map((name) => process.env[name]);
+    const previousMode = ctx.isMultiTenant();
+    const insertOne = jest.fn().mockResolvedValue({ insertedId: 'draft' });
+    BaseModel.prototype.getCollection = jest.fn().mockResolvedValue({ insertOne });
+    const verify = async (secret) => {
+      const draft = await platform.createDraft(req, 'stock_count', {});
+      const [body, signature] = draft.token.split('.');
+      expect(signature).toBe(crypto.createHmac('sha256', secret).update(body).digest('base64url'));
+    };
+    try {
+      ctx.enableMultiTenant(false);
+      process.env.SESSION_SECRET = 'synthetic-standalone-session';
+      for (const value of [undefined, '', 'synthetic-standalone-action']) {
+        if (value === undefined) delete process.env.ASK_POSNIC_ACTION_SECRET;
+        else process.env.ASK_POSNIC_ACTION_SECRET = value;
+        await verify(value || process.env.SESSION_SECRET);
+      }
+      ctx.enableMultiTenant(true);
+      await Promise.all(
+        ['synthetic-shop-a', 'synthetic-shop-b'].map((secret) =>
+          ctx.runWithTenant({ db: {}, secrets: { SESSION_SECRET: secret } }, async () => {
+            await new Promise((resolve) => setImmediate(resolve));
+            await verify(secret);
+          })
+        )
+      );
+      insertOne.mockClear();
+      await expect(platform.createDraft(req, 'stock_count', {})).rejects.toThrow(
+        /no SESSION_SECRET for the shop in context/
+      );
+      await ctx.runWithTenant({ db: {}, secrets: {} }, async () => {
+        await expect(platform.createDraft(req, 'stock_count', {})).rejects.toThrow(
+          /no SESSION_SECRET for the shop in context/
+        );
+      });
+      expect(insertOne).not.toHaveBeenCalled();
+    } finally {
+      ctx.enableMultiTenant(previousMode);
+      names.forEach((name, index) => {
+        if (previous[index] === undefined) delete process.env[name];
+        else process.env[name] = previous[index];
+      });
+      delete BaseModel.prototype.getCollection;
+    }
+  });
+
   test('scoping never propagates the API credential or password into identifier inputs', () => {
     expect(
       platform.scope({

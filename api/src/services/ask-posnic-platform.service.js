@@ -491,10 +491,7 @@ async function deleteHistory(req) {
 }
 
 function signingKey() {
-  const key = currentSecret(
-    'SESSION_SECRET',
-    process.env.ASK_POSNIC_ACTION_SECRET || process.env.SESSION_SECRET
-  );
+  const key = currentSecret('SESSION_SECRET', process.env.ASK_POSNIC_ACTION_SECRET || undefined);
   if (!key) throw new Error('Configure an action signing secret before using Ask Posnic actions.');
   return key;
 }
