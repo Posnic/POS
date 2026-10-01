@@ -202,3 +202,27 @@ test('Azure saved Table 6 loads into payment at the printed total through real c
   }
   dom.window.close();
 });
+
+test('opening tender refreshes local payment methods before showing choices', () => {
+  const { dom, sales, win } = setup();
+  let reply, opened = false;
+  win.PosnicPro.get = (url, callback) => { assert.equal(url, 'setting/getPaymentAll'); reply = callback; };
+  sales.openTenderModel();
+  assert.equal(sales._loadingPaymentMethods, true);
+  sales.openTenderModel = ready => { opened = ready; };
+  reply({ type: 'success', data: [{ payment_value: 'Upi' }] });
+  assert.equal(opened, true);
+  assert.equal(win.PosnicPro.configPaymentType[0].payment_value, 'Upi');
+  dom.window.close();
+});
+
+test('failed payment-method reload keeps cached UPI and does not open a cash-only tender', () => {
+  const { dom, sales, win } = setup();
+  win.PosnicPro.i18n = { t: (_key, text) => text };
+  win.PosnicPro.get = (_url, _done, fail) => fail();
+  sales.openTenderModel();
+  assert.equal(win.PosnicPro.configPaymentType[0].payment_value, 'Upi');
+  assert.match(win.lastError, /Could not load payment settings/);
+  assert.equal(sales._loadingPaymentMethods, false);
+  dom.window.close();
+});

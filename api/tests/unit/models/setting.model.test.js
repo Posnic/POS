@@ -1606,6 +1606,20 @@ describe('deletePaymentFiledModel', () => {
     jest.spyOn(m, 'getCollection').mockResolvedValue(col);
   });
 
+  test('records the branch payment tombstone before deleting', async () => {
+    const doc = { _id: BRANCH_ID, branch_id: BRANCH_ID, license: LICENSE_ID, payment_field: 'Upi' };
+    col.findOne.mockResolvedValue(doc);
+    col.deleteOne.mockResolvedValue({ deletedCount: 1 });
+    const backup = jest.spyOn(BaseModel, 'deletedDocumentBackup').mockResolvedValue({});
+    const result = await m.deletePaymentFiledModel(BRANCH_ID);
+    expect(result.status).toBe(true);
+    expect(backup).toHaveBeenCalledWith('payment_method', doc);
+    expect(backup.mock.invocationCallOrder[0]).toBeLessThan(
+      col.deleteOne.mock.invocationCallOrder[0]
+    );
+    backup.mockRestore();
+  });
+
   test('returns status:false when no id', async () => {
     const r = await m.deletePaymentFiledModel(null);
     expect(r.status).toBe(false);

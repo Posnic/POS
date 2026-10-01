@@ -3585,7 +3585,6 @@ PosnicPro.payment = {
         PosnicPro.payment.deletePaymentField(id);
     },
     paymentTable: function () {
-        PosnicPro.configPaymentType = [];
         var loader = $(".loader-table-tax");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var table = $('#view_payment');
@@ -3596,6 +3595,7 @@ PosnicPro.payment = {
             if (response.type === 'success') {
                 table.children('tbody').text('');
                 var data = response.data;
+                PosnicPro.configPaymentType = [];
                 for (var i = 0; i < data.length; i++) {
                     let row = data[i];
                     let edit = '<a href="#/settings/payment/' + row.payment_id + '/edit" id="setting_payment_edit_' + row.payment_id + '" data-toggle="tooltip" title="Edit Payment" data-t-title="lang_edit_payment" class="btn btn-primary-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "write" data-paymentvalue="' + row.payment_value + '" ><i class="feather icon-edit"></i></a>';

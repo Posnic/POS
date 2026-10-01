@@ -1650,7 +1650,26 @@
         }
         PosnicPro.sales.customerViewDisplay();
     },
-    openTenderModel: function () {
+    openTenderModel: function (methodsReady) {
+        // Load methods from this till's API each time. Startup may still be
+        // loading, or settings/sync may have changed since the screen opened.
+        if (methodsReady !== true && typeof PosnicPro.get === 'function') {
+            if (PosnicPro.sales._loadingPaymentMethods) return;
+            PosnicPro.sales._loadingPaymentMethods = true;
+            var paymentRoute = window.location.hash, paymentSale = PosnicPro.sales.editSaleId;
+            var failMethods = function () {
+                PosnicPro.sales._loadingPaymentMethods = false;
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_captain_payment_settings_failed', 'Could not load payment settings. Please retry.'));
+            };
+            PosnicPro.get('setting/getPaymentAll', function (response) {
+                PosnicPro.sales._loadingPaymentMethods = false;
+                if (!response || response.type !== 'success' || !Array.isArray(response.data)) { failMethods(); return; }
+                PosnicPro.configPaymentType = response.data.map(function (row) { return { payment_value: row.payment_value }; });
+                if (window.location.hash !== paymentRoute || PosnicPro.sales.editSaleId !== paymentSale) return;
+                PosnicPro.sales.openTenderModel(true);
+            }, failMethods);
+            return;
+        }
         // ✅ Reset submission flag when opening tender modal
         PosnicPro.sales.submissionInProgress = false;
         $("#save_btn").prop('disabled', false);
