@@ -22,10 +22,14 @@ test('verified worker loads offline with no inherited database or payment secret
       entrypoint: 'worker.cjs',
       initialState: 'state.json',
       commands: { add: ['write'] },
+      ui: { html: 'page.html', css: 'page.css', script: 'page.js' },
     };
     const files = new Map([
       ['extension.json', Buffer.from(JSON.stringify(metadata))],
       ['state.json', Buffer.from('{}')],
+      ['page.html', Buffer.from('<h1>Signed extension page</h1>')],
+      ['page.css', Buffer.from('h1 { color: navy }')],
+      ['page.js', Buffer.from('window.signedPage = true;')],
       [
         'worker.cjs',
         Buffer.from(
@@ -44,6 +48,8 @@ test('verified worker loads offline with no inherited database or payment secret
     for (const [name, bytes] of files) fs.writeFileSync(path.join(directory, name), bytes);
     fs.writeFileSync(path.join(directory, 'manifest.json'), JSON.stringify(manifest));
     const verified = loadVerifiedDirectory(directory, keys.publicKey, ['namespace.commands.v1']);
+    assert.equal(verified.descriptor.view.html, '<h1>Signed extension page</h1>');
+    assert.equal(verified.descriptor.view.script, 'window.signedPage = true;');
     assert.deepEqual(await verified.descriptor.plan({}), {
       secretVisible: false,
       mongoVisible: false,

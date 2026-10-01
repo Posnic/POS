@@ -5,10 +5,42 @@ const access = require('../utils/branch-access');
 const namespace = require('../services/extension-namespace');
 const runtime = require('../services/extension-runtime');
 const effects = require('../services/extension-effects');
+const catalogue = require('../services/extension-catalog');
 
 function createRouter({ authenticate = protect, registry = runtime, executor = effects } = {}) {
   const router = express.Router();
   router.use(authenticate);
+  router.get('/', async (req, res) => {
+    try {
+      if (req.isApiKey) access.fail('Extension staff session required.', 403);
+      const scope = await access.context(req);
+      const rows = await req.db
+        .collection('extension_installations')
+        .find({
+          license: scope.license,
+          branch_id: scope.branchId,
+          enabled: true,
+        })
+        .toArray();
+      const enabled = new Map(rows.map((row) => [row.extensionId, row.packageDigest]));
+      const extensions = registry
+        .list()
+        .filter(
+          (item) =>
+            item.view &&
+            enabled.get(item.id) === item.packageDigest &&
+            access.allowed(req.user, item.permissionModule || 'extensions', 'read')
+        )
+        .map((item) => ({
+          id: item.id,
+          displayName: item.displayName || item.id,
+          version: item.version,
+        }));
+      res.set('Cache-Control', 'no-store').json({ extensions });
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
   router.use('/:extensionId', async (req, res, next) => {
     try {
       // Existing generic API keys do not carry an installed extension grant.
@@ -44,12 +76,39 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       version: req.extension.descriptor.version,
       capabilities: registry.capabilities,
       permissions: req.extension.actor.permissions,
+      actor: req.extension.actor,
     })
   );
+  router.get('/:extensionId/view', (req, res) => {
+    const descriptor = req.extension.descriptor;
+    if (!descriptor.view)
+      return res.status(404).json({ error: { code: 'extension_page_unavailable' } });
+    res.json({
+      extensionId: descriptor.id,
+      displayName: descriptor.displayName,
+      view: descriptor.view,
+    });
+  });
   router.get('/:extensionId/state', async (req, res) => {
     try {
       const e = req.extension;
       res.json(await namespace.readNamespace(req.db, e.scope, e.descriptor, e.actor));
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
+  router.get('/:extensionId/catalogue', async (req, res) => {
+    try {
+      if (Object.keys(req.query).some((key) => !['q', 'after'].includes(key)))
+        access.fail('Unsupported catalogue query.', 422);
+      res.json(
+        await catalogue.searchProducts({
+          db: req.db,
+          scope: req.extension.scope,
+          query: req.query.q,
+          after: req.query.after,
+        })
+      );
     } catch (error) {
       respondError(res, error);
     }

@@ -424,20 +424,37 @@ async function cancelPayment(context, input) {
     scope = paymentScope(context),
     collection = db.collection('extension_payments');
   if (!/^[a-f\d]{64}$/.test(input.paymentId || '')) fail('extension_payment_invalid');
-  let row = await collection.findOne({ _id: input.paymentId, ...scope });
+  const { actorId: requestingActor, ...shopScope } = scope;
+  let row = await collection.findOne({ _id: input.paymentId, ...shopScope });
   if (!row) fail('extension_payment_unavailable');
+  if (row.actorId !== requestingActor && !context.permissions?.includes('manage'))
+    fail('extension_payment_owner_required');
   if (row.status === 'cancelled') return { cancelled: true };
   if (!['pending', 'cancelling'].includes(row.status)) fail('extension_payment_cannot_cancel');
   await collection.updateOne(
     { _id: row._id, status: 'pending' },
-    { $set: { status: 'cancelling' } }
+    {
+      $set: {
+        status: 'cancelling',
+        cancelOperation: {
+          actorId: requestingActor,
+          operationId: context.operationId,
+          sequence: context.sequence,
+        },
+      },
+    }
   );
   row = await collection.findOne({ _id: row._id });
   if (row.status !== 'cancelling') fail('extension_payment_cannot_cancel');
+  if (!row.cancelOperation) fail('extension_payment_cancel_recovery_required');
   const funding = await db
     .collection('extension_stock_commands')
     .findOne({ _id: row.stockOperationId, license: scope.license, branch_id: scope.branch_id });
-  const stockScope = { license: scope.license, branchId: scope.branch_id, actorId: scope.actorId };
+  const stockScope = {
+    license: scope.license,
+    branchId: scope.branch_id,
+    actorId: row.cancelOperation.actorId,
+  };
   if (!(funding?.phase === 'cleared' && !row.adjusted)) {
     await require('./extension-stock-allocations').releaseCancelledAllocation(
       db,
@@ -449,9 +466,9 @@ async function cancelPayment(context, input) {
       const action = {
         extensionId: scope.extensionId,
         stockOperationId: row.stockOperationId,
-        operationId: `${context.operationId}:cancel`,
+        operationId: `${row.cancelOperation.operationId}:cancel`,
         lines: row.lines,
-        stream: { id: scope.extensionId, sequence: context.sequence },
+        stream: { id: scope.extensionId, sequence: row.cancelOperation.sequence },
       };
       await lifecycle.returnStock(db, stockScope, action);
       await lifecycle.clearStockBasket(db, stockScope, action);
@@ -463,6 +480,7 @@ async function cancelPayment(context, input) {
     {
       _id: row._id,
       ...scope,
+      actorId: row.actorId,
       digest: row.digest,
       status: 'cancelled',
     }

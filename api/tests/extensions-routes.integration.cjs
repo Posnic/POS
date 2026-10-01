@@ -13,6 +13,8 @@ const descriptor = {
   id: 'posnic.example',
   version: '1.0.0',
   packageDigest: 'a'.repeat(64),
+  displayName: 'Example extension',
+  view: { html: '<main>Example</main>', css: '', script: '' },
   initialState: { records: [] },
   commands: { create: ['write'] },
   plan: async ({ actor, operationId }) => ({
@@ -27,16 +29,16 @@ before(async () => {
   });
   client = await MongoClient.connect(mongo.getUri());
   db = client.db('extension_routes');
-  await db.collection('branches').insertOne({ _id: branchId, license });
   await db
-    .collection('extension_installations')
-    .insertOne({
-      license,
-      branch_id: branchId,
-      extensionId: descriptor.id,
-      packageDigest: descriptor.packageDigest,
-      enabled: true,
-    });
+    .collection('branches')
+    .insertOne({ _id: branchId, license, currency: 'GBP', time_zone: 'Europe/London' });
+  await db.collection('extension_installations').insertOne({
+    license,
+    branch_id: branchId,
+    extensionId: descriptor.id,
+    packageDigest: descriptor.packageDigest,
+    enabled: true,
+  });
   const app = express();
   app.use(express.json());
   app.use(
@@ -44,6 +46,7 @@ before(async () => {
     createRouter({
       registry: {
         get: (id) => (id === descriptor.id ? descriptor : null),
+        list: () => [descriptor, { ...descriptor, id: 'posnic.disabled' }],
         capabilities: ['namespace.commands.v1'],
       },
       authenticate: (req, res, next) => {
@@ -114,4 +117,63 @@ test('browser cannot invent write permission, actor, company or branch', async (
   assert.equal(documents.length, 1);
   assert.equal(String(documents[0].license), String(license));
   assert.equal(String(documents[0].branch_id), String(branchId));
+});
+
+test('signed view and catalogue retain staff, installation and branch boundaries', async () => {
+  const list = await fetch(url.replace('/posnic.example', ''), {
+    headers: { Authorization: 'Bearer reader' },
+  });
+  assert.deepEqual((await list.json()).extensions, [
+    { id: descriptor.id, displayName: descriptor.displayName, version: descriptor.version },
+  ]);
+  assert.equal((await request('/view', { token: 'key' })).status, 403);
+  const view = await (await request('/view', { token: 'reader' })).json();
+  assert.deepEqual(view.view, descriptor.view);
+  assert.equal(view.displayName, descriptor.displayName);
+  const caps = await (await request('/capabilities', { token: 'reader' })).json();
+  assert.deepEqual(caps.actor, { userId: String(userId), permissions: ['read'] });
+  const item = {
+    license,
+    branch_id: branchId,
+    name: 'Candle [small]',
+    barcode_id: 'SKU-001',
+    track_inventory: true,
+    item_status: 'regular',
+    available_quantity: 3,
+    unit: 'each',
+    selling_price: 1,
+    tax: 0,
+  };
+  await db
+    .collection('items')
+    .insertMany([
+      { ...item },
+      { ...item, branch_id: new ObjectId() },
+      { ...item, license: new ObjectId() },
+      { ...item, name: 'Candle large' },
+      { ...item, selling_price: 0 },
+    ]);
+  const page = await (await request('/catalogue?q=%5Bsmall%5D')).json();
+  assert.equal(page.products.length, 1);
+  assert.equal(page.products[0].description, 'Candle [small]');
+  assert.equal(page.products[0].stockMilli, 3000);
+  assert.equal(page.products[0].priceMinor, 100);
+  assert.equal(page.products[0].pricing, undefined);
+  assert.equal(page.unavailableCount, 1);
+  assert.equal(page.next, null);
+  assert.equal((await request('/catalogue?q[$ne]=x')).status, 422);
+  assert.equal((await request('/catalogue?after=not-an-id')).status, 422);
+  assert.equal((await request('/catalogue', { token: 'key' })).status, 403);
+  await db.collection('items').insertMany(
+    Array.from({ length: 55 }, (_, index) => ({
+      ...item,
+      name: 'Page ' + index,
+    }))
+  );
+  const first = await (await request('/catalogue?q=Page')).json();
+  const second = await (await request('/catalogue?q=Page&after=' + first.next)).json();
+  assert.equal(first.products.length, 50);
+  assert.equal(second.products.length, 5);
+  assert.equal(second.next, null);
+  assert.equal(new Set([...first.products, ...second.products].map((p) => p.id)).size, 55);
 });

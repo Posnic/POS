@@ -414,6 +414,42 @@ test('cash confirmation and cancellation racing cannot both succeed', async () =
   const count = await db.collection('sales').countDocuments({ license: f.context.scope.license });
   assert.equal(await f.stock(), count ? 2 : 3);
 });
+
+test('only the owner or an authenticated manager can cancel another staff payment', async () => {
+  for (const adjusted of [false, true]) {
+    const f = await fixture(adjusted),
+      prepared = await preparePayment(f.context, f.input);
+    const other = {
+      ...f.context,
+      actorId: String(new ObjectId()),
+      permissions: ['write'],
+      sequence: 3,
+      operationId: 'manager-cancel-preparation',
+    };
+    await assert.rejects(
+      cancelPayment(other, { paymentId: prepared.paymentId, permissions: ['manage'] }),
+      { code: 'extension_payment_owner_required' }
+    );
+    await assert.rejects(
+      confirmCash(
+        { ...other, permissions: ['manage'] },
+        { paymentId: prepared.paymentId, tenderMinor: 100 }
+      ),
+      { code: 'extension_cash_payment_unavailable' }
+    );
+    await cancelPayment(
+      { ...other, permissions: ['write', 'manage'] },
+      { paymentId: prepared.paymentId }
+    );
+    assert.equal(await f.stock(), adjusted ? 0 : 3);
+    const closed = await db.collection('extension_payments').findOne({ _id: prepared.paymentId });
+    assert.equal(closed.actorId, f.context.actorId);
+    assert.equal(closed.status, 'cancelled');
+    assert.equal(closed.cancelOperation, undefined);
+    await cancelPayment(f.context, { paymentId: prepared.paymentId });
+    assert.equal(await f.stock(), adjusted ? 0 : 3);
+  }
+});
 test('fractional quantity and exclusive tax use the same core payable for quote and saved sale', async () => {
   const f = await fixture();
   await db

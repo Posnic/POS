@@ -76,6 +76,19 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
     )
       throw new Error('extension_context_invalid');
   }
+  let view;
+  if (metadata.ui !== undefined) {
+    if (!metadata.ui || typeof metadata.ui !== 'object' || Array.isArray(metadata.ui))
+      throw new Error('extension_ui_invalid');
+    view = {};
+    for (const key of ['html', 'css', 'script']) {
+      const name = metadata.ui[key];
+      if (!safePath(name) || !contents.has(name) || contents.get(name).length > 1024 * 1024)
+        throw new Error('extension_ui_invalid');
+      view[key] = contents.get(name).toString('utf8');
+    }
+    Object.freeze(view);
+  }
   const descriptor = {
     id: metadata.id,
     version: metadata.version,
@@ -84,6 +97,9 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
     contextNeeds: metadata.contextNeeds || {},
     permissionModule: 'extensions',
     requiredCapabilities: metadata.requiredCapabilities,
+    displayName:
+      typeof metadata.displayName === 'string' ? metadata.displayName.slice(0, 100) : metadata.id,
+    ...(view ? { view } : {}),
     plan: (payload) => callWorker(root, metadata.entrypoint, 'plan', payload),
     finalize: (state, results) =>
       callWorker(root, metadata.entrypoint, 'finalize', { state, results }),

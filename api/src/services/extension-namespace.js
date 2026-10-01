@@ -193,6 +193,9 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
             digest,
             phase: 'planned',
             actorId,
+            permissions: actor.permissions.filter((permission) =>
+              ['read', 'write', 'manage'].includes(permission)
+            ),
             plan,
             requestKey: input.requestKey,
             expectedRevision: input.expectedRevision,
@@ -219,6 +222,7 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
             db,
             scope,
             actorId,
+            permissions: row.pending.permissions || [],
             extensionId: descriptor.id,
             operationId,
             sequence: row.pending.sequence,

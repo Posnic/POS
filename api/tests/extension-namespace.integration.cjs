@@ -213,3 +213,34 @@ test('permission, changed payload, stale revision and tenant isolation are enfor
   );
   assert.deepEqual(other.state.records, []);
 });
+
+test('recovery retains the original trusted effect permissions rather than caller claims', async () => {
+  for (const manage of [false, true]) {
+    const f = fixture();
+    f.actor.permissions = ['read', 'write', ...(manage ? ['manage'] : [])];
+    f.input.command.permissions = ['manage'];
+    await assert.rejects(
+      executeNamespace(db, f.scope, f.descriptor, f.actor, f.input, {
+        executeEffect: async (context) => {
+          assert.equal(context.permissions.includes('manage'), manage);
+          throw new Error('interrupted effect');
+        },
+      }),
+      /interrupted effect/
+    );
+    await recoverNamespace(
+      db,
+      f.scope,
+      f.descriptor,
+      { userId: String(new ObjectId()), permissions: ['read', 'write', 'manage'] },
+      {
+        executeEffect: async (context) => {
+          assert.equal(context.actorId, f.actor.userId);
+          assert.equal(context.permissions.includes('manage'), manage);
+          return { applied: true };
+        },
+      }
+    );
+    assert.equal((await readNamespace(db, f.scope, f.descriptor, f.actor)).busy, false);
+  }
+});

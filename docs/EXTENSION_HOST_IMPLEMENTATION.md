@@ -25,13 +25,23 @@ Testing currently uses the installed dependencies from the separate active check
 
 ## Remaining release work
 
-- Dedicated sandboxed page/message bridge, module settings and real login/browser verification.
+- Complete private-page end-to-end verification through real login, module permissions/settings and receipt dispatch. The generic page/message bridge now exists.
 - Normal receipt template integration with truthful pending status, printer dispatch and cash-drawer behavior.
-- Payment ownership/manager handover rules, complete recovery UI, catalogue mutation/repair cases, stock notifications/sync and normal allocated-sale return verification.
+- Catalogue mutation/repair cases, stock notifications/sync and normal allocated-sale return verification. Payment ownership and authenticated manager cancellation now have regression coverage.
 - Activation, versioned update/rollback and offline distribution packaging. Signed ZIP validation and immutable staging now exist, but no activation UI/coordinator is complete.
 - Isolated authenticated staging and compatible Windows/offline verification. No public staging or customer hardware compatibility is claimed by these tests.
 
 Provider-specific integration is separate from manual Card recording. Third-party terminal outcomes must be independently verified by their actual adapter.
+
+## Dedicated page and payment ownership checkpoint
+
+Signed metadata may contribute HTML, CSS and JavaScript assets. They are loaded only from verified package contents. The Extensions page lists enabled, digest-matching packages permitted to the current staff session and opens their presentation in an opaque-origin iframe. Its CSP blocks network connections and unsolicited scripts; its MessageChannel permits only bounded, named operations. Host-owned transport supplies authentication, CSRF, branch and idempotency headers. The frame receives no session token. A branch/page change invalidates its command bridge.
+
+Product search is bounded, cursor-paginated and company/branch scoped. Literal search terms cannot become Mongo operators or regular-expression patterns. It uses core stock/pricing facts, reports unavailable-item counts and sends no internal pricing snapshot to the frame. Command preparation still revalidates facts independently. Historical unavailable products in namespace context remain a repair-case release item.
+
+Payment ownership is checked by the private planner before persisting an effect. A manager can cancel another staff member's known unpaid preparation, while only its owner can confirm it. The namespace persists the original authenticated permission set for recovery. Cancellation persists its initiating actor/operation/sequence and reuses those identities after interruption; manager recovery cannot elevate the original operation's permissions.
+
+Local verification: 25 affected host tests pass, including real MongoDB payment/namespace/routes, signed view loading and two Chromium tests for frame isolation and page transport. The private extension also has a separate production presentation test and real worker/core smoke check. The page adapter currently refuses receipt dispatch; normal receipt integration, full login/browser verification, activation and public staging remain incomplete. No capabilities were advertised prematurely.
 
 ## Signed ZIP staging
 
