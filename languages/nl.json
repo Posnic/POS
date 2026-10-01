@@ -4101,5 +4101,18 @@
   "lang_rd_left_label": "Aangepast label links",
   "lang_rd_label_help": "Aangepaste tekst vervangt de bonkop. Wis de tekst voor de standaardwaarde.",
   "lang_rd_date_format": "Datumnotatie",
-  "lang_rd_time_format": "Tijdnotatie"
+  "lang_rd_time_format": "Tijdnotatie",
+  "lang_add_your_first_outlet_such_as_restaurant_o": "Voeg uw eerste verkooppunt toe, zoals Restaurant of Bar. De voorraad blijft gedeeld met dit filiaal.",
+  "lang_an_item_price_overrides_the_percentage_adj": "Een artikelprijs vervangt de procentuele aanpassing.",
+  "lang_ask_your_manager_to_configure_an_outlet_an": "Vraag uw manager een verkooppunt in te stellen en u toegang te geven.",
+  "lang_billing_outlets_description": "Aparte verkoopgebieden, zoals Restaurant, Bar en Roomservice, met gedeelde filiaalvoorraad.",
+  "lang_billing_outlets_is_switched_off": "Verkooppunten zijn uitgeschakeld",
+  "lang_choose_a_name_to_get_started_prices_and_st": "Kies eerst een naam. Prijzen en personeelstoegang zijn optioneel.",
+  "lang_choose_an_outlet": "Kies een verkooppunt",
+  "lang_for_example_restaurant_or_bar": "Bijvoorbeeld Restaurant of Bar",
+  "lang_individual_item_prices": "Afzonderlijke artikelprijzen",
+  "lang_no_billing_outlets_yet": "Nog geen verkooppunten",
+  "lang_open_features": "Functies openen",
+  "lang_set_up_an_outlet": "Verkooppunt instellen",
+  "lang_use_one_normal_billing_screen_or_enable_se": "Gebruik één verkoopscherm of schakel aparte verkooppunten in bij Functies."
 }

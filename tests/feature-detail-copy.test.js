@@ -84,6 +84,11 @@ test('every configurable feature names its sidebar home, and the home exists', (
   const routes = [...new Set([...homeBlock.matchAll(/\['([a-z_0-9]+)',/g)].map((m) => m[1]))];
   assert.ok(routes.length >= 10, 'the Configure map lost its entries: ' + routes.length);
   for (const r of routes) {
+    if (r === 'billingoutlets') {
+      assert.ok(settingsJs.includes("['billingoutlets', 'Billing outlets', 'page']"));
+      assert.match(fs.readFileSync(path.join(__dirname, '..', 'frontend/static/script/js/core/billing-outlets.js'), 'utf8'), /ui.showDataTablePage = ui.show/);
+      continue;
+    }
     assert.ok(
       settingsHtml.includes(`id="v-pills-${r}"`),
       `#/settings/${r} is a Configure target but no pane v-pills-${r} exists`,

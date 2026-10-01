@@ -3797,5 +3797,18 @@
   "lang_rd_left_label": "Eigene Beschriftung links",
   "lang_rd_label_help": "Eigener Text ersetzt den Belegtitel. Für den Standard leeren.",
   "lang_rd_date_format": "Datumsformat",
-  "lang_rd_time_format": "Zeitformat"
+  "lang_rd_time_format": "Zeitformat",
+  "lang_add_your_first_outlet_such_as_restaurant_o": "Fügen Sie die erste Verkaufsstelle hinzu, etwa Restaurant oder Bar. Der Bestand bleibt gemeinsam.",
+  "lang_an_item_price_overrides_the_percentage_adj": "Ein Artikelpreis ersetzt die prozentuale Anpassung.",
+  "lang_ask_your_manager_to_configure_an_outlet_an": "Bitten Sie Ihre Leitung, eine Verkaufsstelle einzurichten und Zugriff zu gewähren.",
+  "lang_billing_outlets_description": "Getrennte Verkaufsbereiche wie Restaurant, Bar und Zimmerservice mit gemeinsamem Filialbestand.",
+  "lang_billing_outlets_is_switched_off": "Verkaufsstellen sind ausgeschaltet",
+  "lang_choose_a_name_to_get_started_prices_and_st": "Wählen Sie zuerst einen Namen. Preise und Mitarbeiterzugriff sind optional.",
+  "lang_choose_an_outlet": "Verkaufsstelle auswählen",
+  "lang_for_example_restaurant_or_bar": "Zum Beispiel Restaurant oder Bar",
+  "lang_individual_item_prices": "Einzelne Artikelpreise",
+  "lang_no_billing_outlets_yet": "Noch keine Verkaufsstellen",
+  "lang_open_features": "Funktionen öffnen",
+  "lang_set_up_an_outlet": "Verkaufsstelle einrichten",
+  "lang_use_one_normal_billing_screen_or_enable_se": "Nutzen Sie einen Verkaufsbildschirm oder aktivieren Sie getrennte Verkaufsstellen unter Funktionen."
 }

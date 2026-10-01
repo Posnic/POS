@@ -3797,5 +3797,18 @@
   "lang_rd_left_label": "ಎಡಭಾಗದ ಕಸ್ಟಮ್ ಪಠ್ಯ",
   "lang_rd_label_help": "ಕಸ್ಟಮ್ ಪಠ್ಯವು ರಸೀದಿ ಶೀರ್ಷಿಕೆಯನ್ನು ಬದಲಿಸುತ್ತದೆ. ಡೀಫಾಲ್ಟ್ ಬಳಸಲು ಖಾಲಿ ಬಿಡಿ.",
   "lang_rd_date_format": "ದಿನಾಂಕ ಸ್ವರೂಪ",
-  "lang_rd_time_format": "ಸಮಯ ಸ್ವರೂಪ"
+  "lang_rd_time_format": "ಸಮಯ ಸ್ವರೂಪ",
+  "lang_add_your_first_outlet_such_as_restaurant_o": "ಮೊದಲ ಮಾರಾಟ ಕೇಂದ್ರವನ್ನು ಸೇರಿಸಿ, ಉದಾಹರಣೆಗೆ ರೆಸ್ಟೋರೆಂಟ್ ಅಥವಾ ಬಾರ್. ಈ ಶಾಖೆಯ ದಾಸ್ತಾನು ಹಂಚಿಕೆಯಾಗಿರುತ್ತದೆ.",
+  "lang_an_item_price_overrides_the_percentage_adj": "ವಸ್ತುವಿನ ಪ್ರತ್ಯೇಕ ಬೆಲೆ ಶೇಕಡಾವಾರು ಹೊಂದಾಣಿಕೆಯ ಬದಲು ಅನ್ವಯಿಸುತ್ತದೆ.",
+  "lang_ask_your_manager_to_configure_an_outlet_an": "ಮಾರಾಟ ಕೇಂದ್ರವನ್ನು ಹೊಂದಿಸಿ ಪ್ರವೇಶ ನೀಡಲು ನಿರ್ವಾಹಕರನ್ನು ಕೇಳಿ.",
+  "lang_billing_outlets_description": "ರೆಸ್ಟೋರೆಂಟ್, ಬಾರ್ ಮತ್ತು ಕೊಠಡಿ ಸೇವೆಯಂತಹ ಪ್ರತ್ಯೇಕ ಮಾರಾಟ ಪ್ರದೇಶಗಳು ಶಾಖೆಯ ದಾಸ್ತಾನನ್ನು ಹಂಚಿಕೊಳ್ಳುತ್ತವೆ.",
+  "lang_billing_outlets_is_switched_off": "ಮಾರಾಟ ಕೇಂದ್ರಗಳನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ",
+  "lang_choose_a_name_to_get_started_prices_and_st": "ಪ್ರಾರಂಭಿಸಲು ಹೆಸರು ಆಯ್ಕೆಮಾಡಿ. ಬೆಲೆಗಳು ಮತ್ತು ಸಿಬ್ಬಂದಿ ಪ್ರವೇಶ ಐಚ್ಛಿಕ.",
+  "lang_choose_an_outlet": "ಮಾರಾಟ ಕೇಂದ್ರ ಆಯ್ಕೆಮಾಡಿ",
+  "lang_for_example_restaurant_or_bar": "ಉದಾಹರಣೆಗೆ ರೆಸ್ಟೋರೆಂಟ್ ಅಥವಾ ಬಾರ್",
+  "lang_individual_item_prices": "ಪ್ರತ್ಯೇಕ ವಸ್ತುಗಳ ಬೆಲೆಗಳು",
+  "lang_no_billing_outlets_yet": "ಇನ್ನೂ ಮಾರಾಟ ಕೇಂದ್ರಗಳಿಲ್ಲ",
+  "lang_open_features": "ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ತೆರೆಯಿರಿ",
+  "lang_set_up_an_outlet": "ಮಾರಾಟ ಕೇಂದ್ರ ಹೊಂದಿಸಿ",
+  "lang_use_one_normal_billing_screen_or_enable_se": "ಒಂದು ಮಾರಾಟ ಪರದೆ ಬಳಸಿ ಅಥವಾ ವೈಶಿಷ್ಟ್ಯಗಳಲ್ಲಿ ಪ್ರತ್ಯೇಕ ಮಾರಾಟ ಕೇಂದ್ರಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ."
 }

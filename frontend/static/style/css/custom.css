@@ -7692,3 +7692,20 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
 @media (max-width: 575px) {
     .captain-handset-actions .btn { flex: 1 1 100%; }
 }
+
+/* Billing outlets owns its layout; legacy global main rules must not move it. */
+#billing_outlets_page { margin:0; width:auto; }
+#billing_outlets_page > div { background:var(--theme-card-bg,#fff); border:1px solid var(--theme-border-color,#dce2eb); border-radius:14px; padding:24px; }
+#billing_outlets_page .nav { gap:8px; }
+#billing_outlets_page .nav .active { background:var(--theme-primary-color,#0969da); color:var(--theme-on-primary,#fff); border-radius:6px; }
+#billing_outlets_page .billing-empty { padding:32px 16px; text-align:center; background:var(--theme-body-bg,#f5f7fa); border-radius:10px; }
+#billing_outlets_page #billing_form { max-width:800px; }
+#billing_outlets_page #billing_form > label { margin:18px 0; }
+@media(max-width:600px) { #billing_outlets_page { padding:12px!important; } #billing_outlets_page > div { padding:16px; } }
+
+#billing_outlets_page .billing-options { border:1px solid var(--theme-border-color,#dce2eb); border-radius:8px; padding:16px; margin-top:16px; }
+#billing_outlets_page .billing-options summary { cursor:pointer; font-weight:600; }
+#billing_outlets_page .billing-options[open] summary { margin-bottom:16px; }
+
+#billing_outlets_page .form-control { border:1px solid var(--theme-border-color,#ccd5e2); border-radius:6px; background:var(--theme-input-bg,#fff); color:var(--theme-text-primary,#172b4d); }
+#billing_outlets_page .form-control:focus { border-color:var(--theme-primary-color,#0969da); outline:2px solid var(--theme-primary-color,#0969da); outline-offset:1px; }

@@ -1,6 +1,12 @@
 'use strict';
 const { ObjectId } = require('mongodb');
 const BaseModel = require('../models/base.model');
+const SettingsRepository = require('../repositories/settings.repository');
+async function enabled(context) {
+  const result = await new SettingsRepository().resolveGroup('features', context);
+  if (!result.status) fail('Could not load billing outlet settings. Please retry.');
+  return result.data.values.module_billing_outlets_enable === true;
+}
 const money = (value) => Math.round(Number(value) * 100) / 100;
 const fail = (message) => {
   const error = new Error(message);
@@ -65,6 +71,10 @@ async function resolve(context, requested, existing, revision) {
   if (existing && String(requested || id) !== id)
     fail('An existing bill cannot be moved to another outlet.');
   if (!/^[a-f\d]{24}$/i.test(id)) fail('Invalid outlet.');
+  if (!existing && !(await enabled(context)))
+    fail(
+      'Billing outlets is switched off. Enable it in Features before starting a new outlet bill.'
+    );
   const db = await BaseModel.getDb();
   const outlet = await db
     .collection('billing_outlets')
@@ -101,4 +111,4 @@ function charge(outlet, base) {
     tax_amount: money((amount * outlet.service_tax_percent) / 100),
   };
 }
-module.exports = { scope, validate, allowed, resolve, price, charge, money };
+module.exports = { enabled, scope, validate, allowed, resolve, price, charge, money };

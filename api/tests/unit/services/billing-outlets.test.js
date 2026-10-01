@@ -1,3 +1,4 @@
+const SettingsRepository = require('../../../src/repositories/settings.repository');
 const BaseModel = require('../../../src/models/base.model');
 const outlets = require('../../../src/services/billing-outlets');
 const { summarize } = require('../../../src/services/outlet-summary');
@@ -158,6 +159,9 @@ test.each([
   expect(() => outlets.validate(input)).toThrow();
 });
 test('resolve verifies branch/license/staff and retains a bill snapshot across changes', async () => {
+  const feature = jest
+    .spyOn(SettingsRepository.prototype, 'resolveGroup')
+    .mockResolvedValue({ status: true, data: { values: { module_billing_outlets_enable: true } } });
   const updated_at = new Date('2026-09-30T00:00:00Z');
   const findOne = jest.fn(async () => ({
     name: 'Bar',
@@ -178,6 +182,10 @@ test('resolve verifies branch/license/staff and retains a bill snapshot across c
     ).rejects.toThrow('access');
     await expect(outlets.resolve(context, id(3), null, 'old')).rejects.toThrow('changed');
     await expect(outlets.resolve(context, id(4), { outlet_id: id(3) })).rejects.toThrow('original');
+    feature.mockResolvedValue({
+      status: true,
+      data: { values: { module_billing_outlets_enable: false } },
+    });
     await expect(
       outlets.resolve(context, id(3), {
         outlet_id: id(3),
@@ -186,5 +194,23 @@ test('resolve verifies branch/license/staff and retains a bill snapshot across c
     ).resolves.toMatchObject({ name: 'Old bar', markup_percent: 10 });
   } finally {
     spy.mockRestore();
+    feature.mockRestore();
   }
 });
+
+test.each([false, undefined])(
+  'new outlet bills require explicit enablement (%s)',
+  async (value) => {
+    const feature = jest.spyOn(SettingsRepository.prototype, 'resolveGroup').mockResolvedValue({
+      status: true,
+      data: { values: { module_billing_outlets_enable: value } },
+    });
+    try {
+      await expect(
+        outlets.resolve({ branchId: id(1), licenseId: id(2) }, id(3), null, 'revision')
+      ).rejects.toThrow('switched off');
+    } finally {
+      feature.mockRestore();
+    }
+  }
+);

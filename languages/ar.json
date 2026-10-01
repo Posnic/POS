@@ -3797,5 +3797,18 @@
   "lang_rd_left_label": "نص مخصص يسارًا",
   "lang_rd_label_help": "يستبدل النص المخصص عنوان الإيصال. امسحه لاستخدام الافتراضي.",
   "lang_rd_date_format": "تنسيق التاريخ",
-  "lang_rd_time_format": "تنسيق الوقت"
+  "lang_rd_time_format": "تنسيق الوقت",
+  "lang_add_your_first_outlet_such_as_restaurant_o": "أضف أول منفذ بيع، مثل المطعم أو البار. يظل المخزون مشتركًا مع هذا الفرع.",
+  "lang_an_item_price_overrides_the_percentage_adj": "سعر الصنف المحدد يحل محل تعديل النسبة المئوية.",
+  "lang_ask_your_manager_to_configure_an_outlet_an": "اطلب من المدير إعداد منفذ بيع ومنحك صلاحية الوصول.",
+  "lang_billing_outlets_description": "مناطق بيع منفصلة مثل المطعم والبار وخدمة الغرف تشترك في مخزون الفرع.",
+  "lang_billing_outlets_is_switched_off": "منافذ البيع معطلة",
+  "lang_choose_a_name_to_get_started_prices_and_st": "اختر اسمًا للبدء. الأسعار وصلاحيات الموظفين اختيارية.",
+  "lang_choose_an_outlet": "اختر منفذ بيع",
+  "lang_for_example_restaurant_or_bar": "مثل المطعم أو البار",
+  "lang_individual_item_prices": "أسعار الأصناف الفردية",
+  "lang_no_billing_outlets_yet": "لا توجد منافذ بيع بعد",
+  "lang_open_features": "فتح الميزات",
+  "lang_set_up_an_outlet": "إعداد منفذ بيع",
+  "lang_use_one_normal_billing_screen_or_enable_se": "استخدم شاشة بيع واحدة أو فعّل منافذ بيع منفصلة من الميزات."
 }

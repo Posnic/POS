@@ -18,6 +18,7 @@
             if (billingWindowId) {
                 var previous = ui.current;
                 ui.current = data.outlets.find(function (o) { return String(o._id) === billingWindowId; }) || null;
+                if (data.enabled === false) throw new Error('Billing outlets is switched off. Return to the main billing window. Existing bills remain available there.');
                 if (!ui.current) throw new Error('This outlet is unavailable or your access has changed.');
                 if (previous && previous.updated_at !== ui.current.updated_at && PosnicPro.sales && PosnicPro.sales.addSalesLineTable && PosnicPro.sales.addSalesLineTable.length) { ui.current = previous; throw new Error('Outlet settings changed while this cart was open. Clear this unsaved cart and reload the outlet before using the new prices.'); }
                 document.title = ui.current.name + ' - ' + data.branch.name + ' - Posnic';
@@ -29,7 +30,7 @@
     };
     ui.open = function (id) {
         var outlet = ui.data.outlets.find(function (o) { return String(o._id) === id; });
-        if (!outlet) return;
+        if (!outlet || ui.data.enabled === false) return;
         if (window.electronAPI && window.electronAPI.billing) {
             window.electronAPI.billing.openOutlet({ branchId: ui.data.branch.id, outletId: id, name: outlet.name + ' - ' + ui.data.branch.name }).catch(error);
             return;
@@ -82,24 +83,31 @@
         return JSON.stringify(body);
     };
     ui.showDataTablePage = ui.show = function () {
-        ui.previousPages = $('.page_loader:visible').not('#billing_outlets_page');
+        if (!$('#billing_outlets_page').is(':visible')) {
+            ui.previousPages = $('.page_loader:visible').not('#billing_outlets_page');
+            ui.previousHash = /billingoutlets/.test(window.location.hash) ? '#/sales/new' : window.location.hash;
+        }
         $('.page_loader').hide();
-        if (!$('#billing_outlets_page').length) $('body').append('<main id="billing_outlets_page" class="page_loader" style="position:fixed;inset:65px 0 0 0;overflow:auto;background:var(--theme-body-bg,#fff);color:var(--theme-text-primary,#172b4d);z-index:100;padding:24px"><div style="max-width:1100px;margin:auto"><div class="d-flex justify-content-between"><h3><lang class="lang_billing_outlets">Billing outlets</lang></h3><button class="btn btn-outline-secondary" id="billing_back"><lang class="lang_back_to_billing">Back to billing</lang></button></div><p id="billing_message" role="status"></p><div class="nav nav-tabs mb-3"><button class="btn btn-link" data-billing-tab="windows"><lang class="lang_billing_windows">Billing windows</lang></button><button class="btn btn-link" data-billing-tab="summary"><lang class="lang_daily_summary">Daily summary</lang></button><button class="btn btn-link" data-billing-tab="setup"><lang class="lang_outlet_settings">Outlet settings</lang></button></div><section id="billing_content"></section></div></main>');
+        if (!$('#billing_outlets_page').length) $('body').append('<section aria-label="Billing outlets" data-t-aria-label="lang_billing_outlets" id="billing_outlets_page" class="page_loader" style="position:fixed;inset:65px 0 0 0;overflow:auto;background:var(--theme-body-bg,#fff);color:var(--theme-text-primary,#172b4d);z-index:1040;padding:24px"><div style="max-width:1100px;margin:auto"><div class="d-flex justify-content-between"><h3><lang class="lang_billing_outlets">Billing outlets</lang></h3><button class="btn btn-outline-secondary" id="billing_back"><lang class="lang_back_to_billing">Back to billing</lang></button></div><p id="billing_message" role="status"></p><div class="nav nav-tabs mb-3"><button class="btn btn-link" data-billing-tab="windows"><lang class="lang_billing_windows">Billing windows</lang></button><button class="btn btn-link" data-billing-tab="summary"><lang class="lang_daily_summary">Daily summary</lang></button><button class="btn btn-link" data-billing-tab="setup"><lang class="lang_outlet_settings">Outlet settings</lang></button></div><section id="billing_content"></section></div></section>');
         $('#billing_outlets_page').show();
         $('#billing_message').removeClass('text-danger').text('Loading…');
-        ui.load().then(function () { $('#billing_message').text(ui.data.branch.name); ui.tab('windows'); }).catch(error);
+        ui.data = null; $('#billing_content').empty(); $('[data-billing-tab]').prop('disabled', true);
+        return ui.load().then(function () { $('#billing_message').text(ui.data.branch.name); $('[data-billing-tab]').prop('disabled', false); $('[data-billing-tab=setup]').toggle(ui.data.manage); ui.tab('windows'); }).catch(function (e) { error(e); $('#billing_content').html('<button class="btn btn-primary" id="billing_retry"><lang class="lang_desktop_retry">Try again</lang></button>'); });
     };
     ui.tab = function (tab) {
+        if (!ui.data) return;
+        $('[data-billing-tab]').removeClass('active').attr('aria-selected', 'false').filter('[data-billing-tab=' + tab + ']').addClass('active').attr('aria-selected', 'true');
         var box = $('#billing_content').empty();
+        if (tab === 'windows' && ui.data.enabled === false) { box.html('<div class="billing-empty"><h4><lang class="lang_billing_outlets_is_switched_off">Billing outlets is switched off</lang></h4><p><lang class="lang_use_one_normal_billing_screen_or_enable_se">Use one normal billing screen, or enable separate outlets in Features.</lang></p><a class="btn btn-primary" href="#/settings/modules" id="billing_features"><lang class="lang_open_features">Open Features</lang></a></div>'); return; }
         if (tab === 'windows') {
             box.append('<p>Each outlet opens in its own named window. Keep several open and switch using the taskbar or these buttons.</p>');
             ui.data.outlets.forEach(function (o) {
                 box.append('<button class="btn btn-outline-primary m-2" data-billing-open="' + escape(o._id) + '">' + escape(o.name) + ' ↗</button>');
             });
-            if (!ui.data.outlets.length) box.append('<p><lang class="lang_no_outlets_are_configured_for_your_access">No outlets are configured for your access.</lang></p>');
+            if (!ui.data.outlets.length) box.append('<div class="billing-empty"><h4><lang class="lang_no_billing_outlets_yet">No billing outlets yet</lang></h4><p>' + (ui.data.manage ? PosnicPro.i18n.t('lang_add_your_first_outlet_such_as_restaurant_o', 'Add your first outlet, such as Restaurant or Bar. Stock stays shared with this branch.') : PosnicPro.i18n.t('lang_ask_your_manager_to_configure_an_outlet_an', 'Ask your manager to configure an outlet and give you access.')) + '</p>' + (ui.data.manage ? '<button class="btn btn-primary" data-billing-tab="setup"><lang class="lang_set_up_an_outlet">Set up an outlet</lang></button>' : '') + '</div>');
         } else if (tab === 'setup') {
             if (!ui.data.manage) { box.text(PosnicPro.i18n.t('lang_your_account_cannot_change_outlet_settings', 'Your account cannot change outlet settings.')); return; }
-            box.append('<p>Outlets share this branch’s product catalogue and stock. Exact item prices override the percentage. Service charge applies after discounts, before tax. Existing bills retain their saved rules.</p><select class="form-control mb-3" id="billing_edit"><option value="" data-t="lang_new_outlet">New outlet</option></select><form id="billing_form"><input type="hidden" name="id"><label class="d-block">Outlet name<input name="name" required maxlength="60" class="form-control"></label><div class="row"><label class="col-md-4">Price adjustment %<input name="markup_percent" type="number" min="-100" max="1000" step="0.01" value="0" class="form-control"></label><label class="col-md-4">Service charge %<input name="service_percent" type="number" min="0" max="100" step="0.01" value="0" class="form-control"></label><label class="col-md-4">Tax on service charge %<input name="service_tax_percent" type="number" min="0" max="100" step="0.01" value="0" class="form-control"></label></div><label><input name="active" type="checkbox" checked> Active for new bills</label><label class="d-block">Allowed billing staff (leave unselected for everyone with branch access)<select id="billing_members" multiple class="form-control"></select></label><h5><lang class="lang_exact_item_prices">Exact item prices</lang></h5><div id="billing_prices"></div><button class="btn btn-outline-secondary" type="button" id="billing_add_price"><lang class="lang_add_item_price">Add item price</lang></button><button class="btn btn-primary ml-2" type="submit"><lang class="lang_save_outlet">Save outlet</lang></button></form>');
+            box.append('<p><lang class="lang_choose_a_name_to_get_started_prices_and_st">Choose a name to get started. Prices and staff access are optional.</lang></p><label for="billing_edit"><lang class="lang_choose_an_outlet">Choose an outlet</lang></label><select class="form-control mb-3" id="billing_edit"><option value="" data-t="lang_new_outlet">New outlet</option></select><form id="billing_form"><input type="hidden" name="id"><label class="d-block">Outlet name<input name="name" required maxlength="60" class="form-control" placeholder="For example, Restaurant or Bar" data-t-placeholder="lang_for_example_restaurant_or_bar"></label><label class="d-block"><input name="active" type="checkbox" checked> Available for new bills</label><details class="billing-options"><summary>Prices and service charge</summary><p class="text-muted">Leave at zero to use normal prices with no service charge. Existing bills keep their saved prices.</p><div class="row"><label class="col-md-4">Price adjustment %<input name="markup_percent" type="number" min="-100" max="1000" step="0.01" value="0" class="form-control"></label><label class="col-md-4">Service charge %<input name="service_percent" type="number" min="0" max="100" step="0.01" value="0" class="form-control"></label><label class="col-md-4">Tax on service charge %<input name="service_tax_percent" type="number" min="0" max="100" step="0.01" value="0" class="form-control"></label></div><h5><lang class="lang_individual_item_prices">Individual item prices</lang></h5><p class="text-muted"><lang class="lang_an_item_price_overrides_the_percentage_adj">An item price overrides the percentage adjustment.</lang></p><div id="billing_prices"></div><button class="btn btn-outline-secondary" type="button" id="billing_add_price"><lang class="lang_add_item_price">Add item price</lang></button></details><details class="billing-options"><summary>Who can bill here</summary><label class="d-block">All staff with branch access can bill here unless you select specific people.<select id="billing_members" multiple class="form-control"></select></label></details><button class="btn btn-primary mt-3" type="submit"><lang class="lang_save_outlet">Save outlet</lang></button></form>');
             (ui.data.configuration || []).forEach(function (o) { $('#billing_edit').append($('<option>').val(o._id).text(o.name)); });
             request('/staff').then(function (staff) { staff.forEach(function (u) { $('#billing_members').append($('<option>').val(u._id).text(u.name || u.username)); }); }).catch(error);
         } else if (tab === 'summary') {
@@ -116,7 +124,11 @@
             results: function (r) { return { results: (r.data || r || []).map(function (i) { return { id: i.id || i._id, text: i.name || i.item_name }; }) }; } } });
         if (value) { row.find('select').append($('<option selected>').val(value.item_id).text(value.name || value.item_id)); row.find('input').val(value.price); }
     }
-    $(document).on('click', '#billing_back', function () { $('#billing_outlets_page').hide(); if (ui.previousPages && ui.previousPages.length) ui.previousPages.show(); else $('#sales_new').show(); })
+    $(document).on('click', '#billing_back', function () { $('#billing_outlets_page').hide();
+        if (/billingoutlets/.test(window.location.hash)) window.history.replaceState(null, '', ui.previousHash || '#/sales/new');
+        if (ui.previousPages && ui.previousPages.length) ui.previousPages.show(); else $('#sales_new').show(); })
+        .on('click', '#billing_retry', function () { ui.show(); })
+        .on('click', '#billing_features', function () { $('#billing_outlets_page').hide(); })
         .on('click', '[data-billing-tab]', function () { ui.tab($(this).attr('data-billing-tab')); })
         .on('click', '[data-billing-open]', function () { ui.open($(this).attr('data-billing-open')); })
         .on('click', '#billing_add_price', function () { priceRow(); })

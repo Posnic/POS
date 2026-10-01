@@ -68,6 +68,10 @@ function panes() {
 
 test('every channel has a settings pane of its own', () => {
   const defined = panes();
+  assert.match(read('frontend', 'static', 'script', 'js', 'core', 'billing-outlets.js'), /ui.showDataTablePage = ui.show/);
+  assert.ok(SIDEBAR.includes('href="#/billingoutlets"'));
+  assert.ok(SETTINGS_JS.includes("['billingoutlets', 'Billing outlets', 'page']"));
+  defined.add('billingoutlets');
   const missing = CHANNELS.filter((c) => !defined.has(c.section)).map((c) => c.section);
   assert.deepStrictEqual(
     missing,
@@ -109,6 +113,10 @@ test('no feature card points at a section that does not exist', () => {
    * pane takes somebody somewhere wrong with nothing to say it went wrong.
    */
   const defined = panes();
+  assert.match(read('frontend', 'static', 'script', 'js', 'core', 'billing-outlets.js'), /ui.showDataTablePage = ui.show/);
+  assert.ok(SIDEBAR.includes('href="#/billingoutlets"'));
+  assert.ok(SETTINGS_JS.includes("['billingoutlets', 'Billing outlets', 'page']"));
+  defined.add('billingoutlets');
   const dangling = featureHomes()
     .filter(([, where]) => !defined.has(where))
     .map(([module, where]) => `${module} -> #/settings/${where}`);
@@ -387,6 +395,10 @@ test('every settings link in the markup lands on a real page', () => {
    * having anyway: the cheap half of the problem is the half that ships.
    */
   const defined = panes();
+  assert.match(read('frontend', 'static', 'script', 'js', 'core', 'billing-outlets.js'), /ui.showDataTablePage = ui.show/);
+  assert.ok(SIDEBAR.includes('href="#/billingoutlets"'));
+  assert.ok(SETTINGS_JS.includes("['billingoutlets', 'Billing outlets', 'page']"));
+  defined.add('billingoutlets');
   /* Old addresses that route on purpose - openSection redirects these. */
   const legacy = new Set(
     [...SETTINGS_JS.matchAll(/^\s*(\w+): '([\w-]+)',?\s*$/gm)]
