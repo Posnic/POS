@@ -10806,6 +10806,49 @@ class SalesRepository {
         const oldQty = oldItemsData[lineKey] ? parseFloat(oldItemsData[lineKey].quantity) : 0;
         if (oldItemsData[lineKey]) delete oldItemsData[lineKey];
 
+        // A sealed transfer allocation is already a server-owned monetary
+        // record. Retained portions are reconciled against that record below,
+        // without certifying them against today's catalogue or tax rates.
+        if (previousLine && orderDoc.captain_transfer_allocation && qty <= oldQty) {
+          require('../utils/transfer-allocation').read(orderDoc, shop || {});
+          pricingAuthority.assertPrice(
+            submittedPrice,
+            Number(
+              previousLine.unit_price ?? previousLine.item_base_price ?? previousLine.item_price
+            ),
+            (n) => Money.fromMinor(Money.toMinor(n, monetary), monetary),
+            previousLine.item_name
+          );
+          if (
+            item.modifiers !== undefined &&
+            JSON.stringify(item.modifiers) !== JSON.stringify(previousLine.modifiers || [])
+          )
+            throw new pricingAuthority.PricingError(
+              'item_modifiers_changed',
+              'Add a separate line to change priced modifiers.'
+            );
+          updatedItems[existingIndex[lineKey]] = {
+            ...previousLine,
+            ...preparation,
+            quantity: qty,
+            item_quantity: qty,
+            item_description: newNote,
+            spice_level: spiceLevel.levelOf(item.spice_level ?? previousLine.spice_level),
+          };
+          if (qty < oldQty)
+            changesItems.push({
+              item_id: productId,
+              ...preparation,
+              item_name: previousLine.item_name,
+              item_quantity: oldQty - qty,
+              process: 'cancel',
+              item_description: newNote,
+              ...require('../utils/kitchen-amount').snapshot(previousLine),
+            });
+          incomingProductIds.push(lineKey);
+          continue;
+        }
+
         let itemDoc = null;
         if (mongoose.Types.ObjectId.isValid(productId)) {
           itemDoc = await itemCollection.findOne({
@@ -10822,7 +10865,9 @@ class SalesRepository {
               );
             pricingAuthority.assertPrice(
               submittedPrice,
-              Number(previousLine.unit_price ?? previousLine.item_price),
+              Number(
+                previousLine.unit_price ?? previousLine.item_base_price ?? previousLine.item_price
+              ),
               (n) => Money.fromMinor(Money.toMinor(n, monetary), monetary),
               previousLine.item_name
             );
@@ -10858,7 +10903,8 @@ class SalesRepository {
         let amounts;
         try {
           if (previousLine) {
-            const storedUnit = previousLine.unit_price ?? previousLine.item_price;
+            const storedUnit =
+              previousLine.unit_price ?? previousLine.item_base_price ?? previousLine.item_price;
             pricingAuthority.assertPrice(
               submittedPrice,
               Number(storedUnit),
@@ -10976,6 +11022,10 @@ class SalesRepository {
           negative_stock: itemDoc.negative_stock || false,
           company_price_total: Number(itemDoc.company_price || 0) * qty,
         };
+        // The reconciled allocation owns a mixture of historical and newly
+        // added portions; a new-item quote must not certify all old portions.
+        if (previousLine && orderDoc.captain_transfer_allocation && !previousLine.pricing)
+          delete nextLine.pricing;
         if (previousLine) updatedItems[existingIndex[lineKey]] = nextLine;
         else updatedItems.push({ ...nextLine, item_status: 'Add', return: false });
       }

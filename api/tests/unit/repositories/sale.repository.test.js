@@ -1427,7 +1427,7 @@ describe('SalesRepository', () => {
      * charged the normal price is a bad QR code, a customer charged a markup
      * nobody agreed is a complaint.
      */
-    test('a venue nobody recognises falls back to house prices', async () => {
+    test('a venue nobody recognises rejects the order instead of guessing a price', async () => {
       openShopSelling(280);
       settingsHolding({ partner_venues: [ROYAL] });
 
@@ -1438,8 +1438,8 @@ describe('SalesRepository', () => {
         items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
       });
 
-      expect(r.data.total).toBe(280);
-      expect(placed().venue).toBeNull();
+      expect(r).toMatchObject({ status: false, data: { state: 'pricing_rule_unavailable' } });
+      expect(collections.sales.insertOne).not.toHaveBeenCalled();
     });
 
     /*
