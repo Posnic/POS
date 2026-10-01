@@ -3967,8 +3967,11 @@ class SettingModel extends BaseModel {
       // PHP line 2969, 2980: uses $data['tableorder_id']
       const id = data.tableorder_id || data.id || data._id;
       if (!id) throw new Error('ID is required');
+      if (typeof id !== 'string' || !ObjectId.isValid(id)) {
+        throw new Error('A valid table order ID is required');
+      }
       const tableFilter = {
-        _id: this.normalizeId(id),
+        _id: new ObjectId(id),
         branch_id: this.normalizeId(this.branchId),
         license: this.normalizeId(this.licenseId),
       };

@@ -4,11 +4,9 @@ const { passwordMatches } = require('../utils/password-match');
 const { self } = require('./captain-profile');
 const { fail } = require('../utils/branch-access');
 const mail = require('../utils/email');
-const digest = (id, code) =>
-  crypto
-    .createHash('sha256')
-    .update(id + ':' + code)
-    .digest('hex');
+const scrypt = require('util').promisify(crypto.scrypt);
+// Each challenge salts both short verification codes and the credential snapshot.
+const digest = async (salt, value) => (await scrypt(value, salt, 32)).toString('hex');
 const key = (c, user) => String(c.license) + ':' + String(user._id);
 
 async function start(req) {
@@ -47,9 +45,9 @@ async function start(req) {
         challenge,
         email,
         previousEmail: user.email || '',
-        credentialHash: digest('credential', user.password),
+        credentialHash: await digest(challenge + ':credential', user.password),
         branchId: c.branchId,
-        codeHash: digest(challenge, code),
+        codeHash: await digest(challenge, code),
         expiresAt,
         attempts: 0,
         state: 'sending',
@@ -101,7 +99,10 @@ async function verify(req) {
   const collection = req.db.collection('captain_email_verifications');
   const selector = { _id: key(c, user), challenge, branchId: c.branchId };
   const current = await collection.findOne(selector);
-  if (!current || current.credentialHash !== digest('credential', user.password))
+  if (
+    !current ||
+    current.credentialHash !== (await digest(challenge + ':credential', user.password))
+  )
     fail('Request a new verification code.', 409);
   if (
     current.state === 'verified' &&
@@ -117,7 +118,7 @@ async function verify(req) {
     if (!reserved.matchedCount) fail('Request a new verification code.', 409);
   } else if (current.expiresAt <= new Date()) fail('Request a new verification code.', 409);
   const expected = Buffer.from(current.codeHash || '', 'hex'),
-    actual = Buffer.from(digest(challenge, code), 'hex');
+    actual = Buffer.from(await digest(challenge, code), 'hex');
   if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual))
     fail('The verification code is incorrect.', 400);
   // Claim the challenge before changing the user; only one verifier may apply it.
