@@ -1416,15 +1416,22 @@ class SalesController extends BaseController {
       }
 
       const restaurantEnabled = [true, 'true', 'enable', 1, '1'].includes(branchDoc.table_options);
-      if (!restaurantEnabled && (req.query.serving_period || req.query.start_time || req.query.end_time))
+      if (
+        !restaurantEnabled &&
+        (req.query.serving_period || req.query.start_time || req.query.end_time)
+      )
         return this.error(res, 'Serving-period filters require Restaurant to be enabled.', 400);
       const servingPeriods = restaurantEnabled ? await salesService.getReportServingPeriods() : [];
       const period = require('../helpers/daily-report-period').dailyReportPeriod(
-        req.query, branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC', servingPeriods || []
+        req.query,
+        branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC',
+        servingPeriods || []
       );
-      const start = period.start, end = period.end;
+      const start = period.start,
+        end = period.end;
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, {
-        start_date: start, end_date: end,
+        start_date: start,
+        end_date: end,
       });
 
       const SaleModel = this.model || Sale;
@@ -1673,7 +1680,12 @@ class SalesController extends BaseController {
     } catch (error) {
       // Last-resort safety net
       console.error('Error generating daily sales report:', error);
-      return this.error(res, error.statusCode === 400 ? error.message : ERROR_MESSAGES.SERVER_ERROR, error.statusCode || 500, error.message);
+      return this.error(
+        res,
+        error.statusCode === 400 ? error.message : ERROR_MESSAGES.SERVER_ERROR,
+        error.statusCode || 500,
+        error.message
+      );
     }
   }
 
@@ -1769,22 +1781,32 @@ class SalesController extends BaseController {
       }
 
       // ---- Read & sanitize inputs ----
-      const { branch } = req.query;
+      const { branch, type } = req.query;
 
       // Validate before database access; resolve actual windows in the shop timezone below.
-      require('../helpers/daily-report-period').dailyReportPeriod({ ...req.query, serving_period: undefined }, 'UTC');
+      require('../helpers/daily-report-period').dailyReportPeriod(
+        { ...req.query, serving_period: undefined },
+        'UTC'
+      );
       const branchDoc = await salesService.getBranchById(branch);
       if (!branchDoc) return this.error(res, ERROR_MESSAGES.BRANCH_NOT_FOUND, 404);
       const restaurantEnabled = [true, 'true', 'enable', 1, '1'].includes(branchDoc.table_options);
-      if (!restaurantEnabled && (req.query.serving_period || req.query.start_time || req.query.end_time))
+      if (
+        !restaurantEnabled &&
+        (req.query.serving_period || req.query.start_time || req.query.end_time)
+      )
         return this.error(res, 'Serving-period filters require Restaurant to be enabled.', 400);
       const servingPeriods = restaurantEnabled ? await salesService.getReportServingPeriods() : [];
       const period = require('../helpers/daily-report-period').dailyReportPeriod(
-        req.query, branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC', servingPeriods || []
+        req.query,
+        branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC',
+        servingPeriods || []
       );
-      const start = period.start, end = period.end;
+      const start = period.start,
+        end = period.end;
       const filteredDateRange = await sessionFilterUtil.applySessionFilter(req, {
-        start_date: start, end_date: end,
+        start_date: start,
+        end_date: end,
       });
 
       const SaleModel = this.model || Sale;
@@ -1960,12 +1982,20 @@ class SalesController extends BaseController {
             width: middleWidth,
             align: 'center',
           });
-        doc.text(`To date : ${formatDateForTimezone(new Date(end.getTime() - 1), timeZone)}`, middleX, 65, {
-          width: middleWidth,
-          align: 'center',
-        });
+        doc.text(
+          `To date : ${formatDateForTimezone(new Date(end.getTime() - 1), timeZone)}`,
+          middleX,
+          65,
+          {
+            width: middleWidth,
+            align: 'center',
+          }
+        );
 
-        doc.font(emailFont).fontSize(8).text(period.label, middleX, 80, { width: middleWidth, align: 'center' });
+        doc
+          .font(emailFont)
+          .fontSize(8)
+          .text(period.label, middleX, 80, { width: middleWidth, align: 'center' });
 
         // Branch shop icon/logo on the right column (top-right). Use a
         // slightly smaller icon and drop it a little below the top margin so
@@ -2560,7 +2590,12 @@ class SalesController extends BaseController {
       console.error('Error generating daily sales PDF:', error);
 
       if (!res.headersSent) {
-        return this.error(res, error.statusCode === 400 ? error.message : ERROR_MESSAGES.SERVER_ERROR, error.statusCode || 500, error.message);
+        return this.error(
+          res,
+          error.statusCode === 400 ? error.message : ERROR_MESSAGES.SERVER_ERROR,
+          error.statusCode || 500,
+          error.message
+        );
       }
     }
   }
