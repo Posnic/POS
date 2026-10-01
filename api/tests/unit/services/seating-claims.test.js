@@ -13,9 +13,14 @@ beforeAll(async () => {
   db = mongoose.connection.db;
 }, 60000);
 afterAll(async () => {
-  await mongoose.disconnect();
-  await server?.stop();
-});
+  try {
+    await mongoose.disconnect();
+  } finally {
+    await server?.stop();
+  }
+  // Database process shutdown can exceed Jest's five-second default under
+  // coverage load. Keep the same bounded allowance as database startup.
+}, 60000);
 beforeEach(async () => {
   await db.dropDatabase();
   scope = { branchId: new ObjectId(), license: new ObjectId() };

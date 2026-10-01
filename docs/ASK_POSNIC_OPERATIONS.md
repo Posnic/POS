@@ -4,6 +4,55 @@ Ask Posnic is mounted inside the normal POS at `#/askposnic`. It uses the
 authenticated shop and branch context; callers cannot select another tenant in
 their question or request body.
 
+## Release status checked 1 October 2026
+
+The implementation is a coordinated draft release, not an activated customer
+service. Historical checkpoints below describe their stated candidates; a past
+successful probe does not prove the latest application is deployed.
+
+At 10:00 UTC a read-only inspection of the running core host found Node 20.20.2
+for Gateway, web-api, Intranet (`admin`) and the POS shard. This satisfies the
+billing candidate's Node 20.19 minimum. None of the checked Ask Posnic service
+entry files was installed, and none of the checked managed provider, knowledge,
+billing, vector or OCR configuration keys was present in their `.env` files or
+PM2 environment. This checks those locations, not every possible external secret
+store. The active web-api Razorpay key is live-mode; no payment operation was
+performed. A bounded read of `payment_plan_prices` found zero active and zero
+other `managed_ai` prices.
+
+| Requirement | Evidence available | Remaining verification or work |
+|---|---|---|
+| AWS application access | Dedicated host Bedrock identity and isolated authenticated Bedrock/Titan/vector smoke recorded below; AWS SSO and host reachability rechecked | Configure and validate the deployed customer application; earlier isolated probes are not production activation |
+| Metering and paid allowance | Atomic reservation/settlement, unknown-outcome holds, renewal/refund tests and synthetic cross-service contract | Approved commercial catalog, payment-provider test-mode lifecycle, provider invoice reconciliation and actual tenant entitlement |
+| Scheduled delivery | Real loopback SMTP acceptance/rejection/stall tests, database concurrency/recovery checks, one previously delivered synthetic Brevo report | Actual tenant delivery configuration and WhatsApp acceptance; sending requires a selected recipient |
+| Safe cited knowledge | Reviewed publication/withdrawal, tenant/source checks, PDF page mapping and isolated OCR extraction | Live distribution configuration and independent sourced-answer/multilingual review; the 90% correctness gate remains unproven |
+| Confirmed actions | Permission, scope, replay, live-data recheck and interrupted-action database tests; isolated authenticated application smoke | Pilot acceptance against the selected deployed shop and its roles |
+| Administration | Module settings, reviewed Intranet knowledge/OCR workflow, fleet HTTP/browser contract and owned-shop billing UI | Coordinated service configuration, reachable fleet hosts and live Cloud account activation |
+| Release | Five open, mergeable draft PRs; security findings and test results tied to candidate commits | Review/merge and coordinated rollout with backup/rollback, then verify those exact deployed revisions |
+
+Companion candidate heads checked at this audit: Intranet `a08ef8c7770c`, Gateway
+`4c64b1522c02`, web-api `9c353d41f744`, web-frontend `730ac32a6409`. POS application
+head `80e5c0372930` includes the SMTP timeout follow-up. Its CI passed all 12,369
+test assertions but the seating MongoDB teardown exceeded its five-second hook
+limit. The follow-up attempts process cleanup even if disconnect fails and gives teardown
+the same 60-second bound as startup; all 138 seating tests pass under coverage.
+Fresh CI must confirm the resulting revision before calling its checks green.
+
+The billing candidate passed 611 tests, a loopback SMTP check on Node 20.19 and
+the POS/Intranet/billing contract. Its runtime-only and full dependency audits
+reported zero known advisories at this checkpoint. See
+[the security review](ASK_POSNIC_SECURITY_REVIEW.md) for the separate POS CodeQL
+findings and their evidence; this does not clear unrelated default-branch
+dependency alerts.
+
+Rollout must keep paid offers inactive until payment acceptance and commercial
+terms are reviewed. Install the coordinated Intranet/Gateway/billing/account
+candidates, supply matching distribution/billing tokens and restricted AWS
+configuration, then activate the selected POS pilot. Verify citations, a permitted
+report, an explicitly confirmed draft, measured model usage, and scheduled delivery
+with that pilot before widening access. Record deployed revisions and outcomes;
+never substitute an old smoke log for this check.
+
 ## Modes
 
 - **Direct:** sales, profit, tax, payment mix, top/slow/unsold items, category performance,
