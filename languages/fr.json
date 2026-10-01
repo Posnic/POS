@@ -3797,5 +3797,18 @@
   "lang_rd_left_label": "Libellé personnalisé à gauche",
   "lang_rd_label_help": "Le texte remplace le titre du reçu. Effacez-le pour utiliser la valeur par défaut.",
   "lang_rd_date_format": "Format de date",
-  "lang_rd_time_format": "Format horaire"
+  "lang_rd_time_format": "Format horaire",
+  "lang_add_your_first_outlet_such_as_restaurant_o": "Ajoutez votre premier point de vente, comme Restaurant ou Bar. Le stock reste partagé avec cette succursale.",
+  "lang_an_item_price_overrides_the_percentage_adj": "Le prix individuel remplace le réglage en pourcentage.",
+  "lang_ask_your_manager_to_configure_an_outlet_an": "Demandez au responsable de configurer un point de vente et de vous donner accès.",
+  "lang_billing_outlets_description": "Espaces de vente distincts, comme Restaurant, Bar et Service en chambre, avec stock partagé.",
+  "lang_billing_outlets_is_switched_off": "Les points de vente sont désactivés",
+  "lang_choose_a_name_to_get_started_prices_and_st": "Choisissez un nom pour commencer. Les prix et les accès du personnel sont facultatifs.",
+  "lang_choose_an_outlet": "Choisir un point de vente",
+  "lang_for_example_restaurant_or_bar": "Par exemple, Restaurant ou Bar",
+  "lang_individual_item_prices": "Prix individuels des articles",
+  "lang_no_billing_outlets_yet": "Aucun point de vente pour le moment",
+  "lang_open_features": "Ouvrir les fonctionnalités",
+  "lang_set_up_an_outlet": "Configurer un point de vente",
+  "lang_use_one_normal_billing_screen_or_enable_se": "Utilisez un écran de vente ou activez des points de vente distincts dans Fonctionnalités."
 }

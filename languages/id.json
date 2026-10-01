@@ -3797,5 +3797,18 @@
   "lang_rd_left_label": "Label kiri khusus",
   "lang_rd_label_help": "Teks khusus menggantikan judul struk. Kosongkan untuk memakai bawaan.",
   "lang_rd_date_format": "Format tanggal",
-  "lang_rd_time_format": "Format waktu"
+  "lang_rd_time_format": "Format waktu",
+  "lang_add_your_first_outlet_such_as_restaurant_o": "Tambahkan area penjualan pertama, misalnya Restoran atau Bar. Stok tetap digunakan bersama cabang ini.",
+  "lang_an_item_price_overrides_the_percentage_adj": "Harga per barang menggantikan penyesuaian persentase.",
+  "lang_ask_your_manager_to_configure_an_outlet_an": "Minta manajer menyiapkan area penjualan dan memberikan akses.",
+  "lang_billing_outlets_description": "Area penjualan terpisah, seperti Restoran, Bar, dan Layanan Kamar, dengan stok cabang bersama.",
+  "lang_billing_outlets_is_switched_off": "Area penjualan dinonaktifkan",
+  "lang_choose_a_name_to_get_started_prices_and_st": "Pilih nama untuk memulai. Harga dan akses staf bersifat opsional.",
+  "lang_choose_an_outlet": "Pilih area penjualan",
+  "lang_for_example_restaurant_or_bar": "Misalnya Restoran atau Bar",
+  "lang_individual_item_prices": "Harga masing-masing barang",
+  "lang_no_billing_outlets_yet": "Belum ada area penjualan",
+  "lang_open_features": "Buka Fitur",
+  "lang_set_up_an_outlet": "Siapkan area penjualan",
+  "lang_use_one_normal_billing_screen_or_enable_se": "Gunakan satu layar penjualan atau aktifkan area penjualan terpisah di Fitur."
 }

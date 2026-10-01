@@ -3797,5 +3797,18 @@
   "lang_rd_left_label": "ഇടതുവശത്തെ ഇഷ്ടാനുസൃത വാചകം",
   "lang_rd_label_help": "ഈ വാചകം രസീതിന്റെ തലക്കെട്ടിനു പകരം വരും. പതിവ് ഉപയോഗിക്കാൻ മായ്ക്കുക.",
   "lang_rd_date_format": "തീയതി രൂപം",
-  "lang_rd_time_format": "സമയ രൂപം"
+  "lang_rd_time_format": "സമയ രൂപം",
+  "lang_add_your_first_outlet_such_as_restaurant_o": "ആദ്യ വിൽപ്പന കേന്ദ്രം ചേർക്കുക, ഉദാഹരണത്തിന് റെസ്റ്റോറന്റ് അല്ലെങ്കിൽ ബാർ. ശാഖയുടെ സ്റ്റോക്ക് പങ്കിടും.",
+  "lang_an_item_price_overrides_the_percentage_adj": "ഇനത്തിന്റെ പ്രത്യേക വില ശതമാന ക്രമീകരണത്തിനു പകരം ബാധകമാകും.",
+  "lang_ask_your_manager_to_configure_an_outlet_an": "വിൽപ്പന കേന്ദ്രം സജ്ജമാക്കി പ്രവേശനം നൽകാൻ മാനേജരോട് ആവശ്യപ്പെടുക.",
+  "lang_billing_outlets_description": "റെസ്റ്റോറന്റ്, ബാർ, റൂം സർവീസ് തുടങ്ങിയ പ്രത്യേക വിൽപ്പന മേഖലകൾ ശാഖയുടെ സ്റ്റോക്ക് പങ്കിടുന്നു.",
+  "lang_billing_outlets_is_switched_off": "വിൽപ്പന കേന്ദ്രങ്ങൾ പ്രവർത്തനരഹിതമാണ്",
+  "lang_choose_a_name_to_get_started_prices_and_st": "ആരംഭിക്കാൻ പേര് തിരഞ്ഞെടുക്കുക. വിലകളും ജീവനക്കാരുടെ പ്രവേശനവും ഐച്ഛികമാണ്.",
+  "lang_choose_an_outlet": "വിൽപ്പന കേന്ദ്രം തിരഞ്ഞെടുക്കുക",
+  "lang_for_example_restaurant_or_bar": "ഉദാഹരണത്തിന് റെസ്റ്റോറന്റ് അല്ലെങ്കിൽ ബാർ",
+  "lang_individual_item_prices": "ഓരോ ഇനത്തിന്റെയും വിലകൾ",
+  "lang_no_billing_outlets_yet": "വിൽപ്പന കേന്ദ്രങ്ങൾ ഇതുവരെ ഇല്ല",
+  "lang_open_features": "സവിശേഷതകൾ തുറക്കുക",
+  "lang_set_up_an_outlet": "വിൽപ്പന കേന്ദ്രം സജ്ജമാക്കുക",
+  "lang_use_one_normal_billing_screen_or_enable_se": "ഒരു വിൽപ്പന സ്ക്രീൻ ഉപയോഗിക്കുക അല്ലെങ്കിൽ സവിശേഷതകളിൽ പ്രത്യേക വിൽപ്പന കേന്ദ്രങ്ങൾ പ്രവർത്തനക്ഷമമാക്കുക."
 }

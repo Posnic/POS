@@ -3797,5 +3797,18 @@
   "lang_rd_left_label": "बायाँतर्फ अनुकूल पाठ",
   "lang_rd_label_help": "अनुकूल पाठले रसिदको शीर्षक बदल्छ। पूर्वनिर्धारित प्रयोग गर्न खाली गर्नुहोस्।",
   "lang_rd_date_format": "मितिको ढाँचा",
-  "lang_rd_time_format": "समयको ढाँचा"
+  "lang_rd_time_format": "समयको ढाँचा",
+  "lang_add_your_first_outlet_such_as_restaurant_o": "पहिलो बिक्री केन्द्र थप्नुहोस्, जस्तै रेस्टुरेन्ट वा बार। यस शाखाको मौज्दात साझा रहन्छ।",
+  "lang_an_item_price_overrides_the_percentage_adj": "वस्तुको छुट्टै मूल्यले प्रतिशत समायोजनलाई प्रतिस्थापन गर्छ।",
+  "lang_ask_your_manager_to_configure_an_outlet_an": "प्रबन्धकलाई बिक्री केन्द्र सेट गर्न र पहुँच दिन भन्नुहोस्।",
+  "lang_billing_outlets_description": "रेस्टुरेन्ट, बार र कोठा सेवा जस्ता छुट्टै बिक्री क्षेत्रहरूले शाखाको मौज्दात साझा गर्छन्।",
+  "lang_billing_outlets_is_switched_off": "बिक्री केन्द्रहरू बन्द छन्",
+  "lang_choose_a_name_to_get_started_prices_and_st": "सुरु गर्न नाम छान्नुहोस्। मूल्य र कर्मचारी पहुँच ऐच्छिक हुन्।",
+  "lang_choose_an_outlet": "बिक्री केन्द्र छान्नुहोस्",
+  "lang_for_example_restaurant_or_bar": "उदाहरणका लागि रेस्टुरेन्ट वा बार",
+  "lang_individual_item_prices": "प्रत्येक वस्तुको मूल्य",
+  "lang_no_billing_outlets_yet": "अहिलेसम्म बिक्री केन्द्र छैन",
+  "lang_open_features": "सुविधाहरू खोल्नुहोस्",
+  "lang_set_up_an_outlet": "बिक्री केन्द्र सेट गर्नुहोस्",
+  "lang_use_one_normal_billing_screen_or_enable_se": "एउटा बिक्री स्क्रिन प्रयोग गर्नुहोस् वा सुविधाहरूमा छुट्टै बिक्री केन्द्र खोल्नुहोस्।"
 }

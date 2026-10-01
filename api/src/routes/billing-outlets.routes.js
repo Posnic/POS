@@ -33,6 +33,7 @@ router.get(
     const manage = permissions.checkPermission('branch', 'write', req.user);
     return {
       manage,
+      enabled: await outlets.enabled(req.tenantContext),
       branch: { id: String(req.tenantContext.branchId), name: req.tenantContext.branchName },
       outlets: all
         .filter((o) => o.active !== false && outlets.allowed(o, req.user._id))
