@@ -76,7 +76,10 @@ async function reserve(db, scope, { requestId, actor, intent, sales }) {
         'sales_sub_total', 'subtotal', 'total', 'items_subtotal', 'items_total', 'discount', 'tax', 'sales_tax', 'round_off', 'sales_round_off', 'captain_transfer_allocation',
         'person_count', 'table_number', 'table_id', 'dine_type', 'seating_request_id', 'seating_primary_id', 'seating_table_ids', 'seating_capacity_revision'])
         expected[key] = sale[key] === undefined ? { $exists: false } : sale[key];
-      const eligibility = ['move', 'enroll'].includes(journal.intent.kind)
+      // A cover update may fence paid neighbours that still occupy seats.
+      // Only the edited check must remain unpaid; never reopen a paid bill.
+      const occupiedNeighbour = journal.intent.kind === 'covers' && id !== journal.intent.orderId;
+      const eligibility = occupiedNeighbour || ['move', 'enroll'].includes(journal.intent.kind)
         ? require('../helpers/floor-eligibility').floorEligibility()
         : { sale_process: 'KOT', payment_status: journal.intent.kind === 'covers'
           ? { $in: ['Unpaid', null, ''] } : 'Unpaid' };

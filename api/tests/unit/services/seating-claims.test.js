@@ -1672,3 +1672,28 @@ test('unclaimed guest edits include other checks and pending seats without doubl
   for(const guests of [0,-1,1.5,'bad',1001])
     await expect(seating.forEdit(db,scope,order,{guests})).rejects.toThrow('number of guests');
 });
+
+
+test.each(['KOT', 'Add', 'Edit'])('cover changes count a paid %s neighbour without modifying its bill', async (process) => {
+  const { source, target, input } = await mergeOrders();
+  const move = await seating.prepareMove(db, scope, String(source._id), input, { mergeTargetId: String(target._id) });
+  await seating.completeMove(db, scope, move.id, 'staff-1');
+  await db.collection('table_seating').updateOne({}, { $set: { 'claims.$[].max_capacity': 4 } });
+  await db.collection('sales').updateOne({ _id: target._id }, { $set: {
+    floor_lifecycle: true, payment_status: 'Paid', sale_process: process, paid_amount: 12,
+  } });
+  const before = await db.collection('sales').findOne({ _id: target._id });
+  await expect(seating.changeGuests(db, scope, String(source._id), {
+    request_id: 'paid-neighbour-over-capacity', actor: 'staff-1', guests: 3,
+  })).rejects.toThrow('enough seats');
+  expect(await db.collection('sales').findOne({ _id: target._id })).toEqual(before);
+  const change = { request_id: 'paid-neighbour-valid-covers', actor: 'staff-1', guests: 2 };
+  await seating.changeGuests(db, scope, String(source._id), change);
+  await seating.changeGuests(db, scope, String(source._id), change);
+  const after = await db.collection('sales').findOne({ _id: target._id });
+  expect(after).toEqual({ ...before, seating_capacity_revision: change.request_id });
+  const edited = await db.collection('sales').findOne({ _id: source._id });
+  expect(edited.person_count).toBe(2);
+  expect(edited.captain_audit.filter(entry => entry.action === 'guests')).toHaveLength(1);
+  expect(await db.collection('sales').countDocuments({ captain_payment_plan: { $exists: true } })).toBe(0);
+});
