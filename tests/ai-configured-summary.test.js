@@ -64,6 +64,6 @@ test('Edit unfolds, Remove asks and removes, and a visit never starts mid-edit',
   assert.match(JS, /on\('click', '#ai_edit', function \(\) \{\s*PosnicPro\.settings\.ai\._editing = true;\s*PosnicPro\.settings\.ai\.syncRows\(\);/);
   assert.match(JS, /on\('click', '#ai_remove_all', function \(\) \{[\s\S]*?PosnicPro\.settings\.ai\.removeKey\(\);/,
     'the line has its own removal instead of the one that asks first');
-  assert.match(ai, /_replacing = false;\n\s*PosnicPro\.settings\.ai\._editing = false;/,
+  assert.match(ai, /_replacing = false;\r?\n\s*PosnicPro\.settings\.ai\._editing = false;/,
     'a visit can start with the form unfolded from a previous edit');
 });
