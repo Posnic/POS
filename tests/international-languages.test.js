@@ -28,6 +28,8 @@ test('Dutch has every current UI key without empty filler values', () => {
 
 test('the translator catalogue keeps escaped apostrophes and the complete sentence', () => {
   const { context } = require('./tools/i18n-coverage').keysUsed();
+  assert.ok([...context.keys()].every(key => !key.includes('reason.toLowerCase')),
+    'dynamic translation calls must not consume subsequent JavaScript as a key');
   assert.equal(context.get('lang_ai_live_voice_off').english,
     "Off: the microphone works turn by turn, with the phone's own voice");
 });
