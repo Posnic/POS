@@ -14,7 +14,7 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   win.PosnicPro = { local: { get: () => 'Rs.' }, configPaymentType: [{ payment_value: 'Upi' }], alert: (_type, message) => { win.lastError = message; }, sales: {
     extraDiscount: { sale_new_tot: 262.5 }, EditRecentSaleParams: { sales_total: 262.5, payment_status: status, multi_payment: payments }, paymentOnlyMode: true
   } };
-  for (const name of ['showMultiPaymentMode', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
+  for (const name of ['showMultiPaymentMode', 'getPaymentObject', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
     const start = source.indexOf('    ' + name + ': function');
     const end = source.indexOf('\n    },', start);
     assert.ok(start >= 0 && end > start);
@@ -22,6 +22,21 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   }
   return { dom, win, $, sales: win.PosnicPro.sales };
 }
+
+test('split payment keeps configured method spelling in the submitted ledger', () => {
+  const { dom, win, $, sales } = setup('Unpaid', { Cash: 262.5 });
+  win.PosnicPro.configPaymentType = [{ payment_value: 'QA Card' }, { payment_value: 'UPI' }];
+  sales.showMultiPaymentMode();
+  $('#cash_input').val('100').trigger('input');
+  $('#qacard_input').closest('.payment-method-card').find('button').trigger('click');
+  $('#qacard_input').val('100').trigger('input');
+  $('#upi_input').closest('.payment-method-card').find('button').trigger('click');
+  assert.deepEqual(JSON.parse(JSON.stringify(sales.getPaymentObject())), {
+    Cash: 100, 'QA Card': 100, UPI: 62.5
+  });
+  assert.equal($('#save_btn').prop('disabled'), false);
+  dom.window.close();
+});
 test('unpaid bill renders full taxed UPI amount and method switching preserves it', () => {
   const { dom, $, sales } = setup();
   sales.showMultiPaymentMode();

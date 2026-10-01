@@ -3010,8 +3010,12 @@
         $paymentInputs.each(function () {
             let amount = $(this).val().trim();
             if (amount !== '' && !isNaN(amount) && parseFloat(amount) > 0) {
-                let mode = $(this).attr('id').replace('_input', '');
-                mode = mode.charAt(0).toUpperCase() + mode.slice(1);
+                // Element ids remove spaces and case; they are not tender names.
+                let mode = $(this).closest('.payment-method-card').find('.payment_mode').val();
+                if (!mode) {
+                    mode = $(this).attr('id').replace('_input', '');
+                    mode = mode.charAt(0).toUpperCase() + mode.slice(1);
+                }
                 paymentObj[mode] = parseFloat(amount);
             }
         });
