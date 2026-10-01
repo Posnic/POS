@@ -929,8 +929,9 @@ PosnicPro.sales.view = {
      */
     _amountInWords: function (amount) {
         var n = Math.abs(Number(amount) || 0);
-        var whole = Math.floor(n);
-        var frac = Math.round((n - whole) * 100);
+        var minor = Math.round(n * 100);
+        var whole = Math.floor(minor / 100);
+        var frac = minor % 100;
         var ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
             'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
             'Seventeen', 'Eighteen', 'Nineteen'];
@@ -1640,7 +1641,7 @@ PosnicPro.sales.view = {
                                 '<td class="print-deatils-size-family print-details-align lineitem_qty" style="color: #646a6e;" align="center">' + PosnicPro.formatQuantity(data.items[i].item_quantity, item_unit) + ' ' + item_unit + ' </td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_disc" style="color: #646a6e;" align="center">' + discount_percentage + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_tax" style="color: #646a6e;" align="center">' + tax + ' ' + taxSigns + '</td>' +
-                                '<td class="print-deatils-size-family print-details-align lineitem_total" style="color: #1e2b33;" align="right">' + currency + '&nbsp;<span class="number">' + data.items[i].total_amount + '</span></td>' +
+                                '<td class="print-deatils-size-family print-details-align lineitem_total" style="color: #1e2b33;" align="right">' + currency + '&nbsp;<span class="number">' + (transferredBill ? transferredBill.items[i].amount : data.items[i].total_amount) + '</span></td>' +
                                 '</tr><tr><td height="1" colspan="7" style="border:1px solid #e4e4e4"></td></tr>';
 
                             $('table.print-invoice-a4-table-content tbody').append(rowHTMLLine);
@@ -1991,7 +1992,7 @@ PosnicPro.sales.view = {
                 $('#tax_print_hide').hide();
 
                 /* Indian gst calculation */
-                if (PosnicPro.local.get('gst_action') === 'enable' && data.gst === 'enable') {
+                if (!transferredBill && PosnicPro.local.get('gst_action') === 'enable' && data.gst === 'enable') {
                     $('.heading-tax-name').hide();
                     $('.indian-gstr').show();
                     $('.taxgst_print_hide').show();
@@ -2023,7 +2024,10 @@ PosnicPro.sales.view = {
                 }
 
                 // Exact tax rows (or GST split rows) already state the tax once.
-                if (transferredBill) $('.tax-print-hideshow').hide();
+                if (transferredBill) {
+                    var hasTaxRows = isA4Layout ? $('#tax_print_hide tbody tr').length > 0 : $('.tax_print_hide .row').length > 0;
+                    $('.tax-print-hideshow').toggle(!hasTaxRows && data.tax > 0);
+                }
 
                 $('.total-noof-item').html(itemTotalQty.toFixed(2));
                 $('.print-total').attr('data-currency-digits', moneyDigits);
@@ -2065,7 +2069,7 @@ PosnicPro.sales.view = {
                     var _terms = $.trim(data.invoice_terms !== undefined ? data.invoice_terms : (PosnicPro.local.get('invoice_terms') || ''));
                     var _sig = $.trim(data.quote_default_signature !== undefined ? data.quote_default_signature : (PosnicPro.local.get('quotesignature') || ''));
                     var _x = '<div class="a4-invoice-extras" style="margin-top:18px; font-size:12px; color:#5b5b5b;">';
-                    if (_gstShop) {
+                    if (_gstShop && (!transferredBill || (transferredBill.currencyCode === 'INR' && moneyDigits === 2))) {
                         _x += '<div style="padding:6px 0; border-top:1px solid #d8d8d8;"><b><lang class="lang_amount_in_words">Amount in words:</lang></b> '
                             + _escX(PosnicPro.sales.view._amountInWords(data.items_total)) + '</div>';
                     }

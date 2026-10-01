@@ -302,3 +302,63 @@ for (const layout of ['80', '58', 'a4']) {
         });
     }
 }
+
+for (const layout of ['80', '58', 'a4']) {
+    test(layout + ': transferred GST keeps unequal split tax amounts and separate preparations', () => {
+        const { dom, win, $, branch, data, preview, settings } = till();
+        settings.gst_action = 'enable'; data.gst = 'enable';
+        data.branch_gstin_number = '33ABCDE1234F1Z5';
+        data.items = [0, 1].map(index => ({ ...data.items[0], item_name: 'Corn ' + index,
+            item_quantity: 1, item_price: 100 / 3, total_amount: 35,
+            tax: 5, cgst_tax: 0.84, sgst_tax: 0.83 }));
+        data.transferred_bill = { currencyDigits: 2, subTotal: 66.67, total: 70,
+            discount: 0, roundOff: 0, taxes: [{ name: 'CGST 2.5%', amount: 1.67 }, { name: 'SGST 2.5%', amount: 1.66 }],
+            items: [{ name: 'Corn 0', qty: '1', amount: 33.34 }, { name: 'Corn 1', qty: '1', amount: 33.33 }] };
+        const result = $('<div>').html(preview.documentFor(branch, data, layout));
+        if (layout === 'a4') {
+            const values = result.find('.lineitem_total .number').map((_i, node) => $(node).text()).get();
+            assert.deepEqual(values, ['33.34', '33.33']);
+            assert.ok(result.find('#tax_print_hide').text().includes('1.67'));
+            assert.ok(result.find('#tax_print_hide').text().includes('1.66'));
+        } else {
+            const raw = win.PosnicPro.receiptData(result.html());
+            assert.deepEqual(Array.from(raw.items, item => item.amount), [33.34, 33.33]);
+            assert.deepEqual(Array.from(raw.taxes, row => row.amount), [1.67, 1.66]);
+            assert.equal(raw.total, 70);
+        }
+        dom.window.close();
+    });
+}
+
+test('custom transferred receipt without a tax-detail block retains tax summary', () => {
+    const { dom, win, $, branch, data, preview } = till();
+    const template = $('<div>').html(branch.thermal_body_print);
+    template.find('.tax_detail_print_hideShow').remove();
+    branch.thermal_body_print = template.html();
+    data.thermal_body_print = template.html();
+    data.transferred_bill = { currencyDigits: 2, subTotal: 100, total: 105, discount: 0,
+        roundOff: 0, taxes: [{ name: 'Tax', amount: 5 }], items: [{ name: 'Corn', qty: '1', amount: 100 }] };
+    const html = preview.documentFor(branch, data, '80');
+    const raw = win.PosnicPro.receiptData(html);
+    assert.deepEqual(Array.from(raw.taxes, row => row.amount), [5]);
+    dom.window.close();
+});
+
+test('amount in words carries rounded paise into the next rupee', () => {
+    const { dom, win } = till();
+    assert.equal(win.PosnicPro.sales.view._amountInWords(1.999), 'Two Rupees Only');
+    assert.equal(win.PosnicPro.sales.view._amountInWords(1.01), 'One Rupee and One Paisa Only');
+    dom.window.close();
+});
+
+test('a transferred foreign-currency invoice never labels its total as rupees', () => {
+    const { dom, $, branch, data, preview, settings } = till();
+    settings.gst_action = 'enable';
+    data.transferred_bill = { currencyCode: 'KWD', currencyDigits: 3, subTotal: 1,
+        total: 1.001, discount: 0, roundOff: 0.001, taxes: [],
+        items: [{ name: 'Corn', qty: '1', amount: 1 }] };
+    const result = $('<div>').html(preview.documentFor(branch, data, 'a4'));
+    assert.ok(!/Rupee|Paise|Paisa/.test(result.text()));
+    assert.ok(result.find('.print-total').text().includes('1.001'));
+    dom.window.close();
+});
