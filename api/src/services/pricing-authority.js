@@ -136,6 +136,16 @@ function assertPrice(submitted, expected, round, name) {
       { item: name, expected_price: round(expected), submitted_price: actual }
     );
 }
+// Older desktop rows stringify an unset inline override into the hidden cell.
+// Only these missing-value sentinels may fall back to the selling-price field;
+// arbitrary invalid input must still fail validation.
+function desktopSubmittedPrice(item) {
+  const inline = item.sale_inline_item_price;
+  const absent =
+    inline == null ||
+    (typeof inline === 'string' && ['', 'undefined', 'null'].includes(inline.trim()));
+  return absent ? item.item_price_total : inline;
+}
 function failure(error) {
   if (!(error instanceof PricingError)) throw error;
   return { status: false, message: error.message, data: error.details };
@@ -264,4 +274,13 @@ function menuQuote(product, branch = {}, venue) {
     quote_required: false,
   };
 }
-module.exports = { resolve, calculate, assertPrice, PricingError, failure, loadContext, menuQuote };
+module.exports = {
+  resolve,
+  calculate,
+  assertPrice,
+  desktopSubmittedPrice,
+  PricingError,
+  failure,
+  loadContext,
+  menuQuote,
+};
