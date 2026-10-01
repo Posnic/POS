@@ -151,6 +151,7 @@
       "src/backup-manager.js",
       "src/update-integration.js",
       "src/update-service.js",
+      "src/extension-update-policy.js",
       "src/update-manager.html",
       "src/log-viewer.html",
       "src/support-request.html",

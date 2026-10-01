@@ -86,6 +86,9 @@ function loadTree(dir, base, map = new Map()) {
  */
 async function checkAndApply({ assetUpdater, appVersion, sevenZipPath, log = () => {} }) {
   if (!assetUpdater || !assetUpdater.publicKey) return { applied: false, reason: 'no-key' };
+  if (assetUpdater.updateGuard?.()) {
+    return { applied: false, reason: 'extension-compatibility-review-required' };
+  }
 
   let manifest;
   try {

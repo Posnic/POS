@@ -127,3 +127,21 @@ cross-installation transfer feature.
 Verification: 17 stock effect/fence/journal/lifecycle MongoDB tests and 13 outbox
 unit tests, including lost marker replay, reversal, refusal, outbox failure and
 default-versus-explicit database isolation.
+
+## Host update compatibility hold
+
+`extension-update-policy.js` detects installed/staged extension directories and
+queued activation in the desktop's extension root. General installer download,
+manual install, install-on-close and new background asset activation are held
+until a separately checked compatible installer is supplied. The Updates screen
+shows the reason, and ordinary release checks remain available. No network
+licensing check is involved. Missing roots retain normal update behavior;
+unreadable or malformed roots fail closed. Guards are evaluated again after
+backup and immediately before installer invocation.
+
+The release feed has no verified extension-capability declaration yet, so this
+is a conservative compatibility hold, not automatic capability negotiation.
+Normal asset rollback/boot recovery remains unchanged. Customer deployment must
+use the verified baseline and review any pre-existing asset override. Fifty-two
+update/asset tests and the 80-module packaging check pass. Rebuild installers and
+rerun packaged desktop acceptance after this change before customer handover.

@@ -1424,6 +1424,8 @@ const BRAND_DIR = path.join(app.getPath('userData'), 'brand');
  */
 const ASSET_PUBLIC_KEY_FILE = path.join(process.resourcesPath || __dirname, 'asset-signing-key.pub');
 const assetUpdater = new AssetUpdater({
+  updateGuard: () => require('./extension-update-policy').getExtensionUpdateHold(
+    process.env.POSNIC_EXTENSIONS_ROOT || path.join(app.getPath('userData'), 'extensions')),
   root: path.join(app.getPath('userData'), 'assets'),
   baseline: path.join(process.resourcesPath || path.join(__dirname, '..'), 'frontend', 'public'),
   publicKey: (() => {
