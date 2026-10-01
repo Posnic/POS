@@ -1034,3 +1034,31 @@ test.each(['held','cleaning','replaced-id','foreign-branch'])('legacy cleanup pr
   expect((await service.complete(input)).sourceClosed).toBe(true);
   expect(await db.collection('tableorder').findOne({_id:table})).toEqual(before);
 });
+
+
+test('item and category activity exclude cancelled historical dishes but retain returns', async () => {
+ const History = mongoose.models.CaptainActivityHistory || mongoose.model('CaptainActivityHistory', new mongoose.Schema({}, { strict:false, collection:'sales' }));
+ const item = new ObjectId(), category = new ObjectId();
+ const row = { item_id:item, category_id:category, item_quantity:2, total_amount:20 };
+ const doc = { branch_id:branch, license, sale_process:'KOT', items_total:20, items:[
+  row, {...row,cancelled:true}, {...row,cancelled:'1'}, {...row,status:'CANCELLED'}, {...row,status:'Canceled'},
+  {...row,item_quantity:0}, {...row,item_quantity:-1}, {...row,item_quantity:'invalid'},
+  // Both aliases and fractional quantities are accepted for legacy sales.
+  {...row,item_quantity:undefined,quantity:0.5,total_amount:5},
+ ], items_return:[{returnArray:[{returnValue:[{...row,item_quantity:1,total_amount:10}]}]}] };
+ await db.collection('sales').insertMany([
+  {...doc,_id:new ObjectId()},
+  {...doc,_id:new ObjectId(),sale_process:'Cancelled',items:[row],items_return:[]},
+  {...doc,_id:new ObjectId(),branch_id:new ObjectId(),items:[row],items_return:[]},
+ ]);
+ for(const [method, value] of [['itemSaleDetailsPage',{item_id:String(item)}],['categorySaleDetailsPage',{category_id:String(category)}]]) {
+  const response = await sales[method]({...value,branchid:[String(branch)]},{limit:1},{SaleModel:History});
+  expect(response.status).toBe(true);
+  expect(response.data.sale).toEqual([2.5]);
+  expect(response.data.sale_amount).toBe(25);
+  expect(response.data.return).toEqual([1]);
+  expect(response.data.return_amount).toBe(10);
+  expect(response.data.table.data.total).toBe(2);
+  expect(response.data.table.data.list).toHaveLength(1);
+ }
+});

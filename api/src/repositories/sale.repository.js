@@ -3320,8 +3320,20 @@ class SalesRepository {
 
       // Aggregate total quantity for sales side
       const salesList = await Model.aggregate([
-        { $unwind: '$items' },
         { $match: filters },
+        { $unwind: '$items' },
+        { $match: {
+          ...filters,
+          // Cancelled preparations stay in audit history but are not sales.
+          // Returns retain their separate existing gross/return accounting.
+          sale_process: { $not: /^(cancelled|canceled)$/i },
+          'items.cancelled': { $in: [null, false, 0, ''] },
+          'items.status': { $not: /^(cancelled|canceled)$/i },
+          $expr: { $gt: [{ $convert: {
+            input: { $ifNull: ['$items.item_quantity', '$items.quantity'] },
+            to: 'double', onError: 0, onNull: 0,
+          } }, 0] },
+        } },
         {
           $group: {
             _id: null,
@@ -3475,8 +3487,20 @@ class SalesRepository {
 
       // Aggregate total quantity for sales side
       const salesList = await Model.aggregate([
-        { $unwind: '$items' },
         { $match: filters },
+        { $unwind: '$items' },
+        { $match: {
+          ...filters,
+          // Cancelled preparations stay in audit history but are not sales.
+          // Returns retain their separate existing gross/return accounting.
+          sale_process: { $not: /^(cancelled|canceled)$/i },
+          'items.cancelled': { $in: [null, false, 0, ''] },
+          'items.status': { $not: /^(cancelled|canceled)$/i },
+          $expr: { $gt: [{ $convert: {
+            input: { $ifNull: ['$items.item_quantity', '$items.quantity'] },
+            to: 'double', onError: 0, onNull: 0,
+          } }, 0] },
+        } },
         {
           $group: {
             _id: null,
