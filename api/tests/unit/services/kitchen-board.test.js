@@ -358,3 +358,46 @@ test('paid takeaway remains actionable on touch board until served', async () =>
  await service.captainAction(lineAction('serve',2,3,undefined,'takeaway-serve-12345'));
  expect((await service.list(request())).tickets).toHaveLength(0);
 });
+
+test('restructuring blocks kitchen updates until cancellation, while ordinary billing permits service', async () => {
+  const locks = require('../../../src/services/captain-restructure-lock');
+  const scope = { branchId: branch, license };
+  const sale = await db.collection('sales').findOne({ _id: saleId });
+  const requestId = 'kitchen-restructure-1';
+  await locks.reserve(db, scope, {
+    requestId,
+    actor: String(userId),
+    intent: { kind: 'transfer' },
+    sales: [sale],
+  });
+  await expect(service.transition(lineAction('ready', 1, 0))).rejects.toMatchObject({
+    status: 409,
+  });
+  expect((await db.collection('sales').findOne({ _id: saleId })).kitchen_work).toBeUndefined();
+  await locks.cancel(db, scope, requestId, String(userId));
+  await db
+    .collection('sales')
+    .updateOne({ _id: saleId }, { $set: { captain_payment_plan: 'ordinary-payment-plan' } });
+  expect((await service.transition(lineAction('ready', 1, 0))).ticket.items[0].ready).toBe(1);
+});
+
+test('a kitchen update between transfer preview and reservation invalidates that reservation', async () => {
+  const locks = require('../../../src/services/captain-restructure-lock');
+  const sale = await db.collection('sales').findOne({ _id: saleId });
+  await service.transition(lineAction('ready', 1, 0));
+  await expect(
+    locks.reserve(
+      db,
+      { branchId: branch, license },
+      {
+        requestId: 'kitchen-stale-preview',
+        actor: String(userId),
+        intent: { kind: 'transfer' },
+        sales: [sale],
+      }
+    )
+  ).rejects.toMatchObject({ status: 409 });
+  const current = await db.collection('sales').findOne({ _id: saleId });
+  expect(current.captain_payment_plan).toBeUndefined();
+  expect(current.kitchen_work.c0.lines.c0i0.ready).toBe(1);
+});

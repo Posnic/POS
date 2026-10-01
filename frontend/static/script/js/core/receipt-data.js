@@ -394,6 +394,8 @@ PosnicPro.receiptLogo = function (paperWidth) {
 
     PosnicPro.receiptData = function (html) {
         var $root = dropHidden($('<div></div>').html(html));
+        var digits = Number($root.find('[data-currency-digits]').first().attr('data-currency-digits'));
+        if (!Number.isInteger(digits) || digits < 0 || digits > 4) digits = 2;
 
         var pairs = footerPairs($root);
 
@@ -493,6 +495,7 @@ PosnicPro.receiptLogo = function (paperWidth) {
                Read from the markup like everything else here. */
             footerImageCaption: textOf($root.find('.footer-image-caption')),
             currency: currencyOf([total, subTotal, change]),
+            currencyDigits: digits,
             storeName: textOf($root.find('.print_store_name')),
             storeAddress: address.join('\n'),
             storePhone: [phone, altPhone].filter(Boolean).join(' / '),

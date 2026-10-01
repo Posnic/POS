@@ -87,6 +87,15 @@ function qtyText(value) {
   const n = num(value);
   return Number.isInteger(n) ? String(n) : String(Number(n.toFixed(3)));
 }
+function billable(line) {
+  return (
+    line &&
+    !line.return &&
+    !line.cancelled &&
+    !['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) &&
+    num(line.quantity ?? line.item_quantity ?? line.qty) > 0
+  );
+}
 
 /**
  * The lines of the bill.
@@ -96,12 +105,12 @@ function qtyText(value) {
  * the bill. Anything with no name is skipped too - it cannot be read on paper
  * and its amount is already inside the total.
  */
-function itemLines(sale, branch) {
+function itemLines(sale, branch, allocation = null) {
   const monetary = require('../utils/currency').policy(branch || {});
   const rows = Array.isArray(sale && sale.items) ? sale.items : [];
   return rows
-    .filter((it) => it && !it.return && String(it.name || it.item_name || '').trim())
-    .map((it) => {
+    .filter((it) => billable(it) && String(it.name || it.item_name || '').trim())
+    .map((it, index) => {
       /* Three spellings because three writers exist: a priced online line sets
          both `quantity` and `item_quantity`, the till's own path sets
          `item_quantity`, and `qty` is what a hand-built row reaches for.
@@ -146,7 +155,9 @@ function itemLines(sale, branch) {
         rate: rate > 0 ? rate.toFixed(monetary.currencyDigits) : '',
         qty: qtyText(qty),
         amount: require('../utils/currency').fromMinor(
-          require('../utils/currency').toMinor(rate * qty, monetary),
+          allocation
+            ? allocation.lines[index].components.find((row) => row.key === 'base')?.minor || 0
+            : require('../utils/currency').toMinor(rate * qty, monetary),
           monetary
         ),
       };
@@ -169,7 +180,7 @@ function gstRate(sale) {
   const lines = Array.isArray(sale && sale.items) ? sale.items : [];
   const rates = new Set();
   for (const line of lines) {
-    if (!line || line.return) continue;
+    if (!billable(line)) continue;
     const taxOn = num(line.item_tax != null ? line.item_tax : line.tax_amount);
     if (taxOn <= 0) continue;
     const qty = num(line.item_quantity != null ? line.item_quantity : line.quantity) || 1;
@@ -199,12 +210,25 @@ function trimRate(value) {
  * is not something that happens at a table, and it settles at the counter
  * where the shop's own template runs and knows better than this does.
  */
-function taxRows(sale, branch) {
+function taxRows(sale, branch, allocation = null) {
+  if (allocation)
+    return Object.entries(allocation.components)
+      .filter(([key]) => key.startsWith('tax:'))
+      .map(([key, minor]) => ({
+        label: key.slice(4),
+        amount: require('../utils/currency').fromMinor(
+          minor,
+          require('../utils/currency').policy(branch)
+        ),
+      }));
   const tax = num(sale && sale.tax);
   if (tax <= 0) return [];
   const indian = String((branch && branch.indian_gst) || '').toLowerCase();
   if (indian && indian !== 'disable' && indian !== 'false' && indian !== '0') {
-    const half = tax / 2;
+    const money = require('../utils/currency');
+    const policy = money.policy(branch || {});
+    const taxMinor = money.toMinor(tax, policy);
+    const firstHalf = Math.ceil(taxMinor / 2);
     const rate = gstRate(sale);
     /*
      * THE RATE, BESIDE THE AMOUNT.
@@ -230,8 +254,8 @@ function taxRows(sale, branch) {
      */
     const shown = rate === null ? '' : ' ' + trimRate(rate / 2) + '%';
     return [
-      { label: 'CGST' + shown, amount: half },
-      { label: 'SGST' + shown, amount: half },
+      { label: 'CGST' + shown, amount: money.fromMinor(firstHalf, policy) },
+      { label: 'SGST' + shown, amount: money.fromMinor(taxMinor - firstHalf, policy) },
     ];
   }
   return [{ label: 'Tax', amount: tax }];
@@ -458,7 +482,8 @@ function totalQuantity(branch, items) {
  *                        guest their bill over a cosmetic failure.
  */
 function buildBillPayload(sale = {}, branch = {}) {
-  const items = itemLines(sale, branch);
+  const allocation = require('../utils/transfer-allocation').read(sale, branch);
+  const items = itemLines(sale, branch, allocation);
   const subTotal =
     sale.sales_sub_total != null && sale.sales_sub_total !== ''
       ? num(sale.sales_sub_total)
@@ -571,7 +596,7 @@ function buildBillPayload(sale = {}, branch = {}) {
     items,
 
     subTotal,
-    taxes: taxRows(sale, branch),
+    taxes: taxRows(sale, branch, allocation),
     discount: num(sale.discount),
     roundOff: num(sale.round_off || sale.sales_round_off),
     total: num(sale.sales_total != null ? sale.sales_total : sale.total),

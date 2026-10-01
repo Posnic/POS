@@ -20,6 +20,23 @@
                             maxlength="6" pattern="[A-Za-z0-9]{1,6}"
                             title="Max 6 characters. Only letters and numbers allowed." data-t-title="lang_max_6_characters_only_letters_and_numbers" required>
                         <input type="hidden" id="tableorder_id" name="tableorder_id">
+                        <label for="table_capacity" class="mt-3"><lang class="lang_table_capacity">Seat capacity</lang></label>
+                        <input class="form-control border-control" id="table_capacity" name="capacity" type="number" min="1" max="1000" step="1">
+                        <label for="table_max_capacity" class="mt-3"><lang class="lang_table_max_capacity">Maximum seats</lang></label>
+                        <input class="form-control border-control" id="table_max_capacity" name="max_capacity" type="number" min="1" max="1000" step="1">
+                        <label for="table_area" class="mt-3"><lang class="lang_table_area">Dining area</lang></label>
+                        <input class="form-control border-control" id="table_area" name="area" maxlength="60">
+                        <label for="table_shape" class="mt-3"><lang class="lang_table_shape">Table shape</lang></label>
+                        <select class="form-control border-control" id="table_shape" name="shape">
+                            <option value="square" ><lang class="lang_table_square">Square</lang></option>
+                            <option value="round" ><lang class="lang_table_round">Round</lang></option>
+                            <option value="rectangle" ><lang class="lang_table_rectangle">Rectangle</lang></option>
+                        </select>
+                        <fieldset class="mt-3" id="table_neighbours_field">
+                            <legend class="h6"><lang class="lang_table_combine_with">Can combine with</lang></legend>
+                            <div id="table_neighbours"></div>
+                        </fieldset>
+
 
                     </div>
                 </div>

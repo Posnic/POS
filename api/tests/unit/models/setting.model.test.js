@@ -66,6 +66,7 @@ function makeMockCollection(overrides = {}) {
     toArray: jest.fn().mockResolvedValue([]),
   };
   return {
+    createIndex: jest.fn().mockResolvedValue('table-identity'),
     findOne: jest.fn().mockResolvedValue(null),
     find: jest.fn().mockReturnValue({ ...cursorBase }),
     insertOne: jest.fn().mockResolvedValue({ insertedId: new MockObjectId(TAX_ID) }),
@@ -666,6 +667,30 @@ describe('editGeneralSetting', () => {
     col = makeMockCollection();
     jest.spyOn(m, 'getCollection').mockResolvedValue(col);
     jest.spyOn(m, 'updateBranchNameInCollections').mockResolvedValue(true);
+  });
+
+  test('saves branch UPI text, preserves it when omitted, and rejects invalid payees before writing', async () => {
+    col.updateOne.mockResolvedValue({ matchedCount: 1 });
+    const result = await m.editGeneralSetting({
+      store_name: 'Shop',
+      branch_upi_id: ' shop@invalid ',
+      branch_upi_name: ' Shop ',
+    });
+    expect(result.status).toBe(true);
+    expect(col.updateOne.mock.calls[0][1].$set).toMatchObject({
+      branch_upi_id: 'shop@invalid',
+      branch_upi_name: 'Shop',
+    });
+    col.updateOne.mockClear();
+    await m.editGeneralSetting({ store_name: 'Shop' });
+    expect(col.updateOne.mock.calls[0][1].$set).not.toHaveProperty('branch_upi_id');
+    col.updateOne.mockClear();
+    const invalid = await m.editGeneralSetting({
+      branch_upi_id: 'not-a-payee',
+      branch_upi_name: 'Shop',
+    });
+    expect(invalid.status).toBe(false);
+    expect(col.updateOne).not.toHaveBeenCalled();
   });
 
   test('returns status:true on matched update', async () => {

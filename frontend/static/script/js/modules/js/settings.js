@@ -830,6 +830,8 @@ PosnicPro.settings = {
                 $('#razor_key').text(data.razorKey);
                 $('#razor_url').text(data.razorUrl);
                 $('#store_name').val(data.branch_name);
+                $('#branch_upi_id').val(data.branch_upi_id || '');
+                $('#branch_upi_name').val(data.branch_upi_name || '');
                 $('#store_address').val(data.store_address);
                 $('#address').val(data.address);
                 $('#store_email').val(data.store_email);
@@ -3282,7 +3284,9 @@ PosnicPro.tableOrders = {
     },
     triggerModules: function () {
         PosnicPro.showAddModal('tableorder');
+        $('#tableorder_add_form').trigger('reset');
         $('#tableorder_id').val('');
+        PosnicPro.tableOrders.renderNeighbours({});
             $('#tableorder-heading').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
             $('#tableorder_text_change').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
         var loader = $(".loader-tax");
@@ -3295,12 +3299,38 @@ PosnicPro.tableOrders = {
         PosnicPro.showAddModal('tableorder');
         $('#tableorder_id').val(id);
         $('#tableorder_value').val(module.data('tableordervalue'));
+        var row = PosnicPro.tableOrders.allData.find(function (entry) { return String(entry.tableorder_id) === String(id); }) || {};
+        $('#table_capacity').val(row.capacity || '');
+        $('#table_max_capacity').val(row.max_capacity || '');
+        $('#table_area').val(row.area || '');
+        $('#table_shape').val(row.shape || 'square');
+        PosnicPro.tableOrders.renderNeighbours(row);
+
             $('#tableorder-heading').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
             $('#tableorder_text_change').text(PosnicPro.i18n.t('lang_updatebtn_title', 'Update'));
         $('#tableorder_reset').hide();
         $('.tableorder_edit_reset').show();
         $('.tableorder_edit_reset').attr("id", id);
         $('.mobile_tooltip').tooltip('hide');
+    },
+    renderNeighbours: function (row) {
+        var container = $('#table_neighbours').empty();
+        var selected = row.adjacent_table_ids || [];
+        PosnicPro.tableOrders.allData.filter(function (entry) {
+            return String(entry.tableorder_id) !== String(row.tableorder_id);
+        }).forEach(function (entry) {
+            var label = $('<label>').addClass('d-flex align-items-center p-2 border-bottom').css('min-height', '44px');
+            $('<input>').attr({type: 'checkbox', name: 'adjacent_table_ids', value: entry.tableorder_id})
+                .prop('checked', selected.includes(String(entry.tableorder_id))).css('margin-inline-end', '12px').appendTo(label);
+            $('<span>').attr('translate', 'no').text(entry.tableorder_value + (entry.area ? ' · ' + entry.area : '')).appendTo(label);
+            container.append(label);
+        });
+        $('#table_neighbours_field').prop('hidden', !container.children().length);
+    },
+    formData: function () {
+        var data = PosnicPro.getFormData($('#tableorder_add_form'));
+        data.adjacent_table_ids = $('#table_neighbours input:checked').map(function () { return this.value; }).get();
+        return data;
     },
     triggerTaxDelete: function (id) {
         PosnicPro.tableOrders.deleteTableOrderField(id);
@@ -3447,7 +3477,7 @@ PosnicPro.tableOrders = {
             $("<div class='loadingSpinner'></div>").appendTo(loader);
             var params = {
                 url: 'setting/addTableOrderData',
-                data: JSON.stringify(PosnicPro.getFormData($('#tableorder_add_form')))
+                data: JSON.stringify(PosnicPro.tableOrders.formData())
             };
             PosnicPro.post(params, function (response) {
                 if (response.type === 'success') {
@@ -3469,7 +3499,7 @@ PosnicPro.tableOrders = {
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var params = {
             url: 'setting/editTableOrderForm',
-            data: JSON.stringify(PosnicPro.getFormData($('#tableorder_add_form')))
+            data: JSON.stringify(PosnicPro.tableOrders.formData())
         };
         PosnicPro.put(params, function (response) {
             if (response.type === 'success') {
@@ -3517,6 +3547,7 @@ PosnicPro.tableOrders = {
     },
     tableOrdersClearForm: function () {
         $("#tableorder_add_form").trigger("reset");
+        $("#table_neighbours input").prop("checked", false);
     },
     resetEditButton: function (id) {
         PosnicPro.tableOrders.triggerTaxEdit(id);

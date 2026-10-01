@@ -4158,7 +4158,7 @@ PosnicPro.itemdetails = {
                         // current time when no preformatted date is present.
                         let rawDate = row.string_date || row.date || row.created_date || row.updated_date;
                         let updateDate = rawDate ? PosnicPro.convertDate(rawDate) : '';
-                        let trow = '<tr> <td scope="row" data-label="#">' + row_no + '</td> <td data-label="Sale">' + row.sales_id + '</td> <td class="export-date" data-label="Date">' + updateDate + '</td> <td class="text-center" data-label="Process"><span class="' + process_class + '">' + (row.sale_process || 'Add') + '</span></td> <td class="text-center text-danger" data-label="Return qty">' + returnQty + '</td> <td class="text-right text-danger" data-label="Return total">' + currency + '&nbsp;' + rowReturnTotal.toFixed(2) + '</td><td class="text-center text-success" data-label="Qty">' + salesQty + '</td><td class="text-right text-success" data-label="Total">' + currency + '&nbsp;' + rowSaleTotal.toFixed(2) + '</td></tr>';
+                        let trow = '<tr> <td scope="row" data-label="#">' + row_no + '</td> <td data-label="Sale">' + row.sales_id + '</td> <td class="export-date" data-label="Date">' + updateDate + '</td> <td class="text-center" data-label="Process"><span class="' + process_class + '">' + (row.sale_process || 'Add') + '</span></td> <td class="text-center text-danger" data-label="Return qty">' + returnQty + '</td> <td class="text-right text-danger" data-label="Return total">' + (/^[A-Z]{3}$/.test(row.currencyCode || '') ? row.currencyCode : currency) + '&nbsp;' + rowReturnTotal.toFixed(Number.isInteger(row.currencyDigits) && row.currencyDigits >= 0 && row.currencyDigits <= 4 ? row.currencyDigits : 2) + '</td><td class="text-center text-success" data-label="Qty">' + salesQty + '</td><td class="text-right text-success" data-label="Total">' + (/^[A-Z]{3}$/.test(row.currencyCode || '') ? row.currencyCode : currency) + '&nbsp;' + rowSaleTotal.toFixed(Number.isInteger(row.currencyDigits) && row.currencyDigits >= 0 && row.currencyDigits <= 4 ? row.currencyDigits : 2) + '</td></tr>';
                         $('#view_itemdetails').children('tbody').append(trow);
                         $('span.number').number(true, 2);
                     }
@@ -4191,6 +4191,18 @@ PosnicPro.itemdetails = {
                             : returnTotalValue;
                     $('.item_details_saletotalvalue').html(itemSaleValue.toFixed(2));
                     $('.item_details_returntotalvalue').html(itemReturnValue.toFixed(2));
+                    // Complete totals grouped by saved bill currency.
+                    if (Array.isArray(response.data.currency_totals)) {
+                        const formatTotals = field => response.data.currency_totals.map(group => {
+                            const label = /^[A-Z]{3}$/.test(group.currencyCode || '') ? group.currencyCode : currency;
+                            const digits = Number.isInteger(group.currencyDigits) && group.currencyDigits >= 0 && group.currencyDigits <= 4 ? group.currencyDigits : 2;
+                            return label + ' ' + (Number(group[field]) || 0).toFixed(digits);
+                        }).join(' · ') || currency + ' 0.00';
+                        $('.item_details_saletotalvalue').text(formatTotals('total'));
+                        $('.item_details_returntotalvalue').text(formatTotals('return_total'));
+                    }
+                    $('.item_details_saletotalvalue, .item_details_returntotalvalue')
+                        .siblings('.display-currency').toggle(!Array.isArray(response.data.currency_totals));
                 } else {
                     var itemsalesreport = [];
                     data = response.data.table.data.list;
@@ -4214,7 +4226,7 @@ PosnicPro.itemdetails = {
                         let saleId = val.sales_id;
                         let returnTotal = val.items_return_total;
                         let saleTotal = val.items_total;
-                        itemsalesreport.push({SalesId: saleId, Date: date, Process: process, NoOfReturn: returnQty, ReturnAmount: returnTotal, NoOfSale: salesQty, SaleAmount: saleTotal});
+                        itemsalesreport.push({SalesId: saleId, Date: date, Process: process, NoOfReturn: returnQty, ReturnAmount: returnTotal, NoOfSale: salesQty, SaleAmount: saleTotal, Currency: /^[A-Z]{3}$/.test(val.currencyCode || '') ? val.currencyCode : (PosnicPro.local.get('currencySign') || '')});
                     });
                     PosnicPro.JSONToCSVConvertor(itemsalesreport, 'item-sales-reports', true);
                     PosnicPro.itemdetails.itemdetailsTable();

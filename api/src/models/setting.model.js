@@ -880,6 +880,7 @@ class SettingModel extends BaseModel {
       }
 
       const updateData = {
+        ...require('../utils/branch-upi').update(data),
         branch_name: data.store_name?.trim() || '',
         store_address: data.store_address?.trim() || '',
         store_email: data.store_email?.trim() || '',
@@ -3861,6 +3862,7 @@ class SettingModel extends BaseModel {
 
       // PHP lines 2868-2887: Map _id to tableorder_id for frontend compatibility
       const tableorder_values = list.map((doc) => ({
+        ...require('../utils/table-details').view(doc),
         tableorder_id: doc._id.toString(),
         tableorder_value: doc.tableorder_value,
       }));
@@ -3883,6 +3885,8 @@ class SettingModel extends BaseModel {
   async addTableOrderFiledModel(data) {
     try {
       const collection = await this.getCollection(this.tableOrderCollection);
+
+      await require('../utils/table-details').ensureIdentity(collection);
 
       // PHP Parity: Duplicate check (case-insensitive)
       // PHP: new MongoDB\BSON\Regex('^' . preg_quote($data['tableorder_value'], '/') . '$', 'i')
@@ -3911,6 +3915,13 @@ class SettingModel extends BaseModel {
       const insertData = {
         branch_id: this.normalizeId(this.branchId),
         branch_name: branchName,
+        ...require('../utils/table-details').update(data),
+        ...(await require('../utils/table-details').adjacentTables(collection, data, {
+          branch_id: this.normalizeId(this.branchId),
+          license: this.normalizeId(this.licenseId),
+        })),
+        tableorder_key: require('../utils/table-details').key(data.tableorder_value),
+        captain_table_version: 0,
         tableorder_value: data.tableorder_value,
         created_date: mongoDate, // Matches PHP 'created_date'
         created_by: this.user?.username || 'system',
@@ -3945,7 +3956,7 @@ class SettingModel extends BaseModel {
       return {
         status: false,
         data: null,
-        message: error.message,
+        message: error.code === 11000 ? 'This table already exists.' : error.message,
       };
     }
   }
@@ -3956,6 +3967,17 @@ class SettingModel extends BaseModel {
       // PHP line 2969, 2980: uses $data['tableorder_id']
       const id = data.tableorder_id || data.id || data._id;
       if (!id) throw new Error('ID is required');
+      if (typeof id !== 'string' || !ObjectId.isValid(id)) {
+        throw new Error('A valid table order ID is required');
+      }
+      const tableFilter = {
+        _id: new ObjectId(id),
+        branch_id: this.normalizeId(this.branchId),
+        license: this.normalizeId(this.licenseId),
+      };
+      await require('../utils/table-details').ensureIdentity(collection);
+      const previous = await collection.findOne(tableFilter);
+      if (!previous) throw new Error('Table not found.');
 
       // PHP lines 2968-2971: Build tableorder_data array
       const tableorder_data = [
@@ -3968,6 +3990,14 @@ class SettingModel extends BaseModel {
       // PHP lines 2973-2979: Build update data
       const mongoDate = new Date();
       const updateData = {
+        ...require('../utils/table-details').update(data, previous),
+        ...(await require('../utils/table-details').adjacentTables(
+          collection,
+          data,
+          { branch_id: this.normalizeId(this.branchId), license: this.normalizeId(this.licenseId) },
+          previous._id
+        )),
+        tableorder_key: require('../utils/table-details').key(data.tableorder_value),
         tableorder_value: data.tableorder_value,
         tableorder_fields: tableorder_data,
         updated_date: mongoDate,
@@ -3975,11 +4005,35 @@ class SettingModel extends BaseModel {
         updated_by_id: this.normalizeId(this.user?._id),
       };
 
+      const openOrders = await (
+        await this.getCollection('sales')
+      )
+        .find(
+          {
+            branch_id: this.normalizeId(this.branchId),
+            license: this.normalizeId(this.licenseId),
+            table_number: previous.tableorder_value,
+            ...require('../helpers/floor-eligibility').floorEligibility(),
+          },
+          { projection: { person_count: 1 } }
+        )
+        .toArray();
+      if (openOrders.length && updateData.tableorder_value !== previous.tableorder_value)
+        throw new Error('Close the table before renaming it.');
+      if (
+        openOrders.length &&
+        !require('../utils/table-details').accommodates(
+          { ...previous, ...updateData },
+          Math.max(...openOrders.map((order) => Number(order.person_count) || 1))
+        )
+      )
+        throw new Error('Choose a table with enough seats.');
+
       // PHP lines 2981-2984: Update with tableorder_id and license filter
-      const result = await collection.updateOne(
-        { _id: this.normalizeId(id), license: this.normalizeId(this.licenseId) },
-        { $set: updateData }
-      );
+      const result = await collection.updateOne(tableFilter, {
+        $set: updateData,
+        $inc: { captain_table_version: 1 },
+      });
 
       return {
         status: true,
@@ -3991,7 +4045,7 @@ class SettingModel extends BaseModel {
       return {
         status: false,
         data: null,
-        message: error.message,
+        message: error.code === 11000 ? 'This table already exists.' : error.message,
       };
     }
   }

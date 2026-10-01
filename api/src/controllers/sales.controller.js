@@ -711,6 +711,7 @@ class SalesController extends BaseController {
       roundOff: true,
       branchSettings: {},
       branchState: '',
+      seatingProtocol: true,
     });
   }
 

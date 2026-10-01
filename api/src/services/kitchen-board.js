@@ -229,6 +229,8 @@ async function mutate(req, captain = false) {
       kitchen_service:
         sale.kitchen_service === undefined ? { $exists: false } : sale.kitchen_service,
       kitchen_work: sale.kitchen_work === undefined ? { $exists: false } : sale.kitchen_work,
+      // Billing alone does not stop service; moving/restructuring the order does.
+      captain_payment_plan: { $not: /^restructure:/ },
     },
     {
       $set: {

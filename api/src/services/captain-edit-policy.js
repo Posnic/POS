@@ -5,7 +5,7 @@ const { canPos } = require('../utils/pos-permission.util');
 const { verifyApproval } = require('../utils/approval-token.util');
 const lineIdentity = require('../utils/order-line');
 const quantity = (line) => Number(line.quantity ?? line.item_quantity ?? 0);
-async function authorize(req) {
+async function authorize(req, { preview = false } = {}) {
   if (!req.user || !allowed(req.user, 'sales')) fail('Sales permission is required.', 403);
   const c = await context(req),
     body = req.body;
@@ -26,16 +26,20 @@ async function authorize(req) {
         (incoming.get(lineIdentity.key(line)) || 0) <
         Number(line.item_quantity ?? line.quantity ?? 0)
     );
+  const currentDiscount = sale.captain_transfer_allocation
+    ? require('./captain-transfer-discount').editorValue(sale)
+    : sale;
   const discount =
     body.extra_discount != null &&
-    (Number(body.extra_discount) !== Number(sale.extra_discount || 0) ||
-      (Number(body.extra_discount) !== 0 && body.extra_discount_type !== sale.extra_discount_type));
+    (Number(body.extra_discount) !== Number(currentDiscount.extra_discount || 0) ||
+      (Number(body.extra_discount) !== 0 &&
+        body.extra_discount_type !== currentDiscount.extra_discount_type));
   const reason = String(body.change_reason || body.discount_description || '').trim();
-  if ((reduced || discount) && (reason.length < 3 || reason.length > 200))
+  if (!preview && (reduced || discount) && (reason.length < 3 || reason.length > 200))
     fail('Enter a reason for this change.', 422);
   const actions = [...(reduced ? ['void_sale'] : []), ...(discount ? ['discount_apply'] : [])];
   const approved = [];
-  for (const action of actions) {
+  for (const action of preview ? [] : actions) {
     const cap = Number(req.user.access?.pos?.discount_max_percent) || 0;
     const percentage =
       body.extra_discount_type === 'percent'
@@ -61,6 +65,7 @@ async function authorize(req) {
     approved.push(String(proof.approved_by_user_id));
   }
   return {
+    ...(preview ? { previewOnly: true } : {}),
     actor: {
       id: String(req.user._id || req.user.id),
       name: String(req.user.name || req.user.username || ''),

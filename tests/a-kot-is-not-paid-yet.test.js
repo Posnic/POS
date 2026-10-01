@@ -67,17 +67,20 @@ test('handsets already in the field keep working', () => {
 
 test('the table now appears on the handset home screen', () => {
   /*
-   * THE BUG THIS EXPLAINS. getTablesWithActiveOrders filters on
-   * payment_status 'Unpaid'. A captain order stored "cash", which is not that,
-   * so a waiter took an order and the floor showed nothing at all - the screen
-   * has never worked for a captain order since the feature shipped.
+   * THE ORIGINAL BUG. The floor queried payment_status 'Unpaid'.
+   * A captain order stored "cash", which is not that,
+   * so a waiter took an order and the floor showed nothing. The shared
+   * service policy now also keeps enrolled paid tables open until closed.
    */
   const service = fs.readFileSync(
     path.join(__dirname, '..', 'api', 'src', 'services', 'sale.service.js'),
     'utf8'
   );
   const tables = service.slice(service.indexOf('const getTablesWithActiveOrders'));
-  assert.match(tables, /payment_status: 'Unpaid'/, 'the floor query no longer looks for unpaid');
+  assert.match(tables, /floorEligibility\(\)/, 'the floor query must use the shared open-service policy');
+  const filter = require('../api/src/helpers/floor-eligibility').floorEligibility();
+  assert.deepStrictEqual(filter.$or[0], { sale_process: 'KOT', payment_status: { $nin: ['Paid', 'Cancelled'] } });
+  assert.deepStrictEqual(filter.floor_closed_at, { $exists: false });
   /* And the writer now produces exactly that word. */
   assert.match(fn, /: 'Unpaid'/, 'the writer does not produce the word the reader looks for');
 });
