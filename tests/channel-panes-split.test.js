@@ -68,7 +68,7 @@ function panes() {
 
 test('every channel has a settings pane of its own', () => {
   const defined = panes();
-  assert.match(read('frontend', 'static', 'script', 'js', 'core', 'billing-outlets.js'), /ui.showDataTablePage = ui.show/);
+  assert.match(read('frontend', 'static', 'script', 'js', 'core', 'billing-outlets.js'), /ui\.showDataTablePage\s*=/);
   assert.ok(SIDEBAR.includes('href="#/billingoutlets"'));
   assert.ok(SETTINGS_JS.includes("['billingoutlets', 'Billing outlets', 'page']"));
   defined.add('billingoutlets');
@@ -113,7 +113,7 @@ test('no feature card points at a section that does not exist', () => {
    * pane takes somebody somewhere wrong with nothing to say it went wrong.
    */
   const defined = panes();
-  assert.match(read('frontend', 'static', 'script', 'js', 'core', 'billing-outlets.js'), /ui.showDataTablePage = ui.show/);
+  assert.match(read('frontend', 'static', 'script', 'js', 'core', 'billing-outlets.js'), /ui\.showDataTablePage\s*=/);
   assert.ok(SIDEBAR.includes('href="#/billingoutlets"'));
   assert.ok(SETTINGS_JS.includes("['billingoutlets', 'Billing outlets', 'page']"));
   defined.add('billingoutlets');
@@ -395,7 +395,7 @@ test('every settings link in the markup lands on a real page', () => {
    * having anyway: the cheap half of the problem is the half that ships.
    */
   const defined = panes();
-  assert.match(read('frontend', 'static', 'script', 'js', 'core', 'billing-outlets.js'), /ui.showDataTablePage = ui.show/);
+  assert.match(read('frontend', 'static', 'script', 'js', 'core', 'billing-outlets.js'), /ui\.showDataTablePage\s*=/);
   assert.ok(SIDEBAR.includes('href="#/billingoutlets"'));
   assert.ok(SETTINGS_JS.includes("['billingoutlets', 'Billing outlets', 'page']"));
   defined.add('billingoutlets');
