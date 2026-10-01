@@ -107,7 +107,12 @@ router.post(
     await collection.updateOne(
       { ...scope, _id: id },
       {
-        $set: { ...value, updated_at: new Date(), updated_by: req.user._id },
+        $set: {
+          ...value,
+          updated_at: new Date(),
+          updated_date: new Date(),
+          updated_by: req.user._id,
+        },
         $setOnInsert: { ...scope, created_at: new Date() },
       },
       { upsert: !req.body.id }

@@ -1,3 +1,4 @@
+const pricingAuthority = require('../services/pricing-authority');
 const Money = require('../utils/currency');
 const serviceLine = require('../utils/service-line');
 const orderLine = require('../utils/order-line');
@@ -8579,16 +8580,23 @@ class SalesRepository {
         const chargeDoc = await settingsCollection.findOne({ channel_charges: { $exists: true } });
         shopCharges = (chargeDoc && chargeDoc.channel_charges) || {};
       } catch (e) {
-        /* No venues and no fees is the normal state for a shop with one
-           dining room, and it is also the safe answer if this fails: house
-           prices, nothing added, nothing owed. */
-        console.warn('[order] could not read venues or charges:', e.message);
+        return {
+          status: false,
+          message: 'Pricing settings could not be loaded. Try again before placing the order.',
+          data: { state: 'pricing_rule_unavailable' },
+        };
       }
 
       const servicePoint = partnerVenues.resolveServicePoint(
         { table: String(kiosk_table_no || table || '').trim(), venue, unit },
         venues
       );
+      if (venue && !servicePoint.venue)
+        return {
+          status: false,
+          message: 'Venue pricing is unavailable. Refresh the menu or contact the restaurant.',
+          data: { state: 'pricing_rule_unavailable' },
+        };
       /* Where the food actually goes, as the customer confirmed it. Null for
          the shop's own floor, which needs no address. */
       const deliverTo = partnerVenues.confirmDestination(servicePoint, destination || {});
@@ -8726,12 +8734,15 @@ class SalesRepository {
           orderDay,
           orderMinutes,
           servicePoint,
+          channel: staffOrder ? 'tableside' : 'online',
         });
         if (priced.status === false) return priced;
         saleItems.push(priced.line);
       }
 
-      const subtotal = round(saleItems.reduce((s, i) => s + round(i.unit_price * i.quantity), 0));
+      const subtotal = round(
+        saleItems.reduce((s, i) => s + round(i.item_subtotal ?? i.unit_price * i.quantity), 0)
+      );
       const totalTax = round(saleItems.reduce((s, i) => s + i.tax_amount, 0));
       const discountAmt = round(Number(kiosk_discount_amount) || 0);
       const itemDiscountTotal = round(
@@ -10715,6 +10726,10 @@ class SalesRepository {
 
       // ---------- EDIT FLOW ----------
       const existingItems = Array.isArray(orderDoc.items) ? orderDoc.items : [];
+      const needsRules = items.some(
+        (item) => !existingItems.find((old) => orderLine.key(old) === orderLine.key(item))?.pricing
+      );
+      const pricingContext = needsRules ? await pricingAuthority.loadContext(db, orderDoc) : {};
       orderLine.validate(existingItems);
       orderLine.validate(items);
       const oldItemsData = {};
@@ -10749,10 +10764,10 @@ class SalesRepository {
       const incomingProductIds = [];
       const updatedItems = [...existingItems];
 
-      for (const item of items) {
+      for (let item of items) {
         // Accept item_id as fallback when product_id is absent (KOT / kiosk items)
         const rawId = item.product_id || item.item_id || '';
-        if (!rawId) continue;
+        if (!rawId) throw new Error('An item id is required.');
         const productId = String(rawId);
         const lineKey = orderLine.key(item);
         const previousLine = existingItems[existingIndex[lineKey]];
@@ -10783,16 +10798,10 @@ class SalesRepository {
           });
         }
         const qty = parseFloat(item.quantity || item.item_quantity || 0);
-        const price = Number(
-          item.price ??
-            item.unit_price ??
-            item.item_base_price ??
-            item.item_price ??
-            previousLine?.unit_price ??
-            previousLine?.item_price ??
-            0
-        );
-        if (!productId || qty <= 0 || price < 0) continue;
+        const submittedPrice =
+          item.price ?? item.unit_price ?? item.item_base_price ?? item.item_price;
+        if (!Number.isFinite(qty) || qty <= 0)
+          throw new Error('Quantity must be greater than zero.');
 
         const oldQty = oldItemsData[lineKey] ? parseFloat(oldItemsData[lineKey].quantity) : 0;
         if (oldItemsData[lineKey]) delete oldItemsData[lineKey];
@@ -10805,42 +10814,101 @@ class SalesRepository {
           });
         }
         if (!itemDoc) {
-          if (!previousLine)
-            throw new Error(
-              'This product has already been removed, so you can not modify anything.'
+          if (!previousLine) throw new Error('This product has been removed.');
+          if (!previousLine.pricing) {
+            if (qty > oldQty)
+              throw new Error(
+                'Item pricing cannot be verified. Review this legacy order before adding quantities.'
+              );
+            pricingAuthority.assertPrice(
+              submittedPrice,
+              Number(previousLine.unit_price ?? previousLine.item_price),
+              (n) => Money.fromMinor(Money.toMinor(n, monetary), monetary),
+              previousLine.item_name
             );
-          // Item not in catalog (e.g. KOT order item) - update in-place using existing data
-          if (existingIndex[lineKey] !== undefined) {
-            const i = existingIndex[lineKey];
-            updatedItems[i] = {
-              ...this._scaleOrderLine(updatedItems[i], oldQty, qty, monetary),
-              ...serviceLine.metadata({ ...updatedItems[i], ...item }),
-              item_quantity: qty,
-              quantity: qty,
-              ...(item.item_description != null
-                ? { item_description: String(item.item_description) }
-                : {}),
-              /* A KOT line the catalogue no longer holds still belongs to
-                 somebody who may have changed their mind about the chillies. */
-              ...(item.spice_level != null
-                ? { spice_level: spiceLevel.levelOf(item.spice_level) }
-                : {}),
+            updatedItems[existingIndex[lineKey]] = {
+              ...this._scaleOrderLine(previousLine, oldQty, qty, monetary),
+              ...preparation,
+              item_description: newNote,
             };
-            if (qty !== oldQty)
+            if (qty < oldQty)
               changesItems.push({
-                ...preparation,
                 item_id: productId,
-                item_name: previousLine.item_name || '',
-                ...require('../utils/kitchen-amount').snapshot(previousLine),
-                item_quantity: Math.abs(qty - oldQty),
+                ...preparation,
+                item_name: previousLine.item_name,
+                item_quantity: oldQty - qty,
+                process: 'cancel',
                 item_description: newNote,
-                spice_level: spiceLevel.levelOf(updatedItems[i].spice_level),
-                process: qty > oldQty ? 'add' : 'cancel',
+                ...require('../utils/kitchen-amount').snapshot(previousLine),
               });
             incomingProductIds.push(lineKey);
+            continue;
           }
-          continue;
+          itemDoc = { _id: productId, name: previousLine.item_name };
         }
+        if (
+          itemDoc.branch_id &&
+          String(itemDoc.branch_id) !== String(orderDoc.branch_id) &&
+          !(itemDoc.branch_access || []).some(
+            (b) => String(b.branch_id) === String(orderDoc.branch_id)
+          )
+        )
+          throw new Error('Item does not belong to this branch.');
+        let pricing;
+        let amounts;
+        try {
+          if (previousLine) {
+            const storedUnit = previousLine.unit_price ?? previousLine.item_price;
+            pricingAuthority.assertPrice(
+              submittedPrice,
+              Number(storedUnit),
+              (n) => Money.fromMinor(Money.toMinor(n, monetary), monetary),
+              previousLine.item_name
+            );
+            if (
+              item.modifiers !== undefined &&
+              JSON.stringify(item.modifiers) !== JSON.stringify(previousLine.modifiers || [])
+            )
+              throw new pricingAuthority.PricingError(
+                'item_modifiers_changed',
+                'Add a separate line to change priced modifiers.'
+              );
+            pricing = pricingAuthority.resolve({
+              product: itemDoc,
+              branch: shop || {},
+              previous: previousLine,
+              submitted: previousLine.pricing
+                ? undefined
+                : Number(previousLine.sale_inline_item_price ?? storedUnit),
+              ...pricingContext,
+              channel: orderDoc.channel || 'counter',
+            });
+          } else {
+            if ([1, '1', true].includes(itemDoc.del_status))
+              throw new Error('This product has been removed.');
+            const extras = await this._priceModifiers(item.modifiers, itemDoc, shop || {});
+            if (extras.status === false) return extras;
+            pricing = pricingAuthority.resolve({
+              product: itemDoc,
+              branch: shop || {},
+              submitted: submittedPrice,
+              extras: extras.delta,
+              ...pricingContext,
+              channel: orderDoc.channel || 'counter',
+            });
+            item = { ...item, modifiers: extras.lines };
+          }
+          amounts = pricingAuthority.calculate(
+            pricing,
+            qty,
+            shop || {},
+            Number(previousLine?.sale_inline_discount_value ?? itemDoc.discount_amount ?? 0),
+            Number(previousLine?.item_discount_percentage ?? itemDoc.discount_percentage ?? 0)
+          );
+        } catch (error) {
+          return pricingAuthority.failure(error);
+        }
+        const price = amounts.unit_price;
 
         let changeQty = 0;
         let changeProcess = '';
@@ -10882,139 +10950,34 @@ class SalesRepository {
         }
 
         incomingProductIds.push(lineKey);
-        const itemTaxRate = parseFloat(itemDoc.tax || 0);
-        const taxType = itemDoc.tax_type || 'exclusive';
-
-        if (existingIndex[lineKey] !== undefined) {
-          const i = existingIndex[lineKey];
-          const existing = updatedItems[i];
-          const itemAmount = qty * price;
-          const itemDiscountPer = parseFloat(existing.item_discount_percentage || 0);
-          const itemDiscountVal = parseFloat(existing.sale_inline_discount_value || 0);
-          const lineDiscount = (itemAmount * itemDiscountPer) / 100 + itemDiscountVal * qty;
-          const taxableAmount = itemAmount - lineDiscount;
-          let taxAmount = 0;
-          let lineTotal = taxableAmount;
-
-          if (itemTaxRate > 0 && taxType === 'exclusive') {
-            taxAmount = (taxableAmount * itemTaxRate) / 100;
-            lineTotal = taxableAmount + taxAmount;
-          } else if (itemTaxRate > 0 && taxType === 'inclusive') {
-            lineTotal = taxableAmount;
-            taxAmount = (lineTotal * itemTaxRate) / (100 + itemTaxRate);
-          }
-
-          updatedItems[i] = {
-            ...existing,
-            ...serviceLine.metadata({ ...existing, ...item }),
-            ...require('../utils/kitchen-amount').forSaleItem(itemDoc, item, price),
-            item_quantity: qty,
-            quantity: qty,
-            item_price: price,
-            unit_price: price,
-            item_base_price: price,
-            item_total: lineTotal,
-            total: lineTotal,
-            item_tax: taxAmount,
-            item_discount: lineDiscount,
-            total_amount: lineTotal,
-            tax: itemTaxRate,
-            tax_type: taxType,
-            tax_amount: taxAmount,
-            cgst_tax: taxAmount / 2,
-            sgst_tax: taxAmount / 2,
-          };
-          if (item.item_description != null)
-            updatedItems[i].item_description = String(item.item_description);
-          /* The ticket is printed from the change record above; THIS is what
-             the customer sees back on their own order and what a shop counts
-             later, so a change of mind has to land on both. */
-          if (item.spice_level != null)
-            updatedItems[i].spice_level = spiceLevel.levelOf(item.spice_level);
-        } else {
-          const itemQuantity = qty;
-          const sellingPrice = price;
-          const discountAmt = parseFloat(itemDoc.discount_amount || 0);
-          const discountPer = parseFloat(itemDoc.discount_percentage || 0);
-          const itemAmount = sellingPrice * itemQuantity;
-          const companyPriceTotal = (itemDoc.company_price || 0) * itemQuantity;
-          const lineDiscount = (itemAmount * discountPer) / 100 + discountAmt * itemQuantity;
-          const taxableAmount = itemAmount - lineDiscount;
-          let taxAmount = 0;
-          let lineTotal = taxableAmount;
-
-          if (itemTaxRate > 0 && taxType === 'exclusive') {
-            taxAmount = (taxableAmount * itemTaxRate) / 100;
-            lineTotal = taxableAmount + taxAmount;
-          } else if (itemTaxRate > 0 && taxType === 'inclusive') {
-            lineTotal = taxableAmount;
-            taxAmount = (lineTotal * itemTaxRate) / (100 + itemTaxRate);
-          }
-
-          updatedItems.push({
-            sale_inline_item_price: sellingPrice,
-            ...require('../utils/kitchen-amount').forSaleItem(itemDoc, item, sellingPrice),
-            sale_inline_discount_value: discountAmt,
-            sale_inline_discount_pervalue: discountPer,
-            item_discount: lineDiscount,
-            item_discount_percentage: discountPer,
-            item_status: 'Add',
-            return: false,
-            item_name: itemDoc.name || item.name || '',
-            ...itemText.snapshot(itemDoc),
-            item_sku: itemDoc.itemid || '',
-            item_price: sellingPrice,
-            item_quantity: itemQuantity,
-            quantity: itemQuantity,
-            unit_price: sellingPrice,
-            item_base_price: sellingPrice,
-            item_total: lineTotal,
-            total: lineTotal,
-            item_tax: taxAmount,
-            item_available_quantity: parseFloat(itemDoc.available_quantity || 0),
-            item_id: productId,
-            ...preparation,
-            item_unit: itemDoc.unit || 'qty',
-            total_amount: lineTotal,
-            barcode_id: itemDoc.barcode_id || '',
-            company_price_total: companyPriceTotal,
-            category_id: itemDoc.category_id || null,
-            category_name: itemDoc.category_name || '',
-            supplier_id: itemDoc.supplier_id || null,
-            supplier_name: itemDoc.supplier_name || '',
-            tax: itemTaxRate,
-            tax_type: taxType,
-            igst_tax: 0,
-            cgst_tax: taxAmount / 2,
-            sgst_tax: taxAmount / 2,
-            tax_name: itemDoc.tax_name || '',
-            tax_amount: taxAmount,
-            tax_fields: itemDoc.tax_fields || [],
-            /*
-             * THE NOTE IS THE WAITER'S, NEVER THE MENU'S.
-             *
-             * Owner: "actually we need to show only item name if any
-             * customization note delibertly captain entered. otherwise dont
-             * show any other details. dont confuse captain."
-             *
-             * This fell back to itemDoc.description, so a dish added with no
-             * note arrived carrying its menu copy - "slow cooked with 21
-             * spices" - which then showed on the handset's live ticket and
-             * printed in the kitchen as though a waiter had asked for it.
-             *
-             * A blank note means nothing was asked for, and blank is the
-             * honest thing to store. The menu description belongs to the item
-             * and is one lookup away for anything that genuinely wants it.
-             */
-            item_description: String(item.item_description || ''),
-            spice_level: spiceLevel.levelOf(item.spice_level),
-            /* Same reason as the priced line: an added dish keeps the time
-               the kitchen said it took on the day it was added. */
-            prep_minutes: Number(itemDoc.prep_minutes) || 0,
-            track_inventory: itemDoc.track_inventory || false,
-            negative_stock: itemDoc.negative_stock || false,
-          });
-        }
+        const nextLine = {
+          ...previousLine,
+          ...amounts,
+          item_id: productId,
+          ...preparation,
+          ...require('../utils/kitchen-amount').forSaleItem(itemDoc, item, pricing.selling_price),
+          item_name: previousLine?.item_name || itemDoc.name || '',
+          ...itemText.snapshot(itemDoc),
+          item_sku: itemDoc.itemid || '',
+          item_unit: itemDoc.unit || 'qty',
+          category_id: itemDoc.category_id || null,
+          category_name: itemDoc.category_name || '',
+          supplier_id: itemDoc.supplier_id || null,
+          supplier_name: itemDoc.supplier_name || '',
+          tax_name: previousLine?.tax_name || itemDoc.tax_name || '',
+          tax_fields: previousLine?.tax_fields || itemDoc.tax_fields || [],
+          item_description: String(
+            item.item_note ?? item.item_description ?? previousLine?.item_description ?? ''
+          ),
+          spice_level: spiceLevel.levelOf(item.spice_level ?? previousLine?.spice_level),
+          prep_minutes: previousLine?.prep_minutes ?? Number(itemDoc.prep_minutes || 0),
+          modifiers: previousLine?.modifiers || item.modifiers || [],
+          track_inventory: itemDoc.track_inventory || false,
+          negative_stock: itemDoc.negative_stock || false,
+          company_price_total: Number(itemDoc.company_price || 0) * qty,
+        };
+        if (previousLine) updatedItems[existingIndex[lineKey]] = nextLine;
+        else updatedItems.push({ ...nextLine, item_status: 'Add', return: false });
       }
 
       for (const remItemData of Object.values(oldItemsData)) {
@@ -11050,7 +11013,9 @@ class SalesRepository {
         itemsSub += parseFloat(it.total_amount || 0);
         taxTotal += parseFloat(it.tax_amount || 0);
         itemDiscountTotal += parseFloat(it.item_discount || 0);
-        grossSubtotal += parseFloat(it.item_quantity || 0) * parseFloat(it.item_price || 0);
+        grossSubtotal += Number(
+          it.item_subtotal ?? parseFloat(it.item_quantity || 0) * parseFloat(it.item_price || 0)
+        );
       }
 
       const baseSubtotal = grossSubtotal;
@@ -11232,7 +11197,7 @@ class SalesRepository {
             data: {
               order_id: orderId,
               items_updated: finalItems.length,
-              total_amount: totalAmount,
+              total_amount: updateFields.sales_total,
             },
           }
         : {
@@ -11241,6 +11206,7 @@ class SalesRepository {
             data: [],
           };
     } catch (error) {
+      if (error instanceof pricingAuthority.PricingError) return pricingAuthority.failure(error);
       console.error('Error in updateOrderModel:', error);
       return {
         status: false,
@@ -11487,124 +11453,44 @@ class SalesRepository {
      * tax, discount and the inclusive/exclusive arithmetic below all work
      * on the number the customer was actually shown.
      */
-    /*
-     * A DISH SOLD AT TODAY'S PRICE.
-     *
-     * Owner, after two fish went out at zero on a live table: "zero price
-     * items are actually dyanmic pricing. its based current price. so if you
-     * find that kind of item we need to allow captain to update the price and
-     * give order."
-     *
-     * Whole fish, crab, lobster: the shop cannot put a number on the card
-     * because it does not know one until the morning's market. The catalogue
-     * carries no selling price, the handset showed 0.00, and the order went to
-     * the kitchen worth nothing.
-     *
-     * THE DOOR OPENS ONLY WHERE THERE IS NO PRICE TO OVERRIDE. Every other
-     * line is still priced from the catalogue and the client's number is
-     * ignored, because a caller that can name its own price can buy a biryani
-     * for one rupee - and the handset is a phone in a pocket, not a trusted
-     * machine. An item is dynamic when the shop marked it `open_price`, or
-     * when it simply has no selling price, which is how these are set up
-     * today.
-     *
-     * Refused rather than silently zeroed if the price is missing or absurd:
-     * a line that reaches the kitchen worth nothing is what started this.
-     */
-    const catalogue = Number(itemDoc.selling_price || 0);
-    /*
-     * THE FLAG CONTRACT: daily_price + price_set_on.
-     *
-     * A dish marked `daily_price` is priced from the morning's market, and
-     * `price_set_on` is when somebody last did it. Priced TODAY, it is an
-     * ordinary dish charged at the catalogue rate - that is the entire point
-     * of the shop updating it when they open. Priced yesterday, it is not:
-     * yesterday's rate for a pomfret is not today's, and quietly charging it
-     * would be worse than the zero this started as, because it would look
-     * right.
-     *
-     * `open_price` is different and stays always-ask: the shop is saying the
-     * price is settled at the counter, every time.
-     *
-     * An item with none of these fields - every shop until the flag ships -
-     * falls through to "has it got a price at all", which is exactly what it
-     * did before.
-     */
-    const dynamic =
-      itemDoc.open_price === true ||
-      (itemDoc.daily_price === true && !this._pricedToday(itemDoc.price_set_on, branchDoc)) ||
-      catalogue <= 0;
-    /* Three spellings because three callers already exist: the handset's order
-       payload says `item_price`, a line added to a live order says
-       `unit_price`, and `price` is what anything hand-written reaches for. */
-    const said = [item.unit_price, item.item_price, item.price].find((v) => v != null);
-    const asked = Number(said);
-
-    if (dynamic) {
-      if (!Number.isFinite(asked) || asked <= 0) {
-        return {
-          status: false,
-          data: { state: 'item_needs_price', item: itemDoc.name || '' },
-          /*
-           * Worded for whoever is holding the screen, and two different people
-           * can be: a waiter with the handset, who needs to be told to enter a
-           * price, and a customer on the self-service page, who cannot be
-           * asked one and must be sent to a member of staff. The `state` above
-           * is what an app keys on; this is the sentence a person reads.
-           */
-          message: `${itemDoc.name || 'That dish'} is priced on the day, so it needs today's price. A member of staff can add it.`,
-        };
-      }
-      /* A ceiling, because a fat finger on a phone is the likeliest way a
-         wrong number gets here and ten lakh for a fish should not be quietly
-         accepted. */
-      if (asked > 1000000) {
-        return {
-          status: false,
-          data: { state: 'item_price_too_high', item: itemDoc.name || '' },
-          message: `${asked} looks wrong for ${itemDoc.name || 'that dish'}. Check the price.`,
-        };
-      }
-    }
-
-    /*
-     * THE EXTRAS, ADDED BEFORE TAX AND DISCOUNT RATHER THAN AFTER.
-     *
-     * Extra cheese on a pizza is part of the pizza: it is taxed at the
-     * pizza's rate and a percentage discount applies to the whole plate. Adding
-     * it afterwards would tax the dish and not the cheese, which is a quiet
-     * way to file a wrong return.
-     *
-     * The delta comes from the shop's own option documents, never from the
-     * caller. See _priceModifiers.
-     */
+    // Catalogue, configured channel rules and explicit variable-price modes
+    // are resolved by the same authority used by checkout and amendments.
     const extras = await this._priceModifiers(item.modifiers, itemDoc, branchDoc);
     if (extras.status === false) return extras;
-
-    /* A one-off invented at the table: the shop never chose this price on a
-       card, somebody agreed it with a guest. Same reason as a market price. */
-    const oneOff = String(itemDoc.item_status || '').toLowerCase() === 'instant';
-
-    const sellingPrice = partnerVenues.priceFor(
-      (dynamic ? asked : catalogue) + extras.delta,
-      servicePoint.venue
-    );
-    const taxRate = Number(itemDoc.tax || 0);
-    const discountAmount = Number(itemDoc.discount_amount || 0);
+    let pricing;
+    let amounts;
+    try {
+      pricing = pricingAuthority.resolve({
+        product: itemDoc,
+        branch: branchDoc,
+        submitted: item.unit_price ?? item.item_price ?? item.price,
+        extras: extras.delta,
+        venue: servicePoint.venue,
+        channel: where.channel || 'online',
+      });
+      amounts = pricingAuthority.calculate(
+        pricing,
+        qty,
+        branchDoc,
+        Number(itemDoc.discount_amount || 0),
+        Number(itemDoc.discount_percentage || 0)
+      );
+    } catch (error) {
+      return pricingAuthority.failure(error);
+    }
+    const dynamic = ['variable', 'quick_item'].includes(pricing.source);
+    const oneOff = itemDoc.item_status === 'instant';
+    const asked = pricing.selling_price;
+    const catalogue = pricing.selling_price;
+    const baseUnitPrice = amounts.unit_price;
+    const taxAmt = amounts.tax_amount;
+    const itemTotal = amounts.total;
+    const discountUnit = amounts.item_discount / qty;
     const discountPercentage = Number(itemDoc.discount_percentage || 0);
-    const isInclusive = itemDoc.tax_type === 'inclusive';
-    const baseUnitPrice =
-      isInclusive && taxRate > 0 ? sellingPrice / (1 + taxRate / 100) : sellingPrice;
-    const discountUnit =
-      discountAmount > 0 ? discountAmount : baseUnitPrice * (discountPercentage / 100);
-    const taxableUnit = baseUnitPrice - discountUnit;
-    const taxUnit = taxableUnit * (taxRate / 100);
-    const finalUnit = isInclusive ? taxableUnit * (1 + taxRate / 100) : taxableUnit + taxUnit;
-    const taxAmt = round(taxUnit * qty);
-    const itemTotal = round(finalUnit * qty);
 
     return {
       line: {
+        ...amounts,
         item_id: itemId,
         ...serviceLine.metadata(item),
         item_name: itemDoc.name || item.item_name || '',
@@ -11974,6 +11860,7 @@ class SalesRepository {
       'total_amount',
       'item_discount',
       'company_price_total',
+      'item_subtotal',
       'cgst_tax',
       'sgst_tax',
       'igst_tax',
@@ -11989,7 +11876,9 @@ class SalesRepository {
     const unitOf = (l) => Number(l.unit_price != null ? l.unit_price : l.item_price || 0);
     const lineTotalOf = (l) =>
       Number(l.total != null ? l.total : l.item_total || l.total_amount || 0);
-    const subtotal = round(lines.reduce((s, l) => s + unitOf(l) * qtyOf(l), 0));
+    const subtotal = round(
+      lines.reduce((s, l) => s + Number(l.item_subtotal ?? unitOf(l) * qtyOf(l)), 0)
+    );
     const tax = round(lines.reduce((s, l) => s + Number(l.tax_amount || l.item_tax || 0), 0));
     const itemDiscount = round(lines.reduce((s, l) => s + Number(l.item_discount || 0), 0));
     const extra = Number((orderDoc && orderDoc.extra_discount) || 0);
