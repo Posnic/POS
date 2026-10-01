@@ -7709,3 +7709,14 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
 
 #billing_outlets_page .form-control { border:1px solid var(--theme-border-color,#ccd5e2); border-radius:6px; background:var(--theme-input-bg,#fff); color:var(--theme-text-primary,#172b4d); }
 #billing_outlets_page .form-control:focus { border-color:var(--theme-primary-color,#0969da); outline:2px solid var(--theme-primary-color,#0969da); outline-offset:1px; }
+
+/* One compact row for the sale title and its secondary actions. */
+#sales_new .sale-header { display:flex; align-items:center; justify-content:space-between; gap:12px 20px; flex-wrap:wrap; }
+#sales_new .sale-header-main { display:flex; align-items:center; gap:12px; flex-wrap:wrap; min-width:0; }
+#sales_new .sale-header .page-title { margin:0; flex:none; }
+#sales_new .sale-header-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+#sales_new .sale-header-actions:empty { display:none; }
+#sales_new .sale-header-actions .btn { min-height:44px; padding:8px 12px; margin:0; white-space:normal; }
+#sales_new .sale-header-time { margin-inline-start:auto; }
+#billing_outlet_context:has(#billing_outlet_label:not(:empty)), #billing_outlet_context:has(#billing_outlet_charge:not(:empty)) { margin-bottom:8px; }
+@media(max-width:575px) { #sales_new .sale-header { gap:8px; } #sales_new .sale-header-main { gap:8px; } #sales_new .sale-header-actions { gap:6px; } }

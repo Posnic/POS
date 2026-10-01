@@ -7,21 +7,21 @@
     </div>
     <div class="contentbar">
         <div class="breadcrumbbar" style="margin-left: -0px;margin-top: -20px !important;">
-            <div class="row text-left align-items-center">
-                <div class="col-7 col-md-8 col-lg-8">
+            <div class="sale-header">
+                <div class="sale-header-main">
                     <h4 class="page-title break_title"><span id="sales-text-change"><lang class="lang_addvariant_title">New</lang></span>
                         <lang class="lang_printsale">&nbsp;Sale</lang>
                     </h4>
+                    <div id="sale-header-actions" class="sale-header-actions"><button type="button" id="billing_outlets_open" style="display:none" class="btn btn-outline-secondary btn-sm" onclick="PosnicPro.billingoutlets.show()"><lang class="lang_billing_outlets">Billing outlets</lang></button></div>
                 </div>
-                <div class="col-5 col-md-4 col-lg-4 text-right">
+                <div class="sale-header-time">
                     <input type="text" id="time-format" name="date"
                         class="form-control-plaintext commonDate text-right text-muted" readonly
                         style="padding:0; border:0; background:transparent; white-space:nowrap; font-size:13px; display:inline-block; width:165px; max-width:100%;" aria-label="Time format" data-t-aria-label="lang_time_format"/>
                 </div>
             </div>
         </div>
-        <div class="mb-2 d-flex align-items-center flex-wrap" style="gap:8px">
-            <button type="button" id="billing_outlets_open" style="display:none" class="btn btn-outline-primary" onclick="PosnicPro.billingoutlets.show()"><lang class="lang_billing_outlets">Billing outlets</lang></button>
+        <div id="billing_outlet_context" class="d-flex align-items-center flex-wrap" style="gap:8px">
             <strong id="billing_outlet_label"></strong>
             <label id="billing_room_wrap" style="display:none;margin:0"><lang class="lang_room_reference">Room / reference</lang> <input id="billing_room_reference" class="form-control form-control-sm" maxlength="80" placeholder="Optional" data-t-placeholder="lang_optional_2"></label>
             <span id="billing_outlet_charge" class="text-muted"></span>

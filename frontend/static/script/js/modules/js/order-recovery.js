@@ -92,8 +92,11 @@
     $(function(){
         var title=document.querySelector('#sales_new .page-title');
         if(!title)return;
-        var button=node('button','','btn btn-outline-secondary btn-sm ml-2');button.type='button';button.id='desktop-pending-orders';button.hidden=true;
-        button.addEventListener('click',show);title.appendChild(button);refresh();
+        var button=node('button','','btn btn-outline-secondary btn-sm');button.type='button';button.id='desktop-pending-orders';button.hidden=true;
+        button.addEventListener('click',show);
+        var actions=document.getElementById('sale-header-actions');
+        if(actions)actions.insertBefore(button,actions.firstChild);else title.appendChild(button);
+        refresh();
     });
     window.addEventListener('storage',function(){refresh();if(dialog && dialog.open)render();});
     window.addEventListener('hashchange',function(){if(dialog && dialog.open)dialog.close();refresh();});

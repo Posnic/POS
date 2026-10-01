@@ -4,9 +4,9 @@ const fs=require('node:fs');
 const {JSDOM}=require('jsdom');
 const {create}=require('../frontend/static/script/js/modules/js/order-journal');
 const source=fs.readFileSync('frontend/static/script/js/modules/js/order-recovery.js','utf8');
-function app(){
+function app(header=false){
  const dom=new JSDOM('<div id="sales_new"><h4 class="page-title">Sale</h4></div>',{url:'https://shop.test',runScripts:'outside-only'});
- const w=dom.window;w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
+ const w=dom.window;if(header)w.document.querySelector('#sales_new').insertAdjacentHTML('beforeend','<div id="sale-header-actions"><button id="billing_outlets_open">Billing outlets</button></div>');w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
  const scope={server:'shop',branch:'branch',user:'staff'};
  const journal=create(w.localStorage,()=>scope);
  const entry=journal.save({idempotencyKey:'request-1',table_number:'T1',sales_total:200,items:[{item_name:'<img src=x onerror=alert(1)>',item_quantity:2,item_note:'no salt'}]});
@@ -46,4 +46,11 @@ test('recovery uses localized labels and readable inherited headings in RTL',()=
  assert.equal(dialog.dir,'rtl');assert.equal(dialog.querySelector('h4').textContent,'طلبات معلقة');
  assert.equal(dialog.querySelector('h4').style.color,'inherit');
  assert.equal(dialog.querySelector('button').style.minHeight,'44px');a.dom.window.close();
+});
+
+test('pending recovery sits before Billing outlets outside the sale heading',()=>{
+ const a=app(true);const parent=a.w.document.getElementById('sale-header-actions');
+ assert.deepEqual([...parent.children].map(x=>x.id),['desktop-pending-orders','billing_outlets_open']);
+ assert.equal(a.w.document.querySelector('.page-title button'),null);
+ a.dom.window.close();
 });
