@@ -114,7 +114,7 @@ async function deliver(schedule, report) {
     };
   }
   const { resolveShopTransport } = require('../utils/email');
-  const { transporter, from } = resolveShopTransport(report.branch);
+  const { transporter, from } = resolveShopTransport(report.branch, { scheduledReport: true });
   if (transporter.options?.jsonTransport)
     throw new Error('Configure email delivery before enabling scheduled summaries.');
   const info = await transporter.sendMail({

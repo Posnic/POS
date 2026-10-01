@@ -22,7 +22,7 @@
 const path = require('path');
 
 /* Deliberately NOT jest.mock('nodemailer'): loading the real one is the point. */
-const { Email } = require('../../../src/utils/email');
+const { Email, resolveShopTransport } = require('../../../src/utils/email');
 
 describe('nodemailer transport contract', () => {
   const saved = { ...process.env };
@@ -38,6 +38,40 @@ describe('nodemailer transport contract', () => {
       'https://example.com/reset'
     );
   }
+
+  test.each(['shop', 'platform', 'sendgrid'])(
+    'scheduled %s SMTP has bounded waits without changing ordinary mail',
+    (mode) => {
+      delete process.env.BREVO_API_KEY;
+      delete process.env.SENDINBLUE_KEY;
+      process.env.NODE_ENV = mode === 'sendgrid' ? 'production' : 'development';
+      process.env.EMAIL_HOST = 'smtp.example.invalid';
+      process.env.EMAIL_PORT = '587';
+      process.env.EMAIL_USERNAME = 'synthetic';
+      process.env.EMAIL_PASSWORD = 'synthetic';
+      const branch =
+        mode === 'shop'
+          ? {
+              email_smtp_host: 'smtp.example.invalid',
+              email_smtp_username: 'synthetic',
+              email_smtp_password: 'synthetic',
+            }
+          : {};
+      const ordinary = resolveShopTransport(branch).transporter;
+      const scheduled = resolveShopTransport(branch, { scheduledReport: true }).transporter;
+      try {
+        expect(ordinary.options.socketTimeout).toBeUndefined();
+        expect(scheduled.options).toMatchObject({
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 30000,
+        });
+      } finally {
+        ordinary.close();
+        scheduled.close();
+      }
+    }
+  );
 
   test('the installed nodemailer is a real module, not a mock', () => {
     const nodemailer = require('nodemailer');

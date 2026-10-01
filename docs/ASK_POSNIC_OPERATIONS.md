@@ -404,6 +404,15 @@ stay on their originating installation; the sync manifest marks them local-only.
 
 ## Schedules
 
+Scheduled SMTP delivery uses ten-second connection and greeting limits and a
+30-second socket-inactivity limit for shop SMTP, platform SMTP and SendGrid.
+These are per-stage/inactivity limits, not a 30-second total delivery deadline.
+The schedule is paused for operator review if the peer accepts the message body
+but fails to acknowledge it; a timeout cannot prove non-delivery. No automatic
+resend is attempted. Ordinary receipt and password-reset mail retain their
+existing transport settings. A loopback SMTP regression verifies a withheld
+final acknowledgement and one submission only, with no external delivery.
+
 Owners can schedule daily or weekly sales, profit and low-stock summaries by
 email or WhatsApp. WhatsApp uses the branch's configured messaging provider;
 email uses shop SMTP or the existing platform transport. Console-only mail

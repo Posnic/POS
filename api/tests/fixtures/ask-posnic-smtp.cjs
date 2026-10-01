@@ -10,7 +10,7 @@ require.cache[require.resolve('../../src/models/base.model')] = { exports: class
 const runner = require('../../src/services/ask-posnic-runner.service');
 
 // A loopback SMTP peer, never an external recipient or provider account.
-async function withSmtp(rejectRecipient, run) {
+async function withSmtp(rejectRecipient, run, { withholdAcknowledgement = false } = {}) {
   const sockets = new Set(), messages = [];
   const server = net.createServer(socket => {
     sockets.add(socket);
@@ -27,7 +27,7 @@ async function withSmtp(rejectRecipient, run) {
         if (data) {
           if (line !== '.') { message.push(line); continue; }
           messages.push(message.join('\n')); message = []; data = false;
-          socket.write('250 2.0.0 synthetic-message-accepted\r\n');
+          if (!withholdAcknowledgement) socket.write('250 2.0.0 synthetic-message-accepted\r\n');
         } else if (/^EHLO|^HELO/.test(line)) socket.write('250-synthetic.example.invalid\r\n250 AUTH PLAIN\r\n');
         else if (/^AUTH/.test(line)) socket.write('235 2.7.0 Authenticated\r\n');
         else if (/^MAIL FROM/.test(line)) socket.write('250 2.1.0 Sender accepted\r\n');
@@ -60,6 +60,32 @@ test('scheduled summary uses the actual SMTP transport and preserves its acknowl
     assert.match(messages[0], /Message-ID:/i);
     assert.ok(!messages[0].includes('synthetic-only'));
   });
+});
+
+test('an SMTP peer that withholds the final acknowledgement times out without resending', async () => {
+  const nodemailer = require('nodemailer');
+  const createTransport = nodemailer.createTransport;
+  let calls = 0;
+  nodemailer.createTransport = options => {
+    calls++;
+    assert.equal(options.connectionTimeout, 10000);
+    assert.equal(options.greetingTimeout, 10000);
+    assert.equal(options.socketTimeout, 30000);
+    // Keep the real TCP timeout regression fast after checking production values.
+    return createTransport({ ...options, socketTimeout: 100 });
+  };
+  try {
+    await withSmtp(false, async (report, messages) => {
+      await assert.rejects(
+        runner.deliver({ report: 'sales', channel: 'email', destination: 'owner@example.invalid' }, report),
+        error => error.code === 'ETIMEDOUT'
+      );
+      assert.equal(messages.length, 1);
+      assert.equal(calls, 1);
+    }, { withholdAcknowledgement: true });
+  } finally {
+    nodemailer.createTransport = createTransport;
+  }
 });
 
 test('a rejected SMTP recipient never becomes a sent scheduled summary', async () => {
