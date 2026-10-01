@@ -58,7 +58,7 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
     throw new Error('extension_contract_invalid');
   for (const [name, permissions] of Object.entries(metadata.commands)) {
     if (
-      !/^[a-z][a-z0-9.-]{1,80}$/.test(name) ||
+      !/^[a-z][a-zA-Z0-9.-]{1,80}$/.test(name) ||
       !Array.isArray(permissions) ||
       !permissions.length ||
       permissions.some((permission) => !['read', 'write', 'manage'].includes(permission))

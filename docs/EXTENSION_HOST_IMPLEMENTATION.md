@@ -28,7 +28,15 @@ Testing currently uses the installed dependencies from the separate active check
 - Dedicated sandboxed page/message bridge, module settings and real login/browser verification.
 - Normal receipt template integration with truthful pending status, printer dispatch and cash-drawer behavior.
 - Payment ownership/manager handover rules, complete recovery UI, catalogue mutation/repair cases, stock notifications/sync and normal allocated-sale return verification.
-- Signed ZIP reader/installer, activation, versioned update/rollback and offline packaging; only verified directory loading exists so far.
+- Activation, versioned update/rollback and offline distribution packaging. Signed ZIP validation and immutable staging now exist, but no activation UI/coordinator is complete.
 - Isolated authenticated staging and compatible Windows/offline verification. No public staging or customer hardware compatibility is claimed by these tests.
 
 Provider-specific integration is separate from manual Card recording. Third-party terminal outcomes must be independently verified by their actual adapter.
+
+## Signed ZIP staging
+
+`extension-archive.js` accepts an already bounded buffer (24 MiB maximum), reads entries with the existing yauzl dependency, and bounds both declared and actual decompressed bytes. It rejects unsafe/Windows-colliding paths, duplicates, file-as-parent collisions, symlinks/device entries, encrypted/unsupported encodings, unsigned/unlisted content and incompatible packages. All hashes and the Ed25519 signature are checked before filesystem staging. HTTP upload limits still need to be applied by the eventual installer route before buffering.
+
+`stageExtensionArchive` writes a verified package to a random staging directory, revalidates the executable contract without executing it, and atomically renames it into the immutable version directory. It checks ancestor directories for links. A repeat of the exact package returns the existing version; a different build cannot overwrite the same version. It does not change current/previous pointers, enable any shop or reset namespace data. Activation must separately coordinate pending commands, permissions and restart/rollback.
+
+Twelve additional archive/staging tests pass, including actual Windows junction refusal and preserving an existing current-version pointer. The package loader now accepts declared camel-case command names, matching commands such as `payment.confirmCash`; the signed metadata still controls their permissions. The archive/loader/package group contains 24 passing tests. This is not evidence of a complete installer or a deployed package.
