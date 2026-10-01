@@ -176,6 +176,28 @@ test('sales send each saved layout and copy count only to its configured printer
   assert.match(prints[0].html, /data-receipt-design="80"/);
   assert.match(prints[1].html, /data-receipt-design="a5"/);
   assert.equal(prints[0].options.strictPrinter, true);
+  assert.equal(prints[0].options.thermalRaster, true);
+  assert.equal(prints[1].options.thermalRaster, false);
+});
+
+test('A4 override uses the sheet profile instead of sending A4 to the thermal printer', async t => {
+  const p = page(t), prints = [], errors = [];
+  p.w.electronAPI.printer.print = async (_html, options) => { prints.push(clone(options)); return { success: true }; };
+  p.w.PosnicPro.alert = (_level, message) => errors.push(message);
+  p.w.PosnicPro.afterPrint = () => {};
+  p.w.eval(read('api/src/helpers/receipt-design.js'));
+  p.w.eval(read('frontend/static/script/js/core/receipt-designer.js'));
+  const sale = { branch_name: 'Shop', items: [{ item_name: 'Tea', item_quantity: 1, item_price: 200 }], items_total: 200 };
+  await p.w.PosnicPro.receiptDesigner.printSale(sale, 'a4');
+  assert.equal(prints.length, 1);
+  assert.equal(prints[0].printerName, 'Office');
+  assert.equal(prints[0].thermalRaster, false);
+  assert.equal(prints[0].pageSize, 'a4');
+  const values = initial(); values.invoice.printerName = '';
+  p.w.electronAPI.printer.getDocumentSettings = async () => clone(values);
+  await p.w.PosnicPro.receiptDesigner.printSale(sale, 'a4');
+  assert.equal(prints.length, 1);
+  assert.match(errors[0], /Choose a sheet printer/);
 });
 
 test('an explicitly chosen sales printer never falls back to the system default', async () => {

@@ -255,6 +255,7 @@
       <span id="title">Kitchen</span>
       <span><span id="count">0</span> <span id="word">orders</span></span>
       <span id="pager"></span>
+      <button id="refresh-orders" type="button" style="font:inherit;font-size:.65em;min-height:44px;padding:6px 12px;background:var(--card);color:var(--ink);border:1px solid var(--muted);border-radius:8px;cursor:pointer" aria-label="Refresh active orders">↻ Refresh</button>
       <span id="status-key" hidden aria-label="Dish status legend"><span>◷ Pending / cooking</span><span>✓ Ready</span><span>↗ Collected</span></span>
       <div id="wall-clock" style="margin-left:auto;text-align:right;white-space:nowrap;color:var(--ink)"><time id="current-time"></time><div id="current-date" style="font-size:.7em;color:var(--muted)"></div></div>
     </header>
@@ -707,6 +708,7 @@
     }
     if (((config || {}).orderSort || 'oldest') !== ((cfg || {}).orderSort || 'oldest')) page = 0;
     config = cfg || {};
+    $('refresh-orders').hidden = !!config.setupMode;
     cancellationSeen.forEach(function (at, id) { cancellationExpiry.set(id, at + cancelledSeconds() * 1000); });
     updateRotation();
     $('connection').textContent = config.setupMode ? 'Preview - sample orders' : (config._feedStatus || '');
@@ -785,6 +787,23 @@
 
 
   if (window.posnicKitchenScreen && window.posnicKitchenScreen.onConfig) {
+    $('refresh-orders').addEventListener('click', async function () {
+      const button = this;
+      if (button.disabled || config?.setupMode) return;
+      button.disabled = true;
+      button.textContent = 'Refreshing…';
+      $('connection').textContent = 'Checking active orders…';
+      try {
+        const result = await window.posnicKitchenScreen.refresh();
+        if (!result || !result.ok) throw new Error(result?.why || 'Refresh failed');
+        $('connection').textContent = 'Active orders updated';
+      } catch (error) {
+        $('connection').textContent = 'Could not refresh. Showing previous orders. ' + error.message;
+      } finally {
+        button.disabled = false;
+        button.textContent = '↻ Refresh';
+      }
+    });
     window.posnicKitchenScreen.onConfig(setConfig);
     window.posnicKitchenScreen.onTickets(setTickets);
     window.posnicKitchenScreen.ready(displayId).catch(function () {

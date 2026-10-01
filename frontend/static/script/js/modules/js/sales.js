@@ -1642,6 +1642,16 @@
         $("#save_btn").prop('disabled', false);
         $("#save_submit").removeClass('disabled');
         
+        // Taking payment must not silently reprice a bill already issued.
+        const savedPayable = Number(PosnicPro.sales.EditRecentSaleParams.sales_total);
+        const currentPayable = Number(PosnicPro.sales.extraDiscount.sale_new_tot);
+        if (PosnicPro.sales.paymentOnlyMode === true &&
+            (!Number.isFinite(savedPayable) || !Number.isFinite(currentPayable) ||
+             Math.round(savedPayable * 100) !== Math.round(currentPayable * 100))) {
+            $('#save_btn').prop('disabled', true);
+            PosnicPro.alert('error', 'The payment total differs from the saved bill. Reload the bill and review its tax, discounts and charges before taking payment.');
+            return;
+        }
         const saleNewTot = PosnicPro.sales.extraDiscount.sale_new_tot;
         var current_balance = $('#customer_current_balance').val();
         $('.walletbalance').number(current_balance);
@@ -2498,6 +2508,17 @@
         // multipayment map so it matches the new total and avoids stale
         // values from the previous amount.
         const totalsDiffer = currentTotal > 0 && Math.abs(currentTotal - storedTotal) > 0.01;
+
+        // Unpaid orders can retain a provisional method amount from before tax
+        // or later items were added. It is not money collected. Start this first
+        // payment at the complete payable; preserve paid/partial payment records.
+        const firstPayment = String(PosnicPro.sales.EditRecentSaleParams.payment_status).toLowerCase() === 'unpaid'
+            && !(Number(PosnicPro.sales.EditRecentSaleParams.partial_amounts) > 0)
+            && !(Number(PosnicPro.sales.EditRecentSaleParams.wallet_amount) > 0);
+        if (firstPayment) {
+            const preferredMethod = Object.keys(multi_payment).find(function (key) { return Number(multi_payment[key]) > 0; }) || 'Cash';
+            multi_payment = { [preferredMethod]: sales_total };
+        }
 
         if (totalsDiffer) {
             sales_total = currentTotal;

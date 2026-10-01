@@ -3929,5 +3929,13 @@
   "lang_venue_kind": "Lieu",
   "lang_venue_markup": "Supplément payé par le client",
   "lang_venue_name": "Nom du lieu",
-  "lang_venue_unit_label": "Nom donné à une unité"
+  "lang_venue_unit_label": "Nom donné à une unité",
+  "lang_sales_period": "Période des ventes",
+  "lang_full_day": "Journée entière",
+  "lang_all_24_hours": "Les 24 heures",
+  "lang_custom_time": "Plage personnalisée",
+  "lang_choose_your_hours": "Choisir les heures",
+  "lang_apply_time": "Appliquer les heures",
+  "lang_sales_time_filter": "Filtrer les ventes par heure",
+  "lang_choose_a_sales_period": "Choisir une période de vente"
 }

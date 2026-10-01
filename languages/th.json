@@ -3929,5 +3929,13 @@
   "lang_venue_kind": "สถานที่",
   "lang_venue_markup": "ผู้เข้าพักจ่ายเพิ่ม",
   "lang_venue_name": "ชื่อสถานที่",
-  "lang_venue_unit_label": "ชื่อเรียกหน่วย"
+  "lang_venue_unit_label": "ชื่อเรียกหน่วย",
+  "lang_sales_period": "ช่วงเวลาขาย",
+  "lang_full_day": "เต็มวัน",
+  "lang_all_24_hours": "ตลอด 24 ชั่วโมง",
+  "lang_custom_time": "กำหนดเวลาเอง",
+  "lang_choose_your_hours": "เลือกช่วงเวลา",
+  "lang_apply_time": "ใช้ช่วงเวลา",
+  "lang_sales_time_filter": "ตัวกรองเวลาขาย",
+  "lang_choose_a_sales_period": "เลือกช่วงเวลาขาย"
 }

@@ -42,6 +42,7 @@ const PACKAGED_PAGES = new Set([
   'kitchen-audio.html',
   'update-manager.html',
   'log-viewer.html',
+  'diagnostics.html',
 ]);
 
 /* Read the port when asked, never at module load: main.js sets it after
@@ -130,7 +131,17 @@ function guard(ipcMain, { onRefused } = {}) {
     handle(channel, listener) {
       ipcMain.handle(channel, (event, ...args) => {
         if (!isTrustedFrame(event.senderFrame)) throw refuse(channel, event);
-        return listener(event, ...args);
+        const started = Date.now();
+        const record = (success, error) => {
+          if (channel.startsWith('diagnostics:')) return;
+          require('./diagnostic-session').record('ipc', { channel, success, durationMs: Date.now() - started,
+            code: error?.code, message: error?.message });
+        };
+        try {
+          const result = listener(event, ...args);
+          if (result && typeof result.then === 'function') return result.then(value => { record(value?.success !== false, value?.error ? { message: value.error } : null); return value; }, error => { record(false, error); throw error; });
+          record(result?.success !== false); return result;
+        } catch (error) { record(false, error); throw error; }
       });
     },
 

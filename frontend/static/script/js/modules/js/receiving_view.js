@@ -398,11 +398,57 @@ PosnicPro.receivings.view = {
         $('#receving_returned_table tbody').html('');
         PosnicPro.receivings.loadEditReceivings(id);
     },
-    /*printing the receiving data held by this function*/
+    // Purchase printing must work before Settings has populated the hidden templates.
+    _preparePurchasePrint: function (render) {
+        var view = PosnicPro.receivings.view;
+        var a4 = PosnicPro.resolvePrintType() === 'a4';
+        view._purchasePrintEvent('purchase-layout-load');
+        var fail = function () {
+            view._purchasePrintEvent('purchase-layout-failed');
+            PosnicPro.alert('error', 'Could not load the purchase print layout. Nothing was sent to the printer. Please try again.');
+        };
+        PosnicPro.get({ url: 'branches/getOneStore', data: 'id=' + PosnicPro.local.get('branch_id_set') }, function (response) {
+            try {
+                if (!response || response.type !== 'success' || !response.data) { fail(); return; }
+                var data = response.data;
+                var template = a4 ? (data.regular_body_print || data.print_a4html) : (data.thermal_body_print || data.print_standard_html);
+                var target = $(a4 ? '.import-print' : '.import-standard-print');
+                var check = $('<div>').html(template || '');
+                var rows = a4 ? '.print-invoice-a4-table-content' : '.print-invoice-table-content';
+                if (!target.length || !check.find(rows).length) { fail(); return; }
+                target.html(template);
+                var fields = { print_store_name: 'branch_name', print_store_city: 'city', print_store_email: 'store_email',
+                    print_store_telephone: 'store_telephone', print_store_alternativephone: 'store_alternativephone',
+                    print_store_country: 'country', print_store_state: 'state', print_store_pincode: 'pincode' };
+                Object.keys(fields).forEach(function (field) { target.find('.' + field).text(data[fields[field]] || ''); });
+                render();
+            } catch (error) { view._purchasePrintFailed(); }
+        }, fail);
+    },
+    _purchasePrintEvent: function (stage) {
+        // Stage-only evidence: no purchase, supplier or item contents leave the renderer.
+        try { window.electronAPI?.diagnostics?.event('renderer', { stage: stage }).catch(function () {}); } catch (error) { /* Diagnostics must not block printing. */ }
+    },
+    _purchasePrintFailed: function () {
+        PosnicPro.receivings.view._purchasePrintEvent('purchase-print-failed');
+        PosnicPro.alert('error', 'Could not prepare the purchase for printing. Please check the purchase details and try again.');
+    },
     printReceivings: function (id, name) {
+        PosnicPro.receivings.view._preparePurchasePrint(function () {
+            PosnicPro.receivings.view._printReceivings(id, name);
+        });
+    },
+    returnPrintReceivings: function (id) {
+        PosnicPro.receivings.view._preparePurchasePrint(function () {
+            PosnicPro.receivings.view._returnPrintReceivings(id);
+        });
+    },
+    /*printing the receiving data held by this function*/
+    _printReceivings: function (id, name) {
         $('.Hide-Disc,.print-payment-status-hide,.print-sale-notes-hide').hide();
         $('.gst-text-value,.print_igst_tax_view,.cgst-text-value,.print_csgst_tax_view').html('');
         PosnicPro.get('receivings/' + id, function (response) {
+            try {
             if (response.type === 'success') {
                 var data = response.data;
                 $('#receipt_wrapper').removeClass('receipt_small receipt_medium receipt_large receipt_extra_large');
@@ -464,7 +510,7 @@ PosnicPro.receivings.view = {
                 } else {
                     $(".branch_image").css("display", "none");
                 }
-                PosnicPro.printBarcode();
+                if (data.receipt_barcode === true) { PosnicPro.printBarcode(); }
                 var length = data.items.length;
                 var length_return = data.items_return.length;
                 var itemTotalQty = 0;
@@ -819,15 +865,17 @@ PosnicPro.receivings.view = {
                 var contentone = $(".print-modal-a4-body").html();
                 var canvas = document.getElementById("canvasTarget");
                 var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
+                PosnicPro.receivings.view._purchasePrintEvent('purchase-print-dispatch');
                 PosnicPro.printView(PosnicPro.resolvePrintType() === 'a4' ? contentone : contents, img);
                 $('.invoice-table-content div').empty();
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
-        });
+            } catch (error) { PosnicPro.receivings.view._purchasePrintFailed(); }
+        }, function () { PosnicPro.receivings.view._purchasePrintFailed(); });
     },
     /*Perticular Returned printing the receiving data held by this function*/
-    returnPrintReceivings: function (id) {
+    _returnPrintReceivings: function (id) {
         $('.print-sale-notes-hide').hide();
         var data = {
             id: id
@@ -837,6 +885,7 @@ PosnicPro.receivings.view = {
             data: data
         };
         PosnicPro.get(params, function (response) {
+            try {
             $('.gst-text-value,.print_igst_tax_view,.cgst-text-value,.print_csgst_tax_view').html('');
             if (response.type === 'success') {
                 var data = response.data.custom_data;
@@ -852,14 +901,14 @@ PosnicPro.receivings.view = {
                 $('.print_date').text(data.date);
                 $('.print_view_id').html('#' + data.receiving_id);
                 $('.print-invoice-payment-mode').html(data.payment_mode);
-                $('.barcodeValue').val(data.receiving_id);
+                $('#barcodeValue').val(data.receiving_id);
                 $('.hide_customer_details').show();
                 $('.print-custom-title').html(PosnicPro.i18n.t('lang_supplydetails_title', 'Supplier Details'));
                 $('.print-name').html(data.supplier_name);
                 $('.print-phone').html(data.supplier_phone);
                 $('.print-email').html(data.supplier_email);
                 $('.print-address').html(data.supplier_address);
-                PosnicPro.printBarcode();
+                if (data.receipt_barcode === true) { PosnicPro.printBarcode(); }
                 $('.print-invoice-a4-table-content tbody').children("tr").remove();
                 $('#tax_print_hide tbody').children("tr").remove();
                 $('.print-invoice-table-content').html('');
@@ -1088,16 +1137,15 @@ PosnicPro.receivings.view = {
                 var contentone = $(".print-modal-a4-body").html();
                 var canvas = document.getElementById("canvasTarget");
                 var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
+                PosnicPro.receivings.view._purchasePrintEvent('purchase-print-dispatch');
                 PosnicPro.printView(PosnicPro.resolvePrintType() === 'a4' ? contentone : contents, img);
                 $('.invoice-table-content div').empty();
 
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+            } catch (error) { PosnicPro.receivings.view._purchasePrintFailed(); }
+        }, function () { PosnicPro.receivings.view._purchasePrintFailed(); });
     },
     receivingPdf: function (id) {
         window.open(API_URL + 'receivings/receivingsPdf?id=' + id, "_blank");

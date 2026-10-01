@@ -3929,5 +3929,13 @@
   "lang_venue_kind": "Eneo",
   "lang_venue_markup": "Mgeni analipa zaidi",
   "lang_venue_name": "Jina la eneo",
-  "lang_venue_unit_label": "Jina la kitengo"
+  "lang_venue_unit_label": "Jina la kitengo",
+  "lang_sales_period": "Kipindi cha mauzo",
+  "lang_full_day": "Siku nzima",
+  "lang_all_24_hours": "Saa zote 24",
+  "lang_custom_time": "Muda maalumu",
+  "lang_choose_your_hours": "Chagua saa",
+  "lang_apply_time": "Tumia muda",
+  "lang_sales_time_filter": "Kichujio cha muda wa mauzo",
+  "lang_choose_a_sales_period": "Chagua kipindi cha mauzo"
 }

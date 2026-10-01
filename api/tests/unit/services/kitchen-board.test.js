@@ -222,7 +222,7 @@ test('serving, cancellation, new rounds and billing reconcile without merging ro
       { _id: saleId },
       { $set: { 'kitchen_service.c0i0': { quantity: 1 }, bill_requested_at: new Date() } }
     );
-  expect((await service.list(request())).tickets[0].items[0].qty).toBe(1);
+  expect((await service.list(request())).tickets).toEqual([]);
   await db.collection('sales').updateOne(
     { _id: saleId },
     {
@@ -230,7 +230,7 @@ test('serving, cancellation, new rounds and billing reconcile without merging ro
       $push: {
         items: { item_id: 'tea', item_name: 'Tea', item_quantity: 1 },
         changes: {
-          timestamp: new Date(),
+          timestamp: new Date(Date.now() + 1000),
           items: [{ item_id: 'tea', item_name: 'Tea', item_quantity: 1, process: 'add' }],
         },
       },
@@ -262,15 +262,21 @@ test('invalid and skipped transitions do not change an order', async () => {
   expect((await service.list(request())).tickets[0].state).toBe('new');
 });
 
-test('new tracked KOT remains after payment, legacy paid and counter receipts stay out', async () => {
-  await db.collection('sales').updateOne({ _id: saleId }, { $set: { payment_status: 'Paid' } });
+test('settlement removes tracked and legacy kitchen tickets without marking items served', async () => {
+  await db
+    .collection('sales')
+    .updateOne({ _id: saleId }, { $set: { payment_status: 'Paid', kitchen_required: true } });
   expect((await service.list(request())).tickets).toHaveLength(0);
-  await db.collection('sales').updateOne({ _id: saleId }, { $set: { kitchen_required: true } });
-  expect((await service.list(request())).tickets).toHaveLength(1);
-  await service.transition(action());
-  await service.transition(lineAction('ready', 2, 1));
-  await service.captainAction(lineAction('collect', 2, 2, undefined, 'paid-collect-123456'));
-  await service.captainAction(lineAction('serve', 2, 3, undefined, 'paid-serve-12345678'));
+  expect((await db.collection('sales').findOne({ _id: saleId })).kitchen_service).toBeUndefined();
+});
+
+test('bill request removes a tracked order from the touch board', async () => {
+  await db
+    .collection('sales')
+    .updateOne(
+      { _id: saleId },
+      { $set: { kitchen_required: true, bill_requested_at: new Date(Date.now() + 1000) } }
+    );
   expect((await service.list(request())).tickets).toHaveLength(0);
 });
 
@@ -348,6 +354,26 @@ test('branch delay settings validate thresholds and require manager access', asy
   await expect(
     service.saveSettings({ ...req, user: { _id: userId, access: { sales: { write: true } } } })
   ).rejects.toMatchObject({ status: 403 });
+});
+
+test('paid takeaway remains actionable on touch board until served', async () => {
+  await db.collection('sales').updateOne(
+    { _id: saleId },
+    {
+      $set: {
+        fulfilment: 'takeaway',
+        kitchen_required: true,
+        payment_status: 'Paid',
+        bill_requested_at: new Date(Date.now() + 1000),
+      },
+    }
+  );
+  expect((await service.list(request())).tickets).toHaveLength(1);
+  await service.transition(action());
+  await service.transition(lineAction('ready', 2, 1));
+  await service.captainAction(lineAction('collect', 2, 2, undefined, 'takeaway-collect-12345'));
+  await service.captainAction(lineAction('serve', 2, 3, undefined, 'takeaway-serve-12345'));
+  expect((await service.list(request())).tickets).toHaveLength(0);
 });
 
 test('restructuring blocks kitchen updates until cancellation, while ordinary billing permits service', async () => {

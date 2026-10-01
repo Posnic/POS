@@ -3929,5 +3929,13 @@
   "lang_venue_kind": "Standort",
   "lang_venue_markup": "Aufpreis für den Gast",
   "lang_venue_name": "Name des Standorts",
-  "lang_venue_unit_label": "Bezeichnung einer Einheit"
+  "lang_venue_unit_label": "Bezeichnung einer Einheit",
+  "lang_sales_period": "Verkaufszeitraum",
+  "lang_full_day": "Ganzer Tag",
+  "lang_all_24_hours": "Alle 24 Stunden",
+  "lang_custom_time": "Benutzerdefinierte Zeit",
+  "lang_choose_your_hours": "Zeiten auswählen",
+  "lang_apply_time": "Zeit anwenden",
+  "lang_sales_time_filter": "Verkäufe nach Uhrzeit filtern",
+  "lang_choose_a_sales_period": "Verkaufszeitraum auswählen"
 }

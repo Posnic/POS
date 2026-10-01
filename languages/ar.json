@@ -3934,5 +3934,13 @@
   "lang_venue_kind": "الموقع",
   "lang_venue_markup": "مبلغ إضافي يدفعه الضيف",
   "lang_venue_name": "اسم الموقع",
-  "lang_venue_unit_label": "تسمية الوحدة"
+  "lang_venue_unit_label": "تسمية الوحدة",
+  "lang_sales_period": "فترة المبيعات",
+  "lang_full_day": "اليوم الكامل",
+  "lang_all_24_hours": "كل الساعات الأربع والعشرين",
+  "lang_custom_time": "وقت مخصص",
+  "lang_choose_your_hours": "اختر الساعات",
+  "lang_apply_time": "تطبيق الوقت",
+  "lang_sales_time_filter": "تصفية المبيعات حسب الوقت",
+  "lang_choose_a_sales_period": "اختر فترة المبيعات"
 }

@@ -114,6 +114,8 @@ const buildDailyPaymentAggregationPipeline = (match) => [
   { $sort: { total: -1 } },
 ];
 
+const getReportServingPeriods = async () => new ItemRepository().shopDayparts();
+
 // Lightweight helpers for controllers that still need branch metadata
 // Delegates to the BranchesRepository so that all branch DB access stays
 // inside the repository layer.
@@ -977,6 +979,43 @@ const processSale = async (
     } else if (existingSale && existingSale.sale_process === 'KOT' && !data.sale_process) {
       // Preserve existing KOT status if not explicitly changed
       saleProcess = 'KOT';
+    }
+
+    // A full payment must cover the server-calculated bill, including tax;
+    // an explicit partial tender must cover the amount being recorded as paid.
+    // Wallet flows have separate ledger semantics. Never silently
+    // increase a submitted tender or rewrite an already collected payment.
+    if (
+      (paymentStatus === 'Paid' || paymentStatus === 'Partialy Paid') &&
+      data.wallet_check !== true &&
+      data.wallet_check !== 'true' &&
+      data.multi_payment &&
+      typeof data.multi_payment === 'object' &&
+      Object.keys(data.multi_payment).length > 0
+    ) {
+      const amounts = Array.isArray(data.multi_payment)
+        ? data.multi_payment.map((payment) => payment?.amount)
+        : Object.values(data.multi_payment);
+      const invalid = amounts.some(
+        (amount) =>
+          (typeof amount !== 'number' && typeof amount !== 'string') ||
+          String(amount).trim() === '' ||
+          !Number.isFinite(Number(amount)) ||
+          Number(amount) < 0
+      );
+      const tenderMinor = amounts.reduce(
+        (sum, amount) => sum + Math.round(Number(amount) * 100),
+        0
+      );
+      const expectedTender = partialCheck ? partialBalance : effectiveDue;
+      const dueMinor = Math.round(expectedTender * 100);
+      if (invalid || !Number.isSafeInteger(tenderMinor) || tenderMinor !== dueMinor) {
+        return {
+          status: false,
+          data: null,
+          message: `Payment total does not match the ${partialCheck ? 'payment amount' : 'bill total'} (${expectedTender.toFixed(2)}). Review the payment amount before saving.`,
+        };
+      }
     }
 
     // Customer
@@ -2942,6 +2981,7 @@ module.exports = {
   getSalesByProduct,
   getLatestSales,
   getBranchById,
+  getReportServingPeriods,
   getDailySalesReportAggregates,
   getDailyReportPdfAggregates,
   getSalesGraphicalReportData,

@@ -16,8 +16,9 @@
  * have printed anything.
  *
  * So this boots a real Express app on a real port, in front of a real MongoDB,
- * and points a real BillManager at it with a fake printer on the end. The only
- * thing pretending here is the paper.
+ * and points a real BillManager at it with a fake printer on the end. The
+ * Electron raster-rendering boundary is simulated; document contents, routing
+ * and queue acknowledgement still pass through the real API and desktop code.
  */
 
 const http = require('http');
@@ -26,11 +27,19 @@ const express = require('express');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 
+// The API suite runs in Node, without Electron's app/BrowserWindow. The desktop
+// design tests cover rendering; this contract verifies the exact document that
+// reaches that boundary and the bytes passed onward to the selected printer.
+jest.mock('../../../../src/bill-design', () => ({
+  renderBill: jest.fn(async (document) => Buffer.from(JSON.stringify(document))),
+}));
+const billDesign = require('../../../../src/bill-design');
+
 const Sale = require('../../../src/models/sale.model');
 const BaseModel = require('../../../src/models/base.model');
 const PrintJob = require('../../../src/models/print-job.model');
 const repo = require('../../../src/repositories/sale.repository');
-const salesController = require('../../../src/controllers/sales.controller');
+let salesController;
 const { ensureKioskKey } = require('../../../src/middleware/kiosk-key');
 
 /* The desktop's own file, not a copy of it. Four directories up is the repo
@@ -136,6 +145,9 @@ const openTicket = (table = 'T4') =>
 beforeAll(async () => {
   mem = await MongoMemoryServer.create();
   await mongoose.connect(mem.getUri('posnic'));
+  BaseModel.mongoClient = mongoose.connection.getClient();
+  BaseModel.database = mongoose.connection.db;
+  salesController = require('../../../src/controllers/sales.controller');
 
   process.env.KIOSK_API_KEY = KEY;
 
@@ -167,6 +179,8 @@ afterAll(async () => {
   delete process.env.KIOSK_API_KEY;
   if (server) await new Promise((r) => server.close(r));
   await mongoose.disconnect();
+  BaseModel.mongoClient = null;
+  BaseModel.database = null;
   if (mem) await mem.stop();
 });
 
@@ -174,6 +188,7 @@ beforeEach(async () => {
   await Sale.deleteMany({});
   await PrintJob.deleteMany({});
   BaseModel.license = null;
+  billDesign.renderBill.mockClear();
 });
 
 describe('a bill asked for on the floor, printed by a till over the wire', () => {
@@ -185,14 +200,14 @@ describe('a bill asked for on the floor, printed by a till over the wire', () =>
     await oneCloudPass(aTill(hardware));
 
     expect(hardware.jobs).toHaveLength(1);
-    /*
-     * The contents, not just the fact of a job. escpos-receipt renders a VIEW
-     * MODEL - storeName, items[].name, total - and a sale document has none of
-     * those field names. Handing the document over prints a header, an empty
-     * table and 0.00, with no error anywhere, which reads on the counter as a
-     * printer fault. That is what shipped before helpers/bill-payload.js, and
-     * it is why this asserts on the characters.
-     */
+    // Saved-design documents replaced the plain-text renderer for this path.
+    // Check the contents at that boundary, not just whether any bytes appeared.
+    expect(billDesign.renderBill).toHaveBeenCalledTimes(1);
+    const document = billDesign.renderBill.mock.calls[0][0];
+    expect(document.items).toEqual(
+      expect.arrayContaining([expect.objectContaining({ item_name: 'Chicken Biryani' })])
+    );
+    expect(Number(document.items_total)).toBe(440);
     expect(hardware.jobs[0].text).toContain('Chicken Biryani');
     expect(hardware.jobs[0].text).toContain('440');
     expect(hardware.jobs[0].name).toBe('EPSON TM-T82');

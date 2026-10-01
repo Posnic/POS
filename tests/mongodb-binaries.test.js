@@ -51,7 +51,14 @@ test('the check runs before every build that packages MongoDB', () => {
   assert.ok(builds.length >= 3, `only found ${builds.length} prebuild scripts`);
 
   for (const script of builds) {
-    assert.match(pkg.scripts[script], /check:mongodb/,
+    const visited = new Set();
+    function expanded(name) {
+      if (visited.has(name)) return '';
+      visited.add(name);
+      const command = pkg.scripts[name] || '';
+      return command.replace(/npm run ([\w:-]+)/g, (match, child) => match + ' ' + expanded(child));
+    }
+    assert.match(expanded(script), /check:mongodb/,
       `${script} does not check for the MongoDB binaries. electron-builder ` +
       `treats a missing extraResources path as nothing to copy, so the build ` +
       `would succeed and the till would fail.`);

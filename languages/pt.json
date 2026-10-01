@@ -3929,5 +3929,13 @@
   "lang_venue_kind": "Estabelecimento",
   "lang_venue_markup": "Hóspede paga a mais",
   "lang_venue_name": "Nome do estabelecimento",
-  "lang_venue_unit_label": "Nome da unidade"
+  "lang_venue_unit_label": "Nome da unidade",
+  "lang_sales_period": "Período de vendas",
+  "lang_full_day": "Dia inteiro",
+  "lang_all_24_hours": "Todas as 24 horas",
+  "lang_custom_time": "Horário personalizado",
+  "lang_choose_your_hours": "Escolher horários",
+  "lang_apply_time": "Aplicar horário",
+  "lang_sales_time_filter": "Filtro de horário de vendas",
+  "lang_choose_a_sales_period": "Escolher um período de vendas"
 }

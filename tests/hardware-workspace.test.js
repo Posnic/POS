@@ -104,3 +104,17 @@ test('portrait Full HD preview represents a 32 inch monitor without changing the
   assert.match(card.textContent,/40 × 71 cm/);assert.doesNotMatch(card.querySelector('.hw-screen-actions').textContent,/Unsaved/);
   assert.equal(w.screenState.displays[0].widthPx,2560);
 });
+
+test('active-order refresh gives progress, clears busy state and reports failed reads', async t => {
+ const {w,d,html}=setup(t);
+ w.eval(html.slice(html.indexOf('        async function refreshKitchenOrders'),html.indexOf('        async function refreshScreens')));
+ const button=d.getElementById('screenOrdersRefresh'), status=d.getElementById('screenOrdersStatus');
+ let finish; w.posnicKitchenScreen={refresh:()=>new Promise(resolve=>finish=resolve)};
+ const updating=w.refreshKitchenOrders(button);
+ assert.equal(button.disabled,true); assert.match(status.textContent,/Checking/);
+ finish({ok:true}); await updating;
+ assert.equal(button.disabled,false); assert.match(status.textContent,/updated/);
+ w.posnicKitchenScreen.refresh=async()=>({ok:false,why:'Connection unavailable'});
+ await w.refreshKitchenOrders(button);
+ assert.equal(button.disabled,false); assert.equal(status.textContent,'Connection unavailable');
+});

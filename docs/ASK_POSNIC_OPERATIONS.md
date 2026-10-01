@@ -1166,3 +1166,24 @@ node api/scripts/ask-posnic-ocr-ui-check.js
 Commercial pricing/payment lifecycle checks, provider invoice reconciliation,
 real own-key and WhatsApp acceptance, an independent multilingual pilot and
 coordinated production rollout remain open.
+
+### Subsequent develop integration
+
+Develop advanced during OCR validation. The release branch now also includes
+`af5d6ea6`; the Dutch translation conflict retained both independent sets of keys.
+Frontend build `ea63853b0eacf6f2`, authenticated Ask Posnic application smoke and
+desktop/mobile Ask Posnic checks passed on the combined application code.
+
+The full API run passed 489 suites/12,355 tests and found three failures in the
+print wire-contract suite, with 13 existing skipped tests. The newer saved-design
+printing path requires Electron, so that Node-only contract now simulates the
+renderer boundary and asserts the actual document fields and printer bytes. Its
+eight tests then passed. The full desktop run passed 3,785 tests and found one
+obsolete assertion forbidding the newly added kitchen refresh button, with five
+existing skips. That test now allows only the explicit refresh control while
+retaining the read-only/no-editing checks; all 84 kitchen/printing focused checks
+passed. An earlier desktop attempt exited without recorded final counts.
+
+These are completed full runs with failures resolved by focused test repairs,
+not fresh clean full-suite runs after the repairs. Application code did not change
+after those runs. No test, CI job or production protection was removed.

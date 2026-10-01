@@ -3929,5 +3929,13 @@
   "lang_venue_kind": "Lokasi",
   "lang_venue_markup": "Tamu membayar tambahan",
   "lang_venue_name": "Nama lokasi",
-  "lang_venue_unit_label": "Sebutan unit"
+  "lang_venue_unit_label": "Sebutan unit",
+  "lang_sales_period": "Periode penjualan",
+  "lang_full_day": "Sehari penuh",
+  "lang_all_24_hours": "Seluruh 24 jam",
+  "lang_custom_time": "Waktu khusus",
+  "lang_choose_your_hours": "Pilih jam",
+  "lang_apply_time": "Terapkan waktu",
+  "lang_sales_time_filter": "Filter waktu penjualan",
+  "lang_choose_a_sales_period": "Pilih periode penjualan"
 }

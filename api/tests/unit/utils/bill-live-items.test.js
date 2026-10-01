@@ -80,3 +80,32 @@ test.each([
   const snapshot = snapshotFrom([sale], shop, '1');
   expect(snapshot.lines[0].components.find((row) => row.key === 'adjustment').minor).toBe(0);
 });
+
+test('queued bills carry the saved desktop design and only printable data', () => {
+  const design = { version: 1 };
+  const bill = buildBillPayload(
+    {
+      sales_id: 'S-123',
+      sales_sub_total: 250,
+      sales_total: 262.5,
+      tax: 12.5,
+      items: [
+        {
+          item_name: 'Rice',
+          item_quantity: 1,
+          item_base_price: 250,
+          item_price: 250,
+          total_amount: 262.5,
+        },
+        { item_name: 'Cancelled', item_quantity: 1, item_price: 999, cancelled: true },
+      ],
+    },
+    { ...branch, receipt_designs: design, api_key: 'never-print-this', currency: 'Rs' }
+  );
+  expect(bill.receiptDocument.receipt_designs).toEqual(design);
+  expect(bill.receiptDocument.items_total).toBe(262.5);
+  expect(bill.receiptDocument.receipt_line_rows).toHaveLength(1);
+  expect(bill.receiptDocument.receipt_line_rows[0].amount).toBe(250);
+  expect(bill.receiptDocument.receipt_tax_rows).toEqual(bill.taxes);
+  expect(bill.receiptDocument.api_key).toBeUndefined();
+});

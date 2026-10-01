@@ -3929,5 +3929,13 @@
   "lang_venue_kind": "സ്ഥലം",
   "lang_venue_markup": "അതിഥി അധികമായി നൽകുന്നു",
   "lang_venue_name": "സ്ഥലത്തിന്റെ പേര്",
-  "lang_venue_unit_label": "യൂണിറ്റിനെ വിളിക്കുന്ന പേര്"
+  "lang_venue_unit_label": "യൂണിറ്റിനെ വിളിക്കുന്ന പേര്",
+  "lang_sales_period": "വിൽപ്പന കാലയളവ്",
+  "lang_full_day": "മുഴുവൻ ദിവസം",
+  "lang_all_24_hours": "എല്ലാ 24 മണിക്കൂറും",
+  "lang_custom_time": "ഇഷ്ടാനുസൃത സമയം",
+  "lang_choose_your_hours": "സമയം തിരഞ്ഞെടുക്കുക",
+  "lang_apply_time": "സമയം പ്രയോഗിക്കുക",
+  "lang_sales_time_filter": "വിൽപ്പന സമയ ഫിൽട്ടർ",
+  "lang_choose_a_sales_period": "വിൽപ്പന കാലയളവ് തിരഞ്ഞെടുക്കുക"
 }

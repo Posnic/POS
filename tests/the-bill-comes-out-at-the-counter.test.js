@@ -1103,3 +1103,24 @@ test('a sale with no tax prints no tax row at all', () => {
   const payload = buildBillPayload({ ...A_REAL_SALE, tax: 0 }, THE_SHOP);
   assert.deepEqual(payload.taxes, []);
 });
+
+
+test('saved-design bills render before submission and never fall back after a rendering failure', async () => {
+  const design = require('../src/bill-design');
+  const original = design.renderBill;
+  const hardware = fakeHardware();
+  const manager = new BillManager(hardware, { branchId: 'b1' });
+  try {
+    design.renderBill = async () => { throw new Error('layout failed'); };
+    await manager._printOne({ receiptDocument: { sales_id: 'S1', items: [] } });
+    assert.equal(hardware.jobs.length, 0);
+    design.renderBill = async (data, paper) => {
+      assert.equal(data.sales_id, 'S1');
+      assert.ok(['58', '80'].includes(paper));
+      return Buffer.from('designed receipt');
+    };
+    await manager._printOne({ receiptDocument: { sales_id: 'S1', items: [] } });
+    assert.equal(hardware.jobs.length, 1);
+    assert.equal(hardware.jobs[0].bytes.toString(), 'designed receipt');
+  } finally { design.renderBill = original; manager.stop(); }
+});

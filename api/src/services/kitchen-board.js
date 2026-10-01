@@ -1,7 +1,7 @@
 'use strict';
 const { ObjectId } = require('mongodb');
 const { context, allowed, fail } = require('../utils/branch-access');
-const { rounds, progress } = require('../helpers/kitchen-rounds');
+const { rounds, activeRounds, progress } = require('../helpers/kitchen-rounds');
 const states = ['new', 'preparing', 'ready'];
 const filter = (c) => ({
   license: c.license,
@@ -16,7 +16,7 @@ async function scope(req) {
 function project(sale) {
   // Kitchen instructions are not inferred from product marketing descriptions.
   // Keep legacy line IDs identical to Captain, even when descriptions are hidden.
-  return rounds(sale, { descriptions: false }).flatMap((round) => {
+  return activeRounds(sale, { descriptions: false }).flatMap((round) => {
     const work = sale.kitchen_work?.[round.id] || {};
     const items = round.items
       .filter((i) => !i.held && i.remaining > 0)
@@ -92,6 +92,12 @@ async function list(req) {
           kitchen_service: 1,
           kitchen_work: 1,
           kitchen_actor: 1,
+          payment_status: 1,
+          fulfilment: 1,
+          dine_type: 1,
+          bill_requested_at: 1,
+          bill_printed_at: 1,
+          captain_payments: 1,
         },
       }
     )

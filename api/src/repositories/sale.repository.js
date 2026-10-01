@@ -1610,6 +1610,12 @@ class SalesRepository {
       }
 
       if (transferredBill) normalized.transferred_bill = transferredBill;
+      normalized.receipt_line_rows =
+        transferredBill?.items ||
+        require('../helpers/bill-payload').itemLines(saleDoc, branchDoc || {});
+      normalized.receipt_tax_rows =
+        transferredBill?.taxes ||
+        require('../helpers/bill-payload').taxRows(saleDoc, branchDoc || {});
 
       return {
         status: true,
@@ -8192,6 +8198,10 @@ class SalesRepository {
               kitchen_service: 1,
               kitchen_work: 1,
               kitchen_required: 1,
+              payment_status: 1,
+              fulfilment: 1,
+              dine_type: 1,
+              captain_payments: 1,
               bill_requested_at: 1,
               bill_printed_at: 1,
             },

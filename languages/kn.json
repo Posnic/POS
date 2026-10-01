@@ -3929,5 +3929,13 @@
   "lang_venue_kind": "ಸ್ಥಳ",
   "lang_venue_markup": "ಅತಿಥಿ ಹೆಚ್ಚುವರಿಯಾಗಿ ಪಾವತಿಸುತ್ತಾರೆ",
   "lang_venue_name": "ಸ್ಥಳದ ಹೆಸರು",
-  "lang_venue_unit_label": "ಘಟಕವನ್ನು ಏನೆಂದು ಕರೆಯುತ್ತಾರೆ"
+  "lang_venue_unit_label": "ಘಟಕವನ್ನು ಏನೆಂದು ಕರೆಯುತ್ತಾರೆ",
+  "lang_sales_period": "ಮಾರಾಟದ ಅವಧಿ",
+  "lang_full_day": "ಪೂರ್ಣ ದಿನ",
+  "lang_all_24_hours": "ಎಲ್ಲಾ 24 ಗಂಟೆಗಳು",
+  "lang_custom_time": "ಕಸ್ಟಮ್ ಸಮಯ",
+  "lang_choose_your_hours": "ಸಮಯವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+  "lang_apply_time": "ಸಮಯ ಅನ್ವಯಿಸಿ",
+  "lang_sales_time_filter": "ಮಾರಾಟ ಸಮಯದ ಫಿಲ್ಟರ್",
+  "lang_choose_a_sales_period": "ಮಾರಾಟದ ಅವಧಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ"
 }

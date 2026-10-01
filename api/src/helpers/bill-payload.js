@@ -493,7 +493,7 @@ function buildBillPayload(sale = {}, branch = {}) {
     .map((p) => String(p || '').trim())
     .filter(Boolean);
 
-  return {
+  const payload = {
     storeName: String(branch.branch_name || sale.branch_name || '').trim(),
     storeAddress: String(branch.store_address || '').trim(),
     storePhone: phones.join(' / '),
@@ -616,6 +616,98 @@ function buildBillPayload(sale = {}, branch = {}) {
     serviceRows: extraRows(sale, branch, items),
     extras: [],
   };
+  // Transfer documents have their own exact-allocation presentation, shared
+  // with desktop history. Do not reconstruct them from rounded unit prices.
+  if (!allocation) payload.receiptDocument = receiptDocument(sale, branch, payload);
+  return payload;
+}
+
+function receiptDocument(sale, branch, bill) {
+  const doc = {};
+  for (const key of [
+    'receipt_designs',
+    'branch_name',
+    'printing_address',
+    'store_telephone',
+    'store_email',
+    'branch_gstin_number',
+    'branch_fssai_number',
+    'logo',
+    'country',
+    'table_options',
+    'website',
+    'header_print',
+    'footer_print',
+    'footer_image',
+    'footer_image_caption',
+    'footer_qr_url',
+    'print_logoimg',
+    'customer_print',
+    'receipt_barcode',
+    'print_sale_notes',
+    'print_url',
+    'print_type',
+    'print_width',
+    'bill_print_table',
+    'bill_print_dine_type',
+    'bill_print_covers',
+    'bill_print_steward',
+    'bill_print_session',
+    'bill_print_fssai',
+    'bill_print_source',
+    'bill_print_hsn',
+    'bill_print_total_qty',
+  ]) {
+    if (branch[key] !== undefined) doc[key] = branch[key];
+  }
+  for (const key of [
+    'sales_id',
+    'table_number',
+    'dine_type',
+    'person_count',
+    'created_by',
+    'customer_name',
+    'customer_phone',
+    'customer_address',
+    'customer_email',
+    'customer_gst_number',
+    'sales_description',
+  ]) {
+    if (sale[key] !== undefined) doc[key] = sale[key];
+  }
+  doc.branch_name = bill.storeName;
+  doc.printing_address = doc.printing_address || bill.storeAddress;
+  doc.created_date = bill.date;
+  doc.currency_type = bill.currency;
+  doc.gst = branch.indian_gst === 'gst_on' ? 'enable' : sale.gst;
+  doc.serving_session = sessionName(sale, branch);
+  doc.order_source = orderSource(sale);
+  doc.items_subtotal = bill.subTotal;
+  doc.items_total = bill.total;
+  doc.tax = num(sale.tax ?? sale.tax_amount);
+  doc.receipt_tax_rows = bill.taxes;
+  doc.receipt_line_rows = bill.items;
+  doc.discount = bill.discount;
+  doc.sale_extra_discount = num(sale.sale_extra_discount);
+  doc.round_off = bill.roundOff;
+  doc.charges = Array.isArray(sale.charges)
+    ? sale.charges.map((c) => ({ name: c.name, amount: c.amount, tax_amount: c.tax_amount }))
+    : [];
+  doc.items = (sale.items || []).filter(billable).map((item) => ({
+    item_name: item.item_name || item.name,
+    item_quantity: num(item.item_quantity ?? item.quantity ?? item.qty),
+    item_price: num(item.item_price ?? item.unit_price ?? item.item_base_price ?? item.price),
+    item_unit: item.item_unit || item.unit || '',
+    total_amount: num(item.total_amount ?? item.total ?? item.item_total),
+    item_discount: num(item.item_discount),
+    item_discount_percentage: num(item.item_discount_percentage),
+    igst_tax: num(item.igst_tax),
+    cgst_tax: num(item.cgst_tax),
+    sgst_tax: num(item.sgst_tax),
+    hsncode: item.hsncode,
+    ...require('../utils/item-localization').snapshot(item),
+  }));
+  return doc;
 }
 
 /*
@@ -625,4 +717,4 @@ function buildBillPayload(sale = {}, branch = {}) {
  * what counts as a number, a sale could be filed under a guest whose receipt
  * says there was no guest.
  */
-module.exports = { buildBillPayload, isDialable, sessionName };
+module.exports = { buildBillPayload, isDialable, sessionName, taxRows, itemLines };
