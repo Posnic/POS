@@ -352,6 +352,19 @@ async function main() {
         assert.equal(retiredDuringAnswer.body.data.citations.length, 0);
       } finally { repo.resolveGroup = originalResolve; global.fetch = originalFetch; }
     }
+    const confirmedCount = await db.collection('ask_posnic_audit').countDocuments({ event: 'action_confirmed' });
+    let telemetry;
+    for (let attempt = 0; attempt < 40; attempt++) {
+      telemetry = await db.collection('ask_posnic_metrics').find({ license: String(license) }).toArray();
+      const actions = telemetry.filter(row => row.kind === 'quality').reduce((n, row) => n + (row.actions_confirmed || 0), 0);
+      if (actions === confirmedCount && telemetry.some(row => row.kind === 'request' && row.requests > 0) && telemetry.some(row => row.kind === 'cost' && row.cost_microminor > 0)) break;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    assert.equal(telemetry.filter(row => row.kind === 'quality').reduce((n, row) => n + (row.actions_confirmed || 0), 0), confirmedCount);
+    assert.ok(telemetry.some(row => row.kind === 'request' && row.requests > 0));
+    assert.ok(telemetry.some(row => row.kind === 'provider' && row.succeeded > 0));
+    assert.ok(telemetry.some(row => row.kind === 'cost' && row.cost_microminor > 0));
+    assert.ok(telemetry.every(row => !('question' in row) && !('answer' in row) && !('user_id' in row)));
     if (live) {
       const credit = await db.collection('managed_ai_credits').findOne({ license: String(license) });
       assert.equal(credit.reserved_minor, 0);

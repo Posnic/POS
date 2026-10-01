@@ -81,6 +81,7 @@
     "supplier_message_drafts": "Private supplier-message drafts stay with the user and installation that prepared them. They never send automatically or replicate independently of purchase orders.",
     "ask_posnic_audit": "Assistant security and usage events remain on the execution server; managed fleet telemetry is exported separately without prompt content.",
     "ask_posnic_feedback": "Per-user answer ratings stay with the local assistant quality records; fleet telemetry exports aggregate counts without prompt content.",
+    "ask_posnic_metrics": "Content-free daily counters stay on the execution server for 91 days; authenticated fleet reads return bounded aggregates. Replication would clobber atomic increments.",
     "managed_ai_credits": "Cloud allowance and reservations are billing authority state on the server that owns the managed provider credential.",
     "managed_ai_reservations": "Short-lived pre-call holds prevent concurrent managed model calls from overspending a shop allowance.",
     "ask_posnic_schedules": "Summary schedules execute on the server that owns their delivery channel; cloud and local installations operate independently.",

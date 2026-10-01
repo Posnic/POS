@@ -1057,3 +1057,63 @@ hit 12 failures in two timing-sensitive printer/MongoDB suites; both suites then
 passed all 18 tests on an unchanged isolated rerun. Thirteen existing tests remain
 skipped. The entire suite was not repeated after that rerun; the result is recorded
 as full-run failures resolved by focused reruns, not a single clean full-suite run.
+
+## Fleet operations follow-up, 1 October 2026
+
+Intranet's Ask Posnic page now links to **Usage and service health**. The page
+reads ten Cloud shops at a time through each host's existing authenticated Gateway
+control channel. It shows requests, unanswered help, rejection/failure counts,
+mean response time, model-call failures, submitted feedback, confirmed actions and
+estimated AI costs. Totals explicitly cover the displayed page. Currency and
+managed/own-key payer are kept separate; amounts are not provider invoices.
+
+POS writes `ask_posnic_metrics` as atomic daily UTC counters, local to the server
+that executed the request. The collection contains no prompts, answers, user IDs,
+source text or error messages and has a 91-day TTL. Existing personal conversation
+retention does not change these content-free aggregates. Cloud reads do not
+collect desktop/community activity. Requests rejected before authentication or
+rate limiting, process crashes and failed best-effort writes may be absent.
+Model-call health currently covers text generation and managed embeddings; own-key
+embedding costs are included when recorded, but their health is not instrumented.
+
+The date range is limited to 31 days within the last 90 days. Intranet uses four
+concurrent host reads, one active batch and a bounded 60-second cache. Gateway
+requires an exact `INSTANCE_NAME` match in its tenant registry and runs a bounded
+Mongo aggregation with a four-second execution limit. Existing ten-second remote
+control timeouts apply. A failed, stale or incompatible response is unavailable;
+empty windows say no observations. Neither state is evidence of zero activity.
+There is no historical backfill or guaranteed complete coverage interval.
+
+Unanswered help now uses an explicit verified-source flag, so built-in receipt,
+offline and refund guidance without document citations is not counted as unknown.
+Older audit rows lacking this flag are not retrospectively classified. Completed
+actions increment only on the first stable audit insertion; status/recovery replays
+cannot increment them again. These counters measure routing and operator feedback,
+not correctness. Independent answer-quality acceptance remains required.
+
+Roll out the POS, Gateway and Intranet candidates together, ensuring the existing
+per-host control credentials and `INSTANCE_NAME` are configured. No extra AWS
+service, telemetry secret or external monitoring subscription is required. This
+follow-up has not restarted customer services or activated production telemetry.
+Paid scanned-PDF OCR, approved commercial pricing/payment lifecycle checks,
+provider invoice reconciliation, real own-key and WhatsApp acceptance, and the
+independent multilingual pilot remain open.
+
+Validation: the API run passed 468 suites/11,721 tests, with 13 existing skips.
+After the final action-counter correction, all 70 focused AI/metering/metrics
+tests and the authenticated application smoke passed. The smoke verifies counters
+against real confirmed-action audit records and exercises synthetic own-key calls.
+Intranet passed 506 tests with seven skips; Gateway passed 216 with one skip.
+The fleet contract/browser check exercised 100 concurrent increments against real
+MongoDB, per-license storage, TTL indexes, currency separation, authenticated host
+routing, missing observations and escaped desktop/mobile rendering. Five sync
+classification checks passed. Frontend POS build `8b4fd03087368280` is unchanged;
+the new Intranet page uses its existing CSS and vanilla-JavaScript serving path.
+
+Reproduce the cross-service/browser check from `api` with both release roots set:
+
+```powershell
+$env:POSNIC_INTRANET_ROOT='C:/path/to/Intranet'
+$env:POSNIC_GATEWAY_ROOT='C:/path/to/Gateway'
+node scripts/ask-posnic-fleet-check.js
+```

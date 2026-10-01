@@ -151,12 +151,13 @@ class AskPosnicController {
         if (!answer) answer = 'I could not verify that from an approved Posnic source. Try a sales, profit, low-stock, receipt, offline, or refund question.';
         const data = {
           intent: 'help', period, answer, metrics: [], mode, conversation_id: conversationId,
+          verified: Boolean(matches.length || help),
           source: matches.length ? matches[0].title : help?.source || 'Ask Posnic capabilities',
           ...(!matches.length && help?.link ? { link: help.link } : {}),
           citations: matches.map((match) => ({ document_id: match.document_id, title: match.title, revision: match.revision, chunk: match.chunk, ...(match.pages?.length ? { pages: match.pages } : {}) })),
         };
         await platform.saveMessage(req, conversationId, 'assistant', data);
-        await platform.audit(req, 'question', { intent: 'help', mode, citations: data.citations });
+        await platform.audit(req, 'question', { intent: 'help', mode, citations: data.citations, verified: data.verified });
         return res.json({ type: 'success', message: 'Answer', data });
       }
 

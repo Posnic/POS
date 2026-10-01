@@ -356,6 +356,13 @@ async function record({ feature, model, tokensIn, tokensOut, payer, seconds, cal
     },
     { upsert: true }
   );
+  if (String(feature).startsWith('ask_posnic_')) {
+    void require('./ask-posnic-metrics.service').record(context, 'cost', {
+      calls: calls == null ? 1 : Number(calls) || 0,
+      tokens_in: Number(tokensIn) || 0, tokens_out: Number(tokensOut) || 0,
+      cost_microminor: costMicrominor({ model, tokensIn, tokensOut, rate: currency.rate }),
+    }, { currency: currency.code, payer });
+  }
   return minor;
 }
 

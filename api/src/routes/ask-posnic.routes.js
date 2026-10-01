@@ -11,7 +11,7 @@ router.use(protect);
 router.use(rateLimit({ windowMs: 60 * 1000, limit: 60, standardHeaders: true, legacyHeaders: false, keyGenerator: (req) => `${String(req.tenantContext?.licenseId || req.user?.license || '')}:${String(req.user?._id || req.user?.id || '')}` }));
 router.get('/status', controller.status.bind(controller));
 router.get('/recovery', controller.recoveryStatus.bind(controller));
-router.post('/ask', controller.ask.bind(controller));
+router.post('/ask', require('../services/ask-posnic-metrics.service').observe, controller.ask.bind(controller));
 router.get('/documents', controller.documents.bind(controller));
 router.get('/documents/:id', controller.document.bind(controller));
 router.post('/documents', controller.addDocument.bind(controller));

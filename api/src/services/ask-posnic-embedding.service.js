@@ -13,7 +13,7 @@ async function embed(text, context, feature = 'ask_posnic_query_embedding') {
   try {
     hold = await credits.reserve(context, { feature, model: provider.EMBEDDING_MODEL, promptChars: Buffer.byteLength(text, 'utf8') * 3, maxOutputTokens: 0 });
     if (!hold.ok) return { status: false, message: hold.message };
-    const result = await provider.embed(text);
+    const result = await require('./ask-posnic-metrics.service').providerCall(feature, context, () => provider.embed(text));
     returned = true;
     await credits.reconcile(context, hold, result);
     await budget.record({ feature, ...result, payer: 'posnic' }, context).catch(() => {});

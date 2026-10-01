@@ -1,10 +1,26 @@
 'use strict';
 
 jest.mock('../../../src/models/base.model', () => function MockBaseModel() {});
+jest.mock('../../../src/services/ask-posnic-metrics.service', () => ({ record: jest.fn().mockResolvedValue() }));
 const platform = require('../../../src/services/ask-posnic-platform.service');
 
 describe('Ask Posnic capability policy', () => {
   const req = { user: { _id: 'user', license: 'shop', branch_id: 'outlet' } };
+
+  test('confirmed-action telemetry counts only the first audit projection, including recovery replays', async () => {
+    const BaseModel = require('../../../src/models/base.model');
+    const metrics = require('../../../src/services/ask-posnic-metrics.service');
+    const updateOne = jest.fn().mockResolvedValueOnce({ upsertedCount: 1 }).mockResolvedValue({ upsertedCount: 0 });
+    const draft = { _id: 'aaaaaaaaaaaaaaaaaaaaaaaa', type: 'stock_count', status: 'completed', output: { private: 'business output' } };
+    BaseModel.prototype.getCollection = jest.fn(async name => name === 'ask_posnic_audit' ? { updateOne }
+      : { findOne: async () => name === 'ask_posnic_action_drafts' ? draft : { _id: 'saved-count' } });
+    const actor = { user: { ...req.user, license: 'bbbbbbbbbbbbbbbbbbbbbbbb', branch_id: 'cccccccccccccccccccccccc' } };
+    await platform.actionOutcome(actor, draft._id);
+    await platform.actionOutcome(actor, draft._id);
+    expect(metrics.record).toHaveBeenCalledTimes(1);
+    expect(metrics.record).toHaveBeenCalledWith({ licenseId: actor.user.license }, 'quality', { actions_confirmed: 1 });
+    delete BaseModel.prototype.getCollection;
+  });
 
   test('rejects oversized authored knowledge instead of truncating restrictions', async () => {
     await expect(platform.saveDocument(req, { title: 'Policy', content: 'x'.repeat(200001) })).rejects.toThrow(/200,000/);

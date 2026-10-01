@@ -363,15 +363,18 @@ async function actionOutcome(req, id) {
 
 async function projectCompletedAction(req, draft, output) {
   // A stable audit ID lets status reads repair a missing audit entry exactly once.
-  await (await collection('ask_posnic_audit')).updateOne({ _id: `action_confirmed:${draft._id}` }, { $setOnInsert: {
+  const result = await (await collection('ask_posnic_audit')).updateOne({ _id: `action_confirmed:${draft._id}` }, { $setOnInsert: {
     ...scope(req), event: 'action_confirmed', at: draft.completed_at || now(),
     detail: { type: draft.type, draft_id: String(draft._id), output },
   } }, { upsert: true });
+  if (result?.upsertedCount === 1) void require('./ask-posnic-metrics.service').record({ licenseId: scope(req).license }, 'quality', { actions_confirmed: 1 });
 }
 
 async function audit(req, event, detail) {
   const s = scope(req);
   await (await collection('ask_posnic_audit')).insertOne({ ...s, event, detail, at: now() });
+  const counter = event === 'answer_feedback' && ['helpful', 'not_helpful'].includes(detail?.rating) ? detail.rating : null;
+  if (counter) void require('./ask-posnic-metrics.service').record({ licenseId: s.license }, 'quality', { [counter]: 1 });
 }
 
 async function listAudit(req) {
@@ -386,7 +389,7 @@ async function usage(req) {
     (await collection('ask_posnic_audit')).countDocuments({ license: s.license, event: 'question' }),
     (await collection('ask_posnic_audit')).countDocuments({ license: s.license, event: 'action_confirmed' }),
     (await collection('ask_posnic_documents')).countDocuments({ license: s.license, status: 'published' }),
-    (await collection('ask_posnic_audit')).countDocuments({ license: s.license, event: 'question', 'detail.intent': 'help', 'detail.citations.0': { $exists: false } }),
+    (await collection('ask_posnic_audit')).countDocuments({ license: s.license, event: 'question', 'detail.intent': 'help', 'detail.verified': false }),
     (await collection('ask_posnic_feedback')).countDocuments({ license: s.license, at: { $type: 'date', $gte: cutoff } }),
   ]);
   return { questions, confirmed_actions: actions, published_documents: documents, unanswered, feedback };

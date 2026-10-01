@@ -245,7 +245,7 @@ describe('the cap', () => {
      */
     const source = ai.ask.toString();
     const capAt = source.indexOf('withinCap');
-    const callAt = source.indexOf('await run(');
+    const callAt = source.indexOf("await require('./ask-posnic-metrics.service').providerCall(");
     expect(capAt).toBeGreaterThan(-1);
     expect(callAt).toBeGreaterThan(-1);
     expect(capAt).toBeLessThan(callAt);

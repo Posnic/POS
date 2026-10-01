@@ -628,7 +628,7 @@ async function ask(request, context) {
       reservation = await managedCredits.reserve(context, { feature, model, promptChars: Buffer.byteLength(prompt + String(request.system || ''), 'utf8') * 3, maxOutputTokens: MAX_OUTPUT_TOKENS });
       if (!reservation.ok) return { status: false, message: reservation.message, data: null };
     }
-    const answer = await run({ prompt, system: request.system, images, key, model });
+    const answer = await require('./ask-posnic-metrics.service').providerCall(feature, context, () => run({ prompt, system: request.system, images, key, model }));
     providerReturned = true;
     const text = answer && answer.text;
     if (!text) {
