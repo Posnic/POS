@@ -44,7 +44,9 @@ async function runStockBatch(db, scope, command, options = {}) {
     .sort((a, b) => a.itemId.localeCompare(b.itemId));
   if (new Set(lines.map((line) => line.itemId)).size !== lines.length) fail('duplicate_stock_item');
   const operationId = hash(`${license}:${branchId}:${command.extensionId}:${command.operationId}`);
-  const digest = hash(JSON.stringify({ actorId, lines }));
+  const digest = hash(
+    JSON.stringify({ actorId, lines, ...(command.stream ? { stream: command.stream } : {}) })
+  );
   const collection = db.collection('extension_stock_commands');
   try {
     await collection.insertOne({
@@ -73,6 +75,9 @@ async function runStockBatch(db, scope, command, options = {}) {
         itemId: line.itemId,
         operationId: `${operationId}:${index}${reverse ? ':reverse' : ''}`,
         deltaMilli: line.quantityMilli * (reverse ? 1 : -1),
+        ...(command.stream
+          ? { stream: command.stream, ...(reverse ? { reverseOf: `${operationId}:${index}` } : {}) }
+          : {}),
       }
     );
   if (journal.phase === 'applying') {

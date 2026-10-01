@@ -2,7 +2,7 @@
 // Process-local registry is populated only by the verified package loader at
 // API startup. HTTP requests cannot register code or choose module paths.
 const installed = new Map();
-const capabilities = Object.freeze(['namespace.commands.v1', 'stock.durable-debit.v1']);
+const capabilities = Object.freeze(['namespace.commands.v1', 'stock.durable-debit.v1', 'stock.lifecycle.v1']);
 function get(extensionId) {
   return installed.get(extensionId) || null;
 }

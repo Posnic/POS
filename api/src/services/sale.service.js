@@ -1357,6 +1357,8 @@ const processSale = async (
 
     const finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
     if (extensionStock) {
+      if (paymentStatus !== 'Paid')
+        return { status: false, message: 'Allocated quantities require a completed payment.' };
       await require('./extension-stock-allocations').validateSaleGrant(stockGrant, context, items);
       finalSaleData._id = extensionStock.saleId;
       finalSaleData.extension_stock_operation = extensionStock.stockOperationId;

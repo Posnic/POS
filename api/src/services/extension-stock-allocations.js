@@ -49,6 +49,7 @@ async function allocateForSale(db, scope, input) {
     branch_id: branchId,
     extensionId: input.extensionId,
     phase: 'committed',
+    lifecycle: { $exists: false },
   };
   const key = String(saleId);
   for (let attempt = 0; attempt < 30; attempt++) {
@@ -57,6 +58,7 @@ async function allocateForSale(db, scope, input) {
     const previous = journal.allocations?.[key];
     if (previous) {
       if (previous.digest !== digest) fail('stock_allocation_conflict');
+      if (previous.state === 'released') fail('stock_allocation_released');
       const grant = Object.freeze({});
       grants.set(grant, {
         db,
@@ -132,8 +134,14 @@ async function validateSaleGrant(grant, context, items) {
     fail('invalid_stock_grant');
   const requested = new Map();
   for (const item of items) {
-    const amount = Number(item.item_quantity) * 1000;
-    if (!Number.isSafeInteger(amount) || amount <= 0) fail('invalid_stock_grant_quantity');
+    const raw = Number(item.item_quantity) * 1000,
+      amount = Math.round(raw);
+    if (
+      !Number.isSafeInteger(amount) ||
+      amount <= 0 ||
+      Math.abs(raw - amount) > Math.min(0.000001, Number.EPSILON * Math.abs(raw) * 4)
+    )
+      fail('invalid_stock_grant_quantity');
     const key = String(asId(item.item_id));
     requested.set(key, (requested.get(key) || 0) + amount);
   }
@@ -149,6 +157,7 @@ async function validateSaleGrant(grant, context, items) {
       branch_id: record.branchId,
       phase: 'committed',
       [`allocations.${record.saleId}.digest`]: record.digest,
+      [`allocations.${record.saleId}.state`]: { $ne: 'released' },
     },
     { projection: { _id: 1 } }
   );
@@ -161,4 +170,50 @@ async function validateSaleGrant(grant, context, items) {
   };
 }
 
-module.exports = { allocateForSale, validateSaleGrant };
+async function releaseCancelledAllocation(db, scope, paymentId) {
+  const payment = await db
+    .collection('extension_payments')
+    .findOne({
+      _id: paymentId,
+      license: asId(scope.license),
+      branch_id: asId(scope.branchId),
+      status: 'cancelling',
+    });
+  if (!payment) fail('stock_release_not_authorized');
+  if (
+    await db
+      .collection('sales')
+      .findOne({ _id: payment.saleId, license: payment.license }, { projection: { _id: 1 } })
+  )
+    fail('stock_release_sale_exists');
+  const collection = db.collection('extension_stock_commands');
+  const filter = {
+    _id: payment.stockOperationId,
+    license: payment.license,
+    branch_id: payment.branch_id,
+    extensionId: payment.extensionId,
+    phase: 'committed',
+    lifecycle: { $exists: false },
+  };
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const row = await collection.findOne(filter),
+      key = String(payment.saleId);
+    if (!row?.allocations?.[key]) fail('stock_release_unavailable');
+    if (row.allocations[key].state === 'released') return { released: true };
+    const remaining = { ...row.remaining };
+    for (const line of row.allocations[key].lines) remaining[line.itemId] += line.quantityMilli;
+    const result = await collection.updateOne(
+      { ...filter, allocationRevision: row.allocationRevision },
+      {
+        $set: {
+          remaining,
+          allocationRevision: row.allocationRevision + 1,
+          [`allocations.${key}.state`]: 'released',
+        },
+      }
+    );
+    if (result.modifiedCount === 1) return { released: true };
+  }
+  fail('stock_release_busy');
+}
+module.exports = { allocateForSale, validateSaleGrant, releaseCancelledAllocation };

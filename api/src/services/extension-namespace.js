@@ -175,11 +175,20 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
       )
     )
       fail('extension_result_invalid', 422);
+    const sequence = (row.effectSequence || 0) + 1;
+    if (!Number.isSafeInteger(sequence)) fail('extension_sequence_exhausted');
     const locked = await namespaces.updateOne(
-      { ...key, revision: row.revision, pending: { $exists: false } },
+      {
+        ...key,
+        revision: row.revision,
+        pending: { $exists: false },
+        effectSequence: row.effectSequence === undefined ? { $exists: false } : row.effectSequence,
+      },
       {
         $set: {
+          effectSequence: sequence,
           pending: {
+            sequence,
             operationId,
             digest,
             phase: 'planned',
@@ -206,7 +215,14 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
     for (const effect of row.pending.plan.effects) {
       effectResults.push(
         await dependencies.executeEffect(
-          { db, scope, actorId, extensionId: descriptor.id, operationId },
+          {
+            db,
+            scope,
+            actorId,
+            extensionId: descriptor.id,
+            operationId,
+            sequence: row.pending.sequence,
+          },
           effect
         )
       );

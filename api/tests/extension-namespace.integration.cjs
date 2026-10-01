@@ -139,9 +139,13 @@ test('deletion clears payload, retries return only references and never revive d
 });
 test('compensated refusal releases the lane without committing planned state', async () => {
   const f = fixture();
+  const sequences = [];
   await assert.rejects(
     executeNamespace(db, f.scope, f.descriptor, f.actor, f.input, {
-      executeEffect: async () => ({ rejected: true }),
+      executeEffect: async (context) => {
+        sequences.push(context.sequence);
+        return { rejected: true };
+      },
     }),
     { code: 'extension_effect_rejected' }
   );
@@ -150,6 +154,20 @@ test('compensated refusal releases the lane without committing planned state', a
   });
   assert.equal((await readNamespace(db, f.scope, f.descriptor, f.actor)).revision, 0);
   assert.equal((await readNamespace(db, f.scope, f.descriptor, f.actor)).busy, false);
+  await executeNamespace(
+    db,
+    f.scope,
+    f.descriptor,
+    f.actor,
+    { ...f.input, requestKey: 'request-after-refusal-002' },
+    {
+      executeEffect: async (context) => {
+        sequences.push(context.sequence);
+        return { applied: true };
+      },
+    }
+  );
+  assert.deepEqual(sequences, [1, 2]);
 });
 test('permission, changed payload, stale revision and tenant isolation are enforced', async () => {
   const f = fixture();
