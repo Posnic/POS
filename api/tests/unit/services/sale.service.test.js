@@ -318,7 +318,7 @@ describe('SalesService', () => {
       expect(result.status).toBe(true);
       expect(salesRepository.create.mock.calls[0][0].payment_status).toBe('Unpaid');
     });
-});
+  });
 
   test('seating retry returns a saved sale before rechecking or deducting stock', async () => {
     mockItemRepositoryInstance.findItemById.mockResolvedValue(

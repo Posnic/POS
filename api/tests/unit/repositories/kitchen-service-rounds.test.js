@@ -198,14 +198,30 @@ test.each([
   expect(saved.items[0].item_quantity).toBe(2);
 });
 
-test.each([{fulfilment:'takeaway'}, {dine_type:'Take away'}, {dine_type:'Takeaway'}])('paid takeaway stays on wall until served: %j', async (type) => {
- await collection.updateOne({_id:id},{$set:{...type,kitchen_required:true,payment_status:'Paid',bill_requested_at:new Date(Date.now()+1000)}});
- expect((await repository.kitchenScreenTickets(String(branch))).data).toHaveLength(1);
- expect((await repository.serveKitchenItems(request())).status).toBe(true);
- expect((await repository.kitchenScreenTickets(String(branch))).data[0].items[0].qty).toBe(1);
- expect((await repository.serveKitchenItems({...request(),items:[{id:'c0i0',quantity:2}]})).status).toBe(true);
- expect((await repository.kitchenScreenTickets(String(branch))).data).toEqual([]);
-});
+test.each([{ fulfilment: 'takeaway' }, { dine_type: 'Take away' }, { dine_type: 'Takeaway' }])(
+  'paid takeaway stays on wall until served: %j',
+  async (type) => {
+    await collection.updateOne(
+      { _id: id },
+      {
+        $set: {
+          ...type,
+          kitchen_required: true,
+          payment_status: 'Paid',
+          bill_requested_at: new Date(Date.now() + 1000),
+        },
+      }
+    );
+    expect((await repository.kitchenScreenTickets(String(branch))).data).toHaveLength(1);
+    expect((await repository.serveKitchenItems(request())).status).toBe(true);
+    expect((await repository.kitchenScreenTickets(String(branch))).data[0].items[0].qty).toBe(1);
+    expect(
+      (await repository.serveKitchenItems({ ...request(), items: [{ id: 'c0i0', quantity: 2 }] }))
+        .status
+    ).toBe(true);
+    expect((await repository.kitchenScreenTickets(String(branch))).data).toEqual([]);
+  }
+);
 
 test('mark served waits for order restructuring but remains available during normal payment', async () => {
   await collection.updateOne(
