@@ -337,6 +337,14 @@ class SalesRepository {
       }
 
       const doc = { ...saleDoc };
+      // Preserve exact transferred amounts before legacy display normalization
+      // changes line aliases or derives totals from unit prices.
+      const transferredBill = saleDoc.captain_transfer_allocation
+        ? require('../helpers/bill-payload').buildBillPayload(
+          saleDoc, saleDoc.captain_transfer_allocation
+        )
+        : null;
+
 
       // Normalise legacy extra discount fields so that the sales edit and
       // return screens always receive meaningful values, even for older
@@ -1600,6 +1608,8 @@ class SalesRepository {
           }
         }
       }
+
+      if (transferredBill) normalized.transferred_bill = transferredBill;
 
       return {
         status: true,

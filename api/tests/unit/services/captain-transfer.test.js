@@ -874,6 +874,14 @@ test.each([
   expect(settled.payment_status).toBe('Paid');expect(minor(settled.paid_amount)).toBe(bill.totalMinor);
   expect(settled.items).toEqual(check.items);
   expect(require('../../../src/helpers/bill-payload').buildBillPayload(settled,shop)).toEqual(payload);
+  jest.spyOn(BaseModel,'getDb').mockResolvedValue(db);
+  const desktop=await runWithRequestContext({license,currentBranch:branch},()=>sales.getLegacyDetails(String(check._id)));
+  expect(desktop.status).toBe(true);
+  expect(desktop.data.transferred_bill.total).toBe(payload.total);
+  expect(desktop.data.transferred_bill.currencyDigits).toBe(policy.currencyDigits);
+  expect(desktop.data.transferred_bill.items).toEqual(payload.items);
+  expect(desktop.data.transferred_bill.taxes).toEqual(payload.taxes);
+  expect(await db.collection('sales').findOne({_id:check._id})).toEqual(settled);
   const listed=require('../../../src/helpers/sales.helper').formatSaleListEntry(settled);
   expect(listed.currencyCode).toBe(currencyCode);expect(listed.currencyDigits).toBe(policy.currencyDigits);
   expect(minor(listed.sales_total)).toBe(bill.totalMinor);
@@ -886,4 +894,15 @@ test.each([
  }
  expect(sum).toEqual({base:money.toMinor(base,policy),tax:money.toMinor(tax,policy),discount:money.toMinor(discount,policy),total:money.toMinor(total,policy),round:money.toMinor(round,policy)});
  expect(await service.complete(input)).toEqual(completed);
+});
+
+
+test('desktop receipt details reject a transferred bill whose stored amounts changed',async()=>{
+ const input=await confirmation();await service.complete(input);
+ await db.collection('sales').updateOne({_id:sale._id},{$inc:{sales_total:1}});
+ jest.spyOn(BaseModel,'getDb').mockResolvedValue(db);
+ const logged=jest.spyOn(console,'error').mockImplementation(()=>{});
+ const result=await runWithRequestContext({license,currentBranch:branch},()=>sales.getLegacyDetails(String(sale._id)));
+ expect(result).toMatchObject({status:false,data:null,message:'The bill changed. Refresh before continuing.'});
+ expect(logged).toHaveBeenCalled();
 });
