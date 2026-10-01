@@ -602,18 +602,24 @@ class AskPosnicController {
   }
 
   async document(req, res) {
+    const review = req.query?.review === '1' && isOwner(req);
     const preferences = await platform.getPreferences(req);
-    if (!platform.capabilityAllowed(preferences, 'help', req.user))
+    if (!review && !platform.capabilityAllowed(preferences, 'help', req.user))
       return res
         .status(403)
         .json({ type: 'error', message: 'Help is not enabled for your role.', data: null });
     const data = await platform.getDocument(req, req.params.id, {
       revision: req.query?.revision,
       chunk: req.query?.chunk,
+      review,
     });
     return res.status(data ? 200 : 404).json({
       type: data ? 'success' : 'error',
-      message: data ? 'Published source' : 'Source is no longer available.',
+      message: data
+        ? review
+          ? 'Source review'
+          : 'Published source'
+        : 'Source is no longer available.',
       data,
     });
   }

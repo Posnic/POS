@@ -10,9 +10,42 @@ PosnicPro.askposnic = {
         $('.page-title-box,#askposnic').show();
     },
     showDataTablePage: function () {
+        this.settingsOpen = false;
         this._chrome();
         this.bind();
         this.loadStatus();
+    },
+    showSettings: function () {
+        if (this.settingsLoading) return;
+        this.settingsLoading = true;
+        this.settingsOpen = true;
+        this.admin = false;
+        $('#ask_posnic_admin').hide();
+        $('#ask_settings_access').show().text(PosnicPro.i18n.t('lang_ask_checking_access', 'Checking access to Ask Posnic settings…'));
+        this.bind();
+        this.loadStatus();
+    },
+    settingsTab: function (key, focus) {
+        if (!this.admin || ['general', 'knowledge', 'access', 'usage', 'schedules'].indexOf(key) === -1) return;
+        this.activeSettingsTab = key;
+        $('[data-ask-tab]').each(function () {
+            var active = $(this).attr('data-ask-tab') === key;
+            $(this).attr({ 'aria-selected': String(active), tabindex: active ? '0' : '-1' });
+        });
+        $('.ask-settings-panel').prop('hidden', true);
+        $('#ask-settings-' + key).prop('hidden', false);
+        if (focus) $('#ask-tab-' + key).trigger('focus');
+        if (key === 'knowledge') this.loadDocuments();
+        if (key === 'schedules') this.loadSchedules();
+        if (key === 'usage') { PosnicPro.settings.ai.load(); this.loadAudit(); this.loadRecovery(); }
+    },
+    resetConversation: function () {
+        this.conversationId = null;
+        $('#ask_posnic_thread,#ask_history_list').empty();
+        $('#ask_posnic_welcome').prop('hidden', false);
+        $('#ask_history_panel').prop('hidden', true);
+        $('#ask_load_history').attr('aria-expanded', 'false');
+        $('#ask_posnic_question').val('').trigger('focus');
     },
     esc: function (value) { return $('<span>').text(value == null ? '' : value).html(); },
     add: function (kind, text, data) {
@@ -31,6 +64,7 @@ PosnicPro.askposnic = {
         if (data && data.action) details += '<button type="button" class="btn btn-sm btn-primary-rgba ask-posnic-action ask-posnic-draft-action" data-action="' + self.esc(data.action.type) + '" data-source="' + self.esc(data.action.source || '') + '" data-lookback-days="' + self.esc(data.action.lookback_days || '') + '" data-coverage-days="' + self.esc(data.action.coverage_days || '') + '">' + self.esc(data.action.label) + '</button>';
         if (kind === 'answer' && data && data.intent) details += '<span class="ask-posnic-feedback"><button type="button" class="btn btn-sm btn-link ask-feedback" data-rating="helpful" data-intent="' + self.esc(data.intent) + '">Helpful</button><button type="button" class="btn btn-sm btn-link ask-feedback" data-rating="not_helpful" data-intent="' + self.esc(data.intent) + '">Not helpful</button></span>';
         $('#ask_posnic_thread').append('<div class="ask-posnic-message ' + kind + '">' + self.esc(text) + details + '</div>');
+        $('#ask_posnic_welcome').prop('hidden', true);
         var node = $('#ask_posnic_thread')[0];
         if (node) node.scrollTop = node.scrollHeight;
     },
@@ -38,29 +72,44 @@ PosnicPro.askposnic = {
         var self = this;
         if (self.asking) return;
         self.asking = true;
+        $('#ask_posnic_progress').prop('hidden', false);
+        $('#ask_posnic_form button,#ask_new_conversation,#ask_load_history,#ask_delete_history,#ask_history_list button').prop('disabled', true);
+        $('#ask_posnic_thread').attr('aria-busy', 'true');
         self.add('user', question);
         $('#ask_posnic_question').prop('disabled', true);
         PosnicPro.request({ url: 'ask-posnic/ask', method: 'POST', data: JSON.stringify({ question: question, conversation_id: self.conversationId }) }, function (response) {
             self.asking = false;
+            self.finishQuestion();
             $('#ask_posnic_question').prop('disabled', false).focus();
             if (response && response.type === 'success' && response.data) { self.conversationId = response.data.conversation_id || self.conversationId; self.add('answer', response.data.answer, response.data); }
-            else self.add('answer', response.message || 'I could not answer that question.');
+            else self.add('answer', response && response.message || 'I could not answer that question.');
         }, function (xhr) {
             self.asking = false;
+            self.finishQuestion();
             $('#ask_posnic_question').prop('disabled', false).focus();
             var message = xhr && xhr.responseJSON && xhr.responseJSON.message;
             self.add('answer', message || 'I could not reach the shop data. Please try again.');
         });
     },
+    finishQuestion: function () {
+        $('#ask_posnic_progress').prop('hidden', true);
+        $('#ask_posnic_form button,#ask_new_conversation,#ask_load_history,#ask_delete_history,#ask_history_list button').prop('disabled', false);
+        $('#ask_posnic_thread').attr('aria-busy', 'false');
+    },
     loadStatus: function () {
         var self = this;
         PosnicPro.get('ask-posnic/status', function (response) {
             var data = response && response.data;
-            if (!data) return;
+            self.settingsLoading = false;
+            if (!data) {
+                $('#ask_posnic_admin').hide();
+                $('#ask_settings_access').show().text(PosnicPro.i18n.t('lang_ask_settings_failed', 'Settings could not be loaded. Reopen this page to try again.'));
+                return;
+            }
             var scope = data.scope && data.scope.license + ':' + data.scope.branch_id + ':' + data.scope.user_id;
-            if (self.scope && self.scope !== scope) { self.conversationId = null; $('#ask_posnic_thread,#ask_history_list,#ask_supplier_messages').empty(); }
+            if (self.scope && self.scope !== scope) { self.resetConversation(); $('#ask_supplier_messages').empty(); self.activeSettingsTab = 'general'; }
             self.scope = scope;
-            $('#ask_posnic_status').text(data.mode === 'own_key' ? 'Own AI key connected' : data.mode === 'managed' ? PosnicPro.i18n.t('lang_managed_ai', 'Managed AI') : PosnicPro.i18n.t('lang_direct_answers', 'Direct answers'));
+            $('#ask_posnic_status').text($('#branch_name option:selected').text() || PosnicPro.i18n.t('lang_live_shop_data', 'Live shop data'));
             var preferences = data.preferences || {};
             $('#ask_load_supplier_messages').toggle(data.can_supplier_messages === true);
             if (!data.can_supplier_messages) $('#ask_supplier_messages').empty();
@@ -79,7 +128,9 @@ PosnicPro.askposnic = {
             $('#ask_pref_help_roles').val((preferences.roles && preferences.roles.help) || []);
             $('#ask_pref_insight_roles').val((preferences.roles && preferences.roles.insights) || []);
             $('.ask-allowed-action').each(function () { $(this).prop('checked', (preferences.allowed_actions || []).indexOf($(this).val()) !== -1); });
-            $('#ask_posnic_admin').toggle(data.admin === true);
+            self.admin = data.admin === true;
+            $('#ask_posnic_admin').toggle(self.admin && self.settingsOpen === true);
+            $('#ask_settings_access').toggle(!self.admin).text(PosnicPro.i18n.t('lang_ask_owner_settings', 'Only shop owners and administrators can manage these settings.'));
             $('#ask_billing_link').toggle(!!data.billing_url && data.admin === true);
             $('#ask_billing_message').toggle(data.billing_unavailable === true);
             var usage = data.usage || {};
@@ -92,19 +143,25 @@ PosnicPro.askposnic = {
                 data.own_key_search ? { label: PosnicPro.i18n.t('lang_own_key_search_budget_remaining_estimate', 'Own-key search budget remaining (estimate)'), value: data.own_key_search.currency + ' ' + (Number(data.own_key_search.remaining_minor || 0) / 100).toFixed(4) } : null,
                 data.own_key_search && data.own_key_search.pending_calls ? { label: PosnicPro.i18n.t('lang_search_calls_pending_settlement_or_review', 'Search calls pending settlement or review'), value: data.own_key_search.pending_calls } : null
             ].filter(Boolean).map(function (item) { return '<span class="ask-posnic-metric"><strong>' + self.esc(item.value) + '</strong>' + self.esc(item.label) + '</span>'; }).join(''));
-            if (data.admin) { PosnicPro.askposnic.loadDocuments(); PosnicPro.askposnic.loadSchedules(); PosnicPro.askposnic.loadAudit(); PosnicPro.askposnic.loadRecovery(); }
+            if (self.admin && self.settingsOpen) self.settingsTab(self.activeSettingsTab || 'general');
+        }, function () {
+            self.settingsLoading = false;
+            $('#ask_posnic_admin').hide();
+            $('#ask_settings_access').show().text(PosnicPro.i18n.t('lang_ask_settings_failed', 'Settings could not be loaded. Reopen this page to try again.'));
         });
     },
     loadDocuments: function () {
         var self = this;
         PosnicPro.get('ask-posnic/documents', function (response) {
             var docs = response && response.data || [];
-            $('#ask_posnic_documents').html(docs.length ? docs.map(function (doc) {
-                var action = doc.status === 'published' ? '<button class="btn btn-sm btn-outline-secondary ask-doc-status" data-id="' + self.esc(doc._id) + '" data-status="retired">Retire</button>' : '<button class="btn btn-sm btn-outline-primary ask-doc-status" data-id="' + self.esc(doc._id) + '" data-status="published">Publish</button>';
+            function render(rows) { return rows.length ? rows.map(function (doc) {
+                var action = '<button class="btn btn-sm btn-outline-primary ask-doc-review" data-id="' + self.esc(doc._id) + '">' + PosnicPro.i18n.t('lang_review_title', 'Review') + '</button>';
                 var searchState = doc.semantic && ({ ready: 'Semantic search ready', pending: 'Search indexing queued', processing: 'Search indexing in progress', needs_review: 'Search indexing needs operator review' })[doc.semantic.state];
                 if ($('#ask_pref_own_semantic').is(':checked') && doc.own_semantic) searchState = ({ ready: 'Own-key search ready', pending: 'Own-key indexing queued', processing: 'Own-key indexing in progress', needs_review: 'Own-key indexing needs operator review' })[doc.own_semantic.state];
                 return '<div class="ask-posnic-document"><div><strong>' + self.esc(doc.title) + '</strong><small>' + self.esc(doc.kind + ' · ' + doc.status + ' · ' + doc.revision) + '</small>' + (searchState ? '<small>' + self.esc(searchState) + '</small>' : '') + '</div>' + action + '</div>';
-            }).join('') : '<p class="text-muted"><lang class="lang_no_knowledge_documents_yet">No knowledge documents yet.</lang></p>');
+            }).join('') : '<p class="text-muted"><lang class="lang_no_knowledge_documents_yet">No knowledge documents yet.</lang></p>'; }
+            $('#ask_posnic_documents').html(render(docs.filter(function (doc) { return doc.origin !== 'posnic-intranet'; })));
+            $('#ask_posnic_shared_documents').html(render(docs.filter(function (doc) { return doc.origin === 'posnic-intranet'; })));
         });
     },
     loadSchedules: function () {
@@ -136,6 +193,8 @@ PosnicPro.askposnic = {
     actionLink: function (type) { return type === 'supplier_message' ? '#/askposnic' : type === 'sale_draft' ? '#/quotes' : type === 'stock_count' ? '#/inventorycounts' : type === 'campaign' ? '#/customers' : '#/purchaseorders'; },
     loadSupplierMessages: function () {
         var self = this;
+        $('#ask_history_panel').prop('hidden', false);
+        $('#ask_load_history').attr('aria-expanded', 'true');
         $('#ask_supplier_messages').empty();
         PosnicPro.request({ url: 'ask-posnic/supplier-messages', method: 'GET' }, function (response) {
             if (!response || !response.data) return PosnicPro.alert('error', response && response.message || 'Could not load supplier-message drafts.');
@@ -241,7 +300,18 @@ PosnicPro.askposnic = {
             self.ask(question);
         });
         $('#ask_posnic_suggestions').on('click', 'button', function () { self.ask($(this).data('question')); });
-        $('#ask_new_conversation').on('click', function () { self.conversationId = null; $('#ask_posnic_thread,#ask_history_list').empty(); });
+        $('#ask_new_conversation').on('click', function () { if (!self.asking) self.resetConversation(); });
+        $('#ask_posnic_question').on('keydown', function (event) {
+            if (event.key === 'Enter' && !event.shiftKey && !(event.originalEvent && event.originalEvent.isComposing)) { event.preventDefault(); $('#ask_posnic_form').trigger('submit'); }
+        });
+        $('[data-ask-tab]').on('click', function () { self.settingsTab($(this).attr('data-ask-tab')); }).on('keydown', function (event) {
+            var tabs = $('[data-ask-tab]'), index = tabs.index(this);
+            if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].indexOf(event.key) === -1) return;
+            event.preventDefault();
+            index = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+            self.settingsTab(tabs.eq(index).attr('data-ask-tab'), true);
+        });
+        $('#ask_close_history').on('click', function () { $('#ask_history_panel').prop('hidden', true); $('#ask_load_history').attr('aria-expanded', 'false').trigger('focus'); });
         $('#ask_load_supplier_messages').on('click', function () { self.loadSupplierMessages(); });
         $('#ask_supplier_form').on('submit', function (event) {
             event.preventDefault();
@@ -249,15 +319,22 @@ PosnicPro.askposnic = {
             $('#ask_supplier_modal').one('hidden.bs.modal', function () { self.prepareAction('supplier_message', payload); }).modal('hide');
         });
         $('#ask_load_history').on('click', function () {
+            if (self.asking) return;
+            var open = $('#ask_history_panel').prop('hidden');
+            $('#ask_history_panel').prop('hidden', !open);
+            $('#ask_load_history').attr('aria-expanded', String(open));
+            if (!open) return;
             PosnicPro.get('ask-posnic/history', function (response) {
                 var rows = response && response.data || [];
                 $('#ask_history_list').empty();
                 rows.forEach(function (row) {
                     var first = (row.messages || []).find(function (message) { return message.role === 'user'; });
                     $('<button type="button" class="btn btn-sm btn-outline-secondary mr-2 mb-2">').text(first && first.payload.question || 'Conversation').on('click', function () {
+                        if (self.asking) return;
                         self.conversationId = row._id;
                         $('#ask_posnic_thread').empty();
                         (row.messages || []).forEach(function (message) { self.add(message.role === 'user' ? 'user' : 'answer', message.role === 'user' ? message.payload.question : message.payload.answer, message.role === 'user' ? null : message.payload); });
+                        $('#ask_close_history').trigger('click');
                     }).appendTo('#ask_history_list');
                 });
                 if (!rows.length) $('#ask_history_list').text(PosnicPro.i18n.t('lang_no_stored_conversations_in_this_outlet', 'No stored conversations in this outlet.'));
@@ -294,17 +371,30 @@ PosnicPro.askposnic = {
         $('#ask_posnic_document_form').on('submit', function (event) {
             event.preventDefault();
             PosnicPro.request({ url: 'ask-posnic/documents', method: 'POST', data: JSON.stringify({ title: $('#ask_doc_title').val(), kind: $('#ask_doc_kind').val(), content: $('#ask_doc_content').val() }) }, function (response) {
-                if (response && response.type === 'success') { $('#ask_posnic_document_form')[0].reset(); self.loadDocuments(); PosnicPro.alert('success', PosnicPro.i18n.t('lang_knowledge_draft_saved', 'Knowledge draft saved.')); }
+                if (response && response.type === 'success') { $('#ask_posnic_document_form')[0].reset(); $('#ask_source_editor').prop('open', false); self.loadDocuments(); PosnicPro.alert('success', PosnicPro.i18n.t('lang_knowledge_draft_saved', 'Knowledge draft saved.')); }
                 else PosnicPro.alert('error', response.message || 'Could not save the document.');
             });
         });
-        $('#ask_posnic_documents').on('click', '.ask-doc-status', function () {
-            var button = $(this);
-            PosnicPro.request({ url: 'ask-posnic/documents/' + encodeURIComponent(button.data('id')) + '/status', method: 'PATCH', data: JSON.stringify({ status: button.data('status') }) }, function (response) {
-                if (response && response.type === 'success') self.loadDocuments();
-                else PosnicPro.alert('error', response.message || 'Could not update the document.');
+        $('#ask_posnic_documents,#ask_posnic_shared_documents').on('click', '.ask-doc-review', function () {
+            var id = $(this).attr('data-id');
+            $('#ask_source_publish').remove();
+            PosnicPro.get('ask-posnic/documents/' + encodeURIComponent(id) + '?review=1', function (response) {
+                if (!response || !response.data) return PosnicPro.alert('error', response && response.message || 'Source is no longer available.');
+                var doc = response.data, status = doc.status === 'published' ? 'retired' : 'published';
+                $('#ask_source_title').text(doc.title + ' · ' + doc.status + ' · ' + doc.revision);
+                $('#ask_source_content').text(doc.content);
+                $('<button type="button" id="ask_source_publish" class="btn btn-primary m-3">').text(status === 'published' ? PosnicPro.i18n.t('lang_publish_source', 'Publish source') : PosnicPro.i18n.t('lang_retire_source', 'Retire source')).on('click', function () {
+                    var button = $(this).prop('disabled', true);
+                    PosnicPro.request({ url: 'ask-posnic/documents/' + encodeURIComponent(id) + '/status', method: 'PATCH', data: JSON.stringify({ status: status }) }, function (result) {
+                        button.prop('disabled', false);
+                        if (result && result.type === 'success') { $('#ask_source_modal').modal('hide'); self.loadDocuments(); }
+                        else PosnicPro.alert('error', result && result.message || 'Could not update the document.');
+                    }, function () { button.prop('disabled', false); PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_update_the_document', 'Could not update the document.')); });
+                }).appendTo('#ask_source_modal .modal-content');
+                $('#ask_source_modal').modal('show');
             });
         });
+        $('#ask_source_modal').on('hidden.bs.modal', function () { $('#ask_source_publish').remove(); });
         $('#ask_doc_upload').on('click', function () {
             var file = $('#ask_doc_file')[0] && $('#ask_doc_file')[0].files[0];
             if (!file) return PosnicPro.alert('error', PosnicPro.i18n.t('lang_choose_a_pdf_markdown_or_text_file', 'Choose a PDF, Markdown, or text file.'));
@@ -312,7 +402,7 @@ PosnicPro.askposnic = {
             form.append('file', file);
             form.append('title', file.name.replace(/\.[^.]+$/, ''));
             PosnicPro.request({ url: 'ask-posnic/documents/upload', method: 'POST', data: form, contentType: false, processData: false }, function (response) {
-                if (response && response.type === 'success') { $('#ask_doc_file').val(''); self.loadDocuments(); PosnicPro.alert('success', response.message); }
+                if (response && response.type === 'success') { $('#ask_doc_file').val(''); $('#ask_source_editor').prop('open', false); self.loadDocuments(); PosnicPro.alert('success', response.message); }
                 else PosnicPro.alert('error', response.message || 'Could not extract the document.');
             });
         });
@@ -333,13 +423,13 @@ PosnicPro.askposnic = {
         $('#ask_posnic_clear_history,#ask_delete_history').on('click', function () {
             if (!window.confirm(PosnicPro.i18n.t('lang_ask_delete_personal_confirm', 'Delete your Ask Posnic conversations and feedback for this outlet?'))) return;
             PosnicPro.request({ url: 'ask-posnic/history', method: 'DELETE' }, function (response) {
-                if (response && response.type === 'success') { self.conversationId = null; $('#ask_posnic_thread,#ask_history_list').empty(); PosnicPro.alert('success', PosnicPro.i18n.t('lang_ask_personal_deleted', 'Conversations and feedback deleted.')); }
+                if (response && response.type === 'success') { self.resetConversation(); PosnicPro.alert('success', PosnicPro.i18n.t('lang_ask_personal_deleted', 'Conversations and feedback deleted.')); }
             });
         });
         $('#ask_posnic_schedule_form').on('submit', function (event) {
             event.preventDefault();
             PosnicPro.request({ url: 'ask-posnic/schedules', method: 'POST', data: JSON.stringify({ report: $('#ask_schedule_report').val(), frequency: $('#ask_schedule_frequency').val(), hour: Number($('#ask_schedule_hour').val()), weekday: Number($('#ask_schedule_weekday').val()), timezone: $('#ask_schedule_timezone').val(), channel: $('#ask_schedule_channel').val(), destination: $('#ask_schedule_destination').val() }) }, function (response) {
-                if (response && response.type === 'success') { self.loadSchedules(); PosnicPro.alert('success', response.message); }
+                if (response && response.type === 'success') { $('#ask_schedule_editor').prop('open', false); self.loadSchedules(); PosnicPro.alert('success', response.message); }
                 else PosnicPro.alert('error', response.message || 'Could not save the schedule.');
             });
         });

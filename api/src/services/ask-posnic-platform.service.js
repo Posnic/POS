@@ -129,10 +129,9 @@ async function getDocument(req, id, options = {}) {
     {
       _id: new ObjectId(String(id)),
       license: scope(req).license,
-      status: 'published',
-      visibility: 'customer',
+      ...(options.review === true ? {} : { status: 'published', visibility: 'customer' }),
     },
-    { projection: { title: 1, revision: 1, content: 1, kind: 1, page_map: 1 } }
+    { projection: { title: 1, revision: 1, content: 1, kind: 1, page_map: 1, status: 1 } }
   );
   if (!doc || (options.revision !== undefined && String(options.revision) !== String(doc.revision)))
     return null;
