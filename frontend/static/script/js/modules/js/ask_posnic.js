@@ -27,7 +27,7 @@ PosnicPro.askposnic = {
         if (data && data.scope) details += '<span class="ask-posnic-source">' + (Array.isArray(data.scope.outlets) ? 'Outlets: ' + self.esc(data.scope.outlets.map(function (row) { return row.outlet; }).join(', ')) : 'Outlet: ' + self.esc(data.scope.outlet || 'Current outlet')) + (data.scope.from ? ' · ' + self.esc(new Date(data.scope.from).toLocaleString()) + ' to ' + self.esc(new Date(data.scope.to).toLocaleString()) : '') + (data.scope.as_of ? ' · as of ' + self.esc(new Date(data.scope.as_of).toLocaleString()) : '') + '</span>';
         if (data && data.citations && data.citations.length) details += '<span class="ask-posnic-source">Sources: ' + data.citations.map(function (citation, index) { return '<button type="button" class="btn btn-sm btn-link ask-citation" data-id="' + self.esc(citation.document_id) + '">[' + (index + 1) + '] ' + self.esc(citation.title + ' · ' + citation.revision) + '</button>'; }).join(' ') + '</span>';
         if (data && data.link) details += '<a class="ask-posnic-source" href="' + self.esc(data.link) + '">Open source page</a>';
-        if (data && data.intent === 'low_stock') details += '<button type="button" class="btn btn-sm btn-primary-rgba ask-posnic-action" id="ask_posnic_prepare_po">Prepare purchase order draft</button>';
+        if (data && data.intent === 'low_stock') details += '<button type="button" class="btn btn-sm btn-primary-rgba ask-posnic-action" id="ask_posnic_prepare_po"><lang class="lang_prepare_purchase_order_draft">Prepare purchase order draft</lang></button>';
         if (data && data.action) details += '<button type="button" class="btn btn-sm btn-primary-rgba ask-posnic-action ask-posnic-draft-action" data-action="' + self.esc(data.action.type) + '" data-source="' + self.esc(data.action.source || '') + '" data-lookback-days="' + self.esc(data.action.lookback_days || '') + '" data-coverage-days="' + self.esc(data.action.coverage_days || '') + '">' + self.esc(data.action.label) + '</button>';
         if (kind === 'answer' && data && data.intent) details += '<span class="ask-posnic-feedback"><button type="button" class="btn btn-sm btn-link ask-feedback" data-rating="helpful" data-intent="' + self.esc(data.intent) + '">Helpful</button><button type="button" class="btn btn-sm btn-link ask-feedback" data-rating="not_helpful" data-intent="' + self.esc(data.intent) + '">Not helpful</button></span>';
         $('#ask_posnic_thread').append('<div class="ask-posnic-message ' + kind + '">' + self.esc(text) + details + '</div>');
@@ -60,7 +60,7 @@ PosnicPro.askposnic = {
             var scope = data.scope && data.scope.license + ':' + data.scope.branch_id + ':' + data.scope.user_id;
             if (self.scope && self.scope !== scope) { self.conversationId = null; $('#ask_posnic_thread,#ask_history_list,#ask_supplier_messages').empty(); }
             self.scope = scope;
-            $('#ask_posnic_status').text(data.mode === 'own_key' ? 'Own AI key connected' : data.mode === 'managed' ? 'Managed AI' : 'Direct answers');
+            $('#ask_posnic_status').text(data.mode === 'own_key' ? 'Own AI key connected' : data.mode === 'managed' ? PosnicPro.i18n.t('lang_managed_ai', 'Managed AI') : PosnicPro.i18n.t('lang_direct_answers', 'Direct answers'));
             var preferences = data.preferences || {};
             $('#ask_load_supplier_messages').toggle(data.can_supplier_messages === true);
             if (!data.can_supplier_messages) $('#ask_supplier_messages').empty();
@@ -82,13 +82,13 @@ PosnicPro.askposnic = {
             $('#ask_billing_message').toggle(data.billing_unavailable === true);
             var usage = data.usage || {};
             $('#ask_posnic_usage').html([
-                { label: 'Questions', value: usage.questions || 0 },
-                { label: 'Published sources', value: usage.published_documents || 0 },
-                { label: 'Confirmed drafts', value: usage.confirmed_actions || 0 },
-                { label: 'Unanswered', value: usage.unanswered || 0 },
-                data.managed ? { label: 'Managed allowance remaining (estimate)', value: (data.managed.currency || '') + ' ' + (Number(data.managed.remaining_minor || 0) / 100).toFixed(2) } : null,
-                data.own_key_search ? { label: 'Own-key search budget remaining (estimate)', value: data.own_key_search.currency + ' ' + (Number(data.own_key_search.remaining_minor || 0) / 100).toFixed(4) } : null,
-                data.own_key_search && data.own_key_search.pending_calls ? { label: 'Search calls pending settlement or review', value: data.own_key_search.pending_calls } : null
+                { label: PosnicPro.i18n.t('lang_questions', 'Questions'), value: usage.questions || 0 },
+                { label: PosnicPro.i18n.t('lang_published_sources', 'Published sources'), value: usage.published_documents || 0 },
+                { label: PosnicPro.i18n.t('lang_confirmed_drafts', 'Confirmed drafts'), value: usage.confirmed_actions || 0 },
+                { label: PosnicPro.i18n.t('lang_unanswered', 'Unanswered'), value: usage.unanswered || 0 },
+                data.managed ? { label: PosnicPro.i18n.t('lang_managed_allowance_remaining_estimate', 'Managed allowance remaining (estimate)'), value: (data.managed.currency || '') + ' ' + (Number(data.managed.remaining_minor || 0) / 100).toFixed(2) } : null,
+                data.own_key_search ? { label: PosnicPro.i18n.t('lang_own_key_search_budget_remaining_estimate', 'Own-key search budget remaining (estimate)'), value: data.own_key_search.currency + ' ' + (Number(data.own_key_search.remaining_minor || 0) / 100).toFixed(4) } : null,
+                data.own_key_search && data.own_key_search.pending_calls ? { label: PosnicPro.i18n.t('lang_search_calls_pending_settlement_or_review', 'Search calls pending settlement or review'), value: data.own_key_search.pending_calls } : null
             ].filter(Boolean).map(function (item) { return '<span class="ask-posnic-metric"><strong>' + self.esc(item.value) + '</strong>' + self.esc(item.label) + '</span>'; }).join(''));
             if (data.admin) { PosnicPro.askposnic.loadDocuments(); PosnicPro.askposnic.loadSchedules(); PosnicPro.askposnic.loadAudit(); PosnicPro.askposnic.loadRecovery(); }
         });
@@ -102,21 +102,21 @@ PosnicPro.askposnic = {
                 var searchState = doc.semantic && ({ ready: 'Semantic search ready', pending: 'Search indexing queued', processing: 'Search indexing in progress', needs_review: 'Search indexing needs operator review' })[doc.semantic.state];
                 if ($('#ask_pref_own_semantic').is(':checked') && doc.own_semantic) searchState = ({ ready: 'Own-key search ready', pending: 'Own-key indexing queued', processing: 'Own-key indexing in progress', needs_review: 'Own-key indexing needs operator review' })[doc.own_semantic.state];
                 return '<div class="ask-posnic-document"><div><strong>' + self.esc(doc.title) + '</strong><small>' + self.esc(doc.kind + ' · ' + doc.status + ' · ' + doc.revision) + '</small>' + (searchState ? '<small>' + self.esc(searchState) + '</small>' : '') + '</div>' + action + '</div>';
-            }).join('') : '<p class="text-muted">No knowledge documents yet.</p>');
+            }).join('') : '<p class="text-muted"><lang class="lang_no_knowledge_documents_yet">No knowledge documents yet.</lang></p>');
         });
     },
     loadSchedules: function () {
         var self = this;
         PosnicPro.get('ask-posnic/schedules', function (response) {
             var rows = response && response.data || [];
-            $('#ask_posnic_schedules').html(rows.map(function (row) { return '<div class="ask-posnic-document"><div><strong>' + self.esc(row.report.replace('_', ' ')) + '</strong><small>' + self.esc(row.frequency + ' at ' + row.hour + ':00 · ' + row.timezone + ' · ' + (row.channel || 'email') + ' · ' + row.destination) + '</small><small>' + self.esc((row.enabled ? 'Enabled' : 'Paused') + ' · ' + (row.last_status || 'Waiting for first run') + (row.last_error ? ' · ' + row.last_error : '')) + '</small></div><div>' + (!row.enabled && row.last_status === 'reviewed' ? '<button class="btn btn-sm btn-outline-primary ask-schedule-resume" data-id="' + self.esc(row._id) + '">Resume future deliveries</button> ' : '') + '<button class="btn btn-sm btn-outline-danger ask-schedule-delete" data-id="' + self.esc(row._id) + '"' + (row.running_at || row.last_status === 'needs_review' ? ' disabled' : '') + '>Delete</button></div></div>'; }).join(''));
+            $('#ask_posnic_schedules').html(rows.map(function (row) { return '<div class="ask-posnic-document"><div><strong>' + self.esc(row.report.replace('_', ' ')) + '</strong><small>' + self.esc(row.frequency + ' at ' + row.hour + ':00 · ' + row.timezone + ' · ' + (row.channel || 'email') + ' · ' + row.destination) + '</small><small>' + self.esc((row.enabled ? PosnicPro.i18n.t('lang_enabled', 'Enabled') : PosnicPro.i18n.t('lang_paused', 'Paused')) + ' · ' + (row.last_status || 'Waiting for first run') + (row.last_error ? ' · ' + row.last_error : '')) + '</small></div><div>' + (!row.enabled && row.last_status === 'reviewed' ? '<button class="btn btn-sm btn-outline-primary ask-schedule-resume" data-id="' + self.esc(row._id) + '">Resume future deliveries</button> ' : '') + '<button class="btn btn-sm btn-outline-danger ask-schedule-delete" data-id="' + self.esc(row._id) + '"' + (row.running_at || row.last_status === 'needs_review' ? ' disabled' : '') + '>Delete</button></div></div>'; }).join(''));
         });
     },
     loadAudit: function () {
         var self = this;
         PosnicPro.get('ask-posnic/audit', function (response) {
             var rows = response && response.data || [];
-            $('#ask_posnic_audit').html(rows.slice(0, 20).map(function (row) { return '<div class="ask-posnic-document"><div><strong>' + self.esc(String(row.event || '').replace(/_/g, ' ')) + '</strong><small>' + self.esc(new Date(row.at).toLocaleString()) + '</small></div></div>'; }).join('') || '<p class="text-muted">No activity yet.</p>');
+            $('#ask_posnic_audit').html(rows.slice(0, 20).map(function (row) { return '<div class="ask-posnic-document"><div><strong>' + self.esc(String(row.event || '').replace(/_/g, ' ')) + '</strong><small>' + self.esc(new Date(row.at).toLocaleString()) + '</small></div></div>'; }).join('') || '<p class="text-muted"><lang class="lang_no_activity_yet">No activity yet.</lang></p>');
         });
     },
     loadRecovery: function () {
@@ -125,7 +125,7 @@ PosnicPro.askposnic = {
             var rows = response && response.data && response.data.rows || [];
             $('#ask_posnic_recovery').html(rows.map(function (row) {
                 return '<div class="ask-posnic-document"><div><strong>' + self.esc(row.type + ': ' + row.label) + '</strong><small>' + self.esc(row.state.replace(/_/g, ' ')) + '</small></div>' + (row.can_review ? '<button class="btn btn-sm btn-outline-primary ask-recovery-action" data-id="' + self.esc(row.id) + '" data-type="' + self.esc(row.action_type) + '">Review status</button>' : '') + '</div>';
-            }).join('') || '<p class="text-muted">No pending work or recovery reviews.</p>');
+            }).join('') || '<p class="text-muted"><lang class="lang_no_pending_work_or_recovery_reviews">No pending work or recovery reviews.</lang></p>');
         });
     },
     preparePurchaseOrder: function () {
@@ -142,14 +142,14 @@ PosnicPro.askposnic = {
                 var details = $('<details class="border rounded p-2 mb-2">').appendTo(target);
                 $('<summary>').text(row.subject).appendTo(details);
                 $('<p class="text-muted mt-2 mb-2">').text('Saved draft for ' + row.supplier_name + '. Check the current purchase order before sending.').appendTo(details);
-                var body = $('<textarea class="form-control mb-2" rows="6" readonly aria-label="Saved supplier message">').val(row.body).appendTo(details);
-                $('<button type="button" class="btn btn-sm btn-outline-primary">Copy message</button>').on('click', function () {
-                    var fallback = function () { body.trigger('focus').trigger('select'); PosnicPro.alert('info', 'Message selected. Use Copy to copy the text.'); };
-                    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(row.subject + '\n\n' + row.body).then(function () { PosnicPro.alert('success', 'Message copied.'); }).catch(fallback);
+                var body = $('<textarea class="form-control mb-2" rows="6" readonly aria-label="Saved supplier message" data-t-aria-label="lang_saved_supplier_message">').val(row.body).appendTo(details);
+                $('<button type="button" class="btn btn-sm btn-outline-primary"><lang class="lang_copy_message">Copy message</lang></button>').on('click', function () {
+                    var fallback = function () { body.trigger('focus').trigger('select'); PosnicPro.alert('info', PosnicPro.i18n.t('lang_message_selected_use_copy_to_copy_the_text', 'Message selected. Use Copy to copy the text.')); };
+                    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(row.subject + '\n\n' + row.body).then(function () { PosnicPro.alert('success', PosnicPro.i18n.t('lang_message_copied', 'Message copied.')); }).catch(fallback);
                     else fallback();
                 }).appendTo(details);
             });
-            if (!response.data.length) target.text('No saved supplier-message drafts in this outlet.');
+            if (!response.data.length) target.text(PosnicPro.i18n.t('lang_no_saved_supplier_message_drafts_in_this_o', 'No saved supplier-message drafts in this outlet.'));
         }, function (xhr) { PosnicPro.alert('error', xhr && xhr.responseJSON && xhr.responseJSON.message || 'Could not load supplier-message drafts.'); });
     },
     prepareAction: function (type, campaignPayload) {
@@ -178,7 +178,7 @@ PosnicPro.askposnic = {
         var self = this;
         var payload = draft.payload || {};
         var html = '';
-        var table = function (items, count) { return '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Item</th><th>' + (count ? 'Expected quantity' : 'Order quantity') + '</th><th>' + (count ? 'Unit' : 'Unit cost') + '</th></tr></thead><tbody>' + items.map(function (item) { return '<tr><td>' + self.esc(item.item_name) + '</td><td>' + self.esc(count ? item.expected_quantity : item.qty_ordered) + '</td><td>' + self.esc(count ? item.unit : item.unit_cost) + '</td></tr>'; }).join('') + '</tbody></table></div>'; };
+        var table = function (items, count) { return '<div class="table-responsive"><table class="table table-sm"><thead><tr><th><lang class="lang_newitem_title">Item</lang></th><th>' + self.esc(count ? PosnicPro.i18n.t('lang_expected_quantity', 'Expected quantity') : PosnicPro.i18n.t('lang_order_quantity', 'Order quantity')) + '</th><th>' + self.esc(count ? PosnicPro.i18n.t('lang_unit_title', 'Unit') : PosnicPro.i18n.t('lang_unit_cost', 'Unit cost')) + '</th></tr></thead><tbody>' + items.map(function (item) { return '<tr><td>' + self.esc(item.item_name) + '</td><td>' + self.esc(count ? item.expected_quantity : item.qty_ordered) + '</td><td>' + self.esc(count ? item.unit : item.unit_cost) + '</td></tr>'; }).join('') + '</tbody></table></div>'; };
         if (draft.type === 'purchase_order') {
             html = (payload.orders || []).map(function (order) { return '<h6>' + self.esc(order.supplier_name) + '</h6>' + table(order.items || [], false); }).join('');
             if (payload.plan) html = '<p>Based on ' + self.esc(payload.plan.lookback_days) + ' complete days of sales, covering ' + self.esc(payload.plan.coverage_days) + ' days. Suggested quantities subtract current stock and open-order quantities. Review supplier lead times and pack sizes. The plan considers up to ' + self.esc(payload.planned_count) + ' of ' + self.esc(payload.eligible_count) + ' items needing stock.</p>' + html;
@@ -186,8 +186,8 @@ PosnicPro.askposnic = {
             if (draft.recovery) html = '<p>Saved orders: ' + self.esc(draft.recovery.saved.length) + '. Remaining orders to review: ' + self.esc(draft.recovery.remaining) + '. Confirm only after reviewing the remaining orders below.</p>' + html;
             if ((payload.skipped_without_supplier || []).length) html += '<p>Missing supplier: ' + self.esc(payload.skipped_without_supplier.join(', ')) + '</p>';
         } else if (draft.type === 'stock_count') html = table(payload.items || [], true);
-        else if (draft.type === 'sale_draft') html = '<h6>Sales draft for ' + self.esc(payload.customer_name) + '</h6><p>Saved as a draft quotation. Review and convert to a sale from Quotations.</p><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Item</th><th>Quantity</th><th>Unit price</th><th>Tax</th></tr></thead><tbody>' + (payload.lines || []).map(function (line) { return '<tr><td>' + self.esc(line.item_name) + '</td><td>' + self.esc(line.qty) + '</td><td>' + self.esc(Number(line.unit_price).toFixed(2)) + '</td><td>' + self.esc(line.tax_value + '% ' + line.tax_type) + '</td></tr>'; }).join('') + '</tbody></table></div><p><strong>Total: ' + self.esc(Number(payload.total).toFixed(2)) + '</strong> · Tax: ' + self.esc(Number(payload.tax_total).toFixed(2)) + '</p><p class="text-muted">No payment or stock change. Catalog changes require another review.</p>';
-        else if (draft.type === 'supplier_message') html = '<h6>' + self.esc(payload.subject) + '</h6><p>Supplier: ' + self.esc(payload.supplier_name) + '</p><p style="white-space:pre-wrap">' + self.esc(payload.body) + '</p><p class="text-muted">Confirmation saves this draft for copying from Ask Posnic.</p>';
+        else if (draft.type === 'sale_draft') html = '<h6>Sales draft for ' + self.esc(payload.customer_name) + '</h6><p><lang class="lang_saved_as_a_draft_quotation_review_and_conv">Saved as a draft quotation. Review and convert to a sale from Quotations.</lang></p><div class="table-responsive"><table class="table table-sm"><thead><tr><th><lang class="lang_newitem_title">Item</lang></th><th><lang class="lang_quantity">Quantity</lang></th><th><lang class="lang_unit_price">Unit price</lang></th><th><lang class="lang_module_tax">Tax</lang></th></tr></thead><tbody>' + (payload.lines || []).map(function (line) { return '<tr><td>' + self.esc(line.item_name) + '</td><td>' + self.esc(line.qty) + '</td><td>' + self.esc(Number(line.unit_price).toFixed(2)) + '</td><td>' + self.esc(line.tax_value + '% ' + line.tax_type) + '</td></tr>'; }).join('') + '</tbody></table></div><p><strong>Total: ' + self.esc(Number(payload.total).toFixed(2)) + '</strong> · Tax: ' + self.esc(Number(payload.tax_total).toFixed(2)) + '</p><p class="text-muted"><lang class="lang_no_payment_or_stock_change_catalog_changes">No payment or stock change. Catalog changes require another review.</lang></p>';
+        else if (draft.type === 'supplier_message') html = '<h6>' + self.esc(payload.subject) + '</h6><p>Supplier: ' + self.esc(payload.supplier_name) + '</p><p style="white-space:pre-wrap">' + self.esc(payload.body) + '</p><p class="text-muted"><lang class="lang_confirmation_saves_this_draft_for_copying">Confirmation saves this draft for copying from Ask Posnic.</lang></p>';
         else html = '<h6>' + self.esc(payload.name) + '</h6><p>Channel: ' + self.esc(payload.channel) + ' · Audience: opted-in customers</p><p style="white-space:pre-wrap">' + self.esc(payload.message) + '</p>';
         $('#ask_draft_content').html(html);
         $('#ask_draft_confirm').prop('disabled', false).off('click').on('click', function () {
@@ -195,7 +195,7 @@ PosnicPro.askposnic = {
             PosnicPro.request({ url: 'ask-posnic/actions/confirm', method: 'POST', data: JSON.stringify({ token: draft.token }) }, function (response) {
                 $('#ask_draft_modal').modal('hide');
                 if (response && response.type === 'success') {
-                    self.add('answer', draft.type === 'supplier_message' ? 'Supplier message saved. Open My supplier-message drafts to copy it.' : 'Draft created. Open the source page to continue.', { link: self.actionLink(draft.type), source: 'Confirmed action', metrics: response.data && response.data.output && response.data.output.quotation ? [{ label: 'Draft quotation', value: response.data.output.quotation.quote_id }] : [] });
+                    self.add('answer', draft.type === 'supplier_message' ? PosnicPro.i18n.t('lang_supplier_message_saved_open_my_supplier_me', 'Supplier message saved. Open My supplier-message drafts to copy it.') : PosnicPro.i18n.t('lang_draft_created_open_the_source_page_to_cont', 'Draft created. Open the source page to continue.'), { link: self.actionLink(draft.type), source: 'Confirmed action', metrics: response.data && response.data.output && response.data.output.quotation ? [{ label: PosnicPro.i18n.t('lang_draft_quotation', 'Draft quotation'), value: response.data.output.quotation.quote_id }] : [] });
                     if (draft.type === 'supplier_message') self.loadSupplierMessages();
                 }
                 else self.checkActionOutcome(draft, response.message);
@@ -215,10 +215,10 @@ PosnicPro.askposnic = {
         var link = self.actionLink(draft.type);
         PosnicPro.request({ url: 'ask-posnic/actions/' + encodeURIComponent(draft.id), method: 'GET' }, function (response) {
             var result = response && response.data;
-            if (!result) return PosnicPro.alert('error', 'The outcome could not be checked. Open the source page before preparing another draft.');
+            if (!result) return PosnicPro.alert('error', PosnicPro.i18n.t('lang_the_outcome_could_not_be_checked_open_the', 'The outcome could not be checked. Open the source page before preparing another draft.'));
             var message = result.status === 'completed' ? 'The draft was saved. Open the source page to continue.' : result.status === 'partial' ? result.saved.length + ' of ' + result.expected + ' drafts were saved before the interruption. Review those records before preparing the remaining work.' : 'The action has not been confirmed as saved. ' + (failureMessage || 'Check the source page before preparing another draft.');
-            self.add('answer', message, { link: link, source: 'Saved action status', metrics: (result.saved || []).map(function (row) { return { label: 'Saved draft', value: row.po_id || row.id }; }) });
-            if (result.resumable) $('<button type="button" class="btn btn-sm btn-outline-primary mb-3">Review remaining work</button>').on('click', function () {
+            self.add('answer', message, { link: link, source: 'Saved action status', metrics: (result.saved || []).map(function (row) { return { label: PosnicPro.i18n.t('lang_saved_draft', 'Saved draft'), value: row.po_id || row.id }; }) });
+            if (result.resumable) $('<button type="button" class="btn btn-sm btn-outline-primary mb-3"><lang class="lang_review_remaining_work">Review remaining work</lang></button>').on('click', function () {
                 var button = $(this).prop('disabled', true);
                 PosnicPro.request({ url: 'ask-posnic/actions/' + encodeURIComponent(draft.id) + '/resume', method: 'POST', data: '{}' }, function (review) {
                     button.prop('disabled', false);
@@ -258,7 +258,7 @@ PosnicPro.askposnic = {
                         (row.messages || []).forEach(function (message) { self.add(message.role === 'user' ? 'user' : 'answer', message.role === 'user' ? message.payload.question : message.payload.answer, message.role === 'user' ? null : message.payload); });
                     }).appendTo('#ask_history_list');
                 });
-                if (!rows.length) $('#ask_history_list').text('No stored conversations in this outlet.');
+                if (!rows.length) $('#ask_history_list').text(PosnicPro.i18n.t('lang_no_stored_conversations_in_this_outlet', 'No stored conversations in this outlet.'));
             });
         });
         $('#ask_posnic_thread').on('click', '#ask_posnic_prepare_po', function () { self.preparePurchaseOrder(); });
@@ -284,13 +284,13 @@ PosnicPro.askposnic = {
         $('#ask_posnic_thread').on('click', '.ask-feedback', function () {
             var button = $(this);
             PosnicPro.request({ url: 'ask-posnic/feedback', method: 'POST', data: JSON.stringify({ conversation_id: self.conversationId, intent: button.data('intent'), rating: button.data('rating') }) }, function (response) {
-                if (response && response.type === 'success') button.closest('.ask-posnic-feedback').text('Feedback saved');
+                if (response && response.type === 'success') button.closest('.ask-posnic-feedback').text(PosnicPro.i18n.t('lang_feedback_saved', 'Feedback saved'));
             });
         });
         $('#ask_posnic_document_form').on('submit', function (event) {
             event.preventDefault();
             PosnicPro.request({ url: 'ask-posnic/documents', method: 'POST', data: JSON.stringify({ title: $('#ask_doc_title').val(), kind: $('#ask_doc_kind').val(), content: $('#ask_doc_content').val() }) }, function (response) {
-                if (response && response.type === 'success') { $('#ask_posnic_document_form')[0].reset(); self.loadDocuments(); PosnicPro.alert('success', 'Knowledge draft saved.'); }
+                if (response && response.type === 'success') { $('#ask_posnic_document_form')[0].reset(); self.loadDocuments(); PosnicPro.alert('success', PosnicPro.i18n.t('lang_knowledge_draft_saved', 'Knowledge draft saved.')); }
                 else PosnicPro.alert('error', response.message || 'Could not save the document.');
             });
         });
@@ -303,7 +303,7 @@ PosnicPro.askposnic = {
         });
         $('#ask_doc_upload').on('click', function () {
             var file = $('#ask_doc_file')[0] && $('#ask_doc_file')[0].files[0];
-            if (!file) return PosnicPro.alert('error', 'Choose a PDF, Markdown, or text file.');
+            if (!file) return PosnicPro.alert('error', PosnicPro.i18n.t('lang_choose_a_pdf_markdown_or_text_file', 'Choose a PDF, Markdown, or text file.'));
             var form = new FormData();
             form.append('file', file);
             form.append('title', file.name.replace(/\.[^.]+$/, ''));
@@ -314,11 +314,11 @@ PosnicPro.askposnic = {
         });
         $('#ask_bundle_import').on('click', function () {
             var file = $('#ask_bundle_file')[0] && $('#ask_bundle_file')[0].files[0];
-            if (!file) return PosnicPro.alert('error', 'Choose the exported JSON bundle.');
+            if (!file) return PosnicPro.alert('error', PosnicPro.i18n.t('lang_choose_the_exported_json_bundle', 'Choose the exported JSON bundle.'));
             var reader = new FileReader();
             reader.onload = function () {
                 var bundle;
-                try { bundle = JSON.parse(reader.result); } catch (_error) { return PosnicPro.alert('error', 'That file is not valid JSON.'); }
+                try { bundle = JSON.parse(reader.result); } catch (_error) { return PosnicPro.alert('error', PosnicPro.i18n.t('lang_that_file_is_not_valid_json', 'That file is not valid JSON.')); }
                 PosnicPro.request({ url: 'ask-posnic/documents/import-bundle', method: 'POST', data: JSON.stringify(bundle) }, function (response) {
                     if (response && response.type === 'success') { $('#ask_bundle_file').val(''); self.loadDocuments(); PosnicPro.alert('success', response.data.imported + ' published sources imported.'); }
                     else PosnicPro.alert('error', response.message || 'Could not import the knowledge bundle.');
@@ -329,7 +329,7 @@ PosnicPro.askposnic = {
         $('#ask_posnic_clear_history,#ask_delete_history').on('click', function () {
             if (!window.confirm('Delete your Ask Posnic conversations?')) return;
             PosnicPro.request({ url: 'ask-posnic/history', method: 'DELETE' }, function (response) {
-                if (response && response.type === 'success') { self.conversationId = null; $('#ask_posnic_thread,#ask_history_list').empty(); PosnicPro.alert('success', 'Conversation history deleted.'); }
+                if (response && response.type === 'success') { self.conversationId = null; $('#ask_posnic_thread,#ask_history_list').empty(); PosnicPro.alert('success', PosnicPro.i18n.t('lang_conversation_history_deleted', 'Conversation history deleted.')); }
             });
         });
         $('#ask_posnic_schedule_form').on('submit', function (event) {

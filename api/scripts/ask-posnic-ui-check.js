@@ -1,4 +1,4 @@
-/* global document, window, innerWidth, PosnicPro, $ */
+/* global document, window, innerWidth, getComputedStyle, PosnicPro, $ */
 // These globals are used inside browser-evaluated Puppeteer callbacks.
 'use strict';
 
@@ -15,7 +15,12 @@ async function main() {
   app.use('/static', express.static(path.join(root, 'static')));
   app.use('/built', express.static(path.join(root, 'public')));
   const css = fs.readdirSync(path.join(root, 'public/style')).find((file) => /^dashboard\..*\.css$/.test(file));
-  app.get('/', (_req, res) => res.send(`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/built/style/${css}"><link rel="stylesheet" href="/static/style/css/modules/ask-posnic.css"></head><body>${fs.readFileSync(path.join(root, 'modules/ask_posnic.html'), 'utf8')}<script src="/static/style/js/jquery.min.js"></script><script>window.PosnicPro={HideSideBarModal:function(){},get:function(){},request:function(){},alert:function(){}};</script><script src="/static/script/js/modules/js/ask_posnic.js"></script><script>document.querySelector('#askposnic').style.display='block';document.querySelector('#ask_posnic_admin').style.display='block';PosnicPro.askposnic.bind();PosnicPro.askposnic.add('user','How are sales today?');PosnicPro.askposnic.add('answer','Sales today are 12,450.00 across 37 transactions.',{intent:'sales',source:'Live sales dashboard',metrics:[{label:'Sales',value:'12,450.00'},{label:'Transactions',value:37}],scope:{outlet:'Main outlet'}});</script></body></html>`));
+  const core = fs.readFileSync(path.join(root, 'static/script/js/core/PosnicPro.js'), 'utf8');
+  const i18nStart = core.indexOf('PosnicPro.i18n = {');
+  const i18nEnd = core.indexOf('\nPosnicPro.i18n.load()', i18nStart);
+  assert.ok(i18nStart > 0 && i18nEnd > i18nStart, 'Use the shipped translation runtime');
+  app.get('/i18n.js', (_req, res) => res.type('js').send(core.slice(i18nStart, i18nEnd)));
+  app.get('/', (_req, res) => res.send(`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/built/style/${css}"><link rel="stylesheet" href="/static/style/css/modules/ask-posnic.css"></head><body>${fs.readFileSync(path.join(root, 'modules/ask_posnic.html'), 'utf8')}<script src="/static/style/js/jquery.min.js"></script><script>window.PosnicPro={HideSideBarModal:function(){},get:function(){},request:function(){},alert:function(){}};</script><script src="/i18n.js"></script><script src="/static/script/js/modules/js/ask_posnic.js"></script><script>document.querySelector('#askposnic').style.display='block';document.querySelector('#ask_posnic_admin').style.display='block';PosnicPro.askposnic.bind();PosnicPro.askposnic.add('user','How are sales today?');PosnicPro.askposnic.add('answer','Sales today are 12,450.00 across 37 transactions.',{intent:'sales',source:'Live sales dashboard',metrics:[{label:'Sales',value:'12,450.00'},{label:'Transactions',value:37}],scope:{outlet:'Main outlet'}});</script></body></html>`));
   const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
   let browser;
   try {
@@ -153,6 +158,7 @@ async function main() {
       assert.match(await page.evaluate(() => window.copiedSupplierMessage), /Tea: 3\.5/);
       await page.evaluate(() => {
         window.reorderPayload = null;
+        PosnicPro.i18n._dict = { lang_order_quantity: '<img src=x onerror=alert(1)>' };
         PosnicPro.request = (options, done) => {
           if (options.url === 'ask-posnic/actions/draft') {
             window.reorderPayload = JSON.parse(options.data);
@@ -172,9 +178,41 @@ async function main() {
       assert.deepEqual(await page.evaluate(() => window.reorderPayload), { type: 'purchase_order', payload: { source: 'demand', lookback_days: 30, coverage_days: 14 } });
       assert.equal(await page.evaluate(() => window.confirmCalls), 3);
       assert.match(await page.$eval('#ask_draft_content', (element) => element.textContent), /covering 14 days/);
+      assert.equal(await page.$$eval('#ask_draft_content img', (elements) => elements.length), 0);
+      assert.match(await page.$eval('#ask_draft_content', (element) => element.textContent), /<img src=x onerror=alert\(1\)>/);
       await page.screenshot({ path: path.join(output, `reorder-review-${name}.png`) });
       await page.click('#ask_draft_confirm');
       assert.equal(await page.evaluate(() => window.confirmCalls), 4);
+    }
+    for (const code of ['ta', 'nl', 'ar']) {
+      const dictionary = JSON.parse(fs.readFileSync(path.join(root, '../languages', code + '.json'), 'utf8'));
+      await page.goto(`http://127.0.0.1:${server.address().port}`, { waitUntil: 'networkidle0' });
+      await page.evaluate((dict, language) => {
+        PosnicPro.i18n._dict = dict;
+        document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+        document.documentElement.lang = language;
+        PosnicPro.i18n.apply(document);
+        PosnicPro.i18n.watch(document.body);
+        window.localizedQuestions = [];
+        PosnicPro.request = (options, done) => {
+          if (options.url !== 'ask-posnic/ask') throw new Error('Unexpected translated suggestion request');
+          window.localizedQuestions.push(JSON.parse(options.data).question);
+          done({ type: 'success', data: { answer: 'Source text', intent: 'help' } });
+        };
+      }, dictionary, code);
+      assert.equal(await page.$eval('#ask_posnic_question', (element) => element.placeholder), dictionary.lang_ask_posnic_about_your_shop);
+      assert.equal(await page.$eval('#ask_posnic_suggestions button', (element) => element.textContent), dictionary.lang_how_are_sales_today);
+      await page.click('#ask_posnic_suggestions button');
+      assert.deepEqual(await page.evaluate(() => window.localizedQuestions), ['How are sales today?']);
+      assert.equal(await page.$eval('#ask_pref_period option[value="today"]', (element) => element.value), 'today');
+      await page.screenshot({ path: path.join(output, `translated-${code}-mobile.png`), fullPage: true });
+      const overflow = await page.evaluate(() => ({ width: document.documentElement.scrollWidth, viewport: innerWidth, elements: [...document.querySelectorAll('body *')].filter(element => element.getBoundingClientRect().right > innerWidth + 1 && getComputedStyle(element).position !== 'fixed').slice(0, 12).map(element => ({ tag: element.tagName, id: element.id, className: element.className, width: element.getBoundingClientRect().width })) }));
+      assert.ok(overflow.width <= overflow.viewport + 1, code + ' overflows the mobile viewport: ' + JSON.stringify(overflow));
+      await page.evaluate(() => {
+        PosnicPro.i18n.restore(document);
+        PosnicPro.i18n._dict = null;
+      });
+      assert.equal(await page.$eval('#ask_posnic_suggestions button', (element) => element.textContent), 'How are sales today?');
     }
     assert.deepEqual(errors, []);
     console.log(`PASS: desktop and mobile layout; screenshots in ${output}`);

@@ -168,7 +168,7 @@ index unsaved material or charge an embedding call.
 
 ### Managed semantic retrieval
 
-The dedicated private vector bucket `posnic-ask-719443252592` and cosine index
+The dedicated private vector bucket `posnic-ask-<aws-account-id>` and cosine index
 `knowledge-v1` were created in `ap-south-1`, with 256-dimensional float vectors
 and SSE-S3 encryption. `UsePosnicSemanticKnowledge` grants the dedicated host
 identity only Titan V2 invocation and put/get/query/delete on that exact index.
@@ -177,7 +177,7 @@ checked by `api/scripts/provision-ask-posnic-semantic.js --apply`; the S3 Vector
 dual-stack endpoint used IPv6 during the host probe. No application environment
 or process was changed by provisioning.
 
-At managed rollout, set `ASK_POSNIC_VECTOR_BUCKET=posnic-ask-719443252592`,
+At managed rollout, set `ASK_POSNIC_VECTOR_BUCKET=posnic-ask-<aws-account-id>`,
 `ASK_POSNIC_VECTOR_INDEX=knowledge-v1` and a stable
 `ASK_POSNIC_VECTOR_NAMESPACE=posnic-cloud` alongside the dedicated AWS profile.
 The namespace, Mongo database name and authenticated license form the filtered
@@ -449,7 +449,7 @@ and performs one paid model request; it does not send messages or change shop
 data. Set `AWS_PROFILE=posnic-admin` in the calling shell for the local live test.
 
 AWS SSO profile `posnic-admin` was verified on 1 October 2026 against account
-`719443252592` in `ap-south-1`. A controlled Bedrock Converse call through the
+`<aws-account-id>` in `ap-south-1`. A controlled Bedrock Converse call through the
 active `global.amazon.nova-2-lite-v1:0` inference profile returned the exact
 expected response using 57 input tokens and 10 output tokens, with 937 ms
 reported model latency. The base model ID does not support on-demand throughput
@@ -457,12 +457,12 @@ in this region; deployments must use the inference-profile ID.
 
 The subsequent Lightsail runtime setup **did change AWS and the host**:
 
-- Created dedicated IAM user `posnic-ask-bedrock` in account `719443252592` and
+- Created dedicated IAM user `posnic-ask-bedrock` in account `<aws-account-id>` and
   inline policy `InvokeSelectedPosnicModel`. Its selected-model policy is in
   `api/infra/ask-posnic-bedrock-policy.json` and follows the
   [AWS global inference policy requirements](https://docs.aws.amazon.com/bedrock/latest/userguide/global-cross-region-inference.html).
 - Installed one credential profile named `posnic-ask-bedrock` in the existing
-  mode-600 credential file for `ubuntu` on `posnic-core-8gb` (`13.207.75.191`).
+  mode-600 credential file for `ubuntu` on `posnic-core-8gb` (`<posnic-egress-ip>`).
   The provisioning script passes the key over SSH input without displaying it
   or writing it locally, preserves existing profiles and refuses duplicate keys.
 - The profile can invoke only the selected Nova inference profile from that
@@ -854,3 +854,33 @@ confirmed actions, permission checks and credit reconciliation with synthetic da
 This is host validation, not production activation. The POS candidate is ready
 for coordinated review; Intranet, billing API, Cloud account UI, production
 configuration, payment/delivery acceptance and customer quality acceptance remain.
+
+## Develop release integration and language support
+
+The release branch now targets `develop` at `d9893f32703ced6489c99752c014cdfa20fc519f`.
+The full API suite passed 463 suites / 11,694 tests (13 skipped). Generated API
+documentation describes all 799 routes. New Ask Posnic and stock-count screens
+use Posnic translation keys; 148 new strings were added to 17 established packs.
+Existing translations and coverage requirements were preserved. Translation drafts
+were prepared through AWS services and checked for structure and application behavior;
+these checks do not constitute independent linguistic review.
+
+The shipped translation runtime is exercised with Tamil, Dutch and Arabic on a
+mobile viewport, including question routing, unchanged form values, restoration to
+English and safe rendering of translated table headings. Longer translated settings
+headings now wrap without making the screen scroll horizontally. The document-preview
+browser check accepts an explicit Intranet checkout path for validating its release
+candidate. Production account identifiers in this guide use placeholders; deployment
+operators obtain actual values from the private configuration and validation records.
+
+The Intranet candidate has a database-tested publication workflow: review before
+publishing, immutable source revisions, atomic revision numbering, a unique published
+revision per series, explicit export fields and conflict responses for concurrent
+changes. The full Intranet suite passed 501 tests with seven environment-dependent
+checks skipped, plus the real preview endpoint and desktop/mobile browser checks.
+A publication interrupted between retirement and replacement can leave a series
+unpublished; the administrator must inspect and publish the intended revision.
+
+These are release candidates. Billing API and Cloud account UI release integration,
+production activation, approved pricing, payment/delivery acceptance and independent
+answer-quality acceptance remain open.

@@ -30,7 +30,8 @@ const path = require('path');
 const POS = path.resolve(__dirname, '..', '..');
 const API = path.join(POS, 'api');
 const OUT = path.join(POS, 'languages', 'server');
-const SKIP_DIR = /^(node_modules|\.git|json|coverage)$/;
+// Operational scripts and test fixtures do not send customer-facing responses.
+const SKIP_DIR = /^(node_modules|\.git|json|coverage|scripts|tests|test|__tests__)$/;
 
 /* message: '...' in any of the three quotings. A template literal with a
    ${...} in it is skipped: half of that string is a value, not words. */

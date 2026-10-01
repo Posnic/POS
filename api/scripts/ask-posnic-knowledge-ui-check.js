@@ -8,7 +8,7 @@ const express = require('express');
 const puppeteer = require('puppeteer');
 
 async function main() {
-  const root = path.resolve(__dirname, '../../../Intranet');
+  const root = process.env.POSNIC_INTRANET_ROOT ? path.resolve(process.env.POSNIC_INTRANET_ROOT) : path.resolve(__dirname, '../../../Intranet');
   const { mount } = require(path.join(root, 'ask-posnic-preview'));
   const app = express(); app.use(express.json());
   app.get('/api/me', (_req, res) => res.json({ email: 'preview@example.invalid', role: 'admin' }));
