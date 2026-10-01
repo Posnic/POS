@@ -133,3 +133,72 @@ test('split and partial payments preserve recorded amounts and reject overpaymen
   assert.equal($('#save_btn').prop('disabled'), true);
   dom.window.close();
 });
+
+// Exercise the real saved-order loader and real row insertion, rather than
+// constructing an already-calculated DOM. Row order affects half-paisa sums.
+test('Azure saved Table 6 loads into payment at the printed total through real cart rows', () => {
+  const { dom, $, sales, win } = setup('Unpaid', {});
+  $('body').append('<table id="sales_new_items_table"><tbody></tbody></table><input id="grand_total"><span id="extraDisc">0</span><span id="percentIcon" class="d-none"></span><span id="sales_new_grand_total"></span>');
+  $.fn.number = function (value) { return this.text(Number(value).toFixed(2)); };
+  $.fn.editable = function () { return this; };
+  win.billingWindowId = null;
+  win.db = { customerDisplay: { put: () => {}, add: () => {}, get: () => Promise.resolve(null) } };
+  win.PosnicPro.escapeHtml = value => $('<i>').text(value == null ? '' : value).html();
+  win.PosnicPro.i18n = { t: (_key, fallback) => fallback };
+  win.PosnicPro.local.get = key => key === 'general_settings' ? '{}' : '';
+  win.PosnicPro.commonEditDate = () => {};
+  Object.assign(sales, {
+    setDefaults: () => {}, view: { changeExtraDiscType: () => {} },
+    recentMenu: { setEditSalesDetails: () => {} }, SaleTableLineItems: {},
+    quantity: { formatQty: value => value },
+    searchItem: () => false, _applyPriceList: value => value,
+    _needsTodaysPrice: () => false, checkAutoWeightTrigger: () => {},
+    customerBalanceCheck: () => {}, taxFeatureOn: () => true,
+    chargesTotal: () => 0, chargesTax: () => 0,
+    calculation: { billLevelDiscount: () => 0 }
+  });
+  function load(owner, name) {
+    const start = source.indexOf('    ' + name + ': function');
+    const end = source.indexOf('\n    },', start);
+    win.eval(owner + '.' + name + ' = ' + source.slice(source.indexOf('function', start), end + 6) + ';');
+  }
+  load('PosnicPro.sales', 'addSalesLineItems');
+  load('PosnicPro.sales.recentMenu', 'editItems');
+  load('PosnicPro.sales.calculation', 'salesTableRowCart');
+  load('PosnicPro.sales.calculation', 'extraDiscoundCalculation');
+  const units = [350,300,300,380,340,360,350,340,60,100,250,30,300,294,47.25,31.5,136.5,136.5,136.5];
+  const quantities = [1,1,1,1,1,1,2,1,2,3,1,2,2,1,2,2,1,1,2];
+  const bill = {
+    sales_id: 'SB1D28-27-000130', sales_total: 5667.37, sales_sub_total: 5397.5,
+    tax: 269.87, payment_status: 'Unpaid', sale_process: 'KOT', table_number: '6',
+    person_count: 10, extra_discount: 0, extra_discount_type: 'price',
+    items: units.map((price, index) => ({ item_id: 'line' + index, item_name: 'Dish ' + index,
+      item_price: price, item_quantity: quantities[index], item_discount: 0,
+      item_discount_percentage: 0, tax: 5, tax_type: 'exclusive', company_price_total: 0 }))
+  };
+  let opened = 0;
+  sales.openTenderModel = () => {
+    assert.equal(sales.extraDiscount.sale_new_tot, bill.sales_total,
+      'real saved-order loading must retain the printed payable before opening tender');
+    $('#Partial_amount').val(sales.extraDiscount.sale_new_tot);
+    sales.showMultiPaymentMode();
+    opened++;
+  };
+  sales.recentMenu.editItems('saved-table6', bill, 'edit');
+  assert.equal(opened, 1);
+  assert.equal($('#sales_new_items_table tbody tr').length, 19);
+  assert.equal(Number($('#cash_input').val()), 5667.37);
+  assert.equal($('#save_btn').prop('disabled'), false);
+  assert.deepEqual($('#sales_new_items_table tbody tr').get().map(row => row.id),
+    units.map((_price, index) => 'touch_row_line' + index));
+  win.PosnicPro.configPaymentType = ['Card', 'Upi', 'Google Pay', 'Bank Transfer'].map(payment_value => ({ payment_value }));
+  win.localStorage.setItem('payment_gateway', 'true');
+  sales.showMultiPaymentMode();
+  for (const method of ['Cash', 'Card', 'Upi', 'Google Pay', 'Bank Transfer', 'Qrpay']) {
+    $(win.document.getElementById(method)).closest('button').trigger('click');
+    const sum = $('.payment-amount-input').get().reduce((total, input) => total + Number(input.value || 0), 0);
+    assert.equal(Math.round(sum * 100), 566737, method + ' must collect the printed total');
+    assert.equal($('#save_btn').prop('disabled'), false);
+  }
+  dom.window.close();
+});

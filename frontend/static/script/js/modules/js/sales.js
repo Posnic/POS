@@ -1456,11 +1456,25 @@
         if ($('table#sales_new_items_table').find('#touch_row_' + id).length > 0) {
             $('#touch_row_' + id).replaceWith(rowHTMLLine);
             $('#touch_row_' + id).remove();
-            $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            // The API totals saved lines in their stored order. Reversing them
+            // during payment reload changes half-paisa floating-point rounding
+            // (Azure Table 6: 5667.37 becomes 5667.38).
+            if (PosnicPro.sales.paymentOnlyMode === true) {
+                $('#sales_new_items_table tbody').append(rowHTMLLine);
+            } else {
+                $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            }
             itemRecord.push({ name: item_name, qty: item_quantity, price: mrpPrice, discount: $('#addSalesLineItemDiscountprint_' + id).text(), tax: $('#addSalesLineItemTax_' + id).text(), total: line_total.toFixed(2) });
             db.customerDisplay.put({ id: id, 'clear': 'yes', 'get': 'yes', items: itemRecord });
         } else {
-            $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            // The API totals saved lines in their stored order. Reversing them
+            // during payment reload changes half-paisa floating-point rounding
+            // (Azure Table 6: 5667.37 becomes 5667.38).
+            if (PosnicPro.sales.paymentOnlyMode === true) {
+                $('#sales_new_items_table tbody').append(rowHTMLLine);
+            } else {
+                $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            }
             itemRecord.push({ name: item_name, qty: item_quantity, price: mrpPrice, discount: $('#addSalesLineItemDiscountprint_' + id).text(), tax: $('#addSalesLineItemTax_' + id).text(), total: line_total.toFixed(2) });
             db.customerDisplay.add({ id: id, 'clear': 'yes', 'get': 'yes', items: itemRecord });
         }
