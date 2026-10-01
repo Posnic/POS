@@ -52,6 +52,7 @@
         if (!$('#percentIcon').hasClass('d-none')) { extra = number($('#grand_total').val()) * extra / 100; }
         return $.extend({}, branch, {
             items: items, items_return: [], sales_id: '',
+            receipt_date_order: PosnicPro.local.get('client_dateformat') === 'mm/dd/yyyy' ? 'mdy' : 'dmy',
             created_date: moment().format((PosnicPro.local.get('client_dateformat') === 'mm/dd/yyyy'
                 ? 'MM/DD/YYYY' : 'DD/MM/YYYY') + ' h:mm A'),
             customer_name: $('#sales_new_customer_name').val() || '',

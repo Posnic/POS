@@ -3798,5 +3798,9 @@
   "lang_rd_fixed_columns": "निश्चित कॉलम - वस्तु, इकाई मूल्य, मात्रा, राशि",
   "lang_rd_max_name_chars": "वस्तु के नाम में अधिकतम अक्षर",
   "lang_rd_show_title": "चालान / रसीद का शीर्षक दिखाएँ",
-  "lang_rd_fssai_header": "GSTIN के नीचे FSSAI दिखाएँ"
+  "lang_rd_fssai_header": "GSTIN के नीचे FSSAI दिखाएँ",
+  "lang_rd_left_label": "बाईं ओर कस्टम पाठ",
+  "lang_rd_label_help": "कस्टम पाठ रसीद के शीर्षक को बदलता है। डिफ़ॉल्ट के लिए खाली करें।",
+  "lang_rd_date_format": "तारीख का प्रारूप",
+  "lang_rd_time_format": "समय का प्रारूप"
 }

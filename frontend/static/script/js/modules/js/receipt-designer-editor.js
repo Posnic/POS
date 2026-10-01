@@ -26,7 +26,7 @@
     function changed() { status(t('Unsaved changes')); box.find('[data-action="undo"]').prop('disabled', !undo.length); schedulePreview(); }
     function sample() {
         var item = function (name, price, qty) { return { item_name: name, item_price: price, item_quantity: qty, item_unit: 'ea', total_amount: price * qty, hsn_code: '1234' }; };
-        return Object.assign({}, branch, printOptions(), { receipt_designs: design, sales_id: 'S-000128', created_date: new Date().toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+        return Object.assign({}, branch, printOptions(), { receipt_designs: design, sales_id: 'S-000128', created_date: new Date().toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
             customer_name: 'Alex Morgan', customer_phone: '+1 202 555 0148', customer_email: 'alex@example.com', customer_address: '24 Market Street',
             customer_gstin: '', customer_tax_number: layout().blocks.some(function (b) { return b.field === 'customer_tax_number'; }) ? 'TAX-123456' : '',
             items: [item('Everyday notebook', 12, 2), item('Reusable travel cup', 18, 1), item('Gift wrap', 3, 1)],
@@ -154,6 +154,15 @@
         if (b.type === 'items' && !schema.formats[format].height) html += '<label for="rd-item-layout">' + esc(t('Item layout')) + '</label><select id="rd-item-layout" data-prop="itemLayout"><option value="detailed"' + (!b.itemLayout || b.itemLayout === 'detailed' ? ' selected' : '') + '>' + esc(t('Detailed - quantity and unit price below')) + '</option><option value="compact"' + (b.itemLayout === 'compact' ? ' selected' : '') + '>' + esc(t('Compact - item × quantity and amount')) + '</option><option value="columns"' + (b.itemLayout === 'columns' ? ' selected' : '') + '>' + esc(t('Fixed columns - item, rate, quantity, amount')) + '</option></select>';
         if (b.type === 'items' && b.itemLayout === 'columns') html += '<label>' + esc(t('Maximum item name characters')) + '<input type="number" min="8" max="80" data-prop="nameMaxChars" value="' + (b.nameMaxChars || 24) + '"></label>';
         if (b.type === 'transaction' && !schema.formats[format].height) html += '<label><input type="checkbox" data-prop="showTitle" ' + (b.showTitle !== false ? 'checked' : '') + '> ' + esc(t('Show invoice / receipt title')) + '</label>';
+        if (b.type === 'transaction' && !schema.formats[format].height) {
+            html += '<label>' + esc(t('Custom left label')) + '<input type="text" maxlength="40" data-prop="labelText" placeholder="' + esc(PosnicPro.i18n.t('lang_bill_no', 'Bill no')) + '" value="' + esc(b.labelText || '') + '"></label><small>' + esc(t('Custom text replaces the receipt title. Clear to use the default.')) + '</small>';
+            [['dateFormat', 'Date format', [['auto', t('Use default')], ['dmy', 'DD/MM/YYYY'], ['dmy-short', 'DD/MM/YY'], ['mdy', 'MM/DD/YYYY'], ['ymd', 'YYYY-MM-DD']]],
+             ['timeFormat', 'Time format', [['auto', t('Use default')], ['12h', '07:05 PM'], ['24h', '19:05'], ['none', t('None')]]]].forEach(function (setting) {
+                html += '<label>' + esc(t(setting[1])) + '<select data-prop="' + setting[0] + '">' + setting[2].map(function (option) {
+                    return '<option value="' + option[0] + '"' + ((b[setting[0]] || 'auto') === option[0] ? ' selected' : '') + '>' + esc(option[1]) + '</option>';
+                }).join('') + '</select></label>';
+            });
+        }
         if (b.type === 'store') html += '<label><input type="checkbox" data-prop="fssaiInHeader" ' + (b.fssaiInHeader ? 'checked' : '') + '> ' + esc(t('Show FSSAI below GSTIN')) + '</label>';
         if (b.type === 'items' && b.itemLayout === 'columns') html += '<label>' + esc(t('Line style')) + '<select data-prop="lineStyle">' + ['dotted', 'dashed', 'solid'].map(function (v) { return '<option value="' + v + '"' + ((b.lineStyle || 'dotted') === v ? ' selected' : '') + '>' + esc(t(v.charAt(0).toUpperCase() + v.slice(1))) + '</option>'; }).join('') + '</select></label>';
         if (b.type === 'totals') html += '<p class="rd-help">' + esc(t('Uses the actual sale amounts, including discounts, tax, charges and rounding.')) + '</p>';
@@ -358,6 +367,7 @@
             var key = this.getAttribute('data-prop'); var value = this.type === 'checkbox' ? this.checked : ['width', 'thickness', 'fontSize', 'nameMaxChars'].indexOf(key) !== -1 ? (this.value === '' ? undefined : Number(this.value)) : this.value;
             if (b[key] === value) return;
             checkpoint(); b[key] = value;
+            if (key === 'labelText' && !value.trim()) delete b.labelText;
             if (key === 'width') {
                 box.find('.rd-width-value').text(value + '%');
                 if (b.type === 'field') {

@@ -4097,5 +4097,9 @@
   "lang_rd_max_name_chars": "Maximumaantal tekens voor de artikelnaam",
   "lang_rd_show_title": "Titel van factuur / bon tonen",
   "lang_rd_fssai_header": "FSSAI onder GSTIN tonen",
-  "lang_rd_total_items": "Totaal artikelen"
+  "lang_rd_total_items": "Totaal artikelen",
+  "lang_rd_left_label": "Aangepast label links",
+  "lang_rd_label_help": "Aangepaste tekst vervangt de bonkop. Wis de tekst voor de standaardwaarde.",
+  "lang_rd_date_format": "Datumnotatie",
+  "lang_rd_time_format": "Tijdnotatie"
 }

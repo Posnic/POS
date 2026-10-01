@@ -951,3 +951,68 @@ test('short thermal headers label the bill only when space allows and never trun
     assert.equal(long.find('.rd-transaction-date').text(), sale.created_date);
     dom.window.close();
 });
+
+test('thermal receipt custom label and date/time choices survive normalization', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const format of ['58', '80']) {
+        const b = design.layouts[format].blocks.find(b => b.type === 'transaction');
+        Object.assign(b, { labelText: 'Bill No:', dateFormat: 'dmy-short', timeFormat: '24h' });
+        sale.receipt_designs = contract.normalize(design);
+        sale.created_date = '01/10/2026 07:05:44 PM';
+        let out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('.rd-transaction strong').text(), 'Bill No: S128');
+        assert.equal(out.find('.rd-transaction-date').text(), '01/10/26 19:05');
+        b.dateFormat = 'ymd'; b.timeFormat = '12h';
+        sale.receipt_designs = contract.normalize(design);
+        sale.created_date = '01/10/2026 00:05';
+        out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('.rd-transaction-date').text(), '2026-10-01 12:05 AM');
+        b.timeFormat = 'none'; b.labelText = '<img src=x onerror=alert(1)>';
+        sale.receipt_designs = contract.normalize(design);
+        out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('.rd-transaction-date').text(), '2026-10-01');
+        assert.equal(out.find('.rd-transaction img').length, 0);
+    }
+    for (const value of [{ dateFormat: 'bad' }, { timeFormat: 'bad' }, { labelText: 'x'.repeat(41) }]) {
+        Object.assign(design.layouts['80'].blocks.find(b => b.type === 'transaction'), value);
+        assert.throws(() => contract.normalize(design));
+    }
+    dom.window.close();
+});
+
+test('receipt detail controls update the preview and save only the selected paper format', () => {
+    const { dom, w, $, branch } = setup();
+    let saved;
+    w.PosnicPro.put = (request, done) => {
+        saved = JSON.parse(request.data).receipt_designs;
+        done({ type: 'success', data: { receipt_designs: saved } });
+    };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('[data-format="80"]').trigger('click');
+    $('.rd-select').filter((_, e) => $(e).text().includes('Receipt details')).trigger('click');
+    assert.equal($('[data-prop="labelText"]').length, 1);
+    $('[data-prop="labelText"]').val('Bill No:').trigger('input');
+    $('[data-prop="dateFormat"]').val('ymd').trigger('change');
+    $('[data-prop="timeFormat"]').val('24h').trigger('change');
+    $('[data-action="save"]').trigger('click');
+    const block = saved.layouts['80'].blocks.find(b => b.type === 'transaction');
+    assert.equal(block.labelText, 'Bill No:');
+    assert.equal(block.dateFormat, 'ymd');
+    assert.equal(block.timeFormat, '24h');
+    assert.equal(saved.layouts['58'].blocks.find(b => b.type === 'transaction').labelText, undefined);
+    dom.window.close();
+});
+
+test('custom receipt date respects month-first tender data and noon/midnight', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    const b = design.layouts['80'].blocks.find(b => b.type === 'transaction');
+    b.dateFormat = 'dmy'; b.timeFormat = '24h';
+    sale.receipt_date_order = 'mdy';
+    sale.created_date = '10/01/2026 12:05 AM';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-transaction-date').text(), '01/10/2026 00:05');
+    sale.created_date = '10/01/2026 12:05 PM';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-transaction-date').text(), '01/10/2026 12:05');
+    sale.created_date = 'unrecognized historical date';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-transaction-date').text(), sale.created_date);
+    dom.window.close();
+});

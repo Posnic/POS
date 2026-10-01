@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "निश्चित स्तम्भहरू - सामान, एकाइ मूल्य, परिमाण, रकम",
   "lang_rd_max_name_chars": "सामानको नाममा अधिकतम अक्षरहरू",
   "lang_rd_show_title": "बिजक / रसिदको शीर्षक देखाउनुहोस्",
-  "lang_rd_fssai_header": "GSTIN मुनि FSSAI देखाउनुहोस्"
+  "lang_rd_fssai_header": "GSTIN मुनि FSSAI देखाउनुहोस्",
+  "lang_rd_left_label": "बायाँतर्फ अनुकूल पाठ",
+  "lang_rd_label_help": "अनुकूल पाठले रसिदको शीर्षक बदल्छ। पूर्वनिर्धारित प्रयोग गर्न खाली गर्नुहोस्।",
+  "lang_rd_date_format": "मितिको ढाँचा",
+  "lang_rd_time_format": "समयको ढाँचा"
 }

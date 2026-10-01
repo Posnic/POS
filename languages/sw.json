@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "Safu zisizobadilika - bidhaa, bei ya moja, kiasi, jumla",
   "lang_rd_max_name_chars": "Idadi ya juu ya herufi za jina la bidhaa",
   "lang_rd_show_title": "Onyesha kichwa cha ankara / risiti",
-  "lang_rd_fssai_header": "Onyesha FSSAI chini ya GSTIN"
+  "lang_rd_fssai_header": "Onyesha FSSAI chini ya GSTIN",
+  "lang_rd_left_label": "Maandishi maalumu kushoto",
+  "lang_rd_label_help": "Maandishi yanachukua nafasi ya kichwa cha risiti. Futa ili kutumia chaguo msingi.",
+  "lang_rd_date_format": "Muundo wa tarehe",
+  "lang_rd_time_format": "Muundo wa saa"
 }

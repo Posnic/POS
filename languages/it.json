@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "Colonne fisse - articolo, prezzo unitario, quantità, importo",
   "lang_rd_max_name_chars": "Numero massimo di caratteri del nome articolo",
   "lang_rd_show_title": "Mostra titolo fattura / ricevuta",
-  "lang_rd_fssai_header": "Mostra FSSAI sotto GSTIN"
+  "lang_rd_fssai_header": "Mostra FSSAI sotto GSTIN",
+  "lang_rd_left_label": "Etichetta personalizzata a sinistra",
+  "lang_rd_label_help": "Il testo sostituisce il titolo della ricevuta. Svuotare per usare quello predefinito.",
+  "lang_rd_date_format": "Formato data",
+  "lang_rd_time_format": "Formato ora"
 }

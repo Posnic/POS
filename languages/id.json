@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "Kolom tetap - barang, harga satuan, jumlah, nominal",
   "lang_rd_max_name_chars": "Jumlah karakter maksimum nama barang",
   "lang_rd_show_title": "Tampilkan judul faktur / struk",
-  "lang_rd_fssai_header": "Tampilkan FSSAI di bawah GSTIN"
+  "lang_rd_fssai_header": "Tampilkan FSSAI di bawah GSTIN",
+  "lang_rd_left_label": "Label kiri khusus",
+  "lang_rd_label_help": "Teks khusus menggantikan judul struk. Kosongkan untuk memakai bawaan.",
+  "lang_rd_date_format": "Format tanggal",
+  "lang_rd_time_format": "Format waktu"
 }

@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "സ്ഥിര നിരകൾ - ഇനം, യൂണിറ്റ് വില, എണ്ണം, തുക",
   "lang_rd_max_name_chars": "ഇനത്തിന്റെ പേരിലെ പരമാവധി അക്ഷരങ്ങൾ",
   "lang_rd_show_title": "ഇൻവോയ്സ് / രസീത് തലക്കെട്ട് കാണിക്കുക",
-  "lang_rd_fssai_header": "GSTIN-ന് താഴെ FSSAI കാണിക്കുക"
+  "lang_rd_fssai_header": "GSTIN-ന് താഴെ FSSAI കാണിക്കുക",
+  "lang_rd_left_label": "ഇടതുവശത്തെ ഇഷ്ടാനുസൃത വാചകം",
+  "lang_rd_label_help": "ഈ വാചകം രസീതിന്റെ തലക്കെട്ടിനു പകരം വരും. പതിവ് ഉപയോഗിക്കാൻ മായ്ക്കുക.",
+  "lang_rd_date_format": "തീയതി രൂപം",
+  "lang_rd_time_format": "സമയ രൂപം"
 }

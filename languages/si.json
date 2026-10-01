@@ -3793,5 +3793,9 @@
   "lang_rd_fixed_columns": "ස්ථාවර තීරු - භාණ්ඩය, ඒකක මිල, ප්‍රමාණය, මුදල",
   "lang_rd_max_name_chars": "භාණ්ඩ නාමයේ උපරිම අක්ෂර ගණන",
   "lang_rd_show_title": "ඉන්වොයිසියේ / රිසිට්පතේ මාතෘකාව පෙන්වන්න",
-  "lang_rd_fssai_header": "GSTIN යටින් FSSAI පෙන්වන්න"
+  "lang_rd_fssai_header": "GSTIN යටින් FSSAI පෙන්වන්න",
+  "lang_rd_left_label": "වම්පස අභිරුචි පෙළ",
+  "lang_rd_label_help": "අභිරුචි පෙළ රිසිට්පත් මාතෘකාව වෙනුවට යෙදේ. පෙරනිමිය සඳහා හිස් කරන්න.",
+  "lang_rd_date_format": "දින ආකෘතිය",
+  "lang_rd_time_format": "වේලා ආකෘතිය"
 }
