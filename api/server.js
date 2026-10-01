@@ -104,6 +104,7 @@ const startServer = async () => {
           tenants: () => [{ db: mongoose.connection.db }],
         });
       server.once('close', stopNotifications);
+      require('./src/services/ask-posnic-runner.service').start();
       console.log('🚀 =====================================');
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);

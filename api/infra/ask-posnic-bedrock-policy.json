@@ -1,0 +1,35 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InvokeSelectedProfileFromPosnicCore",
+      "Effect": "Allow",
+      "Action": "bedrock:InvokeModel",
+      "Resource": "arn:aws:bedrock:ap-south-1:719443252592:inference-profile/global.amazon.nova-2-lite-v1:0",
+      "Condition": {
+        "StringEquals": { "aws:RequestedRegion": "ap-south-1" },
+        "IpAddress": { "aws:SourceIp": "13.207.75.191/32" }
+      }
+    },
+    {
+      "Sid": "SelectedRegionalModelThroughProfileOnly",
+      "Effect": "Allow",
+      "Action": "bedrock:InvokeModel",
+      "Resource": "arn:aws:bedrock:ap-south-1::foundation-model/amazon.nova-2-lite-v1:0",
+      "Condition": { "StringEquals": {
+        "aws:RequestedRegion": "ap-south-1",
+        "bedrock:InferenceProfileArn": "arn:aws:bedrock:ap-south-1:719443252592:inference-profile/global.amazon.nova-2-lite-v1:0"
+      } }
+    },
+    {
+      "Sid": "SelectedGlobalModelThroughProfileOnly",
+      "Effect": "Allow",
+      "Action": "bedrock:InvokeModel",
+      "Resource": "arn:aws:bedrock:::foundation-model/amazon.nova-2-lite-v1:0",
+      "Condition": { "StringEquals": {
+        "aws:RequestedRegion": "unspecified",
+        "bedrock:InferenceProfileArn": "arn:aws:bedrock:ap-south-1:719443252592:inference-profile/global.amazon.nova-2-lite-v1:0"
+      } }
+    }
+  ]
+}

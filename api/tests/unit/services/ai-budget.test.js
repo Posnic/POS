@@ -22,6 +22,37 @@ const groups = require('../../../src/services/settings-groups');
 
 const CONTEXT = { branchId: 'b1', licenseId: 'l1' };
 
+test('selected Bedrock profile uses verified Mumbai rates with sub-cent precision', () => {
+  const region = process.env.AWS_REGION;
+  try {
+    process.env.AWS_REGION = 'ap-south-1';
+    const model = 'global.amazon.nova-2-lite-v1:0';
+    expect(budget.priceFor(model)).toEqual({ in: 0.35, out: 2.95 });
+    expect(budget.costMicrominor({ model, tokensIn: 1000, tokensOut: 200, rate: 1 })).toBe(94000);
+    process.env.AWS_REGION = 'us-east-1';
+    expect(budget.priceFor(model)).toEqual(budget.FALLBACK_PRICE);
+    expect(
+      budget.costMicrominor({
+        model,
+        tokensIn: 1000,
+        tokensOut: 200,
+        rate: 1,
+        unitPrice: { in: 0.35, out: 2.95 },
+      })
+    ).toBe(94000);
+  } finally {
+    if (region === undefined) delete process.env.AWS_REGION;
+    else process.env.AWS_REGION = region;
+  }
+});
+
+test('managed cost precision retains a call that rounds to zero whole cents', () => {
+  const call = { model: 'gpt-4o-mini', tokensIn: 100, tokensOut: 20, rate: 1 };
+  expect(budget.costMinor(call)).toBe(0);
+  expect(budget.costMicrominor(call)).toBeGreaterThan(0);
+  expect(budget.costMicrominor(call)).toBe(2700);
+});
+
 describe('where the settings live', () => {
   test('the cap is a preference and the key it limits is a secret', () => {
     /* A screen has to be able to show a shop the limit it set, and a number is
@@ -225,7 +256,7 @@ describe('the cap', () => {
      */
     const source = ai.ask.toString();
     const capAt = source.indexOf('withinCap');
-    const callAt = source.indexOf('await run(');
+    const callAt = source.indexOf("await require('./ask-posnic-metrics.service').providerCall(");
     expect(capAt).toBeGreaterThan(-1);
     expect(callAt).toBeGreaterThan(-1);
     expect(capAt).toBeLessThan(callAt);

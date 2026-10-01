@@ -166,10 +166,14 @@ class PurchaseOrderRepository extends BaseModel {
       doc.created_by = context.userName || '';
       doc.created_by_id = context.userId || null;
       doc.received_receiving_ids = [];
-      const result = await collection.insertOne(doc);
+      const result = await require('../services/ask-posnic-action-identity').insertOnce(
+        collection,
+        doc,
+        context
+      );
       return {
         status: true,
-        data: { id: String(result.insertedId), po_id: doc.po_id },
+        data: { id: String(result.insertedId), po_id: result.document.po_id },
         message: status === 'draft' ? 'Draft saved' : 'Purchase order created',
       };
     } catch (error) {

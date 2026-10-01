@@ -1,0 +1,638 @@
+{
+  "scope": "Controlled condition/modality verifier probes plus the recorded public-manual permission regression; not customer answer accuracy.",
+  "cases": [
+    {
+      "id": "possibility-invalid",
+      "question": "Does write access always require manager approval?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "A cashier can have write access but still need manager approval."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "A cashier with write access always needs manager approval.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "A cashier can have write access but still need manager approval."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "possibility-valid",
+      "question": "Does write access always require manager approval?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "A cashier can have write access but still need manager approval."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "A cashier with write access may still need manager approval.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "A cashier can have write access but still need manager approval."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "recommendation-invalid",
+      "question": "Is manager approval mandatory for all refunds?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Recommended default: cashiers should obtain manager approval for refunds. Shops may grant direct refund authority."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "All refunds require manager approval.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Recommended default: cashiers should obtain manager approval for refunds. Shops may grant direct refund authority."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "recommendation-valid",
+      "question": "Is manager approval mandatory for all refunds?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Recommended default: cashiers should obtain manager approval for refunds. Shops may grant direct refund authority."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Manager approval is a recommended default; shops may grant direct refund authority.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Recommended default: cashiers should obtain manager approval for refunds. Shops may grant direct refund authority."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "alternative-invalid",
+      "question": "Is manager approval the only way to refund?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "A refund requires either direct refund authority or manager approval."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "A refund requires manager approval.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "A refund requires either direct refund authority or manager approval."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "alternative-valid",
+      "question": "Is manager approval the only way to refund?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "A refund requires either direct refund authority or manager approval."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "A refund requires either direct refund authority or manager approval.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "A refund requires either direct refund authority or manager approval."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "condition-invalid",
+      "question": "Are coupon discounts always available?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Coupons apply only when the sale meets the minimum spend."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Coupons apply to every sale.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Coupons apply only when the sale meets the minimum spend."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "condition-valid",
+      "question": "Are coupon discounts always available?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Coupons apply only when the sale meets the minimum spend."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Coupons apply only when the sale meets the minimum spend.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Coupons apply only when the sale meets the minimum spend."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "scope-invalid",
+      "question": "Can all employees export reports?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Only managers with report access can export reports."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "All employees can export reports.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Only managers with report access can export reports."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "scope-valid",
+      "question": "Can all employees export reports?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Only managers with report access can export reports."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Only managers with report access can export reports.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Only managers with report access can export reports."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "negation-invalid",
+      "question": "Does deleting a customer delete historical sales?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Deleting a customer does not delete historical sales."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Deleting a customer deletes historical sales.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Deleting a customer does not delete historical sales."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "negation-valid",
+      "question": "Does deleting a customer delete historical sales?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Deleting a customer does not delete historical sales."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Deleting a customer does not delete historical sales.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Deleting a customer does not delete historical sales."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "exception-invalid",
+      "question": "Can every completed sale be returned immediately?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Completed sales can be returned, except credit sales with an outstanding balance."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Every completed sale can be returned immediately.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Completed sales can be returned, except credit sales with an outstanding balance."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "exception-valid",
+      "question": "Can every completed sale be returned immediately?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Completed sales can be returned, except credit sales with an outstanding balance."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Credit sales with an outstanding balance are an exception to returning completed sales.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Completed sales can be returned, except credit sales with an outstanding balance."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "limit-invalid",
+      "question": "Can I return an unlimited quantity?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "The return quantity cannot exceed the remaining sold quantity."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Any quantity can be returned.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "The return quantity cannot exceed the remaining sold quantity."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "limit-valid",
+      "question": "Can I return an unlimited quantity?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "The return quantity cannot exceed the remaining sold quantity."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "The return quantity cannot exceed the remaining sold quantity.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "The return quantity cannot exceed the remaining sold quantity."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "workflow-invalid",
+      "question": "Can a pending credit sale be returned?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "At checkout, walk-in sales must be paid immediately unless the shop allows credit. For returns, pending credit balances must be settled first."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Pending credit sales can be returned when the shop allows credit.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "At checkout, walk-in sales must be paid immediately unless the shop allows credit. For returns, pending credit balances must be settled first."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "workflow-valid",
+      "question": "Can a pending credit sale be returned?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "At checkout, walk-in sales must be paid immediately unless the shop allows credit. For returns, pending credit balances must be settled first."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "For returns, pending credit balances must be settled first.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "At checkout, walk-in sales must be paid immediately unless the shop allows credit. For returns, pending credit balances must be settled first."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "incomplete-invalid",
+      "question": "Are all discount changes subject to manager approval?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Discount change | Manager approval"
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "All discount changes require manager approval.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Discount change | Manager approval"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "tamil-invalid",
+      "question": "எல்லா விற்பனைக்கும் கூப்பன் தள்ளுபடி கிடைக்குமா?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Coupons apply only when the sale meets the minimum spend."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "எல்லா விற்பனைக்கும் கூப்பன் தள்ளுபடி கிடைக்கும்.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Coupons apply only when the sale meets the minimum spend."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "tamil-valid",
+      "question": "எல்லா விற்பனைக்கும் கூப்பன் தள்ளுபடி கிடைக்குமா?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "title": "Controlled condition fixture",
+          "text": "Coupons apply only when the sale meets the minimum spend."
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "குறைந்தபட்ச கொள்முதல் தொகையை எட்டும் விற்பனைக்கு மட்டுமே கூப்பன் தள்ளுபடி பொருந்தும்.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "Coupons apply only when the sale meets the minimum spend."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "recorded-role-invalid",
+      "question": "Does Sales write permission mean a cashier never needs manager approval?",
+      "expected_accept": false,
+      "matches": [
+        {
+          "score": 25.63152685070959,
+          "exact": false,
+          "coverage": 0.75,
+          "title": "Create, Clone and Edit Role Permission Matrices",
+          "revision": "6f9350ec478151e9",
+          "document_id": "settings/role-permission-matrix",
+          "chunk": 3,
+          "text": "ete affects account history and credit follow-up.\n\nSupplier | Purchase staff only. | Write/delete affects purchase source records.\n\nCategory and Item | Inventory staff can maintain catalog. | Delete can break item history and scanner setup.\n\nExpense | Cash Book or accounting staff only. | Write/delete moves non-sale money evidence.\n\nBranch | Owner or store manager. | Branch changes affect receipt identity and access.\n\nReport | Owner, manager or accountant. | Financial and staff performance data may be sensitive.\n\nUser | Owner or trusted manager. | Controls staff accounts, roles, PINs and API users.\n\n## POS Actions and Manager Approval\n\nPOS actions are the till authority layer. A cashier can have Sales write permission but still need manager approval for refunds, price overrides or register close.\n\nPOS action | Use carefully because | Recommended default\n\nApply discount | Reduces margin and can hide pricing mistakes. | Cashier needs manager approval or a low cap.\n\nPrice override | Changes item price at the counter. | Manager approval.\n\nVoid a line | Removes a line from the bill. | Supervisor or manager approval.\n\nVoid a sale | Cancels an entire sale. | Manager approval.\n\nRefund / re",
+          "context": "t normal POS authority. | Verify receiving access and absence of sales authority.\n\nAccountant | Reports and financial review without POS operations. | Keep operational write permissions off unless deliberately required.\n\nAPI / Integration | Programmatic integration access. | Grant only scopes needed by the integration and protect its credentials.\n\n## Module Access Matrix\n\nModule access is the screen and record layer. Read lets the user view data; Write lets the user create or change records; Delete lets the user remove records where that module supports deletion.\n\nModule | Typical owner rule | High-risk access\n\nDashboard | Most staff can see basic dashboard tiles. | Dashboard financials should be management/accounting only.\n\nSales | Cashiers need read and write to sell. | Delete, void and sale correction should be supervisor-controlled.\n\nReceiving | Inventory or purchase staff only. | Write and delete affect stock and supplier evidence.\n\nCustomer | Cashiers may need read/write for account customers. | Delete affects account history and credit follow-up.\n\nSupplier | Purchase staff only. | Write/delete affects purchase source records.\n\nCategory and Item | Inventory staff can maintain catalog. | Delete can break item history and scanner setup.\n\nExpense | Cash Book or accounting staff only. | Write/delete moves non-sale money evidence.\n\nBranch | Owner or store manager. | Branch changes affect receipt identity and access.\n\nReport | Owner, manager or accountant. | Financial and staff performance data may be sensitive.\n\nUser | Owner or trusted manager. | Controls staff accounts, roles, PINs and API users.\n\n## POS Actions and Manager Approval\n\nPOS actions are the till authority layer. A cashier can have Sales write permission but still need manager approval for refunds, price overrides or register close.\n\nPOS action | Use carefully because | Recommended default\n\nApply discount | Reduces margin and can hide pricing mistakes. | Cashier needs manager approval or a low cap.\n\nPrice override | Changes item price at the counter. | Manager approval.\n\nVoid a line | Removes a line from the bill. | Supervisor or manager approval.\n\nVoid a sale | Cancels an entire sale. | Manager approval.\n\nRefund / return | Creates money and stock movement. | Manager approval and original bill review.\n\nReprint receipt | Can expose customer and payment evidence. | Usually allowed for cashier.\n\nNo-sale open drawer | Opens cash drawer without a sale. | Manager or supervisor only.\n\nOpen register | Starts the cash session. | Supervisor or trusted cashier.\n\nClose register | Ends drawer accountability. | Supervisor or manager only.\n\nCash in / out and Cash drop | Moves cash outside normal sale payment. | Supervisor or manager only.\n\nQuick sale / instant items | Allows amount-only sale lines. | Allow only if Quick Sale is part of shop policy.\n\n## Current Enforcement Boundary\n\nDo not treat every visible till-action checkbox as a complete security boundary yet. The current editor explicitly states that Void sale and Refund / return are enforced server-side today; the other action gates take effect as they ship.\n\nControl | Current status | How to operate safely\n\nVoid sale | Server-side permission enforcement is present. | Still t"
+        },
+        {
+          "score": 24.011871373062892,
+          "exact": false,
+          "coverage": 0.625,
+          "title": "Edit and Reconcile a Saved Sale",
+          "revision": "a3f98ce318f19bfb",
+          "document_id": "sales/edit-saved-sale",
+          "chunk": 4,
+          "text": "ed in place; the human-readable Bill # is retained.\n\nThe sale process becomes Edit for a normal completed sale. A held sale is converted to Add, while dedicated KOT edit paths follow separate KOT rules.\n\nServer-side totals are recalculated from normalized submitted items, with payload totals used only as fallback when server values are unavailable.\n\nThe linked register_sales entry is updated with the corrected total, discount, tax and payment information when a register ID is supplied.\n\nCustomer partial-payment or wallet transaction data can also be updated when the sale belongs to that flow.\n\nThe edit payload sets return totals, return tax, return discount and returned-item arrays back to empty or zero. Do not use Edit as a substitute for changing a completed return record.\n\nThe update emits sync activity after the sale is saved so offline/cloud copies can receive the corrected transaction.\n\n## Permissions, Approval and Audit\n\nControl | Enforcement | Evidence\n\nOpen source bill | Sales Read permission. | The original invoice and Bill #.\n\nSubmit edit | Sales Write permission; missing permission returns 403. | Updated sale with the same record ID.\n\nDiscount change | Manager approval ",
+          "context": "ests manager approval for a discount, provide an authorized PIN or card; the browser retries the update once with that approval token.\n\nComplete Update and wait for a success response.\n\nPosnic clears its item cache and returns a normal saved-sale edit to Sales History.\n\nReopen the same Bill # and verify the corrected invoice.\n\n## Stock Consequences\n\nChange | Tracked-stock action | Stock log when enabled\n\nIncrease an existing quantity | Subtract the positive quantity difference. | Edit Sale with Subtract and the bill reference.\n\nReduce an existing quantity | Add the quantity difference back. | Edit Sale with Add and the bill reference.\n\nAdd a new tracked item | Subtract its full submitted quantity. | Edit Sale with opening and closing balances.\n\nRemove a tracked item | Add its old full quantity back. | Edit Sale records the cancelled line difference.\n\nUntracked item | No inventory movement. | No tracked-stock adjustment is expected.\n\n## Financial and Record Consequences\n\nThe existing sale document is updated in place; the human-readable Bill # is retained.\n\nThe sale process becomes Edit for a normal completed sale. A held sale is converted to Add, while dedicated KOT edit paths follow separate KOT rules.\n\nServer-side totals are recalculated from normalized submitted items, with payload totals used only as fallback when server values are unavailable.\n\nThe linked register_sales entry is updated with the corrected total, discount, tax and payment information when a register ID is supplied.\n\nCustomer partial-payment or wallet transaction data can also be updated when the sale belongs to that flow.\n\nThe edit payload sets return totals, return tax, return discount and returned-item arrays back to empty or zero. Do not use Edit as a substitute for changing a completed return record.\n\nThe update emits sync activity after the sale is saved so offline/cloud copies can receive the corrected transaction.\n\n## Permissions, Approval and Audit\n\nControl | Enforcement | Evidence\n\nOpen source bill | Sales Read permission. | The original invoice and Bill #.\n\nSubmit edit | Sales Write permission; missing permission returns 403. | Updated sale with the same record ID.\n\nDiscount change | Manager approval can be required by role policy. | Discount audit event and approval context.\n\nPrice change | Compared with the original sale on the server. | Price override audit event with changed lines.\n\nStock movement | Only tracked items move; detailed logging follows stock-management settings. | Inventory Logs with Edit Sale reference.\n\nRegister movement | Existing register entry is replaced when linked. | Register session and close reconciliation.\n\n## Verify After Update\n\nSearch the same Bill # in Sales History and open it.\n\nCompare customer, every line, subtotal, discount, tax, total and payment with the intended correction.\n\nOpen Inventory Logs and verify one Explainable Edit Sale delta for every tracked item changed.\n\nCheck the current register and payment reports for the corrected tender and amount.\n\nCheck customer dues or wallet when partial payment or customer balance was involved.\n\nCheck price-change and discount audit records when those values changed.\n\nPrint or share a replacement receipt only after the co"
+        },
+        {
+          "score": 22.474055423861234,
+          "exact": false,
+          "coverage": 0.625,
+          "title": "Return or Exchange a Completed Sale",
+          "revision": "b64f12a40d38fcda",
+          "document_id": "sales/return-exchange-sale",
+          "chunk": 0,
+          "text": "Return or Exchange a Completed Sale\n\nMenu path: Home -> Sales History -> select the original sale -> Return\n\nA Posnic return starts from the original sale, preserves its commercial evidence, puts tracked quantities back into stock and records either a partial or full return; adding a replacement item turns the same workspace into an exchange.\n\n## Before Accepting a Return\n\nCheck | Why it matters | Operator action\n\nOriginal bill | The return must be tied to the sale that set price, tax, discount, customer and payment evidence. | Search Sales History by the bill details; do not create a negative new sale.\n\nRemaining quantity | Posnic rejects zero, negative or already-returned quantities and prevents returning more than remains on the bill. | Check earlier returns and count the quantity physically received.\n\nItem condition | Tracked stock is added back automatically even when an item is damaged or unsellable. | Follow shop policy for quarantine or a later stock adjustment and write a reason.\n\nRefund authority | The operator needs Sales write access and either direct Refund / return authority or a manager approval. | Have the approving manager present; never share an admin login or PIN",
+          "context": "Return or Exchange a Completed Sale\n\nMenu path: Home -> Sales History -> select the original sale -> Return\n\nA Posnic return starts from the original sale, preserves its commercial evidence, puts tracked quantities back into stock and records either a partial or full return; adding a replacement item turns the same workspace into an exchange.\n\n## Before Accepting a Return\n\nCheck | Why it matters | Operator action\n\nOriginal bill | The return must be tied to the sale that set price, tax, discount, customer and payment evidence. | Search Sales History by the bill details; do not create a negative new sale.\n\nRemaining quantity | Posnic rejects zero, negative or already-returned quantities and prevents returning more than remains on the bill. | Check earlier returns and count the quantity physically received.\n\nItem condition | Tracked stock is added back automatically even when an item is damaged or unsellable. | Follow shop policy for quarantine or a later stock adjustment and write a reason.\n\nRefund authority | The operator needs Sales write access and either direct Refund / return authority or a manager approval. | Have the approving manager present; never share an admin login or PIN.\n\nPayment status | A credit sale with a pending balance cannot be returned until its transaction is completed. | Settle or correct the customer transaction first, then reopen the original sale.\n\nRefund method | The customer should receive value through the approved method and the register must reconcile. | Confirm cash, original tender, wallet or exchange policy before saving.\n\n## Open the Original Sale\n\nOpen Home -> Sales History.\n\nUse the bill number, customer, date and time, item count, total and status to identify the original transaction.\n\nOpen the sale and compare its customer, lines, quantities, prices, discounts, tax and payment details with the receipt and goods presented.\n\nChoose Return. A restricted cashier is prompted for an approving manager's PIN or card before the return workspace opens.\n\nConfirm that the return screen contains the original sale lines. Stop if the bill or branch is wrong.\n\n## Return All or Part of the Sale\n\nFor each item being returned, set the return quantity to the physi"
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "A cashier with Sales write permission still needs manager approval for certain actions such as refunds, price overrides, or register close.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "A cashier can have Sales write permission but still need manager approval for refunds, price overrides or register close."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "recorded-role-valid",
+      "question": "Does Sales write permission mean a cashier never needs manager approval?",
+      "expected_accept": true,
+      "matches": [
+        {
+          "score": 25.63152685070959,
+          "exact": false,
+          "coverage": 0.75,
+          "title": "Create, Clone and Edit Role Permission Matrices",
+          "revision": "6f9350ec478151e9",
+          "document_id": "settings/role-permission-matrix",
+          "chunk": 3,
+          "text": "ete affects account history and credit follow-up.\n\nSupplier | Purchase staff only. | Write/delete affects purchase source records.\n\nCategory and Item | Inventory staff can maintain catalog. | Delete can break item history and scanner setup.\n\nExpense | Cash Book or accounting staff only. | Write/delete moves non-sale money evidence.\n\nBranch | Owner or store manager. | Branch changes affect receipt identity and access.\n\nReport | Owner, manager or accountant. | Financial and staff performance data may be sensitive.\n\nUser | Owner or trusted manager. | Controls staff accounts, roles, PINs and API users.\n\n## POS Actions and Manager Approval\n\nPOS actions are the till authority layer. A cashier can have Sales write permission but still need manager approval for refunds, price overrides or register close.\n\nPOS action | Use carefully because | Recommended default\n\nApply discount | Reduces margin and can hide pricing mistakes. | Cashier needs manager approval or a low cap.\n\nPrice override | Changes item price at the counter. | Manager approval.\n\nVoid a line | Removes a line from the bill. | Supervisor or manager approval.\n\nVoid a sale | Cancels an entire sale. | Manager approval.\n\nRefund / re",
+          "context": "t normal POS authority. | Verify receiving access and absence of sales authority.\n\nAccountant | Reports and financial review without POS operations. | Keep operational write permissions off unless deliberately required.\n\nAPI / Integration | Programmatic integration access. | Grant only scopes needed by the integration and protect its credentials.\n\n## Module Access Matrix\n\nModule access is the screen and record layer. Read lets the user view data; Write lets the user create or change records; Delete lets the user remove records where that module supports deletion.\n\nModule | Typical owner rule | High-risk access\n\nDashboard | Most staff can see basic dashboard tiles. | Dashboard financials should be management/accounting only.\n\nSales | Cashiers need read and write to sell. | Delete, void and sale correction should be supervisor-controlled.\n\nReceiving | Inventory or purchase staff only. | Write and delete affect stock and supplier evidence.\n\nCustomer | Cashiers may need read/write for account customers. | Delete affects account history and credit follow-up.\n\nSupplier | Purchase staff only. | Write/delete affects purchase source records.\n\nCategory and Item | Inventory staff can maintain catalog. | Delete can break item history and scanner setup.\n\nExpense | Cash Book or accounting staff only. | Write/delete moves non-sale money evidence.\n\nBranch | Owner or store manager. | Branch changes affect receipt identity and access.\n\nReport | Owner, manager or accountant. | Financial and staff performance data may be sensitive.\n\nUser | Owner or trusted manager. | Controls staff accounts, roles, PINs and API users.\n\n## POS Actions and Manager Approval\n\nPOS actions are the till authority layer. A cashier can have Sales write permission but still need manager approval for refunds, price overrides or register close.\n\nPOS action | Use carefully because | Recommended default\n\nApply discount | Reduces margin and can hide pricing mistakes. | Cashier needs manager approval or a low cap.\n\nPrice override | Changes item price at the counter. | Manager approval.\n\nVoid a line | Removes a line from the bill. | Supervisor or manager approval.\n\nVoid a sale | Cancels an entire sale. | Manager approval.\n\nRefund / return | Creates money and stock movement. | Manager approval and original bill review.\n\nReprint receipt | Can expose customer and payment evidence. | Usually allowed for cashier.\n\nNo-sale open drawer | Opens cash drawer without a sale. | Manager or supervisor only.\n\nOpen register | Starts the cash session. | Supervisor or trusted cashier.\n\nClose register | Ends drawer accountability. | Supervisor or manager only.\n\nCash in / out and Cash drop | Moves cash outside normal sale payment. | Supervisor or manager only.\n\nQuick sale / instant items | Allows amount-only sale lines. | Allow only if Quick Sale is part of shop policy.\n\n## Current Enforcement Boundary\n\nDo not treat every visible till-action checkbox as a complete security boundary yet. The current editor explicitly states that Void sale and Refund / return are enforced server-side today; the other action gates take effect as they ship.\n\nControl | Current status | How to operate safely\n\nVoid sale | Server-side permission enforcement is present. | Still t"
+        },
+        {
+          "score": 24.011871373062892,
+          "exact": false,
+          "coverage": 0.625,
+          "title": "Edit and Reconcile a Saved Sale",
+          "revision": "a3f98ce318f19bfb",
+          "document_id": "sales/edit-saved-sale",
+          "chunk": 4,
+          "text": "ed in place; the human-readable Bill # is retained.\n\nThe sale process becomes Edit for a normal completed sale. A held sale is converted to Add, while dedicated KOT edit paths follow separate KOT rules.\n\nServer-side totals are recalculated from normalized submitted items, with payload totals used only as fallback when server values are unavailable.\n\nThe linked register_sales entry is updated with the corrected total, discount, tax and payment information when a register ID is supplied.\n\nCustomer partial-payment or wallet transaction data can also be updated when the sale belongs to that flow.\n\nThe edit payload sets return totals, return tax, return discount and returned-item arrays back to empty or zero. Do not use Edit as a substitute for changing a completed return record.\n\nThe update emits sync activity after the sale is saved so offline/cloud copies can receive the corrected transaction.\n\n## Permissions, Approval and Audit\n\nControl | Enforcement | Evidence\n\nOpen source bill | Sales Read permission. | The original invoice and Bill #.\n\nSubmit edit | Sales Write permission; missing permission returns 403. | Updated sale with the same record ID.\n\nDiscount change | Manager approval ",
+          "context": "ests manager approval for a discount, provide an authorized PIN or card; the browser retries the update once with that approval token.\n\nComplete Update and wait for a success response.\n\nPosnic clears its item cache and returns a normal saved-sale edit to Sales History.\n\nReopen the same Bill # and verify the corrected invoice.\n\n## Stock Consequences\n\nChange | Tracked-stock action | Stock log when enabled\n\nIncrease an existing quantity | Subtract the positive quantity difference. | Edit Sale with Subtract and the bill reference.\n\nReduce an existing quantity | Add the quantity difference back. | Edit Sale with Add and the bill reference.\n\nAdd a new tracked item | Subtract its full submitted quantity. | Edit Sale with opening and closing balances.\n\nRemove a tracked item | Add its old full quantity back. | Edit Sale records the cancelled line difference.\n\nUntracked item | No inventory movement. | No tracked-stock adjustment is expected.\n\n## Financial and Record Consequences\n\nThe existing sale document is updated in place; the human-readable Bill # is retained.\n\nThe sale process becomes Edit for a normal completed sale. A held sale is converted to Add, while dedicated KOT edit paths follow separate KOT rules.\n\nServer-side totals are recalculated from normalized submitted items, with payload totals used only as fallback when server values are unavailable.\n\nThe linked register_sales entry is updated with the corrected total, discount, tax and payment information when a register ID is supplied.\n\nCustomer partial-payment or wallet transaction data can also be updated when the sale belongs to that flow.\n\nThe edit payload sets return totals, return tax, return discount and returned-item arrays back to empty or zero. Do not use Edit as a substitute for changing a completed return record.\n\nThe update emits sync activity after the sale is saved so offline/cloud copies can receive the corrected transaction.\n\n## Permissions, Approval and Audit\n\nControl | Enforcement | Evidence\n\nOpen source bill | Sales Read permission. | The original invoice and Bill #.\n\nSubmit edit | Sales Write permission; missing permission returns 403. | Updated sale with the same record ID.\n\nDiscount change | Manager approval can be required by role policy. | Discount audit event and approval context.\n\nPrice change | Compared with the original sale on the server. | Price override audit event with changed lines.\n\nStock movement | Only tracked items move; detailed logging follows stock-management settings. | Inventory Logs with Edit Sale reference.\n\nRegister movement | Existing register entry is replaced when linked. | Register session and close reconciliation.\n\n## Verify After Update\n\nSearch the same Bill # in Sales History and open it.\n\nCompare customer, every line, subtotal, discount, tax, total and payment with the intended correction.\n\nOpen Inventory Logs and verify one Explainable Edit Sale delta for every tracked item changed.\n\nCheck the current register and payment reports for the corrected tender and amount.\n\nCheck customer dues or wallet when partial payment or customer balance was involved.\n\nCheck price-change and discount audit records when those values changed.\n\nPrint or share a replacement receipt only after the co"
+        },
+        {
+          "score": 22.474055423861234,
+          "exact": false,
+          "coverage": 0.625,
+          "title": "Return or Exchange a Completed Sale",
+          "revision": "b64f12a40d38fcda",
+          "document_id": "sales/return-exchange-sale",
+          "chunk": 0,
+          "text": "Return or Exchange a Completed Sale\n\nMenu path: Home -> Sales History -> select the original sale -> Return\n\nA Posnic return starts from the original sale, preserves its commercial evidence, puts tracked quantities back into stock and records either a partial or full return; adding a replacement item turns the same workspace into an exchange.\n\n## Before Accepting a Return\n\nCheck | Why it matters | Operator action\n\nOriginal bill | The return must be tied to the sale that set price, tax, discount, customer and payment evidence. | Search Sales History by the bill details; do not create a negative new sale.\n\nRemaining quantity | Posnic rejects zero, negative or already-returned quantities and prevents returning more than remains on the bill. | Check earlier returns and count the quantity physically received.\n\nItem condition | Tracked stock is added back automatically even when an item is damaged or unsellable. | Follow shop policy for quarantine or a later stock adjustment and write a reason.\n\nRefund authority | The operator needs Sales write access and either direct Refund / return authority or a manager approval. | Have the approving manager present; never share an admin login or PIN",
+          "context": "Return or Exchange a Completed Sale\n\nMenu path: Home -> Sales History -> select the original sale -> Return\n\nA Posnic return starts from the original sale, preserves its commercial evidence, puts tracked quantities back into stock and records either a partial or full return; adding a replacement item turns the same workspace into an exchange.\n\n## Before Accepting a Return\n\nCheck | Why it matters | Operator action\n\nOriginal bill | The return must be tied to the sale that set price, tax, discount, customer and payment evidence. | Search Sales History by the bill details; do not create a negative new sale.\n\nRemaining quantity | Posnic rejects zero, negative or already-returned quantities and prevents returning more than remains on the bill. | Check earlier returns and count the quantity physically received.\n\nItem condition | Tracked stock is added back automatically even when an item is damaged or unsellable. | Follow shop policy for quarantine or a later stock adjustment and write a reason.\n\nRefund authority | The operator needs Sales write access and either direct Refund / return authority or a manager approval. | Have the approving manager present; never share an admin login or PIN.\n\nPayment status | A credit sale with a pending balance cannot be returned until its transaction is completed. | Settle or correct the customer transaction first, then reopen the original sale.\n\nRefund method | The customer should receive value through the approved method and the register must reconcile. | Confirm cash, original tender, wallet or exchange policy before saving.\n\n## Open the Original Sale\n\nOpen Home -> Sales History.\n\nUse the bill number, customer, date and time, item count, total and status to identify the original transaction.\n\nOpen the sale and compare its customer, lines, quantities, prices, discounts, tax and payment details with the receipt and goods presented.\n\nChoose Return. A restricted cashier is prompted for an approving manager's PIN or card before the return workspace opens.\n\nConfirm that the return screen contains the original sale lines. Stop if the bill or branch is wrong.\n\n## Return All or Part of the Sale\n\nFor each item being returned, set the return quantity to the physi"
+        }
+      ],
+      "draft": {
+        "cannot_answer": false,
+        "statements": [
+          {
+            "text": "Sales write permission alone does not guarantee that a cashier can perform every action without manager approval.",
+            "evidence": [
+              {
+                "source": 1,
+                "quote": "A cashier can have Sales write permission but still need manager approval for refunds, price overrides or register close."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

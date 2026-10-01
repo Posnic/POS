@@ -8,9 +8,8 @@
  *
  * WHOSE MONEY THIS IS.
  *
- * The shop's own. Posnic charges nothing for AI and the key belongs to the
- * shopkeeper, so nothing here protects our margin - there is no margin in it.
- * It protects the customer from us. A loop that calls a model in a retry
+ * Own-key usage is paid by the shopkeeper directly. Managed packs use these
+ * same price helpers with a separate atomic allowance ledger. A loop that calls a model in a retry
  * bills more in a day than the shop pays for the software in a year, and the
  * invoice arrives on their card with our name on the software that spent it.
  *
@@ -37,6 +36,8 @@
 const { ObjectId } = require('mongodb');
 const BaseModel = require('../models/base.model');
 const { parseCurrencyLabel } = require('../utils/currency-label');
+const BEDROCK_PRICE = require('../../infra/ask-posnic-bedrock-pricing.json');
+const EMBEDDING_PRICE = require('../../infra/ask-posnic-embedding-pricing.json');
 
 /*
  * List prices per million tokens, in US dollars, as published September 2026.
@@ -53,6 +54,7 @@ const PRICES = {
   'claude-sonnet-5': { in: 3, out: 15 },
   'claude-opus-5': { in: 5, out: 25 },
   'gpt-4o-mini': { in: 0.15, out: 0.6 },
+  'text-embedding-3-small': { in: 0.02, out: 0 },
   'gpt-4o': { in: 2.5, out: 10 },
   'gpt-realtime': { in: 32, out: 64 },
   'gpt-realtime-mini': { in: 10, out: 20 },
@@ -64,6 +66,16 @@ const REALTIME_FALLBACK_MODEL = 'gpt-realtime';
 
 function priceFor(model) {
   const name = String(model || '');
+  if (
+    name === BEDROCK_PRICE.model &&
+    (process.env.AWS_REGION || 'ap-south-1') === BEDROCK_PRICE.region
+  )
+    return { in: BEDROCK_PRICE.in, out: BEDROCK_PRICE.out };
+  if (
+    name === EMBEDDING_PRICE.model &&
+    (process.env.AWS_REGION || 'ap-south-1') === EMBEDDING_PRICE.region
+  )
+    return { in: EMBEDDING_PRICE.in, out: EMBEDDING_PRICE.out };
   if (PRICES[name]) return PRICES[name];
   if (/realtime/i.test(name)) return PRICES[REALTIME_FALLBACK_MODEL];
   return FALLBACK_PRICE;
@@ -190,6 +202,21 @@ function costMinor({ model, tokensIn, tokensOut, rate }) {
   return Math.round(usd * perDollar * 100);
 }
 
+// Managed allowances retain sub-cent usage between calls. Rounding each small
+// RAG answer to whole cents would make an unlimited number of calls appear free.
+function costMicrominor({ model, tokensIn, tokensOut, rate, unitPrice }) {
+  const price = unitPrice || priceFor(model);
+  if (![price.in, price.out].every((value) => Number.isFinite(value) && value >= 0))
+    throw new Error('Invalid model unit price.');
+  const perDollar = Number(rate) > 0 ? Number(rate) : USD_TO_INR;
+  return Math.ceil(
+    (Math.max(0, Number(tokensIn) || 0) * price.in +
+      Math.max(0, Number(tokensOut) || 0) * price.out) *
+      perDollar *
+      100
+  );
+}
+
 /** The audio tokens a stretch of open line is priced as. Rounded up. */
 function voiceTokens(seconds) {
   const s = Math.max(0, Number(seconds) || 0);
@@ -221,7 +248,11 @@ const currencyCache = new Map();
  */
 async function currencyOf(context) {
   const branchId = String((context && context.branchId) || '');
-  const hit = currencyCache.get(branchId);
+  const cacheKey = JSON.stringify([
+    String(context?.licenseId || BaseModel.license || ''),
+    branchId,
+  ]);
+  const hit = currencyCache.get(cacheKey);
   if (hit && Date.now() - hit.at < CURRENCY_TTL_MS) return hit.value;
   let value = DEFAULT_CURRENCY;
   try {
@@ -246,13 +277,13 @@ async function currencyOf(context) {
   } catch (error) {
     console.error('[ai] could not read the shop currency, counting in rupees:', error.message);
   }
-  currencyCache.set(branchId, { at: Date.now(), value });
+  currencyCache.set(cacheKey, { at: Date.now(), value });
   return value;
 }
 
 function scope(context) {
   return {
-    license: BaseModel.license,
+    license: context?.licenseId || BaseModel.license,
     branch_id: String((context && context.branchId) || ''),
     month: monthKey(),
   };
@@ -272,7 +303,8 @@ async function spentThisMonth(context) {
   const details = {};
   let total = 0;
   for (const row of rows) {
-    const minor = Number(row.cost_minor) || 0;
+    const minor =
+      (Number(row.cost_minor) || 0) + (Number(row.cost_microminor_adjustment) || 0) / 1e6;
     total += minor;
     byFeature[row.feature] = (byFeature[row.feature] || 0) + minor;
     const d = details[row.feature] || { minor: 0, calls: 0, seconds: 0, model: '' };
@@ -329,6 +361,10 @@ async function record({ feature, model, tokensIn, tokensOut, payer, seconds, cal
         tokens_out: Number(tokensOut) || 0,
         seconds: Number(seconds) || 0,
         cost_minor: minor,
+        // Retain the fraction that legacy per-call rounding discarded. This
+        // additive correction preserves old rows and concurrent atomic writes.
+        cost_microminor_adjustment:
+          costMicrominor({ model, tokensIn, tokensOut, rate: currency.rate }) - minor * 1e6,
       },
       $set: {
         last_at: new Date(),
@@ -339,6 +375,19 @@ async function record({ feature, model, tokensIn, tokensOut, payer, seconds, cal
     },
     { upsert: true }
   );
+  if (String(feature).startsWith('ask_posnic_')) {
+    void require('./ask-posnic-metrics.service').record(
+      context,
+      'cost',
+      {
+        calls: calls == null ? 1 : Number(calls) || 0,
+        tokens_in: Number(tokensIn) || 0,
+        tokens_out: Number(tokensOut) || 0,
+        cost_microminor: costMicrominor({ model, tokensIn, tokensOut, rate: currency.rate }),
+      },
+      { currency: currency.code, payer }
+    );
+  }
   return minor;
 }
 
@@ -347,6 +396,7 @@ module.exports = {
   withinCap,
   record,
   costMinor,
+  costMicrominor,
   priceFor,
   voiceTokens,
   voiceMinuteMinor,

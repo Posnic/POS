@@ -281,6 +281,7 @@ async function main() {
   }
 
   await loadRegistry();
+  require('./src/services/ask-posnic-runner.service').start({ tenants: () => byHost.values() });
   setInterval(() => {
     loadRegistry().catch((e) => console.error('[shard] refresh failed:', e.message));
   }, RELOAD_MS).unref();

@@ -233,14 +233,18 @@ class QuoteRepository extends BaseModel {
       }
 
       doc.quote_id = await this._nextQuoteId(collection, wall);
-      doc.status = 'open';
+      doc.status = context.askPosnicAction ? 'draft' : 'open';
       doc.converted_sale_id = null;
       doc.created_date = now;
       doc.created_by = String(context.userName || '');
-      const inserted = await collection.insertOne(doc);
+      const inserted = await require('../services/ask-posnic-action-identity').insertOnce(
+        collection,
+        doc,
+        context
+      );
       return {
         status: true,
-        data: { id: String(inserted.insertedId), quote_id: doc.quote_id },
+        data: { id: String(inserted.insertedId), quote_id: inserted.document.quote_id },
         message: 'Quote saved',
       };
     } catch (error) {
