@@ -276,7 +276,9 @@ router.post(
       .collection('branches')
       .updateOne(
         { _id: c.branchId, license: c.license },
-        { $set: { captain_payments: value, updated_date: new Date() } }
+        {
+          $set: { captain_payments: value, printall: value.printReceipt, updated_date: new Date() },
+        }
       );
     if (result.matchedCount !== 1)
       require('../utils/branch-access').fail('Settings changed. Refresh and try again.', 409);

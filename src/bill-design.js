@@ -51,7 +51,7 @@ async function documentFor(data, paper, baseUrl) {
         return await win.webContents.executeJavaScript(`(() => {
         const data = ${JSON.stringify(data)};
         if (!data.receipt_designs) data.receipt_designs = PosnicPro.receiptDesigner.defaults(data);
-        return PosnicPro.receiptDesigner.render(data, ${JSON.stringify(paper)}, true);
+        return PosnicPro.receiptDesigner.render(data, ${JSON.stringify(paper)}, data.receipt_settled !== true);
       })()`);
       })(),
       new Promise((_, reject) => {

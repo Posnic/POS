@@ -717,4 +717,4 @@ function receiptDocument(sale, branch, bill) {
  * what counts as a number, a sale could be filed under a guest whose receipt
  * says there was no guest.
  */
-module.exports = { buildBillPayload, isDialable, sessionName, taxRows, itemLines };
+module.exports = { buildBillPayload, receiptDocument, isDialable, sessionName, taxRows, itemLines };

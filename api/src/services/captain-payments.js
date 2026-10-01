@@ -4,6 +4,7 @@ const Money = require('../utils/currency');
 const { ObjectId } = require('mongodb');
 const { context, allowed, fail } = require('../utils/branch-access');
 const { snapshotFrom, billForGuest } = require('./guest-bill.service');
+const { buildBillPayload, receiptDocument } = require('../helpers/bill-payload');
 const hash = (value) => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const oid = (value) => new ObjectId(String(value));
 const branchUpi = require('../utils/branch-upi');
@@ -14,7 +15,7 @@ function settings(branch) {
     enabled:
       saved.enabled === true && ![false, 0, '0', 'false'].includes(branch.module_captain_enable),
     methods: METHODS.filter((method) => (saved.methods || METHODS).includes(method)),
-    printReceipt: saved.printReceipt !== false,
+    printReceipt: branch.printall === true,
     upiPayee: branchUpi.payee(branch),
   };
 }
@@ -266,9 +267,32 @@ async function reconcile(db, c, plan) {
         for (const [key, amount] of Object.entries(g.components))
           guest.components[key] = (guest.components[key] || 0) + amount;
       const payload = billForGuest(plan.snapshot, guest, c.branch, plan.sales[0], hash(payment.id));
-      payload.title = 'PAYMENT RECEIPT';
-      payload.billNo = 'CP-' + payment.id.slice(-10);
-      payload.footer = 'Payment received. Keep this receipt.';
+      // The shared designer expects numeric quantities/rates, even for an equal
+      // guest share. Keep the allocated money, never reuse the full sale rows.
+      payload.items = payload.items.map((item, index) => {
+        const line = guest.lines[index];
+        const qty = (Number(line.quantity) * line.weight) / line.weightTotal;
+        return { ...item, qty, rate: qty ? item.amount / qty : 0 };
+      });
+      const bill = buildBillPayload(plan.sales[0], c.branch);
+      payload.title = bill.title;
+      payload.billNo = bill.billNo;
+      payload.footer = bill.footer;
+      payload.footerImage = bill.footerImage;
+      payload.footerImageCaption = bill.footerImageCaption;
+      payload.receiptDocument = receiptDocument(plan.sales[0], c.branch, payload);
+      Object.assign(payload.receiptDocument, {
+        receipt_settled: true,
+        // Discounts, taxes and adjustments are already allocated in this bill.
+        sale_extra_discount: 0,
+        charges: [],
+        tax: payload.taxes.reduce((sum, row) => sum + row.amount, 0),
+        items: [],
+        payment_mode: payment.method,
+        paid_amount: payment.amountMinor / factor,
+        received_amount: payment.receivedMinor / factor,
+        change_amount: payment.changeMinor / factor,
+      });
       payload.extras = [
         { label: 'Payment', value: payment.method },
         {
@@ -510,7 +534,7 @@ async function record(req) {
     signature,
     guests: indexes,
     amountMinor: amount,
-    printReceipt: plan.printReceipt,
+    printReceipt: c.options.printReceipt,
     receivedMinor: input.receivedMinor,
     changeMinor: input.receivedMinor - amount,
     method: input.method,
