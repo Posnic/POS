@@ -1726,3 +1726,88 @@ test.each(['KOT', 'Add', 'Edit'])('cover changes count a paid %s neighbour witho
   expect(edited.captain_audit.filter(entry => entry.action === 'guests')).toHaveLength(1);
   expect(await db.collection('sales').countDocuments({ captain_payment_plan: { $exists: true } })).toBe(0);
 });
+
+async function legacyCapacityPair() {
+  const orders = [1, 2].map(() => ({
+    _id: new ObjectId(), branch_id: scope.branchId, license: scope.license,
+    table_number: 'T1', person_count: 1, sale_process: 'KOT', payment_status: 'Unpaid',
+  }));
+  await db.collection('sales').insertMany(orders);
+  return orders;
+}
+function commitCapacityEdit(order, permit, guests) {
+  return db.collection('sales').updateOne({
+    _id: order._id, person_count: order.person_count,
+    seating_capacity_revision: order.seating_capacity_revision ?? { $exists: false },
+  }, { $set: { person_count: guests, seating_capacity_revision: permit.id } });
+}
+
+test('legacy capacity permits reserve the last seat atomically across two different checks', async () => {
+  const orders = await legacyCapacityPair();
+  const attempts = await Promise.allSettled(orders.map(order =>
+    seating.reserveEditCapacity(db, scope, order, { guests: 2 })));
+  expect(attempts.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+  const index = attempts.findIndex(result => result.status === 'fulfilled');
+  const permit = attempts[index].value;
+  expect(permit.guests).toBe(1);
+  expect((await commitCapacityEdit(orders[index], permit, 2)).modifiedCount).toBe(1);
+  await seating.reconcileEditCapacity(db, scope, permit.id);
+  await expect(seating.reserveEditCapacity(db, scope, orders[1-index], { guests: 2 }))
+    .rejects.toThrow('enough seats');
+  expect((await db.collection('sales').find({}).toArray()).reduce((n, row) => n + row.person_count, 0)).toBe(3);
+});
+
+test('expired legacy capacity permits fence delayed writes before releasing the seat', async () => {
+  const [order, other] = await legacyCapacityPair();
+  const now = new Date('2026-10-01T06:00:00Z');
+  const permit = await seating.reserveEditCapacity(db, scope, order, { guests: 2 }, { now });
+  await seating.reconcileExpiredEditCapacity(db, scope, new Date(now.getTime()+300001));
+  expect((await commitCapacityEdit(order, permit, 2)).matchedCount).toBe(0);
+  const next = await seating.reserveEditCapacity(db, scope, other, { guests: 2 });
+  expect((await commitCapacityEdit(other, next, 2)).modifiedCount).toBe(1);
+  await seating.reconcileEditCapacity(db, scope, next.id);
+  expect(await seating.read(db, scope)).toEqual([]);
+});
+
+test('an unexpired permit remains counted and a committed permit reconciles without changing the order', async () => {
+  const [order, other] = await legacyCapacityPair();
+  const now = new Date('2026-10-01T06:00:00Z');
+  const permit = await seating.reserveEditCapacity(db, scope, order, { guests: 2 }, { now });
+  await seating.reconcileExpiredEditCapacity(db, scope, new Date(now.getTime()+299999));
+  await expect(seating.reserveEditCapacity(db, scope, other, { guests: 2 })).rejects.toThrow('enough seats');
+  await commitCapacityEdit(order, permit, 2);
+  const before = await db.collection('sales').findOne({ _id: order._id });
+  await seating.reconcileEditCapacity(db, scope, permit.id);
+  await seating.reconcileEditCapacity(db, scope, permit.id);
+  expect(await db.collection('sales').findOne({ _id: order._id })).toEqual(before);
+});
+
+test('lost acknowledgement while fencing an abandoned edit retains capacity until safe retry', async () => {
+  const [order] = await legacyCapacityPair();
+  const permit = await seating.reserveEditCapacity(db, scope, order, { guests: 2 });
+  const interrupted = { collection(name) {
+    const collection = db.collection(name);
+    return new Proxy(collection, { get(target, property) {
+      if (name === 'sales' && property === 'updateOne') return async (...args) => {
+        await collection.updateOne(...args);
+        throw new Error('lost fence acknowledgement');
+      };
+      const value = target[property];
+      return typeof value === 'function' ? value.bind(target) : value;
+    } });
+  } };
+  await expect(seating.reconcileEditCapacity(interrupted, scope, permit.id)).rejects.toThrow('lost fence');
+  expect((await seating.read(db, scope)).some(row => row.id === permit.id)).toBe(true);
+  expect((await commitCapacityEdit(order, permit, 2)).matchedCount).toBe(0);
+  await seating.reconcileEditCapacity(db, scope, permit.id);
+  expect(await seating.read(db, scope)).toEqual([]);
+});
+
+test('reductions need no extra capacity and a different branch cannot reconcile a permit', async () => {
+  const [order] = await legacyCapacityPair();
+  expect(await seating.reserveEditCapacity(db, scope, order, { guests: 1 })).toBeNull();
+  const permit = await seating.reserveEditCapacity(db, scope, order, { guests: 2 });
+  await seating.reconcileEditCapacity(db, { ...scope, branchId: new ObjectId() }, permit.id);
+  expect((await seating.read(db, scope)).some(row => row.id === permit.id)).toBe(true);
+  expect((await commitCapacityEdit(order, permit, 2)).matchedCount).toBe(1);
+});

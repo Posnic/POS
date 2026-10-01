@@ -1163,7 +1163,87 @@ async function changeGuests(db, scope, orderId, input) {
   await restructure.complete(db, scope, id, actor);
   return answer;
 }
+// Legacy full-order writers need to reserve their additional seats before
+// committing the order. The reservation deliberately has no order_id: it is
+// counted in addition to the current sale until that write is reconciled.
+async function reserveEditCapacity(db, scope, order, next, { now = new Date() } = {}) {
+  const guests = Number(next.guests ?? order.person_count);
+  const destination = String(next.table ?? order.table_number ?? '');
+  const type = next.dine_type || order.dine_type || 'Dine-in';
+  if (type !== 'Dine-in' || !destination) return null;
+  if (!Number.isInteger(guests) || guests < 1 || guests > 1000)
+    fail('Enter the number of guests.');
+  const sameTable = destination === String(order.table_number || '') &&
+    (order.dine_type || 'Dine-in') === 'Dine-in';
+  const extra = sameTable ? guests - Math.max(1, Number(order.person_count) || 1) : guests;
+  if (extra <= 0) return null;
+  await store(db).updateOne({ _id: scopeKey(scope) }, { $setOnInsert: {
+    branch_id: scope.branchId, license: scope.license, claims: [], revision: 0,
+  } }, { upsert: true });
+  const snapshot = await store(db).findOne({ _id: scopeKey(scope) });
+  const own = snapshot.claims.find(row => !terminal(row) && row.order_id === String(order._id));
+  if (own && (!sameTable || own.state !== 'submitting' || capacityChanging(own)))
+    fail('The seating group changed. Refresh this order.', 409);
+  if (order.seating_request_id && !own)
+    fail('The seating group changed. Refresh this order.', 409);
+  const table = own || await db.collection('tableorder').findOne({
+    branch_id: scope.branchId, license: scope.license, tableorder_value: destination,
+  });
+  if (!table) return null;
+  const tables = own ? own.tables : [String(table._id)];
+  const labels = own ? own.labels : [destination];
+  const overlaps = snapshot.claims.filter(row => !terminal(row) &&
+    row.tables.some(id => tables.includes(id)));
+  if (overlaps.some(capacityChanging)) fail('This order is being updated. Please retry.', 409);
+  const occupants = await db.collection('sales').find({
+    branch_id: scope.branchId, license: scope.license,
+    ...require('../helpers/floor-eligibility').floorEligibility(),
+    table_number: { $in: labels },
+  }, { projection: { _id: 1, person_count: 1 } }).toArray();
+  if (!details.accommodates(table, extra + occupiedGuests(overlaps, occupants)))
+    fail('Choose a table with enough seats.', 409);
+  const id = 'cover-edit-' + require('node:crypto').randomUUID();
+  const claim = {
+    id, actor: 'legacy-edit', kind: 'legacy-edit', state: 'reserved',
+    tables, labels, primary: own ? own.primary : String(table._id), guests: extra,
+    edit_order: String(order._id),
+    edit_revision: order.seating_capacity_revision ?? null,
+    edit_revision_missing: order.seating_capacity_revision === undefined,
+    expires_at: new Date(now.getTime() + 5 * 60000),
+  };
+  const saved = await store(db).updateOne({ _id: scopeKey(scope), revision: snapshot.revision }, {
+    $push: { claims: claim }, $inc: { revision: 1 },
+  });
+  if (!saved.matchedCount) fail('Table changed. Refresh and try again.', 409);
+  return claim;
+}
+
+async function reconcileEditCapacity(db, scope, id) {
+  const claim = (await read(db, scope)).find(row => row.id === id && row.kind === 'legacy-edit');
+  if (!claim || terminal(claim)) return;
+  // Never free seats just because time elapsed. First make the old writer's
+  // atomic revision condition impossible. If it already committed, its new
+  // revision wins; its actual covers are then counted instead of this claim.
+  await db.collection('sales').updateOne({
+    _id: new ObjectId(claim.edit_order), branch_id: scope.branchId, license: scope.license,
+    seating_capacity_revision: claim.edit_revision_missing ? { $exists: false } : claim.edit_revision,
+  }, { $set: { seating_capacity_revision: 'cancelled-' + claim.id } });
+  await store(db).updateOne({ _id: scopeKey(scope),
+    claims: { $elemMatch: { id, kind: 'legacy-edit', state: 'reserved' } },
+  }, { $pull: { claims: { id, kind: 'legacy-edit' } }, $inc: { revision: 1 } });
+}
+
+async function reconcileExpiredEditCapacity(db, scope, now = new Date()) {
+  for (const claim of await read(db, scope)) {
+    if (claim.kind === 'legacy-edit' && !terminal(claim) && new Date(claim.expires_at) <= now)
+      await reconcileEditCapacity(db, scope, claim.id);
+  }
+}
+
 module.exports = {
+  reserveEditCapacity,
+  reconcileEditCapacity,
+  reconcileExpiredEditCapacity,
   releaseTransferredLegacy,
   enrollExisting,
   changeGuests,
