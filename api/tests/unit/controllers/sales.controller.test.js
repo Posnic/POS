@@ -911,6 +911,23 @@ describe('SalesController', () => {
       expect(res.status).toHaveBeenCalledWith(400);
     });
 
+    test('uses the same meal window for totals and cancellations', async () => {
+      salesService.getBranchById.mockResolvedValue({ time_zone: 'Asia/Kolkata' });
+      sessionFilterUtil.applySessionFilter.mockImplementation(async (_req, range) => range);
+      const res = mockRes();
+      await ctrl.dailySalesReports(mockReq({ query: {
+        ...q, starting_date: '2026-10-01', ending_date: '2026-10-01',
+        start_time: '12:00', end_time: '18:00',
+      } }), res);
+      expect(res.status).toHaveBeenCalledWith(200);
+      const { match, cancellationMatch } = salesService.getDailySalesReportAggregates.mock.calls[0][0];
+      expect(match.$and[1]).toEqual(cancellationMatch.$and[0]);
+      expect(match.$and[1].$or[0].date).toEqual({
+        $gte: new Date('2026-10-01T06:30:00Z'), $lt: new Date('2026-10-01T12:30:00Z'),
+      });
+      expect(res.json.mock.calls[0][0].data.branch_details.period_label).toContain('Lunch');
+    });
+
     test('applies sessionFilterUtil', async () => {
       const res = mockRes();
       await ctrl.dailySalesReports(mockReq({ query: q }), res);
@@ -931,7 +948,7 @@ describe('SalesController', () => {
     test('400 invalid dates', async () => {
       salesHelper.parseSaleDate.mockReturnValue(null);
       const res = mockRes();
-      await ctrl.dailyReportPdf(mockReq({ query: q }), res);
+      await ctrl.dailyReportPdf(mockReq({ query: { ...q, starting_date: 'bad' } }), res);
       expect(res.status).toHaveBeenCalledWith(400);
     });
 

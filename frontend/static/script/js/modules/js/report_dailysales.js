@@ -1,4 +1,23 @@
 PosnicPro.quickreport = {
+  meal: 'full',
+  periodParams: function () {
+    var meal = this.meal || 'full';
+    var presets = { breakfast: ['06:00', '12:00'], lunch: ['12:00', '18:00'], dinner: ['18:00', '00:00'] };
+    if (meal === 'full') return {};
+    var times = meal === 'custom' ? [$('#daily-meal-from').val(), $('#daily-meal-to').val()] : presets[meal];
+    if (!times || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(times[0] || '') || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(times[1] || '') || times[0] === times[1]) {
+      PosnicPro.alert('warning', 'Choose different valid start and end times.');
+      return null;
+    }
+    return { start_time: times[0], end_time: times[1] };
+  },
+  chooseMeal: function (meal) {
+    this.meal = meal;
+    $('#dailyreport_new [data-meal]').each(function () { $(this).attr('aria-pressed', $(this).attr('data-meal') === meal ? 'true' : 'false'); });
+    $('#daily-meal-custom').toggle(meal === 'custom');
+    if (meal === 'custom') { $('#daily-meal-from').trigger('focus'); $('#daily-meal-status').text('Choose your hours, then apply. The report below keeps its last applied period.'); }
+    else this.salereportTable('VIEW');
+  },
   showDataTablePage: function () {
     var loader = $(".loader-dailysale-report");
     loader.find(".loadingSpinner:first").remove();
@@ -58,7 +77,14 @@ PosnicPro.quickreport = {
       return;
     }
 
+    var periodParams = PosnicPro.quickreport.periodParams();
+    if (!periodParams) return;
+    var requestId = (PosnicPro.quickreport.requestId || 0) + 1;
+    PosnicPro.quickreport.requestId = requestId;
+    PosnicPro.quickreport.lastReport = null;
+    $('#daily-meal-status').text('Updating report…');
     var loader = $(".loader-dailysale-report");
+    loader.find(".loadingSpinner").remove();
     $("<div class='loadingSpinner'></div>").appendTo(loader);
 
     var daterange = String($("#view_dailysale_report_daterange").val() || "");
@@ -81,6 +107,8 @@ PosnicPro.quickreport = {
         branch: branchId,
         starting_date: startDate,
         ending_date: endDate,
+        start_time: periodParams.start_time,
+        end_time: periodParams.end_time,
         type: type, // 'VIEW' | 'CSV' | 'PDF' etc.
       },
     };
@@ -88,8 +116,10 @@ PosnicPro.quickreport = {
     PosnicPro.get(
       params,
       function (response) {
+        if (requestId !== PosnicPro.quickreport.requestId) return;
         loader.find(".loadingSpinner:first").remove();
         if (response.type !== "success") {
+          $("#daily-meal-status").text("Could not update the report.");
           PosnicPro.alert(response.type, response.message);
           return;
         }
@@ -104,6 +134,7 @@ PosnicPro.quickreport = {
         $("#daily_report_date").html(
           PosnicPro.convertDate(branchData.date || "")
         );
+        $('#daily-report-period, #daily-meal-status').text(branchData.period_label || 'Full day');
         $("#daily_report_fromdate").text(startDate);
         $("#daily_report_todate").text(endDate);
         $("#daily_report_branchname").html(esc(branchData.branch_name));
@@ -118,6 +149,7 @@ PosnicPro.quickreport = {
           "branchAddress",
           "branchPhone",
           "branchEmail",
+          "salesPeriod",
         ];
         var branchDataRow = [
           branchData.from_date,
@@ -126,6 +158,7 @@ PosnicPro.quickreport = {
           branchData.branch_address,
           branchData.branch_phone,
           branchData.branch_email,
+          branchData.period_label,
         ];
 
         // ---- Products ----
@@ -323,6 +356,7 @@ PosnicPro.quickreport = {
          */
         PosnicPro.quickreport.lastReport = {
           branch: branchData,
+          period: branchData.period_label || 'Full day',
           from: startDate,
           to: endDate,
           qty: safeNum(qty),
@@ -644,6 +678,8 @@ PosnicPro.quickreport = {
         }
       },
       function (xhr) {
+        if (requestId !== PosnicPro.quickreport.requestId) return;
+        $("#daily-meal-status").text("Could not update the report. Please try again.");
         loader.find(".loadingSpinner:first").remove();
         var response;
         try {
@@ -720,7 +756,7 @@ PosnicPro.quickreport = {
       address: b.branch_address || b.address || '',
       phone: b.branch_telephone || b.phone || '',
       title: PosnicPro.i18n.t('lang_day_end_summary', 'Day-End Summary'),
-      range: (report.from && report.to) ? report.from + ' - ' + report.to : '',
+      range: (report.from && report.to) ? report.from + ' - ' + report.to + ' · ' + (report.period || 'Full day') : '',
       filename: 'day-end-summary'
     };
   },
@@ -813,6 +849,7 @@ PosnicPro.quickreport = {
       meta: [
         { label: PosnicPro.i18n.t('lang_from', 'From'), value: report.from },
         { label: PosnicPro.i18n.t('lang_to_2', 'To'), value: report.to },
+        { label: 'Sales period', value: report.period || 'Full day' },
         { label: PosnicPro.i18n.t('lang_printed_2', 'Printed'), value: new Date().toLocaleString('en-IN') },
         { label: PosnicPro.i18n.t('lang_by', 'By'), value: PosnicPro.local.get('loginuser_name') || '' }
       ],
@@ -994,6 +1031,8 @@ PosnicPro.quickreport = {
       return;
     }
 
+    const periodParams = PosnicPro.quickreport.periodParams();
+    if (!periodParams) return;
     // fetch report data (use a stable type; do NOT read from date label)
     const getParams = {
       url: "sales/dailySalesReports",
@@ -1001,6 +1040,8 @@ PosnicPro.quickreport = {
         branch: branchId,
         starting_date: startDate,
         ending_date: endDate,
+        start_time: periodParams.start_time,
+        end_time: periodParams.end_time,
         type: "VIEW", // we just need the data payload for the email
       },
     };
@@ -1121,3 +1162,8 @@ $(".to_email_form").submit(function (event) {
     PosnicPro.quickreport.emailFormSubmit();
   }
 });
+
+$(document).on('click', '#dailyreport_new [data-meal]', function () {
+  PosnicPro.quickreport.chooseMeal($(this).attr('data-meal'));
+});
+$(document).on('click', '#daily-meal-apply', function () { PosnicPro.quickreport.salereportTable('VIEW'); });
