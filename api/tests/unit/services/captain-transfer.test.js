@@ -897,6 +897,23 @@ test.each([
 
   expect((await require('../../../src/services/captain-bill').read(request)).dueMinor).toBe(0);
  }
+ const CustomerHistory = mongoose.models.CaptainActivityHistory || mongoose.model('CaptainActivityHistory', new mongoose.Schema({}, { strict: false, collection: 'sales' }));
+ const customer = new ObjectId(), category = new ObjectId();
+ await db.collection('sales').updateMany({_id:{$in:checks.map(check=>check._id)}},{$set:{customer_id:customer,category_id:category}});
+ // A legacy check belongs to the same customer via the newer ref alias, and
+ // must be included despite being outside the one-row visible page.
+ await db.collection('sales').insertOne({_id:new ObjectId(),branch_id:branch,license,customer,category_id:category,sales_total:7.5,items_return_total:1.25});
+ for (const [method, value] of [['customerSaleDetailsPage',{customer_id:String(customer)}],['customerCategorySaleDetailsPage',{category_id:String(category)}]]) {
+  const result = await sales[method]({...value,branchid:[String(branch)]},{limit:1},{SaleModel:CustomerHistory});
+  expect(result.status).toBe(true);
+  expect(result.data.table.data.list).toHaveLength(1);
+  expect(result.data.table.data.total).toBe(3);
+  expect(result.data.currency_totals).toEqual([
+   {currencyCode:'',currencyDigits:2,total:7.5,return_total:1.25},
+   {currencyCode,currencyDigits:policy.currencyDigits,total,return_total:0}
+  ]);
+  expect(result.data.total).toEqual([]);
+ }
  expect(sum).toEqual({base:money.toMinor(base,policy),tax:money.toMinor(tax,policy),discount:money.toMinor(discount,policy),total:money.toMinor(total,policy),round:money.toMinor(round,policy)});
  await db.collection('sales').updateMany({_id:{$in:checks.map(check=>check._id)}},{$set:{date:new Date('2026-09-30T12:00:00Z')}});
  const reported=await runWithRequestContext({license,currentBranch:branch},()=>sales.getPaymentSaleTypeReport({

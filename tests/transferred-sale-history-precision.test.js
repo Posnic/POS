@@ -156,3 +156,25 @@ for (const file of ['items', 'categories', 'customers', 'customer_categories']) 
     }
   });
 }
+
+
+for (const [file, prefix] of [['customers.js','customer'],['customer_categories.js','customercategory']]) {
+    test(file + ' shows complete currency groups safely and restores legacy labels', () => {
+        const script = fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js', file), 'utf8');
+        const start = script.indexOf('                    // Complete totals grouped by saved bill currency.');
+        const end = script.indexOf(".siblings('.display-currency').toggle(!Array.isArray(response.data.currency_totals));", start) + ".siblings('.display-currency').toggle(!Array.isArray(response.data.currency_totals));".length;
+        const dom = new JSDOM('<div><span class="display-currency">Shop</span><span class="'+prefix+'_details_saletotalvalue"></span></div><div><span class="display-currency">Shop</span><span class="'+prefix+'_details_returntotalvalue"></span></div>');
+        const $ = require('jquery')(dom.window);
+        const run = new Function('$','response','currency',script.slice(start,end));
+        run($,{data:{currency_totals:[{currencyCode:'KWD',currencyDigits:3,total:95.005,return_total:1.003},{currencyCode:'JPY',currencyDigits:0,total:95,return_total:0},{currencyCode:'<img src=x>',currencyDigits:99,total:7.5,return_total:1.25}]}},'Shop');
+        assert.equal($('.'+prefix+'_details_saletotalvalue').text(),'KWD 95.005 · JPY 95 · Shop 7.50');
+        assert.equal($('.'+prefix+'_details_returntotalvalue').text(),'KWD 1.003 · JPY 0 · Shop 1.25');
+        assert.equal(dom.window.document.querySelectorAll('img').length,0);
+        assert.equal($('.display-currency')[0].style.display,'none');
+        run($,{data:{}},'Shop');
+        assert.notEqual($('.display-currency')[0].style.display,'none');
+        run($,{data:{currency_totals:[]}},'Shop');
+        assert.equal($('.'+prefix+'_details_saletotalvalue').text(),'Shop 0.00');
+        dom.window.close();
+    });
+}

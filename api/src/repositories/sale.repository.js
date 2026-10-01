@@ -3168,6 +3168,44 @@ class SalesRepository {
     });
   }
 
+  async _saleActivityTotals(Model, matchFilter) {
+    // Stream the complete history: page totals omit sales, while a raw Mongo
+    // sum bypasses the saved transfer allocation and its integrity checks.
+    const cursor = Model.find(matchFilter).lean().cursor();
+    const groups = new Map();
+    try {
+      for await (const doc of cursor) {
+        const [row] = this._renderableSaleRows([doc]);
+        const code = /^[A-Z]{3}$/.test(row.currencyCode || '') ? row.currencyCode : '';
+        const digits = Number.isInteger(row.currencyDigits) && row.currencyDigits >= 0 && row.currencyDigits <= 4
+          ? row.currencyDigits : 2;
+        const group = groups.get(code) || { currencyCode: code, currencyDigits: digits, sale: 0n, returned: 0n };
+        group.currencyDigits = Math.max(group.currencyDigits, digits);
+        // Four-place integer accumulation avoids floating point drift between
+        // bills. Keep legacy unknown currency separate from named currencies.
+        const minor = amount => {
+          const value = Math.round(Number(amount) * 10000);
+          if (!Number.isSafeInteger(value)) throw new Error('Activity amount is outside the supported range.');
+          return BigInt(value);
+        };
+        group.sale += minor(row.items_total);
+        group.returned += minor(row.items_return_total);
+        groups.set(code, group);
+      }
+    } finally {
+      await cursor.close();
+    }
+    const amount = value => {
+      const number = Number(value);
+      if (!Number.isSafeInteger(number)) throw new Error('Activity total is outside the supported range.');
+      return number / 10000;
+    };
+    return [...groups.values()].sort((a, b) => a.currencyCode.localeCompare(b.currencyCode)).map(group => ({
+      currencyCode: group.currencyCode, currencyDigits: group.currencyDigits,
+      total: amount(group.sale), return_total: amount(group.returned),
+    }));
+  }
+
   async itemSaleDetailsPage(value, options = {}, { SaleModel } = {}) {
     try {
       const Model = this.getModel(SaleModel);
@@ -4537,34 +4575,15 @@ class SalesRepository {
         message: 'Get Successfully',
       };
 
-      // Aggregate total sales amount for this customer (similar to PHP)
-      const saleList = await Model.aggregate([
-        { $match: matchFilter },
-        {
-          $group: {
-            _id: '$customer_id',
-            total_amount: {
-              $sum: {
-                // Prefer items_total (legacy) but fall back to sales_total/total
-                $ifNull: ['$items_total', { $ifNull: ['$sales_total', '$total'] }],
-              },
-            },
-            return_amount: { $sum: { $ifNull: ['$items_return_total', 0] } },
-          },
-        },
-      ]);
-
-      const totals = saleList.map((doc) =>
-        typeof doc.total_amount === 'number' ? round(doc.total_amount, 2) : 0
-      );
-      // Complete return total too, so the client shows the real figure rather
-      // than a sum over just the loaded page.
-      const returnTotals = saleList.map((doc) =>
-        typeof doc.return_amount === 'number' ? round(doc.return_amount, 2) : 0
-      );
+      const currencyTotals = await this._saleActivityTotals(Model, matchFilter);
+      // Old clients receive a numeric total only when it represents one
+      // currency. Updated clients render every currency group explicitly.
+      const totals = currencyTotals.length === 1 ? [currencyTotals[0].total] : [];
+      const returnTotals = currencyTotals.length === 1 ? [currencyTotals[0].return_total] : [];
 
       const arrTableData = {
         table: tableData,
+        currency_totals: currencyTotals,
         total: totals,
         return_total: returnTotals,
       };
@@ -4639,31 +4658,15 @@ class SalesRepository {
         message: 'Get Successfully',
       };
 
-      // Aggregate total sales amount for this customer category
-      const saleList = await Model.aggregate([
-        { $match: matchFilter },
-        {
-          $group: {
-            _id: '$category_id',
-            total_amount: {
-              $sum: {
-                $ifNull: ['$items_total', { $ifNull: ['$sales_total', '$total'] }],
-              },
-            },
-            return_amount: { $sum: { $ifNull: ['$items_return_total', 0] } },
-          },
-        },
-      ]);
-
-      const totals = saleList.map((doc) =>
-        typeof doc.total_amount === 'number' ? round(doc.total_amount, 2) : 0
-      );
-      const returnTotals = saleList.map((doc) =>
-        typeof doc.return_amount === 'number' ? round(doc.return_amount, 2) : 0
-      );
+      const currencyTotals = await this._saleActivityTotals(Model, matchFilter);
+      // Old clients receive a numeric total only when it represents one
+      // currency. Updated clients render every currency group explicitly.
+      const totals = currencyTotals.length === 1 ? [currencyTotals[0].total] : [];
+      const returnTotals = currencyTotals.length === 1 ? [currencyTotals[0].return_total] : [];
 
       const arrTableData = {
         table: tableData,
+        currency_totals: currencyTotals,
         return_total: returnTotals,
         total: totals,
       };

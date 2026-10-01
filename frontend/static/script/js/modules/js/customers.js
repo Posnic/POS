@@ -999,6 +999,19 @@ PosnicPro.customerdetails = {
                             : returnTotalValue;
                     $('.customer_details_saletotalvalue').html(custSaleTotal.toFixed(2));
                     $('.customer_details_returntotalvalue').html(custReturnTotal.toFixed(2));
+                    // Complete totals grouped by saved bill currency.
+                    if (Array.isArray(response.data.currency_totals)) {
+                        const formatTotals = field => response.data.currency_totals.map(group => {
+                            const label = /^[A-Z]{3}$/.test(group.currencyCode || '') ? group.currencyCode : currency;
+                            const digits = Number.isInteger(group.currencyDigits) && group.currencyDigits >= 0 && group.currencyDigits <= 4 ? group.currencyDigits : 2;
+                            return label + ' ' + (Number(group[field]) || 0).toFixed(digits);
+                        }).join(' · ') || currency + ' 0.00';
+                        $('.customer_details_saletotalvalue').text(formatTotals('total'));
+                        $('.customer_details_returntotalvalue').text(formatTotals('return_total'));
+                    }
+                    $('.customer_details_saletotalvalue, .customer_details_returntotalvalue')
+                        .siblings('.display-currency').toggle(!Array.isArray(response.data.currency_totals));
+
 
                 } else {
                     var customersalesreport = [];

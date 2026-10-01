@@ -1883,3 +1883,28 @@ describe('_renderableSaleRows', () => {
     expect(salesRepository._renderableSaleRows(null)).toEqual([]);
   });
 });
+
+
+describe('complete activity totals', () => {
+  function model(rows) {
+    const cursor = { close: jest.fn().mockResolvedValue(), async *[Symbol.asyncIterator]() { yield* rows; } };
+    return { cursor, Model: { find: jest.fn(() => ({ lean: () => ({ cursor: () => cursor }) })) } };
+  }
+  test('uses integer accumulation for every bill and closes the cursor', async () => {
+    const { Model, cursor } = model(Array.from({length:1001}, () => ({sales_total:0.1,items_return_total:0.01})));
+    expect(await salesRepository._saleActivityTotals(Model,{branch_id:'one'})).toEqual([
+      {currencyCode:'',currencyDigits:2,total:100.1,return_total:10.01}
+    ]);
+    expect(Model.find).toHaveBeenCalledWith({branch_id:'one'});
+    expect(cursor.close).toHaveBeenCalledTimes(1);
+  });
+  test('empty history returns no currency groups', async () => {
+    const {Model} = model([]);
+    expect(await salesRepository._saleActivityTotals(Model,{})).toEqual([]);
+  });
+  test('invalid transfer allocation fails the report and still closes the cursor', async () => {
+    const {Model,cursor} = model([{captain_transfer_allocation:{}}]);
+    await expect(salesRepository._saleActivityTotals(Model,{})).rejects.toThrow();
+    expect(cursor.close).toHaveBeenCalledTimes(1);
+  });
+});
