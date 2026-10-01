@@ -543,7 +543,7 @@ test('two concurrent schedule workers deliver a due report exactly once', async 
   const schedule = await schedules.save(context, { frequency: 'daily', report: 'sales', destination: 'owner@example.test', hour: 0, weekday: 0 });
   expect(schedule).toMatchObject({ hour: 0, weekday: 0 });
   await mockDb.collection(schedules.COLLECTION).updateOne({ _id: schedule._id }, { $set: { next_run_at: new Date(0) } });
-  const deliver = jest.fn(async () => {});
+  const deliver = jest.fn(async () => ({ status: 'sent', provider: 'smtp', reference: 'synthetic-message-id' }));
   await Promise.all([schedules.runDue(context, async () => 'report', deliver), schedules.runDue(context, async () => 'report', deliver)]);
   expect(deliver).toHaveBeenCalledTimes(1);
   expect(await mockDb.collection(schedules.COLLECTION).findOne({ _id: schedule._id })).toMatchObject({ last_status: 'sent' });
@@ -567,7 +567,7 @@ test('background runner revalidates persisted owner and outlet access', async ()
   const row = await schedules.save(context, { frequency: 'daily', report: 'sales', destination: 'owner@example.test' });
   const col = mockDb.collection(schedules.COLLECTION);
   await col.updateOne({ _id: row._id }, { $set: { next_run_at: new Date(0) } });
-  const send = jest.fn(async () => {});
+  const send = jest.fn(async () => ({ status: 'sent', provider: 'smtp', reference: 'synthetic-message-id' }));
   const build = jest.fn(async (schedule, at, db) => { await runner.authorize(db, schedule); return {}; });
   await runner.sweep({ db: mockDb, build, send });
   expect(send).toHaveBeenCalledTimes(1);
@@ -600,6 +600,83 @@ test('account settlement survives audit-write failure and recovers without doubl
   expect(account.holds[held.id]).toBeUndefined();
   expect(account).toMatchObject({ reserved_minor: 0, used_minor: 1 });
   expect(await mockDb.collection(credits.RESERVATIONS).findOne({ _id: held.id })).toMatchObject({ status: 'reconciled', actual_microminor: 1000000 });
+});
+
+async function queuedSummary() {
+  const outbox = require('../../src/services/whatsapp-outbox');
+  const context = { licenseId: 'shop-a', branchId: 'outlet-a', userId: 'owner-a' };
+  await mockDb.collection('users').insertOne({ _id: 'owner-a', license: 'shop-a', role: 'admin', branch_access: [{ branch_id: 'outlet-a' }] });
+  await mockDb.collection('branches').insertOne({ _id: 'outlet-a', license: 'shop-a' });
+  const row = await schedules.save(context, { frequency: 'daily', report: 'sales', channel: 'whatsapp', destination: '+919999999999' });
+  await mockDb.collection(schedules.COLLECTION).updateOne({ _id: row._id }, { $set: { next_run_at: new Date(0) } });
+  let queued, scope;
+  const sent = await schedules.runDue(context, async () => 'synthetic report', async claim => {
+    scope = { id: String(claim._id), license: claim.license, branch_id: claim.branch_id, user_id: claim.user_id, claim: claim.running_claim };
+    queued = await outbox.enqueue(mockDb, context.licenseId, { branch_id: claim.branch_id, phone: claim.destination, message: 'synthetic report', scheduled: scope });
+    return { status: 'queued', provider: 'whatsapp_connector', reference: String(queued.id) };
+  });
+  expect(sent).toEqual([{ id: String(row._id), status: 'queued' }]);
+  return { context, row, queued, scope, outbox };
+}
+
+test('queued summaries wait for connector acknowledgement and retain a durable receipt', async () => {
+  const { context, row, queued, outbox } = await queuedSummary();
+  const col = mockDb.collection(schedules.COLLECTION);
+  expect((await col.findOne({ _id: row._id })).last_delivery).toMatchObject({ status: 'queued', reference: String(queued.id), provider: 'whatsapp_connector' });
+  await expect(schedules.save(context, { ...row, id: String(row._id) })).rejects.toThrow(/operator review/);
+  expect(await schedules.remove(context, String(row._id))).toBe(false);
+  await col.updateOne({ _id: row._id }, { $set: { next_run_at: new Date(0) } });
+  const another = jest.fn();
+  await schedules.runDue(context, another, another);
+  expect(another).not.toHaveBeenCalled();
+  expect(await outbox.claim(mockDb, 'other-shop')).toHaveLength(0);
+  const claimed = await outbox.claim(mockDb, 'shop-a');
+  expect(claimed).toHaveLength(1);
+  expect(await outbox.claim(mockDb, 'shop-a')).toHaveLength(0);
+  expect((await outbox.report(mockDb, 'other-shop', String(queued.id), { ok: true })).ok).toBe(false);
+  expect((await outbox.report(mockDb, 'shop-a', String(queued.id), { ok: true })).status).toBe('sent');
+  await schedules.reconcileQueued(mockDb, { context });
+  expect((await col.findOne({ _id: row._id })).last_status).toBe('sent');
+});
+
+test('scheduled queue identity is idempotent and cannot change content', async () => {
+  const { context, row, queued, scope, outbox } = await queuedSummary();
+  const payload = { branch_id: context.branchId, phone: row.destination, message: 'synthetic report', scheduled: scope };
+  expect(String((await outbox.enqueue(mockDb, context.licenseId, payload)).id)).toBe(String(queued.id));
+  expect(await mockDb.collection(outbox.OUTBOX).countDocuments()).toBe(1);
+  await expect(outbox.enqueue(mockDb, context.licenseId, { ...payload, message: 'changed' })).rejects.toThrow(/content changed/);
+});
+
+test('a revoked owner cannot leak a previously queued financial report to a connector', async () => {
+  const { context, row, outbox } = await queuedSummary();
+  await mockDb.collection('users').updateOne({ _id: 'owner-a' }, { $set: { role: 'cashier' } });
+  expect(await outbox.claim(mockDb, 'shop-a')).toHaveLength(0);
+  await schedules.reconcileQueued(mockDb, { context });
+  expect(await mockDb.collection(schedules.COLLECTION).findOne({ _id: row._id })).toMatchObject({ enabled: false, last_status: 'needs_review' });
+});
+
+test('interrupted connector claims never automatically resend financial summaries', async () => {
+  const { context, row, queued, outbox } = await queuedSummary();
+  const at = new Date();
+  expect(await outbox.claim(mockDb, 'shop-a', { now: at })).toHaveLength(1);
+  expect(await outbox.claim(mockDb, 'shop-a', { now: new Date(at.getTime() + outbox.CLAIM_TTL_MS + 1) })).toHaveLength(0);
+  expect((await outbox.report(mockDb, 'shop-a', String(queued.id), { ok: true })).ok).toBe(false);
+  await schedules.reconcileQueued(mockDb, { context });
+  expect(await mockDb.collection(schedules.COLLECTION).findOne({ _id: row._id })).toMatchObject({ enabled: false, last_status: 'needs_review' });
+});
+
+test('the runner pauses expired or missing queue records and never recreates them', async () => {
+  const { context, row, queued, outbox } = await queuedSummary();
+  await mockDb.collection(outbox.OUTBOX).updateOne({ _id: queued.id }, { $set: { created_date: new Date(0) } });
+  await schedules.reconcileQueued(mockDb, { context });
+  expect((await mockDb.collection(outbox.OUTBOX).findOne({ _id: queued.id })).status).toBe('needs_review');
+  expect((await mockDb.collection(schedules.COLLECTION).findOne({ _id: row._id })).enabled).toBe(false);
+  expect(await outbox.claim(mockDb, 'shop-a')).toHaveLength(0);
+  await mockDb.collection(outbox.OUTBOX).deleteOne({ _id: queued.id });
+  await mockDb.collection(schedules.COLLECTION).updateOne({ _id: row._id }, { $set: { last_status: 'queued', enabled: true } });
+  await schedules.reconcileQueued(mockDb, { context });
+  expect((await mockDb.collection(schedules.COLLECTION).findOne({ _id: row._id })).last_status).toBe('needs_review');
+  expect(await mockDb.collection(outbox.OUTBOX).countDocuments()).toBe(0);
 });
 
 test('a failed reservation audit insert refunds the hold before any provider call', async () => {

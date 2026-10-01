@@ -48,20 +48,24 @@ async function deliver(schedule, report) {
   const text = `${report.answer}\n\n${metrics}\n\nOutlet: ${report.branch.branch_name || schedule.branch_id}\nSource: ${report.source}\nPeriod: ${report.range.starting_date.toISOString()} to ${report.range.ending_date.toISOString()}`;
   if (schedule.channel === 'whatsapp') {
     const MessagingService = require('./messaging.service');
-    const sent = await new MessagingService().sendWhatsapp(schedule.branch_id, schedule.destination, text);
-    if (!sent.ok) throw new Error('WhatsApp delivery failed.');
-    return;
+    const sent = await new MessagingService().sendWhatsapp(schedule.branch_id, schedule.destination, text, {
+      scheduled: { id: String(schedule._id), license: schedule.license, branch_id: schedule.branch_id, user_id: schedule.user_id, claim: schedule.running_claim },
+    });
+    if (!sent.ok || typeof sent.messageId !== 'string' || !sent.messageId.trim()) throw new Error('WhatsApp delivery was not acknowledged.');
+    return { status: sent.queued ? 'queued' : 'sent', provider: sent.provider, reference: sent.messageId };
   }
   const { resolveShopTransport } = require('../utils/email');
   const { transporter, from } = resolveShopTransport(report.branch);
   if (transporter.options?.jsonTransport) throw new Error('Configure email delivery before enabling scheduled summaries.');
-  const info = await transporter.sendMail({ from, to: schedule.destination, subject: `Posnic ${schedule.report.replace('_', ' ')} summary`, text });
-  if (info.rejected?.length) throw new Error('The email provider rejected the destination.');
+  const info = await transporter.sendMail({ from, to: schedule.destination, subject: `Posnic ${schedule.report.replace('_', ' ')} summary`, text, scheduledReport: true });
+  if (info.rejected?.length || !Array.isArray(info.accepted) || !info.accepted.some(address => String(address?.address || address).toLowerCase() === schedule.destination.toLowerCase()) || !info.messageId) throw new Error('The email provider did not acknowledge the destination.');
+  return { status: 'sent', provider: transporter.options?.brevo ? 'brevo' : 'smtp', reference: String(info.messageId) };
 }
 
 // Called inside the database scope of exactly one tenant by both server modes.
 async function sweep({ db, at = new Date(), context, build = buildReport, send = deliver } = {}) {
   db = db || await BaseModel.getDb();
+  await schedules.reconcileQueued(db, { context, at });
   const filter = { enabled: true, next_run_at: { $lte: at }, ...(context ? { license: String(context.licenseId), branch_id: String(context.branchId) } : {}) };
   const due = await db.collection(schedules.COLLECTION).find(filter).limit(500).toArray();
   const scopes = new Map(due.map((row) => [`${row.license}:${row.branch_id}`, { licenseId: row.license, branchId: row.branch_id }]));

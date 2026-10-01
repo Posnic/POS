@@ -39,8 +39,8 @@ async function save(context, input) {
   doc.next_run_at = nextRun(doc);
   const col = await (new BaseModel(COLLECTION)).getCollection(COLLECTION);
   if (input.id && ObjectId.isValid(String(input.id))) {
-    const result = await col.findOneAndUpdate({ _id: new ObjectId(String(input.id)), license: doc.license, branch_id: doc.branch_id, running_at: { $exists: false }, last_status: { $ne: 'needs_review' } }, { $set: doc }, { returnDocument: 'after' });
-    if (!result) throw new Error('Schedule not found or its interrupted delivery needs operator review.');
+    const result = await col.findOneAndUpdate({ _id: new ObjectId(String(input.id)), license: doc.license, branch_id: doc.branch_id, running_at: { $exists: false }, last_status: { $nin: ['needs_review', 'queued'] } }, { $set: doc }, { returnDocument: 'after' });
+    if (!result) throw new Error('Schedule not found or its queued or interrupted delivery needs operator review.');
     const visible = { ...result };
     delete visible.execution_owner; delete visible.running_claim; delete visible.recovery;
     return visible;
@@ -56,7 +56,7 @@ async function list(context) {
 
 async function remove(context, id) {
   if (!ObjectId.isValid(String(id))) return false;
-  const result = await (await (new BaseModel(COLLECTION)).getCollection(COLLECTION)).deleteOne({ _id: new ObjectId(String(id)), license: String(context.licenseId || ''), branch_id: String(context.branchId || ''), running_at: { $exists: false }, last_status: { $ne: 'needs_review' } });
+  const result = await (await (new BaseModel(COLLECTION)).getCollection(COLLECTION)).deleteOne({ _id: new ObjectId(String(id)), license: String(context.licenseId || ''), branch_id: String(context.branchId || ''), running_at: { $exists: false }, last_status: { $nin: ['needs_review', 'queued'] } });
   return result.deletedCount === 1;
 }
 
@@ -65,7 +65,7 @@ async function runDue(context, buildReport, deliver, at = new Date()) {
   // A crash may occur after the provider accepted a message. Require a human
   // review instead of retrying a delivery whose outcome cannot be established.
   await col.updateMany({ license: String(context.licenseId), branch_id: String(context.branchId), running_at: { $lte: new Date(at.getTime() - 15 * 60 * 1000) } }, { $set: { enabled: false, last_status: 'needs_review', last_error: 'Delivery was interrupted. Verify the worker stopped and review delivery history before recovery.' } });
-  const due = await col.find({ license: String(context.licenseId || ''), branch_id: String(context.branchId || ''), enabled: true, next_run_at: { $lte: at } }).limit(25).toArray();
+  const due = await col.find({ license: String(context.licenseId || ''), branch_id: String(context.branchId || ''), enabled: true, last_status: { $ne: 'queued' }, next_run_at: { $lte: at } }).limit(25).toArray();
   const outcomes = [];
   for (const schedule of due) {
     const claim = await col.findOneAndUpdate({ _id: schedule._id, next_run_at: schedule.next_run_at, enabled: true, running_at: { $exists: false } }, { $set: { running_at: at, running_claim: crypto.randomUUID(), execution_owner: require('./ask-posnic-execution-owner').current() }, $inc: { run_attempts: 1 } }, { returnDocument: 'after' });
@@ -77,10 +77,12 @@ async function runDue(context, buildReport, deliver, at = new Date()) {
       const permission = await col.updateOne({ ...claimed, enabled: true }, { $set: { delivering_at: new Date() } });
       if (permission.matchedCount !== 1) throw new Error('Delivery was paused or its claim changed.');
       delivering = true;
-      await deliver(schedule, report);
+      const receipt = await deliver(claim, report);
+      if (!receipt || !['sent', 'queued'].includes(receipt.status) || !['smtp', 'brevo', 'whatsapp_cloud', 'whatsapp_web', 'whatsapp_connector'].includes(receipt.provider) || typeof receipt.reference !== 'string' || !receipt.reference.trim() || receipt.reference.length > 500 || /[\r\n\0]/.test(receipt.reference) || receipt.status === 'queued' && (receipt.provider !== 'whatsapp_connector' || !ObjectId.isValid(receipt.reference))) throw new Error('Delivery acknowledgement is missing or invalid.');
+      const status = receipt.status;
       const following = nextRun(schedule, new Date(at.getTime() + 1000));
-      await col.updateOne(claimed, { $set: { next_run_at: following, last_run_at: at, last_status: 'sent', last_error: null }, $unset: { running_at: '', running_claim: '', delivering_at: '' } });
-      outcomes.push({ id: String(schedule._id), status: 'sent' });
+      const updated = await col.updateOne(claimed, { $set: { next_run_at: following, last_run_at: at, last_status: status, last_error: null, last_delivery: { status, provider: receipt.provider, reference: receipt.reference, recorded_at: new Date() } }, $unset: { running_at: '', running_claim: '', delivering_at: '' } });
+      outcomes.push({ id: String(schedule._id), status: updated.matchedCount === 1 ? status : 'needs_review' });
     } catch (error) {
       const status = delivering ? 'needs_review' : 'failed';
       await col.updateOne(claimed, { $set: { next_run_at: new Date(at.getTime() + 15 * 60 * 1000), last_run_at: at, last_status: status, last_error: delivering ? 'Delivery was not confirmed. Check the provider before re-enabling.' : 'The report could not be prepared. Check owner access and report settings.', ...(delivering ? { enabled: false } : {}) }, $unset: { running_at: '', running_claim: '', delivering_at: '' } });
@@ -90,4 +92,26 @@ async function runDue(context, buildReport, deliver, at = new Date()) {
   return outcomes;
 }
 
-module.exports = { save, list, remove, runDue, nextRun, COLLECTION, FREQUENCIES, REPORTS };
+async function reconcileQueued(db, { context, at = new Date() } = {}) {
+  const col = db.collection(COLLECTION);
+  const rows = await col.find({ last_status: 'queued', ...(context ? { license: String(context.licenseId), branch_id: String(context.branchId) } : {}) }).limit(500).toArray();
+  const outbox = require('./whatsapp-outbox');
+  for (const row of rows) {
+    const reference = row.last_delivery?.reference;
+    const queue = ObjectId.isValid(String(reference)) ? await db.collection(outbox.OUTBOX).findOne({ _id: new ObjectId(reference), 'scheduled.id': String(row._id), 'scheduled.license': row.license, 'scheduled.branch_id': row.branch_id }) : null;
+    if (queue?.status === 'pending' || queue?.status === 'claimed') {
+      const stale = queue.status === 'claimed' ? new Date(queue.claimed_at).getTime() <= at.getTime() - outbox.CLAIM_TTL_MS : new Date(queue.created_date).getTime() <= at.getTime() - 86400000;
+      if (!stale) continue;
+      const paused = await db.collection(outbox.OUTBOX).updateOne({ _id: queue._id, status: queue.status, updated_date: queue.updated_date }, { $set: { status: 'needs_review', updated_date: at, error: 'Scheduled delivery was interrupted or expired. Review before sending again.' } });
+      if (paused.matchedCount !== 1) continue;
+    }
+    const sent = queue?.status === 'sent';
+    await col.updateOne({ _id: row._id, last_status: 'queued', 'last_delivery.reference': reference }, { $set: {
+      last_status: sent ? 'sent' : 'needs_review', 'last_delivery.status': sent ? 'sent' : 'needs_review',
+      last_error: sent ? null : 'Queued delivery was not confirmed. Review the connector record before re-enabling.',
+      ...(sent ? { 'last_delivery.confirmed_at': queue.sent_at || at } : { enabled: false }),
+    } });
+  }
+}
+
+module.exports = { save, list, remove, runDue, reconcileQueued, nextRun, COLLECTION, FREQUENCIES, REPORTS };

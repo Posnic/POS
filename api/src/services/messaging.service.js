@@ -180,7 +180,7 @@ class MessagingService {
    * A template name (cloud) sends an approved template with the text as its first
    * body variable; otherwise a plain text message (valid inside the 24h window).
    */
-  async sendWhatsapp(branchId, phone, message) {
+  async sendWhatsapp(branchId, phone, message, delivery = {}) {
     const raw = await this._raw(branchId);
     if (!raw.whatsapp_enabled)
       return { ok: false, error: 'WhatsApp is not enabled for this branch' };
@@ -227,6 +227,7 @@ class MessagingService {
           !!(resp.data && resp.data.messages && resp.data.messages[0]);
         return {
           ok,
+          ...(ok ? { provider: 'whatsapp_cloud', messageId: resp.data.messages[0].id } : {}),
           error: ok
             ? null
             : (resp.data && resp.data.error && resp.data.error.message) || `HTTP ${resp.status}`,
@@ -247,8 +248,8 @@ class MessagingService {
     if (transport === 'connector') {
       const outbox = require('./whatsapp-outbox');
       try {
-        await outbox.enqueue(db, BaseModel.license, { branch_id: branchId, phone, message });
-        return { ok: true, queued: true, error: null };
+        const queued = await outbox.enqueue(db, BaseModel.license, { branch_id: branchId, phone, message, scheduled: delivery.scheduled });
+        return { ok: true, queued: true, provider: 'whatsapp_connector', messageId: String(queued.id), error: null };
       } catch (e) {
         return { ok: false, error: 'Could not queue the message: ' + e.message };
       }
@@ -263,7 +264,7 @@ class MessagingService {
     let result;
     try {
       const r = await whatsappService.sendMessage(deviceId, branchId, phone, message);
-      result = { ok: r && r.status === true, error: r && r.message };
+      result = { ok: r && r.status === true, error: r && r.message, provider: 'whatsapp_web', messageId: r && r.messageId };
     } catch (e) {
       result = { ok: false, error: e.message };
     }

@@ -21,8 +21,10 @@ function fakeDb() {
   const matches = (row, q) => {
     return Object.entries(q).every(([k, v]) => {
       if (k === '$or') return v.some((sub) => matches(row, sub));
-      const val = row[k];
+      if (k === '$and') return v.every((sub) => matches(row, sub));
+      const val = k.split('.').reduce((value, key) => value?.[key], row);
       if (v && typeof v === 'object' && !(v instanceof Date) && v.constructor === Object) {
+        if (v.$exists !== undefined) return (val !== undefined) === v.$exists;
         if (v.$lt !== undefined) return val !== undefined && val < v.$lt;
         if (v.$gte !== undefined) return val !== undefined && val >= v.$gte;
       }

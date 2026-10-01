@@ -229,10 +229,17 @@ const resolveShopTransport = (branchDoc) => {
                 }
               : {}),
           };
-          const result = await client.transactionalEmails.sendTransacEmail(payload);
+          // An uncertain scheduled delivery needs review, never an automatic resend.
+          const requestOptions = mail.scheduledReport
+            ? { maxRetries: 0, timeoutInSeconds: 30 }
+            : undefined;
+          const result = await client.transactionalEmails.sendTransacEmail(payload, requestOptions);
+          const messageId = result && (result.messageId || (result.body && result.body.messageId));
+          if (!messageId) throw new Error('The email provider did not acknowledge this message.');
           return {
-            messageId:
-              (result && (result.messageId || (result.body && result.body.messageId))) || 'brevo',
+            messageId,
+            accepted: to.map(recipient => recipient.email),
+            rejected: [],
           };
         },
       },

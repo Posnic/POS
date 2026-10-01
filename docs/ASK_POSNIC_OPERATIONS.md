@@ -371,6 +371,44 @@ The UI shows status and delivery errors. Check the provider before replacing a
 paused schedule. `POST /api/ask-posnic/schedules/run-due` remains available for
 an authenticated owner's manual run.
 
+Delivery now records the provider and acknowledgement reference. Email requires
+an actual message ID and acceptance of the intended recipient; the Brevo adapter
+does not invent an ID when the provider returns none. `sent` means the transport
+accepted the message, not proof of inbox delivery or a read receipt.
+Scheduled Brevo requests disable automatic retries and use a 30-second timeout;
+an uncertain send enters review instead of sending another copy.
+
+WhatsApp connector delivery remains `queued` until the connector reports success.
+The schedule cannot send another report, change destination or be removed while
+that delivery is unresolved. The connector rechecks the persisted schedule,
+owner, outlet and Insights permission before receiving the report text. Queue
+identity is bound to the execution claim, so repeating the enqueue cannot create
+a second copy or replace its contents. A connector's failed/expired claim enters
+operator review instead of automatic redelivery. Pending reports expire after
+24 hours; a missing queue record also pauses the schedule. Ordinary non-scheduled
+WhatsApp messaging retains its existing retry policy.
+
+The runner reconciles queued outcomes each minute. An ambiguous acknowledgement
+or lost settlement still requires reviewing the provider/connector before resuming;
+the operator inspection command includes recent scoped queue references without
+message bodies or destinations. Stop an interrupted connector before declaring
+its delivery unaccepted. Recovery advances to a future schedule slot and does not
+resend the unresolved report. A later provider acknowledgement cannot override
+a queue record already paused for review.
+
+Regression checks exercise real MongoDB queue transitions, ownership revocation,
+scope isolation, duplicate enqueues and interrupted claims. A real loopback SMTP
+peer verifies the normal shop SMTP adapter's accepted/rejected recipient paths.
+These local checks do not constitute real customer email/WhatsApp acceptance.
+
+On 1 October 2026, the isolated AWS validation runtime sent exactly one synthetic
+summary to the configured internal administrator through the real Brevo adapter.
+The real scheduler persisted its acknowledgement, and Brevo's event API reported
+`delivered` for that exact message ID. A durable send-once marker prevented rerunning
+the send. No customer records were read. This confirms internal email delivery;
+it does not establish customer mailbox delivery, human reading or WhatsApp delivery.
+Provider references and the recipient remain in private validation evidence.
+
 ## Release evidence
 
 `api/tests/fixtures/ask-posnic-evaluation.json` contains 100 supported and
@@ -929,3 +967,10 @@ ingestion changes passed 19 targeted tests, 50 language checks, the cross-servic
 contract check and the shared PDF parser's five Linux checks. The Intranet suite
 passed 503 tests with seven skips. These later changes affect document extraction
 and length validation; the live AWS result is recorded against its original commit.
+
+The scheduled-delivery follow-up passed 466 API suites (11,714 tests; 13 skipped),
+the authenticated application smoke and 43 native MongoDB/SMTP checks on Linux.
+After disabling Brevo retries, all 13 focused email/runner/SMTP tests passed.
+The Linux delivery overlay was checked separately from the older AWS model-check
+archive. Changed-file lint has zero errors and 18 existing warnings. Frontend
+files did not change in this follow-up.

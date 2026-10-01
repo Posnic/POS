@@ -223,6 +223,7 @@ describe('MessagingService WhatsApp (mode + cloud)', () => {
 
     const r = await svc.sendWhatsapp(BRANCH, '+15551234567', 'hello');
     expect(r.ok).toBe(true);
+    expect(r).toMatchObject({ provider: 'whatsapp_cloud', messageId: 'wamid.1' });
     const req = axios.mock.calls[0][0];
     expect(req.url).toContain('graph.facebook.com/v20.0/PID1/messages');
     expect(req.headers.Authorization).toBe('Bearer TOK');

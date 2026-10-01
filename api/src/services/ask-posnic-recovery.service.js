@@ -39,9 +39,12 @@ async function inspect(db, context) {
   const [actions, documents, schedules, holds] = await Promise.all([
     db.collection('ask_posnic_action_drafts').find({ ...wall, status: { $in: ['executing', 'needs_review'] } }, { projection: { type: 1, status: 1, user_id: 1, confirmed_at: 1, execution_owner: 1 } }).limit(100).toArray(),
     db.collection('ask_posnic_documents').find({ ...wall, $or: [{ 'semantic.state': { $in: ['processing', 'needs_review'] } }, { 'own_semantic.state': { $in: ['processing', 'needs_review'] } }] }, { projection: { title: 1, 'semantic.state': 1, 'semantic.execution_owner': 1, 'own_semantic.state': 1, 'own_semantic.execution_owner': 1 } }).limit(100).toArray(),
-    db.collection('ask_posnic_schedules').find({ ...wall, $or: [{ running_at: { $exists: true } }, { last_status: 'needs_review' }] }, { projection: { report: 1, last_status: 1, running_at: 1, execution_owner: 1 } }).limit(100).toArray(),
+    db.collection('ask_posnic_schedules').find({ ...wall, $or: [{ running_at: { $exists: true } }, { last_status: 'needs_review' }] }, { projection: { report: 1, last_status: 1, running_at: 1, execution_owner: 1, last_delivery: 1 } }).limit(100).toArray(),
     pendingHolds(db, wall.license),
   ]);
+  for (const schedule of schedules) {
+    schedule.connector_deliveries = await db.collection('whatsapp_outbox').find({ 'scheduled.id': String(schedule._id), 'scheduled.license': wall.license, 'scheduled.branch_id': wall.branch_id }, { projection: { status: 1, created_date: 1, sent_at: 1 } }).sort({ created_date: -1 }).limit(5).toArray();
+  }
   return { actions, documents, schedules, holds: holds.filter((hold) => !hold.branch_id || hold.branch_id === wall.branch_id), limit_per_category: 100 };
 }
 

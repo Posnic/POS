@@ -25,7 +25,7 @@ describe('Ask Posnic summary schedules', () => {
   test('claims, delivers, and advances a due schedule once', async () => {
     mockRows = [{ _id: dueId, report: 'sales', frequency: 'daily', hour: 8, timezone: 'UTC', destination: 'owner@example.com', next_run_at: new Date('2026-10-01T08:00:00Z') }];
     const build = jest.fn(async () => ({ answer: 'Sales are 10' }));
-    const deliver = jest.fn(async () => {});
+    const deliver = jest.fn(async () => ({ status: 'sent', provider: 'smtp', reference: 'synthetic-message-id' }));
     const result = await service.runDue({ licenseId: 'l', branchId: 'b' }, build, deliver, new Date('2026-10-01T09:00:00Z'));
     expect(result).toEqual([{ id: dueId, status: 'sent' }]);
     expect(build).toHaveBeenCalledTimes(1);
