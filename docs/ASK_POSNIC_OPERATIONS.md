@@ -884,3 +884,10 @@ unpublished; the administrator must inspect and publish the intended revision.
 These are release candidates. Billing API and Cloud account UI release integration,
 production activation, approved pricing, payment/delivery acceptance and independent
 answer-quality acceptance remain open.
+
+Final local release checks passed after the translation/layout changes: 3,655 root
+tests (five skipped), frontend build `848f64f8731f0e29`, 32 grounding tests,
+translated desktop/mobile interaction checks, Intranet preview checks, generated API
+docs, attribution and whitespace checks. Changed API scripts/services have zero lint
+errors (five existing console warnings). The root suite ran after the build completed;
+its signed-asset rollback drill passed against the final generated frontend.
