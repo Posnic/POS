@@ -84,6 +84,15 @@ History rechecks current feature and financial permissions; revoked access
 redacts earlier protected answers. Direct report periods use the shop timezone,
 including complete previous weeks (Sunday start), months and years.
 
+POS and Intranet parse PDFs in a short-lived child process, with at most two
+parsers per API process, a 30-second deadline, a 128 MB V8 old-space limit and
+bounded output. This heap limit does not cap native allocations at the OS level.
+The child receives no provider credentials or application configuration. Uploads
+over 10 MB and extracted text over 200,000 characters are rejected; no instructions
+are silently truncated. Busy uploads receive a retry message without entering an
+unbounded queue. Scanned PDFs still require external OCR before upload. Keep both
+copies of `knowledge-pdf-parser.js` and `knowledge-pdf-worker.js` synchronized.
+
 Hourly/daily trends aggregate the same recorded sale totals and accepted statuses
 as the dashboard, bounded to the authenticated shop/outlet and requested dates.
 Financial-report permission is required. Hours use the shop timezone and combine

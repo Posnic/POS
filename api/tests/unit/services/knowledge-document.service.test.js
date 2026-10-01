@@ -35,4 +35,9 @@ describe('knowledge document extraction', () => {
   test('rejects a forged PDF MIME type', async () => {
     await expect(service.extract({ buffer: Buffer.from('not a pdf'), mimetype: 'application/pdf' })).rejects.toThrow(/valid PDF/);
   });
+
+  test('rejects oversized text without silently removing later instructions', async () => {
+    await expect(service.extract({ buffer: Buffer.from('x'.repeat(200001)), mimetype: 'text/markdown' })).rejects.toThrow(/200,000/);
+    expect(service.normalize('x'.repeat(200000))).toHaveLength(200000);
+  });
 });
