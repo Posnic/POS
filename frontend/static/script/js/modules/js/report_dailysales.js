@@ -1,4 +1,38 @@
 PosnicPro.quickreport = {
+  meal: 'full',
+  periodParams: function () {
+    var meal = this.meal || 'full';
+
+    if (meal === 'full') return {};
+    if (meal !== 'custom') return { serving_period: meal.replace(/^period:/, '') };
+    var times = [$('#daily-meal-from').val(), $('#daily-meal-to').val()];
+    if (!times || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(times[0] || '') || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(times[1] || '') || times[0] === times[1]) {
+      PosnicPro.alert('warning', PosnicPro.i18n.t('lang_choose_different_valid_start_and_end_times', 'Choose different valid start and end times.'));
+      return null;
+    }
+    return { start_time: times[0], end_time: times[1] };
+  },
+  renderPeriods: function (branch) {
+    var enabled = branch.restaurant_enabled === true;
+    $('#daily-meal-filter').toggle(enabled);
+    if (!enabled) { this.meal = 'full'; return; }
+    var host = $('#daily-serving-periods').empty();
+    if (!(branch.serving_periods || []).length) host.append($('<small>', { 'class': 'meal-help' }).text('Add sessions in Settings → Restaurant → Serving periods.'));
+    var clock = function (n) { return ('0' + Math.floor(n / 60)).slice(-2) + ':' + ('0' + (n % 60)).slice(-2); };
+    (branch.serving_periods || []).forEach(function (part) {
+      var days = part.hours ? Object.keys(part.hours).map(function (k) { return part.hours[k].map(function (w) { return clock(w.open) + '–' + clock(w.close); }).join(', '); }) : [];
+      var subtitle = !part.hours ? 'Set times in Restaurant' : days.every(function (v) { return v === days[0]; }) ? days[0] : 'Times vary by day';
+      var button = $('<button>', { type: 'button', 'class': 'meal-button', 'data-meal': 'period:' + part.id, 'aria-pressed': PosnicPro.quickreport.meal === 'period:' + part.id ? 'true' : 'false', disabled: !part.hours });
+      button.text(part.name).append($('<small>').text(subtitle)).appendTo(host);
+    });
+  },
+  chooseMeal: function (meal) {
+    this.meal = meal;
+    $('#dailyreport_new [data-meal]').each(function () { $(this).attr('aria-pressed', $(this).attr('data-meal') === meal ? 'true' : 'false'); });
+    $('#daily-meal-custom').toggle(meal === 'custom');
+    if (meal === 'custom') { $('#daily-meal-from').trigger('focus'); $('#daily-meal-status').text(PosnicPro.i18n.t('lang_choose_your_hours_then_apply_the_report_be', 'Choose your hours, then apply. The report below keeps its last applied period.')); }
+    else this.salereportTable('VIEW');
+  },
   showDataTablePage: function () {
     var loader = $(".loader-dailysale-report");
     loader.find(".loadingSpinner:first").remove();
@@ -58,7 +92,14 @@ PosnicPro.quickreport = {
       return;
     }
 
+    var periodParams = PosnicPro.quickreport.periodParams();
+    if (!periodParams) return;
+    var requestId = (PosnicPro.quickreport.requestId || 0) + 1;
+    PosnicPro.quickreport.requestId = requestId;
+    PosnicPro.quickreport.lastReport = null;
+    $('#daily-meal-status').text('Updating report…');
     var loader = $(".loader-dailysale-report");
+    loader.find(".loadingSpinner").remove();
     $("<div class='loadingSpinner'></div>").appendTo(loader);
 
     var daterange = String($("#view_dailysale_report_daterange").val() || "");
@@ -81,6 +122,9 @@ PosnicPro.quickreport = {
         branch: branchId,
         starting_date: startDate,
         ending_date: endDate,
+        serving_period: periodParams.serving_period,
+        start_time: periodParams.start_time,
+        end_time: periodParams.end_time,
         type: type, // 'VIEW' | 'CSV' | 'PDF' etc.
       },
     };
@@ -88,8 +132,10 @@ PosnicPro.quickreport = {
     PosnicPro.get(
       params,
       function (response) {
+        if (requestId !== PosnicPro.quickreport.requestId) return;
         loader.find(".loadingSpinner:first").remove();
         if (response.type !== "success") {
+          $("#daily-meal-status").text("Could not update the report.");
           PosnicPro.alert(response.type, response.message);
           return;
         }
@@ -104,6 +150,8 @@ PosnicPro.quickreport = {
         $("#daily_report_date").html(
           PosnicPro.convertDate(branchData.date || "")
         );
+        PosnicPro.quickreport.renderPeriods(branchData);
+        $('#daily-report-period, #daily-meal-status').text(branchData.period_label || 'Full day');
         $("#daily_report_fromdate").text(startDate);
         $("#daily_report_todate").text(endDate);
         $("#daily_report_branchname").html(esc(branchData.branch_name));
@@ -118,6 +166,7 @@ PosnicPro.quickreport = {
           "branchAddress",
           "branchPhone",
           "branchEmail",
+          "salesPeriod",
         ];
         var branchDataRow = [
           branchData.from_date,
@@ -126,6 +175,7 @@ PosnicPro.quickreport = {
           branchData.branch_address,
           branchData.branch_phone,
           branchData.branch_email,
+          branchData.period_label,
         ];
 
         // ---- Products ----
@@ -323,6 +373,7 @@ PosnicPro.quickreport = {
          */
         PosnicPro.quickreport.lastReport = {
           branch: branchData,
+          period: branchData.period_label || 'Full day',
           from: startDate,
           to: endDate,
           qty: safeNum(qty),
@@ -644,6 +695,8 @@ PosnicPro.quickreport = {
         }
       },
       function (xhr) {
+        if (requestId !== PosnicPro.quickreport.requestId) return;
+        $("#daily-meal-status").text("Could not update the report. Please try again.");
         loader.find(".loadingSpinner:first").remove();
         var response;
         try {
@@ -720,7 +773,7 @@ PosnicPro.quickreport = {
       address: b.branch_address || b.address || '',
       phone: b.branch_telephone || b.phone || '',
       title: PosnicPro.i18n.t('lang_day_end_summary', 'Day-End Summary'),
-      range: (report.from && report.to) ? report.from + ' - ' + report.to : '',
+      range: (report.from && report.to) ? report.from + ' - ' + report.to + ' · ' + (report.period || 'Full day') : '',
       filename: 'day-end-summary'
     };
   },
@@ -813,6 +866,7 @@ PosnicPro.quickreport = {
       meta: [
         { label: PosnicPro.i18n.t('lang_from', 'From'), value: report.from },
         { label: PosnicPro.i18n.t('lang_to_2', 'To'), value: report.to },
+        { label: PosnicPro.i18n.t('lang_sales_period', 'Sales period'), value: report.period || 'Full day' },
         { label: PosnicPro.i18n.t('lang_printed_2', 'Printed'), value: new Date().toLocaleString('en-IN') },
         { label: PosnicPro.i18n.t('lang_by', 'By'), value: PosnicPro.local.get('loginuser_name') || '' }
       ],
@@ -994,6 +1048,8 @@ PosnicPro.quickreport = {
       return;
     }
 
+    const periodParams = PosnicPro.quickreport.periodParams();
+    if (!periodParams) return;
     // fetch report data (use a stable type; do NOT read from date label)
     const getParams = {
       url: "sales/dailySalesReports",
@@ -1001,6 +1057,9 @@ PosnicPro.quickreport = {
         branch: branchId,
         starting_date: startDate,
         ending_date: endDate,
+        serving_period: periodParams.serving_period,
+        start_time: periodParams.start_time,
+        end_time: periodParams.end_time,
         type: "VIEW", // we just need the data payload for the email
       },
     };
@@ -1120,4 +1179,16 @@ $(".to_email_form").submit(function (event) {
     // checks form for validity
     PosnicPro.quickreport.emailFormSubmit();
   }
+});
+
+$(document).on('click', '#dailyreport_new [data-meal]', function () {
+  PosnicPro.quickreport.chooseMeal($(this).attr('data-meal'));
+});
+$(document).on('click', '#daily-meal-apply', function () { PosnicPro.quickreport.salereportTable('VIEW'); });
+
+$(document).on('change', '#dailysale_branch_value', function () {
+  PosnicPro.quickreport.meal = 'full';
+  $('#daily-meal-filter, #daily-meal-custom').hide();
+  $('#dailyreport_new [data-meal]').attr('aria-pressed', 'false');
+  $('#dailyreport_new [data-meal="full"]').attr('aria-pressed', 'true');
 });

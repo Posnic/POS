@@ -3781,5 +3781,13 @@
   "lang_venue_kind": "Struttura",
   "lang_venue_markup": "Supplemento a carico dell’ospite",
   "lang_venue_name": "Nome della struttura",
-  "lang_venue_unit_label": "Nome dell’unità"
+  "lang_venue_unit_label": "Nome dell’unità",
+  "lang_sales_period": "Periodo di vendita",
+  "lang_full_day": "Intera giornata",
+  "lang_all_24_hours": "Tutte le 24 ore",
+  "lang_custom_time": "Orario personalizzato",
+  "lang_choose_your_hours": "Scegli gli orari",
+  "lang_apply_time": "Applica orario",
+  "lang_sales_time_filter": "Filtro orario delle vendite",
+  "lang_choose_a_sales_period": "Scegli un periodo di vendita"
 }

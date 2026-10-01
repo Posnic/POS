@@ -139,7 +139,7 @@ function keysUsed() {
        naive // strip eats https:// inside real string literals. */
     const js = stripComments(fs.readFileSync(file, 'utf8'));
     // Local translator callbacks use t('lang_…', English) as well.
-    for (const m of js.matchAll(/(?:i18n\.t|(?<![\w.])t(?=\(\s*['"]lang_))\(\s*(['"])(.*?)\1\s*,\s*(['"])((?:\\.|(?!\3)[^\\])*)\3/g)) {
+    for (const m of js.matchAll(/(?:i18n\.t|(?<![\w.])t(?=\(\s*['"]lang_))\(\s*(['"])([A-Za-z0-9_-]+)\1\s*,\s*(['"])((?:\\.|(?!\3)[^\\])*)\3/g)) {
       const english = m[4].replace(/\\(['"\\])/g, '$1').replace(/\\n/g, '\n').replace(/\\t/g, '\t');
       remember(m[2], english, file);
       calls += 1;
