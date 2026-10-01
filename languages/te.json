@@ -3781,5 +3781,13 @@
   "lang_venue_kind": "స్థలం",
   "lang_venue_markup": "అతిథి అదనంగా చెల్లిస్తారు",
   "lang_venue_name": "స్థలం పేరు",
-  "lang_venue_unit_label": "యూనిట్‌ను ఏమని పిలుస్తారు"
+  "lang_venue_unit_label": "యూనిట్‌ను ఏమని పిలుస్తారు",
+  "lang_sales_period": "అమ్మకాల వ్యవధి",
+  "lang_full_day": "పూర్తి రోజు",
+  "lang_all_24_hours": "మొత్తం 24 గంటలు",
+  "lang_custom_time": "అనుకూల సమయం",
+  "lang_choose_your_hours": "సమయాన్ని ఎంచుకోండి",
+  "lang_apply_time": "సమయాన్ని వర్తింపజేయండి",
+  "lang_sales_time_filter": "అమ్మకాల సమయ ఫిల్టర్",
+  "lang_choose_a_sales_period": "అమ్మకాల వ్యవధిని ఎంచుకోండి"
 }
