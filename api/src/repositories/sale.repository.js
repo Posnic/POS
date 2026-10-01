@@ -10331,6 +10331,12 @@ class SalesRepository {
       for (const field of ['person_count', 'table_number', 'table_id', 'dine_type',
         'seating_request_id', 'seating_primary_id', 'seating_table_ids'])
         editFilter[field] = orderDoc[field] === undefined ? { $exists: false } : orderDoc[field];
+      // Payment and closure can finish while this edit reads the catalogue,
+      // without changing its items or seating revision. Preserve that newer
+      // state instead of amending/cancelling a check from the older snapshot.
+      for (const field of ['payment_status', 'paid_amount', 'partial_balance',
+        'partial_amounts', 'payment_pending', 'sale_process', 'floor_closed_at', 'order_state'])
+        editFilter[field] = orderDoc[field] === undefined ? { $exists: false } : orderDoc[field];
       const actor = editPolicy?.actor || {
         id: String(BaseModel.loggedUser || ''),
         name: BaseModel.loggedUserName || 'Staff',

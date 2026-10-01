@@ -737,8 +737,10 @@ test.each([
   expect(await db.collection('sales').findOne({_id:sale._id})).toMatchObject(changed);
 });
 test.each([{order_state:'pending'},{order_state:'rejected'},
-  {floor_closed_at:null},{captain_edit_until:new Date(Date.now()+60000)}])(
+  {floor_closed_at:null},{captain_edit_until:'active'}])(
   'item preview refuses unavailable state %j',async changed=>{
+    if (changed.captain_edit_until === 'active')
+      changed = { ...changed, captain_edit_until: new Date(Date.now()+60000) };
     await db.collection('sales').updateOne({_id:sale._id},{$set:changed});
     expect((await scopedItemPreview()).status).toBe(false);
   });

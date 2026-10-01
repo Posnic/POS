@@ -359,3 +359,47 @@ test('customer retry after interrupted insert recovers the same bound order', as
   expect(result.status).toBe(true);
   expect(result.data.sale_id).toBe(claims[0].order_id);
 });
+
+describe.each(['modified', 'cancelled'])('concurrent settlement during %s', (action) => {
+  test.each([
+    ['payment_status', 'Paid'],
+    ['paid_amount', 50],
+    ['partial_balance', 50],
+    ['partial_amounts', 50],
+    ['payment_pending', 0],
+    ['sale_process', 'Add'],
+    ['floor_closed_at', new Date('2026-10-01T06:00:00Z')],
+    ['order_state', 'cancelled'],
+  ])('rejects a stale write after %s changes', async (field, value) => {
+    const created = await submit();
+    expect(created.status).toBe(true);
+    const id = new ObjectId(created.data.sale_id);
+    const before = await db.collection('sales').findOne({ _id: id });
+    expect(before[field]).not.toEqual(value);
+    const notify = require('../../../src/helpers/kot-notify').notifyKotReady;
+    notify.mockClear();
+    let injected = false;
+    BaseModel.getDb.mockResolvedValue({ collection(name) {
+      const collection = db.collection(name);
+      return new Proxy(collection, { get(target, property) {
+        if (name === 'sales' && property === 'updateOne') return async (filter, update, options) => {
+          if (!injected && update.$push?.captain_audit) {
+            injected = true;
+            await collection.updateOne({ _id: id }, { $set: { [field]: value } });
+          }
+          return collection.updateOne(filter, update, options);
+        };
+        const method = target[property];
+        return typeof method === 'function' ? method.bind(target) : method;
+      } });
+    } });
+    const result = await repo.updateOrderModel(String(id), [
+      { product_id: String(item), quantity: 2, price: 100 },
+    ], 200, action, null, null, null, null, null, null);
+    expect(injected).toBe(true);
+    expect(result).toMatchObject({ status: false, message: 'order_changed' });
+    expect(await db.collection('sales').findOne({ _id: id })).toEqual({ ...before, [field]: value });
+    expect(notify).not.toHaveBeenCalled();
+    expect((await seating.find(db, { branchId: branch, license }, claim.id)).state).toBe('submitting');
+  });
+});
