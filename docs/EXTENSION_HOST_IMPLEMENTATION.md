@@ -1,6 +1,6 @@
 # Extension host implementation checkpoint
 
-This branch adds generic extension infrastructure on Posnic 1.9.0 develop, baseline `4e66f816347e62c6fbfc5958fd41ac9267372aa1`. It is not a released extension API. Keep the capability gate closed until the full browser, receipt and installation contract is verified.
+This branch adds generic extension infrastructure on Posnic 1.9.0 develop, updated baseline `773200b2c6084199186014bbc55ae04bd57ab0e9`. It is not a released extension API. Keep the capability gate closed until the full browser, receipt and installation contract is verified.
 
 ## Durable execution
 
@@ -18,6 +18,8 @@ Authorization persists the first complete core sale document in BSON, retaining 
 The payment gate is internal code, never a browser-provided callback or skip-stock flag. Normal sales without an internal stock grant remain on the existing path.
 
 ## Local verification
+
+After rebasing onto develop `773200b`, 46 affected core-sale, extension-payment and existing desktop-payment checks pass. The upstream submitted-payload idempotency fix is preserved for normal sales alongside the extension's host-assigned submission identity. The latest host implementation commit after rebase is `a635e57`; earlier checkpoint hashes refer to the pre-rebase local history.
 
 89 selected tests pass across extension namespace/routes/package loading, stock effects/fences/journals/allocations/lifecycle, real sales/payments, existing desktop payment integrity and business stock. Tests cover stale writers, cash-versus-cancellation races, price/tax review, failure after authorization, native BSON snapshot replay, delayed first writers racing recovery, fractional taxed amounts and manual Card entry. A separate private worker smoke test exercises the complete command boundary against real MongoDB and core sale services. No CI workflow was added.
 
