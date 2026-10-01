@@ -3781,5 +3781,13 @@
   "lang_venue_kind": "स्थल",
   "lang_venue_markup": "पाहुनाले थप तिर्छन्",
   "lang_venue_name": "स्थलको नाम",
-  "lang_venue_unit_label": "एकाइलाई के भनिन्छ"
+  "lang_venue_unit_label": "एकाइलाई के भनिन्छ",
+  "lang_sales_period": "बिक्री अवधि",
+  "lang_full_day": "पूरा दिन",
+  "lang_all_24_hours": "सबै २४ घण्टा",
+  "lang_custom_time": "आफूले तोकेको समय",
+  "lang_choose_your_hours": "समय छान्नुहोस्",
+  "lang_apply_time": "समय लागू गर्नुहोस्",
+  "lang_sales_time_filter": "बिक्री समय फिल्टर",
+  "lang_choose_a_sales_period": "बिक्री अवधि छान्नुहोस्"
 }

@@ -7,7 +7,7 @@ PosnicPro.quickreport = {
     if (meal !== 'custom') return { serving_period: meal.replace(/^period:/, '') };
     var times = [$('#daily-meal-from').val(), $('#daily-meal-to').val()];
     if (!times || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(times[0] || '') || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(times[1] || '') || times[0] === times[1]) {
-      PosnicPro.alert('warning', 'Choose different valid start and end times.');
+      PosnicPro.alert('warning', PosnicPro.i18n.t('lang_choose_different_valid_start_and_end_times', 'Choose different valid start and end times.'));
       return null;
     }
     return { start_time: times[0], end_time: times[1] };
@@ -30,7 +30,7 @@ PosnicPro.quickreport = {
     this.meal = meal;
     $('#dailyreport_new [data-meal]').each(function () { $(this).attr('aria-pressed', $(this).attr('data-meal') === meal ? 'true' : 'false'); });
     $('#daily-meal-custom').toggle(meal === 'custom');
-    if (meal === 'custom') { $('#daily-meal-from').trigger('focus'); $('#daily-meal-status').text('Choose your hours, then apply. The report below keeps its last applied period.'); }
+    if (meal === 'custom') { $('#daily-meal-from').trigger('focus'); $('#daily-meal-status').text(PosnicPro.i18n.t('lang_choose_your_hours_then_apply_the_report_be', 'Choose your hours, then apply. The report below keeps its last applied period.')); }
     else this.salereportTable('VIEW');
   },
   showDataTablePage: function () {
@@ -866,7 +866,7 @@ PosnicPro.quickreport = {
       meta: [
         { label: PosnicPro.i18n.t('lang_from', 'From'), value: report.from },
         { label: PosnicPro.i18n.t('lang_to_2', 'To'), value: report.to },
-        { label: 'Sales period', value: report.period || 'Full day' },
+        { label: PosnicPro.i18n.t('lang_sales_period', 'Sales period'), value: report.period || 'Full day' },
         { label: PosnicPro.i18n.t('lang_printed_2', 'Printed'), value: new Date().toLocaleString('en-IN') },
         { label: PosnicPro.i18n.t('lang_by', 'By'), value: PosnicPro.local.get('loginuser_name') || '' }
       ],

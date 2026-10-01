@@ -3781,5 +3781,13 @@
   "lang_venue_kind": "ස්ථානය",
   "lang_venue_markup": "අමුත්තා අමතරව ගෙවයි",
   "lang_venue_name": "ස්ථානයේ නම",
-  "lang_venue_unit_label": "ඒකකය හඳුන්වන නම"
+  "lang_venue_unit_label": "ඒකකය හඳුන්වන නම",
+  "lang_sales_period": "විකුණුම් කාල පරාසය",
+  "lang_full_day": "මුළු දවසම",
+  "lang_all_24_hours": "පැය 24 ම",
+  "lang_custom_time": "අභිරුචි වේලාව",
+  "lang_choose_your_hours": "වේලාවන් තෝරන්න",
+  "lang_apply_time": "වේලාව යොදන්න",
+  "lang_sales_time_filter": "විකුණුම් වේලා පෙරහන",
+  "lang_choose_a_sales_period": "විකුණුම් කාල පරාසයක් තෝරන්න"
 }

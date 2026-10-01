@@ -14,7 +14,7 @@ function setup() {
   };
   w.setTimeout = () => {};
   const calls = [];
-  w.PosnicPro = { alert: (...a) => calls.push(a) };
+  w.PosnicPro = { i18n: { t: (key, fallback) => fallback }, alert: (...a) => calls.push(a) };
   w.eval(
     fs.readFileSync(
       "frontend/static/script/js/modules/js/report_dailysales.js",

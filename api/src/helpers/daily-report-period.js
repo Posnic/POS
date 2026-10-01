@@ -71,7 +71,7 @@ function dailyReportPeriod(query, timezone, dayparts = []) {
             day
               .map(
                 (w) =>
-                  clock(w.open) + '–' + clock(w.close) + (w.close < w.open ? ' (next day)' : '')
+                  clock(w.open) + ' to ' + clock(w.close) + (w.close < w.open ? ' (next day)' : '')
               )
               .join(', ')
           )
@@ -85,7 +85,7 @@ function dailyReportPeriod(query, timezone, dayparts = []) {
     label: selected
       ? `${selected.name} · ${scheduleLabel} · ${zone}`
       : from
-        ? `Custom time · ${from}–${to}${to < from ? ' (next day)' : ''} · ${zone}`
+        ? `Custom time · ${from} to ${to}${to < from ? ' (next day)' : ''} · ${zone}`
         : `Full day · ${zone}`,
     // Keep the user's session permission as an intersection, never widen it to midnight.
     match(field, sessionStart) {

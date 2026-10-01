@@ -3813,5 +3813,13 @@
   "lang_venue_kind": "இடம்",
   "lang_venue_markup": "விருந்தினர் கூடுதலாகச் செலுத்துவது",
   "lang_venue_name": "இடத்தின் பெயர்",
-  "lang_venue_unit_label": "அலகை அழைக்கும் பெயர்"
+  "lang_venue_unit_label": "அலகை அழைக்கும் பெயர்",
+  "lang_sales_period": "விற்பனைக் காலம்",
+  "lang_full_day": "முழு நாள்",
+  "lang_all_24_hours": "24 மணிநேரமும்",
+  "lang_custom_time": "விருப்ப நேரம்",
+  "lang_choose_your_hours": "நேரத்தைத் தேர்ந்தெடுக்கவும்",
+  "lang_apply_time": "நேரத்தைப் பயன்படுத்து",
+  "lang_sales_time_filter": "விற்பனை நேர வடிகட்டி",
+  "lang_choose_a_sales_period": "விற்பனைக் காலத்தைத் தேர்ந்தெடுக்கவும்"
 }

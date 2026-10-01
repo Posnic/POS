@@ -55,19 +55,19 @@
         #dailyreport_new .meal-help { font-size: 13px; margin: 8px 0 0; color: #526176; }
         @media(max-width: 600px) { #dailyreport_new .meal-filter { margin: 10px 12px 0; } #dailyreport_new .meal-button { flex: 1 1 40%; } }
     </style>
-    <section class="meal-filter" id="daily-meal-filter" style="display:none" aria-label="Sales time filter">
-        <strong>Sales period</strong>
-        <div class="meal-buttons" role="group" aria-label="Choose a sales period">
-            <button type="button" class="meal-button" data-meal="full" aria-pressed="true">Full Day<small>All 24 hours</small></button>
+    <section class="meal-filter" id="daily-meal-filter" style="display:none" aria-label="Sales time filter" data-t-aria-label="lang_sales_time_filter">
+        <strong><lang class="lang_sales_period">Sales period</lang></strong>
+        <div class="meal-buttons" role="group" aria-label="Choose a sales period" data-t-aria-label="lang_choose_a_sales_period">
+            <button type="button" class="meal-button" data-meal="full" aria-pressed="true"><lang class="lang_full_day">Full Day</lang><small><lang class="lang_all_24_hours">All 24 hours</lang></small></button>
             <span id="daily-serving-periods" style="display:contents"></span>
-            <button type="button" class="meal-button" data-meal="custom" aria-pressed="false">Custom Time<small>Choose your hours</small></button>
+            <button type="button" class="meal-button" data-meal="custom" aria-pressed="false"><lang class="lang_custom_time">Custom Time</lang><small><lang class="lang_choose_your_hours">Choose your hours</lang></small></button>
         </div>
         <div id="daily-meal-custom" class="meal-custom" style="display:none">
-            <label for="daily-meal-from">From<input id="daily-meal-from" type="time" class="form-control" value="06:00" required></label>
-            <label for="daily-meal-to">To<input id="daily-meal-to" type="time" class="form-control" value="12:00" required></label>
-            <button type="button" class="btn btn-primary" id="daily-meal-apply">Apply time</button>
+            <label for="daily-meal-from"><lang class="lang_from">From</lang><input id="daily-meal-from" type="time" class="form-control" value="06:00" required></label>
+            <label for="daily-meal-to"><lang class="lang_to_2">To</lang><input id="daily-meal-to" type="time" class="form-control" value="12:00" required></label>
+            <button type="button" class="btn btn-primary" id="daily-meal-apply"><lang class="lang_apply_time">Apply time</lang></button>
         </div>
-        <p class="meal-help">Sessions use Settings → Restaurant → Serving periods, in the shop’s local time on each selected date. An end time earlier than the start continues into the next day.</p>
+        <p class="meal-help"><lang class="lang_sessions_use_settings_restaurant_serving_p">Sessions use Settings → Restaurant → Serving periods, in the shop’s local time on each selected date. An end time earlier than the start continues into the next day.</lang></p>
         <p class="meal-help" id="daily-meal-status" role="status" aria-live="polite"></p>
     </section>
 
