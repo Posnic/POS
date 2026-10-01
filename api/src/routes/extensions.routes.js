@@ -142,6 +142,22 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       respondError(res, error);
     }
   });
+  router.post('/:extensionId/receipt', async (req, res) => {
+    try {
+      const e = req.extension;
+      res.json(
+        await require('../services/extension-receipts').readReceipt({
+          db: req.db,
+          scope: e.scope,
+          descriptor: e.descriptor,
+          actor: e.actor,
+          request: req.body,
+        })
+      );
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
   return router;
 }
 function respondError(res, error) {

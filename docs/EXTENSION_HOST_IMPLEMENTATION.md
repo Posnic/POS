@@ -28,7 +28,7 @@ Testing currently uses the installed dependencies from the separate active check
 ## Remaining release work
 
 - Complete private-page end-to-end verification through real login, module permissions/settings and receipt dispatch. The generic page/message bridge now exists.
-- Normal receipt template integration with truthful pending status, printer dispatch and cash-drawer behavior.
+- Complete signed-runtime/browser verification of receipt dispatch and cash-drawer behavior. Normal template integration and pending receipt projection now exist.
 - Catalogue mutation/repair cases, stock notifications/sync and normal allocated-sale return verification. Payment ownership and authenticated manager cancellation now have regression coverage.
 - Activation, versioned update/rollback and offline distribution packaging. Signed ZIP validation and immutable staging now exist, but no activation UI/coordinator is complete.
 - Isolated authenticated staging and compatible Windows/offline verification. No public staging or customer hardware compatibility is claimed by these tests.
@@ -44,6 +44,14 @@ Product search is bounded, cursor-paginated and company/branch scoped. Literal s
 Payment ownership is checked by the private planner before persisting an effect. A manager can cancel another staff member's known unpaid preparation, while only its owner can confirm it. The namespace persists the original authenticated permission set for recovery. Cancellation persists its initiating actor/operation/sequence and reuses those identities after interruption; manager recovery cannot elevate the original operation's permissions.
 
 Local verification: 25 affected host tests pass, including real MongoDB payment/namespace/routes, signed view loading and two Chromium tests for frame isolation and page transport. The private extension also has a separate production presentation test and real worker/core smoke check. The page adapter currently refuses receipt dispatch; normal receipt integration, full login/browser verification, activation and public staging remain incomplete. No capabilities were advertised prematurely.
+
+## Receipt integration checkpoint
+
+The signed descriptor can expose a read-only receipt projection through its isolated worker. The receipt endpoint reads current namespace state, refuses unresolved commands, verifies the shop/extension stock movement and printable unpaid quantities, and rechecks the namespace revision before returning a pending document. A prepared but unpaid allocation remains printable. No receipt, sale, payment or stock mutation is stored by this read. Deleted/cleared movements cannot print again. Paid projections must resolve to an existing paid core sale belonging to the same shop and extension.
+
+Pending goods use the existing receipt document builder and normal receipt designer, with the shop's configured layout, product descriptions, quantities, original retail value and local date/time. The designer always includes Payment pending for this document type, even if the selected layout omits totals; it does not label it as a tax invoice or claim cash/card was received. Paid receipts load the existing normal sales document. Parent-owned dispatch preserves the cashier's current workspace and propagates printer failure. Reprinting does not open the drawer or alter stock. Actual drawer-on-cash-sale behavior remains a separate handover item.
+
+Verification: 46 receipt designer/endpoint checks pass, including normal renderer regressions, omitted totals blocks, configured printer dispatch, failure propagation, scope and quantity checks, and deletion refusal. The browser page-transport check covers pending/paid dispatch. The private-worker/core smoke now reads a pending receipt before/after payment preparation, refuses it after deletion and still resolves the paid sale. Nineteen private tests remain passing. Signed-runtime browser acceptance and physical printer checks are still required before releasing.
 
 ## Signed ZIP staging
 

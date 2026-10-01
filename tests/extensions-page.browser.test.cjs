@@ -29,6 +29,12 @@ test("extension page transports idempotent commands and closes access when branc
       window.PosnicPro = {
         HideSideBarModal() {},
         local: { get: () => window.branch },
+        receiptDesigner: {
+          printSale: async (document, format, preview, options) => {
+            window.lastPrint = { document, options };
+            return { success: true };
+          },
+        },
         request(params, done) {
           window.requests.push(params);
           if (params.url.endsWith("/view"))
@@ -44,6 +50,17 @@ test("extension page transports idempotent commands and closes access when branc
             done({ actor: { userId: "Staff" } });
           else if (params.url.endsWith("/state"))
             done({ revision: 1, state: {} });
+          else if (params.url.endsWith("/receipt"))
+            done(
+              JSON.parse(params.data).saleId
+                ? { kind: "paid", saleId: "a".repeat(24) }
+                : {
+                    kind: "pending",
+                    document: { pending_goods_receipt: true, items_total: 2 },
+                  },
+            );
+          else if (params.url.startsWith("sales/"))
+            done({ type: "success", data: { sales_id: "INV-1" } });
           else if (params.url === "extensions/v1")
             done({
               extensions: [
@@ -86,6 +103,20 @@ test("extension page transports idempotent commands and closes access when branc
     );
     const bootstrap = await page.evaluate(() => window.bridge("bootstrap", {}));
     assert.equal(bootstrap.namespace.revision, 1);
+    await page.evaluate(() =>
+      window.bridge("receipt", { adjustmentId: "basket-1" }),
+    );
+    assert.deepEqual(await page.evaluate(() => window.lastPrint), {
+      document: { pending_goods_receipt: true, items_total: 2 },
+      options: { preserveWorkspace: true, propagateFailure: true },
+    });
+    await page.evaluate(() =>
+      window.bridge("receipt", { saleId: "a".repeat(24) }),
+    );
+    assert.equal(
+      await page.evaluate(() => window.lastPrint.document.sales_id),
+      "INV-1",
+    );
     await page.evaluate(() =>
       window.bridge("command", {
         expectedRevision: 1,

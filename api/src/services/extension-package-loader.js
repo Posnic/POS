@@ -100,6 +100,11 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
     displayName:
       typeof metadata.displayName === 'string' ? metadata.displayName.slice(0, 100) : metadata.id,
     ...(view ? { view } : {}),
+    ...(metadata.receiptProjection === true
+      ? {
+          readReceipt: (payload) => callWorker(root, metadata.entrypoint, 'receipt', payload),
+        }
+      : {}),
     plan: (payload) => callWorker(root, metadata.entrypoint, 'plan', payload),
     finalize: (state, results) =>
       callWorker(root, metadata.entrypoint, 'finalize', { state, results }),

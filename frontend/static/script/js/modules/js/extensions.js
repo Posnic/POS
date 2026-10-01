@@ -125,6 +125,57 @@
                 input.requestKey,
               );
             if (method === "recover") return request(base + "/recover", {});
+            if (method === "receipt")
+              return request(base + "/receipt", input).then(
+                async function (receipt) {
+                  if (
+                    run !== generation ||
+                    branch !==
+                      String(PosnicPro.local.get("branch_id_set") || "")
+                  )
+                    throw new Error(
+                      "The shop changed. Reopen the extension before printing.",
+                    );
+                  var document = receipt.document;
+                  if (receipt.kind === "paid") {
+                    if (!/^[a-f0-9]{24}$/i.test(receipt.saleId || ""))
+                      throw new Error("Invalid receipt reference.");
+                    document = await new Promise(function (resolve, reject) {
+                      PosnicPro.request(
+                        { url: "sales/" + receipt.saleId },
+                        function (response) {
+                          if (response.type !== "success")
+                            return reject(
+                              new Error(
+                                response.message || "Receipt unavailable.",
+                              ),
+                            );
+                          resolve(response.data);
+                        },
+                        function () {
+                          reject(new Error("Could not load the paid receipt."));
+                        },
+                      );
+                    });
+                  }
+                  if (
+                    run !== generation ||
+                    branch !==
+                      String(PosnicPro.local.get("branch_id_set") || "")
+                  )
+                    throw new Error(
+                      "The shop changed. Reopen the extension before printing.",
+                    );
+                  if (!document || !PosnicPro.receiptDesigner)
+                    throw new Error("Receipt printing is unavailable.");
+                  return PosnicPro.receiptDesigner.printSale(
+                    document,
+                    undefined,
+                    false,
+                    { preserveWorkspace: true, propagateFailure: true },
+                  );
+                },
+              );
             throw new Error(
               "This host does not support that extension operation yet.",
             );
