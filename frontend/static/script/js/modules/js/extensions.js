@@ -155,6 +155,16 @@
                 return { capabilities: values[0], namespace: values[1] };
               });
             if (method === "state") return request(base + "/state");
+            if (method === "sales")
+              return request(
+                base + "/sales?after=" + encodeURIComponent(input.after || ""),
+              );
+            if (method === "salesReport")
+              return request(
+                base +
+                  "/sales-report?day=" +
+                  encodeURIComponent(input.day || ""),
+              );
             if (method === "catalogue")
               return request(
                 base +

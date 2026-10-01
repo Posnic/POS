@@ -10,6 +10,8 @@
     "command",
     "recover",
     "receipt",
+    "sales",
+    "salesReport",
   ]);
   function mount(options) {
     var container = options.container,

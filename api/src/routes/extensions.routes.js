@@ -113,6 +113,36 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       respondError(res, error);
     }
   });
+  router.get('/:extensionId/sales', async (req, res) => {
+    try {
+      if (Object.keys(req.query).some((key) => key !== 'after'))
+        access.fail('Unsupported history query.', 422);
+      res.json(
+        await require('../services/extension-sales-history').listSales({
+          db: req.db,
+          ...req.extension,
+          after: req.query.after,
+        })
+      );
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
+  router.get('/:extensionId/sales-report', async (req, res) => {
+    try {
+      if (Object.keys(req.query).some((key) => key !== 'day'))
+        access.fail('Unsupported report query.', 422);
+      res.json(
+        await require('../services/extension-sales-history').dailySales({
+          db: req.db,
+          ...req.extension,
+          day: req.query.day,
+        })
+      );
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
   router.post('/:extensionId/commands', async (req, res) => {
     try {
       const e = req.extension;

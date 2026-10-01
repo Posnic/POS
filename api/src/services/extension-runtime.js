@@ -10,6 +10,7 @@ const capabilities = Object.freeze([
   'payments.verified-result.v1',
   'receipts.normal-template.v1',
   'catalog.command-selection.v1',
+  'sales.paged-history.v1',
 ]);
 function get(extensionId) {
   return installed.get(extensionId) || null;

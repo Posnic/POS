@@ -81,6 +81,12 @@ The namespace derives hardware actions only from successful trusted cash-payment
 
 A physical device cannot provide an atomic commit with the database. The claim is written before IPC: an interrupted or failed pulse is not automatically retried. The paid sale remains completed and the UI asks staff to check/use the normal manual drawer control. Serial drawer configuration requires separate handling; this customer's printer-connected drawer uses the existing printer adapter. Actual Star hardware remains unverified.
 
+## Paid history and report capability
+
+`sales.paged-history.v1` exposes completed extension payments through authenticated, enabled-package, branch-scoped routes. A compound index supports stable `(paidAt, _id)` cursor pagination, 50 results per page. Daily grouping uses an indexed coarse UTC window followed by the exact local calendar day; totals retain their recorded currencies. These are gross completed-payment totals, not net-return reports. Normal core sales reports handle subsequent refunds.
+
+The private working aggregate no longer retains an ever-growing paid history. Core payment/sale records remain permanent; receipt ownership checks resolve older paid sales even after their private summary expires. Tests cover paging ties, isolation, malformed input, UK DST and mixed currencies. Hardware claims remain independent of the private cache, so this change cannot reopen a drawer on a replay.
+
 ## Signed ZIP staging
 
 `extension-archive.js` accepts an already bounded buffer (24 MiB maximum), reads entries with the existing yauzl dependency, and bounds both declared and actual decompressed bytes. It rejects unsafe/Windows-colliding paths, duplicates, file-as-parent collisions, symlinks/device entries, encrypted/unsupported encodings, unsigned/unlisted content and incompatible packages. All hashes and the Ed25519 signature are checked before filesystem staging. HTTP upload limits still need to be applied by the eventual installer route before buffering.
