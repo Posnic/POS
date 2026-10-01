@@ -900,6 +900,21 @@ test.each([
  const cash=reported.data.payment.find(row=>row.sales_payment_mode==='Cash');
  expect(money.toMinor(cash.sales_payment,policy)).toBe(money.toMinor(total,policy));
  expect(cash.sales_count).toBe(2);expect(cash.outstanding_amount).toBe(0);
+ // Unpaid kitchen orders, unrecorded payments and other shops are not transactions here.
+ const paidTemplate=await db.collection('sales').findOne({_id:checks[0]._id});
+ await db.collection('sales').insertMany([
+  {...paidTemplate,_id:new ObjectId(),payment_status:'Unpaid'},
+  {...paidTemplate,_id:new ObjectId(),captain_payments:[]},
+  {...paidTemplate,_id:new ObjectId(),license:new ObjectId()},
+  {...paidTemplate,_id:new ObjectId(),branch_id:new ObjectId()},
+ ]);
+ const ReportSale=mongoose.models.TransferReportSale || mongoose.model('TransferReportSale',new mongoose.Schema({},{strict:false,collection:'sales'}));
+ const transactions=await runWithRequestContext({license,currentBranch:branch},()=>sales.paymentSalesTransactionReportPage({
+  branchid:[String(branch)],starting_date:'2026-09-30T00:00:00Z',ending_date:'2026-09-30T23:59:59Z'}, {}, {SaleModel:ReportSale}));
+ expect(transactions.status).toBe(true);expect(transactions.data.pagination.total).toBe(2);
+ expect(transactions.data.list.reduce((sum,row)=>sum+money.toMinor(row.report_amount,policy),0)).toBe(money.toMinor(total,policy));
+ expect(transactions.data.list.every(row=>row.currencyDigits===policy.currencyDigits)).toBe(true);
+
 
  expect(await service.complete(input)).toEqual(completed);
 });

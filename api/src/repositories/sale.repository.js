@@ -3799,7 +3799,10 @@ class SalesRepository {
 
       const firstClause = {
         branch_id: { $in: objectBranchIds },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        $or: [
+          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          { sale_process: 'KOT', payment_status: 'Paid', 'captain_payments.0': { $exists: true } },
+        ],
       };
 
       const secondClause = {
@@ -3853,6 +3856,9 @@ class SalesRepository {
         return_round_off: 1,
         sales_sub_total: 1,
         items_total: 1,
+        paid_amount: 1,
+        captain_payments: 1,
+        'captain_transfer_allocation.currencyDigits': 1,
         items_return_total: 1,
         items_subtotal: 1,
         items_return_subtotal: 1,
@@ -3893,7 +3899,12 @@ class SalesRepository {
         .limit(limit)
         .lean();
 
-      const list = Array.isArray(rawList) ? rawList : [];
+      const list = (Array.isArray(rawList) ? rawList : []).map(row => {
+        if (!row.captain_payments?.length || row.payment_status !== 'Paid') return row;
+        const digits = row.captain_transfer_allocation?.currencyDigits;
+        return { ...row, report_amount: row.paid_amount,
+          currencyDigits: Number.isInteger(digits) && digits >= 0 && digits <= 4 ? digits : 2 };
+      });
 
       const total = await Model.countDocuments(filters);
 
