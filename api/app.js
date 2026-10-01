@@ -1115,6 +1115,7 @@ app.use(changeEvents);
  * forms like every infra endpoint.
  */
 require('./src/v1').registerV1({ app, protect: sseProtect });
+app.use(['/api/extensions/v1', '/extensions/v1'], require('./src/routes/extensions.routes'));
 app.use(
   ['/api/branch-payments', '/branch-payments'],
   require('./src/routes/branch-payments.routes')
