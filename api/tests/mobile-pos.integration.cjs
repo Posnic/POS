@@ -542,6 +542,7 @@ test(
         .click();
       await page.getByTestId('manual-server').click();
       await page.getByTestId('server-input').fill(base);
+      await page.getByTestId('choose-server-next').click();
       await page.getByRole('textbox', { name: 'Username', exact: true }).fill(user.username);
       await page.getByRole('textbox', { name: 'Password', exact: true }).fill('test-password');
       await page.getByRole('button', { name: 'Sign in', exact: true }).click();
