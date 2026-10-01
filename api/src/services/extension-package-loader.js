@@ -119,6 +119,7 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
 }
 
 async function initializeInstalledExtensions({
+  db,
   root = process.env.POSNIC_EXTENSIONS_ROOT,
   publicKey = process.env.POSNIC_EXTENSIONS_PUBLIC_KEY ||
     (process.env.POSNIC_EXTENSIONS_PUBLIC_KEY_FILE &&
@@ -126,9 +127,18 @@ async function initializeInstalledExtensions({
 } = {}) {
   if (!root) return { loaded: [], failures: [] };
   if (!publicKey) return { loaded: [], failures: [{ code: 'extension_trust_key_missing' }] };
+  const queueFailures = [];
+  if (db) {
+    try {
+      await require('./extension-install-queue').apply({ root, publicKey, db });
+    } catch (error) {
+      queueFailures.push({ code: error.code || error.message });
+    }
+  }
   const lock = await require('./extension-runtime-lock').acquireRuntimeLock(root);
+  runtime.clear();
   const loaded = [],
-    failures = [];
+    failures = queueFailures;
   for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
     if (!entry.isDirectory() || !/^[a-z][a-z0-9.-]{2,99}$/.test(entry.name)) continue;
     try {

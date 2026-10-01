@@ -45,6 +45,134 @@
   function status(value) {
     document.getElementById("extensions_status").textContent = value;
   }
+  async function installationControls(run) {
+    var state = await request("/installation/status");
+    if (run !== generation) return;
+    var section = document.createElement("section");
+    section.className = "card mt-3";
+    var body = document.createElement("div");
+    body.className = "card-body";
+    section.append(body);
+    var heading = document.createElement("h5");
+    heading.textContent = "Install or update an extension";
+    body.append(heading);
+    var note = document.createElement("p");
+    note.setAttribute("role", "status");
+    body.append(note);
+    document.getElementById("extensions_content").append(section);
+    if (!state.available) {
+      note.textContent =
+        "Extension installation is not configured on this host. Contact your installation administrator.";
+      return;
+    }
+    if (state.busy) {
+      note.textContent = state.pending
+        ? state.pending.id +
+          " " +
+          state.pending.version +
+          " is queued. Finish pending transactions, close Posnic and reopen it to apply the package."
+        : "An installation is queued for another shop on this host.";
+      if (state.pending) {
+        var cancel = document.createElement("button");
+        cancel.className = "btn btn-light";
+        cancel.textContent = "Cancel queued installation";
+        cancel.onclick = async function () {
+          cancel.disabled = true;
+          try {
+            await request("/installation/cancel", {});
+            await PosnicPro.extensions.showDataTablePage();
+          } catch (error) {
+            note.textContent = error.message;
+            cancel.disabled = false;
+          }
+        };
+        body.append(cancel);
+      }
+      return;
+    }
+    note.textContent =
+      "Choose the signed extension ZIP supplied by Posnic. Installation preserves basket data and takes effect after restart. To roll back, choose the previously supplied compatible package.";
+    var file = document.createElement("input");
+    file.type = "file";
+    file.accept = ".zip";
+    file.className = "form-control mb-2";
+    file.setAttribute("aria-label", "Signed extension package");
+    body.append(file);
+    var review = document.createElement("button");
+    review.className = "btn btn-primary";
+    review.textContent = "Verify package";
+    body.append(review);
+    var pinnedBranch = String(PosnicPro.local.get("branch_id_set") || "");
+    function current() {
+      if (
+        run !== generation ||
+        pinnedBranch !== String(PosnicPro.local.get("branch_id_set") || "")
+      )
+        throw new Error(
+          "The shop changed. Reopen Extensions before installing.",
+        );
+    }
+    review.onclick = async function () {
+      try {
+        current();
+        var selected = file.files[0];
+        if (!selected || selected.size > 24 * 1024 * 1024)
+          throw new Error(
+            "Choose a signed extension ZIP no larger than 24 MB.",
+          );
+        review.disabled = true;
+        file.disabled = true;
+        note.textContent = "Verifying package…";
+        var staged = await new Promise(function (resolve, reject) {
+          PosnicPro.request(
+            {
+              url: "extensions/v1/installation/stage",
+              method: "POST",
+              data: selected,
+              contentType: "application/octet-stream",
+              processData: false,
+            },
+            resolve,
+            function (xhr) {
+              reject(
+                new Error(
+                  xhr.responseJSON?.error?.message ||
+                    "Package verification failed.",
+                ),
+              );
+            },
+          );
+        });
+        current();
+        note.textContent =
+          "Verified: " +
+          staged.id +
+          " · " +
+          staged.version +
+          ". Apply this version to the current shop on the next restart?";
+        review.textContent = "Apply on next restart";
+        review.disabled = false;
+        review.onclick = async function () {
+          try {
+            current();
+            review.disabled = true;
+            await request("/installation/activate", {
+              id: staged.id,
+              version: staged.version,
+            });
+            await PosnicPro.extensions.showDataTablePage();
+          } catch (error) {
+            note.textContent = error.message;
+            review.disabled = false;
+          }
+        };
+      } catch (error) {
+        note.textContent = error.message;
+        review.disabled = false;
+        file.disabled = false;
+      }
+    };
+  }
   PosnicPro.extensions = {
     showDataTablePage: async function () {
       var run = show("Extensions");
@@ -66,6 +194,7 @@
           list.append(link);
         });
         document.getElementById("extensions_content").append(list);
+        if (data.canManage) await installationControls(run);
       } catch (error) {
         if (run === generation) status(error.message);
       }

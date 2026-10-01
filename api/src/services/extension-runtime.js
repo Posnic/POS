@@ -28,4 +28,7 @@ function registerVerified(descriptor, packageDigest) {
 function list() {
   return [...installed.values()];
 }
-module.exports = { get, list, registerVerified, capabilities };
+function clear() {
+  installed.clear();
+}
+module.exports = { get, list, registerVerified, capabilities, clear };

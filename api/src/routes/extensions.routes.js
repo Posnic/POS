@@ -10,6 +10,80 @@ const catalogue = require('../services/extension-catalog');
 function createRouter({ authenticate = protect, registry = runtime, executor = effects } = {}) {
   const router = express.Router();
   router.use(authenticate);
+  const installer = express.Router();
+  installer.use(async (req, res, next) => {
+    try {
+      if (req.isApiKey || !access.allowed(req.user, 'extensions', 'manage'))
+        access.fail('Extension management permission required.', 403);
+      req.installScope = await access.context(req);
+      next();
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
+  installer.get('/status', (req, res) => {
+    try {
+      const queue = require('../services/extension-install-queue'),
+        config = queue.configuration();
+      const pending = queue.read(config.root);
+      const owned =
+        pending &&
+        pending.license === String(req.installScope.license) &&
+        pending.branchId === String(req.installScope.branchId);
+      res.json({
+        available: true,
+        pending: owned ? { id: pending.id, version: pending.version } : null,
+        busy: !!pending,
+      });
+    } catch {
+      res.json({ available: false, pending: null, busy: false });
+    }
+  });
+  installer.post(
+    '/stage',
+    express.raw({ type: 'application/octet-stream', limit: '24mb' }),
+    async (req, res) => {
+      try {
+        const options = require('../services/extension-install-queue').configuration();
+        const staged = await require('../services/extension-installation').stageExtensionArchive(
+          req.body,
+          options
+        );
+        res.json({
+          id: staged.id,
+          version: staged.version,
+          packageDigest: staged.packageDigest,
+          existing: staged.existing,
+        });
+      } catch (error) {
+        respondError(res, error);
+      }
+    }
+  );
+  installer.post('/activate', (req, res) => {
+    try {
+      const queue = require('../services/extension-install-queue');
+      const pending = queue.queue({
+        ...queue.configuration(),
+        id: req.body?.id,
+        version: req.body?.version,
+        scope: req.installScope,
+      });
+      res.json({ id: pending.id, version: pending.version, restartRequired: true });
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
+  installer.post('/cancel', (req, res) => {
+    try {
+      const queue = require('../services/extension-install-queue');
+      queue.cancel({ ...queue.configuration(), scope: req.installScope });
+      res.json({ cancelled: true });
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
+  router.use('/installation', installer);
   router.get('/', async (req, res) => {
     try {
       if (req.isApiKey) access.fail('Extension staff session required.', 403);
@@ -36,7 +110,9 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
           displayName: item.displayName || item.id,
           version: item.version,
         }));
-      res.set('Cache-Control', 'no-store').json({ extensions });
+      res
+        .set('Cache-Control', 'no-store')
+        .json({ extensions, canManage: access.allowed(req.user, 'extensions', 'manage') });
     } catch (error) {
       respondError(res, error);
     }

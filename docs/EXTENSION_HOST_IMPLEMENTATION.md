@@ -87,6 +87,14 @@ A physical device cannot provide an atomic commit with the database. The claim i
 
 The private working aggregate no longer retains an ever-growing paid history. Core payment/sale records remain permanent; receipt ownership checks resolve older paid sales even after their private summary expires. Tests cover paging ties, isolation, malformed input, UK DST and mixed currencies. Hardware claims remain independent of the private cache, so this change cannot reopen a drawer on a replay.
 
+## Installation page and startup queue
+
+Extension managers can upload a bounded signed ZIP on the module's own page, review its identity/version and queue activation for the next restart. All installation endpoints require authenticated staff, management permission and a valid branch. The upload parser bounds raw bodies at 24 MiB before archive processing; no uploaded path or install script is accepted. A flushed file is atomically linked into the single pending-request slot, preventing partial queue writes and concurrent replacement.
+
+Desktop and standalone startup process that request after database connection but before listening. Signature/digest, current state and scope are revalidated by the existing coordinator. A pending command leaves the old compatible version active and the request queued. Only the originating shop can cancel the queue, and an activation journal cannot be cancelled midway. Choosing an earlier compatible ZIP supports rollback. The loader clears prior descriptors after acquiring its runtime lock.
+
+Windows now uses a kernel-owned named pipe for runtime exclusion: testing found a reserved TCP range could otherwise reject a valid installation. Restart/queue/cancel/pending/rollback tests pass. Full built-desktop installation and physical hardware remain release gates.
+
 ## Signed ZIP staging
 
 `extension-archive.js` accepts an already bounded buffer (24 MiB maximum), reads entries with the existing yauzl dependency, and bounds both declared and actual decompressed bytes. It rejects unsafe/Windows-colliding paths, duplicates, file-as-parent collisions, symlinks/device entries, encrypted/unsupported encodings, unsigned/unlisted content and incompatible packages. All hashes and the Ed25519 signature are checked before filesystem staging. HTTP upload limits still need to be applied by the eventual installer route before buffering.

@@ -352,7 +352,7 @@ module.exports = async function startServer(options = {}) {
       : path.join(__dirname, 'extension-signing-key.pub');
     try {
       const result = await require(path.join(apiPath, 'src/services/extension-package-loader'))
-        .initializeInstalledExtensions();
+        .initializeInstalledExtensions({ db: mongoose.connection.db });
       app.locals.releaseExtensionRuntime = result.release;
       for (const failure of result.failures)
         console.error('[EXTENSIONS] Package not activated:', failure.id || 'configuration', failure.code);

@@ -100,6 +100,21 @@ test('registered package, shop enablement and staff session are all required', a
     .updateOne({ extensionId: descriptor.id }, { $set: { enabled: true } });
 });
 test('browser cannot invent write permission, actor, company or branch', async () => {
+  const installation = url.replace('/posnic.example', '/installation');
+  assert.equal(
+    (await fetch(installation + '/status', { headers: { Authorization: 'Bearer reader' } })).status,
+    403
+  );
+  assert.equal(
+    (
+      await fetch(installation + '/stage', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer reader', 'Content-Type': 'application/octet-stream' },
+        body: 'not a package',
+      })
+    ).status,
+    403
+  );
   const body = {
     expectedRevision: 0,
     command: { type: 'create' },

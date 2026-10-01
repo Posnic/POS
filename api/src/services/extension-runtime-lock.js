@@ -5,8 +5,9 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 // A kernel-owned local listener is released automatically after a crash. It
-// avoids stale PID files and never needs internet access. Port collisions fail
-// closed; this endpoint accepts no protocol, credentials or application data.
+// avoids stale PID files and never needs internet access. Windows uses a named
+// pipe so reserved TCP port ranges cannot prevent an otherwise valid install.
+// This endpoint accepts no protocol, credentials or application data.
 async function acquireRuntimeLock(root) {
   if (!path.isAbsolute(root)) throw new Error('extension_install_root_invalid');
   fs.mkdirSync(root, { recursive: true });
@@ -24,7 +25,12 @@ async function acquireRuntimeLock(root) {
         })
       )
     );
-    server.listen({ host: '127.0.0.1', port, exclusive: true }, resolve);
+    server.listen(
+      process.platform === 'win32'
+        ? { path: `\\\\.\\pipe\\posnic-extension-lock-${digest.toString('hex')}`, exclusive: true }
+        : { host: '127.0.0.1', port, exclusive: true },
+      resolve
+    );
   });
   server.unref();
   let closed = false;
