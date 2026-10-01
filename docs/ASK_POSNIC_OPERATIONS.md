@@ -881,9 +881,8 @@ checks skipped, plus the real preview endpoint and desktop/mobile browser checks
 A publication interrupted between retirement and replacement can leave a series
 unpublished; the administrator must inspect and publish the intended revision.
 
-These are release candidates. Billing API and Cloud account UI release integration,
-production activation, approved pricing, payment/delivery acceptance and independent
-answer-quality acceptance remain open.
+These are release candidates. Production activation, approved pricing,
+payment/delivery acceptance and independent answer-quality acceptance remain open.
 
 Final local release checks passed after the translation/layout changes: 3,655 root
 tests (five skipped), frontend build `848f64f8731f0e29`, 32 grounding tests,
@@ -891,3 +890,23 @@ translated desktop/mobile interaction checks, Intranet preview checks, generated
 docs, attribution and whitespace checks. Changed API scripts/services have zero lint
 errors (five existing console warnings). The root suite ran after the build completed;
 its signed-asset rollback drill passed against the final generated frontend.
+
+The coordinated billing API and Cloud account UI candidates now pass 610 billing
+tests, the public account build and desktop/mobile interactions. Owners select
+their shop explicitly; payment retry identities remain separate per shop. Inactive
+Cloud shops allow renewal cancellation while blocking new purchases.
+
+Run the cross-service check with `POSNIC_INTRANET_ROOT` and `POSNIC_WEB_API_ROOT`
+pointing to the matching release checkouts:
+
+```text
+node api/scripts/ask-posnic-cloud-contract-check.js
+```
+
+It mounts the actual Intranet and billing modules on loopback with temporary
+databases. The check verifies reviewed publication, POS retrieval and withdrawal,
+captured-payment grants, usage settlement and refund revocation. Unreviewed and
+internal material stays out of the shop. It rejects external requests and makes
+no model or payment-provider calls. This establishes the application contracts;
+production TLS, gateway test-mode lifecycle and live tenant acceptance remain
+separate deployment checks.
