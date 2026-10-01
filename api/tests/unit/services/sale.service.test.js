@@ -955,7 +955,7 @@ describe('SalesService', () => {
       }, 60000);
       afterAll(async () => { await connection?.close(); await server?.stop(); });
 
-      test('two full desktop edits compete for the last shared seat without losing either order', async () => {
+      test.each(['KOT', 'Hold'])('two full desktop %s edits compete for capacity without losing either order', async (initialProcess) => {
         await connection.db.dropDatabase();
         const { ObjectId } = require('mongodb');
         const branchId = new ObjectId(BRANCH_ID), license = new ObjectId(LICENSE_ID);
@@ -966,20 +966,21 @@ describe('SalesService', () => {
         const ids = [SALE_ID, '64f8f2f4c2b9c0a1e4b55556'];
         for (const id of ids) await Model.create({
           _id: id, branch_id: branchId, license, sales_id: 'INV-' + id,
-          payment_status: 'Unpaid', payment_pending: 100, sale_process: 'KOT',
-          table_number: 'T1', person_count: 1, dine_type: 'Dine-in', items: [], changes: [],
+          payment_status: 'Unpaid', payment_pending: 100, sale_process: initialProcess,
+          table_number: 'T1', person_count: initialProcess === 'Hold' ? 2 : 1, dine_type: 'Dine-in', items: [], changes: [],
         });
         BaseModel.getDb.mockResolvedValue(connection.db);
         salesRepository.getById.mockImplementation(id => Model.findById(id));
         salesRepository.save.mockImplementation(doc => doc.save());
         const results = await Promise.all(ids.map(id => salesService.processSale(
-          makeSaleData({ person_count: 2, table_number: 'T1', dine_type: 'Dine-in' }), id, 'Edit',
+          makeSaleData({ person_count: 2, table_number: 'T1', dine_type: 'Dine-in', sale_process: 'KOT', partial_balance: 0, payment_mode: '' }), id, 'Edit',
           makeContext({ branchSettings: { table_options: true } }),
         )));
         expect(results.filter(result => result.status)).toHaveLength(1);
         const rows = await Model.collection.find({}).toArray();
         expect(rows).toHaveLength(2);
-        expect(rows.reduce((sum, row) => sum + row.person_count, 0)).toBe(3);
+        expect(rows.filter(row => row.sale_process === 'KOT').reduce((sum, row) => sum + row.person_count, 0))
+          .toBe(initialProcess === 'Hold' ? 2 : 3);
         const claims = await connection.db.collection('table_seating').findOne({});
         expect(claims.claims.filter(row => row.kind === 'legacy-edit')).toEqual([]);
       });

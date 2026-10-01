@@ -1845,3 +1845,18 @@ test.each(['other table', 'takeaway'])('legacy %s conversion reserves all destin
   })).rejects.toThrow('enough seats');
   await seating.reconcileEditCapacity(db, scope, permit.id);
 });
+
+test('activating a parked sale reserves its entire party even when its table and guest count stay unchanged', async () => {
+  const [order] = await legacyCapacityPair();
+  const held = { ...order, sale_process: 'Hold', person_count: 2 };
+  await db.collection('sales').replaceOne({ _id: order._id }, held);
+  const permit = await seating.reserveEditCapacity(db, scope, held, {
+    guests: 2, table: 'T1', sale_process: 'KOT',
+  });
+  expect(permit.guests).toBe(2);
+  await expect(seating.reserveEditCapacity(db, scope, held, {
+    guests: 2, table: 'T1', sale_process: 'KOT',
+  })).rejects.toThrow('enough seats');
+  await seating.reconcileEditCapacity(db, scope, permit.id);
+  expect((await commitCapacityEdit(held, permit, 2)).matchedCount).toBe(0);
+});

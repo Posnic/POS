@@ -11007,7 +11007,7 @@ class SalesRepository {
         const scope = { branchId: orderDoc.branch_id, license: orderDoc.license };
         const permit = await seating.reserveEditCapacity(db, scope, orderDoc, {
           table: updateFields.table_number, guests: updateFields.person_count,
-          dine_type: updateFields.dine_type,
+          dine_type: updateFields.dine_type, sale_process: updateFields.sale_process,
         });
         if (permit) {
           updateFields.seating_capacity_revision = permit.id;

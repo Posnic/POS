@@ -1484,7 +1484,7 @@ const processSale = async (
         const seating = require('./seating-claims');
         const permit = await seating.reserveEditCapacity(db, scope, existingSale, {
           table: updateData.table_number, guests: updateData.person_count,
-          dine_type: updateData.dine_type,
+          dine_type: updateData.dine_type, sale_process: updateData.sale_process,
         });
         if (permit) {
           updateData.seating_capacity_revision = permit.id;

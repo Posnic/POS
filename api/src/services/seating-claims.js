@@ -1180,7 +1180,11 @@ async function reserveEditCapacity(db, scope, order, next, { now = new Date() } 
     fail('Enter the number of guests.');
   const sameTable = destination === String(order.table_number || '') &&
     (order.dine_type || 'Dine-in') === 'Dine-in';
-  const extra = sameTable ? guests - Math.max(1, Number(order.person_count) || 1) : guests;
+  // A parked sale has not occupied these seats yet. Sending it to the
+  // kitchen must reserve the whole party even when its table/count is unchanged.
+  const activatingHold = order.sale_process === 'Hold' && next.sale_process === 'KOT';
+  const extra = sameTable && !activatingHold
+    ? guests - Math.max(1, Number(order.person_count) || 1) : guests;
   if (extra <= 0) return null;
   await store(db).updateOne({ _id: scopeKey(scope) }, { $setOnInsert: {
     branch_id: scope.branchId, license: scope.license, claims: [], revision: 0,
