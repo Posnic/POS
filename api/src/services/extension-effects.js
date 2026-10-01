@@ -5,6 +5,8 @@ async function executeEffect(context, effect) {
     return require('./extension-payments').preparePayment(context, effect);
   if (effect?.kind === 'payment.cash')
     return require('./extension-payments').confirmCash(context, effect);
+  if (effect?.kind === 'payment.external-card')
+    return require('./extension-payments').confirmExternalCard(context, effect);
   if (effect?.kind === 'payment.cancel')
     return require('./extension-payments').cancelPayment(context, effect);
   if (['stock.return', 'stock.clear'].includes(effect?.kind)) {

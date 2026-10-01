@@ -1,7 +1,8 @@
 'use strict';
 const crypto = require('node:crypto');
-const { ObjectId } = require('mongodb');
+const { ObjectId, BSON } = require('mongodb');
 const Money = require('../utils/currency');
+const fingerprint = require('../utils/order-request-fingerprint');
 const { runStockBatch } = require('./extension-stock-journal');
 const { allocateForSale } = require('./extension-stock-allocations');
 const hash = (value) => crypto.createHash('sha256').update(value).digest('hex');
@@ -54,6 +55,7 @@ const publicPayment = (row) => ({
         valueMinor: row.valueMinor,
         quote: row.quote,
         method: row.method,
+        currency: row.currency,
       }
     : {}),
 });
@@ -132,26 +134,43 @@ async function preparePayment(context, input) {
       })),
     };
     const preview = await require('./sale.service').previewSale(payload, ctx);
-    if (!preview.status) fail('extension_payment_quote_invalid');
-    const valueMinor = Money.toMinor(preview.data.header.finalSaleTotAmount, ctx.branchSettings);
-    if (!Number.isSafeInteger(valueMinor) || valueMinor <= 0)
-      fail('extension_payment_amount_invalid');
-    // Bind the cash/card ledger to the quoted total. Core validation refuses a
-    // changed payable before inserting the sale, rather than silently charging
-    // a different amount when catalogue/configuration changed in the meantime.
-    payload.sales_total = Money.fromMinor(valueMinor, ctx.branchSettings);
-    payload.multi_payment = { [payload.payment_mode]: payload.sales_total };
-    await collection.updateOne(
-      { _id: id, status: 'preparing', quote: { $exists: false } },
-      {
-        $set: {
-          quote: preview.data,
-          valueMinor,
-          payload,
-        },
-      }
-    );
-    row = await collection.findOne({ _id: id });
+    const valueMinor = preview.status
+      ? Money.toMinor(preview.data.header.finalSaleTotAmount, ctx.branchSettings)
+      : 0;
+    if (!preview.status || !Number.isSafeInteger(valueMinor) || valueMinor <= 0) {
+      // A preview has no stock/sale effects. Race the quote writer, so one
+      // failing preview cannot reject another request's accepted reservation.
+      await collection.replaceOne(
+        { _id: id, status: 'preparing', quote: { $exists: false } },
+        { _id: id, ...scope, digest, status: 'rejected' }
+      );
+      row = await collection.findOne({ _id: id });
+      if (row.status === 'rejected')
+        return { rejected: true, failureCode: 'extension_payment_quote_invalid' };
+      if (row.status !== 'preparing') return publicPayment(row);
+    } else {
+      // Bind the cash/card ledger to the quoted total. Core validation refuses a
+      // changed payable before inserting the sale, rather than silently charging
+      // a different amount when catalogue/configuration changed in the meantime.
+      payload.sales_total = Money.fromMinor(valueMinor, ctx.branchSettings);
+      payload.multi_payment = { [payload.payment_mode]: payload.sales_total };
+      await collection.updateOne(
+        { _id: id, status: 'preparing', quote: { $exists: false } },
+        {
+          $set: {
+            quote: preview.data,
+            valueMinor,
+            payload,
+            currency: Money.policy(ctx.branchSettings),
+          },
+        }
+      );
+      row = await collection.findOne({ _id: id });
+    }
+    if (row.status === 'rejected')
+      return { rejected: true, failureCode: 'extension_payment_quote_invalid' };
+    if (row.status !== 'preparing') return publicPayment(row);
+    if (!row.quote) fail('extension_payment_quote_unresolved');
   }
   if (!row.stockOperationId) {
     const movement = await runStockBatch(
@@ -192,44 +211,111 @@ async function preparePayment(context, input) {
   return publicPayment(await collection.findOne({ _id: id }));
 }
 
-async function confirmCash(context, input, options = {}) {
+const paidResult = (row) => ({
+  ...publicPayment(row),
+  paidAt: row.paidAt,
+  ...(row.method === 'cash'
+    ? {
+        tenderMinor: row.confirmation.tenderMinor,
+        changeMinor: row.confirmation.tenderMinor - row.valueMinor,
+      }
+    : { recording: 'external-terminal', reference: row.confirmation.reference }),
+});
+
+async function confirmRecordedPayment(context, input, method, options = {}) {
   const { db } = context,
     scope = paymentScope(context),
     collection = db.collection('extension_payments');
-  if (
-    !/^[a-f\d]{64}$/.test(input.paymentId || '') ||
-    !Number.isSafeInteger(input.tenderMinor) ||
-    input.tenderMinor < 0
-  )
+  if (!/^[a-f\d]{64}$/.test(input.paymentId || '')) fail('extension_payment_invalid');
+  const confirmation =
+    method === 'cash'
+      ? { method, tenderMinor: input.tenderMinor }
+      : { method, reference: input.reference || '', recording: 'external-terminal' };
+  if (method === 'cash' && (!Number.isSafeInteger(input.tenderMinor) || input.tenderMinor < 0))
     fail('extension_cash_confirmation_invalid');
+  if (
+    method === 'card' &&
+    (input.terminalConfirmed !== true ||
+      (input.reference !== undefined &&
+        (typeof input.reference !== 'string' ||
+          input.reference.length > 120 ||
+          /[\u0000-\u001f\u007f]/.test(input.reference))))
+  )
+    fail('extension_card_confirmation_required');
+  const confirmationDigest = fingerprint(confirmation);
+  const attemptId = context.operationId;
   let row = await collection.findOne({ _id: input.paymentId, ...scope });
-  if (!row || row.method !== 'cash') fail('extension_cash_payment_unavailable');
-  if (input.tenderMinor < row.valueMinor) fail('extension_cash_tender_insufficient');
-  if (row.tenderMinor !== undefined && row.tenderMinor !== input.tenderMinor)
-    fail('extension_cash_tender_conflict');
-  if (row.status === 'paid')
-    return {
-      ...publicPayment(row),
-      paidAt: row.paidAt,
-      tenderMinor: row.tenderMinor,
-      changeMinor: row.tenderMinor - row.valueMinor,
-    };
-  if (!['pending', 'submitting'].includes(row.status)) fail('extension_cash_payment_unavailable');
+  if (!row || row.method !== method) fail(`extension_${method}_payment_unavailable`);
+  if (method === 'cash' && input.tenderMinor < row.valueMinor)
+    fail('extension_cash_tender_insufficient');
+  if (row.attempt?.id === attemptId && row.attempt.digest !== confirmationDigest)
+    fail('extension_payment_confirmation_conflict');
+  if (row.attempt?.id === attemptId && row.attempt.status === 'rejected')
+    return { rejected: true, failureCode: row.attempt.failureCode };
+  if (row.status === 'paid') {
+    if (row.attempt.digest !== confirmationDigest) fail('extension_payment_confirmation_conflict');
+    return paidResult(row);
+  }
+  if (!['pending', 'submitting'].includes(row.status))
+    fail(`extension_${method}_payment_unavailable`);
   await collection.updateOne(
-    { _id: row._id, status: 'pending' },
-    { $set: { status: 'submitting', tenderMinor: input.tenderMinor } }
+    { _id: row._id, status: 'pending', attempt: row.attempt || { $exists: false } },
+    {
+      $set: {
+        status: 'submitting',
+        confirmation,
+        attempt: {
+          id: attemptId,
+          digest: confirmationDigest,
+          status: 'submitting',
+          authorized: false,
+        },
+      },
+    }
   );
   row = await collection.findOne({ _id: row._id });
-  if (row.status !== 'submitting' || row.tenderMinor !== input.tenderMinor)
-    fail('extension_cash_submission_conflict');
-  let sale = await db
-    .collection('sales')
-    .findOne({
-      _id: row.saleId,
-      license: scope.license,
-      branch_id: scope.branch_id,
-      extension_stock_operation: row.stockOperationId,
-    });
+  if (row.attempt?.id === attemptId && row.attempt.digest === confirmationDigest) {
+    if (row.status === 'paid') return paidResult(row);
+    if (row.attempt.status === 'rejected')
+      return { rejected: true, failureCode: row.attempt.failureCode };
+  }
+  if (
+    row.status !== 'submitting' ||
+    row.attempt.id !== attemptId ||
+    row.attempt.digest !== confirmationDigest
+  )
+    fail('extension_payment_submission_conflict');
+  const saleFilter = {
+    _id: row.saleId,
+    license: scope.license,
+    branch_id: scope.branch_id,
+    extension_stock_operation: row.stockOperationId,
+  };
+  const rejectBeforeCommit = async () => {
+    // A stale process can still reach the sale writer after a request fails.
+    // Race its durable commit gate, rather than infer "not saved" from a
+    // momentarily absent sale. Once authorized, only reconciliation is safe.
+    await collection.updateOne(
+      {
+        _id: row._id,
+        status: 'submitting',
+        'attempt.id': attemptId,
+        'attempt.digest': confirmationDigest,
+        'attempt.authorized': false,
+      },
+      {
+        $set: {
+          status: 'pending',
+          'attempt.status': 'rejected',
+          'attempt.failureCode': 'extension_payment_review_required',
+        },
+        $unset: { confirmation: '' },
+      }
+    );
+    const latest = await collection.findOne({ _id: row._id });
+    return latest?.attempt?.id === attemptId && latest.attempt.status === 'rejected';
+  };
+  let sale = await db.collection('sales').findOne(saleFilter);
   if (!sale) {
     const stockGrant = await allocateForSale(
       db,
@@ -241,38 +327,98 @@ async function confirmCash(context, input, options = {}) {
         lines: row.lines,
       }
     );
-    const ctx = await saleContext(db, scope);
-    const save = options.saveSale || require('./sale.service').processSale;
-    const result = await save(structuredClone(row.payload), '', 'Add', ctx, { stockGrant });
-    sale = await db
-      .collection('sales')
-      .findOne({
-        _id: row.saleId,
-        license: scope.license,
-        branch_id: scope.branch_id,
-        extension_stock_operation: row.stockOperationId,
-      });
-    if (!sale)
-      fail(result.status ? 'extension_cash_sale_unresolved' : 'extension_cash_sale_not_saved');
+    if (row.attempt.authorized && row.commitDocument) {
+      sale = await require('./extension-sale-commit').resumeSaleCommit(
+        db,
+        {
+          license: scope.license,
+          branchId: scope.branch_id,
+          extensionId: scope.extensionId,
+          actorId: scope.actorId,
+        },
+        row._id,
+        stockGrant
+      );
+    } else {
+      const ctx = await saleContext(db, scope);
+      const save = options.saveSale || require('./sale.service').processSale;
+      const beforeStockCommit = async (pricing, document) => {
+        const currency = Money.policy(ctx.branchSettings);
+        if (
+          currency.currencyCode !== row.currency.currencyCode ||
+          currency.currencyDigits !== row.currency.currencyDigits ||
+          fingerprint(pricing) !== fingerprint(row.quote) ||
+          !document
+        )
+          fail('extension_payment_review_required');
+        await collection.updateOne(
+          {
+            _id: row._id,
+            status: 'submitting',
+            'attempt.id': attemptId,
+            'attempt.digest': confirmationDigest,
+            'attempt.status': 'submitting',
+            'attempt.authorized': false,
+          },
+          {
+            $set: {
+              'attempt.authorized': true,
+              commitDocument: BSON.deserialize(BSON.serialize(document)),
+            },
+          }
+        );
+        const authorized = await collection.findOne({
+          _id: row._id,
+          status: 'submitting',
+          'attempt.id': attemptId,
+          'attempt.digest': confirmationDigest,
+          'attempt.authorized': true,
+        });
+        if (!authorized?.commitDocument) fail('extension_payment_submission_closed');
+        // Every concurrent writer receives the first authorized document, with
+        // the same price, timestamp and sale identity. No fresh repricing on
+        // recovery after authorisation, even if the catalogue has since changed.
+        return authorized.commitDocument;
+      };
+      let result;
+      try {
+        result = await save(structuredClone(row.payload), '', 'Add', ctx, {
+          stockGrant,
+          beforeStockCommit,
+        });
+      } catch (error) {
+        if (await rejectBeforeCommit())
+          return { rejected: true, failureCode: 'extension_payment_review_required' };
+        throw error;
+      }
+      sale = await db.collection('sales').findOne(saleFilter);
+      if (!sale) {
+        if (!result.status && (await rejectBeforeCommit()))
+          return { rejected: true, failureCode: 'extension_payment_review_required' };
+        fail('extension_payment_sale_unresolved');
+      }
+    }
   }
-  const ctx = await saleContext(db, scope);
   if (
     sale.payment_status !== 'Paid' ||
-    Money.toMinor(sale.sales_total, ctx.branchSettings) !== row.valueMinor
+    sale.payment_mode !== (method === 'cash' ? 'Cash' : 'Card') ||
+    Money.toMinor(sale.sales_total, row.currency) !== row.valueMinor
   )
-    fail('extension_cash_sale_mismatch');
+    fail('extension_payment_sale_mismatch');
   await collection.updateOne(
     { _id: row._id, status: 'submitting' },
     { $set: { status: 'paid', paidAt: sale.date || new Date() } }
   );
   row = await collection.findOne({ _id: row._id });
-  return {
-    ...publicPayment(row),
-    paidAt: row.paidAt,
-    tenderMinor: row.tenderMinor,
-    changeMinor: row.tenderMinor - row.valueMinor,
-  };
+  return paidResult(row);
 }
+const confirmCash = (context, input, options) =>
+  confirmRecordedPayment(context, input, 'cash', options);
+// Matches ordinary manual Card entry: staff must explicitly confirm their
+// external terminal received the money. This never calls a provider or claims
+// a Dojo approval. A future provider adapter must use its own verified journal.
+const confirmExternalCard = (context, input, options) =>
+  confirmRecordedPayment(context, input, 'card', options);
 async function cancelPayment(context, input) {
   const { db } = context,
     scope = paymentScope(context),
@@ -323,4 +469,4 @@ async function cancelPayment(context, input) {
   );
   return { cancelled: true };
 }
-module.exports = { preparePayment, confirmCash, cancelPayment };
+module.exports = { preparePayment, confirmCash, confirmExternalCard, cancelPayment };

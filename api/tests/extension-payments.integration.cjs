@@ -6,6 +6,7 @@ const { MongoClient, ObjectId } = require('mongodb');
 const {
   preparePayment,
   confirmCash,
+  confirmExternalCard,
   cancelPayment,
 } = require('../src/services/extension-payments');
 const { runStockBatch } = require('../src/services/extension-stock-journal');
@@ -35,16 +36,14 @@ async function fixture(adjusted = false) {
   BaseModel.license = scope.license;
   BaseModel.currentBranch = scope.branchId;
   BaseModel.loggedUser = actorId;
-  await db
-    .collection('branches')
-    .insertOne({
-      _id: scope.branchId,
-      license: scope.license,
-      branch_name: 'Sample shop',
-      currency: 'GBP',
-      time_zone: 'Europe/London',
-      roundOff: false,
-    });
+  await db.collection('branches').insertOne({
+    _id: scope.branchId,
+    license: scope.license,
+    branch_name: 'Sample shop',
+    currency: 'GBP',
+    time_zone: 'Europe/London',
+    roundOff: false,
+  });
   await db
     .collection('users')
     .insertOne({ _id: actorId, license: scope.license, username: 'Manager' });
@@ -147,15 +146,234 @@ test('changed catalogue amount cannot silently change the confirmed payment', as
   const f = await fixture();
   const prepared = await preparePayment(f.context, f.input);
   await db.collection('items').updateOne({ _id: f.item._id }, { $set: { selling_price: 2 } });
-  await assert.rejects(
-    confirmCash(f.context, { paymentId: prepared.paymentId, tenderMinor: 100 }),
-    { code: 'extension_cash_sale_not_saved' }
+  assert.deepEqual(
+    await confirmCash(f.context, { paymentId: prepared.paymentId, tenderMinor: 100 }),
+    { rejected: true, failureCode: 'extension_payment_review_required' }
   );
   assert.equal(
     await db.collection('sales').countDocuments({ license: f.context.scope.license }),
     0
   );
   assert.equal(await f.stock(), 2);
+  assert.equal(
+    (await db.collection('extension_payments').findOne({ _id: prepared.paymentId })).status,
+    'pending'
+  );
+  // The failed operation cannot be revived by a late retry. The operator can
+  // cancel preparation, review the new quote and start a fresh payment.
+  assert.equal(
+    (await confirmCash(f.context, { paymentId: prepared.paymentId, tenderMinor: 100 })).rejected,
+    true
+  );
+  await cancelPayment(
+    { ...f.context, sequence: 3, operationId: 'cancel-repriced-payment' },
+    { paymentId: prepared.paymentId }
+  );
+  assert.equal(await f.stock(), 3);
+  const nextContext = { ...f.context, sequence: 4, operationId: 'prepare-repriced-payment' };
+  const reviewed = await preparePayment(nextContext, f.input);
+  assert.equal(reviewed.valueMinor, 200);
+  assert.equal(
+    (await confirmCash(nextContext, { paymentId: reviewed.paymentId, tenderMinor: 200 })).status,
+    'paid'
+  );
+  assert.equal(await f.stock(), 2);
+});
+
+test('invalid quote refuses without reserving stock and remains closed on retry', async () => {
+  const f = await fixture();
+  await db.collection('items').updateOne({ _id: f.item._id }, { $set: { selling_price: 0 } });
+  assert.equal((await preparePayment(f.context, f.input)).rejected, true);
+  assert.equal(await f.stock(), 3);
+  await db.collection('items').updateOne({ _id: f.item._id }, { $set: { selling_price: 1 } });
+  assert.equal((await preparePayment(f.context, f.input)).rejected, true);
+  assert.equal(await f.stock(), 3);
+});
+
+test('same payable with a changed tax breakdown requires review before saving', async () => {
+  const f = await fixture();
+  const prepared = await preparePayment(f.context, f.input);
+  await db
+    .collection('items')
+    .updateOne({ _id: f.item._id }, { $set: { tax: 20, tax_type: 'inclusive' } });
+  const result = await confirmCash(f.context, { paymentId: prepared.paymentId, tenderMinor: 100 });
+  assert.equal(result.rejected, true);
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    0
+  );
+  await cancelPayment(
+    { ...f.context, sequence: 3, operationId: 'cancel-tax-change' },
+    { paymentId: prepared.paymentId }
+  );
+  assert.equal(await f.stock(), 3);
+});
+
+test('a stale writer cannot insert after a rejected submission has been cancelled', async () => {
+  const f = await fixture(),
+    prepared = await preparePayment(f.context, f.input);
+  let entered, proceed;
+  const atSave = new Promise((resolve) => {
+    entered = resolve;
+  });
+  const resume = new Promise((resolve) => {
+    proceed = resolve;
+  });
+  const late = confirmCash(
+    f.context,
+    { paymentId: prepared.paymentId, tenderMinor: 100 },
+    {
+      saveSale: async (...args) => {
+        entered();
+        await resume;
+        return require('../src/services/sale.service').processSale(...args);
+      },
+    }
+  ).catch((error) => error);
+  await atSave;
+  const rejected = await confirmCash(
+    f.context,
+    { paymentId: prepared.paymentId, tenderMinor: 100 },
+    {
+      saveSale: async () => ({ status: false }),
+    }
+  );
+  assert.equal(rejected.rejected, true);
+  await cancelPayment(
+    { ...f.context, sequence: 3, operationId: 'cancel-after-refusal' },
+    { paymentId: prepared.paymentId }
+  );
+  proceed();
+  await late;
+  assert.equal(await f.stock(), 3);
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    0
+  );
+});
+
+test('an authorized interrupted write remains locked until safe replay confirms the sale', async () => {
+  const f = await fixture(),
+    prepared = await preparePayment(f.context, f.input);
+  await assert.rejects(
+    confirmCash(
+      f.context,
+      { paymentId: prepared.paymentId, tenderMinor: 100 },
+      {
+        saveSale: async (payload, id, mode, ctx, options) => {
+          return require('../src/services/sale.service').processSale(payload, id, mode, ctx, {
+            ...options,
+            beforeStockCommit: async (...args) => {
+              await options.beforeStockCommit(...args);
+              throw new Error('interrupted after commit gate');
+            },
+          });
+        },
+      }
+    ),
+    { code: 'extension_payment_sale_unresolved' }
+  );
+  await assert.rejects(
+    cancelPayment(
+      { ...f.context, sequence: 3, operationId: 'cancel-uncertain-write' },
+      { paymentId: prepared.paymentId }
+    ),
+    { code: 'extension_payment_cannot_cancel' }
+  );
+  // Authorization saved the normal core document. Catalogue removal and a
+  // currency setting change must not invalidate the money already recorded.
+  await db.collection('items').deleteOne({ _id: f.item._id });
+  await db
+    .collection('branches')
+    .updateOne({ _id: f.context.scope.branchId }, { $set: { currency: 'EUR' } });
+  assert.equal(
+    (await confirmCash(f.context, { paymentId: prepared.paymentId, tenderMinor: 100 })).status,
+    'paid'
+  );
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    1
+  );
+  const sale = await db.collection('sales').findOne({ license: f.context.scope.license });
+  assert.equal(Number(sale.sales_total), 1);
+  assert.equal(sale.items[0].item_name, 'Candle');
+});
+
+test('Card requires explicit terminal confirmation and records a normal Card sale once', async () => {
+  const f = await fixture(true);
+  f.input.method = 'card';
+  const prepared = await preparePayment(f.context, f.input);
+  await assert.rejects(confirmExternalCard(f.context, { paymentId: prepared.paymentId }), {
+    code: 'extension_card_confirmation_required',
+  });
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    0
+  );
+  const input = {
+    paymentId: prepared.paymentId,
+    terminalConfirmed: true,
+    reference: 'TEST-TERMINAL-001',
+  };
+  const paid = await confirmExternalCard(f.context, input);
+  assert.equal(paid.status, 'paid');
+  assert.equal(paid.recording, 'external-terminal');
+  assert.equal(paid.reference, 'TEST-TERMINAL-001');
+  assert.equal(paid.changeMinor, undefined);
+  const sale = await db.collection('sales').findOne({ _id: new ObjectId(paid.saleId) });
+  assert.equal(sale.payment_mode, 'Card');
+  assert.deepEqual(sale.multi_payment, { Card: 1 });
+  assert.equal(await f.stock(), 0);
+  assert.equal((await confirmExternalCard(f.context, input)).saleId, paid.saleId);
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    1
+  );
+  await assert.rejects(confirmExternalCard(f.context, { ...input, reference: 'OTHER' }), {
+    code: 'extension_payment_confirmation_conflict',
+  });
+});
+
+test('a delayed authorized writer and recovery share one immutable sale document', async () => {
+  const f = await fixture(),
+    prepared = await preparePayment(f.context, f.input);
+  let authorized, proceed;
+  const atGate = new Promise((resolve) => {
+    authorized = resolve;
+  });
+  const resume = new Promise((resolve) => {
+    proceed = resolve;
+  });
+  const input = { paymentId: prepared.paymentId, tenderMinor: 100 };
+  const first = confirmCash(f.context, input, {
+    saveSale: async (payload, id, mode, ctx, options) =>
+      require('../src/services/sale.service').processSale(payload, id, mode, ctx, {
+        ...options,
+        beforeStockCommit: async (...args) => {
+          const document = await options.beforeStockCommit(...args);
+          authorized();
+          await resume;
+          return document;
+        },
+      }),
+  });
+  await atGate;
+  const recorded = await db.collection('extension_payments').findOne({ _id: prepared.paymentId });
+  assert.ok(recorded.commitDocument.license instanceof ObjectId);
+  assert.ok(recorded.commitDocument.date instanceof Date);
+  await db.collection('items').updateOne({ _id: f.item._id }, { $set: { selling_price: 9 } });
+  const recovered = await confirmCash(f.context, input);
+  proceed();
+  const original = await first;
+  assert.equal(original.saleId, recovered.saleId);
+  assert.equal(await f.stock(), 2);
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    1
+  );
+  const sale = await db.collection('sales').findOne({ _id: new ObjectId(recovered.saleId) });
+  assert.equal(Number(sale.sales_total), 1);
+  assert.equal(sale.date.toISOString(), recorded.commitDocument.date.toISOString());
 });
 test('cancelling unpaid normal payment restores stock once; adjusted cancellation leaves stock reduced', async () => {
   for (const adjusted of [false, true]) {

@@ -228,10 +228,17 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
       );
     }
     if (effectResults.some((result) => result?.rejected === true)) {
+      const failureCode = effectResults.find((result) => result?.rejected)?.failureCode;
       await namespaces.updateOne(
         { ...key, 'pending.operationId': operationId, 'pending.phase': 'planned' },
         {
-          $set: { 'pending.phase': 'rejected', 'pending.failureCode': 'extension_effect_rejected' },
+          $set: {
+            'pending.phase': 'rejected',
+            'pending.failureCode':
+              typeof failureCode === 'string' && /^extension_[a-z_]{1,100}$/.test(failureCode)
+                ? failureCode
+                : 'extension_effect_rejected',
+          },
         }
       );
     } else {

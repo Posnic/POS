@@ -199,7 +199,7 @@ const processSale = async (
   id = '',
   process = 'Add',
   context = {},
-  { preview = false, beforeCommit, stockGrant } = {}
+  { preview = false, beforeCommit, stockGrant, beforeStockCommit } = {}
 ) => {
   // Retry identity describes the submitted request, not derived charge/tax fields.
   const submittedPayload = structuredClone(data);
@@ -208,6 +208,9 @@ const processSale = async (
   try {
     let extensionStock = null;
     let extensionSubmission = null;
+    if (beforeStockCommit !== undefined &&
+        (typeof beforeStockCommit !== 'function' || stockGrant === undefined))
+      return { status: false, message: 'Unsupported allocated sale commit' };
     if (stockGrant !== undefined) {
       if (preview || id !== '' || process !== 'Add')
         return { status: false, message: 'Unsupported stock allocation sale' };
@@ -872,7 +875,7 @@ const processSale = async (
       }
     }
     const decisionPricing =
-      preview || beforeCommit
+      preview || beforeCommit || beforeStockCommit
         ? {
             header: calculateSaleHeader(data, sale_tot_amount, context),
             roundOff: context.roundOff === true,
@@ -1355,7 +1358,7 @@ const processSale = async (
       denomination_values: data.denomination_values ?? (existingSale?.denomination_values || []),
     };
 
-    const finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
+    let finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
     if (extensionStock) {
       if (paymentStatus !== 'Paid')
         return { status: false, message: 'Allocated quantities require a completed payment.' };
@@ -1480,6 +1483,11 @@ const processSale = async (
       // ADD: create a new Sale document so that the pre-save hook can
       // normalize the payload into a PHP-style 1:1 document.
       try {
+        // A core payment coordinator may fence the final write against a
+        // concurrently rejected/cancelled submission. This internal callback
+        // is unavailable to request JSON and requires a validated stock grant.
+        if (beforeStockCommit)
+          finalSaleData = await beforeStockCommit(decisionPricing, finalSaleData);
         if (beforeCommit) {
           const proof = await beforeCommit(decisionPricing);
           finalSaleData.business_decision_receipt =
