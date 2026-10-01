@@ -31,7 +31,17 @@ const mongoose = require('mongoose');
 // design tests cover rendering; this contract verifies the exact document that
 // reaches that boundary and the bytes passed onward to the selected printer.
 jest.mock('../../../../src/bill-design', () => ({
-  renderBill: jest.fn(async (document) => Buffer.from(JSON.stringify(document))),
+  renderBill: jest.fn(async (document, paper) => {
+    expect(['58', '80']).toContain(paper);
+    expect(document.sales_id).toBe('INV-9001');
+    expect(document.items_total).toBe(440);
+    expect(document.receipt_line_rows[0]).toMatchObject({
+      name: 'Chicken Biryani',
+      qty: '2',
+      amount: 440,
+    });
+    return Buffer.from(JSON.stringify(document));
+  }),
 }));
 const billDesign = require('../../../../src/bill-design');
 

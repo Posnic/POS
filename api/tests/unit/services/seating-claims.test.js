@@ -3,6 +3,9 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb');
 const seating = require('../../../src/services/seating-claims');
+// Load the repository before timed race tests: coverage instrumentation of its
+// dependency graph must not consume the five-second database assertion budget.
+const saleRepository = require('../../../src/repositories/sale.repository');
 let server, db, scope, ids;
 beforeAll(async () => {
   server = await MongoMemoryServer.create();
@@ -897,9 +900,7 @@ test('desktop save cannot restore seating after a concurrent completed move', as
   );
   await seating.completeMove(db, scope, move.id, 'staff-1');
   doc.set({ table_number: 'T1', total_amount: 999 });
-  await expect(
-    require('../../../src/repositories/sale.repository').save(doc)
-  ).rejects.toMatchObject({ name: 'DocumentNotFoundError' });
+  await expect(saleRepository.save(doc)).rejects.toMatchObject({ name: 'DocumentNotFoundError' });
   const saved = await db.collection('sales').findOne({ _id: order._id });
   expect(saved.table_number).toBe('T2');
   expect(saved.total_amount).not.toBe(999);
@@ -919,7 +920,7 @@ test('desktop guarded edit saves normally when seating is unchanged', async () =
     person_count: 4,
   });
   doc.set({ total_amount: 999 });
-  await require('../../../src/repositories/sale.repository').save(doc);
+  await saleRepository.save(doc);
   expect((await db.collection('sales').findOne({ _id: order._id })).total_amount).toBe(999);
 });
 

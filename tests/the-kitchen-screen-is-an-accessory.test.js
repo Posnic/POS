@@ -93,6 +93,7 @@ test('the page remains read-only with only an explicit order refresh control', (
   assert.equal(buttons.length, 1, 'only the read-only refresh control belongs here');
   assert.match(buttons[0], /id="refresh-orders"/);
   assert.match(buttons[0], /type="button"/);
+  assert.match(buttons[0], /aria-label="Refresh active orders"/);
   assert.ok(!/<input/i.test(PAGE), 'the kitchen screen grew an input');
   assert.ok(!/<(?:form|textarea|select)\b/i.test(PAGE), 'the accessory grew an editing form');
 });
