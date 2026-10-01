@@ -929,3 +929,26 @@ test('desktop receipt details reject a transferred bill whose stored amounts cha
  expect(result).toMatchObject({status:false,data:null,message:'The bill changed. Refresh before continuing.'});
  expect(logged).toHaveBeenCalled();
 });
+
+
+test.each([50,60])('new preparation of a transferred product uses current tax at price %s',async price=>{
+ const input=await confirmation(), completed=await service.complete(input), id=new ObjectId(completed.destinationId);
+ const product=sale.items[0].item_id;
+ await db.collection('items').insertOne({_id:product,license,name:'Corn',tax:10,tax_type:'exclusive'});
+ jest.spyOn(BaseModel,'getDb').mockResolvedValue(db);
+ const lineId=require('crypto').randomUUID();
+ const result=await runWithRequestContext({license,currentBranch:branch,loggedUser:String(input.user._id)},()=>
+  sales.updateOrderModel(String(id),[
+   {product_id:String(product),quantity:1,price:50},
+   {product_id:String(product),line_id:lineId,quantity:1,price}
+  ],0,'modified',null,null,null,null,null,null));
+ expect(result.status).toBe(true);
+ const saved=await db.collection('sales').findOne({_id:id});
+ expect(saved.items).toHaveLength(2);
+ expect(saved.items[0].item_tax).toBe(2.5);
+ expect(saved.items[1].item_tax).toBe(price/10);
+ expect(saved.sales_total).toBe(52.5+price*1.1);
+ expect(snapshotFrom([saved],{currencyCode:'INR'},saved.table_number).totalMinor).toBe(Math.round((52.5+price*1.1)*100));
+ const added=saved.changes.flatMap(change=>change.items).filter(item=>item.process==='add');
+ expect(added).toHaveLength(1);expect(added[0].item_quantity).toBe(1);
+});
