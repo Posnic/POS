@@ -710,13 +710,40 @@ isolated synthetic database. No customer data or external messaging was used.
 
 ## Community own-key semantic retrieval — implementation checkpoint
 
-Open **Ask Posnic → Knowledge and controls**, enable **Search by meaning with my
-OpenAI key**, and save a monthly search budget per outlet. The existing AI settings
-page holds the OpenAI key; this page does not duplicate that secret. The option is
+Open **Settings → Ask Posnic → AI & usage**, enable **Search by meaning with my
+OpenAI key**, and save a monthly search budget per outlet. The provider controls
+in that tab hold the OpenAI key; no duplicate secret is stored. The option is
 off by default and requires the existing AI feature and Ask Posnic Help to be on.
 The configured budget applies separately in each outlet's currency. Indexing is
 charged to the outlet that published the source; queries to the requesting outlet.
 The owner status shows remaining estimated search budget and unsettled calls.
+
+### Conversation and administration flow
+
+The **Ask Posnic** page is for questions, answers, citations and reviewed action
+drafts. **Recent conversations** contains personal history, retention information,
+the personal deletion control and saved supplier-message drafts. **New conversation**
+starts a fresh question thread without deleting saved history.
+
+Owners and administrators configure the assistant under **Settings → Ask Posnic**
+(`#/settings/ai`, preserving existing bookmarks):
+
+- **General:** language, report period, style instructions and conversation retention.
+- **Knowledge:** shop sources and imported Posnic knowledge are listed separately.
+  Add text or upload PDF/Markdown/text, save a draft, then open **Review** and
+  publish only after checking the extracted content. Approved Intranet bundles
+  retain their existing published-import workflow. Shop knowledge belongs to the
+  shop account and is shared across its outlets; it is not shared with other shops.
+- **Access & actions:** capability switches, role lists and permitted draft types.
+  Existing server permissions and explicit action confirmation still apply.
+- **AI & usage:** provider/key configuration, managed billing, search budgets,
+  usage and processing/audit details.
+- **Schedules:** existing summaries and an expandable **Add schedule** form.
+
+Opening the conversation page does not fetch the administration lists. The settings
+page checks owner/admin access before displaying controls. Draft-source review
+requires owner/admin authorization and always filters by the authenticated shop;
+ordinary citations remain limited to published customer-visible sources.
 
 The adapter uses `text-embedding-3-small`, 256 float dimensions, and the fixed
 OpenAI embeddings endpoint, with a 30-second timeout and no automatic retry or

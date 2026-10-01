@@ -9,6 +9,30 @@ const platform = require('../../../src/services/ask-posnic-platform.service');
 describe('Ask Posnic capability policy', () => {
   const req = { user: { _id: 'user', license: 'shop', branch_id: 'outlet' } };
 
+  test('source review keeps shop isolation while normal citations exclude unpublished sources', async () => {
+    const BaseModel = require('../../../src/models/base.model');
+    const findOne = jest.fn().mockResolvedValue(null);
+    BaseModel.prototype.getCollection = jest.fn().mockResolvedValue({ findOne });
+    try {
+      const id = '012345678901234567890123';
+      await platform.getDocument(req, id);
+      expect(findOne.mock.calls[0][0]).toMatchObject({
+        license: 'shop',
+        status: 'published',
+        visibility: 'customer',
+      });
+      await platform.getDocument(req, id, { review: true });
+      expect(findOne.mock.calls[1][0]).toEqual({ _id: expect.any(Object), license: 'shop' });
+      await platform.getDocument(req, id, { review: 'true' });
+      expect(findOne.mock.calls[2][0]).toMatchObject({
+        status: 'published',
+        visibility: 'customer',
+      });
+    } finally {
+      delete BaseModel.prototype.getCollection;
+    }
+  });
+
   test('action signing keeps standalone fallbacks and isolates tenant secrets', async () => {
     const crypto = require('node:crypto');
     const ctx = require('../../../src/db/tenant-context');

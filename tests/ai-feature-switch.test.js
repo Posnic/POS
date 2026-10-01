@@ -141,7 +141,7 @@ test('following that row loads the page rather than opening it empty', () => {
    * pane directly without firing it. An empty card reads as broken, not as
    * unconfigured.
    */
-  assert.match(settingsJs, /if \(key === 'ai'\) \{ PosnicPro\.settings\.ai\.load\(\); \}/,
+  assert.match(settingsJs, /if \(key === 'ai'\) \{ PosnicPro\.askposnic\.showSettings\(\); \}/,
     'a deep link to the AI page opens it without loading it');
 });
 

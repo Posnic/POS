@@ -7,6 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const express = require('express');
+const { JSDOM } = require('jsdom');
 const puppeteer = require('puppeteer');
 
 async function main() {
@@ -23,7 +24,8 @@ async function main() {
   // The local server serves a fixed blank page. Only the controlled Puppeteer
   // client loads repository markup, outside any request handler.
   app.get('/', (_req, res) => res.type('html').send('<!doctype html><html><head></head><body></body></html>'));
-  const markup = `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/built/style/${css}"><link rel="stylesheet" href="/static/style/css/modules/ask-posnic.css"></head><body>${fs.readFileSync(path.join(root, 'modules/ask_posnic.html'), 'utf8')}<script src="/static/style/js/jquery.min.js"></script><script>window.PosnicPro={HideSideBarModal:function(){},get:function(){},request:function(){},alert:function(){}};</script><script src="/i18n.js"></script><script src="/static/script/js/modules/js/ask_posnic.js"></script><script>document.querySelector('#askposnic').style.display='block';document.querySelector('#ask_posnic_admin').style.display='block';PosnicPro.askposnic.bind();PosnicPro.askposnic.add('user','How are sales today?');PosnicPro.askposnic.add('answer','Sales today are 12,450.00 across 37 transactions.',{intent:'sales',source:'Live sales dashboard',metrics:[{label:'Sales',value:'12,450.00'},{label:'Transactions',value:37}],scope:{outlet:'Main outlet'}});</script></body></html>`;
+  const settingsMarkup = new JSDOM(fs.readFileSync(path.join(root, 'modules/settings_write.html'), 'utf8')).window.document.querySelector('#v-pills-ai').outerHTML;
+  const markup = `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/built/style/${css}"><link rel="stylesheet" href="/static/style/css/modules/ask-posnic.css"></head><body>${fs.readFileSync(path.join(root, 'modules/ask_posnic.html'), 'utf8')}<div id="test_settings" style="display:none">${settingsMarkup}</div><script src="/static/style/js/jquery.min.js"></script><script>window.PosnicPro={settings:{ai:{load:function(){}}},HideSideBarModal:function(){},get:function(){},request:function(){},alert:function(){}};</script><script src="/i18n.js"></script><script src="/static/script/js/modules/js/ask_posnic.js"></script><script>document.querySelector('#askposnic').style.display='block';document.querySelector('#ask_posnic_admin').style.display='block';PosnicPro.askposnic.admin=true;PosnicPro.askposnic.bind();PosnicPro.askposnic.add('user','How are sales today?');PosnicPro.askposnic.add('answer','Sales today are 12,450.00 across 37 transactions.',{intent:'sales',source:'Live sales dashboard',metrics:[{label:'Sales',value:'12,450.00'},{label:'Transactions',value:37}],scope:{outlet:'Main outlet'}});</script></body></html>`;
   const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
   let browser;
   try {
@@ -49,12 +51,21 @@ async function main() {
       assert.ok(layout.width <= layout.viewport + 1, `${name} horizontal overflow: ${JSON.stringify(layout)}`);
       assert.deepEqual(layout.missing, []);
       await page.evaluate(() => {
+        $('#askposnic').hide();$('#test_settings').show();$('#v-pills-ai').addClass('show active');PosnicPro.askposnic.settingsTab('general');
         PosnicPro.request = (options, done) => { window.savedAskPreferences = JSON.parse(options.data); done({ type: 'success', message: 'Saved' }); };
         document.querySelector('#ask_pref_own_semantic').checked = true;
         document.querySelector('#ask_pref_embedding_budget').value = '2.50';
         document.querySelector('#ask_pref_retention').value = '90';
       });
-      await page.click('#ask_posnic_preferences_form button[type="submit"]');
+      for (const tab of ['general', 'knowledge', 'access', 'usage', 'schedules']) {
+        await page.click(`[data-ask-tab="${tab}"]`);
+        if (tab === 'knowledge') await page.click('#ask_source_editor summary');
+        if (tab === 'schedules') await page.click('#ask_schedule_editor summary');
+        await page.screenshot({ path: path.join(output, `settings-${tab}-${name}.png`), fullPage: true });
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${name} ${tab} settings overflow`);
+      }
+      await page.click('[data-ask-tab="general"]');
+      await page.click('#ask-settings-general button[form="ask_posnic_preferences_form"]');
       const savedPreferences = await page.evaluate(() => window.savedAskPreferences);
       assert.equal(savedPreferences.own_key_semantic, true);
       assert.equal(savedPreferences.own_key_semantic_budget, 2.5);
@@ -73,8 +84,10 @@ async function main() {
       });
       assert.equal(await page.$$eval('#ask_posnic_recovery img', (nodes) => nodes.length), 0);
       assert.match(await page.$eval('#ask_posnic_recovery', (element) => element.textContent), /needs review/);
+      await page.evaluate(() => PosnicPro.askposnic.settingsTab('schedules'));
       await page.click('.ask-schedule-resume');
       assert.equal(await page.evaluate(() => window.resumeCalls), 1);
+      await page.evaluate(() => { $('#test_settings').hide();$('#askposnic').show(); });
       await page.addScriptTag({ url: `http://127.0.0.1:${server.address().port}/static/style/js/popper.min.js` });
       await page.addScriptTag({ url: `http://127.0.0.1:${server.address().port}/static/style/js/bootstrap.min.js` });
       await page.evaluate(() => {
@@ -214,6 +227,7 @@ async function main() {
     for (const code of ['ta', 'nl', 'ar']) {
       const dictionary = JSON.parse(fs.readFileSync(path.join(root, '../languages', code + '.json'), 'utf8'));
       await loadPage();
+      await page.evaluate(() => PosnicPro.askposnic.resetConversation());
       await page.evaluate((dict, language) => {
         PosnicPro.i18n._dict = dict;
         document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
