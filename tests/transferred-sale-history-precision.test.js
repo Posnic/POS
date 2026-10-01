@@ -112,3 +112,26 @@ for(const file of ['items','categories','customers','customer_categories']) {
     }
   });
 }
+
+
+test('staff activity preserves bill precision and keeps different currencies separate',()=>{
+  const dom=new JSDOM('<div id="u_doc_sales"></div><div id="u_doc_stats"></div>',{runScripts:'outside-only'});
+  const win=dom.window;win.$=require('jquery')(win);
+  const rows=[{currencyCode:'KWD',currencyDigits:3,items_total:31.669},
+    {currencyCode:'KWD',currencyDigits:3,items_total:63.336},
+    {currencyCode:'JPY',currencyDigits:0,items_total:95},
+    {items_total:7.5}, {currencyCode:'<script>',currencyDigits:99,items_total:2.25}];
+  win.PosnicPro={local:{get:()=>'$'},i18n:{t:(_key,text)=>text},convertDate:date=>date,
+    get:(_options,success)=>success({data:{table:{data:{list:rows,total:8}}}})};
+  const script=fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/modules/js/users.js'),'utf8');
+  const first=script.indexOf('    loadRecentSales:');const last=script.indexOf('    /* The name',first);
+  win.eval('PosnicPro.users={'+script.slice(first,last).trim().replace(/,$/,'')+'};');
+  win.PosnicPro.users.loadRecentSales('staff');
+  const amounts=[...win.document.querySelectorAll('#u_doc_sales tbody td:last-child')].map(cell=>cell.textContent);
+  assert.deepEqual(amounts,['KWD\u00a031.669','KWD\u00a063.336','JPY\u00a095','$\u00a07.50','$\u00a02.25']);
+  const totals=[...win.document.querySelectorAll('#u_doc_stats .s-stat-value > div')].map(el=>el.textContent);
+  assert.deepEqual(totals,['KWD\u00a095.005','JPY\u00a095','$\u00a09.75']);
+  assert.ok(win.document.querySelector('#u_doc_stats').textContent.includes('last 5'));
+  assert.equal(win.document.querySelectorAll('script').length,0);
+  dom.window.close();
+});
