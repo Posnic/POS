@@ -21,6 +21,7 @@ const getModel = (SaleModel) => SaleModel || Sale;
 
 const { computeLineTax } = require('./tax-engine');
 const { calculateSaleHeader, round2 } = require('./sale-header');
+const { normalizeSaleCharges } = require('./sale-charges');
 
 // Shared aggregation pipeline for daily payment/tender breakdown.
 //
@@ -511,6 +512,14 @@ const processSale = async (
         discountPercentage,
         gstAmount: gstAmountForFallback,
       });
+      if (
+        discountAmount < 0 ||
+        discountPercentage < 0 ||
+        discountPercentage > 100 ||
+        !Number.isFinite(engineLine.total) ||
+        engineLine.total < 0
+      )
+        throw new BadRequestError('Item discount must not exceed the item amount or 100%.');
       itemDiscountAmountTotalCalculation = engineLine.total;
       itemSubTaxTotalCalculation = engineLine.tax;
       itemTaxAmountForItem = engineLine.taxForItem;
@@ -801,6 +810,14 @@ const processSale = async (
 
     // Stop before numbering, stock, payment or sale writes. This internal
     // preview uses the exact checkout tax and header calculations above/below.
+    const manualCharges = await normalizeSaleCharges(
+      Array.isArray(data.charges) && outlet
+        ? data.charges.filter((c) => c?.source !== 'outlet')
+        : data.charges,
+      (existingSale?.charges || []).filter((c) => c.source !== 'outlet'),
+      context
+    );
+    data = { ...data, charges: manualCharges };
     if (outlet) {
       const base = calculateSaleHeader(data, sale_tot_amount, {
         ...context,
@@ -817,26 +834,15 @@ const processSale = async (
           ...(automatic ? [automatic] : []),
         ],
       };
-      // Charges are added after bill discounts, without discounting the charge again.
-      const manual = data.charges.filter((c) => c.source !== 'outlet');
-      const manualAmount = manual.reduce(
-        (n, c) => n + Math.max(0, round2(Number(c.amount) || 0)),
-        0
-      );
-      const manualTax = manual.reduce(
-        (n, c) =>
-          n +
-          (c.taxed === true || c.taxed === 'true'
-            ? Math.max(0, round2(Number(c.tax_amount) || 0))
-            : 0),
-        0
-      );
-      context = {
-        ...context,
-        outletCharge:
-          (automatic ? automatic.amount + automatic.tax_amount : 0) + manualAmount + manualTax,
-      };
-      sale_tax_amount += (automatic ? automatic.tax_amount : 0) + manualTax;
+    }
+    // All sales include charges, whether or not they use a billing outlet.
+    const chargeTax = data.charges.reduce((sum, c) => sum + c.tax_amount, 0);
+    context = {
+      ...context,
+      outletCharge: data.charges.reduce((sum, c) => sum + c.amount + c.tax_amount, 0),
+    };
+    sale_tax_amount += chargeTax;
+    if (outlet) {
       if (data.outlet_expected_total !== undefined) {
         const expected = Number(data.outlet_expected_total);
         const payable = calculateSaleHeader(data, sale_tot_amount, context).salesTotalForDoc;
@@ -1281,45 +1287,8 @@ const processSale = async (
         : existingSale?.source_invoice_id
           ? { source_invoice_id: existingSale.source_invoice_id }
           : {}),
-      // Document-level charges (parcel, service, freight - owner spec):
-      // stored as sent, capped and cleaned; an edit that does not resend
-      // them keeps them, and a sale that HAS them stays editable even
-      // when the shop toggle is off (common software practice).
-      ...(Array.isArray(data.charges)
-        ? {
-            charges: data.charges.slice(0, 20).flatMap((c) => {
-              const name = String((c && c.name) || '')
-                .trim()
-                .slice(0, 60);
-              const amount = round2(parseFloat(c && c.amount) || 0, 2);
-              if (!name || !(amount > 0)) return [];
-              const taxed = !!(c && (c.taxed === true || c.taxed === 'true'));
-              return [
-                {
-                  name,
-                  amount,
-                  taxed,
-                  // Tax on the charge (queue #5): stored only while taxed,
-                  // so a flag flipped off can never leave a stale figure.
-                  tax_name: taxed
-                    ? String((c && c.tax_name) || '')
-                        .trim()
-                        .slice(0, 40)
-                    : '',
-                  tax_amount: taxed ? round2(parseFloat(c && c.tax_amount) || 0, 2) : 0,
-                  source:
-                    outlet && c.source === 'outlet'
-                      ? 'outlet'
-                      : c && c.source === 'quote'
-                        ? 'quote'
-                        : 'manual',
-                },
-              ];
-            }),
-          }
-        : existingSale?.charges
-          ? { charges: existingSale.charges }
-          : {}),
+      // The same normalized charges used in checkout and payment validation.
+      charges: data.charges,
 
       /*
        * The channel this sale came through.

@@ -53,3 +53,17 @@ describe('canonical sale header used by checkout and decision previews', () => {
     ).toBe(100);
   });
 });
+
+test.each([-1, 101, Infinity, 'bad', '20abc'])('rejects invalid percent discount %s', (value) => {
+  expect(() =>
+    calculateSaleHeader({ extra_discount: value, extra_discount_type: 'percent' }, 100, {})
+  ).toThrow();
+});
+test('full discount leaves additional charges payable and never discounts them', () => {
+  expect(
+    calculateSaleHeader({ extra_discount: 100, extra_discount_type: 'percent' }, 100, {
+      outletCharge: 20.05,
+    }).salesTotalForDoc
+  ).toBe(20.05);
+  expect(() => calculateSaleHeader({ extra_discount: 101 }, 100, {})).toThrow();
+});
