@@ -20,19 +20,27 @@ async function main() {
   const i18nEnd = core.indexOf('\nPosnicPro.i18n.load()', i18nStart);
   assert.ok(i18nStart > 0 && i18nEnd > i18nStart, 'Use the shipped translation runtime');
   app.get('/i18n.js', (_req, res) => res.type('js').send(core.slice(i18nStart, i18nEnd)));
-  app.get('/', (_req, res) => res.send(`<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/built/style/${css}"><link rel="stylesheet" href="/static/style/css/modules/ask-posnic.css"></head><body>${fs.readFileSync(path.join(root, 'modules/ask_posnic.html'), 'utf8')}<script src="/static/style/js/jquery.min.js"></script><script>window.PosnicPro={HideSideBarModal:function(){},get:function(){},request:function(){},alert:function(){}};</script><script src="/i18n.js"></script><script src="/static/script/js/modules/js/ask_posnic.js"></script><script>document.querySelector('#askposnic').style.display='block';document.querySelector('#ask_posnic_admin').style.display='block';PosnicPro.askposnic.bind();PosnicPro.askposnic.add('user','How are sales today?');PosnicPro.askposnic.add('answer','Sales today are 12,450.00 across 37 transactions.',{intent:'sales',source:'Live sales dashboard',metrics:[{label:'Sales',value:'12,450.00'},{label:'Transactions',value:37}],scope:{outlet:'Main outlet'}});</script></body></html>`));
+  // The local server serves a fixed blank page. Only the controlled Puppeteer
+  // client loads repository markup, outside any request handler.
+  app.get('/', (_req, res) => res.type('html').send('<!doctype html><html><head></head><body></body></html>'));
+  const markup = `<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="/built/style/${css}"><link rel="stylesheet" href="/static/style/css/modules/ask-posnic.css"></head><body>${fs.readFileSync(path.join(root, 'modules/ask_posnic.html'), 'utf8')}<script src="/static/style/js/jquery.min.js"></script><script>window.PosnicPro={HideSideBarModal:function(){},get:function(){},request:function(){},alert:function(){}};</script><script src="/i18n.js"></script><script src="/static/script/js/modules/js/ask_posnic.js"></script><script>document.querySelector('#askposnic').style.display='block';document.querySelector('#ask_posnic_admin').style.display='block';PosnicPro.askposnic.bind();PosnicPro.askposnic.add('user','How are sales today?');PosnicPro.askposnic.add('answer','Sales today are 12,450.00 across 37 transactions.',{intent:'sales',source:'Live sales dashboard',metrics:[{label:'Sales',value:'12,450.00'},{label:'Transactions',value:37}],scope:{outlet:'Main outlet'}});</script></body></html>`;
   const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
   let browser;
   try {
     browser = await puppeteer.launch({ headless: true, ...(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : {}) });
     const page = await browser.newPage();
+    const loadPage = async () => {
+      await page.goto(`http://127.0.0.1:${server.address().port}`, { waitUntil: 'domcontentloaded' });
+      await page.setContent(markup, { waitUntil: 'domcontentloaded' });
+      await page.waitForFunction(() => document.querySelector('#ask_posnic_thread')?.textContent.includes('Sales today are 12,450.00'));
+    };
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const output = path.resolve(__dirname, '../../output/ask-posnic-ui');
     fs.mkdirSync(output, { recursive: true });
     for (const [name, width, height] of [['desktop', 1440, 1000], ['mobile', 390, 844]]) {
       await page.setViewport({ width, height });
-      await page.goto(`http://127.0.0.1:${server.address().port}`, { waitUntil: 'networkidle0' });
+      await loadPage();
       await page.evaluate(() => PosnicPro.askposnic.add('answer', 'Sales by authorized outlet. Amounts retain their configured currency.', { intent: 'outlet_comparison', source: 'Sales records by authorized outlet', metrics: [{ label: 'Main (USD)', value: '42.50' }, { label: 'Second (INR)', value: '81.75' }], scope: { outlets: [{ outlet: 'Main' }, { outlet: 'Second <img src=x>' }], as_of: '2026-10-01T00:00:00Z' } }));
       assert.match(await page.$eval('#ask_posnic_thread', (element) => element.textContent), /Outlets: Main, Second/);
       assert.equal(await page.$$eval('#ask_posnic_thread img', (elements) => elements.length), 0);
@@ -205,7 +213,7 @@ async function main() {
     }
     for (const code of ['ta', 'nl', 'ar']) {
       const dictionary = JSON.parse(fs.readFileSync(path.join(root, '../languages', code + '.json'), 'utf8'));
-      await page.goto(`http://127.0.0.1:${server.address().port}`, { waitUntil: 'networkidle0' });
+      await loadPage();
       await page.evaluate((dict, language) => {
         PosnicPro.i18n._dict = dict;
         document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';

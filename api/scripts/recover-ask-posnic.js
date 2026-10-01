@@ -3,7 +3,7 @@
 // --apply is required for a transition. This tool never calls an AI provider,
 // sends a message, or writes a purchase order/inventory/business record.
 require('dotenv').config({ quiet: true });
-const fs = require('node:fs');
+const { readEvidence } = require('./ask-posnic-evidence');
 const { MongoClient } = require('mongodb');
 const recovery = require('../src/services/ask-posnic-recovery.service');
 
@@ -26,8 +26,7 @@ async function main() {
     else if (command === 'index') result = await recovery.recoverIndex(db, context, values.id, options);
     else if (command === 'project-usage') result = await recovery.projectUsage(db, context, values.id, options);
     else {
-      if (!values.evidence || fs.statSync(values.evidence).size > 16000) throw new Error('Supply a provider evidence JSON file smaller than 16 KB.');
-      const evidence = JSON.parse(fs.readFileSync(values.evidence, 'utf8'));
+      const evidence = readEvidence(values.evidence);
       result = command === 'hold' ? await recovery.resolveHold(db, context, values.id, evidence, options) : await recovery.recoverSchedule(db, context, values.id, evidence, options);
     }
     console.log(JSON.stringify(result, null, 2));
