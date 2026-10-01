@@ -929,7 +929,7 @@ async function forEdit(db, scope, order, next) {
     if (!takeaway) {
       const overlaps = claims.filter(claim => !terminal(claim) && claim.id !== own.id &&
         claim.order_id !== String(order._id) && claim.tables.some(table => own.tables.includes(table)));
-      if (overlaps.some(claim => claim.guest_update))
+      if (overlaps.some(capacityChanging))
         fail('This order is being updated. Please retry.', 409);
       const others = await db.collection('sales').find({
         branch_id: scope.branchId, license: scope.license,
@@ -958,7 +958,7 @@ async function forEdit(db, scope, order, next) {
       if (table) {
         const overlaps = claims.filter(claim => !terminal(claim) &&
           claim.order_id !== String(order._id) && claim.tables.includes(String(table._id)));
-        if (overlaps.some(claim => claim.guest_update || claim.moving_to || claim.closing || claim.state === 'releasing'))
+        if (overlaps.some(capacityChanging))
           fail('This order is being updated. Please retry.', 409);
         const others = await db.collection('sales').find({
           branch_id: scope.branchId, license: scope.license,
@@ -982,6 +982,14 @@ async function forEdit(db, scope, order, next) {
   )
     fail('This table is reserved for another order.', 409);
   return own || null;
+}
+// An in-progress move/enrollment can have a reservation and a sale on different
+// tables. Do not approve extra covers against that intermediate occupancy.
+// Ordinary pending reservations remain countable through occupiedGuests.
+function capacityChanging(claim) {
+  return claim.guest_update || claim.moving_to || claim.closing ||
+    ['applying', 'releasing'].includes(claim.state) ||
+    ((claim.move_from || claim.adopt_order) && claim.state === 'reserved');
 }
 // Enroll an existing sale in the seating protocol without recreating its items
 // or financial/kitchen history. Kept separate from new-order reservation: the

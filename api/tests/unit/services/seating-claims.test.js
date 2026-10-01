@@ -1674,6 +1674,35 @@ test('unclaimed guest edits include other checks and pending seats without doubl
 });
 
 
+describe.each([true, false])('cover preflight with claimed order %s', (claimed) => {
+  test.each([
+    { guest_update: 'pending-guests' },
+    { moving_to: 'pending-move' },
+    { closing: true },
+    { state: 'applying' },
+    { state: 'releasing' },
+    { state: 'reserved', move_from: 'old-seat' },
+    { state: 'reserved', adopt_order: 'legacy-order' },
+  ])('does not increase covers during an overlapping transition %j', async (transition) => {
+    const order = await movableOrder();
+    if (!claimed) {
+      await db.collection('table_seating').updateOne({}, { $set: { claims: [] } });
+      await db.collection('sales').updateOne({ _id: order._id }, { $unset: { seating_request_id: '' } });
+      delete order.seating_request_id;
+    }
+    await db.collection('table_seating').updateOne({}, { $push: { claims: {
+      id: 'overlapping-transition', state: 'submitting', tables: [ids[0]],
+      labels: ['T1'], guests: 0, ...transition,
+    } } });
+    const before = await db.collection('sales').findOne({ _id: order._id });
+    await expect(seating.forEdit(db, scope, order, { guests: 5 })).rejects.toMatchObject({ status: 409 });
+    // Item-only corrections and reducing an existing party consume no new seats.
+    await expect(seating.forEdit(db, scope, order, { guests: 4 })).resolves.toBeDefined();
+    await expect(seating.forEdit(db, scope, order, { guests: 3 })).resolves.toBeDefined();
+    expect(await db.collection('sales').findOne({ _id: order._id })).toEqual(before);
+  });
+});
+
 test.each(['KOT', 'Add', 'Edit'])('cover changes count a paid %s neighbour without modifying its bill', async (process) => {
   const { source, target, input } = await mergeOrders();
   const move = await seating.prepareMove(db, scope, String(source._id), input, { mergeTargetId: String(target._id) });
