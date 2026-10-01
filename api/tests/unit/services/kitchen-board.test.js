@@ -357,19 +357,17 @@ test('branch delay settings validate thresholds and require manager access', asy
 });
 
 test('paid takeaway remains actionable on touch board until served', async () => {
-  await db
-    .collection('sales')
-    .updateOne(
-      { _id: saleId },
-      {
-        $set: {
-          fulfilment: 'takeaway',
-          kitchen_required: true,
-          payment_status: 'Paid',
-          bill_requested_at: new Date(Date.now() + 1000),
-        },
-      }
-    );
+  await db.collection('sales').updateOne(
+    { _id: saleId },
+    {
+      $set: {
+        fulfilment: 'takeaway',
+        kitchen_required: true,
+        payment_status: 'Paid',
+        bill_requested_at: new Date(Date.now() + 1000),
+      },
+    }
+  );
   expect((await service.list(request())).tickets).toHaveLength(1);
   await service.transition(action());
   await service.transition(lineAction('ready', 2, 1));
