@@ -1168,3 +1168,4 @@ Mounted at `/whatsapp`. Source: `api/src/routes/whatsapp.routes.js`.
 | GET | `/whatsapp/getTemplates` | — | `whatsappController.getTemplates` |
 | POST | `/whatsapp/deleteTemplate` | — | `whatsappController.deleteTemplate` |
 | POST | `/whatsapp/getSalesReceiptTemplate` | — | `whatsappController.getSalesReceiptTemplate` |
+

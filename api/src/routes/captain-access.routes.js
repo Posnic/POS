@@ -24,15 +24,26 @@ router.post('/pair', limit, wrap(access.pair));
 router.post('/refresh', limit, wrap(access.refresh));
 router.post('/route-proof', rateLimit({ windowMs: 60000, limit: 180 }), wrap(access.routeProof));
 router.use(protect);
-router.post('/orders/edit/preview', rateLimit({ windowMs: 60000, limit: 120 }),
-  wrap(require('../services/captain-order-preview').preview));
+router.post(
+  '/orders/edit/preview',
+  rateLimit({ windowMs: 60000, limit: 120 }),
+  wrap(require('../services/captain-order-preview').preview)
+);
 const profile = require('../services/captain-profile');
 router.get('/profile', wrap(profile.get));
 const phone = require('../services/captain-phone');
-router.post('/profile/phone/start', rateLimit({ windowMs: 15 * 60000, limit: 20 }), wrap(phone.start));
+router.post(
+  '/profile/phone/start',
+  rateLimit({ windowMs: 15 * 60000, limit: 20 }),
+  wrap(phone.start)
+);
 router.post('/profile/phone/verify', limit, wrap(phone.verify));
 const email = require('../services/captain-email');
-router.post('/profile/email/start', rateLimit({ windowMs: 15 * 60000, limit: 20 }), wrap(email.start));
+router.post(
+  '/profile/email/start',
+  rateLimit({ windowMs: 15 * 60000, limit: 20 }),
+  wrap(email.start)
+);
 router.post('/profile/email/verify', limit, wrap(email.verify));
 const branchDetails = require('../services/captain-branch-details');
 router.get('/branch-details', wrap(branchDetails.get));
@@ -50,9 +61,21 @@ router.post('/tables/move/complete', limit, wrap(seating.complete));
 router.post('/tables/move/cancel', limit, wrap(seating.cancel));
 router.post('/tables/guests', limit, wrap(seating.guests));
 router.post('/tables/guests/status', limit, wrap(seating.guestsStatus));
-router.post('/tables/transfer/complete', limit, wrap(require('../services/captain-transfer').complete));
-router.post('/tables/transfer/status', rateLimit({ windowMs: 60000, limit: 120 }), wrap(require('../services/captain-transfer').status));
-router.post('/tables/transfer/preview', limit, wrap(require('../services/captain-transfer').preview));
+router.post(
+  '/tables/transfer/complete',
+  limit,
+  wrap(require('../services/captain-transfer').complete)
+);
+router.post(
+  '/tables/transfer/status',
+  rateLimit({ windowMs: 60000, limit: 120 }),
+  wrap(require('../services/captain-transfer').status)
+);
+router.post(
+  '/tables/transfer/preview',
+  limit,
+  wrap(require('../services/captain-transfer').preview)
+);
 
 router.post('/profile', limit, wrap(profile.update));
 router.post('/password', rateLimit({ windowMs: 15 * 60000, limit: 8 }), wrap(profile.password));

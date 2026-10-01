@@ -172,7 +172,7 @@ test('item edits retain the group capacity and cannot detach its table metadata'
   expect(stored.table_number).toBe('T1');
   expect(stored.person_count).toBe(2);
   expect(stored.seating_table_ids).toEqual(claim.tables);
-  expect((await seating.find(db, {branchId:branch,license}, claim.id)).guests).toBe(4);
+  expect((await seating.find(db, { branchId: branch, license }, claim.id)).guests).toBe(4);
 });
 test('another existing order cannot move into a reserved group', async () => {
   const otherId = new ObjectId();
@@ -380,28 +380,47 @@ describe.each(['modified', 'cancelled'])('concurrent settlement during %s', (act
     const notify = require('../../../src/helpers/kot-notify').notifyKotReady;
     notify.mockClear();
     let injected = false;
-    BaseModel.getDb.mockResolvedValue({ collection(name) {
-      const collection = db.collection(name);
-      return new Proxy(collection, { get(target, property) {
-        if (name === 'sales' && property === 'updateOne') return async (filter, update, options) => {
-          if (!injected && update.$push?.captain_audit) {
-            injected = true;
-            await collection.updateOne({ _id: id }, { $set: { [field]: value } });
-          }
-          return collection.updateOne(filter, update, options);
-        };
-        const method = target[property];
-        return typeof method === 'function' ? method.bind(target) : method;
-      } });
-    } });
-    const result = await repo.updateOrderModel(String(id), [
-      { product_id: String(item), quantity: 2, price: 100 },
-    ], 200, action, null, null, null, null, null, null);
+    BaseModel.getDb.mockResolvedValue({
+      collection(name) {
+        const collection = db.collection(name);
+        return new Proxy(collection, {
+          get(target, property) {
+            if (name === 'sales' && property === 'updateOne')
+              return async (filter, update, options) => {
+                if (!injected && update.$push?.captain_audit) {
+                  injected = true;
+                  await collection.updateOne({ _id: id }, { $set: { [field]: value } });
+                }
+                return collection.updateOne(filter, update, options);
+              };
+            const method = target[property];
+            return typeof method === 'function' ? method.bind(target) : method;
+          },
+        });
+      },
+    });
+    const result = await repo.updateOrderModel(
+      String(id),
+      [{ product_id: String(item), quantity: 2, price: 100 }],
+      200,
+      action,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    );
     expect(injected).toBe(true);
     expect(result).toMatchObject({ status: false, message: 'order_changed' });
-    expect(await db.collection('sales').findOne({ _id: id })).toEqual({ ...before, [field]: value });
+    expect(await db.collection('sales').findOne({ _id: id })).toEqual({
+      ...before,
+      [field]: value,
+    });
     expect(notify).not.toHaveBeenCalled();
-    expect((await seating.find(db, { branchId: branch, license }, claim.id)).state).toBe('submitting');
+    expect((await seating.find(db, { branchId: branch, license }, claim.id)).state).toBe(
+      'submitting'
+    );
   });
 });
 
@@ -411,28 +430,59 @@ test('two legacy full-order edits cannot both take the last seat on a shared tab
   await db.collection('tableorder').updateOne({ _id: tables[0] }, { $set: { max_capacity: 3 } });
   const orders = [];
   for (const key of ['shared-legacy-a', 'shared-legacy-b']) {
-    const result = await submit({ seating_request_id: undefined, person_count: 1, idempotencyKey: key }, actor, true, true);
+    const result = await submit(
+      { seating_request_id: undefined, person_count: 1, idempotencyKey: key },
+      actor,
+      true,
+      true
+    );
     expect(result.status).toBe(true);
     orders.push(result.data.sale_id);
   }
-  const results = await Promise.all(orders.map(id => repo.updateOrderModel(id,
-    [{ product_id: String(item), quantity: 1, price: 100 }], 100,
-    'modified', null, null, null, null, null, 2)));
-  expect(results.filter(result => result.status)).toHaveLength(1);
+  const results = await Promise.all(
+    orders.map((id) =>
+      repo.updateOrderModel(
+        id,
+        [{ product_id: String(item), quantity: 1, price: 100 }],
+        100,
+        'modified',
+        null,
+        null,
+        null,
+        null,
+        null,
+        2
+      )
+    )
+  );
+  expect(results.filter((result) => result.status)).toHaveLength(1);
   const saved = await db.collection('sales').find({}).toArray();
   expect(saved.reduce((count, row) => count + row.person_count, 0)).toBe(3);
-  expect((await seating.read(db, { branchId: branch, license })).filter(row => row.kind === 'legacy-edit')).toEqual([]);
+  expect(
+    (await seating.read(db, { branchId: branch, license })).filter(
+      (row) => row.kind === 'legacy-edit'
+    )
+  ).toEqual([]);
 });
 
 test('repository save keeps the expected capacity revision when the document publishes its new permit', async () => {
-  const Model = mongoose.models.CapacityFenceSale || mongoose.model('CapacityFenceSale',
-    new mongoose.Schema({ seating_capacity_revision: String, person_count: Number }, { strict: false }), 'sales');
+  const Model =
+    mongoose.models.CapacityFenceSale ||
+    mongoose.model(
+      'CapacityFenceSale',
+      new mongoose.Schema(
+        { seating_capacity_revision: String, person_count: Number },
+        { strict: false }
+      ),
+      'sales'
+    );
   const original = await Model.create({ branch_id: branch, license, person_count: 1 });
   const doc = await Model.findById(original._id);
   doc.$where = { seating_capacity_revision: { $exists: false } };
   doc.set({ seating_capacity_revision: 'cover-edit-test-permit', person_count: 2 });
   await repo.save(doc);
   expect(await db.collection('sales').findOne({ _id: doc._id })).toMatchObject({
-    person_count: 2, seating_capacity_revision: 'cover-edit-test-permit',
+    person_count: 2,
+    seating_capacity_revision: 'cover-edit-test-permit',
   });
 });

@@ -21,9 +21,13 @@ beforeEach(async () => {
   branch = new ObjectId();
   license = new ObjectId();
   await db.collection('branches').insertOne({ _id: branch, license });
-  await db
-    .collection('users')
-    .insertOne({ _id: user, license, activate: true, phone: '+919000000000', password: await require('bcryptjs').hash('staff-password', 4) });
+  await db.collection('users').insertOne({
+    _id: user,
+    license,
+    activate: true,
+    phone: '+919000000000',
+    password: await require('bcryptjs').hash('staff-password', 4),
+  });
   sender.sendSms.mockReset().mockResolvedValue({ ok: true });
 });
 const req = (body) => ({
@@ -93,48 +97,59 @@ test('retry recovers a confirmed user update when the verification receipt was i
   expect((await db.collection('captain_phone_verifications').findOne({})).state).toBe('verified');
 });
 
-
 test('simultaneous resend requests send only one code', async () => {
   const results = await Promise.allSettled([
     service.start(req({ phone: '+919000000001' })),
     service.start(req({ phone: '+919000000002' })),
   ]);
-  expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+  expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
   expect(sender.sendSms).toHaveBeenCalledTimes(1);
 });
 
 test('a delayed verification cannot overwrite a superseding phone challenge', async () => {
   const original = await begin();
   let release, arrived;
-  const waiting = new Promise(resolve => { arrived = resolve; });
+  const waiting = new Promise((resolve) => {
+    arrived = resolve;
+  });
   const users = db.collection('users');
   const delayed = req(original);
-  delayed.db = { collection(name) {
-    if (name !== 'users') return db.collection(name);
-    return {
-      findOne: (...args) => users.findOne(...args),
-      updateOne: async (...args) => {
-        arrived();
-        await new Promise(resolve => { release = resolve; });
-        return users.updateOne(...args);
-      },
-    };
-  } };
-  const outcome = service.verify(delayed).catch(error => error);
+  delayed.db = {
+    collection(name) {
+      if (name !== 'users') return db.collection(name);
+      return {
+        findOne: (...args) => users.findOne(...args),
+        updateOne: async (...args) => {
+          arrived();
+          await new Promise((resolve) => {
+            release = resolve;
+          });
+          return users.updateOne(...args);
+        },
+      };
+    },
+  };
+  const outcome = service.verify(delayed).catch((error) => error);
   await waiting;
-  await db.collection('captain_phone_verifications').updateOne({}, { $set: { expiresAt: new Date(0), nextSendAt: new Date(0) } });
+  await db
+    .collection('captain_phone_verifications')
+    .updateOne({}, { $set: { expiresAt: new Date(0), nextSendAt: new Date(0) } });
   const replacement = await service.start(req({ phone: '+919000000002' }));
   release();
   expect(await outcome).toMatchObject({ status: 409 });
   expect((await users.findOne({ _id: user })).phone).toBe('+919000000000');
   const code = sender.sendSms.mock.calls[1][2].match(/\b\d{6}\b/)[0];
-  expect(await service.verify(req({ ...replacement, code }))).toEqual({ saved: true, phone: '+919000000002' });
+  expect(await service.verify(req({ ...replacement, code }))).toEqual({
+    saved: true,
+    phone: '+919000000002',
+  });
 });
-
 
 test('missing or incorrect password cannot send a code or reserve a challenge', async () => {
   for (const currentPassword of [undefined, 'wrong']) {
-    await expect(service.start(req({phone:'+919000000001',currentPassword}))).rejects.toMatchObject({status:400});
+    await expect(
+      service.start(req({ phone: '+919000000001', currentPassword }))
+    ).rejects.toMatchObject({ status: 400 });
   }
   expect(sender.sendSms).not.toHaveBeenCalled();
   expect(await db.collection('captain_phone_verifications').countDocuments()).toBe(0);

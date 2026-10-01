@@ -134,31 +134,98 @@ const FAKE_CUSTOMER = '64f9a1c2e3b4d5e6f7000004';
 const FAKE_ITEM = '64f9a1c2e3b4d5e6f7000005';
 
 describe('SalesRepository', () => {
-  test('history preserves edit version and combined seating identity for Captain',async()=>{
-    const created=new Date('2026-09-30T10:00:00Z'),updated=new Date('2026-09-30T10:10:00Z');
-    const doc={_id:FAKE_ID,created_date:created,updated_date:updated,seating_request_id:'seating-request-0001',seating_primary_id:'table-1',seating_table_ids:['table-1','table-2'],items:[]};
-    const result=await salesRepository.getOrderHistoryModel(FAKE_BRANCH,50,1,'pending',FAKE_ID,{SaleModel:{find:()=>createQueryMock([doc])}});
+  test('history preserves edit version and combined seating identity for Captain', async () => {
+    const created = new Date('2026-09-30T10:00:00Z'),
+      updated = new Date('2026-09-30T10:10:00Z');
+    const doc = {
+      _id: FAKE_ID,
+      created_date: created,
+      updated_date: updated,
+      seating_request_id: 'seating-request-0001',
+      seating_primary_id: 'table-1',
+      seating_table_ids: ['table-1', 'table-2'],
+      items: [],
+    };
+    const result = await salesRepository.getOrderHistoryModel(
+      FAKE_BRANCH,
+      50,
+      1,
+      'pending',
+      FAKE_ID,
+      { SaleModel: { find: () => createQueryMock([doc]) } }
+    );
     expect(result.status).toBe(true);
-    expect(result.data.orders[0]).toMatchObject({created_date:created,updated_date:updated,seating_request_id:doc.seating_request_id,seating_primary_id:'table-1',seating_table_ids:['table-1','table-2']});
+    expect(result.data.orders[0]).toMatchObject({
+      created_date: created,
+      updated_date: updated,
+      seating_request_id: doc.seating_request_id,
+      seating_primary_id: 'table-1',
+      seating_table_ids: ['table-1', 'table-2'],
+    });
   });
 
-  test('history exposes the tracked transfer discount and preservation capability',async()=>{
-    const doc={_id:FAKE_ID,extra_discount:0,sale_extra_discount:0,items:[{item_id:FAKE_ITEM,item_name:'Corn',item_quantity:1,item_base_price:100}]};
-    const side={lines:[{lineKey:FAKE_ITEM,quantity:1,amountMinor:9000,billDiscountMinor:1000,
-      components:[{key:'base',minor:10000},{key:'discount',minor:-1000}]}],components:{base:10000,discount:-1000},totalMinor:9000};
-    require('../../../src/services/captain-transfer-projection').applyMoney(doc,doc,{currencyCode:'INR'},side);
-    const result=await salesRepository.getOrderHistoryModel(FAKE_BRANCH,50,1,'pending',FAKE_ID,{SaleModel:{find:()=>createQueryMock([doc])}});
-    expect(result.data.orders[0]).toMatchObject({transfer_allocated:true,extra_discount:10,extra_discount_type:'amount',total_amount:90});
+  test('history exposes the tracked transfer discount and preservation capability', async () => {
+    const doc = {
+      _id: FAKE_ID,
+      extra_discount: 0,
+      sale_extra_discount: 0,
+      items: [{ item_id: FAKE_ITEM, item_name: 'Corn', item_quantity: 1, item_base_price: 100 }],
+    };
+    const side = {
+      lines: [
+        {
+          lineKey: FAKE_ITEM,
+          quantity: 1,
+          amountMinor: 9000,
+          billDiscountMinor: 1000,
+          components: [
+            { key: 'base', minor: 10000 },
+            { key: 'discount', minor: -1000 },
+          ],
+        },
+      ],
+      components: { base: 10000, discount: -1000 },
+      totalMinor: 9000,
+    };
+    require('../../../src/services/captain-transfer-projection').applyMoney(
+      doc,
+      doc,
+      { currencyCode: 'INR' },
+      side
+    );
+    const result = await salesRepository.getOrderHistoryModel(
+      FAKE_BRANCH,
+      50,
+      1,
+      'pending',
+      FAKE_ID,
+      { SaleModel: { find: () => createQueryMock([doc]) } }
+    );
+    expect(result.data.orders[0]).toMatchObject({
+      transfer_allocated: true,
+      extra_discount: 10,
+      extra_discount_type: 'amount',
+      total_amount: 90,
+    });
     expect(doc.extra_discount).toBe(0);
   });
 
   describe('myDayModel complete totals', () => {
     test('counts every sale after 300 while limiting only the recent list', async () => {
-      const docs = Array.from({ length: 325 }, (_, i) => ({ _id: String(i), sales_total: 10, table_number: 'T1' }));
+      const docs = Array.from({ length: 325 }, (_, i) => ({
+        _id: String(i),
+        sales_total: 10,
+        table_number: 'T1',
+      }));
       const query = createQueryMock(docs);
-      query.limit.mockImplementation((limit) => { query.lean.mockResolvedValue(docs.slice(0, limit)); return query; });
+      query.limit.mockImplementation((limit) => {
+        query.lean.mockResolvedValue(docs.slice(0, limit));
+        return query;
+      });
       const model = { find: jest.fn(() => query) };
-      const result = await salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), { SaleModel: model });
+      const result = await salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), {
+        SaleModel: model,
+      });
       expect(result).toMatchObject({ total: 3250, orders: 325, cancelled: 0 });
       expect(result.tables).toEqual([{ table: 'T1', total: 3250, orders: 325 }]);
       expect(result.recent).toHaveLength(20);
@@ -171,27 +238,47 @@ describe('SalesRepository', () => {
         { _id: '3', sales_total: 100, sale_process: 'Cancel' },
         { _id: '4', sales_total: 0, total: 99 },
       ];
-      const result = await salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), { SaleModel: { find: () => createQueryMock(docs) } });
+      const result = await salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), {
+        SaleModel: { find: () => createQueryMock(docs) },
+      });
       expect(result).toMatchObject({ total: 0, orders: 1, cancelled: 3 });
-      expect(result.recent.filter(row => row.cancelled)).toHaveLength(3);
+      expect(result.recent.filter((row) => row.cancelled)).toHaveLength(3);
       expect(result.recent[3].total_amount).toBe(0);
     });
     test('paid totals combine full payments and desktop/Captain partial payments without cancelled amounts', async () => {
       const docs = [
         { _id: '1', sales_total: 100, payment_status: 'Paid' },
         { _id: '2', sales_total: 100, payment_status: 'Unpaid', partial_balance: '25' },
-        { _id: '3', sales_total: 100, payment_status: 'Unpaid', paid_amount: 40, partial_balance: 40 },
+        {
+          _id: '3',
+          sales_total: 100,
+          payment_status: 'Unpaid',
+          paid_amount: 40,
+          partial_balance: 40,
+        },
         { _id: '4', sales_total: 100, payment_status: 'Cancelled', paid_amount: 100 },
-        { _id: '5', sales_total: 100, payment_status: 'Unpaid', paid_amount: 0, partial_balance: 75 },
+        {
+          _id: '5',
+          sales_total: 100,
+          payment_status: 'Unpaid',
+          paid_amount: 0,
+          partial_balance: 75,
+        },
         { _id: '6', sales_total: 100, payment_status: 'Unpaid', paid_amount: 150 },
       ];
-      const result = await salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), { SaleModel: { find: () => createQueryMock(docs) } });
+      const result = await salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), {
+        SaleModel: { find: () => createQueryMock(docs) },
+      });
       expect(result).toMatchObject({ total: 500, paid_total: 265, orders: 5, cancelled: 1 });
     });
     test('database failure propagates instead of reporting an empty day', async () => {
       const query = createQueryMock([]);
       query.lean.mockRejectedValue(new Error('database offline'));
-      await expect(salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), { SaleModel: { find: () => query } })).rejects.toThrow('database offline');
+      await expect(
+        salesRepository.myDayModel(FAKE_BRANCH, FAKE_ID, new Date(), {
+          SaleModel: { find: () => query },
+        })
+      ).rejects.toThrow('database offline');
     });
   });
 
@@ -781,7 +868,9 @@ describe('SalesRepository', () => {
       MockSaleModel.countDocuments.mockResolvedValue(1);
       const r = await salesRepository.salePage({}, { limit: 10, page: 1 }, FAKE_BRANCH);
       expect(r.status).toBe(true);
-      expect(r.data.list).toEqual(docs.map((doc) => ({ ...doc, kitchen_rounds: [], item_transfer: true })));
+      expect(r.data.list).toEqual(
+        docs.map((doc) => ({ ...doc, kitchen_rounds: [], item_transfer: true }))
+      );
       expect(r.data.total).toBe(1);
     });
     test('returns empty results', async () => {
@@ -1884,27 +1973,33 @@ describe('_renderableSaleRows', () => {
   });
 });
 
-
 describe('complete activity totals', () => {
   function model(rows) {
-    const cursor = { close: jest.fn().mockResolvedValue(), async *[Symbol.asyncIterator]() { yield* rows; } };
+    const cursor = {
+      close: jest.fn().mockResolvedValue(),
+      async *[Symbol.asyncIterator]() {
+        yield* rows;
+      },
+    };
     return { cursor, Model: { find: jest.fn(() => ({ lean: () => ({ cursor: () => cursor }) })) } };
   }
   test('uses integer accumulation for every bill and closes the cursor', async () => {
-    const { Model, cursor } = model(Array.from({length:1001}, () => ({sales_total:0.1,items_return_total:0.01})));
-    expect(await salesRepository._saleActivityTotals(Model,{branch_id:'one'})).toEqual([
-      {currencyCode:'',currencyDigits:2,total:100.1,return_total:10.01}
+    const { Model, cursor } = model(
+      Array.from({ length: 1001 }, () => ({ sales_total: 0.1, items_return_total: 0.01 }))
+    );
+    expect(await salesRepository._saleActivityTotals(Model, { branch_id: 'one' })).toEqual([
+      { currencyCode: '', currencyDigits: 2, total: 100.1, return_total: 10.01 },
     ]);
-    expect(Model.find).toHaveBeenCalledWith({branch_id:'one'});
+    expect(Model.find).toHaveBeenCalledWith({ branch_id: 'one' });
     expect(cursor.close).toHaveBeenCalledTimes(1);
   });
   test('empty history returns no currency groups', async () => {
-    const {Model} = model([]);
-    expect(await salesRepository._saleActivityTotals(Model,{})).toEqual([]);
+    const { Model } = model([]);
+    expect(await salesRepository._saleActivityTotals(Model, {})).toEqual([]);
   });
   test('invalid transfer allocation fails the report and still closes the cursor', async () => {
-    const {Model,cursor} = model([{captain_transfer_allocation:{}}]);
-    await expect(salesRepository._saleActivityTotals(Model,{})).rejects.toThrow();
+    const { Model, cursor } = model([{ captain_transfer_allocation: {} }]);
+    await expect(salesRepository._saleActivityTotals(Model, {})).rejects.toThrow();
     expect(cursor.close).toHaveBeenCalledTimes(1);
   });
 });

@@ -237,25 +237,40 @@ describe('SalesService', () => {
     }
   });
 
-  test.each(['stock', 'approval'])('failed %s validation leaves no bound desktop table', async (failure) => {
-    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
-    const adapter = require('../../../src/services/desktop-seating');
-    const lookup = jest.spyOn(adapter, 'lookup').mockResolvedValue(null);
-    const prepare = jest.spyOn(adapter, 'prepare');
-    if (failure === 'stock') mockItemRepositoryInstance.deductStockIfAvailable.mockResolvedValue(null);
-    try {
-      const result = await salesService.processSale(
-        makeSaleData({ table_number: 'T1', person_count: 2, idempotencyKey: 'desktop-rejected' }),
-        '', 'Add', makeContext({ seatingProtocol: true, branchSettings: { table_options: true } }),
-        failure === 'approval' ? { beforeCommit: async () => { throw new Error('Approval changed'); } } : {},
-      );
-      expect(result.status).toBe(false);
-      expect(prepare).not.toHaveBeenCalled();
-      expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
-      if (failure === 'approval')
-        expect(mockItemRepositoryInstance.updateStock).toHaveBeenCalledWith(expect.anything(), 2);
-    } finally { lookup.mockRestore(); prepare.mockRestore(); }
-  });
+  test.each(['stock', 'approval'])(
+    'failed %s validation leaves no bound desktop table',
+    async (failure) => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      const adapter = require('../../../src/services/desktop-seating');
+      const lookup = jest.spyOn(adapter, 'lookup').mockResolvedValue(null);
+      const prepare = jest.spyOn(adapter, 'prepare');
+      if (failure === 'stock')
+        mockItemRepositoryInstance.deductStockIfAvailable.mockResolvedValue(null);
+      try {
+        const result = await salesService.processSale(
+          makeSaleData({ table_number: 'T1', person_count: 2, idempotencyKey: 'desktop-rejected' }),
+          '',
+          'Add',
+          makeContext({ seatingProtocol: true, branchSettings: { table_options: true } }),
+          failure === 'approval'
+            ? {
+                beforeCommit: async () => {
+                  throw new Error('Approval changed');
+                },
+              }
+            : {}
+        );
+        expect(result.status).toBe(false);
+        expect(prepare).not.toHaveBeenCalled();
+        expect(salesRepository.createSaleUnique).not.toHaveBeenCalled();
+        if (failure === 'approval')
+          expect(mockItemRepositoryInstance.updateStock).toHaveBeenCalledWith(expect.anything(), 2);
+      } finally {
+        lookup.mockRestore();
+        prepare.mockRestore();
+      }
+    }
+  );
 
   test('a concurrent desktop seating retry restores its temporary stock reservation', async () => {
     mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
@@ -290,7 +305,7 @@ describe('SalesService', () => {
       prepare.mockRestore();
       BaseModel.getDb.mockReset();
     }
-    });
+  });
 
   describe('Business decision pricing preview', () => {
     test('a rejected pre-commit decision restores reserved stock and never writes the sale', async () => {
@@ -564,8 +579,16 @@ describe('SalesService', () => {
   // ── processSale – validation ──────────────────────────────────────────────
 
   test('a recovered desktop submission returns its sale before stock is deducted again', async () => {
-    require('../../../src/services/desktop-submission').prepare.mockResolvedValueOnce({_id:'saved-sale',sales_id:'INV-SAVED'});
-    const result=await salesService.processSale(makeSaleData({idempotencyKey:'saved-request'}),'','Add',makeContext());
+    require('../../../src/services/desktop-submission').prepare.mockResolvedValueOnce({
+      _id: 'saved-sale',
+      sales_id: 'INV-SAVED',
+    });
+    const result = await salesService.processSale(
+      makeSaleData({ idempotencyKey: 'saved-request' }),
+      '',
+      'Add',
+      makeContext()
+    );
     expect(result.status).toBe(true);
     expect(result.data._id).toBe('saved-sale');
     expect(result.data.duplicate).toBe(true);
@@ -969,89 +992,168 @@ describe('SalesService', () => {
         const { MongoMemoryServer } = require('mongodb-memory-server');
         const mongoose = require('mongoose');
         server = await MongoMemoryServer.create();
-        connection = await mongoose.createConnection(server.getUri('desktop-edit-fence')).asPromise();
-        Model = connection.model('EditFenceSale', new mongoose.Schema({
-          partial_balance: { type: Number, default: 0 },
-        }, { strict: false }), 'sales');
+        connection = await mongoose
+          .createConnection(server.getUri('desktop-edit-fence'))
+          .asPromise();
+        Model = connection.model(
+          'EditFenceSale',
+          new mongoose.Schema(
+            {
+              partial_balance: { type: Number, default: 0 },
+            },
+            { strict: false }
+          ),
+          'sales'
+        );
       }, 60000);
-      afterAll(async () => { await connection?.close(); await server?.stop(); });
-
-      test.each(['KOT', 'Hold'])('two full desktop %s edits compete for capacity without losing either order', async (initialProcess) => {
-        await connection.db.dropDatabase();
-        const { ObjectId } = require('mongodb');
-        const branchId = new ObjectId(BRANCH_ID), license = new ObjectId(LICENSE_ID);
-        await connection.db.collection('branches').insertOne({ _id: branchId, license, table_options: true, table_order_limit: 0 });
-        await connection.db.collection('tableorder').insertOne({
-          _id: new ObjectId(), branch_id: branchId, license, tableorder_value: 'T1', capacity: 3, max_capacity: 3,
-        });
-        const ids = [SALE_ID, '64f8f2f4c2b9c0a1e4b55556'];
-        for (const id of ids) await Model.create({
-          _id: id, branch_id: branchId, license, sales_id: 'INV-' + id,
-          payment_status: 'Unpaid', payment_pending: 100, sale_process: initialProcess,
-          table_number: 'T1', person_count: initialProcess === 'Hold' ? 2 : 1, dine_type: 'Dine-in', items: [], changes: [],
-        });
-        BaseModel.getDb.mockResolvedValue(connection.db);
-        salesRepository.getById.mockImplementation(id => Model.findById(id));
-        salesRepository.save.mockImplementation(doc => doc.save());
-        const results = await Promise.all(ids.map(id => salesService.processSale(
-          makeSaleData({ person_count: 2, table_number: 'T1', dine_type: 'Dine-in', sale_process: 'KOT', partial_balance: 0, payment_mode: '' }), id, 'Edit',
-          makeContext({ branchSettings: { table_options: true } }),
-        )));
-        expect(results.filter(result => result.status)).toHaveLength(1);
-        const rows = await Model.collection.find({}).toArray();
-        expect(rows).toHaveLength(2);
-        expect(rows.filter(row => row.sale_process === 'KOT').reduce((sum, row) => sum + row.person_count, 0))
-          .toBe(initialProcess === 'Hold' ? 2 : 3);
-        const claims = await connection.db.collection('table_seating').findOne({});
-        expect(claims.claims.filter(row => row.kind === 'legacy-edit')).toEqual([]);
+      afterAll(async () => {
+        await connection?.close();
+        await server?.stop();
       });
+
+      test.each(['KOT', 'Hold'])(
+        'two full desktop %s edits compete for capacity without losing either order',
+        async (initialProcess) => {
+          await connection.db.dropDatabase();
+          const { ObjectId } = require('mongodb');
+          const branchId = new ObjectId(BRANCH_ID),
+            license = new ObjectId(LICENSE_ID);
+          await connection.db
+            .collection('branches')
+            .insertOne({ _id: branchId, license, table_options: true, table_order_limit: 0 });
+          await connection.db.collection('tableorder').insertOne({
+            _id: new ObjectId(),
+            branch_id: branchId,
+            license,
+            tableorder_value: 'T1',
+            capacity: 3,
+            max_capacity: 3,
+          });
+          const ids = [SALE_ID, '64f8f2f4c2b9c0a1e4b55556'];
+          for (const id of ids)
+            await Model.create({
+              _id: id,
+              branch_id: branchId,
+              license,
+              sales_id: 'INV-' + id,
+              payment_status: 'Unpaid',
+              payment_pending: 100,
+              sale_process: initialProcess,
+              table_number: 'T1',
+              person_count: initialProcess === 'Hold' ? 2 : 1,
+              dine_type: 'Dine-in',
+              items: [],
+              changes: [],
+            });
+          BaseModel.getDb.mockResolvedValue(connection.db);
+          salesRepository.getById.mockImplementation((id) => Model.findById(id));
+          salesRepository.save.mockImplementation((doc) => doc.save());
+          const results = await Promise.all(
+            ids.map((id) =>
+              salesService.processSale(
+                makeSaleData({
+                  person_count: 2,
+                  table_number: 'T1',
+                  dine_type: 'Dine-in',
+                  sale_process: 'KOT',
+                  partial_balance: 0,
+                  payment_mode: '',
+                }),
+                id,
+                'Edit',
+                makeContext({ branchSettings: { table_options: true } })
+              )
+            )
+          );
+          expect(results.filter((result) => result.status)).toHaveLength(1);
+          const rows = await Model.collection.find({}).toArray();
+          expect(rows).toHaveLength(2);
+          expect(
+            rows
+              .filter((row) => row.sale_process === 'KOT')
+              .reduce((sum, row) => sum + row.person_count, 0)
+          ).toBe(initialProcess === 'Hold' ? 2 : 3);
+          const claims = await connection.db.collection('table_seating').findOne({});
+          expect(claims.claims.filter((row) => row.kind === 'legacy-edit')).toEqual([]);
+        }
+      );
 
       test('legacy missing payment fields remain editable after Mongoose supplies defaults', async () => {
         await Model.deleteMany({});
         const { ObjectId } = require('mongodb');
         await Model.collection.insertOne({
-          _id: new ObjectId(SALE_ID), branch_id: BRANCH_ID, license: LICENSE_ID,
-          sales_id: 'INV-LEGACY', payment_status: 'Unpaid', payment_pending: 100,
-          sale_process: 'KOT', items: [], changes: [],
+          _id: new ObjectId(SALE_ID),
+          branch_id: BRANCH_ID,
+          license: LICENSE_ID,
+          sales_id: 'INV-LEGACY',
+          payment_status: 'Unpaid',
+          payment_pending: 100,
+          sale_process: 'KOT',
+          items: [],
+          changes: [],
         });
         const original = await Model.findById(SALE_ID);
         expect(original.partial_balance).toBe(0);
         expect(original.$isDefault('partial_balance')).toBe(true);
-        salesRepository.getById.mockResolvedValueOnce(original)
+        salesRepository.getById
+          .mockResolvedValueOnce(original)
           .mockImplementationOnce(() => Model.findById(SALE_ID));
-        salesRepository.save.mockImplementation(doc => doc.save());
-        const result = await salesService.processSale(makeSaleData(), SALE_ID, 'Edit', makeContext());
+        salesRepository.save.mockImplementation((doc) => doc.save());
+        const result = await salesService.processSale(
+          makeSaleData(),
+          SALE_ID,
+          'Edit',
+          makeContext()
+        );
         expect(result.status).toBe(true);
         expect(salesRepository.save).toHaveBeenCalledTimes(1);
       });
 
-      test.each([
-        ['payment_status', 'Paid'], ['paid_amount', 50], ['partial_balance', 50],
-        ['partial_amounts', 50], ['payment_pending', 0], ['sale_process', 'Add'],
-        ['floor_closed_at', new Date('2026-10-01T06:00:00Z')], ['order_state', 'cancelled'],
-      ].flatMap(([field, value]) => ['reload', 'save'].map(stage => [stage, field, value])))(
-        'does not overwrite newer state at %s: %s or move stock', async (stage, field, value) => {
+      test.each(
+        [
+          ['payment_status', 'Paid'],
+          ['paid_amount', 50],
+          ['partial_balance', 50],
+          ['partial_amounts', 50],
+          ['payment_pending', 0],
+          ['sale_process', 'Add'],
+          ['floor_closed_at', new Date('2026-10-01T06:00:00Z')],
+          ['order_state', 'cancelled'],
+        ].flatMap(([field, value]) => ['reload', 'save'].map((stage) => [stage, field, value]))
+      )('does not overwrite newer state at %s: %s or move stock', async (stage, field, value) => {
         await Model.deleteMany({});
         const original = await Model.create({
-          _id: SALE_ID, branch_id: BRANCH_ID, license: LICENSE_ID,
-          sales_id: 'INV-FENCE', payment_status: 'Unpaid', payment_pending: 100,
-          sale_process: 'KOT', items: [], changes: [],
+          _id: SALE_ID,
+          branch_id: BRANCH_ID,
+          license: LICENSE_ID,
+          sales_id: 'INV-FENCE',
+          payment_status: 'Unpaid',
+          payment_pending: 100,
+          sale_process: 'KOT',
+          items: [],
+          changes: [],
         });
         salesRepository.getById.mockResolvedValueOnce(original).mockImplementationOnce(async () => {
           if (stage === 'reload')
             await Model.collection.updateOne({ _id: original._id }, { $set: { [field]: value } });
           return Model.findById(original._id);
         });
-        salesRepository.save.mockImplementation(async doc => {
+        salesRepository.save.mockImplementation(async (doc) => {
           if (stage === 'save')
             await Model.collection.updateOne({ _id: original._id }, { $set: { [field]: value } });
           return doc.save();
         });
-        const result = await salesService.processSale(makeSaleData(), SALE_ID, 'Edit', makeContext());
+        const result = await salesService.processSale(
+          makeSaleData(),
+          SALE_ID,
+          'Edit',
+          makeContext()
+        );
         expect(result.status).toBe(false);
         expect(salesRepository.save).toHaveBeenCalledTimes(1);
         expect(await Model.collection.findOne({ _id: original._id })).toEqual({
-          ...original.toObject(), [field]: value,
+          ...original.toObject(),
+          [field]: value,
         });
         expect(mockItemRepositoryInstance.updateStock).not.toHaveBeenCalled();
         expect(mockStockLogsRepositoryInstance.createStockLog).not.toHaveBeenCalled();
@@ -1627,8 +1729,10 @@ describe('SalesService', () => {
     const payload = { branch: BRANCH_ID, seatingProtocol: false };
     salesRepository.createOnlineOrder = jest.fn().mockResolvedValue({ status: true });
     await salesService.createOnlineOrder(payload, { staffOrder: true, seatingProtocol: false });
-    expect(salesRepository.createOnlineOrder).toHaveBeenCalledWith(payload,
-      expect.objectContaining({ staffOrder: true, seatingProtocol: true }));
+    expect(salesRepository.createOnlineOrder).toHaveBeenCalledWith(
+      payload,
+      expect.objectContaining({ staffOrder: true, seatingProtocol: true })
+    );
   });
 
   // ── pass-through delegations ──────────────────────────────────────────────

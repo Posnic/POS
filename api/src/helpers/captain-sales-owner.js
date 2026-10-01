@@ -12,7 +12,12 @@ module.exports = function captainSalesOwner(userId) {
       { channel: CHANNEL.TABLESIDE, 'client.staff_id': { $in: identities } },
       {
         $and: [
-          { $or: [{ channel: { $ne: CHANNEL.TABLESIDE } }, { 'client.staff_id': { $in: [null, ''] } }] },
+          {
+            $or: [
+              { channel: { $ne: CHANNEL.TABLESIDE } },
+              { 'client.staff_id': { $in: [null, ''] } },
+            ],
+          },
           { $or: [{ user_id: { $in: identities } }, { created_by_id: { $in: identities } }] },
         ],
       },

@@ -73,21 +73,47 @@ test('paid orders still on the floor use seats; the moving order does not count 
   await expect(check(db, order, { ...table, max_capacity: 5 }, {})).resolves.toBeUndefined();
 });
 
-
-test.each([undefined,null,'',0,-3,'unknown'])('legacy occupant count %p still consumes a seat',async person_count=>{
-  await db.collection('sales').insertOne({...order,_id:new ObjectId(),table_number:'12',sale_process:'KOT',person_count});
-  await expect(check(db,order,{...table,capacity:2,max_capacity:2},{})).rejects.toThrow('enough seats');
-  await expect(check(db,order,{...table,capacity:3,max_capacity:3},{})).resolves.toBeUndefined();
-});
-
-test.each([0,-1,1.5,'invalid',1001])('invalid requested guest count %p cannot bypass move capacity',async guests=>{
-  await expect(check(db,order,table,{guests})).rejects.toThrow('number of guests');
-});
-
-test('omitted guest input preserves current covers and defaults missing legacy covers to one',async()=>{
-  for(const guests of [undefined,null,'']){
-    await expect(check(db,order,{...table,capacity:1,max_capacity:1},{guests})).rejects.toThrow('enough seats');
-    await expect(check(db,{...order,person_count:undefined},{...table,capacity:1,max_capacity:1},{guests})).resolves.toBeUndefined();
+test.each([undefined, null, '', 0, -3, 'unknown'])(
+  'legacy occupant count %p still consumes a seat',
+  async (person_count) => {
+    await db.collection('sales').insertOne({
+      ...order,
+      _id: new ObjectId(),
+      table_number: '12',
+      sale_process: 'KOT',
+      person_count,
+    });
+    await expect(check(db, order, { ...table, capacity: 2, max_capacity: 2 }, {})).rejects.toThrow(
+      'enough seats'
+    );
+    await expect(
+      check(db, order, { ...table, capacity: 3, max_capacity: 3 }, {})
+    ).resolves.toBeUndefined();
   }
-  await expect(check(db,order,{...table,capacity:1,max_capacity:1},{guests:'1'})).resolves.toBeUndefined();
+);
+
+test.each([0, -1, 1.5, 'invalid', 1001])(
+  'invalid requested guest count %p cannot bypass move capacity',
+  async (guests) => {
+    await expect(check(db, order, table, { guests })).rejects.toThrow('number of guests');
+  }
+);
+
+test('omitted guest input preserves current covers and defaults missing legacy covers to one', async () => {
+  for (const guests of [undefined, null, '']) {
+    await expect(
+      check(db, order, { ...table, capacity: 1, max_capacity: 1 }, { guests })
+    ).rejects.toThrow('enough seats');
+    await expect(
+      check(
+        db,
+        { ...order, person_count: undefined },
+        { ...table, capacity: 1, max_capacity: 1 },
+        { guests }
+      )
+    ).resolves.toBeUndefined();
+  }
+  await expect(
+    check(db, order, { ...table, capacity: 1, max_capacity: 1 }, { guests: '1' })
+  ).resolves.toBeUndefined();
 });

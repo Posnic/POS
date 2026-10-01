@@ -135,33 +135,78 @@ test('THE FIFTY-FIFTH ORDER OF THE DAY STILL PRINTS', async () => {
   expect(await offered()).toContain(id);
 });
 
-test.each(['transfer-in', 'transfer-out', 'held'])('%s-only history cannot fill the printer polling batch', async process => {
-  const at = new Date();
-  await db.collection('sales').insertMany(Array.from({ length: 55 }, () => ({
-    _id: new mongoose.Types.ObjectId(), branch_id: BRANCH, sale_process: 'KOT', created_date: at,
-    changes: [{ timestamp: at, items: [{ item_name: 'Already ordered', item_quantity: 1,
-      process: process === 'held' ? 'add' : process, ...(process === 'held' ? { held: true } : {}) }] }],
-  })));
-  const fresh = await aFreshOrder();
-  expect(await offered()).toEqual([fresh]);
-});
+test.each(['transfer-in', 'transfer-out', 'held'])(
+  '%s-only history cannot fill the printer polling batch',
+  async (process) => {
+    const at = new Date();
+    await db.collection('sales').insertMany(
+      Array.from({ length: 55 }, () => ({
+        _id: new mongoose.Types.ObjectId(),
+        branch_id: BRANCH,
+        sale_process: 'KOT',
+        created_date: at,
+        changes: [
+          {
+            timestamp: at,
+            items: [
+              {
+                item_name: 'Already ordered',
+                item_quantity: 1,
+                process: process === 'held' ? 'add' : process,
+                ...(process === 'held' ? { held: true } : {}),
+              },
+            ],
+          },
+        ],
+      }))
+    );
+    const fresh = await aFreshOrder();
+    expect(await offered()).toEqual([fresh]);
+  }
+);
 
 test('an addition after transfer history prints once with its original change index', async () => {
-  const id = await aFreshOrder(), at = new Date();
-  await db.collection('sales').updateOne({ _id: new mongoose.Types.ObjectId(id) }, {
-    $set: { last_printed_change_index: '0' },
-    $push: { changes: { timestamp: at, items: [{ item_name: 'Moved dish', item_quantity: 1, process: 'transfer-out' }] } },
-  });
+  const id = await aFreshOrder(),
+    at = new Date();
+  await db.collection('sales').updateOne(
+    { _id: new mongoose.Types.ObjectId(id) },
+    {
+      $set: { last_printed_change_index: '0' },
+      $push: {
+        changes: {
+          timestamp: at,
+          items: [{ item_name: 'Moved dish', item_quantity: 1, process: 'transfer-out' }],
+        },
+      },
+    }
+  );
   expect(await offered()).toEqual([]);
-  await db.collection('sales').updateOne({ _id: new mongoose.Types.ObjectId(id) }, {
-    $push: { changes: { timestamp: at, items: [{ item_name: 'Extra soup', item_quantity: 1, process: 'add' }] } },
-  });
+  await db.collection('sales').updateOne(
+    { _id: new mongoose.Types.ObjectId(id) },
+    {
+      $push: {
+        changes: {
+          timestamp: at,
+          items: [{ item_name: 'Extra soup', item_quantity: 1, process: 'add' }],
+        },
+      },
+    }
+  );
   const response = await repo.multiKitchenPrintModel(BRANCH, { tillId: 'TILL-1' });
   expect(response.data).toHaveLength(1);
-  expect(response.data[0].print_jobs).toEqual([expect.objectContaining({
-    type: 'modified', change_index: 3, items: [expect.objectContaining({ item_name: 'Extra soup' })],
-  })]);
-  await db.collection('sales').updateOne({ _id: new mongoose.Types.ObjectId(id) }, { $set: { last_printed_change_index: 2 } });
+  expect(response.data[0].print_jobs).toEqual([
+    expect.objectContaining({
+      type: 'modified',
+      change_index: 3,
+      items: [expect.objectContaining({ item_name: 'Extra soup' })],
+    }),
+  ]);
+  await db
+    .collection('sales')
+    .updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: { last_printed_change_index: 2 } }
+    );
   expect(await offered()).toEqual([]);
 });
 

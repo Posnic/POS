@@ -325,22 +325,52 @@ test('UPI QR rejects stale receiving account and non-INR bills', async () => {
   ).rejects.toThrow('Verify the received');
 });
 
-test('a restructure reservation cannot become a payment or be released as an empty bill',async()=>{
-  const locks=require('../../../src/services/captain-restructure-lock');
-  const operation=await locks.reserve(db,{branchId:branch,license},{requestId:'transfer-request-0001',actor:String(user),intent:{kind:'transfer'},sales:[sale]});
-  await expect(service.prepare(req())).rejects.toMatchObject({status:409});
-  await expect(service.record(req({planId:operation._id,version:0,request_id:'payment-request-0001',guest:null,amountMinor:10500,receivedMinor:10500,method:'Cash'}))).rejects.toMatchObject({status:409,message:'This order is being updated. Please retry.'});
-  await expect(guard.mutable(db,await db.collection('sales').findOne({_id:sale._id}))).rejects.toMatchObject({status:409,message:'This order is being updated. Please retry.'});
-  const retained=await db.collection('captain_payment_plans').findOne({_id:operation._id});
-  expect(retained.payments).toEqual([]);expect(retained.stage).toBe('reserved');
-  await locks.cancel(db,{branchId:branch,license},'transfer-request-0001',String(user));
+test('a restructure reservation cannot become a payment or be released as an empty bill', async () => {
+  const locks = require('../../../src/services/captain-restructure-lock');
+  const operation = await locks.reserve(
+    db,
+    { branchId: branch, license },
+    {
+      requestId: 'transfer-request-0001',
+      actor: String(user),
+      intent: { kind: 'transfer' },
+      sales: [sale],
+    }
+  );
+  await expect(service.prepare(req())).rejects.toMatchObject({ status: 409 });
+  await expect(
+    service.record(
+      req({
+        planId: operation._id,
+        version: 0,
+        request_id: 'payment-request-0001',
+        guest: null,
+        amountMinor: 10500,
+        receivedMinor: 10500,
+        method: 'Cash',
+      })
+    )
+  ).rejects.toMatchObject({ status: 409, message: 'This order is being updated. Please retry.' });
+  await expect(
+    guard.mutable(db, await db.collection('sales').findOne({ _id: sale._id }))
+  ).rejects.toMatchObject({ status: 409, message: 'This order is being updated. Please retry.' });
+  const retained = await db.collection('captain_payment_plans').findOne({ _id: operation._id });
+  expect(retained.payments).toEqual([]);
+  expect(retained.stage).toBe('reserved');
+  await locks.cancel(db, { branchId: branch, license }, 'transfer-request-0001', String(user));
   expect((await service.prepare(req())).dueMinor).toBe(10500);
 });
 
-
 test('closed transfer sources do not block collecting the next table bill', async () => {
-  const closed = { ...sale, _id: new ObjectId(), items: [], sales_total: 0,
-    sales_sub_total: 0, tax: 0, floor_closed_at: new Date() };
+  const closed = {
+    ...sale,
+    _id: new ObjectId(),
+    items: [],
+    sales_total: 0,
+    sales_sub_total: 0,
+    tax: 0,
+    floor_closed_at: new Date(),
+  };
   await db.collection('sales').insertOne(closed);
   const plan = await service.prepare(req());
   expect(plan.dueMinor).toBe(10500);
@@ -350,7 +380,9 @@ test('closed transfer sources do not block collecting the next table bill', asyn
 });
 
 test('a table containing only a closed check cannot start collection', async () => {
-  await db.collection('sales').updateOne({ _id: sale._id }, { $set: { floor_closed_at: new Date() } });
+  await db
+    .collection('sales')
+    .updateOne({ _id: sale._id }, { $set: { floor_closed_at: new Date() } });
   await expect(service.prepare(req())).rejects.toMatchObject({ status: 409 });
   expect(await db.collection('captain_payment_plans').countDocuments({})).toBe(0);
 });
@@ -364,7 +396,7 @@ test('closure after payment snapshot cannot acquire a collection fence', async (
     return insert(...args);
   };
   const input = req();
-  input.db = { collection: name => name === 'captain_payment_plans' ? plans : original(name) };
+  input.db = { collection: (name) => (name === 'captain_payment_plans' ? plans : original(name)) };
   await expect(service.prepare(input)).rejects.toMatchObject({ status: 409 });
   expect((await original('sales').findOne({ _id: sale._id })).captain_payment_plan).toBeUndefined();
 });

@@ -1474,19 +1474,37 @@ const processSale = async (
       // A hydration default was not stored on a legacy document: compare
       // absence rather than requiring that synthesized default in MongoDB.
       doc.$where = { ...(doc.$where || {}) };
-      for (const field of ['payment_status', 'paid_amount', 'partial_balance',
-        'partial_amounts', 'payment_pending', 'sale_process', 'floor_closed_at', 'order_state',
-        'person_count', 'table_number', 'table_id', 'dine_type', 'seating_request_id',
-        'seating_primary_id', 'seating_table_ids', 'seating_capacity_revision'])
-        doc.$where[field] = existingSale?.[field] === undefined || existingSale?.$isDefault?.(field)
-          ? { $exists: false } : existingSale[field];
+      for (const field of [
+        'payment_status',
+        'paid_amount',
+        'partial_balance',
+        'partial_amounts',
+        'payment_pending',
+        'sale_process',
+        'floor_closed_at',
+        'order_state',
+        'person_count',
+        'table_number',
+        'table_id',
+        'dine_type',
+        'seating_request_id',
+        'seating_primary_id',
+        'seating_table_ids',
+        'seating_capacity_revision',
+      ])
+        doc.$where[field] =
+          existingSale?.[field] === undefined || existingSale?.$isDefault?.(field)
+            ? { $exists: false }
+            : existingSale[field];
       if (doc.seating_request_id || context.branchSettings?.table_options === true) {
         const db = await BaseModel.getDb();
         const scope = { branchId, license: licenseId };
         const seating = require('./seating-claims');
         const permit = await seating.reserveEditCapacity(db, scope, existingSale, {
-          table: updateData.table_number, guests: updateData.person_count,
-          dine_type: updateData.dine_type, sale_process: updateData.sale_process,
+          table: updateData.table_number,
+          guests: updateData.person_count,
+          dine_type: updateData.dine_type,
+          sale_process: updateData.sale_process,
         });
         if (permit) {
           updateData.seating_capacity_revision = permit.id;
@@ -1855,8 +1873,11 @@ const processSale = async (
     };
   } finally {
     if (finishCapacityEdit) {
-      try { await finishCapacityEdit(); }
-      catch (error) { console.error('Order capacity reconciliation pending:', error); }
+      try {
+        await finishCapacityEdit();
+      } catch (error) {
+        console.error('Order capacity reconciliation pending:', error);
+      }
     }
     if (finishCaptainEdit) await finishCaptainEdit();
   }

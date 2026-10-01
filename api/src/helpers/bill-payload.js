@@ -88,9 +88,13 @@ function qtyText(value) {
   return Number.isInteger(n) ? String(n) : String(Number(n.toFixed(3)));
 }
 function billable(line) {
-  return line && !line.return && !line.cancelled &&
+  return (
+    line &&
+    !line.return &&
+    !line.cancelled &&
     !['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) &&
-    num(line.quantity ?? line.item_quantity ?? line.qty) > 0;
+    num(line.quantity ?? line.item_quantity ?? line.qty) > 0
+  );
 }
 
 /**
@@ -151,7 +155,9 @@ function itemLines(sale, branch, allocation = null) {
         rate: rate > 0 ? rate.toFixed(monetary.currencyDigits) : '',
         qty: qtyText(qty),
         amount: require('../utils/currency').fromMinor(
-          allocation ? (allocation.lines[index].components.find(row=>row.key==='base')?.minor || 0) : require('../utils/currency').toMinor(rate * qty, monetary),
+          allocation
+            ? allocation.lines[index].components.find((row) => row.key === 'base')?.minor || 0
+            : require('../utils/currency').toMinor(rate * qty, monetary),
           monetary
         ),
       };
@@ -205,8 +211,16 @@ function trimRate(value) {
  * where the shop's own template runs and knows better than this does.
  */
 function taxRows(sale, branch, allocation = null) {
-  if (allocation) return Object.entries(allocation.components).filter(([key])=>key.startsWith('tax:'))
-    .map(([key,minor])=>({label:key.slice(4),amount:require('../utils/currency').fromMinor(minor,require('../utils/currency').policy(branch))}));
+  if (allocation)
+    return Object.entries(allocation.components)
+      .filter(([key]) => key.startsWith('tax:'))
+      .map(([key, minor]) => ({
+        label: key.slice(4),
+        amount: require('../utils/currency').fromMinor(
+          minor,
+          require('../utils/currency').policy(branch)
+        ),
+      }));
   const tax = num(sale && sale.tax);
   if (tax <= 0) return [];
   const indian = String((branch && branch.indian_gst) || '').toLowerCase();

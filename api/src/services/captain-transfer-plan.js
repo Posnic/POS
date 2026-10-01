@@ -18,9 +18,12 @@ function units(value) {
 // discounts and round-off, without multiplying money by a floating-point ratio.
 function divide(amount, left, right) {
   if (!Number.isSafeInteger(amount) || left + right <= 0) fail('Invalid transfer amount.');
-  const magnitude = BigInt(Math.abs(amount)), total = BigInt(left + right);
-  const a = magnitude * BigInt(left), b = magnitude * BigInt(right);
-  let first = a / total, second = b / total;
+  const magnitude = BigInt(Math.abs(amount)),
+    total = BigInt(left + right);
+  const a = magnitude * BigInt(left),
+    b = magnitude * BigInt(right);
+  let first = a / total,
+    second = b / total;
   if (first + second < magnitude) {
     if (a % total >= b % total) first++;
     else second++;
@@ -35,23 +38,39 @@ function divide(amount, left, right) {
 function plan(sale, branch, requested) {
   if (!Array.isArray(requested) || !requested.length || requested.length > 200)
     fail('Choose items to transfer.');
-  const live = (sale.items || []).filter(line => line && !line.return && !line.cancelled &&
-    !['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) &&
-    Number(line.quantity ?? line.item_quantity ?? line.qty) > 0 && String(line.name || line.item_name || '').trim());
+  const live = (sale.items || []).filter(
+    (line) =>
+      line &&
+      !line.return &&
+      !line.cancelled &&
+      !['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()) &&
+      Number(line.quantity ?? line.item_quantity ?? line.qty) > 0 &&
+      String(line.name || line.item_name || '').trim()
+  );
   orderLine.validate(live);
   const discount = require('./captain-transfer-discount');
   const legacyDiscount = sale.captain_transfer_allocation ? null : discount.legacy(sale, branch);
   const Money = require('../utils/currency');
-  const billingSale = legacyDiscount?.billDiscountMinor ? { ...sale,
-    discount: Money.fromMinor(legacyDiscount.totalDiscountMinor, Money.policy(branch)) } : sale;
-  const snapshot = snapshotFrom([billingSale], branch, sale.table_number || '', { allowZero: true });
-  if (legacyDiscount?.billDiscountMinor) discount.track(snapshot.lines, legacyDiscount.billDiscountMinor);
+  const billingSale = legacyDiscount?.billDiscountMinor
+    ? {
+        ...sale,
+        discount: Money.fromMinor(legacyDiscount.totalDiscountMinor, Money.policy(branch)),
+      }
+    : sale;
+  const snapshot = snapshotFrom([billingSale], branch, sale.table_number || '', {
+    allowZero: true,
+  });
+  if (legacyDiscount?.billDiscountMinor)
+    discount.track(snapshot.lines, legacyDiscount.billDiscountMinor);
   // Billing excludes cancelled/returned lines; kitchen history must use that
   // same live set or a mixed selection could move non-billable ghost dishes.
-  const service = rounds({ ...sale, items: live }).flatMap(round => round.items);
+  const service = rounds({ ...sale, items: live }).flatMap((round) => round.items);
   const serviceTotals = new Map();
   for (const line of service)
-    serviceTotals.set(line.line_key, (serviceTotals.get(line.line_key) || 0) + units(line.quantity));
+    serviceTotals.set(
+      line.line_key,
+      (serviceTotals.get(line.line_key) || 0) + units(line.quantity)
+    );
   snapshot.lines.forEach((line, index) => {
     // Legacy aliases may disagree (quantity vs item_quantity). Do not choose
     // one silently and create a bill/service mismatch during a transfer.
@@ -62,10 +81,12 @@ function plan(sale, branch, requested) {
   for (const request of requested) {
     if (!request || typeof request.id !== 'string' || selections.has(request.id))
       fail('Choose each item once.');
-    const line = service.find(row => row.id === request.id);
+    const line = service.find((row) => row.id === request.id);
     if (!line) fail('Order changed. Refresh before transferring items.');
-    const quantity = units(request.quantity), available = units(line.quantity);
-    if (!quantity || quantity > available) fail('Order changed. Refresh before transferring items.');
+    const quantity = units(request.quantity),
+      available = units(line.quantity);
+    if (!quantity || quantity > available)
+      fail('Order changed. Refresh before transferring items.');
     const alreadyServed = units(line.served);
     // For a partly served round, the staff member must identify which plates
     // move. Guessing would change the kitchen's outstanding quantity.
@@ -77,7 +98,11 @@ function plan(sale, branch, requested) {
       else fail('Choose the served quantity to transfer.');
     }
     const servedUnits = units(served);
-    if (servedUnits > quantity || servedUnits > alreadyServed || quantity - servedUnits > available - alreadyServed)
+    if (
+      servedUnits > quantity ||
+      servedUnits > alreadyServed ||
+      quantity - servedUnits > available - alreadyServed
+    )
       fail('Order changed. Refresh before transferring items.');
     selections.set(request.id, { quantity, served: servedUnits });
   }
@@ -93,29 +118,51 @@ function plan(sale, branch, requested) {
     // Within the selected unserved plates, move collected plates first, then
     // ready plates. The preview exposes these counts; no plate goes backwards
     // from collected to preparing and neither table gains new cooked food.
-    const collected = units(current.collected), ready = units(current.ready);
+    const collected = units(current.collected),
+      ready = units(current.ready);
     const picked = Math.min(selected.quantity - selected.served, collected - units(line.served));
     const readyOnly = Math.min(selected.quantity - selected.served - picked, ready - collected);
     const movedCollected = selected.served + picked;
     const movedReady = movedCollected + readyOnly;
     for (const [target, quantity, served, readyCount, collectedCount] of [
-      [source, units(line.quantity) - selected.quantity, units(line.served) - selected.served, ready - movedReady, collected - movedCollected],
+      [
+        source,
+        units(line.quantity) - selected.quantity,
+        units(line.served) - selected.served,
+        ready - movedReady,
+        collected - movedCollected,
+      ],
       [destination, selected.quantity, selected.served, movedReady, movedCollected],
     ]) {
       if (!quantity) continue;
-      target.rounds.push({ ...structuredClone(line), quantity: quantity / 1000,
-        served: served / 1000, remaining: (quantity - served) / 1000,
-        ready: readyCount / 1000, collected: collectedCount / 1000,
-        collector: status.collector || '', collectorName: status.collectorName || '',
-        readyVersion: status.readyVersion || 0, kitchenState: work.state || 'new',
-        origin: line.origin ? structuredClone(line.origin) : { saleId: String(sale._id), roundLineId: line.id } });
+      target.rounds.push({
+        ...structuredClone(line),
+        quantity: quantity / 1000,
+        served: served / 1000,
+        remaining: (quantity - served) / 1000,
+        ready: readyCount / 1000,
+        collected: collectedCount / 1000,
+        collector: status.collector || '',
+        collectorName: status.collectorName || '',
+        readyVersion: status.readyVersion || 0,
+        kitchenState: work.state || 'new',
+        origin: line.origin
+          ? structuredClone(line.origin)
+          : { saleId: String(sale._id), roundLineId: line.id },
+      });
     }
   }
   snapshot.lines.forEach((line, index) => {
     const key = orderLine.key(live[index]);
-    const total = units(line.quantity), moved = movedByLine.get(key) || 0;
+    const total = units(line.quantity),
+      moved = movedByLine.get(key) || 0;
     if (moved > total) fail('Order changed. Refresh before transferring items.');
-    const views = [source, destination].map(() => ({ ...structuredClone(line), lineKey: key, components: [], amountMinor: 0 }));
+    const views = [source, destination].map(() => ({
+      ...structuredClone(line),
+      lineKey: key,
+      components: [],
+      amountMinor: 0,
+    }));
     for (const component of line.components) {
       divide(component.minor, total - moved, moved).forEach((minor, side) => {
         views[side].components.push({ key: component.key, minor });
@@ -124,27 +171,53 @@ function plan(sale, branch, requested) {
     }
     [total - moved, moved].forEach((quantity, side) => {
       if (!quantity) return;
-      const target = side ? destination : source, view = views[side];
+      const target = side ? destination : source,
+        view = views[side];
       view.quantity = quantity / 1000;
       if (line.billDiscountMinor !== undefined)
         view.billDiscountMinor = divide(line.billDiscountMinor, total - moved, moved)[side];
       target.lines.push(view);
       target.totalMinor += view.amountMinor;
       for (const component of view.components)
-        target.components[component.key] = (target.components[component.key] || 0) + component.minor;
+        target.components[component.key] =
+          (target.components[component.key] || 0) + component.minor;
     });
   });
-  if (!destination.lines.length || source.totalMinor < 0 || destination.totalMinor < 0 ||
-    source.totalMinor + destination.totalMinor !== snapshot.totalMinor)
+  if (
+    !destination.lines.length ||
+    source.totalMinor < 0 ||
+    destination.totalMinor < 0 ||
+    source.totalMinor + destination.totalMinor !== snapshot.totalMinor
+  )
     fail('The bill totals do not match. Refresh and try again.');
   // Legacy table/cover writers do not always advance updated_date. A preview
   // belongs to its seating snapshot as well as its money and kitchen state.
-  const seating = Object.fromEntries(['table_number', 'table_id', 'person_count', 'dine_type',
-    'seating_request_id', 'seating_primary_id', 'seating_table_ids', 'seating_capacity_revision']
-    .map(key => [key, sale[key]]));
-  const revision = createHash('sha256').update(JSON.stringify({ bill: snapshot.revision, seating, service, work: sale.kitchen_work || {} })).digest('hex');
-  return { sourceId: String(sale._id), revision, currencyCode: snapshot.currencyCode,
-    currencyDigits: snapshot.currencyDigits, currencySymbol: snapshot.currencySymbol,
-    totalMinor: snapshot.totalMinor, source, destination };
+  const seating = Object.fromEntries(
+    [
+      'table_number',
+      'table_id',
+      'person_count',
+      'dine_type',
+      'seating_request_id',
+      'seating_primary_id',
+      'seating_table_ids',
+      'seating_capacity_revision',
+    ].map((key) => [key, sale[key]])
+  );
+  const revision = createHash('sha256')
+    .update(
+      JSON.stringify({ bill: snapshot.revision, seating, service, work: sale.kitchen_work || {} })
+    )
+    .digest('hex');
+  return {
+    sourceId: String(sale._id),
+    revision,
+    currencyCode: snapshot.currencyCode,
+    currencyDigits: snapshot.currencyDigits,
+    currencySymbol: snapshot.currencySymbol,
+    totalMinor: snapshot.totalMinor,
+    source,
+    destination,
+  };
 }
 module.exports = { plan, divide, units };

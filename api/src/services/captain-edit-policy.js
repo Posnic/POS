@@ -26,17 +26,20 @@ async function authorize(req, { preview = false } = {}) {
         (incoming.get(lineIdentity.key(line)) || 0) <
         Number(line.item_quantity ?? line.quantity ?? 0)
     );
-  const currentDiscount = sale.captain_transfer_allocation ? require('./captain-transfer-discount').editorValue(sale) : sale;
+  const currentDiscount = sale.captain_transfer_allocation
+    ? require('./captain-transfer-discount').editorValue(sale)
+    : sale;
   const discount =
     body.extra_discount != null &&
     (Number(body.extra_discount) !== Number(currentDiscount.extra_discount || 0) ||
-      (Number(body.extra_discount) !== 0 && body.extra_discount_type !== currentDiscount.extra_discount_type));
+      (Number(body.extra_discount) !== 0 &&
+        body.extra_discount_type !== currentDiscount.extra_discount_type));
   const reason = String(body.change_reason || body.discount_description || '').trim();
   if (!preview && (reduced || discount) && (reason.length < 3 || reason.length > 200))
     fail('Enter a reason for this change.', 422);
   const actions = [...(reduced ? ['void_sale'] : []), ...(discount ? ['discount_apply'] : [])];
   const approved = [];
-  for (const action of (preview ? [] : actions)) {
+  for (const action of preview ? [] : actions) {
     const cap = Number(req.user.access?.pos?.discount_max_percent) || 0;
     const percentage =
       body.extra_discount_type === 'percent'

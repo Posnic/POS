@@ -55,11 +55,14 @@ async function start(req) {
   );
   if (!reserved.matchedCount) fail('Wait before requesting another code.', 429);
   try {
-    const marked = await req.db.collection('users').updateOne({
-      ...filter,
-      phone: user.phone || { $in: [null, ''] },
-      phone_verification_id: user.phone_verification_id ?? { $exists: false },
-    }, { $set: { phone_verification_id: challenge } });
+    const marked = await req.db.collection('users').updateOne(
+      {
+        ...filter,
+        phone: user.phone || { $in: [null, ''] },
+        phone_verification_id: user.phone_verification_id ?? { $exists: false },
+      },
+      { $set: { phone_verification_id: challenge } }
+    );
     if (!marked.matchedCount) fail('Your account changed. Sign in again.', 409);
     const sent = await messaging.sendSms(
       c.branchId,
@@ -91,7 +94,11 @@ async function verify(req) {
   const selector = { _id: key(c, user), challenge, branchId: c.branchId };
   const current = await collection.findOne(selector);
   if (!current) fail('Request a new verification code.', 409);
-  if (current.state === 'verified' && user.phone === current.phone && user.phone_verification_id === challenge)
+  if (
+    current.state === 'verified' &&
+    user.phone === current.phone &&
+    user.phone_verification_id === challenge
+  )
     return { saved: true, phone: current.phone };
   if (current.state !== 'applying') {
     const reserved = await collection.updateOne(
@@ -112,12 +119,14 @@ async function verify(req) {
     );
     if (!claimed.matchedCount) fail('Request a new verification code.', 409);
   }
-  const changed = await req.db
-    .collection('users')
-    .updateOne(
-      { ...filter, phone_verification_id: challenge, phone: current.previousPhone || { $in: [null, ''] } },
-      { $set: { phone: current.phone, phone_verified_at: new Date(), updated_date: new Date() } }
-    );
+  const changed = await req.db.collection('users').updateOne(
+    {
+      ...filter,
+      phone_verification_id: challenge,
+      phone: current.previousPhone || { $in: [null, ''] },
+    },
+    { $set: { phone: current.phone, phone_verified_at: new Date(), updated_date: new Date() } }
+  );
   if (!changed.matchedCount) {
     const latest = await req.db.collection('users').findOne(filter);
     if (latest?.phone !== current.phone || latest?.phone_verification_id !== challenge) {

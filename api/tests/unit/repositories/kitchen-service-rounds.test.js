@@ -183,11 +183,13 @@ test('wall display carries partial ready, picked-up and served quantities from t
   expect(result.data).toEqual([]);
 });
 
-
 test('mark served waits for order restructuring but remains available during normal payment', async () => {
-  await collection.updateOne({_id:id},{$set:{captain_payment_plan:'restructure:test-reservation'}});
+  await collection.updateOne(
+    { _id: id },
+    { $set: { captain_payment_plan: 'restructure:test-reservation' } }
+  );
   expect((await repository.serveKitchenItems(request())).status).toBe(false);
-  expect((await collection.findOne({_id:id})).kitchen_service).toBeUndefined();
-  await collection.updateOne({_id:id},{$set:{captain_payment_plan:'normal-payment'}});
+  expect((await collection.findOne({ _id: id })).kitchen_service).toBeUndefined();
+  await collection.updateOne({ _id: id }, { $set: { captain_payment_plan: 'normal-payment' } });
   expect((await repository.serveKitchenItems(request())).status).toBe(true);
 });

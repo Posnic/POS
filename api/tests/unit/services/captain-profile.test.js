@@ -21,16 +21,14 @@ beforeEach(async () => {
   branch = new ObjectId();
   user = new ObjectId();
   await db.collection('branches').insertOne({ _id: branch, license });
-  await db
-    .collection('users')
-    .insertOne({
-      _id: user,
-      license,
-      activate: true,
-      name: 'Original',
-      email: 'staff@example.test',
-      password: await bcrypt.hash(Buffer.from('old-secret-123').toString('base64'), 4),
-    });
+  await db.collection('users').insertOne({
+    _id: user,
+    license,
+    activate: true,
+    name: 'Original',
+    email: 'staff@example.test',
+    password: await bcrypt.hash(Buffer.from('old-secret-123').toString('base64'), 4),
+  });
 });
 const req = (body) => ({
   db,

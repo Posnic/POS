@@ -44,7 +44,8 @@ async function merge(req) {
 async function complete(req) {
   const c = await scope(req);
   const pending = await seating.find(req.db, c, req.body?.request_id);
-  if (pending?.merge_target && !allowed(req.user, 'sales', 'merge')) fail('Permission is required.', 403);
+  if (pending?.merge_target && !allowed(req.user, 'sales', 'merge'))
+    fail('Permission is required.', 403);
   const claim = await seating.completeMove(req.db, c, req.body?.request_id, String(req.user._id));
   try {
     require('../sync/outbox').enqueue({
@@ -70,13 +71,18 @@ async function cancel(req) {
   return { request_id: req.body.request_id, state: 'cancelled' };
 }
 async function guests(req) {
-  const c = await scope(req), body = req.body || {};
+  const c = await scope(req),
+    body = req.body || {};
   const result = await seating.changeGuests(req.db, c, body.orderId, {
-    request_id: body.request_id, guests: body.guests, actor: String(req.user._id),
+    request_id: body.request_id,
+    guests: body.guests,
+    actor: String(req.user._id),
   });
   try {
     require('../sync/outbox').enqueue({
-      collection: 'sales', documentId: new ObjectId(result.orderId), reason: 'sale',
+      collection: 'sales',
+      documentId: new ObjectId(result.orderId),
+      reason: 'sale',
     });
   } catch {
     /* Periodic sync discovers the updated order. */
@@ -84,13 +90,24 @@ async function guests(req) {
   return result;
 }
 async function guestsStatus(req) {
-  const c = await scope(req), id = req.body?.request_id;
+  const c = await scope(req),
+    id = req.body?.request_id;
   if (typeof id !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(id))
     fail('A seating request ID is required.');
-  const journal = await require('./captain-restructure-lock').read(req.db, c, id, String(req.user._id), { optional: true });
+  const journal = await require('./captain-restructure-lock').read(
+    req.db,
+    c,
+    id,
+    String(req.user._id),
+    { optional: true }
+  );
   if (!journal) return { request_id: id, state: 'unknown' };
   if (journal.intent.kind !== 'covers') fail('This seating request has already been used.', 409);
-  return { request_id: id, orderId: journal.intent.orderId, guests: journal.intent.guests,
-    state: ['completed', 'cancelled'].includes(journal.stage) ? journal.stage : 'pending' };
+  return {
+    request_id: id,
+    orderId: journal.intent.orderId,
+    guests: journal.intent.guests,
+    state: ['completed', 'cancelled'].includes(journal.stage) ? journal.stage : 'pending',
+  };
 }
 module.exports = { prepare, merge, complete, cancel, guests, guestsStatus };

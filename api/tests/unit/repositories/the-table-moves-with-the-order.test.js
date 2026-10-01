@@ -189,17 +189,15 @@ test.each(['held', 'cleaning'])('moving cannot occupy a table marked %s', async 
       { $set: { license: LICENSE, table_options: true } },
       { upsert: true }
     );
-  await db
-    .collection('tableorder')
-    .insertOne({
-      _id: TABLE_TWELVE,
-      branch_id: BRANCH,
-      license: LICENSE,
-      tableorder_value: '12',
-      capacity: 6,
-      max_capacity: 6,
-      service_state,
-    });
+  await db.collection('tableorder').insertOne({
+    _id: TABLE_TWELVE,
+    branch_id: BRANCH,
+    license: LICENSE,
+    tableorder_value: '12',
+    capacity: 6,
+    max_capacity: 6,
+    service_state,
+  });
   const id = await orderOnTableFour();
   const result = await move(id, { number: '12', tableId: String(TABLE_TWELVE) });
   expect(result.status).toBe(false);

@@ -185,19 +185,17 @@ test('console transport cannot pretend a verification email was delivered', asyn
 });
 
 test('verified email invalidates both reset-link formats atomically and retry does not rotate again', async () => {
-  await db
-    .collection('users')
-    .updateOne(
-      { _id: user },
-      {
-        $set: {
-          userkey: 'old-reset-link',
-          expire_date: new Date(Date.now() + 60000),
-          passwordResetToken: 'old-token',
-          passwordResetExpires: new Date(Date.now() + 60000),
-        },
-      }
-    );
+  await db.collection('users').updateOne(
+    { _id: user },
+    {
+      $set: {
+        userkey: 'old-reset-link',
+        expire_date: new Date(Date.now() + 60000),
+        passwordResetToken: 'old-token',
+        passwordResetExpires: new Date(Date.now() + 60000),
+      },
+    }
+  );
   const challenge = await begin();
   await service.verify(req(challenge));
   const changed = await db.collection('users').findOne({ _id: user });

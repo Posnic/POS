@@ -32,7 +32,8 @@ async function check(db, order, table, input) {
     fail('Enter the number of guests.');
   // An old check without a recorded party size is still an occupied table.
   // Use the same minimum as seating claims, never zero or a negative count.
-  const covers = value => Number.isFinite(Number(value)) && Number(value) >= 1 ? Number(value) : 1;
+  const covers = (value) =>
+    Number.isFinite(Number(value)) && Number(value) >= 1 ? Number(value) : 1;
   const guests = covers(requested) + other.reduce((sum, row) => sum + covers(row.person_count), 0);
   if (!accommodates(table, guests)) fail('Choose a table with enough seats.', 409);
 }

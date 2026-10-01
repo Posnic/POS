@@ -1044,7 +1044,9 @@ const formatSaleListEntry = (saleDoc) => {
   const customer = doc.customer && typeof doc.customer === 'object' ? doc.customer : undefined;
 
   return {
-    ...(currency ? { currencyCode: currency.currencyCode, currencyDigits: currency.currencyDigits } : {}),
+    ...(currency
+      ? { currencyCode: currency.currencyCode, currencyDigits: currency.currencyDigits }
+      : {}),
     _id: id,
     id,
     sales_id: doc.sales_id || doc.invoice_number || doc.alternative_id || '',

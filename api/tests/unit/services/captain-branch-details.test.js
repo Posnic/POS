@@ -17,14 +17,12 @@ beforeEach(async () => {
   branch = new ObjectId();
   license = new ObjectId();
   user = new ObjectId();
-  await db
-    .collection('branches')
-    .insertOne({
-      _id: branch,
-      license,
-      branch_name: 'Garden',
-      captain_payments: { enabled: true },
-    });
+  await db.collection('branches').insertOne({
+    _id: branch,
+    license,
+    branch_name: 'Garden',
+    captain_payments: { enabled: true },
+  });
 });
 const req = (body = {}, role = 'manager') => ({
   db,

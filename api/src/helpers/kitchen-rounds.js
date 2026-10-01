@@ -22,8 +22,13 @@ function quantity(line) {
 function rounds(sale, { descriptions = true } = {}) {
   const result = [];
   const current = new Map();
-  const items = (sale.items || []).filter(line => line && !line.return && !line.cancelled &&
-    !['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase()));
+  const items = (sale.items || []).filter(
+    (line) =>
+      line &&
+      !line.return &&
+      !line.cancelled &&
+      !['cancelled', 'canceled'].includes(String(line.status || '').toLowerCase())
+  );
   for (const line of items) {
     const key = orderLine.key(line) || product(line);
     current.set(key, (current.get(key) || 0) + quantity(line));
@@ -55,8 +60,11 @@ function rounds(sale, { descriptions = true } = {}) {
       } else if (String(line.process).toLowerCase() === 'transfer-out') {
         // A transfer names the original round; cancelling newest-first would
         // move the wrong plates when the customer orders the same dish again.
-        const original = result.find(row => row.id === line.source_round_line && row.line_key === key);
-        if (original) original.quantity = Math.max(0, Math.round((original.quantity - qty) * 1000) / 1000);
+        const original = result.find(
+          (row) => row.id === line.source_round_line && row.line_key === key
+        );
+        if (original)
+          original.quantity = Math.max(0, Math.round((original.quantity - qty) * 1000) / 1000);
       } else if (String(line.process).toLowerCase() === 'cancel') {
         let remaining = qty;
         // Cancel the newest outstanding additions first, keeping earlier service history.
@@ -74,9 +82,14 @@ function rounds(sale, { descriptions = true } = {}) {
           line_key: key,
           ...serviceLine.metadata(line),
           ...kitchenAmount.snapshot(line),
-          ordered_at: (transferred && date(line.original_ordered_at)) || date(change.timestamp) || date(sale.created_date),
+          ordered_at:
+            (transferred && date(line.original_ordered_at)) ||
+            date(change.timestamp) ||
+            date(sale.created_date),
           ...(transferred && line.transfer_origin ? { origin: { ...line.transfer_origin } } : {}),
-          ...(transferred && date(line.original_fired_at) ? { fired_at: date(line.original_fired_at) } : {}),
+          ...(transferred && date(line.original_fired_at)
+            ? { fired_at: date(line.original_fired_at) }
+            : {}),
           quantity: qty,
           name: String(line.item_name || line.name || ''),
           note: String(

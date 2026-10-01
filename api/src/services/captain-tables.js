@@ -43,7 +43,9 @@ function view(row, orders = [], claim = null) {
             primary_id: claim.primary,
             table_ids: claim.tables,
             labels: claim.labels,
-            guests: orders.length ? orders.reduce((sum, order) => sum + (Number(order.person_count) || 0), 0) : claim.guests,
+            guests: orders.length
+              ? orders.reduce((sum, order) => sum + (Number(order.person_count) || 0), 0)
+              : claim.guests,
           },
         }
       : {}),

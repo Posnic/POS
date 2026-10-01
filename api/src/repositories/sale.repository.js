@@ -341,10 +341,10 @@ class SalesRepository {
       // changes line aliases or derives totals from unit prices.
       const transferredBill = saleDoc.captain_transfer_allocation
         ? require('../helpers/bill-payload').buildBillPayload(
-          saleDoc, saleDoc.captain_transfer_allocation
-        )
+            saleDoc,
+            saleDoc.captain_transfer_allocation
+          )
         : null;
-
 
       // Normalise legacy extra discount fields so that the sales edit and
       // return screens always receive meaningful values, even for older
@@ -1979,10 +1979,17 @@ class SalesRepository {
         await require('../services/captain-payment-guard').mutable(await BaseModel.getDb(), sale);
         sale.set('captain_payment_plan', undefined);
       }
-      const expectedCapacity = Object.prototype.hasOwnProperty.call(sale.$where || {}, 'seating_capacity_revision')
-        ? sale.$where.seating_capacity_revision : sale.seating_capacity_revision ?? { $exists: false };
-      sale.$where = { ...(sale.$where || {}), captain_payment_plan: { $exists: false },
-        seating_capacity_revision: expectedCapacity };
+      const expectedCapacity = Object.prototype.hasOwnProperty.call(
+        sale.$where || {},
+        'seating_capacity_revision'
+      )
+        ? sale.$where.seating_capacity_revision
+        : (sale.seating_capacity_revision ?? { $exists: false });
+      sale.$where = {
+        ...(sale.$where || {}),
+        captain_payment_plan: { $exists: false },
+        seating_capacity_revision: expectedCapacity,
+      };
     }
     return sale.save();
   }
@@ -3160,13 +3167,22 @@ class SalesRepository {
       if (doc.captain_transfer_allocation) {
         const bill = buildBillPayload(doc, doc.captain_transfer_allocation);
         const currency = Money.policy(doc.captain_transfer_allocation);
-        return { ...doc, items_total: bill.total,
-          items_return_total: Money.fromMinor(Money.toMinor(Number(doc.items_return_total) || 0, currency), currency),
-          currencyCode: currency.currencyCode, currencyDigits: currency.currencyDigits };
+        return {
+          ...doc,
+          items_total: bill.total,
+          items_return_total: Money.fromMinor(
+            Money.toMinor(Number(doc.items_return_total) || 0, currency),
+            currency
+          ),
+          currencyCode: currency.currencyCode,
+          currencyDigits: currency.currencyDigits,
+        };
       }
-      return { ...doc,
+      return {
+        ...doc,
         items_total: round2(doc.items_total ?? doc.sales_total ?? doc.total ?? 0),
-        items_return_total: round2(doc.items_return_total ?? 0) };
+        items_return_total: round2(doc.items_return_total ?? 0),
+      };
     });
   }
 
@@ -3179,15 +3195,23 @@ class SalesRepository {
       for await (const doc of cursor) {
         const [row] = this._renderableSaleRows([doc]);
         const code = /^[A-Z]{3}$/.test(row.currencyCode || '') ? row.currencyCode : '';
-        const digits = Number.isInteger(row.currencyDigits) && row.currencyDigits >= 0 && row.currencyDigits <= 4
-          ? row.currencyDigits : 2;
-        const group = groups.get(code) || { currencyCode: code, currencyDigits: digits, sale: 0n, returned: 0n };
+        const digits =
+          Number.isInteger(row.currencyDigits) && row.currencyDigits >= 0 && row.currencyDigits <= 4
+            ? row.currencyDigits
+            : 2;
+        const group = groups.get(code) || {
+          currencyCode: code,
+          currencyDigits: digits,
+          sale: 0n,
+          returned: 0n,
+        };
         group.currencyDigits = Math.max(group.currencyDigits, digits);
         // Four-place integer accumulation avoids floating point drift between
         // bills. Keep legacy unknown currency separate from named currencies.
-        const minor = amount => {
+        const minor = (amount) => {
           const value = Math.round(Number(amount) * 10000);
-          if (!Number.isSafeInteger(value)) throw new Error('Activity amount is outside the supported range.');
+          if (!Number.isSafeInteger(value))
+            throw new Error('Activity amount is outside the supported range.');
           return BigInt(value);
         };
         group.sale += minor(row.items_total);
@@ -3197,34 +3221,53 @@ class SalesRepository {
     } finally {
       await cursor.close();
     }
-    const amount = value => {
+    const amount = (value) => {
       const number = Number(value);
-      if (!Number.isSafeInteger(number)) throw new Error('Activity total is outside the supported range.');
+      if (!Number.isSafeInteger(number))
+        throw new Error('Activity total is outside the supported range.');
       return number / 10000;
     };
-    return [...groups.values()].sort((a, b) => a.currencyCode.localeCompare(b.currencyCode)).map(group => ({
-      currencyCode: group.currencyCode, currencyDigits: group.currencyDigits,
-      total: amount(group.sale), return_total: amount(group.returned),
-    }));
+    return [...groups.values()]
+      .sort((a, b) => a.currencyCode.localeCompare(b.currencyCode))
+      .map((group) => ({
+        currencyCode: group.currencyCode,
+        currencyDigits: group.currencyDigits,
+        total: amount(group.sale),
+        return_total: amount(group.returned),
+      }));
   }
 
   _lineActivityCurrencyTotals(sales, returns) {
     const groups = new Map();
-    for (const [rows, field] of [[sales, 'total'], [returns, 'return_total']]) {
+    for (const [rows, field] of [
+      [sales, 'total'],
+      [returns, 'return_total'],
+    ]) {
       for (const row of rows) {
-        const code = typeof row._id?.code === 'string' && /^[A-Z]{3}$/.test(row._id.code) ? row._id.code : '';
-        const digits = Number.isInteger(row._id?.digits) && row._id.digits >= 0 && row._id.digits <= 4 ? row._id.digits : 2;
-        const group = groups.get(code) || {currencyCode:code,currencyDigits:digits,total:0,return_total:0};
-        group.currencyDigits = Math.max(group.currencyDigits,digits);
+        const code =
+          typeof row._id?.code === 'string' && /^[A-Z]{3}$/.test(row._id.code) ? row._id.code : '';
+        const digits =
+          Number.isInteger(row._id?.digits) && row._id.digits >= 0 && row._id.digits <= 4
+            ? row._id.digits
+            : 2;
+        const group = groups.get(code) || {
+          currencyCode: code,
+          currencyDigits: digits,
+          total: 0,
+          return_total: 0,
+        };
+        group.currencyDigits = Math.max(group.currencyDigits, digits);
         group[field] += Number(row.total_amount) || 0;
-        groups.set(code,group);
+        groups.set(code, group);
       }
     }
-    return [...groups.values()].sort((a,b)=>a.currencyCode.localeCompare(b.currencyCode)).map(group=>({
-      ...group,
-      total: Money.fromMinor(Money.toMinor(group.total,group),group),
-      return_total: Money.fromMinor(Money.toMinor(group.return_total,group),group),
-    }));
+    return [...groups.values()]
+      .sort((a, b) => a.currencyCode.localeCompare(b.currencyCode))
+      .map((group) => ({
+        ...group,
+        total: Money.fromMinor(Money.toMinor(group.total, group), group),
+        return_total: Money.fromMinor(Money.toMinor(group.return_total, group), group),
+      }));
   }
 
   async itemSaleDetailsPage(value, options = {}, { SaleModel } = {}) {
@@ -3343,23 +3386,44 @@ class SalesRepository {
       const salesList = await Model.aggregate([
         { $match: filters },
         { $unwind: '$items' },
-        { $match: {
-          ...filters,
-          // Cancelled preparations stay in audit history but are not sales.
-          // Returns retain their separate existing gross/return accounting.
-          sale_process: { $not: /^(cancelled|canceled)$/i },
-          'items.cancelled': { $in: [null, false, 0, ''] },
-          'items.status': { $not: /^(cancelled|canceled)$/i },
-          $expr: { $gt: [{ $convert: {
-            input: { $ifNull: ['$items.item_quantity', '$items.quantity'] },
-            to: 'double', onError: 0, onNull: 0,
-          } }, 0] },
-        } },
+        {
+          $match: {
+            ...filters,
+            // Cancelled preparations stay in audit history but are not sales.
+            // Returns retain their separate existing gross/return accounting.
+            sale_process: { $not: /^(cancelled|canceled)$/i },
+            'items.cancelled': { $in: [null, false, 0, ''] },
+            'items.status': { $not: /^(cancelled|canceled)$/i },
+            $expr: {
+              $gt: [
+                {
+                  $convert: {
+                    input: { $ifNull: ['$items.item_quantity', '$items.quantity'] },
+                    to: 'double',
+                    onError: 0,
+                    onNull: 0,
+                  },
+                },
+                0,
+              ],
+            },
+          },
+        },
         {
           $group: {
             _id: {
-              code: { $ifNull: ['$captain_transfer_allocation.currencyCode', { $ifNull: ['$currencyCode', ''] }] },
-              digits: { $ifNull: ['$captain_transfer_allocation.currencyDigits', { $ifNull: ['$currencyDigits', 2] }] },
+              code: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyCode',
+                  { $ifNull: ['$currencyCode', ''] },
+                ],
+              },
+              digits: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyDigits',
+                  { $ifNull: ['$currencyDigits', 2] },
+                ],
+              },
             },
             total_amount: {
               $sum: {
@@ -3375,7 +3439,9 @@ class SalesRepository {
         },
       ]);
 
-      const salesValues = salesList.length ? [salesList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)] : [];
+      const salesValues = salesList.length
+        ? [salesList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)]
+        : [];
 
       // Aggregate total quantity for returns side
       const returnList = await Model.aggregate([
@@ -3386,8 +3452,18 @@ class SalesRepository {
         {
           $group: {
             _id: {
-              code: { $ifNull: ['$captain_transfer_allocation.currencyCode', { $ifNull: ['$currencyCode', ''] }] },
-              digits: { $ifNull: ['$captain_transfer_allocation.currencyDigits', { $ifNull: ['$currencyDigits', 2] }] },
+              code: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyCode',
+                  { $ifNull: ['$currencyCode', ''] },
+                ],
+              },
+              digits: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyDigits',
+                  { $ifNull: ['$currencyDigits', 2] },
+                ],
+              },
             },
             total_amount: {
               $sum: '$items_return.returnArray.returnValue.total_amount',
@@ -3399,7 +3475,9 @@ class SalesRepository {
         },
       ]);
 
-      const returnValues = returnList.length ? [returnList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)] : [];
+      const returnValues = returnList.length
+        ? [returnList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)]
+        : [];
 
       const currencyTotals = this._lineActivityCurrencyTotals(salesList, returnList);
       const saleAmount = currencyTotals.length === 1 ? currencyTotals[0].total : 0;
@@ -3509,23 +3587,44 @@ class SalesRepository {
       const salesList = await Model.aggregate([
         { $match: filters },
         { $unwind: '$items' },
-        { $match: {
-          ...filters,
-          // Cancelled preparations stay in audit history but are not sales.
-          // Returns retain their separate existing gross/return accounting.
-          sale_process: { $not: /^(cancelled|canceled)$/i },
-          'items.cancelled': { $in: [null, false, 0, ''] },
-          'items.status': { $not: /^(cancelled|canceled)$/i },
-          $expr: { $gt: [{ $convert: {
-            input: { $ifNull: ['$items.item_quantity', '$items.quantity'] },
-            to: 'double', onError: 0, onNull: 0,
-          } }, 0] },
-        } },
+        {
+          $match: {
+            ...filters,
+            // Cancelled preparations stay in audit history but are not sales.
+            // Returns retain their separate existing gross/return accounting.
+            sale_process: { $not: /^(cancelled|canceled)$/i },
+            'items.cancelled': { $in: [null, false, 0, ''] },
+            'items.status': { $not: /^(cancelled|canceled)$/i },
+            $expr: {
+              $gt: [
+                {
+                  $convert: {
+                    input: { $ifNull: ['$items.item_quantity', '$items.quantity'] },
+                    to: 'double',
+                    onError: 0,
+                    onNull: 0,
+                  },
+                },
+                0,
+              ],
+            },
+          },
+        },
         {
           $group: {
             _id: {
-              code: { $ifNull: ['$captain_transfer_allocation.currencyCode', { $ifNull: ['$currencyCode', ''] }] },
-              digits: { $ifNull: ['$captain_transfer_allocation.currencyDigits', { $ifNull: ['$currencyDigits', 2] }] },
+              code: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyCode',
+                  { $ifNull: ['$currencyCode', ''] },
+                ],
+              },
+              digits: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyDigits',
+                  { $ifNull: ['$currencyDigits', 2] },
+                ],
+              },
             },
             total_amount: {
               $sum: {
@@ -3541,7 +3640,9 @@ class SalesRepository {
         },
       ]);
 
-      const salesValues = salesList.length ? [salesList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)] : [];
+      const salesValues = salesList.length
+        ? [salesList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)]
+        : [];
 
       // Aggregate total quantity for returns side
       const returnList = await Model.aggregate([
@@ -3552,8 +3653,18 @@ class SalesRepository {
         {
           $group: {
             _id: {
-              code: { $ifNull: ['$captain_transfer_allocation.currencyCode', { $ifNull: ['$currencyCode', ''] }] },
-              digits: { $ifNull: ['$captain_transfer_allocation.currencyDigits', { $ifNull: ['$currencyDigits', 2] }] },
+              code: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyCode',
+                  { $ifNull: ['$currencyCode', ''] },
+                ],
+              },
+              digits: {
+                $ifNull: [
+                  '$captain_transfer_allocation.currencyDigits',
+                  { $ifNull: ['$currencyDigits', 2] },
+                ],
+              },
             },
             total_amount: {
               $sum: '$items_return.returnArray.returnValue.total_amount',
@@ -3565,7 +3676,9 @@ class SalesRepository {
         },
       ]);
 
-      const returnValues = returnList.length ? [returnList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)] : [];
+      const returnValues = returnList.length
+        ? [returnList.reduce((sum, doc) => sum + (Number(doc.total_qty) || 0), 0)]
+        : [];
 
       const currencyTotals = this._lineActivityCurrencyTotals(salesList, returnList);
       const saleAmount = currencyTotals.length === 1 ? currencyTotals[0].total : 0;
@@ -3987,11 +4100,14 @@ class SalesRepository {
         .limit(limit)
         .lean();
 
-      const list = (Array.isArray(rawList) ? rawList : []).map(row => {
+      const list = (Array.isArray(rawList) ? rawList : []).map((row) => {
         if (!row.captain_payments?.length || row.payment_status !== 'Paid') return row;
         const digits = row.captain_transfer_allocation?.currencyDigits;
-        return { ...row, report_amount: row.paid_amount,
-          currencyDigits: Number.isInteger(digits) && digits >= 0 && digits <= 4 ? digits : 2 };
+        return {
+          ...row,
+          report_amount: row.paid_amount,
+          currencyDigits: Number.isInteger(digits) && digits >= 0 && digits <= 4 ? digits : 2,
+        };
       });
 
       const total = await Model.countDocuments(filters);
@@ -4072,9 +4188,9 @@ class SalesRepository {
       const reportDigits = docs.reduce((digits, doc) => {
         const saved = doc.captain_transfer_allocation?.currencyDigits;
         return Number.isInteger(saved) && saved >= 0 && saved <= 4
-          ? Math.max(digits, saved) : digits;
+          ? Math.max(digits, saved)
+          : digits;
       }, 2);
-
 
       const round = (value, decimals = 2) => {
         const num = typeof value === 'number' ? value : Number(value);
@@ -10275,10 +10391,20 @@ class SalesRepository {
     try {
       // Preview is an internal read-only calculation, never a cancellation or
       // seating operation. Its HTTP adapter must supply authenticated scope.
-      if (preview && (status !== 'modified' || newTableNo != null || dineType != null || personCount != null || newTableId !== undefined))
+      if (
+        preview &&
+        (status !== 'modified' ||
+          newTableNo != null ||
+          dineType != null ||
+          personCount != null ||
+          newTableId !== undefined)
+      )
         throw new Error('Only item and discount changes can be previewed.');
       if (editPolicy?.previewOnly && !preview) throw new Error('Preview cannot authorize a save.');
-      if (previewContext && (!preview || !previewContext.db || !previewContext.branchId || !previewContext.license))
+      if (
+        previewContext &&
+        (!preview || !previewContext.db || !previewContext.branchId || !previewContext.license)
+      )
         throw new Error('Invalid preview scope.');
       const db = previewContext ? previewContext.db : await BaseModel.getDb();
       const previewScope = previewContext
@@ -10297,11 +10423,15 @@ class SalesRepository {
         return { status: false, message: 'Order not found', data: [] };
       }
 
-      if (preview && (orderDoc.sale_process !== 'KOT' || orderDoc.payment_status !== 'Unpaid' ||
-          Object.prototype.hasOwnProperty.call(orderDoc,'floor_closed_at') ||
-          ['pending','rejected','cancelled'].includes(orderDoc.order_state) ||
+      if (
+        preview &&
+        (orderDoc.sale_process !== 'KOT' ||
+          orderDoc.payment_status !== 'Unpaid' ||
+          Object.prototype.hasOwnProperty.call(orderDoc, 'floor_closed_at') ||
+          ['pending', 'rejected', 'cancelled'].includes(orderDoc.order_state) ||
           new Date(orderDoc.captain_edit_until || 0).getTime() >= Date.now() ||
-          Object.prototype.hasOwnProperty.call(orderDoc,'captain_payment_plan')))
+          Object.prototype.hasOwnProperty.call(orderDoc, 'captain_payment_plan'))
+      )
         throw new Error('Order changed. Refresh before continuing.');
 
       if (status === 'cancelled' && String(orderDoc.sale_process).toLowerCase() === 'cancelled') {
@@ -10331,14 +10461,29 @@ class SalesRepository {
       };
       // Legacy seating writers may leave updated_date unchanged. Never apply
       // a delayed item/cover save against a different seating snapshot.
-      for (const field of ['person_count', 'table_number', 'table_id', 'dine_type',
-        'seating_request_id', 'seating_primary_id', 'seating_table_ids'])
+      for (const field of [
+        'person_count',
+        'table_number',
+        'table_id',
+        'dine_type',
+        'seating_request_id',
+        'seating_primary_id',
+        'seating_table_ids',
+      ])
         editFilter[field] = orderDoc[field] === undefined ? { $exists: false } : orderDoc[field];
       // Payment and closure can finish while this edit reads the catalogue,
       // without changing its items or seating revision. Preserve that newer
       // state instead of amending/cancelling a check from the older snapshot.
-      for (const field of ['payment_status', 'paid_amount', 'partial_balance',
-        'partial_amounts', 'payment_pending', 'sale_process', 'floor_closed_at', 'order_state'])
+      for (const field of [
+        'payment_status',
+        'paid_amount',
+        'partial_balance',
+        'partial_amounts',
+        'payment_pending',
+        'sale_process',
+        'floor_closed_at',
+        'order_state',
+      ])
         editFilter[field] = orderDoc[field] === undefined ? { $exists: false } : orderDoc[field];
       const actor = editPolicy?.actor || {
         id: String(BaseModel.loggedUser || ''),
@@ -10387,10 +10532,11 @@ class SalesRepository {
           return { status: false, message: 'Choose a table with enough seats.', data: null };
       }
 
-      if (!preview) finishCaptainEdit = await require('../services/captain-payment-guard').beginEdit(
-        db,
-        orderDoc
-      );
+      if (!preview)
+        finishCaptainEdit = await require('../services/captain-payment-guard').beginEdit(
+          db,
+          orderDoc
+        );
 
       /*
        * A SAVE WRITTEN AGAINST A VIEW THAT HAS MOVED ON.
@@ -10982,32 +11128,69 @@ class SalesRepository {
       if (orderDoc.captain_transfer_allocation) {
         const transferEdit = require('../services/captain-transfer-edit');
         const reconciled = transferEdit.reconcile(orderDoc, updateFields, shop || {});
-        if (!reconciled) throw new Error('Transferred item amounts need reconciliation before this edit can be saved.');
+        if (!reconciled)
+          throw new Error(
+            'Transferred item amounts need reconciliation before this edit can be saved.'
+          );
         for (const key of Object.keys(updateFields)) delete updateFields[key];
         Object.assign(updateFields, reconciled);
       }
 
       if (preview) {
         // Detect an order change during catalogue reads without taking a lease.
-        const financialFields = Object.fromEntries(['sales_total','sales_sub_total','tax','discount','round_off',
-          'extra_discount','sale_extra_discount','extra_discount_type','captain_transfer_allocation',
-          'items_subtotal','items_total','order_state','updated_date','captain_edit_until']
-          .map(key=>[key,orderDoc[key] === undefined ? {$exists:false} : orderDoc[key]]));
-        if (!await salesCollection.findOne({...editFilter,...financialFields,payment_status:'Unpaid',sale_process:'KOT',
-          floor_closed_at:{$exists:false}}))
+        const financialFields = Object.fromEntries(
+          [
+            'sales_total',
+            'sales_sub_total',
+            'tax',
+            'discount',
+            'round_off',
+            'extra_discount',
+            'sale_extra_discount',
+            'extra_discount_type',
+            'captain_transfer_allocation',
+            'items_subtotal',
+            'items_total',
+            'order_state',
+            'updated_date',
+            'captain_edit_until',
+          ].map((key) => [key, orderDoc[key] === undefined ? { $exists: false } : orderDoc[key]])
+        );
+        if (
+          !(await salesCollection.findOne({
+            ...editFilter,
+            ...financialFields,
+            payment_status: 'Unpaid',
+            sale_process: 'KOT',
+            floor_closed_at: { $exists: false },
+          }))
+        )
           return { status: false, message: 'order_changed', data: [] };
-        return { status: true, data: { items: updateFields.items, subtotal: updateFields.sales_sub_total,
-          tax: updateFields.tax, discount: updateFields.discount,
-          total_amount: updateFields.sales_total, currency: monetary,
-          revision: require('node:crypto').createHash('sha256').update(JSON.stringify(orderDoc)).digest('hex') } };
+        return {
+          status: true,
+          data: {
+            items: updateFields.items,
+            subtotal: updateFields.sales_sub_total,
+            tax: updateFields.tax,
+            discount: updateFields.discount,
+            total_amount: updateFields.sales_total,
+            currency: monetary,
+            revision: require('node:crypto')
+              .createHash('sha256')
+              .update(JSON.stringify(orderDoc))
+              .digest('hex'),
+          },
+        };
       }
 
       if (orderDoc.seating_request_id || shop?.table_options === true) {
         const seating = require('../services/seating-claims');
         const scope = { branchId: orderDoc.branch_id, license: orderDoc.license };
         const permit = await seating.reserveEditCapacity(db, scope, orderDoc, {
-          table: updateFields.table_number, guests: updateFields.person_count,
-          dine_type: updateFields.dine_type, sale_process: updateFields.sale_process,
+          table: updateFields.table_number,
+          guests: updateFields.person_count,
+          dine_type: updateFields.dine_type,
+          sale_process: updateFields.sale_process,
         });
         if (permit) {
           updateFields.seating_capacity_revision = permit.id;
@@ -11056,8 +11239,11 @@ class SalesRepository {
       };
     } finally {
       if (finishCapacityEdit) {
-        try { await finishCapacityEdit(); }
-        catch (error) { console.error('Order capacity reconciliation pending:', error); }
+        try {
+          await finishCapacityEdit();
+        } catch (error) {
+          console.error('Order capacity reconciliation pending:', error);
+        }
       }
       if (finishCaptainEdit) await finishCaptainEdit();
     }
@@ -13617,14 +13803,17 @@ class SalesRepository {
    * already and would rather not have this read the branch to find the same
    * answer twice.
    */
-  async generateSalesIdForBranch(branchIdRaw, { reseed = false, fallbackPrefix, numberingContext } = {}) {
+  async generateSalesIdForBranch(
+    branchIdRaw,
+    { reseed = false, fallbackPrefix, numberingContext } = {}
+  ) {
     if (!branchIdRaw) {
       throw new Error('branchId is required to generate sales_id');
     }
 
     if (numberingContext && (!numberingContext.db || !numberingContext.license))
       throw new Error('A database and licence are required for scoped bill numbering');
-    const db = numberingContext?.db || await BaseModel.getDb();
+    const db = numberingContext?.db || (await BaseModel.getDb());
     const branches = db.collection('branches');
     const salesCollection = db.collection('sales');
 
@@ -13637,9 +13826,14 @@ class SalesRepository {
 
     const branchDoc = await branches.findOne({
       _id: branchId,
-      ...(numberingContext ? { license: numberingContext.license } : BaseModel.license ? { license: BaseModel.license } : {}),
+      ...(numberingContext
+        ? { license: numberingContext.license }
+        : BaseModel.license
+          ? { license: BaseModel.license }
+          : {}),
     });
-    if (numberingContext && !branchDoc) throw new Error('Branch not found for scoped bill numbering');
+    if (numberingContext && !branchDoc)
+      throw new Error('Branch not found for scoped bill numbering');
     // The prefix comes from the branch config. An empty prefix is honoured - a
     // shop may want plain numbers - so only a branch that never set the field
     // falls back to the default 'S'.
@@ -13735,8 +13929,12 @@ class SalesRepository {
    * collection that does not ride the sync wire, so each side numbers its own
    * writes and never inherits a counter that went backwards.
    */
-  async nextSalesNumberForBranch(branchIdRaw, licenseRaw, { reseed = false, period = null, numberingContext } = {}) {
-    const db = numberingContext?.db || await BaseModel.getDb();
+  async nextSalesNumberForBranch(
+    branchIdRaw,
+    licenseRaw,
+    { reseed = false, period = null, numberingContext } = {}
+  ) {
+    const db = numberingContext?.db || (await BaseModel.getDb());
     const counters = db.collection('counters');
 
     /*
@@ -13783,8 +13981,11 @@ class SalesRepository {
        seed below safe, so it is ensured before first use rather than hoped
        for. A failure leaves the flag unset so the next call tries again. */
     if (numberingContext) {
-      await ensureIndexOnce(counters, { kind: 1, branch_key: 1, license_key: 1 },
-        { unique: true, name: 'one_counter_per_scope' });
+      await ensureIndexOnce(
+        counters,
+        { kind: 1, branch_key: 1, license_key: 1 },
+        { unique: true, name: 'one_counter_per_scope' }
+      );
     } else if (!this.constructor._countersIndexEnsured) {
       this.constructor._countersIndexEnsured = true;
       try {
@@ -13919,7 +14120,7 @@ class SalesRepository {
   async deviceTag(numberingContext) {
     if (!numberingContext && this.constructor._deviceTag) return this.constructor._deviceTag;
     try {
-      const db = numberingContext?.db || await BaseModel.getDb();
+      const db = numberingContext?.db || (await BaseModel.getDb());
       const meta = db.collection('device_meta');
       let doc = await meta.findOne({ _id: 'device_tag' });
       if (!doc || !doc.tag) {
@@ -13989,7 +14190,7 @@ class SalesRepository {
   async deviceCode(numberingContext) {
     if (!numberingContext && this.constructor._deviceCode) return this.constructor._deviceCode;
     try {
-      const db = numberingContext?.db || await BaseModel.getDb();
+      const db = numberingContext?.db || (await BaseModel.getDb());
       const doc = await db.collection('device_meta').findOne({ _id: 'device_code' });
       const code = (doc && doc.code) || '';
       if (code && !numberingContext) this.constructor._deviceCode = code;
@@ -14013,7 +14214,7 @@ class SalesRepository {
     const cached = numberingContext ? null : this.constructor._branchCodes;
     if (cached && cached[id]) return cached[id];
     try {
-      const db = numberingContext?.db || await BaseModel.getDb();
+      const db = numberingContext?.db || (await BaseModel.getDb());
       const branches = db.collection('branches');
       const filter = {};
       if (numberingContext) filter.license = numberingContext.license;
@@ -14249,7 +14450,7 @@ class SalesRepository {
   }
 
   async maxIssuedSalesNumber(branchIdRaw, licenseRaw, { periodLabel = '', numberingContext } = {}) {
-    const db = numberingContext?.db || await BaseModel.getDb();
+    const db = numberingContext?.db || (await BaseModel.getDb());
     const asObjectId = (v) =>
       v instanceof mongoose.Types.ObjectId
         ? v

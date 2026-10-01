@@ -49,15 +49,13 @@ async function password(req) {
   if (!(await passwordMatches(currentPassword, user.password)))
     fail('The current password is incorrect.', 400);
   const hash = await bcrypt.hash(Buffer.from(newPassword, 'utf8').toString('base64'), 12);
-  const changed = await req.db
-    .collection('users')
-    .updateOne(
-      { ...filter, password: user.password },
-      {
-        $set: { password: hash, passwordChangedAt: new Date(), updated_date: new Date() },
-        $inc: { authVersion: 1 },
-      }
-    );
+  const changed = await req.db.collection('users').updateOne(
+    { ...filter, password: user.password },
+    {
+      $set: { password: hash, passwordChangedAt: new Date(), updated_date: new Date() },
+      $inc: { authVersion: 1 },
+    }
+  );
   if (!changed.matchedCount) fail('Your account changed. Sign in again.', 409);
   await req.db
     .collection('captain_sessions')

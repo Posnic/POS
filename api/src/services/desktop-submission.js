@@ -15,13 +15,11 @@ function identity(scope, actor, payload) {
   );
 }
 async function lookup(db, scope, actor, payload) {
-  const saved = await db
-    .collection('sales')
-    .findOne({
-      license: scope.license,
-      branch_id: scope.branchId,
-      idempotency_key: identity(scope, actor, payload),
-    });
+  const saved = await db.collection('sales').findOne({
+    license: scope.license,
+    branch_id: scope.branchId,
+    idempotency_key: identity(scope, actor, payload),
+  });
   if (saved && saved.submission_payload_hash !== fingerprint(payload))
     fail('Resolve the previous submission before sending changes.', 409);
   return saved;
