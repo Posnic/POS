@@ -3789,5 +3789,9 @@
   "lang_choose_your_hours": "වේලාවන් තෝරන්න",
   "lang_apply_time": "වේලාව යොදන්න",
   "lang_sales_time_filter": "විකුණුම් වේලා පෙරහන",
-  "lang_choose_a_sales_period": "විකුණුම් කාල පරාසයක් තෝරන්න"
+  "lang_choose_a_sales_period": "විකුණුම් කාල පරාසයක් තෝරන්න",
+  "lang_rd_fixed_columns": "ස්ථාවර තීරු - භාණ්ඩය, ඒකක මිල, ප්‍රමාණය, මුදල",
+  "lang_rd_max_name_chars": "භාණ්ඩ නාමයේ උපරිම අක්ෂර ගණන",
+  "lang_rd_show_title": "ඉන්වොයිසියේ / රිසිට්පතේ මාතෘකාව පෙන්වන්න",
+  "lang_rd_fssai_header": "GSTIN යටින් FSSAI පෙන්වන්න"
 }

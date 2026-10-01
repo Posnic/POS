@@ -3789,5 +3789,9 @@
   "lang_choose_your_hours": "เลือกช่วงเวลา",
   "lang_apply_time": "ใช้ช่วงเวลา",
   "lang_sales_time_filter": "ตัวกรองเวลาขาย",
-  "lang_choose_a_sales_period": "เลือกช่วงเวลาขาย"
+  "lang_choose_a_sales_period": "เลือกช่วงเวลาขาย",
+  "lang_rd_fixed_columns": "คอลัมน์คงที่ - รายการ ราคาต่อหน่วย จำนวน ยอดเงิน",
+  "lang_rd_max_name_chars": "จำนวนอักขระสูงสุดของชื่อสินค้า",
+  "lang_rd_show_title": "แสดงหัวข้อใบแจ้งหนี้ / ใบเสร็จ",
+  "lang_rd_fssai_header": "แสดง FSSAI ใต้ GSTIN"
 }

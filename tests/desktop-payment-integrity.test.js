@@ -60,3 +60,76 @@ for (const computed of [250, 260, NaN]) {
     dom.window.close();
   });
 }
+
+
+test('Azure Table 6 payment sums full-precision lines before rounding, matching the API', () => {
+  const { dom, $, sales, win } = setup('Unpaid', {});
+  const { computeLineTax } = require('../api/src/services/tax-engine');
+  const { calculateSaleHeader } = require('../api/src/services/sale-header');
+  const amounts = [350,300,300,380,340,360,700,340,120,300,250,60,600,294,94.5,63,136.5,136.5,273];
+  const totals = amounts.map(value => computeLineTax({ itemAmount: value, sellingPrice: value, itemQuantity: 1, itemTax: 5, taxType: 'exclusive' }).total);
+  const expected = calculateSaleHeader({}, totals.reduce((n, v) => n + v, 0), { roundOff: false }).salesTotalForDoc;
+  assert.equal(expected, 5667.37);
+  assert.equal(Number(totals.reduce((n, v) => n + Number(v.toFixed(2)), 0).toFixed(2)), 5667.36);
+  $('body').append('<table id="sales_new_items_table"><tbody></tbody></table><input id="grand_total"><span id="extraDisc">0</span><span id="percentIcon" class="d-none"></span><span id="sales_new_grand_total"></span>');
+  totals.forEach((total, id) => {
+    $('#sales_new_items_table tbody').append('<tr>' + '<td></td>'.repeat(8) + '<td>' + id + '</td><td>line</td></tr>');
+    $('body').append('<span id="addSalesLineTotal_' + id + '">' + total.toFixed(2) + '</span><span id="returnLineTotal_' + id + '">' + total + '</span><input id="touchsale_item_qty' + id + '" value="1"><span id="addSalesGstTax_' + id + '">' + (total - amounts[id]) + '</span>');
+  });
+  $.fn.number = function (value) { return this.text(Number(value).toFixed(2)); };
+  win.db = { customerDisplay: { put: () => {}, get: () => Promise.resolve(null) } };
+  sales.customerBalanceCheck = () => {};
+  sales.taxFeatureOn = () => true;
+  sales.chargesTotal = sales.chargesTax = () => 0;
+  sales.calculation = { billLevelDiscount: () => 0 };
+  for (const name of ['salesTableRowCart', 'extraDiscoundCalculation']) {
+    const start = source.indexOf('    ' + name + ': function');
+    const end = source.indexOf('\n    },', start);
+    win.eval('PosnicPro.sales.calculation.' + name + ' = ' + source.slice(source.indexOf('function', start), end + 6) + ';');
+  }
+  sales.calculation.salesTableRowCart();
+  assert.equal(sales.extraDiscount.sale_new_tot, expected);
+  sales.EditRecentSaleParams.sales_total = expected;
+  sales.EditRecentSaleParams.multi_payment = { Upi: expected };
+  $('#Partial_amount').val(expected);
+  sales.showMultiPaymentMode();
+  assert.equal(Number($('#upi_input').val()), expected);
+  assert.equal($('#save_btn').prop('disabled'), false);
+  dom.window.close();
+});
+
+
+for (const method of ['Cash', 'Card', 'Upi', 'Google Pay', 'Bank Transfer', 'Qrpay', 'Razorpay']) {
+  test('full fractional payable survives payment method selection: ' + method, () => {
+    const { dom, $, win, sales } = setup('Unpaid', { [method]: 5397.5 });
+    win.PosnicPro.configPaymentType = ['Card','Upi','Google Pay','Bank Transfer'].map(payment_value => ({ payment_value }));
+    win.localStorage.setItem('payment_gateway', 'true');
+    sales.extraDiscount.sale_new_tot = sales.EditRecentSaleParams.sales_total = 5667.37;
+    $('#Partial_amount').val('5667.37');
+    sales.showMultiPaymentMode();
+    const id = ['Qrpay','Razorpay'].includes(method) ? 'qrpay' : method.toLowerCase().replace(/\s/g, '');
+    assert.equal(Number($('#' + id + '_input').val()), 5667.37);
+    for (const next of ['Cash','Card','Upi','Google Pay','Bank Transfer','Qrpay']) {
+      $(win.document.getElementById(next)).closest('button').trigger('click');
+      const sum = $('.payment-amount-input').get().reduce((n, el) => n + Number(el.value || 0), 0);
+      assert.equal(Math.round(sum * 100), 566737);
+      assert.equal($('#save_btn').prop('disabled'), false);
+    }
+    dom.window.close();
+  });
+}
+
+test('split and partial payments preserve recorded amounts and reject overpayment', () => {
+  const { dom, $, win, sales } = setup('Partialy Paid', { Cash: 1000, Card: 4667.37 });
+  win.PosnicPro.configPaymentType = [{payment_value:'Card'}, {payment_value:'Upi'}];
+  sales.extraDiscount.sale_new_tot = sales.EditRecentSaleParams.sales_total = 5667.37;
+  sales.EditRecentSaleParams.partial_amounts = 5667.37;
+  $('#Partial_amount').val('5667.37');
+  sales.showMultiPaymentMode();
+  assert.equal(Number($('#cash_input').val()), 1000);
+  assert.equal(Number($('#card_input').val()), 4667.37);
+  assert.equal($('#save_btn').prop('disabled'), false);
+  $('#card_input').val('4668.37').trigger('input');
+  assert.equal($('#save_btn').prop('disabled'), true);
+  dom.window.close();
+});

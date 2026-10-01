@@ -3789,5 +3789,9 @@
   "lang_choose_your_hours": "సమయాన్ని ఎంచుకోండి",
   "lang_apply_time": "సమయాన్ని వర్తింపజేయండి",
   "lang_sales_time_filter": "అమ్మకాల సమయ ఫిల్టర్",
-  "lang_choose_a_sales_period": "అమ్మకాల వ్యవధిని ఎంచుకోండి"
+  "lang_choose_a_sales_period": "అమ్మకాల వ్యవధిని ఎంచుకోండి",
+  "lang_rd_fixed_columns": "స్థిర నిలువు వరుసలు - వస్తువు, యూనిట్ ధర, పరిమాణం, మొత్తం",
+  "lang_rd_max_name_chars": "వస్తువు పేరులో గరిష్ఠ అక్షరాలు",
+  "lang_rd_show_title": "ఇన్వాయిస్ / రసీదు శీర్షిక చూపించు",
+  "lang_rd_fssai_header": "GSTIN కింద FSSAI చూపించు"
 }

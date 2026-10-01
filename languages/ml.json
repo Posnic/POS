@@ -3789,5 +3789,9 @@
   "lang_choose_your_hours": "സമയം തിരഞ്ഞെടുക്കുക",
   "lang_apply_time": "സമയം പ്രയോഗിക്കുക",
   "lang_sales_time_filter": "വിൽപ്പന സമയ ഫിൽട്ടർ",
-  "lang_choose_a_sales_period": "വിൽപ്പന കാലയളവ് തിരഞ്ഞെടുക്കുക"
+  "lang_choose_a_sales_period": "വിൽപ്പന കാലയളവ് തിരഞ്ഞെടുക്കുക",
+  "lang_rd_fixed_columns": "സ്ഥിര നിരകൾ - ഇനം, യൂണിറ്റ് വില, എണ്ണം, തുക",
+  "lang_rd_max_name_chars": "ഇനത്തിന്റെ പേരിലെ പരമാവധി അക്ഷരങ്ങൾ",
+  "lang_rd_show_title": "ഇൻവോയ്സ് / രസീത് തലക്കെട്ട് കാണിക്കുക",
+  "lang_rd_fssai_header": "GSTIN-ന് താഴെ FSSAI കാണിക്കുക"
 }

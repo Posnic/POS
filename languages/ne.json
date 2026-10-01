@@ -3789,5 +3789,9 @@
   "lang_choose_your_hours": "समय छान्नुहोस्",
   "lang_apply_time": "समय लागू गर्नुहोस्",
   "lang_sales_time_filter": "बिक्री समय फिल्टर",
-  "lang_choose_a_sales_period": "बिक्री अवधि छान्नुहोस्"
+  "lang_choose_a_sales_period": "बिक्री अवधि छान्नुहोस्",
+  "lang_rd_fixed_columns": "निश्चित स्तम्भहरू - सामान, एकाइ मूल्य, परिमाण, रकम",
+  "lang_rd_max_name_chars": "सामानको नाममा अधिकतम अक्षरहरू",
+  "lang_rd_show_title": "बिजक / रसिदको शीर्षक देखाउनुहोस्",
+  "lang_rd_fssai_header": "GSTIN मुनि FSSAI देखाउनुहोस्"
 }
