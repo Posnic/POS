@@ -1062,6 +1062,20 @@ PosnicPro.sales.view = {
             };
             jQuery.extend($, jQuery);
         }
+        var transferredBill = name === 'sale' ? data.transferred_bill : null;
+        var moneyDigits = transferredBill && Number.isInteger(transferredBill.currencyDigits)
+            && transferredBill.currencyDigits >= 0 && transferredBill.currencyDigits <= 4
+            ? transferredBill.currencyDigits : 2;
+        if (transferredBill) {
+            // Keep the input immutable: the editor and subsequent reprints share it.
+            data = jQuery.extend({}, data, {
+                items_total: transferredBill.total,
+                items_subtotal: transferredBill.subTotal,
+                discount: transferredBill.discount,
+                tax: transferredBill.taxes.reduce(function (sum, row) { return sum + Number(row.amount || 0); }, 0),
+                round_off: transferredBill.roundOff
+            });
+        }
         var isA4Layout = layout ? layout === 'a4' : PosnicPro.sales.view._isA4();
         var $printContainer = isA4Layout ? $('.print-modal-a4-body') : $('.print-modal-body');
         $('.header-content, .footer-content').css('white-space', 'pre-line');
@@ -1113,8 +1127,8 @@ PosnicPro.sales.view = {
                 if (!isKotPrint && data.partial_check === 'true' && data.sale_process !== 'PartialReturn' && data.sale_process !== 'FullReturn') {
                     // NOTE: This block matches the original behavior for this section.
                     $('.print-payment-status-hide').hide();
-                    $('.print-payment-balance').html(currency + '&nbsp;' + data.partial_balance.toFixed(2));
-                    $('.print-payment-pending').html(currency + '&nbsp;' + data.payment_pending.toFixed(2));
+                    $('.print-payment-balance').html(currency + '&nbsp;' + data.partial_balance.toFixed(moneyDigits));
+                    $('.print-payment-pending').html(currency + '&nbsp;' + data.payment_pending.toFixed(moneyDigits));
                     $('.print-payment-status').html(data.payment_status);
 
                     // Thermal (non-A4) receipts: show compact Payments/Credits and Balance Due
@@ -1152,10 +1166,10 @@ PosnicPro.sales.view = {
                     var chargesStd = '';
                     data.charges.forEach(function (c) {
                         var cName = $('<i>').text(c.name || 'Charge').html();
-                        var cAmt = (Number(c.amount) || 0).toFixed(2);
+                        var cAmt = (Number(c.amount) || 0).toFixed(moneyDigits);
                         var cTax = Number(c.tax_amount) || 0;
                         var taxNote = cTax > 0
-                            ? ' <small>(+' + (c.tax_name ? $('<i>').text(c.tax_name).html() : 'tax') + ' ' + cTax.toFixed(2) + ')</small>'
+                            ? ' <small>(+' + (c.tax_name ? $('<i>').text(c.tax_name).html() : 'tax') + ' ' + cTax.toFixed(moneyDigits) + ')</small>'
                             : '';
                         chargesA4 += '<tr class="charge-print-row">' +
                             '<td class="print-deatils-size-family print-footer-align">' + cName + ':' + taxNote + ' &nbsp; &nbsp; </td>' +
@@ -1169,7 +1183,7 @@ PosnicPro.sales.view = {
                 }
                 if (name === 'sale') {
                     var subtotal = data.items_subtotal;
-                    var salesLineTotal = Number(data.items_total).toFixed(2);
+                    var salesLineTotal = Number(data.items_total).toFixed(moneyDigits);
                     $('.round-off-hideshow').hide();
                     let roundOffValue = data.round_off;
                     let sign = roundOffValue >= 0 ? '+' : '-';
@@ -1180,13 +1194,13 @@ PosnicPro.sales.view = {
                         roundOff =
                             '<td class="print-deatils-size-family print-footer-align"> Round-Off: &nbsp; &nbsp; </td>' +
                             '<td class="print-deatils-size-family print-footer-align">' +
-                            currency + '&nbsp;(' + sign + ')&nbsp;<span class="number">' + Math.abs(roundOffValue).toFixed(2) + '</span></td>';
+                            currency + '&nbsp;(' + sign + ')&nbsp;<span class="number">' + Math.abs(roundOffValue).toFixed(moneyDigits) + '</span></td>';
                         roundOffStandardPrint =
                             '<div class="col-md-8 col-sm-8 col-xs-6">' +
                             '<div class="invoice-footer-value"><lang class="lang_round_off_3">Round-Off</lang></div>' +
                             '</div>' +
                             '<div class="col-md-4 col-sm-4 col-xs-6">' +
-                            '<div class="invoice-footer-value invoice-payment text-dark">' + currency + sign + Math.abs(roundOffValue).toFixed(2) +
+                            '<div class="invoice-footer-value invoice-payment text-dark">' + currency + sign + Math.abs(roundOffValue).toFixed(moneyDigits) +
                             '</div>' +
                             '</div>';
                     }
@@ -1197,12 +1211,12 @@ PosnicPro.sales.view = {
                     if (parseFloat(data.discount) > 0) {
                         $('.amount-print-hideshow').show();
                         var discountValue = (name === 'sale') ? data.discount : data.return_discount;
-                        $('.view_sales_discount').html(currency + '&nbsp;<span class="number">' + discountValue.toFixed(2) + '</span>');
+                        $('.view_sales_discount').html(currency + '&nbsp;<span class="number">' + discountValue.toFixed(moneyDigits) + '</span>');
                     }
                     if (parseFloat(data.tax) > 0) {
                         $('.tax-print-hideshow').show();
                         var taxValue = (name === 'sale') ? data.tax : data.return_tax;
-                        $('.view_sales_tax').html(currency + ' &nbsp;<span class="number">' + taxValue.toFixed(2) + '</span>');
+                        $('.view_sales_tax').html(currency + ' &nbsp;<span class="number">' + taxValue.toFixed(moneyDigits) + '</span>');
                     }
                 } else {
                     var subtotal = data.items_return_subtotal;
@@ -1240,13 +1254,13 @@ PosnicPro.sales.view = {
                         roundOff =
                             '<td class="print-deatils-size-family print-footer-align"> Round-Off: &nbsp; &nbsp; </td>' +
                             '<td class="print-deatils-size-family print-footer-align">' +
-                            currency + '&nbsp;(' + sign + ')&nbsp;<span class="number">' + Math.abs(roundOffValue).toFixed(2) + '</span></td>';
+                            currency + '&nbsp;(' + sign + ')&nbsp;<span class="number">' + Math.abs(roundOffValue).toFixed(moneyDigits) + '</span></td>';
                         roundOffStandardPrint =
                             '<div class="col-md-8 col-sm-8 col-xs-6">' +
                             '<div class="invoice-footer-value"><lang class="lang_round_off_3">Round-Off</lang></div>' +
                             '</div>' +
                             '<div class="col-md-4 col-sm-4 col-xs-6">' +
-                            '<div class="invoice-footer-value invoice-payment text-dark">' + currency + sign + Math.abs(roundOffValue).toFixed(2) + '</div>' +
+                            '<div class="invoice-footer-value invoice-payment text-dark">' + currency + sign + Math.abs(roundOffValue).toFixed(moneyDigits) + '</div>' +
                             '</div>';
                     }
                     $('#roundoff-value').html(roundOff);
@@ -1256,16 +1270,16 @@ PosnicPro.sales.view = {
                     if (parseFloat(data.return_discount) > 0) {
                         $('.amount-print-hideshow').show();
                         var discountValue = (name === 'sale') ? data.discount : data.return_discount;
-                        $('.view_sales_discount').html(currency + '&nbsp;<span class="number">' + discountValue.toFixed(2) + '</span>');
+                        $('.view_sales_discount').html(currency + '&nbsp;<span class="number">' + discountValue.toFixed(moneyDigits) + '</span>');
                     }
 
                     if (parseFloat(data.return_tax) > 0) {
                         $('.tax-print-hideshow').show();
                         var taxValue = (name === 'sale') ? data.tax : data.return_tax;
-                        $('.view_sales_tax').html(currency + ' &nbsp;<span class="number">' + taxValue.toFixed(2) + '</span>');
+                        $('.view_sales_tax').html(currency + ' &nbsp;<span class="number">' + taxValue.toFixed(moneyDigits) + '</span>');
                     }
                 }
-                $('.print-subtotal').html(currency + '&nbsp;<span class="number">' + subtotal.toFixed(2) + '</span>');
+                $('.print-subtotal').html(currency + '&nbsp;<span class="number">' + subtotal.toFixed(moneyDigits) + '</span>');
 
 
                 $('.print_view_id').html('#' + data.sales_id);
@@ -1299,7 +1313,7 @@ PosnicPro.sales.view = {
                             if (!isNaN(num) && num !== 0) {
                                 paymentHtml += '<div class="payment-line">' +
                                     '<span class="payment-method">- ' + method + '</span>' +
-                                    '<span class="payment-amount">' + currency + ' ' + num.toFixed(2) + '</span>' +
+                                    '<span class="payment-amount">' + currency + ' ' + num.toFixed(moneyDigits) + '</span>' +
                                 '</div>';
                             }
                         });
@@ -1313,7 +1327,7 @@ PosnicPro.sales.view = {
                         if (singleModePrint && !isNaN(grandTotalPrint) && grandTotalPrint !== 0) {
                             paymentHtml = '<div class="payment-line">' +
                                 '<span class="payment-method">- ' + singleModePrint + '</span>' +
-                                '<span class="payment-amount">' + currency + ' ' + grandTotalPrint.toFixed(2) + '</span>' +
+                                '<span class="payment-amount">' + currency + ' ' + grandTotalPrint.toFixed(moneyDigits) + '</span>' +
                                 '</div>';
                         }
                     }
@@ -1595,9 +1609,9 @@ PosnicPro.sales.view = {
                             cgst += data.items[i].cgst_tax;
 
                             if (discountSign === '%') {
-                                var priceAmount = (((price.toFixed(2)) * data.items[i].item_quantity) - (((price.toFixed(2)) * data.items[i].item_quantity) * (discount / 100)));
+                                var priceAmount = (((price.toFixed(moneyDigits)) * data.items[i].item_quantity) - (((price.toFixed(moneyDigits)) * data.items[i].item_quantity) * (discount / 100)));
                             } else {
-                                var priceAmount = (((price.toFixed(2)) * data.items[i].item_quantity) - (discount * data.items[i].item_quantity));
+                                var priceAmount = (((price.toFixed(moneyDigits)) * data.items[i].item_quantity) - (discount * data.items[i].item_quantity));
                             }
 
                             var discount_percentage = '--';
@@ -1622,7 +1636,7 @@ PosnicPro.sales.view = {
                             let hsn = (data.items[i].tax_fields.length === 0 && data.items[i].tax > 0) ? data.items[i].tax_name : '--';
                             let rowHTMLLine = '<tr><td height="1" colspan="7" style="border:1px solid #e4e4e4"></td></tr><tr><td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.escapeHtml(PosnicPro.textOverflowPrintEllipsis(PosnicPro.printItemName ? PosnicPro.printItemName(data.items[i], 'receipt') : data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true)) + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_hsn" style="color: #646a6e;">' + hsn + '</td>' +
-                                '<td class="print-deatils-size-family print-details-align lineitem_price" style="color: #646a6e;" align="center">' + price.toFixed(2) + '</td>' +
+                                '<td class="print-deatils-size-family print-details-align lineitem_price" style="color: #646a6e;" align="center">' + price.toFixed(moneyDigits) + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_qty" style="color: #646a6e;" align="center">' + PosnicPro.formatQuantity(data.items[i].item_quantity, item_unit) + ' ' + item_unit + ' </td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_disc" style="color: #646a6e;" align="center">' + discount_percentage + '</td>' +
                                 '<td class="print-deatils-size-family print-details-align lineitem_tax" style="color: #646a6e;" align="center">' + tax + ' ' + taxSigns + '</td>' +
@@ -1653,12 +1667,12 @@ PosnicPro.sales.view = {
                             }
 
                         }
-                        var taxPrintItemData = PosnicPro.nestedTaxCalculation(itemPrintTaxDetails);
+                        var taxPrintItemData = (transferredBill ? transferredBill.taxes.map(function (row) { return { tax_name: row.label || row.name || 'Tax', amount: row.amount }; }) : PosnicPro.nestedTaxCalculation(itemPrintTaxDetails));
                         $(taxPrintItemData).each(function (key, val) {
-                            if ((val.amount).toFixed(2) > 0.00) {
+                            if ((val.amount).toFixed(moneyDigits) > 0.00) {
                                 rowHTMLTaxLine += ' <tr> ' +
                                     '    <td style="display:none;">' + val.tax_id + '</td>' +
-                                    '    <td class="print-deatils-size-family" style="color: #5b5b5b; line-height: 20px; vertical-align: top;">' + val.tax_name + '%</td>' +
+                                    '    <td class="print-deatils-size-family" style="color: #5b5b5b; line-height: 20px; vertical-align: top;">' + PosnicPro.escapeHtml(val.tax_name) + (transferredBill ? '' : '%') + '</td>' +
                                     '    <td class="print-deatils-size-family print-footer-align" style="white-space:nowrap;" width="80">' + currency + '&nbsp;<span class="number">' + val.amount + '</span> </td>' +
                                     '</tr>';
                             }
@@ -1677,7 +1691,7 @@ PosnicPro.sales.view = {
                         if (roundOffValue !== 0) {
                             roundOff = '<td class="print-deatils-size-family print-footer-align"> Round-Off: &nbsp; &nbsp; </td>' +
                                 '<td class="print-deatils-size-family print-footer-align">' +
-                                currency + '&nbsp;(' + sign + ')&nbsp;<span class="number">' + Math.abs(roundOffValue).toFixed(2) + '</span></td>';
+                                currency + '&nbsp;(' + sign + ')&nbsp;<span class="number">' + Math.abs(roundOffValue).toFixed(moneyDigits) + '</span></td>';
                         }
                         $('#roundoff-value').html(roundOff);
                         $('table#tax_print_hide tbody').append(rowHTMLTaxLine);
@@ -1686,8 +1700,8 @@ PosnicPro.sales.view = {
                         // payment summary / status block at all.
                         if (!isKotPrint && data.partial_check === 'true' && data.sale_process !== 'PartialReturn' && data.sale_process !== 'FullReturn') {
                             $('.print-payment-status-hide').show();
-                            $('.print-payment-balance').html(currency + '&nbsp;' + data.partial_balance.toFixed(2));
-                            $('.print-payment-pending').html(currency + '&nbsp;' + data.payment_pending.toFixed(2));
+                            $('.print-payment-balance').html(currency + '&nbsp;' + data.partial_balance.toFixed(moneyDigits));
+                            $('.print-payment-pending').html(currency + '&nbsp;' + data.payment_pending.toFixed(moneyDigits));
                             $('.print-payment-status').html(data.payment_status);
                         }
                     } else {
@@ -1710,9 +1724,9 @@ PosnicPro.sales.view = {
                                 var price = data.items[i].item_price / ((tax / 100) + 1);
                             }
                             if (discountSign === '%') {
-                                var priceAmount = (((price.toFixed(2)) * data.items[i].item_quantity) - (((price.toFixed(2)) * data.items[i].item_quantity) * (discount / 100)));
+                                var priceAmount = (((price.toFixed(moneyDigits)) * data.items[i].item_quantity) - (((price.toFixed(moneyDigits)) * data.items[i].item_quantity) * (discount / 100)));
                             } else {
-                                var priceAmount = (((price.toFixed(2)) * data.items[i].item_quantity) - (discount * data.items[i].item_quantity));
+                                var priceAmount = (((price.toFixed(moneyDigits)) * data.items[i].item_quantity) - (discount * data.items[i].item_quantity));
                             }
                             taxText.push(tax + '% &nbsp;');
                             taxCgstText.push(tax / 2 + '% &nbsp;');
@@ -1720,7 +1734,7 @@ PosnicPro.sales.view = {
                             itemTotalQty += data.items[i].item_quantity;
                             let rowHTMLLine = '<div class="row receipt-row-item-holder" style="margin-top:8px;"><div class="col-md-5 col-sm-5 col-xs-5"><div class="invoice-content invoice-con"><div class="invoice-content-heading">' + PosnicPro.escapeHtml(PosnicPro.textOverflowPrintEllipsis(PosnicPro.printItemName ? PosnicPro.printItemName(data.items[i], 'receipt') : data.items[i].item_name, PosnicPro.local.get('printing_max_char'), true)) + '</div></div></div>' +
                                 '<div class="col-md-3 col-sm-3 col-xs-3 gift_receipt_element"><div class="invoice-content item-qty text-left">' + PosnicPro.formatQuantity(data.items[i].item_quantity, item_unit) + ' ' + item_unit + '</div></div>' +
-                                '<div class="col-md-4 col-sm-4 col-xs-4 gift_receipt_element"><div class="invoice-content item-total pull-right ">' + currency + '&nbsp;<span class="number">' + price * data.items[i].item_quantity + '</span></div></div></div>';
+                                '<div class="col-md-4 col-sm-4 col-xs-4 gift_receipt_element"><div class="invoice-content item-total pull-right ">' + currency + '&nbsp;<span class="number">' + (transferredBill ? transferredBill.items[i].amount : price * data.items[i].item_quantity) + '</span></div></div></div>';
 
                             $('.print-invoice-table-content').append(rowHTMLLine);
 
@@ -1746,12 +1760,12 @@ PosnicPro.sales.view = {
                                 });
                             }
                         }
-                        var taxPrintItemData = PosnicPro.nestedTaxCalculation(itemPrintTaxDetails);
+                        var taxPrintItemData = (transferredBill ? transferredBill.taxes.map(function (row) { return { tax_name: row.label || row.name || 'Tax', amount: row.amount }; }) : PosnicPro.nestedTaxCalculation(itemPrintTaxDetails));
                         $(taxPrintItemData).each(function (key, val) {
-                            if ((val.amount).toFixed(2) > 0.00) {
+                            if ((val.amount).toFixed(moneyDigits) > 0.00) {
                                 var rowHTMLTaxLine = '<div class="row">' +
                                     '<div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8"><div class="invoice-footer-heading"></div></div>' +
-                                    '<div class="col-md-8 col-sm-8 col-xs-6"><div class="invoice-footer-value">' + val.tax_name + '%</div></div>' +
+                                    '<div class="col-md-8 col-sm-8 col-xs-6"><div class="invoice-footer-value">' + PosnicPro.escapeHtml(val.tax_name) + (transferredBill ? '' : '%') + '</div></div>' +
                                     '<div class="col-md-4 col-sm-4 col-xs-6"><div class="invoice-footer-valuew invoice-payment text-right">' + currency + '&nbsp;<span class="number">' + val.amount + '</div></div>' +
                                     '</div>';
                             }
@@ -1780,7 +1794,7 @@ PosnicPro.sales.view = {
                                 '<div class="invoice-footer-value"><lang class="lang_round_off_3">Round-Off</lang></div>' +
                                 '</div>' +
                                 '<div class="col-md-4 col-sm-4 col-xs-6">' +
-                                '<div class="invoice-footer-value invoice-payment text-dark">' + currency + sign + Math.abs(roundOffValue).toFixed(2) +
+                                '<div class="invoice-footer-value invoice-payment text-dark">' + currency + sign + Math.abs(roundOffValue).toFixed(moneyDigits) +
                                 '</div>' +
                                 '</div>';
                         }
@@ -1813,9 +1827,9 @@ PosnicPro.sales.view = {
                                 cgst += val.cgst_tax;
 
                                 if (discountSign === '%') {
-                                    var priceAmount = (((price.toFixed(2)) * val.item_quantity) - (((price.toFixed(2)) * val.item_quantity) * (discount / 100)));
+                                    var priceAmount = (((price.toFixed(moneyDigits)) * val.item_quantity) - (((price.toFixed(moneyDigits)) * val.item_quantity) * (discount / 100)));
                                 } else {
-                                    var priceAmount = (((price.toFixed(2)) * val.item_quantity) - (discount * val.item_quantity));
+                                    var priceAmount = (((price.toFixed(moneyDigits)) * val.item_quantity) - (discount * val.item_quantity));
                                 }
 
                                 var discount_percentage = '--';
@@ -1840,7 +1854,7 @@ PosnicPro.sales.view = {
                                 let hsn = (val.tax_fields.length === 0 && val.tax > 0) ? val.tax_name : '--';
                                 let rowHTMLLine = '<tr><td height="1" colspan="7" style="border-top:1px solid #e4e4e4"></td></tr><tr><td style="color: #506fe4;" class="article print-deatils-size-family print-details-align">' + PosnicPro.textOverflowPrintEllipsis(PosnicPro.printItemName ? PosnicPro.printItemName(val, 'receipt') : val.item_name, PosnicPro.local.get('printing_max_char'), true) + '</td>' +
                                     '<td class="print-deatils-size-family print-details-align lineitem_hsn" style="color: #646a6e;">' + hsn + '</td>' +
-                                    '<td class="print-deatils-size-family print-details-align lineitem_price" style="color: #646a6e;" align="center">' + price.toFixed(2) + '</td>' +
+                                    '<td class="print-deatils-size-family print-details-align lineitem_price" style="color: #646a6e;" align="center">' + price.toFixed(moneyDigits) + '</td>' +
                                     '<td class="print-deatils-size-family print-details-align lineitem_qty" style="color: #646a6e;" align="center">' + PosnicPro.formatQuantity(val.item_quantity, item_unit) + ' ' + item_unit + ' </td>' +
                                     '<td class="print-deatils-size-family print-details-align lineitem_disc" style="color: #646a6e;" align="center">' + discount_percentage + '</td>' +
                                     '<td class="print-deatils-size-family print-details-align lineitem_tax" style="color: #646a6e;" align="center">' + tax + ' ' + taxSigns + '</td>' +
@@ -1871,12 +1885,12 @@ PosnicPro.sales.view = {
                                 }
                             });
                         }
-                        var taxPrintItemData = PosnicPro.nestedTaxCalculation(itemPrintTaxDetails);
+                        var taxPrintItemData = (transferredBill ? transferredBill.taxes.map(function (row) { return { tax_name: row.label || row.name || 'Tax', amount: row.amount }; }) : PosnicPro.nestedTaxCalculation(itemPrintTaxDetails));
                         $(taxPrintItemData).each(function (key, val) {
-                            if ((val.amount).toFixed(2) > 0.00) {
+                            if ((val.amount).toFixed(moneyDigits) > 0.00) {
                                 rowHTMLTaxLine += ' <tr> ' +
                                     '    <td style="display:none;">' + val.tax_id + '</td>' +
-                                    '    <td class="print-deatils-size-family" style="color: #5b5b5b; line-height: 20px; vertical-align: top;">' + val.tax_name + '%</td>' +
+                                    '    <td class="print-deatils-size-family" style="color: #5b5b5b; line-height: 20px; vertical-align: top;">' + PosnicPro.escapeHtml(val.tax_name) + (transferredBill ? '' : '%') + '</td>' +
                                     '    <td class="print-deatils-size-family print-footer-align" style="white-space:nowrap;" width="80">' + currency + '&nbsp;<span class="number">' + val.amount + '</span> </td>' +
                                     '</tr>';
                             }
@@ -1908,9 +1922,9 @@ PosnicPro.sales.view = {
                                 }
 
                                 if (discountSign === '%') {
-                                    priceReturnAmount = (((price.toFixed(2)) * val.item_quantity) - (((price.toFixed(2)) * val.item_quantity) * (discount / 100)));
+                                    priceReturnAmount = (((price.toFixed(moneyDigits)) * val.item_quantity) - (((price.toFixed(moneyDigits)) * val.item_quantity) * (discount / 100)));
                                 } else {
-                                    priceReturnAmount = (((price.toFixed(2)) * val.item_quantity) - (discount * val.item_quantity));
+                                    priceReturnAmount = (((price.toFixed(moneyDigits)) * val.item_quantity) - (discount * val.item_quantity));
                                 }
                                 taxText.push(tax + '% &nbsp;');
                                 taxCgstText.push(tax / 2 + '% &nbsp;');
@@ -1945,12 +1959,12 @@ PosnicPro.sales.view = {
                                 }
                             });
                         }
-                        var taxPrintItemData = PosnicPro.nestedTaxCalculation(itemPrintTaxDetails);
+                        var taxPrintItemData = (transferredBill ? transferredBill.taxes.map(function (row) { return { tax_name: row.label || row.name || 'Tax', amount: row.amount }; }) : PosnicPro.nestedTaxCalculation(itemPrintTaxDetails));
                         $(taxPrintItemData).each(function (key, val) {
-                            if ((val.amount).toFixed(2) > 0.00) {
+                            if ((val.amount).toFixed(moneyDigits) > 0.00) {
                                 var rowHTMLTaxLine = '<div class="row">' +
                                     '<div class="col-md-offset-2 col-sm-offset-2 col-xs-offset-2 col-md-8 col-sm-8 col-xs-8"><div class="invoice-footer-heading"></div></div>' +
-                                    '<div class="col-md-8 col-sm-8 col-xs-6"><div class="invoice-footer-value">' + val.tax_name + '%</div></div>' +
+                                    '<div class="col-md-8 col-sm-8 col-xs-6"><div class="invoice-footer-value">' + PosnicPro.escapeHtml(val.tax_name) + (transferredBill ? '' : '%') + '</div></div>' +
                                     '<div class="col-md-4 col-sm-4 col-xs-6"><div class="invoice-footer-valuew invoice-payment text-right">' + currency + '&nbsp;<span class="number">' + val.amount + '</div></div>' +
                                     '</div>';
                             }
@@ -1961,6 +1975,8 @@ PosnicPro.sales.view = {
 
                     }
                 }
+
+                if (transferredBill) itemTotalTax = data.tax;
 
                 PosnicPro.toggleVisibility('lineitem_hsn', '.lineitem_hsn', root);
                 PosnicPro.toggleVisibility('lineitem_price', '.lineitem_price', root);
@@ -1983,12 +1999,12 @@ PosnicPro.sales.view = {
                         $('.hide-show-igst').show();
                         $('.hide-show-scgst').hide();
                         $('.gst-text-value').html(PosnicPro.removeDuplicates(taxText));
-                        $('.print_igst_tax_view').html(currency + '&nbsp;<span class="number">' + igst.toFixed(2) + '</span>');
+                        $('.print_igst_tax_view').html(currency + '&nbsp;<span class="number">' + igst.toFixed(moneyDigits) + '</span>');
                     } else if (parseFloat(cgst) > 0) {
                         $('.hide-show-scgst').show();
                         $('.hide-show-igst').hide();
                         $('.cgst-text-value').html(PosnicPro.removeDuplicates(taxCgstText));
-                        $('.print_csgst_tax_view').html(currency + '&nbsp;<span class="number">' + cgst.toFixed(2) + '</span>');
+                        $('.print_csgst_tax_view').html(currency + '&nbsp;<span class="number">' + cgst.toFixed(moneyDigits) + '</span>');
                     } else {
                         $('.indian-gstr').hide();
                     }
@@ -2006,8 +2022,12 @@ PosnicPro.sales.view = {
                     }
                 }
 
+                // Exact tax rows (or GST split rows) already state the tax once.
+                if (transferredBill) $('.tax-print-hideshow').hide();
+
                 $('.total-noof-item').html(itemTotalQty.toFixed(2));
-                $('span.number').number(true, 2);
+                $('.print-total').attr('data-currency-digits', moneyDigits);
+                $('span.number').number(true, moneyDigits);
 
                 // KOT History prints: temporarily hide plain 'Payment' / 'Payment Status' labels.
                 // Non-KOT prints: always restore these labels so Sales/Settlement prints are unaffected.
