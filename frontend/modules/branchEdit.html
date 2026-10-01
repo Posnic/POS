@@ -54,6 +54,20 @@
             <div class="col-lg-8 col-xl-9">
                 <form class="form-validate" method="post" name="setting_add" id="setting_add">
                     <input type="hidden" id="edit_branch_target" name="target_branch_id">
+                    <div class="card m-b-30">
+                        <div class="card-header"><h5 class="card-title mb-0"><lang class="lang_upi_heading">Pay by UPI</lang></h5></div>
+                        <div class="card-body form-row">
+                            <div class="form-group col-md-6">
+                                <label for="branch_upi_id"><lang class="lang_upi_id">UPI id</lang></label>
+                                <input class="form-control border-control" name="branch_upi_id" id="branch_upi_id" maxlength="80" autocomplete="off" autocapitalize="none" spellcheck="false">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="branch_upi_name"><lang class="lang_upi_name">Name your customer will see</lang></label>
+                                <input class="form-control border-control" name="branch_upi_name" id="branch_upi_name" maxlength="80" autocomplete="off">
+                            </div>
+                            <p class="col-12"><lang class="lang_captain_confirm_received">Confirm only after receiving the money. This does not charge a card or bank account.</lang></p>
+                        </div>
+                    </div>
                     <div class="card m-b-30 loader-view-generalsetting">
                         <div class="card-header">
                             <h5 class="card-title mb-0">

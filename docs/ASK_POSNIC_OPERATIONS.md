@@ -1099,16 +1099,19 @@ Paid scanned-PDF OCR, approved commercial pricing/payment lifecycle checks,
 provider invoice reconciliation, real own-key and WhatsApp acceptance, and the
 independent multilingual pilot remain open.
 
-Validation: the API run passed 468 suites/11,721 tests, with 13 existing skips.
-After the final action-counter correction, all 70 focused AI/metering/metrics
+Validation: after merging develop `33ef8b63`, the full API run passed 490 suites
+and 12,330 tests, with 13 existing skips. All 70 focused AI/metering/metrics
 tests and the authenticated application smoke passed. The smoke verifies counters
 against real confirmed-action audit records and exercises synthetic own-key calls.
 Intranet passed 506 tests with seven skips; Gateway passed 216 with one skip.
 The fleet contract/browser check exercised 100 concurrent increments against real
 MongoDB, per-license storage, TTL indexes, currency separation, authenticated host
 routing, missing observations and escaped desktop/mobile rendering. Five sync
-classification checks passed. Frontend POS build `8b4fd03087368280` is unchanged;
-the new Intranet page uses its existing CSS and vanilla-JavaScript serving path.
+classification checks passed. The merged desktop suite passed 3,721 tests with
+five existing skips. Frontend build `b6a422eb38e86895` and desktop/mobile Ask Posnic
+checks passed. Translation conflicts were resolved by retaining both branches'
+independent keys; API documentation was regenerated to 823 endpoints. The new
+Intranet page uses its existing CSS and vanilla-JavaScript serving path.
 
 Reproduce the cross-service/browser check from `api` with both release roots set:
 

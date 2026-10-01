@@ -336,6 +336,15 @@ const saleSchema = new mongoose.Schema(
     },
     kitchen_closed: { type: Boolean, default: false },
     kitchen_required: { type: Boolean, default: false },
+    floor_lifecycle: { type: Boolean, default: false },
+    seating_request_id: { type: String },
+    idempotency_key: { type: String },
+    submission_payload_hash: { type: String },
+    seating_primary_id: { type: String },
+    seating_table_ids: { type: [String], default: undefined },
+    floor_closed_at: { type: Date },
+    floor_closed_transfer_id: { type: String },
+    floor_closed_by: { type: String },
     sale_process: {
       type: String,
       enum: SALE_PROCESS_VALUES,
@@ -695,6 +704,9 @@ const saleSchema = new mongoose.Schema(
     },
 
     captain_payment_plan: { type: String },
+    seating_capacity_revision: { type: String },
+    captain_transfer_allocation: { type: mongoose.Schema.Types.Mixed },
+    captain_transfer_operations: { type: [mongoose.Schema.Types.Mixed], default: undefined },
     captain_payment_version: { type: Number },
     captain_payments: { type: mongoose.Schema.Types.Mixed },
     denomination_values: {

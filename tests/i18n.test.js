@@ -966,3 +966,10 @@ test('no help text explains itself with a placeholder in angle brackets', () => 
   }
   assert.deepStrictEqual(eaten, [], 'help text with a placeholder a browser will swallow');
 });
+
+test('submission recovery translator callbacks stay in the English inventory', () => {
+  const { keysUsed } = require('./tools/i18n-coverage');
+  const { context } = keysUsed();
+  assert.equal(context.get('lang_pending_submissions').english, 'Pending submissions');
+  assert.equal(context.get('lang_submission_unreadable').english, 'The saved order could not be read.');
+});

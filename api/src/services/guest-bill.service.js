@@ -12,13 +12,42 @@ const amountMinor = (value, policy) => {
 function problem(message, status = 400) {
   return Object.assign(new Error(message), { status });
 }
-function snapshotFrom(sales, branch, table) {
+function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
   const monetary = Money.policy(branch);
   const minor = (value) => amountMinor(value, monetary);
   const lines = [],
     labels = { base: 'Subtotal', discount: 'Discount', adjustment: 'Adjustments' };
   let totalMinor = 0;
   for (const sale of sales) {
+    const allocation = require('../utils/transfer-allocation').read(sale, branch);
+    if (allocation) {
+      const live = (sale.items || []).filter(
+        (it) =>
+          it &&
+          !it.return &&
+          !it.cancelled &&
+          !['cancelled', 'canceled'].includes(String(it.status || '').toLowerCase()) &&
+          Number(it.quantity ?? it.item_quantity ?? it.qty) > 0 &&
+          String(it.name || it.item_name || '').trim()
+      );
+      allocation.lines.forEach((line, index) => {
+        // The allocation fixes money, not guest assignment or display text.
+        // Those details can change without repricing the transferred dishes.
+        const current = structuredClone(line);
+        delete current.default_language;
+        delete current.translations;
+        lines.push({
+          ...current,
+          ...require('../utils/item-localization').snapshot(live[index]),
+          seat: Number(live[index].seat) || 0,
+          id: String(sale._id) + ':' + index,
+        });
+      });
+      for (const key of Object.keys(allocation.components))
+        if (key.startsWith('tax:')) labels[key] = key.slice(4);
+      totalMinor += allocation.totalMinor;
+      continue;
+    }
     const live = (sale.items || []).filter(
       (it) =>
         it &&
@@ -65,7 +94,7 @@ function snapshotFrom(sales, branch, table) {
     });
     totalMinor += total;
   }
-  if (!lines.length || totalMinor <= 0)
+  if (!lines.length || totalMinor < 0 || (totalMinor === 0 && !allowZero))
     throw problem('There is no unpaid bill to split on this table.', 409);
   const revision = hash(
     sales
@@ -89,7 +118,10 @@ function snapshotFrom(sales, branch, table) {
     totalMinor,
     labels,
     lines,
-    guests: Math.max(2, Math.min(20, Number(sales[0].person_count) || 2)),
+    guests: Math.max(
+      2,
+      Math.min(20, sales.reduce((sum, sale) => sum + (Number(sale.person_count) || 0), 0) || 2)
+    ),
   };
 }
 function billForGuest(snapshot, guest, branch, sale, batchId) {

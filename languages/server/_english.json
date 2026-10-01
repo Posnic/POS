@@ -427,6 +427,9 @@
   "Choose a supplier": [
     "src/repositories/purchase-order.repository.js"
   ],
+  "Choose a table with enough seats.": [
+    "src/repositories/sale.repository.js"
+  ],
   "Choose discount or markup quotation pricing.": [
     "src/repositories/quote.repository.js",
     "src/repositories/settings.repository.js"
@@ -2412,6 +2415,9 @@
   ],
   "This supplier details already exist in our system": [
     "src/models/supplier-legacy.model.js"
+  ],
+  "This table is not available.": [
+    "src/repositories/sale.repository.js"
   ],
   "This tax details already exist in our system": [
     "src/models/setting.model.js"

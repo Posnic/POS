@@ -203,21 +203,28 @@ PosnicPro.users = {
                 $('#u_doc_sales').html(PosnicPro.i18n.t('lang_no_sales_rung_up_yet', 'No sales rung up yet.'));
                 return;
             }
-            var value = 0;
+            var totals = new Map();
             var rows = list.map(function (r) {
-                value += Number(r.items_total) || 0;
+                var digits = Number.isInteger(r.currencyDigits) && r.currencyDigits >= 0 && r.currencyDigits <= 4 ? r.currencyDigits : 2;
+                var code = typeof r.currencyCode === 'string' && /^[A-Z]{3}$/.test(r.currencyCode) ? r.currencyCode : '';
+                var label = code || cur;
+                var amount = Number(r.items_total) || 0;
+                var subtotal = totals.get(code) || { label: label, value: 0, digits: digits };
+                subtotal.value += amount;
+                subtotal.digits = Math.max(subtotal.digits, digits);
+                totals.set(code, subtotal);
                 var saleId = r._id && r._id.$oid ? r._id.$oid : r._id;
                 return '<tr class="u-doc-sale-row" data-id="' + esc(saleId) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.sales_id) + '</td>'
                     + '<td class="q-muted">' + esc(r.string_date ? PosnicPro.convertDate(r.string_date) : '') + '</td>'
                     + '<td>' + esc(r.sale_process || 'Add') + '</td>'
-                    + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.items_total) || 0).toFixed(2) + '</td>'
+                    + '<td class="text-right">' + esc(label) + '&nbsp;' + amount.toFixed(digits) + '</td>'
                     + '</tr>';
             }).join('');
             $('#u_doc_stats').append(
                 '<div class="s-stat"><div class="s-stat-value">' + total + '</div>'
                 + '<div class="s-stat-label">' + (total === 1 ? PosnicPro.i18n.t('lang_newsale_title', 'Sale') : PosnicPro.i18n.t('lang_rgrp_sales', 'Sales')) + '</div></div>'
-                + '<div class="s-stat"><div class="s-stat-value">' + cur + '&nbsp;' + value.toFixed(2) + '</div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + Array.from(totals.values()).map(function (sum) { return '<div>' + esc(sum.label) + '&nbsp;' + sum.value.toFixed(sum.digits) + '</div>'; }).join('') + '</div>'
                 + '<div class="s-stat-label">Rung up' + (total > list.length ? ' (last ' + list.length + ')' : '') + '</div></div>');
             $('#u_doc_sales').removeClass('q-muted').html(
                 '<table class="q-items s-doc-purchases-table"><thead><tr>'

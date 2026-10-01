@@ -112,6 +112,14 @@ describe('whose figures these are', () => {
     expect(said.data.cancelled).toBe(1);
   });
 
+  it('a database failure returns an error instead of a successful zero-sales day', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    salesService.myDayModel.mockRejectedValue(new Error('database offline'));
+    const said = await controller().myDay({ user: { _id: 'me-1' }, body: {} }, reply());
+    expect(said).toMatchObject({ code: 500, error: true });
+    expect(said.data).toBeUndefined();
+  });
+
   it('a day with nothing in it says so rather than looking broken', async () => {
     salesService.myDayModel.mockImplementation(async () => ({
       total: 0,

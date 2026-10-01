@@ -24,7 +24,14 @@ async function mutable(db, sale) {
     else delete sale.captain_payment_plan;
     return;
   }
-  throw Object.assign(new Error(message), { status: 409, statusCode: 409 });
+  const operation = await plans.findOne(
+    { _id: id, purpose: 'order-restructure' },
+    { projection: { _id: 1 } }
+  );
+  throw Object.assign(
+    new Error(operation ? 'This order is being updated. Please retry.' : message),
+    { status: 409, statusCode: 409 }
+  );
 }
 // Payment reservation checks this short edit lease. A crash expires the lease;
 // it never clears a recorded payment or authorizes a second payment.

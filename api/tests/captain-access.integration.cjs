@@ -442,3 +442,207 @@ test('paired Captain can split and record payments but cannot change settings or
   assert.equal(response.status, 200);
   assert.equal((await response.json()).dueMinor, 0);
 });
+
+
+test('paired Captain verifies its own phone through scoped routes', async () => {
+  await db.collection('users').updateOne({_id:staff._id},{$set:{password:await require('bcryptjs').hash('staff-password',4)}});
+  const { grant } = await paired();
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  const messaging = require('../src/services/messaging.service');
+  const original = messaging.sendSms;
+  let code;
+  messaging.sendSms = async (_branch, _phone, message) => { code = message.match(/\b\d{6}\b/)[0]; return { ok: true }; };
+  try {
+    const unauthorized = await fetch(base + '/captain/v1/profile/phone/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    assert.equal(unauthorized.status, 401);
+    const sent = await fetch(base + '/captain/v1/profile/phone/start', { method: 'POST', headers, body: JSON.stringify({ phone: '+919000000001', currentPassword:'staff-password' }) });
+    assert.equal(sent.status, 200);
+    const challenge = await sent.json();
+    assert.equal(challenge.code, undefined);
+    const verified = await fetch(base + '/captain/v1/profile/phone/verify', { method: 'POST', headers, body: JSON.stringify({ challenge: challenge.challenge, code }) });
+    assert.equal(verified.status, 200);
+    assert.deepEqual(await verified.json(), { saved: true, phone: '+919000000001' });
+    const profile = await fetch(base + '/captain/v1/profile', { headers });
+    assert.equal((await profile.json()).phone, '+919000000001');
+  } finally { messaging.sendSms = original; }
+});
+
+
+test('paired Captain verifies a new email through scoped routes', async () => {
+  await db.collection('users').updateOne({_id:staff._id},{$set:{password:await require('bcryptjs').hash('staff-password',4)}});
+  const {grant} = await paired();
+  const headers = {Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+  const mail = require('../src/utils/email');
+  const original = mail.resolveShopTransport;
+  let code;
+  mail.resolveShopTransport = () => ({from:'shop@example.test',transporter:{sendMail:async message=>{code=message.text.match(/\b\d{6}\b/)[0];}}});
+  try {
+    const sent = await fetch(base+'/captain/v1/profile/email/start',{method:'POST',headers,body:JSON.stringify({email:'NEW@EXAMPLE.TEST',currentPassword:'staff-password'})});
+    assert.equal(sent.status,200);
+    const challenge = await sent.json();
+    assert.equal(challenge.code,undefined);
+    const verified = await fetch(base+'/captain/v1/profile/email/verify',{method:'POST',headers,body:JSON.stringify({challenge:challenge.challenge,code})});
+    assert.equal(verified.status,200);
+    assert.deepEqual(await verified.json(),{saved:true,email:'new@example.test'});
+    const profile = await fetch(base+'/captain/v1/profile',{headers});
+    assert.equal((await profile.json()).email,'new@example.test');
+  } finally { mail.resolveShopTransport = original; }
+});
+
+
+test('paired Captain moves a reserved group through scoped API without accepting another actor',async()=>{
+ const seating=require('../src/services/seating-claims');
+ const scope={branchId:branch._id,license:branch.license};
+ const ids=[new ObjectId(),new ObjectId(),new ObjectId()];
+ await db.collection('tableorder').insertMany(ids.map((id,index)=>({_id:id,branch_id:branch._id,license:branch.license,tableorder_value:'G'+index,capacity:2,max_capacity:3,adjacent_table_ids:ids[index+1]?[String(ids[index+1])]:[]})));
+ const claim=await seating.reserve(db,scope,{request_id:'route-seating-0001',actor:String(manager._id),table_ids:ids.slice(0,2).map(String),primary_id:String(ids[0]),guests:4});
+ const sale=new ObjectId();
+ await seating.bind(db,scope,claim.id,String(manager._id),String(sale));
+ await db.collection('sales').insertOne({_id:sale,branch_id:branch._id,license:branch.license,seating_request_id:claim.id,table_number:'G0',person_count:4,sale_process:'KOT'});
+ const {grant}=await paired();
+ const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+ const payload={orderId:String(sale),request_id:'route-moving-0001',tableIds:ids.slice(1).map(String),primaryId:String(ids[1]),guests:4,actor:String(manager._id)};
+ const send=(action,body,auth=headers)=>fetch(base+'/captain/v1/tables/move/'+action,{method:'POST',headers:auth,body:JSON.stringify(body)});
+ assert.equal((await send('prepare',payload,{'Content-Type':'application/json'})).status,401);
+ const prepared=await send('prepare',payload);assert.equal(prepared.status,200);
+ assert.equal((await seating.find(db,scope,payload.request_id)).actor,String(staff._id));
+ const completed=await send('complete',{request_id:payload.request_id});assert.equal(completed.status,200);
+ assert.equal((await completed.json()).state,'submitting');
+ assert.equal((await send('prepare',payload)).status,200);
+ assert.equal((await db.collection('sales').findOne({_id:sale})).table_number,'G1');
+ const cancelled={...payload,request_id:'route-moving-0002',primaryId:String(ids[2])};
+ assert.equal((await send('prepare',cancelled)).status,200);
+ const cancelledReply=await send('cancel',{request_id:cancelled.request_id});
+ assert.equal(cancelledReply.status,200);
+ assert.equal((await cancelledReply.json()).state,'cancelled');
+ assert.equal((await db.collection('sales').findOne({_id:sale})).table_number,'G1');
+ const unprepared={...payload,request_id:'route-moving-0003'};
+ const abandoned=await send('cancel',{request_id:unprepared.request_id,orderId:String(sale)});
+ assert.equal(abandoned.status,200);
+ assert.equal((await abandoned.json()).state,'cancelled');
+ assert.equal((await send('prepare',unprepared)).status,409);
+ assert.equal((await send('cancel',{request_id:unprepared.request_id,orderId:String(sale)})).status,200);
+ assert.equal((await db.collection('sales').findOne({_id:sale})).table_number,'G1');
+
+});
+
+
+test('paired Captain can preview an edit over HTTP without modifying the sale', async () => {
+  const { grant } = await paired();
+  const product = new ObjectId(), id = new ObjectId();
+  await db.collection('items').insertOne({ _id: product, license: branch.license, name: 'Soup', tax: 5, tax_type: 'exclusive' });
+  const order = { _id: id, branch_id: branch._id, license: branch.license, sale_process: 'KOT', payment_status: 'Unpaid',
+    sales_total: 105, sales_sub_total: 100, tax: 5, table_number: '1',
+    items: [{ item_id: product, item_name: 'Soup', item_quantity: 2, item_price: 50 }], changes: [] };
+  await db.collection('sales').insertOne(order);
+  const url = base + '/captain/v1/orders/edit/preview';
+  const body = JSON.stringify({ order_id: String(id), items: [{ product_id: String(product), quantity: 3, price: 50 }] });
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  assert.equal((await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })).status, 401);
+  const answer = await fetch(url, { method: 'POST', headers, body });
+  assert.equal(answer.status, 200, await answer.clone().text());
+  assert.equal(answer.headers.get('cache-control'), 'no-store');
+  assert.equal((await answer.json()).total_amount, 157.5);
+  assert.deepEqual(await db.collection('sales').findOne({ _id: id }), order);
+  await db.collection('sales').updateOne({ _id: id }, { $set: { branch_id: new ObjectId() } });
+  assert.equal((await fetch(url, { method: 'POST', headers, body })).status, 404);
+});
+
+
+test('paired Captain reaches bill, kitchen and guest recovery routes with scoped audio ownership', async () => {
+  const { grant } = await paired();
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  const call = (path, body) => fetch(base + '/captain/v1/' + path, { method: body ? 'POST' : 'GET', headers,
+    ...(body ? { body: JSON.stringify(body) } : {}) });
+  const order = { branch_id: branch._id, license: branch.license, sale_process: 'KOT', payment_status: 'Unpaid',
+    table_number: 'ROUTE-BILL', sales_total: 10, sales_sub_total: 10,
+    items: [{ item_name: 'Tea', item_quantity: 1, item_base_price: 10 }] };
+  await db.collection('sales').insertOne(order);
+  const bill = await call('bill?table=ROUTE-BILL');
+  assert.equal(bill.status, 200, await bill.clone().text());
+  assert.equal((await bill.json()).totalMinor, 1000);
+  const ready = await call('kitchen-ready');
+  assert.equal(ready.status, 200, await ready.clone().text());
+  const guest = await call('tables/guests/status', { request_id: 'missing-guest-request-1234' });
+  assert.equal(guest.status, 200);
+  assert.equal((await guest.json()).state, 'unknown');
+  // Malformed mutations reach their own validation, never mutate a sale.
+  for (const path of ['tables/guests', 'kitchen-ready']) {
+    const response = await call(path, {});
+    assert.equal(response.status, path === 'kitchen-ready' ? 400 : 422, await response.clone().text());
+  }
+  // A paired device still needs the staff member's merge permission.
+  for (const path of ['tables/merge/prepare', 'tables/transfer/preview']) {
+    const response = await call(path, {});
+    assert.equal(response.status, 403);
+    assert.notEqual((await response.json()).error.code, 'CAPTAIN_SCOPE');
+  }
+  const events = [];
+  const listener = (event, reply) => { events.push(event); reply(null, { accepted: true }); };
+  process.on('posnic:kitchen-audio', listener);
+  try {
+    for (const action of ['start', 'cancel', 'voice', 'status']) {
+      const response = await call('kitchen-audio/' + action, { id: 'recording-test', owner: 'forged', branchId: 'forged' });
+      assert.equal(response.status, 200, await response.clone().text());
+    }
+    assert.equal(events.length, 4);
+    for (const event of events) {
+      assert.equal(event.branchId, String(branch._id));
+      assert.equal(event.owner, String(branch.license) + ':' + String(staff._id));
+    }
+  } finally { process.removeListener('posnic:kitchen-audio', listener); }
+  for (const path of ['kitchen-audio/delete', 'tables/transfer/commit', 'tables/merge/delete', 'pair-codes']) {
+    const response = await call(path, {});
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).error.code, 'CAPTAIN_SCOPE');
+  }
+});
+
+
+test('paired transfer status requires merge permission and returns scoped unknown recovery',async()=>{
+ const {grant}=await paired();
+ const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+ const body=JSON.stringify({orderId:String(new ObjectId()),requestId:'unknown-transfer-123456'});
+ const send=()=>fetch(base+'/captain/v1/tables/transfer/status',{method:'POST',headers,body});
+ assert.equal((await send()).status,403);
+ await db.collection('users').updateOne({_id:staff._id},{$set:{'access.sales.merge':true}});
+ try {
+  const response=await send();assert.equal(response.status,200,await response.clone().text());
+  assert.equal(response.headers.get('cache-control'),'no-store');
+  assert.deepEqual(await response.json(),{requestId:'unknown-transfer-123456',state:'unknown'});
+ } finally {await db.collection('users').updateOne({_id:staff._id},{$unset:{'access.sales.merge':''}});}
+});
+
+
+test('paired transfer completion conserves totals and replays the same destination',async()=>{
+ const {grant}=await paired();
+ const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+ const post=(action,body,auth=headers)=>fetch(base+'/captain/v1/tables/transfer/'+action,{method:'POST',headers:auth,body:JSON.stringify(body)});
+ const id=new ObjectId(),product=new ObjectId(),table=new ObjectId();
+ await db.collection('tableorder').insertOne({_id:table,branch_id:branch._id,license:branch.license,tableorder_value:'TRANSFER-TARGET',capacity:4,max_capacity:4});
+ await db.collection('sales').insertOne({_id:id,branch_id:branch._id,license:branch.license,sale_process:'KOT',payment_status:'Unpaid',
+  table_number:'TRANSFER-SOURCE',sales_sub_total:100,sales_total:105,tax:5,
+  items:[{item_id:product,item_name:'Corn',item_quantity:2,item_base_price:50,item_tax:5}],
+  changes:[{timestamp:new Date(),items:[{item_id:product,item_name:'Corn',item_quantity:2,process:'add'}]}]});
+ const body={orderId:String(id),items:[{id:'c0i0',quantity:1}],requestId:'http-transfer-complete-123',
+  destination:{tableIds:[String(table)],primaryId:String(table),guests:2}};
+ assert.equal((await post('complete',body,{'Content-Type':'application/json'})).status,401);
+ assert.equal((await post('complete',body)).status,403);
+ await db.collection('users').updateOne({_id:staff._id},{$set:{'access.sales.merge':true}});
+ try {
+  const preview=await post('preview',body);assert.equal(preview.status,200);
+  body.revision=(await preview.json()).revision;
+  const response=await post('complete',body);assert.equal(response.status,200,await response.clone().text());
+  const result=await response.json();assert.equal(result.state,'completed');
+  const retry=await post('complete',body);assert.equal(retry.status,200);
+  assert.deepEqual(await retry.json(),result);
+  const status=await post('status',{orderId:body.orderId,requestId:body.requestId});
+  assert.deepEqual(await status.json(),result);
+  const source=await db.collection('sales').findOne({_id:id});
+  const destination=await db.collection('sales').findOne({_id:new ObjectId(result.destinationId)});
+  assert.equal(source.sales_total+destination.sales_total,105);
+  assert.equal(source.captain_payment_plan,undefined);assert.equal(destination.captain_payment_plan,undefined);
+  assert.equal(await db.collection('sales').countDocuments({'captain_transfer_operations.id':destination.captain_transfer_operations[0].id}),2);
+  const changed=await post('complete',{...body,items:[{id:'c0i0',quantity:2}]});assert.equal(changed.status,409);
+ } finally {await db.collection('users').updateOne({_id:staff._id},{$unset:{'access.sales.merge':''}});}
+});
