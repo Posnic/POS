@@ -127,6 +127,7 @@ async function applyFencedStockEffect(db, scope, effect) {
     [
       {
         $set: {
+          updated_date: { $cond: [permitted, '$$NOW', '$updated_date'] },
           available_quantity: {
             $cond: [
               permitted,

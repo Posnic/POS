@@ -77,7 +77,7 @@ function db() {
   return connection && connection.db ? connection.db : null;
 }
 
-let indexesPromise = null;
+let indexPromises = new WeakMap();
 
 /**
  * Indexes, created once per process.
@@ -88,8 +88,8 @@ let indexesPromise = null;
  * by pushing the same current row twice.
  */
 function ensureIndexes(database) {
-  if (indexesPromise) return indexesPromise;
-  indexesPromise = (async () => {
+  if (indexPromises.has(database)) return indexPromises.get(database);
+  const indexesPromise = (async () => {
     try {
       await database.collection(COLLECTION).createIndex(
         { collection: 1, documentId: 1 },
@@ -107,6 +107,7 @@ function ensureIndexes(database) {
       /* Indexes are an optimisation here, not a correctness requirement. */
     }
   })();
+  indexPromises.set(database, indexesPromise);
   return indexesPromise;
 }
 
@@ -121,14 +122,16 @@ function ensureIndexes(database) {
  * @param {string|object} entry.documentId
  * @param {string} entry.reason      one of REASONS
  * @param {string} [entry.priority]  defaults to 'critical'
+ * @param {object} [targetDb] trusted internal caller's database; avoids a
+ *   connection fallback when the business primitive already has its handle
  * @returns {Promise<boolean>} whether a marker was recorded
  */
-async function enqueue({ collection, documentId, reason, priority = 'critical' } = {}) {
+async function enqueue({ collection, documentId, reason, priority = 'critical' } = {}, targetDb) {
   if (!isEnabled()) return false;
   if (!collection || documentId === undefined || documentId === null) return false;
 
   try {
-    const database = db();
+    const database = targetDb || db();
     if (!database) return false;
     await ensureIndexes(database);
 
@@ -176,8 +179,8 @@ async function enqueue({ collection, documentId, reason, priority = 'critical' }
 }
 
 /** Convenience for the stock paths, which are the reason this exists. */
-async function enqueueInventory(itemId, reason = REASONS.SALE) {
-  return enqueue({ collection: 'items', documentId: itemId, reason, priority: 'critical' });
+async function enqueueInventory(itemId, reason = REASONS.SALE, targetDb) {
+  return enqueue({ collection: 'items', documentId: itemId, reason, priority: 'critical' }, targetDb);
 }
 
 /**
@@ -233,6 +236,6 @@ module.exports = {
   resolve,
   /* Exported for tests, which need a clean slate per case. */
   _resetIndexCache: () => {
-    indexesPromise = null;
+    indexPromises = new WeakMap();
   },
 };

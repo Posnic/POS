@@ -112,3 +112,18 @@ Local verification: 17 startup/port tests, 155 user-controller tests, 18 role/ac
 `stageExtensionArchive` writes a verified package to a random staging directory, revalidates the executable contract without executing it, and atomically renames it into the immutable version directory. It checks ancestor directories for links. A repeat of the exact package returns the existing version; a different build cannot overwrite the same version. It does not change current/previous pointers, enable any shop or reset namespace data. Activation must separately coordinate pending commands, permissions and restart/rollback.
 
 Twelve additional archive/staging tests pass, including actual Windows junction refusal and preserving an existing current-version pointer. The package loader now accepts declared camel-case command names, matching commands such as `payment.confirmCash`; the signed metadata still controls their permissions. The archive/loader/package group contains 24 passing tests. This is not evidence of a complete installer or a deployed package.
+# Inventory sync integration
+
+Extension stock effects advance `items.updated_date` atomically with an applied
+quantity change and enqueue the existing optional inventory priority marker
+using the exact same database handle. Replay repairs a missing marker but does
+not repeat stock or its timestamp. Refused effects do neither. The outbox stays
+disabled for cloud mode and unconfigured standalone installations; its failure
+cannot fail a completed stock effect. Periodic sync can discover the timestamp
+if priority notification was interrupted. Outbox indexes are initialized per
+database handle. This is compatibility with existing sync behavior, not a new
+cross-installation transfer feature.
+
+Verification: 17 stock effect/fence/journal/lifecycle MongoDB tests and 13 outbox
+unit tests, including lost marker replay, reversal, refusal, outbox failure and
+default-versus-explicit database isolation.

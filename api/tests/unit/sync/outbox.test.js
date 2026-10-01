@@ -192,6 +192,20 @@ describe('the durable sync outbox', () => {
     await expect(outbox.enqueueInventory('item-1', outbox.REASONS.SALE)).resolves.toBe(false);
   });
 
+  test('an explicit stock database does not write into the default connection', async () => {
+    const target = fakeDb();
+    const indexes = jest.spyOn(target._coll, 'createIndex');
+    await outbox.enqueueInventory('default-item');
+    await outbox.enqueueInventory('target-item', outbox.REASONS.ADJUSTMENT, target);
+    await outbox.enqueueInventory('target-item', outbox.REASONS.ADJUSTMENT, target);
+    expect(db._coll.rows.map((row) => row.documentId)).toEqual(['default-item']);
+    expect(target._coll.rows.map((row) => row.documentId)).toEqual(['target-item']);
+    expect(indexes).toHaveBeenCalledTimes(3);
+    ctx.enableMultiTenant(true);
+    expect(await outbox.enqueueInventory('cloud-item', outbox.REASONS.ADJUSTMENT, target)).toBe(false);
+    expect(target._coll.rows).toHaveLength(1);
+  });
+
   test('missing arguments are ignored rather than written as junk', async () => {
     expect(await outbox.enqueue({})).toBe(false);
     expect(await outbox.enqueue({ collection: 'items' })).toBe(false);

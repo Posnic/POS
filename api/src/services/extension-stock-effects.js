@@ -22,7 +22,7 @@ const hash = (value) => createHash('sha256').update(value).digest('hex');
  * Opaque receipts are not customer adjustment history and must not be removed
  * while an old operation can still be replayed. There is no public skip-stock flag.
  */
-async function applyStockEffect(db, scope, effect) {
+async function applyStockEffectInternal(db, scope, effect) {
   if (effect?.stream) return require('./extension-stock-fence').applyFencedStockEffect(db, scope, effect);
   const license = objectId(scope?.license);
   const branchId = objectId(scope?.branchId);
@@ -101,6 +101,7 @@ async function applyStockEffect(db, scope, effect) {
     [
       {
         $set: {
+          updated_date: { $cond: [canApply, '$$NOW', '$updated_date'] },
           available_quantity: {
             $cond: [
               canApply,
@@ -117,6 +118,19 @@ async function applyStockEffect(db, scope, effect) {
   const result =
     resultOf(row) || resultOf(await items.findOne(base, { projection: { [field]: 1 } }));
   if (!result) fail('stock_effect_unavailable');
+  return result;
+}
+
+async function applyStockEffect(db, scope, effect) {
+  const result = await applyStockEffectInternal(db, scope, effect);
+  if (result.applied) {
+    // Retry the deduplicated notification even after a lost acknowledgement.
+    // The item timestamp is atomic with stock, so periodic sync can recover
+    // when the optional priority outbox is unavailable. Use the same database
+    // as the stock write rather than a process-wide connection fallback.
+    const outbox = require('../sync/outbox');
+    await outbox.enqueueInventory(objectId(effect.itemId), outbox.REASONS.ADJUSTMENT, db);
+  }
   return result;
 }
 
