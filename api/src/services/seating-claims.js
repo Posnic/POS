@@ -901,6 +901,33 @@ async function forEdit(db, scope, order, next) {
     const total = guests + otherGuests;
     if (!details.accommodates(own, total)) fail('Choose a table with enough seats.', 409);
   }
+  // Older checks also share capacity with submitted checks and reservations.
+  // This is a preflight; legacy writers still need the durable commit protocol.
+  if (!own && destination === String(order.table_number || '') &&
+      next.guests !== undefined && next.guests !== null && next.guests !== '' &&
+      (next.dine_type || order.dine_type || 'Dine-in') === 'Dine-in') {
+    const guests = Number(next.guests);
+    if (!Number.isInteger(guests) || guests < 1 || guests > 1000)
+      fail('Enter the number of guests.');
+    if (guests > (Number(order.person_count) || 0)) {
+      const table = await db.collection('tableorder').findOne({
+        branch_id: scope.branchId, license: scope.license, tableorder_value: destination,
+      });
+      if (table) {
+        const overlaps = claims.filter(claim => !terminal(claim) &&
+          claim.order_id !== String(order._id) && claim.tables.includes(String(table._id)));
+        if (overlaps.some(claim => claim.guest_update || claim.moving_to || claim.closing || claim.state === 'releasing'))
+          fail('This order is being updated. Please retry.', 409);
+        const others = await db.collection('sales').find({
+          branch_id: scope.branchId, license: scope.license,
+          ...require('../helpers/floor-eligibility').floorEligibility(),
+          _id: { $ne: order._id }, table_number: destination,
+        }, { projection: { _id: 1, person_count: 1 } }).toArray();
+        if (!details.accommodates(table, guests + occupiedGuests(overlaps, others)))
+          fail('Choose a table with enough seats.', 409);
+      }
+    }
+  }
   if (
     !own &&
     destination !== String(order.table_number || '') &&

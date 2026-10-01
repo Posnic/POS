@@ -1641,3 +1641,34 @@ test.each(['capacity-reserved','applying','revision-written','capacity-released'
     expect((await require('../../../src/services/captain-restructure-lock').read(db,scope,input.request_id,'staff-1')).stage).toBe('completed');
   }
 );
+
+
+test('unclaimed guest edits include other checks and pending seats without double counting', async () => {
+  await db.collection('tableorder').updateOne({_id:new ObjectId(ids[0])},{$set:{max_capacity:8}});
+  const bound = await seating.reserve(db,scope,request({table_ids:[ids[0]],primary_id:ids[0],guests:2}));
+  const otherId = new ObjectId();
+  await seating.bind(db,scope,bound.id,'staff-1',String(otherId));
+  const order = {_id:new ObjectId(),branch_id:scope.branchId,license:scope.license,
+    table_number:'T1',person_count:1,sale_process:'KOT',payment_status:'Unpaid',dine_type:'Dine-in'};
+  await db.collection('sales').insertMany([order,
+    {...order,_id:otherId,person_count:3,seating_request_id:bound.id},
+    {...order,_id:new ObjectId(),branch_id:new ObjectId(),person_count:100},
+    {...order,_id:new ObjectId(),license:new ObjectId(),person_count:100},
+    {...order,_id:new ObjectId(),person_count:100,floor_closed_at:new Date()},
+  ]);
+  await expect(seating.forEdit(db,scope,order,{guests:5})).resolves.toBeNull();
+  await expect(seating.forEdit(db,scope,order,{guests:6})).rejects.toThrow('enough seats');
+  // A pending reservation consumes seats before it has a sale. Add it to the
+  // branch snapshot to isolate edit validation from reservation policy.
+  await db.collection('table_seating').updateOne({'claims.id':bound.id},{$push:{claims:{
+    id:'pending-shared-seats',state:'reserved',tables:[ids[0]],labels:['T1'],guests:1,
+  }}});
+  await expect(seating.forEdit(db,scope,order,{guests:4})).resolves.toBeNull();
+  await expect(seating.forEdit(db,scope,order,{guests:5})).rejects.toThrow('enough seats');
+  await db.collection('table_seating').updateOne({'claims.id':bound.id},{$set:{'claims.$.guest_update':'another-update'}});
+  await expect(seating.forEdit(db,scope,order,{guests:2})).rejects.toMatchObject({status:409});
+  await expect(seating.forEdit(db,scope,order,{guests:1})).resolves.toBeNull();
+  await expect(seating.forEdit(db,scope,{...order,person_count:12},{guests:11})).resolves.toBeNull();
+  for(const guests of [0,-1,1.5,'bad',1001])
+    await expect(seating.forEdit(db,scope,order,{guests})).rejects.toThrow('number of guests');
+});
