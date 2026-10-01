@@ -261,6 +261,11 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
           $set: {
             data: nextState,
             revision: input.expectedRevision + 1,
+            'pending.hostActions': row.pending.plan.effects.flatMap((effect, index) =>
+              effect.kind === 'payment.cash' && effectResults[index]?.status === 'paid'
+                ? [{ type: 'cash-sale-completed', saleId: effectResults[index].saleId }]
+                : []
+            ),
             'pending.phase': 'applied',
           },
         }
@@ -294,6 +299,9 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
     fail('extension_recovery_required');
   }
   const result = { ...row.pending.plan.result, revision: input.expectedRevision + 1 };
+  // Only trusted effects may request host hardware, never a worker result.
+  delete result.hostActions;
+  if (row.pending.hostActions?.length) result.hostActions = row.pending.hostActions;
   await receipts.updateOne(
     { _id: operationId },
     {

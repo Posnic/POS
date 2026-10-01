@@ -142,6 +142,19 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       respondError(res, error);
     }
   });
+  router.post('/:extensionId/cash-drawer', async (req, res) => {
+    try {
+      res.json(
+        await require('../services/extension-sale-hardware').claimCashDrawer({
+          db: req.db,
+          ...req.extension,
+          saleId: req.body?.saleId,
+        })
+      );
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
   router.post('/:extensionId/receipt', async (req, res) => {
     try {
       const e = req.extension;

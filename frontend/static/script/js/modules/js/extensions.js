@@ -80,6 +80,54 @@
       // Pin the branch at opening. Switching branch requires reopening
       // the frame so an old basket can never be submitted in a new shop.
       var branch = String(PosnicPro.local.get("branch_id_set") || "");
+      async function afterCommand(result) {
+        if (
+          run !== generation ||
+          branch !== String(PosnicPro.local.get("branch_id_set") || "")
+        )
+          return result;
+        var drawer = window.electronAPI && window.electronAPI.cashDrawer;
+        if (!drawer || !Array.isArray(result.hostActions)) return result;
+        try {
+          var config = await drawer.loadConfig();
+          if (!config || !config.autoOpenOnSale) return result;
+          if (!config.printerName || config.method === "serial")
+            throw new Error("Choose the drawer printer in Hardware Manager.");
+          for (var action of result.hostActions) {
+            if (action.type !== "cash-sale-completed") continue;
+            if (
+              run !== generation ||
+              branch !== String(PosnicPro.local.get("branch_id_set") || "")
+            )
+              return result;
+            var claim = await request(base + "/cash-drawer", {
+              saleId: action.saleId,
+            });
+            if (!claim.open) continue;
+            // Claim is durable before IPC, so lost responses/restarts never
+            // automatically pulse a second time. A miss needs manual opening.
+            if (
+              run !== generation ||
+              branch !== String(PosnicPro.local.get("branch_id_set") || "")
+            )
+              return result;
+            var opened = await drawer.openViaPrinter(
+              config.printerName,
+              config.pin || 0,
+            );
+            if (!opened || !opened.success)
+              throw new Error(
+                (opened && opened.error) || "Cash drawer did not open.",
+              );
+          }
+        } catch (error) {
+          status(
+            "Sale saved. Check the cash drawer and use its manual control if needed. " +
+              error.message,
+          );
+        }
+        return result;
+      }
       try {
         var data = await request(base + "/view");
         if (run !== generation) return;
@@ -123,8 +171,9 @@
                   command: input.command,
                 },
                 input.requestKey,
-              );
-            if (method === "recover") return request(base + "/recover", {});
+              ).then(afterCommand);
+            if (method === "recover")
+              return request(base + "/recover", {}).then(afterCommand);
             if (method === "receipt")
               return request(base + "/receipt", input).then(
                 async function (receipt) {

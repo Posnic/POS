@@ -75,6 +75,12 @@ Signed metadata can declare `contextProjection`; its pure worker supplies a boun
 
 The installed browser regression verifies that an unavailable product refuses its own adjustment without locking the namespace, while unrelated baskets and cancellation remain available. The private planner discards obsolete working product snapshots. Core-backed paid-history paging is still required separately.
 
+## Cash drawer completion
+
+The namespace derives hardware actions only from successful trusted cash-payment effects. Worker-supplied action fields are discarded. The parent checks the local auto-open setting, selected drawer printer and connector pin, then requests a scoped durable claim before invoking the existing desktop drawer adapter. The claim requires write permission and an existing paid Cash sale for that shop and extension; unique insertion allows only one automatic attempt across concurrent retries/restarts. Receipt rendering, pending slips and Card confirmation do not request an automatic pulse.
+
+A physical device cannot provide an atomic commit with the database. The claim is written before IPC: an interrupted or failed pulse is not automatically retried. The paid sale remains completed and the UI asks staff to check/use the normal manual drawer control. Serial drawer configuration requires separate handling; this customer's printer-connected drawer uses the existing printer adapter. Actual Star hardware remains unverified.
+
 ## Signed ZIP staging
 
 `extension-archive.js` accepts an already bounded buffer (24 MiB maximum), reads entries with the existing yauzl dependency, and bounds both declared and actual decompressed bytes. It rejects unsafe/Windows-colliding paths, duplicates, file-as-parent collisions, symlinks/device entries, encrypted/unsupported encodings, unsigned/unlisted content and incompatible packages. All hashes and the Ed25519 signature are checked before filesystem staging. HTTP upload limits still need to be applied by the eventual installer route before buffering.
