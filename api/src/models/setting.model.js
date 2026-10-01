@@ -3668,7 +3668,7 @@ class SettingModel extends BaseModel {
       const items = await this.getCollection('items');
       const used = await items.countDocuments({
         license: this.normalizeId(this.licenseId),
-        modifier_group_ids: this.normalizeId(id),
+        modifier_group_ids: new ObjectId(String(id)),
       });
       if (used > 0) {
         return {
@@ -3678,8 +3678,13 @@ class SettingModel extends BaseModel {
         };
       }
       const collection = await this.getCollection('modifier_groups');
+      const removed = await collection.findOne({
+        _id: new ObjectId(String(id)),
+        license: this.normalizeId(this.licenseId),
+      });
+      if (removed) await BaseModel.deletedDocumentBackup('modifier_groups', removed);
       const r = await collection.deleteOne({
-        _id: this.normalizeId(id),
+        _id: new ObjectId(String(id)),
         license: this.normalizeId(this.licenseId),
       });
       if (!r.deletedCount) return { status: false, data: null, message: 'No such modifier group' };
@@ -3794,8 +3799,13 @@ class SettingModel extends BaseModel {
     try {
       if (!id) return { status: false, data: null, message: 'List id required' };
       const collection = await this.getCollection('price_lists');
+      const removed = await collection.findOne({
+        _id: new ObjectId(String(id)),
+        license: this.normalizeId(this.licenseId),
+      });
+      if (removed) await BaseModel.deletedDocumentBackup('price_lists', removed);
       const r = await collection.deleteOne({
-        _id: this.normalizeId(id),
+        _id: new ObjectId(String(id)),
         license: this.normalizeId(this.licenseId),
       });
       if (!r.deletedCount) return { status: false, data: null, message: 'No such price list' };

@@ -969,6 +969,13 @@ saleSchema.pre('save', async function () {
       const src = item && typeof item.toObject === 'function' ? item.toObject() : item || {};
 
       return {
+        ...(src.pricing
+          ? {
+              pricing: src.pricing,
+              unit_price: src.unit_price,
+              item_base_price: src.item_base_price,
+            }
+          : {}),
         sale_inline_item_price: src.sale_inline_item_price != null ? src.sale_inline_item_price : 0,
         sale_inline_discount_value:
           src.sale_inline_discount_value != null ? src.sale_inline_discount_value : 0,
@@ -2069,7 +2076,19 @@ Sale.kioskOrderModel = async function (data) {
 
       const discountAmount = parseFloat(doc.discount_amount) || 0;
       const discountPercentage = parseFloat(doc.discount_percentage) || 0;
-      const sellingPrice = parseFloat(doc.selling_price) || 0;
+      const authority = require('../services/pricing-authority');
+      let pricing;
+      try {
+        pricing = authority.resolve({
+          product: doc,
+          branch: branchDoc,
+          submitted: item.unit_price ?? item.item_price ?? item.price,
+          channel: 'kiosk',
+        });
+      } catch (error) {
+        return authority.failure(error);
+      }
+      const sellingPrice = pricing.selling_price;
       const itemAmount = sellingPrice * itemQuantity;
       const companyPrice = itemQuantity * (parseFloat(doc.company_price) || 0);
       total_company_data.push({ company_amount: companyPrice });
@@ -2143,6 +2162,7 @@ Sale.kioskOrderModel = async function (data) {
       });
 
       itemsale.push({
+        pricing,
         sale_inline_item_price: sellingPrice,
         sale_inline_discount_value: discountAmount,
         sale_inline_discount_pervalue: discountPercentage,

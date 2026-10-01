@@ -1,3 +1,4 @@
+const pricingAuthority = require('./pricing-authority');
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb');
 const Sale = require('../models/sale.model');
@@ -239,6 +240,38 @@ const processSale = async (
       return { status: false, message: ERROR_MESSAGES.BRANCH_LICENSE_REQUIRED };
     }
 
+    const savedAnswer = (saleId, saleNumber, duplicate = false) => ({
+      status: true,
+      data: {
+        _id: saleId,
+        sales_id: saleId,
+        sale_number: saleNumber,
+        sms: context.branchSettings?.sales_sms || false,
+        whatsapp: context.branchSettings?.whatsapp_receipt || false,
+        print: context.branchSettings?.printall || false,
+        mail: context.branchSettings?.sales_mail || false,
+        waring: 'success',
+        name: (data.customer_name || '').trim(),
+        phone: (data.customer_phone || '').trim(),
+        customer_balance: duplicate ? 0 : customer ? customer.balance || 0 : 0,
+        country_sort: context.branchSettings?.sortname || 'in',
+        ...(duplicate ? { duplicate: true } : {}),
+      },
+      message: 'Sale saved successfully',
+    });
+
+    // A retry returns its committed result before current catalogue changes
+    // can invalidate the original, already accepted request.
+    if (!preview && id === '' && data.idempotencyKey) {
+      const existing = await require('./desktop-submission').lookup(
+        await BaseModel.getDb(),
+        { branchId, license: licenseId },
+        String(userId || ''),
+        data
+      );
+      if (existing) return savedAnswer(existing._id, existing.sales_id, true);
+    }
+
     // 2. Check Plan / Max Sales (Skipped for now, assuming valid plan)
     // In strict PHP parity, we would check collection count.
 
@@ -332,6 +365,19 @@ const processSale = async (
       existingSale,
       data.outlet_revision
     );
+    const pricingBranch = context.branchSettings || {};
+    const pricingCustomer = data.customer_id
+      ? await customerRepository.findById(data.customer_id)
+      : null;
+    let priceList;
+    if (pricingCustomer?.category_id) {
+      const pricingDb = await BaseModel.getDb();
+      priceList = await pricingDb.collection('price_lists').findOne({
+        branch_id: branchId,
+        license: licenseId,
+        customer_category_id: String(pricingCustomer.category_id),
+      });
+    }
     const itemsale = [];
     const total_available_qty_map = {}; // To track simulated deductions within this batch
 
@@ -375,26 +421,54 @@ const processSale = async (
         parseLegacyNumber(document.discount_percentage) ??
         0;
 
-      // Selling Price Resolution
-      let sellingPrice =
-        parseLegacyNumber(item.sale_inline_item_price) ??
-        parseLegacyNumber(item.item_price_total) ??
-        parseLegacyNumber(document.selling_price) ??
-        0;
-
-      if (outlet && !existingSale) {
-        const extras = (Array.isArray(item.modifiers) ? item.modifiers : []).reduce(
-          (sum, m) => sum + (Number(m.price_delta) || 0),
-          0
-        );
-        sellingPrice = billingOutlets.price(outlet, document, sellingPrice);
-        if (
-          document.open_price !== true &&
-          Number(document.selling_price) > 0 &&
-          document.item_status !== 'instant'
-        )
-          sellingPrice += extras;
+      const previousLine = existingSale?.items?.find(
+        (line) => String(line.line_id || line.item_id) === String(item.line_id || itemId)
+      );
+      if (
+        previousLine?.pricing &&
+        item.modifiers !== undefined &&
+        JSON.stringify(item.modifiers) !== JSON.stringify(previousLine.modifiers || [])
+      )
+        return {
+          status: false,
+          message: 'Add a separate line to change priced modifiers.',
+          data: { state: 'item_modifiers_changed' },
+        };
+      const extras = previousLine?.pricing
+        ? { delta: previousLine.pricing.modifier_delta || 0, lines: previousLine.modifiers || [] }
+        : item.modifiers?.length
+          ? await salesRepository._priceModifiers(item.modifiers, document, {
+              ...pricingBranch,
+              license: licenseId,
+            })
+          : { delta: 0, lines: [] };
+      if (extras.status === false) return extras;
+      let pricing;
+      try {
+        pricing = pricingAuthority.resolve({
+          product: document,
+          branch: pricingBranch,
+          previous: previousLine,
+          submitted: item.sale_inline_item_price ?? item.item_price_total,
+          extras: extras.delta,
+          outlet,
+          priceList,
+          channel: existingSale?.channel || data.channel || 'counter',
+        });
+        if (item.tax != null && Number(item.tax) !== pricing.tax)
+          throw new pricingAuthority.PricingError(
+            'item_tax_mismatch',
+            'Tax changed. Refresh the item before saving.'
+          );
+        if (item.tax_type && item.tax_type !== pricing.tax_type)
+          throw new pricingAuthority.PricingError(
+            'item_tax_mismatch',
+            'Tax type changed. Refresh the item before saving.'
+          );
+      } catch (error) {
+        return pricingAuthority.failure(error);
       }
+      const sellingPrice = pricing.selling_price;
       const itemAmount = sellingPrice * itemQuantity;
 
       // Prefer payload-provided company_price_total when available, otherwise
@@ -405,11 +479,8 @@ const processSale = async (
 
       total_company_data.push({ company_amount: companyPrice });
 
-      // Tax percentage: prefer per-line tax rate from payload (item.tax),
-      // then fall back to the item master tax when not provided. The
-      // separate GST amount from the legacy frontend is handled via
-      // `gstValue` below.
-      const itemTax = parseLegacyNumber(item.tax) ?? parseLegacyNumber(document.tax) ?? 0;
+      // The validated catalogue/snapshot is the only tax-rate authority.
+      const itemTax = pricing.tax;
 
       let itemDiscountAmountMultiple = 0;
       let itemDiscountPercentageMultiple = 0;
@@ -417,7 +488,7 @@ const processSale = async (
       let itemSubTaxTotalCalculation = 0;
       let itemTaxAmountForItem = 0;
       let effectiveItemTax = itemTax;
-      let effectiveTaxType = item.tax_type || document.tax_type || '';
+      let effectiveTaxType = pricing.tax_type;
 
       /*
        * T1: the ONE tax engine computes this line. tax-engine.js carries
@@ -429,14 +500,13 @@ const processSale = async (
        * value, and only the legacy GST-amount fallback may override the
        * item's declared tax rate and type.
        */
-      const gstAmountForFallback =
-        typeof item.gst === 'number' ? item.gst : parseFloat(item.gst || 0) || 0;
+      const gstAmountForFallback = 0;
       const engineLine = computeLineTax({
         itemAmount,
         sellingPrice,
         itemQuantity,
         itemTax,
-        taxType: document.tax_type,
+        taxType: pricing.tax_type,
         discountAmount,
         discountPercentage,
         gstAmount: gstAmountForFallback,
@@ -515,19 +585,11 @@ const processSale = async (
       let igst_value = 0;
       let csgst_value = 0;
 
-      // In PHP, $gstValue comes from the incoming item payload (per-line GST),
-      // not from the calculated tax amount. However, some modern flows may
-      // omit this dedicated `gst` field and only send percentage + totals.
-      // To keep the sales view Tax Details card correct in those cases, we
-      // fall back to the server-computed per-line tax amount when needed.
-      const gstValueRaw = typeof item.gst === 'number' ? item.gst : parseFloat(item.gst || 0) || 0;
-
+      // Tax components follow the server calculation, never submitted GST amounts.
       const fallbackGst = typeof itemTaxAmountForItem === 'number' ? itemTaxAmountForItem : 0;
 
-      // Prefer explicit payload gst when provided; otherwise, reuse the
-      // computed tax amount so IGST/CGST/SGST are still populated for
-      // GST-enabled branches.
-      const gstValue = gstValueRaw > 0 ? gstValueRaw : fallbackGst;
+      // Populate GST components from the accepted line calculation.
+      const gstValue = fallbackGst;
 
       const indianGstSetting = context.branchSettings?.indian_gst || 'gst_off';
 
@@ -604,12 +666,18 @@ const processSale = async (
       // distinguish HSN-based tax rows from simple one-rate taxes when
       // Indian GST is disabled.
       itemsale.push({
+        pricing,
+        ...require('../utils/order-line').identity(item),
+        ...(extras.lines.length ? { modifiers: extras.lines } : {}),
         // Mongoose Schema Required Fields (Node-native)
         item: new ObjectId(itemId),
         name: document.name,
         quantity: itemQuantity,
         ...require('../utils/kitchen-amount').forSaleItem(document, item, sellingPrice),
-        unit_price: sellingPrice,
+        unit_price:
+          pricing.tax_type === 'inclusive' ? sellingPrice / (1 + pricing.tax / 100) : sellingPrice,
+        item_base_price:
+          pricing.tax_type === 'inclusive' ? sellingPrice / (1 + pricing.tax / 100) : sellingPrice,
         tax_rate: effectiveItemTax,
         // tax_amount is defined below in the PHP-legacy block to avoid
         // duplicate keys and to mirror PHP's stored per-line tax amount.
@@ -1021,7 +1089,7 @@ const processSale = async (
     // Customer
     // In Node we don't fetch and store full customer object redundantly usually, but PHP does.
     // We will stick to schema which has separate fields for customer_*
-    const customer = data.customer_id ? await customerRepository.findById(data.customer_id) : null;
+    const customer = pricingCustomer;
 
     // Insert block: mirror PHP $insertData field order as closely as possible.
     const insertData = {
@@ -1296,25 +1364,6 @@ const processSale = async (
       denomination_values: data.denomination_values ?? (existingSale?.denomination_values || []),
     };
 
-    const savedAnswer = (saleId, saleNumber, duplicate = false) => ({
-      status: true,
-      data: {
-        _id: saleId,
-        sales_id: saleId,
-        sale_number: saleNumber,
-        sms: context.branchSettings?.sales_sms || false,
-        whatsapp: context.branchSettings?.whatsapp_receipt || false,
-        print: context.branchSettings?.printall || false,
-        mail: context.branchSettings?.sales_mail || false,
-        waring: 'success',
-        name: (data.customer_name || '').trim(),
-        phone: (data.customer_phone || '').trim(),
-        customer_balance: customer ? customer.balance || 0 : 0,
-        country_sort: context.branchSettings?.sortname || 'in',
-        ...(duplicate ? { duplicate: true } : {}),
-      },
-      message: 'Sale saved successfully',
-    });
     const finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
     if (finalSaleData.kitchen_required) {
       finalSaleData.kitchen_closed = !require('../helpers/kitchen-rounds')

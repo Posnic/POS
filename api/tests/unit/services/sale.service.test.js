@@ -190,6 +190,29 @@ describe('SalesService', () => {
     consoleWarnSpy.mockRestore();
   });
 
+  describe('fixed-price admission', () => {
+    test.each([
+      [{ item_price_total: '47.25' }, 'item_price_mismatch'],
+      [{ item_price_total: '45', tax: 18 }, 'item_tax_mismatch'],
+      [{ item_price_total: '45', tax: 5, tax_type: 'inclusive' }, 'item_tax_mismatch'],
+    ])('rejects a forged price or tax before sale and stock writes: %j', async (payload, state) => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(
+        makeItemDoc({ selling_price: 45, tax: 5, tax_type: 'exclusive' })
+      );
+      const result = await salesService.processSale(
+        makeSaleData({ items: [makeItemPayload(payload)] }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result).toMatchObject({ status: false, data: { state } });
+      expect(salesRepository.create).not.toHaveBeenCalled();
+      expect(salesRepository.save).not.toHaveBeenCalled();
+      expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+      expect(mockItemRepositoryInstance.updateStock).not.toHaveBeenCalled();
+    });
+  });
+
   describe('tax-inclusive full-payment integrity', () => {
     const taxableSale = (multi_payment, overrides = {}) =>
       makeSaleData({
@@ -456,7 +479,9 @@ describe('SalesService', () => {
 
     test('a bill-level decision binds the actual checkout preview and explains rounding in exact minor units', async () => {
       const { prepareDiscountIntent } = require('../../../src/services/business-discount-intent');
-      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(
+        makeItemDoc({ selling_price: 100.27 })
+      );
       const context = makeContext({
         roundOff: true,
         branchSettings: {
@@ -503,7 +528,7 @@ describe('SalesService', () => {
         ).revisionHash
       ).not.toBe(prepared.revisionHash);
       mockItemRepositoryInstance.findItemById.mockResolvedValue(
-        makeItemDoc({ tax: 10, tax_type: 'exclusive' })
+        makeItemDoc({ selling_price: 100.27, tax: 10, tax_type: 'exclusive' })
       );
       expect(
         (await prepareDiscountIntent(data, context, 'Regular customer')).revisionHash
@@ -671,6 +696,7 @@ describe('SalesService', () => {
       },
       {
         name: 'bill rounding is already applied',
+        item: { selling_price: 100.24 },
         data: { items: [makeItemPayload({ item_price_total: '100.24' })] },
         context: { roundOff: true },
         expected: 20000,
@@ -709,7 +735,8 @@ describe('SalesService', () => {
   // ── processSale – validation ──────────────────────────────────────────────
 
   test('a recovered desktop submission returns its sale before stock is deducted again', async () => {
-    require('../../../src/services/desktop-submission').prepare.mockResolvedValueOnce({
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    require('../../../src/services/desktop-submission').lookup.mockResolvedValueOnce({
       _id: 'saved-sale',
       sales_id: 'INV-SAVED',
     });
@@ -829,7 +856,10 @@ describe('SalesService', () => {
         .mockResolvedValue(outlet);
       try {
         const result = await salesService.processSale(
-          makeSaleData({ outlet_id: outlet.id }),
+          makeSaleData({
+            outlet_id: outlet.id,
+            items: [makeItemPayload({ item_price_total: '125' })],
+          }),
           '',
           'Add',
           makeContext()
@@ -877,7 +907,10 @@ describe('SalesService', () => {
         });
       try {
         const result = await salesService.processSale(
-          makeSaleData({ outlet_expected_total: 200 }),
+          makeSaleData({
+            outlet_expected_total: 200,
+            items: [makeItemPayload({ item_price_total: '125' })],
+          }),
           '',
           'Add',
           makeContext()
