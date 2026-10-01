@@ -354,8 +354,11 @@ PosnicPro.askposnic = {
         });
         $('#ask_posnic_thread').on('click', '.ask-citation', function () {
             var button = $(this);
+            var request = self.sourceRequest = (self.sourceRequest || 0) + 1;
+            $('#ask_source_publish').remove();
             var query = '?revision=' + encodeURIComponent(button.attr('data-revision')) + '&chunk=' + encodeURIComponent(button.attr('data-chunk'));
             PosnicPro.get('ask-posnic/documents/' + encodeURIComponent(button.data('id')) + query, function (response) {
+                if (request !== self.sourceRequest) return;
                 if (!response || !response.data) return PosnicPro.alert('error', response && response.message || 'Source is no longer available.');
                 $('#ask_source_title').text(response.data.title + ' · ' + response.data.revision);
                 $('#ask_source_content').text(response.data.sections && response.data.sections.length ? response.data.sections.map(function (section) { return 'PDF · ' + section.page + '\n\n' + section.text; }).join('\n\n────────\n\n') : response.data.content);
@@ -377,8 +380,10 @@ PosnicPro.askposnic = {
         });
         $('#ask_posnic_documents,#ask_posnic_shared_documents').on('click', '.ask-doc-review', function () {
             var id = $(this).attr('data-id');
+            var request = self.sourceRequest = (self.sourceRequest || 0) + 1;
             $('#ask_source_publish').remove();
             PosnicPro.get('ask-posnic/documents/' + encodeURIComponent(id) + '?review=1', function (response) {
+                if (request !== self.sourceRequest) return;
                 if (!response || !response.data) return PosnicPro.alert('error', response && response.message || 'Source is no longer available.');
                 var doc = response.data, status = doc.status === 'published' ? 'retired' : 'published';
                 $('#ask_source_title').text(doc.title + ' · ' + doc.status + ' · ' + doc.revision);
@@ -394,7 +399,7 @@ PosnicPro.askposnic = {
                 $('#ask_source_modal').modal('show');
             });
         });
-        $('#ask_source_modal').on('hidden.bs.modal', function () { $('#ask_source_publish').remove(); });
+        $('#ask_source_modal').on('hidden.bs.modal', function () { self.sourceRequest = (self.sourceRequest || 0) + 1; $('#ask_source_publish').remove(); });
         $('#ask_doc_upload').on('click', function () {
             var file = $('#ask_doc_file')[0] && $('#ask_doc_file')[0].files[0];
             if (!file) return PosnicPro.alert('error', PosnicPro.i18n.t('lang_choose_a_pdf_markdown_or_text_file', 'Choose a PDF, Markdown, or text file.'));

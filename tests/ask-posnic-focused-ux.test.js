@@ -83,3 +83,14 @@ test('source review escapes untrusted content and publishes only after explicit 
   assert.match($('#ask_source_content').text(), /<img/);
   $('#ask_source_publish').trigger('click'); assert.equal(writes, 1);
 });
+test('a late source response cannot replace the document currently being reviewed', () => {
+  const { $, PosnicPro } = setup(); const pending = [];
+  PosnicPro.get = (_url, done) => pending.push(done);
+  $('#ask_posnic_documents').html('<button class="ask-doc-review" data-id="first">First</button><button class="ask-doc-review" data-id="second">Second</button>');
+  $('.ask-doc-review').eq(0).trigger('click'); $('.ask-doc-review').eq(1).trigger('click');
+  pending[1]({ data: { title: 'Second', content: 'Second content', status: 'draft' } });
+  pending[0]({ data: { title: 'First', content: 'First content', status: 'draft' } });
+  assert.match($('#ask_source_title').text(), /^Second/);
+  assert.equal($('#ask_source_content').text(), 'Second content');
+  assert.equal($('#ask_source_publish').length, 1);
+});
