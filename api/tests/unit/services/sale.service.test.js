@@ -191,6 +191,59 @@ describe('SalesService', () => {
   });
 
   describe('fixed-price admission', () => {
+    test.each(['undefined', 'null', '', '  ', null, undefined])(
+      'desktop missing inline override %j uses and validates the selling-price field',
+      async (inline) => {
+        mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+        const result = await salesService.processSale(
+          makeSaleData({ items: [makeItemPayload({ sale_inline_item_price: inline })] }),
+          '',
+          'Add',
+          makeContext()
+        );
+        expect(result.status).toBe(true);
+        expect(salesRepository.create.mock.calls[0][0]).toMatchObject({ sales_total: 200 });
+        salesRepository.create.mockClear();
+        const invalid = await salesService.processSale(
+          makeSaleData({
+            items: [makeItemPayload({ sale_inline_item_price: inline, item_price_total: '105' })],
+          }),
+          '',
+          'Add',
+          makeContext()
+        );
+        expect(invalid).toMatchObject({ status: false, data: { state: 'item_price_mismatch' } });
+        expect(salesRepository.create).not.toHaveBeenCalled();
+      }
+    );
+    test('the four-item inclusive retail checkout accepts the original legacy retry payload', async () => {
+      const prices = [65, 85, 35, 38];
+      prices.forEach((selling_price) =>
+        mockItemRepositoryInstance.findItemById.mockResolvedValueOnce(
+          makeItemDoc({ selling_price, tax: 0.25, tax_type: 'inclusive' })
+        )
+      );
+      const result = await salesService.processSale(
+        makeSaleData({
+          sales_total: '223',
+          multi_payment: { Cash: 223 },
+          items: prices.map((price) =>
+            makeItemPayload({
+              item_quantity: '1',
+              sale_inline_item_price: 'undefined',
+              item_price_total: String(price),
+            })
+          ),
+        }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result.status).toBe(true);
+      const saved = salesRepository.create.mock.calls[0][0];
+      expect(saved.sales_total).toBe(223);
+      expect(saved.items.map((line) => line.pricing.selling_price)).toEqual(prices);
+    });
     test.each([
       [{ item_price_total: '47.25' }, 'item_price_mismatch'],
       [{ item_price_total: '45', tax: 18 }, 'item_tax_mismatch'],

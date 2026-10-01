@@ -1423,7 +1423,7 @@
             '    <td id="returnSalesDiscount_' + id + '" style="display:none;">' + Math.abs(returndiscount) + '</td>' +
             '    <td id="trackInventory_' + id + '" style="display:none;">' + params.track_inventory + '</td>' +
             '    <td id="negativeStock_' + id + '" style="display:none;">' + params.negative_stock + '</td>' +
-            '    <td id="saleInlineItemPrice_' + id + '" style="display:none;">' + params.sale_inline_item_price + '</td>' +
+            '    <td id="saleInlineItemPrice_' + id + '" style="display:none;">' + (params.sale_inline_item_price == null ? params.selling_price : params.sale_inline_item_price) + '</td>' +
             '    <td id="saleInlineDiscount_' + id + '" style="display:none;">' + params.sale_inline_discount_value + '</td>' +
             '    <td id="saleInlineDiscountPer_' + id + '" style="display:none;">' + params.sale_inline_discount_pervalue + '</td>' +
             '    <td id="addSalesLineItemNote_' + id + '" style="display:none;"></td>' +
@@ -4155,6 +4155,7 @@ PosnicPro.sales.addSale = {
                 PosnicPro.sales.submissionInProgress = false;
                 $("#save_btn").prop('disabled', false);
                 $("#save_submit").removeClass('disabled');
+                loader.find(".loadingSpinner").remove();
                 PosnicPro.alert('error', error.message);
                 return;
             }
@@ -4256,6 +4257,7 @@ PosnicPro.sales.addSale = {
                         }
                     }
                 } else {
+                    loader.find(".loadingSpinner").remove();
                     if (PosnicPro.businessApproval && PosnicPro.businessApproval.failed({ responseJSON: response })) return;
                     // ✅ Re-enable on error response
                     $("#save_btn").prop('disabled', false);
@@ -4263,6 +4265,7 @@ PosnicPro.sales.addSale = {
                     PosnicPro.alert(response.type, response.message);
                 }
             }, function (xhr) {
+                loader.find(".loadingSpinner").remove();
                 if (PosnicPro.businessApproval && PosnicPro.businessApproval.failed(xhr)) return;
                 // ✅ Clear submission flag and re-enable button on error
                 PosnicPro.sales.submissionInProgress = false;

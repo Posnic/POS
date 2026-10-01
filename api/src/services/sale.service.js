@@ -449,7 +449,7 @@ const processSale = async (
           product: document,
           branch: pricingBranch,
           previous: previousLine,
-          submitted: item.sale_inline_item_price ?? item.item_price_total,
+          submitted: pricingAuthority.desktopSubmittedPrice(item),
           extras: extras.delta,
           outlet,
           priceList,
