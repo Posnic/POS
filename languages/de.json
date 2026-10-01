@@ -3789,5 +3789,9 @@
   "lang_choose_your_hours": "Zeiten auswählen",
   "lang_apply_time": "Zeit anwenden",
   "lang_sales_time_filter": "Verkäufe nach Uhrzeit filtern",
-  "lang_choose_a_sales_period": "Verkaufszeitraum auswählen"
+  "lang_choose_a_sales_period": "Verkaufszeitraum auswählen",
+  "lang_rd_fixed_columns": "Feste Spalten - Artikel, Menge, Betrag",
+  "lang_rd_max_name_chars": "Maximale Zeichenanzahl des Artikelnamens",
+  "lang_rd_show_title": "Rechnungs- / Belegtitel anzeigen",
+  "lang_rd_fssai_header": "FSSAI unter GSTIN anzeigen"
 }

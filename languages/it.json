@@ -3789,5 +3789,9 @@
   "lang_choose_your_hours": "Scegli gli orari",
   "lang_apply_time": "Applica orario",
   "lang_sales_time_filter": "Filtro orario delle vendite",
-  "lang_choose_a_sales_period": "Scegli un periodo di vendita"
+  "lang_choose_a_sales_period": "Scegli un periodo di vendita",
+  "lang_rd_fixed_columns": "Colonne fisse - articolo, quantità, importo",
+  "lang_rd_max_name_chars": "Numero massimo di caratteri del nome articolo",
+  "lang_rd_show_title": "Mostra titolo fattura / ricevuta",
+  "lang_rd_fssai_header": "Mostra FSSAI sotto GSTIN"
 }

@@ -150,6 +150,7 @@
             '.rd-document table{width:100%;border-collapse:collapse;table-layout:fixed;font:inherit;color:inherit;}' +
             '.rd-document th{font-weight:bold;border-top:1px solid #333;border-bottom:1px solid #333;text-align:left;padding:7px 3px;}' +
             '.rd-document td{padding:6px 3px;vertical-align:top;border-bottom:1px solid #ddd;}.rd-document tr{break-inside:avoid;}.rd-document thead{display:table-header-group;}' +
+            '.rd-item-fixed{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.rd-total-quantity{font-weight:bold;}' +
             '.rd-number{text-align:right!important;white-space:normal;}.rd-line-detail{font-size:.88em;color:#444;}' +
             '.rd-total-row{display:flex;justify-content:space-between;gap:12px;margin:3px 0;}.rd-grand-total{font-size:1.3em;font-weight:bold;border-top:2px solid #111;padding-top:7px;margin-top:8px;}' +
             '.rd-totals{width:' + (sheet ? '48%' : '100%') + ';margin-left:auto;}.rd-transaction{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;border-bottom:1px solid #bbb;padding-bottom:8px;}' +
@@ -191,37 +192,48 @@
             steward: data.steward_name || data.steward || data.created_by || data.user_name, session: data.serving_session || data.session_name,
             fssai: data.branch_fssai_number, source: data.order_source || data.source,
         };
+        var fixedItems = !sheet && layout.blocks.find(function (b) { return b.type === 'items' && b.itemLayout === 'columns'; });
+        var headerFssai = layout.blocks.some(function (b) { return b.type === 'store' && b.fssaiInHeader; });
         var rendered = layout.blocks.map(function (b) {
             var content = '';
+            if (b.type === 'field' && ((b.field === 'fssai' && headerFssai) || (b.field === 'total_quantity' && fixedItems))) return '';
             if (b.type === 'field' && !contract.fieldAvailable(b.field, data)) return '';
             if (b.type === 'store') {
                 content = '<div class="rd-store"><h1>' + esc(data.branch_name || data.store_name || PosnicPro.local.get('branchname')) + '</h1><div class="rd-store-contact">' + esc(plain(data.printing_address || data.store_address || '')) + '</div>';
                 if (data.store_telephone) content += '<p>' + esc(data.store_telephone) + '</p>';
                 if (data.store_email) content += '<p>' + esc(data.store_email) + '</p>';
                 if (data.branch_gstin_number) content += '<p>GSTIN: ' + esc(data.branch_gstin_number) + '</p>';
-                if (contract.fieldAvailable('fssai', data) && present(data.branch_fssai_number) && !hasField('fssai')) content += '<p>' + esc(fieldLabel('fssai')) + ': ' + esc(String(data.branch_fssai_number).trim()) + '</p>';
+                if (contract.fieldAvailable('fssai', data) && present(data.branch_fssai_number) && (headerFssai || !hasField('fssai'))) content += '<p>' + esc(fieldLabel('fssai')) + ': ' + esc(String(data.branch_fssai_number).trim()) + '</p>';
                 content += '</div>';
             } else if (b.type === 'transaction') {
                 if (sheet) {
                     content = '<div class="rd-invoice-meta"><div class="rd-invoice-title">' + esc(documentTitle) + '</div><dl>';
                     if (data.sales_id) content += '<dt>' + esc(beforePayment ? PosnicPro.i18n.t('lang_bill_no', 'Bill no') : PosnicPro.i18n.t('lang_rd_receipt_number', 'Receipt number')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
                     content += '<dt>' + esc(PosnicPro.i18n.t('lang_date_title', 'Date')) + '</dt><dd>' + esc(data.created_date || data.date || '') + '</dd></dl></div>';
-                } else content = '<div class="rd-transaction"><strong>' + esc(documentTitle) + (data.sales_id ? ' ' + headerValue(data.sales_id) : '') + '</strong><span class="rd-transaction-date">' + thermalDate(data.created_date || data.date || '') + '</span></div>';
+                } else content = '<div class="rd-transaction"><strong>' + (b.showTitle === false ? '' : esc(documentTitle)) + (data.sales_id ? (b.showTitle === false ? '' : ' ') + headerValue(data.sales_id) : '') + '</strong><span class="rd-transaction-date">' + thermalDate(data.created_date || data.date || '') + '</span></div>';
                 if (present(taxNumber) && !hasField('customer_tax_number')) content += '<p class="rd-customer-tax">' + esc(fieldLabel('customer_tax_number')) + ': ' + esc(String(taxNumber).trim()) + '</p>';
             } else if (b.type === 'items') {
                 var compact = !sheet && b.itemLayout === 'compact';
-                content = '<table><colgroup><col style="width:' + (sheet ? '46' : compact ? '68' : '60') + '%">' + (sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr><th>' + esc(compact ? label('Item') + ' × ' + label('Qty') : label('Item')) + '</th>' + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
+                var columns = !sheet && b.itemLayout === 'columns';
+                content = '<table><colgroup><col style="width:' + (sheet ? '46' : columns ? '56' : compact ? '68' : '60') + '%">' + (sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : columns ? '<col style="width:12%"><col style="width:32%">' : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr><th>' + esc(compact ? label('Item') + ' × ' + label('Qty') : label('Item')) + '</th>' + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : columns ? '<th class="rd-number">' + esc(label('Qty')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
                 var receiptItems = Array.isArray(data.receipt_line_rows) ? data.receipt_line_rows.map(function (line) {
                     return Object.assign({}, line, { item_name: line.name, item_quantity: Number(line.qty), item_price: Number(line.rate), total_amount: line.amount, hsncode: line.hsn });
                 }) : items;
                 receiptItems.forEach(function (item) {
                     var qty = Number(item.item_quantity || 0);
                     var hsn = item.hsncode || item.hsn_code || item.hsn || (/^\d{4,8}$/.test(item.tax_name || '') ? item.tax_name : '');
-                    content += '<tr><td>' + esc(PosnicPro.printItemName ? PosnicPro.printItemName(item, 'receipt') : item.item_name) + (compact ? ' × ' + esc(qty) : '') + (b.hsn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
-                    if (!sheet && !compact) content += '<div class="rd-line-detail">' + esc(qty + ' ' + (item.item_unit || '') + ' × ') + money(item.item_price) + '</div>';
+                    var name = PosnicPro.printItemName ? PosnicPro.printItemName(item, 'receipt') : item.item_name;
+                    if (columns) {
+                        var chars = Array.from(String(name || ''));
+                        var limit = b.nameMaxChars || 24;
+                        name = chars.length > limit ? chars.slice(0, limit - 1).join('') + '…' : chars.join('');
+                    }
+                    content += '<tr><td' + (columns ? ' class="rd-item-fixed"' : '') + '>' + esc(name) + (compact ? ' × ' + esc(qty) : '') + (b.hsn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
+                    if (!sheet && !compact && !columns) content += '<div class="rd-line-detail">' + esc(qty + ' ' + (item.item_unit || '') + ' × ') + money(item.item_price) + '</div>';
                     if (Number(item.item_discount) || Number(item.item_discount_percentage)) content += '<div class="rd-line-detail">' + esc(label('Discount')) + ': ' + (Number(item.item_discount_percentage) ? esc(item.item_discount_percentage) + '%' : money(item.item_discount)) + '</div>';
-                    content += '</td>' + (sheet ? '<td class="rd-number">' + esc(qty + ' ' + (item.item_unit || '')) + '</td><td class="rd-number">' + money(item.item_price) + '</td>' : '') + '<td class="rd-number">' + money(item.total_amount) + '</td></tr>';
+                    content += '</td>' + (sheet ? '<td class="rd-number">' + esc(qty + ' ' + (item.item_unit || '')) + '</td><td class="rd-number">' + money(item.item_price) + '</td>' : columns ? '<td class="rd-number">' + esc(qty) + '</td>' : '') + '<td class="rd-number">' + money(item.total_amount) + '</td></tr>';
                 });
+                if (columns && hasField('total_quantity')) content += '<tr class="rd-total-quantity"><td>' + esc(label('Total quantity')) + '</td><td class="rd-number">' + esc(values.total_quantity) + '</td><td></td></tr>';
                 content += '</tbody></table>';
             } else if (b.type === 'totals') {
                 content = '<div class="rd-totals">' + pair('Subtotal', money(data.items_subtotal));

@@ -119,9 +119,16 @@
         if (block.type === 'items') {
           b.hsn = block.hsn === true;
           b.itemLayout = block.itemLayout || 'detailed';
-          if (!['detailed', 'compact'].includes(b.itemLayout))
+          if (!['detailed', 'compact', 'columns'].includes(b.itemLayout))
             throw new Error('Choose a valid item layout.');
         }
+        if (block.type === 'items' && block.nameMaxChars != null) {
+          b.nameMaxChars = Number(block.nameMaxChars);
+          if (!Number.isInteger(b.nameMaxChars) || b.nameMaxChars < 8 || b.nameMaxChars > 80)
+            throw new Error('Item name length must be between 8 and 80 characters.');
+        }
+        if (block.type === 'transaction' && block.showTitle === false) b.showTitle = false;
+        if (block.type === 'store' && block.fssaiInHeader === true) b.fssaiInHeader = true;
         if (textTypes.includes(block.type)) {
           b.bold = block.bold === true;
           if (block.fontSize != null && block.fontSize !== '') {

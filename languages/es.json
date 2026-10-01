@@ -3790,5 +3790,9 @@
   "lang_venue_kind": "Establecimiento",
   "lang_venue_markup": "Suplemento para el huésped",
   "lang_venue_name": "Nombre del establecimiento",
-  "lang_venue_unit_label": "Nombre de la unidad"
+  "lang_venue_unit_label": "Nombre de la unidad",
+  "lang_rd_fixed_columns": "Columnas fijas - artículo, cantidad, importe",
+  "lang_rd_max_name_chars": "Máximo de caracteres del nombre del artículo",
+  "lang_rd_show_title": "Mostrar título de factura / recibo",
+  "lang_rd_fssai_header": "Mostrar FSSAI debajo de GSTIN"
 }

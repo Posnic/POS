@@ -3794,5 +3794,9 @@
   "lang_venue_kind": "स्थान",
   "lang_venue_markup": "मेहमान अतिरिक्त देता है",
   "lang_venue_name": "स्थान का नाम",
-  "lang_venue_unit_label": "इकाई को क्या कहते हैं"
+  "lang_venue_unit_label": "इकाई को क्या कहते हैं",
+  "lang_rd_fixed_columns": "निश्चित कॉलम - वस्तु, मात्रा, राशि",
+  "lang_rd_max_name_chars": "वस्तु के नाम में अधिकतम अक्षर",
+  "lang_rd_show_title": "चालान / रसीद का शीर्षक दिखाएँ",
+  "lang_rd_fssai_header": "GSTIN के नीचे FSSAI दिखाएँ"
 }

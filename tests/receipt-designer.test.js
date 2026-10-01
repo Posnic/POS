@@ -878,3 +878,30 @@ test('signature editor saves only the optional block and keeps each format indep
     assert.equal(options.second, undefined);
     dom.window.close();
 });
+
+
+test('fixed thermal columns align quantity totals and shorten names; header omits title and puts FSSAI below GSTIN', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    sale.table_options = true; sale.country = 'India';
+    sale.branch_gstin_number = 'GST123'; sale.branch_fssai_number = '13521001000125';
+    for (const format of ['58', '80']) {
+        const blocks = design.layouts[format].blocks;
+        Object.assign(blocks.find(b => b.type === 'items'), { itemLayout: 'columns', nameMaxChars: 16 });
+        Object.assign(blocks.find(b => b.type === 'transaction'), { showTitle: false, fontSize: 10 });
+        Object.assign(blocks.find(b => b.type === 'store'), { fssaiInHeader: true });
+        blocks.push(engine.block('field', { field: 'total_quantity' }), engine.block('field', { field: 'fssai', width: 50 }));
+        sale.items[0].item_name = 'Beach Style Full Fish Tawa Fry';
+        sale.receipt_designs = contract.normalize(design);
+        const output = $('<div>').html(engine.render(sale, format, true));
+        assert.deepEqual(output.find('thead th').map((_, el) => $(el).text()).get(), ['Item', 'Qty', 'Amount']);
+        assert.equal(output.find('tbody tr:first td:first').text(), 'Beach Style Ful…');
+        assert.equal(output.find('tbody tr:first td').eq(1).text(), '2');
+        assert.equal(output.find('.rd-total-quantity td').eq(1).text(), '2');
+        assert.equal(output.find('.rd-field-total_quantity,.rd-field-fssai').length, 0);
+        assert.match(output.find('.rd-store').text(), /GSTIN: GST123FSSAI: 13521001000125/);
+        assert.doesNotMatch(output.find('.rd-transaction').text(), /Tax invoice|Receipt|Bill/);
+        assert.match(output.find('.rd-transaction').text(), /S128/);
+    }
+    assert.throws(() => { design.layouts['80'].blocks.find(b => b.type === 'items').nameMaxChars = 0; contract.normalize(design); }, /Item name length/);
+    dom.window.close();
+});

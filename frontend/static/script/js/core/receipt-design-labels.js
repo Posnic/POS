@@ -6,6 +6,10 @@ PosnicPro.receiptDesignLabel = function (value) {
     case "Full width": return PosnicPro.i18n.t('lang_rd_full_width', 'Full width');
     case "Half width": return PosnicPro.i18n.t('lang_rd_half_width', 'Half width');
     case "Place two half-width fields next to each other to share a row.": return PosnicPro.i18n.t('lang_rd_half_width_help', 'Place two half-width fields next to each other to share a row.');
+    case "Fixed columns - item, quantity, amount": return PosnicPro.i18n.t('lang_rd_fixed_columns', 'Fixed columns - item, quantity, amount');
+    case "Maximum item name characters": return PosnicPro.i18n.t('lang_rd_max_name_chars', 'Maximum item name characters');
+    case "Show invoice / receipt title": return PosnicPro.i18n.t('lang_rd_show_title', 'Show invoice / receipt title');
+    case "Show FSSAI below GSTIN": return PosnicPro.i18n.t('lang_rd_fssai_header', 'Show FSSAI below GSTIN');
     case "Item layout": return PosnicPro.i18n.t('lang_rd_item_layout', 'Item layout');
     case "Detailed - quantity and unit price below": return PosnicPro.i18n.t('lang_rd_items_detailed', 'Detailed - quantity and unit price below');
     case "Compact - item × quantity and amount": return PosnicPro.i18n.t('lang_rd_items_compact', 'Compact - item × quantity and amount');

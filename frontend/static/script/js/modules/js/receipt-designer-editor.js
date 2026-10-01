@@ -150,8 +150,11 @@
         if (b.type === 'field') html += '<p class="rd-help">' + esc(t('Filled from each sale. Omitted when no value is available.')) + '</p>' +
             '<label for="rd-field-width">' + esc(t('Field width')) + '</label><select id="rd-field-width" data-prop="width"><option value="100"' + (b.width !== 50 ? ' selected' : '') + '>' + esc(t('Full width')) + '</option><option value="50"' + (b.width === 50 ? ' selected' : '') + '>' + esc(t('Half width')) + '</option></select><small>' + esc(t('Place two half-width fields next to each other to share a row.')) + '</small>';
         if (b.type === 'barcode') html += '<p class="rd-help">' + esc(t('Code 128 barcode of the saved receipt number. Appears after the sale is saved.')) + '</p>';
-        if (b.type === 'items') html += '<label class="rd-inline"><input type="checkbox" data-prop="hsn" ' + (b.hsn ? 'checked' : '') + '> ' + esc(t('Show HSN / SAC codes')) + '</label><p class="rd-help">' + esc(t('Item names wrap onto the next line. Prices and quantities stay readable.')) + '</p>';
-        if (b.type === 'items' && !schema.formats[format].height) html += '<label for="rd-item-layout">' + esc(t('Item layout')) + '</label><select id="rd-item-layout" data-prop="itemLayout"><option value="detailed"' + (b.itemLayout !== 'compact' ? ' selected' : '') + '>' + esc(t('Detailed - quantity and unit price below')) + '</option><option value="compact"' + (b.itemLayout === 'compact' ? ' selected' : '') + '>' + esc(t('Compact - item × quantity and amount')) + '</option></select>';
+        if (b.type === 'items') html += '<label class="rd-inline"><input type="checkbox" data-prop="hsn" ' + (b.hsn ? 'checked' : '') + '> ' + esc(t('Show HSN / SAC codes')) + '</label><p class="rd-help">' + esc(t(b.itemLayout === 'columns' ? PosnicPro.i18n.t('lang_long_names_are_shortened_to_keep_quantity', 'Long names are shortened to keep quantity in its own column.') : PosnicPro.i18n.t('lang_rd_item_names_wrap_onto_the_next_line_prices_and_quantities_stay_readable_', 'Item names wrap onto the next line. Prices and quantities stay readable.'))) + '</p>';
+        if (b.type === 'items' && !schema.formats[format].height) html += '<label for="rd-item-layout">' + esc(t('Item layout')) + '</label><select id="rd-item-layout" data-prop="itemLayout"><option value="detailed"' + (!b.itemLayout || b.itemLayout === 'detailed' ? ' selected' : '') + '>' + esc(t('Detailed - quantity and unit price below')) + '</option><option value="compact"' + (b.itemLayout === 'compact' ? ' selected' : '') + '>' + esc(t('Compact - item × quantity and amount')) + '</option><option value="columns"' + (b.itemLayout === 'columns' ? ' selected' : '') + '>' + esc(t('Fixed columns - item, quantity, amount')) + '</option></select>';
+        if (b.type === 'items' && b.itemLayout === 'columns') html += '<label>' + esc(t('Maximum item name characters')) + '<input type="number" min="8" max="80" data-prop="nameMaxChars" value="' + (b.nameMaxChars || 24) + '"></label>';
+        if (b.type === 'transaction' && !schema.formats[format].height) html += '<label><input type="checkbox" data-prop="showTitle" ' + (b.showTitle !== false ? 'checked' : '') + '> ' + esc(t('Show invoice / receipt title')) + '</label>';
+        if (b.type === 'store') html += '<label><input type="checkbox" data-prop="fssaiInHeader" ' + (b.fssaiInHeader ? 'checked' : '') + '> ' + esc(t('Show FSSAI below GSTIN')) + '</label>';
         if (b.type === 'totals') html += '<p class="rd-help">' + esc(t('Uses the actual sale amounts, including discounts, tax, charges and rounding.')) + '</p>';
         if (schema.textTypes.indexOf(b.type) !== -1) {
             html += '<label for="rd-block-size">' + esc(t('Block text size')) + '</label><select id="rd-block-size" data-prop="fontSize"><option value="">' + esc(t('Use default')) + '</option>' + [8,9,10,11,12,13,14,16,18,20,24,28,32].map(function (n) { return '<option value="' + n + '"' + (b.fontSize === n ? ' selected' : '') + '>' + n + ' px</option>'; }).join('') + '</select><label class="rd-inline"><input type="checkbox" data-prop="bold" ' + (b.bold ? 'checked' : '') + '> ' + esc(t('Bold text')) + '</label>';
@@ -351,7 +354,7 @@
         }).on('input.receiptDesigner change.receiptDesigner', '[data-prop]', function (event) {
             if (event.type === 'change' && this.tagName === 'TEXTAREA') return;
             var b = layout().blocks.find(function (v) { return v.id === selected; }); if (!b) return;
-            var key = this.getAttribute('data-prop'); var value = this.type === 'checkbox' ? this.checked : ['width', 'thickness', 'fontSize'].indexOf(key) !== -1 ? (this.value === '' ? undefined : Number(this.value)) : this.value;
+            var key = this.getAttribute('data-prop'); var value = this.type === 'checkbox' ? this.checked : ['width', 'thickness', 'fontSize', 'nameMaxChars'].indexOf(key) !== -1 ? (this.value === '' ? undefined : Number(this.value)) : this.value;
             if (b[key] === value) return;
             checkpoint(); b[key] = value;
             if (key === 'width') {
@@ -362,6 +365,7 @@
                     if (value === 50) heading.append('<span class="rd-required">' + esc(t('Half width')) + '</span>');
                 }
             }
+            if (key === 'itemLayout') renderEditor();
             if (b.type === 'qr' && key === 'text') updateQr(b); changed();
         }).on('change.receiptDesigner', '#rd-image-file', function () {
             var b = layout().blocks.find(function (v) { return v.id === selected; }); if (b) upload(this.files[0], b);

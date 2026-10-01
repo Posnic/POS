@@ -6787,7 +6787,11 @@ PosnicPro.sales.calculation = {
                 item_quantity: $('#touchsale_item_qty' + itemid).val(),
                 CompanyPrice: $('#addSalesLineItemCompanyPrice_' + itemid).text(),
                 Discount: $('#addSalesLineItemDiscount_' + itemid).text(),
-                Totalamount: $('#addSalesLineTotal_' + itemid).text(),
+                // Payment reloads must sum full-precision line values, as the API does.
+                // Visible cells are rounded for display and can lose a paisa per line.
+                Totalamount: PosnicPro.sales.paymentOnlyMode === true
+                    ? $('#returnLineTotal_' + itemid).text()
+                    : $('#addSalesLineTotal_' + itemid).text(),
                 gsttaxamount: $('#addSalesGstTax_' + itemid).text(),
                 subtotalamount: $('#addSalesLineItemSubTotal_' + itemid).text() * $('#touchsale_item_qty' + itemid).val(),
                 discountamount: $('#addSalesDiscount_' + itemid).text()
@@ -6923,6 +6927,7 @@ PosnicPro.sales.calculation = {
         $('#RoundOff').html(roundOff);
         outputVal = (PosnicPro.roundoff === true) ? Math.round(outputVal) : parseFloat(outputVal);
         $('#sales_new_grand_total').number(outputVal, 2);
+        if (PosnicPro.sales.paymentOnlyMode === true) outputVal = Math.round(outputVal * 100) / 100;
         PosnicPro.sales.extraDiscount.sale_new_tot = outputVal;
         // Update customer display with extra discount
         var isPercent = !$('#percentIcon').hasClass('d-none');

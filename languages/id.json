@@ -3789,5 +3789,9 @@
   "lang_choose_your_hours": "Pilih jam",
   "lang_apply_time": "Terapkan waktu",
   "lang_sales_time_filter": "Filter waktu penjualan",
-  "lang_choose_a_sales_period": "Pilih periode penjualan"
+  "lang_choose_a_sales_period": "Pilih periode penjualan",
+  "lang_rd_fixed_columns": "Kolom tetap - barang, jumlah, nominal",
+  "lang_rd_max_name_chars": "Jumlah karakter maksimum nama barang",
+  "lang_rd_show_title": "Tampilkan judul faktur / struk",
+  "lang_rd_fssai_header": "Tampilkan FSSAI di bawah GSTIN"
 }
