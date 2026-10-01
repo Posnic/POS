@@ -1,6 +1,6 @@
 # Extension host implementation checkpoint
 
-This branch adds generic extension infrastructure on Posnic 1.9.0 develop, updated baseline `773200b2c6084199186014bbc55ae04bd57ab0e9`. It is not a released extension API. Keep the capability gate closed until the full browser, receipt and installation contract is verified.
+This branch adds generic extension infrastructure on Posnic 1.9.0 develop, updated baseline `773200b2c6084199186014bbc55ae04bd57ab0e9`. It is not a released extension API. The verified capabilities are advertised; remaining release checks below still apply.
 
 ## Durable execution
 
@@ -94,6 +94,16 @@ Extension managers can upload a bounded signed ZIP on the module's own page, rev
 Desktop and standalone startup process that request after database connection but before listening. Signature/digest, current state and scope are revalidated by the existing coordinator. A pending command leaves the old compatible version active and the request queued. Only the originating shop can cancel the queue, and an activation journal cannot be cancelled midway. Choosing an earlier compatible ZIP supports rollback. The loader clears prior descriptors after acquiring its runtime lock.
 
 Windows now uses a kernel-owned named pipe for runtime exclusion: testing found a reserved TCP range could otherwise reject a valid installation. Restart/queue/cancel/pending/rollback tests pass. Full built-desktop installation and physical hardware remain release gates.
+
+## Packaged Windows acceptance and staff access
+
+The real Electron 43.2.0 Windows package now passes fresh Community setup, password login, role-permission saving, entry through Manage > Extensions, signed ZIP verification/upload and activation on restart. The private repository's `tests/packaged-desktop.browser.cjs` uses the actual desktop, API, database, authentication, request wrapper, sidebar and iframe; it does not replace those with fixtures. The hardware is not exercised by that test. The earlier authenticated stock/sale/browser and update/rollback tests also pass on the bundled MongoDB 7.0.14 binary.
+
+The build manifest now includes the extension page markup as well as its JavaScript. Roles expose separate read, write and manage controls. Existing owner/manager navigation derives extension permissions using the same rule as the routes, instead of requiring an ACL migration just to reveal the menu. New ordinary users default to no extension permission. Saving a cashier role preserves read/write without granting management.
+
+Desktop startup now honors the existing `POSNIC_USER_DATA` maintenance setting before taking its single-instance lock. It requires an absolute path, isolates Chromium session data, and avoids replacing the normal installation's OS protocol/task links. Port selection probes both wildcard and IPv4 loopback bindings because Windows can permit one while the other is occupied. An explicit data profile refuses the legacy fallback to an unowned running database. Normal default-path behavior remains unchanged. During investigation, the old fallback reached another local database; no test product or sale commands were sent there. Subsequent setup/installation tests used their own newly created database processes and profiles.
+
+Local verification: 17 startup/port tests, 155 user-controller tests, 18 role/access tests, 79-module packaging scan, runtime dependency check and native runtime scan pass. The native scan found the required VC runtime beside every relevant bundled binary; this is not certification of a customer's Windows hardware. Windows Authenticode signing is not configured on this machine: the desktop build is unsigned. The runtime extension ZIP uses the separate Ed25519 publisher signature. NSIS installation, final distribution and customer hardware acceptance remain separate checks.
 
 ## Signed ZIP staging
 

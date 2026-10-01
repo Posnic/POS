@@ -87,6 +87,7 @@
     },
     "files": [
       "src/main.js",
+      "src/user-data-path.js",
       "src/diagnostics.js",
       "src/diagnostic-session.js",
       "src/diagnostic-health.js",

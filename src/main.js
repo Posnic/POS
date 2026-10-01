@@ -8,6 +8,8 @@ if (typeof electron === 'string') {
   process.exit(1);
 }
 
+const customUserData = require('./user-data-path').configure(electron.app);
+
 const {
   app, BrowserWindow, ipcMain: rawIpcMain, Menu, Notification, session, dialog, shell, Tray,
   /* The OS keystore, used to unwrap the key that decrypts the database
@@ -107,7 +109,7 @@ if (!hasSingleInstanceLock) {
  * handler, which focuses the window; a cold start just opens the app normally.
  */
 try {
-  if (app.isPackaged) {
+  if (app.isPackaged && !customUserData) {
     app.setAsDefaultProtocolClient('posnic');
   }
 } catch (err) {
@@ -4488,7 +4490,7 @@ app.whenReady().then(async () => {
 
   // Windows taskbar Jump List (right-click the taskbar icon)
   try {
-    app.setUserTasks([
+    if (!customUserData) app.setUserTasks([
       { program: process.execPath, arguments: '--open=hardware', title: 'Hardware Manager', description: 'Printers, scanners, scales', iconPath: process.execPath, iconIndex: 0 },
       { program: process.execPath, arguments: '--open=backup', title: 'Backup Manager', description: 'Local backups', iconPath: process.execPath, iconIndex: 0 },
       { program: process.execPath, arguments: '--open=update', title: 'Software Update', description: 'Check for updates', iconPath: process.execPath, iconIndex: 0 },
@@ -4560,12 +4562,13 @@ app.whenReady().then(async () => {
       console.error('  Failed to start bundled MongoDB:', error.message);
       console.log('Checking for a system MongoDB service...\n');
       // Fail fast with an actionable screen instead of hanging on a dead DB.
-      const systemMongoAvailable = await mongoDBManager.isPortOpen(2000);
+      const systemMongoAvailable = !customUserData && await mongoDBManager.isPortOpen(2000);
       if (!systemMongoAvailable) {
         updateStartupStatus(
           'error',
           'Database could not be started',
-          'Automatic repair was attempted. Click Restart App; if this repeats, open the log file and contact Posnic support.'
+          error.code === 'MONGODB_PROFILE_MISMATCH' ? error.message :
+            'Automatic repair was attempted. Click Restart App; if this repeats, open the log file and contact Posnic support.'
         );
         return; // do not start the API against a dead database
       }
@@ -4591,7 +4594,7 @@ app.whenReady().then(async () => {
     };
   } else {
     console.log(' Bundled MongoDB not found');
-    const systemMongoAvailable = await mongoDBManager.isPortOpen(2000);
+    const systemMongoAvailable = !customUserData && await mongoDBManager.isPortOpen(2000);
     if (!systemMongoAvailable) {
       updateStartupStatus(
         'error',

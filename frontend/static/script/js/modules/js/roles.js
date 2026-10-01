@@ -176,6 +176,9 @@ PosnicPro.roles = {
             $('#role_acl_' + m + '_delete').prop('checked', mod.delete === true);
         });
         $('#role_acl_dashboard_financials').prop('checked', !!(access.dashboard && access.dashboard.financials));
+        ['read', 'write', 'manage'].forEach(function (action) {
+            $('#role_acl_extensions_' + action).prop('checked', !!(access.extensions && access.extensions[action] === true));
+        });
 
         var pos = (role && role.pos) || {};
         var mgr = (role && role.requires_manager_approval) || [];
@@ -199,6 +202,10 @@ PosnicPro.roles = {
             };
         });
         access.dashboard.financials = $('#role_acl_dashboard_financials').is(':checked');
+        access.extensions = {};
+        ['read', 'write', 'manage'].forEach(function (action) {
+            access.extensions[action] = $('#role_acl_extensions_' + action).is(':checked');
+        });
         var pos = {};
         var mgr = [];
         PosnicPro.roles.POS_KEYS.forEach(function (k) {

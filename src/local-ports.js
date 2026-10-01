@@ -55,15 +55,22 @@ function derive(name, base) {
   return base + (digest.readUInt16BE(0) % SPAN);
 }
 
-function portIsFree(port) {
+function canBind(port, host) {
   return new Promise((resolve) => {
     const server = net.createServer();
     server.once('error', () => resolve(false));
     server.once('listening', () => server.close(() => resolve(true)));
-    // 127.0.0.1 only: these listeners are local, and a port free on the
-    // loopback interface is what actually matters here.
-    server.listen(port, '127.0.0.1');
+    // Match Express' wildcard listener. On Windows a loopback-only probe can
+    // succeed while another process owns the wildcard port; the API then dies
+    // with EADDRINUSE after the database has already started.
+    server.listen({ port, host, exclusive: true });
   });
+}
+
+async function portIsFree(port) {
+  // Windows can permit a wildcard and a loopback listener on the same port.
+  // Check both: the API binds all interfaces, while Mongo binds IPv4 loopback.
+  return (await canBind(port)) && (await canBind(port, '127.0.0.1'));
 }
 
 async function firstFreeFrom(start, alreadyTaken) {
