@@ -122,4 +122,44 @@ test('real core sale records payment and retains movement without deducting adju
   );
   assert.equal(normal.status, false);
   assert.equal(await db.collection('sales').countDocuments({ license: scope.license }), 1);
+  // A paid allocated sale uses the ordinary return screen. Returning it must
+  // restore only its sold quantity; the remaining adjustment is independent.
+  const repository = require('../src/repositories/sale.repository');
+  const refundPayload = {
+    sales_id: String(sale._id),
+    items: [],
+    items_return: sale.items,
+    extra_discount: 0,
+    extra_discount_type: 'percent',
+    round_off_check: false,
+    print: false,
+  };
+  const refunded = await repository.returnSalesOrder(structuredClone(refundPayload));
+  assert.equal(refunded.status, true, JSON.stringify(refunded));
+  assert.equal((await db.collection('items').findOne({ _id: item._id })).available_quantity, 1);
+  const again = await repository.returnSalesOrder(structuredClone(refundPayload));
+  assert.equal(again.status, false, JSON.stringify(again));
+  assert.equal((await db.collection('items').findOne({ _id: item._id })).available_quantity, 1);
+  const { returnStock, clearStockBasket } = require('../src/services/extension-stock-lifecycle');
+  const remainingReturn = {
+    extensionId: 'posnic.example', stockOperationId: result.operationId,
+    operationId: 'return-unsold-after-refund-001',
+    lines: [{ itemId: String(item._id), quantityMilli: 2000 }],
+  };
+  await returnStock(db, scope, remainingReturn);
+  await returnStock(db, scope, remainingReturn);
+  assert.equal((await db.collection('items').findOne({ _id: item._id })).available_quantity, 3);
+  await assert.rejects(returnStock(db, scope, {
+    ...remainingReturn, operationId: 'return-sold-again-after-refund-001',
+    lines: [{ itemId: String(item._id), quantityMilli: 1000 }],
+  }), { code: 'stock_return_exhausted' });
+  await clearStockBasket(db, scope, {
+    extensionId: 'posnic.example', stockOperationId: result.operationId,
+    operationId: 'clear-refunded-basket-operation-001',
+  });
+  const afterRefund = await db.collection('sales').findOne({ _id: sale._id });
+  assert.equal(afterRefund.sale_process, 'FullReturn');
+  assert.equal(Number(afterRefund.items_return_total), 1);
+  assert.equal(afterRefund.extension_stock_operation, result.operationId);
+  assert.equal((await db.collection('items').findOne({ _id: item._id })).available_quantity, 3);
 });
