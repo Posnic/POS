@@ -735,7 +735,7 @@
        document in the product wears. */
     buildSaleSheet: function (d) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(v) || 0).toFixed(2); };
+        var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Math.round((Number(v) || 0) * 100) / 100).toFixed(2); };
         var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
         var unpaid = /partial|^unpaid$/i.test(String(d.payment_status || ''));
         var proc = String(d.sale_process || '');
@@ -771,10 +771,16 @@
             + '<th class="text-right"><lang class="lang_price_title">Price</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th>'
             + '</tr></thead><tbody>';
         (d.items || []).forEach(function (l, i) {
+            var unit = Number(l.item_base_price);
+            if (!Number.isFinite(unit)) {
+                unit = Number(l.item_price) || 0;
+                if (l.tax_type === 'inclusive' && Number(l.tax) > 0) unit /= 1 + Number(l.tax) / 100;
+            }
+
             items += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name) + '</td>'
                 + '<td class="text-right">' + esc(l.item_quantity) + ' ' + esc(l.item_unit || '') + '</td>'
-                + '<td class="text-right">' + money(l.item_price) + '</td>'
-                + '<td class="text-right">' + money(l.total_amount) + '</td></tr>';
+                + '<td class="text-right">' + money(unit) + '</td>'
+                + '<td class="text-right">' + money(unit * (Number(l.item_quantity) || 0)) + '</td></tr>';
         });
         items += '</tbody><tfoot>'
             + '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_subtotal">Subtotal</lang></td>'
@@ -785,12 +791,24 @@
             + (Number(d.tax) > 0
                 ? '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_module_tax">Tax</lang></td><td class="text-right">' + money(d.tax) + '</td></tr>'
                 : '')
+            + [
+                ['Additional discount', -(Number(d.sale_extra_discount) || 0)],
+                ['Coupon discount', -(Number(d.coupon_discount_value) || 0)],
+                ['Loyalty discount', -(Number(d.loyalty_redeem_value) || 0)],
+                ['Round off', Number(d.sales_round_off) || 0]
+            ].concat((d.charges || []).map(function (c) { return [c.name, Number(c.amount) || 0]; }))
+                .filter(function (row) { return row[1] !== 0; })
+                .map(function (row) { return '<tr class="q-sub"><td colspan="4" class="text-right">' + esc(row[0])
+                    + '</td><td class="text-right">' + money(row[1]) + '</td></tr>'; }).join('')
             + '<tr class="q-grand"><th colspan="4" class="text-right"><lang class="lang_total">TOTAL</lang></th>'
             + '<th class="text-right">' + money(d.sales_total) + '</th></tr>'
             + '</tfoot></table></div>';
         var footer = '<div class="q-footer">';
         footer += '<div class="q-block"><div class="q-label"><lang class="lang_payment_2">Payment</lang></div>'
-            + '<div>' + esc(d.payment_mode || '-') + '</div>'
+            + (d.multi_payment && Object.keys(d.multi_payment).some(function (key) { return Number(d.multi_payment[key]) > 0; })
+                ? Object.keys(d.multi_payment).filter(function (key) { return Number(d.multi_payment[key]) > 0; })
+                    .map(function (key) { return '<div>' + esc(key) + ': ' + money(d.multi_payment[key]) + '</div>'; }).join('')
+                : '<div>' + esc(d.payment_mode || '-') + '</div>')
             + (unpaid && Number(d.payment_pending) > 0
                 ? '<div class="q-muted" style="color: var(--theme-danger-color, #c0392b);">Pending: ' + money(d.payment_pending) + '</div>'
                 : '')

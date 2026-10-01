@@ -372,3 +372,23 @@ test('saved order restores charges before checking its payable', (t) => {
   sales.chargeTax._tax={name:'New tax',value:5};
   assert.equal(sales.chargeTax.amountFor(charges[0]),.05,'payment-only retains issued charge tax');
 });
+test('saved receipt lists every discount, charge and split tender with pretax lines', (t) => {
+  const {dom,$,win,sales}=savedOrderSetup(); t.after(()=>dom.window.close());
+  const start=source.indexOf('    buildSaleSheet: function'); const end=source.indexOf('\n    },',start);
+  win.eval('PosnicPro.sales.buildSaleSheet = '+source.slice(source.indexOf('function',start),end+6)+';');
+  const html=sales.buildSaleSheet({sales_id:'TEST',payment_status:'Paid',payment_mode:'Cash',
+    sales_sub_total:73.5714285714,discount:4.5,tax:3.50357142857,sale_extra_discount:7.2525,sales_total:95.32,
+    items:[{item_name:'Paratha',item_price:45,item_quantity:1,tax:5,tax_type:'exclusive',total_amount:42.525},
+      {item_name:'Water',item_price:30,item_quantity:1,tax:5,tax_type:'inclusive',total_amount:30}],
+    charges:[{name:'Service <test>',amount:20},{name:'Delivery',amount:10}],multi_payment:{Cash:20,Card:30,UPI:45.32}});
+  const sheet=$(html); const rows=sheet.find('tfoot tr').get().map(row=>$(row).text().trim());
+  assert.ok(rows.some(r=>r.includes('Additional discount') && r.includes('-7.25')));
+  assert.ok(rows.some(r=>r.includes('Service <test>') && r.includes('20.00')));
+  assert.ok(rows.some(r=>r.includes('Delivery') && r.includes('10.00')));
+  assert.equal(sheet.find('test').length,0);
+  assert.match(sheet.find('tbody tr').eq(0).text(),/45\.00.*45\.00/);
+  assert.match(sheet.find('tbody tr').eq(1).text(),/28\.57.*28\.57/);
+  const sum=sheet.find('tfoot tr.q-sub td:last-child').get().reduce((n,td)=>n+Number($(td).text().replace(/[^\d.-]/g,'')),0);
+  assert.equal(Math.round(sum*100)/100,95.32);
+  assert.match(sheet.find('.q-footer').text(),/Cash:.*20\.00.*Card:.*30\.00.*UPI:.*45\.32/);
+});
