@@ -118,6 +118,7 @@ async function reconcileMergeTarget(db, scope, parentId, sourceId, actor, target
   return target;
 }
 async function reserveClaim(db, scope, input, moving = null, operationLock = null, mergeTarget = null, adopting = null) {
+  await reconcileExpiredEditCapacity(db, scope);
   const id = requestId(input.request_id);
   const takeaway = moving && input.dine_type === 'Take away';
   if (input.dine_type && !['Dine-in', 'Take away'].includes(input.dine_type)) fail('Choose an order type.');
@@ -274,7 +275,8 @@ async function reserveClaim(db, scope, input, moving = null, operationLock = nul
     // exceed the configured limit by submitting during that gap.
     const count = new Set([
       ...open.map((order) => `sale:${String(order._id)}`),
-      ...overlaps.map((row) => (row.order_id ? `sale:${row.order_id}` : `claim:${row.id}`)),
+      ...overlaps.filter(row => row.kind !== 'legacy-edit')
+        .map((row) => (row.order_id ? `sale:${row.order_id}` : `claim:${row.id}`)),
     ]).size;
     if (mergeTarget) {
       if (open.length !== 1 || String(open[0]._id) !== String(mergeTarget._id) ||
@@ -897,6 +899,7 @@ async function prepareOrder(db, scope, claim, document) {
   return existing;
 }
 async function forEdit(db, scope, order, next) {
+  await reconcileExpiredEditCapacity(db, scope);
   const destination = String(next.table || order.table_number || '');
   const claims = await read(db, scope);
   const own = claims.find((claim) => !terminal(claim) && claim.order_id === String(order._id));
@@ -1056,6 +1059,7 @@ async function enrollExisting(db, scope, orderId, input) {
 // Durable cover-only update. Callers must keep the request ID until a retry
 // confirms completion. No item, pricing, stock or kitchen projection is made.
 async function changeGuests(db, scope, orderId, input) {
+  await reconcileExpiredEditCapacity(db, scope);
   const id = requestId(input.request_id), actor = String(input.actor || '');
   const orderKey = identity(orderId), guests = input.guests;
   if (!actor || !Number.isInteger(guests) || guests < 1 || guests > 1000)
@@ -1167,7 +1171,8 @@ async function changeGuests(db, scope, orderId, input) {
 // committing the order. The reservation deliberately has no order_id: it is
 // counted in addition to the current sale until that write is reconciled.
 async function reserveEditCapacity(db, scope, order, next, { now = new Date() } = {}) {
-  const guests = Number(next.guests ?? order.person_count);
+  const suppliedGuests = next.guests !== undefined && next.guests !== null && next.guests !== '';
+  const guests = suppliedGuests ? Number(next.guests) : Math.max(1, Number(order.person_count) || 1);
   const destination = String(next.table ?? order.table_number ?? '');
   const type = next.dine_type || order.dine_type || 'Dine-in';
   if (type !== 'Dine-in' || !destination) return null;
@@ -1218,7 +1223,7 @@ async function reserveEditCapacity(db, scope, order, next, { now = new Date() } 
   return claim;
 }
 
-async function reconcileEditCapacity(db, scope, id) {
+async function reconcileEditCapacity(db, scope, id, { deferBusy = false } = {}) {
   const claim = (await read(db, scope)).find(row => row.id === id && row.kind === 'legacy-edit');
   if (!claim || terminal(claim)) return;
   // Never free seats just because time elapsed. First make the old writer's
@@ -1226,8 +1231,20 @@ async function reconcileEditCapacity(db, scope, id) {
   // revision wins; its actual covers are then counted instead of this claim.
   await db.collection('sales').updateOne({
     _id: new ObjectId(claim.edit_order), branch_id: scope.branchId, license: scope.license,
+    captain_payment_plan: { $exists: false },
     seating_capacity_revision: claim.edit_revision_missing ? { $exists: false } : claim.edit_revision,
   }, { $set: { seating_capacity_revision: 'cancelled-' + claim.id } });
+  const current = await db.collection('sales').findOne({
+    _id: new ObjectId(claim.edit_order), branch_id: scope.branchId, license: scope.license,
+  }, { projection: { seating_capacity_revision: 1 } });
+  if (current && (claim.edit_revision_missing
+    ? current.seating_capacity_revision === undefined
+    : current.seating_capacity_revision === claim.edit_revision)) {
+    // A recovery sweep must not block the durable operation holding this sale
+    // from resuming. Keep its seats reserved until that operation releases it.
+    if (deferBusy) return;
+    fail('This order is being updated. Please retry.', 409);
+  }
   await store(db).updateOne({ _id: scopeKey(scope),
     claims: { $elemMatch: { id, kind: 'legacy-edit', state: 'reserved' } },
   }, { $pull: { claims: { id, kind: 'legacy-edit' } }, $inc: { revision: 1 } });
@@ -1236,7 +1253,7 @@ async function reconcileEditCapacity(db, scope, id) {
 async function reconcileExpiredEditCapacity(db, scope, now = new Date()) {
   for (const claim of await read(db, scope)) {
     if (claim.kind === 'legacy-edit' && !terminal(claim) && new Date(claim.expires_at) <= now)
-      await reconcileEditCapacity(db, scope, claim.id);
+      await reconcileEditCapacity(db, scope, claim.id, { deferBusy: true });
   }
 }
 

@@ -1811,3 +1811,37 @@ test('reductions need no extra capacity and a different branch cannot reconcile 
   expect((await seating.read(db, scope)).some(row => row.id === permit.id)).toBe(true);
   expect((await commitCapacityEdit(order, permit, 2)).matchedCount).toBe(1);
 });
+
+test('capacity reconciliation waits for another durable operation instead of altering its fenced snapshot', async () => {
+  const [order] = await legacyCapacityPair();
+  const permit = await seating.reserveEditCapacity(db, scope, order, { guests: 2 });
+  await db.collection('sales').updateOne({ _id: order._id }, { $set: { captain_payment_plan: 'restructure:other-operation' } });
+  const before = await db.collection('sales').findOne({ _id: order._id });
+  await expect(seating.reconcileEditCapacity(db, scope, permit.id)).rejects.toMatchObject({ status: 409 });
+  expect(await db.collection('sales').findOne({ _id: order._id })).toEqual(before);
+  await expect(seating.reconcileExpiredEditCapacity(db, scope, new Date(Date.now() + 600000)))
+    .resolves.toBeUndefined();
+  expect(await db.collection('sales').findOne({ _id: order._id })).toEqual(before);
+  expect((await seating.read(db, scope)).some(row => row.id === permit.id)).toBe(true);
+  await db.collection('sales').updateOne({ _id: order._id }, { $unset: { captain_payment_plan: '' } });
+  await seating.reconcileEditCapacity(db, scope, permit.id);
+  expect((await commitCapacityEdit(order, permit, 2)).matchedCount).toBe(0);
+});
+
+// A table/type change reserves the full party at its destination, not merely
+// the increase relative to the old party size.
+test.each(['other table', 'takeaway'])('legacy %s conversion reserves all destination seats', async (source) => {
+  const [order] = await legacyCapacityPair();
+  const original = source === 'takeaway'
+    ? { ...order, table_number: '', dine_type: 'Take away', person_count: 2 }
+    : { ...order, table_number: 'T2', person_count: 2 };
+  await db.collection('sales').replaceOne({ _id: order._id }, original);
+  const permit = await seating.reserveEditCapacity(db, scope, original, {
+    table: 'T1', dine_type: 'Dine-in', guests: 2,
+  });
+  expect(permit.guests).toBe(2);
+  await expect(seating.reserveEditCapacity(db, scope, original, {
+    table: 'T1', dine_type: 'Dine-in', guests: 2,
+  })).rejects.toThrow('enough seats');
+  await seating.reconcileEditCapacity(db, scope, permit.id);
+});

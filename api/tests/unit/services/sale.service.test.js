@@ -951,9 +951,38 @@ describe('SalesService', () => {
         connection = await mongoose.createConnection(server.getUri('desktop-edit-fence')).asPromise();
         Model = connection.model('EditFenceSale', new mongoose.Schema({
           partial_balance: { type: Number, default: 0 },
-        }, { strict: false }));
+        }, { strict: false }), 'sales');
       }, 60000);
       afterAll(async () => { await connection?.close(); await server?.stop(); });
+
+      test('two full desktop edits compete for the last shared seat without losing either order', async () => {
+        await connection.db.dropDatabase();
+        const { ObjectId } = require('mongodb');
+        const branchId = new ObjectId(BRANCH_ID), license = new ObjectId(LICENSE_ID);
+        await connection.db.collection('branches').insertOne({ _id: branchId, license, table_options: true, table_order_limit: 0 });
+        await connection.db.collection('tableorder').insertOne({
+          _id: new ObjectId(), branch_id: branchId, license, tableorder_value: 'T1', capacity: 3, max_capacity: 3,
+        });
+        const ids = [SALE_ID, '64f8f2f4c2b9c0a1e4b55556'];
+        for (const id of ids) await Model.create({
+          _id: id, branch_id: branchId, license, sales_id: 'INV-' + id,
+          payment_status: 'Unpaid', payment_pending: 100, sale_process: 'KOT',
+          table_number: 'T1', person_count: 1, dine_type: 'Dine-in', items: [], changes: [],
+        });
+        BaseModel.getDb.mockResolvedValue(connection.db);
+        salesRepository.getById.mockImplementation(id => Model.findById(id));
+        salesRepository.save.mockImplementation(doc => doc.save());
+        const results = await Promise.all(ids.map(id => salesService.processSale(
+          makeSaleData({ person_count: 2, table_number: 'T1', dine_type: 'Dine-in' }), id, 'Edit',
+          makeContext({ branchSettings: { table_options: true } }),
+        )));
+        expect(results.filter(result => result.status)).toHaveLength(1);
+        const rows = await Model.collection.find({}).toArray();
+        expect(rows).toHaveLength(2);
+        expect(rows.reduce((sum, row) => sum + row.person_count, 0)).toBe(3);
+        const claims = await connection.db.collection('table_seating').findOne({});
+        expect(claims.claims.filter(row => row.kind === 'legacy-edit')).toEqual([]);
+      });
 
       test('legacy missing payment fields remain editable after Mongoose supplies defaults', async () => {
         await Model.deleteMany({});

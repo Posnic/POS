@@ -1979,8 +1979,10 @@ class SalesRepository {
         await require('../services/captain-payment-guard').mutable(await BaseModel.getDb(), sale);
         sale.set('captain_payment_plan', undefined);
       }
+      const expectedCapacity = Object.prototype.hasOwnProperty.call(sale.$where || {}, 'seating_capacity_revision')
+        ? sale.$where.seating_capacity_revision : sale.seating_capacity_revision ?? { $exists: false };
       sale.$where = { ...(sale.$where || {}), captain_payment_plan: { $exists: false },
-        seating_capacity_revision: sale.seating_capacity_revision ?? { $exists: false } };
+        seating_capacity_revision: expectedCapacity };
     }
     return sale.save();
   }
@@ -10269,6 +10271,7 @@ class SalesRepository {
     { SaleModel, newTableId, seenAt, editPolicy, preview = false, previewContext } = {}
   ) {
     let finishCaptainEdit;
+    let finishCapacityEdit;
     try {
       // Preview is an internal read-only calculation, never a cancellation or
       // seating operation. Its HTTP adapter must supply authenticated scope.
@@ -10999,6 +11002,18 @@ class SalesRepository {
           revision: require('node:crypto').createHash('sha256').update(JSON.stringify(orderDoc)).digest('hex') } };
       }
 
+      if (orderDoc.seating_request_id || shop?.table_options === true) {
+        const seating = require('../services/seating-claims');
+        const scope = { branchId: orderDoc.branch_id, license: orderDoc.license };
+        const permit = await seating.reserveEditCapacity(db, scope, orderDoc, {
+          table: updateFields.table_number, guests: updateFields.person_count,
+          dine_type: updateFields.dine_type,
+        });
+        if (permit) {
+          updateFields.seating_capacity_revision = permit.id;
+          finishCapacityEdit = () => seating.reconcileEditCapacity(db, scope, permit.id);
+        }
+      }
       const updateResult = await salesCollection.updateOne(editFilter, {
         $set: updateFields,
         $push: { captain_audit: audit },
@@ -11040,6 +11055,10 @@ class SalesRepository {
         data: [],
       };
     } finally {
+      if (finishCapacityEdit) {
+        try { await finishCapacityEdit(); }
+        catch (error) { console.error('Order capacity reconciliation pending:', error); }
+      }
       if (finishCaptainEdit) await finishCaptainEdit();
     }
   }

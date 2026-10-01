@@ -403,3 +403,35 @@ describe.each(['modified', 'cancelled'])('concurrent settlement during %s', (act
     expect((await seating.find(db, { branchId: branch, license }, claim.id)).state).toBe('submitting');
   });
 });
+
+test('two legacy full-order edits cannot both take the last seat on a shared table', async () => {
+  await seating.cancel(db, { branchId: branch, license }, claim.id, actor);
+  await db.collection('branches').updateOne({ _id: branch }, { $set: { table_order_limit: 0 } });
+  await db.collection('tableorder').updateOne({ _id: tables[0] }, { $set: { max_capacity: 3 } });
+  const orders = [];
+  for (const key of ['shared-legacy-a', 'shared-legacy-b']) {
+    const result = await submit({ seating_request_id: undefined, person_count: 1, idempotencyKey: key }, actor, true, true);
+    expect(result.status).toBe(true);
+    orders.push(result.data.sale_id);
+  }
+  const results = await Promise.all(orders.map(id => repo.updateOrderModel(id,
+    [{ product_id: String(item), quantity: 1, price: 100 }], 100,
+    'modified', null, null, null, null, null, 2)));
+  expect(results.filter(result => result.status)).toHaveLength(1);
+  const saved = await db.collection('sales').find({}).toArray();
+  expect(saved.reduce((count, row) => count + row.person_count, 0)).toBe(3);
+  expect((await seating.read(db, { branchId: branch, license })).filter(row => row.kind === 'legacy-edit')).toEqual([]);
+});
+
+test('repository save keeps the expected capacity revision when the document publishes its new permit', async () => {
+  const Model = mongoose.models.CapacityFenceSale || mongoose.model('CapacityFenceSale',
+    new mongoose.Schema({ seating_capacity_revision: String, person_count: Number }, { strict: false }), 'sales');
+  const original = await Model.create({ branch_id: branch, license, person_count: 1 });
+  const doc = await Model.findById(original._id);
+  doc.$where = { seating_capacity_revision: { $exists: false } };
+  doc.set({ seating_capacity_revision: 'cover-edit-test-permit', person_count: 2 });
+  await repo.save(doc);
+  expect(await db.collection('sales').findOne({ _id: doc._id })).toMatchObject({
+    person_count: 2, seating_capacity_revision: 'cover-edit-test-permit',
+  });
+});
