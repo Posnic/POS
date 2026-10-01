@@ -17,7 +17,8 @@
  *
  * So this boots a real Express app on a real port, in front of a real MongoDB,
  * and points a real BillManager at it with a fake printer on the end. The only
- * thing pretending here is the paper.
+ * things substituted here are the final raster renderer and the paper.
+ * The Electron proof separately checks real rendering at both thermal widths.
  */
 
 const http = require('http');
@@ -36,6 +37,12 @@ const { ensureKioskKey } = require('../../../src/middleware/kiosk-key');
 /* The desktop's own file, not a copy of it. Four directories up is the repo
    root: api/tests/unit/repositories -> api/tests/unit -> api/tests -> api. */
 const BillManager = require(path.join(__dirname, '..', '..', '..', '..', 'src', 'bill-manager.js'));
+
+// This suite runs in the API-only Node job, without Electron. Keep the real
+// database, socket, payload builder, job ownership and submission code; replace
+// only the Electron raster boundary. Its input must be the printable snapshot.
+const billDesign = require('../../../../src/bill-design');
+let renderBill;
 
 const KEY = 'the-installation-key';
 const BRANCH = '64b7f1c2a1e2c3d4e5f60001';
@@ -134,6 +141,17 @@ const openTicket = (table = 'T4') =>
   });
 
 beforeAll(async () => {
+  renderBill = jest.spyOn(billDesign, 'renderBill').mockImplementation(async (document, paper) => {
+    expect(['58', '80']).toContain(paper);
+    expect(document.sales_id).toBe('INV-9001');
+    expect(document.items_total).toBe(440);
+    expect(document.receipt_line_rows[0]).toMatchObject({
+      name: 'Chicken Biryani',
+      qty: '2',
+      amount: 440,
+    });
+    return Buffer.from(JSON.stringify(document));
+  });
   mem = await MongoMemoryServer.create();
   await mongoose.connect(mem.getUri('posnic'));
 
@@ -164,6 +182,7 @@ beforeAll(async () => {
 }, 60000);
 
 afterAll(async () => {
+  renderBill?.mockRestore();
   delete process.env.KIOSK_API_KEY;
   if (server) await new Promise((r) => server.close(r));
   await mongoose.disconnect();
@@ -174,6 +193,7 @@ beforeEach(async () => {
   await Sale.deleteMany({});
   await PrintJob.deleteMany({});
   BaseModel.license = null;
+  renderBill.mockClear();
 });
 
 describe('a bill asked for on the floor, printed by a till over the wire', () => {
@@ -185,14 +205,10 @@ describe('a bill asked for on the floor, printed by a till over the wire', () =>
     await oneCloudPass(aTill(hardware));
 
     expect(hardware.jobs).toHaveLength(1);
-    /*
-     * The contents, not just the fact of a job. escpos-receipt renders a VIEW
-     * MODEL - storeName, items[].name, total - and a sale document has none of
-     * those field names. Handing the document over prints a header, an empty
-     * table and 0.00, with no error anywhere, which reads on the counter as a
-     * printer fault. That is what shipped before helpers/bill-payload.js, and
-     * it is why this asserts on the characters.
-     */
+    // Assert the actual API-produced printable snapshot reaches the renderer
+    // and its returned bytes reach the selected printer. Raster appearance is
+    // exercised by tests/tools/designed-thermal-proof.cjs under Electron.
+    expect(renderBill).toHaveBeenCalledTimes(1);
     expect(hardware.jobs[0].text).toContain('Chicken Biryani');
     expect(hardware.jobs[0].text).toContain('440');
     expect(hardware.jobs[0].name).toBe('EPSON TM-T82');

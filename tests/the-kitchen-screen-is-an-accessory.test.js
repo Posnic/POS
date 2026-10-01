@@ -85,11 +85,15 @@ test('THE WINDOW IS SHOWN WITHOUT FOCUS, and cannot take it later', () => {
   assert.match(SOURCE, /skipTaskbar:\s*true/);
 });
 
-test('the page cannot be typed into or clicked by accident', () => {
-  /* A cook with wet hands, a cat, a stray trolley. There is nothing to press. */
+test('the read-only wall exposes only an explicit refresh control and no editable inputs', () => {
+  // Refresh re-reads orders; it must not add order-changing controls to the wall.
   assert.match(PAGE, /user-select:\s*none/);
   assert.match(PAGE, /cursor:\s*none/);
-  assert.ok(!/<button/i.test(PAGE), 'the kitchen screen grew a button');
+  const buttons = PAGE.match(/<button\b[^>]*>/gi) || [];
+  assert.equal(buttons.length, 1);
+  assert.match(buttons[0], /id="refresh-orders"/);
+  assert.match(buttons[0], /type="button"/);
+  assert.match(buttons[0], /aria-label="Refresh active orders"/);
   assert.ok(!/<input/i.test(PAGE), 'the kitchen screen grew an input');
 });
 
