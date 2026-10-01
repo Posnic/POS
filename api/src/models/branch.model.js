@@ -27,6 +27,7 @@ const branchSchema = new Schema(
     branch_upi_name: { type: String },
     captain_payments: { type: Schema.Types.Mixed },
     module_mobile_pos_enable: { type: Boolean },
+    module_billing_outlets_enable: { type: Boolean },
     payment_settings: { type: Schema.Types.Mixed },
     branch_id: { type: Schema.Types.ObjectId, ref: 'Branch' },
     branch_name: { type: String, required: true },

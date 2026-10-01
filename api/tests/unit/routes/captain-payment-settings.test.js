@@ -51,7 +51,11 @@ test('an already identical save succeeds and writes only authorized branch setti
   expect(updateOne).toHaveBeenCalledWith(
     { _id: 'authorized-branch', license: 'authorized-license' },
     {
-      $set: { captain_payments: value, updated_date: expect.any(Date) },
+      $set: {
+        captain_payments: value,
+        printall: value.printReceipt,
+        updated_date: expect.any(Date),
+      },
     }
   );
 });

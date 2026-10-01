@@ -1015,6 +1015,35 @@ describe('invoice_key survives the strict schema', () => {
 });
 
 describe('item translation snapshots', () => {
+  test('the accepted pricing snapshot survives legacy live-order normalization', async () => {
+    const pricing = {
+      version: 1,
+      item_id: 'water',
+      source: 'catalogue',
+      selling_price: 30,
+      tax: 5,
+      tax_type: 'inclusive',
+    };
+    const sale = new Sale({
+      sale_method: 'Live-Order',
+      items: [
+        {
+          item_name: 'Water',
+          item_quantity: 1,
+          total_amount: 30,
+          pricing,
+          unit_price: 28.57,
+          item_base_price: 28.57,
+        },
+      ],
+    });
+    await getPreSaveFn().call(sale);
+    expect(sale.toObject().items[0]).toMatchObject({
+      pricing,
+      unit_price: 28.57,
+      item_base_price: 28.57,
+    });
+  });
   test('Mongoose and live-order normalization retain names without menu descriptions', async () => {
     const sale = new Sale({
       sale_method: 'Live-Order',

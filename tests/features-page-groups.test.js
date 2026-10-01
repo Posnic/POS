@@ -40,6 +40,7 @@ function featuresPane() {
 const PANE = featuresPane();
 
 const SWITCHES = [
+  'module_billing_outlets_enable',
   'module_mobile_pos_enable', 'quick_sale_enable', 'cash_register_enable', 'quotes_enable', 'invoices_enable',
   'custom_charges_enable', 'hardware_weight_machine_enable',
   'module_tax_enable', 'module_credit_enable', 'module_cashbook_enable',

@@ -33,6 +33,7 @@ router.get(
     const manage = permissions.checkPermission('branch', 'write', req.user);
     return {
       manage,
+      enabled: await outlets.enabled(req.tenantContext),
       branch: { id: String(req.tenantContext.branchId), name: req.tenantContext.branchName },
       outlets: all
         .filter((o) => o.active !== false && outlets.allowed(o, req.user._id))
@@ -107,7 +108,12 @@ router.post(
     await collection.updateOne(
       { ...scope, _id: id },
       {
-        $set: { ...value, updated_at: new Date(), updated_by: req.user._id },
+        $set: {
+          ...value,
+          updated_at: new Date(),
+          updated_date: new Date(),
+          updated_by: req.user._id,
+        },
         $setOnInsert: { ...scope, created_at: new Date() },
       },
       { upsert: !req.body.id }

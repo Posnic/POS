@@ -275,8 +275,7 @@ describe('the daily_price flag', () => {
       unit_price: 1,
     });
 
-    expect(out.status).not.toBe(false);
-    expect(out.line.unit_price).toBe(900);
+    expect(out).toMatchObject({ status: false, data: { state: 'item_price_mismatch' } });
   });
 
   test("priced YESTERDAY, yesterday's rate is not charged as today's", async () => {
@@ -368,7 +367,7 @@ describe('the daily_price flag', () => {
 });
 
 describe('an ordinary dish', () => {
-  test('IGNORES a price the client sent', async () => {
+  test('REJECTS an unexplained price the client sent', async () => {
     /*
      * The hole this must not open. The handset is a phone in somebody's
      * pocket; a caller that can name its own price can buy a biryani for one
@@ -383,8 +382,7 @@ describe('an ordinary dish', () => {
       unit_price: 1,
     });
 
-    expect(out.line.unit_price).toBe(220);
-    expect(out.line.total).toBe(440);
+    expect(out).toMatchObject({ status: false, data: { state: 'item_price_mismatch' } });
   });
 
   test('is unaffected when no price is sent at all', async () => {

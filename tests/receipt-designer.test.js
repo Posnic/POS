@@ -18,6 +18,12 @@ function setup() {
     w.eval(read('frontend/static/script/js/modules/js/receipt-designer-editor.js'));
     const branch = { branch_name: 'My Shop', logo: pixel, print_logoimg: true, footer_print: 'Thanks <b>again</b>', footer_qr_url: 'https://example.com/shop', footer_image: pixel, table_options: false };
     const design = w.PosnicPro.receiptDesigner.defaults(branch);
+    // Existing saved designs keep their legacy layout; default templates are tested separately.
+    for (const l of Object.values(design.layouts)) for (const b of l.blocks) {
+        if (b.type === 'items') { b.itemLayout = 'detailed'; delete b.fontSize; }
+        if (b.type === 'store') b.fssaiInHeader = false;
+        if (b.type === 'transaction') b.showTitle = true;
+    }
     const sale = { ...branch, receipt_designs: design, sales_id: 'S128', created_date: '19/09/2026', customer_name: '<script>bad()</script>', customer_gst_number: 'GST123',
         items: [{ item_name: 'Cup <em>large</em>', item_price: 12, item_quantity: 2, item_unit: 'ea', total_amount: 24 }], items_subtotal: 24, items_total: 26, tax: 2 };
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
@@ -340,7 +346,7 @@ test('editor saves half-width fields and compact items independently by format a
     assert.equal(JSON.stringify(sent.receipt_designs.layouts.a4), original);
     assert.equal(sent.receipt_designs.defaultFormat, '80');
     assert.equal(sent.receipt_designs.layouts['80'].blocks.some(b => b.type === 'qr'), false, 'Standard templates do not restore obsolete legacy customizations');
-    assert.equal(sent.receipt_designs.layouts['80'].blocks.find(b => b.type === 'items').itemLayout, 'detailed');
+    assert.equal(sent.receipt_designs.layouts['80'].blocks.find(b => b.type === 'items').itemLayout, 'columns');
     assert.equal(sent.receipt_designs.layouts['80'].blocks.filter(b => b.field?.startsWith('customer_')).length, 5);
     assert.match($('iframe[title="Receipt design preview"]').attr('srcdoc'), /Tax ID:<\/strong> TAX-123456/, 'Adding a tax field has sample data to preview');
     $('[data-format="a4"]').trigger('click');
@@ -876,5 +882,137 @@ test('signature editor saves only the optional block and keeps each format indep
     assert.equal(options.year, 'numeric');
     assert.equal(options.minute, '2-digit');
     assert.equal(options.second, undefined);
+    dom.window.close();
+});
+
+
+test('fixed thermal columns align quantity totals and shorten names; header omits title and puts FSSAI below GSTIN', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    sale.table_options = true; sale.country = 'India';
+    sale.branch_gstin_number = 'GST123'; sale.branch_fssai_number = '13521001000125';
+    for (const format of ['58', '80']) {
+        const blocks = design.layouts[format].blocks;
+        Object.assign(blocks.find(b => b.type === 'items'), { itemLayout: 'columns', nameMaxChars: 16 });
+        Object.assign(blocks.find(b => b.type === 'transaction'), { showTitle: false, fontSize: 10 });
+        Object.assign(blocks.find(b => b.type === 'store'), { fssaiInHeader: true });
+        blocks.push(engine.block('field', { field: 'total_quantity' }), engine.block('field', { field: 'fssai', width: 50 }));
+        sale.items[0].item_name = 'Beach Style Full Fish Tawa Fry';
+        sale.receipt_designs = contract.normalize(design);
+        const output = $('<div>').html(engine.render(sale, format, true));
+        assert.deepEqual(output.find('thead th').map((_, el) => $(el).text()).get(), ['Item name', 'Rate', 'Qty', 'Amount']);
+        assert.equal(output.find('tbody tr:first td:first').text(), 'Beach Style Ful…');
+        assert.equal(output.find('tbody tr:first td').eq(2).text(), '2');
+        assert.equal(output.find('.rd-total-quantity td').eq(1).text(), '2');
+        assert.equal(output.find('.rd-field-total_quantity,.rd-field-fssai').length, 0);
+        assert.match(output.find('.rd-store').text(), /GSTIN: GST123FSSAI: 13521001000125/);
+        assert.doesNotMatch(output.find('.rd-transaction').text(), /Tax invoice|Receipt/);
+        assert.match(output.find('.rd-transaction').text(), /S128/);
+    }
+    assert.throws(() => { design.layouts['80'].blocks.find(b => b.type === 'items').nameMaxChars = 0; contract.normalize(design); }, /Item name length/);
+    dom.window.close();
+});
+
+
+test('new thermal defaults and reset use dotted Item Rate Qty Amount with a quantity-aligned summary', () => {
+    const { dom, engine, sale, $ } = setup();
+    for (const format of ['58', '80']) {
+        for (const design of [engine.defaults(sale), { ...engine.defaults(sale), layouts: { ...engine.defaults(sale).layouts, [format]: engine.standardLayout(format) } }]) {
+            const data = { ...sale, receipt_designs: contract.normalize(design), items: [
+                {item_name:'Chapathi', item_price:30, item_quantity:3, total_amount:90},
+                {item_name:'Garlic naan', item_price:90, item_quantity:2, total_amount:180}
+            ] };
+            const out = $('<div>').html(engine.render(data, format, true));
+            assert.deepEqual(out.find('thead th').map((_, el) => $(el).text()).get(), ['Item name','Rate','Qty','Amount']);
+            assert.deepEqual(out.find('tbody tr:first td').map((_, el) => $(el).text()).get(), ['Chapathi','30.00','3','90.00']);
+            assert.equal(out.find('.rd-total-quantity td').eq(0).attr('colspan'), '2');
+            assert.equal(out.find('.rd-total-quantity td').eq(0).text(), 'Total Items: 2');
+            assert.equal(out.find('.rd-total-quantity td').eq(1).text(), '5');
+            assert.match(out.find('style').text(), /border-top:1px dotted/);
+            design.layouts[format].blocks.find(b => b.type === 'items').lineStyle = 'dashed';
+            const customized = $('<div>').html(engine.render({...data, receipt_designs:contract.normalize(design)},format,true));
+            assert.match(customized.find('style').text(), /border-top:1px dashed/);
+        }
+    }
+    dom.window.close();
+});
+
+
+test('short thermal headers label the bill only when space allows and never truncate its number', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.receipt_designs = engine.defaults(sale);
+    sale.sales_id = 'SB1D28-27-000130'; sale.created_date = '01/10/2026 03:03 pm';
+    const wide = $('<div>').html(engine.render(sale, '80', true));
+    assert.equal(wide.find('.rd-transaction strong').text(), 'Bill no: SB1D28-27-000130');
+    const narrow = $('<div>').html(engine.render(sale, '58', true));
+    assert.equal(narrow.find('.rd-transaction strong').text(), sale.sales_id);
+    sale.sales_id = 'A'.repeat(60);
+    const long = $('<div>').html(engine.render(sale, '80', true));
+    assert.equal(long.find('.rd-transaction strong').text(), sale.sales_id);
+    assert.equal(long.find('.rd-transaction-date').text(), sale.created_date);
+    dom.window.close();
+});
+
+test('thermal receipt custom label and date/time choices survive normalization', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const format of ['58', '80']) {
+        const b = design.layouts[format].blocks.find(b => b.type === 'transaction');
+        Object.assign(b, { labelText: 'Bill No:', dateFormat: 'dmy-short', timeFormat: '24h' });
+        sale.receipt_designs = contract.normalize(design);
+        sale.created_date = '01/10/2026 07:05:44 PM';
+        let out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('.rd-transaction strong').text(), 'Bill No: S128');
+        assert.equal(out.find('.rd-transaction-date').text(), '01/10/26 19:05');
+        b.dateFormat = 'ymd'; b.timeFormat = '12h';
+        sale.receipt_designs = contract.normalize(design);
+        sale.created_date = '01/10/2026 00:05';
+        out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('.rd-transaction-date').text(), '2026-10-01 12:05 AM');
+        b.timeFormat = 'none'; b.labelText = '<img src=x onerror=alert(1)>';
+        sale.receipt_designs = contract.normalize(design);
+        out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('.rd-transaction-date').text(), '2026-10-01');
+        assert.equal(out.find('.rd-transaction img').length, 0);
+    }
+    for (const value of [{ dateFormat: 'bad' }, { timeFormat: 'bad' }, { labelText: 'x'.repeat(41) }]) {
+        Object.assign(design.layouts['80'].blocks.find(b => b.type === 'transaction'), value);
+        assert.throws(() => contract.normalize(design));
+    }
+    dom.window.close();
+});
+
+test('receipt detail controls update the preview and save only the selected paper format', () => {
+    const { dom, w, $, branch } = setup();
+    let saved;
+    w.PosnicPro.put = (request, done) => {
+        saved = JSON.parse(request.data).receipt_designs;
+        done({ type: 'success', data: { receipt_designs: saved } });
+    };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('[data-format="80"]').trigger('click');
+    $('.rd-select').filter((_, e) => $(e).text().includes('Receipt details')).trigger('click');
+    assert.equal($('[data-prop="labelText"]').length, 1);
+    $('[data-prop="labelText"]').val('Bill No:').trigger('input');
+    $('[data-prop="dateFormat"]').val('ymd').trigger('change');
+    $('[data-prop="timeFormat"]').val('24h').trigger('change');
+    $('[data-action="save"]').trigger('click');
+    const block = saved.layouts['80'].blocks.find(b => b.type === 'transaction');
+    assert.equal(block.labelText, 'Bill No:');
+    assert.equal(block.dateFormat, 'ymd');
+    assert.equal(block.timeFormat, '24h');
+    assert.equal(saved.layouts['58'].blocks.find(b => b.type === 'transaction').labelText, undefined);
+    dom.window.close();
+});
+
+test('custom receipt date respects month-first tender data and noon/midnight', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    const b = design.layouts['80'].blocks.find(b => b.type === 'transaction');
+    b.dateFormat = 'dmy'; b.timeFormat = '24h';
+    sale.receipt_date_order = 'mdy';
+    sale.created_date = '10/01/2026 12:05 AM';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-transaction-date').text(), '01/10/2026 00:05');
+    sale.created_date = '10/01/2026 12:05 PM';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-transaction-date').text(), '01/10/2026 12:05');
+    sale.created_date = 'unrecognized historical date';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-transaction-date').text(), sale.created_date);
     dom.window.close();
 });

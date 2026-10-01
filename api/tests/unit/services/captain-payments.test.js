@@ -162,9 +162,7 @@ test('a journal committed before a lost response repairs the sale on retry', asy
   expect((await original('sales').findOne({ _id: sale._id })).paid_amount).toBe(105);
 });
 test('a receipt queue failure retains one payment and retries the same receipt ticket', async () => {
-  await db
-    .collection('branches')
-    .updateOne({ _id: branch }, { $set: { 'captain_payments.printReceipt': true } });
+  await db.collection('branches').updateOne({ _id: branch }, { $set: { printall: true } });
   const queue = require('../../../src/repositories/print-job.repository').queuePrintJob;
   queue.mockClear();
   queue.mockResolvedValueOnce({ status: false });
@@ -173,7 +171,12 @@ test('a receipt queue failure retains one payment and retries the same receipt t
   await expect(service.record(input)).rejects.toThrow('receipt is pending');
   expect((await service.record(input)).payments).toHaveLength(1);
   expect(queue.mock.calls[0][0].ticketKey).toBe(queue.mock.calls[1][0].ticketKey);
-  expect(queue.mock.calls[1][0].payload.title).toBe('PAYMENT RECEIPT');
+  expect(queue.mock.calls[1][0].payload.title).not.toBe('PAYMENT RECEIPT');
+  expect(queue.mock.calls[1][0].payload.receiptDocument).toMatchObject({
+    receipt_settled: true,
+    items_total: 105,
+    payment_mode: 'Cash',
+  });
 });
 test('a live edit prevents collecting against the old totals', async () => {
   const finish = await guard.beginEdit(db, sale);
@@ -399,4 +402,60 @@ test('closure after payment snapshot cannot acquire a collection fence', async (
   input.db = { collection: (name) => (name === 'captain_payment_plans' ? plans : original(name)) };
   await expect(service.prepare(input)).rejects.toMatchObject({ status: 409 });
   expect((await original('sales').findOne({ _id: sale._id })).captain_payment_plan).toBeUndefined();
+});
+
+test.each([false, true])(
+  'settlement follows POS auto-print=%s rather than the old Captain switch',
+  async (enabled) => {
+    const queue = require('../../../src/repositories/print-job.repository').queuePrintJob;
+    queue.mockClear();
+    const design = { thermal: { blocks: [] } };
+    await db.collection('branches').updateOne(
+      { _id: branch },
+      {
+        $set: {
+          printall: enabled,
+          'captain_payments.printReceipt': !enabled,
+          receipt_designs: design,
+        },
+      }
+    );
+    const plan = await service.prepare(req());
+    await service.record(pay(plan));
+    expect(queue).toHaveBeenCalledTimes(enabled ? 1 : 0);
+    if (enabled)
+      expect(queue.mock.calls[0][0].payload.receiptDocument.receipt_designs).toEqual(design);
+  }
+);
+
+test('auto-print choice is read at settlement, not when the payment screen opened', async () => {
+  const queue = require('../../../src/repositories/print-job.repository').queuePrintJob;
+  queue.mockClear();
+  const plan = await service.prepare(req());
+  await db.collection('branches').updateOne({ _id: branch }, { $set: { printall: true } });
+  await service.record(pay(plan));
+  expect(queue).toHaveBeenCalledTimes(1);
+});
+
+test('split settlement renders only the paid share through the branch template', async () => {
+  const queue = require('../../../src/repositories/print-job.repository').queuePrintJob;
+  queue.mockClear();
+  await db.collection('branches').updateOne({ _id: branch }, { $set: { printall: true } });
+  const snapshot = require('../../../src/services/guest-bill.service').snapshotFrom(
+    [sale],
+    { currency: '\u20b9' },
+    'T1'
+  );
+  const plan = await service.prepare(
+    req({ revision: snapshot.revision, plan: { mode: 'equal', guests: ['A', 'B', 'C'] } })
+  );
+  await service.record(pay(plan, { guest: 0, amountMinor: 3500, receivedMinor: 4000 }));
+  const payload = queue.mock.calls[0][0].payload;
+  expect(payload.total).toBe(35);
+  expect(payload.items[0].qty).toBeCloseTo(2 / 3);
+  expect(Number.isFinite(payload.items[0].rate)).toBe(true);
+  expect(payload.receiptDocument.items_total).toBe(35);
+  expect(payload.receiptDocument.receipt_line_rows).toEqual(payload.items);
+  expect(payload.receiptDocument.receipt_tax_rows).toEqual(payload.taxes);
+  expect(payload.receiptDocument).toMatchObject({ received_amount: 40, change_amount: 5 });
 });

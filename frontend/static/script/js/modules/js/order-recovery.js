@@ -48,7 +48,12 @@
                             PosnicPro.alert('success', response.message || t('lang_submission_saved','Order saved'));
                         } catch (error) { PosnicPro.alert('error', error.message); }
                         finally { busy.delete(key); render(); refresh(); }
-                    }, function () {
+                    }, function (xhr) {
+                        try {
+                            var response = xhr && xhr.responseJSON;
+                            if (!response && xhr && xhr.responseText) response = JSON.parse(xhr.responseText);
+                            if (PosnicPro.sales.submissionJournal().reject(entry, response)) PosnicPro.sales.resetOrderRequest();
+                        } catch (error) { PosnicPro.alert('error', error.message); }
                         busy.delete(key); render(); refresh();
                     });
                 } catch (error) { busy.delete(key); render(); PosnicPro.alert('error', error.message); }
@@ -92,8 +97,11 @@
     $(function(){
         var title=document.querySelector('#sales_new .page-title');
         if(!title)return;
-        var button=node('button','','btn btn-outline-secondary btn-sm ml-2');button.type='button';button.id='desktop-pending-orders';button.hidden=true;
-        button.addEventListener('click',show);title.appendChild(button);refresh();
+        var button=node('button','','btn btn-outline-secondary btn-sm');button.type='button';button.id='desktop-pending-orders';button.hidden=true;
+        button.addEventListener('click',show);
+        var actions=document.getElementById('sale-header-actions');
+        if(actions)actions.insertBefore(button,actions.firstChild);else title.appendChild(button);
+        refresh();
     });
     window.addEventListener('storage',function(){refresh();if(dialog && dialog.open)render();});
     window.addEventListener('hashchange',function(){if(dialog && dialog.open)dialog.close();refresh();});

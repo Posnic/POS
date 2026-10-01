@@ -4,7 +4,27 @@ Ask Posnic is mounted inside the normal POS at `#/askposnic`. It uses the
 authenticated shop and branch context; callers cannot select another tenant in
 their question or request body.
 
-## Release status checked 1 October 2026
+## Development testing release — 2 October 2026
+
+The owner authorized merging the coordinated AI implementation into `develop`
+for testing. POS #1055, Intranet #57, Gateway #31, web-api #30 and web-frontend
+#95 are ready for review and target `develop`. The development candidates include
+the current base branches; POS translation additions and Gateway mobile delivery
+acknowledgments are preserved alongside the incoming development changes.
+
+POS's existing development deployment publishes `develop.posnic.io` with its
+isolated demo database. The companion development branches do not activate their
+production deployments. Test Ask Posnic at `#/askposnic`, Insights and confirmed
+Actions with synthetic shop data; the coordinated local smoke and cloud contract
+scripts also cover knowledge publication, allowance enforcement and fleet metrics.
+Managed provider credentials, paid offers and customer delivery require their own
+environment configuration. Keep production credentials out of the public demo.
+
+The audit below is historical production-readiness evidence. Its customer pilot
+and commercial acceptance items do not prevent development integration. Verify
+the PR merge states and development deployment revision for the actual rollout.
+
+## Production status checked 1 October 2026 (historical)
 
 The implementation is a coordinated draft release, not an activated customer
 service. Historical checkpoints below describe their stated candidates; a past

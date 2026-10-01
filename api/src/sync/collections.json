@@ -26,6 +26,7 @@
     "inventoryitems": "branch",
     "easytables": "branch",
     "tableorder": "branch",
+    "payment_method": "branch",
     "staff_activities": "branch",
     "activitylogs": "branch",
     "price_history": "branch",
@@ -33,7 +34,10 @@
     "unit": "global",
     "branches": "global",
     "users": "global",
-    "settings": "global"
+    "settings": "global",
+    "billing_outlets": "branch",
+    "price_lists": "branch",
+    "modifier_groups": "branch"
   },
   "local_only": {
     "captain_email_verifications": "One-use email verification challenges, attempt counters and expiry belong to the issuing account server; replication would permit replay.",
@@ -120,13 +124,11 @@
     "messaging_settings": "SMS and WhatsApp settings set in one place do not reach the other",
     "customer_category": "customer groups created in one place do not reach the other",
     "denomination": "cash denominations set in one place do not reach the other",
-    "payment_method": "payment methods set in one place do not reach the other",
     "roles": "staff roles set in one place do not reach the other",
     "reminder_sends": "reminder history stays on the machine that sent",
     "branch_preferences": "per-branch preferences set in one place do not reach the other",
     "transaction": "customer credit transactions on the till are unknown to the cloud",
     "payment": "payment records on the till are unknown to the cloud",
-    "purchase_orders": "a purchase order raised on the till is unknown to the cloud, and the reverse; receivings already sync",
-    "billing_outlets": "Outlet configuration is currently scoped to its API database; cloud-to-desktop configuration sync is not yet implemented. Sales retain outlet snapshots."
+    "purchase_orders": "a purchase order raised on the till is unknown to the cloud, and the reverse; receivings already sync"
   }
 }

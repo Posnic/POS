@@ -600,10 +600,13 @@
                 + '<th class="text-center"><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var digits = Number.isInteger(r.currencyDigits) && r.currencyDigits >= 0 && r.currencyDigits <= 4 ? r.currencyDigits : 2;
-                var unpaid = String(r.payment_status || '').toLowerCase() === 'unpaid';
+                var partial = /partial/i.test(String(r.payment_status || ''));
+                var unpaid = partial || String(r.payment_status || '').toLowerCase() === 'unpaid';
                 var proc = String(r.sale_process || '');
                 var pill = /return/i.test(proc)
                     ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
+                    : partial
+                        ? '<span class="rs-pill unpaid"><lang class="lang_partial">Partial</lang></span>'
                     : unpaid
                         ? '<span class="rs-pill unpaid"><lang class="lang_unpaid">Unpaid</lang></span>'
                         : '<span class="rs-pill paid"><lang class="lang_paid">Paid</lang></span>';
@@ -734,9 +737,11 @@
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var money = function (v) { return PosnicPro.local.get('currencySign') + '&nbsp;' + (Number(v) || 0).toFixed(2); };
         var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
-        var unpaid = String(d.payment_status || '').toLowerCase() === 'unpaid';
+        var unpaid = /partial|^unpaid$/i.test(String(d.payment_status || ''));
         var proc = String(d.sale_process || '');
-        var stamp = /return/i.test(proc) ? proc.toUpperCase() : unpaid ? PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID') : PosnicPro.i18n.t('lang_paid_2', 'PAID');
+        var stamp = /return/i.test(proc) ? proc.toUpperCase()
+            : /partial/i.test(String(d.payment_status || '')) ? PosnicPro.i18n.t('lang_partially_paid_3', 'PARTIALLY PAID')
+            : unpaid ? PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID') : PosnicPro.i18n.t('lang_paid_2', 'PAID');
         var logo = PosnicPro.local.get('branchimage');
         var taxLabel = PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID');
         var seller = '<div class="q-seller">'
@@ -786,8 +791,8 @@
         var footer = '<div class="q-footer">';
         footer += '<div class="q-block"><div class="q-label"><lang class="lang_payment_2">Payment</lang></div>'
             + '<div>' + esc(d.payment_mode || '-') + '</div>'
-            + (unpaid && Number(d.partial_balance) > 0
-                ? '<div class="q-muted" style="color: var(--theme-danger-color, #c0392b);">Pending: ' + money(d.partial_balance) + '</div>'
+            + (unpaid && Number(d.payment_pending) > 0
+                ? '<div class="q-muted" style="color: var(--theme-danger-color, #c0392b);">Pending: ' + money(d.payment_pending) + '</div>'
                 : '')
             + (real(d.payment_description) ? '<div class="q-muted">' + esc(d.payment_description) + '</div>' : '')
             + '</div>';
@@ -825,10 +830,12 @@
     renderSaleDoc: function (d) {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var id = String(d._id || d.id || PosnicPro.sales._openDocId);
-        var unpaid = String(d.payment_status || '').toLowerCase() === 'unpaid';
+        var partial = /partial/i.test(String(d.payment_status || ''));
+        var unpaid = partial || String(d.payment_status || '').toLowerCase() === 'unpaid';
         var proc = String(d.sale_process || '');
         var pill = /return/i.test(proc)
             ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
+            : partial ? '<span class="rs-pill unpaid"><lang class="lang_partial">Partial</lang></span>'
             : unpaid ? '<span class="rs-pill unpaid"><lang class="lang_unpaid">Unpaid</lang></span>' : '<span class="rs-pill paid"><lang class="lang_paid">Paid</lang></span>';
         var toolbar = '<div class="p-doc-toolbar">'
             + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" data-t-title="lang_show_or_hide_the_list" aria-label="Show or hide the list" data-t-aria-label="lang_show_or_hide_the_list" onclick="PosnicPro.masterDetail.toggleRail(\'#sales_split\');"><i class="feather icon-sidebar"></i></button>'
@@ -1423,7 +1430,7 @@
             '    <td id="returnSalesDiscount_' + id + '" style="display:none;">' + Math.abs(returndiscount) + '</td>' +
             '    <td id="trackInventory_' + id + '" style="display:none;">' + params.track_inventory + '</td>' +
             '    <td id="negativeStock_' + id + '" style="display:none;">' + params.negative_stock + '</td>' +
-            '    <td id="saleInlineItemPrice_' + id + '" style="display:none;">' + params.sale_inline_item_price + '</td>' +
+            '    <td id="saleInlineItemPrice_' + id + '" style="display:none;">' + (params.sale_inline_item_price == null ? params.selling_price : params.sale_inline_item_price) + '</td>' +
             '    <td id="saleInlineDiscount_' + id + '" style="display:none;">' + params.sale_inline_discount_value + '</td>' +
             '    <td id="saleInlineDiscountPer_' + id + '" style="display:none;">' + params.sale_inline_discount_pervalue + '</td>' +
             '    <td id="addSalesLineItemNote_' + id + '" style="display:none;"></td>' +
@@ -1456,11 +1463,25 @@
         if ($('table#sales_new_items_table').find('#touch_row_' + id).length > 0) {
             $('#touch_row_' + id).replaceWith(rowHTMLLine);
             $('#touch_row_' + id).remove();
-            $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            // The API totals saved lines in their stored order. Reversing them
+            // during payment reload changes half-paisa floating-point rounding
+            // (Azure Table 6: 5667.37 becomes 5667.38).
+            if (PosnicPro.sales.paymentOnlyMode === true) {
+                $('#sales_new_items_table tbody').append(rowHTMLLine);
+            } else {
+                $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            }
             itemRecord.push({ name: item_name, qty: item_quantity, price: mrpPrice, discount: $('#addSalesLineItemDiscountprint_' + id).text(), tax: $('#addSalesLineItemTax_' + id).text(), total: line_total.toFixed(2) });
             db.customerDisplay.put({ id: id, 'clear': 'yes', 'get': 'yes', items: itemRecord });
         } else {
-            $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            // The API totals saved lines in their stored order. Reversing them
+            // during payment reload changes half-paisa floating-point rounding
+            // (Azure Table 6: 5667.37 becomes 5667.38).
+            if (PosnicPro.sales.paymentOnlyMode === true) {
+                $('#sales_new_items_table tbody').append(rowHTMLLine);
+            } else {
+                $('#sales_new_items_table tbody').prepend(rowHTMLLine);
+            }
             itemRecord.push({ name: item_name, qty: item_quantity, price: mrpPrice, discount: $('#addSalesLineItemDiscountprint_' + id).text(), tax: $('#addSalesLineItemTax_' + id).text(), total: line_total.toFixed(2) });
             db.customerDisplay.add({ id: id, 'clear': 'yes', 'get': 'yes', items: itemRecord });
         }
@@ -1636,7 +1657,26 @@
         }
         PosnicPro.sales.customerViewDisplay();
     },
-    openTenderModel: function () {
+    openTenderModel: function (methodsReady) {
+        // Load methods from this till's API each time. Startup may still be
+        // loading, or settings/sync may have changed since the screen opened.
+        if (methodsReady !== true && typeof PosnicPro.get === 'function') {
+            if (PosnicPro.sales._loadingPaymentMethods) return;
+            PosnicPro.sales._loadingPaymentMethods = true;
+            var paymentRoute = window.location.hash, paymentSale = PosnicPro.sales.editSaleId;
+            var failMethods = function () {
+                PosnicPro.sales._loadingPaymentMethods = false;
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_captain_payment_settings_failed', 'Could not load payment settings. Please retry.'));
+            };
+            PosnicPro.get('setting/getPaymentAll', function (response) {
+                PosnicPro.sales._loadingPaymentMethods = false;
+                if (!response || response.type !== 'success' || !Array.isArray(response.data)) { failMethods(); return; }
+                PosnicPro.configPaymentType = response.data.map(function (row) { return { payment_value: row.payment_value }; });
+                if (window.location.hash !== paymentRoute || PosnicPro.sales.editSaleId !== paymentSale) return;
+                PosnicPro.sales.openTenderModel(true);
+            }, failMethods);
+            return;
+        }
         // ✅ Reset submission flag when opening tender modal
         PosnicPro.sales.submissionInProgress = false;
         $("#save_btn").prop('disabled', false);
@@ -2563,7 +2603,7 @@
             // ðŸ” Match value by normalized key (handles "Google pay", "googlepay", etc.)
             let storedValue = '';
             for (let key in multi_payment) {
-                if (normalizeKey(key) === normalizeKey(title)) {
+                if (normalizeKey(key) === normalizeKey(title) || normalizeKey(key) === normalizeKey(id)) {
                     storedValue = multi_payment[key];
                     break;
                 }
@@ -2968,6 +3008,13 @@
         PosnicPro.sales.customerViewDisplay();
     },
 
+    savedSellingPrice: function (line) {
+        // App orders store item_price as net; the saved pricing snapshot keeps
+        // the selling basis that the cart's tax calculator expects.
+        if (line.pricing && line.pricing.version === 1) return line.pricing.selling_price;
+        if (line.sale_inline_item_price != null && Number.isFinite(Number(line.sale_inline_item_price)) && String(line.sale_inline_item_price).trim() !== '') return Number(line.sale_inline_item_price);
+        return line.selling_price != null ? line.selling_price : line.item_price;
+    },
     getPaymentObject: function () {
         let paymentObj = {};
 
@@ -2977,8 +3024,14 @@
         $paymentInputs.each(function () {
             let amount = $(this).val().trim();
             if (amount !== '' && !isNaN(amount) && parseFloat(amount) > 0) {
-                let mode = $(this).attr('id').replace('_input', '');
-                mode = mode.charAt(0).toUpperCase() + mode.slice(1);
+                // Element ids remove spaces and case; they are not tender names.
+                // The legacy selection handler overwrites every radio's value.
+                // Its id retains the exact configured name, including spaces/case.
+                let mode = $(this).closest('.payment-method-card').find('.payment_mode').attr('id');
+                if (!mode) {
+                    mode = $(this).attr('id').replace('_input', '');
+                    mode = mode.charAt(0).toUpperCase() + mode.slice(1);
+                }
                 paymentObj[mode] = parseFloat(amount);
             }
         });
@@ -4122,6 +4175,7 @@ PosnicPro.sales.addSale = {
                 PosnicPro.sales.submissionInProgress = false;
                 $("#save_btn").prop('disabled', false);
                 $("#save_submit").removeClass('disabled');
+                loader.find(".loadingSpinner").remove();
                 PosnicPro.alert('error', error.message);
                 return;
             }
@@ -4223,6 +4277,7 @@ PosnicPro.sales.addSale = {
                         }
                     }
                 } else {
+                    loader.find(".loadingSpinner").remove();
                     if (PosnicPro.businessApproval && PosnicPro.businessApproval.failed({ responseJSON: response })) return;
                     // ✅ Re-enable on error response
                     $("#save_btn").prop('disabled', false);
@@ -4230,6 +4285,7 @@ PosnicPro.sales.addSale = {
                     PosnicPro.alert(response.type, response.message);
                 }
             }, function (xhr) {
+                loader.find(".loadingSpinner").remove();
                 if (PosnicPro.businessApproval && PosnicPro.businessApproval.failed(xhr)) return;
                 // ✅ Clear submission flag and re-enable button on error
                 PosnicPro.sales.submissionInProgress = false;
@@ -4239,6 +4295,12 @@ PosnicPro.sales.addSale = {
                 if (!response && xhr && xhr.responseText) {
                     try { response = JSON.parse(xhr.responseText); } catch (error) { response = null; }
                 }
+                try {
+                    if (PosnicPro.sales.submissionJournal().reject(savedSubmission, response)) {
+                        PosnicPro.sales.resetOrderRequest();
+                        if (PosnicPro.orderRecovery) PosnicPro.orderRecovery.refresh();
+                    }
+                } catch (error) { console.warn('Order rejection remains pending:', error.message); }
                 // A dropped connection has no stock correction payload. Keep
                 // the cart and retry identity intact instead of throwing here.
                 var corrections = response && Array.isArray(response.data) ? response.data : [];
@@ -6787,7 +6849,11 @@ PosnicPro.sales.calculation = {
                 item_quantity: $('#touchsale_item_qty' + itemid).val(),
                 CompanyPrice: $('#addSalesLineItemCompanyPrice_' + itemid).text(),
                 Discount: $('#addSalesLineItemDiscount_' + itemid).text(),
-                Totalamount: $('#addSalesLineTotal_' + itemid).text(),
+                // Payment reloads must sum full-precision line values, as the API does.
+                // Visible cells are rounded for display and can lose a paisa per line.
+                Totalamount: PosnicPro.sales.paymentOnlyMode === true
+                    ? $('#returnLineTotal_' + itemid).text()
+                    : $('#addSalesLineTotal_' + itemid).text(),
                 gsttaxamount: $('#addSalesGstTax_' + itemid).text(),
                 subtotalamount: $('#addSalesLineItemSubTotal_' + itemid).text() * $('#touchsale_item_qty' + itemid).val(),
                 discountamount: $('#addSalesDiscount_' + itemid).text()
@@ -6923,6 +6989,7 @@ PosnicPro.sales.calculation = {
         $('#RoundOff').html(roundOff);
         outputVal = (PosnicPro.roundoff === true) ? Math.round(outputVal) : parseFloat(outputVal);
         $('#sales_new_grand_total').number(outputVal, 2);
+        if (PosnicPro.sales.paymentOnlyMode === true) outputVal = Math.round(outputVal * 100) / 100;
         PosnicPro.sales.extraDiscount.sale_new_tot = outputVal;
         // Update customer display with extra discount
         var isPercent = !$('#percentIcon').hasClass('d-none');
@@ -8435,11 +8502,11 @@ PosnicPro.sales.recentMenu = {
             PosnicPro.sales.salesId = result.sales_id;
             $.each(EditRecentSaleItems, function (key, val) {
                 lineItem = {
-                    "sale_inline_item_price": val.item_price,
+                    "sale_inline_item_price": PosnicPro.sales.savedSellingPrice(val),
                     "return": val.return,
                     "item_id": val.item_id,
                     "item_name": val.item_name,
-                    "selling_price": val.item_price,
+                    "selling_price": PosnicPro.sales.savedSellingPrice(val),
                     "itemid": val.barcode_id,
                     "item_quantity": val.item_quantity,
                     "item_available_quantity": val.item_available_quantity,
@@ -8473,10 +8540,10 @@ PosnicPro.sales.recentMenu = {
         PosnicPro.sales.salesId = result.sales_id;
         $.each(EditRecentSaleItems, function (key, val) {
             lineItem = {
-                "sale_inline_item_price": val.item_price,
+                "sale_inline_item_price": PosnicPro.sales.savedSellingPrice(val),
                 "item_id": val.item_id,
                 "item_name": val.item_name,
-                "selling_price": val.item_price,
+                "selling_price": PosnicPro.sales.savedSellingPrice(val),
                 "itemid": val.barcode_id,
                 "item_quantity": val.item_quantity,
                 "available_quantity": val.item_available_quantity,

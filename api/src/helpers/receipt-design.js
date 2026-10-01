@@ -118,10 +118,39 @@
         }
         if (block.type === 'items') {
           b.hsn = block.hsn === true;
+          if (block.lineStyle != null) {
+            if (!['solid', 'dashed', 'dotted'].includes(block.lineStyle))
+              throw new Error('Choose a valid separator style.');
+            b.lineStyle = block.lineStyle;
+          }
           b.itemLayout = block.itemLayout || 'detailed';
-          if (!['detailed', 'compact'].includes(b.itemLayout))
+          if (!['detailed', 'compact', 'columns'].includes(b.itemLayout))
             throw new Error('Choose a valid item layout.');
         }
+        if (block.type === 'items' && block.nameMaxChars != null) {
+          b.nameMaxChars = Number(block.nameMaxChars);
+          if (!Number.isInteger(b.nameMaxChars) || b.nameMaxChars < 8 || b.nameMaxChars > 80)
+            throw new Error('Item name length must be between 8 and 80 characters.');
+        }
+        if (block.type === 'transaction' && block.showTitle === false) b.showTitle = false;
+        if (block.type === 'transaction') {
+          if (block.labelText != null) {
+            if (typeof block.labelText !== 'string' || block.labelText.length > 40)
+              throw new Error('Receipt label must be at most 40 characters.');
+            b.labelText = block.labelText.trim();
+          }
+          for (const [key, values] of Object.entries({
+            dateFormat: ['auto', 'dmy', 'dmy-short', 'mdy', 'ymd'],
+            timeFormat: ['auto', '12h', '24h', 'none'],
+          })) {
+            if (block[key] != null) {
+              if (!values.includes(block[key]))
+                throw new Error('Choose a valid receipt date or time format.');
+              b[key] = block[key];
+            }
+          }
+        }
+        if (block.type === 'store' && block.fssaiInHeader === true) b.fssaiInHeader = true;
         if (textTypes.includes(block.type)) {
           b.bold = block.bold === true;
           if (block.fontSize != null && block.fontSize !== '') {

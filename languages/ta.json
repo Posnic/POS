@@ -3974,5 +3974,18 @@
   "lang_choose_your_hours": "நேரத்தைத் தேர்ந்தெடுக்கவும்",
   "lang_apply_time": "நேரத்தைப் பயன்படுத்து",
   "lang_sales_time_filter": "விற்பனை நேர வடிகட்டி",
-  "lang_choose_a_sales_period": "விற்பனைக் காலத்தைத் தேர்ந்தெடுக்கவும்"
+  "lang_choose_a_sales_period": "விற்பனைக் காலத்தைத் தேர்ந்தெடுக்கவும்",
+  "lang_add_your_first_outlet_such_as_restaurant_o": "முதல் விற்பனை மையத்தைச் சேர்க்கவும், உதாரணமாக உணவகம் அல்லது பார். கிளையின் இருப்பு பகிரப்படும்.",
+  "lang_an_item_price_overrides_the_percentage_adj": "தனிப்பட்ட பொருள் விலை சதவீத மாற்றத்திற்குப் பதிலாகப் பயன்படுத்தப்படும்.",
+  "lang_ask_your_manager_to_configure_an_outlet_an": "விற்பனை மையத்தை அமைத்து அணுகல் வழங்க மேலாளரிடம் கேளுங்கள்.",
+  "lang_billing_outlets_description": "உணவகம், பார், அறைச் சேவை போன்ற தனி விற்பனைப் பகுதிகள் கிளையின் இருப்பைப் பகிர்கின்றன.",
+  "lang_billing_outlets_is_switched_off": "விற்பனை மையங்கள் அணைக்கப்பட்டுள்ளன",
+  "lang_choose_a_name_to_get_started_prices_and_st": "தொடங்க ஒரு பெயரைத் தேர்ந்தெடுக்கவும். விலைகளும் ஊழியர் அணுகலும் விருப்பத்தேர்வுகள்.",
+  "lang_choose_an_outlet": "விற்பனை மையத்தைத் தேர்ந்தெடுக்கவும்",
+  "lang_for_example_restaurant_or_bar": "உதாரணமாக உணவகம் அல்லது பார்",
+  "lang_individual_item_prices": "தனிப்பட்ட பொருள் விலைகள்",
+  "lang_no_billing_outlets_yet": "இன்னும் விற்பனை மையங்கள் இல்லை",
+  "lang_open_features": "அம்சங்களைத் திறக்கவும்",
+  "lang_set_up_an_outlet": "விற்பனை மையத்தை அமைக்கவும்",
+  "lang_use_one_normal_billing_screen_or_enable_se": "ஒரே விற்பனைத் திரையைப் பயன்படுத்தவும் அல்லது அம்சங்களில் தனி விற்பனை மையங்களை இயக்கவும்."
 }

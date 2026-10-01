@@ -1601,6 +1601,7 @@ class SettingModel extends BaseModel {
         module_kiosk_enable: offOnly,
         module_captain_enable: offOnly,
         module_mobile_pos_enable: onOnly,
+        module_billing_outlets_enable: onOnly,
         module_delivery_partners_enable: offOnly,
         module_webshop_enable: offOnly,
         module_recyclebin_enable: offOnly,
@@ -1799,6 +1800,7 @@ class SettingModel extends BaseModel {
       module_kiosk_enable: { parse: offOnly, dflt: true },
       module_captain_enable: { parse: offOnly, dflt: true },
       module_mobile_pos_enable: { parse: onOnly, dflt: false },
+      module_billing_outlets_enable: { parse: onOnly, dflt: false },
       module_delivery_partners_enable: { parse: offOnly, dflt: true },
       module_webshop_enable: { parse: offOnly, dflt: true },
       module_recyclebin_enable: { parse: offOnly, dflt: true },
@@ -2959,6 +2961,8 @@ class SettingModel extends BaseModel {
 
       console.log('DEBUG - deletePaymentFiledModel filter:', filter);
 
+      const doc = await collection.findOne(filter);
+      if (doc) await BaseModel.deletedDocumentBackup(this.paymentCollection, doc);
       const result = await collection.deleteOne(filter);
 
       console.log('DEBUG - deletePaymentFiledModel result:', {
@@ -3666,7 +3670,7 @@ class SettingModel extends BaseModel {
       const items = await this.getCollection('items');
       const used = await items.countDocuments({
         license: this.normalizeId(this.licenseId),
-        modifier_group_ids: this.normalizeId(id),
+        modifier_group_ids: new ObjectId(String(id)),
       });
       if (used > 0) {
         return {
@@ -3676,8 +3680,13 @@ class SettingModel extends BaseModel {
         };
       }
       const collection = await this.getCollection('modifier_groups');
+      const removed = await collection.findOne({
+        _id: new ObjectId(String(id)),
+        license: this.normalizeId(this.licenseId),
+      });
+      if (removed) await BaseModel.deletedDocumentBackup('modifier_groups', removed);
       const r = await collection.deleteOne({
-        _id: this.normalizeId(id),
+        _id: new ObjectId(String(id)),
         license: this.normalizeId(this.licenseId),
       });
       if (!r.deletedCount) return { status: false, data: null, message: 'No such modifier group' };
@@ -3792,8 +3801,13 @@ class SettingModel extends BaseModel {
     try {
       if (!id) return { status: false, data: null, message: 'List id required' };
       const collection = await this.getCollection('price_lists');
+      const removed = await collection.findOne({
+        _id: new ObjectId(String(id)),
+        license: this.normalizeId(this.licenseId),
+      });
+      if (removed) await BaseModel.deletedDocumentBackup('price_lists', removed);
       const r = await collection.deleteOne({
-        _id: this.normalizeId(id),
+        _id: new ObjectId(String(id)),
         license: this.normalizeId(this.licenseId),
       });
       if (!r.deletedCount) return { status: false, data: null, message: 'No such price list' };
@@ -4301,12 +4315,11 @@ class SettingModel extends BaseModel {
           $group: {
             _id: {
               payment_id: '$_id',
-              payment_value: '$payment_field',
+              payment_value: { $ifNull: ['$payment_field', '$payment_value'] },
             },
           },
         },
         { $sort: { _id: 1 } },
-        { $limit: 10 },
       ];
 
       const paymentList = await collection.aggregate(pipeline).toArray();
