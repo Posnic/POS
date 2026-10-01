@@ -29,6 +29,15 @@ test('failed retry leaves the original record available for another attempt',()=
  const a=app();a.recovery.retry(a.entry);a.calls[0][2]();
  assert.equal(a.journal.pending().length,1);a.recovery.retry(a.entry);assert.equal(a.calls.length,2);a.dom.window.close();
 });
+
+test('confirmed no-write rejection releases pending retry and preserves its rejected payload',()=>{
+ const a=app();let resets=0;a.w.PosnicPro.sales.resetOrderRequest=()=>{resets++;};
+ a.recovery.show();a.recovery.retry(a.entry);
+ a.calls[0][2]({responseJSON:{type:'error',data:{submission_outcome:'not_saved',request_id:a.entry.id}}});
+ assert.equal(a.journal.pending().length,0);assert.equal(resets,1);
+ assert.match(a.w.document.querySelector('dialog').textContent,/No pending submissions/);
+ a.dom.window.close();
+});
 test('account change while manager approval is open prevents submission',()=>{
  const a=app();let approval;
  a.w.PosnicPro.sales.guardDiscountApproval=(params,proceed)=>{approval=proceed;};

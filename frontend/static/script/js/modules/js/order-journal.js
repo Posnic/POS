@@ -28,7 +28,7 @@
             if (!raw) return null;
             var entry = JSON.parse(raw);
             if (entry.version !== 1 || entry.owner !== scope || entry.id !== id ||
-                entry.payload.idempotencyKey !== id || !['pending', 'confirmed'].includes(entry.state)) {
+                entry.payload.idempotencyKey !== id || !['pending', 'confirmed', 'rejected'].includes(entry.state)) {
                 throw new Error(t('lang_submission_unreadable', 'The saved order could not be read.'));
             }
             return entry;
@@ -69,7 +69,20 @@
             storage.setItem(key(scope, entry.id), JSON.stringify(saved));
             try { storage.removeItem(key(scope, entry.id)); } catch (error) { /* confirmed marker remains */ }
         }
-        return { save: save, pending: pending, confirm: confirm };
+        function reject(entry, response) {
+            var outcome = response && response.data;
+            if (!entry || !response || response.type !== 'error' || !outcome ||
+                outcome.submission_outcome !== 'not_saved' || outcome.request_id !== entry.id) return false;
+            var scope = owner();
+            if (scope !== entry.owner) throw new Error(t('lang_submission_sign_in', 'Sign in before saving an order.'));
+            var saved = read(scope, entry.id);
+            if (!saved || saved.state !== 'pending') return false;
+            // Retain the rejected payload for diagnosis; never call it a sale.
+            saved.state = 'rejected'; saved.rejection = response.message;
+            storage.setItem(key(scope, entry.id), JSON.stringify(saved));
+            return true;
+        }
+        return { save: save, pending: pending, confirm: confirm, reject: reject };
     }
     if (typeof module === 'object' && module.exports) module.exports = { create: create };
     else root.PosnicOrderJournal = { create: create };

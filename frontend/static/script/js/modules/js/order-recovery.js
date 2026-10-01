@@ -48,7 +48,12 @@
                             PosnicPro.alert('success', response.message || t('lang_submission_saved','Order saved'));
                         } catch (error) { PosnicPro.alert('error', error.message); }
                         finally { busy.delete(key); render(); refresh(); }
-                    }, function () {
+                    }, function (xhr) {
+                        try {
+                            var response = xhr && xhr.responseJSON;
+                            if (!response && xhr && xhr.responseText) response = JSON.parse(xhr.responseText);
+                            if (PosnicPro.sales.submissionJournal().reject(entry, response)) PosnicPro.sales.resetOrderRequest();
+                        } catch (error) { PosnicPro.alert('error', error.message); }
                         busy.delete(key); render(); refresh();
                     });
                 } catch (error) { busy.delete(key); render(); PosnicPro.alert('error', error.message); }

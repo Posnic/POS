@@ -288,13 +288,17 @@ describe('SalesService', () => {
       'refuses %s against a 262.50 bill before any stock or sale write',
       async (amount) => {
         const result = await salesService.processSale(
-          taxableSale({ Upi: amount }),
+          taxableSale({ Upi: amount }, { idempotencyKey: 'rejected-payment-request' }),
           '',
           'Add',
           makeContext()
         );
         expect(result.status).toBe(false);
         expect(result.message).toMatch(/Payment total.*262.50/);
+        expect(result.data).toEqual({
+          submission_outcome: 'not_saved',
+          request_id: 'rejected-payment-request',
+        });
         expect(salesRepository.create).not.toHaveBeenCalled();
         expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
         expect(mockRegisterRepositoryInstance.addSaleRegisterEntry).not.toHaveBeenCalled();
