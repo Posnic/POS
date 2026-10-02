@@ -1719,6 +1719,57 @@ describe('SalesService', () => {
       expect(kotNotifications).toEqual([]);
     });
 
+    test.each(['Cash', 'Upi', 'Card', 'Cash,Upi'])(
+      'desktop settles a synchronized order without local seating claims using %s',
+      async (payment_mode) => {
+        const doc = {
+          _id: SALE_ID,
+          items: [],
+          changes: [],
+          set: jest.fn(),
+          sales_id: 'SYNC-1',
+          sale_method: 'Table-Order',
+          sale_process: 'KOT',
+          payment_status: 'Unpaid',
+          seating_request_id: 'remote-claim',
+          table_number: 'T2',
+          person_count: 2,
+          dine_type: 'Dine-in',
+          updated_date: new Date('2026-10-02T10:00:00Z'),
+        };
+        salesRepository.getById.mockResolvedValue(doc);
+        const findOne = jest.fn().mockResolvedValue(null);
+        const updateOne = jest.fn();
+        BaseModel.getDb.mockResolvedValue({ collection: () => ({ findOne, updateOne }) });
+        const result = await salesService.processSale(
+          makeSaleData({
+            sale_method: 'Table-Order',
+            payment_mode,
+            table_number: 'T2',
+            person_count: 2,
+            ...(payment_mode === 'Cash,Upi' ? { multi_payment: { Cash: 100, Upi: 100 } } : {}),
+          }),
+          SALE_ID,
+          'Edit',
+          makeContext()
+        );
+        expect(result.status).toBe(true);
+        expect(doc.set).toHaveBeenCalledWith(
+          expect.objectContaining({
+            payment_status: 'Paid',
+            partial_balance: 200,
+            table_number: 'T2',
+          })
+        );
+        expect(doc.$where).toMatchObject({
+          payment_status: 'Unpaid',
+          seating_request_id: 'remote-claim',
+          table_number: 'T2',
+        });
+        expect(salesRepository.save).toHaveBeenCalledWith(doc);
+      }
+    );
+
     test('updates register entry for edit mode', async () => {
       const fakeSaleDoc = { items: [], changes: [], set: jest.fn(), sales_id: 'INV000001' };
       salesRepository.getById.mockResolvedValue(fakeSaleDoc);
