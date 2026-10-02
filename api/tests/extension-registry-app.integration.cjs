@@ -41,3 +41,31 @@ test('account limiter and parser failures are enforced by composed routes',async
  r=await fetch(url,{method:'POST',headers:f.headers});assert.equal(r.status,429);
  }finally{await f.close()}
 });
+
+test('organization discovery is paginated, account-scoped and reflects revoked membership',async()=>{
+ const f=await fixture();try{
+ await f.db.collection('library_memberships').insertMany([
+ ...Array.from({length:51},(_,i)=>({organizationId:'shop'+String(i).padStart(2,'0'),userId:'owner',role:'member',status:'active'})),
+ {organizationId:'foreign',userId:'another',role:'owner',status:'active'},
+ {organizationId:'revoked',userId:'owner',role:'owner',status:'revoked'}]);
+ const url=f.url+'/v1/session/organizations';
+ let r=await fetch(url,{headers:f.headers});assert.equal(r.status,200);const first=await r.json();
+ assert.equal(first.organizations.length,50);assert.equal(first.next,'shop48');
+ assert.equal(first.organizations.some(o=>['foreign','revoked'].includes(o.organizationId)),false);
+ assert.deepEqual(Object.keys(first.organizations[0]).sort(),['organizationId','role']);
+ r=await fetch(url+'?after='+first.next,{headers:f.headers});const last=await r.json();assert.equal(last.organizations.length,2);assert.equal(last.next,null);
+ await f.db.collection('library_memberships').updateOne({organizationId:'shop50',userId:'owner'},{$set:{status:'revoked'}});
+ r=await fetch(url+'?after=shop49',{headers:f.headers});assert.deepEqual(await r.json(),{organizations:[],next:null});
+ r=await fetch(url+'?after[$gt]=x',{headers:f.headers});assert.equal(r.status,400);
+ }finally{await f.close()}
+});
+test('sign-out revokes only the authenticated session and does not alter offline entitlements',async()=>{
+ const f=await fixture();try{
+ const other=await issueSession(f.db,'owner');
+ await f.db.collection('library_entitlements').insertOne({organizationId:'org',extensionId:'example',status:'active',releaseIds:['one']});
+ let r=await fetch(f.url+'/v1/session/logout',{method:'POST',headers:f.headers});assert.equal(r.status,204);assert.equal(r.headers.get('cache-control'),'private, no-store');
+ r=await fetch(f.url+'/v1/session/organizations',{headers:f.headers});assert.equal(r.status,401);
+ r=await fetch(f.url+'/v1/session/organizations',{headers:{authorization:'Bearer '+other.token}});assert.equal(r.status,200);
+ assert.equal(await f.db.collection('library_entitlements').countDocuments({status:'active'}),1);
+ }finally{await f.close()}
+});
