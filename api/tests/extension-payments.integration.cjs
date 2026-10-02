@@ -124,6 +124,30 @@ test('Dojo capture commits one normal Card sale and adjusted stock is never dedu
   await assert.rejects(processDojoPayment(f.context, input, { ...options, configurationId: 'another-merchant' }), /provider_payment_conflict/);
 });
 
+test('captured Dojo payment with changed local pricing stays in reconciliation and cannot charge again', async () => {
+  const f = await fixture();
+  const prepared = await preparePayment(f.context, { ...f.input, method: 'card' });
+  let intent, creates = 0;
+  const session = { id: 'ts_price', terminalId: 'tm_test', status: 'Captured',
+    details: { sessionType: 'Sale', sale: { paymentIntentId: 'pi_price' } } };
+  const options = { configurationId: 'merchant-one', terminalId: 'tm_test', provider: {
+    environment: 'sandbox', createIntent: async quote => {
+      creates++;
+      intent = { id: 'pi_price', reference: quote.reference, captureMode: 'Auto', status: 'Captured',
+        amount: { value: quote.valueMinor, currencyCode: 'GBP' }, totalAmount: { value: quote.valueMinor, currencyCode: 'GBP' } };
+      await db.collection('items').updateOne({ _id: f.item._id }, { $set: { selling_price: 2 } });
+      return intent;
+    }, createSession: async () => session, getSession: async () => session, getIntent: async () => intent,
+  } };
+  const input = { paymentId: prepared.paymentId };
+  await assert.rejects(processDojoPayment(f.context, input, options), /dojo_sale_reconciliation_required/);
+  await assert.rejects(processDojoPayment(f.context, input, options), /dojo_sale_reconciliation_required/);
+  await assert.rejects(cancelPayment(f.context, input), /provider_payment_in_progress/);
+  assert.equal(creates, 1);
+  assert.equal(await f.stock(), 2);
+  assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 0);
+});
+
 test('Dojo lost creation response retains payment and prevents manual cancellation or repeat charge', async () => {
   const f = await fixture();
   const prepared = await preparePayment(f.context, { ...f.input, method: 'card' });

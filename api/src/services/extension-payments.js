@@ -449,9 +449,13 @@ async function processDojoPayment(context, input, { provider, configurationId, t
   }, provider);
   const result = await journal.pollPayment(context.db, context.scope, row._id, configurationId, provider);
   if (result.status !== 'captured') return { paymentId: row._id, status: result.status, provider: 'dojo' };
-  return confirmRecordedPayment({ ...context, operationId: 'dojo-confirm:' + row._id },
+  const committed = await confirmRecordedPayment({ ...context, operationId: 'dojo-confirm:' + row._id },
     { paymentId: row._id, terminalConfirmed: true, reference: result.paymentIntentId }, 'card',
     { authorization: dojoAuthorization });
+  // Money is already captured. A failed local validation is a reconciliation
+  // problem, never a declined payment or permission to charge another time.
+  if (committed.rejected) fail('extension_dojo_sale_reconciliation_required');
+  return committed;
 }
 async function cancelPayment(context, input) {
   const { db } = context,
