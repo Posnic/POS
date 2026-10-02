@@ -4364,5 +4364,7 @@
   "lang_item_zero_title": "Nog geen beginvoorraad",
   "lang_item_zero_untracked": "Voorraad niet bijhouden",
   "lang_item_zero_untracked_help": "Verkoop dit artikel zonder voorraadaantallen bij te houden.",
-  "lang_item_zero_variants": "Sommige varianten hebben geen beginvoorraad. Uw keuze voor voorraadbeheer geldt voor alle varianten van dit artikel."
+  "lang_item_zero_variants": "Sommige varianten hebben geen beginvoorraad. Uw keuze voor voorraadbeheer geldt voor alle varianten van dit artikel.",
+  "lang_serve_all": "Alles serveren",
+  "lang_items_marked_served": "Artikelen gemarkeerd als geserveerd"
 }
