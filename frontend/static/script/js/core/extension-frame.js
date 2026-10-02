@@ -12,6 +12,7 @@
     "receipt",
     "sales",
     "salesReport",
+    "exportReport",
   ]);
   function mount(options) {
     var container = options.container,

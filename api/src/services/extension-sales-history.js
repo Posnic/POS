@@ -70,11 +70,14 @@ async function listSales({ db, scope, descriptor, after = '' }) {
     next: rows.length > 50 ? `${page.at(-1).paidAt.toISOString()}~${page.at(-1)._id}` : null,
   };
 }
-async function dailySales({ db, scope, descriptor, day }) {
+async function dailySales({ db, scope, descriptor, day, endDay = day }) {
   if (typeof day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(day))
     fail('extension_report_date_invalid');
   const utc = new Date(day + 'T00:00:00.000Z');
   if (!Number.isFinite(utc.getTime()) || utc.toISOString().slice(0, 10) !== day)
+    fail('extension_report_date_invalid');
+  const endUtc = new Date(endDay + 'T00:00:00.000Z');
+  if (typeof endDay !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(endDay) || !Number.isFinite(+endUtc) || endUtc.toISOString().slice(0,10) !== endDay || endDay < day || +endUtc - +utc > 366 * 86400000)
     fail('extension_report_date_invalid');
   const branch = await db
     .collection('branches')
@@ -95,15 +98,15 @@ async function dailySales({ db, scope, descriptor, day }) {
         {
           $match: {
             ...filter(scope, descriptor),
-            paidAt: { $gte: new Date(+utc - 36 * 3600000), $lt: new Date(+utc + 60 * 3600000) },
+            paidAt: { $gte: new Date(+utc - 36 * 3600000), $lt: new Date(+endUtc + 60 * 3600000) },
           },
         },
         {
           $match: {
             $expr: {
-              $eq: [
-                { $dateToString: { date: '$paidAt', format: '%Y-%m-%d', timezone: timeZone } },
-                day,
+              $and: [
+                { $gte: [{ $dateToString: { date: '$paidAt', format: '%Y-%m-%d', timezone: timeZone } }, day] },
+                { $lte: [{ $dateToString: { date: '$paidAt', format: '%Y-%m-%d', timezone: timeZone } }, endDay] },
               ],
             },
           },
@@ -135,6 +138,6 @@ async function dailySales({ db, scope, descriptor, day }) {
     if (row._id.method === 'cash') groups.get(key).cashMinor = row.valueMinor;
     if (row._id.method === 'card') groups.get(key).cardMinor = row.valueMinor;
   }
-  return { day, timeZone, totals: [...groups.values()] };
+  return { day, endDay, timeZone, totals: [...groups.values()] };
 }
 module.exports = { listSales, dailySales };

@@ -272,13 +272,14 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
   });
   router.get('/:extensionId/sales-report', async (req, res) => {
     try {
-      if (Object.keys(req.query).some((key) => key !== 'day'))
+      if (Object.keys(req.query).some((key) => !['day', 'endDay'].includes(key)))
         access.fail('Unsupported report query.', 422);
       res.json(
         await require('../services/extension-sales-history').dailySales({
           db: req.db,
           ...req.extension,
           day: req.query.day,
+            endDay: req.query.endDay,
         })
       );
     } catch (error) {

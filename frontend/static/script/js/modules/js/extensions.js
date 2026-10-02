@@ -5,6 +5,32 @@
   var generation = 0,
     menuGeneration = 0,
     mounted = null;
+  async function exportReport(input) {
+    if (!['csv','xls','pdf','print'].includes(input.format) || !Array.isArray(input.rows) || input.rows.length > 30 || typeof input.range !== 'string' || input.range.length > 120)
+      throw Error('Invalid extension report.');
+    const rows = input.rows.map(row => {
+      if (!Array.isArray(row) || row.length !== 3 || row.some(cell => typeof cell !== 'string' || cell.length > 150)) throw Error('Invalid report cells.');
+      return row.map(cell => /^[=+@\-\t\r]/.test(cell) ? "'" + cell : cell);
+    });
+    const root = document.createElement('div'); root.id='extension-report-'+crypto.randomUUID(); root.hidden=true;
+    const table=document.createElement('table'); table.setAttribute('data-export-include','');
+    [['Type','Currency','Amount'],...rows].forEach((row,index)=>{const tr=document.createElement('tr');row.forEach(cell=>{const td=document.createElement(index?'td':'th');td.textContent=cell;tr.appendChild(td)});table.appendChild(tr)});
+    root.appendChild(table); document.body.appendChild(root);
+    const meta={title:'Basket Review report',range:input.range,filename:'basket-review-report'};
+    try {
+      if (input.format==='csv'||input.format==='xls') PosnicPro.reportExport[input.format](root.id,meta);
+      else {
+        await PosnicPro.lazy.load('jspdf');
+        const C=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF||window.jspdf;
+        if(typeof C!=='function')throw Error('PDF tools unavailable.');
+        const doc=PosnicPro.reportExport._buildDoc(root.id,meta,C);
+        if(!doc)throw Error('Report unavailable.');
+        if(input.format==='pdf')doc.save(meta.filename+'.pdf');
+        else await PosnicPro.printPdfDocument(doc,meta.filename,'Allow pop-ups to print the report.');
+      }
+      return {exported:true};
+    } finally {root.remove()}
+  }
   function close() {
     generation++;
     if (mounted) mounted.destroy();
@@ -490,11 +516,12 @@
               return request(
                 base + "/sales?after=" + encodeURIComponent(input.after || ""),
               );
+            if (method === "exportReport") return exportReport(input);
             if (method === "salesReport")
               return request(
                 base +
                   "/sales-report?day=" +
-                  encodeURIComponent(input.day || ""),
+                  encodeURIComponent(input.day || "") + "&endDay=" + encodeURIComponent(input.endDay || input.day || ""),
               );
             if (method === "catalogue")
               return request(

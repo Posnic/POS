@@ -88,6 +88,10 @@ test('paid history pages without gaps and reports the local payment day across D
       300
     );
     assert.equal(report.timeZone, 'Europe/London');
+    const month = await dailySales({...input,day:'2026-10-01',endDay:'2026-10-31'});
+    assert.equal(month.totals.find(g=>g.currency.currencyCode==='GBP').cashMinor,11499);
+    assert.equal(month.totals.find(g=>g.currency.currencyCode==='GBP').cardMinor,250);
+    for(const endDay of ['2026-09-30','2026-02-30','2028-10-01'])await assert.rejects(dailySales({...input,day:'2026-10-01',endDay}),{code:'extension_report_date_invalid'});
   } finally {
     await client.close();
     await mongo.stop();
