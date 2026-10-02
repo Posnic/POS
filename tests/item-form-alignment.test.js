@@ -462,7 +462,7 @@ test('tax falls back to 0, not to empty string', () => {
      it is a value the server has to guess about. */
   const code = stripComments(itemsJs);
   const hits = [...code.matchAll(/selectAttr\('#items_tax', 'data-tax-value', 0\)/g)];
-  assert.strictEqual(hits.length, 2, 'both save paths must default tax to 0');
+  assert.strictEqual(hits.length, 3, 'both save paths and the price preview must default tax to 0');
 });
 
 test('both save paths are fixed, not just the one that was reported', () => {
