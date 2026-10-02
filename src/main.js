@@ -2517,10 +2517,7 @@ async function redirectToLogin() {
 
     await loadPageAndReveal(targetUrl);
     if (hasSavedLogin === false) {
-      mainWindow.webContents.executeJavaScript(`
-        localStorage.removeItem('posnic_jwt_token');
-        document.cookie = 'loginuser=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-      `).catch(error => console.warn('[Auth] Renderer token cleanup skipped:', error.message));
+      require('./startup-progress').clearLoginRenderer(mainWindow.webContents, targetUrl, console);
     }
     writeStartupPerformanceSummary(hasSavedLogin ? 'Dashboard' : 'Login');
     markInterfaceReady(hasSavedLogin ? 'Dashboard' : 'Login');

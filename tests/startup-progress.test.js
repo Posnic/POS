@@ -2,6 +2,16 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {EventEmitter}=require('node:events');
 const {createStartupProgress}=require('../src/startup-progress');
+test('login cleanup waits for full load and cannot clear a subsequently opened dashboard',()=>{
+ const {clearLoginRenderer}=require('../src/startup-progress');
+ const contents=new EventEmitter(),calls=[];let url='http://localhost/public/login.html';
+ contents.isDestroyed=()=>false;contents.isLoadingMainFrame=()=>true;contents.getURL=()=>url;
+ contents.executeJavaScript=code=>{calls.push(code);return Promise.resolve();};
+ clearLoginRenderer(contents,url);assert.equal(calls.length,0);
+ contents.emit('did-finish-load');assert.equal(calls.length,1);
+ clearLoginRenderer(contents,url);url='http://localhost/public/dashboard.html';
+ contents.emit('did-finish-load');assert.equal(calls.length,1);
+});
 test('the desktop package includes its startup progress helper',()=>{
  assert.ok(require('../package.json').build.files.includes('src/startup-progress.js'));
 });

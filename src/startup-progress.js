@@ -27,4 +27,15 @@ function createStartupProgress() {
     } else flush();
   };
 }
-module.exports = { createStartupProgress };
+function clearLoginRenderer(contents, targetUrl, logger = console) {
+  const clean = () => {
+    if (contents.isDestroyed() || contents.getURL() !== targetUrl) return;
+    contents.executeJavaScript("localStorage.removeItem('posnic_jwt_token'); document.cookie = 'loginuser=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';")
+      .catch(error => logger.warn('[Auth] Renderer token cleanup skipped:', error.message));
+  };
+  // loadPageAndReveal resolves at DOM-ready; executeJavaScript otherwise adds
+  // another did-stop-loading waiter during Electron's navigation startup.
+  if (contents.isLoadingMainFrame()) contents.once('did-finish-load', clean);
+  else clean();
+}
+module.exports = { createStartupProgress, clearLoginRenderer };
