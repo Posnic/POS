@@ -57,7 +57,7 @@ describe('Ask Posnic service', () => {
     expect(service.intentFrom('Prepare a sales draft')).toBe('sale_draft_action');
     expect(service.intentFrom('Prepare a supplier message')).toBe('supplier_message_action');
     expect(service.intentFrom('Draft a message to my supplier')).toBe('supplier_message_action');
-    expect(service.intentFrom('Create a sale')).toBe('sale_draft_action');
+    expect(service.intentFrom('Create a sale')).toBe('sale_checkout_action');
     expect(service.intentFrom('How do I create a sale?')).toBe('unknown');
   });
 

@@ -372,7 +372,14 @@ async function getPreferences(req) {
     roles: row?.roles && typeof row.roles === 'object' ? row.roles : {},
     allowed_actions: Array.isArray(row?.allowed_actions)
       ? row.allowed_actions
-      : ['purchase_order', 'stock_count', 'campaign', 'sale_draft', 'supplier_message'],
+      : [
+          'purchase_order',
+          'stock_count',
+          'campaign',
+          'sale_draft',
+          'supplier_message',
+          'sale_checkout',
+        ],
   };
 }
 
@@ -433,11 +440,23 @@ async function savePreferences(req, input) {
     help_instructions: clean(input.help_instructions, 2000),
     allowed_actions: Array.isArray(input.allowed_actions)
       ? input.allowed_actions.filter((type) =>
-          ['purchase_order', 'stock_count', 'campaign', 'sale_draft', 'supplier_message'].includes(
-            type
-          )
+          [
+            'purchase_order',
+            'stock_count',
+            'campaign',
+            'sale_draft',
+            'supplier_message',
+            'sale_checkout',
+          ].includes(type)
         )
-      : ['purchase_order', 'stock_count', 'campaign', 'sale_draft', 'supplier_message'],
+      : [
+          'purchase_order',
+          'stock_count',
+          'campaign',
+          'sale_draft',
+          'supplier_message',
+          'sale_checkout',
+        ],
     updated_at: now(),
     updated_by: s.user_id,
   };

@@ -1670,6 +1670,9 @@
   "Posnic API v2 root": [
     "app.js"
   ],
+  "Posnic capabilities": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Preferences updated successfully": [
     "src/services/customer.service.js"
   ],
@@ -1844,6 +1847,9 @@
   "Return sales value is null": [
     "src/repositories/sale.repository.js"
   ],
+  "Review the basket before checkout.": [
+    "src/controllers/ask-posnic.controller.js"
+  ],
   "Review the remaining work before confirming.": [
     "src/controllers/ask-posnic.controller.js"
   ],
@@ -1879,6 +1885,9 @@
   ],
   "Sale added successfully": [
     "src/models/sale.model.js"
+  ],
+  "Sale checkout is not enabled for your account.": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "Sale not found": [
     "src/controllers/whatsapp.controller.js",
@@ -2296,6 +2305,9 @@
   ],
   "This Branch details already exist in our system": [
     "src/models/branch.model.js"
+  ],
+  "This action is not enabled for your account. Ask an owner to review Ask Posnic Access & actions and your normal module permissions.": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "This category details already exist in our system": [
     "src/models/customer-category.model.js",

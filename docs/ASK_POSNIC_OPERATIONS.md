@@ -734,7 +734,11 @@ Owners and administrators configure the assistant under **Settings → Ask Posni
   publish only after checking the extracted content. Approved Intranet bundles
   retain their existing published-import workflow. Shop knowledge belongs to the
   shop account and is shared across its outlets; it is not shared with other shops.
-- **Access & actions:** capability switches, role lists and permitted draft types.
+- **Access & actions:** capability switches, role lists, permitted draft types and
+  sales checkout. **Enable all supported actions** selects the supported actions;
+  **Save assistant settings** applies the change. Existing explicit selections
+  are preserved on upgrade. The expandable feature inventory distinguishes AI
+  actions from normal module workflows; it does not claim every module is an AI tool.
   Existing server permissions and explicit action confirmation still apply.
 - **AI & usage:** provider/key configuration, managed billing, search budgets,
   usage and processing/audit details.
@@ -744,6 +748,44 @@ Opening the conversation page does not fetch the administration lists. The setti
 page checks owner/admin access before displaying controls. Draft-source review
 requires owner/admin authorization and always filters by the authenticated shop;
 ordinary citations remain limited to published customer-visible sources.
+
+### Natural-language sale and payment
+
+With **Sales checkout & receipt printing** enabled, ask **Create one sale with
+1 Coke and 3 Biryani**. Ask Posnic resolves exact names, barcodes or SKUs in the
+current outlet, displays catalog prices and quantities, and asks for review.
+Missing or ambiguous items require a corrected name or a unique barcode/SKU.
+The initial parser supports English quantity-and-item requests; the structured
+item form remains available when a sentence cannot be parsed.
+
+**Continue to payment** loads an empty normal POS cart. An existing sale must be
+finished or held first. The native checkout recalculates taxes, charges, prices
+and stock availability and shows the receipt. Its **Cash - complete & print**
+button records the sale only after the cashier confirms receipt of the cash.
+**Card paid - complete & print** is offered only when Card is a configured tender;
+it records an externally confirmed terminal payment, and does not charge a card.
+Other tenders, split payments, change and special checkout cases retain the
+normal payment controls. Sale validation, approvals, register rules, tenant scope
+and the existing retry/idempotency journal remain in force.
+
+Printing is requested only after the sale API reports success, through the
+existing receipt printer. Browser printing can open the system print dialog;
+physical paper output depends on the configured printer. A changed outlet,
+basket or total invalidates the quick-completion buttons. Quotations remain a
+separate **sales draft** action.
+
+### Feature coverage
+
+| Group | Features | Ask Posnic coverage |
+|---|---|---|
+| Core commerce | Sales, receipts, history, returns, items, categories, variants, units, pricing, customers, customer groups, suppliers, purchasing, purchase orders, counts, stock movements, quotations, invoices, branches, employees | Sale checkout and printing; quotation, purchase-order and stock-count drafts. Other changes use their module pages and permissions. |
+| Insights | Sales, profit, tax, payment mix, top/slow/unsold items, low stock, receivables, hourly/daily trends, period/outlet comparisons, category/promotion performance, customer segments and reorder suggestions | Direct authenticated report tools; financial and outlet restrictions apply. Specialist report pages remain available separately. |
+| Optional modules | Restaurant/KOT, registers, workforce/shifts/tips/rosters, cash book, customer credit, taxes, marketing, messaging, online ordering, kiosk, Captain App, Mobile POS, billing outlets, delivery partners, webshop, themes, till PIN, recycle bin and demo data | Campaign and supplier-message drafts; other operations remain module workflows. Enabling AI does not turn on optional modules or grant staff new rights. |
+| Administration | Core settings, payments/printers, feature switches, devices, integrations, cloud sync, backups, diagnostics, updates and Ask Posnic settings | Owners manage these on the corresponding module pages. Ask Posnic does not execute arbitrary API calls or change permissions from a prompt. |
+| Knowledge & scheduled work | FAQs, PDF/Markdown/text sources, Intranet bundles, citations, sales/profit/stock report schedules | Published shop-scoped retrieval, source review, scheduled delivery through configured channels and budgets. |
+
+Ask **What can you do?** or **List all core features** for the same current
+inventory, including which AI actions are enabled for the signed-in account.
 
 The adapter uses `text-embedding-3-small`, 256 float dimensions, and the fixed
 OpenAI embeddings endpoint, with a 30-second timeout and no automatic retry or
