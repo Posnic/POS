@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "Usafishaji wa meza",
+  "lang_enable_table_cleaning": "Washa usafishaji wa meza",
+  "lang_off_by_default_enable_only_if_staff_should": "Imezimwa kwa chaguo-msingi. Ikiwashwa, meza lazima ziwekwe kuwa zinapatikana baada ya huduma.",
+  "lang_could_not_load_table_settings_please_retry": "Imeshindwa kupakia mipangilio ya meza. Jaribu tena.",
+  "lang_could_not_save_table_settings_please_retry": "Imeshindwa kuhifadhi mipangilio ya meza. Jaribu tena.",
   "lang_item_ai_review_help": "Kagua pendekezo. Tafsiri yako haibadiliki mpaka ulikubali.",
   "lang_item_upload_failed": "Kupakia picha kumeshindikana. Bidhaa haijahifadhiwa.",
   "lang_item_translated_name": "Jina la bidhaa lililotafsiriwa",

@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "تنظيف الطاولات",
+  "lang_enable_table_cleaning": "تفعيل تنظيف الطاولات",
+  "lang_off_by_default_enable_only_if_staff_should": "معطل افتراضيًا. عند التفعيل، يجب تحديد الطاولات كمتاحة بعد الخدمة.",
+  "lang_could_not_load_table_settings_please_retry": "تعذر تحميل إعدادات الطاولات. حاول مجددًا.",
+  "lang_could_not_save_table_settings_please_retry": "تعذر حفظ إعدادات الطاولات. حاول مجددًا.",
   "lang_item_upload_failed": "فشل رفع الصورة. لم يتم حفظ الصنف.",
   "lang_item_translated_name": "اسم الصنف المترجم",
   "lang_item_stock_variants_help": "أدخل المخزون الافتتاحي في صف كل متغير.",

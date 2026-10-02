@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "Limpeza de mesas",
+  "lang_enable_table_cleaning": "Ativar limpeza de mesas",
+  "lang_off_by_default_enable_only_if_staff_should": "Desativada por padrão. Quando ativada, as mesas devem ser marcadas como disponíveis após o atendimento.",
+  "lang_could_not_load_table_settings_please_retry": "Não foi possível carregar as configurações das mesas. Tente novamente.",
+  "lang_could_not_save_table_settings_please_retry": "Não foi possível salvar as configurações das mesas. Tente novamente.",
   "lang_item_ai_review_help": "Revise a sugestão. Sua tradução não muda até você aceitá-la.",
   "lang_item_upload_failed": "Falha ao enviar imagem. O item não foi salvo.",
   "lang_item_translated_name": "Nome traduzido do item",

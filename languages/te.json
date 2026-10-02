@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "టేబుల్ శుభ్రపరచడం",
+  "lang_enable_table_cleaning": "టేబుల్ శుభ్రపరచడాన్ని ప్రారంభించండి",
+  "lang_off_by_default_enable_only_if_staff_should": "డిఫాల్ట్‌గా ఆఫ్‌లో ఉంటుంది. ప్రారంభిస్తే, సేవ తర్వాత టేబుళ్లను అందుబాటులో ఉన్నట్లు గుర్తించాలి.",
+  "lang_could_not_load_table_settings_please_retry": "టేబుల్ సెట్టింగ్‌లను లోడ్ చేయలేకపోయాము. మళ్లీ ప్రయత్నించండి.",
+  "lang_could_not_save_table_settings_please_retry": "టేబుల్ సెట్టింగ్‌లను సేవ్ చేయలేకపోయాము. మళ్లీ ప్రయత్నించండి.",
   "lang_item_ai_review_help": "సూచనను పరిశీలించండి. అంగీకరించే వరకు మీ అనువాదం మారదు.",
   "lang_item_upload_failed": "చిత్రం అప్‌లోడ్ విఫలమైంది. వస్తువు సేవ్ కాలేదు.",
   "lang_item_translated_name": "అనువదించిన వస్తువు పేరు",

@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "Pulizia dei tavoli",
+  "lang_enable_table_cleaning": "Abilita pulizia dei tavoli",
+  "lang_off_by_default_enable_only_if_staff_should": "Disattivata per impostazione predefinita. Se attivata, i tavoli devono essere contrassegnati come disponibili dopo il servizio.",
+  "lang_could_not_load_table_settings_please_retry": "Impossibile caricare le impostazioni dei tavoli. Riprova.",
+  "lang_could_not_save_table_settings_please_retry": "Impossibile salvare le impostazioni dei tavoli. Riprova.",
   "lang_item_ai_review_help": "Controlla il suggerimento. La traduzione resta invariata finché non lo accetti.",
   "lang_item_upload_failed": "Caricamento immagine non riuscito. Articolo non salvato.",
   "lang_item_translated_name": "Nome tradotto dell’articolo",

@@ -10253,11 +10253,11 @@ $(document).on('shown.bs.tab', '#captaintables-tab-line', function () {
         $('#captain_table_cleaning').prop('checked',data.cleaningEnabled === true);
         $('#save_captain_tables').prop('disabled',false);
         $('#captain_tables_message').empty();
-    },function(){ $('#captain_tables_message').text('Could not load table settings. Please retry.'); });
+    },function(){ $('#captain_tables_message').text(PosnicPro.i18n.t('lang_could_not_load_table_settings_please_retry', 'Could not load table settings. Please retry.')); });
 });
 $(document).on('click','#save_captain_tables',function(){
     var button=$(this).prop('disabled',true);
     PosnicPro.post({url:'captain/v1/table-settings',processData:false,data:JSON.stringify({cleaningEnabled:$('#captain_table_cleaning').is(':checked')})},function(){
         button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_successfully_completed','Successfully Completed'));
-    },function(){button.prop('disabled',false);$('#captain_tables_message').text('Could not save table settings. Please retry.');});
+    },function(){button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_could_not_save_table_settings_please_retry', 'Could not save table settings. Please retry.'));});
 });

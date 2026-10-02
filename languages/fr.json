@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "Nettoyage des tables",
+  "lang_enable_table_cleaning": "Activer le nettoyage des tables",
+  "lang_off_by_default_enable_only_if_staff_should": "Désactivé par défaut. Une fois activé, les tables doivent être marquées disponibles après le service.",
+  "lang_could_not_load_table_settings_please_retry": "Impossible de charger les paramètres des tables. Réessayez.",
+  "lang_could_not_save_table_settings_please_retry": "Impossible d’enregistrer les paramètres des tables. Réessayez.",
   "lang_item_ai_review_help": "Vérifiez la suggestion. Votre traduction reste inchangée tant que vous ne l’acceptez pas.",
   "lang_item_upload_failed": "Échec de l’envoi de l’image. L’article n’a pas été enregistré.",
   "lang_item_translated_name": "Nom traduit de l’article",

@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "මේස පිරිසිදු කිරීම",
+  "lang_enable_table_cleaning": "මේස පිරිසිදු කිරීම සක්‍රිය කරන්න",
+  "lang_off_by_default_enable_only_if_staff_should": "පෙරනිමියෙන් අක්‍රියයි. සක්‍රිය කළ විට, සේවාවෙන් පසු මේස ලබාගත හැකි ලෙස සලකුණු කළ යුතුය.",
+  "lang_could_not_load_table_settings_please_retry": "මේස සැකසුම් පූරණය කළ නොහැකි විය. නැවත උත්සාහ කරන්න.",
+  "lang_could_not_save_table_settings_please_retry": "මේස සැකසුම් සුරැකිය නොහැකි විය. නැවත උත්සාහ කරන්න.",
   "lang_item_ai_review_help": "යෝජනාව පරීක්ෂා කරන්න. පිළිගන්නා තෙක් ඔබේ පරිවර්තනය වෙනස් නොවේ.",
   "lang_item_upload_failed": "රූපය උඩුගත කිරීම අසාර්ථකයි. භාණ්ඩය සුරැකී නැත.",
   "lang_item_translated_name": "පරිවර්තනය කළ භාණ්ඩ නම",
