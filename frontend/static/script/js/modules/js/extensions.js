@@ -315,6 +315,48 @@
                 }
               };
               body.append(toggle);
+              var history = document.createElement("button");
+              history.type = "button";
+              history.className = "btn btn-light mt-3 ml-2";
+              history.textContent = "Activity";
+              history.setAttribute("aria-label", "Activity for " + item.displayName);
+              var activity = document.createElement("div");
+              activity.className = "mt-3";
+              activity.hidden = true;
+              activity.setAttribute("role", "status");
+              var cursor;
+              async function loadActivity() {
+                function current() {
+                  return run === generation && body.isConnected &&
+                    branch === String(PosnicPro.local.get("branch_id_set") || "");
+                }
+                if (!current()) return;
+                history.disabled = true;
+                activity.hidden = false;
+                try {
+                  var result = await request("/" + encodeURIComponent(item.id) +
+                    "/lifecycle-history" + (cursor ? "?before=" + cursor : ""));
+                  if (!current()) return;
+                  if (!cursor) activity.replaceChildren();
+                  if (!result.events.length && !cursor) activity.textContent = "No activation changes recorded.";
+                  result.events.forEach(function (event) {
+                    var entry = document.createElement("p");
+                    entry.className = "small mb-2";
+                    entry.textContent = (event.action === "enabled" ? "Enabled" : "Disabled") +
+                      " · " + new Date(event.changedAt).toLocaleString() +
+                      " · v" + event.version + " · Staff ID: " + event.actorId;
+                    activity.append(entry);
+                  });
+                  cursor = result.next;
+                  history.textContent = cursor ? "Older activity" : "Refresh activity";
+                } catch (error) {
+                  if (current()) status(error.message);
+                } finally {
+                  if (current()) history.disabled = false;
+                }
+              }
+              history.onclick = loadActivity;
+              body.append(history, activity);
             }
             card.append(body);
             column.append(card);

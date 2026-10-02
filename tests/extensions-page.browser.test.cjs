@@ -64,6 +64,9 @@ test("extension page transports idempotent commands and closes access when branc
             );
           else if (params.url.startsWith("sales/"))
             done({ type: "success", data: { sales_id: "INV-1" } });
+          else if (params.url.includes("/lifecycle-history"))
+            done({ events: [{ action: 'disabled', changedAt: '2026-10-02T05:00:00Z',
+              version: '1.0.0', actorId: '<script>staff</script>' }], next: null });
           else if (params.url.endsWith("/enabled")) {
             window.extensionEnabled = JSON.parse(params.data).enabled;
             done({ enabled: window.extensionEnabled });
@@ -113,6 +116,9 @@ test("extension page transports idempotent commands and closes access when branc
     assert.equal(await page.locator("#extensions_content article").count(), 1);
     assert.equal(await page.getByRole("button", { name: "Install or update", exact: true }).count(), 0);
     await page.evaluate(() => { window.canManage = true; return PosnicPro.extensions.showDataTablePage(); });
+    await page.getByRole('button', { name: 'Activity for <script>Example</script>', exact: true }).click();
+    assert.match(await page.locator('#extensions_content').innerText(), /Staff ID: <script>staff<\/script>/);
+    assert.equal(await page.locator('#extensions_content script').count(), 0);
     await page.getByRole("button", { name: "Disable <script>Example</script>", exact: true }).click();
     await page.getByRole("button", { name: "Enable <script>Example</script>", exact: true }).waitFor();
     assert.equal(await page.locator("#extensions_content article a[href]").count(), 0);
