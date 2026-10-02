@@ -8097,13 +8097,11 @@ class SalesRepository {
    * Tracked kitchen orders remain until served or cancelled, independently of
    * billing. Legacy receipts retain their historical billing boundary.
    */
-  async serveKitchenItems({ saleId, branchId, items, actor }) {
+  async serveKitchenItems({ saleId, branchId, items, actor, all }) {
     if (
       !mongoose.Types.ObjectId.isValid(String(saleId)) ||
       !mongoose.Types.ObjectId.isValid(String(branchId)) ||
-      !Array.isArray(items) ||
-      !items.length ||
-      items.length > 200
+      (all !== true && (!Array.isArray(items) || !items.length || items.length > 200))
     ) {
       return { status: false, message: 'Invalid service request' };
     }
@@ -8119,6 +8117,10 @@ class SalesRepository {
     if (!sale) return { status: false, message: 'Open order not found' };
     const rounds = require('../helpers/kitchen-rounds').rounds;
     const lines = rounds(sale).flatMap((round) => round.items);
+    if (all === true)
+      items = lines
+        .filter((line) => !line.held && line.remaining > 0)
+        .map((line) => ({ id: line.id, quantity: line.quantity }));
     const service = { ...(sale.kitchen_service || {}) };
     for (const requested of items) {
       const line = lines.find((row) => row.id === requested.id);
