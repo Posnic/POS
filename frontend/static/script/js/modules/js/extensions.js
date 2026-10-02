@@ -46,8 +46,13 @@
     document.getElementById("extensions_status").textContent = value;
   }
   async function installationControls(run) {
+    var openingBranch = String(PosnicPro.local.get("branch_id_set") || "");
     var state = await request("/installation/status");
     if (run !== generation) return;
+    if (openingBranch !== String(PosnicPro.local.get("branch_id_set") || "")) {
+      status("The shop changed. Reopen Extensions before installing.");
+      return;
+    }
     var section = document.createElement("section");
     section.className = "card mt-3";
     var body = document.createElement("div");
@@ -77,10 +82,14 @@
         cancel.className = "btn btn-light";
         cancel.textContent = "Cancel queued installation";
         cancel.onclick = async function () {
+          if (run !== generation || openingBranch !== String(PosnicPro.local.get("branch_id_set") || "")) {
+            note.textContent = "The shop changed. Reopen Extensions before installing.";
+            return;
+          }
           cancel.disabled = true;
           try {
             await request("/installation/cancel", {});
-            await PosnicPro.extensions.showDataTablePage();
+            if (run === generation) await PosnicPro.extensions.showDataTablePage("installation");
           } catch (error) {
             note.textContent = error.message;
             cancel.disabled = false;
@@ -160,7 +169,7 @@
               id: staged.id,
               version: staged.version,
             });
-            await PosnicPro.extensions.showDataTablePage();
+            if (run === generation) await PosnicPro.extensions.showDataTablePage("installation");
           } catch (error) {
             note.textContent = error.message;
             review.disabled = false;
@@ -174,27 +183,96 @@
     };
   }
   PosnicPro.extensions = {
-    showDataTablePage: async function () {
+    showDataTablePage: async function (selectedTab) {
       var run = show("Extensions");
+      var branch = String(PosnicPro.local.get("branch_id_set") || "");
       try {
         var data = await request("");
         if (run !== generation) return;
+        if (branch !== String(PosnicPro.local.get("branch_id_set") || "")) {
+          status("The shop changed. Reopen Extensions to see its installed packages.");
+          return;
+        }
+        var content = document.getElementById("extensions_content");
+        var installing = selectedTab === "installation" && data.canManage;
+        var tabs = document.createElement("div");
+        tabs.className = "nav nav-tabs mb-3";
+        tabs.setAttribute("aria-label", "Extension views");
+        function tab(label, name, active) {
+          var button = document.createElement("button");
+          button.type = "button";
+          button.className = "nav-link" + (active ? " active" : "");
+          button.textContent = label;
+          button.setAttribute("aria-pressed", String(active));
+          button.onclick = function () {
+            PosnicPro.extensions.showDataTablePage(name);
+          };
+          tabs.append(button);
+        }
+        tab("Installed (" + data.extensions.length + ")", "installed", !installing);
+        if (data.canManage) tab("Install or update", "installation", installing);
+        content.append(tabs);
+        if (installing) {
+          status("Install a signed package supplied by Posnic.");
+          await installationControls(run);
+          return;
+        }
         status(
           data.extensions.length
-            ? "Choose an extension."
+            ? "Extensions available to you in this shop."
             : "No extensions are enabled for this shop.",
         );
+        var search = document.createElement("input");
+        search.type = "search";
+        search.className = "form-control mb-3";
+        search.placeholder = "Search installed extensions…";
+        search.setAttribute("aria-label", "Search installed extensions");
+        search.style.maxWidth = "420px";
+        if (data.extensions.length) content.append(search);
         var list = document.createElement("div");
-        list.className = "list-group";
-        data.extensions.forEach(function (item) {
-          var link = document.createElement("a");
-          link.className = "list-group-item list-group-item-action";
-          link.href = "#/extensions/" + encodeURIComponent(item.id);
-          link.textContent = item.displayName + " · " + item.version;
-          list.append(link);
-        });
-        document.getElementById("extensions_content").append(list);
-        if (data.canManage) await installationControls(run);
+        list.className = "row";
+        content.append(list);
+        function renderInstalled() {
+          list.replaceChildren();
+          var query = search.value.trim().toLowerCase();
+          var matches = data.extensions.filter(function (item) {
+            return (item.displayName + " " + item.id + " " + item.version)
+              .toLowerCase().includes(query);
+          });
+          matches.forEach(function (item) {
+            var column = document.createElement("div");
+            column.className = "col-12 col-md-6 col-xl-4 mb-3";
+            var card = document.createElement("article");
+            card.className = "card h-100";
+            var body = document.createElement("div");
+            body.className = "card-body";
+            var heading = document.createElement("h5");
+            var link = document.createElement("a");
+            link.href = "#/extensions/" + encodeURIComponent(item.id);
+            link.textContent = item.displayName + " · " + item.version;
+            link.style.overflowWrap = "anywhere";
+            heading.append(link);
+            var enabled = document.createElement("span");
+            enabled.className = "badge badge-success mb-2";
+            enabled.textContent = "Enabled";
+            var note = document.createElement("p");
+            note.className = "text-muted mb-0";
+            note.textContent = "Open this extension to use its tools.";
+            body.append(enabled, heading, note);
+            card.append(body);
+            column.append(card);
+            list.append(column);
+          });
+          if (!matches.length && data.extensions.length) {
+            var empty = document.createElement("p");
+            empty.className = "col-12 text-muted";
+            empty.setAttribute("role", "status");
+            empty.textContent = "No installed extensions match your search.";
+            list.append(empty);
+          }
+        }
+        search.oninput = renderInstalled;
+        renderInstalled();
       } catch (error) {
         if (run === generation) status(error.message);
       }

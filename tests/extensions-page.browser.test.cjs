@@ -23,7 +23,10 @@ test("extension page transports idempotent commands and closes access when branc
     const page = await browser.newPage();
     await page.goto(`http://127.0.0.1:${server.address().port}/#/extensions`);
     await page.evaluate(() => {
-      window.$ = () => ({ hide() {}, show() {} });
+      window.$ = (selector) => ({
+        hide() { document.querySelectorAll(selector).forEach((node) => { node.style.display = "none"; }); },
+        show() { document.querySelectorAll(selector).forEach((node) => { node.style.display = "block"; }); },
+      });
       window.branch = "first-shop";
       window.requests = [];
       window.PosnicPro = {
@@ -63,6 +66,7 @@ test("extension page transports idempotent commands and closes access when branc
             done({ type: "success", data: { sales_id: "INV-1" } });
           else if (params.url === "extensions/v1")
             done({
+              canManage: !!window.canManage,
               extensions: [
                 {
                   id: "posnic.example",
@@ -98,6 +102,17 @@ test("extension page transports idempotent commands and closes access when branc
       "<script>Example</script> · 1.0.0",
     );
     assert.equal(await page.locator("#extensions_content script").count(), 0);
+    await page.locator('input[type="search"]').fill("missing");
+    assert.match(await page.locator("#extensions_content").innerText(), /No installed extensions match/);
+    await page.locator('input[type="search"]').fill("EXAMPLE");
+    assert.equal(await page.locator("#extensions_content article").count(), 1);
+    assert.equal(await page.getByRole("button", { name: "Install or update", exact: true }).count(), 0);
+    await page.evaluate(() => { window.canManage = true; return PosnicPro.extensions.showDataTablePage(); });
+    await page.getByRole("button", { name: "Install or update", exact: true }).click();
+    await page.waitForFunction(() => document.getElementById("extensions_content").textContent.includes("not configured"));
+    assert.equal(await page.locator('input[type="file"]').count(), 0);
+    await page.getByRole("button", { name: "Installed (1)", exact: true }).click();
+    await page.waitForFunction(() => !!document.querySelector('input[type="search"]'));
     await page.evaluate(() =>
       PosnicPro.extensions.showDetails("posnic.example"),
     );
