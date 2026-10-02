@@ -67,6 +67,8 @@
     },
     showAdd: function () {
         PosnicPro.sales.resetOrderRequest();
+        if (PosnicPro.askposnic) PosnicPro.askposnic.checkout = null;
+        $('#ask_checkout_payment').remove();
         // ✅ Reset submission flag when opening new sale
         PosnicPro.sales.submissionInProgress = false;
         $("#save_btn").prop('disabled', false);
@@ -2156,6 +2158,7 @@
         } else {
             $('.tables-list-hide-show').show();
             $('#infobar-settings-sidebar-tender-details').show();
+            if (PosnicPro.askposnic) PosnicPro.askposnic.checkoutPaymentReady();
         }
     },
     showPaymentMode: function () {
@@ -4258,7 +4261,10 @@ PosnicPro.sales.addSale = {
                             button: "Ok",
                         });
                     }
-                    if (PosnicPro.sales.saleProcess !== 'KOT' && response.data.print === true) {
+                    var askPrint = PosnicPro.askposnic && PosnicPro.askposnic.checkout && PosnicPro.askposnic.checkout.print === true;
+                    if (PosnicPro.askposnic) PosnicPro.askposnic.checkout = null;
+                    $('#ask_checkout_payment').remove();
+                    if (PosnicPro.sales.saleProcess !== 'KOT' && (response.data.print === true || askPrint)) {
                         PosnicPro.sales.view.printSale(response.data.sales_id, 'sale');
                     }
                     if (isKotNewSale && PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(response.data.sales_id);
@@ -8836,6 +8842,8 @@ PosnicPro.sales.loadDocumentIntoCart = function (spec) {
     var tries = 0;
     var t = setInterval(function () {
         tries += 1;
+        if (spec.isCurrent && !spec.isCurrent()) { clearInterval(t); return; }
+        if (spec.isCurrent && tries > 20 && !$('#sales_new_item_name').is(':visible')) { clearInterval(t); if (spec.onSkipped) spec.onSkipped(lines.length); return; }
         if ($('#sales_new_item_name').is(':visible') || tries > 20) {
             clearInterval(t);
             lines.forEach(function (l) {
@@ -8845,6 +8853,7 @@ PosnicPro.sales.loadDocumentIntoCart = function (spec) {
             var waited = 0;
             var t2 = setInterval(function () {
                 waited += 300;
+                if (spec.isCurrent && !spec.isCurrent()) { clearInterval(t2); return; }
                 pending = pending.filter(function (l) {
                     var $qty = $('#touchsale_item_qty' + l.item_id);
                     if (!$qty.length) { return true; }

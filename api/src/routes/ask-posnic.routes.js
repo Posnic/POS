@@ -39,6 +39,7 @@ router.get('/history', controller.history.bind(controller));
 router.delete('/history', controller.deleteHistory.bind(controller));
 router.get('/audit', controller.audit.bind(controller));
 router.post('/feedback', controller.feedback.bind(controller));
+router.post('/checkout/preview', controller.previewSale.bind(controller));
 router.post('/actions/draft', controller.createDraft.bind(controller));
 router.post('/actions/confirm', controller.confirmDraft.bind(controller));
 router.get('/actions/:id', controller.actionOutcome.bind(controller));
