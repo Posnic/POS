@@ -50,6 +50,12 @@ router.get('/branch-details', wrap(branchDetails.get));
 router.post('/branch-details', limit, wrap(branchDetails.update));
 const tables = require('../services/captain-tables');
 router.get('/tables', wrap(tables.list));
+router.get('/table-cleaning-settings', wrap(require('../services/table-cleaning-policy').settings));
+router.post(
+  '/table-cleaning-settings',
+  limit,
+  wrap(require('../services/table-cleaning-policy').settings)
+);
 router.get('/bill', wrap(require('../services/captain-bill').read));
 router.post('/tables', limit, wrap(tables.update));
 router.post('/tables/state', limit, wrap(tables.state));

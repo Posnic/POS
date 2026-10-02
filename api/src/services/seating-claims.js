@@ -763,7 +763,10 @@ async function completeMove(db, scope, id, actor) {
         ],
       },
       {
-        $set: { service_state: 'cleaning', last_seating_release_generation: move.generation },
+        $set: {
+          service_state: await require('./table-cleaning-policy').releasedState(db, scope),
+          last_seating_release_generation: move.generation,
+        },
         $inc: { captain_table_version: 1 },
       }
     );
@@ -979,7 +982,9 @@ async function release(db, scope, id, { transferId, settled = false } = {}) {
       },
       {
         $set: {
-          service_state: settled ? 'available' : 'cleaning',
+          service_state: settled
+            ? 'available'
+            : await require('./table-cleaning-policy').releasedState(db, scope),
           last_seating_release_generation: claim.generation,
           updated_date: new Date(),
         },

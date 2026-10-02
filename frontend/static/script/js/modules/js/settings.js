@@ -10224,3 +10224,18 @@ $(document).on('click', '#save_captain_payments', function () {
         $('#captain_payments_message').text(data.saved ? PosnicPro.i18n.t('lang_successfully_completed','Successfully Completed') : PosnicPro.i18n.t('lang_captain_payment_settings_failed','Could not load payment settings. Please retry.'));
     }, function () { button.prop('disabled',false); $('#captain_payments_message').text(PosnicPro.i18n.t('lang_captain_payment_save_failed','Could not save payment settings. Please retry.')); });
 });
+
+$(document).on('shown.bs.tab', '#v-pills-tableorder-tab', function () {
+    $('#table_cleaning_after_close,#save_table_cleaning').prop('disabled',true);
+    PosnicPro.get({url:'captain/v1/table-cleaning-settings'}, function (data) {
+        $('#table_cleaning_after_close').prop('checked',data.automatic !== false).prop('disabled',false);
+        $('#save_table_cleaning').prop('disabled',false);
+        $('#table_cleaning_message').empty();
+    }, function () { $('#table_cleaning_message').text('Could not load table cleaning settings.'); });
+});
+$(document).on('click', '#save_table_cleaning', function () {
+    var button=$(this).prop('disabled',true);
+    PosnicPro.post({url:'captain/v1/table-cleaning-settings',processData:false,data:JSON.stringify({automatic:$('#table_cleaning_after_close').is(':checked')})}, function () {
+        button.prop('disabled',false); $('#table_cleaning_message').text('Saved');
+    }, function () { button.prop('disabled',false); $('#table_cleaning_message').text('Could not save table cleaning settings.'); });
+});

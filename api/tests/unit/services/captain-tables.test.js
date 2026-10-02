@@ -128,6 +128,34 @@ async function paidTable() {
     },
   };
 }
+test('manual cleaning policy frees a paid table and still permits an explicit cleaning action', async () => {
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { table_cleaning_after_close: false } });
+  const { body } = await paidTable();
+  const closed = await service.close(req(body));
+  expect(closed.status).toBe('available');
+  expect((await service.close(req(body))).status).toBe('available');
+  const cleaning = await service.state(
+    req({ id: body.id, version: closed.version, status: 'cleaning' })
+  );
+  expect(cleaning.status).toBe('cleaning');
+});
+
+test('only settings managers can change the branch cleaning policy', async () => {
+  const policy = require('../../../src/services/table-cleaning-policy');
+  await expect(
+    policy.settings({ ...req({ automatic: false }, 'staff'), method: 'POST' })
+  ).rejects.toThrow('permission');
+  await expect(policy.settings({ ...req({ automatic: 'false' }), method: 'POST' })).rejects.toThrow(
+    'Choose'
+  );
+  expect(await policy.settings({ ...req({ automatic: false }), method: 'POST' })).toEqual({
+    automatic: false,
+  });
+  expect(await policy.settings({ ...req(), method: 'GET' })).toEqual({ automatic: false });
+});
+
 test('closing paid orders preserves payment and stock data and leaves the table for cleaning', async () => {
   const { orderId, body } = await paidTable();
   const result = await service.close(req(body));

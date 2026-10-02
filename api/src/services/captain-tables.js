@@ -285,7 +285,11 @@ async function close(req) {
             : table.captain_table_version,
       },
       {
-        $set: { floor_close: operation, service_state: 'cleaning', updated_date: new Date() },
+        $set: {
+          floor_close: operation,
+          service_state: await require('./table-cleaning-policy').releasedState(req.db, c),
+          updated_date: new Date(),
+        },
         $inc: { captain_table_version: 1 },
       }
     );
