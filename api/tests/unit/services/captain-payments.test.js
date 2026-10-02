@@ -459,3 +459,45 @@ test('split settlement renders only the paid share through the branch template',
   expect(payload.receiptDocument.receipt_tax_rows).toEqual(payload.taxes);
   expect(payload.receiptDocument).toMatchObject({ received_amount: 40, change_amount: 5 });
 });
+
+test.each([undefined, 0])(
+  'legacy unpaid desktop tender does not block collection (paid_amount %s)',
+  async (paid) => {
+    await db.collection('sales').updateOne(
+      { _id: sale._id },
+      {
+        $set: {
+          partial_check: false,
+          partial_balance: 105,
+          payment_pending: 105,
+          payment_mode: 'Cash',
+          multi_payment: { Cash: 105 },
+          ...(paid === undefined ? {} : { paid_amount: paid }),
+        },
+      }
+    );
+    const bill = await require('../../../src/services/captain-bill').read({
+      ...req(),
+      query: { table: 'T1' },
+    });
+    expect(bill.paidMinor).toBe(0);
+    expect(bill.dueMinor).toBe(10500);
+    const plan = await service.prepare(req());
+    expect(plan.dueMinor).toBe(10500);
+    const result = await service.record(pay(plan, { method: 'Card' }));
+    expect(result.dueMinor).toBe(0);
+    const saved = await db.collection('sales').findOne({ _id: sale._id });
+    expect(saved.multi_payment).toEqual({ Card: 105 });
+    expect(saved.items).toEqual(sale.items);
+  }
+);
+
+test.each([
+  { paid_amount: 10, partial_check: false, partial_balance: 105, payment_pending: 105 },
+  { partial_check: true, partial_balance: 10, payment_pending: 95 },
+  { partial_check: false, partial_balance: 10, payment_pending: 95 },
+])('existing payment evidence still blocks a new full collection: %j', async (fields) => {
+  await db.collection('sales').updateOne({ _id: sale._id }, { $set: fields });
+  await expect(service.prepare(req())).rejects.toMatchObject({ status: 409 });
+  expect(await db.collection('captain_payment_plans').countDocuments()).toBe(0);
+});

@@ -86,8 +86,7 @@ async function fresh(db, c, table, input) {
   if (!sales.length || sales.length > 200) fail('No payable table bill was found.', 409);
   if (
     sales.some(
-      (sale) =>
-        sale.captain_payment_plan || Number(sale.paid_amount || sale.partial_balance || 0) > 0
+      (sale) => sale.captain_payment_plan || require('./captain-sale-payment').paidAmount(sale) > 0
     )
   )
     fail('Refresh the table payment details.', 409);
