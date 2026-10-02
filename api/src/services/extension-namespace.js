@@ -114,6 +114,7 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
     if (error.code !== 11000) throw error;
   }
   let row = await namespaces.findOne(key);
+  if (row.lifecycle?.enabled === false) fail('extension_disabled', 403);
   if (row.pending && row.pending.operationId !== operationId)
     fail('extension_operation_in_progress');
   if (row.pending?.digest && row.pending.digest !== digest) fail('extension_request_conflict');
@@ -188,6 +189,9 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
         ...key,
         revision: row.revision,
         pending: { $exists: false },
+        'lifecycle.enabled': { $ne: false },
+        'lifecycle.generation': row.lifecycle?.generation === undefined
+          ? { $exists: false } : row.lifecycle.generation,
         effectSequence: row.effectSequence === undefined ? { $exists: false } : row.effectSequence,
       },
       {
@@ -347,4 +351,30 @@ async function recoverNamespace(db, scope, descriptor, actor, dependencies) {
     dependencies
   );
 }
-module.exports = { readNamespace, executeNamespace, recoverNamespace };
+async function setEnabled(db, scope, descriptor, actor, enabled) {
+  if (!actor.permissions?.includes('manage')) fail('extension_manage_required', 403);
+  if (typeof enabled !== 'boolean') fail('extension_enabled_invalid', 422);
+  const key = identity(scope, descriptor.id);
+  const actorId = String(objectId(actor.userId));
+  const collection = db.collection('extension_namespaces');
+  try {
+    await collection.insertOne({ ...key, revision: 0, data: json(descriptor.initialState) });
+  } catch (error) {
+    if (error.code !== 11000) throw error;
+  }
+  const row = await collection.findOne(key);
+  if (row.pending) fail('extension_operation_in_progress');
+  if ((row.lifecycle?.enabled !== false) === enabled)
+    return { enabled, generation: row.lifecycle?.generation || 0 };
+  const generation = (row.lifecycle?.generation || 0) + 1;
+  if (!Number.isSafeInteger(generation)) fail('extension_lifecycle_sequence_exhausted');
+  const changed = await collection.updateOne({
+    ...key,
+    pending: { $exists: false },
+    'lifecycle.generation': row.lifecycle?.generation === undefined
+      ? { $exists: false } : row.lifecycle.generation,
+  }, { $set: { lifecycle: { enabled, generation, actorId, changedAt: new Date() } } });
+  if (changed.modifiedCount !== 1) fail('extension_lifecycle_conflict');
+  return { enabled, generation };
+}
+module.exports = { readNamespace, executeNamespace, recoverNamespace, setEnabled };

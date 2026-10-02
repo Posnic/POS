@@ -139,7 +139,7 @@ test('signed view and catalogue retain staff, installation and branch boundaries
     headers: { Authorization: 'Bearer reader' },
   });
   assert.deepEqual((await list.json()).extensions, [
-    { id: descriptor.id, displayName: descriptor.displayName, version: descriptor.version },
+    { id: descriptor.id, displayName: descriptor.displayName, version: descriptor.version, enabled: true },
   ]);
   assert.equal((await request('/view', { token: 'key' })).status, 403);
   const view = await (await request('/view', { token: 'reader' })).json();
@@ -191,4 +191,21 @@ test('signed view and catalogue retain staff, installation and branch boundaries
   assert.equal(second.products.length, 5);
   assert.equal(second.next, null);
   assert.equal(new Set([...first.products, ...second.products].map((p) => p.id)).size, 55);
+});
+
+test('only managers change lifecycle and disabled packages are hidden from staff but retained for managers', async () => {
+  assert.equal((await request('/enabled', { token: 'reader', body: { enabled: false } })).status, 403);
+  assert.equal((await request('/enabled', { token: 'key', body: { enabled: false } })).status, 403);
+  assert.equal((await request('/enabled', { body: { enabled: 'false' } })).status, 422);
+  assert.equal((await request('/enabled', { body: { enabled: false } })).status, 200);
+  assert.equal((await request('/state')).status, 403);
+  assert.equal((await request('/commands', { body: { expectedRevision: 0, command: { type: 'create' } } })).status, 403);
+  const listing = async token => (await (await fetch(url.replace('/posnic.example', ''), {
+    headers: { Authorization: `Bearer ${token}` },
+  })).json()).extensions;
+  assert.deepEqual(await listing('reader'), []);
+  assert.equal((await listing('owner'))[0].enabled, false);
+  assert.equal((await request('/enabled', { body: { enabled: true } })).status, 200);
+  assert.equal((await request('/state')).status, 200);
+  assert.equal((await listing('reader'))[0].enabled, true);
 });

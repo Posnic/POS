@@ -7,6 +7,7 @@ const {
   readNamespace,
   executeNamespace,
   recoverNamespace,
+  setEnabled,
 } = require('../src/services/extension-namespace');
 let mongo, client, db;
 before(async () => {
@@ -47,6 +48,50 @@ function fixture() {
   return { scope, actor, descriptor, input };
 }
 const noEffect = { executeEffect: async () => ({ applied: true }) };
+
+test('disable retains state, fences stale planners and allows repeated reinstall-style enable cycles', async () => {
+  const f = fixture();
+  let unblock, planning;
+  const ready = new Promise(resolve => { planning = resolve; });
+  const originalPlan = f.descriptor.plan;
+  f.descriptor.plan = async input => {
+    planning();
+    await new Promise(resolve => { unblock = resolve; });
+    return originalPlan(input);
+  };
+  let effects = 0;
+  const pending = executeNamespace(db, f.scope, f.descriptor, f.actor, f.input,
+    { executeEffect: async () => { effects++; return { applied: true }; } });
+  await ready;
+  await setEnabled(db, f.scope, f.descriptor, f.actor, false);
+  await setEnabled(db, f.scope, f.descriptor, f.actor, true);
+  unblock();
+  await assert.rejects(pending, /extension_operation_in_progress/);
+  assert.equal(effects, 0);
+  f.descriptor.plan = originalPlan;
+  await executeNamespace(db, f.scope, f.descriptor, f.actor, f.input, noEffect);
+  const before = await readNamespace(db, f.scope, f.descriptor, f.actor);
+  for (let cycle = 0; cycle < 5; cycle++) {
+    await setEnabled(db, f.scope, f.descriptor, f.actor, false);
+    await assert.rejects(executeNamespace(db, f.scope, f.descriptor, f.actor,
+      { ...f.input, requestKey: `other-operation-${cycle}`, expectedRevision: 1 }, noEffect), /extension_disabled/);
+    await setEnabled(db, f.scope, f.descriptor, f.actor, true);
+    assert.deepEqual(await readNamespace(db, f.scope, f.descriptor, f.actor), before);
+  }
+  await assert.rejects(setEnabled(db, f.scope, f.descriptor, { ...f.actor, permissions: ['read'] }, false), /extension_manage_required/);
+});
+
+test('an accepted unresolved effect blocks disabling and another shop remains unaffected', async () => {
+  const f = fixture();
+  await assert.rejects(executeNamespace(db, f.scope, f.descriptor, f.actor, f.input,
+    { executeEffect: async () => { throw Error('connection lost'); } }), /connection lost/);
+  await assert.rejects(setEnabled(db, f.scope, f.descriptor, f.actor, false), /extension_operation_in_progress/);
+  const other = { ...f.scope, branchId: new ObjectId() };
+  await setEnabled(db, other, f.descriptor, f.actor, false);
+  await recoverNamespace(db, f.scope, f.descriptor, f.actor, noEffect);
+  assert.equal((await readNamespace(db, f.scope, f.descriptor, f.actor)).revision, 1);
+  assert.equal((await readNamespace(db, other, f.descriptor, f.actor)).revision, 0);
+});
 test('receipt committed before unlock survives connection loss and retry releases the lane', async () => {
   const f = fixture();
   const faultyDb = {

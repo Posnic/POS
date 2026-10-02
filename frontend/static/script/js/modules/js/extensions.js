@@ -248,17 +248,46 @@
             body.className = "card-body";
             var heading = document.createElement("h5");
             var link = document.createElement("a");
-            link.href = "#/extensions/" + encodeURIComponent(item.id);
+            if (item.enabled !== false)
+              link.href = "#/extensions/" + encodeURIComponent(item.id);
             link.textContent = item.displayName + " · " + item.version;
             link.style.overflowWrap = "anywhere";
             heading.append(link);
             var enabled = document.createElement("span");
-            enabled.className = "badge badge-success mb-2";
-            enabled.textContent = "Enabled";
+            enabled.className = "badge mb-2 " + (item.enabled === false ? "badge-secondary" : "badge-success");
+            enabled.textContent = item.enabled === false ? "Disabled" : "Enabled";
             var note = document.createElement("p");
             note.className = "text-muted mb-0";
-            note.textContent = "Open this extension to use its tools.";
+            note.textContent = item.enabled === false
+              ? "Data is retained. Enable this extension to use its tools."
+              : "Open this extension to use its tools.";
             body.append(enabled, heading, note);
+            if (data.canManage) {
+              var toggle = document.createElement("button");
+              toggle.type = "button";
+              toggle.className = "btn btn-light mt-3";
+              toggle.textContent = item.enabled === false ? "Enable" : "Disable";
+              toggle.setAttribute("aria-label", toggle.textContent + " " + item.displayName);
+              toggle.onclick = async function () {
+                if (run !== generation || branch !== String(PosnicPro.local.get("branch_id_set") || "")) {
+                  status("The shop changed. Reopen Extensions before changing an extension.");
+                  return;
+                }
+                toggle.disabled = true;
+                try {
+                  await request("/" + encodeURIComponent(item.id) + "/enabled", { enabled: item.enabled === false });
+                  if (run === generation) await PosnicPro.extensions.showDataTablePage();
+                } catch (error) {
+                  if (run === generation) {
+                    status(error.code === "extension_operation_in_progress"
+                      ? "Finish or recover the extension's current operation, then try again. No data has been removed."
+                      : error.message);
+                    toggle.disabled = false;
+                  }
+                }
+              };
+              body.append(toggle);
+            }
             card.append(body);
             column.append(card);
             list.append(column);

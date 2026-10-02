@@ -64,6 +64,10 @@ test("extension page transports idempotent commands and closes access when branc
             );
           else if (params.url.startsWith("sales/"))
             done({ type: "success", data: { sales_id: "INV-1" } });
+          else if (params.url.endsWith("/enabled")) {
+            window.extensionEnabled = JSON.parse(params.data).enabled;
+            done({ enabled: window.extensionEnabled });
+          }
           else if (params.url === "extensions/v1")
             done({
               canManage: !!window.canManage,
@@ -72,6 +76,7 @@ test("extension page transports idempotent commands and closes access when branc
                   id: "posnic.example",
                   displayName: "<script>Example</script>",
                   version: "1.0.0",
+                  enabled: window.extensionEnabled !== false,
                 },
               ],
             });
@@ -108,6 +113,12 @@ test("extension page transports idempotent commands and closes access when branc
     assert.equal(await page.locator("#extensions_content article").count(), 1);
     assert.equal(await page.getByRole("button", { name: "Install or update", exact: true }).count(), 0);
     await page.evaluate(() => { window.canManage = true; return PosnicPro.extensions.showDataTablePage(); });
+    await page.getByRole("button", { name: "Disable <script>Example</script>", exact: true }).click();
+    await page.getByRole("button", { name: "Enable <script>Example</script>", exact: true }).waitFor();
+    assert.equal(await page.locator("#extensions_content article a[href]").count(), 0);
+    assert.match(await page.locator("#extensions_content article").innerText(), /Data is retained/);
+    await page.getByRole("button", { name: "Enable <script>Example</script>", exact: true }).click();
+    await page.getByRole("button", { name: "Disable <script>Example</script>", exact: true }).waitFor();
     await page.getByRole("button", { name: "Install or update", exact: true }).click();
     await page.waitForFunction(() => document.getElementById("extensions_content").textContent.includes("not configured"));
     assert.equal(await page.locator('input[type="file"]').count(), 0);

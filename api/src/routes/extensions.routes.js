@@ -97,25 +97,52 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
         })
         .toArray();
       const enabled = new Map(rows.map((row) => [row.extensionId, row.packageDigest]));
+      const canManage = access.allowed(req.user, 'extensions', 'manage');
+      const states = await req.db.collection('extension_namespaces').find({
+        license: scope.license, branch_id: scope.branchId,
+        'lifecycle.enabled': false,
+      }).toArray();
+      const disabled = new Set(states.map((row) => row.extensionId));
       const extensions = registry
         .list()
         .filter(
           (item) =>
             item.view &&
             enabled.get(item.id) === item.packageDigest &&
+            (canManage || !disabled.has(item.id)) &&
             access.allowed(req.user, item.permissionModule || 'extensions', 'read')
         )
         .map((item) => ({
           id: item.id,
           displayName: item.displayName || item.id,
           version: item.version,
+          enabled: !disabled.has(item.id),
         }));
       res
         .set('Cache-Control', 'no-store')
-        .json({ extensions, canManage: access.allowed(req.user, 'extensions', 'manage') });
+        .json({ extensions, canManage });
     } catch (error) {
       respondError(res, error);
     }
+  });
+  router.post('/:extensionId/enabled', async (req, res) => {
+    try {
+      if (req.isApiKey || !access.allowed(req.user, 'extensions', 'manage'))
+        access.fail('Extension management permission required.', 403);
+      const descriptor = registry.get(req.params.extensionId);
+      if (!descriptor) access.fail('Extension is not installed on this host.', 404);
+      const scope = await access.context(req);
+      const approved = await req.db.collection('extension_installations').findOne({
+        license: scope.license, branch_id: scope.branchId,
+        extensionId: descriptor.id, packageDigest: descriptor.packageDigest, enabled: true,
+      });
+      if (!approved) access.fail('Extension is not approved for this shop.', 403);
+      res.set('Cache-Control', 'no-store').json(await namespace.setEnabled(
+        req.db, scope, descriptor,
+        { userId: String(req.user._id || req.user.id), permissions: ['manage'] },
+        req.body?.enabled
+      ));
+    } catch (error) { respondError(res, error); }
   });
   router.use('/:extensionId', async (req, res, next) => {
     try {
@@ -132,6 +159,10 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
         enabled: true,
       });
       if (!approved) access.fail('Extension is not enabled for this shop.', 403);
+      const state = await req.db.collection('extension_namespaces').findOne({
+        license: scope.license, branch_id: scope.branchId, extensionId: descriptor.id,
+      });
+      if (state?.lifecycle?.enabled === false) access.fail('Extension is disabled for this shop.', 403);
       const module = descriptor.permissionModule || 'extensions';
       const permissions = ['read', 'write', 'manage'].filter((action) =>
         access.allowed(req.user, module, action)
