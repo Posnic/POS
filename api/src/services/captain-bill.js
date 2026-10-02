@@ -62,7 +62,7 @@ async function read(req) {
       paid =
         sale.payment_status === 'Paid'
           ? total
-          : Money.toMinor(sale.paid_amount ?? sale.partial_balance ?? 0, monetary);
+          : Money.toMinor(require('./captain-sale-payment').paidAmount(sale), monetary);
     if (!Number.isSafeInteger(paid) || paid < 0 || paid > total)
       fail('The bill totals do not match. Refresh and try again.', 409);
     paidMinor += paid;
