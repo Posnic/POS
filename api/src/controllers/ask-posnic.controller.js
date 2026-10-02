@@ -38,12 +38,13 @@ function isOwner(req) {
 }
 
 function canPrepare(req, type) {
+  if (type === 'insights') return dashboardController.canSeeFinancials(req.user);
   if (isOwner(req)) return true;
   if (['purchase_order', 'supplier_message'].includes(type))
     return req.user?.access?.receiving?.write === true;
   if (type === 'stock_count') return req.user?.access?.item?.write === true;
   if (type === 'campaign') return req.user?.access?.branch?.write === true;
-  if (type === 'sale_draft')
+  if (['sale_draft', 'sale_checkout'].includes(type))
     return (
       req.user?.access?.sale?.write !== false &&
       req.user?.access?.sales?.write !== false &&
@@ -193,6 +194,12 @@ class AskPosnicController {
             : null,
         admin: isOwner(req),
         preferences,
+        feature_catalog: require('../services/ask-posnic-feature-catalog').catalog(
+          preferences,
+          req.user,
+          (type) => canPrepare(req, type),
+          platform.capabilityAllowed
+        ),
         can_supplier_messages:
           platform.capabilityAllowed(preferences, 'actions', req.user) &&
           preferences.allowed_actions.includes('supplier_message') &&
@@ -216,7 +223,9 @@ class AskPosnicController {
       const period = assistant.periodFrom(question, req.body?.period, preferences.default_period);
       const capability = intent.endsWith('_action')
         ? 'actions'
-        : ['receipt_help', 'offline_help', 'refund_help', 'unknown'].includes(intent)
+        : ['receipt_help', 'offline_help', 'refund_help', 'features_help', 'unknown'].includes(
+              intent
+            )
           ? 'help'
           : 'insights';
       if (!platform.capabilityAllowed(preferences, capability, req.user))
@@ -229,16 +238,59 @@ class AskPosnicController {
         question,
       });
       const help = assistant.answerHelp(intent);
+      if (intent === 'features_help') {
+        const rows = require('../services/ask-posnic-feature-catalog').catalog(
+          preferences,
+          req.user,
+          (type) => canPrepare(req, type),
+          platform.capabilityAllowed
+        );
+        const groups = [...new Set(rows.map((row) => row.group))];
+        const data = {
+          intent,
+          conversation_id: conversationId,
+          mode: 'direct',
+          source: 'Posnic feature catalog',
+          answer:
+            groups
+              .map(
+                (group) =>
+                  group +
+                  ': ' +
+                  rows
+                    .filter((row) => row.group === group)
+                    .map((row) => row.name)
+                    .join(', ')
+              )
+              .join('\n\n') +
+            '\n\nAvailable AI actions: ' +
+            rows
+              .filter((row) => row.mode === 'action' && row.enabled)
+              .map((row) => row.name)
+              .join(', ') +
+            '. Other operations use their module pages. Normal Posnic permissions and enabled features apply.',
+        };
+        await platform.saveMessage(req, conversationId, 'assistant', data);
+        return res.json({ type: 'success', message: 'Posnic capabilities', data });
+      }
       if (
         [
           'purchase_order_action',
           'stock_count_action',
           'campaign_action',
           'sale_draft_action',
+          'sale_checkout_action',
           'supplier_message_action',
         ].includes(intent)
       ) {
         const actionType = intent.replace('_action', '');
+        if (!preferences.allowed_actions.includes(actionType) || !canPrepare(req, actionType))
+          return res.status(403).json({
+            type: 'error',
+            message:
+              'This action is not enabled for your account. Ask an owner to review Ask Posnic Access & actions and your normal module permissions.',
+            data: null,
+          });
         const descriptions = {
           purchase_order:
             'I can prepare purchase-order drafts from low-stock items, grouped by supplier.',
@@ -247,6 +299,8 @@ class AskPosnicController {
             'I can prepare a customer campaign draft. You will review its channel, audience, and message before anything is sent.',
           sale_draft:
             'I can prepare a sales draft using catalog prices and tax. After your review it is saved as a draft quotation, ready to open and convert in the normal sale workflow. No stock or payment changes at this step.',
+          sale_checkout:
+            'I can prepare that basket from this outlet’s catalog. Review the items, then choose the payment method in checkout to complete the sale and print its receipt.',
           supplier_message:
             'Choose a purchase order to prepare a supplier message about availability or remaining delivery quantities. Review and confirm to save the text in Ask Posnic. You can then copy it into your normal messaging workflow.',
         };
@@ -255,6 +309,7 @@ class AskPosnicController {
           stock_count: 'Review stock count draft',
           campaign: 'Prepare campaign draft',
           sale_draft: 'Prepare sales draft',
+          sale_checkout: 'Review sale and checkout',
           supplier_message: 'Prepare supplier message',
         };
         const data = {
@@ -276,6 +331,12 @@ class AskPosnicController {
                     ? 'Purchase orders'
                     : 'Campaign drafts',
         };
+        if (actionType === 'sale_checkout') {
+          data.action.lines_text = require('../services/ask-posnic-sale-request').linesFromQuestion(
+            question
+          );
+          data.source = 'Current outlet catalog and checkout';
+        }
         await platform.saveMessage(req, conversationId, 'assistant', data);
         return res.json({ type: 'success', message: 'Action available', data });
       }
@@ -762,6 +823,33 @@ class AskPosnicController {
         type: 'success',
         data: await platform.saveFeedback(req, req.body || {}),
         message: 'Thanks for the feedback.',
+      });
+    } catch (error) {
+      return res.status(400).json({ type: 'error', message: error.message, data: null });
+    }
+  }
+
+  async previewSale(req, res) {
+    const preferences = await platform.getPreferences(req);
+    if (
+      !platform.capabilityAllowed(preferences, 'actions', req.user) ||
+      !preferences.allowed_actions.includes('sale_checkout') ||
+      !canPrepare(req, 'sale_checkout')
+    )
+      return res.status(403).json({
+        type: 'error',
+        message: 'Sale checkout is not enabled for your account.',
+        data: null,
+      });
+    try {
+      const payload = await require('../services/ask-posnic-sale-draft.service').prepare(
+        await dashboardController.ensureContext(req),
+        { lines_text: req.body?.lines_text }
+      );
+      return res.json({
+        type: 'success',
+        message: 'Review the basket before checkout.',
+        data: { payload, scope: platform.scope(req) },
       });
     } catch (error) {
       return res.status(400).json({ type: 'error', message: error.message, data: null });

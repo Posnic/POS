@@ -191,6 +191,39 @@ beforeEach(() => {
 // =============================================================================
 
 describe('parseFilters', () => {
+  test('AI translation refuses staff without item write access', async () => {
+    const res = mockRes();
+    await ctrl.aiTranslation(mockReq({ user: restrictedUser() }), res);
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  test('AI translation uses resolved branch context rather than the body', async () => {
+    const service = require('../../../src/services/ai-item-translation');
+    const draft = jest
+      .spyOn(service, 'draft')
+      .mockResolvedValue({ status: true, data: { locale: 'ta', name: 'தேநீர்' } });
+    const context = jest.spyOn(ctrl, 'ensureContext').mockImplementation(async () => {
+      ctrl.model.branchId = VALID_BRANCH;
+      ctrl.model.licenseId = VALID_LIC;
+    });
+    try {
+      await ctrl.aiTranslation(
+        mockReq({
+          user: adminUser(),
+          body: { name: 'Tea', target_language: 'ta', branch_id: 'other-branch' },
+        }),
+        mockRes()
+      );
+      expect(draft).toHaveBeenCalledWith(expect.any(Object), {
+        branchId: VALID_BRANCH,
+        licenseId: VALID_LIC,
+      });
+    } finally {
+      draft.mockRestore();
+      context.mockRestore();
+    }
+  });
+
   test('returns {} for null/undefined input', () => {
     expect(ctrl.parseFilters(null)).toEqual({});
     expect(ctrl.parseFilters(undefined)).toEqual({});

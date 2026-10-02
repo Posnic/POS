@@ -3,6 +3,117 @@ PosnicPro.items = {
     imageParams: [],
     form_data: new FormData(),
     itemAction: 'add',
+    _saving: false,
+    beginSave: function () {
+        if (PosnicPro.items._saving) { return false; }
+        PosnicPro.items._saving = true;
+        $('#item_save_bar button').prop('disabled', true);
+        $('#item_image_upload_form').attr('aria-busy', 'true');
+        return true;
+    },
+    finishSave: function () {
+        PosnicPro.items._saving = false;
+        $('#item_save_bar button').prop('disabled', false);
+        $('#item_image_upload_form').attr('aria-busy', 'false');
+        $('.loader-item .loadingSpinner').remove();
+    },
+    stockMessage: function (item) {
+        var t = PosnicPro.i18n.t;
+        if (item.item_kind === 'service') return t('lang_item_ready_service', 'Service: no stock needed.');
+        if (item.inventory === false || item.track_inventory === false) return t('lang_item_ready_untracked', 'Stock is not tracked. You can sell without entering quantities.');
+        if (item.negative_stock === true) return t('lang_item_ready_negative', 'Sales can continue at zero stock and below.');
+        if (Number(item.available_quantity || 0) <= 0) return t('lang_item_ready_empty', 'Out of stock: add stock before this item appears on POS.');
+        return t('lang_item_ready_stock', 'Stock available for sale.');
+    },
+    saveMessage: function (item) {
+        var text = PosnicPro.i18n.t('lang_saved_an_item', 'Saved an item.') + ' ' + PosnicPro.items.stockMessage(item);
+        if ((item.channel_off || []).length || (item.daypart_ids || []).length) text += ' ' + PosnicPro.i18n.t('lang_item_ready_restrictions', 'Selected channel and serving-period restrictions still apply.');
+        $('#item_saved_status').text(text);
+        return text;
+    },
+    _previewSequence: 0,
+    _previewTimer: null,
+    refreshCreateSummary: function () {
+        var self = PosnicPro.items, t = PosnicPro.i18n.t;
+        var service = $('#item_is_service').is(':checked');
+        var tracked = $('#item_track_inventory').is(':checked');
+        var variants = $('#product_with_variant').is(':checked');
+        $('#item_stock_policy').toggle(!service);
+        $('#item_stock_variants_hint').prop('hidden', !variants);
+        $('#item_negative_stock').prop('disabled', !tracked || service);
+        var stock = self.stockMessage({ item_kind: service ? 'service' : 'product', inventory: tracked,
+            negative_stock: $('#item_negative_stock').is(':checked'), available_quantity: $('#items_available_quantity').val() });
+        if (variants && tracked && !$('#item_negative_stock').is(':checked')) stock = t('lang_item_ready_variants', 'Each variant needs opening stock to appear on POS.');
+        $('#item_stock_status').text(stock);
+        if (($('#item_channel_off').val() || []).length || ($('#item_dayparts').val() || []).length) stock += ' ' + t('lang_item_ready_restrictions', 'Selected channel and serving-period restrictions still apply.');
+        $('#item_availability_preview').text(stock);
+        clearTimeout(self._previewTimer);
+        var seq = ++self._previewSequence;
+        var target = $('#item_price_preview');
+        if (variants) { target.text(t('lang_item_price_variants', 'Each variant uses its own price and discount.')); return; }
+        if ($('#item_open_price').is(':checked')) { target.text(t('lang_item_price_open', 'Customer price is entered at the sale.')); return; }
+        if (!$('#items_selling_price').val()) { target.text(t('lang_item_price_enter', 'Enter a selling price to see what the customer pays.')); return; }
+        target.text(t('lang_item_price_calculating', 'Checking price…'));
+        var taxOff = PosnicPro.local.get('default_tax_enable_disable') === 'false' && PosnicPro.local.get('gst_action') !== 'enable';
+        var tax = taxOff ? 0 : ($('input[name="hsntax_radio_value"]:checked').val() === 'hsncode' ? $('#hsn_tax').val() : self.selectAttr('#items_tax', 'data-tax-value', 0));
+        self._previewTimer = setTimeout(function () {
+            PosnicPro.post({ url: 'items/pricePreview', data: JSON.stringify({ price: $('#items_selling_price').val(), tax: tax,
+                tax_type: $('input[name="tax_radio_value"]:checked').val(),
+                discount_amount: $('#items_discount_amount').is(':disabled') ? 0 : $('#items_discount_amount').val(),
+                discount_percentage: $('#items_discount_percentage').is(':disabled') ? 0 : $('#items_discount_percentage').val() }) }, function (response) {
+                if (seq !== self._previewSequence) return;
+                if (!response || response.type !== 'success' || !response.data) { target.text(t('lang_item_price_check', 'Check the price, tax and discount.')); return; }
+                var p = response.data;
+                var unit = service ? ($('#item_service_unit').val() || 'fixed') : 'fixed';
+                var label = unit === 'hour' ? t('lang_item_pays_hour', 'Customer pays per hour: ') : unit === 'day' ? t('lang_item_pays_day', 'Customer pays per day: ') : t('lang_item_pays_one', 'Customer pays for one: ');
+                target.text(label + ' ' + (PosnicPro.local.get('currencySign') || '') + ' ' + Number(p.total).toFixed(2) + ' · ' + t('lang_item_price_parts', 'Base − discount + tax: ') + ' ' + Number(p.base).toFixed(2) + ' − ' + Number(p.discount).toFixed(2) + ' + ' + Number(p.tax).toFixed(2));
+                target.attr('title', t('lang_item_price_basis', 'Base price − item discount + tax. Before sale-level offers, charges and rounding.'));
+            }, function () { if (seq === self._previewSequence) target.text(t('lang_item_price_unavailable', 'Price preview unavailable. Check the price and tax before saving.')); });
+        }, 300);
+    },
+
+    // Ask before upload/save; the decision changes this item, never shop policy.
+    confirmOpeningStock: function (save) {
+        if ($('#itemid').val() || $('#item_is_service').is(':checked') ||
+            !$('#item_track_inventory').is(':checked') || $('#item_negative_stock').is(':checked')) {
+            save();
+            return;
+        }
+        var variants = $('#product_with_variant').is(':checked');
+        var quantities = variants ? $('#load_price_fields input[id^="items_available_quantity_"]') : $('#items_available_quantity');
+        var empty = quantities.filter(function () { return Number($(this).val() || 0) === 0; });
+        if (!empty.length) { save(); return; }
+        var modal = $('#item_zero_stock_modal');
+        if (modal.hasClass('show')) { return; }
+        modal.find('input[value="enter"]').prop('checked', true);
+        modal.find('[data-zero-variants]').toggle(variants);
+        // Do not discard stock already entered for other variants.
+        modal.find('[data-zero-untracked]').toggle(!quantities.toArray().some(function (input) {
+            return Number($(input).val()) > 0;
+        }));
+        var decided = false;
+        modal.off('.openingStock');
+        modal.on('click.openingStock', '[data-zero-continue]', function () {
+            if (decided) { return; }
+            decided = true;
+            var choice = modal.find('input[name="item_zero_choice"]:checked').val();
+            modal.one('hidden.bs.modal.openingStock', function () {
+                if (choice === 'enter') {
+                    PosnicPro.items.goToTab('item_tab_main', '#' + empty.first().attr('id'));
+                    empty.first().trigger('focus').select();
+                    return;
+                }
+                if (choice === 'negative') { $('#item_negative_stock').prop('checked', true); }
+                if (choice === 'untracked') {
+                    $('#item_track_inventory').prop('checked', false);
+                    $('#item_negative_stock').prop('checked', false);
+                }
+                save();
+            });
+            modal.modal('hide');
+        });
+        modal.modal('show');
+    },
 
     /*
      * Whether this shop can draft descriptions at all.
@@ -1122,9 +1233,11 @@ PosnicPro.items = {
                 variant_parent_name: itemName
             })
         }, function (response) {
+            PosnicPro.items.finishSave();
             loader.find(".loadingSpinner:first").remove();
             if (response.type === 'success') {
-                PosnicPro.alert('success', response.message || 'Family created');
+                var outOfStock = rows.filter(function (row) { return row.inventory !== false && !row.negative_stock && Number(row.available_quantity || 0) <= 0; }).length;
+                PosnicPro.alert('success', PosnicPro.i18n.t('lang_item_family_saved', 'Variants saved: ') + rows.length + '. ' + PosnicPro.i18n.t('lang_item_family_empty', 'Variants waiting for stock: ') + outOfStock + '.');
                 PosnicPro.items.addItemButton();
                 PosnicPro.items.loadSelectUnit();
                 $('#item_image_upload_form')[0].reset();
@@ -1143,6 +1256,7 @@ PosnicPro.items = {
                 PosnicPro.alert(response.type || 'error', response.message || 'Could not create the family');
             }
         }, function (xhr) {
+            PosnicPro.items.finishSave();
             loader.find(".loadingSpinner:first").remove();
             var resp = {};
             try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
@@ -1151,6 +1265,11 @@ PosnicPro.items = {
     },
     /*This Items Function Used To Add & Edit*/
     item: function () {
+        if (!String($('#items_name').val() || '').trim()) {
+            PosnicPro.items.finishSave();
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_the_item_name_first', 'Enter the item name first'));
+            return false;
+        }
         var loader = $(".loader-item");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         if ($('#items_name').val() !== '') {
@@ -1289,9 +1408,10 @@ PosnicPro.items = {
                 };
                 var typedSku = (formData.sku_id || '').trim();
                 PosnicPro.request(params, function (response) {
-
+                    PosnicPro.items.finishSave();
                     if (response.type === 'success') {
                         var data = response.data;
+                        var savedMessage = PosnicPro.items.saveMessage(Object.assign({}, formData, param_fields, data));
                         // The server keeps a genuinely unique SKU and rewrites a
                         // colliding one to the next free number - say so instead
                         // of saving silently under a different SKU.
@@ -1422,7 +1542,7 @@ PosnicPro.items = {
                             $('#product_with_variant').prop('checked', true);
                         }
 
-                        PosnicPro.alert(response.type, response.message);
+                        PosnicPro.alert(response.type, savedMessage);
                         /*This function while add new item from another page after complete add items go to previous page*/
                         /*END*/
 
@@ -1457,8 +1577,10 @@ PosnicPro.items = {
                         PosnicPro.alert(response.type, response.message);
                     }
                 }, function (xhr) {
-                    var response = jQuery.parseJSON(xhr.responseText);
-                    PosnicPro.alert(response.type, response.message);
+                    PosnicPro.items.finishSave();
+                    var response = {};
+                    try { response = JSON.parse(xhr.responseText); } catch (_) { /* Connection failure. */ }
+                    PosnicPro.alert('error', response.message || PosnicPro.i18n.t('lang_item_save_failed', 'Could not save. Your entries are still here; check the item list before retrying.'));
                 });
             });
             return false;
@@ -2561,6 +2683,11 @@ PosnicPro.items = {
             };
 
             PosnicPro.post(params, function (response) {
+                if (!response || response.type !== 'success' || !Array.isArray(response.data)) {
+                    PosnicPro.items.finishSave();
+                    PosnicPro.alert('error', (response && response.message) || PosnicPro.i18n.t('lang_item_upload_failed', 'Image upload failed. Your item has not been saved.'));
+                    return;
+                }
                 PosnicPro.items.imageParams = [];
                 $.each(response.data, function (key, val) {
                     if (val.cover === 'yes') {
@@ -2573,11 +2700,12 @@ PosnicPro.items = {
                     };
                     $('#item-display-preview').html('');
                 });
-                PosnicPro.items.item();
+                $('#item_upload_image_status').val('no');
+                try { PosnicPro.items.item(); } catch (error) { PosnicPro.items.finishSave(); PosnicPro.alert('error', error.message); }
                 loader.find(".loadingSpinner:first").remove();
             }, function (xhr) {
-                var response = jQuery.parseJSON(xhr.responseText);
-                PosnicPro.alert(response.type, response.message);
+                PosnicPro.items.finishSave();
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_item_upload_failed', 'Image upload failed. Your item has not been saved.'));
             });
 
         } else {
@@ -4921,16 +5049,25 @@ $(document).ready(function () {
     });
     $("#item_image_upload_form").submit(function (event) {
         event.preventDefault();
+        if (PosnicPro.items._saving || !PosnicPro.itemTranslations.ready()) return;
         if ($('#item_image_upload_form').valid()) {            // checks form for validity
             if ($("#product_with_variant").is(":checked") && $("#load_price_fields").html() === '') {
                 PosnicPro.items.loadVariant();
                 PosnicPro.alert('info', 'Review each variant\'s price below, then Save');
             } else {
-                if ($('#item_upload_image_status').val() === 'no') {
-                    PosnicPro.items.item();
-                } else {
-                    PosnicPro.items.itemImageFormSubmit();
-                }
+                PosnicPro.items.confirmOpeningStock(function () {
+                    if (!PosnicPro.items.beginSave()) return;
+                    try {
+                        if ($('#item_upload_image_status').val() === 'no') {
+                            PosnicPro.items.item();
+                        } else {
+                            PosnicPro.items.itemImageFormSubmit();
+                        }
+                    } catch (error) {
+                        PosnicPro.items.finishSave();
+                        PosnicPro.alert('error', error.message);
+                    }
+                });
             }
 
         }
@@ -6288,3 +6425,10 @@ PosnicPro.itemDayparts = {
         });
     }
 };
+
+$(document).ready(function () {
+    $('#item_image_upload_form').on('input change', 'input, select', function () {
+        if (this.id === 'item_track_inventory' && !this.checked) $('#item_negative_stock').prop('checked', false);
+        PosnicPro.items.refreshCreateSummary();
+    }).on('reset', function () { setTimeout(function () { PosnicPro.items.refreshCreateSummary(); }, 0); });
+});

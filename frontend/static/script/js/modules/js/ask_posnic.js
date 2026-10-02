@@ -64,6 +64,7 @@ PosnicPro.askposnic = {
         if (data && data.action) details += '<button type="button" class="btn btn-sm btn-primary-rgba ask-posnic-action ask-posnic-draft-action" data-action="' + self.esc(data.action.type) + '" data-source="' + self.esc(data.action.source || '') + '" data-lookback-days="' + self.esc(data.action.lookback_days || '') + '" data-coverage-days="' + self.esc(data.action.coverage_days || '') + '">' + self.esc(data.action.label) + '</button>';
         if (kind === 'answer' && data && data.intent) details += '<span class="ask-posnic-feedback"><button type="button" class="btn btn-sm btn-link ask-feedback" data-rating="helpful" data-intent="' + self.esc(data.intent) + '">Helpful</button><button type="button" class="btn btn-sm btn-link ask-feedback" data-rating="not_helpful" data-intent="' + self.esc(data.intent) + '">Not helpful</button></span>';
         $('#ask_posnic_thread').append('<div class="ask-posnic-message ' + kind + '">' + self.esc(text) + details + '</div>');
+        if (data && data.action && data.action.lines_text) $('#ask_posnic_thread .ask-posnic-message').last().find('.ask-posnic-draft-action').data('lines', data.action.lines_text);
         $('#ask_posnic_welcome').prop('hidden', true);
         var node = $('#ask_posnic_thread')[0];
         if (node) node.scrollTop = node.scrollHeight;
@@ -81,7 +82,11 @@ PosnicPro.askposnic = {
             self.asking = false;
             self.finishQuestion();
             $('#ask_posnic_question').prop('disabled', false).focus();
-            if (response && response.type === 'success' && response.data) { self.conversationId = response.data.conversation_id || self.conversationId; self.add('answer', response.data.answer, response.data); }
+            if (response && response.type === 'success' && response.data) {
+                self.conversationId = response.data.conversation_id || self.conversationId;
+                self.add('answer', response.data.answer, response.data);
+                if (response.data.action && response.data.action.type === 'sale_checkout' && response.data.action.lines_text) self.previewSale(response.data.action.lines_text);
+            }
             else self.add('answer', response && response.message || 'I could not answer that question.');
         }, function (xhr) {
             self.asking = false;
@@ -129,6 +134,7 @@ PosnicPro.askposnic = {
             $('#ask_pref_insight_roles').val((preferences.roles && preferences.roles.insights) || []);
             $('.ask-allowed-action').each(function () { $(this).prop('checked', (preferences.allowed_actions || []).indexOf($(this).val()) !== -1); });
             self.admin = data.admin === true;
+            self.renderFeatureCatalog(data.feature_catalog || []);
             $('#ask_posnic_admin').toggle(self.admin && self.settingsOpen === true);
             $('#ask_settings_access').toggle(!self.admin).text(PosnicPro.i18n.t('lang_ask_owner_settings', 'Only shop owners and administrators can manage these settings.'));
             $('#ask_billing_link').toggle(!!data.billing_url && data.admin === true);
@@ -149,6 +155,104 @@ PosnicPro.askposnic = {
             $('#ask_posnic_admin').hide();
             $('#ask_settings_access').show().text(PosnicPro.i18n.t('lang_ask_settings_failed', 'Settings could not be loaded. Reopen this page to try again.'));
         });
+    },
+    renderFeatureCatalog: function (rows) {
+        var target = $('#ask_feature_catalog').empty(), group = '';
+        rows.forEach(function (row) {
+            if (row.group !== group) { group = row.group; $('<h6 class="mt-4">').text(group).appendTo(target); }
+            var item = $('<div class="ask-posnic-document">').appendTo(target);
+            var text = $('<div>').appendTo(item);
+            $('<strong>').text(row.name).appendTo(text);
+            $('<small>').text(row.description).appendTo(text);
+            $('<small>').text(row.mode === 'module' ? PosnicPro.i18n.t('lang_ask_module_workflow', 'Use the module page; its permissions apply') : row.enabled ? PosnicPro.i18n.t('lang_ask_available_here', 'Available in Ask Posnic') : PosnicPro.i18n.t('lang_ask_access_disabled', 'Disabled by Ask Posnic or role permissions')).appendTo(text);
+            if (/^#\/[a-zA-Z0-9/-]+$/.test(row.route)) $('<a class="btn btn-sm btn-outline-primary">').attr('href', row.route).text(PosnicPro.i18n.t('lang_open', 'Open')).appendTo(item);
+        });
+    },
+    previewSale: function (lines) {
+        var self = this;
+        PosnicPro.request({ url: 'ask-posnic/checkout/preview', method: 'POST', data: JSON.stringify({ lines_text: lines }) }, function (response) {
+            if (!response || !response.data) return self.add('answer', response && response.message || 'Could not prepare the sale.');
+            var payload = response.data.payload;
+            var target = $('#ask_checkout_content').empty();
+            var table = $('<table class="table table-sm">').appendTo($('<div class="table-responsive">').appendTo(target));
+            var heading = $('<tr>').appendTo($('<thead>').appendTo(table));
+            [PosnicPro.i18n.t('lang_newitem_title', 'Item'), PosnicPro.i18n.t('lang_quantity', 'Quantity'), PosnicPro.i18n.t('lang_unit_price', 'Unit price')].forEach(function (label) { $('<th scope="col">').text(label).appendTo(heading); });
+            var body = $('<tbody>').appendTo(table);
+            (payload.lines || []).forEach(function (line) {
+                var row = $('<tr>').appendTo(body);
+                $('<td>').text(line.item_name).appendTo(row);
+                $('<td>').text(line.qty).appendTo(row);
+                $('<td>').text(Number(line.unit_price).toFixed(2)).appendTo(row);
+            });
+            $('<p class="font-weight-bold">').text(PosnicPro.i18n.t('lang_total_title', 'Total') + ': ' + (PosnicPro.local.get('currencySign') || '') + ' ' + Number(payload.total).toFixed(2)).appendTo(target);
+            $('#ask_checkout_continue').prop('disabled', false).off('click').on('click', function () { self.startCheckout(payload, response.data.scope); });
+            $('#ask_checkout_modal').modal('show');
+        }, function (xhr) { self.add('answer', xhr && xhr.responseJSON && xhr.responseJSON.message || 'Could not prepare the sale. Check the item names and quantities, then try again.'); });
+    },
+    startCheckout: function (payload, scope) {
+        var self = this;
+        if (!scope || String(scope.branch_id) !== String(PosnicPro.local.get('branch_id_set'))) {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_ask_checkout_changed', 'The cart or outlet changed. Review it and use the normal payment controls.'));
+            return;
+        }
+        if (PosnicPro.sales.addSalesLineTable.length || $('#sales_new_items_table [name="addSalesLineItemId"]').length) {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_ask_finish_cart', 'Finish or hold the current sale before starting this basket.'));
+            return;
+        }
+        $('#ask_checkout_continue').prop('disabled', true);
+        $('#ask_checkout_modal').one('hidden.bs.modal', function () {
+            var branch = PosnicPro.local.get('branch_id_set');
+            PosnicPro.sales.loadDocumentIntoCart({ lines: payload.lines, honour: false,
+                isCurrent: function () { return branch === PosnicPro.local.get('branch_id_set') && window.location.hash === '#/sales/new'; },
+                onSkipped: function () { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_ask_checkout_incomplete', 'Some items need attention. Review the cart before taking payment.')); },
+                onLoaded: function () {
+                    if (branch !== PosnicPro.local.get('branch_id_set') || window.location.hash !== '#/sales/new') return;
+                    // Native checkout owns the final tax, stock checks, charges,
+                    // approvals and payment. Never post a separate AI sale.
+                    self.checkout = { branch: branch, lines: payload.lines, total: Number(PosnicPro.sales.extraDiscount.sale_new_tot) };
+                    PosnicPro.sales.saleProcess = 'Add';
+                    PosnicPro.sales.openTenderModel();
+                }
+            });
+        }).modal('hide');
+    },
+    checkoutPaymentReady: function () {
+        var self = this, checkout = self.checkout;
+        $('#ask_checkout_payment').remove();
+        if (!checkout || checkout.branch !== PosnicPro.local.get('branch_id_set') || PosnicPro.sales.SaleAction !== 'add') return;
+        var box = $('<div id="ask_checkout_payment" class="alert alert-light border mb-3">').insertBefore('#payment_id');
+        $('<h5>').text(PosnicPro.i18n.t('lang_ask_how_paid', 'How is the customer paying?')).appendTo(box);
+        $('<p>').text(PosnicPro.i18n.t('lang_ask_payment_confirm', 'Review the receipt and total. Choose Cash after receiving the money, or Card paid after the terminal confirms payment. This completes the sale and requests receipt printing.')).appendTo(box);
+        $('#payment_id .payment_mode').each(function () {
+            var mode = this.id, key = mode.trim().toLowerCase();
+            if (key !== 'cash' && key !== 'card') return;
+            $('<button type="button" class="btn btn-primary mr-2 mb-2">').text(key === 'cash' ? PosnicPro.i18n.t('lang_ask_cash_complete', 'Cash - complete & print') : PosnicPro.i18n.t('lang_ask_card_complete', 'Card paid - complete & print')).on('click', function () { self.completeCheckout(mode); }).appendTo(box);
+        });
+    },
+    completeCheckout: function (mode) {
+        var checkout = this.checkout, sales = PosnicPro.sales;
+        if (!checkout || sales.submissionInProgress || checkout.submitted) return;
+        var valid = Number.isFinite(checkout.total) && checkout.total >= 0 && checkout.branch === PosnicPro.local.get('branch_id_set') && window.location.hash === '#/sales/new'
+            && sales.SaleAction === 'add' && !sales.paymentOnlyMode && sales.saleProcess === 'Add'
+            && Number(sales.extraDiscount.sale_new_tot) === checkout.total
+            && $('#sales_new_items_table [name="addSalesLineItemId"]').length === checkout.lines.length
+            && checkout.lines.every(function (line) { return Number($('#touchsale_item_qty' + line.item_id).val()) === line.qty; });
+        if (!valid) { this.checkout = null; $('#ask_checkout_payment').remove(); PosnicPro.alert('warning', PosnicPro.i18n.t('lang_ask_checkout_changed', 'The cart or outlet changed. Review it and use the normal payment controls.')); return; }
+        var input = $('#payment_id .payment_mode').filter(function () { return this.id === mode; });
+        if (input.length !== 1 || !/^(cash|card)$/i.test(mode.trim())) return;
+        $('#unpaid_payment_toggle').prop('checked', true).trigger('change');
+        $('#wallet_balance').prop('checked', false);
+        $('#Partial_amount').val(checkout.total.toFixed(2));
+        input.closest('.btn-payment-method,.btn-payment-mode').trigger('click');
+        $('.payment_mode').val(mode);
+        input.prop('checked', true);
+        $('.payment-amount-input').val('0.00');
+        input.closest('.payment-method-card').find('.payment-amount-input').val(checkout.total.toFixed(2)).trigger('input');
+        $('#tendered_amount').val(checkout.total.toFixed(2)).trigger('keyup');
+        checkout.submitted = true;
+        checkout.print = true;
+        $('#ask_checkout_payment button').prop('disabled', true);
+        sales.addSale.cartOrderSubmit();
     },
     loadDocuments: function () {
         var self = this;
@@ -214,6 +318,14 @@ PosnicPro.askposnic = {
         }, function (xhr) { PosnicPro.alert('error', xhr && xhr.responseJSON && xhr.responseJSON.message || 'Could not load supplier-message drafts.'); });
     },
     prepareAction: function (type, campaignPayload) {
+        if (type === 'sale_checkout') {
+            if (campaignPayload && campaignPayload.lines_text) return this.previewSale(campaignPayload.lines_text);
+            this.saleRequestType = 'sale_checkout';
+            $('#ask_sale_title').text(PosnicPro.i18n.t('lang_ask_prepare_sale', 'Prepare sale for checkout'));
+            $('#ask_sale_customer').closest('.form-group').hide();
+            $('#ask_sale_modal').modal('show');
+            return;
+        }
         var self = this;
         var payload = { source: type === 'purchase_order' ? 'low_stock' : 'inventory', period: 'today' };
         if (type === 'purchase_order' && campaignPayload && campaignPayload.source === 'demand') payload = { source: 'demand', lookback_days: campaignPayload.lookback_days, coverage_days: campaignPayload.coverage_days };
@@ -222,6 +334,9 @@ PosnicPro.askposnic = {
             payload = campaignPayload;
         }
         if (type === 'sale_draft') {
+            this.saleRequestType = 'sale_draft';
+            $('#ask_sale_title').text(PosnicPro.i18n.t('lang_prepare_sales_draft', 'Prepare sales draft'));
+            $('#ask_sale_customer').closest('.form-group').show();
             if (!campaignPayload) { $('#ask_sale_modal').modal('show'); return; }
             payload = campaignPayload;
         }
@@ -301,6 +416,10 @@ PosnicPro.askposnic = {
         });
         $('#ask_posnic_suggestions').on('click', 'button', function () { self.ask($(this).data('question')); });
         $('#ask_new_conversation').on('click', function () { if (!self.asking) self.resetConversation(); });
+        $('#ask_enable_all_actions').on('click', function () { $('.ask-allowed-action').prop('checked', true); $('#ask_pref_actions').prop('checked', true); });
+        $(window).on('hashchange.askCheckout', function () {
+            if (window.location.hash !== '#/sales/new') { self.checkout = null; $('#ask_checkout_payment').remove(); }
+        });
         $('#ask_posnic_question').on('keydown', function (event) {
             if (event.key === 'Enter' && !event.shiftKey && !(event.originalEvent && event.originalEvent.isComposing)) { event.preventDefault(); $('#ask_posnic_form').trigger('submit'); }
         });
@@ -341,7 +460,7 @@ PosnicPro.askposnic = {
             });
         });
         $('#ask_posnic_thread').on('click', '#ask_posnic_prepare_po', function () { self.preparePurchaseOrder(); });
-        $('#ask_posnic_thread').on('click', '.ask-posnic-draft-action', function () { var button = $(this); self.prepareAction(button.data('action'), button.data('source') === 'demand' ? { source: 'demand', lookback_days: button.data('lookback-days'), coverage_days: button.data('coverage-days') } : undefined); });
+        $('#ask_posnic_thread').on('click', '.ask-posnic-draft-action', function () { var button = $(this); self.prepareAction(button.data('action'), button.data('action') === 'sale_checkout' && button.data('lines') ? { lines_text: button.data('lines') } : button.data('source') === 'demand' ? { source: 'demand', lookback_days: button.data('lookback-days'), coverage_days: button.data('coverage-days') } : undefined); });
         $('#ask_campaign_form').on('submit', function (event) {
             event.preventDefault();
             $('#ask_campaign_modal').modal('hide');
@@ -349,8 +468,9 @@ PosnicPro.askposnic = {
         });
         $('#ask_sale_form').on('submit', function (event) {
             event.preventDefault();
-            $('#ask_sale_modal').modal('hide');
-            self.prepareAction('sale_draft', { customer_name: $('#ask_sale_customer').val(), lines_text: $('#ask_sale_lines').val() });
+            var type = self.saleRequestType || 'sale_draft';
+            var payload = { customer_name: $('#ask_sale_customer').val(), lines_text: $('#ask_sale_lines').val() };
+            $('#ask_sale_modal').one('hidden.bs.modal', function () { self.prepareAction(type, payload); }).modal('hide');
         });
         $('#ask_posnic_thread').on('click', '.ask-citation', function () {
             var button = $(this);

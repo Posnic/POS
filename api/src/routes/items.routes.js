@@ -162,6 +162,8 @@ router.post('/itemsImport', bindController(itemsController.itemsImport));
 // whether to show the button at all; it moves to its own route when a
 // second screen needs it.
 router.post('/aiDescription', bindController(itemsController.aiDescription));
+router.post('/aiTranslation', bindController(itemsController.aiTranslation));
+router.post('/pricePreview', bindController(itemsController.pricePreview));
 // POST /api/items/aiDishFacts - estimate the nutrition of a dish from its
 // name. Writes nothing; the numbers land in the form marked as estimates and
 // a person looks at them before saving. Same gate as aiDescription, and for

@@ -722,6 +722,30 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/ask-posnic/checkout/preview": {
+      "post": {
+        "summary": "controller",
+        "operationId": "post_ask_posnic_checkout_preview",
+        "tags": [
+          "Ask posnic"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/ask-posnic/actions/draft": {
       "post": {
         "summary": "controller",
@@ -9627,6 +9651,54 @@
       "post": {
         "summary": "aiDescription",
         "operationId": "post_items_aiDescription",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/items/aiTranslation": {
+      "post": {
+        "summary": "aiTranslation",
+        "operationId": "post_items_aiTranslation",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/items/pricePreview": {
+      "post": {
+        "summary": "pricePreview",
+        "operationId": "post_items_pricePreview",
         "tags": [
           "Items"
         ],

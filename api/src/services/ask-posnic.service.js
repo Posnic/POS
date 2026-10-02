@@ -47,6 +47,12 @@ function dateRange(period, timezone = 'UTC', at = new Date()) {
 
 function intentFrom(question) {
   const text = String(question || '').toLowerCase();
+  if (
+    /\bwhat can (?:you|ask posnic) do\b|\blist (?:all )?(?:core )?features\b|\bavailable (?:features|actions|modules)\b/.test(
+      text
+    )
+  )
+    return 'features_help';
   if (/how (?:do|can|to)|help (?:me|with)/.test(text) && /return|refund/.test(text))
     return 'refund_help';
   // Workflow questions belong to approved product guidance even when their
@@ -69,6 +75,12 @@ function intentFrom(question) {
     return 'purchase_order_action';
   if (/prepare|create|make/.test(text) && /campaign|promotion message|marketing message/.test(text))
     return 'campaign_action';
+  if (
+    ((/\b(?:prepare|create|make|start)\b/.test(text) && /\bsale\b/.test(text)) ||
+      /^\s*(?:please\s+)?sell\b/.test(text)) &&
+    !/draft|quot(?:e|ation)|report|summary|trend/.test(text)
+  )
+    return 'sale_checkout_action';
   if (
     /prepare|create|make/.test(text) &&
     /\bsale\b|sales draft|draft sales|quotation|sales quote/.test(text) &&

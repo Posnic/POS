@@ -124,6 +124,47 @@ test('script and region locales fall back progressively without changing the ori
   assert.equal(text.name({name:'Tea',translations:[{locale:'zh-Hant',name:'茶'}]},'zh-Hant-TW'),'茶');
 });
 
+test('AI suggestions are reviewed separately; typing during requests is never overwritten', t => {
+  const e = editor(t);
+  let success;
+  e.w.PosnicPro.post = (_params, ok) => { success = ok; };
+  e.field('item_translation_ai').click();
+  assert.equal(e.api.ready(), false);
+  e.field('item_translation_name').value = 'My own translation';
+  success({type:'success',data:{locale:'nl',name:'AI text',description:'AI description'}});
+  assert.equal(e.field('item_translation_name').value, 'My own translation');
+  assert.equal(e.field('item_translation_ai_review').hidden, true);
+  e.field('item_translation_ai').click();
+  success({type:'success',data:{locale:'nl',name:'Koffie',description:'Bonen'}});
+  assert.equal(e.field('item_translation_name').value, 'My own translation');
+  assert.equal(e.api.ready(), false);
+  e.field('item_translation_ai_name').value = 'Reviewed koffie';
+  e.field('item_translation_ai_keep').click();
+  assert.equal(e.api.ready(), true);
+  assert.equal(e.api.data().translations[0].name, 'Reviewed koffie');
+});
+
+test('late AI replies cannot cross language switches or a new item', t => {
+  const e = editor(t); const callbacks=[];
+  e.w.PosnicPro.post = (_params, ok) => callbacks.push(ok);
+  e.field('item_translation_ai').click();
+  e.field('item_translation_chips').children[1].click();
+  callbacks[0]({type:'success',data:{locale:'nl',name:'Late'}});
+  assert.equal(e.field('item_translation_ai_review').hidden, true);
+  e.field('item_translation_ai').click(); e.api.reset();
+  callbacks[1]({type:'success',data:{locale:'ar',name:'Late'}});
+  assert.deepEqual(Array.from(e.api.data().translations), []);
+});
+
+test('AI failures and discarded suggestions leave manual editing and saving available', t => {
+  const e=editor(t);let fail,success;
+  e.w.PosnicPro.post=(_p,ok,bad)=>{success=ok;fail=bad;};
+  e.field('item_translation_ai').click();fail();assert.equal(e.api.ready(),true);
+  e.field('item_translation_ai').click();success({type:'success',data:{locale:'nl',name:'Draft'}});
+  e.field('item_translation_ai_discard').click();
+  assert.equal(e.api.ready(),true);assert.equal(e.api.data().translations[0].name,'Koffie');
+});
+
 
 test('customer cart stores the original identity and can change language after adding', () => {
   const core = require('../order/assets/kiosk-core');

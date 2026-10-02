@@ -359,10 +359,8 @@ class CategoryRepository extends BaseModel {
                   // Case 1: Inventory not tracked - always allowed
                   { track_inventory: false },
 
-                  // Case 2: Negative stock allowed - quantity >= 0
-                  {
-                    $and: [{ negative_stock: true }, { available_quantity: { $gte: 0 } }],
-                  },
+                  // Keep the category visible even after an allowed sale takes stock below zero.
+                  { negative_stock: true },
 
                   // Case 3: Normal stock - quantity > 0
                   {

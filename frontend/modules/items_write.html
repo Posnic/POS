@@ -127,27 +127,40 @@
                                         name="items_name" placeholder="Enter Item Name" data-t-placeholder="lang_enter_item_name" minlength="1" maxlength="200" dir="auto"
                                         autocomplete="off" required>
                                     <input type="hidden" name="id" id="itemid">
-                                    <div class="d-flex align-items-center justify-content-between mt-2">
-                                        <button type="button" id="item_translation_toggle" class="btn btn-sm btn-link p-0" aria-expanded="false" aria-controls="item_translation_panel">
-                                            <i class="feather icon-globe mr-1" aria-hidden="true"></i><lang class="lang_item_translations">Translations</lang><span id="item_translation_count"></span>
+                                    <section class="item-language-workspace mt-3">
+                                        <button type="button" id="item_translation_toggle" class="item-language-toggle" aria-expanded="false" aria-controls="item_translation_panel">
+                                            <span><lang class="lang_item_translations">Translations</lang><span id="item_translation_count"></span></span>
+                                            <span class="item-language-chevron" aria-hidden="true"></span>
                                         </button>
-                                    </div>
-                                    <section id="item_translation_panel" class="border rounded p-3 mt-2" hidden aria-label="Item translations" data-t-aria-label="lang_item_translations_panel">
-                                        <div class="form-row">
-                                            <div class="col-sm-6 mb-2"><label for="item_original_language"><lang class="lang_item_original_language">Original language</lang></label><select id="item_original_language" class="form-control form-control-sm"></select></div>
-                                            <div class="col-sm-6 mb-2"><label for="item_translation_language"><lang class="lang_item_add_language">Add translation</lang></label><select id="item_translation_language" class="form-control form-control-sm"></select></div>
-                                        </div>
-                                        <div id="item_translation_chips" class="d-flex flex-wrap mb-2" style="gap:6px;max-height:120px;overflow-y:auto" role="group" aria-label="Translation languages" data-t-aria-label="lang_item_translation_languages"></div>
-                                        <small id="item_translation_empty" class="text-muted"><lang class="lang_item_translation_empty">Add only the languages your shop uses. Translations share this item's price, barcode and stock.</lang></small>
-                                        <div id="item_translation_fields" hidden>
-                                            <div class="d-flex justify-content-between align-items-center mb-2"><strong id="item_translation_heading"></strong><button id="item_translation_remove" type="button" class="btn btn-sm btn-link text-danger"><lang class="lang_item_remove_translation">Remove translation</lang></button></div>
-                                            <label for="item_translation_name"><lang class="lang_itemname_title">Item Name</lang></label>
-                                            <small class="d-block text-muted mb-1"><lang class="lang_item_original_text">Original:</lang> <bdi id="item_translation_original_name"></bdi></small>
-                                            <input id="item_translation_name" type="text" class="form-control" maxlength="200" dir="auto">
-                                            <label for="item_translation_description" class="mt-2"><lang class="lang_item_menu_description">Customer menu description</lang></label>
-                                            <small class="d-block text-muted mb-1" style="max-height:4.5em;overflow:auto"><lang class="lang_item_original_text">Original:</lang> <bdi id="item_translation_original_description"></bdi></small>
-                                            <textarea id="item_translation_description" class="form-control" rows="2" maxlength="2000" dir="auto"></textarea>
-                                            <small class="text-muted"><lang class="lang_item_translation_save_hint">Saved with this item. Empty fields use the original. Descriptions appear only on the customer menu.</lang></small>
+                                        <div id="item_translation_panel" hidden>
+                                            <div class="item-language-source"><label for="item_original_language"><lang class="lang_item_original_language">Original language</lang></label><select id="item_original_language" class="form-control form-control-sm"></select></div>
+                                            <div class="item-language-columns">
+                                                <aside class="item-language-sidebar">
+                                                    <div id="item_translation_chips" role="group" aria-label="Translation languages" data-t-aria-label="lang_item_translation_languages"></div>
+                                                    <label for="item_translation_language" class="mt-3"><lang class="lang_item_add_language">Add translation</lang></label><select id="item_translation_language" class="form-control form-control-sm"></select>
+                                                </aside>
+                                                <div class="item-language-editor">
+                                                    <p id="item_translation_empty" class="text-muted"><lang class="lang_item_translation_empty">Add only the languages your shop uses. Translations share this item's price, barcode and stock.</lang></p>
+                                                    <div id="item_translation_fields" hidden>
+                                                        <div class="item-language-heading"><strong id="item_translation_heading"></strong><div><button type="button" id="item_translation_ai" class="btn btn-sm btn-outline-primary" hidden><lang class="lang_item_ai_translate">Suggest with AI</lang></button><button type="button" id="item_translation_ai_stop" class="btn btn-sm btn-light" hidden><lang class="lang_cancel_title">Cancel</lang></button></div></div>
+                                                        <div id="item_translation_ai_review" class="item-language-review" hidden>
+                                                            <strong><lang class="lang_item_ai_review">Review the suggestion</lang></strong>
+                                                            <label for="item_translation_ai_name"><lang class="lang_itemname_title">Item Name</lang></label><input id="item_translation_ai_name" class="form-control" maxlength="200" dir="auto">
+                                                            <label for="item_translation_ai_description"><lang class="lang_item_menu_description">Customer menu description</lang></label><textarea id="item_translation_ai_description" class="form-control" rows="2" maxlength="2000" dir="auto"></textarea>
+                                                            <div class="mt-2"><button id="item_translation_ai_keep" type="button" class="btn btn-primary btn-sm"><lang class="lang_item_ai_keep">Keep suggestion</lang></button><button id="item_translation_ai_discard" type="button" class="btn btn-light btn-sm"><lang class="lang_cancel_title">Cancel</lang></button></div>
+                                                        </div>
+                                                        <label for="item_translation_name"><lang class="lang_item_translated_name">Translated item name</lang></label>
+                                                        <input id="item_translation_name" type="text" class="form-control" maxlength="200" dir="auto">
+                                                        <small class="d-block text-muted mt-1"><lang class="lang_item_original_text">Original:</lang> <bdi id="item_translation_original_name"></bdi></small>
+                                                        <details class="mt-3"><summary><lang class="lang_item_menu_description">Customer menu description</lang></summary>
+                                                            <small class="d-block text-muted my-2"><lang class="lang_item_original_text">Original:</lang> <bdi id="item_translation_original_description"></bdi></small>
+                                                            <label class="sr-only" for="item_translation_description"><lang class="lang_item_menu_description">Customer menu description</lang></label><textarea id="item_translation_description" class="form-control" rows="2" maxlength="2000" dir="auto"></textarea>
+                                                        </details>
+                                                        <div class="item-language-actions"><small class="text-muted"><lang class="lang_item_translation_fallback">Leave empty to use the original</lang></small><button id="item_translation_remove" type="button" class="btn btn-sm btn-link text-danger"><lang class="lang_item_remove_translation">Remove translation</lang></button></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="item_translation_status" class="item-language-status" role="status"><lang class="lang_item_translation_save_hint">Saved with this item. Empty fields use the original. Descriptions appear only on the customer menu.</lang></div>
                                         </div>
                                     </section>
 
@@ -175,15 +188,7 @@
                                         </small>
                                     </div>
                                 </div>
-                                <div class="form-group col-md-6" id="item_opening_wrap">
-                                    <label class="form-control-placeholder" for="items_available_quantity">
-                                        <lang class="lang_openquantity_title"> In stock (opening) </lang>
-                                    </label>
-                                    <input inputmode="decimal" type="text" class="form-control allow_decimal text-right clear_text_item"
-                                        id="items_available_quantity" name="items_available_quantity" min="0"
-                                        minlength="1" maxlength="10" value="0" placeholder="Available Quantity" data-t-placeholder="lang_availablequatity_title"
-                                        autocomplete="off">
-                                </div>
+
                             </div>
                             <!-- Reorder point and Item Units moved out of Price & Stock
                                  (owner ask). Neither is a price: the reorder point is when
@@ -260,7 +265,30 @@
                                     <input type="hidden" name="items_supplier_id" id="items_supplier_id">
                                 </div>
                             </div>
-                            <!-- IC4: the import path exists (items list > Import icon) but
+<fieldset id="item_stock_policy" class="item-stock-policy"><legend><lang class="lang_item_stock_behavior">Stock & selling</lang></legend><div class="form-row"><div class="form-group col-md-6" id="item_opening_wrap">
+                                    <label class="form-control-placeholder" for="items_available_quantity">
+                                        <lang class="lang_openquantity_title"> In stock (opening) </lang>
+                                    </label>
+                                    <input inputmode="decimal" type="text" class="form-control allow_decimal text-right clear_text_item"
+                                        id="items_available_quantity" name="items_available_quantity" min="0"
+                                        minlength="1" maxlength="10" value="0" placeholder="Available Quantity" data-t-placeholder="lang_availablequatity_title"
+                                        autocomplete="off">
+                                <small id="item_stock_status" class="form-text" role="status"></small></div><div class="form-group col-md-6">
+                                        <input type="checkbox" class="custom-control-input" id="item_track_inventory"
+                                            name="item_track_inventory" checked>
+                                        <label class="custom-control-label" for="item_track_inventory">
+                                            <lang class="lang_item_track_stock">Track stock quantities</lang>
+                                        </label>
+                                        <small class="form-text text-muted"><lang class="lang_item_track_stock_help">Turn off for items you sell without counting stock.</lang></small>
+                                    </div>
+<div class="form-group col-md-6">
+                                        <input type="checkbox" class="custom-control-input" id="item_negative_stock"
+                                            name="item_negative_stock">
+                                        <label class="custom-control-label" for="item_negative_stock">
+                                            <lang class="lang_item_sell_out_of_stock">Sell when out of stock</lang>
+                                        </label>
+                                        <small class="form-text text-muted"><lang class="lang_item_negative_help">Keep tracking stock. Sales can take the balance below zero.</lang></small>
+                                    </div></div><small id="item_stock_variants_hint" class="text-muted" hidden><lang class="lang_item_stock_variants_help">For variants, enter opening stock in each variant row.</lang></small></fieldset>                            <!-- IC4: the import path exists (items list > Import icon) but
                                  nobody onboarding 500 SKUs finds it from HERE, where they
                                  feel the pain. -->
                             <!-- Services (Q3): a second sellable kind - no stock, priced
@@ -561,7 +589,7 @@
                         </div>
                     </div>
 
-                    
+
                     <!-- A tabbed form with no way forward makes people hunt for the
                          next tab. The step buttons are the path through it; Save is
                          still on the sticky bar and works from any tab. -->
@@ -769,7 +797,7 @@
                     </div>
 
                     <!-- 8 · Channels & extras (collapsed: flags, supplier) -->
-                    
+
                     <!-- A tabbed form with no way forward makes people hunt for the
                          next tab. The step buttons are the path through it; Save is
                          still on the sticky bar and works from any tab. -->
@@ -903,13 +931,7 @@
                         <div class="collapse show" id="item_extras_collapse">
                             <div class="card-body">
                                 <div class="form-row">
-                                    <div class="form-group col-md-4">
-                                        <input type="checkbox" class="custom-control-input" id="item_track_inventory"
-                                            name="item_track_inventory" checked>
-                                        <label class="custom-control-label" for="item_track_inventory">
-                                            <lang class="lang_tracknontrack_title">Tracking inventory </lang>
-                                        </label>
-                                    </div>
+
 
                                     <div class="form-group col-md-4">
                                         <input type="checkbox" class="custom-control-input" id="item_ecommerce"
@@ -938,7 +960,7 @@
 
                                     <!--
                                         Which channels do NOT sell this.
-                                    
+
                                         Exceptions, not memberships: an item is on every
                                         channel the shop runs unless it is ticked here.
                                         A shop of two hundred lines should not have to
@@ -955,17 +977,11 @@
                                             <lang class="lang_not_sold_on_help">Leave empty to sell it everywhere. Pick a channel or a delivery partner to keep this item off it.</lang>
                                         </small>
                                     </div>
-                                    
 
 
 
-                                    <div class="form-group col-md-4">
-                                        <input type="checkbox" class="custom-control-input" id="item_negative_stock"
-                                            name="item_negative_stock">
-                                        <label class="custom-control-label" for="item_negative_stock">
-                                            <lang class="lang_negative_stock_2">Negative stock</lang>
-                                        </label>
-                                    </div>
+
+
 
                                     <!-- Shown only when the weight-machine hardware module is on -
                                          the sales side only honours the flag then (items.js gates it). -->
@@ -982,14 +998,14 @@
                     </div>
                     <!--
                         RESTAURANT ONLY, IN ITS OWN CARD.
-                    
+
                         Serving periods, the kitchen ticket and the diet mark are questions
                         a restaurant answers about a dish. They sat among the stock and
                         channel flags for every shop, so a hardware store editing a hinge
                         read "Note for the kitchen" and "Diet". Owner: do not show
                         restaurant-specific inputs to every business; give them their own
                         section when the Restaurant module is on.
-                    
+
                         One switch, on the card: the same table_options that shows the KOT
                         report and the Restaurant settings page. The fields inside carry no
                         class of their own, so there is exactly one place this can go wrong.
@@ -1073,7 +1089,7 @@
                         </div>
                     </div>
 
-                    
+
                     <!--
                         WHAT IS ON THE PLATE.
 
@@ -1290,7 +1306,7 @@
                          are inset by their own padding and a scrollbar, so the bar ran
                          past the Next button and the cards above it (owner ask). -->
                     <div class="card item-save-bar" id="item_save_bar">
-                        <div class="card-body py-2 text-right">
+                        <div class="card-body py-2 text-right"><div id="item_ready_summary" class="item-ready-summary text-left" role="status"><span id="item_price_preview"></span><span id="item_availability_preview"></span></div>
                             <button type="button" class="btn btn-outline-secondary infobar-settings-reset"
                                 id="items_reset" onclick="PosnicPro.items.itemClearForm();"><i
                                     class="feather icon-refresh-ccw mr-2"></i>
@@ -1316,7 +1332,7 @@
                             <div class="form-row" id="show_last_created_item" style="display: none;">
                                 <div class="form-group col-md-12 mb-0">
                                     <div class="text-center">
-                                        <h6 class="mb-0 mt-1"><lang class="lang_saved_an_item">Saved an item.</lang> <a href="#" id="last_created_item"><lang class="lang_open_it">Open it</lang></a></h6>
+                                        <h6 class="mb-0 mt-1"><span id="item_saved_status"><lang class="lang_saved_an_item">Saved an item.</lang></span> <a href="#" id="last_created_item"><lang class="lang_open_it">Open it</lang></a></h6>
                                     </div>
                                 </div>
                             </div>
@@ -1330,5 +1346,44 @@
             </div>
         </form>
         <!-- End row -->
+        <div class="modal fade" id="item_zero_stock_modal" tabindex="-1" role="dialog" aria-labelledby="item_zero_stock_title" aria-describedby="item_zero_stock_help">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="item_zero_stock_title"><lang class="lang_item_zero_title">No opening stock yet</lang></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="item_zero_stock_help"><lang class="lang_item_zero_help">With stock tracking on, items at zero stock stay off the POS sale list. How would you like to save?</lang></p>
+                        <p class="text-muted small" data-zero-variants><lang class="lang_item_zero_variants">Some variants have no opening stock. Your stock tracking choice applies to all variants of this item.</lang></p>
+                        <fieldset>
+                            <legend class="sr-only"><lang class="lang_item_zero_title">No opening stock yet</lang></legend>
+                            <label class="d-flex border rounded p-3 mb-2">
+                                <input class="mt-1 mr-3" type="radio" name="item_zero_choice" value="enter" checked>
+                                <span><strong class="d-block"><lang class="lang_item_zero_enter">Enter opening stock</lang></strong><small><lang class="lang_item_zero_enter_help">Add the quantity you already have, then save.</lang></small></span>
+                            </label>
+                            <label class="d-flex border rounded p-3 mb-2">
+                                <input class="mt-1 mr-3" type="radio" name="item_zero_choice" value="negative">
+                                <span><strong class="d-block"><lang class="lang_item_sell_out_of_stock">Sell when out of stock</lang></strong><small><lang class="lang_item_negative_help">Keep tracking stock. Sales can take the balance below zero.</lang></small></span>
+                            </label>
+                            <div data-zero-untracked>
+                                <label class="d-flex border rounded p-3 mb-2">
+                                    <input class="mt-1 mr-3" type="radio" name="item_zero_choice" value="untracked">
+                                    <span><strong class="d-block"><lang class="lang_item_zero_untracked">Don't track stock</lang></strong><small><lang class="lang_item_zero_untracked_help">Sell this item without counting quantities in stock.</lang></small></span>
+                                </label>
+                            </div>
+                            <label class="d-flex border rounded p-3 mb-0">
+                                <input class="mt-1 mr-3" type="radio" name="item_zero_choice" value="out">
+                                <span><strong class="d-block"><lang class="lang_item_zero_out">Save as out of stock</lang></strong><small><lang class="lang_item_zero_out_help">Keep it off the POS sale list until you add stock.</lang></small></span>
+                            </label>
+                        </fieldset>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>
+                        <button type="button" class="btn btn-primary" data-zero-continue><lang class="lang_continue_title">Continue</lang></button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
