@@ -65,6 +65,32 @@ const req = (body) => ({
   },
   body: { saleId: String(sale._id), branchId: String(branch), ...body },
 });
+
+test('legacy desktop additions retain Captain identity and do not request void approval', async () => {
+  sale.items[0].line_id = 'phone-line-1';
+  await db.collection('sales').updateOne({ _id: sale._id }, { $set: { items: sale.items } });
+  const input = req({
+    order_id: String(sale._id),
+    items: [
+      { product_id: sale.items[0].item_id, quantity: 3 },
+      { product_id: String(new ObjectId()), quantity: 1 },
+    ],
+  });
+  await expect(policy.authorize(input)).resolves.toMatchObject({ reason: '' });
+  expect(input.body.items[0].line_id).toBe('phone-line-1');
+});
+
+test('legacy desktop quantity reductions still require a reason and permission', async () => {
+  sale.items[0].line_id = 'phone-line-1';
+  await db.collection('sales').updateOne({ _id: sale._id }, { $set: { items: sale.items } });
+  const input = req({
+    order_id: String(sale._id),
+    items: [{ product_id: sale.items[0].item_id, quantity: 1 }],
+  });
+  await expect(policy.authorize(input)).rejects.toThrow('Enter a reason');
+  input.body.change_reason = 'Customer changed the order';
+  await expect(policy.authorize(input)).rejects.toThrow('Manager approval required');
+});
 test('fire is idempotent under retries and preserves bill quantity and service identity', async () => {
   const input = req({ requestId: require('crypto').randomUUID(), items: ['c0i0'] });
   const first = await service.fire(input);

@@ -16,6 +16,7 @@ async function authorize(req, { preview = false } = {}) {
     branch_id: c.branchId,
   });
   if (!sale) fail('Order not found.', 404);
+  body.items = lineIdentity.reconcile(body.items || [], sale.items || []);
   const incoming = new Map(
     (body.items || []).map((line) => [lineIdentity.key(line), quantity(line)])
   );
