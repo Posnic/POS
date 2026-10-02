@@ -9400,10 +9400,10 @@ PosnicPro.dayparts = {
         var self = PosnicPro.dayparts;
         var p = part || {};
         var win = self.firstWindow(p.hours);
-        var safeName = $('<div>').text(p.name || '').html();
+        var safeName = $('<div>').text(p.name || '').html().replace(/"/g, '&quot;');
 
         return '<div class="form-row align-items-end mb-2 daypart-row" data-id="' +
-            $('<div>').text(p.id || '').html() + '">' +
+            $('<div>').text(p.id || '').html().replace(/"/g, '&quot;') + '">' +
             '<div class="form-group col-md-4">' +
             '<input type="text" class="form-control form-control-sm daypart-name" value="' + safeName + '">' +
             '</div>' +
@@ -9438,6 +9438,10 @@ PosnicPro.dayparts = {
             if (!name) return;
             var from = $row.find('.daypart-from').val();
             var to = $row.find('.daypart-to').val();
+            if (!$row.data('id')) {
+                var id = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || ('period_' + window.crypto.randomUUID().replace(/-/g, ''));
+                $row.data('id', id);
+            }
             out.push({
                 /* The id survives a rename, so calling Breakfast "Morning"
                    does not silently unassign every breakfast dish. */
@@ -9658,16 +9662,33 @@ $(document).on('click', '#channel_items_off', function () { PosnicPro.channelIte
  * layout problem.
  */
 PosnicPro.servingPeriods = {
-    load: function () {
+    load: function (afterLoad) {
+        var self = PosnicPro.servingPeriods;
+        if (self.loading) return;
+        self.loading = true;
+        $('#save_dayparts').prop('disabled', true);
+        var fail = function () {
+            self.loading = false;
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_period_load_failed', 'Could not load serving periods. Reopen Restaurant settings to retry.'));
+        };
         PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
-            var values = (response && response.data && response.data.values) || {};
+            if (!response || response.type !== 'success') { fail(); return; }
+            var values = (response.data && response.data.values) || {};
             PosnicPro.dayparts.render(values.menu_dayparts);
-        }, function () {
-            PosnicPro.dayparts.render([]);
-        });
+            self.loading = false;
+            $('#save_dayparts').prop('disabled', false);
+            if (typeof afterLoad === 'function') afterLoad();
+        }, fail);
     },
 
     save: function () {
+        if (PosnicPro.servingPeriods.loading) return;
+        var invalid = false;
+        $('#menu_daypart_rows .daypart-row').each(function () {
+            var row = $(this);
+            if (!String(row.find('.daypart-name').val() || '').trim() || !row.find('.daypart-from').val() || !row.find('.daypart-to').val() || row.find('.daypart-from').val() === row.find('.daypart-to').val()) invalid = true;
+        });
+        if (invalid) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_period_required_fields', 'Enter a name and different start and end times for every serving period.')); return; }
         var loader = $('.loader-view-dayparts');
         loader.find('.loadingSpinner').remove();
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -9685,8 +9706,9 @@ PosnicPro.servingPeriods = {
         }, function (response) {
             loader.find('.loadingSpinner').remove();
             if (response && response.type === 'success') {
-                PosnicPro.alert('success', response.message
-                    || PosnicPro.i18n.t('lang_settings_saved', 'Settings saved'));
+                PosnicPro.servingPeriods.load(function () {
+                    PosnicPro.alert('success', PosnicPro.i18n.t('lang_serving_periods_saved', 'Serving periods saved'));
+                });
                 /* The item form caches this group for the session. A period
                    saved here must be offered on the next dish opened, not on
                    the next sign-in. Both boxes come from the same request. */

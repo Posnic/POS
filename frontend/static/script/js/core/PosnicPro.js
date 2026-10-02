@@ -7111,3 +7111,41 @@ PosnicPro.printItemName = function (item, kind) {
     var policy = PosnicPro.printSettings ? PosnicPro.printSettings.get('itemLanguages') : {};
     return PosnicPro.itemName(item, policy[kind || 'receipt'] || '', kind !== 'kot' && policy.bilingual === true);
 };
+
+
+// Shared compact serving-period selector. Read fresh branch settings on every page visit.
+PosnicPro.mountServingPeriodFilter = function (options) {
+    var host = $(options.host), select = $(options.select), hint = $(options.hint);
+    var branches = Array.isArray(options.branch) ? options.branch.filter(Boolean) : String(options.branch || '').split(',').filter(Boolean);
+    var request = (host.data('periodRequest') || 0) + 1;
+    host.data('periodRequest', request);
+    var branch = branches.length === 1 ? String(branches[0]) : '';
+    var previous = host.data('periodBranch') === branch ? select.val() || '' : '';
+    host.data('periodBranch', branch);
+    select.empty().append($('<option>').val('').text(PosnicPro.i18n.t('lang_all_day', 'All day'))).prop('disabled', true);
+    host.css('display', 'flex');
+    select.off('change.servingPeriod').on('change.servingPeriod', function () { options.change(select.val() || ''); });
+    if (!branch) {
+        hint.text(PosnicPro.i18n.t('lang_choose_one_branch_for_period', 'Choose one branch to filter by serving period.'));
+        if (options.ready) options.ready('');
+        return;
+    }
+    hint.text(PosnicPro.i18n.t('lang_loading_serving_periods', 'Loading serving periods…'));
+    var fail = function () {
+        if (host.data('periodRequest') !== request) return;
+        hint.text(PosnicPro.i18n.t('lang_period_load_failed', 'Could not load serving periods. Reopen this page to retry.'));
+        if (options.ready) options.ready('');
+    };
+    PosnicPro.get({ url: 'sales/servingPeriods', data: { branch: branch } }, function (r) {
+        if (host.data('periodRequest') !== request) return;
+        if (!r || r.type !== 'success') { fail(); return; }
+        var data = r.data || {}, periods = data.serving_periods || [];
+        host.css('display', data.restaurant_enabled ? 'flex' : 'none');
+        periods.forEach(function (p) { select.append($('<option>').val(p.id).text(p.name).prop('disabled', !p.hours)); });
+        if (options.custom) select.append($('<option>').val('__custom').text(PosnicPro.i18n.t('lang_custom_time', 'Custom time')));
+        select.val(data.restaurant_enabled && previous && (previous === '__custom' || periods.some(function (p) { return p.id === previous && p.hours; })) ? previous : '');
+        select.prop('disabled', !data.restaurant_enabled);
+        hint.text(periods.length ? '' : PosnicPro.i18n.t('lang_set_serving_periods', 'Set breakfast, lunch and dinner in Restaurant > Menu.'));
+        if (options.ready) options.ready(select.val() || '');
+    }, fail);
+};

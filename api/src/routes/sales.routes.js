@@ -554,6 +554,8 @@ router.post(
 // GET /api/sales - Get all sales with pagination
 router.get('/', bindController(salesController.getAll));
 
+router.get('/servingPeriods', bindController(salesController.servingPeriodOptions));
+
 // GET /api/sales/dailySalesReports - Legacy daily sales report endpoint
 router.get(
   '/dailySalesReports',

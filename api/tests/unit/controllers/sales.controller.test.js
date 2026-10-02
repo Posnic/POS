@@ -1852,3 +1852,62 @@ describe('SalesController', () => {
     });
   });
 });
+
+describe('branch serving-period filters', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    salesService.getBranchById.mockResolvedValue({
+      license: VALID_LICENSE,
+      table_options: 'enable',
+      time_zone: 'Asia/Kolkata',
+    });
+    salesService.getReportServingPeriods.mockResolvedValue([
+      { id: 'lunch', name: 'Lunch', hours: { mon: [{ open: 720, close: 930 }] } },
+    ]);
+  });
+  test('options load the explicitly selected branch periods', async () => {
+    const res = mockRes();
+    await ctrl.servingPeriodOptions(mockReq({ query: { branch: VALID_BRANCH } }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(salesService.getReportServingPeriods).toHaveBeenCalledWith({
+      branchId: VALID_BRANCH,
+      licenseId: VALID_LICENSE,
+    });
+    expect(res.json.mock.calls[0][0].data.serving_periods[0].id).toBe('lunch');
+  });
+  test('options never expose another license', async () => {
+    salesService.getBranchById.mockResolvedValue({
+      license: 'another-license',
+      table_options: 'enable',
+    });
+    const res = mockRes();
+    await ctrl.servingPeriodOptions(mockReq({ query: { branch: VALID_BRANCH } }), res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(salesService.getReportServingPeriods).not.toHaveBeenCalled();
+  });
+  test('inaccessible branch is refused before reading its settings', async () => {
+    const res = mockRes();
+    await ctrl.servingPeriodOptions(
+      mockReq({
+        query: { branch: VALID_BRANCH },
+        user: adminUser({ branch_access: [{ branch_id: VALID_LICENSE }] }),
+      }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+  test('selected period is a real database condition', async () => {
+    const match = await ctrl.reportServingMatch(mockReq({ query: { serving_period: 'lunch' } }), [
+      VALID_BRANCH,
+    ]);
+    expect(match[0].$expr.$or.length).toBe(1);
+  });
+  test('multiple branches cannot silently reuse one branch schedule', async () => {
+    await expect(
+      ctrl.reportServingMatch(mockReq({ query: { serving_period: 'lunch' } }), [
+        VALID_BRANCH,
+        VALID_LICENSE,
+      ])
+    ).rejects.toThrow('Choose one branch');
+  });
+});

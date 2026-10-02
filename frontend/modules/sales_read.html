@@ -27,6 +27,14 @@
                     </div>
                 </div>
             </div>
+            <div id="sales_restaurant_filters" class="flex-wrap align-items-end" style="display:none; gap:12px; margin-top:10px;">
+                <div><label for="sales_history_table" class="mb-1"><lang class="lang_table">Table</lang></label>
+                    <select id="sales_history_table" class="form-control form-control-sm" style="min-width:160px;"><option value="">All sales</option><option value="__tables">Tables only</option></select></div>
+                <div><label for="sales_history_period" class="mb-1"><lang class="lang_serving_period">Serving period</lang></label>
+                    <select id="sales_history_period" class="form-control form-control-sm" style="min-width:160px;"><option value="">All day</option></select></div>
+                <button type="button" id="sales_restaurant_reset" class="btn btn-link btn-sm"><lang class="lang_clear_restaurant_filters">Clear restaurant filters</lang></button>
+                <small id="sales_history_period_hint" class="text-muted" aria-live="polite"></small>
+            </div>
             <!--
                 KEPT DELIBERATELY, and not a filter control any more.
 

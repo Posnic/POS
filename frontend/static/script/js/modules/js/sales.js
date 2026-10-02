@@ -510,6 +510,7 @@
         $('#view_sales_per_page').closest('.form-group').show();
         $('.card.m-b-30.sales_header .ecommerce-pagination').closest('.card.m-b-30').show();
         PosnicPro.sales.mountHistoryFilters();
+        PosnicPro.sales.mountRestaurantHistory();
         PosnicPro.sales.closeDoc();
         PosnicPro.sales.loadHistory(1);
         $('#image_sidebar_dashboard,#image_sidebar_newsale').hide();
@@ -566,6 +567,34 @@
         });
     },
 
+    mountRestaurantHistory: function () {
+        var enabled = PosnicPro.local.get('table_options') === 'enable';
+        $('#sales_restaurant_filters').css('display', enabled ? 'flex' : 'none');
+        if (!enabled) { $('#sales_history_table, #sales_history_period').val(''); return; }
+        var table = $('#sales_history_table'), period = $('#sales_history_period');
+        PosnicPro.get({ url: 'setting/getTableOrderAll' }, function (r) {
+            if (r.type !== 'success') return;
+            var prior = table.val() || '';
+            table.empty().append($('<option>').val('').text(PosnicPro.i18n.t('lang_all_sales', 'All sales')))
+                .append($('<option>').val('__tables').text(PosnicPro.i18n.t('lang_tables_only', 'Tables only')));
+            (r.data || []).forEach(function (t) { table.append($('<option>').val(t.tableorder_value).text(PosnicPro.i18n.t('lang_table', 'Table') + ' ' + t.tableorder_value)); });
+            if (prior && !table.find('option').toArray().some(function (o) { return o.value === prior; })) table.append($('<option>').val(prior).text(prior));
+            table.val(prior);
+        });
+        var failed = function () { $('#sales_history_period_hint').text(PosnicPro.i18n.t('lang_period_load_failed', 'Could not load serving periods. Reopen Sales History to retry.')); };
+        PosnicPro.get({ url: 'sales/servingPeriods', data: { branch: PosnicPro.local.get('branch_id_set') } }, function (r) {
+            if (!r || r.type !== 'success') { failed(); return; }
+            var parts = r.data.serving_periods || [], prior = period.val() || '';
+            period.empty().append($('<option>').val('').text(PosnicPro.i18n.t('lang_all_day', 'All day')));
+            parts.forEach(function (p) { period.append($('<option>').val(p.id).text(p.name)); });
+            period.val(parts.some(function (p) { return p.id === prior; }) ? prior : '');
+            $('#sales_history_period_hint').text(parts.length ? '' : PosnicPro.i18n.t('lang_set_serving_periods', 'Set breakfast, lunch and dinner in Restaurant > Menu.'));
+            if (prior && !period.val()) PosnicPro.sales.loadHistory(1);
+        }, failed);
+        $('#sales_history_table, #sales_history_period').off('change.restaurantHistory').on('change.restaurantHistory', function () { PosnicPro.sales.loadHistory(1); });
+        $('#sales_restaurant_reset').off('click.restaurantHistory').on('click.restaurantHistory', function () { $('#sales_history_table, #sales_history_period').val(''); PosnicPro.sales.loadHistory(1); });
+    },
+
     _histPage: 1,
     HIST_PAGE_SIZE: 25,
     _histRows: [],
@@ -574,7 +603,7 @@
         PosnicPro.sales.mountHistoryFilters();
         var self = PosnicPro.sales;
         if (page) { self._histPage = page; }
-        var filters = PosnicPro.listFilter.legacyFilters('sales', { dateKey: 'updated_date' });
+        var filters = PosnicPro.listFilter.legacyFilters('sales', { dateKey: 'date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.listFilter.request('sales', {
             url: 'sales',
@@ -582,6 +611,12 @@
                 var d = { page: self._histPage, limit: self.HIST_PAGE_SIZE, filters: JSON.stringify(filters) };
                 var sv = PosnicPro.listSort.value('sales');
                 if (sv) { d.sort = sv; }
+                if (PosnicPro.local.get('table_options') === 'enable') {
+                    var table = $('#sales_history_table').val();
+                    if (table === '__tables') d.tables_only = 'true';
+                    else if (table) d.table_number = table;
+                    if ($('#sales_history_period').val()) d.serving_period = $('#sales_history_period').val();
+                }
                 return d;
             }())
         }, function (response) {
@@ -589,15 +624,17 @@
             var list = data.list || [];
             self._histRows = list;
             if (!list.length) {
-                var filtered = PosnicPro.listFilter.activeCount('sales') > 0;
+                var filtered = PosnicPro.listFilter.activeCount('sales') > 0 || $('#sales_history_table').val() || $('#sales_history_period').val();
                 $('#sales_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
                     + (filtered ? PosnicPro.i18n.t('lang_no_sales_match_this_filter', 'No sales match this filter.') : PosnicPro.i18n.t('lang_no_sales_yet_the_first_bill_will_appear_he', 'No sales yet - the first bill will appear here.')) + '</div>');
                 $('#sales_list_paging').html('');
                 return;
             }
+            var restaurant = PosnicPro.local.get('table_options') === 'enable';
             var cur = PosnicPro.local.get('currencySign');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
                 + '<thead><tr><th><lang class="lang_bill">Bill #</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th class="sl-col-date"><lang class="lang_date_time">Date &amp; time</lang></th>'
+                + (restaurant ? '<th><lang class="lang_table">Table</lang></th>' : '')
                 + '<th class="text-right sl-col-items"><lang class="lang_itemdetail_title">Items</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
                 + '<th class="text-center"><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
@@ -617,6 +654,7 @@
                     + '<td>' + esc(r.sales_id) + '</td>'
                     + '<td>' + esc(r.customer_name || 'Walk-in') + '</td>'
                     + '<td class="sl-col-date">' + esc(r.string_date ? PosnicPro.convertDate(r.string_date) : (r.date ? String(r.date).slice(0, 10) : '-')) + '</td>'
+                    + (restaurant ? '<td>' + esc(r.table_number || '-') + '</td>' : '')
                     + '<td class="text-right sl-col-items">' + esc(r.number_of_items != null ? r.number_of_items : (r.items || []).length) + '</td>'
                     + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.sales_total) || 0).toFixed(digits) + '</td>'
                     + '<td class="text-center">' + pill + '</td>'

@@ -3835,12 +3835,22 @@ class ItemRepository extends BaseModel {
   /**
    * The shop's serving periods: breakfast, lunch, dinner.
    *
-   * Stored with the other channel settings rather than per branch, because a
-   * chain serves breakfast at breakfast time everywhere. An empty list is the
-   * normal state - most shops serve everything all day - and costs one lookup.
+   * Read the same resolved branch settings as the Restaurant editor. Only
+   * installations without a migrated value use the old settings collection;
+   * an explicitly saved empty list must remain empty.
    */
-  async shopDayparts() {
+  async shopDayparts(context = {}) {
     try {
+      const resolved = await new (require('./settings.repository'))().resolveGroup('channels', {
+        branchId: context.branchId || BaseModel.currentBranch,
+        licenseId: context.licenseId || BaseModel.license,
+      });
+      if (
+        resolved.status &&
+        Object.prototype.hasOwnProperty.call(resolved.data.values, 'menu_dayparts')
+      ) {
+        return onlineOrdering.normalizeDayparts(resolved.data.values.menu_dayparts);
+      }
       const settings = await this.getCollection('settings');
       const doc = await settings.findOne({ menu_dayparts: { $exists: true } });
       return onlineOrdering.normalizeDayparts((doc && doc.menu_dayparts) || []);

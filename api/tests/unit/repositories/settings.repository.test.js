@@ -571,3 +571,61 @@ test('quotation pricing settings persist in documents and mirror to the branch',
     false
   );
 });
+
+describe('serving-period persistence', () => {
+  const parts = [
+    { id: 'lunch', name: 'Lunch', hours: { mon: [{ open: '12:00', close: '15:30' }] } },
+  ];
+  test('saved periods are normalized and the branch mirror gets a sync timestamp', async () => {
+    seed({ legacy: {} });
+    mockCollections.branch_channels = { updateOne: jest.fn().mockResolvedValue({}) };
+    mockCollections.branches.updateOne = jest.fn().mockResolvedValue({});
+    const r = await new SettingsRepository().saveGroup('channels', { menu_dayparts: parts }, ctx);
+    expect(r.status).toBe(true);
+    const saved = mockCollections.branch_channels.updateOne.mock.calls[0][1].$set;
+    expect(saved.menu_dayparts[0].hours.mon[0]).toEqual({ open: 720, close: 930 });
+    const mirror = mockCollections.branches.updateOne.mock.calls[0][1].$set;
+    expect(mirror.updated_date).toBeInstanceOf(Date);
+    expect(mirror.menu_dayparts).toEqual(saved.menu_dayparts);
+  });
+  test('newer synced periods override stale local settings', async () => {
+    seed({ legacy: { menu_dayparts: parts, updated_date: new Date('2026-10-02') } });
+    mockCollections.branch_channels = {
+      findOne: jest.fn((f) =>
+        Promise.resolve(
+          f.branch_id === null ? null : { menu_dayparts: [], updated_date: new Date('2026-10-01') }
+        )
+      ),
+    };
+    const r = await new SettingsRepository().resolveGroup('channels', ctx);
+    expect(r.data.values.menu_dayparts).toEqual(parts);
+  });
+  test('incomplete periods fail explicitly', async () => {
+    expect(
+      (
+        await new SettingsRepository().saveGroup(
+          'channels',
+          { menu_dayparts: [{ id: 'lunch', name: 'Lunch', hours: null }] },
+          ctx
+        )
+      ).status
+    ).toBe(false);
+  });
+});
+
+test('legacy serving periods remain visible but an explicit empty branch list stays empty', async () => {
+  seed({ legacy: {} });
+  const parts = [
+    { id: 'breakfast', name: 'Breakfast', hours: { mon: [{ open: '07:00', close: '11:00' }] } },
+  ];
+  mockCollections.settings = { findOne: jest.fn().mockResolvedValue({ menu_dayparts: parts }) };
+  mockCollections.branch_channels = { findOne: jest.fn().mockResolvedValue(null) };
+  const repo = new SettingsRepository();
+  expect((await repo.resolveGroup('channels', ctx)).data.values.menu_dayparts[0].id).toBe(
+    'breakfast'
+  );
+  mockCollections.branch_channels.findOne = jest.fn((f) =>
+    Promise.resolve(f.branch_id === null ? null : { menu_dayparts: [] })
+  );
+  expect((await repo.resolveGroup('channels', ctx)).data.values.menu_dayparts).toEqual([]);
+});

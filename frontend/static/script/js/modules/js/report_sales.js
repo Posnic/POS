@@ -1,4 +1,16 @@
 PosnicPro.salereport = {
+    loadPeriods: function () {
+        PosnicPro.mountServingPeriodFilter({ host: '#sales-report-period-filter', select: '#sales-report-period', hint: '#sales-report-period-hint', branch: $('.sale_branch_value').val(),
+            change: function () { PosnicPro.salereport.refreshPeriod(); },
+            ready: function () { PosnicPro.salereport.refreshPeriod(); }
+        });
+    },
+    refreshPeriod: function () {
+        $('#view_salereport, #view_instantreport').data('current_page', 1);
+        if ($('#instant-tab-line').hasClass('active')) PosnicPro.instantreport.instantTableTabClick();
+        else if ($('#sale-summary-tab-line').hasClass('active')) PosnicPro.salesummaryreport.saleSummaryTabClick();
+        else PosnicPro.salereport.saleTableTabClick();
+    },
     showDataTablePage: function () {
         var loader = $(".loader-sale-report");
         loader.find(".loadingSpinner:first").remove();
@@ -11,13 +23,7 @@ PosnicPro.salereport = {
         $('.page-title-box,#salereport_new').show();
         $('#v-pills-report-tab,#viewsalereport_page').addClass('active');
         $('#v-pills-report').addClass('show active');
-        if ($('a#sale-view-tab-line').hasClass('active')) {
-            PosnicPro.salereport.saleTableTabClick();
-        } else if ($('a#instant-tab-line').hasClass('active')) {
-            PosnicPro.instantreport.instantTableTabClick();
-        } else if ($('a#sale-summary-tab-line').hasClass('active')) {
-            PosnicPro.salesummaryreport.saleSummaryTabClick();
-        }
+        PosnicPro.salereport.loadPeriods();
         $('.hide_date_filetr,.hide_value_filetr').hide();
         if (PosnicPro.local.get('userplan') === 'free') {
             $('#sale-view-line, #instant-line, #sale-summary-line, #sale-graph-line').css('filter', 'blur(2px)');
@@ -81,7 +87,7 @@ PosnicPro.salereport = {
         };
         var params = {
             url: 'sales/salesReports',
-            data: data
+            data: Object.assign({}, data, { serving_period: $('#sales-report-period').val() || undefined })
         };
         PosnicPro.get(params, function (response) {
             loader.find(".loadingSpinner:first").remove();
@@ -266,7 +272,7 @@ PosnicPro.instantreport = {
             };
             var params = {
                 url: 'sales/instantSalesReports',
-                data: data
+                data: Object.assign({}, data, { serving_period: $('#sales-report-period').val() || undefined })
             };
             PosnicPro.get(params, function (response) {
                 loader.find(".loadingSpinner:first").remove();
@@ -427,7 +433,7 @@ PosnicPro.salesummaryreport = {
             };
             var params = {
                 url: 'sales/salesSummaryReports',
-                data: data
+                data: Object.assign({}, data, { serving_period: $('#sales-report-period').val() || undefined })
             };
             PosnicPro.get(params, function (response) {
                 loader.find(".loadingSpinner:first").remove();
@@ -564,3 +570,5 @@ $(document).on("click", "#view_salereport tbody tr td .exploder", function () {
     }
 });
 //end
+
+$(document).on('change.servingPeriod', '.sale_branch_value', function () { PosnicPro.salereport.loadPeriods(); });
