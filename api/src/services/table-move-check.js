@@ -1,7 +1,7 @@
 'use strict';
 const { fail } = require('../utils/branch-access');
 const { accommodates } = require('../utils/table-details');
-const { floorEligibility } = require('../helpers/floor-eligibility');
+const { tableOccupancy } = require('../helpers/floor-eligibility');
 
 // Validate current floor data before an order edit. This is not a replacement
 // for atomic seating claims shared by every order writer.
@@ -21,7 +21,7 @@ async function check(db, order, table, input) {
         license: order.license,
         table_number: String(table.tableorder_value),
         _id: { $ne: order._id },
-        ...floorEligibility(),
+        ...tableOccupancy(),
       },
       { projection: { person_count: 1 } }
     )

@@ -8692,7 +8692,7 @@ class SalesRepository {
       if (runsTableService && openTableLimit > 0 && wantsTable) {
         const openNow = await db.collection('sales').countDocuments({
           branch_id: branchObjectId,
-          ...require('../helpers/floor-eligibility').floorEligibility(),
+          ...require('../helpers/floor-eligibility').tableOccupancy(),
           table_number: wantsTable,
         });
         if (openNow >= openTableLimit) {

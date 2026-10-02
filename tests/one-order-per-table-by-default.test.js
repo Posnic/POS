@@ -119,11 +119,11 @@ test('the server refuses a second order on a full table, and says what to do', (
   const end = SALE_REPO.indexOf('const monetary =', start);
   assert.ok(start >= 0 && end > start, 'the table-limit query boundaries must be found');
   const guard = SALE_REPO.slice(start, end);
-  assert.match(guard, /floorEligibility\(\)/, 'occupancy must use the shared open-service policy');
-  const filter = require('../api/src/helpers/floor-eligibility').floorEligibility();
+  assert.match(guard, /tableOccupancy\(\)/, 'occupancy must use the shared open-service policy');
+  const filter = require('../api/src/helpers/floor-eligibility').tableOccupancy();
   assert.deepStrictEqual(filter.floor_closed_at, { $exists: false });
   assert.deepStrictEqual(filter.order_state, { $nin: ['rejected', 'cancelled'] });
-  assert.strictEqual(filter.$or[1].floor_lifecycle, true, 'paid table service remains occupied until closed');
+  assert.strictEqual(filter.$or[1].floor_lifecycle, true, 'floor lifecycle is still recognized before the settled exclusion');
   assert.match(guard, /if \(openNow >= openTableLimit\)/);
   assert.match(guard, /Add to it, or settle it first/,
     'the refusal does not tell a waiter what to do instead');

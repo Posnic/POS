@@ -4027,7 +4027,7 @@ class SettingModel extends BaseModel {
             branch_id: this.normalizeId(this.branchId),
             license: this.normalizeId(this.licenseId),
             table_number: previous.tableorder_value,
-            ...require('../helpers/floor-eligibility').floorEligibility(),
+            ...require('../helpers/floor-eligibility').tableOccupancy(),
           },
           { projection: { person_count: 1 } }
         )
