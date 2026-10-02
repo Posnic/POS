@@ -28,4 +28,22 @@ function validate(lines) {
     seen.add(value);
   }
 }
-module.exports = { product, id, key, identity, validate };
+// Older desktop editors send product IDs without the saved preparation ID.
+// Recover only an unambiguous match; never guess between two guests' lines.
+function reconcile(incoming, existing) {
+  const byProduct = new Map();
+  for (const line of existing || []) {
+    const matches = byProduct.get(product(line)) || [];
+    matches.push(line);
+    byProduct.set(product(line), matches);
+  }
+  const result = incoming.map((line) => {
+    if (id(line)) return { ...line };
+    const matches = byProduct.get(product(line)) || [];
+    if (matches.length > 1) throw new Error('ambiguous_order_lines');
+    return { ...line, ...(matches.length === 1 ? identity(matches[0]) : {}) };
+  });
+  validate(result);
+  return result;
+}
+module.exports = { product, id, key, identity, validate, reconcile };

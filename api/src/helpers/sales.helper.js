@@ -1079,6 +1079,9 @@ const formatSaleListEntry = (saleDoc) => {
           if (!item || typeof item !== 'object') return item;
           return {
             item_id: item.item_id || item.item || item.itemId || '',
+            // The desktop KOT editor renders this list, then uses the identity
+            // to match each preparation in the full order before saving.
+            ...(item.line_id ? { line_id: item.line_id } : {}),
             item_name: item.item_name || item.name || item.itemName || '',
             /*
              * The waiter's note and nothing else.
