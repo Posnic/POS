@@ -198,6 +198,12 @@ test('only managers change lifecycle and disabled packages are hidden from staff
   assert.equal((await request('/enabled', { token: 'key', body: { enabled: false } })).status, 403);
   assert.equal((await request('/enabled', { body: { enabled: 'false' } })).status, 422);
   assert.equal((await request('/enabled', { body: { enabled: false } })).status, 200);
+  assert.equal((await request('/lifecycle-history', { token: 'reader' })).status, 403);
+  assert.equal((await request('/lifecycle-history', { token: 'key' })).status, 403);
+  assert.equal((await request('/lifecycle-history?before=bad')).status, 422);
+  const history = await request('/lifecycle-history');
+  assert.equal(history.status, 200);
+  assert.equal((await history.json()).events[0].action, 'disabled');
   assert.equal((await request('/state')).status, 403);
   assert.equal((await request('/commands', { body: { expectedRevision: 0, command: { type: 'create' } } })).status, 403);
   const listing = async token => (await (await fetch(url.replace('/posnic.example', ''), {

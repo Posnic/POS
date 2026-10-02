@@ -351,6 +351,32 @@ async function recoverNamespace(db, scope, descriptor, actor, dependencies) {
     dependencies
   );
 }
+// A single pending event is committed with the lifecycle fence. Archive it
+// before admitting the next transition; no transaction-capable Mongo is needed.
+async function flushLifecycleAudit(db, key) {
+  const namespaces = db.collection('extension_namespaces');
+  const row = await namespaces.findOne(key);
+  const event = row?.lifecycleAuditPending;
+  if (!event) return;
+  await db.collection('extension_lifecycle_events').updateOne(
+    { _id: `${key._id}:${event.generation}` },
+    { $setOnInsert: { ...event, namespaceId: key._id, license: key.license,
+      branch_id: key.branch_id, extensionId: key.extensionId } },
+    { upsert: true }
+  );
+  await namespaces.updateOne({ ...key, 'lifecycleAuditPending.generation': event.generation },
+    { $unset: { lifecycleAuditPending: '' } });
+}
+async function readLifecycleAudit(db, scope, descriptor, actor, beforeGeneration = Number.MAX_SAFE_INTEGER) {
+  if (!actor.permissions?.includes('manage')) fail('extension_manage_required', 403);
+  if (!Number.isSafeInteger(beforeGeneration) || beforeGeneration < 1)
+    fail('extension_audit_cursor_invalid', 422);
+  const key = identity(scope, descriptor.id);
+  await flushLifecycleAudit(db, key);
+  return db.collection('extension_lifecycle_events').find({
+    namespaceId: key._id, generation: { $lt: beforeGeneration },
+  }).sort({ generation: -1 }).limit(50).toArray();
+}
 async function setEnabled(db, scope, descriptor, actor, enabled) {
   if (!actor.permissions?.includes('manage')) fail('extension_manage_required', 403);
   if (typeof enabled !== 'boolean') fail('extension_enabled_invalid', 422);
@@ -362,19 +388,27 @@ async function setEnabled(db, scope, descriptor, actor, enabled) {
   } catch (error) {
     if (error.code !== 11000) throw error;
   }
+  await flushLifecycleAudit(db, key);
   const row = await collection.findOne(key);
   if (row.pending) fail('extension_operation_in_progress');
   if ((row.lifecycle?.enabled !== false) === enabled)
     return { enabled, generation: row.lifecycle?.generation || 0 };
   const generation = (row.lifecycle?.generation || 0) + 1;
   if (!Number.isSafeInteger(generation)) fail('extension_lifecycle_sequence_exhausted');
+  const changedAt = new Date();
   const changed = await collection.updateOne({
     ...key,
     pending: { $exists: false },
+    lifecycleAuditPending: { $exists: false },
     'lifecycle.generation': row.lifecycle?.generation === undefined
       ? { $exists: false } : row.lifecycle.generation,
-  }, { $set: { lifecycle: { enabled, generation, actorId, changedAt: new Date() } } });
+  }, { $set: {
+    lifecycle: { enabled, generation, actorId, changedAt },
+    lifecycleAuditPending: { generation, actorId, changedAt,
+      action: enabled ? 'enabled' : 'disabled', version: descriptor.version },
+  } });
   if (changed.modifiedCount !== 1) fail('extension_lifecycle_conflict');
+  await flushLifecycleAudit(db, key);
   return { enabled, generation };
 }
-module.exports = { readNamespace, executeNamespace, recoverNamespace, setEnabled };
+module.exports = { readNamespace, executeNamespace, recoverNamespace, setEnabled, readLifecycleAudit };

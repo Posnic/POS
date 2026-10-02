@@ -126,6 +126,21 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       respondError(res, error);
     }
   });
+  router.get('/:extensionId/lifecycle-history', async (req, res) => {
+    try {
+      if (req.isApiKey || !access.allowed(req.user, 'extensions', 'manage'))
+        access.fail('Extension management permission required.', 403);
+      const scope = await access.context(req);
+      if (Object.keys(req.query).some(key => key !== 'before') ||
+          (req.query.before !== undefined && !/^[1-9][0-9]{0,15}$/.test(req.query.before)))
+        access.fail('Invalid lifecycle history cursor.', 422);
+      const events = await namespace.readLifecycleAudit(req.db, scope,
+        { id: req.params.extensionId }, { permissions: ['manage'] },
+        req.query.before === undefined ? undefined : Number(req.query.before));
+      res.set('Cache-Control', 'no-store').json({ events,
+        next: events.length === 50 ? events[events.length - 1].generation : null });
+    } catch (error) { respondError(res, error); }
+  });
   router.post('/:extensionId/enabled', async (req, res) => {
     try {
       if (req.isApiKey || !access.allowed(req.user, 'extensions', 'manage'))

@@ -8,6 +8,7 @@ const {
   executeNamespace,
   recoverNamespace,
   setEnabled,
+  readLifecycleAudit,
 } = require('../src/services/extension-namespace');
 let mongo, client, db;
 before(async () => {
@@ -48,6 +49,59 @@ function fixture() {
   return { scope, actor, descriptor, input };
 }
 const noEffect = { executeEffect: async () => ({ applied: true }) };
+
+test('lifecycle audit survives archive failure and retries without losing or duplicating a transition', async () => {
+  const f = fixture();
+  const broken = { collection(name) {
+    if (name === 'extension_lifecycle_events') return { updateOne: async () => { throw Error('archive unavailable'); } };
+    return db.collection(name);
+  } };
+  await assert.rejects(setEnabled(broken, f.scope, f.descriptor, f.actor, false), /archive unavailable/);
+  const row = await db.collection('extension_namespaces').findOne({ license: f.scope.license });
+  assert.equal(row.lifecycle.enabled, false);
+  assert.equal(row.lifecycleAuditPending.generation, 1);
+  await setEnabled(db, f.scope, f.descriptor, f.actor, false);
+  await setEnabled(db, f.scope, f.descriptor, f.actor, true);
+  const events = await readLifecycleAudit(db, f.scope, f.descriptor, f.actor);
+  assert.deepEqual(events.map(e => [e.generation, e.action]), [[2, 'enabled'], [1, 'disabled']]);
+  assert.equal(events[0].actorId, f.actor.userId);
+  assert.equal(events[0].version, f.descriptor.version);
+  assert.equal(events[0].changedAt instanceof Date, true);
+  assert.equal((await readLifecycleAudit(db, f.scope, f.descriptor, f.actor, 2)).length, 1);
+  assert.deepEqual(await readLifecycleAudit(db, { ...f.scope, branchId: new ObjectId() }, f.descriptor, f.actor), []);
+  await assert.rejects(readLifecycleAudit(db, f.scope, f.descriptor, { permissions: ['read'] }), /extension_manage_required/);
+  assert.equal((await db.collection('extension_namespaces').findOne({ _id: row._id })).lifecycleAuditPending, undefined);
+});
+
+test('lifecycle audit resumes after archive succeeds but outbox cleanup fails', async () => {
+  const f = fixture();
+  const broken = { collection(name) {
+    const collection = db.collection(name);
+    return new Proxy(collection, { get(target, property) {
+      if (name === 'extension_namespaces' && property === 'updateOne') return async (filter, update, options) => {
+        if (update.$unset?.lifecycleAuditPending !== undefined) throw Error('cleanup interrupted');
+        return target.updateOne(filter, update, options);
+      };
+      const value = target[property];
+      return typeof value === 'function' ? value.bind(target) : value;
+    } });
+  } };
+  await assert.rejects(setEnabled(broken, f.scope, f.descriptor, f.actor, false), /cleanup interrupted/);
+  await setEnabled(db, f.scope, f.descriptor, f.actor, true);
+  assert.equal((await readLifecycleAudit(db, f.scope, f.descriptor, f.actor)).length, 2);
+});
+
+test('concurrent lifecycle requests cannot overwrite an unarchived event', async () => {
+  const f = fixture();
+  await Promise.allSettled(Array.from({ length: 12 }, () =>
+    setEnabled(db, f.scope, f.descriptor, f.actor, false)));
+  await setEnabled(db, f.scope, f.descriptor, f.actor, false);
+  await Promise.allSettled(Array.from({ length: 12 }, () =>
+    setEnabled(db, f.scope, f.descriptor, f.actor, true)));
+  await setEnabled(db, f.scope, f.descriptor, f.actor, true);
+  assert.deepEqual((await readLifecycleAudit(db, f.scope, f.descriptor, f.actor))
+    .map(event => [event.generation, event.action]), [[2, 'enabled'], [1, 'disabled']]);
+});
 
 test('disable retains state, fences stale planners and allows repeated reinstall-style enable cycles', async () => {
   const f = fixture();
