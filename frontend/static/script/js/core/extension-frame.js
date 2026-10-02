@@ -35,7 +35,11 @@
     frame.title = options.title || "Extension";
     frame.setAttribute("sandbox", "allow-scripts");
     frame.setAttribute("referrerpolicy", "no-referrer");
-    frame.style.cssText = "width:100%;min-height:760px;border:0;display:block";
+    frame.style.cssText = "width:100%;min-height:420px;border:0;display:block";
+    function resizeFrame() {
+      if (!closed) frame.style.height = Math.max(420, window.innerHeight - frame.getBoundingClientRect().top - 12) + "px";
+    }
+    window.addEventListener("resize", resizeFrame);
     function reply(value) {
       if (!closed) port.postMessage(value);
     }
@@ -116,10 +120,12 @@
       view.script.replace(/<\/script/gi, "<\\/script") +
       "</script></body></html>";
     container.replaceChildren(frame);
+    resizeFrame();
     return {
       frame: frame,
       destroy: function () {
         closed = true;
+        window.removeEventListener("resize", resizeFrame);
         port.close();
         channel.port2.close();
         pending.clear();
