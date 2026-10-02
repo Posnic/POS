@@ -7213,6 +7213,7 @@ class SalesController extends BaseController {
         saleId: req.body.saleId,
         branchId: req.body.branchId,
         items: req.body.items,
+        all: req.body.all === true,
         actor: req.user?.id || req.user?._id || 'Captain',
       });
       return out.status
