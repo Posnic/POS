@@ -1162,6 +1162,9 @@
         if (PosnicPro.sales.editSaleAction === true) {
             PosnicPro.sales.recentMenu.setEditSalesDetails();
         }
+        // Imported/catalogue products may omit discount fields entirely.
+        params.discount_amount = Number(params.discount_amount) || 0;
+        params.discount_percentage = Number(params.discount_percentage) || 0;
         var addSalesLineDiscount = (params.discount_amount > 0) ? params.discount_amount : params.discount_percentage;
         var Discount = (params.discount_amount > 0) ? params.discount_amount : params.selling_price * (params.discount_percentage / 100);
         var currencySign = PosnicPro.local.get('currencySign');
@@ -11579,10 +11582,16 @@ PosnicPro.sales.refreshCustomerAccount = function () {
     var id = String($('#sales_new_customer_id').val() || '');
     var request = PosnicPro.sales._accountRequest = (PosnicPro.sales._accountRequest || 0) + 1;
     var target = $('.sale-customer-account').empty().hide();
+    var creditEnabled = function () {
+        try { return JSON.parse(PosnicPro.local.get('general_settings') || '{}').module_credit_enable !== false; }
+        catch (e) { return true; }
+    };
+    if (!creditEnabled()) return;
+    var branch = PosnicPro.local.get('branch_id_set');
     if (!/^[a-f0-9]{24}$/i.test(id)) return;
     var t = function (key, fallback) { return PosnicPro.i18n.t(key, fallback); };
     target.text(t('lang_loading', 'Loading…')).show();
-    var current = function () { return request === PosnicPro.sales._accountRequest && String($('#sales_new_customer_id').val()) === id; };
+    var current = function () { return creditEnabled() && branch === PosnicPro.local.get('branch_id_set') && request === PosnicPro.sales._accountRequest && String($('#sales_new_customer_id').val()) === id; };
     var failed = function () {
         if (current()) target.text(t('lang_account_balance_unavailable', 'Previous account balance unavailable. Check customer details.')).show();
     };

@@ -2958,6 +2958,7 @@ PosnicPro = {
          * two thirds width beside a gap.
          */
         var creditOn = on('module_credit_enable');
+        if (!creditOn) $('.sale-customer-account').empty().hide();
         $('#dashboard_dues_col').toggle(creditOn);
         $('#dashboard_best_col').toggleClass('col-md-8', creditOn).toggleClass('col-md-12', !creditOn);
         $('#manage_li_marketingmodule').toggle(on('module_marketing_enable'));
