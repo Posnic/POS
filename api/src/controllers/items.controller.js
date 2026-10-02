@@ -2526,6 +2526,32 @@ class ItemsController extends BaseController {
    * read: somebody who cannot edit an item has no reason to spend the shop's
    * balance drafting copy for one.
    */
+  async aiTranslation(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false)
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      await this.ensureContext(req);
+      const context = { branchId: this.model?.branchId, licenseId: this.model?.licenseId };
+      if (!context.branchId) return this.error(res, 'Branch context is required', 400);
+      const result = await require('../services/ai-item-translation').draft(
+        req.body || {},
+        context
+      );
+      if (!result.status) return this.error(res, result.message, 400);
+      return this.success(res, result.data, 'Translation ready for review');
+    } catch (_) {
+      return this.error(res, 'Could not suggest a translation. Try again.', 500);
+    }
+  }
+
+  async pricePreview(req, res) {
+    try {
+      return this.success(res, require('../services/item-price-preview').preview(req.body || {}));
+    } catch (error) {
+      return this.error(res, error.message, 400);
+    }
+  }
+
   async aiDescription(req, res) {
     try {
       if (req.user?.access?.item?.write === false) {

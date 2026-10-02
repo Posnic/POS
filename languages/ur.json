@@ -1,4 +1,12 @@
 {
+  "lang_item_zero_untracked_help": "اسٹاک کی مقدار گنے بغیر یہ آئٹم فروخت کریں۔",
+  "lang_item_zero_enter_help": "اپنے پاس موجود مقدار شامل کریں، پھر محفوظ کریں۔",
+  "lang_item_zero_enter": "ابتدائی اسٹاک درج کریں",
+  "lang_item_zero_title": "ابھی ابتدائی اسٹاک نہیں ہے",
+  "lang_item_zero_out": "اسٹاک ختم کے طور پر محفوظ کریں",
+  "lang_item_zero_untracked": "اسٹاک کا حساب نہ رکھیں",
+  "lang_item_sell_out_of_stock": "اسٹاک ختم ہونے پر بھی فروخت کریں",
+  "lang_item_track_stock": "اسٹاک کی مقدار کا حساب رکھیں",
   "lang_Addvariants": "شامل کریں",
   "lang_action_edit": "ترمیم کریں",
   "lang_add_title": "شامل کریں",

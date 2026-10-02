@@ -530,6 +530,9 @@
   "Could not read the print queue": [
     "src/repositories/print-job.repository.js"
   ],
+  "Could not read the translation. Your existing text is unchanged. Try again.": [
+    "src/services/ai-item-translation.js"
+  ],
   "Could not read what needs attention": [
     "src/repositories/print-job.repository.js"
   ],
@@ -755,6 +758,9 @@
   ],
   "Enter a valid email address": [
     "app.js"
+  ],
+  "Enter an item name and choose a different translation language.": [
+    "src/services/ai-item-translation.js"
   ],
   "Enter how many minutes, from 0 to 1440": [
     "src/repositories/item.repository.js"

@@ -728,6 +728,15 @@ describe('CategoryRepository (class, extends BaseModel)', () => {
   // ── findByBranchWithItems ─────────────────────────────────────────────────
 
   describe('findByBranchWithItems', () => {
+    test('keeps categories sellable when negative-stock items go below zero', async () => {
+      CategoryModel.aggregate.mockResolvedValueOnce([]);
+      await repository.findByBranchWithItems(FAKE_BRANCH_ID);
+      const pipeline = CategoryModel.aggregate.mock.calls[0][0];
+      const match = pipeline.find((stage) => stage.$lookup).$lookup.pipeline[0].$match;
+      expect(match.$or).toContainEqual({ negative_stock: true });
+      expect(match.$or).toContainEqual({ track_inventory: false });
+      expect(match['branch_access.branch_id']).toBeDefined();
+    });
     test('calls model.aggregate with complex pipeline', async () => {
       CategoryModel.aggregate.mockResolvedValueOnce([FAKE_CATEGORY]);
       await repository.findByBranchWithItems(FAKE_BRANCH_ID);
