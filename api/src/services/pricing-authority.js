@@ -275,6 +275,7 @@ function menuQuote(product, branch = {}, venue) {
   };
 }
 module.exports = {
+  isVariable,
   resolve,
   calculate,
   assertPrice,

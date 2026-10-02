@@ -3811,6 +3811,9 @@ PosnicPro.kotorder = {
                 const $activePerson = $('#kot_order_persons_list .person_select.active');
                 if ($activePerson.length) {
                     totalSelected = parseInt($activePerson.data('id'), 10) || 0;
+                } else {
+                    totalSelected = Number(PosnicPro.kotorder.kotPersonCount) ||
+                        Number(PosnicPro.kotorder.selectedPerson) || 0;
                 }
             }
         }
