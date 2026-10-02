@@ -222,7 +222,7 @@ test('closure resumes its durable intent after interruption', async () => {
   expect(recovered.closing).toBeNull();
 });
 
-test('paid legacy receipts stay closed on upgrade while newly paid floor orders remain for cleaning', async () => {
+test('paid legacy and enrolled dine-in receipts do not occupy the floor', async () => {
   const table = await service.update(req({ tableorder_value: 'T1' }));
   await db.collection('sales').insertOne({
     branch_id: branch,
@@ -240,7 +240,7 @@ test('paid legacy receipts stay closed on upgrade while newly paid floor orders 
     payment_status: 'Paid',
     floor_lifecycle: true,
   });
-  expect((await service.list(req())).tables[0].status).toBe('occupied');
+  expect((await service.list(req())).tables[0].status).toBe('available');
 });
 
 test('neighbour settings use table identities and survive renaming and unrelated edits', async () => {
@@ -307,7 +307,7 @@ test('seating claims are visible on every member and block table edits and manua
     license,
     table_number: 'T1',
     sale_process: 'KOT',
-    payment_status: 'Paid',
+    payment_status: 'Unpaid',
     floor_lifecycle: true,
     person_count: 4,
   });
@@ -318,6 +318,7 @@ test('seating claims are visible on every member and block table edits and manua
   expect(
     occupied.every((table) => table.status === 'occupied' && table.orders[0].id === String(orderId))
   ).toBe(true);
+  await db.collection('sales').updateOne({ _id: orderId }, { $set: { payment_status: 'Paid' } });
   await service.close(
     req({
       id: first.id,

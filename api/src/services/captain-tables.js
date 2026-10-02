@@ -58,6 +58,7 @@ function view(row, orders = [], claim = null) {
 }
 async function list(req) {
   const c = await scope(req);
+  await seating.releaseSettled(req.db, c);
   const [tables, orders, claims] = await Promise.all([
     req.db
       .collection('tableorder')
@@ -66,7 +67,10 @@ async function list(req) {
       .toArray(),
     req.db
       .collection('sales')
-      .find(active(c), { projection: { table_number: 1, person_count: 1, payment_status: 1 } })
+      .find(
+        { ...active(c), ...require('../helpers/floor-eligibility').tableOccupancy() },
+        { projection: { table_number: 1, person_count: 1, payment_status: 1 } }
+      )
       .toArray(),
     activeClaims(req.db, c),
   ]);

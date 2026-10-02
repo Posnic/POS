@@ -1990,7 +1990,7 @@ const getTablesWithActiveOrders = async (branchId) => {
       {
         $match: {
           branch_id: branchObjectId,
-          ...require('../helpers/floor-eligibility').floorEligibility(),
+          ...require('../helpers/floor-eligibility').tableOccupancy(),
         },
       },
       {
