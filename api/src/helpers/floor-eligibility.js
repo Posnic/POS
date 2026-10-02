@@ -15,4 +15,20 @@ function floorEligibility() {
     ],
   };
 }
-module.exports = { floorEligibility };
+// Payment completion releases dine-in occupancy. Keep takeaway preparation and
+// inconsistent/partial payment records active rather than hiding money still due.
+function settledDineIn() {
+  return {
+    payment_status: 'Paid',
+    dine_type: { $not: /^take[\s_-]*away$/i },
+    $expr: {
+      $and: ['payment_pending', 'balance'].map((field) => ({
+        $lte: [{ $convert: { input: { $ifNull: ['$' + field, 0] }, to: 'double', onError: 1 } }, 0],
+      })),
+    },
+  };
+}
+function tableOccupancy() {
+  return { ...floorEligibility(), $nor: [settledDineIn()] };
+}
+module.exports = { floorEligibility, tableOccupancy, settledDineIn };

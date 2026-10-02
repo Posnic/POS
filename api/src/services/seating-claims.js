@@ -149,6 +149,7 @@ async function reserveClaim(
   mergeTarget = null,
   adopting = null
 ) {
+  await releaseSettled(db, scope);
   await reconcileExpiredEditCapacity(db, scope);
   const id = requestId(input.request_id);
   const takeaway = moving && input.dine_type === 'Take away';
@@ -299,7 +300,7 @@ async function reserveClaim(
       {
         branch_id: scope.branchId,
         license: scope.license,
-        ...require('../helpers/floor-eligibility').floorEligibility(),
+        ...require('../helpers/floor-eligibility').tableOccupancy(),
         table_number: { $in: tables.map((row) => row.tableorder_value) },
         ...(moving ? { _id: { $ne: new ObjectId(moving.order_id) } } : {}),
         ...(adopting ? { _id: { $ne: adopting._id } } : {}),
@@ -849,7 +850,7 @@ async function cancel(db, scope, id, actor) {
     fail('Reconcile the submitted order before releasing its tables.', 409);
   await archive(db, scope, id);
 }
-async function release(db, scope, id, { transferId } = {}) {
+async function release(db, scope, id, { transferId, settled = false } = {}) {
   requestId(id);
   const claim = await find(db, scope, id);
   if (!claim) fail('Seating request not found.', 404);
@@ -866,6 +867,16 @@ async function release(db, scope, id, { transferId } = {}) {
     license: scope.license,
   });
   if (!sale?.floor_closed_at) fail('Close the order before releasing its tables.', 409);
+  if (settled) {
+    const eligible = await db.collection('sales').findOne({
+      _id: sale._id,
+      branch_id: scope.branchId,
+      license: scope.license,
+      ...require('../helpers/floor-eligibility').settledDineIn(),
+      floor_auto_released: true,
+    });
+    if (!eligible) fail('Record the remaining payment first.', 409);
+  }
   let transferred = false;
   if (transferId) {
     const journal = await db.collection('captain_payment_plans').findOne({
@@ -905,7 +916,7 @@ async function release(db, scope, id, { transferId } = {}) {
     table_number: { $in: claim.labels },
   });
   const cancelled = String(sale.sale_process).toLowerCase() === 'cancelled';
-  const detached = cancelled || transferred;
+  const detached = cancelled || transferred || settled;
   if (remainingOrders && !detached)
     fail('Close the remaining orders before releasing this table.', 409);
   const otherClaims =
@@ -968,7 +979,7 @@ async function release(db, scope, id, { transferId } = {}) {
       },
       {
         $set: {
-          service_state: 'cleaning',
+          service_state: settled ? 'available' : 'cleaning',
           last_seating_release_generation: claim.generation,
           updated_date: new Date(),
         },
@@ -990,6 +1001,55 @@ async function release(db, scope, id, { transferId } = {}) {
     { $set: { 'claims.$.state': 'released' }, $inc: { revision: 1 } }
   );
   await archive(db, scope, id);
+}
+// Recover already-paid seating claims when the floor is read or reused. Only
+// floor metadata changes: receipts, payments, items and stock remain untouched.
+async function releaseSettled(db, scope) {
+  const claims = await read(db, scope);
+  for (const claim of claims) {
+    if (
+      !['submitting', 'releasing'].includes(claim.state) ||
+      !claim.order_id ||
+      claim.moving_to ||
+      claim.guest_update ||
+      claim.closing
+    )
+      continue;
+    const filter = {
+      _id: new ObjectId(claim.order_id),
+      branch_id: scope.branchId,
+      license: scope.license,
+      ...require('../helpers/floor-eligibility').settledDineIn(),
+    };
+    const sale = await db.collection('sales').findOne(filter);
+    if (!sale || (sale.floor_closed_at && !sale.floor_auto_released)) continue;
+    if (sale.captain_payment_plan) {
+      const plan = await db.collection('captain_payment_plans').findOne({
+        _id: sale.captain_payment_plan,
+        branch_id: scope.branchId,
+        license: scope.license,
+      });
+      if (!plan || plan.state !== 'paid' || plan.projectedVersion !== plan.version) continue;
+    }
+    if (!sale.floor_closed_at) {
+      const changed = await db.collection('sales').updateOne(
+        {
+          ...filter,
+          floor_closed_at: { $exists: false },
+          updated_date: sale.updated_date === undefined ? { $exists: false } : sale.updated_date,
+        },
+        {
+          $set: {
+            floor_closed_at: new Date(),
+            floor_auto_released: true,
+            updated_date: new Date(),
+          },
+        }
+      );
+      if (!changed.matchedCount) continue;
+    }
+    await release(db, scope, claim.id, { settled: true });
+  }
 }
 // A legacy source has no seating claim. Create a deterministic, temporary
 // release claim so the existing branch revision fence also protects cleanup.
@@ -1742,6 +1802,7 @@ async function reconcileExpiredEditCapacity(db, scope, now = new Date()) {
 }
 
 module.exports = {
+  releaseSettled,
   reserveEditCapacity,
   reconcileEditCapacity,
   reconcileExpiredEditCapacity,

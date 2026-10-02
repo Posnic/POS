@@ -70,15 +70,15 @@ test('the table now appears on the handset home screen', () => {
    * THE ORIGINAL BUG. The floor queried payment_status 'Unpaid'.
    * A captain order stored "cash", which is not that,
    * so a waiter took an order and the floor showed nothing. The shared
-   * service policy now also keeps enrolled paid tables open until closed.
+   * occupancy policy releases fully paid dine-in tables.
    */
   const service = fs.readFileSync(
     path.join(__dirname, '..', 'api', 'src', 'services', 'sale.service.js'),
     'utf8'
   );
   const tables = service.slice(service.indexOf('const getTablesWithActiveOrders'));
-  assert.match(tables, /floorEligibility\(\)/, 'the floor query must use the shared open-service policy');
-  const filter = require('../api/src/helpers/floor-eligibility').floorEligibility();
+  assert.match(tables, /tableOccupancy\(\)/, 'the floor query must use the shared open-service policy');
+  const filter = require('../api/src/helpers/floor-eligibility').tableOccupancy();
   assert.deepStrictEqual(filter.$or[0], { sale_process: 'KOT', payment_status: { $nin: ['Paid', 'Cancelled'] } });
   assert.deepStrictEqual(filter.floor_closed_at, { $exists: false });
   /* And the writer now produces exactly that word. */

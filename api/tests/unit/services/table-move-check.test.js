@@ -56,7 +56,7 @@ test('current occupants consume seats while closed orders and other branches do 
   await expect(check(db, order, table, {})).rejects.toMatchObject({ status: 409 });
   await expect(check(db, order, { ...table, max_capacity: 5 }, {})).resolves.toBeUndefined();
 });
-test('paid orders still on the floor use seats; the moving order does not count twice', async () => {
+test('settled dine-in orders free their seats; the moving order does not count twice', async () => {
   await db.collection('sales').insertMany([
     { ...order, table_number: '12', sale_process: 'KOT' },
     {
@@ -69,7 +69,7 @@ test('paid orders still on the floor use seats; the moving order does not count 
       person_count: 3,
     },
   ]);
-  await expect(check(db, order, table, {})).rejects.toMatchObject({ status: 409 });
+  await expect(check(db, order, table, {})).resolves.toBeUndefined();
   await expect(check(db, order, { ...table, max_capacity: 5 }, {})).resolves.toBeUndefined();
 });
 
