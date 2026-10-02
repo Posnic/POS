@@ -1,0 +1,7 @@
+Order ID,Order Date,Product Name,Quantity,Unit Price,Currency,Order Status,SKU,Customer Name,Customer Email
+,2026-09-05,Travel Bottle,1,15.00,USD,paid,SYNTH-BOTTLE-001,Taylor Reed,taylor.reed@example.test
+SYNTH-SS-INVALID-2,not-a-date,Phone Stand,1,20.00,USD,paid,SYNTH-STAND-001,Morgan Hill,morgan.hill@example.test
+SYNTH-SS-INVALID-3,2026-09-07,Desk Mat,0,25.00,USD,paid,SYNTH-MAT-001,Riley Chen,riley.chen@example.test
+SYNTH-SS-INVALID-4,2026-09-08,Water Bottle,2,-5.00,USD,paid,SYNTH-BOTTLE-002,Jamie Fox,jamie.fox@example.test
+SYNTH-SS-INVALID-5,2026-09-09,Key Holder,1,8.00,,paid,SYNTH-KEY-001,Drew Kim,drew.kim@example.test
+SYNTH-SS-INVALID-6,2026-09-10,Sticker Pack,1,4.00,USD,unknown,SYNTH-STICKER-001,Robin Shah,robin.shah@example.test

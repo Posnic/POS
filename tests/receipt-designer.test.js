@@ -199,7 +199,7 @@ test('adjacent half-width fields share a row, preserve styling and omit empty fi
         assert.equal(row.length, 1); assert.equal(row.children().length, 2);
         assert.equal(row.text(), 'Session: LunchCovers: 2');
         assert.equal(row.find('.rd-field-session').css('font-size'), '13px');
-        assert.equal(row.find('.rd-field-session').css('font-weight'), 'bold');
+        assert.ok(['bold', '700'].includes(row.find('.rd-field-session').css('font-weight')));
         const empty = $('<div>').html(engine.render({ ...sale, serving_session: ' \n ' }, format, false));
         assert.equal(empty.find('.rd-field-session,.rd-field-row').length, 0);
         assert.equal(empty.find('.rd-field-covers').text(), 'Covers: 2');

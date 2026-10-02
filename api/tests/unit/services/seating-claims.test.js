@@ -251,6 +251,27 @@ test('closed sale releases every member for cleaning and archives the retry reco
     { name: 'Dish', qty: 2 },
   ]);
 });
+
+test('manual cleaning policy releases cancelled seating to available without changing the sale', async () => {
+  delete scope.branch;
+  await db
+    .collection('branches')
+    .insertOne({ _id: scope.branchId, license: scope.license, captain_table_cleaning: false });
+  const claim = await seating.reserve(db, scope, request());
+  const saleId = new ObjectId();
+  await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    sale_process: 'cancelled',
+    payment_status: 'Cancelled',
+    floor_closed_at: new Date(),
+  });
+  await seating.release(db, scope, claim.id);
+  expect(await db.collection('tableorder').countDocuments({ service_state: 'available' })).toBe(2);
+  expect((await db.collection('sales').findOne({ _id: saleId })).payment_status).toBe('Cancelled');
+});
 test('paid alone, missing sale and other-branch sale cannot release the claim', async () => {
   const claim = await seating.reserve(db, scope, request());
   const saleId = new ObjectId();
@@ -1975,6 +1996,25 @@ async function legacySale(guests = 2) {
   await db.collection('sales').insertOne(sale);
   return sale;
 }
+
+test('floor refresh recovers a committed cancellation without repeating kitchen changes', async () => {
+  const order = await movableOrder();
+  await db.collection('sales').updateOne(
+    { _id: order._id },
+    {
+      $set: {
+        sale_process: 'cancelled',
+        payment_status: 'Cancelled',
+        floor_closed_at: new Date(),
+        changes: [{ items: [{ process: 'cancel', item_quantity: 1 }] }],
+      },
+    }
+  );
+  await seating.releaseSettled(db, scope);
+  await seating.releaseSettled(db, scope);
+  expect((await seating.find(db, scope, order.seating_request_id)).state).toBe('released');
+  expect((await db.collection('sales').findOne({ _id: order._id })).changes).toHaveLength(1);
+});
 
 test('existing zero-cover desktop orders can update dishes without inventing guests', async () => {
   const order = await legacySale(0);
