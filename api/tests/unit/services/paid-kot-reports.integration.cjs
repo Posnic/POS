@@ -43,7 +43,27 @@ beforeAll(async () => {
   sales = db.collection('sales');
   model = {
     aggregate: (pipeline) => sales.aggregate(pipeline).toArray(),
-    find: (filter) => ({ select: () => ({ lean: () => sales.find(filter).toArray() }) }),
+    find: (filter) => {
+      const cursor = sales.find(filter);
+      const query = {
+        select: () => query,
+        sort: (value) => {
+          cursor.sort(value);
+          return query;
+        },
+        skip: (value) => {
+          cursor.skip(value);
+          return query;
+        },
+        limit: (value) => {
+          cursor.limit(value);
+          return query;
+        },
+        lean: () => cursor.toArray(),
+      };
+      return query;
+    },
+    countDocuments: (filter) => sales.countDocuments(filter),
   };
 });
 afterAll(async () => {
@@ -152,4 +172,37 @@ test('report-specific OR filters cannot overwrite the paid-KOT condition', async
     (await sales.find(filter).toArray()).map((row) => row.sales_id),
     ['paid-kot']
   );
+});
+
+test('payment transactions include desktop KOTs but not unrecorded guest-check allocations', async () => {
+  await sales.insertMany([
+    bill('unrecorded-transfer', 'KOT', 'Paid', 500, {
+      captain_transfer_allocation: {},
+      captain_payments: [],
+    }),
+    bill('recorded-transfer', 'KOT', 'Paid', 600, {
+      captain_transfer_allocation: {},
+      captain_payments: [{ amount: 600 }],
+      paid_amount: 600,
+    }),
+  ]);
+  const repository = require('../../../src/repositories/sale.repository');
+  const { runWithRequestContext } = require('../../../src/utils/request-context');
+  const result = await runWithRequestContext({ license, currentBranch: branch }, () =>
+    repository.paymentSalesTransactionReportPage(
+      {
+        branchid: [String(branch)],
+        starting_date: '2026/10/02 12:00 AM',
+        ending_date: '2026/10/02 11:59 PM',
+      },
+      { limit: 50 },
+      { SaleModel: model }
+    )
+  );
+  assert.equal(result.status, true);
+  assert.deepEqual(result.data.list.map((row) => row.sales_id).sort(), [
+    'paid-kot',
+    'posted',
+    'recorded-transfer',
+  ]);
 });

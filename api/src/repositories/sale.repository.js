@@ -4009,6 +4009,14 @@ class SalesRepository {
       const firstClause = {
         branch_id: { $in: objectBranchIds },
         ...reportableSales(),
+        // Transferred guest checks are transactions only once their allocation
+        // has a recorded tender. Ordinary desktop KOT bills have no allocation
+        // and do not require a Captain-specific payment ledger.
+        $or: [
+          { sale_process: { $ne: 'KOT' } },
+          { captain_transfer_allocation: { $exists: false } },
+          { 'captain_payments.0': { $exists: true } },
+        ],
       };
 
       const secondClause = {
