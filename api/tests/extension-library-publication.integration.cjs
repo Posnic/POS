@@ -7,7 +7,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { MongoClient } = require('mongodb');
-const { zip, signedEntries, options } = require('./fixtures/signed-extension.cjs');
+const { zip, signedEntries, sourceEntries, options } = require('./fixtures/signed-extension.cjs');
 const { createLibraryStorage } = require('../src/services/extension-library-storage');
 const { publishPrivateRelease } = require('../src/services/extension-library-publication');
 const library = require('../src/services/extension-private-library');
@@ -57,4 +57,33 @@ test('published version cannot be replaced, audience-expanded or restored after 
   assert.equal(release.status, 'withdrawn');
   assert.deepEqual(release.organizations, ['shop-owner']);
   assert.deepEqual(await f.storage.read(release.artifacts.package.sha256), f.input.package);
+});
+
+test('signed source binds to exact runtime and needs its own revocable access grant', async t => {
+  const f = await fixture(t);
+  const { readExtensionArchive } = require('../src/services/extension-archive');
+  const runtime = await readExtensionArchive(f.input.package, options);
+  const source = zip(sourceEntries(runtime.packageDigest));
+  const release = await f.publish({ ...f.input, source });
+  const actor = { id: 'source-owner' };
+  await f.db.collection('library_memberships').insertOne({ organizationId: 'shop-owner', userId: actor.id, status: 'active' });
+  await f.db.collection('library_entitlements').insertOne({ organizationId: 'shop-owner', extensionId: release.extensionId,
+    status: 'active', releaseIds: [release.releaseId], sourceAccess: false });
+  await assert.rejects(library.issueDownload(f.db, actor, 'shop-owner', release.releaseId, 'source'), /unavailable/);
+  await f.db.collection('library_entitlements').updateOne({ organizationId: 'shop-owner' }, { $set: { sourceAccess: true } });
+  const ticket = await library.issueDownload(f.db, actor, 'shop-owner', release.releaseId, 'source');
+  assert.deepEqual((await library.download(f.db, actor, ticket.token, f.storage.read)).bytes, source);
+  await f.db.collection('library_entitlements').updateOne({ organizationId: 'shop-owner' }, { $set: { sourceAccess: false } });
+  await assert.rejects(library.download(f.db, actor, ticket.token, f.storage.read), /unavailable/);
+  await assert.rejects(readExtensionArchive(source, options));
+});
+
+test('wrong runtime binding and tampered source fail before any artifact is published', async t => {
+  const f = await fixture(t);
+  await assert.rejects(f.publish({ ...f.input, source: zip(sourceEntries('b'.repeat(64))) }), /source_mismatch/);
+  const entries = sourceEntries('b'.repeat(64));
+  entries.find(entry => entry.name === 'src/worker.js').body = Buffer.from('tampered source');
+  await assert.rejects(f.publish({ ...f.input, source: zip(entries) }), /source_invalid/);
+  assert.equal(await f.db.collection('library_releases').countDocuments(), 0);
+  assert.deepEqual(await fs.readdir(f.root), []);
 });

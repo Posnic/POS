@@ -15,7 +15,7 @@ const failure = (code) => Object.assign(new Error(code), { code, status: 422 });
  * executed until every entry and the signed package have been verified.
  * The caller must also bound its HTTP/file input before allocating the buffer.
  */
-async function readExtensionArchive(input, options) {
+async function readArchive(input, options, verifyPackage) {
   if (!Buffer.isBuffer(input) || !input.length || input.length > MAX_ARCHIVE_BYTES)
     throw failure('extension_archive_size_invalid');
   const archive = Buffer.from(input);
@@ -131,7 +131,7 @@ async function readExtensionArchive(input, options) {
         if (!bytes) throw failure('extension_manifest_missing');
         const manifest = JSON.parse(bytes.toString('utf8'));
         files.delete('manifest.json');
-        const metadata = verifyExtensionPackage(manifest, files, options);
+        const metadata = verifyPackage(manifest, files, options);
         // Directory names are structural only; no unsigned empty directories
         // are carried into the installation.
         finished = true;
@@ -149,4 +149,7 @@ async function readExtensionArchive(input, options) {
     zip.readEntry();
   });
 }
-module.exports = { readExtensionArchive, MAX_ARCHIVE_BYTES, MAX_MANIFEST_BYTES };
+const readExtensionArchive = (input, options) => readArchive(input, options, verifyExtensionPackage);
+const readSourceArchive = (input, options) => readArchive(input, options,
+  require('./extension-source-package').verifySourcePackage);
+module.exports = { readExtensionArchive, readSourceArchive, MAX_ARCHIVE_BYTES, MAX_MANIFEST_BYTES };

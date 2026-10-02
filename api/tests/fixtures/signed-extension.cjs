@@ -70,4 +70,17 @@ function signedEntries(extra = []) {
     .toString('base64');
   return [...entries, { name: 'manifest.json', body: Buffer.from(JSON.stringify(manifest)) }];
 }
-module.exports = { zip, signedEntries, options };
+function sourceEntries(runtimePackageDigest) {
+  const entries = [
+    { name: 'source.json', body: Buffer.from(JSON.stringify({ manifestVersion: 1,
+      id: 'posnic.example', version: '1.0.0', runtimePackageDigest, sourceCommit: 'a'.repeat(40) })) },
+    { name: 'README.md', body: Buffer.from('Build and installation instructions') },
+    { name: 'LICENSE', body: Buffer.from('Synthetic test licence') },
+    { name: 'src/worker.js', body: Buffer.from('module.exports = {};') },
+  ];
+  const manifest = { kind: 'extension-source:posnic.example', version: '1.0.0',
+    files: entries.map(entry => ({ path: entry.name, sha256: AssetUpdater.hash(entry.body) })) };
+  manifest.signature = crypto.sign(null, Buffer.from(AssetUpdater.signedPayload(manifest)), keys.privateKey).toString('base64');
+  return [...entries, { name: 'manifest.json', body: Buffer.from(JSON.stringify(manifest)) }];
+}
+module.exports = { zip, signedEntries, sourceEntries, options };
