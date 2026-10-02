@@ -1,4 +1,5 @@
 'use strict';
+const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
 
 const { ObjectId } = require('mongodb');
 const BaseModel = require('../models/base.model');
@@ -79,14 +80,14 @@ async function read(req, range, timezone) {
             license: { $in: variants(scope.license) },
             branch_id: { $in: branches.flatMap((branch) => variants(branch._id)) },
             date: { $gte: from, $lte: to },
-            sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+            ...reportableSales(),
           },
         },
         {
           $group: {
             _id: { $toString: '$branch_id' },
             transactions: { $sum: 1 },
-            amount: { $sum: '$items_total' },
+            amount: { $sum: reportSaleTotal() },
             latest_sale: { $max: '$date' },
           },
         },

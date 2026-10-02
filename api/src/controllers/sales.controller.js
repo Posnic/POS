@@ -1,3 +1,4 @@
+const { reportableSales } = require('../helpers/reportable-sales');
 // src/controllers/sales_controller.js
 const BaseController = require('./base.controller');
 const { clientIp } = require('../utils/client-ip');
@@ -1522,10 +1523,10 @@ class SalesController extends BaseController {
       const SaleModel = this.model || Sale;
       const branchObjectId = new mongoose.Types.ObjectId(branch);
 
-      // PHP uses ONLY date field and specific sale_process - sales_model.php:7088-7095
+      // Use the same posted-sale rule as the dashboard and report exports.
       const match = {
         $and: [
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          reportableSales(),
           period.match('date', filteredDateRange.start_date),
           { branch_id: branchObjectId },
         ],
@@ -1903,6 +1904,7 @@ class SalesController extends BaseController {
       const branchObjectId = new mongoose.Types.ObjectId(branch);
       const match = {
         $and: [
+          reportableSales(),
           {
             $or: [{ branch: branchObjectId }, { branch_id: branchObjectId }],
           },
@@ -2774,7 +2776,7 @@ class SalesController extends BaseController {
       // Initialize match variable outside the if block
       const match = {
         branch_id: { $in: validBranchIds },
-        sale_process: { $in: GRAPH_ALLOWED_SALE_PROCESSES },
+        ...reportableSales(),
         status: { $ne: SALE_STATUS.CANCELLED },
       };
 
@@ -3044,7 +3046,7 @@ class SalesController extends BaseController {
       const match = {
         $and: [
           { branch_id: { $in: branchObjectIds } },
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          reportableSales(),
           {
             date: { $gte: startDate, $lte: endDate },
             license: new ObjectId(req.user.license || req.user.licenseId),
@@ -3204,7 +3206,7 @@ class SalesController extends BaseController {
       const matchConditions = [
         { branch_id: { $in: branchIds } },
         { 'items.item_status': 'instant' }, // Exact match, not regex
-        { sale_process: { $in: ['Add', 'Edit', 'PartialReturn', 'Partial'] } },
+        { ...reportableSales(['Add', 'Edit', 'PartialReturn', 'Partial']) },
       ];
 
       if (Object.keys(dateFilter).length) {
@@ -3414,10 +3416,7 @@ class SalesController extends BaseController {
       }
       const { branchIds, error: branchError } = this.extractBranchObjectIds(req);
       if (branchError) return this.error(res, branchError, 400);
-      const matchConditions = [
-        { branch_id: { $in: branchIds } },
-        { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
-      ];
+      const matchConditions = [{ branch_id: { $in: branchIds } }, reportableSales()];
       if (Object.keys(dateFilter).length) matchConditions.push({ updated_date: dateFilter });
 
       const { rows } = await salesService.getTaxSummaryReportData(
@@ -3619,10 +3618,7 @@ class SalesController extends BaseController {
       }
 
       // PHP uses ONLY branch_id and updated_date - sales_model.php:3867-3874
-      const matchConditions = [
-        { branch_id: { $in: branchIds } },
-        { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
-      ];
+      const matchConditions = [{ branch_id: { $in: branchIds } }, reportableSales()];
 
       // PHP uses ONLY updated_date field (line 3871)
       if (Object.keys(dateFilter).length) {
@@ -3788,7 +3784,7 @@ class SalesController extends BaseController {
             { 'branch._id': { $in: branchIds } },
           ],
         },
-        { sale_process: { $in: GRAPH_ALLOWED_SALE_PROCESSES } },
+        reportableSales(),
         { status: { $ne: SALE_STATUS.CANCELLED } },
       ];
 
@@ -3955,10 +3951,7 @@ class SalesController extends BaseController {
         return this.error(res, branchError, 400);
       }
 
-      const matchConditions = [
-        { branch_id: { $in: branchIds } },
-        { sale_process: { $in: GRAPH_ALLOWED_SALE_PROCESSES } },
-      ];
+      const matchConditions = [{ branch_id: { $in: branchIds } }, reportableSales()];
 
       if (Object.keys(dateFilter).length) {
         matchConditions.push({ updated_date: dateFilter });
@@ -4134,7 +4127,7 @@ class SalesController extends BaseController {
             { 'branch._id': { $in: branchIds } },
           ],
         },
-        { sale_process: { $in: GRAPH_ALLOWED_SALE_PROCESSES } },
+        reportableSales(),
         { status: { $ne: SALE_STATUS.CANCELLED } },
       ];
 
@@ -4278,7 +4271,7 @@ class SalesController extends BaseController {
             { 'branch._id': { $in: branchIds } },
           ],
         },
-        { sale_process: { $in: statuses } },
+        { ...reportableSales(statuses) },
         { status: { $ne: SALE_STATUS.CANCELLED } },
       ];
 

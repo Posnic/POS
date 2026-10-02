@@ -3924,7 +3924,7 @@ PosnicPro = {
          * Anything that is not this exact shape falls through untouched.
          */
         var stamp = (typeof date === 'string')
-            && date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[\sT]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap])\.?m\.?$/i);
+            && date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}),?[\sT]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap])\.?m\.?$/i);
         if (stamp) {
             var hh = parseInt(stamp[4], 10) % 12;
             if (/p/i.test(stamp[7])) { hh += 12; }
