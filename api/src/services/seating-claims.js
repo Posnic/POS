@@ -1201,6 +1201,9 @@ async function forEdit(db, scope, order, next) {
   if (own && next.guests !== undefined && next.guests !== null && next.guests !== '') {
     const guests = Number(next.guests);
     const takeaway = own.tables.length === 0 && own.dine_type === 'Take away';
+    // Older desktop checks allowed an unknown cover count of zero. Editing
+    // their dishes must not require inventing guests; ownership is checked above.
+    if (guests === 0 && Number(order.person_count) === 0) return own;
     if (!Number.isInteger(guests) || (takeaway ? guests !== 0 : guests < 1 || guests > 1000))
       fail('Enter the number of guests.');
     // Existing over-capacity data must not block adding/correcting dishes or
@@ -1250,6 +1253,7 @@ async function forEdit(db, scope, order, next) {
     (next.dine_type || order.dine_type || 'Dine-in') === 'Dine-in'
   ) {
     const guests = Number(next.guests);
+    if (guests === 0 && Number(order.person_count) === 0) return null;
     if (!Number.isInteger(guests) || guests < 1 || guests > 1000)
       fail('Enter the number of guests.');
     if (guests > (Number(order.person_count) || 0)) {
@@ -1661,13 +1665,15 @@ async function reserveEditCapacity(db, scope, order, next, { now = new Date() } 
   const destination = String(next.table ?? order.table_number ?? '');
   const type = next.dine_type || order.dine_type || 'Dine-in';
   if (type !== 'Dine-in' || !destination) return null;
-  if (!Number.isInteger(guests) || guests < 1 || guests > 1000) fail('Enter the number of guests.');
   const sameTable =
     destination === String(order.table_number || '') &&
     (order.dine_type || 'Dine-in') === 'Dine-in';
   // A parked sale has not occupied these seats yet. Sending it to the
   // kitchen must reserve the whole party even when its table/count is unchanged.
   const activatingHold = order.sale_process === 'Hold' && next.sale_process === 'KOT';
+  if (sameTable && !activatingHold && guests === 0 && Number(order.person_count) === 0)
+    return null;
+  if (!Number.isInteger(guests) || guests < 1 || guests > 1000) fail('Enter the number of guests.');
   const extra =
     sameTable && !activatingHold ? guests - Math.max(1, Number(order.person_count) || 1) : guests;
   if (extra <= 0) return null;
