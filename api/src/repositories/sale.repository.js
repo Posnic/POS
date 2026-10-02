@@ -2243,7 +2243,7 @@ class SalesRepository {
         { $match: condition },
         {
           $project: {
-            items_total: 1,
+            items_total: reportSaleTotal(),
             h: {
               $dayOfWeek: {
                 date: '$updated_date',

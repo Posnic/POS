@@ -2877,6 +2877,7 @@ class SalesController extends BaseController {
 
       const match = {
         branch_id: { $in: branchObjectIds },
+        ...reportableSales([...GRAPH_ALLOWED_SALE_PROCESSES, 'FullReturn']),
       };
 
       // Apply session filtering if user has permission and dates are provided
