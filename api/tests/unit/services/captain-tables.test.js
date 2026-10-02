@@ -128,10 +128,10 @@ async function paidTable() {
     },
   };
 }
-test('closing paid orders preserves payment and stock data and leaves the table for cleaning', async () => {
+test('closing paid orders preserves payment and stock data and makes the table available by default', async () => {
   const { orderId, body } = await paidTable();
   const result = await service.close(req(body));
-  expect(result.status).toBe('cleaning');
+  expect(result.status).toBe('available');
   expect(result.orders).toEqual([]);
   const sale = await db.collection('sales').findOne({ _id: orderId });
   expect(sale.payment_status).toBe('Paid');
@@ -218,7 +218,7 @@ test('closure resumes its durable intent after interruption', async () => {
     service.state(req({ id: body.id, version: pending.version, status: 'available' }))
   ).rejects.toThrow('Table changed');
   const recovered = await service.close(req({ ...body, version: pending.version }));
-  expect(recovered.status).toBe('cleaning');
+  expect(recovered.status).toBe('available');
   expect(recovered.closing).toBeNull();
 });
 
@@ -329,7 +329,7 @@ test('seating claims are visible on every member and block table edits and manua
   );
   const closed = (await service.list(req())).tables;
   expect(
-    closed.every((table) => table.status === 'cleaning' && !table.seating && !table.orders.length)
+    closed.every((table) => table.status === 'available' && !table.seating && !table.orders.length)
   ).toBe(true);
   expect(closed.find((table) => table.id === second.id).version).toBe(1);
   await expect(
@@ -380,62 +380,72 @@ test('interrupted group release remains retryable after the sale leaves active o
   await service.close(req(body));
   expect(
     (await service.list(req())).tables.every(
-      (table) => table.status === 'cleaning' && !table.closing
+      (table) => table.status === 'available' && !table.closing
     )
   ).toBe(true);
 });
 
-test('close intent survives interruption before table write and is exposed for screen recovery', async () => {
-  const seating = require('../../../src/services/seating-claims');
-  const table = await service.update(req({ tableorder_value: 'T1', capacity: 4, max_capacity: 4 }));
-  const scope = { branchId: branch, license };
-  const claim = await seating.reserve(db, scope, {
-    request_id: 'seating-close-0001',
-    actor: String(user),
-    table_ids: [table.id],
-    primary_id: table.id,
-    guests: 2,
-  });
-  const id = new ObjectId();
-  await seating.bind(db, scope, claim.id, String(user), String(id));
-  await db.collection('sales').insertOne({
-    _id: id,
-    branch_id: branch,
-    license,
-    table_number: 'T1',
-    seating_request_id: claim.id,
-    sale_process: 'KOT',
-    payment_status: 'Paid',
-    floor_lifecycle: true,
-  });
-  const body = {
-    id: table.id,
-    version: 0,
-    request_id: 'closing-request-0001',
-    orderIds: [String(id)],
-  };
-  const input = req(body),
-    tables = db.collection('tableorder');
-  input.db = {
-    collection(name) {
-      return name === 'tableorder'
-        ? {
-            findOne: (...args) => tables.findOne(...args),
-            updateOne: async () => {
-              throw new Error('interrupted');
-            },
-          }
-        : db.collection(name);
-    },
-  };
-  await expect(service.close(input)).rejects.toThrow('interrupted');
-  const pending = (await service.list(req())).tables[0];
-  expect(pending.closing).toEqual({ request_id: body.request_id, orderIds: body.orderIds });
-  await service.close(req({ ...body, version: pending.version }));
-  const closed = (await service.list(req())).tables[0];
-  expect(closed.status).toBe('cleaning');
-  expect(closed.closing).toBeNull();
-});
+test.each(['available', 'cleaning'])(
+  'close intent %s survives interruption before table write and is exposed for screen recovery',
+  async (afterClose) => {
+    const seating = require('../../../src/services/seating-claims');
+    const table = await service.update(
+      req({ tableorder_value: 'T1', capacity: 4, max_capacity: 4 })
+    );
+    const scope = { branchId: branch, license };
+    const claim = await seating.reserve(db, scope, {
+      request_id: 'seating-close-0001',
+      actor: String(user),
+      table_ids: [table.id],
+      primary_id: table.id,
+      guests: 2,
+    });
+    const id = new ObjectId();
+    await seating.bind(db, scope, claim.id, String(user), String(id));
+    await db.collection('sales').insertOne({
+      _id: id,
+      branch_id: branch,
+      license,
+      table_number: 'T1',
+      seating_request_id: claim.id,
+      sale_process: 'KOT',
+      payment_status: 'Paid',
+      floor_lifecycle: true,
+    });
+    const body = {
+      id: table.id,
+      version: 0,
+      request_id: 'closing-request-0001',
+      afterClose,
+      orderIds: [String(id)],
+    };
+    const input = req(body),
+      tables = db.collection('tableorder');
+    input.db = {
+      collection(name) {
+        return name === 'tableorder'
+          ? {
+              findOne: (...args) => tables.findOne(...args),
+              updateOne: async () => {
+                throw new Error('interrupted');
+              },
+            }
+          : db.collection(name);
+      },
+    };
+    await expect(service.close(input)).rejects.toThrow('interrupted');
+    const pending = (await service.list(req())).tables[0];
+    expect(pending.closing).toEqual({
+      request_id: body.request_id,
+      orderIds: body.orderIds,
+      afterClose,
+    });
+    await service.close(req({ ...body, version: pending.version }));
+    const closed = (await service.list(req())).tables[0];
+    expect(closed.status).toBe(afterClose);
+    expect(closed.closing).toBeNull();
+  }
+);
 
 test('payment change during close leaves a recoverable partial close and never frees the table', async () => {
   const { body, orderId } = await paidTable();
@@ -558,4 +568,20 @@ test('cleaning is opt-in and legacy cleaning flags do not block when disabled', 
     .collection('branches')
     .updateOne({ _id: branch }, { $set: { captain_table_cleaning: true } });
   expect((await service.list(req())).tables[0].status).toBe('cleaning');
+});
+
+test('cleaning is explicit and a retry cannot change the saved choice', async () => {
+  const { body } = await paidTable();
+  const input = { ...body, afterClose: 'cleaning' };
+  expect((await service.close(req(input))).status).toBe('cleaning');
+  expect((await service.close(req(input))).status).toBe('cleaning');
+  await expect(service.close(req({ ...input, afterClose: 'available' }))).rejects.toThrow(
+    'Table changed'
+  );
+});
+test('invalid post-close state is rejected before closing', async () => {
+  const { body } = await paidTable();
+  await expect(service.close(req({ ...body, afterClose: 'occupied' }))).rejects.toThrow(
+    'Choose Available or Cleaning'
+  );
 });

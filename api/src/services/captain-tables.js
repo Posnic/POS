@@ -31,9 +31,17 @@ function view(row, orders = [], claim = null) {
       row.floor_close &&
       (!row.floor_close.completed ||
         (claim?.order_id && row.floor_close.orders.includes(claim.order_id)))
-        ? { request_id: row.floor_close.id, orderIds: row.floor_close.orders }
+        ? {
+            request_id: row.floor_close.id,
+            orderIds: row.floor_close.orders,
+            afterClose: row.floor_close.afterClose || 'cleaning',
+          }
         : claim?.closing
-          ? { request_id: claim.closing.id, orderIds: claim.closing.orders }
+          ? {
+              request_id: claim.closing.id,
+              orderIds: claim.closing.orders,
+              afterClose: claim.closing.afterClose || 'cleaning',
+            }
           : null,
     status: orders.length ? 'occupied' : claim ? 'held' : row.service_state || 'available',
     ...(claim
@@ -246,6 +254,8 @@ async function close(req) {
     body.orderIds.some((id) => !ObjectId.isValid(String(id)))
   )
     fail('Choose the orders to close.');
+  if (body.afterClose !== undefined && !['available', 'cleaning'].includes(body.afterClose))
+    fail('Choose Available or Cleaning.');
   const ids = [...new Set(body.orderIds.map(String))].sort();
   const tables = req.db.collection('tableorder'),
     sales = req.db.collection('sales');
@@ -255,6 +265,8 @@ async function close(req) {
   let operation = table.floor_close;
   if (operation?.id === body.request_id) {
     if (operation.failed) fail('Table changed. Refresh and try again.', 409);
+    if (body.afterClose !== undefined && body.afterClose !== (operation.afterClose || 'cleaning'))
+      fail('Table changed. Refresh and try again.', 409);
     if (JSON.stringify(operation.orders) !== JSON.stringify(ids))
       fail('Table changed. Refresh and try again.', 409);
   } else {
@@ -275,13 +287,19 @@ async function close(req) {
       )
     )
       fail('Record the remaining payment first.', 409);
-    await seating.beginClose(req.db, c, ids, body.request_id);
+    const priorClose = (await seating.read(req.db, c)).find(
+      (row) => row.closing?.id === body.request_id
+    )?.closing;
+    const afterClose =
+      body.afterClose || (priorClose ? priorClose.afterClose || 'cleaning' : (require('./table-cleaning').enabled(c.branch) ? 'cleaning' : 'available'));
+    await seating.beginClose(req.db, c, ids, body.request_id, afterClose);
     operation = {
       id: body.request_id,
       orders: ids,
       at: new Date(),
       actor: String(req.user._id),
       completed: false,
+      afterClose,
     };
     const claimed = await tables.updateOne(
       {
@@ -294,7 +312,7 @@ async function close(req) {
       {
         $set: {
           floor_close: operation,
-          service_state: require('./table-cleaning').enabled(c.branch) ? 'cleaning' : 'available',
+          service_state: operation.afterClose,
           updated_date: new Date(),
         },
         $inc: { captain_table_version: 1 },
@@ -303,7 +321,7 @@ async function close(req) {
     if (!claimed.matchedCount) fail('Table changed. Refresh and try again.', 409);
   }
   if (!operation.completed) {
-    await seating.beginClose(req.db, c, ids, body.request_id);
+    await seating.beginClose(req.db, c, ids, body.request_id, operation.afterClose);
     // The saved intent survives a lost reply or an interrupted projection.
     // Payment and stock records are never changed by floor closure.
     await sales.updateMany(
@@ -362,7 +380,9 @@ async function close(req) {
   const claims = await activeClaims(req.db, c);
   for (const claim of claims) {
     if (claim.primary === String(table._id) && ids.includes(claim.order_id))
-      await seating.release(req.db, c, claim.id);
+      await seating.release(req.db, c, claim.id, {
+        afterClose: operation.afterClose || 'cleaning',
+      });
   }
   table = await tables.findOne(filter);
   const open = await sales.find({ ...active(c), table_number: table.tableorder_value }).toArray();
