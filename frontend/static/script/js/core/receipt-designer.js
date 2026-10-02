@@ -335,7 +335,34 @@
         }
         return '<style>' + css(format, layout.fontSize) + (fixedItems ? '.rd-fixed-columns .rd-number{white-space:nowrap;}.rd-fixed-columns td{border-bottom:0;padding-top:2px;padding-bottom:2px;}.rd-fixed-columns th,.rd-total-quantity td,.rd-grand-total{border-color:#333;border-top-style:' + (fixedItems.lineStyle || 'dotted') + ';border-bottom-style:' + (fixedItems.lineStyle || 'dotted') + ';}.rd-transaction{border-bottom-style:' + (fixedItems.lineStyle || 'dotted') + ';}.rd-total-quantity td{border-top:1px ' + (fixedItems.lineStyle || 'dotted') + ' #333;padding-top:6px;}.rd-grand-total{border-top-width:1px;border-bottom:1px ' + (fixedItems.lineStyle || 'dotted') + ' #333;padding-bottom:6px;}' : '') + '</style><article class="rd-document' + (sheet ? ' rd-sheet' : '') + '" data-receipt-design="' + format + '">' + html + '</article>';
     }
+    var activeSale = false;
+    var printCount = 0;
+    function printProgress() {
+        printCount++;
+        if (!document.getElementById('receipt-print-progress')) {
+            var status = $('<div id="receipt-print-progress" role="status" aria-live="polite" aria-busy="true">').css({
+                position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+                zIndex: 11000, padding: '16px 24px', borderRadius: '10px', background: '#fff',
+                color: '#172b4d', boxShadow: '0 4px 24px #0003', border: '1px solid #d9e2ef',
+                display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '90vw'
+            });
+            $('<span class="spinner-border spinner-border-sm" aria-hidden="true">').appendTo(status);
+            var text = $('<div>').appendTo(status);
+            $('<strong>').text(PosnicPro.i18n.t('lang_printing', 'Printing')).appendTo(text);
+            $('<div>').text(PosnicPro.i18n.t('lang_preparing', 'Preparing...')).appendTo(text);
+            status.appendTo('body');
+        }
+        return function () {
+            printCount--;
+            if (!printCount) $('#receipt-print-progress').remove();
+        };
+    }
     function print(html, format, options) {
+        var finish = printProgress();
+        try { return Promise.resolve(printDocument(html, format, options)).finally(finish); }
+        catch (error) { finish(); throw error; }
+    }
+    function printDocument(html, format, options) {
         options = options || {};
         var doc = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(label('Receipt')) + '</title></head><body>' + html + '</body></html>';
         var printer = window.electronAPI && window.electronAPI.printer;
@@ -387,6 +414,9 @@
     }
     async function printSale(data, requested, kitchenBill) {
         var diagnostic = function (fields) { window.electronAPI?.diagnostics?.event('renderer', fields).catch(function () {}); };
+        if (activeSale) return;
+        activeSale = true;
+        var finish = printProgress();
         diagnostic({ stage: 'sale-print-start', format: requested || 'configured' });
         try {
             if (PosnicPro.printSettings) await PosnicPro.printSettings.ready();
@@ -411,6 +441,7 @@
             }
             PosnicPro.afterPrint();
         } catch (error) { diagnostic({ stage: 'sale-print-failed', success: false, message: error.message }); PosnicPro.alert('error', error.message || label('Print failed')); }
+        finally { activeSale = false; finish(); }
     }
     PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, standardLayout: standardLayout, render: render, css: css, print: print, printSale: printSale, block: block, label: label, copy: copy, formatFor: formatFor };
 }());

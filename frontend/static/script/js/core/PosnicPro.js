@@ -3533,13 +3533,19 @@ PosnicPro = {
                 if (img.complete && !img.naturalWidth) {
                     return Promise.reject(new Error('Could not load a receipt image'));
                 }
-                return loaded(img, function () { return img.complete && img.naturalWidth > 0; });
+                return loaded(img, function () { return img.complete && img.naturalWidth > 0; }).then(function () {
+                    return img.decode ? img.decode() : undefined;
+                });
             });
             Array.from(doc.querySelectorAll('link[rel="stylesheet"]')).forEach(function (link) {
                 pending.push(loaded(link, function () { return !!link.sheet; }));
             });
-            if (doc.fonts && doc.fonts.ready) { pending.push(doc.fonts.ready); }
-            Promise.all(pending).then(function () { finish(); }, finish);
+            Promise.all(pending).then(function () {
+                // A newly loaded stylesheet can introduce fonts after the old
+                // fonts.ready promise has resolved. Force layout, then wait.
+                doc.body.getBoundingClientRect();
+                return doc.fonts ? doc.fonts.ready : undefined;
+            }).then(function () { finish(); }, finish);
         });
     },
     printView: function (contents, image) {
