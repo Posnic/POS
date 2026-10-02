@@ -10464,13 +10464,7 @@ class SalesRepository {
         throw new Error('Order changed. Refresh before continuing.');
 
       if (status === 'cancelled' && String(orderDoc.sale_process).toLowerCase() === 'cancelled') {
-        if (orderDoc.seating_request_id) {
-          await require('../services/seating-claims').release(
-            db,
-            { branchId: orderDoc.branch_id, license: orderDoc.license },
-            orderDoc.seating_request_id
-          );
-        }
+        await require('../services/cancelled-order-cleanup').finish(db, orderDoc);
         return { status: true, message: 'Order cancelled', data: { order_id: orderId } };
       }
 
@@ -10712,11 +10706,7 @@ class SalesRepository {
         }
 
         if (updateResult.modifiedCount > 0 && orderDoc.seating_request_id) {
-          await require('../services/seating-claims').release(
-            db,
-            { branchId: orderDoc.branch_id, license: orderDoc.license },
-            orderDoc.seating_request_id
-          );
+          await require('../services/cancelled-order-cleanup').finish(db, orderDoc);
         }
 
         return updateResult.modifiedCount > 0
@@ -11279,7 +11269,15 @@ class SalesRepository {
           console.error('Order capacity reconciliation pending:', error);
         }
       }
-      if (finishCaptainEdit) await finishCaptainEdit();
+      if (finishCaptainEdit) {
+        try {
+          await finishCaptainEdit();
+        } catch (error) {
+          // The edit lease expires independently; releasing it must not replace
+          // the durable order result with a failure after the write committed.
+          console.error('Order edit lease cleanup pending:', error);
+        }
+      }
     }
   }
 

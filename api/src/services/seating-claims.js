@@ -1025,6 +1025,19 @@ async function releaseSettled(db, scope) {
       claim.closing
     )
       continue;
+    const cancelled = await db.collection('sales').findOne({
+      _id: new ObjectId(claim.order_id),
+      branch_id: scope.branchId,
+      license: scope.license,
+      sale_process: 'cancelled',
+      payment_status: 'Cancelled',
+      floor_closed_at: { $exists: true },
+      captain_payment_plan: { $exists: false },
+    });
+    if (cancelled) {
+      await require('./cancelled-order-cleanup').finish(db, cancelled);
+      continue;
+    }
     const filter = {
       _id: new ObjectId(claim.order_id),
       branch_id: scope.branchId,
