@@ -2,6 +2,9 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {EventEmitter}=require('node:events');
 const {createStartupProgress}=require('../src/startup-progress');
+test('the desktop package includes its startup progress helper',()=>{
+ assert.ok(require('../package.json').build.files.includes('src/startup-progress.js'));
+});
 test('loading progress coalesces to one listener and the latest message',()=>{
  const contents=new EventEmitter(),calls=[];
  contents.isDestroyed=()=>false;contents.isLoadingMainFrame=()=>true;
