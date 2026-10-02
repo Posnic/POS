@@ -302,7 +302,7 @@ const processSale = async (
     }
 
     // 3. Process Items & Calculations
-    const items = data.items || [];
+    let items = data.items || [];
 
     // Robust numeric parser for legacy string values that may contain
     // commas or currency/percent symbols.
@@ -361,6 +361,9 @@ const processSale = async (
       }
     }
 
+    if (existingSale) {
+      items = require('../utils/order-line').reconcile(items, existingSale.items || []);
+    }
     const billingOutlets = require('./billing-outlets');
     const outlet = await billingOutlets.resolve(
       context,
@@ -678,6 +681,7 @@ const processSale = async (
       // Indian GST is disabled.
       itemsale.push({
         pricing,
+        ...(previousLine ? require('../utils/service-line').metadata(previousLine) : {}),
         ...require('../utils/order-line').identity(item),
         ...(extras.lines.length ? { modifiers: extras.lines } : {}),
         // Mongoose Schema Required Fields (Node-native)
