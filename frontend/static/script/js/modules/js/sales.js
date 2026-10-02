@@ -7417,7 +7417,35 @@ PosnicPro.sales.itemCache = {
     },
     clear: function () {
         PosnicPro.sales.itemCache._map = {};
+        PosnicPro.sales._billingCatalogue = null;
+        PosnicPro.sales._catalogueRefreshing = false;
+        PosnicPro.sales._catalogueGeneration = (PosnicPro.sales._catalogueGeneration || 0) + 1;
     },
+};
+
+// The complete catalogue powers instant search. Pagination must finish even
+// when a page contains only unavailable items; next_offset is server-owned.
+PosnicPro.sales.loadBillingCatalogue = function (done, preserve) {
+    var rows = [], offset = 0;
+    var generation = (PosnicPro.sales._catalogueGeneration || 0) + 1;
+    PosnicPro.sales._catalogueGeneration = generation;
+    if (!preserve) PosnicPro.sales._billingCatalogue = null;
+    function page() {
+        PosnicPro.get({ url: 'items/onlineSalesItemsAjaxLists', data: { paginate: 'true', limit: 200, offset: offset } }, function (response) {
+            if (generation !== PosnicPro.sales._catalogueGeneration) return;
+            if (!response || response.type !== 'success') { done(response || { type: 'error' }); return; }
+            var data = response.data || {};
+            // Older local APIs still return an array during rolling updates.
+            rows = rows.concat(Array.isArray(data) ? data : data.items || []);
+            if (!Array.isArray(data) && Number.isInteger(data.next_offset) && data.next_offset > offset) {
+                offset = data.next_offset; page(); return;
+            }
+            PosnicPro.sales._billingCatalogue = Array.isArray(data) ? null : rows;
+            PosnicPro.sales._catalogueAt = Date.now();
+            done({ type: 'success', data: rows });
+        }, function () { if (generation === PosnicPro.sales._catalogueGeneration) done({ type: 'error' }); });
+    }
+    page();
 };
 
 PosnicPro.sales.itemsMenu = {
@@ -7429,9 +7457,9 @@ PosnicPro.sales.itemsMenu = {
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $('#sales_new_productList').show();
         $('#sales_new_categoryList').hide();
-        PosnicPro.get('items/onlineSalesItemsAjaxLists', function (response) {
+        PosnicPro.sales.loadBillingCatalogue(function (response) {
+            loader.find(".loadingSpinner:first").remove();
             if (response.type === 'success') {
-                loader.find(".loadingSpinner:first").remove();
                 var getItemdata = response.data;
                 /* The panel lives on <body>, so removing the grid does not take
                    it with it - a category change would otherwise leave a list
@@ -7480,54 +7508,13 @@ PosnicPro.sales.itemsMenu = {
                         // once. It used to be truncated at 30 chars in JS, which is
                         // why the two-line CSS clamp had nothing to wrap.
                         var _escName = $('<i>').text(list_item_name == null ? '' : list_item_name).html();
-                        var price = 0;
-                        let sellingPrice = getItemdata[i]['selling_price'];
-                        let discountAmount = getItemdata[i]['discount_amount'];
-                        let discountPercentage = getItemdata[i]['discount_percentage'];
-                        let tax = getItemdata[i]['tax'];
-                        let taxType = getItemdata[i]['tax_type'];
-                        let taxPrice = (sellingPrice * tax) / (100 + tax);
-                        var inclusive_price = sellingPrice - taxPrice.toFixed(2);
-                        if (discountAmount > 0 && tax > 0) {
-                            var discountValue = 0;
-                            if (taxType === 'exclusive') {
-                                discountValue = sellingPrice - discountAmount;
-                            } else {
-                                discountValue = inclusive_price - discountAmount;
-                            }
-                            price = discountValue + (tax / 100) * discountValue;
-
-                        } else if (discountPercentage > 0 && tax > 0) {
-                            var discountValue = 0;
-                            var taxValue = 0;
-                            if (taxType === 'exclusive') {
-                                discountValue = (sellingPrice * (discountPercentage / 100));
-                                taxValue = sellingPrice - discountValue;
-                            } else {
-                                discountValue = (inclusive_price * (discountPercentage / 100));
-                                taxValue = inclusive_price - discountValue;
-                            }
-                            price = taxValue + (tax / 100) * taxValue;
-                        } else if (discountAmount > 0) {
-                            price = sellingPrice - discountAmount;
-                        } else if (discountPercentage > 0) {
-                            price = sellingPrice - (sellingPrice * (discountPercentage / 100));
-                        } else if (tax > 0) {
-                            if (taxType === 'exclusive') {
-                                price = sellingPrice + (sellingPrice * tax / 100);
-                            } else {
-                                price = inclusive_price + (inclusive_price / 100) * tax;
-                            }
-                        } else {
-                            price = getItemdata[i]['selling_price']
-                        }
+                        var taxEnabled = true;
+                        try { taxEnabled = JSON.parse(PosnicPro.local.get('general_settings') || '{}').module_tax_enable !== false; } catch (e) {}
+                        var pricing = PosnicBillingSearch.price(getItemdata[i], taxEnabled);
+                        var price = pricing.price;
                         var image_path = (getItemdata[i]['image'] && getItemdata[i]['image'] !== "item.svg") ? getItemdata[i]['image'] : 'static/images/default/item.svg';
-                        let timeZone = PosnicPro.timeZone();
-                        let dateTime = new Date().getTime();
-                        let currentDateTimeCentralTimeZone = moment(dateTime).tz(timeZone).format('YYYY/MM/DD hh:mm A');
-                        let currentDate = new Date().getTime(currentDateTimeCentralTimeZone);
                         let items_expiry_date = getItemdata[i]['items_expiry_date'];
-                        if (items_expiry_date >= currentDate || items_expiry_date === null || items_expiry_date === '') {
+                        if (!PosnicBillingSearch.expired(items_expiry_date)) {
                             // Subtle, light-grey stock count on the card - only when the item
                             // tracks inventory. Fails safe (shows nothing) if the field is absent.
                             var _trackInv = getItemdata[i]['track_inventory'];
@@ -11372,7 +11359,11 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
     }
     var meta = [];
     if (d.itemid || d.item_code) { meta.push(esc(d.itemid || d.item_code)); }
+    if (d.plu_code) { meta.push('#' + esc(d.plu_code)); }
+    if (d.short_code) { meta.push(esc(d.short_code)); }
+    if (d.barcode_id && d.barcode_id !== d.itemid) { meta.push(esc(d.barcode_id)); }
     if (d.category_name) { meta.push(esc(d.category_name)); }
+    if (d.unit) { meta.push(esc(d.unit)); }
     var stock;
     if (d.item_kind === 'service') {
         stock = '<span class="sug-stock na"><lang class="lang_service">Service</lang></span>';
@@ -11402,32 +11393,61 @@ PosnicPro.sugActionRow = function (icon, cls, title, meta) {
         + '<div class="sug-main"><div class="sug-name">' + title + '</div>'
         + '<div class="sug-meta">' + meta + '</div></div></div>';
 };
+PosnicPro.sales.askSearchQuantity = function (item, id) {
+    swal({
+        title: PosnicPro.i18n.t('lang_quantity', 'Quantity'),
+        text: item.item_name || item.name || '', input: 'text', inputValue: '1', animation: false,
+        inputAttributes: { min: '0.001', max: '100000', step: 'any', inputmode: 'decimal' },
+        showCancelButton: true,
+        onOpen: function () { setTimeout(function () { var input = document.querySelector('.swal2-input'); if (input) { input.focus(); input.select(); } }, 0); },
+        confirmButtonText: PosnicPro.i18n.t('lang_add_to_sale', 'Add to sale'),
+        inputValidator: function (value) {
+            return new Promise(function (resolve, reject) {
+                if (Number.isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 100000) resolve();
+                else reject(PosnicPro.i18n.t('lang_enter_a_valid_quantity', 'Enter a valid quantity.'));
+            });
+        }
+    }).then(function (result) {
+        if (!result || result.dismiss) { $('#sales_new_item_name').focus(); return; }
+        var qty = Number(typeof result === 'string' || typeof result === 'number' ? result : result.value);
+        if (!Number.isFinite(qty) || qty <= 0 || qty > 100000) return;
+        function add(details) {
+            var current = Number($('#touchsale_item_qty' + id).val()) || 0;
+            if (PosnicPro.sales.SaleAction !== 'return' && (details.track_inventory === true || details.track_inventory === 'true') && details.negative_stock !== true && details.negative_stock !== 'true' && qty + current > Number(details.available_quantity || 0)) {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_some_items_are_out_of_stock', 'Some items are out of stock.'));
+                $('#sales_new_item_name').focus(); return;
+            }
+            PosnicPro.sales.addSalesLineItems(Object.assign({}, details, { item_quantity: qty }));
+            if (!$('.modal.show:visible, .swal2-modal:visible').length) $('#sales_new_item_name').focus();
+        }
+        if (id) PosnicPro.sales.itemCache.get(id, add); else add(item);
+    }).catch(function () { $('#sales_new_item_name').focus(); });
+};
+
 /* Owner: typing here must NEVER wait. One-time widget init (the old code
    re-created the whole autocomplete on every keydown AND keyup), requests
-   trail the keystrokes by 120ms, and late responses for stale queries are
+   use the loaded catalogue immediately, and late responses for stale queries are
    dropped. The lookup itself is async - the input never blocks on it. */
 $(function () {
     var itemLookupSeq = 0;
     $('#sales_new_item_name').autocomplete({
-        deferRequestBy: 120,
+        deferRequestBy: 0,
         lookup: function (query, done) {
             var seq = ++itemLookupSeq;
             var result = {};
             var suggestions = [];
             var params = {
                 url: 'items/getOnlineItemsAjaxList',
-                data: 'query=' + query + '&type=normal'
+                data: { query: query, type: 'normal', limit: 20 }
             };
-            PosnicPro.get(params, function (response) {
+            function receive(response) {
+                response = response || { suggestions: [] };
+                response.suggestions = response.suggestions || [];
                 if (seq !== itemLookupSeq) { return; }
                 if (response.suggestions.length > 0) {
-                    suggestions: $.map(response.suggestions, function (dataItem) {
-                        let timeZone = PosnicPro.timeZone();
-                        let dateTime = new Date().getTime();
-                        let currentDateTimeCentralTimeZone = moment(dateTime).tz(timeZone).format('YYYY/MM/DD hh:mm A');
-                        let currentDate = new Date().getTime(currentDateTimeCentralTimeZone);
+                    $.map(response.suggestions, function (dataItem) {
                         let items_expiry_date = dataItem.items_expiry_date;
-                        if (items_expiry_date >= currentDate || items_expiry_date === null || items_expiry_date === '') {
+                        if (!PosnicBillingSearch.expired(items_expiry_date)) {
                             suggestions.push({ "value": PosnicPro.itemName ? PosnicPro.itemName(dataItem) : dataItem.item_name, "data": dataItem });
                         }
                     });
@@ -11442,7 +11462,19 @@ $(function () {
                 }
                 result["suggestions"] = suggestions;
                 done(result);
-            });
+            }
+            var catalogue = PosnicPro.sales._billingCatalogue;
+            if (catalogue) {
+                if (Date.now() - PosnicPro.sales._catalogueAt >= 60000 && !PosnicPro.sales._catalogueRefreshing) {
+                    PosnicPro.sales._catalogueRefreshing = true;
+                    PosnicPro.sales.loadBillingCatalogue(function () { PosnicPro.sales._catalogueRefreshing = false; }, true);
+                }
+                receive({ suggestions: PosnicBillingSearch.search(query, catalogue, 20) });
+            } else {
+                PosnicPro.get(params, receive, function () {
+                    if (seq === itemLookupSeq) done({ suggestions: [] });
+                });
+            }
         },
         onSelect: function (suggestion) {
             var act = suggestion.data && suggestion.data.__action;
@@ -11466,17 +11498,9 @@ $(function () {
 
                 var itemData = suggestion.data || {};
 
-                // Prefer the explicit item_id returned by getOnlineItemsAjaxLists
-                if (itemData.item_id) {
-                    PosnicPro.sales.itemsMenu.addToLineItemsList(itemData.item_id);
-                } else if (itemData.id) {
-                    PosnicPro.sales.itemsMenu.addToLineItemsList(itemData.id);
-                } else if (itemData._id && itemData._id.$oid) {
-                    PosnicPro.sales.itemsMenu.addToLineItemsList(itemData._id.$oid);
-                } else {
-                    // Fallback to previous behaviour if no usable id is found
-                    PosnicPro.sales.addSalesLineItems(itemData);
-                }
+                var selectedId = itemData.item_id || itemData.id || (itemData._id && itemData._id.$oid);
+                PosnicPro.sales.askSearchQuantity(itemData, selectedId);
+
             }
         },
         autoSelectFirst: true,
@@ -11495,52 +11519,12 @@ $(function () {
             }
             {
                 var currency = PosnicPro.local.get('currencySign');
-                var price = 0;
-                let sellingPrice = suggestion.data.selling_price;
-                let discountAmount = suggestion.data.discount_amount;
-                let discountPercentage = suggestion.data.discount_percentage;
-                let tax = suggestion.data.tax;
-                let taxType = suggestion.data.tax_type;
-                let taxPrice = (sellingPrice * tax) / (100 + tax);
-                var inclusive_price = sellingPrice - taxPrice.toFixed(2);
-                if (discountAmount > 0 && tax > 0) {
-                    var discountValue = 0;
-                    if (taxType === 'exclusive') {
-                        discountValue = sellingPrice - discountAmount;
-                    } else {
-                        discountValue = inclusive_price - discountAmount;
-                    }
-                    price = discountValue + (tax / 100) * discountValue;
-
-                } else if (discountPercentage > 0 && tax > 0) {
-                    var discountValue = 0;
-                    var taxValue = 0;
-                    if (taxType === 'exclusive') {
-                        discountValue = (sellingPrice * (discountPercentage / 100));
-                        taxValue = sellingPrice - discountValue;
-                    } else {
-                        discountValue = (inclusive_price * (discountPercentage / 100));
-                        taxValue = inclusive_price - discountValue;
-                    }
-                    price = taxValue + (tax / 100) * taxValue;
-                } else if (discountAmount > 0) {
-                    price = sellingPrice - discountAmount;
-                } else if (discountPercentage > 0) {
-                    price = sellingPrice - (sellingPrice * (discountPercentage / 100));
-                } else if (tax > 0) {
-                    if (taxType === 'exclusive') {
-                        price = sellingPrice + (sellingPrice * tax / 100);
-                    } else {
-                        price = inclusive_price + (inclusive_price / 100) * tax;
-                    }
-                } else {
-                    price = suggestion.data.selling_price;
-                }
+                var taxEnabled = true;
+                try { taxEnabled = JSON.parse(PosnicPro.local.get('general_settings') || '{}').module_tax_enable !== false; } catch (e) {}
+                var pricing = PosnicBillingSearch.price(suggestion.data, taxEnabled);
                 return PosnicPro.sugRow(suggestion.data,
                     $.Autocomplete.formatResult(suggestion, currentValue), {
-                        currency: currency,
-                        price: price,
-                        was: (sellingPrice.toFixed(2) === price.toFixed(2)) ? null : sellingPrice
+                        currency: currency, price: pricing.price, was: pricing.was
                     });
             }
         }
@@ -11837,7 +11821,7 @@ $(function () {
             PosnicPro.get(params, function (response) {
                 if (seq !== customerLookupSeq) { return; }
                 if (response.suggestions.length > 0) {
-                    suggestions: $.map(response.suggestions, function (dataItem) {
+                    $.map(response.suggestions, function (dataItem) {
                         suggestions.push({ "value": dataItem.name, "data": dataItem });
                     });
                 } else {
