@@ -2881,15 +2881,13 @@ test('default-disabled cleaning permits seating and does not return closed table
   const claim = await seating.reserve(db, scope, request());
   const saleId = new ObjectId();
   await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
-  await db
-    .collection('sales')
-    .insertOne({
-      _id: saleId,
-      branch_id: scope.branchId,
-      license: scope.license,
-      payment_status: 'Paid',
-      floor_closed_at: new Date(),
-    });
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    payment_status: 'Paid',
+    floor_closed_at: new Date(),
+  });
   await seating.release(db, scope, claim.id);
   expect(
     await db.collection('tableorder').countDocuments({ service_state: 'available' })

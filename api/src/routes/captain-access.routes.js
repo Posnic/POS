@@ -306,15 +306,13 @@ router.post(
         { $set: { captain_table_cleaning: cleaningEnabled, updated_date: new Date() } }
       );
     if (!cleaningEnabled)
-      await req.db
-        .collection('tableorder')
-        .updateMany(
-          { branch_id: c.branchId, license: c.license, service_state: 'cleaning' },
-          {
-            $set: { service_state: 'available', updated_date: new Date() },
-            $inc: { captain_table_version: 1 },
-          }
-        );
+      await req.db.collection('tableorder').updateMany(
+        { branch_id: c.branchId, license: c.license, service_state: 'cleaning' },
+        {
+          $set: { service_state: 'available', updated_date: new Date() },
+          $inc: { captain_table_version: 1 },
+        }
+      );
     return { saved: true, cleaningEnabled };
   })
 );
