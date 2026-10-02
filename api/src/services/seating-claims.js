@@ -1209,7 +1209,7 @@ async function prepareOrder(db, scope, claim, document) {
     fail('The sale identity is already in use.', 409);
   return existing;
 }
-async function forEdit(db, scope, order, next) {
+async function forEdit(db, scope, order, next, { cancelling = false } = {}) {
   await reconcileExpiredEditCapacity(db, scope);
   const destination = String(next.table || order.table_number || '');
   const claims = await read(db, scope);
@@ -1220,6 +1220,9 @@ async function forEdit(db, scope, order, next) {
   if (own?.closing) fail('Close is in progress. Refresh this order.', 409);
   if (own?.state === 'releasing') fail('Close is in progress. Refresh this order.', 409);
   if (own?.moving_to) fail('Reconcile the table move before editing this order.', 409);
+  // Cancellation closes this exact sale; it cannot consume or move seats.
+  // Missing local claims must not block it, while live operation locks above do.
+  if (cancelling) return own || null;
   if (order.seating_request_id && !own) fail('The seating group changed. Refresh this order.', 409);
   if (
     own &&
