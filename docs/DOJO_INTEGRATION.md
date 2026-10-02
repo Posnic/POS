@@ -10,6 +10,8 @@ Status: implementation in progress, 2 October 2026. Shared Community Edition cod
 
 These are internal services. There is deliberately no arbitrary browser-supplied amount endpoint and no automatic stock/sale mutation. The journal collection `dojo_payment_operations` is host-owned payment integrity data: retain it across extension uninstall, include it in backup/restore, and never clear it to retry payment. Raw card data, provider response bodies and API credentials are not stored in this journal.
 
+The internal `extension-payments.processDojoPayment` binding now claims the same prepared-payment document used by manual confirmation and cancellation before contacting the provider. It binds configuration and terminal identity, uses the persisted host quote, blocks manual completion/cancellation while Dojo is unresolved, and passes only a verified capture into the ordinary sale commit. Repeated capture processing produces one normal Card sale, retains `recording: dojo` and the provider intent reference, and does not debit adjusted stock again. It is not exposed to workers or HTTP yet. A changed quote at final commit still requires reconciliation; freezing the full commit document before charging is a remaining release gate.
+
 ## Work required before checkout release
 
 1. Add a dedicated payment-provider settings page with manager authorization, encrypted per-shop credentials and terminal selection. Posnic's assigned software-house ID is deployment configuration, not a merchant-editable field. Configuration identity must stay stable for old operations; do not reconcile against a different merchant account after a key change.
@@ -28,6 +30,8 @@ Dojo's go-live checklist requires at least one supported refund method. It also 
 ## Verification
 
 `node --test api/tests/dojo-client.test.cjs api/tests/dojo-payment-journal.integration.cjs` — 8 passed using mocked provider responses and real temporary MongoDB. Cases include transport contract, environment validation, redacted errors, strict capture matching, 12 concurrent starts, cross-branch/configuration denial, lost creation responses and expiry. No Dojo API calls or real payments occurred.
+
+Expanded targeted command including `api/tests/extension-payments.integration.cjs`: 23 passed. Two new cases exercise real core sale persistence after simulated Dojo capture, one-time stock deduction and blocked cancellation/manual confirmation after a lost provider response. This is local verification only.
 
 ## Official references reviewed
 

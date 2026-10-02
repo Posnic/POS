@@ -6,6 +6,7 @@ const fingerprint = require('../utils/order-request-fingerprint');
 const { runStockBatch } = require('./extension-stock-journal');
 const { allocateForSale } = require('./extension-stock-allocations');
 const hash = (value) => crypto.createHash('sha256').update(value).digest('hex');
+const dojoAuthorization = Symbol('host-verified-dojo');
 const fail = (code) => {
   const error = new Error(code);
   error.code = code;
@@ -219,7 +220,7 @@ const paidResult = (row) => ({
         tenderMinor: row.confirmation.tenderMinor,
         changeMinor: row.confirmation.tenderMinor - row.valueMinor,
       }
-    : { recording: 'external-terminal', reference: row.confirmation.reference }),
+    : { recording: row.confirmation.recording, reference: row.confirmation.reference }),
 });
 
 async function confirmRecordedPayment(context, input, method, options = {}) {
@@ -230,7 +231,7 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
   const confirmation =
     method === 'cash'
       ? { method, tenderMinor: input.tenderMinor }
-      : { method, reference: input.reference || '', recording: 'external-terminal' };
+      : { method, reference: input.reference || '', recording: options.authorization === dojoAuthorization ? 'dojo' : 'external-terminal' };
   if (method === 'cash' && (!Number.isSafeInteger(input.tenderMinor) || input.tenderMinor < 0))
     fail('extension_cash_confirmation_invalid');
   if (
@@ -246,6 +247,7 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
   const attemptId = context.operationId;
   let row = await collection.findOne({ _id: input.paymentId, ...scope });
   if (!row || row.method !== method) fail(`extension_${method}_payment_unavailable`);
+  if (row.provider && options.authorization !== dojoAuthorization) fail('extension_provider_payment_in_progress');
   if (method === 'cash' && input.tenderMinor < row.valueMinor)
     fail('extension_cash_tender_insufficient');
   if (row.attempt?.id === attemptId && row.attempt.digest !== confirmationDigest)
@@ -259,7 +261,8 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
   if (!['pending', 'submitting'].includes(row.status))
     fail(`extension_${method}_payment_unavailable`);
   await collection.updateOne(
-    { _id: row._id, status: 'pending', attempt: row.attempt || { $exists: false } },
+    { _id: row._id, status: 'pending', attempt: row.attempt || { $exists: false },
+      provider: options.authorization === dojoAuthorization ? row.provider : { $exists: false } },
     {
       $set: {
         status: 'submitting',
@@ -419,6 +422,37 @@ const confirmCash = (context, input, options) =>
 // a Dojo approval. A future provider adapter must use its own verified journal.
 const confirmExternalCard = (context, input, options) =>
   confirmRecordedPayment(context, input, 'card', options);
+// Internal host entry point. Provider/configuration are trusted dependencies,
+// never supplied by a worker or browser. Claim the SAME payment document used
+// by manual confirmation/cancellation before making any provider request.
+async function processDojoPayment(context, input, { provider, configurationId, terminalId } = {}) {
+  const scope = paymentScope(context), collection = context.db.collection('extension_payments');
+  if (!/^[a-f\d]{64}$/.test(input.paymentId || '')) fail('extension_payment_invalid');
+  const filter = { _id: input.paymentId, ...scope };
+  let row = await collection.findOne(filter);
+  if (!row || row.method !== 'card' || !['pending', 'submitting', 'paid'].includes(row.status))
+    fail('extension_card_payment_unavailable');
+  if (row.currency?.currencyCode !== 'GBP' || !Number.isSafeInteger(row.valueMinor) || row.valueMinor <= 0)
+    fail('extension_dojo_amount_invalid');
+  if (!provider || !['sandbox', 'production'].includes(provider.environment) ||
+      !/^[A-Za-z0-9_-]{1,120}$/.test(configurationId || '') ||
+      !/^tm_[A-Za-z0-9_-]{1,180}$/.test(terminalId || '')) fail('extension_dojo_configuration_invalid');
+  const binding = { name: 'dojo', configurationId, terminalId, environment: provider.environment };
+  await collection.updateOne({ ...filter, status: 'pending', provider: { $exists: false } },
+    { $set: { provider: binding } });
+  row = await collection.findOne(filter);
+  if (fingerprint(row.provider || {}) !== fingerprint(binding)) fail('extension_provider_payment_conflict');
+  const journal = require('./dojo-payment-journal');
+  await journal.startPayment(context.db, context.scope, {
+    paymentId: row._id, valueMinor: row.valueMinor, currencyCode: row.currency.currencyCode,
+    configurationId, terminalId,
+  }, provider);
+  const result = await journal.pollPayment(context.db, context.scope, row._id, configurationId, provider);
+  if (result.status !== 'captured') return { paymentId: row._id, status: result.status, provider: 'dojo' };
+  return confirmRecordedPayment({ ...context, operationId: 'dojo-confirm:' + row._id },
+    { paymentId: row._id, terminalConfirmed: true, reference: result.paymentIntentId }, 'card',
+    { authorization: dojoAuthorization });
+}
 async function cancelPayment(context, input) {
   const { db } = context,
     scope = paymentScope(context),
@@ -430,9 +464,10 @@ async function cancelPayment(context, input) {
   if (row.actorId !== requestingActor && !context.permissions?.includes('manage'))
     fail('extension_payment_owner_required');
   if (row.status === 'cancelled') return { cancelled: true };
+  if (row.provider) fail('extension_provider_payment_in_progress');
   if (!['pending', 'cancelling'].includes(row.status)) fail('extension_payment_cannot_cancel');
   await collection.updateOne(
-    { _id: row._id, status: 'pending' },
+    { _id: row._id, status: 'pending', provider: { $exists: false } },
     {
       $set: {
         status: 'cancelling',
@@ -487,4 +522,4 @@ async function cancelPayment(context, input) {
   );
   return { cancelled: true };
 }
-module.exports = { preparePayment, confirmCash, confirmExternalCard, cancelPayment };
+module.exports = { preparePayment, confirmCash, confirmExternalCard, processDojoPayment, cancelPayment };

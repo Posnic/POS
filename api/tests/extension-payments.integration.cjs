@@ -8,6 +8,7 @@ const {
   confirmCash,
   confirmExternalCard,
   cancelPayment,
+  processDojoPayment,
 } = require('../src/services/extension-payments');
 const { runStockBatch } = require('../src/services/extension-stock-journal');
 let mongo, client, db, BaseModel, mongoose;
@@ -91,6 +92,54 @@ async function fixture(adjusted = false) {
     stock: async () => (await db.collection('items').findOne({ _id: item._id })).available_quantity,
   };
 }
+test('Dojo capture commits one normal Card sale and adjusted stock is never deducted again', async () => {
+  const f = await fixture(true);
+  const prepared = await preparePayment(f.context, { ...f.input, method: 'card' });
+  let intent, creates = 0;
+  const provider = { environment: 'sandbox',
+    createIntent: async quote => { creates++; intent = { id: 'pi_test', reference: quote.reference,
+      captureMode: 'Auto', status: 'Created', amount: { value: quote.valueMinor, currencyCode: 'GBP' },
+      totalAmount: { value: quote.valueMinor, currencyCode: 'GBP' } }; return intent; },
+    createSession: async () => ({ id: 'ts_test', terminalId: 'tm_test', status: 'Initiated',
+      details: { sessionType: 'Sale', sale: { paymentIntentId: 'pi_test' } } }),
+    getSession: async () => ({ id: 'ts_test', terminalId: 'tm_test', status: intent.status === 'Captured' ? 'Captured' : 'Initiated',
+      details: { sessionType: 'Sale', sale: { paymentIntentId: 'pi_test' } } }),
+    getIntent: async () => intent,
+  };
+  const options = { provider, configurationId: 'merchant-one', terminalId: 'tm_test' };
+  const input = { paymentId: prepared.paymentId };
+  assert.equal((await processDojoPayment(f.context, input, options)).status, 'pending');
+  await assert.rejects(confirmExternalCard(f.context, { ...input, terminalConfirmed: true }), /provider_payment_in_progress/);
+  await assert.rejects(cancelPayment(f.context, input), /provider_payment_in_progress/);
+  assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 0);
+  intent.status = 'Captured';
+  const paid = await processDojoPayment(f.context, input, options);
+  assert.equal(paid.status, 'paid');
+  assert.equal(paid.recording, 'dojo');
+  assert.equal(paid.reference, 'pi_test');
+  assert.equal(await f.stock(), 0);
+  await processDojoPayment(f.context, input, options);
+  assert.equal(creates, 1);
+  assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license, payment_mode: 'Card' }), 1);
+  await assert.rejects(processDojoPayment(f.context, input, { ...options, configurationId: 'another-merchant' }), /provider_payment_conflict/);
+});
+
+test('Dojo lost creation response retains payment and prevents manual cancellation or repeat charge', async () => {
+  const f = await fixture();
+  const prepared = await preparePayment(f.context, { ...f.input, method: 'card' });
+  let creates = 0;
+  const options = { configurationId: 'merchant-one', terminalId: 'tm_test', provider: {
+    environment: 'sandbox', createIntent: async () => { creates++; throw Error('response lost'); },
+  } };
+  const input = { paymentId: prepared.paymentId };
+  await assert.rejects(processDojoPayment(f.context, input, options), /response lost/);
+  await assert.rejects(processDojoPayment(f.context, input, options), /reconciliation_required/);
+  await assert.rejects(cancelPayment(f.context, input), /provider_payment_in_progress/);
+  assert.equal(creates, 1);
+  assert.equal(await f.stock(), 2);
+  assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 0);
+});
+
 test('cash preparation reserves stock, uses core quote and creates no sale before confirmation', async () => {
   const f = await fixture();
   const prepared = await preparePayment(f.context, f.input);
