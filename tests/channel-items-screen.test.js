@@ -132,7 +132,10 @@ function screen({ items = [] } = {}) {
     },
   };
 
-  const src = stripComments(fs.readFileSync(SETTINGS, 'utf8'));
+  // Scope the fixture to this module before stripping comments: unrelated
+  // regular expressions earlier in settings.js can contain quote characters.
+  const source = fs.readFileSync(SETTINGS, 'utf8');
+  const src = stripComments(source.slice(source.indexOf('PosnicPro.channelItems = {')));
   window.eval('PosnicPro.channelItems = ' + objectLiteral(src, 'PosnicPro.channelItems') + ';');
 
   /* The real delegated handlers, lifted from the real file. */

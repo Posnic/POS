@@ -4040,5 +4040,18 @@
   "lang_ask_payment_confirm": "Vérifiez le reçu et le total. Choisissez Espèces après réception de l’argent, ou Carte encaissée après confirmation du terminal. Cela termine la vente et demande l’impression du reçu.",
   "lang_ask_prepare_sale": "Préparer la vente pour l’encaissement",
   "lang_ask_review_sale": "Vérifier la vente",
-  "lang_ask_sale_checkout": "Encaissement et impression des reçus"
+  "lang_ask_sale_checkout": "Encaissement et impression des reçus",
+  "lang_about_these_times": "À propos de ces horaires",
+  "lang_all_sales": "Toutes les ventes",
+  "lang_choose_one_branch_for_period": "Choisissez un établissement pour filtrer par service.",
+  "lang_clear_restaurant_filters": "Effacer les filtres du restaurant",
+  "lang_loading_serving_periods": "Chargement des services…",
+  "lang_period_load_failed": "Impossible de charger les services. Rouvrez cette page pour réessayer.",
+  "lang_period_required_fields": "Saisissez un nom et des heures de début et de fin différentes pour chaque service.",
+  "lang_serving_period": "Service",
+  "lang_serving_periods_saved": "Services enregistrés",
+  "lang_set_serving_periods": "Définissez le petit-déjeuner, le déjeuner et le dîner dans Restaurant > Menu.",
+  "lang_tables_only": "Tables uniquement",
+  "lang_serve_all": "Tout servir",
+  "lang_items_marked_served": "Articles marqués comme servis"
 }

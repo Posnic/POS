@@ -9669,7 +9669,7 @@ PosnicPro.servingPeriods = {
         $('#save_dayparts').prop('disabled', true);
         var fail = function () {
             self.loading = false;
-            PosnicPro.alert('error', PosnicPro.i18n.t('lang_period_load_failed', 'Could not load serving periods. Reopen Restaurant settings to retry.'));
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_period_load_failed', 'Could not load serving periods. Reopen this page to retry.'));
         };
         PosnicPro.get({ url: 'settings/group/channels', data: {} }, function (response) {
             if (!response || response.type !== 'success') { fail(); return; }

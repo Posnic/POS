@@ -922,6 +922,9 @@
   "Get unprinted sales successfully": [
     "src/repositories/sale.repository.js"
   ],
+  "Give every serving period a unique name and valid start and end times.": [
+    "src/repositories/settings.repository.js"
+  ],
   "Graphical report successfully": [
     "src/models/receiving.model.js",
     "src/models/supplier-legacy.model.js",

@@ -581,7 +581,7 @@
             if (prior && !table.find('option').toArray().some(function (o) { return o.value === prior; })) table.append($('<option>').val(prior).text(prior));
             table.val(prior);
         });
-        var failed = function () { $('#sales_history_period_hint').text(PosnicPro.i18n.t('lang_period_load_failed', 'Could not load serving periods. Reopen Sales History to retry.')); };
+        var failed = function () { $('#sales_history_period_hint').text(PosnicPro.i18n.t('lang_period_load_failed', 'Could not load serving periods. Reopen this page to retry.')); };
         PosnicPro.get({ url: 'sales/servingPeriods', data: { branch: PosnicPro.local.get('branch_id_set') } }, function (r) {
             if (!r || r.type !== 'success') { failed(); return; }
             var parts = r.data.serving_periods || [], prior = period.val() || '';
