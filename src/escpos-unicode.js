@@ -13,6 +13,7 @@ const { fontsFor, family, cssFor } = require('./receipt-fonts');
 const UNICODE = /[^\x00-\x7f\u20ac]/u;
 const STRIP_ROWS = 256;
 const MAX_ROWS = 48000;
+const FRAME_MARKER_ROWS = 4;
 
 function needsRaster(sale) {
   const { logo, footerImage, ...text } = sale || {};
@@ -137,24 +138,73 @@ async function loadDocument(win, plan) {
   }
 }
 
-// A renderer animation frame is not a compositor acknowledgement. On a cold
-// window capturePage can still hold the preceding strip until a paint arrives.
-function waitForReceiptPaint(contents, timeoutMs = 5000) {
+// A paint event can belong to the previous scroll position. Accept a strip only
+// when its pixels contain the frame marker drawn with that position, and use
+// that same image (never a second, potentially stale capturePage snapshot).
+function waitForReceiptPaint(contents, timeoutMs = 5000, accept = () => true, draw) {
   return new Promise((resolve, reject) => {
     const cleanup = () => { clearTimeout(timer); contents.removeListener('paint', painted); contents.removeListener('destroyed', destroyed); };
-    const painted = () => { cleanup(); resolve(); };
-    const destroyed = () => { cleanup(); reject(new Error('Receipt window closed before rendering completed')); };
-    const timer = setTimeout(() => { cleanup(); reject(new Error('Receipt painting timed out. Nothing was printed.')); }, timeoutMs);
-    contents.once('paint', painted);
+    const failed = error => { cleanup(); reject(error); };
+    const painted = (_event, _dirty, image) => {
+      try {
+        const result = accept(image);
+        if (result) { cleanup(); resolve(result); }
+      } catch (error) { failed(error); }
+    };
+    const destroyed = () => failed(new Error('Receipt window closed before rendering completed'));
+    const timer = setTimeout(() => failed(new Error('Receipt painting timed out. Nothing was printed.')), timeoutMs);
+    contents.on('paint', painted);
     contents.once('destroyed', destroyed);
-    try { contents.invalidate(); } catch (error) { cleanup(); reject(error); }
+    Promise.resolve().then(() => draw && draw()).then(() => contents.invalidate()).catch(failed);
   });
+}
+
+function stripFrame(image, width, rows, frame) {
+  if (!image || image.isEmpty()) return null;
+  const size = image.getSize();
+  if (size.width < width || size.height < STRIP_ROWS + FRAME_MARKER_ROWS) return null;
+  // Normalize Windows display scaling before reading the marker or printer dots.
+  const normalized = image.crop({ x: 0, y: 0, width, height: STRIP_ROWS + FRAME_MARKER_ROWS })
+    .resize({ width, height: STRIP_ROWS + FRAME_MARKER_ROWS, quality: 'best' });
+  const pixels = normalized.toBitmap();
+  for (let bit = 0; bit < 12; bit++) {
+    for (let half = 0; half < 2; half++) {
+      const black = ((frame >> bit) & 1) === half;
+      const at = (2 * width + (bit * 2 + half) * 4 + 2) * 4;
+      for (let channel = 0; channel < 3; channel++) {
+        if (black ? pixels[at + channel] > 15 : pixels[at + channel] < 240) return null;
+      }
+      if (pixels[at + 3] < 240) return null;
+    }
+  }
+  // The marker lives outside the receipt and must never reach the printer.
+  return pixels.subarray(FRAME_MARKER_ROWS * width * 4, (FRAME_MARKER_ROWS + rows) * width * 4);
+}
+
+async function captureReceiptStrip(contents, width, rows, y) {
+  const frame = Math.floor(y / STRIP_ROWS) + 1;
+  return waitForReceiptPaint(contents, 5000, image => stripFrame(image, width, rows, frame),
+    () => contents.executeJavaScript(`(() => {
+      let marker = document.querySelector('#posnic-print-frame');
+      if (!marker) {
+        marker = document.createElement('canvas'); marker.id = 'posnic-print-frame';
+        marker.width = 96; marker.height = ${FRAME_MARKER_ROWS};
+        marker.style.cssText = 'position:fixed;left:0;top:0;width:96px;height:${FRAME_MARKER_ROWS}px;margin:0;padding:0;border:0;z-index:2147483647;';
+        document.body.append(marker);
+      }
+      const ctx = marker.getContext('2d');
+      for (let bit = 0; bit < 12; bit++) for (let half = 0; half < 2; half++) {
+        ctx.fillStyle = ((${frame} >> bit) & 1) === half ? '#000' : '#fff';
+        ctx.fillRect((bit * 2 + half) * 4, 0, 4, ${FRAME_MARKER_ROWS});
+      }
+      document.querySelector('#receipt').style.transform = 'translateY(${FRAME_MARKER_ROWS - y}px)';
+    })()`));
 }
 
 async function rasterize(plan) {
   const { BrowserWindow } = require('electron');
   const win = hardenPrintWindow(new BrowserWindow({
-    show: false, useContentSize: true, width: plan.width, height: STRIP_ROWS,
+    show: false, useContentSize: true, width: plan.width, height: STRIP_ROWS + FRAME_MARKER_ROWS,
     backgroundColor: '#ffffff',
     // Offscreen rendering keeps frame callbacks running even when the till is
     // minimised or this is the application's first (hidden) window.
@@ -208,17 +258,8 @@ async function rasterize(plan) {
         for (let y = 0; y < height; y += STRIP_ROWS) {
           stage = `drawing receipt row ${y}`;
           const rows = Math.min(STRIP_ROWS, height - y);
-          await win.webContents.executeJavaScript(`new Promise(resolve => {
-            document.querySelector('#receipt').style.transform = 'translateY(-${y}px)';
-            requestAnimationFrame(() => requestAnimationFrame(resolve));
-          })`);
-          await waitForReceiptPaint(win.webContents);
-          stage = `capturing receipt row ${y}`;
-          let capture = await win.webContents.capturePage({ x: 0, y: 0, width: plan.width, height: rows }, { stayHidden: true, stayAwake: true });
-          if (capture.isEmpty()) throw new Error('Could not render Unicode receipt');
-          // Desktop display scaling must never change the number of printer dots.
-          capture = capture.resize({ width: plan.width, height: rows, quality: 'best' });
-          const dots = pack(capture.toBitmap(), plan.width, rows, plan.width, false);
+          const capture = await captureReceiptStrip(win.webContents, plan.width, rows, y);
+          const dots = pack(capture, plan.width, rows, plan.width, false);
           if (dots.some(byte => byte !== 0)) ink = true;
           strips.push({ width: plan.width, height: rows, data: dots.toString('base64') });
         }
@@ -254,4 +295,4 @@ async function renderDesignedReceipt(document, paper, render = rasterize) {
   return receipt.build();
 }
 
-module.exports = { renderReceipt, renderDesignedReceipt, needsRaster, layout, documentFor, loadDocument, rasterize, waitForReceiptPaint };
+module.exports = { renderReceipt, renderDesignedReceipt, needsRaster, layout, documentFor, loadDocument, rasterize, waitForReceiptPaint, stripFrame, captureReceiptStrip };
