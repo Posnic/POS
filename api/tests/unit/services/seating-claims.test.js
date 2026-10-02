@@ -45,6 +45,70 @@ const request = (overrides = {}) => ({
   guests: 4,
   ...overrides,
 });
+
+test('completed dine-in payment releases an existing claim and permits a new party without changing the receipt', async () => {
+  const claim = await seating.reserve(db, scope, request());
+  const sale = {
+    _id: new ObjectId(),
+    branch_id: scope.branchId,
+    license: scope.license,
+    table_number: 'T1',
+    dine_type: 'Dine-in',
+    sale_process: 'KOT',
+    floor_lifecycle: true,
+    payment_status: 'Paid',
+    sales_total: 262.5,
+    paid_amount: 262.5,
+    payment_pending: 0,
+    balance: 0,
+    items: [{ name: 'Dish', qty: 1 }],
+  };
+  await seating.bind(db, scope, claim.id, 'staff-1', String(sale._id));
+  await db.collection('sales').insertOne(sale);
+  const next = await seating.reserve(db, scope, request({ request_id: 'seating-next-party-0002' }));
+  expect(next.state).toBe('reserved');
+  expect((await seating.find(db, scope, claim.id)).state).toBe('released');
+  const saved = await db.collection('sales').findOne({ _id: sale._id });
+  expect(saved).toMatchObject(sale);
+  expect(saved.floor_closed_at).toBeInstanceOf(Date);
+  expect(await db.collection('tableorder').countDocuments({ service_state: 'cleaning' })).toBe(0);
+  await seating.releaseSettled(db, scope);
+  expect((await seating.find(db, scope, next.id)).state).toBe('reserved');
+});
+
+test.each([
+  { payment_status: 'Unpaid', bill_printed_at: new Date() },
+  { payment_status: 'Paid', balance: 1 },
+  { payment_status: 'Paid', payment_pending: 1 },
+  { payment_status: 'Paid', balance: 'unknown' },
+  { payment_status: 'Paid', dine_type: 'Take away' },
+  { payment_status: 'Paid', dine_type: 'Takeaway' },
+  { payment_status: 'Paid', dine_type: 'Take-Away' },
+])('automatic recovery preserves unfinished service: %j', async (fields) => {
+  const claim = await seating.reserve(db, scope, request());
+  const saleId = new ObjectId();
+  await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    sale_process: 'KOT',
+    table_number: 'T1',
+    floor_lifecycle: true,
+    dine_type: 'Dine-in',
+    balance: 0,
+    payment_pending: 0,
+    ...fields,
+  });
+  await seating.releaseSettled(db, scope);
+  expect((await seating.find(db, scope, claim.id)).state).toBe('submitting');
+  expect((await db.collection('sales').findOne({ _id: saleId })).floor_closed_at).toBeUndefined();
+  expect(
+    await db
+      .collection('sales')
+      .countDocuments(require('../../../src/helpers/floor-eligibility').tableOccupancy())
+  ).toBe(1);
+});
 test('connected neighbouring chains combine capacities regardless of configuration direction', async () => {
   const result = await seating.reserve(
     db,

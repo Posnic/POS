@@ -717,6 +717,7 @@ PosnicPro.kot = {
                                       does not; the button says Print Bill either way, because that
                                       is the word every floor already uses for it.
                                     -->
+                                    <button type="button" class="btn btn-sm btn-outline-success kot-serve-all" data-sale-id="${kot._id}" onclick="PosnicPro.kot.serveAll('${kot._id}')"><i class="feather icon-check-circle" aria-hidden="true"></i> <lang class="lang_serve_all">Serve all</lang></button>
                                     <button type="button" class="btn btn-info" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')">
                                         <i class="feather icon-printer"></i> <lang class="lang_print_bill">Print Bill</lang>
                                     </button>
@@ -1929,6 +1930,7 @@ PosnicPro.kot = {
                                 <button type="button" class="btn btn-sm btn-outline-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')" title="Take Payment" data-t-title="lang_settlement" data-toggle="tooltip">
                                     <i class="feather icon-dollar-sign"></i>
                                 </button>
+                                <button type="button" class="btn btn-sm btn-outline-success kot-serve-all" data-sale-id="${kot._id}" onclick="PosnicPro.kot.serveAll('${kot._id}')"><i class="feather icon-check-circle" aria-hidden="true"></i> <lang class="lang_serve_all">Serve all</lang></button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')" title="Print Bill" data-t-title="lang_print_bill" data-toggle="tooltip">
                                     <i class="feather icon-printer"></i>
                                 </button>
@@ -2006,6 +2008,7 @@ PosnicPro.kot = {
                                 <button type="button" class="btn btn-sm btn-outline-success" onclick="PosnicPro.kothistory.proceed('${kot._id}')" title="Take Payment" data-t-title="lang_settlement" data-toggle="tooltip">
                                     <i class="feather icon-dollar-sign"></i>
                                 </button>
+                                <button type="button" class="btn btn-sm btn-outline-success kot-serve-all" data-sale-id="${kot._id}" onclick="PosnicPro.kot.serveAll('${kot._id}')"><i class="feather icon-check-circle" aria-hidden="true"></i> <lang class="lang_serve_all">Serve all</lang></button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="PosnicPro.kot.printKOTReceipt('${kot._id}')" title="Print Bill" data-t-title="lang_print_bill" data-toggle="tooltip">
                                     <i class="feather icon-printer"></i>
                                 </button>
@@ -2243,6 +2246,27 @@ PosnicPro.kot = {
                 });
             }
         }
+    },
+
+    servingOrders: {},
+    serveAll: function (saleId) {
+        if (!saleId || PosnicPro.kot.servingOrders[saleId]) return;
+        PosnicPro.kot.servingOrders[saleId] = true;
+        var buttons = $('.kot-serve-all').filter(function () { return $(this).attr('data-sale-id') === saleId; });
+        buttons.prop('disabled', true).attr('aria-busy', 'true');
+        function finish() {
+            delete PosnicPro.kot.servingOrders[saleId];
+            buttons.prop('disabled', false).removeAttr('aria-busy');
+        }
+        PosnicPro.post({ url: 'sales/serveKitchenItems', processData: false,
+            data: JSON.stringify({ saleId: saleId, branchId: PosnicPro.local.get('branch_id_set'), all: true })
+        }, function (response) {
+            finish();
+            if (response.type !== 'success') { PosnicPro.alert('error', response.message); return; }
+            PosnicPro.alert('success', PosnicPro.i18n.t('lang_items_marked_served', 'Items marked served'));
+            if (PosnicPro.kot.currentTableNumber) PosnicPro.kot.loadTableDetails(PosnicPro.kot.currentTableNumber, true);
+            PosnicPro.kot.loadTables(null, true);
+        }, function () { finish(); });
     },
 
     printKOT: function () {

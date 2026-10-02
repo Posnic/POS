@@ -233,3 +233,55 @@ test('mark served waits for order restructuring but remains available during nor
   await collection.updateOne({ _id: id }, { $set: { captain_payment_plan: 'normal-payment' } });
   expect((await repository.serveKitchenItems(request())).status).toBe(true);
 });
+
+test('desktop serve all updates every pending line and removes the kitchen ticket without settling', async () => {
+  const before = await collection.findOne({ _id: id });
+  const result = await repository.serveKitchenItems({ ...request(), items: undefined, all: true });
+  expect(result.status).toBe(true);
+  const saved = await collection.findOne({ _id: id });
+  expect(saved.kitchen_service.c0i0.quantity).toBe(2);
+  expect(saved.payment_status).toBe('Unpaid');
+  expect(saved.items).toEqual(before.items);
+  expect(saved.changes).toEqual(before.changes);
+  expect((await repository.kitchenScreenTickets(String(branch))).data).toEqual([]);
+  expect(
+    (await repository.serveKitchenItems({ ...request(), items: undefined, all: true })).status
+  ).toBe(true);
+});
+
+test('serve all handles more than 200 lines in one atomic update', async () => {
+  const items = Array.from({ length: 201 }, (_, i) => ({
+    item_id: 'dish' + i,
+    item_name: 'Dish ' + i,
+    item_quantity: 1,
+  }));
+  await collection.updateOne(
+    { _id: id },
+    {
+      $set: {
+        items,
+        changes: [
+          { timestamp: new Date(), items: items.map((item) => ({ ...item, process: 'add' })) },
+        ],
+      },
+    }
+  );
+  expect(
+    (await repository.serveKitchenItems({ ...request(), all: true, items: undefined })).status
+  ).toBe(true);
+  expect(Object.keys((await collection.findOne({ _id: id })).kitchen_service)).toHaveLength(201);
+  expect((await repository.kitchenScreenTickets(String(branch))).data).toEqual([]);
+});
+
+test('serve all leaves held courses unserved', async () => {
+  const held = { item_id: 'dessert', item_name: 'Dessert', item_quantity: 1, held: true };
+  await collection.updateOne(
+    { _id: id },
+    { $push: { items: held, 'changes.0.items': { ...held, process: 'add' } } }
+  );
+  const result = await repository.serveKitchenItems({ ...request(), all: true, items: undefined });
+  expect(result.status).toBe(true);
+  const saved = await collection.findOne({ _id: id });
+  expect(saved.kitchen_service.c0i0.quantity).toBe(2);
+  expect(saved.kitchen_service.c0i1).toBeUndefined();
+});
