@@ -1132,14 +1132,10 @@ function loadPageAndReveal(url) {
   });
 }
 
+const sendStartupProgress = require('./startup-progress').createStartupProgress();
 function updateStartupStatus(stage, text, details, progress) {
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  const payload = [stage, text, details, progress]
-    .map(value => JSON.stringify(value))
-    .join(',');
-  mainWindow.webContents
-    .executeJavaScript(`window.updateStartupStatus?.(${payload})`)
-    .catch(() => { });
+  sendStartupProgress(mainWindow.webContents, [stage, text, details, progress]);
 }
 
 // Startup-failure actions used by the loading screen's error state
