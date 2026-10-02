@@ -78,3 +78,49 @@ test('sheet sizes stay unchanged and an unmeasurable thermal receipt fails clear
         dom.window.close();
     }
 });
+
+
+test('receipt readiness waits for CSS before checking fonts and rejects failed images', async () => {
+    const { prepareDocument } = require('../src/receipt-page-layout');
+    const dom = new JSDOM('<link rel="stylesheet" href="/receipt.css"><article class="rd-document" data-receipt-design="80">Total 840.00</article>');
+    const doc = dom.window.document;
+    doc.querySelector('article').getBoundingClientRect = () => ({ height: 80 });
+    let fontReads = 0, releaseFonts, ready = false;
+    Object.defineProperty(doc, 'fonts', { value: { get ready() { fontReads++; return new Promise(resolve => { releaseFonts = resolve; }); }, [Symbol.iterator]: function* () {} } });
+    const pending = prepareDocument(doc, true).then(() => { ready = true; });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(fontReads, 0, 'fonts must not be checked before the stylesheet arrives');
+    doc.querySelector('link').dispatchEvent(new dom.window.Event('load'));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(ready, false);
+    releaseFonts(); await pending;
+    assert.equal(ready, true);
+    doc.querySelector('link').remove();
+    doc.querySelector('article').innerHTML += '<img src="/broken.png">';
+    Object.defineProperty(doc.images[0], 'complete', { value: true });
+    await assert.rejects(prepareDocument(doc, true), /receipt image/);
+    dom.window.close();
+});
+
+test('receipt readiness times out instead of printing unfinished assets', async () => {
+    const { prepareDocument } = require('../src/receipt-page-layout');
+    const dom = new JSDOM('<link rel="stylesheet" href="/slow.css"><p>Total 840.00</p>');
+    await assert.rejects(prepareDocument(dom.window.document, false, { timeoutMs: 15 }), /Nothing was printed/);
+    dom.window.close();
+});
+
+test('thermal capture waits for paint acknowledgement and cleans up on failure', async () => {
+    const { EventEmitter } = require('node:events');
+    const { waitForReceiptPaint } = require('../src/escpos-unicode');
+    const contents = new EventEmitter();
+    let invalidations = 0, ready = false;
+    contents.invalidate = () => { invalidations++; };
+    const pending = waitForReceiptPaint(contents).then(() => { ready = true; });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(invalidations, 1); assert.equal(ready, false);
+    contents.emit('paint'); await pending;
+    assert.equal(contents.listenerCount('paint'), 0);
+    await assert.rejects(waitForReceiptPaint(contents, 15), /Nothing was printed/);
+    assert.equal(contents.listenerCount('paint'), 0);
+    assert.equal(contents.listenerCount('destroyed'), 0);
+});
