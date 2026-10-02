@@ -1,0 +1,33 @@
+{
+    "source": "synthetic-opencart-fixture",
+    "unsupported_combinations": [
+      {
+        "product_id": "OC-SYN-1001",
+        "product_name": "Classic Backpack",
+        "selected_options": [
+          {
+            "option_name": "Material",
+            "option_value": "Premium Leather"
+          },
+          {
+            "option_name": "Size",
+            "option_value": "XXL"
+          }
+        ],
+        "reason": "The fixture does not define an XXL option value for this product.",
+        "expected_action": "reject"
+      },
+      {
+        "product_id": "OC-SYN-1001",
+        "product_name": "Classic Backpack",
+        "selected_options": [
+          {
+            "option_name": "Material",
+            "option_value": "Nonexistent Material"
+          }
+        ],
+        "reason": "The selected option value is not present in the synthetic product definition.",
+        "expected_action": "reject"
+      }
+    ]
+  }
