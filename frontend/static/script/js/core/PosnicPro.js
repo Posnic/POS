@@ -2903,6 +2903,7 @@ PosnicPro = {
      * does via applyModuleNav). Runs at page load and after a modules save.
      */
     applyModuleSidebar: function () {
+        if (PosnicPro.extensions && PosnicPro.extensions.refreshMenu) PosnicPro.extensions.refreshMenu();
         var s = {};
         try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
         var on = function (k) { return s[k] !== false; };

@@ -3,6 +3,7 @@
 (function () {
   "use strict";
   var generation = 0,
+    menuGeneration = 0,
     mounted = null;
   function close() {
     generation++;
@@ -183,6 +184,32 @@
     };
   }
   PosnicPro.extensions = {
+    refreshMenu: async function () {
+      var menuRun = ++menuGeneration;
+      var branch = String(PosnicPro.local.get('branch_id_set') || '');
+      document.querySelectorAll('[data-extension-menu]').forEach(function (node) { node.remove(); });
+      if (!branch) return;
+      try {
+        var data = await request('');
+        if (menuRun !== menuGeneration || branch !== String(PosnicPro.local.get('branch_id_set') || '')) return;
+        document.querySelectorAll('[data-extension-menu]').forEach(function (node) { node.remove(); });
+        var anchor = document.getElementById('view_touchsales_page');
+        if (!anchor) return;
+        data.extensions.filter(function (item) { return item.enabled !== false && item.menu === 'sales'; }).forEach(function (item) {
+          var row = document.createElement('li'), link = document.createElement('a'), icon = document.createElement('img');
+          row.dataset.extensionMenu = item.id;
+          link.href = '#/extensions/' + encodeURIComponent(item.id);
+          icon.src = 'static/images/svg-icon/bag.svg'; icon.alt = ''; icon.className = 'img-fluid';
+          link.append(icon, document.createTextNode(item.displayName)); row.append(link);
+          anchor.parentElement.after(row);
+          if (window.location.hash === link.getAttribute('href')) {
+            row.classList.add('active'); link.classList.add('active');
+            var pane = $(row).closest('.tab-pane');
+            $('.vertical-menu-icon [href="#' + pane.attr('id') + '"]').tab('show');
+          }
+        });
+      } catch (_) { /* No extension navigation when the authorised list is unavailable. */ }
+    },
     showDataTablePage: async function (selectedTab) {
       var run = show("Extensions");
       var branch = String(PosnicPro.local.get("branch_id_set") || "");
@@ -276,6 +303,7 @@
                 toggle.disabled = true;
                 try {
                   await request("/" + encodeURIComponent(item.id) + "/enabled", { enabled: item.enabled === false });
+                  await PosnicPro.extensions.refreshMenu();
                   if (run === generation) await PosnicPro.extensions.showDataTablePage();
                 } catch (error) {
                   if (run === generation) {
@@ -307,6 +335,7 @@
       }
     },
     showDetails: async function (id) {
+      PosnicPro.extensions.refreshMenu();
       var run = show("Extension");
       if (!/^[a-z][a-z0-9.-]{2,99}$/.test(id)) {
         status("Invalid extension.");

@@ -116,6 +116,7 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
           id: item.id,
           displayName: item.displayName || item.id,
           version: item.version,
+          ...(item.menu === 'sales' ? { menu: 'sales' } : {}),
           enabled: !disabled.has(item.id),
         }));
       res
