@@ -8735,6 +8735,7 @@ class SalesRepository {
           orderMinutes,
           servicePoint,
           channel: staffOrder ? 'tableside' : 'online',
+          captainPriceClient: staffOrder ? client : null,
         });
         if (priced.status === false) return priced;
         saleItems.push(priced.line);
@@ -11513,7 +11514,15 @@ class SalesRepository {
       pricing = pricingAuthority.resolve({
         product: itemDoc,
         branch: branchDoc,
-        submitted: item.unit_price ?? item.item_price ?? item.price,
+        submitted: require('../services/captain-price-contract').submittedPrice({
+          item,
+          product: itemDoc,
+          branch: branchDoc,
+          venue: servicePoint.venue,
+          extras: extras.delta,
+          client: where.captainPriceClient,
+          staffOrder: where.channel === 'tableside',
+        }),
         extras: extras.delta,
         venue: servicePoint.venue,
         channel: where.channel || 'online',
