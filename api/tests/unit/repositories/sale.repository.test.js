@@ -954,6 +954,67 @@ describe('SalesRepository', () => {
       expect(r.status).toBe(false);
       expect(r.message).toBe('Sale not found');
     });
+    test.each([
+      [1720, 1806, 1390, 1459.5, 'UPI'],
+      [3144.285714285714, 3301.5, 2750, 2887.5, 'Card'],
+      [0, 0, 100, 105, 'Cash'],
+    ])(
+      'receipt uses saved bill %s/%s instead of stale aliases',
+      async (subtotal, total, oldSub, oldTotal, method) => {
+        const saleDoc = {
+          _id: FAKE_ID,
+          sales_id: 'TEST-BILL',
+          branch_id: FAKE_BRANCH,
+          license: FAKE_LICENSE,
+          sale_process: 'KOT',
+          payment_status: 'Paid',
+          items: [],
+          sales_total: total,
+          sales_sub_total: subtotal,
+          total: oldTotal,
+          subtotal: oldSub,
+          items_total: oldTotal,
+          items_subtotal: oldSub,
+          multi_payment: { [method]: total },
+        };
+        collections.sales = mkCol();
+        collections.sales.findOne.mockResolvedValue(saleDoc);
+        collections.branches = mkCol();
+        collections.branches.findOne.mockResolvedValue({ _id: FAKE_BRANCH });
+        const result = await salesRepository.getLegacyDetails(FAKE_ID);
+        expect(result.status).toBe(true);
+        expect(result.data.items_total).toBe(total);
+        expect(result.data.items_subtotal).toBe(subtotal);
+        expect(result.data.total).toBe(total);
+        expect(result.data.subtotal).toBe(subtotal);
+        expect(result.data.multi_payment).toEqual({ [method]: total });
+        expect(collections.sales.updateOne).not.toHaveBeenCalled();
+      }
+    );
+
+    test('receipt keeps remaining-item totals for returned sales', async () => {
+      const saleDoc = {
+        _id: FAKE_ID,
+        sales_id: 'TEST-RETURN',
+        branch_id: FAKE_BRANCH,
+        license: FAKE_LICENSE,
+        sale_process: 'Return',
+        items: [],
+        sales_total: 1806,
+        sales_sub_total: 1720,
+        items_total: 1050,
+        items_subtotal: 1000,
+      };
+      collections.sales = mkCol();
+      collections.sales.findOne.mockResolvedValue(saleDoc);
+      collections.branches = mkCol();
+      collections.branches.findOne.mockResolvedValue({ _id: FAKE_BRANCH });
+      const result = await salesRepository.getLegacyDetails(FAKE_ID);
+      expect(result.status).toBe(true);
+      expect(result.data.items_total).toBe(1050);
+      expect(result.data.items_subtotal).toBe(1000);
+    });
+
     test('returns normalized sale doc', async () => {
       const saleDoc = {
         _id: { toString: () => FAKE_ID },

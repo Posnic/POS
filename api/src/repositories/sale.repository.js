@@ -1610,6 +1610,31 @@ class SalesRepository {
         }
       }
 
+      // Ordinary bills and payment use sales_total/sales_sub_total. Older KOT
+      // edits left the receipt aliases at the first order's amount. Never let
+      // those stale aliases change a reprint after payment. Returns retain
+      // their separate remaining-item totals; transferred bills use allocation.
+      const hasReturns =
+        /return|exchange/i.test(String(saleDoc.sale_process || '')) ||
+        (Array.isArray(saleDoc.items_return) && saleDoc.items_return.length > 0) ||
+        (Array.isArray(saleDoc.returnArray) && saleDoc.returnArray.length > 0);
+      if (!hasReturns && !transferredBill) {
+        for (const [source, targets] of [
+          ['sales_total', ['items_total', 'total']],
+          ['sales_sub_total', ['items_subtotal', 'subtotal']],
+        ]) {
+          const value = saleDoc[source];
+          if (
+            value !== undefined &&
+            value !== null &&
+            value !== '' &&
+            Number.isFinite(Number(value))
+          ) {
+            for (const target of targets) normalized[target] = Number(value);
+          }
+        }
+      }
+
       if (transferredBill) normalized.transferred_bill = transferredBill;
       normalized.receipt_line_rows =
         transferredBill?.items ||
@@ -11096,10 +11121,12 @@ class SalesRepository {
         kitchen_required: true,
         floor_lifecycle: true,
         kitchen_closed: false,
+        subtotal: baseSubtotal,
         sales_sub_total: baseSubtotal,
         items_subtotal: baseSubtotal,
         sales_total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
-        items_total: salesTotal,
+        total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
+        items_total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
         tax: taxTotal,
         discount: itemDiscountTotal,
         return_tax: 0,
