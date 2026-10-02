@@ -1,4 +1,12 @@
 {
+  "lang_item_zero_untracked_help": "Uza bidhaa hii bila kuhesabu kiasi kilichopo.",
+  "lang_item_zero_enter_help": "Ongeza kiasi ulichonacho tayari, kisha uhifadhi.",
+  "lang_item_zero_enter": "Weka kiasi cha kuanzia",
+  "lang_item_zero_title": "Bado hakuna kiasi cha kuanzia",
+  "lang_item_zero_out": "Hifadhi kama bidhaa imeisha",
+  "lang_item_zero_untracked": "Usifuatilie kiasi cha bidhaa",
+  "lang_item_sell_out_of_stock": "Uza hata bidhaa zikiisha",
+  "lang_item_track_stock": "Fuatilia kiasi cha bidhaa zilizopo",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - siku/mwezi/mwaka",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mwezi/siku/mwaka",
   "lang_01_january_18_d_mm_yy": "01 Januari 18 - siku Mwezi mwaka",

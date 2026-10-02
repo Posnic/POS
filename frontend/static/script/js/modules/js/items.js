@@ -4,6 +4,49 @@ PosnicPro.items = {
     form_data: new FormData(),
     itemAction: 'add',
 
+    // Ask before upload/save; the decision changes this item, never shop policy.
+    confirmOpeningStock: function (save) {
+        if ($('#itemid').val() || $('#item_is_service').is(':checked') ||
+            !$('#item_track_inventory').is(':checked') || $('#item_negative_stock').is(':checked')) {
+            save();
+            return;
+        }
+        var variants = $('#product_with_variant').is(':checked');
+        var quantities = variants ? $('#load_price_fields input[id^="items_available_quantity_"]') : $('#items_available_quantity');
+        var empty = quantities.filter(function () { return Number($(this).val() || 0) === 0; });
+        if (!empty.length) { save(); return; }
+        var modal = $('#item_zero_stock_modal');
+        if (modal.hasClass('show')) { return; }
+        modal.find('input[value="enter"]').prop('checked', true);
+        modal.find('[data-zero-variants]').toggle(variants);
+        // Do not discard stock already entered for other variants.
+        modal.find('[data-zero-untracked]').toggle(!quantities.toArray().some(function (input) {
+            return Number($(input).val()) > 0;
+        }));
+        var decided = false;
+        modal.off('.openingStock');
+        modal.on('click.openingStock', '[data-zero-continue]', function () {
+            if (decided) { return; }
+            decided = true;
+            var choice = modal.find('input[name="item_zero_choice"]:checked').val();
+            modal.one('hidden.bs.modal.openingStock', function () {
+                if (choice === 'enter') {
+                    PosnicPro.items.goToTab('item_tab_main', '#' + empty.first().attr('id'));
+                    empty.first().trigger('focus').select();
+                    return;
+                }
+                if (choice === 'negative') { $('#item_negative_stock').prop('checked', true); }
+                if (choice === 'untracked') {
+                    $('#item_track_inventory').prop('checked', false);
+                    $('#item_negative_stock').prop('checked', false);
+                }
+                save();
+            });
+            modal.modal('hide');
+        });
+        modal.modal('show');
+    },
+
     /*
      * Whether this shop can draft descriptions at all.
      *
@@ -4926,11 +4969,13 @@ $(document).ready(function () {
                 PosnicPro.items.loadVariant();
                 PosnicPro.alert('info', 'Review each variant\'s price below, then Save');
             } else {
-                if ($('#item_upload_image_status').val() === 'no') {
-                    PosnicPro.items.item();
-                } else {
-                    PosnicPro.items.itemImageFormSubmit();
-                }
+                PosnicPro.items.confirmOpeningStock(function () {
+                    if ($('#item_upload_image_status').val() === 'no') {
+                        PosnicPro.items.item();
+                    } else {
+                        PosnicPro.items.itemImageFormSubmit();
+                    }
+                });
             }
 
         }

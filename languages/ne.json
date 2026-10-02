@@ -1,4 +1,12 @@
 {
+  "lang_item_zero_untracked_help": "स्टकको मात्रा नगनी यो सामान बेच्नुहोस्।",
+  "lang_item_zero_enter_help": "तपाईंसँग पहिले नै भएको मात्रा थप्नुहोस्, त्यसपछि सुरक्षित गर्नुहोस्।",
+  "lang_item_zero_enter": "सुरुवाती स्टक प्रविष्ट गर्नुहोस्",
+  "lang_item_zero_title": "अहिलेसम्म सुरुवाती स्टक छैन",
+  "lang_item_zero_out": "स्टक सकिएको रूपमा सुरक्षित गर्नुहोस्",
+  "lang_item_zero_untracked": "स्टक ट्र्याक नगर्नुहोस्",
+  "lang_item_sell_out_of_stock": "स्टक सकिए पनि बेच्नुहोस्",
+  "lang_item_track_stock": "स्टकको मात्रा ट्र्याक गर्नुहोस्",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - dd/mm/yyyy (दिन/महिना/वर्ष)",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mm/dd/yyyy (महिना/दिन/वर्ष)",
   "lang_01_january_18_d_mm_yy": "01 जनवरी 18 - d MM yy",

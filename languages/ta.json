@@ -1,4 +1,12 @@
 {
+  "lang_item_zero_untracked_help": "இருப்பு அளவைக் கணக்கிடாமல் இந்தப் பொருளை விற்கலாம்.",
+  "lang_item_zero_enter_help": "உங்களிடம் ஏற்கனவே உள்ள அளவை உள்ளிட்டு, பிறகு சேமிக்கவும்.",
+  "lang_item_zero_enter": "தொடக்க இருப்பை உள்ளிடு",
+  "lang_item_zero_title": "தொடக்க இருப்பு இன்னும் இல்லை",
+  "lang_item_zero_out": "இருப்பு இல்லை எனச் சேமி",
+  "lang_item_zero_untracked": "இருப்பைக் கண்காணிக்க வேண்டாம்",
+  "lang_item_sell_out_of_stock": "இருப்பு இல்லாவிட்டாலும் விற்பனை செய்",
+  "lang_item_track_stock": "இருப்பு அளவைக் கண்காணி",
   "lang_approve_captain_phone": "கேப்டன் கைப்பேசிக்கு அனுமதி அளிக்கவும்",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - நாள்/மாதம்/ஆண்டு (dd/mm/yyyy)",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - மாதம்/நாள்/ஆண்டு (mm/dd/yyyy)",

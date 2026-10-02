@@ -1,4 +1,12 @@
 {
+  "lang_item_zero_untracked_help": "ದಾಸ್ತಾನು ಪ್ರಮಾಣವನ್ನು ಎಣಿಸದೆ ಈ ವಸ್ತುವನ್ನು ಮಾರಾಟ ಮಾಡಿ.",
+  "lang_item_zero_enter_help": "ನಿಮ್ಮ ಬಳಿ ಈಗಾಗಲೇ ಇರುವ ಪ್ರಮಾಣವನ್ನು ಸೇರಿಸಿ, ನಂತರ ಉಳಿಸಿ.",
+  "lang_item_zero_enter": "ಆರಂಭಿಕ ದಾಸ್ತಾನು ನಮೂದಿಸಿ",
+  "lang_item_zero_title": "ಇನ್ನೂ ಆರಂಭಿಕ ದಾಸ್ತಾನು ಇಲ್ಲ",
+  "lang_item_zero_out": "ದಾಸ್ತಾನು ಖಾಲಿಯಾಗಿದೆ ಎಂದು ಉಳಿಸಿ",
+  "lang_item_zero_untracked": "ದಾಸ್ತಾನು ಟ್ರ್ಯಾಕ್ ಮಾಡಬೇಡಿ",
+  "lang_item_sell_out_of_stock": "ದಾಸ್ತಾನು ಮುಗಿದರೂ ಮಾರಾಟ ಮಾಡಿ",
+  "lang_item_track_stock": "ದಾಸ್ತಾನು ಪ್ರಮಾಣವನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - dd/mm/yyyy (ದಿನ/ತಿಂಗಳು/ವರ್ಷ)",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mm/dd/yyyy (ತಿಂಗಳು/ದಿನ/ವರ್ಷ)",
   "lang_01_january_18_d_mm_yy": "01 ಜನವರಿ 18 - d MM yy",

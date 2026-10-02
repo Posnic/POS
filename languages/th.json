@@ -1,4 +1,12 @@
 {
+  "lang_item_zero_untracked_help": "ขายสินค้านี้โดยไม่ต้องนับจำนวนในสต็อก",
+  "lang_item_zero_enter_help": "เพิ่มจำนวนที่คุณมีอยู่แล้ว จากนั้นบันทึก",
+  "lang_item_zero_enter": "กรอกสต็อกเริ่มต้น",
+  "lang_item_zero_title": "ยังไม่มีสต็อกเริ่มต้น",
+  "lang_item_zero_out": "บันทึกว่าสินค้าหมด",
+  "lang_item_zero_untracked": "ไม่ติดตามสต็อก",
+  "lang_item_sell_out_of_stock": "ขายได้แม้สินค้าหมด",
+  "lang_item_track_stock": "ติดตามจำนวนสต็อก",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - วว/ดด/ปปปป",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - ดด/วว/ปปปป",
   "lang_01_january_18_d_mm_yy": "01 มกราคม 18 - ว เดือน ปป",

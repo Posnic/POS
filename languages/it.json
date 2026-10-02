@@ -1,4 +1,12 @@
 {
+  "lang_item_zero_untracked_help": "Vendi questo articolo senza contare le quantità in magazzino.",
+  "lang_item_zero_enter_help": "Inserisci la quantità già disponibile, poi salva.",
+  "lang_item_zero_enter": "Inserisci le scorte iniziali",
+  "lang_item_zero_title": "Nessuna scorta iniziale",
+  "lang_item_zero_out": "Salva come esaurito",
+  "lang_item_zero_untracked": "Non tenere traccia delle scorte",
+  "lang_item_sell_out_of_stock": "Vendi anche senza scorte",
+  "lang_item_track_stock": "Tieni traccia delle scorte",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - gg/mm/aaaa",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mm/gg/aaaa",
   "lang_01_january_18_d_mm_yy": "01 gennaio 18 - g MM aa",

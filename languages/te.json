@@ -1,4 +1,12 @@
 {
+  "lang_item_zero_untracked_help": "స్టాక్ పరిమాణాలను లెక్కించకుండా ఈ వస్తువును విక్రయించండి.",
+  "lang_item_zero_enter_help": "మీ వద్ద ఇప్పటికే ఉన్న పరిమాణాన్ని నమోదు చేసి, సేవ్ చేయండి.",
+  "lang_item_zero_enter": "ప్రారంభ స్టాక్ నమోదు చేయండి",
+  "lang_item_zero_title": "ఇంకా ప్రారంభ స్టాక్ లేదు",
+  "lang_item_zero_out": "స్టాక్ అయిపోయినట్లు సేవ్ చేయండి",
+  "lang_item_zero_untracked": "స్టాక్ ట్రాక్ చేయవద్దు",
+  "lang_item_sell_out_of_stock": "స్టాక్ అయిపోయినా విక్రయించండి",
+  "lang_item_track_stock": "స్టాక్ పరిమాణాలను ట్రాక్ చేయండి",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - dd/mm/yyyy (రోజు/నెల/సంవత్సరం)",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mm/dd/yyyy (నెల/రోజు/సంవత్సరం)",
   "lang_01_january_18_d_mm_yy": "01 జనవరి 18 - d MM yy",

@@ -1,4 +1,12 @@
 {
+  "lang_item_zero_untracked_help": "තොග ප්‍රමාණ ගණන් නොකර මෙම භාණ්ඩය විකුණන්න.",
+  "lang_item_zero_enter_help": "ඔබ සතුව දැනටමත් ඇති ප්‍රමාණය ඇතුළත් කර සුරකින්න.",
+  "lang_item_zero_enter": "ආරම්භක තොගය ඇතුළත් කරන්න",
+  "lang_item_zero_title": "තවම ආරම්භක තොගයක් නැත",
+  "lang_item_zero_out": "තොග අවසන් ලෙස සුරකින්න",
+  "lang_item_zero_untracked": "තොග සටහන් නොකරන්න",
+  "lang_item_sell_out_of_stock": "තොග අවසන් වුවත් විකුණන්න",
+  "lang_item_track_stock": "තොග ප්‍රමාණ සටහන් කරන්න",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - දින/මාස/වර්ෂ",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - මාස/දින/වර්ෂ",
   "lang_01_january_18_d_mm_yy": "01 ජනවාරි 18 - දින මාස වර්ෂ",

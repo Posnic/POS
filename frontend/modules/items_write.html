@@ -907,8 +907,9 @@
                                         <input type="checkbox" class="custom-control-input" id="item_track_inventory"
                                             name="item_track_inventory" checked>
                                         <label class="custom-control-label" for="item_track_inventory">
-                                            <lang class="lang_tracknontrack_title">Tracking inventory </lang>
+                                            <lang class="lang_item_track_stock">Track stock quantities</lang>
                                         </label>
+                                        <small class="form-text text-muted"><lang class="lang_item_track_stock_help">Turn off for items you sell without counting stock.</lang></small>
                                     </div>
 
                                     <div class="form-group col-md-4">
@@ -963,8 +964,9 @@
                                         <input type="checkbox" class="custom-control-input" id="item_negative_stock"
                                             name="item_negative_stock">
                                         <label class="custom-control-label" for="item_negative_stock">
-                                            <lang class="lang_negative_stock_2">Negative stock</lang>
+                                            <lang class="lang_item_sell_out_of_stock">Sell when out of stock</lang>
                                         </label>
+                                        <small class="form-text text-muted"><lang class="lang_item_negative_help">Keep tracking stock. Sales can take the balance below zero.</lang></small>
                                     </div>
 
                                     <!-- Shown only when the weight-machine hardware module is on -
@@ -1330,5 +1332,44 @@
             </div>
         </form>
         <!-- End row -->
+        <div class="modal fade" id="item_zero_stock_modal" tabindex="-1" role="dialog" aria-labelledby="item_zero_stock_title" aria-describedby="item_zero_stock_help">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="item_zero_stock_title"><lang class="lang_item_zero_title">No opening stock yet</lang></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="item_zero_stock_help"><lang class="lang_item_zero_help">With stock tracking on, items at zero stock stay off the POS sale list. How would you like to save?</lang></p>
+                        <p class="text-muted small" data-zero-variants><lang class="lang_item_zero_variants">Some variants have no opening stock. Your stock tracking choice applies to all variants of this item.</lang></p>
+                        <fieldset>
+                            <legend class="sr-only"><lang class="lang_item_zero_title">No opening stock yet</lang></legend>
+                            <label class="d-flex border rounded p-3 mb-2">
+                                <input class="mt-1 mr-3" type="radio" name="item_zero_choice" value="enter" checked>
+                                <span><strong class="d-block"><lang class="lang_item_zero_enter">Enter opening stock</lang></strong><small><lang class="lang_item_zero_enter_help">Add the quantity you already have, then save.</lang></small></span>
+                            </label>
+                            <label class="d-flex border rounded p-3 mb-2">
+                                <input class="mt-1 mr-3" type="radio" name="item_zero_choice" value="negative">
+                                <span><strong class="d-block"><lang class="lang_item_sell_out_of_stock">Sell when out of stock</lang></strong><small><lang class="lang_item_negative_help">Keep tracking stock. Sales can take the balance below zero.</lang></small></span>
+                            </label>
+                            <div data-zero-untracked>
+                                <label class="d-flex border rounded p-3 mb-2">
+                                    <input class="mt-1 mr-3" type="radio" name="item_zero_choice" value="untracked">
+                                    <span><strong class="d-block"><lang class="lang_item_zero_untracked">Don't track stock</lang></strong><small><lang class="lang_item_zero_untracked_help">Sell this item without counting quantities in stock.</lang></small></span>
+                                </label>
+                            </div>
+                            <label class="d-flex border rounded p-3 mb-0">
+                                <input class="mt-1 mr-3" type="radio" name="item_zero_choice" value="out">
+                                <span><strong class="d-block"><lang class="lang_item_zero_out">Save as out of stock</lang></strong><small><lang class="lang_item_zero_out_help">Keep it off the POS sale list until you add stock.</lang></small></span>
+                            </label>
+                        </fieldset>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>
+                        <button type="button" class="btn btn-primary" data-zero-continue><lang class="lang_continue_title">Continue</lang></button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
