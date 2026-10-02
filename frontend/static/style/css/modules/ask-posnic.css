@@ -1,30 +1,74 @@
-.ask-posnic-card{min-height:620px}.ask-posnic-intro{display:flex;gap:14px;align-items:center;padding-bottom:22px;border-bottom:1px solid var(--theme-border-color,#e8ebf2)}.ask-posnic-mark{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:#506fe4;color:#fff;font-size:21px}.ask-posnic-status{display:inline-block;padding:7px 11px;border-radius:20px;background:rgba(80,111,228,.1);color:#506fe4;font-size:12px;font-weight:600}.ask-posnic-suggestions{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0}.ask-posnic-suggestions button{border:1px solid var(--theme-border-color,#dfe4ec);background:var(--theme-card-bg,#fff);color:var(--theme-heading-color,#273142);border-radius:18px;padding:7px 13px;cursor:pointer}.ask-posnic-suggestions button:hover{border-color:#506fe4;color:#506fe4}.ask-posnic-thread{min-height:290px;max-height:430px;overflow:auto;padding:4px 2px 18px}.ask-posnic-message{max-width:86%;padding:12px 15px;border-radius:12px;margin:8px 0;white-space:pre-wrap}.ask-posnic-message.user{margin-left:auto;background:#506fe4;color:#fff}.ask-posnic-message.answer{background:var(--theme-bg-color,#f5f7fb);color:var(--theme-heading-color,#273142)}.ask-posnic-metrics{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}.ask-posnic-metric{background:var(--theme-card-bg,#fff);border:1px solid var(--theme-border-color,#e0e5ed);border-radius:8px;padding:8px 10px}.ask-posnic-metric strong{display:block}.ask-posnic-source{display:block;margin-top:10px;font-size:12px;opacity:.72}.ask-posnic-compose{display:flex;gap:10px;align-items:flex-end;border:1px solid var(--theme-border-color,#dfe4ec);border-radius:12px;padding:8px;background:var(--theme-card-bg,#fff)}.ask-posnic-compose textarea{flex:1;border:0;resize:none;background:transparent;color:inherit;padding:7px;outline:0}.ask-posnic-compose .btn{width:42px;height:42px;border-radius:10px}.ask-posnic-note{font-size:12px;color:#8492a6;text-align:center;padding-top:10px}@media(max-width:575px){.ask-posnic-card{min-height:auto}.ask-posnic-message{max-width:96%}.ask-posnic-suggestions{overflow-x:auto;flex-wrap:nowrap}.ask-posnic-suggestions button{white-space:nowrap}}
-
-.ask-posnic-document{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--theme-border-color,#e8ebf2)}.ask-posnic-document small{display:block;color:#8492a6}.ask-posnic-action{margin-top:10px}
-
-.ask-posnic-mark{flex-shrink:0}.ask-posnic-intro>div:last-child,.ask-posnic-compose textarea{min-width:0}.ask-posnic-admin-heading{flex-wrap:wrap;gap:12px}.ask-posnic-admin-heading>div{flex:1 1 220px;min-width:0}#askposnic .btn{max-width:100%;white-space:normal}#askposnic .card-body{overflow-wrap:anywhere}
-
-/* Conversations stay quiet; administration lives on the module's settings page. */
+/* A single aligned workspace; history is a separate pane, never a chat message. */
 #askposnic [hidden], #ask_posnic_admin [hidden] { display: none !important; }
-#askposnic .contentbar { padding-top: 12px; }
-#askposnic .ask-posnic-card { min-height: min(680px, calc(100vh - 190px)); box-shadow: none; }
-#askposnic .ask-posnic-card > .card-body { display: flex; flex-direction: column; padding: 28px; }
-#askposnic .ask-posnic-intro { flex: 1; flex-direction: column; justify-content: center; text-align: center; border: 0; padding: 48px 0 32px; }
-#askposnic .ask-posnic-intro h5 { font-size: 25px; margin-top: 8px; }
-#askposnic .ask-posnic-suggestions { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 20px 0 0; overflow: visible; }
-#askposnic .ask-posnic-suggestions button { min-height: 76px; padding: 16px; border-radius: 10px; white-space: normal; text-align: left; line-height: 1.5; }
-#askposnic .ask-posnic-thread { flex: 1; min-height: 280px; max-height: 58vh; }
-#askposnic .ask-posnic-thread:empty { display: none; }
-#askposnic .ask-posnic-message { line-height: 1.65; }
-#askposnic .ask-posnic-message.answer { padding: 20px; }
-#askposnic .ask-posnic-compose { margin-top: auto; }
-#askposnic .ask-posnic-compose:focus-within { border-color: #506fe4; box-shadow: 0 0 0 3px rgba(80,111,228,.1); }
-.ask-chat-toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
-.ask-history-panel { border: 1px solid var(--theme-border-color,#e0e5ed); border-radius: 10px; padding: 16px; margin-bottom: 20px; }
-.ask-history-heading,.ask-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.ask-history-heading { margin-bottom: 14px; }
-#ask_history_list { max-height: 240px; overflow: auto; }
-#ask_history_list button { display: block; text-align: left; }
+#askposnic .contentbar { padding: 24px 32px; }
+.ask-workspace { max-width: 1180px; margin: 0 auto; min-width: 0; }
+.ask-workspace-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+.ask-workspace-title { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+#askposnic .page-title { font-size: 23px; font-weight: 650; }
+.ask-posnic-status { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--theme-text-color,#52617a); }
+.ask-posnic-status::before { content: ''; width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: #16836b; }
+.ask-chat-toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+#askposnic .ask-chat-toolbar .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; border-radius: 9px; padding: 9px 14px; margin: 0; }
+.ask-workspace-body { display: flex; align-items: stretch; gap: 18px; min-width: 0; }
+#askposnic .ask-posnic-card { flex: 1; min-width: 0; height: calc(100dvh - 248px); min-height: 440px; margin: 0; border: 1px solid var(--theme-border-color,#e0e5ed); border-radius: 16px; background: var(--theme-card-bg,#fff); box-shadow: 0 5px 20px rgba(25,42,70,.025); }
+#askposnic .ask-posnic-card > .card-body { display: flex; flex-direction: column; min-height: 0; padding: 24px; overflow-wrap: anywhere; }
+#askposnic .btn { max-width: 100%; white-space: normal; }
+#askposnic .ask-posnic-intro { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 18px; padding: 24px 8px; }
+.ask-posnic-mark { display: grid; place-items: center; flex-shrink: 0; width: 52px; height: 52px; border-radius: 16px; background: #edf1ff; color: #435dd1; font-size: 24px; }
+#askposnic .ask-posnic-intro h5 { font-size: 24px; }
+.ask-posnic-suggestions { width: 100%; max-width: 760px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 6px; }
+.ask-posnic-suggestions button { min-width: 0; border: 1px solid var(--theme-border-color,#e0e5ed); background: var(--theme-card-bg,#fff); color: var(--theme-heading-color,#273142); border-radius: 12px; padding: 14px; min-height: 66px; text-align: left; line-height: 1.5; cursor: pointer; }
+.ask-posnic-suggestions button:hover { border-color: #506fe4; background: var(--theme-bg-color,#f5f7fb); }
+.ask-posnic-thread { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 8px 20px 0; scrollbar-gutter: stable; }
+.ask-posnic-thread:empty { display: none; }
+.ask-posnic-message { line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 24px; font-size: 14px; }
+.ask-posnic-message.user { width: fit-content; max-width: 80%; margin-left: auto; padding: 12px 17px; border-radius: 15px 15px 4px 15px; background: #506fe4; color: #fff; }
+.ask-posnic-message.answer { padding: 4px 4px 12px; max-width: 100%; color: var(--theme-heading-color,#273142); }
+.ask-posnic-metrics { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ask-posnic-metric { background: var(--theme-bg-color,#f5f7fb); border: 1px solid var(--theme-border-color,#e0e5ed); border-radius: 10px; padding: 10px 14px; }
+.ask-posnic-metric strong { display: block; }
+.ask-posnic-source { display: block; margin-top: 10px; font-size: 12px; color: var(--theme-text-color,#637188); }
+.ask-posnic-feedback { display: flex; gap: 6px; margin-top: 12px; }
+.ask-posnic-feedback .btn { padding: 4px 8px; }
+.ask-posnic-compose { display: flex; gap: 12px; align-items: flex-end; flex-shrink: 0; border: 1px solid var(--theme-border-color,#dfe4ec); border-radius: 14px; padding: 10px; background: var(--theme-card-bg,#fff); margin-top: auto; }
+.ask-posnic-compose:focus-within { border-color: #506fe4; box-shadow: 0 0 0 3px rgba(80,111,228,.09); }
+.ask-posnic-compose textarea { flex: 1; min-width: 0; border: 0; resize: none; background: transparent; color: var(--theme-heading-color,#273142); padding: 8px; outline: 0; line-height: 1.5; font-size: 14px; }
+#askposnic .ask-posnic-compose textarea::placeholder { color: #728096 !important; opacity: 1; }
+.ask-posnic-compose .btn { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 11px; }
+.ask-posnic-note { font-size: 11px; color: var(--theme-text-color,#637188); text-align: center; padding-top: 10px; }
+.ask-history-panel { flex: 0 0 270px; min-width: 0; max-height: max(440px,calc(100dvh - 248px)); overflow: auto; padding: 18px; border: 1px solid var(--theme-border-color,#e0e5ed); border-radius: 16px; background: var(--theme-card-bg,#fff); }
+.ask-history-heading,.ask-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ask-history-heading { margin-bottom: 18px; }
+.ask-history-heading h6 { margin: 0; font-size: 14px; }
+#ask_history_list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px !important; }
+#ask_history_list button { display: block; width: 100%; text-align: left; padding: 11px; margin: 0 !important; border-radius: 9px; font-size: 13px; overflow-wrap: anywhere; }
+#ask_history_list button:hover { background: var(--theme-bg-color,#f5f7fb); color: var(--theme-heading-color,#273142); }
+#ask_delete_history { padding: 8px 0; text-align: left; }
+#ask_load_supplier_messages { margin-top: 12px; }
+.ask-posnic-document { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--theme-border-color,#e8ebf2); }
+.ask-posnic-document small { display: block; color: #8492a6; }
+.ask-posnic-action { margin-top: 10px; }
+#askposnic button:focus-visible { outline: 2px solid #506fe4; outline-offset: 3px; }
+@media(max-width:991px) {
+ #askposnic .contentbar { padding: 20px; }
+ .ask-workspace-header { flex-wrap: wrap; gap: 14px; }
+ .ask-workspace-body { flex-direction: column; }
+ .ask-history-panel { flex-basis: auto; max-height: 300px; }
+ #askposnic .ask-posnic-card { flex: none; }
+}
+@media(max-width:575px) {
+ #askposnic .contentbar { padding: 16px 12px; }
+ .ask-workspace-header { margin-bottom: 16px; }
+ .ask-chat-toolbar { width: 100%; gap: 8px; }
+ #askposnic .ask-chat-toolbar .btn { flex: 1; font-size: 12px; padding: 8px; }
+ #askposnic .ask-posnic-card > .card-body { padding: 16px; }
+ #askposnic .ask-posnic-card { min-height: 440px; }
+ #askposnic .ask-posnic-intro { justify-content: flex-start; padding: 12px 0; gap: 12px; }
+ #askposnic .ask-posnic-intro h5 { font-size: 20px; }
+ .ask-posnic-suggestions { grid-template-columns: 1fr; gap: 8px; }
+ .ask-posnic-suggestions button { min-height: 42px; padding: 10px 12px; }
+ .ask-posnic-message.user { max-width: 92%; }
+}
 .ask-settings-card .card-body { padding: 28px; overflow-wrap: anywhere; }
 .ask-settings-heading { align-items: flex-start; margin-bottom: 24px; }
 .ask-settings-heading .btn { flex-shrink: 0; }
@@ -48,15 +92,12 @@
 #ask-settings-usage > .card { margin-top: 24px; }
 #ask-settings-schedules .form-group { flex: 0 0 50%; max-width: 50%; }
 @media(max-width:767px) {
-    #askposnic .row_filter { gap: 12px; }
-    #askposnic .ask-posnic-card > .card-body,.ask-settings-card .card-body { padding: 16px; }
-    #askposnic .ask-posnic-intro { padding: 24px 0; }
-    #askposnic .ask-posnic-intro h5 { font-size: 21px; }
-    #askposnic .ask-posnic-suggestions { grid-template-columns: 1fr; gap: 8px; }
-    #askposnic .ask-posnic-suggestions button { min-height: 48px; padding: 12px; }
-    .ask-settings-heading { flex-direction: column; }
-    .ask-settings-tabs button { padding: 10px; }
-    .ask-settings-panel .input-group { flex-wrap: wrap; gap: 8px; }
-    .ask-settings-panel .input-group input[type="file"] { flex: 1 1 100%; width: 100%; }
-    #ask-settings-schedules .form-group { flex: 0 0 100%; max-width: 100%; }
+ .ask-settings-card .card-body { padding: 16px; }
+ .ask-settings-heading { flex-direction: column; }
+ .ask-settings-tabs button { padding: 10px; }
+ .ask-settings-panel .input-group { flex-wrap: wrap; gap: 8px; }
+ .ask-settings-panel .input-group input[type="file"] { flex: 1 1 100%; width: 100%; }
+ #ask-settings-schedules .form-group { flex: 0 0 100%; max-width: 100%; }
 }
+
+#askposnic .btn-outline-secondary { color: var(--theme-text-secondary,#52617a); border-color: var(--theme-border-color,#ccd4e0); }
