@@ -1209,7 +1209,7 @@ async function prepareOrder(db, scope, claim, document) {
     fail('The sale identity is already in use.', 409);
   return existing;
 }
-async function forEdit(db, scope, order, next) {
+async function forEdit(db, scope, order, next, { settling = false } = {}) {
   await reconcileExpiredEditCapacity(db, scope);
   const destination = String(next.table || order.table_number || '');
   const claims = await read(db, scope);
@@ -1220,6 +1220,24 @@ async function forEdit(db, scope, order, next) {
   if (own?.closing) fail('Close is in progress. Refresh this order.', 409);
   if (own?.state === 'releasing') fail('Close is in progress. Refresh this order.', 409);
   if (own?.moving_to) fail('Reconcile the table move before editing this order.', 409);
+  // A synchronized sale can arrive without the originating server's seating
+  // claim. Taking payment consumes no seats. Require unchanged seating and
+  // retain all live move/close guards above plus the caller's atomic sale filter.
+  if (settling) {
+    if (
+      destination !== String(order.table_number || '') ||
+      (next.dine_type && next.dine_type !== (order.dine_type || 'Dine-in')) ||
+      (next.guests !== undefined &&
+        next.guests !== null &&
+        next.guests !== '' &&
+        Number(next.guests) !== Number(order.person_count || 0))
+    )
+      fail(
+        'Change the seating group before changing its table, order type or guests during payment.',
+        409
+      );
+    return own || null;
+  }
   if (order.seating_request_id && !own) fail('The seating group changed. Refresh this order.', 409);
   if (
     own &&

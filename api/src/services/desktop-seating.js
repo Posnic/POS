@@ -48,12 +48,24 @@ async function prepare(db, scope, input, document) {
   document.floor_lifecycle = true;
   return { claim, existing };
 }
-async function guardEdit(db, scope, doc, next) {
-  await seating.forEdit(db, scope, doc, {
-    table: next.table_number,
-    guests: next.person_count,
-    dine_type: next.dine_type,
-  });
+async function guardEdit(db, scope, doc, next, { settling = false } = {}) {
+  if (
+    settling &&
+    next.table_id !== undefined &&
+    String(next.table_id || '') !== String(doc.table_id || '')
+  )
+    fail('Refresh the order before changing tables and taking payment.', 409);
+  await seating.forEdit(
+    db,
+    scope,
+    doc,
+    {
+      table: next.table_number,
+      guests: next.person_count,
+      dine_type: next.dine_type,
+    },
+    { settling }
+  );
   // Mongoose merges these conditions into the atomic save filter.
   doc.$where = {
     ...(doc.$where || {}),
