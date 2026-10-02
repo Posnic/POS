@@ -1,3 +1,4 @@
+const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
 // src/repositories/customer.repository.js
 const BaseModel = require('../models/base.model');
 const demoData = require('../services/demo-data');
@@ -661,7 +662,7 @@ class CustomerRepository extends BaseModel {
         $and: [
           {
             branch_id: { $in: branchObjectIds },
-            sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+            ...reportableSales(),
           },
           {
             updated_date: { $gte: fromDate, $lte: toDate },
@@ -686,7 +687,7 @@ class CustomerRepository extends BaseModel {
           { $match: condition },
           {
             $project: {
-              items_total: 1,
+              items_total: reportSaleTotal(),
               h: {
                 $dayOfWeek: {
                   date: '$updated_date',

@@ -884,6 +884,10 @@ describe('SalesController', () => {
     test('200 success', async () => {
       const res = mockRes();
       await ctrl.dailySalesReports(mockReq({ query: q }), res);
+      const reportMatch = salesService.getDailySalesReportAggregates.mock.calls[0][0].match;
+      expect(reportMatch.$and).toContainEqual(
+        require('../../../src/helpers/reportable-sales').reportableSales()
+      );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
     });
@@ -1012,6 +1016,10 @@ describe('SalesController', () => {
     test('sets Content-Type header on success', async () => {
       const res = mockRes();
       await ctrl.dailyReportPdf(mockReq({ query: q }), res);
+      const reportMatch = salesService.getDailyReportPdfAggregates.mock.calls[0][0].match;
+      expect(reportMatch.$and).toContainEqual(
+        require('../../../src/helpers/reportable-sales').reportableSales()
+      );
       expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
     });
   });

@@ -1,3 +1,4 @@
+const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
 const BaseModel = require('./base.model');
 const { ObjectId } = require('mongodb');
 const path = require('path');
@@ -72,7 +73,7 @@ class DashboardModel extends BaseModel {
           $gte: new Date(fromTimestamp || 0),
           $lte: new Date(toTimestamp || Date.now()),
         },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
       });
 
       const paymentModes = await salesCollection
@@ -80,7 +81,7 @@ class DashboardModel extends BaseModel {
           { $match: condition },
           {
             $project: {
-              items_total: 1,
+              items_total: reportSaleTotal(),
               multi_payment: 1,
               payment_mode: 1,
               // Convert multi_payment object to array of key-value pairs.
@@ -375,7 +376,7 @@ class DashboardModel extends BaseModel {
       // Primary path: legacy PHP-style sales documents
       const legacyCondition = this.getContextMatch({
         date: dateRange,
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
       });
 
       let topPerformer = await salesCollection
@@ -384,7 +385,7 @@ class DashboardModel extends BaseModel {
           {
             $group: {
               _id: { user_id: '$user_id' },
-              sales_amount: { $sum: '$items_total' },
+              sales_amount: { $sum: reportSaleTotal() },
               sales_count: { $sum: 1 },
             },
           },
@@ -494,7 +495,12 @@ class DashboardModel extends BaseModel {
         {
           $group: {
             _id: null,
-            total: { $sum: `$${field}` },
+            total: {
+              $sum:
+                collectionName === 'sales' && field === 'items_total'
+                  ? reportSaleTotal()
+                  : `$${field}`,
+            },
           },
         },
       ];
@@ -516,7 +522,7 @@ class DashboardModel extends BaseModel {
           $gte: new Date(fromTimestamp || 0),
           $lte: new Date(toTimestamp || Date.now()),
         },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
       });
 
       const pipeline = [
@@ -569,7 +575,7 @@ class DashboardModel extends BaseModel {
           $gte: new Date(fromTimestamp || 0),
           $lte: new Date(toTimestamp || Date.now()),
         },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
       });
       const purchaseMatch = this.getContextMatch({
         date: {
@@ -627,7 +633,7 @@ class DashboardModel extends BaseModel {
 
       const salesMatch = this.getContextMatch({
         ...inRange,
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
       });
       const purchaseMatch = this.getContextMatch({
         ...inRange,
@@ -691,7 +697,7 @@ class DashboardModel extends BaseModel {
       const missingCost = await salesCol.countDocuments(
         this.getContextMatch({
           ...inRange,
-          sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+          ...reportableSales(),
           items_total: { $gt: 0 },
           $or: [
             { total_companyprice: { $exists: false } },
@@ -819,7 +825,7 @@ class DashboardModel extends BaseModel {
       const to = new Date(BaseModel.endingDate(data.ending_date, this.timeZone) || Date.now());
       const salesMatch = this.getContextMatch({
         date: { $gte: from, $lte: to },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
       });
       const tax = await this.sumCollectionField('sales', salesMatch, 'tax_amount');
       let cash = 0;
@@ -959,7 +965,7 @@ class DashboardModel extends BaseModel {
       // Conditions matching PHP
       const condition = this.getContextMatch({
         date: dateRange,
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
       });
 
       const purchasecondition = this.getContextMatch({
@@ -1010,7 +1016,7 @@ class DashboardModel extends BaseModel {
               _id: {
                 datetime: groupDate,
                 sales_id: '$sales_id',
-                sale_amount: { $sum: '$items_total' },
+                sale_amount: { $sum: reportSaleTotal() },
               },
             },
           },

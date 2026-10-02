@@ -1,3 +1,4 @@
+const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
 const pricingAuthority = require('../services/pricing-authority');
 const Money = require('../utils/currency');
 const serviceLine = require('../utils/service-line');
@@ -2115,7 +2116,7 @@ class SalesRepository {
         {
           $addFields: {
             sales_total_num: {
-              $toDouble: { $ifNull: ['$items_total', 0] },
+              ...reportSaleTotal(),
             },
             tax_num: { $toDouble: { $ifNull: ['$tax', 0] } },
             company_price_total_num: {
@@ -2136,7 +2137,7 @@ class SalesRepository {
                 ],
               },
             },
-            sales_total: { $first: '$items_total' },
+            sales_total: { $first: reportSaleTotal() },
             refund_total: { $first: '$items_return_total' },
           },
         },
@@ -2222,7 +2223,7 @@ class SalesRepository {
       const andConditions = [
         {
           branch_id: { $in: branchObjectIds },
-          sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+          ...reportableSales(),
         },
         {
           updated_date: { $gte: fromDate, $lte: toDate },
@@ -2242,7 +2243,7 @@ class SalesRepository {
         { $match: condition },
         {
           $project: {
-            items_total: 1,
+            items_total: reportSaleTotal(),
             h: {
               $dayOfWeek: {
                 date: '$updated_date',
@@ -2254,7 +2255,7 @@ class SalesRepository {
         {
           $group: {
             _id: '$h',
-            totalValue: { $sum: '$items_total' },
+            totalValue: { $sum: reportSaleTotal() },
           },
         },
       ];
@@ -2869,7 +2870,7 @@ class SalesRepository {
               customer_phone: '$customer_phone',
               number_of_items: '$number_of_items',
             },
-            pending_amount: { $sum: '$items_total' },
+            pending_amount: { $sum: reportSaleTotal() },
             partial_amount: { $sum: '$partial_balance' },
             due_amount: { $sum: '$payment_pending' },
           },
@@ -2985,7 +2986,7 @@ class SalesRepository {
               referrer: { $ifNull: ['$referrer_name', '--'] },
             },
             number_of_items: { $sum: '$number_of_items' },
-            pending_amount: { $sum: '$items_total' },
+            pending_amount: { $sum: reportSaleTotal() },
             partial_amount: { $sum: '$partial_balance' },
             due_amount: { $sum: '$payment_pending' },
           },
@@ -3077,7 +3078,7 @@ class SalesRepository {
       // Build filters for items with tax amount > 0, including license scope
       const firstClause = {
         branch_id: { $in: objectBranchIds },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
       };
 
       const secondClause = {
@@ -4007,9 +4008,14 @@ class SalesRepository {
 
       const firstClause = {
         branch_id: { $in: objectBranchIds },
+        ...reportableSales(),
+        // Transferred guest checks are transactions only once their allocation
+        // has a recorded tender. Ordinary desktop KOT bills have no allocation
+        // and do not require a Captain-specific payment ledger.
         $or: [
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
-          { sale_process: 'KOT', payment_status: 'Paid', 'captain_payments.0': { $exists: true } },
+          { sale_process: { $ne: 'KOT' } },
+          { captain_transfer_allocation: { $exists: false } },
+          { 'captain_payments.0': { $exists: true } },
         ],
       };
 
@@ -9358,7 +9364,7 @@ class SalesRepository {
       }
 
       const range = {
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
         date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
         license: BaseModel.license,
       };
@@ -12406,7 +12412,7 @@ class SalesRepository {
         {
           $match: {
             branch_id: branchObjectId,
-            sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+            ...reportableSales(),
             license: BaseModel.license,
           },
         },
@@ -12463,7 +12469,7 @@ class SalesRepository {
       const filters = {
         $and: [
           { branch_id: { $in: branchObjectIds } },
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          reportableSales(),
           { was_kot_proceeded: true },
           { updated_date: { $gte: FromDate, $lte: ToDate } },
           { license: BaseModel.license },
@@ -12729,7 +12735,7 @@ class SalesRepository {
 
       const filters = {
         $and: [
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          reportableSales(),
           { date: { $gte: FromDate, $lte: ToDate } },
           { branch_id: branchId },
           { license: BaseModel.license },
@@ -13091,7 +13097,7 @@ class SalesRepository {
         .map((id) => new mongoose.Types.ObjectId(id));
 
       const andConditions = [];
-      andConditions.push({ sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } });
+      andConditions.push(reportableSales());
       if (branchObjectIds.length) {
         andConditions.push({ branch_id: { $in: branchObjectIds } });
       }
@@ -13128,7 +13134,7 @@ class SalesRepository {
               category_name: '$category_name',
             },
             number_of_items: { $sum: '$number_of_items' },
-            pending_amount: { $sum: '$items_total' },
+            pending_amount: { $sum: reportSaleTotal() },
             partial_amount: { $sum: '$partial_balance' },
             due_amount: { $sum: '$payment_pending' },
           },
@@ -13230,7 +13236,7 @@ class SalesRepository {
       const filters = {
         $and: [
           { branch_id: { $in: branchIds } },
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          reportableSales(),
           methodFilter,
           {
             updated_date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
@@ -13307,7 +13313,7 @@ class SalesRepository {
 
       const condition = {
         branch_id: { $in: branchIds },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn', 'FullReturn'] },
+        ...reportableSales(['Add', 'Edit', 'PartialReturn', 'FullReturn']),
         ...methodFilter,
         date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
         license: BaseModel.license,
@@ -13322,7 +13328,7 @@ class SalesRepository {
             {
               $addFields: {
                 sales_total_num: {
-                  $toDouble: { $ifNull: ['$items_total', 0] },
+                  ...reportSaleTotal(),
                 },
                 tax_num: { $toDouble: { $ifNull: ['$tax', 0] } },
                 items_return_total_num: {
@@ -13401,7 +13407,7 @@ class SalesRepository {
           {
             $addFields: {
               sales_total_num: {
-                $toDouble: { $ifNull: ['$items_total', 0] },
+                ...reportSaleTotal(),
               },
             },
           },
@@ -13488,7 +13494,7 @@ class SalesRepository {
 
       const condition = {
         branch_id: { $in: branchIds },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
         ...methodFilter,
         date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
         license: BaseModel.license,
@@ -13501,7 +13507,7 @@ class SalesRepository {
         {
           $project: {
             payment_mode: 1,
-            amount: { $toDouble: { $ifNull: ['$items_total', 0] } },
+            amount: reportSaleTotal(),
             datetime: {
               $dateToString: {
                 format: '%Y-%m-%d %H:00',
