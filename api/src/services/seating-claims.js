@@ -1032,22 +1032,20 @@ async function releaseSettled(db, scope) {
       if (!plan || plan.state !== 'paid' || plan.projectedVersion !== plan.version) continue;
     }
     if (!sale.floor_closed_at) {
-      const changed = await db
-        .collection('sales')
-        .updateOne(
-          {
-            ...filter,
-            floor_closed_at: { $exists: false },
-            updated_date: sale.updated_date === undefined ? { $exists: false } : sale.updated_date,
+      const changed = await db.collection('sales').updateOne(
+        {
+          ...filter,
+          floor_closed_at: { $exists: false },
+          updated_date: sale.updated_date === undefined ? { $exists: false } : sale.updated_date,
+        },
+        {
+          $set: {
+            floor_closed_at: new Date(),
+            floor_auto_released: true,
+            updated_date: new Date(),
           },
-          {
-            $set: {
-              floor_closed_at: new Date(),
-              floor_auto_released: true,
-              updated_date: new Date(),
-            },
-          }
-        );
+        }
+      );
       if (!changed.matchedCount) continue;
     }
     await release(db, scope, claim.id, { settled: true });
