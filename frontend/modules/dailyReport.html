@@ -45,11 +45,6 @@
     <style>
         #dailyreport_new .meal-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 30px 0; padding: 10px 14px; background: var(--bs-body-bg, #fff); border: 1px solid #dbe3ef; border-radius: 10px; }
         #dailyreport_new .meal-filter > strong { font-size: 13px; }
-        #dailyreport_new .meal-buttons { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-        #dailyreport_new .meal-button { background: transparent; color: inherit; border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px 12px; text-align: left; font: inherit; cursor: pointer; }
-        #dailyreport_new .meal-button small { margin-left: 6px; opacity: .8; }
-        #dailyreport_new .meal-button[aria-pressed="true"] { background: #eaf2ff; border-color: #1768cc; color: #124e96; box-shadow: inset 0 0 0 1px #1768cc; }
-        #dailyreport_new .meal-button:focus-visible { outline: 3px solid #80b6ff; outline-offset: 2px; }
         #dailyreport_new .meal-custom { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
         #dailyreport_new .meal-custom label { display: flex; align-items: center; gap: 6px; margin: 0; }
         #dailyreport_new .meal-custom input { width: 130px; height: 36px; padding: 5px 8px; }
@@ -75,19 +70,16 @@
         }
     </style>
     <section class="meal-filter" id="daily-meal-filter" style="display:none" aria-label="Sales time filter" data-t-aria-label="lang_sales_time_filter">
-        <strong><lang class="lang_sales_period">Sales period</lang></strong>
-        <div class="meal-buttons" role="group" aria-label="Choose a sales period" data-t-aria-label="lang_choose_a_sales_period">
-            <button type="button" class="meal-button" data-meal="full" aria-pressed="true" title="All 24 hours" data-t-title="lang_all_24_hours"><lang class="lang_full_day">Full Day</lang></button>
-            <span id="daily-serving-periods" style="display:contents"></span>
-            <button type="button" class="meal-button" data-meal="custom" aria-pressed="false" title="Choose your hours" data-t-title="lang_choose_your_hours"><lang class="lang_custom_time">Custom Time</lang></button>
-        </div>
+        <label for="daily-serving-period" class="mb-0"><lang class="lang_serving_period">Serving period</lang></label>
+        <select id="daily-serving-period" class="form-control form-control-sm" style="width:auto;min-width:160px;"><option value="" data-t="lang_all_day">All day</option></select>
+        <small id="daily-period-hint" class="text-muted" aria-live="polite"></small>
         <div id="daily-meal-custom" class="meal-custom" style="display:none">
             <label for="daily-meal-from"><lang class="lang_from">From</lang><input id="daily-meal-from" type="time" class="form-control" value="06:00" required></label>
             <label for="daily-meal-to"><lang class="lang_to_2">To</lang><input id="daily-meal-to" type="time" class="form-control" value="12:00" required></label>
             <button type="button" class="btn btn-primary" id="daily-meal-apply"><lang class="lang_apply_time">Apply time</lang></button>
         </div>
         <details class="meal-guidance">
-            <summary><lang class="lang_serving_periods">Serving periods</lang></summary>
+            <summary><lang class="lang_about_these_times">About these times</lang></summary>
             <p class="meal-help" id="daily-meal-help"><lang class="lang_sessions_use_settings_restaurant_serving_p">Sessions use Settings → Restaurant → Serving periods, in the shop’s local time on each selected date. An end time earlier than the start continues into the next day.</lang></p>
         </details>
         <p class="meal-help" id="daily-meal-status" role="status" aria-live="polite"></p>

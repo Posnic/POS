@@ -4040,5 +4040,18 @@
   "lang_ask_payment_confirm": "Verifique o recibo e o total. Escolha Dinheiro após receber o montante, ou Cartão pago após confirmação do terminal. Isto conclui a venda e solicita a impressão do recibo.",
   "lang_ask_prepare_sale": "Preparar venda para pagamento",
   "lang_ask_review_sale": "Rever venda",
-  "lang_ask_sale_checkout": "Pagamento de vendas e impressão de recibos"
+  "lang_ask_sale_checkout": "Pagamento de vendas e impressão de recibos",
+  "lang_about_these_times": "Sobre estes horários",
+  "lang_all_sales": "Todas as vendas",
+  "lang_choose_one_branch_for_period": "Escolha uma filial para filtrar por período de serviço.",
+  "lang_clear_restaurant_filters": "Limpar filtros do restaurante",
+  "lang_loading_serving_periods": "Carregando períodos de serviço…",
+  "lang_period_load_failed": "Não foi possível carregar os períodos. Reabra esta página para tentar novamente.",
+  "lang_period_required_fields": "Insira um nome e horários de início e fim diferentes para cada período.",
+  "lang_serving_period": "Período de serviço",
+  "lang_serving_periods_saved": "Períodos de serviço salvos",
+  "lang_set_serving_periods": "Configure café da manhã, almoço e jantar em Restaurante > Menu.",
+  "lang_tables_only": "Somente mesas",
+  "lang_serve_all": "Servir tudo",
+  "lang_items_marked_served": "Itens marcados como servidos"
 }

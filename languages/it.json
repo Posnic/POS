@@ -4040,5 +4040,18 @@
   "lang_ask_payment_confirm": "Controlla ricevuta e totale. Scegli Contanti dopo aver ricevuto il denaro, oppure Carta pagata dopo la conferma del terminale. Completa la vendita e richiede la stampa della ricevuta.",
   "lang_ask_prepare_sale": "Prepara vendita per la cassa",
   "lang_ask_review_sale": "Controlla vendita",
-  "lang_ask_sale_checkout": "Pagamento vendite e stampa ricevute"
+  "lang_ask_sale_checkout": "Pagamento vendite e stampa ricevute",
+  "lang_about_these_times": "Informazioni sugli orari",
+  "lang_all_sales": "Tutte le vendite",
+  "lang_choose_one_branch_for_period": "Scegli una sede per filtrare per turno di servizio.",
+  "lang_clear_restaurant_filters": "Cancella i filtri del ristorante",
+  "lang_loading_serving_periods": "Caricamento dei turni di servizio…",
+  "lang_period_load_failed": "Impossibile caricare i turni. Riapri questa pagina per riprovare.",
+  "lang_period_required_fields": "Inserisci un nome e orari di inizio e fine diversi per ogni turno.",
+  "lang_serving_period": "Turno di servizio",
+  "lang_serving_periods_saved": "Turni di servizio salvati",
+  "lang_set_serving_periods": "Imposta colazione, pranzo e cena in Ristorante > Menu.",
+  "lang_tables_only": "Solo tavoli",
+  "lang_serve_all": "Servi tutto",
+  "lang_items_marked_served": "Articoli contrassegnati come serviti"
 }

@@ -96,6 +96,17 @@ class SettingsRepository extends BaseModel {
 
         // null in a branch row means INHERIT, so it must not shadow the
         // account value the way false would
+        // The branch mirror is synchronized to desktop; grouped rows are local.
+        if (
+          key === 'menu_dayparts' &&
+          has(legacy, key) &&
+          has(branchRow, key) &&
+          new Date(legacy.updated_date || 0) > new Date(branchRow.updated_date || 0)
+        ) {
+          values[key] = legacy[key];
+          source[key] = 'legacy';
+          continue;
+        }
         if (has(branchRow, key)) {
           values[key] = branchRow[key];
           source[key] = 'branch';
@@ -109,6 +120,25 @@ class SettingsRepository extends BaseModel {
         if (legacy && legacy[key] !== undefined) {
           values[key] = legacy[key];
           source[key] = 'legacy';
+        }
+      }
+
+      // Preserve periods from installations that used the old settings collection.
+      // An explicit empty branch/account value is authoritative and must not resurrect them.
+      if (group === 'channels' && values.menu_dayparts === undefined) {
+        const settings = await this.getCollection('settings');
+        const old = await settings.findOne({
+          menu_dayparts: { $exists: true },
+          $and: [
+            { $or: [{ license: ids.license }, { license: { $exists: false } }] },
+            { $or: [{ branch_id: ids.branch }, { branch_id: null }] },
+          ],
+        });
+        if (old) {
+          values.menu_dayparts = require('../utils/online-ordering').normalizeDayparts(
+            old.menu_dayparts
+          );
+          source.menu_dayparts = 'legacy';
         }
       }
 
@@ -295,7 +325,21 @@ class SettingsRepository extends BaseModel {
            Stored verbatim they read as ENABLED through every `!== false`
            gate - the all-toggles-on incident. The boolean is stored, so no
            reader ever meets the string. null still means inherit. */
-        if (key === 'receipt_designs' && value !== null) {
+        if (key === 'menu_dayparts' && value !== null) {
+          const normalized = require('../utils/online-ordering').normalizeDayparts(value);
+          if (
+            !Array.isArray(value) ||
+            normalized.length !== value.length ||
+            normalized.some((p) => !p.hours)
+          ) {
+            return {
+              status: false,
+              data: null,
+              message: 'Give every serving period a unique name and valid start and end times.',
+            };
+          }
+          accepted[key] = normalized;
+        } else if (key === 'receipt_designs' && value !== null) {
           try {
             accepted[key] = await require('../helpers/resolve-receipt-design').resolveReceiptDesign(
               value
@@ -385,7 +429,13 @@ class SettingsRepository extends BaseModel {
       const isAccount = options.level === 'account';
       const collection = await this.getCollection(collectionName);
       const update = {
-        $set: { license: ids.license, branch_id: isAccount ? null : ids.branch },
+        $set: {
+          license: ids.license,
+          branch_id: isAccount ? null : ids.branch,
+          ...(Object.prototype.hasOwnProperty.call(toSet, 'menu_dayparts')
+            ? { updated_date: new Date() }
+            : {}),
+        },
       };
       if (Object.keys(toSet).length) Object.assign(update.$set, toSet);
       if (toClear.length) {
@@ -407,7 +457,17 @@ class SettingsRepository extends BaseModel {
          meant to inherit. */
       if (!isAccount && Object.keys(toSet).length) {
         const branches = await this.getCollection('branches');
-        await branches.updateOne({ _id: ids.branch, license: ids.license }, { $set: toSet });
+        await branches.updateOne(
+          { _id: ids.branch, license: ids.license },
+          {
+            $set: {
+              ...toSet,
+              ...(Object.prototype.hasOwnProperty.call(toSet, 'menu_dayparts')
+                ? { updated_date: new Date() }
+                : {}),
+            },
+          }
+        );
       }
 
       /* the CSP + runtime-info read analytics through a 30s cache - a

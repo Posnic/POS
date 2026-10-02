@@ -4040,5 +4040,18 @@
   "lang_ask_payment_confirm": "Revise el recibo y el total. Elija Efectivo después de recibir el dinero, o Tarjeta cobrada tras la confirmación del terminal. Esto finaliza la venta y solicita imprimir el recibo.",
   "lang_ask_prepare_sale": "Preparar venta para cobrar",
   "lang_ask_review_sale": "Revisar venta",
-  "lang_ask_sale_checkout": "Cobro de ventas e impresión de recibos"
+  "lang_ask_sale_checkout": "Cobro de ventas e impresión de recibos",
+  "lang_about_these_times": "Acerca de estos horarios",
+  "lang_all_sales": "Todas las ventas",
+  "lang_choose_one_branch_for_period": "Elija una sucursal para filtrar por turno de servicio.",
+  "lang_clear_restaurant_filters": "Borrar filtros del restaurante",
+  "lang_loading_serving_periods": "Cargando turnos de servicio…",
+  "lang_period_load_failed": "No se pudieron cargar los turnos. Vuelva a abrir esta página para intentarlo de nuevo.",
+  "lang_period_required_fields": "Introduzca un nombre y horas de inicio y fin diferentes para cada turno.",
+  "lang_serving_period": "Turno de servicio",
+  "lang_serving_periods_saved": "Turnos de servicio guardados",
+  "lang_set_serving_periods": "Configure desayuno, almuerzo y cena en Restaurante > Menú.",
+  "lang_tables_only": "Solo mesas",
+  "lang_serve_all": "Servir todo",
+  "lang_items_marked_served": "Artículos marcados como servidos"
 }

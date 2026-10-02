@@ -4364,5 +4364,18 @@
   "lang_item_zero_title": "Nog geen beginvoorraad",
   "lang_item_zero_untracked": "Voorraad niet bijhouden",
   "lang_item_zero_untracked_help": "Verkoop dit artikel zonder voorraadaantallen bij te houden.",
-  "lang_item_zero_variants": "Sommige varianten hebben geen beginvoorraad. Uw keuze voor voorraadbeheer geldt voor alle varianten van dit artikel."
+  "lang_item_zero_variants": "Sommige varianten hebben geen beginvoorraad. Uw keuze voor voorraadbeheer geldt voor alle varianten van dit artikel.",
+  "lang_about_these_times": "Over deze tijden",
+  "lang_all_sales": "Alle verkopen",
+  "lang_choose_one_branch_for_period": "Kies één vestiging om op serveerperiode te filteren.",
+  "lang_clear_restaurant_filters": "Restaurantfilters wissen",
+  "lang_loading_serving_periods": "Serveerperioden laden…",
+  "lang_period_load_failed": "Kan serveerperioden niet laden. Open deze pagina opnieuw om het nog eens te proberen.",
+  "lang_period_required_fields": "Voer voor elke serveerperiode een naam en verschillende begin- en eindtijden in.",
+  "lang_serving_period": "Serveerperiode",
+  "lang_serving_periods_saved": "Serveerperioden opgeslagen",
+  "lang_set_serving_periods": "Stel ontbijt, lunch en diner in via Restaurant > Menu.",
+  "lang_tables_only": "Alleen tafels",
+  "lang_serve_all": "Alles serveren",
+  "lang_items_marked_served": "Artikelen gemarkeerd als geserveerd"
 }
