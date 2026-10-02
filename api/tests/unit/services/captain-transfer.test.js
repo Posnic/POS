@@ -45,7 +45,9 @@ beforeEach(async () => {
       },
     ],
   };
-  await db.collection('branches').insertOne({ _id: branch, license, currencyCode: 'INR' });
+  await db
+    .collection('branches')
+    .insertOne({ _id: branch, license, currencyCode: 'INR', captain_table_cleaning: true });
   await db.collection('sales').insertOne(sale);
 });
 const req = () => ({

@@ -17,7 +17,7 @@ beforeEach(async () => {
   branch = new ObjectId();
   license = new ObjectId();
   user = new ObjectId();
-  await db.collection('branches').insertOne({ _id: branch, license });
+  await db.collection('branches').insertOne({ _id: branch, license, captain_table_cleaning: true });
 });
 const req = (body = {}, role = 'manager') => ({
   db,
@@ -128,34 +128,6 @@ async function paidTable() {
     },
   };
 }
-test('manual cleaning policy frees a paid table and still permits an explicit cleaning action', async () => {
-  await db
-    .collection('branches')
-    .updateOne({ _id: branch }, { $set: { table_cleaning_after_close: false } });
-  const { body } = await paidTable();
-  const closed = await service.close(req(body));
-  expect(closed.status).toBe('available');
-  expect((await service.close(req(body))).status).toBe('available');
-  const cleaning = await service.state(
-    req({ id: body.id, version: closed.version, status: 'cleaning' })
-  );
-  expect(cleaning.status).toBe('cleaning');
-});
-
-test('only settings managers can change the branch cleaning policy', async () => {
-  const policy = require('../../../src/services/table-cleaning-policy');
-  await expect(
-    policy.settings({ ...req({ automatic: false }, 'staff'), method: 'POST' })
-  ).rejects.toThrow('permission');
-  await expect(policy.settings({ ...req({ automatic: 'false' }), method: 'POST' })).rejects.toThrow(
-    'Choose'
-  );
-  expect(await policy.settings({ ...req({ automatic: false }), method: 'POST' })).toEqual({
-    automatic: false,
-  });
-  expect(await policy.settings({ ...req(), method: 'GET' })).toEqual({ automatic: false });
-});
-
 test('closing paid orders preserves payment and stock data and leaves the table for cleaning', async () => {
   const { orderId, body } = await paidTable();
   const result = await service.close(req(body));
@@ -566,4 +538,24 @@ test('the Captain seating endpoint forwards order type and confirms a retryable 
     items: [{ item_name: 'Soup', item_quantity: 2 }],
   });
   expect(await db.collection('print_jobs').countDocuments({})).toBe(0);
+});
+
+test('cleaning is opt-in and legacy cleaning flags do not block when disabled', async () => {
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $unset: { captain_table_cleaning: '' } });
+  const row = await service.update(req({ tableorder_value: '4', capacity: 4 }));
+  await db
+    .collection('tableorder')
+    .updateOne({ _id: new ObjectId(row.id) }, { $set: { service_state: 'cleaning' } });
+  const listed = await service.list(req());
+  expect(listed.cleaningEnabled).toBe(false);
+  expect(listed.tables[0].status).toBe('available');
+  await expect(
+    service.state(req({ id: row.id, version: 0, status: 'cleaning' }))
+  ).rejects.toMatchObject({ status: 409 });
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { captain_table_cleaning: true } });
+  expect((await service.list(req())).tables[0].status).toBe('cleaning');
 });

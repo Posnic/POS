@@ -75,10 +75,15 @@ async function list(req) {
     activeClaims(req.db, c),
   ]);
   return {
+    cleaningEnabled: require('./table-cleaning').enabled(c.branch),
     canManage: allowed(req.user, 'settings'),
     canMerge: allowed(req.user, 'sales', 'merge'),
     capabilities: { legacySourceMove: true, legacyGuestUpdate: true, legacyTargetMerge: true },
-    tables: tables.map((row) => {
+    tables: tables.map((original) => {
+      const row = {
+        ...original,
+        service_state: require('./table-cleaning').state(original, c.branch),
+      };
       const claim = claims.find((entry) => entry.tables.includes(String(row._id)));
       const primary = claim && tables.find((entry) => String(entry._id) === claim.primary);
       return view(
@@ -198,6 +203,8 @@ async function state(req) {
     !['available', 'cleaning', 'held'].includes(body.status)
   )
     fail('Choose a table status.');
+  if (body.status === 'cleaning' && !require('./table-cleaning').enabled(c.branch))
+    fail('Table cleaning is disabled.', 409);
   const filter = { _id: new ObjectId(body.id), branch_id: c.branchId, license: c.license };
   const row = await req.db.collection('tableorder').findOne(filter);
   if (!row) fail('Table not found.', 404);
@@ -287,7 +294,7 @@ async function close(req) {
       {
         $set: {
           floor_close: operation,
-          service_state: await require('./table-cleaning-policy').releasedState(req.db, c),
+          service_state: require('./table-cleaning').enabled(c.branch) ? 'cleaning' : 'available',
           updated_date: new Date(),
         },
         $inc: { captain_table_version: 1 },

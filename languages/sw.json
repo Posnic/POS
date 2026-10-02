@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "Usafishaji wa meza",
+  "lang_enable_table_cleaning": "Washa usafishaji wa meza",
+  "lang_off_by_default_enable_only_if_staff_should": "Imezimwa kwa chaguo-msingi. Ikiwashwa, meza lazima ziwekwe kuwa zinapatikana baada ya huduma.",
+  "lang_could_not_load_table_settings_please_retry": "Imeshindwa kupakia mipangilio ya meza. Jaribu tena.",
+  "lang_could_not_save_table_settings_please_retry": "Imeshindwa kuhifadhi mipangilio ya meza. Jaribu tena.",
   "lang_item_ai_review_help": "Kagua pendekezo. Tafsiri yako haibadiliki mpaka ulikubali.",
   "lang_item_upload_failed": "Kupakia picha kumeshindikana. Bidhaa haijahifadhiwa.",
   "lang_item_translated_name": "Jina la bidhaa lililotafsiriwa",
@@ -4040,5 +4045,18 @@
   "lang_ask_payment_confirm": "Kagua risiti na jumla. Chagua Taslimu baada ya kupokea pesa, au Kadi imelipwa baada ya kifaa kuthibitisha malipo. Hii hukamilisha mauzo na kuomba uchapishaji wa risiti.",
   "lang_ask_prepare_sale": "Andaa mauzo kwa malipo",
   "lang_ask_review_sale": "Kagua mauzo",
-  "lang_ask_sale_checkout": "Malipo ya mauzo na uchapishaji wa risiti"
+  "lang_ask_sale_checkout": "Malipo ya mauzo na uchapishaji wa risiti",
+  "lang_about_these_times": "Kuhusu nyakati hizi",
+  "lang_all_sales": "Mauzo yote",
+  "lang_choose_one_branch_for_period": "Chagua tawi moja ili kuchuja kwa kipindi cha huduma.",
+  "lang_clear_restaurant_filters": "Futa vichujio vya mgahawa",
+  "lang_loading_serving_periods": "Inapakia vipindi vya huduma…",
+  "lang_period_load_failed": "Imeshindwa kupakia vipindi vya huduma. Fungua ukurasa huu tena ili kujaribu tena.",
+  "lang_period_required_fields": "Weka jina na saa tofauti za kuanza na kumaliza kwa kila kipindi cha huduma.",
+  "lang_serving_period": "Kipindi cha huduma",
+  "lang_serving_periods_saved": "Vipindi vya huduma vimehifadhiwa",
+  "lang_set_serving_periods": "Weka kifungua kinywa, chakula cha mchana na cha jioni katika Mgahawa > Menyu.",
+  "lang_tables_only": "Meza pekee",
+  "lang_serve_all": "Hudumia vyote",
+  "lang_items_marked_served": "Bidhaa zimewekewa alama kuwa zimehudumiwa"
 }

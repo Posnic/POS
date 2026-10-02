@@ -191,6 +191,7 @@ async function reserveClaim(
       fail('This seating request has already been used.', 409);
     return previous;
   }
+  const cleaningEnabled = await require('./table-cleaning').active(db, scope);
   const tables = await db
     .collection('tableorder')
     .find({
@@ -203,7 +204,8 @@ async function reserveClaim(
   if (
     tables.some(
       (row) =>
-        ['held', 'cleaning'].includes(row.service_state) ||
+        row.service_state === 'held' ||
+        (cleaningEnabled && row.service_state === 'cleaning') ||
         (row.floor_close && !row.floor_close.completed)
     )
   )
@@ -764,7 +766,9 @@ async function completeMove(db, scope, id, actor) {
       },
       {
         $set: {
-          service_state: await require('./table-cleaning-policy').releasedState(db, scope),
+          service_state: (await require('./table-cleaning').active(db, scope))
+            ? 'cleaning'
+            : 'available',
           last_seating_release_generation: move.generation,
         },
         $inc: { captain_table_version: 1 },
@@ -982,9 +986,10 @@ async function release(db, scope, id, { transferId, settled = false } = {}) {
       },
       {
         $set: {
-          service_state: settled
-            ? 'available'
-            : await require('./table-cleaning-policy').releasedState(db, scope),
+          service_state:
+            !settled && (await require('./table-cleaning').active(db, scope))
+              ? 'cleaning'
+              : 'available',
           last_seating_release_generation: claim.generation,
           updated_date: new Date(),
         },

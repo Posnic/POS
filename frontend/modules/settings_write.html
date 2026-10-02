@@ -3393,12 +3393,6 @@
                                             </h5>
                                         </div>
                                         <div class="card-body">
-                                            <div class="mb-3">
-                                                <label><input type="checkbox" id="table_cleaning_after_close" disabled> Mark empty tables Cleaning automatically after closing or moving an order</label>
-                                                <p class="text-muted">When off, empty tables become Available. Staff can still select Cleaning manually.</p>
-                                                <button type="button" class="btn btn-primary" id="save_table_cleaning" disabled>Save table cleaning</button>
-                                                <p id="table_cleaning_message" role="status"></p>
-                                            </div>
                                             <div class="order-box">
                                                 <div class="card border m-b-30">
                                                     <div class="card-header">
@@ -6765,6 +6759,7 @@
                                                         href="#captainproducts-line" role="tab" aria-controls="captainproducts-line"
                                                         aria-selected="false"><i class="feather icon-package mr-1"></i><lang class="lang_what_it_sells">What it sells</lang></a>
                                                 </li>
+                                                <li class="nav-item"><a class="nav-link" id="captaintables-tab-line" data-toggle="tab" href="#captaintables-line" role="tab"><lang class="lang_tables">Tables</lang></a></li>
                                                 <li class="nav-item"><a class="nav-link" id="captainpayments-tab-line" data-toggle="tab" href="#captainpayments-line" role="tab" aria-controls="captainpayments-line" aria-selected="false"><lang class="lang_payment">PAYMENT</lang></a></li>
                                                 <li class="nav-item">
                                                     <a class="nav-link" id="captainvoice-tab-line" data-toggle="tab"
@@ -6812,6 +6807,15 @@
                                                     <div class="channel-products-host"></div>
                                                 </div>
 
+                                                <div class="tab-pane fade" id="captaintables-line" role="tabpanel" aria-labelledby="captaintables-tab-line">
+                                                    <div style="max-width:560px">
+                                                        <h6><lang class="lang_table_cleaning">Table cleaning</lang></h6>
+                                                        <p class="text-muted"><lang class="lang_off_by_default_enable_only_if_staff_should">Off by default. When enabled, tables must be marked Available after service.</lang></p>
+                                                        <label><input type="checkbox" id="captain_table_cleaning"> <lang class="lang_enable_table_cleaning">Enable table cleaning</lang></label>
+                                                        <div class="mt-3"><button type="button" class="btn btn-primary" id="save_captain_tables" disabled><lang class="lang_save_title">Save</lang></button></div>
+                                                        <p id="captain_tables_message" class="mt-2" role="status"></p>
+                                                    </div>
+                                                </div>
                                                 <div class="tab-pane fade" id="captainpayments-line" role="tabpanel" aria-labelledby="captainpayments-tab-line">
                                                     <div style="max-width:560px">
                                                         <h6><lang class="lang_captain_collect_payments">Collect payments in Captain</lang></h6>

@@ -8679,7 +8679,12 @@ class SalesRepository {
           tableorder_value: wantsTable,
         });
         seatingTable = configuredTable;
-        if (configuredTable && ['held', 'cleaning'].includes(configuredTable.service_state))
+        if (
+          configuredTable &&
+          ['held', 'cleaning'].includes(
+            require('../services/table-cleaning').state(configuredTable, branchDoc)
+          )
+        )
           return { status: false, message: 'This table is not available.', data: null };
         if (
           configuredTable &&

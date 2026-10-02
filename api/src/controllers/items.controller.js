@@ -824,7 +824,7 @@ class ItemsController extends BaseController {
       const limit = Number.isFinite(limitParam) && limitParam > 0 ? limitParam : 100;
 
       const response = await this.service.getOnlineSalesItems(
-        { limit },
+        { limit: Math.min(limit, 500), offset: Math.max(0, parseInt(req.query.offset, 10) || 0) },
         {
           branchId: this.model?.branchId || null,
           licenseId: this.model?.licenseId || null,
@@ -832,7 +832,13 @@ class ItemsController extends BaseController {
       );
 
       if (response && response.status === true) {
-        return this.success(res, response.data, response.message || 'success');
+        return this.success(
+          res,
+          req.query.paginate === 'true'
+            ? { items: response.data, next_offset: response.next_offset }
+            : response.data,
+          response.message || 'success'
+        );
       }
 
       return this.error(res, ERROR_MESSAGES.ITEM_DETAILS_NOT_FOUND, 404, response?.data || null);

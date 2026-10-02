@@ -50,12 +50,6 @@ router.get('/branch-details', wrap(branchDetails.get));
 router.post('/branch-details', limit, wrap(branchDetails.update));
 const tables = require('../services/captain-tables');
 router.get('/tables', wrap(tables.list));
-router.get('/table-cleaning-settings', wrap(require('../services/table-cleaning-policy').settings));
-router.post(
-  '/table-cleaning-settings',
-  limit,
-  wrap(require('../services/table-cleaning-policy').settings)
-);
 router.get('/bill', wrap(require('../services/captain-bill').read));
 router.post('/tables', limit, wrap(tables.update));
 router.post('/tables/state', limit, wrap(tables.state));
@@ -290,4 +284,36 @@ router.post(
   })
 );
 
+router.get(
+  '/table-settings',
+  wrap(async (req) => {
+    const c = await require('../utils/branch-access').context(req);
+    return { cleaningEnabled: require('../services/table-cleaning').enabled(c.branch) };
+  })
+);
+router.post(
+  '/table-settings',
+  wrap(async (req) => {
+    const { allowed, context, fail } = require('../utils/branch-access');
+    if (!allowed(req.user, 'settings')) fail('Settings permission is required.', 403);
+    if (typeof req.body?.cleaningEnabled !== 'boolean') fail('Choose a table status.');
+    const c = await context(req),
+      cleaningEnabled = req.body.cleaningEnabled;
+    await req.db
+      .collection('branches')
+      .updateOne(
+        { _id: c.branchId, license: c.license },
+        { $set: { captain_table_cleaning: cleaningEnabled, updated_date: new Date() } }
+      );
+    if (!cleaningEnabled)
+      await req.db.collection('tableorder').updateMany(
+        { branch_id: c.branchId, license: c.license, service_state: 'cleaning' },
+        {
+          $set: { service_state: 'available', updated_date: new Date() },
+          $inc: { captain_table_version: 1 },
+        }
+      );
+    return { saved: true, cleaningEnabled };
+  })
+);
 module.exports = router;

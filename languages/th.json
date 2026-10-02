@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "การทำความสะอาดโต๊ะ",
+  "lang_enable_table_cleaning": "เปิดใช้การทำความสะอาดโต๊ะ",
+  "lang_off_by_default_enable_only_if_staff_should": "ปิดไว้ตามค่าเริ่มต้น เมื่อเปิดใช้ ต้องทำเครื่องหมายว่าโต๊ะว่างหลังให้บริการ",
+  "lang_could_not_load_table_settings_please_retry": "โหลดการตั้งค่าโต๊ะไม่สำเร็จ โปรดลองอีกครั้ง",
+  "lang_could_not_save_table_settings_please_retry": "บันทึกการตั้งค่าโต๊ะไม่สำเร็จ โปรดลองอีกครั้ง",
   "lang_item_ai_review_help": "ตรวจสอบคำแนะนำ คำแปลเดิมจะไม่เปลี่ยนจนกว่าคุณจะเลือกใช้",
   "lang_item_upload_failed": "อัปโหลดรูปภาพไม่สำเร็จ ยังไม่ได้บันทึกสินค้า",
   "lang_item_translated_name": "ชื่อสินค้าที่แปลแล้ว",
@@ -4040,5 +4045,18 @@
   "lang_ask_payment_confirm": "ตรวจใบเสร็จและยอดรวม เลือกเงินสดหลังรับเงิน หรือรับชำระด้วยบัตรแล้วหลังเครื่องยืนยัน การเลือกนี้ทำการขายให้เสร็จและขอพิมพ์ใบเสร็จ",
   "lang_ask_prepare_sale": "เตรียมการขายเพื่อชำระเงิน",
   "lang_ask_review_sale": "ตรวจสอบการขาย",
-  "lang_ask_sale_checkout": "ชำระยอดขายและพิมพ์ใบเสร็จ"
+  "lang_ask_sale_checkout": "ชำระยอดขายและพิมพ์ใบเสร็จ",
+  "lang_about_these_times": "เกี่ยวกับเวลาเหล่านี้",
+  "lang_all_sales": "ยอดขายทั้งหมด",
+  "lang_choose_one_branch_for_period": "เลือกหนึ่งสาขาเพื่อกรองตามช่วงให้บริการ",
+  "lang_clear_restaurant_filters": "ล้างตัวกรองร้านอาหาร",
+  "lang_loading_serving_periods": "กำลังโหลดช่วงให้บริการ…",
+  "lang_period_load_failed": "โหลดช่วงให้บริการไม่ได้ เปิดหน้านี้ใหม่เพื่อลองอีกครั้ง",
+  "lang_period_required_fields": "กรอกชื่อและเวลาเริ่มต้นกับเวลาสิ้นสุดที่ต่างกันสำหรับแต่ละช่วงให้บริการ",
+  "lang_serving_period": "ช่วงให้บริการ",
+  "lang_serving_periods_saved": "บันทึกช่วงให้บริการแล้ว",
+  "lang_set_serving_periods": "ตั้งค่าอาหารเช้า กลางวัน และเย็นใน ร้านอาหาร > เมนู",
+  "lang_tables_only": "เฉพาะโต๊ะ",
+  "lang_serve_all": "เสิร์ฟทั้งหมด",
+  "lang_items_marked_served": "ทำเครื่องหมายว่าเสิร์ฟรายการแล้ว"
 }

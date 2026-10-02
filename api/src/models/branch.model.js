@@ -25,6 +25,7 @@ const branchSchema = new Schema(
     mobile_pos: { type: Schema.Types.Mixed },
     branch_upi_id: { type: String },
     branch_upi_name: { type: String },
+    captain_table_cleaning: { type: Boolean, default: false },
     captain_payments: { type: Schema.Types.Mixed },
     module_mobile_pos_enable: { type: Boolean },
     module_billing_outlets_enable: { type: Boolean },

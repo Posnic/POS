@@ -44,6 +44,7 @@ beforeEach(async () => {
     _id: branch,
     license,
     name: 'Restaurant',
+    captain_table_cleaning: true,
     table_options: true,
     table_order_limit: 1,
     online_ordering: { store_id: 'SHOP1', mode: 'order' },

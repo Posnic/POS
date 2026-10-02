@@ -137,6 +137,20 @@ async function loadDocument(win, plan) {
   }
 }
 
+// A renderer animation frame is not a compositor acknowledgement. On a cold
+// window capturePage can still hold the preceding strip until a paint arrives.
+function waitForReceiptPaint(contents, timeoutMs = 5000) {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => { clearTimeout(timer); contents.removeListener('paint', painted); contents.removeListener('destroyed', destroyed); };
+    const painted = () => { cleanup(); resolve(); };
+    const destroyed = () => { cleanup(); reject(new Error('Receipt window closed before rendering completed')); };
+    const timer = setTimeout(() => { cleanup(); reject(new Error('Receipt painting timed out. Nothing was printed.')); }, timeoutMs);
+    contents.once('paint', painted);
+    contents.once('destroyed', destroyed);
+    try { contents.invalidate(); } catch (error) { cleanup(); reject(error); }
+  });
+}
+
 async function rasterize(plan) {
   const { BrowserWindow } = require('electron');
   const win = hardenPrintWindow(new BrowserWindow({
@@ -198,6 +212,7 @@ async function rasterize(plan) {
             document.querySelector('#receipt').style.transform = 'translateY(-${y}px)';
             requestAnimationFrame(() => requestAnimationFrame(resolve));
           })`);
+          await waitForReceiptPaint(win.webContents);
           stage = `capturing receipt row ${y}`;
           let capture = await win.webContents.capturePage({ x: 0, y: 0, width: plan.width, height: rows }, { stayHidden: true, stayAwake: true });
           if (capture.isEmpty()) throw new Error('Could not render Unicode receipt');
@@ -239,4 +254,4 @@ async function renderDesignedReceipt(document, paper, render = rasterize) {
   return receipt.build();
 }
 
-module.exports = { renderReceipt, renderDesignedReceipt, needsRaster, layout, documentFor, loadDocument, rasterize };
+module.exports = { renderReceipt, renderDesignedReceipt, needsRaster, layout, documentFor, loadDocument, rasterize, waitForReceiptPaint };

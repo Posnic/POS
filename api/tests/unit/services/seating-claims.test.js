@@ -24,6 +24,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await db.dropDatabase();
   scope = { branchId: new ObjectId(), license: new ObjectId() };
+  scope.branch = { captain_table_cleaning: true };
   ids = [new ObjectId(), new ObjectId(), new ObjectId()].map(String);
   await db.collection('tableorder').insertMany(
     ids.map((id, index) => ({
@@ -254,7 +255,7 @@ test('closed sale releases every member for cleaning and archives the retry reco
 test('manual cleaning policy releases cancelled seating to available without changing the sale', async () => {
   await db
     .collection('branches')
-    .insertOne({ _id: scope.branchId, license: scope.license, table_cleaning_after_close: false });
+    .insertOne({ _id: scope.branchId, license: scope.license, captain_table_cleaning: false });
   const claim = await seating.reserve(db, scope, request());
   const saleId = new ObjectId();
   await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
@@ -2911,4 +2912,23 @@ test('activating a parked sale reserves its entire party even when its table and
   ).rejects.toThrow('enough seats');
   await seating.reconcileEditCapacity(db, scope, permit.id);
   expect((await commitCapacityEdit(held, permit, 2)).matchedCount).toBe(0);
+});
+
+test('default-disabled cleaning permits seating and does not return closed tables to cleaning', async () => {
+  scope.branch = {};
+  await db.collection('tableorder').updateMany({}, { $set: { service_state: 'cleaning' } });
+  const claim = await seating.reserve(db, scope, request());
+  const saleId = new ObjectId();
+  await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    payment_status: 'Paid',
+    floor_closed_at: new Date(),
+  });
+  await seating.release(db, scope, claim.id);
+  expect(
+    await db.collection('tableorder').countDocuments({ service_state: 'available' })
+  ).toBeGreaterThan(0);
 });
