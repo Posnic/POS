@@ -199,7 +199,7 @@
           var row = document.createElement('li'), link = document.createElement('a'), icon = document.createElement('img');
           row.dataset.extensionMenu = item.id;
           link.href = '#/extensions/' + encodeURIComponent(item.id);
-          icon.src = 'static/images/svg-icon/bag.svg'; icon.alt = ''; icon.className = 'img-fluid';
+          icon.src = 'static/images/svg-icon/basket-review.svg'; icon.alt = ''; icon.className = 'img-fluid';
           link.append(icon, document.createTextNode(item.displayName)); row.append(link);
           anchor.parentElement.after(row);
           if (window.location.hash === link.getAttribute('href')) {
