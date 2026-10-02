@@ -199,15 +199,20 @@ const processSale = async (
   id = '',
   process = 'Add',
   context = {},
-  { preview = false, beforeCommit, stockGrant, beforeStockCommit } = {}
+  { preview = false, beforeCommit, stockGrant, beforeStockCommit, prepareAllocated = false } = {}
 ) => {
   // Retry identity describes the submitted request, not derived charge/tax fields.
   const submittedPayload = structuredClone(data);
+  // The decision gate closes over the caller's trusted context. Pricing adds
+  // a local copy below; retain the gate's later verified device identity.
+  const decisionContext = context;
   let finishCaptainEdit;
   let finishCapacityEdit;
   try {
     let extensionStock = null;
     let extensionSubmission = null;
+    if (prepareAllocated && (stockGrant === undefined || preview || beforeCommit || beforeStockCommit))
+      return { status: false, message: 'Unsupported allocated sale preparation' };
     if (beforeStockCommit !== undefined &&
         (typeof beforeStockCommit !== 'function' || stockGrant === undefined))
       return { status: false, message: 'Unsupported allocated sale commit' };
@@ -875,7 +880,7 @@ const processSale = async (
       }
     }
     const decisionPricing =
-      preview || beforeCommit || beforeStockCommit
+      preview || beforeCommit || beforeStockCommit || prepareAllocated
         ? {
             header: calculateSaleHeader(data, sale_tot_amount, context),
             roundOff: context.roundOff === true,
@@ -1478,6 +1483,10 @@ const processSale = async (
     }
 
     // --- DB OPERATIONS ---
+    // Internal provider preparation: pricing, allocation and submission identity
+    // have been validated. Return the exact core document before any sale write.
+    // The payment coordinator persists it before asking a terminal to charge.
+    if (prepareAllocated) return { status: true, data: decisionPricing, document: finalSaleData };
     let result;
     if (id === '') {
       // ADD: create a new Sale document so that the pre-save hook can
@@ -1493,7 +1502,7 @@ const processSale = async (
           finalSaleData.business_decision_receipt =
             require('./business-decision-receipt').decisionReceipt(
               proof,
-              context,
+              { ...context, businessDecisionDeviceId: decisionContext.businessDecisionDeviceId },
               data.billing_transaction_id,
               decisionPricing
             );

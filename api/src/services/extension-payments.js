@@ -271,8 +271,10 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
           id: attemptId,
           digest: confirmationDigest,
           status: 'submitting',
-          authorized: false,
+          authorized: options.authorization === dojoAuthorization && !!row.providerCommitDocument,
         },
+        ...(options.authorization === dojoAuthorization && row.providerCommitDocument
+          ? { commitDocument: row.providerCommitDocument } : {}),
       },
     }
   );
@@ -442,6 +444,29 @@ async function processDojoPayment(context, input, { provider, configurationId, t
     { $set: { provider: binding } });
   row = await collection.findOne(filter);
   if (fingerprint(row.provider || {}) !== fingerprint(binding)) fail('extension_provider_payment_conflict');
+  if (!row.providerCommitDocument) {
+    const stockGrant = await allocateForSale(context.db,
+      { license: scope.license, branchId: scope.branch_id, actorId: scope.actorId },
+      { extensionId: scope.extensionId, stockOperationId: row.stockOperationId, saleId: row.saleId, lines: row.lines });
+    const ctx = await saleContext(context.db, scope);
+    const prepared = await require('./sale.service').processSale(structuredClone(row.payload), '', 'Add', ctx,
+      { stockGrant, prepareAllocated: true });
+    if (!prepared.status || !prepared.document || fingerprint(prepared.data) !== fingerprint(row.quote) ||
+        Money.policy(ctx.branchSettings).currencyCode !== row.currency.currencyCode ||
+        Money.policy(ctx.branchSettings).currencyDigits !== row.currency.currencyDigits) {
+      // No provider request has been made by this path. Allow cancellation if
+      // no competing request has frozen a document and advanced to charging.
+      await collection.updateOne({ ...filter, status: 'pending', provider: binding,
+        providerCommitDocument: { $exists: false } }, { $unset: { provider: '' } });
+      fail('extension_payment_review_required');
+    }
+    await collection.updateOne({ ...filter, status: 'pending', provider: binding,
+      providerCommitDocument: { $exists: false } },
+      { $set: { providerCommitDocument: BSON.deserialize(BSON.serialize(prepared.document)) } });
+    row = await collection.findOne(filter);
+    if (!row.providerCommitDocument || fingerprint(row.provider || {}) !== fingerprint(binding))
+      fail('extension_provider_payment_conflict');
+  }
   const journal = require('./dojo-payment-journal');
   await journal.startPayment(context.db, context.scope, {
     paymentId: row._id, valueMinor: row.valueMinor, currencyCode: row.currency.currencyCode,

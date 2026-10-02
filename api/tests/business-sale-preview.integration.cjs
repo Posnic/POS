@@ -136,9 +136,12 @@ test('Community checkout uses authenticated owner approval, final pricing and on
           return this;
         },
       };
-      await controller[method]({ ...req, method: 'POST', params: {}, body }, response, (error) => {
-        throw error;
-      });
+      await require('../src/utils/request-context').runWithRequestContext(
+        { license, currentBranch: branchId, loggedUser: cashier._id, loggedUserName: 'Cashier' },
+        () => controller[method]({ ...req, method: 'POST', params: {}, body }, response, (error) => {
+          throw error;
+        })
+      );
       return response;
     };
     const requested = await invoke('businessDiscountDecision', {
@@ -213,12 +216,15 @@ test('Community checkout uses authenticated owner approval, final pricing and on
         return this;
       },
     };
-    await controller.businessDiscountDecision(
+    await require('../src/utils/request-context').runWithRequestContext(
+      { license, currentBranch: branchId, loggedUser: cashier._id, loggedUserName: 'Cashier' },
+      () => controller.businessDiscountDecision(
       { ...req, method: 'GET', params: { requestId: 'recoveries' }, query: {} },
       recoveryResponse,
       (error) => {
         throw error;
       }
+      )
     );
     assert.equal(recoveryResponse.body.data.references.length, 1);
     assert.equal(recoveryResponse.body.data.references[0].requestId, row.id);

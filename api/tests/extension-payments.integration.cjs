@@ -108,7 +108,10 @@ test('Dojo capture commits one normal Card sale and adjusted stock is never dedu
   };
   const options = { provider, configurationId: 'merchant-one', terminalId: 'tm_test' };
   const input = { paymentId: prepared.paymentId };
-  assert.equal((await processDojoPayment(f.context, input, options)).status, 'pending');
+  const concurrent = await Promise.allSettled(Array.from({ length: 8 }, () =>
+    processDojoPayment(f.context, input, options)));
+  assert.ok(concurrent.some(result => result.status === 'fulfilled' && result.value.status === 'pending'));
+  assert.equal(creates, 1);
   await assert.rejects(confirmExternalCard(f.context, { ...input, terminalConfirmed: true }), /provider_payment_in_progress/);
   await assert.rejects(cancelPayment(f.context, input), /provider_payment_in_progress/);
   assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 0);
@@ -124,7 +127,7 @@ test('Dojo capture commits one normal Card sale and adjusted stock is never dedu
   await assert.rejects(processDojoPayment(f.context, input, { ...options, configurationId: 'another-merchant' }), /provider_payment_conflict/);
 });
 
-test('captured Dojo payment with changed local pricing stays in reconciliation and cannot charge again', async () => {
+test('Dojo freezes the core sale before charging and later price changes cannot invalidate capture', async () => {
   const f = await fixture();
   const prepared = await preparePayment(f.context, { ...f.input, method: 'card' });
   let intent, creates = 0;
@@ -133,6 +136,9 @@ test('captured Dojo payment with changed local pricing stays in reconciliation a
   const options = { configurationId: 'merchant-one', terminalId: 'tm_test', provider: {
     environment: 'sandbox', createIntent: async quote => {
       creates++;
+      const frozen = await db.collection('extension_payments').findOne({ _id: prepared.paymentId });
+      assert.ok(frozen.providerCommitDocument);
+      assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 0);
       intent = { id: 'pi_price', reference: quote.reference, captureMode: 'Auto', status: 'Captured',
         amount: { value: quote.valueMinor, currencyCode: 'GBP' }, totalAmount: { value: quote.valueMinor, currencyCode: 'GBP' } };
       await db.collection('items').updateOne({ _id: f.item._id }, { $set: { selling_price: 2 } });
@@ -140,11 +146,30 @@ test('captured Dojo payment with changed local pricing stays in reconciliation a
     }, createSession: async () => session, getSession: async () => session, getIntent: async () => intent,
   } };
   const input = { paymentId: prepared.paymentId };
-  await assert.rejects(processDojoPayment(f.context, input, options), /dojo_sale_reconciliation_required/);
-  await assert.rejects(processDojoPayment(f.context, input, options), /dojo_sale_reconciliation_required/);
+  const paid = await processDojoPayment(f.context, input, options);
+  assert.equal(paid.status, 'paid');
+  assert.equal((await processDojoPayment(f.context, input, options)).saleId, paid.saleId);
   await assert.rejects(cancelPayment(f.context, input), /provider_payment_in_progress/);
   assert.equal(creates, 1);
   assert.equal(await f.stock(), 2);
+  assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 1);
+  const sale = await db.collection('sales').findOne({ _id: new ObjectId(paid.saleId) });
+  assert.equal(Number(sale.sales_total), 1);
+});
+
+test('price changes before Dojo freeze cause no charge and leave cancellation available', async () => {
+  const f = await fixture();
+  const prepared = await preparePayment(f.context, { ...f.input, method: 'card' });
+  await db.collection('items').updateOne({ _id: f.item._id }, { $set: { selling_price: 2 } });
+  let creates = 0;
+  const options = { configurationId: 'merchant-one', terminalId: 'tm_test', provider: {
+    environment: 'sandbox', createIntent: async () => { creates++; throw Error('must not charge'); },
+  } };
+  const input = { paymentId: prepared.paymentId };
+  await assert.rejects(processDojoPayment(f.context, input, options), /payment_review_required/);
+  assert.equal(creates, 0);
+  await cancelPayment({ ...f.context, sequence: 3, operationId: 'cancel-price-change' }, input);
+  assert.equal(await f.stock(), 3);
   assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 0);
 });
 
