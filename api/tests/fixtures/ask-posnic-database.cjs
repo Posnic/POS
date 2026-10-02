@@ -878,7 +878,16 @@ test('interrupted action batches report persisted drafts and remain isolated and
   await expect(platform.confirmDraft(request, draft.token, async () => {})).rejects.toThrow('already used');
   expect(result.resumable).toBe(true);
   await expect(platform.resumeDraft(req(String(license), String(branch), String(new ObjectId())), draft.id, async () => {})).rejects.toThrow('not available');
-  const reviews = await Promise.allSettled([1, 2].map(() => platform.resumeDraft(request, draft.id, async (payload) => { expect(payload.orders).toEqual([{ supplier_name: 'B' }]); })));
+  // Both requests must read the same version before racing the compare-and-set.
+  // Without the barrier, the second can legitimately read the first review's
+  // new nonce and perform a later review, making this concurrency test flaky.
+  let reviewers = 0, releaseReviews;
+  const reviewsReady = new Promise((resolve) => { releaseReviews = resolve; });
+  const reviews = await Promise.allSettled([1, 2].map(() => platform.resumeDraft(request, draft.id, async (payload) => {
+    expect(payload.orders).toEqual([{ supplier_name: 'B' }]);
+    if (++reviewers === 2) releaseReviews();
+    await reviewsReady;
+  })));
   expect(reviews.filter((row) => row.status === 'fulfilled')).toHaveLength(1);
   const recovery = reviews.find((row) => row.status === 'fulfilled').value;
   expect(recovery.recovery).toMatchObject({ remaining: 1 });
