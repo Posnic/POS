@@ -10560,10 +10560,11 @@ class SalesRepository {
               db,
               { branchId: orderDoc.branch_id, license: orderDoc.license },
               orderDoc,
-              { table: newTableNo, guests: personCount, dine_type: dineType }
+              { table: newTableNo, guests: personCount, dine_type: dineType },
+              { cancelling: status === 'cancelled' }
             )
           : null;
-      if (shop?.table_options === true && (newTableNo || personCount)) {
+      if (status !== 'cancelled' && shop?.table_options === true && (newTableNo || personCount)) {
         const destination = String(newTableNo || orderDoc.table_number || '');
         const configuredTable = await db.collection('tableorder').findOne({
           branch_id: orderDoc.branch_id,

@@ -188,3 +188,52 @@ test('a cancellation with nothing printable does not wake the printer', async ()
   expect(stored.sale_process).toBe('cancelled');
   expect(stored.changes).toBeUndefined();
 });
+
+test('desktop and handset cancellation can close a synchronized order without a local claim, exactly once', async () => {
+  const id = await anOrder();
+  await db.collection('sales').updateOne(
+    { _id: new mongoose.Types.ObjectId(id) },
+    {
+      $set: {
+        seating_request_id: 'remote-seating-claim-1234',
+        person_count: 2,
+        payment_status: 'Unpaid',
+      },
+    }
+  );
+  const heard = await announcedDuring(async () => {
+    expect((await cancel(id)).status).toBe(true);
+    expect((await cancel(id)).status).toBe(true);
+  });
+  const saved = await db.collection('sales').findOne({ _id: new mongoose.Types.ObjectId(id) });
+  expect(saved.sale_process).toBe('cancelled');
+  expect(saved.payment_status).toBe('Cancelled');
+  expect(saved.floor_closed_at).toBeInstanceOf(Date);
+  expect(saved.table_number).toBe('4');
+  expect(heard).toHaveLength(1);
+});
+
+test('cancellation keeps blocking a live move instead of cancelling a different seating snapshot', async () => {
+  const id = await anOrder();
+  const claim = 'remote-seating-claim-5678';
+  await db
+    .collection('sales')
+    .updateOne({ _id: new mongoose.Types.ObjectId(id) }, { $set: { seating_request_id: claim } });
+  await db
+    .collection('table_seating')
+    .updateOne(
+      { _id: `${LICENSE}:${BRANCH}` },
+      {
+        $set: {
+          claims: [{ id: claim, order_id: id, state: 'submitting', moving_to: 'another-table' }],
+        },
+      },
+      { upsert: true }
+    );
+  const result = await cancel(id);
+  expect(result.status).toBe(false);
+  expect(result.message).toContain('table move');
+  expect(
+    (await db.collection('sales').findOne({ _id: new mongoose.Types.ObjectId(id) })).sale_process
+  ).toBe('KOT');
+});
