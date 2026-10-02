@@ -45,9 +45,11 @@ test('a late catalogue from a previous branch cannot overwrite the new branch',(
  const callbacks=[];const context={PosnicPro:{sales:{},get(p,done){callbacks.push(done);}}};
  vm.runInNewContext(section('PosnicPro.sales.loadBillingCatalogue =','PosnicPro.sales.itemsMenu ='),context);
  context.PosnicPro.sales.loadBillingCatalogue(()=>assert.fail('stale callback'));
+ context.PosnicPro.sales._catalogueRefreshing=true;
  context.PosnicPro.sales.loadBillingCatalogue(()=>{});
  callbacks[1]({type:'success',data:{items:[{name:'New shop'}],next_offset:null}});callbacks[0]({type:'success',data:{items:[{name:'Old shop'}],next_offset:null}});
  assert.equal(context.PosnicPro.sales._billingCatalogue[0].name,'New shop');
+ assert.equal(context.PosnicPro.sales._catalogueRefreshing,false);
 });
 test('quantity confirmation validates stock and adds full item details; cancel adds nothing',async()=>{
  let options,resolve;const added=[],alerts=[];let focused=false;

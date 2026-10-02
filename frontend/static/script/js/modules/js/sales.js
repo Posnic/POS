@@ -7433,7 +7433,7 @@ PosnicPro.sales.loadBillingCatalogue = function (done, preserve) {
     function page() {
         PosnicPro.get({ url: 'items/onlineSalesItemsAjaxLists', data: { paginate: 'true', limit: 200, offset: offset } }, function (response) {
             if (generation !== PosnicPro.sales._catalogueGeneration) return;
-            if (!response || response.type !== 'success') { done(response || { type: 'error' }); return; }
+            if (!response || response.type !== 'success') { PosnicPro.sales._catalogueRefreshing = false; done(response || { type: 'error' }); return; }
             var data = response.data || {};
             // Older local APIs still return an array during rolling updates.
             rows = rows.concat(Array.isArray(data) ? data : data.items || []);
@@ -7442,8 +7442,9 @@ PosnicPro.sales.loadBillingCatalogue = function (done, preserve) {
             }
             PosnicPro.sales._billingCatalogue = Array.isArray(data) ? null : rows;
             PosnicPro.sales._catalogueAt = Date.now();
+            PosnicPro.sales._catalogueRefreshing = false;
             done({ type: 'success', data: rows });
-        }, function () { if (generation === PosnicPro.sales._catalogueGeneration) done({ type: 'error' }); });
+        }, function () { if (generation === PosnicPro.sales._catalogueGeneration) { PosnicPro.sales._catalogueRefreshing = false; done({ type: 'error' }); } });
     }
     page();
 };
