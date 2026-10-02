@@ -95,7 +95,9 @@ beforeEach(async () => {
   await db.collection('items').deleteMany({});
   await db.collection('tableorder').deleteMany({});
   await db.collection('branches').deleteMany({});
-  await db.collection('branches').insertOne({ _id: BRANCH, license: LICENSE });
+  await db
+    .collection('branches')
+    .insertOne({ _id: BRANCH, license: LICENSE, captain_table_cleaning: true });
   await db.collection('items').insertOne({
     _id: ITEM,
     license: LICENSE,

@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "การทำความสะอาดโต๊ะ",
+  "lang_enable_table_cleaning": "เปิดใช้การทำความสะอาดโต๊ะ",
+  "lang_off_by_default_enable_only_if_staff_should": "ปิดไว้ตามค่าเริ่มต้น เมื่อเปิดใช้ ต้องทำเครื่องหมายว่าโต๊ะว่างหลังให้บริการ",
+  "lang_could_not_load_table_settings_please_retry": "โหลดการตั้งค่าโต๊ะไม่สำเร็จ โปรดลองอีกครั้ง",
+  "lang_could_not_save_table_settings_please_retry": "บันทึกการตั้งค่าโต๊ะไม่สำเร็จ โปรดลองอีกครั้ง",
   "lang_item_ai_review_help": "ตรวจสอบคำแนะนำ คำแปลเดิมจะไม่เปลี่ยนจนกว่าคุณจะเลือกใช้",
   "lang_item_upload_failed": "อัปโหลดรูปภาพไม่สำเร็จ ยังไม่ได้บันทึกสินค้า",
   "lang_item_translated_name": "ชื่อสินค้าที่แปลแล้ว",

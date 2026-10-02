@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "Tischreinigung",
+  "lang_enable_table_cleaning": "Tischreinigung aktivieren",
+  "lang_off_by_default_enable_only_if_staff_should": "Standardmäßig aus. Wenn aktiviert, müssen Tische nach dem Service als verfügbar markiert werden.",
+  "lang_could_not_load_table_settings_please_retry": "Tischeinstellungen konnten nicht geladen werden. Bitte erneut versuchen.",
+  "lang_could_not_save_table_settings_please_retry": "Tischeinstellungen konnten nicht gespeichert werden. Bitte erneut versuchen.",
   "lang_item_ai_review_help": "Prüfen Sie den Vorschlag. Ihre Übersetzung bleibt unverändert, bis Sie ihn übernehmen.",
   "lang_item_upload_failed": "Bild-Upload fehlgeschlagen. Artikel nicht gespeichert.",
   "lang_item_translated_name": "Übersetzter Artikelname",

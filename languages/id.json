@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "Pembersihan meja",
+  "lang_enable_table_cleaning": "Aktifkan pembersihan meja",
+  "lang_off_by_default_enable_only_if_staff_should": "Nonaktif secara default. Jika diaktifkan, meja harus ditandai tersedia setelah pelayanan.",
+  "lang_could_not_load_table_settings_please_retry": "Pengaturan meja tidak dapat dimuat. Coba lagi.",
+  "lang_could_not_save_table_settings_please_retry": "Pengaturan meja tidak dapat disimpan. Coba lagi.",
   "lang_item_ai_review_help": "Tinjau saran. Terjemahan Anda tidak berubah sampai Anda menerimanya.",
   "lang_item_upload_failed": "Unggah gambar gagal. Barang belum disimpan.",
   "lang_item_translated_name": "Nama barang terjemahan",

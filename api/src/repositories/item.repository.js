@@ -5381,7 +5381,7 @@ class ItemRepository extends BaseModel {
           .toArray();
         tableorders = tableList.map((doc) => ({
           ...require('../utils/table-details').view(doc),
-          service_state: doc.service_state || 'available',
+          service_state: require('../services/table-cleaning').state(doc, branchDoc),
           id: doc._id.toString(),
           tableorder_value: doc.tableorder_value,
           tableorder_fields: doc.tableorder_fields || [],

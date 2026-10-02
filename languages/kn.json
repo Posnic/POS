@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "ಮೇಜು ಸ್ವಚ್ಛಗೊಳಿಸುವಿಕೆ",
+  "lang_enable_table_cleaning": "ಮೇಜು ಸ್ವಚ್ಛಗೊಳಿಸುವಿಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ",
+  "lang_off_by_default_enable_only_if_staff_should": "ಪೂರ್ವನಿಯೋಜಿತವಾಗಿ ನಿಷ್ಕ್ರಿಯವಾಗಿದೆ. ಸಕ್ರಿಯಗೊಳಿಸಿದರೆ, ಸೇವೆಯ ನಂತರ ಮೇಜುಗಳನ್ನು ಲಭ್ಯವೆಂದು ಗುರುತಿಸಬೇಕು.",
+  "lang_could_not_load_table_settings_please_retry": "ಮೇಜಿನ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  "lang_could_not_save_table_settings_please_retry": "ಮೇಜಿನ ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
   "lang_item_ai_review_help": "ಸಲಹೆ ಪರಿಶೀಲಿಸಿ. ನೀವು ಸ್ವೀಕರಿಸುವವರೆಗೆ ನಿಮ್ಮ ಅನುವಾದ ಬದಲಾಗುವುದಿಲ್ಲ.",
   "lang_item_upload_failed": "ಚಿತ್ರ ಅಪ್ಲೋಡ್ ವಿಫಲವಾಗಿದೆ. ವಸ್ತು ಉಳಿಸಲಾಗಿಲ್ಲ.",
   "lang_item_translated_name": "ಅನುವಾದಿತ ವಸ್ತುವಿನ ಹೆಸರು",

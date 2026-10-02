@@ -17,7 +17,7 @@ beforeEach(async () => {
   branch = new ObjectId();
   license = new ObjectId();
   user = new ObjectId();
-  await db.collection('branches').insertOne({ _id: branch, license });
+  await db.collection('branches').insertOne({ _id: branch, license, captain_table_cleaning: true });
 });
 const req = (body = {}, role = 'manager') => ({
   db,
@@ -538,4 +538,24 @@ test('the Captain seating endpoint forwards order type and confirms a retryable 
     items: [{ item_name: 'Soup', item_quantity: 2 }],
   });
   expect(await db.collection('print_jobs').countDocuments({})).toBe(0);
+});
+
+test('cleaning is opt-in and legacy cleaning flags do not block when disabled', async () => {
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $unset: { captain_table_cleaning: '' } });
+  const row = await service.update(req({ tableorder_value: '4', capacity: 4 }));
+  await db
+    .collection('tableorder')
+    .updateOne({ _id: new ObjectId(row.id) }, { $set: { service_state: 'cleaning' } });
+  const listed = await service.list(req());
+  expect(listed.cleaningEnabled).toBe(false);
+  expect(listed.tables[0].status).toBe('available');
+  await expect(
+    service.state(req({ id: row.id, version: 0, status: 'cleaning' }))
+  ).rejects.toMatchObject({ status: 409 });
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { captain_table_cleaning: true } });
+  expect((await service.list(req())).tables[0].status).toBe('cleaning');
 });

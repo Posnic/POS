@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "மேசை சுத்தம் செய்தல்",
+  "lang_enable_table_cleaning": "மேசை சுத்தம் செய்தலை இயக்கவும்",
+  "lang_off_by_default_enable_only_if_staff_should": "இயல்பாக முடக்கப்பட்டுள்ளது. இயக்கினால், சேவைக்குப் பிறகு மேசைகள் கிடைக்கின்றன எனக் குறிக்க வேண்டும்.",
+  "lang_could_not_load_table_settings_please_retry": "மேசை அமைப்புகளை ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
+  "lang_could_not_save_table_settings_please_retry": "மேசை அமைப்புகளைச் சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
   "lang_item_upload_failed": "படத்தைப் பதிவேற்ற முடியவில்லை. பொருள் சேமிக்கப்படவில்லை.",
   "lang_item_translated_name": "மொழிபெயர்க்கப்பட்ட பொருள் பெயர்",
   "lang_item_stock_variants_help": "ஒவ்வொரு வகையின் வரியிலும் தொடக்க இருப்பை உள்ளிடவும்.",

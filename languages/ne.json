@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "टेबल सफाइ",
+  "lang_enable_table_cleaning": "टेबल सफाइ सक्षम गर्नुहोस्",
+  "lang_off_by_default_enable_only_if_staff_should": "पूर्वनिर्धारित रूपमा बन्द छ। सक्षम भएमा, सेवा पछि टेबलहरू उपलब्ध भनी चिन्ह लगाउनुपर्छ।",
+  "lang_could_not_load_table_settings_please_retry": "टेबल सेटिङहरू लोड गर्न सकिएन। फेरि प्रयास गर्नुहोस्।",
+  "lang_could_not_save_table_settings_please_retry": "टेबल सेटिङहरू सुरक्षित गर्न सकिएन। फेरि प्रयास गर्नुहोस्।",
   "lang_item_ai_review_help": "सुझाव जाँच्नुहोस्। स्वीकार नगरेसम्म तपाईंको अनुवाद बदलिँदैन।",
   "lang_item_upload_failed": "तस्बिर अपलोड भएन। वस्तु सुरक्षित भएको छैन।",
   "lang_item_translated_name": "अनुवादित वस्तुको नाम",
