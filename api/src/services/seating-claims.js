@@ -515,7 +515,7 @@ async function prepareMove(
   }
 }
 
-async function beginClose(db, scope, orderIds, closeId) {
+async function beginClose(db, scope, orderIds, closeId, afterClose) {
   requestId(closeId);
   if (!Array.isArray(orderIds) || !orderIds.length || orderIds.length > 200)
     fail('Choose the orders to close.');
@@ -531,7 +531,8 @@ async function beginClose(db, scope, orderIds, closeId) {
         !['submitting', 'releasing'].includes(row.state) ||
         (row.closing &&
           (row.closing.id !== closeId ||
-            JSON.stringify(row.closing.orders) !== JSON.stringify(ids)))
+            JSON.stringify(row.closing.orders) !== JSON.stringify(ids) ||
+            (afterClose !== undefined && (row.closing.afterClose || 'cleaning') !== afterClose)))
     )
   )
     fail('The seating group changed. Refresh this order.', 409);
@@ -542,7 +543,12 @@ async function beginClose(db, scope, orderIds, closeId) {
     {
       $set: {
         claims: snapshot.claims.map((row) =>
-          selectedIds.has(row.id) ? { ...row, closing: { id: closeId, orders: ids } } : row
+          selectedIds.has(row.id)
+            ? {
+                ...row,
+                closing: { id: closeId, orders: ids, ...(afterClose ? { afterClose } : {}) },
+              }
+            : row
         ),
       },
       $inc: { revision: 1 },
@@ -857,7 +863,9 @@ async function cancel(db, scope, id, actor) {
     fail('Reconcile the submitted order before releasing its tables.', 409);
   await archive(db, scope, id);
 }
-async function release(db, scope, id, { transferId, settled = false } = {}) {
+async function release(db, scope, id, { transferId, settled = false, afterClose } = {}) {
+  if (afterClose !== undefined && !['available', 'cleaning'].includes(afterClose))
+    fail('Choose Available or Cleaning.');
   requestId(id);
   const claim = await find(db, scope, id);
   if (!claim) fail('Seating request not found.', 404);
@@ -986,10 +994,10 @@ async function release(db, scope, id, { transferId, settled = false } = {}) {
       },
       {
         $set: {
-          service_state:
-            !settled && (await require('./table-cleaning').active(db, scope))
-              ? 'cleaning'
-              : 'available',
+          service_state: settled
+            ? 'available'
+            : afterClose ||
+              ((await require('./table-cleaning').active(db, scope)) ? 'cleaning' : 'available'),
           last_seating_release_generation: claim.generation,
           updated_date: new Date(),
         },

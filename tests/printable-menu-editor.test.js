@@ -77,3 +77,53 @@ test('pattern thumbnails replace uploaded images and persist the selected design
     assert.equal(saved.pattern, 'petals'); assert.equal(saved.background, '');
     dom.window.close();
 });
+
+test('ten-page export captures only each menu page and encodes asynchronously without reducing quality', async () => {
+    const { dom, w, pending } = editor();
+    try {
+        const canvases = [], images = [];
+        let captures = 0, saved = 0, eventTurns = 0;
+        w.PosnicPrintableMenuRenderer.render = (host, _data, design) => {
+            host.replaceChildren();
+            const pages = Array.from({ length: 10 }, () => {
+                const page = w.document.createElement('section');
+                page.style.width = '794px'; page.style.height = '1123px';
+                page.appendChild(w.document.createElement('span'));
+                host.appendChild(page); return page;
+            });
+            return { pages, count: 500, design };
+        };
+        w.PosnicPro.lazy = { load: async () => {} };
+        w.jspdf = { jsPDF: function () {
+            this.addPage = () => {};
+            this.addImage = bytes => images.push(Array.from(bytes));
+            this.setProperties = () => {};
+            this.save = () => { saved++; };
+        } };
+        w.html2canvas = async (page, options) => {
+            captures++;
+            assert.equal(options.scale, 3);
+            assert.equal(options.ignoreElements(page), false);
+            assert.equal(options.ignoreElements(page.firstChild), false);
+            assert.equal(options.ignoreElements(page.parentElement), false);
+            assert.equal(options.ignoreElements(w.document.getElementById('pm-preview')), true);
+            const other = page.nextElementSibling || page.previousElementSibling;
+            assert.equal(options.ignoreElements(other), true);
+            const canvas = { width: 2382, height: 3369,
+                toDataURL() { assert.fail('Synchronous JPEG/base64 encoding must not run'); },
+                toBlob(callback, mime, quality) {
+                    assert.equal(mime, 'image/jpeg'); assert.equal(quality, 0.95);
+                    w.setTimeout(() => { eventTurns++; callback({ arrayBuffer: async () => new Uint8Array([255,216,255]).buffer }); }, 0);
+                }
+            };
+            canvases.push(canvas); return canvas;
+        };
+        w.$('#pm-reload').trigger('click'); answer(pending, 'Ten pages'); await tick();
+        w.$('#pm-download').trigger('click');
+        const deadline = Date.now() + 5000;
+        while (!saved && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 20));
+        assert.equal(saved, 1, w.$('#pm-status').text());
+        assert.equal(captures, 10); assert.equal(eventTurns, 10); assert.equal(images.length, 10);
+        assert.ok(canvases.every(canvas => canvas.width === 0 && canvas.height === 0));
+    } finally { dom.window.close(); }
+});

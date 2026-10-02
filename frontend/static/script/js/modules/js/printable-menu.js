@@ -172,12 +172,35 @@
             for (var i = 0; i < exportResult.pages.length; i++) {
                 if (ticket !== generation) throw new Error(t('lang_pm_branch_changed', 'Branch changed. Open the menu again before printing.'));
                 status(t('lang_pm_preparing', 'Preparing PDF…') + ' ' + (i + 1) + ' / ' + exportResult.pages.length);
+                // Give input, networking and repaint tasks a turn between pages.
+                await new Promise(function (resolve) { setTimeout(resolve, 25); });
+                if (ticket !== generation) throw new Error(t('lang_pm_branch_changed', 'Branch changed. Open the menu again before printing.'));
                 var page = exportResult.pages[i];
                 await Promise.all(Array.from(page.querySelectorAll('img')).map(function (img) { return img.decode(); }));
-                var canvas = await window.html2canvas(page, { scale: 3, backgroundColor: '#ffffff', logging: false });
-                if (i) doc.addPage(dimensions, 'portrait');
-                doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, dimensions[0], dimensions[1]);
-                canvas.width = 0; canvas.height = 0;
+                var canvas;
+                try {
+                    canvas = await window.html2canvas(page, {
+                        scale: 3, backgroundColor: '#ffffff', logging: false,
+                        // html2canvas otherwise clones the whole dashboard, all
+                        // menu pages and their previews again for every page.
+                        ignoreElements: function (element) {
+                            return document.body.contains(element) &&
+                                !element.contains(page) && !page.contains(element);
+                        }
+                    });
+                    var jpeg = await new Promise(function (resolve, reject) {
+                        canvas.toBlob(function (blob) {
+                            if (blob) resolve(blob);
+                            else reject(new Error(t('lang_pm_tools_error', 'PDF tools could not load. Please try again.')));
+                        }, 'image/jpeg', 0.95);
+                    });
+                    var bytes = new Uint8Array(await jpeg.arrayBuffer());
+                    if (ticket !== generation) throw new Error(t('lang_pm_branch_changed', 'Branch changed. Open the menu again before printing.'));
+                    if (i) doc.addPage(dimensions, 'portrait');
+                    doc.addImage(bytes, 'JPEG', 0, 0, dimensions[0], dimensions[1]);
+                } finally {
+                    if (canvas) { canvas.width = 0; canvas.height = 0; }
+                }
             }
             if (ticket !== generation) throw new Error(t('lang_pm_branch_changed', 'Branch changed. Open the menu again before printing.'));
             doc.setProperties({ title: exportTitle });

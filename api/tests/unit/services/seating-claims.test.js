@@ -253,7 +253,7 @@ test('closed sale releases every member for cleaning and archives the retry reco
 });
 
 test('manual cleaning policy releases cancelled seating to available without changing the sale', async () => {
-  scope.branch.captain_table_cleaning = false;
+  delete scope.branch;
   await db
     .collection('branches')
     .insertOne({ _id: scope.branchId, license: scope.license, captain_table_cleaning: false });
