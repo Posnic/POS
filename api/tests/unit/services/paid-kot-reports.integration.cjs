@@ -75,7 +75,7 @@ beforeEach(async () => {
   await sales.deleteMany({});
   await sales.insertMany([
     bill('posted', 'Edit', 'Paid', 8283),
-    bill('paid-kot', 'KOT', 'Paid', 36951, { items_total: null }),
+    bill('paid-kot', 'KOT', 'Paid', 36951, { items_total: 1 }),
     bill('open', 'KOT', 'Unpaid', 5176.5),
     bill('cancelled', 'cancelled', 'Cancelled', 6205.5),
     bill('hold', 'Hold', 'Paid', 100),
@@ -205,4 +205,19 @@ test('payment transactions include desktop KOTs but not unrecorded guest-check a
     'posted',
     'recorded-transfer',
   ]);
+});
+
+test('saved final total wins over stale aliases, preserving zero and legacy-only totals', async () => {
+  await sales.deleteMany({});
+  await sales.insertMany([
+    { sales_total: 0, total: 900, items_total: 900 },
+    { sales_total: 120, total: 110, items_total: 100 },
+    { total: 50 },
+    { items_total: 30 },
+  ]);
+  const { reportSaleTotal } = require('../../../src/helpers/reportable-sales');
+  const [row] = await sales
+    .aggregate([{ $group: { _id: null, amount: { $sum: reportSaleTotal() } } }])
+    .toArray();
+  assert.equal(row.amount, 200);
 });

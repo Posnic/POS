@@ -22,12 +22,13 @@ function reportableSales(processes = GRAPH_ALLOWED_SALE_PROCESSES) {
   };
 }
 
-// Captain bills may store sales_total/total without the legacy items_total.
-// Preserve a recorded zero; only fall back when the legacy field is missing.
+// The saved payable total is authoritative. Older item-total snapshots can
+// be absent or stale after editing a KOT. Preserve zero and use legacy aliases
+// only when the canonical bill total is absent.
 function reportSaleTotal() {
   return {
     $toDouble: {
-      $ifNull: ['$items_total', { $ifNull: ['$sales_total', { $ifNull: ['$total', 0] }] }],
+      $ifNull: ['$sales_total', { $ifNull: ['$total', { $ifNull: ['$items_total', 0] }] }],
     },
   };
 }
