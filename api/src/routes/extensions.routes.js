@@ -103,6 +103,7 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
         'lifecycle.enabled': false,
       }).toArray();
       const disabled = new Set(states.map((row) => row.extensionId));
+      const removed = new Set(states.filter(row => row.lifecycle?.installed === false).map(row => row.extensionId));
       const extensions = registry
         .list()
         .filter(
@@ -118,6 +119,7 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
           version: item.version,
           ...(item.menu === 'sales' ? { menu: 'sales' } : {}),
           enabled: !disabled.has(item.id),
+          installed: !removed.has(item.id),
         }));
       res
         .set('Cache-Control', 'no-store')
@@ -139,6 +141,23 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
         req.query.before === undefined ? undefined : Number(req.query.before));
       res.set('Cache-Control', 'no-store').json({ events,
         next: events.length === 50 ? events[events.length - 1].generation : null });
+    } catch (error) { respondError(res, error); }
+  });
+  router.post('/:extensionId/installed', async (req, res) => {
+    try {
+      if (req.isApiKey || !access.allowed(req.user, 'extensions', 'manage'))
+        access.fail('Extension management permission required.', 403);
+      if (req.body?.retainData !== true) access.fail('Removal preserves business data. Confirm retainData.', 422);
+      const descriptor = registry.get(req.params.extensionId);
+      if (!descriptor) access.fail('Verified package is unavailable on this host.', 404);
+      const scope = await access.context(req);
+      const approved = await req.db.collection('extension_installations').findOne({
+        license: scope.license, branch_id: scope.branchId, extensionId: descriptor.id,
+        packageDigest: descriptor.packageDigest, enabled: true,
+      });
+      if (!approved) access.fail('Extension is not approved for this shop.', 403);
+      res.set('Cache-Control', 'no-store').json(await namespace.setInstalled(req.db, scope, descriptor,
+        { userId: String(req.user._id || req.user.id), permissions: ['manage'] }, req.body?.installed));
     } catch (error) { respondError(res, error); }
   });
   router.post('/:extensionId/enabled', async (req, res) => {

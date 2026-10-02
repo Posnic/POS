@@ -236,7 +236,7 @@
           };
           tabs.append(button);
         }
-        tab("Installed (" + data.extensions.length + ")", "installed", !installing);
+        tab("Your extensions (" + data.extensions.length + ")", "installed", !installing);
         if (data.canManage) tab("Install or update", "installation", installing);
         content.append(tabs);
         if (installing) {
@@ -282,10 +282,11 @@
             heading.append(link);
             var enabled = document.createElement("span");
             enabled.className = "badge mb-2 " + (item.enabled === false ? "badge-secondary" : "badge-success");
-            enabled.textContent = item.enabled === false ? "Disabled" : "Enabled";
+            enabled.textContent = item.installed === false ? "Removed · data retained" : item.enabled === false ? "Disabled" : "Enabled";
             var note = document.createElement("p");
             note.className = "text-muted mb-0";
-            note.textContent = item.enabled === false
+            note.textContent = item.installed === false ? "Removed from this shop. Restore the verified package, then enable it to resume."
+              : item.enabled === false
               ? "Data is retained. Enable this extension to use its tools."
               : "Open this extension to use its tools.";
             body.append(enabled, heading, note);
@@ -315,6 +316,29 @@
                 }
               };
               body.append(toggle);
+              toggle.hidden = item.installed === false;
+              var removal = document.createElement("button");
+              removal.type = "button";
+              removal.className = "btn btn-light mt-3 ml-2";
+              removal.textContent = item.installed === false ? "Restore" : "Remove from shop";
+              removal.onclick = async function () {
+                function current() { return run === generation && branch === String(PosnicPro.local.get("branch_id_set") || ""); }
+                if (!current()) return;
+                if (item.installed !== false && !window.confirm("Remove this extension from this shop? Basket data, stock, sales and payment records will be retained. Other shops are unchanged. You can restore it later.")) return;
+                removal.disabled = true;
+                try {
+                  await request("/" + encodeURIComponent(item.id) + "/installed", { installed: item.installed === false, retainData: true });
+                  if (!current()) return;
+                  await PosnicPro.extensions.refreshMenu();
+                  if (current()) await PosnicPro.extensions.showDataTablePage();
+                } catch (error) {
+                  if (current()) {
+                    status(error.code === "extension_payment_unresolved" ? "Finish or cancel pending payments before removing this extension. No data was removed." : error.message);
+                    removal.disabled = false;
+                  }
+                }
+              };
+              body.append(removal);
               var history = document.createElement("button");
               history.type = "button";
               history.className = "btn btn-light mt-3 ml-2";
@@ -342,7 +366,7 @@
                   result.events.forEach(function (event) {
                     var entry = document.createElement("p");
                     entry.className = "small mb-2";
-                    entry.textContent = (event.action === "enabled" ? "Enabled" : "Disabled") +
+                    entry.textContent = ({ enabled: "Enabled", disabled: "Disabled", removed: "Removed from shop", restored: "Restored" }[event.action] || "Lifecycle change") +
                       " · " + new Date(event.changedAt).toLocaleString() +
                       " · v" + event.version + " · Staff ID: " + event.actorId;
                     activity.append(entry);

@@ -377,9 +377,9 @@ async function readLifecycleAudit(db, scope, descriptor, actor, beforeGeneration
     namespaceId: key._id, generation: { $lt: beforeGeneration },
   }).sort({ generation: -1 }).limit(50).toArray();
 }
-async function setEnabled(db, scope, descriptor, actor, enabled) {
+async function changeLifecycle(db, scope, descriptor, actor, action) {
   if (!actor.permissions?.includes('manage')) fail('extension_manage_required', 403);
-  if (typeof enabled !== 'boolean') fail('extension_enabled_invalid', 422);
+  if (!['enabled', 'disabled', 'removed', 'restored'].includes(action)) fail('extension_lifecycle_invalid', 422);
   const key = identity(scope, descriptor.id);
   const actorId = String(objectId(actor.userId));
   const collection = db.collection('extension_namespaces');
@@ -391,8 +391,20 @@ async function setEnabled(db, scope, descriptor, actor, enabled) {
   await flushLifecycleAudit(db, key);
   const row = await collection.findOne(key);
   if (row.pending) fail('extension_operation_in_progress');
-  if ((row.lifecycle?.enabled !== false) === enabled)
+  if (action === 'restored' && row.lifecycle?.installed !== false)
+    return { enabled: row.lifecycle?.enabled !== false, installed: true, generation: row.lifecycle?.generation || 0 };
+  const installed = action === 'removed' ? false : action === 'restored' ? true : row.lifecycle?.installed !== false;
+  const enabled = action === 'enabled';
+  if (['enabled', 'disabled'].includes(action) && !installed) fail('extension_removed', 403);
+  if ((row.lifecycle?.enabled !== false) === enabled && (row.lifecycle?.installed !== false) === installed)
     return { enabled, generation: row.lifecycle?.generation || 0 };
+  if (action === 'removed') {
+    const unresolved = await db.collection('extension_payments').findOne({
+      license: key.license, branch_id: key.branch_id, extensionId: descriptor.id,
+      status: { $nin: ['paid', 'cancelled', 'rejected'] },
+    });
+    if (unresolved) fail('extension_payment_unresolved');
+  }
   const generation = (row.lifecycle?.generation || 0) + 1;
   if (!Number.isSafeInteger(generation)) fail('extension_lifecycle_sequence_exhausted');
   const changedAt = new Date();
@@ -403,12 +415,20 @@ async function setEnabled(db, scope, descriptor, actor, enabled) {
     'lifecycle.generation': row.lifecycle?.generation === undefined
       ? { $exists: false } : row.lifecycle.generation,
   }, { $set: {
-    lifecycle: { enabled, generation, actorId, changedAt },
+    lifecycle: { enabled, installed, generation, actorId, changedAt },
     lifecycleAuditPending: { generation, actorId, changedAt,
-      action: enabled ? 'enabled' : 'disabled', version: descriptor.version },
+      action, version: descriptor.version },
   } });
   if (changed.modifiedCount !== 1) fail('extension_lifecycle_conflict');
   await flushLifecycleAudit(db, key);
-  return { enabled, generation };
+  return { enabled, installed, generation };
 }
-module.exports = { readNamespace, executeNamespace, recoverNamespace, setEnabled, readLifecycleAudit };
+async function setEnabled(db, scope, descriptor, actor, enabled) {
+  if (typeof enabled !== 'boolean') fail('extension_enabled_invalid', 422);
+  return changeLifecycle(db, scope, descriptor, actor, enabled ? 'enabled' : 'disabled');
+}
+async function setInstalled(db, scope, descriptor, actor, installed) {
+  if (typeof installed !== 'boolean') fail('extension_installed_invalid', 422);
+  return changeLifecycle(db, scope, descriptor, actor, installed ? 'restored' : 'removed');
+}
+module.exports = { readNamespace, executeNamespace, recoverNamespace, setEnabled, setInstalled, readLifecycleAudit };

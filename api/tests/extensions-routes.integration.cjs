@@ -139,7 +139,7 @@ test('signed view and catalogue retain staff, installation and branch boundaries
     headers: { Authorization: 'Bearer reader' },
   });
   assert.deepEqual((await list.json()).extensions, [
-    { id: descriptor.id, displayName: descriptor.displayName, version: descriptor.version, enabled: true },
+    { id: descriptor.id, displayName: descriptor.displayName, version: descriptor.version, enabled: true, installed: true },
   ]);
   assert.equal((await request('/view', { token: 'key' })).status, 403);
   const view = await (await request('/view', { token: 'reader' })).json();
@@ -214,4 +214,15 @@ test('only managers change lifecycle and disabled packages are hidden from staff
   assert.equal((await request('/enabled', { body: { enabled: true } })).status, 200);
   assert.equal((await request('/state')).status, 200);
   assert.equal((await listing('reader'))[0].enabled, true);
+  assert.equal((await request('/installed', { token: 'reader', body: { installed: false, retainData: true } })).status, 403);
+  assert.equal((await request('/installed', { body: { installed: false } })).status, 422);
+  assert.equal((await request('/installed', { body: { installed: false, retainData: true } })).status, 200);
+  assert.deepEqual(await listing('reader'), []);
+  assert.equal((await listing('owner'))[0].installed, false);
+  assert.equal((await request('/enabled', { body: { enabled: true } })).status, 403);
+  assert.equal((await request('/state')).status, 403);
+  assert.equal((await request('/installed', { body: { installed: true, retainData: true } })).status, 200);
+  assert.equal((await request('/state')).status, 403);
+  assert.equal((await request('/enabled', { body: { enabled: true } })).status, 200);
+  assert.equal((await request('/state')).status, 200);
 });

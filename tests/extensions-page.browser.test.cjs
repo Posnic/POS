@@ -67,6 +67,11 @@ test("extension page transports idempotent commands and closes access when branc
           else if (params.url.includes("/lifecycle-history"))
             done({ events: [{ action: 'disabled', changedAt: '2026-10-02T05:00:00Z',
               version: '1.0.0', actorId: '<script>staff</script>' }], next: null });
+          else if (params.url.endsWith("/installed")) {
+            window.extensionInstalled = JSON.parse(params.data).installed;
+            window.extensionEnabled = false;
+            done({ installed: window.extensionInstalled });
+          }
           else if (params.url.endsWith("/enabled")) {
             window.extensionEnabled = JSON.parse(params.data).enabled;
             done({ enabled: window.extensionEnabled });
@@ -80,6 +85,7 @@ test("extension page transports idempotent commands and closes access when branc
                   displayName: "<script>Example</script>",
                   version: "1.0.0",
                   enabled: window.extensionEnabled !== false,
+                  installed: window.extensionInstalled !== false,
                 },
               ],
             });
@@ -125,10 +131,17 @@ test("extension page transports idempotent commands and closes access when branc
     assert.match(await page.locator("#extensions_content article").innerText(), /Data is retained/);
     await page.getByRole("button", { name: "Enable <script>Example</script>", exact: true }).click();
     await page.getByRole("button", { name: "Disable <script>Example</script>", exact: true }).waitFor();
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: 'Remove from shop', exact: true }).click();
+    await page.getByRole('button', { name: 'Restore', exact: true }).waitFor();
+    assert.equal(await page.locator('#extensions_content article a[href]').count(), 0);
+    assert.match(await page.locator('#extensions_content').innerText(), /Removed · data retained/);
+    await page.getByRole('button', { name: 'Restore', exact: true }).click();
+    await page.getByRole('button', { name: 'Enable <script>Example</script>', exact: true }).waitFor();
     await page.getByRole("button", { name: "Install or update", exact: true }).click();
     await page.waitForFunction(() => document.getElementById("extensions_content").textContent.includes("not configured"));
     assert.equal(await page.locator('input[type="file"]').count(), 0);
-    await page.getByRole("button", { name: "Installed (1)", exact: true }).click();
+    await page.getByRole("button", { name: "Your extensions (1)", exact: true }).click();
     await page.waitForFunction(() => !!document.querySelector('input[type="search"]'));
     await page.evaluate(() =>
       PosnicPro.extensions.showDetails("posnic.example"),

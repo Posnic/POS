@@ -9,6 +9,7 @@ const {
   recoverNamespace,
   setEnabled,
   readLifecycleAudit,
+  setInstalled,
 } = require('../src/services/extension-namespace');
 let mongo, client, db;
 before(async () => {
@@ -49,6 +50,41 @@ function fixture() {
   return { scope, actor, descriptor, input };
 }
 const noEffect = { executeEffect: async () => ({ applied: true }) };
+
+test('repeated removal and restore retain state, effect receipts and other shops', async () => {
+  const f = fixture();
+  await executeNamespace(db, f.scope, f.descriptor, f.actor, f.input, noEffect);
+  const original = await readNamespace(db, f.scope, f.descriptor, f.actor);
+  const receiptsBefore = await db.collection('extension_command_receipts').countDocuments();
+  const other = { ...f.scope, branchId: new ObjectId() };
+  await setEnabled(db, other, f.descriptor, f.actor, true);
+  for (let n = 0; n < 4; n++) {
+    await setInstalled(db, f.scope, f.descriptor, f.actor, false);
+    await setInstalled(db, f.scope, f.descriptor, f.actor, false);
+    await assert.rejects(setEnabled(db, f.scope, f.descriptor, f.actor, true), /extension_removed/);
+    await assert.rejects(executeNamespace(db, f.scope, f.descriptor, f.actor,
+      { ...f.input, requestKey: 'fresh-command-removal', expectedRevision: 1 }, noEffect), /extension_disabled/);
+    await setInstalled(db, f.scope, f.descriptor, f.actor, true);
+    await setEnabled(db, f.scope, f.descriptor, f.actor, true);
+    await setInstalled(db, f.scope, f.descriptor, f.actor, true);
+    assert.deepEqual(await readNamespace(db, f.scope, f.descriptor, f.actor), original);
+  }
+  assert.equal(await db.collection('extension_command_receipts').countDocuments(), receiptsBefore);
+  const sibling = await db.collection('extension_namespaces').findOne({ license: other.license, branch_id: other.branchId });
+  assert.notEqual(sibling.lifecycle?.enabled, false);
+  assert.equal((await readLifecycleAudit(db, f.scope, f.descriptor, f.actor)).filter(e => e.action === 'removed').length, 4);
+});
+
+test('removal refuses unresolved payments and unauthorized callers', async () => {
+  const f = fixture();
+  await db.collection('extension_payments').insertOne({ license: f.scope.license, branch_id: f.scope.branchId,
+    extensionId: f.descriptor.id, status: 'pending' });
+  await assert.rejects(setInstalled(db, f.scope, f.descriptor, f.actor, false), /extension_payment_unresolved/);
+  await assert.rejects(setInstalled(db, f.scope, f.descriptor, { ...f.actor, permissions: ['read'] }, false), /extension_manage_required/);
+  await db.collection('extension_payments').updateOne({ license: f.scope.license }, { $set: { status: 'paid' } });
+  await setInstalled(db, f.scope, f.descriptor, f.actor, false);
+  assert.equal((await db.collection('extension_payments').findOne({ license: f.scope.license })).status, 'paid');
+});
 
 test('lifecycle audit survives archive failure and retries without losing or duplicating a transition', async () => {
   const f = fixture();
@@ -140,6 +176,7 @@ test('an accepted unresolved effect blocks disabling and another shop remains un
   await assert.rejects(executeNamespace(db, f.scope, f.descriptor, f.actor, f.input,
     { executeEffect: async () => { throw Error('connection lost'); } }), /connection lost/);
   await assert.rejects(setEnabled(db, f.scope, f.descriptor, f.actor, false), /extension_operation_in_progress/);
+  await assert.rejects(setInstalled(db, f.scope, f.descriptor, f.actor, false), /extension_operation_in_progress/);
   const other = { ...f.scope, branchId: new ObjectId() };
   await setEnabled(db, other, f.descriptor, f.actor, false);
   await recoverNamespace(db, f.scope, f.descriptor, f.actor, noEffect);
