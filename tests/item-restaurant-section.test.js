@@ -57,9 +57,11 @@ test('the restaurant questions are together, in their own card', () => {
   assert.match(restaurantCard, /class="lang_item_restaurant_title"/, 'the card has no heading');
 });
 
-test('the questions every shop answers stayed where they were', () => {
+test('stock and channel questions remain outside the Restaurant card', () => {
   for (const id of EVERY_SHOP) {
-    assert.ok(extrasCard.includes(`id="${id}"`), `#${id} left Channels & extras`);
+    const stock = ['item_track_inventory', 'item_negative_stock'].includes(id);
+    const section = stock ? cardOf('id="item_stock_policy"') : extrasCard;
+    assert.ok(section.includes(`id="${id}"`), `#${id} left its stock or channel section`);
     assert.ok(!restaurantCard.includes(`id="${id}"`), `#${id} was moved into the Restaurant card`);
   }
 });

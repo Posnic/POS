@@ -19,10 +19,10 @@ PosnicPro.items = {
     },
     stockMessage: function (item) {
         var t = PosnicPro.i18n.t;
-        if (item.item_kind === 'service') return t('lang_item_ready_service', 'Service — no stock needed.');
+        if (item.item_kind === 'service') return t('lang_item_ready_service', 'Service: no stock needed.');
         if (item.inventory === false || item.track_inventory === false) return t('lang_item_ready_untracked', 'Stock is not tracked. You can sell without entering quantities.');
         if (item.negative_stock === true) return t('lang_item_ready_negative', 'Sales can continue at zero stock and below.');
-        if (Number(item.available_quantity || 0) <= 0) return t('lang_item_ready_empty', 'Out of stock — add stock before this item appears on POS.');
+        if (Number(item.available_quantity || 0) <= 0) return t('lang_item_ready_empty', 'Out of stock: add stock before this item appears on POS.');
         return t('lang_item_ready_stock', 'Stock available for sale.');
     },
     saveMessage: function (item) {
