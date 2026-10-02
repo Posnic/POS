@@ -2784,7 +2784,13 @@ class ItemRepository extends BaseModel {
 
   async getOnlineItemsAjaxList(params = {}, context = {}) {
     try {
-      const { query = '', type = 'normal', limit = 5 } = params || {};
+      const { type = 'normal' } = params || {};
+      if (params.query != null && typeof params.query !== 'string')
+        throw new Error('Invalid item search');
+      const query = String(params.query || '')
+        .trim()
+        .slice(0, 80);
+      const limit = Math.min(50, Math.max(1, parseInt(params.limit, 10) || 20));
 
       const branchId = context.branchId;
       if (!branchId) {
@@ -2798,11 +2804,7 @@ class ItemRepository extends BaseModel {
       const licenseObjectId =
         licenseId && ObjectId.isValid(licenseId) ? new ObjectId(licenseId) : licenseId || null;
 
-      const regex =
-        query && typeof query === 'string'
-          ? new RegExp(query.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&'), 'i')
-          : null;
-
+      const regex = query ? new RegExp(searchPattern(query), 'i') : null;
       let searchConditions = [];
 
       // PHP Line 1377-1387: Handle type='id' separately to fetch by ObjectId
@@ -2815,9 +2817,23 @@ class ItemRepository extends BaseModel {
           { name: regex },
           { 'translations.name': regex },
           { itemid: regex },
+          { short_code: regex },
+          { item_code: regex },
           { barcode_id: regex },
           { barcodes: regex },
         ];
+        const tokens = query.split(/\s+/).filter(Boolean).slice(0, 6);
+        if (tokens.length > 1)
+          searchConditions.push({
+            $and: tokens.map((token) => ({ name: new RegExp(searchPattern(token), 'i') })),
+          });
+        if (/^[a-z]{2,6}$/i.test(query))
+          searchConditions.push({
+            name: new RegExp(
+              '^' + query.split('').map(searchPattern).join('\\S*\\s+') + '\\S*',
+              'i'
+            ),
+          });
         // An all-digits query is how quick codes are typed.
         if (/^\d{1,6}$/.test(String(query))) {
           searchConditions.push({ plu_code: String(query) });
@@ -2832,6 +2848,7 @@ class ItemRepository extends BaseModel {
       const stockCondition = {
         $or: [
           { track_inventory: false },
+          { item_kind: 'service' },
           { available_quantity: { $gt: 0 } },
           { negative_stock: true },
         ],
@@ -2856,6 +2873,51 @@ class ItemRepository extends BaseModel {
       const data = await collection
         .aggregate([
           { $match: match },
+          {
+            $addFields: {
+              _searchRank: {
+                $switch: {
+                  branches: [
+                    {
+                      case: {
+                        $or: ['plu_code', 'itemid', 'barcode_id', 'short_code', 'item_code'].map(
+                          (field) => ({
+                            $eq: [
+                              {
+                                $toLower: {
+                                  $convert: {
+                                    input: '$' + field,
+                                    to: 'string',
+                                    onError: '',
+                                    onNull: '',
+                                  },
+                                },
+                              },
+                              query.toLowerCase(),
+                            ],
+                          })
+                        ),
+                      },
+                      then: 5,
+                    },
+                    { case: { $eq: [{ $toLower: '$name' }, query.toLowerCase()] }, then: 4 },
+                    {
+                      case: {
+                        $regexMatch: {
+                          input: { $ifNull: ['$name', ''] },
+                          regex: '^' + searchPattern(query),
+                          options: 'i',
+                        },
+                      },
+                      then: 3,
+                    },
+                  ],
+                  default: 1,
+                },
+              },
+            },
+          },
+          { $sort: { _searchRank: -1, name: 1, _id: 1 } },
           { $limit: limit },
           {
             $project: {
@@ -2866,6 +2928,10 @@ class ItemRepository extends BaseModel {
               selling_price: 1,
               mrp_price: 1,
               itemid: 1,
+              unit: 1,
+              short_code: 1,
+              item_code: 1,
+              barcodes: 1,
               available_quantity: 1,
               company_price: 1,
               discount_amount: 1,
@@ -2897,6 +2963,10 @@ class ItemRepository extends BaseModel {
         selling_price: item.selling_price || 0,
         mrp_price: item.mrp_price || 0,
         itemid: item.itemid || '',
+        unit: item.unit || '',
+        short_code: item.short_code || '',
+        item_code: item.item_code || '',
+        barcodes: item.barcodes || [],
         available_quantity: item.available_quantity || 0,
         company_price: item.company_price || 0,
         discount_amount: item.discount_amount || 0,
@@ -2942,7 +3012,8 @@ class ItemRepository extends BaseModel {
 
   async getOnlineSalesItems(params = {}, context = {}) {
     try {
-      const { limit = 100 } = params || {};
+      const limit = Math.min(500, Math.max(1, parseInt(params.limit, 10) || 100));
+      const offset = Math.max(0, parseInt(params.offset, 10) || 0);
 
       const branchId = context.branchId;
       if (!branchId) {
@@ -2983,11 +3054,9 @@ class ItemRepository extends BaseModel {
         ],
       };
 
-      const items = await collection
-        .find(match)
-        .sort({ sort_order: 1, name: 1 })
-        .limit(limit)
-        .toArray();
+      let cursor = collection.find(match).sort({ sort_order: 1, name: 1, _id: 1 });
+      if (offset) cursor = cursor.skip(offset);
+      const items = await cursor.limit(limit).toArray();
 
       const list = items
         .filter((item) => {
@@ -3005,6 +3074,17 @@ class ItemRepository extends BaseModel {
         .map((item) => ({
           id: item._id?.toString?.() || '',
           name: item.name || '',
+          item_name: item.name || '',
+          item_id: item._id?.toString?.() || '',
+          plu_code: item.plu_code || '',
+          barcode_id: item.barcode_id || '',
+          barcodes: item.barcodes || [],
+          short_code: item.short_code || '',
+          item_code: item.item_code || '',
+          track_inventory: item.track_inventory === true,
+          negative_stock: item.negative_stock === true,
+          item_kind: item.item_kind || 'product',
+          unit: item.unit || '',
           ...itemText.snapshot(item),
           selling_price: item.selling_price || 0,
           itemid: item.itemid || '',
@@ -3025,7 +3105,6 @@ class ItemRepository extends BaseModel {
           variant_group_id: item.variant_group_id ? String(item.variant_group_id) : '',
           variant_value: item.variant_value || '',
           variant_parent_name: item.variant_parent_name || '',
-          track_inventory: item.track_inventory === true,
           // Tile colour (Loyverse study L2): the no-image tile's look.
           tile_color: item.tile_color || '',
           tile_shape: item.tile_shape || '',
@@ -3034,6 +3113,7 @@ class ItemRepository extends BaseModel {
       return {
         status: true,
         data: list,
+        next_offset: items.length === limit ? offset + limit : null,
         message: 'success',
       };
     } catch (error) {
