@@ -246,6 +246,9 @@ describe('SalesService', () => {
       expect(result.status).toBe(true);
       const saved = salesRepository.create.mock.calls[0][0];
       expect(saved.sales_total).toBe(223);
+      expect(saved.total).toBe(saved.sales_total);
+      expect(saved.subtotal).toBe(saved.sales_sub_total);
+      expect(saved.items_total).toBe(saved.sales_total);
       expect(saved.items.map((line) => line.pricing.selling_price)).toEqual(prices);
     });
     test.each([
