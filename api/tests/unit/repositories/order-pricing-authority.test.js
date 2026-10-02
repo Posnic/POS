@@ -107,7 +107,15 @@ test('existing snapshots preserve agreed tax and price but reject a submitted ov
     .collection('items')
     .updateOne({ _id: product._id }, { $set: { selling_price: 60, tax: 18 } });
   expect((await save([line(45, 3)])).status).toBe(true);
-  expect(await stored()).toMatchObject({ sales_sub_total: 135, tax: 6.75, sales_total: 141.75 });
+  expect(await stored()).toMatchObject({
+    sales_sub_total: 135,
+    subtotal: 135,
+    items_subtotal: 135,
+    tax: 6.75,
+    sales_total: 141.75,
+    total: 141.75,
+    items_total: 141.75,
+  });
   const before = await stored();
   expect((await save([line(60, 3)])).status).toBe(false);
   expect(await stored()).toEqual(before);
@@ -120,7 +128,7 @@ test('inclusive new and existing lines never accumulate tax', async () => {
   expect(await stored()).toMatchObject({ sales_total: 60, tax: 2.86 });
   const current = (await stored()).items[0];
   expect((await save([{ ...current, price: current.unit_price, quantity: 3 }])).status).toBe(true);
-  expect(await stored()).toMatchObject({ sales_total: 90, tax: 4.29 });
+  expect(await stored()).toMatchObject({ sales_total: 90, total: 90, items_total: 90, tax: 4.29 });
 });
 test('a legacy inflated line cannot silently acquire a validated snapshot', async () => {
   await db.collection('sales').updateOne(

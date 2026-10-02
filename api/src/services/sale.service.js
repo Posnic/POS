@@ -1225,9 +1225,11 @@ const processSale = async (
       payment_description: (data.payment_description || '').trim(),
       discount_description: (data.discount_description || '').trim(),
       // Use full precision values to mirror PHP's stored doubles
+      total: salesTotalForDoc,
       sales_total: salesTotalForDoc,
       sales_round_off: roundOffForDoc,
       round_off: roundOffForDoc,
+      subtotal: sale_subtotal_amount,
       sales_sub_total: sale_subtotal_amount,
       items_total: itemsTotalForDoc, // Mirrors PHP items_total
       items_return_total: 0.0,
