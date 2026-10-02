@@ -51,3 +51,42 @@ test('ordinary members cannot invite or escalate existing roles', async () => {
   await f.db.collection('library_memberships').insertOne({ organizationId: 'org', userId: f.actor.id, role: 'owner', status: 'active' });
   assert.equal((await service.acceptInvitation(f.db, client, f.actor, f.invite.token)).role, 'owner');
 });
+
+test('HTTP invitations use authenticated identity, bounded bodies and no-store responses', async () => {
+  const f = await fixture();
+  const express = require('express');
+  const { createInvitationRouter } = require('../src/routes/extension-library-invitations.routes');
+  assert.throws(() => createInvitationRouter({ db: f.db, client }), /dependencies_required/);
+  const app = express();
+  // Synthetic account middleware, not a production authentication implementation.
+  app.use(createInvitationRouter({ db: f.db, client, authenticate(req, res, next) {
+    if (req.headers.authorization === 'Bearer owner') req.libraryActor = f.owner;
+    else if (req.headers.authorization === 'Bearer recipient') req.libraryActor = f.actor;
+    else return res.status(401).json({ error: 'Sign in required.' });
+    next();
+  } }));
+  const server = await new Promise(resolve => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
+  const url = 'http://127.0.0.1:' + server.address().port;
+  const request = (route, actor, body) => fetch(url + route, { method: 'POST',
+    headers: { Authorization: 'Bearer ' + actor, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  try {
+    let r = await request('/organizations/org/invitations', 'recipient', { email: 'x@example.test', libraryActor: f.owner });
+    assert.equal(r.status, 404);
+    r = await request('/organizations/org/invitations', 'owner', { email: f.actor.verifiedEmail });
+    assert.equal(r.status, 201); assert.equal(r.headers.get('cache-control'), 'private, no-store');
+    const issued = await r.json();
+    r = await request('/invitations/accept', 'missing', { token: issued.token, libraryActor: f.actor });
+    assert.equal(r.status, 401);
+    r = await request('/invitations/accept', 'owner', { token: issued.token, emailVerified: true, verifiedEmail: f.actor.verifiedEmail });
+    assert.equal(r.status, 404);
+    r = await request('/invitations/accept', 'recipient', { token: issued.token, organizationId: 'other', role: 'owner' });
+    assert.deepEqual(await r.json(), { organizationId: 'org', role: 'member' });
+    r = await request('/organizations/org/invitations/' + f.invite.invitationId + '/revoke', 'owner', {});
+    assert.equal(r.status, 204);
+    r = await request('/invitations/accept', 'recipient', { token: f.invite.token });
+    assert.equal(r.status, 404);
+    r = await request('/invitations/accept', 'recipient', { token: 'x'.repeat(9000) });
+    assert.equal(r.status, 413); assert.equal(r.headers.get('cache-control'), 'private, no-store');
+    assert.deepEqual(await r.json(), { error: 'Invalid invitation request.' });
+  } finally { await new Promise(resolve => server.close(resolve)); }
+});
