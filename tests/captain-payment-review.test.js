@@ -5,6 +5,24 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { JSDOM } = require('jsdom');
 
+for (const status of [409, 422, 500, 0]) {
+  test(`payment load reports HTTP ${status} separately from a lost connection`, async () => {
+    const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://shop.invalid', runScripts: 'outside-only' });
+    const w = dom.window;
+    w.HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
+    const message = status === 409 ? 'Refresh the table payment details.' : 'Please retry.';
+    w.PosnicPro = { local: { get: () => 'branch' }, post: (_options, _success, failure) => failure({ status, responseJSON: { error: { message } } }) };
+    for (const name of ['captain-money.js', 'captain-payments.js']) w.eval(fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/core', name), 'utf8'));
+    await w.CaptainPayments.open('6');
+    const text = w.document.querySelector('#captain-payments').textContent;
+    if (status) {
+      assert.ok(text.includes(message));
+      assert.doesNotMatch(text, /Connect to the shop server/);
+    } else assert.match(text, /Connect to the shop server/);
+    dom.window.close();
+  });
+}
+
 test('desktop guest payment is reviewed before recording, preserves Back and shows confirmed change', async () => {
   const dom = new JSDOM('<!doctype html><body></body>', { url:'https://shop.invalid', runScripts:'outside-only' });
   const w = dom.window;
