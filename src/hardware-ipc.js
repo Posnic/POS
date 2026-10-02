@@ -520,31 +520,35 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   // Preferences Handlers (file-based persistence)
   const _prefsPath = path.join(app.getPath('userData'), 'preferences.json');
 
-  function _loadPrefs() {
+  function _loadPrefs(strict = false) {
     try {
       if (fs.existsSync(_prefsPath)) {
         return JSON.parse(fs.readFileSync(_prefsPath, 'utf8'));
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) { if (strict) throw e; }
     return {};
   }
 
-  function _savePrefs(prefs) {
-    require('./device-preferences').saveJson(_prefsPath, prefs);
+  // Merge only the requested keys into the latest file. Kitchen screens and
+  // other hardware modules also write this file during the same app session.
+  function _savePrefs(patch) {
+    const next = { ..._loadPrefs(true), ...patch };
+    require('./device-preferences').saveJson(_prefsPath, next);
+    Object.assign(preferences, next);
   }
 
   const preferences = _loadPrefs();
 
   ipcMain.handle('printer:get-document-settings', () =>
-    require('./device-preferences').documentPrintSettings(preferences));
+    require('./device-preferences').documentPrintSettings(_loadPrefs()));
   ipcMain.handle('printer:save-document-settings', (_event, value) => {
     try {
       const settings = require('./device-preferences').validateDocumentPrintSettings(value);
-      const next = { ...preferences, item_print_languages: settings.itemLanguages || preferences.item_print_languages, receipt_printers: JSON.stringify(settings.sales),
+      const current = _loadPrefs(true);
+      const next = { item_print_languages: settings.itemLanguages || current.item_print_languages, receipt_printers: JSON.stringify(settings.sales),
         receipt_printer: settings.sales[0].name, print_width: settings.sales[0].pageSize,
         document_print_profiles: { invoice: settings.invoice, quotation: settings.quotation } };
-      require('./device-preferences').saveJson(_prefsPath, next);
-      Object.assign(preferences, next);
+      _savePrefs(next);
       return { success: true, settings };
     } catch (error) { return { success: false, error: error.message }; }
   });
@@ -596,19 +600,17 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
   if (!preferences.cloud_print_key) {
     preferences.cloud_print_key = require('crypto').randomBytes(32).toString('hex');
     try {
-      _savePrefs(preferences);
+      _savePrefs({ cloud_print_key: preferences.cloud_print_key });
       console.log('[BILL] made this till a printing key for the cloud');
     } catch (error) { console.error('[hardware] Could not persist relay key:', error.message); }
   }
 
   ipcMain.handle('preferences:get', (event, key) => {
-    return preferences[key] ?? null;
+    return _loadPrefs()[key] ?? null;
   });
 
   ipcMain.handle('preferences:set', (event, key, value) => {
-    const next = { ...preferences, [key]: value };
-    _savePrefs(next);
-    Object.assign(preferences, next);
+    _savePrefs({ [key]: value });
     if (key === 'mobile.maxDevices' && global.mobileTracker) {
       global.mobileTracker.maxDevices = Math.max(1, parseInt(value, 10) || 6);
     }
@@ -739,8 +741,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
 
   // Printer set-default (saves to preferences)
   ipcMain.handle('printer:set-default', (event, printerName) => {
-    preferences['defaultPrinter'] = printerName;
-    _savePrefs(preferences);
+    _savePrefs({ defaultPrinter: printerName });
     return { success: true };
   });
 

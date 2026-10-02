@@ -51,3 +51,35 @@ test('hardware choices survive module restart and failed replacement; kitchen as
     assert.equal(fs.existsSync(file + '.tmp'), false);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+
+test('kitchen screen saves atomically and preserves printers when replacement fails', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'kitchen-settings-'));
+  try {
+    const electron = { app: { getPath: () => dir } };
+    const prefs = load('device-preferences.js', electron);
+    const file = path.join(dir, 'preferences.json');
+    prefs.saveJson(file, { receipt_printer: 'Counter', print_width: '58mm' });
+    const module = { exports: {} };
+    vm.runInNewContext(fs.readFileSync(path.join(root, 'src/kitchen-screen.js'), 'utf8'), {
+      module, exports: module.exports, console, __dirname: path.join(root, 'src'),
+      require(name) {
+        if (name === './device-preferences') return prefs;
+        if (name === 'electron') return electron;
+        if (name === './kitchen-screen-fit') return require('../src/kitchen-screen-fit');
+        return require(name);
+      },
+    });
+    const screens = module.exports;
+    assert.equal(screens.configure('42', { enabled: false, fontSizePx: 31 }).ok, true);
+    assert.equal(prefs.all().receipt_printer, 'Counter');
+    const before = fs.readFileSync(file, 'utf8');
+    prefs.saveJson = () => { throw new Error('Disk unavailable'); };
+    assert.equal(screens.configure('42', { fontSizePx: 12 }).ok, false);
+    assert.equal(fs.readFileSync(file, 'utf8'), before);
+    assert.equal(load('device-preferences.js', electron).all().kitchenScreens['42'].fontSizePx, 31);
+    fs.writeFileSync(file, '{broken');
+    assert.equal(screens.configure('42', { fontSizePx: 20 }).ok, false);
+    assert.equal(fs.readFileSync(file, 'utf8'), '{broken');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});

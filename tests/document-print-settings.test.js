@@ -36,12 +36,15 @@ test('profile validation refuses invalid copies, repeated printers and thermal i
 function ipc(prefs, file, fileSystem = fs) {
   const handlers = {};
   const source = read('src/hardware-ipc.js');
-  const from = source.indexOf("  ipcMain.handle('printer:get-document-settings'");
-  const end = source.indexOf('\n  /*', from);
-  new Function('ipcMain', 'require', 'preferences', 'fs', '_prefsPath', source.slice(from, end))(
+  const from = source.indexOf('  function _loadPrefs(');
+  const end = source.indexOf('\n  /*', source.indexOf("  ipcMain.handle('printer:save-document-settings'", from));
+  if (fileSystem === fs && !fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify(prefs));
+  const getters = source.slice(source.indexOf("  ipcMain.handle('preferences:get'"), source.indexOf("  // ── Mobile Device Persistence"));
+  const printerDefault = source.slice(source.indexOf("  ipcMain.handle('printer:set-default'"), source.indexOf("  // ── Cash Drawer Handlers"));
+  new Function('ipcMain', 'require', 'fs', '_prefsPath', source.slice(from, end) + getters + printerDefault)(
     { handle: (key, fn) => { handlers[key] = fn; } },
     () => ({ documentPrintSettings, validateDocumentPrintSettings,
-      saveJson: fileSystem === fs ? require('../src/device-preferences').saveJson : fileSystem.writeFileSync }), prefs, fileSystem, file);
+      saveJson: fileSystem === fs ? require('../src/device-preferences').saveJson : fileSystem.writeFileSync }), fileSystem, file);
   return handlers;
 }
 
@@ -270,9 +273,9 @@ test('item print languages persist independently of each other and printer desti
   const prefs = {}, handlers = ipc(prefs,file);
   assert.equal(handlers['printer:save-document-settings']({},profiles).success,true);
   assert.deepEqual(documentPrintSettings(JSON.parse(fs.readFileSync(file,'utf8'))).itemLanguages,policy);
-  assert.equal(prefs.receipt_printer,'Counter');
+  assert.equal(JSON.parse(fs.readFileSync(file,'utf8')).receipt_printer,'Counter');
   assert.equal(handlers['printer:save-document-settings']({},initial()).success,true);
-  assert.deepEqual(prefs.item_print_languages,policy,'saving from an older screen preserves language choices');
+  assert.deepEqual(JSON.parse(fs.readFileSync(file,'utf8')).item_print_languages,policy,'saving from an older screen preserves language choices');
   assert.throws(()=>validateDocumentPrintSettings({...profiles,itemLanguages:{...policy,kot:'../bad'}}));
 });
 
@@ -285,4 +288,35 @@ test('API-side bill workers can load device preferences without an Electron depe
   },loaded,loaded.exports);
   assert.deepEqual(loaded.exports.all(),{});
   assert.equal(loaded.exports.get('item_print_languages'),null);
+});
+
+
+test('saving printers after a kitchen save preserves the latest settings across restart', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hardware-writers-'));
+  const file = path.join(dir, 'preferences.json');
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const h = ipc({ receipt_printer: 'Old' }, file);
+  const kitchenScreens = { '42': { enabled: true, fontSizePx: 28, branchId: 'shop' } };
+  fs.writeFileSync(file, JSON.stringify({ receipt_printer: 'Changed', kitchenScreens, 'hardware.weightMachine': { port: 'COM9' } }));
+  assert.equal(h['printer:get-document-settings']().sales[0].name, 'Changed');
+  assert.equal(h['printer:save-document-settings']({}, initial()).success, true);
+  const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert.deepEqual(saved.kitchenScreens, kitchenScreens);
+  assert.equal(saved['hardware.weightMachine'].port, 'COM9');
+  h['preferences:set']({}, 'print_width', '58mm');
+  h['printer:set-default']({}, 'Counter');
+  assert.deepEqual(h['preferences:get']({}, 'kitchenScreens'), kitchenScreens);
+  const restarted = ipc({}, file);
+  assert.equal(restarted['printer:get-document-settings']().sales[0].name, 'Counter');
+  assert.deepEqual(restarted['preferences:get']({}, 'kitchenScreens'), kitchenScreens);
+});
+
+test('an unreadable preferences file is not replaced with defaults on printer save', t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hardware-corrupt-'));
+  const file = path.join(dir, 'preferences.json');
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const h = ipc({}, file);
+  fs.writeFileSync(file, '{interrupted');
+  assert.equal(h['printer:save-document-settings']({}, initial()).success, false);
+  assert.equal(fs.readFileSync(file, 'utf8'), '{interrupted');
 });

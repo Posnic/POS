@@ -49,12 +49,13 @@ function saveJson(file, value) {
   }
 }
 
-function all() {
+function all(strict = false) {
   const file = prefsPath();
   if (!file) return {};
   try {
     if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8')) || {};
   } catch (e) {
+    if (strict) throw e;
     console.error('[prefs] could not be read:', e.message);
   }
   return {};

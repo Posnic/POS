@@ -368,14 +368,15 @@ function watch() {
  */
 function configure(displayId, changes = {}) {
   const id = String(displayId);
-  const stored = prefs.all().kitchenScreens || {};
-  const next = { ...DEFAULTS, ...(stored[id] || {}), ...changes };
-  const all = { ...prefs.all(), kitchenScreens: { ...stored, [id]: next } };
-
+  let next;
   try {
-    const fs = require('fs');
+    const current = prefs.all(true);
+    const stored = current.kitchenScreens || {};
+    next = { ...DEFAULTS, ...(stored[id] || {}), ...changes };
+    const all = { ...current, kitchenScreens: { ...stored, [id]: next } };
     const file = prefs.prefsPath();
-    if (file) fs.writeFileSync(file, JSON.stringify(all, null, 2), 'utf8');
+    if (!file) throw new Error('Hardware settings location is unavailable.');
+    prefs.saveJson(file, all);
   } catch (err) {
     console.warn('[kitchen-screen] setting could not be saved:', err.message);
     return { ok: false, error: err.message };
