@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "Tafels schoonmaken",
+  "lang_enable_table_cleaning": "Tafels schoonmaken inschakelen",
+  "lang_off_by_default_enable_only_if_staff_should": "Standaard uitgeschakeld. Indien ingeschakeld, moeten tafels na de bediening als beschikbaar worden gemarkeerd.",
+  "lang_could_not_load_table_settings_please_retry": "Tafelinstellingen konden niet worden geladen. Probeer het opnieuw.",
+  "lang_could_not_save_table_settings_please_retry": "Tafelinstellingen konden niet worden opgeslagen. Probeer het opnieuw.",
   "lang_business_access_changed": "Je toegangsrechten zijn gewijzigd. Meld je opnieuw aan en controleer dit verzoek voordat je verdergaat.",
   "lang_business_approved_not_saved": "De goedkeuring is bevestigd. De verkoop is nog niet opgeslagen. Controleer het bedrag en sla daarna deze bon op.",
   "lang_business_approved_ready": "Goedgekeurd — klaar om op te slaan",
