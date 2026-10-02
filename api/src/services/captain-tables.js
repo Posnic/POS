@@ -291,7 +291,12 @@ async function close(req) {
       (row) => row.closing?.id === body.request_id
     )?.closing;
     const afterClose =
-      body.afterClose || (priorClose ? priorClose.afterClose || 'cleaning' : (require('./table-cleaning').enabled(c.branch) ? 'cleaning' : 'available'));
+      body.afterClose ||
+      (priorClose
+        ? priorClose.afterClose || 'cleaning'
+        : require('./table-cleaning').enabled(c.branch)
+          ? 'cleaning'
+          : 'available');
     await seating.beginClose(req.db, c, ids, body.request_id, afterClose);
     operation = {
       id: body.request_id,

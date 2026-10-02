@@ -863,13 +863,9 @@ async function cancel(db, scope, id, actor) {
     fail('Reconcile the submitted order before releasing its tables.', 409);
   await archive(db, scope, id);
 }
-async function release(
-  db,
-  scope,
-  id,
-  { transferId, settled = false, afterClose } = {}
-) {
-  if (!['available', 'cleaning'].includes(afterClose)) fail('Choose Available or Cleaning.');
+async function release(db, scope, id, { transferId, settled = false, afterClose } = {}) {
+  if (afterClose !== undefined && !['available', 'cleaning'].includes(afterClose))
+    fail('Choose Available or Cleaning.');
   requestId(id);
   const claim = await find(db, scope, id);
   if (!claim) fail('Seating request not found.', 404);
@@ -998,7 +994,10 @@ async function release(
       },
       {
         $set: {
-          service_state: settled ? 'available' : (afterClose || ((await require('./table-cleaning').active(db, scope)) ? 'cleaning' : 'available')),
+          service_state: settled
+            ? 'available'
+            : afterClose ||
+              ((await require('./table-cleaning').active(db, scope)) ? 'cleaning' : 'available'),
           last_seating_release_generation: claim.generation,
           updated_date: new Date(),
         },

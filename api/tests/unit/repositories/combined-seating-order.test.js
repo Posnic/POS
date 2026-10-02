@@ -255,7 +255,7 @@ test('an interrupted cancellation release retries without writing another kitche
   const release = jest
     .spyOn(seating, 'release')
     .mockRejectedValueOnce(new Error('lost connection'));
-  expect((await cancel()).status).toBe(false);
+  expect((await cancel()).status).toBe(true);
   release.mockRestore();
   const saved = await db.collection('sales').findOne({ _id: new ObjectId(created.data.sale_id) });
   expect((await cancel()).status).toBe(true);

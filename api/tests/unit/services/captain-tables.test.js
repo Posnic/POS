@@ -128,10 +128,10 @@ async function paidTable() {
     },
   };
 }
-test('closing paid orders preserves payment and stock data and makes the table available by default', async () => {
+test('closing paid orders preserves payment and stock data and honors enabled cleaning', async () => {
   const { orderId, body } = await paidTable();
   const result = await service.close(req(body));
-  expect(result.status).toBe('available');
+  expect(result.status).toBe('cleaning');
   expect(result.orders).toEqual([]);
   const sale = await db.collection('sales').findOne({ _id: orderId });
   expect(sale.payment_status).toBe('Paid');
@@ -218,7 +218,7 @@ test('closure resumes its durable intent after interruption', async () => {
     service.state(req({ id: body.id, version: pending.version, status: 'available' }))
   ).rejects.toThrow('Table changed');
   const recovered = await service.close(req({ ...body, version: pending.version }));
-  expect(recovered.status).toBe('available');
+  expect(recovered.status).toBe('cleaning');
   expect(recovered.closing).toBeNull();
 });
 
@@ -329,7 +329,7 @@ test('seating claims are visible on every member and block table edits and manua
   );
   const closed = (await service.list(req())).tables;
   expect(
-    closed.every((table) => table.status === 'available' && !table.seating && !table.orders.length)
+    closed.every((table) => table.status === 'cleaning' && !table.seating && !table.orders.length)
   ).toBe(true);
   expect(closed.find((table) => table.id === second.id).version).toBe(1);
   await expect(
@@ -380,7 +380,7 @@ test('interrupted group release remains retryable after the sale leaves active o
   await service.close(req(body));
   expect(
     (await service.list(req())).tables.every(
-      (table) => table.status === 'available' && !table.closing
+      (table) => table.status === 'cleaning' && !table.closing
     )
   ).toBe(true);
 });
@@ -584,4 +584,13 @@ test('invalid post-close state is rejected before closing', async () => {
   await expect(service.close(req({ ...body, afterClose: 'occupied' }))).rejects.toThrow(
     'Choose Available or Cleaning'
   );
+});
+
+test('closing a paid table defaults to available when cleaning is unset', async () => {
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $unset: { captain_table_cleaning: '' } });
+  const { body } = await paidTable();
+  expect((await service.close(req(body))).status).toBe('available');
+  expect((await service.close(req(body))).status).toBe('available');
 });
