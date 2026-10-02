@@ -246,6 +246,9 @@ describe('SalesService', () => {
       expect(result.status).toBe(true);
       const saved = salesRepository.create.mock.calls[0][0];
       expect(saved.sales_total).toBe(223);
+      expect(saved.total).toBe(saved.sales_total);
+      expect(saved.subtotal).toBe(saved.sales_sub_total);
+      expect(saved.items_total).toBe(saved.sales_total);
       expect(saved.items.map((line) => line.pricing.selling_price)).toEqual(prices);
     });
     test.each([
@@ -1551,6 +1554,43 @@ describe('SalesService', () => {
       const result = await salesService.processSale(makeSaleData(), SALE_ID, 'Edit', makeContext());
       expect(salesRepository.save).toHaveBeenCalledTimes(1);
       expect(result.status).toBe(true);
+    });
+
+    test('desktop Modify retains a Captain line and its agreed price after catalogue changes', async () => {
+      const pricing = require('../../../src/services/pricing-authority');
+      const doc = {
+        items: [
+          {
+            item_id: ITEM_ID,
+            line_id: 'phone-line-1',
+            item_quantity: 1,
+            item_price: 100,
+            held: true,
+            seat: 2,
+            course: 'Main',
+            allergies: ['milk'],
+            pricing: pricing.resolve({ product: makeItemDoc(), submitted: 100 }),
+          },
+        ],
+        changes: [],
+        set: jest.fn(),
+        sales_id: 'INV-EDIT',
+      };
+      salesRepository.getById.mockResolvedValue(doc);
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(
+        makeItemDoc({ selling_price: 150 })
+      );
+      const result = await salesService.processSale(makeSaleData(), SALE_ID, 'Edit', makeContext());
+      expect(result.status).toBe(true);
+      const saved = doc.set.mock.calls[0][0];
+      expect(saved.items[0]).toMatchObject({
+        line_id: 'phone-line-1',
+        held: true,
+        seat: 2,
+        course: 'Main',
+        allergies: ['milk'],
+        pricing: { selling_price: 100 },
+      });
     });
 
     test('desktop edit cannot bypass the seating move protocol', async () => {

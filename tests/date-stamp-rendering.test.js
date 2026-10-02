@@ -82,3 +82,17 @@ test('the rail keeps padding for everything that is not the row table', () => {
     'the general rail-padding rule is gone - split mode puts text back on the border',
   );
 });
+
+
+test('day-end Intl report stamps keep the complete year and time', () => {
+  const m = core.match(/date\.match\((\/\^\(\\d.*?\/i)\)/);
+  const re = new RegExp(m[1].slice(1, m[1].lastIndexOf('/')), 'i');
+  const stamp = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
+  }).format(new Date('2026-10-02T11:16:00Z'));
+  const parts = stamp.match(re);
+  assert.ok(parts, 'the comma in the report date must not send it to the guesser');
+  assert.deepStrictEqual(parts.slice(1, 7), ['10', '02', '2026', '04', '46', '00']);
+  assert.match(parts[7], /p/i);
+});

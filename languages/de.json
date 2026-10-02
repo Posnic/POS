@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "Tischreinigung",
+  "lang_enable_table_cleaning": "Tischreinigung aktivieren",
+  "lang_off_by_default_enable_only_if_staff_should": "Standardmäßig aus. Wenn aktiviert, müssen Tische nach dem Service als verfügbar markiert werden.",
+  "lang_could_not_load_table_settings_please_retry": "Tischeinstellungen konnten nicht geladen werden. Bitte erneut versuchen.",
+  "lang_could_not_save_table_settings_please_retry": "Tischeinstellungen konnten nicht gespeichert werden. Bitte erneut versuchen.",
   "lang_item_ai_review_help": "Prüfen Sie den Vorschlag. Ihre Übersetzung bleibt unverändert, bis Sie ihn übernehmen.",
   "lang_item_upload_failed": "Bild-Upload fehlgeschlagen. Artikel nicht gespeichert.",
   "lang_item_translated_name": "Übersetzter Artikelname",
@@ -4040,5 +4045,18 @@
   "lang_ask_payment_confirm": "Beleg und Summe prüfen. Bar erst nach Geldeingang wählen, Kartenzahlung erhalten erst nach Terminalbestätigung. Dies schließt den Verkauf ab und fordert den Belegdruck an.",
   "lang_ask_prepare_sale": "Verkauf für die Kasse vorbereiten",
   "lang_ask_review_sale": "Verkauf prüfen",
-  "lang_ask_sale_checkout": "Verkauf abschließen und Belege drucken"
+  "lang_ask_sale_checkout": "Verkauf abschließen und Belege drucken",
+  "lang_about_these_times": "Zu diesen Zeiten",
+  "lang_all_sales": "Alle Verkäufe",
+  "lang_choose_one_branch_for_period": "Wählen Sie eine Filiale, um nach Bewirtungszeit zu filtern.",
+  "lang_clear_restaurant_filters": "Restaurantfilter löschen",
+  "lang_loading_serving_periods": "Bewirtungszeiten werden geladen…",
+  "lang_period_load_failed": "Bewirtungszeiten konnten nicht geladen werden. Öffnen Sie diese Seite erneut.",
+  "lang_period_required_fields": "Geben Sie für jede Bewirtungszeit einen Namen und unterschiedliche Anfangs- und Endzeiten ein.",
+  "lang_serving_period": "Bewirtungszeit",
+  "lang_serving_periods_saved": "Bewirtungszeiten gespeichert",
+  "lang_set_serving_periods": "Legen Sie Frühstück, Mittag- und Abendessen unter Restaurant > Menü fest.",
+  "lang_tables_only": "Nur Tische",
+  "lang_serve_all": "Alles servieren",
+  "lang_items_marked_served": "Artikel als serviert markiert"
 }

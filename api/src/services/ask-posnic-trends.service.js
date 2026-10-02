@@ -1,4 +1,5 @@
 'use strict';
+const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
 
 const moment = require('moment-timezone');
 
@@ -15,7 +16,7 @@ async function read(model, range, interval) {
   const timezone = moment.tz.zone(model.timeZone) ? model.timeZone : 'UTC';
   const match = model.getContextMatch({
     date: { $gte: from, $lte: to },
-    sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+    ...reportableSales(),
   });
   const sales = await model.getCollection('sales');
   const rows = await sales
@@ -32,7 +33,7 @@ async function read(model, range, interval) {
               },
             },
             transactions: { $sum: 1 },
-            amount: { $sum: '$items_total' },
+            amount: { $sum: reportSaleTotal() },
           },
         },
         { $sort: { _id: 1 } },

@@ -1,6 +1,6 @@
 {
   "name": "posnic",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "description": "Free, offline-first point-of-sale software for retail and restaurants, with open source POS code and billing workflows. Posnic source is AGPL-3.0-only; packages contain separately licensed components.",
   "main": "src/main.js",
   "desktopName": "com.posnic.app.desktop",
@@ -632,17 +632,17 @@
     "icon-gen": "^5.0.0",
     "jquery": "^3.7.1",
     "js-yaml": "^4.3.2",
-    "jsdom": "^30.0.1",
-    "lint-staged": "^17.5.1",
+    "jsdom": "^30.1.1",
+    "lint-staged": "^17.6.0",
     "png-to-ico": "^3.0.2",
-    "prettier": "^3.9.6",
-    "sharp": "^0.35.4"
+    "prettier": "^3.9.9",
+    "sharp": "^0.35.5"
   },
   "dependencies": {
     "@serialport/parser-readline": "^13.0.0",
     "electron-log": "^5.4.4",
     "electron-updater": "^6.8.9",
-    "mongodb": "7.6.0",
+    "mongodb": "7.7.0",
     "pdf-to-printer": "^5.8.1",
     "serialport": "^13.0.0",
     "unzipper": "0.12.5"

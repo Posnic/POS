@@ -1,4 +1,5 @@
 'use strict';
+const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
 const { activeCatalog } = require('./ask-posnic-catalog');
 
 function scopedMatch(model, range) {
@@ -10,7 +11,7 @@ function scopedMatch(model, range) {
     throw new Error('Choose a valid report period up to one year.');
   return model.getContextMatch({
     date: { $gte: from, $lte: to },
-    sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+    ...reportableSales(),
   });
 }
 const string = (value) => ({ $convert: { input: value, to: 'string', onError: '', onNull: '' } });
@@ -123,7 +124,7 @@ async function read(model, range, intent) {
         $group: {
           _id: '$customer_key',
           transactions: { $sum: 1 },
-          amount: { $sum: '$items_total' },
+          amount: { $sum: reportSaleTotal() },
         },
       },
       {

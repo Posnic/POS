@@ -1,3 +1,4 @@
+const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
 const pricingAuthority = require('../services/pricing-authority');
 const Money = require('../utils/currency');
 const serviceLine = require('../utils/service-line');
@@ -1610,6 +1611,31 @@ class SalesRepository {
         }
       }
 
+      // Ordinary bills and payment use sales_total/sales_sub_total. Older KOT
+      // edits left the receipt aliases at the first order's amount. Never let
+      // those stale aliases change a reprint after payment. Returns retain
+      // their separate remaining-item totals; transferred bills use allocation.
+      const hasReturns =
+        /return|exchange/i.test(String(saleDoc.sale_process || '')) ||
+        (Array.isArray(saleDoc.items_return) && saleDoc.items_return.length > 0) ||
+        (Array.isArray(saleDoc.returnArray) && saleDoc.returnArray.length > 0);
+      if (!hasReturns && !transferredBill) {
+        for (const [source, targets] of [
+          ['sales_total', ['items_total', 'total']],
+          ['sales_sub_total', ['items_subtotal', 'subtotal']],
+        ]) {
+          const value = saleDoc[source];
+          if (
+            value !== undefined &&
+            value !== null &&
+            value !== '' &&
+            Number.isFinite(Number(value))
+          ) {
+            for (const target of targets) normalized[target] = Number(value);
+          }
+        }
+      }
+
       if (transferredBill) normalized.transferred_bill = transferredBill;
       normalized.receipt_line_rows =
         transferredBill?.items ||
@@ -2115,7 +2141,7 @@ class SalesRepository {
         {
           $addFields: {
             sales_total_num: {
-              $toDouble: { $ifNull: ['$items_total', 0] },
+              ...reportSaleTotal(),
             },
             tax_num: { $toDouble: { $ifNull: ['$tax', 0] } },
             company_price_total_num: {
@@ -2136,7 +2162,7 @@ class SalesRepository {
                 ],
               },
             },
-            sales_total: { $first: '$items_total' },
+            sales_total: { $first: reportSaleTotal() },
             refund_total: { $first: '$items_return_total' },
           },
         },
@@ -2222,7 +2248,7 @@ class SalesRepository {
       const andConditions = [
         {
           branch_id: { $in: branchObjectIds },
-          sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+          ...reportableSales(),
         },
         {
           updated_date: { $gte: fromDate, $lte: toDate },
@@ -2242,7 +2268,7 @@ class SalesRepository {
         { $match: condition },
         {
           $project: {
-            items_total: 1,
+            items_total: reportSaleTotal(),
             h: {
               $dayOfWeek: {
                 date: '$updated_date',
@@ -2254,7 +2280,7 @@ class SalesRepository {
         {
           $group: {
             _id: '$h',
-            totalValue: { $sum: '$items_total' },
+            totalValue: { $sum: reportSaleTotal() },
           },
         },
       ];
@@ -2869,7 +2895,7 @@ class SalesRepository {
               customer_phone: '$customer_phone',
               number_of_items: '$number_of_items',
             },
-            pending_amount: { $sum: '$items_total' },
+            pending_amount: { $sum: reportSaleTotal() },
             partial_amount: { $sum: '$partial_balance' },
             due_amount: { $sum: '$payment_pending' },
           },
@@ -2985,7 +3011,7 @@ class SalesRepository {
               referrer: { $ifNull: ['$referrer_name', '--'] },
             },
             number_of_items: { $sum: '$number_of_items' },
-            pending_amount: { $sum: '$items_total' },
+            pending_amount: { $sum: reportSaleTotal() },
             partial_amount: { $sum: '$partial_balance' },
             due_amount: { $sum: '$payment_pending' },
           },
@@ -3077,7 +3103,7 @@ class SalesRepository {
       // Build filters for items with tax amount > 0, including license scope
       const firstClause = {
         branch_id: { $in: objectBranchIds },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
       };
 
       const secondClause = {
@@ -4007,9 +4033,14 @@ class SalesRepository {
 
       const firstClause = {
         branch_id: { $in: objectBranchIds },
+        ...reportableSales(),
+        // Transferred guest checks are transactions only once their allocation
+        // has a recorded tender. Ordinary desktop KOT bills have no allocation
+        // and do not require a Captain-specific payment ledger.
         $or: [
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
-          { sale_process: 'KOT', payment_status: 'Paid', 'captain_payments.0': { $exists: true } },
+          { sale_process: { $ne: 'KOT' } },
+          { captain_transfer_allocation: { $exists: false } },
+          { 'captain_payments.0': { $exists: true } },
         ],
       };
 
@@ -8679,7 +8710,12 @@ class SalesRepository {
           tableorder_value: wantsTable,
         });
         seatingTable = configuredTable;
-        if (configuredTable && ['held', 'cleaning'].includes(configuredTable.service_state))
+        if (
+          configuredTable &&
+          ['held', 'cleaning'].includes(
+            require('../services/table-cleaning').state(configuredTable, branchDoc)
+          )
+        )
           return { status: false, message: 'This table is not available.', data: null };
         if (
           configuredTable &&
@@ -9353,7 +9389,7 @@ class SalesRepository {
       }
 
       const range = {
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
         date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
         license: BaseModel.license,
       };
@@ -10459,13 +10495,7 @@ class SalesRepository {
         throw new Error('Order changed. Refresh before continuing.');
 
       if (status === 'cancelled' && String(orderDoc.sale_process).toLowerCase() === 'cancelled') {
-        if (orderDoc.seating_request_id) {
-          await require('../services/seating-claims').release(
-            db,
-            { branchId: orderDoc.branch_id, license: orderDoc.license },
-            orderDoc.seating_request_id
-          );
-        }
+        await require('../services/cancelled-order-cleanup').finish(db, orderDoc);
         return { status: true, message: 'Order cancelled', data: { order_id: orderId } };
       }
 
@@ -10707,11 +10737,7 @@ class SalesRepository {
         }
 
         if (updateResult.modifiedCount > 0 && orderDoc.seating_request_id) {
-          await require('../services/seating-claims').release(
-            db,
-            { branchId: orderDoc.branch_id, license: orderDoc.license },
-            orderDoc.seating_request_id
-          );
+          await require('../services/cancelled-order-cleanup').finish(db, orderDoc);
         }
 
         return updateResult.modifiedCount > 0
@@ -11101,10 +11127,12 @@ class SalesRepository {
         kitchen_required: true,
         floor_lifecycle: true,
         kitchen_closed: false,
+        subtotal: baseSubtotal,
         sales_sub_total: baseSubtotal,
         items_subtotal: baseSubtotal,
         sales_total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
-        items_total: salesTotal,
+        total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
+        items_total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
         tax: taxTotal,
         discount: itemDiscountTotal,
         return_tax: 0,
@@ -11274,7 +11302,15 @@ class SalesRepository {
           console.error('Order capacity reconciliation pending:', error);
         }
       }
-      if (finishCaptainEdit) await finishCaptainEdit();
+      if (finishCaptainEdit) {
+        try {
+          await finishCaptainEdit();
+        } catch (error) {
+          // The edit lease expires independently; releasing it must not replace
+          // the durable order result with a failure after the write committed.
+          console.error('Order edit lease cleanup pending:', error);
+        }
+      }
     }
   }
 
@@ -12403,7 +12439,7 @@ class SalesRepository {
         {
           $match: {
             branch_id: branchObjectId,
-            sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+            ...reportableSales(),
             license: BaseModel.license,
           },
         },
@@ -12460,7 +12496,7 @@ class SalesRepository {
       const filters = {
         $and: [
           { branch_id: { $in: branchObjectIds } },
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          reportableSales(),
           { was_kot_proceeded: true },
           { updated_date: { $gte: FromDate, $lte: ToDate } },
           { license: BaseModel.license },
@@ -12726,7 +12762,7 @@ class SalesRepository {
 
       const filters = {
         $and: [
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          reportableSales(),
           { date: { $gte: FromDate, $lte: ToDate } },
           { branch_id: branchId },
           { license: BaseModel.license },
@@ -13088,7 +13124,7 @@ class SalesRepository {
         .map((id) => new mongoose.Types.ObjectId(id));
 
       const andConditions = [];
-      andConditions.push({ sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } });
+      andConditions.push(reportableSales());
       if (branchObjectIds.length) {
         andConditions.push({ branch_id: { $in: branchObjectIds } });
       }
@@ -13125,7 +13161,7 @@ class SalesRepository {
               category_name: '$category_name',
             },
             number_of_items: { $sum: '$number_of_items' },
-            pending_amount: { $sum: '$items_total' },
+            pending_amount: { $sum: reportSaleTotal() },
             partial_amount: { $sum: '$partial_balance' },
             due_amount: { $sum: '$payment_pending' },
           },
@@ -13227,7 +13263,7 @@ class SalesRepository {
       const filters = {
         $and: [
           { branch_id: { $in: branchIds } },
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          reportableSales(),
           methodFilter,
           {
             updated_date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
@@ -13304,7 +13340,7 @@ class SalesRepository {
 
       const condition = {
         branch_id: { $in: branchIds },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn', 'FullReturn'] },
+        ...reportableSales(['Add', 'Edit', 'PartialReturn', 'FullReturn']),
         ...methodFilter,
         date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
         license: BaseModel.license,
@@ -13319,7 +13355,7 @@ class SalesRepository {
             {
               $addFields: {
                 sales_total_num: {
-                  $toDouble: { $ifNull: ['$items_total', 0] },
+                  ...reportSaleTotal(),
                 },
                 tax_num: { $toDouble: { $ifNull: ['$tax', 0] } },
                 items_return_total_num: {
@@ -13398,7 +13434,7 @@ class SalesRepository {
           {
             $addFields: {
               sales_total_num: {
-                $toDouble: { $ifNull: ['$items_total', 0] },
+                ...reportSaleTotal(),
               },
             },
           },
@@ -13485,7 +13521,7 @@ class SalesRepository {
 
       const condition = {
         branch_id: { $in: branchIds },
-        sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+        ...reportableSales(),
         ...methodFilter,
         date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
         license: BaseModel.license,
@@ -13498,7 +13534,7 @@ class SalesRepository {
         {
           $project: {
             payment_mode: 1,
-            amount: { $toDouble: { $ifNull: ['$items_total', 0] } },
+            amount: reportSaleTotal(),
             datetime: {
               $dateToString: {
                 format: '%Y-%m-%d %H:00',

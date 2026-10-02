@@ -191,6 +191,7 @@ async function reserveClaim(
       fail('This seating request has already been used.', 409);
     return previous;
   }
+  const cleaningEnabled = await require('./table-cleaning').active(db, scope);
   const tables = await db
     .collection('tableorder')
     .find({
@@ -203,7 +204,8 @@ async function reserveClaim(
   if (
     tables.some(
       (row) =>
-        ['held', 'cleaning'].includes(row.service_state) ||
+        row.service_state === 'held' ||
+        (cleaningEnabled && row.service_state === 'cleaning') ||
         (row.floor_close && !row.floor_close.completed)
     )
   )
@@ -513,7 +515,7 @@ async function prepareMove(
   }
 }
 
-async function beginClose(db, scope, orderIds, closeId) {
+async function beginClose(db, scope, orderIds, closeId, afterClose) {
   requestId(closeId);
   if (!Array.isArray(orderIds) || !orderIds.length || orderIds.length > 200)
     fail('Choose the orders to close.');
@@ -529,7 +531,8 @@ async function beginClose(db, scope, orderIds, closeId) {
         !['submitting', 'releasing'].includes(row.state) ||
         (row.closing &&
           (row.closing.id !== closeId ||
-            JSON.stringify(row.closing.orders) !== JSON.stringify(ids)))
+            JSON.stringify(row.closing.orders) !== JSON.stringify(ids) ||
+            (afterClose !== undefined && (row.closing.afterClose || 'cleaning') !== afterClose)))
     )
   )
     fail('The seating group changed. Refresh this order.', 409);
@@ -540,7 +543,12 @@ async function beginClose(db, scope, orderIds, closeId) {
     {
       $set: {
         claims: snapshot.claims.map((row) =>
-          selectedIds.has(row.id) ? { ...row, closing: { id: closeId, orders: ids } } : row
+          selectedIds.has(row.id)
+            ? {
+                ...row,
+                closing: { id: closeId, orders: ids, ...(afterClose ? { afterClose } : {}) },
+              }
+            : row
         ),
       },
       $inc: { revision: 1 },
@@ -763,7 +771,12 @@ async function completeMove(db, scope, id, actor) {
         ],
       },
       {
-        $set: { service_state: 'cleaning', last_seating_release_generation: move.generation },
+        $set: {
+          service_state: (await require('./table-cleaning').active(db, scope))
+            ? 'cleaning'
+            : 'available',
+          last_seating_release_generation: move.generation,
+        },
         $inc: { captain_table_version: 1 },
       }
     );
@@ -850,7 +863,9 @@ async function cancel(db, scope, id, actor) {
     fail('Reconcile the submitted order before releasing its tables.', 409);
   await archive(db, scope, id);
 }
-async function release(db, scope, id, { transferId, settled = false } = {}) {
+async function release(db, scope, id, { transferId, settled = false, afterClose } = {}) {
+  if (afterClose !== undefined && !['available', 'cleaning'].includes(afterClose))
+    fail('Choose Available or Cleaning.');
   requestId(id);
   const claim = await find(db, scope, id);
   if (!claim) fail('Seating request not found.', 404);
@@ -979,7 +994,10 @@ async function release(db, scope, id, { transferId, settled = false } = {}) {
       },
       {
         $set: {
-          service_state: settled ? 'available' : 'cleaning',
+          service_state: settled
+            ? 'available'
+            : afterClose ||
+              ((await require('./table-cleaning').active(db, scope)) ? 'cleaning' : 'available'),
           last_seating_release_generation: claim.generation,
           updated_date: new Date(),
         },
@@ -1015,6 +1033,19 @@ async function releaseSettled(db, scope) {
       claim.closing
     )
       continue;
+    const cancelled = await db.collection('sales').findOne({
+      _id: new ObjectId(claim.order_id),
+      branch_id: scope.branchId,
+      license: scope.license,
+      sale_process: 'cancelled',
+      payment_status: 'Cancelled',
+      floor_closed_at: { $exists: true },
+      captain_payment_plan: { $exists: false },
+    });
+    if (cancelled) {
+      await require('./cancelled-order-cleanup').finish(db, cancelled);
+      continue;
+    }
     const filter = {
       _id: new ObjectId(claim.order_id),
       branch_id: scope.branchId,
@@ -1671,8 +1702,7 @@ async function reserveEditCapacity(db, scope, order, next, { now = new Date() } 
   // A parked sale has not occupied these seats yet. Sending it to the
   // kitchen must reserve the whole party even when its table/count is unchanged.
   const activatingHold = order.sale_process === 'Hold' && next.sale_process === 'KOT';
-  if (sameTable && !activatingHold && guests === 0 && Number(order.person_count) === 0)
-    return null;
+  if (sameTable && !activatingHold && guests === 0 && Number(order.person_count) === 0) return null;
   if (!Number.isInteger(guests) || guests < 1 || guests > 1000) fail('Enter the number of guests.');
   const extra =
     sameTable && !activatingHold ? guests - Math.max(1, Number(order.person_count) || 1) : guests;

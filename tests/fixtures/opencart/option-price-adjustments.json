@@ -1,0 +1,137 @@
+{
+    "source": "synthetic-opencart-fixture",
+    "currency": "USD",
+    "products": [
+      {
+        "product_id": "OC-SYN-1001",
+        "name": "Classic Backpack",
+        "base_price": 50,
+        "options": [
+          {
+            "option_name": "Material",
+            "option_value": "Standard",
+            "price_adjustment": 0
+          },
+          {
+            "option_name": "Material",
+            "option_value": "Premium Leather",
+            "price_adjustment": 5
+          },
+          {
+            "option_name": "Size",
+            "option_value": "Compact",
+            "price_adjustment": -3
+          }
+        ]
+      }
+    ],
+    "orders": [
+      {
+        "order_id": "OC-SYN-ORDER-1001",
+        "product_id": "OC-SYN-1001",
+        "product_name": "Classic Backpack",
+        "quantity": 2,
+        "base_price": 50,
+        "selected_options": [],
+        "option_adjustment": 0,
+        "charged_unit_price": 50,
+        "line_subtotal": 100,
+        "discount_amount": 0,
+        "tax_rate": 0,
+        "tax_amount": 0,
+        "line_total": 100,
+        "expected_pos_line": {
+          "item_quantity": 2,
+          "item_price": 50,
+          "discount_amount": 0,
+          "tax_amount": 0,
+          "total": 100
+        }
+      },
+      {
+        "order_id": "OC-SYN-ORDER-1002",
+        "product_id": "OC-SYN-1001",
+        "product_name": "Classic Backpack",
+        "quantity": 2,
+        "base_price": 50,
+        "selected_options": [
+          {
+            "option_name": "Material",
+            "option_value": "Premium Leather",
+            "price_adjustment": 5
+          }
+        ],
+        "option_adjustment": 5,
+        "charged_unit_price": 55,
+        "line_subtotal": 110,
+        "discount_amount": 0,
+        "tax_rate": 0,
+        "tax_amount": 0,
+        "line_total": 110,
+        "expected_pos_line": {
+          "item_quantity": 2,
+          "item_price": 55,
+          "discount_amount": 0,
+          "tax_amount": 0,
+          "total": 110
+        }
+      },
+      {
+        "order_id": "OC-SYN-ORDER-1003",
+        "product_id": "OC-SYN-1001",
+        "product_name": "Classic Backpack",
+        "quantity": 2,
+        "base_price": 50,
+        "selected_options": [
+          {
+            "option_name": "Size",
+            "option_value": "Compact",
+            "price_adjustment": -3
+          }
+        ],
+        "option_adjustment": -3,
+        "charged_unit_price": 47,
+        "line_subtotal": 94,
+        "discount_amount": 0,
+        "tax_rate": 0,
+        "tax_amount": 0,
+        "line_total": 94,
+        "expected_pos_line": {
+          "item_quantity": 2,
+          "item_price": 47,
+          "discount_amount": 0,
+          "tax_amount": 0,
+          "total": 94
+        }
+      },
+      {
+        "order_id": "OC-SYN-ORDER-1004",
+        "product_id": "OC-SYN-1001",
+        "product_name": "Classic Backpack",
+        "quantity": 2,
+        "base_price": 50,
+        "selected_options": [
+          {
+            "option_name": "Material",
+            "option_value": "Premium Leather",
+            "price_adjustment": 5
+          }
+        ],
+        "option_adjustment": 5,
+        "charged_unit_price": 55,
+        "line_subtotal": 110,
+        "discount_amount": 10,
+        "tax_rate": 10,
+        "taxable_amount": 100,
+        "tax_amount": 10,
+        "line_total": 110,
+        "expected_pos_line": {
+          "item_quantity": 2,
+          "item_price": 55,
+          "discount_amount": 10,
+          "tax_amount": 10,
+          "total": 110
+        }
+      }
+    ]
+  }

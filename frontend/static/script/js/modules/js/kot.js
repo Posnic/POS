@@ -2,6 +2,21 @@ PosnicPro.kot = {
     currentTableNumber: null,
     currentTableId: null,
 
+    editLine: function (item, quantity) {
+        var inlinePrice = item.sale_inline_item_price;
+        var line = {
+            product_id: item.item_id || item.product_id,
+            quantity: quantity == null ? item.item_quantity : quantity,
+            price: item.pricing && item.pricing.version === 1 ? item.pricing.selling_price :
+                (inlinePrice != null && String(inlinePrice).trim() !== '' && Number.isFinite(Number(inlinePrice)) ?
+                    Number(inlinePrice) : (item.selling_price != null ? item.selling_price : item.item_price))
+        };
+        ['line_id', 'modifiers', 'seat', 'course', 'held', 'allergies', 'allergy_note', 'item_description'].forEach(function (key) {
+            if (item[key] !== undefined) line[key] = item[key];
+        });
+        return line;
+    },
+
     showDataTablePage: function (module, table_number) {
         PosnicPro.sales.recentSaleAction = false;
         var loader = $(".loader-table-kot");
@@ -604,7 +619,7 @@ PosnicPro.kot = {
                                     <div class="kot-item-qty-display" data-sale-id="${kot._id}" data-item-id="${itemId}" style="display: inline-flex; align-items: center; justify-content: flex-end;">
                                         <span style="font-weight: 600; padding: 0 5px;">× ${itemQty}</span>
                                     </div>
-                                    <div class="kot-item-qty-controls" data-sale-id="${kot._id}" data-item-id="${itemId}" data-item-price="${itemPrice}" style="display: none; align-items: center; justify-content: flex-end;">
+                                    <div class="kot-item-qty-controls" data-sale-id="${kot._id}" data-item-id="${itemId}" data-line-id="${PosnicPro.escapeHtml(item.line_id || '')}" data-item-price="${itemPrice}" style="display: none; align-items: center; justify-content: flex-end;">
                                         <div class="btn-group btn-group-sm" style="display: inline-flex; align-items: center; margin-right: 8px;">
                                             <button type="button" class="btn btn-light btn-sm qty-decrease" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Decrease quantity" data-t-aria-label="lang_decrease_quantity">
                                                 <i class="feather icon-minus" style="font-size: 10px;"></i>
@@ -1442,16 +1457,12 @@ PosnicPro.kot = {
                     var id = item.item_id || '';
 
                     // Check if item already exists, if so increment quantity
-                    if (id.toString() === itemId.toString()) {
+                    if (!itemFound && id.toString() === itemId.toString()) {
                         currentQty += 1;
                         itemFound = true;
                     }
 
-                    items.push({
-                        product_id: id,
-                        quantity: currentQty,
-                        price: price
-                    });
+                    items.push(PosnicPro.kot.editLine(item, currentQty));
 
                     newTotal += (currentQty * price);
                 }
@@ -1580,7 +1591,9 @@ PosnicPro.kot = {
             // Collect updated quantities from inputs (both existing and new items)
             $('.kot-item-qty-controls[data-sale-id="' + saleId + '"]').each(function() {
                 var itemId = $(this).data('item-id');
-                var newQty = parseInt($(this).find('.qty-input').val()) || 1;
+                var newQty = parseFloat($(this).find('.qty-input').val()) || 1;
+                var savedLineId = $(this).attr('data-line-id');
+                var savedLine = null;
                 
                 // Try to get the original base price from order data first
                 var price = 0;
@@ -1588,7 +1601,8 @@ PosnicPro.kot = {
                 if (data.items && data.items.length) {
                     for (var i = 0; i < data.items.length; i++) {
                         var item = data.items[i];
-                        if ((item.item_id || '').toString() === itemId.toString()) {
+                        if (savedLineId ? item.line_id === savedLineId : (!item.line_id && (item.item_id || '').toString() === itemId.toString())) {
+                            savedLine = item;
                             price = parseFloat(item.item_price || 0);
                             console.log('Existing item - Base Price:', price, '- Qty:', newQty);
                             itemFound = true;
@@ -1603,11 +1617,7 @@ PosnicPro.kot = {
                     console.log('New item - Using base price:', price, '- Qty:', newQty);
                 }
                 
-                items.push({
-                    product_id: itemId,
-                    quantity: newQty,
-                    price: price
-                });
+                items.push(savedLine ? PosnicPro.kot.editLine(savedLine, newQty) : { product_id: itemId, quantity: newQty, price: price });
                 newTotal += (newQty * price);
             });
 
@@ -2403,11 +2413,7 @@ PosnicPro.kot = {
                 if (data.items && data.items.length) {
                     for (var i = 0; i < data.items.length; i++) {
                         var item = data.items[i];
-                        items.push({
-                            product_id: item.item_id || '',
-                            quantity: item.item_quantity || 0,
-                            price: item.item_price || 0
-                        });
+                        items.push(PosnicPro.kot.editLine(item));
                     }
                 }
 
@@ -2498,11 +2504,7 @@ PosnicPro.kot = {
             if (data.items && data.items.length) {
                 for (var i = 0; i < data.items.length; i++) {
                     var item = data.items[i];
-                    items.push({
-                        product_id: item.item_id || '',
-                        quantity: item.item_quantity || 0,
-                        price: item.item_price || 0
-                    });
+                    items.push(PosnicPro.kot.editLine(item));
                 }
             }
 
@@ -2602,11 +2604,7 @@ PosnicPro.kot = {
                         itemFound = true;
                     }
 
-                    items.push({
-                        product_id: id,
-                        quantity: currentQty,
-                        price: price
-                    });
+                    items.push(PosnicPro.kot.editLine(item, currentQty));
 
                     newTotal += (currentQty * price);
                 }
@@ -2747,11 +2745,7 @@ PosnicPro.kot = {
                         continue; // Skip adding this item to new list
                     }
 
-                    items.push({
-                        product_id: id,
-                        quantity: currentQty,
-                        price: price
-                    });
+                    items.push(PosnicPro.kot.editLine(item, currentQty));
 
                     newTotal += (currentQty * price);
                 }
@@ -3023,16 +3017,12 @@ PosnicPro.kot = {
                     var id = item.item_id || '';
 
                     // Check if item already exists, if so increment quantity
-                    if (id.toString() === itemId.toString()) {
+                    if (!itemFound && id.toString() === itemId.toString()) {
                         currentQty += 1;
                         itemFound = true;
                     }
 
-                    items.push({
-                        product_id: id,
-                        quantity: currentQty,
-                        price: price
-                    });
+                    items.push(PosnicPro.kot.editLine(item, currentQty));
 
                     newTotal += (currentQty * price);
                 }

@@ -199,7 +199,7 @@ test('adjacent half-width fields share a row, preserve styling and omit empty fi
         assert.equal(row.length, 1); assert.equal(row.children().length, 2);
         assert.equal(row.text(), 'Session: LunchCovers: 2');
         assert.equal(row.find('.rd-field-session').css('font-size'), '13px');
-        assert.equal(row.find('.rd-field-session').css('font-weight'), 'bold');
+        assert.ok(['bold', '700'].includes(row.find('.rd-field-session').css('font-weight')));
         const empty = $('<div>').html(engine.render({ ...sale, serving_session: ' \n ' }, format, false));
         assert.equal(empty.find('.rd-field-session,.rd-field-row').length, 0);
         assert.equal(empty.find('.rd-field-covers').text(), 'Covers: 2');
@@ -1014,5 +1014,40 @@ test('custom receipt date respects month-first tender data and noon/midnight', (
     assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-transaction-date').text(), '01/10/2026 12:05');
     sale.created_date = 'unrecognized historical date';
     assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-transaction-date').text(), sale.created_date);
+    dom.window.close();
+});
+
+
+test('printing progress stays visible until submission resolves and clears on failure', async () => {
+    const { dom, w, $, engine } = setup();
+    let submit;
+    w.PosnicPro.resolveReceiptPrinter = () => 'Counter';
+    w.electronAPI = { printer: { print: () => new Promise(resolve => { submit = resolve; }) } };
+    const job = engine.print('<article>Total 840.00</article>', '80', { sample: true });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal($('#receipt-print-progress[role="status"]').length, 1);
+    submit({ success: false, error: 'Receipt preparation timed out' });
+    await assert.rejects(job, /timed out/);
+    assert.equal($('#receipt-print-progress').length, 0);
+    dom.window.close();
+});
+
+
+test('repeated sale print clicks share one in-flight submission and allow a later reprint', async () => {
+    const { dom, w, $, engine, sale } = setup();
+    let release, sends = 0, after = 0;
+    w.PosnicPro.resolveReceiptPrinter = () => 'Counter';
+    w.PosnicPro.afterPrint = () => { after++; };
+    w.electronAPI = { printer: { print: () => { sends++; return new Promise(resolve => { release = resolve; }); } } };
+    const first = engine.printSale(sale, '80');
+    await new Promise(resolve => setImmediate(resolve));
+    await engine.printSale(sale, '80');
+    assert.equal(sends, 1);
+    assert.equal($('#receipt-print-progress').length, 1);
+    release({ success: true }); await first;
+    assert.equal(after, 1); assert.equal($('#receipt-print-progress').length, 0);
+    const next = engine.printSale(sale, '80');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(sends, 2); release({ success: true }); await next;
     dom.window.close();
 });

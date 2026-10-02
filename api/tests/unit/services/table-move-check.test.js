@@ -21,6 +21,9 @@ beforeEach(async () => {
     license: new ObjectId(),
     person_count: 2,
   };
+  await db
+    .collection('branches')
+    .insertOne({ _id: order.branch_id, license: order.license, captain_table_cleaning: true });
   table = { _id: new ObjectId(), tableorder_value: '12', capacity: 4, max_capacity: 4 };
 });
 test('missing, replaced, held, cleaning and closing destinations are rejected', async () => {

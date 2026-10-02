@@ -55,3 +55,7 @@ GitHub Actions spending is constrained. Prefer local verification.
   rerun unchanged CI jobs for experimentation; reproduce failures locally.
 - Preserve existing required checks and security protections. Do not disable
   them or bypass branch protection without explicit user authorization.
+
+## Optional features
+
+Optional workflows and behaviors must default off and require explicit opt-in in their module's settings. Server capability support alone is not user consent. Preserve explicitly saved settings on upgrades. Do not introduce automatic workflow transitions such as table cleaning. Keep duplicate prevention, durable order recovery, payment integrity, authentication and access checks automatic. Document default changes and test both unset and explicitly enabled settings.

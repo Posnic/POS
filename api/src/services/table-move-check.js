@@ -9,7 +9,12 @@ async function check(db, order, table, input) {
   if (!table || (input.id && String(table._id) !== String(input.id)))
     fail('This table changed. Refresh the table list.', 409);
   if (
-    ['held', 'cleaning'].includes(table.service_state) ||
+    table.service_state === 'held' ||
+    (table.service_state === 'cleaning' &&
+      (await require('./table-cleaning').active(db, {
+        branchId: order.branch_id,
+        license: order.license,
+      }))) ||
     (table.floor_close && !table.floor_close.completed)
   )
     fail('This table is not available.', 409);

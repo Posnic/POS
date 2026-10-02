@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "Pembersihan meja",
+  "lang_enable_table_cleaning": "Aktifkan pembersihan meja",
+  "lang_off_by_default_enable_only_if_staff_should": "Nonaktif secara default. Jika diaktifkan, meja harus ditandai tersedia setelah pelayanan.",
+  "lang_could_not_load_table_settings_please_retry": "Pengaturan meja tidak dapat dimuat. Coba lagi.",
+  "lang_could_not_save_table_settings_please_retry": "Pengaturan meja tidak dapat disimpan. Coba lagi.",
   "lang_item_ai_review_help": "Tinjau saran. Terjemahan Anda tidak berubah sampai Anda menerimanya.",
   "lang_item_upload_failed": "Unggah gambar gagal. Barang belum disimpan.",
   "lang_item_translated_name": "Nama barang terjemahan",
@@ -4040,5 +4045,18 @@
   "lang_ask_payment_confirm": "Periksa struk dan total. Pilih Tunai setelah menerima uang, atau Kartu sudah dibayar setelah terminal mengonfirmasi pembayaran. Ini menyelesaikan penjualan dan meminta pencetakan struk.",
   "lang_ask_prepare_sale": "Siapkan penjualan untuk pembayaran",
   "lang_ask_review_sale": "Periksa penjualan",
-  "lang_ask_sale_checkout": "Pembayaran penjualan dan pencetakan struk"
+  "lang_ask_sale_checkout": "Pembayaran penjualan dan pencetakan struk",
+  "lang_about_these_times": "Tentang waktu ini",
+  "lang_all_sales": "Semua penjualan",
+  "lang_choose_one_branch_for_period": "Pilih satu cabang untuk memfilter menurut waktu layanan.",
+  "lang_clear_restaurant_filters": "Hapus filter restoran",
+  "lang_loading_serving_periods": "Memuat waktu layanan…",
+  "lang_period_load_failed": "Tidak dapat memuat waktu layanan. Buka kembali halaman ini untuk mencoba lagi.",
+  "lang_period_required_fields": "Masukkan nama serta waktu mulai dan selesai yang berbeda untuk setiap waktu layanan.",
+  "lang_serving_period": "Waktu layanan",
+  "lang_serving_periods_saved": "Waktu layanan disimpan",
+  "lang_set_serving_periods": "Atur sarapan, makan siang, dan makan malam di Restoran > Menu.",
+  "lang_tables_only": "Hanya meja",
+  "lang_serve_all": "Sajikan semua",
+  "lang_items_marked_served": "Item ditandai sudah disajikan"
 }

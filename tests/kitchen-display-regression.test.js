@@ -256,10 +256,10 @@ test('cancellation expires on schedule, does not restart on polls, and keeps act
   w.kitchenScreen.setConfig(cfg);
   const list=[{id:'active',table:'T1',items:[{qty:1,name:'Fish'}]}, {id:'cancel',cancelled:true,table:'T1',items:[{qty:2,name:'Fish'}]}];
   w.kitchenScreen.setTickets(list);
-  assert.match(board.querySelector('.cancelled-section').textContent,/CANCELLED.*2×Fish/);
+  assert.match(board.querySelector('.cancelled-section').textContent,/CANCELLED.*2 - Fish/);
   assert.equal(board.querySelectorAll('.ticket').length,1);
   assert.ok(board.querySelector('.cancel-pulse'));
-  assert.match(board.querySelector('.ticket:not(.cancelled)').textContent,/1×Fish/);
+  assert.match(board.querySelector('.ticket:not(.cancelled)').textContent,/1 - Fish/);
   assert.equal(w.document.getElementById('count').textContent,'1');
   now+=2000;w.kitchenScreen.setTickets(list);
   now+=1100;timers.find(t=>t.ms===250).fn();
@@ -308,7 +308,7 @@ test('one table has one box across rounds, all dishes and cancellations; untable
   w.kitchenScreen.setConfig({maxItemsPerCard:3,_fit:{fontPx:32,columns:4}});
   w.kitchenScreen.setTickets([
    {id:'sale1:c0',table:'7',items:Array.from({length:8},(_,i)=>({name:'Dish '+i,qty:1}))},
-   {id:'sale1:c1',table:'7',items:[{name:'Added fish',qty:2,note:'No salt'}]},
+   {id:'sale1:c1',table:'7',items:[{name:'Added fish',qty:2,note:'No salt',priced_at_table:500}]},
    {id:'sale1:cancel2',table:'7',cancelled:true,items:[{name:'Cancelled tea',qty:1}]},
    {id:'takeaway1:c0',table:'',items:[{name:'Parcel one',qty:1}]},
    {id:'takeaway1:c1',table:'',items:[{name:'Parcel extra',qty:1}]},
@@ -317,8 +317,10 @@ test('one table has one box across rounds, all dishes and cancellations; untable
   assert.equal(board.querySelectorAll('.ticket').length,3);
   const table=board.querySelector('.table').closest('.ticket');
   assert.equal(table.querySelectorAll('.name').length,10);
-  assert.ok(table.querySelector('.ticket-meta > .top .table'),'table details belong beside the dishes');
-  assert.ok(table.querySelector('.ticket-body > .items'),'full dish list belongs in the remaining width');
+  assert.equal(table.querySelector('.table').textContent,'T - 7');
+  assert.match(table.querySelector('.ticket-body').textContent,/2 - Added fish \(500 each\)/);
+  assert.ok(table.querySelector('.ticket-meta > .top .table'),'table heading belongs above the dishes');
+  assert.ok(table.querySelector('.ticket-body > .items'),'full dish list follows the heading');
   assert.equal(table.querySelector('.ticket-meta .items'),null);
   assert.match(table.textContent,/Dish 7/);
   assert.match(table.textContent,/Added fish/);

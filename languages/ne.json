@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "टेबल सफाइ",
+  "lang_enable_table_cleaning": "टेबल सफाइ सक्षम गर्नुहोस्",
+  "lang_off_by_default_enable_only_if_staff_should": "पूर्वनिर्धारित रूपमा बन्द छ। सक्षम भएमा, सेवा पछि टेबलहरू उपलब्ध भनी चिन्ह लगाउनुपर्छ।",
+  "lang_could_not_load_table_settings_please_retry": "टेबल सेटिङहरू लोड गर्न सकिएन। फेरि प्रयास गर्नुहोस्।",
+  "lang_could_not_save_table_settings_please_retry": "टेबल सेटिङहरू सुरक्षित गर्न सकिएन। फेरि प्रयास गर्नुहोस्।",
   "lang_item_ai_review_help": "सुझाव जाँच्नुहोस्। स्वीकार नगरेसम्म तपाईंको अनुवाद बदलिँदैन।",
   "lang_item_upload_failed": "तस्बिर अपलोड भएन। वस्तु सुरक्षित भएको छैन।",
   "lang_item_translated_name": "अनुवादित वस्तुको नाम",
@@ -4040,5 +4045,18 @@
   "lang_ask_payment_confirm": "रसिद र कुल जाँच्नुहोस्। पैसा पाएपछि नगद वा टर्मिनलले पुष्टि गरेपछि कार्ड भुक्तानी प्राप्त छान्नुहोस्। यसले बिक्री पूरा गरी रसिद प्रिन्ट अनुरोध गर्छ।",
   "lang_ask_prepare_sale": "चेकआउटका लागि बिक्री तयार गर्नुहोस्",
   "lang_ask_review_sale": "बिक्री समीक्षा गर्नुहोस्",
-  "lang_ask_sale_checkout": "बिक्री चेकआउट र रसिद प्रिन्ट"
+  "lang_ask_sale_checkout": "बिक्री चेकआउट र रसिद प्रिन्ट",
+  "lang_about_these_times": "यी समयहरूबारे",
+  "lang_all_sales": "सबै बिक्री",
+  "lang_choose_one_branch_for_period": "खाना सेवाको अवधिअनुसार छान्न एउटा शाखा रोज्नुहोस्।",
+  "lang_clear_restaurant_filters": "रेस्टुरेन्टका फिल्टर हटाउनुहोस्",
+  "lang_loading_serving_periods": "खाना सेवाका अवधिहरू लोड हुँदै छन्…",
+  "lang_period_load_failed": "खाना सेवाका अवधिहरू लोड हुन सकेनन्। फेरि प्रयास गर्न यो पृष्ठ पुनः खोल्नुहोस्।",
+  "lang_period_required_fields": "हरेक खाना सेवाको अवधिका लागि नाम र फरक सुरु तथा अन्त्य समय राख्नुहोस्।",
+  "lang_serving_period": "खाना सेवाको अवधि",
+  "lang_serving_periods_saved": "खाना सेवाका अवधिहरू सुरक्षित गरिए",
+  "lang_set_serving_periods": "रेस्टुरेन्ट > मेनुमा बिहान, दिउँसो र बेलुकाको खानाको समय मिलाउनुहोस्।",
+  "lang_tables_only": "टेबलहरू मात्र",
+  "lang_serve_all": "सबै पस्कनुहोस्",
+  "lang_items_marked_served": "आइटमहरू पस्किएको भनी चिन्ह लगाइयो"
 }

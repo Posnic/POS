@@ -4044,5 +4044,18 @@
   "lang_ask_payment_confirm": "रसीद और कुल जाँचें। पैसे मिलने के बाद नकद चुनें, या टर्मिनल की पुष्टि के बाद कार्ड भुगतान मिला चुनें। इससे बिक्री पूरी होती है और रसीद प्रिंट का अनुरोध होता है।",
   "lang_ask_prepare_sale": "चेकआउट के लिए बिक्री तैयार करें",
   "lang_ask_review_sale": "बिक्री की समीक्षा करें",
-  "lang_ask_sale_checkout": "बिक्री चेकआउट और रसीद प्रिंट"
+  "lang_ask_sale_checkout": "बिक्री चेकआउट और रसीद प्रिंट",
+  "lang_about_these_times": "इन समयों के बारे में",
+  "lang_all_sales": "सभी बिक्री",
+  "lang_choose_one_branch_for_period": "भोजन अवधि के अनुसार फ़िल्टर करने के लिए एक शाखा चुनें।",
+  "lang_clear_restaurant_filters": "रेस्तरां फ़िल्टर हटाएँ",
+  "lang_loading_serving_periods": "भोजन अवधियाँ लोड हो रही हैं…",
+  "lang_period_load_failed": "भोजन अवधियाँ लोड नहीं हो सकीं। फिर से कोशिश करने के लिए यह पेज दोबारा खोलें।",
+  "lang_period_required_fields": "हर भोजन अवधि का नाम और अलग-अलग शुरू और समाप्ति समय दर्ज करें।",
+  "lang_serving_period": "भोजन अवधि",
+  "lang_serving_periods_saved": "भोजन अवधियाँ सहेजी गईं",
+  "lang_set_serving_periods": "रेस्तरां > मेन्यू में नाश्ते, दोपहर और रात के भोजन का समय तय करें।",
+  "lang_tables_only": "केवल टेबल",
+  "lang_serve_all": "सभी परोसें",
+  "lang_items_marked_served": "आइटम परोसे गए के रूप में चिह्नित हैं"
 }

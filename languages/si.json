@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "මේස පිරිසිදු කිරීම",
+  "lang_enable_table_cleaning": "මේස පිරිසිදු කිරීම සක්‍රිය කරන්න",
+  "lang_off_by_default_enable_only_if_staff_should": "පෙරනිමියෙන් අක්‍රියයි. සක්‍රිය කළ විට, සේවාවෙන් පසු මේස ලබාගත හැකි ලෙස සලකුණු කළ යුතුය.",
+  "lang_could_not_load_table_settings_please_retry": "මේස සැකසුම් පූරණය කළ නොහැකි විය. නැවත උත්සාහ කරන්න.",
+  "lang_could_not_save_table_settings_please_retry": "මේස සැකසුම් සුරැකිය නොහැකි විය. නැවත උත්සාහ කරන්න.",
   "lang_item_ai_review_help": "යෝජනාව පරීක්ෂා කරන්න. පිළිගන්නා තෙක් ඔබේ පරිවර්තනය වෙනස් නොවේ.",
   "lang_item_upload_failed": "රූපය උඩුගත කිරීම අසාර්ථකයි. භාණ්ඩය සුරැකී නැත.",
   "lang_item_translated_name": "පරිවර්තනය කළ භාණ්ඩ නම",
@@ -4040,5 +4045,18 @@
   "lang_ask_payment_confirm": "රිසිට්පත සහ එකතුව බලන්න. මුදල් ලැබුණු පසු මුදල් හෝ යන්ත්‍රය තහවුරු කළ පසු කාඩ් ගෙවීම ලැබුණි තෝරන්න. මෙය විකිණීම අවසන් කර රිසිට්පත මුද්‍රණය ඉල්ලයි.",
   "lang_ask_prepare_sale": "ගෙවීමට විකිණීම සූදානම් කරන්න",
   "lang_ask_review_sale": "විකිණීම පරීක්ෂා කරන්න",
-  "lang_ask_sale_checkout": "විකිණීම් ගෙවීම සහ රිසිට්පත් මුද්‍රණය"
+  "lang_ask_sale_checkout": "විකිණීම් ගෙවීම සහ රිසිට්පත් මුද්‍රණය",
+  "lang_about_these_times": "මෙම වේලාවන් ගැන",
+  "lang_all_sales": "සියලු විකුණුම්",
+  "lang_choose_one_branch_for_period": "සේවා කාලය අනුව පෙරීමට එක් ශාඛාවක් තෝරන්න.",
+  "lang_clear_restaurant_filters": "ආපනශාලා පෙරහන් ඉවත් කරන්න",
+  "lang_loading_serving_periods": "සේවා කාලයන් පූරණය වෙමින්…",
+  "lang_period_load_failed": "සේවා කාලයන් පූරණය කළ නොහැකි විය. නැවත උත්සාහ කිරීමට මෙම පිටුව නැවත විවෘත කරන්න.",
+  "lang_period_required_fields": "සෑම සේවා කාලයකටම නමක් සහ වෙනස් ආරම්භක හා අවසන් වේලාවන් ඇතුළත් කරන්න.",
+  "lang_serving_period": "සේවා කාලය",
+  "lang_serving_periods_saved": "සේවා කාලයන් සුරකින ලදී",
+  "lang_set_serving_periods": "ආපනශාලාව > මෙනුව තුළ උදේ, දහවල් සහ රාත්‍රී ආහාර වේලාවන් සකසන්න.",
+  "lang_tables_only": "මේස පමණි",
+  "lang_serve_all": "සියල්ල පිළිගන්වන්න",
+  "lang_items_marked_served": "අයිතම පිළිගැන්වූ ලෙස සලකුණු කරන ලදී"
 }

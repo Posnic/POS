@@ -28,3 +28,14 @@ describe('sales.helper', () => {
     expect(helper.roundToTwo('12.345')).toBe(12.35);
   });
 });
+test('the desktop KOT list keeps distinct Captain preparation IDs', () => {
+  const { formatSaleListEntry } = require('../../../src/helpers/sales.helper');
+  const result = formatSaleListEntry({
+    _id: 'order',
+    items: [
+      { item_id: 'water', line_id: 'first', item_quantity: 1 },
+      { item_id: 'water', line_id: 'second', item_quantity: 2 },
+    ],
+  });
+  expect(result.items.map((line) => line.line_id)).toEqual(['first', 'second']);
+});

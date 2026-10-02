@@ -1,4 +1,5 @@
 'use strict';
+const { reportableSales } = require('../helpers/reportable-sales');
 
 const moment = require('moment-timezone');
 const crypto = require('crypto');
@@ -57,7 +58,7 @@ async function read(model, input, at = new Date()) {
         {
           $match: model.getContextMatch({
             date: { $gte: start.toDate(), $lt: end.toDate() },
-            sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] },
+            ...reportableSales(),
           }),
         },
         { $unwind: '$items' },

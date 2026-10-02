@@ -8,6 +8,55 @@ const { renderReceipt, needsRaster, layout } = require('../src/escpos-unicode');
 const { renderSale } = require('../src/escpos-receipt');
 const { parse } = require('../src/escpos-preview');
 
+function frameImage(frame, fill = 255) {
+  const width = 384, height = 260;
+  const pixels = Buffer.alloc(width * height * 4, fill);
+  for (let bit = 0; bit < 12; bit++) for (let half = 0; half < 2; half++) {
+    const at = (2 * width + (bit * 2 + half) * 4 + 2) * 4;
+    pixels.fill(((frame >> bit) & 1) === half ? 0 : 255, at, at + 3);
+    pixels[at + 3] = 255;
+  }
+  return {
+    isEmpty: () => false, getSize: () => ({ width, height }),
+    crop() { return this; }, resize() { return this; }, toBitmap: () => pixels,
+  };
+}
+
+test('thermal strips reject previous frames and return only the matching frame without its marker', async () => {
+  const { EventEmitter } = require('node:events');
+  const { captureReceiptStrip } = require('../src/escpos-unicode');
+  const contents = new EventEmitter();
+  contents.executeJavaScript = async () => {};
+  contents.invalidate = () => {};
+  let ready = false;
+  const pending = captureReceiptStrip(contents, 384, 73, 256).then(pixels => {
+    ready = true; return pixels;
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  contents.emit('paint', {}, {}, frameImage(1));
+  contents.emit('paint', {}, {}, frameImage(3));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(ready, false, 'a paint event alone must not acknowledge the requested strip');
+  contents.emit('paint', {}, {}, frameImage(2, 128));
+  assert.deepEqual(await pending, Buffer.alloc(384 * 73 * 4, 128));
+  assert.equal(contents.listenerCount('paint'), 0);
+  assert.equal(contents.listenerCount('destroyed'), 0);
+});
+
+test('a stale-only frame stream times out and a destroyed renderer fails cleanly', async () => {
+  const { EventEmitter } = require('node:events');
+  const { waitForReceiptPaint, stripFrame } = require('../src/escpos-unicode');
+  const contents = new EventEmitter();
+  contents.invalidate = () => contents.emit('paint', {}, {}, frameImage(1));
+  await assert.rejects(waitForReceiptPaint(contents, 15, image => stripFrame(image, 384, 256, 2)), /Nothing was printed/);
+  assert.equal(contents.listenerCount('paint'), 0);
+  const pending = waitForReceiptPaint(contents);
+  contents.emit('destroyed');
+  await assert.rejects(pending, /closed before rendering/);
+  assert.equal(contents.listenerCount('paint'), 0);
+  assert.equal(contents.listenerCount('destroyed'), 0);
+});
+
 const sale = {
   storeName: 'متجر التجربة', storeAddress: 'القاهرة', billNo: 'TEST-001', currency: 'ج.م ',
   customer: ['عبدالله'], serviceRows: [{ label: 'طاولة', value: '12' }],

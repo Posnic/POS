@@ -116,7 +116,7 @@ const buildDailyPaymentAggregationPipeline = (match) => [
   { $sort: { total: -1 } },
 ];
 
-const getReportServingPeriods = async () => new ItemRepository().shopDayparts();
+const getReportServingPeriods = async (context) => new ItemRepository().shopDayparts(context);
 
 // Lightweight helpers for controllers that still need branch metadata
 // Delegates to the BranchesRepository so that all branch DB access stays
@@ -302,7 +302,7 @@ const processSale = async (
     }
 
     // 3. Process Items & Calculations
-    const items = data.items || [];
+    let items = data.items || [];
 
     // Robust numeric parser for legacy string values that may contain
     // commas or currency/percent symbols.
@@ -361,6 +361,9 @@ const processSale = async (
       }
     }
 
+    if (existingSale) {
+      items = require('../utils/order-line').reconcile(items, existingSale.items || []);
+    }
     const billingOutlets = require('./billing-outlets');
     const outlet = await billingOutlets.resolve(
       context,
@@ -678,6 +681,7 @@ const processSale = async (
       // Indian GST is disabled.
       itemsale.push({
         pricing,
+        ...(previousLine ? require('../utils/service-line').metadata(previousLine) : {}),
         ...require('../utils/order-line').identity(item),
         ...(extras.lines.length ? { modifiers: extras.lines } : {}),
         // Mongoose Schema Required Fields (Node-native)
@@ -1221,9 +1225,11 @@ const processSale = async (
       payment_description: (data.payment_description || '').trim(),
       discount_description: (data.discount_description || '').trim(),
       // Use full precision values to mirror PHP's stored doubles
+      total: salesTotalForDoc,
       sales_total: salesTotalForDoc,
       sales_round_off: roundOffForDoc,
       round_off: roundOffForDoc,
+      subtotal: sale_subtotal_amount,
       sales_sub_total: sale_subtotal_amount,
       items_total: itemsTotalForDoc, // Mirrors PHP items_total
       items_return_total: 0.0,

@@ -15,6 +15,10 @@ function setup() {
   w.setTimeout = () => {};
   const calls = [];
   w.PosnicPro = { i18n: { t: (key, fallback) => fallback }, alert: (...a) => calls.push(a) };
+  w.PosnicPro.get = (_params, callback) => callback({type:'success', data: w.periodOptions || {restaurant_enabled:true, serving_periods:[]} });
+  const core = fs.readFileSync('frontend/static/script/js/core/PosnicPro.js', 'utf8');
+  w.eval(core.slice(core.indexOf('PosnicPro.mountServingPeriodFilter = function')));
+  w.$('#dailysale_branch_value').append(w.$('<option>').val('branch-a').text('A')).val('branch-a');
   w.eval(
     fs.readFileSync(
       "frontend/static/script/js/modules/js/report_dailysales.js",
@@ -25,9 +29,9 @@ function setup() {
     calls.push(w.PosnicPro.quickreport.periodParams());
   return { w, $: w.$, r: w.PosnicPro.quickreport, calls };
 }
-test("meal buttons set the request window and pressed state", () => {
+test("meal dropdown sets the request window and selected state", () => {
   const { w, $, r, calls } = setup();
-  r.renderPeriods({
+  w.periodOptions = {
     restaurant_enabled: true,
     serving_periods: [
       {
@@ -36,13 +40,13 @@ test("meal buttons set the request window and pressed state", () => {
         hours: { mon: [{ open: 750, close: 930 }] },
       },
     ],
-  });
-  $('#dailyreport_new [data-meal="period:lunch"]').trigger("click");
+  };
+  r.loadPeriods();
+  $('#daily-serving-period').val('lunch').trigger('change');
   assert.deepEqual(JSON.parse(JSON.stringify(calls[0])), {
     serving_period: "lunch",
   });
-  assert.equal($('[data-meal="period:lunch"]').attr("aria-pressed"), "true");
-  assert.equal($('[data-meal="full"]').attr("aria-pressed"), "false");
+  assert.equal($('#daily-serving-period').val(), 'lunch');
   r.chooseMeal("full");
   assert.deepEqual(JSON.parse(JSON.stringify(calls[1])), {});
   w.close();
@@ -83,7 +87,7 @@ test("period controls are hidden for retail and reset previous selections", () =
 });
 test("configured names and hours replace hardcoded breakfast timings", () => {
   const { w, $, r } = setup();
-  r.renderPeriods({
+  w.periodOptions = {
     restaurant_enabled: true,
     serving_periods: [
       {
@@ -93,9 +97,10 @@ test("configured names and hours replace hardcoded breakfast timings", () => {
       },
       { id: "tea", name: "Tea" },
     ],
-  });
-  assert.equal($('[data-meal="period:breakfast"]').length, 0);
-  assert.match($('[data-meal="period:brunch"]').text(), /10:00–14:00/);
-  assert.equal($('[data-meal="period:tea"]').prop("disabled"), true);
+  };
+  r.loadPeriods();
+  assert.equal($('#daily-serving-period option[value=breakfast]').length, 0);
+  assert.equal($('#daily-serving-period option[value=brunch]').text(), 'Weekend brunch');
+  assert.equal($('#daily-serving-period option[value=tea]').prop('disabled'), true);
   w.close();
 });

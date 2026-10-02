@@ -1,4 +1,9 @@
 {
+  "lang_table_cleaning": "تنظيف الطاولات",
+  "lang_enable_table_cleaning": "تفعيل تنظيف الطاولات",
+  "lang_off_by_default_enable_only_if_staff_should": "معطل افتراضيًا. عند التفعيل، يجب تحديد الطاولات كمتاحة بعد الخدمة.",
+  "lang_could_not_load_table_settings_please_retry": "تعذر تحميل إعدادات الطاولات. حاول مجددًا.",
+  "lang_could_not_save_table_settings_please_retry": "تعذر حفظ إعدادات الطاولات. حاول مجددًا.",
   "lang_item_upload_failed": "فشل رفع الصورة. لم يتم حفظ الصنف.",
   "lang_item_translated_name": "اسم الصنف المترجم",
   "lang_item_stock_variants_help": "أدخل المخزون الافتتاحي في صف كل متغير.",
@@ -4040,5 +4045,18 @@
   "lang_ask_payment_confirm": "راجع الإيصال والمجموع. اختر نقدًا بعد استلام المال، أو تم الدفع بالبطاقة بعد تأكيد جهاز الدفع. يؤدي ذلك إلى إكمال البيع وطلب طباعة الإيصال.",
   "lang_ask_prepare_sale": "تحضير البيع للدفع",
   "lang_ask_review_sale": "مراجعة البيع",
-  "lang_ask_sale_checkout": "إتمام المبيعات وطباعة الإيصالات"
+  "lang_ask_sale_checkout": "إتمام المبيعات وطباعة الإيصالات",
+  "lang_about_these_times": "حول هذه الأوقات",
+  "lang_all_sales": "كل المبيعات",
+  "lang_choose_one_branch_for_period": "اختر فرعًا واحدًا للتصفية حسب فترة التقديم.",
+  "lang_clear_restaurant_filters": "مسح مرشحات المطعم",
+  "lang_loading_serving_periods": "جارٍ تحميل فترات التقديم…",
+  "lang_period_load_failed": "تعذر تحميل فترات التقديم. أعد فتح هذه الصفحة للمحاولة مجددًا.",
+  "lang_period_required_fields": "أدخل اسمًا ووقتي بداية ونهاية مختلفين لكل فترة تقديم.",
+  "lang_serving_period": "فترة التقديم",
+  "lang_serving_periods_saved": "تم حفظ فترات التقديم",
+  "lang_set_serving_periods": "حدد الإفطار والغداء والعشاء في المطعم > القائمة.",
+  "lang_tables_only": "الطاولات فقط",
+  "lang_serve_all": "تقديم الكل",
+  "lang_items_marked_served": "تم تحديد الأصناف على أنها قُدمت"
 }

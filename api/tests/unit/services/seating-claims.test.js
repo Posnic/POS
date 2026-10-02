@@ -24,6 +24,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await db.dropDatabase();
   scope = { branchId: new ObjectId(), license: new ObjectId() };
+  scope.branch = { captain_table_cleaning: true };
   ids = [new ObjectId(), new ObjectId(), new ObjectId()].map(String);
   await db.collection('tableorder').insertMany(
     ids.map((id, index) => ({
@@ -249,6 +250,27 @@ test('closed sale releases every member for cleaning and archives the retry reco
   expect((await db.collection('sales').findOne({ _id: saleId })).items).toEqual([
     { name: 'Dish', qty: 2 },
   ]);
+});
+
+test('manual cleaning policy releases cancelled seating to available without changing the sale', async () => {
+  delete scope.branch;
+  await db
+    .collection('branches')
+    .insertOne({ _id: scope.branchId, license: scope.license, captain_table_cleaning: false });
+  const claim = await seating.reserve(db, scope, request());
+  const saleId = new ObjectId();
+  await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    sale_process: 'cancelled',
+    payment_status: 'Cancelled',
+    floor_closed_at: new Date(),
+  });
+  await seating.release(db, scope, claim.id);
+  expect(await db.collection('tableorder').countDocuments({ service_state: 'available' })).toBe(2);
+  expect((await db.collection('sales').findOne({ _id: saleId })).payment_status).toBe('Cancelled');
 });
 test('paid alone, missing sale and other-branch sale cannot release the claim', async () => {
   const claim = await seating.reserve(db, scope, request());
@@ -1975,13 +1997,43 @@ async function legacySale(guests = 2) {
   return sale;
 }
 
+test('floor refresh recovers a committed cancellation without repeating kitchen changes', async () => {
+  const order = await movableOrder();
+  await db.collection('sales').updateOne(
+    { _id: order._id },
+    {
+      $set: {
+        sale_process: 'cancelled',
+        payment_status: 'Cancelled',
+        floor_closed_at: new Date(),
+        changes: [{ items: [{ process: 'cancel', item_quantity: 1 }] }],
+      },
+    }
+  );
+  await seating.releaseSettled(db, scope);
+  await seating.releaseSettled(db, scope);
+  expect((await seating.find(db, scope, order.seating_request_id)).state).toBe('released');
+  expect((await db.collection('sales').findOne({ _id: order._id })).changes).toHaveLength(1);
+});
+
 test('existing zero-cover desktop orders can update dishes without inventing guests', async () => {
   const order = await legacySale(0);
   await expect(seating.forEdit(db, scope, order, { guests: 0 })).resolves.toBeNull();
   await expect(seating.reserveEditCapacity(db, scope, order, { guests: 0 })).resolves.toBeNull();
-  await expect(seating.reserveEditCapacity(db, scope, order, { guests: 0, table: 'T2' })).rejects.toThrow('number of guests');
-  await expect(seating.reserveEditCapacity(db, scope, { ...order, sale_process: 'Hold' }, { guests: 0, sale_process: 'KOT' })).rejects.toThrow('number of guests');
-  await expect(seating.forEdit(db, scope, { ...order, person_count: 2 }, { guests: 0 })).rejects.toThrow('number of guests');
+  await expect(
+    seating.reserveEditCapacity(db, scope, order, { guests: 0, table: 'T2' })
+  ).rejects.toThrow('number of guests');
+  await expect(
+    seating.reserveEditCapacity(
+      db,
+      scope,
+      { ...order, sale_process: 'Hold' },
+      { guests: 0, sale_process: 'KOT' }
+    )
+  ).rejects.toThrow('number of guests');
+  await expect(
+    seating.forEdit(db, scope, { ...order, person_count: 2 }, { guests: 0 })
+  ).rejects.toThrow('number of guests');
 });
 
 test('claimed zero-cover orders remain editable but retain move protections', async () => {
@@ -1989,7 +2041,12 @@ test('claimed zero-cover orders remain editable but retain move protections', as
   order.person_count = 0;
   await db.collection('sales').updateOne({ _id: order._id }, { $set: { person_count: 0 } });
   await expect(seating.forEdit(db, scope, order, { guests: 0 })).resolves.toBeTruthy();
-  await db.collection('table_seating').updateOne({ 'claims.id': order.seating_request_id }, { $set: { 'claims.$.moving_to': 'pending-move' } });
+  await db
+    .collection('table_seating')
+    .updateOne(
+      { 'claims.id': order.seating_request_id },
+      { $set: { 'claims.$.moving_to': 'pending-move' } }
+    );
   await expect(seating.forEdit(db, scope, order, { guests: 0 })).rejects.toThrow('Reconcile');
 });
 
@@ -2856,4 +2913,23 @@ test('activating a parked sale reserves its entire party even when its table and
   ).rejects.toThrow('enough seats');
   await seating.reconcileEditCapacity(db, scope, permit.id);
   expect((await commitCapacityEdit(held, permit, 2)).matchedCount).toBe(0);
+});
+
+test('default-disabled cleaning permits seating and does not return closed tables to cleaning', async () => {
+  scope.branch = {};
+  await db.collection('tableorder').updateMany({}, { $set: { service_state: 'cleaning' } });
+  const claim = await seating.reserve(db, scope, request());
+  const saleId = new ObjectId();
+  await seating.bind(db, scope, claim.id, 'staff-1', String(saleId));
+  await db.collection('sales').insertOne({
+    _id: saleId,
+    branch_id: scope.branchId,
+    license: scope.license,
+    payment_status: 'Paid',
+    floor_closed_at: new Date(),
+  });
+  await seating.release(db, scope, claim.id);
+  expect(
+    await db.collection('tableorder').countDocuments({ service_state: 'available' })
+  ).toBeGreaterThan(0);
 });

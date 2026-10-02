@@ -44,6 +44,7 @@ beforeEach(async () => {
     _id: branch,
     license,
     name: 'Restaurant',
+    captain_table_cleaning: true,
     table_options: true,
     table_order_limit: 1,
     online_ordering: { store_id: 'SHOP1', mode: 'order' },
@@ -254,7 +255,7 @@ test('an interrupted cancellation release retries without writing another kitche
   const release = jest
     .spyOn(seating, 'release')
     .mockRejectedValueOnce(new Error('lost connection'));
-  expect((await cancel()).status).toBe(false);
+  expect((await cancel()).status).toBe(true);
   release.mockRestore();
   const saved = await db.collection('sales').findOne({ _id: new ObjectId(created.data.sale_id) });
   expect((await cancel()).status).toBe(true);

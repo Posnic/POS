@@ -1,3 +1,4 @@
+const { reportableSales } = require('../helpers/reportable-sales');
 // src/controllers/sales_controller.js
 const BaseController = require('./base.controller');
 const { clientIp } = require('../utils/client-ip');
@@ -1139,6 +1140,21 @@ class SalesController extends BaseController {
         options.sortBy = SALE_SORTS[req.query.sort];
       }
 
+      if (req.query.table_number || req.query.tables_only || req.query.serving_period) {
+        const branchDoc = await salesService.getBranchById(BaseModel.currentBranch);
+        if (!branchDoc || ![true, 'true', 'enable', 1, '1'].includes(branchDoc.table_options)) {
+          return this.error(res, 'Restaurant filters require Restaurant to be enabled.', 400);
+        }
+        const periods = req.query.serving_period
+          ? await salesService.getReportServingPeriods()
+          : [];
+        const clauses = require('../helpers/restaurant-history-filter').restaurantHistoryFilter(
+          req.query,
+          periods,
+          branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC'
+        );
+        filter.$and = [...(filter.$and || []), ...clauses];
+      }
       const result = await salesService.listSales(filter, options, { SaleModel });
 
       const docs = Array.isArray(result?.results) ? result.results : [];
@@ -1390,6 +1406,71 @@ class SalesController extends BaseController {
     }
   }
 
+  async servingPeriodOptions(req, res) {
+    try {
+      if (
+        !this.checkPermission('report', 'read', req.user) &&
+        !this.checkPermission('sales', 'read', req.user)
+      )
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      const branchId = req.query.branch || resolveBranchId(req.user, req.session);
+      const data = await this.readServingPeriods(req, branchId);
+      return this.success(res, data, 'Serving periods loaded');
+    } catch (error) {
+      return this.error(res, error.message, error.statusCode || 500);
+    }
+  }
+
+  async readServingPeriods(req, branchId) {
+    const fail = (message, statusCode = 400) => {
+      throw Object.assign(new Error(message), { statusCode });
+    };
+    if (!mongoose.Types.ObjectId.isValid(String(branchId || '')))
+      fail('Choose one branch to filter by serving period.');
+    const licenseId =
+      req.tenantContext?.licenseId ||
+      req.user?.license ||
+      req.user?.license_id ||
+      req.user?.licenseId;
+    const allowed = req.user?.branch_access;
+    if (
+      Array.isArray(allowed) &&
+      allowed.length &&
+      !allowed.some((b) => String(b.branch_id || b) === String(branchId))
+    )
+      fail('You do not have access to this branch.', 403);
+    const branch = await salesService.getBranchById(branchId);
+    if (!branch || !licenseId || String(branch.license) !== String(licenseId))
+      fail('Branch not found.', 404);
+    const restaurant_enabled = [true, 'true', 'enable', 1, '1'].includes(branch.table_options);
+    const serving_periods = restaurant_enabled
+      ? await salesService.getReportServingPeriods({ branchId, licenseId })
+      : [];
+    return {
+      restaurant_enabled,
+      serving_periods,
+      timezone: branch.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC',
+    };
+  }
+
+  async reportServingMatch(req, branchIds) {
+    if (!req.query.serving_period) return [];
+    if (branchIds.length !== 1)
+      throw Object.assign(new Error('Choose one branch to filter by serving period.'), {
+        statusCode: 400,
+      });
+    const options = await this.readServingPeriods(req, branchIds[0]);
+    if (!options.restaurant_enabled)
+      throw Object.assign(new Error('Restaurant is not enabled for this branch.'), {
+        statusCode: 400,
+      });
+    return require('../helpers/restaurant-history-filter').restaurantHistoryFilter(
+      { serving_period: req.query.serving_period },
+      options.serving_periods,
+      options.timezone
+    );
+  }
+
   async dailySalesReports(req, res) {
     try {
       // ---- Access check (null-safe) ----
@@ -1421,7 +1502,12 @@ class SalesController extends BaseController {
         (req.query.serving_period || req.query.start_time || req.query.end_time)
       )
         return this.error(res, 'Serving-period filters require Restaurant to be enabled.', 400);
-      const servingPeriods = restaurantEnabled ? await salesService.getReportServingPeriods() : [];
+      const servingPeriods = restaurantEnabled
+        ? await salesService.getReportServingPeriods({
+            branchId: branch,
+            licenseId: BaseModel.license || req.user.license || req.user.license_id,
+          })
+        : [];
       const period = require('../helpers/daily-report-period').dailyReportPeriod(
         req.query,
         branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC',
@@ -1437,10 +1523,10 @@ class SalesController extends BaseController {
       const SaleModel = this.model || Sale;
       const branchObjectId = new mongoose.Types.ObjectId(branch);
 
-      // PHP uses ONLY date field and specific sale_process - sales_model.php:7088-7095
+      // Use the same posted-sale rule as the dashboard and report exports.
       const match = {
         $and: [
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          reportableSales(),
           period.match('date', filteredDateRange.start_date),
           { branch_id: branchObjectId },
         ],
@@ -1796,7 +1882,12 @@ class SalesController extends BaseController {
         (req.query.serving_period || req.query.start_time || req.query.end_time)
       )
         return this.error(res, 'Serving-period filters require Restaurant to be enabled.', 400);
-      const servingPeriods = restaurantEnabled ? await salesService.getReportServingPeriods() : [];
+      const servingPeriods = restaurantEnabled
+        ? await salesService.getReportServingPeriods({
+            branchId: branch,
+            licenseId: BaseModel.license || req.user.license || req.user.license_id,
+          })
+        : [];
       const period = require('../helpers/daily-report-period').dailyReportPeriod(
         req.query,
         branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC',
@@ -1813,6 +1904,7 @@ class SalesController extends BaseController {
       const branchObjectId = new mongoose.Types.ObjectId(branch);
       const match = {
         $and: [
+          reportableSales(),
           {
             $or: [{ branch: branchObjectId }, { branch_id: branchObjectId }],
           },
@@ -2684,7 +2776,7 @@ class SalesController extends BaseController {
       // Initialize match variable outside the if block
       const match = {
         branch_id: { $in: validBranchIds },
-        sale_process: { $in: GRAPH_ALLOWED_SALE_PROCESSES },
+        ...reportableSales(),
         status: { $ne: SALE_STATUS.CANCELLED },
       };
 
@@ -2785,6 +2877,7 @@ class SalesController extends BaseController {
 
       const match = {
         branch_id: { $in: branchObjectIds },
+        ...reportableSales([...GRAPH_ALLOWED_SALE_PROCESSES, 'FullReturn']),
       };
 
       // Apply session filtering if user has permission and dates are provided
@@ -2814,6 +2907,11 @@ class SalesController extends BaseController {
         }
       }
 
+      match.$and = [
+        ...(match.$and || []),
+        ...(await this.reportServingMatch(req, branchObjectIds)),
+      ];
+
       const SaleModel = this.model || Sale;
 
       const result = await salesService.getSalesSummaryReportsData(
@@ -2823,6 +2921,7 @@ class SalesController extends BaseController {
 
       return this.success(res, result, 'Sales summary report retrieved successfully');
     } catch (error) {
+      if (error.statusCode) return this.error(res, error.message, error.statusCode);
       console.error('Error in salesSummaryReports:', error);
       return this.error(res, 'Failed to load sales summary report. Please try again later.', 500);
     }
@@ -2948,9 +3047,9 @@ class SalesController extends BaseController {
       const match = {
         $and: [
           { branch_id: { $in: branchObjectIds } },
-          { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
+          reportableSales(),
           {
-            updated_date: { $gte: startDate, $lte: endDate },
+            date: { $gte: startDate, $lte: endDate },
             license: new ObjectId(req.user.license || req.user.licenseId),
           },
         ],
@@ -2975,6 +3074,11 @@ class SalesController extends BaseController {
         console.warn('Sales report: could not read branch date settings:', err.message);
       }
 
+      match.$and = [
+        ...(match.$and || []),
+        ...(await this.reportServingMatch(req, branchObjectIds)),
+      ];
+
       const SaleModel = this.model || Sale;
       const responseData = await salesService.getSalesReportsData(
         { match, page, limit, branch },
@@ -2988,6 +3092,7 @@ class SalesController extends BaseController {
         data: responseData,
       });
     } catch (error) {
+      if (error.statusCode) return this.error(res, error.message, error.statusCode);
       console.error('Error in salesReports:', error);
       return res.status(500).json({
         type: 'error',
@@ -3102,7 +3207,7 @@ class SalesController extends BaseController {
       const matchConditions = [
         { branch_id: { $in: branchIds } },
         { 'items.item_status': 'instant' }, // Exact match, not regex
-        { sale_process: { $in: ['Add', 'Edit', 'PartialReturn', 'Partial'] } },
+        { ...reportableSales(['Add', 'Edit', 'PartialReturn', 'Partial']) },
       ];
 
       if (Object.keys(dateFilter).length) {
@@ -3110,6 +3215,8 @@ class SalesController extends BaseController {
       }
 
       const match = { $and: matchConditions };
+
+      match.$and = [...(match.$and || []), ...(await this.reportServingMatch(req, branchIds))];
 
       const SaleModel = this.model || Sale;
       const timeZone = resolveTimeZonePreference(req.user);
@@ -3155,6 +3262,7 @@ class SalesController extends BaseController {
         'Instant sales report retrieved successfully'
       );
     } catch (error) {
+      if (error.statusCode) return this.error(res, error.message, error.statusCode);
       console.error('Error in instantSalesReports:', error);
       return this.error(res, 'Unable to load instant sales report. Please try again later.', 500, {
         error: error.message,
@@ -3309,10 +3417,7 @@ class SalesController extends BaseController {
       }
       const { branchIds, error: branchError } = this.extractBranchObjectIds(req);
       if (branchError) return this.error(res, branchError, 400);
-      const matchConditions = [
-        { branch_id: { $in: branchIds } },
-        { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
-      ];
+      const matchConditions = [{ branch_id: { $in: branchIds } }, reportableSales()];
       if (Object.keys(dateFilter).length) matchConditions.push({ updated_date: dateFilter });
 
       const { rows } = await salesService.getTaxSummaryReportData(
@@ -3514,10 +3619,7 @@ class SalesController extends BaseController {
       }
 
       // PHP uses ONLY branch_id and updated_date - sales_model.php:3867-3874
-      const matchConditions = [
-        { branch_id: { $in: branchIds } },
-        { sale_process: { $in: ['Add', 'Edit', 'PartialReturn'] } },
-      ];
+      const matchConditions = [{ branch_id: { $in: branchIds } }, reportableSales()];
 
       // PHP uses ONLY updated_date field (line 3871)
       if (Object.keys(dateFilter).length) {
@@ -3683,7 +3785,7 @@ class SalesController extends BaseController {
             { 'branch._id': { $in: branchIds } },
           ],
         },
-        { sale_process: { $in: GRAPH_ALLOWED_SALE_PROCESSES } },
+        reportableSales(),
         { status: { $ne: SALE_STATUS.CANCELLED } },
       ];
 
@@ -3850,10 +3952,7 @@ class SalesController extends BaseController {
         return this.error(res, branchError, 400);
       }
 
-      const matchConditions = [
-        { branch_id: { $in: branchIds } },
-        { sale_process: { $in: GRAPH_ALLOWED_SALE_PROCESSES } },
-      ];
+      const matchConditions = [{ branch_id: { $in: branchIds } }, reportableSales()];
 
       if (Object.keys(dateFilter).length) {
         matchConditions.push({ updated_date: dateFilter });
@@ -4029,7 +4128,7 @@ class SalesController extends BaseController {
             { 'branch._id': { $in: branchIds } },
           ],
         },
-        { sale_process: { $in: GRAPH_ALLOWED_SALE_PROCESSES } },
+        reportableSales(),
         { status: { $ne: SALE_STATUS.CANCELLED } },
       ];
 
@@ -4173,7 +4272,7 @@ class SalesController extends BaseController {
             { 'branch._id': { $in: branchIds } },
           ],
         },
-        { sale_process: { $in: statuses } },
+        { ...reportableSales(statuses) },
         { status: { $ne: SALE_STATUS.CANCELLED } },
       ];
 

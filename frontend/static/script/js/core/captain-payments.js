@@ -98,7 +98,7 @@
         resolve,
         (e) =>
           reject(
-            Object.assign(new Error("request_failed"), { status: e?.status }),
+            Object.assign(new Error(e?.responseJSON?.error?.message || e?.responseJSON?.message || "request_failed"), { status: e?.status }),
           ),
       ),
     );
@@ -153,7 +153,7 @@
         <p class="cp-help">${esc(t("Confirm only after receiving the money. This does not charge a card or bank account."))}</p>`;
       if (plan.dueMinor === 0)
         body += `<p role="status">${esc(t("Payment recorded"))}</p>`;
-    } else
+    } else if (!error)
       body = `<p>${esc(t(busy ? "Loading..." : "Connect to the shop server before collecting payment. You can still take orders offline."))}</p>`;
     if (reviewing && plan && !pending) {
       const guest = selected === "" ? t("All remaining guests") : plan.guests[Number(selected)].name;
@@ -192,7 +192,9 @@
       error =
         e.status === 403
           ? "Payment collection is not enabled for this phone."
-          : "Connect to the shop server before collecting payment. You can still take orders offline.";
+          : e.status
+            ? (e.message && e.message !== "request_failed" ? e.message : "Please retry.")
+            : "Connect to the shop server before collecting payment. You can still take orders offline.";
     } finally {
       busy = false;
       render();
