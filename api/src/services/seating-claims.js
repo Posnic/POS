@@ -1015,6 +1015,19 @@ async function releaseSettled(db, scope) {
       claim.closing
     )
       continue;
+    const cancelled = await db.collection('sales').findOne({
+      _id: new ObjectId(claim.order_id),
+      branch_id: scope.branchId,
+      license: scope.license,
+      sale_process: 'cancelled',
+      payment_status: 'Cancelled',
+      floor_closed_at: { $exists: true },
+      captain_payment_plan: { $exists: false },
+    });
+    if (cancelled) {
+      await require('./cancelled-order-cleanup').finish(db, cancelled);
+      continue;
+    }
     const filter = {
       _id: new ObjectId(claim.order_id),
       branch_id: scope.branchId,
@@ -1671,8 +1684,7 @@ async function reserveEditCapacity(db, scope, order, next, { now = new Date() } 
   // A parked sale has not occupied these seats yet. Sending it to the
   // kitchen must reserve the whole party even when its table/count is unchanged.
   const activatingHold = order.sale_process === 'Hold' && next.sale_process === 'KOT';
-  if (sameTable && !activatingHold && guests === 0 && Number(order.person_count) === 0)
-    return null;
+  if (sameTable && !activatingHold && guests === 0 && Number(order.person_count) === 0) return null;
   if (!Number.isInteger(guests) || guests < 1 || guests > 1000) fail('Enter the number of guests.');
   const extra =
     sameTable && !activatingHold ? guests - Math.max(1, Number(order.person_count) || 1) : guests;

@@ -137,6 +137,41 @@ test('the cancellation is still written, whatever the announcement does', async 
   });
 });
 
+test('committed cancellation stays successful when table cleanup fails, including retries', async () => {
+  const id = await anOrder();
+  await db.collection('sales').updateOne(
+    { _id: new mongoose.Types.ObjectId(id) },
+    {
+      $set: { seating_request_id: 'desktop-cancel-recovery-test' },
+    }
+  );
+  const seating = require('../../../src/services/seating-claims');
+  jest.spyOn(seating, 'forEdit').mockResolvedValue({});
+  const release = jest
+    .spyOn(seating, 'release')
+    .mockRejectedValue(new Error('temporary cleanup failure'));
+  expect((await cancel(id)).status).toBe(true);
+  expect((await cancel(id)).status).toBe(true);
+  const stored = await db.collection('sales').findOne({ _id: new mongoose.Types.ObjectId(id) });
+  expect(stored.sale_process).toBe('cancelled');
+  expect(stored.changes).toHaveLength(1);
+  expect(release).toHaveBeenCalledTimes(2);
+});
+
+test('edit lease cleanup cannot replace a committed cancellation with an error', async () => {
+  const id = await anOrder();
+  const finish = jest.fn().mockRejectedValue(new Error('temporary lease cleanup failure'));
+  jest
+    .spyOn(require('../../../src/services/captain-payment-guard'), 'beginEdit')
+    .mockResolvedValue(finish);
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  expect((await cancel(id)).status).toBe(true);
+  expect(finish).toHaveBeenCalledTimes(1);
+  const stored = await db.collection('sales').findOne({ _id: new mongoose.Types.ObjectId(id) });
+  expect(stored.sale_process).toBe('cancelled');
+  expect(stored.changes).toHaveLength(1);
+});
+
 test('a cancellation with nothing printable does not wake the printer', async () => {
   /*
    * `changes[].items` is what the poller builds a cancellation ticket out of.

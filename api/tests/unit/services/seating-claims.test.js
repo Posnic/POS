@@ -1975,13 +1975,43 @@ async function legacySale(guests = 2) {
   return sale;
 }
 
+test('floor refresh recovers a committed cancellation without repeating kitchen changes', async () => {
+  const order = await movableOrder();
+  await db.collection('sales').updateOne(
+    { _id: order._id },
+    {
+      $set: {
+        sale_process: 'cancelled',
+        payment_status: 'Cancelled',
+        floor_closed_at: new Date(),
+        changes: [{ items: [{ process: 'cancel', item_quantity: 1 }] }],
+      },
+    }
+  );
+  await seating.releaseSettled(db, scope);
+  await seating.releaseSettled(db, scope);
+  expect((await seating.find(db, scope, order.seating_request_id)).state).toBe('released');
+  expect((await db.collection('sales').findOne({ _id: order._id })).changes).toHaveLength(1);
+});
+
 test('existing zero-cover desktop orders can update dishes without inventing guests', async () => {
   const order = await legacySale(0);
   await expect(seating.forEdit(db, scope, order, { guests: 0 })).resolves.toBeNull();
   await expect(seating.reserveEditCapacity(db, scope, order, { guests: 0 })).resolves.toBeNull();
-  await expect(seating.reserveEditCapacity(db, scope, order, { guests: 0, table: 'T2' })).rejects.toThrow('number of guests');
-  await expect(seating.reserveEditCapacity(db, scope, { ...order, sale_process: 'Hold' }, { guests: 0, sale_process: 'KOT' })).rejects.toThrow('number of guests');
-  await expect(seating.forEdit(db, scope, { ...order, person_count: 2 }, { guests: 0 })).rejects.toThrow('number of guests');
+  await expect(
+    seating.reserveEditCapacity(db, scope, order, { guests: 0, table: 'T2' })
+  ).rejects.toThrow('number of guests');
+  await expect(
+    seating.reserveEditCapacity(
+      db,
+      scope,
+      { ...order, sale_process: 'Hold' },
+      { guests: 0, sale_process: 'KOT' }
+    )
+  ).rejects.toThrow('number of guests');
+  await expect(
+    seating.forEdit(db, scope, { ...order, person_count: 2 }, { guests: 0 })
+  ).rejects.toThrow('number of guests');
 });
 
 test('claimed zero-cover orders remain editable but retain move protections', async () => {
@@ -1989,7 +2019,12 @@ test('claimed zero-cover orders remain editable but retain move protections', as
   order.person_count = 0;
   await db.collection('sales').updateOne({ _id: order._id }, { $set: { person_count: 0 } });
   await expect(seating.forEdit(db, scope, order, { guests: 0 })).resolves.toBeTruthy();
-  await db.collection('table_seating').updateOne({ 'claims.id': order.seating_request_id }, { $set: { 'claims.$.moving_to': 'pending-move' } });
+  await db
+    .collection('table_seating')
+    .updateOne(
+      { 'claims.id': order.seating_request_id },
+      { $set: { 'claims.$.moving_to': 'pending-move' } }
+    );
   await expect(seating.forEdit(db, scope, order, { guests: 0 })).rejects.toThrow('Reconcile');
 });
 
