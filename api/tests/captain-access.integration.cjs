@@ -66,6 +66,7 @@ before(async () => {
     next();
   });
   app.use('/api/captain/v1', require('../src/routes/captain-access.routes'));
+  app.use('/api/kitchen', require('../src/routes/kitchen-board.routes'));
   const { protect, optionalProtect } = require('../src/middleware/auth');
   const paymentTestLimit = require('express-rate-limit')({windowMs:60000,limit:180});
   const guestBills = require('../src/controllers/guest-bill.controller');
@@ -156,7 +157,7 @@ test('paired Captain collects one takeaway bill with mixed tenders over HTTP and
   const code=await access.createCode(req);
   const grant=await access.pair({db,body:{code:code.code,device:{device_id:crypto.randomUUID()}}});
   const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
-  const sale={_id:new ObjectId(),branch_id:branch._id,license:branch.license,table_number:'',dine_type:'Take away',sales_id:'HTTP-1',sale_process:'KOT',payment_status:'Unpaid',sales_total:105,sales_sub_total:100,tax:5,items:[{item_name:'Soup',item_quantity:2,item_base_price:50,item_tax:5}]};
+  const sale={_id:new ObjectId(),branch_id:branch._id,license:branch.license,table_number:'',dine_type:'Take away',sales_id:'HTTP-1',sale_process:'KOT',payment_status:'Unpaid',floor_lifecycle:true,created_date:new Date(),kitchen_actor:{id:String(staff._id),name:'Waiter'},sales_total:105,sales_sub_total:100,tax:5,items:[{item_name:'Soup',item_quantity:2,item_base_price:50,item_tax:5}]};
   const other={...sale,_id:new ObjectId(),sales_id:'HTTP-2'};
   await db.collection('sales').insertMany([sale,other]);
   const billResponse=await fetch(base+'/captain/v1/bill?saleId='+sale._id,{headers});
@@ -174,6 +175,35 @@ test('paired Captain collects one takeaway bill with mixed tenders over HTTP and
   const stored=await db.collection('sales').findOne({_id:sale._id});
   assert.deepEqual(stored.multi_payment,{Cash:100,Card:5});assert.equal(stored.floor_closed_at,undefined);
   assert.equal((await db.collection('sales').findOne({_id:other._id})).payment_status,'Unpaid');
+  // Paid food stays in preparation, reports partial readiness to its ordering
+  // Captain, and closes only after pickup and service.
+  const managerToken=require('../src/middleware/auth').signLegacyToken(manager,req,branch._id,900);
+  const kitchenHeaders={Authorization:'Bearer '+managerToken,'Content-Type':'application/json'};
+  const kitchen=await fetch(base+'/kitchen',{headers:kitchenHeaders});
+  assert.equal(kitchen.status,200,await kitchen.clone().text());
+  let ticket=(await kitchen.json()).tickets.find(ticket=>ticket.saleId===String(sale._id));
+  assert.ok(ticket,'Payment must not hide preparation');
+  assert.equal(ticket.orderNumber,'HTTP-1');assert.equal(ticket.takeaway,true);
+  const action=async(path,auth,operation,quantity)=>{
+    const response=await fetch(base+path,{method:'POST',headers:auth,body:JSON.stringify({saleId:String(sale._id),roundId:ticket.roundId,
+      itemId:ticket.items[0].id,revision:ticket.revision,actionId:crypto.randomUUID(),operation,quantity})});
+    assert.equal(response.status,200,await response.clone().text());
+    ticket=(await response.json()).ticket;
+  };
+  await action('/kitchen/transition',kitchenHeaders,'ready',1);
+  const noticeResponse=await fetch(base+'/captain/v1/kitchen-ready',{headers});
+  assert.equal(noticeResponse.status,200);
+  const notice=await noticeResponse.json(),own=notice.tickets.find(row=>row.saleId===String(sale._id));
+  assert.equal(own.owner,String(staff._id));assert.equal(own.items[0].ready,1);
+  assert.equal(notice.readiness.find(row=>row.saleId===String(sale._id)).remaining,2);
+  assert.equal((await db.collection('sales').findOne({_id:sale._id})).floor_closed_at,undefined);
+  await action('/kitchen/transition',kitchenHeaders,'ready',2);
+  await action('/captain/v1/kitchen-ready',headers,'collect',2);
+  await action('/captain/v1/kitchen-ready',headers,'serve',2);
+  assert.equal(ticket,null);
+  assert.ok((await db.collection('sales').findOne({_id:sale._id})).floor_closed_at);
+  const afterKitchen=await fetch(base+'/kitchen',{headers:kitchenHeaders});
+  assert.ok(!(await afterKitchen.json()).tickets.some(row=>row.saleId===String(sale._id)));
 });
 
 test('expired codes and wrong cloud device proof cannot authorize a phone', async () => {
