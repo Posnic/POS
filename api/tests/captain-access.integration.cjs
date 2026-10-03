@@ -74,6 +74,7 @@ before(async () => {
   app.get('/api/sales/guestBills/latest', paymentTestLimit, protect, guestBills.latest);
   app.post('/api/sales/guestBills/print', paymentTestLimit, protect, guestBills.send);
   app.post('/api/sales/requestBillPrint', paymentTestLimit, protect, salesController.requestBillPrint.bind(salesController));
+  app.post('/api/sales/updateOrder', protect, salesController.updateOrder.bind(salesController));
   app.post('/api/sales/tablePayments/record', paymentTestLimit, protect, (_r, s) => s.json({ allowed: true }));
   app.get('/api/users/admin', protect, (r, s) => s.json({ user: r.user._id }));
   app.post('/api/items/accessQr', optionalProtect, (r, s) =>
@@ -614,6 +615,33 @@ test('paired Captain can preview an edit over HTTP without modifying the sale', 
   assert.deepEqual(await db.collection('sales').findOne({ _id: id }), order);
   await db.collection('sales').updateOne({ _id: id }, { $set: { branch_id: new ObjectId() } });
   assert.equal((await fetch(url, { method: 'POST', headers, body })).status, 404);
+});
+
+test('paired Captain adds the same dish as a new preparation round without overwriting the old note', async () => {
+  const {grant}=await paired();
+  const product=new ObjectId(), id=new ObjectId(), firstAt=new Date(Date.now()-600000);
+  const original={item_id:product,line_id:'original-round',item_name:'Naan',item_quantity:1,item_price:40,item_base_price:40,item_description:'No butter'};
+  await db.collection('items').insertOne({_id:product,license:branch.license,name:'Naan',tax:0,tax_type:'exclusive',selling_price:40});
+  await db.collection('sales').insertOne({_id:id,branch_id:branch._id,license:branch.license,sale_process:'KOT',payment_status:'Unpaid',
+    table_number:'ROUND-4',dine_type:'Dine-in',person_count:2,sales_sub_total:40,sales_total:40,
+    created_date:firstAt,updated_date:firstAt,items:[original],changes:[{timestamp:firstAt,items:[{...original,process:'add'}]}]});
+  const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+  const input={order_id:String(id),seen_at:firstAt.toISOString(),items:[
+    {product_id:String(product),line_id:'original-round',name:'Naan',quantity:1,price:40,item_description:'No butter'},
+    {product_id:String(product),line_id:'new-round',name:'Naan',quantity:2,price:40,item_description:'Extra butter'}],total_amount:120};
+  const response=await fetch(base+'/sales/updateOrder',{method:'POST',headers,body:JSON.stringify(input)});
+  assert.equal(response.status,200,await response.clone().text());
+  const sale=await db.collection('sales').findOne({_id:id});
+  assert.equal(sale.sales_total,120);
+  assert.deepEqual(sale.items.map(item=>[item.line_id,item.item_quantity,item.item_description]),[
+    ['original-round',1,'No butter'],['new-round',2,'Extra butter']]);
+  assert.equal(sale.changes.length,2);
+  assert.equal(sale.changes[0].timestamp.getTime(),firstAt.getTime());
+  assert.deepEqual(sale.changes[1].items.map(item=>[item.line_id,item.item_quantity,item.item_description,item.process]),[
+    ['new-round',2,'Extra butter','add']]);
+  const retry=await fetch(base+'/sales/updateOrder',{method:'POST',headers,body:JSON.stringify(input)});
+  assert.notEqual(retry.status,200,'Stale edit must not duplicate a kitchen round');
+  assert.equal((await db.collection('sales').findOne({_id:id})).changes.length,2);
 });
 
 
