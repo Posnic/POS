@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "Ordini su carta",
+  "lang_order_reference": "Riferimento ordine",
+  "lang_view_original_order_photo": "Visualizza foto originale dell’ordine",
+  "lang_photo_unavailable_retry": "Foto non disponibile. Riprova",
+  "lang_could_not_load_settings_please_retry": "Impossibile caricare le impostazioni. Riprova.",
+  "lang_could_not_save_check_server_configuration": "Salvataggio non riuscito. Controlla la configurazione del server e riprova.",
+  "lang_saved": "Salvato.",
+  "lang_enable_paper_orders_aws_recognition_charge": "Abilita ordini su carta (si applicano costi di riconoscimento AWS)",
   "lang_table_cleaning": "Pulizia dei tavoli",
   "lang_enable_table_cleaning": "Abilita pulizia dei tavoli",
   "lang_off_by_default_enable_only_if_staff_should": "Disattivata per impostazione predefinita. Se attivata, i tavoli devono essere contrassegnati come disponibili dopo il servizio.",

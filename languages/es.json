@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "Pedidos en papel",
+  "lang_order_reference": "Referencia del pedido",
+  "lang_view_original_order_photo": "Ver foto original del pedido",
+  "lang_photo_unavailable_retry": "Foto no disponible. Reintentar",
+  "lang_could_not_load_settings_please_retry": "No se pudieron cargar los ajustes. Inténtelo de nuevo.",
+  "lang_could_not_save_check_server_configuration": "No se pudo guardar. Revise la configuración del servidor e inténtelo de nuevo.",
+  "lang_saved": "Guardado.",
+  "lang_enable_paper_orders_aws_recognition_charge": "Activar pedidos en papel (se aplican cargos de reconocimiento de AWS)",
   "lang_item_upload_failed": "No se pudo subir la imagen. El artículo no se ha guardado.",
   "lang_item_translated_name": "Nombre traducido del artículo",
   "lang_item_stock_variants_help": "Introduce las existencias iniciales en cada fila de variante.",

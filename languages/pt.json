@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "Pedidos em papel",
+  "lang_order_reference": "Referência do pedido",
+  "lang_view_original_order_photo": "Ver foto original do pedido",
+  "lang_photo_unavailable_retry": "Foto indisponível. Tentar novamente",
+  "lang_could_not_load_settings_please_retry": "Não foi possível carregar as configurações. Tente novamente.",
+  "lang_could_not_save_check_server_configuration": "Não foi possível salvar. Verifique a configuração do servidor e tente novamente.",
+  "lang_saved": "Salvo.",
+  "lang_enable_paper_orders_aws_recognition_charge": "Ativar pedidos em papel (aplicam-se taxas de reconhecimento AWS)",
   "lang_table_cleaning": "Limpeza de mesas",
   "lang_enable_table_cleaning": "Ativar limpeza de mesas",
   "lang_off_by_default_enable_only_if_staff_should": "Desativada por padrão. Quando ativada, as mesas devem ser marcadas como disponíveis após o atendimento.",

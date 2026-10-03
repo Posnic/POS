@@ -66,7 +66,7 @@ test('staff is read from the request, never from the body', () => {
 
 test('the flag is carried through the service untouched', () => {
   expect(SERVICE).toMatch(
-    /createOnlineOrder: async \(data, \{ SaleModel, staffOrder = false \} = \{\}\)/
+    /createOnlineOrder: async \(data, \{ SaleModel, staffOrder = false(?:,[^}]*)? \} = \{\}\)/
   );
   expect(SERVICE).toMatch(/staffOrder,/);
 });
@@ -75,7 +75,7 @@ test('absent means customer, which is the safe direction', () => {
   /* An order whose origin we cannot establish is a customer's. Guessing the
      other way would file a stranger's order as a member of staff's. */
   expect(REPO).toMatch(
-    /async createOnlineOrder\(data, \{[^}]*staffOrder = false(?:,[^}]*)? \} = \{\}\) \{/
+    /async createOnlineOrder\(\s*data,\s*\{[^}]*staffOrder = false(?:,[^}]*)? \} = \{\}\s*\) \{/
   );
 });
 

@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "คำสั่งซื้อบนกระดาษ",
+  "lang_order_reference": "ข้อมูลอ้างอิงคำสั่งซื้อ",
+  "lang_view_original_order_photo": "ดูภาพต้นฉบับของคำสั่งซื้อ",
+  "lang_photo_unavailable_retry": "ไม่มีภาพ ลองอีกครั้ง",
+  "lang_could_not_load_settings_please_retry": "โหลดการตั้งค่าไม่ได้ โปรดลองอีกครั้ง",
+  "lang_could_not_save_check_server_configuration": "บันทึกไม่ได้ ตรวจสอบการตั้งค่าเซิร์ฟเวอร์แล้วลองอีกครั้ง",
+  "lang_saved": "บันทึกแล้ว",
+  "lang_enable_paper_orders_aws_recognition_charge": "เปิดใช้คำสั่งซื้อบนกระดาษ (มีค่าบริการรู้จำของ AWS)",
   "lang_table_cleaning": "การทำความสะอาดโต๊ะ",
   "lang_enable_table_cleaning": "เปิดใช้การทำความสะอาดโต๊ะ",
   "lang_off_by_default_enable_only_if_staff_should": "ปิดไว้ตามค่าเริ่มต้น เมื่อเปิดใช้ ต้องทำเครื่องหมายว่าโต๊ะว่างหลังให้บริการ",

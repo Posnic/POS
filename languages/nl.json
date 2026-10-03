@@ -1,4 +1,13 @@
 {
+  "lang_paper_orders": "Papieren bestellingen",
+  "lang_order_reference": "Bestelreferentie",
+  "lang_view_original_order_photo": "Originele bestelfoto bekijken",
+  "lang_photo_unavailable_retry": "Foto niet beschikbaar. Opnieuw proberen",
+  "lang_could_not_load_settings_please_retry": "Instellingen konden niet worden geladen. Probeer het opnieuw.",
+  "lang_could_not_save_check_server_configuration": "Opslaan mislukt. Controleer de serverconfiguratie en probeer het opnieuw.",
+  "lang_saved": "Opgeslagen.",
+  "lang_enable_paper_orders_aws_recognition_charge": "Papieren bestellingen inschakelen (AWS-herkenningskosten zijn van toepassing)",
+  "lang_take_a_photo_in_captain_review_the_extract": "Maak een foto in Captain, controleer de herkende artikelen en stuur ze naar de keuken. Alleen Engels handschrift. Internet vereist. Originele foto's worden privé bij de verkoop bewaard.",
   "lang_table_cleaning": "Tafels schoonmaken",
   "lang_enable_table_cleaning": "Tafels schoonmaken inschakelen",
   "lang_off_by_default_enable_only_if_staff_should": "Standaard uitgeschakeld. Indien ingeschakeld, moeten tafels na de bediening als beschikbaar worden gemarkeerd.",

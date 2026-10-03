@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "කඩදාසි ඇණවුම්",
+  "lang_order_reference": "ඇණවුම් යොමුව",
+  "lang_view_original_order_photo": "ඇණවුමේ මුල් ඡායාරූපය බලන්න",
+  "lang_photo_unavailable_retry": "ඡායාරූපය නොමැත. නැවත උත්සාහ කරන්න",
+  "lang_could_not_load_settings_please_retry": "සැකසුම් පූරණය කළ නොහැකි විය. නැවත උත්සාහ කරන්න.",
+  "lang_could_not_save_check_server_configuration": "සුරැකිය නොහැකි විය. සේවාදායක සැකසුම් පරීක්ෂා කර නැවත උත්සාහ කරන්න.",
+  "lang_saved": "සුරැකිණි.",
+  "lang_enable_paper_orders_aws_recognition_charge": "කඩදාසි ඇණවුම් සක්‍රිය කරන්න (AWS හඳුනාගැනීමේ ගාස්තු අදාළ වේ)",
   "lang_table_cleaning": "මේස පිරිසිදු කිරීම",
   "lang_enable_table_cleaning": "මේස පිරිසිදු කිරීම සක්‍රිය කරන්න",
   "lang_off_by_default_enable_only_if_staff_should": "පෙරනිමියෙන් අක්‍රියයි. සක්‍රිය කළ විට, සේවාවෙන් පසු මේස ලබාගත හැකි ලෙස සලකුණු කළ යුතුය.",

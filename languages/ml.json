@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "കടലാസ് ഓർഡറുകൾ",
+  "lang_order_reference": "ഓർഡർ റഫറൻസ്",
+  "lang_view_original_order_photo": "ഓർഡറിന്റെ യഥാർത്ഥ ഫോട്ടോ കാണുക",
+  "lang_photo_unavailable_retry": "ഫോട്ടോ ലഭ്യമല്ല. വീണ്ടും ശ്രമിക്കുക",
+  "lang_could_not_load_settings_please_retry": "ക്രമീകരണങ്ങൾ ലോഡ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കുക.",
+  "lang_could_not_save_check_server_configuration": "സംരക്ഷിക്കാനായില്ല. സെർവർ ക്രമീകരണം പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.",
+  "lang_saved": "സംരക്ഷിച്ചു.",
+  "lang_enable_paper_orders_aws_recognition_charge": "കടലാസ് ഓർഡറുകൾ പ്രവർത്തനക്ഷമമാക്കുക (AWS തിരിച്ചറിയൽ നിരക്കുകൾ ബാധകം)",
   "lang_table_cleaning": "മേശ വൃത്തിയാക്കൽ",
   "lang_enable_table_cleaning": "മേശ വൃത്തിയാക്കൽ പ്രവർത്തനക്ഷമമാക്കുക",
   "lang_off_by_default_enable_only_if_staff_should": "സ്ഥിരമായി ഓഫാണ്. ഓണാക്കിയാൽ, സേവനത്തിന് ശേഷം മേശകൾ ലഭ്യമാണെന്ന് അടയാളപ്പെടുത്തണം.",
