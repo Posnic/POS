@@ -38,7 +38,10 @@ function ipc(prefs, file, fileSystem = fs) {
   const source = read('src/hardware-ipc.js');
   const from = source.indexOf('  function _loadPrefs(');
   const end = source.indexOf('\n  /*', source.indexOf("  ipcMain.handle('printer:save-document-settings'", from));
-  if (fileSystem === fs && !fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify(prefs));
+  if (fileSystem === fs) {
+    try { fs.writeFileSync(file, JSON.stringify(prefs), { flag: 'wx' }); }
+    catch (error) { if (error.code !== 'EEXIST') throw error; }
+  }
   const getters = source.slice(source.indexOf("  ipcMain.handle('preferences:get'"), source.indexOf("  // ── Mobile Device Persistence"));
   const printerDefault = source.slice(source.indexOf("  ipcMain.handle('printer:set-default'"), source.indexOf("  // ── Cash Drawer Handlers"));
   new Function('ipcMain', 'require', 'fs', '_prefsPath', source.slice(from, end) + getters + printerDefault)(
