@@ -6,6 +6,13 @@ allows cropping and review, then submits through the existing durable order queu
 The original photo is saved before recognition and its reference is written with
 the sale. No recognition result directly creates a kitchen order.
 
+Existing orders can also receive reference-only photos through
+`POST /captain/v1/paper-orders/reference` with `id`, `saleId`, and `original`.
+This option uses the same opt-in setting and private storage, but does not call
+Textract or change sale items, money, or payment status. Identical retries reuse
+the saved upload and attach it only once. The photo cannot be rebound to another
+order. Captain and desktop sale details show the scan and additional references.
+
 ## Server setup
 
 - Set AWS_REGION to a Textract-supported region, for example ap-south-1.
@@ -15,7 +22,7 @@ the sale. No recognition result directly creates a kitchen order.
 - Give the server IAM role textract:DetectDocumentText and s3:PutObject /
   s3:GetObject on that bucket's orders/* objects. Use the AWS SDK credential chain;
   no keys are stored in Captain or returned by the settings endpoint.
-- ORDER_PHOTO_MONTHLY_LIMIT defaults to 3000 attempted scans per branch per UTC
+- ORDER_PHOTO_MONTHLY_LIMIT defaults to 3000 attempted photo uploads/scans per branch per UTC
   calendar month. Failed attempts count; completed identical retries use the saved
   result and do not call AWS again. Monitor AWS billing separately.
 - The endpoint must be deployed to the server Captain connects to. A desktop

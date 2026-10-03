@@ -3,13 +3,16 @@ const { context, allowed, fail } = require('../utils/branch-access');
 const { floorEligibility } = require('../helpers/floor-eligibility');
 const { snapshotFrom } = require('./guest-bill.service');
 const Money = require('../utils/currency');
+const { ObjectId } = require('mongodb');
 
 async function read(req) {
   if (!req.user || !allowed(req.user, 'sales')) fail('Permission is required.', 403);
   const c = await context(req);
   if ([false, 0, '0', 'false'].includes(c.branch.module_captain_enable))
     fail('Captain is disabled.', 403);
-  const table = req.query?.table;
+  const saleId = req.query?.saleId;
+  if (saleId && !/^[a-f0-9]{24}$/i.test(String(saleId))) fail('Open order not found.', 404);
+  let table = saleId ? 'Take Away' : req.query?.table;
   if (
     typeof table !== 'string' ||
     !table.trim() ||
@@ -23,12 +26,13 @@ async function read(req) {
     .find({
       ...scope,
       ...floorEligibility(),
-      table_number: table.trim(),
+      ...(saleId ? {_id:new ObjectId(saleId),dine_type:/^take[\s_-]*away$/i} : {table_number:table.trim()}),
     })
     .sort({ _id: 1 })
     .limit(201)
     .toArray();
   if (!sales.length) fail('Open order not found.', 404);
+  if (saleId) table = 'Take Away ' + (sales[0].sales_id || sales[0].token_id || saleId);
   if (sales.length > 200)
     fail('This table has too many open orders. Ask the cashier for help.', 422);
   const snapshot = snapshotFrom(sales, c.branch, table.trim(), { allowZero: true });

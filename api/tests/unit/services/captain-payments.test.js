@@ -62,6 +62,32 @@ const pay = (plan, overrides = {}) =>
     request_id: require('crypto').randomUUID(),
     ...overrides,
   });
+
+test('individual takeaway payment targets only the selected sale and keeps preparation open', async () => {
+  const other = {...sale,_id:new ObjectId(),table_number:'',dine_type:'Take away',sales_id:'TA-2'};
+  await db.collection('sales').insertOne(other);
+  await db.collection('sales').updateOne({_id:sale._id},{$set:{table_number:'',dine_type:'Take away',sales_id:'TA-1'}});
+  const input=req({saleId:String(sale._id)});
+  const bill=await require('../../../src/services/captain-bill').read({...req(),query:{saleId:String(sale._id)}});
+  expect(bill.orderIds).toEqual([String(sale._id)]);
+  expect(bill.dueMinor).toBe(10500);
+  const plan=await service.prepare(input);
+  expect(plan.table).toBe('Take Away TA-1');
+  expect(plan.dueMinor).toBe(10500);
+  expect(plan.guests[0].name).toBe('Take Away TA-1');
+  expect((await service.prepare(input)).id).toBe(plan.id);
+  await service.record(pay(plan));
+  const stored=await db.collection('sales').findOne({_id:sale._id});
+  expect(stored.payment_status).toBe('Paid');
+  expect(stored.floor_closed_at).toBeUndefined();
+  expect((await db.collection('sales').findOne({_id:other._id})).payment_status).toBe('Unpaid');
+});
+
+test('takeaway target rejects dine-in and foreign-branch sale IDs', async () => {
+  await expect(service.prepare(req({saleId:String(sale._id)}))).rejects.toMatchObject({status:409});
+  await db.collection('sales').updateOne({_id:sale._id},{$set:{dine_type:'Take away',branch_id:new ObjectId()}});
+  await expect(service.prepare(req({saleId:String(sale._id)}))).rejects.toMatchObject({status:409});
+});
 test('mixed cash and card commits once and projects exact tender amounts', async () => {
   const plan = await service.prepare(req());
   const payment = pay(plan, {method:'Mixed',receivedMinor:11000,tenders:[
