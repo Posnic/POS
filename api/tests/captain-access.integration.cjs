@@ -145,6 +145,31 @@ test('real HTTP pairing, branch scoping and revocation; bearer does not mint an 
     );
   assert.equal((await fetch(base + '/captain/v1/session', { headers })).status, 403);
 });
+test('paired Captain collects one takeaway bill with mixed tenders over HTTP and retries safely', async () => {
+  await db.collection('branches').updateOne({_id:branch._id},{$set:{captain_payments:{enabled:true,methods:['Cash','Card']},printall:false}});
+  const code=await access.createCode(req);
+  const grant=await access.pair({db,body:{code:code.code,device:{device_id:crypto.randomUUID()}}});
+  const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+  const sale={_id:new ObjectId(),branch_id:branch._id,license:branch.license,table_number:'',dine_type:'Take away',sales_id:'HTTP-1',sale_process:'KOT',payment_status:'Unpaid',sales_total:105,sales_sub_total:100,tax:5,items:[{item_name:'Soup',item_quantity:2,item_base_price:50,item_tax:5}]};
+  const other={...sale,_id:new ObjectId(),sales_id:'HTTP-2'};
+  await db.collection('sales').insertMany([sale,other]);
+  const billResponse=await fetch(base+'/captain/v1/bill?saleId='+sale._id,{headers});
+  assert.equal(billResponse.status,200,await billResponse.clone().text());
+  assert.deepEqual((await billResponse.json()).orderIds,[String(sale._id)]);
+  const prepared=await fetch(base+'/captain/v1/payments/table',{method:'POST',headers,body:JSON.stringify({saleId:String(sale._id)})});
+  assert.equal(prepared.status,200,await prepared.clone().text());
+  const plan=await prepared.json();assert.equal(plan.dueMinor,10500);
+  const input={planId:plan.id,version:plan.version,amountMinor:10500,receivedMinor:10500,method:'Mixed',request_id:crypto.randomUUID(),tenders:[{method:'Cash',amountMinor:10000,receivedMinor:10000},{method:'Card',amountMinor:500,receivedMinor:500,verified:true}]};
+  for(let attempt=0;attempt<2;attempt++){
+    const response=await fetch(base+'/captain/v1/payments/record',{method:'POST',headers,body:JSON.stringify(input)});
+    assert.equal(response.status,200,await response.clone().text());
+    const result=await response.json();assert.equal(result.dueMinor,0);assert.equal(result.payments.length,1);
+  }
+  const stored=await db.collection('sales').findOne({_id:sale._id});
+  assert.deepEqual(stored.multi_payment,{Cash:100,Card:5});assert.equal(stored.floor_closed_at,undefined);
+  assert.equal((await db.collection('sales').findOne({_id:other._id})).payment_status,'Unpaid');
+});
+
 test('expired codes and wrong cloud device proof cannot authorize a phone', async () => {
   const code = await access.createCode(req);
   await db
