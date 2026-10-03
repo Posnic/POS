@@ -1535,7 +1535,8 @@ const processSale = async (
           await BaseModel.getDb(),
           { branchId, license: licenseId },
           doc,
-          updateData
+          updateData,
+          { settling: settlingTheBill }
         );
       }
       // Repricing used the first read. Reloading the Mongoose document must
@@ -1572,7 +1573,10 @@ const processSale = async (
             ? { $exists: false }
             : storedValue;
       }
-      if (doc.seating_request_id || context.branchSettings?.table_options === true) {
+      if (
+        !settlingTheBill &&
+        (doc.seating_request_id || context.branchSettings?.table_options === true)
+      ) {
         const db = await BaseModel.getDb();
         const scope = { branchId, license: licenseId };
         const seating = require('./seating-claims');

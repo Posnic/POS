@@ -827,6 +827,7 @@ PosnicPro.kot = {
             
             // ✅ Show Add new item section
             $('.kot-add-item-section[data-sale-id="' + saleId + '"]').show();
+            $('.kot-product-search[data-sale-id="' + saleId + '"]').trigger('focus');
             
             // Toggle buttons
             $('.kot-modify-btn[data-sale-id="' + saleId + '"]').hide();
@@ -889,24 +890,14 @@ PosnicPro.kot = {
             PosnicPro.kot.updateTotalDisplay(saleId);
         });
 
-        // ✅ Handle product search
-        var searchTimeout;
-        $(document).off('input', '.kot-product-search').on('input', '.kot-product-search', function() {
+        $('.kot-product-search').each(function () {
             var $input = $(this);
-            var saleId = $input.data('sale-id');
-            var query = $input.val().trim();
-            var $results = $('.kot-search-results[data-sale-id="' + saleId + '"]');
-
-            clearTimeout(searchTimeout);
-
-            if (query.length < 2) {
-                $results.hide().empty();
-                return;
-            }
-
-            searchTimeout = setTimeout(function() {
-                PosnicPro.kot.searchProducts(query, saleId, $results);
-            }, 300);
+            PosnicPro.kot.bindProductSearch($input, function (data, quantity, done) {
+                var priced = PosnicPro.kot._priceOf(data);
+                var added = PosnicPro.kot.addProductToEditMode($input.data('sale-id'), String(data.item_id || data.id || (data._id && data._id.$oid) || ''),
+                    data.item_name || data.name || '', priced.priceDisplay, priced.basePrice, quantity);
+                done(added !== false);
+            });
         });
 
         /*
@@ -928,25 +919,6 @@ PosnicPro.kot = {
             PosnicPro.kot.addFromMenu($b.data('sale-id'), $b.data('item-id'));
         });
 
-        /*
-         * A SCANNER TYPES, THEN PRESSES ENTER.
-         *
-         * That return is the whole difference between a scan and somebody
-         * typing, so Enter asks the barcode-only search first and adds a single
-         * hit straight away, leaving the box empty and focused because a
-         * scanner's next action is another scan. A typed name finds nothing as
-         * a barcode and falls through to the ordinary search, rather than
-         * appearing to do nothing.
-         */
-        $(document).off('keydown', '.kot-product-search').on('keydown', '.kot-product-search', function (e) {
-            if (e.key !== 'Enter' && e.keyCode !== 13) return;
-            e.preventDefault();
-            var $input = $(this);
-            var term = $input.val().trim();
-            if (!term) return;
-            PosnicPro.kot.scanBarcode($input.data('sale-id'), term, $input);
-        });
-
         // Handle clicking outside to close search results
         $(document).off('click.kotsearch').on('click.kotsearch', function(e) {
             if (!$(e.target).closest('.kot-search-product-wrapper').length) {
@@ -955,8 +927,6 @@ PosnicPro.kot = {
         });
     },
 
-    // Store searched products to avoid issues with special characters in inline handlers
-    searchedProducts: {},
 
     /*
      * WHAT A LINE COSTS, for the two ways of adding one.
@@ -1170,35 +1140,6 @@ PosnicPro.kot = {
         );
     },
 
-    /*
-     * A SCAN: the barcode fields first, then an ordinary search.
-     *
-     * type=barcode asks only the barcode fields, so a number that also appears
-     * inside a dish name cannot add the wrong thing. Exactly one hit is added
-     * at once; anything else is shown as a search rather than guessed at.
-     */
-    scanBarcode: function (saleId, term, $input) {
-        var asSearch = function () {
-            PosnicPro.kot.searchProducts(term, saleId,
-                $('.kot-search-results[data-sale-id="' + saleId + '"]'));
-        };
-        PosnicPro.get({
-            url: 'items/getOnlineItemsAjaxList',
-            data: 'query=' + encodeURIComponent(term) + '&type=barcode'
-        }, function (response) {
-            var list = (response && response.suggestions) || [];
-            if (list.length !== 1) { asSearch(); return; }
-            var d = list[0].data || list[0];
-            var priced = PosnicPro.kot._priceOf(d);
-            PosnicPro.kot.addProductToEditMode(
-                saleId, String(d.item_id || d.id || ''),
-                String(d.item_name || ''), priced.priceDisplay, priced.basePrice
-            );
-            if ($input) { $input.val('').trigger('focus'); }
-            $('.kot-search-results[data-sale-id="' + saleId + '"]').hide().empty();
-        }, asSearch);
-    },
-
     /** A line of explanation inside the picker. */
     _menuNote: function (text) {
         return '<div style="padding:14px;color:#6c757d;font-size:14px;">'
@@ -1206,98 +1147,16 @@ PosnicPro.kot = {
     },
 
 
-    searchProducts: function(query, saleId, $results) {
-        var params = {
-            url: 'items/getOnlineItemsAjaxList',
-            data: 'query=' + encodeURIComponent(query) + '&type=normal'
-        };
-
-        PosnicPro.get(params, function(response) {
-            if (response && response.suggestions && response.suggestions.length > 0) {
-                var html = '';
-                response.suggestions.forEach(function(item) {
-                    var data = item.data || item;
-                    var itemId = data.item_id || data.id || (data._id ? data._id.$oid : '');
-                    var itemName = data.item_name || item.value || '';
-                    
-                    /* Priced through _priceOf so the Browse grid below cannot
-                       reach a different number for the same dish. NOTE: two
-                       more copies of this arithmetic live in this file (the
-                       view and the add-from-view paths); they are left alone
-                       here rather than refactored blind, and are worth
-                       folding in next. */
-                    var priced = PosnicPro.kot._priceOf(data);
-                    var priceDisplay = priced.priceDisplay;
-                    var basePrice = priced.basePrice;
-
-                    // Store product data for retrieval by ID
-                    PosnicPro.kot.searchedProducts[itemId] = {
-                        itemId: itemId,
-                        itemName: itemName,
-                        itemPrice: priceDisplay,
-                        basePrice: basePrice,
-                        saleId: saleId
-                    };
-
-                    // Store item name in data attribute as backup to prevent special character issues
-                    html += '<div class="kot-search-result-item" data-item-id="' + itemId + '" data-sale-id="' + saleId + '" ' +
-                            'data-item-name="' + itemName.replace(/"/g, '&quot;') + '" data-item-price="' + priceDisplay + '" data-base-price="' + basePrice + '" ' +
-                            /* Was 8px padding and 13px type - a row you had to aim at.
-                               Sized like the menu tiles beside it so the same finger
-                               works on both. */
-                            'style="min-height: 52px; padding: 12px 14px; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background 0.2s; display: flex; justify-content: space-between; align-items: center; gap: 10px;" ' +
-                            'onmouseover="this.style.background=\'#f8f9fa\'" onmouseout="this.style.background=\'white\'">' +
-                            '<div style="font-weight: 600; font-size: 14px; color: #333; flex: 1; overflow-wrap: anywhere;">' + itemName + '</div>' +
-                            '<div style="font-size: 13px; color: #28a745; font-weight: 600; white-space: nowrap;">₹' + priceDisplay + '</div>' +
-                            '</div>';
-                });
-
-                $results.html(html).show();
-
-                // Handle result item click - retrieve data from DOM attributes
-                $(document).off('click', '.kot-search-result-item').on('click', '.kot-search-result-item', function() {
-                    var $item = $(this);
-                    var itemId = $item.data('item-id');
-                    var saleId = $item.data('sale-id');
-                    var itemName = $item.data('item-name');
-                    var itemPrice = $item.data('item-price');
-                    var basePrice = $item.data('base-price');
-                    
-                    // Validate data
-                    if (!itemId || !itemName) {
-                        console.error('Missing product data:', {itemId: itemId, itemName: itemName});
-                        return;
-                    }
-                    
-                    // Add item to edit mode UI with correct data from DOM
-                    PosnicPro.kot.addProductToEditMode(
-                        saleId,
-                        itemId,
-                        itemName,
-                        itemPrice,
-                        basePrice
-                    );
-                    
-                    // Clear search
-                    $('.kot-product-search[data-sale-id="' + saleId + '"]').val('');
-                    $('.kot-search-results[data-sale-id="' + saleId + '"]').hide().empty();
-                });
-            } else {
-                $results.html('<div style="padding: 12px; text-align: center; color: #6c757d; font-size: 13px;"><lang class="lang_no_products_found">No products found</lang></div>').show();
-            }
-        }, function() {
-            $results.html('<div style="padding: 12px; text-align: center; color: #dc3545; font-size: 13px;"><lang class="lang_search_failed">Search failed</lang></div>').show();
-        });
-    },
-
-    addProductToEditMode: function(saleId, itemId, itemName, itemPrice, basePrice) {
+    addProductToEditMode: function(saleId, itemId, itemName, itemPrice, basePrice, quantity) {
+        quantity = quantity == null ? 1 : Number(quantity);
+        if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 100000) return false;
         // Find the items table for this KOT
         var $kotItem = $('.kot-modify-btn[data-sale-id="' + saleId + '"]').closest('.kot-item');
         var $itemsTable = $kotItem.find('table');
         
         if ($itemsTable.length === 0) {
             PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_find_items_table', 'Could not find items table'));
-            return;
+            return false;
         }
 
         // Check if item already exists in the table
@@ -1307,8 +1166,8 @@ PosnicPro.kot = {
             if ($qtyControls.length > 0) {
                 // Item exists, increment quantity
                 var $input = $qtyControls.find('.qty-input');
-                var currentQty = parseInt($input.val()) || 1;
-                $input.val(currentQty + 1);
+                var currentQty = parseFloat($input.val()) || 0;
+                $input.val(currentQty + quantity);
                 itemExists = true;
                 return false; // break loop
             }
@@ -1320,20 +1179,20 @@ PosnicPro.kot = {
             var newRow = `
                 <tr style="border-bottom: 1px solid #f0f0f0;">
                     <td style="padding: 6px 0; width: 30px;">${rowIndex}.</td>
-                    <td style="padding: 6px 0;">${itemName}</td>
+                    <td style="padding: 6px 0;">${PosnicPro.kot._escape(itemName)}</td>
                     <td style="padding: 6px 0; text-align: right; width: 80px;">
                         <span class="kot-item-price-display" data-sale-id="${saleId}" data-item-id="${itemId}" style="font-weight: 600; color: #28a745;">₹${parseFloat(itemPrice).toFixed(2)}</span>
                     </td>
                     <td style="padding: 6px 0; text-align: right; width: 140px;">
                         <div class="kot-item-qty-display" data-sale-id="${saleId}" data-item-id="${itemId}" style="display: none; align-items: center; justify-content: flex-end;">
-                            <span style="font-weight: 600; padding: 0 5px;">1</span>
+                            <span style="font-weight: 600; padding: 0 5px;">${quantity}</span>
                         </div>
-                        <div class="kot-item-qty-controls" data-sale-id="${saleId}" data-item-id="${itemId}" data-item-price="${itemPrice}" data-base-price="${basePrice || itemPrice}" style="display: inline-flex; align-items: center; justify-content: flex-end;">
+                        <div class="kot-item-qty-controls" data-sale-id="${saleId}" data-item-id="${itemId}" data-item-price="${itemPrice}" data-base-price="${basePrice == null ? itemPrice : basePrice}" style="display: inline-flex; align-items: center; justify-content: flex-end;">
                             <div class="btn-group btn-group-sm" style="display: inline-flex; align-items: center; margin-right: 8px;">
                                 <button type="button" class="btn btn-light btn-sm qty-decrease" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Decrease quantity" data-t-aria-label="lang_decrease_quantity">
                                     <i class="feather icon-minus" style="font-size: 10px;"></i>
                                 </button>
-                                <input type="text" class="form-control form-control-sm qty-input" value="1" min="1" style="width: 50px; text-align: center; padding: 2px 5px; height: 28px;">
+                                <input type="text" class="form-control form-control-sm qty-input" value="${quantity}" min="1" style="width: 50px; text-align: center; padding: 2px 5px; height: 28px;">
                                 <button type="button" class="btn btn-light btn-sm qty-increase" style="border: 1px solid #ced4da; padding: 2px 8px;" aria-label="Increase quantity" data-t-aria-label="lang_increase_quantity">
                                     <i class="feather icon-plus" style="font-size: 10px;"></i>
                                 </button>
@@ -1353,6 +1212,7 @@ PosnicPro.kot = {
 
         // Update total display (optional - can calculate on Update)
         PosnicPro.kot.updateTotalDisplay(saleId);
+        return true;
     },
 
     updateTotalDisplay: function(saleId) {
@@ -1360,7 +1220,7 @@ PosnicPro.kot = {
         var itemQuantities = {};
         $('.kot-item-qty-controls[data-sale-id="' + saleId + '"]').each(function() {
             var itemId = $(this).data('item-id');
-            var qty = parseInt($(this).find('.qty-input').val()) || 0;
+            var qty = parseFloat($(this).find('.qty-input').val()) || 0;
             itemQuantities[itemId] = qty;
         });
 
@@ -2906,88 +2766,114 @@ PosnicPro.kot = {
     },
 
     initItemSearch: function () {
-        var searchTimeout;
-        
-        $('#kot_item_search').on('input', function () {
-            var query = $(this).val().trim();
-            var resultsContainer = $('#kot_item_search_results');
-            
-            clearTimeout(searchTimeout);
-            
-            if (query.length < 2) {
-                resultsContainer.html(`
-                    <div class="text-center text-muted mt-4">
-                        <i class="feather icon-search" style="font-size: 32px; opacity: 0.2;"></i>
-                        <p class="mt-2"><lang class="lang_type_to_search_for_items">Type to search for items</lang></p>
-                    </div>
-                `);
-                return;
-            }
-            
-            searchTimeout = setTimeout(function () {
-                resultsContainer.html('<div class="text-center mt-4"><div class="loadingSpinner"></div></div>');
-                
-                var params = {
-                    url: 'items/getOnlineItemsAjaxList',
-                    data: 'query=' + encodeURIComponent(query) + '&type=normal'
-                };
-                
-                PosnicPro.get(params, function (response) {
-                    if (response && response.suggestions && response.suggestions.length > 0) {
-                        var html = '';
-                        response.suggestions.forEach(function (item) {
-                            // Item data is returned directly, not wrapped in 'data' property
-                            var data = item.data || item;
-                            if (!data) return;
-                            
-                            var itemName = data.item_name || data.name || '';
-                            var itemPrice = parseFloat(data.selling_price || 0).toFixed(2);
-                            var itemId = data.item_id || data.id || (data._id ? data._id.$oid : '');
-                            var imagePath = (data.image && data.image !== "item.svg") ? data.image : 'static/images/default/item.svg';
-                            
-                            // Check stock if tracked
-                            var trackInventory = (data.track_inventory === true || data.track_inventory === 'true' || data.track_inventory === 1);
-                            var negativeStock = (data.negative_stock === true || data.negative_stock === 'true' || data.negative_stock === 1);
-                            var availableQty = parseFloat(data.available_quantity || 0);
-                            var outOfStock = (trackInventory && !negativeStock && availableQty <= 0);
-                            
-                            var opacity = outOfStock ? '0.6' : '1';
-                            var clickAction = outOfStock ? '' : `onclick="PosnicPro.kot.addItemToOrder('${itemId}')"`;
-                            var cursor = outOfStock ? 'not-allowed' : 'pointer';
-                            var stockBadge = outOfStock ? '<span class="badge badge-danger ml-2"><lang class="lang_out_of_stock">Out of Stock</lang></span>' : '';
-                            
-                            html += `
-                                <a href="javascript:void(0);" class="list-group-item list-group-item-action" 
-                                   style="display: flex; align-items: center; padding: 10px; opacity: ${opacity}; cursor: ${cursor};" 
-                                   ${clickAction}>
-                                    <img loading="lazy" decoding="async" src="${imagePath}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover; margin-right: 15px;">
-                                    <div style="flex: 1;">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0" style="font-weight: 600;">${itemName} ${stockBadge}</h6>
-                                            <span class="text-primary font-weight-bold">₹${itemPrice}</span>
-                                        </div>
-                                    </div>
-                                    ${!outOfStock ? '<i class="feather icon-plus-circle text-success ml-3" style="font-size: 20px;"></i>' : ''}
-                                </a>
-                            `;
-                        });
-                        resultsContainer.html(html);
-                    } else {
-                        resultsContainer.html(`
-                            <div class="text-center text-muted mt-4">
-                                <i class="feather icon-alert-circle" style="font-size: 32px; opacity: 0.2;"></i>
-                                <p class="mt-2"><lang class="lang_no_items_found">No items found</lang></p>
-                            </div>
-                        `);
-                    }
-                });
-            }, 300);
+        $('#kot_add_item_modal').off('.kot-picker')
+            .on('shown.bs.modal.kot-picker', function () { $('#kot_item_search').trigger('focus'); })
+            .on('hide.bs.modal.kot-picker', function (e) {
+                if ($(this).find('.kot-search-quantity').data('saving')) { e.preventDefault(); return; }
+                $(this).find('.kot-search-quantity').remove();
+                $('#kot_item_search').prop('disabled', false).autocomplete('hide');
+            })
+            .on('hidden.bs.modal.kot-picker', function () {
+                if (!$(this).data('kot-dirty')) return;
+                $(this).data('kot-dirty', false);
+                if (PosnicPro.kot.currentTableNumber) PosnicPro.kot.loadTableDetails(PosnicPro.kot.currentTableNumber);
+                else PosnicPro.kot.refreshKOTData();
+            });
+        PosnicPro.kot.bindProductSearch($('#kot_item_search'), function (data, quantity, done) {
+            var id = String(data.item_id || data.id || (data._id && data._id.$oid) || '');
+            PosnicPro.kot.addItemToOrder(id, quantity, done);
         });
     },
 
-    addItemToOrder: function (itemId) {
+    bindProductSearch: function ($input, commit) {
+        if (!$input.length || !$.fn.autocomplete || $input.data('kot-picker')) return;
+        $input.data('kot-picker', true);
+        var sequence = 0;
+        $input.on('input.kot-picker', function () { sequence++; if (this.id === 'kot_item_search') $('#kot_item_search_results').empty(); });
+        $input.on('keydown.kot-picker', function (e) {
+            if (e.key === 'Enter' && e.ctrlKey && $input.hasClass('kot-product-search')) {
+                e.preventDefault(); e.stopImmediatePropagation();
+                $input.closest('.kot-item').find('.kot-update-btn:visible').trigger('click');
+            }
+        });
+        $input.autocomplete({
+            minChars: 1, deferRequestBy: 0, autoSelectFirst: true,
+            triggerSelectOnValidInput: false, zIndex: 1060, forceFixPosition: true,
+            appendTo: $input.closest('.modal').length ? $input.closest('.modal') : document.body,
+            lookup: function (query, done) {
+                var current = ++sequence;
+                function receive(response) {
+                    if (current !== sequence || $input.prop('disabled') || !$input[0].isConnected || $input.val() !== query || ($input.closest('.modal').length && !$input.closest('.modal').hasClass('show'))) return;
+                    done({ suggestions: ((response && response.suggestions) || []).map(function (item) {
+                        var data = item.data || item;
+                        return { value: PosnicPro.itemName ? PosnicPro.itemName(data) : (data.item_name || data.name || item.value || ''), data: data };
+                    }).filter(function (item) { return !PosnicBillingSearch.expired(item.data.items_expiry_date); }) });
+                }
+                var catalogue = PosnicPro.sales && PosnicPro.sales._billingCatalogue;
+                if (catalogue && Date.now() - PosnicPro.sales._catalogueAt < 60000) {
+                    receive({ suggestions: PosnicBillingSearch.search(query, catalogue, 20) });
+                } else {
+                    PosnicPro.get({ url: 'items/getOnlineItemsAjaxList', data: { query: query, type: 'normal', limit: 20 } }, receive,
+                        function () { receive({ suggestions: [] }); });
+                }
+            },
+            formatResult: function (suggestion, query) {
+                var taxEnabled = true;
+                try { taxEnabled = JSON.parse(PosnicPro.local.get('general_settings') || '{}').module_tax_enable !== false; } catch (e) {}
+                var pricing = PosnicBillingSearch.price(suggestion.data, taxEnabled);
+                return PosnicPro.sugRow(suggestion.data, $.Autocomplete.formatResult(suggestion, query), {
+                    currency: PosnicPro.local.get('currencySign') || '', price: pricing.price, was: pricing.was
+                });
+            },
+            onSelect: function (suggestion) {
+                sequence++;
+                PosnicPro.kot.searchQuantity($input, suggestion.data, commit);
+            }
+        });
+    },
+
+    searchQuantity: function ($input, data, commit) {
+        if ($input.prop('disabled')) return;
+        var t = function (key, fallback) { return PosnicPro.i18n.t(key, fallback); };
+        var $box = $('<div class="kot-search-quantity border rounded p-2 mt-2" role="group"></div>');
+        $('<div class="font-weight-bold mb-2"></div>').text(PosnicPro.itemName ? PosnicPro.itemName(data) : (data.item_name || data.name || '')).appendTo($box);
+        var $row = $('<div class="d-flex align-items-center" style="gap:8px"></div>').appendTo($box);
+        var $qty = $('<input type="number" class="form-control" min="0.001" max="100000" step="any" inputmode="decimal" value="1" style="max-width:120px">').attr('aria-label', t('lang_quantity', 'Quantity')).appendTo($row);
+        var $add = $('<button type="button" class="btn btn-primary"></button>').text(t('lang_add_item', 'Add item')).appendTo($row);
+        var $cancel = $('<button type="button" class="btn btn-light"></button>').text(t('lang_cancel', 'Cancel')).appendTo($row);
+        $('<small class="text-muted d-block mt-1">↑ ↓ · Enter · Esc</small>').appendTo($box);
+        $input.prop('disabled', true).after($box);
+        $qty.trigger('focus').trigger('select');
+        var busy = false;
+        function close(clear) { $box.remove(); $input.prop('disabled', false); if (clear) $input.val(''); $input.trigger('focus'); }
+        function add() {
+            if (busy) return;
+            var quantity = Number($qty.val());
+            if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 100000) { $qty[0].setCustomValidity(t('lang_enter_a_valid_quantity', 'Enter a valid quantity.')); $qty[0].reportValidity(); return; }
+            busy = true; $box.data('saving', true); $box.find('input,button').prop('disabled', true);
+            commit(data, quantity, function (success) {
+                if (success) close(true);
+                else { busy = false; $box.data('saving', false); $box.find('input,button').prop('disabled', false); $qty.trigger('focus').trigger('select'); }
+            });
+        }
+        $qty.on('input', function () { this.setCustomValidity(''); });
+        $qty.on('keydown', function (e) {
+            if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+            e.preventDefault(); this.setCustomValidity('');
+            $qty.val(Math.max(0.001, Math.min(100000, (Number($qty.val()) || 0) + (e.key === 'ArrowUp' ? 1 : -1))));
+        });
+        $box.on('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); add(); }
+            if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (!busy) close(false); }
+        });
+        $add.on('click', add); $cancel.on('click', function () { if (!busy) close(false); });
+    },
+
+    addItemToOrder: function (itemId, quantity, onComplete) {
+        quantity = quantity == null ? 1 : Number(quantity);
+        var finished = function (success) { if (onComplete) onComplete(success); };
         var saleId = $('#kot_add_item_modal').data('sale-id');
-        if (!saleId || !itemId) return;
+        if (!saleId || !itemId || !Number.isFinite(quantity) || quantity <= 0 || quantity > 100000) { finished(false); return; }
         
         // Show loading overlay on modal
         var modalContent = $('#kot_add_item_modal .modal-content');
@@ -2998,7 +2884,7 @@ PosnicPro.kot = {
         // 1. Get current order details
         PosnicPro.get('sales/' + saleId, function (response) {
             if (response.type !== 'success') {
-                spinner.remove();
+                spinner.remove(); finished(false);
                 PosnicPro.alert('error', PosnicPro.i18n.t('lang_failed_to_load_order', 'Failed to load order'));
                 return;
             }
@@ -3018,7 +2904,7 @@ PosnicPro.kot = {
 
                     // Check if item already exists, if so increment quantity
                     if (!itemFound && id.toString() === itemId.toString()) {
-                        currentQty += 1;
+                        currentQty += quantity;
                         itemFound = true;
                     }
 
@@ -3048,7 +2934,7 @@ PosnicPro.kot = {
                              return sid.toString() === itemId.toString();
                         });
                         
-                        if (!newItemData) newItemData = itemResponse.suggestions[0]; // Fallback
+                        // Only the exact selected product can be added.
                     }
                     
                     if (newItemData) {
@@ -3060,29 +2946,32 @@ PosnicPro.kot = {
                         
                         items.push({
                             product_id: itemId,
-                            quantity: 1,
+                            quantity: quantity,
                             price: price
                         });
                         
-                        newTotal += price;
+                        newTotal += price * quantity;
                         
-                        PosnicPro.kot.finalizeAddItem(saleId, data, items, newTotal, spinner);
+                        PosnicPro.kot.finalizeAddItem(saleId, data, items, newTotal, spinner, onComplete);
                     } else {
-                        spinner.remove();
+                        spinner.remove(); finished(false);
                         PosnicPro.alert('error', PosnicPro.i18n.t('lang_item_details_not_found', 'Item details not found'));
                     }
+                }, function () {
+                    spinner.remove(); finished(false);
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_item_details_not_found', 'Item details not found'));
                 });
             } else {
-                PosnicPro.kot.finalizeAddItem(saleId, data, items, newTotal, spinner);
+                PosnicPro.kot.finalizeAddItem(saleId, data, items, newTotal, spinner, onComplete);
             }
 
         }, function (xhr) {
-            spinner.remove();
+            spinner.remove(); finished(false);
             PosnicPro.alert('error', PosnicPro.i18n.t('lang_failed_to_load_order', 'Failed to load order'));
         });
     },
 
-    finalizeAddItem: function(saleId, orderData, items, newTotal, spinner) {
+    finalizeAddItem: function(saleId, orderData, items, newTotal, spinner, onComplete) {
         // Apply existing discount if any
         var discountType = orderData.extra_discount_type || 'amount';
         var discountValue = parseFloat(orderData.extra_discount || 0);
@@ -3120,6 +3009,7 @@ PosnicPro.kot = {
                 PosnicPro.alert('success', PosnicPro.i18n.t('lang_item_added', 'Item added'));
                 
                 if (PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(saleId);
+                if (onComplete) { $('#kot_add_item_modal').data('kot-dirty', true); onComplete(true); return; }
                 // Hide add modal
                 $('#kot_add_item_modal').modal('hide');
                 
@@ -3136,10 +3026,13 @@ PosnicPro.kot = {
                 }, 500);
             } else {
                 PosnicPro.alert(res.type, res.message);
+                if (onComplete) onComplete(false);
             }
         }, function (xhr) {
             spinner.remove();
-            var err = JSON.parse(xhr.responseText || '{}');
+            if (onComplete) onComplete(false);
+            var err = {};
+            try { err = JSON.parse(xhr.responseText || '{}'); } catch (e) {}
             PosnicPro.alert('error', err.message || 'Failed to update order');
         });
     },

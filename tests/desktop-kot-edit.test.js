@@ -61,3 +61,40 @@ test('server compatibility does not guess among duplicate preparations or duplic
   assert.throws(() => lines.reconcile([{ product_id: 'water' }], [saved, { ...saved, line_id: 'other' }]), /ambiguous_order_lines/);
   assert.throws(() => lines.reconcile([{ product_id: 'water' }, { product_id: 'water' }], [saved]), /ambiguous_order_lines/);
 });
+
+test('Add Item saves the entered quantity and preserves existing preparation details', () => {
+  const x = setup([saved]);
+  x.$('body').append('<div id="kot_add_item_modal"><div class="modal-content"></div></div>');
+  x.$('#kot_add_item_modal').data('sale-id', 'order');
+  let completed;
+  x.w.PosnicPro.kot.addItemToOrder('new-product', 2.5, value => { completed = value; });
+  assert.equal(completed, true);
+  assert.equal(x.requests[0].items[0].line_id, 'captain-1');
+  assert.equal(x.requests[0].items[0].price, 30);
+  assert.equal(x.requests[0].items[0].item_description, 'No ice');
+  assert.deepEqual(x.requests[0].items[1], { product_id: 'new-product', quantity: 2.5, price: 45 });
+  assert.equal(x.$('#kot_add_item_modal').data('kot-dirty'), true);
+  assert.equal(x.$('.loadingSpinner').length, 0);
+  x.close();
+});
+
+test('quantity selection cancels cleanly and repeated Enter cannot submit twice', () => {
+  const x = setup([]);
+  x.$('body').append('<input id="search">');
+  const $search = x.$('#search');
+  let calls = 0, finish;
+  x.w.PosnicPro.kot.searchQuantity($search, { item_name: 'Tea' }, (_data, qty, done) => {
+    calls++; assert.equal(qty, 3); finish = done;
+  });
+  const $qty = x.$('.kot-search-quantity input');
+  $qty.val('3').trigger(x.$.Event('keydown', { key: 'Enter' }));
+  $qty.trigger(x.$.Event('keydown', { key: 'Enter' }));
+  assert.equal(calls, 1);
+  finish(false);
+  assert.equal($qty.prop('disabled'), false);
+  $qty.trigger(x.$.Event('keydown', { key: 'Escape' }));
+  assert.equal(x.$('.kot-search-quantity').length, 0);
+  assert.equal($search.prop('disabled'), false);
+  assert.equal(calls, 1);
+  x.close();
+});

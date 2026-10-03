@@ -31,6 +31,7 @@
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
 const { authCookieOptions } = require('../utils/auth-cookie');
+const authVersion = require('../utils/auth-version');
 const { currentDb, currentSecret } = require('../db/tenant-context');
 const BaseModel = require('../models/base.model');
 
@@ -132,7 +133,7 @@ async function shadowLogin(req, res) {
    * shopkeeper made.
    */
   const authToken = jwt.sign(
-    { id: user._id, shadow: true, by: claims.by || null },
+    { id: user._id, authVersion: authVersion.version(user), shadow: true, by: claims.by || null },
     currentSecret('JWT_SECRET'),
     { expiresIn: '2h' }
   );
@@ -146,6 +147,7 @@ async function shadowLogin(req, res) {
   );
 
   if (req.session) {
+    authVersion.stampSession(req, user);
     req.session.shadow = { by: claims.by || null, at: new Date(), user: user.email };
   }
 
