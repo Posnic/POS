@@ -68,7 +68,12 @@ before(async () => {
   app.use('/api/captain/v1', require('../src/routes/captain-access.routes'));
   const { protect, optionalProtect } = require('../src/middleware/auth');
   const paymentTestLimit = require('express-rate-limit')({windowMs:60000,limit:180});
-  app.get('/api/sales/guestBills/table', paymentTestLimit, protect, (_r, s) => s.json({ allowed: true }));
+  const guestBills = require('../src/controllers/guest-bill.controller');
+  const salesController = require('../src/controllers/sales.controller');
+  app.get('/api/sales/guestBills/table', paymentTestLimit, protect, guestBills.read);
+  app.get('/api/sales/guestBills/latest', paymentTestLimit, protect, guestBills.latest);
+  app.post('/api/sales/guestBills/print', paymentTestLimit, protect, guestBills.send);
+  app.post('/api/sales/requestBillPrint', paymentTestLimit, protect, salesController.requestBillPrint.bind(salesController));
   app.post('/api/sales/tablePayments/record', paymentTestLimit, protect, (_r, s) => s.json({ allowed: true }));
   app.get('/api/users/admin', protect, (r, s) => s.json({ user: r.user._id }));
   app.post('/api/items/accessQr', optionalProtect, (r, s) =>
@@ -197,6 +202,44 @@ test('expired codes and wrong cloud device proof cannot authorize a phone', asyn
     }),
     (e) => e.code === 'INVALID_PAIR'
   );
+});
+
+test('paired Captain prints and splits one Take Away order through real HTTP controllers', async () => {
+  const { grant } = await paired();
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  const sale = { _id:new ObjectId(), branch_id:branch._id, license:branch.license,
+    table_number:'', dine_type:'Take Away', sales_id:'PRINT-1048', sale_process:'KOT', payment_status:'Unpaid',
+    sales_total:100, sales_sub_total:100, items:[{item_name:'Tea',item_quantity:2,item_base_price:50}] };
+  const other = {...sale, _id:new ObjectId(), sales_id:'PRINT-1049'};
+  await db.collection('sales').insertMany([sale,other]);
+  const endpoint = '/sales/guestBills/table?branchId=' + branch._id + '&saleId=' + sale._id;
+  assert.equal((await fetch(base+endpoint)).status,401);
+  const response = await fetch(base+endpoint,{headers});
+  assert.equal(response.status,200,await response.clone().text());
+  const snapshot = (await response.json()).data;
+  assert.equal(snapshot.table,'Take Away PRINT-1048');
+  assert.equal(snapshot.totalMinor,10000);
+  const splitInput = {branchId:String(branch._id), saleId:String(sale._id), revision:snapshot.revision, request_id:crypto.randomUUID(), copies:1,
+    plan:{mode:'equal',guests:['Guest 1','Guest 2']}};
+  const post = (path,body) => fetch(base+path,{method:'POST',headers,body:JSON.stringify(body)});
+  for (let attempt=0;attempt<2;attempt++) {
+    const result = await post('/sales/guestBills/print',splitInput);
+    assert.equal(result.status,200,await result.clone().text());
+    assert.equal((await result.json()).data.queued,true);
+  }
+  assert.equal(await db.collection('printjobs').countDocuments({ticket_key:{$regex:'^guest-batch:'+splitInput.request_id+':'}}),2);
+  const latest = await fetch(base+'/sales/guestBills/latest?branchId='+branch._id+'&saleId='+sale._id,{headers});
+  assert.equal((await latest.json()).data.stale,false);
+  for(let attempt=0;attempt<2;attempt++) {
+    const result = await post('/sales/requestBillPrint',{branchId:String(branch._id),saleId:String(sale._id),copies:1});
+    assert.equal(result.status,200,await result.clone().text());
+    assert.equal((await result.json()).data.waiting,1);
+  }
+  assert.equal(await db.collection('printjobs').countDocuments({sale_id:sale._id}),1);
+  assert.equal((await db.collection('sales').findOne({_id:other._id})).bill_requested_at,undefined);
+  const foreign={...sale,_id:new ObjectId(),branch_id:new ObjectId()};
+  await db.collection('sales').insertOne(foreign);
+  assert.equal((await fetch(base+'/sales/guestBills/table?branchId='+branch._id+'&saleId='+foreign._id,{headers})).status,409);
 });
 test(
   'manager setup page generates a QR with a real login cookie and CSRF protection',
@@ -421,7 +464,7 @@ test('Captain scoped sessions cannot access Mobile POS or administration', async
 test('paired Captain can split and record payments but cannot change settings or use cashier bypass', async () => {
   const { grant } = await paired();
   const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
-  assert.equal((await fetch(base + '/sales/guestBills/table', { headers })).status, 200);
+  assert.equal((await fetch(base + '/sales/guestBills/table?table_number=NO-OPEN-BILL&branchId='+branch._id, { headers })).status, 409);
   assert.equal((await fetch(base + '/captain/v1/payment-options', { headers })).status, 200);
   assert.equal((await fetch(base + '/captain/v1/payment-settings', { headers })).status, 403);
   assert.equal(
