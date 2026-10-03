@@ -11,6 +11,8 @@ const capabilities = Object.freeze([
   'receipts.normal-template.v1',
   'catalog.command-selection.v1',
   'sales.paged-history.v1',
+  'sales.date-range-report.v1',
+  'reports.text-export.v1',
 ]);
 function get(extensionId) {
   return installed.get(extensionId) || null;

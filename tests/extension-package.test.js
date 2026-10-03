@@ -38,3 +38,15 @@ test('unsigned version traversal cannot reach a staging directory', () => {
   const b = bundle(); b.manifest.version = '../../outside';
   assert.throws(() => verifyExtensionPackage(b.manifest, b.contents, options), { code: 'extension_manifest_invalid' });
 });
+
+test('report extensions reject older hosts before installation', () => {
+  const capabilities = require('../api/src/services/extension-runtime').capabilities;
+  const requiredCapabilities = ['sales.paged-history.v1', 'sales.date-range-report.v1', 'reports.text-export.v1'];
+  const b = bundle({ requiredCapabilities });
+  assert.equal(verifyExtensionPackage(b.manifest, b.contents, {publicKey: keys.publicKey, capabilities}).id, 'posnic.example');
+  for (const missing of ['sales.date-range-report.v1', 'reports.text-export.v1']) {
+    assert.throws(() => verifyExtensionPackage(b.manifest, b.contents, {
+      publicKey: keys.publicKey, capabilities: capabilities.filter(value => value !== missing),
+    }), {code: 'extension_incompatible'});
+  }
+});
