@@ -55,3 +55,12 @@ Run the focused API paper-order and sale-origin tests and Captain paper-order
 browser tests. AWS is mocked in those tests. Before enabling for a customer, verify
 the real IAM role, bucket privacy, a real handwritten sample and photo retrieval.
 No production sale is necessary for recognition validation.
+
+For an opt-in live service check, set `CAPTAIN_LIVE_AWS_CHECK=1`, `AWS_REGION`,
+`ORDER_PHOTO_BUCKET` and an AWS SDK credential profile, then run
+`node tests/paper-order-live.cjs path/to/sample.png` from `api`. The PNG should
+contain `T4 P5`, `CB 5`, `MB 2`, and `PBM 1`. This check uses an isolated MongoDB,
+verifies bucket privacy, recognition, retry reuse, photo retrieval and ownership,
+then deletes its own S3 object. It incurs one Textract request. A generated font
+sample verifies integration only; use real handwritten samples for quality
+acceptance and verify the deployed application's IAM identity separately.
