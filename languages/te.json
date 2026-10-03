@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "కాగితం ఆర్డర్లు",
+  "lang_order_reference": "ఆర్డర్ సూచన",
+  "lang_view_original_order_photo": "ఆర్డర్ అసలు ఫోటో చూడండి",
+  "lang_photo_unavailable_retry": "ఫోటో అందుబాటులో లేదు. మళ్లీ ప్రయత్నించండి",
+  "lang_could_not_load_settings_please_retry": "సెట్టింగ్‌లను లోడ్ చేయలేకపోయాం. మళ్లీ ప్రయత్నించండి.",
+  "lang_could_not_save_check_server_configuration": "సేవ్ చేయలేకపోయాం. సర్వర్ కాన్ఫిగరేషన్ తనిఖీ చేసి మళ్లీ ప్రయత్నించండి.",
+  "lang_saved": "సేవ్ అయింది.",
+  "lang_enable_paper_orders_aws_recognition_charge": "కాగితం ఆర్డర్లను ప్రారంభించండి (AWS గుర్తింపు రుసుములు వర్తిస్తాయి)",
   "lang_table_cleaning": "టేబుల్ శుభ్రపరచడం",
   "lang_enable_table_cleaning": "టేబుల్ శుభ్రపరచడాన్ని ప్రారంభించండి",
   "lang_off_by_default_enable_only_if_staff_should": "డిఫాల్ట్‌గా ఆఫ్‌లో ఉంటుంది. ప్రారంభిస్తే, సేవ తర్వాత టేబుళ్లను అందుబాటులో ఉన్నట్లు గుర్తించాలి.",

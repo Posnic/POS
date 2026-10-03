@@ -58,14 +58,14 @@ PosnicPro.sales.view = {
         var origin = data.origin || data.client;
         if (origin || data.paper_order) {
             var evidence = $('<section id="sale-origin-details" class="border rounded p-3 my-3 d-print-none"></section>');
-            evidence.append($('<h6></h6>').text('Order reference'));
+            evidence.append($('<h6></h6>').text(PosnicPro.i18n.t('lang_order_reference', 'Order reference')));
             if (origin) {
                 [['Ordered by',origin.actor_name || origin.staff_name || data.created_by],['Source',origin.source || origin.app],['Time',origin.at],['IP address',origin.ip],['Device',origin.device_model || origin.device_id],['Browser / app',origin.user_agent]].forEach(function(pair){
                     if(pair[1]) evidence.append($('<p class="mb-1"></p>').text(pair[0]+': '+pair[1]));
                 });
             }
             if(data.paper_order && data.paper_order.id){
-                var photoButton=$('<button type="button" class="btn btn-outline-primary mt-2">View original order photo</button>');
+                var photoButton=$('<button type="button" class="btn btn-outline-primary mt-2"><lang class="lang_view_original_order_photo">View original order photo</lang></button>');
                 photoButton.on('click',function(){
                     photoButton.prop('disabled',true);
                     PosnicPro.get({url:'captain/v1/paper-orders/photos/'+encodeURIComponent(data.paper_order.id)},function(photo){
@@ -74,7 +74,7 @@ PosnicPro.sales.view = {
                             evidence.find('img').remove();
                             evidence.append($('<img alt="Original handwritten order" class="d-block mt-2">').attr('src',photo.data).css({maxWidth:'100%',maxHeight:'700px',objectFit:'contain'}));
                         }
-                    },function(){photoButton.prop('disabled',false).text('Photo unavailable — retry');});
+                    },function(){photoButton.prop('disabled',false).text(PosnicPro.i18n.t('lang_photo_unavailable_retry', 'Photo unavailable. Retry'));});
                 });
                 evidence.append(photoButton);
             }

@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "कागज़ी ऑर्डर",
+  "lang_order_reference": "ऑर्डर संदर्भ",
+  "lang_view_original_order_photo": "ऑर्डर की मूल फ़ोटो देखें",
+  "lang_photo_unavailable_retry": "फ़ोटो उपलब्ध नहीं है। फिर प्रयास करें",
+  "lang_could_not_load_settings_please_retry": "सेटिंग लोड नहीं हो सकीं। फिर प्रयास करें।",
+  "lang_could_not_save_check_server_configuration": "सहेजा नहीं जा सका। सर्वर कॉन्फ़िगरेशन जाँचें और फिर प्रयास करें।",
+  "lang_saved": "सहेजा गया।",
+  "lang_enable_paper_orders_aws_recognition_charge": "कागज़ी ऑर्डर चालू करें (AWS पहचान शुल्क लागू है)",
   "lang_item_upload_failed": "चित्र अपलोड नहीं हुआ। आइटम सहेजा नहीं गया।",
   "lang_item_translated_name": "अनुवादित आइटम नाम",
   "lang_item_stock_variants_help": "हर वैरिएंट की पंक्ति में शुरुआती स्टॉक दर्ज करें।",

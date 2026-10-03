@@ -10253,13 +10253,13 @@ $(document).on('shown.bs.tab', '#captainpaper-tab-line', function () {
         $('#captain_paper_enabled').prop('checked',data.enabled === true);
         $('#save_captain_paper').prop('disabled',false);
         $('#captain_paper_message').text(data.configured ? '' : 'Server setup required: private S3 order-photo bucket and AWS Textract.');
-    },function(){ $('#captain_paper_message').text('Could not load settings. Please retry.'); });
+    },function(){ $('#captain_paper_message').text(PosnicPro.i18n.t('lang_could_not_load_settings_please_retry', 'Could not load settings. Please retry.')); });
 });
 $(document).on('click','#save_captain_paper',function(){
     var button=$(this).prop('disabled',true);
     PosnicPro.post({url:'captain/v1/paper-orders/settings',processData:false,data:JSON.stringify({enabled:$('#captain_paper_enabled').is(':checked')})},function(){
-        button.prop('disabled',false);$('#captain_paper_message').text('Saved.');
-    },function(){button.prop('disabled',false);$('#captain_paper_message').text('Could not save. Check server configuration and retry.');});
+        button.prop('disabled',false);$('#captain_paper_message').text(PosnicPro.i18n.t('lang_saved', 'Saved.'));
+    },function(){button.prop('disabled',false);$('#captain_paper_message').text(PosnicPro.i18n.t('lang_could_not_save_check_server_configuration', 'Could not save. Check server configuration and retry.'));});
 });
 $(document).on('shown.bs.tab', '#captaintables-tab-line', function () {
     $('#save_captain_tables').prop('disabled',true);
