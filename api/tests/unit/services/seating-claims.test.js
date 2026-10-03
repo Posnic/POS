@@ -2966,21 +2966,19 @@ test.each([
     person_count: 2,
     dine_type: 'Dine-in',
   };
-  await db
-    .collection('table_seating')
-    .insertOne({
-      _id: `${scope.license}:${scope.branchId}`,
-      claims: [
-        {
-          id: 'remote-claim',
-          order_id: String(order._id),
-          state: 'submitting',
-          tables: [ids[0]],
-          labels: ['T1'],
-          ...lock,
-        },
-      ],
-    });
+  await db.collection('table_seating').insertOne({
+    _id: `${scope.license}:${scope.branchId}`,
+    claims: [
+      {
+        id: 'remote-claim',
+        order_id: String(order._id),
+        state: 'submitting',
+        tables: [ids[0]],
+        labels: ['T1'],
+        ...lock,
+      },
+    ],
+  });
   await expect(
     seating.forEdit(db, scope, order, { table: 'T1', guests: 2 }, { settling: true })
   ).rejects.toMatchObject({ status: 409 });

@@ -219,17 +219,15 @@ test('cancellation keeps blocking a live move instead of cancelling a different 
   await db
     .collection('sales')
     .updateOne({ _id: new mongoose.Types.ObjectId(id) }, { $set: { seating_request_id: claim } });
-  await db
-    .collection('table_seating')
-    .updateOne(
-      { _id: `${LICENSE}:${BRANCH}` },
-      {
-        $set: {
-          claims: [{ id: claim, order_id: id, state: 'submitting', moving_to: 'another-table' }],
-        },
+  await db.collection('table_seating').updateOne(
+    { _id: `${LICENSE}:${BRANCH}` },
+    {
+      $set: {
+        claims: [{ id: claim, order_id: id, state: 'submitting', moving_to: 'another-table' }],
       },
-      { upsert: true }
-    );
+    },
+    { upsert: true }
+  );
   const result = await cancel(id);
   expect(result.status).toBe(false);
   expect(result.message).toContain('table move');
