@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "कागजी अर्डर",
+  "lang_order_reference": "अर्डर सन्दर्भ",
+  "lang_view_original_order_photo": "अर्डरको मूल फोटो हेर्नुहोस्",
+  "lang_photo_unavailable_retry": "फोटो उपलब्ध छैन। फेरि प्रयास गर्नुहोस्",
+  "lang_could_not_load_settings_please_retry": "सेटिङ लोड गर्न सकिएन। फेरि प्रयास गर्नुहोस्।",
+  "lang_could_not_save_check_server_configuration": "सुरक्षित गर्न सकिएन। सर्भर कन्फिगरेसन जाँचेर फेरि प्रयास गर्नुहोस्।",
+  "lang_saved": "सुरक्षित भयो।",
+  "lang_enable_paper_orders_aws_recognition_charge": "कागजी अर्डर सक्षम गर्नुहोस् (AWS पहिचान शुल्क लाग्छ)",
   "lang_table_cleaning": "टेबल सफाइ",
   "lang_enable_table_cleaning": "टेबल सफाइ सक्षम गर्नुहोस्",
   "lang_off_by_default_enable_only_if_staff_should": "पूर्वनिर्धारित रूपमा बन्द छ। सक्षम भएमा, सेवा पछि टेबलहरू उपलब्ध भनी चिन्ह लगाउनुपर्छ।",

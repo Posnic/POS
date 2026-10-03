@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "Papierbestellungen",
+  "lang_order_reference": "Bestellreferenz",
+  "lang_view_original_order_photo": "Originalfoto der Bestellung ansehen",
+  "lang_photo_unavailable_retry": "Foto nicht verfügbar. Erneut versuchen",
+  "lang_could_not_load_settings_please_retry": "Einstellungen konnten nicht geladen werden. Bitte erneut versuchen.",
+  "lang_could_not_save_check_server_configuration": "Speichern fehlgeschlagen. Serverkonfiguration prüfen und erneut versuchen.",
+  "lang_saved": "Gespeichert.",
+  "lang_enable_paper_orders_aws_recognition_charge": "Papierbestellungen aktivieren (AWS-Erkennungsgebühren fallen an)",
   "lang_table_cleaning": "Tischreinigung",
   "lang_enable_table_cleaning": "Tischreinigung aktivieren",
   "lang_off_by_default_enable_only_if_staff_should": "Standardmäßig aus. Wenn aktiviert, müssen Tische nach dem Service als verfügbar markiert werden.",

@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "طلبات ورقية",
+  "lang_order_reference": "مرجع الطلب",
+  "lang_view_original_order_photo": "عرض صورة الطلب الأصلية",
+  "lang_photo_unavailable_retry": "الصورة غير متاحة. أعد المحاولة",
+  "lang_could_not_load_settings_please_retry": "تعذر تحميل الإعدادات. أعد المحاولة.",
+  "lang_could_not_save_check_server_configuration": "تعذر الحفظ. تحقق من إعدادات الخادم وأعد المحاولة.",
+  "lang_saved": "تم الحفظ.",
+  "lang_enable_paper_orders_aws_recognition_charge": "تفعيل الطلبات الورقية (تُطبق رسوم التعرف من AWS)",
   "lang_table_cleaning": "تنظيف الطاولات",
   "lang_enable_table_cleaning": "تفعيل تنظيف الطاولات",
   "lang_off_by_default_enable_only_if_staff_should": "معطل افتراضيًا. عند التفعيل، يجب تحديد الطاولات كمتاحة بعد الخدمة.",
