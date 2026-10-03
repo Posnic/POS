@@ -140,8 +140,10 @@ function view(plan, options) {
       at: p.at,
       reference: p.reference,
       ...(p.upi ? { upi: p.upi } : {}),
+      ...(p.tenders ? {tenders:p.tenders.map(({allocations, ...tender}) => tender)} : {}),
     })),
     ...options,
+    mixedPayment: true,
   };
 }
 // Every effect is derived from the durable payment journal. Replaying repairs
@@ -158,8 +160,11 @@ async function reconcile(db, c, plan) {
       const amount = payment.allocations[String(sale._id)] || 0;
       if (!amount) continue;
       paid += amount;
-      multi[payment.method] =
-        Math.round(((multi[payment.method] || 0) + amount / factor) * factor) / factor;
+      for (const tender of payment.tenders || [payment]) {
+        const tenderAmount = tender.allocations[String(sale._id)] || 0;
+        if (!tenderAmount) continue;
+        multi[tender.method] = Math.round(((multi[tender.method] || 0) + tenderAmount / factor) * factor) / factor;
+      }
     }
     const total = plan.saleTotals[String(sale._id)];
     const due = total - paid;
@@ -199,6 +204,7 @@ async function reconcile(db, c, plan) {
               method: p.method,
               amount: p.allocations[String(sale._id)] / factor,
               reference: p.reference,
+              ...(p.tenders ? {tenders:p.tenders.filter(t => t.allocations[String(sale._id)] > 0).map(t => ({method:t.method, amount:t.allocations[String(sale._id)] / factor, reference:t.reference}))} : {}),
               ...(p.upi ? { upi: p.upi } : {}),
               staffId: p.staffId,
               staffName: p.staffName,
@@ -288,6 +294,7 @@ async function reconcile(db, c, plan) {
         tax: payload.taxes.reduce((sum, row) => sum + row.amount, 0),
         items: [],
         payment_mode: payment.method,
+        ...(payment.tenders ? {multi_payment:Object.fromEntries(payment.tenders.map(tender => [tender.method, tender.amountMinor / factor]))} : {}),
         paid_amount: payment.amountMinor / factor,
         received_amount: payment.receivedMinor / factor,
         change_amount: payment.changeMinor / factor,
@@ -468,6 +475,7 @@ async function record(req) {
     receivedMinor: input.receivedMinor,
     reference: input.reference || '',
     ...(input.upi ? { upi: input.upi } : {}),
+    ...(input.tenders ? { tenders: input.tenders } : {}),
   });
   const previous = (plan.payments || []).find((p) => p.id === input.request_id);
   if (previous) {
@@ -477,7 +485,7 @@ async function record(req) {
   }
   if (!Number.isSafeInteger(input.version) || input.version !== plan.version)
     fail('Another payment changed this bill. Refresh before collecting more.', 409);
-  if (!c.options.enabled || !c.options.methods.includes(input.method))
+  if (!c.options.enabled || (input.method !== 'Mixed' && !c.options.methods.includes(input.method)))
     fail('This payment method is not enabled in Captain.', 403);
   const paidGuests = new Set(plan.payments.flatMap((p) => p.guests));
   const indexes =
@@ -492,12 +500,18 @@ async function record(req) {
   const amount = indexes.reduce((sum, i) => sum + plan.guests[i].totalMinor, 0);
   if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor !== amount || amount <= 0)
     fail('The amount changed. Review the bill again.', 409);
+  const tenders = input.method === 'Mixed'
+    ? require('./captain-tenders').validate(input.tenders, amount, c.options.methods)
+    : null;
+  if (input.tenders && !tenders) fail('Invalid payment methods.');
   if (
     !Number.isSafeInteger(input.receivedMinor) ||
     input.receivedMinor < amount ||
     input.receivedMinor > 1e12 ||
-    (input.method !== 'Cash' && input.receivedMinor !== amount)
+    (!['Cash', 'Mixed'].includes(input.method) && input.receivedMinor !== amount)
   )
+    fail('Enter the amount received.');
+  if (tenders && input.receivedMinor !== tenders.reduce((sum, tender) => sum + tender.receivedMinor, 0))
     fail('Enter the amount received.');
   if (typeof (input.reference || '') !== 'string' || (input.reference || '').length > 100)
     fail('Invalid payment reference.');
@@ -543,6 +557,7 @@ async function record(req) {
     reference: (input.reference || '').trim(),
     ...(input.upi ? { upi: { ...c.options.upiPayee, verified: true } } : {}),
     allocations,
+    ...(tenders ? {tenders:require('./captain-tenders').allocate(tenders, allocations)} : {}),
     at: new Date(),
     staffId: String(req.user._id || req.user.id),
     staffName: String(req.user.name || req.user.username || req.user.email || ''),

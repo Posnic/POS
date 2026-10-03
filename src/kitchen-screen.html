@@ -395,23 +395,33 @@
       icon.setAttribute('class', 'table-icon');
       icon.setAttribute('aria-hidden', 'true');
       var shape = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      shape.setAttribute('d', 'M8 18h32v8H8zM12 26v14m24-14v14M16 8h16v6H16z');
+      shape.setAttribute('d', ticket.takeaway ? 'M10 14h28l4 28H6l4-28z M18 16V10a6 6 0 0 1 12 0v6' : 'M8 18h32v8H8zM12 26v14m24-14v14M16 8h16v6H16z');
       shape.setAttribute('fill', 'none');
       shape.setAttribute('stroke', 'currentColor');
       shape.setAttribute('stroke-width', '4');
       shape.setAttribute('stroke-linejoin', 'round');
       icon.appendChild(shape);
       node.appendChild(icon);
-      node.appendChild(el('span', 'table', ticket.table || ''));
+      node.appendChild(el('span', 'table', ticket.takeaway ? 'Take Away ' + (ticket.orderNumber || '') : ticket.table || ''));
       node.setAttribute('aria-label', (ticket.table || '') + ', ' + state);
       return node;
     }
 
     var top = el('div', 'top');
-    if (cfg.showTable !== false && String(ticket.table || '').trim()) {
-      var tableLabel = String(ticket.table || '').trim();
+    if (cfg.showTable !== false && (ticket.takeaway || String(ticket.table || '').trim())) {
+      var tableLabel = ticket.takeaway ? 'Take Away ' + (ticket.orderNumber || '') : String(ticket.table || '').trim();
       if (/^(?:T\s*-?\s*)?\d+$/i.test(tableLabel)) tableLabel = 'T - ' + tableLabel.replace(/^T\s*-?\s*/i, '');
       var heading = el('span', 'table', tableLabel);
+      var kindIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      kindIcon.setAttribute('viewBox', '0 0 24 24');
+      kindIcon.setAttribute('width', '1em'); kindIcon.setAttribute('height', '1em');
+      kindIcon.setAttribute('aria-hidden', 'true');
+      var kindPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      kindPath.setAttribute('d', ticket.takeaway ? 'M5 7h14l2 14H3L5 7z M9 8V5a3 3 0 0 1 6 0v3' : 'M3 9h18v3H3z M5 12v9 M19 12v9 M5 3v6 M19 3v6');
+      kindPath.setAttribute('fill', 'none'); kindPath.setAttribute('stroke', 'currentColor');
+      kindPath.setAttribute('stroke-width', '2'); kindIcon.appendChild(kindPath);
+      kindIcon.style.marginRight = '0.25em';
+      heading.prepend(kindIcon);
       top.appendChild(heading);
     }
     if (cfg.showAge !== false) {

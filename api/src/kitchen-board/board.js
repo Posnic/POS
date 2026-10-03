@@ -196,7 +196,7 @@
     )
       return;
     for (const stage of stages) {
-      const list = tickets.filter((t) => t.state === stage);
+      const list = stage === 'ready' ? [] : tickets.filter((t) => t.state === stage && t.items.some(i => (i.total ?? i.qty) > (i.ready || 0)));
       $(stage).replaceChildren();
       $('count-' + stage).textContent = list.length;
       if (!list.length)
@@ -228,17 +228,17 @@
         card.dataset.id = ticket.id;
         const top = node('div', 'top'),
           table = node('span', 'table');
-        if (ticket.table) {
+        if (ticket.table || ticket.takeaway) {
           const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
           icon.setAttribute('viewBox', '0 0 24 24');
           icon.setAttribute('aria-hidden', 'true');
           const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-          p.setAttribute('d', 'M3 9h18v3H3z M5 12v9 M19 12v9 M5 3v6 M19 3v6');
+          p.setAttribute('d', ticket.takeaway ? 'M5 7h14l2 14H3L5 7z M9 8V5a3 3 0 0 1 6 0v3' : 'M3 9h18v3H3z M5 12v9 M19 12v9 M5 3v6 M19 3v6');
           p.setAttribute('fill', 'none');
           p.setAttribute('stroke', 'currentColor');
           p.setAttribute('stroke-width', '2');
           icon.append(p);
-          table.append(icon, document.createTextNode(ticket.table));
+          table.append(icon, document.createTextNode(ticket.takeaway ? 'Take Away ' + (ticket.orderNumber || '') : ticket.table));
         }
         top.append(table, node('span', 'arrival', time(ticket.placedAt)));
         card.append(top);
@@ -267,8 +267,10 @@
           );
         const items = node('ul', 'items');
         for (const item of ticket.items) {
+          const toPrepare = Math.max(0, (item.total ?? item.qty) - (item.ready || 0));
+          if (!toPrepare) continue;
           const li = node('li');
-          li.append(node('span', 'quantity', item.qty + '×'), node('span', 'name', item.name));
+          li.append(node('span', 'quantity', toPrepare + '×'), node('span', 'name', item.name));
           if (Number.isFinite(Number(item.priced_at_table)) && Number(item.priced_at_table) > 0) {
             li.append(
               node(

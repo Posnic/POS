@@ -43,7 +43,7 @@ test('chef marks part of a dish ready, can undo it, and can ready the remaining 
     assert.equal(card.querySelector('.name .progress-cooking').getAttribute('aria-label'), '2 Cooking');
     card.querySelector('.advance').click();
     await tick();
-    assert.ok(d.querySelector('#ready [data-id="demo-1:c0"]'));
+    assert.equal(d.querySelector('[data-id="demo-1:c0"]'), null);
   } finally {
     dom.window.close();
   }
@@ -58,6 +58,25 @@ const liveTicket = {
   items: [{ qty: 1, name: 'Rice' }],
 };
 const response = (tickets) => ({ ok: true, json: async () => ({ branch: 'Test', tickets }) });
+
+test('paid takeaway shows full numbered bag heading and only quantities still cooking', async () => {
+  const dom = setup(false, async () => response([{
+    id:'paid:c0',saleId:'paid',roundId:'c0',table:'',takeaway:true,orderNumber:'104',
+    state:'preparing',revision:1,items:[
+      {id:'a',name:'Fish',qty:3,total:3,ready:2,served:0},
+      {id:'b',name:'Rice',qty:1,total:1,ready:1,served:0},
+    ],
+  }]));
+  try {
+    await tick();
+    const d=dom.window.document;
+    assert.equal(d.querySelector('.table').textContent,'Take Away 104');
+    assert.ok(d.querySelector('.table svg'));
+    assert.equal(d.querySelectorAll('.items li').length,1);
+    assert.equal(d.querySelector('.quantity').textContent,'1×');
+    assert.equal(d.querySelector('#ready').closest('section').hidden,true);
+  } finally {dom.window.close();}
+});
 test('an old read cannot undo a confirmed action; duplicate clicks submit once', async () => {
   let calls = 0,
     posts = 0,
@@ -122,7 +141,7 @@ test('demo buttons and Undo operate locally; stages keep order details', async (
   const dom = setup();
   try {
     const d = dom.window.document;
-    assert.equal(d.querySelectorAll('.ticket').length, 4);
+    assert.equal(d.querySelectorAll('.ticket').length, 3);
     assert.match(d.querySelector('#new').textContent, /Chicken biryani/);
     d.querySelector('#new button').click();
     await tick();

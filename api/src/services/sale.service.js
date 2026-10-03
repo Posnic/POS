@@ -2043,6 +2043,7 @@ const getTablesWithActiveOrders = async (branchId) => {
            */
           orders: { $sum: 1 },
           paidOrders: { $sum: { $cond: [{ $eq: ['$payment_status', 'Paid'] }, 1, 0] } },
+          sales: { $push: { id: '$_id', number: '$sales_id', since: '$created_date', amount: '$sales_total', payment_status: '$payment_status' } },
           since: { $min: { $ifNull: ['$created_date', '$date'] } },
           amount: { $sum: { $ifNull: ['$sales_total', 0] } },
         },
@@ -2054,6 +2055,7 @@ const getTablesWithActiveOrders = async (branchId) => {
           dine_type: '$_id.dine_type',
           orders: 1,
           paidOrders: 1,
+          sales: 1,
           since: 1,
           amount: 1,
         },
@@ -2100,6 +2102,7 @@ const getTablesWithActiveOrders = async (branchId) => {
     const detail = new Map();
     let hasTakeaway = false;
     let takeaway = null;
+    const takeawayOrders = [];
 
     const remember = (key, res) => {
       const was = detail.get(key);
@@ -2125,6 +2128,16 @@ const getTablesWithActiveOrders = async (branchId) => {
       if (dType === 'Take away' || dType === 'Takeaway') {
         hasTakeaway = true;
         remember('__takeaway__', res);
+        for (const sale of res.sales || []) {
+          takeawayOrders.push({
+            sale_id: String(sale.id),
+            number: String(sale.number || sale.id),
+            orders: 1,
+            since: sale.since ? new Date(sale.since).toISOString() : null,
+            amount: Number(sale.amount) || 0,
+            payment_status: sale.payment_status,
+          });
+        }
       } else if (tNum !== '') {
         tables.push(tNum);
         remember(tNum, res);
@@ -2163,6 +2176,7 @@ const getTablesWithActiveOrders = async (branchId) => {
       data: {
         tables: uniqueTables,
         has_takeaway: hasTakeaway,
+        takeaway_orders: takeawayOrders.sort((a, b) => String(a.since || '').localeCompare(String(b.since || '')) || a.sale_id.localeCompare(b.sale_id)),
         /*
          * How many open orders a table may have, so a handset can grey out a
          * full table instead of letting a waiter walk to it, type an order and

@@ -62,6 +62,71 @@ const pay = (plan, overrides = {}) =>
     request_id: require('crypto').randomUUID(),
     ...overrides,
   });
+test('mixed cash and card commits once and projects exact tender amounts', async () => {
+  const plan = await service.prepare(req());
+  const payment = pay(plan, {method:'Mixed',receivedMinor:11000,tenders:[
+    {method:'Cash',amountMinor:10000,receivedMinor:10500},
+    {method:'Card',amountMinor:500,receivedMinor:500,verified:true,reference:'terminal-1'},
+  ]});
+  const first = await service.record(payment);
+  const retry = await service.record(payment);
+  expect(first.dueMinor).toBe(0);
+  expect(retry.payments).toHaveLength(1);
+  expect(retry.payments[0].changeMinor).toBe(500);
+  const stored = await db.collection('sales').findOne({_id:sale._id});
+  expect(stored.multi_payment).toEqual({Cash:100,Card:5});
+  expect(stored.payment_status).toBe('Paid');
+  expect(stored.items).toEqual(sale.items);
+  payment.body.tenders[1].reference = 'changed';
+  await expect(service.record(payment)).rejects.toMatchObject({status:409});
+});
+
+test('invalid mixed totals or unverified card leave the payment journal untouched', async () => {
+  const plan = await service.prepare(req());
+  for (const tenders of [
+    [{method:'Cash',amountMinor:10000,receivedMinor:10000},{method:'Card',amountMinor:400,receivedMinor:400,verified:true}],
+    [{method:'Cash',amountMinor:10000,receivedMinor:10000},{method:'Card',amountMinor:500,receivedMinor:500}],
+  ]) await expect(service.record(pay(plan,{method:'Mixed',tenders}))).rejects.toThrow();
+  const stored = await db.collection('captain_payment_plans').findOne({_id:plan.id});
+  expect(stored.payments).toEqual([]);
+});
+
+test.each([false, true])('mixed payment across sales preserves totals and follows auto-print=%s', async enabled => {
+  const second = {...sale, _id: new ObjectId()};
+  await db.collection('sales').insertOne(second);
+  const design = {thermal: {blocks: []}};
+  await db.collection('branches').updateOne({_id:branch}, {$set:{printall:enabled, receipt_designs:design}});
+  const queue = require('../../../src/repositories/print-job.repository').queuePrintJob;
+  queue.mockClear();
+  const plan = await service.prepare(req());
+  expect(plan.dueMinor).toBe(21000);
+  const input = pay(plan, {method:'Mixed', tenders:[
+    {method:'Cash', amountMinor:10000, receivedMinor:10000},
+    {method:'Card', amountMinor:11000, receivedMinor:11000, verified:true, reference:'terminal-2'},
+  ]});
+  await service.record(input);
+  await service.record(input);
+  const sales = await db.collection('sales').find({}).toArray();
+  const totals = {Cash:0, Card:0};
+  for (const saved of sales) {
+    expect(saved.payment_status).toBe('Paid');
+    expect(saved.paid_amount).toBe(105);
+    expect(saved.items).toEqual(sale.items);
+    expect(Object.values(saved.multi_payment).reduce((a,b) => a+b, 0)).toBe(105);
+    for (const [method, amount] of Object.entries(saved.multi_payment)) totals[method] += amount;
+    expect(saved.captain_payments).toHaveLength(1);
+    expect(saved.captain_payments[0].tenders.reduce((sum,t) => sum+t.amount, 0)).toBe(105);
+  }
+  expect(totals).toEqual({Cash:100, Card:110});
+  expect(queue).toHaveBeenCalledTimes(enabled ? 2 : 0);
+  if (enabled) {
+    expect(queue.mock.calls[1][0].ticketKey).toBe(queue.mock.calls[0][0].ticketKey);
+    expect(queue.mock.calls[0][0].payload.receiptDocument).toMatchObject({
+    receipt_designs:design, multi_payment:{Cash:100, Card:110}, items_total:210,
+    });
+  }
+});
+
 test('records once across duplicate and concurrent retries without changing items', async () => {
   const plan = await service.prepare(req());
   expect(plan.dueMinor).toBe(10500);
@@ -81,6 +146,31 @@ test('records once across duplicate and concurrent retries without changing item
     .collection('branches')
     .updateOne({ _id: branch }, { $set: { 'captain_payments.enabled': false } });
   expect((await service.record(input)).confirmed).toBe(input.body.request_id);
+});
+
+test('a mixed settlement retry creates one real receipt job with the configured template', async () => {
+  const queue = require('../../../src/repositories/print-job.repository').queuePrintJob;
+  const actualQueue = jest.requireActual('../../../src/repositories/print-job.repository').queuePrintJob;
+  const design = {thermal:{blocks:[{type:'text', text:'Test shop receipt'}]}};
+  await db.collection('branches').updateOne({_id:branch}, {$set:{printall:true, receipt_designs:design}});
+  queue.mockImplementation(actualQueue);
+  try {
+    const plan = await service.prepare(req());
+    const input = pay(plan, {method:'Mixed', tenders:[
+      {method:'Cash', amountMinor:10000, receivedMinor:10000},
+      {method:'Card', amountMinor:500, receivedMinor:500, verified:true},
+    ]});
+    await service.record(input);
+    await service.record(input);
+    const jobs = await db.collection('printjobs').find({branch_id:branch}).toArray();
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0].ticket_key).toBe('captain-payment:' + input.body.request_id + ':1');
+    expect(jobs[0].payload.receiptDocument).toMatchObject({
+      receipt_designs:design, multi_payment:{Cash:100, Card:5}, items_total:105,
+    });
+  } finally {
+    queue.mockImplementation(async () => ({status:true}));
+  }
 });
 test('split guest payments retain the exact remainder and reject competing stale payments', async () => {
   const snapshot = require('../../../src/services/guest-bill.service').snapshotFrom(
