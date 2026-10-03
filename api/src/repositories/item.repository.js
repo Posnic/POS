@@ -1964,7 +1964,6 @@ class ItemRepository extends BaseModel {
           String(data.nutrition_source || '').trim() === 'estimated' ? 'estimated' : '',
         food_tags: dishFacts.cleanTags(data.food_tags, dishFacts.FOOD_TAGS),
         menu_marks: dishFacts.cleanTags(data.menu_marks, dishFacts.MENU_MARKS),
-        isAvailable: Boolean(data.ecommerce),
         negative_stock: Boolean(data.negative_stock),
         item_weight_machine_based: Boolean(data.item_weight_machine_based),
         items_mfg_date: data.items_mfg_date || null,
@@ -2108,6 +2107,9 @@ class ItemRepository extends BaseModel {
       }
 
       if (!id) {
+        // Kiosk visibility is independent of dish availability. Existing items
+        // retain their availability because edits omit this field entirely.
+        updateData.isAvailable = true;
         // Insert new item
         const insertData = {
           ...updateData,
@@ -3658,7 +3660,7 @@ class ItemRepository extends BaseModel {
 
       const result = await collection.updateOne(
         { _id: new ObjectId(id) },
-        { $set: { isAvailable: status, ecommerce: status } }
+        { $set: { ecommerce: status, updated_date: new Date() } }
       );
 
       if (result.modifiedCount > 0) {
@@ -4486,7 +4488,7 @@ class ItemRepository extends BaseModel {
            * of day. The page says so, with the periods it IS served in.
            *
            * `isAvailable` used to be read here too, and it is not what its
-           * name says. It is the legacy per-item "show on kiosk" tick, written
+           * name says. It was the legacy per-item "show on kiosk" tick, written
            * as Boolean(ecommerce) on every save - so every dish saved through
            * the item form without that box ticked carried isAvailable: false,
            * and a real shop's whole menu came out greyed "Not available
