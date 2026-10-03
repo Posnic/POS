@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "Commandes sur papier",
+  "lang_order_reference": "Référence de commande",
+  "lang_view_original_order_photo": "Voir la photo originale de la commande",
+  "lang_photo_unavailable_retry": "Photo indisponible. Réessayer",
+  "lang_could_not_load_settings_please_retry": "Impossible de charger les paramètres. Réessayez.",
+  "lang_could_not_save_check_server_configuration": "Enregistrement impossible. Vérifiez la configuration du serveur et réessayez.",
+  "lang_saved": "Enregistré.",
+  "lang_enable_paper_orders_aws_recognition_charge": "Activer les commandes sur papier (frais de reconnaissance AWS applicables)",
   "lang_table_cleaning": "Nettoyage des tables",
   "lang_enable_table_cleaning": "Activer le nettoyage des tables",
   "lang_off_by_default_enable_only_if_staff_should": "Désactivé par défaut. Une fois activé, les tables doivent être marquées disponibles après le service.",

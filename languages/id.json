@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "Pesanan kertas",
+  "lang_order_reference": "Referensi pesanan",
+  "lang_view_original_order_photo": "Lihat foto asli pesanan",
+  "lang_photo_unavailable_retry": "Foto tidak tersedia. Coba lagi",
+  "lang_could_not_load_settings_please_retry": "Pengaturan tidak dapat dimuat. Coba lagi.",
+  "lang_could_not_save_check_server_configuration": "Tidak dapat menyimpan. Periksa konfigurasi server dan coba lagi.",
+  "lang_saved": "Tersimpan.",
+  "lang_enable_paper_orders_aws_recognition_charge": "Aktifkan pesanan kertas (dikenakan biaya pengenalan AWS)",
   "lang_table_cleaning": "Pembersihan meja",
   "lang_enable_table_cleaning": "Aktifkan pembersihan meja",
   "lang_off_by_default_enable_only_if_staff_should": "Nonaktif secara default. Jika diaktifkan, meja harus ditandai tersedia setelah pelayanan.",

@@ -1,4 +1,12 @@
 {
+  "lang_paper_orders": "Maagizo ya karatasi",
+  "lang_order_reference": "Rejeleo la agizo",
+  "lang_view_original_order_photo": "Tazama picha asili ya agizo",
+  "lang_photo_unavailable_retry": "Picha haipatikani. Jaribu tena",
+  "lang_could_not_load_settings_please_retry": "Mipangilio haikuweza kupakiwa. Jaribu tena.",
+  "lang_could_not_save_check_server_configuration": "Imeshindwa kuhifadhi. Kagua usanidi wa seva na ujaribu tena.",
+  "lang_saved": "Imehifadhiwa.",
+  "lang_enable_paper_orders_aws_recognition_charge": "Washa maagizo ya karatasi (ada za utambuzi za AWS zinatumika)",
   "lang_table_cleaning": "Usafishaji wa meza",
   "lang_enable_table_cleaning": "Washa usafishaji wa meza",
   "lang_off_by_default_enable_only_if_staff_should": "Imezimwa kwa chaguo-msingi. Ikiwashwa, meza lazima ziwekwe kuwa zinapatikana baada ya huduma.",

@@ -286,7 +286,7 @@ class SalesRepository {
 
   async create(data, { SaleModel } = {}) {
     const Model = this.getModel(SaleModel);
-    const doc = new Model(data);
+    const doc = new Model({ ...data, origin: require('../utils/sale-origin').stamp(data) });
     await doc.save();
     return doc;
   }
@@ -8427,7 +8427,10 @@ class SalesRepository {
     return { id: null, name };
   }
 
-  async createOnlineOrder(data, { SaleModel, staffOrder = false, seatingProtocol = false } = {}) {
+  async createOnlineOrder(
+    data,
+    { SaleModel, staffOrder = false, seatingProtocol = false, paperOrder = null } = {}
+  ) {
     try {
       const db = await BaseModel.getDb();
 
@@ -9143,6 +9146,7 @@ class SalesRepository {
         /* The device this came from; see the note beside `client` above.
            Worked out once: calling twice would stamp two different times. */
         ...(clientRecord ? { client: clientRecord } : {}),
+        ...(paperOrder ? { paper_order: paperOrder } : {}),
         // Initial change log entry for KOT printing
         kitchen_actor: staffOrder ? kitchenActor() : null,
         changes: changesItems.length
@@ -14430,6 +14434,7 @@ class SalesRepository {
    * is raised, because retrying it would be how one order becomes two.
    */
   async insertSaleWithFreshNumber(salesCollection, document, branchId, { attempts = 5 } = {}) {
+    document.origin = require('../utils/sale-origin').stamp(document);
     for (let attempt = 1; ; attempt++) {
       try {
         return await salesCollection.insertOne(document);
