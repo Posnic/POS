@@ -10413,6 +10413,8 @@ class SalesRepository {
               }
             : {}),
           assigned_staff: doc.assigned_staff,
+          ...(doc.paper_order?.id ? { paper_order: { id: doc.paper_order.id } } : {}),
+          ...(Array.isArray(doc.order_photos) ? {order_photos:doc.order_photos.map(photo => ({id:photo.id}))} : {}),
           kitchen_rounds: require('../helpers/kitchen-rounds').rounds(doc),
           item_transfer: true,
           total_amount: doc.sales_total || doc.total || 0,
