@@ -26,7 +26,9 @@ async function read(req) {
     .find({
       ...scope,
       ...floorEligibility(),
-      ...(saleId ? {_id:new ObjectId(saleId),dine_type:/^take[\s_-]*away$/i} : {table_number:table.trim()}),
+      ...(saleId
+        ? { _id: new ObjectId(saleId), dine_type: /^take[\s_-]*away$/i }
+        : { table_number: table.trim() }),
     })
     .sort({ _id: 1 })
     .limit(201)

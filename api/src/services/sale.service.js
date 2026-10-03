@@ -2043,7 +2043,15 @@ const getTablesWithActiveOrders = async (branchId) => {
            */
           orders: { $sum: 1 },
           paidOrders: { $sum: { $cond: [{ $eq: ['$payment_status', 'Paid'] }, 1, 0] } },
-          sales: { $push: { id: '$_id', number: '$sales_id', since: '$created_date', amount: '$sales_total', payment_status: '$payment_status' } },
+          sales: {
+            $push: {
+              id: '$_id',
+              number: '$sales_id',
+              since: '$created_date',
+              amount: '$sales_total',
+              payment_status: '$payment_status',
+            },
+          },
           since: { $min: { $ifNull: ['$created_date', '$date'] } },
           amount: { $sum: { $ifNull: ['$sales_total', 0] } },
         },
@@ -2176,7 +2184,11 @@ const getTablesWithActiveOrders = async (branchId) => {
       data: {
         tables: uniqueTables,
         has_takeaway: hasTakeaway,
-        takeaway_orders: takeawayOrders.sort((a, b) => String(a.since || '').localeCompare(String(b.since || '')) || a.sale_id.localeCompare(b.sale_id)),
+        takeaway_orders: takeawayOrders.sort(
+          (a, b) =>
+            String(a.since || '').localeCompare(String(b.since || '')) ||
+            a.sale_id.localeCompare(b.sale_id)
+        ),
         /*
          * How many open orders a table may have, so a handset can grey out a
          * full table instead of letting a waiter walk to it, type an order and

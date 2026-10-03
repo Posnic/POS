@@ -211,9 +211,10 @@ function createService(deps = {}) {
       throw problem('This table has too many open orders. Ask the cashier for help.', 422);
     const branch = await Branch.findById(branchId).lean();
     if (!branch) throw problem('Shop not found.', 404);
-    const displayTable = saleId && sales.length
-      ? 'Take Away ' + (sales[0].sales_id || sales[0].token_id || saleId)
-      : table;
+    const displayTable =
+      saleId && sales.length
+        ? 'Take Away ' + (sales[0].sales_id || sales[0].token_id || saleId)
+        : table;
     return { sales, branch, snapshot: snapshotFrom(sales, branch, displayTable) };
   }
   async function send(input) {

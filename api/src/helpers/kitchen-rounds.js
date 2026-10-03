@@ -211,7 +211,10 @@ function tickets(sale) {
             outlet: String(sale.outlet_snapshot?.name || ''),
             roomReference: String(sale.room_reference || ''),
             orderNumber: String(sale.sales_id || sale.token_id || ''),
-            takeaway: String(sale.fulfilment || sale.dine_type || '').toLowerCase().replace(/[\s_-]/g, '') === 'takeaway',
+            takeaway:
+              String(sale.fulfilment || sale.dine_type || '')
+                .toLowerCase()
+                .replace(/[\s_-]/g, '') === 'takeaway',
             placedAt: kitchenTime,
             items,
           },

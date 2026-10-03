@@ -7511,7 +7511,10 @@ class SalesRepository {
       const Model = this.getModel(SaleModel);
       const table = String(tableNumber == null ? '' : tableNumber).trim();
       const takeawayId = saleId == null ? null : String(saleId);
-      if (takeawayId !== null && (!/^[a-f\d]{24}$/i.test(takeawayId) || !/^[a-f\d]{24}$/i.test(String(branchId)))) {
+      if (
+        takeawayId !== null &&
+        (!/^[a-f\d]{24}$/i.test(takeawayId) || !/^[a-f\d]{24}$/i.test(String(branchId)))
+      ) {
         return { status: false, message: 'Choose a valid Take Away order and branch', data: null };
       }
       if (!table && !takeawayId) {
@@ -7521,7 +7524,11 @@ class SalesRepository {
       const query = {
         sale_process: { $regex: 'KOT', $options: 'i' },
         ...(takeawayId
-          ? { _id: new mongoose.Types.ObjectId(takeawayId), dine_type: /^take[\s_-]*away$/i, floor_closed_at: { $exists: false } }
+          ? {
+              _id: new mongoose.Types.ObjectId(takeawayId),
+              dine_type: /^take[\s_-]*away$/i,
+              floor_closed_at: { $exists: false },
+            }
           : { table_number: table }),
         /*
          * Only what is still open. A settled ticket has had its bill.
@@ -7667,7 +7674,9 @@ class SalesRepository {
         const copies = billCopies(shop, copiesAsked);
 
         for (const sale of open) {
-          const label = takeawayId ? 'Take Away ' + (sale.sales_id || sale.token_id || takeawayId) : `Table ${table}`;
+          const label = takeawayId
+            ? 'Take Away ' + (sale.sales_id || sale.token_id || takeawayId)
+            : `Table ${table}`;
           for (let copy = 1; copy <= copies; copy += 1) {
             await queuePrintJob({
               branchId,
@@ -10427,7 +10436,9 @@ class SalesRepository {
             : {}),
           assigned_staff: doc.assigned_staff,
           ...(doc.paper_order?.id ? { paper_order: { id: doc.paper_order.id } } : {}),
-          ...(Array.isArray(doc.order_photos) ? {order_photos:doc.order_photos.map(photo => ({id:photo.id}))} : {}),
+          ...(Array.isArray(doc.order_photos)
+            ? { order_photos: doc.order_photos.map((photo) => ({ id: photo.id })) }
+            : {}),
           kitchen_rounds: require('../helpers/kitchen-rounds').rounds(doc),
           item_transfer: true,
           total_amount: doc.sales_total || doc.total || 0,

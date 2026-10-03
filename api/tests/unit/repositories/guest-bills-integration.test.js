@@ -106,17 +106,22 @@ test('cashier references detect an order modified after guest bills were sent', 
 });
 
 test('Take Away guest bills isolate one order and retain its numbered identity on retries', async () => {
-  const selected = await openSale(''), other = await openSale('');
-  await Sale.collection.updateMany({ _id: { $in: [selected._id, other._id] } }, {
-    $set: { dine_type: 'Take Away', sales_id: '1048' },
-  });
+  const selected = await openSale(''),
+    other = await openSale('');
+  await Sale.collection.updateMany(
+    { _id: { $in: [selected._id, other._id] } },
+    {
+      $set: { dine_type: 'Take Away', sales_id: '1048' },
+    }
+  );
   const input = {
-    branchId: String(branch), saleId: String(selected._id),
+    branchId: String(branch),
+    saleId: String(selected._id),
     request_id: 'takeaway-12345678-1234-1234-123456789012',
     plan: { mode: 'equal', guests: ['A', 'B'] },
   };
   const { snapshot, sales } = await service.read(input);
-  expect(sales.map(sale => String(sale._id))).toEqual([String(selected._id)]);
+  expect(sales.map((sale) => String(sale._id))).toEqual([String(selected._id)]);
   expect(snapshot.table).toBe('Take Away 1048');
   expect(snapshot.totalMinor).toBe(10500);
   input.revision = snapshot.revision;
@@ -124,7 +129,7 @@ test('Take Away guest bills isolate one order and retain its numbered identity o
   await service.send(input);
   expect(await Jobs.countDocuments({ status: 'queued' })).toBe(4);
   const jobs = await Jobs.find({ status: 'queued' }).lean();
-  expect(jobs.every(job => job.label.startsWith('Take Away 1048 ·'))).toBe(true);
+  expect(jobs.every((job) => job.label.startsWith('Take Away 1048 ·'))).toBe(true);
   expect((await service.latest(input)).stale).toBe(false);
   await Sale.updateOne({ _id: other._id }, { $set: { sales_total: 200 } });
   expect((await service.latest(input)).stale).toBe(false);
@@ -137,11 +142,13 @@ test('Take Away targeting rejects dine-in, foreign branches, closed orders and m
   const input = { branchId: String(branch), saleId: String(sale._id) };
   await expect(service.read(input)).rejects.toMatchObject({ status: 409 });
   await Sale.collection.updateOne({ _id: sale._id }, { $set: { dine_type: 'Take Away' } });
-  await expect(service.read({ ...input, branchId: String(new mongoose.Types.ObjectId()) }))
-    .rejects.toMatchObject({ status: 409 });
+  await expect(
+    service.read({ ...input, branchId: String(new mongoose.Types.ObjectId()) })
+  ).rejects.toMatchObject({ status: 409 });
   await Sale.collection.updateOne({ _id: sale._id }, { $set: { floor_closed_at: new Date() } });
   await expect(service.read(input)).rejects.toMatchObject({ status: 409 });
   await expect(service.read({ ...input, saleId: 'bad' })).rejects.toMatchObject({ status: 400 });
-  await expect(service.read({ branchId: input.branchId, table_number: 'takeaway:' + input.saleId }))
-    .rejects.toMatchObject({ status: 400 });
+  await expect(
+    service.read({ branchId: input.branchId, table_number: 'takeaway:' + input.saleId })
+  ).rejects.toMatchObject({ status: 400 });
 });

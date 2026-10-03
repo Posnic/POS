@@ -144,7 +144,11 @@ describe('SalesRepository', () => {
       seating_request_id: 'seating-request-0001',
       seating_primary_id: 'table-1',
       seating_table_ids: ['table-1', 'table-2'],
-      paper_order: { id: '12345678-1234-1234-1234-123456789abc', bucket: 'private-test', key: 'private-key' },
+      paper_order: {
+        id: '12345678-1234-1234-1234-123456789abc',
+        bucket: 'private-test',
+        key: 'private-key',
+      },
       items: [],
     };
     const result = await salesRepository.getOrderHistoryModel(

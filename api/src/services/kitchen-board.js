@@ -63,7 +63,10 @@ function project(sale) {
         saleId: String(sale._id),
         roundId: round.id,
         table: String(sale.table_number || ''),
-        takeaway: String(sale.fulfilment || sale.dine_type || '').toLowerCase().replace(/[\s_-]/g, '') === 'takeaway',
+        takeaway:
+          String(sale.fulfilment || sale.dine_type || '')
+            .toLowerCase()
+            .replace(/[\s_-]/g, '') === 'takeaway',
         orderNumber: String(sale.sales_id || sale.token_id || ''),
         outlet: String(sale.outlet_snapshot?.name || ''),
         roomReference: String(sale.room_reference || ''),
@@ -280,10 +283,14 @@ function readiness(tickets) {
   const groups = new Map();
   for (const ticket of tickets) {
     const key = ticket.table ? 'table:' + ticket.table : 'sale:' + ticket.saleId;
-    if (!groups.has(key)) groups.set(key, {
-      table: ticket.table, saleId: ticket.table ? null : ticket.saleId,
-      remaining: 0, ready: 0, items: [],
-    });
+    if (!groups.has(key))
+      groups.set(key, {
+        table: ticket.table,
+        saleId: ticket.table ? null : ticket.saleId,
+        remaining: 0,
+        ready: 0,
+        items: [],
+      });
     const group = groups.get(key);
     for (const item of ticket.items) {
       const remaining = Math.max(0, item.total - item.served);
