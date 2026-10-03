@@ -330,6 +330,9 @@ async function reconcile(db, c, plan) {
       },
     }
   );
+  for (const sale of plan.sales) {
+    await require('./takeaway-completion').recover(db, c, sale._id);
+  }
 }
 async function prepare(req) {
   const c = await scope(req),

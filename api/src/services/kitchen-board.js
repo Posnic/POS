@@ -239,11 +239,13 @@ async function mutate(req, captain = false) {
           (round) => round.items.some((item) => item.remaining > 0)
         ),
         kitchen_work: work,
+        updated_date: new Date(),
         ...(b.operation === 'serve' ? { kitchen_service: service } : {}),
       },
     }
   );
   if (!result.matchedCount) fail('Order changed. Refresh before trying again.', 409);
+  await require('./takeaway-completion').recover(req.db, c, sale._id);
   try {
     process.emit('posnic:kitchen-served', { branchId: String(c.branchId), saleId: b.saleId });
   } catch {

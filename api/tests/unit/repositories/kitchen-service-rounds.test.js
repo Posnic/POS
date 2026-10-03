@@ -285,3 +285,30 @@ test('serve all leaves held courses unserved', async () => {
   expect(saved.kitchen_service.c0i0.quantity).toBe(2);
   expect(saved.kitchen_service.c0i1).toBeUndefined();
 });
+
+test('desktop Serve all closes a paid takeaway and advances its sync timestamp', async () => {
+  const license = new mongoose.Types.ObjectId();
+  const before = new Date('2026-10-03T06:13:00Z');
+  await collection.updateOne(
+    { _id: id },
+    {
+      $set: {
+        license,
+        dine_type: 'Take away',
+        payment_status: 'Paid',
+        kitchen_required: true,
+        floor_lifecycle: true,
+        updated_date: before,
+        sales_total: 1134,
+      },
+    }
+  );
+  const result = await repository.serveKitchenItems({ ...request(), all: true });
+  expect(result.status).toBe(true);
+  const saved = await collection.findOne({ _id: id });
+  expect(saved.floor_closed_at).toBeInstanceOf(Date);
+  expect(saved.kitchen_closed).toBe(true);
+  expect(saved.updated_date.getTime()).toBeGreaterThan(before.getTime());
+  expect(saved.sales_total).toBe(1134);
+  expect(saved.payment_status).toBe('Paid');
+});

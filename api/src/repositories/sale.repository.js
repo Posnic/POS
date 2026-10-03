@@ -8181,6 +8181,7 @@ class SalesRepository {
       {
         $set: {
           kitchen_service: service,
+          updated_date: new Date(),
           kitchen_closed: !rounds({ ...sale, kitchen_service: service }).some((r) =>
             r.items.some((i) => i.remaining > 0)
           ),
@@ -8189,6 +8190,11 @@ class SalesRepository {
     );
     if (!result.matchedCount)
       return { status: false, message: 'Order changed. Refresh before marking items served.' };
+    await require('../services/takeaway-completion').recover(
+      db,
+      { branchId: sale.branch_id, license: sale.license },
+      sale._id
+    );
     // Only notify after the write succeeds. Cloud/other processes still use the normal poll.
     try {
       process.emit('posnic:kitchen-served', { branchId: String(branchId), saleId: String(saleId) });

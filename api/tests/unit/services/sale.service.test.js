@@ -1530,6 +1530,52 @@ describe('SalesService', () => {
       expect(result.message).toBe('Sale not found for update');
     });
 
+    test('desktop payment preserves served quantities stored outside the Mongoose schema', async () => {
+      const mongoose = require('mongoose');
+      const Model =
+        mongoose.models.TakeawayPaymentSnapshot ||
+        mongoose.model(
+          'TakeawayPaymentSnapshot',
+          new mongoose.Schema(
+            {
+              items: Array,
+              changes: Array,
+              kitchen_required: Boolean,
+              floor_lifecycle: Boolean,
+              payment_status: String,
+              sale_process: String,
+              sales_id: String,
+              dine_type: String,
+            },
+            { strict: true }
+          )
+        );
+      const doc = Model.hydrate({
+        _id: SALE_ID,
+        sales_id: 'TA-PAID',
+        sale_process: 'KOT',
+        payment_status: 'Unpaid',
+        dine_type: 'Take away',
+        kitchen_required: true,
+        floor_lifecycle: true,
+        items: [{ item_id: ITEM_ID, item_quantity: 2, item_price: 100 }],
+        changes: [{ items: [{ item_id: ITEM_ID, item_quantity: 2, process: 'add' }] }],
+        kitchen_service: { c0i0: { quantity: 2, by: 'staff' } },
+      });
+      expect(doc.kitchen_service).toBeUndefined();
+      expect(doc.toObject().kitchen_service.c0i0.quantity).toBe(2);
+      const set = jest.spyOn(doc, 'set');
+      salesRepository.getById.mockResolvedValue(doc);
+      const result = await salesService.processSale(
+        makeSaleData({ dine_type: 'Take away' }),
+        SALE_ID,
+        'Edit',
+        makeContext()
+      );
+      expect(result.status).toBe(true);
+      expect(set.mock.calls[0][0].kitchen_closed).toBe(true);
+    });
+
     test('calls salesRepository.save for edit mode', async () => {
       const fakeSaleDoc = {
         items: [
