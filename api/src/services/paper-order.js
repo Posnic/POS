@@ -209,16 +209,15 @@ async function reference(db, c, id, orderKey, owner) {
 async function read(req) {
   const c = await scope(req);
   const id = String(req.params.id || '');
-  const sale = await req.db
-    .collection('sales')
-    .findOne(
-      {
-        license: c.license,
-        branch_id: c.branchId,
-        $or: [{ 'paper_order.id': id }, { 'order_photos.id': id }],
-      },
-      { projection: { paper_order: 1, order_photos: 1 } }
-    );
+  const sales = req.db.collection('sales');
+  const sale = await sales.findOne(
+    {
+      license: c.license,
+      branch_id: c.branchId,
+      $or: [{ 'paper_order.id': id }, { 'order_photos.id': id }],
+    },
+    { projection: { paper_order: 1, order_photos: 1 } }
+  );
   const doc =
     (sale?.paper_order?.id === id
       ? sale.paper_order

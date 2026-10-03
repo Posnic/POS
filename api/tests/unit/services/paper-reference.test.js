@@ -35,16 +35,15 @@ beforeEach(async () => {
   license = new ObjectId();
   sale = new ObjectId();
   await db.collection('branches').insertOne({ _id: branch, license, captain_paper_orders: true });
-  await db
-    .collection('sales')
-    .insertOne({
-      _id: sale,
-      branch_id: branch,
-      license,
-      items: [{ item_name: 'Soup', item_quantity: 2 }],
-      sales_total: 100,
-      payment_status: 'Paid',
-    });
+  const sales = db.collection('sales');
+  await sales.insertOne({
+    _id: sale,
+    branch_id: branch,
+    license,
+    items: [{ item_name: 'Soup', item_quantity: 2 }],
+    sales_total: 100,
+    payment_status: 'Paid',
+  });
   req = {
     db,
     tenantContext: { branchId: branch, licenseId: license },
@@ -55,11 +54,10 @@ beforeEach(async () => {
       original: 'data:image/jpeg;base64,/9j/AA==',
     },
   };
-  send = jest
-    .fn()
-    .mockResolvedValue({
-      Body: { transformToByteArray: async () => Buffer.from('/9j/AA==', 'base64') },
-    });
+  send = jest.fn();
+  send.mockResolvedValue({
+    Body: { transformToByteArray: async () => Buffer.from('/9j/AA==', 'base64') },
+  });
   s3.S3Client.mockImplementation(() => ({ send }));
 });
 test('a lost-response retry stores one reference and leaves paid sale content unchanged', async () => {
