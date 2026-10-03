@@ -154,7 +154,7 @@ test('partial and whole cancellations remain visible without showing served food
   expect((await repository.kitchenScreenTickets(String(branch))).data).toEqual([]);
 });
 
-test('wall display carries partial ready, picked-up and served quantities from the touch workflow', async () => {
+test('wall display shows only preparing quantity while retaining progress from the touch workflow', async () => {
   await collection.updateOne(
     { _id: id },
     {
@@ -168,7 +168,7 @@ test('wall display carries partial ready, picked-up and served quantities from t
   );
   let result = await repository.kitchenScreenTickets(String(branch));
   expect(result.data[0].items[0]).toMatchObject({
-    qty: 3,
+    qty: 1,
     preparing: 1,
     readyToCollect: 1,
     pickedUp: 1,

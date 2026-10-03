@@ -433,6 +433,9 @@
   "Choose a table with enough seats.": [
     "src/repositories/sale.repository.js"
   ],
+  "Choose a valid Take Away order and branch": [
+    "src/repositories/sale.repository.js"
+  ],
   "Choose discount or markup quotation pricing.": [
     "src/repositories/quote.repository.js",
     "src/repositories/settings.repository.js"
