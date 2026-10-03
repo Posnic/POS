@@ -7381,6 +7381,7 @@ class SalesController extends BaseController {
       const copies = req.body.copies || req.body.bill_copies;
       const response = await salesService.requestBillPrint(req.body.branchId, table, askedBy, {
         copies,
+        saleId: req.body.saleId,
       });
 
       if (response.status !== true) {

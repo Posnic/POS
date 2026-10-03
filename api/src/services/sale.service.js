@@ -4398,10 +4398,11 @@ module.exports = {
    * out, the paper comes out. See the block above requestBillPrintModel for
    * why none of them touches payment_status.
    */
-  requestBillPrint: async (branchId, tableNumber, askedBy, { SaleModel, copies } = {}) =>
+  requestBillPrint: async (branchId, tableNumber, askedBy, { SaleModel, copies, saleId } = {}) =>
     salesRepository.requestBillPrintModel(branchId, tableNumber, askedBy, {
       SaleModel: getModel(SaleModel),
       copies,
+      saleId,
     }),
   pendingBillPrints: async (branchId, { SaleModel } = {}) =>
     salesRepository.pendingBillPrintsModel(branchId, { SaleModel: getModel(SaleModel) }),

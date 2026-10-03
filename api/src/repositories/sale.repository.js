@@ -7505,18 +7505,24 @@ class SalesRepository {
    * asking twice is somebody wondering where the bill got to, not a second
    * bill.
    */
-  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel, copies } = {}) {
+  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel, copies, saleId } = {}) {
     const copiesAsked = copies;
     try {
       const Model = this.getModel(SaleModel);
       const table = String(tableNumber == null ? '' : tableNumber).trim();
-      if (!table) {
+      const takeawayId = saleId == null ? null : String(saleId);
+      if (takeawayId !== null && (!/^[a-f\d]{24}$/i.test(takeawayId) || !/^[a-f\d]{24}$/i.test(String(branchId)))) {
+        return { status: false, message: 'Choose a valid Take Away order and branch', data: null };
+      }
+      if (!table && !takeawayId) {
         return { status: false, message: 'No table was named', data: null };
       }
 
       const query = {
         sale_process: { $regex: 'KOT', $options: 'i' },
-        table_number: table,
+        ...(takeawayId
+          ? { _id: new mongoose.Types.ObjectId(takeawayId), dine_type: /^take[\s_-]*away$/i, floor_closed_at: { $exists: false } }
+          : { table_number: table }),
         /*
          * Only what is still open. A settled ticket has had its bill.
          *
@@ -7661,6 +7667,7 @@ class SalesRepository {
         const copies = billCopies(shop, copiesAsked);
 
         for (const sale of open) {
+          const label = takeawayId ? 'Take Away ' + (sale.sales_id || sale.token_id || takeawayId) : `Table ${table}`;
           for (let copy = 1; copy <= copies; copy += 1) {
             await queuePrintJob({
               branchId,
@@ -7668,7 +7675,7 @@ class SalesRepository {
               saleId: sale._id,
               /* The counter reads these as they come off: "(2 of 2)" says the
                  pair belongs to one table rather than two bills for it. */
-              label: copies > 1 ? `Table ${table} (${copy} of ${copies})` : `Table ${table}`,
+              label: copies > 1 ? `${label} (${copy} of ${copies})` : label,
               /*
                * BUILT FOR THE PRINTER, not handed over raw.
                *
