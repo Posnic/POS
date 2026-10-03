@@ -1,5 +1,6 @@
 'use strict';
 const { rounds } = require('../helpers/kitchen-rounds');
+const { ObjectId } = require('mongodb');
 
 // Payment alone does not mean a takeaway has been handed over. Derive completion
 // from served quantities, not kitchen_closed (older payment saves reset that flag).
@@ -21,24 +22,27 @@ function completed(sale) {
 }
 
 async function reconcile(db, scope, saleId) {
-  if (!scope.branchId || !scope.license) return;
+  if (!/^[a-f\d]{24}$/i.test(String(scope.branchId)) || !/^[a-f\d]{24}$/i.test(String(scope.license))) return;
+  if (saleId != null && !/^[a-f\d]{24}$/i.test(String(saleId))) return;
+  const branchId = new ObjectId(String(scope.branchId));
+  const license = new ObjectId(String(scope.license));
   const collection = db.collection('sales');
   const filter = {
-    branch_id: scope.branchId,
-    license: scope.license,
+    branch_id: branchId,
+    license,
     floor_closed_at: { $exists: false },
     floor_lifecycle: true,
     payment_status: 'Paid',
     $or: [{ dine_type: /^take[\s_-]*away$/i }, { fulfilment: /^take[\s_-]*away$/i }],
-    ...(saleId ? { _id: saleId } : {}),
+    ...(saleId ? { _id: new ObjectId(String(saleId)) } : {}),
   };
   for await (const sale of collection.find(filter)) {
     if (!completed(sale)) continue;
     if (sale.captain_payment_plan) {
       const plan = await db.collection('captain_payment_plans').findOne({
-        _id: sale.captain_payment_plan,
-        branch_id: scope.branchId,
-        license: scope.license,
+        _id: { $eq: sale.captain_payment_plan },
+        branch_id: branchId,
+        license,
       });
       if (!plan || plan.state !== 'paid' || plan.projectedVersion !== plan.version) continue;
     }
@@ -57,10 +61,10 @@ async function reconcile(db, scope, saleId) {
         'sale_process',
         'dine_type',
         'fulfilment',
-      ].map((key) => [key, sale[key] === undefined ? { $exists: false } : sale[key]])
+      ].map((key) => [key, sale[key] === undefined ? { $exists: false } : { $eq: sale[key] }])
     );
     const result = await collection.updateOne(
-      { ...filter, _id: sale._id, ...snapshot },
+      { ...filter, _id: { $eq: sale._id }, ...snapshot },
       {
         $set: { floor_closed_at: new Date(), kitchen_closed: true, updated_date: new Date() },
       }

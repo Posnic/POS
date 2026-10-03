@@ -100,6 +100,23 @@ test('new held additions keep the takeaway open', async () => {
   };
   expect(completed(changed)).toBe(false);
 });
+
+test('operator-shaped scope values cannot broaden takeaway completion', async () => {
+  await reconcile(db, { ...scope, branchId: { $ne: null } });
+  await reconcile(db, { ...scope, license: { $ne: null } });
+  await reconcile(db, scope, { $ne: null });
+  expect((await db.collection('sales').findOne({ _id: sale._id })).floor_closed_at).toBeUndefined();
+});
+
+test('a stored operator-shaped payment-plan value cannot match another completed journal', async () => {
+  await db.collection('sales').updateOne({ _id: sale._id }, { $set: { captain_payment_plan: { $ne: null } } });
+  await db.collection('captain_payment_plans').insertOne({
+    _id: 'unrelated-complete-plan', branch_id: scope.branchId, license: scope.license,
+    state: 'paid', projectedVersion: 1, version: 1,
+  });
+  await reconcile(db, scope);
+  expect((await db.collection('sales').findOne({ _id: sale._id })).floor_closed_at).toBeUndefined();
+});
 test('a pending payment projection stays open until the journal is completely projected', async () => {
   await db
     .collection('sales')

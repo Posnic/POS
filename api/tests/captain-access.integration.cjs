@@ -75,7 +75,7 @@ before(async () => {
   app.get('/api/sales/guestBills/latest', paymentTestLimit, protect, guestBills.latest);
   app.post('/api/sales/guestBills/print', paymentTestLimit, protect, guestBills.send);
   app.post('/api/sales/requestBillPrint', paymentTestLimit, protect, salesController.requestBillPrint.bind(salesController));
-  app.post('/api/sales/updateOrder', protect, salesController.updateOrder.bind(salesController));
+  app.post('/api/sales/updateOrder', paymentTestLimit, protect, salesController.updateOrder.bind(salesController));
   app.post('/api/sales/tablePayments/record', paymentTestLimit, protect, (_r, s) => s.json({ allowed: true }));
   app.get('/api/users/admin', protect, (r, s) => s.json({ user: r.user._id }));
   app.post('/api/items/accessQr', optionalProtect, (r, s) =>
