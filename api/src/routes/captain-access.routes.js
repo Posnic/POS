@@ -24,6 +24,15 @@ router.post('/pair', limit, wrap(access.pair));
 router.post('/refresh', limit, wrap(access.refresh));
 router.post('/route-proof', rateLimit({ windowMs: 60000, limit: 180 }), wrap(access.routeProof));
 router.use(protect);
+const paper = require('../services/paper-order');
+router.get('/paper-orders/options', wrap(paper.options));
+router.post('/paper-orders/settings', limit, wrap(paper.settings));
+router.post(
+  '/paper-orders/recognize',
+  rateLimit({ windowMs: 60000, limit: 8 }),
+  wrap(paper.recognize)
+);
+router.get('/paper-orders/photos/:id', limit, wrap(paper.read));
 router.post(
   '/orders/edit/preview',
   rateLimit({ windowMs: 60000, limit: 120 }),

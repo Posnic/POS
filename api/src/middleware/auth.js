@@ -68,6 +68,7 @@ const continueWithTenant = async (req, res, next, currentUser) => {
         license: tenant.licenseId || null,
         loggedUser: currentUser._id || currentUser.id || null,
         loggedUserName: currentUser.username || currentUser.email || currentUser.name || '',
+        saleOrigin: require('../utils/sale-origin').requestOrigin(req, currentUser),
       },
       next
     );
