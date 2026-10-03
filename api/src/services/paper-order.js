@@ -6,6 +6,18 @@ const { TextractClient, DetectDocumentTextCommand } = require('@aws-sdk/client-t
 
 // A separate private bucket: menu images may intentionally be publicly readable.
 const config = () => ({ bucket: process.env.ORDER_PHOTO_BUCKET, region: process.env.AWS_REGION });
+const clientConfig = () => ({
+  region: config().region,
+  maxAttempts: 2,
+  ...(process.env.ORDER_PHOTO_AWS_ACCESS_KEY_ID && process.env.ORDER_PHOTO_AWS_SECRET_ACCESS_KEY
+    ? {
+        credentials: {
+          accessKeyId: process.env.ORDER_PHOTO_AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.ORDER_PHOTO_AWS_SECRET_ACCESS_KEY,
+        },
+      }
+    : {}),
+});
 const enabled = (branch) => branch.captain_paper_orders === true;
 async function scope(req, settings = false) {
   if (!req.user?._id || !allowed(req.user, settings ? 'settings' : 'sales'))
@@ -131,7 +143,7 @@ async function recognize(req) {
       { $inc: { count: 1 } }
     );
     if (!counted.modifiedCount) fail('This branch has reached its monthly paper-scan limit.', 429);
-    const s3 = new S3Client({ region: cfg.region, maxAttempts: 2 });
+    const s3 = new S3Client(clientConfig());
     await s3.send(
       new PutObjectCommand({
         Bucket: cfg.bucket,
@@ -142,7 +154,7 @@ async function recognize(req) {
       }),
       { abortSignal: AbortSignal.timeout(30000) }
     );
-    const textract = new TextractClient({ region: cfg.region, maxAttempts: 2 });
+    const textract = new TextractClient(clientConfig());
     const response = await textract.send(
       new DetectDocumentTextCommand({ Document: { Bytes: crop.bytes } }),
       { abortSignal: AbortSignal.timeout(45000) }
@@ -207,7 +219,7 @@ async function read(req) {
     doc.key !== `orders/${c.license}/${c.branchId}/${id}`
   )
     fail('Photo not found.', 404);
-  const result = await new S3Client({ region: config().region }).send(
+  const result = await new S3Client(clientConfig()).send(
     new GetObjectCommand({ Bucket: doc.bucket, Key: doc.key }),
     { abortSignal: AbortSignal.timeout(30000) }
   );

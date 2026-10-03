@@ -20,6 +20,10 @@ the sale. No recognition result directly creates a kitchen order.
   result and do not call AWS again. Monitor AWS billing separately.
 - The endpoint must be deployed to the server Captain connects to. A desktop
   without AWS configuration does not advertise photo recognition.
+- Lightsail installations without an instance role can use dedicated
+  ORDER_PHOTO_AWS_ACCESS_KEY_ID and ORDER_PHOTO_AWS_SECRET_ACCESS_KEY credentials.
+  Store these only in the server environment or GitHub Secrets. They override
+  credentials for paper orders only, leaving public menu storage unchanged.
 
 Set storage retention deliberately. Sale photos are retained; there is no automatic
 deletion of attached photos. Abandoned drafts also leave private objects and should
