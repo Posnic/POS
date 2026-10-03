@@ -3665,6 +3665,110 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/captain/v1/paper-orders/options": {
+      "get": {
+        "summary": "options",
+        "operationId": "get_captain_v1_paper_orders_options",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/captain/v1/paper-orders/settings": {
+      "post": {
+        "summary": "settings",
+        "operationId": "post_captain_v1_paper_orders_settings",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain/v1/paper-orders/recognize": {
+      "post": {
+        "summary": "recognize",
+        "operationId": "post_captain_v1_paper_orders_recognize",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain/v1/paper-orders/photos/{id}": {
+      "get": {
+        "summary": "read",
+        "operationId": "get_captain_v1_paper_orders_photos_id",
+        "tags": [
+          "Captain access"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/captain/v1/orders/edit/preview": {
       "post": {
         "summary": "preview",

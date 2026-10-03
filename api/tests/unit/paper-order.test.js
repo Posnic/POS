@@ -85,7 +85,10 @@ test('rejects non-image content', () => {
   expect(() => service.image('data:image/jpeg;base64,aGVsbG8=')).toThrow();
 });
 test('dish names starting with T are not mistaken for table metadata', () => {
-  expect(service.parse([{BlockType:'LINE',Text:'Tea'}])).toMatchObject({table:'',lines:[{name:'Tea',quantity:null}]});
+  expect(service.parse([{ BlockType: 'LINE', Text: 'Tea' }])).toMatchObject({
+    table: '',
+    lines: [{ name: 'Tea', quantity: null }],
+  });
 });
 test('stores original privately and recognizes crop bytes', async () => {
   req.body.crop = 'data:image/jpeg;base64,/9j/AQ==';
