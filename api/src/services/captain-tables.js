@@ -67,6 +67,7 @@ function view(row, orders = [], claim = null) {
 async function list(req) {
   const c = await scope(req);
   await seating.releaseSettled(req.db, c);
+  await require('./takeaway-completion').recover(req.db, c);
   const [tables, orders, claims] = await Promise.all([
     req.db
       .collection('tableorder')

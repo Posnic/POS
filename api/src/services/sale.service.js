@@ -1349,7 +1349,10 @@ const processSale = async (
     const finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
     if (finalSaleData.kitchen_required) {
       finalSaleData.kitchen_closed = !require('../helpers/kitchen-rounds')
-        .rounds({ ...existingSale, ...finalSaleData })
+        .rounds({
+          ...(existingSale?.toObject ? existingSale.toObject() : existingSale),
+          ...finalSaleData,
+        })
         .some((round) => round.items.some((item) => item.remaining > 0));
     }
 
@@ -1940,6 +1943,17 @@ const processSale = async (
       }
     }
 
+    if (/^take[\s_-]*away$/i.test(finalSaleData.dine_type || '')) {
+      try {
+        await require('./takeaway-completion').recover(
+          await BaseModel.getDb(),
+          { branchId, license: licenseId },
+          saleId
+        );
+      } catch (error) {
+        console.warn('[takeaway] Completion reconciliation pending:', error.message);
+      }
+    }
     return savedAnswer(saleId, salePrefixedId);
   } catch (error) {
     console.error('processSale Error:', error);
@@ -1995,6 +2009,11 @@ const getTablesWithActiveOrders = async (branchId) => {
       console.error('Invalid branchId for ObjectId:', branchId);
       return { status: false, message: 'Invalid Branch ID format', data: [] };
     }
+
+    await require('./takeaway-completion').recover(await BaseModel.getDb(), {
+      branchId: branchObjectId,
+      license: BaseModel.license,
+    });
 
     const pipeline = [
       {
