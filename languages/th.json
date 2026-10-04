@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "เริ่มที่นี่",
   "lang_iv2_taking_shape": "สินค้าของคุณกำลังเป็นรูปเป็นร่าง",
   "lang_iv2_view": "ดูสินค้า",
-  "lang_iv2_optional_hint": "กรอกข้อมูลสำคัญก่อน แท็บเพิ่มเติมสามารถกรอกภายหลังได้"
+  "lang_iv2_optional_hint": "กรอกข้อมูลสำคัญก่อน แท็บเพิ่มเติมสามารถกรอกภายหลังได้",
+  "lang_restaurant_assigned": "ผู้รับผิดชอบปัจจุบัน",
+  "lang_restaurant_bill_printed": "พิมพ์บิลแล้ว",
+  "lang_restaurant_bill_requested": "ขอเก็บเงินแล้ว",
+  "lang_restaurant_handover": "ส่งต่องานระหว่างพนักงาน",
+  "lang_restaurant_not_recorded": "ไม่ได้บันทึก",
+  "lang_restaurant_service_record": "เวลาเสิร์ฟจะแสดงเมื่อพนักงานบันทึกเท่านั้น การชำระเงินไม่ได้ยืนยันการส่งอาหาร",
+  "lang_restaurant_taken_by": "ผู้รับออเดอร์"
 }

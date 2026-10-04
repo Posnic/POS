@@ -48,25 +48,21 @@ test('reserved numbers persist on actual sales, old clients also receive sequent
   const BaseModel = require('../../../src/models/base.model');
   const repo = require('../../../src/repositories/sale.repository');
   const item = new ObjectId();
-  await db
-    .collection('branches')
-    .insertOne({
-      _id: scope.branchId,
-      license: scope.license,
-      name: 'Test shop',
-      online_ordering: { store_id: 'SEQUENCE', mode: 'order' },
-    });
-  await db
-    .collection('items')
-    .insertOne({
-      _id: item,
-      branch_id: scope.branchId,
-      license: scope.license,
-      name: 'Rice',
-      selling_price: 100,
-      tax: 0,
-      tax_type: 'exclusive',
-    });
+  await db.collection('branches').insertOne({
+    _id: scope.branchId,
+    license: scope.license,
+    name: 'Test shop',
+    online_ordering: { store_id: 'SEQUENCE', mode: 'order' },
+  });
+  await db.collection('items').insertOne({
+    _id: item,
+    branch_id: scope.branchId,
+    license: scope.license,
+    name: 'Rice',
+    selling_price: 100,
+    tax: 0,
+    tax_type: 'exclusive',
+  });
   const dbSpy = jest.spyOn(BaseModel, 'getDb').mockResolvedValue(db);
   let receipt = 0;
   const numberSpy = jest

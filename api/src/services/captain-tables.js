@@ -110,21 +110,33 @@ async function list(req) {
 // Floor staff may name an ad-hoc table without changing existing table settings.
 async function temporary(req) {
   const c = await scope(req);
-  const label = typeof req.body?.tableorder_value === 'string'
-    ? details.key(req.body.tableorder_value) : '';
+  const label =
+    typeof req.body?.tableorder_value === 'string' ? details.key(req.body.tableorder_value) : '';
   if (!/^[A-Z0-9]{1,6}$/.test(label)) fail('Use up to 6 letters or numbers for the table.');
   const tables = req.db.collection('tableorder');
   await details.ensureIdentity(tables);
-  const filter = { branch_id: c.branchId, license: c.license,
-    tableorder_value: { $regex: '^' + label + '$', $options: 'i' } };
+  const filter = {
+    branch_id: c.branchId,
+    license: c.license,
+    tableorder_value: { $regex: '^' + label + '$', $options: 'i' },
+  };
   const previous = await tables.findOne(filter);
   if (previous) return view(previous);
-  const row = { _id: new ObjectId(), branch_id: c.branchId, license: c.license,
-    tableorder_value: label, tableorder_key: details.key(label), temporary: true,
-    captain_table_version: 0, created_date: new Date(), updated_date: new Date(),
-    created_by_id: req.user._id };
-  try { await tables.insertOne(row); }
-  catch (error) {
+  const row = {
+    _id: new ObjectId(),
+    branch_id: c.branchId,
+    license: c.license,
+    tableorder_value: label,
+    tableorder_key: details.key(label),
+    temporary: true,
+    captain_table_version: 0,
+    created_date: new Date(),
+    updated_date: new Date(),
+    created_by_id: req.user._id,
+  };
+  try {
+    await tables.insertOne(row);
+  } catch (error) {
     if (error.code !== 11000) throw error;
     const existing = await tables.findOne(filter);
     if (!existing) throw error;

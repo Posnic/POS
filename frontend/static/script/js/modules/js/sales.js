@@ -727,7 +727,7 @@
             var d = response.data;
             var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
             $('#sale_peek_title').text(d.sales_id || 'Bill');
-            $('#sale_peek_body').html(PosnicPro.sales.buildSaleSheet(d));
+            $('#sale_peek_body').html(PosnicPro.restaurantSaleDetails.render(d) + PosnicPro.sales.buildSaleSheet(d));
             $('#sale_peek_footer').html(
                 '<a href="javascript:void(0)" class="q-muted" style="font-size:13px;"'
                 + ' onclick="$(\'#sale_peek_modal\').modal(\'hide\'); hasher.setHash(\'sales/' + esc(d._id || id) + '\');">'
@@ -923,7 +923,7 @@
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';
-        $('#sales_doc').html(toolbar + '<div class="doc-scroll">' + PosnicPro.sales.buildSaleSheet(d) + '</div>');
+        $('#sales_doc').html(toolbar + '<div class="doc-scroll">' + PosnicPro.restaurantSaleDetails.render(d) + PosnicPro.sales.buildSaleSheet(d) + '</div>');
     },
     searchItem: function (id) {
         var matched = false;

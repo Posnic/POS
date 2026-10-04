@@ -10,11 +10,18 @@ async function defaultTax(context) {
   if (!branch?.default_tax || !ObjectId.isValid(String(branch.default_tax)))
     throw new Error('Configure a default tax in Tax settings before using Quick sale.');
   const tax = await db.collection('grouptax').findOne({
-    _id: new ObjectId(String(branch.default_tax)), branch_id, license,
+    _id: new ObjectId(String(branch.default_tax)),
+    branch_id,
+    license,
   });
   if (!tax || tax.rate == null || !Number.isFinite(Number(tax.rate)) || Number(tax.rate) < 0)
     throw new Error('The default tax is unavailable. Check Tax settings.');
-  return { id: String(tax._id), name: String(tax.name || 'Tax'), rate: Number(tax.rate), type: 'exclusive' };
+  return {
+    id: String(tax._id),
+    name: String(tax.name || 'Tax'),
+    rate: Number(tax.rate),
+    type: 'exclusive',
+  };
 }
 
 async function applyDefaultTax(data, context) {
@@ -25,7 +32,12 @@ async function applyDefaultTax(data, context) {
   const amount = Number(data.items_selling_price);
   if (!Number.isFinite(amount) || amount <= 0 || amount > 1000000)
     throw new Error('Enter a valid Quick sale amount.');
-  return { ...data, items_tax_id: tax.id, items_tax_name: tax.name,
-    items_tax: tax.rate, items_tax_type: 'exclusive' };
+  return {
+    ...data,
+    items_tax_id: tax.id,
+    items_tax_name: tax.name,
+    items_tax: tax.rate,
+    items_tax_type: 'exclusive',
+  };
 }
 module.exports = { defaultTax, applyDefaultTax };

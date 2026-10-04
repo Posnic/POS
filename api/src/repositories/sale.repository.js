@@ -1636,6 +1636,10 @@ class SalesRepository {
         }
       }
 
+      normalized.restaurant_details = require('../helpers/restaurant-sale-details')(
+        saleDoc,
+        BaseModel.currentTimeZone
+      );
       if (transferredBill) normalized.transferred_bill = transferredBill;
       normalized.receipt_line_rows =
         transferredBill?.items ||

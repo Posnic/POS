@@ -1316,9 +1316,10 @@ test.each(['reduction', 'discount'])(
     const policy = require('../../../src/services/captain-edit-policy');
     await expect(policy.authorize(input)).rejects.toMatchObject({
       status: 422,
-      message: kind === 'reduction'
-        ? 'Manager approval required: cancellation'
-        : 'Manager approval required: discount',
+      message:
+        kind === 'reduction'
+          ? 'Manager approval required: cancellation'
+          : 'Manager approval required: discount',
     });
     expect((await editPreview.preview(input)).total_amount).toBe(kind === 'reduction' ? 52.5 : 95);
     input.body.change_reason = 'Customer requested';
@@ -1969,9 +1970,12 @@ test('item and category summaries separate currencies while adding quantities ac
   }
 });
 
-
-test.each([{sale_process:'cancelled'},{sale_process:'Completed'},{payment_status:'Paid'}])('transfer refuses closed source %j without creating a destination',async(fields)=>{
- await db.collection('sales').updateOne({_id:sale._id},{$set:fields});
- await expect(service.preview(req())).rejects.toMatchObject({status:409});
- expect(await db.collection('sales').countDocuments()).toBe(1);
+test.each([
+  { sale_process: 'cancelled' },
+  { sale_process: 'Completed' },
+  { payment_status: 'Paid' },
+])('transfer refuses closed source %j without creating a destination', async (fields) => {
+  await db.collection('sales').updateOne({ _id: sale._id }, { $set: fields });
+  await expect(service.preview(req())).rejects.toMatchObject({ status: 409 });
+  expect(await db.collection('sales').countDocuments()).toBe(1);
 });

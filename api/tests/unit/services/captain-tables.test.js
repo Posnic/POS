@@ -595,19 +595,31 @@ test('closing a paid table defaults to available when cleaning is unset', async 
   expect((await service.close(req(body))).status).toBe('available');
 });
 
-
 test('staff temporary labels are normalized, retry safe and do not alter configured tables', async () => {
-  const rows = await Promise.all(Array.from({length: 8}, () => service.temporary(req({tableorder_value:' 6a '}, 'staff'))));
-  expect(new Set(rows.map(row=>row.id)).size).toBe(1);
+  const rows = await Promise.all(
+    Array.from({ length: 8 }, () => service.temporary(req({ tableorder_value: ' 6a ' }, 'staff')))
+  );
+  expect(new Set(rows.map((row) => row.id)).size).toBe(1);
   expect(rows[0].tableorder_value).toBe('6A');
-  expect(await db.collection('tableorder').countDocuments({branch_id:branch})).toBe(1);
-  const existing = await service.update(req({tableorder_value:'6B',capacity:4}));
-  expect((await service.temporary(req({tableorder_value:'6b',capacity:50},'staff'))).id).toBe(existing.id);
-  expect((await db.collection('tableorder').findOne({_id:new ObjectId(existing.id)})).capacity).toBe(4);
-  await expect(service.temporary(req({tableorder_value:'6/A'},'staff'))).rejects.toThrow('letters or numbers');
-  await expect(service.temporary({...req({tableorder_value:'6C'}), user:{role:'staff'}})).rejects.toMatchObject({status:403});
+  expect(await db.collection('tableorder').countDocuments({ branch_id: branch })).toBe(1);
+  const existing = await service.update(req({ tableorder_value: '6B', capacity: 4 }));
+  expect((await service.temporary(req({ tableorder_value: '6b', capacity: 50 }, 'staff'))).id).toBe(
+    existing.id
+  );
+  expect(
+    (await db.collection('tableorder').findOne({ _id: new ObjectId(existing.id) })).capacity
+  ).toBe(4);
+  await expect(service.temporary(req({ tableorder_value: '6/A' }, 'staff'))).rejects.toThrow(
+    'letters or numbers'
+  );
+  await expect(
+    service.temporary({ ...req({ tableorder_value: '6C' }), user: { role: 'staff' } })
+  ).rejects.toMatchObject({ status: 403 });
   const other = new ObjectId();
-  await db.collection('branches').insertOne({_id:other,license});
-  const otherRow=await service.temporary({...req({tableorder_value:'6A'},'staff'),tenantContext:{branchId:other,licenseId:license}});
+  await db.collection('branches').insertOne({ _id: other, license });
+  const otherRow = await service.temporary({
+    ...req({ tableorder_value: '6A' }, 'staff'),
+    tenantContext: { branchId: other, licenseId: license },
+  });
   expect(otherRow.id).not.toBe(rows[0].id);
 });

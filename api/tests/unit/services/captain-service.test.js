@@ -80,14 +80,14 @@ test('legacy desktop additions retain Captain identity and do not request void a
   expect(input.body.items[0].line_id).toBe('phone-line-1');
 });
 
-test('legacy desktop quantity reductions still require a reason and permission', async () => {
+test('legacy desktop quantity reductions require permission even without an optional reason', async () => {
   sale.items[0].line_id = 'phone-line-1';
   await db.collection('sales').updateOne({ _id: sale._id }, { $set: { items: sale.items } });
   const input = req({
     order_id: String(sale._id),
     items: [{ product_id: sale.items[0].item_id, quantity: 1 }],
   });
-  await expect(policy.authorize(input)).rejects.toThrow('Enter a reason');
+  await expect(policy.authorize(input)).rejects.toThrow('Manager approval required');
   input.body.change_reason = 'Customer changed the order';
   await expect(policy.authorize(input)).rejects.toThrow('Manager approval required');
 });
@@ -132,12 +132,12 @@ test('handover validates branch and permission and retains original author', asy
   const unauthorized = req({ staffId: String(actor), requestId: require('crypto').randomUUID() });
   await expect(service.handover(unauthorized)).rejects.toMatchObject({ status: 403 });
 });
-test('cancellation requires a reason and a manager proof bound to this order and actor', async () => {
+test('cancellation accepts an optional reason but requires a manager proof bound to this order and actor', async () => {
   const input = req({
     order_id: String(sale._id),
     items: [{ ...sale.items[0], item_quantity: 1 }],
   });
-  await expect(policy.authorize(input)).rejects.toThrow('Enter a reason');
+  await expect(policy.authorize(input)).rejects.toThrow('Manager approval required');
   input.body.change_reason = 'Guest changed their mind';
   await expect(policy.authorize(input)).rejects.toThrow('Manager approval required: cancellation');
   input.body.approval_token = signApproval({

@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "Anza hapa",
   "lang_iv2_taking_shape": "Bidhaa yako inaanza kukamilika",
   "lang_iv2_view": "Tazama bidhaa",
-  "lang_iv2_optional_hint": "Weka taarifa muhimu. Vichupo vya hiari vinaweza kusubiri."
+  "lang_iv2_optional_hint": "Weka taarifa muhimu. Vichupo vya hiari vinaweza kusubiri.",
+  "lang_restaurant_assigned": "Kwa sasa amekabidhiwa",
+  "lang_restaurant_bill_printed": "Bili imechapishwa",
+  "lang_restaurant_bill_requested": "Bili imeombwa",
+  "lang_restaurant_handover": "Makabidhiano ya wafanyakazi",
+  "lang_restaurant_not_recorded": "Haijarekodiwa",
+  "lang_restaurant_service_record": "Nyakati za kuhudumia huonekana tu zinaporekodiwa na wafanyakazi. Malipo hayathibitishi uwasilishaji.",
+  "lang_restaurant_taken_by": "Agizo limepokelewa na"
 }

@@ -4156,5 +4156,12 @@
   "lang_iv2_draft_found": "अधूरा टेक्स्ट ड्राफ़्ट उपलब्ध है। फ़ोटो फिर से चुनने होंगे।",
   "lang_iv2_draft_lists": "ड्राफ़्ट के कुछ विकल्प उपलब्ध नहीं हैं। दोबारा लोड करें या सहेजने से पहले ड्राफ़्ट हटाएँ।",
   "lang_iv2_draft_saved": "टेक्स्ट ड्राफ़्ट इस डिवाइस पर सहेजा गया। फ़ोटो शामिल नहीं हैं।",
-  "lang_iv2_draft_unavailable": "ड्राफ़्ट सहेजना उपलब्ध नहीं है। सहेजने तक यह पेज खुला रखें।"
+  "lang_iv2_draft_unavailable": "ड्राफ़्ट सहेजना उपलब्ध नहीं है। सहेजने तक यह पेज खुला रखें।",
+  "lang_restaurant_assigned": "वर्तमान में सौंपा गया",
+  "lang_restaurant_bill_printed": "बिल प्रिंट हुआ",
+  "lang_restaurant_bill_requested": "बिल माँगा गया",
+  "lang_restaurant_handover": "कर्मचारी हस्तांतरण",
+  "lang_restaurant_not_recorded": "दर्ज नहीं है",
+  "lang_restaurant_service_record": "परोसने का समय तभी दिखता है जब कर्मचारी उसे दर्ज करते हैं। भुगतान डिलीवरी की पुष्टि नहीं करता।",
+  "lang_restaurant_taken_by": "ऑर्डर लिया"
 }

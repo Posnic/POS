@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "Inizia qui",
   "lang_iv2_taking_shape": "Il tuo articolo prende forma",
   "lang_iv2_view": "Visualizza articolo",
-  "lang_iv2_optional_hint": "Inserisci le informazioni essenziali. Le schede facoltative possono aspettare."
+  "lang_iv2_optional_hint": "Inserisci le informazioni essenziali. Le schede facoltative possono aspettare.",
+  "lang_restaurant_assigned": "Attualmente assegnato a",
+  "lang_restaurant_bill_printed": "Conto stampato",
+  "lang_restaurant_bill_requested": "Conto richiesto",
+  "lang_restaurant_handover": "Passaggio tra dipendenti",
+  "lang_restaurant_not_recorded": "Non registrato",
+  "lang_restaurant_service_record": "Gli orari di servizio appaiono solo se registrati dal personale. Il pagamento non conferma la consegna.",
+  "lang_restaurant_taken_by": "Ordine preso da"
 }

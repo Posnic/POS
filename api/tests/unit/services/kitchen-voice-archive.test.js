@@ -1,12 +1,108 @@
-const {MongoMemoryServer}=require('mongodb-memory-server');
-const {ObjectId}=require('mongodb');const mongoose=require('mongoose');const {randomUUID}=require('crypto');
-const mockSend=jest.fn();jest.mock('@aws-sdk/client-s3',()=>({S3Client:jest.fn(()=>({send:mockSend})),PutObjectCommand:class{constructor(input){this.input=input;}},GetObjectCommand:class{constructor(input){this.input=input;}}}));
-const archive=require('../../../src/services/kitchen-voice-archive');let memory,db,license,branch,user;
-beforeAll(async()=>{memory=await MongoMemoryServer.create();await mongoose.connect(memory.getUri());db=mongoose.connection.db;},60000);
-afterAll(async()=>{await mongoose.disconnect();await memory.stop();});
-beforeEach(async()=>{await db.collection('branches').deleteMany({});await db.collection('captain_voice_archive').deleteMany({});license=new ObjectId();branch=new ObjectId();user=new ObjectId();await db.collection('branches').insertOne({_id:branch,license});delete process.env.KITCHEN_VOICE_BUCKET;delete process.env.ORDER_PHOTO_BUCKET;mockSend.mockReset();});
-const bytes=Buffer.from('RIFF0000WAVEtest');const req=()=>({db,user:{_id:user,role:'manager'},tenantContext:{licenseId:String(license),branchId:String(branch)},params:{action:'archive'},body:{id:randomUUID(),data:'data:audio/wav;base64,'+bytes.toString('base64'),duration:2000}});
-test('retries and owner-scoped durable replay',async()=>{const r=req();await archive.run(r);await archive.run(r);expect(await db.collection('captain_voice_archive').countDocuments()).toBe(1);expect(await archive.run({...r,params:{action:'playback'}})).toEqual({data:r.body.data});expect((await archive.run({...r,params:{action:'recordings'}})).recordings).toHaveLength(1);await expect(archive.run({...r,user:{_id:new ObjectId(),role:'manager'},params:{action:'playback'}})).rejects.toMatchObject({status:404});await expect(archive.run({...r,user:{_id:new ObjectId(),role:'manager'}})).rejects.toMatchObject({status:409});});
-test('private S3 upload and authenticated replay',async()=>{process.env.KITCHEN_VOICE_BUCKET='private';mockSend.mockResolvedValue({});const r=req();await archive.run(r);expect(mockSend.mock.calls[0][0].input).toMatchObject({Bucket:'private',Body:bytes});expect(mockSend.mock.calls[0][0].input.ACL).toBeUndefined();expect((await db.collection('captain_voice_archive').findOne({_id:r.body.id})).data).toBeUndefined();mockSend.mockResolvedValue({Body:{transformToByteArray:async()=>bytes}});expect(await archive.run({...r,params:{action:'playback'}})).toEqual({data:r.body.data});});
-test('invalid data and expired records cannot replay',async()=>{const r=req();await expect(archive.run({...r,body:{...r.body,data:'data:audio/wav;base64,YWJj'}})).rejects.toMatchObject({status:400});await archive.run(r);await db.collection('captain_voice_archive').updateOne({_id:r.body.id},{$set:{expiresAt:new Date(0)}});await expect(archive.run({...r,params:{action:'playback'}})).rejects.toMatchObject({status:404});});
-test('failed upload never claims saved',async()=>{process.env.KITCHEN_VOICE_BUCKET='private';mockSend.mockRejectedValue(Error('offline'));await expect(archive.run(req())).rejects.toThrow('offline');expect(await db.collection('captain_voice_archive').countDocuments()).toBe(0);});
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const { ObjectId } = require('mongodb');
+const mongoose = require('mongoose');
+const { randomUUID } = require('crypto');
+const mockSend = jest.fn();
+jest.mock('@aws-sdk/client-s3', () => ({
+  S3Client: jest.fn(() => ({ send: mockSend })),
+  PutObjectCommand: class {
+    constructor(input) {
+      this.input = input;
+    }
+  },
+  GetObjectCommand: class {
+    constructor(input) {
+      this.input = input;
+    }
+  },
+}));
+const archive = require('../../../src/services/kitchen-voice-archive');
+let memory, db, license, branch, user;
+beforeAll(async () => {
+  memory = await MongoMemoryServer.create();
+  await mongoose.connect(memory.getUri());
+  db = mongoose.connection.db;
+}, 60000);
+afterAll(async () => {
+  await mongoose.disconnect();
+  await memory.stop();
+});
+beforeEach(async () => {
+  await db.collection('branches').deleteMany({});
+  await db.collection('captain_voice_archive').deleteMany({});
+  license = new ObjectId();
+  branch = new ObjectId();
+  user = new ObjectId();
+  await db.collection('branches').insertOne({ _id: branch, license });
+  delete process.env.KITCHEN_VOICE_BUCKET;
+  delete process.env.ORDER_PHOTO_BUCKET;
+  mockSend.mockReset();
+});
+const bytes = Buffer.from('RIFF0000WAVEtest');
+const req = () => ({
+  db,
+  user: { _id: user, role: 'manager' },
+  tenantContext: { licenseId: String(license), branchId: String(branch) },
+  params: { action: 'archive' },
+  body: {
+    id: randomUUID(),
+    data: 'data:audio/wav;base64,' + bytes.toString('base64'),
+    duration: 2000,
+  },
+});
+test('retries and owner-scoped durable replay', async () => {
+  const r = req();
+  await archive.run(r);
+  await archive.run(r);
+  expect(await db.collection('captain_voice_archive').countDocuments()).toBe(1);
+  expect(await archive.run({ ...r, params: { action: 'playback' } })).toEqual({
+    data: r.body.data,
+  });
+  expect((await archive.run({ ...r, params: { action: 'recordings' } })).recordings).toHaveLength(
+    1
+  );
+  await expect(
+    archive.run({
+      ...r,
+      user: { _id: new ObjectId(), role: 'manager' },
+      params: { action: 'playback' },
+    })
+  ).rejects.toMatchObject({ status: 404 });
+  await expect(
+    archive.run({ ...r, user: { _id: new ObjectId(), role: 'manager' } })
+  ).rejects.toMatchObject({ status: 409 });
+});
+test('private S3 upload and authenticated replay', async () => {
+  process.env.KITCHEN_VOICE_BUCKET = 'private';
+  mockSend.mockResolvedValue({});
+  const r = req();
+  await archive.run(r);
+  expect(mockSend.mock.calls[0][0].input).toMatchObject({ Bucket: 'private', Body: bytes });
+  expect(mockSend.mock.calls[0][0].input.ACL).toBeUndefined();
+  expect(
+    (await db.collection('captain_voice_archive').findOne({ _id: r.body.id })).data
+  ).toBeUndefined();
+  mockSend.mockResolvedValue({ Body: { transformToByteArray: async () => bytes } });
+  expect(await archive.run({ ...r, params: { action: 'playback' } })).toEqual({
+    data: r.body.data,
+  });
+});
+test('invalid data and expired records cannot replay', async () => {
+  const r = req();
+  await expect(
+    archive.run({ ...r, body: { ...r.body, data: 'data:audio/wav;base64,YWJj' } })
+  ).rejects.toMatchObject({ status: 400 });
+  await archive.run(r);
+  await db
+    .collection('captain_voice_archive')
+    .updateOne({ _id: r.body.id }, { $set: { expiresAt: new Date(0) } });
+  await expect(archive.run({ ...r, params: { action: 'playback' } })).rejects.toMatchObject({
+    status: 404,
+  });
+});
+test('failed upload never claims saved', async () => {
+  process.env.KITCHEN_VOICE_BUCKET = 'private';
+  mockSend.mockRejectedValue(Error('offline'));
+  await expect(archive.run(req())).rejects.toThrow('offline');
+  expect(await db.collection('captain_voice_archive').countDocuments()).toBe(0);
+});

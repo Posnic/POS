@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "यहाँ सुरु गर्नुहोस्",
   "lang_iv2_taking_shape": "तपाईंको वस्तु तयार हुँदैछ",
   "lang_iv2_view": "वस्तु हेर्नुहोस्",
-  "lang_iv2_optional_hint": "आवश्यक जानकारी भर्नुहोस्। वैकल्पिक ट्याबहरू पछि भर्न सकिन्छ।"
+  "lang_iv2_optional_hint": "आवश्यक जानकारी भर्नुहोस्। वैकल्पिक ट्याबहरू पछि भर्न सकिन्छ।",
+  "lang_restaurant_assigned": "हाल जिम्मा दिइएको",
+  "lang_restaurant_bill_printed": "बिल छापियो",
+  "lang_restaurant_bill_requested": "बिल मागियो",
+  "lang_restaurant_handover": "कर्मचारी हस्तान्तरण",
+  "lang_restaurant_not_recorded": "रेकर्ड गरिएको छैन",
+  "lang_restaurant_service_record": "कर्मचारीले रेकर्ड गरेपछि मात्र पस्किएको समय देखिन्छ। भुक्तानीले डेलिभरी पुष्टि गर्दैन।",
+  "lang_restaurant_taken_by": "अर्डर लिने व्यक्ति"
 }

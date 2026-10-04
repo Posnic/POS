@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "Mulai di sini",
   "lang_iv2_taking_shape": "Barang Anda mulai terbentuk",
   "lang_iv2_view": "Lihat barang",
-  "lang_iv2_optional_hint": "Masukkan informasi penting. Tab opsional bisa diisi nanti."
+  "lang_iv2_optional_hint": "Masukkan informasi penting. Tab opsional bisa diisi nanti.",
+  "lang_restaurant_assigned": "Saat ini ditugaskan kepada",
+  "lang_restaurant_bill_printed": "Tagihan dicetak",
+  "lang_restaurant_bill_requested": "Tagihan diminta",
+  "lang_restaurant_handover": "Serah terima staf",
+  "lang_restaurant_not_recorded": "Tidak tercatat",
+  "lang_restaurant_service_record": "Waktu penyajian hanya muncul jika dicatat oleh staf. Pembayaran tidak mengonfirmasi pengantaran.",
+  "lang_restaurant_taken_by": "Pesanan diterima oleh"
 }

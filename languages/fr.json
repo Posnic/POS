@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "Commencer ici",
   "lang_iv2_taking_shape": "Votre article prend forme",
   "lang_iv2_view": "Voir l’article",
-  "lang_iv2_optional_hint": "Saisissez les informations essentielles. Les onglets facultatifs peuvent attendre."
+  "lang_iv2_optional_hint": "Saisissez les informations essentielles. Les onglets facultatifs peuvent attendre.",
+  "lang_restaurant_assigned": "Actuellement attribué à",
+  "lang_restaurant_bill_printed": "Facture imprimée",
+  "lang_restaurant_bill_requested": "Addition demandée",
+  "lang_restaurant_handover": "Relève du personnel",
+  "lang_restaurant_not_recorded": "Non enregistré",
+  "lang_restaurant_service_record": "Les heures de service apparaissent uniquement si le personnel les enregistre. Le paiement ne confirme pas la livraison.",
+  "lang_restaurant_taken_by": "Commande prise par"
 }

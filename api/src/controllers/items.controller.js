@@ -581,9 +581,14 @@ class ItemsController extends BaseController {
   async instantItemTax(req, res) {
     try {
       await this.ensureContext(req);
-      const tax = await require('../services/quick-sale-tax').defaultTax({ branchId: this.model.branchId, licenseId: this.model.licenseId });
+      const tax = await require('../services/quick-sale-tax').defaultTax({
+        branchId: this.model.branchId,
+        licenseId: this.model.licenseId,
+      });
       return this.success(res, tax);
-    } catch (error) { return this.error(res, error.message, 400); }
+    } catch (error) {
+      return this.error(res, error.message, 400);
+    }
   }
 
   async instanceItemInsert(req, res) {
@@ -607,8 +612,11 @@ class ItemsController extends BaseController {
 
       let payload = req.body || {};
       if (req.captainSession || payload.quick_sale_default_tax === true) {
-        try { payload = await require('../services/quick-sale-tax').applyDefaultTax(payload, context); }
-        catch (error) { return this.error(res, error.message, 400); }
+        try {
+          payload = await require('../services/quick-sale-tax').applyDefaultTax(payload, context);
+        } catch (error) {
+          return this.error(res, error.message, 400);
+        }
       }
 
       const result = await this.service.createInstantItem({
