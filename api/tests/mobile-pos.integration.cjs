@@ -235,6 +235,29 @@ test('mobile retention settings are validated and delivered in authenticated boo
   assert.equal((await call('/mobile/v1/settings')).data.historyDays, 30);
   await call('/mobile/v1/settings', { ...settings, historyDays: 90, historyMaxReceipts: 10000 });
 });
+test('mobile photo reading has a separate opt-in and legacy settings preserve it', async () => {
+  const options = await call('/mobile/v1/photo-orders/options');
+  assert.equal(options.status, 200);
+  assert.equal(options.data.enabled, false);
+  const current = (await call('/mobile/v1/settings')).data;
+  const settings = {
+    offlineHours: current.offlineHours,
+    quickSale: current.quickSale,
+    quickTaxBps: current.quickTaxBps,
+    quickTaxInclusive: current.quickTaxInclusive,
+    tillId: current.tillId,
+  };
+  assert.equal((await call('/mobile/v1/settings', { ...settings, photoOrders: true })).status, 200);
+  assert.equal((await call('/mobile/v1/photo-orders/options')).data.enabled, true);
+  await call('/mobile/v1/settings', settings);
+  assert.equal((await call('/mobile/v1/photo-orders/options')).data.enabled, true);
+  await call('/mobile/v1/settings', { ...settings, photoOrders: false });
+  const denied = await call('/mobile/v1/photo-orders/recognize', {
+    id: crypto.randomUUID(),
+    original: 'invalid',
+  });
+  assert.equal(denied.status, 403);
+});
 test('paid cash sale lands in normal desktop sales and concurrent retry deducts stock once', async () => {
   const s = sale();
   const body = { idempotencyKey: s.id, sale: s };
