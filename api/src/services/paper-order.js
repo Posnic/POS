@@ -83,9 +83,10 @@ function parse(blocks) {
   }
   return { table, pax, lines: lines.slice(0, 100), truncated: lines.length > 100 };
 }
-async function recognize(req) {
-  const c = await scope(req);
-  if (!enabled(c.branch)) fail('Paper orders are not enabled for this branch.', 403);
+async function recognize(req, mobileContext) {
+  const c = mobileContext || (await scope(req));
+  if (!(mobileContext ? c.config.photoOrders === true : enabled(c.branch)))
+    fail('Photo orders are not enabled for this branch.', 403);
   const cfg = config();
   if (!cfg.bucket || !cfg.region) fail('Paper recognition is not configured on this server.', 503);
   const id = String(req.body?.id || '');
@@ -227,4 +228,31 @@ async function read(req) {
     data: `data:${doc.type};base64,${Buffer.from(await result.Body.transformToByteArray()).toString('base64')}`,
   };
 }
-module.exports = { options, settings, recognize, reference, read, parse, image, enabled };
+async function mobileOptions(req) {
+  const mobile = require('./mobile-pos');
+  if (!mobile.allowed(req.user, 'sales')) fail('Sales permission is required.', 403);
+  const c = await mobile.context(req);
+  return {
+    enabled: c.config.photoOrders === true,
+    configured: Boolean(config().bucket && config().region),
+    handwritingLanguages: ['en'],
+    printedLanguages: ['en', 'de', 'fr', 'es', 'it', 'pt'],
+  };
+}
+async function mobileRecognize(req) {
+  const mobile = require('./mobile-pos');
+  if (!mobile.allowed(req.user, 'sales')) fail('Sales permission is required.', 403);
+  return recognize(req, await mobile.context(req));
+}
+module.exports = {
+  options,
+  settings,
+  recognize,
+  reference,
+  read,
+  parse,
+  image,
+  enabled,
+  mobileOptions,
+  mobileRecognize,
+};

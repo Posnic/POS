@@ -15,6 +15,8 @@ jest.mock('../../src/utils/branch-access', () => ({
   },
 }));
 const service = require('../../src/services/paper-order');
+jest.mock('../../src/services/mobile-pos', () => ({ allowed: jest.fn(), context: jest.fn() }));
+const mobile = require('../../src/services/mobile-pos');
 const access = require('../../src/utils/branch-access');
 const s3 = require('@aws-sdk/client-s3');
 const textract = require('@aws-sdk/client-textract');
@@ -24,6 +26,8 @@ const c = { license: 'tenant', branchId: 'branch', branch: { captain_paper_order
 let req, photos, sales, usage, sendS3, sendOCR;
 beforeEach(() => {
   jest.clearAllMocks();
+  mobile.allowed.mockReturnValue(true);
+  mobile.context.mockResolvedValue({ ...c, config: { photoOrders: true } });
   process.env.ORDER_PHOTO_BUCKET = 'private-orders';
   process.env.AWS_REGION = 'ap-south-1';
   access.context.mockResolvedValue(c);
@@ -52,6 +56,28 @@ beforeEach(() => {
     .mockResolvedValue({ Blocks: [{ BlockType: 'LINE', Text: 'CB 5', Confidence: 98 }] });
   s3.S3Client.mockImplementation(() => ({ send: sendS3 }));
   textract.TextractClient.mockImplementation(() => ({ send: sendOCR }));
+});
+
+test('mobile uses its own opt-in and strict selling ACL, independent of Captain', async () => {
+  mobile.context.mockResolvedValue({
+    ...c,
+    branch: { captain_paper_orders: false },
+    config: { photoOrders: true },
+  });
+  await expect(service.mobileRecognize(req)).resolves.toMatchObject({ id });
+  expect(sendOCR).toHaveBeenCalledTimes(1);
+  mobile.allowed.mockReturnValue(false);
+  await expect(service.mobileRecognize(req)).rejects.toMatchObject({ status: 403 });
+  expect(sendOCR).toHaveBeenCalledTimes(1);
+});
+test('enabling Captain does not enable mobile cloud reading', async () => {
+  mobile.context.mockResolvedValue({ ...c, config: { photoOrders: false } });
+  await expect(service.mobileRecognize(req)).rejects.toMatchObject({ status: 403 });
+  expect(sendOCR).not.toHaveBeenCalled();
+  await expect(service.mobileOptions(req)).resolves.toMatchObject({
+    enabled: false,
+    configured: true,
+  });
 });
 test('reads table, optional pax and quantities; keeps unrecognized lines for review', () => {
   expect(
