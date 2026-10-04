@@ -36,6 +36,7 @@ function settings(branch) {
     historyDays: s.historyDays || 90,
     historyMaxReceipts: s.historyMaxReceipts || 10000,
     quickSale: s.quickSale !== false,
+    photoOrders: s.photoOrders === true,
     quickTaxBps: s.quickTaxBps || 0,
     quickTaxInclusive: s.quickTaxInclusive !== false,
     tillId: s.tillId || '',

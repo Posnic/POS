@@ -3769,6 +3769,30 @@
         }
       }
     },
+    "/captain/v1/paper-orders/reference": {
+      "post": {
+        "summary": "attach",
+        "operationId": "post_captain_v1_paper_orders_reference",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/captain/v1/orders/edit/preview": {
       "post": {
         "summary": "preview",
@@ -11653,6 +11677,53 @@
       "post": {
         "summary": "handsetLifetimeSeconds",
         "operationId": "post_mobile_v1_pair",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile/v1/photo-orders/options": {
+      "get": {
+        "summary": "order",
+        "operationId": "get_mobile_v1_photo_orders_options",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/mobile/v1/photo-orders/recognize": {
+      "post": {
+        "summary": "order",
+        "operationId": "post_mobile_v1_photo_orders_recognize",
         "tags": [
           "Mobile pos"
         ],

@@ -199,6 +199,19 @@
             <input type="number" id="tax" min="0" max="100" step="0.01" required /></label
           ><label class="check"><input type="checkbox" id="inclusive" /> Amount includes tax</label>
         </section>
+        <section id="photo-section">
+          <h2>Photo and paper orders</h2>
+          <label class="check"
+            ><input type="checkbox" id="photo-orders" /> Allow sellers to read photos online</label
+          >
+          <p>
+            Optional cloud recognition uses private order-photo storage and the branch's monthly
+            scan allowance. Configure ORDER_PHOTO_BUCKET and AWS_REGION on the server, with
+            permission to use S3 and Textract. English handwriting and supported printed languages
+            only. Staff must review every item and quantity. Barcode scanning and supported
+            on-device text reading work without this setting.
+          </p>
+        </section>
         <section id="payments-section">
           <h2>UPI accounts</h2>
           <p>

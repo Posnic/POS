@@ -154,7 +154,7 @@ test('partial and whole cancellations remain visible without showing served food
   expect((await repository.kitchenScreenTickets(String(branch))).data).toEqual([]);
 });
 
-test('wall display carries partial ready, picked-up and served quantities from the touch workflow', async () => {
+test('wall display shows only preparing quantity while retaining progress from the touch workflow', async () => {
   await collection.updateOne(
     { _id: id },
     {
@@ -168,7 +168,7 @@ test('wall display carries partial ready, picked-up and served quantities from t
   );
   let result = await repository.kitchenScreenTickets(String(branch));
   expect(result.data[0].items[0]).toMatchObject({
-    qty: 3,
+    qty: 1,
     preparing: 1,
     readyToCollect: 1,
     pickedUp: 1,
@@ -284,4 +284,31 @@ test('serve all leaves held courses unserved', async () => {
   const saved = await collection.findOne({ _id: id });
   expect(saved.kitchen_service.c0i0.quantity).toBe(2);
   expect(saved.kitchen_service.c0i1).toBeUndefined();
+});
+
+test('desktop Serve all closes a paid takeaway and advances its sync timestamp', async () => {
+  const license = new mongoose.Types.ObjectId();
+  const before = new Date('2026-10-03T06:13:00Z');
+  await collection.updateOne(
+    { _id: id },
+    {
+      $set: {
+        license,
+        dine_type: 'Take away',
+        payment_status: 'Paid',
+        kitchen_required: true,
+        floor_lifecycle: true,
+        updated_date: before,
+        sales_total: 1134,
+      },
+    }
+  );
+  const result = await repository.serveKitchenItems({ ...request(), all: true });
+  expect(result.status).toBe(true);
+  const saved = await collection.findOne({ _id: id });
+  expect(saved.floor_closed_at).toBeInstanceOf(Date);
+  expect(saved.kitchen_closed).toBe(true);
+  expect(saved.updated_date.getTime()).toBeGreaterThan(before.getTime());
+  expect(saved.sales_total).toBe(1134);
+  expect(saved.payment_status).toBe('Paid');
 });

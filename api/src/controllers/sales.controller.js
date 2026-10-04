@@ -7381,6 +7381,7 @@ class SalesController extends BaseController {
       const copies = req.body.copies || req.body.bill_copies;
       const response = await salesService.requestBillPrint(req.body.branchId, table, askedBy, {
         copies,
+        saleId: req.body.saleId,
       });
 
       if (response.status !== true) {
@@ -7822,7 +7823,7 @@ class SalesController extends BaseController {
         newTableNo,
         dineType,
         personCount,
-        { SaleModel, newTableId, seenAt, editPolicy }
+        { SaleModel, newTableId, seenAt, editPolicy, preparationNote: req.body.preparation_note }
       );
 
       if (response.status === true) {

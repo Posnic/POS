@@ -178,23 +178,29 @@ function createService(deps = {}) {
     Jobs: deps.Jobs || require('../models/print-job.model'),
   });
   function scope(input) {
+    const saleId = input.saleId == null ? null : String(input.saleId).toLowerCase();
+    if (saleId !== null && !/^[a-f\d]{24}$/.test(saleId))
+      throw problem('Choose a valid Take Away order.');
     const branchId = String(input.branchId || '').toLowerCase(),
-      table = String(input.table_number || '').trim();
+      table = saleId ? 'takeaway:' + saleId : String(input.table_number || '').trim();
     if (
       !/^[a-f\d]{24}$/i.test(branchId) ||
       !table ||
+      (!saleId && table.startsWith('takeaway:')) ||
       table.length > 40 ||
       Array.from(table).some((character) => character.charCodeAt(0) < 32)
     )
       throw problem('Choose a branch and table.');
-    return { branchId, table };
+    return { branchId, table, saleId };
   }
   async function read(input) {
-    const { branchId, table } = scope(input),
+    const { branchId, table, saleId } = scope(input),
       { Sale, Branch } = models();
     const sales = await Sale.find({
       branch_id: branchId,
-      table_number: table,
+      ...(saleId
+        ? { _id: saleId, dine_type: /^take[\s_-]*away$/i, floor_closed_at: { $exists: false } }
+        : { table_number: table }),
       sale_process: 'KOT',
       payment_status: 'Unpaid',
     })
@@ -205,7 +211,11 @@ function createService(deps = {}) {
       throw problem('This table has too many open orders. Ask the cashier for help.', 422);
     const branch = await Branch.findById(branchId).lean();
     if (!branch) throw problem('Shop not found.', 404);
-    return { sales, branch, snapshot: snapshotFrom(sales, branch, table) };
+    const displayTable =
+      saleId && sales.length
+        ? 'Take Away ' + (sales[0].sales_id || sales[0].token_id || saleId)
+        : table;
+    return { sales, branch, snapshot: snapshotFrom(sales, branch, displayTable) };
   }
   async function send(input) {
     const { branchId, table } = scope(input),
@@ -278,7 +288,7 @@ function createService(deps = {}) {
           kind: 'bill',
           ticketKey: `${ticket}:${guest}:${copy}`,
           payload: data.bills[guest],
-          label: `Table ${table} · ${data.guests[guest].name} (${copy}/${data.copies})`,
+          label: `${table.startsWith('takeaway:') ? data.snapshot.table : 'Table ' + table} · ${data.guests[guest].name} (${copy}/${data.copies})`,
         });
         if (!result.status)
           throw problem(

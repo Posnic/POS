@@ -1,3 +1,5 @@
+jest.mock('../../src/sync/outbox', () => ({ enqueue: jest.fn() }));
+jest.mock('../../src/sync/nudge', () => ({ nudgeSyncAgent: jest.fn() }));
 jest.mock('@aws-sdk/client-s3', () => ({
   S3Client: jest.fn(),
   PutObjectCommand: jest.fn((x) => x),
@@ -15,6 +17,8 @@ jest.mock('../../src/utils/branch-access', () => ({
   },
 }));
 const service = require('../../src/services/paper-order');
+jest.mock('../../src/services/mobile-pos', () => ({ allowed: jest.fn(), context: jest.fn() }));
+const mobile = require('../../src/services/mobile-pos');
 const access = require('../../src/utils/branch-access');
 const s3 = require('@aws-sdk/client-s3');
 const textract = require('@aws-sdk/client-textract');
@@ -24,6 +28,8 @@ const c = { license: 'tenant', branchId: 'branch', branch: { captain_paper_order
 let req, photos, sales, usage, sendS3, sendOCR;
 beforeEach(() => {
   jest.clearAllMocks();
+  mobile.allowed.mockReturnValue(true);
+  mobile.context.mockResolvedValue({ ...c, config: { photoOrders: true } });
   process.env.ORDER_PHOTO_BUCKET = 'private-orders';
   process.env.AWS_REGION = 'ap-south-1';
   access.context.mockResolvedValue(c);
@@ -52,6 +58,28 @@ beforeEach(() => {
     .mockResolvedValue({ Blocks: [{ BlockType: 'LINE', Text: 'CB 5', Confidence: 98 }] });
   s3.S3Client.mockImplementation(() => ({ send: sendS3 }));
   textract.TextractClient.mockImplementation(() => ({ send: sendOCR }));
+});
+
+test('mobile uses its own opt-in and strict selling ACL, independent of Captain', async () => {
+  mobile.context.mockResolvedValue({
+    ...c,
+    branch: { captain_paper_orders: false },
+    config: { photoOrders: true },
+  });
+  await expect(service.mobileRecognize(req)).resolves.toMatchObject({ id });
+  expect(sendOCR).toHaveBeenCalledTimes(1);
+  mobile.allowed.mockReturnValue(false);
+  await expect(service.mobileRecognize(req)).rejects.toMatchObject({ status: 403 });
+  expect(sendOCR).toHaveBeenCalledTimes(1);
+});
+test('enabling Captain does not enable mobile cloud reading', async () => {
+  mobile.context.mockResolvedValue({ ...c, config: { photoOrders: false } });
+  await expect(service.mobileRecognize(req)).rejects.toMatchObject({ status: 403 });
+  expect(sendOCR).not.toHaveBeenCalled();
+  await expect(service.mobileOptions(req)).resolves.toMatchObject({
+    enabled: false,
+    configured: true,
+  });
 });
 test('reads table, optional pax and quantities; keeps unrecognized lines for review', () => {
   expect(
@@ -138,5 +166,37 @@ test('photo read rejects a reference pointing outside this branch', async () => 
     paper_order: { bucket: 'private-orders', key: 'orders/other/branch/stolen' },
   });
   await expect(service.read(req)).rejects.toMatchObject({ status: 404 });
+  expect(sendS3).not.toHaveBeenCalled();
+});
+
+test('reference photo attaches without extraction or changing sale lines and money', async () => {
+  req.body.saleId = '507f1f77bcf86cd799439011';
+  sales.findOne.mockResolvedValue({ _id: req.body.saleId });
+  sales.updateOne = jest.fn().mockResolvedValue({ matchedCount: 1 });
+  const photo = {
+    _id: id,
+    key: `orders/tenant/branch/${id}`,
+    bucket: 'private-orders',
+    type: 'image/jpeg',
+    created: new Date(),
+  };
+  photos.findOneAndUpdate.mockResolvedValue(photo);
+  await expect(service.attach(req)).resolves.toEqual({ photo: { id } });
+  expect(sendOCR).not.toHaveBeenCalled();
+  expect(sendS3).toHaveBeenCalledTimes(1);
+  const [where, update] = sales.updateOne.mock.calls[0];
+  expect(where).toMatchObject({ license: c.license, branch_id: c.branchId });
+  expect(Object.keys(update.$set)).toEqual(['updated_date']);
+  expect(update.$addToSet.order_photos.id).toBe(id);
+  expect(photos.findOneAndUpdate.mock.calls[0][1].$set.orderKey).toBe(req.body.saleId);
+});
+
+test('reference upload rejects another branch order before storing any image', async () => {
+  req.body.saleId = '507f1f77bcf86cd799439011';
+  await expect(service.attach(req)).rejects.toMatchObject({ status: 404 });
+  expect(sales.findOne.mock.calls[0][0]).toMatchObject({
+    license: c.license,
+    branch_id: c.branchId,
+  });
   expect(sendS3).not.toHaveBeenCalled();
 });

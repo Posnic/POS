@@ -127,6 +127,7 @@ async function load() {
   $('history-days').value = state.historyDays || 90;
   $('history-max').value = state.historyMaxReceipts || 10000;
   $('quick').checked = state.quickSale;
+  $('photo-orders').checked = state.photoOrders === true;
   $('tax').value = state.quickTaxBps / 100;
   $('inclusive').checked = state.quickTaxInclusive;
   $('till').value = state.tillId;
@@ -191,6 +192,7 @@ $('settings').onsubmit = async (e) => {
       historyDays: Number($('history-days').value),
       historyMaxReceipts: Number($('history-max').value),
       quickSale: $('quick').checked,
+      photoOrders: $('photo-orders').checked,
       quickTaxBps: Math.round(Number($('tax').value) * 100),
       quickTaxInclusive: $('inclusive').checked,
       tillId: $('till').value,
