@@ -12,8 +12,7 @@ const METHODS = ['Cash', 'Card', 'Upi'];
 function settings(branch) {
   const saved = branch.captain_payments || {};
   return {
-    enabled:
-      saved.enabled === true && ![false, 0, '0', 'false'].includes(branch.module_captain_enable),
+    enabled: require('../utils/captain-payment-enabled')(branch),
     methods: METHODS.filter((method) => (saved.methods || METHODS).includes(method)),
     printReceipt: branch.printall === true,
     upiPayee: branchUpi.payee(branch),

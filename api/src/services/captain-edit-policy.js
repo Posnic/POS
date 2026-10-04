@@ -46,8 +46,8 @@ async function authorize(req, { preview = false } = {}) {
       (Number(body.extra_discount) !== 0 &&
         body.extra_discount_type !== currentDiscount.extra_discount_type));
   const reason = String(body.change_reason || body.discount_description || '').trim();
-  if (!preview && (reduced || discount) && (reason.length < 3 || reason.length > 200))
-    fail('Enter a reason for this change.', 422);
+  // Reasons are optional; actor/change auditing and permission checks still apply.
+  if (reason.length > 200) fail('Reason must be 200 characters or fewer.', 422);
   const actions = [...(reduced ? ['void_sale'] : []), ...(discount ? ['discount_apply'] : [])];
   const approved = [];
   for (const action of preview ? [] : actions) {
