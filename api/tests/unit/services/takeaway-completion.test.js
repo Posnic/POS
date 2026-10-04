@@ -109,10 +109,16 @@ test('operator-shaped scope values cannot broaden takeaway completion', async ()
 });
 
 test('a stored operator-shaped payment-plan value cannot match another completed journal', async () => {
-  await db.collection('sales').updateOne({ _id: sale._id }, { $set: { captain_payment_plan: { $ne: null } } });
+  await db
+    .collection('sales')
+    .updateOne({ _id: sale._id }, { $set: { captain_payment_plan: { $ne: null } } });
   await db.collection('captain_payment_plans').insertOne({
-    _id: 'unrelated-complete-plan', branch_id: scope.branchId, license: scope.license,
-    state: 'paid', projectedVersion: 1, version: 1,
+    _id: 'unrelated-complete-plan',
+    branch_id: scope.branchId,
+    license: scope.license,
+    state: 'paid',
+    projectedVersion: 1,
+    version: 1,
   });
   await reconcile(db, scope);
   expect((await db.collection('sales').findOne({ _id: sale._id })).floor_closed_at).toBeUndefined();

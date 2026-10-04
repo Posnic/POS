@@ -22,7 +22,11 @@ function completed(sale) {
 }
 
 async function reconcile(db, scope, saleId) {
-  if (!/^[a-f\d]{24}$/i.test(String(scope.branchId)) || !/^[a-f\d]{24}$/i.test(String(scope.license))) return;
+  if (
+    !/^[a-f\d]{24}$/i.test(String(scope.branchId)) ||
+    !/^[a-f\d]{24}$/i.test(String(scope.license))
+  )
+    return;
   if (saleId != null && !/^[a-f\d]{24}$/i.test(String(saleId))) return;
   const branchId = new ObjectId(String(scope.branchId));
   const license = new ObjectId(String(scope.license));
