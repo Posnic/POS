@@ -68,6 +68,14 @@
     }
     function money(n) { return (P.local.get('currencySign') || '') + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     function render() {
+        var dishChoice = document.querySelector('#items_v2 input[name="iv2-kind"][value="dish"]');
+        dishChoice.closest('label').hidden = !capabilities.restaurant;
+        dishChoice.disabled = !capabilities.restaurant;
+        document.querySelector('#items_v2 .iv2-types').style.gridTemplateColumns = 'repeat(' + (capabilities.restaurant ? 3 : 2) + ', minmax(0, 1fr))';
+        if (!capabilities.restaurant && dishChoice.checked) {
+            document.querySelector('#items_v2 input[name="iv2-kind"][value="product"]').checked = true;
+            document.querySelector('#items_v2 input[name="iv2-stock"][value="tracked"]').checked = true;
+        }
         var f = fields(), a = assess(f), named = !!f.name.trim(), tracked = f.kind !== 'service' && f.stock === 'tracked';
         show('iv2-restaurant', capabilities.restaurant && f.kind !== 'service'); show('iv2-online', capabilities.online);
         var noun = f.kind === 'dish' ? 'dish' : f.kind === 'service' ? 'service' : 'item';
