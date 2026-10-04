@@ -32,3 +32,18 @@ test('tax and item codes use the existing API contract', () => {
   const item = payload({ ...base, quantity: '3', taxId: 'tax', taxName: 'GST', taxRate: '5', taxType: 'exclusive', sku: ' TE ', barcode: '12345' });
   assert.equal(item.tax, 5); assert.equal(item.tax_type, 'exclusive'); assert.equal(item.sku_id, 'TE'); assert.equal(item.available_quantity, 3);
 });
+
+const { list, combinations, validGtin } = require('../frontend/static/script/js/modules/js/items-v2-details');
+test('open-price items explicitly defer price entry to the cashier', () => {
+  assert.equal(assess({ ...base, price: '', openPrice: true, stock: 'untracked' }).error, undefined);
+});
+test('variant generation trims, deduplicates and combines values', () => {
+  assert.deepEqual(list(' S, M, S, '), ['S','M']);
+  assert.deepEqual(combinations('S,M', 'Blue, White'), ['S / Blue','S / White','M / Blue','M / White']);
+});
+test('optional GTIN validates length and check digit', () => {
+  assert.equal(validGtin(''), true);
+  assert.equal(validGtin('4006381333931'), true);
+  assert.equal(validGtin('4006381333932'), false);
+  assert.equal(validGtin('SOAP-123'), false);
+});
