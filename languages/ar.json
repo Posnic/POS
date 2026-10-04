@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "ابدأ هنا",
   "lang_iv2_taking_shape": "العنصر يتشكل",
   "lang_iv2_view": "عرض العنصر",
-  "lang_iv2_optional_hint": "أدخل المعلومات الأساسية. يمكن إكمال علامات التبويب الاختيارية لاحقًا."
+  "lang_iv2_optional_hint": "أدخل المعلومات الأساسية. يمكن إكمال علامات التبويب الاختيارية لاحقًا.",
+  "lang_restaurant_assigned": "الموظف المسؤول حاليًا",
+  "lang_restaurant_bill_printed": "تمت طباعة الفاتورة",
+  "lang_restaurant_bill_requested": "تم طلب الفاتورة",
+  "lang_restaurant_handover": "تسليم بين الموظفين",
+  "lang_restaurant_not_recorded": "غير مسجل",
+  "lang_restaurant_service_record": "تظهر أوقات التقديم فقط عند تسجيلها بواسطة الموظفين. الدفع لا يؤكد التسليم.",
+  "lang_restaurant_taken_by": "تلقى الطلب"
 }
