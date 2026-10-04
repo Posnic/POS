@@ -286,7 +286,7 @@ class SalesRepository {
 
   async create(data, { SaleModel } = {}) {
     const Model = this.getModel(SaleModel);
-    const doc = new Model(data);
+    const doc = new Model({ ...data, origin: require('../utils/sale-origin').stamp(data) });
     await doc.save();
     return doc;
   }
@@ -1636,6 +1636,10 @@ class SalesRepository {
         }
       }
 
+      normalized.restaurant_details = require('../helpers/restaurant-sale-details')(
+        saleDoc,
+        BaseModel.currentTimeZone
+      );
       if (transferredBill) normalized.transferred_bill = transferredBill;
       normalized.receipt_line_rows =
         transferredBill?.items ||
@@ -7505,18 +7509,31 @@ class SalesRepository {
    * asking twice is somebody wondering where the bill got to, not a second
    * bill.
    */
-  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel, copies } = {}) {
+  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel, copies, saleId } = {}) {
     const copiesAsked = copies;
     try {
       const Model = this.getModel(SaleModel);
       const table = String(tableNumber == null ? '' : tableNumber).trim();
-      if (!table) {
+      const takeawayId = saleId == null ? null : String(saleId);
+      if (
+        takeawayId !== null &&
+        (!/^[a-f\d]{24}$/i.test(takeawayId) || !/^[a-f\d]{24}$/i.test(String(branchId)))
+      ) {
+        return { status: false, message: 'Choose a valid Take Away order and branch', data: null };
+      }
+      if (!table && !takeawayId) {
         return { status: false, message: 'No table was named', data: null };
       }
 
       const query = {
         sale_process: { $regex: 'KOT', $options: 'i' },
-        table_number: table,
+        ...(takeawayId
+          ? {
+              _id: new mongoose.Types.ObjectId(takeawayId),
+              dine_type: /^take[\s_-]*away$/i,
+              floor_closed_at: { $exists: false },
+            }
+          : { table_number: table }),
         /*
          * Only what is still open. A settled ticket has had its bill.
          *
@@ -7661,6 +7678,9 @@ class SalesRepository {
         const copies = billCopies(shop, copiesAsked);
 
         for (const sale of open) {
+          const label = takeawayId
+            ? 'Take Away ' + (sale.takeaway_number || sale.token_id || sale.sales_id || takeawayId)
+            : `Table ${table}`;
           for (let copy = 1; copy <= copies; copy += 1) {
             await queuePrintJob({
               branchId,
@@ -7668,7 +7688,7 @@ class SalesRepository {
               saleId: sale._id,
               /* The counter reads these as they come off: "(2 of 2)" says the
                  pair belongs to one table rather than two bills for it. */
-              label: copies > 1 ? `Table ${table} (${copy} of ${copies})` : `Table ${table}`,
+              label: copies > 1 ? `${label} (${copy} of ${copies})` : label,
               /*
                * BUILT FOR THE PRINTER, not handed over raw.
                *
@@ -8006,6 +8026,8 @@ class SalesRepository {
               type: i === 0 ? 'new' : 'modified',
               timestamp: change.timestamp || null,
               items: addItems,
+              preparation_note:
+                typeof change.preparation_note === 'string' ? change.preparation_note : '',
               change_index: i + 1,
             });
             highestPrintedIndex = i;
@@ -8015,7 +8037,24 @@ class SalesRepository {
               type: 'cancel',
               timestamp: change.timestamp || null,
               items: cancelItems,
+              preparation_note:
+                typeof change.preparation_note === 'string' ? change.preparation_note : '',
               change_index: i + 1,
+            });
+            highestPrintedIndex = i;
+          }
+          if (
+            change.note_only === true &&
+            typeof change.preparation_note === 'string' &&
+            items.length === 0
+          ) {
+            printJobs.push({
+              type: 'modified',
+              timestamp: change.timestamp || null,
+              items: [],
+              change_index: i + 1,
+              preparation_note: change.preparation_note,
+              note_only: true,
             });
             highestPrintedIndex = i;
           }
@@ -8181,6 +8220,7 @@ class SalesRepository {
       {
         $set: {
           kitchen_service: service,
+          updated_date: new Date(),
           kitchen_closed: !rounds({ ...sale, kitchen_service: service }).some((r) =>
             r.items.some((i) => i.remaining > 0)
           ),
@@ -8189,6 +8229,11 @@ class SalesRepository {
     );
     if (!result.matchedCount)
       return { status: false, message: 'Order changed. Refresh before marking items served.' };
+    await require('../services/takeaway-completion').recover(
+      db,
+      { branchId: sale.branch_id, license: sale.license },
+      sale._id
+    );
     // Only notify after the write succeeds. Cloud/other processes still use the normal poll.
     try {
       process.emit('posnic:kitchen-served', { branchId: String(branchId), saleId: String(saleId) });
@@ -8427,7 +8472,10 @@ class SalesRepository {
     return { id: null, name };
   }
 
-  async createOnlineOrder(data, { SaleModel, staffOrder = false, seatingProtocol = false } = {}) {
+  async createOnlineOrder(
+    data,
+    { SaleModel, staffOrder = false, seatingProtocol = false, paperOrder = null } = {}
+  ) {
     try {
       const db = await BaseModel.getDb();
 
@@ -8751,9 +8799,6 @@ class SalesRepository {
       const orderDay = orderLocal.day();
       const orderMinutes = orderLocal.hours() * 60 + orderLocal.minutes();
 
-      // Generate token ID
-      const tokenId = String(clientTokenId || String(Math.floor(Math.random() * 900) + 100));
-
       // Map items - use raw shape (no Mongoose ObjectId for item ref to avoid validation errors)
       const itemCollection = db.collection('items');
       if (!staffOrder && items.some((item) => item.held === true)) {
@@ -9005,6 +9050,23 @@ class SalesRepository {
         console.warn('[online order] could not estimate the wait:', e.message);
       }
 
+      // Generate token ID
+      const isTakeaway =
+        String(dine_type || order || '')
+          .toLowerCase()
+          .replace(/[\s_-]/g, '') === 'takeaway';
+      const takeawayNumber = isTakeaway
+        ? await require('../services/takeaway-number').allocate(
+            db,
+            { branchId: branchObjectId, license: branchDoc.license },
+            data.takeaway_request_id || idempotencyKey || crypto.randomUUID(),
+            idempotencyKey || crypto.randomUUID()
+          )
+        : null;
+      const tokenId = takeawayNumber
+        ? String(takeawayNumber)
+        : String(clientTokenId || Math.floor(Math.random() * 900) + 100);
+
       const saleDocument = {
         /* What makes a resend safe. Absent on orders taken before this
            shipped, which is why the lookup above is skipped without one. */
@@ -9140,9 +9202,11 @@ class SalesRepository {
         updated_date: now,
         transaction_id: transactionId || '',
         token_id: tokenId,
+        ...(takeawayNumber ? { takeaway_number: takeawayNumber } : {}),
         /* The device this came from; see the note beside `client` above.
            Worked out once: calling twice would stamp two different times. */
         ...(clientRecord ? { client: clientRecord } : {}),
+        ...(paperOrder ? { paper_order: paperOrder } : {}),
         // Initial change log entry for KOT printing
         kitchen_actor: staffOrder ? kitchenActor() : null,
         changes: changesItems.length
@@ -10409,7 +10473,13 @@ class SalesRepository {
               }
             : {}),
           assigned_staff: doc.assigned_staff,
+          ...(doc.paper_order?.id ? { paper_order: { id: doc.paper_order.id } } : {}),
+          ...(Array.isArray(doc.order_photos)
+            ? { order_photos: doc.order_photos.map((photo) => ({ id: photo.id })) }
+            : {}),
           kitchen_rounds: require('../helpers/kitchen-rounds').rounds(doc),
+          preparation_note: String(doc.preparation_note || ''),
+          preparation_notes: true,
           item_transfer: true,
           total_amount: doc.sales_total || doc.total || 0,
           subtotal: doc.sales_sub_total || doc.subtotal || 0,
@@ -10444,7 +10514,15 @@ class SalesRepository {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel, newTableId, seenAt, editPolicy, preview = false, previewContext } = {}
+    {
+      SaleModel,
+      newTableId,
+      seenAt,
+      editPolicy,
+      preparationNote,
+      preview = false,
+      previewContext,
+    } = {}
   ) {
     let finishCaptainEdit;
     let finishCapacityEdit;
@@ -11112,10 +11190,16 @@ class SalesRepository {
 
       const salesTotal = itemsSub - extraDiscountAmount;
       const mongoDate = new Date();
-      if (changesItems.length > 0) {
+      const note =
+        preparationNote === undefined ? orderDoc.preparation_note : String(preparationNote).trim();
+      const noteChanged =
+        preparationNote !== undefined && note !== String(orderDoc.preparation_note || '');
+      if (changesItems.length > 0 || noteChanged) {
         existingChanges.push({
           timestamp: mongoDate,
           items: changesItems,
+          ...(typeof note === 'string' ? { preparation_note: note } : {}),
+          ...(noteChanged && changesItems.length === 0 ? { note_only: true } : {}),
           actor,
           reason: audit.reason,
           kitchen_actor: kitchenActor(),
@@ -11151,7 +11235,8 @@ class SalesRepository {
       }
       if (discountDescription !== null)
         updateFields.discount_description = String(discountDescription);
-      if (newTableNo !== null && newTableNo !== '') updateFields.table_number = String(newTableNo);
+      if (preparationNote !== undefined) updateFields.preparation_note = note;
+      if (newTableNo != null && newTableNo !== '') updateFields.table_number = String(newTableNo);
 
       /*
        * THE TABLE'S ID MOVES WITH ITS NUMBER.
@@ -11178,8 +11263,10 @@ class SalesRepository {
          */
         updateFields.table_id = '';
       }
-      if (dineType !== null && dineType !== '') updateFields.dine_type = String(dineType);
-      if (personCount !== null && personCount !== '')
+      if (dineType != null && dineType !== '') updateFields.dine_type = String(dineType);
+      // Partial desktop edits omit seating fields. Do not turn an omitted
+      // cover count into NaN (or an omitted table/type into "undefined").
+      if (personCount != null && personCount !== '')
         updateFields.person_count = parseInt(personCount, 10);
 
       if (orderDoc.captain_transfer_allocation) {
@@ -13772,6 +13859,7 @@ class SalesRepository {
           list: docs.map((sale) => ({
             ...sale,
             assigned_staff: sale.assigned_staff,
+            preparation_notes: true,
             kitchen_rounds: require('../helpers/kitchen-rounds').rounds(sale),
             item_transfer: true,
           })),
@@ -14430,6 +14518,7 @@ class SalesRepository {
    * is raised, because retrying it would be how one order becomes two.
    */
   async insertSaleWithFreshNumber(salesCollection, document, branchId, { attempts = 5 } = {}) {
+    document.origin = require('../utils/sale-origin').stamp(document);
     for (let attempt = 1; ; attempt++) {
       try {
         return await salesCollection.insertOne(document);

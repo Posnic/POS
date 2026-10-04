@@ -571,7 +571,7 @@ PosnicPro.kot = {
                     var discountText = discountType === 'percent'
                         ? discountValue + '%'
                         : '₹' + discountValue.toFixed(2);
-                    var discountDesc = kot.discount_description || '';
+                    var discountDesc = PosnicPro.escapeHtml(kot.discount_description || '');
                     discountHtml = `
                         <div style="font-size: 13px; color: #ffc107; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
                             <span>
@@ -601,9 +601,9 @@ PosnicPro.kot = {
                         var itemDesc = item.item_description || '';
 
                         // Add description in brackets if exists
-                        var displayName = itemName;
+                        var displayName = PosnicPro.escapeHtml(itemName);
                         if (itemDesc && itemDesc.trim() !== '') {
-                            displayName = itemName + ' <span style="color: #6c757d; font-style: italic;">(' + itemDesc + ')</span>';
+                            displayName += ' <span style="color: #6c757d; font-style: italic;">(' + PosnicPro.escapeHtml(itemDesc) + ')</span>';
                         }
 
                         var itemId = item.item_id || '';
@@ -629,7 +629,7 @@ PosnicPro.kot = {
                                                 <i class="feather icon-plus" style="font-size: 10px;"></i>
                                             </button>
                                         </div>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" style="padding: 2px 6px; border-radius: 4px;" onclick="PosnicPro.kot.deleteItem('${kot._id}', '${itemId}')" title="Delete Item" data-t-title="lang_delete_item">
+                                        <button type="button" class="btn btn-outline-danger btn-sm" style="padding: 2px 6px; border-radius: 4px;" onclick="PosnicPro.kot.deleteItem('${kot._id}', '${itemId}', this)" title="Delete Item" data-t-title="lang_delete_item">
                                             <i class="feather icon-trash" style="font-size: 12px;"></i>
                                         </button>
                                     </div>
@@ -786,6 +786,7 @@ PosnicPro.kot = {
             console.log('Order API Response:', response);
             
             if (response.type === 'success' && response.data && response.data.items) {
+                if (PosnicPro.kotWorkspace) PosnicPro.kotWorkspace.mount(response.data);
                 var items = response.data.items;
                 console.log('Found', items.length, 'items in order');
                 
@@ -1340,11 +1341,10 @@ PosnicPro.kot = {
                     if (itemResponse && itemResponse.suggestions && itemResponse.suggestions.length > 0) {
                         newItemData = itemResponse.suggestions.find(function(s) { 
                             var d = s.data || s;
-                            var sid = d.item_id || d.id || (d._id ? d._id.$oid : '');
+                            var sid = d.item_id || d.id || (d._id && (d._id.$oid || d._id)) || '';
                             return sid.toString() === itemId.toString();
                         });
                         
-                        if (!newItemData) newItemData = itemResponse.suggestions[0];
                     }
                     
                     if (newItemData) {
@@ -2532,15 +2532,17 @@ PosnicPro.kot = {
         });
     },
 
-    deleteItem: function (saleId, itemId) {
+    deleteItem: function (saleId, itemId, control) {
         if (!saleId || !itemId) return;
+        var $line = control ? $(control).closest('.kot-item-qty-controls') :
+            $('.kot-item-qty-controls[data-sale-id="' + saleId + '"][data-item-id="' + itemId + '"]').first();
 
         // Check if we're in edit mode
         var $updateBtn = $('.kot-update-btn[data-sale-id="' + saleId + '"]');
         
         if ($updateBtn.is(':visible')) {
             // In edit mode - just remove from table (no API call)
-            var $table = $('.kot-item-qty-controls[data-sale-id="' + saleId + '"][data-item-id="' + itemId + '"]').closest('table');
+            var $table = $line.closest('table');
             var rowCount = $table.find('tr').length;
             
             // Check if this is the last item
@@ -2550,7 +2552,7 @@ PosnicPro.kot = {
             }
             
             // Remove the row from table (no API call)
-            $('.kot-item-qty-controls[data-sale-id="' + saleId + '"][data-item-id="' + itemId + '"]').closest('tr').remove();
+            $line.closest('tr').remove();
             
             // Update total display
             PosnicPro.kot.updateTotalDisplay(saleId);
@@ -2560,12 +2562,14 @@ PosnicPro.kot = {
         // Not in edit mode - show confirmation modal for API delete
         $('#kot_delete_item_modal').data('sale-id', saleId);
         $('#kot_delete_item_modal').data('item-id', itemId);
+        $('#kot_delete_item_modal').data('line-id', $line.attr('data-line-id') || '');
         $('#kot_delete_item_modal').modal('show');
     },
 
     confirmDeleteItem: function () {
         var saleId = $('#kot_delete_item_modal').data('sale-id');
         var itemId = $('#kot_delete_item_modal').data('item-id');
+        var lineId = $('#kot_delete_item_modal').data('line-id');
         
         // Hide modal
         $('#kot_delete_item_modal').modal('hide');
@@ -2600,7 +2604,7 @@ PosnicPro.kot = {
                     var price = parseFloat(item.item_price || 0);
                     var id = item.item_id || '';
 
-                    if (id.toString() === itemId.toString()) {
+                    if (!itemFound && (lineId ? item.line_id === lineId : id.toString() === itemId.toString())) {
                         itemFound = true;
                         continue; // Skip adding this item to new list
                     }

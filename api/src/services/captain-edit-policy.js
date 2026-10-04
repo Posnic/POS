@@ -9,6 +9,16 @@ async function authorize(req, { preview = false } = {}) {
   if (!req.user || !allowed(req.user, 'sales')) fail('Sales permission is required.', 403);
   const c = await context(req),
     body = req.body;
+  if (
+    body.preparation_note !== undefined &&
+    (typeof body.preparation_note !== 'string' ||
+      body.preparation_note.length > 500 ||
+      Array.from(body.preparation_note).some((character) => {
+        const code = character.charCodeAt(0);
+        return code < 32 && ![9, 10, 13].includes(code);
+      }))
+  )
+    fail('Preparation note must be 500 characters or fewer.', 422);
   if (!ObjectId.isValid(String(body.order_id))) fail('Choose an order.');
   const sale = await req.db.collection('sales').findOne({
     _id: new ObjectId(String(body.order_id)),
@@ -36,8 +46,8 @@ async function authorize(req, { preview = false } = {}) {
       (Number(body.extra_discount) !== 0 &&
         body.extra_discount_type !== currentDiscount.extra_discount_type));
   const reason = String(body.change_reason || body.discount_description || '').trim();
-  if (!preview && (reduced || discount) && (reason.length < 3 || reason.length > 200))
-    fail('Enter a reason for this change.', 422);
+  // Reasons are optional; actor/change auditing and permission checks still apply.
+  if (reason.length > 200) fail('Reason must be 200 characters or fewer.', 422);
   const actions = [...(reduced ? ['void_sale'] : []), ...(discount ? ['discount_apply'] : [])];
   const approved = [];
   for (const action of preview ? [] : actions) {

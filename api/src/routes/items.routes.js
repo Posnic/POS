@@ -131,6 +131,7 @@ router.get('/getOnlineItemsAjaxList', bindController(itemsController.getOnlineIt
 router.get('/onlineSalesItemsAjaxLists', bindController(itemsController.onlineSalesItemsAjaxLists));
 
 // Legacy instant item creation endpoint
+router.get('/instantItemTax', bindController(itemsController.instantItemTax));
 router.post('/instanceItemInsert', bindController(itemsController.instanceItemInsert));
 
 // Legacy instant delete endpoint - support both POST and DELETE verbs

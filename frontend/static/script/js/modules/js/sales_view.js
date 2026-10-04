@@ -1,4 +1,36 @@
 PosnicPro.sales.view = {
+    renderOrderEvidence: function (data) {
+        $('#sale-origin-details').remove();
+        var origin = data.origin || data.client;
+        var photos = [data.paper_order].concat(Array.isArray(data.order_photos) ? data.order_photos : []).filter(function(photo){return photo && /^[a-f0-9-]{36}$/i.test(photo.id || '');});
+        photos = photos.filter(function(photo,index){return photos.findIndex(function(other){return other.id===photo.id;})===index;});
+        if (origin || photos.length) {
+            var evidence = $('<section id="sale-origin-details" class="border rounded p-3 my-3 d-print-none"></section>');
+            evidence.append($('<h6></h6>').text(PosnicPro.i18n.t('lang_order_reference', 'Order reference')));
+            if (origin) {
+                [['Ordered by',origin.actor_name || origin.staff_name || data.created_by],['Source',origin.source || origin.app],['Time',origin.at],['IP address',origin.ip],['Device',origin.device_model || origin.device_id],['Browser / app',origin.user_agent]].forEach(function(pair){
+                    if(pair[1]) evidence.append($('<p class="mb-1"></p>').text(pair[0]+': '+pair[1]));
+                });
+            }
+            photos.forEach(function(reference,index){
+                var photoArea=$('<div class="sale-photo-reference"></div>');
+                var photoButton=$('<button type="button" class="btn btn-outline-primary mt-2"><lang class="lang_view_original_order_photo">View original order photo</lang></button>');
+                if(photos.length > 1) photoButton.append(document.createTextNode(' '+(index+1)));
+                photoButton.on('click',function(){
+                    photoButton.prop('disabled',true);
+                    PosnicPro.get({url:'captain/v1/paper-orders/photos/'+encodeURIComponent(reference.id)},function(photo){
+                        photoButton.prop('disabled',false);
+                        if(photo && /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/]+=*$/.test(photo.data) && photo.data.length <= 7100000) {
+                            photoArea.find('img').remove();
+                            photoArea.append($('<img alt="Original handwritten order" class="d-block mt-2">').attr('src',photo.data).css({maxWidth:'100%',maxHeight:'700px',objectFit:'contain'}));
+                        } else photoButton.text(PosnicPro.i18n.t('lang_photo_unavailable_retry', 'Photo unavailable. Retry'));
+                    },function(){photoButton.prop('disabled',false).text(PosnicPro.i18n.t('lang_photo_unavailable_retry', 'Photo unavailable. Retry'));});
+                });
+                photoArea.append(photoButton);evidence.append(photoArea);
+            });
+            $('#sales_view .modal-body').first().prepend(evidence);
+        }
+    },
     viewSale: function (id) {
         var loader = $(".loader-view-sale");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -54,6 +86,7 @@ PosnicPro.sales.view = {
         $('#sales_view').modal('show');
         $('.sale_view_hide').hide();
         var data = response.data;
+        PosnicPro.sales.view.renderOrderEvidence(data);
         (data.partial_check === 'true' && data.sale_process !== 'PartialReturn' && data.sale_process !== 'FullReturn') ? $('#sale_view_Transaction_show').show() : $('#sale_view_Transaction_show').hide();
         $.each(data, function (key, val) {
             if (val === '' || val === null) {

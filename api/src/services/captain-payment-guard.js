@@ -40,7 +40,7 @@ async function beginEdit(db, sale) {
   const branch = await db
     .collection('branches')
     .findOne({ _id: sale.branch_id, license: sale.license });
-  if (!branch?.captain_payments?.enabled) return null;
+  if (!require('../utils/captain-payment-enabled')(branch)) return null;
   const token = new ObjectId().toHexString();
   const result = await db.collection('sales').updateOne(
     {

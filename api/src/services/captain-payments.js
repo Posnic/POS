@@ -12,11 +12,11 @@ const METHODS = ['Cash', 'Card', 'Upi'];
 function settings(branch) {
   const saved = branch.captain_payments || {};
   return {
-    enabled:
-      saved.enabled === true && ![false, 0, '0', 'false'].includes(branch.module_captain_enable),
+    enabled: require('../utils/captain-payment-enabled')(branch),
     methods: METHODS.filter((method) => (saved.methods || METHODS).includes(method)),
     printReceipt: branch.printall === true,
     upiPayee: branchUpi.payee(branch),
+    takeawayPayments: true,
   };
 }
 function validateSettings(value) {
@@ -46,8 +46,18 @@ async function scope(req, requireEnabled = true) {
   return c;
 }
 function tableOf(req) {
+  const saleId = req.body?.saleId || req.query?.saleId;
+  if (saleId) {
+    if (!/^[a-f0-9]{24}$/i.test(String(saleId))) fail('Open order not found.', 404);
+    return 'takeaway:' + String(saleId).toLowerCase();
+  }
   const table = String(req.body?.table_number || req.query?.table_number || '').trim();
-  if (!table || table.length > 40 || Array.from(table).some((c) => c.charCodeAt(0) < 32))
+  if (
+    !table ||
+    table.startsWith('takeaway:') ||
+    table.length > 40 ||
+    Array.from(table).some((c) => c.charCodeAt(0) < 32)
+  )
     fail('Choose a table.');
   return table;
 }
@@ -71,11 +81,14 @@ function wholeGuest(snapshot) {
   };
 }
 async function fresh(db, c, table, input) {
+  const takeawayId = table.startsWith('takeaway:') ? table.slice(9) : null;
   const sales = await db
     .collection('sales')
     .find({
       ...baseFilter(c),
-      table_number: table,
+      ...(takeawayId
+        ? { _id: oid(takeawayId), dine_type: /^take[\s_-]*away$/i }
+        : { table_number: table }),
       sale_process: 'KOT',
       payment_status: 'Unpaid',
       floor_closed_at: { $exists: false },
@@ -90,7 +103,10 @@ async function fresh(db, c, table, input) {
     )
   )
     fail('Refresh the table payment details.', 409);
-  const snapshot = snapshotFrom(sales, c.branch, table);
+  const displayTable = takeawayId
+    ? 'Take Away ' + (sales[0].sales_id || sales[0].token_id || takeawayId)
+    : table;
+  const snapshot = snapshotFrom(sales, c.branch, displayTable);
   const batch = await db.collection('printjobs').findOne(
     {
       branch_id: c.branchId,
@@ -112,14 +128,15 @@ async function fresh(db, c, table, input) {
     sales.some((sale) => !snapshot.lines.some((line) => line.id.startsWith(String(sale._id) + ':')))
   )
     fail('Ask the cashier to settle this bill.', 422);
-  return { sales, snapshot, guests };
+  if (takeawayId && !input.plan && !batch) guests[0].name = displayTable;
+  return { sales, snapshot, guests, displayTable };
 }
 function view(plan, options) {
   const paidGuests = new Set((plan.payments || []).flatMap((p) => p.guests));
   const paidMinor = (plan.payments || []).reduce((sum, p) => sum + p.amountMinor, 0);
   return {
     id: plan._id,
-    table: plan.table,
+    table: plan.displayTable || plan.table,
     ...Money.snapshot(plan.snapshot),
     totalMinor: plan.snapshot.totalMinor,
     paidMinor,
@@ -140,8 +157,10 @@ function view(plan, options) {
       at: p.at,
       reference: p.reference,
       ...(p.upi ? { upi: p.upi } : {}),
+      ...(p.tenders ? { tenders: p.tenders.map(({ allocations, ...tender }) => tender) } : {}),
     })),
     ...options,
+    mixedPayment: true,
   };
 }
 // Every effect is derived from the durable payment journal. Replaying repairs
@@ -158,8 +177,12 @@ async function reconcile(db, c, plan) {
       const amount = payment.allocations[String(sale._id)] || 0;
       if (!amount) continue;
       paid += amount;
-      multi[payment.method] =
-        Math.round(((multi[payment.method] || 0) + amount / factor) * factor) / factor;
+      for (const tender of payment.tenders || [payment]) {
+        const tenderAmount = tender.allocations[String(sale._id)] || 0;
+        if (!tenderAmount) continue;
+        multi[tender.method] =
+          Math.round(((multi[tender.method] || 0) + tenderAmount / factor) * factor) / factor;
+      }
     }
     const total = plan.saleTotals[String(sale._id)];
     const due = total - paid;
@@ -199,6 +222,17 @@ async function reconcile(db, c, plan) {
               method: p.method,
               amount: p.allocations[String(sale._id)] / factor,
               reference: p.reference,
+              ...(p.tenders
+                ? {
+                    tenders: p.tenders
+                      .filter((t) => t.allocations[String(sale._id)] > 0)
+                      .map((t) => ({
+                        method: t.method,
+                        amount: t.allocations[String(sale._id)] / factor,
+                        reference: t.reference,
+                      })),
+                  }
+                : {}),
               ...(p.upi ? { upi: p.upi } : {}),
               staffId: p.staffId,
               staffName: p.staffName,
@@ -288,6 +322,13 @@ async function reconcile(db, c, plan) {
         tax: payload.taxes.reduce((sum, row) => sum + row.amount, 0),
         items: [],
         payment_mode: payment.method,
+        ...(payment.tenders
+          ? {
+              multi_payment: Object.fromEntries(
+                payment.tenders.map((tender) => [tender.method, tender.amountMinor / factor])
+              ),
+            }
+          : {}),
         paid_amount: payment.amountMinor / factor,
         received_amount: payment.receivedMinor / factor,
         change_amount: payment.changeMinor / factor,
@@ -308,7 +349,7 @@ async function reconcile(db, c, plan) {
           kind: 'bill',
           ticketKey: 'captain-payment:' + payment.id + ':' + copy,
           payload,
-          label: 'Payment · ' + plan.table,
+          label: 'Payment · ' + (plan.displayTable || plan.table),
         }).catch(() => ({ status: false }));
         if (!result.status) receiptPending = true;
       }
@@ -330,6 +371,9 @@ async function reconcile(db, c, plan) {
       },
     }
   );
+  for (const sale of plan.sales) {
+    await require('./takeaway-completion').recover(db, c, sale._id);
+  }
 }
 async function prepare(req) {
   const c = await scope(req),
@@ -360,6 +404,7 @@ async function prepare(req) {
     _id: planId,
     ...baseFilter(c),
     table,
+    displayTable: data.displayTable,
     sales: data.sales,
     snapshot: data.snapshot,
     guests: data.guests,
@@ -465,6 +510,7 @@ async function record(req) {
     receivedMinor: input.receivedMinor,
     reference: input.reference || '',
     ...(input.upi ? { upi: input.upi } : {}),
+    ...(input.tenders ? { tenders: input.tenders } : {}),
   });
   const previous = (plan.payments || []).find((p) => p.id === input.request_id);
   if (previous) {
@@ -474,7 +520,7 @@ async function record(req) {
   }
   if (!Number.isSafeInteger(input.version) || input.version !== plan.version)
     fail('Another payment changed this bill. Refresh before collecting more.', 409);
-  if (!c.options.enabled || !c.options.methods.includes(input.method))
+  if (!c.options.enabled || (input.method !== 'Mixed' && !c.options.methods.includes(input.method)))
     fail('This payment method is not enabled in Captain.', 403);
   const paidGuests = new Set(plan.payments.flatMap((p) => p.guests));
   const indexes =
@@ -489,11 +535,21 @@ async function record(req) {
   const amount = indexes.reduce((sum, i) => sum + plan.guests[i].totalMinor, 0);
   if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor !== amount || amount <= 0)
     fail('The amount changed. Review the bill again.', 409);
+  const tenders =
+    input.method === 'Mixed'
+      ? require('./captain-tenders').validate(input.tenders, amount, c.options.methods)
+      : null;
+  if (input.tenders && !tenders) fail('Invalid payment methods.');
   if (
     !Number.isSafeInteger(input.receivedMinor) ||
     input.receivedMinor < amount ||
     input.receivedMinor > 1e12 ||
-    (input.method !== 'Cash' && input.receivedMinor !== amount)
+    (!['Cash', 'Mixed'].includes(input.method) && input.receivedMinor !== amount)
+  )
+    fail('Enter the amount received.');
+  if (
+    tenders &&
+    input.receivedMinor !== tenders.reduce((sum, tender) => sum + tender.receivedMinor, 0)
   )
     fail('Enter the amount received.');
   if (typeof (input.reference || '') !== 'string' || (input.reference || '').length > 100)
@@ -540,6 +596,7 @@ async function record(req) {
     reference: (input.reference || '').trim(),
     ...(input.upi ? { upi: { ...c.options.upiPayee, verified: true } } : {}),
     allocations,
+    ...(tenders ? { tenders: require('./captain-tenders').allocate(tenders, allocations) } : {}),
     at: new Date(),
     staffId: String(req.user._id || req.user.id),
     staffName: String(req.user.name || req.user.username || req.user.email || ''),

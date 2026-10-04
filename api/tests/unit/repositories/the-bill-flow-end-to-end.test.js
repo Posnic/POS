@@ -59,6 +59,47 @@ const openTicket = (branch, table = 'T1') =>
     sales_total: 440,
   });
 
+test('Take Away print queues only the selected order, with a numbered label and no retry duplicate', async () => {
+  const branch = new mongoose.Types.ObjectId();
+  const selected = await openTicket(branch, ''),
+    other = await openTicket(branch, '');
+  await Sale.collection.updateMany(
+    { _id: { $in: [selected._id, other._id] } },
+    {
+      $set: { dine_type: 'Take Away', sales_id: '1048' },
+    }
+  );
+  const options = { saleId: String(selected._id), copies: 1 };
+  expect((await repo.requestBillPrintModel(String(branch), '', 'ravi', options)).status).toBe(true);
+  expect((await repo.requestBillPrintModel(String(branch), '', 'ravi', options)).status).toBe(true);
+  const jobs = await PrintJob.find({ kind: 'bill' }).lean();
+  expect(jobs).toHaveLength(1);
+  expect(jobs[0].label).toBe('Take Away 1048');
+  expect(String(jobs[0].sale_id)).toBe(String(selected._id));
+  expect((await Sale.findById(other._id).lean()).bill_requested_at).toBeFalsy();
+});
+
+test('Take Away print rejects invalid identity and cannot select dine-in or another branch', async () => {
+  const branch = new mongoose.Types.ObjectId(),
+    sale = await openTicket(branch);
+  expect(
+    (await repo.requestBillPrintModel(String(branch), 'T1', '', { saleId: 'bad' })).status
+  ).toBe(false);
+  expect(
+    (await repo.requestBillPrintModel(String(branch), 'T1', '', { saleId: String(sale._id) }))
+      .status
+  ).toBe(false);
+  await Sale.collection.updateOne({ _id: sale._id }, { $set: { dine_type: 'Take Away' } });
+  expect(
+    (
+      await repo.requestBillPrintModel(String(new mongoose.Types.ObjectId()), '', '', {
+        saleId: String(sale._id),
+      })
+    ).status
+  ).toBe(false);
+  expect(await PrintJob.countDocuments({})).toBe(0);
+});
+
 describe('a bill asked for from the floor', () => {
   test('is found on a shop that has a licence set', async () => {
     /*

@@ -103,6 +103,12 @@ router.post(
   })
 );
 router.use(protect);
+router.get('/photo-orders/options', wrap(require('../services/paper-order').mobileOptions));
+router.post(
+  '/photo-orders/recognize',
+  rateLimit({ windowMs: 60000, limit: 6, standardHeaders: true, legacyHeaders: false }),
+  wrap(require('../services/paper-order').mobileRecognize)
+);
 router.get('/bootstrap', wrap(mobile.bootstrap));
 router.get('/catalogue/:version/:page', wrap(mobile.cataloguePage));
 router.post('/sales', wrap(mobile.ingest));
@@ -217,6 +223,7 @@ router.post(
     )
       mobile.fail('Choose an offline period of 1 to 72 hours and a valid tax rate.');
     const config = {
+      photoOrders: s.photoOrders === undefined ? c.config.photoOrders : s.photoOrders === true,
       historyDays,
       historyMaxReceipts,
       offlineHours: s.offlineHours,

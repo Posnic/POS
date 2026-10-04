@@ -37,6 +37,14 @@ test('desktop quick Add retains existing preparation and inclusive selling price
   x.close();
 });
 
+test('quick Add never borrows the price of an unrelated search result', () => {
+  const x = setup([saved]);
+  x.w.PosnicPro.kot.addProductToKOT('order', 'not-found');
+  assert.equal(x.requests.length, 0);
+  assert.equal(x.$('.loadingSpinner').length, 0);
+  x.close();
+});
+
 test('desktop Modify sends separate saved lines and preserves fractional quantities', () => {
   const second = { ...saved, line_id: 'captain-2', seat: 3, item_description: 'With ice' };
   const x = setup([saved, second]);
@@ -60,6 +68,20 @@ test('server compatibility does not guess among duplicate preparations or duplic
   const lines = require('../api/src/utils/order-line');
   assert.throws(() => lines.reconcile([{ product_id: 'water' }], [saved, { ...saved, line_id: 'other' }]), /ambiguous_order_lines/);
   assert.throws(() => lines.reconcile([{ product_id: 'water' }, { product_id: 'water' }], [saved]), /ambiguous_order_lines/);
+});
+
+test('removing one preparation does not remove another row for the same product', () => {
+  const second = { ...saved, line_id: 'captain-2', seat: 3 };
+  const x = setup([saved, second]);
+  const kot = x.w.PosnicPro.kot;
+  x.$('body').append(kot.buildTableDetailsPanel('4', [{ _id: 'order', items: [saved, second] }], 1));
+  x.$.expr.pseudos.visible = () => true;
+  kot.updateTotalDisplay = () => {};
+  const control = x.$('[data-line-id="captain-1"] button').last()[0];
+  kot.deleteItem('order', 'water', control);
+  assert.equal(x.$('[data-line-id="captain-1"]').length, 0);
+  assert.equal(x.$('[data-line-id="captain-2"]').length, 1);
+  x.close();
 });
 
 test('Add Item saves the entered quantity and preserves existing preparation details', () => {

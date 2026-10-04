@@ -58,9 +58,10 @@ test('incoming transfer retains origin, preparation notes and original order tim
     note: 'Less salt',
     ordered_at: new Date(early).toISOString(),
   });
-  expect(tickets(sale)[0]).toMatchObject({
+  expect(tickets(sale)).toEqual([]); // Fully ready food has left the preparation screen.
+  expect(require('../../../src/services/kitchen-board').project(sale)[0]).toMatchObject({
     placedAt: new Date(early).toISOString(),
-    items: [expect.objectContaining({ qty: 1, ready: 2, collected: 1 })],
+    items: [expect.objectContaining({ qty: 1, ready: 2, collected: 1, note: 'Less salt' })],
   });
   expect(cancellations(sale, Date.parse(late))).toEqual([]);
   const next = plan(sale, { currencyCode: 'INR' }, [

@@ -30,6 +30,7 @@ function ticket(sale) {
     dine_type: sale.dine_type,
     sale_process: sale.sale_process,
     sales_description: sale.sales_description,
+    preparation_note: sale.preparation_note,
     channel: sale.channel,
     items: pickItems(sale.items),
     print_jobs: (sale.print_jobs || []).map((job) => ({
@@ -38,6 +39,8 @@ function ticket(sale) {
       timestamp: job.timestamp,
       change_index: job.change_index,
       items: pickItems(job.items),
+      preparation_note: job.preparation_note,
+      note_only: job.note_only,
     })),
   };
 }

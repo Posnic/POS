@@ -1,5 +1,6 @@
 const pricingAuthority = require('../services/pricing-authority');
 const itemText = require('../utils/item-localization');
+const gtin = require('../utils/gtin');
 const { searchPattern } = require('../utils/safe-search');
 const tradingDay = require('../utils/trading-day');
 // src/repositories/item.repository.js
@@ -1856,7 +1857,7 @@ class ItemRepository extends BaseModel {
             ? new ObjectId(data.category_id)
             : '',
         discount_amount: parseFloat(data.discount_amount) || 0,
-        discount_percentage: parseInt(data.discount_percentage, 10) || 0,
+        discount_percentage: parseFloat(data.discount_percentage) || 0,
         hsncode: (data.hsn_code || '').trim(),
         hsndescription: (data.hsn_description || '').trim(),
         tax_method: (data.tax_method || '').trim(),
@@ -1964,7 +1965,6 @@ class ItemRepository extends BaseModel {
           String(data.nutrition_source || '').trim() === 'estimated' ? 'estimated' : '',
         food_tags: dishFacts.cleanTags(data.food_tags, dishFacts.FOOD_TAGS),
         menu_marks: dishFacts.cleanTags(data.menu_marks, dishFacts.MENU_MARKS),
-        isAvailable: Boolean(data.ecommerce),
         negative_stock: Boolean(data.negative_stock),
         item_weight_machine_based: Boolean(data.item_weight_machine_based),
         items_mfg_date: data.items_mfg_date || null,
@@ -1994,6 +1994,13 @@ class ItemRepository extends BaseModel {
       if (data.tile_color !== undefined) {
         const tileColor = String(data.tile_color || '').trim();
         updateData.tile_color = /^#[0-9a-fA-F]{6}$/.test(tileColor) ? tileColor : '';
+      }
+
+      // Omitted identifiers preserve existing values; explicit input is validated.
+      if (Object.prototype.hasOwnProperty.call(data, 'gtin')) {
+        const parsed = gtin.parse(data.gtin);
+        updateData.gtin = parsed ? parsed.gtin : '';
+        updateData.gtin14 = parsed ? parsed.gtin14 : '';
       }
 
       // Quick code (owner ask): digits only, up to 6, or empty clears.
@@ -2108,6 +2115,9 @@ class ItemRepository extends BaseModel {
       }
 
       if (!id) {
+        // Kiosk visibility is independent of dish availability. Existing items
+        // retain their availability because edits omit this field entirely.
+        updateData.isAvailable = true;
         // Insert new item
         const insertData = {
           ...updateData,
@@ -3658,7 +3668,7 @@ class ItemRepository extends BaseModel {
 
       const result = await collection.updateOne(
         { _id: new ObjectId(id) },
-        { $set: { isAvailable: status, ecommerce: status } }
+        { $set: { ecommerce: status, updated_date: new Date() } }
       );
 
       if (result.modifiedCount > 0) {
@@ -4486,7 +4496,7 @@ class ItemRepository extends BaseModel {
            * of day. The page says so, with the periods it IS served in.
            *
            * `isAvailable` used to be read here too, and it is not what its
-           * name says. It is the legacy per-item "show on kiosk" tick, written
+           * name says. It was the legacy per-item "show on kiosk" tick, written
            * as Boolean(ecommerce) on every save - so every dish saved through
            * the item form without that box ticked carried isAvailable: false,
            * and a real shop's whole menu came out greyed "Not available

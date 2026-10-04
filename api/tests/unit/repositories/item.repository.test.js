@@ -187,6 +187,39 @@ describe('ItemRepository', () => {
       available_quantity: '100',
     };
 
+    test.each([false, true])(
+      'new untracked item is available with ecommerce=%s',
+      async (ecommerce) => {
+        const result = await repo.upsertItem(
+          { ...data, track_inventory: false, available_quantity: 0, ecommerce },
+          '',
+          ctx
+        );
+        expect(result.status).toBe(true);
+        expect(col.insertOne.mock.calls[0][0]).toMatchObject({
+          isAvailable: true,
+          ecommerce,
+          track_inventory: false,
+          available_quantity: 0,
+        });
+      }
+    );
+
+    test.each([false, true])(
+      'editing kiosk visibility preserves existing availability=%s',
+      async (isAvailable) => {
+        col.findOne
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce({ name: 'Pen', isAvailable, track_inventory: false });
+        const result = await repo.upsertItem({ ...data, ecommerce: !isAvailable }, FAKE_ID, ctx);
+        expect(result.status).toBe(true);
+        const writes = col.updateOne.mock.calls.map((call) => call[1].$set).filter(Boolean);
+        expect(writes.length).toBeGreaterThan(0);
+        writes.forEach((write) => expect(write).not.toHaveProperty('isAvailable'));
+      }
+    );
+
     test('translations are stored on the existing item without new stock records', async () => {
       col.findOne.mockResolvedValueOnce(null);
       const translated = {
@@ -662,6 +695,19 @@ describe('ItemRepository', () => {
   });
 
   describe('updateKioskStatus', () => {
+    test.each([false, true])(
+      'kiosk status %s does not overwrite dish availability',
+      async (status) => {
+        col.updateOne.mockResolvedValueOnce({ modifiedCount: 1 });
+        const result = await repo.updateKioskStatus(FAKE_ID, status);
+        expect(result.status).toBe(true);
+        expect(col.updateOne.mock.calls[0][1].$set).toEqual({
+          ecommerce: status,
+          updated_date: expect.any(Date),
+        });
+      }
+    );
+
     test('updates status', async () => {
       col.findOneAndUpdate = jest.fn().mockResolvedValue({ value: { _id: FAKE_ID } });
       const r = await repo.updateKioskStatus(FAKE_ID, true);

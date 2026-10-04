@@ -42,7 +42,9 @@ function mergeNonMinCssFile(index, page, url) {
         taskCount--;
         return;
     }
-    sass.render({file: url, outputStyle: 'compressed'}, function(error, result) {
+    // Each result is a fragment of one bundle. Sass's UTF-8 BOM would become
+    // part of the first selector when placed in the middle of that bundle.
+    sass.render({file: url, outputStyle: 'compressed', charset: false}, function(error, result) {
         if (error) {
             console.log(error)
         }
@@ -72,7 +74,7 @@ function buildAllCss(cb) {
         if (taskCount === 0) {
             for (let page in css) {
                 if (css.hasOwnProperty(page)) {
-                    let content = css[page].join("\n");
+                    let content = css[page].map(fragment => String(fragment).replace(/^\uFEFF/, '')).join("\n");
                     /*
                      * Written once. This looped over the languages and wrote
                      * the SAME path each time - the filename never carried the

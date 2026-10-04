@@ -79,6 +79,8 @@
     "bulk_stock_updates": "a job's progress on the machine running it",
     "branch": "a legacy alias seen in old code paths; the real collection is branches, which syncs",
     "login_check": "sign-in attempts and lockouts on this machine; another machine has its own",
+    "paper_order_photos": "Recognition drafts and retry locks stay on the server that called AWS. Completed photo references travel with sales, which syncs.",
+    "paper_order_usage": "Atomic monthly scan counters belong to the server owning the AWS credentials; last-writer-wins replication would lose increments.",
     "shadow_login_tokens": "support sign-in tokens minted by the cloud for one use on one machine",
     "user_sessions": "browser and app sessions belong to the machine that opened them",
     "ai_usage": "The AI spend meter, counted where the call was made: the cloud meters the ordering page and the till meters its own screens. Rows are $inc counters, which last-writer-wins would clobber; the settings screen reads the side it is opened on.",
@@ -107,7 +109,9 @@
     "mobile_pair_codes": "Mobile device grants and durable ingestion journal belong to the issuing server. Moving them independently would permit cross-server replay; completed sales use the normal sales sync.",
     "captain_payment_plans": "Durable table payment journal belongs to the server receiving payment. Amounts and staff audit entries project onto sales and follow normal sales sync; retrying a payment must return to its issuing server.",
     "kitchen_devices": "Kitchen screen credentials belong to the issuing server and must not authorize devices on other installations.",
-    "kitchen_device_codes": "Single-use kitchen pairing codes expire on their issuing server; copying them would enable cross-server replay."
+    "kitchen_device_codes": "Single-use kitchen pairing codes expire on their issuing server; copying them would enable cross-server replay.",
+    "captain_voice_archive": "Recording bytes and storage references belong to the server that archived them. Cloud storage uses the configured provider directly; generic sync must not copy private audio or inaccessible local paths.",
+    "takeaway_numbers": "Atomic number reservations and request bindings belong to the allocating server. Last-writer-wins replication could reuse numbers or bind one reservation to different orders; completed sales carry their assigned display number through sales sync."
   },
   "undecided": {
     "_note": "Shop data that today stays where it was written. Each needs a decision and, if synced, a check that rows carry branch_id and license and that deletes leave a tombstone. Until decided, a till and the cloud can disagree on these exactly as they did on tables.",

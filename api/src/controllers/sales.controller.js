@@ -6986,11 +6986,27 @@ class SalesController extends BaseController {
           : {}),
       };
 
+      let paperOrder = null;
+      if (req.body?.paper_order_id) {
+        const { context, fail, allowed } = require('../utils/branch-access');
+        if (!req.user || !allowed(req.user, 'sales')) fail('Order access is required.', 403);
+        const c = await context(req);
+        if (String(req.body.branch) !== String(c.branchId))
+          fail('Choose your current branch.', 403);
+        paperOrder = await require('../services/paper-order').reference(
+          req.db,
+          c,
+          req.body.paper_order_id,
+          req.body.idempotencyKey,
+          req.user?._id
+        );
+      }
       const response = await salesService.createOnlineOrder(
         { ...req.body, client },
         {
           SaleModel,
           staffOrder: Boolean(req.user),
+          paperOrder,
         }
       );
 
@@ -7365,6 +7381,7 @@ class SalesController extends BaseController {
       const copies = req.body.copies || req.body.bill_copies;
       const response = await salesService.requestBillPrint(req.body.branchId, table, askedBy, {
         copies,
+        saleId: req.body.saleId,
       });
 
       if (response.status !== true) {
@@ -7806,7 +7823,7 @@ class SalesController extends BaseController {
         newTableNo,
         dineType,
         personCount,
-        { SaleModel, newTableId, seenAt, editPolicy }
+        { SaleModel, newTableId, seenAt, editPolicy, preparationNote: req.body.preparation_note }
       );
 
       if (response.status === true) {

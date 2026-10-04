@@ -97,6 +97,10 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          ORDER_PHOTO_BUCKET: ${{ secrets.ORDER_PHOTO_BUCKET }}
+          ORDER_PHOTO_AWS_ACCESS_KEY_ID: ${{ secrets.ORDER_PHOTO_AWS_ACCESS_KEY_ID }}
+          ORDER_PHOTO_AWS_SECRET_ACCESS_KEY: ${{ secrets.ORDER_PHOTO_AWS_SECRET_ACCESS_KEY }}
+          ORDER_PHOTO_MONTHLY_LIMIT: ${{ secrets.ORDER_PHOTO_MONTHLY_LIMIT }}
         run: |
           if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ] || [ -z "$AWS_S3_BUCKET" ]; then
             echo "::warning::S3 secrets not set in this repo; skipping env write - uploads will keep falling back to local disk"
@@ -112,6 +116,12 @@ jobs:
             # BREVO_API_KEY secret is set, and harmless while empty.
             [ -n "$BREVO_API_KEY" ] && echo "BREVO_API_KEY=$BREVO_API_KEY"
             [ -n "$EMAIL_FROM" ] && echo "EMAIL_FROM=$EMAIL_FROM"
+            if [ -n "$ORDER_PHOTO_BUCKET" ] && [ -n "$ORDER_PHOTO_AWS_ACCESS_KEY_ID" ] && [ -n "$ORDER_PHOTO_AWS_SECRET_ACCESS_KEY" ]; then
+              echo "ORDER_PHOTO_BUCKET=$ORDER_PHOTO_BUCKET"
+              echo "ORDER_PHOTO_AWS_ACCESS_KEY_ID=$ORDER_PHOTO_AWS_ACCESS_KEY_ID"
+              echo "ORDER_PHOTO_AWS_SECRET_ACCESS_KEY=$ORDER_PHOTO_AWS_SECRET_ACCESS_KEY"
+              echo "ORDER_PHOTO_MONTHLY_LIMIT=${ORDER_PHOTO_MONTHLY_LIMIT:-3000}"
+            fi
           # MERGED INTO THE EXISTING .env, NEVER WRITTEN OVER IT.
           #
           # This was `cat > ~/apps/tenants/app/api/.env`, which replaces the
