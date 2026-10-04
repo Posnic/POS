@@ -53,7 +53,7 @@
         var kind = restaurant ? 'dish' : businessContext === 'service' ? 'service' : 'product';
         document.querySelector('#items_v2 input[name="iv2-kind"][value="' + kind + '"]').checked = true;
         document.querySelector('#items_v2 input[name="iv2-stock"][value="' + (kind === 'product' ? 'tracked' : 'untracked') + '"]').checked = true;
-        text('iv2-product-label', restaurant ? 'Packaged product' : 'Retail product');
+        text('iv2-product-label', restaurant ? PosnicPro.i18n.t('lang_packaged_product', 'Packaged product') : PosnicPro.i18n.t('lang_retail_product', 'Retail product'));
     }
     var bound = false, taxReady = false, taxLoading = false, busy = false, saved = false, attempted = false;
     function value(id) { return document.getElementById(id).value; }
@@ -79,12 +79,12 @@
         show('iv2-quantity-row', tracked);
         show('iv2-zero-stock', (named || attempted) && tracked && Number(f.quantity) === 0);
         document.querySelector('#items_v2 input[name="iv2-stock"][value="tracked"]').disabled = f.kind === 'service' || busy || saved;
-        text('iv2-stock-note', tracked ? (f.zeroStock === 'negative' ? 'For this item only: sales can take its stock below zero.' : 'Stock tracking applies to this item only.') : 'This item can be sold without an opening stock quantity.');
+        text('iv2-stock-note', tracked ? (f.zeroStock === 'negative' ? PosnicPro.i18n.t('lang_for_this_item_only_sales_can_take_its_stoc', 'For this item only: sales can take its stock below zero.') : PosnicPro.i18n.t('lang_stock_tracking_applies_to_this_item_only', 'Stock tracking applies to this item only.')) : 'This item can be sold without an opening stock quantity.');
         text('iv2-preview-name', f.name.trim() || 'Your next item');
         text('iv2-preview-price', Number.isFinite(total) ? money(total) : '—');
         text('iv2-preview-tax', taxReady ? (Number(f.taxRate) ? 'Customer pays · including tax' : 'Customer pays · no tax selected') : 'Loading tax settings');
         text('iv2-price-hint', taxReady && Number.isFinite(total) ? 'Customer pays ' + money(total) + (Number(f.taxRate) ? ', including tax.' : '.') : 'Checking your tax settings…');
-        var title = !named ? 'Let’s get started' : a.error ? 'A little more to decide' : a.later ? 'Saved for later, not ready to sell' : 'Ready to sell';
+        var title = !named ? 'Let’s get started' : a.error ? 'A little more to decide' : a.later ? PosnicPro.i18n.t('lang_saved_for_later_not_ready_to_sell', 'Saved for later, not ready to sell') : PosnicPro.i18n.t('lang_ready_to_sell', 'Ready to sell');
         var note = !named ? 'Give your item a name to begin.' : a.error ? a.error : a.later ? 'Add stock before looking for this item in sale search.' : !price ? 'This item will sell at zero. You can edit the price later.' : tracked ? 'Opening stock: ' + a.quantity + '. Your stock choice will be saved.' : 'No stock count needed. Save it and start selling.';
         var panel = document.getElementById('iv2-readiness');
         panel.dataset.state = a.error || a.later ? 'attention' : 'ready';
@@ -147,7 +147,7 @@
             if (!r || r.type !== 'success') { fail(r && r.message || 'Couldn’t save. Your entries are still here.'); return; }
             saved = true; document.getElementById('iv2-fields').disabled = true; document.getElementById('iv2-save').disabled = true; text('iv2-save', 'Saved');
             var banner = document.getElementById('iv2-success'); banner.replaceChildren();
-            var message = document.createElement('strong'); message.textContent = f.name.trim() + ' saved. ' + (a.later ? 'Add stock before selling.' : !a.price ? 'Selling price is zero.' : 'Ready to sell.'); banner.appendChild(message);
+            var message = document.createElement('strong'); message.textContent = f.name.trim() + ' saved. ' + (a.later ? 'Add stock before selling.' : !a.price ? PosnicPro.i18n.t('lang_selling_price_is_zero', 'Selling price is zero.') : PosnicPro.i18n.t('lang_ready_to_sell_2', 'Ready to sell.')); banner.appendChild(message);
             var another = document.createElement('button'); another.type = 'button'; another.textContent = 'Create another'; another.onclick = reset; banner.appendChild(another);
             var id = r.data && (r.data.id || r.data._id);
             if (id && /^[a-zA-Z0-9_-]+$/.test(String(id))) { var link = document.createElement('a'); link.href = '#/items/' + encodeURIComponent(id) + '/edit'; link.textContent = 'Edit full details'; banner.appendChild(link); }
@@ -177,7 +177,8 @@
             render();
         });
         form.addEventListener('click', function (event) {
-            var action = event.target.dataset.iv2Action;
+            var button = event.target.closest('[data-iv2-action]');
+            var action = button && button.dataset.iv2Action;
             if (action === 'retry') loadTax();
             if (action === 'add-stock') document.getElementById('iv2-quantity').focus();
         });

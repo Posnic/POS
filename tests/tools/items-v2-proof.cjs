@@ -5,7 +5,7 @@ const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const output = path.join(root, 'output/item-create-v2'); fs.mkdirSync(output, { recursive: true });
 const stub = `window.savedRequests=[];window.PosnicPro={
  local:{get:k=>({currencySign:'₹',tax_type:'inclusive',default_tax_id:'gst5'})[k]},
- HideSideBarModal(){},aclLoaded:()=>true,checkAccess:()=>true,
+ i18n:{t:(_key,fallback)=>fallback},HideSideBarModal(){},aclLoaded:()=>true,checkAccess:()=>true,
  get(p,ok,fail){if(p.url==='settings/group/channels')return ok({data:{values:{menu_dayparts:[{id:'lunch',name:'Lunch'}]}}});if(p.url==='setting/modifierGroups')return ok({data:[{id:'spice',name:'Spice level'}]});if(p.url.includes('Tax')){if(window.failTax)return fail();return ok({data:[{tax_id:'gst5',tax_name:'GST 5%',tax_value:5}]});}ok({suggestions:[{id:'food',name:'Food'}]});},
  request(p,ok,fail){window.savedRequests.push(JSON.parse(p.data));setTimeout(()=>{if(window.failSave)return fail({responseText:JSON.stringify({message:'Connection unavailable. Your entries are still here.'})});ok({type:'success',data:{id:'sample-item'}});},80);}
 };`;
