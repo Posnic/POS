@@ -63,6 +63,32 @@ const pay = (plan, overrides = {}) =>
     ...overrides,
   });
 
+test('unset collection defaults to all methods and reserves edits against payment preparation', async () => {
+  await db.collection('branches').updateOne({ _id: branch }, { $unset: { captain_payments: '' } });
+  expect((await service.scope(req())).options).toMatchObject({
+    enabled: true,
+    methods: ['Cash', 'Card', 'Upi'],
+  });
+  const finishEdit = await guard.beginEdit(db, sale);
+  expect(typeof finishEdit).toBe('function');
+  await expect(service.prepare(req())).rejects.toMatchObject({ status: 409 });
+  await finishEdit();
+  expect((await service.prepare(req())).dueMinor).toBe(10500);
+});
+
+test('saved payment preferences override defaults', () => {
+  expect(
+    service.settings({ captain_payments: { enabled: false, methods: ['Cash'] } })
+  ).toMatchObject({ enabled: false, methods: ['Cash'] });
+  expect(
+    service.settings({ captain_payments: { enabled: true, methods: ['Card'] } })
+  ).toMatchObject({ enabled: true, methods: ['Card'] });
+});
+
+test.each([false, 0, '0', 'false'])('disabled Captain module %s blocks the default', (disabled) => {
+  expect(service.settings({ module_captain_enable: disabled }).enabled).toBe(false);
+});
+
 test('individual takeaway payment targets only the selected sale and keeps preparation open', async () => {
   const other = {
     ...sale,

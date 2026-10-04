@@ -24,6 +24,7 @@ router.post('/pair', limit, wrap(access.pair));
 router.post('/refresh', limit, wrap(access.refresh));
 router.post('/route-proof', rateLimit({ windowMs: 60000, limit: 180 }), wrap(access.routeProof));
 router.use(protect);
+router.post('/takeaway-number', limit, wrap(require('../services/takeaway-number').reserve));
 const paper = require('../services/paper-order');
 router.get('/paper-orders/options', wrap(paper.options));
 router.post('/paper-orders/settings', limit, wrap(paper.settings));
@@ -65,7 +66,9 @@ router.post('/branch-details', limit, wrap(branchDetails.update));
 const tables = require('../services/captain-tables');
 router.get('/tables', wrap(tables.list));
 router.get('/bill', wrap(require('../services/captain-bill').read));
+router.post('/bill/reprint', limit, wrap(require('../services/captain-bill').reprint));
 router.post('/tables', limit, wrap(tables.update));
+router.post('/tables/temporary', limit, wrap(tables.temporary));
 router.post('/tables/state', limit, wrap(tables.state));
 router.post('/tables/close', limit, wrap(tables.close));
 const seating = require('../services/captain-seating');
@@ -109,6 +112,8 @@ router.post(
     const c = await context(req);
     if (c.branch.module_captain_enable === false)
       access.fail('DISABLED', 'Captain is disabled.', 403);
+    if (['archive', 'recordings', 'playback'].includes(req.params.action))
+      return require('../services/kitchen-voice-archive').run(req);
     if (!['start', 'cancel', 'voice', 'status'].includes(req.params.action))
       access.fail('INVALID_ACTION', 'Unknown audio action.', 400);
     if (!process.listenerCount('posnic:kitchen-audio'))
