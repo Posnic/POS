@@ -1,0 +1,52 @@
+<div id="items_v2" class="vertical-layout page_loader" style="display:none">
+  <div class="iv2-workspace">
+    <header class="iv2-heading"><div><div class="iv2-eyebrow">YOUR CATALOGUE <span>New experience</span></div><h1 id="iv2-title">Create item</h1><p>Start with a name. We’ll help you get it ready to sell.</p></div><a href="#/items" class="iv2-back">Back to items <span aria-hidden="true">↗</span></a></header>
+    <div id="iv2-success" class="iv2-success" role="status" hidden></div>
+    <div class="iv2-layout">
+      <form id="iv2-form" class="iv2-form" novalidate>
+        <fieldset id="iv2-fields">
+          <section class="iv2-section">
+            <div class="iv2-section-title"><span class="iv2-step">1</span><div><h2>The basics</h2><p>Only the item name is required to create a record.</p></div></div>
+            <fieldset class="iv2-types"><legend class="iv2-sr">Item type</legend>
+              <label><input type="radio" name="iv2-kind" value="product" checked><span><span id="iv2-product-label">Retail product</span><small>Goods you buy and sell</small></span></label>
+              <label><input type="radio" name="iv2-kind" value="dish"><span>Dish<small>Food or drink you prepare</small></span></label>
+              <label><input type="radio" name="iv2-kind" value="service"><span>Service<small>Your time or expertise</small></span></label>
+            </fieldset>
+            <label for="iv2-name"><span id="iv2-name-label">Item name</span> <span class="iv2-required">Required</span></label>
+            <input id="iv2-name" maxlength="100" autocomplete="off" placeholder="e.g. Tea, Blue shirt, Haircut" required>
+            <div class="iv2-grid iv2-pricing"><div><label for="iv2-price">Selling price</label><div class="iv2-money"><span class="iv2-currency"></span><input id="iv2-price" type="number" min="0" step="any" inputmode="decimal" placeholder="0.00" aria-describedby="iv2-price-hint"></div></div><div id="iv2-tax-field"><label for="iv2-tax">Tax</label><select id="iv2-tax" disabled><option>Loading your taxes…</option></select></div></div>
+            <div class="iv2-tax-row"><p id="iv2-price-hint"></p><label for="iv2-tax-type" class="iv2-sr">Tax calculation</label><select id="iv2-tax-type"><option value="inclusive">Tax included in price</option><option value="exclusive">Tax added to price</option></select></div>
+            <div id="iv2-tax-error" class="iv2-callout" hidden>Couldn’t load your tax settings. <button type="button" data-iv2-action="retry">Try again</button></div>
+            <div id="iv2-zero-price" class="iv2-callout" hidden><strong>No selling price yet</strong><p>Add a price above, or confirm that this item should have a zero price. A zero price does not hide an item from sales.</p><label class="iv2-check"><input id="iv2-confirm-zero" type="checkbox">Save this item with a zero selling price</label></div>
+          </section>
+          <section class="iv2-section">
+            <div class="iv2-section-title"><span class="iv2-step">2</span><div><h2>How do you sell it?</h2><p id="iv2-stock-intro">Choose whether Posnic should keep count.</p></div></div>
+            <fieldset class="iv2-stock-modes"><legend class="iv2-sr">Stock tracking</legend>
+              <label><input type="radio" name="iv2-stock" value="tracked" checked><span>Track stock<small>Keep count as you buy and sell.</small></span></label>
+              <label><input type="radio" name="iv2-stock" value="untracked"><span>Don’t track stock<small>Sell without entering stock quantities.</small></span></label>
+            </fieldset>
+            <div id="iv2-quantity-row" class="iv2-grid"><div><label for="iv2-quantity">Opening stock</label><input id="iv2-quantity" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></div><div class="iv2-stock-help">How many do you have right now?<br>You can add more stock later.</div></div>
+            <div id="iv2-zero-stock" class="iv2-callout" hidden><strong>This item starts with no stock</strong><p>It may not appear in sale search until you add stock. Choose what works for this item:</p>
+              <button class="iv2-text-button" type="button" data-iv2-action="add-stock">Enter opening stock ↑</button>
+              <label class="iv2-check"><input type="radio" name="iv2-zero-stock" value="untracked">Don’t track stock — sell without a stock count</label>
+              <label class="iv2-check"><input type="radio" name="iv2-zero-stock" value="negative">Keep tracking, but allow sales below zero</label>
+              <label class="iv2-check"><input type="radio" name="iv2-zero-stock" value="later">Save with zero stock — add stock before selling</label>
+            </div>
+            <p id="iv2-stock-note" class="iv2-note"></p>
+          </section>
+          <details id="iv2-restaurant" class="iv2-section iv2-details" hidden><summary>Restaurant details <span>Optional · dietary label, serving periods and modifiers</span></summary>
+            <label for="iv2-diet">Dietary label</label><select id="iv2-diet"><option value="">Not specified</option><option value="veg">Vegetarian</option><option value="non_veg">Non-vegetarian</option><option value="egg">Contains egg</option><option value="vegan">Vegan</option></select>
+            <p>Serving periods</p><div id="iv2-periods"><p>Loading serving periods…</p></div><p class="iv2-note">Leave all unchecked to serve this dish all day.</p>
+            <p>Modifier groups</p><div id="iv2-modifiers"><p>Loading modifier groups…</p></div>
+            <label class="iv2-check"><input id="iv2-menu" type="checkbox" checked>Show on the customer menu</label>
+          </details>
+          <details id="iv2-online" class="iv2-section iv2-details" hidden><summary>Online ordering <span>Choose whether customers can order this item online</span></summary><label class="iv2-check"><input id="iv2-orderable" type="checkbox">Available for online ordering</label><p class="iv2-note">The description below is also used on the customer menu. Add photos from the full editor after saving.</p></details>
+          <details class="iv2-section iv2-details"><summary>More details <span>Optional · codes, cost and description</span></summary><div class="iv2-grid"><div><label for="iv2-barcode">Barcode</label><input id="iv2-barcode" maxlength="100" autocomplete="off" placeholder="Scan or enter a barcode"></div><div><label for="iv2-sku">SKU / item code</label><input id="iv2-sku" maxlength="100" autocomplete="off" placeholder="Your own reference"></div><div><label for="iv2-cost">Cost price</label><input id="iv2-cost" type="number" min="0" step="any" inputmode="decimal" placeholder="0.00"></div><div><label for="iv2-category">Category</label><select id="iv2-category"><option value="">No category</option></select></div></div><label for="iv2-description">Description</label><textarea id="iv2-description" rows="3" maxlength="1000" placeholder="Anything useful to know about this item"></textarea></details>
+        </fieldset>
+        <div id="iv2-error" class="iv2-error" role="alert" tabindex="-1" hidden></div>
+        <footer class="iv2-actions"><p>No changes are saved until you choose Save item.</p><button id="iv2-save" type="submit">Save item <span aria-hidden="true">→</span></button></footer>
+      </form>
+      <aside class="iv2-aside"><div class="iv2-preview"><div class="iv2-eyebrow">ITEM PREVIEW</div><div class="iv2-item-icon" aria-hidden="true">▦</div><h2 id="iv2-preview-name">Your next item</h2><div id="iv2-preview-price" class="iv2-preview-price">—</div><p id="iv2-preview-tax">Selling price</p><hr><div id="iv2-readiness" class="iv2-readiness" aria-live="polite"><strong>Let’s get started</strong><p>Give your item a name to begin.</p></div><ul class="iv2-checklist"><li id="iv2-check-name">Item name</li><li id="iv2-check-price">Selling price</li><li id="iv2-check-stock">Stock choice</li></ul></div><p class="iv2-aside-help">Start simple.<br>You can add photos, translations and other details from the full item editor after saving.</p></aside>
+    </div>
+  </div>
+</div>
