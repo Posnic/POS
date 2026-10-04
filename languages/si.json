@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "මෙතැනින් අරඹන්න",
   "lang_iv2_taking_shape": "ඔබේ භාණ්ඩය සකස් වෙමින් පවතී",
   "lang_iv2_view": "භාණ්ඩය බලන්න",
-  "lang_iv2_optional_hint": "අත්‍යවශ්‍ය තොරතුරු ඇතුළත් කරන්න. විකල්ප ටැබ් පසුව පිරවිය හැක."
+  "lang_iv2_optional_hint": "අත්‍යවශ්‍ය තොරතුරු ඇතුළත් කරන්න. විකල්ප ටැබ් පසුව පිරවිය හැක.",
+  "lang_restaurant_assigned": "දැනට පවරා ඇත්තේ",
+  "lang_restaurant_bill_printed": "බිල මුද්‍රණය කර ඇත",
+  "lang_restaurant_bill_requested": "බිල ඉල්ලා ඇත",
+  "lang_restaurant_handover": "කාර්ය මණ්ඩල භාරදීම",
+  "lang_restaurant_not_recorded": "සටහන් කර නැත",
+  "lang_restaurant_service_record": "සේවකයන් සටහන් කළ විට පමණක් පිළිගැන්වූ වේලාවන් පෙන්වයි. ගෙවීමෙන් බෙදාහැරීම තහවුරු නොවේ.",
+  "lang_restaurant_taken_by": "ඇණවුම ගත් තැනැත්තා"
 }

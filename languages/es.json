@@ -4152,5 +4152,12 @@
   "lang_iv2_draft_found": "Hay un borrador de texto sin terminar. Debes seleccionar las fotos de nuevo.",
   "lang_iv2_draft_lists": "Algunas selecciones del borrador no están disponibles. Vuelve a cargar o descarta el borrador antes de guardar.",
   "lang_iv2_draft_saved": "Borrador de texto guardado en este dispositivo. No incluye fotos.",
-  "lang_iv2_draft_unavailable": "No se puede guardar el borrador. Mantén esta página abierta hasta guardar."
+  "lang_iv2_draft_unavailable": "No se puede guardar el borrador. Mantén esta página abierta hasta guardar.",
+  "lang_restaurant_assigned": "Asignado actualmente a",
+  "lang_restaurant_bill_printed": "Factura impresa",
+  "lang_restaurant_bill_requested": "Cuenta solicitada",
+  "lang_restaurant_handover": "Cambio de personal",
+  "lang_restaurant_not_recorded": "No registrado",
+  "lang_restaurant_service_record": "Los horarios de servicio solo aparecen cuando el personal los registra. El pago no confirma la entrega.",
+  "lang_restaurant_taken_by": "Pedido tomado por"
 }

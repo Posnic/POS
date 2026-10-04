@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "ಇಲ್ಲಿ ಪ್ರಾರಂಭಿಸಿ",
   "lang_iv2_taking_shape": "ನಿಮ್ಮ ವಸ್ತು ರೂಪುಗೊಳ್ಳುತ್ತಿದೆ",
   "lang_iv2_view": "ವಸ್ತುವನ್ನು ವೀಕ್ಷಿಸಿ",
-  "lang_iv2_optional_hint": "ಅಗತ್ಯ ಮಾಹಿತಿಯನ್ನು ನಮೂದಿಸಿ. ಐಚ್ಛಿಕ ಟ್ಯಾಬ್‌ಗಳನ್ನು ನಂತರ ಭರ್ತಿ ಮಾಡಬಹುದು."
+  "lang_iv2_optional_hint": "ಅಗತ್ಯ ಮಾಹಿತಿಯನ್ನು ನಮೂದಿಸಿ. ಐಚ್ಛಿಕ ಟ್ಯಾಬ್‌ಗಳನ್ನು ನಂತರ ಭರ್ತಿ ಮಾಡಬಹುದು.",
+  "lang_restaurant_assigned": "ಪ್ರಸ್ತುತ ನಿಯೋಜಿಸಲಾದವರು",
+  "lang_restaurant_bill_printed": "ಬಿಲ್ ಮುದ್ರಿಸಲಾಗಿದೆ",
+  "lang_restaurant_bill_requested": "ಬಿಲ್ ಕೇಳಲಾಗಿದೆ",
+  "lang_restaurant_handover": "ಸಿಬ್ಬಂದಿ ಹಸ್ತಾಂತರ",
+  "lang_restaurant_not_recorded": "ದಾಖಲಾಗಿಲ್ಲ",
+  "lang_restaurant_service_record": "ಸಿಬ್ಬಂದಿ ದಾಖಲಿಸಿದಾಗ ಮಾತ್ರ ಬಡಿಸಿದ ಸಮಯ ಕಾಣಿಸುತ್ತದೆ. ಪಾವತಿಯು ವಿತರಣೆಯನ್ನು ದೃಢೀಕರಿಸುವುದಿಲ್ಲ.",
+  "lang_restaurant_taken_by": "ಆರ್ಡರ್ ತೆಗೆದುಕೊಂಡವರು"
 }

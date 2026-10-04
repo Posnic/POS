@@ -117,6 +117,7 @@
             "static/script/js/modules/js/weight-bridge.js",
             "static/script/js/modules/js/order-journal.js",
             "../api/src/helpers/billing-search.js",
+            "static/script/js/modules/js/restaurant-sale-details.js",
             "static/script/js/modules/js/sales.js",
             "static/script/js/modules/js/order-recovery.js",
             "static/script/js/modules/js/business-approval.js",

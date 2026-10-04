@@ -667,3 +667,11 @@ body.customer-display .contentbar {
 .table_select[disabled] strong {
     color: #999 !important;
 }
+
+.sale-restaurant-summary{background:#f7faff;border:1px solid #dce6f3;border-radius:10px;padding:20px 24px;margin:0 0 16px;color:#18314d}
+.sale-restaurant-summary h3{font-size:17px;font-weight:600;margin:0 0 18px}
+.sale-restaurant-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 24px;margin:0}
+.sale-restaurant-facts dt{font-size:12px;font-weight:400;color:#60758e;margin-bottom:5px}.sale-restaurant-facts dd{font-size:14px;font-weight:600;margin:0;overflow-wrap:anywhere}
+.sale-restaurant-history{margin-top:18px;border-top:1px solid #dce6f3;padding-top:14px}.sale-restaurant-history summary{cursor:pointer;font-weight:600}.sale-restaurant-history summary span{background:#e6effc;padding:2px 8px;border-radius:12px;margin-left:8px}
+.sale-restaurant-help{font-size:12px;color:#60758e;margin:12px 0}.sale-restaurant-event{background:white;border:1px solid #e2e8f1;border-radius:8px;padding:14px;margin-top:10px}.sale-restaurant-event header{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}.sale-restaurant-event time{font-size:12px;color:#60758e}.sale-restaurant-event ul{padding:0;margin:8px 0 0;list-style:none}.sale-restaurant-event li{padding:6px 0;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}.sale-restaurant-event li small{color:#60758e}.sale-restaurant-event p{font-size:12px;margin:6px 0 0;overflow-wrap:anywhere}.sale-restaurant-event li p{width:100%}.sale-restaurant-note{margin:16px 0 0}
+@media(max-width:900px){.sale-restaurant-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:480px){.sale-restaurant-summary{padding:16px}.sale-restaurant-facts{grid-template-columns:1fr}}

@@ -4485,5 +4485,12 @@
   "lang_iv2_stock_pricing": "Voorraad en prijzen",
   "lang_iv2_taking_shape": "Uw artikel krijgt vorm",
   "lang_iv2_view": "Artikel bekijken",
-  "lang_restaurant": "Restaurant"
+  "lang_restaurant": "Restaurant",
+  "lang_restaurant_assigned": "Momenteel toegewezen aan",
+  "lang_restaurant_bill_printed": "Bon afgedrukt",
+  "lang_restaurant_bill_requested": "Rekening aangevraagd",
+  "lang_restaurant_handover": "Personeelsoverdracht",
+  "lang_restaurant_not_recorded": "Niet vastgelegd",
+  "lang_restaurant_service_record": "Serveertijden verschijnen alleen wanneer medewerkers de bediening vastleggen. Betaling bevestigt geen levering.",
+  "lang_restaurant_taken_by": "Bestelling opgenomen door"
 }

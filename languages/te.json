@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "ఇక్కడ ప్రారంభించండి",
   "lang_iv2_taking_shape": "మీ వస్తువు రూపుదిద్దుకుంటోంది",
   "lang_iv2_view": "వస్తువును చూడండి",
-  "lang_iv2_optional_hint": "ముఖ్యమైన వివరాలు నమోదు చేయండి. ఐచ్ఛిక ట్యాబ్‌లను తర్వాత పూరించవచ్చు."
+  "lang_iv2_optional_hint": "ముఖ్యమైన వివరాలు నమోదు చేయండి. ఐచ్ఛిక ట్యాబ్‌లను తర్వాత పూరించవచ్చు.",
+  "lang_restaurant_assigned": "ప్రస్తుతం కేటాయించిన వ్యక్తి",
+  "lang_restaurant_bill_printed": "బిల్లు ముద్రించబడింది",
+  "lang_restaurant_bill_requested": "బిల్లు కోరారు",
+  "lang_restaurant_handover": "సిబ్బంది బాధ్యత బదిలీ",
+  "lang_restaurant_not_recorded": "నమోదు కాలేదు",
+  "lang_restaurant_service_record": "సిబ్బంది నమోదు చేసినప్పుడు మాత్రమే వడ్డించిన సమయం కనిపిస్తుంది. చెల్లింపు డెలివరీని నిర్ధారించదు.",
+  "lang_restaurant_taken_by": "ఆర్డర్ తీసుకున్నవారు"
 }

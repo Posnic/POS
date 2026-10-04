@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "ഇവിടെ തുടങ്ങുക",
   "lang_iv2_taking_shape": "നിങ്ങളുടെ ഇനം തയ്യാറാകുന്നു",
   "lang_iv2_view": "ഇനം കാണുക",
-  "lang_iv2_optional_hint": "അവശ്യ വിവരങ്ങൾ നൽകുക. ഐച്ഛിക ടാബുകൾ പിന്നീട് പൂരിപ്പിക്കാം."
+  "lang_iv2_optional_hint": "അവശ്യ വിവരങ്ങൾ നൽകുക. ഐച്ഛിക ടാബുകൾ പിന്നീട് പൂരിപ്പിക്കാം.",
+  "lang_restaurant_assigned": "നിലവിൽ ചുമതലപ്പെടുത്തിയ വ്യക്തി",
+  "lang_restaurant_bill_printed": "ബിൽ പ്രിന്റ് ചെയ്തു",
+  "lang_restaurant_bill_requested": "ബിൽ ആവശ്യപ്പെട്ടു",
+  "lang_restaurant_handover": "ജീവനക്കാരുടെ കൈമാറ്റം",
+  "lang_restaurant_not_recorded": "രേഖപ്പെടുത്തിയിട്ടില്ല",
+  "lang_restaurant_service_record": "ജീവനക്കാർ രേഖപ്പെടുത്തിയാൽ മാത്രമേ വിളമ്പിയ സമയം കാണിക്കൂ. പണമടയ്ക്കൽ വിതരണം സ്ഥിരീകരിക്കുന്നില്ല.",
+  "lang_restaurant_taken_by": "ഓർഡർ എടുത്തത്"
 }

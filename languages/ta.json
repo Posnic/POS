@@ -4173,5 +4173,12 @@
   "lang_iv2_start_here": "இங்கே தொடங்கவும்",
   "lang_iv2_taking_shape": "உங்கள் பொருள் உருவாகிறது",
   "lang_iv2_view": "பொருளைப் பார்க்கவும்",
-  "lang_iv2_optional_hint": "அத்தியாவசிய விவரங்களை உள்ளிடவும். விருப்பத் தாவல்களைப் பின்னர் நிரப்பலாம்."
+  "lang_iv2_optional_hint": "அத்தியாவசிய விவரங்களை உள்ளிடவும். விருப்பத் தாவல்களைப் பின்னர் நிரப்பலாம்.",
+  "lang_restaurant_assigned": "தற்போது பொறுப்பில் உள்ளவர்",
+  "lang_restaurant_bill_printed": "பில் அச்சிடப்பட்டது",
+  "lang_restaurant_bill_requested": "பில் கோரப்பட்டது",
+  "lang_restaurant_handover": "பணியாளர் பொறுப்பு மாற்றம்",
+  "lang_restaurant_not_recorded": "பதிவு செய்யப்படவில்லை",
+  "lang_restaurant_service_record": "பணியாளர் பதிவு செய்தால் மட்டுமே பரிமாறிய நேரம் காட்டப்படும். பணம் செலுத்தியது உணவு வழங்கப்பட்டதை உறுதிப்படுத்தாது.",
+  "lang_restaurant_taken_by": "ஆர்டர் எடுத்தவர்"
 }

@@ -4153,5 +4153,12 @@
   "lang_iv2_start_here": "Hier beginnen",
   "lang_iv2_taking_shape": "Ihr Artikel nimmt Gestalt an",
   "lang_iv2_view": "Artikel ansehen",
-  "lang_iv2_optional_hint": "Geben Sie die Grundlagen ein. Optionale Registerkarten können warten."
+  "lang_iv2_optional_hint": "Geben Sie die Grundlagen ein. Optionale Registerkarten können warten.",
+  "lang_restaurant_assigned": "Aktuell zugewiesen an",
+  "lang_restaurant_bill_printed": "Rechnung gedruckt",
+  "lang_restaurant_bill_requested": "Rechnung angefordert",
+  "lang_restaurant_handover": "Personalübergabe",
+  "lang_restaurant_not_recorded": "Nicht erfasst",
+  "lang_restaurant_service_record": "Servierzeiten erscheinen nur, wenn Mitarbeiter sie erfassen. Eine Zahlung bestätigt keine Lieferung.",
+  "lang_restaurant_taken_by": "Bestellung aufgenommen von"
 }
