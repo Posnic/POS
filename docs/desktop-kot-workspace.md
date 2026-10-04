@@ -7,7 +7,7 @@ The desktop table screen uses the same seating, kitchen-service and payment serv
 | Action | Behavior |
 | --- | --- |
 | Add / modify items | Existing keyboard search and quantity entry; preserves saved pricing and preparation metadata. An unmatched product lookup cannot borrow another product's price. |
-| Discount | Preserves the saved guest count. Discount permission, limit and reason checks remain enforced. |
+| Discount | Preserves the saved guest count. Discount permission and limit checks remain enforced. |
 | Order details | Edit overall kitchen note, individual item notes, seat, course, allergy note and hold status. Existing modifiers and allergy flags survive these edits. |
 | Kitchen progress | Groups additions by recorded KOT time. Displays served quantity for each exact KOT line. |
 | Mark served / Serve all | Updates kitchen service without taking payment. Held dishes must first be sent to the kitchen. |
@@ -23,7 +23,7 @@ The desktop table screen uses the same seating, kitchen-service and payment serv
 ## Defaults and boundaries
 
 - No module or payment setting is enabled by this change. Split and shared collection controls appear only when the existing payment options allow them.
-- Staff permissions remain enforced server-side. Quantity corrections no longer require a modification reason, but still require the existing reduction permission. Cancelling the order and applying discounts still require their reasons and permissions.
+- Staff permissions remain enforced server-side. The current develop branch makes order reasons optional; this workspace preserves that policy. Quantity reductions, cancellations and discounts still require their existing permissions or manager approval.
 - The mockup uses sample data only and never contacts a shop, printer or payment provider.
 - Manager approval continues through the existing shared desktop request handler. Existing modifier choices and allergy flags are preserved; the notes dialog does not replace the sale screen's modifier picker.
 
