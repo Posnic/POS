@@ -260,6 +260,7 @@ test('partially paid history keeps a settlement action and shows the remaining b
   const { dom, win, $, sales } = setup();
   win.PosnicPro.i18n = { t: (_key, fallback) => fallback };
   win.PosnicPro.convertDate = value => value;
+  win.eval(fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js/restaurant-sale-details.js'), 'utf8'));
   $('body').append('<div id="sales_doc"></div><div id="sales_list_rows"></div>');
   const bill = { _id: 'abc', sales_id: 'QA-PARTIAL', payment_status: 'Partialy Paid', sales_total: 100,
     sales_sub_total: 100, partial_balance: 40, payment_pending: 60, items: [] };
