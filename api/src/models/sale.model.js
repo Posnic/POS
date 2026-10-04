@@ -256,6 +256,7 @@ const paymentSchema = new mongoose.Schema(
       trim: true,
     },
     paper_order: { type: mongoose.Schema.Types.Mixed },
+    order_photos: { type: [mongoose.Schema.Types.Mixed], default: undefined },
     origin: { type: mongoose.Schema.Types.Mixed },
   },
   { _id: false }
@@ -1124,6 +1125,7 @@ class LegacySaleModel {
     logo: { type: 'String', select: true },
     branch_name: { type: 'String', select: true },
     paper_order: { type: 'Object', select: true },
+    order_photos: { type: 'Array', select: true },
     origin: { type: 'Object', select: true },
     client: { type: 'Object', select: true },
     user_id: { type: 'String', select: true },

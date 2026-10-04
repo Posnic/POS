@@ -144,6 +144,11 @@ describe('SalesRepository', () => {
       seating_request_id: 'seating-request-0001',
       seating_primary_id: 'table-1',
       seating_table_ids: ['table-1', 'table-2'],
+      paper_order: {
+        id: '12345678-1234-1234-1234-123456789abc',
+        bucket: 'private-test',
+        key: 'private-key',
+      },
       items: [],
     };
     const result = await salesRepository.getOrderHistoryModel(
@@ -155,6 +160,7 @@ describe('SalesRepository', () => {
       { SaleModel: { find: () => createQueryMock([doc]) } }
     );
     expect(result.status).toBe(true);
+    expect(result.data.orders[0].paper_order).toEqual({ id: doc.paper_order.id });
     expect(result.data.orders[0]).toMatchObject({
       created_date: created,
       updated_date: updated,
@@ -869,7 +875,12 @@ describe('SalesRepository', () => {
       const r = await salesRepository.salePage({}, { limit: 10, page: 1 }, FAKE_BRANCH);
       expect(r.status).toBe(true);
       expect(r.data.list).toEqual(
-        docs.map((doc) => ({ ...doc, kitchen_rounds: [], item_transfer: true }))
+        docs.map((doc) => ({
+          ...doc,
+          kitchen_rounds: [],
+          item_transfer: true,
+          preparation_notes: true,
+        }))
       );
       expect(r.data.total).toBe(1);
     });

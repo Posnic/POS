@@ -186,7 +186,7 @@ test('5. and something actually reads it', () => {
    */
   assert.match(SALES, /const copies = billCopies\(shop, copiesAsked\);/, 'the queue never asks');
   assert.match(SALES, /for \(let copy = 1; copy <= copies; copy \+= 1\)/, 'one job however many copies');
-  assert.match(SALES, /copies > 1 \? `Table \$\{table\} \(\$\{copy\} of \$\{copies\}\)`/,
+  assert.match(SALES, /copies > 1 \? `\$\{label\} \(\$\{copy\} of \$\{copies\}\)`/,
     'two identical labels at the counter, with nothing to say they are a pair');
 });
 

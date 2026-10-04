@@ -7505,18 +7505,31 @@ class SalesRepository {
    * asking twice is somebody wondering where the bill got to, not a second
    * bill.
    */
-  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel, copies } = {}) {
+  async requestBillPrintModel(branchId, tableNumber, askedBy, { SaleModel, copies, saleId } = {}) {
     const copiesAsked = copies;
     try {
       const Model = this.getModel(SaleModel);
       const table = String(tableNumber == null ? '' : tableNumber).trim();
-      if (!table) {
+      const takeawayId = saleId == null ? null : String(saleId);
+      if (
+        takeawayId !== null &&
+        (!/^[a-f\d]{24}$/i.test(takeawayId) || !/^[a-f\d]{24}$/i.test(String(branchId)))
+      ) {
+        return { status: false, message: 'Choose a valid Take Away order and branch', data: null };
+      }
+      if (!table && !takeawayId) {
         return { status: false, message: 'No table was named', data: null };
       }
 
       const query = {
         sale_process: { $regex: 'KOT', $options: 'i' },
-        table_number: table,
+        ...(takeawayId
+          ? {
+              _id: new mongoose.Types.ObjectId(takeawayId),
+              dine_type: /^take[\s_-]*away$/i,
+              floor_closed_at: { $exists: false },
+            }
+          : { table_number: table }),
         /*
          * Only what is still open. A settled ticket has had its bill.
          *
@@ -7661,6 +7674,9 @@ class SalesRepository {
         const copies = billCopies(shop, copiesAsked);
 
         for (const sale of open) {
+          const label = takeawayId
+            ? 'Take Away ' + (sale.sales_id || sale.token_id || takeawayId)
+            : `Table ${table}`;
           for (let copy = 1; copy <= copies; copy += 1) {
             await queuePrintJob({
               branchId,
@@ -7668,7 +7684,7 @@ class SalesRepository {
               saleId: sale._id,
               /* The counter reads these as they come off: "(2 of 2)" says the
                  pair belongs to one table rather than two bills for it. */
-              label: copies > 1 ? `Table ${table} (${copy} of ${copies})` : `Table ${table}`,
+              label: copies > 1 ? `${label} (${copy} of ${copies})` : label,
               /*
                * BUILT FOR THE PRINTER, not handed over raw.
                *
@@ -8006,6 +8022,8 @@ class SalesRepository {
               type: i === 0 ? 'new' : 'modified',
               timestamp: change.timestamp || null,
               items: addItems,
+              preparation_note:
+                typeof change.preparation_note === 'string' ? change.preparation_note : '',
               change_index: i + 1,
             });
             highestPrintedIndex = i;
@@ -8015,7 +8033,24 @@ class SalesRepository {
               type: 'cancel',
               timestamp: change.timestamp || null,
               items: cancelItems,
+              preparation_note:
+                typeof change.preparation_note === 'string' ? change.preparation_note : '',
               change_index: i + 1,
+            });
+            highestPrintedIndex = i;
+          }
+          if (
+            change.note_only === true &&
+            typeof change.preparation_note === 'string' &&
+            items.length === 0
+          ) {
+            printJobs.push({
+              type: 'modified',
+              timestamp: change.timestamp || null,
+              items: [],
+              change_index: i + 1,
+              preparation_note: change.preparation_note,
+              note_only: true,
             });
             highestPrintedIndex = i;
           }
@@ -8181,6 +8216,7 @@ class SalesRepository {
       {
         $set: {
           kitchen_service: service,
+          updated_date: new Date(),
           kitchen_closed: !rounds({ ...sale, kitchen_service: service }).some((r) =>
             r.items.some((i) => i.remaining > 0)
           ),
@@ -8189,6 +8225,11 @@ class SalesRepository {
     );
     if (!result.matchedCount)
       return { status: false, message: 'Order changed. Refresh before marking items served.' };
+    await require('../services/takeaway-completion').recover(
+      db,
+      { branchId: sale.branch_id, license: sale.license },
+      sale._id
+    );
     // Only notify after the write succeeds. Cloud/other processes still use the normal poll.
     try {
       process.emit('posnic:kitchen-served', { branchId: String(branchId), saleId: String(saleId) });
@@ -10413,7 +10454,13 @@ class SalesRepository {
               }
             : {}),
           assigned_staff: doc.assigned_staff,
+          ...(doc.paper_order?.id ? { paper_order: { id: doc.paper_order.id } } : {}),
+          ...(Array.isArray(doc.order_photos)
+            ? { order_photos: doc.order_photos.map((photo) => ({ id: photo.id })) }
+            : {}),
           kitchen_rounds: require('../helpers/kitchen-rounds').rounds(doc),
+          preparation_note: String(doc.preparation_note || ''),
+          preparation_notes: true,
           item_transfer: true,
           total_amount: doc.sales_total || doc.total || 0,
           subtotal: doc.sales_sub_total || doc.subtotal || 0,
@@ -10448,7 +10495,15 @@ class SalesRepository {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel, newTableId, seenAt, editPolicy, preview = false, previewContext } = {}
+    {
+      SaleModel,
+      newTableId,
+      seenAt,
+      editPolicy,
+      preparationNote,
+      preview = false,
+      previewContext,
+    } = {}
   ) {
     let finishCaptainEdit;
     let finishCapacityEdit;
@@ -11116,10 +11171,16 @@ class SalesRepository {
 
       const salesTotal = itemsSub - extraDiscountAmount;
       const mongoDate = new Date();
-      if (changesItems.length > 0) {
+      const note =
+        preparationNote === undefined ? orderDoc.preparation_note : String(preparationNote).trim();
+      const noteChanged =
+        preparationNote !== undefined && note !== String(orderDoc.preparation_note || '');
+      if (changesItems.length > 0 || noteChanged) {
         existingChanges.push({
           timestamp: mongoDate,
           items: changesItems,
+          ...(typeof note === 'string' ? { preparation_note: note } : {}),
+          ...(noteChanged && changesItems.length === 0 ? { note_only: true } : {}),
           actor,
           reason: audit.reason,
           kitchen_actor: kitchenActor(),
@@ -11155,6 +11216,7 @@ class SalesRepository {
       }
       if (discountDescription !== null)
         updateFields.discount_description = String(discountDescription);
+      if (preparationNote !== undefined) updateFields.preparation_note = note;
       if (newTableNo !== null && newTableNo !== '') updateFields.table_number = String(newTableNo);
 
       /*
@@ -13776,6 +13838,7 @@ class SalesRepository {
           list: docs.map((sale) => ({
             ...sale,
             assigned_staff: sale.assigned_staff,
+            preparation_notes: true,
             kitchen_rounds: require('../helpers/kitchen-rounds').rounds(sale),
             item_transfer: true,
           })),

@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('crypto');
+const { ObjectId } = require('mongodb');
 const { context, allowed, fail } = require('../utils/branch-access');
 const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { TextractClient, DetectDocumentTextCommand } = require('@aws-sdk/client-textract');
@@ -26,7 +27,11 @@ async function scope(req, settings = false) {
 }
 async function options(req) {
   const c = await scope(req);
-  return { enabled: enabled(c.branch), configured: Boolean(config().bucket && config().region) };
+  return {
+    enabled: enabled(c.branch),
+    configured: Boolean(config().bucket && config().region),
+    referenceAttachments: true,
+  };
 }
 async function settings(req) {
   const c = await scope(req, true);
@@ -83,7 +88,7 @@ function parse(blocks) {
   }
   return { table, pax, lines: lines.slice(0, 100), truncated: lines.length > 100 };
 }
-async function recognize(req, mobileContext) {
+async function recognize(req, referenceOnly = false, mobileContext = null) {
   const c = mobileContext || (await scope(req));
   if (!(mobileContext ? c.config.photoOrders === true : enabled(c.branch)))
     fail('Photo orders are not enabled for this branch.', 403);
@@ -97,6 +102,7 @@ async function recognize(req, mobileContext) {
     .createHash('sha256')
     .update(original.bytes)
     .update(crop.bytes)
+    .update(referenceOnly ? 'reference-only' : '')
     .digest('hex');
   const where = { _id: id, license: c.license, branch_id: c.branchId, owner: String(req.user._id) };
   const coll = req.db.collection('paper_order_photos');
@@ -155,12 +161,15 @@ async function recognize(req, mobileContext) {
       }),
       { abortSignal: AbortSignal.timeout(30000) }
     );
-    const textract = new TextractClient(clientConfig());
-    const response = await textract.send(
-      new DetectDocumentTextCommand({ Document: { Bytes: crop.bytes } }),
-      { abortSignal: AbortSignal.timeout(45000) }
-    );
-    const result = parse(response.Blocks);
+    let result = { referenceOnly: true };
+    if (!referenceOnly) {
+      const textract = new TextractClient(clientConfig());
+      const response = await textract.send(
+        new DetectDocumentTextCommand({ Document: { Bytes: crop.bytes } }),
+        { abortSignal: AbortSignal.timeout(45000) }
+      );
+      result = parse(response.Blocks);
+    }
     await coll.updateOne(where, {
       $set: { result, key, bucket: cfg.bucket, type: original.type },
       $unset: { runningUntil: '' },
@@ -194,20 +203,26 @@ async function reference(db, c, id, orderKey, owner) {
     bucket: doc.bucket,
     type: doc.type,
     uploaded_at: doc.created,
+    uploaded_by: doc.owner,
     url: `/captain/v1/paper-orders/photos/${doc._id}`,
   };
 }
 async function read(req) {
   const c = await scope(req);
   const id = String(req.params.id || '');
-  const sale = await req.db
-    .collection('sales')
-    .findOne(
-      { license: c.license, branch_id: c.branchId, 'paper_order.id': id },
-      { projection: { paper_order: 1 } }
-    );
+  const sales = req.db.collection('sales');
+  const sale = await sales.findOne(
+    {
+      license: c.license,
+      branch_id: c.branchId,
+      $or: [{ 'paper_order.id': id }, { 'order_photos.id': id }],
+    },
+    { projection: { paper_order: 1, order_photos: 1 } }
+  );
   const doc =
-    sale?.paper_order ||
+    (sale?.paper_order?.id === id
+      ? sale.paper_order
+      : sale?.order_photos?.find((photo) => photo.id === id)) ||
     (await req.db.collection('paper_order_photos').findOne({
       _id: id,
       license: c.license,
@@ -242,7 +257,24 @@ async function mobileOptions(req) {
 async function mobileRecognize(req) {
   const mobile = require('./mobile-pos');
   if (!mobile.allowed(req.user, 'sales')) fail('Sales permission is required.', 403);
-  return recognize(req, await mobile.context(req));
+  return recognize(req, false, await mobile.context(req));
+}
+async function attach(req) {
+  const c = await scope(req);
+  if (!enabled(c.branch)) fail('Paper orders are not enabled for this branch.', 403);
+  if (!ObjectId.isValid(String(req.body?.saleId || ''))) fail('Order not found.', 404);
+  const where = { _id: new ObjectId(req.body.saleId), license: c.license, branch_id: c.branchId };
+  if (!(await req.db.collection('sales').findOne(where))) fail('Order not found.', 404);
+  const result = await recognize(req, true);
+  const photo = await reference(req.db, c, result.id, String(where._id), req.user._id);
+  const saved = await req.db.collection('sales').updateOne(where, {
+    $addToSet: { order_photos: photo },
+    $set: { updated_date: new Date() },
+  });
+  if (!saved.matchedCount) fail('Order not found.', 404);
+  require('../sync/outbox').enqueue({ collection: 'sales', documentId: where._id, reason: 'sale' });
+  require('../sync/nudge').nudgeSyncAgent();
+  return { photo: { id: photo.id } };
 }
 module.exports = {
   options,
@@ -250,6 +282,7 @@ module.exports = {
   recognize,
   reference,
   read,
+  attach,
   parse,
   image,
   enabled,

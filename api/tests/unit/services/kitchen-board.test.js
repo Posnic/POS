@@ -418,3 +418,27 @@ test('a kitchen update between transfer preview and reservation invalidates that
   expect(current.captain_payment_plan).toBeUndefined();
   expect(current.kitchen_work.c0.lines.c0i0.ready).toBe(1);
 });
+
+test('serving a paid takeaway closes the floor as well as the kitchen', async () => {
+  await db.collection('sales').updateOne(
+    { _id: saleId },
+    {
+      $set: {
+        dine_type: 'Take away',
+        payment_status: 'Paid',
+        kitchen_required: true,
+        floor_lifecycle: true,
+        sales_total: 100,
+        payment_pending: 0,
+      },
+    }
+  );
+  await service.transition(lineAction('ready', 2, 0));
+  await service.captainAction(lineAction('collect', 2, 1, userId, 'takeaway-collect-123'));
+  await service.captainAction(lineAction('serve', 2, 2, userId, 'takeaway-serve-12345'));
+  const saved = await db.collection('sales').findOne({ _id: saleId });
+  expect(saved.floor_closed_at).toBeInstanceOf(Date);
+  expect(saved.updated_date).toBeInstanceOf(Date);
+  expect(saved.payment_status).toBe('Paid');
+  expect(saved.sales_total).toBe(100);
+});

@@ -66,9 +66,16 @@ before(async () => {
     next();
   });
   app.use('/api/captain/v1', require('../src/routes/captain-access.routes'));
+  app.use('/api/kitchen', require('../src/routes/kitchen-board.routes'));
   const { protect, optionalProtect } = require('../src/middleware/auth');
   const paymentTestLimit = require('express-rate-limit')({windowMs:60000,limit:180});
-  app.get('/api/sales/guestBills/table', paymentTestLimit, protect, (_r, s) => s.json({ allowed: true }));
+  const guestBills = require('../src/controllers/guest-bill.controller');
+  const salesController = require('../src/controllers/sales.controller');
+  app.get('/api/sales/guestBills/table', paymentTestLimit, protect, guestBills.read);
+  app.get('/api/sales/guestBills/latest', paymentTestLimit, protect, guestBills.latest);
+  app.post('/api/sales/guestBills/print', paymentTestLimit, protect, guestBills.send);
+  app.post('/api/sales/requestBillPrint', paymentTestLimit, protect, salesController.requestBillPrint.bind(salesController));
+  app.post('/api/sales/updateOrder', paymentTestLimit, protect, salesController.updateOrder.bind(salesController));
   app.post('/api/sales/tablePayments/record', paymentTestLimit, protect, (_r, s) => s.json({ allowed: true }));
   app.get('/api/users/admin', protect, (r, s) => s.json({ user: r.user._id }));
   app.post('/api/items/accessQr', optionalProtect, (r, s) =>
@@ -145,6 +152,60 @@ test('real HTTP pairing, branch scoping and revocation; bearer does not mint an 
     );
   assert.equal((await fetch(base + '/captain/v1/session', { headers })).status, 403);
 });
+test('paired Captain collects one takeaway bill with mixed tenders over HTTP and retries safely', async () => {
+  await db.collection('branches').updateOne({_id:branch._id},{$set:{captain_payments:{enabled:true,methods:['Cash','Card']},printall:false}});
+  const code=await access.createCode(req);
+  const grant=await access.pair({db,body:{code:code.code,device:{device_id:crypto.randomUUID()}}});
+  const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+  const sale={_id:new ObjectId(),branch_id:branch._id,license:branch.license,table_number:'',dine_type:'Take away',sales_id:'HTTP-1',sale_process:'KOT',payment_status:'Unpaid',floor_lifecycle:true,created_date:new Date(),kitchen_actor:{id:String(staff._id),name:'Waiter'},sales_total:105,sales_sub_total:100,tax:5,items:[{item_name:'Soup',item_quantity:2,item_base_price:50,item_tax:5}]};
+  const other={...sale,_id:new ObjectId(),sales_id:'HTTP-2'};
+  await db.collection('sales').insertMany([sale,other]);
+  const billResponse=await fetch(base+'/captain/v1/bill?saleId='+sale._id,{headers});
+  assert.equal(billResponse.status,200,await billResponse.clone().text());
+  assert.deepEqual((await billResponse.json()).orderIds,[String(sale._id)]);
+  const prepared=await fetch(base+'/captain/v1/payments/table',{method:'POST',headers,body:JSON.stringify({saleId:String(sale._id)})});
+  assert.equal(prepared.status,200,await prepared.clone().text());
+  const plan=await prepared.json();assert.equal(plan.dueMinor,10500);
+  const input={planId:plan.id,version:plan.version,amountMinor:10500,receivedMinor:10500,method:'Mixed',request_id:crypto.randomUUID(),tenders:[{method:'Cash',amountMinor:10000,receivedMinor:10000},{method:'Card',amountMinor:500,receivedMinor:500,verified:true}]};
+  for(let attempt=0;attempt<2;attempt++){
+    const response=await fetch(base+'/captain/v1/payments/record',{method:'POST',headers,body:JSON.stringify(input)});
+    assert.equal(response.status,200,await response.clone().text());
+    const result=await response.json();assert.equal(result.dueMinor,0);assert.equal(result.payments.length,1);
+  }
+  const stored=await db.collection('sales').findOne({_id:sale._id});
+  assert.deepEqual(stored.multi_payment,{Cash:100,Card:5});assert.equal(stored.floor_closed_at,undefined);
+  assert.equal((await db.collection('sales').findOne({_id:other._id})).payment_status,'Unpaid');
+  // Paid food stays in preparation, reports partial readiness to its ordering
+  // Captain, and closes only after pickup and service.
+  const managerToken=require('../src/middleware/auth').signLegacyToken(manager,req,branch._id,900);
+  const kitchenHeaders={Authorization:'Bearer '+managerToken,'Content-Type':'application/json'};
+  const kitchen=await fetch(base+'/kitchen',{headers:kitchenHeaders});
+  assert.equal(kitchen.status,200,await kitchen.clone().text());
+  let ticket=(await kitchen.json()).tickets.find(ticket=>ticket.saleId===String(sale._id));
+  assert.ok(ticket,'Payment must not hide preparation');
+  assert.equal(ticket.orderNumber,'HTTP-1');assert.equal(ticket.takeaway,true);
+  const action=async(path,auth,operation,quantity)=>{
+    const response=await fetch(base+path,{method:'POST',headers:auth,body:JSON.stringify({saleId:String(sale._id),roundId:ticket.roundId,
+      itemId:ticket.items[0].id,revision:ticket.revision,actionId:crypto.randomUUID(),operation,quantity})});
+    assert.equal(response.status,200,await response.clone().text());
+    ticket=(await response.json()).ticket;
+  };
+  await action('/kitchen/transition',kitchenHeaders,'ready',1);
+  const noticeResponse=await fetch(base+'/captain/v1/kitchen-ready',{headers});
+  assert.equal(noticeResponse.status,200);
+  const notice=await noticeResponse.json(),own=notice.tickets.find(row=>row.saleId===String(sale._id));
+  assert.equal(own.owner,String(staff._id));assert.equal(own.items[0].ready,1);
+  assert.equal(notice.readiness.find(row=>row.saleId===String(sale._id)).remaining,2);
+  assert.equal((await db.collection('sales').findOne({_id:sale._id})).floor_closed_at,undefined);
+  await action('/kitchen/transition',kitchenHeaders,'ready',2);
+  await action('/captain/v1/kitchen-ready',headers,'collect',2);
+  await action('/captain/v1/kitchen-ready',headers,'serve',2);
+  assert.equal(ticket,null);
+  assert.ok((await db.collection('sales').findOne({_id:sale._id})).floor_closed_at);
+  const afterKitchen=await fetch(base+'/kitchen',{headers:kitchenHeaders});
+  assert.ok(!(await afterKitchen.json()).tickets.some(row=>row.saleId===String(sale._id)));
+});
+
 test('expired codes and wrong cloud device proof cannot authorize a phone', async () => {
   const code = await access.createCode(req);
   await db
@@ -172,6 +233,44 @@ test('expired codes and wrong cloud device proof cannot authorize a phone', asyn
     }),
     (e) => e.code === 'INVALID_PAIR'
   );
+});
+
+test('paired Captain prints and splits one Take Away order through real HTTP controllers', async () => {
+  const { grant } = await paired();
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  const sale = { _id:new ObjectId(), branch_id:branch._id, license:branch.license,
+    table_number:'', dine_type:'Take Away', sales_id:'PRINT-1048', sale_process:'KOT', payment_status:'Unpaid',
+    sales_total:100, sales_sub_total:100, items:[{item_name:'Tea',item_quantity:2,item_base_price:50}] };
+  const other = {...sale, _id:new ObjectId(), sales_id:'PRINT-1049'};
+  await db.collection('sales').insertMany([sale,other]);
+  const endpoint = '/sales/guestBills/table?branchId=' + branch._id + '&saleId=' + sale._id;
+  assert.equal((await fetch(base+endpoint)).status,401);
+  const response = await fetch(base+endpoint,{headers});
+  assert.equal(response.status,200,await response.clone().text());
+  const snapshot = (await response.json()).data;
+  assert.equal(snapshot.table,'Take Away PRINT-1048');
+  assert.equal(snapshot.totalMinor,10000);
+  const splitInput = {branchId:String(branch._id), saleId:String(sale._id), revision:snapshot.revision, request_id:crypto.randomUUID(), copies:1,
+    plan:{mode:'equal',guests:['Guest 1','Guest 2']}};
+  const post = (path,body) => fetch(base+path,{method:'POST',headers,body:JSON.stringify(body)});
+  for (let attempt=0;attempt<2;attempt++) {
+    const result = await post('/sales/guestBills/print',splitInput);
+    assert.equal(result.status,200,await result.clone().text());
+    assert.equal((await result.json()).data.queued,true);
+  }
+  assert.equal(await db.collection('printjobs').countDocuments({ticket_key:{$regex:'^guest-batch:'+splitInput.request_id+':'}}),2);
+  const latest = await fetch(base+'/sales/guestBills/latest?branchId='+branch._id+'&saleId='+sale._id,{headers});
+  assert.equal((await latest.json()).data.stale,false);
+  for(let attempt=0;attempt<2;attempt++) {
+    const result = await post('/sales/requestBillPrint',{branchId:String(branch._id),saleId:String(sale._id),copies:1});
+    assert.equal(result.status,200,await result.clone().text());
+    assert.equal((await result.json()).data.waiting,1);
+  }
+  assert.equal(await db.collection('printjobs').countDocuments({sale_id:sale._id}),1);
+  assert.equal((await db.collection('sales').findOne({_id:other._id})).bill_requested_at,undefined);
+  const foreign={...sale,_id:new ObjectId(),branch_id:new ObjectId()};
+  await db.collection('sales').insertOne(foreign);
+  assert.equal((await fetch(base+'/sales/guestBills/table?branchId='+branch._id+'&saleId='+foreign._id,{headers})).status,409);
 });
 test(
   'manager setup page generates a QR with a real login cookie and CSRF protection',
@@ -396,7 +495,7 @@ test('Captain scoped sessions cannot access Mobile POS or administration', async
 test('paired Captain can split and record payments but cannot change settings or use cashier bypass', async () => {
   const { grant } = await paired();
   const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
-  assert.equal((await fetch(base + '/sales/guestBills/table', { headers })).status, 200);
+  assert.equal((await fetch(base + '/sales/guestBills/table?table_number=NO-OPEN-BILL&branchId='+branch._id, { headers })).status, 409);
   assert.equal((await fetch(base + '/captain/v1/payment-options', { headers })).status, 200);
   assert.equal((await fetch(base + '/captain/v1/payment-settings', { headers })).status, 403);
   assert.equal(
@@ -546,6 +645,68 @@ test('paired Captain can preview an edit over HTTP without modifying the sale', 
   assert.deepEqual(await db.collection('sales').findOne({ _id: id }), order);
   await db.collection('sales').updateOne({ _id: id }, { $set: { branch_id: new ObjectId() } });
   assert.equal((await fetch(url, { method: 'POST', headers, body })).status, 404);
+});
+
+test('paired Captain adds the same dish as a new preparation round without overwriting the old note', async () => {
+  const {grant}=await paired();
+  const product=new ObjectId(), id=new ObjectId(), firstAt=new Date(Date.now()-600000);
+  const original={item_id:product,line_id:'original-round',item_name:'Naan',item_quantity:1,item_price:40,item_base_price:40,item_description:'No butter'};
+  await db.collection('items').insertOne({_id:product,license:branch.license,name:'Naan',tax:0,tax_type:'exclusive',selling_price:40});
+  await db.collection('sales').insertOne({_id:id,branch_id:branch._id,license:branch.license,sale_process:'KOT',payment_status:'Unpaid',
+    table_number:'ROUND-4',dine_type:'Dine-in',person_count:2,sales_sub_total:40,sales_total:40,
+    created_date:firstAt,updated_date:firstAt,items:[original],changes:[{timestamp:firstAt,items:[{...original,process:'add'}]}]});
+  const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
+  const input={order_id:String(id),seen_at:firstAt.toISOString(),items:[
+    {product_id:String(product),line_id:'original-round',name:'Naan',quantity:1,price:40,item_description:'No butter'},
+    {product_id:String(product),line_id:'new-round',name:'Naan',quantity:2,price:40,item_description:'Extra butter'}],total_amount:120,preparation_note:'Serve together'};
+  const response=await fetch(base+'/sales/updateOrder',{method:'POST',headers,body:JSON.stringify(input)});
+  assert.equal(response.status,200,await response.clone().text());
+  const sale=await db.collection('sales').findOne({_id:id});
+  assert.equal(sale.sales_total,120);
+  assert.equal(sale.preparation_note,'Serve together');
+  assert.equal(sale.changes[1].preparation_note,'Serve together');
+  assert.deepEqual(sale.items.map(item=>[item.line_id,item.item_quantity,item.item_description]),[
+    ['original-round',1,'No butter'],['new-round',2,'Extra butter']]);
+  assert.equal(sale.changes.length,2);
+  assert.equal(sale.changes[0].timestamp.getTime(),firstAt.getTime());
+  assert.deepEqual(sale.changes[1].items.map(item=>[item.line_id,item.item_quantity,item.item_description,item.process]),[
+    ['new-round',2,'Extra butter','add']]);
+  const retry=await fetch(base+'/sales/updateOrder',{method:'POST',headers,body:JSON.stringify(input)});
+  assert.notEqual(retry.status,200,'Stale edit must not duplicate a kitchen round');
+  assert.equal((await db.collection('sales').findOne({_id:id})).changes.length,2);
+  const noteOnly={...input,seen_at:sale.updated_date.toISOString(),preparation_note:'Pack separately'};
+  const changed=await fetch(base+'/sales/updateOrder',{method:'POST',headers,body:JSON.stringify(noteOnly)});
+  assert.equal(changed.status,200,await changed.clone().text());
+  const noted=await db.collection('sales').findOne({_id:id});
+  assert.equal(noted.sales_total,120);
+  assert.deepEqual(noted.items,sale.items);
+  assert.equal(noted.changes.length,3);
+  assert.deepEqual(noted.changes[2].items,[]);
+  assert.equal(noted.changes[2].note_only,true);
+  assert.equal(noted.changes[2].preparation_note,'Pack separately');
+  assert.equal(noted.changes[1].preparation_note,'Serve together','Earlier print snapshot is immutable');
+  const tickets=require('../src/helpers/kitchen-rounds').tickets(noted);
+  assert.equal(tickets.flatMap(ticket=>ticket.items).reduce((n,item)=>n+item.qty,0),3);
+  assert.ok(tickets.every(ticket=>ticket.preparationNote==='Pack separately'));
+  const BaseModel=require('../src/models/base.model');
+  const previousGetDb=BaseModel.getDb;
+  BaseModel.getDb=async()=>db;
+  try {
+    const queue=await require('../src/repositories/sale.repository').multiKitchenPrintModel(String(branch._id),{onlySaleId:String(id)});
+    assert.equal(queue.status,true);
+    assert.equal(queue.data.length,1);
+    const jobs=queue.data[0].print_jobs;
+    assert.equal(jobs.length,3);
+    assert.equal(jobs[0].preparation_note,'','An earlier ticket must not inherit the latest note');
+    assert.equal(jobs[1].preparation_note,'Serve together');
+    assert.equal(jobs[1].items[0].item_quantity,2);
+    assert.equal(jobs[2].preparation_note,'Pack separately');
+    assert.equal(jobs[2].note_only,true);
+    assert.deepEqual(jobs[2].items,[]);
+    assert.equal(queue.data[0].new_last_printed_change_index,2);
+  } finally {BaseModel.getDb=previousGetDb;}
+  const invalid=await fetch(base+'/sales/updateOrder',{method:'POST',headers,body:JSON.stringify({...noteOnly,preparation_note:'x'.repeat(501)})});
+  assert.equal(invalid.status,422);
 });
 
 

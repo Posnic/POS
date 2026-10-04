@@ -63,9 +63,15 @@ function project(sale) {
         saleId: String(sale._id),
         roundId: round.id,
         table: String(sale.table_number || ''),
+        takeaway:
+          String(sale.fulfilment || sale.dine_type || '')
+            .toLowerCase()
+            .replace(/[\s_-]/g, '') === 'takeaway',
+        orderNumber: String(sale.sales_id || sale.token_id || ''),
         outlet: String(sale.outlet_snapshot?.name || ''),
         roomReference: String(sale.room_reference || ''),
         placedAt: round.fired_at || round.ordered_at,
+        preparationNote: String(sale.preparation_note || ''),
         state,
         owner: String(owner.id || ''),
         ownerName: String(owner.name || ''),
@@ -84,8 +90,11 @@ async function list(req) {
       {
         projection: {
           table_number: 1,
+          sales_id: 1,
+          token_id: 1,
           'outlet_snapshot.name': 1,
           room_reference: 1,
+          preparation_note: 1,
           created_date: 1,
           items: 1,
           changes: 1,
@@ -239,11 +248,13 @@ async function mutate(req, captain = false) {
           (round) => round.items.some((item) => item.remaining > 0)
         ),
         kitchen_work: work,
+        updated_date: new Date(),
         ...(b.operation === 'serve' ? { kitchen_service: service } : {}),
       },
     }
   );
   if (!result.matchedCount) fail('Order changed. Refresh before trying again.', 409);
+  await require('./takeaway-completion').recover(req.db, c, sale._id);
   try {
     process.emit('posnic:kitchen-served', { branchId: String(c.branchId), saleId: b.saleId });
   } catch {
@@ -265,8 +276,33 @@ async function captainList(req) {
     ...data,
     actor,
     scope: String(c.license) + ':' + String(c.branchId) + ':' + actor,
+    // Include preparing rounds in the denominator, not only tickets with ready food.
+    readiness: readiness(data.tickets),
     tickets: data.tickets.filter((t) => t.items.some((i) => i.ready > i.served)),
   };
+}
+function readiness(tickets) {
+  const groups = new Map();
+  for (const ticket of tickets) {
+    const key = ticket.table ? 'table:' + ticket.table : 'sale:' + ticket.saleId;
+    if (!groups.has(key))
+      groups.set(key, {
+        table: ticket.table,
+        saleId: ticket.table ? null : ticket.saleId,
+        remaining: 0,
+        ready: 0,
+        items: [],
+      });
+    const group = groups.get(key);
+    for (const item of ticket.items) {
+      const remaining = Math.max(0, item.total - item.served);
+      const count = Math.max(0, Math.min(remaining, item.ready - item.served));
+      group.remaining += remaining;
+      group.ready += count;
+      if (count) group.items.push({ name: item.name, quantity: count, roundId: ticket.roundId });
+    }
+  }
+  return [...groups.values()];
 }
 async function captainAction(req) {
   const c = await scope(req);
@@ -300,6 +336,7 @@ module.exports = {
   project,
   transition: (req) => mutate(req),
   captainList,
+  readiness,
   captainAction,
   saveSettings,
 };
