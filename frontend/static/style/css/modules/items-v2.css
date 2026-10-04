@@ -53,11 +53,22 @@
 #items_v2 select[multiple]{min-height:110px}
 #items_v2 input[type=color]{height:46px;padding:5px}
 #items_v2 .iv2-translations .item-language-toggle{width:100%;text-align:left;border:0;background:transparent;color:var(--iv2-ink);font:inherit;font-weight:600;display:flex;justify-content:space-between}
-#items_v2 .iv2-translations .item-language-layout{display:grid;grid-template-columns:160px minmax(0,1fr);gap:18px}
+#items_v2 .iv2-translations .item-language-columns{display:grid;grid-template-columns:160px minmax(0,1fr);gap:18px}
 #items_v2 .iv2-translations .item-language-source{margin-top:20px}
 #items_v2 .iv2-translations .item-language-review{background:#f1f6ff;border:1px solid #c7d9f5;padding:14px;border-radius:8px;margin:12px 0}
 #items_v2 .iv2-translations .item-language-heading{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:16px 0}
 #items_v2 .iv2-translations button{cursor:pointer}
 #items_v2 .iv2-icon-palette{display:flex;gap:5px;flex-wrap:wrap}
 #items_v2 .iv2-icon-palette button{padding:5px;font-size:19px;line-height:1.3}
-@media(max-width:600px){#items_v2 .iv2-translations .item-language-layout{display:block}#items_v2 .iv2-grid{grid-template-columns:1fr}#items_v2 .iv2-pricing{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){#items_v2 .iv2-translations .item-language-columns{display:block}#items_v2 .iv2-grid{grid-template-columns:1fr}#items_v2 .iv2-pricing{grid-template-columns:1fr 1fr}}
+
+#items_v2 .iv2-translations .item-language-columns{margin-top:20px}
+#items_v2 .iv2-translations .item-language-sidebar{padding-right:16px;border-right:1px solid var(--iv2-line)}
+#items_v2 #iv2-item_translation_chips{display:flex;flex-direction:column;gap:8px}
+#items_v2 #iv2-item_translation_chips button{text-align:left;white-space:normal;border-radius:8px;padding:10px 12px}
+#items_v2 .item-language-chevron:after{content:'+';font-size:20px;color:var(--iv2-blue)}
+#items_v2 [aria-expanded=true] .item-language-chevron:after{content:'−'}
+#items_v2 .item-language-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+#items_v2 .item-language-status{font-size:11px;color:var(--iv2-muted);margin-top:20px}
+#items_v2 input,#items_v2 textarea,#items_v2 select{scroll-margin-bottom:110px}
+@media(max-width:600px){#items_v2 .iv2-translations .item-language-sidebar{padding-right:0;border-right:0}#items_v2 #iv2-item_translation_chips{flex-direction:row;flex-wrap:wrap}}
