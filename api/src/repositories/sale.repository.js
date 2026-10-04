@@ -11221,7 +11221,7 @@ class SalesRepository {
       if (discountDescription !== null)
         updateFields.discount_description = String(discountDescription);
       if (preparationNote !== undefined) updateFields.preparation_note = note;
-      if (newTableNo !== null && newTableNo !== '') updateFields.table_number = String(newTableNo);
+      if (newTableNo != null && newTableNo !== '') updateFields.table_number = String(newTableNo);
 
       /*
        * THE TABLE'S ID MOVES WITH ITS NUMBER.
@@ -11248,8 +11248,10 @@ class SalesRepository {
          */
         updateFields.table_id = '';
       }
-      if (dineType !== null && dineType !== '') updateFields.dine_type = String(dineType);
-      if (personCount !== null && personCount !== '')
+      if (dineType != null && dineType !== '') updateFields.dine_type = String(dineType);
+      // Partial desktop edits omit seating fields. Do not turn an omitted
+      // cover count into NaN (or an omitted table/type into "undefined").
+      if (personCount != null && personCount !== '')
         updateFields.person_count = parseInt(personCount, 10);
 
       if (orderDoc.captain_transfer_allocation) {

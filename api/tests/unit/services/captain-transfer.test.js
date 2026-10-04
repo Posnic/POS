@@ -1315,7 +1315,10 @@ test.each(['reduction', 'discount'])(
     const policy = require('../../../src/services/captain-edit-policy');
     await expect(policy.authorize(input)).rejects.toMatchObject({
       status: 422,
-      message: 'Enter a reason for this change.',
+      message:
+        kind === 'reduction'
+          ? 'Manager approval required: cancellation'
+          : 'Enter a reason for this change.',
     });
     expect((await editPreview.preview(input)).total_amount).toBe(kind === 'reduction' ? 52.5 : 95);
     input.body.change_reason = 'Customer requested';

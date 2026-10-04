@@ -80,16 +80,16 @@ test('legacy desktop additions retain Captain identity and do not request void a
   expect(input.body.items[0].line_id).toBe('phone-line-1');
 });
 
-test('legacy desktop quantity reductions still require a reason and permission', async () => {
+test('quantity corrections need permission but no modification reason', async () => {
   sale.items[0].line_id = 'phone-line-1';
   await db.collection('sales').updateOne({ _id: sale._id }, { $set: { items: sale.items } });
   const input = req({
     order_id: String(sale._id),
     items: [{ product_id: sale.items[0].item_id, quantity: 1 }],
   });
-  await expect(policy.authorize(input)).rejects.toThrow('Enter a reason');
-  input.body.change_reason = 'Customer changed the order';
   await expect(policy.authorize(input)).rejects.toThrow('Manager approval required');
+  input.user.access.pos.void_sale = true;
+  await expect(policy.authorize(input)).resolves.toMatchObject({ reason: '' });
 });
 test('fire is idempotent under retries and preserves bill quantity and service identity', async () => {
   const input = req({ requestId: require('crypto').randomUUID(), items: ['c0i0'] });
@@ -135,6 +135,7 @@ test('handover validates branch and permission and retains original author', asy
 test('cancellation requires a reason and a manager proof bound to this order and actor', async () => {
   const input = req({
     order_id: String(sale._id),
+    status: 'cancelled',
     items: [{ ...sale.items[0], item_quantity: 1 }],
   });
   await expect(policy.authorize(input)).rejects.toThrow('Enter a reason');
