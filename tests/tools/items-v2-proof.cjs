@@ -2,6 +2,11 @@ const fs = require('node:fs'), path = require('node:path'), assert = require('no
 const root = path.resolve(__dirname, '../..');
 const puppeteer = require(require.resolve('puppeteer', { paths: [path.join(root, 'api'), process.env.POSNIC_TEST_DEPENDENCIES].filter(Boolean) }));
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const built = process.argv.includes('--built');
+const dashboard = built ? read('frontend/public/dashboard.html') : '';
+const stylesheet = built
+ ? read('frontend/public/' + dashboard.match(/href="(style\/dashboard\.[a-f0-9]+\.css)"/)[1])
+ : read('frontend/static/style/css/modules/items-v2.css');
 const output = path.join(root, 'output/item-create-v2'); fs.mkdirSync(output, { recursive: true });
 const stub = `window.savedRequests=[];window.PosnicPro={
  local:{get:k=>({currencySign:'₹',tax_type:'inclusive',default_tax_id:'gst5'})[k]},
@@ -9,13 +14,20 @@ const stub = `window.savedRequests=[];window.PosnicPro={
  get(p,ok,fail){if(p.url==='settings/group/channels')return ok({data:{values:{menu_dayparts:[{id:'lunch',name:'Lunch'}]}}});if(p.url==='setting/modifierGroups')return ok({data:[{id:'spice',name:'Spice level'}]});if(p.url.includes('Tax')){if(window.failTax)return fail();return ok({data:[{tax_id:'gst5',tax_name:'GST 5%',tax_value:5}]});}ok({suggestions:[{id:'food',name:'Food'}]});},
  request(p,ok,fail){window.savedRequests.push(JSON.parse(p.data));setTimeout(()=>{if(window.failSave)return fail({responseText:JSON.stringify({message:'Connection unavailable. Your entries are still here.'})});ok({type:'success',data:{id:'sample-item'}});},80);}
 };`;
-const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Posnic · Create item v2</title><style>body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#f6f8fb} .demo-head{background:white;border-bottom:1px solid #e2e8f1;padding:20px 36px;display:flex;justify-content:space-between;align-items:center;gap:20px}.demo-head b{color:#0963e8;font-size:25px}.demo-head span{color:#61738e;font-size:12px} ${read('frontend/static/style/css/modules/items-v2.css')}</style></head><body><div class="demo-head"><b>Posnic</b><span>Preview only · no shop data changes</span><label style="font-size:12px;color:#61738e">Business <select id="preview-business" style="padding:8px;border:1px solid #d6dfec;border-radius:6px" onchange="PosnicPro.items_v2.setBusinessContext(this.value)"><option value="retail">Retail shop</option><option value="restaurant">Restaurant / café</option><option value="service">Services</option></select></label></div>${read('frontend/modules/items_v2.html')}<script>${read('frontend/static/script/js/jquery.min.js')}</script><script>${stub}</script><script>${read('frontend/static/script/js/modules/js/items_v2.js')}</script><script>PosnicPro.items_v2.showAdd();</script></body></html>`;
+const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Posnic · Create item v2</title><style>body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#f6f8fb} .demo-head{background:white;border-bottom:1px solid #e2e8f1;padding:20px 36px;display:flex;justify-content:space-between;align-items:center;gap:20px}.demo-head b{color:#0963e8;font-size:25px}.demo-head span{color:#61738e;font-size:12px} ${stylesheet}</style></head><body><div class="demo-head"><b>Posnic</b><span>Preview only · no shop data changes</span><label style="font-size:12px;color:#61738e">Business <select id="preview-business" style="padding:8px;border:1px solid #d6dfec;border-radius:6px" onchange="PosnicPro.items_v2.setBusinessContext(this.value)"><option value="retail">Retail shop</option><option value="restaurant">Restaurant / café</option><option value="service">Services</option></select></label></div>${read('frontend/modules/items_v2.html')}<script>${read('frontend/static/script/js/jquery.min.js')}</script><script>${stub}</script><script>${read('frontend/static/script/js/modules/js/items_v2.js')}</script><script>PosnicPro.items_v2.showAdd();</script></body></html>`;
 fs.writeFileSync(path.join(output, 'preview.html'), html);
 (async () => {
  const browser = await puppeteer.launch({headless:true});
  try {
   const page=await browser.newPage(), errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.setViewport({width:1320,height:1060});await page.setContent(html);
+  const saveStyle = await page.$eval('#iv2-save', el => {
+   const style = getComputedStyle(el);
+   return { background: style.backgroundColor, color: style.color, accent: style.getPropertyValue('--iv2-blue').trim() };
+  });
+  assert.equal(saveStyle.accent, '#0963e8', 'the bundled module root must define its colours');
+  assert.equal(saveStyle.background, 'rgb(9, 99, 232)', 'Save must have an opaque blue background');
+  assert.equal(saveStyle.color, 'rgb(255, 255, 255)', 'Save text must contrast with the background');
   await page.type('#iv2-name','Tea');await page.keyboard.press('Enter');
   assert.equal(await page.evaluate(()=>document.activeElement.id),'iv2-price');
   await page.click('#iv2-save');assert.equal(await page.evaluate(()=>savedRequests.length),0);

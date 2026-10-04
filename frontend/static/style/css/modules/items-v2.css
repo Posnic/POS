@@ -36,5 +36,5 @@
 @media(max-width:420px){#items_v2 .iv2-workspace{padding:20px 12px}#items_v2 .iv2-section{padding:20px 16px}#items_v2 .iv2-stock-modes{grid-template-columns:1fr}#items_v2 .iv2-grid{gap:12px}#items_v2 .iv2-actions{padding:18px 16px}#items_v2 .iv2-actions p{max-width:140px}#items_v2 .iv2-tax-row{display:block}#items_v2 .iv2-tax-row select{max-width:100%}}
 
 /* Focus belongs to the complete currency control, not its inner input. */
-#items_v2 .iv2-money:focus-within{outline:3px solid #a8ceff;outline-offset:2px;border-color:var(--iv2-blue)}
+#items_v2 .iv2-money:focus-within{outline:3px solid #a8ceff!important;outline-offset:2px;border-color:var(--iv2-blue)}
 #items_v2 .iv2-money input:focus,#items_v2 .iv2-money input:focus-visible{outline:none;box-shadow:none}
