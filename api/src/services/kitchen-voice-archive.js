@@ -112,7 +112,9 @@ async function run(req) {
     row.bucket = bucket();
     row.key =
       'kitchen-voice/' +
-      crypto.createHash('sha256').update(JSON.stringify(scope)).digest('hex') +
+      encodeURIComponent(String(scope.license)) +
+      '/' +
+      encodeURIComponent(String(scope.branch_id)) +
       '/' +
       id +
       '/' +
