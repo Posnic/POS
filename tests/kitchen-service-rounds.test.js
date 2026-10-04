@@ -1,6 +1,23 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { rounds, tickets } = require('../api/src/helpers/kitchen-rounds');
+
+test('paid takeaway preparation removes only ready quantities while service retains them', () => {
+  const order = sale();
+  Object.assign(order, { dine_type: 'Take away', sales_id: '104', payment_status: 'Paid',
+    kitchen_work: { c0: { state: 'preparing', lines: { c0i0: { ready: 1 } } } } });
+  const shown = tickets(order);
+  assert.equal(shown[0].takeaway, true);
+  assert.equal(shown[0].orderNumber, '104');
+  assert.equal(shown[0].items[0].qty, 1);
+  assert.equal(rounds(order)[0].items[0].remaining, 2);
+  order.kitchen_work.c0.lines.c0i0.ready = 2;
+  assert.equal(tickets(order).length, 1);
+  assert.equal(tickets(order)[0].id, `${order._id}:c1`);
+  order.kitchen_work.c1 = { state: 'ready' };
+  assert.deepEqual(tickets(order), []);
+  assert.equal(rounds(order).length, 2);
+});
 const line = (qty, process = 'add') => ({
   item_id: 'rice',
   item_name: 'Rice',

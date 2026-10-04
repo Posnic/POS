@@ -34,6 +34,11 @@ router.post(
 );
 router.get('/paper-orders/photos/:id', limit, wrap(paper.read));
 router.post(
+  '/paper-orders/reference',
+  rateLimit({ windowMs: 60000, limit: 8 }),
+  wrap(paper.attach)
+);
+router.post(
   '/orders/edit/preview',
   rateLimit({ windowMs: 60000, limit: 120 }),
   wrap(require('../services/captain-order-preview').preview)

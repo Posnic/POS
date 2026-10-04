@@ -9,6 +9,16 @@ async function authorize(req, { preview = false } = {}) {
   if (!req.user || !allowed(req.user, 'sales')) fail('Sales permission is required.', 403);
   const c = await context(req),
     body = req.body;
+  if (
+    body.preparation_note !== undefined &&
+    (typeof body.preparation_note !== 'string' ||
+      body.preparation_note.length > 500 ||
+      Array.from(body.preparation_note).some((character) => {
+        const code = character.charCodeAt(0);
+        return code < 32 && ![9, 10, 13].includes(code);
+      }))
+  )
+    fail('Preparation note must be 500 characters or fewer.', 422);
   if (!ObjectId.isValid(String(body.order_id))) fail('Choose an order.');
   const sale = await req.db.collection('sales').findOne({
     _id: new ObjectId(String(body.order_id)),

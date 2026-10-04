@@ -1349,7 +1349,10 @@ const processSale = async (
     const finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
     if (finalSaleData.kitchen_required) {
       finalSaleData.kitchen_closed = !require('../helpers/kitchen-rounds')
-        .rounds({ ...existingSale, ...finalSaleData })
+        .rounds({
+          ...(existingSale?.toObject ? existingSale.toObject() : existingSale),
+          ...finalSaleData,
+        })
         .some((round) => round.items.some((item) => item.remaining > 0));
     }
 
@@ -1940,6 +1943,17 @@ const processSale = async (
       }
     }
 
+    if (/^take[\s_-]*away$/i.test(finalSaleData.dine_type || '')) {
+      try {
+        await require('./takeaway-completion').recover(
+          await BaseModel.getDb(),
+          { branchId, license: licenseId },
+          saleId
+        );
+      } catch (error) {
+        console.warn('[takeaway] Completion reconciliation pending:', error.message);
+      }
+    }
     return savedAnswer(saleId, salePrefixedId);
   } catch (error) {
     console.error('processSale Error:', error);
@@ -1996,6 +2010,11 @@ const getTablesWithActiveOrders = async (branchId) => {
       return { status: false, message: 'Invalid Branch ID format', data: [] };
     }
 
+    await require('./takeaway-completion').recover(await BaseModel.getDb(), {
+      branchId: branchObjectId,
+      license: BaseModel.license,
+    });
+
     const pipeline = [
       {
         $match: {
@@ -2024,6 +2043,15 @@ const getTablesWithActiveOrders = async (branchId) => {
            */
           orders: { $sum: 1 },
           paidOrders: { $sum: { $cond: [{ $eq: ['$payment_status', 'Paid'] }, 1, 0] } },
+          sales: {
+            $push: {
+              id: '$_id',
+              number: '$sales_id',
+              since: '$created_date',
+              amount: '$sales_total',
+              payment_status: '$payment_status',
+            },
+          },
           since: { $min: { $ifNull: ['$created_date', '$date'] } },
           amount: { $sum: { $ifNull: ['$sales_total', 0] } },
         },
@@ -2035,6 +2063,7 @@ const getTablesWithActiveOrders = async (branchId) => {
           dine_type: '$_id.dine_type',
           orders: 1,
           paidOrders: 1,
+          sales: 1,
           since: 1,
           amount: 1,
         },
@@ -2081,6 +2110,7 @@ const getTablesWithActiveOrders = async (branchId) => {
     const detail = new Map();
     let hasTakeaway = false;
     let takeaway = null;
+    const takeawayOrders = [];
 
     const remember = (key, res) => {
       const was = detail.get(key);
@@ -2106,6 +2136,16 @@ const getTablesWithActiveOrders = async (branchId) => {
       if (dType === 'Take away' || dType === 'Takeaway') {
         hasTakeaway = true;
         remember('__takeaway__', res);
+        for (const sale of res.sales || []) {
+          takeawayOrders.push({
+            sale_id: String(sale.id),
+            number: String(sale.number || sale.id),
+            orders: 1,
+            since: sale.since ? new Date(sale.since).toISOString() : null,
+            amount: Number(sale.amount) || 0,
+            payment_status: sale.payment_status,
+          });
+        }
       } else if (tNum !== '') {
         tables.push(tNum);
         remember(tNum, res);
@@ -2144,6 +2184,11 @@ const getTablesWithActiveOrders = async (branchId) => {
       data: {
         tables: uniqueTables,
         has_takeaway: hasTakeaway,
+        takeaway_orders: takeawayOrders.sort(
+          (a, b) =>
+            String(a.since || '').localeCompare(String(b.since || '')) ||
+            a.sale_id.localeCompare(b.sale_id)
+        ),
         /*
          * How many open orders a table may have, so a handset can grey out a
          * full table instead of letting a waiter walk to it, type an order and
@@ -4306,7 +4351,7 @@ module.exports = {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel, newTableId, seenAt, editPolicy } = {}
+    { SaleModel, newTableId, seenAt, editPolicy, preparationNote } = {}
   ) =>
     salesRepository.updateOrderModel(
       orderId,
@@ -4324,6 +4369,7 @@ module.exports = {
         newTableId,
         seenAt,
         editPolicy,
+        preparationNote,
       }
     ),
   getFrequentItemsForBranch: async (branchId, limit, { SaleModel } = {}) =>
@@ -4365,10 +4411,11 @@ module.exports = {
    * out, the paper comes out. See the block above requestBillPrintModel for
    * why none of them touches payment_status.
    */
-  requestBillPrint: async (branchId, tableNumber, askedBy, { SaleModel, copies } = {}) =>
+  requestBillPrint: async (branchId, tableNumber, askedBy, { SaleModel, copies, saleId } = {}) =>
     salesRepository.requestBillPrintModel(branchId, tableNumber, askedBy, {
       SaleModel: getModel(SaleModel),
       copies,
+      saleId,
     }),
   pendingBillPrints: async (branchId, { SaleModel } = {}) =>
     salesRepository.pendingBillPrintsModel(branchId, { SaleModel: getModel(SaleModel) }),

@@ -332,6 +332,7 @@ class KOTManager {
       }
       if (this.isPolling && key && !printLedger.deliveryPlan(key)) this._announceToKitchen(sale, job.items, job.type);
       const counterResults = await this.silentPrint({ ...sale, items: job.items,
+        ...(typeof job.preparation_note === 'string' ? { preparation_note:job.preparation_note } : {}), note_only:job.note_only,
         _deliveryKey: key, _printKind: job.type === 'modified' ? 'edit' : job.type }, printers, false, true);
       if (key) printLedger.settle(key, _allPrinted(counterResults), _firstReason(counterResults));
       if (!counterResults?.length || counterResults.some((r) => r.status !== 'success')) {
@@ -726,7 +727,8 @@ class KOTManager {
             if (!printLedger.deliveryPlan(jobKey)) this._announceToKitchen(sale, jobItems, jobType);
 
             const jobResults = await this.silentPrint(
-              { ...sale, _deliveryKey: jobKey, _printKind: jobType === 'modified' ? 'edit' : jobType, items: jobItems },
+              { ...sale, _deliveryKey: jobKey, _printKind: jobType === 'modified' ? 'edit' : jobType, items: jobItems,
+                ...(typeof job.preparation_note === 'string' ? {preparation_note:job.preparation_note} : {}), note_only:job.note_only },
               printerNames
             );
             // Complete only when every destination has its copy.
@@ -1369,7 +1371,8 @@ class KOTManager {
     const placeLine = placeParts.join('   ');
     /* What the customer said about the whole order, and - for a delivery -
        where it is going. Both were on the sale and neither was printed. */
-    const orderNote   = [sale.outlet_snapshot?.name, sale.room_reference ? 'Room / reference: ' + sale.room_reference : '', String(sale.notes || sale.note || '').trim()].filter(Boolean).join(' · ');
+    const preparationNote = String(sale.preparation_note ?? sale.notes ?? sale.note ?? '').trim();
+    const orderNote   = [sale.outlet_snapshot?.name, sale.room_reference ? 'Room / reference: ' + sale.room_reference : '', preparationNote || (sale.note_only ? 'Preparation note cleared' : '')].filter(Boolean).join(' · ');
     const deliverTo   = String(sale.fulfilment || '') === 'delivery'
       ? [sale.customer_name, sale.customer_address, sale.customer_phone].filter(Boolean).map(String).join(' / ')
       : '';
@@ -1378,7 +1381,7 @@ class KOTManager {
     const saleIdDisplay = rawId ? (String(rawId).toUpperCase().startsWith('SID') ? rawId : 'SID' + rawId) : '';
 
     let items = [];
-    if (Array.isArray(sale.items) && sale.items.length > 0) {
+    if (Array.isArray(sale.items) && (sale.items.length > 0 || sale.note_only === true)) {
       items = sale.items;
     } else if (printKind === 'edit' && Array.isArray(sale.changes) && sale.changes.length) {
       const last = sale.changes[sale.changes.length - 1];

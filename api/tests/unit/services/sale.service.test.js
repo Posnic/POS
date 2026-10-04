@@ -1530,6 +1530,52 @@ describe('SalesService', () => {
       expect(result.message).toBe('Sale not found for update');
     });
 
+    test('desktop payment preserves served quantities stored outside the Mongoose schema', async () => {
+      const mongoose = require('mongoose');
+      const Model =
+        mongoose.models.TakeawayPaymentSnapshot ||
+        mongoose.model(
+          'TakeawayPaymentSnapshot',
+          new mongoose.Schema(
+            {
+              items: Array,
+              changes: Array,
+              kitchen_required: Boolean,
+              floor_lifecycle: Boolean,
+              payment_status: String,
+              sale_process: String,
+              sales_id: String,
+              dine_type: String,
+            },
+            { strict: true }
+          )
+        );
+      const doc = Model.hydrate({
+        _id: SALE_ID,
+        sales_id: 'TA-PAID',
+        sale_process: 'KOT',
+        payment_status: 'Unpaid',
+        dine_type: 'Take away',
+        kitchen_required: true,
+        floor_lifecycle: true,
+        items: [{ item_id: ITEM_ID, item_quantity: 2, item_price: 100 }],
+        changes: [{ items: [{ item_id: ITEM_ID, item_quantity: 2, process: 'add' }] }],
+        kitchen_service: { c0i0: { quantity: 2, by: 'staff' } },
+      });
+      expect(doc.kitchen_service).toBeUndefined();
+      expect(doc.toObject().kitchen_service.c0i0.quantity).toBe(2);
+      const set = jest.spyOn(doc, 'set');
+      salesRepository.getById.mockResolvedValue(doc);
+      const result = await salesService.processSale(
+        makeSaleData({ dine_type: 'Take away' }),
+        SALE_ID,
+        'Edit',
+        makeContext()
+      );
+      expect(result.status).toBe(true);
+      expect(set.mock.calls[0][0].kitchen_closed).toBe(true);
+    });
+
     test('calls salesRepository.save for edit mode', async () => {
       const fakeSaleDoc = {
         items: [
@@ -2042,6 +2088,56 @@ describe('SalesService', () => {
   // ── getTablesWithActiveOrders ─────────────────────────────────────────────
 
   describe('getTablesWithActiveOrders', () => {
+    test('keeps takeaway identities and payment status separate while retaining old summary', async () => {
+      salesRepository.aggregate.mockResolvedValue([
+        {
+          dine_type: 'Take away',
+          table_number: '',
+          orders: 2,
+          amount: 300,
+          sales: [
+            {
+              id: 'b',
+              number: '102',
+              since: '2026-10-04T11:00:00Z',
+              amount: 200,
+              payment_status: 'Unpaid',
+            },
+            {
+              id: 'a',
+              number: '101',
+              since: '2026-10-04T10:00:00Z',
+              amount: 100,
+              payment_status: 'Paid',
+            },
+          ],
+        },
+      ]);
+      const result = await salesService.getTablesWithActiveOrders(BRANCH_ID);
+      expect(result.data.takeaway_orders).toEqual([
+        {
+          sale_id: 'a',
+          number: '101',
+          orders: 1,
+          since: '2026-10-04T10:00:00.000Z',
+          amount: 100,
+          payment_status: 'Paid',
+        },
+        {
+          sale_id: 'b',
+          number: '102',
+          orders: 1,
+          since: '2026-10-04T11:00:00.000Z',
+          amount: 200,
+          payment_status: 'Unpaid',
+        },
+      ]);
+      expect(result.data.takeaway_detail.orders).toBe(2);
+      expect(
+        salesRepository.aggregate.mock.calls[0][0].find((stage) => stage.$group).$group.sales.$push
+          .id
+      ).toBe('$_id');
+    });
     test('returns error when branchId is missing', async () => {
       const result = await salesService.getTablesWithActiveOrders(null);
       expect(result.status).toBe(false);
