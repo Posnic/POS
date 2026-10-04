@@ -55,6 +55,7 @@
         document.querySelector('#items_v2 input[name="iv2-stock"][value="' + (kind === 'product' ? 'tracked' : 'untracked') + '"]').checked = true;
         text('iv2-product-label', restaurant ? PosnicPro.i18n.t('lang_packaged_product', 'Packaged product') : PosnicPro.i18n.t('lang_retail_product', 'Retail product'));
     }
+    var touched = new Set();
     var bound = false, taxReady = false, taxLoading = false, busy = false, saved = false, attempted = false;
     function value(id) { return document.getElementById(id).value; }
     function selected(name) { var el = document.querySelector('#items_v2 input[name="' + name + '"]:checked'); return el ? el.value : ''; }
@@ -80,6 +81,7 @@
             text('iv2-price-hint', f.family ? P.i18n.t('lang_item_price_variants', 'Each variant uses its own price and discount.') : P.i18n.t('lang_item_price_open', 'Customer price is entered at the sale.'));
             text('iv2-preview-price', f.family ? P.i18n.t('lang_variants_2', 'Variants') : P.i18n.t('lang_cashier_types_the_price', 'Cashier types the price')); return;
         }
+        text('iv2-preview-price', '—');
         text('iv2-price-hint', P.i18n.t('lang_item_price_calculating', 'Checking price…'));
         if (!taxReady || !Number.isFinite(params.price)) return;
         previewTimer = setTimeout(function () {
@@ -111,19 +113,21 @@
         var details = P.itemsV2Details.status();
         if (details.hsn) f.taxRate = details.tax;
         var price = Number(f.price);
-        show('iv2-zero-price', (named || attempted) && price === 0 && !f.openPrice);
+        show('iv2-zero-price', (attempted || touched.has('iv2-price')) && price === 0 && !f.openPrice);
         show('iv2-quantity-row', tracked && !f.family);
         document.getElementById('iv2-quantity').disabled = !tracked || f.family;
-        show('iv2-zero-stock', (named || attempted) && tracked && Number(f.quantity) === 0);
+        show('iv2-zero-stock', (attempted || touched.has('iv2-quantity')) && tracked && Number(f.quantity) === 0);
         document.querySelector('#items_v2 input[name="iv2-stock"][value="tracked"]').disabled = f.kind === 'service' || busy || saved;
         text('iv2-stock-note', tracked ? (f.zeroStock === 'negative' ? PosnicPro.i18n.t('lang_for_this_item_only_sales_can_take_its_stoc', 'For this item only: sales can take its stock below zero.') : PosnicPro.i18n.t('lang_stock_tracking_applies_to_this_item_only', 'Stock tracking applies to this item only.')) : 'This item can be sold without an opening stock quantity.');
         text('iv2-preview-name', f.name.trim() || 'Your next item');
         text('iv2-preview-tax', taxReady ? (Number(f.taxRate) ? 'Customer pays · including tax' : 'Customer pays · no tax selected') : 'Loading tax settings');
         pricePreview(f, details);
+        P.itemsV2Workspace.update(capabilities);
         var title = !named ? 'Let’s get started' : a.error ? 'A little more to decide' : a.later ? PosnicPro.i18n.t('lang_saved_for_later_not_ready_to_sell', 'Saved for later, not ready to sell') : PosnicPro.i18n.t('lang_ready_to_sell', 'Ready to sell');
         var note = !named ? 'Give your item a name to begin.' : a.error ? a.error : a.later ? 'Add stock before looking for this item in sale search.' : f.openPrice ? 'The cashier enters the price when selling.' : !price ? 'This item will sell at zero. You can edit the price later.' : tracked ? 'Opening stock: ' + a.quantity + '. Your stock choice will be saved.' : 'No stock count needed. Save it and start selling.';
         var panel = document.getElementById('iv2-readiness');
-        panel.dataset.state = a.error || a.later ? 'attention' : 'ready';
+        if (a.error && !attempted) { title = P.i18n.t('lang_iv2_taking_shape', 'Your item is taking shape'); note = P.i18n.t('lang_iv2_optional_hint', 'Enter the essentials. Optional tabs can wait.'); }
+        panel.dataset.state = a.error && !attempted ? 'neutral' : a.error || a.later ? 'attention' : 'ready';
         panel.querySelector('strong').textContent = title; panel.querySelector('p').textContent = note;
         document.getElementById('iv2-check-name').dataset.done = String(named);
         document.getElementById('iv2-check-price').dataset.done = String(Number.isFinite(price) && (price > 0 || f.confirmZero || f.openPrice));
@@ -133,7 +137,7 @@
         text('iv2-error', message); show('iv2-error', true);
         var node = document.getElementById(target || 'iv2-error');
         if (node && node.id === 'iv2-zero-stock') node = node.querySelector('button');
-        if (node) { var details = node.closest('details'); if (details) details.open = true; node.focus(); node.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+        if (node) { P.itemsV2Workspace.reveal(node); var details = node.closest('details'); if (details) details.open = true; node.focus(); node.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
     }
     function loadTax() {
         if (!capabilities.tax) { taxReady = true; show('iv2-tax-error', false); return; }
@@ -150,6 +154,7 @@
         }, function () { taxLoading = false; show('iv2-tax-error', true); });
     }
     function reset() {
+        P.itemsV2Workspace.reset(); touched.clear();
         document.getElementById('iv2-form').reset(); P.itemsV2Details.reset(); applyBusinessContext(); saved = false; attempted = false;
         document.getElementById('iv2-fields').disabled = false;
         document.getElementById('iv2-save').disabled = false;
@@ -164,6 +169,7 @@
         if (busy || saved) return false;
         if (P.aclLoaded && P.aclLoaded() && !P.checkAccess('item', 'write')) { fail('You don’t have permission to create items.'); return false; }
         attempted = true; render();
+        if (!P.itemsV2Workspace.ready()) { fail(P.i18n.t('lang_iv2_draft_lists', 'Some draft selections are unavailable. Reload to retry, or discard the draft before saving.')); return false; }
         var f = fields(), a = assess(f);
         if (a.error) { fail(a.error, a.field); return false; }
         var advancedError = P.itemsV2Details.validate();
@@ -186,12 +192,8 @@
             unlock();
             if (!r || r.type !== 'success') { fail(r && r.message || 'Couldn’t save. Your entries are still here.'); return; }
             saved = true; document.getElementById('iv2-fields').disabled = true; document.getElementById('iv2-save').disabled = true; text('iv2-save', 'Saved');
-            var banner = document.getElementById('iv2-success'); banner.replaceChildren();
-            var message = document.createElement('strong'); message.textContent = f.name.trim() + ' saved. ' + (a.later ? 'Add stock before selling.' : f.openPrice ? 'The cashier enters the price when selling.' : !a.price ? PosnicPro.i18n.t('lang_selling_price_is_zero', 'Selling price is zero.') : PosnicPro.i18n.t('lang_ready_to_sell_2', 'Ready to sell.')); banner.appendChild(message);
-            var another = document.createElement('button'); another.type = 'button'; another.textContent = 'Create another'; another.onclick = reset; banner.appendChild(another);
             var id = r.data && (r.data.id || r.data._id || r.data.created && r.data.created[0]);
-            if (id && /^[a-zA-Z0-9_-]+$/.test(String(id))) { var link = document.createElement('a'); link.href = '#/items/' + encodeURIComponent(id) + '/edit'; link.textContent = 'Edit full details'; banner.appendChild(link); }
-            show('iv2-success', true); banner.scrollIntoView({ block: 'start', behavior: 'smooth' }); another.focus();
+            P.itemsV2Workspace.saved(data, id, a, f.family);
         }, function (xhr) {
             unlock(); var message = 'Couldn’t confirm the save. Check your item list before trying again.';
             try { message = JSON.parse(xhr.responseText).message || message; } catch (_) { /* preserve the form */ }
@@ -203,6 +205,7 @@
     function bind() {
         if (bound) return; bound = true;
         var form = document.getElementById('iv2-form'); form.addEventListener('submit', save);
+        form.addEventListener('focusout', function (event) { touched.add(event.target.id); if (!saved && !busy) render(); });
         form.addEventListener('input', function (event) {
             if (event.target.id === 'iv2-name' || event.target.id === 'iv2-price') document.getElementById('iv2-confirm-zero').checked = false;
             if (event.target.id === 'iv2-quantity') document.querySelectorAll('#items_v2 input[name="iv2-zero-stock"]').forEach(function (el) { el.checked = false; });
@@ -231,6 +234,13 @@
         $('.page_loader,#osk-container').hide(); $('#items_v2').show();
         capabilities = readCapabilities();
         P.itemsV2Details.init();
+        P.itemsV2Workspace.init({refresh:render,reset:reset,duplicate:function () {
+            P.itemsV2Workspace.reset(); saved=false; attempted=false; touched.clear();
+            document.getElementById('iv2-fields').disabled=false; document.getElementById('iv2-save').disabled=false;
+            ['iv2-sku','iv2-barcode','iv2-gtin','iv2-plu','iv2-alt-barcodes','iv2-quantity'].forEach(function(id){document.getElementById(id).value='';});
+            document.querySelectorAll('#items_v2 [name="iv2-zero-stock"]').forEach(function(e){e.checked=false;});
+            P.itemsV2Details.duplicate(); render(); document.getElementById('iv2-name').focus();
+        }});
         show('iv2-tax-field', capabilities.tax); document.getElementById('iv2-tax-type').hidden = !capabilities.tax;
         if (!bound) applyBusinessContext();
         if (capabilities.restaurant) loadRestaurantOptions();

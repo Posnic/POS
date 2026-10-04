@@ -220,5 +220,17 @@
         }
         reset();
     }
-    P.itemsV2Details={init:init,reset:reset,upload:upload,data:data,validate:validate,update:update,status:status,family:family};
+    function draft() { captureVariants(); return variants.map(function(row){var copy=Object.assign({},row); delete copy.photo; return copy;}); }
+    function restoreDraft(rows) {
+        if (!isFamily() || !Array.isArray(rows) || rows.length > 50) return;
+        variants=rows.map(function(row){return Object.assign({},row,{photo:''});});
+        // generate captures current controls, so start with an empty rendered list.
+        el('variant-rows').replaceChildren(); generate();
+    }
+    function duplicate() {
+        captureVariants();
+        variants.forEach(function(row){['sku_id','barcode_id','gtin'].forEach(function(key){row[key]='';});row.available_quantity=0;});
+        el('variant-rows').replaceChildren(); if(isFamily())generate();
+    }
+    P.itemsV2Details={draft:draft,restoreDraft:restoreDraft,duplicate:duplicate,init:init,reset:reset,upload:upload,data:data,validate:validate,update:update,status:status,family:family};
 }(typeof window==='undefined'?globalThis:window));
