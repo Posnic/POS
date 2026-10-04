@@ -1,5 +1,6 @@
 const pricingAuthority = require('../services/pricing-authority');
 const itemText = require('../utils/item-localization');
+const gtin = require('../utils/gtin');
 const { searchPattern } = require('../utils/safe-search');
 const tradingDay = require('../utils/trading-day');
 // src/repositories/item.repository.js
@@ -1856,7 +1857,7 @@ class ItemRepository extends BaseModel {
             ? new ObjectId(data.category_id)
             : '',
         discount_amount: parseFloat(data.discount_amount) || 0,
-        discount_percentage: parseInt(data.discount_percentage, 10) || 0,
+        discount_percentage: parseFloat(data.discount_percentage) || 0,
         hsncode: (data.hsn_code || '').trim(),
         hsndescription: (data.hsn_description || '').trim(),
         tax_method: (data.tax_method || '').trim(),
@@ -1994,6 +1995,13 @@ class ItemRepository extends BaseModel {
       if (data.tile_color !== undefined) {
         const tileColor = String(data.tile_color || '').trim();
         updateData.tile_color = /^#[0-9a-fA-F]{6}$/.test(tileColor) ? tileColor : '';
+      }
+
+      // Omitted identifiers preserve existing values; explicit input is validated.
+      if (Object.prototype.hasOwnProperty.call(data, 'gtin')) {
+        const parsed = gtin.parse(data.gtin);
+        updateData.gtin = parsed ? parsed.gtin : '';
+        updateData.gtin14 = parsed ? parsed.gtin14 : '';
       }
 
       // Quick code (owner ask): digits only, up to 6, or empty clears.

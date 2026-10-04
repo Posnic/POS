@@ -106,6 +106,8 @@
             "static/script/js/modules/js/items.js",
             "static/script/js/modules/js/item-translations.js",
             "static/script/js/modules/js/quick_items.js",
+            "static/script/js/modules/js/item-translations-v2.js",
+            "static/script/js/modules/js/items-v2-details.js",
             "static/script/js/modules/js/items_v2.js",
             "static/script/js/modules/js/lowstock.js",
             "static/script/js/modules/js/inventory_counts.js",
