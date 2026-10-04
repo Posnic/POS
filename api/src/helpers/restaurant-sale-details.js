@@ -20,11 +20,11 @@ module.exports = function restaurantSaleDetails(sale, timeZone) {
       (line) => line && typeof line === 'object'
     ),
     changes: (Array.isArray(sale.changes) ? sale.changes : [])
-      .filter((change) => change && typeof change === 'object')
+      .map((change) => (change && typeof change === 'object' ? change : {}))
       .map((change) => ({
         ...change,
-        items: (Array.isArray(change.items) ? change.items : []).filter(
-          (line) => line && typeof line === 'object'
+        items: (Array.isArray(change.items) ? change.items : []).map((line) =>
+          line && typeof line === 'object' ? line : {}
         ),
       })),
   };

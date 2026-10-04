@@ -18,6 +18,11 @@ test('payment and updated dates never masquerade as serving time',()=>{
   assert.deepEqual(details(input).events.map(e=>e.kind),['kot','kot','bill_printed']);
   const legacy=details({payment_status:'Paid',person_count:0});assert.equal(legacy.ordered_at,null);assert.equal(legacy.covers,0);assert.deepEqual(legacy.events,[]);
 });
+test('legacy gaps never shift the identities used for serving records',()=>{
+  const input=sale();input.changes.unshift(null);input.changes[1].items.unshift(null);
+  input.kitchen_service={c1i1:{quantity:2,at:'2026-10-05T06:40:00Z',by:'Asha'}};
+  const served=details(input).events.filter(e=>e.kind==='served');assert.equal(served.length,1);assert.equal(served[0].items[0].name,'Tea');
+});
 test('restaurant-only UI renders missing data honestly and escapes all stored text',()=>{
   const d=details(sale(),'Asia/Kolkata');d.taken_by='<img src=x onerror=alert(1)>';d.events[0].items[0].name='<script>alert(1)</script>';
   assert.equal(render(d,false,t),'');assert.equal(render(null,true,t),'');
