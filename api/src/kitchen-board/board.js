@@ -257,6 +257,7 @@
         }
         top.append(table, node('span', 'arrival', time(ticket.placedAt)));
         card.append(top);
+        if (ticket.preparationNote) card.append(node('p', 'note', ticket.preparationNote));
         if (ticket.voiceNotes?.length) {
           const voice = node(
             'button',

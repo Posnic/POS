@@ -658,11 +658,13 @@ test('paired Captain adds the same dish as a new preparation round without overw
   const headers={Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
   const input={order_id:String(id),seen_at:firstAt.toISOString(),items:[
     {product_id:String(product),line_id:'original-round',name:'Naan',quantity:1,price:40,item_description:'No butter'},
-    {product_id:String(product),line_id:'new-round',name:'Naan',quantity:2,price:40,item_description:'Extra butter'}],total_amount:120};
+    {product_id:String(product),line_id:'new-round',name:'Naan',quantity:2,price:40,item_description:'Extra butter'}],total_amount:120,preparation_note:'Serve together'};
   const response=await fetch(base+'/sales/updateOrder',{method:'POST',headers,body:JSON.stringify(input)});
   assert.equal(response.status,200,await response.clone().text());
   const sale=await db.collection('sales').findOne({_id:id});
   assert.equal(sale.sales_total,120);
+  assert.equal(sale.preparation_note,'Serve together');
+  assert.equal(sale.changes[1].preparation_note,'Serve together');
   assert.deepEqual(sale.items.map(item=>[item.line_id,item.item_quantity,item.item_description]),[
     ['original-round',1,'No butter'],['new-round',2,'Extra butter']]);
   assert.equal(sale.changes.length,2);
@@ -672,6 +674,39 @@ test('paired Captain adds the same dish as a new preparation round without overw
   const retry=await fetch(base+'/sales/updateOrder',{method:'POST',headers,body:JSON.stringify(input)});
   assert.notEqual(retry.status,200,'Stale edit must not duplicate a kitchen round');
   assert.equal((await db.collection('sales').findOne({_id:id})).changes.length,2);
+  const noteOnly={...input,seen_at:sale.updated_date.toISOString(),preparation_note:'Pack separately'};
+  const changed=await fetch(base+'/sales/updateOrder',{method:'POST',headers,body:JSON.stringify(noteOnly)});
+  assert.equal(changed.status,200,await changed.clone().text());
+  const noted=await db.collection('sales').findOne({_id:id});
+  assert.equal(noted.sales_total,120);
+  assert.deepEqual(noted.items,sale.items);
+  assert.equal(noted.changes.length,3);
+  assert.deepEqual(noted.changes[2].items,[]);
+  assert.equal(noted.changes[2].note_only,true);
+  assert.equal(noted.changes[2].preparation_note,'Pack separately');
+  assert.equal(noted.changes[1].preparation_note,'Serve together','Earlier print snapshot is immutable');
+  const tickets=require('../src/helpers/kitchen-rounds').tickets(noted);
+  assert.equal(tickets.flatMap(ticket=>ticket.items).reduce((n,item)=>n+item.qty,0),3);
+  assert.ok(tickets.every(ticket=>ticket.preparationNote==='Pack separately'));
+  const BaseModel=require('../src/models/base.model');
+  const previousGetDb=BaseModel.getDb;
+  BaseModel.getDb=async()=>db;
+  try {
+    const queue=await require('../src/repositories/sale.repository').multiKitchenPrintModel(String(branch._id),{onlySaleId:String(id)});
+    assert.equal(queue.status,true);
+    assert.equal(queue.data.length,1);
+    const jobs=queue.data[0].print_jobs;
+    assert.equal(jobs.length,3);
+    assert.equal(jobs[0].preparation_note,'','An earlier ticket must not inherit the latest note');
+    assert.equal(jobs[1].preparation_note,'Serve together');
+    assert.equal(jobs[1].items[0].item_quantity,2);
+    assert.equal(jobs[2].preparation_note,'Pack separately');
+    assert.equal(jobs[2].note_only,true);
+    assert.deepEqual(jobs[2].items,[]);
+    assert.equal(queue.data[0].new_last_printed_change_index,2);
+  } finally {BaseModel.getDb=previousGetDb;}
+  const invalid=await fetch(base+'/sales/updateOrder',{method:'POST',headers,body:JSON.stringify({...noteOnly,preparation_note:'x'.repeat(501)})});
+  assert.equal(invalid.status,422);
 });
 
 

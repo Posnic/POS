@@ -216,6 +216,7 @@ function tickets(sale) {
                 .toLowerCase()
                 .replace(/[\s_-]/g, '') === 'takeaway',
             placedAt: kitchenTime,
+            preparationNote: String(sale.preparation_note || ''),
             items,
           },
         ]

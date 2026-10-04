@@ -8022,6 +8022,8 @@ class SalesRepository {
               type: i === 0 ? 'new' : 'modified',
               timestamp: change.timestamp || null,
               items: addItems,
+              preparation_note:
+                typeof change.preparation_note === 'string' ? change.preparation_note : '',
               change_index: i + 1,
             });
             highestPrintedIndex = i;
@@ -8031,7 +8033,24 @@ class SalesRepository {
               type: 'cancel',
               timestamp: change.timestamp || null,
               items: cancelItems,
+              preparation_note:
+                typeof change.preparation_note === 'string' ? change.preparation_note : '',
               change_index: i + 1,
+            });
+            highestPrintedIndex = i;
+          }
+          if (
+            change.note_only === true &&
+            typeof change.preparation_note === 'string' &&
+            items.length === 0
+          ) {
+            printJobs.push({
+              type: 'modified',
+              timestamp: change.timestamp || null,
+              items: [],
+              change_index: i + 1,
+              preparation_note: change.preparation_note,
+              note_only: true,
             });
             highestPrintedIndex = i;
           }
@@ -10440,6 +10459,8 @@ class SalesRepository {
             ? { order_photos: doc.order_photos.map((photo) => ({ id: photo.id })) }
             : {}),
           kitchen_rounds: require('../helpers/kitchen-rounds').rounds(doc),
+          preparation_note: String(doc.preparation_note || ''),
+          preparation_notes: true,
           item_transfer: true,
           total_amount: doc.sales_total || doc.total || 0,
           subtotal: doc.sales_sub_total || doc.subtotal || 0,
@@ -10474,7 +10495,15 @@ class SalesRepository {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel, newTableId, seenAt, editPolicy, preview = false, previewContext } = {}
+    {
+      SaleModel,
+      newTableId,
+      seenAt,
+      editPolicy,
+      preparationNote,
+      preview = false,
+      previewContext,
+    } = {}
   ) {
     let finishCaptainEdit;
     let finishCapacityEdit;
@@ -11142,10 +11171,16 @@ class SalesRepository {
 
       const salesTotal = itemsSub - extraDiscountAmount;
       const mongoDate = new Date();
-      if (changesItems.length > 0) {
+      const note =
+        preparationNote === undefined ? orderDoc.preparation_note : String(preparationNote).trim();
+      const noteChanged =
+        preparationNote !== undefined && note !== String(orderDoc.preparation_note || '');
+      if (changesItems.length > 0 || noteChanged) {
         existingChanges.push({
           timestamp: mongoDate,
           items: changesItems,
+          ...(typeof note === 'string' ? { preparation_note: note } : {}),
+          ...(noteChanged && changesItems.length === 0 ? { note_only: true } : {}),
           actor,
           reason: audit.reason,
           kitchen_actor: kitchenActor(),
@@ -11181,6 +11216,7 @@ class SalesRepository {
       }
       if (discountDescription !== null)
         updateFields.discount_description = String(discountDescription);
+      if (preparationNote !== undefined) updateFields.preparation_note = note;
       if (newTableNo !== null && newTableNo !== '') updateFields.table_number = String(newTableNo);
 
       /*
@@ -13802,6 +13838,7 @@ class SalesRepository {
           list: docs.map((sale) => ({
             ...sale,
             assigned_staff: sale.assigned_staff,
+            preparation_notes: true,
             kitchen_rounds: require('../helpers/kitchen-rounds').rounds(sale),
             item_transfer: true,
           })),

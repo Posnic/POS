@@ -428,6 +428,7 @@
       top.appendChild(el('span', 'age', mins < 60 ? mins + 'm' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'));
     }
     node.appendChild(top);
+    if (ticket.preparationNote) node.appendChild(el('div', 'note', ticket.preparationNote));
     if (complete) node.appendChild(el('div', 'item-progress', ticket.items.some(function (i) { return i.readyToCollect > 0; }) ? '✓ Ready to collect' : '↗ Picked up'));
     if (ticket.outlet || ticket.roomReference) node.appendChild(el('div', 'note', [ticket.outlet, ticket.roomReference ? 'Room / reference: ' + ticket.roomReference : ''].filter(Boolean).join(' · ')));
     var arrived = new Date(ticket.placedAt);
