@@ -7679,7 +7679,7 @@ class SalesRepository {
 
         for (const sale of open) {
           const label = takeawayId
-            ? 'Take Away ' + (sale.sales_id || sale.token_id || takeawayId)
+            ? 'Take Away ' + (sale.takeaway_number || sale.token_id || sale.sales_id || takeawayId)
             : `Table ${table}`;
           for (let copy = 1; copy <= copies; copy += 1) {
             await queuePrintJob({
@@ -8799,9 +8799,6 @@ class SalesRepository {
       const orderDay = orderLocal.day();
       const orderMinutes = orderLocal.hours() * 60 + orderLocal.minutes();
 
-      // Generate token ID
-      const tokenId = String(clientTokenId || String(Math.floor(Math.random() * 900) + 100));
-
       // Map items - use raw shape (no Mongoose ObjectId for item ref to avoid validation errors)
       const itemCollection = db.collection('items');
       if (!staffOrder && items.some((item) => item.held === true)) {
@@ -9053,6 +9050,23 @@ class SalesRepository {
         console.warn('[online order] could not estimate the wait:', e.message);
       }
 
+      // Generate token ID
+      const isTakeaway =
+        String(dine_type || order || '')
+          .toLowerCase()
+          .replace(/[\s_-]/g, '') === 'takeaway';
+      const takeawayNumber = isTakeaway
+        ? await require('../services/takeaway-number').allocate(
+            db,
+            { branchId: branchObjectId, license: branchDoc.license },
+            data.takeaway_request_id || idempotencyKey || crypto.randomUUID(),
+            idempotencyKey || crypto.randomUUID()
+          )
+        : null;
+      const tokenId = takeawayNumber
+        ? String(takeawayNumber)
+        : String(clientTokenId || Math.floor(Math.random() * 900) + 100);
+
       const saleDocument = {
         /* What makes a resend safe. Absent on orders taken before this
            shipped, which is why the lookup above is skipped without one. */
@@ -9188,6 +9202,7 @@ class SalesRepository {
         updated_date: now,
         transaction_id: transactionId || '',
         token_id: tokenId,
+        ...(takeawayNumber ? { takeaway_number: takeawayNumber } : {}),
         /* The device this came from; see the note beside `client` above.
            Worked out once: calling twice would stamp two different times. */
         ...(clientRecord ? { client: clientRecord } : {}),

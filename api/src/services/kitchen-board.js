@@ -67,7 +67,7 @@ function project(sale) {
           String(sale.fulfilment || sale.dine_type || '')
             .toLowerCase()
             .replace(/[\s_-]/g, '') === 'takeaway',
-        orderNumber: String(sale.sales_id || sale.token_id || ''),
+        orderNumber: String(sale.takeaway_number || sale.sales_id || sale.token_id || ''),
         outlet: String(sale.outlet_snapshot?.name || ''),
         roomReference: String(sale.room_reference || ''),
         placedAt: round.fired_at || round.ordered_at,
@@ -92,6 +92,7 @@ async function list(req) {
           table_number: 1,
           sales_id: 1,
           token_id: 1,
+          takeaway_number: 1,
           'outlet_snapshot.name': 1,
           room_reference: 1,
           preparation_note: 1,

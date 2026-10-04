@@ -121,3 +121,45 @@ test('a bill cannot expose an intermediate transfer projection as a final amount
   await locks.cancel(db, { branchId: branch, license }, 'transfer-request-0001', 'manager');
   expect(await service.read(req())).toMatchObject({ totalMinor: 10500, dueMinor: 10500 });
 });
+
+test('completed paid receipts target one sale and reprint its payment without modifying it', async () => {
+  await db
+    .collection('sales')
+    .updateOne(
+      { _id: sale._id },
+      { $set: { sale_process: 'Completed', payment_status: 'Paid', floor_closed_at: new Date() } }
+    );
+  await db.collection('sales').insertOne({ ...sale, _id: new ObjectId() });
+  const r = {
+    ...req(),
+    query: { saleId: String(sale._id), receipt: 'true' },
+    body: { saleId: String(sale._id), request_id: 'receipt-test-request-001' },
+  };
+  const bill = await service.read(r);
+  expect(bill).toMatchObject({
+    paidMinor: 10500,
+    dueMinor: 0,
+    collectEnabled: false,
+    orderIds: [String(sale._id)],
+  });
+  const before = await db.collection('sales').findOne({ _id: sale._id });
+  await service.reprint(r);
+  await service.reprint(r);
+  const jobs = await db.collection('printjobs').find({}).toArray();
+  expect(jobs).toHaveLength(1);
+  expect(jobs[0].payload.title).toBe('PAID RECEIPT - COPY');
+  expect(jobs[0].payload.receiptDocument).toMatchObject({
+    payment_mode: 'Paid (receipt copy)',
+    partial_check: 'true',
+    partial_balance: 105,
+    payment_pending: 0,
+  });
+  expect(jobs[0].payload.payments).toEqual([
+    { label: 'Paid', amount: 105 },
+    { label: 'Remaining balance', amount: 0 },
+  ]);
+  expect(await db.collection('sales').findOne({ _id: sale._id })).toEqual(before);
+  await expect(
+    service.read({ ...r, tenantContext: { branchId: new ObjectId(), licenseId: license } })
+  ).rejects.toMatchObject({ status: 403 });
+});

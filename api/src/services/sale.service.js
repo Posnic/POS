@@ -336,7 +336,7 @@ const processSale = async (
         if (existingSale.captain_payment_plan)
           await require('./captain-payment-guard').mutable(await BaseModel.getDb(), existingSale);
         const paymentBranch = await getBranchById(existingSale.branch_id || context.branchId);
-        if (paymentBranch?.captain_payments?.enabled)
+        if (require('../utils/captain-payment-enabled')(paymentBranch))
           finishCaptainEdit = await require('./captain-payment-guard').beginEdit(
             await BaseModel.getDb(),
             existingSale
@@ -2046,7 +2046,7 @@ const getTablesWithActiveOrders = async (branchId) => {
           sales: {
             $push: {
               id: '$_id',
-              number: '$sales_id',
+              number: { $ifNull: ['$takeaway_number', { $ifNull: ['$token_id', '$sales_id'] }] },
               since: '$created_date',
               amount: '$sales_total',
               payment_status: '$payment_status',

@@ -1036,9 +1036,10 @@ test('ordinary editor replaces, retries and clears an allocated bill discount wi
       require('../../../src/services/captain-edit-policy').authorize(policyRequest)
     ).resolves.toBeDefined();
     policyRequest.body.extra_discount++;
+    // Ordinary edits no longer require a reason; explicit manager approval rules remain separate.
     await expect(
       require('../../../src/services/captain-edit-policy').authorize(policyRequest)
-    ).rejects.toMatchObject({ status: 422 });
+    ).resolves.toMatchObject({ reason: '' });
     expect(result.changes).toEqual(before.changes);
     expect(snapshotFrom([result], { currencyCode: 'INR' }, result.table_number).totalMinor).toBe(
       Math.round(total * 100)
@@ -1315,7 +1316,10 @@ test.each(['reduction', 'discount'])(
     const policy = require('../../../src/services/captain-edit-policy');
     await expect(policy.authorize(input)).rejects.toMatchObject({
       status: 422,
-      message: 'Enter a reason for this change.',
+      message:
+        kind === 'reduction'
+          ? 'Manager approval required: cancellation'
+          : 'Manager approval required: discount',
     });
     expect((await editPreview.preview(input)).total_amount).toBe(kind === 'reduction' ? 52.5 : 95);
     input.body.change_reason = 'Customer requested';
@@ -1964,4 +1968,14 @@ test('item and category summaries separate currencies while adding quantities ac
       { currencyCode: 'KWD', currencyDigits: 3, total: 1.003, return_total: 0.502 },
     ]);
   }
+});
+
+test.each([
+  { sale_process: 'cancelled' },
+  { sale_process: 'Completed' },
+  { payment_status: 'Paid' },
+])('transfer refuses closed source %j without creating a destination', async (fields) => {
+  await db.collection('sales').updateOne({ _id: sale._id }, { $set: fields });
+  await expect(service.preview(req())).rejects.toMatchObject({ status: 409 });
+  expect(await db.collection('sales').countDocuments()).toBe(1);
 });

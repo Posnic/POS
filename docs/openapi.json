@@ -3665,6 +3665,30 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/captain/v1/takeaway-number": {
+      "post": {
+        "summary": "number",
+        "operationId": "post_captain_v1_takeaway_number",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/captain/v1/paper-orders/options": {
       "get": {
         "summary": "options",
@@ -4069,6 +4093,54 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/captain/v1/bill/reprint": {
+      "post": {
+        "summary": "bill",
+        "operationId": "post_captain_v1_bill_reprint",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/captain/v1/tables/temporary": {
+      "post": {
+        "summary": "temporary",
+        "operationId": "post_captain_v1_tables_temporary",
+        "tags": [
+          "Captain access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/captain/v1/tables/state": {
@@ -9651,6 +9723,29 @@
       "get": {
         "summary": "onlineSalesItemsAjaxLists",
         "operationId": "get_items_onlineSalesItemsAjaxLists",
+        "tags": [
+          "Items"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/items/instantItemTax": {
+      "get": {
+        "summary": "instantItemTax",
+        "operationId": "get_items_instantItemTax",
         "tags": [
           "Items"
         ],

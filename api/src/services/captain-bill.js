@@ -11,6 +11,8 @@ async function read(req) {
   if ([false, 0, '0', 'false'].includes(c.branch.module_captain_enable))
     fail('Captain is disabled.', 403);
   const saleId = req.query?.saleId;
+  const receipt = req.query?.receipt === 'true';
+  if (receipt && !saleId) fail('Choose an order.', 422);
   if (saleId && !/^[a-f0-9]{24}$/i.test(String(saleId))) fail('Open order not found.', 404);
   let table = saleId ? 'Take Away' : req.query?.table;
   if (
@@ -25,16 +27,22 @@ async function read(req) {
     .collection('sales')
     .find({
       ...scope,
-      ...floorEligibility(),
+      ...(receipt
+        ? { sale_process: { $ne: 'cancelled' }, payment_status: { $ne: 'Cancelled' } }
+        : floorEligibility()),
       ...(saleId
-        ? { _id: new ObjectId(saleId), dine_type: /^take[\s_-]*away$/i }
+        ? { _id: new ObjectId(saleId), ...(receipt ? {} : { dine_type: /^take[\s_-]*away$/i }) }
         : { table_number: table.trim() }),
     })
     .sort({ _id: 1 })
     .limit(201)
     .toArray();
   if (!sales.length) fail('Open order not found.', 404);
-  if (saleId) table = 'Take Away ' + (sales[0].sales_id || sales[0].token_id || saleId);
+  if (saleId)
+    table = /^take[\s_-]*away$/i.test(sales[0].dine_type || '')
+      ? 'Take Away ' +
+        (sales[0].takeaway_number || sales[0].token_id || sales[0].sales_id || saleId)
+      : String(sales[0].table_number || sales[0].sales_id || saleId);
   if (sales.length > 200)
     fail('This table has too many open orders. Ask the cashier for help.', 422);
   const snapshot = snapshotFrom(sales, c.branch, table.trim(), { allowZero: true });
@@ -77,9 +85,50 @@ async function read(req) {
     ...snapshot,
     paidMinor,
     dueMinor: snapshot.totalMinor - paidMinor,
-    collectEnabled: require('./captain-payments').settings(c.branch).enabled,
+    collectEnabled: !receipt && require('./captain-payments').settings(c.branch).enabled,
     orderIds: sales.map((sale) => String(sale._id)),
     serverTime: new Date().toISOString(),
   };
 }
-module.exports = { read };
+async function reprint(req) {
+  const body = req.body || {};
+  if (!/^[a-zA-Z0-9-]{16,80}$/.test(body.request_id || '')) fail('Choose a valid print request.');
+  const bill = await read({ ...req, query: { saleId: body.saleId, receipt: 'true' } });
+  const c = await context(req);
+  const sale = await req.db
+    .collection('sales')
+    .findOne({ _id: new ObjectId(body.saleId), branch_id: c.branchId, license: c.license });
+  const payload = require('../helpers/bill-payload').buildBillPayload(sale, c.branch);
+  const monetary = Money.policy(c.branch);
+  payload.title = bill.dueMinor === 0 ? 'PAID RECEIPT - COPY' : 'BILL - COPY';
+  payload.payments = [
+    { label: 'Paid', amount: Money.fromMinor(bill.paidMinor, monetary) },
+    { label: 'Remaining balance', amount: Money.fromMinor(bill.dueMinor, monetary) },
+  ];
+  if (payload.receiptDocument)
+    Object.assign(payload.receiptDocument, {
+      sales_id: sale.sales_id || String(sale._id),
+      payment_mode: bill.dueMinor === 0 ? 'Paid (receipt copy)' : 'Payment pending (bill copy)',
+      partial_check: 'true',
+      partial_balance: Money.fromMinor(bill.paidMinor, monetary),
+      payment_pending: Money.fromMinor(bill.dueMinor, monetary),
+    });
+  const copies = Math.max(
+    1,
+    Math.min(3, Math.floor(Number(body.copies || c.branch.bill_print_copies) || 1))
+  );
+  for (let copy = 1; copy <= copies; copy++) {
+    const result = await require('../repositories/print-job.repository').queuePrintJob({
+      branchId: c.branchId,
+      saleId: sale._id,
+      kind: 'bill',
+      label: 'Receipt copy',
+      payload,
+      ticketKey: 'captain-receipt:' + sale._id + ':' + body.request_id + ':' + copy,
+    });
+    if (!result.status) fail('Could not queue the bill. Please retry.', 503);
+  }
+  require('../helpers/bill-notify').notifyBillRequested({ branchId: c.branchId, count: copies });
+  return { type: 'success', status: 'queued' };
+}
+module.exports = { read, reprint };
