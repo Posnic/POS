@@ -175,6 +175,34 @@ test('item edits retain the group capacity and cannot detach its table metadata'
   expect(stored.seating_table_ids).toEqual(claim.tables);
   expect((await seating.find(db, { branchId: branch, license }, claim.id)).guests).toBe(4);
 });
+test('desktop item and discount edits preserve omitted seating fields', async () => {
+  const created = await submit();
+  if (!created.status) throw new Error(created.message);
+  const id = new ObjectId(created.data.sale_id);
+  const sale = await db.collection('sales').findOne({ _id: id });
+  for (const discounted of [false, true]) {
+    const result = await repo.updateOrderModel(
+      String(id),
+      sale.items,
+      sale.sales_total,
+      null,
+      discounted ? 'percent' : null,
+      discounted ? 10 : null,
+      discounted ? 'Customer discount' : null,
+      undefined,
+      undefined,
+      undefined,
+      {}
+    );
+    if (!result.status) throw new Error(result.message);
+    const saved = await db.collection('sales').findOne({ _id: id });
+    expect(saved.person_count).toBe(4);
+    expect(saved.table_number).toBe('T1');
+    expect(saved.dine_type).toBe('Dine-in');
+    expect(saved.seating_table_ids).toEqual(claim.tables);
+  }
+});
+
 test('another existing order cannot move into a reserved group', async () => {
   const otherId = new ObjectId();
   await db.collection('sales').insertOne({

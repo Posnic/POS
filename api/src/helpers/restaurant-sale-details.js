@@ -84,6 +84,7 @@ module.exports = function restaurantSaleDetails(sale, timeZone) {
     source: String(client.app || sale.channel || sale.sale_method || ''),
     app_version: String(client.app_version || ''),
     preparation_note: String(sale.preparation_note || ''),
+    rounds: rounds(sale),
     events,
   };
 };
