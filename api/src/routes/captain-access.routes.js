@@ -27,6 +27,7 @@ router.use(protect);
 router.post('/takeaway-number', limit, wrap(require('../services/takeaway-number').reserve));
 const paper = require('../services/paper-order');
 router.get('/paper-orders/options', wrap(paper.options));
+router.post('/paper-orders/upload', rateLimit({ windowMs: 60000, limit: 8 }), wrap(paper.upload));
 router.post('/paper-orders/settings', limit, wrap(paper.settings));
 router.post(
   '/paper-orders/recognize',

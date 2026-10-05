@@ -244,6 +244,7 @@ Mounted at `/captain/v1`. Source: `api/src/routes/captain-access.routes.js`.
 | POST | `/captain/v1/route-proof` | — | `access.routeProof` |
 | POST | `/captain/v1/takeaway-number` | — | `number` |
 | GET | `/captain/v1/paper-orders/options` | — | `paper.options` |
+| POST | `/captain/v1/paper-orders/upload` | — | `paper.upload` |
 | POST | `/captain/v1/paper-orders/settings` | — | `paper.settings` |
 | POST | `/captain/v1/paper-orders/recognize` | — | `paper.recognize` |
 | GET | `/captain/v1/paper-orders/photos/:id` | — | `paper.read` |
