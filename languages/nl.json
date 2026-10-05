@@ -4551,5 +4551,6 @@
   "lang_table_orders": "Tafelbestellingen",
   "lang_orders_updated": "Bestellingen bijgewerkt",
   "lang_refresh_failed_try_again": "Vernieuwen mislukt. Probeer het opnieuw.",
-  "lang_refresh_orders": "Bestellingen vernieuwen"
+  "lang_refresh_orders": "Bestellingen vernieuwen",
+  "lang_captain_tender_total": "Voer twee of drie bedragen in die samen gelijk zijn aan de rekening."
 }

@@ -1,6 +1,9 @@
 (function () {
   "use strict";
   const messages = [
+    { label: "Split payment", t: "lang_splitpay_title" },
+    { label: "Amount", t: "lang_amount" },
+    { label: 'Enter two or three amounts that add up to the bill.', t: 'lang_captain_tender_total' },
     { label: "Back", t: "lang_back_title" },
     { label: "Continue", t: "lang_continue" },
     { label: "Total", t: "lang_total" },
@@ -121,6 +124,7 @@
     received = "",
     reference = "",
     verified = false;
+  let tenderInputs = {};
   const monetary = () => CaptainMoney.snapshot(plan || {});
   const money = n => CaptainMoney.format(CaptainMoney.fromMinor(Number(n || 0), monetary()), monetary());
   const cashMinor = () => { try { return CaptainMoney.toMinor(received || 0, monetary()); } catch { return NaN; } };
@@ -139,6 +143,22 @@
       return false;
     }
   };
+  function mixedTenders() {
+    return plan.methods.filter(m => tenderInputs[m]?.amount !== undefined && tenderInputs[m].amount !== '').map(m => {
+      const v = tenderInputs[m], amountMinor = CaptainMoney.toMinor(v.amount, monetary());
+      return { method:m, amountMinor, receivedMinor:m === 'Cash' && v.received ? CaptainMoney.toMinor(v.received, monetary()) : amountMinor, reference:v.reference || '', verified:m !== 'Cash' && !!v.verified };
+    }).filter(v => v.amountMinor !== 0);
+  }
+  function tenderRows(rows) {
+    return (rows || []).map(row => '<div><span>' + esc(t(row.method === 'Upi' ? 'UPI' : row.method)) + '</span><strong translate="no">' + esc(money(row.amountMinor)) + '</strong></div>').join('');
+  }
+  function splitFields() {
+    return '<div class="cp-split">' + plan.methods.map(m => {
+      const v = tenderInputs[m] || {};
+      return '<fieldset><legend>' + esc(t(m === 'Upi' ? 'UPI' : m)) + '</legend><label>' + esc(t('Amount')) + '<input data-tender="' + esc(m) + '" data-field="amount" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.amount || '') + '"></label>' +
+        (m === 'Cash' ? '<label>' + esc(t('Amount received')) + '<input data-tender="Cash" data-field="received" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.received || '') + '"></label>' : '<label>' + esc(t('Payment reference (optional)')) + '<input data-tender="' + esc(m) + '" data-field="reference" maxlength="100" value="' + esc(v.reference || '') + '"></label><label class="cp-confirm"><input type="checkbox" data-tender="' + esc(m) + '" data-field="verified" ' + (v.verified ? 'checked' : '') + '><span>' + esc(t('I verified this payment on the terminal or bank app.')) + '</span></label>') + '</fieldset>';
+    }).join('') + '</div>';
+  }
   function render() {
     if (!dialog) return;
     let body = "";
@@ -148,8 +168,8 @@
       if (plan.dueMinor > 0 && !pending)
         body += `
         ${plan.guests.filter((g) => !g.paid).length > 1 ? `<label>${esc(t("Guest"))}<select id="cp-guest"><option value="">${esc(t("All remaining guests"))}</option>${plan.guests.map((g, i) => (g.paid ? "" : `<option value="${i}" ${selected === String(i) ? "selected" : ""} translate="no">${esc(g.name)} · ${esc(money(g.totalMinor))}</option>`)).join("")}</select></label>` : ""}
-        <div class="cp-methods" role="group" aria-label="${esc(t("Collect payment"))}">${plan.methods.map((m) => `<button type="button" data-method="${m}" aria-pressed="${method === m}">${esc(t(m === "Upi" ? "UPI" : m))}</button>`).join("")}</div>
-        ${method === "Cash" ? `<label>${esc(t("Amount received"))}<input id="cp-received" inputmode="decimal" type="number" min="0" step="${1 / monetary().factor}" value="${esc(received)}"></label><div class="cp-change"><span>${esc(t("Change to return"))}</span><strong id="cp-change" translate="no">${esc(money(Math.max(0, cashMinor() - amount())))}</strong></div>` : `<label>${esc(t("Payment reference (optional)"))}<input id="cp-reference" maxlength="100" value="${esc(reference)}"></label><label class="cp-confirm"><input type="checkbox" id="cp-verified" ${verified ? "checked" : ""}><span>${esc(t("I verified this payment on the terminal or bank app."))}</span></label>`}
+        <div class="cp-methods" role="group" aria-label="${esc(t("Collect payment"))}">${[...plan.methods, ...(plan.methods.length > 1 ? ["Mixed"] : [])].map((m) => `<button type="button" data-method="${m}" aria-pressed="${method === m}">${esc(t(m === "Mixed" ? "Split payment" : m === "Upi" ? "UPI" : m))}</button>`).join("")}</div>
+        ${method === "Mixed" ? splitFields() : method === "Cash" ? `<label>${esc(t("Amount received"))}<input id="cp-received" inputmode="decimal" type="number" min="0" step="${1 / monetary().factor}" value="${esc(received)}"></label><div class="cp-change"><span>${esc(t("Change to return"))}</span><strong id="cp-change" translate="no">${esc(money(Math.max(0, cashMinor() - amount())))}</strong></div>` : `<label>${esc(t("Payment reference (optional)"))}<input id="cp-reference" maxlength="100" value="${esc(reference)}"></label><label class="cp-confirm"><input type="checkbox" id="cp-verified" ${verified ? "checked" : ""}><span>${esc(t("I verified this payment on the terminal or bank app."))}</span></label>`}
         <p class="cp-help">${esc(t("Confirm only after receiving the money. This does not charge a card or bank account."))}</p>`;
       if (plan.dueMinor === 0)
         body += `<p role="status">${esc(t("Payment recorded"))}</p>`;
@@ -157,11 +177,11 @@
       body = `<p>${esc(t(busy ? "Loading..." : "Connect to the shop server before collecting payment. You can still take orders offline."))}</p>`;
     if (reviewing && plan && !pending) {
       const guest = selected === "" ? t("All remaining guests") : plan.guests[Number(selected)].name;
-      body = `<section class="cp-review"><h3>${esc(t("Payment details"))}</h3><div><span>${esc(t("Guest"))}</span><strong>${esc(guest)}</strong></div><div><span>${esc(t("Total"))}</span><strong>${esc(money(amount()))}</strong></div><div><span>${esc(t("Collect payment"))}</span><strong>${esc(t(method === "Upi" ? "UPI" : method))}</strong></div>${method === "Cash" ? `<div><span>${esc(t("Amount received"))}</span><strong>${esc(money(cashMinor()))}</strong></div><div><span>${esc(t("Change to return"))}</span><strong>${esc(money(cashMinor()-amount()))}</strong></div>` : `<div><span>${esc(t("Payment reference (optional)"))}</span><strong>${esc(reference || '—')}</strong></div>`}<p class="cp-help">${esc(t("Confirm only after receiving the money. This does not charge a card or bank account."))}</p></section>`;
+      body = `<section class="cp-review"><h3>${esc(t("Payment details"))}</h3><div><span>${esc(t("Guest"))}</span><strong>${esc(guest)}</strong></div><div><span>${esc(t("Total"))}</span><strong>${esc(money(amount()))}</strong></div><div><span>${esc(t("Collect payment"))}</span><strong>${esc(t(method === "Mixed" ? "Split payment" : method === "Upi" ? "UPI" : method))}</strong></div>${method === "Mixed" ? tenderRows(mixedTenders()) + `<div><span>${esc(t("Change to return"))}</span><strong>${esc(money(mixedTenders().reduce((n,v)=>n+v.receivedMinor-v.amountMinor,0)))}</strong></div>` : method === "Cash" ? `<div><span>${esc(t("Amount received"))}</span><strong>${esc(money(cashMinor()))}</strong></div><div><span>${esc(t("Change to return"))}</span><strong>${esc(money(cashMinor()-amount()))}</strong></div>` : `<div><span>${esc(t("Payment reference (optional)"))}</span><strong>${esc(reference || '—')}</strong></div>`}<p class="cp-help">${esc(t("Confirm only after receiving the money. This does not charge a card or bank account."))}</p></section>`;
     }
     if (receipt) {
       const at = new Date(receipt.at);
-      body = `<section class="cp-review cp-receipt"><h3 role="status">${esc(t("Payment recorded"))}</h3><div><span>${esc(t("Total"))}</span><strong translate="no">${esc(money(receipt.amountMinor))}</strong></div><div><span>${esc(t("Collect payment"))}</span><strong>${esc(t(receipt.method === "Upi" ? "UPI" : receipt.method))}</strong></div>${receipt.method === "Cash" ? `<div><span>${esc(t("Amount received"))}</span><strong translate="no">${esc(money(receipt.receivedMinor))}</strong></div><div><span>${esc(t("Change to return"))}</span><strong translate="no">${esc(money(receipt.changeMinor))}</strong></div>` : ''}${receipt.reference ? `<div><span>${esc(t("Payment reference (optional)"))}</span><strong translate="no">${esc(receipt.reference)}</strong></div>` : ''}<div class="cp-balance"><span>${esc(t("Remaining balance"))}</span><strong translate="no">${esc(money(plan.dueMinor))}</strong></div>${Number.isFinite(at.getTime()) ? `<p translate="no">${esc(at.toLocaleString())}</p>` : ''}${receipt.staff ? `<p translate="no">${esc(receipt.staff)}</p>` : ''}</section>`;
+      body = `<section class="cp-review cp-receipt"><h3 role="status">${esc(t("Payment recorded"))}</h3><div><span>${esc(t("Total"))}</span><strong translate="no">${esc(money(receipt.amountMinor))}</strong></div><div><span>${esc(t("Collect payment"))}</span><strong>${esc(t(receipt.method === "Mixed" ? "Split payment" : receipt.method === "Upi" ? "UPI" : receipt.method))}</strong></div>${receipt.method === "Mixed" ? tenderRows(receipt.tenders) + `<div><span>${esc(t("Change to return"))}</span><strong>${esc(money(receipt.changeMinor))}</strong></div>` : receipt.method === "Cash" ? `<div><span>${esc(t("Amount received"))}</span><strong translate="no">${esc(money(receipt.receivedMinor))}</strong></div><div><span>${esc(t("Change to return"))}</span><strong translate="no">${esc(money(receipt.changeMinor))}</strong></div>` : ''}${receipt.reference ? `<div><span>${esc(t("Payment reference (optional)"))}</span><strong translate="no">${esc(receipt.reference)}</strong></div>` : ''}<div class="cp-balance"><span>${esc(t("Remaining balance"))}</span><strong translate="no">${esc(money(plan.dueMinor))}</strong></div>${Number.isFinite(at.getTime()) ? `<p translate="no">${esc(at.toLocaleString())}</p>` : ''}${receipt.staff ? `<p translate="no">${esc(receipt.staff)}</p>` : ''}</section>`;
     }
     dialog.innerHTML = `<header><h2>${esc(t("Collect payment"))} <small translate="no">${esc(table)}</small></h2><button type="button" data-action="close" aria-label="${esc(t("Close"))}">×</button></header><div class="cp-body">${body}${error ? `<p class="cp-error" role="status">${esc(t(error))}</p>` : ""}</div><footer><button type="button" data-action="${reviewing ? "back" : "close"}">${esc(t(reviewing ? "Back" : plan?.dueMinor === 0 ? "Close" : "Cancel"))}</button>${receipt ? (plan?.dueMinor > 0 ? `<button type="button" class="cp-primary" data-action="continue">${esc(t("Continue"))}</button>` : "") : plan?.dueMinor === 0 ? "" : `<button type="button" class="cp-primary" data-action="record" ${busy ? "disabled" : ""}>${esc(t(busy ? "Loading..." : pending || !plan ? "Retry" : reviewing ? "Record payment" : "Continue"))}${plan && !pending ? ` · <span translate="no">${esc(money(amount()))}</span>` : ""}</button>`}</footer>`;
 
@@ -185,6 +205,7 @@
         throw Object.assign(new Error("Disabled"), { status: 403 });
       method = plan.methods.includes(method) ? method : plan.methods[0];
       selected = "";
+      tenderInputs = {};
       received = receivedDefault();
       verified = false;
     } catch (e) {
@@ -208,6 +229,14 @@
       return;
     }
     if (!pending) {
+      let tenders;
+      if (method === 'Mixed') {
+        try { tenders = mixedTenders(); } catch { tenders = []; }
+        if (tenders.length < 2 || tenders.length > 3 || tenders.some(v => !Number.isSafeInteger(v.amountMinor) || v.amountMinor <= 0 || !Number.isSafeInteger(v.receivedMinor) || v.receivedMinor < v.amountMinor) || tenders.reduce((n,v)=>n+v.amountMinor,0) !== amount()) {
+          error = 'Enter two or three amounts that add up to the bill.'; render(); return;
+        }
+        if (tenders.some(v => v.method !== 'Cash' && !v.verified)) { error = 'I verified this payment on the terminal or bank app.'; render(); return; }
+      }
       const paid = amount(),
         cash = cashMinor();
       if (method === "Cash" && (!Number.isFinite(cash) || cash < paid)) {
@@ -215,7 +244,7 @@
         render();
         return;
       }
-      if (method !== "Cash" && !verified) {
+      if (method !== "Cash" && method !== "Mixed" && !verified) {
         error = "I verified this payment on the terminal or bank app.";
         render();
         return;
@@ -231,7 +260,8 @@
           guest: selected === "" ? null : Number(selected),
           amountMinor: paid,
           method,
-          receivedMinor: method === "Cash" ? cash : paid,
+          receivedMinor: tenders ? tenders.reduce((n,v)=>n+v.receivedMinor,0) : method === "Cash" ? cash : paid,
+          ...(tenders ? { tenders } : {}),
           reference,
           request_id: crypto.randomUUID(),
         },
@@ -261,6 +291,7 @@
       pending = null;
       localStorage.removeItem(key);
       selected = "";
+      tenderInputs = {};
       received = receivedDefault();
       verified = false;
       reference = "";
@@ -303,6 +334,7 @@
     const style = document.createElement("style");
     style.textContent = `#captain-payments{width:min(100vw,480px);max-width:100vw;max-height:100dvh;height: min(100dvh,780px);border:0;border-radius:18px;padding:0;color:#172033;background:#fff;font:inherit;box-shadow:0 16px 60px #0004}#captain-payments::backdrop{background:#15223b88}#captain-payments[open]{display:flex;flex-direction:column}#captain-payments *{box-sizing:border-box}#captain-payments header,#captain-payments footer{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid #e4e8ee}#captain-payments h2{font-size:20px;margin:0;flex:1}#captain-payments h2 small{font-size:14px;display:block;color:#667085;margin-top:4px}#captain-payments button{min-height:46px;padding:10px 16px;border:1px solid #dbe1eb;border-radius:10px;background:white;color:inherit;font:inherit;font-weight:600;cursor:pointer}#captain-payments button:disabled{opacity:.55;cursor:wait}#captain-payments .cp-body{padding:20px;overflow:auto;flex:1}#captain-payments footer{border-top:1px solid #e4e8ee;border-bottom:0;padding-bottom:max(16px,env(safe-area-inset-bottom))}#captain-payments .cp-primary{flex:1;background:#5146e5;color:white;border-color:#5146e5}#captain-payments .cp-balance{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}#captain-payments .cp-balance strong{font-size:26px}#captain-payments .cp-guests{margin-bottom:22px;border:1px solid #e4e8ee;border-radius:12px;padding:4px 14px}#captain-payments .cp-guests>div{display:flex;justify-content:space-between;padding:12px 0;gap:12px}#captain-payments label{display:block;margin:16px 0;font-weight:600}#captain-payments input:not([type=checkbox]),#captain-payments select{display:block;width:100%;min-height:48px;padding:10px;margin-top:8px;border:1px solid #cbd3df;border-radius:10px;font:inherit;background:white;color:inherit}#captain-payments .cp-methods{display:flex;gap:8px;flex-wrap:wrap}#captain-payments .cp-methods button{flex:1}#captain-payments [aria-pressed=true]{border-color:#5146e5;background:#efedff;color:#3529aa}#captain-payments .cp-change{display:flex;justify-content:space-between;gap:10px}#captain-payments .cp-confirm{display:flex;align-items:flex-start;gap:10px;line-height:1.5}#captain-payments .cp-confirm input{width:22px;height:22px;flex:none}#captain-payments .cp-help{color:#667085;font-size:13px;line-height:1.5;margin-top:22px}#captain-payments .cp-error{padding:12px;background:#fff5e6;color:#754700;border-radius:10px;line-height:1.5}@media(max-width:480px){#captain-payments{width:100%;height:100dvh;max-height:100dvh;border-radius:0;margin:0}}`;
     style.textContent += `#captain-payments .cp-review>div{display:flex;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid #e4e8ee;overflow-wrap:anywhere}#captain-payments .cp-review strong{text-align:end}`;
+    style.textContent += `#captain-payments .cp-split fieldset{border:1px solid #e4e8ee;border-radius:12px;padding:10px 14px;margin-top:16px}#captain-payments .cp-split legend{font-size:15px;font-weight:600;width:auto;padding:0 5px}#captain-payments .cp-split label{font-size:13px;margin:10px 0}`;
     document.head.append(style);
     dialog = document.createElement("dialog");
     dialog.id = "captain-payments";
@@ -329,6 +361,7 @@
     dialog.addEventListener("change", (e) => {
       if (e.target.id === "cp-guest") {
         selected = e.target.value;
+        tenderInputs = {};
         received = receivedDefault();
         verified = false;
         render();
@@ -336,6 +369,12 @@
       if (e.target.id === "cp-verified") verified = e.target.checked;
     });
     dialog.addEventListener("input", (e) => {
+      if (e.target.dataset.tender && !busy && !pending) {
+        const m = e.target.dataset.tender, field = e.target.dataset.field;
+        tenderInputs[m] ||= {};
+        tenderInputs[m][field] = field === 'verified' ? e.target.checked : e.target.value;
+        if (field === 'amount') { tenderInputs[m].verified = false; const check = e.target.closest('fieldset').querySelector('[type=checkbox]'); if(check) check.checked = false; }
+      }
       if (e.target.id === "cp-reference") reference = e.target.value;
       if (e.target.id === "cp-received") {
         received = e.target.value;
@@ -361,6 +400,7 @@
     pending = null;
     error = "";
     selected = "";
+    tenderInputs = {};
     reference = "";
     verified = false;
     try {
