@@ -1,5 +1,5 @@
 'use strict';
-const { drainDue, prepareUpcoming } = require('./business-notifications');
+const { drainDue } = require('./business-notifications');
 const { prepareRegisterCloses } = require('./business-register-notifications');
 const { drainPush } = require('./business-push');
 const { drainApprovalAlerts } = require('./business-approval-notifications');
@@ -11,7 +11,9 @@ function createNotificationWorker({
   tenants,
   run = (_tenant, work) => work(),
   drain = drainDue,
-  prepare = prepareUpcoming,
+  // Daily totals now come from bounded server reads at delivery time. Do not
+  // ask an optional desktop to scan its history for a report we will not use.
+  prepare = () => Promise.resolve(),
   prepareCloses = prepareRegisterCloses,
   push = drainPush,
   approvals = drainApprovalAlerts,
