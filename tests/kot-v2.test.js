@@ -73,3 +73,10 @@ test('an empty draft does not block a different table',async()=>{
 test('opening table orders automatically selects an active order and shows its details',async()=>{
  const h=setup();h.app.showDataTablePage();await flush();assert.equal(h.app.state.selected,h.sale._id);assert.equal(h.app.state.sale._id,h.sale._id);assert.equal(h.app.state.expanded,false);assert.ok(h.w.document.querySelector('[data-action=add]'));h.close();
 });
+
+test('sad chef plays only after a successful order cancellation',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();
+ const cancel=async()=>{await h.click('actions');h.w.document.querySelector('[data-action=cancel]').click();await flush();const d=h.w.document.querySelector('dialog');d.querySelector('[name=reason]').value='Duplicate order';d.querySelector('[type=submit]').click();await flush();};
+ setup.failure=true;try{await cancel();assert.equal(h.effects.includes('cancelled'),false);h.w.document.querySelector('dialog [data-close]').click();}finally{setup.failure=false;}
+ await cancel();assert.equal(h.effects.filter(e=>e==='cancelled').length,1);assert.equal(h.calls.filter(c=>c.url==='sales/updateOrder').at(-1).body.status,'cancelled');h.close();
+});

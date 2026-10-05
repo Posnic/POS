@@ -172,3 +172,15 @@
 #kot_v2 button[data-action=serve]:disabled:not(.kv2-serving),#kot_v2 button.kv2-serve-saved,#kot_v2 button.kv2-serve-saved:hover{opacity:1;background:#edf9f2;border-color:#b4dfc7;color:#16814c}
 #kot_v2 .kv2-served-row{background:#f0faf4;transition:background .2s ease}
 @media(prefers-reduced-motion:reduce){#kot_v2 button.kv2-serving::before{animation:none}#kot_v2 .kv2-served-row{transition:none}}
+
+/* A brief transparent walk-away after confirmed cancellation. */
+.restaurant-feedback.sad-chef{width:160px;height:120px;background:none;border:0;box-shadow:none;padding:0;animation:rfChefExit 1.8s ease-in-out both}
+.sad-chef svg{width:100%;height:100%;overflow:visible;fill:none;stroke:#7890a7;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.sad-chef .chef-hat,.sad-chef .chef-coat{fill:#fff;stroke:#7890a7}
+.sad-chef .chef-shadow{fill:#879bb326;stroke:none}
+.sad-chef .chef-body{animation:rfChefBob .4s ease-in-out infinite;transform-origin:80px 65px}
+.sad-chef .chef-leg{transform-origin:80px 85px;animation:rfChefStep .4s ease-in-out infinite alternate}
+.sad-chef .chef-leg-right{animation-delay:-.4s}
+@keyframes rfChefBob{50%{transform:translateY(2px) rotate(-3deg)}}
+@keyframes rfChefStep{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
+@keyframes rfChefExit{0%{opacity:0;transform:translateX(-24px)}15%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translateX(48px)}}

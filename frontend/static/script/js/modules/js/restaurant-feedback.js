@@ -61,6 +61,11 @@
                     { length: 7 },
                     (_, i) => `<i class="kitchen-spark" style="--angle:${i * 51}deg"></i>`,
                 ).join('');
+        } else if (kind === 'cancelled') {
+            el.classList.add('sad-chef');
+            el.style.left = Math.max(10, (innerWidth - 160) / 2) + 'px';
+            el.style.top = Math.max(10, (innerHeight - 120) / 2) + 'px';
+            el.innerHTML = '<svg viewBox="0 0 160 120"><ellipse class="chef-shadow" cx="80" cy="108" rx="24" ry="3"/><g class="chef-walk"><path class="chef-leg chef-leg-left" d="M73 85v17l-8 3"/><path class="chef-leg chef-leg-right" d="M87 85v17l8 3"/><g class="chef-body"><path class="chef-coat" d="M67 60q13-6 26 0l4 27H63Z"/><path d="m67 66-9 14m35-14 9 12M80 66v18"/><circle cx="80" cy="47" r="16" fill="#fff4e8"/><path class="chef-hat" d="M65 37v-9c-12-9 0-22 9-15 5-12 22-7 22 3 13 0 15 17 1 19l-2 5Z"/><path d="m69 46 5 2m12 0 5-2M74 58q6-7 12 0"/><circle cx="74" cy="50" r="1"/><circle cx="86" cy="50" r="1"/></g></g></svg>';
         } else if (kind === 'payment') {
             el.classList.add('transparent-gold');
             el.innerHTML =
@@ -84,7 +89,7 @@
                 ).join('');
         }
         document.body.append(el);
-        timer = setTimeout(clear, kind === 'sent' ? 2100 : kind === 'payment' ? 1800 : 950);
+        timer = setTimeout(clear, kind === 'cancelled' ? 1800 : kind === 'sent' ? 2100 : kind === 'payment' ? 1800 : 950);
     }
     P.restaurantFeedback = {
         load,

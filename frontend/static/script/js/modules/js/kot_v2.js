@@ -1068,7 +1068,7 @@
                                         ],
                                         'reason',
                                     ),
-                                async (f) => {
+                                async (f, modal) => {
                                     await api('post', 'sales/updateOrder', {
                                         ...P.kotWorkspace.editPayload(
                                             s,
@@ -1077,6 +1077,8 @@
                                         status: 'cancelled',
                                         change_reason: f.get('reason'),
                                     });
+                                    modal.close();
+                                    P.restaurantFeedback?.play('cancelled');
                                     await refresh();
                                 },
                                 'Cancel order',
