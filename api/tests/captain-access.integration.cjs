@@ -796,6 +796,7 @@ test('paired Captain reads the real sample through HTTP and AWS', { skip: proces
   const { grant } = await paired();
   const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
   const id = crypto.randomUUID();
+  const uploadId = crypto.randomUUID();
   const original = 'data:image/png;base64,' + require('node:fs').readFileSync(process.env.CAPTAIN_SCAN_SAMPLE).toString('base64');
   await db.collection('branches').updateOne({ _id: branch._id }, { $set: { captain_paper_orders: true } });
   const s3 = new (require('@aws-sdk/client-s3').S3Client)({ region: process.env.AWS_REGION });
@@ -803,7 +804,11 @@ test('paired Captain reads the real sample through HTTP and AWS', { skip: proces
     const options = await fetch(base + '/captain/v1/paper-orders/options', { headers });
     assert.equal(options.status, 200);
     assert.equal((await options.json()).configured, true);
-    const response = await fetch(base + '/captain/v1/paper-orders/recognize', { method: 'POST', headers, body: JSON.stringify({ id, original }) });
+    const upload = await fetch(base + '/captain/v1/paper-orders/upload', { method: 'POST', headers, body: JSON.stringify({ id: uploadId, original }) });
+    assert.equal(upload.status, 200, await upload.clone().text());
+    assert.equal((await upload.json()).referenceOnly, true);
+    assert.equal((await db.collection('paper_order_usage').findOne({})).count, 0);
+    const response = await fetch(base + '/captain/v1/paper-orders/recognize', { method: 'POST', headers, body: JSON.stringify({ id, uploadId }) });
     assert.equal(response.status, 200, await response.clone().text());
     const result = await response.json();
     assert.equal(result.table, '4');
@@ -814,6 +819,7 @@ test('paired Captain reads the real sample through HTTP and AWS', { skip: proces
     assert.equal((await photo.json()).data, original);
   } finally {
     await s3.send(new (require('@aws-sdk/client-s3').DeleteObjectCommand)({ Bucket: process.env.ORDER_PHOTO_BUCKET, Key: `orders/${branch.license}/${branch._id}/${id}` }));
+    await s3.send(new (require('@aws-sdk/client-s3').DeleteObjectCommand)({ Bucket: process.env.ORDER_PHOTO_BUCKET, Key: `orders/${branch.license}/${branch._id}/${uploadId}` }));
     s3.destroy();
     await db.collection('branches').updateOne({ _id: branch._id }, { $unset: { captain_paper_orders: '' } });
   }

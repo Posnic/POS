@@ -60,6 +60,23 @@ beforeEach(() => {
   textract.TextractClient.mockImplementation(() => ({ send: sendOCR }));
 });
 
+test('staging uploads privately without invoking recognition or consuming scan quota', async () => {
+  const result = await service.upload(req);
+  expect(result.referenceOnly).toBe(true);
+  expect(sendS3).toHaveBeenCalled();
+  expect(sendOCR).not.toHaveBeenCalled();
+  expect(usage.updateOne.mock.calls.some((call) => call[1]?.$inc)).toBe(false);
+});
+
+test('recognition rejects a staged photo outside the current owner scope', async () => {
+  req.body = { id, uploadId: '22345678-1234-4234-8234-123456789abc' };
+  await expect(service.recognize(req)).rejects.toMatchObject({ status: 404 });
+  expect(photos.findOne).toHaveBeenCalledWith(
+    expect.objectContaining({ owner: 'staff', license: 'tenant', branch_id: 'branch' })
+  );
+  expect(sendOCR).not.toHaveBeenCalled();
+});
+
 test('mobile uses its own opt-in and strict selling ACL, independent of Captain', async () => {
   mobile.context.mockResolvedValue({
     ...c,
