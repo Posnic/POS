@@ -212,7 +212,9 @@ test('reference photo attaches without extraction or changing sale lines and mon
     created: new Date(),
   };
   photos.findOneAndUpdate.mockResolvedValue(photo);
-  await expect(service.attach(req)).resolves.toEqual({ photo: { id } });
+  await expect(service.attach(req)).resolves.toMatchObject({
+    photo: { id, visibility: 'private' },
+  });
   expect(sendOCR).not.toHaveBeenCalled();
   expect(sendS3).toHaveBeenCalledTimes(1);
   const [where, update] = sales.updateOne.mock.calls[0];
