@@ -450,7 +450,7 @@
                     await api('post', 'sales/orderCustomer', {
                         saleId: s._id,
                         branchId: branch(),
-                        seenAt: s.updated_date || s.created_date,
+                        seenAt: s.order_revision || s.updated_date || s.created_date,
                         customerId: selected?.id,
                         ...value,
                     });

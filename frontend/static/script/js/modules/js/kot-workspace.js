@@ -89,7 +89,7 @@
     const area = (label, name, value, max = 500) => '<label>' + esc(text(label)) + '<textarea name="' + name + '" maxlength="' + max + '">' + esc(value) + '</textarea></label>';
     function editPayload(sale, items) {
         return { order_id: sale._id || sale.id, items,
-            seen_at: sale.updated_date || sale.created_date,
+            seen_at: sale.order_revision || sale.updated_date || sale.created_date,
             extra_discount_type: sale.extra_discount_type || 'amount',
             extra_discount: sale.extra_discount || 0,
             discount_description: sale.discount_description || '' };
