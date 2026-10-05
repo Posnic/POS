@@ -1,5 +1,5 @@
 'use strict';
-const { test, before, after } = require('node:test');
+const { test, before, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict'),
   crypto = require('node:crypto');
 process.env.NODE_ENV = 'test';
@@ -9,6 +9,8 @@ const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose');
 const access = require('../src/services/captain-access');
 let mongo, db, manager, staff, branch, req, server, base;
+let testClient = 0;
+beforeEach(() => { testClient++; });
 before(async () => {
   const binary = require('node:path').resolve(__dirname, '../../mongodb/bin/mongod.exe');
   mongo = await MongoMemoryServer.create({
@@ -62,6 +64,8 @@ before(async () => {
   );
   app.use(require('../src/middleware/csrf').protect);
   app.use((r, _s, next) => {
+    // Each scenario has its own client; requests within it still share limits.
+    Object.defineProperty(r, 'ip', { value: `127.0.0.${testClient}` });
     r.db = db;
     next();
   });
