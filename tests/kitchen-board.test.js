@@ -272,3 +272,21 @@ test('compact badges distinguish ready, collected and served quantities', async 
     assert.equal(name.querySelectorAll('button').length,0,'Status badges are not accidental touch actions');
   } finally {dom.window.close();}
 });
+
+
+test('header shows escaped staff name and additional-order text beside time', async () => {
+  const dom = setup(false, async () => response([
+    { ...liveTicket, ownerName: 'Jack <script>bad()</script>', additionalOrder: true },
+    { ...liveTicket, id: 'other:c0', ownerName: '', additionalOrder: false },
+  ]));
+  try {
+    await tick();
+    const cards = dom.window.document.querySelectorAll('.ticket');
+    assert.equal(cards[0].querySelector('.order-taker').textContent, 'Jack <script>bad()</script>');
+    assert.ok(cards[0].querySelector('.order-taker svg'));
+    assert.equal(cards[0].querySelector('.order-taker script'), null);
+    assert.equal(cards[0].querySelector('.arrival .additional-order').textContent, 'Additional Order');
+    assert.equal(cards[1].querySelector('.order-taker'), null);
+    assert.equal(cards[1].querySelector('.additional-order'), null);
+  } finally { dom.window.close(); }
+});
