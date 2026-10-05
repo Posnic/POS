@@ -799,6 +799,35 @@
             'Add to round',
         );
     }
+    async function serveFeedback(control, action) {
+        const label = control.innerHTML;
+        control.classList.remove('kv2-serve-saved');
+        control.closest('.kv2-line')?.classList.remove('kv2-served-row');
+        control.disabled = true;
+        control.setAttribute('aria-busy', 'true');
+        control.classList.add('kv2-serving');
+        control.textContent = PosnicPro.i18n.t('lang_loading_3', 'Loading…');
+        try {
+            await action();
+            const updated = Array.from(root().querySelectorAll('[data-action]')).find((el) =>
+                el.dataset.action === control.dataset.action && el.dataset.line === control.dataset.line);
+            if (updated) {
+                updated.classList.add('kv2-serve-saved');
+                updated.closest('.kv2-line')?.classList.add('kv2-served-row');
+                setTimeout(() => {
+                    updated.classList.remove('kv2-serve-saved');
+                    updated.closest('.kv2-line')?.classList.remove('kv2-served-row');
+                }, 1600);
+            }
+        } finally {
+            if (control.isConnected) {
+                control.innerHTML = label;
+                control.disabled = false;
+                control.removeAttribute('aria-busy');
+                control.classList.remove('kv2-serving');
+            }
+        }
+    }
     async function serve(lineId) {
         const s = state.sale,
             l = s.restaurant_details.rounds.flatMap((r) => r.items).find((l) => l.id === lineId);
@@ -926,19 +955,21 @@
                     (f) => addLine({ ...P.kot.editLine(original, Number(f.get('qty'))), name: l.name }),
                     'Add to round',
                 );
-            } else if (a === 'serve') await serve(b.dataset.line);
+            } else if (a === 'serve') await serveFeedback(b, () => serve(b.dataset.line));
             else if (a === 'serveAll') {
                 const lines = s.restaurant_details.rounds
                     .flatMap((r) => r.items)
                     .filter((l) => !l.held && l.remaining > 0);
                 if (lines.length) {
-                    await api('post', 'sales/serveKitchenItems', {
-                        saleId: s._id,
-                        branchId: branch(),
-                        requestId: id(),
-                        items: lines.map((l) => ({ id: l.id, quantity: l.quantity })),
+                    await serveFeedback(b, async () => {
+                        await api('post', 'sales/serveKitchenItems', {
+                            saleId: s._id,
+                            branchId: branch(),
+                            requestId: id(),
+                            items: lines.map((l) => ({ id: l.id, quantity: l.quantity })),
                     });
                     await refresh();
+                    });
                 }
             } else if (a === 'editLine') editLine(b.dataset.line);
             else if (a === 'customer') customer();

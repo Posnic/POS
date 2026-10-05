@@ -167,3 +167,8 @@
 #kot_v2 .kv2-expanded>.kv2-editor{display:none}
 #kot_v2 .kv2-stepper .kv2-remove{color:#b33443;margin-left:0}
 #kot_v2 .kv2-stepper button[data-action=draftNote]{margin-left:auto}
+#kot_v2 button.kv2-serving{opacity:1;background:#edf4ff;border-color:#a9ccff;color:#0866e8;cursor:progress;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+#kot_v2 button.kv2-serving::before{content:'';width:11px;height:11px;flex:none;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:kv2-refresh-spin .7s linear infinite}
+#kot_v2 button[data-action=serve]:disabled:not(.kv2-serving),#kot_v2 button.kv2-serve-saved,#kot_v2 button.kv2-serve-saved:hover{opacity:1;background:#edf9f2;border-color:#b4dfc7;color:#16814c}
+#kot_v2 .kv2-served-row{background:#f0faf4;transition:background .2s ease}
+@media(prefers-reduced-motion:reduce){#kot_v2 button.kv2-serving::before{animation:none}#kot_v2 .kv2-served-row{transition:none}}
