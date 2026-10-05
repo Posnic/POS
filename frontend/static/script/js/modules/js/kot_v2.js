@@ -461,6 +461,7 @@
         finally { state.loadingMenu = false; if (scope === scopeKey() && category !== state.category) loadCatalogue(); }
     }
     function chooseProduct(data, quantity = 1) {
+        if (pendingSendReview()) return;
         const price = Number(data.items_selling_price ?? data.selling_price ?? data.item_price ?? data.price ?? 0);
         const openPrice = !price || data.open_price === true;
         const modal = dialog(data.item_name || data.name || data.items_name || '',
@@ -560,7 +561,20 @@
             Number(saved.unit_price ?? saved.item_base_price ?? saved.item_price ?? 0) * line.quantity,
         );
     }
+    function pendingSendReview(afterRecovery) {
+        if (!state.draft?.intent) return false;
+        dialog(P.i18n.t('lang_review_latest_order', 'Review latest order'),
+            '<p>' + esc(P.i18n.t('lang_kot_pending_edit_review', 'Check the previous kitchen send before changing this order. Your selected items are kept.')) + '</p>',
+            async (_, modal) => {
+                await send();
+                if (state.draft?.intent) return;
+                modal.close();
+                if (afterRecovery) afterRecovery();
+            }, P.i18n.t('lang_retry_saved_send', 'Retry saved send'));
+        return true;
+    }
     function customer() {
+        if (pendingSendReview(customer)) return;
         const d = state.draft,
             s = state.sale,
             c = d?.customer || { id: s?.customer_id, name: s?.customer_name || '', phone: s?.customer_phone || '' };
@@ -838,6 +852,7 @@
         );
     }
     async function offmenu() {
+        if (pendingSendReview()) return;
         if (!state.draft && !state.sale) throw new Error('Start a table or takeaway order first.');
         const tax = await api('get', 'items/instantItemTax');
         dialog(
@@ -911,6 +926,7 @@
         await run(async () => {
             const a = b.dataset.action,
                 s = state.sale;
+            if (['discard', 'qty', 'removeDraft', 'draftNote'].includes(a) && pendingSendReview()) return;
             if (a === 'expand') {
                 state.expanded = !state.expanded;
                 render();

@@ -4552,5 +4552,7 @@
   "lang_orders_updated": "Bestellingen bijgewerkt",
   "lang_refresh_failed_try_again": "Vernieuwen mislukt. Probeer het opnieuw.",
   "lang_refresh_orders": "Bestellingen vernieuwen",
-  "lang_captain_tender_total": "Voer twee of drie bedragen in die samen gelijk zijn aan de rekening."
+  "lang_captain_tender_total": "Voer twee of drie bedragen in die samen gelijk zijn aan de rekening.",
+  "lang_kot_pending_edit_review": "Controleer de vorige verzending naar de keuken voordat u deze bestelling wijzigt. Uw geselecteerde artikelen blijven bewaard.",
+  "lang_review_latest_order": "Laatste bestelling bekijken"
 }
