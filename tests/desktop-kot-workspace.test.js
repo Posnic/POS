@@ -77,3 +77,9 @@ test('merge registers a legacy custom source in the current branch only after Sa
  await app.move('source',true);assert.equal(writes.length,0);w.document.querySelector('[name=table]').value='dest';w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
  assert.equal(writes[0].url,'captain/v1/tables/temporary');assert.deepEqual(writes[0].body,{branchId:'branch',tableorder_value:'66'});assert.equal(writes[1].url,'captain/v1/tables/merge/prepare');assert.equal(writes[1].body.targetOrderId,'target');assert.equal(writes[2].url,'captain/v1/tables/move/complete');dom.window.close();
 });
+
+test('move offers custom destination when floor is full and retries the same resolved table',async()=>{
+ const writes=[];let fail=true;
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{tables:[{id:'src',tableorder_value:'66',status:'occupied'}]}:{_id:'source',table_number:'66',person_count:2}}),post:(o,done,bad)=>{writes.push({url:o.url,body:JSON.parse(o.data)});if(o.url.endsWith('/complete')&&fail)bad({responseJSON:{message:'Offline'}});else done({type:'success',data:o.url.endsWith('/temporary')?{id:'custom-id'}:{}});}});
+ await app.move('source');assert.equal(w.document.querySelector('select').value,'custom');assert.equal(writes.length,0);w.document.querySelector('[name=customTable]').value='a12';const submit=()=>w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await flush();assert.equal(writes[0].body.tableorder_value,'A12');assert.equal(writes[1].body.primaryId,'custom-id');fail=false;submit();await flush();assert.equal(writes.filter(x=>x.url.endsWith('/temporary')).length,1);assert.equal(writes[2].body.request_id,writes[3].body.request_id);dom.window.close();
+});
