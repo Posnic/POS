@@ -53,6 +53,8 @@
         el.style.top = Math.max(70, Math.min(innerHeight - 150, rect.top + 145)) + 'px';
         if (kind === 'sent') {
             el.classList.add('transparent-kitchen');
+            el.style.left = Math.max(10, (innerWidth - 300) / 2) + 'px';
+            el.style.top = Math.max(10, (innerHeight - 100) / 2) + 'px';
             el.innerHTML =
                 '<svg class="free-arrow" viewBox="0 0 32 32"><path d="m3 13 26-10-10 26-4-12-12-4Z"/><path d="M15 17 29 3"/></svg><svg class="free-vessel" viewBox="0 0 64 64"><path d="M14 28h36l-3 23H17Z M9 28h46M22 23h20M32 18v5M14 32H7v9h9M50 32h7v9h-9"/><path class="steam" d="M23 16c-5-5 5-6 0-11M41 16c-5-5 5-6 0-11"/></svg><span class="vessel-ring"></span>' +
                 Array.from(
