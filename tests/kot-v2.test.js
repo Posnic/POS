@@ -109,3 +109,12 @@ test('Cancel recovery closes after an occupied-table rejection and allows leavin
  setup.failure=true;setup.failureResponse={message:'Table 6 already has an open order. Add to it, or settle it first.'};
  try{await h.click('discard');h.w.document.querySelector('dialog[open] [type=submit]').click();await flush();assert.equal(h.w.document.querySelector('dialog[open]'),null);assert.equal(d.intent,undefined);await h.click('discard');assert.equal(h.app.state.draft,null);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
 });
+
+
+test('off-menu entry checks a saved send before collecting fields or creating a product',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+ h.app.state.draft.intent={url:'sales/updateOrder',body:{}};
+ await h.click('offmenu');assert.equal(h.w.document.querySelector('dialog[open] [name=price]'),null);assert.match(h.w.document.querySelector('dialog[open]').textContent,/previous submission/);assert.equal(h.calls.some(c=>c.url==='items/instanceItemInsert'),false);
+ setup.failure=true;setup.failureResponse={message:'order_changed'};
+ try{h.w.document.querySelector('dialog[open] [type=submit]').click();await flush();assert.equal(h.app.state.draft.intent,undefined);setup.failure=false;await h.click('offmenu');h.w.document.querySelector('dialog[open] [name=name]').value='Soup';h.w.document.querySelector('dialog[open] [name=price]').value='25';h.w.document.querySelector('dialog[open] form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();assert.equal(h.app.state.draft.items.length,2);assert.equal(h.calls.filter(c=>c.url==='items/instanceItemInsert').length,1);assert.equal(h.w.document.querySelector('dialog[open]'),null);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
+});
