@@ -12,5 +12,9 @@
 // constants/runtime.constants.js in the same commit.
 
 module.exports = [
-  // { id: '001-example', description: 'what and why', up: async (db) => { ... } },
+  {
+    id: '001-business-cloud-daily-indexes',
+    description: 'Bound Business daily sales and historical-sale refund reads by branch and date',
+    up: require('../../services/business-cloud-reports').ensureCloudReportingIndexes,
+  },
 ];

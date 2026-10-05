@@ -413,7 +413,8 @@ router.get(
       await require('../services/business-reports').readBusinessOverview(
         req.db,
         await req.businessAccess.contextFor(req.businessIdentity.user),
-        req.query
+        req.query,
+        { cloud: true }
       )
     )
   )
@@ -425,7 +426,8 @@ router.get(
       await require('../services/business-reports').readBusinessItems(
         req.db,
         await req.businessAccess.contextFor(req.businessIdentity.user),
-        req.query
+        req.query,
+        { cloud: true }
       )
     )
   )
