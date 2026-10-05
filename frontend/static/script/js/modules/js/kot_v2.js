@@ -83,7 +83,7 @@
             .join('') +
         '</div>';
     const button = (label, action, extra = '') =>
-        `<button type="button" data-action="${action}" ${extra}>${esc(label)}</button>`;
+        `<button type="button" data-action="${action}" ${extra}>${actionIcons[action] ? icon(actionIcons[action]) : ""}<span>${esc(label)}</span>${action === "actions" ? icon("chevron") : ""}</button>`;
     function scopeKey() {
         return 'posnic.kot-v2.draft:' + location.origin + ':' + branch() + ':' + P.local.get('username');
     }
@@ -320,7 +320,15 @@
         state.tab = 'order';
         render();
     }
+    const actionIcons = {discount:'discount',printBill:'print',printKOT:'print',pay:'pay',serveAll:'check',serve:'check',customer:'guests',details:'details',notes:'details',guests:'guests',handover:'transfer',split:'merge',cancel:'cancel',discard:'cancel',draftNote:'details',removeDraft:'cancel'};
     const paths = {
+        chevron: 'm8 10 4 4 4-4',
+        discount: 'm5 19 14-14M7 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6M17 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6',
+        print: 'M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 11h1',
+        pay: 'M3 5h18v14H3zM3 10h18M6 15h4',
+        check: 'm4 12 5 5L20 6',
+        details: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5',
+        cancel: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M8 8l8 8m0-8-8 8',
         table: 'M4 8h16v9H4z M6 17v4m12-4v4M8 4h8',
         guests: 'M8 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5 8v-2a5 5 0 0 1 10 0v2m3-14a3 3 0 0 1 0 6m1 3a4 4 0 0 1 4 4',
         move: 'M3 6h7v7H3z M5 13v4m3-4v4m6-8h7m-3-3 3 3-3 3',
@@ -426,7 +434,7 @@
         const s = state.sale;
         if (!s) return emptyOrderHTML();
         const details = s.restaurant_details || {};
-        return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.takeaway_number || s.token_id || '') : 'Table ' + s.table_number)}</h2><small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('transfer', 'Transfer items')}${button('Actions', 'actions')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button('Serve all', 'serveAll')}${button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p><p>Discount <b>${esc(money(s.discount || 0))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}<p>${esc(details.preparation_note || 'No kitchen note')}</p>${button('Edit details', 'notes')}</div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
+        return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.takeaway_number || s.token_id || '') : 'Table ' + s.table_number)}</h2><small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('transfer', 'Transfer items')}${button('Actions', 'actions', 'aria-haspopup="true" aria-expanded="false" aria-controls="kv2-actions-menu"')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button('Serve all', 'serveAll')}${button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p><p>Discount <b>${esc(money(s.discount || 0))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}<p>${esc(details.preparation_note || 'No kitchen note')}</p>${button('Edit details', 'notes')}</div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
     }
     function catalogueHTML() {
         return state.catalogue.map((item, i) => {
@@ -1081,18 +1089,32 @@
                     throw new Error('Payment screen is unavailable. Reload the app.');
                 await CaptainPayments.open(paymentTable(s), branch());
             } else if (a === 'actions') {
-                const d = dialog(
-                    'Order actions',
-                    '<div class="kv2-choices">' +
-                        button('Order details', 'details') +
-                        button('Guests', 'guests') +
-                        button('Hand over', 'handover') +
-                        button('Split payment', 'split') +
-                        button('Cancel order', 'cancel') +
-                        '</div>',
-                    () => {},
-                    'Close',
-                );
+                const existing = document.getElementById('kv2-actions-menu');
+                if (existing) { existing.close(); return; }
+                const d = document.createElement('div');
+                d.id = 'kv2-actions-menu';
+                d.className = 'kv2-actions-menu';
+                d.setAttribute('popover', 'auto');
+                d.innerHTML = '<section aria-label="Order actions">' +
+                    button('Order details', 'details') + button('Guests', 'guests') +
+                    button('Hand over', 'handover') + button('Split payment', 'split') +
+                    button('Cancel order', 'cancel', 'class="kv2-danger"') + '</section>';
+                b.setAttribute('aria-expanded', 'true');
+                d.close = () => { b.setAttribute('aria-expanded', 'false'); d.remove(); };
+                document.body.append(d);
+                const rect = b.getBoundingClientRect();
+                d.style.left = Math.max(8, Math.min(innerWidth - 248, rect.right - 240)) + 'px';
+                d.style.top = Math.max(8, Math.min(innerHeight - 270, rect.bottom + 8)) + 'px';
+                if (d.showPopover) d.showPopover();
+                d.addEventListener('toggle', ev => { if (ev.newState === 'closed') d.close(); });
+                d.addEventListener('keydown', ev => {
+                    const items = Array.from(d.querySelectorAll('button'));
+                    const index = items.indexOf(document.activeElement);
+                    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+                        ev.preventDefault(); items[(index + (ev.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
+                    } else if (ev.key === 'Escape') { d.close(); b.focus(); }
+                });
+                d.querySelector('button').focus();
                 d.querySelector('section').onclick = (ev) => {
                     const v = ev.target.closest('button');
                     if (!v) return;
