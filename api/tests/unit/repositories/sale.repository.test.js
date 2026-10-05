@@ -905,10 +905,14 @@ describe('SalesRepository', () => {
       if (!collections.sales) collections.sales = mkCol();
       const updated = new Date('2026-10-05T08:12:10.987Z');
       collections.sales.findOne.mockResolvedValue({
-        _id: FAKE_ID, branch_id: FAKE_BRANCH, items: [], updated_date: updated,
+        _id: FAKE_ID,
+        branch_id: FAKE_BRANCH,
+        items: [],
+        updated_date: updated,
       });
       BaseModel.simplifyFields.mockImplementationOnce((doc) => ({
-        ...doc, updated_date: '2026-10-05 13:42:10',
+        ...doc,
+        updated_date: '2026-10-05 13:42:10',
       }));
       const result = await salesRepository.getLegacyDetails(FAKE_ID);
       expect(result.status).toBe(true);
