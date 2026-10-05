@@ -672,6 +672,20 @@
         try {
             result = await api('post', d.intent.url, d.intent.body);
         } catch (error) {
+            if (d.saleId && error.message === 'order_changed') {
+                // This is an explicit refusal, not an unknown network outcome.
+                // Reconcile accepted line IDs before unlocking the remaining draft.
+                const latest = await api('get', 'sales/' + d.saleId);
+                const accepted = new Set((latest.items || []).map(line => line.line_id));
+                d.items = d.items.filter(line => !accepted.has(line.line_id));
+                delete d.intent;
+                d.key = id();
+                state.sale = latest;
+                persist();
+                render();
+                notify('Latest order loaded. Review the remaining dishes before sending.');
+                return;
+            }
             // Pricing validation happens before any order write. Unlike a lost response,
             // this is a confirmed refusal: retain the dishes, but allow corrections.
             if (['item_price_mismatch', 'invalid_price', 'item_needs_price', 'item_price_too_high', 'invalid_tax_configuration', 'price_context_mismatch', 'item_modifiers_changed'].includes(error.details?.state)) {

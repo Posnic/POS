@@ -80,3 +80,8 @@ test('sad chef plays only after a successful order cancellation',async()=>{
  setup.failure=true;try{await cancel();assert.equal(h.effects.includes('cancelled'),false);h.w.document.querySelector('dialog [data-close]').click();}finally{setup.failure=false;}
  await cancel();assert.equal(h.effects.filter(e=>e==='cancelled').length,1);assert.equal(h.calls.filter(c=>c.url==='sales/updateOrder').at(-1).body.status,'cancelled');h.close();
 });
+
+test('confirmed order conflict unlocks and reconciles the draft instead of trapping saved retries',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});const key=h.app.state.draft.key;
+ setup.failure=true;setup.failureResponse={message:'order_changed'};try{await h.click('send');assert.equal(h.app.state.draft.intent,undefined);assert.notEqual(h.app.state.draft.key,key);assert.equal(h.app.state.draft.items.length,1);assert.equal(h.effects.includes('sent'),false);await h.click('removeDraft');assert.equal(h.app.state.draft.items.length,0);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
+});
