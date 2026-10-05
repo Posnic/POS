@@ -84,7 +84,10 @@ describeIfDb('the REST API, against a real database', () => {
     process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '0123456789abcdef0123456789abcdef';
     process.env.ENCRYPTION_IV = process.env.ENCRYPTION_IV || '0123456789abcdef';
 
-    client = new MongoClient(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 20000 });
+    client = new MongoClient(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 20000,
+      runtimeAdapters: { os: require('node:os') },
+    });
     await client.connect();
 
     /* Clear out databases left by runs that were cancelled before their

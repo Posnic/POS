@@ -7299,6 +7299,17 @@ class SalesController extends BaseController {
       return this.error(res, error.message, error.status || 500);
     }
   }
+  async orderCustomer(req, res) {
+    try {
+      return this.success(
+        res,
+        await require('../services/captain-service').customer(req),
+        'Customer saved'
+      );
+    } catch (error) {
+      return this.error(res, error.message, error.status || 500);
+    }
+  }
   async handoverOrder(req, res) {
     try {
       return this.success(

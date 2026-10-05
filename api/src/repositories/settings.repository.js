@@ -325,7 +325,11 @@ class SettingsRepository extends BaseModel {
            Stored verbatim they read as ENABLED through every `!== false`
            gate - the all-toggles-on incident. The boolean is stored, so no
            reader ever meets the string. null still means inherit. */
-        if (key === 'menu_dayparts' && value !== null) {
+        if (key === 'restaurant_playful_feedback') {
+          if (value !== null && typeof value !== 'boolean')
+            return { status: false, data: null, message: 'Order feedback must be on or off.' };
+          accepted[key] = value;
+        } else if (key === 'menu_dayparts' && value !== null) {
           const normalized = require('../utils/online-ordering').normalizeDayparts(value);
           if (
             !Array.isArray(value) ||
