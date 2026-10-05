@@ -220,7 +220,8 @@
                 P.alert('error', 'The saved draft could not be read.');
             }
         }
-        state.expanded = !!state.draft;
+        state.expanded = false;
+        if (state.draft) state.selected = state.draft.saleId || null;
         state.filter = 'active';
         render();
         run(refresh);
@@ -257,6 +258,10 @@
             if (generation !== state.generation) return;
             if (!more.list?.length) break;
             state.sales.push(...more.list);
+        }
+        if (!state.draft && !state.sales.some((sale) => String(sale._id) === String(state.selected))) {
+            state.selected = state.sales[0]?._id || null;
+            state.sale = null;
         }
         if (state.selected) {
             const sale = await api('get', 'sales/' + encodeURIComponent(state.selected));
