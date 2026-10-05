@@ -9067,6 +9067,22 @@ class SalesRepository {
         ? String(takeawayNumber)
         : String(clientTokenId || Math.floor(Math.random() * 900) + 100);
 
+      let selectedCustomer = null;
+      if (staffOrder && data.customer_id) {
+        if (!ObjectId.isValid(String(data.customer_id))) throw new Error('Choose a customer.');
+        const person = await db.collection('customers').findOne({
+          _id: new ObjectId(String(data.customer_id)),
+          branch_id: branchObjectId,
+          license: branchDoc.license,
+        });
+        if (!person) throw new Error('Customer not found in this branch.');
+        selectedCustomer = {
+          customer_id: person._id,
+          customer_name: String(person.name || ''),
+          customer_phone: String(person.phone || ''),
+          customer_address: String(person.address || ''),
+        };
+      }
       const saleDocument = {
         /* What makes a resend safe. Absent on orders taken before this
            shipped, which is why the lookup above is skipped without one. */
@@ -9193,6 +9209,7 @@ class SalesRepository {
         ...(anonymous
           ? { customer_id: walkIn.id, customer_name: walkIn.name, customer_phone: '' }
           : {}),
+        ...(selectedCustomer || {}),
         /* "null" is what a page stores when it stores nothing, and it was
            reaching tickets as a note. */
         notes: note && String(note) !== 'null' ? String(note).trim().slice(0, 300) : '',

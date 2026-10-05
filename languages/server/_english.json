@@ -1560,6 +1560,9 @@
   "Order changed. Refresh before marking items served.": [
     "src/repositories/sale.repository.js"
   ],
+  "Order feedback must be on or off.": [
+    "src/repositories/settings.repository.js"
+  ],
   "Order history fetched": [
     "src/repositories/sale.repository.js"
   ],
