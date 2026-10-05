@@ -431,3 +431,29 @@ footer {
 .progress-served { background:#28333b; color:#d7e1e8; }
 .status-key { display:flex; flex-wrap:wrap; gap:12px; font-size:14px; }
 .status-key span { white-space:nowrap; }
+
+.ticket-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  min-width: 0;
+}
+.order-taker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.order-taker svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.additional-order {
+  display: block;
+  font-size: 11px;
+  margin-top: 3px;
+}

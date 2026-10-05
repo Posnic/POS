@@ -442,3 +442,26 @@ test('serving a paid takeaway closes the floor as well as the kitchen', async ()
   expect(saved.payment_status).toBe('Paid');
   expect(saved.sales_total).toBe(100);
 });
+
+test('kitchen header resolves staff full names within the tenant and labels additions only', async () => {
+  const first = new ObjectId(),
+    second = new ObjectId();
+  await db.collection('users').insertMany([
+    { _id: first, license, firstname: 'Jack', lastname: 'Smith' },
+    { _id: second, license: new ObjectId(), firstname: 'Other tenant' },
+  ]);
+  const sale = await db.collection('sales').findOne({ _id: saleId });
+  sale.changes[0].kitchen_actor = { id: String(first), name: 'jack' };
+  sale.items[0].item_quantity = 3;
+  sale.changes.push({
+    timestamp: new Date(),
+    kitchen_actor: { id: String(second), name: 'Original snapshot' },
+    items: [{ item_id: 'rice', item_name: 'Rice', item_quantity: 1, process: 'add' }],
+  });
+  await db.collection('sales').replaceOne({ _id: saleId }, sale);
+  const tickets = (await service.list(request())).tickets;
+  expect(tickets[0]).toMatchObject({ ownerName: 'Jack Smith', additionalOrder: false });
+  expect(tickets[1]).toMatchObject({ ownerName: 'Original snapshot', additionalOrder: true });
+  sale.changes[1].items[0].process = 'transfer-in';
+  expect(service.project(sale)[1].additionalOrder).toBe(false);
+});
