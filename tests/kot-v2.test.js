@@ -47,3 +47,11 @@ test('serve shows immediate pending feedback, confirms the portion and restores 
  done();await flush();assert.match(button().textContent,/1\/2/);assert.ok(button().classList.contains('kv2-serve-saved'));assert.equal(button().disabled,false);
  button().click();fail();await flush();assert.equal(button().disabled,false);assert.equal(button().getAttribute('aria-busy'),null);assert.match(button().textContent,/1\/2/);assert.equal(h.w.document.querySelector('.kv2-serving'),null);h.close();
 });
+
+test('takeaway card uses its short number and elapsed minutes advance without rebuilding the order',async()=>{
+ const h=setup();h.sale.dine_type='Take away';h.sale.token_id='8';h.sale.takeaway_number=8;h.sale.sales_id='S-LONG-00008';h.sale.created_date=new Date(Date.now()-14*60000).toISOString();h.app.showDataTablePage();await flush();
+ const root=h.w.document.querySelector('#kot_v2');Object.defineProperty(root,'offsetParent',{get:()=>h.w.document.body});Object.defineProperty(h.w.document,'hidden',{get:()=>false});
+ const card=root.querySelector('[data-table^="takeaway-"]');assert.match(card.textContent,/Takeaway 8/);assert.doesNotMatch(card.textContent,/S-LONG/);const before=root.innerHTML;const now=h.w.Date.now;
+ h.w.Date.now=()=>now()+2*60000;h.w.document.dispatchEvent(new h.w.Event('visibilitychange'));assert.match(card.querySelector('[data-elapsed]').textContent,/16 min/);assert.equal(card.dataset.age,'waiting');assert.equal(root.querySelector('[data-table^="takeaway-"]'),card);
+ h.w.Date.now=()=>now()+17*60000;h.w.document.dispatchEvent(new h.w.Event('visibilitychange'));assert.equal(card.dataset.age,'late');h.close();
+});

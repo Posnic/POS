@@ -325,7 +325,7 @@
         for (const sale of state.sales.filter((s) => /^take[\s_-]*away$/i.test(s.dine_type)))
             rows.push({
                 id: 'takeaway-' + sale._id,
-                tableorder_value: 'Takeaway ' + (sale.token_id || sale.sales_id || ''),
+                tableorder_value: 'Takeaway ' + (sale.takeaway_number || sale.token_id || ''),
                 status: 'occupied',
                 sales: [sale],
             });
@@ -349,11 +349,23 @@
                               ),
                           )
                         : 0;
-                    return `<button class="kv2-table ${t.sales.some((s) => String(s._id) === state.selected) ? 'selected' : ''}" data-action="table" data-table="${esc(t.id)}" data-sale="${esc(t.sales[0]?._id || '')}" data-age="${!t.sales.length ? '' : minutes >= 30 ? 'late' : minutes >= 15 ? 'waiting' : 'fresh'}"><strong>${icon(t.id.startsWith('takeaway-') ? 'takeaway' : 'table')} ${esc(t.tableorder_value)}</strong><small>${t.sales.length ? t.sales.reduce((n, s) => n + (s.items || []).reduce((q, l) => q + Number(l.item_quantity || 0), 0), 0) + ' items · ' + t.sales.reduce((n, s) => n + Number(s.person_count || 0), 0) + ' guests' : esc(t.status)}</small>${t.sales.length ? `<b>${esc(money(t.sales.reduce((n, s) => n + Number(s.sales_total || 0), 0)))}</b><small>${minutes} min ago</small>` : ''}</button>`;
+                    return `<button class="kv2-table ${t.sales.some((s) => String(s._id) === state.selected) ? 'selected' : ''}" data-action="table" data-table="${esc(t.id)}" data-sale="${esc(t.sales[0]?._id || '')}" data-opened="${t.sales.length ? Math.min(...t.sales.map((s) => Date.parse(s.created_date) || Date.now())) : ''}" data-age="${!t.sales.length ? '' : minutes >= 30 ? 'late' : minutes >= 15 ? 'waiting' : 'fresh'}"><strong>${icon(t.id.startsWith('takeaway-') ? 'takeaway' : 'table')} ${esc(t.tableorder_value)}</strong><small>${t.sales.length ? t.sales.reduce((n, s) => n + (s.items || []).reduce((q, l) => q + Number(l.item_quantity || 0), 0), 0) + ' items · ' + t.sales.reduce((n, s) => n + Number(s.person_count || 0), 0) + ' guests' : esc(t.status)}</small>${t.sales.length ? `<b>${esc(money(t.sales.reduce((n, s) => n + Number(s.sales_total || 0), 0)))}</b><small data-elapsed>${minutes} min ago</small>` : ''}</button>`;
                 })
                 .join('') || `<div class="kv2-floor-empty">${icon('table')}<p><lang class="lang_no_orders_here">No orders here.</lang></p>${state.filter === 'active' ? button(PosnicPro.i18n.t('lang_choose_a_table', 'Choose a table'), 'filter', 'data-value="available"') : ''}</div>`
         }</div></aside>`;
     }
+    function updateElapsed() {
+        if (!root()?.offsetParent || document.hidden) return;
+        root().querySelectorAll('.kv2-table[data-opened]').forEach((card) => {
+            if (!card.dataset.opened) return;
+            const minutes = Math.max(0, Math.floor((Date.now() - Number(card.dataset.opened)) / 60000));
+            const label = card.querySelector('[data-elapsed]');
+            if (label) label.textContent = minutes + ' min ago';
+            card.dataset.age = minutes >= 30 ? 'late' : minutes >= 15 ? 'waiting' : 'fresh';
+        });
+    }
+    setInterval(updateElapsed, 15000);
+    document.addEventListener('visibilitychange', updateElapsed);
     function roundHTML(sale) {
         const rounds = sale.restaurant_details?.rounds || [];
         return (
@@ -375,7 +387,7 @@
         const s = state.sale;
         if (!s) return emptyOrderHTML();
         const details = s.restaurant_details || {};
-        return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.token_id || '') : 'Table ' + s.table_number)}</h2><small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('transfer', 'Transfer items')}${button('Actions', 'actions')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button('Serve all', 'serveAll')}${button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p><p>Discount <b>${esc(money(s.discount || 0))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}<p>${esc(details.preparation_note || 'No kitchen note')}</p>${button('Edit details', 'notes')}</div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
+        return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.takeaway_number || s.token_id || '') : 'Table ' + s.table_number)}</h2><small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('transfer', 'Transfer items')}${button('Actions', 'actions')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button('Serve all', 'serveAll')}${button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p><p>Discount <b>${esc(money(s.discount || 0))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}<p>${esc(details.preparation_note || 'No kitchen note')}</p>${button('Edit details', 'notes')}</div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
     }
     function catalogueHTML() {
         return state.catalogue.map((item, i) => {

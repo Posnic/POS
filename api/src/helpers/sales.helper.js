@@ -1050,6 +1050,8 @@ const formatSaleListEntry = (saleDoc) => {
     _id: id,
     id,
     sales_id: doc.sales_id || doc.invoice_number || doc.alternative_id || '',
+    token_id: doc.token_id || '',
+    takeaway_number: doc.takeaway_number || null,
     customer_id: customer?._id?.toString?.() || doc.customer_id || doc.customer || null,
     customer_name: doc.customer_name || customer?.name || '',
     customer_phone: doc.customer_phone || customer?.phone || '',
@@ -1069,7 +1071,11 @@ const formatSaleListEntry = (saleDoc) => {
     number_of_items: doc.number_of_items ?? (Array.isArray(doc.items) ? doc.items.length : 0),
     string_date: stringDate,
     date: saleDate,
-    created_date: saleDate,
+    created_date:
+      parseSaleDate(doc.created_date) ||
+      parseSaleDate(doc.createdAt) ||
+      parseSaleDate(doc.date) ||
+      saleDate,
     updated_date: parseSaleDate(doc.updatedAt) || parseSaleDate(doc.updated_date) || null,
     created_by: doc.created_by || doc.user_name || undefined,
     branch_name: doc.branch_name,
