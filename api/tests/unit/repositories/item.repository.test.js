@@ -458,6 +458,19 @@ describe('ItemRepository', () => {
   });
 
   describe('getOnlineItemsAjaxList', () => {
+    test('category filtering keeps branch and license scope and returns saved icons', async () => {
+      col.aggregate.mockReturnValue(mkAgg([{ _id: FAKE_ID, name: 'Tea', icon: '☕' }]));
+      const result = await repo.getOnlineItemsAjaxList(
+        { categoryId: String(FAKE_ID) },
+        { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE }
+      );
+      expect(result.status).toBe(true);
+      expect(result.data[0].icon).toBe('☕');
+      const clauses = col.aggregate.mock.calls.at(-1)[0][0].$match.$and;
+      expect(clauses.some((c) => String(c.category_id) === String(FAKE_ID))).toBe(true);
+      expect(clauses.some((c) => c['branch_access.branch_id'])).toBe(true);
+      expect(clauses.some((c) => c.license)).toBe(true);
+    });
     test('returns suggestions', async () => {
       col.aggregate.mockReturnValue(mkAgg([{ _id: FAKE_ID, name: 'A' }]));
       const r = await repo.getOnlineItemsAjaxList(

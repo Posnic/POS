@@ -88,3 +88,43 @@ test('the same photo request cannot be rebound to a different order', async () =
   ).rejects.toMatchObject({ status: 409 });
   expect((await db.collection('sales').findOne({ _id: second })).order_photos).toBeUndefined();
 });
+
+test('dish photos retain canonical item linkage privately and reject rebinding', async () => {
+  const itemId = new ObjectId(),
+    other = new ObjectId();
+  await db.collection('sales').updateOne(
+    { _id: sale },
+    {
+      $set: {
+        items: [
+          { item_id: itemId, item_name: 'Soup', item_quantity: 2 },
+          { item_id: other, item_name: 'Rice', item_quantity: 1 },
+        ],
+      },
+    }
+  );
+  req.body.itemId = String(itemId);
+  const first = await service.attach(req);
+  expect(first.photo).toMatchObject({
+    item_id: String(itemId),
+    item_name: 'Soup',
+    visibility: 'private',
+  });
+  await service.attach(req);
+  const saved = await db.collection('sales').findOne({ _id: sale });
+  expect(saved.order_photos).toHaveLength(1);
+  expect(saved.order_photos[0]).toMatchObject({ item_id: String(itemId), visibility: 'private' });
+  await expect(
+    service.attach({ ...req, body: { ...req.body, itemId: String(other) } })
+  ).rejects.toMatchObject({ status: 409 });
+  await expect(
+    service.attach({ ...req, body: { ...req.body, itemId: undefined } })
+  ).rejects.toMatchObject({ status: 409 });
+  expect(send).toHaveBeenCalledTimes(1);
+});
+
+test('a dish outside this order cannot receive a photo or trigger an upload', async () => {
+  req.body.itemId = String(new ObjectId());
+  await expect(service.attach(req)).rejects.toMatchObject({ status: 422 });
+  expect(send).not.toHaveBeenCalled();
+});

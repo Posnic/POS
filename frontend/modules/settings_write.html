@@ -3257,8 +3257,17 @@
                                     href="#restaurantprinting-line" role="tab" aria-controls="restaurantprinting-line"
                                     aria-selected="false"><i class="feather icon-printer mr-1"></i><lang class="lang_kot_print_tab">KOT printing</lang></a>
                             </li>
+                            <li class="nav-item"><a class="nav-link" id="restaurantfeedback-tab" data-toggle="tab" href="#restaurantfeedback-line" role="tab" aria-selected="false"><lang class="lang_order_feedback">Order feedback</lang></a></li>
                             </ul>
                             <div class="tab-content">
+                                <div class="tab-pane fade" id="restaurantfeedback-line" role="tabpanel" aria-labelledby="restaurantfeedback-tab">
+                                    <div class="card"><div class="card-body">
+                                        <h5><lang class="lang_order_feedback">Order feedback</lang></h5><p><lang class="lang_brief_playful_feedback_when_adding_dishes">Brief, playful feedback when adding dishes, sending to the kitchen and collecting payment. Your device's reduced-motion preference is respected.</lang></p>
+                                        <label><input type="checkbox" id="restaurant-feedback-enabled" disabled> <lang class="lang_play_order_animations_in_table_orders_v2">Play order animations in Table orders v2</lang></label>
+                                        <button type="button" id="restaurant-feedback-save" class="btn btn-primary" disabled><lang class="lang_save_title">Save</lang></button>
+                                        <p id="restaurant-feedback-status" role="status"></p>
+                                    </div></div>
+                                </div>
                                 <div class="tab-pane fade" id="restaurantprintmenu-line" role="tabpanel" aria-labelledby="restaurantprintmenu-tab-line">
                                     <div class="card"><div class="card-body">
                                         <h5><lang class="lang_printable_menu">Printable menu</lang></h5>

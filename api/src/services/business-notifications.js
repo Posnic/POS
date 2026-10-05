@@ -375,7 +375,7 @@ async function drainDue(
           db,
           context,
           { branchId: job.branchId, businessDate: job.businessDate },
-          { now }
+          { now, cloud: true }
         );
       } catch (error) {
         if (error.code !== 'summary_unavailable') throw error;

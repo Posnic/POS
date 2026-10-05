@@ -67,15 +67,68 @@ test('partial payment journal takes precedence over a stale sale projection', as
   await db.collection('captain_payment_plans').deleteMany({});
   await expect(service.read(req())).rejects.toMatchObject({ status: 409 });
 });
-test('paid open tables remain readable until explicitly closed', async () => {
+test('settled dine-in releases the table but remains readable by receipt', async () => {
   await db
     .collection('sales')
     .updateOne({ _id: sale._id }, { $set: { payment_status: 'Paid', floor_lifecycle: true } });
-  expect(await service.read(req())).toMatchObject({ paidMinor: 10500, dueMinor: 0 });
+  await expect(service.read(req())).rejects.toMatchObject({ status: 404 });
+  expect(
+    await service.read({ ...req(), query: { saleId: String(sale._id), receipt: 'true' } })
+  ).toMatchObject({ paidMinor: 10500, dueMinor: 0, collectEnabled: false });
   await db
     .collection('sales')
     .updateOne({ _id: sale._id }, { $set: { floor_closed_at: new Date() } });
   await expect(service.read(req())).rejects.toMatchObject({ status: 404 });
+});
+
+test('old settled orders with unavailable journals cannot block the next table bill', async () => {
+  await db.collection('sales').insertOne({
+    ...sale,
+    _id: new ObjectId(),
+    payment_status: 'Paid',
+    floor_lifecycle: true,
+    payment_pending: 0,
+    balance: 0,
+    captain_payment_plan: 'old-unsynced-plan',
+  });
+  expect(await service.read(req())).toMatchObject({
+    totalMinor: 10500,
+    paidMinor: 0,
+    dueMinor: 10500,
+    orderIds: [String(sale._id)],
+  });
+});
+
+test('paid projections with a remaining balance still require a valid payment journal', async () => {
+  await db.collection('sales').updateOne(
+    { _id: sale._id },
+    {
+      $set: {
+        payment_status: 'Paid',
+        floor_lifecycle: true,
+        payment_pending: 35,
+        captain_payment_plan: 'missing-current-plan',
+      },
+    }
+  );
+  await expect(service.read(req())).rejects.toMatchObject({ status: 409 });
+});
+
+test('paid takeaway remains readable while awaiting handover', async () => {
+  await db.collection('sales').updateOne(
+    { _id: sale._id },
+    {
+      $set: {
+        payment_status: 'Paid',
+        floor_lifecycle: true,
+        dine_type: 'Take Away',
+      },
+    }
+  );
+  expect(await service.read({ ...req(), query: { saleId: String(sale._id) } })).toMatchObject({
+    paidMinor: 10500,
+    dueMinor: 0,
+  });
 });
 test('rejects missing permission and invalid table inputs', async () => {
   await expect(service.read({ ...req(), user: { role: 'staff' } })).rejects.toMatchObject({

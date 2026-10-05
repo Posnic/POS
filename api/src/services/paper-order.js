@@ -31,6 +31,7 @@ async function options(req) {
     enabled: enabled(c.branch),
     configured: Boolean(config().bucket && config().region),
     referenceAttachments: true,
+    itemReferenceAttachments: true,
     stagedPhotoUpload: true,
   };
 }
@@ -233,7 +234,7 @@ async function recognize(req, referenceOnly = false, mobileContext = null) {
   }
 }
 // Bind before sale insertion. Retries may reuse the same order key, never another order.
-async function reference(db, c, id, orderKey, owner) {
+async function reference(db, c, id, orderKey, owner, item) {
   if (!id) return null;
   if (!orderKey || !owner) fail('Sign in and retry this photo order.', 403);
   const where = {
@@ -244,9 +245,20 @@ async function reference(db, c, id, orderKey, owner) {
     result: { $exists: true },
     $or: [{ orderKey: { $exists: false } }, { orderKey: String(orderKey) }],
   };
+  if (item !== undefined)
+    where.$and = [
+      { $or: [{ reference_item_id: { $exists: false } }, { reference_item_id: item?.id || null }] },
+    ];
+  const binding = { orderKey: String(orderKey) };
+  if (item !== undefined)
+    Object.assign(binding, {
+      reference_item_id: item?.id || null,
+      reference_item_name: item?.name || '',
+      visibility: 'private',
+    });
   const doc = await db
     .collection('paper_order_photos')
-    .findOneAndUpdate(where, { $set: { orderKey: String(orderKey) } }, { returnDocument: 'after' });
+    .findOneAndUpdate(where, { $set: binding }, { returnDocument: 'after' });
   if (!doc) fail('This photo belongs to another order or is not ready.', 409);
   return {
     id: doc._id,
@@ -255,6 +267,10 @@ async function reference(db, c, id, orderKey, owner) {
     type: doc.type,
     uploaded_at: doc.created,
     uploaded_by: doc.owner,
+    ...(doc.reference_item_id
+      ? { item_id: doc.reference_item_id, item_name: doc.reference_item_name }
+      : {}),
+    visibility: 'private',
     url: `/captain/v1/paper-orders/photos/${doc._id}`,
   };
 }
@@ -315,17 +331,43 @@ async function attach(req) {
   if (!enabled(c.branch)) fail('Paper orders are not enabled for this branch.', 403);
   if (!ObjectId.isValid(String(req.body?.saleId || ''))) fail('Order not found.', 404);
   const where = { _id: new ObjectId(req.body.saleId), license: c.license, branch_id: c.branchId };
-  if (!(await req.db.collection('sales').findOne(where))) fail('Order not found.', 404);
+  const sale = await req.db.collection('sales').findOne(where);
+  if (!sale) fail('Order not found.', 404);
+  const previous = (sale.order_photos || []).find((photo) => photo.id === req.body.id);
+  if (previous && (previous.item_id || null) !== (req.body.itemId || null))
+    fail('This photo is already attached. Choose a new photo.', 409);
+  let item = null;
+  if (req.body.itemId) {
+    if (typeof req.body.itemId !== 'string' || !/^[a-f0-9]{24}$/i.test(req.body.itemId))
+      fail('Choose an item from this order.', 422);
+    const line = (sale.items || []).find((row) => String(row.item_id) === req.body.itemId);
+    if (!line) fail('Choose an item from this order.', 422);
+    item = { id: req.body.itemId, name: String(line.item_name || line.name || '') };
+  }
   const result = await recognize(req, true);
-  const photo = await reference(req.db, c, result.id, String(where._id), req.user._id);
-  const saved = await req.db.collection('sales').updateOne(where, {
-    $addToSet: { order_photos: photo },
-    $set: { updated_date: new Date() },
-  });
-  if (!saved.matchedCount) fail('Order not found.', 404);
+  const photo = await reference(req.db, c, result.id, String(where._id), req.user._id, item);
+  const saved = await req.db.collection('sales').updateOne(
+    { ...where, 'order_photos.id': { $ne: photo.id } },
+    {
+      $addToSet: { order_photos: photo },
+      $set: { updated_date: new Date() },
+    }
+  );
+  if (
+    !saved.matchedCount &&
+    !(await req.db.collection('sales').findOne({ ...where, 'order_photos.id': photo.id }))
+  )
+    fail('Order not found.', 404);
   require('../sync/outbox').enqueue({ collection: 'sales', documentId: where._id, reason: 'sale' });
   require('../sync/nudge').nudgeSyncAgent();
-  return { photo: { id: photo.id } };
+  return {
+    photo: {
+      id: photo.id,
+      item_id: photo.item_id,
+      item_name: photo.item_name,
+      visibility: 'private',
+    },
+  };
 }
 module.exports = {
   upload: (req) => recognize(req, true),

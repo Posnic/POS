@@ -878,7 +878,12 @@ class ItemsController extends BaseController {
       const limit = Number.isFinite(limitParam) && limitParam > 0 ? limitParam : 5;
 
       const response = await this.service.getOnlineItemsAjaxList(
-        { query, type, limit },
+        {
+          query,
+          type,
+          limit,
+          ...(req.query.categoryId ? { categoryId: req.query.categoryId } : {}),
+        },
         {
           branchId: this.model?.branchId || null,
           licenseId: this.model?.licenseId || null,

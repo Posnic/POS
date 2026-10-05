@@ -641,16 +641,42 @@ PosnicPro.dashboard = {
 
     KPI_IDS: '#kpi_sales,#kpi_purchase,#kpi_expenses,#kpi_tax,#kpi_upi,#kpi_cash',
 
+    refreshOverview: function () {
+        if (PosnicPro.dashboard._overviewLoading) return;
+        PosnicPro.dashboard.loadOverview(PosnicPro.dashboard._overviewFilter || 'day');
+    },
+
     loadOverview: function (filter) {
+        var dashboard = PosnicPro.dashboard;
+        filter = filter || 'day';
+        dashboard._overviewFilter = filter;
+        var request = dashboard._overviewRequest = (dashboard._overviewRequest || 0) + 1;
+        var branch = PosnicPro.local.get('branch_id_set');
+        dashboard._overviewLoading = true;
+        $('#dashboard_refresh').prop('disabled', true).attr('aria-busy', 'true');
+        $('#dashboard_refresh_status').text(PosnicPro.i18n.t('lang_refreshing', 'Refreshing…'));
+        function current() {
+            return request === dashboard._overviewRequest && branch === PosnicPro.local.get('branch_id_set');
+        }
+        function finish(ok) {
+            if (request !== dashboard._overviewRequest) return;
+            dashboard._overviewLoading = false;
+            $('#dashboard_refresh').prop('disabled', false).attr('aria-busy', 'false');
+            $('#dashboard_refresh_status').text(ok
+                ? PosnicPro.i18n.t('lang_refreshed', 'Refreshed') + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                : PosnicPro.i18n.t('lang_refresh_failed', 'Refresh failed'));
+        }
         PosnicPro.dashboard.greeting();
         $(PosnicPro.dashboard.KPI_IDS).text('…');
         $('#kpi_period_label').text('(' + PosnicPro.dashboard.periodLabel(filter) + ')');
 
         PosnicPro.get({ url: 'dashboard/getOverview', data: { filter: filter } }, function (response) {
+            if (!current()) { finish(false); return; }
             /* crash-hunt probe gate: skippable render */
-            if (window.__posnicSkip === 'overview' || window.__posnicSkip === 'all') { return; }
+            if (window.__posnicSkip === 'overview' || window.__posnicSkip === 'all') { finish(false); return; }
             if (response.type !== 'success' || !response.data) {
                 $(PosnicPro.dashboard.KPI_IDS).html('&mdash;');
+                finish(false);
                 return;
             }
             var d = response.data;
@@ -671,10 +697,13 @@ PosnicPro.dashboard = {
 
             PosnicPro.dashboard.renderBestSellers(d.topItems || []);
             PosnicPro.dashboard.renderProfit(d.profit, filter);
+            finish(true);
             // Let the layout settle, then match the empty dues card to Best Sellers.
             setTimeout(function () { PosnicPro.dashboard.syncDuesHeight(); }, 60);
         }, function () {
+            if (!current()) { finish(false); return; }
             $(PosnicPro.dashboard.KPI_IDS).html('&mdash;');
+            finish(false);
         });
     },
 

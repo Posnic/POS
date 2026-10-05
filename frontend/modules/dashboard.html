@@ -66,12 +66,16 @@
                             </div>
                             <div class="col-xs-12 col-sm-12 col-lg-8 mb-1 shop_button_group">
                                 <div class="button-list pull-right">
+                                    <button type="button" class="btn btn-outline-primary" id="dashboard_refresh" onclick="PosnicPro.dashboard.refreshOverview();" style="padding-inline:12px;">
+                                        <i class="feather icon-refresh-cw mr-1" aria-hidden="true"></i><lang class="lang_wf_refresh">Refresh</lang>
+                                    </button>
                                     <div class="btn-group shop_buttons">
                                         <button type="button" class="btn btn-light active" id="btnDashboardCountDay" onclick="PosnicPro.dashboard.activeInActiveFilterButtons('day', this)"> <lang class="lang_this_day">Today </lang></button>
                                         <button type="button" class="btn btn-light" id="btnDashboardCountWeek" onclick="PosnicPro.dashboard.activeInActiveFilterButtons('week', this)"><lang class="lang_this_week">This Week </lang></button>
                                         <button type="button" class="btn btn-light" id="btnDashboardCountMonth" onclick="PosnicPro.dashboard.activeInActiveFilterButtons('month', this)"><lang class="lang_this_month">This Month </lang></button>
                                         <button type="button" class="btn btn-light" id="btnDashboardCountYear" onclick="PosnicPro.dashboard.activeInActiveFilterButtons('year', this)"> <lang class="lang_year">This Year </lang></button>
                                     </div>
+                                    <small id="dashboard_refresh_status" class="d-block text-muted mt-1" role="status" aria-live="polite"></small>
                                 </div>
                             </div>
                         </div>

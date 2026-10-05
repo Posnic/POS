@@ -174,4 +174,58 @@ async function handover(req) {
   }
   return { staff: assigned_staff };
 }
-module.exports = { fire, scope, staff, handover };
+// Customer identity changes do not rewrite the agreed prices or payment history.
+async function customer(req) {
+  const c = await scope(req),
+    body = req.body;
+  const sales = req.db.collection('sales'),
+    sale = await sales.findOne(c.filter);
+  if (!sale) fail('Open order not found.', 404);
+  if (
+    !body.seenAt ||
+    new Date(body.seenAt).getTime() !== new Date(sale.updated_date || sale.created_date).getTime()
+  )
+    fail('Order changed. Refresh before choosing the customer.', 409);
+  let details;
+  if (body.customerId) {
+    if (!ObjectId.isValid(String(body.customerId))) fail('Choose a customer.');
+    const person = await req.db.collection('customers').findOne({
+      _id: new ObjectId(String(body.customerId)),
+      branch_id: c.branchId,
+      license: c.license,
+    });
+    if (!person) fail('Customer not found in this branch.', 404);
+    details = {
+      customer_id: person._id,
+      customer_name: String(person.name || ''),
+      customer_phone: String(person.phone || ''),
+      customer_address: String(person.address || ''),
+    };
+  } else {
+    const name = String(body.name || '').trim(),
+      phone = String(body.phone || '').trim();
+    if (
+      name.length > 80 ||
+      phone.length > 40 ||
+      Array.from(name + phone).some((c) => c.charCodeAt(0) < 32)
+    )
+      fail('Enter valid customer details.');
+    details = {
+      customer_id: null,
+      customer_name: name || 'Walk-in customer',
+      customer_phone: phone,
+      customer_address: '',
+    };
+  }
+  const result = await sales.updateOne(
+    {
+      ...c.filter,
+      updated_date: sale.updated_date === undefined ? { $exists: false } : sale.updated_date,
+      captain_payment_plan: { $exists: false },
+    },
+    { $set: { ...details, updated_date: new Date() } }
+  );
+  if (!result.matchedCount) fail('Order changed. Refresh before choosing the customer.', 409);
+  return details;
+}
+module.exports = { fire, scope, staff, handover, customer };

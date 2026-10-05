@@ -74,6 +74,33 @@ const summary = (f) => ({
     complete: false,
   },
 });
+
+test('scheduled daily summary reads server sales without a desktop and is delivered once', async () => {
+  const f = await fixture();
+  await require('../src/services/business-cloud-reports').ensureCloudReportingIndexes(db);
+  await db.collection('sales').insertOne({
+    _id: new ObjectId(),
+    license: f.user.license,
+    branch_id: new ObjectId(f.branchId),
+    sale_process: 'Add',
+    payment_status: 'Paid',
+    sales_total: 150,
+    date: new Date(beforeDue),
+    updated_date: new Date(beforeDue),
+  });
+  await service.savePreference(db, f.context, f.branchId, input(), { now: () => beforeDue });
+  await Promise.all([
+    service.drainDue(db, { now: () => due }),
+    service.drainDue(db, { now: () => due }),
+  ]);
+  const inbox = await db.collection('business_inbox').find({}).toArray();
+  assert.equal(inbox.length, 1);
+  assert.equal(inbox[0].kind, 'daily_summary');
+  assert.equal(inbox[0].summary.completedSales, 1);
+  assert.equal(inbox[0].summary.salesAfterReturnsMinor, 15000);
+  assert.equal(inbox[0].summary.freshness.complete, false);
+  assert.equal(await db.collection('business_reporting_requests').countDocuments({}), 0);
+});
 test('upcoming schedules request desktop preparation without an open phone and throttle duplicate workers', async () => {
   const f = await fixture();
   await service.savePreference(db, f.context, f.branchId, input(), { now: () => beforeDue });

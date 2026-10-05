@@ -399,6 +399,7 @@ router.get(
   protectOrKioskKey,
   bindController(salesController.handoverStaff)
 );
+router.post('/orderCustomer', protect, bindController(salesController.orderCustomer));
 router.post(
   '/handoverOrder',
   rateLimit({ windowMs: 60000, limit: 120, standardHeaders: true, legacyHeaders: false }),
