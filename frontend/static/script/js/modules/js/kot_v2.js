@@ -913,6 +913,7 @@
         control.textContent = PosnicPro.i18n.t('lang_loading_3', 'Loading…');
         try {
             await action();
+            P.restaurantFeedback?.play('served');
             const updated = Array.from(root().querySelectorAll('[data-action]')).find((el) =>
                 el.dataset.action === control.dataset.action && el.dataset.line === control.dataset.line);
             if (updated) {
