@@ -55,3 +55,17 @@ test('takeaway card uses its short number and elapsed minutes advance without re
  h.w.Date.now=()=>now()+2*60000;h.w.document.dispatchEvent(new h.w.Event('visibilitychange'));assert.match(card.querySelector('[data-elapsed]').textContent,/16 min/);assert.equal(card.dataset.age,'waiting');assert.equal(root.querySelector('[data-table^="takeaway-"]'),card);
  h.w.Date.now=()=>now()+17*60000;h.w.document.dispatchEvent(new h.w.Event('visibilitychange'));assert.equal(card.dataset.age,'late');h.close();
 });
+
+test('draft table selection resumes the same round without an error or send',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});const draft=h.app.state.draft;await h.click('expand');await h.click('table');assert.equal(h.app.state.expanded,false);assert.equal(h.app.state.draft,draft);assert.equal(h.errors.length,0);assert.equal(h.calls.some(c=>c.method==='post'),false);h.close();
+});
+test('changing tables offers review or explicit discard and preserves uncertain sends',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+ const other=async()=>{h.app.state.filter='all';h.app.state.expanded=false;await h.click('expand');h.w.document.querySelector('[data-table="t7"]').click();await flush();};
+ await other();let d=h.w.document.querySelector('dialog');assert.match(d.textContent,/Naan/);d.querySelector('[type=submit]').click();await flush();assert.equal(h.app.state.expanded,false);assert.equal(h.app.state.draft.items.length,1);
+ h.app.state.draft.intent={key:'pending'};await other();d=h.w.document.querySelector('dialog');assert.doesNotMatch(d.querySelector('footer').textContent,/Discard/);d.querySelector('[data-close]').click();delete h.app.state.draft.intent;
+ await other();d=h.w.document.querySelector('dialog');Array.from(d.querySelectorAll('button')).find(b=>b.textContent==='Discard draft').click();await flush();assert.equal(h.app.state.draft,null);assert.ok(h.w.document.querySelector('.kv2-seating-dialog'));assert.equal(h.calls.some(c=>c.method==='post'),false);h.close();
+});
+test('an empty draft does not block a different table',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.app.state.filter='all';await h.click('expand');h.w.document.querySelector('[data-table="t7"]').click();await flush();assert.equal(h.app.state.draft,null);assert.ok(h.w.document.querySelector('.kv2-seating-dialog'));assert.equal(h.errors.length,0);h.close();
+});

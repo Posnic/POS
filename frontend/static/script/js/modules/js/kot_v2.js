@@ -273,8 +273,42 @@
         state.refreshed = new Date().toISOString();
         render();
     }
+    function resolveDraftBeforeSwitch(next, saleId) {
+        const draft = state.draft;
+        if (!draft) return false;
+        if (saleId && String(draft.saleId) === String(saleId)) {
+            state.expanded = false;
+            render();
+            return true;
+        }
+        if (!draft.items.length && !draft.intent) {
+            state.draft = null;
+            persist();
+            return false;
+        }
+        const review = P.i18n.t('lang_review_this_round', 'Review this round');
+        const modal = dialog(review,
+            '<strong>' + esc(draft.table || 'Takeaway') + '</strong><ul>' +
+            draft.items.map((line) => '<li>' + esc(line.quantity) + ' × ' + esc(line.name) + '</li>').join('') + '</ul>',
+            () => { state.expanded = false; render(); }, review);
+        // An uncertain send must be reconciled before its durable request can be discarded.
+        if (!draft.intent) {
+            const discard = document.createElement('button');
+            discard.type = 'button';
+            discard.textContent = P.i18n.t('lang_iv2_discard', 'Discard draft');
+            discard.onclick = () => run(async () => {
+                if (state.draft !== draft || draft.intent) return;
+                state.draft = null;
+                persist();
+                modal.close();
+                await next();
+            });
+            modal.querySelector('footer').prepend(discard);
+        }
+        return true;
+    }
     async function select(saleId) {
-        if (state.draft) throw new Error('Send or discard this draft before changing orders.');
+        if (resolveDraftBeforeSwitch(() => select(saleId), saleId)) return;
         state.expanded = false;
         state.selected = saleId;
         state.sale = await api('get', 'sales/' + encodeURIComponent(saleId));
@@ -664,7 +698,7 @@
         if (d.saleId && P.kotPrint) P.kotPrint.afterSave(d.saleId);
     }
     function newOrder(takeaway = false, tableId = '') {
-        if (state.draft) throw new Error('Send or discard the current draft first.');
+        if (resolveDraftBeforeSwitch(() => newOrder(takeaway, tableId))) return;
         const free = state.floor.filter((t) => t.status === 'available');
         const modal = dialog(
             takeaway ? PosnicPro.i18n.t('lang_new_takeaway', 'New takeaway') : PosnicPro.i18n.t('lang_start_a_table_order', 'Start a table order'),
