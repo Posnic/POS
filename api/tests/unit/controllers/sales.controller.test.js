@@ -1922,7 +1922,9 @@ describe('branch serving-period filters', () => {
 
 test('qrOrder preserves structured price rejection so a desktop draft can be corrected', async () => {
   const details = { state: 'item_price_mismatch', expected_price: 399, submitted_price: 398 };
-  salesService.createOnlineOrder = jest.fn().mockResolvedValue({ status: false, message: 'Price changed', data: details });
+  salesService.createOnlineOrder = jest
+    .fn()
+    .mockResolvedValue({ status: false, message: 'Price changed', data: details });
   const res = mockRes();
   await ctrl.qrOrder({ body: {}, user: adminUser(), get: () => '', headers: {}, socket: {} }, res);
   expect(res.status).toHaveBeenCalledWith(422);
