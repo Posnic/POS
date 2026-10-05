@@ -699,7 +699,7 @@
             const occupiedTable = !d.saleId && (
                 (String(error.details?.table_number) === String(d.table) && Number(error.details?.open_orders) > 0) ||
                 error.message === `Table ${d.table} already has an open order. Add to it, or settle it first.` ||
-                new RegExp('^Table ' + String(d.table).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' already has [0-9]+ open orders, which is the most this shop allows\.$').test(error.message)
+                new RegExp('^Table ' + String(d.table).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' already has [0-9]+ open orders, which is the most this shop allows\\.$').test(error.message)
             );
             if (occupiedTable) {
                 delete d.intent;
