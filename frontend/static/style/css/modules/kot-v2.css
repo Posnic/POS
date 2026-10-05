@@ -10,7 +10,7 @@
 @keyframes goldBurst{0%{opacity:0;transform:rotate(var(--angle)) translateX(0)}20%{opacity:1}100%{opacity:0;transform:rotate(var(--angle)) translateX(90px)}}
 @media(prefers-reduced-motion:reduce){.restaurant-feedback.transparent-kitchen,.restaurant-feedback.transparent-gold{display:none}}
 
-.restaurant-feedback{position:fixed;z-index:11000;pointer-events:none;user-select:none}
+.restaurant-feedback{position:fixed;z-index:100;pointer-events:none;user-select:none}
 .restaurant-feedback.small-feedback{color:#24966d;font-size:34px;animation:rfFloat .85s ease-out both}
 .restaurant-feedback.small-feedback i{position:absolute;left:12px;top:10px;width:9px;height:9px;border:2px solid #67c3a1;border-radius:50%;animation:rfBubble .9s ease-out both}
 .restaurant-feedback.reduce{color:#8797a9}
@@ -172,3 +172,44 @@
 #kot_v2 button[data-action=serve]:disabled:not(.kv2-serving),#kot_v2 button.kv2-serve-saved,#kot_v2 button.kv2-serve-saved:hover{opacity:1;background:#edf9f2;border-color:#b4dfc7;color:#16814c}
 #kot_v2 .kv2-served-row{background:#f0faf4;transition:background .2s ease}
 @media(prefers-reduced-motion:reduce){#kot_v2 button.kv2-serving::before{animation:none}#kot_v2 .kv2-served-row{transition:none}}
+
+/* A brief transparent walk-away after confirmed cancellation. */
+.restaurant-feedback.sad-chef{width:160px;height:120px;background:none;border:0;box-shadow:none;padding:0;animation:rfChefExit 1.8s ease-in-out both}
+.sad-chef svg{width:100%;height:100%;overflow:visible;fill:none;stroke:#7890a7;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.sad-chef .chef-hat,.sad-chef .chef-coat{fill:#fff;stroke:#7890a7}
+.sad-chef .chef-shadow{fill:#879bb326;stroke:none}
+.sad-chef .chef-body{animation:rfChefBob .4s ease-in-out infinite;transform-origin:80px 65px}
+.sad-chef .chef-leg{transform-origin:80px 85px;animation:rfChefStep .4s ease-in-out infinite alternate}
+.sad-chef .chef-leg-right{animation-delay:-.4s}
+@keyframes rfChefBob{50%{transform:translateY(2px) rotate(-3deg)}}
+@keyframes rfChefStep{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
+@keyframes rfChefExit{0%{opacity:0;transform:translateX(-24px)}15%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translateX(48px)}}
+
+#kot_v2 button > svg{width:17px;height:17px;flex-shrink:0;margin-right:6px}
+#kot_v2 button[data-action=actions] > svg{margin:0 0 0 7px;width:15px;height:15px}
+#kot_v2 button{transition:background-color .15s ease,border-color .15s ease,color .15s ease}
+.kv2-actions-menu{position:fixed;inset:auto;margin:0;width:240px;padding:6px;border:1px solid #dce5f0;border-radius:12px;background:#fff;color:#15324e;box-shadow:0 12px 36px #17314d26;z-index:1060}
+.kv2-actions-menu section{display:grid;gap:2px}
+.kv2-actions-menu button{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;border-radius:7px;background:transparent;color:inherit;font:inherit;font-size:13px;text-align:left;cursor:pointer;transition:background-color .15s ease}
+.kv2-actions-menu svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.kv2-actions-menu button:hover,.kv2-actions-menu button:focus-visible{background:#eef5ff;outline:2px solid transparent;color:#0863cf}
+.kv2-actions-menu button.kv2-danger{color:#c43b49;margin-top:5px;border-top:1px solid #edf0f5;border-radius:0 0 7px 7px}
+.kv2-actions-menu button.kv2-danger:hover,.kv2-actions-menu button.kv2-danger:focus-visible{background:#fff0f1;color:#a92230}
+@media(prefers-reduced-motion:reduce){.kv2-actions-menu button,#kot_v2 button{transition:none}}
+
+/* Keep labels and icons on one baseline, with stable click targets. */
+#kot_v2 .kv2-heading button,#kot_v2 .kv2-order>header button,#kot_v2 .kv2-order>nav button,#kot_v2 .kv2-order>footer button,#kot_v2 .kv2-customer button,#kot_v2 .kv2-line button,.kv2-dialog footer button{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;line-height:1.3}
+#kot_v2 .kv2-icon>svg{margin:0}
+#kot_v2 .kv2-line button[data-action=serve]{white-space:normal;gap:3px}
+#kot_v2 .kv2-line button[data-action=serve]>svg{width:14px;height:14px;margin-right:2px}
+#kot_v2 button:not(:disabled):active,.kv2-dialog button:not(:disabled):active{filter:brightness(.96)}
+#kot_v2 button[data-action=removeDraft],#kot_v2 button[data-action=discard]{color:#ac4753}
+#kot_v2 button[data-action=removeDraft]:hover,#kot_v2 button[data-action=discard]:hover{background:#fff3f4;border-color:#edc6cc}
+#kot_v2 button[data-action=serveAll]{color:#287c64;border-color:#cce5dc}
+#kot_v2 button[data-action=serveAll]:hover{background:#edf9f3;border-color:#8cc8b0}
+.kv2-dialog button{transition:background-color .15s ease,border-color .15s ease}
+.restaurant-feedback.happy-feedback{width:80px;height:80px;color:#2b9a75;animation:rfHappy 1.2s ease both}
+.happy-feedback svg{width:80px;height:80px;overflow:visible;fill:currentColor;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+.happy-feedback .happy-ring{fill:#eefbf4;stroke:#9ed8bf}.happy-feedback .happy-smile,.happy-feedback .happy-spark{fill:none}
+@keyframes rfHappy{0%{opacity:0;transform:translateY(12px) scale(.75)}25%{opacity:1;transform:translateY(0) scale(1.06)}45%,75%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-10px) scale(.96)}}
+@media(prefers-reduced-motion:reduce){.kv2-dialog button{transition:none}}

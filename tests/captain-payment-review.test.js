@@ -64,3 +64,24 @@ test('desktop guest payment is reviewed before recording, preserves Back and sho
   assert.equal(w.document.querySelector('[data-action=record]'),null);
   dom.window.close();
 });
+
+test('split cash UPI and card is reviewed and retried as one immutable payment',async()=>{
+ const dom=new JSDOM('<body></body>',{url:'https://shop.invalid',runScripts:'outside-only'}),w=dom.window;
+ w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
+ const plan={id:'plan',currency:'₹',totalMinor:100000,paidMinor:0,dueMinor:100000,enabled:true,version:0,methods:['Cash','Upi','Card'],guests:[{name:'Bill',totalMinor:100000,paid:false}]};const records=[];let fail=true;
+ w.PosnicPro={local:{get:()=> 'branch'},post:(o,ok,bad)=>{const b=JSON.parse(o.data);if(o.url.endsWith('/record')){records.push(b);if(fail)bad({status:0});else ok({...plan,dueMinor:0,paidMinor:100000,confirmed:b.request_id,payments:[{...b,id:b.request_id,changeMinor:b.receivedMinor-b.amountMinor}]});}else ok(plan);}};
+ for(const f of ['captain-money.js','captain-payments.js'])w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/core',f),'utf8'));
+ await w.CaptainPayments.open('1');w.document.querySelector('[data-method=Mixed]').click();
+ const input=(m,f,v)=>{const e=w.document.querySelector('[data-tender="'+m+'"][data-field="'+f+'"]');if(e.type==='checkbox')e.checked=v;else e.value=v;e.dispatchEvent(new w.Event('input',{bubbles:true}));};
+ const focus=m=>w.document.querySelector('[data-tender="'+m+'"][data-field=amount]').dispatchEvent(new w.FocusEvent('focusin',{bubbles:true}));
+ input('Cash','amount','300');focus('Upi');assert.equal(w.document.querySelector('[data-tender=Upi][data-field=amount]').value,'700');
+ input('Upi','amount','400');focus('Card');assert.equal(w.document.querySelector('[data-tender=Card][data-field=amount]').value,'300');
+ assert.match(w.document.querySelector('#cp-split-remaining').textContent,/0.00/);
+ focus('Cash');assert.equal(w.document.querySelector('[data-tender=Cash][data-field=amount]').value,'300');
+ input('Cash','amount','500');input('Cash','received','600');input('Upi','amount','300');input('Card','amount','100');
+ w.document.querySelector('[data-action=record]').click();assert.equal(w.document.querySelector('.cp-review'),null);assert.equal(records.length,0);
+ input('Card','amount','200');w.document.querySelector('[data-action=record]').click();assert.equal(w.document.querySelector('.cp-review'),null);
+ input('Upi','verified',true);input('Card','verified',true);w.document.querySelector('[data-action=record]').click();assert.match(w.document.querySelector('.cp-review').textContent,/500.00/);assert.match(w.document.querySelector('.cp-review').textContent,/300.00/);assert.match(w.document.querySelector('.cp-review').textContent,/200.00/);assert.match(w.document.querySelector('.cp-review').textContent,/100.00/);assert.equal(records.length,0);
+ w.document.querySelector('[data-action=back]').click();assert.equal(w.document.querySelector('[data-tender=Cash][data-field=amount]').value,'500');w.document.querySelector('[data-action=record]').click();w.document.querySelector('[data-action=record]').click();await new Promise(r=>setImmediate(r));assert.equal(records.length,1);assert.equal(records[0].method,'Mixed');assert.equal(records[0].receivedMinor,110000);assert.deepEqual(records[0].tenders.map(t=>t.amountMinor),[50000,30000,20000]);
+ fail=false;w.document.querySelector('[data-action=record]').click();await new Promise(r=>setImmediate(r));assert.deepEqual(records[1],records[0]);assert.match(w.document.querySelector('.cp-receipt').textContent,/UPI/);assert.equal(w.document.querySelector('[data-action=record]'),null);dom.window.close();
+});

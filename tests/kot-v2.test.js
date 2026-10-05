@@ -28,7 +28,7 @@ test('catalogue selection reviews quantity and notes before adding to the unsent
 test('zero-price catalogue items request a price before they enter the draft',async()=>{const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();h.app.state.catalogueLoaded=true;h.app.state.catalogue=[{item_id:'special',item_name:'Special',selling_price:0}];await h.click('add');await h.click('pick');const d=h.w.document.querySelector('.kv2-product-dialog');assert.equal(h.w.document.activeElement.name,'price');d.querySelector('[name=price]').value='125';d.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();assert.equal(h.app.state.draft.items[0].price,125);assert.equal(h.calls.some(c=>c.url==='sales/updateOrder'||c.url==='sales/qrOrder'),false);h.close();});
 
 test('confirmed price rejection unlocks the draft so an item can be removed',async()=>{const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});setup.failure=true;setup.failureResponse={message:'Price changed',data:{state:'item_price_mismatch',expected_price:12}};try{await h.click('send');assert.equal(h.app.state.draft.intent,undefined);assert.equal(h.app.state.draft.items.length,1);await h.click('removeDraft');assert.equal(h.app.state.draft.items.length,0);assert.equal(h.effects.includes('sent'),false);}finally{setup.failure=false;setup.failureResponse=null;h.close();}});
-test('revisiting with a saved draft displays active tables without losing the round',async()=>{const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});h.app.showDataTablePage();await flush();assert.equal(h.app.state.expanded,true);assert.equal(h.app.state.filter,'active');assert.equal(h.app.state.sales.length,1);assert.equal(h.app.state.draft.items.length,1);await h.click('expand');assert.equal(h.app.state.expanded,false);assert.equal(h.app.state.draft.items.length,1);h.close();});
+test('revisiting with a saved draft opens its review without losing the round',async()=>{const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});h.app.showDataTablePage();await flush();assert.equal(h.app.state.expanded,false);assert.equal(h.app.state.filter,'active');assert.equal(h.app.state.sales.length,1);assert.equal(h.app.state.draft.items.length,1);await h.click('expand');assert.equal(h.app.state.expanded,true);assert.equal(h.app.state.draft.items.length,1);h.close();});
 
 test('refresh gives immediate busy feedback, prevents repeat clicks and confirms only successful loads',async()=>{
  const h=setup();h.app.showDataTablePage();await flush();
@@ -54,4 +54,71 @@ test('takeaway card uses its short number and elapsed minutes advance without re
  const card=root.querySelector('[data-table^="takeaway-"]');assert.match(card.textContent,/Takeaway 8/);assert.doesNotMatch(card.textContent,/S-LONG/);const before=root.innerHTML;const now=h.w.Date.now;
  h.w.Date.now=()=>now()+2*60000;h.w.document.dispatchEvent(new h.w.Event('visibilitychange'));assert.match(card.querySelector('[data-elapsed]').textContent,/16 min/);assert.equal(card.dataset.age,'waiting');assert.equal(root.querySelector('[data-table^="takeaway-"]'),card);
  h.w.Date.now=()=>now()+17*60000;h.w.document.dispatchEvent(new h.w.Event('visibilitychange'));assert.equal(card.dataset.age,'late');h.close();
+});
+
+test('draft table selection resumes the same round without an error or send',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});const draft=h.app.state.draft;await h.click('expand');await h.click('table');assert.equal(h.app.state.expanded,false);assert.equal(h.app.state.draft,draft);assert.equal(h.errors.length,0);assert.equal(h.calls.some(c=>c.method==='post'),false);h.close();
+});
+test('changing tables offers review or explicit discard and preserves uncertain sends',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+ const other=async()=>{h.app.state.filter='all';h.app.state.expanded=false;await h.click('expand');h.w.document.querySelector('[data-table="t7"]').click();await flush();};
+ await other();let d=h.w.document.querySelector('dialog');assert.match(d.textContent,/Naan/);d.querySelector('[type=submit]').click();await flush();assert.equal(h.app.state.expanded,false);assert.equal(h.app.state.draft.items.length,1);
+ h.app.state.draft.intent={key:'pending'};await other();d=h.w.document.querySelector('dialog');assert.doesNotMatch(d.querySelector('footer').textContent,/Discard/);d.querySelector('[data-close]').click();delete h.app.state.draft.intent;
+ await other();d=h.w.document.querySelector('dialog');Array.from(d.querySelectorAll('button')).find(b=>b.textContent==='Discard draft').click();await flush();assert.equal(h.app.state.draft,null);assert.ok(h.w.document.querySelector('.kv2-seating-dialog'));assert.equal(h.calls.some(c=>c.method==='post'),false);h.close();
+});
+test('an empty draft does not block a different table',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.app.state.filter='all';await h.click('expand');h.w.document.querySelector('[data-table="t7"]').click();await flush();assert.equal(h.app.state.draft,null);assert.ok(h.w.document.querySelector('.kv2-seating-dialog'));assert.equal(h.errors.length,0);h.close();
+});
+
+test('opening table orders automatically selects an active order and shows its details',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();assert.equal(h.app.state.selected,h.sale._id);assert.equal(h.app.state.sale._id,h.sale._id);assert.equal(h.app.state.expanded,false);assert.ok(h.w.document.querySelector('[data-action=add]'));h.close();
+});
+
+test('sad chef plays only after a successful order cancellation',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();
+ const cancel=async()=>{await h.click('actions');h.w.document.querySelector('[data-action=cancel]').click();await flush();const d=h.w.document.querySelector('dialog');d.querySelector('[name=reason]').value='Duplicate order';d.querySelector('[type=submit]').click();await flush();};
+ setup.failure=true;try{await cancel();assert.equal(h.effects.includes('cancelled'),false);h.w.document.querySelector('dialog [data-close]').click();}finally{setup.failure=false;}
+ await cancel();assert.equal(h.effects.filter(e=>e==='cancelled').length,1);assert.equal(h.calls.filter(c=>c.url==='sales/updateOrder').at(-1).body.status,'cancelled');h.close();
+});
+
+test('confirmed order conflict unlocks and reconciles the draft instead of trapping saved retries',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});const key=h.app.state.draft.key;
+ setup.failure=true;setup.failureResponse={message:'order_changed'};try{await h.click('send');assert.equal(h.app.state.draft.intent,undefined);assert.notEqual(h.app.state.draft.key,key);assert.equal(h.app.state.draft.items.length,1);assert.equal(h.effects.includes('sent'),false);await h.click('removeDraft');assert.equal(h.app.state.draft.items.length,0);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
+});
+
+test('customer entry waits for pending-send recovery and opens automatically after rejection is reconciled',async()=>{
+ const h=setup();h.w.$.fn.autocomplete=function(){return this;};h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});h.app.state.draft.intent={url:'sales/updateOrder',body:{}};
+ await h.click('customer');assert.equal(h.w.document.querySelector('[name=phone]'),null);assert.match(h.w.document.querySelector('dialog').textContent,/previous submission/);
+ setup.failure=true;setup.failureResponse={message:'order_changed'};try{h.w.document.querySelector('dialog [type=submit]').click();await flush();assert.ok(h.w.document.querySelector('[name=phone]'));assert.equal(h.app.state.draft.items.length,1);assert.equal(h.app.state.draft.intent,undefined);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
+});
+
+
+test('occupied-table refusal unlocks both new and restored sends so Cancel exits without another write',async()=>{
+ for(const restored of [false,true]){
+  const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+  const d=h.app.state.draft;delete d.saleId;d.table='6';d.dineType='Dine-in';const key=d.key;
+  if(restored)d.intent={url:'sales/qrOrder',body:{idempotencyKey:key}};
+  setup.failure=true;setup.failureResponse={message:'Table 6 already has an open order. Add to it, or settle it first.'};
+  try{await h.click('send');assert.equal(d.intent,undefined);assert.notEqual(d.key,key);assert.equal(d.items.length,1);assert.equal(h.effects.includes('sent'),false);const writes=h.calls.filter(c=>c.method==='post').length;await h.click('discard');assert.equal(h.app.state.draft,null);assert.equal(h.calls.filter(c=>c.method==='post').length,writes);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
+ }
+});
+
+test('Cancel recovery closes after an occupied-table rejection and allows leaving the retained draft',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+ const d=h.app.state.draft;delete d.saleId;d.table='6';d.intent={url:'sales/qrOrder',body:{idempotencyKey:d.key}};
+ setup.failure=true;setup.failureResponse={message:'Table 6 already has an open order. Add to it, or settle it first.'};
+ try{await h.click('discard');h.w.document.querySelector('dialog[open] [type=submit]').click();await flush();assert.equal(h.w.document.querySelector('dialog[open]'),null);assert.equal(d.intent,undefined);await h.click('discard');assert.equal(h.app.state.draft,null);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
+});
+
+
+test('off-menu entry checks a saved send before collecting fields or creating a product',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+ h.app.state.draft.intent={url:'sales/updateOrder',body:{}};
+ await h.click('offmenu');assert.equal(h.w.document.querySelector('dialog[open] [name=price]'),null);assert.match(h.w.document.querySelector('dialog[open]').textContent,/previous submission/);assert.equal(h.calls.some(c=>c.url==='items/instanceItemInsert'),false);
+ setup.failure=true;setup.failureResponse={message:'order_changed'};
+ try{h.w.document.querySelector('dialog[open] [type=submit]').click();await flush();assert.equal(h.app.state.draft.intent,undefined);setup.failure=false;await h.click('offmenu');h.w.document.querySelector('dialog[open] [name=name]').value='Soup';h.w.document.querySelector('dialog[open] [name=price]').value='25';h.w.document.querySelector('dialog[open] form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();assert.equal(h.app.state.draft.items.length,2);assert.equal(h.calls.filter(c=>c.url==='items/instanceItemInsert').length,1);assert.equal(h.w.document.querySelector('dialog[open]'),null);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
+});
+
+test('actions opens an anchored icon list and Escape restores trigger focus',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('actions');const menu=h.w.document.querySelector('#kv2-actions-menu');assert.ok(menu);assert.equal(h.w.document.querySelector('dialog'),null);assert.equal(menu.querySelectorAll('button svg').length,5);assert.ok(menu.querySelector('[data-action=cancel].kv2-danger'));menu.dispatchEvent(new h.w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));assert.equal(h.w.document.activeElement.dataset.action,'guests');menu.dispatchEvent(new h.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(h.w.document.querySelector('#kv2-actions-menu'),null);assert.equal(h.w.document.activeElement.dataset.action,'actions');h.close();
 });

@@ -83,7 +83,7 @@
             .join('') +
         '</div>';
     const button = (label, action, extra = '') =>
-        `<button type="button" data-action="${action}" ${extra}>${esc(label)}</button>`;
+        `<button type="button" data-action="${action}" ${extra}>${actionIcons[action] ? icon(actionIcons[action]) : ""}<span>${esc(label)}</span>${action === "actions" ? icon("chevron") : ""}</button>`;
     function scopeKey() {
         return 'posnic.kot-v2.draft:' + location.origin + ':' + branch() + ':' + P.local.get('username');
     }
@@ -220,7 +220,8 @@
                 P.alert('error', 'The saved draft could not be read.');
             }
         }
-        state.expanded = !!state.draft;
+        state.expanded = false;
+        if (state.draft) state.selected = state.draft.saleId || null;
         state.filter = 'active';
         render();
         run(refresh);
@@ -258,6 +259,10 @@
             if (!more.list?.length) break;
             state.sales.push(...more.list);
         }
+        if (!state.draft && !state.sales.some((sale) => String(sale._id) === String(state.selected))) {
+            state.selected = state.sales[0]?._id || null;
+            state.sale = null;
+        }
         if (state.selected) {
             const sale = await api('get', 'sales/' + encodeURIComponent(state.selected));
             if (generation !== state.generation) return;
@@ -273,15 +278,57 @@
         state.refreshed = new Date().toISOString();
         render();
     }
+    function resolveDraftBeforeSwitch(next, saleId) {
+        const draft = state.draft;
+        if (!draft) return false;
+        if (saleId && String(draft.saleId) === String(saleId)) {
+            state.expanded = false;
+            render();
+            return true;
+        }
+        if (!draft.items.length && !draft.intent) {
+            state.draft = null;
+            persist();
+            return false;
+        }
+        const review = P.i18n.t('lang_review_this_round', 'Review this round');
+        const modal = dialog(review,
+            '<strong>' + esc(draft.table || 'Takeaway') + '</strong><ul>' +
+            draft.items.map((line) => '<li>' + esc(line.quantity) + ' × ' + esc(line.name) + '</li>').join('') + '</ul>',
+            () => { state.expanded = false; render(); }, review);
+        // An uncertain send must be reconciled before its durable request can be discarded.
+        if (!draft.intent) {
+            const discard = document.createElement('button');
+            discard.type = 'button';
+            discard.textContent = P.i18n.t('lang_iv2_discard', 'Discard draft');
+            discard.onclick = () => run(async () => {
+                if (state.draft !== draft || draft.intent) return;
+                state.draft = null;
+                persist();
+                modal.close();
+                await next();
+            });
+            modal.querySelector('footer').prepend(discard);
+        }
+        return true;
+    }
     async function select(saleId) {
-        if (state.draft) throw new Error('Send or discard this draft before changing orders.');
+        if (resolveDraftBeforeSwitch(() => select(saleId), saleId)) return;
         state.expanded = false;
         state.selected = saleId;
         state.sale = await api('get', 'sales/' + encodeURIComponent(saleId));
         state.tab = 'order';
         render();
     }
+    const actionIcons = {discount:'discount',printBill:'print',printKOT:'print',pay:'pay',serveAll:'check',serve:'check',customer:'guests',details:'details',notes:'details',guests:'guests',handover:'transfer',split:'merge',cancel:'cancel',discard:'cancel',draftNote:'details',removeDraft:'cancel'};
     const paths = {
+        chevron: 'm8 10 4 4 4-4',
+        discount: 'm5 19 14-14M7 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6M17 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6',
+        print: 'M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 11h1',
+        pay: 'M3 5h18v14H3zM3 10h18M6 15h4',
+        check: 'm4 12 5 5L20 6',
+        details: 'M5 3h14v18H5zM8 7h8M8 11h8M8 15h5',
+        cancel: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M8 8l8 8m0-8-8 8',
         table: 'M4 8h16v9H4z M6 17v4m12-4v4M8 4h8',
         guests: 'M8 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5 8v-2a5 5 0 0 1 10 0v2m3-14a3 3 0 0 1 0 6m1 3a4 4 0 0 1 4 4',
         move: 'M3 6h7v7H3z M5 13v4m3-4v4m6-8h7m-3-3 3 3-3 3',
@@ -387,7 +434,7 @@
         const s = state.sale;
         if (!s) return emptyOrderHTML();
         const details = s.restaurant_details || {};
-        return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.takeaway_number || s.token_id || '') : 'Table ' + s.table_number)}</h2><small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('transfer', 'Transfer items')}${button('Actions', 'actions')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button('Serve all', 'serveAll')}${button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p><p>Discount <b>${esc(money(s.discount || 0))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}<p>${esc(details.preparation_note || 'No kitchen note')}</p>${button('Edit details', 'notes')}</div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
+        return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.takeaway_number || s.token_id || '') : 'Table ' + s.table_number)}</h2><small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('transfer', 'Transfer items')}${button('Actions', 'actions', 'aria-haspopup="true" aria-expanded="false" aria-controls="kv2-actions-menu"')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button('Serve all', 'serveAll')}${button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p><p>Discount <b>${esc(money(s.discount || 0))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}<p>${esc(details.preparation_note || 'No kitchen note')}</p>${button('Edit details', 'notes')}</div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
     }
     function catalogueHTML() {
         return state.catalogue.map((item, i) => {
@@ -422,6 +469,7 @@
         finally { state.loadingMenu = false; if (scope === scopeKey() && category !== state.category) loadCatalogue(); }
     }
     function chooseProduct(data, quantity = 1) {
+        if (pendingSendReview()) return;
         const price = Number(data.items_selling_price ?? data.selling_price ?? data.item_price ?? data.price ?? 0);
         const openPrice = !price || data.open_price === true;
         const modal = dialog(data.item_name || data.name || data.items_name || '',
@@ -521,7 +569,20 @@
             Number(saved.unit_price ?? saved.item_base_price ?? saved.item_price ?? 0) * line.quantity,
         );
     }
+    function pendingSendReview(afterRecovery) {
+        if (!state.draft?.intent) return false;
+        dialog(P.i18n.t('lang_review_this_round', 'Review this round'),
+            '<p>' + esc(P.i18n.t('lang_submission_resolve_first', 'Resolve the previous submission before sending changes.')) + '</p>',
+            async (_, modal) => {
+                await send();
+                if (state.draft?.intent) return;
+                modal.close();
+                if (afterRecovery) afterRecovery();
+            }, P.i18n.t('lang_retry_saved_send', 'Retry saved send'));
+        return true;
+    }
     function customer() {
+        if (pendingSendReview(customer)) return;
         const d = state.draft,
             s = state.sale,
             c = d?.customer || { id: s?.customer_id, name: s?.customer_name || '', phone: s?.customer_phone || '' };
@@ -633,6 +694,35 @@
         try {
             result = await api('post', d.intent.url, d.intent.body);
         } catch (error) {
+            // Occupancy is rejected before any write. Do not lock a refused new order
+            // as an uncertain send, including drafts restored from older clients.
+            const occupiedTable = !d.saleId && (
+                (String(error.details?.table_number) === String(d.table) && Number(error.details?.open_orders) > 0) ||
+                error.message === `Table ${d.table} already has an open order. Add to it, or settle it first.` ||
+                new RegExp('^Table ' + String(d.table).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' already has [0-9]+ open orders, which is the most this shop allows\\.$').test(error.message)
+            );
+            if (occupiedTable) {
+                delete d.intent;
+                d.key = id();
+                persist();
+                render();
+                notify(error.message);
+                return;
+            }
+            if (d.saleId && error.message === 'order_changed') {
+                // This is an explicit refusal, not an unknown network outcome.
+                // Reconcile accepted line IDs before unlocking the remaining draft.
+                const latest = await api('get', 'sales/' + d.saleId);
+                const accepted = new Set((latest.items || []).map(line => line.line_id));
+                d.items = d.items.filter(line => !accepted.has(line.line_id));
+                delete d.intent;
+                d.key = id();
+                state.sale = latest;
+                persist();
+                render();
+                notify('Latest order loaded. Review the remaining dishes before sending.');
+                return;
+            }
             // Pricing validation happens before any order write. Unlike a lost response,
             // this is a confirmed refusal: retain the dishes, but allow corrections.
             if (['item_price_mismatch', 'invalid_price', 'item_needs_price', 'item_price_too_high', 'invalid_tax_configuration', 'price_context_mismatch', 'item_modifiers_changed'].includes(error.details?.state)) {
@@ -664,7 +754,7 @@
         if (d.saleId && P.kotPrint) P.kotPrint.afterSave(d.saleId);
     }
     function newOrder(takeaway = false, tableId = '') {
-        if (state.draft) throw new Error('Send or discard the current draft first.');
+        if (resolveDraftBeforeSwitch(() => newOrder(takeaway, tableId))) return;
         const free = state.floor.filter((t) => t.status === 'available');
         const modal = dialog(
             takeaway ? PosnicPro.i18n.t('lang_new_takeaway', 'New takeaway') : PosnicPro.i18n.t('lang_start_a_table_order', 'Start a table order'),
@@ -764,9 +854,10 @@
     }
     function discount() {
         const s = state.sale;
+        const discountType = Number(s.extra_discount) > 0 ? (s.extra_discount_type || 'amount') : 'percent';
         dialog(
             'Discount',
-            `<label>Type<select name="type"><option value="amount" data-t="lang_amount_title">Amount</option><option value="percent" data-t="lang_percentages">Percentage</option></select></label><label>Discount<input name="amount" type="number" min="0" step="0.01" required value="${esc(s.extra_discount || 0)}"></label><label>Reason<textarea name="reason" maxlength="200" required>${esc(s.discount_description || '')}</textarea></label>` +
+            `<label>Type<select name="type"><option value="percent" data-t="lang_percentages" ${discountType === 'percent' ? 'selected' : ''}>Percentage</option><option value="amount" data-t="lang_amount_title" ${discountType === 'amount' ? 'selected' : ''}>Amount</option></select></label><label>Discount<input name="amount" type="number" min="0" step="0.01" required value="${esc(s.extra_discount || 0)}"></label><label>Reason<textarea name="reason" maxlength="200" required>${esc(s.discount_description || '')}</textarea></label>` +
                 templates(['Manager approved', 'Customer loyalty', 'Service delay'], 'reason'),
             async (f) => {
                 if (f.get('type') === 'percent' && Number(f.get('amount')) > 100)
@@ -785,6 +876,7 @@
         );
     }
     async function offmenu() {
+        if (pendingSendReview()) return;
         if (!state.draft && !state.sale) throw new Error('Start a table or takeaway order first.');
         const tax = await api('get', 'items/instantItemTax');
         dialog(
@@ -821,6 +913,7 @@
         control.textContent = PosnicPro.i18n.t('lang_loading_3', 'Loading…');
         try {
             await action();
+            P.restaurantFeedback?.play('served');
             const updated = Array.from(root().querySelectorAll('[data-action]')).find((el) =>
                 el.dataset.action === control.dataset.action && el.dataset.line === control.dataset.line);
             if (updated) {
@@ -858,6 +951,7 @@
         await run(async () => {
             const a = b.dataset.action,
                 s = state.sale;
+            if (['discard', 'qty', 'removeDraft', 'draftNote'].includes(a) && pendingSendReview()) return;
             if (a === 'expand') {
                 state.expanded = !state.expanded;
                 render();
@@ -907,7 +1001,7 @@
             else if (a === 'send') await send();
             else if (a === 'rebase') {
                 const d = state.draft;
-                if (!d.saleId) throw new Error('Retry this new order to confirm its result.');
+                if (!d.saleId) { pendingSendReview(); return; }
                 const latest = await api('get', 'sales/' + d.saleId);
                 const accepted = new Set((latest.items || []).map((l) => l.line_id));
                 d.items = d.items.filter((l) => !accepted.has(l.line_id));
@@ -996,18 +1090,32 @@
                     throw new Error('Payment screen is unavailable. Reload the app.');
                 await CaptainPayments.open(paymentTable(s), branch());
             } else if (a === 'actions') {
-                const d = dialog(
-                    'Order actions',
-                    '<div class="kv2-choices">' +
-                        button('Order details', 'details') +
-                        button('Guests', 'guests') +
-                        button('Hand over', 'handover') +
-                        button('Split payment', 'split') +
-                        button('Cancel order', 'cancel') +
-                        '</div>',
-                    () => {},
-                    'Close',
-                );
+                const existing = document.getElementById('kv2-actions-menu');
+                if (existing) { existing.close(); return; }
+                const d = document.createElement('div');
+                d.id = 'kv2-actions-menu';
+                d.className = 'kv2-actions-menu';
+                d.setAttribute('popover', 'auto');
+                d.innerHTML = '<section aria-label="Actions" data-t-aria-label="lang_action_title">' +
+                    button('Order details', 'details') + button('Guests', 'guests') +
+                    button('Hand over', 'handover') + button('Split payment', 'split') +
+                    button('Cancel order', 'cancel', 'class="kv2-danger"') + '</section>';
+                b.setAttribute('aria-expanded', 'true');
+                d.close = () => { b.setAttribute('aria-expanded', 'false'); d.remove(); };
+                document.body.append(d);
+                const rect = b.getBoundingClientRect();
+                d.style.left = Math.max(8, Math.min(innerWidth - 248, rect.right - 240)) + 'px';
+                d.style.top = Math.max(8, Math.min(innerHeight - 270, rect.bottom + 8)) + 'px';
+                if (d.showPopover) d.showPopover();
+                d.addEventListener('toggle', ev => { if (ev.newState === 'closed') d.close(); });
+                d.addEventListener('keydown', ev => {
+                    const items = Array.from(d.querySelectorAll('button'));
+                    const index = items.indexOf(document.activeElement);
+                    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+                        ev.preventDefault(); items[(index + (ev.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length].focus();
+                    } else if (ev.key === 'Escape') { d.close(); b.focus(); }
+                });
+                d.querySelector('button').focus();
                 d.querySelector('section').onclick = (ev) => {
                     const v = ev.target.closest('button');
                     if (!v) return;
@@ -1029,7 +1137,7 @@
                                         ],
                                         'reason',
                                     ),
-                                async (f) => {
+                                async (f, modal) => {
                                     await api('post', 'sales/updateOrder', {
                                         ...P.kotWorkspace.editPayload(
                                             s,
@@ -1038,6 +1146,8 @@
                                         status: 'cancelled',
                                         change_reason: f.get('reason'),
                                     });
+                                    modal.close();
+                                    P.restaurantFeedback?.play('cancelled');
                                     await refresh();
                                 },
                                 'Cancel order',

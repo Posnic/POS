@@ -119,7 +119,21 @@
         if (merge && !floor.canMerge) throw new Error(text('Permission is required'));
         const d = dialog(merge ? PosnicPro.i18n.t('lang_kot_workspace_merge', 'Merge tables') : PosnicPro.i18n.t('lang_kot_workspace_move', 'Move table'));
         d.querySelector('section').innerHTML = '<p>' + esc(text('Choose a destination table')) + '</p><label>' + esc(text('Table')) + '<select name="table" required><option value="">—</option>' +
-            floor.tables.filter(t => merge ? t.orders?.length === 1 && !t.orders[0].paid && t.orders[0].id !== saleId : t.status === 'available').map(t => '<option value="' + esc(t.id) + '">' + esc(t.tableorder_value) + '</option>').join('') + '</select></label>';
+            floor.tables.filter(t => merge ? t.orders?.length === 1 && !t.orders[0].paid && t.orders[0].id !== saleId : t.status === 'available').map(t => '<option value="' + esc(t.id) + '">' + esc(t.tableorder_value) + '</option>').join('') + (merge ? '' : '<option value="custom">' + esc(P.i18n.t('lang_custom_2', 'Custom')) + '</option>') + '</select></label>' +
+            (merge ? '' : '<label hidden data-custom-table>' + esc(text('Table')) + '<input name="customTable" maxlength="6" pattern="[A-Za-z0-9]{1,6}" autocomplete="off" placeholder="e.g. A12"></label>');
+        const customInput = d.querySelector('[name=customTable]');
+        const tableSelect = d.querySelector('select');
+        if (customInput) {
+            const updateCustom = () => {
+                const custom = tableSelect.value === 'custom';
+                d.querySelector('[data-custom-table]').hidden = !custom;
+                d.querySelector('[data-custom-table]').style.display = custom ? '' : 'none';
+                customInput.required = custom;
+            };
+            tableSelect.addEventListener('change', updateCustom);
+            if (!floor.tables.some(t => t.status === 'available')) tableSelect.value = 'custom';
+            updateCustom();
+        }
         // Retain the same request on a network retry; never issue a second move.
         const key = 'posnic.kot.' + (merge ? 'merge:' : 'move:') + location.origin + ':' + branch() + ':' + saleId;
         let intent;
@@ -130,16 +144,37 @@
             if (![...select.options].some(o => o.value === intent.primaryId)) select.add(new Option(intent.primaryId, intent.primaryId));
             select.value = intent.primaryId;
             select.disabled = true;
+            if (customInput) { customInput.disabled = true; d.querySelector('[data-custom-table]').hidden = true; d.querySelector('[data-custom-table]').style.display = 'none'; }
         }
         let prepared = false;
         d.save(async form => {
             if (!prepared) {
+                let destination = intent?.primaryId || form.get('table');
+                if (!intent && destination === 'custom' && !merge) {
+                    const label = String(form.get('customTable') || '').trim().toUpperCase();
+                    if (!/^[A-Z0-9]{1,6}$/.test(label)) throw new Error('Use up to 6 letters or numbers for the table.');
+                    if (label === String(sale.table_number || '').toUpperCase()) throw new Error('Choose a different table.');
+                    const table = await request('post', 'captain/v1/tables/temporary', { branchId: branch(), tableorder_value: label });
+                    destination = table.id;
+                    if (!destination) throw new Error(text('Please retry'));
+                }
+                // Older desktop custom labels may have orders but no floor row.
+                // Register within this branch before seating enrollment; the endpoint
+                // reuses existing rows, so a retry cannot create a duplicate table.
+                if (!sale.seating_request_id && !sale.table_id &&
+                    /^[A-Z0-9]{1,6}$/.test(String(sale.table_number || '')) &&
+                    !floor.tables.some(t => String(t.tableorder_value) === String(sale.table_number))) {
+                    await request('post', 'captain/v1/tables/temporary', {
+                        branchId: branch(), tableorder_value: String(sale.table_number)
+                    });
+                }
                 intent = intent || { branchId: branch(), orderId: saleId,
-                    request_id: id, tableIds: [form.get('table')], primaryId: form.get('table'),
+                    request_id: id, tableIds: [destination], primaryId: destination,
                     guests: sale.person_count, dineType: sale.dine_type || 'Dine-in',
                     ...(merge ? { targetOrderId: floor.tables.find(t => t.id === form.get('table'))?.orders[0]?.id } : {}) };
                 localStorage.setItem(key, JSON.stringify(intent));
                 d.querySelector('select').disabled = true;
+                if (customInput) customInput.disabled = true;
                 await request('post', merge ? 'captain/v1/tables/merge/prepare' : 'captain/v1/tables/move/prepare', intent);
                 prepared = true;
             }

@@ -18,6 +18,7 @@ PosnicPro.kot = {
     },
 
     showDataTablePage: function (module, table_number) {
+        if (!table_number && PosnicPro.kot_v2) return PosnicPro.kot_v2.showDataTablePage();
         PosnicPro.sales.recentSaleAction = false;
         var loader = $(".loader-table-kot");
         loader.find(".loadingSpinner:first").remove();
