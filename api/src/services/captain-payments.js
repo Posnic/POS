@@ -397,7 +397,7 @@ async function prepare(req) {
     await reconcile(db, c, plan);
     return view(plan, c.options);
   }
-  if (!settings(c.branch).enabled) fail('Captain payment collection is disabled.', 403);
+  if (!c.options.enabled) fail('Captain payment collection is disabled.', 403);
   const data = await fresh(db, c, table, req.body);
   const planId = crypto.randomUUID();
   plan = {

@@ -5,6 +5,16 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { JSDOM } = require('jsdom');
 
+test('dashboard loads payment dependencies before KOT without visiting reports', () => {
+  const map = require('../frontend/pages_css_js_map.json');
+  const scripts = map.dashboard.js;
+  const money = scripts.indexOf('static/script/js/core/captain-money.js');
+  const payments = scripts.indexOf('static/script/js/core/captain-payments.js');
+  const kot = scripts.indexOf('static/script/js/modules/js/kot_v2.js');
+  assert.ok(money >= 0 && payments > money && kot > payments);
+  assert.ok(!map.lazy_reports.includes('static/script/js/core/captain-payments.js'), 'Reports must not recreate the payment module');
+});
+
 for (const status of [409, 422, 500, 0]) {
   test(`payment load reports HTTP ${status} separately from a lost connection`, async () => {
     const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://shop.invalid', runScripts: 'outside-only' });
