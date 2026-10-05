@@ -18,7 +18,7 @@ async function readBusinessOverview(
   db,
   context,
   query,
-  { now = Date.now, includeItems = false } = {}
+  { now = Date.now, includeItems = false, cloud = false } = {}
 ) {
   if (!context.capabilities.includes('overview.read')) fail('access_denied', 403);
   if (includeItems && !context.capabilities.includes('items.read')) fail('access_denied', 403);
@@ -51,6 +51,21 @@ async function readBusinessOverview(
   const license = new ObjectId(context.businessId);
   const age = now() - parsedDate.getTime();
   if (age > 32 * 86400000 || age < -2 * 86400000) fail('date_out_of_range', 400);
+  if (cloud) {
+    try {
+      return await require('./business-cloud-reports').readCloudOverview(
+        db,
+        context,
+        branches,
+        day,
+        { now, includeItems }
+      );
+    } catch (error) {
+      // Never substitute a partial sum or an old desktop's total when an
+      // authoritative cloud read is incomplete or exceeds its small budget.
+      fail('summary_unavailable', 503);
+    }
+  }
   if (!requestIndexes.has(db)) {
     const setup = Promise.all([
       db

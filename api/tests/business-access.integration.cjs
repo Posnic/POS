@@ -23,6 +23,7 @@ before(async () => {
   process.env.MONGODB_URI = mongo.getUri('business_test');
   await mongoose.connect(process.env.MONGODB_URI);
   db = mongoose.connection.db;
+  await require('../src/services/business-cloud-reports').ensureCloudReportingIndexes(db);
   passwordHash = await bcrypt.hash(password, 4);
   const app = require('express')();
   app.set('trust proxy', 'loopback');
@@ -811,7 +812,7 @@ test('push registration is scoped to the authenticated Business session and retu
     });
   }
 });
-test('prepared overview enforces live ACL and branch scope and never substitutes missing summaries with zero', async () => {
+test('cloud overview enforces live ACL and shows zero only after querying authoritative sales', async () => {
   const f = await fixture(),
     value = await grant(f),
     id = String(f.branch._id);
@@ -819,8 +820,19 @@ test('prepared overview enforces live ACL and branch scope and never substitutes
     fetch(base + '/api/business/v1/overview?businessDate=' + reportDay + '&branchId=' + branchId, {
       headers: { 'x-forwarded-proto': 'https', authorization: 'Bearer ' + value.token },
     });
-  assert.equal((await read(id)).status, 503);
-  await prepared(f);
+  const empty = await read(id);
+  assert.equal(empty.status, 200);
+  assert.equal((await empty.json()).completedSales, 0);
+  await db.collection('sales').insertOne({
+    _id: new ObjectId(),
+    license: f.branch.license,
+    branch_id: f.branch._id,
+    sale_process: 'Add',
+    payment_status: 'Paid',
+    sales_total: 75,
+    date: new Date(reportDay + 'T10:00:00Z'),
+    updated_date: new Date(),
+  });
   const response = await read(id);
   assert.equal(response.status, 200);
   const result = await response.json();
@@ -833,69 +845,35 @@ test('prepared overview enforces live ACL and branch scope and never substitutes
     .updateOne({ _id: f.user._id }, { $set: { access: { item: { read: true } } } });
   assert.equal((await read(id)).status, 403);
 });
-test('item reads require live item ACL, one authorized branch and a validated publisher snapshot', async () => {
+test('cloud item reads require live item ACL, one authorized branch and no desktop publisher', async () => {
   const f = await fixture(),
     value = await grant(f),
-    id = await prepared(f);
+    id = String(f.branch._id);
   const url = base + '/api/business/v1/items?businessDate=' + reportDay + '&branchId=' + id;
   const headers = { 'x-forwarded-proto': 'https', authorization: 'Bearer ' + value.token };
   assert.equal((await fetch(url, { headers: { 'x-forwarded-proto': 'https' } })).status, 401);
-  assert.equal((await fetch(url, { headers })).status, 503);
-  const insight = {
-    schemaVersion: 1,
-    state: 'available',
-    reason: null,
-    sourceSales: 2,
-    unavailableSales: 0,
-    totalItems: 1,
-    truncated: false,
+  const itemId = String(new ObjectId());
+  await db.collection('sales').insertOne({
+    _id: new ObjectId(),
+    license: f.branch.license,
+    branch_id: f.branch._id,
+    sale_process: 'Add',
+    payment_status: 'Paid',
+    sales_total: 75,
+    date: new Date(reportDay + 'T10:00:00Z'),
+    updated_date: new Date(),
     items: [
-      {
-        itemId: String(new ObjectId()),
-        name: 'Tea',
-        billedSalesMinor: 10000,
-        refundsMinor: 2500,
-        salesAfterReturnsMinor: 7500,
-        quantities: [{ unit: 'cup', soldMilli: 2000, returnedMilli: 1000 }],
-      },
+      { item_id: itemId, item_name: 'Tea', item_unit: 'cup', item_quantity: 1, total_amount: 75 },
     ],
-  };
-  const summaries = db.collection('business_prepared_summaries');
-  await summaries.updateOne(
-    { branch_id: f.branch._id },
-    { $set: { 'summary.itemInsights': insight, 'summary.sourceDocuments': 2 } }
-  );
+  });
   const response = await fetch(url, { headers });
   assert.equal(response.status, 200);
   assert.match(response.headers.get('cache-control'), /no-store/);
-  assert.deepEqual((await response.json()).itemInsights, insight);
+  const result = await response.json();
+  assert.equal(result.itemInsights.state, 'available');
+  assert.equal(result.itemInsights.items[0].salesAfterReturnsMinor, 7500);
   assert.equal((await fetch(url + '&branchId=' + String(new ObjectId()), { headers })).status, 400);
   assert.equal((await fetch(url.replace(id, String(new ObjectId())), { headers })).status, 403);
-  await db
-    .collection('business_reporting_publishers')
-    .updateOne({ _id: id }, { $set: { pending: { sequence: 2 } } });
-  assert.equal((await fetch(url, { headers })).status, 503);
-  await db
-    .collection('business_reporting_publishers')
-    .updateOne({ _id: id }, { $unset: { pending: '' } });
-  await summaries.updateOne(
-    { branch_id: f.branch._id },
-    { $set: { 'summary.itemInsights.items.0.salesAfterReturnsMinor': 8000 } }
-  );
-  assert.equal((await fetch(url, { headers })).status, 503);
-  const incomplete = {
-    ...insight,
-    state: 'incomplete',
-    reason: 'original_items_unavailable',
-    unavailableSales: 1,
-    totalItems: null,
-    items: [],
-  };
-  await summaries.updateOne(
-    { branch_id: f.branch._id },
-    { $set: { 'summary.itemInsights': incomplete } }
-  );
-  assert.deepEqual((await (await fetch(url, { headers })).json()).itemInsights, incomplete);
   await db
     .collection('users')
     .updateOne({ _id: f.user._id }, { $set: { 'access.item.read': false } });
