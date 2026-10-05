@@ -1553,7 +1553,15 @@ test.each([
       expect(minor(listed.round_off)).toBe(minor(payload.roundOff));
       expect(minor(listed.items_total) + minor(listed.round_off)).toBe(bill.totalMinor);
 
-      expect((await require('../../../src/services/captain-bill').read(request)).dueMinor).toBe(0);
+      // Settled dine-in no longer occupies the table; inspect its explicit receipt.
+      expect(
+        (
+          await require('../../../src/services/captain-bill').read({
+            ...request,
+            query: { saleId: String(check._id), receipt: 'true' },
+          })
+        ).dueMinor
+      ).toBe(0);
     }
     const CustomerHistory =
       mongoose.models.CaptainActivityHistory ||
