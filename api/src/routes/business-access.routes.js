@@ -130,6 +130,12 @@ try{const response=await fetch(${jsonForHtml(PATH + '/approve')},{method:'POST',
 form.password.value='';
 if(!response.ok){status.textContent=response.status===401?'Check your sign-in details and try again.':response.status===429?'Too many attempts. Please wait before trying again.':'This connection could not be authorized. Return to the app and start again.';return;}
 form.hidden=true;status.textContent=decision==='allow'?'Connected. Return to Posnic Business.':'Request cancelled. You can close this page.';
+if(decision==='allow'){
+const open=document.createElement('a');open.href='com.posnic.business://authorized';open.textContent='Open Posnic Business';status.append(document.createElement('br'),open);
+// No credential or authorization code travels through the app link. The phone
+// still exchanges its own single-use PKCE request with this exact issuer.
+if(/Android|iPhone|iPad|iPod/.test(navigator.userAgent))window.location.assign(open.href);
+}
 }catch{form.password.value='';status.textContent='Unable to reach the server. Please try again.';}finally{buttons.forEach(b=>b.disabled=false);}}
 form.addEventListener('submit',e=>{e.preventDefault();decide('allow');});document.getElementById('deny').addEventListener('click',()=>decide('deny'));
 </script></main></html>`);
