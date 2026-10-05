@@ -7013,7 +7013,12 @@ class SalesController extends BaseController {
       if (response.status === true) {
         return this.success(res, response.data, response.message);
       }
-      return this.error(res, response.message, 404);
+      return this.error(
+        res,
+        response.message,
+        response.data?.state ? 422 : 404,
+        response.data || null
+      );
     } catch (error) {
       console.error('Error in qrOrder:', error);
       return this.error(res, error.message, 500);

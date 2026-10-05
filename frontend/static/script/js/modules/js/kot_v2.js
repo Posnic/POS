@@ -35,6 +35,11 @@
             : '';
     const id = () => crypto.randomUUID();
     const root = () => document.getElementById('kot_v2');
+    function requestError(response) {
+        const error = new Error(response?.message || response?.error?.message || 'Connection failed. Your draft is retained.');
+        error.details = response?.data || response?.error?.details || {};
+        return error;
+    }
     function api(method, url, data) {
         if (activeScope && activeScope !== scopeKey())
             return Promise.reject(
@@ -49,12 +54,12 @@
                         return;
                     }
                     if (r?.type === 'error' || r?.error || r?.status === false)
-                        reject(new Error(r.message || r.error?.message || 'Please retry.'));
+                        reject(requestError(r));
                     else resolve(r?.type === 'success' ? r.data : r);
                 },
                 (e) =>
                     reject(
-                        new Error(e?.responseJSON?.message || 'Connection failed. Your draft is retained.'),
+                        requestError(e?.responseJSON),
                     ),
             ),
         );
@@ -176,6 +181,8 @@
                 P.alert('error', 'The saved draft could not be read.');
             }
         }
+        state.expanded = !!state.draft;
+        state.filter = 'active';
         render();
         run(refresh);
     }
@@ -375,19 +382,20 @@
     }
     function draftHTML() {
         const d = state.draft;
-        return `<section class="kv2-order kv2-editor"><div class="kv2-customer"><strong>${esc(d.customer?.name || 'Walk-in customer')}</strong>${button('Choose customer', 'customer')}</div><header><div><h2>${PosnicPro.i18n.t('lang_add_items', 'Add items')} <span class="kv2-editor-table">/ ${esc(d.table || 'Takeaway')}</span></h2><small><lang class="lang_search_all_dishes_by_name_barcode_or_quick">Search all dishes by name, barcode or quick code. F2 to focus.</lang></small></div>${d.intent ? button('Review latest order', 'rebase') : button('Discard draft', 'discard')}</header><div class="kv2-draft-body"><section class="kv2-catalogue"><div class="kv2-searchbar"><input id="kv2-search" type="search" autocomplete="off" placeholder="Search name, SKU, barcode or quick code" data-t-placeholder="lang_search_name_sku_barcode_or_quick_code"><div id="kv2-results"></div></div><div class="kv2-catalogue-footer">${button('Item not on menu', 'offmenu')}</div><div class="kv2-category-chips">${categoriesHTML()}</div><div class="kv2-menu">${catalogueHTML()}</div></section><aside class="kv2-review"><div class="kv2-review-heading"><h3><lang class="lang_review_this_round">Review this round</lang></h3></div><p class="kv2-review-hint"><lang class="lang_nothing_is_sent_until_you_choose_send_to_k">Nothing is sent until you choose Send to kitchen.</lang></p><div class="kv2-basket">${d.items.length ? d.items.map((l, i) => `<div class="kv2-draft-line"><div class="kv2-draft-name"><strong>${esc(l.name)}</strong><span>${esc(money(l.price * l.quantity))}</span></div>${l.item_description ? `<small>${esc(l.item_description)}</small>` : ''}<div class="kv2-stepper">${button('−', 'qty', `data-index="${i}" data-delta="-1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} −"`)}<b>${l.quantity}</b>${button('+', 'qty', `data-index="${i}" data-delta="1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} +"`)}${button('Note', 'draftNote', `data-index="${i}"`)}</div></div>`).join('') : `<div class="kv2-basket-empty">${icon('takeaway')}<p><lang class="lang_add_item">Add item</lang></p></div>`}</div><div class="kv2-round-total"><span><lang class="lang_amount">Amount</lang></span><strong>${esc(money(d.items.reduce((sum, l) => sum + Number(l.price) * Number(l.quantity), 0)))}</strong></div></aside></div><footer>${button(PosnicPro.i18n.t('lang_cancel', 'Cancel'), 'discard')}<small>${d.items.reduce((n, l) => n + Number(l.quantity), 0)} <lang class="lang_items">Items</lang></small>${button(d.intent ? PosnicPro.i18n.t('lang_retry_saved_send', 'Retry saved send') : PosnicPro.i18n.t('lang_kot_workspace_send', 'Send to kitchen'), 'send', `class="primary" ${d.items.length ? '' : 'disabled'}`)}</footer></section>`;
+        return `<section class="kv2-order kv2-editor"><div class="kv2-customer"><strong>${esc(d.customer?.name || 'Walk-in customer')}</strong>${button('Choose customer', 'customer')}</div><header><div><h2>${PosnicPro.i18n.t('lang_add_items', 'Add items')} <span class="kv2-editor-table">/ ${esc(d.table || 'Takeaway')}</span></h2><small><lang class="lang_search_all_dishes_by_name_barcode_or_quick">Search all dishes by name, barcode or quick code. F2 to focus.</lang></small></div>${d.intent ? button('Review latest order', 'rebase') : button('Discard draft', 'discard')}</header><div class="kv2-draft-body"><section class="kv2-catalogue"><div class="kv2-searchbar"><input id="kv2-search" type="search" autocomplete="off" placeholder="Search name, SKU, barcode or quick code" data-t-placeholder="lang_search_name_sku_barcode_or_quick_code"><div id="kv2-results"></div></div><div class="kv2-catalogue-footer">${button('Item not on menu', 'offmenu')}</div><div class="kv2-category-chips">${categoriesHTML()}</div><div class="kv2-menu">${catalogueHTML()}</div></section><aside class="kv2-review"><div class="kv2-review-heading"><h3><lang class="lang_review_this_round">Review this round</lang></h3></div><p class="kv2-review-hint"><lang class="lang_nothing_is_sent_until_you_choose_send_to_k">Nothing is sent until you choose Send to kitchen.</lang></p><div class="kv2-basket">${d.items.length ? d.items.map((l, i) => `<div class="kv2-draft-line"><div class="kv2-draft-name"><strong>${esc(l.name)}</strong><span>${esc(money(l.price * l.quantity))}</span></div>${l.item_description ? `<small>${esc(l.item_description)}</small>` : ''}<div class="kv2-stepper">${button('−', 'qty', `data-index="${i}" data-delta="-1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} −"`)}<b>${l.quantity}</b>${button('+', 'qty', `data-index="${i}" data-delta="1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} +"`)}${button('Note', 'draftNote', `data-index="${i}"`)}${button(PosnicPro.i18n.t('lang_remove','Remove'), 'removeDraft', `data-index="${i}" class="kv2-remove"`)}</div></div>`).join('') : `<div class="kv2-basket-empty">${icon('takeaway')}<p><lang class="lang_add_item">Add item</lang></p></div>`}</div><div class="kv2-round-total"><span><lang class="lang_amount">Amount</lang></span><strong>${esc(money(d.items.reduce((sum, l) => sum + Number(l.price) * Number(l.quantity), 0)))}</strong></div></aside></div><footer>${button(PosnicPro.i18n.t('lang_cancel', 'Cancel'), 'discard')}<small>${d.items.reduce((n, l) => n + Number(l.quantity), 0)} <lang class="lang_items">Items</lang></small>${button(d.intent ? PosnicPro.i18n.t('lang_retry_saved_send', 'Retry saved send') : PosnicPro.i18n.t('lang_kot_workspace_send', 'Send to kitchen'), 'send', `class="primary" ${d.items.length ? '' : 'disabled'}`)}</footer></section>`;
     }
     function render() {
         if (!root()) return;
         root().classList.toggle('kv2-composing', !!state.draft);
         root().classList.toggle('kv2-playful', !!P.restaurantFeedback?.allowed?.());
-        root().innerHTML = `<div class="kv2-heading"><h1><lang class="lang_table_orders">Table orders</lang></h1><small>${state.refreshed ? 'Refreshed ' + esc(time(state.refreshed)) : ''}</small><div>${iconButton('refresh', 'Refresh orders')}${button('Item not on menu', 'offmenu')}${button('Takeaway', 'takeaway')}${button('＋ New order', 'new', 'class="primary"')}</div></div><div class="kv2-workspace ${state.expanded ? 'kv2-expanded' : ''}">${floorHTML()}${state.draft ? draftHTML() : orderHTML()}</div>`;
+        root().innerHTML = `<div class="kv2-heading"><h1><lang class="lang_table_orders">Table orders</lang></h1><small>${state.refreshed ? 'Refreshed ' + esc(time(state.refreshed)) : ''}</small><div>${state.draft ? button(state.expanded ? PosnicPro.i18n.t('lang_review_this_round','Review this round') : PosnicPro.i18n.t('lang_tables','Tables'), 'expand') : ''}${iconButton('refresh', 'Refresh orders')}${state.draft ? '' : button('Item not on menu', 'offmenu') + button('Takeaway', 'takeaway') + button('＋ New order', 'new', 'class="primary"')}</div></div><div class="kv2-workspace ${state.expanded ? 'kv2-expanded' : ''}">${floorHTML()}${state.draft ? draftHTML() : orderHTML()}</div>`;
         if (state.draft) {
             bindSearch();
             if (!state.catalogueLoaded) loadCatalogue();
         }
     }
     function startDraft(meta) {
+        state.expanded = false;
         if (!state.draft)
             state.draft = {
                 key: id(),
@@ -573,6 +581,15 @@
         try {
             result = await api('post', d.intent.url, d.intent.body);
         } catch (error) {
+            // Pricing validation happens before any order write. Unlike a lost response,
+            // this is a confirmed refusal: retain the dishes, but allow corrections.
+            if (['item_price_mismatch', 'invalid_price', 'item_needs_price', 'item_price_too_high', 'invalid_tax_configuration', 'price_context_mismatch', 'item_modifiers_changed'].includes(error.details?.state)) {
+                delete d.intent;
+                d.key = id();
+                persist();
+                render();
+                throw error;
+            }
             if (!d.saleId) throw error;
             // Stable line IDs prove the saved addition on a lost response; never send it twice.
             const latest = await api('get', 'sales/' + d.saleId);
@@ -824,6 +841,11 @@
                         'Retry the saved send before discarding; it may already have reached the kitchen.',
                     );
                 state.draft = null;
+                persist();
+                render();
+            } else if (a === 'removeDraft') {
+                if (state.draft.intent) throw new Error('Retry the saved send first.');
+                state.draft.items.splice(Number(b.dataset.index), 1);
                 persist();
                 render();
             } else if (a === 'qty') {

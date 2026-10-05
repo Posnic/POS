@@ -11035,9 +11035,17 @@ class SalesRepository {
           if (previousLine) {
             const storedUnit =
               previousLine.unit_price ?? previousLine.item_base_price ?? previousLine.item_price;
+            // Desktop retains the agreed selling price; older clients retain the
+            // tax-exclusive unit. Both are server-owned values on this saved line.
+            // Never compare an inclusive selling price to its exclusive base.
+            const roundStored = (n) => Money.fromMinor(Money.toMinor(n, monetary), monetary);
+            const retainsSellingPrice =
+              previousLine.pricing?.version === 1 &&
+              submittedPrice !== undefined &&
+              roundStored(submittedPrice) === roundStored(previousLine.pricing.selling_price);
             pricingAuthority.assertPrice(
               submittedPrice,
-              Number(storedUnit),
+              Number(retainsSellingPrice ? previousLine.pricing.selling_price : storedUnit),
               (n) => Money.fromMinor(Money.toMinor(n, monetary), monetary),
               previousLine.item_name
             );
