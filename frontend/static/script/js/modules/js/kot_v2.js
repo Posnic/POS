@@ -1096,7 +1096,7 @@
                 d.id = 'kv2-actions-menu';
                 d.className = 'kv2-actions-menu';
                 d.setAttribute('popover', 'auto');
-                d.innerHTML = '<section aria-label="Order actions">' +
+                d.innerHTML = '<section aria-label="Actions" data-t-aria-label="lang_action_title">' +
                     button('Order details', 'details') + button('Guests', 'guests') +
                     button('Hand over', 'handover') + button('Split payment', 'split') +
                     button('Cancel order', 'cancel', 'class="kv2-danger"') + '</section>';

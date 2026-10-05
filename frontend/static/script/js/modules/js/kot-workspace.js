@@ -119,7 +119,7 @@
         if (merge && !floor.canMerge) throw new Error(text('Permission is required'));
         const d = dialog(merge ? PosnicPro.i18n.t('lang_kot_workspace_merge', 'Merge tables') : PosnicPro.i18n.t('lang_kot_workspace_move', 'Move table'));
         d.querySelector('section').innerHTML = '<p>' + esc(text('Choose a destination table')) + '</p><label>' + esc(text('Table')) + '<select name="table" required><option value="">—</option>' +
-            floor.tables.filter(t => merge ? t.orders?.length === 1 && !t.orders[0].paid && t.orders[0].id !== saleId : t.status === 'available').map(t => '<option value="' + esc(t.id) + '">' + esc(t.tableorder_value) + '</option>').join('') + (merge ? '' : '<option value="custom">' + esc(P.i18n.t('lang_custom', 'Custom')) + '</option>') + '</select></label>' +
+            floor.tables.filter(t => merge ? t.orders?.length === 1 && !t.orders[0].paid && t.orders[0].id !== saleId : t.status === 'available').map(t => '<option value="' + esc(t.id) + '">' + esc(t.tableorder_value) + '</option>').join('') + (merge ? '' : '<option value="custom">' + esc(P.i18n.t('lang_custom_2', 'Custom')) + '</option>') + '</select></label>' +
             (merge ? '' : '<label hidden data-custom-table>' + esc(text('Table')) + '<input name="customTable" maxlength="6" pattern="[A-Za-z0-9]{1,6}" autocomplete="off" placeholder="e.g. A12"></label>');
         const customInput = d.querySelector('[name=customTable]');
         const tableSelect = d.querySelector('select');
