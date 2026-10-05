@@ -381,6 +381,7 @@ const CHANNELS = [
      shop will do, and moving breakfast half an hour would mean editing every
      one of them. */
   'menu_dayparts',
+  'restaurant_playful_feedback',
   /* 'auto' or 'manual': does an incoming online order go straight to the
      kitchen, or wait for somebody to accept it. Anything unreadable means
      auto - see utils/order-approval for why that is the survivable

@@ -83,7 +83,13 @@ async function list(req) {
       .toArray(),
     activeClaims(req.db, c),
   ]);
+  const feedback = await new (require('../repositories/settings.repository'))().resolveGroup(
+    'channels',
+    { branchId: c.branchId, licenseId: c.license }
+  );
   return {
+    orderFeedback:
+      feedback.status === true && feedback.data?.values?.restaurant_playful_feedback === true,
     cleaningEnabled: require('./table-cleaning').enabled(c.branch),
     canManage: allowed(req.user, 'settings'),
     canMerge: allowed(req.user, 'sales', 'merge'),

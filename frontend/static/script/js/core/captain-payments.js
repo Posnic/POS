@@ -177,7 +177,7 @@
     render();
     try {
       plan = await request("post", root() + "/table", {
-        table_number: table,
+        ...(table.startsWith("takeaway:") ? {saleId:table.slice(9)} : {table_number:table}),
         branchId,
         ...(splitDraft || {}),
       });

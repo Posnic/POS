@@ -47,6 +47,7 @@
         }, error => reject(new Error(error?.responseJSON?.error?.message || error?.responseJSON?.message || text('Please retry')))));
     }
     function refresh() {
+        if (document.getElementById("kot_v2")?.offsetParent && P.kot_v2) { P.kot_v2.refresh().catch(e => P.alert("error", e.message)); return; }
         if (P.kot.currentTableNumber) P.kot.loadTableDetails(P.kot.currentTableNumber, true);
         P.kot.loadTables(null, true);
     }
@@ -225,7 +226,7 @@
         d.save(async form => { await request('post', 'sales/handoverOrder', { branchId: branch(), saleId, staffId: form.get('staff'), requestId: id }); refresh(); });
     }
     async function split(table) {
-        const snapshot = await request('get', 'sales/guestBills/table', { branchId: branch(), table_number: table });
+        const snapshot = await request('get', 'sales/guestBills/table', { branchId: branch(), ...(table.startsWith('takeaway:') ? {saleId:table.slice(9)} : {table_number:table}) });
         const d = dialog('Split payment');
         d.querySelector('[type=submit]').textContent = text('Review payment');
         d.querySelector('section').innerHTML = field('Guests', 'guests', snapshot.guests, 'type="number" min="2" max="20" step="1" required') +
