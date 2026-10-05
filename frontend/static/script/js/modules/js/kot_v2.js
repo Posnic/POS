@@ -846,9 +846,10 @@
     }
     function discount() {
         const s = state.sale;
+        const discountType = Number(s.extra_discount) > 0 ? (s.extra_discount_type || 'amount') : 'percent';
         dialog(
             'Discount',
-            `<label>Type<select name="type"><option value="amount" data-t="lang_amount_title">Amount</option><option value="percent" data-t="lang_percentages">Percentage</option></select></label><label>Discount<input name="amount" type="number" min="0" step="0.01" required value="${esc(s.extra_discount || 0)}"></label><label>Reason<textarea name="reason" maxlength="200" required>${esc(s.discount_description || '')}</textarea></label>` +
+            `<label>Type<select name="type"><option value="percent" data-t="lang_percentages" ${discountType === 'percent' ? 'selected' : ''}>Percentage</option><option value="amount" data-t="lang_amount_title" ${discountType === 'amount' ? 'selected' : ''}>Amount</option></select></label><label>Discount<input name="amount" type="number" min="0" step="0.01" required value="${esc(s.extra_discount || 0)}"></label><label>Reason<textarea name="reason" maxlength="200" required>${esc(s.discount_description || '')}</textarea></label>` +
                 templates(['Manager approved', 'Customer loyalty', 'Service delay'], 'reason'),
             async (f) => {
                 if (f.get('type') === 'percent' && Number(f.get('amount')) > 100)
