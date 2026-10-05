@@ -299,7 +299,7 @@
                         : 0;
                     return `<button class="kv2-table ${t.sales.some((s) => String(s._id) === state.selected) ? 'selected' : ''}" data-action="table" data-table="${esc(t.id)}" data-sale="${esc(t.sales[0]?._id || '')}" data-age="${!t.sales.length ? '' : minutes >= 30 ? 'late' : minutes >= 15 ? 'waiting' : 'fresh'}"><strong>${icon(t.id.startsWith('takeaway-') ? 'takeaway' : 'table')} ${esc(t.tableorder_value)}</strong><small>${t.sales.length ? t.sales.reduce((n, s) => n + (s.items || []).reduce((q, l) => q + Number(l.item_quantity || 0), 0), 0) + ' items · ' + t.sales.reduce((n, s) => n + Number(s.person_count || 0), 0) + ' guests' : esc(t.status)}</small>${t.sales.length ? `<b>${esc(money(t.sales.reduce((n, s) => n + Number(s.sales_total || 0), 0)))}</b><small>${minutes} min ago</small>` : ''}</button>`;
                 })
-                .join('') || '<p><lang class="lang_no_orders_here">No orders here.</lang></p>'
+                .join('') || `<div class="kv2-floor-empty">${icon('table')}<p><lang class="lang_no_orders_here">No orders here.</lang></p>${state.filter === 'active' ? button(PosnicPro.i18n.t('lang_choose_a_table', 'Choose a table'), 'filter', 'data-value="available"') : ''}</div>`
         }</div></aside>`;
     }
     function roundHTML(sale) {
@@ -315,10 +315,13 @@
             '<p class="kv2-empty"><lang class="lang_no_pending_portions">No pending portions.</lang></p>'
         );
     }
+    function emptyOrderHTML() {
+        const idle = !state.sales.length;
+        return `<section class="kv2-order kv2-welcome"><div class="kv2-illustration" aria-hidden="true"><svg viewBox="0 0 240 180"><ellipse cx="120" cy="155" rx="83" ry="12" fill="#edf3fa" stroke="none"/><circle cx="120" cy="79" r="66" fill="#f0f6ff" stroke="none"/><g class="kv2-cloche"><path d="M66 103h108M75 99a45 45 0 0 1 90 0M113 49h14M120 49v6"/><path d="M63 112h114l-9 10H72Z" fill="#e1edff"/></g><path d="M76 132h88M87 132v20m66-20v20"/><g class="kv2-steam"><path d="M104 32q-6-7 0-14m16 12q-6-7 0-14m16 16q-6-7 0-14"/></g><circle cx="182" cy="54" r="17" fill="#e5f5ef" stroke="none"/><path d="m175 54 5 5 9-11" stroke="#4d9b80"/></svg></div><h2><lang class="${idle ? 'lang_no_active_orders_2' : 'lang_choose_a_table'}">${idle ? PosnicPro.i18n.t('lang_no_active_orders_2', 'No active orders') : PosnicPro.i18n.t('lang_choose_a_table', 'Choose a table')}</lang></h2><p><lang class="${idle ? 'lang_start_a_table_order' : 'lang_choose_an_active_table_or_start_a_new_orde'}">${idle ? PosnicPro.i18n.t('lang_start_a_table_order', 'Start a table order') : PosnicPro.i18n.t('lang_choose_an_active_table_or_start_a_new_orde', 'Choose an active table, or start a new order.')}</lang></p><div class="kv2-welcome-actions">${button(PosnicPro.i18n.t('lang_new_order', 'New order'), 'new', 'class="primary"')}${button(PosnicPro.i18n.t('lang_takeaway', 'Takeaway'), 'takeaway')}</div></section>`;
+    }
     function orderHTML() {
         const s = state.sale;
-        if (!s)
-            return '<section class="kv2-order"><p class="kv2-empty"><lang class="lang_choose_an_active_table_or_start_a_new_orde">Choose an active table, or start a new order.</lang></p></section>';
+        if (!s) return emptyOrderHTML();
         const details = s.restaurant_details || {};
         return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.token_id || '') : 'Table ' + s.table_number)}</h2><small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('transfer', 'Transfer items')}${button('Actions', 'actions')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button('Serve all', 'serveAll')}${button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p><p>Discount <b>${esc(money(s.discount || 0))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}<p>${esc(details.preparation_note || 'No kitchen note')}</p>${button('Edit details', 'notes')}</div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
     }
@@ -328,6 +331,7 @@
     }
     function render() {
         if (!root()) return;
+        root().classList.toggle('kv2-playful', !!P.restaurantFeedback?.allowed?.());
         root().innerHTML = `<div class="kv2-heading"><h1><lang class="lang_table_orders">Table orders</lang></h1><small>${state.refreshed ? 'Refreshed ' + esc(time(state.refreshed)) : ''}</small><div>${iconButton('refresh', 'Refresh orders')}${button('Item not on menu', 'offmenu')}${button('Takeaway', 'takeaway')}${button('＋ New order', 'new', 'class="primary"')}</div></div><div class="kv2-workspace ${state.expanded ? 'kv2-expanded' : ''}">${floorHTML()}${state.draft ? draftHTML() : orderHTML()}</div>`;
         if (state.draft) {
             bindSearch();
@@ -568,7 +572,8 @@
         const free = state.floor.filter((t) => t.status === 'available');
         const modal = dialog(
             takeaway ? PosnicPro.i18n.t('lang_new_takeaway', 'New takeaway') : PosnicPro.i18n.t('lang_start_a_table_order', 'Start a table order'),
-            `${takeaway ? '' : `<h4><lang class="lang_choose_a_table">Choose a table</lang></h4><div class="kv2-choices">${free.map((t) => `<label>${icon('table')}<br><input type="radio" name="table" value="${esc(t.id)}" ${tableId === t.id ? 'checked' : ''}>${esc(t.tableorder_value)}</label>`).join('')}</div><label>Other table number<input name="custom" maxlength="30" placeholder="For example, Garden 2" data-t-placeholder="lang_for_example_garden_2"></label><h4><lang class="lang_kot_workspace_covers">Number of guests</lang></h4><div class="kv2-choices">${[1, 2, 3, 4, 5, 6, 8, 10].map((n) => `<button type="button" data-guests="${n}">${icon('guests')} ${n}</button>`).join('')}</div>`}<label>${takeaway ? PosnicPro.i18n.t('lang_guests_optional', 'Guests (optional)') : PosnicPro.i18n.t('lang_guest_count', 'Guest count')}<input name="guests" inputmode="numeric" type="number" value="${takeaway ? 0 : 2}" min="${takeaway ? 0 : 1}" max="1000" required></label>`,
+            `<div class="kv2-seating-layout">${takeaway ? '' : `<div class="kv2-table-section"><h4>${icon('table')} <lang class="lang_choose_a_table">Choose a table</lang></h4><div class="kv2-choices kv2-seat-grid">${[...state.floor].sort((a, b) => Number(b.status === 'available') - Number(a.status === 'available')).map((t) => `<label class="kv2-seat ${t.status !== 'available' ? 'occupied' : ''}"><input type="radio" name="table" value="${esc(t.id)}" ${tableId === t.id && t.status === 'available' ? 'checked' : ''} ${t.status !== 'available' ? 'disabled' : ''}>${icon('table')}<strong>${esc(t.tableorder_value)}</strong><small>${esc(t.status)}</small></label>`).join('')}</div><label>Other table number<input name="custom" maxlength="30" placeholder="For example, Garden 2" data-t-placeholder="lang_for_example_garden_2"></label></div>`}<div class="kv2-guest-section"><h4>${icon('guests')} <lang class="lang_kot_workspace_covers">Number of guests</lang></h4>${takeaway ? '' : `<div class="kv2-choices kv2-guest-grid">${[1, 2, 3, 4, 5, 6, 8, 10].map((n) => `<button type="button" data-guests="${n}" aria-pressed="${n === 2}" class="${n === 2 ? 'primary' : ''}">${icon('guests')}<strong>${n}</strong></button>`).join('')}</div>`}<label>${takeaway ? PosnicPro.i18n.t('lang_guests_optional', 'Guests (optional)') : PosnicPro.i18n.t('lang_guest_count', 'Guest count')}<input name="guests" inputmode="numeric" type="number" value="${takeaway ? 0 : 2}" min="${takeaway ? 0 : 1}" max="1000" required></label></div></div>`,
+
             (form) => {
                 const t = free.find((t) => t.id === form.get('table')),
                     custom = String(form.get('custom') || '').trim();
@@ -586,14 +591,18 @@
             },
             'Choose dishes',
         );
+        modal.classList.add('kv2-seating-dialog');
         modal.addEventListener('click', (e) => {
             const b = e.target.closest('[data-guests]');
             if (b) {
                 modal.querySelector('[name=guests]').value = b.dataset.guests;
                 modal
                     .querySelectorAll('[data-guests]')
-                    .forEach((v) => v.classList.toggle('primary', v === b));
+                    .forEach((v) => { v.classList.toggle('primary', v === b); v.setAttribute('aria-pressed', String(v === b)); });
             }
+        });
+        modal.querySelector('[name=guests]').addEventListener('input', (e) => {
+            modal.querySelectorAll('[data-guests]').forEach((v) => { const on = Number(v.dataset.guests) === Number(e.target.value); v.classList.toggle('primary', on); v.setAttribute('aria-pressed', String(on)); });
         });
         modal
             .querySelector('[name=custom]')
