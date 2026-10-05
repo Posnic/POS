@@ -59,3 +59,39 @@
 .kv2-menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:9px;max-height:240px;overflow:auto;margin:12px 0}#kot_v2 .kv2-menu button{min-height:72px;text-align:left;background:#f8fbff;font-size:12px}.kv2-draft-body{max-height:calc(100dvh - 310px);overflow:auto}
 
 #kot_v2 .kv2-tab{border:0;border-radius:0;background:white;color:#7b899d;border-bottom:2px solid transparent}#kot_v2 .kv2-tab.active{border-bottom-color:#076bff;color:#076bff}.kv2-breakdown{border-top:1px solid #e4eaf1;padding:9px 16px;color:#738397;font-size:11px}.kv2-breakdown summary{cursor:pointer}.kv2-breakdown>div{padding:10px}.kv2-breakdown p{display:flex;justify-content:space-between}.kv2-expanded{grid-template-columns:1fr}.kv2-expanded>.kv2-order{display:none}.kv2-expanded .kv2-grid{max-height:calc(100dvh - 270px)}
+/* Match the approved seating layout without inheriting the legacy drawer styles. */
+#kot_v2 .kv2-floor nav button{border:0;background:transparent;color:#75879c;font-weight:600}
+#kot_v2 .kv2-floor nav button.selected{background:white;color:#183047;box-shadow:0 1px 4px #18304712}
+#kot_v2 h1,#kot_v2 h2,.kv2-seating-dialog h3{font-weight:700;letter-spacing:-.35px}
+#kot_v2 .kv2-welcome{min-height:440px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;background:radial-gradient(ellipse at 50% 30%,#f8fbff,white 65%)}
+#kot_v2 .kv2-welcome h2{font-size:23px;margin:12px 0}
+#kot_v2 .kv2-welcome p{max-width:310px;color:#75879c;line-height:1.65;margin:0 0 22px}
+#kot_v2 .kv2-illustration svg{width:240px;height:180px;stroke:#7b9bc2;stroke-width:2.5}
+.kv2-welcome-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#kot_v2 .kv2-welcome-actions button{min-height:44px;padding:10px 20px;font-weight:600}
+.kv2-floor-empty{grid-column:1/-1;text-align:center;padding:28px 10px;color:#75879c}
+#kot_v2 .kv2-floor-empty>svg{width:32px;height:32px;margin-bottom:12px;color:#9bb1cb}
+.kv2-floor-empty p{margin-bottom:14px}
+#kot_v2.kv2-playful .kv2-steam{animation:kv2Steam 3s ease-in-out 2;transform-origin:center}
+@keyframes kv2Steam{0%,100%{opacity:.5;transform:translateY(2px)}50%{opacity:1;transform:translateY(-5px)}}
+.kv2-seating-dialog{width:min(850px,calc(100vw - 28px));font-size:14px}
+.kv2-seating-dialog header{padding:23px 26px}.kv2-seating-dialog section{padding:24px 26px;max-height:67dvh}
+.kv2-seating-dialog footer{padding:17px 26px;background:#fafbfd}
+.kv2-seating-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:26px}
+.kv2-seating-dialog h4{font-size:14px;font-weight:700;margin:0 0 18px;display:flex;align-items:center;gap:9px}
+.kv2-guest-section{border-left:1px solid #e8edf3;padding-left:26px}
+.kv2-seating-dialog .kv2-seat-grid{grid-template-columns:repeat(3,minmax(0,1fr));max-height:280px;overflow:auto;padding:3px;margin:-3px -3px 20px}
+.kv2-seating-dialog .kv2-seat{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:98px;margin:0;padding:12px 6px;color:#6f8fb4;background:#fbfdff}
+.kv2-seat strong{font-size:18px;color:#20364d}.kv2-seat small{font-size:10px}
+.kv2-seating-dialog .kv2-seat input{position:absolute;opacity:0;width:1px;height:1px;padding:0;min-height:0}
+.kv2-seat:focus-within{outline:3px solid #a5caff;outline-offset:1px}
+.kv2-seating-dialog .kv2-seat.occupied{background:#f5f6f8;color:#a8b1bd;cursor:not-allowed}.kv2-seat.occupied strong{color:#939dac}
+.kv2-seating-dialog .kv2-seat:has(:checked){border-color:#0872ff;background:#eef6ff;box-shadow:0 0 0 1px #0872ff}
+.kv2-seat:has(:checked) strong{color:#0867ee}
+.kv2-seating-dialog .kv2-guest-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 20px}
+.kv2-seating-dialog .kv2-guest-grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:76px;padding:10px 4px;border-radius:22px;background:#fbfdfc;color:#658d7b}
+.kv2-seating-dialog .kv2-guest-grid button.primary{background:#eaf6f0;border-color:#7bb39b;color:#357d60}
+.kv2-guest-grid strong{font-size:17px}.kv2-seating-dialog label{font-size:12px;color:#6e7f93}.kv2-seating-dialog label>input{margin-top:7px}
+.kv2-seating-dialog .kv2-guest-section:only-child{border:0;padding:0;grid-column:1/-1}
+@media(max-width:680px){.kv2-seating-layout{grid-template-columns:1fr;gap:22px}.kv2-guest-section{border-left:0;border-top:1px solid #e8edf3;padding:20px 0 0}.kv2-seating-dialog section{padding:20px}.kv2-seating-dialog .kv2-seat-grid{grid-template-columns:repeat(4,minmax(0,1fr));max-height:220px}#kot_v2 .kv2-welcome{min-height:350px;padding:22px}}
+@media(prefers-reduced-motion:reduce){#kot_v2.kv2-playful .kv2-steam{animation:none}}
