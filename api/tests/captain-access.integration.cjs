@@ -49,7 +49,7 @@ before(async () => {
   };
   const express = require('express'),
     app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: process.env.CAPTAIN_LIVE_AWS_CHECK === '1' ? '10mb' : '100kb' }));
   // lgtm[js/missing-token-validation] The real csrf.protect middleware below validates
   // credential-bound CSRF tokens before these test routes; cookie pairing is tested below.
   app.use(require('cookie-parser')());
@@ -759,6 +759,61 @@ test('paired Captain reaches bill, kitchen and guest recovery routes with scoped
   }
 });
 
+
+test('paired Captain can check scanning and reach photo validation without gaining settings access', async () => {
+  const { grant } = await paired();
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  const call = (path, body) =>
+    fetch(base + '/captain/v1/paper-orders/' + path, {
+      method: body ? 'POST' : 'GET',
+      headers,
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+  const options = await call('options');
+  assert.equal(options.status, 200, await options.clone().text());
+  assert.equal((await options.json()).enabled, false);
+  for (const [path, body] of [
+    ['recognize', {}],
+    ['reference', {}],
+    ['photos/' + crypto.randomUUID(), null],
+  ]) {
+    const response = await call(path, body);
+    assert.ok(response.status >= 400);
+    assert.notEqual((await response.json()).error.code, 'CAPTAIN_SCOPE');
+  }
+  for (const path of ['settings', 'delete', 'photos/not-an-id']) {
+    const response = await call(path, {});
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).error.code, 'CAPTAIN_SCOPE');
+  }
+});
+
+test('paired Captain reads the real sample through HTTP and AWS', { skip: process.env.CAPTAIN_LIVE_AWS_CHECK !== '1' }, async () => {
+  const { grant } = await paired();
+  const headers = { Authorization: 'Bearer ' + grant.token, 'Content-Type': 'application/json' };
+  const id = crypto.randomUUID();
+  const original = 'data:image/png;base64,' + require('node:fs').readFileSync(process.env.CAPTAIN_SCAN_SAMPLE).toString('base64');
+  await db.collection('branches').updateOne({ _id: branch._id }, { $set: { captain_paper_orders: true } });
+  const s3 = new (require('@aws-sdk/client-s3').S3Client)({ region: process.env.AWS_REGION });
+  try {
+    const options = await fetch(base + '/captain/v1/paper-orders/options', { headers });
+    assert.equal(options.status, 200);
+    assert.equal((await options.json()).configured, true);
+    const response = await fetch(base + '/captain/v1/paper-orders/recognize', { method: 'POST', headers, body: JSON.stringify({ id, original }) });
+    assert.equal(response.status, 200, await response.clone().text());
+    const result = await response.json();
+    assert.equal(result.table, '4');
+    assert.equal(result.pax, 3);
+    assert.deepEqual(result.lines.map(line => [line.name, line.quantity]), [['Chicken Biryani', 2], ['Mutton Biryani', 1], ['Paneer Butter Masala', 1]]);
+    const photo = await fetch(base + '/captain/v1/paper-orders/photos/' + id, { headers });
+    assert.equal(photo.status, 200, await photo.clone().text());
+    assert.equal((await photo.json()).data, original);
+  } finally {
+    await s3.send(new (require('@aws-sdk/client-s3').DeleteObjectCommand)({ Bucket: process.env.ORDER_PHOTO_BUCKET, Key: `orders/${branch.license}/${branch._id}/${id}` }));
+    s3.destroy();
+    await db.collection('branches').updateOne({ _id: branch._id }, { $unset: { captain_paper_orders: '' } });
+  }
+});
 
 test('paired transfer status requires merge permission and returns scoped unknown recovery',async()=>{
  const {grant}=await paired();
