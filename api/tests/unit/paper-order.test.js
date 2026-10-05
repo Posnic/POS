@@ -109,6 +109,18 @@ test('feature is off unless explicitly enabled', async () => {
   await expect(service.recognize(req)).rejects.toMatchObject({ status: 403 });
   expect(sendOCR).not.toHaveBeenCalled();
 });
+
+test('real sample Textract blocks pair right-column quantities and recognize Guests', () => {
+  const blocks = require('../fixtures/paper-sample-textract.json');
+  const parsed = service.parse(blocks);
+  expect(parsed).toMatchObject({ table: '4', pax: 3 });
+  expect(parsed.lines.map(({ name, quantity }) => [name, quantity])).toEqual([
+    ['Chicken Biryani', 2], ['Mutton Biryani', 1], ['Paneer Butter Masala', 1],
+  ]);
+  // An unrelated number below a dish must remain for review, not become its qty.
+  expect(service.parse([blocks[2], blocks[5]]).lines).toHaveLength(2);
+  expect(service.parse([blocks[2], { ...blocks[3], Geometry: undefined }]).lines).toHaveLength(2);
+});
 test('rejects non-image content', () => {
   expect(() => service.image('data:image/jpeg;base64,aGVsbG8=')).toThrow();
 });
