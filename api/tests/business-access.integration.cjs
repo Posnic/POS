@@ -509,6 +509,41 @@ test('browser approval requires HTTPS, same-origin and browser-bound consent bef
   assert.equal(page.status, 200);
   const html = await page.text();
   assert.ok(html.includes(f.request.slice(-6).toUpperCase()));
+  // Exercise the actual approval-page script: only a successful mobile
+  // approval opens the fixed app link, and no grant travels in that URL.
+  for (const [decision, mobile, ok, expected] of [
+    ['allow', true, true, 1],
+    ['deny', true, true, 0],
+    ['allow', false, true, 0],
+    ['allow', true, false, 0],
+  ]) {
+    const opened = [];
+    const form = {
+      identifier: { value: 'test' },
+      password: { value: 'test-only' },
+      addEventListener() {},
+    };
+    const status = { append() {} };
+    const sandbox = {
+      document: {
+        getElementById: (id) =>
+          id === 'consent' ? form : id === 'status' ? status : { addEventListener() {} },
+        querySelectorAll: () => [],
+        createElement: () => ({}),
+      },
+      navigator: { userAgent: mobile ? 'Android' : 'Desktop' },
+      window: { location: { assign: (url) => opened.push(url) } },
+      fetch: async () => ({ ok, status: ok ? 200 : 401 }),
+    };
+    require('node:vm').runInNewContext(
+      html.match(/<script nonce="[^"]+">([\s\S]*?)<\/script>/)[1],
+      sandbox
+    );
+    await sandbox.decide(decision);
+    assert.equal(opened.length, expected);
+    if (expected) assert.equal(opened[0], 'com.posnic.business://authorized');
+    assert.equal(form.password.value, '');
+  }
   const csrf = html.match(/csrf:"([\w-]{43})"/)[1];
   const cookie = page.headers.get('set-cookie').split(';')[0];
   const body = JSON.stringify({
