@@ -91,3 +91,21 @@ test('customer entry waits for pending-send recovery and opens automatically aft
  await h.click('customer');assert.equal(h.w.document.querySelector('[name=phone]'),null);assert.match(h.w.document.querySelector('dialog').textContent,/previous submission/);
  setup.failure=true;setup.failureResponse={message:'order_changed'};try{h.w.document.querySelector('dialog [type=submit]').click();await flush();assert.ok(h.w.document.querySelector('[name=phone]'));assert.equal(h.app.state.draft.items.length,1);assert.equal(h.app.state.draft.intent,undefined);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
 });
+
+
+test('occupied-table refusal unlocks both new and restored sends so Cancel exits without another write',async()=>{
+ for(const restored of [false,true]){
+  const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+  const d=h.app.state.draft;delete d.saleId;d.table='6';d.dineType='Dine-in';const key=d.key;
+  if(restored)d.intent={url:'sales/qrOrder',body:{idempotencyKey:key}};
+  setup.failure=true;setup.failureResponse={message:'Table 6 already has an open order. Add to it, or settle it first.'};
+  try{await h.click('send');assert.equal(d.intent,undefined);assert.notEqual(d.key,key);assert.equal(d.items.length,1);assert.equal(h.effects.includes('sent'),false);const writes=h.calls.filter(c=>c.method==='post').length;await h.click('discard');assert.equal(h.app.state.draft,null);assert.equal(h.calls.filter(c=>c.method==='post').length,writes);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
+ }
+});
+
+test('Cancel recovery closes after an occupied-table rejection and allows leaving the retained draft',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+ const d=h.app.state.draft;delete d.saleId;d.table='6';d.intent={url:'sales/qrOrder',body:{idempotencyKey:d.key}};
+ setup.failure=true;setup.failureResponse={message:'Table 6 already has an open order. Add to it, or settle it first.'};
+ try{await h.click('discard');h.w.document.querySelector('dialog[open] [type=submit]').click();await flush();assert.equal(h.w.document.querySelector('dialog[open]'),null);assert.equal(d.intent,undefined);await h.click('discard');assert.equal(h.app.state.draft,null);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
+});

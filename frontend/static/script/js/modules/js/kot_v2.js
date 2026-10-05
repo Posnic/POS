@@ -686,6 +686,21 @@
         try {
             result = await api('post', d.intent.url, d.intent.body);
         } catch (error) {
+            // Occupancy is rejected before any write. Do not lock a refused new order
+            // as an uncertain send, including drafts restored from older clients.
+            const occupiedTable = !d.saleId && (
+                (String(error.details?.table_number) === String(d.table) && Number(error.details?.open_orders) > 0) ||
+                error.message === `Table ${d.table} already has an open order. Add to it, or settle it first.` ||
+                new RegExp('^Table ' + String(d.table).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' already has [0-9]+ open orders, which is the most this shop allows\.$').test(error.message)
+            );
+            if (occupiedTable) {
+                delete d.intent;
+                d.key = id();
+                persist();
+                render();
+                notify(error.message);
+                return;
+            }
             if (d.saleId && error.message === 'order_changed') {
                 // This is an explicit refusal, not an unknown network outcome.
                 // Reconcile accepted line IDs before unlocking the remaining draft.
@@ -976,7 +991,7 @@
             else if (a === 'send') await send();
             else if (a === 'rebase') {
                 const d = state.draft;
-                if (!d.saleId) throw new Error('Retry this new order to confirm its result.');
+                if (!d.saleId) { pendingSendReview(); return; }
                 const latest = await api('get', 'sales/' + d.saleId);
                 const accepted = new Set((latest.items || []).map((l) => l.line_id));
                 d.items = d.items.filter((l) => !accepted.has(l.line_id));
