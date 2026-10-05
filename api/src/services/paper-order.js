@@ -71,7 +71,14 @@ function parse(blocks) {
     if (!n) continue;
     const candidates = input.filter((b) => {
       const r = b.Geometry?.BoundingBox;
-      if (!r || b === number || consumed.has(b) || !/[a-z]/i.test(b.Text || '') || /\d\s*$/.test(b.Text || '')) return false;
+      if (
+        !r ||
+        b === number ||
+        consumed.has(b) ||
+        !/[a-z]/i.test(b.Text || '') ||
+        /\d\s*$/.test(b.Text || '')
+      )
+        return false;
       const overlap = Math.min(r.Top + r.Height, n.Top + n.Height) - Math.max(r.Top, n.Top);
       return r.Left + r.Width < n.Left && overlap >= Math.min(r.Height, n.Height) * 0.6;
     });
@@ -79,7 +86,13 @@ function parse(blocks) {
       const item = candidates[0];
       const peers = input.filter((b) => {
         const r = b.Geometry?.BoundingBox;
-        return /^\d+(?:\.\d+)?$/.test(b.Text?.trim()) && r && r.Left > item.Geometry.BoundingBox.Left + item.Geometry.BoundingBox.Width && Math.min(r.Top + r.Height, n.Top + n.Height) - Math.max(r.Top, n.Top) >= Math.min(r.Height, n.Height) * 0.6;
+        return (
+          /^\d+(?:\.\d+)?$/.test(b.Text?.trim()) &&
+          r &&
+          r.Left > item.Geometry.BoundingBox.Left + item.Geometry.BoundingBox.Width &&
+          Math.min(r.Top + r.Height, n.Top + n.Height) - Math.max(r.Top, n.Top) >=
+            Math.min(r.Height, n.Height) * 0.6
+        );
       });
       if (peers.length !== 1) continue;
       item.Text += ' ' + number.Text.trim();

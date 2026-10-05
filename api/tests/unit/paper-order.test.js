@@ -115,7 +115,9 @@ test('real sample Textract blocks pair right-column quantities and recognize Gue
   const parsed = service.parse(blocks);
   expect(parsed).toMatchObject({ table: '4', pax: 3 });
   expect(parsed.lines.map(({ name, quantity }) => [name, quantity])).toEqual([
-    ['Chicken Biryani', 2], ['Mutton Biryani', 1], ['Paneer Butter Masala', 1],
+    ['Chicken Biryani', 2],
+    ['Mutton Biryani', 1],
+    ['Paneer Butter Masala', 1],
   ]);
   // An unrelated number below a dish must remain for review, not become its qty.
   expect(service.parse([blocks[2], blocks[5]]).lines).toHaveLength(2);
