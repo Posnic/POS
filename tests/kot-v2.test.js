@@ -29,3 +29,13 @@ test('zero-price catalogue items request a price before they enter the draft',as
 
 test('confirmed price rejection unlocks the draft so an item can be removed',async()=>{const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});setup.failure=true;setup.failureResponse={message:'Price changed',data:{state:'item_price_mismatch',expected_price:12}};try{await h.click('send');assert.equal(h.app.state.draft.intent,undefined);assert.equal(h.app.state.draft.items.length,1);await h.click('removeDraft');assert.equal(h.app.state.draft.items.length,0);assert.equal(h.effects.includes('sent'),false);}finally{setup.failure=false;setup.failureResponse=null;h.close();}});
 test('revisiting with a saved draft displays active tables without losing the round',async()=>{const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});h.app.showDataTablePage();await flush();assert.equal(h.app.state.expanded,true);assert.equal(h.app.state.filter,'active');assert.equal(h.app.state.sales.length,1);assert.equal(h.app.state.draft.items.length,1);await h.click('expand');assert.equal(h.app.state.expanded,false);assert.equal(h.app.state.draft.items.length,1);h.close();});
+
+test('refresh gives immediate busy feedback, prevents repeat clicks and confirms only successful loads',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();
+ const original=h.w.PosnicPro.get;let finish,fail,requests=0;
+ h.w.PosnicPro.get=(o,done,reject)=>{if(o.url==='captain/v1/tables'){requests++;finish=()=>original(o,done,reject);fail=()=>reject({responseJSON:{message:'Offline'}});}else original(o,done,reject);};
+ const button=()=>h.w.document.querySelector('[data-action=refresh]');
+ button().click();assert.equal(button().dataset.feedback,'loading');assert.equal(button().disabled,true);button().click();assert.equal(requests,1);
+ finish();await flush();assert.equal(button().dataset.feedback,'success');assert.equal(button().disabled,false);assert.equal(button().getAttribute('aria-busy'),'false');
+ button().click();fail();await flush();assert.equal(button().dataset.feedback,'error');assert.equal(button().disabled,false);assert.ok(h.errors.includes('Offline'));h.close();
+});
