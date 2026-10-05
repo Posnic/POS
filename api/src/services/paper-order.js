@@ -62,14 +62,53 @@ function parse(blocks) {
   let table = '',
     pax = null;
   const lines = [];
-  for (const block of blocks || []) {
+  // Textract can split a right-aligned quantity from its item into another LINE.
+  // Join only a unique number on the same visual row, never by reading order.
+  const input = (blocks || []).filter((b) => b.BlockType === 'LINE').map((b) => ({ ...b }));
+  const consumed = new Set();
+  for (const number of input.filter((b) => /^\d+(?:\.\d+)?$/.test(b.Text?.trim()))) {
+    const n = number.Geometry?.BoundingBox;
+    if (!n) continue;
+    const candidates = input.filter((b) => {
+      const r = b.Geometry?.BoundingBox;
+      if (
+        !r ||
+        b === number ||
+        consumed.has(b) ||
+        !/[a-z]/i.test(b.Text || '') ||
+        /\d\s*$/.test(b.Text || '')
+      )
+        return false;
+      const overlap = Math.min(r.Top + r.Height, n.Top + n.Height) - Math.max(r.Top, n.Top);
+      return r.Left + r.Width < n.Left && overlap >= Math.min(r.Height, n.Height) * 0.6;
+    });
+    if (candidates.length === 1) {
+      const item = candidates[0];
+      const peers = input.filter((b) => {
+        const r = b.Geometry?.BoundingBox;
+        return (
+          /^\d+(?:\.\d+)?$/.test(b.Text?.trim()) &&
+          r &&
+          r.Left > item.Geometry.BoundingBox.Left + item.Geometry.BoundingBox.Width &&
+          Math.min(r.Top + r.Height, n.Top + n.Height) - Math.max(r.Top, n.Top) >=
+            Math.min(r.Height, n.Height) * 0.6
+        );
+      });
+      if (peers.length !== 1) continue;
+      item.Text += ' ' + number.Text.trim();
+      item.Confidence = Math.min(item.Confidence || 0, number.Confidence || 0);
+      consumed.add(number);
+    }
+  }
+  for (const block of input) {
+    if (consumed.has(block)) continue;
     if (block.BlockType !== 'LINE') continue;
     const raw = String(block.Text || '')
       .trim()
       .slice(0, 200);
     // Only a complete metadata line is consumed; item numbers remain item text.
     const header =
-      /^(?:T(?:able)?\s*[:#-]?\s*(\d+[\w-]*))?(?:\s*[,/]?\s*P(?:ax)?\s*[:#-]?\s*(\d+))?$/i.exec(
+      /^(?:T(?:able)?\s*[:#-]?\s*(\d+[\w-]*))?(?:\s*[,/]?\s*(?:P(?:ax)?|Guests?)\s*[:#-]?\s*(\d+))?$/i.exec(
         raw
       );
     if (header && (header[1] || header[2])) {

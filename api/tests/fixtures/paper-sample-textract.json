@@ -1,0 +1,93 @@
+[
+  {
+    "BlockType": "LINE",
+    "Text": "Table 4",
+    "Confidence": 99.97518920898438,
+    "Geometry": {
+      "BoundingBox": {
+        "Width": 0.39698925614356995,
+        "Height": 0.08140396326780319,
+        "Left": 0.1289767473936081,
+        "Top": 0.15646888315677643
+      }
+    }
+  },
+  {
+    "BlockType": "LINE",
+    "Text": "Guests 3",
+    "Confidence": 100,
+    "Geometry": {
+      "BoundingBox": {
+        "Width": 0.41360846161842346,
+        "Height": 0.06450925767421722,
+        "Left": 0.12626339495182037,
+        "Top": 0.28047361969947815
+      }
+    }
+  },
+  {
+    "BlockType": "LINE",
+    "Text": "Chicken Biryani",
+    "Confidence": 100,
+    "Geometry": {
+      "BoundingBox": {
+        "Width": 0.5431325435638428,
+        "Height": 0.07889483869075775,
+        "Left": 0.10538602620363235,
+        "Top": 0.4686564803123474
+      }
+    }
+  },
+  {
+    "BlockType": "LINE",
+    "Text": "2",
+    "Confidence": 100,
+    "Geometry": {
+      "BoundingBox": {
+        "Width": 0.06069478392601013,
+        "Height": 0.05363479629158974,
+        "Left": 0.8192254304885864,
+        "Top": 0.4751533567905426
+      }
+    }
+  },
+  {
+    "BlockType": "LINE",
+    "Text": "Mutton Biryani",
+    "Confidence": 100,
+    "Geometry": {
+      "BoundingBox": {
+        "Width": 0.5025790333747864,
+        "Height": 0.07865021377801895,
+        "Left": 0.11257340013980865,
+        "Top": 0.6002695560455322
+      }
+    }
+  },
+  {
+    "BlockType": "LINE",
+    "Text": "1",
+    "Confidence": 100,
+    "Geometry": {
+      "BoundingBox": {
+        "Width": 0.0537736676633358,
+        "Height": 0.05546923726797104,
+        "Left": 0.8238227963447571,
+        "Top": 0.6011416912078857
+      }
+    }
+  },
+  {
+    "BlockType": "LINE",
+    "Text": "Paneer Butter Masala 1",
+    "Confidence": 99.9951171875,
+    "Geometry": {
+      "BoundingBox": {
+        "Width": 0.7796339988708496,
+        "Height": 0.0601467564702034,
+        "Left": 0.1043066754937172,
+        "Top": 0.7319145798683167
+      }
+    }
+  }
+]

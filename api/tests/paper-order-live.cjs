@@ -12,6 +12,9 @@ const { S3Client, DeleteObjectCommand, GetPublicAccessBlockCommand } = require('
   assert.equal(process.env.CAPTAIN_LIVE_AWS_CHECK, '1', 'Set CAPTAIN_LIVE_AWS_CHECK=1 explicitly');
   assert.ok(process.env.ORDER_PHOTO_BUCKET && process.env.AWS_REGION, 'Set the private bucket and region');
   const fixture = fs.readFileSync(process.argv[2]);
+  const expected = process.argv[3] ? JSON.parse(fs.readFileSync(process.argv[3], 'utf8')) : {
+    table: '4', pax: 5, lines: [['CB',5],['MB',2],['PBM',1]],
+  };
   const data = 'data:image/png;base64,' + fixture.toString('base64');
   const paper = require('../src/services/paper-order');
   const s3 = new S3Client({region:process.env.AWS_REGION});
@@ -27,9 +30,9 @@ const { S3Client, DeleteObjectCommand, GetPublicAccessBlockCommand } = require('
     await db.collection('branches').insertOne({_id:branchId,license,captain_paper_orders:true});
     const req = {db,user:{_id:user,access:{sales:{write:true}}},tenantContext:{branchId,licenseId:license},body:{id,original:data}};
     const result = await paper.recognize(req);
-    assert.equal(result.table,'4');
-    assert.equal(result.pax,5);
-    assert.deepEqual(result.lines.map(line=>[line.name,line.quantity]),[['CB',5],['MB',2],['PBM',1]]);
+    assert.equal(result.table,expected.table);
+    assert.equal(result.pax,expected.pax);
+    assert.deepEqual(result.lines.map(line=>[line.name,line.quantity]),expected.lines);
     assert.deepEqual(await paper.recognize(req),result);
     assert.equal((await db.collection('paper_order_usage').findOne({})).count,1,'Retry must not consume another scan');
     const photo = await paper.read({...req,params:{id}});
