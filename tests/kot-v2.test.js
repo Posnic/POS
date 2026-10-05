@@ -39,3 +39,11 @@ test('refresh gives immediate busy feedback, prevents repeat clicks and confirms
  finish();await flush();assert.equal(button().dataset.feedback,'success');assert.equal(button().disabled,false);assert.equal(button().getAttribute('aria-busy'),'false');
  button().click();fail();await flush();assert.equal(button().dataset.feedback,'error');assert.equal(button().disabled,false);assert.ok(h.errors.includes('Offline'));h.close();
 });
+
+test('serve shows immediate pending feedback, confirms the portion and restores retry after failure',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();
+ const post=h.w.PosnicPro.post;let done,fail,count=0;h.w.PosnicPro.post=(o,success,reject)=>{count++;done=()=>{const line=h.sale.restaurant_details.rounds[0].items[0];line.served=1;line.remaining=1;post(o,success,reject);};fail=()=>reject({responseJSON:{message:'Offline'}});};
+ const button=()=>h.w.document.querySelector('[data-action=serve]');button().click();assert.equal(button().disabled,true);assert.equal(button().getAttribute('aria-busy'),'true');assert.ok(button().classList.contains('kv2-serving'));button().click();assert.equal(count,1);
+ done();await flush();assert.match(button().textContent,/1\/2/);assert.ok(button().classList.contains('kv2-serve-saved'));assert.equal(button().disabled,false);
+ button().click();fail();await flush();assert.equal(button().disabled,false);assert.equal(button().getAttribute('aria-busy'),null);assert.match(button().textContent,/1\/2/);assert.equal(h.w.document.querySelector('.kv2-serving'),null);h.close();
+});
