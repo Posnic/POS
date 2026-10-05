@@ -152,3 +152,15 @@ test('variable and quick-item prices are accepted only from catalogue-marked pro
     expect(await stored()).toMatchObject({ sales_total: 105 });
   }
 });
+
+test('desktop additional rounds retain inclusive selling prices without repricing existing dishes', async () => {
+  await db.collection('items').updateOne({ _id: product._id }, { $set: { selling_price: 399, tax: 0.25, tax_type: 'inclusive' } });
+  expect((await save([{ ...line(399, 1), line_id: 'first' }])).status).toBe(true);
+  const current = (await stored()).items[0];
+  expect(current.unit_price).toBe(398);
+  expect((await save([{ ...current, price: 399, quantity: 1 }, { ...line(399, 1), line_id: 'additional' }])).status).toBe(true);
+  expect((await stored()).sales_total).toBe(798);
+  const before = await stored();
+  expect((await save(before.items.map(i => ({ ...i, price: 397, quantity: 1 })))).status).toBe(false);
+  expect(await stored()).toEqual(before);
+});

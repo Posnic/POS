@@ -151,3 +151,9 @@
 @container(max-width:900px){#kot_v2.kv2-composing .kv2-workspace{grid-template-columns:1fr}#kot_v2.kv2-composing .kv2-floor{display:none}#kot_v2 .kv2-menu{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @container(max-width:620px){#kot_v2 .kv2-draft-body{grid-template-columns:1fr;grid-template-rows:minmax(210px,1.2fr) minmax(150px,1fr)}#kot_v2 .kv2-catalogue{padding:12px}#kot_v2 .kv2-review{padding:12px;border-top:1px solid #e5eaf0;border-left:0}#kot_v2 .kv2-menu{grid-template-columns:repeat(3,minmax(0,1fr))}#kot_v2 .kv2-editor>header{padding:12px}#kot_v2 .kv2-editor>header small,#kot_v2 .kv2-review-hint{display:none}#kot_v2 .kv2-category-chips{padding-bottom:8px}#kot_v2 .kv2-catalogue-footer{padding:4px 0}#kot_v2 .kv2-round-total{padding-top:6px}}
 @media(max-width:850px){#kot_v2{margin-top:105px}#kot_v2 .kv2-editor{height:calc(100dvh - 200px)}}
+/* A restored draft must not hide the floor when the user visits Table orders. */
+#kot_v2.kv2-composing .kv2-expanded{grid-template-columns:1fr}
+#kot_v2.kv2-composing .kv2-expanded .kv2-floor{display:block}
+#kot_v2 .kv2-expanded>.kv2-editor{display:none}
+#kot_v2 .kv2-stepper .kv2-remove{color:#b33443;margin-left:0}
+#kot_v2 .kv2-stepper button[data-action=draftNote]{margin-left:auto}
