@@ -70,3 +70,10 @@ test('transfer is read-only until the reviewed amounts are confirmed',async()=>{
   assert.match(w.document.querySelector('dialog').textContent,/₹10\.00/);
   submit();await flush();assert.ok(requests[1].url.endsWith('/complete'));assert.equal(requests[1].body.revision,'rev');assert.deepEqual(requests[1].body.items,[{id:'c0i0',quantity:1,servedQuantity:0}]);assert.equal(w.localStorage.length,0);dom.window.close();
 });
+
+test('merge registers a legacy custom source in the current branch only after Save',async()=>{
+ const writes=[];
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{canMerge:true,tables:[{id:'dest',tableorder_value:'T1',orders:[{id:'target',paid:false}]}]}:{_id:'source',table_number:'66',person_count:6,dine_type:'Dine-in'}}),post:(o,done)=>{writes.push({url:o.url,body:JSON.parse(o.data)});done({type:'success',data:{}});}});
+ await app.move('source',true);assert.equal(writes.length,0);w.document.querySelector('[name=table]').value='dest';w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
+ assert.equal(writes[0].url,'captain/v1/tables/temporary');assert.deepEqual(writes[0].body,{branchId:'branch',tableorder_value:'66'});assert.equal(writes[1].url,'captain/v1/tables/merge/prepare');assert.equal(writes[1].body.targetOrderId,'target');assert.equal(writes[2].url,'captain/v1/tables/move/complete');dom.window.close();
+});

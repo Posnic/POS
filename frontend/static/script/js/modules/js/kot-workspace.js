@@ -134,6 +134,16 @@
         let prepared = false;
         d.save(async form => {
             if (!prepared) {
+                // Older desktop custom labels may have orders but no floor row.
+                // Register within this branch before seating enrollment; the endpoint
+                // reuses existing rows, so a retry cannot create a duplicate table.
+                if (!sale.seating_request_id && !sale.table_id &&
+                    /^[A-Z0-9]{1,6}$/.test(String(sale.table_number || '')) &&
+                    !floor.tables.some(t => String(t.tableorder_value) === String(sale.table_number))) {
+                    await request('post', 'captain/v1/tables/temporary', {
+                        branchId: branch(), tableorder_value: String(sale.table_number)
+                    });
+                }
                 intent = intent || { branchId: branch(), orderId: saleId,
                     request_id: id, tableIds: [form.get('table')], primaryId: form.get('table'),
                     guests: sale.person_count, dineType: sale.dine_type || 'Dine-in',
