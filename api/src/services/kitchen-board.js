@@ -75,6 +75,9 @@ function project(sale) {
         state,
         owner: String(owner.id || ''),
         ownerName: String(owner.name || ''),
+        additionalOrder:
+          /^c[1-9]\d*$/.test(round.id) &&
+          (change?.items || []).some((item) => String(item.process).toLowerCase() === 'add'),
         revision: Number(work.revision) || 0,
         items,
       },
@@ -124,6 +127,25 @@ async function list(req) {
     }
   } finally {
     await cursor.close();
+  }
+  const ownerIds = [...new Set(tickets.map((ticket) => ticket.owner))]
+    .filter((id) => /^[a-f0-9]{24}$/i.test(id))
+    .map((id) => new ObjectId(id));
+  if (ownerIds.length) {
+    const users = await req.db
+      .collection('users')
+      .find(
+        { _id: { $in: ownerIds }, license: c.license },
+        { projection: { firstname: 1, lastname: 1, name: 1 } }
+      )
+      .toArray();
+    const names = new Map(
+      users.map((user) => [
+        String(user._id),
+        [user.firstname, user.lastname].filter(Boolean).join(' ').trim() || String(user.name || ''),
+      ])
+    );
+    for (const ticket of tickets) ticket.ownerName = names.get(ticket.owner) || ticket.ownerName;
   }
   await require('./kitchen-voice').listForTickets(req, c, tickets);
   return {
