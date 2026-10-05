@@ -255,7 +255,27 @@
             )
           );
         }
-        top.append(table, node('span', 'arrival', time(ticket.placedAt)));
+        const heading = node('div', 'ticket-heading');
+        heading.append(table);
+        if (ticket.ownerName) {
+          const owner = node('span', 'order-taker');
+          const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          icon.setAttribute('viewBox', '0 0 24 24');
+          icon.setAttribute('aria-hidden', 'true');
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M4 21v-2a8 8 0 0 1 16 0v2');
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', 'currentColor');
+          path.setAttribute('stroke-width', '2');
+          icon.append(path);
+          owner.append(icon, document.createTextNode(ticket.ownerName));
+          owner.setAttribute('aria-label', 'Order taken by ' + ticket.ownerName);
+          heading.append(owner);
+        }
+        const arrival = node('span', 'arrival', time(ticket.placedAt));
+        if (ticket.additionalOrder)
+          arrival.append(node('small', 'additional-order', 'Additional Order'));
+        top.append(heading, arrival);
         card.append(top);
         if (ticket.preparationNote) card.append(node('p', 'note', ticket.preparationNote));
         if (ticket.voiceNotes?.length) {

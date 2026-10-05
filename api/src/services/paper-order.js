@@ -31,6 +31,7 @@ async function options(req) {
     enabled: enabled(c.branch),
     configured: Boolean(config().bucket && config().region),
     referenceAttachments: true,
+    stagedPhotoUpload: true,
   };
 }
 async function settings(req) {
@@ -135,7 +136,19 @@ async function recognize(req, referenceOnly = false, mobileContext = null) {
   if (!cfg.bucket || !cfg.region) fail('Paper recognition is not configured on this server.', 503);
   const id = String(req.body?.id || '');
   if (!/^[a-f0-9-]{36}$/i.test(id)) fail('A photo request ID is required.');
-  const original = image(req.body.original),
+  let originalData = req.body.original;
+  if (!originalData && req.body.uploadId && !referenceOnly && !mobileContext) {
+    const source = await req.db.collection('paper_order_photos').findOne({
+      _id: String(req.body.uploadId),
+      license: c.license,
+      branch_id: c.branchId,
+      owner: String(req.user._id),
+      'result.referenceOnly': true,
+    });
+    if (!source) fail('Uploaded photo not found. Upload the photo again.', 404);
+    originalData = (await read({ ...req, params: { id: source._id } })).data;
+  }
+  const original = image(originalData),
     crop = req.body.crop ? image(req.body.crop) : original;
   const digest = crypto
     .createHash('sha256')
@@ -184,10 +197,9 @@ async function recognize(req, referenceOnly = false, mobileContext = null) {
       if (e.code !== 11000) throw e;
     }
     const limit = Math.max(1, Number(process.env.ORDER_PHOTO_MONTHLY_LIMIT) || 3000);
-    const counted = await quota.updateOne(
-      { _id: quotaId, count: { $lt: limit } },
-      { $inc: { count: 1 } }
-    );
+    const counted = referenceOnly
+      ? { modifiedCount: 1 }
+      : await quota.updateOne({ _id: quotaId, count: { $lt: limit } }, { $inc: { count: 1 } });
     if (!counted.modifiedCount) fail('This branch has reached its monthly paper-scan limit.', 429);
     const s3 = new S3Client(clientConfig());
     await s3.send(
@@ -316,6 +328,7 @@ async function attach(req) {
   return { photo: { id: photo.id } };
 }
 module.exports = {
+  upload: (req) => recognize(req, true),
   options,
   settings,
   recognize,
