@@ -18,6 +18,9 @@
         draft: null,
         search: [],
         catalogue: [],
+        categories: [],
+        category: "",
+        catalogueLoaded: false,
         busy: false,
         generation: 0,
     };
@@ -145,6 +148,9 @@
             state.sales = [];
             state.floor = [];
             state.catalogue = [];
+            state.categories = [];
+            state.category = "";
+            state.catalogueLoaded = false;
         }
         P.HideSideBarModal();
         $('.page_loader,#osk-container,#closeSaleButton,#closeEditButton').hide();
@@ -327,13 +333,49 @@
     }
     function catalogueHTML() {
         return state.catalogue.map((item, i) => {
-            const name = item.item_name || item.name || '';
-            return `<button type="button" data-action="pick" data-index="${i}" class="kv2-product"><span class="kv2-product-mark" aria-hidden="true">${esc(name.charAt(0).toUpperCase())}</span><strong>${esc(name)}</strong><span class="kv2-product-price">${esc(money(item.items_selling_price ?? item.selling_price ?? item.item_price ?? item.price ?? 0))}</span></button>`;
+            const name = P.itemName ? P.itemName(item) : item.item_name || item.name || '';
+            const photo = typeof item.image === 'string' && item.image !== 'item.svg' && !/default\/item\.svg/.test(item.image) && /^(https?:|\/|static\/)/i.test(item.image) ? item.image : '';
+            const art = photo ? `<img src="${esc(photo)}" alt="" loading="lazy">` : item.icon ? esc(item.icon) : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18v13H3zM3 8l4-5h10l4 5M12 8v13M8 3l4 5 4-5"/></svg>';
+            return `<button type="button" data-action="pick" data-index="${i}" class="kv2-product"><span class="kv2-product-art">${art}</span><span class="kv2-product-text"><strong>${esc(name)}</strong><small>${esc([item.plu_code || item.short_code, item.itemid || item.item_code].filter(Boolean).join(' · '))}</small><span class="kv2-product-meta"><small>${esc(item.category_name || '')}</small><b>${esc(money(item.items_selling_price ?? item.selling_price ?? item.item_price ?? item.price ?? 0))}</b></span></span></button>`;
         }).join('');
+    }
+    function categoriesHTML() {
+        return button(PosnicPro.i18n.t('lang_all_items', 'All items'), 'category', 'data-category="" class="' + (!state.category ? 'selected' : '') + '"') + state.categories.map(c => button(c.name, 'category', 'data-category="' + esc(c.id) + '" class="' + (state.category === String(c.id) ? 'selected' : '') + '"')).join('');
+    }
+    async function loadCatalogue() {
+        if (state.loadingMenu) return;
+        state.loadingMenu = true;
+        const scope = scopeKey(), category = state.category;
+        try {
+            const r = await api('get', 'items/getOnlineItemsAjaxList', {query: '', limit: 50, ...(category ? {categoryId: category} : {})});
+            if (scope !== scopeKey() || category !== state.category) return;
+            state.catalogue = (r.suggestions || []).map(v => v.data || v).filter(v => !window.PosnicBillingSearch?.expired(v.items_expiry_date));
+            state.catalogueLoaded = true;
+            const menu = root()?.querySelector('.kv2-menu');
+            if (menu) menu.innerHTML = catalogueHTML();
+            if (!state.categories.length) {
+                const cats = await api('get', 'categories/getCategoryAjaxList', {query: ''});
+                if (scope !== scopeKey()) return;
+                state.categories = cats.suggestions || [];
+                const chips = root()?.querySelector('.kv2-category-chips');
+                if (chips) chips.innerHTML = categoriesHTML();
+            }
+        } catch (e) { P.alert('error', e.message); }
+        finally { state.loadingMenu = false; if (scope === scopeKey() && category !== state.category) loadCatalogue(); }
+    }
+    function chooseProduct(data, quantity = 1) {
+        const price = Number(data.items_selling_price ?? data.selling_price ?? data.item_price ?? data.price ?? 0);
+        const openPrice = !price || data.open_price === true;
+        const modal = dialog(data.item_name || data.name || data.items_name || '',
+            `${openPrice ? '<label>Price<input name="price" type="number" min="0.01" step="0.01" required></label>' : '<p>' + esc(money(price)) + '</p>'}<label><lang class="lang_quantity">Quantity</lang><input name="qty" type="number" min="0.001" max="100000" step="any" value="${quantity}" required></label><label><lang class="lang_kot_workspace_note">Kitchen note</lang><textarea name="note" maxlength="500"></textarea></label>` + templates(['No onion', 'Less spicy', 'Less ice'], 'note'),
+            form => { addLine({product_id:data.item_id || data.id || data._id?.$oid || data._id,name:data.item_name || data.name || data.items_name,price:openPrice ? Number(form.get('price')) : price,quantity:Number(form.get('qty')),item_description:String(form.get('note') || '')}); }, 'Add to round');
+        modal.classList.add('kv2-product-dialog');
+        modal.querySelector(openPrice ? '[name=price]' : '[name=qty]').focus();
+        modal.addEventListener('close', () => root()?.querySelector('#kv2-search')?.focus());
     }
     function draftHTML() {
         const d = state.draft;
-        return `<section class="kv2-order kv2-editor"><header><div><h2>${d.saleId ? PosnicPro.i18n.t('lang_additional_order', 'Additional order') : PosnicPro.i18n.t('lang_new_order', 'New order')} · ${esc(d.table || 'Takeaway')}</h2><small><lang class="lang_search_all_dishes_by_name_barcode_or_quick">Search all dishes by name, barcode or quick code. F2 to focus.</lang></small></div>${d.intent ? button('Review latest order', 'rebase') : button('Discard draft', 'discard')}</header><div class="kv2-draft-body"><section class="kv2-catalogue"><div class="kv2-searchbar"><input id="kv2-search" type="search" autocomplete="off" placeholder="Search name, SKU, barcode or quick code" data-t-placeholder="lang_search_name_sku_barcode_or_quick_code"><div id="kv2-results"></div></div><div class="kv2-menu">${catalogueHTML()}</div><div class="kv2-catalogue-footer">${button('Item not on menu', 'offmenu')}</div></section><aside class="kv2-review"><div class="kv2-review-heading"><h3><lang class="lang_review_this_round">Review this round</lang></h3>${button(d.customer?.name || 'Walk-in customer', 'customer')}</div><p class="kv2-review-hint"><lang class="lang_nothing_is_sent_until_you_choose_send_to_k">Nothing is sent until you choose Send to kitchen.</lang></p><div class="kv2-basket">${d.items.length ? d.items.map((l, i) => `<div class="kv2-draft-line"><div class="kv2-draft-name"><strong>${esc(l.name)}</strong><span>${esc(money(l.price * l.quantity))}</span></div>${l.item_description ? `<small>${esc(l.item_description)}</small>` : ''}<div class="kv2-stepper">${button('−', 'qty', `data-index="${i}" data-delta="-1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} −"`)}<b>${l.quantity}</b>${button('+', 'qty', `data-index="${i}" data-delta="1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} +"`)}${button('Note', 'draftNote', `data-index="${i}"`)}</div></div>`).join('') : `<div class="kv2-basket-empty">${icon('takeaway')}<p><lang class="lang_add_item">Add item</lang></p></div>`}</div></aside></div><footer><small><lang class="lang_review_this_round">Review this round</lang> · ${d.items.reduce((n, l) => n + Number(l.quantity), 0)}</small>${button(d.intent ? PosnicPro.i18n.t('lang_retry_saved_send', 'Retry saved send') : PosnicPro.i18n.t('lang_kot_workspace_send', 'Send to kitchen'), 'send', `class="primary" ${d.items.length ? '' : 'disabled'}`)}</footer></section>`;
+        return `<section class="kv2-order kv2-editor"><div class="kv2-customer"><strong>${esc(d.customer?.name || 'Walk-in customer')}</strong>${button('Choose customer', 'customer')}</div><header><div><h2>${PosnicPro.i18n.t('lang_add_items', 'Add items')} <span class="kv2-editor-table">/ ${esc(d.table || 'Takeaway')}</span></h2><small><lang class="lang_search_all_dishes_by_name_barcode_or_quick">Search all dishes by name, barcode or quick code. F2 to focus.</lang></small></div>${d.intent ? button('Review latest order', 'rebase') : button('Discard draft', 'discard')}</header><div class="kv2-draft-body"><section class="kv2-catalogue"><div class="kv2-searchbar"><input id="kv2-search" type="search" autocomplete="off" placeholder="Search name, SKU, barcode or quick code" data-t-placeholder="lang_search_name_sku_barcode_or_quick_code"><div id="kv2-results"></div></div><div class="kv2-catalogue-footer">${button('Item not on menu', 'offmenu')}</div><div class="kv2-category-chips">${categoriesHTML()}</div><div class="kv2-menu">${catalogueHTML()}</div></section><aside class="kv2-review"><div class="kv2-review-heading"><h3><lang class="lang_review_this_round">Review this round</lang></h3></div><p class="kv2-review-hint"><lang class="lang_nothing_is_sent_until_you_choose_send_to_k">Nothing is sent until you choose Send to kitchen.</lang></p><div class="kv2-basket">${d.items.length ? d.items.map((l, i) => `<div class="kv2-draft-line"><div class="kv2-draft-name"><strong>${esc(l.name)}</strong><span>${esc(money(l.price * l.quantity))}</span></div>${l.item_description ? `<small>${esc(l.item_description)}</small>` : ''}<div class="kv2-stepper">${button('−', 'qty', `data-index="${i}" data-delta="-1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} −"`)}<b>${l.quantity}</b>${button('+', 'qty', `data-index="${i}" data-delta="1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} +"`)}${button('Note', 'draftNote', `data-index="${i}"`)}</div></div>`).join('') : `<div class="kv2-basket-empty">${icon('takeaway')}<p><lang class="lang_add_item">Add item</lang></p></div>`}</div><div class="kv2-round-total"><span><lang class="lang_amount">Amount</lang></span><strong>${esc(money(d.items.reduce((sum, l) => sum + Number(l.price) * Number(l.quantity), 0)))}</strong></div></aside></div><footer>${button(PosnicPro.i18n.t('lang_cancel', 'Cancel'), 'discard')}<small>${d.items.reduce((n, l) => n + Number(l.quantity), 0)} <lang class="lang_items">Items</lang></small>${button(d.intent ? PosnicPro.i18n.t('lang_retry_saved_send', 'Retry saved send') : PosnicPro.i18n.t('lang_kot_workspace_send', 'Send to kitchen'), 'send', `class="primary" ${d.items.length ? '' : 'disabled'}`)}</footer></section>`;
     }
     function render() {
         if (!root()) return;
@@ -342,22 +384,7 @@
         root().innerHTML = `<div class="kv2-heading"><h1><lang class="lang_table_orders">Table orders</lang></h1><small>${state.refreshed ? 'Refreshed ' + esc(time(state.refreshed)) : ''}</small><div>${iconButton('refresh', 'Refresh orders')}${button('Item not on menu', 'offmenu')}${button('Takeaway', 'takeaway')}${button('＋ New order', 'new', 'class="primary"')}</div></div><div class="kv2-workspace ${state.expanded ? 'kv2-expanded' : ''}">${floorHTML()}${state.draft ? draftHTML() : orderHTML()}</div>`;
         if (state.draft) {
             bindSearch();
-            if (!state.catalogue.length && !state.loadingMenu) {
-                state.loadingMenu = true;
-                const scope = scopeKey();
-                api('get', 'items/getOnlineItemsAjaxList', { query: '', limit: 50 })
-                    .then((r) => {
-                        if (scope !== scopeKey()) return;
-                        state.catalogue = (r.suggestions || [])
-                            .map((v) => v.data || v)
-                            .filter((v) => !window.PosnicBillingSearch?.expired(v.items_expiry_date));
-                        const menu = root()?.querySelector('.kv2-menu');
-                        if (menu)
-                            menu.innerHTML = catalogueHTML();
-                    })
-                    .catch(() => {})
-                    .finally(() => (state.loadingMenu = false));
-            }
+            if (!state.catalogueLoaded) loadCatalogue();
         }
     }
     function startDraft(meta) {
@@ -406,6 +433,7 @@
                 done(false);
             }
         });
+        if ($.fn.autocomplete) input.autocomplete('setOptions', {onSelect: suggestion => chooseProduct(suggestion.data)});
     }
     function quantityDialog(data, quantity) {
         dialog(
@@ -769,19 +797,11 @@
                     };
                 } else if (b.dataset.sale) await select(b.dataset.sale);
                 else newOrder(false, b.dataset.table);
+            } else if (a === 'category') {
+                state.category = b.dataset.category; state.catalogue = []; state.catalogueLoaded = false; render();
             } else if (a === 'pick') {
                 const item = state.catalogue[Number(b.dataset.index)];
-                P.kot.searchQuantity($('#kv2-search'), item, (data, qty, done) => {
-                    if (!Number(data.selling_price) || data.open_price === true) quantityDialog(data, qty);
-                    else
-                        addLine({
-                            product_id: data.item_id,
-                            name: data.item_name,
-                            price: Number(data.selling_price),
-                            quantity: qty,
-                        });
-                    done(true);
-                });
+                chooseProduct(item);
             } else if (a === 'new') newOrder();
             else if (a === 'takeaway') newOrder(true);
             else if (a === 'add') startDraft();

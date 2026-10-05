@@ -2801,6 +2801,10 @@ class ItemRepository extends BaseModel {
         .trim()
         .slice(0, 80);
       const limit = Math.min(50, Math.max(1, parseInt(params.limit, 10) || 20));
+      const categoryId = params.categoryId;
+      if (categoryId && (typeof categoryId !== 'string' || !ObjectId.isValid(categoryId))) {
+        throw new Error('Invalid category');
+      }
 
       const branchId = context.branchId;
       if (!branchId) {
@@ -2876,6 +2880,7 @@ class ItemRepository extends BaseModel {
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
           stockCondition,
+          ...(categoryId ? [{ category_id: new ObjectId(categoryId) }] : []),
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ].filter(Boolean),
       };
@@ -2962,6 +2967,7 @@ class ItemRepository extends BaseModel {
               tile_color: 1,
               tile_shape: 1,
               plu_code: 1,
+              icon: 1,
             },
           },
         ])
@@ -2998,6 +3004,7 @@ class ItemRepository extends BaseModel {
         tile_color: item.tile_color || '',
         tile_shape: item.tile_shape || '',
         plu_code: item.plu_code || '',
+        icon: item.icon || '',
       }));
 
       // Exact quick-code hits lead the list - Enter carts them instantly.
