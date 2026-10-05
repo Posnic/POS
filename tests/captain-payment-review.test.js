@@ -73,6 +73,11 @@ test('split cash UPI and card is reviewed and retried as one immutable payment',
  for(const f of ['captain-money.js','captain-payments.js'])w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/core',f),'utf8'));
  await w.CaptainPayments.open('1');w.document.querySelector('[data-method=Mixed]').click();
  const input=(m,f,v)=>{const e=w.document.querySelector('[data-tender="'+m+'"][data-field="'+f+'"]');if(e.type==='checkbox')e.checked=v;else e.value=v;e.dispatchEvent(new w.Event('input',{bubbles:true}));};
+ const focus=m=>w.document.querySelector('[data-tender="'+m+'"][data-field=amount]').dispatchEvent(new w.FocusEvent('focusin',{bubbles:true}));
+ input('Cash','amount','300');focus('Upi');assert.equal(w.document.querySelector('[data-tender=Upi][data-field=amount]').value,'700');
+ input('Upi','amount','400');focus('Card');assert.equal(w.document.querySelector('[data-tender=Card][data-field=amount]').value,'300');
+ assert.match(w.document.querySelector('#cp-split-remaining').textContent,/0.00/);
+ focus('Cash');assert.equal(w.document.querySelector('[data-tender=Cash][data-field=amount]').value,'300');
  input('Cash','amount','500');input('Cash','received','600');input('Upi','amount','300');input('Card','amount','100');
  w.document.querySelector('[data-action=record]').click();assert.equal(w.document.querySelector('.cp-review'),null);assert.equal(records.length,0);
  input('Card','amount','200');w.document.querySelector('[data-action=record]').click();assert.equal(w.document.querySelector('.cp-review'),null);

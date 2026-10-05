@@ -10,7 +10,7 @@
 @keyframes goldBurst{0%{opacity:0;transform:rotate(var(--angle)) translateX(0)}20%{opacity:1}100%{opacity:0;transform:rotate(var(--angle)) translateX(90px)}}
 @media(prefers-reduced-motion:reduce){.restaurant-feedback.transparent-kitchen,.restaurant-feedback.transparent-gold{display:none}}
 
-.restaurant-feedback{position:fixed;z-index:11000;pointer-events:none;user-select:none}
+.restaurant-feedback{position:fixed;z-index:100;pointer-events:none;user-select:none}
 .restaurant-feedback.small-feedback{color:#24966d;font-size:34px;animation:rfFloat .85s ease-out both}
 .restaurant-feedback.small-feedback i{position:absolute;left:12px;top:10px;width:9px;height:9px;border:2px solid #67c3a1;border-radius:50%;animation:rfBubble .9s ease-out both}
 .restaurant-feedback.reduce{color:#8797a9}

@@ -88,6 +88,10 @@
                     (_, i) => `<i style="--angle:${i * 60}deg"></i>`,
                 ).join('');
         }
+        const width = kind === 'sent' ? 300 : kind === 'cancelled' ? 160 : kind === 'payment' ? 140 : 40;
+        el.style.left = Math.max(8, (innerWidth - width) / 2) + 'px';
+        el.style.top = 'auto';
+        el.style.bottom = 'max(24px, env(safe-area-inset-bottom))';
         document.body.append(el);
         timer = setTimeout(clear, kind === 'cancelled' ? 1800 : kind === 'sent' ? 2100 : kind === 'payment' ? 1800 : 950);
     }

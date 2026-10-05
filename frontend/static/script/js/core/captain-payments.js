@@ -152,8 +152,15 @@
   function tenderRows(rows) {
     return (rows || []).map(row => '<div><span>' + esc(t(row.method === 'Upi' ? 'UPI' : row.method)) + '</span><strong translate="no">' + esc(money(row.amountMinor)) + '</strong></div>').join('');
   }
+  function splitRemaining(exclude) {
+    return amount() - plan.methods.reduce((sum, m) => {
+      if (m === exclude) return sum;
+      const value = CaptainMoney.toMinor(tenderInputs[m]?.amount || 0, monetary());
+      return sum + (Number.isSafeInteger(value) ? value : 0);
+    }, 0);
+  }
   function splitFields() {
-    return '<div class="cp-split">' + plan.methods.map(m => {
+    return '<div class="cp-split"><div class="cp-change"><span>' + esc(t('Remaining balance')) + '</span><strong id="cp-split-remaining" aria-live="polite">' + esc(money(splitRemaining())) + '</strong></div>' + plan.methods.map(m => {
       const v = tenderInputs[m] || {};
       return '<fieldset><legend>' + esc(t(m === 'Upi' ? 'UPI' : m)) + '</legend><label>' + esc(t('Amount')) + '<input data-tender="' + esc(m) + '" data-field="amount" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.amount || '') + '"></label>' +
         (m === 'Cash' ? '<label>' + esc(t('Amount received')) + '<input data-tender="Cash" data-field="received" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.received || '') + '"></label>' : '<label>' + esc(t('Payment reference (optional)')) + '<input data-tender="' + esc(m) + '" data-field="reference" maxlength="100" value="' + esc(v.reference || '') + '"></label><label class="cp-confirm"><input type="checkbox" data-tender="' + esc(m) + '" data-field="verified" ' + (v.verified ? 'checked' : '') + '><span>' + esc(t('I verified this payment on the terminal or bank app.')) + '</span></label>') + '</fieldset>';
@@ -368,12 +375,21 @@
       }
       if (e.target.id === "cp-verified") verified = e.target.checked;
     });
+    dialog.addEventListener("focusin", (e) => {
+      const m = e.target.dataset.tender;
+      if (!m || e.target.dataset.field !== 'amount' || e.target.value !== '' || busy || pending) return;
+      const remaining = Math.max(0, splitRemaining(m));
+      if (!remaining) return;
+      e.target.value = String(remaining / monetary().factor);
+      e.target.dispatchEvent(new Event('input', { bubbles: true }));
+      e.target.select();
+    });
     dialog.addEventListener("input", (e) => {
       if (e.target.dataset.tender && !busy && !pending) {
         const m = e.target.dataset.tender, field = e.target.dataset.field;
         tenderInputs[m] ||= {};
         tenderInputs[m][field] = field === 'verified' ? e.target.checked : e.target.value;
-        if (field === 'amount') { tenderInputs[m].verified = false; const check = e.target.closest('fieldset').querySelector('[type=checkbox]'); if(check) check.checked = false; }
+        if (field === 'amount') { tenderInputs[m].verified = false; const check = e.target.closest('fieldset').querySelector('[type=checkbox]'); if(check) check.checked = false; dialog.querySelector('#cp-split-remaining').textContent = money(splitRemaining()); }
       }
       if (e.target.id === "cp-reference") reference = e.target.value;
       if (e.target.id === "cp-received") {
