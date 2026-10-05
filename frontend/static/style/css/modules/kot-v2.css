@@ -95,3 +95,59 @@
 .kv2-seating-dialog .kv2-guest-section:only-child{border:0;padding:0;grid-column:1/-1}
 @media(max-width:680px){.kv2-seating-layout{grid-template-columns:1fr;gap:22px}.kv2-guest-section{border-left:0;border-top:1px solid #e8edf3;padding:20px 0 0}.kv2-seating-dialog section{padding:20px}.kv2-seating-dialog .kv2-seat-grid{grid-template-columns:repeat(4,minmax(0,1fr));max-height:220px}#kot_v2 .kv2-welcome{min-height:350px;padding:22px}}
 @media(prefers-reduced-motion:reduce){#kot_v2.kv2-playful .kv2-steam{animation:none}}
+/* Order entry uses the full workspace: catalogue and review stay side by side. */
+#kot_v2.kv2-composing .kv2-workspace{display:block}
+#kot_v2.kv2-composing .kv2-floor,#kot_v2.kv2-composing .kv2-heading>div{display:none}
+#kot_v2.kv2-composing .kv2-editor{display:flex;flex-direction:column;height:calc(100dvh - 168px);min-height:460px}
+#kot_v2 .kv2-editor>header{flex:none;padding:18px 22px;border-bottom:1px solid #e5ebf2;align-items:center}
+#kot_v2 .kv2-editor>header h2{font-size:21px;margin-bottom:7px}
+#kot_v2 .kv2-draft-body{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);flex:1;min-height:0;max-height:none;overflow:visible;padding:0}
+#kot_v2 .kv2-catalogue{display:flex;flex-direction:column;padding:18px 20px 0;min-height:0;min-width:0}
+#kot_v2 .kv2-searchbar{position:relative;flex:none;margin-bottom:16px}
+#kot_v2 #kv2-search{min-height:46px;padding:12px 15px;background:#f9fbfe}
+#kot_v2 .kv2-menu{grid-template-columns:repeat(auto-fill,minmax(138px,1fr));align-content:start;gap:12px;overflow:auto;flex:1;min-height:0;max-height:none;margin:0;padding:2px 3px 14px}
+#kot_v2 .kv2-menu .kv2-product{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:10px;min-height:150px;padding:14px;text-align:left;background:white;border-color:#e0e7ef;border-radius:12px}
+#kot_v2 .kv2-product:hover{background:#f6faff;border-color:#8eb9ed}
+#kot_v2 .kv2-product strong{font-size:13px;font-weight:600;line-height:1.45;overflow-wrap:anywhere}
+#kot_v2 .kv2-product-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#eef4fd;color:#6a91bf;font-size:18px;font-weight:600}
+#kot_v2 .kv2-product:nth-child(3n+2) .kv2-product-mark{background:#eef7f3;color:#669d84}
+#kot_v2 .kv2-product:nth-child(3n) .kv2-product-mark{background:#fff5e8;color:#bc9664}
+#kot_v2 .kv2-product-price{margin-top:auto;color:#0867df;font-size:14px;font-weight:600}
+#kot_v2 .kv2-catalogue-footer{padding:12px 0;border-top:1px solid #edf1f5;flex:none}
+#kot_v2 .kv2-review{display:flex;flex-direction:column;min-width:0;min-height:0;background:#fbfcfe;border-left:1px solid #e5ebf2;padding:20px}
+#kot_v2 .kv2-review-heading{display:flex;align-items:flex-start;gap:10px;flex-direction:column;flex:none}
+#kot_v2 .kv2-review h3{font-weight:700;font-size:16px;margin:0}
+#kot_v2 .kv2-review-heading button{font-size:12px;min-height:36px;background:white}
+#kot_v2 .kv2-review-hint{font-size:11px;line-height:1.6;color:#7b8b9f;margin:12px 0 8px;flex:none}
+#kot_v2 .kv2-basket{flex:1;min-height:0;overflow:auto}
+#kot_v2 .kv2-draft-line{display:block;padding:17px 0;border-bottom:1px solid #e2e9f1}
+#kot_v2 .kv2-draft-line>.kv2-draft-name{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin:0;font-size:13px;line-height:1.5}
+#kot_v2 .kv2-draft-name strong{overflow-wrap:anywhere}#kot_v2 .kv2-draft-name span{white-space:nowrap;font-weight:600}
+#kot_v2 .kv2-draft-line>.kv2-stepper{display:flex;align-items:center;gap:12px;margin:12px 0 0}
+#kot_v2 .kv2-stepper button{min-width:38px;min-height:38px;padding:6px 10px}
+#kot_v2 .kv2-stepper button:last-child{margin-left:auto;color:#0867df}
+#kot_v2 .kv2-draft-line>small{margin-top:6px}
+#kot_v2 .kv2-basket-empty{height:100%;min-height:100px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#9aacc1;font-size:12px}
+#kot_v2 .kv2-basket-empty svg{width:40px;height:40px;stroke-width:1.2}
+#kot_v2 .kv2-editor>footer{flex:none;justify-content:space-between;padding:14px 22px;background:white}
+#kot_v2 .kv2-editor>footer .primary{min-height:44px;padding:10px 24px}
+#kot_v2 .kv2-searchbar .kot-search-quantity{position:absolute;left:0;right:0;top:100%;z-index:8;background:white;box-shadow:0 12px 32px #18304724;border-radius:12px!important;padding:16px!important;margin-top:8px!important}
+#kot_v2 .kv2-searchbar .kot-search-quantity .d-flex{flex-wrap:wrap}
+@media(max-width:900px){#kot_v2 .kv2-draft-body{grid-template-columns:minmax(0,1fr) minmax(280px,.85fr)}#kot_v2 .kv2-catalogue,#kot_v2 .kv2-review{padding:14px}#kot_v2 .kv2-menu{grid-template-columns:repeat(auto-fill,minmax(115px,1fr))}}
+@media(max-width:620px){#kot_v2.kv2-composing .kv2-editor{height:auto;min-height:0}#kot_v2 .kv2-draft-body{display:block}#kot_v2 .kv2-menu{max-height:290px;grid-template-columns:repeat(2,minmax(0,1fr))}#kot_v2 .kv2-review{border-left:0;border-top:1px solid #e5ebf2}#kot_v2 .kv2-basket{max-height:280px}#kot_v2 .kv2-editor>footer{position:sticky;bottom:0;z-index:9}#kot_v2 .kv2-editor>header{padding:14px}#kot_v2 .kv2-editor>header h2{font-size:17px}}
+@media(pointer:coarse){#kot_v2 .kv2-stepper button{min-height:44px;min-width:44px}}
+#kot_v2{container-type:inline-size}
+@container(max-width:680px){
+ #kot_v2 .kv2-draft-body{display:grid;grid-template-columns:1fr;grid-template-rows:minmax(180px,1fr) minmax(180px,1fr)}
+ #kot_v2 .kv2-menu{grid-template-columns:repeat(auto-fill,minmax(125px,1fr));max-height:none}
+ #kot_v2 .kv2-review{border-left:0;border-top:1px solid #e5ebf2;padding:12px 16px}
+ #kot_v2 .kv2-review-heading{flex-direction:row;align-items:center;justify-content:space-between}
+ #kot_v2 .kv2-review-hint{margin:6px 0}
+ #kot_v2 .kv2-basket{max-height:none}
+ #kot_v2 .kv2-catalogue-footer{position:absolute;right:16px;bottom:14px;border:0;padding:0}
+ #kot_v2 .kv2-catalogue{position:relative;padding-bottom:62px}
+ #kot_v2 .kv2-editor>header{padding:12px 16px;flex-wrap:nowrap}
+ #kot_v2 .kv2-editor>header small{display:none}
+ #kot_v2 .kv2-editor>header h2{font-size:17px}
+}
+@media(max-width:850px){#kot_v2{margin-top:105px}#kot_v2.kv2-composing .kv2-editor{height:calc(100dvh - 198px);min-height:520px}}
