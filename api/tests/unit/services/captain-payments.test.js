@@ -85,6 +85,22 @@ test('saved payment preferences override defaults', () => {
   ).toMatchObject({ enabled: true, methods: ['Card'] });
 });
 
+test('desktop can prepare and settle a table when phone collection is disabled', async () => {
+  await db.collection('branches').updateOne(
+    { _id: branch },
+    {
+      $set: { module_captain_enable: false, 'captain_payments.enabled': false },
+    }
+  );
+  await expect(service.prepare(req())).rejects.toMatchObject({ status: 403 });
+  const plan = await service.prepare({ ...req(), captainPaymentDesktop: true });
+  expect(plan.enabled).toBe(true);
+  expect(plan.methods).toEqual(['Cash', 'Card', 'Upi']);
+  const paid = await service.record({ ...pay(plan), captainPaymentDesktop: true });
+  expect(paid.dueMinor).toBe(0);
+  expect((await db.collection('sales').findOne({ _id: sale._id })).payment_status).toBe('Paid');
+});
+
 test.each([false, 0, '0', 'false'])('disabled Captain module %s blocks the default', (disabled) => {
   expect(service.settings({ module_captain_enable: disabled }).enabled).toBe(false);
 });
