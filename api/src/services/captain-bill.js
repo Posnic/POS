@@ -1,6 +1,6 @@
 'use strict';
 const { context, allowed, fail } = require('../utils/branch-access');
-const { floorEligibility } = require('../helpers/floor-eligibility');
+const { tableOccupancy } = require('../helpers/floor-eligibility');
 const { snapshotFrom } = require('./guest-bill.service');
 const Money = require('../utils/currency');
 const { ObjectId } = require('mongodb');
@@ -29,7 +29,7 @@ async function read(req) {
       ...scope,
       ...(receipt
         ? { sale_process: { $ne: 'cancelled' }, payment_status: { $ne: 'Cancelled' } }
-        : floorEligibility()),
+        : tableOccupancy()),
       ...(saleId
         ? { _id: new ObjectId(saleId), ...(receipt ? {} : { dine_type: /^take[\s_-]*away$/i }) }
         : { table_number: table.trim() }),
