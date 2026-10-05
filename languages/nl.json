@@ -4548,5 +4548,8 @@
   "lang_search_all_dishes_by_name_barcode_or_quick": "Zoek alle gerechten op naam, barcode of snelcode. F2 om te zoeken.",
   "lang_search_name_sku_barcode_or_quick_code": "Zoek op naam, SKU, barcode of snelcode",
   "lang_start_a_table_order": "Een tafelbestelling starten",
-  "lang_table_orders": "Tafelbestellingen"
+  "lang_table_orders": "Tafelbestellingen",
+  "lang_orders_updated": "Bestellingen bijgewerkt",
+  "lang_refresh_failed_try_again": "Vernieuwen mislukt. Probeer het opnieuw.",
+  "lang_refresh_orders": "Bestellingen vernieuwen"
 }
