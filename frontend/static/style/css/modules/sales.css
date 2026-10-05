@@ -668,10 +668,42 @@ body.customer-display .contentbar {
     color: #999 !important;
 }
 
-.sale-restaurant-summary{background:#f7faff;border:1px solid #dce6f3;border-radius:10px;padding:20px 24px;margin:0 0 16px;color:#18314d}
-.sale-restaurant-summary h3{font-size:17px;font-weight:600;margin:0 0 18px}
-.sale-restaurant-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 24px;margin:0}
-.sale-restaurant-facts dt{font-size:12px;font-weight:400;color:#60758e;margin-bottom:5px}.sale-restaurant-facts dd{font-size:14px;font-weight:600;margin:0;overflow-wrap:anywhere}
-.sale-restaurant-history{margin-top:18px;border-top:1px solid #dce6f3;padding-top:14px}.sale-restaurant-history summary{cursor:pointer;font-weight:600}.sale-restaurant-history summary span{background:#e6effc;padding:2px 8px;border-radius:12px;margin-left:8px}
-.sale-restaurant-help{font-size:12px;color:#60758e;margin:12px 0}.sale-restaurant-event{background:white;border:1px solid #e2e8f1;border-radius:8px;padding:14px;margin-top:10px}.sale-restaurant-event header{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}.sale-restaurant-event time{font-size:12px;color:#60758e}.sale-restaurant-event ul{padding:0;margin:8px 0 0;list-style:none}.sale-restaurant-event li{padding:6px 0;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}.sale-restaurant-event li small{color:#60758e}.sale-restaurant-event p{font-size:12px;margin:6px 0 0;overflow-wrap:anywhere}.sale-restaurant-event li p{width:100%}.sale-restaurant-note{margin:16px 0 0}
-@media(max-width:900px){.sale-restaurant-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:480px){.sale-restaurant-summary{padding:16px}.sale-restaurant-facts{grid-template-columns:1fr}}
+/* Read-only restaurant context in sale history. */
+.sale-restaurant-summary{background:#fff;border:1px solid #dfe7ef;border-radius:12px;padding:18px 20px;margin:0 0 16px;color:#18314d}
+.sale-restaurant-heading{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.sale-restaurant-summary h3{font-size:15px;font-weight:650;line-height:1.4;margin:0}
+.sale-restaurant-icon{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:9px;background:#edf5ff;color:#397ab7}
+.sale-restaurant-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.sale-restaurant-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px 24px;margin:0}
+.sale-restaurant-service{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 16px}
+.sale-restaurant-service>div{min-width:86px;padding:8px 12px;background:#f5f8fc;border:1px solid #e6edf5;border-radius:8px}
+.sale-restaurant-summary dt{font-size:11px;font-weight:400;color:#6b7e93;margin:0 0 4px;line-height:1.4}
+.sale-restaurant-summary dd{font-size:13px;font-weight:600;margin:0;line-height:1.55;overflow-wrap:anywhere}
+.sale-restaurant-summary summary{cursor:pointer;min-height:40px;align-content:center;font-size:12px;color:#40638b;list-style-position:inside}
+.sale-restaurant-summary summary:focus-visible{outline:2px solid #6aa5f7;outline-offset:3px;border-radius:4px}
+.sale-restaurant-provenance{margin-top:8px}
+.sale-restaurant-provenance .sale-restaurant-facts{padding:8px 0 12px}
+.sale-restaurant-history{margin-top:8px;border-top:1px solid #e7edf4;padding-top:4px}
+.sale-restaurant-history summary{font-size:13px;font-weight:600;color:#234565}
+.sale-restaurant-history summary span{display:inline-block;min-width:22px;line-height:22px;text-align:center;background:#edf3fb;color:#376a9e;border-radius:7px;margin-left:6px;font-size:11px}
+.sale-restaurant-help{font-size:11px;line-height:1.6;color:#728297;margin:10px 0 14px}
+.sale-restaurant-event{position:relative;border-left:2px solid #e0eaf5;margin:0 0 0 5px;padding:2px 0 20px 17px}
+.sale-restaurant-event::before{content:'';position:absolute;left:-5px;top:6px;width:8px;height:8px;background:#83afd6;border:2px solid #fff;border-radius:50%}
+.sale-restaurant-event:last-child{padding-bottom:4px}
+.sale-restaurant-event header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:5px 14px}
+.sale-restaurant-event header strong{font-size:12px;font-weight:650}
+.sale-restaurant-event time{font-size:11px;color:#728297}
+.sale-restaurant-event ul{padding:0;margin:8px 0 0;list-style:none}
+.sale-restaurant-event li{padding:7px 10px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;background:#f7f9fc;border-radius:6px;margin-top:4px;font-size:12px}
+.sale-restaurant-event li small{color:#60758e}
+.sale-restaurant-event p{font-size:12px;margin:5px 0 0;overflow-wrap:anywhere;color:#60758e}
+.sale-restaurant-event li p{width:100%;margin:0}
+.sale-restaurant-note{margin:14px 0 0;padding:10px 12px;border-left:3px solid #8ebbd9;background:#f5f9fc;border-radius:0 6px 6px 0;font-size:12px}
+.sale-restaurant-note strong{font-size:11px;color:#5f7890;font-weight:500}
+.sale-restaurant-note p{margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:480px){.sale-restaurant-summary{padding:14px}.sale-restaurant-facts{grid-template-columns:1fr;gap:12px}.sale-restaurant-service{gap:6px}.sale-restaurant-service>div{min-width:72px;flex:1}.sale-restaurant-event header{display:block}.sale-restaurant-event time{display:block;margin-top:4px}}
+/* Keep restaurant receipts readable when the navigation and list consume a tablet width. */
+@media(max-width:1100px){
+    #sales_split.saleshist-split{flex-direction:column}
+    #sales_split.saleshist-split>.md-rail{flex:0 0 auto;max-width:100%;max-height:28vh}
+}
