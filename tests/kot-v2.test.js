@@ -88,6 +88,6 @@ test('confirmed order conflict unlocks and reconciles the draft instead of trapp
 
 test('customer entry waits for pending-send recovery and opens automatically after rejection is reconciled',async()=>{
  const h=setup();h.w.$.fn.autocomplete=function(){return this;};h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});h.app.state.draft.intent={url:'sales/updateOrder',body:{}};
- await h.click('customer');assert.equal(h.w.document.querySelector('[name=phone]'),null);assert.match(h.w.document.querySelector('dialog').textContent,/previous kitchen send/);
+ await h.click('customer');assert.equal(h.w.document.querySelector('[name=phone]'),null);assert.match(h.w.document.querySelector('dialog').textContent,/previous submission/);
  setup.failure=true;setup.failureResponse={message:'order_changed'};try{h.w.document.querySelector('dialog [type=submit]').click();await flush();assert.ok(h.w.document.querySelector('[name=phone]'));assert.equal(h.app.state.draft.items.length,1);assert.equal(h.app.state.draft.intent,undefined);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
 });

@@ -563,8 +563,8 @@
     }
     function pendingSendReview(afterRecovery) {
         if (!state.draft?.intent) return false;
-        dialog(P.i18n.t('lang_review_latest_order', 'Review latest order'),
-            '<p>' + esc(P.i18n.t('lang_kot_pending_edit_review', 'Check the previous kitchen send before changing this order. Your selected items are kept.')) + '</p>',
+        dialog(P.i18n.t('lang_review_this_round', 'Review this round'),
+            '<p>' + esc(P.i18n.t('lang_submission_resolve_first', 'Resolve the previous submission before sending changes.')) + '</p>',
             async (_, modal) => {
                 await send();
                 if (state.draft?.intent) return;
