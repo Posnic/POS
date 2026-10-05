@@ -107,7 +107,7 @@
         const control = root()?.querySelector('[data-action="refresh"]');
         if (!control) return;
         const loading = refreshFeedback === 'loading';
-        const label = loading ? 'Refreshing orders…' : refreshFeedback === 'success' ? 'Orders updated' : refreshFeedback === 'error' ? 'Refresh failed. Try again.' : 'Refresh orders';
+        const label = loading ? PosnicPro.i18n.t('lang_refreshing', 'Refreshing…') : refreshFeedback === 'success' ? PosnicPro.i18n.t('lang_orders_updated', 'Orders updated') : refreshFeedback === 'error' ? PosnicPro.i18n.t('lang_refresh_failed_try_again', 'Refresh failed. Try again.') : PosnicPro.i18n.t('lang_refresh_orders', 'Refresh orders');
         control.dataset.feedback = refreshFeedback;
         control.disabled = loading;
         control.setAttribute('aria-busy', String(loading));
