@@ -1315,6 +1315,11 @@ class SalesRepository {
       // mirror PHP behaviour, where Sale Note / Payment Note are stored on the
       // main sales document and reused for partial/full returns.
       if (normalized && typeof normalized === 'object') {
+        // Display dates lose precision during normalization; edits need the exact revision.
+        const revisionDate = new Date(saleDoc.updated_date || saleDoc.created_date || 0);
+        normalized.order_revision = Number.isFinite(revisionDate.getTime())
+          ? revisionDate.toISOString()
+          : null;
         const firstNonEmptyString = (...values) => {
           for (const value of values) {
             if (typeof value === 'string' && value.trim() !== '') {
