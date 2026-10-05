@@ -102,6 +102,45 @@
             state.busy = false;
         }
     }
+    let refreshFeedback = '', refreshFeedbackTimer;
+    function paintRefreshFeedback() {
+        const control = root()?.querySelector('[data-action="refresh"]');
+        if (!control) return;
+        const loading = refreshFeedback === 'loading';
+        const label = loading ? 'Refreshing orders…' : refreshFeedback === 'success' ? 'Orders updated' : refreshFeedback === 'error' ? 'Refresh failed. Try again.' : 'Refresh orders';
+        control.dataset.feedback = refreshFeedback;
+        control.disabled = loading;
+        control.setAttribute('aria-busy', String(loading));
+        control.setAttribute('aria-label', label);
+        control.title = label;
+        control.innerHTML = refreshFeedback === 'success' ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>' : icon('refresh');
+        let status = root().querySelector('.kv2-refresh-status');
+        if (!status) {
+            status = document.createElement('span');
+            status.className = 'kv2-refresh-status';
+            status.setAttribute('role', 'status');
+            root().querySelector('.kv2-heading').append(status);
+        }
+        status.textContent = refreshFeedback ? label : '';
+    }
+    async function refreshFromButton() {
+        clearTimeout(refreshFeedbackTimer);
+        refreshFeedback = 'loading';
+        paintRefreshFeedback();
+        try {
+            await refresh();
+            refreshFeedback = 'success';
+        } catch (error) {
+            refreshFeedback = 'error';
+            throw error;
+        } finally {
+            paintRefreshFeedback();
+            refreshFeedbackTimer = setTimeout(() => {
+                refreshFeedback = '';
+                paintRefreshFeedback();
+            }, 2000);
+        }
+    }
     function dialog(title, body, save, label = 'Save') {
         const d = document.createElement('dialog');
         d.className = 'kv2-dialog';
@@ -393,6 +432,7 @@
             bindSearch();
             if (!state.catalogueLoaded) loadCatalogue();
         }
+        paintRefreshFeedback();
     }
     function startDraft(meta) {
         state.expanded = false;
@@ -783,7 +823,7 @@
             } else if (a === 'filter') {
                 state.filter = b.dataset.value;
                 render();
-            } else if (a === 'refresh') await refresh();
+            } else if (a === 'refresh') await refreshFromButton();
             else if (a === 'table') {
                 const t = state.floor.find((t) => t.id === b.dataset.table);
                 const ids = t?.orders?.map((o) => String(o.id)) || [];
