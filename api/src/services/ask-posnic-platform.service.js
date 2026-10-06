@@ -508,6 +508,24 @@ async function deleteHistory(req) {
   return { deletedCount: conversations.deletedCount, feedbackDeletedCount: feedback.deletedCount };
 }
 
+async function previousAnswer(req, conversationId) {
+  if (!/^[a-f0-9]{24}$/i.test(String(conversationId || ''))) return null;
+  const preferences = await getPreferences(req);
+  if (!preferences.store_conversations) return null;
+  const row = await (
+    await collection('ask_posnic_conversations')
+  ).findOne(
+    { _id: new ObjectId(conversationId), ...scope(req) },
+    { projection: { messages: { $slice: -20 } } }
+  );
+  const cutoff = retention.cutoffFor(preferences);
+  return (
+    (row?.messages || [])
+      .filter((message) => message.role === 'assistant' && retention.isCurrent(message, cutoff))
+      .at(-1)?.payload || null
+  );
+}
+
 function signingKey() {
   const key = currentSecret('SESSION_SECRET', process.env.ASK_POSNIC_ACTION_SECRET || undefined);
   if (!key) throw new Error('Configure an action signing secret before using Ask Posnic actions.');
@@ -870,6 +888,7 @@ module.exports = {
   currentMatches,
   saveMessage,
   history,
+  previousAnswer,
   deleteHistory,
   createDraft,
   resumeDraft,

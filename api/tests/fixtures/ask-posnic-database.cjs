@@ -7,6 +7,8 @@ const jest = require('jest-mock');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { MongoClient, ObjectId } = require('mongodb');
 let mockDb;
+// These workflow fixtures represent an opted-in shop; feature denial is tested separately.
+require.cache[require.resolve('../../src/services/ask-posnic-feature')] = { exports: { enabled: async () => true } };
 require.cache[require.resolve('../../src/models/base.model')] = { exports: class {
   async getCollection(name) { return mockDb.collection(name); }
   static async getDb() { return mockDb; }

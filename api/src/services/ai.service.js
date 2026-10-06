@@ -236,6 +236,7 @@ async function settingsFor(context) {
     enabled: !(
       flags.ai_enabled === false || String(flags.ai_enabled).trim().toLowerCase() === 'false'
     ),
+    askPosnicEnabled: flags.ask_posnic_enabled === true || flags.ask_posnic_enabled === 'true',
     provider: String(
       ownKey ? chosen.ai_provider : managedReady ? managedProvider : chosen.ai_provider || ''
     )

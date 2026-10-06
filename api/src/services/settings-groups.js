@@ -33,6 +33,8 @@ const FEATURES = [
      neighbours, so a shop that never touched it is not switched off by our
      silence. See services/ai.service.js. */
   'ai_enabled',
+  // Ask Posnic is opt-in, independent of AI used by other modules.
+  'ask_posnic_enabled',
   'module_messaging_enable',
   /* The parent: whether this shop sells anywhere but the counter at all. */
   'module_channels_enable',

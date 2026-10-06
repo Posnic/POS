@@ -14,7 +14,7 @@ function setup(admin = true) {
   const $ = require('jquery')(dom.window), calls = [];
   $.fn.modal = function () { return this; };
   const PosnicPro = { HideSideBarModal() {}, i18n: { t: (_key, fallback) => fallback }, alert() {}, settings: { ai: { load() { calls.push('provider'); } } },
-    get(url, done) { calls.push(url); done({ data: url === 'ask-posnic/status' ? { admin, scope: { license: 'shop', branch_id: 'outlet', user_id: 'user' }, preferences: {} } : [] }); }, request() {} };
+    get(url, done) { calls.push(url); done({ data: url === 'ask-posnic/status' ? { enabled: true, admin, scope: { license: 'shop', branch_id: 'outlet', user_id: 'user' }, preferences: {} } : [] }); }, request() {} };
   vm.runInNewContext(script, { PosnicPro, $, window: dom.window });
   PosnicPro.askposnic.bind();
   return { dom, $, PosnicPro, calls, ui: PosnicPro.askposnic };
@@ -58,6 +58,7 @@ test('preferences retain form ownership across tabs and save every section', () 
 });
 test('question progress, Enter and new conversation keep the chat usable', () => {
   const { $, ui, PosnicPro } = setup();
+  ui.showDataTablePage();
   let complete, payload;
   PosnicPro.request = (options, done) => { payload = JSON.parse(options.data); complete = done; };
   $('#ask_posnic_question').val('How are sales today?').trigger($.Event('keydown', { key: 'Enter' }));

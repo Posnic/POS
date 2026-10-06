@@ -1624,6 +1624,7 @@ class SettingModel extends BaseModel {
            module here uses. The provider and key live on the AI page; this
            is only the switch, which is all a Features card may carry. */
         ai_enabled: offOnly,
+        ask_posnic_enabled: onOnly,
       };
       for (const [key, parse] of Object.entries(TOGGLES)) {
         if (data[key] !== undefined) {

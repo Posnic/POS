@@ -13,7 +13,7 @@ const embedding = require('../../src/services/ask-posnic-own-key-embedding.servi
 const semantic = require('../../src/services/ask-posnic-own-key-semantic.service');
 const context = { licenseId: 'shop-a', branchId: 'outlet-a' };
 const preferences = { license: 'shop-a', own_key_semantic: true, own_key_semantic_budget: 1 };
-const settingsFor = async () => ({ enabled: true, provider: 'openai', key: 'synthetic-test-key', cap: null });
+const settingsFor = async () => ({ enabled: true, askPosnicEnabled: true, provider: 'openai', key: 'synthetic-test-key', cap: null });
 const vector = (position = 0) => Array.from({ length: 256 }, (_, i) => i === position ? 1 : 0);
 const okResponse = (tokens = 20) => ({ ok: true, json: async () => ({ model: embedding.MODEL, usage: { total_tokens: tokens }, data: [{ index: 0, embedding: vector() }] }) });
 async function doc(overrides = {}) {
@@ -25,6 +25,17 @@ async function doc(overrides = {}) {
 before(async () => { server = await MongoMemoryServer.create(); client = await MongoClient.connect(server.getUri()); db = client.db('own_key_isolated'); });
 beforeEach(async () => { await db.dropDatabase(); budget._currencyCache.clear(); await db.collection('ask_posnic_preferences').insertOne({ ...preferences }); });
 after(async () => { await client?.close(); await server?.stop(); });
+
+test('turning Ask Posnic off pauses own-key indexing without a paid embedding request', async () => {
+  await doc();
+  let calls = 0;
+  const result = await semantic.indexBatch(db, {
+    settingsFor: async () => ({ ...(await settingsFor()), askPosnicEnabled: false }),
+    embed: async () => { calls++; return vector(); },
+  });
+  assert.equal(result.state, 'idle');
+  assert.equal(calls, 0);
+});
 
 test('provider request is fixed-origin, bounded and uses the configured own key; tiny usage is retained', async () => {
   let request;

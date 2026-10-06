@@ -6,6 +6,42 @@ jest.mock('../../../src/services/ask-posnic-metrics.service', () => ({
 }));
 const platform = require('../../../src/services/ask-posnic-platform.service');
 
+describe('follow-up history scope and retention', () => {
+  const BaseModel = require('../../../src/models/base.model');
+  const req = { user: { _id: 'user', license: 'shop', branch_id: 'outlet' } };
+  const id = '012345678901234567890123';
+  afterEach(() => {
+    delete BaseModel.prototype.getCollection;
+  });
+
+  test('reads only this user, shop and outlet and ignores expired answers', async () => {
+    const findOne = jest
+      .fn()
+      .mockResolvedValueOnce({ store_conversations: true, retention_days: 7 })
+      .mockResolvedValueOnce({
+        messages: [
+          { role: 'assistant', at: new Date(), payload: { intent: 'sales' } },
+          { role: 'assistant', at: new Date(0), payload: { intent: 'profit' } },
+        ],
+      });
+    BaseModel.prototype.getCollection = jest.fn().mockResolvedValue({ findOne });
+    expect(await platform.previousAnswer(req, id)).toEqual({ intent: 'sales' });
+    expect(findOne.mock.calls[1][0]).toEqual({
+      _id: expect.any(Object),
+      license: 'shop',
+      branch_id: 'outlet',
+      user_id: 'user',
+    });
+  });
+
+  test('does not read stored messages when conversation storage is disabled', async () => {
+    const findOne = jest.fn().mockResolvedValue({ store_conversations: false });
+    BaseModel.prototype.getCollection = jest.fn().mockResolvedValue({ findOne });
+    expect(await platform.previousAnswer(req, id)).toBeNull();
+    expect(findOne).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('Ask Posnic capability policy', () => {
   const req = { user: { _id: 'user', license: 'shop', branch_id: 'outlet' } };
 

@@ -49,7 +49,7 @@ const SWITCHES = [
   'module_online_ordering_enable', 'module_kiosk_enable',
   'module_delivery_partners_enable', 'module_webshop_enable',
   'staff_shifts_enable', 'till_lock_enable',
-  'module_themes_enable', 'ai_enabled', 'module_recyclebin_enable', 'module_demo_data_enable',
+  'module_themes_enable', 'ai_enabled', 'ask_posnic_enabled', 'module_recyclebin_enable', 'module_demo_data_enable',
 ];
 
 const groups = () => PANE.split('<section class="module-group"').slice(1);
