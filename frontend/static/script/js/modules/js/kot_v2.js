@@ -13,6 +13,7 @@
         selected: null,
         sale: null,
         paymentMessage: '',
+        paymentMethod: '',
         filter: 'active',
         tab: 'order',
         pending: false,
@@ -443,7 +444,11 @@
     }
     function emptyOrderHTML() {
         const idle = !state.sales.length;
-        return `<section class="kv2-order kv2-welcome"><div class="kv2-illustration" aria-hidden="true"><svg viewBox="0 0 240 180"><ellipse cx="120" cy="155" rx="83" ry="12" fill="#edf3fa" stroke="none"/><circle cx="120" cy="79" r="66" fill="#f0f6ff" stroke="none"/><g class="kv2-cloche"><path d="M66 103h108M75 99a45 45 0 0 1 90 0M113 49h14M120 49v6"/><path d="M63 112h114l-9 10H72Z" fill="#e1edff"/></g><path d="M76 132h88M87 132v20m66-20v20"/><g class="kv2-steam"><path d="M104 32q-6-7 0-14m16 12q-6-7 0-14m16 16q-6-7 0-14"/></g><circle cx="182" cy="54" r="17" fill="#e5f5ef" stroke="none"/><path d="m175 54 5 5 9-11" stroke="#4d9b80"/></svg></div><h2>${esc(state.paymentMessage ? P.i18n.t('lang_captain_payment_recorded', 'Payment recorded') : idle ? P.i18n.t('lang_no_active_orders_2', 'No active orders') : P.i18n.t('lang_choose_a_table', 'Choose a table'))}</h2>${state.paymentMessage ? '<p role="status">' + esc(state.paymentMessage) + '</p>' : ''}<p>${esc(idle ? P.i18n.t('lang_start_a_table_order', 'Start a table order') : P.i18n.t('lang_choose_an_active_table_or_start_a_new_orde', 'Choose an active table, or start a new order.'))}</p><div class="kv2-welcome-actions">${button(PosnicPro.i18n.t('lang_new_order', 'New order'), 'new', 'class="primary"')}${button(PosnicPro.i18n.t('lang_takeaway', 'Takeaway'), 'takeaway')}</div></section>`;
+        const method = state.paymentMethod;
+        const paymentArt = method === 'Card' ? '<rect x="62" y="48" width="116" height="78" rx="12" fill="#fff"/><path d="M62 70h116M79 101h24m10 0h14"/>' : method === 'Cash' ? '<rect x="58" y="56" width="124" height="70" rx="10" fill="#fff"/><circle cx="120" cy="91" r="19"/><path d="M73 78v26m94-26v26"/>' : method === 'Upi' ? '<rect x="88" y="29" width="64" height="113" rx="12" fill="#fff"/><path d="M109 40h22m-18 89h14M101 62h12v12h-12zm25 0h12v12h-12zm-25 25h12v12h-12zm26 0h11v12h-11z"/>' : '<path d="M82 35h76v110l-10-7-10 7-10-7-10 7-10-7-10 7-16-9Z" fill="#fff"/><path d="M98 60h43m-43 17h43m-43 17h25"/>';
+        const paymentImage = '<svg data-payment-art="' + esc(method || 'receipt') + '" viewBox="0 0 240 180"><ellipse cx="120" cy="155" rx="76" ry="10" fill="#edf3fa" stroke="none"/><circle cx="120" cy="85" r="66" fill="#f0f6ff" stroke="none"/>' + paymentArt + '<circle cx="175" cy="119" r="21" fill="#f5fbff"/><path d="m165 119 7 7 13-15"/></svg>';
+        const methodLabel = {Cash: P.i18n.t('lang_cash', 'Cash'), Card: P.i18n.t('lang_card', 'Card'), Upi: 'UPI'}[method];
+        return `<section class="kv2-order kv2-welcome"><div class="kv2-illustration" aria-hidden="true">${state.paymentMessage ? paymentImage : !idle ? `<svg viewBox="0 0 240 180"><circle cx="120" cy="85" r="66" fill="#f0f6ff" stroke="none"/><ellipse cx="120" cy="155" rx="76" ry="10" fill="#edf3fa" stroke="none"/><rect x="67" y="66" width="106" height="50" rx="10" fill="#fff"/><path d="M79 116v25m82-25v25M94 52v-9h52v9M47 78v39h9m137-39v39h-9"/><circle cx="120" cy="91" r="12"/></svg>` : `<svg viewBox="0 0 240 180"><ellipse cx="120" cy="155" rx="83" ry="12" fill="#edf3fa" stroke="none"/><circle cx="120" cy="79" r="66" fill="#f0f6ff" stroke="none"/><g class="kv2-cloche"><path d="M66 103h108M75 99a45 45 0 0 1 90 0M113 49h14M120 49v6"/><path d="M63 112h114l-9 10H72Z" fill="#e1edff"/></g><path d="M76 132h88M87 132v20m66-20v20"/><g class="kv2-steam"><path d="M104 32q-6-7 0-14m16 12q-6-7 0-14m16 16q-6-7 0-14"/></g><circle cx="182" cy="54" r="17" fill="#e5f5ef" stroke="none"/><path d="m175 54 5 5 9-11" stroke="#4d9b80"/></svg>`}</div><h2>${esc(state.paymentMessage ? (methodLabel ? methodLabel + ' · ' : '') + P.i18n.t('lang_captain_payment_recorded', 'Payment recorded') : idle ? P.i18n.t('lang_no_active_orders_2', 'No active orders') : P.i18n.t('lang_choose_a_table', 'Choose a table'))}</h2>${state.paymentMessage ? '<p role="status">' + esc(state.paymentMessage) + '</p>' : ''}<p>${esc(idle ? P.i18n.t('lang_start_a_table_order', 'Start a table order') : P.i18n.t('lang_choose_an_active_table_or_start_a_new_orde', 'Choose an active table, or start a new order.'))}</p><div class="kv2-welcome-actions">${button(PosnicPro.i18n.t('lang_new_order', 'New order'), 'new', 'class="primary"')}${button(PosnicPro.i18n.t('lang_takeaway', 'Takeaway'), 'takeaway')}</div></section>`;
     }
     function orderHTML() {
         const s = state.sale;
@@ -1269,6 +1274,7 @@
             const paidTable = state.sale
                 ? state.sale.dine_type === 'Take away' ? 'Takeaway ' + (state.sale.takeaway_number || state.sale.token_id || '') : 'Table ' + state.sale.table_number
                 : '';
+            state.paymentMethod = event.detail?.method || '';
             state.paymentMessage = (paidTable ? paidTable + ' · ' : '') + (event.detail?.message || 'Payment recorded');
             state.selected = null;
             state.sale = null;

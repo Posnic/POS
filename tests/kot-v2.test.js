@@ -193,3 +193,15 @@ test('opening KOT again clears the previous table until an explicit table click'
  assert.equal(h.calls.filter(c=>c.url==='sales/'+h.sale._id).length,reads);
  await h.click('table');assert.equal(h.app.state.sale._id,h.sale._id);h.close();
 });
+
+test('confirmed payment art follows the actual tender and clears when an order is opened', async () => {
+ const h=setup();h.app.showDataTablePage();await flush();
+ Object.defineProperty(h.w.document.querySelector('#kot_v2'),'offsetParent',{get:()=>h.w.document.body});
+ for (const method of ['Cash','Card','Upi','Mixed']) {
+  h.w.dispatchEvent(new h.w.CustomEvent('captain:payment-recorded',{cancelable:true,detail:{method,message:'Payment recorded'}}));await flush();
+  assert.equal(h.w.document.querySelector('[data-payment-art]').getAttribute('data-payment-art'),method);
+  assert.equal(h.w.document.querySelector('.kv2-cloche'),null);
+  assert.match(h.w.document.querySelector('.kv2-welcome h2').textContent,method==='Mixed'?/Payment recorded/:new RegExp(method==='Upi'?'UPI':method));
+ }
+ h.app.showDataTablePage();await flush();assert.equal(h.w.document.querySelector('[data-payment-art]'),null);h.close();
+});

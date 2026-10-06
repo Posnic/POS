@@ -76,7 +76,8 @@ class InstallRepository extends BaseModel {
    */
   async insertBranch(branchData) {
     const branchCollection = await this.getCollection('branches');
-    const result = await branchCollection.insertOne(branchData);
+    const result = await branchCollection.insertOne({ ...branchData, payment_methods_initialized: true });
+    await require('../services/payment-methods').seed(await this.getCollection('payment_method'), { ...branchData, _id: result.insertedId });
     return result.insertedId;
   }
 

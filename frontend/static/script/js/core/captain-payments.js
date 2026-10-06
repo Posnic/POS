@@ -307,7 +307,7 @@
         new CustomEvent("captain:payment-recorded", {
           cancelable: true,
           detail: {
-            table, remaining: plan.dueMinor,
+            table, remaining: plan.dueMinor, method: receipt.method,
             message: t("Payment recorded") +
               (receipt.changeMinor > 0 ? " · " + t("Change to return") + ": " + money(receipt.changeMinor) : "") +
               (plan.dueMinor > 0 ? " · " + t("Remaining balance") + ": " + money(plan.dueMinor) : ""),
