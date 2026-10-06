@@ -96,7 +96,14 @@ describe('demo sales look like last week, not last fortnight', () => {
 });
 
 describe('demo purchases are proper entries', () => {
-  const purchases = demoSeed.buildPurchases({ items, suppliers, branch, pack: 'cafe', now });
+  const supplies = demoSeed.buildPurchaseSupplies({ items, branch, pack: 'cafe', now });
+  const purchases = demoSeed.buildPurchases({
+    items: supplies,
+    suppliers,
+    branch,
+    pack: 'cafe',
+    now,
+  });
 
   test('they exist, dated inside the same week, never today', () => {
     expect(purchases.length).toBe(demoSeed.PURCHASE_COUNT);
@@ -120,8 +127,9 @@ describe('demo purchases are proper entries', () => {
   test('bought below retail, so the margin reports are not zero', () => {
     for (const p of purchases) {
       for (const line of p.items) {
-        const item = items.find((i) => String(i._id) === line.item_id);
-        expect(line.unit_price).toBeLessThan(item.selling_price);
+        const item = supplies.find((i) => String(i._id) === line.item_id);
+        expect(line.unit_price).toBe(item.company_price);
+        expect(line.item_quantity * line.item_price).toBeCloseTo(line.total_amount, 2);
         expect(line.unit_price).toBeGreaterThan(0);
       }
       expect(p.total_amount).toBeCloseTo(

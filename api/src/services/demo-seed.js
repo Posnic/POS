@@ -34,6 +34,97 @@
  */
 
 const { ObjectId } = require('mongodb');
+const { createHash } = require('crypto');
+const foodPack = (pack) => /^(restaurant|cafe|bakery|coffee)$/i.test(String(pack));
+const supplyNames = [
+  'Pantry staples supplier',
+  'Fresh dairy supplier',
+  'Vegetable market supplier',
+  'Food packaging supplier',
+  'Kitchen hygiene supplier',
+];
+const supplyGroups = [
+  [
+    ['Long-grain rice', 'kg', 0.35, 25],
+    ['Cooking oil', 'litre', 0.6, 10],
+  ],
+  [
+    ['Fresh milk', 'litre', 0.3, 20],
+    ['Butter', 'kg', 2, 2],
+  ],
+  [
+    ['Onions', 'kg', 0.2, 15],
+    ['Tomatoes', 'kg', 0.25, 10],
+  ],
+  [
+    ['Takeaway containers', 'pack of 50', 1.2, 4],
+    ['Paper napkins', 'pack of 100', 0.4, 6],
+  ],
+  [
+    ['Dishwashing liquid', '5 litre can', 2, 2],
+    ['Kitchen cleaning cloths', 'pack of 10', 0.8, 3],
+  ],
+];
+
+function buildPurchaseSupplies({ items, branch, pack, now }) {
+  if (!foodPack(pack) || !items.length) return [];
+  const prices = items
+    .map((i) => Number(i.selling_price))
+    .filter((p) => p > 0)
+    .sort((a, b) => a - b);
+  if (!prices.length) return [];
+  const anchor = prices[Math.floor(prices.length / 2)];
+  const groups = supplyGroups.map((group) => group.map((line) => [...line]));
+  if (/^(cafe|coffee)$/i.test(pack))
+    groups[0] = [
+      ['Coffee beans', 'kg', 3, 5],
+      ['Tea leaves', 'kg', 2, 2],
+    ];
+  if (/^bakery$/i.test(pack))
+    groups[0] = [
+      ['Baking flour', 'kg', 0.25, 25],
+      ['Sugar', 'kg', 0.3, 10],
+    ];
+  if (/^(cafe|coffee|bakery)$/i.test(pack))
+    groups[2] = [
+      ['Bananas', 'kg', 0.3, 5],
+      ['Apples', 'kg', 0.7, 5],
+    ];
+  return groups.flatMap((group, groupIndex) =>
+    group.map(([name, unit, factor, qty], index) => ({
+      _id: new ObjectId(
+        createHash('sha256')
+          .update([branch.license, branch.branch_id, pack, groupIndex, index].join(':'))
+          .digest('hex')
+          .slice(0, 24)
+      ),
+      name,
+      unit,
+      company_price: round2(anchor * factor),
+      selling_price: round2(anchor * factor),
+      demo_purchase_supply: true,
+      demo_supply_group: groupIndex,
+      demo_purchase_qty: qty,
+      demo_pack: pack,
+      demo_seeded_at: now,
+      branch_id: branch.branch_id,
+      branch_name: branch.branch_name,
+      license: branch.license,
+      branch_access: [{ branch_id: branch.branch_id }],
+      track_inventory: true,
+      available_quantity: 0,
+      negative_stock: false,
+      ecommerce: false,
+      item_status: 'regular',
+      image: 'item.svg',
+      category_name: 'Kitchen supplies',
+      created_date: now,
+      updated_date: now,
+      created_by: 'Demo data',
+      updated_by: 'Demo data',
+    }))
+  );
+}
 
 /* Enough to fill a report, few enough to scan and recognise as samples. */
 const SALE_COUNT = 14;
@@ -117,12 +208,13 @@ function buildSales({
       when.setHours(9 + Math.floor(rand() * 10), Math.floor(rand() * 60), 0, 0);
     }
 
-    const lineCount = 1 + Math.floor(rand() * 3);
+    const lineCount = Math.min(items.length, 1 + Math.floor(rand() * 3));
+    const candidates = [...items];
     const lines = [];
     let subtotal = 0;
 
     for (let j = 0; j < lineCount; j++) {
-      const item = items[Math.floor(rand() * items.length)];
+      const item = candidates.splice(Math.floor(rand() * candidates.length), 1)[0];
       const price = Number(item.selling_price) || 0;
       if (price <= 0) continue;
       const qty = 1 + Math.floor(rand() * 3);
@@ -148,11 +240,13 @@ function buildSales({
         name: item.name,
         item_quantity: qty,
         quantity: qty,
+        item_price: price,
         unit_price: price,
         price,
         subtotal: lineTotal,
         total_amount: lineTotal,
         total: lineTotal,
+        item_unit: item.unit || 'qty',
         unit: item.unit || 'qty',
         tax_rate: 0,
         tax_amount: 0,
@@ -176,6 +270,7 @@ function buildSales({
        * carry the shop's own token, never the word DEMO.
        */
       sales_id: 'S-DEMO-' + String(i + 1).padStart(6, '0'),
+      demo_seed_version: 2,
       demo_pack: pack,
       demo_seeded_at: now,
       branch_id: branch.branch_id,
@@ -237,16 +332,19 @@ function buildSales({
 function buildQuotes({ items, branch, pack, now, count = QUOTE_COUNT }) {
   if (!Array.isArray(items) || !items.length) return [];
   const rand = rng(String(branch.branch_id || 'demo') + 'q');
-  const names = ['Anand Traders', 'Meera Enterprises', 'Sunrise Stores'];
+  const names = foodPack(pack)
+    ? ['Office lunch catering', 'Family celebration', 'Team breakfast']
+    : ['Sample customer 1', 'Sample customer 2', 'Sample customer 3'];
   const quotes = [];
 
   for (let i = 0; i < count; i++) {
-    const lineCount = 2 + Math.floor(rand() * 3);
+    const lineCount = Math.min(items.length, 2 + Math.floor(rand() * 3));
+    const candidates = [...items];
     const lines = [];
     let subtotal = 0;
 
     for (let j = 0; j < lineCount; j++) {
-      const item = items[Math.floor(rand() * items.length)];
+      const item = candidates.splice(Math.floor(rand() * candidates.length), 1)[0];
       const price = Number(item.selling_price) || 0;
       if (price <= 0) continue;
       const qty = 2 + Math.floor(rand() * 8);
@@ -255,10 +353,17 @@ function buildQuotes({ items, branch, pack, now, count = QUOTE_COUNT }) {
       lines.push({
         item_id: String(item._id),
         name: item.name,
+        item_name: item.name,
+        qty,
         quantity: qty,
+        item_price: price,
         unit_price: price,
         tax_rate: 0,
         tax_amount: 0,
+        tax_value: 0,
+        tax_type: 'exclusive',
+        discount: 0,
+        line_total: total,
         total,
       });
     }
@@ -267,6 +372,7 @@ function buildQuotes({ items, branch, pack, now, count = QUOTE_COUNT }) {
     subtotal = round2(subtotal);
     const when = new Date(now.getTime() - (7 - i * 2) * 864e5);
     quotes.push({
+      demo_seed_version: 2,
       demo_pack: pack,
       demo_seeded_at: now,
       branch_id: branch.branch_id,
@@ -316,34 +422,50 @@ const PURCHASE_COUNT = 5;
 function buildPurchases({ items, suppliers, branch, pack, now, count = PURCHASE_COUNT }) {
   if (!Array.isArray(items) || !items.length) return [];
   if (!Array.isArray(suppliers) || !suppliers.length) return [];
+  const supplies = foodPack(pack) ? items.filter((i) => i.demo_purchase_supply) : [];
+  if (foodPack(pack) && !supplies.length) return [];
   const rand = rng(String(branch.branch_id || 'demo') + 'p');
   const purchases = [];
 
   for (let i = 0; i < count; i++) {
-    const lineCount = 2 + Math.floor(rand() * 3);
+    const pool = supplies.length
+      ? supplies.filter((item) => item.demo_supply_group === i % 5)
+      : items;
+    const lineCount = supplies.length
+      ? pool.length
+      : Math.min(pool.length, 2 + Math.floor(rand() * 3));
+    const candidates = [...pool];
     const lines = [];
     let subtotal = 0;
 
     for (let j = 0; j < lineCount; j++) {
-      const item = items[Math.floor(rand() * items.length)];
+      const item = candidates.splice(Math.floor(rand() * candidates.length), 1)[0];
       const price = Number(item.selling_price) || 0;
       if (price <= 0) continue;
       /* Bought below what it sells for - a shop whose demo buys at retail
          shows a margin of zero on every report, which reads as broken. */
-      const cost = round2(price * 0.6);
-      const qty = 5 + Math.floor(rand() * 20);
+      const cost = round2(
+        Number(item.company_price || item.cost_price || item.purchase_price) || price * 0.6
+      );
+      const qty = item.demo_purchase_qty || 5 + Math.floor(rand() * 20);
       const total = round2(cost * qty);
       subtotal += total;
       lines.push({
         item_id: String(item._id),
         item_name: item.name,
         name: item.name,
+        qty,
+        item_quantity: qty,
+        qty_received: qty,
         quantity: qty,
+        item_price: cost,
         unit_price: cost,
         price: cost,
         cost_price: cost,
+        total_amount: total,
         subtotal: total,
         total,
+        item_unit: item.unit || 'qty',
         unit: item.unit || 'qty',
         tax_rate: 0,
         tax_amount: 0,
@@ -367,6 +489,7 @@ function buildPurchases({ items, suppliers, branch, pack, now, count = PURCHASE_
          was an empty dashboard, not a purchase complaint, which is how a
          missing field on one collection surfaced as "no sales anywhere". */
       receiving_number: 'R-DEMO-' + String(i + 1).padStart(6, '0'),
+      demo_seed_version: 2,
       demo_pack: pack,
       demo_seeded_at: now,
       branch_id: branch.branch_id,
@@ -382,6 +505,14 @@ function buildPurchases({ items, suppliers, branch, pack, now, count = PURCHASE_
          states from this array's SHAPE. */
       items_return: [],
       number_of_items: lines.length,
+      subtotal_amount: subtotal,
+      items_subtotal: subtotal,
+      items_total: subtotal,
+      items_return_total: 0,
+      items_return_subtotal: 0,
+      tax: 0,
+      return_tax: 0,
+      total_items: lines.length,
       receiving_total: subtotal,
       total_amount: subtotal,
       paid_amount: subtotal,
@@ -508,7 +639,9 @@ function buildPeople({ branch, pack, now, base, people }) {
 
   return {
     customers: customerRows.map(common),
-    suppliers: supplierRows.map(common),
+    suppliers: supplierRows.map((row, i) =>
+      common(foodPack(pack) ? { ...row, name: supplyNames[i % 5] + ' (sample)' } : row)
+    ),
   };
 }
 
@@ -517,6 +650,8 @@ module.exports = {
   SALES_PER_DAY,
   PURCHASE_COUNT,
   buildPurchases,
+  buildPurchaseSupplies,
+  supplyNames,
   QUOTE_COUNT,
   buildSales,
   buildQuotes,
