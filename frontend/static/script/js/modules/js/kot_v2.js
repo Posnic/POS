@@ -328,7 +328,7 @@
         state.tab = 'order';
         render();
     }
-    const actionIcons = {discount:'discount',printBill:'print',printKOT:'print',pay:'pay',serveAll:'check',serve:'check',customer:'guests',details:'details',notes:'details',guests:'guests',handover:'transfer',split:'merge',cancel:'cancel',discard:'cancel',draftNote:'details',removeDraft:'cancel'};
+    const actionIcons = {discount:'discount',printBill:'print',printKOT:'print',pay:'pay',serveAll:'check',serve:'check',customer:'guests',details:'details',notes:'details',guests:'guests',handover:'handover',split:'split',cancel:'cancel',discard:'cancel',draftNote:'details',removeDraft:'cancel'};
     const paths = {
         chevron: 'm8 10 4 4 4-4',
         discount: 'm5 19 14-14M7 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6M17 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6',
@@ -342,7 +342,9 @@
         search: 'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14m5 12 6 6',
         move: 'M3 6h7v7H3z M5 13v4m3-4v4m6-8h7m-3-3 3 3-3 3',
         merge: 'M3 4h6v6H3z M15 4h6v6h-6z M6 10v4l6 6 6-6v-4m-9 7 3 3 3-3',
-        transfer: 'M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4',
+        transfer: 'M3 15a7 7 0 0 1 14 0M2 18h15M10 6V4m7 4h5m-3-3 3 3-3 3',
+        handover: 'M10 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0M2 20v-3a5 5 0 0 1 10 0v3m2-9h8m-4-4 4 4-4 4',
+        split: 'M5 3h14v7M5 10V3m3 3h8M12 10v5m0 0-6 6m6-6 6 6M3 17v4h4m10 0h4v-4',
         refresh: 'M20 10a8 8 0 0 0-14-5L3 8m0-5v5h5m-4 6a8 8 0 0 0 14 5l3-3m0 5v-5h-5',
         takeaway: 'M5 7h14l1 14H4L5 7zm4 2V5a3 3 0 0 1 6 0v4',
     };
