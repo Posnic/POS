@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "Selecione um cliente abaixo.",
   "lang_use_this_customer": "Usar este cliente",
   "lang_merge_tables_separate_bills": "Os dois pedidos ficarão na mesa de destino. As contas continuam separadas.",
-  "lang_no_other_open_table_orders_to_merge": "Não há outros pedidos de mesa abertos para juntar."
+  "lang_no_other_open_table_orders_to_merge": "Não há outros pedidos de mesa abertos para juntar.",
+  "lang_no_available_tables": "Não há mesas disponíveis."
 }

@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "පහතින් පාරිභෝගිකයෙකු තෝරන්න.",
   "lang_use_this_customer": "මෙම පාරිභෝගිකයා භාවිත කරන්න",
   "lang_merge_tables_separate_bills": "ඇණවුම් දෙකම තෝරාගත් මේසයේ තිබෙනු ඇත. බිල්පත් වෙන වෙනම පවතී.",
-  "lang_no_other_open_table_orders_to_merge": "ඒකාබද්ධ කිරීමට වෙනත් මේසවල විවෘත ඇණවුම් නැත."
+  "lang_no_other_open_table_orders_to_merge": "ඒකාබද්ධ කිරීමට වෙනත් මේසවල විවෘත ඇණවුම් නැත.",
+  "lang_no_available_tables": "ලබාගත හැකි මේස නැත."
 }

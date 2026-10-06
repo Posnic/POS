@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "Pilih pelanggan di bawah.",
   "lang_use_this_customer": "Gunakan pelanggan ini",
   "lang_merge_tables_separate_bills": "Kedua pesanan akan berada di meja tujuan. Tagihan tetap terpisah.",
-  "lang_no_other_open_table_orders_to_merge": "Tidak ada pesanan meja lain yang terbuka untuk digabungkan."
+  "lang_no_other_open_table_orders_to_merge": "Tidak ada pesanan meja lain yang terbuka untuk digabungkan.",
+  "lang_no_available_tables": "Tidak ada meja yang tersedia."
 }

@@ -175,3 +175,9 @@ test('customer chooser separates search, new details and walk-in with explicit a
  modal.querySelector('[data-customer-mode=walkin]').click();assert.equal(submit.textContent,'Use walk-in customer');modal.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
  const saved=h.calls.find(c=>c.url==='sales/orderCustomer').body;assert.equal(saved.customerId,undefined);assert.equal(saved.name,'');assert.equal(saved.phone,'');h.close();
 });
+
+test('table action dialogs retain selected table context while new-order picker does not inherit it',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('table');await h.click('discount');
+ assert.equal(h.w.document.querySelector('.kv2-action-context').textContent,'Table 6');h.w.document.querySelector('dialog').close();
+ await h.click('new');assert.equal(h.w.document.querySelector('dialog .kv2-action-context'),null);h.close();
+});

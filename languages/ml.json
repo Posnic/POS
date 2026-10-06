@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "താഴെ ഒരു ഉപഭോക്താവിനെ തിരഞ്ഞെടുക്കുക.",
   "lang_use_this_customer": "ഈ ഉപഭോക്താവിനെ ഉപയോഗിക്കുക",
   "lang_merge_tables_separate_bills": "രണ്ട് ഓർഡറുകളും തിരഞ്ഞെടുത്ത ടേബിളിലായിരിക്കും. ബില്ലുകൾ വേറിട്ടുതന്നെ തുടരും.",
-  "lang_no_other_open_table_orders_to_merge": "ലയിപ്പിക്കാൻ മറ്റു ടേബിളുകളുടെ തുറന്ന ഓർഡറുകളില്ല."
+  "lang_no_other_open_table_orders_to_merge": "ലയിപ്പിക്കാൻ മറ്റു ടേബിളുകളുടെ തുറന്ന ഓർഡറുകളില്ല.",
+  "lang_no_available_tables": "ടേബിളുകൾ ലഭ്യമല്ല."
 }

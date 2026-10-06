@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "కింద కస్టమర్‌ను ఎంచుకోండి.",
   "lang_use_this_customer": "ఈ కస్టమర్‌ను ఉపయోగించండి",
   "lang_merge_tables_separate_bills": "రెండు ఆర్డర్‌లు ఎంచుకున్న టేబుల్‌పై ఉంటాయి. బిల్లులు వేరుగానే ఉంటాయి.",
-  "lang_no_other_open_table_orders_to_merge": "విలీనం చేయడానికి ఇతర టేబుల్‌లలో తెరిచిన ఆర్డర్‌లు లేవు."
+  "lang_no_other_open_table_orders_to_merge": "విలీనం చేయడానికి ఇతర టేబుల్‌లలో తెరిచిన ఆర్డర్‌లు లేవు.",
+  "lang_no_available_tables": "టేబుల్‌లు అందుబాటులో లేవు."
 }

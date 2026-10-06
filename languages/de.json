@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "Wählen Sie unten einen Kunden aus.",
   "lang_use_this_customer": "Diesen Kunden verwenden",
   "lang_merge_tables_separate_bills": "Beide Bestellungen werden dem Zieltisch zugeordnet. Die Rechnungen bleiben getrennt.",
-  "lang_no_other_open_table_orders_to_merge": "Keine anderen offenen Tischbestellungen zum Zusammenführen."
+  "lang_no_other_open_table_orders_to_merge": "Keine anderen offenen Tischbestellungen zum Zusammenführen.",
+  "lang_no_available_tables": "Keine Tische verfügbar."
 }

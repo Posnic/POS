@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "เลือกลูกค้าด้านล่าง",
   "lang_use_this_customer": "ใช้ลูกค้ารายนี้",
   "lang_merge_tables_separate_bills": "ทั้งสองคำสั่งซื้อจะอยู่ที่โต๊ะปลายทาง บิลยังคงแยกกัน",
-  "lang_no_other_open_table_orders_to_merge": "ไม่มีคำสั่งซื้อที่เปิดอยู่ของโต๊ะอื่นให้รวม"
+  "lang_no_other_open_table_orders_to_merge": "ไม่มีคำสั่งซื้อที่เปิดอยู่ของโต๊ะอื่นให้รวม",
+  "lang_no_available_tables": "ไม่มีโต๊ะว่าง"
 }

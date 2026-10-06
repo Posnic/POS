@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "اختر عميلاً أدناه.",
   "lang_use_this_customer": "استخدام هذا العميل",
   "lang_merge_tables_separate_bills": "سيكون الطلبان على الطاولة المستهدفة. تبقى الفواتير منفصلة.",
-  "lang_no_other_open_table_orders_to_merge": "لا توجد طلبات مفتوحة لطاولات أخرى لدمجها."
+  "lang_no_other_open_table_orders_to_merge": "لا توجد طلبات مفتوحة لطاولات أخرى لدمجها.",
+  "lang_no_available_tables": "لا توجد طاولات متاحة."
 }
