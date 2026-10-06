@@ -2252,7 +2252,7 @@
                 if (renderedModes[modeKey(val.payment_value)]) { return; }
                 renderedModes[modeKey(val.payment_value)] = true;
                 if (sales_payment_mode !== val.payment_value) {
-
+                    $('.payment_mode').val(sales_payment_mode);
                     let paymentMethod = '<div class="col-lg-4 col-md-2 col-xs-12">' +
                         '<label class="btn btn-block btn-payment-mode payment_detail change_active save_enable ' + payment_mode_active + ' ">' +
                         '<input type="radio" class="payment_mode" name="payment_mode" id="' + val.payment_value + '" value="' + val.payment_value + '" style="display: none;"/>' + val.payment_value + '' +
