@@ -4223,5 +4223,15 @@
   "lang_model_assistance_for_item_descriptions_and": "โมเดลช่วยเขียนรายละเอียดสินค้าและงานอื่นที่เปิดใช้งาน ตั้งค่าการเชื่อมต่อและขีดจำกัดการใช้งานในการตั้งค่า AI",
   "lang_optional_help_shop_insights_and_confirmed": "ความช่วยเหลือ ข้อมูลเชิงลึกของร้าน และการดำเนินการที่ยืนยันแล้วเป็นทางเลือก ปิดไว้ตามค่าเริ่มต้น เปิด Ask Posnic และจัดการความรู้กับการเข้าถึงในการตั้งค่า AI",
   "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic ปิดอยู่ เปิดได้ใน",
-  "lang_to_use_questions_insights_actions_and_sche": "เพื่อใช้คำถาม ข้อมูลเชิงลึก การดำเนินการ และกำหนดการ"
+  "lang_to_use_questions_insights_actions_and_sche": "เพื่อใช้คำถาม ข้อมูลเชิงลึก การดำเนินการ และกำหนดการ",
+  "lang_add_customer_details_for_this_order": "เพิ่มรายละเอียดลูกค้าสำหรับคำสั่งซื้อนี้",
+  "lang_add_to_order": "เพิ่มในคำสั่งซื้อ",
+  "lang_customer_options": "ตัวเลือกลูกค้า",
+  "lang_find_an_existing_customer": "ค้นหาลูกค้าที่มีอยู่",
+  "lang_new_customer_details": "รายละเอียดลูกค้าใหม่",
+  "lang_no_customer_details_needed_for_this_order": "คำสั่งซื้อนี้ไม่จำเป็นต้องมีรายละเอียดลูกค้า",
+  "lang_no_customers_found_choose_add_new_customer": "ไม่พบลูกค้า เลือกเพิ่มลูกค้าใหม่",
+  "lang_search_by_name_or_mobile_then_select_a_res": "ค้นหาด้วยชื่อหรือเบอร์มือถือ แล้วเลือกผลลัพธ์",
+  "lang_select_a_customer_below": "เลือกลูกค้าด้านล่าง",
+  "lang_use_this_customer": "ใช้ลูกค้ารายนี้"
 }

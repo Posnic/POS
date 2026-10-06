@@ -4560,5 +4560,15 @@
   "lang_model_assistance_for_item_descriptions_and": "Modelhulp bij artikelbeschrijvingen en andere ingeschakelde processen. Stel verbinding en gebruikslimieten in bij de AI-instellingen.",
   "lang_optional_help_shop_insights_and_confirmed": "Optionele hulp, winkelanalyses en bevestigde acties. Standaard uitgeschakeld. Schakel Ask Posnic in; beheer kennis en toegang via de AI-instellingen.",
   "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic staat uit. Schakel het in bij",
-  "lang_to_use_questions_insights_actions_and_sche": "om vragen, analyses, acties en geplande taken te gebruiken."
+  "lang_to_use_questions_insights_actions_and_sche": "om vragen, analyses, acties en geplande taken te gebruiken.",
+  "lang_add_customer_details_for_this_order": "Voeg klantgegevens toe aan deze bestelling.",
+  "lang_add_to_order": "Toevoegen aan bestelling",
+  "lang_customer_options": "Klantopties",
+  "lang_find_an_existing_customer": "Bestaande klant zoeken",
+  "lang_new_customer_details": "Gegevens nieuwe klant",
+  "lang_no_customer_details_needed_for_this_order": "Voor deze bestelling zijn geen klantgegevens nodig.",
+  "lang_no_customers_found_choose_add_new_customer": "Geen klanten gevonden. Kies Nieuwe klant toevoegen.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "Zoek op naam of mobiel nummer en selecteer een resultaat.",
+  "lang_select_a_customer_below": "Selecteer hieronder een klant.",
+  "lang_use_this_customer": "Deze klant gebruiken"
 }

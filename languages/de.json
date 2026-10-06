@@ -4223,5 +4223,15 @@
   "lang_model_assistance_for_item_descriptions_and": "Modellunterstützung für Artikelbeschreibungen und andere aktivierte Abläufe. Verbindung und Nutzungslimits lassen sich in den KI-Einstellungen konfigurieren.",
   "lang_optional_help_shop_insights_and_confirmed": "Optionale Hilfe, Geschäftsauswertungen und bestätigte Aktionen. Standardmäßig ausgeschaltet. Aktivieren Sie Ask Posnic; Wissen und Zugriff verwalten Sie in den KI-Einstellungen.",
   "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic ist ausgeschaltet. Aktivieren Sie es unter",
-  "lang_to_use_questions_insights_actions_and_sche": "um Fragen, Auswertungen, Aktionen und Zeitpläne zu nutzen."
+  "lang_to_use_questions_insights_actions_and_sche": "um Fragen, Auswertungen, Aktionen und Zeitpläne zu nutzen.",
+  "lang_add_customer_details_for_this_order": "Kundendaten für diese Bestellung hinzufügen.",
+  "lang_add_to_order": "Zur Bestellung hinzufügen",
+  "lang_customer_options": "Kundenoptionen",
+  "lang_find_an_existing_customer": "Bestehenden Kunden suchen",
+  "lang_new_customer_details": "Neue Kundendaten",
+  "lang_no_customer_details_needed_for_this_order": "Für diese Bestellung sind keine Kundendaten erforderlich.",
+  "lang_no_customers_found_choose_add_new_customer": "Keine Kunden gefunden. Wählen Sie Neuen Kunden hinzufügen.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "Nach Name oder Handynummer suchen und ein Ergebnis auswählen.",
+  "lang_select_a_customer_below": "Wählen Sie unten einen Kunden aus.",
+  "lang_use_this_customer": "Diesen Kunden verwenden"
 }

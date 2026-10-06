@@ -4222,5 +4222,15 @@
   "lang_model_assistance_for_item_descriptions_and": "Ayuda del modelo para descripciones de artículos y otros procesos activados. Configure la conexión y los límites de uso en la configuración de IA.",
   "lang_optional_help_shop_insights_and_confirmed": "Ayuda, informes del negocio y acciones confirmadas opcionales. Desactivado por defecto. Active Ask Posnic y gestione su conocimiento y acceso en la configuración de IA.",
   "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic está desactivado. Actívelo en",
-  "lang_to_use_questions_insights_actions_and_sche": "para usar preguntas, informes, acciones y tareas programadas."
+  "lang_to_use_questions_insights_actions_and_sche": "para usar preguntas, informes, acciones y tareas programadas.",
+  "lang_add_customer_details_for_this_order": "Añade los datos del cliente a este pedido.",
+  "lang_add_to_order": "Añadir al pedido",
+  "lang_customer_options": "Opciones de cliente",
+  "lang_find_an_existing_customer": "Buscar un cliente existente",
+  "lang_new_customer_details": "Datos del nuevo cliente",
+  "lang_no_customer_details_needed_for_this_order": "Este pedido no necesita datos del cliente.",
+  "lang_no_customers_found_choose_add_new_customer": "No se encontraron clientes. Elige Añadir nuevo cliente.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "Busca por nombre o móvil y selecciona un resultado.",
+  "lang_select_a_customer_below": "Selecciona un cliente abajo.",
+  "lang_use_this_customer": "Usar este cliente"
 }

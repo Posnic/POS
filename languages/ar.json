@@ -4223,5 +4223,15 @@
   "lang_model_assistance_for_item_descriptions_and": "مساعدة النموذج في أوصاف الأصناف والعمليات المفعّلة الأخرى. اضبط الاتصال وحدود الاستخدام في إعدادات الذكاء الاصطناعي.",
   "lang_optional_help_shop_insights_and_confirmed": "مساعدة وتحليلات المتجر وإجراءات مؤكدة اختيارية. متوقف افتراضيًا. فعّل Ask Posnic وأدر المعرفة والوصول من إعدادات الذكاء الاصطناعي.",
   "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic متوقف. فعّله في",
-  "lang_to_use_questions_insights_actions_and_sche": "لاستخدام الأسئلة والتحليلات والإجراءات والجداول."
+  "lang_to_use_questions_insights_actions_and_sche": "لاستخدام الأسئلة والتحليلات والإجراءات والجداول.",
+  "lang_add_customer_details_for_this_order": "أضف بيانات العميل لهذا الطلب.",
+  "lang_add_to_order": "إضافة إلى الطلب",
+  "lang_customer_options": "خيارات العميل",
+  "lang_find_an_existing_customer": "البحث عن عميل موجود",
+  "lang_new_customer_details": "بيانات العميل الجديد",
+  "lang_no_customer_details_needed_for_this_order": "لا يلزم إدخال بيانات العميل لهذا الطلب.",
+  "lang_no_customers_found_choose_add_new_customer": "لم يتم العثور على عملاء. اختر إضافة عميل جديد.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "ابحث بالاسم أو رقم الجوال ثم اختر نتيجة.",
+  "lang_select_a_customer_below": "اختر عميلاً أدناه.",
+  "lang_use_this_customer": "استخدام هذا العميل"
 }

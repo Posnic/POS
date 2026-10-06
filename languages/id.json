@@ -4223,5 +4223,15 @@
   "lang_model_assistance_for_item_descriptions_and": "Bantuan model untuk deskripsi barang dan alur lain yang diaktifkan. Atur koneksi dan batas penggunaan di pengaturan AI.",
   "lang_optional_help_shop_insights_and_confirmed": "Bantuan, wawasan toko, dan tindakan terkonfirmasi bersifat opsional. Nonaktif secara default. Aktifkan Ask Posnic; kelola pengetahuan dan aksesnya di pengaturan AI.",
   "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic dinonaktifkan. Aktifkan di",
-  "lang_to_use_questions_insights_actions_and_sche": "untuk menggunakan pertanyaan, wawasan, tindakan, dan jadwal."
+  "lang_to_use_questions_insights_actions_and_sche": "untuk menggunakan pertanyaan, wawasan, tindakan, dan jadwal.",
+  "lang_add_customer_details_for_this_order": "Tambahkan detail pelanggan untuk pesanan ini.",
+  "lang_add_to_order": "Tambahkan ke pesanan",
+  "lang_customer_options": "Pilihan pelanggan",
+  "lang_find_an_existing_customer": "Cari pelanggan yang sudah ada",
+  "lang_new_customer_details": "Detail pelanggan baru",
+  "lang_no_customer_details_needed_for_this_order": "Pesanan ini tidak memerlukan detail pelanggan.",
+  "lang_no_customers_found_choose_add_new_customer": "Pelanggan tidak ditemukan. Pilih Tambah pelanggan baru.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "Cari berdasarkan nama atau nomor ponsel, lalu pilih hasilnya.",
+  "lang_select_a_customer_below": "Pilih pelanggan di bawah.",
+  "lang_use_this_customer": "Gunakan pelanggan ini"
 }

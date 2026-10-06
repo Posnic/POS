@@ -4223,5 +4223,15 @@
   "lang_model_assistance_for_item_descriptions_and": "භාණ්ඩ විස්තර සහ වෙනත් සක්‍රිය කාර්යයන් සඳහා මාදිලියේ සහාය. සම්බන්ධතාවය සහ භාවිත සීමා AI සැකසුම් තුළ සකසන්න.",
   "lang_optional_help_shop_insights_and_confirmed": "විකල්ප සහාය, වෙළඳසැල් විශ්ලේෂණ සහ තහවුරු කළ ක්‍රියා. පෙරනිමියෙන් අක්‍රියයි. Ask Posnic සක්‍රිය කර, එහි දැනුම සහ ප්‍රවේශය AI සැකසුම් තුළ කළමනාකරණය කරන්න.",
   "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic අක්‍රියයි. මෙහි සක්‍රිය කරන්න",
-  "lang_to_use_questions_insights_actions_and_sche": "ප්‍රශ්න, විශ්ලේෂණ, ක්‍රියා සහ කාලසටහන් භාවිත කිරීමට."
+  "lang_to_use_questions_insights_actions_and_sche": "ප්‍රශ්න, විශ්ලේෂණ, ක්‍රියා සහ කාලසටහන් භාවිත කිරීමට.",
+  "lang_add_customer_details_for_this_order": "මෙම ඇණවුමට පාරිභෝගික විස්තර එක් කරන්න.",
+  "lang_add_to_order": "ඇණවුමට එක් කරන්න",
+  "lang_customer_options": "පාරිභෝගික විකල්ප",
+  "lang_find_an_existing_customer": "පවතින පාරිභෝගිකයෙකු සොයන්න",
+  "lang_new_customer_details": "නව පාරිභෝගික විස්තර",
+  "lang_no_customer_details_needed_for_this_order": "මෙම ඇණවුමට පාරිභෝගික විස්තර අවශ්‍ය නැත.",
+  "lang_no_customers_found_choose_add_new_customer": "පාරිභෝගිකයන් හමු නොවීය. නව පාරිභෝගිකයෙකු එක් කරන්න තෝරන්න.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "නම හෝ ජංගම දුරකථන අංකය අනුව සොයා ප්‍රතිඵලයක් තෝරන්න.",
+  "lang_select_a_customer_below": "පහතින් පාරිභෝගිකයෙකු තෝරන්න.",
+  "lang_use_this_customer": "මෙම පාරිභෝගිකයා භාවිත කරන්න"
 }
