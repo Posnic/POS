@@ -189,7 +189,7 @@
         d.showModal();
         return d;
     }
-    function open() {
+    function open(saleId = null) {
         if (activeScope !== scopeKey()) {
             activeScope = scopeKey();
             state.draft = null;
@@ -227,8 +227,12 @@
                 P.alert('error', 'The saved draft could not be read.');
             }
         }
+        // A page visit must not reuse the last table from this module's lifetime.
+        // Explicit order links and durable drafts retain their own recovery context.
+        state.sale = null;
+        state.selected = state.draft ? state.draft.saleId || null : saleId;
+        state.paymentMessage = '';
         state.expanded = false;
-        if (state.draft) state.selected = state.draft.saleId || null;
         state.filter = 'active';
         render();
         run(refresh);
@@ -1255,10 +1259,7 @@
     P.kot_v2 = {
         showDataTablePage: open,
         showAdd: open,
-        showDetails: (saleId) => {
-            state.selected = saleId;
-            open();
-        },
+        showDetails: (saleId) => open(saleId),
         refresh,
         state,
     };

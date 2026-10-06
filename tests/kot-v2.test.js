@@ -181,3 +181,15 @@ test('table action dialogs retain selected table context while new-order picker 
  assert.equal(h.w.document.querySelector('.kv2-action-context').textContent,'Table 6');h.w.document.querySelector('dialog').close();
  await h.click('new');assert.equal(h.w.document.querySelector('dialog .kv2-action-context'),null);h.close();
 });
+
+test('opening KOT again clears the previous table until an explicit table click',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();
+ assert.equal(h.app.state.sale,null);assert.ok(h.w.document.querySelector('.kv2-welcome'));
+ await h.click('table');assert.equal(h.app.state.sale._id,h.sale._id);
+ const reads=h.calls.filter(c=>c.url==='sales/'+h.sale._id).length;
+ h.app.showDataTablePage();await flush();await h.app.refresh();
+ assert.equal(h.app.state.selected,null);assert.equal(h.app.state.sale,null);
+ assert.ok(h.w.document.querySelector('.kv2-welcome'));assert.equal(h.w.document.querySelector('[data-action=pay]'),null);
+ assert.equal(h.calls.filter(c=>c.url==='sales/'+h.sale._id).length,reads);
+ await h.click('table');assert.equal(h.app.state.sale._id,h.sale._id);h.close();
+});
