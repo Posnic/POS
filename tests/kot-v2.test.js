@@ -142,3 +142,25 @@ test('confirmed payment leaves a persistent success state until the cashier choo
  }
  assert.equal(h.app.state.sales.length,1);await h.click('table');assert.equal(h.app.state.selected,h.sale._id);assert.equal(h.app.state.paymentMessage,'');assert.ok(h.w.document.querySelector('[data-action=pay]'));h.close();
 });
+
+test('custom names cannot bypass occupied-table checks before choosing dishes',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('new');
+ const modal=h.w.document.querySelector('dialog');modal.querySelector('[name=custom]').value='6';modal.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
+ assert.equal(h.app.state.draft,null);assert.match(modal.querySelector('[role=alert]').textContent,/no longer available/);assert.equal(h.calls.some(c=>c.method==='post'),false);h.close();
+});
+
+test('a refused occupied table can be changed without losing draft items, notes or customer',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('table');await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+ const d=h.app.state.draft;d.saleId=null;d.table='6';d.guests=3;d.dineType='Dine-in';d.items[0].item_description='No onion';d.customer={name:'Guest',phone:'123'};
+ setup.failure=true;setup.failureResponse={message:'Table 6 already has an open order. Add to it, or settle it first.'};
+ try{await h.click('send');assert.equal(d.intent,undefined);assert.ok(h.w.document.querySelector('[data-action=changeDraftTable]'));}finally{setup.failure=false;setup.failureResponse=null;}
+ const priorKey=d.key;await h.click('changeDraftTable');const modal=h.w.document.querySelector('dialog');assert.equal(modal.querySelector('[name=guests]').value,'3');modal.querySelector('[value=t7]').checked=true;modal.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
+ assert.equal(h.app.state.draft,d);assert.equal(d.table,'7');assert.equal(d.tableId,'t7');assert.equal(d.items[0].item_description,'No onion');assert.equal(d.customer.name,'Guest');assert.equal(d.guests,3);assert.notEqual(d.key,priorKey);assert.equal(d.tableConflict,undefined);assert.equal(h.calls.filter(c=>c.method==='post').length,1);h.close();
+});
+
+test('table availability is checked again if another device takes it while the picker is open',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('new');
+ const original=h.w.PosnicPro.get;h.w.PosnicPro.get=(options,done,fail)=>original(options,result=>{if(options.url==='captain/v1/tables')result.data.tables.find(t=>t.id==='t7').status='occupied';done(result);},fail);
+ const modal=h.w.document.querySelector('dialog');modal.querySelector('[value=t7]').checked=true;modal.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
+ assert.equal(h.app.state.draft,null);assert.match(modal.querySelector('[role=alert]').textContent,/no longer available/);assert.equal(h.calls.some(c=>c.method==='post'),false);h.close();
+});
