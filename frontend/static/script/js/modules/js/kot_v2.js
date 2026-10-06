@@ -489,7 +489,7 @@
         if (!root()) return;
         root().classList.toggle('kv2-composing', !!state.draft);
         root().classList.toggle('kv2-playful', !!P.restaurantFeedback?.allowed?.());
-        root().innerHTML = `<div class="kv2-heading"><h1><lang class="lang_table_orders">Table orders</lang></h1><small>${state.refreshed ? 'Refreshed ' + esc(time(state.refreshed)) : ''}</small><div>${state.draft ? button(state.expanded ? PosnicPro.i18n.t('lang_review_this_round','Review this round') : PosnicPro.i18n.t('lang_tables','Tables'), 'expand') : ''}${iconButton('refresh', 'Refresh orders')}${state.draft ? '' : button('Item not on menu', 'offmenu') + button('Takeaway', 'takeaway') + button('＋ New order', 'new', 'class="primary"')}</div></div><div class="kv2-workspace ${state.expanded ? 'kv2-expanded' : ''}">${floorHTML()}${state.draft ? draftHTML() : orderHTML()}</div>`;
+        root().innerHTML = `<div class="kv2-heading"><h1><lang class="lang_table_orders">Table orders</lang></h1><small>${state.refreshed ? 'Refreshed ' + esc(time(state.refreshed)) : ''}</small><div>${state.draft ? button(state.expanded ? PosnicPro.i18n.t('lang_review_this_round','Review this round') : PosnicPro.i18n.t('lang_tables','Tables'), 'expand') : ''}${iconButton('refresh', 'Refresh orders')}${state.draft ? '' : button('Takeaway', 'takeaway') + button('＋ New order', 'new', 'class="primary"')}</div></div><div class="kv2-workspace ${state.expanded ? 'kv2-expanded' : ''}">${floorHTML()}${state.draft ? draftHTML() : orderHTML()}</div>`;
         if (state.draft) {
             bindSearch();
             if (!state.catalogueLoaded) loadCatalogue();
