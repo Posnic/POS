@@ -80,7 +80,7 @@
     "asar": true,
     "asarUnpack": [],
     "npmRebuild": false,
-    "compression": "store",
+    "compression": "normal",
     "directories": {
       "output": "dist",
       "buildResources": "builds"
