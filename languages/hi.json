@@ -4236,5 +4236,7 @@
   "lang_no_customers_found_choose_add_new_customer": "कोई ग्राहक नहीं मिला। नया ग्राहक जोड़ें चुनें।",
   "lang_search_by_name_or_mobile_then_select_a_res": "नाम या मोबाइल से खोजें, फिर एक परिणाम चुनें।",
   "lang_select_a_customer_below": "नीचे एक ग्राहक चुनें।",
-  "lang_use_this_customer": "इस ग्राहक का उपयोग करें"
+  "lang_use_this_customer": "इस ग्राहक का उपयोग करें",
+  "lang_merge_tables_separate_bills": "दोनों ऑर्डर चुनी गई टेबल पर होंगे। बिल अलग रहेंगे।",
+  "lang_no_other_open_table_orders_to_merge": "मिलाने के लिए किसी अन्य टेबल का खुला ऑर्डर नहीं है।"
 }

@@ -117,10 +117,48 @@
     async function move(saleId, merge = false) {
         const [sale, floor] = await Promise.all([request('get', 'sales/' + saleId), request('get', 'captain/v1/tables', { branchId: branch() })]);
         if (merge && !floor.canMerge) throw new Error(text('Permission is required'));
+        // Include legacy custom labels without creating floor records merely by opening the dialog.
+        const candidates = floor.tables.filter(t => merge ? t.orders?.length === 1 && !t.orders[0].paid && t.orders[0].id !== saleId : t.status === 'available').map(t => ({ ...t }));
+        let activeOrders = [];
+        if (merge) {
+            let page = 1, result;
+            do {
+                result = await request('get', 'sales', { page: page++, limit: 1000, filters: JSON.stringify({ branch_id: branch(), sale_process: 'KOT', payment_status: 'Unpaid', order_state: { $nin: ['pending', 'rejected', 'cancelled'] }, floor_closed_at: { $exists: false } }) });
+                activeOrders.push(...(result.list || []));
+            } while (result.list?.length && activeOrders.length < Number(result.total || 0));
+            const labels = new Map();
+            activeOrders.filter(o => o.dine_type !== 'Take away' && o.table_number).forEach(o => {
+                const label = String(o.table_number);
+                labels.set(label, [...(labels.get(label) || []), o]);
+            });
+            for (const [label, orders] of labels) {
+                if (orders.length !== 1 || orders[0]._id === saleId || label === String(sale.table_number) || !/^[A-Z0-9]{1,6}$/.test(label) || floor.tables.some(t => String(t.tableorder_value) === label)) continue;
+                candidates.push({ id: 'legacy:' + orders[0]._id, tableorder_value: label, legacy: true, orders: [{ id: orders[0]._id, guests: orders[0].person_count }] });
+            }
+        }
+        const orderSummary = (order, label) => '<strong>' + esc(text('Table') + ' ' + label) + '</strong><small>' + esc(Number(order.person_count) || 0) + ' ' + esc(text('Guests')) + (Array.isArray(order.items) ? ' · ' + esc(order.items.reduce((sum, item) => sum + (Number(item.item_quantity) || 0), 0)) + ' ' + esc(text('Items')) : '') + '</small>';
         const d = dialog(merge ? PosnicPro.i18n.t('lang_kot_workspace_merge', 'Merge tables') : PosnicPro.i18n.t('lang_kot_workspace_move', 'Move table'));
-        d.querySelector('section').innerHTML = '<p>' + esc(text('Choose a destination table')) + '</p><label>' + esc(text('Table')) + '<select name="table" required><option value="">—</option>' +
-            floor.tables.filter(t => merge ? t.orders?.length === 1 && !t.orders[0].paid && t.orders[0].id !== saleId : t.status === 'available').map(t => '<option value="' + esc(t.id) + '">' + esc(t.tableorder_value) + '</option>').join('') + (merge ? '' : '<option value="custom">' + esc(P.i18n.t('lang_custom_2', 'Custom')) + '</option>') + '</select></label>' +
+        d.querySelector('section').innerHTML = (merge ? '<div class="kot-merge-source"><span>' + esc(text('From')) + '</span>' + orderSummary(sale, sale.table_number) + '</div>' : '') + '<p>' + esc(text('Choose a destination table')) + '</p><label>' + esc(text('Table')) + '<select name="table" required><option value="">—</option>' +
+            candidates.map(t => '<option value="' + esc(t.id) + '">' + esc(t.tableorder_value) + '</option>').join('') + (merge ? '' : '<option value="custom">' + esc(P.i18n.t('lang_custom_2', 'Custom')) + '</option>') + '</select></label>' +
             (merge ? '' : '<label hidden data-custom-table>' + esc(text('Table')) + '<input name="customTable" maxlength="6" pattern="[A-Za-z0-9]{1,6}" autocomplete="off" placeholder="e.g. A12"></label>');
+        if (merge) {
+            d.querySelector('section').insertAdjacentHTML('beforeend', '<div class="kot-merge-preview" role="status" hidden></div><p class="kot-merge-help">' + esc(P.i18n.t('lang_merge_tables_separate_bills', 'Both orders will be on the destination table. Bills stay separate.')) + '</p>');
+            d.querySelector('footer [data-close]').textContent = text('Close');
+            const updatePreview = () => {
+                const target = candidates.find(t => t.id === d.querySelector('select').value);
+                const preview = d.querySelector('.kot-merge-preview');
+                preview.hidden = !target;
+                preview.innerHTML = target ? '<span>' + esc(text('To')) + '</span>' + orderSummary(activeOrders.find(o => o._id === target.orders[0].id) || { person_count: target.orders[0].guests }, target.tableorder_value) : '';
+                d.querySelector('[type=submit]').textContent = target ? text('Merge tables') + ' · ' + sale.table_number + ' → ' + target.tableorder_value : text('Merge tables');
+                d.querySelector('[type=submit]').disabled = !target;
+            };
+            d.querySelector('select').addEventListener('change', updatePreview);
+            updatePreview();
+            if (!candidates.length) {
+                d.querySelector('select').disabled = true;
+                d.querySelector('.kot-merge-help').textContent = P.i18n.t('lang_no_other_open_table_orders_to_merge', 'No other open table orders to merge.');
+            }
+        }
         const customInput = d.querySelector('[name=customTable]');
         const tableSelect = d.querySelector('select');
         if (customInput) {
@@ -141,8 +179,16 @@
         const id = intent?.request_id || requestId();
         if (intent) {
             const select = d.querySelector('select');
-            if (![...select.options].some(o => o.value === intent.primaryId)) select.add(new Option(intent.primaryId, intent.primaryId));
+            const restoredTarget = candidates.find(t => t.orders?.[0]?.id === intent.targetOrderId);
+            if (merge && restoredTarget && restoredTarget.id !== intent.primaryId) {
+                const option = [...select.options].find(o => o.value === restoredTarget.id);
+                if (option) option.value = intent.primaryId;
+                restoredTarget.id = intent.primaryId;
+            }
+            if (![...select.options].some(o => o.value === intent.primaryId)) select.add(new Option(text('Table') + ' · ' + text('Please retry'), intent.primaryId));
             select.value = intent.primaryId;
+            select.dispatchEvent(new Event('change'));
+            if (merge) d.querySelector('[type=submit]').disabled = false;
             select.disabled = true;
             if (customInput) { customInput.disabled = true; d.querySelector('[data-custom-table]').hidden = true; d.querySelector('[data-custom-table]').style.display = 'none'; }
         }
@@ -150,6 +196,15 @@
         d.save(async form => {
             if (!prepared) {
                 let destination = intent?.primaryId || form.get('table');
+                const selectedTarget = candidates.find(t => t.id === destination);
+                if (!intent && merge) {
+                    if (!selectedTarget) throw new Error(text('Choose a destination table'));
+                    if (selectedTarget.legacy) {
+                        const table = await request('post', 'captain/v1/tables/temporary', { branchId: branch(), tableorder_value: selectedTarget.tableorder_value });
+                        if (!table.id) throw new Error(text('Please retry'));
+                        destination = table.id;
+                    }
+                }
                 if (!intent && destination === 'custom' && !merge) {
                     const label = String(form.get('customTable') || '').trim().toUpperCase();
                     if (!/^[A-Z0-9]{1,6}$/.test(label)) throw new Error('Use up to 6 letters or numbers for the table.');
@@ -161,7 +216,7 @@
                 // Older desktop custom labels may have orders but no floor row.
                 // Register within this branch before seating enrollment; the endpoint
                 // reuses existing rows, so a retry cannot create a duplicate table.
-                if (!sale.seating_request_id && !sale.table_id &&
+                if (!intent && !sale.seating_request_id && !sale.table_id &&
                     /^[A-Z0-9]{1,6}$/.test(String(sale.table_number || '')) &&
                     !floor.tables.some(t => String(t.tableorder_value) === String(sale.table_number))) {
                     await request('post', 'captain/v1/tables/temporary', {
@@ -171,7 +226,7 @@
                 intent = intent || { branchId: branch(), orderId: saleId,
                     request_id: id, tableIds: [destination], primaryId: destination,
                     guests: sale.person_count, dineType: sale.dine_type || 'Dine-in',
-                    ...(merge ? { targetOrderId: floor.tables.find(t => t.id === form.get('table'))?.orders[0]?.id } : {}) };
+                    ...(merge ? { targetOrderId: selectedTarget?.orders[0]?.id } : {}) };
                 localStorage.setItem(key, JSON.stringify(intent));
                 d.querySelector('select').disabled = true;
                 if (customInput) customInput.disabled = true;
@@ -337,6 +392,7 @@
     }
     const style = document.createElement('style');
     style.textContent = '.kot-workspace-tools{padding:16px;background:#f6f8fc;border:1px solid #e1e7f0;border-radius:12px;margin:12px 15px}.kot-workspace-actions{display:flex;flex-wrap:wrap;gap:8px}.kot-workspace-kitchen{margin-top:16px}.kot-workspace-kitchen summary{cursor:pointer;font-weight:600}.kot-workspace-round{padding-top:14px}.kot-workspace-line{display:flex;align-items:center;gap:16px;padding:12px 0;border-top:1px solid #e1e7f0}.kot-workspace-line>div{flex:1;min-width:0}.kot-workspace-line small{display:block;overflow-wrap:anywhere}.kot-workspace-dialog{width:min(640px,94vw);max-height:90vh;border:1px solid #dce3ed;border-radius:16px;padding:0;color:#17314f;background:#fff;box-shadow:0 24px 80px #10203c33}.kot-workspace-dialog::backdrop{background:#14243866}.kot-workspace-dialog form{display:flex;flex-direction:column;max-height:88vh}.kot-workspace-dialog header,.kot-workspace-dialog footer{display:flex;gap:12px;align-items:center;padding:18px 24px;border-bottom:1px solid #e1e7f0}.kot-workspace-dialog h3{flex:1;margin:0;font-size:20px}.kot-workspace-dialog section{padding:20px 24px;overflow:auto}.kot-workspace-dialog label{display:block;margin:0 0 16px}.kot-workspace-dialog input:not([type=checkbox]),.kot-workspace-dialog textarea,.kot-workspace-dialog select{display:block;width:100%;min-height:42px;padding:10px;border:1px solid #c7d3e3;border-radius:8px;margin-top:6px;color:inherit;background:#fff;font:inherit}.kot-workspace-dialog input:focus,.kot-workspace-dialog textarea:focus,.kot-workspace-dialog select:focus{outline:2px solid #0969da;outline-offset:2px}.kot-workspace-dialog button{min-height:40px;border:1px solid #ccd7e6;border-radius:8px;padding:8px 16px;background:#fff;color:inherit;cursor:pointer}.kot-workspace-dialog .primary{background:#0969da;color:#fff;border-color:#0969da}.kot-workspace-dialog footer{justify-content:flex-end;border-top:1px solid #e1e7f0}.kot-workspace-dialog fieldset{border:1px solid #e1e7f0;border-radius:10px;padding:16px;margin:16px 0}.kot-workspace-dialog legend{font-size:16px;width:auto;padding:0 8px}.kot-workspace-dialog .fields{display:grid;grid-template-columns:1fr 2fr;gap:16px}.kot-workspace-dialog [role=alert]{color:#b42318;margin:0;padding:0 24px}.kot-workspace-dialog .check{display:flex;gap:8px;align-items:center}#kot_details_panel{min-width:0}#kot_tables_grid>*{min-width:0}#kot_table_details .btn-group{flex-wrap:wrap}#kot_table_details .kot-item table{table-layout:auto}@media(max-width:767px){.kot-workspace-line{flex-wrap:wrap}.kot-workspace-line>div{flex-basis:100%}}';
+    style.textContent += '.kot-workspace-dialog{background:var(--theme-card-bg,#fff);color:var(--theme-text-primary,#17314f);border-color:var(--theme-border-color,#dce3ed)}.kot-workspace-dialog input:not([type=checkbox]),.kot-workspace-dialog textarea,.kot-workspace-dialog select,.kot-workspace-dialog button{background:var(--theme-card-bg,#fff);border-color:var(--theme-border-color,#dce3ed)}.kot-workspace-dialog .primary{background:var(--theme-btn-primary-bg,#0969da);border-color:var(--theme-btn-primary-bg,#0969da);color:var(--theme-btn-primary-text,#fff)}.kot-workspace-dialog header,.kot-workspace-dialog footer{border-color:var(--theme-border-color,#dce3ed)}.kot-workspace-dialog button:disabled{opacity:.5;cursor:default}.kot-merge-source,.kot-merge-preview{display:flex;flex-direction:column;gap:6px;border:1px solid var(--theme-border-color,#dce3ed);border-radius:10px;padding:14px;margin-bottom:16px;background:var(--theme-table-header-bg,#f7f9fc)}.kot-merge-preview{border-color:var(--theme-primary-color,#0969da)}.kot-merge-preview[hidden]{display:none}.kot-merge-source span,.kot-merge-preview span,.kot-merge-help{font-size:13px;color:var(--theme-text-muted,#66758a)}.kot-merge-source strong,.kot-merge-preview strong{font-size:19px}.kot-merge-help{line-height:1.5;margin:10px 0 0}';
     document.head.append(style);
     const layout = document.createElement('style');
     layout.textContent = '#kot_tables_grid .kot-table-box{aspect-ratio:auto!important;min-height:74px!important;margin-bottom:0!important}#kot_tables_grid .kot-table-box h2{font-size:26px!important;color:#125b42!important}#kot_table_details .kot-item>div>div:last-child{flex-wrap:wrap;gap:12px}#kot_table_details .kot-item .btn{min-height:38px}#infobar-settings-sidebar-table-selection.sidebarview,#infobar-settings-sidebar-table-selection.sidebarshow{width:min(1040px,100vw)}#infobar-settings-sidebar-table-selection .contentbar-new{padding:24px}#infobar-settings-sidebar-table-selection .card{border-radius:14px;box-shadow:none}#infobar-settings-sidebar-table-selection .card-header{background:transparent;text-align:left!important}#infobar-settings-sidebar-table-selection .table_select{height:64px!important;border-width:1px!important}#infobar-settings-sidebar-table-selection .table_select>div{border:0!important}#infobar-settings-sidebar-table-selection .person_select{height:56px!important;flex-direction:row!important;gap:8px}#infobar-settings-sidebar-table-selection .person_select>div{display:none}#infobar-settings-sidebar-table-selection #custom_table_input,#infobar-settings-sidebar-table-selection #kot_custom_person_input{height:56px!important}#infobar-settings-sidebar-table-selection #kot_order_next_btn{background:#0869da;color:#fff;border-color:#0869da;min-height:44px}@media(max-width:767px){#kot_tables_grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}#infobar-settings-sidebar-table-selection .contentbar-new{padding:12px}}';
