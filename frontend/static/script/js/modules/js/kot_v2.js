@@ -484,7 +484,7 @@
     }
     function draftHTML() {
         const d = state.draft;
-        return `<section class="kv2-order kv2-editor"><div class="kv2-customer"><strong>${esc(d.customer?.name || 'Walk-in customer')}</strong>${button('Choose customer', 'customer')}</div><header><div><h2>${PosnicPro.i18n.t('lang_add_items', 'Add items')} <span class="kv2-editor-table">/ ${esc(d.table || 'Takeaway')}</span></h2><small><lang class="lang_search_all_dishes_by_name_barcode_or_quick">Search all dishes by name, barcode or quick code. F2 to focus.</lang></small></div>${d.intent ? button('Review latest order', 'rebase') : button('Discard draft', 'discard')}</header><div class="kv2-draft-body"><section class="kv2-catalogue"><div class="kv2-search-row"><div class="kv2-searchbar"><input id="kv2-search" type="search" autocomplete="off" placeholder="Search name, SKU, barcode or quick code" data-t-placeholder="lang_search_name_sku_barcode_or_quick_code"><div id="kv2-results"></div></div>${button('Item not on menu', 'offmenu')}</div><div class="kv2-category-chips">${categoriesHTML()}</div><div class="kv2-menu">${catalogueHTML()}</div></section><aside class="kv2-review"><div class="kv2-review-heading"><h3><lang class="lang_review_this_round">Review this round</lang></h3></div><p class="kv2-review-hint"><lang class="lang_nothing_is_sent_until_you_choose_send_to_k">Nothing is sent until you choose Send to kitchen.</lang></p><div class="kv2-basket">${d.items.length ? d.items.map((l, i) => `<div class="kv2-draft-line"><div class="kv2-draft-name"><strong>${esc(l.name)}</strong><span>${esc(money(l.price * l.quantity))}</span></div>${l.item_description ? `<small>${esc(l.item_description)}</small>` : ''}<div class="kv2-stepper">${button('−', 'qty', `data-index="${i}" data-delta="-1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} −"`)}<b>${l.quantity}</b>${button('+', 'qty', `data-index="${i}" data-delta="1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} +"`)}${button('Note', 'draftNote', `data-index="${i}"`)}${button(PosnicPro.i18n.t('lang_remove','Remove'), 'removeDraft', `data-index="${i}" class="kv2-remove"`)}</div></div>`).join('') : `<div class="kv2-basket-empty">${icon('takeaway')}<p><lang class="lang_add_item">Add item</lang></p></div>`}</div><div class="kv2-round-total"><span><lang class="lang_amount">Amount</lang></span><strong>${esc(money(d.items.reduce((sum, l) => sum + Number(l.price) * Number(l.quantity), 0)))}</strong></div></aside></div><footer>${button(PosnicPro.i18n.t('lang_cancel', 'Cancel'), 'discard')}<small>${d.items.reduce((n, l) => n + Number(l.quantity), 0)} <lang class="lang_items">Items</lang></small>${button(d.intent ? PosnicPro.i18n.t('lang_retry_saved_send', 'Retry saved send') : PosnicPro.i18n.t('lang_kot_workspace_send', 'Send to kitchen'), 'send', `class="primary" ${d.items.length ? '' : 'disabled'}`)}</footer></section>`;
+        return `<section class="kv2-order kv2-editor"><div class="kv2-customer"><strong>${esc(d.customer?.name || 'Walk-in customer')}</strong>${button('Choose customer', 'customer')}</div><header><div><h2>${PosnicPro.i18n.t('lang_add_items', 'Add items')} <span class="kv2-editor-table">/ ${esc(d.table || 'Takeaway')}</span></h2><small><lang class="lang_search_all_dishes_by_name_barcode_or_quick">Search all dishes by name, barcode or quick code. F2 to focus.</lang></small></div>${d.intent ? button('Review latest order', 'rebase') : button('Discard draft', 'discard')}</header>${d.tableConflict ? `<div class="kv2-table-conflict" role="status"><span>${esc(d.tableConflict)} Your items are kept.</span>${button('Change table', 'changeDraftTable')}</div>` : ''}<div class="kv2-draft-body"><section class="kv2-catalogue"><div class="kv2-search-row"><div class="kv2-searchbar"><input id="kv2-search" type="search" autocomplete="off" placeholder="Search name, SKU, barcode or quick code" data-t-placeholder="lang_search_name_sku_barcode_or_quick_code"><div id="kv2-results"></div></div>${button('Item not on menu', 'offmenu')}</div><div class="kv2-category-chips">${categoriesHTML()}</div><div class="kv2-menu">${catalogueHTML()}</div></section><aside class="kv2-review"><div class="kv2-review-heading"><h3><lang class="lang_review_this_round">Review this round</lang></h3></div><p class="kv2-review-hint"><lang class="lang_nothing_is_sent_until_you_choose_send_to_k">Nothing is sent until you choose Send to kitchen.</lang></p><div class="kv2-basket">${d.items.length ? d.items.map((l, i) => `<div class="kv2-draft-line"><div class="kv2-draft-name"><strong>${esc(l.name)}</strong><span>${esc(money(l.price * l.quantity))}</span></div>${l.item_description ? `<small>${esc(l.item_description)}</small>` : ''}<div class="kv2-stepper">${button('−', 'qty', `data-index="${i}" data-delta="-1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} −"`)}<b>${l.quantity}</b>${button('+', 'qty', `data-index="${i}" data-delta="1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} +"`)}${button('Note', 'draftNote', `data-index="${i}"`)}${button(PosnicPro.i18n.t('lang_remove','Remove'), 'removeDraft', `data-index="${i}" class="kv2-remove"`)}</div></div>`).join('') : `<div class="kv2-basket-empty">${icon('takeaway')}<p><lang class="lang_add_item">Add item</lang></p></div>`}</div><div class="kv2-round-total"><span><lang class="lang_amount">Amount</lang></span><strong>${esc(money(d.items.reduce((sum, l) => sum + Number(l.price) * Number(l.quantity), 0)))}</strong></div></aside></div><footer>${button(PosnicPro.i18n.t('lang_cancel', 'Cancel'), 'discard')}<small>${d.items.reduce((n, l) => n + Number(l.quantity), 0)} <lang class="lang_items">Items</lang></small>${button(d.intent ? PosnicPro.i18n.t('lang_retry_saved_send', 'Retry saved send') : PosnicPro.i18n.t('lang_kot_workspace_send', 'Send to kitchen'), 'send', `class="primary" ${d.items.length ? '' : 'disabled'}`)}</footer></section>`;
     }
     function render() {
         const desktopTools = document.getElementById('posnic-desktop-fab');
@@ -726,6 +726,7 @@
             if (occupiedTable) {
                 delete d.intent;
                 d.key = id();
+                d.tableConflict = error.message;
                 persist();
                 render();
                 notify(error.message);
@@ -775,31 +776,69 @@
         await refresh();
         if (d.saleId && P.kotPrint) P.kotPrint.afterSave(d.saleId);
     }
-    function newOrder(takeaway = false, tableId = '') {
-        if (resolveDraftBeforeSwitch(() => newOrder(takeaway, tableId))) return;
+    async function newOrder(takeaway = false, tableId = '', movingDraft = null) {
+        if (movingDraft && (state.draft !== movingDraft || movingDraft.intent || movingDraft.saleId)) return;
+        if (!movingDraft && resolveDraftBeforeSwitch(() => newOrder(takeaway, tableId))) return;
+        if (!takeaway) {
+            const floor = await api('get', 'captain/v1/tables', { branchId: branch() });
+            state.floor = floor.tables || [];
+        }
         const free = state.floor.filter((t) => t.status === 'available');
         const modal = dialog(
             takeaway ? PosnicPro.i18n.t('lang_new_takeaway', 'New takeaway') : PosnicPro.i18n.t('lang_start_a_table_order', 'Start a table order'),
             `<div class="kv2-seating-layout">${takeaway ? '' : `<div class="kv2-table-section"><h4>${icon('table')} <lang class="lang_choose_a_table">Choose a table</lang></h4><div class="kv2-choices kv2-seat-grid">${[...state.floor].sort((a, b) => Number(b.status === 'available') - Number(a.status === 'available')).map((t) => `<label class="kv2-seat ${t.status !== 'available' ? 'occupied' : ''}"><input type="radio" name="table" value="${esc(t.id)}" ${tableId === t.id && t.status === 'available' ? 'checked' : ''} ${t.status !== 'available' ? 'disabled' : ''}>${icon('table')}<strong>${esc(t.tableorder_value)}</strong><small>${esc(t.status)}</small></label>`).join('')}</div><label>Other table number<input name="custom" maxlength="30" placeholder="For example, Garden 2" data-t-placeholder="lang_for_example_garden_2"></label></div>`}<div class="kv2-guest-section"><h4>${icon('guests')} <lang class="lang_kot_workspace_covers">Number of guests</lang></h4>${takeaway ? '' : `<div class="kv2-choices kv2-guest-grid">${[1, 2, 3, 4, 5, 6, 8, 10].map((n) => `<button type="button" data-guests="${n}" aria-pressed="${n === 2}" class="${n === 2 ? 'primary' : ''}">${icon('guests')}<strong>${n}</strong></button>`).join('')}</div>`}<label>${takeaway ? PosnicPro.i18n.t('lang_guests_optional', 'Guests (optional)') : PosnicPro.i18n.t('lang_guest_count', 'Guest count')}<input name="guests" inputmode="numeric" type="number" value="${takeaway ? 0 : 2}" min="${takeaway ? 0 : 1}" max="1000" required></label></div></div>`,
 
-            (form) => {
-                const t = free.find((t) => t.id === form.get('table')),
+            async (form) => {
+                let t = free.find((t) => t.id === form.get('table'));
+                const
                     custom = String(form.get('custom') || '').trim();
                 if (!takeaway && !t && !custom) throw new Error('Choose a table or enter its number.');
                 if (custom.toUpperCase() === 'TA') throw new Error('Use Takeaway for an order to go.');
+                if (!takeaway) {
+                    const floor = await api('get', 'captain/v1/tables', { branchId: branch() });
+                    state.floor = floor.tables || [];
+                    const name = custom || t?.tableorder_value;
+                    const current = state.floor.find(row => custom
+                        ? String(row.tableorder_value).trim().toLowerCase() === custom.toLowerCase()
+                        : String(row.id) === String(t?.id));
+                    if ((current && current.status !== 'available') || (!custom && !current))
+                        throw new Error(`Table ${name} is no longer available. Choose another table.`);
+                    if (custom && !current) {
+                        const orders = await api('get', 'sales', { page: 1, limit: 1, filters: JSON.stringify({
+                            table_number: custom, sale_process: 'KOT',
+                            payment_status: { $nin: ['Paid', 'Cancelled'] },
+                            order_state: { $nin: ['rejected', 'cancelled'] },
+                        }) });
+                        if (orders.list?.some(order => String(order.table_number).trim().toLowerCase() === custom.toLowerCase()))
+                            throw new Error(`Table ${name} already has an open order. Choose another table.`);
+                    }
+                    t = current || (custom ? null : t);
+                }
+                if (movingDraft && (state.draft !== movingDraft || movingDraft.intent))
+                    throw new Error('The draft changed. Close this window and try again.');
                 state.sale = null;
                 state.selected = null;
-                startDraft({
+                const seating = {
                     saleId: null,
                     table: custom || t?.tableorder_value || '',
-                    tableId: custom ? '' : t?.id || '',
+                    tableId: t?.id || '',
                     guests: Number(form.get('guests')),
                     dineType: takeaway ? 'Take away' : 'Dine-in',
-                });
+                };
+                if (movingDraft) {
+                    Object.assign(movingDraft, seating, { key: id() });
+                    delete movingDraft.tableConflict;
+                    persist();
+                    render();
+                } else startDraft(seating);
             },
             'Choose dishes',
         );
         modal.classList.add('kv2-seating-dialog');
+        if (movingDraft) {
+            modal.querySelector('h3').textContent = 'Change table';
+            modal.querySelector('[name=guests]').value = movingDraft.guests || 2;
+        }
         modal.addEventListener('click', (e) => {
             const b = e.target.closest('[data-guests]');
             if (b) {
@@ -1010,14 +1049,15 @@
                         }
                     };
                 } else if (b.dataset.sale) await select(b.dataset.sale);
-                else newOrder(false, b.dataset.table);
+                else await newOrder(false, b.dataset.table);
             } else if (a === 'category') {
                 state.category = b.dataset.category; state.catalogue = []; state.catalogueLoaded = false; render();
             } else if (a === 'pick') {
                 const item = state.catalogue[Number(b.dataset.index)];
                 chooseProduct(item);
-            } else if (a === 'new') newOrder();
-            else if (a === 'takeaway') newOrder(true);
+            } else if (a === 'new') await newOrder();
+            else if (a === 'takeaway') await newOrder(true);
+            else if (a === 'changeDraftTable') await newOrder(false, '', state.draft);
             else if (a === 'add') startDraft();
             else if (a === 'offmenu') await offmenu();
             else if (a === 'send') await send();
