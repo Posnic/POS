@@ -191,8 +191,8 @@
   "Ask Posnic could not load the answer.": [
     "src/controllers/ask-posnic.controller.js"
   ],
-  "Ask Posnic is available": [
-    "src/controllers/ask-posnic.controller.js"
+  "Ask Posnic is off. An owner can enable it in Settings → Features → Ask Posnic.": [
+    "src/services/ask-posnic-feature.js"
   ],
   "Ask Posnic preferences": [
     "src/controllers/ask-posnic.controller.js"
@@ -1238,6 +1238,9 @@
   ],
   "New password and confirmation are required": [
     "src/controllers/users.controller.js"
+  ],
+  "Next step": [
+    "src/controllers/ask-posnic.controller.js"
   ],
   "No API key is saved for the AI provider": [
     "src/services/ai.service.js"

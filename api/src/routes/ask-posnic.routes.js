@@ -19,6 +19,9 @@ router.use(
   })
 );
 router.get('/status', controller.status.bind(controller));
+router.get('/preferences', controller.preferences.bind(controller));
+router.put('/preferences', controller.savePreferences.bind(controller));
+router.use(require('../services/ask-posnic-feature').requireEnabled);
 router.get('/recovery', controller.recoveryStatus.bind(controller));
 router.post(
   '/ask',
@@ -45,8 +48,6 @@ router.post('/actions/confirm', controller.confirmDraft.bind(controller));
 router.get('/actions/:id', controller.actionOutcome.bind(controller));
 router.post('/actions/:id/resume', controller.resumeDraft.bind(controller));
 router.get('/supplier-messages', controller.supplierMessages.bind(controller));
-router.get('/preferences', controller.preferences.bind(controller));
-router.put('/preferences', controller.savePreferences.bind(controller));
 router.get('/schedules', controller.listSchedules.bind(controller));
 router.post('/schedules', controller.saveSchedule.bind(controller));
 router.delete('/schedules/:id', controller.removeSchedule.bind(controller));

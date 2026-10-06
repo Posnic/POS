@@ -136,6 +136,7 @@ describe('off by default', () => {
          either way, and absent means on for every switch in that list. It
          is still unusable: no provider and no key. */
       enabled: true,
+      askPosnicEnabled: false,
     });
   });
 });

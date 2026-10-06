@@ -1,5 +1,41 @@
 # Ask Posnic operations
 
+## Ask Posnic opt-in and answer handling — 6 October 2026
+
+Ask Posnic now has its own `ask_posnic_enabled` feature flag. Missing values mean
+off, including existing shops that have never explicitly enabled this new flag.
+An owner enables it in **Settings → Features → Ask Posnic** and saves the Features
+form. Knowledge, providers, role permissions and usage controls stay on the
+existing AI settings page; the feature card contains only the switch.
+
+The main Ask Posnic navigation, Stock Counts shortcut and Open Ask Posnic link
+are hidden while off. A direct chat URL explains how to enable it. The API rejects
+operational requests with `ASK_POSNIC_DISABLED`; scheduled reports recheck the flag
+before generation and delivery. Background knowledge indexing also checks the
+flag before starting paid work. Already dispatched provider calls cannot be
+cancelled retroactively. Sources, history and provider keys are not deleted.
+The separate `ai_enabled` switch still controls model assistance used by other
+modules; enabling item descriptions does not enable Ask Posnic.
+
+Answer improvements in this change are deliberately bounded:
+
+- Read-only report follow-ups such as “What about yesterday?” reuse the previous
+  report subject and re-read the authorized shop data for the new period.
+- Context comes only from this user's stored, unexpired conversation in the same
+  shop and outlet. With storage off or no suitable prior report, Ask Posnic asks
+  which report is intended. It never repeats a prior write action.
+- Current stock and receivables are not relabelled as historical reports.
+- Greetings and missing/unsupported answers offer relevant next-step buttons.
+  A request for a clearer answer asks what step or figure needs checking instead
+  of repeating the same excerpt. Explicitly irrelevant retrieved sources are
+  not displayed as verified answers after the model rejects them.
+- Unsupported commands such as “Delete all sales” do not fall through to a sales
+  total. They perform no mutation and ask for the intended workflow.
+
+This does not add unrestricted actions, generic conversation memory, live voice
+checkout, arbitrary product-level reports or answers without supporting shop
+data/documentation. Those remain separate work in the AI/voice unification plan.
+
 Ask Posnic is mounted inside the normal POS at `#/askposnic`. It uses the
 authenticated shop and branch context; callers cannot select another tenant in
 their question or request body.

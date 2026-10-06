@@ -52,6 +52,8 @@ Mounted at `/ask-posnic`. Source: `api/src/routes/ask-posnic.routes.js`.
 | Method | Path | Body documented | Handler |
 |---|---|---|---|
 | GET | `/ask-posnic/status` | — | `controller` |
+| GET | `/ask-posnic/preferences` | — | `controller` |
+| PUT | `/ask-posnic/preferences` | — | `controller` |
 | GET | `/ask-posnic/recovery` | — | `controller` |
 | POST | `/ask-posnic/ask` | — | `controller` |
 | GET | `/ask-posnic/documents` | — | `controller` |
@@ -70,8 +72,6 @@ Mounted at `/ask-posnic`. Source: `api/src/routes/ask-posnic.routes.js`.
 | GET | `/ask-posnic/actions/:id` | — | `controller` |
 | POST | `/ask-posnic/actions/:id/resume` | — | `controller` |
 | GET | `/ask-posnic/supplier-messages` | — | `controller` |
-| GET | `/ask-posnic/preferences` | — | `controller` |
-| PUT | `/ask-posnic/preferences` | — | `controller` |
 | GET | `/ask-posnic/schedules` | — | `controller` |
 | POST | `/ask-posnic/schedules` | — | `controller` |
 | DELETE | `/ask-posnic/schedules/:id` | — | `controller` |

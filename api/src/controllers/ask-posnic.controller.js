@@ -3,6 +3,7 @@
 const dashboardController = require('./dashboard.controller');
 const sessionFilterUtil = require('../utils/session-filter.util');
 const assistant = require('../services/ask-posnic.service');
+const conversation = require('../services/ask-posnic-conversation');
 const platform = require('../services/ask-posnic-platform.service');
 const ai = require('../services/ai.service');
 const PurchaseOrderRepository = require('../repositories/purchase-order.repository');
@@ -135,10 +136,11 @@ class AskPosnicController {
   }
 
   async status(req, res) {
-    const [configuration, usage, preferences] = await Promise.all([
+    const [configuration, usage, preferences, enabled] = await Promise.all([
       ai.settingsFor(aiContext(req)),
       platform.usage(req),
       platform.getPreferences(req),
+      require('../services/ask-posnic-feature').enabled(aiContext(req)),
     ]);
     const aiMode = ai.modeFor(configuration);
     let billingUnavailable = false;
@@ -158,8 +160,9 @@ class AskPosnicController {
         : null;
     return res.json({
       type: 'success',
-      message: 'Ask Posnic is available',
+      message: enabled ? 'Ask Posnic is available' : 'Ask Posnic is off',
       data: {
+        enabled,
         mode: aiMode === 'managed' ? 'managed' : aiMode === 'own_key' ? 'own_key' : 'direct',
         capabilities: [
           'sales',
@@ -219,8 +222,16 @@ class AskPosnicController {
       }
 
       const preferences = await platform.getPreferences(req);
-      const intent = assistant.intentFrom(question);
-      const period = assistant.periodFrom(question, req.body?.period, preferences.default_period);
+      const followup = conversation.needsContext(question)
+        ? conversation.resolve(
+            question,
+            await platform.previousAnswer(req, req.body?.conversation_id)
+          )
+        : {};
+      const intent = followup.intent || assistant.intentFrom(question);
+      const period =
+        followup.period ||
+        assistant.periodFrom(question, req.body?.period, preferences.default_period);
       const capability = intent.endsWith('_action')
         ? 'actions'
         : ['receipt_help', 'offline_help', 'refund_help', 'features_help', 'unknown'].includes(
@@ -237,6 +248,22 @@ class AskPosnicController {
       const conversationId = await platform.saveMessage(req, req.body?.conversation_id, 'user', {
         question,
       });
+      if (
+        followup.clarification ||
+        /^\s*(?:hi|hello|hey|good morning|good evening)[!.?\s]*$/i.test(question)
+      ) {
+        const response = followup.clarification
+          ? { answer: followup.clarification, suggestions: followup.suggestions }
+          : conversation.fallback(question);
+        const data = {
+          ...response,
+          intent: 'clarification',
+          mode: 'direct',
+          conversation_id: conversationId,
+        };
+        await platform.saveMessage(req, conversationId, 'assistant', data);
+        return res.json({ type: 'success', message: 'Next step', data });
+      }
       const help = assistant.answerHelp(intent);
       if (intent === 'features_help') {
         const rows = require('../services/ask-posnic-feature-catalog').catalog(
@@ -346,6 +373,7 @@ class AskPosnicController {
           .catch(() => console.warn('[ask-posnic] published knowledge sync unavailable'));
         let matches = await platform.retrieve(req, question);
         let answer;
+        let reason;
         let mode = 'retrieval';
         if (matches[0]?.exact) {
           answer = excerptAnswer(matches);
@@ -357,7 +385,8 @@ class AskPosnicController {
             preferences,
             aiContext(req)
           );
-          answer = generated.text;
+          reason = generated.reason;
+          answer = generated.mode === 'refusal' ? null : generated.text;
           mode = generated.mode || 'retrieval';
         }
         const current = await platform.currentMatches(req, matches);
@@ -366,18 +395,24 @@ class AskPosnicController {
           mode = 'retrieval';
         }
         matches = current;
+        // An explicitly irrelevant source must not become an answer just because
+        // retrieval found a keyword match. Keep the evidence checks intact.
+        if (reason === 'unsupported') matches = [];
         if (!answer && matches.length) answer = excerptAnswer(matches);
         if (!answer && help) {
           answer = help.answer;
           mode = 'direct';
         }
-        if (!answer)
-          answer =
-            'I could not verify that from an approved Posnic source. Try a sales, profit, low-stock, receipt, offline, or refund question.';
+        const clarification = !answer ? conversation.fallback(question, reason) : null;
+        if (clarification) {
+          answer = clarification.answer;
+          mode = 'clarification';
+        }
         const data = {
           intent: 'help',
           period,
           answer,
+          ...(clarification ? { suggestions: clarification.suggestions } : {}),
           metrics: [],
           mode,
           conversation_id: conversationId,

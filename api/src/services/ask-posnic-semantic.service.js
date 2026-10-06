@@ -165,6 +165,7 @@ async function indexBatch(db, dependencies = {}) {
       const settings = await ai.settingsFor(context);
       if (
         !settings.enabled ||
+        !settings.askPosnicEnabled ||
         ai.modeFor(settings) !== 'managed' ||
         settings.provider !== 'bedrock'
       )

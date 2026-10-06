@@ -636,11 +636,25 @@ test('restaurant feedback defaults on but preserves explicit branch and account 
     [{}, true],
     [{ branchRow: { restaurant_playful_feedback: false } }, false],
     [{ accountRow: { restaurant_playful_feedback: false } }, false],
-    [{ branchRow: { restaurant_playful_feedback: true }, accountRow: { restaurant_playful_feedback: false } }, true],
-    [{ branchRow: { restaurant_playful_feedback: null }, accountRow: { restaurant_playful_feedback: false } }, false],
+    [
+      {
+        branchRow: { restaurant_playful_feedback: true },
+        accountRow: { restaurant_playful_feedback: false },
+      },
+      true,
+    ],
+    [
+      {
+        branchRow: { restaurant_playful_feedback: null },
+        accountRow: { restaurant_playful_feedback: false },
+      },
+      false,
+    ],
   ]) {
     seed(rows);
     mockCollections.branch_channels = mockCollections.branch_features;
-    expect((await repo.resolveGroup('channels', ctx)).data.values.restaurant_playful_feedback).toBe(expected);
+    expect((await repo.resolveGroup('channels', ctx)).data.values.restaurant_playful_feedback).toBe(
+      expected
+    );
   }
 });

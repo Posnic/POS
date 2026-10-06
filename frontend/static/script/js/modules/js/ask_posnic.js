@@ -1,5 +1,17 @@
 PosnicPro.askposnic = {
     conversationId: null,
+    enabled: false,
+    setEnabled: function (enabled) {
+        this.enabled = enabled === true;
+        $('#askposnic .ask-workspace').toggle(this.enabled);
+        $('#ask_posnic_disabled').toggle(!this.enabled);
+        $('#ask_feature_notice').toggle(!this.enabled);
+        $('[data-ask-entry]').toggle(this.enabled);
+        if (!this.enabled) {
+            this.checkout = null;
+            $('#ask_checkout_payment').remove();
+        }
+    },
     _chrome: function () {
         PosnicPro.HideSideBarModal();
         $('.page_loader,#osk-container').hide();
@@ -11,6 +23,7 @@ PosnicPro.askposnic = {
     },
     showDataTablePage: function () {
         this.settingsOpen = false;
+        this.setEnabled(false);
         this._chrome();
         this.bind();
         this.loadStatus();
@@ -60,6 +73,7 @@ PosnicPro.askposnic = {
         if (data && data.scope) details += '<span class="ask-posnic-source">' + (Array.isArray(data.scope.outlets) ? 'Outlets: ' + self.esc(data.scope.outlets.map(function (row) { return row.outlet; }).join(', ')) : 'Outlet: ' + self.esc(data.scope.outlet || 'Current outlet')) + (data.scope.from ? ' · ' + self.esc(new Date(data.scope.from).toLocaleString()) + ' to ' + self.esc(new Date(data.scope.to).toLocaleString()) : '') + (data.scope.as_of ? ' · as of ' + self.esc(new Date(data.scope.as_of).toLocaleString()) : '') + '</span>';
         if (data && data.citations && data.citations.length) details += '<span class="ask-posnic-source">Sources: ' + data.citations.map(function (citation, index) { return '<button type="button" class="btn btn-sm btn-link ask-citation" data-id="' + self.esc(citation.document_id) + '" data-revision="' + self.esc(citation.revision) + '" data-chunk="' + self.esc(citation.chunk) + '">[' + (index + 1) + '] ' + self.esc(citation.title + ' · ' + citation.revision + (Array.isArray(citation.pages) && citation.pages.length ? ' · PDF ' + citation.pages.join(', ') : '')) + '</button>'; }).join(' ') + '</span>';
         if (data && data.link) details += '<a class="ask-posnic-source" href="' + self.esc(data.link) + '">Open source page</a>';
+        if (data && Array.isArray(data.suggestions)) details += '<div class="ask-posnic-suggestions">' + data.suggestions.slice(0, 3).map(function (question) { return '<button type="button" class="ask-followup" data-question="' + self.esc(question) + '">' + self.esc(question) + '</button>'; }).join('') + '</div>';
         if (data && data.intent === 'low_stock') details += '<button type="button" class="btn btn-sm btn-primary-rgba ask-posnic-action" id="ask_posnic_prepare_po"><lang class="lang_prepare_purchase_order_draft">Prepare purchase order draft</lang></button>';
         if (data && data.action) details += '<button type="button" class="btn btn-sm btn-primary-rgba ask-posnic-action ask-posnic-draft-action" data-action="' + self.esc(data.action.type) + '" data-source="' + self.esc(data.action.source || '') + '" data-lookback-days="' + self.esc(data.action.lookback_days || '') + '" data-coverage-days="' + self.esc(data.action.coverage_days || '') + '">' + self.esc(data.action.label) + '</button>';
         if (kind === 'answer' && data && data.intent) details += '<span class="ask-posnic-feedback"><button type="button" class="btn btn-sm btn-link ask-feedback" data-rating="helpful" data-intent="' + self.esc(data.intent) + '">Helpful</button><button type="button" class="btn btn-sm btn-link ask-feedback" data-rating="not_helpful" data-intent="' + self.esc(data.intent) + '">Not helpful</button></span>';
@@ -71,7 +85,7 @@ PosnicPro.askposnic = {
     },
     ask: function (question) {
         var self = this;
-        if (self.asking) return;
+        if (self.asking || !self.enabled) return;
         self.asking = true;
         $('#ask_posnic_progress').prop('hidden', false);
         $('#ask_posnic_form button,#ask_new_conversation,#ask_load_history,#ask_delete_history,#ask_history_list button').prop('disabled', true);
@@ -105,6 +119,7 @@ PosnicPro.askposnic = {
         var self = this;
         PosnicPro.get('ask-posnic/status', function (response) {
             var data = response && response.data;
+            self.setEnabled(!!data && data.enabled === true);
             self.settingsLoading = false;
             if (!data) {
                 $('#ask_posnic_admin').hide();
@@ -415,6 +430,7 @@ PosnicPro.askposnic = {
             self.ask(question);
         });
         $('#ask_posnic_suggestions').on('click', 'button', function () { self.ask($(this).data('question')); });
+        $('#ask_posnic_thread').on('click', '.ask-followup', function () { self.ask($(this).attr('data-question')); });
         $('#ask_new_conversation').on('click', function () { if (!self.asking) self.resetConversation(); });
         $('#ask_enable_all_actions').on('click', function () { $('.ask-allowed-action').prop('checked', true); $('#ask_pref_actions').prop('checked', true); });
         $(window).on('hashchange.askCheckout', function () {
