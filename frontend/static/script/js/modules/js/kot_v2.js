@@ -12,6 +12,7 @@
         sales: [],
         selected: null,
         sale: null,
+        paymentMessage: '',
         filter: 'active',
         tab: 'order',
         pending: false,
@@ -189,6 +190,7 @@
             state.draft = null;
             state.sale = null;
             state.selected = null;
+            state.paymentMessage = '';
             state.sales = [];
             state.floor = [];
             state.catalogue = [];
@@ -260,7 +262,7 @@
             state.sales.push(...more.list);
         }
         if (!state.draft && !state.sales.some((sale) => String(sale._id) === String(state.selected))) {
-            state.selected = state.sales[0]?._id || null;
+            state.selected = null;
             state.sale = null;
         }
         if (state.selected) {
@@ -314,6 +316,7 @@
     }
     async function select(saleId) {
         if (resolveDraftBeforeSwitch(() => select(saleId), saleId)) return;
+        state.paymentMessage = '';
         state.expanded = false;
         state.selected = saleId;
         state.sale = await api('get', 'sales/' + encodeURIComponent(saleId));
@@ -428,7 +431,7 @@
     }
     function emptyOrderHTML() {
         const idle = !state.sales.length;
-        return `<section class="kv2-order kv2-welcome"><div class="kv2-illustration" aria-hidden="true"><svg viewBox="0 0 240 180"><ellipse cx="120" cy="155" rx="83" ry="12" fill="#edf3fa" stroke="none"/><circle cx="120" cy="79" r="66" fill="#f0f6ff" stroke="none"/><g class="kv2-cloche"><path d="M66 103h108M75 99a45 45 0 0 1 90 0M113 49h14M120 49v6"/><path d="M63 112h114l-9 10H72Z" fill="#e1edff"/></g><path d="M76 132h88M87 132v20m66-20v20"/><g class="kv2-steam"><path d="M104 32q-6-7 0-14m16 12q-6-7 0-14m16 16q-6-7 0-14"/></g><circle cx="182" cy="54" r="17" fill="#e5f5ef" stroke="none"/><path d="m175 54 5 5 9-11" stroke="#4d9b80"/></svg></div><h2><lang class="${idle ? 'lang_no_active_orders_2' : 'lang_choose_a_table'}">${idle ? PosnicPro.i18n.t('lang_no_active_orders_2', 'No active orders') : PosnicPro.i18n.t('lang_choose_a_table', 'Choose a table')}</lang></h2><p><lang class="${idle ? 'lang_start_a_table_order' : 'lang_choose_an_active_table_or_start_a_new_orde'}">${idle ? PosnicPro.i18n.t('lang_start_a_table_order', 'Start a table order') : PosnicPro.i18n.t('lang_choose_an_active_table_or_start_a_new_orde', 'Choose an active table, or start a new order.')}</lang></p><div class="kv2-welcome-actions">${button(PosnicPro.i18n.t('lang_new_order', 'New order'), 'new', 'class="primary"')}${button(PosnicPro.i18n.t('lang_takeaway', 'Takeaway'), 'takeaway')}</div></section>`;
+        return `<section class="kv2-order kv2-welcome"><div class="kv2-illustration" aria-hidden="true"><svg viewBox="0 0 240 180"><ellipse cx="120" cy="155" rx="83" ry="12" fill="#edf3fa" stroke="none"/><circle cx="120" cy="79" r="66" fill="#f0f6ff" stroke="none"/><g class="kv2-cloche"><path d="M66 103h108M75 99a45 45 0 0 1 90 0M113 49h14M120 49v6"/><path d="M63 112h114l-9 10H72Z" fill="#e1edff"/></g><path d="M76 132h88M87 132v20m66-20v20"/><g class="kv2-steam"><path d="M104 32q-6-7 0-14m16 12q-6-7 0-14m16 16q-6-7 0-14"/></g><circle cx="182" cy="54" r="17" fill="#e5f5ef" stroke="none"/><path d="m175 54 5 5 9-11" stroke="#4d9b80"/></svg></div><h2>${esc(state.paymentMessage ? P.i18n.t('lang_captain_payment_recorded', 'Payment recorded') : idle ? P.i18n.t('lang_no_active_orders_2', 'No active orders') : P.i18n.t('lang_choose_a_table', 'Choose a table'))}</h2>${state.paymentMessage ? '<p role="status">' + esc(state.paymentMessage) + '</p>' : ''}<p>${esc(idle ? P.i18n.t('lang_start_a_table_order', 'Start a table order') : 'Select a table on the left to view its order.')}</p><div class="kv2-welcome-actions">${button(PosnicPro.i18n.t('lang_new_order', 'New order'), 'new', 'class="primary"')}${button(PosnicPro.i18n.t('lang_takeaway', 'Takeaway'), 'takeaway')}</div></section>`;
     }
     function orderHTML() {
         const s = state.sale;
@@ -513,6 +516,7 @@
         if (tools && !/^#\/kot(?:_v2)?(?:\/|$)/.test(location.hash)) document.body.append(tools);
     });
     function startDraft(meta) {
+        state.paymentMessage = '';
         state.expanded = false;
         if (!state.draft)
             state.draft = {
@@ -1189,6 +1193,14 @@
     window.addEventListener('captain:payment-recorded', (event) => {
         if (root()?.offsetParent) {
             event.preventDefault();
+            const paidTable = state.sale
+                ? state.sale.dine_type === 'Take away' ? 'Takeaway ' + (state.sale.takeaway_number || state.sale.token_id || '') : 'Table ' + state.sale.table_number
+                : '';
+            state.paymentMessage = (paidTable ? paidTable + ' · ' : '') + (event.detail?.message || 'Payment recorded');
+            state.selected = null;
+            state.sale = null;
+            state.expanded = false;
+            render();
             P.alert('success', event.detail?.message || 'Payment recorded');
             P.restaurantFeedback?.play('payment');
             run(refresh);

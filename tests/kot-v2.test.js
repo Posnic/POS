@@ -70,24 +70,24 @@ test('an empty draft does not block a different table',async()=>{
  const h=setup();h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');h.app.state.filter='all';await h.click('expand');h.w.document.querySelector('[data-table="t7"]').click();await flush();assert.equal(h.app.state.draft,null);assert.ok(h.w.document.querySelector('.kv2-seating-dialog'));assert.equal(h.errors.length,0);h.close();
 });
 
-test('opening table orders automatically selects an active order and shows its details',async()=>{
- const h=setup();h.app.showDataTablePage();await flush();assert.equal(h.app.state.selected,h.sale._id);assert.equal(h.app.state.sale._id,h.sale._id);assert.equal(h.app.state.expanded,false);assert.ok(h.w.document.querySelector('[data-action=add]'));h.close();
+test('opening table orders waits for an explicit table selection',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();assert.equal(h.app.state.selected,null);assert.equal(h.app.state.sale,null);assert.ok(h.w.document.querySelector('.kv2-welcome'));await h.click('table');assert.equal(h.app.state.selected,h.sale._id);assert.ok(h.w.document.querySelector('[data-action=add]'));h.close();
 });
 
 test('sad chef plays only after a successful order cancellation',async()=>{
- const h=setup();h.app.showDataTablePage();await flush();
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('table');
  const cancel=async()=>{await h.click('actions');h.w.document.querySelector('[data-action=cancel]').click();await flush();const d=h.w.document.querySelector('dialog');d.querySelector('[name=reason]').value='Duplicate order';d.querySelector('[type=submit]').click();await flush();};
  setup.failure=true;try{await cancel();assert.equal(h.effects.includes('cancelled'),false);h.w.document.querySelector('dialog [data-close]').click();}finally{setup.failure=false;}
  await cancel();assert.equal(h.effects.filter(e=>e==='cancelled').length,1);assert.equal(h.calls.filter(c=>c.url==='sales/updateOrder').at(-1).body.status,'cancelled');h.close();
 });
 
 test('confirmed order conflict unlocks and reconciles the draft instead of trapping saved retries',async()=>{
- const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});const key=h.app.state.draft.key;
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('table');await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});const key=h.app.state.draft.key;
  setup.failure=true;setup.failureResponse={message:'order_changed'};try{await h.click('send');assert.equal(h.app.state.draft.intent,undefined);assert.notEqual(h.app.state.draft.key,key);assert.equal(h.app.state.draft.items.length,1);assert.equal(h.effects.includes('sent'),false);await h.click('removeDraft');assert.equal(h.app.state.draft.items.length,0);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
 });
 
 test('customer entry waits for pending-send recovery and opens automatically after rejection is reconciled',async()=>{
- const h=setup();h.w.$.fn.autocomplete=function(){return this;};h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});h.app.state.draft.intent={url:'sales/updateOrder',body:{}};
+ const h=setup();h.w.$.fn.autocomplete=function(){return this;};h.app.showDataTablePage();await flush();await h.click('table');await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});h.app.state.draft.intent={url:'sales/updateOrder',body:{}};
  await h.click('customer');assert.equal(h.w.document.querySelector('[name=phone]'),null);assert.match(h.w.document.querySelector('dialog').textContent,/previous submission/);
  setup.failure=true;setup.failureResponse={message:'order_changed'};try{h.w.document.querySelector('dialog [type=submit]').click();await flush();assert.ok(h.w.document.querySelector('[name=phone]'));assert.equal(h.app.state.draft.items.length,1);assert.equal(h.app.state.draft.intent,undefined);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
 });
@@ -95,7 +95,7 @@ test('customer entry waits for pending-send recovery and opens automatically aft
 
 test('occupied-table refusal unlocks both new and restored sends so Cancel exits without another write',async()=>{
  for(const restored of [false,true]){
-  const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+  const h=setup();h.app.showDataTablePage();await flush();await h.click('table');await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
   const d=h.app.state.draft;delete d.saleId;d.table='6';d.dineType='Dine-in';const key=d.key;
   if(restored)d.intent={url:'sales/qrOrder',body:{idempotencyKey:key}};
   setup.failure=true;setup.failureResponse={message:'Table 6 already has an open order. Add to it, or settle it first.'};
@@ -104,7 +104,7 @@ test('occupied-table refusal unlocks both new and restored sends so Cancel exits
 });
 
 test('Cancel recovery closes after an occupied-table rejection and allows leaving the retained draft',async()=>{
- const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('table');await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
  const d=h.app.state.draft;delete d.saleId;d.table='6';d.intent={url:'sales/qrOrder',body:{idempotencyKey:d.key}};
  setup.failure=true;setup.failureResponse={message:'Table 6 already has an open order. Add to it, or settle it first.'};
  try{await h.click('discard');h.w.document.querySelector('dialog[open] [type=submit]').click();await flush();assert.equal(h.w.document.querySelector('dialog[open]'),null);assert.equal(d.intent,undefined);await h.click('discard');assert.equal(h.app.state.draft,null);}finally{setup.failure=false;setup.failureResponse=null;h.close();}
@@ -112,7 +112,7 @@ test('Cancel recovery closes after an occupied-table rejection and allows leavin
 
 
 test('off-menu entry checks a saved send before collecting fields or creating a product',async()=>{
- const h=setup();h.app.showDataTablePage();await flush();await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('table');await h.click('add');h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
  h.app.state.draft.intent={url:'sales/updateOrder',body:{}};
  await h.click('offmenu');assert.equal(h.w.document.querySelector('dialog[open] [name=price]'),null);assert.match(h.w.document.querySelector('dialog[open]').textContent,/previous submission/);assert.equal(h.calls.some(c=>c.url==='items/instanceItemInsert'),false);
  setup.failure=true;setup.failureResponse={message:'order_changed'};
@@ -120,7 +120,7 @@ test('off-menu entry checks a saved send before collecting fields or creating a 
 });
 
 test('actions opens an anchored icon list and Escape restores trigger focus',async()=>{
- const h=setup();h.app.showDataTablePage();await flush();await h.click('actions');const menu=h.w.document.querySelector('#kv2-actions-menu');assert.ok(menu);assert.equal(h.w.document.querySelector('dialog'),null);assert.equal(menu.querySelectorAll('button svg').length,5);assert.ok(menu.querySelector('[data-action=cancel].kv2-danger'));menu.dispatchEvent(new h.w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));assert.equal(h.w.document.activeElement.dataset.action,'guests');menu.dispatchEvent(new h.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(h.w.document.querySelector('#kv2-actions-menu'),null);assert.equal(h.w.document.activeElement.dataset.action,'actions');h.close();
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('table');await h.click('actions');const menu=h.w.document.querySelector('#kv2-actions-menu');assert.ok(menu);assert.equal(h.w.document.querySelector('dialog'),null);assert.equal(menu.querySelectorAll('button svg').length,5);assert.ok(menu.querySelector('[data-action=cancel].kv2-danger'));menu.dispatchEvent(new h.w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));assert.equal(h.w.document.activeElement.dataset.action,'guests');menu.dispatchEvent(new h.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(h.w.document.querySelector('#kv2-actions-menu'),null);assert.equal(h.w.document.activeElement.dataset.action,'actions');h.close();
 });
 
 test('kitchen payment success dismisses the receipt in favour of a message and animation',async()=>{
@@ -129,4 +129,16 @@ test('kitchen payment success dismisses the receipt in favour of a message and a
  const event=new h.w.CustomEvent('captain:payment-recorded',{cancelable:true,detail:{message:'Payment recorded · Change to return: ₹20.00'}});
  assert.equal(h.w.dispatchEvent(event),false);await flush();
  assert.ok(h.errors.includes('Payment recorded · Change to return: ₹20.00'));assert.ok(h.effects.includes('payment'));h.close();
+});
+
+test('confirmed payment leaves a persistent success state until the cashier chooses a table',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('table');
+ Object.defineProperty(h.w.document.querySelector('#kot_v2'),'offsetParent',{get:()=>h.w.document.body});
+ h.w.dispatchEvent(new h.w.CustomEvent('captain:payment-recorded',{cancelable:true,detail:{remaining:0,message:'Payment recorded'}}));await flush();
+ for(let i=0;i<2;i++){
+  await h.app.refresh();assert.equal(h.app.state.selected,null);assert.equal(h.app.state.sale,null);
+  assert.match(h.w.document.querySelector('.kv2-welcome').textContent,/Table 6.*Payment recorded/);
+  assert.equal(h.w.document.querySelector('[data-action=pay]'),null);
+ }
+ assert.equal(h.app.state.sales.length,1);await h.click('table');assert.equal(h.app.state.selected,h.sale._id);assert.equal(h.app.state.paymentMessage,'');assert.ok(h.w.document.querySelector('[data-action=pay]'));h.close();
 });
