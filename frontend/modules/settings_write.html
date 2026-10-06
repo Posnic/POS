@@ -2994,7 +2994,19 @@
                                                         <label class="custom-control-label" for="ai_enabled"></label>
                                                     </div>
                                                 </div>
-                                                <p class="module-desc"><lang class="lang_ai_module_desc">Writes item descriptions for you. You bring your own AI account and pay that provider directly; we charge nothing. Set it up on the AI assistance page.</lang></p>
+                                                <p class="module-desc">Model assistance for item descriptions and other enabled workflows. Configure your connection and usage limits in AI settings.</p>
+                                            </div>
+
+                                            <div class="module-card" style="--fg-accent: #6d28d9;">
+                                                <div class="module-card-head">
+                                                    <span class="module-ico"><i class="feather icon-message-circle"></i></span>
+                                                    <div class="module-title">Ask Posnic</div>
+                                                    <div class="custom-control custom-switch module-switch">
+                                                        <input type="checkbox" class="custom-control-input" id="ask_posnic_enabled" name="ask_posnic_enabled">
+                                                        <label class="custom-control-label" for="ask_posnic_enabled"><span class="sr-only">Enable Ask Posnic</span></label>
+                                                    </div>
+                                                </div>
+                                                <p class="module-desc">Optional help, shop insights and confirmed actions. Off by default. Enable it to show Ask Posnic; manage its knowledge and access in AI settings.</p>
                                             </div>
 
                                             <div class="module-card" style="--fg-accent: #57534e;">
@@ -3600,7 +3612,8 @@
                         <div class="tab-pane fade" id="v-pills-ai" role="tabpanel" aria-labelledby="v-pills-ai-tab">
 <p class="text-muted" id="ask_settings_access" role="status"><lang class="lang_ask_checking_access">Checking access to Ask Posnic settings…</lang></p>
 <div id="ask_posnic_admin" class="card ask-settings-card" style="display:none"><div class="card-body">
-<div class="ask-settings-heading"><div><h5><lang class="lang_ask_posnic">Ask Posnic</lang></h5><p class="text-muted mb-0"><lang class="lang_ask_settings_hint">Manage how Ask Posnic helps your team. These settings apply to your shop account.</lang></p></div><a class="btn btn-outline-primary" href="#/askposnic"><lang class="lang_ask_open_chat">Open Ask Posnic</lang></a></div>
+<div id="ask_feature_notice" class="alert alert-info">Ask Posnic is off. Enable it in <a href="#/settings/modules">Features</a> to use questions, insights, actions and schedules.</div>
+<div class="ask-settings-heading"><div><h5><lang class="lang_ask_posnic">Ask Posnic</lang></h5><p class="text-muted mb-0"><lang class="lang_ask_settings_hint">Manage how Ask Posnic helps your team. These settings apply to your shop account.</lang></p></div><a class="btn btn-outline-primary" data-ask-entry style="display:none" href="#/askposnic"><lang class="lang_ask_open_chat">Open Ask Posnic</lang></a></div>
 <div class="ask-settings-tabs" role="tablist" aria-label="Ask Posnic settings" data-t-aria-label="lang_ask_settings_label"><button type="button" role="tab" id="ask-tab-general" data-ask-tab="general" aria-controls="ask-settings-general" aria-selected="true" tabindex="0"><lang class="lang_ask_tab_general">General</lang></button><button type="button" role="tab" id="ask-tab-knowledge" data-ask-tab="knowledge" aria-controls="ask-settings-knowledge" aria-selected="false" tabindex="-1"><lang class="lang_ask_tab_knowledge">Knowledge</lang></button><button type="button" role="tab" id="ask-tab-access" data-ask-tab="access" aria-controls="ask-settings-access" aria-selected="false" tabindex="-1"><lang class="lang_ask_tab_access">Access &amp; actions</lang></button><button type="button" role="tab" id="ask-tab-usage" data-ask-tab="usage" aria-controls="ask-settings-usage" aria-selected="false" tabindex="-1"><lang class="lang_ask_tab_usage">AI &amp; usage</lang></button><button type="button" role="tab" id="ask-tab-schedules" data-ask-tab="schedules" aria-controls="ask-settings-schedules" aria-selected="false" tabindex="-1"><lang class="lang_ask_tab_schedules">Schedules</lang></button></div>
 <form id="ask_posnic_preferences_form"></form>
 <section id="ask-settings-general" class="ask-settings-panel" role="tabpanel" aria-labelledby="ask-tab-general"><h5><lang class="lang_ask_tab_general">General</lang></h5><p class="text-muted"><lang class="lang_ask_general_hint">Set the language, report period and conversation preferences for your team.</lang></p><div class="form-row"><div class="form-group col-md-6"><label for="ask_pref_language"><lang class="lang_response_language">Response language</lang></label><select class="form-control" id="ask_pref_language" form="ask_posnic_preferences_form"><option value="auto"><lang class="lang_automatic">Automatic</lang></option><option value="en"><lang class="lang_english">English</lang></option></select></div>

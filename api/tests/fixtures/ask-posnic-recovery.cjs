@@ -1,4 +1,6 @@
 'use strict';
+// Recovery fixtures exercise enabled shops. Disabling the feature is covered by the feature gate suite.
+require.cache[require.resolve('../../src/services/ask-posnic-feature')] = { exports: { enabled: async () => true } };
 const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const os = require('node:os');

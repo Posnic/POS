@@ -131,7 +131,7 @@ test('the sidebar has a way in, gated on the switch', () => {
      reachable only by scrolling the settings rail and hoping. */
   assert.match(sidebar, /id="manage_li_ai"/, 'the AI row is gone from the sidebar');
   assert.match(sidebar, /href="#\/settings\/ai"/, 'the AI row points nowhere');
-  assert.match(core, /\$\('#manage_li_ai'\)\.toggle\(on\('ai_enabled'\)\)/,
+  assert.match(core, /\$\('#manage_li_ai'\)\.toggle\(on\('ai_enabled'\) \|\| s.ask_posnic_enabled === true\)/,
     'the AI sidebar row is not gated on the switch');
 });
 

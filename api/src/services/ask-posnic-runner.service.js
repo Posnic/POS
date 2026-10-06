@@ -20,6 +20,13 @@ const isOwner = (user) =>
   );
 
 async function authorize(db, schedule) {
+  if (
+    !(await require('./ask-posnic-feature').enabled({
+      licenseId: schedule.license,
+      branchId: schedule.branch_id,
+    }))
+  )
+    throw new Error('Ask Posnic is disabled for this outlet.');
   const user = await db.collection('users').findOne({
     _id: idMatch(schedule.user_id),
     license: idMatch(schedule.license),
