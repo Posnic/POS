@@ -1729,7 +1729,7 @@
             PosnicPro.get('setting/getPaymentAll', function (response) {
                 PosnicPro.sales._loadingPaymentMethods = false;
                 if (!response || response.type !== 'success' || !Array.isArray(response.data)) { failMethods(); return; }
-                PosnicPro.configPaymentType = response.data.map(function (row) { return { payment_value: row.payment_value }; });
+                PosnicPro.configPaymentType = response.data.map(function (row) { return { payment_value: row.payment_value, enabled: row.enabled !== false }; });
                 if (window.location.hash !== paymentRoute || PosnicPro.sales.editSaleId !== paymentSale) return;
                 PosnicPro.sales.openTenderModel(true);
             }, failMethods);
@@ -2199,6 +2199,11 @@
             if (PosnicPro.askposnic) PosnicPro.askposnic.checkoutPaymentReady();
         }
     },
+    paymentMethodEnabled: function (name) {
+        const key = String(name || '').trim().toLowerCase();
+        const rows = (PosnicPro.configPaymentType || []).filter(row => String(row.payment_value || '').trim().toLowerCase() === key);
+        return rows.length ? rows.some(row => row.enabled !== false) : key === 'cash';
+    },
     showPaymentMode: function () {
         $("#payment_id").html("");
         var sales_payment_mode = PosnicPro.sales.EditRecentSaleParams.payment_mode;
@@ -2215,7 +2220,7 @@
             '<input type="radio" class="payment_mode" name="payment_mode" id="Cash" value="Cash" checked="checked" style="display: none;"> <lang class="lang_cash_title">Cash</lang>' +
             '</label>' +
             '</div>';
-        $('#payment_id').append(paymentMethod);
+        if (PosnicPro.sales.paymentMethodEnabled('Cash')) $('#payment_id').append(paymentMethod);
         if (localStorage.getItem("payment_gateway") === 'true') {
             let paymentMethod = '<div class="col-lg-4 col-md-2 col-xs-12">' +
                 '<label class="btn btn-block btn-payment-mode Qrpay_active payment_detail change_active save_enable qr_active qr_btn ' + active_qrpay_mode + ' ">' +
@@ -2243,6 +2248,7 @@
         {
             $.each(SalePaymentType, function (key, val) {
                 var payment_mode_active = val.payment_value + '_active';
+                if (val.enabled === false) { return; }
                 if (renderedModes[modeKey(val.payment_value)]) { return; }
                 renderedModes[modeKey(val.payment_value)] = true;
                 if (sales_payment_mode !== val.payment_value) {
@@ -2256,7 +2262,7 @@
                 }
             });
         }
-        if (sales_payment_mode !== '' && sales_payment_mode !== null && sales_payment_mode !== undefined && sales_payment_mode !== 'Cash') {
+        if (sales_payment_mode !== '' && sales_payment_mode !== null && sales_payment_mode !== undefined && sales_payment_mode !== 'Cash' && PosnicPro.sales.paymentMethodEnabled(sales_payment_mode)) {
             var edit_payment_mode_active = sales_payment_mode + '_active';
             let paymentMethod = '<div class="col-lg-4 col-md-2 col-xs-12">' +
                 '<label class="btn btn-block btn-payment-mode payment_detail change_active save_enable active ' + edit_payment_mode_active + ' ">' +
@@ -2270,6 +2276,9 @@
             '<button type="button" class="btn btn-payment-mode btn-block change_active" onclick="return PosnicPro.payment.triggerModules();" ><i class="feather icon-plus mr-2"></i>Add</button>' +
             '</div>';
         $('#payment_id').append(addMethod);
+        if (!$('#payment_id .payment_mode:checked').length) {
+            $('#payment_id .payment_mode').first().prop('checked', true).closest('label').addClass('active');
+        }
 
     },
 
@@ -2631,7 +2640,7 @@
         // ✅ Determine which payment method should be active
         // For edit: activate the first payment method that has a value
         // For new: always activate Cash
-        let activePaymentMethod = 'Cash'; // Default for new sales
+        let activePaymentMethod = PosnicPro.sales.paymentMethodEnabled('Cash') ? 'Cash' : (PosnicPro.configPaymentType || []).find(row => row.enabled !== false)?.payment_value || ''; // First enabled method
         if (Object.keys(multi_payment).length > 0) {
             // Find first payment method with a value > 0
             for (let key in multi_payment) {
@@ -2711,7 +2720,7 @@
         }
 
         // --- Cash ---
-        addPaymentBlock('Cash', 'Cash', normalizeKey(activePaymentMethod) === normalizeKey('Cash'));
+        if (PosnicPro.sales.paymentMethodEnabled('Cash')) addPaymentBlock('Cash', 'Cash', normalizeKey(activePaymentMethod) === normalizeKey('Cash'));
         // --- QR / Razorpay ---
         if (localStorage.getItem("payment_gateway") === 'true') {
             addPaymentBlock('Qrpay', 'Razorpay', normalizeKey(activePaymentMethod) === normalizeKey('Qrpay') || normalizeKey(activePaymentMethod) === normalizeKey('Razorpay'));
@@ -2721,7 +2730,7 @@
         let SalePaymentType = PosnicPro.configPaymentType;
         if (SalePaymentType && SalePaymentType.length !== 0) {
             $.each(SalePaymentType, function (key, val) {
-                addPaymentBlock(val.payment_value, val.payment_value, normalizeKey(activePaymentMethod) === normalizeKey(val.payment_value));
+                if (val.enabled !== false) addPaymentBlock(val.payment_value, val.payment_value, normalizeKey(activePaymentMethod) === normalizeKey(val.payment_value));
             });
         }
 

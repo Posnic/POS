@@ -65,6 +65,9 @@ async function context(req, requireEnabled = true) {
     .findOne({ _id: oid(t.branchId), license: oid(t.licenseId) });
   if (!branch) fail('Branch not found.', 403);
   const config = settings(branch);
+  config.paymentMethods = (await require('./payment-methods').read(req.db, branch)).map((m) =>
+    m.toLowerCase()
+  );
   if (requireEnabled && !config.enabled)
     fail('Enable Mobile POS in Settings → Features on the desktop.', 403);
   return {
@@ -205,8 +208,9 @@ async function bootstrap(req) {
       customerWrite: allowed(req.user, 'customer'),
       itemWrite: false,
       priceOverride: false,
-      manualUpi: c.config.upiAccounts.length > 0,
+      manualUpi: c.config.paymentMethods.includes('upi') && c.config.upiAccounts.length > 0,
     },
+    paymentMethods: c.config.paymentMethods,
     upiAccounts: c.config.upiAccounts,
     defaultUpiAccountId: c.config.defaultUpiAccountId || undefined,
     capabilities: {
@@ -384,9 +388,18 @@ function validateSale(sale, grant, c, grants = new Map()) {
   if (total <= 0 || total > 99999999999 || total !== sale.total || tax !== sale.tax)
     fail('Sale totals do not match.', 409);
   const p = sale.payment;
+  if (grant.shop.paymentMethods && !grant.shop.paymentMethods.includes(p?.method))
+    fail('Payment method is disabled.', 403);
   if (p?.method === 'cash') {
     if (!Number.isSafeInteger(p.received) || p.received < total || p.change !== p.received - total)
       fail('Cash payment does not match.');
+  } else if (p?.method === 'card') {
+    if (
+      !grant.shop.paymentMethods?.includes('card') ||
+      p.status !== 'staff-confirmed' ||
+      (p.reference !== undefined && (typeof p.reference !== 'string' || p.reference.length > 100))
+    )
+      fail('Card confirmation is invalid.', 403);
   } else if (p?.method === 'upi') {
     if (grant.shop.permissions.manualUpi !== true) fail('UPI confirmation is not permitted.', 403);
     const account = grant.shop.upiAccounts.find(
@@ -615,7 +628,8 @@ async function finish(db, intent, c, deps = {}) {
       items_subtotal: amount - tax,
       tax,
       payment_status: 'Paid',
-      payment_mode: sale.payment.method === 'cash' ? 'Cash' : 'Upi',
+      payment_mode:
+        sale.payment.method === 'cash' ? 'Cash' : sale.payment.method === 'card' ? 'Card' : 'Upi',
       partial_balance: amount,
       payment_pending: 0,
       paid_amount: amount,
@@ -634,7 +648,9 @@ async function finish(db, intent, c, deps = {}) {
             sale.payment.account.vpa +
             ' ' +
             String(sale.payment.reference || '').slice(0, 100)
-          : '',
+          : sale.payment.method === 'card'
+            ? 'Staff-confirmed Card: ' + String(sale.payment.reference || '').slice(0, 100)
+            : '',
       sales_description: 'Mobile POS ' + sale.receipt,
       printing_address: c.branch.printing_address || '',
     });

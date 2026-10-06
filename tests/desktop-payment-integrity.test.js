@@ -15,7 +15,7 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   win.PosnicPro = { local: { get: () => 'Rs.' }, configPaymentType: [{ payment_value: 'Upi' }], alert: (_type, message) => { win.lastError = message; }, sales: {
     extraDiscount: { sale_new_tot: 262.5 }, EditRecentSaleParams: { sales_total: 262.5, payment_status: status, multi_payment: payments }, paymentOnlyMode: true
   } };
-  for (const name of ['sub', 'showMultiPaymentMode', 'getPaymentObject', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
+  for (const name of ['sub', 'paymentMethodEnabled', 'showPaymentMode', 'showMultiPaymentMode', 'getPaymentObject', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
     const start = source.indexOf('    ' + name + ': function');
     const end = source.indexOf('\n    },', start);
     assert.ok(start >= 0 && end > start);
@@ -426,4 +426,23 @@ test('successful-sale reset clears charges before the next customer is billed', 
     tax:0,tax_type:'exclusive',discount_amount:0,discount_percentage:0,quantity:1,item_quantity:1,unit:'pc'});
   sales.calculation.salesTableRowCart();
   assert.equal(sales.extraDiscount.sale_new_tot,100);
+});
+
+
+test('disabled Cash and UPI are absent from single and split tender choices', () => {
+  const { dom, win, $, sales } = setup('Unpaid', {});
+  win.PosnicPro.configPaymentType = [
+    {payment_value:'Cash',enabled:false},
+    {payment_value:'Card',enabled:true},
+    {payment_value:'Upi',enabled:false},
+  ];
+  sales.showPaymentMode();
+  assert.equal($('#Cash').length,0);
+  assert.equal($('#Upi').length,0);
+  assert.equal($('#Card').prop('checked'),true);
+  sales.showMultiPaymentMode();
+  assert.equal($('#cash_input').length,0);
+  assert.equal($('#upi_input').length,0);
+  assert.equal($('#card_input').length,1);
+  dom.window.close();
 });

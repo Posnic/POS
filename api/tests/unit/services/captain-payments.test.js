@@ -721,3 +721,20 @@ test.each([
   await expect(service.prepare(req())).rejects.toMatchObject({ status: 409 });
   expect(await db.collection('captain_payment_plans').countDocuments()).toBe(0);
 });
+
+test('desktop and captain both honor the master disabled methods', async () => {
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { payment_methods_initialized: true } });
+  await db.collection('payment_method').insertMany([
+    { branch_id: branch, license, payment_field: 'Cash', enabled: false },
+    { branch_id: branch, license, payment_field: 'Card', enabled: true },
+    { branch_id: branch, license, payment_field: 'Upi', enabled: false },
+  ]);
+  expect((await service.scope(req())).options.methods).toEqual(['Card']);
+  expect((await service.scope({ ...req(), captainPaymentDesktop: true })).options.methods).toEqual([
+    'Card',
+  ]);
+  const plan = await service.prepare(req());
+  await expect(service.record(pay(plan))).rejects.toThrow();
+});

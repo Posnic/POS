@@ -3615,8 +3615,19 @@ PosnicPro.payment = {
                     let deleted = '<a href="#/settings/payment/' + row.payment_id + '/delete" id="setting_payment_delete_' + row.payment_id + '" data-toggle="tooltip" title="Delete Payment" data-t-title="lang_delete_payment" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete" data-paymentvalue="' + row.payment_value + '" ><i class="feather icon-trash"></i></a>';
                     let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td><td width="10%" class="text-right">' + row.payment_value + '</td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
                     $('#view_payment').children('tbody').append(trow);
+                    const toggle = $('<input type="checkbox">').prop('checked', row.enabled !== false);
+                    const label = $('<label class="mr-3"></label>').append(toggle, document.createTextNode(' ' + PosnicPro.i18n.t('lang_enabled', 'Enabled')));
+                    table.find('tbody tr:last td:last').prepend(label);
+                    toggle.on('change', function () {
+                        const enabled = this.checked;
+                        toggle.prop('disabled', true);
+                        PosnicPro.put({url: 'setting/editPaymentForm', data: JSON.stringify({payment_id: row.payment_id, payment_value: row.payment_value, enabled})}, function (response) {
+                            if (response.type !== 'success') PosnicPro.alert(response.type, response.message);
+                            PosnicPro.payment.paymentTable();
+                        }, function () { toggle.prop('checked', !enabled).prop('disabled', false); });
+                    });
                     PosnicPro.configPaymentType[i] = {
-                        payment_value: row.payment_value
+                        payment_value: row.payment_value, enabled: row.enabled !== false
                     };
                 }
                 // Only refresh payment UI if we're on the sales page
