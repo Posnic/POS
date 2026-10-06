@@ -1,4 +1,4 @@
-/* Restaurant-only, opt-in feedback. Effects never own focus or intercept input. */
+/* Restaurant-only feedback, respecting saved preferences. Never intercepts input. */
 (function () {
     'use strict';
     const P = PosnicPro;
@@ -92,9 +92,16 @@
                 ).join('');
         }
         const width = kind === 'sent' ? 300 : kind === 'cancelled' ? 160 : kind === 'payment' ? 140 : kind === 'served' ? 80 : 40;
-        el.style.left = Math.max(8, (innerWidth - width) / 2) + 'px';
-        el.style.top = 'auto';
-        el.style.bottom = 'max(24px, env(safe-area-inset-bottom))';
+        if (el.classList.contains('small-feedback')) {
+            const cart = document.querySelector('#kot_v2 .kv2-review-heading') || panel;
+            const anchor = cart.getBoundingClientRect();
+            el.style.left = Math.max(8, Math.min(innerWidth - 48, anchor.right - 48)) + 'px';
+            el.style.top = Math.max(8, Math.min(innerHeight - 48, anchor.top)) + 'px';
+        } else {
+            el.style.left = Math.max(8, (innerWidth - width) / 2) + 'px';
+            el.style.top = 'auto';
+            el.style.bottom = 'max(24px, env(safe-area-inset-bottom))';
+        }
         document.body.append(el);
         timer = setTimeout(clear, kind === 'cancelled' ? 1800 : kind === 'sent' ? 2100 : kind === 'payment' ? 1800 : kind === 'served' ? 1200 : 950);
     }
