@@ -334,6 +334,7 @@
         cancel: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M8 8l8 8m0-8-8 8',
         table: 'M4 8h16v9H4z M6 17v4m12-4v4M8 4h8',
         guests: 'M8 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5 8v-2a5 5 0 0 1 10 0v2m3-14a3 3 0 0 1 0 6m1 3a4 4 0 0 1 4 4',
+        search: 'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14m5 12 6 6',
         move: 'M3 6h7v7H3z M5 13v4m3-4v4m6-8h7m-3-3 3 3-3 3',
         merge: 'M3 4h6v6H3z M15 4h6v6h-6z M6 10v4l6 6 6-6v-4m-9 7 3 3 3-3',
         transfer: 'M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4',
@@ -608,12 +609,18 @@
         const d = state.draft,
             s = state.sale,
             c = d?.customer || { id: s?.customer_id, name: s?.customer_name || '', phone: s?.customer_phone || '' };
-        let selected = c.id ? { id: c.id } : null;
+        let selected = c.id ? { ...c } : null;
+        const walkIn = !c.id && (!c.name || /^walk[ -]in customer$/i.test(c.name));
+        let mode = !c.id && !walkIn ? 'new' : 'find';
         const modal = dialog(
-            'Customer',
-            `<label>Find an existing customer<input type="search" id="kv2-customer-search" placeholder="Name or mobile number" data-t-placeholder="lang_name_or_mobile_number" autocomplete="off"></label><label>Name<input name="name" maxlength="80" value="${esc(c.name)}"></label><label>Mobile number<input name="phone" type="tel" maxlength="40" value="${esc(c.phone)}"></label><p><lang class="lang_leave_both_blank_for_a_walk_in_customer_ca">Leave both blank for a walk-in customer / cash bill.</lang></p>`,
+            'Choose customer',
+            `<div class="kv2-customer-modes" role="group" aria-label="Customer options"><button type="button" data-customer-mode="find">${icon('search')}Find customer</button><button type="button" data-customer-mode="new">${icon('guests')}＋ Add new customer</button><button type="button" data-customer-mode="walkin">Walk-in customer</button></div><div data-customer-panel="find"><label for="kv2-customer-search">Find an existing customer</label><div class="kv2-customer-search">${icon('search')}<input type="search" id="kv2-customer-search" placeholder="Name or mobile number" data-t-placeholder="lang_name_or_mobile_number" autocomplete="off"></div><p class="kv2-customer-help" data-search-status role="status">Search by name or mobile, then select a result.</p><div class="kv2-customer-selected" data-selected-customer></div></div><div data-customer-panel="new"><h4>New customer details</h4><p class="kv2-customer-help">Add customer details for this order.</p><label>Name<input name="name" maxlength="80" value="${esc(walkIn ? '' : c.name)}" autocomplete="name"></label><label>Mobile number <small>(optional)</small><input name="phone" type="tel" maxlength="40" value="${esc(c.phone)}" autocomplete="tel"></label></div><div data-customer-panel="walkin"><h4>Walk-in customer</h4><p>No customer details needed for this order.</p></div>`,
             async (f) => {
-                const value = { name: f.get('name'), phone: f.get('phone') };
+                if (mode === 'find' && !selected) throw new Error('Select a customer from the search results.');
+                const value = mode === 'walkin' ? { name: '', phone: '' } : mode === 'find'
+                    ? { name: selected.name || '', phone: selected.phone || '' }
+                    : { name: String(f.get('name') || '').trim(), phone: String(f.get('phone') || '').trim() };
+                if (mode === 'new' && !value.name) throw new Error('Enter the new customer name.');
                 if (d && !d.saleId) {
                     if (d.intent) throw new Error('Confirm the saved send first.');
                     d.customer = { ...value, id: selected?.id };
@@ -636,6 +643,25 @@
                 }
             },
         );
+        modal.classList.add('kv2-customer-dialog');
+        modal.querySelector('footer [data-close]').textContent = 'Close';
+        const paintMode = () => {
+            modal.querySelectorAll('[data-customer-panel]').forEach(panel => { panel.hidden = panel.dataset.customerPanel !== mode; });
+            modal.querySelectorAll('[data-customer-mode]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.customerMode === mode)));
+            const submit = modal.querySelector('[type=submit]');
+            submit.textContent = mode === 'walkin' ? 'Use walk-in customer' : mode === 'new' ? 'Add to order' : 'Use this customer';
+            submit.disabled = mode === 'find' && !selected;
+            modal.querySelector('[data-selected-customer]').textContent = selected ? selected.name + (selected.phone ? ' · ' + selected.phone : '') : '';
+            modal.querySelector('[data-selected-customer]').hidden = !selected;
+        };
+        modal.querySelectorAll('[data-customer-mode]').forEach(control => control.onclick = () => {
+            mode = control.dataset.customerMode;
+            selected = null;
+            modal.querySelector('[role=alert]').textContent = '';
+            paintMode();
+            modal.querySelector(mode === 'find' ? '#kv2-customer-search' : mode === 'new' ? '[name=name]' : '[type=submit]').focus();
+        });
+        paintMode();
         $(modal)
             .find('#kv2-customer-search')
             .autocomplete({
@@ -643,29 +669,27 @@
                 deferRequestBy: 180,
                 lookup: (query, done) => {
                     api('get', 'customers/getCustomersAjaxList', { query, limit: 20 })
-                        .then((r) =>
+                        .then((r) => {
+                            modal.querySelector('[data-search-status]').textContent = r.suggestions?.length ? 'Select a customer below.' : 'No customers found. Choose Add new customer.';
                             done({
                                 suggestions: (r.suggestions || []).map((c) => ({
                                     value: c.name + ' · ' + (c.phone || ''),
                                     data: c,
                                 })),
-                            }),
-                        )
+                            });
+                        })
                         .catch(() => done({ suggestions: [] }));
                 },
                 onSelect: (choice) => {
                     selected = choice.data;
                     modal.querySelector('[name=name]').value = selected.name || '';
                     modal.querySelector('[name=phone]').value = selected.phone || '';
+                    paintMode();
                 },
-                autoSelectFirst: true,
+                autoSelectFirst: false,
                 triggerSelectOnValidInput: false,
             });
-        $(modal)
-            .find('[name=name],[name=phone]')
-            .on('input', () => {
-                selected = null;
-            });
+        modal.querySelector('#kv2-customer-search').addEventListener('input', () => { selected = null; paintMode(); });
     }
     async function send() {
         const d = state.draft;
