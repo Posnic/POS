@@ -281,3 +281,4 @@
 .kv2-dialog .autocomplete-selected{background:var(--theme-table-row-hover, #edf5ff)}
 #kot_v2 input::placeholder,.kv2-dialog input::placeholder,.kv2-dialog textarea::placeholder{color:var(--theme-text-muted, #75879c);opacity:.8}
 #kot_v2,.kv2-dialog{scrollbar-color:var(--theme-text-muted, #75879c) var(--theme-card-bg, white)}
+.kv2-action-context{display:block;font-size:13px;font-weight:500;margin-top:7px;color:var(--theme-text-muted,#66758a)}#kv2-actions-menu .kv2-action-context{padding:8px 12px;margin:0;border-bottom:1px solid var(--theme-border-color,#dce3ed)}

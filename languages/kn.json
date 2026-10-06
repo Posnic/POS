@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "ಕೆಳಗೆ ಗ್ರಾಹಕರನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
   "lang_use_this_customer": "ಈ ಗ್ರಾಹಕರನ್ನು ಬಳಸಿ",
   "lang_merge_tables_separate_bills": "ಎರಡೂ ಆರ್ಡರ್‌ಗಳು ಗುರಿ ಟೇಬಲ್‌ನಲ್ಲಿರುತ್ತವೆ. ಬಿಲ್‌ಗಳು ಪ್ರತ್ಯೇಕವಾಗಿಯೇ ಇರುತ್ತವೆ.",
-  "lang_no_other_open_table_orders_to_merge": "ವಿಲೀನಗೊಳಿಸಲು ಬೇರೆ ಟೇಬಲ್‌ನ ತೆರೆದ ಆರ್ಡರ್‌ಗಳಿಲ್ಲ."
+  "lang_no_other_open_table_orders_to_merge": "ವಿಲೀನಗೊಳಿಸಲು ಬೇರೆ ಟೇಬಲ್‌ನ ತೆರೆದ ಆರ್ಡರ್‌ಗಳಿಲ್ಲ.",
+  "lang_no_available_tables": "ಯಾವುದೇ ಟೇಬಲ್‌ಗಳು ಲಭ್ಯವಿಲ್ಲ."
 }

@@ -113,3 +113,33 @@ test('saved merge can be retried when the target no longer appears in the curren
  w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
  assert.equal(calls[0].body.request_id,'same-request');assert.equal(calls[0].body.targetOrderId,'target');dom.window.close();
 });
+
+test('compact transfer bounds quantities, reviews direction and supports editing before confirmation',async()=>{
+ const requests=[];
+ const sale={_id:'sale',table_number:'66',restaurant_details:{rounds:[{items:[{id:'c0i0',name:'Tea',quantity:2,served:1}]}]}};
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{canMerge:true,tables:[{id:'destination',tableorder_value:'33',status:'available'}]}:sale}),post:(o,done)=>{requests.push({url:o.url,body:JSON.parse(o.data)});done({type:'success',data:{revision:'rev',currencySymbol:'₹',currencyDigits:2,source:{totalMinor:1000},destination:{totalMinor:1000}}});}});
+ await app.transfer('sale');assert.equal(w.document.querySelector('.kot-action-context').textContent,'Table 66');
+ const plus=w.document.querySelector('[data-step="0:1"]');plus.click();plus.click();plus.click();
+ assert.equal(w.document.querySelector('[name=qty0]').value,'2');assert.equal(w.document.querySelector('[name=served0]').value,'1');
+ w.document.querySelector('[name=table]').value='destination';
+ w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
+ assert.match(w.document.querySelector('.kot-transfer-direction').textContent,/Table 66.*Table 33/);
+ assert.match(w.document.querySelector('.kot-transfer-review').textContent,/2 × Tea/);
+ const back=[...w.document.querySelectorAll('footer button')].find(b=>b.textContent==='Back');back.click();
+ assert.equal(w.document.querySelector('[name=qty0]').value,'2');assert.equal(w.document.querySelector('[name=table]').value,'destination');
+ assert.equal(requests.length,1);assert.ok(requests[0].url.endsWith('/preview'));assert.equal(w.localStorage.length,0);dom.window.close();
+});
+
+test('uncertain item transfer keeps its saved intent and cannot go back to change quantities',async()=>{
+ const requests=[];let fail=true;
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{canMerge:true,tables:[{id:'destination',tableorder_value:'33',status:'available'}]}:{_id:'sale',table_number:'66',restaurant_details:{rounds:[{items:[{id:'i',name:'Tea',quantity:1,served:0}]}]}}}),post:(o,done,bad)=>{requests.push({url:o.url,body:JSON.parse(o.data)});if(o.url.endsWith('/complete')&&fail)bad({responseJSON:{message:'Offline'}});else done({type:'success',data:{revision:'rev',currencySymbol:'₹',currencyDigits:2,source:{totalMinor:0},destination:{totalMinor:1000}}});}});
+ await app.transfer('sale');w.document.querySelector('[name=table]').value='destination';w.document.querySelector('[data-step="0:1"]').click();
+ const submit=()=>w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await flush();submit();await flush();
+ const back=[...w.document.querySelectorAll('footer button')].find(b=>b.textContent==='Back');assert.equal(back.hidden,true);back.click();assert.equal(w.document.querySelector('[name=qty0]'),null);assert.equal(w.localStorage.length,1);
+ fail=false;submit();await flush();assert.deepEqual(requests[1].body,requests[2].body);assert.equal(w.localStorage.length,0);dom.window.close();
+});
+
+test('transfer with no free destination explains the empty state and cannot submit',async()=>{
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{canMerge:true,tables:[]}:{_id:'sale',table_number:'66'}})});
+ await app.transfer('sale');assert.match(w.document.querySelector('dialog').textContent,/No available tables/);assert.equal(w.document.querySelector('[type=submit]').disabled,true);dom.window.close();
+});

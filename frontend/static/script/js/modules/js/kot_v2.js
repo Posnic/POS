@@ -142,10 +142,15 @@
             }, 2000);
         }
     }
-    function dialog(title, body, save, label = 'Save') {
+    function dialog(title, body, save, label = 'Save', context = state.draft || state.sale) {
         const d = document.createElement('dialog');
         d.className = 'kv2-dialog';
         d.innerHTML = `<form><header><h3>${esc(title)}</h3><button type="button" data-close aria-label="Close" data-t-aria-label="lang_close_title">×</button></header><section>${body}</section><p role="alert"></p><footer><button type="button" data-close><lang class="lang_cancel_title">Cancel</lang></button><button class="primary" type="submit">${esc(label)}</button></footer></form>`;
+        if (context) {
+            const caption = document.createElement('small'); caption.className = 'kv2-action-context';
+            caption.textContent = /^take[\s_-]*away$/i.test(context.dineType || context.dine_type || '') ? P.i18n.t('lang_takeaway', 'Takeaway') + ' ' + (context.takeaway_number || context.token_id || '') : P.i18n.t('lang_table', 'Table') + ' ' + (context.table || context.table_number || '—');
+            d.querySelector('header h3').append(caption);
+        }
         document.body.append(d);
         let saving = false;
         d.addEventListener('click', (e) => {
@@ -857,6 +862,7 @@
                 } else startDraft(seating);
             },
             'Choose dishes',
+            movingDraft || null,
         );
         modal.classList.add('kv2-seating-dialog');
         if (movingDraft) {
@@ -1184,7 +1190,7 @@
                 d.className = 'kv2-actions-menu';
                 d.setAttribute('popover', 'auto');
                 d.innerHTML = '<section aria-label="Actions" data-t-aria-label="lang_action_title">' +
-                    button('Order details', 'details') + button('Guests', 'guests') +
+                    '<strong class="kv2-action-context">' + esc(s.dine_type === 'Take away' ? P.i18n.t('lang_takeaway', 'Takeaway') : P.i18n.t('lang_table', 'Table') + ' ' + s.table_number) + '</strong>' + button('Order details', 'details') + button('Guests', 'guests') +
                     button('Hand over', 'handover') + button('Split payment', 'split') +
                     button('Cancel order', 'cancel', 'class="kv2-danger"') + '</section>';
                 b.setAttribute('aria-expanded', 'true');

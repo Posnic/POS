@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "Chagua mteja hapa chini.",
   "lang_use_this_customer": "Tumia mteja huyu",
   "lang_merge_tables_separate_bills": "Maagizo yote mawili yatakuwa kwenye meza lengwa. Bili zitabaki tofauti.",
-  "lang_no_other_open_table_orders_to_merge": "Hakuna maagizo mengine ya meza yaliyo wazi ya kuunganisha."
+  "lang_no_other_open_table_orders_to_merge": "Hakuna maagizo mengine ya meza yaliyo wazi ya kuunganisha.",
+  "lang_no_available_tables": "Hakuna meza zinazopatikana."
 }

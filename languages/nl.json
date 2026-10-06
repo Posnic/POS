@@ -4572,5 +4572,6 @@
   "lang_select_a_customer_below": "Selecteer hieronder een klant.",
   "lang_use_this_customer": "Deze klant gebruiken",
   "lang_merge_tables_separate_bills": "Beide bestellingen komen op de doeltafel. De rekeningen blijven apart.",
-  "lang_no_other_open_table_orders_to_merge": "Geen andere open tafelbestellingen om samen te voegen."
+  "lang_no_other_open_table_orders_to_merge": "Geen andere open tafelbestellingen om samen te voegen.",
+  "lang_no_available_tables": "Geen tafels beschikbaar."
 }

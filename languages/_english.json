@@ -2460,6 +2460,7 @@
   "lang_no_address": "No address given",
   "lang_no_ai_key_for_pass": "This shop has no AI provider set up yet. Add a provider and key under Settings, AI, and this can fill in the whole menu.",
   "lang_no_answer": "no answer",
+  "lang_no_available_tables": "No available tables.",
   "lang_no_b2b_invoices_in_this_period_nothing_to": "No B2B invoices in this period - nothing to file.",
   "lang_no_badges_earned": "no badges",
   "lang_no_billing_outlets_yet": "No billing outlets yet",

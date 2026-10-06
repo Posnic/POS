@@ -4235,5 +4235,6 @@
   "lang_select_a_customer_below": "Sélectionnez un client ci-dessous.",
   "lang_use_this_customer": "Utiliser ce client",
   "lang_merge_tables_separate_bills": "Les deux commandes seront à la table de destination. Les factures restent séparées.",
-  "lang_no_other_open_table_orders_to_merge": "Aucune autre commande de table ouverte à regrouper."
+  "lang_no_other_open_table_orders_to_merge": "Aucune autre commande de table ouverte à regrouper.",
+  "lang_no_available_tables": "Aucune table disponible."
 }

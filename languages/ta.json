@@ -4255,5 +4255,6 @@
   "lang_select_a_customer_below": "கீழே ஒரு வாடிக்கையாளரைத் தேர்ந்தெடுக்கவும்.",
   "lang_use_this_customer": "இந்த வாடிக்கையாளரைப் பயன்படுத்தவும்",
   "lang_merge_tables_separate_bills": "இரண்டு ஆர்டர்களும் தேர்ந்தெடுத்த மேசையில் இருக்கும். பில்கள் தனித்தனியாகவே இருக்கும்.",
-  "lang_no_other_open_table_orders_to_merge": "இணைக்க மற்ற மேசைகளில் திறந்த ஆர்டர்கள் இல்லை."
+  "lang_no_other_open_table_orders_to_merge": "இணைக்க மற்ற மேசைகளில் திறந்த ஆர்டர்கள் இல்லை.",
+  "lang_no_available_tables": "மேசைகள் எதுவும் கிடைக்கவில்லை."
 }

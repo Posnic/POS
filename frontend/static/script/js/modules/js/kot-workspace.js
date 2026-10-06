@@ -61,11 +61,13 @@
         try { await action(); } catch (error) { P.alert('error', error.message); }
         finally { control.disabled = false; }
     }
-    function dialog(title) {
+    const orderLabel = sale => /^take[\s_-]*away$/i.test(sale.dine_type || '') ? text('Takeaway') + ' ' + (sale.takeaway_number || sale.token_id || '') : text('Table') + ' ' + (sale.table_number || '—');
+    function dialog(title, sale) {
         const el = document.createElement('dialog');
         el.className = 'kot-workspace-dialog';
         el.innerHTML = '<form><header><h3></h3><button type="button" data-close aria-label="Close" data-t-aria-label="lang_close_title">×</button></header><section></section><p role="alert"></p><footer><button type="button" data-close></button><button type="submit" class="primary"></button></footer></form>';
         el.querySelector('h3').textContent = text(title);
+        if (sale) { const context = document.createElement('small'); context.className = 'kot-action-context'; context.textContent = orderLabel(sale); el.querySelector('h3').append(context); }
         el.querySelector('footer [data-close]').textContent = text('Cancel');
         el.querySelector('[type=submit]').textContent = text('Save');
         el.querySelectorAll('[data-close]').forEach(b => b.onclick = () => el.close());
@@ -96,7 +98,7 @@
     }
     async function notes(saleId) {
         const sale = await request('get', 'sales/' + saleId);
-        const d = dialog('Order details');
+        const d = dialog('Order details', sale);
         d.querySelector('section').innerHTML = area('Kitchen note', 'note', sale.preparation_note || '') +
             sale.items.map((line, i) => '<fieldset><legend>' + esc(line.item_name) + '</legend>' +
                 area('Item note', 'note' + i, line.item_description || '') + '<div class="fields">' +
@@ -137,7 +139,7 @@
             }
         }
         const orderSummary = (order, label) => '<strong>' + esc(text('Table') + ' ' + label) + '</strong><small>' + esc(Number(order.person_count) || 0) + ' ' + esc(text('Guests')) + (Array.isArray(order.items) ? ' · ' + esc(order.items.reduce((sum, item) => sum + (Number(item.item_quantity) || 0), 0)) + ' ' + esc(text('Items')) : '') + '</small>';
-        const d = dialog(merge ? PosnicPro.i18n.t('lang_kot_workspace_merge', 'Merge tables') : PosnicPro.i18n.t('lang_kot_workspace_move', 'Move table'));
+        const d = dialog(merge ? PosnicPro.i18n.t('lang_kot_workspace_merge', 'Merge tables') : PosnicPro.i18n.t('lang_kot_workspace_move', 'Move table'), sale);
         d.querySelector('section').innerHTML = (merge ? '<div class="kot-merge-source"><span>' + esc(text('From')) + '</span>' + orderSummary(sale, sale.table_number) + '</div>' : '') + '<p>' + esc(text('Choose a destination table')) + '</p><label>' + esc(text('Table')) + '<select name="table" required><option value="">—</option>' +
             candidates.map(t => '<option value="' + esc(t.id) + '">' + esc(t.tableorder_value) + '</option>').join('') + (merge ? '' : '<option value="custom">' + esc(P.i18n.t('lang_custom_2', 'Custom')) + '</option>') + '</select></label>' +
             (merge ? '' : '<label hidden data-custom-table>' + esc(text('Table')) + '<input name="customTable" maxlength="6" pattern="[A-Za-z0-9]{1,6}" autocomplete="off" placeholder="e.g. A12"></label>');
@@ -250,7 +252,7 @@
     }
     async function covers(saleId) {
         const sale = await request('get', 'sales/' + saleId);
-        const d = dialog('Number of guests');
+        const d = dialog('Number of guests', sale);
         d.querySelector('section').innerHTML = field('Guests', 'guests', sale.person_count, 'type="number" min="1" max="1000" required step="1"');
         const id = requestId();
         d.save(async form => {
@@ -261,63 +263,91 @@
     async function transfer(saleId) {
         const [sale, floor] = await Promise.all([request('get', 'sales/' + saleId), request('get', 'captain/v1/tables', { branchId: branch() })]);
         if (!floor.canMerge) throw new Error(text('Permission is required'));
-        const lines = sale.restaurant_details?.rounds?.flatMap(r => r.items) || [];
+        const lines = (sale.restaurant_details?.rounds?.flatMap(r => r.items) || []).filter(line => Number(line.quantity) > 0);
+        const destinations = floor.tables.filter(t => t.status === 'available' && String(t.tableorder_value) !== String(sale.table_number));
         const key = 'posnic.kot.transfer:' + location.origin + ':' + branch() + ':' + saleId;
-        let intent = JSON.parse(localStorage.getItem(key) || 'null');
-        let preview = null;
-        const d = dialog('Transfer items');
-        const section = d.querySelector('section');
-        const submit = d.querySelector('[type=submit]');
+        let intent = JSON.parse(localStorage.getItem(key) || 'null'), editing = null;
+        const d = dialog('Transfer items', sale);
+        d.classList.add('kot-transfer-dialog');
+        d.querySelector('footer [data-close]').textContent = text('Close');
+        const section = d.querySelector('section'), submit = d.querySelector('[type=submit]');
+        const back = document.createElement('button'); back.type = 'button'; back.hidden = true; back.textContent = P.i18n.t('lang_back_title', 'Back');
+        submit.before(back);
+        const direction = target => '<div class="kot-transfer-direction"><span>' + esc(text('From')) + '<strong>' + esc(orderLabel(sale)) + '</strong></span><b aria-hidden="true">→</b><span>' + esc(text('To')) + '<strong>' + esc(target || text('Choose a destination table')) + '</strong></span></div>';
+        const lineValues = () => lines.map((line, i) => ({ id: line.id, quantity: Number(d.querySelector('[name=qty' + i + ']').value), servedQuantity: Number(d.querySelector('[name=served' + i + ']')?.value || 0) })).filter(l => l.quantity > 0);
+        function update() {
+            lines.forEach((line, i) => {
+                const qty = d.querySelector('[name=qty' + i + ']'), served = d.querySelector('[name=served' + i + ']');
+                d.querySelector('[data-transfer-row="' + i + '"]').classList.toggle('selected', Number(qty.value) > 0);
+                if (served) {
+                    const count = Math.max(0, Math.min(Number(line.quantity), Number(qty.value) || 0));
+                    served.min = Math.max(0, count - (Number(line.quantity) - Number(line.served)));
+                    served.max = Math.min(count, Number(line.served));
+                    served.value = Math.min(Number(served.max), Math.max(Number(served.min), Number(served.value) || 0));
+                    served.disabled = !count;
+                }
+                d.querySelector('[data-step="' + i + ':-1"]').disabled = Number(qty.value) <= 0;
+                d.querySelector('[data-step="' + i + ':1"]').disabled = Number(qty.value) >= Number(line.quantity);
+            });
+            const items = lineValues();
+            d.querySelector('[data-transfer-count]').textContent = text('Quantity') + ': ' + Number(items.reduce((n,l) => n + l.quantity, 0).toFixed(3));
+        }
+        function edit() {
+            back.hidden = true; submit.textContent = text('Review transfer'); submit.disabled = !destinations.length || !lines.length;
+            section.innerHTML = '<div class="kot-transfer-fields"><label>' + esc(text('Choose a destination table')) + '<select name="table" required><option value="">—</option>' + destinations.map(t => '<option value="' + esc(t.id) + '">' + esc(text('Table') + ' ' + t.tableorder_value) + '</option>').join('') + '</select></label>' + field('Guests', 'guests', 1, 'type="number" min="1" max="1000" step="1" required') + '</div>' +
+                (!destinations.length ? '<p role="status">' + esc(P.i18n.t('lang_no_available_tables', 'No available tables.')) + '</p>' : '') +
+                '<div class="kot-transfer-list">' + lines.map((line,i) => '<article data-transfer-row="' + i + '"><div class="kot-transfer-name"><strong>' + esc(line.name) + '</strong><small>' + esc(text('Quantity')) + ': ' + esc(line.quantity) + ' · ' + esc(text('Served')) + ': ' + esc(line.served || 0) + '</small></div><div class="kot-transfer-stepper"><button type="button" data-step="' + i + ':-1" aria-label="' + esc(text('Decrease quantity') + ' · ' + line.name) + '">−</button><input aria-label="' + esc(text('Quantity') + ' · ' + line.name) + '" name="qty' + i + '" type="number" min="0" max="' + esc(line.quantity) + '" step="0.001" value="0" required><button type="button" data-step="' + i + ':1" aria-label="' + esc(text('Increase quantity') + ' · ' + line.name) + '">+</button></div>' +
+                (line.served ? '<label class="kot-transfer-served">' + esc(text('Served quantity to transfer')) + '<input name="served' + i + '" type="number" min="0" max="' + esc(line.served) + '" step="0.001" value="0" required></label>' : '') + '</article>').join('') + '</div><p data-transfer-count role="status"></p>';
+            if (editing) for (const [name,value] of editing) { const field = d.querySelector('[name="' + name + '"]'); if (field) field.value = value; }
+            section.oninput = update;
+            section.onclick = event => {
+                const control = event.target.closest('[data-step]'); if (!control) return;
+                const [index,delta] = control.dataset.step.split(':').map(Number), input = d.querySelector('[name=qty' + index + ']');
+                input.value = Number(Math.max(0, Math.min(Number(input.max), (Number(input.value) || 0) + delta)).toFixed(3)); update();
+            };
+            update();
+        }
         function review(value) {
+            section.oninput = section.onclick = null;
+            const target = destinations.find(t => t.id === intent.destination.primaryId);
             const money = n => value.currencySymbol + (n / Math.pow(10, value.currencyDigits)).toFixed(value.currencyDigits);
-            section.innerHTML = '<p>' + esc(text('Remaining on this order')) + ': <strong>' + esc(money(value.source.totalMinor)) + '</strong></p><p>' + esc(text('Transfer total')) + ': <strong>' + esc(money(value.destination.totalMinor)) + '</strong></p>';
-            submit.textContent = text('Confirm transfer');
+            section.innerHTML = direction(target ? text('Table') + ' ' + target.tableorder_value : '') + '<div class="kot-transfer-review">' + intent.items.map(item => '<p><strong>' + esc(item.quantity + ' × ' + lines.find(l => l.id === item.id)?.name) + '</strong>' + (item.servedQuantity ? '<small>' + esc(text('Served')) + ': ' + esc(item.servedQuantity) + '</small>' : '') + '</p>').join('') + '</div><div class="kot-transfer-totals"><p>' + esc(text('Remaining on this order')) + '<strong>' + esc(money(value.source.totalMinor)) + '</strong></p><p>' + esc(text('Transfer total')) + '<strong>' + esc(money(value.destination.totalMinor)) + '</strong></p></div>';
+            back.hidden = false; submit.textContent = text('Confirm transfer');
         }
-        if (intent) {
-            section.textContent = text('Retry the saved transfer to confirm its result');
-            submit.textContent = text('Retry');
-        } else {
-            submit.textContent = text('Review transfer');
-            section.innerHTML = '<label>' + esc(text('Table')) + '<select name="table" required><option value="">—</option>' + floor.tables.filter(t => t.status === 'available').map(t => '<option value="' + esc(t.id) + '">' + esc(t.tableorder_value) + '</option>').join('') + '</select></label>' +
-                field('Guests', 'guests', 1, 'type="number" min="1" max="1000" step="1" required') +
-                lines.map((line, i) => '<fieldset><legend>' + esc(line.name) + '</legend><p>' + esc(line.quantity + ' · ' + line.served + ' ' + text('Served')) + '</p>' +
-                    field('Quantity', 'qty' + i, 0, 'type="number" min="0" max="' + line.quantity + '" step="0.001" required') +
-                    (line.served ? field('Served quantity to transfer', 'served' + i, 0, 'type="number" min="0" max="' + line.served + '" step="0.001" required') : '') + '</fieldset>').join('');
-        }
-        // Preview is read-only. The complete request is persisted before the first
-        // commit so a lost response cannot cause a second stock/billing operation.
+        back.onclick = () => { if (localStorage.getItem(key)) return; intent = null; d.querySelector('[role=alert]').textContent = ''; edit(); };
+        if (intent) { section.textContent = text('Retry the saved transfer to confirm its result'); submit.textContent = text('Retry'); } else edit();
+        // Only confirm writes; a saved request is immutable after an uncertain result.
         d.querySelector('form').onsubmit = async event => {
             event.preventDefault();
             if (submit.disabled || !d.querySelector('form').reportValidity()) return;
-            submit.disabled = true;
+            submit.disabled = true; back.disabled = true; d.querySelector('[role=alert]').textContent = '';
             try {
                 if (!intent) {
-                    const form = new FormData(d.querySelector('form'));
-                    const items = lines.map((line, i) => ({ id: line.id, quantity: Number(form.get('qty' + i)), servedQuantity: Number(form.get('served' + i) || 0) })).filter(l => l.quantity > 0);
-                    preview = await request('post', 'captain/v1/tables/transfer/preview', { branchId: branch(), orderId: saleId, items });
-                    intent = { branchId: branch(), orderId: saleId, requestId: requestId(), revision: preview.revision, items,
-                        destination: { tableIds: [form.get('table')], primaryId: form.get('table'), guests: Number(form.get('guests')) } };
+                    const form = new FormData(d.querySelector('form')), items = lineValues();
+                    if (!items.length) throw new Error(P.i18n.t('lang_enter_a_quantity_for_at_least_one_line', 'Enter a quantity for at least one line.'));
+                    const preview = await request('post', 'captain/v1/tables/transfer/preview', { branchId: branch(), orderId: saleId, items });
+                    editing = [...form.entries()];
+                    intent = { branchId: branch(), orderId: saleId, requestId: requestId(), revision: preview.revision, items, destination: { tableIds: [form.get('table')], primaryId: form.get('table'), guests: Number(form.get('guests')) } };
                     review(preview);
                 } else {
-                    localStorage.setItem(key, JSON.stringify(intent));
+                    localStorage.setItem(key, JSON.stringify(intent)); back.hidden = true;
                     await request('post', 'captain/v1/tables/transfer/complete', intent);
-                    localStorage.removeItem(key);
-                    d.close(); refresh();
+                    localStorage.removeItem(key); d.close(); refresh();
                 }
             } catch (error) { d.querySelector('[role=alert]').textContent = error.message; }
-            finally { submit.disabled = false; }
+            finally { submit.disabled = false; back.disabled = false; }
         };
     }
     async function handover(saleId) {
-        const staff = await request('get', 'sales/handoverStaff', { branchId: branch() });
-        const d = dialog('Hand over order');
+        const [staff, sale] = await Promise.all([request('get', 'sales/handoverStaff', { branchId: branch() }), request('get', 'sales/' + saleId)]);
+        const d = dialog('Hand over order', sale);
         d.querySelector('section').innerHTML = '<label>' + esc(text('Staff')) + '<select name="staff" required>' + staff.map(s => '<option value="' + esc(s.id) + '">' + esc(s.name) + '</option>').join('') + '</select></label>';
         const id = requestId();
         d.save(async form => { await request('post', 'sales/handoverOrder', { branchId: branch(), saleId, staffId: form.get('staff'), requestId: id }); refresh(); });
     }
     async function split(table) {
         const snapshot = await request('get', 'sales/guestBills/table', { branchId: branch(), ...(table.startsWith('takeaway:') ? {saleId:table.slice(9)} : {table_number:table}) });
-        const d = dialog('Split payment');
+        const d = dialog('Split payment', table.startsWith('takeaway:') ? { dine_type: 'Take away' } : { table_number: table });
         d.querySelector('[type=submit]').textContent = text('Review payment');
         d.querySelector('section').innerHTML = field('Guests', 'guests', snapshot.guests, 'type="number" min="2" max="20" step="1" required') +
             '<label>' + esc(text('Split by')) + '<select name="mode"><option value="equal">' + esc(text('Equal shares')) + '</option><option value="items">' + esc(text('Items')) + '</option></select></label><div data-allocations></div>';
@@ -393,6 +423,7 @@
     const style = document.createElement('style');
     style.textContent = '.kot-workspace-tools{padding:16px;background:#f6f8fc;border:1px solid #e1e7f0;border-radius:12px;margin:12px 15px}.kot-workspace-actions{display:flex;flex-wrap:wrap;gap:8px}.kot-workspace-kitchen{margin-top:16px}.kot-workspace-kitchen summary{cursor:pointer;font-weight:600}.kot-workspace-round{padding-top:14px}.kot-workspace-line{display:flex;align-items:center;gap:16px;padding:12px 0;border-top:1px solid #e1e7f0}.kot-workspace-line>div{flex:1;min-width:0}.kot-workspace-line small{display:block;overflow-wrap:anywhere}.kot-workspace-dialog{width:min(640px,94vw);max-height:90vh;border:1px solid #dce3ed;border-radius:16px;padding:0;color:#17314f;background:#fff;box-shadow:0 24px 80px #10203c33}.kot-workspace-dialog::backdrop{background:#14243866}.kot-workspace-dialog form{display:flex;flex-direction:column;max-height:88vh}.kot-workspace-dialog header,.kot-workspace-dialog footer{display:flex;gap:12px;align-items:center;padding:18px 24px;border-bottom:1px solid #e1e7f0}.kot-workspace-dialog h3{flex:1;margin:0;font-size:20px}.kot-workspace-dialog section{padding:20px 24px;overflow:auto}.kot-workspace-dialog label{display:block;margin:0 0 16px}.kot-workspace-dialog input:not([type=checkbox]),.kot-workspace-dialog textarea,.kot-workspace-dialog select{display:block;width:100%;min-height:42px;padding:10px;border:1px solid #c7d3e3;border-radius:8px;margin-top:6px;color:inherit;background:#fff;font:inherit}.kot-workspace-dialog input:focus,.kot-workspace-dialog textarea:focus,.kot-workspace-dialog select:focus{outline:2px solid #0969da;outline-offset:2px}.kot-workspace-dialog button{min-height:40px;border:1px solid #ccd7e6;border-radius:8px;padding:8px 16px;background:#fff;color:inherit;cursor:pointer}.kot-workspace-dialog .primary{background:#0969da;color:#fff;border-color:#0969da}.kot-workspace-dialog footer{justify-content:flex-end;border-top:1px solid #e1e7f0}.kot-workspace-dialog fieldset{border:1px solid #e1e7f0;border-radius:10px;padding:16px;margin:16px 0}.kot-workspace-dialog legend{font-size:16px;width:auto;padding:0 8px}.kot-workspace-dialog .fields{display:grid;grid-template-columns:1fr 2fr;gap:16px}.kot-workspace-dialog [role=alert]{color:#b42318;margin:0;padding:0 24px}.kot-workspace-dialog .check{display:flex;gap:8px;align-items:center}#kot_details_panel{min-width:0}#kot_tables_grid>*{min-width:0}#kot_table_details .btn-group{flex-wrap:wrap}#kot_table_details .kot-item table{table-layout:auto}@media(max-width:767px){.kot-workspace-line{flex-wrap:wrap}.kot-workspace-line>div{flex-basis:100%}}';
     style.textContent += '.kot-workspace-dialog{background:var(--theme-card-bg,#fff);color:var(--theme-text-primary,#17314f);border-color:var(--theme-border-color,#dce3ed)}.kot-workspace-dialog input:not([type=checkbox]),.kot-workspace-dialog textarea,.kot-workspace-dialog select,.kot-workspace-dialog button{background:var(--theme-card-bg,#fff);border-color:var(--theme-border-color,#dce3ed)}.kot-workspace-dialog .primary{background:var(--theme-btn-primary-bg,#0969da);border-color:var(--theme-btn-primary-bg,#0969da);color:var(--theme-btn-primary-text,#fff)}.kot-workspace-dialog header,.kot-workspace-dialog footer{border-color:var(--theme-border-color,#dce3ed)}.kot-workspace-dialog button:disabled{opacity:.5;cursor:default}.kot-merge-source,.kot-merge-preview{display:flex;flex-direction:column;gap:6px;border:1px solid var(--theme-border-color,#dce3ed);border-radius:10px;padding:14px;margin-bottom:16px;background:var(--theme-table-header-bg,#f7f9fc)}.kot-merge-preview{border-color:var(--theme-primary-color,#0969da)}.kot-merge-preview[hidden]{display:none}.kot-merge-source span,.kot-merge-preview span,.kot-merge-help{font-size:13px;color:var(--theme-text-muted,#66758a)}.kot-merge-source strong,.kot-merge-preview strong{font-size:19px}.kot-merge-help{line-height:1.5;margin:10px 0 0}';
+    style.textContent += '.kot-workspace-dialog,.kot-workspace-dialog *{box-sizing:border-box}.kot-action-context{display:block;font-size:13px;font-weight:500;margin-top:7px;color:var(--theme-text-muted,#66758a)}.kot-transfer-dialog{width:min(740px,94vw)}.kot-transfer-dialog [hidden]{display:none!important}.kot-transfer-fields{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:18px}.kot-transfer-list article{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 14px;padding:13px 8px;border-bottom:1px solid var(--theme-border-color,#dce3ed);border-radius:6px}.kot-transfer-list article.selected{background:var(--theme-table-row-hover,#eef5ff)}.kot-transfer-name{min-width:0;overflow-wrap:anywhere}.kot-transfer-name strong{display:block;font-size:14px}.kot-transfer-name small{display:block;font-size:12px;color:var(--theme-text-muted,#66758a);margin-top:5px}.kot-transfer-stepper{display:flex;align-items:center;gap:5px}.kot-transfer-dialog .kot-transfer-stepper input{width:68px;min-height:38px;margin:0;text-align:center;padding:6px}.kot-transfer-stepper button{min-width:36px;min-height:38px;padding:5px;font-size:19px}.kot-transfer-dialog .kot-transfer-served{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0;font-size:12px;color:var(--theme-text-muted,#66758a)}.kot-transfer-dialog .kot-transfer-served input{width:68px;min-height:34px;padding:5px;margin:0;text-align:center}.kot-transfer-direction{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;border:1px solid var(--theme-border-color,#dce3ed);border-radius:10px;background:var(--theme-table-header-bg,#f7f9fc);margin-bottom:12px}.kot-transfer-direction span{font-size:12px;color:var(--theme-text-muted,#66758a)}.kot-transfer-direction strong{display:block;margin-top:4px;font-size:18px;color:var(--theme-text-primary,#17314f)}.kot-transfer-review p{margin:0;padding:12px 0;border-bottom:1px solid var(--theme-border-color,#dce3ed)}.kot-transfer-review small{display:block;margin-top:5px}.kot-transfer-totals p{display:flex;justify-content:space-between;gap:10px}.kot-transfer-dialog [data-transfer-count]{font-size:13px;text-align:right;margin:14px 0 0}.kot-transfer-dialog footer{flex-shrink:0}.kot-transfer-dialog section{min-height:0}@media(max-width:480px){.kot-transfer-dialog section{padding:14px}.kot-transfer-fields{gap:10px;grid-template-columns:minmax(0,1fr) 80px}.kot-transfer-list article{grid-template-columns:1fr}.kot-transfer-stepper{justify-self:end}.kot-transfer-dialog footer{padding:12px;gap:8px}}';
     document.head.append(style);
     const layout = document.createElement('style');
     layout.textContent = '#kot_tables_grid .kot-table-box{aspect-ratio:auto!important;min-height:74px!important;margin-bottom:0!important}#kot_tables_grid .kot-table-box h2{font-size:26px!important;color:#125b42!important}#kot_table_details .kot-item>div>div:last-child{flex-wrap:wrap;gap:12px}#kot_table_details .kot-item .btn{min-height:38px}#infobar-settings-sidebar-table-selection.sidebarview,#infobar-settings-sidebar-table-selection.sidebarshow{width:min(1040px,100vw)}#infobar-settings-sidebar-table-selection .contentbar-new{padding:24px}#infobar-settings-sidebar-table-selection .card{border-radius:14px;box-shadow:none}#infobar-settings-sidebar-table-selection .card-header{background:transparent;text-align:left!important}#infobar-settings-sidebar-table-selection .table_select{height:64px!important;border-width:1px!important}#infobar-settings-sidebar-table-selection .table_select>div{border:0!important}#infobar-settings-sidebar-table-selection .person_select{height:56px!important;flex-direction:row!important;gap:8px}#infobar-settings-sidebar-table-selection .person_select>div{display:none}#infobar-settings-sidebar-table-selection #custom_table_input,#infobar-settings-sidebar-table-selection #kot_custom_person_input{height:56px!important}#infobar-settings-sidebar-table-selection #kot_order_next_btn{background:#0869da;color:#fff;border-color:#0869da;min-height:44px}@media(max-width:767px){#kot_tables_grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}#infobar-settings-sidebar-table-selection .contentbar-new{padding:12px}}';

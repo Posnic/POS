@@ -4238,5 +4238,6 @@
   "lang_select_a_customer_below": "नीचे एक ग्राहक चुनें।",
   "lang_use_this_customer": "इस ग्राहक का उपयोग करें",
   "lang_merge_tables_separate_bills": "दोनों ऑर्डर चुनी गई टेबल पर होंगे। बिल अलग रहेंगे।",
-  "lang_no_other_open_table_orders_to_merge": "मिलाने के लिए किसी अन्य टेबल का खुला ऑर्डर नहीं है।"
+  "lang_no_other_open_table_orders_to_merge": "मिलाने के लिए किसी अन्य टेबल का खुला ऑर्डर नहीं है।",
+  "lang_no_available_tables": "कोई टेबल उपलब्ध नहीं है।"
 }
