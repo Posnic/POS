@@ -1259,34 +1259,48 @@ test('cloud pair uses the scoped shop database and cannot consume another shop c
 });
 
 test('mobile snapshot sync carries disabled methods and still accepts a previously collected offline card payment', async () => {
-  const savedBranch = await db.collection('branches').findOne({_id:branch._id});
-  await db.collection('items').replaceOne({_id:item._id},item,{upsert:true});
+  const savedBranch = await db.collection('branches').findOne({ _id: branch._id });
+  await db.collection('items').replaceOne({ _id: item._id }, item, { upsert: true });
   try {
-    await db.collection('branches').updateOne({_id:branch._id},{$set:{payment_methods_initialized:true}});
+    await db
+      .collection('branches')
+      .updateOne({ _id: branch._id }, { $set: { payment_methods_initialized: true } });
     await db.collection('payment_method').insertMany([
-      {branch_id:branch._id,license:branch.license,payment_field:'Cash',enabled:false},
-      {branch_id:branch._id,license:branch.license,payment_field:'Card',enabled:true},
-      {branch_id:branch._id,license:branch.license,payment_field:'Upi',enabled:false},
+      { branch_id: branch._id, license: branch.license, payment_field: 'Cash', enabled: false },
+      { branch_id: branch._id, license: branch.license, payment_field: 'Card', enabled: true },
+      { branch_id: branch._id, license: branch.license, payment_field: 'Upi', enabled: false },
     ]);
     const first = await call('/mobile/v1/bootstrap');
-    assert.equal(first.status,200);
-    assert.deepEqual(first.data.shop.paymentMethods,['card']);
-    assert.equal(first.data.shop.permissions.manualUpi,false);
-    const pending = sale({snapshotVersion:first.data.shop.snapshotVersion,payment:{method:'card',status:'staff-confirmed',reference:'terminal-42'}});
-    await db.collection('payment_method').updateOne({branch_id:branch._id,payment_field:'Card'},{$set:{enabled:false}});
+    assert.equal(first.status, 200);
+    assert.deepEqual(first.data.shop.paymentMethods, ['card']);
+    assert.equal(first.data.shop.permissions.manualUpi, false);
+    const pending = sale({
+      snapshotVersion: first.data.shop.snapshotVersion,
+      payment: { method: 'card', status: 'staff-confirmed', reference: 'terminal-42' },
+    });
+    await db
+      .collection('payment_method')
+      .updateOne({ branch_id: branch._id, payment_field: 'Card' }, { $set: { enabled: false } });
     const next = await call('/mobile/v1/bootstrap');
-    assert.deepEqual(next.data.shop.paymentMethods,[]);
-    assert.notEqual(next.data.shop.snapshotVersion,first.data.shop.snapshotVersion);
-    const rejected = sale({snapshotVersion:next.data.shop.snapshotVersion,payment:{method:'card',status:'staff-confirmed'}});
-    const refused = await call('/mobile/v1/sales',{idempotencyKey:rejected.id,sale:rejected});
-    assert.equal(refused.status,403,JSON.stringify(refused.data));
-    const result = await call('/mobile/v1/sales',{idempotencyKey:pending.id,sale:pending});
-    assert.equal(result.status,200,JSON.stringify(result.data));
-    const stored = await db.collection('sales').findOne({_id:new ObjectId(result.data.serverId)});
-    assert.equal(stored.payment_mode,'Card');
-    assert.match(stored.payment_description,/terminal-42/);
+    assert.deepEqual(next.data.shop.paymentMethods, []);
+    assert.notEqual(next.data.shop.snapshotVersion, first.data.shop.snapshotVersion);
+    const rejected = sale({
+      snapshotVersion: next.data.shop.snapshotVersion,
+      payment: { method: 'card', status: 'staff-confirmed' },
+    });
+    const refused = await call('/mobile/v1/sales', { idempotencyKey: rejected.id, sale: rejected });
+    assert.equal(refused.status, 403, JSON.stringify(refused.data));
+    const result = await call('/mobile/v1/sales', { idempotencyKey: pending.id, sale: pending });
+    assert.equal(result.status, 200, JSON.stringify(result.data));
+    const stored = await db
+      .collection('sales')
+      .findOne({ _id: new ObjectId(result.data.serverId) });
+    assert.equal(stored.payment_mode, 'Card');
+    assert.match(stored.payment_description, /terminal-42/);
   } finally {
-    await db.collection('payment_method').deleteMany({branch_id:branch._id,license:branch.license});
-    await db.collection('branches').replaceOne({_id:branch._id},savedBranch);
+    await db
+      .collection('payment_method')
+      .deleteMany({ branch_id: branch._id, license: branch.license });
+    await db.collection('branches').replaceOne({ _id: branch._id }, savedBranch);
   }
 });

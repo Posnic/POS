@@ -153,7 +153,10 @@ describe('InstallRepository', () => {
   describe('insertBranch', () => {
     test('inserts into branches and returns insertedId', async () => {
       const r = await repository.insertBranch({ name: 'Main' });
-      expect(col.branches.insertOne).toHaveBeenCalledWith({ name: 'Main', payment_methods_initialized: true });
+      expect(col.branches.insertOne).toHaveBeenCalledWith({
+        name: 'Main',
+        payment_methods_initialized: true,
+      });
       expect(col.payment_method.updateOne).toHaveBeenCalledTimes(2);
       expect(r).toEqual(FAKE_ID);
     });

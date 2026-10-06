@@ -42,7 +42,9 @@ async function scope(req, requireEnabled = true) {
     fail('Choose the authorized branch.', 403);
   c.options = settings(c.branch);
   const enabledMethods = await require('./payment-methods').read(req.db, c.branch);
-  c.options.methods = enabledMethods.filter(method => req.captainPaymentDesktop || c.options.methods.includes(method));
+  c.options.methods = enabledMethods.filter(
+    (method) => req.captainPaymentDesktop || c.options.methods.includes(method)
+  );
   if (req.captainPaymentDesktop) c.options.enabled = true;
   if (requireEnabled && !c.options.enabled) fail('Captain payment collection is disabled.', 403);
   return c;
