@@ -614,7 +614,7 @@
         let mode = !c.id && !walkIn ? 'new' : 'find';
         const modal = dialog(
             'Choose customer',
-            `<div class="kv2-customer-modes" role="group" aria-label="Customer options"><button type="button" data-customer-mode="find">${icon('search')}Find customer</button><button type="button" data-customer-mode="new">${icon('guests')}＋ Add new customer</button><button type="button" data-customer-mode="walkin">Walk-in customer</button></div><div data-customer-panel="find"><label for="kv2-customer-search">Find an existing customer</label><div class="kv2-customer-search">${icon('search')}<input type="search" id="kv2-customer-search" placeholder="Name or mobile number" data-t-placeholder="lang_name_or_mobile_number" autocomplete="off"></div><p class="kv2-customer-help" data-search-status role="status">Search by name or mobile, then select a result.</p><div class="kv2-customer-selected" data-selected-customer></div></div><div data-customer-panel="new"><h4>New customer details</h4><p class="kv2-customer-help">Add customer details for this order.</p><label>Name<input name="name" maxlength="80" value="${esc(walkIn ? '' : c.name)}" autocomplete="name"></label><label>Mobile number <small>(optional)</small><input name="phone" type="tel" maxlength="40" value="${esc(c.phone)}" autocomplete="tel"></label></div><div data-customer-panel="walkin"><h4>Walk-in customer</h4><p>No customer details needed for this order.</p></div>`,
+            `<div class="kv2-customer-modes" role="group" aria-label="Customer options" data-t-aria-label="lang_customer_options"><button type="button" data-customer-mode="find">${icon('search')}Find customer</button><button type="button" data-customer-mode="new">${icon('guests')}＋ Add new customer</button><button type="button" data-customer-mode="walkin"><lang class="lang_walk_in_customer">Walk-in customer</lang></button></div><div data-customer-panel="find"><label for="kv2-customer-search"><lang class="lang_find_an_existing_customer">Find an existing customer</lang></label><div class="kv2-customer-search">${icon('search')}<input type="search" id="kv2-customer-search" placeholder="Name or mobile number" data-t-placeholder="lang_name_or_mobile_number" autocomplete="off"></div><p class="kv2-customer-help" data-search-status role="status"><lang class="lang_search_by_name_or_mobile_then_select_a_res">Search by name or mobile, then select a result.</lang></p><div class="kv2-customer-selected" data-selected-customer></div></div><div data-customer-panel="new"><h4><lang class="lang_new_customer_details">New customer details</lang></h4><p class="kv2-customer-help"><lang class="lang_add_customer_details_for_this_order">Add customer details for this order.</lang></p><label>Name<input name="name" maxlength="80" value="${esc(walkIn ? '' : c.name)}" autocomplete="name"></label><label>Mobile number <small>(optional)</small><input name="phone" type="tel" maxlength="40" value="${esc(c.phone)}" autocomplete="tel"></label></div><div data-customer-panel="walkin"><h4><lang class="lang_walk_in_customer">Walk-in customer</lang></h4><p><lang class="lang_no_customer_details_needed_for_this_order">No customer details needed for this order.</lang></p></div>`,
             async (f) => {
                 if (mode === 'find' && !selected) throw new Error('Select a customer from the search results.');
                 const value = mode === 'walkin' ? { name: '', phone: '' } : mode === 'find'
@@ -649,7 +649,7 @@
             modal.querySelectorAll('[data-customer-panel]').forEach(panel => { panel.hidden = panel.dataset.customerPanel !== mode; });
             modal.querySelectorAll('[data-customer-mode]').forEach(control => control.setAttribute('aria-pressed', String(control.dataset.customerMode === mode)));
             const submit = modal.querySelector('[type=submit]');
-            submit.textContent = mode === 'walkin' ? 'Use walk-in customer' : mode === 'new' ? 'Add to order' : 'Use this customer';
+            submit.textContent = mode === 'walkin' ? 'Use walk-in customer' : mode === 'new' ? PosnicPro.i18n.t('lang_add_to_order', 'Add to order') : PosnicPro.i18n.t('lang_use_this_customer', 'Use this customer');
             submit.disabled = mode === 'find' && !selected;
             modal.querySelector('[data-selected-customer]').textContent = selected ? selected.name + (selected.phone ? ' · ' + selected.phone : '') : '';
             modal.querySelector('[data-selected-customer]').hidden = !selected;
@@ -670,7 +670,7 @@
                 lookup: (query, done) => {
                     api('get', 'customers/getCustomersAjaxList', { query, limit: 20 })
                         .then((r) => {
-                            modal.querySelector('[data-search-status]').textContent = r.suggestions?.length ? 'Select a customer below.' : 'No customers found. Choose Add new customer.';
+                            modal.querySelector('[data-search-status]').textContent = r.suggestions?.length ? PosnicPro.i18n.t('lang_select_a_customer_below', 'Select a customer below.') : PosnicPro.i18n.t('lang_no_customers_found_choose_add_new_customer', 'No customers found. Choose Add new customer.');
                             done({
                                 suggestions: (r.suggestions || []).map((c) => ({
                                     value: c.name + ' · ' + (c.phone || ''),
