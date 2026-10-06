@@ -259,3 +259,5 @@
 #kot_v2 .kv2-order>.kv2-breakdown{flex-shrink:0;max-height:28%;overflow:auto}
 #kot_v2 .kv2-expanded>.kv2-order:not(.kv2-editor){display:none}
 #kot_v2 #posnic-desktop-fab{display:none}
+#kot_v2 .kv2-table-conflict{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:#fff6e9;color:#78501d;flex-shrink:0;font-size:13px}
+#kot_v2 .kv2-table-conflict button{flex-shrink:0;white-space:nowrap}
