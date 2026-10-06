@@ -4215,5 +4215,15 @@
   "lang_new_takeaway": "නව රැගෙන යන ඇණවුම",
   "lang_start_a_table_order": "මේස ඇණවුම ආරම්භ කරන්න",
   "lang_guests_optional": "අමුත්තන් (විකල්ප)",
-  "lang_guest_count": "අමුත්තන් ගණන"
+  "lang_guest_count": "අමුත්තන් ගණන",
+  "lang_add_customer_details_for_this_order": "මෙම ඇණවුමට පාරිභෝගික විස්තර එක් කරන්න.",
+  "lang_add_to_order": "ඇණවුමට එක් කරන්න",
+  "lang_customer_options": "පාරිභෝගික විකල්ප",
+  "lang_find_an_existing_customer": "පවතින පාරිභෝගිකයෙකු සොයන්න",
+  "lang_new_customer_details": "නව පාරිභෝගික විස්තර",
+  "lang_no_customer_details_needed_for_this_order": "මෙම ඇණවුමට පාරිභෝගික විස්තර අවශ්‍ය නැත.",
+  "lang_no_customers_found_choose_add_new_customer": "පාරිභෝගිකයන් හමු නොවීය. නව පාරිභෝගිකයෙකු එක් කරන්න තෝරන්න.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "නම හෝ ජංගම දුරකථන අංකය අනුව සොයා ප්‍රතිඵලයක් තෝරන්න.",
+  "lang_select_a_customer_below": "පහතින් පාරිභෝගිකයෙකු තෝරන්න.",
+  "lang_use_this_customer": "මෙම පාරිභෝගිකයා භාවිත කරන්න"
 }

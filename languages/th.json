@@ -4215,5 +4215,15 @@
   "lang_new_takeaway": "คำสั่งซื้อกลับบ้านใหม่",
   "lang_start_a_table_order": "เริ่มคำสั่งซื้อที่โต๊ะ",
   "lang_guests_optional": "ลูกค้า (ไม่บังคับ)",
-  "lang_guest_count": "จำนวนลูกค้า"
+  "lang_guest_count": "จำนวนลูกค้า",
+  "lang_add_customer_details_for_this_order": "เพิ่มรายละเอียดลูกค้าสำหรับคำสั่งซื้อนี้",
+  "lang_add_to_order": "เพิ่มในคำสั่งซื้อ",
+  "lang_customer_options": "ตัวเลือกลูกค้า",
+  "lang_find_an_existing_customer": "ค้นหาลูกค้าที่มีอยู่",
+  "lang_new_customer_details": "รายละเอียดลูกค้าใหม่",
+  "lang_no_customer_details_needed_for_this_order": "คำสั่งซื้อนี้ไม่จำเป็นต้องมีรายละเอียดลูกค้า",
+  "lang_no_customers_found_choose_add_new_customer": "ไม่พบลูกค้า เลือกเพิ่มลูกค้าใหม่",
+  "lang_search_by_name_or_mobile_then_select_a_res": "ค้นหาด้วยชื่อหรือเบอร์มือถือ แล้วเลือกผลลัพธ์",
+  "lang_select_a_customer_below": "เลือกลูกค้าด้านล่าง",
+  "lang_use_this_customer": "ใช้ลูกค้ารายนี้"
 }

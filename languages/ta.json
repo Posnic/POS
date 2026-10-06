@@ -4235,5 +4235,15 @@
   "lang_new_takeaway": "புதிய பார்சல் ஆர்டர்",
   "lang_start_a_table_order": "மேசை ஆர்டரைத் தொடங்கு",
   "lang_guests_optional": "விருந்தினர்கள் (விருப்பம்)",
-  "lang_guest_count": "விருந்தினர்கள் எண்ணிக்கை"
+  "lang_guest_count": "விருந்தினர்கள் எண்ணிக்கை",
+  "lang_add_customer_details_for_this_order": "இந்த ஆர்டருக்கான வாடிக்கையாளர் விவரங்களைச் சேர்க்கவும்.",
+  "lang_add_to_order": "ஆர்டரில் சேர்க்கவும்",
+  "lang_customer_options": "வாடிக்கையாளர் விருப்பங்கள்",
+  "lang_find_an_existing_customer": "ஏற்கனவே உள்ள வாடிக்கையாளரைத் தேடவும்",
+  "lang_new_customer_details": "புதிய வாடிக்கையாளர் விவரங்கள்",
+  "lang_no_customer_details_needed_for_this_order": "இந்த ஆர்டருக்கு வாடிக்கையாளர் விவரங்கள் தேவையில்லை.",
+  "lang_no_customers_found_choose_add_new_customer": "வாடிக்கையாளர்கள் கிடைக்கவில்லை. புதிய வாடிக்கையாளரைச் சேர்க்கவும் என்பதைத் தேர்ந்தெடுக்கவும்.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "பெயர் அல்லது கைபேசி எண் மூலம் தேடி, ஒரு முடிவைத் தேர்ந்தெடுக்கவும்.",
+  "lang_select_a_customer_below": "கீழே ஒரு வாடிக்கையாளரைத் தேர்ந்தெடுக்கவும்.",
+  "lang_use_this_customer": "இந்த வாடிக்கையாளரைப் பயன்படுத்தவும்"
 }

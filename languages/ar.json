@@ -4215,5 +4215,15 @@
   "lang_new_takeaway": "طلب سفري جديد",
   "lang_start_a_table_order": "بدء طلب طاولة",
   "lang_guests_optional": "الضيوف (اختياري)",
-  "lang_guest_count": "عدد الضيوف"
+  "lang_guest_count": "عدد الضيوف",
+  "lang_add_customer_details_for_this_order": "أضف بيانات العميل لهذا الطلب.",
+  "lang_add_to_order": "إضافة إلى الطلب",
+  "lang_customer_options": "خيارات العميل",
+  "lang_find_an_existing_customer": "البحث عن عميل موجود",
+  "lang_new_customer_details": "بيانات العميل الجديد",
+  "lang_no_customer_details_needed_for_this_order": "لا يلزم إدخال بيانات العميل لهذا الطلب.",
+  "lang_no_customers_found_choose_add_new_customer": "لم يتم العثور على عملاء. اختر إضافة عميل جديد.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "ابحث بالاسم أو رقم الجوال ثم اختر نتيجة.",
+  "lang_select_a_customer_below": "اختر عميلاً أدناه.",
+  "lang_use_this_customer": "استخدام هذا العميل"
 }

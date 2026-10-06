@@ -4215,5 +4215,15 @@
   "lang_new_takeaway": "Neue Abholbestellung",
   "lang_start_a_table_order": "Tischbestellung starten",
   "lang_guests_optional": "Gäste (optional)",
-  "lang_guest_count": "Anzahl der Gäste"
+  "lang_guest_count": "Anzahl der Gäste",
+  "lang_add_customer_details_for_this_order": "Kundendaten für diese Bestellung hinzufügen.",
+  "lang_add_to_order": "Zur Bestellung hinzufügen",
+  "lang_customer_options": "Kundenoptionen",
+  "lang_find_an_existing_customer": "Bestehenden Kunden suchen",
+  "lang_new_customer_details": "Neue Kundendaten",
+  "lang_no_customer_details_needed_for_this_order": "Für diese Bestellung sind keine Kundendaten erforderlich.",
+  "lang_no_customers_found_choose_add_new_customer": "Keine Kunden gefunden. Wählen Sie Neuen Kunden hinzufügen.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "Nach Name oder Handynummer suchen und ein Ergebnis auswählen.",
+  "lang_select_a_customer_below": "Wählen Sie unten einen Kunden aus.",
+  "lang_use_this_customer": "Diesen Kunden verwenden"
 }

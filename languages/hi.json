@@ -4218,5 +4218,15 @@
   "lang_new_takeaway": "नया टेकअवे ऑर्डर",
   "lang_start_a_table_order": "टेबल ऑर्डर शुरू करें",
   "lang_guests_optional": "मेहमान (वैकल्पिक)",
-  "lang_guest_count": "मेहमानों की संख्या"
+  "lang_guest_count": "मेहमानों की संख्या",
+  "lang_add_customer_details_for_this_order": "इस ऑर्डर के लिए ग्राहक का विवरण जोड़ें।",
+  "lang_add_to_order": "ऑर्डर में जोड़ें",
+  "lang_customer_options": "ग्राहक विकल्प",
+  "lang_find_an_existing_customer": "मौजूदा ग्राहक खोजें",
+  "lang_new_customer_details": "नए ग्राहक का विवरण",
+  "lang_no_customer_details_needed_for_this_order": "इस ऑर्डर के लिए ग्राहक का विवरण आवश्यक नहीं है।",
+  "lang_no_customers_found_choose_add_new_customer": "कोई ग्राहक नहीं मिला। नया ग्राहक जोड़ें चुनें।",
+  "lang_search_by_name_or_mobile_then_select_a_res": "नाम या मोबाइल से खोजें, फिर एक परिणाम चुनें।",
+  "lang_select_a_customer_below": "नीचे एक ग्राहक चुनें।",
+  "lang_use_this_customer": "इस ग्राहक का उपयोग करें"
 }

@@ -4215,5 +4215,15 @@
   "lang_new_takeaway": "Pesanan bungkus baru",
   "lang_start_a_table_order": "Mulai pesanan meja",
   "lang_guests_optional": "Tamu (opsional)",
-  "lang_guest_count": "Jumlah tamu"
+  "lang_guest_count": "Jumlah tamu",
+  "lang_add_customer_details_for_this_order": "Tambahkan detail pelanggan untuk pesanan ini.",
+  "lang_add_to_order": "Tambahkan ke pesanan",
+  "lang_customer_options": "Pilihan pelanggan",
+  "lang_find_an_existing_customer": "Cari pelanggan yang sudah ada",
+  "lang_new_customer_details": "Detail pelanggan baru",
+  "lang_no_customer_details_needed_for_this_order": "Pesanan ini tidak memerlukan detail pelanggan.",
+  "lang_no_customers_found_choose_add_new_customer": "Pelanggan tidak ditemukan. Pilih Tambah pelanggan baru.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "Cari berdasarkan nama atau nomor ponsel, lalu pilih hasilnya.",
+  "lang_select_a_customer_below": "Pilih pelanggan di bawah.",
+  "lang_use_this_customer": "Gunakan pelanggan ini"
 }
