@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "यो ग्राहक प्रयोग गर्नुहोस्",
   "lang_merge_tables_separate_bills": "दुवै अर्डर गन्तव्य टेबलमा हुनेछन्। बिलहरू छुट्टै रहनेछन्।",
   "lang_no_other_open_table_orders_to_merge": "मिलाउन अन्य टेबलका खुला अर्डरहरू छैनन्।",
-  "lang_no_available_tables": "कुनै टेबल उपलब्ध छैन।"
+  "lang_no_available_tables": "कुनै टेबल उपलब्ध छैन।",
+  "lang_cash_towards_bill": "बिलका लागि नगद",
+  "lang_cash_handed_over": "दिइएको नगद",
+  "lang_cash_still_to_collect": "अझै लिन बाँकी",
+  "lang_payment_left_to_allocate": "छुट्याउन बाँकी"
 }

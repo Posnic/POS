@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "Utiliser ce client",
   "lang_merge_tables_separate_bills": "Les deux commandes seront à la table de destination. Les factures restent séparées.",
   "lang_no_other_open_table_orders_to_merge": "Aucune autre commande de table ouverte à regrouper.",
-  "lang_no_available_tables": "Aucune table disponible."
+  "lang_no_available_tables": "Aucune table disponible.",
+  "lang_cash_towards_bill": "Part du paiement en espèces",
+  "lang_cash_handed_over": "Espèces remises",
+  "lang_cash_still_to_collect": "Reste à encaisser",
+  "lang_payment_left_to_allocate": "Reste à répartir"
 }

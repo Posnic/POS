@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "Usa questo cliente",
   "lang_merge_tables_separate_bills": "Entrambi gli ordini saranno al tavolo di destinazione. I conti restano separati.",
   "lang_no_other_open_table_orders_to_merge": "Nessun altro ordine al tavolo aperto da unire.",
-  "lang_no_available_tables": "Nessun tavolo disponibile."
+  "lang_no_available_tables": "Nessun tavolo disponibile.",
+  "lang_cash_towards_bill": "Quota del conto in contanti",
+  "lang_cash_handed_over": "Contanti consegnati",
+  "lang_cash_still_to_collect": "Ancora da incassare",
+  "lang_payment_left_to_allocate": "Ancora da ripartire"
 }

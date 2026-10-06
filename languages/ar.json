@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "استخدام هذا العميل",
   "lang_merge_tables_separate_bills": "سيكون الطلبان على الطاولة المستهدفة. تبقى الفواتير منفصلة.",
   "lang_no_other_open_table_orders_to_merge": "لا توجد طلبات مفتوحة لطاولات أخرى لدمجها.",
-  "lang_no_available_tables": "لا توجد طاولات متاحة."
+  "lang_no_available_tables": "لا توجد طاولات متاحة.",
+  "lang_cash_towards_bill": "المبلغ النقدي من الفاتورة",
+  "lang_cash_handed_over": "النقد المستلم",
+  "lang_cash_still_to_collect": "المتبقي للتحصيل",
+  "lang_payment_left_to_allocate": "المتبقي للتوزيع"
 }

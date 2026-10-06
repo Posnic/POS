@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "Diesen Kunden verwenden",
   "lang_merge_tables_separate_bills": "Beide Bestellungen werden dem Zieltisch zugeordnet. Die Rechnungen bleiben getrennt.",
   "lang_no_other_open_table_orders_to_merge": "Keine anderen offenen Tischbestellungen zum Zusammenführen.",
-  "lang_no_available_tables": "Keine Tische verfügbar."
+  "lang_no_available_tables": "Keine Tische verfügbar.",
+  "lang_cash_towards_bill": "Baranteil der Rechnung",
+  "lang_cash_handed_over": "Übergebenes Bargeld",
+  "lang_cash_still_to_collect": "Noch zu kassieren",
+  "lang_payment_left_to_allocate": "Noch aufzuteilen"
 }

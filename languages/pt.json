@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "Usar este cliente",
   "lang_merge_tables_separate_bills": "Os dois pedidos ficarão na mesa de destino. As contas continuam separadas.",
   "lang_no_other_open_table_orders_to_merge": "Não há outros pedidos de mesa abertos para juntar.",
-  "lang_no_available_tables": "Não há mesas disponíveis."
+  "lang_no_available_tables": "Não há mesas disponíveis.",
+  "lang_cash_towards_bill": "Parte da conta em dinheiro",
+  "lang_cash_handed_over": "Dinheiro entregue",
+  "lang_cash_still_to_collect": "Ainda a receber",
+  "lang_payment_left_to_allocate": "Falta distribuir"
 }
