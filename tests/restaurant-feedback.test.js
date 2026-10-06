@@ -8,3 +8,10 @@ test('reduced motion suppresses all decorative effects',async()=>{const h=setup(
 test('cancelled chef effect is gated and replaced without stacking',async()=>{const h=setup();await h.app.load();h.app.play('cancelled');assert.equal(h.w.document.querySelector('.sad-chef'),null);h.config(true);await h.app.load();h.app.play('cancelled');const chef=h.w.document.querySelector('.sad-chef');assert.ok(chef.querySelector('.chef-hat'));assert.equal(chef.getAttribute('aria-hidden'),'true');assert.equal(parseFloat(chef.style.left)+80,h.w.innerWidth/2);h.app.play('cancelled');assert.equal(h.w.document.querySelectorAll('.sad-chef').length,1);h.close();});
 
 test('served feedback is a small bottom-centre smile and never stacks',async()=>{const h=setup();h.config(true);await h.app.load();h.app.play('served');const smile=h.w.document.querySelector('.happy-feedback');assert.ok(smile.querySelector('.happy-smile'));assert.equal(parseFloat(smile.style.left)+40,h.w.innerWidth/2);assert.equal(smile.style.top,'auto');h.app.play('served');assert.equal(h.w.document.querySelectorAll('.restaurant-feedback').length,1);h.close();});
+
+test('add and reduce feedback stays beside the cart instead of bottom centre', async () => {
+ const h=setup();h.config(true);await h.app.load();
+ const cart=h.w.document.createElement('div');cart.className='kv2-review-heading';cart.getBoundingClientRect=()=>({top:210,right:920});h.w.document.querySelector('.kv2-order').append(cart);
+ for(const kind of ['first','add','reduce']){h.app.play(kind);const effect=h.w.document.querySelector('.small-feedback');assert.equal(effect.style.left,'872px');assert.equal(effect.style.top,'210px');assert.equal(effect.style.bottom,'');}
+ h.close();
+});

@@ -1040,6 +1040,7 @@
                 state.draft.items.splice(Number(b.dataset.index), 1);
                 persist();
                 render();
+                P.restaurantFeedback?.play('reduce');
             } else if (a === 'qty') {
                 if (state.draft.intent) throw new Error('Retry the saved send first.');
                 const l = state.draft.items[b.dataset.index];

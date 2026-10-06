@@ -123,6 +123,12 @@ class SettingsRepository extends BaseModel {
         }
       }
 
+      // Restaurant feedback defaults on; an explicit branch/account off remains authoritative.
+      if (group === 'channels' && values.restaurant_playful_feedback === undefined) {
+        values.restaurant_playful_feedback = true;
+        source.restaurant_playful_feedback = 'default';
+      }
+
       // Preserve periods from installations that used the old settings collection.
       // An explicit empty branch/account value is authoritative and must not resurrect them.
       if (group === 'channels' && values.menu_dayparts === undefined) {
