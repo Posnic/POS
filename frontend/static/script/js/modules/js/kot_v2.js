@@ -501,10 +501,11 @@
         fitEditor();
     }
     function fitEditor() {
-        const editor = root()?.querySelector('.kv2-editor');
+        const editor = root()?.querySelector('.kv2-order');
         if (!editor || !editor.getClientRects().length) return;
         const available = window.innerHeight - editor.getBoundingClientRect().top - 12;
         editor.style.setProperty('--kv2-editor-height', Math.max(300, available) + 'px');
+        editor.style.setProperty('--kv2-order-height', Math.max(300, available) + 'px');
     }
     window.addEventListener('resize', fitEditor);
     window.addEventListener('hashchange', () => {
