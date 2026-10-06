@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "ఈ కస్టమర్‌ను ఉపయోగించండి",
   "lang_merge_tables_separate_bills": "రెండు ఆర్డర్‌లు ఎంచుకున్న టేబుల్‌పై ఉంటాయి. బిల్లులు వేరుగానే ఉంటాయి.",
   "lang_no_other_open_table_orders_to_merge": "విలీనం చేయడానికి ఇతర టేబుల్‌లలో తెరిచిన ఆర్డర్‌లు లేవు.",
-  "lang_no_available_tables": "టేబుల్‌లు అందుబాటులో లేవు."
+  "lang_no_available_tables": "టేబుల్‌లు అందుబాటులో లేవు.",
+  "lang_cash_towards_bill": "బిల్లుకు నగదు",
+  "lang_cash_handed_over": "కస్టమర్ ఇచ్చిన నగదు",
+  "lang_cash_still_to_collect": "ఇంకా తీసుకోవాల్సిన మొత్తం",
+  "lang_payment_left_to_allocate": "ఇంకా కేటాయించాల్సిన మొత్తం"
 }

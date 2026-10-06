@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "ಈ ಗ್ರಾಹಕರನ್ನು ಬಳಸಿ",
   "lang_merge_tables_separate_bills": "ಎರಡೂ ಆರ್ಡರ್‌ಗಳು ಗುರಿ ಟೇಬಲ್‌ನಲ್ಲಿರುತ್ತವೆ. ಬಿಲ್‌ಗಳು ಪ್ರತ್ಯೇಕವಾಗಿಯೇ ಇರುತ್ತವೆ.",
   "lang_no_other_open_table_orders_to_merge": "ವಿಲೀನಗೊಳಿಸಲು ಬೇರೆ ಟೇಬಲ್‌ನ ತೆರೆದ ಆರ್ಡರ್‌ಗಳಿಲ್ಲ.",
-  "lang_no_available_tables": "ಯಾವುದೇ ಟೇಬಲ್‌ಗಳು ಲಭ್ಯವಿಲ್ಲ."
+  "lang_no_available_tables": "ಯಾವುದೇ ಟೇಬಲ್‌ಗಳು ಲಭ್ಯವಿಲ್ಲ.",
+  "lang_cash_towards_bill": "ಬಿಲ್‌ಗೆ ನಗದು",
+  "lang_cash_handed_over": "ಗ್ರಾಹಕರು ನೀಡಿದ ನಗದು",
+  "lang_cash_still_to_collect": "ಇನ್ನೂ ಪಡೆಯಬೇಕಾದ ಮೊತ್ತ",
+  "lang_payment_left_to_allocate": "ಇನ್ನೂ ಹಂಚಬೇಕಾದ ಮೊತ್ತ"
 }

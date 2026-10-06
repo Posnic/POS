@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "Tumia mteja huyu",
   "lang_merge_tables_separate_bills": "Maagizo yote mawili yatakuwa kwenye meza lengwa. Bili zitabaki tofauti.",
   "lang_no_other_open_table_orders_to_merge": "Hakuna maagizo mengine ya meza yaliyo wazi ya kuunganisha.",
-  "lang_no_available_tables": "Hakuna meza zinazopatikana."
+  "lang_no_available_tables": "Hakuna meza zinazopatikana.",
+  "lang_cash_towards_bill": "Sehemu ya bili taslimu",
+  "lang_cash_handed_over": "Pesa taslimu zilizotolewa",
+  "lang_cash_still_to_collect": "Bado kukusanya",
+  "lang_payment_left_to_allocate": "Bado kugawa"
 }

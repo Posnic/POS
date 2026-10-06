@@ -4573,5 +4573,9 @@
   "lang_use_this_customer": "Deze klant gebruiken",
   "lang_merge_tables_separate_bills": "Beide bestellingen komen op de doeltafel. De rekeningen blijven apart.",
   "lang_no_other_open_table_orders_to_merge": "Geen andere open tafelbestellingen om samen te voegen.",
-  "lang_no_available_tables": "Geen tafels beschikbaar."
+  "lang_no_available_tables": "Geen tafels beschikbaar.",
+  "lang_cash_towards_bill": "Contant deel van de rekening",
+  "lang_cash_handed_over": "Ontvangen contant geld",
+  "lang_cash_still_to_collect": "Nog te ontvangen",
+  "lang_payment_left_to_allocate": "Nog te verdelen"
 }

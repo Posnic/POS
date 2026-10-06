@@ -89,3 +89,25 @@ test('split cash UPI and card is reviewed and retried as one immutable payment',
  w.document.querySelector('[data-action=back]').click();assert.equal(w.document.querySelector('[data-tender=Cash][data-field=amount]').value,'500');w.document.querySelector('[data-action=record]').click();w.document.querySelector('[data-action=record]').click();await new Promise(r=>setImmediate(r));assert.equal(records.length,1);assert.equal(records[0].method,'Mixed');assert.equal(records[0].receivedMinor,110000);assert.deepEqual(records[0].tenders.map(t=>t.amountMinor),[50000,30000,20000]);
  fail=false;w.document.querySelector('[data-action=record]').click();await new Promise(r=>setImmediate(r));assert.deepEqual(records[1],records[0]);assert.match(w.document.querySelector('.cp-receipt').textContent,/UPI/);assert.equal(w.document.querySelector('[data-action=record]'),null);dom.window.close();
 });
+test('cash entry separates bill allocation, handed cash and live change in single and split payments', async () => {
+ const dom=new JSDOM('<body></body>',{url:'https://shop.invalid',runScripts:'outside-only'}),w=dom.window;
+ try {
+ w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+ const plan={id:'plan',currency:'₹',dueMinor:34300,enabled:true,methods:['Cash','Card'],guests:[{name:'Table 99',totalMinor:34300,paid:false}]};
+ w.PosnicPro={local:{get:()=> 'branch'},post:(_o,ok)=>ok(plan)};
+ for(const f of ['captain-money.js','captain-payments.js'])w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/core',f),'utf8'));
+ await w.CaptainPayments.open('99');
+ const enter=(selector,value)=>{const e=w.document.querySelector(selector);e.value=value;e.dispatchEvent(new w.Event('input',{bubbles:true}));};
+ const summary=()=>w.document.querySelector('#cp-cash-summary').textContent;
+ enter('#cp-received','555');assert.match(summary(),/Change to return.*212.00/);
+ enter('#cp-received','300');assert.match(summary(),/Still to collect.*43.00/);
+ w.document.querySelector('[data-action=exact-cash]').click();assert.equal(w.document.querySelector('#cp-received').value,'343.00');assert.match(summary(),/0.00/);
+ w.document.querySelector('[data-method=Mixed]').click();
+ assert.match(w.document.querySelector('.cp-split').textContent,/Left to allocate/);
+ assert.match(w.document.querySelector('fieldset').textContent,/Cash towards bill.*Cash handed over/s);
+ enter('[data-tender=Cash][data-field=amount]','343');enter('[data-tender=Cash][data-field=received]','555');assert.match(summary(),/Change to return.*212.00/);
+ enter('[data-tender=Cash][data-field=amount]','300');assert.match(summary(),/255.00/);
+ enter('[data-tender=Cash][data-field=received]','200');assert.match(summary(),/Still to collect.*100.00/);
+ w.document.querySelector('[data-action=exact-cash]').click();assert.equal(w.document.querySelector('[data-tender=Cash][data-field=received]').value,'300');assert.match(summary(),/0.00/);
+ } finally {w.close();}
+});

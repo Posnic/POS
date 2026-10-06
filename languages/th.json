@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "ใช้ลูกค้ารายนี้",
   "lang_merge_tables_separate_bills": "ทั้งสองคำสั่งซื้อจะอยู่ที่โต๊ะปลายทาง บิลยังคงแยกกัน",
   "lang_no_other_open_table_orders_to_merge": "ไม่มีคำสั่งซื้อที่เปิดอยู่ของโต๊ะอื่นให้รวม",
-  "lang_no_available_tables": "ไม่มีโต๊ะว่าง"
+  "lang_no_available_tables": "ไม่มีโต๊ะว่าง",
+  "lang_cash_towards_bill": "ส่วนที่จ่ายเงินสด",
+  "lang_cash_handed_over": "เงินสดที่ลูกค้าส่งให้",
+  "lang_cash_still_to_collect": "ยังต้องรับเพิ่ม",
+  "lang_payment_left_to_allocate": "ยอดที่ยังไม่ได้จัดสรร"
 }

@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "මෙම පාරිභෝගිකයා භාවිත කරන්න",
   "lang_merge_tables_separate_bills": "ඇණවුම් දෙකම තෝරාගත් මේසයේ තිබෙනු ඇත. බිල්පත් වෙන වෙනම පවතී.",
   "lang_no_other_open_table_orders_to_merge": "ඒකාබද්ධ කිරීමට වෙනත් මේසවල විවෘත ඇණවුම් නැත.",
-  "lang_no_available_tables": "ලබාගත හැකි මේස නැත."
+  "lang_no_available_tables": "ලබාගත හැකි මේස නැත.",
+  "lang_cash_towards_bill": "බිල සඳහා මුදල්",
+  "lang_cash_handed_over": "ලබා දුන් මුදල්",
+  "lang_cash_still_to_collect": "තව ලබාගත යුතු මුදල",
+  "lang_payment_left_to_allocate": "තව බෙදා වෙන් කළ යුතු මුදල"
 }

@@ -4236,5 +4236,9 @@
   "lang_use_this_customer": "ഈ ഉപഭോക്താവിനെ ഉപയോഗിക്കുക",
   "lang_merge_tables_separate_bills": "രണ്ട് ഓർഡറുകളും തിരഞ്ഞെടുത്ത ടേബിളിലായിരിക്കും. ബില്ലുകൾ വേറിട്ടുതന്നെ തുടരും.",
   "lang_no_other_open_table_orders_to_merge": "ലയിപ്പിക്കാൻ മറ്റു ടേബിളുകളുടെ തുറന്ന ഓർഡറുകളില്ല.",
-  "lang_no_available_tables": "ടേബിളുകൾ ലഭ്യമല്ല."
+  "lang_no_available_tables": "ടേബിളുകൾ ലഭ്യമല്ല.",
+  "lang_cash_towards_bill": "ബില്ലിലേക്കുള്ള പണം",
+  "lang_cash_handed_over": "ഉപഭോക്താവ് നൽകിയ പണം",
+  "lang_cash_still_to_collect": "ഇനിയും സ്വീകരിക്കേണ്ടത്",
+  "lang_payment_left_to_allocate": "ഇനിയും വകയിരുത്തേണ്ടത്"
 }

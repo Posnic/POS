@@ -1,6 +1,11 @@
 (function () {
   "use strict";
   const messages = [
+    { label: 'Cash towards bill', t: 'lang_cash_towards_bill' },
+    { label: 'Cash handed over', t: 'lang_cash_handed_over' },
+    { label: 'Still to collect', t: 'lang_cash_still_to_collect' },
+    { label: 'Left to allocate', t: 'lang_payment_left_to_allocate' },
+    { label: "Exact amount", t: "lang_exact_amount" },
     { label: "Split payment", t: "lang_splitpay_title" },
     { label: "Amount", t: "lang_amount" },
     { label: 'Enter two or three amounts that add up to the bill.', t: 'lang_captain_tender_total' },
@@ -159,11 +164,22 @@
       return sum + (Number.isSafeInteger(value) ? value : 0);
     }, 0);
   }
+  function cashSummary() {
+    const v = tenderInputs.Cash || {};
+    const minor = value => { try { return CaptainMoney.toMinor(value || 0, monetary()); } catch { return NaN; } };
+    const due = method === 'Mixed' ? minor(v.amount) : amount();
+    const handed = method === 'Mixed' ? minor(v.received || v.amount) : cashMinor();
+    const delta = handed - due;
+    return '<span>' + esc((delta < 0 ? t('Still to collect') : t('Change to return'))) + '</span><strong translate="no">' + esc(Number.isSafeInteger(delta) ? money(Math.abs(delta)) : '—') + '</strong>';
+  }
+  function cashTools() {
+    return '<button type="button" data-action="exact-cash">' + esc(t('Exact amount')) + '</button><div id="cp-cash-summary" class="cp-change cp-cash-summary" aria-live="polite">' + cashSummary() + '</div>';
+  }
   function splitFields() {
-    return '<div class="cp-split"><div class="cp-change"><span>' + esc(t('Remaining balance')) + '</span><strong id="cp-split-remaining" aria-live="polite">' + esc(money(splitRemaining())) + '</strong></div>' + plan.methods.map(m => {
+    return '<div class="cp-split"><div class="cp-change"><span>' + esc(t('Left to allocate')) + '</span><strong id="cp-split-remaining" aria-live="polite">' + esc(money(splitRemaining())) + '</strong></div>' + plan.methods.map(m => {
       const v = tenderInputs[m] || {};
-      return '<fieldset><legend>' + esc(t(m === 'Upi' ? 'UPI' : m)) + '</legend><label>' + esc(t('Amount')) + '<input data-tender="' + esc(m) + '" data-field="amount" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.amount || '') + '"></label>' +
-        (m === 'Cash' ? '<label>' + esc(t('Amount received')) + '<input data-tender="Cash" data-field="received" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.received || '') + '"></label>' : '<label>' + esc(t('Payment reference (optional)')) + '<input data-tender="' + esc(m) + '" data-field="reference" maxlength="100" value="' + esc(v.reference || '') + '"></label><label class="cp-confirm"><input type="checkbox" data-tender="' + esc(m) + '" data-field="verified" ' + (v.verified ? 'checked' : '') + '><span>' + esc(t('I verified this payment on the terminal or bank app.')) + '</span></label>') + '</fieldset>';
+      return '<fieldset><legend>' + esc(t(m === 'Upi' ? 'UPI' : m)) + '</legend><label>' + esc((m === 'Cash' ? t('Cash towards bill') : t('Amount'))) + '<input data-tender="' + esc(m) + '" data-field="amount" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.amount || '') + '"></label>' +
+        (m === 'Cash' ? '<label>' + esc(t('Cash handed over')) + '<input data-tender="Cash" data-field="received" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.received || '') + '"></label>' + cashTools() : '<label>' + esc(t('Payment reference (optional)')) + '<input data-tender="' + esc(m) + '" data-field="reference" maxlength="100" value="' + esc(v.reference || '') + '"></label><label class="cp-confirm"><input type="checkbox" data-tender="' + esc(m) + '" data-field="verified" ' + (v.verified ? 'checked' : '') + '><span>' + esc(t('I verified this payment on the terminal or bank app.')) + '</span></label>') + '</fieldset>';
     }).join('') + '</div>';
   }
   function render() {
@@ -176,7 +192,7 @@
         body += `
         ${plan.guests.filter((g) => !g.paid).length > 1 ? `<label>${esc(t("Guest"))}<select id="cp-guest"><option value="">${esc(t("All remaining guests"))}</option>${plan.guests.map((g, i) => (g.paid ? "" : `<option value="${i}" ${selected === String(i) ? "selected" : ""} translate="no">${esc(g.name)} · ${esc(money(g.totalMinor))}</option>`)).join("")}</select></label>` : ""}
         <div class="cp-methods" role="group" aria-label="${esc(t("Collect payment"))}">${[...plan.methods, ...(plan.methods.length > 1 ? ["Mixed"] : [])].map((m) => `<button type="button" data-method="${m}" aria-pressed="${method === m}">${esc(t(m === "Mixed" ? "Split payment" : m === "Upi" ? "UPI" : m))}</button>`).join("")}</div>
-        ${method === "Mixed" ? splitFields() : method === "Cash" ? `<label>${esc(t("Amount received"))}<input id="cp-received" inputmode="decimal" type="number" min="0" step="${1 / monetary().factor}" value="${esc(received)}"></label><div class="cp-change"><span>${esc(t("Change to return"))}</span><strong id="cp-change" translate="no">${esc(money(Math.max(0, cashMinor() - amount())))}</strong></div>` : `<label>${esc(t("Payment reference (optional)"))}<input id="cp-reference" maxlength="100" value="${esc(reference)}"></label><label class="cp-confirm"><input type="checkbox" id="cp-verified" ${verified ? "checked" : ""}><span>${esc(t("I verified this payment on the terminal or bank app."))}</span></label>`}
+        ${method === "Mixed" ? splitFields() : method === "Cash" ? `<label>${esc(t("Cash handed over"))}<input id="cp-received" inputmode="decimal" type="number" min="0" step="${1 / monetary().factor}" value="${esc(received)}"></label>${cashTools()}` : `<label>${esc(t("Payment reference (optional)"))}<input id="cp-reference" maxlength="100" value="${esc(reference)}"></label><label class="cp-confirm"><input type="checkbox" id="cp-verified" ${verified ? "checked" : ""}><span>${esc(t("I verified this payment on the terminal or bank app."))}</span></label>`}
         <p class="cp-help">${esc(t("Confirm only after receiving the money. This does not charge a card or bank account."))}</p>`;
       if (plan.dueMinor === 0)
         body += `<p role="status">${esc(t("Payment recorded"))}</p>`;
@@ -194,7 +210,7 @@
 
     if (busy || pending)
       dialog
-        .querySelectorAll("input,select,[data-method]")
+        .querySelectorAll('input,select,[data-method],[data-action="exact-cash"]')
         .forEach((el) => (el.disabled = true));
   }
   async function load() {
@@ -346,7 +362,7 @@
   function setup() {
     if (dialog) return;
     const style = document.createElement("style");
-    style.textContent = `#captain-payments{width:min(100vw,480px);max-width:100vw;max-height:100dvh;height: min(100dvh,780px);border:0;border-radius:18px;padding:0;color:#172033;background:#fff;font:inherit;box-shadow:0 16px 60px #0004}#captain-payments::backdrop{background:#15223b88}#captain-payments[open]{display:flex;flex-direction:column}#captain-payments *{box-sizing:border-box}#captain-payments header,#captain-payments footer{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid #e4e8ee}#captain-payments h2{font-size:20px;margin:0;flex:1}#captain-payments h2 small{font-size:14px;display:block;color:#667085;margin-top:4px}#captain-payments button{min-height:46px;padding:10px 16px;border:1px solid #dbe1eb;border-radius:10px;background:white;color:inherit;font:inherit;font-weight:600;cursor:pointer}#captain-payments button:disabled{opacity:.55;cursor:wait}#captain-payments .cp-body{padding:20px;overflow:auto;flex:1}#captain-payments footer{border-top:1px solid #e4e8ee;border-bottom:0;padding-bottom:max(16px,env(safe-area-inset-bottom))}#captain-payments .cp-primary{flex:1;background:#5146e5;color:white;border-color:#5146e5}#captain-payments .cp-balance{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}#captain-payments .cp-balance strong{font-size:26px}#captain-payments .cp-guests{margin-bottom:22px;border:1px solid #e4e8ee;border-radius:12px;padding:4px 14px}#captain-payments .cp-guests>div{display:flex;justify-content:space-between;padding:12px 0;gap:12px}#captain-payments label{display:block;margin:16px 0;font-weight:600}#captain-payments input:not([type=checkbox]),#captain-payments select{display:block;width:100%;min-height:48px;padding:10px;margin-top:8px;border:1px solid #cbd3df;border-radius:10px;font:inherit;background:white;color:inherit}#captain-payments .cp-methods{display:flex;gap:8px;flex-wrap:wrap}#captain-payments .cp-methods button{flex:1}#captain-payments [aria-pressed=true]{border-color:#5146e5;background:#efedff;color:#3529aa}#captain-payments .cp-change{display:flex;justify-content:space-between;gap:10px}#captain-payments .cp-confirm{display:flex;align-items:flex-start;gap:10px;line-height:1.5}#captain-payments .cp-confirm input{width:22px;height:22px;flex:none}#captain-payments .cp-help{color:#667085;font-size:13px;line-height:1.5;margin-top:22px}#captain-payments .cp-error{padding:12px;background:#fff5e6;color:#754700;border-radius:10px;line-height:1.5}@media(max-width:480px){#captain-payments{width:100%;height:100dvh;max-height:100dvh;border-radius:0;margin:0}}`;
+    style.textContent = `#captain-payments{width:min(100vw,480px);max-width:100vw;max-height:100dvh;height: min(100dvh,780px);border:0;border-radius:18px;padding:0;color:#172033;background:#fff;font:inherit;box-shadow:0 16px 60px #0004}#captain-payments::backdrop{background:#15223b88}#captain-payments[open]{display:flex;flex-direction:column}#captain-payments *{box-sizing:border-box}#captain-payments header,#captain-payments footer{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid #e4e8ee}#captain-payments h2{font-size:20px;margin:0;flex:1}#captain-payments h2 small{font-size:14px;display:block;color:#667085;margin-top:4px}#captain-payments button{min-height:46px;padding:10px 16px;border:1px solid #dbe1eb;border-radius:10px;background:white;color:inherit;font:inherit;font-weight:600;cursor:pointer}#captain-payments button:disabled{opacity:.55;cursor:wait}#captain-payments .cp-body{padding:20px;overflow:auto;flex:1}#captain-payments footer{border-top:1px solid #e4e8ee;border-bottom:0;padding-bottom:max(16px,env(safe-area-inset-bottom))}#captain-payments .cp-primary{flex:1;background:#5146e5;color:white;border-color:#5146e5}#captain-payments .cp-balance{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}#captain-payments .cp-balance strong{font-size:26px}#captain-payments .cp-guests{margin-bottom:22px;border:1px solid #e4e8ee;border-radius:12px;padding:4px 14px}#captain-payments .cp-guests>div{display:flex;justify-content:space-between;padding:12px 0;gap:12px}#captain-payments label{display:block;margin:16px 0;font-weight:600}#captain-payments input:not([type=checkbox]),#captain-payments select{display:block;width:100%;min-height:48px;padding:10px;margin-top:8px;border:1px solid #cbd3df;border-radius:10px;font:inherit;background:white;color:inherit}#captain-payments .cp-methods{display:flex;gap:8px;flex-wrap:wrap}#captain-payments .cp-methods button{flex:1}#captain-payments [aria-pressed=true]{border-color:#5146e5;background:#efedff;color:#3529aa}#captain-payments .cp-change{display:flex;justify-content:space-between;gap:10px}#captain-payments .cp-cash-summary{margin-top:12px;padding:14px;border-radius:10px;background:#eef7f4;color:#20594b;align-items:center}#captain-payments .cp-cash-summary strong{font-size:23px}#captain-payments [data-action=exact-cash]{min-height:34px;padding:6px 10px;font-size:13px}#captain-payments .cp-confirm{display:flex;align-items:flex-start;gap:10px;line-height:1.5}#captain-payments .cp-confirm input{width:22px;height:22px;flex:none}#captain-payments .cp-help{color:#667085;font-size:13px;line-height:1.5;margin-top:22px}#captain-payments .cp-error{padding:12px;background:#fff5e6;color:#754700;border-radius:10px;line-height:1.5}@media(max-width:480px){#captain-payments{width:100%;height:100dvh;max-height:100dvh;border-radius:0;margin:0}}`;
     style.textContent += `#captain-payments .cp-review>div{display:flex;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid #e4e8ee;overflow-wrap:anywhere}#captain-payments .cp-review strong{text-align:end}`;
     style.textContent += `#captain-payments .cp-split fieldset{border:1px solid #e4e8ee;border-radius:12px;padding:10px 14px;margin-top:16px}#captain-payments .cp-split legend{font-size:15px;font-weight:600;width:auto;padding:0 5px}#captain-payments .cp-split label{font-size:13px;margin:10px 0}`;
     document.head.append(style);
@@ -360,6 +376,13 @@
     });
     dialog.addEventListener("click", (e) => {
       const action = e.target.closest("[data-action]")?.dataset.action;
+      if (action === "exact-cash" && !busy && !pending) {
+        const input = dialog.querySelector(method === 'Mixed' ? '[data-tender="Cash"][data-field="received"]' : '#cp-received');
+        if (input) {
+          input.value = method === 'Mixed' ? tenderInputs.Cash?.amount || '0' : receivedDefault();
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
       if (action === "close") close();
       if (action === "back" && !busy) { reviewing = false; render(); }
       if (action === "record" && !receipt) record();
@@ -401,10 +424,9 @@
       if (e.target.id === "cp-reference") reference = e.target.value;
       if (e.target.id === "cp-received") {
         received = e.target.value;
-        dialog.querySelector("#cp-change").textContent = money(
-          Math.max(0, cashMinor() - amount()),
-        );
       }
+      const summary = dialog.querySelector('#cp-cash-summary');
+      if (summary) summary.innerHTML = cashSummary();
     });
   }
   async function open(value, branchValue, draft) {
