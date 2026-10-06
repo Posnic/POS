@@ -325,6 +325,8 @@ module.exports = async function startServer(options = {}) {
         .migrateSupplierEmailIndex(mongoose.connection.db);
       await require(path.join(apiPath, 'src/database/migrations/supplier-email-index'))
         .migrateCustomerEmailIndex(mongoose.connection.db);
+      await require(path.join(apiPath, 'src/database/migrations/receiving-number-indexes'))
+        .migrateReceivingNumberIndexes(mongoose.connection.db);
     
     // Add mongoClient to app.locals for session filter utility
     app.locals.mongoClient = mongoClient;

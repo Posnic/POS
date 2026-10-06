@@ -484,6 +484,8 @@
         return `<section class="kv2-order kv2-editor"><div class="kv2-customer"><strong>${esc(d.customer?.name || 'Walk-in customer')}</strong>${button('Choose customer', 'customer')}</div><header><div><h2>${PosnicPro.i18n.t('lang_add_items', 'Add items')} <span class="kv2-editor-table">/ ${esc(d.table || 'Takeaway')}</span></h2><small><lang class="lang_search_all_dishes_by_name_barcode_or_quick">Search all dishes by name, barcode or quick code. F2 to focus.</lang></small></div>${d.intent ? button('Review latest order', 'rebase') : button('Discard draft', 'discard')}</header><div class="kv2-draft-body"><section class="kv2-catalogue"><div class="kv2-searchbar"><input id="kv2-search" type="search" autocomplete="off" placeholder="Search name, SKU, barcode or quick code" data-t-placeholder="lang_search_name_sku_barcode_or_quick_code"><div id="kv2-results"></div></div><div class="kv2-catalogue-footer">${button('Item not on menu', 'offmenu')}</div><div class="kv2-category-chips">${categoriesHTML()}</div><div class="kv2-menu">${catalogueHTML()}</div></section><aside class="kv2-review"><div class="kv2-review-heading"><h3><lang class="lang_review_this_round">Review this round</lang></h3></div><p class="kv2-review-hint"><lang class="lang_nothing_is_sent_until_you_choose_send_to_k">Nothing is sent until you choose Send to kitchen.</lang></p><div class="kv2-basket">${d.items.length ? d.items.map((l, i) => `<div class="kv2-draft-line"><div class="kv2-draft-name"><strong>${esc(l.name)}</strong><span>${esc(money(l.price * l.quantity))}</span></div>${l.item_description ? `<small>${esc(l.item_description)}</small>` : ''}<div class="kv2-stepper">${button('−', 'qty', `data-index="${i}" data-delta="-1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} −"`)}<b>${l.quantity}</b>${button('+', 'qty', `data-index="${i}" data-delta="1" aria-label="${esc(PosnicPro.i18n.t('lang_quantity','Quantity'))} +"`)}${button('Note', 'draftNote', `data-index="${i}"`)}${button(PosnicPro.i18n.t('lang_remove','Remove'), 'removeDraft', `data-index="${i}" class="kv2-remove"`)}</div></div>`).join('') : `<div class="kv2-basket-empty">${icon('takeaway')}<p><lang class="lang_add_item">Add item</lang></p></div>`}</div><div class="kv2-round-total"><span><lang class="lang_amount">Amount</lang></span><strong>${esc(money(d.items.reduce((sum, l) => sum + Number(l.price) * Number(l.quantity), 0)))}</strong></div></aside></div><footer>${button(PosnicPro.i18n.t('lang_cancel', 'Cancel'), 'discard')}<small>${d.items.reduce((n, l) => n + Number(l.quantity), 0)} <lang class="lang_items">Items</lang></small>${button(d.intent ? PosnicPro.i18n.t('lang_retry_saved_send', 'Retry saved send') : PosnicPro.i18n.t('lang_kot_workspace_send', 'Send to kitchen'), 'send', `class="primary" ${d.items.length ? '' : 'disabled'}`)}</footer></section>`;
     }
     function render() {
+        const desktopTools = document.getElementById('posnic-desktop-fab');
+        if (desktopTools) document.body.append(desktopTools);
         if (!root()) return;
         root().classList.toggle('kv2-composing', !!state.draft);
         root().classList.toggle('kv2-playful', !!P.restaurantFeedback?.allowed?.());
@@ -493,7 +495,22 @@
             if (!state.catalogueLoaded) loadCatalogue();
         }
         paintRefreshFeedback();
+        if (desktopTools) {
+            root()?.querySelector('.kv2-heading')?.append(desktopTools);
+        }
+        fitEditor();
     }
+    function fitEditor() {
+        const editor = root()?.querySelector('.kv2-editor');
+        if (!editor || !editor.getClientRects().length) return;
+        const available = window.innerHeight - editor.getBoundingClientRect().top - 12;
+        editor.style.setProperty('--kv2-editor-height', Math.max(300, available) + 'px');
+    }
+    window.addEventListener('resize', fitEditor);
+    window.addEventListener('hashchange', () => {
+        const tools = document.getElementById('posnic-desktop-fab');
+        if (tools && !/^#\/kot(?:_v2)?(?:\/|$)/.test(location.hash)) document.body.append(tools);
+    });
     function startDraft(meta) {
         state.expanded = false;
         if (!state.draft)

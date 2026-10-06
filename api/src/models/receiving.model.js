@@ -65,11 +65,9 @@ const receivingSchema = new mongoose.Schema(
     // for compatibility, treating receiving_number as an alias.
     receiving_id: {
       type: String,
-      unique: true,
     },
     receiving_number: {
       type: String,
-      unique: true,
     },
     supplier: {
       type: mongoose.Schema.Types.ObjectId,
@@ -142,6 +140,11 @@ const receivingSchema = new mongoose.Schema(
     strict: false,
   }
 );
+
+// Purchase sequences belong to a branch; legacy records may omit either alias.
+for (const index of require('../database/migrations/receiving-number-indexes').numberIndexes) {
+  receivingSchema.index(index.key, index.options);
+}
 
 // Add plugins
 receivingSchema.plugin(toJSON);
