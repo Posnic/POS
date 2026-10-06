@@ -1,10 +1,10 @@
 (function () {
   "use strict";
   const messages = [
-    { label: "Cash towards bill", t: "lang_cash_towards_bill" },
-    { label: "Cash handed over", t: "lang_cash_handed_over" },
-    { label: "Still to collect", t: "lang_cash_still_to_collect" },
-    { label: "Left to allocate", t: "lang_payment_left_to_allocate" },
+    { label: 'Cash towards bill', t: 'lang_cash_towards_bill' },
+    { label: 'Cash handed over', t: 'lang_cash_handed_over' },
+    { label: 'Still to collect', t: 'lang_cash_still_to_collect' },
+    { label: 'Left to allocate', t: 'lang_payment_left_to_allocate' },
     { label: "Exact amount", t: "lang_exact_amount" },
     { label: "Split payment", t: "lang_splitpay_title" },
     { label: "Amount", t: "lang_amount" },
