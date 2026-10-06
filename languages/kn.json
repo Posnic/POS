@@ -4215,5 +4215,13 @@
   "lang_new_takeaway": "ಹೊಸ ಪಾರ್ಸೆಲ್ ಆರ್ಡರ್",
   "lang_start_a_table_order": "ಮೇಜಿನ ಆರ್ಡರ್ ಪ್ರಾರಂಭಿಸಿ",
   "lang_guests_optional": "ಅತಿಥಿಗಳು (ಐಚ್ಛಿಕ)",
-  "lang_guest_count": "ಅತಿಥಿಗಳ ಸಂಖ್ಯೆ"
+  "lang_guest_count": "ಅತಿಥಿಗಳ ಸಂಖ್ಯೆ",
+  "lang_ai_settings": "AI ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+  "lang_ask_posnic_is_off": "Ask Posnic ಆಫ್ ಆಗಿದೆ",
+  "lang_an_owner_can_enable_ask_posnic_in_settings": "ಮಾಲೀಕರು ಸೆಟ್ಟಿಂಗ್‌ಗಳು → ವೈಶಿಷ್ಟ್ಯಗಳಲ್ಲಿ Ask Posnic ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಬಹುದು. ಸಾಮಾನ್ಯ POS ಕಾರ್ಯಗಳು ಲಭ್ಯವಿರುತ್ತವೆ.",
+  "lang_enable_ask_posnic": "Ask Posnic ಸಕ್ರಿಯಗೊಳಿಸಿ",
+  "lang_model_assistance_for_item_descriptions_and": "ವಸ್ತುಗಳ ವಿವರಣೆ ಮತ್ತು ಇತರ ಸಕ್ರಿಯ ಕಾರ್ಯಗಳಿಗೆ ಮಾದರಿಯ ಸಹಾಯ. ಸಂಪರ್ಕ ಮತ್ತು ಬಳಕೆಯ ಮಿತಿಗಳನ್ನು AI ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಹೊಂದಿಸಿ.",
+  "lang_optional_help_shop_insights_and_confirmed": "ಐಚ್ಛಿಕ ಸಹಾಯ, ಅಂಗಡಿಯ ವಿಶ್ಲೇಷಣೆ ಮತ್ತು ದೃಢೀಕರಿಸಿದ ಕ್ರಮಗಳು. ಪೂರ್ವನಿಯೋಜಿತವಾಗಿ ಆಫ್. Ask Posnic ಸಕ್ರಿಯಗೊಳಿಸಿ; ಅದರ ಜ್ಞಾನ ಮತ್ತು ಪ್ರವೇಶವನ್ನು AI ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ನಿರ್ವಹಿಸಿ.",
+  "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic ಆಫ್ ಆಗಿದೆ. ಇದನ್ನು ಇಲ್ಲಿ ಸಕ್ರಿಯಗೊಳಿಸಿ",
+  "lang_to_use_questions_insights_actions_and_sche": "ಪ್ರಶ್ನೆಗಳು, ವಿಶ್ಲೇಷಣೆಗಳು, ಕ್ರಮಗಳು ಮತ್ತು ವೇಳಾಪಟ್ಟಿಗಳನ್ನು ಬಳಸಲು."
 }

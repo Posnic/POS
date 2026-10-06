@@ -4215,5 +4215,13 @@
   "lang_new_takeaway": "طلب سفري جديد",
   "lang_start_a_table_order": "بدء طلب طاولة",
   "lang_guests_optional": "الضيوف (اختياري)",
-  "lang_guest_count": "عدد الضيوف"
+  "lang_guest_count": "عدد الضيوف",
+  "lang_ai_settings": "إعدادات الذكاء الاصطناعي",
+  "lang_ask_posnic_is_off": "Ask Posnic متوقف",
+  "lang_an_owner_can_enable_ask_posnic_in_settings": "يمكن للمالك تفعيل Ask Posnic من الإعدادات ← الميزات. تظل عمليات نقاط البيع المعتادة متاحة.",
+  "lang_enable_ask_posnic": "تفعيل Ask Posnic",
+  "lang_model_assistance_for_item_descriptions_and": "مساعدة النموذج في أوصاف الأصناف والعمليات المفعّلة الأخرى. اضبط الاتصال وحدود الاستخدام في إعدادات الذكاء الاصطناعي.",
+  "lang_optional_help_shop_insights_and_confirmed": "مساعدة وتحليلات المتجر وإجراءات مؤكدة اختيارية. متوقف افتراضيًا. فعّل Ask Posnic وأدر المعرفة والوصول من إعدادات الذكاء الاصطناعي.",
+  "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic متوقف. فعّله في",
+  "lang_to_use_questions_insights_actions_and_sche": "لاستخدام الأسئلة والتحليلات والإجراءات والجداول."
 }

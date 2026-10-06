@@ -4218,5 +4218,13 @@
   "lang_new_takeaway": "नया टेकअवे ऑर्डर",
   "lang_start_a_table_order": "टेबल ऑर्डर शुरू करें",
   "lang_guests_optional": "मेहमान (वैकल्पिक)",
-  "lang_guest_count": "मेहमानों की संख्या"
+  "lang_guest_count": "मेहमानों की संख्या",
+  "lang_ai_settings": "AI सेटिंग्स",
+  "lang_ask_posnic_is_off": "Ask Posnic बंद है",
+  "lang_an_owner_can_enable_ask_posnic_in_settings": "मालिक सेटिंग्स → सुविधाएँ में Ask Posnic चालू कर सकता है। आपके सामान्य POS कार्य उपलब्ध रहेंगे।",
+  "lang_enable_ask_posnic": "Ask Posnic चालू करें",
+  "lang_model_assistance_for_item_descriptions_and": "वस्तुओं के विवरण और अन्य चालू कार्यों के लिए मॉडल की सहायता। कनेक्शन और उपयोग की सीमाएँ AI सेटिंग्स में तय करें।",
+  "lang_optional_help_shop_insights_and_confirmed": "वैकल्पिक सहायता, दुकान की जानकारी और पुष्टि की गई कार्रवाइयाँ। डिफ़ॉल्ट रूप से बंद। Ask Posnic चालू करें; इसकी जानकारी और पहुँच AI सेटिंग्स में प्रबंधित करें।",
+  "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic बंद है। इसे यहाँ चालू करें",
+  "lang_to_use_questions_insights_actions_and_sche": "ताकि प्रश्न, विश्लेषण, कार्रवाइयाँ और समय-सारणी इस्तेमाल कर सकें।"
 }

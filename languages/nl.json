@@ -4552,5 +4552,13 @@
   "lang_orders_updated": "Bestellingen bijgewerkt",
   "lang_refresh_failed_try_again": "Vernieuwen mislukt. Probeer het opnieuw.",
   "lang_refresh_orders": "Bestellingen vernieuwen",
-  "lang_captain_tender_total": "Voer twee of drie bedragen in die samen gelijk zijn aan de rekening."
+  "lang_captain_tender_total": "Voer twee of drie bedragen in die samen gelijk zijn aan de rekening.",
+  "lang_ai_settings": "AI-instellingen",
+  "lang_ask_posnic_is_off": "Ask Posnic staat uit",
+  "lang_an_owner_can_enable_ask_posnic_in_settings": "Een eigenaar kan Ask Posnic inschakelen via Instellingen → Functies. De gewone kassawerkzaamheden blijven beschikbaar.",
+  "lang_enable_ask_posnic": "Ask Posnic inschakelen",
+  "lang_model_assistance_for_item_descriptions_and": "Modelhulp bij artikelbeschrijvingen en andere ingeschakelde processen. Stel verbinding en gebruikslimieten in bij de AI-instellingen.",
+  "lang_optional_help_shop_insights_and_confirmed": "Optionele hulp, winkelanalyses en bevestigde acties. Standaard uitgeschakeld. Schakel Ask Posnic in; beheer kennis en toegang via de AI-instellingen.",
+  "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic staat uit. Schakel het in bij",
+  "lang_to_use_questions_insights_actions_and_sche": "om vragen, analyses, acties en geplande taken te gebruiken."
 }

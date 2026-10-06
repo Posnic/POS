@@ -4215,5 +4215,13 @@
   "lang_new_takeaway": "නව රැගෙන යන ඇණවුම",
   "lang_start_a_table_order": "මේස ඇණවුම ආරම්භ කරන්න",
   "lang_guests_optional": "අමුත්තන් (විකල්ප)",
-  "lang_guest_count": "අමුත්තන් ගණන"
+  "lang_guest_count": "අමුත්තන් ගණන",
+  "lang_ai_settings": "AI සැකසුම්",
+  "lang_ask_posnic_is_off": "Ask Posnic අක්‍රියයි",
+  "lang_an_owner_can_enable_ask_posnic_in_settings": "හිමිකරුට සැකසුම් → විශේෂාංග තුළ Ask Posnic සක්‍රිය කළ හැක. සාමාන්‍ය POS කාර්යයන් තවදුරටත් තිබේ.",
+  "lang_enable_ask_posnic": "Ask Posnic සක්‍රිය කරන්න",
+  "lang_model_assistance_for_item_descriptions_and": "භාණ්ඩ විස්තර සහ වෙනත් සක්‍රිය කාර්යයන් සඳහා මාදිලියේ සහාය. සම්බන්ධතාවය සහ භාවිත සීමා AI සැකසුම් තුළ සකසන්න.",
+  "lang_optional_help_shop_insights_and_confirmed": "විකල්ප සහාය, වෙළඳසැල් විශ්ලේෂණ සහ තහවුරු කළ ක්‍රියා. පෙරනිමියෙන් අක්‍රියයි. Ask Posnic සක්‍රිය කර, එහි දැනුම සහ ප්‍රවේශය AI සැකසුම් තුළ කළමනාකරණය කරන්න.",
+  "lang_ask_posnic_is_off_enable_it_in": "Ask Posnic අක්‍රියයි. මෙහි සක්‍රිය කරන්න",
+  "lang_to_use_questions_insights_actions_and_sche": "ප්‍රශ්න, විශ්ලේෂණ, ක්‍රියා සහ කාලසටහන් භාවිත කිරීමට."
 }
