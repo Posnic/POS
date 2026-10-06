@@ -1774,6 +1774,13 @@ const form = document.getElementById('installForm');
                     setTimeout(() => { window.location = API_BASE + '/login.html'; }, 1500);
                     return;
                 }
+                if (sync && sync.lastPullConflict) {
+                    const conflict = sync.lastPullConflict;
+                    failed('Cloud download is blocked by a record conflict in ' +
+                        (conflict.collection || 'shop data') + '. Your downloaded data is saved. ' +
+                        'Resolve the conflict and retry. Reference: ' + (conflict.documentId || 'unknown'));
+                    return;
+                }
                 if (sync && sync.lastError) {
                     progressText.textContent = 'Waiting for connection… (' + sync.lastError + ')';
                 } else if (sync && sync.initialProgress) {

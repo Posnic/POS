@@ -147,6 +147,19 @@ for (const type of ['false', 'rejection', 'status failure', 'no status']) {
 }
 
 // A small real ZIP (stored entries) exercises the production in-memory parser.
+test('wizard exposes a retained pull conflict even when another lane clears lastError', async (t) => {
+  const harness = wizard(t, { status: async () => ({ sync: {
+    lastError: null, initialSyncComplete: false,
+    lastPullConflict: { collection: 'receivings', documentId: 'blocked-purchase' },
+    initialProgress: { percent: 83, localDocs: 3942, cloudDocs: 4752 },
+  } }) });
+  await harness.run(async () => ({ ok: true }));
+  await harness.tick(2000);
+  assert.match(harness.document.getElementById('cloudError').textContent, /receivings.*blocked-purchase/);
+  assert.equal(harness.document.getElementById('cloudProgress').style.display, 'none');
+  assert.equal(harness.document.getElementById('cloudBackBtn').disabled, false);
+});
+
 function zip(entries) {
   const locals = [], central = [];
   let offset = 0;

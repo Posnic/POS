@@ -71,6 +71,8 @@ const startServer = async () => {
       migrateOptionalEmailIndexes,
     } = require('./src/database/migrations/optional-email-indexes');
     await migrateOptionalEmailIndexes(mongoose.connection.db);
+    await require('./src/database/migrations/receiving-number-indexes')
+      .migrateReceivingNumberIndexes(mongoose.connection.db);
 
     // Versioned, ledgered schema migrations (SEAMLESS_UPDATE_ROADMAP U1.3):
     // every not-yet-applied entry in src/db/migrations/index.js runs before
