@@ -143,3 +143,19 @@ test('transfer with no free destination explains the empty state and cannot subm
  const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{canMerge:true,tables:[]}:{_id:'sale',table_number:'66'}})});
  await app.transfer('sale');assert.match(w.document.querySelector('dialog').textContent,/No available tables/);assert.equal(w.document.querySelector('[type=submit]').disabled,true);dom.window.close();
 });
+
+test('guest picker keeps table context, supports presets and custom counts, and validates before saving',async()=>{
+ const {dom,w,calls,app}=setup({get:(_o,done)=>done({type:'success',data:{_id:'sale',table_number:'66',person_count:5}})});
+ await app.covers('sale');
+ assert.match(w.document.querySelector('.kot-action-context').textContent,/Table 66/);
+ const input=w.document.querySelector('[name=guests]');
+ assert.equal(w.document.querySelector('[data-guests="5"]').getAttribute('aria-pressed'),'true');
+ w.document.querySelector('[data-guests="8"]').click();assert.equal(input.value,'8');assert.equal(calls.length,0);
+ input.value='13';input.dispatchEvent(new w.Event('input'));
+ assert.equal(w.document.querySelectorAll('[aria-pressed=true]').length,0);
+ w.document.querySelector('[data-guest-step="1"]').click();assert.equal(input.value,'14');
+ const submit=()=>w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));
+ input.value='1.5';submit();await flush();assert.equal(calls.length,0);
+ input.value='14';submit();await flush();assert.equal(calls[0].body.guests,14);assert.equal(calls[0].body.orderId,'sale');
+ dom.window.close();
+});
