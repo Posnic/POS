@@ -7157,3 +7157,38 @@ PosnicPro.mountServingPeriodFilter = function (options) {
         if (options.ready) options.ready(select.val() || '');
     }, fail);
 };
+
+// Select existing numbers once on entry, including dynamically opened dialogs.
+(function installNumericFocusSelection() {
+    var pointerEntry = null;
+    function editableNumber(field) {
+        return field && field.tagName === 'INPUT' && !field.disabled && !field.readOnly &&
+            (field.type === 'number' || (field.type === 'text' &&
+                field.matches('[inputmode="decimal"], [inputmode="numeric"], .allow_decimal, .allow_only_numbers')));
+    }
+    document.addEventListener('pointerdown', function (event) {
+        var field = event.target;
+        pointerEntry = event.button === 0 && editableNumber(field) && document.activeElement !== field
+            ? { field: field, value: field.value } : null;
+    }, true);
+    document.addEventListener('focusin', function (event) {
+        if (editableNumber(event.target)) event.target.select();
+    });
+    // The first pointer click can collapse the selection made by focusin.
+    // Do not interfere with later caret clicks, typing, dragging or number spinners.
+    document.addEventListener('click', function (event) {
+        var entry = pointerEntry;
+        pointerEntry = null;
+        if (entry && event.target === entry.field && document.activeElement === entry.field &&
+            editableNumber(entry.field) && entry.field.value === entry.value) entry.field.select();
+    });
+    ['input', 'keydown', 'pointercancel'].forEach(function (name) {
+        document.addEventListener(name, function () { pointerEntry = null; }, true);
+    });
+    document.addEventListener('focusout', function (event) {
+        if (pointerEntry && event.target === pointerEntry.field) pointerEntry = null;
+    }, true);
+    document.addEventListener('pointermove', function (event) {
+        if (event.buttons) pointerEntry = null;
+    }, true);
+})();
