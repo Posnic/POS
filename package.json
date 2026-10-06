@@ -356,6 +356,7 @@
           "!**/node_modules/**/*.yml",
           "!**/node_modules/**/*.yaml",
           "!node_modules/**",
+          "!node_modules.*",
           "!node_modules.*/**"
         ]
       },
