@@ -33,7 +33,7 @@ for (const status of [409, 422, 500, 0]) {
   });
 }
 
-test('desktop guest payment is reviewed before recording, preserves Back and shows confirmed change', async () => {
+for (const closeReceipt of [false, true]) test('desktop guest payment preserves review and confirmed change; close receipt=' + closeReceipt, async () => {
   const dom = new JSDOM('<!doctype html><body></body>', { url:'https://shop.invalid', runScripts:'outside-only' });
   const w = dom.window;
   w.HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open',''); };
@@ -48,6 +48,8 @@ test('desktop guest payment is reviewed before recording, preserves Back and sho
     else success({released:true});
   }};
   for(const name of ['captain-money.js','captain-payments.js']) w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/core',name),'utf8'));
+  let successMessage;
+  if (closeReceipt) w.addEventListener('captain:payment-recorded', event => { successMessage = event.detail.message; event.preventDefault(); });
   await w.CaptainPayments.open('1');
   const input=w.document.querySelector('#cp-received');input.value='120';input.dispatchEvent(new w.Event('input',{bubbles:true}));
   w.document.querySelector('[data-action=record]').click();
@@ -62,6 +64,8 @@ test('desktop guest payment is reviewed before recording, preserves Back and sho
   assert.match(w.document.querySelector('.cp-receipt').textContent,/Payment recorded/);
   assert.match(w.document.querySelector('.cp-receipt').textContent,/20\.00/);
   assert.equal(w.document.querySelector('[data-action=record]'),null);
+  assert.equal(w.document.querySelector('#captain-payments').hasAttribute('open'), !closeReceipt);
+  if (closeReceipt) assert.match(successMessage, /Change to return.*20\.00/);
   dom.window.close();
 });
 

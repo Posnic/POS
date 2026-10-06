@@ -122,3 +122,11 @@ test('off-menu entry checks a saved send before collecting fields or creating a 
 test('actions opens an anchored icon list and Escape restores trigger focus',async()=>{
  const h=setup();h.app.showDataTablePage();await flush();await h.click('actions');const menu=h.w.document.querySelector('#kv2-actions-menu');assert.ok(menu);assert.equal(h.w.document.querySelector('dialog'),null);assert.equal(menu.querySelectorAll('button svg').length,5);assert.ok(menu.querySelector('[data-action=cancel].kv2-danger'));menu.dispatchEvent(new h.w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));assert.equal(h.w.document.activeElement.dataset.action,'guests');menu.dispatchEvent(new h.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(h.w.document.querySelector('#kv2-actions-menu'),null);assert.equal(h.w.document.activeElement.dataset.action,'actions');h.close();
 });
+
+test('kitchen payment success dismisses the receipt in favour of a message and animation',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();
+ Object.defineProperty(h.w.document.querySelector('#kot_v2'),'offsetParent',{get:()=>h.w.document.body});
+ const event=new h.w.CustomEvent('captain:payment-recorded',{cancelable:true,detail:{message:'Payment recorded · Change to return: ₹20.00'}});
+ assert.equal(h.w.dispatchEvent(event),false);await flush();
+ assert.ok(h.errors.includes('Payment recorded · Change to return: ₹20.00'));assert.ok(h.effects.includes('payment'));h.close();
+});
