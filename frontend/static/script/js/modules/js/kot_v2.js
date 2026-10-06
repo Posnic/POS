@@ -1185,8 +1185,10 @@
         refresh,
         state,
     };
-    window.addEventListener('captain:payment-recorded', () => {
+    window.addEventListener('captain:payment-recorded', (event) => {
         if (root()?.offsetParent) {
+            event.preventDefault();
+            P.alert('success', event.detail?.message || 'Payment recorded');
             P.restaurantFeedback?.play('payment');
             run(refresh);
         }

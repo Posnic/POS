@@ -303,11 +303,18 @@
       verified = false;
       reference = "";
       error = "";
-      window.dispatchEvent(
+      const showReceipt = window.dispatchEvent(
         new CustomEvent("captain:payment-recorded", {
-          detail: { table, remaining: plan.dueMinor },
+          cancelable: true,
+          detail: {
+            table, remaining: plan.dueMinor,
+            message: t("Payment recorded") +
+              (receipt.changeMinor > 0 ? " · " + t("Change to return") + ": " + money(receipt.changeMinor) : "") +
+              (plan.dueMinor > 0 ? " · " + t("Remaining balance") + ": " + money(plan.dueMinor) : ""),
+          },
         }),
       );
+      if (!showReceipt) dialog.close();
     } catch (e) {
       if ([400, 403, 409, 422].includes(e.status)) {
         pending = null;
