@@ -100,9 +100,9 @@
 @media(prefers-reduced-motion:reduce){#kot_v2.kv2-playful .kv2-steam{animation:none}}
 /* Approved preview: floor, illustrated catalogue, compact round basket. */
 #kot_v2{font-family:'Segoe UI',Arial,sans-serif;font-size:14px;container-type:inline-size}
-#kot_v2.kv2-composing .kv2-floor{display:block}
+#kot_v2.kv2-composing .kv2-floor{display:none}
 #kot_v2.kv2-composing .kv2-heading>div{display:flex}
-#kot_v2.kv2-composing .kv2-workspace{display:grid;grid-template-columns:minmax(280px,38%) minmax(0,1fr);gap:14px}
+#kot_v2.kv2-composing .kv2-workspace{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 #kot_v2 .kv2-editor{height:calc(100dvh - 155px);min-height:540px;display:flex;flex-direction:column}
 #kot_v2 .kv2-editor>.kv2-customer{padding:14px 22px;border-bottom:1px solid #e5eaf0;background:#f8fafc;flex:none;font-size:12px}
 #kot_v2 .kv2-editor>header{padding:22px;align-items:center;flex:none;border-bottom:1px solid #e5eaf0}
@@ -157,7 +157,7 @@
 #kot_v2 .kv2-editor>footer button{min-height:42px}
 #kot_v2 .kv2-editor>header button[data-action=discard]{font-size:11px;min-height:36px}
 @media(pointer:coarse){#kot_v2 .kv2-stepper button,#kot_v2 .kv2-category-chips button,#kot_v2 .kv2-catalogue-footer button{min-height:44px;min-width:44px}}
-@container(max-width:1250px){#kot_v2.kv2-composing .kv2-workspace{grid-template-columns:minmax(210px,28%) minmax(0,1fr)}#kot_v2 .kv2-draft-body{grid-template-columns:minmax(0,1fr) 240px}#kot_v2 .kv2-catalogue,#kot_v2 .kv2-review{padding:15px}#kot_v2 .kv2-menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container(max-width:1250px){#kot_v2 .kv2-catalogue,#kot_v2 .kv2-review{padding:15px}#kot_v2 .kv2-menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @container(max-width:900px){#kot_v2.kv2-composing .kv2-workspace{grid-template-columns:1fr}#kot_v2.kv2-composing .kv2-floor{display:none}#kot_v2 .kv2-menu{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @container(max-width:620px){#kot_v2 .kv2-draft-body{grid-template-columns:1fr;grid-template-rows:minmax(210px,1.2fr) minmax(150px,1fr)}#kot_v2 .kv2-catalogue{padding:12px}#kot_v2 .kv2-review{padding:12px;border-top:1px solid #e5eaf0;border-left:0}#kot_v2 .kv2-menu{grid-template-columns:repeat(3,minmax(0,1fr))}#kot_v2 .kv2-editor>header{padding:12px}#kot_v2 .kv2-editor>header small,#kot_v2 .kv2-review-hint{display:none}#kot_v2 .kv2-category-chips{padding-bottom:8px}#kot_v2 .kv2-catalogue-footer{padding:4px 0}#kot_v2 .kv2-round-total{padding-top:6px}}
 @media(max-width:850px){#kot_v2{margin-top:105px}#kot_v2 .kv2-editor{height:calc(100dvh - 200px)}}
@@ -242,3 +242,13 @@
  #kot_v2 .kv2-catalogue-footer{padding:2px 0}
  #kot_v2 .kv2-category-chips{padding-bottom:8px}
 }
+/* Give item selection the full workspace and keep cart controls on one line. */
+#kot_v2 .kv2-draft-body{grid-template-columns:minmax(0,1fr) clamp(300px,34%,420px)}
+#kot_v2 .kv2-review{padding:14px}
+#kot_v2 .kv2-review-hint{margin:4px 0 8px}
+#kot_v2 .kv2-draft-line{padding:10px 0}
+#kot_v2 .kv2-draft-name>span{white-space:nowrap;flex:none}
+#kot_v2 .kv2-draft-line>.kv2-stepper{gap:6px;margin-top:7px;flex-wrap:nowrap}
+#kot_v2 .kv2-stepper button{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex-shrink:0}
+#kot_v2 .kv2-stepper button>svg{width:14px;height:14px;margin-right:4px}
+@container(max-width:620px){#kot_v2 .kv2-draft-body{grid-template-columns:1fr}}
