@@ -4215,5 +4215,15 @@
   "lang_new_takeaway": "ಹೊಸ ಪಾರ್ಸೆಲ್ ಆರ್ಡರ್",
   "lang_start_a_table_order": "ಮೇಜಿನ ಆರ್ಡರ್ ಪ್ರಾರಂಭಿಸಿ",
   "lang_guests_optional": "ಅತಿಥಿಗಳು (ಐಚ್ಛಿಕ)",
-  "lang_guest_count": "ಅತಿಥಿಗಳ ಸಂಖ್ಯೆ"
+  "lang_guest_count": "ಅತಿಥಿಗಳ ಸಂಖ್ಯೆ",
+  "lang_add_customer_details_for_this_order": "ಈ ಆರ್ಡರ್‌ಗೆ ಗ್ರಾಹಕರ ವಿವರಗಳನ್ನು ಸೇರಿಸಿ.",
+  "lang_add_to_order": "ಆರ್ಡರ್‌ಗೆ ಸೇರಿಸಿ",
+  "lang_customer_options": "ಗ್ರಾಹಕರ ಆಯ್ಕೆಗಳು",
+  "lang_find_an_existing_customer": "ಈಗಿರುವ ಗ್ರಾಹಕರನ್ನು ಹುಡುಕಿ",
+  "lang_new_customer_details": "ಹೊಸ ಗ್ರಾಹಕರ ವಿವರಗಳು",
+  "lang_no_customer_details_needed_for_this_order": "ಈ ಆರ್ಡರ್‌ಗೆ ಗ್ರಾಹಕರ ವಿವರಗಳು ಅಗತ್ಯವಿಲ್ಲ.",
+  "lang_no_customers_found_choose_add_new_customer": "ಗ್ರಾಹಕರು ಕಂಡುಬಂದಿಲ್ಲ. ಹೊಸ ಗ್ರಾಹಕರನ್ನು ಸೇರಿಸಿ ಆಯ್ಕೆಮಾಡಿ.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "ಹೆಸರು ಅಥವಾ ಮೊಬೈಲ್ ಸಂಖ್ಯೆಯಿಂದ ಹುಡುಕಿ, ನಂತರ ಫಲಿತಾಂಶವನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
+  "lang_select_a_customer_below": "ಕೆಳಗೆ ಗ್ರಾಹಕರನ್ನು ಆಯ್ಕೆಮಾಡಿ.",
+  "lang_use_this_customer": "ಈ ಗ್ರಾಹಕರನ್ನು ಬಳಸಿ"
 }

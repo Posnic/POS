@@ -261,3 +261,14 @@
 #kot_v2 #posnic-desktop-fab{display:none}
 #kot_v2 .kv2-table-conflict{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:#fff6e9;color:#78501d;flex-shrink:0;font-size:13px}
 #kot_v2 .kv2-table-conflict button{flex-shrink:0;white-space:nowrap}
+.kv2-customer-modes{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.kv2-customer-modes button{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1;white-space:nowrap;font-size:13px}
+.kv2-customer-modes svg,.kv2-customer-search svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;flex-shrink:0}
+.kv2-customer-modes [aria-pressed=true]{background:#edf5ff;border-color:#8ebcff;color:#0867ee}
+.kv2-customer-search{position:relative}
+.kv2-customer-search>svg{position:absolute;left:14px;top:15px;color:#73869a}
+.kv2-customer-dialog .kv2-customer-search input{padding-left:42px}
+.kv2-customer-help{font-size:13px;color:#718096;line-height:1.5;margin:8px 0 16px}
+.kv2-customer-selected{padding:14px;border:1px solid #bad7f5;border-radius:9px;background:#f3f8ff;color:#1b426c}
+.kv2-customer-dialog [hidden]{display:none!important}
+.kv2-customer-dialog h4{margin:0 0 8px;font-size:17px}

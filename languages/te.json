@@ -4215,5 +4215,15 @@
   "lang_new_takeaway": "కొత్త పార్సెల్ ఆర్డర్",
   "lang_start_a_table_order": "టేబుల్ ఆర్డర్ ప్రారంభించండి",
   "lang_guests_optional": "అతిథులు (ఐచ్ఛికం)",
-  "lang_guest_count": "అతిథుల సంఖ్య"
+  "lang_guest_count": "అతిథుల సంఖ్య",
+  "lang_add_customer_details_for_this_order": "ఈ ఆర్డర్ కోసం కస్టమర్ వివరాలను జోడించండి.",
+  "lang_add_to_order": "ఆర్డర్‌కు జోడించండి",
+  "lang_customer_options": "కస్టమర్ ఎంపికలు",
+  "lang_find_an_existing_customer": "ఇప్పటికే ఉన్న కస్టమర్‌ను వెతకండి",
+  "lang_new_customer_details": "కొత్త కస్టమర్ వివరాలు",
+  "lang_no_customer_details_needed_for_this_order": "ఈ ఆర్డర్‌కు కస్టమర్ వివరాలు అవసరం లేదు.",
+  "lang_no_customers_found_choose_add_new_customer": "కస్టమర్లు కనుగొనబడలేదు. కొత్త కస్టమర్‌ను జోడించండి ఎంచుకోండి.",
+  "lang_search_by_name_or_mobile_then_select_a_res": "పేరు లేదా మొబైల్ నంబర్‌తో వెతికి, ఫలితాన్ని ఎంచుకోండి.",
+  "lang_select_a_customer_below": "కింద కస్టమర్‌ను ఎంచుకోండి.",
+  "lang_use_this_customer": "ఈ కస్టమర్‌ను ఉపయోగించండి"
 }
