@@ -217,8 +217,11 @@
 #kot_v2 .kv2-editor{height:var(--kv2-editor-height,calc(100dvh - 180px));min-height:0}
 #kot_v2 .kv2-editor>footer{padding:12px 16px;gap:12px;align-items:center;min-height:68px}
 #kot_v2 .kv2-editor>footer button[data-action=send]{min-width:156px;flex-shrink:0}
-#kot_v2 .kv2-editor>header{padding:14px 16px}
-#kot_v2 .kv2-editor>.kv2-customer{padding:10px 16px}
+#kot_v2 .kv2-editor>header{padding:10px 16px}
+#kot_v2 .kv2-editor>.kv2-customer{padding:6px 16px}
+#kot_v2 .kv2-search-row{display:flex;align-items:center;gap:8px;flex:none;margin-bottom:10px}
+#kot_v2 .kv2-search-row .kv2-searchbar{flex:1;min-width:0}
+#kot_v2 .kv2-search-row>button{flex:none;min-height:44px;white-space:nowrap;font-size:11px;padding:8px 10px}
 #kot_v2 .kv2-menu{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
 #kot_v2 .kv2-menu .kv2-product{min-height:150px}
 #kot_v2 .kv2-product-text{padding:9px;gap:6px;flex:1 0 auto}
