@@ -221,7 +221,8 @@
 #kot_v2 .kv2-editor>.kv2-customer{padding:10px 16px}
 #kot_v2 .kv2-menu{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
 #kot_v2 .kv2-menu .kv2-product{min-height:150px}
-#kot_v2 .kv2-product-text{padding:9px;gap:6px}
+#kot_v2 .kv2-product-text{padding:9px;gap:6px;flex:1 0 auto}
+#kot_v2 .kv2-product-text>small:empty{display:none}
 #kot_v2 .kv2-product-text strong{min-height:34px}
 #kot_v2 .kv2-product-art,#kot_v2 .kv2-product-art img{height:68px;min-height:68px}
 #kot_v2 .kv2-heading #posnic-desktop-fab{position:relative;inset:auto;z-index:30;margin-left:0;flex:none}
