@@ -252,3 +252,10 @@
 #kot_v2 .kv2-stepper button{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex-shrink:0}
 #kot_v2 .kv2-stepper button>svg{width:14px;height:14px;margin-right:4px}
 @container(max-width:620px){#kot_v2 .kv2-draft-body{grid-template-columns:1fr}}
+/* Keep settlement actions in view; scroll the order, not its payment bar. */
+#kot_v2 .kv2-order:not(.kv2-editor){height:var(--kv2-order-height,calc(100dvh - 180px));display:flex;flex-direction:column;min-height:0}
+#kot_v2 .kv2-order:not(.kv2-editor)>.kv2-lines{flex:1;min-height:0;max-height:none;overflow:auto}
+#kot_v2 .kv2-order>header,#kot_v2 .kv2-order>.kv2-customer,#kot_v2 .kv2-order>nav,#kot_v2 .kv2-order>footer{flex-shrink:0}
+#kot_v2 .kv2-order>.kv2-breakdown{flex-shrink:0;max-height:28%;overflow:auto}
+#kot_v2 .kv2-expanded>.kv2-order:not(.kv2-editor){display:none}
+#kot_v2 #posnic-desktop-fab{display:none}
