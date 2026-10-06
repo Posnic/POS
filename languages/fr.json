@@ -4233,5 +4233,7 @@
   "lang_no_customers_found_choose_add_new_customer": "Aucun client trouvé. Choisissez Ajouter un nouveau client.",
   "lang_search_by_name_or_mobile_then_select_a_res": "Recherchez par nom ou mobile, puis sélectionnez un résultat.",
   "lang_select_a_customer_below": "Sélectionnez un client ci-dessous.",
-  "lang_use_this_customer": "Utiliser ce client"
+  "lang_use_this_customer": "Utiliser ce client",
+  "lang_merge_tables_separate_bills": "Les deux commandes seront à la table de destination. Les factures restent séparées.",
+  "lang_no_other_open_table_orders_to_merge": "Aucune autre commande de table ouverte à regrouper."
 }
