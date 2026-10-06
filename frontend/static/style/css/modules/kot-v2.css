@@ -1,21 +1,18 @@
 
-.restaurant-feedback.transparent-kitchen,.restaurant-feedback.transparent-gold{background:none;border:0;box-shadow:none;padding:0;pointer-events:none;animation:none}
-.transparent-kitchen{width:300px;height:100px}.free-arrow{position:absolute;left:0;top:38px;width:38px;height:38px;fill:white;stroke:#639eac;stroke-width:1;filter:drop-shadow(0 2px 4px #21445d55);animation:freeFlight 1s cubic-bezier(.35,.05,.5,1) both}.free-vessel{position:absolute;right:10px;top:9px;width:72px;height:72px;fill:#def3eccc;stroke:#348875;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;animation:vesselBounce 2s ease both}.free-vessel .steam{fill:none}.vessel-ring{position:absolute;right:18px;top:23px;width:54px;height:54px;border:2px solid #60bc9f;border-radius:50%;animation:vesselRing 1.9s ease-out both}.kitchen-spark,.gold-spark{position:absolute;width:5px;height:5px;border-radius:50%;background:#63b99d;left:245px;top:48px;animation:kitchenSpark 1.9s ease-out both;transform:rotate(var(--angle))}
+.restaurant-feedback.transparent-kitchen,.restaurant-feedback.payment-feedback{background:none;border:0;box-shadow:none;padding:0;pointer-events:none;animation:none}
+.transparent-kitchen{width:300px;height:100px}.free-arrow{position:absolute;left:0;top:38px;width:38px;height:38px;fill:white;stroke:#a0b9d1;stroke-width:1;filter:none;animation:freeFlight 1s cubic-bezier(.35,.05,.5,1) both}.free-vessel{position:absolute;right:10px;top:9px;width:72px;height:72px;fill:#fff;stroke:#a0b9d1;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;animation:vesselBounce 2s ease both}.free-vessel .steam{fill:none}.vessel-ring{position:absolute;right:18px;top:23px;width:54px;height:54px;border:2px solid #c5d8e8;border-radius:50%;animation:vesselRing 1.9s ease-out both}.kitchen-spark{position:absolute;width:5px;height:5px;border-radius:50%;background:#c1cfeb;left:245px;top:48px;animation:kitchenSpark 1.9s ease-out both;transform:rotate(var(--angle))}
 @keyframes freeFlight{0%{opacity:0;transform:translate(-15px,15px) rotate(10deg)}15%{opacity:1}65%{opacity:1;transform:translate(135px,-25px) rotate(20deg)}100%{opacity:0;transform:translate(235px,0) rotate(65deg) scale(.4)}}
-@keyframes vesselBounce{0%{opacity:0;transform:scale(.8)}15%,45%{opacity:1;transform:scale(1)}55%{transform:scale(1.15) rotate(-5deg)}65%{transform:scale(1) rotate(3deg)}80%{opacity:1;transform:rotate(0)}100%{opacity:0}}
+@keyframes vesselBounce{0%{opacity:0;transform:scale(.8)}15%,45%{opacity:1;transform:scale(1)}55%{transform:scale(1.04) rotate(-2deg)}65%{transform:scale(1) rotate(1deg)}80%{opacity:1;transform:rotate(0)}100%{opacity:0}}
 @keyframes vesselRing{0%,47%{opacity:0;transform:scale(.5)}50%{opacity:.7}85%,100%{opacity:0;transform:scale(2)}}
-@keyframes kitchenSpark{0%,48%{opacity:0;transform:rotate(var(--angle)) translateX(0)}53%{opacity:1}100%{opacity:0;transform:rotate(var(--angle)) translateX(60px)}}
-.transparent-gold{width:140px;height:130px;perspective:400px}.free-coin{position:absolute;left:55px;top:60px;display:grid;place-items:center;width:33px;height:33px;border:2px solid #c88a13;border-radius:50%;background:linear-gradient(135deg,#fff4ae,#f1ba2e 60%,#d69216);box-shadow:inset 0 0 0 2px #ffe694,0 2px 4px #b47a252b;color:#8d5900;font-size:19px;font-weight:700;animation:goldFlip 1.4s var(--delay) ease-out both}.gold-spark{left:70px;top:76px;background:#e9b639;width:4px;height:4px;animation:goldBurst 1.3s ease-out both}
-@keyframes goldFlip{0%{opacity:0;transform:translate(0,10px) rotateY(0) scale(.6)}15%{opacity:1}65%{opacity:1;transform:translate(var(--dx),var(--dy)) rotateY(360deg) scale(1)}100%{opacity:0;transform:translate(var(--dx),20px) rotateY(650deg) scale(.7)}}
-@keyframes goldBurst{0%{opacity:0;transform:rotate(var(--angle)) translateX(0)}20%{opacity:1}100%{opacity:0;transform:rotate(var(--angle)) translateX(90px)}}
-@media(prefers-reduced-motion:reduce){.restaurant-feedback.transparent-kitchen,.restaurant-feedback.transparent-gold{display:none}}
+@keyframes kitchenSpark{0%,48%{opacity:0;transform:rotate(var(--angle)) translateX(0)}53%{opacity:1}100%{opacity:0;transform:rotate(var(--angle)) translateX(32px)}}
+@media(prefers-reduced-motion:reduce){.restaurant-feedback.transparent-kitchen,.restaurant-feedback.payment-feedback{display:none}}
 
 .restaurant-feedback{position:fixed;z-index:100;pointer-events:none;user-select:none}
-.restaurant-feedback.small-feedback{color:#24966d;font-size:34px;animation:rfFloat .85s ease-out both}
-.restaurant-feedback.small-feedback i{position:absolute;left:12px;top:10px;width:9px;height:9px;border:2px solid #67c3a1;border-radius:50%;animation:rfBubble .9s ease-out both}
-.restaurant-feedback.reduce{color:#8797a9}
-@keyframes rfFloat{0%{opacity:0;transform:translateY(10px) scale(.6)}25%{opacity:1;transform:translateY(0) scale(1.1)}100%{opacity:0;transform:translateY(-55px) scale(.8)}}
-@keyframes rfBubble{to{opacity:0;transform:rotate(var(--angle)) translateX(50px) scale(.5)}}
+.restaurant-feedback.small-feedback{color:#b3bfdc;width:40px;height:40px;animation:rfFloat .85s ease-out both}
+.restaurant-feedback.small-feedback i{position:absolute;left:12px;top:10px;width:5px;height:5px;border:2px solid #d5ddef;border-radius:50%;animation:rfBubble .9s ease-out both}
+.restaurant-feedback.reduce{color:#b5c3d0}
+@keyframes rfFloat{0%{opacity:0;transform:translateY(10px) scale(.6)}25%{opacity:1;transform:translateY(0) scale(1.1)}100%{opacity:0;transform:translateY(-18px) scale(.8)}}
+@keyframes rfBubble{to{opacity:0;transform:rotate(var(--angle)) translateX(24px) scale(.5)}}
 #kot_v2{color:var(--theme-text-primary, #183047);margin-top:75px;padding:12px 16px;font-size:13px}
 #kot_v2 *, .kv2-dialog *{box-sizing:border-box}
 #kot_v2 button,.kv2-dialog button{min-height:42px;border:1px solid var(--theme-border-color, #e0e7ef);border-radius:9px;background:var(--theme-card-bg, white);color:var(--theme-text-primary, #183047);padding:8px 12px;cursor:pointer;font:inherit}
@@ -175,8 +172,8 @@
 
 /* A brief transparent walk-away after confirmed cancellation. */
 .restaurant-feedback.sad-chef{width:160px;height:120px;background:none;border:0;box-shadow:none;padding:0;animation:rfChefExit 1.8s ease-in-out both}
-.sad-chef svg{width:100%;height:100%;overflow:visible;fill:none;stroke:#7890a7;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.sad-chef .chef-hat,.sad-chef .chef-coat{fill:#fff;stroke:#7890a7}
+.sad-chef svg{width:100%;height:100%;overflow:visible;fill:none;stroke:#a9bbce;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.sad-chef .chef-hat,.sad-chef .chef-coat{fill:#fff;stroke:#a9bbce}
 .sad-chef .chef-shadow{fill:#879bb326;stroke:none}
 .sad-chef .chef-body{animation:rfChefBob .4s ease-in-out infinite;transform-origin:80px 65px}
 .sad-chef .chef-leg{transform-origin:80px 85px;animation:rfChefStep .4s ease-in-out infinite alternate}
@@ -208,9 +205,9 @@
 #kot_v2 button[data-action=serveAll]{color:var(--theme-success-color, #287c64);border-color:var(--theme-success-color, #287c64)}
 #kot_v2 button[data-action=serveAll]:hover{background:color-mix(in srgb, var(--theme-success-color, #287c64) 10%, var(--theme-card-bg, white));border-color:var(--theme-success-color, #287c64)}
 .kv2-dialog button{transition:background-color .15s ease,border-color .15s ease}
-.restaurant-feedback.happy-feedback{width:80px;height:80px;color:#2b9a75;animation:rfHappy 1.2s ease both}
+.restaurant-feedback.happy-feedback{width:80px;height:80px;color:#a2b8d2;animation:rfHappy 1.2s ease both}
 .happy-feedback svg{width:80px;height:80px;overflow:visible;fill:currentColor;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
-.happy-feedback .happy-ring{fill:#eefbf4;stroke:#9ed8bf}.happy-feedback .happy-smile,.happy-feedback .happy-spark{fill:none}
+.happy-feedback .happy-ring{fill:#fff;stroke:#c4d6e6}.happy-feedback .happy-smile,.happy-feedback .happy-spark{fill:none}
 @keyframes rfHappy{0%{opacity:0;transform:translateY(12px) scale(.75)}25%{opacity:1;transform:translateY(0) scale(1.06)}45%,75%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-10px) scale(.96)}}
 @media(prefers-reduced-motion:reduce){.kv2-dialog button{transition:none}}
 /* Keep the working area inside short desktop windows; only lists scroll. */
@@ -282,3 +279,16 @@
 #kot_v2 input::placeholder,.kv2-dialog input::placeholder,.kv2-dialog textarea::placeholder{color:var(--theme-text-muted, #75879c);opacity:.8}
 #kot_v2,.kv2-dialog{scrollbar-color:var(--theme-text-muted, #75879c) var(--theme-card-bg, white)}
 .kv2-action-context{display:block;font-size:13px;font-weight:500;margin-top:7px;color:var(--theme-text-muted,#66758a)}#kv2-actions-menu .kv2-action-context{padding:8px 12px;margin:0;border-bottom:1px solid var(--theme-border-color,#dce3ed)}
+
+/* Airy outline feedback: no coins, opaque cards, or full-screen effects. */
+.small-feedback svg{width:40px;height:40px;fill:#fafbff;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.payment-feedback{width:140px;height:110px;animation:rfReceipt 1.35s ease-in-out both!important}
+.payment-feedback svg{width:100%;height:100%;fill:none;stroke:#a1b9d1;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.payment-feedback .receipt-paper{fill:#fff;stroke:#b8cce0}
+.payment-feedback .receipt-line{stroke:#d3deea}
+.payment-feedback .receipt-check{stroke:#9ccac0;stroke-width:2.4;stroke-dasharray:34;animation:rfReceiptCheck 1.35s ease both}
+.payment-feedback .receipt-smile{stroke:#b5c5db}
+.payment-feedback .payment-twinkle{stroke:#c9c1e2;animation:rfTwinkle 1.35s ease both}
+@keyframes rfReceipt{0%{opacity:0;transform:translateY(10px) scale(.96)}22%,65%{opacity:.9;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-12px) scale(1)}}
+@keyframes rfReceiptCheck{0%,15%{stroke-dashoffset:34}55%,100%{stroke-dashoffset:0}}
+@keyframes rfTwinkle{0%,25%{opacity:0}50%{opacity:.8}100%{opacity:0}}

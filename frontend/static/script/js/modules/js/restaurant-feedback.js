@@ -70,25 +70,16 @@
             el.classList.add('happy-feedback');
             el.innerHTML = '<svg viewBox="0 0 80 80"><circle class="happy-ring" cx="40" cy="40" r="29"/><circle cx="31" cy="34" r="2"/><circle cx="49" cy="34" r="2"/><path class="happy-smile" d="M28 44q12 15 24 0"/><path class="happy-spark" d="M9 10v8M5 14h8M68 55v8M64 59h8"/></svg>';
         } else if (kind === 'payment') {
-            el.classList.add('transparent-gold');
-            el.innerHTML =
-                Array.from(
-                    { length: 7 },
-                    (_, i) =>
-                        `<span class="free-coin" style="--dx:${[-65, -40, -12, 18, 48, 70, 0][i]}px;--dy:${[-44, -85, -110, -100, -74, -30, -60][i]}px;--delay:${i * 35}ms">★</span>`,
-                ).join('') +
-                Array.from(
-                    { length: 10 },
-                    (_, i) => `<i class="gold-spark" style="--angle:${i * 36}deg"></i>`,
-                ).join('');
+            el.classList.add('payment-feedback');
+            el.innerHTML = '<svg viewBox="0 0 140 110"><g class="payment-receipt"><path class="receipt-paper" d="M49 20h42v65l-7-4-7 4-7-4-7 4-7-4-7 4Z"/><path class="receipt-line" d="M59 33h22M59 40h14"/><path class="receipt-check" d="m59 58 7 7 15-16"/><path class="receipt-smile" d="M64 72q6 4 12 0"/></g><path class="payment-twinkle" d="M33 35v8m-4-4h8M104 61v8m-4-4h8"/></svg>';
         } else {
             el.classList.add('small-feedback');
             if (kind === 'reduce') el.classList.add('reduce');
-            el.textContent = kind === 'reduce' ? '☹' : '♥';
+            el.textContent = kind === 'reduce' ? 'â˜¹' : 'â™¥';
             if (kind === 'first')
                 el.innerHTML += Array.from(
-                    { length: 6 },
-                    (_, i) => `<i style="--angle:${i * 60}deg"></i>`,
+                    { length: 3 },
+                    (_, i) => `<i style="--angle:${i * 120}deg"></i>`,
                 ).join('');
         }
         const width = kind === 'sent' ? 300 : kind === 'cancelled' ? 160 : kind === 'payment' ? 140 : kind === 'served' ? 80 : 40;
@@ -103,7 +94,7 @@
             el.style.bottom = 'max(24px, env(safe-area-inset-bottom))';
         }
         document.body.append(el);
-        timer = setTimeout(clear, kind === 'cancelled' ? 1800 : kind === 'sent' ? 2100 : kind === 'payment' ? 1800 : kind === 'served' ? 1200 : 950);
+        timer = setTimeout(clear, kind === 'cancelled' ? 1800 : kind === 'sent' ? 2100 : kind === 'payment' ? 1400 : kind === 'served' ? 1200 : 950);
     }
     P.restaurantFeedback = {
         load,
