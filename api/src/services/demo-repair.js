@@ -93,14 +93,12 @@ async function repairDemoRecords(db) {
           name: row.supplier_name,
           phone: row.supplier_phone,
         };
-        const supplierRow = await db
-          .collection('suppliers')
-          .findOne({
-            _id: row.supplier_id,
-            license: row.license,
-            branch_id: row.branch_id,
-            demo_pack: row.demo_pack,
-          });
+        const supplierRow = await db.collection('suppliers').findOne({
+          _id: row.supplier_id,
+          license: row.license,
+          branch_id: row.branch_id,
+          demo_pack: row.demo_pack,
+        });
         if (
           supplierRow &&
           supplierRow.created_by === 'Demo data' &&
@@ -108,21 +106,19 @@ async function repairDemoRecords(db) {
           (!supplierRow.updated_by || supplierRow.updated_by === 'Demo data')
         ) {
           const name = seed.supplyNames[index] + ' (sample)';
-          const changed = await db
-            .collection('suppliers')
-            .updateOne(
-              {
-                _id: supplierRow._id,
-                name: supplierRow.name,
-                updated_date: supplierRow.updated_date,
+          const changed = await db.collection('suppliers').updateOne(
+            {
+              _id: supplierRow._id,
+              name: supplierRow.name,
+              updated_date: supplierRow.updated_date,
+            },
+            {
+              $set: {
+                name,
+                demo_original_name: supplierRow.demo_original_name || supplierRow.name,
               },
-              {
-                $set: {
-                  name,
-                  demo_original_name: supplierRow.demo_original_name || supplierRow.name,
-                },
-              }
-            );
+            }
+          );
           if (changed.matchedCount) supplier.name = name;
         }
         const rebuilt = seed.buildPurchases({
