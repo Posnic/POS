@@ -77,7 +77,7 @@ function collect() {
 }
 
 const languages = () => (fs.existsSync(OUT)
-  ? fs.readdirSync(OUT).filter((f) => /^[a-z]{2}\.json$/.test(f)).map((f) => f.slice(0, 2)).sort()
+  ? fs.readdirSync(OUT).filter((f) => /^[a-z]{2}(?:-[A-Za-z]{2,4})?\.json$/.test(f)).map((f) => f.slice(0, -5)).sort()
   : []);
 
 const pack = (code) => {

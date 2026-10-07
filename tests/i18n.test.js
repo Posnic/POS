@@ -189,7 +189,7 @@ test('no language file contains mojibake', () => {
    */
   const walk = (node, where, file) => {
     if (typeof node === 'string') {
-      if (/[\u0080-\u00FF]{3,}/.test(node)) bad.push(`${file}:${where} = ${node.slice(0, 30)}`);
+      if (require('../scripts/lib/translation-encoding').looksLikeMojibake(node)) bad.push(`${file}:${where} = ${node.slice(0, 30)}`);
       return;
     }
     if (node && typeof node === 'object') {
@@ -933,7 +933,7 @@ test('no server pack answers a sentence the server never sends', () => {
   const known = new Set(Object.keys(JSON.parse(fs.readFileSync(file, 'utf8'))));
   const dir = path.join(LANGUAGES_DIR, 'server');
   const stray = [];
-  for (const f of fs.readdirSync(dir).filter((f) => /^[a-z]{2}\.json$/.test(f))) {
+  for (const f of fs.readdirSync(dir).filter((f) => /^[a-z]{2}(?:-[A-Za-z]{2,4})?\.json$/.test(f))) {
     const pack = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
     for (const english of Object.keys(pack)) {
       if (!known.has(english)) stray.push(f.slice(0, 2) + ': ' + JSON.stringify(english.slice(0, 60)));

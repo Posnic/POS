@@ -56,22 +56,7 @@ if (!files.length) {
  * live for months. cp1252 matters as well as Latin-1: bytes 0x80-0x9F become
  * punctuation like U+2021, so a Latin-1-only test misses half of it.
  */
-const CP1252 = {
-  0x20AC: 1, 0x201A: 1, 0x0192: 1, 0x201E: 1, 0x2026: 1, 0x2020: 1, 0x2021: 1,
-  0x02C6: 1, 0x2030: 1, 0x0160: 1, 0x2039: 1, 0x0152: 1, 0x017D: 1, 0x2018: 1,
-  0x2019: 1, 0x201C: 1, 0x201D: 1, 0x2022: 1, 0x2013: 1, 0x2014: 1, 0x02DC: 1,
-  0x2122: 1, 0x0161: 1, 0x203A: 1, 0x0153: 1, 0x017E: 1, 0x0178: 1,
-};
-function looksLikeMojibake(text) {
-  let run = 0;
-  for (const ch of String(text)) {
-    const c = ch.charCodeAt(0);
-    const suspicious = (c >= 0x80 && c <= 0xFF) || CP1252[c];
-    run = suspicious ? run + 1 : 0;
-    if (run >= 3) return true;
-  }
-  return false;
-}
+const { looksLikeMojibake } = require('../../scripts/lib/translation-encoding');
 
 let englishSource = {};
 const englishPath = path.join(LANG_DIR, '_english.json');

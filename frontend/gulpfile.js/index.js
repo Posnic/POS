@@ -191,7 +191,7 @@ function buildLangPacks(cb) {
         const problems = [];
         /* A run of Latin-1 supplement characters is what UTF-8 read as
            Latin-1 looks like. Real translations never contain one. */
-        const MOJIBAKE = /[\u0080-\u00FF]{3,}/;
+        const { looksLikeMojibake } = require('../../scripts/lib/translation-encoding');
         const packs = {};
         for (const lang of languages) {
             if (lang === 'en') continue;
@@ -208,7 +208,7 @@ function buildLangPacks(cb) {
             for (const [key, value] of Object.entries(dict)) {
                 /* A run of Latin-1 supplement characters is what UTF-8 read as
                    Latin-1 looks like. Real translations never contain one. */
-                if (/[\u0080-\u00FF]{3,}/.test(String(value))) {
+                if (looksLikeMojibake(value)) {
                     problems.push(`${lang}.${key} looks like mojibake: ${String(value).slice(0, 40)}`);
                 }
             }
@@ -239,7 +239,7 @@ function buildLangPacks(cb) {
                 const clean = {};
                 for (const [english, said] of Object.entries(says)) {
                     if (typeof said !== 'string' || !said.trim()) continue;
-                    if (MOJIBAKE.test(said)) {
+                    if (looksLikeMojibake(said)) {
                         problems.push(`server/${lang}: "${english.slice(0, 30)}" looks like mojibake`);
                         continue;
                     }
