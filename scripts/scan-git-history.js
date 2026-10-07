@@ -83,7 +83,8 @@ const RULES = [
     /* An assignment whose value has the length and character mix of a real
        secret. Short values and dictionary words are left alone. */
     name: 'secret-shaped assignment',
-    re: /\b(?:password|passwd|pwd|secret|token|api[_-]?key|apikey|auth[_-]?token|access[_-]?key|private[_-]?key|client[_-]?secret|encryption[_-]?key)\b["']?\s*[:=]\s*["']([^"'\s]{12,})["']/i,
+    // Quoted keys must match the whole key, not the last word of a UI sentence.
+    re: /(?:["'](?:password|passwd|pwd|secret|token|api[_-]?key|apikey|auth[_-]?token|access[_-]?key|private[_-]?key|client[_-]?secret|encryption[_-]?key)["']|\b(?:password|passwd|pwd|secret|token|api[_-]?key|apikey|auth[_-]?token|access[_-]?key|private[_-]?key|client[_-]?secret|encryption[_-]?key)\b)\s*[:=]\s*["']([^"'\s]{12,})["']/i,
     valueGroup: 1,
   },
 ];
@@ -269,5 +270,5 @@ function main() {
   return 1;
 }
 
-module.exports = { isReviewedFixture };
+module.exports = { isReviewedFixture, RULES };
 if (require.main === module) process.exit(main());
