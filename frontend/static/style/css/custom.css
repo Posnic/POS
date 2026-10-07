@@ -2884,6 +2884,7 @@ input:checked + .slider:before {
 .rs-pill { display: inline-block; font-size: 10.5px; line-height: 1; padding: 3px 8px; border-radius: 9px; margin-top: 3px; }
 .rs-pill.paid { background: rgba(43, 183, 111, 0.13); color: #23985c; }
 .rs-pill.unpaid { background: rgba(255, 159, 67, 0.15); color: #d9820e; }
+.rs-pill.cancelled { background: rgba(192, 57, 43, 0.12); color: #c0392b; }
 .rs-pill.hold { background: rgba(80, 111, 228, 0.13); color: #506fe4; }
 .rs-actions { flex: 0 0 auto; display: flex; gap: 6px; }
 .rs-act { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 9px; }
