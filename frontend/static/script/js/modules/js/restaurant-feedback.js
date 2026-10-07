@@ -45,54 +45,36 @@
         const panel = document.querySelector('#kot_v2 .kv2-order');
         if (!panel || !panel.getClientRects().length) return;
         clear();
-        const rect = panel.getBoundingClientRect(),
-            el = document.createElement('div');
+        const el = document.createElement('div');
         el.className = 'restaurant-feedback';
         el.setAttribute('aria-hidden', 'true');
-        el.style.left = Math.max(15, Math.min(innerWidth - 310, rect.right - 325)) + 'px';
-        el.style.top = Math.max(70, Math.min(innerHeight - 150, rect.top + 145)) + 'px';
+        // Captain develop f280fcb: kitchen-send-feedback.js and thankyou/placed.css.
+        // Reuse its dish, plane, chef and drawn tick; keep the scene at the POS footer.
         if (kind === 'sent') {
-            el.classList.add('transparent-kitchen');
-            el.style.left = Math.max(10, (innerWidth - 300) / 2) + 'px';
-            el.style.top = Math.max(10, (innerHeight - 100) / 2) + 'px';
-            el.innerHTML =
-                '<svg class="free-arrow" viewBox="0 0 32 32"><path d="m3 13 26-10-10 26-4-12-12-4Z"/><path d="M15 17 29 3"/></svg><svg class="free-vessel" viewBox="0 0 64 64"><path d="M14 28h36l-3 23H17Z M9 28h46M22 23h20M32 18v5M14 32H7v9h9M50 32h7v9h-9"/><path class="steam" d="M23 16c-5-5 5-6 0-11M41 16c-5-5 5-6 0-11"/></svg><span class="vessel-ring"></span>' +
-                Array.from(
-                    { length: 7 },
-                    (_, i) => `<i class="kitchen-spark" style="--angle:${i * 51}deg"></i>`,
-                ).join('');
+            el.classList.add('captain-kitchen');
+            el.innerHTML = '<svg class="kitchen-flight-dish" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 24h24M6 21a10 10 0 0 1 20 0Z M16 8v3m-2-3h4"/></svg><svg class="kitchen-flight-plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="m3 10 18-7-7 18-3-8-8-3Z m8 3L21 3"/></svg>';
+            const tables = new Map((P.kot_v2?.state?.floor || []).filter(row => row.tableorder_value != null).map(row => [String(row.tableorder_value), row]));
+            if (tables.size && [...tables.values()].filter(row => row.status === 'occupied').length / tables.size >= .7) {
+                el.querySelector('.kitchen-flight-plane').remove();
+                el.innerHTML += '<span class="kitchen-chef-runner"><span class="kitchen-chef-person">👨‍🍳</span><span class="kitchen-chef-meal">🍲</span></span><span class="kitchen-chef-finish">👍</span>';
+            }
         } else if (kind === 'cancelled') {
-            el.classList.add('sad-chef');
-            el.style.left = Math.max(10, (innerWidth - 160) / 2) + 'px';
-            el.style.top = Math.max(10, (innerHeight - 120) / 2) + 'px';
-            el.innerHTML = '<svg viewBox="0 0 160 120"><ellipse class="chef-shadow" cx="80" cy="108" rx="24" ry="3"/><g class="chef-walk"><path class="chef-leg chef-leg-left" d="M73 85v17l-8 3"/><path class="chef-leg chef-leg-right" d="M87 85v17l8 3"/><g class="chef-body"><path class="chef-coat" d="M67 60q13-6 26 0l4 27H63Z"/><path d="m67 66-9 14m35-14 9 12M80 66v18"/><circle cx="80" cy="47" r="16" fill="#fff4e8"/><path class="chef-hat" d="M65 37v-9c-12-9 0-22 9-15 5-12 22-7 22 3 13 0 15 17 1 19l-2 5Z"/><path d="m69 46 5 2m12 0 5-2M74 58q6-7 12 0"/><circle cx="74" cy="50" r="1"/><circle cx="86" cy="50" r="1"/></g></g></svg>';
-        } else if (kind === 'served') {
-            el.classList.add('happy-feedback');
-            el.innerHTML = '<svg viewBox="0 0 80 80"><circle class="happy-ring" cx="40" cy="40" r="29"/><circle cx="31" cy="34" r="2"/><circle cx="49" cy="34" r="2"/><path class="happy-smile" d="M28 44q12 15 24 0"/><path class="happy-spark" d="M9 10v8M5 14h8M68 55v8M64 59h8"/></svg>';
-        } else if (kind === 'payment') {
-            el.classList.add('payment-feedback');
-            el.innerHTML = '<svg viewBox="0 0 140 110"><g class="payment-receipt"><path class="receipt-paper" d="M49 20h42v65l-7-4-7 4-7-4-7 4-7-4-7 4Z"/><path class="receipt-line" d="M59 33h22M59 40h14"/><path class="receipt-check" d="m59 58 7 7 15-16"/><path class="receipt-smile" d="M64 72q6 4 12 0"/></g><path class="payment-twinkle" d="M33 35v8m-4-4h8M104 61v8m-4-4h8"/></svg>';
+            el.classList.add('captain-chef-dismiss');
+            el.innerHTML = '<span class="kitchen-chef-person">👨‍🍳</span>';
+        } else if (kind === 'served' || kind === 'payment') {
+            el.classList.add('captain-confirmation');
+            el.innerHTML = '<svg viewBox="0 0 52 52"><circle class="tick-ring" cx="26" cy="26" r="24" fill="none"/><path class="tick-mark" fill="none" d="M14.5 27l7.5 7.5 15.5-16"/></svg>';
         } else {
-            el.classList.add('small-feedback');
-            if (kind === 'reduce') el.classList.add('reduce');
-            el.textContent = kind === 'reduce' ? 'â˜¹' : 'â™¥';
-            if (kind === 'first')
-                el.innerHTML += Array.from(
-                    { length: 3 },
-                    (_, i) => `<i style="--angle:${i * 120}deg"></i>`,
-                ).join('');
+            // Captain's local bill nudge replaces floating hearts and faces.
+            const cart = document.querySelector('#kot_v2 .kv2-round-total strong') || document.querySelector('#kot_v2 .kv2-order>footer strong');
+            cart?.animate?.([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}], {duration:340,easing:'cubic-bezier(.34,1.56,.64,1)'});
+            return;
         }
-        const width = kind === 'sent' ? 300 : kind === 'cancelled' ? 160 : kind === 'payment' ? 140 : kind === 'served' ? 80 : 40;
-        if (el.classList.contains('small-feedback')) {
-            const cart = document.querySelector('#kot_v2 .kv2-review-heading') || panel;
-            const anchor = cart.getBoundingClientRect();
-            el.style.left = Math.max(8, Math.min(innerWidth - 48, anchor.right - 48)) + 'px';
-            el.style.top = Math.max(8, Math.min(innerHeight - 48, anchor.top)) + 'px';
-        } else {
-            el.style.left = Math.max(8, (innerWidth - width) / 2) + 'px';
-            el.style.top = 'auto';
-            el.style.bottom = 'max(24px, env(safe-area-inset-bottom))';
-        }
+        const width = kind === 'sent' ? Math.min(360, innerWidth - 16) : 96;
+        el.style.width = width + 'px';
+        el.style.left = Math.max(8, (innerWidth - width) / 2) + 'px';
+        el.style.top = 'auto';
+        el.style.bottom = 'max(24px, env(safe-area-inset-bottom))';
         document.body.append(el);
         timer = setTimeout(clear, kind === 'cancelled' ? 1800 : kind === 'sent' ? 2100 : kind === 'payment' ? 1400 : kind === 'served' ? 1200 : 950);
     }

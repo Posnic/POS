@@ -1,18 +1,4 @@
-
-.restaurant-feedback.transparent-kitchen,.restaurant-feedback.payment-feedback{background:none;border:0;box-shadow:none;padding:0;pointer-events:none;animation:none}
-.transparent-kitchen{width:300px;height:100px}.free-arrow{position:absolute;left:0;top:38px;width:38px;height:38px;fill:white;stroke:#a0b9d1;stroke-width:1;filter:none;animation:freeFlight 1s cubic-bezier(.35,.05,.5,1) both}.free-vessel{position:absolute;right:10px;top:9px;width:72px;height:72px;fill:#fff;stroke:#a0b9d1;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;animation:vesselBounce 2s ease both}.free-vessel .steam{fill:none}.vessel-ring{position:absolute;right:18px;top:23px;width:54px;height:54px;border:2px solid #c5d8e8;border-radius:50%;animation:vesselRing 1.9s ease-out both}.kitchen-spark{position:absolute;width:5px;height:5px;border-radius:50%;background:#c1cfeb;left:245px;top:48px;animation:kitchenSpark 1.9s ease-out both;transform:rotate(var(--angle))}
-@keyframes freeFlight{0%{opacity:0;transform:translate(-15px,15px) rotate(10deg)}15%{opacity:1}65%{opacity:1;transform:translate(135px,-25px) rotate(20deg)}100%{opacity:0;transform:translate(235px,0) rotate(65deg) scale(.4)}}
-@keyframes vesselBounce{0%{opacity:0;transform:scale(.8)}15%,45%{opacity:1;transform:scale(1)}55%{transform:scale(1.04) rotate(-2deg)}65%{transform:scale(1) rotate(1deg)}80%{opacity:1;transform:rotate(0)}100%{opacity:0}}
-@keyframes vesselRing{0%,47%{opacity:0;transform:scale(.5)}50%{opacity:.7}85%,100%{opacity:0;transform:scale(2)}}
-@keyframes kitchenSpark{0%,48%{opacity:0;transform:rotate(var(--angle)) translateX(0)}53%{opacity:1}100%{opacity:0;transform:rotate(var(--angle)) translateX(32px)}}
-@media(prefers-reduced-motion:reduce){.restaurant-feedback.transparent-kitchen,.restaurant-feedback.payment-feedback{display:none}}
-
 .restaurant-feedback{position:fixed;z-index:100;pointer-events:none;user-select:none}
-.restaurant-feedback.small-feedback{color:#b3bfdc;width:40px;height:40px;animation:rfFloat .85s ease-out both}
-.restaurant-feedback.small-feedback i{position:absolute;left:12px;top:10px;width:5px;height:5px;border:2px solid #d5ddef;border-radius:50%;animation:rfBubble .9s ease-out both}
-.restaurant-feedback.reduce{color:#b5c3d0}
-@keyframes rfFloat{0%{opacity:0;transform:translateY(10px) scale(.6)}25%{opacity:1;transform:translateY(0) scale(1.1)}100%{opacity:0;transform:translateY(-18px) scale(.8)}}
-@keyframes rfBubble{to{opacity:0;transform:rotate(var(--angle)) translateX(24px) scale(.5)}}
 #kot_v2{color:var(--theme-text-primary, #183047);margin-top:75px;padding:12px 16px;font-size:13px}
 #kot_v2 *, .kv2-dialog *{box-sizing:border-box}
 #kot_v2 button,.kv2-dialog button{min-height:42px;border:1px solid var(--theme-border-color, #e0e7ef);border-radius:9px;background:var(--theme-card-bg, white);color:var(--theme-text-primary, #183047);padding:8px 12px;cursor:pointer;font:inherit}
@@ -170,17 +156,6 @@
 #kot_v2 .kv2-served-row{background:color-mix(in srgb, var(--theme-success-color, #287c64) 10%, var(--theme-card-bg, white));transition:background .2s ease}
 @media(prefers-reduced-motion:reduce){#kot_v2 button.kv2-serving::before{animation:none}#kot_v2 .kv2-served-row{transition:none}}
 
-/* A brief transparent walk-away after confirmed cancellation. */
-.restaurant-feedback.sad-chef{width:160px;height:120px;background:none;border:0;box-shadow:none;padding:0;animation:rfChefExit 1.8s ease-in-out both}
-.sad-chef svg{width:100%;height:100%;overflow:visible;fill:none;stroke:#a9bbce;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.sad-chef .chef-hat,.sad-chef .chef-coat{fill:#fff;stroke:#a9bbce}
-.sad-chef .chef-shadow{fill:#879bb326;stroke:none}
-.sad-chef .chef-body{animation:rfChefBob .4s ease-in-out infinite;transform-origin:80px 65px}
-.sad-chef .chef-leg{transform-origin:80px 85px;animation:rfChefStep .4s ease-in-out infinite alternate}
-.sad-chef .chef-leg-right{animation-delay:-.4s}
-@keyframes rfChefBob{50%{transform:translateY(2px) rotate(-3deg)}}
-@keyframes rfChefStep{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
-@keyframes rfChefExit{0%{opacity:0;transform:translateX(-24px)}15%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translateX(48px)}}
 
 #kot_v2 button > svg{width:17px;height:17px;flex-shrink:0;margin-right:6px}
 #kot_v2 button[data-action=actions] > svg{margin:0 0 0 7px;width:15px;height:15px}
@@ -205,10 +180,6 @@
 #kot_v2 button[data-action=serveAll]{color:var(--theme-success-color, #287c64);border-color:var(--theme-success-color, #287c64)}
 #kot_v2 button[data-action=serveAll]:hover{background:color-mix(in srgb, var(--theme-success-color, #287c64) 10%, var(--theme-card-bg, white));border-color:var(--theme-success-color, #287c64)}
 .kv2-dialog button{transition:background-color .15s ease,border-color .15s ease}
-.restaurant-feedback.happy-feedback{width:80px;height:80px;color:#a2b8d2;animation:rfHappy 1.2s ease both}
-.happy-feedback svg{width:80px;height:80px;overflow:visible;fill:currentColor;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
-.happy-feedback .happy-ring{fill:#fff;stroke:#c4d6e6}.happy-feedback .happy-smile,.happy-feedback .happy-spark{fill:none}
-@keyframes rfHappy{0%{opacity:0;transform:translateY(12px) scale(.75)}25%{opacity:1;transform:translateY(0) scale(1.06)}45%,75%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-10px) scale(.96)}}
 @media(prefers-reduced-motion:reduce){.kv2-dialog button{transition:none}}
 /* Keep the working area inside short desktop windows; only lists scroll. */
 #kot_v2 .kv2-editor{height:var(--kv2-editor-height,calc(100dvh - 180px));min-height:0}
@@ -280,18 +251,6 @@
 #kot_v2,.kv2-dialog{scrollbar-color:var(--theme-text-muted, #75879c) var(--theme-card-bg, white)}
 .kv2-action-context{display:block;font-size:13px;font-weight:500;margin-top:7px;color:var(--theme-text-muted,#66758a)}#kv2-actions-menu .kv2-action-context{padding:8px 12px;margin:0;border-bottom:1px solid var(--theme-border-color,#dce3ed)}
 
-/* Airy outline feedback: no coins, opaque cards, or full-screen effects. */
-.small-feedback svg{width:40px;height:40px;fill:#fafbff;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.payment-feedback{width:140px;height:110px;animation:rfReceipt 1.35s ease-in-out both!important}
-.payment-feedback svg{width:100%;height:100%;fill:none;stroke:#a1b9d1;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.payment-feedback .receipt-paper{fill:#fff;stroke:#b8cce0}
-.payment-feedback .receipt-line{stroke:#d3deea}
-.payment-feedback .receipt-check{stroke:#9ccac0;stroke-width:2.4;stroke-dasharray:34;animation:rfReceiptCheck 1.35s ease both}
-.payment-feedback .receipt-smile{stroke:#b5c5db}
-.payment-feedback .payment-twinkle{stroke:#c9c1e2;animation:rfTwinkle 1.35s ease both}
-@keyframes rfReceipt{0%{opacity:0;transform:translateY(10px) scale(.96)}22%,65%{opacity:.9;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-12px) scale(1)}}
-@keyframes rfReceiptCheck{0%,15%{stroke-dashoffset:34}55%,100%{stroke-dashoffset:0}}
-@keyframes rfTwinkle{0%,25%{opacity:0}50%{opacity:.8}100%{opacity:0}}
 
 /* Customer choices stay in the form flow, above the fixed dialog footer. */
 .kv2-customer-dialog[open]{display:flex;flex-direction:column;overflow:hidden}
@@ -318,3 +277,25 @@
 #kot_v2 .kv2-line{grid-template-columns:minmax(38px,max-content) minmax(100px,1fr) 85px minmax(90px,max-content) 95px 42px}
 @media(max-width:1150px){#kot_v2 .kv2-line{grid-template-columns:minmax(36px,max-content) minmax(75px,1fr) 72px minmax(85px,max-content) 78px 32px}}
 @media(max-width:520px){#kot_v2 .kv2-line{grid-template-columns:minmax(36px,max-content) minmax(0,1fr) minmax(85px,max-content)}}
+
+/* Captain kitchen-send-feedback / placed tick, scaled to a quiet footer scene. */
+.restaurant-feedback.captain-kitchen{height:160px;color:#a0b9d1;background:none;animation:captain-scene 2s ease both}
+.captain-kitchen .kitchen-flight-dish{position:absolute;left:70%;top:40%;width:120px;height:120px;stroke-width:1.2;animation:captain-dish 2s ease both}
+.captain-kitchen .kitchen-flight-plane{position:absolute;left:5%;top:60%;width:48px;height:48px;fill:#fff;animation:captain-plane 2s cubic-bezier(.25,.6,.35,1) both}
+.captain-kitchen .kitchen-chef-runner{position:absolute;left:5%;top:45%;display:flex;align-items:center;font-size:64px;line-height:1;animation:captain-dash 2s ease-in-out both}
+.captain-kitchen .kitchen-chef-person{display:inline-block;animation:captain-step 180ms ease-in-out 8 alternate}
+.captain-kitchen .kitchen-chef-meal{font-size:.55em;margin-left:-.12em;transform:translateY(.15em)}
+.captain-kitchen .kitchen-chef-finish{position:absolute;left:65%;top:30%;font-size:44px;animation:captain-cheer 2s ease both}
+.restaurant-feedback.captain-confirmation{height:96px;color:#a4c8c2;animation:captain-scene 1.4s ease both}
+.captain-confirmation svg{width:100%;height:100%}
+.captain-confirmation .tick-ring{stroke:currentColor;stroke-width:2;stroke-dasharray:151;stroke-dashoffset:151;animation:captain-tick 520ms cubic-bezier(.22,.61,.36,1) forwards}
+.captain-confirmation .tick-mark{stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:captain-tick 320ms cubic-bezier(.22,.61,.36,1) 380ms forwards}
+.restaurant-feedback.captain-chef-dismiss{height:96px;font-size:72px;text-align:center;animation:captain-dismiss 1.8s ease both}
+@keyframes captain-tick{to{stroke-dashoffset:0}}
+@keyframes captain-scene{0%{opacity:0}12%,82%{opacity:.85}100%{opacity:0}}
+@keyframes captain-plane{0%,8%{transform:translate(0,0) scale(.65) rotate(-12deg);opacity:0}18%{opacity:.85}42%{transform:translate(65px,-35px) scale(1.1) rotate(-8deg);opacity:.9}65%{transform:translate(145px,-70px) rotate(28deg);opacity:.9}78%,100%{transform:translate(205px,-55px) scale(.12) rotate(55deg);opacity:0}}
+@keyframes captain-dish{0%{opacity:0;transform:translate(-50%,-50%) scale(.8)}20%,66%{opacity:.65;transform:translate(-50%,-50%) scale(1)}78%{opacity:.9;transform:translate(-50%,-50%) scale(1.14) rotate(-5deg)}88%{opacity:.8;transform:translate(-50%,-50%) scale(1) rotate(3deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+@keyframes captain-dash{0%,8%{opacity:0;transform:translate(-30px,0) rotate(-6deg)}18%{opacity:1}65%{opacity:1;transform:translate(145px,-30px) rotate(3deg)}78%,100%{opacity:0;transform:translate(180px,-40px) scale(.65)}}
+@keyframes captain-step{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-7px) rotate(5deg)}}
+@keyframes captain-cheer{0%,68%{opacity:0;transform:scale(.4)}78%,90%{opacity:1;transform:scale(1.1)}100%{opacity:0;transform:translateY(-8px) scale(1)}}
+@keyframes captain-dismiss{0%{opacity:0;transform:translateX(16px)}20%,65%{opacity:.8}100%{opacity:0;transform:translateX(-24px)}}
