@@ -7,6 +7,26 @@ const {JSDOM} = require('jsdom');
 const root = path.join(__dirname,'../api/src/kitchen-board');
 const read = file => fs.readFileSync(path.join(root,file),'utf8');
 const tick = () => new Promise(resolve => setImmediate(resolve));
+
+for (const protocol of ['https:', 'file:']) test(`language input cannot escape bundled locales in ${protocol}`, async () => {
+  const base = protocol === 'file:' ? 'file:///app/api/src/kitchen-board/' : 'https://example.test/kitchen/';
+  const dom = new JSDOM('<html><body>Settings</body></html>', {url:base+'index.html',runScripts:'outside-only'});
+  try {
+    const w = dom.window, calls = [];
+    Object.defineProperty(w.document, 'currentScript', {value:{src:base+'i18n.js'}});
+    w.fetch = async url => {calls.push(String(url));return {ok:true,json:async()=>({})};};
+    w.XMLHttpRequest = class {
+      open(method,url){assert.equal(method,'GET');this.url=url;}
+      send(){calls.push(this.url);this.responseText='{}';this.onload();}
+    };
+    w.eval(read('i18n.js'));await w.DisplayI18n.setLanguage('en');calls.length=0;
+    for(const input of ['https://evil.invalid/x','//evil.invalid/x','../../secret','%2e%2e%2fsecret','ta?x=1','ta#x','ta/../xx','javascript:alert(1)']) await w.DisplayI18n.setLanguage(input);
+    assert.deepEqual(calls,[]);
+    await w.DisplayI18n.setLanguage('ta');
+    assert.deepEqual(calls,[base+'locales/ta.json']);
+  } finally {dom.window.close();}
+});
+
 function setup(lang='ta', board=true) {
   const dom = new JSDOM(read('index.html'), {url:'https://example.test/kitchen/?demo=1&lang='+lang,runScripts:'outside-only'});
   const w=dom.window;
