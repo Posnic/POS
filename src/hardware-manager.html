@@ -1976,7 +1976,7 @@
                 const url = await rpPref().get('cloud_api_url');
                 const box = document.getElementById('cpEnabled');
                 const field = document.getElementById('cpApiUrl');
-                if (box) box.checked = on === true || on === 'true';
+                if (box) box.checked = on == null || on === true || on === 'true';
                 if (field) field.value = url || '';
                 await cpShowKey();
                 cpSummary();
