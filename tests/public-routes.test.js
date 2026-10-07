@@ -71,6 +71,10 @@ const ALLOWED_ANONYMOUS = {
     // Each endpoint is rate limited; captain-access.integration.cjs exercises
     // expiry, replay, revocation, permissions and the proof boundary.
     '/enrolment-proof', '/pair', '/refresh', '/route-proof',
+    // Rate-limited pre-sign-in hint: a single enabled shop's public name and
+    // configured internet address only. Ambiguous shops return no hints.
+    // No staff/order data or credentials; peers still require route proof.
+    '/discovery',
   ],
   'mobile-pos.routes.js': [
     // Pairing is a rate-limited authentication entry point with an expiring,
