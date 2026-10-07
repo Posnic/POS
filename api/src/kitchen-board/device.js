@@ -66,6 +66,7 @@
         orangeMinutes: Number($('orange-minutes').value),
         redMinutes: Number($('red-minutes').value),
         pulse: $('pulse-orders').checked,
+        takeawayRemoveWhen: $('takeaway-remove-when').value,
       }),
       signal: AbortSignal.timeout(10000),
     });

@@ -184,7 +184,10 @@ function activeRounds(sale, options) {
     return !closed || (time && time > closed);
   });
 }
-function tickets(sale) {
+function tickets(sale, settings = {}) {
+  const keepUntilGiven =
+    settings.takeawayRemoveWhen === 'given' &&
+    /^take[\s_-]*away$/i.test(sale.fulfilment || sale.dine_type || '');
   return activeRounds(sale, { descriptions: false }).flatMap((round) => {
     const kitchenTime = round.fired_at || round.ordered_at;
     const items = round.items
@@ -201,8 +204,8 @@ function tickets(sale) {
         allergies: line.allergies,
         allergy_note: line.allergy_note,
       }))
-      .filter((item) => item.preparing > 0)
-      .map((item) => ({ ...item, qty: item.preparing }));
+      .filter((item) => (keepUntilGiven ? item.qty > 0 : item.preparing > 0))
+      .map((item) => ({ ...item, qty: keepUntilGiven ? item.qty : item.preparing }));
     return items.length
       ? [
           {

@@ -195,10 +195,14 @@
       (online && !mutating && document.activeElement?.classList.contains('quantity-input'))
     )
       return;
+    $('ready').parentElement.hidden = settings.takeawayRemoveWhen !== 'given';
+    $('board').classList.toggle('show-pickup', settings.takeawayRemoveWhen === 'given');
     for (const stage of stages) {
       const list =
         stage === 'ready'
-          ? []
+          ? tickets.filter(
+              (t) => settings.takeawayRemoveWhen === 'given' && t.takeaway && t.state === 'ready'
+            )
           : tickets.filter(
               (t) => t.state === stage && t.items.some((i) => (i.total ?? i.qty) > (i.ready || 0))
             );
@@ -304,9 +308,16 @@
         const items = node('ul', 'items');
         for (const item of ticket.items) {
           const toPrepare = Math.max(0, (item.total ?? item.qty) - (item.ready || 0));
-          if (!toPrepare) continue;
+          const displayQuantity =
+            stage === 'ready'
+              ? Math.max(0, (item.total ?? item.qty) - (item.served || 0))
+              : toPrepare;
+          if (!displayQuantity) continue;
           const li = node('li');
-          li.append(node('span', 'quantity', toPrepare + '×'), node('span', 'name', item.name));
+          li.append(
+            node('span', 'quantity', displayQuantity + '×'),
+            node('span', 'name', item.name)
+          );
           if (Number.isFinite(Number(item.priced_at_table)) && Number(item.priced_at_table) > 0) {
             li.append(
               node(
@@ -396,7 +407,11 @@
           const b = node(
             'button',
             'advance' + (stage === 'preparing' ? ' ready-action' : ''),
-            stage === 'new' ? 'Start preparing →' : 'Ready all →'
+            stage === 'new'
+              ? 'Start preparing →'
+              : ticket.takeaway
+                ? 'Ready for pickup →'
+                : 'Ready all →'
           );
           b.disabled = !online || mutating;
           b.onclick = () => advance(ticket, stages[stages.indexOf(stage) + 1]);
@@ -430,6 +445,7 @@
           $('orange-minutes').value = settings.orangeMinutes;
           $('red-minutes').value = settings.redMinutes;
           $('pulse-orders').checked = settings.pulse;
+          $('takeaway-remove-when').value = settings.takeawayRemoveWhen || 'ready';
         }
         online = true;
         $('branch').textContent = data.branch || 'Kitchen';

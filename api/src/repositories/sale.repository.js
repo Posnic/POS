@@ -8295,7 +8295,12 @@ class SalesRepository {
 
       /* The shape the screen draws, and nothing else. A kitchen screen hangs
          where staff need preparation amounts, but never customer contact details. */
-      const tickets = rows.flatMap(require('../helpers/kitchen-rounds').tickets);
+      const branch = await db
+        .collection('branches')
+        .findOne({ _id: branchObjectId, ...activeTenantFilter() });
+      const tickets = rows.flatMap((sale) =>
+        require('../helpers/kitchen-rounds').tickets(sale, branch?.kitchen_board_settings)
+      );
 
       // Explicit cancellation events only: served or paid dishes must not look cancelled.
       const cancelled = await db
