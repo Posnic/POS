@@ -188,6 +188,12 @@
             }
         };
         d.showModal();
+        // Start entry in the form, not on the header's close button.
+        const entry = d.querySelector('section input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not([type=button]):not([type=submit]):not(:disabled):not([readonly]), section textarea:not(:disabled):not([readonly])') || d.querySelector('section select:not(:disabled)');
+        if (entry) {
+            entry.focus();
+            if (entry.type === 'number' || entry.matches('[inputmode=numeric], [inputmode=decimal]')) entry.select();
+        }
         return d;
     }
     function open(saleId = null) {
