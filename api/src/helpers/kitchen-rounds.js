@@ -189,6 +189,11 @@ function tickets(sale, settings = {}) {
     settings.takeawayRemoveWhen === 'given' &&
     /^take[\s_-]*away$/i.test(sale.fulfilment || sale.dine_type || '');
   return activeRounds(sale, { descriptions: false }).flatMap((round) => {
+    const change = round.id === 'legacy' ? null : sale.changes?.[Number(round.id.slice(1))];
+    const owner =
+      change?.kitchen_actor ||
+      (round.id === 'legacy' || round.id === 'c0' ? sale.kitchen_actor : null) ||
+      {};
     const kitchenTime = round.fired_at || round.ordered_at;
     const items = round.items
       .filter((line) => !line.held && line.remaining > 0)
@@ -210,6 +215,8 @@ function tickets(sale, settings = {}) {
       ? [
           {
             id: `${sale._id}:${round.id}`,
+            owner: String(owner.id || ''),
+            ownerName: String(owner.name || ''),
             table: String(sale.table_number || ''),
             outlet: String(sale.outlet_snapshot?.name || ''),
             roomReference: String(sale.room_reference || ''),

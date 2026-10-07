@@ -496,3 +496,224 @@ footer {
   color: #fff;
   font: inherit;
 }
+/* Settings is a focused page; kitchen work remains behind it without being altered. */
+body:has(#device-setup:not([hidden])) #board,
+body:has(#device-setup:not([hidden])) > footer,
+body:has(#device-setup:not([hidden])) > .status-key {
+  display: none;
+}
+.device-setup {
+  max-width: 960px;
+  margin: 24px auto;
+  padding: 0;
+  border: 1px solid #dce4ee;
+  border-radius: 20px;
+  background: #f5f7fb;
+  color: #21324a;
+  overflow: hidden;
+  box-shadow: 0 12px 36px #0002;
+}
+.device-setup[hidden],
+.settings-panel[hidden] {
+  display: none !important;
+}
+.settings-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 28px 32px 20px;
+  background: #fff;
+}
+.settings-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #536780;
+}
+.device-setup h2 {
+  margin: 8px 0;
+  font-size: 26px;
+}
+.device-setup p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #536780;
+  margin: 8px 0 16px;
+}
+.device-setup button,
+.device-setup input,
+.device-setup select {
+  font: inherit;
+  min-height: 44px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 10px 14px;
+  color: #21324a;
+  background: #fff;
+}
+.device-setup button {
+  cursor: pointer;
+  font-weight: 600;
+}
+.device-setup button:hover {
+  border-color: #1764ce;
+  background: #edf4ff;
+}
+.device-setup :focus-visible {
+  outline: 3px solid #83b5ff;
+  outline-offset: 2px;
+}
+.settings-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 32px;
+  background: #fff;
+  border-bottom: 1px solid #dce4ee;
+}
+.settings-tabs button {
+  border: 0;
+  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  padding: 14px 12px;
+  background: transparent;
+  color: #536780;
+}
+.settings-tabs button[aria-selected='true'] {
+  color: #075dcc;
+  border-bottom-color: #075dcc;
+}
+.settings-panel {
+  padding: 24px 32px;
+}
+.settings-card {
+  background: #fff;
+  border: 1px solid #dce4ee;
+  border-radius: 12px;
+  padding: 22px;
+  margin-bottom: 16px;
+}
+.settings-card h3 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+.settings-card summary {
+  cursor: pointer;
+  font-weight: 650;
+  min-height: 28px;
+}
+.settings-card label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+.settings-card input:not([type='checkbox']),
+.settings-card select,
+#takeaway-remove-when {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  margin: 8px 0 0;
+  font-size: 16px;
+  background: #fff;
+  color: #21324a;
+}
+.settings-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 520px;
+}
+.settings-input-unit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #536780;
+  font-weight: 400;
+}
+.settings-input-unit input {
+  max-width: 96px !important;
+}
+.settings-card .settings-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 400;
+}
+.settings-check input {
+  min-height: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: #075dcc;
+}
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+.settings-save {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 4px 0;
+}
+.settings-save p {
+  margin: 0;
+}
+.device-setup .settings-primary {
+  background: #0864d9;
+  color: #fff;
+  border-color: #0864d9;
+}
+.device-setup .settings-primary:hover {
+  background: #0755b8;
+}
+.settings-hint {
+  font-size: 13px !important;
+}
+#close-setup {
+  flex: none;
+  width: 44px;
+  padding: 8px;
+}
+#device-address {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .device-setup {
+    margin: 12px 0;
+    border-radius: 12px;
+  }
+  .settings-heading {
+    padding: 20px 16px 12px;
+  }
+  .settings-tabs {
+    padding: 0 8px;
+    gap: 0;
+  }
+  .settings-tabs button {
+    flex: 1;
+    font-size: 13px;
+    padding: 12px 6px;
+  }
+  .settings-panel {
+    padding: 16px 12px;
+  }
+  .settings-card {
+    padding: 16px;
+  }
+  .settings-fields {
+    gap: 12px;
+  }
+  .settings-save {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .settings-heading h2 {
+    font-size: 23px;
+  }
+}

@@ -4,20 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#101719" />
-    <title>Posnic Kitchen</title>
+    <title>Interactive Kitchen Display · Posnic</title>
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="board.css" />
   </head>
   <body>
     <header>
       <div>
-        <small>POSNIC / KITCHEN</small>
+        <small>POSNIC / INTERACTIVE KITCHEN DISPLAY</small>
         <h1 id="branch">Kitchen board</h1>
       </div>
       <div class="tools">
         <time id="clock"></time><button id="refresh">Refresh</button
         ><button id="fullscreen">Fullscreen</button
-        ><button id="setup-toggle" aria-expanded="false">Device setup</button>
+        ><button id="setup-toggle" aria-expanded="false">Settings</button>
       </div>
     </header>
     <section class="notice">
@@ -32,74 +32,171 @@
     <section id="signin" hidden>
       <h2>Sign in on this device</h2>
       <p>
-        Open Device setup and enter the pairing code from your manager, or sign in to POS and select
-        your branch.
+        Open Settings → Connection and enter the pairing code from your manager, or sign in to POS
+        and select your branch.
       </p>
       <a href="/login.html" target="_blank" rel="noopener">Open POS sign-in</a>
     </section>
-    <section id="device-setup" hidden class="device-setup">
-      <h2>Kitchen device setup</h2>
-      <h3>Connect this kitchen screen</h3>
-      <p>
-        On a manager's signed-in POS browser, create a code below. Enter it on the kitchen tablet.
-        The paired tablet can only view and update kitchen work.
-      </p>
-      <label>Pairing code <input id="device-code" maxlength="16" autocomplete="off" /></label>
-      <button id="device-pair">Connect screen</button
-      ><button id="device-forget">Disconnect this screen</button>
-      <p id="device-result" role="status"></p>
-      <details>
-        <summary>Manager: authorize or disconnect screens</summary>
-        <label
-          >Screen name <input id="device-name" maxlength="60" placeholder="Kitchen pass"
-        /></label>
-        <button id="device-create">Create pairing code</button
-        ><button id="device-list">Refresh connected screens</button>
-        <p id="device-manager-result" role="status"></p>
-        <div id="device-list-items"></div>
-      </details>
-      <button id="keep-awake">Keep screen awake</button
-      ><span id="awake-status" role="status"></span>
-      <button id="install-board" hidden>Install kitchen screen</button>
-      <p id="install-help">
-        Android: open the browser menu → Add to Home screen / Install app. Open that shortcut for a
-        standalone screen.
-      </p>
-      <p>
-        For automatic opening after a restart, configure your Android device's managed kiosk
-        launcher with this page as its start URL. A web page cannot set Android startup or lock
-        other apps. Keep the tablet powered, set screen sleep to Never while plugged in where
-        available, and allow the kiosk browser to run without battery restrictions during service.
-      </p>
-      <details>
-        <summary>Manager: kitchen display settings</summary>
-        <label
-          >Orange after
-          <input id="orange-minutes" type="number" min="1" max="239" value="5" /> minutes</label
+    <section
+      id="device-setup"
+      hidden
+      class="device-setup"
+      aria-label="Interactive kitchen display settings"
+    >
+      <div class="settings-heading">
+        <div>
+          <span class="settings-eyebrow">INTERACTIVE KITCHEN DISPLAY</span>
+          <h2>Display settings</h2>
+          <p>Connect your screen and choose how kitchen orders are shown.</p>
+        </div>
+        <button id="close-setup" aria-label="Close settings">✕</button>
+      </div>
+      <nav class="settings-tabs" role="tablist" aria-label="Settings sections">
+        <button
+          role="tab"
+          id="tab-workflow"
+          data-settings-tab="workflow"
+          aria-controls="settings-workflow"
+          aria-selected="true"
         >
-        <label
-          >Red after
-          <input id="red-minutes" type="number" min="2" max="240" value="10" /> minutes</label
+          Orders & alerts
+        </button>
+        <button
+          role="tab"
+          id="tab-connection"
+          data-settings-tab="connection"
+          aria-controls="settings-connection"
+          aria-selected="false"
+          tabindex="-1"
         >
-        <label
-          ><input id="pulse-orders" type="checkbox" checked /> Gently pulse overdue borders</label
+          Connection
+        </button>
+        <button
+          role="tab"
+          id="tab-device"
+          data-settings-tab="device"
+          aria-controls="settings-device"
+          aria-selected="false"
+          tabindex="-1"
         >
-        <label
-          >Remove takeaway from kitchen when
-          <select id="takeaway-remove-when">
+          This device
+        </button>
+      </nav>
+      <div
+        id="settings-workflow"
+        role="tabpanel"
+        aria-labelledby="tab-workflow"
+        class="settings-panel"
+      >
+        <div class="settings-card">
+          <h3>Takeaway orders</h3>
+          <p>Payment and bill printing never remove unfinished takeaway orders.</p>
+          <label for="takeaway-remove-when">Remove from kitchen when</label
+          ><select id="takeaway-remove-when">
             <option value="ready">Ready for pickup (default)</option>
             <option value="given">Given to customer</option>
           </select>
-        </label>
-        <p>Payment and bill printing never remove unfinished takeaway orders.</p>
-        <button id="save-delay-settings">Save for this branch</button>
-        <p id="delay-result" role="status"></p>
-      </details>
-      <p id="device-address"></p>
-      <p>
-        Disconnected? Check shop Wi-Fi and that POS is running. Orders remain visible, but actions
-        pause until the connection returns.
-      </p>
+          <p class="settings-hint">
+            Kitchen Display is view-only. Staff can continue updating orders in Captain. This
+            interactive display also provides preparation controls.
+          </p>
+        </div>
+        <div class="settings-card">
+          <h3>Waiting-time alerts</h3>
+          <p>Help the kitchen spot orders that need attention.</p>
+          <div class="settings-fields">
+            <label
+              >Amber after
+              <span class="settings-input-unit"
+                ><input id="orange-minutes" type="number" min="1" max="239" value="5" />
+                minutes</span
+              ></label
+            >
+            <label
+              >Red after
+              <span class="settings-input-unit"
+                ><input id="red-minutes" type="number" min="2" max="240" value="10" /> minutes</span
+              ></label
+            >
+          </div>
+          <label class="settings-check"
+            ><input id="pulse-orders" type="checkbox" checked /> Gently pulse overdue borders</label
+          >
+        </div>
+        <div class="settings-save">
+          <p id="delay-result" role="status">Changes apply to this branch.</p>
+          <button id="save-delay-settings" class="settings-primary">Save settings</button>
+        </div>
+      </div>
+      <div
+        id="settings-connection"
+        role="tabpanel"
+        aria-labelledby="tab-connection"
+        class="settings-panel"
+        hidden
+      >
+        <div class="settings-card">
+          <h3>Connect this screen</h3>
+          <p>
+            Get a pairing code from a manager signed in to POS. Enter it here on your phone or
+            kitchen tablet.
+          </p>
+          <label for="device-code">Pairing code</label
+          ><input
+            id="device-code"
+            maxlength="16"
+            autocomplete="off"
+            placeholder="Enter pairing code"
+          />
+          <div class="settings-actions">
+            <button id="device-pair" class="settings-primary">Connect screen</button
+            ><button id="device-forget">Disconnect this screen</button>
+          </div>
+          <p id="device-result" role="status"></p>
+        </div>
+        <details class="settings-card">
+          <summary>Manager · Manage connected screens</summary>
+          <p>Create a code for a new kitchen device, or disconnect a device you no longer use.</p>
+          <label for="device-name">Screen name</label
+          ><input id="device-name" maxlength="60" placeholder="Kitchen pass" />
+          <div class="settings-actions">
+            <button id="device-create">Create pairing code</button
+            ><button id="device-list">Refresh connected screens</button>
+          </div>
+          <p id="device-manager-result" role="status"></p>
+          <div id="device-list-items"></div>
+        </details>
+      </div>
+      <div
+        id="settings-device"
+        role="tabpanel"
+        aria-labelledby="tab-device"
+        class="settings-panel"
+        hidden
+      >
+        <div class="settings-card">
+          <h3>Keep the display visible</h3>
+          <p>Keep this device plugged in during service.</p>
+          <button id="keep-awake">Keep screen awake</button>
+          <p id="awake-status" role="status"></p>
+          <button id="install-board" hidden>Install kitchen screen</button>
+          <p id="install-help">
+            Android: open the browser menu → Add to Home screen / Install app.
+          </p>
+        </div>
+        <div class="settings-card">
+          <h3>Opening after a restart</h3>
+          <p>
+            For a dedicated Android tablet, use its managed kiosk launcher to open this page on
+            startup. Browser settings cannot power on a device or configure Android startup.
+          </p>
+          <p id="device-address"></p>
+          <p class="settings-hint">
+            If disconnected, check shop Wi-Fi and the POS connection. Orders remain visible, but
+            actions pause until connected.
+          </p>
+        </div>
+      </div>
     </section>
     <main id="board" aria-label="Kitchen orders">
       <section class="lane">

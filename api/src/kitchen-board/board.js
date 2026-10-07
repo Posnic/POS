@@ -442,10 +442,12 @@
         tickets = data.tickets;
         if (data.settings) settings = data.settings;
         if (!document.activeElement?.closest('#device-setup')) {
-          $('orange-minutes').value = settings.orangeMinutes;
-          $('red-minutes').value = settings.redMinutes;
-          $('pulse-orders').checked = settings.pulse;
-          $('takeaway-remove-when').value = settings.takeawayRemoveWhen || 'ready';
+          if ($('settings-workflow').dataset.dirty !== 'true') {
+            $('orange-minutes').value = settings.orangeMinutes;
+            $('red-minutes').value = settings.redMinutes;
+            $('pulse-orders').checked = settings.pulse;
+            $('takeaway-remove-when').value = settings.takeawayRemoveWhen || 'ready';
+          }
         }
         online = true;
         $('branch').textContent = data.branch || 'Kitchen';

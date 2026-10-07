@@ -348,3 +348,8 @@ test('visible dish setting limits the list height without splitting or dropping 
   assert.equal(board.querySelector('.items').style.maxHeight,'');
  }finally{dom.window.close();}
 });
+
+test('view-only display shows the staff who ordered each grouped table without interpreting names as HTML',()=>{
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try{dom.window.kitchenScreen.setTickets([{id:'a:c0',table:'12',ownerName:'Arun <img>',placedAt:new Date().toISOString(),items:[{name:'Rice',qty:1}]},{id:'a:c1',table:'12',ownerName:'Priya',placedAt:new Date().toISOString(),items:[{name:'Tea',qty:1}]}]);assert.match(dom.window.document.querySelector('.ordered-by').textContent,/Arun <img> · Priya/);assert.equal(dom.window.document.querySelector('.ordered-by img'),null);}finally{dom.window.close();}
+});

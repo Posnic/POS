@@ -295,3 +295,13 @@ test('given-to-customer branch setting keeps ready takeaway dishes visible in pi
  const dom=setup(false,async()=>({ok:true,json:async()=>({settings:{orangeMinutes:5,redMinutes:10,pulse:false,takeawayRemoveWhen:'given'},tickets:[{...liveTicket,takeaway:true,state:'ready',items:[{id:'rice',name:'Rice',total:2,qty:2,ready:2,served:0}]}]})}));
  try{await tick();const d=dom.window.document;assert.equal(d.querySelector('#ready').parentElement.hidden,false);assert.match(d.querySelector('#ready').textContent,/Rice/);assert.equal(d.querySelector('#ready .quantity').textContent,'2×');assert.equal(d.querySelector('#takeaway-remove-when').value,'given');}finally{dom.window.close();}
 });
+
+test('settings sections separate branch workflow, connection and this device with keyboard navigation',async()=>{
+ const dom=setup();try{
+  dom.window.eval(fs.readFileSync(path.join(dir,'device.js'),'utf8'));
+  const d=dom.window.document;d.querySelector('#setup-toggle').click();assert.equal(d.querySelector('#device-setup').hidden,false);
+  assert.equal(d.querySelector('#settings-workflow').hidden,false);d.querySelector('#tab-connection').click();assert.equal(d.querySelector('#settings-workflow').hidden,true);assert.equal(d.querySelector('#settings-connection').hidden,false);
+  d.querySelector('#tab-connection').dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));assert.equal(d.querySelector('#settings-device').hidden,false);
+  d.querySelector('#close-setup').click();assert.equal(d.querySelector('#device-setup').hidden,true);assert.equal(d.activeElement.id,'setup-toggle');
+ }finally{dom.window.close();}
+});

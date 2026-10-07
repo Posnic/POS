@@ -8280,6 +8280,7 @@ class SalesRepository {
               items: 1,
               changes: 1,
               kitchen_service: 1,
+              kitchen_actor: 1,
               kitchen_work: 1,
               kitchen_required: 1,
               payment_status: 1,
@@ -8301,6 +8302,29 @@ class SalesRepository {
       const tickets = rows.flatMap((sale) =>
         require('../helpers/kitchen-rounds').tickets(sale, branch?.kitchen_board_settings)
       );
+
+      const ownerIds = [...new Set(tickets.map((ticket) => ticket.owner))]
+        .filter((id) => /^[a-f0-9]{24}$/i.test(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+      if (ownerIds.length) {
+        const staff = await db
+          .collection('users')
+          .find(
+            { _id: { $in: ownerIds }, ...activeTenantFilter() },
+            { projection: { firstname: 1, lastname: 1, name: 1 } }
+          )
+          .toArray();
+        const names = new Map(
+          staff.map((user) => [
+            String(user._id),
+            [user.firstname, user.lastname].filter(Boolean).join(' ').trim() ||
+              String(user.name || ''),
+          ])
+        );
+        tickets.forEach((ticket) => {
+          ticket.ownerName = ticket.ownerName || names.get(ticket.owner) || '';
+        });
+      }
 
       // Explicit cancellation events only: served or paid dishes must not look cancelled.
       const cancelled = await db
