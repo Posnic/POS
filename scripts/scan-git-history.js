@@ -110,6 +110,20 @@ function isReviewedFixture(rule, value, paths) {
     paths.includes('api/scripts/ask-posnic-ui-check.js');
 }
 
+// Public translations of token-verification/sign-in errors contain no spaces
+// in these scripts. The assignment heuristic mistakes the final English word
+// in their JSON key for a credential field. Match only these reviewed literals.
+function isReviewedTranslation(rule, value, paths) {
+  if (rule !== 'secret-shaped assignment') return false;
+  const messages = {
+    'languages/server/ja.json': 'トークンの検証中にエラーが発生しました。',
+    'languages/server/th.json': 'เกิดข้อผิดพลาดขณะยืนยันโทเค็น',
+    'languages/server/zh-CN.json': '您尝试使用错误的帐户或密码登录的次数过多',
+    'languages/server/zh-TW.json': '您嘗試使用錯誤的帳戶或密碼登入過多次',
+  };
+  return paths.length > 0 && paths.every(path => messages[path] === value);
+}
+
 function main() {
   /*
    * Every object in the database, with its type.
@@ -200,7 +214,8 @@ function main() {
       const line = content.slice(0, m.index).split('\n').length;
       const context = content.split('\n')[line - 1] || '';
       const declaredFake = SELF_DECLARED_FAKE.test(value) || SELF_DECLARED_FAKE.test(context) ||
-        isReviewedFixture(rule.name, value, pathList);
+        isReviewedFixture(rule.name, value, pathList) ||
+        isReviewedTranslation(rule.name, value, pathList);
 
       const serious =
         ALWAYS_SERIOUS.has(rule.name) ||
@@ -269,5 +284,5 @@ function main() {
   return 1;
 }
 
-module.exports = { isReviewedFixture };
+module.exports = { isReviewedFixture, isReviewedTranslation };
 if (require.main === module) process.exit(main());
