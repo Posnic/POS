@@ -4245,5 +4245,20 @@
   "lang_cash_towards_bill": "बिल के लिए नकद",
   "lang_cash_handed_over": "ग्राहक द्वारा दिया गया नकद",
   "lang_cash_still_to_collect": "अभी लेना बाकी",
-  "lang_payment_left_to_allocate": "आवंटन बाकी"
+  "lang_payment_left_to_allocate": "आवंटन बाकी",
+  "lang_always_available": "हमेशा उपलब्ध",
+  "lang_track_quantities": "मात्रा ट्रैक करें",
+  "lang_choose_a_preference": "प्राथमिकता चुनें",
+  "lang_stock_preference": "स्टॉक प्राथमिकता",
+  "lang_stock_for_new_items": "नए आइटम का स्टॉक",
+  "lang_keep_current_item_defaults": "मौजूदा डिफ़ॉल्ट बनाए रखें",
+  "lang_stock_preference_could_not_be_saved": "स्टॉक प्राथमिकता सहेजी नहीं जा सकी।",
+  "lang_applies_to_new_items_in_this_branch_existi": "इस शाखा के नए आइटम पर लागू है। मौजूदा आइटम की स्टॉक सेटिंग नहीं बदलेगी। आप किसी आइटम को मैन्युअल रूप से समाप्त चिह्नित कर सकते हैं।",
+  "lang_sell_without_entering_stock_quantities_no": "स्टॉक मात्रा दर्ज किए बिना बेचें। कम स्टॉक की चेतावनी नहीं। ऑर्डर पर बनने वाले व्यंजनों के लिए उपयुक्त।",
+  "lang_enter_stock_received_and_count_each_sale_l": "प्राप्त स्टॉक दर्ज करें और हर बिक्री गिनें। कम स्टॉक की चेतावनियाँ लागू होंगी। पैक किए गए सामान के लिए उपयुक्त।",
+  "lang_for_made_to_order_dishes_choose_always_ava": "ऑर्डर पर बनने वाले व्यंजनों के लिए हमेशा उपलब्ध चुनें। पैक किए गए सामान के लिए मात्रा ट्रैक करें चुनें। मौजूदा आइटम की सेटिंग बनी रहेगी। बाद में आइटम > स्टॉक प्राथमिकता में बदलें।",
+  "lang_always_available_2": "हमेशा उपलब्ध:",
+  "lang_track_quantities_2": "मात्रा ट्रैक करें:",
+  "lang_always_available_no_quantity_tracking_or_l": "हमेशा उपलब्ध — स्टॉक मात्रा दर्ज किए बिना बेचें। कम स्टॉक की चेतावनी नहीं। ऑर्डर पर बनने वाले व्यंजनों के लिए उपयुक्त।",
+  "lang_track_quantities_count_stock_received_and": "मात्रा ट्रैक करें — प्राप्त स्टॉक दर्ज करें और हर बिक्री गिनें। कम स्टॉक की चेतावनियाँ लागू होंगी। पैक किए गए सामान के लिए उपयुक्त।"
 }

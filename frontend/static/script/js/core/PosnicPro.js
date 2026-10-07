@@ -7158,6 +7158,20 @@ PosnicPro.mountServingPeriodFilter = function (options) {
     }, fail);
 };
 
+PosnicPro.itemStockPreference = {
+ load: function (selector, done) {
+  PosnicPro.get({url:'items/stockPreference'}, function (r) {
+   if (r.type === 'success') { $(selector).val(r.data.preference || ''); if (done) done(r.data.preference); }
+  });
+ },
+ save: function (value, done, fail) {
+  PosnicPro.put({url:'items/stockPreference', data:JSON.stringify({preference:value})}, function (r) {
+   if (r.type === 'success') { if (done) done(); }
+   else { PosnicPro.alert('error', r.message || PosnicPro.i18n.t('lang_stock_preference_could_not_be_saved', 'Stock preference could not be saved.')); if (fail) fail(); }
+  }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_stock_preference_could_not_be_saved', 'Stock preference could not be saved.')); if (fail) fail(); });
+ }
+};
+
 // Select existing numbers once on entry, including dynamically opened dialogs.
 (function installNumericFocusSelection() {
     var pointerEntry = null;

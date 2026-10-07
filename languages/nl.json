@@ -4584,5 +4584,20 @@
   "lang_cash_towards_bill": "Contant deel van de rekening",
   "lang_cash_handed_over": "Ontvangen contant geld",
   "lang_cash_still_to_collect": "Nog te ontvangen",
-  "lang_payment_left_to_allocate": "Nog te verdelen"
+  "lang_payment_left_to_allocate": "Nog te verdelen",
+  "lang_always_available": "Altijd beschikbaar",
+  "lang_track_quantities": "Aantallen bijhouden",
+  "lang_choose_a_preference": "Kies een voorkeur",
+  "lang_stock_preference": "Voorraadvoorkeur",
+  "lang_stock_for_new_items": "Voorraad voor nieuwe artikelen",
+  "lang_keep_current_item_defaults": "Huidige standaardinstellingen behouden",
+  "lang_stock_preference_could_not_be_saved": "De voorraadvoorkeur kon niet worden opgeslagen.",
+  "lang_applies_to_new_items_in_this_branch_existi": "Geldt voor nieuwe artikelen in deze vestiging. Bestaande artikelen behouden hun instellingen. U kunt een artikel nog steeds handmatig als uitverkocht markeren.",
+  "lang_sell_without_entering_stock_quantities_no": "Verkoop zonder voorraadaantallen in te voeren. Geen waarschuwingen voor lage voorraad. Geschikt voor gerechten op bestelling.",
+  "lang_enter_stock_received_and_count_each_sale_l": "Voer ontvangen voorraad in en tel elke verkoop. Waarschuwingen voor lage voorraad zijn van toepassing. Geschikt voor verpakte goederen.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Kies Altijd beschikbaar voor gerechten op bestelling. Kies Aantallen bijhouden voor verpakte goederen. Bestaande artikelen behouden hun instellingen. Later te wijzigen via Artikelen > Voorraadvoorkeur.",
+  "lang_always_available_2": "Altijd beschikbaar:",
+  "lang_track_quantities_2": "Aantallen bijhouden:",
+  "lang_always_available_no_quantity_tracking_or_l": "Altijd beschikbaar — Verkoop zonder voorraadaantallen in te voeren. Geen waarschuwingen voor lage voorraad. Geschikt voor gerechten op bestelling.",
+  "lang_track_quantities_count_stock_received_and": "Aantallen bijhouden — Voer ontvangen voorraad in en tel elke verkoop. Waarschuwingen voor lage voorraad zijn van toepassing. Geschikt voor verpakte goederen."
 }
