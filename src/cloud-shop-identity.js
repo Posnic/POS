@@ -11,12 +11,12 @@ function validateIdentity(identity) {
 
 function assertSameShop({ identity, savedTenant, localBranchIds, userCount, businessDataCount = 0 }) {
   const verified = validateIdentity(identity);
-  const refusal = 'This computer contains data for another or unlinked local shop. Connection stopped to protect your data. Back up this shop and contact support to migrate it; accounts are never merged automatically.';
-  if (savedTenant && savedTenant !== verified.tenantDb) throw new Error(refusal);
+  const refusal = Object.assign(new Error('Existing local shop data cannot be linked to this cloud shop. Keep the existing data, or delete it from this computer and start again. Cloud accounts are never merged automatically.'), { code: 'LOCAL_SHOP_CONFLICT' });
+  if (savedTenant && savedTenant !== verified.tenantDb) throw refusal;
   if (localBranchIds.length) {
     const cloud = new Set(verified.branchIds);
-    if (localBranchIds.some((id) => !cloud.has(String(id)))) throw new Error(refusal);
-  } else if (!savedTenant && (userCount > 0 || businessDataCount > 0)) throw new Error(refusal);
+    if (localBranchIds.some((id) => !cloud.has(String(id)))) throw refusal;
+  } else if (!savedTenant && (userCount > 0 || businessDataCount > 0)) throw refusal;
   return verified;
 }
 
