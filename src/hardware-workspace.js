@@ -26,7 +26,7 @@
     host.append(nav, ...panes); return panes;
   }
   function outer(id, host) { let el = at(id); while (el && el.parentElement !== host) el = el.parentElement; return el; }
-  const pages = [['receipt','Receipt printer','Checkout'],['cash','Cash drawer'],['weight','Weight machine'],['scanner','Barcode scanner'],['kot','Kitchen printing','Kitchen'],['screen','Kitchen screen'],['sound','Kitchen sound'],['mobile','Mobile devices','Connections']];
+  const pages = [['receipt','Receipt printer','Checkout'],['cash','Cash drawer'],['weight','Weight machine'],['scanner','Barcode scanner'],['kot','Kitchen printing','Kitchen'],['screen','Kitchen Display'],['sound','Kitchen sound'],['mobile','Mobile devices','Connections']];
   const nav = document.querySelector('.tabs');
   pages.forEach(([key, title, group]) => { const b = nav.querySelector(`[onclick="switchTab('${key}')"]`); if(!b)return; if(group)nav.append(make('div','hw-nav-group',group)); b.textContent=title;nav.append(b); });
   document.body.classList.add('hardware-workspace');
@@ -77,7 +77,7 @@
 
   const screen=at('screenTab');screen.querySelector('h2').remove();const screenHelp=screen.querySelector('.card');const screenHelpBox=details('Screen size and viewing distance',[]);screenHelp.before(screenHelpBox);screenHelpBox.append(screenHelp);
   screen.querySelector('.status').textContent='Preview changes here, then save them to the selected kitchen display.';
-  heading('screenTab','Kitchen screen','Keep each table in one box, readable from across the kitchen.');
+  heading('screenTab','Kitchen Display','View-only HDMI screen. Staff update orders from Captain. Saved displays reconnect automatically when Windows detects them.');
   const screenSaveStatus=at('screenSaveStatus')||make('div','hw-note');screenSaveStatus.id='screenSaveStatus';screenSaveStatus.setAttribute('role','status');screen.querySelector('.hw-heading').after(screenSaveStatus);
 
   const mobile=at('mobileTab');const network=outer('mobileApiUrl',mobile), devices=outer('deviceTableBody',mobile), blocked=outer('blockedDeviceBody',mobile), login=outer('loginLogBody',mobile);
@@ -170,11 +170,23 @@
       const diagonal=Number(cfg.diagonalInches)||32,unit=diagonal*2.54/Math.hypot(width,height);
       summary.textContent=diagonal+'″ · '+Math.round(width*unit)+' × '+Math.round(height*unit)+' cm screen area · '+width+' × '+height+'. Scaled preview; rotate the actual display in Windows display settings.';
     }
-    frame.addEventListener('load',update);card.addEventListener('input',()=>{status.textContent='Unsaved changes';update();});card.addEventListener('change',()=>{status.textContent='Unsaved changes';update();});
+    frame.addEventListener('load',update);card.addEventListener('input',()=>{card.dataset.unsaved='true';status.textContent='Unsaved changes';update();});card.addEventListener('change',()=>{card.dataset.unsaved='true';status.textContent='Unsaved changes';update();});
     if(window.ResizeObserver){const observer=new ResizeObserver(()=>{if(card.isConnected)update();else observer.disconnect();});observer.observe(viewport);}
     update();
   }
   const walker=document.createTreeWalker(document.querySelector('.container'),NodeFilter.SHOW_TEXT);
   while(walker.nextNode()){const node=walker.currentNode;if(node.parentElement.closest('button,label,h1,h2,h3,summary'))node.textContent=node.textContent.replace(/^[\s]*(?:[\p{Extended_Pictographic}\uFE0F]+\s*)+/u,'');}
+  let checkingDisplays = false;
+  const displayTimer = setInterval(async()=>{
+    if(checkingDisplays || document.hidden || !window.posnicKitchenScreen?.list || document.querySelector('.hw-screen-card[data-unsaved=true]')) return;
+    checkingDisplays=true;
+    try {
+      const result=await window.posnicKitchenScreen.list();
+      const signature=JSON.stringify((result?.displays||[]).map(d=>[d.id,d.connected,d.configured]));
+      const displayed=JSON.stringify((window.screenState?.displays||[]).map(d=>[d.id,d.connected,d.configured]));
+      if(signature!==displayed && typeof window.refreshScreens==='function') await window.refreshScreens();
+    } catch (_) {} finally {checkingDisplays=false;}
+  },5000);
+  window.addEventListener('beforeunload',()=>clearInterval(displayTimer));
   window.hardwareWorkspace={decorateScreen};
 })();
