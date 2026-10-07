@@ -1,0 +1,4 @@
+Order ID,Order Date,Product Name,Quantity,Unit Price,Currency,Order Status,SKU,Customer Name,Customer Email
+SYNTH-OSC-5001,2026-09-15,Synthetic Basmati Rice 5kg,2,320.00,INR,paid,SYNTH-OSC-SKU-001,Kiran Mehta,kiran.mehta@example.test
+SYNTH-OSC-5001,2026-09-15,Synthetic Cardamom Pods 100g,1,195.00,INR,paid,SYNTH-OSC-SKU-002,Kiran Mehta,kiran.mehta@example.test
+SYNTH-OSC-5002,2026-09-16,Synthetic Turmeric Powder 250g,3,85.00,INR,paid,SYNTH-OSC-SKU-003,Priya Nair,priya.nair@example.test
