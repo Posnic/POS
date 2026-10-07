@@ -92,3 +92,22 @@ test('packaged HDMI windows load bundled locale files without Fetch',async()=>{
   assert.ok(files.includes('api/src/kitchen-board/locales/*.json'));
  }finally{dom.window.close();}
 });
+test('API public asset routes serve the runtime and every shipped locale from fixed paths',()=>{
+ const vm=require('node:vm');
+ const api=path.join(__dirname,'../api');
+ const source=fs.readFileSync(path.join(api,'app.js'),'utf8');
+ const start=source.indexOf('const kitchenLocaleFiles =');
+ const end=source.indexOf("app.use(['/api/mobile/v1'",start);
+ assert.ok(start>=0&&end>start);
+ const handlers=new Map();
+ vm.runInNewContext(source.slice(start,end),{fs,path,__dirname:api,app:{get(routes,handler){for(const route of Array.isArray(routes)?routes:[routes])handlers.set(route,handler);}}});
+ const expected=['i18n.js',...fs.readdirSync(path.join(root,'locales')).filter(name=>name.endsWith('.json')).map(name=>'locales/'+name)];
+ for(const file of expected){
+  const handler=handlers.get('/kitchen/'+file);assert.equal(typeof handler,'function',file);
+  let sent=false;
+  handler({}, {set(name,value){assert.equal(name,'Cache-Control');assert.equal(value,'no-store');},sendFile(filePath){assert.equal(filePath,path.join(root,file));assert.ok(fs.statSync(filePath).isFile());sent=true;}});
+  assert.ok(sent,file);
+ }
+ assert.equal(handlers.has('/kitchen/locales/../../.env'),false);
+ assert.equal(handlers.has('/kitchen/locales/unknown.json'),false);
+});

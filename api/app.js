@@ -1122,7 +1122,10 @@ app.use(
 app.use(['/api/captain/v1', '/captain/v1'], require('./src/routes/captain-access.routes'));
 app.use('/api/kitchen', require('./src/routes/kitchen-board.routes'));
 app.get(/^\/kitchen$/, (_req, res) => res.redirect('/kitchen/'));
-for (const file of ['index.html', 'board.js', 'board.css', 'device.js', 'manifest.webmanifest', 'sw.js', 'icon.svg']) {
+const kitchenLocaleFiles = fs.readdirSync(path.join(__dirname, 'src', 'kitchen-board', 'locales'))
+  .filter((file) => /^(?:index|[a-z]{2}(?:-[A-Z]{2})?)\.json$/.test(file))
+  .map((file) => 'locales/' + file);
+for (const file of ['index.html', 'board.js', 'board.css', 'device.js', 'i18n.js', 'manifest.webmanifest', 'sw.js', 'icon.svg', ...kitchenLocaleFiles]) {
   app.get(
     file === 'index.html' ? ['/kitchen/', '/kitchen/index.html'] : '/kitchen/' + file,
     (_req, res) => {
