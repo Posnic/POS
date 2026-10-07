@@ -4247,5 +4247,20 @@
   "lang_cash_towards_bill": "Baranteil der Rechnung",
   "lang_cash_handed_over": "Übergebenes Bargeld",
   "lang_cash_still_to_collect": "Noch zu kassieren",
-  "lang_payment_left_to_allocate": "Noch aufzuteilen"
+  "lang_payment_left_to_allocate": "Noch aufzuteilen",
+  "lang_always_available": "Immer verfügbar",
+  "lang_track_quantities": "Mengen verfolgen",
+  "lang_choose_a_preference": "Einstellung wählen",
+  "lang_stock_preference": "Bestandseinstellung",
+  "lang_stock_for_new_items": "Bestand für neue Artikel",
+  "lang_keep_current_item_defaults": "Aktuelle Artikelvorgaben beibehalten",
+  "lang_stock_preference_could_not_be_saved": "Bestandseinstellung konnte nicht gespeichert werden.",
+  "lang_applies_to_new_items_in_this_branch_existi": "Gilt für neue Artikel dieser Filiale. Bestehende Artikel behalten ihre Bestandseinstellungen. Artikel können weiterhin manuell als ausverkauft markiert werden.",
+  "lang_sell_without_entering_stock_quantities_no": "Ohne Bestandsmengen verkaufen. Keine Warnungen bei niedrigem Bestand. Für frisch zubereitete Gerichte geeignet.",
+  "lang_enter_stock_received_and_count_each_sale_l": "Wareneingänge erfassen und jeden Verkauf zählen. Warnungen bei niedrigem Bestand gelten. Für verpackte Waren geeignet.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Für frisch zubereitete Gerichte „Immer verfügbar“ wählen, für verpackte Waren „Mengen verfolgen“. Bestehende Artikel bleiben unverändert. Später unter Artikel > Bestandseinstellung ändern.",
+  "lang_always_available_2": "Immer verfügbar:",
+  "lang_track_quantities_2": "Mengen verfolgen:",
+  "lang_always_available_no_quantity_tracking_or_l": "Immer verfügbar — Ohne Bestandsmengen verkaufen. Keine Warnungen bei niedrigem Bestand. Für frisch zubereitete Gerichte geeignet.",
+  "lang_track_quantities_count_stock_received_and": "Mengen verfolgen — Wareneingänge erfassen und jeden Verkauf zählen. Warnungen bei niedrigem Bestand gelten. Für verpackte Waren geeignet."
 }

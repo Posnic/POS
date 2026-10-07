@@ -4247,5 +4247,20 @@
   "lang_cash_towards_bill": "බිල සඳහා මුදල්",
   "lang_cash_handed_over": "ලබා දුන් මුදල්",
   "lang_cash_still_to_collect": "තව ලබාගත යුතු මුදල",
-  "lang_payment_left_to_allocate": "තව බෙදා වෙන් කළ යුතු මුදල"
+  "lang_payment_left_to_allocate": "තව බෙදා වෙන් කළ යුතු මුදල",
+  "lang_always_available": "සැමවිටම තිබේ",
+  "lang_track_quantities": "ප්‍රමාණ නිරීක්ෂණය කරන්න",
+  "lang_choose_a_preference": "මනාපයක් තෝරන්න",
+  "lang_stock_preference": "තොග මනාපය",
+  "lang_stock_for_new_items": "නව භාණ්ඩවල තොග",
+  "lang_keep_current_item_defaults": "දැනට ඇති පෙරනිමි තබාගන්න",
+  "lang_stock_preference_could_not_be_saved": "තොග මනාපය සුරැකිය නොහැකි විය.",
+  "lang_applies_to_new_items_in_this_branch_existi": "මෙම ශාඛාවේ නව භාණ්ඩවලට අදාළ වේ. පවතින භාණ්ඩවල සැකසුම් වෙනස් නොවේ. භාණ්ඩයක් අවසන් බව අතින් සලකුණු කළ හැක.",
+  "lang_sell_without_entering_stock_quantities_no": "තොග ප්‍රමාණ ඇතුළත් නොකර විකුණන්න. අඩු තොග අනතුරු ඇඟවීම් නැත. ඇණවුමට සාදන ආහාර සඳහා සුදුසුය.",
+  "lang_enter_stock_received_and_count_each_sale_l": "ලැබුණු තොග ඇතුළත් කර සෑම විකිණීමක්ම ගණන් කරන්න. අඩු තොග අනතුරු ඇඟවීම් අදාළ වේ. ඇසුරුම් කළ භාණ්ඩ සඳහා සුදුසුය.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "ඇණවුමට සාදන ආහාර සඳහා සැමවිටම තිබේ තෝරන්න. ඇසුරුම් කළ භාණ්ඩ සඳහා ප්‍රමාණ නිරීක්ෂණය කරන්න තෝරන්න. පවතින භාණ්ඩවල සැකසුම් නොවෙනස්ව පවතී. පසුව භාණ්ඩ > තොග මනාපය යටතේ වෙනස් කරන්න.",
+  "lang_always_available_2": "සැමවිටම තිබේ:",
+  "lang_track_quantities_2": "ප්‍රමාණ නිරීක්ෂණය කරන්න:",
+  "lang_always_available_no_quantity_tracking_or_l": "සැමවිටම තිබේ — තොග ප්‍රමාණ ඇතුළත් නොකර විකුණන්න. අඩු තොග අනතුරු ඇඟවීම් නැත. ඇණවුමට සාදන ආහාර සඳහා සුදුසුය.",
+  "lang_track_quantities_count_stock_received_and": "ප්‍රමාණ නිරීක්ෂණය කරන්න — ලැබුණු තොග ඇතුළත් කර සෑම විකිණීමක්ම ගණන් කරන්න. අඩු තොග අනතුරු ඇඟවීම් අදාළ වේ. ඇසුරුම් කළ භාණ්ඩ සඳහා සුදුසුය."
 }
