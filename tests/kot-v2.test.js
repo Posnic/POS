@@ -231,3 +231,20 @@ test('customer suggestions start with ten customers inside the form and ignore s
  requests[2].done({suggestions:[{id:'new',name:'Ab'}]});await flush();requests[1].done({suggestions:[{id:'old',name:'A'}]});await flush();assert.equal(latest,true);assert.equal(old,false);
  } finally {h.close();}
 });
+
+test('bill breakdown shows saved tax labels, charges and the full discount',async()=>{
+ const h=setup();h.sale.items[0].tax_name='GST';h.sale.items[0].tax_rate=5;h.sale.items[0].tax_amount=3;h.sale.tax=3;h.sale.charges=[{name:'Parcel',amount:10}];h.sale.discount=2;h.sale.sale_extra_discount=4;
+ h.app.showDataTablePage();await flush();await h.click('table');const bill=h.w.document.querySelector('.kv2-breakdown');assert.match(bill.textContent,/GST \(5%\)/);assert.match(bill.textContent,/Parcel/);assert.match(bill.textContent,/₹10.00/);assert.match(bill.textContent,/Discount ₹6.00/);assert.ok(bill.querySelector('[data-action=charges]'));h.close();
+});
+test('additional charges save named values with revision',async()=>{
+ const h=setup();const localGet=h.w.PosnicPro.local.get;h.w.PosnicPro.local.get=k=>k==='general_settings'?'{"custom_charges_enable":true}':localGet(k);h.app.showDataTablePage();await flush();await h.click('table');await h.click('charges');const d=h.w.document.querySelector('dialog');assert.ok(d);d.querySelector('[name=charge-name]').value='Parcel';d.querySelector('[name=charge-amount]').value='10';d.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();const request=h.calls.find(c=>c.url==='sales/updateOrder');assert.equal(request.body.charges[0].amount,10);assert.equal(request.body.charges[0].name,'Parcel');assert.equal(request.body.seen_at,h.sale.updated_date);h.close();
+});
+
+test('group tax components share the saved tax amount without adding it twice',async()=>{
+ const h=setup();Object.assign(h.sale.items[0],{tax:5,tax_amount:3.01,tax_fields:[{tax_name:'CGST',tax_value:2.5},{tax_name:'SGST',tax_value:2.5}]});h.sale.tax=3.01;
+ h.app.showDataTablePage();await flush();await h.click('table');const rows=h.w.document.querySelectorAll('.kv2-tax-detail');assert.equal(rows.length,2);assert.match(rows[0].textContent,/CGST \(2.5%\).*1.51/);assert.match(rows[1].textContent,/SGST \(2.5%\).*1.50/);h.close();
+});
+
+test('additional charges respect the existing disabled setting',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('table');await h.click('charges');assert.equal(h.w.document.querySelector('dialog'),null);assert.match(h.errors.at(-1),/Enable Custom charges/);h.close();
+});
