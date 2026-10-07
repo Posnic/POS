@@ -11,7 +11,7 @@ test('kitchen entry redirects once and serves the page and assets', async (t) =>
   assert.ok(start >= 0);
   const end = source.indexOf("app.use(['/api/mobile/v1'", start);
   const app = express();
-  new Function('app', 'path', '__dirname', source.slice(start, end))(app, path, path.join(__dirname, '../api'));
+  new Function('app', 'path', '__dirname', 'fs', source.slice(start, end))(app, path, path.join(__dirname, '../api'), fs);
   const server = app.listen(0, '127.0.0.1');
   await new Promise(resolve => server.once('listening', resolve));
   t.after(() => { server.closeAllConnections(); server.close(); });
@@ -26,4 +26,13 @@ test('kitchen entry redirects once and serves the page and assets', async (t) =>
   const asset = await get('/kitchen/board.js');
   assert.equal(asset.status, 200);
   assert.equal(asset.headers.get('cache-control'), 'no-store');
+  assert.equal((await get('/kitchen/i18n.js')).status, 200);
+  const locales = fs.readdirSync(path.join(__dirname, '../api/src/kitchen-board/locales'));
+  for (const file of locales) {
+    const response = await get('/kitchen/locales/' + file);
+    assert.equal(response.status, 200, file);
+    assert.match(response.headers.get('content-type'), /json/, file);
+    assert.ok(await response.json(), file);
+  }
+  assert.equal((await get('/kitchen/locales/unknown.json')).status, 404);
 });
