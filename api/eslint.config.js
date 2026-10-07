@@ -17,13 +17,7 @@ const prettier = require('eslint-config-prettier');
 
 module.exports = [
   {
-    ignores: [
-      'node_modules/**',
-      'coverage/**',
-      'uploads/**',
-      'public/**',
-      '**/*.min.js',
-    ],
+    ignores: ['node_modules/**', 'coverage/**', 'uploads/**', 'public/**', '**/*.min.js'],
   },
 
   js.configs.recommended,
@@ -62,11 +56,14 @@ module.exports = [
        * An unused argument is often a deliberate Express signature - above all
        * the four-argument error handler - so only unused variables are counted.
        */
-      'no-unused-vars': ['warn', {
-        args: 'none',
-        caughtErrors: 'none',
-        ignoreRestSiblings: true,
-      }],
+      'no-unused-vars': [
+        'warn',
+        {
+          args: 'none',
+          caughtErrors: 'none',
+          ignoreRestSiblings: true,
+        },
+      ],
       'no-useless-catch': 'warn',
       'no-empty': 'warn',
 
@@ -100,7 +97,11 @@ module.exports = [
   },
 
   {
-    files: ['src/kitchen-board/board.js', 'src/kitchen-board/device.js'],
+    files: [
+      'src/kitchen-board/board.js',
+      'src/kitchen-board/device.js',
+      'src/kitchen-board/i18n.js',
+    ],
     languageOptions: { sourceType: 'script', globals: globals.browser },
   },
   {

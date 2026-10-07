@@ -118,6 +118,8 @@
       "src/kitchen-screen-feed.js",
       "src/kitchen-screen-fit.js",
       "src/kitchen-screen.html",
+      "api/src/kitchen-board/i18n.js",
+      "api/src/kitchen-board/locales/*.json",
       "src/handset-reachability.js",
       "src/sync-agent-manager.js",
       "src/asset-updater.js",
