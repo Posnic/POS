@@ -373,7 +373,7 @@
   function card(ticket, cfg, compact) {
     if (ticket.cancelled) {
       var cancelledCard = el('div', 'ticket cancelled' + (cfg.cancelledPulse !== false ? ' cancel-pulse' : ''));
-      cancelledCard.appendChild(el('div', 'cancellation-label', t("CANCELLED — do not prepare")));
+      cancelledCard.appendChild(el('div', 'cancellation-label', t("CANCELLED - do not prepare")));
       if (ticket.table) cancelledCard.appendChild(el('div', 'table', ticket.table));
       var cancelledList = el('div', 'items');
       (ticket.items || []).forEach(function (item) {
@@ -493,7 +493,7 @@
       });
       if ((ticket.cancelledItems || []).length) {
         var cancelledSection = el('div', 'cancelled-section');
-        cancelledSection.appendChild(el('div', 'cancellation-label', t("CANCELLED — do not prepare")));
+        cancelledSection.appendChild(el('div', 'cancellation-label', t("CANCELLED - do not prepare")));
         ticket.cancelledItems.forEach(function (item) {
           var row = el('div', 'item');
           row.appendChild(el('span', 'qty', item.qty + ' - '));

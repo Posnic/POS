@@ -66,7 +66,7 @@ def main():
                 time.sleep(2**attempt)
         parsed = Rows(); parsed.feed(result['TranslatedDocument']['Content'].decode('utf-8'))
         for index, key in enumerate(pending):
-            translated = parsed.rows.get('s'+str(index), '').strip()
+            translated = parsed.rows.get('s'+str(index), '').strip().replace('\u2014', '-').replace('\u2013', '-')
             if not translated or sorted(re.findall(r'\{\w+\}',key)) != sorted(re.findall(r'\{\w+\}',translated)):
                 raise ValueError('Missing text or changed placeholder: '+code+' '+key)
             values[key] = translated
