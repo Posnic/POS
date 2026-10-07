@@ -244,6 +244,21 @@
         render();
         run(refresh);
     }
+    function activeOrderFilter() {
+        return {
+            floor_closed_at: { $exists: false },
+            order_state: { $nin: ['rejected', 'cancelled'] },
+            $or: [
+                { sale_process: 'KOT', payment_status: { $nin: ['Paid', 'Cancelled'] } },
+                { floor_lifecycle: true, sale_process: { $in: ['KOT', 'Add', 'Edit'] },
+                  payment_status: { $ne: 'Cancelled' },
+                  $or: [{ dine_type: { $regex: '^take[\\s_-]*away$', $options: 'i' } },
+                        { fulfilment: { $regex: '^take[\\s_-]*away$', $options: 'i' } }] },
+            ],
+        };
+    }
+    const isTakeaway = sale => /^take[\s_-]*away$/i.test(sale?.fulfilment || sale?.dine_type || '');
+    const activeTakeaway = sale => isTakeaway(sale) && sale.floor_lifecycle === true && !sale.floor_closed_at && !['Cancelled'].includes(sale.payment_status) && ['KOT', 'Add', 'Edit'].includes(sale.sale_process);
     async function refresh() {
         const generation = ++state.generation;
         const [floor, list] = await Promise.all([
@@ -251,11 +266,7 @@
             api('get', 'sales', {
                 page: 1,
                 limit: 1000,
-                filters: JSON.stringify({
-                    sale_process: 'KOT',
-                    payment_status: { $nin: ['Paid', 'Cancelled'] },
-                    order_state: { $nin: ['rejected', 'cancelled'] },
-                }),
+                filters: JSON.stringify(activeOrderFilter()),
             }),
         ]);
         if (generation !== state.generation) return;
@@ -267,11 +278,7 @@
             const more = await api('get', 'sales', {
                 page: ++page,
                 limit: 1000,
-                filters: JSON.stringify({
-                    sale_process: 'KOT',
-                    payment_status: { $nin: ['Paid', 'Cancelled'] },
-                    order_state: { $nin: ['rejected', 'cancelled'] },
-                }),
+                filters: JSON.stringify(activeOrderFilter()),
             });
             if (generation !== state.generation) return;
             if (!more.list?.length) break;
@@ -288,6 +295,7 @@
         }
         if (
             state.sale &&
+            !activeTakeaway(state.sale) &&
             (['Paid', 'Cancelled'].includes(state.sale.payment_status) || state.sale.sale_process !== 'KOT')
         ) {
             state.sale = null;
@@ -442,7 +450,7 @@
                 .map((r, i) => {
                     const lines = r.items.filter((l) => !state.pending || l.remaining > 0);
                     if (!lines.length) return '';
-                    return `<div class="kv2-round"><strong>${i ? PosnicPro.i18n.t('lang_additional_order', 'Additional order') : PosnicPro.i18n.t('lang_first_order', 'First order')} · KOT ${i + 1}</strong><small>${esc(time(r.ordered_at || r.fired_at))}</small></div>${lines.map((l) => `<div class="kv2-line"><b>${esc(l.quantity)}</b><div><strong>${esc(l.name)}</strong><small>${esc([l.note, l.allergy_note, l.course].filter(Boolean).join(' · '))}</small></div>${button('＋ Add again', 'again', `data-line="${esc(l.id)}"`)}<span>${esc(lineAmount(sale, l))}</span>${button(l.held ? 'Send now' : l.remaining <= 0 ? '✓ Served' : l.quantity === 1 ? 'Mark served' : 'Serve 1 · ' + l.served + '/' + l.quantity, 'serve', `data-line="${esc(l.id)}" ${l.remaining <= 0 ? 'disabled' : ''}`)}${button('✎', 'editLine', `data-line="${esc(l.id)}" title="Edit dish" data-t-title="lang_edit_dish" aria-label="Edit dish" data-t-aria-label="lang_edit_dish"`)}</div>`).join('')}`;
+                    return `<div class="kv2-round"><strong>${i ? PosnicPro.i18n.t('lang_additional_order', 'Additional order') : PosnicPro.i18n.t('lang_first_order', 'First order')} · KOT ${i + 1}</strong><small>${esc(time(r.ordered_at || r.fired_at))}</small></div>${lines.map((l) => `<div class="kv2-line"><b>${esc(l.quantity)}</b><div><strong>${esc(l.name)}</strong><small>${esc([l.note, l.allergy_note, l.course].filter(Boolean).join(' · '))}</small></div>${sale.payment_status === 'Paid' ? '' : button('＋ Add again', 'again', `data-line="${esc(l.id)}"`)}<span>${esc(lineAmount(sale, l))}</span>${button(l.held ? 'Send now' : l.remaining <= 0 ? '✓ Served' : l.quantity === 1 ? 'Mark served' : 'Serve 1 · ' + l.served + '/' + l.quantity, 'serve', `data-line="${esc(l.id)}" ${l.remaining <= 0 ? 'disabled' : ''}`)}${sale.payment_status === 'Paid' ? '' : button('✎', 'editLine', `data-line="${esc(l.id)}" title="Edit dish" data-t-title="lang_edit_dish" aria-label="Edit dish" data-t-aria-label="lang_edit_dish"`)}</div>`).join('')}`;
                 })
                 .join('') ||
             '<p class="kv2-empty"><lang class="lang_no_pending_portions">No pending portions.</lang></p>'
@@ -456,11 +464,21 @@
         const methodLabel = {Cash: P.i18n.t('lang_cash', 'Cash'), Card: P.i18n.t('lang_card', 'Card'), Upi: 'UPI'}[method];
         return `<section class="kv2-order kv2-welcome"><div class="kv2-illustration" aria-hidden="true">${state.paymentMessage ? paymentImage : !idle ? `<svg viewBox="0 0 240 180"><circle cx="120" cy="85" r="66" fill="#f0f6ff" stroke="none"/><ellipse cx="120" cy="155" rx="76" ry="10" fill="#edf3fa" stroke="none"/><rect x="67" y="66" width="106" height="50" rx="10" fill="#fff"/><path d="M79 116v25m82-25v25M94 52v-9h52v9M47 78v39h9m137-39v39h-9"/><circle cx="120" cy="91" r="12"/></svg>` : `<svg viewBox="0 0 240 180"><ellipse cx="120" cy="155" rx="83" ry="12" fill="#edf3fa" stroke="none"/><circle cx="120" cy="79" r="66" fill="#f0f6ff" stroke="none"/><g class="kv2-cloche"><path d="M66 103h108M75 99a45 45 0 0 1 90 0M113 49h14M120 49v6"/><path d="M63 112h114l-9 10H72Z" fill="#e1edff"/></g><path d="M76 132h88M87 132v20m66-20v20"/><g class="kv2-steam"><path d="M104 32q-6-7 0-14m16 12q-6-7 0-14m16 16q-6-7 0-14"/></g><circle cx="182" cy="54" r="17" fill="#e5f5ef" stroke="none"/><path d="m175 54 5 5 9-11" stroke="#4d9b80"/></svg>`}</div><h2>${esc(state.paymentMessage ? (methodLabel ? methodLabel + ' · ' : '') + P.i18n.t('lang_captain_payment_recorded', 'Payment recorded') : idle ? P.i18n.t('lang_no_active_orders_2', 'No active orders') : P.i18n.t('lang_choose_a_table', 'Choose a table'))}</h2>${state.paymentMessage ? '<p role="status">' + esc(state.paymentMessage) + '</p>' : ''}<p>${esc(idle ? P.i18n.t('lang_start_a_table_order', 'Start a table order') : P.i18n.t('lang_choose_an_active_table_or_start_a_new_orde', 'Choose an active table, or start a new order.'))}</p><div class="kv2-welcome-actions">${button(PosnicPro.i18n.t('lang_new_order', 'New order'), 'new', 'class="primary"')}${button(PosnicPro.i18n.t('lang_takeaway', 'Takeaway'), 'takeaway')}</div></section>`;
     }
+    function takeawayStatus(sale) {
+        if (!isTakeaway(sale)) return '';
+        const rounds = sale.restaurant_details?.rounds || [];
+        const ready = rounds.length && rounds.every(round => round.items.every(line => {
+            if (line.remaining <= 0) return true;
+            const work = sale.kitchen_work?.[round.id] || {};
+            return !line.held && Number(work.lines?.[line.id]?.ready ?? (work.state === 'ready' ? line.quantity : 0)) >= line.quantity;
+        }));
+        return '<p class="kv2-takeaway-status" role="status">' + esc(ready ? P.i18n.t('lang_takeaway_ready_pickup', 'Ready for pickup') : P.i18n.t('lang_preparing', 'Preparing...')) + ' · ' + esc(sale.payment_status === 'Paid' ? P.i18n.t('lang_paid', 'Paid') : P.i18n.t('lang_unpaid', 'Unpaid')) + '</p>';
+    }
     function orderHTML() {
         const s = state.sale;
         if (!s) return emptyOrderHTML();
         const details = s.restaurant_details || {};
-        return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.takeaway_number || s.token_id || '') : 'Table ' + s.table_number)}</h2><small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('split', 'Split payment')}${button('Actions', 'actions', 'aria-haspopup="true" aria-expanded="false" aria-controls="kv2-actions-menu"')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button('Serve all', 'serveAll')}${button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div class="kv2-bill-content"><div class="kv2-bill-summary"><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p>${taxBreakdown(s)}${(s.charges || []).map(c => `<p><span>${esc(c.name)}</span><b>${esc(money(c.amount))}</b></p>`).join('')}<p>Discount <b>${esc(money(Number(s.discount || 0) + Number(s.sale_extra_discount || 0)))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}</div><div class="kv2-bill-notes"><p>${esc(details.preparation_note || 'No kitchen note')}</p><div class="kv2-bill-actions">${button('Additional charges', 'charges')}${button('Edit details', 'notes')}</div></div></div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
+        return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.takeaway_number || s.token_id || '') : 'Table ' + s.table_number)}</h2>${takeawayStatus(s)}<small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('split', 'Split payment')}${button('Actions', 'actions', 'aria-haspopup="true" aria-expanded="false" aria-controls="kv2-actions-menu"')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button(isTakeaway(s) ? P.i18n.t('lang_takeaway_given', 'Given to customer') : 'Serve all', 'serveAll')}${s.payment_status === 'Paid' ? '' : button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div class="kv2-bill-content"><div class="kv2-bill-summary"><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p>${taxBreakdown(s)}${(s.charges || []).map(c => `<p><span>${esc(c.name)}</span><b>${esc(money(c.amount))}</b></p>`).join('')}<p>Discount <b>${esc(money(Number(s.discount || 0) + Number(s.sale_extra_discount || 0)))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}</div><div class="kv2-bill-notes"><p>${esc(details.preparation_note || 'No kitchen note')}</p><div class="kv2-bill-actions">${s.payment_status === 'Paid' ? '' : button('Additional charges', 'charges') + button('Edit details', 'notes')}</div></div></div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${s.payment_status === 'Paid' ? '' : button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${s.payment_status === 'Paid' ? '<strong>' + esc(P.i18n.t('lang_paid', 'Paid')) + '</strong>' : button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
     }
     function catalogueHTML() {
         return state.catalogue.map((item, i) => {

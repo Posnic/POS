@@ -425,12 +425,33 @@ footer {
 }
 
 /* Status stays beside the dish, with one legend for the whole screen. */
-.items .name { min-width:0; overflow-wrap:anywhere; }
-.items .name > .item-progress { display:inline-flex; vertical-align:middle; margin-left:.4em; gap:4px; }
-.items .name > .item-progress span { white-space:nowrap; padding:2px 5px; }
-.progress-served { background:#28333b; color:#d7e1e8; }
-.status-key { display:flex; flex-wrap:wrap; gap:12px; font-size:14px; }
-.status-key span { white-space:nowrap; }
+.items .name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.items .name > .item-progress {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 0.4em;
+  gap: 4px;
+}
+.items .name > .item-progress span {
+  white-space: nowrap;
+  padding: 2px 5px;
+}
+.progress-served {
+  background: #28333b;
+  color: #d7e1e8;
+}
+.status-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 14px;
+}
+.status-key span {
+  white-space: nowrap;
+}
 
 .ticket-heading {
   display: flex;
@@ -456,4 +477,22 @@ footer {
   display: block;
   font-size: 11px;
   margin-top: 3px;
+}
+
+@media (min-width: 1100px) {
+  main.show-pickup {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+#takeaway-remove-when {
+  display: block;
+  width: min(100%, 380px);
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid #70847b;
+  border-radius: 8px;
+  background: #20332a;
+  color: #fff;
+  font: inherit;
 }

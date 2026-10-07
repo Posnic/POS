@@ -347,7 +347,10 @@ test('expired codes, disabled authorizers and foreign managers cannot keep a dev
 test('branch delay settings validate thresholds and require manager access', async () => {
   const req = { ...request(), body: { orangeMinutes: 7, redMinutes: 15, pulse: false } };
   await service.saveSettings(req);
-  expect((await service.list(request())).settings).toEqual(req.body);
+  expect((await service.list(request())).settings).toEqual({
+    ...req.body,
+    takeawayRemoveWhen: 'ready',
+  });
   await expect(
     service.saveSettings({ ...req, body: { orangeMinutes: 10, redMinutes: 5, pulse: true } })
   ).rejects.toMatchObject({ status: 400 });
@@ -464,4 +467,68 @@ test('kitchen header resolves staff full names within the tenant and labels addi
   expect(tickets[1]).toMatchObject({ ownerName: 'Original snapshot', additionalOrder: true });
   sale.changes[1].items[0].process = 'transfer-in';
   expect(service.project(sale)[1].additionalOrder).toBe(false);
+});
+
+test.each(['Paid', 'Unpaid'])(
+  'takeaway stays through payment and leaves kitchen only when all ready: %s',
+  async (payment_status) => {
+    await db.collection('sales').updateOne(
+      { _id: saleId },
+      {
+        $set: {
+          dine_type: 'Take away',
+          kitchen_required: true,
+          floor_lifecycle: true,
+          payment_status,
+        },
+      }
+    );
+    expect((await service.list(request())).tickets).toHaveLength(1);
+    await service.transition(lineAction('ready', 1, 0));
+    expect((await service.list(request())).tickets).toHaveLength(1);
+    await service.transition(lineAction('ready', 2, 1, undefined, 'takeaway-ready-final'));
+    expect((await service.list(request())).tickets).toHaveLength(0);
+    expect((await service.captainList(request())).tickets).toHaveLength(1);
+    const sale = await db.collection('sales').findOne({ _id: saleId });
+    expect(sale.floor_closed_at).toBeUndefined();
+    expect(sale.payment_status).toBe(payment_status);
+    await service.transition(lineAction('ready', 1, 2, undefined, 'takeaway-ready-undo'));
+    expect((await service.list(request())).tickets).toHaveLength(1);
+  }
+);
+
+test('given setting keeps ready takeaway visible and survives saves from older clients', async () => {
+  await db.collection('branches').updateOne(
+    { _id: branch },
+    {
+      $set: {
+        kitchen_board_settings: {
+          orangeMinutes: 5,
+          redMinutes: 10,
+          pulse: false,
+          takeawayRemoveWhen: 'given',
+        },
+      },
+    }
+  );
+  await db
+    .collection('sales')
+    .updateOne(
+      { _id: saleId },
+      { $set: { dine_type: 'Take away', kitchen_required: true, payment_status: 'Paid' } }
+    );
+  await service.transition(lineAction('ready', 2, 0));
+  expect((await service.list(request())).tickets).toHaveLength(1);
+  const manager = request();
+  await service.saveSettings({
+    ...manager,
+    body: { orangeMinutes: 6, redMinutes: 12, pulse: false },
+  });
+  expect((await service.list(request())).settings.takeawayRemoveWhen).toBe('given');
+  await expect(
+    service.saveSettings({
+      ...manager,
+      body: { orangeMinutes: 6, redMinutes: 12, pulse: false, takeawayRemoveWhen: 'paid' },
+    })
+  ).rejects.toMatchObject({ status: 400 });
 });

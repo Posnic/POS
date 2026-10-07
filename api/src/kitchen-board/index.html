@@ -24,7 +24,10 @@
       <span id="connection" role="status">Connecting…</span
       ><span id="help">Swipe right to advance • buttons work too</span>
     </section>
-    <div class="notice status-key" aria-label="Dish status legend"><span>◷ Pending / cooking</span><span>✓ Ready</span><span>↗ Collected</span><span>✓✓ Served</span></div>
+    <div class="notice status-key" aria-label="Dish status legend">
+      <span>◷ Pending / cooking</span><span>✓ Ready</span><span>↗ Collected</span
+      ><span>✓✓ Served</span>
+    </div>
     <p id="message" role="alert"></p>
     <section id="signin" hidden>
       <h2>Sign in on this device</h2>
@@ -69,7 +72,7 @@
         available, and allow the kiosk browser to run without battery restrictions during service.
       </p>
       <details>
-        <summary>Manager: order delay colours</summary>
+        <summary>Manager: kitchen display settings</summary>
         <label
           >Orange after
           <input id="orange-minutes" type="number" min="1" max="239" value="5" /> minutes</label
@@ -81,6 +84,14 @@
         <label
           ><input id="pulse-orders" type="checkbox" checked /> Gently pulse overdue borders</label
         >
+        <label
+          >Remove takeaway from kitchen when
+          <select id="takeaway-remove-when">
+            <option value="ready">Ready for pickup (default)</option>
+            <option value="given">Given to customer</option>
+          </select>
+        </label>
+        <p>Payment and bill printing never remove unfinished takeaway orders.</p>
         <button id="save-delay-settings">Save for this branch</button>
         <p id="delay-result" role="status"></p>
       </details>

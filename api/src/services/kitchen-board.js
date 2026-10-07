@@ -84,7 +84,7 @@ function project(sale) {
     ];
   });
 }
-async function list(req) {
+async function list(req, includePickup = false) {
   const c = await scope(req);
   const cursor = req.db
     .collection('sales')
@@ -118,7 +118,15 @@ async function list(req) {
   const tickets = [];
   try {
     for await (const sale of cursor) {
-      tickets.push(...project(sale));
+      tickets.push(
+        ...project(sale).filter(
+          (ticket) =>
+            includePickup ||
+            c.branch.kitchen_board_settings?.takeawayRemoveWhen === 'given' ||
+            !ticket.takeaway ||
+            ticket.state !== 'ready'
+        )
+      );
       if (tickets.length > 500)
         fail(
           'More than 500 open kitchen tickets. Complete old tickets before using this board.',
@@ -150,7 +158,13 @@ async function list(req) {
   await require('./kitchen-voice').listForTickets(req, c, tickets);
   return {
     branch: String(c.branch.branch_name || ''),
-    settings: c.branch.kitchen_board_settings || { orangeMinutes: 5, redMinutes: 10, pulse: true },
+    settings: {
+      orangeMinutes: 5,
+      redMinutes: 10,
+      pulse: true,
+      takeawayRemoveWhen: 'ready',
+      ...c.branch.kitchen_board_settings,
+    },
     serverTime: new Date().toISOString(),
     tickets,
   };
@@ -293,7 +307,7 @@ async function mutate(req, captain = false) {
 async function captainList(req) {
   const c = await scope(req);
   if (c.branch.module_captain_enable === false) fail('Captain is disabled.', 403);
-  const data = await list(req),
+  const data = await list(req, true),
     actor = String(req.user._id || req.user.id);
   return {
     ...data,
@@ -345,7 +359,15 @@ async function saveSettings(req) {
     typeof b.pulse !== 'boolean'
   )
     fail('Choose orange and red times from 1 to 240 minutes, with red later than orange.', 400);
-  const settings = { orangeMinutes: b.orangeMinutes, redMinutes: b.redMinutes, pulse: b.pulse };
+  if (b.takeawayRemoveWhen !== undefined && !['ready', 'given'].includes(b.takeawayRemoveWhen))
+    fail('Choose Ready for pickup or Given to customer.', 400);
+  const settings = {
+    orangeMinutes: b.orangeMinutes,
+    redMinutes: b.redMinutes,
+    pulse: b.pulse,
+    takeawayRemoveWhen:
+      b.takeawayRemoveWhen ?? c.branch.kitchen_board_settings?.takeawayRemoveWhen ?? 'ready',
+  };
   await req.db
     .collection('branches')
     .updateOne(

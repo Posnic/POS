@@ -290,3 +290,8 @@ test('header shows escaped staff name and additional-order text beside time', as
     assert.equal(cards[1].querySelector('.additional-order'), null);
   } finally { dom.window.close(); }
 });
+
+test('given-to-customer branch setting keeps ready takeaway dishes visible in pickup lane', async()=>{
+ const dom=setup(false,async()=>({ok:true,json:async()=>({settings:{orangeMinutes:5,redMinutes:10,pulse:false,takeawayRemoveWhen:'given'},tickets:[{...liveTicket,takeaway:true,state:'ready',items:[{id:'rice',name:'Rice',total:2,qty:2,ready:2,served:0}]}]})}));
+ try{await tick();const d=dom.window.document;assert.equal(d.querySelector('#ready').parentElement.hidden,false);assert.match(d.querySelector('#ready').textContent,/Rice/);assert.equal(d.querySelector('#ready .quantity').textContent,'2×');assert.equal(d.querySelector('#takeaway-remove-when').value,'given');}finally{dom.window.close();}
+});
