@@ -27,6 +27,7 @@ test('kitchen entry redirects once and serves the page and assets', async (t) =>
   assert.equal(asset.status, 200);
   assert.equal(asset.headers.get('cache-control'), 'no-store');
   assert.equal((await get('/kitchen/i18n.js')).status, 200);
+  assert.equal((await get('/kitchen/i18n.js?v=20261007')).status, 200);
   const locales = fs.readdirSync(path.join(__dirname, '../api/src/kitchen-board/locales'));
   for (const file of locales) {
     const response = await get('/kitchen/locales/' + file);
