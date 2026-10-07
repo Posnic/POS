@@ -205,3 +205,15 @@ test('confirmed payment art follows the actual tender and clears when an order i
  }
  h.app.showDataTablePage();await flush();assert.equal(h.w.document.querySelector('[data-payment-art]'),null);h.close();
 });
+
+test('takeaway opens with guest count focused and selected, and add-again and discount do likewise', async()=>{
+ const h=setup();
+ try {
+ const selected=[];h.w.HTMLInputElement.prototype.select=function(){selected.push(this);};
+ h.app.showDataTablePage();await flush();await h.click('takeaway');
+ let input=h.w.document.querySelector('dialog [name=guests]');assert.equal(input.value,'0');assert.equal(h.w.document.activeElement,input);assert.ok(selected.includes(input));
+ h.w.document.querySelector('dialog').close();h.app.state.selected=h.sale._id;await h.app.refresh();
+ await h.click('again');input=h.w.document.querySelector('dialog [name=qty]');assert.equal(input.value,'1');assert.equal(h.w.document.activeElement,input);assert.ok(selected.includes(input));
+ h.w.document.querySelector('dialog').close();await h.click('discount');input=h.w.document.querySelector('dialog [name=amount]');assert.equal(h.w.document.activeElement,input);assert.ok(selected.includes(input));
+ } finally {h.close();}
+});
