@@ -23,7 +23,45 @@ router.post('/enrolment-proof', limit, wrap(access.proof));
 router.post('/pair', limit, wrap(access.pair));
 router.post('/refresh', limit, wrap(access.refresh));
 router.post('/route-proof', rateLimit({ windowMs: 60000, limit: 180 }), wrap(access.routeProof));
+router.get(
+  '/discovery',
+  limit,
+  wrap(async (req) => {
+    // No credentials, staff data or cross-branch list in public discovery.
+    // Ambiguous multi-branch installations return no shop-specific hints.
+    const branches = await req.db
+      .collection('branches')
+      .find(
+        { module_captain_enable: true },
+        { projection: { branch_name: 1, captain_fallback_url: 1 } }
+      )
+      .limit(2)
+      .toArray();
+    if (branches.length !== 1) return { connections: {} };
+    const branch = branches[0];
+    return {
+      connections: {
+        shopName: branch.branch_name || '',
+        cloud: branch.captain_fallback_url || null,
+      },
+    };
+  })
+);
 router.use(protect);
+// Only publish the signed-in branch's addresses. A hint never grants access
+// to the peer server; Captain still verifies its session/route proof there.
+router.post(
+  '/connections',
+  wrap(async (req) => {
+    const { context } = require('../utils/branch-access');
+    const c = await context(req);
+    return {
+      branchId: String(c.branchId),
+      shopName: c.branch.branch_name || '',
+      cloud: c.branch.captain_fallback_url || null,
+    };
+  })
+);
 router.post('/takeaway-number', limit, wrap(require('../services/takeaway-number').reserve));
 const paper = require('../services/paper-order');
 router.get('/paper-orders/options', wrap(paper.options));
