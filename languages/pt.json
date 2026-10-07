@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "Encontrar funcionário",
+  "lang_kot_staff_search": "Pesquisar por nome ou e-mail",
+  "lang_kot_staff_no_match": "Nenhum funcionário encontrado. Tente outra pesquisa.",
+  "lang_kot_staff_empty": "Nenhum funcionário disponível para a transferência.",
+  "lang_kot_staff_choose": "Escolha quem ficará responsável por este pedido.",
   "lang_paper_orders": "Pedidos em papel",
   "lang_order_reference": "Referência do pedido",
   "lang_view_original_order_photo": "Ver foto original do pedido",

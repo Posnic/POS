@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "कर्मचारी खोज्नुहोस्",
+  "lang_kot_staff_search": "नाम वा इमेलबाट खोज्नुहोस्",
+  "lang_kot_staff_no_match": "मिल्ने कर्मचारी भेटिएन। अर्को खोज प्रयास गर्नुहोस्।",
+  "lang_kot_staff_empty": "हस्तान्तरणका लागि कर्मचारी उपलब्ध छैनन्।",
+  "lang_kot_staff_choose": "यो अर्डर कसले सम्हाल्ने हो छान्नुहोस्।",
   "lang_paper_orders": "कागजी अर्डर",
   "lang_order_reference": "अर्डर सन्दर्भ",
   "lang_view_original_order_photo": "अर्डरको मूल फोटो हेर्नुहोस्",

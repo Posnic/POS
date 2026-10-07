@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "Cari staf",
+  "lang_kot_staff_search": "Cari berdasarkan nama atau email",
+  "lang_kot_staff_no_match": "Tidak ada staf yang cocok. Coba pencarian lain.",
+  "lang_kot_staff_empty": "Tidak ada staf yang tersedia untuk serah terima.",
+  "lang_kot_staff_choose": "Pilih siapa yang akan mengambil alih pesanan ini.",
   "lang_paper_orders": "Pesanan kertas",
   "lang_order_reference": "Referensi pesanan",
   "lang_view_original_order_photo": "Lihat foto asli pesanan",

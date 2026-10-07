@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "సిబ్బందిని వెతకండి",
+  "lang_kot_staff_search": "పేరు లేదా ఇమెయిల్‌తో వెతకండి",
+  "lang_kot_staff_no_match": "సరిపోలే సిబ్బంది లేరు. మరోసారి వెతకండి.",
+  "lang_kot_staff_empty": "అప్పగించడానికి సిబ్బంది అందుబాటులో లేరు.",
+  "lang_kot_staff_choose": "ఈ ఆర్డర్‌ను ఎవరు తీసుకుంటారో ఎంచుకోండి.",
   "lang_paper_orders": "కాగితం ఆర్డర్లు",
   "lang_order_reference": "ఆర్డర్ సూచన",
   "lang_view_original_order_photo": "ఆర్డర్ అసలు ఫోటో చూడండి",

@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "البحث عن موظف",
+  "lang_kot_staff_search": "البحث بالاسم أو البريد الإلكتروني",
+  "lang_kot_staff_no_match": "لا يوجد موظف مطابق. جرّب بحثًا آخر.",
+  "lang_kot_staff_empty": "لا يوجد موظفون متاحون لتسليم الطلب.",
+  "lang_kot_staff_choose": "اختر من سيتولى هذا الطلب.",
   "lang_paper_orders": "طلبات ورقية",
   "lang_order_reference": "مرجع الطلب",
   "lang_view_original_order_photo": "عرض صورة الطلب الأصلية",

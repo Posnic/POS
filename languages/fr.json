@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "Rechercher un employé",
+  "lang_kot_staff_search": "Rechercher par nom ou e-mail",
+  "lang_kot_staff_no_match": "Aucun employé correspondant. Essayez une autre recherche.",
+  "lang_kot_staff_empty": "Aucun employé disponible pour le transfert.",
+  "lang_kot_staff_choose": "Choisissez qui prendra en charge cette commande.",
   "lang_paper_orders": "Commandes sur papier",
   "lang_order_reference": "Référence de commande",
   "lang_view_original_order_photo": "Voir la photo originale de la commande",

@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "ಸಿಬ್ಬಂದಿಯನ್ನು ಹುಡುಕಿ",
+  "lang_kot_staff_search": "ಹೆಸರು ಅಥವಾ ಇಮೇಲ್ ಮೂಲಕ ಹುಡುಕಿ",
+  "lang_kot_staff_no_match": "ಹೊಂದುವ ಸಿಬ್ಬಂದಿ ಇಲ್ಲ. ಬೇರೆ ಹುಡುಕಾಟ ಪ್ರಯತ್ನಿಸಿ.",
+  "lang_kot_staff_empty": "ಹಸ್ತಾಂತರಕ್ಕೆ ಸಿಬ್ಬಂದಿ ಲಭ್ಯವಿಲ್ಲ.",
+  "lang_kot_staff_choose": "ಈ ಆರ್ಡರ್ ಅನ್ನು ಯಾರು ವಹಿಸಿಕೊಳ್ಳುತ್ತಾರೆ ಎಂದು ಆಯ್ಕೆಮಾಡಿ.",
   "lang_paper_orders": "ಕಾಗದದ ಆರ್ಡರ್‌ಗಳು",
   "lang_order_reference": "ಆರ್ಡರ್ ಉಲ್ಲೇಖ",
   "lang_view_original_order_photo": "ಆರ್ಡರ್‌ನ ಮೂಲ ಫೋಟೋ ನೋಡಿ",

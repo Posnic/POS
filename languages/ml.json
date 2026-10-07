@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "ജീവനക്കാരെ കണ്ടെത്തുക",
+  "lang_kot_staff_search": "പേര് അല്ലെങ്കിൽ ഇമെയിൽ ഉപയോഗിച്ച് തിരയുക",
+  "lang_kot_staff_no_match": "യോജിക്കുന്ന ജീവനക്കാരില്ല. മറ്റൊരു തിരയൽ ശ്രമിക്കുക.",
+  "lang_kot_staff_empty": "കൈമാറാൻ ജീവനക്കാർ ലഭ്യമല്ല.",
+  "lang_kot_staff_choose": "ഈ ഓർഡർ ഏറ്റെടുക്കുന്ന ആളെ തിരഞ്ഞെടുക്കുക.",
   "lang_paper_orders": "കടലാസ് ഓർഡറുകൾ",
   "lang_order_reference": "ഓർഡർ റഫറൻസ്",
   "lang_view_original_order_photo": "ഓർഡറിന്റെ യഥാർത്ഥ ഫോട്ടോ കാണുക",

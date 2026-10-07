@@ -232,3 +232,15 @@ test('a delayed retry cannot report success for an assignment superseded by a la
   expect(saved.assigned_staff.id).toBe(String(actor));
   expect(saved.captain_audit).toHaveLength(2);
 });
+
+test('staff search data includes email without exposing user permissions', async () => {
+  await db
+    .collection('users')
+    .updateOne({ _id: other }, { $set: { username: 'captain@example.com' } });
+  const results = await service.staff(req({}));
+  expect(results.find((user) => user.id === String(other))).toEqual({
+    id: String(other),
+    name: 'Staff 1',
+    username: 'captain@example.com',
+  });
+});

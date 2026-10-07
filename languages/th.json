@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "ค้นหาพนักงาน",
+  "lang_kot_staff_search": "ค้นหาด้วยชื่อหรืออีเมล",
+  "lang_kot_staff_no_match": "ไม่พบพนักงานที่ตรงกัน ลองค้นหาใหม่",
+  "lang_kot_staff_empty": "ไม่มีพนักงานที่พร้อมรับช่วงต่อ",
+  "lang_kot_staff_choose": "เลือกผู้ที่จะรับผิดชอบออร์เดอร์นี้",
   "lang_paper_orders": "คำสั่งซื้อบนกระดาษ",
   "lang_order_reference": "ข้อมูลอ้างอิงคำสั่งซื้อ",
   "lang_view_original_order_photo": "ดูภาพต้นฉบับของคำสั่งซื้อ",
