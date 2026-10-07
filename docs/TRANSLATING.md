@@ -48,16 +48,15 @@ Search by the native name, English name or language code (for example Dutch,
 Nederlands, or nl).
 
 - English is the source language. Tamil is the existing reviewed pack.
-- Dutch now answers every current UI key, including printing, online ordering,
-  device access and quotation markup. Its wording still needs native-speaker review.
-- The other existing packs answer approximately 93–94% of UI keys. Recent receipt,
-  session, note and settings messages have been added to each of them.
-- **The 40 new packs are starter packs, approximately 3% coverage, not complete
-  localizations.** They provide common actions, sales and document labels, and
-  essential tooltips. All remaining messages intentionally fall back to English.
-  Never fill missing entries with English merely to raise the coverage figure.
+- The AWS-supported non-English packs now answer all 4,517 current main POS
+  UI keys. Existing translations were retained; missing entries were filled
+  with Amazon Translate on 2026-10-07. Coverage is not native-speaker review.
+- Nepali retains its existing translations and English fallback for missing
+  entries because Amazon Translate does not support it.
+- The former starter packs remain unreviewed/beta. Never fill missing entries
+  with English merely to raise the coverage figure.
 
-The starter collection adds the remaining EU official languages: Bulgarian,
+The expanded collection includes the remaining EU official languages: Bulgarian,
 Croatian, Czech, Danish, Estonian, Finnish, Greek, Hungarian, Irish, Latvian,
 Lithuanian, Maltese, Polish, Romanian, Slovak, Slovenian and Swedish.
 It also adds Albanian, Bosnian, Icelandic, Macedonian, Norwegian Bokmål,
@@ -103,10 +102,25 @@ existing values as coverage improves; never lower existing baselines to pass CI.
 ### Where the words came from
 
 The original packs were seeded from the glossary and expanded with machine
-translation on 2026-09-02. Later screens have added new gaps. The current starter
-packs contain drafted core vocabulary; they have not been bulk-filled with
-English or claimed as native-speaker reviewed. Terminology and grammar must be
-reviewed in screen context before a pack can be called reviewed.
+translation on 2026-09-02. On 2026-10-07, Amazon Translate filled missing main
+POS labels and the 946-message server catalog across its 56 supported app
+languages. Existing nonempty translations were preserved. The new wording
+still needs review in screen context; no review flags were promoted.
+
+To repeat the missing-only pass (requires boto3 and an authorized AWS profile):
+
+```bash
+node tests/tools/i18n-coverage.js --write-english
+node tests/tools/i18n-server-text.js --write
+python scripts/translate-app.py --profile YOUR_PROFILE --region ap-south-1
+node tests/tools/check-translations.js
+```
+
+The script sends checked-in public UI copy only, protects placeholders, markup
+and glossary brands, validates returned tokens, and checkpoints each batch.
+It never sends customer records or overwrites existing nonempty entries.
+Unsupported languages retain their existing fallback. This pass covers the
+main POS catalogs, not every separate mobile/native application's text.
 
 The owner's decision was to ship them anyway, honestly labelled, rather than
 hold them back: a shopkeeper who can read most of their screen is better off
