@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "Mitarbeiter suchen",
+  "lang_kot_staff_search": "Nach Name oder E-Mail suchen",
+  "lang_kot_staff_no_match": "Keine passenden Mitarbeiter. Versuchen Sie eine andere Suche.",
+  "lang_kot_staff_empty": "Keine Mitarbeiter für die Übergabe verfügbar.",
+  "lang_kot_staff_choose": "Wählen Sie, wer diese Bestellung übernimmt.",
   "lang_paper_orders": "Papierbestellungen",
   "lang_order_reference": "Bestellreferenz",
   "lang_view_original_order_photo": "Originalfoto der Bestellung ansehen",

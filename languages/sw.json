@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "Tafuta mfanyakazi",
+  "lang_kot_staff_search": "Tafuta kwa jina au barua pepe",
+  "lang_kot_staff_no_match": "Hakuna mfanyakazi anayelingana. Jaribu utafutaji mwingine.",
+  "lang_kot_staff_empty": "Hakuna mfanyakazi anayepatikana kwa makabidhiano.",
+  "lang_kot_staff_choose": "Chagua atakayesimamia oda hii.",
   "lang_paper_orders": "Maagizo ya karatasi",
   "lang_order_reference": "Rejeleo la agizo",
   "lang_view_original_order_photo": "Tazama picha asili ya agizo",

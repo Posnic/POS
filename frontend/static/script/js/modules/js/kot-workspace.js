@@ -14,6 +14,11 @@
         { label: 'Choose a destination table', t: 'lang_kot_workspace_destination' },
         { label: 'Number of guests', t: 'lang_kot_workspace_covers' },
         { label: 'Guests', t: 'lang_kot_workspace_guests' },
+        { label: 'Find staff', t: 'lang_kot_find_staff' },
+        { label: 'Search by name or email', t: 'lang_kot_staff_search' },
+        { label: 'No matching staff. Try another search.', t: 'lang_kot_staff_no_match' },
+        { label: 'No staff available for handover.', t: 'lang_kot_staff_empty' },
+        { label: 'Choose who will take over this order.', t: 'lang_kot_staff_choose' },
         { label: 'Hand over order', t: 'lang_kot_workspace_handover' },
         { label: 'Split payment', t: 'lang_splitpay_title' },
         { label: 'Review payment', t: 'lang_kot_workspace_review' },
@@ -361,10 +366,45 @@
     async function handover(saleId) {
         const [staff, sale] = await Promise.all([request('get', 'sales/handoverStaff', { branchId: branch() }), request('get', 'sales/' + saleId)]);
         const d = dialog('Hand over order', sale);
-        d.querySelector('section').innerHTML = '<label>' + esc(text('Staff')) + '<select name="staff" required>' + staff.map(s => '<option value="' + esc(s.id) + '">' + esc(s.name) + '</option>').join('') + '</select></label>';
+        d.classList.add('kot-handover-dialog');
+        const submit = d.querySelector('[type=submit]');
+        submit.textContent = text('Hand over order');
+        submit.disabled = true;
+        d.querySelector('footer [data-close]').textContent = text('Close');
+        d.querySelector('section').innerHTML = '<label>' + esc(text('Find staff')) + '<input type="search" data-staff-search autocomplete="off" placeholder="' + esc(text('Search by name or email')) + '"></label><p class="kot-staff-help">' + esc(text('Choose who will take over this order.')) + '</p><div class="kot-staff-list" role="group" aria-label="' + esc(text('Staff')) + '"></div><p data-staff-empty role="status" hidden></p>';
+        const search = d.querySelector('[data-staff-search]');
+        const list = d.querySelector('.kot-staff-list');
+        list.innerHTML = staff.map(s => '<label class="kot-staff-choice"><input type="radio" name="staff" required value="' + esc(s.id) + '"><span><strong>' + esc(s.name || s.username) + '</strong>' + (s.username && s.username !== s.name ? '<small>' + esc(s.username) + '</small>' : '') + '</span></label>').join('');
+        const rows = [...list.children];
+        search.oninput = () => {
+            const query = search.value.trim().toLocaleLowerCase();
+            rows.forEach((row, index) => {
+                row.hidden = ![staff[index].name, staff[index].username].filter(Boolean).join(' ').toLocaleLowerCase().includes(query);
+                if (row.hidden) row.querySelector('input').checked = false;
+            });
+            submit.disabled = !list.querySelector('input:checked');
+            const empty = d.querySelector('[data-staff-empty]');
+            empty.hidden = rows.some(row => !row.hidden);
+            empty.textContent = text(staff.length ? PosnicPro.i18n.t('lang_kot_staff_no_match', 'No matching staff. Try another search.') : PosnicPro.i18n.t('lang_kot_staff_empty', 'No staff available for handover.'));
+        };
+        list.onchange = () => { submit.disabled = !list.querySelector('input:checked'); };
+        search.onkeydown = event => {
+            if (event.key === 'ArrowDown' || event.key === 'Enter') {
+                event.preventDefault();
+                const visible = rows.filter(row => !row.hidden);
+                if (visible.length) visible[0].querySelector('input').focus();
+                if (event.key === 'Enter' && visible.length === 1) {
+                    visible[0].querySelector('input').checked = true;
+                    submit.disabled = false;
+                }
+            }
+        };
+        search.oninput();
+        search.focus();
         const id = requestId();
         d.save(async form => { await request('post', 'sales/handoverOrder', { branchId: branch(), saleId, staffId: form.get('staff'), requestId: id }); refresh(); });
     }
+
     async function split(table) {
         const snapshot = await request('get', 'sales/guestBills/table', { branchId: branch(), ...(table.startsWith('takeaway:') ? {saleId:table.slice(9)} : {table_number:table}) });
         const d = dialog('Split payment', table.startsWith('takeaway:') ? { dine_type: 'Take away' } : { table_number: table });
@@ -445,7 +485,8 @@
     style.textContent += '.kot-workspace-dialog{background:var(--theme-card-bg,#fff);color:var(--theme-text-primary,#17314f);border-color:var(--theme-border-color,#dce3ed)}.kot-workspace-dialog input:not([type=checkbox]),.kot-workspace-dialog textarea,.kot-workspace-dialog select,.kot-workspace-dialog button{background:var(--theme-card-bg,#fff);border-color:var(--theme-border-color,#dce3ed)}.kot-workspace-dialog .primary{background:var(--theme-btn-primary-bg,#0969da);border-color:var(--theme-btn-primary-bg,#0969da);color:var(--theme-btn-primary-text,#fff)}.kot-workspace-dialog header,.kot-workspace-dialog footer{border-color:var(--theme-border-color,#dce3ed)}.kot-workspace-dialog button:disabled{opacity:.5;cursor:default}.kot-merge-source,.kot-merge-preview{display:flex;flex-direction:column;gap:6px;border:1px solid var(--theme-border-color,#dce3ed);border-radius:10px;padding:14px;margin-bottom:16px;background:var(--theme-table-header-bg,#f7f9fc)}.kot-merge-preview{border-color:var(--theme-primary-color,#0969da)}.kot-merge-preview[hidden]{display:none}.kot-merge-source span,.kot-merge-preview span,.kot-merge-help{font-size:13px;color:var(--theme-text-muted,#66758a)}.kot-merge-source strong,.kot-merge-preview strong{font-size:19px}.kot-merge-help{line-height:1.5;margin:10px 0 0}';
     style.textContent += '.kot-workspace-dialog,.kot-workspace-dialog *{box-sizing:border-box}.kot-action-context{display:block;font-size:13px;font-weight:500;margin-top:7px;color:var(--theme-text-muted,#66758a)}.kot-transfer-dialog{width:min(740px,94vw)}.kot-transfer-dialog [hidden]{display:none!important}.kot-transfer-fields{display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:18px}.kot-transfer-list article{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 14px;padding:13px 8px;border-bottom:1px solid var(--theme-border-color,#dce3ed);border-radius:6px}.kot-transfer-list article.selected{background:var(--theme-table-row-hover,#eef5ff)}.kot-transfer-name{min-width:0;overflow-wrap:anywhere}.kot-transfer-name strong{display:block;font-size:14px}.kot-transfer-name small{display:block;font-size:12px;color:var(--theme-text-muted,#66758a);margin-top:5px}.kot-transfer-stepper{display:flex;align-items:center;gap:5px}.kot-transfer-dialog .kot-transfer-stepper input{width:68px;min-height:38px;margin:0;text-align:center;padding:6px}.kot-transfer-stepper button{min-width:36px;min-height:38px;padding:5px;font-size:19px}.kot-transfer-dialog .kot-transfer-served{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0;font-size:12px;color:var(--theme-text-muted,#66758a)}.kot-transfer-dialog .kot-transfer-served input{width:68px;min-height:34px;padding:5px;margin:0;text-align:center}.kot-transfer-direction{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;border:1px solid var(--theme-border-color,#dce3ed);border-radius:10px;background:var(--theme-table-header-bg,#f7f9fc);margin-bottom:12px}.kot-transfer-direction span{font-size:12px;color:var(--theme-text-muted,#66758a)}.kot-transfer-direction strong{display:block;margin-top:4px;font-size:18px;color:var(--theme-text-primary,#17314f)}.kot-transfer-review p{margin:0;padding:12px 0;border-bottom:1px solid var(--theme-border-color,#dce3ed)}.kot-transfer-review small{display:block;margin-top:5px}.kot-transfer-totals p{display:flex;justify-content:space-between;gap:10px}.kot-transfer-dialog [data-transfer-count]{font-size:13px;text-align:right;margin:14px 0 0}.kot-transfer-dialog footer{flex-shrink:0}.kot-transfer-dialog section{min-height:0}@media(max-width:480px){.kot-transfer-dialog section{padding:14px}.kot-transfer-fields{gap:10px;grid-template-columns:minmax(0,1fr) 80px}.kot-transfer-list article{grid-template-columns:1fr}.kot-transfer-stepper{justify-self:end}.kot-transfer-dialog footer{padding:12px;gap:8px}}';
     style.textContent += '.kot-workspace-dialog.kot-guests-dialog{width:min(460px,calc(100vw - 32px))}.kot-guests-dialog .kot-action-context{font-size:15px;margin-top:8px;color:var(--theme-text-primary,#183153)}.kot-guest-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}.kot-guest-presets button{min-height:48px;font-size:18px}.kot-guest-presets button[aria-pressed=true]{background:var(--theme-primary,#0667ed);color:#fff;border-color:var(--theme-primary,#0667ed)}.kot-guest-count{display:flex;align-items:flex-end;justify-content:center;gap:12px}.kot-guest-count label{width:110px;margin:0;text-align:center}.kot-guest-count input{text-align:center;font-size:22px;height:48px;appearance:textfield}.kot-guest-count input::-webkit-inner-spin-button{appearance:none}.kot-guest-count button{width:48px;height:48px;font-size:22px;flex:none}.kot-guests-dialog [role=alert]:empty{display:none}';
-        document.head.append(style);
+        style.textContent += '.kot-handover-dialog section{min-height:0}.kot-handover-dialog header,.kot-handover-dialog footer{flex-shrink:0}.kot-staff-help{font-size:14px;color:var(--theme-text-muted,#66758a);margin:0 0 12px}.kot-staff-list{max-height:320px;overflow:auto;display:grid;gap:8px;padding:3px}.kot-handover-dialog .kot-staff-choice{display:flex;align-items:center;gap:12px;margin:0;padding:14px;border:1px solid var(--theme-border-color,#dce3ed);border-radius:10px;cursor:pointer}.kot-staff-choice:hover,.kot-staff-choice:has(input:checked){background:var(--theme-table-row-hover,#eef5ff);border-color:#0969da}.kot-handover-dialog .kot-staff-choice input[type=radio]{width:18px;height:18px;min-height:18px;margin:0;padding:0;flex:none;accent-color:#0969da}.kot-staff-choice span{min-width:0;overflow-wrap:anywhere}.kot-staff-choice strong{font-size:16px}.kot-staff-choice small{display:block;margin-top:4px;font-size:13px;color:var(--theme-text-muted,#66758a)}.kot-handover-dialog [hidden]{display:none!important}';
+    document.head.append(style);
     const layout = document.createElement('style');
     layout.textContent = '#kot_tables_grid .kot-table-box{aspect-ratio:auto!important;min-height:74px!important;margin-bottom:0!important}#kot_tables_grid .kot-table-box h2{font-size:26px!important;color:#125b42!important}#kot_table_details .kot-item>div>div:last-child{flex-wrap:wrap;gap:12px}#kot_table_details .kot-item .btn{min-height:38px}#infobar-settings-sidebar-table-selection.sidebarview,#infobar-settings-sidebar-table-selection.sidebarshow{width:min(1040px,100vw)}#infobar-settings-sidebar-table-selection .contentbar-new{padding:24px}#infobar-settings-sidebar-table-selection .card{border-radius:14px;box-shadow:none}#infobar-settings-sidebar-table-selection .card-header{background:transparent;text-align:left!important}#infobar-settings-sidebar-table-selection .table_select{height:64px!important;border-width:1px!important}#infobar-settings-sidebar-table-selection .table_select>div{border:0!important}#infobar-settings-sidebar-table-selection .person_select{height:56px!important;flex-direction:row!important;gap:8px}#infobar-settings-sidebar-table-selection .person_select>div{display:none}#infobar-settings-sidebar-table-selection #custom_table_input,#infobar-settings-sidebar-table-selection #kot_custom_person_input{height:56px!important}#infobar-settings-sidebar-table-selection #kot_order_next_btn{background:#0869da;color:#fff;border-color:#0869da;min-height:44px}@media(max-width:767px){#kot_tables_grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}#infobar-settings-sidebar-table-selection .contentbar-new{padding:12px}}';
     document.head.append(layout);

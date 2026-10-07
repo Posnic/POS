@@ -159,3 +159,29 @@ test('guest picker keeps table context, supports presets and custom counts, and 
  input.value='14';submit();await flush();assert.equal(calls[0].body.guests,14);assert.equal(calls[0].body.orderId,'sale');
  dom.window.close();
 });
+
+test('handover opens a searchable staff list, requires a choice and submits only that recipient', async()=>{
+  const staff=[{id:'a',name:'Arun',username:'captain@example.com'},{id:'b',name:'Bala <img src=x>',username:'manager@example.com'}];
+  const {dom,w,calls,app}=setup({get:(o,done)=>done({type:'success',data:o.url==='sales/handoverStaff'?staff:{_id:'sale',table_number:'45'}})});
+  await app.handover('sale');
+  const search=w.document.querySelector('[data-staff-search]');
+  const rows=[...w.document.querySelectorAll('.kot-staff-choice')];
+  const submit=w.document.querySelector('[type=submit]');
+  assert.equal(w.document.activeElement,search);assert.equal(rows.length,2);assert.ok(rows.every(row=>!row.hidden));assert.equal(submit.disabled,true);
+  assert.match(w.document.querySelector('h3').textContent,/45/);assert.equal(w.document.querySelector('img'),null);
+  search.value='MANAGER@';search.dispatchEvent(new w.Event('input'));
+  assert.equal(rows[0].hidden,true);assert.equal(rows[1].hidden,false);
+  search.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',cancelable:true}));
+  assert.equal(submit.disabled,false);assert.equal(calls.length,0);
+  search.value='missing';search.dispatchEvent(new w.Event('input'));
+  assert.equal(submit.disabled,true);assert.equal(w.document.querySelector('[data-staff-empty]').hidden,false);
+  search.value='';search.dispatchEvent(new w.Event('input'));rows[0].querySelector('input').click();
+  submit.click();await flush();assert.equal(calls[0].body.staffId,'a');assert.equal(calls[0].body.saleId,'sale');
+  dom.window.close();
+});
+
+test('handover with no eligible staff explains the empty list and cannot submit',async()=>{
+  const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url==='sales/handoverStaff'?[]:{_id:'sale'}})});
+  await app.handover('sale');assert.equal(w.document.querySelector('[type=submit]').disabled,true);
+  assert.match(w.document.querySelector('[data-staff-empty]').textContent,/No staff available/);dom.window.close();
+});

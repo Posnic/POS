@@ -1,4 +1,9 @@
 {
+  "lang_kot_find_staff": "Medewerker zoeken",
+  "lang_kot_staff_search": "Zoeken op naam of e-mail",
+  "lang_kot_staff_no_match": "Geen passende medewerkers. Probeer een andere zoekopdracht.",
+  "lang_kot_staff_empty": "Geen medewerkers beschikbaar voor overdracht.",
+  "lang_kot_staff_choose": "Kies wie deze bestelling overneemt.",
   "lang_cashier_types_the_price": "De kassamedewerker voert de prijs in",
   "lang_iv2_generate": "Genereren",
   "lang_service_day": "Dag",
