@@ -1207,6 +1207,10 @@ class InstallService {
 
   async _insertBusinessTypeDemoData(params) {
     try {
+      // A trade label must never become a MongoDB query operator or stored object.
+      if (typeof params.businessType !== 'string' || !params.businessType.trim()) {
+        throw new TypeError('Business type must be a non-empty string.');
+      }
       const {
         branchId,
         branchName,
@@ -1607,9 +1611,9 @@ class InstallService {
       .collection('items')
       .find(
         {
-          demo_pack: pack,
-          'branch_access.branch_id': branchId,
-          license: licenseId,
+          demo_pack: { $eq: pack },
+          'branch_access.branch_id': { $eq: branchId },
+          license: { $eq: licenseId },
           demo_purchase_supply: { $ne: true },
         },
         { projection: { _id: 1, name: 1, selling_price: 1, company_price: 1, unit: 1 } }

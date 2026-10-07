@@ -937,6 +937,16 @@ describe('InstallService', () => {
       );
     });
 
+    test.each([{ $ne: null }, { $regex: '.*' }, ['restaurant'], null])(
+      'rejects a non-string demo pack before reading or writing data: %p',
+      async (businessType) => {
+        await service._insertBusinessTypeDemoData(makeParams({ businessType }));
+        expect(getDemoDataByType).not.toHaveBeenCalled();
+        expect(demoDataset.loadDatasetPack).not.toHaveBeenCalled();
+        expect(repo.insertItems).not.toHaveBeenCalled();
+      }
+    );
+
     test('swallows errors silently (does NOT throw)', async () => {
       getDemoDataByType.mockImplementation(() => {
         throw new Error('demoData crash');
