@@ -137,7 +137,7 @@ test('all three display events are handled, not just the obvious one', () => {
 });
 
 test('a display that comes back is reopened without anybody clicking', () => {
-  const watch = SOURCE.slice(SOURCE.indexOf('function watch'));
+  const watch = SOURCE.slice(SOURCE.indexOf('function reconcileDisplays'));
   assert.match(watch, /configuredIds\(\)/, 'nothing reopens a configured screen');
   assert.match(watch, /close\(id\)/, 'nothing drops a window whose screen has gone');
 });

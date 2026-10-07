@@ -72,6 +72,7 @@
     });
     const data = await response.json();
     if (!response.ok) throw Error(data.message || 'Could not save settings.');
+    $('settings-workflow').dataset.dirty = 'false';
     $('delay-result').textContent = 'Saved for this branch.';
     $('refresh').click();
   });
@@ -79,10 +80,47 @@
     wantsWake = false,
     installPrompt = null;
   $('device-address').textContent = 'Start URL: ' + location.origin + '/kitchen/';
-  $('setup-toggle').onclick = () => {
-    $('device-setup').hidden = !$('device-setup').hidden;
-    $('setup-toggle').setAttribute('aria-expanded', String(!$('device-setup').hidden));
+  const settingsTabs = [...document.querySelectorAll('[data-settings-tab]')];
+  const showSettingsTab = (tab) => {
+    settingsTabs.forEach((button) => {
+      const active = button === tab;
+      button.setAttribute('aria-selected', String(active));
+      button.tabIndex = active ? 0 : -1;
+      $('settings-' + button.dataset.settingsTab).hidden = !active;
+    });
   };
+  settingsTabs.forEach((tab, index) => {
+    tab.onclick = () => showSettingsTab(tab);
+    tab.onkeydown = (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const next =
+        settingsTabs[
+          event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? settingsTabs.length - 1
+              : (index + (event.key === 'ArrowRight' ? 1 : -1) + settingsTabs.length) %
+                settingsTabs.length
+        ];
+      showSettingsTab(next);
+      next.focus();
+    };
+  });
+  function toggleSettings(open) {
+    $('device-setup').hidden = !open;
+    $('setup-toggle').setAttribute('aria-expanded', String(open));
+    if (open) settingsTabs.find((tab) => tab.getAttribute('aria-selected') === 'true')?.focus();
+    else $('setup-toggle').focus();
+  }
+  $('setup-toggle').onclick = () => toggleSettings($('device-setup').hidden);
+  $('close-setup').onclick = () => toggleSettings(false);
+  $('device-setup').addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') toggleSettings(false);
+  });
+  $('settings-workflow').addEventListener('input', () => {
+    $('settings-workflow').dataset.dirty = 'true';
+  });
   async function acquire() {
     if (!wantsWake || document.hidden || wake) return;
     try {

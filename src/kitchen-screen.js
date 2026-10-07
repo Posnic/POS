@@ -55,6 +55,8 @@ function electron() {
 const windows = new Map();
 const renderReceipts = new Map();
 let _watching = false;
+let _running = false;
+let _pollTimer = null;
 
 /* ------------------------------------------------------------------ config */
 
@@ -149,7 +151,14 @@ function displays() {
     return [];
   }
 
-  return all.map((d) => {
+  const present = new Set(all.map(d => String(d.id)));
+  const stored = prefs.all().kitchenScreens || {};
+  const saved = Object.entries(stored).filter(([id, cfg]) => !present.has(id) && (cfg.enabled || cfg.displayIdentity)).map(([id, cfg]) => ({
+    id, label: cfg.displayIdentity?.label || 'Saved kitchen display',
+    size: cfg.displayIdentity?.size || { width: 1920, height: 1080 },
+    scaleFactor: cfg.displayIdentity?.scaleFactor || 1, disconnected: true,
+  }));
+  return all.concat(saved).map((d) => {
     const cfg = configFor(d.id);
     const size = d.size || {};
     const widthPx = Math.round((size.width || 0) * (d.scaleFactor || 1));
@@ -166,6 +175,7 @@ function displays() {
       /* The till's own window lives on the primary display, so offering it as
          a kitchen screen is offering to cover the sale screen. */
       recommended: !primary,
+      connected: !d.disconnected,
       configured: Boolean(cfg.enabled),
       open: windows.has(String(d.id)),
       fit: fit({
@@ -298,6 +308,7 @@ function close(displayId) {
 
 /** Close every kitchen screen. Used on shutdown and when the shop turns it off. */
 function closeAll() {
+  _running = false;
   for (const id of [...windows.keys()]) close(id);
 }
 
@@ -309,7 +320,8 @@ function closeAll() {
  */
 function start() {
   try {
-    for (const id of configuredIds()) open(id);
+    _running = true;
+    reconcileDisplays();
     watch();
     return true;
   } catch (err) {
@@ -327,36 +339,65 @@ function start() {
  * coordinates that no longer exist, which on Windows means an invisible window
  * holding a page that is still rendering tickets.
  */
+function displayIdentity(display) {
+  return { label: String(display.label || '').trim(), size: display.size,
+    scaleFactor: display.scaleFactor || 1, internal: display.internal === true };
+}
+// A changed OS ID may be rebound only to one uniquely matching external panel.
+// Never guess by position or assign a saved kitchen to the primary screen.
+function restoreDisplayBindings(all, primaryId) {
+  const current = prefs.all(true), stored = { ...(current.kitchenScreens || {}) };
+  let changed = false;
+  const present = new Set(all.map(d => String(d.id)));
+  const matches = (identity, d) => identity?.label && identity.label === String(d.label || '').trim() &&
+    identity.internal === (d.internal === true) && identity.size?.width === d.size?.width &&
+    identity.size?.height === d.size?.height && identity.scaleFactor === (d.scaleFactor || 1);
+  const missing = Object.entries(stored).filter(([id, cfg]) => cfg.enabled && !present.has(id));
+  for (const [id, cfg] of missing) {
+    const candidates = all.filter(d => String(d.id) !== String(primaryId) && !stored[String(d.id)] && matches(cfg.displayIdentity, d));
+    if (candidates.length !== 1 || missing.filter(([, other]) => matches(other.displayIdentity, candidates[0])).length !== 1) continue;
+    stored[String(candidates[0].id)] = { ...cfg, displayIdentity: displayIdentity(candidates[0]) };
+    delete stored[id]; changed = true;
+  }
+  // Remember already-configured screens for the next disconnect, including upgrades.
+  for (const d of all) {
+    const cfg = stored[String(d.id)];
+    if (cfg?.enabled && !cfg.displayIdentity) {
+      stored[String(d.id)] = { ...cfg, displayIdentity: displayIdentity(d) }; changed = true;
+    }
+  }
+  if (changed) prefs.saveJson(prefs.prefsPath(), { ...current, kitchenScreens: stored });
+}
+function reconcileDisplays() {
+  if (!_running) return;
+  const e = electron();
+  if (!e?.screen) return;
+  try {
+    const all = e.screen.getAllDisplays() || [];
+    try { restoreDisplayBindings(all, e.screen.getPrimaryDisplay()?.id); }
+    catch (err) { console.warn('[kitchen-screen] could not remember display identity:', err.message); }
+    const present = new Set(all.map(d => String(d.id)));
+    for (const id of [...windows.keys()]) if (!present.has(id)) close(id);
+    for (const id of configuredIds()) if (present.has(id) && (!windows.has(id) || windows.get(id).isDestroyed())) open(id);
+    for (const [id, win] of windows) {
+      const d = all.find(x => String(x.id) === id);
+      if (d && !win.isDestroyed()) { win.setBounds(d.bounds); push(id); }
+    }
+  } catch (err) { console.warn('[kitchen-screen] display recovery pending:', err.message); }
+}
+
 function watch() {
   const e = electron();
   if (!e || !e.screen || _watching) return;
   _watching = true;
 
-  const reconcile = () => {
-    try {
-      const present = new Set((e.screen.getAllDisplays() || []).map((d) => String(d.id)));
-      /* Gone: drop the window rather than leave it at coordinates that do not
-         exist. */
-      for (const id of [...windows.keys()]) if (!present.has(id)) close(id);
-      /* Back, or newly plugged in and already configured: open it. Nobody
-         should have to click anything after a power cut. */
-      for (const id of configuredIds()) if (present.has(id) && !windows.has(id)) open(id);
-      /* Still here but moved or resized. */
-      for (const [id, win] of windows) {
-        const d = (e.screen.getAllDisplays() || []).find((x) => String(x.id) === id);
-        if (d && win && !win.isDestroyed()) {
-          win.setBounds(d.bounds);
-          push(id);
-        }
-      }
-    } catch (err) {
-      console.warn('[kitchen-screen] display change not handled:', err.message);
-    }
-  };
+  e.screen.on('display-added', reconcileDisplays);
+  e.screen.on('display-removed', reconcileDisplays);
+  e.screen.on('display-metrics-changed', reconcileDisplays);
+  e.powerMonitor?.on('resume', reconcileDisplays);
+  _pollTimer = setInterval(reconcileDisplays, 10000);
+  _pollTimer.unref?.();
 
-  e.screen.on('display-added', reconcile);
-  e.screen.on('display-removed', reconcile);
-  e.screen.on('display-metrics-changed', reconcile);
 }
 
 /**
@@ -373,6 +414,8 @@ function configure(displayId, changes = {}) {
     const current = prefs.all(true);
     const stored = current.kitchenScreens || {};
     next = { ...DEFAULTS, ...(stored[id] || {}), ...changes };
+    const target = electron()?.screen?.getAllDisplays().find(d => String(d.id) === id);
+    next.displayIdentity = target ? displayIdentity(target) : stored[id]?.displayIdentity;
     const all = { ...current, kitchenScreens: { ...stored, [id]: next } };
     const file = prefs.prefsPath();
     if (!file) throw new Error('Hardware settings location is unavailable.');
@@ -382,7 +425,7 @@ function configure(displayId, changes = {}) {
     return { ok: false, error: err.message };
   }
 
-  if (next.enabled) open(id);
+  if (next.enabled) { _running = true; watch(); open(id); }
   else close(id);
 
   /* The page re-reads its own settings rather than being sent them, so a font
@@ -532,6 +575,7 @@ module.exports = {
   closeAll,
   start,
   describePosition,
+  reconcileDisplays,
   /* For tests, which need to look at what is open without an Electron app. */
   _windows: windows,
 };

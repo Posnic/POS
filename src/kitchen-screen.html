@@ -210,6 +210,7 @@
 
   /* A note is the line that costs money when missed. Never dimmed, never
      dropped when space runs short. */
+  .ordered-by { font-size: .55em; color: #cbd5e1; margin: .25em 0 .45em; overflow-wrap: anywhere; }
   .note {
     color: var(--warm);
     font-size: calc(var(--font) * 0.8);
@@ -428,6 +429,7 @@
       top.appendChild(el('span', 'age', mins < 60 ? mins + 'm' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'));
     }
     node.appendChild(top);
+    if (ticket.ownerName) node.appendChild(el('div', 'ordered-by', 'Taken by ' + ticket.ownerName));
     if (ticket.preparationNote) node.appendChild(el('div', 'note', ticket.preparationNote));
     if (complete) node.appendChild(el('div', 'item-progress', ticket.items.some(function (i) { return i.readyToCollect > 0; }) ? '✓ Ready to collect' : '↗ Picked up'));
     if (ticket.outlet || ticket.roomReference) node.appendChild(el('div', 'note', [ticket.outlet, ticket.roomReference ? 'Room / reference: ' + ticket.roomReference : ''].filter(Boolean).join(' · ')));
@@ -537,9 +539,11 @@
     live.concat(cancelled).forEach(function (ticket, index) {
       var table = String(ticket.table || '').trim();
       var key = table ? JSON.stringify([ticket.outletId || ticket.outlet || '', table]) : 'order:' + (ticket.saleId || String(ticket.id || 'unknown-' + index).split(':')[0]);
-      if (!grouped.has(key)) grouped.set(key, Object.assign({}, ticket, {id:key,items:[],cancelledItems:[],cancelled:false,hasActive:false}));
+      if (!grouped.has(key)) grouped.set(key, Object.assign({}, ticket, {id:key,items:[],cancelledItems:[],cancelled:false,hasActive:false,ownerNames:[]}));
       var group = grouped.get(key);
       if (!ticket.cancelled) group.hasActive = true;
+      if (ticket.ownerName && !group.ownerNames.includes(ticket.ownerName)) group.ownerNames.push(ticket.ownerName);
+      group.ownerName = group.ownerNames.join(' · ');
       (ticket.items || []).forEach(function (item) {
         if (ticket.cancelled) group.cancelledItems.push(item);
         else group.items.push(Object.assign({}, item, {roundId:ticket.id,roundTime:ticket.placedAt}));
