@@ -7213,3 +7213,17 @@ PosnicPro.mountServingPeriodFilter = function (options) {
     document.addEventListener('pointerdown', show, true);
     document.addEventListener('keydown', show, true);
 })();
+
+PosnicPro.itemStockPreference = {
+ load: function (selector, done) {
+  PosnicPro.get({url:'items/stockPreference'}, function (r) {
+   if (r.type === 'success') { $(selector).val(r.data.preference || ''); if (done) done(r.data.preference); }
+  });
+ },
+ save: function (value, done, fail) {
+  PosnicPro.put({url:'items/stockPreference', data:JSON.stringify({preference:value})}, function (r) {
+   if (r.type === 'success') { if (done) done(); }
+   else { PosnicPro.alert('error', r.message || 'Stock preference could not be saved.'); if (fail) fail(); }
+  }, function () { PosnicPro.alert('error', 'Stock preference could not be saved.'); if (fail) fail(); });
+ }
+};

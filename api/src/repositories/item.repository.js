@@ -1729,7 +1729,7 @@ class ItemRepository extends BaseModel {
         _id: branchObjectId,
         license: licenseObjectId,
       })
-        .select('branch_name')
+        .select('branch_name item_stock_default')
         .lean();
       if (!branch) {
         return {
@@ -1877,7 +1877,10 @@ class ItemRepository extends BaseModel {
         multi_image: multiImage,
         sort_order: parseInt(data.position, 10) || 0,
         description: (data.description || '').trim(),
-        track_inventory: Boolean(data.inventory),
+        track_inventory:
+          !id && ['always_available', 'track_quantities'].includes(branch.item_stock_default)
+            ? branch.item_stock_default === 'track_quantities'
+            : Boolean(data.inventory),
         ecommerce: Boolean(data.ecommerce),
         /* Absent means shown. A menu whose default is "hidden" starts empty
            and stays empty until somebody ticks every dish, which is not a
@@ -2669,7 +2672,7 @@ class ItemRepository extends BaseModel {
         });
       }
 
-      conditions.push({ item_status: { $ne: 'instant' } });
+      conditions.push({ item_status: { $ne: 'instant' }, track_inventory: true });
 
       const resolvedBranch =
         branchId || filters.branch_id || filters.branchId || context.branchId || null;

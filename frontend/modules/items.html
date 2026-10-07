@@ -19,6 +19,7 @@
                 -->
                 <div class="col-auto text-right">
                     <div class="widgetbar">
+                        <button type="button" class="btn btn-outline-secondary" onclick="$('#item_stock_preference_modal').modal('show'); PosnicPro.itemStockPreference.load('#item_stock_preference');">Stock preference</button>
                         <a data-module="item" data-access="write" href="#/items" class="btn btn-primary-rgba"
                             onclick="PosnicPro.importTableFile('items'); return false;"
                             data-toggle="tooltip" title="Import from CSV/Excel" data-t-title="lang_import_from_csv_excel" aria-label="Import items" data-t-aria-label="lang_import_items">
@@ -926,3 +927,12 @@
     </div>
 </div>
 <!-- end Stock adjustment -->
+
+<div class="modal fade" id="item_stock_preference_modal" tabindex="-1" role="dialog" aria-label="Stock preference">
+ <div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Stock for new items</h5></div><div class="modal-body">
+ <select id="item_stock_preference" class="form-control" aria-label="Stock for new items"><option value="">Choose a preference</option><option value="always_available">Always available</option><option value="track_quantities">Track quantities</option></select>
+ <p><strong>Always available:</strong> Sell without entering stock quantities. No low-stock alerts. Suitable for made-to-order dishes.</p>
+ <p><strong>Track quantities:</strong> Enter stock received and count each sale. Low-stock alerts apply. Suitable for packaged goods.</p>
+ <p>Applies to new items in this branch. Existing items keep their stock settings. You can still mark an item sold out manually.</p>
+ </div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button><button type="button" class="btn btn-primary" onclick="PosnicPro.itemStockPreference.save($('#item_stock_preference').val(), function () { $('#item_stock_preference_modal').modal('hide'); });">Save</button></div></div></div>
+</div>

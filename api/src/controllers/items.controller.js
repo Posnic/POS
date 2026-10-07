@@ -1305,6 +1305,7 @@ class ItemsController extends BaseController {
 
       const match = {
         available_quantity: { $lte: notificationRange },
+        track_inventory: true,
         item_status: { $ne: 'instant' },
       };
 

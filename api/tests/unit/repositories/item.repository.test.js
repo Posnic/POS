@@ -187,6 +187,15 @@ describe('ItemRepository', () => {
       available_quantity: '100',
     };
 
+    test.each([['always_available', false], ['track_quantities', true]])(
+      'new items inherit %s while legacy shops preserve input', async (preference, tracked) => {
+        require('../../../src/models/branch.model').findOne.mockReturnValueOnce({
+          select: () => ({ lean: async () => ({ branch_name: 'Main', item_stock_default: preference }) })
+        });
+        const result = await repo.upsertItem({ ...data, inventory: !tracked }, '', ctx);
+        expect(result.status).toBe(true);
+        expect(col.insertOne.mock.calls[0][0].track_inventory).toBe(tracked);
+      });
     test.each([false, true])(
       'new untracked item is available with ecommerce=%s',
       async (ecommerce) => {
@@ -449,6 +458,7 @@ describe('ItemRepository', () => {
       const r = await repo.getLowStockItems({ branchId: FAKE_BRANCH, notificationRange: 5 });
       expect(r.status).toBe(true);
       expect(r.data.list).toHaveLength(1);
+      expect(col.find.mock.calls[0][0].$and).toEqual(expect.arrayContaining([expect.objectContaining({ track_inventory: true })]));
     });
     test('returns error on exception', async () => {
       repo.getCollection.mockRejectedValueOnce(new Error('fail'));

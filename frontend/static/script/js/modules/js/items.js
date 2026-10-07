@@ -261,6 +261,10 @@ PosnicPro.items = {
             PosnicPro.items.itemClearForm();
         }
         PosnicPro.items.itemAction = 'add';
+        PosnicPro.itemStockPreference.load(null, function (preference) {
+            if (PosnicPro.items.itemAction !== 'add' || !preference) return;
+            $('#item_track_inventory').prop('checked', preference === 'track_quantities').trigger('change');
+        });
         PosnicPro.itemDayparts.set([]);
         PosnicPro.itemTranslations.reset();
         

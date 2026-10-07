@@ -79,6 +79,7 @@ async function maybeNotify(db, { now = Date.now(), force = false } = {}) {
 
   const count = await db.collection('items').countDocuments({
     available_quantity: { $lte: range },
+    track_inventory: true,
     item_status: { $ne: 'instant' },
   });
 
