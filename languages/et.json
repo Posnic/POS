@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termiline",
   "lang_rd_80_mm_thermal": "80 mm termiline",
   "lang_sun_01_18_day_mm_dd": "Pühapäev 01/18 - päev mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Neljapäev 01 18. jaanuar - päev d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Neljapäev 01 18. jaanuar - päev d MM yy",
+  "lang_always_available": "Alati saadaval",
+  "lang_always_available_2": "Alati saadaval:",
+  "lang_always_available_no_quantity_tracking_or_l": "Alati saadaval - puudub koguse jälgimine ega vähese varude hoiatused",
+  "lang_applies_to_new_items_in_this_branch_existi": "Kehtib selle haru uute üksuste kohta. Olemasolevad kaubad säilitavad oma laoseaded. Saate siiski märkida müüdud kauba käsitsi.",
+  "lang_choose_a_preference": "Valige eelistus",
+  "lang_enter_stock_received_and_count_each_sale_l": "Sisestage saadud varu ja loendage iga müük. Kehtivad madala varuga hoiatused. Sobib pakendatud kaupadele.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Tellimusel valmistatud roogade jaoks valige Alati saadaval. Pakendatud kaupade puhul valige Jälgi kogused. Olemasolevad üksused säilitavad oma sätted. Muutke seda hiljem jaotises Üksused > Varude eelistus.",
+  "lang_keep_current_item_defaults": "Hoidke praeguse üksuse vaikeseadused",
+  "lang_sell_without_entering_stock_quantities_no": "Müü ilma varukoguseid sisestamata. Vähese varuga hoiatusi puuduvad. Sobib tellimusel valmistatud roogade jaoks.",
+  "lang_stock_for_new_items": "Varud uutele kaupadele",
+  "lang_stock_preference": "Aktsia eelistus",
+  "lang_stock_preference_could_not_be_saved": "Varude eelistust ei õnnestunud salvestada.",
+  "lang_track_quantities": "Jälgi koguseid",
+  "lang_track_quantities_2": "Jälgikogused:",
+  "lang_track_quantities_count_stock_received_and": "Jälgige koguseid - loendage saadud ja müüdud varusid"
 }

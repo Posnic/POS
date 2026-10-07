@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm teirmeach",
   "lang_rd_80_mm_thermal": "80 mm teirmeach",
   "lang_sun_01_18_day_mm_dd": "Dé Domhan 01/18 - Lá mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Déar 01 Eanáir 18 - Lá d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Déar 01 Eanáir 18 - Lá d MM yy",
+  "lang_always_available": "Ar fáil i gcónaí",
+  "lang_always_available_2": "Ar fáil i gcónaí:",
+  "lang_always_available_no_quantity_tracking_or_l": "Ar fáil i gcónaí - gan rianú cainníochta ná foláirimh",
+  "lang_applies_to_new_items_in_this_branch_existi": "Baineann sé le míreanna nua sa bhrainse seo. Coinníonn míreanna atá ann cheana féin a socruithe stoc. Is féidir leat earra a dhíoltar amach de láimh a mharcáil fós.",
+  "lang_choose_a_preference": "Roghnaigh rogha",
+  "lang_enter_stock_received_and_count_each_sale_l": "Cuir isteach stoc a fuarthas agus comhaireamh gach díolachán. Tá foláirimh stoc íseal i bhfeidhm Oiriúnach d'earraí pacáistithe.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Maidir le miasa déanta d'ordú, roghnaigh Ar fáil i gcónaí. Maidir le hearraí pacáistithe, roghnaigh cainníochtaí Coinníonn míreanna atá ann cheana a socruithe. Athraigh é seo níos déanaí in Míreanna > Rogha Stoc.",
+  "lang_keep_current_item_defaults": "Coinnigh réamhshocruithe earraí reatha",
+  "lang_sell_without_entering_stock_quantities_no": "Díol gan cainníochtaí stoc a iontráil. Gan aon foláirimh stoc íseal. Oiriúnach do mhiasa déanta d'ordú.",
+  "lang_stock_for_new_items": "Stoc le haghaidh earraí nua",
+  "lang_stock_preference": "Rogha stoic",
+  "lang_stock_preference_could_not_be_saved": "Ní fhéadfaí rogha stoic a shábháil.",
+  "lang_track_quantities": "Cainníochtaí a ri",
+  "lang_track_quantities_2": "Cainníochtaí rianaithe:",
+  "lang_track_quantities_count_stock_received_and": "Cainníochtaí a rianú - comhaireamh stoc a fuarthas"
 }

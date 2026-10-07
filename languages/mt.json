@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termali",
   "lang_rd_80_mm_thermal": "80 mm termali",
   "lang_sun_01_18_day_mm_dd": "Ħadd 01/18 - Jum mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Ħam 01 Jannar 18 - Jum d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Ħam 01 Jannar 18 - Jum d MM yy",
+  "lang_always_available": "Dejjem disponibbli",
+  "lang_always_available_2": "Dejjem disponibbli:",
+  "lang_always_available_no_quantity_tracking_or_l": "Dejjem disponibbli - l-ebda traċċar tal-kwantità jew twissijiet b'ħażna baxxa",
+  "lang_applies_to_new_items_in_this_branch_existi": "Tapplika għal oġġetti ġodda f'din il-fergħa. L-oġġetti eżistenti jżommu s-settings tal-ħażna tagħhom. Xorta tista 'timmarka oġġett mibjugħ manwalment.",
+  "lang_choose_a_preference": "Agħżel preferenza",
+  "lang_enter_stock_received_and_count_each_sale_l": "Daħħal l-istokk riċevut u għodd kull bejgħ. Japplikaw twissijiet b'ħażna baxxa. Adattat għal oġġetti ppakkjati.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Għal platti magħmula skont l-ordni, agħżel Dejjem disponibbli. Għal oġġetti ppakkjati, agħżel il-kwantitajiet Track. L-oġġetti eżistenti jżommu l-issettjar tagħhom. Ibdel dan aktar tard f'Oġġetti > Preferenza tal-istokk.",
+  "lang_keep_current_item_defaults": "Żomm inadempjenti tal-oġġett kurrenti",
+  "lang_sell_without_entering_stock_quantities_no": "Biegħ mingħajr ma ddaħħal kwantitajiet tal-ħażni L-ebda twissijiet ta 'stokk baxx. Adattat għal platti magħmula skont l-ordni.",
+  "lang_stock_for_new_items": "Ħażna għal oġġetti ġodda",
+  "lang_stock_preference": "Preferenza tal-istokk",
+  "lang_stock_preference_could_not_be_saved": "Il-preferenza tal-istokk ma setgħetx tiġi ffrankata.",
+  "lang_track_quantities": "Kwantitajiet tat-traċċa",
+  "lang_track_quantities_2": "Kwantitajiet tal-binarji:",
+  "lang_track_quantities_count_stock_received_and": "Il-kwantitajiet tat-traċċa - għadd tal-ħażniet riċevuti"
 }

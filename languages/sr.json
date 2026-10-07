@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termalna",
   "lang_rd_80_mm_thermal": "80 mm termalna",
   "lang_sun_01_18_day_mm_dd": "Ned 01/18 - Dan mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Čet 01 januar 18 - Dan MM g"
+  "lang_thu_01_january_18_day_d_mm_yy": "Čet 01 januar 18 - Dan MM g",
+  "lang_always_available": "Uvek na raspolaganju",
+  "lang_always_available_2": "Uvek dostupno:",
+  "lang_always_available_no_quantity_tracking_or_l": "Uvek dostupno - bez praćenja količine ili upozorenja o niskim zalihama",
+  "lang_applies_to_new_items_in_this_branch_existi": "Odnosi se na nove stavke u ovoj grani. Postojeći predmeti zadržavaju podešavanja zaliha. I dalje možete ručno označiti rasprodatu stavku.",
+  "lang_choose_a_preference": "Izaberite želju",
+  "lang_enter_stock_received_and_count_each_sale_l": "Unesite primljene zalihe i računajte svaku prodaju. Primenjuju se upozorenja o niskim zalihama. Pogodno za upakovanu robu.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Za jela po narudžbi izaberite Uvek dostupno. Za upakovanu robu izaberite Pratite količine. Postojeće stavke zadržavaju svoja podešavanja. Promenite ovo kasnije u stavkama > Preferencije zaliha.",
+  "lang_keep_current_item_defaults": "Zadržite podrazumevane vrednosti trenutne stavke",
+  "lang_sell_without_entering_stock_quantities_no": "Prodajte bez unosa količina zaliha. Nema upozorenja o niskim zalihama. Pogodno za jela po narudžbi.",
+  "lang_stock_for_new_items": "Zaliha za nove artikle",
+  "lang_stock_preference": "Preferencija zaliha",
+  "lang_stock_preference_could_not_be_saved": "Preferencije zaliha nisu mogle biti sačuvane.",
+  "lang_track_quantities": "Pratite količine",
+  "lang_track_quantities_2": "Pratite količine:",
+  "lang_track_quantities_count_stock_received_and": "Pratite količine - računajte primljene i prodate zalihe"
 }

@@ -4582,5 +4582,20 @@
   "lang_your_account_cannot_change_outlet_settings": "لا يمكن لحسابك تغيير إعدادات المنفذ.",
   "lang_your_online_address": "عنوانك على الإنترنت",
   "lang_58_mm": "58 mm",
-  "lang_80_mm": "80 mm"
+  "lang_80_mm": "80 mm",
+  "lang_always_available": "متاح دائمًا",
+  "lang_track_quantities": "تتبع الكميات",
+  "lang_choose_a_preference": "اختر تفضيلًا",
+  "lang_stock_preference": "تفضيل المخزون",
+  "lang_stock_for_new_items": "مخزون الأصناف الجديدة",
+  "lang_keep_current_item_defaults": "الاحتفاظ بالإعدادات الحالية",
+  "lang_stock_preference_could_not_be_saved": "تعذر حفظ تفضيل المخزون.",
+  "lang_applies_to_new_items_in_this_branch_existi": "ينطبق على الأصناف الجديدة في هذا الفرع. تحتفظ الأصناف الحالية بإعداداتها. يمكنك الاستمرار في تحديد نفاد الصنف يدويًا.",
+  "lang_sell_without_entering_stock_quantities_no": "البيع دون إدخال كميات المخزون. لا توجد تنبيهات انخفاض المخزون. مناسب للأطباق المحضرة عند الطلب.",
+  "lang_enter_stock_received_and_count_each_sale_l": "سجّل المخزون المستلم واحسب كل عملية بيع. تُفعّل تنبيهات انخفاض المخزون. مناسب للسلع المعبأة.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "للأطباق المحضرة عند الطلب اختر متاح دائمًا. للسلع المعبأة اختر تتبع الكميات. تحتفظ الأصناف الحالية بإعداداتها. يمكن التغيير لاحقًا من الأصناف > تفضيل المخزون.",
+  "lang_always_available_2": "متاح دائمًا:",
+  "lang_track_quantities_2": "تتبع الكميات:",
+  "lang_always_available_no_quantity_tracking_or_l": "متاح دائمًا — البيع دون إدخال كميات المخزون. لا توجد تنبيهات انخفاض المخزون. مناسب للأطباق المحضرة عند الطلب.",
+  "lang_track_quantities_count_stock_received_and": "تتبع الكميات — سجّل المخزون المستلم واحسب كل عملية بيع. تُفعّل تنبيهات انخفاض المخزون. مناسب للسلع المعبأة."
 }

@@ -84,6 +84,16 @@ router.post(
 
 // Protect all remaining item routes to ensure req.user context is available
 router.use(protect);
+const stockPreference = require('../services/item-stock-preference');
+const preferenceHandler = (fn) => async (req, res, next) => {
+  try {
+    res.json({ type: 'success', data: await fn(req) });
+  } catch (error) {
+    next(error);
+  }
+};
+router.get('/stockPreference', preferenceHandler(stockPreference.read));
+router.put('/stockPreference', preferenceHandler(stockPreference.save));
 
 /*
  * A dish that has run out, said by whoever found out first.

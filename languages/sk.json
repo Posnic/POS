@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm tepelné",
   "lang_rd_80_mm_thermal": "80 mm tepelné",
   "lang_sun_01_18_day_mm_dd": "Ne 01/18 - Deň mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Št 01 18. januára - Deň d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Št 01 18. januára - Deň d MM yy",
+  "lang_always_available": "Vždy k dispozícii",
+  "lang_always_available_2": "Vždy k dispozícii:",
+  "lang_always_available_no_quantity_tracking_or_l": "Vždy k dispozícii - žiadne sledovanie množstva alebo upozornenia na nízke zásoby",
+  "lang_applies_to_new_items_in_this_branch_existi": "Vzťahuje sa na nové položky v tejto pobočke. Existujúce položky si zachovávajú svoje skladové nastavenia. Stále môžete vypredanú položku označiť ručne.",
+  "lang_choose_a_preference": "Vyberte si preferenciu",
+  "lang_enter_stock_received_and_count_each_sale_l": "Zadajte prijaté zásoby a spočítajte každý predaj. Uplatňujú sa upozornenia na nízke zásoby. Vhodné pre balený tovar.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Pre jedlá vyrobené na objednávku vyberte položku Vždy k dispozícii. Pre balený tovar vyberte možnosť Sledovať množstvá. Existujúce položky si zachovávajú svoje nastavenia. Zmeňte to neskôr v položke Položky > Predvoľba skladov.",
+  "lang_keep_current_item_defaults": "Ponechajte predvolené nastavenia aktuálnej položky",
+  "lang_sell_without_entering_stock_quantities_no": "Predávať bez zadávania množstiev zásob. Žiadne upozornenia na nízke zásoby. Vhodné pre jedlá na objednávku.",
+  "lang_stock_for_new_items": "Zásoby nových položiek",
+  "lang_stock_preference": "Preferencie zásob",
+  "lang_stock_preference_could_not_be_saved": "Preferencie zásob sa nepodarilo uložiť.",
+  "lang_track_quantities": "Sledujte množstvá",
+  "lang_track_quantities_2": "Sledujte množstvá:",
+  "lang_track_quantities_count_stock_received_and": "Sledujte množstvá - počítajte prijaté a predané zásoby"
 }

@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 mm 써멀",
   "lang_rd_80_mm_thermal": "80% mm 써멀",
   "lang_sun_01_18_day_mm_dd": "일요일 01/18 - 데이 mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "1월 1일 목요일 - 전년 동기 대비 MM"
+  "lang_thu_01_january_18_day_d_mm_yy": "1월 1일 목요일 - 전년 동기 대비 MM",
+  "lang_always_available": "상시 이용 가능",
+  "lang_always_available_2": "상시 이용 가능:",
+  "lang_always_available_no_quantity_tracking_or_l": "상시 구매 가능 - 수량 추적이나 재고 부족 알림 없음",
+  "lang_applies_to_new_items_in_this_branch_existi": "이 지점의 새 품목에 적용됩니다.기존 품목은 재고 설정을 유지합니다.여전히 품목을 수동으로 품절로 표시할 수 있습니다.",
+  "lang_choose_a_preference": "기본 설정을 선택하세요.",
+  "lang_enter_stock_received_and_count_each_sale_l": "받은 재고를 입력하고 각 판매를 집계합니다.재고 부족 알림이 적용됩니다.포장 상품에 적합합니다.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "주문 제작 요리의 경우 상시 이용 가능을 선택하세요.포장된 상품의 경우 수량 추적을 선택합니다.기존 품목은 해당 설정을 유지합니다.나중에 아이템 > 스톡 환경설정에서 변경하세요.",
+  "lang_keep_current_item_defaults": "현재 아이템 기본값 유지",
+  "lang_sell_without_entering_stock_quantities_no": "재고 수량을 입력하지 않고 판매할 수 있습니다.재고 부족 알림은 없습니다.주문 제작 요리에 적합합니다.",
+  "lang_stock_for_new_items": "새 제품을 위한 재고",
+  "lang_stock_preference": "주식 선호도",
+  "lang_stock_preference_could_not_be_saved": "주식 우선순위를 저장할 수 없습니다.",
+  "lang_track_quantities": "수량 추적",
+  "lang_track_quantities_2": "트랙 수량:",
+  "lang_track_quantities_count_stock_received_and": "수량 추적 - 입고 및 판매된 재고 수"
 }

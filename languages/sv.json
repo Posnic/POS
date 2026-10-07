@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termisk",
   "lang_rd_80_mm_thermal": "80 mm termisk",
   "lang_sun_01_18_day_mm_dd": "sön 01/18 - Dag mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "tors 01 januari 18 - Dag d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "tors 01 januari 18 - Dag d MM yy",
+  "lang_always_available": "Alltid tillgänglig",
+  "lang_always_available_2": "Alltid tillgänglig:",
+  "lang_always_available_no_quantity_tracking_or_l": "Alltid tillgänglig - ingen kvantitetsspårning eller varningar om lågt lager",
+  "lang_applies_to_new_items_in_this_branch_existi": "Gäller nya objekt i den här grenen. Befintliga artiklar behåller sina lagerinställningar. Du kan fortfarande markera en vara som är slutsåld manuellt.",
+  "lang_choose_a_preference": "Välj en preferens",
+  "lang_enter_stock_received_and_count_each_sale_l": "Ange mottaget lager och räkna varje försäljning. Varningar om lågt lager gäller. Lämplig för förpackade varor.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Välj Alltid tillgänglig för specialbeställda rätter. För förpackade varor väljer du Spåra kvantiteter. Befintliga objekt behåller sina inställningar. Ändra detta senare i Artiklar > Lagerpreferens.",
+  "lang_keep_current_item_defaults": "Behåll standardvärden för aktuella objekt",
+  "lang_sell_without_entering_stock_quantities_no": "Sälj utan att ange lagerkvantiteter. Inga varningar om lågt lager. Lämplig för skräddarsydda rätter.",
+  "lang_stock_for_new_items": "Lager för nya artiklar",
+  "lang_stock_preference": "Aktiepreferens",
+  "lang_stock_preference_could_not_be_saved": "Aktiepreferensen kunde inte sparas.",
+  "lang_track_quantities": "Spåra kvantiteter",
+  "lang_track_quantities_2": "Spåra kvantiteter:",
+  "lang_track_quantities_count_stock_received_and": "Spåra kvantiteter - räkna mottaget och sålt lager"
 }

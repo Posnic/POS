@@ -6380,6 +6380,7 @@ PosnicPro.features = {
     },
 
     initIntroLocaleEditor: function () {
+        PosnicPro.itemStockPreference.load('#feature_intro_stock');
         PosnicPro.features.loadIntroCountries();
         PosnicPro.features.loadIntroCurrencies();
         PosnicPro.features.loadIntroTimezones();
@@ -6453,6 +6454,16 @@ PosnicPro.features = {
     },
 
     saveIntroLocaleIfNeeded: function (done, fail) {
+        var preference = $('#feature_intro_stock').val();
+        if (preference) {
+            PosnicPro.itemStockPreference.save(preference, function () {
+                PosnicPro.features.saveIntroLocaleFields(done, fail);
+            }, fail);
+            return;
+        }
+        PosnicPro.features.saveIntroLocaleFields(done, fail);
+    },
+    saveIntroLocaleFields: function (done, fail) {
         var locale = PosnicPro.features.readIntroLocale();
         var snapshot = JSON.stringify(locale);
         if (snapshot === PosnicPro.features._introLocaleSnapshot) {

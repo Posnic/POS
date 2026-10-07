@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termikus",
   "lang_rd_80_mm_thermal": "80 mm termikus",
   "lang_sun_01_18_day_mm_dd": "Nap 01/18 - Nap mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Csütörtök 01 január 18. - Day d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Csütörtök 01 január 18. - Day d MM yy",
+  "lang_always_available": "Mindig elérhető",
+  "lang_always_available_2": "Mindig elérhető:",
+  "lang_always_available_no_quantity_tracking_or_l": "Mindig elérhető - nincs mennyiségi nyomon követés vagy alacsony készletre vonatkozó figyelmeztetés",
+  "lang_applies_to_new_items_in_this_branch_existi": "Az ágazat új elemeire vonatkozik. A meglévő termékek megtartják készletbeállításaikat. Továbbra is kézzel is megjelölheti az elfogyott elemet.",
+  "lang_choose_a_preference": "Válasszon preferenciát",
+  "lang_enter_stock_received_and_count_each_sale_l": "Adja meg a kapott készleteket, és számolja meg az egyes eladásokat Alacsony készletű figyelmeztetések érvényesek. Alkalmas csomagolt árukhoz.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Rendelésre készített ételek esetén válassza a Mindig elérhető lehetőséget. Csomagolt áruk esetén válassza a Mennyiségek követése lehetőséget. A meglévő elemek megtartják a beállításaikat. Ezt később módosítsa a Tételek > Készletbeállítás menüpontban.",
+  "lang_keep_current_item_defaults": "Az aktuális elem alapértelmezett beállításainak megőrzése",
+  "lang_sell_without_entering_stock_quantities_no": "Értékesítés készletmennyiségek megadása nélkül. Nincs alacsony készletű figyelmeztetés. Megrendelésre készült ételekhez alkalmas.",
+  "lang_stock_for_new_items": "Készlet új termékekhez",
+  "lang_stock_preference": "Készletpreferencia",
+  "lang_stock_preference_could_not_be_saved": "A készletpreferenciát nem sikerült menteni.",
+  "lang_track_quantities": "Kövesse nyomon a mennyiségeket",
+  "lang_track_quantities_2": "Nyomkövetési mennyiségek:",
+  "lang_track_quantities_count_stock_received_and": "Mennyiségek nyomon követése - számolja meg a kapott és eladott"
 }

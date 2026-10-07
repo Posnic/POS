@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 تھر mm مل",
   "lang_rd_80_mm_thermal": "80 تھر mm مل",
   "lang_sun_01_18_day_mm_dd": "اتوار 01/18 - دن mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "جمعرات 01 جنوری 18 - MM دن"
+  "lang_thu_01_january_18_day_d_mm_yy": "جمعرات 01 جنوری 18 - MM دن",
+  "lang_always_available": "ہمیشہ دستیاب",
+  "lang_always_available_2": "ہمیشہ دستیاب:",
+  "lang_always_available_no_quantity_tracking_or_l": "ہمیشہ دستیاب - کوئی مقدار کی ٹریکنگ یا کم اسٹاک الرٹس",
+  "lang_applies_to_new_items_in_this_branch_existi": "اس برانچ میں نئی اشیاء پر لاگو ہوتا ہے۔ موجودہ اشیاء اپنی اسٹاک ترتیبات رکھتی ہیں۔ آپ اب بھی دستی طور پر فروخت ہونے والی آئٹم کو نشان زد کرسکتے ہیں۔",
+  "lang_choose_a_preference": "ترجیح کا انتخاب کریں",
+  "lang_enter_stock_received_and_count_each_sale_l": "موصول شدہ اسٹاک درج کریں اور ہر فروخت کو گنتے کم اسٹاک الرٹس لاگو ہوتے ہیں۔ پیک شدہ سامان کے لئے موزوں ہے۔",
+  "lang_for_made_to_order_dishes_choose_always_ava": "آرڈر کے مطابق بنائے گئے پکوان کے لئے، ہمیشہ دستیاب منتخب کریں۔ پیک شدہ سامان کے لئے، ٹریک کی مقدار کا انتخاب کریں۔ موجودہ اشیاء اپنی ترتیبات رکھتی ہیں۔ اسے بعد میں اشیاء > اسٹاک ترجیح میں تبدیل کریں۔",
+  "lang_keep_current_item_defaults": "موجودہ آئٹم کو ڈیفالٹ رکھیں",
+  "lang_sell_without_entering_stock_quantities_no": "اسٹاک کی مقدار داخل کیے بغیر فروخت کریں۔ کم اسٹاک الرٹ نہیں۔ آرڈر کے مطابق بنائے گئے برتنوں کے لئے موزوں ہے۔",
+  "lang_stock_for_new_items": "نئی اشیاء کے لئے اسٹاک",
+  "lang_stock_preference": "اسٹاک کی ترجیح",
+  "lang_stock_preference_could_not_be_saved": "اسٹاک کی ترجیح کو محفوظ نہیں کیا جاسکتا۔",
+  "lang_track_quantities": "مقدار کو ٹریک کریں",
+  "lang_track_quantities_2": "ٹریک کی مقدار:",
+  "lang_track_quantities_count_stock_received_and": "مقدار ٹریک کریں - موصول ہونے والے اور فروخت ہونے والے اسٹاک"
 }

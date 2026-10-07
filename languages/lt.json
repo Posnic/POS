@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm šiluminis",
   "lang_rd_80_mm_thermal": "80 mm šiluminė",
   "lang_sun_01_18_day_mm_dd": "Sekmadienis 01/18 - Diena mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Ketvirtadienis 01 sausio 18 d. - diena d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Ketvirtadienis 01 sausio 18 d. - diena d MM yy",
+  "lang_always_available": "Visada prieinama",
+  "lang_always_available_2": "Visada prieinama:",
+  "lang_always_available_no_quantity_tracking_or_l": "Visada prieinama - nėra kiekio stebėjimo ar mažai atsargų įspėjimų",
+  "lang_applies_to_new_items_in_this_branch_existi": "Taikoma naujiems šios šakos elementams. Esamos prekės išlaiko atsargų nustatymus. Vis tiek galite pažymėti išparduotą prekę rankiniu būdu.",
+  "lang_choose_a_preference": "Pasirinkite pirmenybę",
+  "lang_enter_stock_received_and_count_each_sale_l": "Įveskite gautas atsargas ir suskaičiuokite kiekvieną pardavimą. Taikomi įspėjimai apie mažai atsargų. Tinka supakuotoms prekėms.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Jei norite patiekalų pagal užsakymą, pasirinkite Visada prieinama. Supakuotoms prekėms pasirinkite Sekti kiekius. Esami elementai išlaiko savo nustatymus. Pakeiskite tai vėliau skiltyje Elementai > Atsargų pirmenybė.",
+  "lang_keep_current_item_defaults": "Išlaikyti dabartinio elemento numatytuosius nustatymus",
+  "lang_sell_without_entering_stock_quantities_no": "Parduokite neįvedant atsargų kiekių. Nėra įspėjimų apie mažai atsargų. Tinka pagal užsakymą pagamintiems patiekalams.",
+  "lang_stock_for_new_items": "Naujų prekių atsargos",
+  "lang_stock_preference": "Akcijų pirmenybė",
+  "lang_stock_preference_could_not_be_saved": "Akcijų pirmenybės negalėjo būti išsaugotos.",
+  "lang_track_quantities": "Stebėkite kiekius",
+  "lang_track_quantities_2": "Stebėkite kiekius:",
+  "lang_track_quantities_count_stock_received_and": "Stebėkite kiekius - skaičiuokite gautas ir parduotas atsargas"
 }

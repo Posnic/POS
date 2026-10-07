@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 mm haba",
   "lang_rd_80_mm_thermal": "80 mm haba",
   "lang_sun_01_18_day_mm_dd": "Ahad 01/18 - Hari mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Khamis 01 Januari 18 - Hari d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Khamis 01 Januari 18 - Hari d MM yy",
+  "lang_always_available": "Sentiasa tersedia",
+  "lang_always_available_2": "Sentiasa tersedia:",
+  "lang_always_available_no_quantity_tracking_or_l": "Sentiasa tersedia - tiada penjejakan kuantiti atau amaran stok rendah",
+  "lang_applies_to_new_items_in_this_branch_existi": "Terpakai kepada item baru di cawangan ini. Item sedia ada menyimpan tetapan stok mereka. Anda masih boleh menandakan item yang habis dijual secara manual.",
+  "lang_choose_a_preference": "Pilih pilihan",
+  "lang_enter_stock_received_and_count_each_sale_l": "Masukkan stok yang diterima dan hitung setiap jualan. Makluman stok rendah dikenakan. Sesuai untuk barangan yang dibungkus.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Untuk hidangan yang dibuat mengikut pesanan, pilih Sentiasa tersedia. Untuk barangan yang dibungkus, pilih Kuantiti Track. Item sedia ada menyimpan tetapannya. Tukar ini kemudian dalam Item > Keutamaan saham.",
+  "lang_keep_current_item_defaults": "Pastikan item semasa lalai",
+  "lang_sell_without_entering_stock_quantities_no": "Jual tanpa memasukkan kuantiti stok. Tiada makluman stok rendah. Sesuai untuk hidangan yang dibuat mengikut pesanan.",
+  "lang_stock_for_new_items": "Stok untuk item baru",
+  "lang_stock_preference": "Keutamaan saham",
+  "lang_stock_preference_could_not_be_saved": "Keutamaan saham tidak dapat disimpan.",
+  "lang_track_quantities": "Jejaki kuantiti",
+  "lang_track_quantities_2": "Kuantiti trek:",
+  "lang_track_quantities_count_stock_received_and": "Jejaki kuantiti - hitung stok yang diterima dan dijual"
 }

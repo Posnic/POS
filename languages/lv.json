@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termiskais",
   "lang_rd_80_mm_thermal": "80 mm termiskais",
   "lang_sun_01_18_day_mm_dd": "Sv. 01/18 - Diena mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Ceturtdiena 01 18. janvāris - diena d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Ceturtdiena 01 18. janvāris - diena d MM yy",
+  "lang_always_available": "Vienmēr pieejams",
+  "lang_always_available_2": "Vienmēr pieejams:",
+  "lang_always_available_no_quantity_tracking_or_l": "Vienmēr pieejams - nav daudzuma izsekošanas vai brīdinājumu par zemu krājumu",
+  "lang_applies_to_new_items_in_this_branch_existi": "Attiecas uz jauniem vienumiem šajā nozarē. Esošie priekšmeti saglabā krājumu iestatījumus. Jūs joprojām varat atzīmēt izpārdoto preci manuāli.",
+  "lang_choose_a_preference": "Izvēlieties izvēli",
+  "lang_enter_stock_received_and_count_each_sale_l": "Ievadiet saņemto krājumu un saskaitiet katru pārdošanu. Tiek piemēroti brīdinājumi par zemu krājumu. Piemērots iepakotām precēm.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Ēdieniem pēc pasūtījuma izvēlieties Vienmēr pieejams. Iepakotām precēm izvēlieties Track Daudzumi. Esošie vienumi saglabā savus iestatījumus. Mainiet to vēlāk sadaļā Preces > Krājumu izvēle.",
+  "lang_keep_current_item_defaults": "Saglabājiet pašreizējo vienumu noklusējuma iestatījumus",
+  "lang_sell_without_entering_stock_quantities_no": "Pārdod, neievadot krājumu daudzumus. Nav brīdinājumu par zemu krājumu daudzumu. Piemērots ēdieniem pēc pasūtījuma.",
+  "lang_stock_for_new_items": "Krājums jaunām precēm",
+  "lang_stock_preference": "Akciju izvēle",
+  "lang_stock_preference_could_not_be_saved": "Akciju priekšroku nevarēja saglabāt.",
+  "lang_track_quantities": "Izsekojiet daudzumus",
+  "lang_track_quantities_2": "Izsekošanas daudzumi:",
+  "lang_track_quantities_count_stock_received_and": "Izsekojiet daudzumus - saskaitiet saņemtos un pārdotos krājumus"
 }

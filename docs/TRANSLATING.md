@@ -48,7 +48,7 @@ Search by the native name, English name or language code (for example Dutch,
 Nederlands, or nl).
 
 - English is the source language. Tamil is the existing reviewed pack.
-- The AWS-supported non-English packs now answer all 4,502 current main POS
+- The AWS-supported non-English packs now answer all 4,517 current main POS
   UI keys. Existing translations were retained; missing entries were filled
   with Amazon Translate on 2026-10-07. Coverage is not native-speaker review.
 - Nepali retains its existing translations and English fallback for missing

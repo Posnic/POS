@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 hitaupp mm streymi",
   "lang_rd_80_mm_thermal": "80 hitaupp mm streymi",
   "lang_sun_01_18_day_mm_dd": "Sun 01/18 - Dagur mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "fimmtudagur 01 18. janúar - Dagur d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "fimmtudagur 01 18. janúar - Dagur d MM yy",
+  "lang_always_available": "Alltaf í boði",
+  "lang_always_available_2": "Alltaf í boði:",
+  "lang_always_available_no_quantity_tracking_or_l": "Alltaf fáanlegt - engin magnmælingar eða viðvaranir um lágt birgðir",
+  "lang_applies_to_new_items_in_this_branch_existi": "Gildir um nýja hluti í þessu útibúi. Núverandi hlutir halda lagerstillingum sínum. Þú getur samt merkt hlut sem uppseldur er handvirkt.",
+  "lang_choose_a_preference": "Veldu val",
+  "lang_enter_stock_received_and_count_each_sale_l": "Sláðu inn birgðir sem berast og teljið hverja sölu. Viðvaranir um lágvörubirgðir eiga við. Hentar fyrir pakkaðar vörur.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Fyrir rétti sem eru gerðir eftir pöntun, veldu Alltaf í boði. Fyrir pakkaðar vörur skaltu velja Track magn. Núverandi hlutir halda stillingum sínum. Breyttu þessu síðar í Hlutir > Hlutabréfkjör.",
+  "lang_keep_current_item_defaults": "Haltu sjálfgefnum núverandi hlutum",
+  "lang_sell_without_entering_stock_quantities_no": "Selja án þess að slá inn hlutabréfamagn. Engar viðvaranir með litlum birgðum. Hentar fyrir rétti sem gerðar eru eftir pöntun.",
+  "lang_stock_for_new_items": "Lager fyrir nýja hluti",
+  "lang_stock_preference": "Hlutabréfavald",
+  "lang_stock_preference_could_not_be_saved": "Ekki var hægt að vista hlutabréfavald.",
+  "lang_track_quantities": "Fylgstu með magni",
+  "lang_track_quantities_2": "Fylgjumagn:",
+  "lang_track_quantities_count_stock_received_and": "Fylgstu með magni - telja birgðir mótteknar og seldar"
 }

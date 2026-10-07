@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 mm サーマル",
   "lang_rd_80_mm_thermal": "80 mm サーマル",
   "lang_sun_01_18_day_mm_dd": "18 年 1 月 1 日 (日)-デイ mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "1 月 1 日 (木)-年 2 日 (木) MM"
+  "lang_thu_01_january_18_day_d_mm_yy": "1 月 1 日 (木)-年 2 日 (木) MM",
+  "lang_always_available": "いつでも利用可能",
+  "lang_always_available_2": "いつでも利用可能:",
+  "lang_always_available_no_quantity_tracking_or_l": "いつでも利用可能-数量追跡や在庫不足アラートはありません",
+  "lang_applies_to_new_items_in_this_branch_existi": "このブランチの新しい商品に適用されます。既存の商品の在庫設定は維持されます。商品に手動で売り切れのマークを付けることはできます。",
+  "lang_choose_a_preference": "好みを選択してください。",
+  "lang_enter_stock_received_and_count_each_sale_l": "入荷した在庫を入力し、各販売数をカウントします。在庫不足アラートが適用されます。パッケージ商品に適しています。",
+  "lang_for_made_to_order_dishes_choose_always_ava": "注文を受けてから作る料理の場合は、「いつでも利用可能」を選択してください。パッケージ商品の場合は、[数量を追跡] を選択します。既存の商品の設定はそのまま維持されます。これは後で「商品」>「在庫設定」で変更できます。",
+  "lang_keep_current_item_defaults": "現在の商品のデフォルト値を維持",
+  "lang_sell_without_entering_stock_quantities_no": "在庫数を入力せずに販売する。在庫不足アラートはありません。注文を受けてから作る料理に適しています。",
+  "lang_stock_for_new_items": "新商品の在庫",
+  "lang_stock_preference": "株式優先",
+  "lang_stock_preference_could_not_be_saved": "株式優先権を保存できませんでした。",
+  "lang_track_quantities": "数量を追跡できます。",
+  "lang_track_quantities_2": "数量の追跡:",
+  "lang_track_quantities_count_stock_received_and": "数量の追跡-入荷および販売された在庫をカウントします"
 }

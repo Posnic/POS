@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 তাপ mm ীয়",
   "lang_rd_80_mm_thermal": "80 তাপ mm ীয়",
   "lang_sun_01_18_day_mm_dd": "রবিবার 01/18 - দিন mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "বৃহস্পতিবার 01 জানুয়ারী 18 - MM দিন"
+  "lang_thu_01_january_18_day_d_mm_yy": "বৃহস্পতিবার 01 জানুয়ারী 18 - MM দিন",
+  "lang_always_available": "সর্বদা উপলব্ধ",
+  "lang_always_available_2": "সর্বদা উপলব্ধ:",
+  "lang_always_available_no_quantity_tracking_or_l": "সর্বদা উপলব্ধ - কোনও পরিমাণ ট্র্যাকিং বা স্বল্প-স্টক",
+  "lang_applies_to_new_items_in_this_branch_existi": "এই শাখায় নতুন আইটেমগুলিতে প্রযোজ্য। বিদ্যমান আইটেমগুলি তাদের স্টক সেটিংস রাখে। আপনি এখনও ম্যানুয়ালি বিক্রি করা একটি আইটেম চিহ্নিত করতে পারেন",
+  "lang_choose_a_preference": "একটি পছন্দ নির্বাচন করুন",
+  "lang_enter_stock_received_and_count_each_sale_l": "প্রাপ্ত স্টক লিখুন এবং প্রতিটি বিক্রয় গণনা করুন। কম স্টক সতর্কতা প্রযোজ্য। প্যাকেজড পণ্য জন্য উপযুক্ত।",
+  "lang_for_made_to_order_dishes_choose_always_ava": "তৈরি টু-অর্ডার ডিশগুলির জন্য, সর্বদা উপলব্ধ চয়ন করুন। প্যাকেজযুক্ত পণ্যের জন্য, ট্র্যাক পরিমাণ নির্বাচন করুন। বিদ্যমান আইটেমগুলি তাদের সেটিংস রাখে। এটি পরে আইটেম> স্টক পছন্দে পরিবর্তন করুন।",
+  "lang_keep_current_item_defaults": "বর্তমান আইটেম ডিফল্ট রাখুন",
+  "lang_sell_without_entering_stock_quantities_no": "স্টক পরিমাণ প্রবেশ না করে বিক্রি করুন। কোনও লো-স্টক সতর্কতা নেই। তৈরি টু-অর্ডার ডিশের জন্য উপযুক্ত।",
+  "lang_stock_for_new_items": "নতুন আইটেম জন্য স্টক",
+  "lang_stock_preference": "স্টক পছন্দ",
+  "lang_stock_preference_could_not_be_saved": "স্টক পছন্দ সংরক্ষণ করা যায়নি।",
+  "lang_track_quantities": "ট্র্যাক পরিমাণ",
+  "lang_track_quantities_2": "ট্র্যাক পরিমাণ:",
+  "lang_track_quantities_count_stock_received_and": "ট্র্যাক পরিমাণ - প্রাপ্ত এবং বিক্রি স্টক গণনা"
 }

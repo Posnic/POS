@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termice",
   "lang_rd_80_mm_thermal": "80 mm termic",
   "lang_sun_01_18_day_mm_dd": "Duminică 01/18 - Zi mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Joi 01 ianuarie 18 - Ziua d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Joi 01 ianuarie 18 - Ziua d MM yy",
+  "lang_always_available": "Întotdeauna disponibil",
+  "lang_always_available_2": "Întotdeauna disponibil:",
+  "lang_always_available_no_quantity_tracking_or_l": "Întotdeauna disponibil - fără urmărirea cantităților sau alerte de stoc redus",
+  "lang_applies_to_new_items_in_this_branch_existi": "Se aplică articolelor noi din această ramură. Articolele existente își păstrează setările de stoc. Puteți marca în continuare manual un articol epuizat.",
+  "lang_choose_a_preference": "Alegeți o preferință",
+  "lang_enter_stock_received_and_count_each_sale_l": "Introduceți stocul primit și numărați fiecare vânzare. Se aplică alerte de stoc redus. Potrivit pentru mărfuri ambalate.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Pentru mâncăruri făcute la comandă, alegeți Întotdeauna disponibil. Pentru mărfurile ambalate, alegeți Urmăriți cantitățile. Elementele existente își păstrează setările. Modificați acest lucru mai târziu în Articole > Preferințe stoc.",
+  "lang_keep_current_item_defaults": "Păstrați valorile implicite ale elementului curent",
+  "lang_sell_without_entering_stock_quantities_no": "Vindeți fără a introduce cantități de stoc. Nu există alerte de stoc redus. Potrivit pentru mâncăruri făcute la comandă.",
+  "lang_stock_for_new_items": "Stoc pentru articole noi",
+  "lang_stock_preference": "Preferința stocurilor",
+  "lang_stock_preference_could_not_be_saved": "Preferința stocurilor nu a putut fi salvată.",
+  "lang_track_quantities": "Urmăriți cantitățile",
+  "lang_track_quantities_2": "Urmăriți cantitățile:",
+  "lang_track_quantities_count_stock_received_and": "Urmăriți cantitățile - numărați stocul primit și vândut"
 }

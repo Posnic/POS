@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termal",
   "lang_rd_80_mm_thermal": "80 mm termal",
   "lang_sun_01_18_day_mm_dd": "Araw 01/18 - Araw mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Huwebes 01 Enero 18 - Araw ng MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Huwebes 01 Enero 18 - Araw ng MM yy",
+  "lang_always_available": "Palaging magagamit",
+  "lang_always_available_2": "Palaging magagamit:",
+  "lang_always_available_no_quantity_tracking_or_l": "Palaging magagamit - walang pagsubaybay sa dami o mga alerto sa mababang stock",
+  "lang_applies_to_new_items_in_this_branch_existi": "Nalalapat sa mga bagong item sa sangay na ito. Pinapanatili ng umiiral na item ang kanilang mga setting ng stock Maaari mo pa ring markahan ang isang item na naibenta nang manu-mano.",
+  "lang_choose_a_preference": "Pumili ng isang kagustuhan",
+  "lang_enter_stock_received_and_count_each_sale_l": "Ipasok ang stock na natanggap at bilangin ang bawat pagbebenta. Nalalapat ang mga alerto sa mababang stock. Angkop para sa nakabalot na kalakal.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Para sa mga pinggan na ginawa sa pag-order, piliin ang Laging available. Para sa mga nakabalot na kalakal, piliin ang dami ng track. Pinapanatili ng umiiral na item ang kanilang mga setting Baguhin ito sa ibang pagkakataon sa Mga Item > Kagustuhan ng stock.",
+  "lang_keep_current_item_defaults": "Panatilihin ang mga default na kasalukuyang item",
+  "lang_sell_without_entering_stock_quantities_no": "Magbenta nang hindi nagpasok ng dami ng stock. Walang mga alerto sa mababang stock. Angkop para sa mga pinggan na ginawa sa pag-order.",
+  "lang_stock_for_new_items": "Stock para sa mga bagong item",
+  "lang_stock_preference": "Kagustuhan ng stock",
+  "lang_stock_preference_could_not_be_saved": "Hindi mai-save ang kagustuhan ng stock.",
+  "lang_track_quantities": "Subaybayan ang dami",
+  "lang_track_quantities_2": "Subaybayan ang dami:",
+  "lang_track_quantities_count_stock_received_and": "Subaybayan ang dami - bilangin ang stock na natanggap at naibenta"
 }

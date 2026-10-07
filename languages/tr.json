@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 mm termal",
   "lang_rd_80_mm_thermal": "80 mm termal",
   "lang_sun_01_18_day_mm_dd": "Paz 01/18 - Gün mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Per 01 Ocak 18 - Day d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Per 01 Ocak 18 - Day d MM yy",
+  "lang_always_available": "Her zaman müsait",
+  "lang_always_available_2": "Her zaman müsait:",
+  "lang_always_available_no_quantity_tracking_or_l": "Her zaman kullanılabilir - miktar takibi veya düşük stok uyarısı yok",
+  "lang_applies_to_new_items_in_this_branch_existi": "Bu daldaki yeni öğeler için geçerlidir. Mevcut ürünler stok ayarlarını korur. Tükenmiş bir ürünü manuel olarak işaretlemeye devam edebilirsiniz.",
+  "lang_choose_a_preference": "Bir tercih seçin",
+  "lang_enter_stock_received_and_count_each_sale_l": "Alınan stokları girin ve her satışı sayın. Düşük stok uyarıları geçerlidir. Paketlenmiş ürünler için uygundur.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Sipariş üzerine hazırlanmış yemekler için Her zaman müsait'i seçin. Paketlenmiş ürünler için Miktarları takip et seçeneğini belirleyin. Mevcut öğeler ayarlarını korur. Bunu daha sonra Öğeler > Stok tercihi bölümünde değiştirin.",
+  "lang_keep_current_item_defaults": "Geçerli öğe varsayılanlarını koru",
+  "lang_sell_without_entering_stock_quantities_no": "Stok miktarlarını girmeden satış yapın. Düşük stok uyarısı yok. Sipariş üzerine yapılan yemekler için uygundur.",
+  "lang_stock_for_new_items": "Yeni ürünler için stok",
+  "lang_stock_preference": "Hisse senedi tercihi",
+  "lang_stock_preference_could_not_be_saved": "Hisse senedi tercihi kaydedilemedi.",
+  "lang_track_quantities": "Miktarları takip edin",
+  "lang_track_quantities_2": "Miktarları takip edin:",
+  "lang_track_quantities_count_stock_received_and": "Miktarları takip edin - alınan ve satılan stokları sayın"
 }

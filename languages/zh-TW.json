@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 mm 熱",
   "lang_rd_80_mm_thermal": "80 mm 熱",
   "lang_sun_01_18_day_mm_dd": "1 月 18 日 (星期日)-日 mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "1 月 18 日 1 月 1 日（星期四）-年第MM二天"
+  "lang_thu_01_january_18_day_d_mm_yy": "1 月 18 日 1 月 1 日（星期四）-年第MM二天",
+  "lang_always_available": "隨時可用",
+  "lang_always_available_2": "永遠可用：",
+  "lang_always_available_no_quantity_tracking_or_l": "隨時可用-無數量跟踪或缺貨警報",
+  "lang_applies_to_new_items_in_this_branch_existi": "套用至此分支中的新項目。現有商品會保留其庫存設定。您仍然可以手動標記已售罄的物品。",
+  "lang_choose_a_preference": "選擇偏好設定",
+  "lang_enter_stock_received_and_count_each_sale_l": "輸入收到的庫存並計算每次銷售。適用於低庫存警報。適用於包裝商品。",
+  "lang_for_made_to_order_dishes_choose_always_ava": "對於訂製的菜餚，請選擇「始終可用」。對於包裝商品，請選擇「追蹤數量」。現有項目保留其設定。稍後在料號 > 庫存偏好設定中變更此選項。",
+  "lang_keep_current_item_defaults": "保留目前的項目預設值",
+  "lang_sell_without_entering_stock_quantities_no": "無需輸入庫存數量即可出售。沒有低庫存警報。適用於訂製的菜餚。",
+  "lang_stock_for_new_items": "新商品庫存",
+  "lang_stock_preference": "股票優惠",
+  "lang_stock_preference_could_not_be_saved": "無法儲存股票偏好。",
+  "lang_track_quantities": "追蹤數量",
+  "lang_track_quantities_2": "追蹤數量：",
+  "lang_track_quantities_count_stock_received_and": "追蹤數量-計算收到和出售的庫存"
 }

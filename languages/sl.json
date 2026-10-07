@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termalno",
   "lang_rd_80_mm_thermal": "80 mm termalno",
   "lang_sun_01_18_day_mm_dd": "Ned 01/18 - Dan mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Čet, 01 18. januar - Dan d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Čet, 01 18. januar - Dan d MM yy",
+  "lang_always_available": "Vedno na voljo",
+  "lang_always_available_2": "Vedno na voljo:",
+  "lang_always_available_no_quantity_tracking_or_l": "Vedno na voljo - brez sledenja količini ali opozoril o nizki zalogi",
+  "lang_applies_to_new_items_in_this_branch_existi": "Velja za nove postavke v tej panogi. Obstoječi izdelki ohranijo nastavitve zaloge. Izdelek, ki je bil razprodan, lahko še vedno označite ročno.",
+  "lang_choose_a_preference": "Izberite željo",
+  "lang_enter_stock_received_and_count_each_sale_l": "Vnesite prejete zaloge in preštejte vsako prodajo. Veljajo opozorila o nizkih zalogah. Primerno za pakirano blago.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Za jedi po naročilu izberite Vedno na voljo. Za pakirano blago izberite Sledenje količinam. Obstoječi elementi ohranjajo svoje nastavitve. Spremenite to pozneje v razdelku Elementi > Nastavitve zaloge.",
+  "lang_keep_current_item_defaults": "Ohranite privzete nastavitve trenutnega elementa",
+  "lang_sell_without_entering_stock_quantities_no": "Prodajajte brez vnosa količin zalog. Brez opozoril o nizki zalogi. Primerno za jedi po naročilu.",
+  "lang_stock_for_new_items": "Zaloga za nove izdelke",
+  "lang_stock_preference": "Prednost zalog",
+  "lang_stock_preference_could_not_be_saved": "Prednostnih zalog ni bilo mogoče shraniti.",
+  "lang_track_quantities": "Sledite količinam",
+  "lang_track_quantities_2": "Sledenje količin:",
+  "lang_track_quantities_count_stock_received_and": "Sledite količinam - preštejte prejete in prodane zaloge"
 }

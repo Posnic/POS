@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm תרמי",
   "lang_rd_80_mm_thermal": "80 mm תרמי",
   "lang_sun_01_18_day_mm_dd": "יום ראשון 01/18 - יום mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "יום ה' 01 בינואר 18 - יום ד MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "יום ה' 01 בינואר 18 - יום ד MM yy",
+  "lang_always_available": "זמין תמיד",
+  "lang_always_available_2": "זמין תמיד:",
+  "lang_always_available_no_quantity_tracking_or_l": "זמין תמיד - ללא מעקב אחר כמויות או התראות על מלאי נמוך",
+  "lang_applies_to_new_items_in_this_branch_existi": "חל על פריטים חדשים בענף זה. פריטים קיימים שומרים על הגדרות המלאי שלהם. אתה עדיין יכול לסמן פריט שנמכר באופן ידני.",
+  "lang_choose_a_preference": "בחר העדפה",
+  "lang_enter_stock_received_and_count_each_sale_l": "הזן מלאי שהתקבל וספר כל מכירה. התראות על מלאי נמוך חלות. מתאים למוצרים ארוזים.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "עבור מנות לפי הזמנה, בחר זמין תמיד. עבור מוצרים ארוזים, בחר עקוב אחר כמויות. פריטים קיימים שומרים על ההגדרות שלהם. שנה זאת בהמשך בפריטים > העדפת מלאי.",
+  "lang_keep_current_item_defaults": "שמור על ברירת המחדל של הפריט הנוכחי",
+  "lang_sell_without_entering_stock_quantities_no": "למכור מבלי להכניס כמויות מלאי. אין התראות על מלאי נמוך. מתאים למנות לפי הזמנה.",
+  "lang_stock_for_new_items": "מלאי לפריטים חדשים",
+  "lang_stock_preference": "העדפת מניות",
+  "lang_stock_preference_could_not_be_saved": "לא ניתן לשמור את העדפת המניות.",
+  "lang_track_quantities": "עקוב אחר כמויות",
+  "lang_track_quantities_2": "עקוב אחר כמויות:",
+  "lang_track_quantities_count_stock_received_and": "עקוב אחר כמויות - ספירת מלאי שהתקבל ונמכר"
 }

@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 થ mm ર્મલ",
   "lang_rd_80_mm_thermal": "80 થ mm ર્મલ",
   "lang_sun_01_18_day_mm_dd": "રવિવાર 01/18 - દિવસ mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "ગુરુવાર 01 જાન્યુઆરી 18 - દિવસ d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "ગુરુવાર 01 જાન્યુઆરી 18 - દિવસ d MM yy",
+  "lang_always_available": "હંમેશા ઉપલબ્ધ",
+  "lang_always_available_2": "હંમેશા ઉપલબ્ધ:",
+  "lang_always_available_no_quantity_tracking_or_l": "હંમેશા ઉપલબ્ધ - કોઈ જથ્થો ટ્રેકિંગ અથવા લો-સ્ટોક ચેતવણીઓ નથી",
+  "lang_applies_to_new_items_in_this_branch_existi": "આ શાખામાં નવી વસ્તુઓ પર લાગુ પડે છે. હાલની વસ્તુઓ તેમની સ્ટોક સેટિંગ્સ રાખે છે. તમે હજી પણ મેન્યુઅલી વેચાયેલી વસ્તુને ચિહ્નિત કરી શકો છો.",
+  "lang_choose_a_preference": "પસંદગી પસંદ કરો",
+  "lang_enter_stock_received_and_count_each_sale_l": "પ્રાપ્ત સ્ટોક દાખલ કરો અને દરેક વેચાણની ગણતરી કરો. લો-સ્ટોક ચેતવણીઓ લાગુ પડે છે. પેકેજ્ડ માલ માટે યોગ્ય.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "ઓર્ડરથી બનાવેલી વાનગીઓ માટે, હંમેશા ઉપલબ્ધ પસંદ કરો. પેકેજ્ડ માલ માટે, ટ્રેક જથ્થો પસંદ કરો. હાલની વસ્તુઓ તેમની સેટિંગ્સ રાખે છે. આને પછીથી આઇટમ્સ> સ્ટોક પ્રેફરન્સમાં બદલો.",
+  "lang_keep_current_item_defaults": "વર્તમાન આઇટમ ડિફૉલ્ટ રાખો",
+  "lang_sell_without_entering_stock_quantities_no": "સ્ટોક જથ્થો દાખલ કર્યા વિના વેચો. ઓછા સ્ટોક ચેતવણીઓ નથી. મેડ-ટુ-ઓર્ડર વાનગીઓ માટે યોગ્ય.",
+  "lang_stock_for_new_items": "નવી વસ્તુઓ માટે સ્ટોક",
+  "lang_stock_preference": "સ્ટોક પસંદગી",
+  "lang_stock_preference_could_not_be_saved": "સ્ટોક પસંદગી સાચવી શકાઈ નથી.",
+  "lang_track_quantities": "ટ્રૅક જથ્થો",
+  "lang_track_quantities_2": "ટ્રેક જથ્થો:",
+  "lang_track_quantities_count_stock_received_and": "ટ્રૅક જથ્થો - પ્રાપ્ત અને વેચવામાં આવેલા સ્ટોકની ગણતરી કરો"
 }

@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm термальний",
   "lang_rd_80_mm_thermal": "80 mm тепловий",
   "lang_sun_01_18_day_mm_dd": "нд 01/18 - День mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "чт 01 січня 18 - День d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "чт 01 січня 18 - День d MM yy",
+  "lang_always_available": "Завжди в наявності",
+  "lang_always_available_2": "Завжди в наявності:",
+  "lang_always_available_no_quantity_tracking_or_l": "Завжди доступний - відсутність відстеження кількості або сповіщень про низький запас",
+  "lang_applies_to_new_items_in_this_branch_existi": "Застосовується до нових елементів у цій гілці. Існуючі товари зберігають свої налаштування запасів. Ви все ще можете позначити товар, розпроданий вручну.",
+  "lang_choose_a_preference": "Виберіть уподобання",
+  "lang_enter_stock_received_and_count_each_sale_l": "Введіть отримані запаси та порахуйте кожен продаж. Застосовуються сповіщення про низький запас. Підходить для фасованих товарів.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Для страв на замовлення виберіть Завжди в наявності. Для упакованих товарів виберіть Відстежувати кількість. Існуючі елементи зберігають свої налаштування. Змініть це пізніше в пункті Товари > Налаштування запасів.",
+  "lang_keep_current_item_defaults": "Зберігати поточні параметри елемента за замовчуванням",
+  "lang_sell_without_entering_stock_quantities_no": "Продайте, не вводячи запасних кількостей. Немає сповіщень про низький запас. Підходить для страв на замовлення.",
+  "lang_stock_for_new_items": "Запас для новинки",
+  "lang_stock_preference": "Преференція акцій",
+  "lang_stock_preference_could_not_be_saved": "Уподобання акцій не вдалося зберегти.",
+  "lang_track_quantities": "Відстежуйте кількість",
+  "lang_track_quantities_2": "Кількість відстежень:",
+  "lang_track_quantities_count_stock_received_and": "Відстежуйте кількість - підрахуйте отримані та продані запаси"
 }

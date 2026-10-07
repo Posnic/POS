@@ -4578,5 +4578,20 @@
   "lang_your_account_cannot_change_outlet_settings": "Tu cuenta no puede cambiar la configuración del outlet.",
   "lang_your_online_address": "Tu dirección en línea",
   "lang_58_mm": "58 mm",
-  "lang_80_mm": "80 mm"
+  "lang_80_mm": "80 mm",
+  "lang_always_available": "Siempre disponible",
+  "lang_track_quantities": "Controlar cantidades",
+  "lang_choose_a_preference": "Elegir una preferencia",
+  "lang_stock_preference": "Preferencia de existencias",
+  "lang_stock_for_new_items": "Existencias para artículos nuevos",
+  "lang_keep_current_item_defaults": "Mantener los valores actuales",
+  "lang_stock_preference_could_not_be_saved": "No se pudo guardar la preferencia de existencias.",
+  "lang_applies_to_new_items_in_this_branch_existi": "Se aplica a los artículos nuevos de esta sucursal. Los existentes conservan sus ajustes. Puede seguir marcando un artículo como agotado manualmente.",
+  "lang_sell_without_entering_stock_quantities_no": "Vender sin introducir cantidades de existencias. Sin alertas de pocas existencias. Adecuado para platos preparados al pedido.",
+  "lang_enter_stock_received_and_count_each_sale_l": "Registrar las entradas y contar cada venta. Se aplican alertas de pocas existencias. Adecuado para productos envasados.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Para platos preparados al pedido, elija Siempre disponible. Para productos envasados, elija Controlar cantidades. Los artículos existentes conservan sus ajustes. Puede cambiarlo en Artículos > Preferencia de existencias.",
+  "lang_always_available_2": "Siempre disponible:",
+  "lang_track_quantities_2": "Controlar cantidades:",
+  "lang_always_available_no_quantity_tracking_or_l": "Siempre disponible — Vender sin introducir cantidades de existencias. Sin alertas de pocas existencias. Adecuado para platos preparados al pedido.",
+  "lang_track_quantities_count_stock_received_and": "Controlar cantidades — Registrar las entradas y contar cada venta. Se aplican alertas de pocas existencias. Adecuado para productos envasados."
 }

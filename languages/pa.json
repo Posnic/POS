@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 ਥਰ mm ਮਲ",
   "lang_rd_80_mm_thermal": "80 ਥਰ mm ਮਲ",
   "lang_sun_01_18_day_mm_dd": "ਐਤਵਾਰ 01/18 - ਦਿਨ mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "ਵੀਰਵਾਰ 01 ਜਨਵਰੀ 18 - ਦਿਨ ਡੀ MM ਯੂ"
+  "lang_thu_01_january_18_day_d_mm_yy": "ਵੀਰਵਾਰ 01 ਜਨਵਰੀ 18 - ਦਿਨ ਡੀ MM ਯੂ",
+  "lang_always_available": "ਹਮੇਸ਼ਾਂ ਉਪਲਬਧ",
+  "lang_always_available_2": "ਹਮੇਸ਼ਾਂ ਉਪਲਬਧ:",
+  "lang_always_available_no_quantity_tracking_or_l": "ਹਮੇਸ਼ਾਂ ਉਪਲਬਧ - ਕੋਈ ਮਾਤਰਾ ਟਰੈਕਿੰਗ ਜਾਂ ਘੱਟ ਸਟਾਕ ਚੇਤਾਵਨੀਆਂ",
+  "lang_applies_to_new_items_in_this_branch_existi": "ਇਸ ਸ਼ਾਖਾ ਵਿੱਚ ਨਵੀਆਂ ਚੀਜ਼ਾਂ 'ਤੇ ਲਾਗੂ ਹੁੰਦਾ ਹੈ। ਮੌਜੂਦਾ ਚੀਜ਼ਾਂ ਆਪਣੀਆਂ ਸਟਾਕ ਸੈਟਿੰਗਾਂ ਰੱਖਦੀਆਂ ਹਨ। ਤੁਸੀਂ ਅਜੇ ਵੀ ਹੱਥੀਂ ਵੇਚੀ ਗਈ ਕਿਸੇ ਆਈਟਮ ਨੂੰ ਨਿਸ਼ਾਨਬੱਧ ਕਰ ਸਕਦੇ ਹੋ",
+  "lang_choose_a_preference": "ਇੱਕ ਤਰਜੀਹ ਚੁਣੋ",
+  "lang_enter_stock_received_and_count_each_sale_l": "ਪ੍ਰਾਪਤ ਸਟਾਕ ਦਰਜ ਕਰੋ ਅਤੇ ਹਰੇਕ ਵਿਕਰੀ ਦੀ ਗਿਣਤੀ ਕਰੋ। ਘੱਟ ਸਟਾਕ ਚੇਤਾਵਨੀਆਂ ਲਾਗੂ ਹੁੰਦੀਆਂ ਪੈਕ ਕੀਤੇ ਸਮਾਨ ਲਈ suitableੁਕਵਾਂ.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "ਬਣਾਏ ਗਏ ਪਕਵਾਨਾਂ ਲਈ, ਹਮੇਸ਼ਾਂ ਉਪਲਬਧ ਚੁਣੋ. ਪੈਕ ਕੀਤੇ ਸਮਾਨ ਲਈ, ਟਰੈਕ ਮਾਤਰਾਵਾਂ ਦੀ ਚੋਣ ਕਰੋ। ਮੌਜੂਦਾ ਆਈਟਮਾਂ ਆਪਣੀਆਂ ਸੈਟਿੰਗਾਂ ਰੱਖਦੀਆਂ ਹਨ. ਇਸਨੂੰ ਬਾਅਦ ਵਿੱਚ ਆਈਟਮਾਂ > ਸਟਾਕ ਤਰਜੀਹ ਵਿੱਚ ਬਦਲੋ।",
+  "lang_keep_current_item_defaults": "ਮੌਜੂਦਾ ਆਈਟਮ ਡਿਫੌਲਟ ਰੱਖੋ",
+  "lang_sell_without_entering_stock_quantities_no": "ਸਟਾਕ ਮਾਤਰਾ ਦਾਖਲ ਕੀਤੇ ਬਿਨਾਂ ਵੇਚੋ. ਕੋਈ ਘੱਟ ਸਟਾਕ ਚੇਤਾਵਨੀ ਨਹੀਂ। ਬਣਾਏ ਗਏ ਪਕਵਾਨਾਂ ਲਈ ਉਚਿਤ.",
+  "lang_stock_for_new_items": "ਨਵੀਆਂ ਚੀਜ਼ਾਂ ਲਈ ਸਟਾਕ",
+  "lang_stock_preference": "ਸਟਾਕ ਤਰਜੀਹ",
+  "lang_stock_preference_could_not_be_saved": "ਸਟਾਕ ਤਰਜੀਹ ਨੂੰ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ.",
+  "lang_track_quantities": "ਮਾਤਰਾ ਨੂੰ ਟਰੈਕ ਕਰੋ",
+  "lang_track_quantities_2": "ਟਰੈਕ ਮਾਤਰਾ:",
+  "lang_track_quantities_count_stock_received_and": "ਟ੍ਰੈਕ ਮਾਤਰਾ - ਪ੍ਰਾਪਤ ਅਤੇ ਵੇਚੇ ਗਏ ਸਟਾਕ ਦੀ ਗਿਣਤੀ ਕਰੋ"
 }

@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm термички",
   "lang_rd_80_mm_thermal": "80 mm термички",
   "lang_sun_01_18_day_mm_dd": "нед 01/18 - Ден mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Чет 01 јануари 18 - Ден д г MM од"
+  "lang_thu_01_january_18_day_d_mm_yy": "Чет 01 јануари 18 - Ден д г MM од",
+  "lang_always_available": "Секогаш достапен",
+  "lang_always_available_2": "Секогаш на располагање:",
+  "lang_always_available_no_quantity_tracking_or_l": "Секогаш достапно - без следење на количината или предупредувања за ниски залихи",
+  "lang_applies_to_new_items_in_this_branch_existi": "Се однесува на нови ставки во оваа гранка. Постоечките предмети ги задржуваат поставките за залихи. Сè уште можете рачно да обележите ставка распродадена.",
+  "lang_choose_a_preference": "Изберете претпочитање",
+  "lang_enter_stock_received_and_count_each_sale_l": "Внесете ги добиените акции и пребројте ја секоја продажба. Се применуваат предупредувања за ниски залихи. Погоден за пакувана стока.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "За јадења направени по нарачка, изберете Секогаш достапно. За пакувана стока, изберете Следете ги количините. Постоечките ставки ги задржуваат своите поставки. Променете го ова подоцна во Предмети > Предност на акции.",
+  "lang_keep_current_item_defaults": "Чувајте ги стандардните поставки на тековната ставка",
+  "lang_sell_without_entering_stock_quantities_no": "Продајте без внесување на количини на залихи. Нема предупредувања за ниски залихи. Погоден за јадења направени по нарачка.",
+  "lang_stock_for_new_items": "Акции за нови артикли",
+  "lang_stock_preference": "Предност на акции",
+  "lang_stock_preference_could_not_be_saved": "Преференцијата на акции не може да се зачува.",
+  "lang_track_quantities": "Следете ги количините",
+  "lang_track_quantities_2": "Следете ги количините:",
+  "lang_track_quantities_count_stock_received_and": "Следете ги количините - бројте ги добиените и продадените залихи"
 }

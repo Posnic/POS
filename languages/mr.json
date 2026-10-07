@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 mm थर्मल",
   "lang_rd_80_mm_thermal": "80 mm थर्मल",
   "lang_sun_01_18_day_mm_dd": "रविवार 01/18 - दिवस mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "गुरुवार 01 जानेवारी 18 - दिव MM स"
+  "lang_thu_01_january_18_day_d_mm_yy": "गुरुवार 01 जानेवारी 18 - दिव MM स",
+  "lang_always_available": "नेहमी उपलब्",
+  "lang_always_available_2": "नेहमी उपलब्ध:",
+  "lang_always_available_no_quantity_tracking_or_l": "नेहमीच उपलब्ध - कोणतीही प्रमाण ट्रॅकिंग किंवा",
+  "lang_applies_to_new_items_in_this_branch_existi": "या शाखेतील नवीन आयटमवर लागू होते विद्यमान आयटम त्यांची स्टॉक सेटिं आपण अजूनही स्वयंचलितपणे विकलेल्या आयटम",
+  "lang_choose_a_preference": "प्राधान्य निवड",
+  "lang_enter_stock_received_and_count_each_sale_l": "प्राप्त केलेले स्टॉक प्रविष्ट करा आणि प्रत्य लो-स्टॉक अलर्ट लागू आहेत पॅकेज केलेल्या वस्तूंसाठी",
+  "lang_for_made_to_order_dishes_choose_always_ava": "तयार केलेल्या पदार्थांसाठी, नेहमी उपलब्ध निवडा पॅकेज्ड वस्तूंसाठी, ट्रॅक प्रमाण विद्यमान आयटम त्यांची सेटिंग् हे नंतर आयटम > स्टॉक प्राधान्य मध्ये बद",
+  "lang_keep_current_item_defaults": "वर्तमान आयटम डीफॉल्ट ठ",
+  "lang_sell_without_entering_stock_quantities_no": "स्टॉक प्रमाण प्रविष्ट न करता विक कमी स्टॉक अलर्ट नाही. मेड टू-ऑर्डर डिशसाठी उपयुक्त.",
+  "lang_stock_for_new_items": "नवीन आयटमसाठी स्टॉक",
+  "lang_stock_preference": "स्टॉक पसंती",
+  "lang_stock_preference_could_not_be_saved": "स्टॉक प्राधान्य जतन केली जात नाही",
+  "lang_track_quantities": "ट्रॅक प्रमाणे",
+  "lang_track_quantities_2": "ट्रॅक प्रमाण:",
+  "lang_track_quantities_count_stock_received_and": "मात्रांचा ट्रॅक करा - प्राप्त आणि विकलेल्या"
 }

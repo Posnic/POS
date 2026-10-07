@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm lämpö",
   "lang_rd_80_mm_thermal": "80 mm lämpö",
   "lang_sun_01_18_day_mm_dd": "su 01/18 - Päivä mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "to 01 tammikuu 18 - päivä d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "to 01 tammikuu 18 - päivä d MM yy",
+  "lang_always_available": "Aina saatavilla",
+  "lang_always_available_2": "Aina saatavilla:",
+  "lang_always_available_no_quantity_tracking_or_l": "Aina saatavilla - ei määrien seurantaa tai vähäisiä varastoilmoituksia",
+  "lang_applies_to_new_items_in_this_branch_existi": "Koskee tämän haaran uusia kohteita. Olemassa olevat tuotteet säilyttävät varastoasetuksensa. Voit silti merkitä loppuun myydyn tuotteen manuaalisesti.",
+  "lang_choose_a_preference": "Valitse mieltymys",
+  "lang_enter_stock_received_and_count_each_sale_l": "Syötä vastaanotettu varasto ja laske jokainen myynti. Vähävarastohälytykset ovat voimassa. Sopii pakattuihin tuotteisiin.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Jos haluat tehdä tilauksesta valmistettuja ruokia, valitse Aina saatavilla. Valitse pakattujen tuotteiden osalta Seuraa määriä. Olemassa olevat kohteet säilyttävät asetuksensa. Muuta tätä myöhemmin kohdassa Nimikkeet > Varasto-asetus.",
+  "lang_keep_current_item_defaults": "Säilytä nykyiset nimikkeiden oletusarvot",
+  "lang_sell_without_entering_stock_quantities_no": "Myy syöttämättä varastomääriä. Ei vähäisiä varastohälytyksiä. Sopii tilauksesta valmistettuihin ruokiin.",
+  "lang_stock_for_new_items": "Uusien tuotteiden varastossa",
+  "lang_stock_preference": "Osakkeiden etuoikeus",
+  "lang_stock_preference_could_not_be_saved": "Osakeetuuksia ei voitu tallentaa.",
+  "lang_track_quantities": "Seuraa määriä",
+  "lang_track_quantities_2": "Seuraa määriä:",
+  "lang_track_quantities_count_stock_received_and": "Seuraa määriä - laske vastaanotetut ja myydyt varastot"
 }

@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termisk",
   "lang_rd_80_mm_thermal": "80 mm termisk",
   "lang_sun_01_18_day_mm_dd": "søn 01/18 - Dag mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "tor 01 januar 18 - Dag d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "tor 01 januar 18 - Dag d MM yy",
+  "lang_always_available": "Alltid tilgjengelig",
+  "lang_always_available_2": "Alltid tilgjengelig:",
+  "lang_always_available_no_quantity_tracking_or_l": "Alltid tilgjengelig - ingen kvantitetssporing eller varsler om lite lager",
+  "lang_applies_to_new_items_in_this_branch_existi": "Gjelder for nye elementer i denne grenen. Eksisterende varer beholder lagerinnstillingene. Du kan fortsatt merke en vare som er utsolgt manuelt.",
+  "lang_choose_a_preference": "Velg en preferanse",
+  "lang_enter_stock_received_and_count_each_sale_l": "Skriv inn mottatt lager og tell hvert salg. Varsler om lavt lager gjelder. Egnet for pakkede varer.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "For retter laget på bestilling, velg Alltid tilgjengelig. For pakkede varer velger du Spor antall. Eksisterende elementer beholder innstillingene. Endre dette senere i Varer > Lagerpreferanse.",
+  "lang_keep_current_item_defaults": "Behold gjeldende elementstandardinnstillinger",
+  "lang_sell_without_entering_stock_quantities_no": "Selg uten å oppgi lagermengder. Ingen varsler om lavt lager. Passer til retter laget på bestilling.",
+  "lang_stock_for_new_items": "Lager for nye varer",
+  "lang_stock_preference": "Aksjeferanse",
+  "lang_stock_preference_could_not_be_saved": "Aksjeferanse kunne ikke lagres.",
+  "lang_track_quantities": "Spor mengder",
+  "lang_track_quantities_2": "Spor mengder:",
+  "lang_track_quantities_count_stock_received_and": "Spor antall - telle mottatte og solgte lager"
 }

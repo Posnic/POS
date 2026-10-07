@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 mm nhiệt",
   "lang_rd_80_mm_thermal": "80 mm nhiệt",
   "lang_sun_01_18_day_mm_dd": "CN 01/18 - Ngày mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "Thứ Năm 01 Tháng Giêng 18 - Ngày d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "Thứ Năm 01 Tháng Giêng 18 - Ngày d MM yy",
+  "lang_always_available": "Luôn có sẵn",
+  "lang_always_available_2": "Luôn có sẵn:",
+  "lang_always_available_no_quantity_tracking_or_l": "Luôn có sẵn - không theo dõi số lượng hoặc cảnh báo hàng tồn kho thấp",
+  "lang_applies_to_new_items_in_this_branch_existi": "Áp dụng cho các mặt hàng mới trong chi nhánh này. Các mặt hàng hiện có giữ cài đặt kho của chúng. Bạn vẫn có thể đánh dấu một mặt hàng đã bán hết theo cách thủ công.",
+  "lang_choose_a_preference": "Chọn một tùy chọn",
+  "lang_enter_stock_received_and_count_each_sale_l": "Nhập cổ phiếu nhận được và đếm từng đợt bán hàng. Áp dụng cảnh báo tồn kho thấp. Thích hợp cho hàng hóa đóng gói.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Đối với các món ăn được làm theo đơn đặt hàng, hãy chọn Luôn có sẵn. Đối với hàng hóa đóng gói, chọn Theo dõi số lượng. Các mục hiện có giữ cài đặt của chúng. Thay đổi điều này sau trong Mục > Tùy chọn cổ phiếu.",
+  "lang_keep_current_item_defaults": "Giữ mặc định của mục hiện tại",
+  "lang_sell_without_entering_stock_quantities_no": "Bán mà không nhập số lượng cổ phiếu. Không có cảnh báo tồn kho thấp. Thích hợp cho các món ăn theo đơn đặt hàng.",
+  "lang_stock_for_new_items": "Cổ phiếu cho các mặt hàng mới",
+  "lang_stock_preference": "Ưu đãi cổ phiếu",
+  "lang_stock_preference_could_not_be_saved": "Không thể lưu ưu tiên cổ phiếu.",
+  "lang_track_quantities": "Theo dõi số lượng",
+  "lang_track_quantities_2": "Theo dõi số lượng:",
+  "lang_track_quantities_count_stock_received_and": "Theo dõi số lượng - đếm cổ phiếu nhận và bán"
 }

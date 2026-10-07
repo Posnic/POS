@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termiczne",
   "lang_rd_80_mm_thermal": "80 mm termiczne",
   "lang_sun_01_18_day_mm_dd": "niedz. 01/18 - Dzień mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "czw. 01 styczeń 18 - Dzień d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "czw. 01 styczeń 18 - Dzień d MM yy",
+  "lang_always_available": "Zawsze dostępne",
+  "lang_always_available_2": "Zawsze dostępne:",
+  "lang_always_available_no_quantity_tracking_or_l": "Zawsze dostępne - brak śledzenia ilości lub alertów o niskich zapasach",
+  "lang_applies_to_new_items_in_this_branch_existi": "Dotyczy nowych pozycji w tej gałęzi. Istniejące przedmioty zachowują ustawienia zapasów. Nadal możesz ręcznie oznaczyć wyprzedany przedmiot.",
+  "lang_choose_a_preference": "Wybierz preferencje",
+  "lang_enter_stock_received_and_count_each_sale_l": "Wprowadź otrzymane zapasy i policz każdą sprzedaż. Obowiązują alerty o niskim stanie zapasów. Nadaje się do pakowanych towarów.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "W przypadku dań na zamówienie wybierz Zawsze dostępne. W przypadku towarów zapakowanych wybierz opcję Śledź ilości. Istniejące elementy zachowują swoje ustawienia. Zmień to później w pozycji Elementy > Preferencje magazynowe.",
+  "lang_keep_current_item_defaults": "Zachowaj domyślne ustawienia bieżącego elementu",
+  "lang_sell_without_entering_stock_quantities_no": "Sprzedawaj bez podawania ilości zapasów. Brak alertów o niskiej zawartości zapasów. Nadaje się do dań na zamówienie.",
+  "lang_stock_for_new_items": "Zapasy nowych przedmiotów",
+  "lang_stock_preference": "Preferencje dotyczące akcji",
+  "lang_stock_preference_could_not_be_saved": "Nie można zapisać preferencji zapasowych.",
+  "lang_track_quantities": "Śledź ilości",
+  "lang_track_quantities_2": "Ilości śledzenia:",
+  "lang_track_quantities_count_stock_received_and": "Śledź ilości - policz otrzymane i sprzedane zapasy"
 }

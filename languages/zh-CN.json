@@ -4503,5 +4503,20 @@
   "lang_rd_58_mm_thermal": "58 mm 热敏的",
   "lang_rd_80_mm_thermal": "80 mm 热敏的",
   "lang_sun_01_18_day_mm_dd": "18 日星期日-第 1 天 mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "1 月 1 日星期四-第 d MM 天"
+  "lang_thu_01_january_18_day_d_mm_yy": "1 月 1 日星期四-第 d MM 天",
+  "lang_always_available": "随时可用",
+  "lang_always_available_2": "随时可用：",
+  "lang_always_available_no_quantity_tracking_or_l": "随时可用-没有数量追踪或库存不足提醒",
+  "lang_applies_to_new_items_in_this_branch_existi": "适用于该分支中的新项目。现有物品保留其库存设置。您仍然可以手动将商品标记为已售罄。",
+  "lang_choose_a_preference": "选择偏好",
+  "lang_enter_stock_received_and_count_each_sale_l": "输入收到的库存并计算每笔销售。低库存警报适用。适用于包装好的商品。",
+  "lang_for_made_to_order_dishes_choose_always_ava": "对于现点现做的菜肴，请选择 “随时可用”。对于已包装的商品，选择 “追踪数量”。现有项目保留其设置。稍后在 “商品” > “库存偏好” 中对此进行更改。",
+  "lang_keep_current_item_defaults": "保留当前项目的默认值",
+  "lang_sell_without_entering_stock_quantities_no": "在不输入库存数量的情况下出售。没有低库存警报。适用于现点菜肴。",
+  "lang_stock_for_new_items": "新物品库存",
+  "lang_stock_preference": "股票优先权",
+  "lang_stock_preference_could_not_be_saved": "无法保存股票偏好。",
+  "lang_track_quantities": "追踪数量",
+  "lang_track_quantities_2": "追踪数量：",
+  "lang_track_quantities_count_stock_received_and": "追踪数量-计算收到和出售的库存"
 }

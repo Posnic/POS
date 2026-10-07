@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termisk",
   "lang_rd_80_mm_thermal": "80 mm termisk",
   "lang_sun_01_18_day_mm_dd": "søn 01/18 - Dag mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "tor. 01 januar 18 - Dag d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "tor. 01 januar 18 - Dag d MM yy",
+  "lang_always_available": "Altid tilgængelig",
+  "lang_always_available_2": "Altid tilgængelig:",
+  "lang_always_available_no_quantity_tracking_or_l": "Altid tilgængelig - ingen mængdesporing eller alarmer om lavt lager",
+  "lang_applies_to_new_items_in_this_branch_existi": "Gælder for nye varer i denne gren. Eksisterende varer beholder deres lagerindstillinger. Du kan stadig markere en vare, der er udsolgt manuelt.",
+  "lang_choose_a_preference": "Vælg en præference",
+  "lang_enter_stock_received_and_count_each_sale_l": "Indtast modtaget lager, og tæl hvert salg. Alarmer om lavt lager gælder. Velegnet til emballerede varer.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "For specialfremstillede retter skal du vælge Altid tilgængelig. For emballerede varer skal du vælge Spor mængder. Eksisterende elementer beholder deres indstillinger. Skift dette senere i Varer > Lagerpræference.",
+  "lang_keep_current_item_defaults": "Bevar aktuelle varestandarder",
+  "lang_sell_without_entering_stock_quantities_no": "Sælg uden at indtaste lagermængder. Ingen alarmer om lavt lager. Velegnet til specialfremstillede retter.",
+  "lang_stock_for_new_items": "Lager til nye varer",
+  "lang_stock_preference": "Aktiepræference",
+  "lang_stock_preference_could_not_be_saved": "Aktiepræference kunne ikke gemmes.",
+  "lang_track_quantities": "Spor mængder",
+  "lang_track_quantities_2": "Spor mængder:",
+  "lang_track_quantities_count_stock_received_and": "Spor mængder - tæl modtagne og solgte lagre"
 }

@@ -752,6 +752,7 @@ class DashboardModel extends BaseModel {
         Number(data && data.low_stock_threshold) > 0 ? Number(data.low_stock_threshold) : 10;
       const match = this.getContextMatch({
         available_quantity: { $lte: threshold },
+        track_inventory: true,
         item_status: { $ne: 'instant' },
       });
       const [count, list] = await Promise.all([

@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm حرارتی",
   "lang_rd_80_mm_thermal": "80 mm حرارتی",
   "lang_sun_01_18_day_mm_dd": "یکشنبه 01/18 - روز mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "پنجشنبه 01 ژانویه 18 - روز d MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "پنجشنبه 01 ژانویه 18 - روز d MM yy",
+  "lang_always_available": "همیشه در دسترس",
+  "lang_always_available_2": "همیشه در دسترس:",
+  "lang_always_available_no_quantity_tracking_or_l": "همیشه در دسترس است - بدون ردیابی مقدار یا هشدارهای کم موجودی",
+  "lang_applies_to_new_items_in_this_branch_existi": "برای موارد جدید در این شاخه اعمال می شود. اقلام موجود تنظیمات سهام خود را حفظ می کنند. شما هنوز هم می توانید یک مورد فروخته شده را به صورت دستی علامت بزنید.",
+  "lang_choose_a_preference": "یک ترجیح را انتخاب کنید",
+  "lang_enter_stock_received_and_count_each_sale_l": "سهام دریافت شده را وارد کنید و هر فروش را شمارش کنید. هشدارهای کم سهام اعمال می شود. مناسب برای کالاهای بسته بندی شده.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "برای غذاهای ساخته شده به سفارش، همیشه در دسترس را انتخاب کنید. برای کالاهای بسته بندی شده، ردیابی مقادیر را انتخاب کنید. موارد موجود تنظیمات خود را حفظ می کنند. این را بعداً در موارد > ترجیح سهام تغییر دهید.",
+  "lang_keep_current_item_defaults": "پیش فرض آیتم فعلی را حفظ کنید",
+  "lang_sell_without_entering_stock_quantities_no": "فروش بدون وارد کردن مقادیر سهام. هیچ هشدار کم سهام وجود ندارد. مناسب برای غذاهای ساخته شده به سفارش.",
+  "lang_stock_for_new_items": "موجودی برای اقلام جدید",
+  "lang_stock_preference": "اولویت سهام",
+  "lang_stock_preference_could_not_be_saved": "اولویت سهام را نمی توان ذخیره کرد.",
+  "lang_track_quantities": "ردیابی مقادیر",
+  "lang_track_quantities_2": "ردیابی مقادیر:",
+  "lang_track_quantities_count_stock_received_and": "ردیابی مقادیر - شمارش موجودی دریافت شده و فروخته شده"
 }

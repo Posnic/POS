@@ -4500,5 +4500,20 @@
   "lang_rd_58_mm_thermal": "58 mm termik",
   "lang_rd_80_mm_thermal": "80 mm termik",
   "lang_sun_01_18_day_mm_dd": "Diel 01/18 - Dita mm/dd",
-  "lang_thu_01_january_18_day_d_mm_yy": "E enjte 01 Janar 18 - Dita e MM yy"
+  "lang_thu_01_january_18_day_d_mm_yy": "E enjte 01 Janar 18 - Dita e MM yy",
+  "lang_always_available": "Gjithmonë në dispozicion",
+  "lang_always_available_2": "Gjithmonë në dispozicion:",
+  "lang_always_available_no_quantity_tracking_or_l": "Gjithmonë në dispozicion - pa gjurmim të sasisë ose alarme të ulëta",
+  "lang_applies_to_new_items_in_this_branch_existi": "Zbatohet për artikuj të rinj në këtë degë. Artikujt ekzistues mbajnë cilësimet e tyre të stokut. Ju ende mund të shënoni një artikull të shitur manualisht.",
+  "lang_choose_a_preference": "Zgjidhni një preferencë",
+  "lang_enter_stock_received_and_count_each_sale_l": "Futni aksionet e marra dhe numëroni çdo shitje. Zbatohen alarme të aksioneve të ulët. I përshtatshëm për mallra të paketuara.",
+  "lang_for_made_to_order_dishes_choose_always_ava": "Për pjata të bëra sipas porosisë, zgjidhni Gjithmonë në dispozicion. Për mallrat e paketuara, zgjidhni Gjurmoni sasitë. Artikujt ekzistues mbajnë cilësimet e tyre. Ndryshoni këtë më vonë në Artikujt > Preferenca e aksioneve.",
+  "lang_keep_current_item_defaults": "Mbani paracaktuar të artikullit aktual",
+  "lang_sell_without_entering_stock_quantities_no": "Shitet pa futur sasi të aksioneve. Asnjë paralajmërim me stoqe të ulët. I përshtatshëm për enët e bëra sipas porosisë.",
+  "lang_stock_for_new_items": "Stok për artikuj të rinj",
+  "lang_stock_preference": "Preferenca e aksioneve",
+  "lang_stock_preference_could_not_be_saved": "Preferenca e aksioneve nuk mund të ruhet.",
+  "lang_track_quantities": "Gjurmoni sasitë",
+  "lang_track_quantities_2": "Gjurmoni sasitë:",
+  "lang_track_quantities_count_stock_received_and": "Gjurmoni sasitë - numëroni aksionet e marra dhe të shitura"
 }
