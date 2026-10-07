@@ -1049,7 +1049,7 @@
     }
     async function onClick(e) {
         const b = e.target.closest('[data-action]');
-        if (!b) return;
+        if (!b || b.disabled || b.getAttribute('aria-busy') === 'true') return;
         await run(async () => {
             const a = b.dataset.action,
                 s = state.sale;
