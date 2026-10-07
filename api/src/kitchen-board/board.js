@@ -1,5 +1,9 @@
 'use strict';
 (() => {
+  const t = (text, values) =>
+    window.DisplayI18n
+      ? window.DisplayI18n.t(text, values)
+      : text.replace(/\{(\w+)\}/g, (token, key) => String(values?.[key] ?? token));
   const $ = (id) => document.getElementById(id),
     demo = new URLSearchParams(location.search).get('demo') === '1';
   const stages = ['new', 'preparing', 'ready'];
@@ -66,7 +70,11 @@
   const time = (value) => {
     const d = new Date(value);
     return value && Number.isFinite(d.getTime())
-      ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+      ? d.toLocaleTimeString(window.DisplayI18n?.language || 'en', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        })
       : '';
   };
   function node(tag, cls, text) {
@@ -91,7 +99,7 @@
     });
     const data = await response.json();
     if (!response.ok) {
-      const e = Error(data.message || data.error?.message || 'Could not contact the kitchen.');
+      const e = Error(data.message || data.error?.message || t('Could not contact the kitchen.'));
       e.status = response.status;
       throw e;
     }
@@ -119,21 +127,27 @@
     voicePanel = panel;
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-modal', 'true');
-    panel.setAttribute('aria-label', 'Order voice messages');
+    panel.setAttribute('aria-label', t('Order voice messages'));
     panel.append(
       node(
         'h2',
         '',
-        ticket.table ? 'Table ' + ticket.table + ' · Voice messages' : 'Order voice messages'
+        ticket.table
+          ? t('Table {table} · Voice messages', { table: ticket.table })
+          : t('Order voice messages')
       )
     );
-    const close = node('button', '', 'Close');
+    const close = node('button', '', t('Close'));
     close.onclick = closeVoice;
     panel.append(close);
     const select = node('select', 'voice-note-choice');
-    select.setAttribute('aria-label', 'Choose a recording');
+    select.setAttribute('aria-label', t('Choose a recording'));
     for (const [index, note] of ticket.voiceNotes.entries()) {
-      const option = node('option', '', 'Message ' + (index + 1) + ' · ' + time(note.created));
+      const option = node(
+        'option',
+        '',
+        t('Message {number} · {time}', { number: index + 1, time: time(note.created) })
+      );
       option.value = note.id;
       select.append(option);
     }
@@ -147,7 +161,7 @@
       const generation = ++voiceRequest;
       audio.pause();
       audio.removeAttribute('src');
-      status.textContent = 'Loading recording…';
+      status.textContent = t('Loading recording…');
       try {
         const result = await request(
           '/api/kitchen/voice/' +
@@ -157,11 +171,11 @@
         );
         if (generation !== voiceRequest) return;
         audio.src = result.data;
-        status.textContent = 'Replay on this screen only.';
+        status.textContent = t('Replay on this screen only.');
         try {
           await audio.play();
         } catch (_) {
-          status.textContent = 'Press Play to hear this recording.';
+          status.textContent = t('Press Play to hear this recording.');
         }
       } catch (e) {
         if (generation === voiceRequest) status.textContent = e.message;
@@ -214,13 +228,14 @@
             'p',
             'empty',
             online
-              ? 'No ' +
-                  (stage === 'new'
-                    ? 'new orders'
+              ? t(
+                  stage === 'new'
+                    ? 'No new orders'
                     : stage === 'ready'
-                      ? 'orders ready'
-                      : 'orders preparing')
-              : 'Waiting for connection'
+                      ? 'No orders ready'
+                      : 'No orders preparing'
+                )
+              : t('Waiting for connection')
           )
         );
       for (const ticket of list) {
@@ -255,7 +270,9 @@
           table.append(
             icon,
             document.createTextNode(
-              ticket.takeaway ? 'Take Away ' + (ticket.orderNumber || '') : ticket.table
+              ticket.takeaway
+                ? t('Take Away {number}', { number: ticket.orderNumber || '' })
+                : ticket.table
             )
           );
         }
@@ -273,12 +290,12 @@
           path.setAttribute('stroke-width', '2');
           icon.append(path);
           owner.append(icon, document.createTextNode(ticket.ownerName));
-          owner.setAttribute('aria-label', 'Order taken by ' + ticket.ownerName);
+          owner.setAttribute('aria-label', t('Order taken by {name}', { name: ticket.ownerName }));
           heading.append(owner);
         }
         const arrival = node('span', 'arrival', time(ticket.placedAt));
         if (ticket.additionalOrder)
-          arrival.append(node('small', 'additional-order', 'Additional Order'));
+          arrival.append(node('small', 'additional-order', t('Additional Order')));
         top.append(heading, arrival);
         card.append(top);
         if (ticket.preparationNote) card.append(node('p', 'note', ticket.preparationNote));
@@ -286,7 +303,7 @@
           const voice = node(
             'button',
             'order-voice-play',
-            '▶ Voice (' + ticket.voiceNotes.length + ')'
+            t('▶ Voice ({count})', { count: ticket.voiceNotes.length })
           );
           voice.type = 'button';
           voice.onclick = () => openVoice(ticket);
@@ -299,7 +316,9 @@
               'note',
               [
                 ticket.outlet,
-                ticket.roomReference ? 'Room / reference: ' + ticket.roomReference : '',
+                ticket.roomReference
+                  ? t('Room / reference: {reference}', { reference: ticket.roomReference })
+                  : '',
               ]
                 .filter(Boolean)
                 .join(' · ')
@@ -323,11 +342,12 @@
               node(
                 'strong',
                 'note',
-                'Amount: ' +
-                  Number(item.priced_at_table).toLocaleString(undefined, {
-                    maximumFractionDigits: 3,
-                  }) +
-                  ' each'
+                t('Amount: {amount} each', {
+                  amount: Number(item.priced_at_table).toLocaleString(
+                    window.DisplayI18n?.language,
+                    { maximumFractionDigits: 3 }
+                  ),
+                })
               )
             );
           }
@@ -337,14 +357,16 @@
               node(
                 'span',
                 'note',
-                [item.seat ? 'Seat ' + item.seat : '', item.course || '']
+                [item.seat ? t('Seat {number}', { number: item.seat }) : '', item.course || '']
                   .filter(Boolean)
                   .join(' · ')
               )
             );
           const allergies = [...(item.allergies || []), item.allergy_note || ''].filter(Boolean);
           if (allergies.length)
-            li.append(node('strong', 'allergy', 'ALLERGY: ' + allergies.join(', ')));
+            li.append(
+              node('strong', 'allergy', t('ALLERGY: {details}', { details: allergies.join(', ') }))
+            );
           const total = item.total ?? item.qty,
             ready = item.ready ?? (stage === 'ready' ? total : 0);
           const collected = item.collected || 0,
@@ -356,21 +378,21 @@
           function badge(kind, symbol, quantity, label) {
             const value = node('span', 'progress-' + kind, `${symbol} ${quantity}`);
             value.setAttribute('role', 'img');
-            value.setAttribute('aria-label', `${quantity} ${label}`);
-            value.title = `${quantity} ${label}`;
+            value.setAttribute('aria-label', t('{quantity} {status}', { quantity, status: label }));
+            value.title = t('{quantity} {status}', { quantity, status: label });
             return value;
           }
           if (cooking)
             progress.append(
-              badge('cooking', '◷', cooking, stage === 'new' ? 'To prepare' : 'Cooking')
+              badge('cooking', '◷', cooking, stage === 'new' ? t('To prepare') : t('Cooking'))
             );
-          if (waiting) progress.append(badge('ready', '✓', waiting, 'Ready to collect'));
-          if (picked) progress.append(badge('picked', '↗', picked, 'Collected, not yet served'));
-          if (served) progress.append(badge('served', '✓✓', served, 'Served'));
+          if (waiting) progress.append(badge('ready', '✓', waiting, t('Ready to collect')));
+          if (picked) progress.append(badge('picked', '↗', picked, t('Collected, not yet served')));
+          if (served) progress.append(badge('served', '✓✓', served, t('Served')));
           li.querySelector('.name').append(progress);
           if (!cooking) li.classList.add(waiting ? 'line-ready' : 'line-picked');
           if (item.collectorName && collected > served)
-            li.append(node('span', 'note', 'Collected by ' + item.collectorName));
+            li.append(node('span', 'note', t('Collected by {name}', { name: item.collectorName })));
           if (stage === 'preparing' && ready < total) {
             const controls = node('div', 'item-controls'),
               input = node('input', 'quantity-input');
@@ -380,13 +402,13 @@
             input.max = String(total - ready);
             input.step = 'any';
             input.value = String(Math.min(1, total - ready));
-            input.setAttribute('aria-label', 'Quantity ready: ' + item.name);
-            const b = node('button', 'item-ready', '✓ Ready');
+            input.setAttribute('aria-label', t('Quantity ready: {item}', { item: item.name }));
+            const b = node('button', 'item-ready', t('✓ Ready'));
             b.disabled = !online || mutating;
             b.onclick = () => {
               const quantity = Number(input.value);
               if (!Number.isFinite(quantity) || quantity <= 0 || quantity > total - ready) {
-                $('message').textContent = 'Choose a quantity within the remaining order.';
+                $('message').textContent = t('Choose a quantity within the remaining order.');
                 return;
               }
               void advance(ticket, null, false, {
@@ -402,31 +424,32 @@
           items.append(li);
         }
         card.append(items);
-        if (ticket.ownerName) card.append(node('p', 'waiting', 'Ordered by ' + ticket.ownerName));
+        if (ticket.ownerName)
+          card.append(node('p', 'waiting', t('Ordered by {name}', { name: ticket.ownerName })));
         if (stage !== 'ready') {
           const b = node(
             'button',
             'advance' + (stage === 'preparing' ? ' ready-action' : ''),
             stage === 'new'
-              ? 'Start preparing →'
+              ? t('Start preparing →')
               : ticket.takeaway
-                ? 'Ready for pickup →'
-                : 'Ready all →'
+                ? t('Ready for pickup →')
+                : t('Ready all →')
           );
           b.disabled = !online || mutating;
           b.onclick = () => advance(ticket, stages[stages.indexOf(stage) + 1]);
           card.append(b);
-        } else card.append(node('p', 'waiting', 'Ready for collection · awaiting service'));
+        } else card.append(node('p', 'waiting', t('Ready for collection · awaiting service')));
         $(stage).append(card);
       }
     }
   }
   function stateText() {
     $('connection').textContent = demo
-      ? 'DEMO · sample orders only'
+      ? t('DEMO · sample orders only')
       : online
-        ? 'Connected'
-        : 'Disconnected · orders may be out of date';
+        ? t('Connected')
+        : t('Disconnected · orders may be out of date');
   }
   async function refresh() {
     if (reading || mutating) return;
@@ -435,7 +458,7 @@
     try {
       if (demo) {
         online = true;
-        $('branch').textContent = 'Kitchen · demo';
+        $('branch').textContent = t('Kitchen · demo');
       } else {
         const data = await request('/api/kitchen');
         if (current !== revision) return;
@@ -450,10 +473,10 @@
           }
         }
         online = true;
-        $('branch').textContent = data.branch || 'Kitchen';
+        $('branch').textContent = data.branch || t('Kitchen');
         $('signin').hidden = true;
       }
-      $('updated').textContent = 'Updated ' + time(new Date().toISOString());
+      $('updated').textContent = t('Updated {time}', { time: time(new Date().toISOString()) });
     } catch (e) {
       if (current !== revision) return;
       online = false;
@@ -474,7 +497,7 @@
     if (!online || mutating) return;
     mutating = true;
     revision++;
-    $('message').textContent = 'Saving…';
+    $('message').textContent = t('Saving…');
     render();
     try {
       const result = demo
@@ -493,7 +516,7 @@
             actionId: actionId(),
           });
       tickets = tickets.map((t) => (t.id === ticket.id ? result.ticket : t));
-      $('message').textContent = demo ? 'Demo updated - no real order changed.' : 'Saved';
+      $('message').textContent = demo ? t('Demo updated - no real order changed.') : t('Saved');
       clearTimeout(undoTimer);
       undo = isUndo
         ? null
@@ -504,7 +527,11 @@
           };
       $('undoBox').hidden = !undo;
       if (undo) {
-        $('undoLabel').textContent = lineAction ? 'Item readiness updated' : 'Moved to ' + state;
+        $('undoLabel').textContent = lineAction
+          ? t('Item readiness updated')
+          : t('Moved to {state}', {
+              state: t({ new: 'New', preparing: 'Preparing', ready: 'Ready' }[state] || state),
+            });
         undoTimer = setTimeout(() => {
           undo = null;
           $('undoBox').hidden = true;
@@ -512,7 +539,7 @@
       }
     } catch (e) {
       $('message').textContent =
-        e.status === 409 ? e.message : 'Update not confirmed. Refreshing before another action.';
+        e.status === 409 ? e.message : t('Update not confirmed. Refreshing before another action.');
       online = false;
       undo = null;
       $('undoBox').hidden = true;
@@ -594,7 +621,7 @@
       if (document.fullscreenElement) await document.exitFullscreen();
       else await document.documentElement.requestFullscreen();
     } catch {
-      $('message').textContent = 'Use your kiosk browser fullscreen setting on this device.';
+      $('message').textContent = t('Use your kiosk browser fullscreen setting on this device.');
     }
   };
   window.addEventListener('offline', () => {
@@ -608,7 +635,7 @@
     if (!document.hidden) void refresh();
   });
   function clock() {
-    $('clock').textContent = new Date().toLocaleString('en-US', {
+    $('clock').textContent = new Date().toLocaleString(window.DisplayI18n?.language || 'en', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -650,6 +677,13 @@
         ready: t.state === 'ready' ? i.qty : 0,
       })),
     }));
+  document.addEventListener('display-language-change', () => {
+    clock();
+    if (demo) $('branch').textContent = t('Kitchen · demo');
+    $('updated').textContent = t('Updated {time}', { time: time(new Date().toISOString()) });
+    stateText();
+    render();
+  });
   clock();
   setInterval(clock, 1000);
   setInterval(refresh, 5000);

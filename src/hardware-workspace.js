@@ -1,8 +1,9 @@
 'use strict';
 /* Reorganize existing controls without replacing their IDs, events or IPC routes. */
 (function () {
+  const t = text => window.DisplayI18n ? window.DisplayI18n.t(text) : text;
   const at = id => document.getElementById(id);
-  const make = (tag, cls, text) => { const el = document.createElement(tag); el.className = cls || ''; if (text) el.textContent = text; return el; };
+  const make = (tag, cls, text) => { const el = document.createElement(tag); el.className = cls || ''; if (text) { if(window.DisplayI18n) window.DisplayI18n.bind(el,text); else el.textContent=text; } return el; };
   const button = (text, fn) => { const b = make('button', 'btn', text); b.type = 'button'; b.addEventListener('click', fn); return b; };
   const panel = (title, nodes) => { const box = make('section', 'hw-panel'); if (title) box.append(make('h3', '', title)); nodes.filter(Boolean).forEach(n => box.append(n)); return box; };
   const details = (title, nodes) => { const el = make('details', 'hw-details'); el.append(make('summary', '', title)); nodes.filter(Boolean).forEach(n => el.append(n)); return el; };
@@ -28,7 +29,7 @@
   function outer(id, host) { let el = at(id); while (el && el.parentElement !== host) el = el.parentElement; return el; }
   const pages = [['receipt','Receipt printer','Checkout'],['cash','Cash drawer'],['weight','Weight machine'],['scanner','Barcode scanner'],['kot','Kitchen printing','Kitchen'],['screen','Kitchen Display'],['sound','Kitchen sound'],['mobile','Mobile devices','Connections']];
   const nav = document.querySelector('.tabs');
-  pages.forEach(([key, title, group]) => { const b = nav.querySelector(`[onclick="switchTab('${key}')"]`); if(!b)return; if(group)nav.append(make('div','hw-nav-group',group)); b.textContent=title;nav.append(b); });
+  pages.forEach(([key, title, group]) => { const b = nav.querySelector(`[onclick="switchTab('${key}')"]`); if(!b)return; if(group)nav.append(make('div','hw-nav-group',group)); b.textContent=t(title);nav.append(b); });
   document.body.classList.add('hardware-workspace');
   document.querySelector('.header h1').textContent='Hardware Manager';
   document.querySelector('.header p').textContent='Devices and connections on this computer';
@@ -76,7 +77,7 @@
   heading('kotTab','Kitchen printing','Manage printers without losing track of ticket deliveries.');
 
   const screen=at('screenTab');screen.querySelector('h2').remove();const screenHelp=screen.querySelector('.card');const screenHelpBox=details('Screen size and viewing distance',[]);screenHelp.before(screenHelpBox);screenHelpBox.append(screenHelp);
-  screen.querySelector('.status').textContent='Preview changes here, then save them to the selected kitchen display.';
+  screen.querySelector('.status').textContent=t('Preview changes here, then save them to the selected kitchen display.');
   heading('screenTab','Kitchen Display','View-only HDMI screen. Staff update orders from Captain. Saved displays reconnect automatically when Windows detects them.');
   const screenSaveStatus=at('screenSaveStatus')||make('div','hw-note');screenSaveStatus.id='screenSaveStatus';screenSaveStatus.setAttribute('role','status');screen.querySelector('.hw-heading').after(screenSaveStatus);
 
@@ -188,5 +189,12 @@
     } catch (_) {} finally {checkingDisplays=false;}
   },5000);
   window.addEventListener('beforeunload',()=>clearInterval(displayTimer));
+  document.addEventListener('display-language-change', () => {
+    const h=screen.querySelector('.hw-heading');
+    h.querySelector('h2').textContent=t('Kitchen Display');
+    h.querySelector('p').textContent=t('View-only HDMI screen. Staff update orders from Captain. Saved displays reconnect automatically when Windows detects them.');
+    const navButton=nav.querySelector("[onclick=\"switchTab('screen')\"]");if(navButton)navButton.textContent=t('Kitchen Display');
+    if(typeof window.refreshScreens==='function' && !document.querySelector('.hw-screen-card[data-unsaved=true]')) void window.refreshScreens();
+  });
   window.hardwareWorkspace={decorateScreen};
 })();

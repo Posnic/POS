@@ -266,6 +266,7 @@
     <div id="empty" hidden>Nothing cooking.</div>
   </div>
 
+<script src="../api/src/kitchen-board/i18n.js"></script>
 <script>
 /*
  * The page reads its own configuration and re-reads it when it changes, so a
@@ -275,6 +276,8 @@
 (function () {
   'use strict';
 
+  var t = function(text, values) { return window.DisplayI18n ? window.DisplayI18n.t(text, values) : text.replace(/\{(\w+)\}/g, function(token,key) { return values && values[key] != null ? String(values[key]) : token; }); };
+  document.addEventListener('display-language-change', function() { if(config) render(); });
   var displayId = new URLSearchParams(location.search).get('display') || '';
   var config = null;
   var tickets = [];
@@ -370,7 +373,7 @@
   function card(ticket, cfg, compact) {
     if (ticket.cancelled) {
       var cancelledCard = el('div', 'ticket cancelled' + (cfg.cancelledPulse !== false ? ' cancel-pulse' : ''));
-      cancelledCard.appendChild(el('div', 'cancellation-label', 'CANCELLED — do not prepare'));
+      cancelledCard.appendChild(el('div', 'cancellation-label', t("CANCELLED — do not prepare")));
       if (ticket.table) cancelledCard.appendChild(el('div', 'table', ticket.table));
       var cancelledList = el('div', 'items');
       (ticket.items || []).forEach(function (item) {
@@ -429,7 +432,7 @@
       top.appendChild(el('span', 'age', mins < 60 ? mins + 'm' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'));
     }
     node.appendChild(top);
-    if (ticket.ownerName) node.appendChild(el('div', 'ordered-by', 'Taken by ' + ticket.ownerName));
+    if (ticket.ownerName) node.appendChild(el('div', 'ordered-by', t('Taken by {name}', {name:ticket.ownerName})));
     if (ticket.preparationNote) node.appendChild(el('div', 'note', ticket.preparationNote));
     if (complete) node.appendChild(el('div', 'item-progress', ticket.items.some(function (i) { return i.readyToCollect > 0; }) ? '✓ Ready to collect' : '↗ Picked up'));
     if (ticket.outlet || ticket.roomReference) node.appendChild(el('div', 'note', [ticket.outlet, ticket.roomReference ? 'Room / reference: ' + ticket.roomReference : ''].filter(Boolean).join(' · ')));
@@ -490,7 +493,7 @@
       });
       if ((ticket.cancelledItems || []).length) {
         var cancelledSection = el('div', 'cancelled-section');
-        cancelledSection.appendChild(el('div', 'cancellation-label', 'CANCELLED — do not prepare'));
+        cancelledSection.appendChild(el('div', 'cancellation-label', t("CANCELLED — do not prepare")));
         ticket.cancelledItems.forEach(function (item) {
           var row = el('div', 'item');
           row.appendChild(el('span', 'qty', item.qty + ' - '));
@@ -557,7 +560,7 @@
     itemScroll.forEach(function (_, key) { if (!grouped.has(key)) itemScroll.delete(key); });
     if (cfg.orderSort === 'newest') live.sort(function (a, b) { return compareArrival(a, b, true); });
     $('count').textContent = live.length;
-    $('word').textContent = cfg.tableOnly ? (live.length === 1 ? 'table' : 'tables') : (live.length === 1 ? 'order' : 'orders');
+    $('word').textContent = cfg.tableOnly ? (live.length === 1 ? t("table") : t("tables")) : (live.length === 1 ? t("order") : t("orders"));
     $('empty').hidden = live.length > 0 || cancelled.length > 0 || !!cfg._feedStatus;
     board.hidden = live.length === 0 && cancelled.length === 0;
     live = cancelled.concat(live);
@@ -717,9 +720,9 @@
     $('refresh-orders').hidden = !!config.setupMode;
     cancellationSeen.forEach(function (at, id) { cancellationExpiry.set(id, at + cancelledSeconds() * 1000); });
     updateRotation();
-    $('connection').textContent = config.setupMode ? 'Preview - sample orders' : (config._feedStatus || '');
+    $('connection').textContent = config.setupMode ? t("Preview - sample orders") : (t(config._feedStatus || ''));
     applyFit(config._fit, config);
-    $('title').textContent = config.name || 'Kitchen';
+    $('title').textContent = config.name || t("Kitchen");
 
     /*
      * While the screen is being placed, say what it can and cannot do - here,
@@ -797,23 +800,23 @@
       const button = this;
       if (button.disabled || config?.setupMode) return;
       button.disabled = true;
-      button.textContent = 'Refreshing…';
-      $('connection').textContent = 'Checking active orders…';
+      button.textContent = t("Refreshing…");
+      $('connection').textContent = t("Checking active orders…");
       try {
         const result = await window.posnicKitchenScreen.refresh();
         if (!result || !result.ok) throw new Error(result?.why || 'Refresh failed');
-        $('connection').textContent = 'Active orders updated';
+        $('connection').textContent = t("Active orders updated");
       } catch (error) {
         $('connection').textContent = 'Could not refresh. Showing previous orders. ' + error.message;
       } finally {
         button.disabled = false;
-        button.textContent = '↻ Refresh';
+        button.textContent = t("↻ Refresh");
       }
     });
     window.posnicKitchenScreen.onConfig(setConfig);
     window.posnicKitchenScreen.onTickets(setTickets);
     window.posnicKitchenScreen.ready(displayId).catch(function () {
-      $('connection').textContent = 'Kitchen display could not connect. Close and reopen it in Hardware Manager.';
+      $('connection').textContent = t("Kitchen display could not connect. Close and reopen it in Hardware Manager.");
     });
   }
 
