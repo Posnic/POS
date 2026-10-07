@@ -5,10 +5,18 @@ const path = require('node:path');
 const fs = require('node:fs');
 const readPack = require('./helpers/language-pack');
 const root = path.join(__dirname, '..');
-test('starter coverage resolves missing labels through English without replacing translations', () => {
-  const raw = require('../languages/bg.json');
-  const english = require('../languages/_english.json');
-  const effective = readPack(root, 'bg.json');
+test('starter coverage resolves missing labels through English without replacing translations', (t) => {
+  const fixtureRoot = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'posnic-language-fallback-'));
+  t.after(() => fs.rmSync(fixtureRoot, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(fixtureRoot, 'languages'));
+  fs.mkdirSync(path.join(fixtureRoot, 'frontend/gulpfile.js'), { recursive: true });
+  fs.writeFileSync(path.join(fixtureRoot, 'frontend/gulpfile.js/config.js'),
+    "exports.LANGUAGES = [{ code: 'bg', stage: 'starter' }];");
+  const raw = { lang_save: 'Запазване' };
+  const english = { lang_save: 'Save', lang_cancel: 'Cancel' };
+  fs.writeFileSync(path.join(fixtureRoot, 'languages/bg.json'), JSON.stringify(raw));
+  fs.writeFileSync(path.join(fixtureRoot, 'languages/_english.json'), JSON.stringify(english));
+  const effective = readPack(fixtureRoot, 'bg.json');
   for (const [key, value] of Object.entries(raw)) assert.equal(effective[key], value);
   const missing = Object.keys(english).find(key => !Object.hasOwn(raw, key));
   assert.ok(missing);
