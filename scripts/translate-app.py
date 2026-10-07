@@ -71,6 +71,12 @@ def main():
     protected = re.compile(TOKEN.pattern + '|' + FORMAT + r'|\b(?:' + '|'.join(re.escape(t) for t in sorted(terms, key=len, reverse=True)) + r')\b')
     sources = [(ROOT / 'languages', read(ROOT / 'languages/_english.json')),
                (ROOT / 'languages/server', {key: key for key in read(ROOT / 'languages/server/_english.json')})]
+    context = read(ROOT / 'languages/_translation-context.json')
+    for key, wording in context.items():
+        original = sources[0][1].get(key)
+        if original is None or sorted(TOKEN.findall(original)) != sorted(TOKEN.findall(wording)):
+            raise ValueError('Invalid translation context or changed tokens: ' + key)
+        sources[0][1][key] = wording
     rate_lock = threading.Lock()
     last_request = [0.0]
 
