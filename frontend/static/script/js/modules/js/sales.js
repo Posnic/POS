@@ -642,7 +642,10 @@
                 var partial = /partial/i.test(String(r.payment_status || ''));
                 var unpaid = partial || String(r.payment_status || '').toLowerCase() === 'unpaid';
                 var proc = String(r.sale_process || '');
-                var pill = /return/i.test(proc)
+                var cancelled = /^(cancel|cancelled|canceled)$/i.test(proc.trim()) || /^(cancel|cancelled|canceled)$/i.test(String(r.payment_status || '').trim());
+                var pill = cancelled
+                    ? '<span class="rs-pill cancelled"><lang class="lang_cancelled">Cancelled</lang></span>'
+                    : /return/i.test(proc)
                     ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
                     : partial
                         ? '<span class="rs-pill unpaid"><lang class="lang_partial">Partial</lang></span>'
@@ -779,7 +782,9 @@
         var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
         var unpaid = /partial|^unpaid$/i.test(String(d.payment_status || ''));
         var proc = String(d.sale_process || '');
-        var stamp = /return/i.test(proc) ? proc.toUpperCase()
+        var cancelled = /^(cancel|cancelled|canceled)$/i.test(proc.trim()) || /^(cancel|cancelled|canceled)$/i.test(String(d.payment_status || '').trim());
+        var stamp = cancelled ? PosnicPro.i18n.t('lang_cancelled', 'Cancelled').toUpperCase()
+            : /return/i.test(proc) ? proc.toUpperCase()
             : /partial/i.test(String(d.payment_status || '')) ? PosnicPro.i18n.t('lang_partially_paid_3', 'PARTIALLY PAID')
             : unpaid ? PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID') : PosnicPro.i18n.t('lang_paid_2', 'PAID');
         var logo = PosnicPro.local.get('branchimage');
@@ -891,7 +896,10 @@
         var partial = /partial/i.test(String(d.payment_status || ''));
         var unpaid = partial || String(d.payment_status || '').toLowerCase() === 'unpaid';
         var proc = String(d.sale_process || '');
-        var pill = /return/i.test(proc)
+        var cancelled = /^(cancel|cancelled|canceled)$/i.test(proc.trim()) || /^(cancel|cancelled|canceled)$/i.test(String(d.payment_status || '').trim());
+        var pill = cancelled
+            ? '<span class="rs-pill cancelled"><lang class="lang_cancelled">Cancelled</lang></span>'
+            : /return/i.test(proc)
             ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
             : partial ? '<span class="rs-pill unpaid"><lang class="lang_partial">Partial</lang></span>'
             : unpaid ? '<span class="rs-pill unpaid"><lang class="lang_unpaid">Unpaid</lang></span>' : '<span class="rs-pill paid"><lang class="lang_paid">Paid</lang></span>';
@@ -899,7 +907,7 @@
             + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" data-t-title="lang_show_or_hide_the_list" aria-label="Show or hide the list" data-t-aria-label="lang_show_or_hide_the_list" onclick="PosnicPro.masterDetail.toggleRail(\'#sales_split\');"><i class="feather icon-sidebar"></i></button>'
             + '<span class="p-doc-title">' + esc(d.sales_id) + '</span>' + pill
             + '<span class="ml-auto"></span>'
-            + (unpaid
+            + (unpaid && !cancelled
                 ? '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i><lang class="lang_settlement">Take Payment</lang></button>'
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" data-module="sales" data-access="write" data-toggle="tooltip" title="Edit this bill" data-t-title="lang_edit_this_bill" aria-label="Edit" data-t-aria-label="lang_edit_title" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
