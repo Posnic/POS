@@ -292,3 +292,15 @@
 @keyframes rfReceipt{0%{opacity:0;transform:translateY(10px) scale(.96)}22%,65%{opacity:.9;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-12px) scale(1)}}
 @keyframes rfReceiptCheck{0%,15%{stroke-dashoffset:34}55%,100%{stroke-dashoffset:0}}
 @keyframes rfTwinkle{0%,25%{opacity:0}50%{opacity:.8}100%{opacity:0}}
+
+/* Customer choices stay in the form flow, above the fixed dialog footer. */
+.kv2-customer-dialog[open]{display:flex;flex-direction:column;overflow:hidden}
+.kv2-customer-dialog form{display:flex;flex-direction:column;min-height:0;max-height:calc(90dvh - 2px)}
+.kv2-customer-dialog form>header,.kv2-customer-dialog form>footer{flex-shrink:0}
+.kv2-customer-dialog form>section{overflow:auto;min-height:0}
+.kv2-customer-results .autocomplete-suggestions{position:static!important;width:100%!important;max-height:260px;overflow:auto;border:1px solid var(--theme-border-color,#e0e7ef);border-radius:9px;box-sizing:border-box}
+.kv2-customer-results .autocomplete-suggestion{padding:12px 14px;min-height:44px;white-space:normal;cursor:pointer;border-bottom:1px solid var(--theme-border-color,#e0e7ef)}
+.kv2-customer-results .autocomplete-suggestion:last-child{border-bottom:0}
+.kv2-customer-selected:not([hidden]){margin-top:12px}
+
+.kv2-customer-results .autocomplete-suggestion:hover{background:var(--theme-table-row-hover,#edf5ff)}

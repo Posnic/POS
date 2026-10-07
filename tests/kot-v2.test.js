@@ -166,7 +166,7 @@ test('table availability is checked again if another device takes it while the p
 });
 
 test('customer chooser separates search, new details and walk-in with explicit actions',async()=>{
- const h=setup();let searchConfig;h.w.$.fn.autocomplete=function(config){searchConfig=config;return this;};h.app.showDataTablePage();await flush();await h.click('table');await h.click('customer');
+ const h=setup();let searchConfig;h.w.$.fn.autocomplete=function(config){if(typeof config==='object')searchConfig=config;return this;};h.app.showDataTablePage();await flush();await h.click('table');await h.click('customer');
  const modal=h.w.document.querySelector('dialog'),submit=modal.querySelector('[type=submit]');
  assert.equal(modal.querySelector('[data-customer-panel=new]').hidden,true);assert.equal(submit.disabled,true);
  searchConfig.onSelect({data:{id:'person',name:'Anita',phone:'123'}});assert.equal(submit.disabled,false);assert.equal(submit.textContent,'Use this customer');assert.match(modal.querySelector('[data-selected-customer]').textContent,/Anita/);
@@ -215,5 +215,19 @@ test('takeaway opens with guest count focused and selected, and add-again and di
  h.w.document.querySelector('dialog').close();h.app.state.selected=h.sale._id;await h.app.refresh();
  await h.click('again');input=h.w.document.querySelector('dialog [name=qty]');assert.equal(input.value,'1');assert.equal(h.w.document.activeElement,input);assert.ok(selected.includes(input));
  h.w.document.querySelector('dialog').close();await h.click('discount');input=h.w.document.querySelector('dialog [name=amount]');assert.equal(h.w.document.activeElement,input);assert.ok(selected.includes(input));
+ } finally {h.close();}
+});
+
+test('customer suggestions start with ten customers inside the form and ignore stale searches',async()=>{
+ const h=setup();let config,initial=false;
+ try {
+ h.w.$.fn.autocomplete=function(value){if(typeof value==='object')config=value;if(value==='onValueChange')initial=true;return this;};
+ h.app.showDataTablePage();await flush();await h.click('table');await h.click('customer');
+ const modal=h.w.document.querySelector('dialog');assert.equal(initial,true);assert.equal(config.minChars,0);assert.equal(config.appendTo,modal.querySelector('[data-customer-results]'));assert.ok(config.appendTo.closest('section'));
+ const requests=[];h.w.PosnicPro.get=(o,done)=>requests.push({o,done});let defaults;
+ config.lookup('',r=>defaults=r);assert.equal(requests[0].o.url,'customers');assert.equal(requests[0].o.data.limit,10);
+ requests[0].done({type:'success',data:{list:Array.from({length:12},(_,i)=>({_id:'id'+i,name:'Customer '+i,phone:'123'}))}});await flush();assert.equal(defaults.suggestions.length,10);assert.equal(defaults.suggestions[0].data.id,'id0');
+ let old=false,latest=false;config.lookup('a',()=>old=true);config.lookup('ab',()=>latest=true);
+ requests[2].done({suggestions:[{id:'new',name:'Ab'}]});await flush();requests[1].done({suggestions:[{id:'old',name:'A'}]});await flush();assert.equal(latest,true);assert.equal(old,false);
  } finally {h.close();}
 });
