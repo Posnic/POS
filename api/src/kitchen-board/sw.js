@@ -1,11 +1,11 @@
 /* Cache the public UI only. API, authentication and orders always use the network. */
-const CACHE = 'posnic-kitchen-shell-v2';
+const CACHE = 'posnic-kitchen-shell-v3';
 const FILES = [
   '/kitchen/',
   '/kitchen/board.js',
   '/kitchen/board.css',
   '/kitchen/device.js',
-  '/kitchen/i18n.js',
+  '/kitchen/i18n.js?v=20261007',
   '/kitchen/locales/index.json',
   '/kitchen/locales/en.json',
   '/kitchen/icon.svg',
@@ -31,9 +31,8 @@ self.addEventListener('fetch', (event) => {
   if (
     event.request.method !== 'GET' ||
     url.origin !== self.location.origin ||
-    url.search ||
-    (!FILES.includes(url.pathname) &&
-      !/^\/kitchen\/locales\/[a-z]{2}(?:-[A-Z]{2})?\.json$/.test(url.pathname))
+    (!FILES.includes(url.pathname + url.search) &&
+      (url.search || !/^\/kitchen\/locales\/[a-z]{2}(?:-[A-Z]{2})?\.json$/.test(url.pathname)))
   )
     return;
   event.respondWith(
