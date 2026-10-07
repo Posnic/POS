@@ -304,3 +304,17 @@
 .kv2-customer-selected:not([hidden]){margin-top:12px}
 
 .kv2-customer-results .autocomplete-suggestion:hover{background:var(--theme-table-row-hover,#edf5ff)}
+
+/* Keep quantities and money readable, with aligned digits and a compact bill summary. */
+#kot_v2 .kv2-line>b{font-size:18px;line-height:1.3;padding:6px 3px;font-variant-numeric:tabular-nums}
+#kot_v2 .kv2-line>span{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+#kot_v2 .kv2-table>strong{font-size:20px;font-variant-numeric:tabular-nums}
+#kot_v2 .kv2-table>b{font-size:16px;font-variant-numeric:tabular-nums}
+#kot_v2 .kv2-breakdown{font-size:14px;color:var(--theme-text-primary,#183047)}
+#kot_v2 .kv2-breakdown>div{max-width:440px;margin-left:auto;padding:8px 0}
+#kot_v2 .kv2-breakdown p{gap:24px;align-items:baseline;margin:10px 0;line-height:1.5}
+#kot_v2 .kv2-breakdown p>b{margin-left:auto;min-width:100px;text-align:right;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#kot_v2 .kv2-order>footer strong{font-size:26px;font-variant-numeric:tabular-nums;line-height:1.4}
+#kot_v2 .kv2-line{grid-template-columns:minmax(38px,max-content) minmax(100px,1fr) 85px minmax(90px,max-content) 95px 42px}
+@media(max-width:1150px){#kot_v2 .kv2-line{grid-template-columns:minmax(36px,max-content) minmax(75px,1fr) 72px minmax(85px,max-content) 78px 32px}}
+@media(max-width:520px){#kot_v2 .kv2-line{grid-template-columns:minmax(36px,max-content) minmax(0,1fr) minmax(85px,max-content)}}
