@@ -83,3 +83,12 @@ test('kitchen screen saves atomically and preserves printers when replacement fa
     assert.equal(fs.readFileSync(file, 'utf8'), '{broken');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('remote printing defaults on and preserves saved opt-out', () => {
+  for (const [saved, expected] of [[undefined,true],[true,true],['true',true],[false,false],['false',false]]) {
+    const prefs = load('device-preferences.js', {app:{getPath:()=>'/test'}}, {
+      existsSync:()=>true, readFileSync:()=>JSON.stringify(saved === undefined ? {} : {cloud_print_relay:saved})
+    });
+    assert.equal(prefs.cloudPrintRelay().enabled, expected);
+  }
+});

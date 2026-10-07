@@ -872,3 +872,56 @@ test('paired transfer completion conserves totals and replays the same destinati
   const changed=await post('complete',{...body,items:[{id:'c0i0',quantity:2}]});assert.equal(changed.status,409);
  } finally {await db.collection('users').updateOne({_id:staff._id},{$unset:{'access.sales.merge':''}});}
 });
+
+test('public discovery exposes only a single Captain shop and its configured address', async () => {
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch._id }, { $set: { captain_fallback_url: 'https://shop.example/api' } });
+  const response = await fetch(base + '/captain/v1/discovery');
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.deepEqual(body, {
+    connections: { shopName: 'Test shop', cloud: 'https://shop.example/api' },
+  });
+  const extra = {
+    _id: new ObjectId(),
+    license: branch.license,
+    module_captain_enable: true,
+    branch_name: 'Other',
+  };
+  await db.collection('branches').insertOne(extra);
+  try {
+    assert.deepEqual(await (await fetch(base + '/captain/v1/discovery')).json(), {
+      connections: {},
+    });
+  } finally {
+    await db.collection('branches').deleteOne({ _id: extra._id });
+    await db
+      .collection('branches')
+      .updateOne({ _id: branch._id }, { $unset: { captain_fallback_url: '' } });
+  }
+});
+
+test('connection details require a session and stay scoped to its branch', async () => {
+  const { grant } = await paired();
+  const body = JSON.stringify({ branch_id: String(branch._id) });
+  const send = (payload, authenticated = true) =>
+    fetch(base + '/captain/v1/connections', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authenticated ? { Authorization: 'Bearer ' + grant.token } : {}),
+      },
+      body: payload,
+    });
+  assert.equal((await send(body, false)).status, 401);
+  const response = await send(body);
+  assert.equal(response.status, 200, await response.clone().text());
+  const result = await response.json();
+  assert.equal(result.branchId, String(branch._id));
+  assert.equal(result.shopName, 'Test shop');
+  // Captain authentication replaces caller-supplied branch IDs with its grant.
+  const spoofed = await send(JSON.stringify({ branch_id: String(new ObjectId()) }));
+  assert.equal(spoofed.status, 200);
+  assert.equal((await spoofed.json()).branchId, String(branch._id));
+});

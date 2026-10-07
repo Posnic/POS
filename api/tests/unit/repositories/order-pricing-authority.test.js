@@ -152,3 +152,94 @@ test('variable and quick-item prices are accepted only from catalogue-marked pro
     expect(await stored()).toMatchObject({ sales_total: 105 });
   }
 });
+
+test('desktop additional rounds retain inclusive selling prices without repricing existing dishes', async () => {
+  await db
+    .collection('items')
+    .updateOne(
+      { _id: product._id },
+      { $set: { selling_price: 399, tax: 0.25, tax_type: 'inclusive' } }
+    );
+  expect((await save([{ ...line(399, 1), line_id: 'first' }])).status).toBe(true);
+  const current = (await stored()).items[0];
+  expect(current.unit_price).toBe(398);
+  expect(
+    (
+      await save([
+        { ...current, price: 399, quantity: 1 },
+        { ...line(399, 1), line_id: 'additional' },
+      ])
+    ).status
+  ).toBe(true);
+  expect((await stored()).sales_total).toBe(798);
+  const before = await stored();
+  expect((await save(before.items.map((i) => ({ ...i, price: 397, quantity: 1 })))).status).toBe(
+    false
+  );
+  expect(await stored()).toEqual(before);
+});
+
+const saveCharges = (charges) =>
+  repo.updateOrderModel(
+    String(order._id),
+    [line(45)],
+    0,
+    'modified',
+    null,
+    null,
+    null,
+    undefined,
+    undefined,
+    undefined,
+    { charges }
+  );
+test('named charges are saved, included in totals and retained by later item edits', async () => {
+  expect((await saveCharges([{ name: 'Parcel', amount: 10, taxed: false }])).status).toBe(true);
+  expect(await stored()).toMatchObject({
+    sales_total: 104.5,
+    tax: 4.5,
+    charges: [{ name: 'Parcel', amount: 10 }],
+  });
+  expect((await save([line(45, 3)])).status).toBe(true);
+  expect(await stored()).toMatchObject({
+    sales_total: 151.75,
+    tax: 6.75,
+    charges: [{ name: 'Parcel', amount: 10 }],
+  });
+  expect((await saveCharges([])).status).toBe(true);
+  expect(await stored()).toMatchObject({ sales_total: 94.5, charges: [] });
+});
+test('charge tax uses the configured default and rejects forged tax without saving', async () => {
+  const tax = new mongoose.Types.ObjectId();
+  await db.collection('branches').updateOne({ _id: branch }, { $set: { default_tax: tax } });
+  await db
+    .collection('grouptax')
+    .insertOne({ _id: tax, branch_id: branch, license, name: 'GST', rate: 5 });
+  expect(
+    (await saveCharges([{ name: 'Service', amount: 10, taxed: true, tax_amount: 0 }])).status
+  ).toBe(false);
+  expect(await stored()).toEqual(order);
+  expect(
+    (await saveCharges([{ name: 'Service', amount: 10, taxed: true, tax_amount: 0.5 }])).status
+  ).toBe(true);
+  expect(await stored()).toMatchObject({
+    sales_total: 105,
+    tax: 5,
+    charges: [{ tax_name: 'GST', tax_amount: 0.5 }],
+  });
+});
+test('invalid charges do not mutate an order and outlet charges cannot be removed', async () => {
+  expect((await saveCharges([{ name: 'Parcel', amount: -10 }])).status).toBe(false);
+  expect(await stored()).toEqual(order);
+  await db
+    .collection('sales')
+    .updateOne(
+      { _id: order._id },
+      { $set: { charges: [{ name: 'Outlet', amount: 5, tax_amount: 0, source: 'outlet' }] } }
+    );
+  expect((await saveCharges([])).status).toBe(true);
+  expect(await stored()).toMatchObject({
+    sales_total: 99.5,
+    charges: [{ name: 'Outlet', amount: 5, source: 'outlet' }],
+  });
+});

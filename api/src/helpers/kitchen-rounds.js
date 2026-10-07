@@ -184,8 +184,16 @@ function activeRounds(sale, options) {
     return !closed || (time && time > closed);
   });
 }
-function tickets(sale) {
+function tickets(sale, settings = {}) {
+  const keepUntilGiven =
+    settings.takeawayRemoveWhen === 'given' &&
+    /^take[\s_-]*away$/i.test(sale.fulfilment || sale.dine_type || '');
   return activeRounds(sale, { descriptions: false }).flatMap((round) => {
+    const change = round.id === 'legacy' ? null : sale.changes?.[Number(round.id.slice(1))];
+    const owner =
+      change?.kitchen_actor ||
+      (round.id === 'legacy' || round.id === 'c0' ? sale.kitchen_actor : null) ||
+      {};
     const kitchenTime = round.fired_at || round.ordered_at;
     const items = round.items
       .filter((line) => !line.held && line.remaining > 0)
@@ -201,12 +209,14 @@ function tickets(sale) {
         allergies: line.allergies,
         allergy_note: line.allergy_note,
       }))
-      .filter((item) => item.preparing > 0)
-      .map((item) => ({ ...item, qty: item.preparing }));
+      .filter((item) => (keepUntilGiven ? item.qty > 0 : item.preparing > 0))
+      .map((item) => ({ ...item, qty: keepUntilGiven ? item.qty : item.preparing }));
     return items.length
       ? [
           {
             id: `${sale._id}:${round.id}`,
+            owner: String(owner.id || ''),
+            ownerName: String(owner.name || ''),
             table: String(sale.table_number || ''),
             outlet: String(sale.outlet_snapshot?.name || ''),
             roomReference: String(sale.room_reference || ''),

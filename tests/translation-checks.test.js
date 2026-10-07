@@ -41,6 +41,8 @@ function checkWith(files, configLanguages) {
     'const LANGUAGES = [\n'
     + langs.map((c) => `    { code: '${c}', name: '${c}', flag: 'us' },`).join('\n')
     + '\n];\n', 'utf8');
+  fs.mkdirSync(path.join(dir, 'scripts', 'lib'), { recursive: true });
+  fs.copyFileSync(path.join(REPO, 'scripts', 'lib', 'translation-encoding.js'), path.join(dir, 'scripts', 'lib', 'translation-encoding.js'));
   fs.copyFileSync(TOOL, path.join(dir, 'tests', 'tools', 'check-translations.js'));
 
   const r = spawnSync(process.execPath, [path.join(dir, 'tests', 'tools', 'check-translations.js')],
@@ -160,4 +162,9 @@ test('damaged Unicode characters are rejected', () => {
   const result = checkWith({ 'nl.json': { lang_message: 'Opsla\uFFFDn' } });
   assert.equal(result.code, 1, result.out);
   assert.match(result.out, /replacement character/);
+});
+
+test('valid accented words are not mistaken for corrupted UTF-8', () => {
+  const r = checkWith({ 'is.json': { lang_example: 'Þýðingar' }, 'tr.json': { lang_example: 'Küçük' }, 'cs.json': { lang_example: 'nejvyšší' }, 'sk.json': { lang_example: 'SKÚŠKE' } });
+  assert.equal(r.code, 0, r.out);
 });

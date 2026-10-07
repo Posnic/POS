@@ -101,10 +101,10 @@ function receiptPrinterName() {
 /**
  * WHETHER THIS TILL RELAYS BILLS THAT CAME IN OVER THE INTERNET.
  *
- * Owner: "may be configuration or toggle to poll cloud. it needs to be on only
- * when required. otherwise let app connect via lan and give print."
+ * Owner requested remote printing enabled by default on 6 October 2026.
+ * Explicit per-machine opt-outs remain respected.
  *
- * Off unless somebody turned it on, and that is the right default: a handset
+ * Enabled unless explicitly switched off. A handset
  * on the shop's own Wi-Fi talks to this machine directly, which is faster,
  * works with the line cut, and costs nothing. The switch is for the shop whose
  * waiters are on mobile data or a guest network that cannot see the till.
@@ -121,7 +121,7 @@ function cloudPrintRelay() {
   const said = prefs.cloud_print_relay;
   return {
     /*
-     * ON only for a real yes.
+     * Enabled on new installations; preserve an explicitly disabled switch.
      *
      * Both spellings accepted because a preferences file can be hand-edited
      * and older builds of anything here have written settings as text. What
@@ -129,7 +129,7 @@ function cloudPrintRelay() {
      * so a lazier test would read a switch somebody turned off as ON, for ever.
      * This desktop has been bitten by that before.
      */
-    enabled: said === true || said === 'true',
+    enabled: said == null || said === true || said === 'true',
     apiUrl: String(prefs.cloud_api_url || '').trim(),
     /*
      * The key the FAR door presents, which is deliberately not this machine's

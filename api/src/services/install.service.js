@@ -1207,6 +1207,10 @@ class InstallService {
 
   async _insertBusinessTypeDemoData(params) {
     try {
+      // A trade label must never become a MongoDB query operator or stored object.
+      if (typeof params.businessType !== 'string' || !params.businessType.trim()) {
+        throw new TypeError('Business type must be a non-empty string.');
+      }
       const {
         branchId,
         branchName,
@@ -1606,8 +1610,13 @@ class InstallService {
     const stored = await db
       .collection('items')
       .find(
-        { demo_pack: pack, 'branch_access.branch_id': branchId, license: licenseId },
-        { projection: { _id: 1, name: 1, selling_price: 1, unit: 1 } }
+        {
+          demo_pack: { $eq: pack },
+          'branch_access.branch_id': { $eq: branchId },
+          license: { $eq: licenseId },
+          demo_purchase_supply: { $ne: true },
+        },
+        { projection: { _id: 1, name: 1, selling_price: 1, company_price: 1, unit: 1 } }
       )
       .limit(60)
       .toArray();
@@ -1675,8 +1684,13 @@ class InstallService {
     /* Both sides of the counter: a Purchase History that opens empty says
        the product does not do purchasing. From the sample suppliers, over
        the same week, no stock movement - same rules as the sales. */
+    const supplies = demoSeed.buildPurchaseSupplies({ items: stored, branch, pack, now });
+    for (const supply of supplies)
+      await db
+        .collection('items')
+        .updateOne({ _id: supply._id }, { $setOnInsert: supply }, { upsert: true });
     const purchases = demoSeed.buildPurchases({
-      items: stored,
+      items: supplies.length ? supplies : stored,
       suppliers: seededSuppliers,
       branch,
       pack,

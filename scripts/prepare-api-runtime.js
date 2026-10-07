@@ -81,11 +81,11 @@ function devOnlyTopLevelDirs() {
     encoding: 'utf8',
     shell: process.platform === 'win32',
   });
-  // If npm cannot resolve the tree, ship everything rather than guess wrong and
-  // produce an installer that is missing a module.
-  if (!listed.stdout || !listed.stdout.trim()) {
-    console.warn('  could not resolve the production tree; keeping every package');
-    return [];
+  // A stale install can omit a newly declared dependency while still returning
+  // a partial tree. Never cache or ship that tree as a valid runtime.
+  if (listed.status !== 0 || !listed.stdout || !listed.stdout.trim()) {
+    throw new Error('API production dependencies are incomplete. Run npm ci in api before packaging.\n' +
+      (listed.stderr || listed.error?.message || 'npm ls did not return a valid dependency tree'));
   }
 
   const keep = new Set();
@@ -123,7 +123,7 @@ const DEV_EXCLUDE = DEV_DROP.map((name) => `-x!${name}`);
 
 function createFingerprint() {
   const hash = crypto.createHash('sha256');
-  hash.update('posnic-api-runtime-v1');
+  hash.update('posnic-api-runtime-v2-validated');
   hash.update(process.platform);
   hash.update(process.arch);
   hash.update(process.versions.modules || '');
@@ -188,18 +188,8 @@ if (!forceRebuild && fs.existsSync(archivePath)) {
     process.exit(0);
   }
 
-  // Safely adopt an archive created by the old build script when it is newer
-  // than both dependency manifests. Future builds use the exact fingerprint.
-  if (!cachedFingerprint) {
-    const archiveMtime = fs.statSync(archivePath).mtimeMs;
-    const manifestsAreOlder = dependencyFiles.every(filePath => fs.statSync(filePath).mtimeMs <= archiveMtime);
-    if (manifestsAreOlder) {
-      writeFingerprint(fingerprint);
-      const archiveMb = (fs.statSync(archivePath).size / 1024 / 1024).toFixed(1);
-      console.log(`Adopted existing api dependency cache (${archiveMb} MB).`);
-      process.exit(0);
-    }
-  }
+  // Archives without a validated fingerprint must be rebuilt, not adopted
+  // based on file dates: dates cannot establish dependency completeness.
 }
 
 fs.rmSync(temporaryArchivePath, { force: true });

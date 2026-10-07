@@ -104,7 +104,11 @@ async function staff(req) {
     .toArray();
   return users
     .filter((user) => allowed(user, 'sales'))
-    .map((user) => ({ id: String(user._id), name: String(user.name || user.username || '') }));
+    .map((user) => ({
+      id: String(user._id),
+      name: String(user.name || user.username || ''),
+      username: String(user.username || ''),
+    }));
 }
 function handoverReplay(sale, body, actor) {
   const entry = (sale.captain_audit || []).find((item) => item.request_id === body.requestId);
@@ -145,7 +149,7 @@ async function handover(req) {
   ].includes(String(req.user.usertype || req.user.role).toLowerCase());
   if (!manager && current !== actor && !(current === '' && selected.id === actor))
     fail('Ask the assigned staff member or manager to hand over this order.', 403);
-  const assigned_staff = { ...selected, at: new Date(), by: actor };
+  const assigned_staff = { id: selected.id, name: selected.name, at: new Date(), by: actor };
   const result = await collection.updateOne(
     {
       ...c.filter,

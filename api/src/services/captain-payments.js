@@ -41,7 +41,11 @@ async function scope(req, requireEnabled = true) {
   if (input.branchId && String(input.branchId) !== String(c.branchId))
     fail('Choose the authorized branch.', 403);
   c.options = settings(c.branch);
-  if (req.captainPaymentDesktop) c.options = { ...c.options, enabled: true, methods: METHODS };
+  const enabledMethods = await require('./payment-methods').read(req.db, c.branch);
+  c.options.methods = enabledMethods.filter(
+    (method) => req.captainPaymentDesktop || c.options.methods.includes(method)
+  );
+  if (req.captainPaymentDesktop) c.options.enabled = true;
   if (requireEnabled && !c.options.enabled) fail('Captain payment collection is disabled.', 403);
   return c;
 }
@@ -397,7 +401,7 @@ async function prepare(req) {
     await reconcile(db, c, plan);
     return view(plan, c.options);
   }
-  if (!settings(c.branch).enabled) fail('Captain payment collection is disabled.', 403);
+  if (!c.options.enabled) fail('Captain payment collection is disabled.', 403);
   const data = await fresh(db, c, table, req.body);
   const planId = crypto.randomUUID();
   plan = {

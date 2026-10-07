@@ -1,9 +1,8 @@
 ; Posnic - Custom NSIS Installer Script
 ; This script is included during the installation process
 
-; Ultra-fast installation like VSCode/Windsurf
-SetCompressor /SOLID lzma
-SetCompressorDictSize 32
+; Let electron-builder control compression of its already archived payload.
+; Solid recompression breaks its installer-size validation and slows extraction.
 SetDatablockOptimize on
 
 ; The file list stays visible - a shop watching an installer that says nothing

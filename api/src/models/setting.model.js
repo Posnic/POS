@@ -1624,6 +1624,7 @@ class SettingModel extends BaseModel {
            module here uses. The provider and key live on the AI page; this
            is only the switch, which is all a Features card may carry. */
         ai_enabled: offOnly,
+        ask_posnic_enabled: onOnly,
       };
       for (const [key, parse] of Object.entries(TOGGLES)) {
         if (data[key] !== undefined) {
@@ -2910,6 +2911,8 @@ class SettingModel extends BaseModel {
       // PHP lines 1841-1846: Build updateData matching PHP structure
       const updateData = {
         payment_field: data.payment_value,
+        payment_value: data.payment_value,
+        ...(typeof data.enabled === 'boolean' ? { enabled: data.enabled } : {}),
         payment_fields: payment_data,
         updated_date: new Date(),
         updated_by: this.user?.username || 'system',
@@ -4316,6 +4319,7 @@ class SettingModel extends BaseModel {
             _id: {
               payment_id: '$_id',
               payment_value: { $ifNull: ['$payment_field', '$payment_value'] },
+              enabled: { $ifNull: ['$enabled', true] },
             },
           },
         },
@@ -4329,6 +4333,7 @@ class SettingModel extends BaseModel {
       const payments = paymentList.map((doc) => ({
         payment_id: doc._id?.payment_id?.toString?.() || doc._id?.payment_id || '',
         payment_value: doc._id?.payment_value || '',
+        enabled: doc._id?.enabled !== false,
       }));
 
       return {

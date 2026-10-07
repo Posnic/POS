@@ -642,7 +642,10 @@
                 var partial = /partial/i.test(String(r.payment_status || ''));
                 var unpaid = partial || String(r.payment_status || '').toLowerCase() === 'unpaid';
                 var proc = String(r.sale_process || '');
-                var pill = /return/i.test(proc)
+                var cancelled = /^(cancel|cancelled|canceled)$/i.test(proc.trim()) || /^(cancel|cancelled|canceled)$/i.test(String(r.payment_status || '').trim());
+                var pill = cancelled
+                    ? '<span class="rs-pill cancelled"><lang class="lang_cancelled">Cancelled</lang></span>'
+                    : /return/i.test(proc)
                     ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
                     : partial
                         ? '<span class="rs-pill unpaid"><lang class="lang_partial">Partial</lang></span>'
@@ -779,7 +782,9 @@
         var real = function (v) { return v && v !== 'null' && v !== 'undefined' ? v : ''; };
         var unpaid = /partial|^unpaid$/i.test(String(d.payment_status || ''));
         var proc = String(d.sale_process || '');
-        var stamp = /return/i.test(proc) ? proc.toUpperCase()
+        var cancelled = /^(cancel|cancelled|canceled)$/i.test(proc.trim()) || /^(cancel|cancelled|canceled)$/i.test(String(d.payment_status || '').trim());
+        var stamp = cancelled ? PosnicPro.i18n.t('lang_cancelled', 'Cancelled').toUpperCase()
+            : /return/i.test(proc) ? proc.toUpperCase()
             : /partial/i.test(String(d.payment_status || '')) ? PosnicPro.i18n.t('lang_partially_paid_3', 'PARTIALLY PAID')
             : unpaid ? PosnicPro.i18n.t('lang_unpaid_2', 'UNPAID') : PosnicPro.i18n.t('lang_paid_2', 'PAID');
         var logo = PosnicPro.local.get('branchimage');
@@ -891,7 +896,10 @@
         var partial = /partial/i.test(String(d.payment_status || ''));
         var unpaid = partial || String(d.payment_status || '').toLowerCase() === 'unpaid';
         var proc = String(d.sale_process || '');
-        var pill = /return/i.test(proc)
+        var cancelled = /^(cancel|cancelled|canceled)$/i.test(proc.trim()) || /^(cancel|cancelled|canceled)$/i.test(String(d.payment_status || '').trim());
+        var pill = cancelled
+            ? '<span class="rs-pill cancelled"><lang class="lang_cancelled">Cancelled</lang></span>'
+            : /return/i.test(proc)
             ? '<span class="rs-pill hold">' + esc(proc) + '</span>'
             : partial ? '<span class="rs-pill unpaid"><lang class="lang_partial">Partial</lang></span>'
             : unpaid ? '<span class="rs-pill unpaid"><lang class="lang_unpaid">Unpaid</lang></span>' : '<span class="rs-pill paid"><lang class="lang_paid">Paid</lang></span>';
@@ -899,7 +907,7 @@
             + '<button type="button" class="btn btn-sm btn-light" title="Show or hide the list" data-t-title="lang_show_or_hide_the_list" aria-label="Show or hide the list" data-t-aria-label="lang_show_or_hide_the_list" onclick="PosnicPro.masterDetail.toggleRail(\'#sales_split\');"><i class="feather icon-sidebar"></i></button>'
             + '<span class="p-doc-title">' + esc(d.sales_id) + '</span>' + pill
             + '<span class="ml-auto"></span>'
-            + (unpaid
+            + (unpaid && !cancelled
                 ? '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i><lang class="lang_settlement">Take Payment</lang></button>'
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" data-module="sales" data-access="write" data-toggle="tooltip" title="Edit this bill" data-t-title="lang_edit_this_bill" aria-label="Edit" data-t-aria-label="lang_edit_title" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
@@ -1729,7 +1737,7 @@
             PosnicPro.get('setting/getPaymentAll', function (response) {
                 PosnicPro.sales._loadingPaymentMethods = false;
                 if (!response || response.type !== 'success' || !Array.isArray(response.data)) { failMethods(); return; }
-                PosnicPro.configPaymentType = response.data.map(function (row) { return { payment_value: row.payment_value }; });
+                PosnicPro.configPaymentType = response.data.map(function (row) { return { payment_value: row.payment_value, enabled: row.enabled !== false }; });
                 if (window.location.hash !== paymentRoute || PosnicPro.sales.editSaleId !== paymentSale) return;
                 PosnicPro.sales.openTenderModel(true);
             }, failMethods);
@@ -2199,6 +2207,11 @@
             if (PosnicPro.askposnic) PosnicPro.askposnic.checkoutPaymentReady();
         }
     },
+    paymentMethodEnabled: function (name) {
+        const key = String(name || '').trim().toLowerCase();
+        const rows = (PosnicPro.configPaymentType || []).filter(row => String(row.payment_value || '').trim().toLowerCase() === key);
+        return rows.length ? rows.some(row => row.enabled !== false) : key === 'cash';
+    },
     showPaymentMode: function () {
         $("#payment_id").html("");
         var sales_payment_mode = PosnicPro.sales.EditRecentSaleParams.payment_mode;
@@ -2215,7 +2228,7 @@
             '<input type="radio" class="payment_mode" name="payment_mode" id="Cash" value="Cash" checked="checked" style="display: none;"> <lang class="lang_cash_title">Cash</lang>' +
             '</label>' +
             '</div>';
-        $('#payment_id').append(paymentMethod);
+        if (PosnicPro.sales.paymentMethodEnabled('Cash')) $('#payment_id').append(paymentMethod);
         if (localStorage.getItem("payment_gateway") === 'true') {
             let paymentMethod = '<div class="col-lg-4 col-md-2 col-xs-12">' +
                 '<label class="btn btn-block btn-payment-mode Qrpay_active payment_detail change_active save_enable qr_active qr_btn ' + active_qrpay_mode + ' ">' +
@@ -2243,6 +2256,7 @@
         {
             $.each(SalePaymentType, function (key, val) {
                 var payment_mode_active = val.payment_value + '_active';
+                if (val.enabled === false) { return; }
                 if (renderedModes[modeKey(val.payment_value)]) { return; }
                 renderedModes[modeKey(val.payment_value)] = true;
                 if (sales_payment_mode !== val.payment_value) {
@@ -2256,7 +2270,7 @@
                 }
             });
         }
-        if (sales_payment_mode !== '' && sales_payment_mode !== null && sales_payment_mode !== undefined && sales_payment_mode !== 'Cash') {
+        if (sales_payment_mode !== '' && sales_payment_mode !== null && sales_payment_mode !== undefined && sales_payment_mode !== 'Cash' && PosnicPro.sales.paymentMethodEnabled(sales_payment_mode)) {
             var edit_payment_mode_active = sales_payment_mode + '_active';
             let paymentMethod = '<div class="col-lg-4 col-md-2 col-xs-12">' +
                 '<label class="btn btn-block btn-payment-mode payment_detail change_active save_enable active ' + edit_payment_mode_active + ' ">' +
@@ -2270,6 +2284,9 @@
             '<button type="button" class="btn btn-payment-mode btn-block change_active" onclick="return PosnicPro.payment.triggerModules();" ><i class="feather icon-plus mr-2"></i>Add</button>' +
             '</div>';
         $('#payment_id').append(addMethod);
+        if (!$('#payment_id .payment_mode:checked').length) {
+            $('#payment_id .payment_mode').first().prop('checked', true).closest('label').addClass('active');
+        }
 
     },
 
@@ -2631,7 +2648,7 @@
         // ✅ Determine which payment method should be active
         // For edit: activate the first payment method that has a value
         // For new: always activate Cash
-        let activePaymentMethod = 'Cash'; // Default for new sales
+        let activePaymentMethod = PosnicPro.sales.paymentMethodEnabled('Cash') ? 'Cash' : (PosnicPro.configPaymentType || []).find(row => row.enabled !== false)?.payment_value || ''; // First enabled method
         if (Object.keys(multi_payment).length > 0) {
             // Find first payment method with a value > 0
             for (let key in multi_payment) {
@@ -2711,7 +2728,7 @@
         }
 
         // --- Cash ---
-        addPaymentBlock('Cash', 'Cash', normalizeKey(activePaymentMethod) === normalizeKey('Cash'));
+        if (PosnicPro.sales.paymentMethodEnabled('Cash')) addPaymentBlock('Cash', 'Cash', normalizeKey(activePaymentMethod) === normalizeKey('Cash'));
         // --- QR / Razorpay ---
         if (localStorage.getItem("payment_gateway") === 'true') {
             addPaymentBlock('Qrpay', 'Razorpay', normalizeKey(activePaymentMethod) === normalizeKey('Qrpay') || normalizeKey(activePaymentMethod) === normalizeKey('Razorpay'));
@@ -2721,7 +2738,7 @@
         let SalePaymentType = PosnicPro.configPaymentType;
         if (SalePaymentType && SalePaymentType.length !== 0) {
             $.each(SalePaymentType, function (key, val) {
-                addPaymentBlock(val.payment_value, val.payment_value, normalizeKey(activePaymentMethod) === normalizeKey(val.payment_value));
+                if (val.enabled !== false) addPaymentBlock(val.payment_value, val.payment_value, normalizeKey(activePaymentMethod) === normalizeKey(val.payment_value));
             });
         }
 

@@ -2972,7 +2972,9 @@ PosnicPro = {
         $('#manage_li_deliverypartners').toggle(on('module_delivery_partners_enable'));
         $('#manage_li_webshop').toggle(on('module_webshop_enable'));
         $('#manage_li_theme').toggle(on('module_themes_enable'));
-        $('#manage_li_ai').toggle(on('ai_enabled'));
+        $('#manage_li_ai').toggle(on('ai_enabled') || s.ask_posnic_enabled === true);
+        $('[data-ask-entry]').toggle(s.ask_posnic_enabled === true);
+        if (PosnicPro.askposnic) PosnicPro.askposnic.setEnabled(s.ask_posnic_enabled === true);
         $('#manage_li_recyclebin').toggle(on('module_recyclebin_enable'));
         /* One system, owner's rule: a feature's card explains it; a
            feature's CONFIGURATION lives here, in its own entry - the same
@@ -7155,3 +7157,73 @@ PosnicPro.mountServingPeriodFilter = function (options) {
         if (options.ready) options.ready(select.val() || '');
     }, fail);
 };
+
+PosnicPro.itemStockPreference = {
+ load: function (selector, done) {
+  PosnicPro.get({url:'items/stockPreference'}, function (r) {
+   if (r.type === 'success') { $(selector).val(r.data.preference || ''); if (done) done(r.data.preference); }
+  });
+ },
+ save: function (value, done, fail) {
+  PosnicPro.put({url:'items/stockPreference', data:JSON.stringify({preference:value})}, function (r) {
+   if (r.type === 'success') { if (done) done(); }
+   else { PosnicPro.alert('error', r.message || PosnicPro.i18n.t('lang_stock_preference_could_not_be_saved', 'Stock preference could not be saved.')); if (fail) fail(); }
+  }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_stock_preference_could_not_be_saved', 'Stock preference could not be saved.')); if (fail) fail(); });
+ }
+};
+
+// Select existing numbers once on entry, including dynamically opened dialogs.
+(function installNumericFocusSelection() {
+    var pointerEntry = null;
+    function editableNumber(field) {
+        return field && field.tagName === 'INPUT' && !field.disabled && !field.readOnly &&
+            (field.type === 'number' || (field.type === 'text' &&
+                field.matches('[inputmode="decimal"], [inputmode="numeric"], .allow_decimal, .allow_only_numbers')));
+    }
+    document.addEventListener('pointerdown', function (event) {
+        var field = event.target;
+        pointerEntry = event.button === 0 && editableNumber(field) && document.activeElement !== field
+            ? { field: field, value: field.value } : null;
+    }, true);
+    document.addEventListener('focusin', function (event) {
+        if (editableNumber(event.target)) event.target.select();
+    });
+    // The first pointer click can collapse the selection made by focusin.
+    // Do not interfere with later caret clicks, typing, dragging or number spinners.
+    document.addEventListener('click', function (event) {
+        var entry = pointerEntry;
+        pointerEntry = null;
+        if (entry && event.target === entry.field && document.activeElement === entry.field &&
+            editableNumber(entry.field) && entry.field.value === entry.value) entry.field.select();
+    });
+    ['input', 'keydown', 'pointercancel'].forEach(function (name) {
+        document.addEventListener(name, function () { pointerEntry = null; }, true);
+    });
+    document.addEventListener('focusout', function (event) {
+        if (pointerEntry && event.target === pointerEntry.field) pointerEntry = null;
+    }, true);
+    document.addEventListener('pointermove', function (event) {
+        if (event.buttons) pointerEntry = null;
+    }, true);
+})();
+
+// Immediate acknowledgement of a press, independent of later server success.
+(function installPressFeedback() {
+    var effects = new WeakMap();
+    function show(event) {
+        if (event.type === 'pointerdown' && event.button !== 0) return;
+        if (event.type === 'keydown' && (event.repeat || !['Enter', ' '].includes(event.key))) return;
+        var control = event.target.closest && event.target.closest('button, a[href], [role="button"], [role="menuitem"], input[type="button"], input[type="submit"]');
+        if (!control || control.disabled || control.closest('[aria-disabled="true"], [inert]') ||
+            event.target.closest('input:not([type="button"]):not([type="submit"]), textarea, select, [contenteditable="true"]')) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !control.animate) return;
+        var previous = effects.get(control);
+        if (previous) previous.cancel();
+        effects.set(control, control.animate([
+            { boxShadow: 'inset 0 0 0 2px rgba(164,193,231,.65), 0 0 0 0 rgba(164,193,231,.3)' },
+            { boxShadow: 'inset 0 0 0 1px rgba(164,193,231,.15), 0 0 0 5px rgba(164,193,231,0)' }
+        ], { duration: 320, easing: 'ease-out' }));
+    }
+    document.addEventListener('pointerdown', show, true);
+    document.addEventListener('keydown', show, true);
+})();

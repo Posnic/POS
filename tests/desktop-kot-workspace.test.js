@@ -70,3 +70,118 @@ test('transfer is read-only until the reviewed amounts are confirmed',async()=>{
   assert.match(w.document.querySelector('dialog').textContent,/₹10\.00/);
   submit();await flush();assert.ok(requests[1].url.endsWith('/complete'));assert.equal(requests[1].body.revision,'rev');assert.deepEqual(requests[1].body.items,[{id:'c0i0',quantity:1,servedQuantity:0}]);assert.equal(w.localStorage.length,0);dom.window.close();
 });
+
+test('merge registers a legacy custom source in the current branch only after Save',async()=>{
+ const writes=[];
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{canMerge:true,tables:[{id:'dest',tableorder_value:'T1',orders:[{id:'target',paid:false}]}]}:{_id:'source',table_number:'66',person_count:6,dine_type:'Dine-in'}}),post:(o,done)=>{writes.push({url:o.url,body:JSON.parse(o.data)});done({type:'success',data:{}});}});
+ await app.move('source',true);assert.equal(writes.length,0);w.document.querySelector('[name=table]').value='dest';w.document.querySelector('[name=table]').dispatchEvent(new w.Event('change'));w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
+ assert.equal(writes[0].url,'captain/v1/tables/temporary');assert.deepEqual(writes[0].body,{branchId:'branch',tableorder_value:'66'});assert.equal(writes[1].url,'captain/v1/tables/merge/prepare');assert.equal(writes[1].body.targetOrderId,'target');assert.equal(writes[2].url,'captain/v1/tables/move/complete');dom.window.close();
+});
+
+test('move offers custom destination when floor is full and retries the same resolved table',async()=>{
+ const writes=[];let fail=true;
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{tables:[{id:'src',tableorder_value:'66',status:'occupied'}]}:{_id:'source',table_number:'66',person_count:2}}),post:(o,done,bad)=>{writes.push({url:o.url,body:JSON.parse(o.data)});if(o.url.endsWith('/complete')&&fail)bad({responseJSON:{message:'Offline'}});else done({type:'success',data:o.url.endsWith('/temporary')?{id:'custom-id'}:{}});}});
+ await app.move('source');assert.equal(w.document.querySelector('select').value,'custom');assert.equal(writes.length,0);w.document.querySelector('[name=customTable]').value='a12';const submit=()=>w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await flush();assert.equal(writes[0].body.tableorder_value,'A12');assert.equal(writes[1].body.primaryId,'custom-id');fail=false;submit();await flush();assert.equal(writes.filter(x=>x.url.endsWith('/temporary')).length,1);assert.equal(writes[2].body.request_id,writes[3].body.request_id);dom.window.close();
+});
+
+test('merge shows source and destination and includes unregistered custom orders without writes before confirmation',async()=>{
+ const writes=[];
+ const source={_id:'source',table_number:'66',person_count:2,dine_type:'Dine-in',items:[{item_quantity:7}]};
+ const target={_id:'target',table_number:'33',person_count:3,dine_type:'Dine-in',items:[{item_quantity:1}]};
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url==='sales'?{list:[source,target],total:2}:o.url.includes('tables')?{canMerge:true,tables:[]}:source}),post:(o,done)=>{writes.push({url:o.url,body:JSON.parse(o.data)});done({type:'success',data:{id:'registered'}});}});
+ await app.move('source',true);
+ assert.match(w.document.querySelector('.kot-merge-source').textContent,/Table 66.*2 Guests.*7 Items/);
+ assert.equal(w.document.querySelector('[type=submit]').disabled,true);
+ const select=w.document.querySelector('select');select.value='legacy:target';select.dispatchEvent(new w.Event('change'));
+ assert.match(w.document.querySelector('.kot-merge-preview').textContent,/Table 33.*3 Guests.*1 Items/);
+ assert.match(w.document.querySelector('[type=submit]').textContent,/66 → 33/);
+ assert.equal(writes.length,0);
+ w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
+ assert.equal(writes[0].body.tableorder_value,'33');assert.equal(writes[2].body.targetOrderId,'target');assert.equal(writes[2].body.primaryId,'registered');dom.window.close();
+});
+
+test('merge empty state explains missing destinations and cannot submit',async()=>{
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url==='sales'?{list:[]}:o.url.includes('tables')?{canMerge:true,tables:[]}:{_id:'source',table_number:'66'}})});
+ await app.move('source',true);assert.match(w.document.querySelector('dialog').textContent,/No other open table orders/);assert.equal(w.document.querySelector('[type=submit]').disabled,true);dom.window.close();
+});
+
+test('saved merge can be retried when the target no longer appears in the current choices',async()=>{
+ const {dom,w,calls,app}=setup({get:(o,done)=>done({type:'success',data:o.url==='sales'?{list:[]}:o.url.includes('tables')?{canMerge:true,tables:[]}:{_id:'source',table_number:'66'}})});
+ const intent={request_id:'same-request',orderId:'source',primaryId:'destination',tableIds:['destination'],targetOrderId:'target'};
+ w.localStorage.setItem('posnic.kot.merge:https://shop.invalid:branch:source',JSON.stringify(intent));
+ await app.move('source',true);assert.equal(w.document.querySelector('[type=submit]').disabled,false);
+ w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
+ assert.equal(calls[0].body.request_id,'same-request');assert.equal(calls[0].body.targetOrderId,'target');dom.window.close();
+});
+
+test('compact transfer bounds quantities, reviews direction and supports editing before confirmation',async()=>{
+ const requests=[];
+ const sale={_id:'sale',table_number:'66',restaurant_details:{rounds:[{items:[{id:'c0i0',name:'Tea',quantity:2,served:1}]}]}};
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{canMerge:true,tables:[{id:'destination',tableorder_value:'33',status:'available'}]}:sale}),post:(o,done)=>{requests.push({url:o.url,body:JSON.parse(o.data)});done({type:'success',data:{revision:'rev',currencySymbol:'₹',currencyDigits:2,source:{totalMinor:1000},destination:{totalMinor:1000}}});}});
+ await app.transfer('sale');assert.equal(w.document.querySelector('.kot-action-context').textContent,'Table 66');
+ const plus=w.document.querySelector('[data-step="0:1"]');plus.click();plus.click();plus.click();
+ assert.equal(w.document.querySelector('[name=qty0]').value,'2');assert.equal(w.document.querySelector('[name=served0]').value,'1');
+ w.document.querySelector('[name=table]').value='destination';
+ w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
+ assert.match(w.document.querySelector('.kot-transfer-direction').textContent,/Table 66.*Table 33/);
+ assert.match(w.document.querySelector('.kot-transfer-review').textContent,/2 × Tea/);
+ const back=[...w.document.querySelectorAll('footer button')].find(b=>b.textContent==='Back');back.click();
+ assert.equal(w.document.querySelector('[name=qty0]').value,'2');assert.equal(w.document.querySelector('[name=table]').value,'destination');
+ assert.equal(requests.length,1);assert.ok(requests[0].url.endsWith('/preview'));assert.equal(w.localStorage.length,0);dom.window.close();
+});
+
+test('uncertain item transfer keeps its saved intent and cannot go back to change quantities',async()=>{
+ const requests=[];let fail=true;
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{canMerge:true,tables:[{id:'destination',tableorder_value:'33',status:'available'}]}:{_id:'sale',table_number:'66',restaurant_details:{rounds:[{items:[{id:'i',name:'Tea',quantity:1,served:0}]}]}}}),post:(o,done,bad)=>{requests.push({url:o.url,body:JSON.parse(o.data)});if(o.url.endsWith('/complete')&&fail)bad({responseJSON:{message:'Offline'}});else done({type:'success',data:{revision:'rev',currencySymbol:'₹',currencyDigits:2,source:{totalMinor:0},destination:{totalMinor:1000}}});}});
+ await app.transfer('sale');w.document.querySelector('[name=table]').value='destination';w.document.querySelector('[data-step="0:1"]').click();
+ const submit=()=>w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));submit();await flush();submit();await flush();
+ const back=[...w.document.querySelectorAll('footer button')].find(b=>b.textContent==='Back');assert.equal(back.hidden,true);back.click();assert.equal(w.document.querySelector('[name=qty0]'),null);assert.equal(w.localStorage.length,1);
+ fail=false;submit();await flush();assert.deepEqual(requests[1].body,requests[2].body);assert.equal(w.localStorage.length,0);dom.window.close();
+});
+
+test('transfer with no free destination explains the empty state and cannot submit',async()=>{
+ const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url.includes('tables')?{canMerge:true,tables:[]}:{_id:'sale',table_number:'66'}})});
+ await app.transfer('sale');assert.match(w.document.querySelector('dialog').textContent,/No available tables/);assert.equal(w.document.querySelector('[type=submit]').disabled,true);dom.window.close();
+});
+
+test('guest picker keeps table context, supports presets and custom counts, and validates before saving',async()=>{
+ const {dom,w,calls,app}=setup({get:(_o,done)=>done({type:'success',data:{_id:'sale',table_number:'66',person_count:5}})});
+ await app.covers('sale');
+ assert.match(w.document.querySelector('.kot-action-context').textContent,/Table 66/);
+ const input=w.document.querySelector('[name=guests]');
+ assert.equal(w.document.querySelector('[data-guests="5"]').getAttribute('aria-pressed'),'true');
+ w.document.querySelector('[data-guests="8"]').click();assert.equal(input.value,'8');assert.equal(calls.length,0);
+ input.value='13';input.dispatchEvent(new w.Event('input'));
+ assert.equal(w.document.querySelectorAll('[aria-pressed=true]').length,0);
+ w.document.querySelector('[data-guest-step="1"]').click();assert.equal(input.value,'14');
+ const submit=()=>w.document.querySelector('form').dispatchEvent(new w.Event('submit',{cancelable:true}));
+ input.value='1.5';submit();await flush();assert.equal(calls.length,0);
+ input.value='14';submit();await flush();assert.equal(calls[0].body.guests,14);assert.equal(calls[0].body.orderId,'sale');
+ dom.window.close();
+});
+
+test('handover opens a searchable staff list, requires a choice and submits only that recipient', async()=>{
+  const staff=[{id:'a',name:'Arun',username:'captain@example.com'},{id:'b',name:'Bala <img src=x>',username:'manager@example.com'}];
+  const {dom,w,calls,app}=setup({get:(o,done)=>done({type:'success',data:o.url==='sales/handoverStaff'?staff:{_id:'sale',table_number:'45'}})});
+  await app.handover('sale');
+  const search=w.document.querySelector('[data-staff-search]');
+  const rows=[...w.document.querySelectorAll('.kot-staff-choice')];
+  const submit=w.document.querySelector('[type=submit]');
+  assert.equal(w.document.activeElement,search);assert.equal(rows.length,2);assert.ok(rows.every(row=>!row.hidden));assert.equal(submit.disabled,true);
+  assert.match(w.document.querySelector('h3').textContent,/45/);assert.equal(w.document.querySelector('img'),null);
+  search.value='MANAGER@';search.dispatchEvent(new w.Event('input'));
+  assert.equal(rows[0].hidden,true);assert.equal(rows[1].hidden,false);
+  search.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',cancelable:true}));
+  assert.equal(submit.disabled,false);assert.equal(calls.length,0);
+  search.value='missing';search.dispatchEvent(new w.Event('input'));
+  assert.equal(submit.disabled,true);assert.equal(w.document.querySelector('[data-staff-empty]').hidden,false);
+  search.value='';search.dispatchEvent(new w.Event('input'));rows[0].querySelector('input').click();
+  submit.click();await flush();assert.equal(calls[0].body.staffId,'a');assert.equal(calls[0].body.saleId,'sale');
+  dom.window.close();
+});
+
+test('handover with no eligible staff explains the empty list and cannot submit',async()=>{
+  const {dom,w,app}=setup({get:(o,done)=>done({type:'success',data:o.url==='sales/handoverStaff'?[]:{_id:'sale'}})});
+  await app.handover('sale');assert.equal(w.document.querySelector('[type=submit]').disabled,true);
+  assert.match(w.document.querySelector('[data-staff-empty]').textContent,/No staff available/);dom.window.close();
+});

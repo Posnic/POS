@@ -1,5 +1,7 @@
 /* A single aligned workspace; history is a separate pane, never a chat message. */
 #askposnic [hidden], #ask_posnic_admin [hidden] { display: none !important; }
+/* This page has no breadcrumb bar to clear the fixed application header. */
+#askposnic { padding-top: 94px; }
 #askposnic .contentbar { padding: 24px 32px; }
 .ask-workspace { max-width: 1180px; margin: 0 auto; min-width: 0; }
 .ask-workspace-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 22px; }

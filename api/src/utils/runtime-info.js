@@ -87,6 +87,9 @@ function buildRuntimeInfo(env = process.env, apiRoot = path.join(__dirname, '..'
     channel: String(env.POSNIC_UPDATE_CHANNEL || '').trim() || null,
     apiSchema: API_SCHEMA_VERSION,
     syncProtocol: SYNC_PROTOCOL_VERSION,
+    // Optional public discovery address. Do not expose credentials or infer
+    // a tenant API from a sync gateway (the gateway can be a different host).
+    connections: publicConnections(env),
     // Capability flags (PRODUCT_ARCHITECTURE §1/§4). Clients read .features
     // unconditionally; a flag that is absent reads as false, which is always
     // the safe direction here.
@@ -116,4 +119,20 @@ function buildRuntimeInfo(env = process.env, apiRoot = path.join(__dirname, '..'
   };
 }
 
-module.exports = { buildRuntimeInfo, resolveAppVersion, resolveMode, hasAccount };
+function publicConnections(env) {
+  try {
+    const url = new URL(env.POSNIC_CAPTAIN_CLOUD_URL);
+    if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash)
+      return {};
+    return { cloud: url.href.replace(/\/$/, '') };
+  } catch (_) {
+    return {};
+  }
+}
+module.exports = {
+  buildRuntimeInfo,
+  resolveAppVersion,
+  resolveMode,
+  hasAccount,
+  publicConnections,
+};

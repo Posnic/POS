@@ -164,7 +164,7 @@ router.get(
     });
     return {
       ...c.options,
-      enabled: captainPayments.settings(c.branch).enabled || Boolean(plan),
+      enabled: c.options.enabled || Boolean(plan),
       plan: plan ? captainPayments.view(plan, c.options) : null,
     };
   })

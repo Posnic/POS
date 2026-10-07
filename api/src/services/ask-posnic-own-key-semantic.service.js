@@ -30,7 +30,10 @@ async function eligible(db, context, dependencies = {}) {
   if (preferences?.own_key_semantic !== true || preferences.help_enabled === false) return null;
   const ai = require('./ai.service');
   const settings = await (dependencies.settingsFor || ai.settingsFor)(context);
-  return settings.enabled && settings.provider === 'openai' && ai.modeFor(settings) === 'own_key'
+  return settings.enabled &&
+    settings.askPosnicEnabled === true &&
+    settings.provider === 'openai' &&
+    ai.modeFor(settings) === 'own_key'
     ? preferences
     : null;
 }

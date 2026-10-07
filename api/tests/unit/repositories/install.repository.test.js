@@ -45,6 +45,7 @@ describe('InstallRepository', () => {
 
     // Shared collection mocks per collection name
     col = {
+      payment_method: { updateOne: jest.fn().mockResolvedValue({ upsertedCount: 1 }) },
       users: {
         findOne: jest.fn().mockResolvedValue(null),
         insertOne: jest.fn().mockResolvedValue({ insertedId: FAKE_ID }),
@@ -152,7 +153,11 @@ describe('InstallRepository', () => {
   describe('insertBranch', () => {
     test('inserts into branches and returns insertedId', async () => {
       const r = await repository.insertBranch({ name: 'Main' });
-      expect(col.branches.insertOne).toHaveBeenCalledWith({ name: 'Main' });
+      expect(col.branches.insertOne).toHaveBeenCalledWith({
+        name: 'Main',
+        payment_methods_initialized: true,
+      });
+      expect(col.payment_method.updateOne).toHaveBeenCalledTimes(2);
       expect(r).toEqual(FAKE_ID);
     });
     test('rethrows error', async () => {

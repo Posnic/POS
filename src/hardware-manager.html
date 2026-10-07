@@ -370,7 +370,7 @@
             <!-- Only a shop running table service has anything to print a KOT
                  for; the dashboard mirrors the setting into preferences. -->
             <button class="tab" id="kotTabButton" onclick="switchTab('kot')" style="display:none;">Kitchen Printing</button>
-            <button class="tab" onclick="switchTab('screen')">📺 Kitchen Screen</button>
+            <button class="tab" onclick="switchTab('screen')">📺 Kitchen Display</button>
             <button class="tab" onclick="switchTab('sound')">🔔 Kitchen Sound</button>
             <button class="tab" onclick="switchTab('mobile')">📱 Mobile Devices</button>
             <button class="tab" onclick="switchTab('scanner')">🔎 Barcode Scanner</button>
@@ -941,7 +941,9 @@
                 after paying for the mount.
             -->
             <div id="screenTab" class="tab-content">
-                <h2>📺 Kitchen Screen</h2>
+<label for="display-language">Language</label><select id="display-language" translate="no"></select>
+
+                <h2>📺 Kitchen Display</h2>
 
                 <div class="status" style="background:#e7f1ff;color:#1e3a8a;display:block;">
                     Run an HDMI cable from this computer to a screen in the kitchen.
@@ -1164,6 +1166,7 @@
     </div>
 
     <script src="kitchen-screen-fit.js"></script>
+    <script src="../api/src/kitchen-board/i18n.js"></script>
     <script src="hardware-workspace.js"></script>
     <script>
         /*
@@ -1976,7 +1979,7 @@
                 const url = await rpPref().get('cloud_api_url');
                 const box = document.getElementById('cpEnabled');
                 const field = document.getElementById('cpApiUrl');
-                if (box) box.checked = on === true || on === 'true';
+                if (box) box.checked = on == null || on === true || on === 'true';
                 if (field) field.value = url || '';
                 await cpShowKey();
                 cpSummary();
@@ -3810,7 +3813,7 @@
                 +     '<div>'
                 +       '<div style="font-weight:700;font-size:15px;">' + esc(d.label) + '</div>'
                 +       '<div style="font-size:12px;color:#64748b;">' + d.widthPx + ' &times; ' + d.heightPx
-                +         (d.primary ? ' &middot; this is the till’s own screen' : '') + '</div>'
+                +         (d.connected === false ? ' &middot; ' + esc(window.DisplayI18n ? window.DisplayI18n.t('Saved · Waiting for display - reconnects automatically') : 'Saved · Waiting for display - reconnects automatically') : d.primary ? ' &middot; this is the till’s own screen' : ' &middot; Connected') + '</div>'
                 +     '</div>'
                 +     '<label style="margin-left:auto;display:flex;gap:8px;align-items:center;font-size:13px;font-weight:600;cursor:pointer;">'
                 +       '<input type="checkbox" id="use-' + d.id + '" ' + (c.enabled ? 'checked' : '')

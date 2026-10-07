@@ -12,7 +12,23 @@ const {
   buildRuntimeInfo,
   resolveMode,
   resolveAppVersion,
+  publicConnections,
 } = require('../../../src/utils/runtime-info');
+
+test('discovery metadata exposes only a clean configured HTTPS address', () => {
+  expect(publicConnections({ POSNIC_CAPTAIN_CLOUD_URL: 'https://shop.example/api/' })).toEqual({
+    cloud: 'https://shop.example/api',
+  });
+  for (const value of [
+    '',
+    'http://shop.example/api',
+    'https://user:secret@shop.example/api',
+    'https://shop.example/api?token=secret',
+    'not a url',
+  ]) {
+    expect(publicConnections({ POSNIC_CAPTAIN_CLOUD_URL: value })).toEqual({});
+  }
+});
 const {
   API_SCHEMA_VERSION,
   SYNC_PROTOCOL_VERSION,

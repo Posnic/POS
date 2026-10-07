@@ -658,6 +658,7 @@ PosnicPro.settings = {
                         module_demo_data_enable: response.data['module_demo_data_enable'] !== false,
                         module_themes_enable: response.data['module_themes_enable'] !== false,
                     ai_enabled: response.data['ai_enabled'] !== false,
+                    ask_posnic_enabled: response.data['ask_posnic_enabled'] === true,
                         module_cashbook_enable: response.data['module_cashbook_enable'] !== false,
                         quick_sale_enable: response.data['quick_sale_enable'] !== false,
                         quotes_enable: response.data['quotes_enable'] !== false,
@@ -971,6 +972,7 @@ PosnicPro.settings = {
                 /* AI assistance. !== false like its neighbours: absent means
                    on, which is what offOnly stores. */
                 $('#ai_enabled').prop('checked', data.ai_enabled !== false);
+                $('#ask_posnic_enabled').prop('checked', data.ask_posnic_enabled === true);
                 $('#pl_include_cashbook').prop('checked', data.pl_include_cashbook !== false);
                 $('#module_cashbook_enable').prop('checked', data.module_cashbook_enable !== false);
                 $('#quick_sale_enable').prop('checked', data.quick_sale_enable !== false);
@@ -1004,6 +1006,7 @@ PosnicPro.settings = {
                     module_demo_data_enable: data.module_demo_data_enable !== false,
                     module_themes_enable: data.module_themes_enable !== false,
                     ai_enabled: data.ai_enabled !== false,
+                    ask_posnic_enabled: data.ask_posnic_enabled === true,
                     module_cashbook_enable: data.module_cashbook_enable !== false,
                     quick_sale_enable: data.quick_sale_enable !== false,
                     quotes_enable: data.quotes_enable !== false,
@@ -2057,6 +2060,7 @@ if ($wrapper.length) {
         /* AI assistance. The provider and key live on its own page; this is
            only the switch, which is all a Features card may carry. */
         'ai_enabled',
+        'ask_posnic_enabled',
     ],
     initModulesBranchSelect: function () {
         var $sel = $('#modules_branch_select');
@@ -2278,6 +2282,7 @@ if ($wrapper.length) {
                 module_demo_data_enable: $('#module_demo_data_enable').is(':checked') ? 'true' : 'false',
                 module_themes_enable: $('#module_themes_enable').is(':checked') ? 'true' : 'false',
                 ai_enabled: $('#ai_enabled').is(':checked') ? 'true' : 'false',
+                ask_posnic_enabled: $('#ask_posnic_enabled').is(':checked') ? 'true' : 'false',
                 pl_include_cashbook: $('#pl_include_cashbook').is(':checked') ? 'true' : 'false',
                 module_cashbook_enable: $('#module_cashbook_enable').is(':checked') ? 'true' : 'false',
                 quick_sale_enable: $('#quick_sale_enable').is(':checked') ? 'true' : 'false',
@@ -2409,6 +2414,8 @@ if ($("#sale_quick_edit").is(":checked")) {
                     module_recyclebin_enable: $('#module_recyclebin_enable').is(':checked'),
                     module_demo_data_enable: $('#module_demo_data_enable').is(':checked'),
                     module_themes_enable: $('#module_themes_enable').is(':checked'),
+                    ask_posnic_enabled: $('#ask_posnic_enabled').is(':checked'),
+                    ai_enabled: $('#ai_enabled').is(':checked'),
                     module_cashbook_enable: $('#module_cashbook_enable').is(':checked'),
                     quotes_enable: $('#quotes_enable').is(':checked'),
                     invoices_enable: $('#invoices_enable').is(':checked'),
@@ -3608,8 +3615,19 @@ PosnicPro.payment = {
                     let deleted = '<a href="#/settings/payment/' + row.payment_id + '/delete" id="setting_payment_delete_' + row.payment_id + '" data-toggle="tooltip" title="Delete Payment" data-t-title="lang_delete_payment" class="btn btn-danger-rgba mobile_tooltip mb-1 mr-1" data-module = "branch" data-access = "delete" data-paymentvalue="' + row.payment_value + '" ><i class="feather icon-trash"></i></a>';
                     let trow = '<tr> <td scope="row" width="10%">' + (i + 1) + '</td><td width="10%" class="text-right">' + row.payment_value + '</td><td width="40%" class="text-center">' + edit + ' ' + deleted + '</td> </tr>';
                     $('#view_payment').children('tbody').append(trow);
+                    const toggle = $('<input type="checkbox">').prop('checked', row.enabled !== false);
+                    const label = $('<label class="mr-3"></label>').append(toggle, document.createTextNode(' ' + PosnicPro.i18n.t('lang_enabled', 'Enabled')));
+                    table.find('tbody tr:last td:last').prepend(label);
+                    toggle.on('change', function () {
+                        const enabled = this.checked;
+                        toggle.prop('disabled', true);
+                        PosnicPro.put({url: 'setting/editPaymentForm', data: JSON.stringify({payment_id: row.payment_id, payment_value: row.payment_value, enabled})}, function (response) {
+                            if (response.type !== 'success') PosnicPro.alert(response.type, response.message);
+                            PosnicPro.payment.paymentTable();
+                        }, function () { toggle.prop('checked', !enabled).prop('disabled', false); });
+                    });
                     PosnicPro.configPaymentType[i] = {
-                        payment_value: row.payment_value
+                        payment_value: row.payment_value, enabled: row.enabled !== false
                     };
                 }
                 // Only refresh payment UI if we're on the sales page
@@ -6362,6 +6380,7 @@ PosnicPro.features = {
     },
 
     initIntroLocaleEditor: function () {
+        PosnicPro.itemStockPreference.load('#feature_intro_stock');
         PosnicPro.features.loadIntroCountries();
         PosnicPro.features.loadIntroCurrencies();
         PosnicPro.features.loadIntroTimezones();
@@ -6435,6 +6454,16 @@ PosnicPro.features = {
     },
 
     saveIntroLocaleIfNeeded: function (done, fail) {
+        var preference = $('#feature_intro_stock').val();
+        if (preference) {
+            PosnicPro.itemStockPreference.save(preference, function () {
+                PosnicPro.features.saveIntroLocaleFields(done, fail);
+            }, fail);
+            return;
+        }
+        PosnicPro.features.saveIntroLocaleFields(done, fail);
+    },
+    saveIntroLocaleFields: function (done, fail) {
         var locale = PosnicPro.features.readIntroLocale();
         var snapshot = JSON.stringify(locale);
         if (snapshot === PosnicPro.features._introLocaleSnapshot) {

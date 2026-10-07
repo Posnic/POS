@@ -1067,6 +1067,13 @@
                 const menu = fab.querySelector('.fab-menu');
                 const trigger = fab.querySelector('.fab-btn');
                 const closeMenu = () => { fab.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); };
+                const updateDesktopToolVisibility = () => {
+                    const working = /^#\/(?:kot(?:_v2)?(?:\/|$)|sales\/(?:new(?:\/|$)|[^/]+\/(?:edit|hold)(?:\/|$)))/.test(location.hash);
+                    fab.hidden = working;
+                    if (working) closeMenu();
+                };
+                window.addEventListener('hashchange', updateDesktopToolVisibility);
+                updateDesktopToolVisibility();
                 const addItem = (label, target, icon, settings) => {
                     const b = document.createElement('button');
                     b.type = 'button'; b.setAttribute('role', 'menuitem');

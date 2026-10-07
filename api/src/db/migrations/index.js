@@ -17,4 +17,9 @@ module.exports = [
     description: 'Bound Business daily sales and historical-sale refund reads by branch and date',
     up: require('../../services/business-cloud-reports').ensureCloudReportingIndexes,
   },
+  {
+    id: '002-repair-demo-document-lines',
+    description: 'Repair untouched demo document line fields and restaurant supply purchases',
+    up: require('../../services/demo-repair').repairDemoRecords,
+  },
 ];

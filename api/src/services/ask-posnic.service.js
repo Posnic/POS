@@ -55,6 +55,11 @@ function intentFrom(question) {
     return 'features_help';
   if (/how (?:do|can|to)|help (?:me|with)/.test(text) && /return|refund/.test(text))
     return 'refund_help';
+  // Questions about measured results are reports, not workflow instructions.
+  if (/^\s*(?:please\s+)?how (?:much|many)\b/.test(text)) {
+    if (/\b(?:profit|margin|expenses?)\b/.test(text)) return 'profit';
+    if (/\b(?:sales?|sold|sell|revenue|takings)\b/.test(text)) return 'sales';
+  }
   // Workflow questions belong to approved product guidance even when their
   // wording mentions a report metric or a supported write action.
   if (
@@ -64,6 +69,13 @@ function intentFrom(question) {
     if (/offline|internet/.test(text)) return 'offline_help';
     return 'unknown';
   }
+  // Unsupported mutations must not fall through to a similarly named report.
+  if (
+    /^\s*(?:(?:please|can you|could you)\s+)*(?:delete|cancel|refund|pay|send|email|export|update|change|remove)\b/.test(
+      text
+    )
+  )
+    return 'unknown';
   if (/prepare|create|make|start/.test(text) && /stock count|stocktake|inventory count/.test(text))
     return 'stock_count_action';
   if (

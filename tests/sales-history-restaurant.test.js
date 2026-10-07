@@ -6,7 +6,7 @@ const { JSDOM } = require('jsdom');
 const root = path.join(__dirname, '..');
 const sales = fs.readFileSync(path.join(root, 'frontend/static/script/js/modules/js/sales.js'), 'utf8');
 const settings = fs.readFileSync(path.join(root, 'frontend/static/script/js/modules/js/settings.js'), 'utf8');
-function setup(enabled = true) {
+function setup(enabled = true, rows = null) {
  const dom = new JSDOM(fs.readFileSync(path.join(root, 'frontend/modules/sales_read.html'), 'utf8') + '<div class="loader-view-dayparts"><div id="menu_daypart_rows"></div><button id="save_dayparts">Save</button></div>', { runScripts: 'outside-only' });
  const w = dom.window; const $ = require('jquery')(w); w.$ = $;
  let saved = [{ id: 'lunch', name: 'Lunch', hours: { mon: [{ open: 720, close: 930 }] } }];
@@ -15,7 +15,7 @@ function setup(enabled = true) {
  alert: (...v) => alerts.push(v), convertDate: v => v, listSort: { value: () => '' },
  get: (p, cb) => cb({ type: 'success', data: p.url === 'setting/getTableOrderAll' ? [{ tableorder_value: '4' }] : (p.url === 'sales/servingPeriods' ? { restaurant_enabled: true, serving_periods: saved } : { values: { menu_dayparts: saved } }) }),
  put: (p, cb) => { saved = JSON.parse(p.data).menu_dayparts; cb({ type: 'success' }); },
- listFilter: { legacyFilters: () => ({}), activeCount: () => 0, request: (key,p,cb) => { requests.push(p.data); cb({ data: { list: [{ _id: 'bill', table_number: '4', sales_id: 'B-1', sales_total: 210, payment_status: 'Paid' }], total: 1 } }); } } };
+ listFilter: { legacyFilters: () => ({}), activeCount: () => 0, request: (key,p,cb) => { requests.push(p.data); cb({ data: { list: rows || [{ _id: 'bill', table_number: '4', sales_id: 'B-1', sales_total: 210, payment_status: 'Paid' }], total: 1 } }); } } };
  w.eval('PosnicPro.sales = {' + sales.slice(sales.indexOf('    mountRestaurantHistory: function'), sales.indexOf('    renderHistoryPager: function')) + '};');
  w.PosnicPro.sales.mountHistoryFilters = () => {}; w.PosnicPro.sales.renderHistoryPager = () => {};
  const dayStart = settings.indexOf('PosnicPro.dayparts = {');
@@ -44,3 +44,30 @@ test('failed load keeps edits and prevents saving an empty replacement', () => {
  const x = setup(); x.w.PosnicPro.servingPeriods.load(); x.w.PosnicPro.get = (p,cb,fail) => fail(); x.w.PosnicPro.servingPeriods.load();
  assert.equal(x.$('.daypart-name').val(), 'Lunch'); assert.equal(x.$('#save_dayparts').prop('disabled'), true); x.close();
 });
+
+for (const status of [
+ { sale_process: 'cancelled', payment_status: 'Cancelled' },
+ { sale_process: 'cancelled', payment_status: 'Paid' },
+ { sale_process: 'cancel', payment_status: 'Unpaid' },
+ { sale_process: 'Sales', payment_status: 'Canceled' },
+ { sale_process: ' CANCELLED ', payment_status: 'Partially Paid' },
+]) {
+ test('cancelled bill stays cancelled across history and invoice: ' + JSON.stringify(status), () => {
+  const bill = { _id: 'bill', sales_id: 'SB1D40-27-000276', sales_total: 861, items: [], ...status };
+  const before = JSON.stringify(bill);
+  const x = setup(true, [bill]);
+  try {
+   const s = x.w.PosnicPro.sales;
+   x.w.eval('PosnicPro.sales.buildSaleSheet = ' + sales.slice(sales.indexOf('    buildSaleSheet: function') + '    buildSaleSheet: '.length, sales.indexOf('    /* Email the bill', sales.indexOf('    buildSaleSheet: function'))).trim().replace(/,$/, '') + ';');
+   x.w.eval('PosnicPro.sales.renderSaleDoc = ' + sales.slice(sales.indexOf('    renderSaleDoc: function') + '    renderSaleDoc: '.length, sales.indexOf('    searchItem: function')).trim().replace(/,$/, '') + ';');
+   x.w.PosnicPro.restaurantSaleDetails = { render: () => '' };
+   s.loadHistory(1);
+   assert.equal(x.$('#sales_list_rows .rs-pill').text(), 'Cancelled');
+   s.renderSaleDoc(bill);
+   assert.equal(x.$('#sales_doc .p-doc-toolbar .rs-pill').text(), 'Cancelled');
+   assert.equal(x.$('#sales_doc .q-status').text(), 'CANCELLED');
+   assert.equal(x.$('#sales_doc [onclick*="showPayment"]').length, 0);
+   assert.equal(JSON.stringify(bill), before, 'rendering must preserve financial records');
+  } finally { x.close(); }
+ });
+}

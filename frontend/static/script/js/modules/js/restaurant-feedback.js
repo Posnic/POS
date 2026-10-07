@@ -1,4 +1,4 @@
-/* Restaurant-only, opt-in feedback. Effects never own focus or intercept input. */
+/* Restaurant-only feedback, respecting saved preferences. Never intercepts input. */
 (function () {
     'use strict';
     const P = PosnicPro;
@@ -45,44 +45,38 @@
         const panel = document.querySelector('#kot_v2 .kv2-order');
         if (!panel || !panel.getClientRects().length) return;
         clear();
-        const rect = panel.getBoundingClientRect(),
-            el = document.createElement('div');
+        const el = document.createElement('div');
         el.className = 'restaurant-feedback';
         el.setAttribute('aria-hidden', 'true');
-        el.style.left = Math.max(15, Math.min(innerWidth - 310, rect.right - 325)) + 'px';
-        el.style.top = Math.max(70, Math.min(innerHeight - 150, rect.top + 145)) + 'px';
+        // Captain develop f280fcb: kitchen-send-feedback.js and thankyou/placed.css.
+        // Reuse its dish, plane, chef and drawn tick; keep the scene at the POS footer.
         if (kind === 'sent') {
-            el.classList.add('transparent-kitchen');
-            el.innerHTML =
-                '<svg class="free-arrow" viewBox="0 0 32 32"><path d="m3 13 26-10-10 26-4-12-12-4Z"/><path d="M15 17 29 3"/></svg><svg class="free-vessel" viewBox="0 0 64 64"><path d="M14 28h36l-3 23H17Z M9 28h46M22 23h20M32 18v5M14 32H7v9h9M50 32h7v9h-9"/><path class="steam" d="M23 16c-5-5 5-6 0-11M41 16c-5-5 5-6 0-11"/></svg><span class="vessel-ring"></span>' +
-                Array.from(
-                    { length: 7 },
-                    (_, i) => `<i class="kitchen-spark" style="--angle:${i * 51}deg"></i>`,
-                ).join('');
-        } else if (kind === 'payment') {
-            el.classList.add('transparent-gold');
-            el.innerHTML =
-                Array.from(
-                    { length: 7 },
-                    (_, i) =>
-                        `<span class="free-coin" style="--dx:${[-65, -40, -12, 18, 48, 70, 0][i]}px;--dy:${[-44, -85, -110, -100, -74, -30, -60][i]}px;--delay:${i * 35}ms">★</span>`,
-                ).join('') +
-                Array.from(
-                    { length: 10 },
-                    (_, i) => `<i class="gold-spark" style="--angle:${i * 36}deg"></i>`,
-                ).join('');
+            el.classList.add('captain-kitchen');
+            el.innerHTML = '<svg class="kitchen-flight-dish" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 24h24M6 21a10 10 0 0 1 20 0Z M16 8v3m-2-3h4"/></svg><svg class="kitchen-flight-plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="m3 10 18-7-7 18-3-8-8-3Z m8 3L21 3"/></svg>';
+            const tables = new Map((P.kot_v2?.state?.floor || []).filter(row => row.tableorder_value != null).map(row => [String(row.tableorder_value), row]));
+            if (tables.size && [...tables.values()].filter(row => row.status === 'occupied').length / tables.size >= .7) {
+                el.querySelector('.kitchen-flight-plane').remove();
+                el.innerHTML += '<span class="kitchen-chef-runner"><span class="kitchen-chef-person">👨‍🍳</span><span class="kitchen-chef-meal">🍲</span></span><span class="kitchen-chef-finish">👍</span>';
+            }
+        } else if (kind === 'cancelled') {
+            el.classList.add('captain-chef-dismiss');
+            el.innerHTML = '<span class="kitchen-chef-person">👨‍🍳</span>';
+        } else if (kind === 'served' || kind === 'payment') {
+            el.classList.add('captain-confirmation');
+            el.innerHTML = '<svg viewBox="0 0 52 52"><circle class="tick-ring" cx="26" cy="26" r="24" fill="none"/><path class="tick-mark" fill="none" d="M14.5 27l7.5 7.5 15.5-16"/></svg>';
         } else {
-            el.classList.add('small-feedback');
-            if (kind === 'reduce') el.classList.add('reduce');
-            el.textContent = kind === 'reduce' ? '☹' : '♥';
-            if (kind === 'first')
-                el.innerHTML += Array.from(
-                    { length: 6 },
-                    (_, i) => `<i style="--angle:${i * 60}deg"></i>`,
-                ).join('');
+            // Captain's local bill nudge replaces floating hearts and faces.
+            const cart = document.querySelector('#kot_v2 .kv2-round-total strong') || document.querySelector('#kot_v2 .kv2-order>footer strong');
+            cart?.animate?.([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}], {duration:340,easing:'cubic-bezier(.34,1.56,.64,1)'});
+            return;
         }
+        const width = kind === 'sent' ? Math.min(360, innerWidth - 16) : 96;
+        el.style.width = width + 'px';
+        el.style.left = Math.max(8, (innerWidth - width) / 2) + 'px';
+        el.style.top = 'auto';
+        el.style.bottom = 'max(24px, env(safe-area-inset-bottom))';
         document.body.append(el);
-        timer = setTimeout(clear, kind === 'sent' ? 2100 : kind === 'payment' ? 1800 : 950);
+        timer = setTimeout(clear, kind === 'cancelled' ? 1800 : kind === 'sent' ? 2100 : kind === 'payment' ? 1400 : kind === 'served' ? 1200 : 950);
     }
     P.restaurantFeedback = {
         load,

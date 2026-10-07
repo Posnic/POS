@@ -96,6 +96,7 @@ const branchSchema = new Schema(
     sales_sms: { type: Boolean, default: false },
     whatsapp_receipt: { type: Boolean, default: false },
     whatsapp_device_id: { type: String, default: '' },
+    item_stock_default: { type: String, enum: ['always_available', 'track_quantities'] },
     stock_management: { type: Boolean, default: false },
     stock_management_log: { type: Boolean, default: false },
     sale_inline_editor: { type: Boolean, default: false },

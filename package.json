@@ -80,7 +80,7 @@
     "asar": true,
     "asarUnpack": [],
     "npmRebuild": false,
-    "compression": "store",
+    "compression": "normal",
     "directories": {
       "output": "dist",
       "buildResources": "builds"
@@ -118,6 +118,8 @@
       "src/kitchen-screen-feed.js",
       "src/kitchen-screen-fit.js",
       "src/kitchen-screen.html",
+      "api/src/kitchen-board/i18n.js",
+      "api/src/kitchen-board/locales/*.json",
       "src/handset-reachability.js",
       "src/sync-agent-manager.js",
       "src/asset-updater.js",
@@ -355,7 +357,9 @@
           "!**/node_modules/**/Makefile",
           "!**/node_modules/**/*.yml",
           "!**/node_modules/**/*.yaml",
-          "!node_modules/**"
+          "!node_modules/**",
+          "!node_modules.*",
+          "!node_modules.*/**"
         ]
       },
       {
@@ -626,7 +630,7 @@
   "devDependencies": {
     "@electron/asar": "^3.4.1",
     "7zip-bin": "^5.2.0",
-    "electron": "^43.2.0",
+    "electron": "^43.7.8",
     "electron-builder": "^26.15.3",
     "husky": "^9.1.7",
     "icon-gen": "^5.0.0",

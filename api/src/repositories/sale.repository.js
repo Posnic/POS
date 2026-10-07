@@ -8280,6 +8280,7 @@ class SalesRepository {
               items: 1,
               changes: 1,
               kitchen_service: 1,
+              kitchen_actor: 1,
               kitchen_work: 1,
               kitchen_required: 1,
               payment_status: 1,
@@ -8295,7 +8296,35 @@ class SalesRepository {
 
       /* The shape the screen draws, and nothing else. A kitchen screen hangs
          where staff need preparation amounts, but never customer contact details. */
-      const tickets = rows.flatMap(require('../helpers/kitchen-rounds').tickets);
+      const branch = await db
+        .collection('branches')
+        .findOne({ _id: branchObjectId, ...activeTenantFilter() });
+      const tickets = rows.flatMap((sale) =>
+        require('../helpers/kitchen-rounds').tickets(sale, branch?.kitchen_board_settings)
+      );
+
+      const ownerIds = [...new Set(tickets.map((ticket) => ticket.owner))]
+        .filter((id) => /^[a-f0-9]{24}$/i.test(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+      if (ownerIds.length) {
+        const staff = await db
+          .collection('users')
+          .find(
+            { _id: { $in: ownerIds }, ...activeTenantFilter() },
+            { projection: { firstname: 1, lastname: 1, name: 1 } }
+          )
+          .toArray();
+        const names = new Map(
+          staff.map((user) => [
+            String(user._id),
+            [user.firstname, user.lastname].filter(Boolean).join(' ').trim() ||
+              String(user.name || ''),
+          ])
+        );
+        tickets.forEach((ticket) => {
+          ticket.ownerName = ticket.ownerName || names.get(ticket.owner) || '';
+        });
+      }
 
       // Explicit cancellation events only: served or paid dishes must not look cancelled.
       const cancelled = await db
@@ -10542,6 +10571,7 @@ class SalesRepository {
       seenAt,
       editPolicy,
       preparationNote,
+      charges,
       preview = false,
       previewContext,
     } = {}
@@ -10654,6 +10684,28 @@ class SalesRepository {
         .collection('branches')
         .findOne({ _id: orderDoc.branch_id, license: orderDoc.license });
       const monetary = Money.policy(shop || {});
+      if (charges !== undefined && orderDoc.captain_transfer_allocation)
+        throw new Error('Additional charges cannot be changed on a transferred bill.');
+      if (charges !== undefined && preview)
+        throw new Error('Charges cannot be changed in an item preview.');
+      const savedCharges = Array.isArray(orderDoc.charges) ? orderDoc.charges : [];
+      const normalizedCharges =
+        charges === undefined
+          ? savedCharges
+          : [
+              ...savedCharges.filter((c) => c.source === 'outlet'),
+              ...(await require('../services/sale-charges').normalizeSaleCharges(
+                Array.isArray(charges) ? charges.filter((c) => c?.source !== 'outlet') : charges,
+                savedCharges.filter((c) => c.source !== 'outlet'),
+                {
+                  branchSettings: shop || {},
+                  branchId: orderDoc.branch_id,
+                  licenseId: orderDoc.license,
+                }
+              )),
+            ];
+      editFilter.charges = orderDoc.charges === undefined ? { $exists: false } : orderDoc.charges;
+      if (charges !== undefined) audit.charges = { before: savedCharges, after: normalizedCharges };
       const orderSeating =
         orderDoc.seating_request_id || shop?.table_options === true
           ? await require('../services/seating-claims').forEdit(
@@ -11035,9 +11087,17 @@ class SalesRepository {
           if (previousLine) {
             const storedUnit =
               previousLine.unit_price ?? previousLine.item_base_price ?? previousLine.item_price;
+            // Desktop retains the agreed selling price; older clients retain the
+            // tax-exclusive unit. Both are server-owned values on this saved line.
+            // Never compare an inclusive selling price to its exclusive base.
+            const roundStored = (n) => Money.fromMinor(Money.toMinor(n, monetary), monetary);
+            const retainsSellingPrice =
+              previousLine.pricing?.version === 1 &&
+              submittedPrice !== undefined &&
+              roundStored(submittedPrice) === roundStored(previousLine.pricing.selling_price);
             pricingAuthority.assertPrice(
               submittedPrice,
-              Number(storedUnit),
+              Number(retainsSellingPrice ? previousLine.pricing.selling_price : storedUnit),
               (n) => Money.fromMinor(Money.toMinor(n, monetary), monetary),
               previousLine.item_name
             );
@@ -11210,7 +11270,16 @@ class SalesRepository {
       }
       if (extraDiscountAmount > itemsSub) extraDiscountAmount = itemsSub;
 
-      const salesTotal = itemsSub - extraDiscountAmount;
+      const chargeTotal = normalizedCharges.reduce(
+        (sum, charge) => sum + Number(charge.amount || 0),
+        0
+      );
+      const chargeTax = normalizedCharges.reduce(
+        (sum, charge) => sum + Number(charge.tax_amount || 0),
+        0
+      );
+      const salesTotal = itemsSub - extraDiscountAmount + chargeTotal + chargeTax;
+      taxTotal += chargeTax;
       const mongoDate = new Date();
       const note =
         preparationNote === undefined ? orderDoc.preparation_note : String(preparationNote).trim();
@@ -11230,6 +11299,7 @@ class SalesRepository {
 
       const updateFields = {
         items: finalItems,
+        charges: normalizedCharges,
         changes: existingChanges,
         kitchen_required: true,
         floor_lifecycle: true,
