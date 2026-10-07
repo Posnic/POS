@@ -460,7 +460,7 @@
         const s = state.sale;
         if (!s) return emptyOrderHTML();
         const details = s.restaurant_details || {};
-        return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.takeaway_number || s.token_id || '') : 'Table ' + s.table_number)}</h2><small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('split', 'Split payment')}${button('Actions', 'actions', 'aria-haspopup="true" aria-expanded="false" aria-controls="kv2-actions-menu"')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button('Serve all', 'serveAll')}${button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p><p>Discount <b>${esc(money(s.discount || 0))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}<p>${esc(details.preparation_note || 'No kitchen note')}</p>${button('Edit details', 'notes')}</div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
+        return `<section class="kv2-order"><header><div><h2>${esc(s.dine_type === 'Take away' ? 'Takeaway ' + (s.takeaway_number || s.token_id || '') : 'Table ' + s.table_number)}</h2><small>${esc(s.person_count || 0)} guests · ${esc(details.taken_by)} · ${esc(time(s.created_date))}</small></div><div>${iconButton('move', 'Move table')}${iconButton('merge', 'Merge tables')}${iconButton('split', 'Split payment')}${button('Actions', 'actions', 'aria-haspopup="true" aria-expanded="false" aria-controls="kv2-actions-menu"')}</div></header><div class="kv2-customer">Customer <strong>${esc(s.customer_name || 'Walk-in customer')}</strong> ${esc(s.customer_phone || '')}${button('Choose customer', 'customer')}</div><nav>${button('Order', 'tab', `data-value="order" class="kv2-tab ${state.tab === 'order' ? 'active' : ''}"`)}${button('Activity', 'tab', `data-value="activity" class="kv2-tab ${state.tab === 'activity' ? 'active' : ''}"`)}${button(state.pending ? 'Pending only ✓' : 'Pending only', 'pending')}${button('Serve all', 'serveAll')}${button('＋ Add items', 'add', 'class="primary"')}</nav><div class="kv2-lines">${state.tab === 'activity' ? (details.events || []).map((e) => `<article><strong>${esc(e.kind)}</strong> · ${esc(time(e.at))} · ${esc(e.actor)}<p>${esc((e.items || []).map((l) => l.quantity + ' × ' + l.name).join(', '))}</p></article>`).join('') : roundHTML(s)}</div><details class="kv2-breakdown"><summary>Bill breakdown & kitchen note</summary><div class="kv2-bill-content"><div class="kv2-bill-summary"><p>Subtotal <b>${esc(money(s.sales_sub_total || s.subtotal || 0))}</b></p><p>Tax <b>${esc(money(s.tax || 0))}</b></p>${taxBreakdown(s)}${(s.charges || []).map(c => `<p><span>${esc(c.name)}</span><b>${esc(money(c.amount))}</b></p>`).join('')}<p>Discount <b>${esc(money(Number(s.discount || 0) + Number(s.sale_extra_discount || 0)))}</b></p>${Number(s.round_off || s.sales_round_off) ? `<p>Rounding <b>${esc(money(s.round_off || s.sales_round_off))}</b></p>` : ''}</div><div class="kv2-bill-notes"><p>${esc(details.preparation_note || 'No kitchen note')}</p><div class="kv2-bill-actions">${button('Additional charges', 'charges')}${button('Edit details', 'notes')}</div></div></div></details><footer><div><small><lang class="lang_total_title">Total</lang></small><strong>${esc(money(s.sales_total))}</strong></div>${button('Discount', 'discount')}${button('Print bill', 'printBill')}${button('Print KOT', 'printKOT')}${button('Take payment', 'pay', 'class="primary"')}</footer></section>`;
     }
     function catalogueHTML() {
         return state.catalogue.map((item, i) => {
@@ -972,6 +972,69 @@
             'Save changes',
         );
     }
+    function taxBreakdown(sale) {
+        const groups = new Map();
+        for (const line of sale.items || []) {
+            const amount = Number(line.tax_amount ?? line.item_tax ?? 0);
+            if (!Number.isFinite(amount) || !amount) continue;
+            const rate = Number(line.tax_rate ?? line.tax ?? line.item_tax_rate);
+            const fields = (Array.isArray(line.tax_fields) ? line.tax_fields : []).map(t => ({name:String(t.tax_name || ''),rate:Number(t.tax_value ?? t.tax)})).filter(t => t.name && Number.isFinite(t.rate) && t.rate > 0);
+            const totalRate = fields.reduce((sum, t) => sum + t.rate, 0);
+            if (fields.length > 1 && Number.isFinite(rate) && Math.abs(totalRate - rate) < .001) {
+                let allocated = 0;
+                fields.forEach((t, i) => {
+                    const part = i === fields.length - 1 ? amount - allocated : Math.round(amount * t.rate / totalRate * 100) / 100;
+                    allocated += part;
+                    const label = t.name + ' (' + t.rate + '%)';
+                    groups.set(label, (groups.get(label) || 0) + part);
+                });
+                continue;
+            }
+            const name = String(line.tax_name || 'Tax') + (Number.isFinite(rate) && rate > 0 ? ' (' + rate + '%)' : '');
+            groups.set(name, (groups.get(name) || 0) + amount);
+        }
+        for (const charge of sale.charges || []) {
+            if (Number(charge.tax_amount) > 0) {
+                const name = String(charge.tax_name || 'Tax') + ' · ' + charge.name;
+                groups.set(name, (groups.get(name) || 0) + Number(charge.tax_amount));
+            }
+        }
+        return [...groups].map(([name, amount]) => `<p class="kv2-tax-detail"><span>${esc(name)}</span><b>${esc(money(amount))}</b></p>`).join('');
+    }
+    async function charges() {
+        const sale = state.sale;
+        let enabled = false;
+        try { enabled = JSON.parse(P.local.get('general_settings') || '{}').custom_charges_enable === true; } catch (_) {}
+        if (!enabled && !(sale.charges || []).length) throw new Error('Enable Custom charges in Settings to add charges to this bill.');
+        if (sale.captain_transfer_allocation) throw new Error('Additional charges cannot be changed on a transferred bill.');
+        const list = (sale.charges || []).filter(c => c.source !== 'outlet').map(c => ({...c}));
+        const taxes = await api('get', 'setting/getTaxAjaxList', {query: ''});
+        const defaultTax = (taxes.suggestions || []).find(t => String(t.tax_id) === String(P.local.get('default_tax_id')));
+        const rate = Number(defaultTax?.tax_value) || 0;
+        const row = (charge = {}) => `<div class="kv2-charge-row"><label>Charge name<input name="charge-name" maxlength="60" required value="${esc(charge.name || '')}"></label><label>Amount<input name="charge-amount" type="number" min="0.01" step="0.01" required value="${esc(charge.amount || '')}"></label><label>Tax<select name="charge-tax"><option value="no" data-t="lang_no_tax">No tax</option>${rate > 0 || charge.taxed ? `<option value="yes" ${charge.taxed ? 'selected' : ''}>${esc(defaultTax?.tax_name || charge.tax_name || 'Tax')}${rate > 0 ? ' (' + rate + '%)' : ''}</option>` : ''}</select></label><button type="button" data-remove-charge><lang class="lang_remove">Remove</lang></button></div>`;
+        const d = dialog('Additional charges', `<div class="kv2-charge-list">${list.map(row).join('')}</div><button type="button" data-add-charge><lang class="lang_add_charge">Add charge</lang></button>`, async (_, modal) => {
+            const values = [...modal.querySelectorAll('.kv2-charge-row')].map(el => {
+                const name = el.querySelector('[name=charge-name]').value.trim();
+                const amount = Number(el.querySelector('[name=charge-amount]').value);
+                const taxed = el.querySelector('[name=charge-tax]').value === 'yes';
+                const previous = list.find(c => c.name === name && Number(c.amount) === amount && c.taxed === taxed);
+                if (previous) return previous;
+                if (taxed && !rate) throw new Error('Configure a default tax before taxing additional charges.');
+                return {name,amount,taxed,tax_name:taxed ? defaultTax.tax_name : '',tax_amount:taxed ? Math.round(amount * rate) / 100 : 0,source:'manual'};
+            });
+            await api('post', 'sales/updateOrder', {...P.kotWorkspace.editPayload(sale, sale.items.map(l => P.kot.editLine(l))),charges:values});
+            await refresh();
+        }, 'Save', sale);
+        const add = () => {
+            if (d.querySelectorAll('.kv2-charge-row').length >= 20) return;
+            d.querySelector('.kv2-charge-list').insertAdjacentHTML('beforeend', row());
+            d.querySelector('.kv2-charge-row:last-child input').focus();
+        };
+        d.querySelector('footer [data-close]').textContent = P.i18n.t('lang_close_title', 'Close');
+        d.querySelector('[data-add-charge]').onclick = add;
+        d.addEventListener('click', e => e.target.closest('[data-remove-charge]')?.closest('.kv2-charge-row')?.remove());
+        if (!list.length) add();
+    }
     function discount() {
         const s = state.sale;
         const discountType = Number(s.extra_discount) > 0 ? (s.extra_discount_type || 'amount') : 'percent';
@@ -1205,6 +1268,7 @@
             else if (a === 'move' || a === 'merge') await P.kotWorkspace.move(s._id, a === 'merge');
             else if (a === 'transfer') await P.kotWorkspace.transfer(s._id);
             else if (a === 'discount') discount();
+            else if (a === 'charges') await charges();
             else if (a === 'printBill') P.kot.printKOTReceipt(s._id);
             else if (a === 'printKOT') P.kot.printKOTSlip(s._id);
             else if (a === 'pay') {

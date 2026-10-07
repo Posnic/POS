@@ -10542,6 +10542,7 @@ class SalesRepository {
       seenAt,
       editPolicy,
       preparationNote,
+      charges,
       preview = false,
       previewContext,
     } = {}
@@ -10654,6 +10655,28 @@ class SalesRepository {
         .collection('branches')
         .findOne({ _id: orderDoc.branch_id, license: orderDoc.license });
       const monetary = Money.policy(shop || {});
+      if (charges !== undefined && orderDoc.captain_transfer_allocation)
+        throw new Error('Additional charges cannot be changed on a transferred bill.');
+      if (charges !== undefined && preview)
+        throw new Error('Charges cannot be changed in an item preview.');
+      const savedCharges = Array.isArray(orderDoc.charges) ? orderDoc.charges : [];
+      const normalizedCharges =
+        charges === undefined
+          ? savedCharges
+          : [
+              ...savedCharges.filter((c) => c.source === 'outlet'),
+              ...(await require('../services/sale-charges').normalizeSaleCharges(
+                Array.isArray(charges) ? charges.filter((c) => c?.source !== 'outlet') : charges,
+                savedCharges.filter((c) => c.source !== 'outlet'),
+                {
+                  branchSettings: shop || {},
+                  branchId: orderDoc.branch_id,
+                  licenseId: orderDoc.license,
+                }
+              )),
+            ];
+      editFilter.charges = orderDoc.charges === undefined ? { $exists: false } : orderDoc.charges;
+      if (charges !== undefined) audit.charges = { before: savedCharges, after: normalizedCharges };
       const orderSeating =
         orderDoc.seating_request_id || shop?.table_options === true
           ? await require('../services/seating-claims').forEdit(
@@ -11218,7 +11241,16 @@ class SalesRepository {
       }
       if (extraDiscountAmount > itemsSub) extraDiscountAmount = itemsSub;
 
-      const salesTotal = itemsSub - extraDiscountAmount;
+      const chargeTotal = normalizedCharges.reduce(
+        (sum, charge) => sum + Number(charge.amount || 0),
+        0
+      );
+      const chargeTax = normalizedCharges.reduce(
+        (sum, charge) => sum + Number(charge.tax_amount || 0),
+        0
+      );
+      const salesTotal = itemsSub - extraDiscountAmount + chargeTotal + chargeTax;
+      taxTotal += chargeTax;
       const mongoDate = new Date();
       const note =
         preparationNote === undefined ? orderDoc.preparation_note : String(preparationNote).trim();
@@ -11238,6 +11270,7 @@ class SalesRepository {
 
       const updateFields = {
         items: finalItems,
+        charges: normalizedCharges,
         changes: existingChanges,
         kitchen_required: true,
         floor_lifecycle: true,

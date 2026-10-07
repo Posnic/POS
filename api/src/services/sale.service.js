@@ -4351,7 +4351,7 @@ module.exports = {
     newTableNo,
     dineType,
     personCount,
-    { SaleModel, newTableId, seenAt, editPolicy, preparationNote } = {}
+    { SaleModel, newTableId, seenAt, editPolicy, preparationNote, charges } = {}
   ) =>
     salesRepository.updateOrderModel(
       orderId,
@@ -4370,6 +4370,7 @@ module.exports = {
         seenAt,
         editPolicy,
         preparationNote,
+        charges,
       }
     ),
   getFrequentItemsForBranch: async (branchId, limit, { SaleModel } = {}) =>

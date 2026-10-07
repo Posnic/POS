@@ -7839,7 +7839,14 @@ class SalesController extends BaseController {
         newTableNo,
         dineType,
         personCount,
-        { SaleModel, newTableId, seenAt, editPolicy, preparationNote: req.body.preparation_note }
+        {
+          SaleModel,
+          newTableId,
+          seenAt,
+          editPolicy,
+          preparationNote: req.body.preparation_note,
+          charges: req.body.charges,
+        }
       );
 
       if (response.status === true) {

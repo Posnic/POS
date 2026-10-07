@@ -299,3 +299,18 @@
 @keyframes captain-step{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-7px) rotate(5deg)}}
 @keyframes captain-cheer{0%,68%{opacity:0;transform:scale(.4)}78%,90%{opacity:1;transform:scale(1.1)}100%{opacity:0;transform:translateY(-8px) scale(1)}}
 @keyframes captain-dismiss{0%{opacity:0;transform:translateX(16px)}20%,65%{opacity:.8}100%{opacity:0;transform:translateX(-24px)}}
+
+#kot_v2 .kv2-breakdown{font-size:16px}
+#kot_v2 .kv2-breakdown p>b{font-size:18px}
+#kot_v2 .kv2-tax-detail{padding-left:14px;border-left:2px solid var(--theme-border-color,#e0e7ef);font-size:14px}
+#kot_v2 .kv2-tax-detail>b{font-size:16px}
+.kv2-bill-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.kv2-charge-row{display:grid;grid-template-columns:minmax(100px,1fr) 110px 140px auto;align-items:end;gap:10px;border-bottom:1px solid var(--theme-border-color,#e0e7ef);padding:12px 0}
+.kv2-charge-row label{margin:0;font-size:13px}.kv2-charge-row input,.kv2-charge-row select{margin-top:6px}
+@media(max-width:600px){.kv2-charge-row{grid-template-columns:1fr 110px}.kv2-charge-row button{align-self:end}}
+
+#kot_v2 .kv2-order>.kv2-breakdown{max-height:32vh}
+#kot_v2 .kv2-breakdown p{margin:6px 0;line-height:1.35}
+#kot_v2 .kv2-breakdown>.kv2-bill-content{max-width:none;display:grid;grid-template-columns:minmax(150px,1fr) minmax(240px,360px);gap:24px;margin:0}
+.kv2-bill-summary{grid-column:2;grid-row:1}.kv2-bill-notes{grid-column:1;grid-row:1}
+@media(max-width:850px){#kot_v2 .kv2-breakdown>.kv2-bill-content{grid-template-columns:1fr;gap:8px}.kv2-bill-summary,.kv2-bill-notes{grid-column:1;grid-row:auto}}
