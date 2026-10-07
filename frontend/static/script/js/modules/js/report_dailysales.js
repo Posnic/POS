@@ -1,5 +1,19 @@
 PosnicPro.quickreport = {
   meal: 'full',
+  chooseRange: function (preset) {
+    var zone = PosnicPro.timeZone();
+    var start = moment.tz ? moment.tz(zone) : moment();
+    if (preset === 'yesterday') start.subtract(1, 'day');
+    if (preset === 'last-month') start.subtract(1, 'month');
+    var monthly = preset === 'month' || preset === 'last-month';
+    var end = start.clone().endOf(monthly ? 'month' : 'day');
+    start.startOf(monthly ? 'month' : 'day');
+    var field = $('#view_dailysale_report_daterange'), picker = field.data('daterangepicker');
+    if (picker) { picker.setStartDate(start); picker.setEndDate(end); }
+    var text = start.format('YYYY/MM/DD h:mm A') + ' - ' + end.format('YYYY/MM/DD h:mm A');
+    field.val(text).find('span').first().text(text);
+    this.salereportTable(monthly ? 'Monthly' : 'Daily');
+  },
   periodParams: function () {
     var meal = this.meal || 'full';
 
@@ -12,25 +26,24 @@ PosnicPro.quickreport = {
     }
     return { start_time: times[0], end_time: times[1] };
   },
-  renderPeriods: function (branch) {
-    var enabled = branch.restaurant_enabled === true;
-    $('#daily-meal-filter').toggle(enabled);
-    if (!enabled) { this.meal = 'full'; return; }
-    var host = $('#daily-serving-periods').empty();
-    $('#daily-meal-help').text((branch.serving_periods || []).length
-      ? PosnicPro.i18n.t('lang_sessions_use_settings_restaurant_serving_p', 'Sessions use Settings → Restaurant → Serving periods, in the shop’s local time on each selected date. An end time earlier than the start continues into the next day.')
-      : PosnicPro.i18n.t('lang_no_dayparts_yet', 'No serving periods yet. Add breakfast, lunch or dinner in Settings, Restaurant, and they will appear here.'));
-    var clock = function (n) { return ('0' + Math.floor(n / 60)).slice(-2) + ':' + ('0' + (n % 60)).slice(-2); };
-    (branch.serving_periods || []).forEach(function (part) {
-      var days = part.hours ? Object.keys(part.hours).map(function (k) { return part.hours[k].map(function (w) { return clock(w.open) + '–' + clock(w.close); }).join(', '); }) : [];
-      var subtitle = !part.hours ? 'Set times in Restaurant' : days.every(function (v) { return v === days[0]; }) ? days[0] : 'Times vary by day';
-      var button = $('<button>', { type: 'button', 'class': 'meal-button', 'data-meal': 'period:' + part.id, 'aria-pressed': PosnicPro.quickreport.meal === 'period:' + part.id ? 'true' : 'false', disabled: !part.hours });
-      button.text(part.name).append($('<small>').text(subtitle)).appendTo(host);
+  loadPeriods: function (ready) {
+    PosnicPro.mountServingPeriodFilter({ host: '#daily-meal-filter', select: '#daily-serving-period', hint: '#daily-period-hint',
+      branch: $('#dailysale_branch_value').val(), custom: true,
+      change: function (value) { PosnicPro.quickreport.chooseMeal(value === '__custom' ? 'custom' : value ? 'period:' + value : 'full'); },
+      ready: function (value) {
+        PosnicPro.quickreport.meal = value === '__custom' ? 'custom' : value ? 'period:' + value : 'full';
+        $('#daily-meal-custom').toggle(value === '__custom');
+        if (ready) ready();
+      }
     });
+  },
+  renderPeriods: function (branch) {
+    $('#daily-meal-filter').toggle(branch.restaurant_enabled === true);
+    if (!branch.restaurant_enabled) this.meal = 'full';
   },
   chooseMeal: function (meal) {
     this.meal = meal;
-    $('#dailyreport_new [data-meal]').each(function () { $(this).attr('aria-pressed', $(this).attr('data-meal') === meal ? 'true' : 'false'); });
+    $('#daily-serving-period').val(meal === 'full' ? '' : meal === 'custom' ? '__custom' : meal.replace(/^period:/, ''));
     $('#daily-meal-custom').toggle(meal === 'custom');
     if (meal === 'custom') { $('#daily-meal-from').trigger('focus'); $('#daily-meal-status').text(PosnicPro.i18n.t('lang_choose_your_hours_then_apply_the_report_be', 'Choose your hours, then apply. The report below keeps its last applied period.')); }
     else this.salereportTable('VIEW');
@@ -47,7 +60,7 @@ PosnicPro.quickreport = {
     $("#v-pills-report-tab,#viewdailyreport_page").addClass("active");
     $(".custom-daily-sale-nav-menu").addClass("active");
     $("#v-pills-report").addClass("show active");
-    PosnicPro.quickreport.salereportTable("Daily");
+    PosnicPro.quickreport.loadPeriods(function () { PosnicPro.quickreport.salereportTable("Daily"); });
     if (PosnicPro.local.get("userplan") === "free") {
       $("#dailysale-view-line").css("filter", "blur(2px)");
       $("#export_daily_report, .blur_val").attr("disabled", true).css({
@@ -389,6 +402,20 @@ PosnicPro.quickreport = {
             return { name: row[0], qty: safeNum(row[2]), total: safeNum(row[6]) };
           }),
         };
+
+        var summaryCash = 0, summaryCard = 0;
+        PosnicPro.quickreport.lastReport.payments.forEach(function (payment) {
+          if (/^cash$/i.test(payment.label)) summaryCash += payment.amount;
+          if (/^card$/i.test(payment.label)) summaryCard += payment.amount;
+        });
+        var summary = $('#daily-payment-summary').empty().addClass('d-flex flex-wrap');
+        summary.css('gap', '16px');
+        [['Cash received', summaryCash], ['Card received', summaryCard], ['Total payments received', tenderTotal]].forEach(function (entry) {
+          var card = $('<div class="card p-3 mb-1">');
+          $('<span>').text(entry[0]).appendTo(card);
+          $('<strong class="h4 mb-0">').text((PosnicPro.local.get('currencySign') || '') + safeNum(entry[1]).toFixed(2)).appendTo(card);
+          summary.append(card);
+        });
 
         // The PDF's Summary section - the on-screen stat cards are divs the
         // exporter cannot gather, so the numbers ride this hidden table.
@@ -1183,14 +1210,11 @@ $(".to_email_form").submit(function (event) {
   }
 });
 
-$(document).on('click', '#dailyreport_new [data-meal]', function () {
-  PosnicPro.quickreport.chooseMeal($(this).attr('data-meal'));
-});
 $(document).on('click', '#daily-meal-apply', function () { PosnicPro.quickreport.salereportTable('VIEW'); });
 
 $(document).on('change', '#dailysale_branch_value', function () {
   PosnicPro.quickreport.meal = 'full';
-  $('#daily-meal-filter, #daily-meal-custom').hide();
-  $('#dailyreport_new [data-meal]').attr('aria-pressed', 'false');
-  $('#dailyreport_new [data-meal="full"]').attr('aria-pressed', 'true');
+  $('#daily-meal-custom').hide();
+  PosnicPro.quickreport.loadPeriods();
+  $('#daily-serving-period').val('');
 });

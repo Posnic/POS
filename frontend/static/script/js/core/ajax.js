@@ -80,9 +80,7 @@ PosnicPro.request = function (params, callback, failure = null) {
     {
         // JWT Token support for Electron cross-origin requests
         var headers = {};
-        if (/^[a-zA-Z0-9:_-]{16,160}$/.test(params.idempotencyKey || '')) {
-            headers['Idempotency-Key'] = params.idempotencyKey;
-        }
+        if (typeof params.idempotencyKey === 'string' && /^[a-zA-Z0-9:_-]{16,160}$/.test(params.idempotencyKey)) headers['Idempotency-Key'] = params.idempotencyKey;
         var activeBranch = PosnicPro.local && PosnicPro.local.get('branch_id_set');
         if (activeBranch && params.url !== 'users/changeBranch') headers['X-Branch-Id'] = activeBranch;
         if (typeof billingWindowId !== 'undefined' && billingWindowId && params.url === 'users/changeBranch') {

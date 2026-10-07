@@ -118,6 +118,7 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
           displayName: item.displayName || item.id,
           version: item.version,
           ...(item.menu === 'sales' ? { menu: 'sales' } : {}),
+          salesWorkspace: item.salesWorkspace === true,
           enabled: !disabled.has(item.id),
           installed: !removed.has(item.id),
         }));

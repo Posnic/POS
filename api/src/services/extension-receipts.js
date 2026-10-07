@@ -35,8 +35,8 @@ async function readReceipt({ db, scope, descriptor, actor, request }) {
     return { kind: 'paid', saleId: String(sale._id) };
   }
   if (
-    result?.kind !== 'pending' ||
-    !/^[a-f\d]{64}$/.test(result.stockOperationId || '') ||
+    !['pending', 'held'].includes(result?.kind) ||
+    (result.kind === 'pending' && !/^[a-f\d]{64}$/.test(result.stockOperationId || '')) ||
     !Array.isArray(result.lines) ||
     !result.lines.length ||
     result.lines.length > 200 ||
@@ -47,6 +47,12 @@ async function readReceipt({ db, scope, descriptor, actor, request }) {
     !Number.isFinite(Date.parse(result.createdAt))
   )
     fail('extension_receipt_invalid');
+  let available;
+  if (result.kind === 'held') {
+    // A verified read-only projection of the scoped namespace. No stock
+    // movement or sale is required or created for an unpaid basket slip.
+    available = Object.fromEntries(result.lines.map(line => [line.productId, line.quantityMilli]));
+  } else {
   const movement = await db.collection('extension_stock_commands').findOne({
     _id: result.stockOperationId,
     license: scope.license,
@@ -55,7 +61,7 @@ async function readReceipt({ db, scope, descriptor, actor, request }) {
     phase: 'committed',
   });
   if (!movement || movement.lifecycle) fail('extension_receipt_unavailable', 404);
-  const available = {
+  available = {
     ...(movement.remaining ||
       Object.fromEntries(movement.lines.map((line) => [line.itemId, line.quantityMilli]))),
   };
@@ -74,6 +80,7 @@ async function readReceipt({ db, scope, descriptor, actor, request }) {
     if (payment)
       for (const line of allocation.lines)
         available[line.itemId] = (available[line.itemId] || 0) + line.quantityMilli;
+  }
   }
   const selected = new Map();
   let value = 0n;

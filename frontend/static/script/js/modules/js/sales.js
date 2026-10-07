@@ -455,23 +455,7 @@
         loader.find(".loadingSpinner:first").remove();
     },
     showSalesHoldPage: function (id) {
-        var params = {
-            url: 'sales/getSaleQtyDetail',
-            data: { sale_id: id }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                PosnicPro.sales.view.showSalesEditPage(id);
-            } else {
-                hasher.changed.active = false; //disable changed signal
-                hasher.replaceHash('sales');
-                hasher.changed.active = true; //enable changed signal
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+        PosnicPro.sales.view.showSalesEditPage(id);
     },
     /* #/sales/<id>: the invoice opens in the right pane - never a popup. */
     showDetails: function (id) {
@@ -1082,7 +1066,7 @@
         if (!params) { return false; }
         if (params._priceAsked) { return false; }
         if (PosnicPro.sales.SaleAction === 'return') { return false; }
-        if (params.open_price === true || params.open_price === 'true') { return true; }
+        if (params.open_price === true || params.open_price === 'true') { return !(PosnicPro.saleExtensions && PosnicPro.saleExtensions.active() && Number(params.selling_price) > 0); }
         return !(Number(params.selling_price) > 0);
     },
     askTodaysPrice: function (params) {
@@ -3934,6 +3918,7 @@ PosnicPro.sales.guardDiscountApproval = function (params, proceed, checkedPendin
 PosnicPro.sales.addSale = {
     /*Save Sales Order*/
     cartOrderSubmit: function (payment) {
+        if (PosnicPro.saleExtensions && PosnicPro.saleExtensions.active() && !PosnicPro.sales.paymentOnlyMode && PosnicPro.sales.saleProcess !== 'KOT') { PosnicPro.saleExtensions.open(String($('#payment_id .payment_mode:checked').attr('id') || 'Cash').toLowerCase() === 'card' ? 'card' : 'cash'); return false; }
         // // ✅ Prevent duplicate submissions
         // if (PosnicPro.sales.submissionInProgress || $("#save_btn").prop('disabled') || $("#save_submit").hasClass('disabled')) {
         //     console.log('⚠️ Submission already in progress');

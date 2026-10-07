@@ -210,6 +210,7 @@
     };
   }
   PosnicPro.extensions = {
+    closeEmbedded: close,
     refreshMenu: async function () {
       var menuRun = ++menuGeneration;
       var branch = String(PosnicPro.local.get('branch_id_set') || '');
@@ -219,6 +220,7 @@
         var data = await request('');
         if (menuRun !== menuGeneration || branch !== String(PosnicPro.local.get('branch_id_set') || '')) return;
         document.querySelectorAll('[data-extension-menu]').forEach(function (node) { node.remove(); });
+        if (PosnicPro.saleExtensions) PosnicPro.saleExtensions.configure(data.extensions);
         var anchor = document.getElementById('view_touchsales_page');
         if (!anchor) return;
         data.extensions.filter(function (item) { return item.enabled !== false && item.menu === 'sales'; }).forEach(function (item) {
@@ -426,9 +428,10 @@
         if (run === generation) status(error.message);
       }
     },
-    showDetails: async function (id) {
+    showDetails: async function (id, embedded) {
       PosnicPro.extensions.refreshMenu();
-      var run = show("Extension");
+      var run;
+      if (embedded) { close(); run = generation; } else run = show("Extension");
       if (!/^[a-z][a-z0-9.-]{2,99}$/.test(id)) {
         status("Invalid extension.");
         return;
@@ -443,6 +446,7 @@
           branch !== String(PosnicPro.local.get("branch_id_set") || "")
         )
           return result;
+        if (embedded && embedded.onCommand) embedded.onCommand(result);
         var drawer = window.electronAPI && window.electronAPI.cashDrawer;
         if (!drawer || !Array.isArray(result.hostActions)) return result;
         try {
@@ -492,7 +496,7 @@
           data.displayName;
         status("");
         mounted = PosnicExtensionFrame.mount({
-          container: document.getElementById("extensions_content"),
+          container: embedded ? embedded.container : document.getElementById("extensions_content"),
           extensionId: id,
           title: data.displayName,
           view: data.view,
@@ -509,7 +513,7 @@
                 request(base + "/capabilities"),
                 request(base + "/state"),
               ]).then(function (values) {
-                return { capabilities: values[0], namespace: values[1] };
+                return { capabilities: values[0], namespace: values[1], salesWorkspace: embedded ? embedded.workspace : null };
               });
             if (method === "state") return request(base + "/state");
             if (method === "sales")
@@ -531,7 +535,8 @@
                   "&after=" +
                   encodeURIComponent(input.after || ""),
               );
-            if (method === "command")
+            if (method === "command") {
+              if (embedded && embedded.onBusy) embedded.onBusy(true);
               return request(
                 base + "/commands",
                 {
@@ -539,7 +544,8 @@
                   command: input.command,
                 },
                 input.requestKey,
-              ).then(afterCommand);
+              ).then(function(result){if(embedded && embedded.onBusy) embedded.onBusy(false);return afterCommand(result);},function(error){if(embedded && embedded.onBusy) embedded.onBusy(!error.code || error.code === 'EXTENSION_CONNECTION_FAILED');throw error;});
+            }
             if (method === "recover")
               return request(base + "/recover", {}).then(afterCommand);
             if (method === "receipt")
@@ -599,7 +605,7 @@
           },
         });
       } catch (error) {
-        if (run === generation) status(error.message);
+        if (run === generation) { if (embedded) embedded.container.textContent = error.message; else status(error.message); }
       }
     },
   };

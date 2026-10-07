@@ -83,7 +83,8 @@ async function preparePayment(context, input) {
   const lines = input.lines.map((line) => {
     if (!Number.isSafeInteger(line.quantityMilli) || line.quantityMilli <= 0)
       fail('extension_payment_quantity_invalid');
-    return { itemId: String(oid(line.itemId)), quantityMilli: line.quantityMilli };
+    if (line.sellingPrice !== undefined && (typeof line.sellingPrice !== 'number' || !Number.isFinite(line.sellingPrice) || line.sellingPrice < 0)) fail('extension_payment_price_invalid');
+    return { itemId: String(oid(line.itemId)), quantityMilli: line.quantityMilli, ...(line.sellingPrice !== undefined ? { sellingPrice: line.sellingPrice } : {}) };
   });
   if (new Set(lines.map((line) => line.itemId)).size !== lines.length)
     fail('extension_payment_duplicate_item');
@@ -132,6 +133,7 @@ async function preparePayment(context, input) {
       items: lines.map((line) => ({
         item_id: line.itemId,
         item_quantity: line.quantityMilli / 1000,
+        ...(line.sellingPrice !== undefined ? { sale_inline_item_price: line.sellingPrice } : {}),
       })),
     };
     const preview = await require('./sale.service').previewSale(payload, ctx);

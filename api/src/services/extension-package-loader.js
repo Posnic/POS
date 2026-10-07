@@ -97,6 +97,7 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
     contextNeeds: metadata.contextNeeds || {},
     permissionModule: 'extensions',
     menu: metadata.contributes?.menu === 'sales' ? 'sales' : null,
+    salesWorkspace: metadata.contributes?.salesWorkspace === true,
     requiredCapabilities: metadata.requiredCapabilities,
     displayName:
       typeof metadata.displayName === 'string' ? metadata.displayName.slice(0, 100) : metadata.id,
