@@ -7192,3 +7192,24 @@ PosnicPro.mountServingPeriodFilter = function (options) {
         if (event.buttons) pointerEntry = null;
     }, true);
 })();
+
+// Immediate acknowledgement of a press, independent of later server success.
+(function installPressFeedback() {
+    var effects = new WeakMap();
+    function show(event) {
+        if (event.type === 'pointerdown' && event.button !== 0) return;
+        if (event.type === 'keydown' && (event.repeat || !['Enter', ' '].includes(event.key))) return;
+        var control = event.target.closest && event.target.closest('button, a[href], [role="button"], [role="menuitem"], input[type="button"], input[type="submit"]');
+        if (!control || control.disabled || control.closest('[aria-disabled="true"], [inert]') ||
+            event.target.closest('input:not([type="button"]):not([type="submit"]), textarea, select, [contenteditable="true"]')) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !control.animate) return;
+        var previous = effects.get(control);
+        if (previous) previous.cancel();
+        effects.set(control, control.animate([
+            { boxShadow: 'inset 0 0 0 2px rgba(164,193,231,.65), 0 0 0 0 rgba(164,193,231,.3)' },
+            { boxShadow: 'inset 0 0 0 1px rgba(164,193,231,.15), 0 0 0 5px rgba(164,193,231,0)' }
+        ], { duration: 320, easing: 'ease-out' }));
+    }
+    document.addEventListener('pointerdown', show, true);
+    document.addEventListener('keydown', show, true);
+})();
