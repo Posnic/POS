@@ -82,6 +82,11 @@ async function readReceipt({ db, scope, descriptor, actor, request }) {
         available[line.itemId] = (available[line.itemId] || 0) + line.quantityMilli;
   }
   }
+  const lineMinor = line => {
+    const precise = line.priceSubminor ?? line.priceMinor * 1000000;
+    if (!Number.isSafeInteger(precise) || precise < 0) fail('extension_receipt_invalid');
+    return (BigInt(line.quantityMilli) * BigInt(precise) + 500000000n) / 1000000000n;
+  };
   const selected = new Map();
   let value = 0n;
   for (const line of result.lines) {
@@ -96,7 +101,7 @@ async function readReceipt({ db, scope, descriptor, actor, request }) {
     )
       fail('extension_receipt_invalid');
     selected.set(line.productId, (selected.get(line.productId) || 0) + line.quantityMilli);
-    value += (BigInt(line.quantityMilli) * BigInt(line.priceMinor) + 500n) / 1000n;
+    value += lineMinor(line);
   }
   for (const [id, quantity] of selected)
     if (!Number.isSafeInteger(quantity) || quantity > (available[id] || 0))
@@ -113,7 +118,7 @@ async function readReceipt({ db, scope, descriptor, actor, request }) {
     item_quantity: line.quantityMilli / 1000,
     item_price: Money.fromMinor(line.priceMinor, currency),
     total_amount: Money.fromMinor(
-      Number((BigInt(line.quantityMilli) * BigInt(line.priceMinor) + 500n) / 1000n),
+      Number(lineMinor(line)),
       currency
     ),
   }));

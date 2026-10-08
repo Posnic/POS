@@ -181,6 +181,8 @@ function calculate(pricing, quantity, branch = {}, discountAmount = 0, discountP
     quantity: qty,
     item_quantity: qty,
     total,
+    // Extensions may defer currency rounding until the full quantity is known.
+    totalSubminor: Math.round(result.total * monetary.factor * 1000000),
     item_total: total,
     total_amount: total,
     tax: pricing.tax,

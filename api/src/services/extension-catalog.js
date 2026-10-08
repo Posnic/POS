@@ -24,6 +24,8 @@ function productSnapshot(product, branch, scope, submitted) {
     description: product.name || product.item_name,
     barcode: String(product.barcode_id || product.itemid || ''),
     priceMinor: Money.toMinor(unit.total, branch),
+    // Retain sub-penny tax precision until the complete quantity is valued.
+    priceSubminor: unit.totalSubminor,
     sellingPrice: snapshot.selling_price,
     stockMilli: stock.availableMilli,
     allowNegativeStock: product.negative_stock === true,

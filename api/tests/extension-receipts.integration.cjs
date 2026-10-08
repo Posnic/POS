@@ -116,3 +116,17 @@ test('paid receipt requires an existing paid core sale owned by this extension a
   assert.deepEqual(await readReceipt(f.input), { kind: 'paid', saleId: String(saleId) });
   await db.collection('extension_stock_commands').deleteMany({});
 });
+
+
+test('pending receipt rounds VAT at line quantity, retaining sub-penny unit precision', async () => {
+ const f=await fixture();
+ f.result.lines[0].quantityMilli=2000;
+ f.result.lines[0].priceMinor=130;
+ f.result.lines[0].priceSubminor=129600000;
+ f.result.valueMinor=259;
+ const printed=await readReceipt(f.input);
+ assert.equal(printed.document.items_total,2.59);
+ f.result.valueMinor=260;
+ await assert.rejects(readReceipt(f.input),{code:'extension_receipt_total_invalid'});
+ await db.collection('extension_stock_commands').deleteMany({});
+});

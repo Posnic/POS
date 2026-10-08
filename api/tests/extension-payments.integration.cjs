@@ -564,3 +564,14 @@ test('fractional quantity and exclusive tax use the same core payable for quote 
     1.2
   );
 });
+
+
+test('extension catalogue preserves exclusive VAT precision for held quantities', async () => {
+ const f=await fixture();
+ await db.collection('items').updateOne({_id:f.item._id},{$set:{selling_price:1.08,tax:20,tax_type:'exclusive'}});
+ const {prepareContext}=require('../src/services/extension-catalog');
+ const context=await prepareContext({db,scope:f.context.scope,state:{products:[]},command:{type:'basket.create',lines:[{productId:String(f.item._id),quantityMilli:2000,sellingPrice:1.08}]},resources:['catalog.products']});
+ assert.equal(context.products[0].priceMinor,130);
+ assert.equal(context.products[0].priceSubminor,129600000);
+});
+
