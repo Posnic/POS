@@ -7,8 +7,21 @@
   'use strict';
   function taxRegistrationLabel(data, fallbackCountry) {
     data = data || {};
-    const country = String(data.branch_country || data.country || data.sortname || fallbackCountry || '').trim().toLowerCase();
-    if (['gb', 'gbr', 'uk', 'united kingdom', 'united kingdom of great britain and northern ireland'].includes(country)) return 'VAT No.';
+    const country = String(
+      data.branch_country || data.country || data.sortname || fallbackCountry || ''
+    )
+      .trim()
+      .toLowerCase();
+    if (
+      [
+        'gb',
+        'gbr',
+        'uk',
+        'united kingdom',
+        'united kingdom of great britain and northern ireland',
+      ].includes(country)
+    )
+      return 'VAT No.';
     if (['in', 'ind', 'india'].includes(country)) return 'GSTIN';
     if (country) return 'Tax ID';
     // Preserve existing Indian documents which predate saved country details.

@@ -523,3 +523,10 @@ You do not have to speak a language to check that a pull request is safe:
 - CI is green.
 
 Whether the words are _good_ needs a speaker. Say which you checked.
+
+## Reviewing existing machine translations
+
+See [the 2026-10-07 quality review](TRANSLATION_QUALITY_REVIEW_20261007.md) for
+comparison evidence, applied refinements and proposals withheld for review.
+The AWS script uses `_translation-context.json` to disambiguate short POS
+labels. New output is not automatically better than existing wording.
