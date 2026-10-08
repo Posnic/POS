@@ -68,11 +68,25 @@
   function notice(message) {
     document.getElementById('sale-extension-notice')?.remove();
     if(typeof message!=='string' || !message.trim())return;
-    var box=document.createElement('div');box.id='sale-extension-notice';box.setAttribute('role','status');
-    box.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;background:#e8f7ee;border:1px solid #9ecfb1;color:#175c34;padding:10px 16px;border-radius:8px;margin:8px 0;font-size:16px';
-    var text=document.createElement('span');text.textContent=message.slice(0,300);
-    var dismiss=document.createElement('button');dismiss.type='button';dismiss.textContent='×';dismiss.setAttribute('aria-label','Dismiss message');dismiss.style.cssText='min-height:48px;min-width:48px;background:transparent;border:1px solid #9ecfb1;border-radius:6px;color:#175c34';dismiss.onclick=function(){box.remove();};
-    box.style.flexShrink='0';box.append(text,dismiss);(document.querySelector('#sales_new #instance-view')||document.getElementById('sales_new'))?.prepend(box);window.scrollTo(0,0);
+    var escaped=message.slice(0,300).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    PosnicPro.alert('success',escaped,3500);
+  }
+  function refreshStock() {
+    if(!PosnicPro.sales.loadBillingCatalogue)return;
+    var branch=String(PosnicPro.local?.get('branch_id_set')||'');
+    PosnicPro.sales.loadBillingCatalogue(function(response){
+      if(branch!==String(PosnicPro.local?.get('branch_id_set')||'') || !active())return;
+      if(response?.type!=='success'){PosnicPro.alert('error','Stock display could not refresh. Refresh Sales before checking availability.');return;}
+      var items=new Map(),families={};
+      response.data.forEach(function(item){items.set(String(item.id||item.item_id),item);if(item.variant_group_id)(families[item.variant_group_id]||(families[item.variant_group_id]=[])).push(item);});
+      if(PosnicPro.sales.itemsMenu)PosnicPro.sales.itemsMenu._families=families;
+      document.querySelectorAll('#sales_new .wsk-cp').forEach(function(tile){
+        var rows=tile.dataset.variantGroup?families[tile.dataset.variantGroup]:[items.get(tile.id)];
+        if(!rows || !rows[0])return;
+        var tracked=rows.filter(function(r){return r.track_inventory===true || r.track_inventory==='true';}),stock=tile.querySelector('.wsk-cp-stock');
+        if(stock)stock.textContent=tracked.length?tracked.reduce(function(sum,r){return sum+(Number(r.available_quantity)||0);},0)+' in stock':'';
+      });
+    },true);
   }
   function confirmClear() {
     if(document.getElementById('sale-clear-dialog') || dialog || !cart().length)return;
@@ -112,6 +126,7 @@
       var content=document.createElement('div');content.textContent='Loading sale actions…';header.append(back);dialog.append(header,content);document.body.append(dialog);
       PosnicPro.HideSideBarModal();
       PosnicPro.extensions.showDetails(selected.id, {container:content,onClose:close,workspace:{version:1,presentation:compact?'compact':'workspace',action:action,page:page,lines:lines,context:!page?resumeContext:null,tender:String($('#payment_id .payment_mode:checked').attr('id')||'Cash').toLowerCase(),customer:String($('#sales_new_customer_name').val()||'Walk-in customer').slice(0,120)},onBusy:function(busy){back.disabled=busy;},onCommand:function(result,commandType){
+        if(result)refreshStock();
         if (!transferred && lines.length && result && selected.salesWorkspace.clearCartOn?.includes(commandType)) {
           transferred=true;
           resumeContext=null;
