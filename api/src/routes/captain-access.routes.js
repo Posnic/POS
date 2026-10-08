@@ -2,6 +2,7 @@
 const router = require('express').Router();
 const { rateLimit } = require('express-rate-limit');
 const access = require('../services/captain-access');
+const cloudAddress = require('../utils/captain-cloud-address');
 const { protect } = require('../middleware/auth');
 const wrap = (fn) => async (req, res) => {
   res.set('Cache-Control', 'no-store');
@@ -33,7 +34,7 @@ router.get(
       .collection('branches')
       .find(
         { module_captain_enable: true },
-        { projection: { branch_name: 1, captain_fallback_url: 1 } }
+        { projection: { branch_name: 1, captain_fallback_url: 1, captain_cloud_url: 1 } }
       )
       .limit(2)
       .toArray();
@@ -42,7 +43,7 @@ router.get(
     return {
       connections: {
         shopName: branch.branch_name || '',
-        cloud: branch.captain_fallback_url || null,
+        cloud: cloudAddress(branch),
       },
     };
   })
@@ -58,7 +59,7 @@ router.post(
     return {
       branchId: String(c.branchId),
       shopName: c.branch.branch_name || '',
-      cloud: c.branch.captain_fallback_url || null,
+      cloud: cloudAddress(c.branch),
     };
   })
 );
@@ -232,6 +233,7 @@ router.get(
       .toArray();
     return {
       fallbackUrl: c.branch.captain_fallback_url || '',
+      discoveredUrl: c.branch.captain_cloud_url || '',
       branch: c.branch.branch_name,
       staff: users
         .filter(

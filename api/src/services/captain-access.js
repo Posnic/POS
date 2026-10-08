@@ -217,7 +217,8 @@ function routeTargets(req, branch) {
     { host: req.headers?.host, port: req.socket?.localPort || process.env.PORT || 5555 },
     localAddresses()
   ).targets.map((t) => t.url);
-  if (branch.captain_fallback_url) targets.push(branch.captain_fallback_url);
+  const cloud = require('../utils/captain-cloud-address')(branch);
+  if (cloud) targets.push(cloud);
   return [...new Set(targets)].slice(0, 8);
 }
 

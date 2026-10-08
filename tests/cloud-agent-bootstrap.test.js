@@ -84,7 +84,7 @@ test('a public installer upgrade retains the downloaded agent when it has no bun
 });
 
 // Exercise the real main-process connection helper with an asynchronous manager.
-function connection(start) {
+function connection(start, refreshCaptainDiscovery = async () => {}) {
   const main = fs.readFileSync(path.join(__dirname, '../src/main.js'), 'utf8');
   const helper = main.slice(main.indexOf('let cloudConnectionBusy ='), main.indexOf("ipcMain.handle('cloud:resume'"));
   const manager = { stop() {}, start };
@@ -96,7 +96,7 @@ function connection(start) {
       async connect() {} async close() {}
       db() { return { collection: () => ({ find: () => ({ toArray: async () => [] }), countDocuments: async () => 0 }) }; }
     } } : require(name === './cloud-shop-identity' ? '../src/cloud-shop-identity' : name),
-    createMenu() {}, tray: null, refreshBrand: async () => {}, refreshLimits: async () => {}, };
+    createMenu() {}, tray: null, refreshBrand: async () => {}, refreshLimits: async () => {}, refreshCaptainDiscovery };
   vm.runInNewContext(helper, sandbox);
   return sandbox.connectCloudDevice({ deviceToken: 'a'.repeat(64), deviceId: 'device' }, 'https://cloud.example');
 }
@@ -109,11 +109,14 @@ test('activation awaits startup and refuses async false', async () => {
 test('activation does not succeed before the component has started', async () => {
   let finish;
   let complete = false;
-  const result = connection(() => new Promise((resolve) => { finish = resolve; })).then((r) => { complete = true; return r; });
+  let refreshes = 0;
+  const result = connection(() => new Promise((resolve) => { finish = resolve; }), async () => { refreshes++; }).then((r) => { complete = true; return r; });
   while (!finish) await new Promise((resolve) => setImmediate(resolve));
   assert.equal(complete, false);
+  assert.equal(refreshes, 0);
   finish(true);
   assert.equal((await result).ok, true);
+  assert.equal(refreshes, 1);
 });
 
 test('startup failure permits retry without redeeming a pairing code twice', async () => {
@@ -130,7 +133,7 @@ function wizard(t, cloud) {
   const document = { getElementById(id) { if (!elements.has(id)) elements.set(id, { style: {}, disabled: false, textContent: '' }); return elements.get(id); } };
   let poll;
   let now = 0;
-  const sandbox = { resumeCloudDownload: false, document, window: { electronAPI: { cloud } }, API_BASE: 'http://localhost',
+  const sandbox = { resumeCloudDownload: false, document, window: { showCloudConflict() {}, electronAPI: { cloud } }, API_BASE: 'http://localhost',
     Date: { now: () => now }, setTimeout: (fn) => { poll = fn; return 1; }, clearTimeout: () => { poll = null; } };
   vm.runInNewContext(fn, sandbox);
   return { run: sandbox.runCloudSetup, document, tick: async (elapsed) => { now += elapsed; const fn = poll; poll = null; await fn(); } };

@@ -68,6 +68,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     reopenAuthorization: () => ipcRenderer.invoke('cloud:reopen-authorization'),
     activate:   (details) => ipcRenderer.invoke('cloud:activate', details),
     resume: () => ipcRenderer.invoke('cloud:resume'),
+    resetLocalShop: () => ipcRenderer.invoke('cloud:reset-local-shop'),
     status:     () => ipcRenderer.invoke('cloud:status'),
     signup:     () => ipcRenderer.invoke('cloud:signup'),
     /* Opening an account from inside the installer, so "I do not have one yet"
