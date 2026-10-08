@@ -15,9 +15,9 @@
   #sales_new.touch-extension #paymentdisplay tbody,#sales_new.touch-extension #paymentdisplay tr{display:contents}
   #sales_new.touch-extension #paymentdisplay #payment_note{grid-column:1/-1;max-width:none;border-bottom:1px solid #e0e6ed}
   #sales_new.touch-extension #paymentdisplay .sale-actionbar{display:flex;flex-wrap:wrap;gap:5px}
-  #sales_new.touch-extension #paymentdisplay #return_discount{grid-column:1/-1}
+  #sales_new.touch-extension #paymentdisplay #return_discount{grid-column:auto}
   #sales_new.touch-extension #paymentdisplay #pay_hide,#sales_new.touch-extension #paymentdisplay #pay_total_hide{background:#edf5ff;padding:8px}
-  #sales_new.touch-extension #paymentdisplay td{padding:5px 8px}
+  #sales_new.touch-extension #paymentdisplay td{padding:6px 8px;width:auto!important;height:auto!important;min-height:32px;line-height:1.4}
   #sales_new.touch-extension #edit_style_button{display:none!important}
   #sales_new.touch-extension #payment_note{max-width:280px}
   #sales_new.touch-extension #pay_total_hide{font-size:26px;font-weight:700;color:#066bca!important}
@@ -143,4 +143,5 @@
   window.addEventListener('hashchange',function(){if(dialog)close();render();});
   window.addEventListener('resize',render);
 })();
+
 
