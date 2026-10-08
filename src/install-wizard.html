@@ -842,6 +842,15 @@
                     <button type="button" class="btn btn-secondary" id="cloudConnectBtn">Connect with password</button>
                 </details>
                 <div id="cloudError" role="alert" style="display:none;color:#b91c1c;margin:12px 0;"></div>
+                <section id="cloudConflict" hidden style="border:1px solid #e0a889;border-radius:10px;padding:16px;margin:16px 0;">
+                    <h3 style="margin:0 0 8px;">Choose how to continue</h3>
+                    <p>Keep this computer’s existing shop data and sign in to its cloud account, or delete the local data and start setup again.</p>
+                    <p class="field-hint">Unsynced changes will be lost. Cloud records and existing backups stay unchanged. After restart, sign in again or use a new pairing code.</p>
+                    <button type="button" class="btn btn-secondary" id="keepLocalShop">Keep data / use another login</button>
+                    <button type="button" class="btn btn-secondary" id="deleteLocalShop" style="color:#b91c1c;border-color:#b91c1c;">Delete local data and restart</button>
+                    <p id="cloudResetStatus" role="status" aria-live="polite"></p>
+                </section>
+                <script src="cloud-reset-ui.js"></script>
                 <div id="cloudProgress" style="display:none;margin:14px 0;" role="status" aria-live="polite">
                     <div style="background:#eef0f7;border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px;"><div id="cloudProgBar" style="height:100%;width:2%;background:#3D85C6;transition:width .6s ease;"></div></div>
                     <div class="mode-progress-text" id="cloudProgressText">Connecting…</div><div id="cloudProgressSub" class="field-hint"></div>
@@ -1709,6 +1718,7 @@ const form = document.getElementById('installForm');
             const progress = document.getElementById('cloudProgress');
             const progressText = document.getElementById('cloudProgressText');
             if (btn.disabled) return;
+            window.showCloudConflict(null);
             btn.disabled = backBtn.disabled = pairBtn.disabled = true;
             document.getElementById('browserSignInBtn').disabled = true;
             document.getElementById('browserWait').style.display = browser && !resumeCloudDownload ? 'block' : 'none';
@@ -1727,6 +1737,7 @@ const form = document.getElementById('installForm');
             }
             try {
                 const result = await (resumeCloudDownload ? window.electronAPI.cloud.resume() : connect());
+                window.showCloudConflict(result);
                 document.getElementById('browserWait').style.display = 'none';
                 resumeCloudDownload = !!(result && (result.ok || result.canResume));
                 if (!result || !result.ok) {

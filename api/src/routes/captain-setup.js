@@ -21,6 +21,7 @@ call('settings')
   .then((data) => {
     $('branch').textContent = data.branch;
     $('fallback-url').value = data.fallbackUrl || '';
+    if (data.discoveredUrl) $('fallback-url').placeholder = data.discoveredUrl;
     for (const staff of data.staff) {
       const option = document.createElement('option');
       option.value = staff.id;
