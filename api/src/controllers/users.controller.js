@@ -956,7 +956,17 @@ class UsersController extends BaseController {
         });
       }
 
-      const access = user.access || {};
+      const access = { ...(user.access || {}) };
+      // Match extension route authorization, including existing owner/manager
+      // accounts whose stored ACL predates the extension module. Otherwise
+      // the sidebar removes a page the server correctly permits them to use.
+      const extensionAccess = require('../utils/branch-access');
+      access.extensions = Object.fromEntries(
+        ['read', 'write', 'manage'].map((action) => [
+          action,
+          extensionAccess.allowed(user, 'extensions', action),
+        ])
+      );
 
       if (!access.plan || typeof access.plan !== 'object') {
         access.plan = { read: true, write: false, delete: false };

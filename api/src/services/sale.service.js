@@ -199,13 +199,44 @@ const processSale = async (
   id = '',
   process = 'Add',
   context = {},
-  { preview = false, beforeCommit } = {}
+  { preview = false, beforeCommit, stockGrant, beforeStockCommit, prepareAllocated = false } = {}
 ) => {
   // Retry identity describes the submitted request, not derived charge/tax fields.
   const submittedPayload = structuredClone(data);
+  // The decision gate closes over the caller's trusted context. Pricing adds
+  // a local copy below; retain the gate's later verified device identity.
+  const decisionContext = context;
   let finishCaptainEdit;
   let finishCapacityEdit;
   try {
+    let extensionStock = null;
+    let extensionSubmission = null;
+    if (
+      prepareAllocated &&
+      (stockGrant === undefined || preview || beforeCommit || beforeStockCommit)
+    )
+      return { status: false, message: 'Unsupported allocated sale preparation' };
+    if (
+      beforeStockCommit !== undefined &&
+      (typeof beforeStockCommit !== 'function' || stockGrant === undefined)
+    )
+      return { status: false, message: 'Unsupported allocated sale commit' };
+    if (stockGrant !== undefined) {
+      if (preview || id !== '' || process !== 'Add')
+        return { status: false, message: 'Unsupported stock allocation sale' };
+      extensionStock = await require('./extension-stock-allocations').validateSaleGrant(
+        stockGrant,
+        context,
+        data.items || []
+      );
+      // The key is chosen by the host allocation, never by the extension UI.
+      data = {
+        ...data,
+        idempotencyKey: `extension-sale:${extensionStock.saleId}`,
+        extension_stock_operation: extensionStock.stockOperationId,
+      };
+      extensionSubmission = structuredClone(data);
+    }
     if (
       beforeCommit !== undefined &&
       (typeof beforeCommit !== 'function' || id !== '' || process !== 'Add')
@@ -270,7 +301,7 @@ const processSale = async (
         await BaseModel.getDb(),
         { branchId, license: licenseId },
         String(userId || ''),
-        submittedPayload
+        extensionSubmission || submittedPayload
       );
       if (existing) return savedAnswer(existing._id, existing.sales_id, true);
     }
@@ -333,6 +364,8 @@ const processSale = async (
     if (id !== '') {
       existingSale = await salesRepository.getById(id);
       if (existingSale) {
+        if (existingSale.extension_stock_operation)
+          return { status: false, message: 'Use the normal return process for an allocated sale.' };
         if (existingSale.captain_payment_plan)
           await require('./captain-payment-guard').mutable(await BaseModel.getDb(), existingSale);
         const paymentBranch = await getBranchById(existingSale.branch_id || context.branchId);
@@ -861,7 +894,7 @@ const processSale = async (
       }
     }
     const decisionPricing =
-      preview || beforeCommit
+      preview || beforeCommit || beforeStockCommit || prepareAllocated
         ? {
             header: calculateSaleHeader(data, sale_tot_amount, context),
             roundOff: context.roundOff === true,
@@ -1346,7 +1379,15 @@ const processSale = async (
       denomination_values: data.denomination_values ?? (existingSale?.denomination_values || []),
     };
 
-    const finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
+    let finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
+    if (extensionStock) {
+      if (paymentStatus !== 'Paid')
+        return { status: false, message: 'Allocated quantities require a completed payment.' };
+      await require('./extension-stock-allocations').validateSaleGrant(stockGrant, context, items);
+      finalSaleData._id = extensionStock.saleId;
+      finalSaleData.extension_stock_operation = extensionStock.stockOperationId;
+      finalSaleData.extension_id = extensionStock.extensionId;
+    }
     if (finalSaleData.kitchen_required) {
       finalSaleData.kitchen_closed = !require('../helpers/kitchen-rounds')
         .rounds({
@@ -1363,7 +1404,7 @@ const processSale = async (
         submissionDb,
         { branchId, license: licenseId },
         String(userId || ''),
-        submittedPayload,
+        extensionSubmission || submittedPayload,
         finalSaleData
       );
       if (existing) return savedAnswer(existing._id, existing.sales_id, true);
@@ -1388,7 +1429,7 @@ const processSale = async (
     }
 
     // Inventory Verification BEFORE Insert (PHP lines 653-690)
-    if (id === '') {
+    if (id === '' && !extensionStock) {
       const insufficientItems = [];
       for (const item of items) {
         const doc = await itemRepository.findItemById(item.item_id);
@@ -1413,7 +1454,7 @@ const processSale = async (
     // Reserve tracked stock atomically before creating the sale. A normal
     // read-then-update allows two counters to sell the same final quantity.
     const stockReservations = new Map();
-    if (id === '') {
+    if (id === '' && !extensionStock) {
       const stockRequests = new Map();
       for (const item of items) {
         const doc = await itemRepository.findItemById(item.item_id);
@@ -1461,17 +1502,26 @@ const processSale = async (
     }
 
     // --- DB OPERATIONS ---
+    // Internal provider preparation: pricing, allocation and submission identity
+    // have been validated. Return the exact core document before any sale write.
+    // The payment coordinator persists it before asking a terminal to charge.
+    if (prepareAllocated) return { status: true, data: decisionPricing, document: finalSaleData };
     let result;
     if (id === '') {
       // ADD: create a new Sale document so that the pre-save hook can
       // normalize the payload into a PHP-style 1:1 document.
       try {
+        // A core payment coordinator may fence the final write against a
+        // concurrently rejected/cancelled submission. This internal callback
+        // is unavailable to request JSON and requires a validated stock grant.
+        if (beforeStockCommit)
+          finalSaleData = await beforeStockCommit(decisionPricing, finalSaleData);
         if (beforeCommit) {
           const proof = await beforeCommit(decisionPricing);
           finalSaleData.business_decision_receipt =
             require('./business-decision-receipt').decisionReceipt(
               proof,
-              context,
+              { ...context, businessDecisionDeviceId: decisionContext.businessDecisionDeviceId },
               data.billing_transaction_id,
               decisionPricing
             );
@@ -1506,7 +1556,7 @@ const processSale = async (
             submissionDb,
             { branchId, license: licenseId },
             String(userId || ''),
-            submittedPayload
+            extensionSubmission || submittedPayload
           );
           if (existing) return savedAnswer(existing._id, existing.sales_id, true);
         }
@@ -1638,6 +1688,9 @@ const processSale = async (
         if (!doc) continue;
 
         const qty = parseFloat(item.item_quantity);
+        // This quantity already left stock in a durable host operation. The
+        // sale retains that reference; there is no second movement or stock log.
+        if (extensionStock?.itemIds.has(String(doc._id))) continue;
         const reservation = stockReservations.get(String(doc._id));
         const opening = reservation ? reservation.opening : doc.available_quantity;
         const newAvailable = reservation ? reservation.closing : opening - qty;

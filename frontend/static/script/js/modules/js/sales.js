@@ -455,23 +455,7 @@
         loader.find(".loadingSpinner:first").remove();
     },
     showSalesHoldPage: function (id) {
-        var params = {
-            url: 'sales/getSaleQtyDetail',
-            data: { sale_id: id }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                PosnicPro.sales.view.showSalesEditPage(id);
-            } else {
-                hasher.changed.active = false; //disable changed signal
-                hasher.replaceHash('sales');
-                hasher.changed.active = true; //enable changed signal
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+        PosnicPro.sales.view.showSalesEditPage(id);
     },
     /* #/sales/<id>: the invoice opens in the right pane - never a popup. */
     showDetails: function (id) {
@@ -1128,7 +1112,7 @@
         if (!params) { return false; }
         if (params._priceAsked) { return false; }
         if (PosnicPro.sales.SaleAction === 'return') { return false; }
-        if (params.open_price === true || params.open_price === 'true') { return true; }
+        if (params.open_price === true || params.open_price === 'true') { return !(PosnicPro.saleExtensions && PosnicPro.saleExtensions.policy('useDefaultOpenPrice') && Number(params.selling_price) > 0); }
         return !(Number(params.selling_price) > 0);
     },
     askTodaysPrice: function (params) {
@@ -1208,6 +1192,9 @@
         if (PosnicPro.sales.editSaleAction === true) {
             PosnicPro.sales.recentMenu.setEditSalesDetails();
         }
+        // Imported/catalogue products may omit discount fields entirely.
+        params.discount_amount = Number(params.discount_amount) || 0;
+        params.discount_percentage = Number(params.discount_percentage) || 0;
         var addSalesLineDiscount = (params.discount_amount > 0) ? params.discount_amount : params.discount_percentage;
         var Discount = (params.discount_amount > 0) ? params.discount_amount : params.selling_price * (params.discount_percentage / 100);
         var currencySign = PosnicPro.local.get('currencySign');
@@ -3989,6 +3976,7 @@ PosnicPro.sales.guardDiscountApproval = function (params, proceed, checkedPendin
 PosnicPro.sales.addSale = {
     /*Save Sales Order*/
     cartOrderSubmit: function (payment) {
+        if (!PosnicPro.sales.paymentOnlyMode && PosnicPro.sales.saleProcess !== 'KOT' && PosnicPro.saleExtensions?.dispatch('submit')) return false;
         // // ✅ Prevent duplicate submissions
         // if (PosnicPro.sales.submissionInProgress || $("#save_btn").prop('disabled') || $("#save_submit").hasClass('disabled')) {
         //     console.log('⚠️ Submission already in progress');
@@ -11622,10 +11610,16 @@ PosnicPro.sales.refreshCustomerAccount = function () {
     var id = String($('#sales_new_customer_id').val() || '');
     var request = PosnicPro.sales._accountRequest = (PosnicPro.sales._accountRequest || 0) + 1;
     var target = $('.sale-customer-account').empty().hide();
+    var creditEnabled = function () {
+        try { return JSON.parse(PosnicPro.local.get('general_settings') || '{}').module_credit_enable !== false; }
+        catch (e) { return true; }
+    };
+    if (!creditEnabled()) return;
+    var branch = PosnicPro.local.get('branch_id_set');
     if (!/^[a-f0-9]{24}$/i.test(id)) return;
     var t = function (key, fallback) { return PosnicPro.i18n.t(key, fallback); };
     target.text(t('lang_loading', 'Loading…')).show();
-    var current = function () { return request === PosnicPro.sales._accountRequest && String($('#sales_new_customer_id').val()) === id; };
+    var current = function () { return creditEnabled() && branch === PosnicPro.local.get('branch_id_set') && request === PosnicPro.sales._accountRequest && String($('#sales_new_customer_id').val()) === id; };
     var failed = function () {
         if (current()) target.text(t('lang_account_balance_unavailable', 'Previous account balance unavailable. Check customer details.')).show();
     };

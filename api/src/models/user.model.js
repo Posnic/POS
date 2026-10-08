@@ -28,6 +28,7 @@ const createDefaultAccess = () => {
       delete: false,
     };
   });
+  matrix.extensions = { read: false, write: false, manage: false };
   return matrix;
 };
 

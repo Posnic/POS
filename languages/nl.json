@@ -4599,5 +4599,12 @@
   "lang_always_available_2": "Altijd beschikbaar:",
   "lang_track_quantities_2": "Aantallen bijhouden:",
   "lang_always_available_no_quantity_tracking_or_l": "Altijd beschikbaar — Verkoop zonder voorraadaantallen in te voeren. Geen waarschuwingen voor lage voorraad. Geschikt voor gerechten op bestelling.",
-  "lang_track_quantities_count_stock_received_and": "Aantallen bijhouden — Voer ontvangen voorraad in en tel elke verkoop. Waarschuwingen voor lage voorraad zijn van toepassing. Geschikt voor verpakte goederen."
+  "lang_track_quantities_count_stock_received_and": "Aantallen bijhouden — Voer ontvangen voorraad in en tel elke verkoop. Waarschuwingen voor lage voorraad zijn van toepassing. Geschikt voor verpakte goederen.",
+  "lang_basket_review_report": "Rapport winkelmandcontrole",
+  "lang_extensions": "Extensies",
+  "lang_manage_extensions_and_approve_protected_ac": "Extensies beheren en beveiligde acties goedkeuren",
+  "lang_management_includes_package_installation_b": "Beheer omvat pakketinstallatie, het verwijderen van winkelmanden, voorraadretouren en het afhandelen van openstaande betalingen van andere medewerkers. Alleen toekennen aan bevoegde leidinggevenden.",
+  "lang_use_extension_workflows": "Extensiewerkstromen gebruiken",
+  "lang_view_installed_extensions_and_their_record": "Geïnstalleerde extensies en hun gegevens bekijken",
+  "lang_multiple_extensions_request_the_sales_work": "Meerdere extensies vragen toegang tot de verkoopwerkruimte. Schakel slechts één aanbieder van de verkoopwerkruimte in."
 }
