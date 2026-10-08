@@ -1553,62 +1553,8 @@ PosnicPro = {
          * person SEES it work. Hidden wherever push cannot work (Electron
          * never registers the worker; unsupported browsers).
          */
-        _pushSetup: function () {
-            var $btn = $('#bell_feed_push');
-            if (!$btn.length) return;
-            if (!('Notification' in window) || !navigator.serviceWorker || !('PushManager' in window)) {
-                $btn.hide();
-                return;
-            }
-            navigator.serviceWorker.getRegistration().then(function (reg) {
-                if (!reg) { $btn.hide(); return; }
-                reg.pushManager.getSubscription().then(function (sub) {
-                    $btn.text(sub ? PosnicPro.i18n.t('lang_send_test_notification', 'Send test notification') : PosnicPro.i18n.t('lang_enable_notifications_on_this_device', 'Enable notifications on this device'))
-                        .data('subscribed', !!sub).show();
-                });
-            }).catch(function () { $btn.hide(); });
-        },
-        _pushClick: function () {
-            var $btn = $('#bell_feed_push');
-            if ($btn.data('subscribed')) {
-                PosnicPro.post({ url: 'push/test', data: JSON.stringify({}) }, function (response) {
-                    PosnicPro.alert(response.type, response.message);
-                }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_send_the_test', 'Could not send the test.')); });
-                return;
-            }
-            Notification.requestPermission().then(function (perm) {
-                if (perm !== 'granted') return;
-                return navigator.serviceWorker.getRegistration().then(function (reg) {
-                    if (!reg) return;
-                    return new Promise(function (resolve) {
-                        PosnicPro.get({ url: 'push/key', data: {} }, function (r) {
-                            resolve(r && r.data && r.data.key);
-                        }, function () { resolve(null); });
-                    }).then(function (key) {
-                        if (!key) return;
-                        var raw = atob(key.replace(/-/g, '+').replace(/_/g, '/')
-                            + '='.repeat((4 - key.length % 4) % 4));
-                        var bytes = new Uint8Array(raw.length);
-                        for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-                        return reg.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: bytes,
-                        }).then(function (sub) {
-                            return new Promise(function (resolve) {
-                                PosnicPro.post({
-                                    url: 'push/subscribe',
-                                    data: JSON.stringify({ subscription: sub.toJSON() }),
-                                }, function () {
-                                    PosnicPro.alert('success', PosnicPro.i18n.t('lang_notifications_enabled_on_this_device', 'Notifications enabled on this device.'));
-                                    PosnicPro.bellFeed._pushSetup();
-                                    resolve();
-                                }, function () { resolve(); });
-                            });
-                        });
-                    });
-                });
-            }).catch(function () { /* declined or unsupported - the bell still works */ });
-        },
+        _pushSetup: function () { if (PosnicPro.deviceNotifications) PosnicPro.deviceNotifications.setup(); },
+        _pushClick: function () { if (PosnicPro.deviceNotifications) return PosnicPro.deviceNotifications.click(); },
         /* Wire the dropdown: opening it marks activity seen, paints the feed
            fresh, and refreshes the push button's state. */
         init: function () {

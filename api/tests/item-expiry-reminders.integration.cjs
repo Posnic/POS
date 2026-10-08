@@ -56,3 +56,17 @@ test('only current shop stocked products in date window; invalid dates ignored; 
   assert.equal(new Set([...first.rows, ...next.rows].map(row => row.id)).size, 30);
   req.body.enabled = false; await service.save(req); assert.equal((await service.list(req, now)).total, 0);
 });
+test('report works with reminders off, filters literal search, sorts and rejects invalid filters', async () => {
+  const req = await fixture();
+  const base = { license:req.tenantContext.licenseId,branch_id:req.tenantContext.branchId,available_quantity:3 };
+  await db.collection('items').insertMany([{...base,name:'Milk (small)',items_expiry_date:'2026-10-07'}, {...base,name:'Milk large',items_expiry_date:'2026-10-12'}, {...base,name:'Later',items_expiry_date:'2026-11-12'}]);
+  const now = new Date('2026-10-08T12:00:00Z');
+  assert.equal((await service.list(req,now)).total,0);
+  assert.equal((await service.report(req,now)).total,2);
+  req.query={sort:'desc'};assert.equal((await service.report(req,now)).rows[0].name,'Milk large');
+  req.query={status:'expired'};assert.equal((await service.report(req,now)).total,1);
+  req.query={status:'upcoming'};assert.equal((await service.report(req,now)).rows[0].name,'Milk large');
+  req.query={search:'(small)'};assert.equal((await service.report(req,now)).total,1);
+  req.query={search:'.*'};assert.equal((await service.report(req,now)).total,0);
+  for(const query of [{days:366},{days:-1},{status:'bad'},{sort:'bad'},{page:0}]) {req.query=query;await assert.rejects(service.report(req,now),{status:422});}
+});
