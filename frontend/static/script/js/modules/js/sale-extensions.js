@@ -27,6 +27,9 @@
   #sales_new.touch-extension #sale-extension-checkout .btn-secondary{background:#fff;color:#17548d;border:1px solid #cbdbea}
   #sales_new.touch-extension #sale-extension-checkout .sale-clear{color:#b3293e;background:#fff;border:1px solid #e6cbd1}
   #sales_new.touch-extension #sales_new_items_table .input-group button,#sales_new.touch-extension #sales_new_items_table .input-group input{min-height:48px;min-width:44px}
+  #sales_new.touch-extension #sales_new_items_table .button_qty_check{min-height:48px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}
+  #sales_new.touch-extension #sales_new_items_table .button_qty_check i{margin:0!important}
+  #sales_new.touch-extension #sales_new_items_table .sale-line-act{min-width:44px;min-height:48px;display:inline-flex;align-items:center;justify-content:center}
   #sales_new.touch-extension #sales_new_items_table td:last-of-type a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:48px}
   #sales_new.touch-extension #sales_new_productList,#sales_new.touch-extension #sales_new_categoryList{max-height:calc(var(--sale-pane-height,70vh) - 100px)!important;overflow:auto}
   .sale-extension-back{min-height:48px;min-width:150px;font-size:16px}
@@ -100,7 +103,7 @@
     var payment=document.getElementById('payment_id');
     if(payment && selected.salesWorkspace.controls.some(function(c){return c.placements.includes('payment');}) && !document.getElementById('sale-extension-payment')) {var controls=strip('payment');controls.id='sale-extension-payment';payment.after(controls);}
     document.querySelectorAll('.sale-extension-actions').forEach(function(el){el.hidden=!visible;el.style.display=visible?(el.dataset.placement==='sale'?'grid':'flex'):'none';});
-    var pane=document.getElementById('instance-view');if(visible && pane)sale.style.setProperty('--sale-pane-height',Math.max(420,window.innerHeight-pane.getBoundingClientRect().top-16)+'px');
+    var pane=document.getElementById('instance-view');if(visible && pane)sale.style.setProperty('--sale-pane-height',Math.max(420,window.innerHeight-(pane.getBoundingClientRect().top+window.scrollY)-16)+'px');
   }
   function active(){return Boolean(selected) && /^#\/?sales\/new(?:$|\?)/.test(location.hash) && PosnicPro.sales.SaleAction==='add';}
   PosnicPro.saleExtensions={active:active,policy:function(name){return active() && selected.salesWorkspace.policies?.[name]===true;},dispatch:function(event){
@@ -128,6 +131,7 @@
         location.hash='#/sales/new';
         await new Promise(function(resolve,reject){var until=Date.now()+8000;function ready(){var scanner=document.getElementById('sales_new_item_name');if(scanner?.getClientRects().length && PosnicPro.sales.SaleAction==='add')return resolve();if(Date.now()>until)return reject(Error('Open Sales and try resuming again.'));setTimeout(ready,50);}setTimeout(ready,50);});
       }
+      if(branch!==String(PosnicPro.local.get('branch_id_set')||'') || (lines.length && cart().length) || selected?.id!==id)throw Error('The shop or current sale changed. Try again.');
       items.forEach(function(item){PosnicPro.sales.addSalesLineItems(item);});
       if(lines.length)resumeContext=input.context||null;
       if(input.customer)$('#sales_new_customer_name').val(String(input.customer).slice(0,120));
@@ -143,5 +147,6 @@
   window.addEventListener('hashchange',function(){if(dialog)close();render();});
   window.addEventListener('resize',render);
 })();
+
 
 
