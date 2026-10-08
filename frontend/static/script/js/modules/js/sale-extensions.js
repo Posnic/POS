@@ -94,6 +94,7 @@
   }
   function render() {
     var sale=document.getElementById('sales_new');
+    if(resumeContext && !dialog && !restoring && !document.querySelector('#sales_new_items_table [id^="addSalesLineItemId_"]'))resumeContext=null;
     var visible=Boolean(selected) && /^#\/?sales\/new(?:$|\?)/.test(location.hash) && PosnicPro.sales?.SaleAction==='add';
     sale?.classList.toggle('touch-extension',visible && selected.salesWorkspace.policies?.touchCheckout===true);
     if (!selected) return;
@@ -112,7 +113,7 @@
     // More than one owner must never silently redirect checkout to the first.
     var owners=extensions.filter(function(e){return e.enabled!==false && e.salesWorkspace?.version===1 && Array.isArray(e.salesWorkspace.controls);});
     var next=owners.length===1 ? owners[0] : null;
-    if(JSON.stringify(selected)!==JSON.stringify(next)){close();document.querySelectorAll('.sale-extension-actions').forEach(function(el){el.remove();});}
+    if(JSON.stringify(selected)!==JSON.stringify(next)){close();resumeContext=null;document.querySelectorAll('.sale-extension-actions').forEach(function(el){el.remove();});}
     selected=next;render();
     if(owners.length>1)PosnicPro.alert('error', PosnicPro.i18n.t('lang_multiple_extensions_request_the_sales_work', 'Multiple extensions request the sales workspace. Enable only one sales workspace provider.'));
   },open:open,restore:async function(id,input,branch){
