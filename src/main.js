@@ -1256,10 +1256,16 @@ function getMachineId() {
 }
 
 let cloudConnectionBusy = false;
+let cloudResetUri = null;
 async function connectCloudDevice(activation, base) {
   if (cloudConnectionBusy) return { ok: false, error: 'A cloud connection is already in progress.' };
   cloudConnectionBusy = true;
+  cloudResetUri = null;
   try { return await connectVerifiedCloudDevice(activation, base); }
+  catch (error) {
+    if (error.code === 'LOCAL_SHOP_CONFLICT') return { ok: false, code: error.code, error: error.message };
+    throw error;
+  }
   finally { cloudConnectionBusy = false; }
 }
 
@@ -1300,10 +1306,15 @@ async function connectVerifiedCloudDevice(activation, base) {
     const businessCounts = await Promise.all(['items', 'sales', 'customers', 'purchases'].map(
       (name) => db.collection(name).countDocuments({}, { limit: 1 })
     ));
-    verifiedIdentity = require('./cloud-shop-identity').assertSameShop({
-      identity, savedTenant, localBranchIds: branches.map((branch) => String(branch._id)), userCount,
-      businessDataCount: businessCounts.reduce((sum, count) => sum + count, 0),
-    });
+    try {
+      verifiedIdentity = require('./cloud-shop-identity').assertSameShop({
+        identity, savedTenant, localBranchIds: branches.map((branch) => String(branch._id)), userCount,
+        businessDataCount: businessCounts.reduce((sum, count) => sum + count, 0),
+      });
+    } catch (error) {
+      if (error.code === 'LOCAL_SHOP_CONFLICT') cloudResetUri = localUri;
+      throw error;
+    }
   } finally { await localClient.close(); }
   // Create once, exclusively: do not follow or overwrite a file installed
   // between verification and enrollment by another process.
@@ -3620,9 +3631,9 @@ async function clearRendererStorage() {
   ]);
 }
 
-async function dropPosnicDatabase() {
+async function dropPosnicDatabase(resetUri) {
   const { MongoClient } = require('mongodb');
-  const uri = process.env.MONGODB_URI || `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`;
+  const uri = resetUri || process.env.MONGODB_URI || `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}/PosnicPro`;
   const client = new MongoClient(uri, {
     serverSelectionTimeoutMS: 5000,
     connectTimeoutMS: 5000
@@ -3636,7 +3647,7 @@ async function dropPosnicDatabase() {
   }
 }
 
-async function removeFullAccountData() {
+async function removeFullAccountData(resetUri) {
   console.log('[AccountReset] Full account removal started');
 
   if (backupManager) backupManager.stopScheduler();
@@ -3656,9 +3667,10 @@ async function removeFullAccountData() {
   }
 
   try {
-    await dropPosnicDatabase();
+    await dropPosnicDatabase(resetUri);
     console.log('[AccountReset] PosnicPro database dropped');
   } catch (error) {
+    if (resetUri) throw error;
     console.warn('[AccountReset] Database drop failed; local data files will still be removed if available:', error.message);
   }
 
@@ -3699,6 +3711,43 @@ async function removeFullAccountData() {
 
   console.log('[AccountReset] Full account removal finished; relaunching');
 }
+
+ipcMain.handle('cloud:reset-local-shop', async (event) => {
+  let page;
+  try { page = require('url').fileURLToPath(event.senderFrame.url); } catch { return { ok: false, error: 'Open cloud setup to reset this computer.' }; }
+  if (!['install-wizard.html', 'cloud-setup.html'].some(name => page === path.join(__dirname, name)) || !cloudResetUri || cloudConnectionBusy) {
+    return { ok: false, error: 'Try connecting to the cloud shop first.' };
+  }
+  cloudConnectionBusy = true;
+  try {
+    const uri = cloudResetUri;
+    const reset = require('./cloud-local-reset');
+    const verify = () => reset.verifyLocalDatabase({ uri, dataPath: mongoDBManager?.dataPath, MongoClient: require('mongodb').MongoClient });
+    await verify();
+    const answer = await dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender), {
+      type: 'warning', title: 'Delete existing local shop data?',
+      message: 'Delete this computer’s local shop data and restart setup?',
+      detail: 'Local sales, items, customers, purchases and login data will be permanently deleted. Any changes not synced or backed up will be lost. Cloud records and existing backup files will not be deleted. After restart, sign in to the cloud shop you want to use or enter a new pairing code.',
+      buttons: ['Keep existing data', 'Delete local data and restart'], defaultId: 0, cancelId: 0, noLink: true,
+    });
+    if (answer.response !== 1) return { ok: false, cancelled: true };
+    await verify();
+    await reset.stopSync(syncAgentManager);
+    // Disconnect before dropping data so the old shop cannot repopulate it.
+    if (fs.existsSync(CLOUD_CONFIG_FILE)) fs.unlinkSync(CLOUD_CONFIG_FILE);
+    await removeFullAccountData(uri);
+    for (const name of ['cloud-shop-identity.json', '.startup-ready']) {
+      const file = path.join(app.getPath('userData'), name);
+      if (fs.existsSync(file)) fs.unlinkSync(file);
+    }
+    cloudResetUri = null;
+    app.relaunch();
+    app.exit(0);
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: 'Could not reset local data: ' + error.message };
+  } finally { cloudConnectionBusy = false; }
+});
 
 function confirmFullAccountRemoval() {
   const { dialog } = require('electron');

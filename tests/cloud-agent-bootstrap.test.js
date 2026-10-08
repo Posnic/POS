@@ -130,7 +130,7 @@ function wizard(t, cloud) {
   const document = { getElementById(id) { if (!elements.has(id)) elements.set(id, { style: {}, disabled: false, textContent: '' }); return elements.get(id); } };
   let poll;
   let now = 0;
-  const sandbox = { resumeCloudDownload: false, document, window: { electronAPI: { cloud } }, API_BASE: 'http://localhost',
+  const sandbox = { resumeCloudDownload: false, document, window: { showCloudConflict() {}, electronAPI: { cloud } }, API_BASE: 'http://localhost',
     Date: { now: () => now }, setTimeout: (fn) => { poll = fn; return 1; }, clearTimeout: () => { poll = null; } };
   vm.runInNewContext(fn, sandbox);
   return { run: sandbox.runCloudSetup, document, tick: async (elapsed) => { now += elapsed; const fn = poll; poll = null; await fn(); } };
