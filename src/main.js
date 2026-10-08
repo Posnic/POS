@@ -1350,6 +1350,7 @@ async function connectVerifiedCloudDevice(activation, base) {
   if (tray && tray.rebuildMenu) tray.rebuildMenu();
   refreshBrand().catch(() => {});  // white label, if this shop has one
   refreshLimits().catch(() => {}); // how many outlets they may run
+  refreshCaptainDiscovery().catch(() => {});
   return { ok: true, deviceId };
 }
 
@@ -1444,6 +1445,28 @@ const assetUpdater = new AssetUpdater({
   log: (m) => console.log(m),
 });
 const BRAND_FILE = path.join(BRAND_DIR, 'brand.json');
+
+let captainDiscoveryBusy = false;
+async function refreshCaptainDiscovery() {
+  if (captainDiscoveryBusy) return;
+  captainDiscoveryBusy = true;
+  let client;
+  try {
+    let config;
+    try { config = JSON.parse(fs.readFileSync(CLOUD_CONFIG_FILE, 'utf8')); }
+    catch (error) { if (error.code === 'ENOENT') return; throw error; }
+    if (!config.gatewayUrl || !config.deviceToken || !config.localUri) return;
+    let savedTenant;
+    try { savedTenant = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'cloud-shop-identity.json'), 'utf8')).tenantDb; }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    client = new (require('mongodb').MongoClient)(config.localUri, { serverSelectionTimeoutMS: 3000 });
+    await client.connect();
+    await require('./cloud-captain-discovery').refresh({ config, savedTenant, db: client.db(config.localDb || 'PosnicPro') });
+  } finally {
+    try { if (client) await client.close(); }
+    finally { captainDiscoveryBusy = false; }
+  }
+}
 
 async function refreshBrand() {
   if (!fs.existsSync(CLOUD_CONFIG_FILE)) return;
@@ -5476,6 +5499,8 @@ function startServer() {
       // plenty: branding is not something a shop changes mid-shift.
       refreshBrand().catch((e) => console.warn('[Brand] refresh failed:', e.message));
       refreshLimits().catch((e) => console.warn('[Limits] refresh failed:', e.message));
+      refreshCaptainDiscovery().catch(() => console.warn('[Captain] Cloud address refresh unavailable; keeping saved address'));
+      setInterval(() => refreshCaptainDiscovery().catch(() => {}), 5 * 60_000).unref();
       setInterval(() => {
         refreshBrand().catch(() => {});
         refreshLimits().catch(() => {});

@@ -110,6 +110,32 @@ after(async () => {
   await Model.mongoClient?.close();
   await mongo?.stop();
 });
+test('verified gateway address reaches public discovery, signed-in connections and Captain grants', async () => {
+  const cloud = 'https://discovery-test.posnic.io/api';
+  const managerToken = require('../src/middleware/auth').signLegacyToken(manager, req, branch._id, 900);
+  try {
+    await require('../../src/cloud-captain-discovery').refresh({
+      config: { gatewayUrl: 'https://gateway.example.com', deviceToken: 'isolated-test' },
+      savedTenant: 'test_shop', db,
+      fetchImpl: async () => ({ ok: true, json: async () => ({
+        tenantDb: 'test_shop', branchIds: [String(branch._id)], connections: { cloud },
+      }) }),
+    });
+    const discovery = await fetch(base + '/captain/v1/discovery').then(r => r.json());
+    assert.deepEqual(discovery.connections, { shopName: branch.branch_name, cloud });
+    const connections = await fetch(base + '/captain/v1/connections', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + managerToken },
+    }).then(r => r.json());
+    assert.equal(connections.cloud, cloud);
+    const { grant } = await paired();
+    assert.ok(grant.routes.includes(cloud));
+    await db.collection('branches').updateOne({ _id: branch._id }, { $set: { captain_fallback_url: 'https://manual.example/api' } });
+    assert.equal((await fetch(base + '/captain/v1/discovery').then(r => r.json())).connections.cloud, 'https://manual.example/api');
+  } finally {
+    await db.collection('branches').updateOne({ _id: branch._id }, { $unset: { captain_cloud_url: '', captain_fallback_url: '' } });
+  }
+});
+
 test('real HTTP pairing, branch scoping and revocation; bearer does not mint an unscoped login cookie', async () => {
   const managerToken = require('../src/middleware/auth').signLegacyToken(
     manager,
