@@ -329,6 +329,7 @@ PosnicPro.stocklogs = {
     },
     /*Display the low stock of item details like  only display below 10 available quantity of each item */
     viewLowStockDashboard: function () {
+        if (PosnicPro.expiryReminders) PosnicPro.expiryReminders.refresh();
         var notificationValue = localStorage.getItem("notificationrange");
         var params = {
             url: 'items/quantityCount',

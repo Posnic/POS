@@ -94,6 +94,10 @@ const preferenceHandler = (fn) => async (req, res, next) => {
 };
 router.get('/stockPreference', preferenceHandler(stockPreference.read));
 router.put('/stockPreference', preferenceHandler(stockPreference.save));
+const expiryReminders = require('../services/item-expiry-reminders');
+router.get('/expiryReminders/preference', preferenceHandler(expiryReminders.read));
+router.put('/expiryReminders/preference', preferenceHandler(expiryReminders.save));
+router.get('/expiryReminders', preferenceHandler(expiryReminders.list));
 
 /*
  * A dish that has run out, said by whoever found out first.
