@@ -42,21 +42,29 @@ function validate(request) {
     throw Object.assign(new Error('extension_install_queue_invalid'), { status: 422 });
 }
 function queue({ root, publicKey, id, version, scope }) {
-  const request = {
+  const requested = {
     id,
     version,
     license: String(scope.license),
     branchId: String(scope.branchId),
     packageDigest: '0'.repeat(64),
   };
-  validate(request);
+  validate(requested);
   const directory = path.resolve(root, id, 'versions', version);
   if (!directory.startsWith(path.resolve(root) + path.sep))
     throw new Error('extension_install_queue_invalid');
   const verified = loadVerifiedDirectory(directory, publicKey);
   if (verified.descriptor.id !== id || verified.descriptor.version !== version)
     throw new Error('extension_identity_mismatch');
-  request.packageDigest = verified.packageDigest;
+  // Persist the identity read from the verified signed package, rather than
+  // echoing HTTP fields into the activation journal.
+  const request = {
+    id: verified.descriptor.id,
+    version: verified.descriptor.version,
+    license: String(scope.license),
+    branchId: String(scope.branchId),
+    packageDigest: verified.packageDigest,
+  };
   const existing = read(root);
   if (existing) {
     if (JSON.stringify(existing) === JSON.stringify(request)) return existing;

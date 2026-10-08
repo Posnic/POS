@@ -85,3 +85,14 @@ test('registry HTTP boundary authenticates tickets and never caches private pack
     assert.equal((await fetch(origin + '/downloads', { method: 'POST', headers, body: JSON.stringify({ token: ticket.token }) })).status, 404);
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
+
+test('release lookup rejects operator objects and arrays before issuing tickets', async () => {
+  const f = await fixture();
+  for (const releaseId of [{ $ne: null }, ['release-one'], { $regex: '.*' }, null]) {
+    await assert.rejects(
+      library.issueDownload(db, f.actor, f.org, releaseId, 'package'),
+      /unavailable/
+    );
+  }
+  assert.equal(await db.collection('library_download_tickets').countDocuments({}), 0);
+});

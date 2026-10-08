@@ -33,7 +33,7 @@ async function releaseAccess(db, actor, organizationId, releaseId, kind) {
     fail();
   const release = await db
     .collection('library_releases')
-    .findOne({ _id: releaseId, status: 'approved' });
+    .findOne({ _id: String(releaseId), status: 'approved' });
   if (
     !release ||
     (release.visibility !== 'public' &&

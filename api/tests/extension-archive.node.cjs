@@ -217,3 +217,44 @@ test('invalid archive cannot create installation directories, and linked targets
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('activation queue persists only a verified package identity and rejects parameter tampering', async () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'posnic-queue-test-'));
+  try {
+    const root = path.join(directory, 'extensions');
+    const installed = await stageExtensionArchive(zip(signedEntries()), { ...options, root });
+    const queue = require('../src/services/extension-install-queue');
+    const input = {
+      root,
+      publicKey: keys.publicKey,
+      id: installed.id,
+      version: installed.version,
+      scope: { license: 'a'.repeat(24), branchId: 'b'.repeat(24) },
+    };
+    for (const patch of [
+      { id: [installed.id] },
+      { version: [installed.version] },
+      { id: '../outside' },
+    ]) {
+      assert.throws(() => queue.queue({ ...input, ...patch }), /extension_install_queue_invalid/);
+    }
+    assert.equal(fs.existsSync(path.join(root, '.activation-request.json')), false);
+    const result = queue.queue(input);
+    assert.deepEqual(result, {
+      id: installed.id,
+      version: installed.version,
+      license: input.scope.license,
+      branchId: input.scope.branchId,
+      packageDigest: installed.packageDigest,
+    });
+    assert.deepEqual(queue.read(root), result);
+    assert.deepEqual(queue.queue(input), result);
+  } finally {
+    assert.equal(
+      path.dirname(path.resolve(directory)),
+      path.resolve(os.tmpdir()),
+      'unsafe cleanup'
+    );
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
