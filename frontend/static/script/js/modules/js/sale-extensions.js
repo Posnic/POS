@@ -6,7 +6,11 @@
   var icons = {cash:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/>',card:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20M6 15h4"/>',box:'<path d="m12 2 10 5v10l-10 5-10-5V7Zm0 10v10M2 7l10 5 10-5M7 4.5l10 5"/>',pause:'<rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/>',printer:'<path d="M6 9V3h12v6M6 18H3V9h18v9h-3M6 14h12v7H6ZM17 12h.01"/>'};
   function icon(name) { var span=document.createElement('span');span.setAttribute('aria-hidden','true');span.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(icons[name]||'')+'</svg>';return span; }
   var css=document.createElement('style');css.textContent=`
-  #sales_new.touch-extension #instance-view{display:flex;flex-direction:column;height:var(--sale-pane-height,70vh);min-height:420px}
+  #sales_new.touch-extension #instance-view{display:flex;flex-direction:column;height:var(--sale-pane-height,70vh);min-height:420px;background:#fff;border:1px solid #dce4ed;border-radius:12px;padding:12px;box-shadow:0 2px 8px #18385808}
+  #sales_new.touch-extension #viewtest{background:#fff;border-radius:8px}
+  #sales_new.touch-extension #sales_new_items_table{background:#fff}
+  #sales_new.touch-extension #sales_new_items_table tbody td{border-bottom:1px solid #edf1f5}
+  #sales_new.touch-extension #paymentdisplay{border-top:1px solid #dce4ed;padding-top:8px}
   #sales_new.touch-extension #viewtest{flex:1 1 auto;min-height:90px;overflow:auto;margin-bottom:8px}
   #sales_new.touch-extension #sales_table,#sales_new.touch-extension #sales_table>.table-responsive{height:auto!important;max-height:none!important;overflow:visible}
   #sales_new.touch-extension .sales-cart-image{height:100px!important;width:auto!important;display:block;margin:auto}
