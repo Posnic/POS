@@ -65,15 +65,17 @@ function salesWorkspace(value, commands = {}) {
   if (value.policies !== undefined) {
     if (
       !object(value.policies) ||
-      Object.keys(value.policies).some((k) => !['useDefaultOpenPrice', 'compactCheckout'].includes(k)) ||
-      (value.policies.compactCheckout !== undefined && typeof value.policies.compactCheckout !== 'boolean') ||
+      Object.keys(value.policies).some(
+        (k) => !['useDefaultOpenPrice', 'compactCheckout'].includes(k)
+      ) ||
+      (value.policies.compactCheckout !== undefined &&
+        typeof value.policies.compactCheckout !== 'boolean') ||
       (value.policies.useDefaultOpenPrice !== undefined &&
         typeof value.policies.useDefaultOpenPrice !== 'boolean')
     )
       fail();
     policies.compactCheckout = value.policies.compactCheckout === true;
-    policies.useDefaultOpenPrice = value.policies.compactCheckout = value.policies.compactCheckout === true;
-    policies.useDefaultOpenPrice === true;
+    policies.useDefaultOpenPrice = value.policies.useDefaultOpenPrice === true;
   }
   return Object.freeze({
     version: 1,

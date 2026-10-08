@@ -20,6 +20,18 @@ test('compact checkout is opt-in and validates its boolean policy',()=>{
  v.policies.compactCheckout='true';assert.throws(()=>salesWorkspace(v),/extension_sales_workspace_invalid/);
 });
 
+test('checkout and open-price policies remain independent and do not mutate the manifest',()=>{
+ for(const compactCheckout of [undefined,false,true]) {
+  for(const useDefaultOpenPrice of [undefined,false,true]) {
+   const v=valid();v.policies=Object.freeze({compactCheckout,useDefaultOpenPrice});
+   const result=salesWorkspace(v);
+   assert.equal(result.policies.compactCheckout,compactCheckout===true);
+   assert.equal(result.policies.useDefaultOpenPrice,useDefaultOpenPrice===true);
+   assert.equal(v.policies.compactCheckout,compactCheckout);
+  }
+ }
+});
+
 test('native Pay uses the extension only for an eligible new checkout',()=>{
  const fs=require('node:fs'),vm=require('node:vm');
  const source=fs.readFileSync(require('node:path').join(__dirname,'../frontend/static/script/js/modules/js/sales.js'),'utf8');
