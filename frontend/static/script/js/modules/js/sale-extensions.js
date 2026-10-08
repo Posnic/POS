@@ -71,32 +71,38 @@
     var escaped=message.slice(0,300).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     PosnicPro.alert('success',escaped,3500);
   }
-  function refreshStock() {
-    if(!PosnicPro.sales.loadBillingCatalogue)return;
+  function refreshStock(done) {
+    if(!PosnicPro.sales.loadBillingCatalogue){done?.(false);return;}
     PosnicPro.sales.itemCache?.clear();
     var branch=String(PosnicPro.local?.get('branch_id_set')||'');
     PosnicPro.sales.loadBillingCatalogue(function(response){
-      if(branch!==String(PosnicPro.local?.get('branch_id_set')||'') || !active())return;
-      if(response?.type!=='success'){PosnicPro.alert('error','Stock display could not refresh. Refresh Sales before checking availability.');return;}
-      var items=new Map(),families={};
+      if(branch!==String(PosnicPro.local?.get('branch_id_set')||'') || !active()){done?.(false);return;}
+      if(response?.type!=='success'){done?.(false);PosnicPro.alert('error','Stock display could not refresh. Refresh Sales before checking availability.');return;}
+      var items=new Map(),families={},pending=1,ok=true;
+      function settled(){if(--pending===0)done?.(ok);}
       response.data.forEach(function(item){items.set(String(item.id||item.item_id),item);if(item.variant_group_id)(families[item.variant_group_id]||(families[item.variant_group_id]=[])).push(item);});
       if(PosnicPro.sales.itemsMenu)PosnicPro.sales.itemsMenu._families=families;
       document.querySelectorAll('#sales_new .wsk-cp').forEach(function(tile){
         var rows=tile.dataset.variantGroup?families[tile.dataset.variantGroup]:[items.get(tile.id)];
         if(!rows || !rows[0]){
           var missingStock=tile.querySelector('.wsk-cp-stock');
-          if(missingStock && /^[a-f0-9]{24}$/i.test(tile.id) && PosnicPro.sales.itemCache){
-            PosnicPro.sales.itemCache.get(tile.id,function(item){
-              if(branch!==String(PosnicPro.local?.get('branch_id_set')||'') || !tile.isConnected)return;
-              var quantity=Number(item.available_quantity);
+          if(missingStock && /^[a-f0-9]{24}$/i.test(tile.id) && PosnicPro.get){
+            pending++;missingStock.textContent='Updating stock…';
+            function failed(){ok=false;if(tile.isConnected)missingStock.textContent='Stock unavailable';settled();}
+            PosnicPro.get('items/'+tile.id,function(response){
+              if(branch!==String(PosnicPro.local?.get('branch_id_set')||'') || !tile.isConnected){ok=false;settled();return;}
+              if(response?.type!=='success'){failed();return;}
+              var quantity=Number(response.data?.available_quantity);
               missingStock.textContent=Number.isFinite(quantity)?quantity+' in stock':'Stock unavailable';
-            });
+              if(!Number.isFinite(quantity))ok=false;settled();
+            },failed);
           }
           return;
         }
         var tracked=rows.filter(function(r){return r.track_inventory===true || r.track_inventory==='true';}),stock=tile.querySelector('.wsk-cp-stock');
         if(stock)stock.textContent=tracked.length?tracked.reduce(function(sum,r){return sum+(Number(r.available_quantity)||0);},0)+' in stock':'';
       });
+      settled();
     },true);
   }
   function confirmClear() {
@@ -136,7 +142,7 @@
       back.onclick=function(){close();};
       var content=document.createElement('div');content.textContent='Loading sale actions…';header.append(back);dialog.append(header,content);document.body.append(dialog);
       PosnicPro.HideSideBarModal();
-      PosnicPro.extensions.showDetails(selected.id, {container:content,onClose:close,workspace:{version:1,presentation:compact?'compact':'workspace',action:action,page:page,lines:lines,context:!page?resumeContext:null,tender:String($('#payment_id .payment_mode:checked').attr('id')||'Cash').toLowerCase(),customer:String($('#sales_new_customer_name').val()||'Walk-in customer').slice(0,120)},onBusy:function(busy){back.disabled=busy;},onCommand:function(result,commandType){
+      PosnicPro.extensions.showDetails(selected.id, {container:content,onClose:close,workspace:{version:1,presentation:compact?'compact':'workspace',action:action,page:page,lines:lines,context:!page?resumeContext:null,tender:String($('#payment_id .payment_mode:checked').attr('id')||'Cash').toLowerCase(),customer:String($('#sales_new_customer_name').val()||'Walk-in customer').slice(0,120)},onError:function(){refreshStock();},onBusy:function(busy){back.disabled=busy;},onCommand:function(result,commandType){
         if(result)refreshStock();
         if (!transferred && lines.length && result && selected.salesWorkspace.clearCartOn?.includes(commandType)) {
           transferred=true;
@@ -155,6 +161,10 @@
       if(c.icon)b.prepend(icon(c.icon));
       b.style.minHeight='44px';b.style.whiteSpace='normal';b.onclick=function(){open(c.action,c.page);};el.append(b);
     });
+    if(placement==='header'){
+      var refresh=document.createElement('button');refresh.type='button';refresh.className='btn btn-outline-primary';refresh.id='sale-refresh-stock';refresh.textContent='↻ Refresh stock';refresh.style.minHeight='48px';
+      refresh.onclick=function(){refresh.disabled=true;refresh.textContent='Refreshing…';refreshStock(function(ok){refresh.disabled=false;refresh.textContent='↻ Refresh stock';if(ok)notice('Stock refreshed. Your current sale has been kept.');});};el.append(refresh);
+    }
     if(placement==='sale' && selected.salesWorkspace.policies?.touchCheckout){var clear=document.createElement('button');clear.type='button';clear.className='btn sale-clear';clear.textContent='Clear sale';clear.onclick=confirmClear;el.append(clear);}
     if(placement==='sale' && el.children.length%2===1)el.lastElementChild.style.gridColumn='1 / -1';return el;
   }

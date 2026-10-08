@@ -557,7 +557,7 @@
                   command: input.command,
                 },
                 input.requestKey,
-              ).then(async function(result){const completed = await afterCommand(result, input.command?.type);commandBusy=false;if(embedded && embedded.onBusy) embedded.onBusy(false);return completed;},function(error){commandBusy=!error.code || error.code === 'EXTENSION_CONNECTION_FAILED';if(embedded && embedded.onBusy) embedded.onBusy(commandBusy);throw error;});
+              ).then(async function(result){const completed = await afterCommand(result, input.command?.type);commandBusy=false;if(embedded && embedded.onBusy) embedded.onBusy(false);return completed;},function(error){if(embedded?.onError)embedded.onError(error);commandBusy=!error.code || error.code === 'EXTENSION_CONNECTION_FAILED';if(embedded && embedded.onBusy) embedded.onBusy(commandBusy);throw error;});
             }
             if (method === "recover") {
               commandBusy = true;
