@@ -1506,16 +1506,23 @@ app.post(['/push/test', '/api/push/test'], sseProtect, async (req, res) => {
   try {
     const result =
       req.db && req.user
-        ? await pushInfra.sendToUser(req.db, req.user._id, {
-            title: 'Posnic',
-            body: 'Notifications are working on this device.',
-            url: '/dashboard.html#/dashboard',
-          })
+        ? await pushInfra.sendToUser(
+            req.db,
+            req.user._id,
+            {
+              title: 'Posnic',
+              body: 'Notifications are working on this device.',
+              url: '/dashboard.html#/dashboard',
+            },
+            typeof req.body?.endpoint === 'string' ? req.body.endpoint : undefined
+          )
         : { sent: 0 };
     res.json({
-      type: 'success',
+      type: result.sent ? 'success' : 'error',
       data: result,
-      message: result.sent ? 'Sent' : 'No subscriptions on this device yet',
+      message: result.sent
+        ? 'Sent'
+        : 'Notification could not be delivered. Check device registration and try again.',
     });
   } catch (e) {
     res.status(500).json({ type: 'error', message: 'Send failed' });
