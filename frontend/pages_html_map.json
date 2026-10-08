@@ -34,6 +34,8 @@
         "modules/itemReport.html",
         "modules/items.html",
         "modules/inventoryCounts.html",
+        "modules/itemSettings.html",
+        "modules/expiryReport.html",
         "modules/quick_items.html",
         "modules/items_v2.html",
         "modules/items_write.html",

@@ -35,13 +35,22 @@ function windowFor(branch, days, now) {
   const today = moment(now).tz(timezone).format('YYYY-MM-DD');
   return { today, through: moment.utc(today).add(days, 'days').format('YYYY-MM-DD'), timezone };
 }
-async function list(req, now = new Date()) {
+async function list(req, now = new Date(), report = false) {
   const c = await scoped(req),
     settings = preference(c.branch);
   const page = Number(req.query?.page ?? 1);
   if (!Number.isSafeInteger(page) || page < 1 || page > 100000) fail('Choose a valid page.');
-  const range = windowFor(c.branch, settings.days, now);
-  if (!settings.enabled)
+  const days = report ? Number(req.query?.days ?? 30) : settings.days;
+  if (!Number.isInteger(days) || days < 0 || days > 365)
+    fail('Choose a period between 0 and 365 days.');
+  const status = report ? req.query?.status || 'all' : 'all';
+  const sort = report ? req.query?.sort || 'asc' : 'asc';
+  if (!['all', 'expired', 'upcoming'].includes(status) || !['asc', 'desc'].includes(sort))
+    fail('Invalid report filter.');
+  const search = report ? String(req.query?.search || '').trim() : '';
+  if (search.length > 100) fail('Search must be at most 100 characters.');
+  const range = windowFor(c.branch, days, now);
+  if (!report && !settings.enabled)
     return {
       ...settings,
       ...range,
@@ -57,6 +66,9 @@ async function list(req, now = new Date()) {
         $or: [{ branch_id: c.branchId }, { 'branch_access.branch_id': c.branchId }],
         item_status: { $ne: 'instant' },
         available_quantity: { $gt: 0 },
+        ...(search
+          ? { name: { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } }
+          : {}),
       },
     },
     // Item expiry is a calendar date; never shift it to the browser timezone.
@@ -71,7 +83,19 @@ async function list(req, now = new Date()) {
         },
       },
     },
-    { $match: { expiryDay: { $regex: '^\\d{4}-\\d{2}-\\d{2}$', $lte: range.through } } },
+    {
+      $match: {
+        expiryDay: {
+          $regex: '^\\d{4}-\\d{2}-\\d{2}$',
+          $lte: range.through,
+          ...(status === 'expired'
+            ? { $lt: range.today }
+            : status === 'upcoming'
+              ? { $gte: range.today }
+              : {}),
+        },
+      },
+    },
     {
       $set: {
         expiryParsed: {
@@ -90,7 +114,7 @@ async function list(req, now = new Date()) {
         },
       },
     },
-    { $sort: { expiryDay: 1, _id: 1 } },
+    { $sort: { expiryDay: sort === 'desc' ? -1 : 1, _id: 1 } },
     {
       $facet: {
         count: [{ $count: 'total' }],
@@ -122,4 +146,11 @@ async function list(req, now = new Date()) {
     })),
   };
 }
-module.exports = { read, save, list, preference, windowFor };
+module.exports = {
+  read,
+  save,
+  list,
+  report: (req, now) => list(req, now, true),
+  preference,
+  windowFor,
+};

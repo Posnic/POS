@@ -82,7 +82,7 @@ async function subscribe(db, userId, subscription) {
  * Deliver to every device of one user. 404/410 mean the browser revoked the
  * subscription; those rows are pruned so the store never accumulates ghosts.
  */
-async function sendToUser(db, userId, payload) {
+async function sendToUser(db, userId, payload, endpoint) {
   const wp = webpush();
   if (!wp || !db) return { sent: 0 };
   const vapid = await getVapid(db);
@@ -90,7 +90,7 @@ async function sendToUser(db, userId, payload) {
 
   const rows = await db
     .collection(COLLECTION)
-    .find({ user_id: String(userId) })
+    .find({ user_id: String(userId), ...(endpoint ? { endpoint } : {}) })
     .toArray();
   let sent = 0;
   for (const row of rows) {

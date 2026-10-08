@@ -98,6 +98,7 @@ const expiryReminders = require('../services/item-expiry-reminders');
 router.get('/expiryReminders/preference', preferenceHandler(expiryReminders.read));
 router.put('/expiryReminders/preference', preferenceHandler(expiryReminders.save));
 router.get('/expiryReminders', preferenceHandler(expiryReminders.list));
+router.get('/expiryReport', preferenceHandler(expiryReminders.report));
 
 /*
  * A dish that has run out, said by whoever found out first.
