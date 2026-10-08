@@ -1066,7 +1066,7 @@
         if (!params) { return false; }
         if (params._priceAsked) { return false; }
         if (PosnicPro.sales.SaleAction === 'return') { return false; }
-        if (params.open_price === true || params.open_price === 'true') { return !(PosnicPro.saleExtensions && PosnicPro.saleExtensions.active() && Number(params.selling_price) > 0); }
+        if (params.open_price === true || params.open_price === 'true') { return !(PosnicPro.saleExtensions && PosnicPro.saleExtensions.policy('useDefaultOpenPrice') && Number(params.selling_price) > 0); }
         return !(Number(params.selling_price) > 0);
     },
     askTodaysPrice: function (params) {
@@ -3918,7 +3918,7 @@ PosnicPro.sales.guardDiscountApproval = function (params, proceed, checkedPendin
 PosnicPro.sales.addSale = {
     /*Save Sales Order*/
     cartOrderSubmit: function (payment) {
-        if (PosnicPro.saleExtensions && PosnicPro.saleExtensions.active() && !PosnicPro.sales.paymentOnlyMode && PosnicPro.sales.saleProcess !== 'KOT') { PosnicPro.saleExtensions.open(String($('#payment_id .payment_mode:checked').attr('id') || 'Cash').toLowerCase() === 'card' ? 'card' : 'cash'); return false; }
+        if (!PosnicPro.sales.paymentOnlyMode && PosnicPro.sales.saleProcess !== 'KOT' && PosnicPro.saleExtensions?.dispatch('submit')) return false;
         // // ✅ Prevent duplicate submissions
         // if (PosnicPro.sales.submissionInProgress || $("#save_btn").prop('disabled') || $("#save_submit").hasClass('disabled')) {
         //     console.log('⚠️ Submission already in progress');

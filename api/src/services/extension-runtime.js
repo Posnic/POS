@@ -4,6 +4,7 @@
 const installed = new Map();
 const capabilities = Object.freeze([
   'namespace.commands.v1',
+  'sales.workspace-contributions.v1',
   'stock.durable-debit.v1',
   'stock.lifecycle.v1',
   'sales.adjusted-quantity.v1',

@@ -440,13 +440,13 @@
       // Pin the branch at opening. Switching branch requires reopening
       // the frame so an old basket can never be submitted in a new shop.
       var branch = String(PosnicPro.local.get("branch_id_set") || "");
-      async function afterCommand(result) {
+      async function afterCommand(result, commandType) {
         if (
           run !== generation ||
           branch !== String(PosnicPro.local.get("branch_id_set") || "")
         )
           return result;
-        if (embedded && embedded.onCommand) embedded.onCommand(result);
+        if (embedded && embedded.onCommand) embedded.onCommand(result, commandType);
         var drawer = window.electronAPI && window.electronAPI.cashDrawer;
         if (!drawer || !Array.isArray(result.hostActions)) return result;
         try {
@@ -544,7 +544,7 @@
                   command: input.command,
                 },
                 input.requestKey,
-              ).then(function(result){if(embedded && embedded.onBusy) embedded.onBusy(false);return afterCommand(result);},function(error){if(embedded && embedded.onBusy) embedded.onBusy(!error.code || error.code === 'EXTENSION_CONNECTION_FAILED');throw error;});
+              ).then(function(result){if(embedded && embedded.onBusy) embedded.onBusy(false);return afterCommand(result, input.command?.type);},function(error){if(embedded && embedded.onBusy) embedded.onBusy(!error.code || error.code === 'EXTENSION_CONNECTION_FAILED');throw error;});
             }
             if (method === "recover")
               return request(base + "/recover", {}).then(afterCommand);
