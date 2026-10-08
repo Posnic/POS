@@ -77,7 +77,7 @@
     var branch=String(PosnicPro.local?.get('branch_id_set')||'');
     PosnicPro.sales.loadBillingCatalogue(function(response){
       if(branch!==String(PosnicPro.local?.get('branch_id_set')||'') || !active()){done?.(false);return;}
-      if(response?.type!=='success'){done?.(false);PosnicPro.alert('error','Stock display could not refresh. Refresh Sales before checking availability.');return;}
+      if(response?.type!=='success'){done?.(false);PosnicPro.alert('error', PosnicPro.i18n.t('lang_stock_display_could_not_refresh_refresh_sa', 'Stock display could not refresh. Refresh Sales before checking availability.'));return;}
       var items=new Map(),families={},pending=1,ok=true;
       function settled(){if(--pending===0)done?.(ok);}
       response.data.forEach(function(item){items.set(String(item.id||item.item_id),item);if(item.variant_group_id)(families[item.variant_group_id]||(families[item.variant_group_id]=[])).push(item);});
@@ -109,11 +109,11 @@
     if(document.getElementById('sale-clear-dialog') || dialog || !cart().length)return;
     var before=JSON.stringify(cart()), modal=document.createElement('dialog');modal.id='sale-clear-dialog';modal.setAttribute('aria-labelledby','sale-clear-title');
     modal.style.cssText='width:min(520px,94vw);border:0;border-radius:12px;padding:24px;color:#172b4d;box-shadow:0 16px 60px #0004';
-    modal.innerHTML='<h2 id="sale-clear-title">Clear this sale?</h2><p>Remove all items from the current sale. Saved held baskets will remain available.</p><footer style="display:flex;gap:12px;margin-top:24px"><button type="button" class="btn btn-secondary" autofocus>Keep sale</button><button type="button" class="btn btn-danger">Clear sale</button></footer>';
+    modal.innerHTML='<h2 id="sale-clear-title"><lang class="lang_clear_this_sale">Clear this sale?</lang></h2><p><lang class="lang_remove_all_items_from_the_current_sale_sav">Remove all items from the current sale. Saved held baskets will remain available.</lang></p><footer style="display:flex;gap:12px;margin-top:24px"><button type="button" class="btn btn-secondary" autofocus><lang class="lang_keep_sale">Keep sale</lang></button><button type="button" class="btn btn-danger"><lang class="lang_clear_sale">Clear sale</lang></button></footer>';
     modal.querySelectorAll('button').forEach(function(b){b.style.cssText='flex:1;min-height:52px;font-size:16px;border-radius:8px';});
     function dismiss(){modal.close();modal.remove();document.getElementById('sales_new_item_name')?.focus({preventScroll:true});}
     modal.querySelector('.btn-secondary').onclick=dismiss;modal.addEventListener('cancel',function(e){e.preventDefault();dismiss();});
-    modal.querySelector('.btn-danger').onclick=function(){if(JSON.stringify(cart())!==before){dismiss();PosnicPro.alert('error','The sale changed. Review it before clearing.');return;}resumeContext=null;PosnicPro.sales.clear.cartItems(false);dismiss();notice('Sale cleared. Ready for the next customer.');};
+    modal.querySelector('.btn-danger').onclick=function(){if(JSON.stringify(cart())!==before){dismiss();PosnicPro.alert('error', PosnicPro.i18n.t('lang_the_sale_changed_review_it_before_clearing', 'The sale changed. Review it before clearing.'));return;}resumeContext=null;PosnicPro.sales.clear.cartItems(false);dismiss();notice('Sale cleared. Ready for the next customer.');};
     document.body.append(modal);modal.showModal();
   }
   function close(result) { if (dialog) { dialog.remove(); dialog=null; PosnicPro.extensions.closeEmbedded();

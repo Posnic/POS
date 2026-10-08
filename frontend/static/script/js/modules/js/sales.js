@@ -6574,7 +6574,7 @@ PosnicPro.sales.lineEdit = {
                 + '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button></div>'
                 + '<div class="modal-body pb-2">'
                 + '<div class="form-row">'
-                + '<div class="form-group col-6"><label class="le-label" id="le_price_label">Price</label><input type="number" min="0" step="any" class="form-control text-right" id="le_price"></div>'
+                + '<div class="form-group col-6"><label class="le-label" id="le_price_label"><lang class="lang_price_title">Price</lang></label><input type="number" min="0" step="any" class="form-control text-right" id="le_price"></div>'
                 + '<div class="form-group col-6"><label class="le-label"><lang class="lang_quantity">Quantity</lang></label><input type="number" min="0" step="any" class="form-control text-right" id="le_qty"></div>'
                 + '<div class="form-group col-6"><label class="le-label"><lang class="lang_discount_title">Discount</lang></label>'
                 + '<div class="input-group"><div class="input-group-prepend"><button type="button" class="btn btn-outline-secondary" id="le_disc_mode" title="Tap to switch amount / percent" data-t-title="lang_tap_to_switch_amount_percent">%</button></div>'
@@ -6601,7 +6601,7 @@ PosnicPro.sales.lineEdit = {
         var inclusive = $('#addSalesLineItemTaxType_' + id).text() !== 'Exc';
         var grossEntry = inclusive || !!(PosnicPro.saleExtensions && PosnicPro.saleExtensions.policy('inclusivePriceEntry'));
         PosnicPro.sales.lineEdit._grossEntry = grossEntry;
-        $('#le_price_label').text(grossEntry ? 'Price including tax' : 'Price excluding tax');
+        $('#le_price_label').text(grossEntry ? PosnicPro.i18n.t('lang_price_including_tax', 'Price including tax') : PosnicPro.i18n.t('lang_price_excluding_tax', 'Price excluding tax'));
         var entryPrice = parseFloat($('#addSalesLineItemSellingPrice_' + id).text()) || 0;
         if (grossEntry && !inclusive) entryPrice *= 1 + (parseFloat($('#addSalesLineItemTax_' + id).text()) || 0) / 100;
         $('#le_price').val(Number(entryPrice.toFixed(2)));
