@@ -2,7 +2,31 @@
  * No browser session or privileged API is passed into the extension frame. */
 (function () {
   'use strict';
-  var selected = null, dialog = null;
+  var selected = null, dialog = null, resumeContext = null, restoring = false;
+  var icons = {cash:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/>',card:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20M6 15h4"/>',box:'<path d="m12 2 10 5v10l-10 5-10-5V7Zm0 10v10M2 7l10 5 10-5M7 4.5l10 5"/>',pause:'<rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/>',printer:'<path d="M6 9V3h12v6M6 18H3V9h18v9h-3M6 14h12v7H6ZM17 12h.01"/>'};
+  function icon(name) { var span=document.createElement('span');span.setAttribute('aria-hidden','true');span.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(icons[name]||'')+'</svg>';return span; }
+  var css=document.createElement('style');css.textContent=`
+  #sales_new.touch-extension #instance-view{display:flex;flex-direction:column;height:var(--sale-pane-height,70vh);min-height:420px}
+  #sales_new.touch-extension #viewtest{flex:1 1 auto;min-height:90px;overflow:auto;margin-bottom:8px}
+  #sales_new.touch-extension #sales_table,#sales_new.touch-extension #sales_table>.table-responsive{height:auto!important;max-height:none!important;overflow:visible}
+  #sales_new.touch-extension .sales-cart-image{height:100px!important;width:auto!important;display:block;margin:auto}
+  #sales_new.touch-extension #sales_new_items_table thead{position:sticky;top:0;background:#f5f7fa;z-index:1}
+  #sales_new.touch-extension #paymentdisplay{flex:0 0 auto}
+  #sales_new.touch-extension #paymentdisplay td{padding:5px 8px}
+  #sales_new.touch-extension #edit_style_button{display:none!important}
+  #sales_new.touch-extension #payment_note{max-width:280px}
+  #sales_new.touch-extension #pay_total_hide{font-size:26px;font-weight:700;color:#066bca!important}
+  #sales_new.touch-extension #pay_hide{font-size:17px}
+  #sales_new.touch-extension #sale-extension-checkout{flex:none;gap:10px!important;margin:10px 0 0!important}
+  #sales_new.touch-extension #sale-extension-checkout button{min-height:58px!important;display:flex;align-items:center;justify-content:center;gap:12px;font-size:17px;font-weight:600;border-radius:8px;padding:10px}
+  #sales_new.touch-extension #sale-extension-checkout .btn-secondary{background:#fff;color:#17548d;border:1px solid #cbdbea}
+  #sales_new.touch-extension #sale-extension-checkout .sale-clear{color:#b3293e;background:#fff;border:1px solid #e6cbd1}
+  #sales_new.touch-extension #sales_new_items_table .input-group button,#sales_new.touch-extension #sales_new_items_table .input-group input{min-height:48px;min-width:44px}
+  #sales_new.touch-extension #sales_new_items_table td:last-of-type a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:48px}
+  #sales_new.touch-extension #sales_new_productList,#sales_new.touch-extension #sales_new_categoryList{max-height:calc(var(--sale-pane-height,70vh) - 100px)!important;overflow:auto}
+  .sale-extension-back{min-height:48px;min-width:150px;font-size:16px}
+  @media(max-width:767px){#sales_new.touch-extension #instance-view{height:auto;min-height:0}#sales_new.touch-extension #viewtest{max-height:38vh}#sales_new.touch-extension #sale-extension-checkout{position:sticky;bottom:0;background:#f5f7fa;padding:10px 0;z-index:2}}
+  `;document.head.append(css);
   function cart() {
     return Array.from(document.querySelectorAll('#sales_new_items_table tbody tr')).map(function (row) {
       var item = row.querySelector('[id^="addSalesLineItemId_"]');
@@ -34,14 +58,15 @@
       dialog=document.createElement('section'); dialog.setAttribute('role','dialog');dialog.setAttribute('aria-label','Sale actions');dialog.setAttribute('aria-modal','true');
       dialog.style.cssText='position:fixed;inset:3vh 3vw;z-index:10550;background:white;color:#172b4d;border:2px solid #ddd;box-shadow:0 0 0 100vmax #0008;border-radius:10px;padding:12px;overflow:auto';
       if (compact) { dialog.dataset.presentation='compact'; dialog.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(620px,94vw);max-height:94vh;z-index:10550;background:white;color:#172b4d;box-shadow:0 0 0 100vmax #0008;border-radius:10px;padding:16px;overflow:auto'; }
-      var back=document.createElement('button');back.type='button';back.className='btn btn-secondary';back.textContent='Back to sale';
+      var back=document.createElement('button');back.type='button';back.className='btn btn-secondary sale-extension-back';back.textContent='← Back to sale';
       // Closing leaves any persisted extension transaction available in its own workflow.
       back.onclick=close;
       var content=document.createElement('div');content.textContent='Loading sale actions…';dialog.append(back,content);document.body.append(dialog);
       PosnicPro.HideSideBarModal();
-      PosnicPro.extensions.showDetails(selected.id, {container:content,onClose:close,workspace:{version:1,presentation:compact?'compact':'workspace',action:action,page:page,lines:lines,tender:String($('#payment_id .payment_mode:checked').attr('id')||'Cash').toLowerCase(),customer:String($('#sales_new_customer_name').val()||'Walk-in customer').slice(0,120)},onBusy:function(busy){back.disabled=busy;},onCommand:function(result,commandType){
+      PosnicPro.extensions.showDetails(selected.id, {container:content,onClose:close,workspace:{version:1,presentation:compact?'compact':'workspace',action:action,page:page,lines:lines,context:!page?resumeContext:null,tender:String($('#payment_id .payment_mode:checked').attr('id')||'Cash').toLowerCase(),customer:String($('#sales_new_customer_name').val()||'Walk-in customer').slice(0,120)},onBusy:function(busy){back.disabled=busy;},onCommand:function(result,commandType){
         if (!transferred && lines.length && result && selected.salesWorkspace.clearCartOn?.includes(commandType)) {
           transferred=true;
+          resumeContext=null;
           if (JSON.stringify(cart())===before) PosnicPro.sales.clear.cartItems(false);
         }
       }});
@@ -53,19 +78,24 @@
     var controls=selected.salesWorkspace.controls.filter(function(c){return c.placements.includes(placement);});
     controls.forEach(function(c){
       var b=document.createElement('button');b.type='button';b.textContent=c.label;b.dataset.extensionControl=c.id;b.className='btn btn-'+c.tone;
+      if(c.icon)b.prepend(icon(c.icon));
       b.style.minHeight='44px';b.style.whiteSpace='normal';b.onclick=function(){open(c.action,c.page);};el.append(b);
-    });if(placement==='sale' && controls.length%2===1)el.lastElementChild.style.gridColumn='1 / -1';return el;
+    });
+    if(placement==='sale' && selected.salesWorkspace.policies?.touchCheckout){var clear=document.createElement('button');clear.type='button';clear.className='btn sale-clear';clear.textContent='Clear sale';clear.onclick=function(){if(!cart().length)return;if(window.confirm('Clear the current sale? Saved held baskets will remain available.')){resumeContext=null;PosnicPro.sales.clear.cartItems(false);document.getElementById('sales_new_item_name')?.focus();}};el.append(clear);}
+    if(placement==='sale' && el.children.length%2===1)el.lastElementChild.style.gridColumn='1 / -1';return el;
   }
   function render() {
-    if (!selected) return;
     var sale=document.getElementById('sales_new');
+    var visible=Boolean(selected) && /^#\/?sales\/new(?:$|\?)/.test(location.hash) && PosnicPro.sales?.SaleAction==='add';
+    sale?.classList.toggle('touch-extension',visible && selected.salesWorkspace.policies?.touchCheckout===true);
+    if (!selected) return;
     if(sale && !sale.querySelector('.sale-extension-folders')) {var folders=strip('header');folders.classList.add('sale-extension-folders');(sale.querySelector('#sale-header-actions')||sale.querySelector('.contentbar')||sale).append(folders);}
     var pay=document.getElementById('sales_save_button');
-    if(pay && !document.getElementById('sale-extension-checkout')) {var controls=strip('sale');controls.id='sale-extension-checkout';var totals=document.getElementById('paymentdisplay');(totals||pay.parentElement).before(controls);}
+    if(pay && !document.getElementById('sale-extension-checkout')) {var controls=strip('sale');controls.id='sale-extension-checkout';var totals=document.getElementById('paymentdisplay');if(selected.salesWorkspace.policies?.touchCheckout && totals)totals.after(controls);else (totals||pay.parentElement).before(controls);}
     var payment=document.getElementById('payment_id');
     if(payment && selected.salesWorkspace.controls.some(function(c){return c.placements.includes('payment');}) && !document.getElementById('sale-extension-payment')) {var controls=strip('payment');controls.id='sale-extension-payment';payment.after(controls);}
-    var visible=/^#\/?sales\/new(?:$|\?)/.test(location.hash) && PosnicPro.sales?.SaleAction==='add';
     document.querySelectorAll('.sale-extension-actions').forEach(function(el){el.hidden=!visible;el.style.display=visible?(el.dataset.placement==='sale'?'grid':'flex'):'none';});
+    var pane=document.getElementById('instance-view');if(visible && pane)sale.style.setProperty('--sale-pane-height',Math.max(420,window.innerHeight-pane.getBoundingClientRect().top-16)+'px');
   }
   function active(){return Boolean(selected) && /^#\/?sales\/new(?:$|\?)/.test(location.hash) && PosnicPro.sales.SaleAction==='add';}
   PosnicPro.saleExtensions={active:active,policy:function(name){return active() && selected.salesWorkspace.policies?.[name]===true;},dispatch:function(event){
@@ -77,10 +107,34 @@
     if(JSON.stringify(selected)!==JSON.stringify(next)){close();document.querySelectorAll('.sale-extension-actions').forEach(function(el){el.remove();});}
     selected=next;render();
     if(owners.length>1)PosnicPro.alert('error', PosnicPro.i18n.t('lang_multiple_extensions_request_the_sales_work', 'Multiple extensions request the sales workspace. Enable only one sales workspace provider.'));
-  },open:open};
+  },open:open,restore:async function(id,input,branch){
+    if(!selected || selected.id!==id || restoring)throw Error('This extension cannot open Sales.');
+    input=input||{};var lines=input.lines||[];
+    if(!Array.isArray(lines)||lines.length>200||lines.some(function(l){return !/^[a-f0-9]{24}$/i.test(l.productId)||!Number.isSafeInteger(l.quantityMilli)||l.quantityMilli<=0||!Number.isFinite(l.sellingPrice)||l.sellingPrice<0;}))throw Error('Invalid saved sale.');
+    if(lines.length && cart().length)throw Error('Hold or clear the current sale before opening another basket.');
+    if(input.context && JSON.stringify(input.context).length>1024)throw Error('Invalid sale context.');
+    restoring=true;
+    try{
+      var response=lines.length?await new Promise(function(resolve){PosnicPro.sales.loadBillingCatalogue(resolve,true);}):{type:'success',data:[]};
+      if(response.type!=='success')throw Error('Products could not be loaded. Try again.');
+      if(branch!==String(PosnicPro.local.get('branch_id_set')||'') || (lines.length && cart().length) || selected?.id!==id)throw Error('The shop or current sale changed. Try again.');
+      var items=lines.map(function(line){var item=response.data.find(function(p){return String(p.id||p.item_id)===line.productId;});if(!item)throw Error('A saved product is unavailable. Review the basket before resuming.');return Object.assign({},item,{id:line.productId,item_quantity:line.quantityMilli/1000,selling_price:line.sellingPrice,mrp_price:line.sellingPrice,discount_amount:0,discount_percentage:0,_modifiersResolved:true,_priceAsked:true});});
+      if(!/^#\/?sales\/new(?:$|\?)/.test(location.hash)){
+        location.hash='#/sales/new';
+        await new Promise(function(resolve,reject){var until=Date.now()+8000;function ready(){var scanner=document.getElementById('sales_new_item_name');if(scanner?.getClientRects().length && PosnicPro.sales.SaleAction==='add')return resolve();if(Date.now()>until)return reject(Error('Open Sales and try resuming again.'));setTimeout(ready,50);}setTimeout(ready,50);});
+      }
+      items.forEach(function(item){PosnicPro.sales.addSalesLineItems(item);});
+      if(lines.length)resumeContext=input.context||null;
+      if(input.customer)$('#sales_new_customer_name').val(String(input.customer).slice(0,120));
+      document.getElementById('sales_new_item_name')?.focus();
+      setTimeout(close,0);
+      return {opened:true};
+    }finally{restoring=false;}
+  }};
   // Tender and sales modules are inserted/rebuilt asynchronously by the host.
   var queued=false;
   new MutationObserver(function(){if(queued)return;queued=true;requestAnimationFrame(function(){queued=false;render();});}).observe(document.body,{childList:true,subtree:true});
   document.addEventListener('click',function(event){if(event.target.closest('#holdSaleButton') && PosnicPro.saleExtensions.dispatch('hold')){event.preventDefault();event.stopImmediatePropagation();}},true);
   window.addEventListener('hashchange',function(){if(dialog)close();render();});
+  window.addEventListener('resize',render);
 })();

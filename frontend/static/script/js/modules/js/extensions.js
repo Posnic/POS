@@ -515,12 +515,16 @@
               setTimeout(function(){if(run === generation) embedded.onClose();}, 0);
               return {closed:true};
             }
+            if (method === "openSale") {
+              if (commandBusy || !PosnicPro.saleExtensions) throw new Error('Finish the current operation first.');
+              return PosnicPro.saleExtensions.restore(id, input, branch);
+            }
             if (method === "bootstrap")
               return Promise.all([
                 request(base + "/capabilities"),
                 request(base + "/state"),
               ]).then(function (values) {
-                return { capabilities: values[0], namespace: values[1], salesWorkspace: embedded ? embedded.workspace : null };
+                return { capabilities: values[0], namespace: values[1], salesWorkspace: embedded ? embedded.workspace : null, salesWorkspaceBridge: Boolean(PosnicPro.saleExtensions) };
               });
             if (method === "state") return request(base + "/state");
             if (method === "sales")
