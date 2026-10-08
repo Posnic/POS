@@ -3679,7 +3679,7 @@
     },
     "/captain/v1/discovery": {
       "get": {
-        "summary": "captain_fallback_url",
+        "summary": "branch",
         "operationId": "get_captain_v1_discovery",
         "tags": [
           "Captain access"
@@ -3702,7 +3702,7 @@
     },
     "/captain/v1/connections": {
       "post": {
-        "summary": "captain_fallback_url",
+        "summary": "branch",
         "operationId": "post_captain_v1_connections",
         "tags": [
           "Captain access"
