@@ -37,6 +37,13 @@
   #sales_new.touch-extension #sales_new_items_table td:last-of-type a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:48px}
   #sales_new.touch-extension #sales_new_productList,#sales_new.touch-extension #sales_new_categoryList{max-height:calc(var(--sale-pane-height,70vh) - 100px)!important;overflow:auto}
   .sale-extension-back{min-height:48px;min-width:150px;font-size:16px}
+  @media(min-width:768px) and (max-height:800px){
+   #sales_new.touch-extension #sales_new_items_table th{padding:6px 8px}
+   #sales_new.touch-extension #sales_new_items_table td{padding:4px 8px}
+   #sales_new.touch-extension #paymentdisplay td{padding:4px 8px;min-height:28px}
+   #sales_new.touch-extension #sale-extension-checkout{gap:8px!important}
+   #sales_new.touch-extension #sale-extension-checkout button{min-height:52px!important;padding:8px}
+  }
   @media(max-width:1400px){
    #sales_new.touch-extension #sales_new_items_table th:nth-child(3),#sales_new.touch-extension #sales_new_items_table th:nth-child(5),#sales_new.touch-extension #sales_new_items_table th:nth-child(6),#sales_new.touch-extension #sales_new_items_table td[name="addSalesLineItemUnit"],#sales_new.touch-extension #sales_new_items_table td[id^="addSalesLineItemDiscountprint_"],#sales_new.touch-extension #sales_new_items_table td[name="addSalesLineItemTax"]{display:none}
    #sales_new.touch-extension #sales_new_items_table td[id^="addSalesLineItemName_"]{min-width:100px;width:auto!important}
