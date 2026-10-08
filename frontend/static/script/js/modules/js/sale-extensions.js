@@ -73,6 +73,7 @@
   }
   function refreshStock() {
     if(!PosnicPro.sales.loadBillingCatalogue)return;
+    PosnicPro.sales.itemCache?.clear();
     var branch=String(PosnicPro.local?.get('branch_id_set')||'');
     PosnicPro.sales.loadBillingCatalogue(function(response){
       if(branch!==String(PosnicPro.local?.get('branch_id_set')||'') || !active())return;
@@ -82,7 +83,17 @@
       if(PosnicPro.sales.itemsMenu)PosnicPro.sales.itemsMenu._families=families;
       document.querySelectorAll('#sales_new .wsk-cp').forEach(function(tile){
         var rows=tile.dataset.variantGroup?families[tile.dataset.variantGroup]:[items.get(tile.id)];
-        if(!rows || !rows[0])return;
+        if(!rows || !rows[0]){
+          var missingStock=tile.querySelector('.wsk-cp-stock');
+          if(missingStock && /^[a-f0-9]{24}$/i.test(tile.id) && PosnicPro.sales.itemCache){
+            PosnicPro.sales.itemCache.get(tile.id,function(item){
+              if(branch!==String(PosnicPro.local?.get('branch_id_set')||'') || !tile.isConnected)return;
+              var quantity=Number(item.available_quantity);
+              missingStock.textContent=Number.isFinite(quantity)?quantity+' in stock':'Stock unavailable';
+            });
+          }
+          return;
+        }
         var tracked=rows.filter(function(r){return r.track_inventory===true || r.track_inventory==='true';}),stock=tile.querySelector('.wsk-cp-stock');
         if(stock)stock.textContent=tracked.length?tracked.reduce(function(sum,r){return sum+(Number(r.available_quantity)||0);},0)+' in stock':'';
       });
