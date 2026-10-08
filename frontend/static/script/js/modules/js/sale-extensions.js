@@ -16,7 +16,12 @@
       return {productId:id, quantityMilli:Math.round(quantity*1000), sellingPrice:price, expectedLineMinor:Math.round(total*100), priceMinor:Math.round(total / quantity * 100), description:read('addSalesLineItemName_')};
     }).filter(Boolean);
   }
-  function close() { if (dialog) { dialog.remove(); dialog=null; PosnicPro.extensions.closeEmbedded(); } }
+  function close() { if (dialog) { dialog.remove(); dialog=null; PosnicPro.extensions.closeEmbedded();
+    if (/^#\/?sales\/new(?:$|\?)/.test(location.hash)) {
+      var scanner = document.getElementById('sales_new_item_name');
+      if (scanner && !scanner.disabled && scanner.getClientRects().length) scanner.focus({preventScroll:true});
+    }
+  } }
   function open(action, page) {
     if (!selected || dialog) return;
     try {
