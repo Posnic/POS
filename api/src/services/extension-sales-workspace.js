@@ -28,7 +28,8 @@ function salesWorkspace(value, commands = {}) {
       c.placements.some((p) => !['sale', 'payment', 'header'].includes(p)) ||
       (c.action !== undefined) === (c.page !== undefined) ||
       !token(c.action || c.page) ||
-      (c.tone !== undefined && !['primary', 'secondary', 'danger'].includes(c.tone))
+      (c.tone !== undefined && !['primary', 'secondary', 'danger'].includes(c.tone)) ||
+      (c.icon !== undefined && !['cash', 'card', 'box', 'pause', 'printer'].includes(c.icon))
     )
       fail();
     if (c.page && c.placements.some((p) => p !== 'header')) fail();
@@ -39,6 +40,7 @@ function salesWorkspace(value, commands = {}) {
       label: c.label.trim(),
       placements: Object.freeze([...new Set(c.placements)]),
       tone: c.tone || 'primary',
+      ...(c.icon ? { icon: c.icon } : {}),
       ...(c.action ? { action: c.action } : { page: c.page }),
     });
   });
@@ -66,8 +68,21 @@ function salesWorkspace(value, commands = {}) {
     if (
       !object(value.policies) ||
       Object.keys(value.policies).some(
-        (k) => !['useDefaultOpenPrice', 'compactCheckout'].includes(k)
+        (k) =>
+          ![
+            'useDefaultOpenPrice',
+            'compactCheckout',
+            'touchCheckout',
+            'inclusivePriceEntry',
+            'allowCounterPriceOverride',
+          ].includes(k)
       ) ||
+      (value.policies.allowCounterPriceOverride !== undefined &&
+        typeof value.policies.allowCounterPriceOverride !== 'boolean') ||
+      (value.policies.inclusivePriceEntry !== undefined &&
+        typeof value.policies.inclusivePriceEntry !== 'boolean') ||
+      (value.policies.touchCheckout !== undefined &&
+        typeof value.policies.touchCheckout !== 'boolean') ||
       (value.policies.compactCheckout !== undefined &&
         typeof value.policies.compactCheckout !== 'boolean') ||
       (value.policies.useDefaultOpenPrice !== undefined &&
@@ -75,6 +90,9 @@ function salesWorkspace(value, commands = {}) {
     )
       fail();
     policies.compactCheckout = value.policies.compactCheckout === true;
+    policies.allowCounterPriceOverride = value.policies.allowCounterPriceOverride === true;
+    policies.inclusivePriceEntry = value.policies.inclusivePriceEntry === true;
+    policies.touchCheckout = value.policies.touchCheckout === true;
     policies.useDefaultOpenPrice = value.policies.useDefaultOpenPrice === true;
   }
   return Object.freeze({

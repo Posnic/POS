@@ -6,6 +6,7 @@
   var methods = new Set([
     "bootstrap",
     "closeWorkspace",
+    "openSale",
     "state",
     "catalogue",
     "command",

@@ -34,7 +34,8 @@ async function resumeSaleCommit(db, scope, paymentId, stockGrant) {
     document.extension_stock_operation !== row.stockOperationId ||
     document.extension_id !== row.extensionId ||
     document.payment_status !== 'Paid' ||
-    document.payment_mode !== (row.method === 'cash' ? 'Cash' : 'Card') ||
+    document.payment_mode !==
+      (row.method === 'cash' ? 'Cash' : row.method === 'split' ? 'Multiple' : 'Card') ||
     Money.toMinor(document.sales_total, row.currency) !== row.valueMinor ||
     !row.payload ||
     Object.keys(row.payload).some(

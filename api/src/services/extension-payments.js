@@ -25,7 +25,7 @@ function paymentScope(context) {
     actorId: String(oid(context.actorId)),
   };
 }
-async function saleContext(db, scope) {
+async function saleContext(db, scope, allowCounterPriceOverride = false) {
   const branch = await db
     .collection('branches')
     .findOne({ _id: scope.branch_id, license: scope.license });
@@ -34,6 +34,7 @@ async function saleContext(db, scope) {
     .findOne({ _id: oid(scope.actorId), license: scope.license });
   if (!branch || !user) fail('extension_payment_context_unavailable');
   return {
+    allowCounterPriceOverride,
     licenseId: String(scope.license),
     branchId: String(scope.branch_id),
     userId: scope.actorId,
@@ -69,7 +70,7 @@ async function preparePayment(context, input) {
   const { db } = context,
     scope = paymentScope(context);
   if (
-    !['cash', 'card'].includes(input.method) ||
+    !['cash', 'card', 'split'].includes(input.method) ||
     !Array.isArray(input.lines) ||
     !input.lines.length ||
     input.lines.length > 100
@@ -124,6 +125,7 @@ async function preparePayment(context, input) {
       status: 'preparing',
       ...(input.stockOperationId ? { stockOperationId: input.stockOperationId } : {}),
       adjusted: Boolean(input.stockOperationId),
+      allowCounterPriceOverride: context.allowCounterPriceOverride === true,
       createdAt: new Date(),
     });
   } catch (error) {
@@ -133,11 +135,11 @@ async function preparePayment(context, input) {
   if (!row || row.digest !== digest) fail('extension_payment_conflict');
   if (row.status === 'rejected') return { rejected: true };
   if (row.status !== 'preparing') return publicPayment(row);
-  const ctx = await saleContext(db, scope);
+  const ctx = await saleContext(db, scope, row.allowCounterPriceOverride === true);
   if (!row.quote) {
     const payload = {
       sale_process: 'add',
-      payment_mode: row.method === 'cash' ? 'Cash' : 'Card',
+      payment_mode: row.method === 'cash' ? 'Cash' : row.method === 'split' ? 'Multiple' : 'Card',
       sales_total: 0,
       customer_name: input.customer || '',
       items: lines.map((line) => ({
@@ -227,6 +229,16 @@ async function preparePayment(context, input) {
 const paidResult = (row) => ({
   ...publicPayment(row),
   paidAt: row.paidAt,
+  ...(row.method === 'split'
+    ? {
+        cashMinor: row.confirmation.cashMinor,
+        cardMinor: row.confirmation.cardMinor,
+        tenderMinor: row.confirmation.tenderMinor,
+        changeMinor: row.confirmation.tenderMinor - row.confirmation.cashMinor,
+        recording: 'external-terminal',
+        reference: row.confirmation.reference,
+      }
+    : {}),
   ...(row.method === 'cash'
     ? {
         tenderMinor: row.confirmation.tenderMinor,
@@ -261,10 +273,32 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
           ))))
   )
     fail('extension_card_confirmation_required');
+  if (method === 'split') {
+    if (
+      ![input.cashMinor, input.cardMinor, input.tenderMinor].every(Number.isSafeInteger) ||
+      input.cashMinor <= 0 ||
+      input.cardMinor <= 0 ||
+      input.tenderMinor < input.cashMinor ||
+      input.terminalConfirmed !== true ||
+      typeof (input.reference || '') !== 'string' ||
+      (input.reference || '').length > 120 ||
+      [...(input.reference || '')].some(
+        (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127
+      )
+    )
+      fail('extension_split_confirmation_invalid');
+    Object.assign(confirmation, {
+      cashMinor: input.cashMinor,
+      cardMinor: input.cardMinor,
+      tenderMinor: input.tenderMinor,
+    });
+  }
   const confirmationDigest = fingerprint(confirmation);
   const attemptId = context.operationId;
   let row = await collection.findOne({ _id: input.paymentId, ...scope });
   if (!row || row.method !== method) fail(`extension_${method}_payment_unavailable`);
+  if (method === 'split' && input.cashMinor + input.cardMinor !== row.valueMinor)
+    fail('extension_split_total_invalid');
   if (row.provider && options.authorization !== dojoAuthorization)
     fail('extension_provider_payment_in_progress');
   if (method === 'cash' && input.tenderMinor < row.valueMinor)
@@ -289,6 +323,14 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
     {
       $set: {
         status: 'submitting',
+        ...(method === 'split'
+          ? {
+              'payload.multi_payment': {
+                Cash: Money.fromMinor(input.cashMinor, row.currency),
+                Card: Money.fromMinor(input.cardMinor, row.currency),
+              },
+            }
+          : {}),
         confirmation,
         attempt: {
           id: attemptId,
@@ -369,7 +411,7 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
         stockGrant
       );
     } else {
-      const ctx = await saleContext(db, scope);
+      const ctx = await saleContext(db, scope, row.allowCounterPriceOverride === true);
       const save = options.saveSale || require('./sale.service').processSale;
       const beforeStockCommit = async (pricing, document) => {
         const currency = Money.policy(ctx.branchSettings);
@@ -430,7 +472,7 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
   }
   if (
     sale.payment_status !== 'Paid' ||
-    sale.payment_mode !== (method === 'cash' ? 'Cash' : 'Card') ||
+    sale.payment_mode !== (method === 'cash' ? 'Cash' : method === 'split' ? 'Multiple' : 'Card') ||
     Money.toMinor(sale.sales_total, row.currency) !== row.valueMinor
   )
     fail('extension_payment_sale_mismatch');
@@ -441,6 +483,8 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
   row = await collection.findOne({ _id: row._id });
   return paidResult(row);
 }
+const confirmSplit = (context, input, options) =>
+  confirmRecordedPayment(context, input, 'split', options);
 const confirmCash = (context, input, options) =>
   confirmRecordedPayment(context, input, 'cash', options);
 // Matches ordinary manual Card entry: staff must explicitly confirm their
@@ -637,6 +681,7 @@ async function cancelPayment(context, input) {
 module.exports = {
   preparePayment,
   confirmCash,
+  confirmSplit,
   confirmExternalCard,
   processDojoPayment,
   cancelPayment,

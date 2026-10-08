@@ -4606,5 +4606,13 @@
   "lang_management_includes_package_installation_b": "Beheer omvat pakketinstallatie, het verwijderen van winkelmanden, voorraadretouren en het afhandelen van openstaande betalingen van andere medewerkers. Alleen toekennen aan bevoegde leidinggevenden.",
   "lang_use_extension_workflows": "Extensiewerkstromen gebruiken",
   "lang_view_installed_extensions_and_their_record": "Geïnstalleerde extensies en hun gegevens bekijken",
-  "lang_multiple_extensions_request_the_sales_work": "Meerdere extensies vragen toegang tot de verkoopwerkruimte. Schakel slechts één aanbieder van de verkoopwerkruimte in."
+  "lang_multiple_extensions_request_the_sales_work": "Meerdere extensies vragen toegang tot de verkoopwerkruimte. Schakel slechts één aanbieder van de verkoopwerkruimte in.",
+  "lang_clear_sale": "Verkoop wissen",
+  "lang_clear_this_sale": "Deze verkoop wissen?",
+  "lang_keep_sale": "Verkoop behouden",
+  "lang_price_including_tax": "Prijs inclusief belasting",
+  "lang_price_excluding_tax": "Prijs exclusief belasting",
+  "lang_remove_all_items_from_the_current_sale_sav": "Verwijder alle artikelen uit de huidige verkoop. Opgeslagen winkelmandjes blijven beschikbaar.",
+  "lang_stock_display_could_not_refresh_refresh_sa": "De voorraadweergave kon niet worden vernieuwd. Vernieuw het verkoopscherm voordat u de beschikbaarheid controleert.",
+  "lang_the_sale_changed_review_it_before_clearing": "De verkoop is gewijzigd. Controleer deze voordat u hem wist."
 }

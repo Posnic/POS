@@ -3,6 +3,8 @@ const { runStockBatch } = require('./extension-stock-journal');
 async function executeEffect(context, effect) {
   if (effect?.kind === 'payment.prepare')
     return require('./extension-payments').preparePayment(context, effect);
+  if (effect?.kind === 'payment.split')
+    return require('./extension-payments').confirmSplit(context, effect);
   if (effect?.kind === 'payment.cash')
     return require('./extension-payments').confirmCash(context, effect);
   if (effect?.kind === 'payment.external-card')
