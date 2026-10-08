@@ -512,7 +512,8 @@
               );
             if (method === "closeWorkspace") {
               if (!embedded?.onClose || embedded.workspace?.presentation !== 'compact' || commandBusy) throw new Error('This workspace cannot close yet.');
-              setTimeout(function(){if(run === generation) embedded.onClose();}, 0);
+              const message = typeof input?.message === 'string' ? input.message.slice(0,300) : '';
+              setTimeout(function(){if(run === generation) embedded.onClose({message});}, 0);
               return {closed:true};
             }
             if (method === "openSale") {
