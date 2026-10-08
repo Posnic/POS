@@ -11,7 +11,12 @@
   #sales_new.touch-extension #sales_table,#sales_new.touch-extension #sales_table>.table-responsive{height:auto!important;max-height:none!important;overflow:visible}
   #sales_new.touch-extension .sales-cart-image{height:100px!important;width:auto!important;display:block;margin:auto}
   #sales_new.touch-extension #sales_new_items_table thead{position:sticky;top:0;background:#f5f7fa;z-index:1}
-  #sales_new.touch-extension #paymentdisplay{flex:0 0 auto}
+  #sales_new.touch-extension #paymentdisplay{flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr}
+  #sales_new.touch-extension #paymentdisplay tbody,#sales_new.touch-extension #paymentdisplay tr{display:contents}
+  #sales_new.touch-extension #paymentdisplay #payment_note{grid-column:1/-1;max-width:none;border-bottom:1px solid #e0e6ed}
+  #sales_new.touch-extension #paymentdisplay .sale-actionbar{display:flex;flex-wrap:wrap;gap:5px}
+  #sales_new.touch-extension #paymentdisplay #return_discount{grid-column:1/-1}
+  #sales_new.touch-extension #paymentdisplay #pay_hide,#sales_new.touch-extension #paymentdisplay #pay_total_hide{background:#edf5ff;padding:8px}
   #sales_new.touch-extension #paymentdisplay td{padding:5px 8px}
   #sales_new.touch-extension #edit_style_button{display:none!important}
   #sales_new.touch-extension #payment_note{max-width:280px}
@@ -118,7 +123,7 @@
       var response=lines.length?await new Promise(function(resolve){PosnicPro.sales.loadBillingCatalogue(resolve,true);}):{type:'success',data:[]};
       if(response.type!=='success')throw Error('Products could not be loaded. Try again.');
       if(branch!==String(PosnicPro.local.get('branch_id_set')||'') || (lines.length && cart().length) || selected?.id!==id)throw Error('The shop or current sale changed. Try again.');
-      var items=lines.map(function(line){var item=response.data.find(function(p){return String(p.id||p.item_id)===line.productId;});if(!item)throw Error('A saved product is unavailable. Review the basket before resuming.');return Object.assign({},item,{id:line.productId,item_quantity:line.quantityMilli/1000,selling_price:line.sellingPrice,mrp_price:line.sellingPrice,discount_amount:0,discount_percentage:0,_modifiersResolved:true,_priceAsked:true});});
+      var items=lines.map(function(line){var item=response.data.find(function(p){return String(p.id||p.item_id)===line.productId;});if(!item)throw Error('A saved product is unavailable. Review the basket before resuming.');return Object.assign({},item,{available_quantity:Number(item.available_quantity)||0,id:line.productId,item_quantity:line.quantityMilli/1000,selling_price:line.sellingPrice,mrp_price:line.sellingPrice,discount_amount:0,discount_percentage:0,_modifiersResolved:true,_priceAsked:true});});
       if(!/^#\/?sales\/new(?:$|\?)/.test(location.hash)){
         location.hash='#/sales/new';
         await new Promise(function(resolve,reject){var until=Date.now()+8000;function ready(){var scanner=document.getElementById('sales_new_item_name');if(scanner?.getClientRects().length && PosnicPro.sales.SaleAction==='add')return resolve();if(Date.now()>until)return reject(Error('Open Sales and try resuming again.'));setTimeout(ready,50);}setTimeout(ready,50);});
@@ -138,3 +143,4 @@
   window.addEventListener('hashchange',function(){if(dialog)close();render();});
   window.addEventListener('resize',render);
 })();
+
