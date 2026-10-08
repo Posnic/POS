@@ -36,11 +36,11 @@ PosnicPro.expiryReminders = (function () {
     function load(next) {
         if (loading) return;
         loading = true;
-        var branch = PosnicPro.local.get('branch'), ticket = ++generation;
+        var branch = PosnicPro.local.get('branch_id_set'), ticket = ++generation;
         $('#expiry_reminders_summary').text(PosnicPro.i18n.t('lang_loading', 'Loading…'));
         PosnicPro.get({ url: 'items/expiryReminders', data: { page: next } }, function (r) {
             loading = false;
-            if (ticket !== generation || branch !== PosnicPro.local.get('branch')) return;
+            if (ticket !== generation || branch !== PosnicPro.local.get('branch_id_set')) return;
             if (r.type === 'success') paint(r.data); else error();
         }, function () { loading = false; error(); });
     }
@@ -58,11 +58,11 @@ PosnicPro.expiryReminders = (function () {
         }, function () { $('#expiry_reminders_save').prop('disabled', false); error(); });
     }
     function refresh() {
-        var branch = PosnicPro.local.get('branch');
+        var branch = PosnicPro.local.get('branch_id_set');
         if (activeBranch !== branch) { activeBranch = branch; PosnicPro.bellFeed._expiryCount = 0; PosnicPro.bellFeed._expirySignature = ''; $('#expiry_bell_section').hide(); PosnicPro.bellFeed._badge(); }
         if (!branch || !PosnicPro.bellFeed._can(['item', 'read'])) { $('#expiry_bell_section').hide(); return; }
         PosnicPro.get({ url: 'items/expiryReminders' }, function (r) {
-            if (branch !== PosnicPro.local.get('branch') || r.type !== 'success') return;
+            if (branch !== PosnicPro.local.get('branch_id_set') || r.type !== 'success') return;
             var data = r.data, signature = branch + ':' + data.today + ':' + data.total + ':' + data.rows.map(function (row) { return row.id + ':' + row.expiryDate; }).join(',');
             var seen = PosnicPro.local.get('expiry_reminders_seen') === signature;
             PosnicPro.bellFeed._expiryCount = data.enabled && !seen ? data.total : 0;
