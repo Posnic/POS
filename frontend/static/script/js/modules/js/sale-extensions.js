@@ -59,7 +59,7 @@
     box.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;background:#e8f7ee;border:1px solid #9ecfb1;color:#175c34;padding:10px 16px;border-radius:8px;margin:8px 0;font-size:16px';
     var text=document.createElement('span');text.textContent=message.slice(0,300);
     var dismiss=document.createElement('button');dismiss.type='button';dismiss.textContent='×';dismiss.setAttribute('aria-label','Dismiss message');dismiss.style.cssText='min-height:48px;min-width:48px;background:transparent;border:1px solid #9ecfb1;border-radius:6px;color:#175c34';dismiss.onclick=function(){box.remove();};
-    box.append(text,dismiss);var header=document.querySelector('#sales_new #sale-header-actions');if(header)header.after(box);else document.getElementById('sales_new')?.prepend(box);
+    box.style.flexShrink='0';box.append(text,dismiss);(document.querySelector('#sales_new #instance-view')||document.getElementById('sales_new'))?.prepend(box);
   }
   function confirmClear() {
     if(document.getElementById('sale-clear-dialog') || dialog || !cart().length)return;
