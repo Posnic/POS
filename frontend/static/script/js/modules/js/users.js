@@ -1293,13 +1293,13 @@ PosnicPro.users = {
             PosnicPro.local.set('customerAddress', response.data['customer_address']);
             var customerRecord = [];
             customerRecord.push({name: response.data['customer_name'], phone: response.data['customer_phone'], email: response.data['customer_email'], address: response.data['customer_address']});
-            db.customerDisplay.add({id: '1', 'clear': 'no', 'get': 'no', customer: customerRecord});
+            db.customerDisplay.put({id: '1', 'clear': 'no', 'get': 'no', customer: customerRecord});
             var branchRecord = [];
             branchRecord.push({name: response.data.branch_name, phone: response.data.branch_phone, email: response.data.branch_email, address: response.data.branch_address, image: response.data.branch_logo});
-            db.customerDisplay.add({id: '2', 'clear': 'no', 'get': 'no', branch: branchRecord});
+            db.customerDisplay.put({id: '2', 'clear': 'no', 'get': 'no', branch: branchRecord});
             db.currentbranch.put({id: '1', branch_id: response.data.branch_id, branch_name: response.data.branch_name, user_id: response.data.user_id});
-            db.saleAutoFocus.add({id: '1', branch_id: response.data.branch_id, addSale: true, editSale: true, holdSale: true});
-            db.recevingAutoFocus.add({id: '1', branch_id: response.data.branch_id, addReceiving: true, editReceiving: true});
+            db.saleAutoFocus.put({id: '1', branch_id: response.data.branch_id, addSale: true, editSale: true, holdSale: true});
+            db.recevingAutoFocus.put({id: '1', branch_id: response.data.branch_id, addReceiving: true, editReceiving: true});
 
             db.currentregister.get('1').then(function (data) {
                 if (data.register_status === 'close') {

@@ -694,6 +694,13 @@
         show('btnInstall', st === 'downloaded');
         show('btnLater',   ['available','downloaded'].includes(st));
 
+        if (s.extensionUpdateHold) {
+            document.getElementById('statusTitle').textContent = 'Extension compatibility review required';
+            document.getElementById('statusSub').textContent = s.extensionUpdateHold;
+            show('btnDl', false);
+            show('btnInstall', false);
+        }
+
         // Progress
         if (st !== 'downloading') {
             document.getElementById('progressWrap').style.display = 'none';

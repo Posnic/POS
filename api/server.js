@@ -100,6 +100,15 @@ const startServer = async () => {
     // while still allowing override via the PORT environment variable.
     const PORT = process.env.PORT || 5000;
     const HOST = process.env.HOST || config.server?.host || config.host || '0.0.0.0';
+    // An incompatible or damaged extension must not prevent the till starting.
+    try {
+      const result = await require('./src/services/extension-package-loader').initializeInstalledExtensions({ db: mongoose.connection.db });
+      app.locals.releaseExtensionRuntime = result.release;
+      for (const failure of result.failures)
+        console.error('[EXTENSIONS] Package not activated:', failure.id || 'configuration', failure.code);
+    } catch (error) {
+      console.error('[EXTENSIONS] Could not read installed packages:', error.code || error.message);
+    }
     const server = app.listen(PORT, HOST, () => {
       const stopNotifications =
         require('./src/services/business-notification-worker').startNotifications({

@@ -616,6 +616,26 @@ describe('userBranchSelection', () => {
 describe('getUserAccessDetails', () => {
   const lean = (v) => ({ lean: jest.fn().mockResolvedValue(v) });
 
+  test.each([
+    [
+      { usertype: 'super_admin', access: {} },
+      { read: true, write: true, manage: true },
+    ],
+    [
+      { usertype: 'cashier', access: {} },
+      { read: false, write: false, manage: false },
+    ],
+    [
+      { usertype: 'cashier', access: { extensions: { read: true, write: true, manage: false } } },
+      { read: true, write: true, manage: false },
+    ],
+  ])('extension navigation matches server permissions for %j', async (user, expected) => {
+    mockUserModel.findById.mockReturnValue(lean(user));
+    const res = mockRes();
+    await ctrl.getUserAccessDetails(mockReq(), res);
+    expect(res.json.mock.calls[0][0].data.extensions).toEqual(expected);
+  });
+
   test('401 when no user in request', async () => {
     const res = mockRes();
     await ctrl.getUserAccessDetails(mockReq({ user: undefined }), res);

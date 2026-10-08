@@ -87,6 +87,7 @@
     },
     "files": [
       "src/main.js",
+      "src/user-data-path.js",
       "src/diagnostics.js",
       "src/diagnostic-session.js",
       "src/diagnostic-health.js",
@@ -107,6 +108,7 @@
       "src/shutdown-state.js",
       "src/scheduled-task.js",
       "src/startup-auth.js",
+      "src/startup-progress.js",
       "src/receipt-log.js",
       "src/print-ledger.js",
       "src/handset-slots.js",
@@ -152,6 +154,7 @@
       "src/backup-manager.js",
       "src/update-integration.js",
       "src/update-service.js",
+      "src/extension-update-policy.js",
       "src/update-manager.html",
       "src/log-viewer.html",
       "src/support-request.html",
@@ -274,6 +277,22 @@
       {
         "from": "src/server.js",
         "to": "server.js"
+      },
+      {
+        "from": "src/extension-signing-key.pub",
+        "to": "extension-signing-key.pub"
+      },
+      {
+        "from": "src/extension-package.js",
+        "to": "src/extension-package.js"
+      },
+      {
+        "from": "src/extension-worker.js",
+        "to": "src/extension-worker.js"
+      },
+      {
+        "from": "src/asset-updater.js",
+        "to": "src/asset-updater.js"
       },
       {
         "from": "src/handset-slots.js",

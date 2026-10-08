@@ -1,5 +1,19 @@
 PosnicPro.quickreport = {
   meal: 'full',
+  chooseRange: function (preset) {
+    var zone = PosnicPro.timeZone();
+    var start = moment.tz ? moment.tz(zone) : moment();
+    if (preset === 'yesterday') start.subtract(1, 'day');
+    if (preset === 'last-month') start.subtract(1, 'month');
+    var monthly = preset === 'month' || preset === 'last-month';
+    var end = start.clone().endOf(monthly ? 'month' : 'day');
+    start.startOf(monthly ? 'month' : 'day');
+    var field = $('#view_dailysale_report_daterange'), picker = field.data('daterangepicker');
+    if (picker) { picker.setStartDate(start); picker.setEndDate(end); }
+    var text = start.format('YYYY/MM/DD h:mm A') + ' - ' + end.format('YYYY/MM/DD h:mm A');
+    field.val(text).find('span').first().text(text);
+    this.salereportTable(monthly ? 'Monthly' : 'Daily');
+  },
   periodParams: function () {
     var meal = this.meal || 'full';
 
@@ -388,6 +402,20 @@ PosnicPro.quickreport = {
             return { name: row[0], qty: safeNum(row[2]), total: safeNum(row[6]) };
           }),
         };
+
+        var summaryCash = 0, summaryCard = 0;
+        PosnicPro.quickreport.lastReport.payments.forEach(function (payment) {
+          if (/^cash$/i.test(payment.label)) summaryCash += payment.amount;
+          if (/^card$/i.test(payment.label)) summaryCard += payment.amount;
+        });
+        var summary = $('#daily-payment-summary').empty().addClass('d-flex flex-wrap');
+        summary.css('gap', '16px');
+        [['Cash received', summaryCash], ['Card received', summaryCard], ['Total payments received', tenderTotal]].forEach(function (entry) {
+          var card = $('<div class="card p-3 mb-1">');
+          $('<span>').text(entry[0]).appendTo(card);
+          $('<strong class="h4 mb-0">').text((PosnicPro.local.get('currencySign') || '') + safeNum(entry[1]).toFixed(2)).appendTo(card);
+          summary.append(card);
+        });
 
         // The PDF's Summary section - the on-screen stat cards are divs the
         // exporter cannot gather, so the numbers ride this hidden table.

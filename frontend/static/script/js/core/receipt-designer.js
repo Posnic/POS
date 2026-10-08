@@ -202,8 +202,9 @@
         var gstNumber = [data.customer_gstin, data.customer_gstin_number, data.customer_gst_number].find(present);
         var taxNumber = present(gstNumber) ? gstNumber : data.customer_tax_number;
         var fieldLabel = function (field) { return label({ customer_name: 'Name', customer_phone: 'Phone', customer_email: 'Email', customer_address: 'Address', customer_tax_number: present(gstNumber) ? PosnicPro.i18n.t('lang_gstin', 'GSTIN') : PosnicPro.i18n.t('lang_tax_id', 'Tax ID'), fssai: 'FSSAI' }[field] || contract.fields[field]); };
-        var beforePayment = preview || !data.sales_id;
-        var documentTitle = beforePayment ? (present(data.branch_gstin_number) || on(data.gst) ? label('Tax invoice') : label('Bill')) : label('Receipt');
+        var pendingGoods = data.pending_goods_receipt === true;
+        var beforePayment = pendingGoods || preview || !data.sales_id;
+        var documentTitle = pendingGoods ? label('Bill') : beforePayment ? (present(data.branch_gstin_number) || on(data.gst) ? label('Tax invoice') : label('Bill')) : label('Receipt');
         var hasField = function (field) { return layout.blocks.some(function (b) { return b.type === 'field' && b.field === field; }); };
         var values = {
             customer_name: data.customer_name, customer_phone: data.customer_phone, customer_email: data.customer_email,
@@ -283,7 +284,7 @@
                 (data.charges || []).forEach(function (c) { content += pair(c.name || 'Charge', money(Number(c.amount || 0) + Number(c.tax_amount || 0))); });
                 if (Number(data.round_off)) content += pair('Rounding', money(data.round_off));
                 content += pair('Total', money(data.items_total), true);
-                if (!preview && data.sales_id) {
+                if (!beforePayment && data.sales_id) {
                     if (data.payment_mode) content += pair('Payment', esc(data.payment_mode));
                     if (data.partial_check === 'true') content += pair('Payments / credits', money(data.partial_balance)) + pair('Balance due', money(data.payment_pending));
                 }
@@ -325,6 +326,7 @@
         }).filter(Boolean);
         rendered = pairFields(rendered);
         var html = sheet ? composeSheet(rendered) : rendered.map(function (b) { return b.html; }).join('');
+        if (pendingGoods) html += '<section class="rd-block rd-payment-status">' + esc(label('Payment pending')) + '</section>';
         if (sheet) {
             var notes = '';
             if ((data.branch_gstin_number || on(data.gst)) && PosnicPro.sales && PosnicPro.sales.view && PosnicPro.sales.view._amountInWords) {
@@ -412,7 +414,8 @@
             frame.attr('srcdoc', doc).appendTo('body');
         }).catch(failure);
     }
-    async function printSale(data, requested, kitchenBill) {
+    async function printSale(data, requested, kitchenBill, options) {
+        options = options || {};
         var diagnostic = function (fields) { window.electronAPI?.diagnostics?.event('renderer', fields).catch(function () {}); };
         if (activeSale) return;
         activeSale = true;
@@ -439,8 +442,9 @@
                 // A format explicitly selected for this print takes precedence.
                 await print(render(data, chosen, kitchenBill), chosen, { target: target, batch: true, sample: true });
             }
-            PosnicPro.afterPrint();
-        } catch (error) { diagnostic({ stage: 'sale-print-failed', success: false, message: error.message }); PosnicPro.alert('error', error.message || label('Print failed')); }
+            if (!options.preserveWorkspace) PosnicPro.afterPrint();
+            return { success: true };
+        } catch (error) { diagnostic({ stage: 'sale-print-failed', success: false, message: error.message }); if (options.propagateFailure) throw error; PosnicPro.alert('error', error.message || label('Print failed')); }
         finally { activeSale = false; finish(); }
     }
     PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, standardLayout: standardLayout, render: render, css: css, print: print, printSale: printSale, block: block, label: label, copy: copy, formatFor: formatFor };

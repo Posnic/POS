@@ -345,6 +345,23 @@ module.exports = async function startServer(options = {}) {
       progress: 88,
     });
     
+    // The desktop loads app.js directly; api/server.js is not executed here.
+    // Keep installed extensions under user data so replacing the app preserves
+    // their packages and offline rollback pointers.
+    process.env.POSNIC_EXTENSIONS_ROOT ||= path.join(electronApp.getPath('userData'), 'extensions');
+    process.env.POSNIC_EXTENSIONS_PUBLIC_KEY_FILE ||= electronApp.isPackaged
+      ? path.join(process.resourcesPath, 'extension-signing-key.pub')
+      : path.join(__dirname, 'extension-signing-key.pub');
+    try {
+      const result = await require(path.join(apiPath, 'src/services/extension-package-loader'))
+        .initializeInstalledExtensions({ db: mongoose.connection.db });
+      app.locals.releaseExtensionRuntime = result.release;
+      for (const failure of result.failures)
+        console.error('[EXTENSIONS] Package not activated:', failure.id || 'configuration', failure.code);
+    } catch (error) {
+      console.error('[EXTENSIONS] Could not read installed packages:', error.code || error.message);
+    }
+
     // Start Express server
     const PORT = process.env.PORT || 5555;
     const server = app.listen(PORT);

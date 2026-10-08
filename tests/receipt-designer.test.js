@@ -28,6 +28,37 @@ function setup() {
         items: [{ item_name: 'Cup <em>large</em>', item_price: 12, item_quantity: 2, item_unit: 'ea', total_amount: 24 }], items_subtotal: 24, items_total: 26, tax: 2 };
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
 }
+
+test('pending goods use the normal layout with a truthful status even without totals', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const layout of Object.values(design.layouts)) layout.blocks = layout.blocks.filter(b => b.type !== 'totals');
+    const document = { ...sale, pending_goods_receipt: true, sales_id: '', payment_mode: 'Cash' };
+    for (const format of Object.keys(contract.formats)) {
+        const output = $('<div>').html(engine.render(document, format, false));
+        assert.match(output.text(), /My Shop/);
+        assert.match(output.text(), /Cup <em>large<\/em>/);
+        assert.equal(output.find('.rd-payment-status').text(), 'Payment pending');
+        assert.doesNotMatch(output.text(), /Tax invoice|Donation|Adjust Stock|PaymentCash/);
+    }
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-payment-status').length, 0);
+    dom.window.close();
+});
+
+test('extension print uses configured receipt rendering without clearing the sales workspace and propagates failure', async () => {
+    const { dom, w, engine, sale } = setup();
+    let afterPrint = 0, document;
+    w.PosnicPro.afterPrint = () => { afterPrint++; };
+    w.PosnicPro.resolveReceiptPrinter = () => 'Counter';
+    w.electronAPI = { printer: { print: async html => { document = html; return { success: true }; } } };
+    const options = { preserveWorkspace: true, propagateFailure: true };
+    assert.equal((await engine.printSale({ ...sale, pending_goods_receipt: true, sales_id: '' }, '80', false, options)).success, true);
+    assert.match(document, /Payment pending/);
+    assert.equal(afterPrint, 0);
+    w.electronAPI.printer.print = async () => ({ success: false, error: 'Printer unavailable' });
+    await assert.rejects(engine.printSale(sale, '80', false, options), /Printer unavailable/);
+    assert.equal(afterPrint, 0);
+    dom.window.close();
+});
 test('five independent layouts migrate existing content and use different paper geometry', () => {
     const { dom, engine, design, sale, $ } = setup();
     for (const format of Object.keys(contract.formats)) {
