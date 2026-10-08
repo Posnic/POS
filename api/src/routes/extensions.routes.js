@@ -394,12 +394,11 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
   return router;
 }
 function respondError(res, error) {
-  res.status(error.status || 500).json({
+  const status = error.status || error.statusCode;
+  res.status(status || 500).json({
     error: {
-      code: error.status
-        ? error.code || 'extension_access_denied'
-        : 'extension_operation_unresolved',
-      message: error.status
+      code: status ? error.code || 'extension_access_denied' : 'extension_operation_unresolved',
+      message: status
         ? error.message
         : 'The operation needs recovery. Do not submit another payment.',
     },

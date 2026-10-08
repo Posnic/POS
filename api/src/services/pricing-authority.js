@@ -46,6 +46,7 @@ function resolve({
   outlet,
   priceList,
   channel = 'counter',
+  allowCounterPriceOverride = false,
 }) {
   const monetary = Money.policy(branch);
   const round = (value) => Money.fromMinor(Money.toMinor(value, monetary), monetary);
@@ -100,6 +101,20 @@ function resolve({
     selling = venues.priceFor(selling, venue);
     source = 'venue';
     ruleId = venue.code;
+  }
+  // This flag comes only from the authenticated host context, never sale JSON.
+  if (
+    allowCounterPriceOverride === true &&
+    channel === 'counter' &&
+    !outlet &&
+    !priceList &&
+    !venue &&
+    submitted !== undefined
+  ) {
+    selling = number(submitted, 'Entered price');
+    if (selling <= 0 || selling > 1000000)
+      fail('item_price_too_high', `${name}: price is outside the allowed range.`);
+    source = 'counter_override';
   }
   selling = round(selling);
   if (selling < 0 || (variable && selling > 1000000))

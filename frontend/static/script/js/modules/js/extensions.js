@@ -512,15 +512,20 @@
               );
             if (method === "closeWorkspace") {
               if (!embedded?.onClose || embedded.workspace?.presentation !== 'compact' || commandBusy) throw new Error('This workspace cannot close yet.');
-              setTimeout(function(){if(run === generation) embedded.onClose();}, 0);
+              const message = typeof input?.message === 'string' ? input.message.slice(0,300) : '';
+              setTimeout(function(){if(run === generation) embedded.onClose({message});}, 0);
               return {closed:true};
+            }
+            if (method === "openSale") {
+              if (commandBusy || !PosnicPro.saleExtensions) throw new Error('Finish the current operation first.');
+              return PosnicPro.saleExtensions.restore(id, input, branch);
             }
             if (method === "bootstrap")
               return Promise.all([
                 request(base + "/capabilities"),
                 request(base + "/state"),
               ]).then(function (values) {
-                return { capabilities: values[0], namespace: values[1], salesWorkspace: embedded ? embedded.workspace : null };
+                return { capabilities: values[0], namespace: values[1], salesWorkspace: embedded ? embedded.workspace : null, salesWorkspaceBridge: Boolean(PosnicPro.saleExtensions) };
               });
             if (method === "state") return request(base + "/state");
             if (method === "sales")
@@ -552,7 +557,7 @@
                   command: input.command,
                 },
                 input.requestKey,
-              ).then(async function(result){const completed = await afterCommand(result, input.command?.type);commandBusy=false;if(embedded && embedded.onBusy) embedded.onBusy(false);return completed;},function(error){commandBusy=!error.code || error.code === 'EXTENSION_CONNECTION_FAILED';if(embedded && embedded.onBusy) embedded.onBusy(commandBusy);throw error;});
+              ).then(async function(result){const completed = await afterCommand(result, input.command?.type);commandBusy=false;if(embedded && embedded.onBusy) embedded.onBusy(false);return completed;},function(error){if(embedded?.onError)embedded.onError(error);commandBusy=!error.code || error.code === 'EXTENSION_CONNECTION_FAILED';if(embedded && embedded.onBusy) embedded.onBusy(commandBusy);throw error;});
             }
             if (method === "recover") {
               commandBusy = true;

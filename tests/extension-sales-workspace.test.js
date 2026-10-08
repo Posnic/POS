@@ -45,3 +45,10 @@ test('native Pay uses the extension only for an eligible new checkout',()=>{
   assert.equal(native,scenario.expected);
  }
 });
+
+test('touch checkout and icons are explicit and bounded',()=>{
+ const v=valid();assert.equal(salesWorkspace(v).policies.touchCheckout,false);
+ v.policies.touchCheckout=true;v.controls[0].icon='cash';assert.equal(salesWorkspace(v).controls[0].icon,'cash');
+ v.controls[0].icon='<script>';assert.throws(()=>salesWorkspace(v),/invalid/);
+ v.controls[0].icon='card';v.policies.touchCheckout='true';assert.throws(()=>salesWorkspace(v),/invalid/);
+});

@@ -487,6 +487,7 @@ const processSale = async (
         pricing = pricingAuthority.resolve({
           product: document,
           branch: pricingBranch,
+          allowCounterPriceOverride: context.allowCounterPriceOverride === true,
           previous: previousLine,
           submitted: pricingAuthority.desktopSubmittedPrice(item),
           extras: extras.delta,

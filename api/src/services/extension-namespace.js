@@ -140,6 +140,8 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
           state: row.data,
           command,
           extensionId: descriptor.id,
+          allowCounterPriceOverride:
+            descriptor.salesWorkspace?.policies?.allowCounterPriceOverride === true,
           resources,
           selection,
         })
@@ -234,6 +236,8 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
             actorId,
             permissions: row.pending.permissions || [],
             extensionId: descriptor.id,
+            allowCounterPriceOverride:
+              descriptor.salesWorkspace?.policies?.allowCounterPriceOverride === true,
             operationId,
             sequence: row.pending.sequence,
           },
@@ -266,7 +270,8 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
             data: nextState,
             revision: input.expectedRevision + 1,
             'pending.hostActions': row.pending.plan.effects.flatMap((effect, index) =>
-              effect.kind === 'payment.cash' && effectResults[index]?.status === 'paid'
+              ['payment.cash', 'payment.split'].includes(effect.kind) &&
+              effectResults[index]?.status === 'paid'
                 ? [{ type: 'cash-sale-completed', saleId: effectResults[index].saleId }]
                 : []
             ),
