@@ -38,6 +38,7 @@ function till() {
     }
     const view = read('frontend/static/script/js/modules/js/sales_view.js');
     win.eval(view.slice(0, view.indexOf('\n};') + 3));
+    win.eval(read('api/src/helpers/receipt-design.js'));
     win.eval(read('frontend/static/script/js/core/tender-receipt.js'));
     win.eval(read('frontend/static/script/js/core/receipt-data.js'));
     win.eval(read('frontend/static/script/js/moment.js'));
@@ -362,3 +363,18 @@ test('a transferred foreign-currency invoice never labels its total as rupees', 
     assert.ok(result.find('.print-total').text().includes('1.001'));
     dom.window.close();
 });
+
+for (const country of ['United Kingdom', 'India']) {
+    test(country + ': tax registration label follows the store country in thermal and A4 previews', () => {
+        const {dom, $, branch, data, preview} = till();
+        Object.assign(branch,{country,branch_gstin_number:'464448078'});
+        Object.assign(data,branch);
+        for(const format of ['80','58','a4']) {
+            const result=$('<div>').html(preview.documentFor(branch,data,format));
+            assert.match(result.text(),country==='India'?/GSTIN:/:/VAT No\.:/);
+            if(country!=='India') assert.doesNotMatch(result.text(),/GSTIN/);
+            assert.equal(result.find('.print_store_gst').first().attr('data-tax-label'),country==='India'?'GSTIN':'VAT No.');
+        }
+        dom.window.close();
+    });
+}

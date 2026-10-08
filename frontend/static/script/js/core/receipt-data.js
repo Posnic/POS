@@ -500,7 +500,8 @@ PosnicPro.receiptLogo = function (paperWidth) {
             storeAddress: address.join('\n'),
             storePhone: [phone, altPhone].filter(Boolean).join(' / '),
             storeEmail: textOf($root.find('.print_store_email')),
-            gstin: textOf($root.find('.print_store_gst')).replace(/^GST(IN)?\s*:?\s*/i, ''),
+            gstin: textOf($root.find('.print_store_gst')).replace(/^(?:GST(IN)?|VAT No\.|Tax ID)\s*:?\s*/i, ''),
+            taxRegistrationLabel: $root.find('.print_store_gst').first().attr('data-tax-label') || 'GSTIN',
 
             title: textOf($root.find('.print-title')) || textOf($root.find('.print-custom-title')),
             billNo: textOf($root.find('.print_view_id')),

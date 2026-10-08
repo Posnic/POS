@@ -5,6 +5,7 @@
   "use strict";
   var methods = new Set([
     "bootstrap",
+    "closeWorkspace",
     "state",
     "catalogue",
     "command",
@@ -38,7 +39,10 @@
     frame.setAttribute("referrerpolicy", "no-referrer");
     frame.style.cssText = "width:100%;min-height:420px;border:0;display:block";
     function resizeFrame() {
-      if (!closed) frame.style.height = Math.max(420, window.innerHeight - frame.getBoundingClientRect().top - 12) + "px";
+      if (!closed) {
+        frame.style.minHeight = options.presentation === "compact" ? "0" : "420px";
+        frame.style.height = (options.presentation === "compact" ? Math.min(480, window.innerHeight * 0.78) : Math.max(420, window.innerHeight - frame.getBoundingClientRect().top - 12)) + "px";
+      }
     }
     window.addEventListener("resize", resizeFrame);
     function reply(value) {
@@ -113,7 +117,7 @@
       nonce +
       '">' +
       view.css.replace(/<\/style/gi, "<\\/style") +
-      "</style></head><body>" +
+      '</style></head><body' + (options.presentation === 'compact' ? ' class="compact-checkout"' : '') + '>' +
       view.html +
       '<script nonce="' +
       nonce +

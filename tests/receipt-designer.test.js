@@ -11,7 +11,7 @@ const pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAw
 function setup() {
     const dom = new JSDOM('<div id="receipt-designer"></div><div class="form-group"><input id="printall" type="checkbox"></div><div class="form-group"><select id="bill_print_copies"><option>1</option></select></div><div class="form-group"><input id="branch_fssai_number"></div>', { url: 'http://localhost/', runScripts: 'outside-only' });
     const w = dom.window; w.$ = w.jQuery = require('jquery')(w);
-    w.PosnicPro = { escapeHtml: v => w.$('<i>').text(v).html(), local: { get: () => '$', set: () => {} }, i18n: { t: (_key, text) => text }, BRAND_URL: 'https://www.posnic.com' };
+    w.PosnicPro = { escapeHtml: v => w.$('<i>').text(v).html(), local: { get: key => key === 'currencySign' ? '$' : '', set: () => {} }, i18n: { t: (_key, text) => text }, BRAND_URL: 'https://www.posnic.com' };
     w.eval(read('api/src/helpers/receipt-design.js'));
     w.eval(read('src/receipt-page-layout.js'));
     w.eval(read('frontend/static/script/js/core/receipt-designer.js'));
@@ -1081,4 +1081,17 @@ test('repeated sale print clicks share one in-flight submission and allow a late
     await new Promise(resolve => setImmediate(resolve));
     assert.equal(sends, 2); release({ success: true }); await next;
     dom.window.close();
+});
+
+test('UK receipts label the saved registration number as VAT, including legacy GST fields',()=>{
+ const {dom,engine,sale,$}=setup();
+ for(const format of ['58','80','a4']) {
+  const output=$('<div>').html(engine.render({...sale,country:'United Kingdom',branch_gstin_number:'464448078'},format,false));
+  assert.match(output.text(),/VAT No\.: 464448078/);
+  assert.doesNotMatch(output.text(),/GSTIN/);
+ }
+ assert.equal(contract.taxRegistrationLabel({country:'India'}),'GSTIN');
+ assert.equal(contract.taxRegistrationLabel({country:'US'}),'Tax ID');
+ assert.equal(contract.taxRegistrationLabel({},'GB'),'VAT No.');
+ dom.window.close();
 });

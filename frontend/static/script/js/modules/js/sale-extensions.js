@@ -30,14 +30,16 @@
       if (!page && !lines.length) throw Error('Add at least one product.');
       // Preserve exact cart ownership until the host confirms its durable basket.
       var before = JSON.stringify(lines), transferred=false;
+      var compact = !page && selected.salesWorkspace.policies?.compactCheckout === true;
       dialog=document.createElement('section'); dialog.setAttribute('role','dialog');dialog.setAttribute('aria-label','Sale actions');dialog.setAttribute('aria-modal','true');
       dialog.style.cssText='position:fixed;inset:3vh 3vw;z-index:10550;background:white;color:#172b4d;border:2px solid #ddd;box-shadow:0 0 0 100vmax #0008;border-radius:10px;padding:12px;overflow:auto';
+      if (compact) { dialog.dataset.presentation='compact'; dialog.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(620px,94vw);max-height:94vh;z-index:10550;background:white;color:#172b4d;box-shadow:0 0 0 100vmax #0008;border-radius:10px;padding:16px;overflow:auto'; }
       var back=document.createElement('button');back.type='button';back.className='btn btn-secondary';back.textContent='Back to sale';
       // Closing leaves any persisted extension transaction available in its own workflow.
       back.onclick=close;
       var content=document.createElement('div');content.textContent='Loading sale actions…';dialog.append(back,content);document.body.append(dialog);
       PosnicPro.HideSideBarModal();
-      PosnicPro.extensions.showDetails(selected.id, {container:content,workspace:{version:1,action:action,page:page,lines:lines,tender:String($('#payment_id .payment_mode:checked').attr('id')||'Cash').toLowerCase(),customer:String($('#sales_new_customer_name').val()||'Walk-in customer').slice(0,120)},onBusy:function(busy){back.disabled=busy;},onCommand:function(result,commandType){
+      PosnicPro.extensions.showDetails(selected.id, {container:content,onClose:close,workspace:{version:1,presentation:compact?'compact':'workspace',action:action,page:page,lines:lines,tender:String($('#payment_id .payment_mode:checked').attr('id')||'Cash').toLowerCase(),customer:String($('#sales_new_customer_name').val()||'Walk-in customer').slice(0,120)},onBusy:function(busy){back.disabled=busy;},onCommand:function(result,commandType){
         if (!transferred && lines.length && result && selected.salesWorkspace.clearCartOn?.includes(commandType)) {
           transferred=true;
           if (JSON.stringify(cart())===before) PosnicPro.sales.clear.cartItems(false);
@@ -46,11 +48,13 @@
     } catch (error) { PosnicPro.alert('error',error.message); }
   }
   function strip(placement) {
-    var el=document.createElement('div');el.className='sale-extension-actions';el.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin:10px 0';
-    selected.salesWorkspace.controls.filter(function(c){return c.placements.includes(placement);}).forEach(function(c){
+    var el=document.createElement('div');el.className='sale-extension-actions';el.dataset.placement=placement;el.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin:10px 0';
+    if(placement==='sale') { el.style.gridTemplateColumns='repeat(2,minmax(0,1fr))'; }
+    var controls=selected.salesWorkspace.controls.filter(function(c){return c.placements.includes(placement);});
+    controls.forEach(function(c){
       var b=document.createElement('button');b.type='button';b.textContent=c.label;b.dataset.extensionControl=c.id;b.className='btn btn-'+c.tone;
-      b.onclick=function(){open(c.action,c.page);};el.append(b);
-    });return el;
+      b.style.minHeight='44px';b.style.whiteSpace='normal';b.onclick=function(){open(c.action,c.page);};el.append(b);
+    });if(placement==='sale' && controls.length%2===1)el.lastElementChild.style.gridColumn='1 / -1';return el;
   }
   function render() {
     if (!selected) return;
@@ -59,9 +63,9 @@
     var pay=document.getElementById('sales_save_button');
     if(pay && !document.getElementById('sale-extension-checkout')) {var controls=strip('sale');controls.id='sale-extension-checkout';var totals=document.getElementById('paymentdisplay');(totals||pay.parentElement).before(controls);}
     var payment=document.getElementById('payment_id');
-    if(payment && !document.getElementById('sale-extension-payment')) {var controls=strip('payment');controls.id='sale-extension-payment';payment.after(controls);}
+    if(payment && selected.salesWorkspace.controls.some(function(c){return c.placements.includes('payment');}) && !document.getElementById('sale-extension-payment')) {var controls=strip('payment');controls.id='sale-extension-payment';payment.after(controls);}
     var visible=/^#\/?sales\/new(?:$|\?)/.test(location.hash) && PosnicPro.sales?.SaleAction==='add';
-    document.querySelectorAll('.sale-extension-actions').forEach(function(el){el.hidden=!visible;el.style.display=visible?'flex':'none';});
+    document.querySelectorAll('.sale-extension-actions').forEach(function(el){el.hidden=!visible;el.style.display=visible?(el.dataset.placement==='sale'?'grid':'flex'):'none';});
   }
   function active(){return Boolean(selected) && /^#\/?sales\/new(?:$|\?)/.test(location.hash) && PosnicPro.sales.SaleAction==='add';}
   PosnicPro.saleExtensions={active:active,policy:function(name){return active() && selected.salesWorkspace.policies?.[name]===true;},dispatch:function(event){

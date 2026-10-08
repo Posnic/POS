@@ -53,7 +53,7 @@ function salesWorkspace(value, commands = {}) {
   if (value.events !== undefined) {
     if (
       !object(value.events) ||
-      Object.keys(value.events).some((k) => !['submit', 'hold'].includes(k))
+      Object.keys(value.events).some((k) => !['submit', 'hold', 'checkout'].includes(k))
     )
       fail();
     for (const [key, action] of Object.entries(value.events)) {
@@ -65,12 +65,15 @@ function salesWorkspace(value, commands = {}) {
   if (value.policies !== undefined) {
     if (
       !object(value.policies) ||
-      Object.keys(value.policies).some((k) => k !== 'useDefaultOpenPrice') ||
+      Object.keys(value.policies).some((k) => !['useDefaultOpenPrice', 'compactCheckout'].includes(k)) ||
+      (value.policies.compactCheckout !== undefined && typeof value.policies.compactCheckout !== 'boolean') ||
       (value.policies.useDefaultOpenPrice !== undefined &&
         typeof value.policies.useDefaultOpenPrice !== 'boolean')
     )
       fail();
-    policies.useDefaultOpenPrice = value.policies.useDefaultOpenPrice === true;
+    policies.compactCheckout = value.policies.compactCheckout === true;
+    policies.useDefaultOpenPrice = value.policies.compactCheckout = value.policies.compactCheckout === true;
+    policies.useDefaultOpenPrice === true;
   }
   return Object.freeze({
     version: 1,
