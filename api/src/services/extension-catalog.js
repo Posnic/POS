@@ -4,7 +4,7 @@ const pricing = require('./pricing-authority');
 const Money = require('../utils/currency');
 const { stockFact } = require('./business-stock-facts');
 const { MetricError } = require('./business-metrics');
-function productSnapshot(product, branch, scope, submitted) {
+function productSnapshot(product, branch, scope, submitted, allowCounterPriceOverride = false) {
   const stock = stockFact(product, {
     id: String(scope.branchId),
     license: String(scope.license),
@@ -14,6 +14,7 @@ function productSnapshot(product, branch, scope, submitted) {
   const snapshot = pricing.resolve({
     product,
     branch,
+    allowCounterPriceOverride,
     submitted:
       submitted === undefined && product.open_price === true ? product.selling_price : submitted,
   });
@@ -39,7 +40,15 @@ function productSnapshot(product, branch, scope, submitted) {
     unit: product.unit,
   };
 }
-async function prepareContext({ db, scope, state, command, resources = [], selection }) {
+async function prepareContext({
+  db,
+  scope,
+  state,
+  command,
+  resources = [],
+  selection,
+  allowCounterPriceOverride = false,
+}) {
   if (!resources.includes('catalog.products')) return {};
   // A signed worker may name only the products required by this command.
   // Never accept descriptions/prices/scope from that projection or the caller.
@@ -90,12 +99,14 @@ async function prepareContext({ db, scope, state, command, resources = [], selec
         product,
         branch,
         scope,
-        ['basket.create', 'basket.update'].includes(command.type) ||
+        allowCounterPriceOverride ||
+          ['basket.create', 'basket.update'].includes(command.type) ||
           product.open_price === true ||
           product.item_status === 'instant' ||
           Number(product.selling_price || 0) <= 0
           ? inputs.get(String(product._id))
-          : undefined
+          : undefined,
+        allowCounterPriceOverride
       )
     )
     .filter(Boolean);

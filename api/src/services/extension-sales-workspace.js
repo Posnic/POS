@@ -74,8 +74,11 @@ function salesWorkspace(value, commands = {}) {
             'compactCheckout',
             'touchCheckout',
             'inclusivePriceEntry',
+            'allowCounterPriceOverride',
           ].includes(k)
       ) ||
+      (value.policies.allowCounterPriceOverride !== undefined &&
+        typeof value.policies.allowCounterPriceOverride !== 'boolean') ||
       (value.policies.inclusivePriceEntry !== undefined &&
         typeof value.policies.inclusivePriceEntry !== 'boolean') ||
       (value.policies.touchCheckout !== undefined &&
@@ -87,6 +90,7 @@ function salesWorkspace(value, commands = {}) {
     )
       fail();
     policies.compactCheckout = value.policies.compactCheckout === true;
+    policies.allowCounterPriceOverride = value.policies.allowCounterPriceOverride === true;
     policies.inclusivePriceEntry = value.policies.inclusivePriceEntry === true;
     policies.touchCheckout = value.policies.touchCheckout === true;
     policies.useDefaultOpenPrice = value.policies.useDefaultOpenPrice === true;

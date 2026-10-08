@@ -767,3 +767,55 @@ test('an interrupted split commit replays the same cash/card ledger exactly once
   assert.deepEqual(sales[0].multi_payment, { Cash: 0.3, Card: 0.7 });
   assert.equal(await f.stock(), 2);
 });
+test('explicit host price-entry policy preserves a one-pound VAT-inclusive override through split payment', async () => {
+  const f = await fixture();
+  await db
+    .collection('items')
+    .updateOne(
+      { _id: f.item._id },
+      { $set: { selling_price: 1.3, tax: 20, tax_type: 'inclusive' } }
+    );
+  const command = {
+    type: 'basket.create',
+    lines: [{ productId: String(f.item._id), sellingPrice: 1 }],
+  };
+  const catalogue = require('../src/services/extension-catalog');
+  const args = {
+    db,
+    scope: f.context.scope,
+    state: { products: [] },
+    command,
+    resources: ['catalog.products'],
+  };
+  await assert.rejects(catalogue.prepareContext(args), { code: 'item_price_mismatch' });
+  const context = await catalogue.prepareContext({ ...args, allowCounterPriceOverride: true });
+  assert.equal(context.products[0].priceMinor, 100);
+  const input = {
+    ...f.input,
+    method: 'split',
+    lines: [{ itemId: String(f.item._id), quantityMilli: 1000, sellingPrice: 1 }],
+  };
+  const rejected = await preparePayment(f.context, input);
+  assert.equal(rejected.rejected, true);
+  assert.equal(await f.stock(), 3);
+  const allowed = {
+    ...f.context,
+    allowCounterPriceOverride: true,
+    operationId: 'override-allowed-001',
+  };
+  const p = await preparePayment(allowed, input);
+  assert.equal(p.valueMinor, 100);
+  const paid = await confirmSplit(allowed, {
+    paymentId: p.paymentId,
+    cashMinor: 40,
+    cardMinor: 60,
+    tenderMinor: 40,
+    terminalConfirmed: true,
+  });
+  assert.equal(paid.status, 'paid');
+  const sale = await db.collection('sales').findOne({ _id: new ObjectId(paid.saleId) });
+  assert.equal(sale.sales_total, 1);
+  assert.equal(Math.round(sale.tax * 100), 17);
+  assert.equal(sale.items[0].pricing.source, 'counter_override');
+  assert.equal(await f.stock(), 2);
+});

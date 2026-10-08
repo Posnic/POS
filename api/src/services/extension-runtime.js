@@ -10,6 +10,7 @@ const capabilities = Object.freeze([
   'sales.adjusted-quantity.v1',
   'payments.verified-result.v1',
   'payments.split-recording.v1',
+  'sales.counter-price-entry.v1',
   'receipts.normal-template.v1',
   'receipts.unpaid-basket.v1',
   'catalog.command-selection.v1',
