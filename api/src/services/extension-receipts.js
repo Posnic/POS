@@ -19,18 +19,16 @@ async function readReceipt({ db, scope, descriptor, actor, request }) {
   const result = await descriptor.readReceipt({ state: current.state, request });
   if (result?.kind === 'paid') {
     if (!/^[a-f\d]{24}$/i.test(result.saleId || '')) fail('extension_receipt_invalid');
-    const sale = await db
-      .collection('sales')
-      .findOne(
-        {
-          _id: new ObjectId(result.saleId),
-          license: scope.license,
-          branch_id: scope.branchId,
-          extension_id: descriptor.id,
-          payment_status: 'Paid',
-        },
-        { projection: { _id: 1 } }
-      );
+    const sale = await db.collection('sales').findOne(
+      {
+        _id: new ObjectId(result.saleId),
+        license: scope.license,
+        branch_id: scope.branchId,
+        extension_id: descriptor.id,
+        payment_status: 'Paid',
+      },
+      { projection: { _id: 1 } }
+    );
     if (!sale) fail('extension_receipt_unavailable', 404);
     return { kind: 'paid', saleId: String(sale._id) };
   }
@@ -51,38 +49,40 @@ async function readReceipt({ db, scope, descriptor, actor, request }) {
   if (result.kind === 'held') {
     // A verified read-only projection of the scoped namespace. No stock
     // movement or sale is required or created for an unpaid basket slip.
-    available = Object.fromEntries(result.lines.map(line => [line.productId, line.quantityMilli]));
+    available = Object.fromEntries(
+      result.lines.map((line) => [line.productId, line.quantityMilli])
+    );
   } else {
-  const movement = await db.collection('extension_stock_commands').findOne({
-    _id: result.stockOperationId,
-    license: scope.license,
-    branch_id: scope.branchId,
-    extensionId: descriptor.id,
-    phase: 'committed',
-  });
-  if (!movement || movement.lifecycle) fail('extension_receipt_unavailable', 404);
-  available = {
-    ...(movement.remaining ||
-      Object.fromEntries(movement.lines.map((line) => [line.itemId, line.quantityMilli]))),
-  };
-  // A prepared but unpaid allocation still belongs on a pending goods slip.
-  // Paid/uncertain submissions never get added back to the printable balance.
-  for (const [saleId, allocation] of Object.entries(movement.allocations || {})) {
-    if (allocation.state === 'released') continue;
-    const payment = await db.collection('extension_payments').findOne({
-      saleId: new ObjectId(saleId),
+    const movement = await db.collection('extension_stock_commands').findOne({
+      _id: result.stockOperationId,
       license: scope.license,
       branch_id: scope.branchId,
       extensionId: descriptor.id,
-      stockOperationId: movement._id,
-      status: 'pending',
+      phase: 'committed',
     });
-    if (payment)
-      for (const line of allocation.lines)
-        available[line.itemId] = (available[line.itemId] || 0) + line.quantityMilli;
+    if (!movement || movement.lifecycle) fail('extension_receipt_unavailable', 404);
+    available = {
+      ...(movement.remaining ||
+        Object.fromEntries(movement.lines.map((line) => [line.itemId, line.quantityMilli]))),
+    };
+    // A prepared but unpaid allocation still belongs on a pending goods slip.
+    // Paid/uncertain submissions never get added back to the printable balance.
+    for (const [saleId, allocation] of Object.entries(movement.allocations || {})) {
+      if (allocation.state === 'released') continue;
+      const payment = await db.collection('extension_payments').findOne({
+        saleId: new ObjectId(saleId),
+        license: scope.license,
+        branch_id: scope.branchId,
+        extensionId: descriptor.id,
+        stockOperationId: movement._id,
+        status: 'pending',
+      });
+      if (payment)
+        for (const line of allocation.lines)
+          available[line.itemId] = (available[line.itemId] || 0) + line.quantityMilli;
+    }
   }
-  }
-  const lineMinor = line => {
+  const lineMinor = (line) => {
     const precise = line.priceSubminor ?? line.priceMinor * 1000000;
     if (!Number.isSafeInteger(precise) || precise < 0) fail('extension_receipt_invalid');
     return (BigInt(line.quantityMilli) * BigInt(precise) + 500000000n) / 1000000000n;
@@ -117,10 +117,7 @@ async function readReceipt({ db, scope, descriptor, actor, request }) {
     item_name: line.description,
     item_quantity: line.quantityMilli / 1000,
     item_price: Money.fromMinor(line.priceMinor, currency),
-    total_amount: Money.fromMinor(
-      Number(lineMinor(line)),
-      currency
-    ),
+    total_amount: Money.fromMinor(Number(lineMinor(line)), currency),
   }));
   const total = Money.fromMinor(result.valueMinor, currency);
   const stamp = new Intl.DateTimeFormat('en-GB', {

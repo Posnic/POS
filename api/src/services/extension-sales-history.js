@@ -77,7 +77,14 @@ async function dailySales({ db, scope, descriptor, day, endDay = day }) {
   if (!Number.isFinite(utc.getTime()) || utc.toISOString().slice(0, 10) !== day)
     fail('extension_report_date_invalid');
   const endUtc = new Date(endDay + 'T00:00:00.000Z');
-  if (typeof endDay !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(endDay) || !Number.isFinite(+endUtc) || endUtc.toISOString().slice(0,10) !== endDay || endDay < day || +endUtc - +utc > 366 * 86400000)
+  if (
+    typeof endDay !== 'string' ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(endDay) ||
+    !Number.isFinite(+endUtc) ||
+    endUtc.toISOString().slice(0, 10) !== endDay ||
+    endDay < day ||
+    +endUtc - +utc > 366 * 86400000
+  )
     fail('extension_report_date_invalid');
   const branch = await db
     .collection('branches')
@@ -105,8 +112,18 @@ async function dailySales({ db, scope, descriptor, day, endDay = day }) {
           $match: {
             $expr: {
               $and: [
-                { $gte: [{ $dateToString: { date: '$paidAt', format: '%Y-%m-%d', timezone: timeZone } }, day] },
-                { $lte: [{ $dateToString: { date: '$paidAt', format: '%Y-%m-%d', timezone: timeZone } }, endDay] },
+                {
+                  $gte: [
+                    { $dateToString: { date: '$paidAt', format: '%Y-%m-%d', timezone: timeZone } },
+                    day,
+                  ],
+                },
+                {
+                  $lte: [
+                    { $dateToString: { date: '$paidAt', format: '%Y-%m-%d', timezone: timeZone } },
+                    endDay,
+                  ],
+                },
               ],
             },
           },

@@ -83,8 +83,18 @@ async function preparePayment(context, input) {
   const lines = input.lines.map((line) => {
     if (!Number.isSafeInteger(line.quantityMilli) || line.quantityMilli <= 0)
       fail('extension_payment_quantity_invalid');
-    if (line.sellingPrice !== undefined && (typeof line.sellingPrice !== 'number' || !Number.isFinite(line.sellingPrice) || line.sellingPrice < 0)) fail('extension_payment_price_invalid');
-    return { itemId: String(oid(line.itemId)), quantityMilli: line.quantityMilli, ...(line.sellingPrice !== undefined ? { sellingPrice: line.sellingPrice } : {}) };
+    if (
+      line.sellingPrice !== undefined &&
+      (typeof line.sellingPrice !== 'number' ||
+        !Number.isFinite(line.sellingPrice) ||
+        line.sellingPrice < 0)
+    )
+      fail('extension_payment_price_invalid');
+    return {
+      itemId: String(oid(line.itemId)),
+      quantityMilli: line.quantityMilli,
+      ...(line.sellingPrice !== undefined ? { sellingPrice: line.sellingPrice } : {}),
+    };
   });
   if (new Set(lines.map((line) => line.itemId)).size !== lines.length)
     fail('extension_payment_duplicate_item');
@@ -233,7 +243,11 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
   const confirmation =
     method === 'cash'
       ? { method, tenderMinor: input.tenderMinor }
-      : { method, reference: input.reference || '', recording: options.authorization === dojoAuthorization ? 'dojo' : 'external-terminal' };
+      : {
+          method,
+          reference: input.reference || '',
+          recording: options.authorization === dojoAuthorization ? 'dojo' : 'external-terminal',
+        };
   if (method === 'cash' && (!Number.isSafeInteger(input.tenderMinor) || input.tenderMinor < 0))
     fail('extension_cash_confirmation_invalid');
   if (
@@ -242,14 +256,17 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
       (input.reference !== undefined &&
         (typeof input.reference !== 'string' ||
           input.reference.length > 120 ||
-          /[\u0000-\u001f\u007f]/.test(input.reference))))
+          [...input.reference].some(
+            (character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127
+          ))))
   )
     fail('extension_card_confirmation_required');
   const confirmationDigest = fingerprint(confirmation);
   const attemptId = context.operationId;
   let row = await collection.findOne({ _id: input.paymentId, ...scope });
   if (!row || row.method !== method) fail(`extension_${method}_payment_unavailable`);
-  if (row.provider && options.authorization !== dojoAuthorization) fail('extension_provider_payment_in_progress');
+  if (row.provider && options.authorization !== dojoAuthorization)
+    fail('extension_provider_payment_in_progress');
   if (method === 'cash' && input.tenderMinor < row.valueMinor)
     fail('extension_cash_tender_insufficient');
   if (row.attempt?.id === attemptId && row.attempt.digest !== confirmationDigest)
@@ -263,8 +280,12 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
   if (!['pending', 'submitting'].includes(row.status))
     fail(`extension_${method}_payment_unavailable`);
   await collection.updateOne(
-    { _id: row._id, status: 'pending', attempt: row.attempt || { $exists: false },
-      provider: options.authorization === dojoAuthorization ? row.provider : { $exists: false } },
+    {
+      _id: row._id,
+      status: 'pending',
+      attempt: row.attempt || { $exists: false },
+      provider: options.authorization === dojoAuthorization ? row.provider : { $exists: false },
+    },
     {
       $set: {
         status: 'submitting',
@@ -276,7 +297,8 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
           authorized: options.authorization === dojoAuthorization && !!row.providerCommitDocument,
         },
         ...(options.authorization === dojoAuthorization && row.providerCommitDocument
-          ? { commitDocument: row.providerCommitDocument } : {}),
+          ? { commitDocument: row.providerCommitDocument }
+          : {}),
       },
     }
   );
@@ -430,55 +452,114 @@ const confirmExternalCard = (context, input, options) =>
 // never supplied by a worker or browser. Claim the SAME payment document used
 // by manual confirmation/cancellation before making any provider request.
 async function processDojoPayment(context, input, { provider, configurationId, terminalId } = {}) {
-  const scope = paymentScope(context), collection = context.db.collection('extension_payments');
+  const scope = paymentScope(context),
+    collection = context.db.collection('extension_payments');
   if (!/^[a-f\d]{64}$/.test(input.paymentId || '')) fail('extension_payment_invalid');
   const filter = { _id: input.paymentId, ...scope };
   let row = await collection.findOne(filter);
   if (!row || row.method !== 'card' || !['pending', 'submitting', 'paid'].includes(row.status))
     fail('extension_card_payment_unavailable');
-  if (row.currency?.currencyCode !== 'GBP' || !Number.isSafeInteger(row.valueMinor) || row.valueMinor <= 0)
+  if (
+    row.currency?.currencyCode !== 'GBP' ||
+    !Number.isSafeInteger(row.valueMinor) ||
+    row.valueMinor <= 0
+  )
     fail('extension_dojo_amount_invalid');
-  if (!provider || !['sandbox', 'production'].includes(provider.environment) ||
-      !/^[A-Za-z0-9_-]{1,120}$/.test(configurationId || '') ||
-      !/^tm_[A-Za-z0-9_-]{1,180}$/.test(terminalId || '')) fail('extension_dojo_configuration_invalid');
+  if (
+    !provider ||
+    !['sandbox', 'production'].includes(provider.environment) ||
+    !/^[A-Za-z0-9_-]{1,120}$/.test(configurationId || '') ||
+    !/^tm_[A-Za-z0-9_-]{1,180}$/.test(terminalId || '')
+  )
+    fail('extension_dojo_configuration_invalid');
   const binding = { name: 'dojo', configurationId, terminalId, environment: provider.environment };
-  await collection.updateOne({ ...filter, status: 'pending', provider: { $exists: false } },
-    { $set: { provider: binding } });
+  await collection.updateOne(
+    { ...filter, status: 'pending', provider: { $exists: false } },
+    { $set: { provider: binding } }
+  );
   row = await collection.findOne(filter);
-  if (fingerprint(row.provider || {}) !== fingerprint(binding)) fail('extension_provider_payment_conflict');
+  if (fingerprint(row.provider || {}) !== fingerprint(binding))
+    fail('extension_provider_payment_conflict');
   if (!row.providerCommitDocument) {
-    const stockGrant = await allocateForSale(context.db,
+    const stockGrant = await allocateForSale(
+      context.db,
       { license: scope.license, branchId: scope.branch_id, actorId: scope.actorId },
-      { extensionId: scope.extensionId, stockOperationId: row.stockOperationId, saleId: row.saleId, lines: row.lines });
+      {
+        extensionId: scope.extensionId,
+        stockOperationId: row.stockOperationId,
+        saleId: row.saleId,
+        lines: row.lines,
+      }
+    );
     const ctx = await saleContext(context.db, scope);
-    const prepared = await require('./sale.service').processSale(structuredClone(row.payload), '', 'Add', ctx,
-      { stockGrant, prepareAllocated: true });
-    if (!prepared.status || !prepared.document || fingerprint(prepared.data) !== fingerprint(row.quote) ||
-        Money.policy(ctx.branchSettings).currencyCode !== row.currency.currencyCode ||
-        Money.policy(ctx.branchSettings).currencyDigits !== row.currency.currencyDigits) {
+    const prepared = await require('./sale.service').processSale(
+      structuredClone(row.payload),
+      '',
+      'Add',
+      ctx,
+      { stockGrant, prepareAllocated: true }
+    );
+    if (
+      !prepared.status ||
+      !prepared.document ||
+      fingerprint(prepared.data) !== fingerprint(row.quote) ||
+      Money.policy(ctx.branchSettings).currencyCode !== row.currency.currencyCode ||
+      Money.policy(ctx.branchSettings).currencyDigits !== row.currency.currencyDigits
+    ) {
       // No provider request has been made by this path. Allow cancellation if
       // no competing request has frozen a document and advanced to charging.
-      await collection.updateOne({ ...filter, status: 'pending', provider: binding,
-        providerCommitDocument: { $exists: false } }, { $unset: { provider: '' } });
+      await collection.updateOne(
+        {
+          ...filter,
+          status: 'pending',
+          provider: binding,
+          providerCommitDocument: { $exists: false },
+        },
+        { $unset: { provider: '' } }
+      );
       fail('extension_payment_review_required');
     }
-    await collection.updateOne({ ...filter, status: 'pending', provider: binding,
-      providerCommitDocument: { $exists: false } },
-      { $set: { providerCommitDocument: BSON.deserialize(BSON.serialize(prepared.document)) } });
+    await collection.updateOne(
+      {
+        ...filter,
+        status: 'pending',
+        provider: binding,
+        providerCommitDocument: { $exists: false },
+      },
+      { $set: { providerCommitDocument: BSON.deserialize(BSON.serialize(prepared.document)) } }
+    );
     row = await collection.findOne(filter);
     if (!row.providerCommitDocument || fingerprint(row.provider || {}) !== fingerprint(binding))
       fail('extension_provider_payment_conflict');
   }
   const journal = require('./dojo-payment-journal');
-  await journal.startPayment(context.db, context.scope, {
-    paymentId: row._id, valueMinor: row.valueMinor, currencyCode: row.currency.currencyCode,
-    configurationId, terminalId,
-  }, provider);
-  const result = await journal.pollPayment(context.db, context.scope, row._id, configurationId, provider);
-  if (result.status !== 'captured') return { paymentId: row._id, status: result.status, provider: 'dojo' };
-  const committed = await confirmRecordedPayment({ ...context, operationId: 'dojo-confirm:' + row._id },
-    { paymentId: row._id, terminalConfirmed: true, reference: result.paymentIntentId }, 'card',
-    { authorization: dojoAuthorization });
+  await journal.startPayment(
+    context.db,
+    context.scope,
+    {
+      paymentId: row._id,
+      valueMinor: row.valueMinor,
+      currencyCode: row.currency.currencyCode,
+      configurationId,
+      terminalId,
+    },
+    provider
+  );
+  const result = await journal.pollPayment(
+    context.db,
+    context.scope,
+    row._id,
+    configurationId,
+    provider
+  );
+  if (result.status !== 'captured')
+    return { paymentId: row._id, status: result.status, provider: 'dojo' };
+  const committed = await confirmRecordedPayment(
+    { ...context, operationId: 'dojo-confirm:' + row._id },
+    { paymentId: row._id, terminalConfirmed: true, reference: result.paymentIntentId },
+    'card',
+    { authorization: dojoAuthorization }
+  );
   // Money is already captured. A failed local validation is a reconciliation
   // problem, never a declined payment or permission to charge another time.
   if (committed.rejected) fail('extension_dojo_sale_reconciliation_required');
@@ -553,4 +634,10 @@ async function cancelPayment(context, input) {
   );
   return { cancelled: true };
 }
-module.exports = { preparePayment, confirmCash, confirmExternalCard, processDojoPayment, cancelPayment };
+module.exports = {
+  preparePayment,
+  confirmCash,
+  confirmExternalCard,
+  processDojoPayment,
+  cancelPayment,
+};

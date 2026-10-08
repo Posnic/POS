@@ -72,7 +72,7 @@
     var next=owners.length===1 ? owners[0] : null;
     if(JSON.stringify(selected)!==JSON.stringify(next)){close();document.querySelectorAll('.sale-extension-actions').forEach(function(el){el.remove();});}
     selected=next;render();
-    if(owners.length>1)PosnicPro.alert('error','Multiple extensions request the sales workspace. Enable only one sales workspace provider.');
+    if(owners.length>1)PosnicPro.alert('error', PosnicPro.i18n.t('lang_multiple_extensions_request_the_sales_work', 'Multiple extensions request the sales workspace. Enable only one sales workspace provider.'));
   },open:open};
   // Tender and sales modules are inserted/rebuilt asynchronously by the host.
   var queued=false;

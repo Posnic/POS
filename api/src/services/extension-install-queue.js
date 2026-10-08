@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { readExtensionFile } = require('../../../src/extension-file');
 const { loadVerifiedDirectory } = require('./extension-package-loader');
 const { activateStagedVersion } = require('./extension-activation');
 function configuration() {
@@ -19,15 +20,19 @@ function file(root) {
 }
 function read(root) {
   const filename = file(root);
-  if (!fs.existsSync(filename)) return null;
-  const stat = fs.lstatSync(filename);
-  if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 4096)
-    throw new Error('extension_install_queue_invalid');
-  return JSON.parse(fs.readFileSync(filename, 'utf8'));
+  try {
+    return JSON.parse(readExtensionFile(filename, 4096).toString('utf8'));
+  } catch (error) {
+    if (error.code === 'ENOENT') return null;
+    throw error;
+  }
 }
 function validate(request) {
   if (
     !request ||
+    ['id', 'version', 'packageDigest', 'license', 'branchId'].some(
+      (key) => typeof request[key] !== 'string'
+    ) ||
     !/^[a-z][a-z0-9.-]{2,99}$/.test(request.id || '') ||
     !/^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/.test(request.version || '') ||
     !/^[a-f0-9]{64}$/.test(request.packageDigest || '') ||
@@ -45,7 +50,10 @@ function queue({ root, publicKey, id, version, scope }) {
     packageDigest: '0'.repeat(64),
   };
   validate(request);
-  const verified = loadVerifiedDirectory(path.join(root, id, 'versions', version), publicKey);
+  const directory = path.resolve(root, id, 'versions', version);
+  if (!directory.startsWith(path.resolve(root) + path.sep))
+    throw new Error('extension_install_queue_invalid');
+  const verified = loadVerifiedDirectory(directory, publicKey);
   if (verified.descriptor.id !== id || verified.descriptor.version !== version)
     throw new Error('extension_identity_mismatch');
   request.packageDigest = verified.packageDigest;

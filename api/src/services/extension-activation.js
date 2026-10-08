@@ -6,6 +6,7 @@ const { ObjectId } = require('mongodb');
 const { acquireRuntimeLock } = require('./extension-runtime-lock');
 const { loadVerifiedDirectory } = require('./extension-package-loader');
 const runtime = require('./extension-runtime');
+const { readExtensionFile } = require('../../../src/extension-file');
 const fail = (code) => {
   throw Object.assign(new Error(code), { code, status: 409 });
 };
@@ -27,10 +28,14 @@ function atomicWrite(filename, value) {
 }
 function pointer(directory, name) {
   const filename = path.join(directory, name);
-  if (!fs.existsSync(filename)) return null;
-  const stat = fs.lstatSync(filename);
-  if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 100) fail('extension_pointer_invalid');
-  const version = fs.readFileSync(filename, 'utf8').trim();
+  let bytes;
+  try {
+    bytes = readExtensionFile(filename, 100);
+  } catch (error) {
+    if (error.code === 'ENOENT') return null;
+    throw error;
+  }
+  const version = bytes.toString('utf8').trim();
   if (!/^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/.test(version)) fail('extension_version_invalid');
   return version;
 }
@@ -103,10 +108,7 @@ async function activateStagedVersion({
     const journalFile = path.join(directory, 'activation.pending.json');
     let journal;
     if (fs.existsSync(journalFile)) {
-      const stat = fs.lstatSync(journalFile);
-      if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 32768)
-        fail('extension_activation_journal_invalid');
-      journal = JSON.parse(fs.readFileSync(journalFile, 'utf8'));
+      journal = JSON.parse(readExtensionFile(journalFile, 32768).toString('utf8'));
       if (
         journal.id !== id ||
         journal.version !== version ||
@@ -165,16 +167,14 @@ async function activateStagedVersion({
         .createHash('sha256')
         .update(`${scope.license}:${scope.branchId}:${id}`)
         .digest('hex');
-      await db
-        .collection('extension_installations')
-        .updateOne(
-          filter,
-          {
-            $set: { packageDigest: verified.packageDigest, version, enabled: true },
-            $setOnInsert: { _id: installationId },
-          },
-          { upsert: true }
-        );
+      await db.collection('extension_installations').updateOne(
+        filter,
+        {
+          $set: { packageDigest: verified.packageDigest, version, enabled: true },
+          $setOnInsert: { _id: installationId },
+        },
+        { upsert: true }
+      );
     }
     fs.unlinkSync(journalFile);
     return {

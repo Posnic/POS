@@ -32,18 +32,16 @@ const revisionFilter = (row) =>
 async function requireSettled(db, row) {
   for (const saleId of Object.keys(row.allocations || {})) {
     if (row.allocations[saleId].state === 'released') continue;
-    const sale = await db
-      .collection('sales')
-      .findOne(
-        {
-          _id: asId(saleId),
-          license: row.license,
-          branch_id: row.branch_id,
-          extension_stock_operation: row._id,
-          payment_status: 'Paid',
-        },
-        { projection: { _id: 1 } }
-      );
+    const sale = await db.collection('sales').findOne(
+      {
+        _id: asId(saleId),
+        license: row.license,
+        branch_id: row.branch_id,
+        extension_stock_operation: row._id,
+        payment_status: 'Paid',
+      },
+      { projection: { _id: 1 } }
+    );
     if (!sale) fail('stock_lifecycle_payment_unresolved');
   }
 }

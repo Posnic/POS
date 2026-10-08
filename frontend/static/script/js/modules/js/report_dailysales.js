@@ -12,7 +12,7 @@ PosnicPro.quickreport = {
     if (picker) { picker.setStartDate(start); picker.setEndDate(end); }
     var text = start.format('YYYY/MM/DD h:mm A') + ' - ' + end.format('YYYY/MM/DD h:mm A');
     field.val(text).find('span').first().text(text);
-    this.salereportTable(monthly ? 'Monthly' : 'Daily');
+    this.salereportTable(monthly ? PosnicPro.i18n.t('lang_monthly', 'Monthly') : PosnicPro.i18n.t('lang_daily', 'Daily'));
   },
   periodParams: function () {
     var meal = this.meal || 'full';

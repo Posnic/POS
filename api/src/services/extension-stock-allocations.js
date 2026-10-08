@@ -171,14 +171,12 @@ async function validateSaleGrant(grant, context, items) {
 }
 
 async function releaseCancelledAllocation(db, scope, paymentId) {
-  const payment = await db
-    .collection('extension_payments')
-    .findOne({
-      _id: paymentId,
-      license: asId(scope.license),
-      branch_id: asId(scope.branchId),
-      status: 'cancelling',
-    });
+  const payment = await db.collection('extension_payments').findOne({
+    _id: paymentId,
+    license: asId(scope.license),
+    branch_id: asId(scope.branchId),
+    status: 'cancelling',
+  });
   if (!payment) fail('stock_release_not_authorized');
   if (
     await db

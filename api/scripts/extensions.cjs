@@ -12,6 +12,7 @@ require('dotenv').config({
 const { MongoClient } = require('mongodb');
 const { stageExtensionArchive } = require('../src/services/extension-installation');
 const { activateStagedVersion, pointer } = require('../src/services/extension-activation');
+const { readExtensionFile } = require('../../src/extension-file');
 const { MAX_ARCHIVE_BYTES } = require('../src/services/extension-archive');
 const [command, first, second, ...rest] = process.argv.slice(2);
 async function main() {
@@ -25,10 +26,10 @@ async function main() {
   if (command === 'stage') {
     if (!first || second || rest.length)
       throw Error('Usage: extensions.cjs stage <signed-package.zip>');
-    const stat = fs.statSync(first);
-    if (!stat.isFile() || stat.size > MAX_ARCHIVE_BYTES)
-      throw Error('Invalid or oversized package.');
-    const staged = await stageExtensionArchive(fs.readFileSync(first), { root, publicKey });
+    const staged = await stageExtensionArchive(readExtensionFile(first, MAX_ARCHIVE_BYTES), {
+      root,
+      publicKey,
+    });
     console.log(
       JSON.stringify({
         id: staged.id,

@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const runtime = require('./extension-runtime');
+const { readExtensionFile } = require('../../../src/extension-file');
 function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capabilities) {
   const {
     verifyExtensionPackage,
@@ -15,14 +16,14 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
   if (fs.lstatSync(root).isSymbolicLink()) throw new Error('extension_directory_link_forbidden');
   const read = (relative, limit) => {
     if (!safePath(relative)) throw new Error('extension_path_invalid');
+    const resolved = path.resolve(root, relative);
+    if (!resolved.startsWith(root + path.sep)) throw new Error('extension_path_invalid');
     let current = root;
     for (const part of relative.split('/')) {
       current = path.join(current, part);
       if (fs.lstatSync(current).isSymbolicLink()) throw new Error('extension_file_link_forbidden');
     }
-    const info = fs.statSync(current);
-    if (!info.isFile() || info.size > limit) throw new Error('extension_file_invalid');
-    return fs.readFileSync(current);
+    return readExtensionFile(resolved, limit);
   };
   const manifestBytes = read('manifest.json', 128 * 1024);
   const manifest = JSON.parse(manifestBytes.toString('utf8'));
@@ -97,7 +98,10 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
     contextNeeds: metadata.contextNeeds || {},
     permissionModule: 'extensions',
     menu: metadata.contributes?.menu === 'sales' ? 'sales' : null,
-    salesWorkspace: require('./extension-sales-workspace').salesWorkspace(metadata.contributes?.salesWorkspace, metadata.commands),
+    salesWorkspace: require('./extension-sales-workspace').salesWorkspace(
+      metadata.contributes?.salesWorkspace,
+      metadata.commands
+    ),
     requiredCapabilities: metadata.requiredCapabilities,
     displayName:
       typeof metadata.displayName === 'string' ? metadata.displayName.slice(0, 100) : metadata.id,
@@ -148,9 +152,7 @@ async function initializeInstalledExtensions({
       if (fs.existsSync(path.join(directory, 'activation.pending.json')))
         throw new Error('extension_activation_recovery_required');
       const pointer = path.join(directory, 'current');
-      if (fs.lstatSync(pointer).isSymbolicLink() || fs.statSync(pointer).size > 100)
-        throw new Error('extension_pointer_invalid');
-      const version = fs.readFileSync(pointer, 'utf8').trim();
+      const version = readExtensionFile(pointer, 100).toString('utf8').trim();
       if (!/^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/.test(version))
         throw new Error('extension_version_invalid');
       const verified = loadVerifiedDirectory(path.join(directory, 'versions', version), publicKey);

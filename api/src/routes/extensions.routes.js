@@ -1,5 +1,6 @@
 'use strict';
 const express = require('express');
+const { rateLimit } = require('express-rate-limit');
 const { protect } = require('../middleware/auth');
 const access = require('../utils/branch-access');
 const namespace = require('../services/extension-namespace');
@@ -9,6 +10,9 @@ const catalogue = require('../services/extension-catalog');
 
 function createRouter({ authenticate = protect, registry = runtime, executor = effects } = {}) {
   const router = express.Router();
+  router.use(
+    rateLimit({ windowMs: 60000, limit: 600, standardHeaders: 'draft-8', legacyHeaders: false })
+  );
   router.use(authenticate);
   const installer = express.Router();
   installer.use(async (req, res, next) => {
@@ -98,12 +102,18 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
         .toArray();
       const enabled = new Map(rows.map((row) => [row.extensionId, row.packageDigest]));
       const canManage = access.allowed(req.user, 'extensions', 'manage');
-      const states = await req.db.collection('extension_namespaces').find({
-        license: scope.license, branch_id: scope.branchId,
-        'lifecycle.enabled': false,
-      }).toArray();
+      const states = await req.db
+        .collection('extension_namespaces')
+        .find({
+          license: scope.license,
+          branch_id: scope.branchId,
+          'lifecycle.enabled': false,
+        })
+        .toArray();
       const disabled = new Set(states.map((row) => row.extensionId));
-      const removed = new Set(states.filter(row => row.lifecycle?.installed === false).map(row => row.extensionId));
+      const removed = new Set(
+        states.filter((row) => row.lifecycle?.installed === false).map((row) => row.extensionId)
+      );
       const extensions = registry
         .list()
         .filter(
@@ -122,9 +132,7 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
           enabled: !disabled.has(item.id),
           installed: !removed.has(item.id),
         }));
-      res
-        .set('Cache-Control', 'no-store')
-        .json({ extensions, canManage });
+      res.set('Cache-Control', 'no-store').json({ extensions, canManage });
     } catch (error) {
       respondError(res, error);
     }
@@ -134,32 +142,56 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       if (req.isApiKey || !access.allowed(req.user, 'extensions', 'manage'))
         access.fail('Extension management permission required.', 403);
       const scope = await access.context(req);
-      if (Object.keys(req.query).some(key => key !== 'before') ||
-          (req.query.before !== undefined && !/^[1-9][0-9]{0,15}$/.test(req.query.before)))
+      if (
+        Object.keys(req.query).some((key) => key !== 'before') ||
+        (req.query.before !== undefined && !/^[1-9][0-9]{0,15}$/.test(req.query.before))
+      )
         access.fail('Invalid lifecycle history cursor.', 422);
-      const events = await namespace.readLifecycleAudit(req.db, scope,
-        { id: req.params.extensionId }, { permissions: ['manage'] },
-        req.query.before === undefined ? undefined : Number(req.query.before));
-      res.set('Cache-Control', 'no-store').json({ events,
-        next: events.length === 50 ? events[events.length - 1].generation : null });
-    } catch (error) { respondError(res, error); }
+      const events = await namespace.readLifecycleAudit(
+        req.db,
+        scope,
+        { id: req.params.extensionId },
+        { permissions: ['manage'] },
+        req.query.before === undefined ? undefined : Number(req.query.before)
+      );
+      res
+        .set('Cache-Control', 'no-store')
+        .json({ events, next: events.length === 50 ? events[events.length - 1].generation : null });
+    } catch (error) {
+      respondError(res, error);
+    }
   });
   router.post('/:extensionId/installed', async (req, res) => {
     try {
       if (req.isApiKey || !access.allowed(req.user, 'extensions', 'manage'))
         access.fail('Extension management permission required.', 403);
-      if (req.body?.retainData !== true) access.fail('Removal preserves business data. Confirm retainData.', 422);
+      if (req.body?.retainData !== true)
+        access.fail('Removal preserves business data. Confirm retainData.', 422);
       const descriptor = registry.get(req.params.extensionId);
       if (!descriptor) access.fail('Verified package is unavailable on this host.', 404);
       const scope = await access.context(req);
       const approved = await req.db.collection('extension_installations').findOne({
-        license: scope.license, branch_id: scope.branchId, extensionId: descriptor.id,
-        packageDigest: descriptor.packageDigest, enabled: true,
+        license: scope.license,
+        branch_id: scope.branchId,
+        extensionId: descriptor.id,
+        packageDigest: descriptor.packageDigest,
+        enabled: true,
       });
       if (!approved) access.fail('Extension is not approved for this shop.', 403);
-      res.set('Cache-Control', 'no-store').json(await namespace.setInstalled(req.db, scope, descriptor,
-        { userId: String(req.user._id || req.user.id), permissions: ['manage'] }, req.body?.installed));
-    } catch (error) { respondError(res, error); }
+      res
+        .set('Cache-Control', 'no-store')
+        .json(
+          await namespace.setInstalled(
+            req.db,
+            scope,
+            descriptor,
+            { userId: String(req.user._id || req.user.id), permissions: ['manage'] },
+            req.body?.installed
+          )
+        );
+    } catch (error) {
+      respondError(res, error);
+    }
   });
   router.post('/:extensionId/enabled', async (req, res) => {
     try {
@@ -169,16 +201,27 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       if (!descriptor) access.fail('Extension is not installed on this host.', 404);
       const scope = await access.context(req);
       const approved = await req.db.collection('extension_installations').findOne({
-        license: scope.license, branch_id: scope.branchId,
-        extensionId: descriptor.id, packageDigest: descriptor.packageDigest, enabled: true,
+        license: scope.license,
+        branch_id: scope.branchId,
+        extensionId: descriptor.id,
+        packageDigest: descriptor.packageDigest,
+        enabled: true,
       });
       if (!approved) access.fail('Extension is not approved for this shop.', 403);
-      res.set('Cache-Control', 'no-store').json(await namespace.setEnabled(
-        req.db, scope, descriptor,
-        { userId: String(req.user._id || req.user.id), permissions: ['manage'] },
-        req.body?.enabled
-      ));
-    } catch (error) { respondError(res, error); }
+      res
+        .set('Cache-Control', 'no-store')
+        .json(
+          await namespace.setEnabled(
+            req.db,
+            scope,
+            descriptor,
+            { userId: String(req.user._id || req.user.id), permissions: ['manage'] },
+            req.body?.enabled
+          )
+        );
+    } catch (error) {
+      respondError(res, error);
+    }
   });
   router.use('/:extensionId', async (req, res, next) => {
     try {
@@ -196,9 +239,12 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       });
       if (!approved) access.fail('Extension is not enabled for this shop.', 403);
       const state = await req.db.collection('extension_namespaces').findOne({
-        license: scope.license, branch_id: scope.branchId, extensionId: descriptor.id,
+        license: scope.license,
+        branch_id: scope.branchId,
+        extensionId: descriptor.id,
       });
-      if (state?.lifecycle?.enabled === false) access.fail('Extension is disabled for this shop.', 403);
+      if (state?.lifecycle?.enabled === false)
+        access.fail('Extension is disabled for this shop.', 403);
       const module = descriptor.permissionModule || 'extensions';
       const permissions = ['read', 'write', 'manage'].filter((action) =>
         access.allowed(req.user, module, action)
@@ -280,7 +326,7 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
           db: req.db,
           ...req.extension,
           day: req.query.day,
-            endDay: req.query.endDay,
+          endDay: req.query.endDay,
         })
       );
     } catch (error) {

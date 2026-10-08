@@ -96,6 +96,9 @@
     "src/models/supplier-legacy.model.js",
     "src/services/supplier.service.js"
   ],
+  "Allocated quantities require a completed payment.": [
+    "src/services/sale.service.js"
+  ],
   "Already answered": [
     "src/repositories/item.repository.js",
     "src/repositories/print-job.repository.js"
@@ -2616,14 +2619,26 @@
   "Unknown settings group: ": [
     "src/repositories/settings.repository.js"
   ],
+  "Unsupported allocated sale commit": [
+    "src/services/sale.service.js"
+  ],
+  "Unsupported allocated sale preparation": [
+    "src/services/sale.service.js"
+  ],
   "Unsupported decision commit": [
     "src/services/sale.service.js"
   ],
   "Unsupported decision preview": [
     "src/services/sale.service.js"
   ],
+  "Unsupported stock allocation sale": [
+    "src/services/sale.service.js"
+  ],
   "Update info": [
     "src/models/setting.model.js"
+  ],
+  "Use the normal return process for an allocated sale.": [
+    "src/services/sale.service.js"
   ],
   "User Data Exported": [
     "src/models/user.model.js"

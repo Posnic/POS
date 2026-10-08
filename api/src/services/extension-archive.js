@@ -16,8 +16,9 @@ const failure = (code) => Object.assign(new Error(code), { code, status: 422 });
  * The caller must also bound its HTTP/file input before allocating the buffer.
  */
 async function readArchive(input, options, verifyPackage) {
-  if (!Buffer.isBuffer(input) || !input.length || input.length > MAX_ARCHIVE_BYTES)
-    throw failure('extension_archive_size_invalid');
+  if (!Buffer.isBuffer(input)) throw failure('extension_archive_size_invalid');
+  const size = Buffer.byteLength(input);
+  if (size === 0 || size > MAX_ARCHIVE_BYTES) throw failure('extension_archive_size_invalid');
   const archive = Buffer.from(input);
   const zip = await new Promise((resolve, reject) =>
     yauzl.fromBuffer(
@@ -149,7 +150,8 @@ async function readArchive(input, options, verifyPackage) {
     zip.readEntry();
   });
 }
-const readExtensionArchive = (input, options) => readArchive(input, options, verifyExtensionPackage);
-const readSourceArchive = (input, options) => readArchive(input, options,
-  require('./extension-source-package').verifySourcePackage);
+const readExtensionArchive = (input, options) =>
+  readArchive(input, options, verifyExtensionPackage);
+const readSourceArchive = (input, options) =>
+  readArchive(input, options, require('./extension-source-package').verifySourcePackage);
 module.exports = { readExtensionArchive, readSourceArchive, MAX_ARCHIVE_BYTES, MAX_MANIFEST_BYTES };

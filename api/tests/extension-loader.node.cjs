@@ -69,8 +69,11 @@ test('verified worker loads offline with no inherited database or payment secret
     if (prior === undefined) delete process.env.POSNIC_TEST_SECRET;
     else process.env.POSNIC_TEST_SECRET = prior;
     // This exact path was created above below the OS temporary directory.
-    if (!path.resolve(directory).startsWith(path.resolve(os.tmpdir()) + path.sep))
-      throw new Error('unsafe cleanup');
+    assert.equal(
+      path.dirname(path.resolve(directory)),
+      path.resolve(os.tmpdir()),
+      'unsafe cleanup'
+    );
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });

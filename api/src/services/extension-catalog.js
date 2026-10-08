@@ -11,7 +11,12 @@ function productSnapshot(product, branch, scope, submitted) {
     notificationRange: '0',
   });
   if (!stock) return null;
-  const snapshot = pricing.resolve({ product, branch, submitted: submitted === undefined && product.open_price === true ? product.selling_price : submitted });
+  const snapshot = pricing.resolve({
+    product,
+    branch,
+    submitted:
+      submitted === undefined && product.open_price === true ? product.selling_price : submitted,
+  });
   const unit = pricing.calculate(
     snapshot,
     1,
@@ -73,10 +78,27 @@ async function prepareContext({ db, scope, state, command, resources = [], selec
     .collection('items')
     .find({ license: scope.license, _id: { $in: [...ids].map((id) => new ObjectId(id)) } })
     .toArray();
-  const source = ['basket.create', 'basket.update'].includes(command.type) ? command :
-    [...(state.baskets || []), ...(state.adjustments || [])].find(row => row.id === (command.basketId || command.sourceId));
-  const inputs = new Map((source?.lines || []).map(line => [line.productId, line.sellingPrice]));
-  const products = rows.map((product) => productSnapshot(product, branch, scope, (['basket.create', 'basket.update'].includes(command.type) || product.open_price === true || product.item_status === 'instant' || Number(product.selling_price || 0) <= 0) ? inputs.get(String(product._id)) : undefined)).filter(Boolean);
+  const source = ['basket.create', 'basket.update'].includes(command.type)
+    ? command
+    : [...(state.baskets || []), ...(state.adjustments || [])].find(
+        (row) => row.id === (command.basketId || command.sourceId)
+      );
+  const inputs = new Map((source?.lines || []).map((line) => [line.productId, line.sellingPrice]));
+  const products = rows
+    .map((product) =>
+      productSnapshot(
+        product,
+        branch,
+        scope,
+        ['basket.create', 'basket.update'].includes(command.type) ||
+          product.open_price === true ||
+          product.item_status === 'instant' ||
+          Number(product.selling_price || 0) <= 0
+          ? inputs.get(String(product._id))
+          : undefined
+      )
+    )
+    .filter(Boolean);
   if (products.length !== ids.size) {
     const error = new Error(
       'A selected product is unavailable in this shop. Restore its catalogue entry or cancel the ordinary basket.'

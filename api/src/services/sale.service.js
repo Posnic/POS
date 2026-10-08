@@ -211,20 +211,30 @@ const processSale = async (
   try {
     let extensionStock = null;
     let extensionSubmission = null;
-    if (prepareAllocated && (stockGrant === undefined || preview || beforeCommit || beforeStockCommit))
+    if (
+      prepareAllocated &&
+      (stockGrant === undefined || preview || beforeCommit || beforeStockCommit)
+    )
       return { status: false, message: 'Unsupported allocated sale preparation' };
-    if (beforeStockCommit !== undefined &&
-        (typeof beforeStockCommit !== 'function' || stockGrant === undefined))
+    if (
+      beforeStockCommit !== undefined &&
+      (typeof beforeStockCommit !== 'function' || stockGrant === undefined)
+    )
       return { status: false, message: 'Unsupported allocated sale commit' };
     if (stockGrant !== undefined) {
       if (preview || id !== '' || process !== 'Add')
         return { status: false, message: 'Unsupported stock allocation sale' };
       extensionStock = await require('./extension-stock-allocations').validateSaleGrant(
-        stockGrant, context, data.items || []
+        stockGrant,
+        context,
+        data.items || []
       );
       // The key is chosen by the host allocation, never by the extension UI.
-      data = { ...data, idempotencyKey: `extension-sale:${extensionStock.saleId}`,
-        extension_stock_operation: extensionStock.stockOperationId };
+      data = {
+        ...data,
+        idempotencyKey: `extension-sale:${extensionStock.saleId}`,
+        extension_stock_operation: extensionStock.stockOperationId,
+      };
       extensionSubmission = structuredClone(data);
     }
     if (

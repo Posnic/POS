@@ -49,7 +49,8 @@ async function stageExtensionArchive(
     fail('extension_install_identity_invalid');
   const base = path.resolve(root);
   const versions = path.join(base, metadata.id, 'versions');
-  const target = path.join(versions, metadata.version);
+  const target = path.resolve(versions, metadata.version);
+  if (!target.startsWith(base + path.sep)) fail('extension_install_identity_invalid');
   const existing = () => {
     const loaded = loadVerifiedDirectory(target, publicKey, capabilities);
     if (loaded.packageDigest !== packageDigest) fail('extension_version_already_exists');

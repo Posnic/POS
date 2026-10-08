@@ -16,7 +16,7 @@
     const table=document.createElement('table'); table.setAttribute('data-export-include','');
     [['Type','Currency','Amount'],...rows].forEach((row,index)=>{const tr=document.createElement('tr');row.forEach(cell=>{const td=document.createElement(index?'td':'th');td.textContent=cell;tr.appendChild(td)});table.appendChild(tr)});
     root.appendChild(table); document.body.appendChild(root);
-    const meta={title:'Basket Review report',range:input.range,filename:'basket-review-report'};
+    const meta={title:PosnicPro.i18n.t('lang_basket_review_report', 'Basket Review report'),range:input.range,filename:'basket-review-report'};
     try {
       if (input.format==='csv'||input.format==='xls') PosnicPro.reportExport[input.format](root.id,meta);
       else {

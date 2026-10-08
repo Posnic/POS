@@ -180,7 +180,10 @@ async function enqueue({ collection, documentId, reason, priority = 'critical' }
 
 /** Convenience for the stock paths, which are the reason this exists. */
 async function enqueueInventory(itemId, reason = REASONS.SALE, targetDb) {
-  return enqueue({ collection: 'items', documentId: itemId, reason, priority: 'critical' }, targetDb);
+  return enqueue(
+    { collection: 'items', documentId: itemId, reason, priority: 'critical' },
+    targetDb
+  );
 }
 
 /**

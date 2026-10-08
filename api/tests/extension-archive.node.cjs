@@ -186,8 +186,11 @@ test('offline staging is immutable, repeatable and does not activate or replace 
     assert.deepEqual(fs.readdirSync(root), ['posnic.example']);
     assert.equal(fs.existsSync(path.join(first.directory, 'extra.js')), false);
   } finally {
-    if (path.dirname(path.resolve(directory)) !== path.resolve(os.tmpdir()))
-      throw new Error('unsafe cleanup');
+    assert.equal(
+      path.dirname(path.resolve(directory)),
+      path.resolve(os.tmpdir()),
+      'unsafe cleanup'
+    );
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });
@@ -206,8 +209,11 @@ test('invalid archive cannot create installation directories, and linked targets
     });
     assert.deepEqual(fs.readdirSync(outside), []);
   } finally {
-    if (path.dirname(path.resolve(directory)) !== path.resolve(os.tmpdir()))
-      throw new Error('unsafe cleanup');
+    assert.equal(
+      path.dirname(path.resolve(directory)),
+      path.resolve(os.tmpdir()),
+      'unsafe cleanup'
+    );
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });

@@ -27,17 +27,15 @@ async function claimCashDrawer({ db, scope, descriptor, actor, saleId }) {
     .update(`${scope.license}:${scope.branchId}:${sale._id}:cash-drawer`)
     .digest('hex');
   try {
-    await db
-      .collection('extension_hardware_claims')
-      .insertOne({
-        _id,
-        saleId: sale._id,
-        license: scope.license,
-        branch_id: scope.branchId,
-        extensionId: descriptor.id,
-        actorId: actor.userId,
-        claimedAt: new Date(),
-      });
+    await db.collection('extension_hardware_claims').insertOne({
+      _id,
+      saleId: sale._id,
+      license: scope.license,
+      branch_id: scope.branchId,
+      extensionId: descriptor.id,
+      actorId: actor.userId,
+      claimedAt: new Date(),
+    });
     return { open: true };
   } catch (error) {
     if (error.code === 11000) return { open: false };

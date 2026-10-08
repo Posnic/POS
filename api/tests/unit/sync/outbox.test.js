@@ -202,7 +202,9 @@ describe('the durable sync outbox', () => {
     expect(target._coll.rows.map((row) => row.documentId)).toEqual(['target-item']);
     expect(indexes).toHaveBeenCalledTimes(3);
     ctx.enableMultiTenant(true);
-    expect(await outbox.enqueueInventory('cloud-item', outbox.REASONS.ADJUSTMENT, target)).toBe(false);
+    expect(await outbox.enqueueInventory('cloud-item', outbox.REASONS.ADJUSTMENT, target)).toBe(
+      false
+    );
     expect(target._coll.rows).toHaveLength(1);
   });
 

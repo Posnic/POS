@@ -23,7 +23,8 @@ const hash = (value) => createHash('sha256').update(value).digest('hex');
  * while an old operation can still be replayed. There is no public skip-stock flag.
  */
 async function applyStockEffectInternal(db, scope, effect) {
-  if (effect?.stream) return require('./extension-stock-fence').applyFencedStockEffect(db, scope, effect);
+  if (effect?.stream)
+    return require('./extension-stock-fence').applyFencedStockEffect(db, scope, effect);
   const license = objectId(scope?.license);
   const branchId = objectId(scope?.branchId);
   const itemId = objectId(effect?.itemId);

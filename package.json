@@ -291,6 +291,10 @@
         "to": "src/extension-worker.js"
       },
       {
+        "from": "src/extension-file.js",
+        "to": "src/extension-file.js"
+      },
+      {
         "from": "src/asset-updater.js",
         "to": "src/asset-updater.js"
       },
