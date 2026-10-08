@@ -18,7 +18,7 @@
         if (data.taken_by) facts += field(t('lang_restaurant_taken_by', 'Order taken by'), data.taken_by);
         if (data.ordered_at) facts += field(t('lang_po_ordered', 'Ordered'), time(data.ordered_at, true));
         if (data.assigned_to) facts += field(t('lang_restaurant_assigned', 'Currently assigned to'), data.assigned_to);
-        var html = '<section class="sale-restaurant-summary"><header class="sale-restaurant-heading"><span class="sale-restaurant-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16a8 8 0 0 1 16 0M2 19h20M12 5V3m-2 0h4M3 16h18"/></svg></span><h3>' + esc(t('lang_restaurant_details', 'Restaurant details')) + '</h3></header>';
+        var html = '<details class="sale-restaurant-summary" open><summary class="sale-restaurant-heading"><span class="sale-restaurant-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 16a8 8 0 0 1 16 0M2 19h20M12 5V3m-2 0h4M3 16h18"/></svg></span><h3>' + esc(t('lang_restaurant_details', 'Restaurant details')) + '</h3><span class="sale-restaurant-chevron" aria-hidden="true"></span></summary>';
         if (service) html += '<dl class="sale-restaurant-service">' + service + '</dl>';
         if (facts) html += '<dl class="sale-restaurant-facts">' + facts + '</dl>';
         if (!service && !facts) html += '<p class="sale-restaurant-help">' + esc(missing) + '</p>';
@@ -48,7 +48,7 @@
             });
             html += '</ul>' + (event.note ? '<p>' + esc(event.note) + '</p>' : '') + (event.reason ? '<p>' + esc(t('lang_stock_adjust_reason', 'Reason')) + ': ' + esc(event.reason) + '</p>' : '') + '</article>';
         });
-        return html + '</details></section>';
+        return html + '</details></details>';
     }
     if (typeof module === 'object' && module.exports) module.exports = { render:render };
     else root.PosnicPro.restaurantSaleDetails = { render:function (sale) { return render(sale.restaurant_details, root.PosnicPro.local.get('table_options') === 'enable', function (key, fallback) { return root.PosnicPro.i18n.t(key, fallback); }); } };

@@ -37,6 +37,8 @@ beforeEach(async () => {
     license,
     table_number: 'T1',
     sale_process: 'KOT',
+    date: new Date('2026-10-06T18:20:00Z'),
+    created_date: new Date('2026-10-06T18:20:00Z'),
     payment_status: 'Unpaid',
     sales_sub_total: 100,
     sales_total: 105,
@@ -132,9 +134,13 @@ test('individual takeaway payment targets only the selected sale and keeps prepa
   expect(plan.dueMinor).toBe(10500);
   expect(plan.guests[0].name).toBe('Take Away TA-1');
   expect((await service.prepare(input)).id).toBe(plan.id);
-  await service.record(pay(plan));
+  const first = await service.record(pay(plan));
   const stored = await db.collection('sales').findOne({ _id: sale._id });
   expect(stored.payment_status).toBe('Paid');
+  expect(stored.date).toEqual(new Date(first.payments[0].at));
+  expect(stored.settled_at).toEqual(stored.date);
+  expect(stored.order_date).toEqual(sale.date);
+  expect(stored.created_date).toEqual(sale.created_date);
   expect(stored.floor_closed_at).toBeUndefined();
   expect((await db.collection('sales').findOne({ _id: other._id })).payment_status).toBe('Unpaid');
 });
@@ -173,6 +179,8 @@ test('mixed cash and card commits once and projects exact tender amounts', async
   expect(retry.payments[0].changeMinor).toBe(500);
   const stored = await db.collection('sales').findOne({ _id: sale._id });
   expect(stored.multi_payment).toEqual({ Cash: 100, Card: 5 });
+  expect(stored.date).toEqual(new Date(first.payments[0].at));
+  expect(stored.settled_at).toEqual(stored.date);
   expect(stored.payment_status).toBe('Paid');
   expect(stored.items).toEqual(sale.items);
   payment.body.tenders[1].reference = 'changed';
@@ -316,6 +324,9 @@ test('split guest payments retain the exact remainder and reject competing stale
     pay(plan, { guest: 0, amountMinor: 3500, receivedMinor: 3500 })
   );
   expect(first.dueMinor).toBe(7000);
+  const partial = await db.collection('sales').findOne({ _id: sale._id });
+  expect(partial.date).toEqual(sale.date);
+  expect(partial.settled_at).toBeUndefined();
   await expect(
     service.record(pay(plan, { guest: 1, amountMinor: 3500, receivedMinor: 3500 }))
   ).rejects.toMatchObject({ status: 409 });
@@ -326,6 +337,8 @@ test('split guest payments retain the exact remainder and reject competing stale
   expect(rest.dueMinor).toBe(0);
   const saved = await db.collection('sales').findOne({ _id: sale._id });
   expect(saved.multi_payment).toEqual({ Cash: 35, Card: 70 });
+  expect(saved.date).toEqual(new Date(rest.payments[rest.payments.length - 1].at));
+  expect(saved.created_date).toEqual(sale.created_date);
 });
 test('cancel releases an untouched bill and interrupted preparation recovers', async () => {
   const plan = await service.prepare(req());
@@ -669,8 +682,15 @@ test('split settlement renders only the paid share through the branch template',
   const plan = await service.prepare(
     req({ revision: snapshot.revision, plan: { mode: 'equal', guests: ['A', 'B', 'C'] } })
   );
-  await service.record(pay(plan, { guest: 0, amountMinor: 3500, receivedMinor: 4000 }));
+  const paid = await service.record(
+    pay(plan, { guest: 0, amountMinor: 3500, receivedMinor: 4000 })
+  );
   const payload = queue.mock.calls[0][0].payload;
+  const receipt = require('../../../src/helpers/bill-payload').buildBillPayload(
+    { ...sale, date: paid.payments[0].at },
+    { currency: '\u20b9' }
+  );
+  expect(payload.date).toEqual(receipt.date);
   expect(payload.total).toBe(35);
   expect(payload.items[0].qty).toBeCloseTo(2 / 3);
   expect(Number.isFinite(payload.items[0].rate)).toBe(true);

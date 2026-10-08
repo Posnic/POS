@@ -821,7 +821,7 @@ const processSale = async (
 
     // Date
     const dateInput = data.date || new Date();
-    const mongo_date = new Date(dateInput);
+    let mongo_date = new Date(dateInput);
 
     // Cancelled Items (Remaining in oldItemsData)
     if (id !== '' && Object.keys(oldItemsData).length > 0) {
@@ -1141,6 +1141,13 @@ const processSale = async (
     // We will stick to schema which has separate fields for customer_*
     const customer = pricingCustomer;
 
+    const restaurantTime = require('../helpers/restaurant-sale-time')(
+      existingSale,
+      paymentStatus,
+      new Date()
+    );
+    if (restaurantTime.date) mongo_date = new Date(restaurantTime.date);
+
     // Insert block: mirror PHP $insertData field order as closely as possible.
     const insertData = {
       // PHP: branch_id, branch_name, printing_address, sales_id, wallet_amount,
@@ -1208,6 +1215,7 @@ const processSale = async (
       // Core PHP ordering
       date: mongo_date,
       sale_process: saleProcess,
+      ...restaurantTime,
       // Only the server's KOT path enrolls kitchen work; caller flags are ignored.
       floor_lifecycle:
         existingSale?.floor_lifecycle === true ||

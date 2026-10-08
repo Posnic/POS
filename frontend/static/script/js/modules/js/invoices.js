@@ -626,7 +626,7 @@ PosnicPro.invoices = {
             + '<div class="q-muted">Due: ' + ed('due_date', d(inv.due_date), 'dd/mm/yyyy') + '</div>'
             + (open || inv.reference ? '<div class="q-muted">Ref: ' + ed('reference', inv.reference, 'customer PO / job no.') + '</div>' : '')
             + (inv.source_quote_number ? '<div class="q-muted">From quote ' + esc(inv.source_quote_number) + '</div>' : '')
-            + (stamp ? '<div class="q-status' + (inv.status === 'paid' ? ' is-paid' : '') + '">' + esc(stamp) + '</div>' : '')
+            + (stamp ? '<div class="q-status' + (inv.status === 'paid' ? ' is-paid' : '') + '" data-status="' + esc(inv.status !== 'paid' && inv.status !== 'cancelled' && inv.is_overdue ? 'overdue' : inv.status) + '">' + esc(stamp) + '</div>' : '')
             + '</div>'
             + '</div>'
             + '<div class="q-billto"><div class="q-label"><lang class="lang_bill_to_2">Bill To</lang></div>'
