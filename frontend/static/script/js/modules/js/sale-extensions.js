@@ -106,7 +106,7 @@
       if (compact) { dialog.dataset.presentation='compact'; dialog.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(620px,94vw);max-height:94vh;z-index:10550;background:white;color:#172b4d;box-shadow:0 0 0 100vmax #0008;border-radius:10px;padding:16px;overflow:auto'; }
       notice('');
       var header=document.createElement('div');header.style.cssText='display:flex;justify-content:flex-end;margin-bottom:8px';
-      var back=document.createElement('button');back.type='button';back.className='btn sale-extension-back';back.textContent='×';back.setAttribute('aria-label','Close and return to sale');back.title='Close and return to sale. Any pending payment stays saved.';
+      var back=document.createElement('button');back.type='button';back.className='btn sale-extension-back';back.innerHTML='<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';back.setAttribute('aria-label','Close and return to sale');back.title='Close and return to sale. Any pending payment stays saved.';
       // Closing leaves any persisted extension transaction available in its own workflow.
       back.onclick=function(){close();};
       var content=document.createElement('div');content.textContent='Loading sale actions…';header.append(back);dialog.append(header,content);document.body.append(dialog);
