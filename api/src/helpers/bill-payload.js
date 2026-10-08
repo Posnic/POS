@@ -499,6 +499,7 @@ function buildBillPayload(sale = {}, branch = {}) {
     storePhone: phones.join(' / '),
     storeEmail: String(branch.store_email || '').trim(),
     gstin: String(branch.branch_gstin_number || '').trim(),
+    taxRegistrationLabel: require('./receipt-design').taxRegistrationLabel(branch),
 
     /*
      * FSSAI licence number.

@@ -29,6 +29,39 @@ test('previous account balance shows signed ledger values, does not overwrite te
   assert.match($('.sale-customer-account').text(),/unavailable/);
  } finally {dom.window.close();}
 });
+test('disabled customer credit skips the ledger request and rejects late replies after a toggle or branch change',()=>{
+ const {dom,w,$}=env('<input id="sales_new_customer_id"><div class="sale-customer-account">old balance</div>');
+ try {
+  let enabled=false,branch='one';const calls=[];
+  w.PosnicPro.local.get=k=>k==='general_settings'?JSON.stringify({module_credit_enable:enabled}):k==='branch_id_set'?branch:'GBP';
+  w.PosnicPro.get=(p,ok,fail)=>calls.push({ok,fail});
+  const a=sales.indexOf('PosnicPro.sales.refreshCustomerAccount =');
+  w.eval(sales.slice(a,sales.indexOf('PosnicPro.sales.applyCustomerPick =',a)));
+  $('#sales_new_customer_id').val('a'.repeat(24));
+  w.PosnicPro.sales.refreshCustomerAccount();
+  assert.equal(calls.length,0);assert.equal($('.sale-customer-account').css('display'),'none');
+  enabled=true;w.PosnicPro.sales.refreshCustomerAccount();
+  enabled=false;w.PosnicPro.sales.refreshCustomerAccount();
+  calls[0].ok({type:'success',data:{pending:99,wallet:0}});calls[0].fail();
+  assert.equal($('.sale-customer-account').css('display'),'none');assert.equal($('.sale-customer-account').text(),'');
+  enabled=true;w.PosnicPro.sales.refreshCustomerAccount();branch='two';
+  calls[1].ok({type:'success',data:{pending:88,wallet:0}});
+  assert.doesNotMatch($('.sale-customer-account').text(),/88/);
+ } finally {dom.window.close();}
+});
+
+test('missing product discounts render zero and valid percentage/amount discounts remain intact',()=>{
+ const {dom,w}=env();
+ try {
+  const a=sales.indexOf('        // Imported/catalogue products');
+  const b=sales.indexOf('        /*',a);
+  for(const [fields,display,discount] of [[{},'0%',0],[{discount_percentage:'10'},'10%',2],[{discount_amount:'3'},'EGP3',3]]) {
+   w.params={selling_price:20,...fields};w.eval(sales.slice(a,b));
+   assert.equal(w.discountDisplay,display);assert.equal(w.Discount,discount);
+  }
+ } finally {dom.window.close();}
+});
+
 test('cart quantity counts units rather than lines and handles fractional quantities',()=>{
  const {dom,w,$}=env('<span class="sale-cart-quantity"></span><span class="sale-cart-lines"></span>');
  try {

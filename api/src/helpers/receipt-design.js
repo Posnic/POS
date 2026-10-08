@@ -5,6 +5,28 @@
   else root.PosnicReceiptDesign = factory();
 })(typeof window !== 'undefined' ? window : this, function () {
   'use strict';
+  function taxRegistrationLabel(data, fallbackCountry) {
+    data = data || {};
+    const country = String(
+      data.branch_country || data.country || data.sortname || fallbackCountry || ''
+    )
+      .trim()
+      .toLowerCase();
+    if (
+      [
+        'gb',
+        'gbr',
+        'uk',
+        'united kingdom',
+        'united kingdom of great britain and northern ireland',
+      ].includes(country)
+    )
+      return 'VAT No.';
+    if (['in', 'ind', 'india'].includes(country)) return 'GSTIN';
+    if (country) return 'Tax ID';
+    // Preserve existing Indian documents which predate saved country details.
+    return 'GSTIN';
+  }
   const formats = {
     58: { name: '58 mm thermal', width: 58, content: 48, font: 10 },
     80: { name: '80 mm thermal', width: 80, content: 72, font: 12 },
@@ -210,6 +232,7 @@
     return out;
   }
   return {
+    taxRegistrationLabel: taxRegistrationLabel,
     formats: formats,
     fields: fields,
     restaurant: restaurant,

@@ -812,7 +812,7 @@ function renderSale(sale, options = {}, renderer) {
   if (sale.storeAddress) String(sale.storeAddress).split('\n').forEach((l) => r.centre(l));
   if (sale.storePhone) r.centre(sale.storePhone);
   if (sale.storeEmail) r.centre(sale.storeEmail);
-  if (sale.gstin) r.centre('GSTIN: ' + sale.gstin);
+  if (sale.gstin) r.centre((sale.taxRegistrationLabel || 'GSTIN') + ': ' + sale.gstin);
   /* A food business in India shows its FSSAI licence on the invoice. Printed
      under the GSTIN, where the owner's own reference bill puts it. */
   if (sale.fssai) r.centre('FSSAI: ' + sale.fssai);

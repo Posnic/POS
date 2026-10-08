@@ -29,6 +29,7 @@
         "modules/ask_posnic.html",
         "modules/expenses.html",
         "modules/expensesReport.html",
+        "modules/extensions.html",
         "modules/priceSettings.html",
         "modules/itemReport.html",
         "modules/items.html",
