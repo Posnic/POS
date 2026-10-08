@@ -165,3 +165,10 @@ test('nothing optional leaves an empty line behind', () => {
   const body = lines.slice(0, lines.findIndex((l) => l.startsWith('TOTAL')));
   assert.ok(!body.some((l) => l.trim() === ''), 'blank line in: ' + JSON.stringify(body));
 });
+
+test('UK thermal printer output preserves the VAT registration label',()=>{
+ for(const paperWidth of ['58','80']) {
+  const {lines}=decode(renderSale({...SALE,gstin:'464448078',taxRegistrationLabel:'VAT No.'},{paperWidth}));
+  const text=lines.join('\n');assert.match(text,/VAT No\.: 464448078/);assert.doesNotMatch(text,/GSTIN/);
+ }
+});

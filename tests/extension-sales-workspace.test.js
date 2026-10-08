@@ -13,3 +13,23 @@ test('sales contributions reject unsupported contracts, script targets and ambig
 test('cart transfer commands must belong to the signed extension',()=>{
  const v=valid();v.clearCartOn=['quote.create'];assert.throws(()=>salesWorkspace(v),/extension_sales_workspace_invalid/);assert.deepEqual(salesWorkspace(v,{'quote.create':['write']}).clearCartOn,['quote.create']);
 });
+
+test('compact checkout is opt-in and validates its boolean policy',()=>{
+ const v=valid();assert.equal(salesWorkspace(v).policies.compactCheckout,false);
+ v.policies.compactCheckout=true;assert.equal(salesWorkspace(v).policies.compactCheckout,true);
+ v.policies.compactCheckout='true';assert.throws(()=>salesWorkspace(v),/extension_sales_workspace_invalid/);
+});
+
+test('native Pay uses the extension only for an eligible new checkout',()=>{
+ const fs=require('node:fs'),vm=require('node:vm');
+ const source=fs.readFileSync(require('node:path').join(__dirname,'../frontend/static/script/js/modules/js/sales.js'),'utf8');
+ const start=source.indexOf('    openTenderModel: function (methodsReady) {');
+ const end=source.indexOf('        // Load methods',start);
+ const body=source.slice(source.indexOf('{',start)+1,end);
+ for(const scenario of [{enabled:true,paymentOnly:false,kot:false,expected:0},{enabled:false,paymentOnly:false,kot:false,expected:1},{enabled:true,paymentOnly:true,kot:false,expected:1},{enabled:true,paymentOnly:false,kot:true,expected:1}]) {
+  let native=0;
+  const context={PosnicPro:{sales:{paymentOnlyMode:scenario.paymentOnly,saleProcess:scenario.kot?'KOT':'add'},saleExtensions:{dispatch:event=>{assert.equal(event,'checkout');return scenario.enabled;}}},nativeTender:()=>native++};
+  vm.runInNewContext('(function(){'+body+'nativeTender();})()',context);
+  assert.equal(native,scenario.expected);
+ }
+});

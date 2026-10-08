@@ -28,3 +28,17 @@ Only one enabled workspace owner is supported. Conflicting owners show an error 
 The generic host contains no Basket Review button labels, folder destinations or cash/card workflow mapping. Those now live in Basket Review's signed manifest and page script. Core changes are limited to reusable rendering, cart handoff, lifecycle and submit/policy hooks.
 
 Future standard Posnic builds must retain this versioned capability and pass its contract tests. This removes customer-specific Sales patches, not the need for compatibility testing or a one-time compatible host installation. The existing rc14 EXE and cloud deployment are unchanged by this source refactor.
+
+### Compact action presentation
+
+`policies.compactCheckout: true` opts the installed provider into a compact dialog
+for action controls. It defaults to false. Folder (`page`) controls keep the full
+workspace. The bootstrap workspace includes `presentation: "compact"` or
+`"workspace"`; compact frames receive the `compact-checkout` body class before
+rendering. Providers should omit their catalogue and navigation in compact mode.
+
+An embedded compact provider can request `closeWorkspace` after its durable
+operation finishes. The host rejects this request for standalone/full workspace
+frames or while a command has an unresolved outcome, and restores the Sales
+barcode focus on close. Do not close merely because a payment was prepared;
+retain confirmation and receipt controls until the cashier finishes.

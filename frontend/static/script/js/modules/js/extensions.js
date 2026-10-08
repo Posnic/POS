@@ -436,6 +436,7 @@
         status("Invalid extension.");
         return;
       }
+      var commandBusy = false;
       var base = "/" + id;
       // Pin the branch at opening. Switching branch requires reopening
       // the frame so an old basket can never be submitted in a new shop.
@@ -499,6 +500,7 @@
           container: embedded ? embedded.container : document.getElementById("extensions_content"),
           extensionId: id,
           title: data.displayName,
+          presentation: embedded?.workspace?.presentation,
           view: data.view,
           request: function (method, input) {
             if (
@@ -508,6 +510,11 @@
               throw new Error(
                 "The shop or page changed. Reopen the extension before continuing.",
               );
+            if (method === "closeWorkspace") {
+              if (!embedded?.onClose || embedded.workspace?.presentation !== 'compact' || commandBusy) throw new Error('This workspace cannot close yet.');
+              setTimeout(function(){if(run === generation) embedded.onClose();}, 0);
+              return {closed:true};
+            }
             if (method === "bootstrap")
               return Promise.all([
                 request(base + "/capabilities"),
@@ -536,6 +543,7 @@
                   encodeURIComponent(input.after || ""),
               );
             if (method === "command") {
+              commandBusy = true;
               if (embedded && embedded.onBusy) embedded.onBusy(true);
               return request(
                 base + "/commands",
@@ -544,10 +552,13 @@
                   command: input.command,
                 },
                 input.requestKey,
-              ).then(function(result){if(embedded && embedded.onBusy) embedded.onBusy(false);return afterCommand(result, input.command?.type);},function(error){if(embedded && embedded.onBusy) embedded.onBusy(!error.code || error.code === 'EXTENSION_CONNECTION_FAILED');throw error;});
+              ).then(async function(result){const completed = await afterCommand(result, input.command?.type);commandBusy=false;if(embedded && embedded.onBusy) embedded.onBusy(false);return completed;},function(error){commandBusy=!error.code || error.code === 'EXTENSION_CONNECTION_FAILED';if(embedded && embedded.onBusy) embedded.onBusy(commandBusy);throw error;});
             }
-            if (method === "recover")
-              return request(base + "/recover", {}).then(afterCommand);
+            if (method === "recover") {
+              commandBusy = true;
+              if (embedded?.onBusy) embedded.onBusy(true);
+              return request(base + "/recover", {}).then(afterCommand).then(function(result){commandBusy=false;if(embedded?.onBusy) embedded.onBusy(false);return result;},function(error){if(embedded?.onBusy) embedded.onBusy(true);throw error;});
+            }
             if (method === "receipt")
               return request(base + "/receipt", input).then(
                 async function (receipt) {

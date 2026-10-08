@@ -1125,7 +1125,8 @@ PosnicPro.sales.view = {
                 $('#receipt_wrapper').addClass(print_size);
                 $('.print_store_address').html(data.printing_address);
                 var branchGstin = (data.branch_gstin_number || '').toString().trim();
-                $('.print_store_gst').html(branchGstin);
+                var registrationLabel = window.PosnicReceiptDesign ? window.PosnicReceiptDesign.taxRegistrationLabel(data, PosnicPro.local.get('country_setting')) : 'Tax ID';
+                $('.print_store_gst').text(branchGstin).attr('data-tax-label', registrationLabel);
                 if (branchGstin) {
                     $('.gst_hide_show').show();
                 } else {
@@ -1153,6 +1154,14 @@ PosnicPro.sales.view = {
                     }
                 }
                 var currency = PosnicPro.local.get('currencySign');
+                // Update the label in saved templates as well as the current default.
+                $('.gst_hide_show').each(function () {
+                    var container = this;
+                    $(container).contents().filter(function () { return this.nodeType === 3 && /(?:GSTIN|VAT No\.|Tax ID)\s*:/i.test(this.nodeValue); }).each(function () {
+                        this.nodeValue = this.nodeValue.replace(/(?:GSTIN|VAT No\.|Tax ID)\s*:/ig, registrationLabel + ':');
+                    });
+                    $(container).find('.print_store_gst').attr('data-tax-label', registrationLabel);
+                });
                 $('.tax-print-hideshow,.amount-print-hideshow,.print-payment-status-hide').hide();
 
                 // Determine whether current print is A4 or thermal (standard) layout

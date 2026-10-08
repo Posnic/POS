@@ -1711,6 +1711,8 @@
         PosnicPro.sales.customerViewDisplay();
     },
     openTenderModel: function (methodsReady) {
+        if (!PosnicPro.sales.paymentOnlyMode && PosnicPro.sales.saleProcess !== 'KOT' && PosnicPro.saleExtensions?.dispatch('checkout')) return;
+
         // Load methods from this till's API each time. Startup may still be
         // loading, or settings/sync may have changed since the screen opened.
         if (methodsReady !== true && typeof PosnicPro.get === 'function') {
