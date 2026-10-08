@@ -63,6 +63,10 @@ test('the stamp pattern reads month, day, year and the 12-hour clock', () => {
   assert.match(parts[7], /a/i, 'am/pm is dropped, so afternoon sign-ins would read as morning');
 
   assert.ok(re.test('12/01/2026 06:30 pm'), 'a pm stamp no longer matches');
+  const reportStamp = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).format(new Date('2026-10-02T16:59:00Z'));
+  const reportParts = reportStamp.match(re);
+  assert.ok(reportParts, 'report API comma separator must not fall through to loose date parsing');
+  assert.deepStrictEqual(reportParts.slice(1,7), ['10','02','2026','05','59','00']);
   /* A bare date must NOT match: user-typed dd/mm/yyyy inputs go through the
      same function, and claiming them here would swap month and day. */
   assert.ok(!re.test('08/09/2026'), 'a bare date matches, which would swap day and month on inputs');

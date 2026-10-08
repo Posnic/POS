@@ -301,14 +301,19 @@ class MongoDBManager {
     // system service). Reuse it instead of failing with a port conflict —
     // it serves the same data directory in the leftover case.
     if (await this.isPortOpen()) {
-      console.warn('♻️ MongoDB already listening on 127.0.0.1:' + mongoPort() + ' — reusing existing instance');
       // The port is fixed, so a second data profile (--user-data-dir) would
       // silently attach to whichever shop is already open and then sync that
       // shop's records to the wrong cloud tenant. Say so loudly.
       if (!this._ownsRunningMongo()) {
+        if (process.env.POSNIC_USER_DATA) {
+          const error = new Error('The database port belongs to another Posnic installation. No connection was made. Contact support to correct this installation\'s local ports.');
+          error.code = 'MONGODB_PROFILE_MISMATCH';
+          throw error;
+        }
         console.warn('⚠️ That MongoDB is not serving this profile\'s data directory:', this.dataPath);
         console.warn('⚠️ If another POSNIC profile is open, close it first — otherwise this window shows the other shop\'s data.');
       }
+      console.warn('♻️ MongoDB already listening on 127.0.0.1:' + mongoPort() + ' — reusing existing instance');
       this.isRunning = true;
       this.usingExternal = true;
       return true;

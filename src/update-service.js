@@ -130,12 +130,12 @@ class UpdateService {
        * That is a real download and a real restart, so it waits for a moment
        * the shop picks rather than landing in the middle of a queue.
        */
-      if (this._updateInfo.kind === 'app') {
+      if (this._updateInfo.kind === 'app' && !this.extensionUpdateHold()) {
         console.log(`[UpdateService] ${info.version} is an application update; downloading quietly`);
         this.downloadUpdate().catch((e) =>
           console.warn('[UpdateService] background download failed:', e.message));
       } else {
-        console.log(`[UpdateService] ${info.version} changes the core; leaving it for the shop to start`);
+        console.log(`[UpdateService] ${info.version} requires a deliberate compatible update; not downloading automatically`);
       }
     });
 
@@ -179,7 +179,7 @@ class UpdateService {
          database is still up) then finishQuitInstall - and it also honours the
          shop's installOnQuit setting. Turning the built-in flag on here would
          bypass both. */
-      if (this._updateInfo.kind === 'app') {
+      if (this._updateInfo.kind === 'app' && !this.extensionUpdateHold()) {
         console.log(`[UpdateService] ${info.version} downloaded; it will be applied when the app is next closed`);
       }
     });
@@ -293,6 +293,7 @@ class UpdateService {
 
   _snapshot() {
     return {
+      extensionUpdateHold: this.extensionUpdateHold(),
       status:       this._status,
       updateInfo:   this._updateInfo,
       progress:     this._progress,
@@ -435,6 +436,7 @@ class UpdateService {
    * still choose to apply updates by hand.
    */
   shouldInstallOnQuit() {
+    if (this.extensionUpdateHold()) return false;
     if (!app.isPackaged || !this._autoUpdater) return false;
     if (!this.isDownloaded()) return false;
     return this.loadConfig().installOnQuit !== false;
@@ -448,6 +450,8 @@ class UpdateService {
    * would fail - or worse, appear to succeed and be empty.
    */
   async prepareQuitInstall() {
+    const hold = this.extensionUpdateHold();
+    if (hold) return { ok: false, error: hold };
     try {
       await this._runBeforeInstallBackup();
       return { ok: true };
@@ -468,6 +472,8 @@ class UpdateService {
    * already expect from everything else on the machine.
    */
   finishQuitInstall() {
+    const hold = this.extensionUpdateHold();
+    if (hold) return { ok: false, error: hold };
     try {
       console.log('[UpdateService] Installing the downloaded update on quit');
       this._autoUpdater.quitAndInstall(true, false);
@@ -507,6 +513,8 @@ class UpdateService {
   }
 
   async downloadUpdate() {
+    const hold = this.extensionUpdateHold();
+    if (hold) return { success: false, error: hold };
     if (!this._autoUpdater) return { success: false, error: 'electron-updater not available' };
     try {
       await this._autoUpdater.downloadUpdate();
@@ -541,6 +549,8 @@ class UpdateService {
   }
 
   async quitAndInstall() {
+    const hold = this.extensionUpdateHold();
+    if (hold) return { success: false, error: hold };
     if (!app.isPackaged) { 
       console.log('[UpdateService] Dev mode — install skipped'); 
       return { success: true, skipped: true, message: 'Install skipped in dev mode' };
@@ -556,6 +566,9 @@ class UpdateService {
     
     try {
       await this._runBeforeInstallBackup();
+
+      const updatedHold = this.extensionUpdateHold();
+      if (updatedHold) return { success: false, error: updatedHold };
 
       // Create update progress window
       const updateWindow = new BrowserWindow({
@@ -655,6 +668,13 @@ class UpdateService {
         
         // Now close main windows
         setTimeout(() => {
+          const hold = this.extensionUpdateHold();
+          if (hold) {
+            if (!updateWindow.isDestroyed()) updateWindow.close();
+            this._error = hold;
+            this._set('error');
+            return;
+          }
           // Prevent app from quitting when all windows are closed
           app.removeAllListeners('window-all-closed');
           console.log('[UpdateService] Removed window-all-closed listeners');
@@ -684,6 +704,11 @@ class UpdateService {
             
             // Small delay to ensure window is fully closed
             setTimeout(() => {
+              if (this.extensionUpdateHold()) {
+                app.relaunch();
+                app.exit(0);
+                return;
+              }
               console.log('[UpdateService] Calling quitAndInstall(isSilent=true, forceRunAfter=true)...');
 
               /*
@@ -722,6 +747,11 @@ class UpdateService {
       this._set('error');
       return { success: false, error: error.message };
     }
+  }
+
+  extensionUpdateHold() {
+    const root = process.env.POSNIC_EXTENSIONS_ROOT || path.join(app.getPath('userData'), 'extensions');
+    return require('./extension-update-policy').getExtensionUpdateHold(root);
   }
 
   // ── Auto-check scheduling (called once on startup) ────────────────────────

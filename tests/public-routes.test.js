@@ -32,7 +32,7 @@ const ROUTES_DIR = path.join(__dirname, '..', 'api', 'src', 'routes');
 function openRoutes(file) {
   const src = fs.readFileSync(path.join(ROUTES_DIR, file), 'utf8');
   const guardAt = (() => {
-    const m = src.match(/router\.use\(\s*(protect|auth\b)/);
+    const m = src.match(/router\.use\(\s*(protect|auth\b|authenticate\b)/);
     return m ? m.index : Infinity;
   })();
 

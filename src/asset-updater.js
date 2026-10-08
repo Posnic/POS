@@ -51,11 +51,12 @@ class AssetUpdater {
    * @param {string}   opts.baseline   assets shipped in the installer (the floor)
    * @param {function} [opts.log]
    */
-  constructor({ root, publicKey, baseline, log } = {}) {
+  constructor({ root, publicKey, baseline, log, updateGuard } = {}) {
     this.root = root;
     this.publicKey = publicKey || null;
     this.baseline = baseline || null;
     this.log = log || (() => {});
+    this.updateGuard = typeof updateGuard === 'function' ? updateGuard : () => null;
     this.versionsDir = path.join(root, 'versions');
     this.pointerFile = path.join(root, 'current');
     this.previousFile = path.join(root, 'previous');
@@ -235,6 +236,8 @@ class AssetUpdater {
    * gets. Whatever was live becomes "previous", which is what revert reads.
    */
   activate(version) {
+    const hold = this.updateGuard();
+    if (hold) return { ok: false, reason: 'extension-compatibility-review-required', detail: hold };
     const dir = path.join(this.versionsDir, version);
     if (!fs.existsSync(dir)) return { ok: false, reason: 'not-staged', version };
 
