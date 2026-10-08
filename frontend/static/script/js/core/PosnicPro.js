@@ -1502,7 +1502,7 @@ PosnicPro = {
                - the standing list stays readable inside the panel. */
             var seen = parseInt(PosnicPro.local.get('bell_lowstock_seen'), 10) || 0;
             var low = PosnicPro.bellFeed._lowStock || 0;
-            var n = PosnicPro.bellFeed._unseen + Math.max(0, low - seen);
+            var n = PosnicPro.bellFeed._unseen + Math.max(0, low - seen) + (PosnicPro.bellFeed._expiryCount || 0);
             el.style.display = n > 0 ? 'inline-block' : 'none';
             el.textContent = n > 99 ? '99+' : String(n);
         },
@@ -1614,6 +1614,7 @@ PosnicPro = {
         init: function () {
             var $dd = $('#dropdown-notification');
             if (!$dd.length) return;
+            if (PosnicPro.expiryReminders) PosnicPro.expiryReminders.init();
             $dd.on('shown.bs.dropdown', function () {
                 PosnicPro.bellFeed._unseen = 0;
                 PosnicPro.local.set('bell_lowstock_seen', String(PosnicPro.bellFeed._lowStock || 0));

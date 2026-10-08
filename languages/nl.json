@@ -4614,5 +4614,18 @@
   "lang_price_excluding_tax": "Prijs exclusief belasting",
   "lang_remove_all_items_from_the_current_sale_sav": "Verwijder alle artikelen uit de huidige verkoop. Opgeslagen winkelmandjes blijven beschikbaar.",
   "lang_stock_display_could_not_refresh_refresh_sa": "De voorraadweergave kon niet worden vernieuwd. Vernieuw het verkoopscherm voordat u de beschikbaarheid controleert.",
-  "lang_the_sale_changed_review_it_before_clearing": "De verkoop is gewijzigd. Controleer deze voordat u hem wist."
+  "lang_the_sale_changed_review_it_before_clearing": "De verkoop is gewijzigd. Controleer deze voordat u hem wist.",
+  "lang_expiry_load_failed": "Vervalherinneringen konden niet worden geladen. Probeer het opnieuw.",
+  "lang_expiry_reminders": "Vervalherinneringen",
+  "lang_expiry_reminders_help": "Herinneringen verschijnen bij de POS-meldingen voor producten met voorraad en een opgeslagen vervaldatum. Datums gebruiken de tijdzone van de winkel. Er worden geen e-mails of WhatsApp-berichten verzonden.",
+  "lang_enable_expiry_reminders": "Vervalherinneringen inschakelen",
+  "lang_expiry_days_ahead": "Dagen vóór vervaldatum",
+  "lang_products_due_for_expiry_review": "producten om op vervaldatum te controleren",
+  "lang_expiry_reminders_off": "Vervalherinneringen zijn uitgeschakeld.",
+  "lang_expires_today": "Vervalt vandaag",
+  "lang_days_remaining": "dagen resterend",
+  "lang_no_products_expiry_review": "Geen producten om te controleren.",
+  "lang_expiry_days_invalid": "Kies een herinneringsperiode tussen 0 en 365 dagen.",
+  "lang_expiry_preferences_saved": "Instellingen voor vervalherinneringen opgeslagen.",
+  "lang_expired": "Verlopen"
 }

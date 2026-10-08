@@ -19,6 +19,7 @@
                 -->
                 <div class="col-auto text-right">
                     <div class="widgetbar">
+                        <button type="button" class="btn btn-outline-primary" onclick="PosnicPro.expiryReminders.open();"><lang class="lang_expiry_reminders">Expiry reminders</lang></button>
                         <button type="button" class="btn btn-outline-secondary" onclick="$('#item_stock_preference_modal').modal('show'); PosnicPro.itemStockPreference.load('#item_stock_preference');"><lang class="lang_stock_preference">Stock preference</lang></button>
                         <a data-module="item" data-access="write" href="#/items" class="btn btn-primary-rgba"
                             onclick="PosnicPro.importTableFile('items'); return false;"
