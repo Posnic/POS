@@ -6,6 +6,7 @@ const { MongoClient, ObjectId } = require('mongodb');
 const {
   preparePayment,
   confirmCash,
+  confirmSplit,
   confirmExternalCard,
   cancelPayment,
   processDojoPayment,
@@ -95,26 +96,54 @@ async function fixture(adjusted = false) {
 test('Dojo capture commits one normal Card sale and adjusted stock is never deducted again', async () => {
   const f = await fixture(true);
   const prepared = await preparePayment(f.context, { ...f.input, method: 'card' });
-  let intent, creates = 0;
-  const provider = { environment: 'sandbox',
-    createIntent: async quote => { creates++; intent = { id: 'pi_test', reference: quote.reference,
-      captureMode: 'Auto', status: 'Created', amount: { value: quote.valueMinor, currencyCode: 'GBP' },
-      totalAmount: { value: quote.valueMinor, currencyCode: 'GBP' } }; return intent; },
-    createSession: async () => ({ id: 'ts_test', terminalId: 'tm_test', status: 'Initiated',
-      details: { sessionType: 'Sale', sale: { paymentIntentId: 'pi_test' } } }),
-    getSession: async () => ({ id: 'ts_test', terminalId: 'tm_test', status: intent.status === 'Captured' ? 'Captured' : 'Initiated',
-      details: { sessionType: 'Sale', sale: { paymentIntentId: 'pi_test' } } }),
+  let intent,
+    creates = 0;
+  const provider = {
+    environment: 'sandbox',
+    createIntent: async (quote) => {
+      creates++;
+      intent = {
+        id: 'pi_test',
+        reference: quote.reference,
+        captureMode: 'Auto',
+        status: 'Created',
+        amount: { value: quote.valueMinor, currencyCode: 'GBP' },
+        totalAmount: { value: quote.valueMinor, currencyCode: 'GBP' },
+      };
+      return intent;
+    },
+    createSession: async () => ({
+      id: 'ts_test',
+      terminalId: 'tm_test',
+      status: 'Initiated',
+      details: { sessionType: 'Sale', sale: { paymentIntentId: 'pi_test' } },
+    }),
+    getSession: async () => ({
+      id: 'ts_test',
+      terminalId: 'tm_test',
+      status: intent.status === 'Captured' ? 'Captured' : 'Initiated',
+      details: { sessionType: 'Sale', sale: { paymentIntentId: 'pi_test' } },
+    }),
     getIntent: async () => intent,
   };
   const options = { provider, configurationId: 'merchant-one', terminalId: 'tm_test' };
   const input = { paymentId: prepared.paymentId };
-  const concurrent = await Promise.allSettled(Array.from({ length: 8 }, () =>
-    processDojoPayment(f.context, input, options)));
-  assert.ok(concurrent.some(result => result.status === 'fulfilled' && result.value.status === 'pending'));
+  const concurrent = await Promise.allSettled(
+    Array.from({ length: 8 }, () => processDojoPayment(f.context, input, options))
+  );
+  assert.ok(
+    concurrent.some((result) => result.status === 'fulfilled' && result.value.status === 'pending')
+  );
   assert.equal(creates, 1);
-  await assert.rejects(confirmExternalCard(f.context, { ...input, terminalConfirmed: true }), /provider_payment_in_progress/);
+  await assert.rejects(
+    confirmExternalCard(f.context, { ...input, terminalConfirmed: true }),
+    /provider_payment_in_progress/
+  );
   await assert.rejects(cancelPayment(f.context, input), /provider_payment_in_progress/);
-  assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 0);
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    0
+  );
   intent.status = 'Captured';
   const paid = await processDojoPayment(f.context, input, options);
   assert.equal(paid.status, 'paid');
@@ -123,28 +152,60 @@ test('Dojo capture commits one normal Card sale and adjusted stock is never dedu
   assert.equal(await f.stock(), 0);
   await processDojoPayment(f.context, input, options);
   assert.equal(creates, 1);
-  assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license, payment_mode: 'Card' }), 1);
-  await assert.rejects(processDojoPayment(f.context, input, { ...options, configurationId: 'another-merchant' }), /provider_payment_conflict/);
+  assert.equal(
+    await db
+      .collection('sales')
+      .countDocuments({ license: f.context.scope.license, payment_mode: 'Card' }),
+    1
+  );
+  await assert.rejects(
+    processDojoPayment(f.context, input, { ...options, configurationId: 'another-merchant' }),
+    /provider_payment_conflict/
+  );
 });
 
 test('Dojo freezes the core sale before charging and later price changes cannot invalidate capture', async () => {
   const f = await fixture();
   const prepared = await preparePayment(f.context, { ...f.input, method: 'card' });
-  let intent, creates = 0;
-  const session = { id: 'ts_price', terminalId: 'tm_test', status: 'Captured',
-    details: { sessionType: 'Sale', sale: { paymentIntentId: 'pi_price' } } };
-  const options = { configurationId: 'merchant-one', terminalId: 'tm_test', provider: {
-    environment: 'sandbox', createIntent: async quote => {
-      creates++;
-      const frozen = await db.collection('extension_payments').findOne({ _id: prepared.paymentId });
-      assert.ok(frozen.providerCommitDocument);
-      assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 0);
-      intent = { id: 'pi_price', reference: quote.reference, captureMode: 'Auto', status: 'Captured',
-        amount: { value: quote.valueMinor, currencyCode: 'GBP' }, totalAmount: { value: quote.valueMinor, currencyCode: 'GBP' } };
-      await db.collection('items').updateOne({ _id: f.item._id }, { $set: { selling_price: 2 } });
-      return intent;
-    }, createSession: async () => session, getSession: async () => session, getIntent: async () => intent,
-  } };
+  let intent,
+    creates = 0;
+  const session = {
+    id: 'ts_price',
+    terminalId: 'tm_test',
+    status: 'Captured',
+    details: { sessionType: 'Sale', sale: { paymentIntentId: 'pi_price' } },
+  };
+  const options = {
+    configurationId: 'merchant-one',
+    terminalId: 'tm_test',
+    provider: {
+      environment: 'sandbox',
+      createIntent: async (quote) => {
+        creates++;
+        const frozen = await db
+          .collection('extension_payments')
+          .findOne({ _id: prepared.paymentId });
+        assert.ok(frozen.providerCommitDocument);
+        assert.equal(
+          await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+          0
+        );
+        intent = {
+          id: 'pi_price',
+          reference: quote.reference,
+          captureMode: 'Auto',
+          status: 'Captured',
+          amount: { value: quote.valueMinor, currencyCode: 'GBP' },
+          totalAmount: { value: quote.valueMinor, currencyCode: 'GBP' },
+        };
+        await db.collection('items').updateOne({ _id: f.item._id }, { $set: { selling_price: 2 } });
+        return intent;
+      },
+      createSession: async () => session,
+      getSession: async () => session,
+      getIntent: async () => intent,
+    },
+  };
   const input = { paymentId: prepared.paymentId };
   const paid = await processDojoPayment(f.context, input, options);
   assert.equal(paid.status, 'paid');
@@ -152,7 +213,10 @@ test('Dojo freezes the core sale before charging and later price changes cannot 
   await assert.rejects(cancelPayment(f.context, input), /provider_payment_in_progress/);
   assert.equal(creates, 1);
   assert.equal(await f.stock(), 2);
-  assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 1);
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    1
+  );
   const sale = await db.collection('sales').findOne({ _id: new ObjectId(paid.saleId) });
   assert.equal(Number(sale.sales_total), 1);
 });
@@ -162,31 +226,53 @@ test('price changes before Dojo freeze cause no charge and leave cancellation av
   const prepared = await preparePayment(f.context, { ...f.input, method: 'card' });
   await db.collection('items').updateOne({ _id: f.item._id }, { $set: { selling_price: 2 } });
   let creates = 0;
-  const options = { configurationId: 'merchant-one', terminalId: 'tm_test', provider: {
-    environment: 'sandbox', createIntent: async () => { creates++; throw Error('must not charge'); },
-  } };
+  const options = {
+    configurationId: 'merchant-one',
+    terminalId: 'tm_test',
+    provider: {
+      environment: 'sandbox',
+      createIntent: async () => {
+        creates++;
+        throw Error('must not charge');
+      },
+    },
+  };
   const input = { paymentId: prepared.paymentId };
   await assert.rejects(processDojoPayment(f.context, input, options), /payment_review_required/);
   assert.equal(creates, 0);
   await cancelPayment({ ...f.context, sequence: 3, operationId: 'cancel-price-change' }, input);
   assert.equal(await f.stock(), 3);
-  assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 0);
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    0
+  );
 });
 
 test('Dojo lost creation response retains payment and prevents manual cancellation or repeat charge', async () => {
   const f = await fixture();
   const prepared = await preparePayment(f.context, { ...f.input, method: 'card' });
   let creates = 0;
-  const options = { configurationId: 'merchant-one', terminalId: 'tm_test', provider: {
-    environment: 'sandbox', createIntent: async () => { creates++; throw Error('response lost'); },
-  } };
+  const options = {
+    configurationId: 'merchant-one',
+    terminalId: 'tm_test',
+    provider: {
+      environment: 'sandbox',
+      createIntent: async () => {
+        creates++;
+        throw Error('response lost');
+      },
+    },
+  };
   const input = { paymentId: prepared.paymentId };
   await assert.rejects(processDojoPayment(f.context, input, options), /response lost/);
   await assert.rejects(processDojoPayment(f.context, input, options), /reconciliation_required/);
   await assert.rejects(cancelPayment(f.context, input), /provider_payment_in_progress/);
   assert.equal(creates, 1);
   assert.equal(await f.stock(), 2);
-  assert.equal(await db.collection('sales').countDocuments({ license: f.context.scope.license }), 0);
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    0
+  );
 });
 
 test('cash preparation reserves stock, uses core quote and creates no sale before confirmation', async () => {
@@ -565,12 +651,119 @@ test('fractional quantity and exclusive tax use the same core payable for quote 
   );
 });
 
-
 test('extension catalogue preserves exclusive VAT precision for held quantities', async () => {
- const f=await fixture();
- await db.collection('items').updateOne({_id:f.item._id},{$set:{selling_price:1.08,tax:20,tax_type:'exclusive'}});
- const {prepareContext}=require('../src/services/extension-catalog');
- const context=await prepareContext({db,scope:f.context.scope,state:{products:[]},command:{type:'basket.create',lines:[{productId:String(f.item._id),quantityMilli:2000,sellingPrice:1.08}]},resources:['catalog.products']});
- assert.equal(context.products[0].priceMinor,130);
- assert.equal(context.products[0].priceSubminor,129600000);
+  const f = await fixture();
+  await db
+    .collection('items')
+    .updateOne(
+      { _id: f.item._id },
+      { $set: { selling_price: 1.08, tax: 20, tax_type: 'exclusive' } }
+    );
+  const { prepareContext } = require('../src/services/extension-catalog');
+  const context = await prepareContext({
+    db,
+    scope: f.context.scope,
+    state: { products: [] },
+    command: {
+      type: 'basket.create',
+      lines: [{ productId: String(f.item._id), quantityMilli: 2000, sellingPrice: 1.08 }],
+    },
+    resources: ['catalog.products'],
+  });
+  assert.equal(context.products[0].priceMinor, 130);
+  assert.equal(context.products[0].priceSubminor, 129600000);
+});
+
+for (const adjusted of [false, true])
+  test(`split cash/card records one sale with one stock deduction (adjusted=${adjusted})`, async () => {
+    const f = await fixture(adjusted);
+    const p = await preparePayment(f.context, { ...f.input, method: 'split' });
+    const stock = await f.stock();
+    const input = {
+      paymentId: p.paymentId,
+      cashMinor: 40,
+      cardMinor: 60,
+      tenderMinor: 100,
+      terminalConfirmed: true,
+      reference: 'SPLIT-TEST',
+    };
+    await assert.rejects(confirmSplit(f.context, { ...input, terminalConfirmed: false }), {
+      code: 'extension_split_confirmation_invalid',
+    });
+    await assert.rejects(confirmSplit(f.context, { ...input, cardMinor: 50 }), {
+      code: 'extension_split_total_invalid',
+    });
+    await assert.rejects(confirmSplit(f.context, { ...input, tenderMinor: 20 }), {
+      code: 'extension_split_confirmation_invalid',
+    });
+    const paid = await confirmSplit(f.context, input);
+    assert.equal(paid.status, 'paid');
+    assert.equal(paid.changeMinor, 60);
+    await confirmSplit(f.context, input);
+    assert.equal(await f.stock(), stock);
+    const sales = await db.collection('sales').find({ license: f.context.scope.license }).toArray();
+    assert.equal(sales.length, 1);
+    assert.deepEqual(sales[0].multi_payment, { Cash: 0.4, Card: 0.6 });
+    const { dailySales } = require('../src/services/extension-sales-history');
+    const report = await dailySales({
+      db,
+      scope: f.context.scope,
+      descriptor: { id: f.context.extensionId },
+      day: new Date(paid.paidAt).toISOString().slice(0, 10),
+    });
+    assert.equal(report.totals[0].cashMinor, 40);
+    assert.equal(report.totals[0].cardMinor, 60);
+  });
+test('cancelling an unpaid split preparation returns reserved stock', async () => {
+  const f = await fixture();
+  const p = await preparePayment(f.context, { ...f.input, method: 'split' });
+  await cancelPayment(
+    { ...f.context, operationId: 'split-cancel-001', sequence: 3 },
+    { paymentId: p.paymentId }
+  );
+  assert.equal(await f.stock(), 3);
+  assert.equal(
+    await db.collection('sales').countDocuments({ license: f.context.scope.license }),
+    0
+  );
+});
+
+test('an interrupted split commit replays the same cash/card ledger exactly once', async () => {
+  const f = await fixture();
+  const p = await preparePayment(f.context, { ...f.input, method: 'split' });
+  const input = {
+    paymentId: p.paymentId,
+    cashMinor: 30,
+    cardMinor: 70,
+    tenderMinor: 50,
+    terminalConfirmed: true,
+  };
+  await assert.rejects(
+    confirmSplit(f.context, input, {
+      saveSale: async (payload, id, mode, ctx, options) =>
+        require('../src/services/sale.service').processSale(payload, id, mode, ctx, {
+          ...options,
+          beforeStockCommit: async (...args) => {
+            await options.beforeStockCommit(...args);
+            throw Error('interrupted');
+          },
+        }),
+    }),
+    { code: 'extension_payment_sale_unresolved' }
+  );
+  await assert.rejects(confirmSplit(f.context, { ...input, cashMinor: 40, cardMinor: 60 }), {
+    code: 'extension_payment_confirmation_conflict',
+  });
+  await assert.rejects(
+    cancelPayment(
+      { ...f.context, operationId: 'cancel-split-uncertain', sequence: 3 },
+      { paymentId: p.paymentId }
+    ),
+    { code: 'extension_payment_cannot_cancel' }
+  );
+  assert.equal((await confirmSplit(f.context, input)).status, 'paid');
+  const sales = await db.collection('sales').find({ license: f.context.scope.license }).toArray();
+  assert.equal(sales.length, 1);
+  assert.deepEqual(sales[0].multi_payment, { Cash: 0.3, Card: 0.7 });
+  assert.equal(await f.stock(), 2);
 });

@@ -6574,7 +6574,7 @@ PosnicPro.sales.lineEdit = {
                 + '<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button></div>'
                 + '<div class="modal-body pb-2">'
                 + '<div class="form-row">'
-                + '<div class="form-group col-6"><label class="le-label"><lang class="lang_price_title">Price</lang></label><input type="number" min="0" step="any" class="form-control text-right" id="le_price"></div>'
+                + '<div class="form-group col-6"><label class="le-label" id="le_price_label">Price</label><input type="number" min="0" step="any" class="form-control text-right" id="le_price"></div>'
                 + '<div class="form-group col-6"><label class="le-label"><lang class="lang_quantity">Quantity</lang></label><input type="number" min="0" step="any" class="form-control text-right" id="le_qty"></div>'
                 + '<div class="form-group col-6"><label class="le-label"><lang class="lang_discount_title">Discount</lang></label>'
                 + '<div class="input-group"><div class="input-group-prepend"><button type="button" class="btn btn-outline-secondary" id="le_disc_mode" title="Tap to switch amount / percent" data-t-title="lang_tap_to_switch_amount_percent">%</button></div>'
@@ -6598,7 +6598,13 @@ PosnicPro.sales.lineEdit = {
             });
         }
         $('#sale_line_edit_name').text($('#addSalesLineItemName_' + id).data('id') || 'Edit line');
-        $('#le_price').val(parseFloat($('#addSalesLineItemPrice_' + id).text()) || 0);
+        var inclusive = $('#addSalesLineItemTaxType_' + id).text() !== 'Exc';
+        var grossEntry = inclusive || !!(PosnicPro.saleExtensions && PosnicPro.saleExtensions.policy('inclusivePriceEntry'));
+        PosnicPro.sales.lineEdit._grossEntry = grossEntry;
+        $('#le_price_label').text(grossEntry ? 'Price including tax' : 'Price excluding tax');
+        var entryPrice = parseFloat($('#addSalesLineItemSellingPrice_' + id).text()) || 0;
+        if (grossEntry && !inclusive) entryPrice *= 1 + (parseFloat($('#addSalesLineItemTax_' + id).text()) || 0) / 100;
+        $('#le_price').val(Number(entryPrice.toFixed(2)));
         $('#le_qty').val(parseFloat($('#touchsale_item_qty' + id).val()) || 1);
         var isPct = $('#discountSign' + id).text() === '%';
         $('#le_disc').val(parseFloat($('#addSalesLineItemDiscount_' + id).text()) || 0);
@@ -6623,15 +6629,19 @@ PosnicPro.sales.lineEdit = {
         var nd = parseFloat($('#le_disc').val());
         var ntx = parseFloat($('#le_tax').val());
         var pct = $('#le_disc_mode').data('pct') === true;
-        var curPrice = parseFloat($('#addSalesLineItemPrice_' + id).text()) || 0;
+        var curPrice = parseFloat($('#addSalesLineItemSellingPrice_' + id).text()) || 0;
         var curTax = parseFloat($('#addSalesLineItemTax_' + id).text()) || 0;
         var curDisc = parseFloat($('#addSalesLineItemDiscount_' + id).text()) || 0;
         var curPct = $('#discountSign' + id).text() === '%';
         var TaxValue = curTax;
+        if (PosnicPro.sales.lineEdit._grossEntry && taxType === 'Exc' && isFinite(np)) {
+            var entryTax = $('#le_tax_group').is(':visible') && isFinite(ntx) && ntx >= 0 && ntx <= 100 ? ntx : curTax;
+            np = Number((np / (1 + entryTax / 100)).toFixed(8));
+        }
         if (isFinite(np) && np >= 0 && np !== curPrice) {
-            $('#saleInlineItemPrice_' + id).text(np.toFixed(2));
-            $('#addSalesLineItemPrice_' + id).text(np.toFixed(2));
-            $('#addSalesLineItemSellingPrice_' + id).text(np.toFixed(2));
+            $('#saleInlineItemPrice_' + id).text(String(np));
+            $('#addSalesLineItemPrice_' + id).text(String(np));
+            $('#addSalesLineItemSellingPrice_' + id).text(String(np));
             patch.selling_price = np;
         }
         if ($('#le_tax_group').is(':visible') && isFinite(ntx) && ntx >= 0 && ntx <= 100 && ntx !== curTax) {
@@ -6639,8 +6649,9 @@ PosnicPro.sales.lineEdit = {
             TaxValue = ntx;
             patch.tax = ntx;
         }
-        var priceNow = parseFloat($('#addSalesLineItemPrice_' + id).text()) || 0;
+        var priceNow = parseFloat($('#addSalesLineItemSellingPrice_' + id).text()) || 0;
         var mrp = taxType === 'Exc' ? priceNow : priceNow / (1 + TaxValue / 100);
+        $('#addSalesLineItemPrice_' + id).text(mrp.toFixed(2));
         $('#addSalesLineItemSubTotal_' + id).text(mrp.toFixed(2));
         if (isFinite(nd) && nd >= 0 && (nd !== curDisc || pct !== curPct)) {
             if (pct) {

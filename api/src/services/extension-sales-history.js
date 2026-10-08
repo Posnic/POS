@@ -136,6 +136,8 @@ async function dailySales({ db, scope, descriptor, day, endDay = day }) {
               method: '$method',
             },
             valueMinor: { $sum: '$valueMinor' },
+            cashMinor: { $sum: '$confirmation.cashMinor' },
+            cardMinor: { $sum: '$confirmation.cardMinor' },
           },
         },
       ],
@@ -152,8 +154,18 @@ async function dailySales({ db, scope, descriptor, day, endDay = day }) {
         cashMinor: 0,
         cardMinor: 0,
       });
-    if (row._id.method === 'cash') groups.get(key).cashMinor = row.valueMinor;
-    if (row._id.method === 'card') groups.get(key).cardMinor = row.valueMinor;
+    if (row._id.method === 'split') {
+      if (
+        !Number.isSafeInteger(row.cashMinor) ||
+        !Number.isSafeInteger(row.cardMinor) ||
+        row.cashMinor + row.cardMinor !== row.valueMinor
+      )
+        fail('extension_report_total_invalid');
+      groups.get(key).cashMinor += row.cashMinor;
+      groups.get(key).cardMinor += row.cardMinor;
+    }
+    if (row._id.method === 'cash') groups.get(key).cashMinor += row.valueMinor;
+    if (row._id.method === 'card') groups.get(key).cardMinor += row.valueMinor;
   }
   return { day, endDay, timeZone, totals: [...groups.values()] };
 }

@@ -68,8 +68,16 @@ function salesWorkspace(value, commands = {}) {
     if (
       !object(value.policies) ||
       Object.keys(value.policies).some(
-        (k) => !['useDefaultOpenPrice', 'compactCheckout', 'touchCheckout'].includes(k)
+        (k) =>
+          ![
+            'useDefaultOpenPrice',
+            'compactCheckout',
+            'touchCheckout',
+            'inclusivePriceEntry',
+          ].includes(k)
       ) ||
+      (value.policies.inclusivePriceEntry !== undefined &&
+        typeof value.policies.inclusivePriceEntry !== 'boolean') ||
       (value.policies.touchCheckout !== undefined &&
         typeof value.policies.touchCheckout !== 'boolean') ||
       (value.policies.compactCheckout !== undefined &&
@@ -79,6 +87,7 @@ function salesWorkspace(value, commands = {}) {
     )
       fail();
     policies.compactCheckout = value.policies.compactCheckout === true;
+    policies.inclusivePriceEntry = value.policies.inclusivePriceEntry === true;
     policies.touchCheckout = value.policies.touchCheckout === true;
     policies.useDefaultOpenPrice = value.policies.useDefaultOpenPrice === true;
   }
