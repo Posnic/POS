@@ -36,7 +36,9 @@
   #sales_new.touch-extension #sales_new_items_table .sale-line-act{min-width:44px;min-height:48px;display:inline-flex;align-items:center;justify-content:center}
   #sales_new.touch-extension #sales_new_items_table td:last-of-type a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:48px}
   #sales_new.touch-extension #sales_new_productList,#sales_new.touch-extension #sales_new_categoryList{max-height:calc(var(--sale-pane-height,70vh) - 100px)!important;overflow:auto}
-  .sale-extension-back{min-height:48px;min-width:150px;font-size:16px}
+  .sale-extension-back{width:48px;height:48px;min-width:48px;padding:0!important;border:1px solid #dce4ed!important;border-radius:8px;background:#f5f8fc!important;color:#17548d!important;font-size:28px;line-height:1;display:flex;align-items:center;justify-content:center}
+  .sale-extension-back:hover{background:#e9f2ff!important;border-color:#8eb9e6!important}
+  .sale-extension-back:focus-visible{outline:3px solid #066bca;outline-offset:2px}
   @media(min-width:768px) and (max-height:800px){
    #sales_new.touch-extension #sales_new_items_table th{padding:6px 8px}
    #sales_new.touch-extension #sales_new_items_table td{padding:4px 8px}
@@ -104,7 +106,7 @@
       if (compact) { dialog.dataset.presentation='compact'; dialog.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(620px,94vw);max-height:94vh;z-index:10550;background:white;color:#172b4d;box-shadow:0 0 0 100vmax #0008;border-radius:10px;padding:16px;overflow:auto'; }
       notice('');
       var header=document.createElement('div');header.style.cssText='display:flex;justify-content:flex-end;margin-bottom:8px';
-      var back=document.createElement('button');back.type='button';back.className='btn btn-secondary sale-extension-back';back.textContent='Close ×';back.setAttribute('aria-label','Close and return to sale');
+      var back=document.createElement('button');back.type='button';back.className='btn sale-extension-back';back.textContent='×';back.setAttribute('aria-label','Close and return to sale');back.title='Close and return to sale. Any pending payment stays saved.';
       // Closing leaves any persisted extension transaction available in its own workflow.
       back.onclick=function(){close();};
       var content=document.createElement('div');content.textContent='Loading sale actions…';header.append(back);dialog.append(header,content);document.body.append(dialog);
