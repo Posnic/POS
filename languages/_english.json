@@ -1560,6 +1560,7 @@
   "lang_expiry_reminders_help": "Reminders appear in the POS bell for products with stock and a saved expiry date. Dates use the shop timezone. No email or WhatsApp messages are sent.",
   "lang_expiry_report": "Expiring products report",
   "lang_expiry_report_help": "Products with stock and a saved expiry date. Available even when reminders are off.",
+  "lang_expiry_report_short": "Expiry report",
   "lang_expiry_title": "Items Expiry Date",
   "lang_export_csv": "Export CSV",
   "lang_export_excel": "Export Excel",
