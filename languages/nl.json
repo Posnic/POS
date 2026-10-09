@@ -1467,6 +1467,7 @@
   "lang_lowest_amount_first": "Laagste bedrag eerst",
   "lang_lowest_bill_first": "Laagste bon eerst",
   "lang_lowstock_notify": "Lage voorraad",
+  "lang_low_stock_list": "Lagevoorraadlijst",
   "lang_lowstockdetail_title": "Lage voorraad",
   "lang_lowstocknotify_title": "Meldgrens lage voorraad&nbsp;",
   "lang_loyalty": "Loyaliteit :",
@@ -4628,7 +4629,7 @@
   "lang_expiry_days_invalid": "Kies een herinneringsperiode tussen 0 en 365 dagen.",
   "lang_expiry_preferences_saved": "Instellingen voor vervalherinneringen opgeslagen.",
   "lang_expired": "Verlopen",
-  "lang_expiry_report": "Rapport vervallende producten",
+  "lang_expiry_report": "Vervallijst",
   "lang_item_settings": "Artikelinstellingen",
   "lang_expiry_report_help": "Producten met voorraad en een opgeslagen vervaldatum. Ook beschikbaar als herinneringen uitstaan.",
   "lang_days_ahead": "Dagen vooruit",
@@ -4647,5 +4648,5 @@
   "lang_push_failed": "Apparaatmeldingen konden niet worden ingeschakeld of verzonden. Controleer de browsermachtigingen en uw verbinding en probeer opnieuw. De POS-meldingen blijven werken.",
   "lang_item_settings_admin": "Een beheerder kan artikelinstellingen wijzigen.",
   "lang_item_settings_saved": "Artikelinstellingen opgeslagen.",
-  "lang_expiry_report_short": "Vervalrapport"
+  "lang_expiry_report_short": "Vervallijst"
 }

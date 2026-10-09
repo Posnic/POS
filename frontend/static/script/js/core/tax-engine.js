@@ -33,6 +33,12 @@
         var discountAmount = Number(line.discountAmount) || 0;
         var discountPercentage = Number(line.discountPercentage) || 0;
         var gstAmount = Number(line.gstAmount) || 0;
+        // Retail gross-unit pricing is opt-in; normal exclusive pricing is unchanged.
+        if (line.roundGrossUnit === true && taxType === 'exclusive' && itemTax > 0) {
+            var factor = Number(line.currencyFactor) || 100;
+            sellingPrice = Math.round((sellingPrice * (1 + itemTax / 100) + Number.EPSILON) * factor) / factor / (1 + itemTax / 100);
+            itemAmount = sellingPrice * itemQuantity;
+        }
 
         var total = 0;
         var tax = 0;

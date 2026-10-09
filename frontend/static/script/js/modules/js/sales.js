@@ -1333,7 +1333,7 @@
                 '<div class="input-group-prepend">' +
                 '<span class="btn btn-secondary-rgba button_qty_check" id = ' + id + '  onclick="PosnicPro.sales.quantity.qtyIncreaseDecrease(this.id,0,\'' + params.track_inventory + '\',\'' + params.negative_stock + '\');" style="width:45px;"><i class="feather icon-minus custom_minus" style="margin-left:-7px;"></i></span>' +
                 '</div>' +
-                '<input type="text" class="form-control cart-qty font_size14 rec_sale_inp_val" minlength="1" maxlength="7" size="4" min="0" max="100000" inputmode="decimal" name="addSalesLineItemQty" id="touchsale_item_qty' + id + '" value=' + item_quantity + ' onkeyup="PosnicPro.sales.quantity.textOnChange(\'' + id + '\',\'' + params.track_inventory + '\',\'' + params.negative_stock + '\');" oninput="this.value = PosnicPro.minmax(this.value, 0, 100000)" onfocusout="PosnicPro.sales.quantity.normalizeInput(\'' + id + '\');" onkeypress="PosnicPro.validate(event)" style="text-align:center;background-color:#fff;width:140px;text-align: center; max-width:120px !important;">' +
+                '<input type="text" class="form-control cart-qty font_size14 rec_sale_inp_val" minlength="1" maxlength="7" size="4" min="0" max="100000" inputmode="decimal" name="addSalesLineItemQty" id="touchsale_item_qty' + id + '" value=' + item_quantity + ' oninput="this.value = PosnicPro.minmax(this.value, 0, 100000); PosnicPro.sales.quantity.textOnChange(\'' + id + '\',\'' + params.track_inventory + '\',\'' + params.negative_stock + '\');" onfocusout="PosnicPro.sales.quantity.normalizeInput(\'' + id + '\');" onkeypress="PosnicPro.validate(event)" style="text-align:center;background-color:#fff;width:140px;text-align: center; max-width:120px !important;">' +
                 '<div class="input-group-append">' +
                 '<span class="btn btn-success-rgba button_qty_check" id = ' + id + '  onclick="PosnicPro.sales.quantity.qtyIncreaseDecrease(this.id,1,\'' + params.track_inventory + '\',\'' + params.negative_stock + '\');" style="width:45px;"><i class="feather icon-plus custom_plus" style="margin-left:-7px;"></i></span>' +
                 '</div>' +
@@ -5440,7 +5440,7 @@ PosnicPro.sales.quantity = {
         $('#addSalesLineTotal_' + id).text(updateSalesLineTotal);
         $('#addSalesGstTax_' + id).text(taxGst.toFixed(2));
         $('#addSalesDiscount_' + id).text(PriceDiscount.toFixed(2));
-        var addLineItemQty = '<input type="text" minlength="1" maxlength="7" size="4" min="0" max="10000" class="form-control cart-qty font_size14" inputmode="decimal" name="addSalesLineItemQty" id="touchsale_item_qty' + id + '" value=' + ItemQty + ' onkeyup="PosnicPro.sales.quantity.textOnChange(\'' + id + '\',\'' + track_inventory + '\',\'' + negative_stock + '\');" oninput="this.value = PosnicPro.minmax(this.value, 0, 100000)" onfocusout="PosnicPro.sales.quantity.normalizeInput(\'' + id + '\');" onkeypress="PosnicPro.validate(event)" style="width: 140px;text-align: center; max-width:120px !important;">';
+        var addLineItemQty = '<input type="text" minlength="1" maxlength="7" size="4" min="0" max="10000" class="form-control cart-qty font_size14" inputmode="decimal" name="addSalesLineItemQty" id="touchsale_item_qty' + id + '" value=' + ItemQty + ' oninput="this.value = PosnicPro.minmax(this.value, 0, 100000); PosnicPro.sales.quantity.textOnChange(\'' + id + '\',\'' + track_inventory + '\',\'' + negative_stock + '\');" onfocusout="PosnicPro.sales.quantity.normalizeInput(\'' + id + '\');" onkeypress="PosnicPro.validate(event)" style="width: 140px;text-align: center; max-width:120px !important;">';
         $('#touchsale_item_qty' + id).replaceWith(addLineItemQty);
         var itemRecord = [];
         itemRecord.push({ name: $('#addSalesLineItemName_' + id).text(), qty: ItemQty, price: $('#addSalesLineItemPrice_' + id).text(), discount: $('#addSalesLineItemDiscount_' + id).text(), tax: $('#addSalesLineItemTax_' + id).text(), total: updateSalesLineTotal });
@@ -6929,6 +6929,7 @@ PosnicPro.sales.calculation = {
                 var selling = Number($('#addSalesLineItemSellingPrice_' + itemid).text());
                 var quantity = Number($('#touchsale_item_qty' + itemid).val());
                 canonicalLine = PosnicTaxEngine.computeLineTax({
+                    roundGrossUnit: !!(PosnicPro.saleExtensions && PosnicPro.saleExtensions.policy('inclusivePriceEntry')),
                     itemAmount: selling * quantity, sellingPrice: selling, itemQuantity: quantity,
                     itemTax: parseFloat($('#addSalesLineItemTax_' + itemid).text()),
                     taxType: $('#addSalesLineItemTaxType_' + itemid).text() === 'Exc' ? 'exclusive' : 'inclusive',

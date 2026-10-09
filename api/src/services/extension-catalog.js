@@ -4,7 +4,14 @@ const pricing = require('./pricing-authority');
 const Money = require('../utils/currency');
 const { stockFact } = require('./business-stock-facts');
 const { MetricError } = require('./business-metrics');
-function productSnapshot(product, branch, scope, submitted, allowCounterPriceOverride = false) {
+function productSnapshot(
+  product,
+  branch,
+  scope,
+  submitted,
+  allowCounterPriceOverride = false,
+  roundGrossUnit = false
+) {
   const stock = stockFact(product, {
     id: String(scope.branchId),
     license: String(scope.license),
@@ -15,6 +22,7 @@ function productSnapshot(product, branch, scope, submitted, allowCounterPriceOve
     product,
     branch,
     allowCounterPriceOverride,
+    roundGrossUnit,
     submitted:
       submitted === undefined && product.open_price === true ? product.selling_price : submitted,
   });
@@ -48,6 +56,7 @@ async function prepareContext({
   resources = [],
   selection,
   allowCounterPriceOverride = false,
+  roundGrossUnit = false,
 }) {
   if (!resources.includes('catalog.products')) return {};
   // A signed worker may name only the products required by this command.
@@ -106,7 +115,8 @@ async function prepareContext({
           Number(product.selling_price || 0) <= 0
           ? inputs.get(String(product._id))
           : undefined,
-        allowCounterPriceOverride
+        allowCounterPriceOverride,
+        roundGrossUnit
       )
     )
     .filter(Boolean);
