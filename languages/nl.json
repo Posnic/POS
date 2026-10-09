@@ -4672,5 +4672,22 @@
   "lang_saved_count_worksheets": "Opgeslagen telwerkbladen",
   "lang_start_recount_to_review_and_apply_actual_s": "Start een hertelling om de werkelijke voorraad te controleren en toe te passen. Voltooide aanpassingen staan in het voorraadlogboek; opgeslagen conceptwerkbladen staan hieronder.",
   "lang_stock_counts_recount": "Voorraadtellingen / hertellen",
-  "lang_stock_tools": "Voorraadacties"
+  "lang_stock_tools": "Voorraadacties",
+  "lang_all_sources": "Alle bronnen",
+  "lang_captain_tableside": "Kapitein/aan tafel",
+  "lang_delivery_partners": "Leveringspartners",
+  "lang_device_name_or_id": "Naam of ID van het apparaat",
+  "lang_kiosk": "Kiosk",
+  "lang_last_updated": "Laatst bijgewerkt",
+  "lang_order_created": "Bestelling aangemaakt",
+  "lang_order_created_newest": "Bestelling aangemaakt: nieuwste eerst",
+  "lang_pos_counter": "POS/toonbank",
+  "lang_sale_date_time": "Datum en tijd van de verkoop",
+  "lang_sale_time_newest": "Verkoopdatum en -tijd: nieuwste eerst",
+  "lang_sale_time_oldest": "Verkoopdatum en -tijd: oudste eerst",
+  "lang_search_recorded_staff_and_device_details_o": "Zoek opgenomen personeels- en apparaatgegevens. Oudere facturen zonder deze gegevens komen niet overeen.",
+  "lang_staff_device_source_filters": "Filters voor personeel, apparaten en bronnen",
+  "lang_staff_name_or_email": "Naam of e-mailadres van het personeel",
+  "lang_updated_newest": "Laatst bijgewerkt: nieuwste eerst",
+  "lang_webshop": "Webshop"
 }
