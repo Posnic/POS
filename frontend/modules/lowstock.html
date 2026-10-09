@@ -69,7 +69,7 @@
    <div class="table-responsive" style="max-height:45vh; overflow:auto;"><table class="table"><thead><tr><th><lang class="lang_newitem_title">Item</lang></th><th><lang class="lang_instock_title">In stock</lang></th><th><lang class="lang_quantity_to_add">Quantity to add</lang></th><th></th></tr></thead><tbody id="restock_rows"></tbody></table></div>
    <div id="restock_finish" style="display:none;" class="border-top pt-3">
     <div class="form-group mb-3"><label for="restock_supplier"><lang class="lang_purchase_group">Purchase group</lang></label><select id="restock_supplier" class="form-control"></select></div>
-    <p class="text-muted"><lang class="lang_direct_addition_includes_the_whole_basket">Direct addition includes the whole basket. Purchases are prepared one supplier at a time; other items stay in the basket.</lang></p>
+    <p class="text-muted"><lang class="lang_direct_addition_includes_the_whole_basket">Direct addition includes the whole basket. Purchase includes this supplier’s items and items without a supplier; other supplier groups stay in the basket.</lang></p>
     <div class="row"><div class="col-sm-6 mb-2"><button type="button" class="btn btn-primary p-3 w-100" data-module="item" data-access="write" onclick="PosnicPro.lowstockitems.restockDirect();"><lang class="lang_direct_stock_addition">Direct stock addition</lang></button></div><div class="col-sm-6 mb-2"><button type="button" class="btn btn-outline-primary p-3 w-100" data-module="receiving" data-access="write" onclick="PosnicPro.lowstockitems.restockPurchase();"><lang class="lang_continue_via_purchase">Continue via purchase</lang></button></div></div>
    </div>
   </div>

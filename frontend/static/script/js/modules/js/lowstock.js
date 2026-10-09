@@ -297,7 +297,30 @@ PosnicPro.lowstockitems = {
         Object.keys(groups).forEach(function (id) { $('<option>').val(id).text(groups[id]).appendTo(select); });
         $('#restock_status').empty().removeClass();
         $('#restock_finish').show();
-        select.select2({ width: '100%', minimumResultsForSearch: 0, dropdownParent: $('#restock_modal') });
+        var options = { width: '100%', minimumResultsForSearch: 0, dropdownParent: $('#restock_modal') };
+        // Unassigned items can be purchased from any supplier, not only a group
+        // already represented in this basket. Search the branch supplier list.
+        if (Object.prototype.hasOwnProperty.call(groups, '')) {
+            options.ajax = {
+                delay: 200,
+                transport: function (params, success, failure) {
+                    var term = String(params.data.term || '');
+                    PosnicPro.get({ url: 'suppliers/getSuppliersAjaxList', data: 'query=' + encodeURIComponent(term) + '&branch=' + encodeURIComponent(self._restockBranch) }, function (response) {
+                        var results = [], seen = {};
+                        Object.keys(groups).forEach(function (id) {
+                            if (groups[id].toLowerCase().indexOf(term.toLowerCase()) !== -1) {
+                                results.push({ id: id, text: groups[id] }); seen[id] = true;
+                            }
+                        });
+                        ((response && response.suggestions) || []).forEach(function (row) {
+                            if (!seen[row.id]) { results.push({ id: String(row.id), text: row.name }); seen[row.id] = true; }
+                        });
+                        success({ results: results });
+                    }, failure);
+                }
+            };
+        }
+        select.select2(options);
         $('#restock_finish_button').hide();
     },
     restockDirect: function () {
@@ -328,7 +351,7 @@ PosnicPro.lowstockitems = {
             self.restockMessage(PosnicPro.i18n.t('lang_restock_purchase_in_progress', 'An unfinished purchase already has items. Save or clear it in Purchases before transferring this basket. Your restock selection is kept.')); return;
         }
         var supplierId = String($('#restock_supplier').val() || '');
-        var ids = Object.keys(self._restock).filter(function (id) { return String(self._restock[id].supplier_id || '') === supplierId; });
+        var ids = Object.keys(self._restock).filter(function (id) { return !self._restock[id].supplier_id || String(self._restock[id].supplier_id) === supplierId; });
         if (!ids.length) return;
         if (self._restockBusy) return;
         var branch = self._restockBranch;
@@ -364,7 +387,8 @@ PosnicPro.lowstockitems = {
         var ids = draft.ids;
         PosnicPro.receivings.clearReceivingForm();
         $('#receiving_add_supplier_id').val(draft.supplierId);
-        $('#receiving_add_supplier_name').val(self._restock[ids[0]].supplier_name || '');
+        var supplierName = (draft.supplier || {}).name || self._restock[ids[0]].supplier_name || '';
+        $('#receiving_add_supplier_name').val(supplierName);
         ['address', 'phone', 'email', 'state', 'gst_type', 'gst_number'].forEach(function (field) {
             $('#receiving_add_supplier_' + field).val((draft.supplier || {})[field] || '');
         });
@@ -372,7 +396,7 @@ PosnicPro.lowstockitems = {
             var r = self._restock[id];
             PosnicPro.receivings.addReceivingLineItems({ item_id: id, item_name: $('<span>').text(r.name).html(), company_price: Number(r.company_price) || 0,
                 barcode_id: r.barcode_id || '', item_quantity: Number(r.qty), item_unit: r.unit || 'qty', tax: Number(r.tax) || 0, tax_type: r.tax_type,
-                discount_amount: 0, discount_percentage: 0, supplier: r.supplier_name || '' });
+                discount_amount: 0, discount_percentage: 0, supplier: supplierName });
             delete self._restock[id];
         });
         self.renderRestock();

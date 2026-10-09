@@ -1253,7 +1253,7 @@
   "lang_dine_in_orders_by_table_kots_to_the_kitche": "Dine-in orders by table, KOTs to the kitchen.",
   "lang_dine_table_summary": "Dine & Table Summary",
   "lang_dine_type": "Dine Type",
-  "lang_direct_addition_includes_the_whole_basket": "Direct addition includes the whole basket. Purchases are prepared one supplier at a time; other items stay in the basket.",
+  "lang_direct_addition_includes_the_whole_basket": "Direct addition includes the whole basket. Purchase includes this supplier’s items and items without a supplier; other supplier groups stay in the basket.",
   "lang_direct_stock_addition": "Direct stock addition",
   "lang_direction": "Direction",
   "lang_disc": "Disc :",

@@ -72,6 +72,19 @@ test('touch quantity steps use whole units and preserve positive fractional quan
   assert.equal(app.stepRestockQuantity(100000, 1), 100000);
   assert.equal(app.stepRestockQuantity('', 1), 1);
 });
+test('a chosen supplier receives unassigned items without taking another supplier group', () => {
+  const t = setup();
+  t.app._restock = { a: { name: 'Unassigned', qty: 4 }, b: { name: 'Other supplier', qty: 2, supplier_id: 'other' } };
+  t.$('#restock_supplier').val('general');
+  t.app.restockPurchase();
+  assert.equal(t.request().url, 'suppliers/general');
+  t.request().yes({ type: 'success', data: { name: 'General Supplier' } });
+  t.app.applyPurchaseDraft();
+  assert.equal(t.$('#receiving_add_supplier_name').val(), 'General Supplier');
+  assert.equal(t.added[0].item_quantity, 4);
+  assert.equal(t.added[0].supplier, 'General Supplier');
+  assert.deepEqual(Object.keys(t.app._restock), ['b']);
+});
 test('existing purchase is never erased by a restock handoff', () => {
   const t = setup(); t.PosnicPro.receiving_lineitems = [{ item_id: 'existing' }];
   t.app._restock = { a: { name: 'Cable', qty: 1 } }; t.app.restockPurchase();
