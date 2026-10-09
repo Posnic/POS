@@ -13253,3 +13253,12 @@ $(document).on('click', '.infobar-tender-close', function () {
 $(document).on('click', '#sales_list_rows tr.sales-row', function () {
     PosnicPro.sales.openDoc($(this).data('id'));
 });
+
+// Select checkout numbers for immediate replacement by touch or keyboard.
+$(document).on('focusin click', '#sales_new input[name="addSalesLineItemQty"], #sale_line_edit input[type="number"]', function () {
+    var input = this;
+    setTimeout(function () {
+        if (document.activeElement === input && !input.disabled && !input.readOnly) input.select();
+    }, 0);
+});
+
