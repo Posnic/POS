@@ -16,6 +16,28 @@ const SOURCE = path.join(__dirname, '..', 'frontend', 'static', 'script', 'js',
   'custom-shortcutkey.js');
 const source = fs.readFileSync(SOURCE, 'utf8');
 
+test('navigation ignores dialogs and focused editors, but works on the page', () => {
+  const vm = require('node:vm');
+  const document = { activeElement: null, querySelector: () => null };
+  const context = { document, PosnicPro: { userACL: { branch: { write: true } } } };
+  const start = source.indexOf('function aclCan(');
+  const end = source.indexOf('Mousetrap.bind', start);
+  vm.runInNewContext(source.slice(start, end), context);
+  assert.equal(context.aclCan('branch', 'write'), true);
+  for (const tagName of ['INPUT', 'TEXTAREA', 'SELECT']) {
+    document.activeElement = { tagName };
+    assert.equal(context.aclCan('branch', 'write'), false);
+  }
+  document.activeElement = { isContentEditable: true };
+  assert.equal(context.aclCan('branch', 'write'), false);
+  document.activeElement = { tagName: 'BODY' };
+  document.querySelector = () => ({});
+  assert.equal(context.aclCan('branch', 'write'), false);
+  document.querySelector = () => null;
+  assert.equal(context.aclCan('branch', 'write'), true);
+  assert.equal(context.aclCan('branch', 'read'), false);
+});
+
 test('the till actions are function keys, not letters', () => {
   // Letters cannot be bound here: the cursor lives in the search box, and a
   // shortcut that eats a keystroke from a product name is worse than no
