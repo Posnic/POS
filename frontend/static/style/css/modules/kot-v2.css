@@ -79,6 +79,22 @@
 .kv2-seating-dialog .kv2-guest-grid button.primary{background:color-mix(in srgb, var(--theme-success-color, #287c64) 10%, var(--theme-card-bg, white));border-color:var(--theme-success-color, #287c64);color:var(--theme-success-color, #287c64)}
 .kv2-guest-grid strong{font-size:17px}.kv2-seating-dialog label{font-size:12px;color:var(--theme-text-muted, #75879c)}.kv2-seating-dialog label>input{margin-top:7px}
 .kv2-seating-dialog .kv2-guest-section:only-child{border:0;padding:0;grid-column:1/-1}
+/* Give table selection room on larger tills while keeping takeaway compact. */
+@media(min-width:1000px){
+    .kv2-seating-dialog:has(.kv2-table-section){width:min(1160px,calc(100vw - 64px));font-size:16px}
+    .kv2-seating-dialog:has(.kv2-table-section) section{max-height:calc(90dvh - 180px);padding:28px 32px}
+    .kv2-seating-dialog:has(.kv2-table-section) .kv2-seating-layout{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:32px}
+    .kv2-seating-dialog:has(.kv2-table-section) h4{font-size:17px;margin-bottom:20px}
+    .kv2-seating-dialog .kv2-seat-grid{gap:12px;max-height:clamp(260px,calc(90dvh - 350px),440px)}
+    .kv2-seating-dialog .kv2-seat{min-height:128px;justify-content:center;gap:9px;padding:16px 10px}
+    .kv2-seating-dialog .kv2-seat strong,.kv2-seating-dialog .kv2-guest-grid strong{font-size:24px}
+    .kv2-seating-dialog .kv2-seat small{font-size:12px}
+    .kv2-seating-dialog:has(.kv2-table-section) label{font-size:14px}
+    .kv2-seating-dialog:has(.kv2-table-section) input:not([type=radio]){font-size:18px;min-height:50px}
+    .kv2-seating-dialog .kv2-guest-grid{gap:12px}
+    .kv2-seating-dialog .kv2-guest-grid button{min-height:104px;gap:10px}
+    .kv2-seating-dialog .kv2-seat>svg,.kv2-seating-dialog .kv2-guest-grid svg{width:26px;height:26px}
+}
 @media(max-width:680px){.kv2-seating-layout{grid-template-columns:1fr;gap:22px}.kv2-guest-section{border-left:0;border-top:1px solid var(--theme-border-color, #e0e7ef);padding:20px 0 0}.kv2-seating-dialog section{padding:20px}.kv2-seating-dialog .kv2-seat-grid{grid-template-columns:repeat(4,minmax(0,1fr));max-height:220px}#kot_v2 .kv2-welcome{min-height:350px;padding:22px}}
 @media(prefers-reduced-motion:reduce){#kot_v2.kv2-playful .kv2-steam{animation:none}}
 /* Approved preview: floor, illustrated catalogue, compact round basket. */
@@ -87,20 +103,20 @@
 #kot_v2.kv2-composing .kv2-heading>div{display:flex}
 #kot_v2.kv2-composing .kv2-workspace{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 #kot_v2 .kv2-editor{height:calc(100dvh - 155px);min-height:540px;display:flex;flex-direction:column}
-#kot_v2 .kv2-editor>.kv2-customer{padding:14px 22px;border-bottom:1px solid var(--theme-border-color, #e0e7ef);background:var(--theme-table-header-bg, #f7f9fc);flex:none;font-size:12px}
+#kot_v2 .kv2-editor>.kv2-customer{padding:14px 22px;border-bottom:1px solid var(--theme-border-color, #e0e7ef);background:var(--theme-table-header-bg, #f7f9fc);flex:none;font-size:16px}
 #kot_v2 .kv2-editor>header{padding:22px;align-items:center;flex:none;border-bottom:1px solid var(--theme-border-color, #e0e7ef)}
 #kot_v2 .kv2-editor h2{font-size:23px;margin:0 0 6px;letter-spacing:-.5px}
 #kot_v2 .kv2-editor-table{font-size:16px;font-weight:400;color:var(--theme-text-muted, #75879c)}
-#kot_v2 .kv2-editor>header small{font-size:11px}
+#kot_v2 .kv2-editor>header small{font-size:14px}
 #kot_v2 .kv2-draft-body{display:grid;grid-template-columns:minmax(0,1fr) 300px;min-height:0;max-height:none;overflow:hidden;padding:0;flex:1}
 #kot_v2 .kv2-catalogue{min-height:0;min-width:0;padding:22px;display:flex;flex-direction:column;overflow:hidden}
 #kot_v2 .kv2-searchbar{position:relative;flex:none}
 #kot_v2 #kv2-search{height:44px;min-height:44px;background:var(--theme-card-bg, white);padding:11px 12px}
 #kot_v2 .kv2-category-chips{display:flex;gap:6px;overflow-x:auto;flex:none;padding:4px 0 16px}
-#kot_v2 .kv2-category-chips button{border-radius:18px;padding:7px 11px;font-size:11px;min-height:32px;white-space:nowrap}
+#kot_v2 .kv2-category-chips button{border-radius:18px;padding:7px 11px;font-size:14px;min-height:32px;white-space:nowrap}
 #kot_v2 .kv2-category-chips button.selected{background:color-mix(in srgb, var(--theme-primary-color, #0867ee) 12%, var(--theme-card-bg, white));border-color:var(--theme-primary-color, #0867ee);color:var(--theme-primary-color, #0867ee)}
 #kot_v2 .kv2-catalogue-footer{position:static;padding:12px 0;flex:none;border:0}
-#kot_v2 .kv2-catalogue-footer button{border:0;background:transparent;color:var(--theme-primary-color, #0867ee);font-size:11px;padding:6px 12px;min-height:32px}
+#kot_v2 .kv2-catalogue-footer button{border:0;background:transparent;color:var(--theme-primary-color, #0867ee);font-size:14px;padding:6px 12px;min-height:32px}
 #kot_v2 .kv2-menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;align-content:start;overflow-y:auto;min-height:0;max-height:none;margin:0;padding:1px;flex:1}
 #kot_v2 .kv2-menu .kv2-product{padding:0;text-align:left;overflow:hidden;border:1px solid var(--theme-border-color, #e0e7ef);border-radius:10px;background:var(--theme-card-bg, white);display:flex;flex-direction:column;min-height:172px}
 #kot_v2 .kv2-product-art{height:76px;min-height:76px;width:100%;display:grid;place-items:center;font-size:36px;background:var(--theme-table-header-bg, #edf6fb);color:var(--theme-text-muted, #8aa9bc)}
@@ -116,29 +132,29 @@
 @keyframes kv2-refresh-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){#kot_v2 button[data-action=refresh][data-feedback=loading] svg{animation:none}}
 #kot_v2 .kv2-product-text{padding:11px;display:flex;flex-direction:column;gap:8px;flex:1;width:100%;min-width:0}
-#kot_v2 .kv2-product-text strong{font-size:12px;font-weight:600;line-height:1.45;overflow-wrap:anywhere}
-#kot_v2 .kv2-product-text>small{min-height:14px;margin-top:auto;font-size:11px}
-#kot_v2 .kv2-product-meta{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11px}
-#kot_v2 .kv2-product-meta b{color:var(--theme-primary-color, #0867ee);white-space:nowrap;font-size:11px}
+#kot_v2 .kv2-product-text strong{font-size:16px;font-weight:600;line-height:1.45;overflow-wrap:anywhere}
+#kot_v2 .kv2-product-text>small{min-height:14px;margin-top:auto;font-size:14px}
+#kot_v2 .kv2-product-meta{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:14px}
+#kot_v2 .kv2-product-meta b{color:var(--theme-primary-color, #0867ee);white-space:nowrap;font-size:14px}
 #kot_v2 .kv2-review{padding:22px;background:var(--theme-table-header-bg, #f7f9fc);display:flex;flex-direction:column;border-left:1px solid var(--theme-border-color, #e0e7ef);min-height:0;min-width:0}
 #kot_v2 .kv2-review h3{margin:0;font-size:16px;font-weight:700}
-#kot_v2 .kv2-review-hint{font-size:11px;color:var(--theme-text-muted, #75879c);line-height:1.5;margin:5px 0 15px}
+#kot_v2 .kv2-review-hint{font-size:14px;color:var(--theme-text-muted, #75879c);line-height:1.5;margin:5px 0 15px}
 #kot_v2 .kv2-basket{min-height:0;flex:1;overflow-y:auto}
-#kot_v2 .kv2-basket-empty{text-align:center;font-size:12px;color:var(--theme-text-muted, #75879c);padding:50px 0}
+#kot_v2 .kv2-basket-empty{text-align:center;font-size:16px;color:var(--theme-text-muted, #75879c);padding:50px 0}
 #kot_v2 .kv2-basket-empty svg{display:none}
 #kot_v2 .kv2-draft-line{display:block;border-bottom:1px solid var(--theme-border-color, #e0e7ef);padding:14px 0}
-#kot_v2 .kv2-draft-line>.kv2-draft-name{display:flex;align-items:start;justify-content:space-between;gap:10px;margin:0;font-size:12px;line-height:1.5}
+#kot_v2 .kv2-draft-line>.kv2-draft-name{display:flex;align-items:start;justify-content:space-between;gap:10px;margin:0;font-size:16px;line-height:1.5}
 #kot_v2 .kv2-draft-name span{white-space:nowrap}
 #kot_v2 .kv2-draft-line>.kv2-stepper{display:flex;align-items:center;gap:10px;margin:10px 0 0}
-#kot_v2 .kv2-stepper button{min-height:36px;min-width:34px;padding:7px;font-size:12px}
-#kot_v2 .kv2-stepper button:last-child{margin-left:auto;border:0;color:var(--theme-primary-color, #0867ee);font-size:11px;background:transparent}
+#kot_v2 .kv2-stepper button{min-height:36px;min-width:34px;padding:7px;font-size:16px}
+#kot_v2 .kv2-stepper button:last-child{margin-left:auto;border:0;color:var(--theme-primary-color, #0867ee);font-size:14px;background:transparent}
 #kot_v2 .kv2-draft-line>small{margin-top:7px}
-#kot_v2 .kv2-round-total{flex:none;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--theme-border-color, #e0e7ef);padding-top:15px;gap:10px;font-size:12px}
+#kot_v2 .kv2-round-total{flex:none;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--theme-border-color, #e0e7ef);padding-top:15px;gap:10px;font-size:16px}
 #kot_v2 .kv2-round-total strong{font-size:18px}
 #kot_v2 .kv2-editor>footer{flex:none;padding:16px 22px;display:flex;justify-content:space-between;border-top:1px solid var(--theme-border-color, #e0e7ef);background:var(--theme-card-bg, white)}
-#kot_v2 .kv2-editor>footer small{margin-left:auto}
+#kot_v2 .kv2-editor>footer small{margin-left:auto;font-size:14px}
 #kot_v2 .kv2-editor>footer button{min-height:42px}
-#kot_v2 .kv2-editor>header button[data-action=discard]{font-size:11px;min-height:36px}
+#kot_v2 .kv2-editor>header button[data-action=discard]{font-size:14px;min-height:36px}
 @media(pointer:coarse){#kot_v2 .kv2-stepper button,#kot_v2 .kv2-category-chips button,#kot_v2 .kv2-catalogue-footer button{min-height:44px;min-width:44px}}
 @container(max-width:1250px){#kot_v2 .kv2-catalogue,#kot_v2 .kv2-review{padding:15px}#kot_v2 .kv2-menu{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @container(max-width:900px){#kot_v2.kv2-composing .kv2-workspace{grid-template-columns:1fr}#kot_v2.kv2-composing .kv2-floor{display:none}#kot_v2 .kv2-menu{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -182,15 +198,19 @@
 .kv2-dialog button{transition:background-color .15s ease,border-color .15s ease}
 @media(prefers-reduced-motion:reduce){.kv2-dialog button{transition:none}}
 /* Keep the working area inside short desktop windows; only lists scroll. */
-#kot_v2 .kv2-editor{height:var(--kv2-editor-height,calc(100dvh - 180px));min-height:0}
+#kot_v2 .kv2-editor{height:var(--kv2-editor-height,calc(100dvh - 180px));min-height:0;font-size:16px}
+#kot_v2 .kv2-product-meta{flex-wrap:wrap}
+#kot_v2 .kv2-product-meta small{font-size:14px}
+#kot_v2 .kv2-draft-name strong{min-width:0;overflow-wrap:anywhere}
+#kot_v2 .kv2-stepper{flex-wrap:wrap}
 #kot_v2 .kv2-editor>footer{padding:12px 16px;gap:12px;align-items:center;min-height:68px}
 #kot_v2 .kv2-editor>footer button[data-action=send]{min-width:156px;flex-shrink:0}
 #kot_v2 .kv2-editor>header{padding:10px 16px}
 #kot_v2 .kv2-editor>.kv2-customer{padding:6px 16px}
 #kot_v2 .kv2-search-row{display:flex;align-items:center;gap:8px;flex:none;margin-bottom:10px}
 #kot_v2 .kv2-search-row .kv2-searchbar{flex:1;min-width:0}
-#kot_v2 .kv2-search-row>button{flex:none;min-height:44px;white-space:nowrap;font-size:11px;padding:8px 10px}
-#kot_v2 .kv2-menu{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
+#kot_v2 .kv2-search-row>button{flex:none;min-height:44px;white-space:nowrap;font-size:14px;padding:8px 10px}
+#kot_v2 .kv2-menu{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
 #kot_v2 .kv2-menu .kv2-product{min-height:150px}
 #kot_v2 .kv2-product-text{padding:9px;gap:6px;flex:1 0 auto}
 #kot_v2 .kv2-product-text>small:empty{display:none}
@@ -274,8 +294,8 @@
 #kot_v2 .kv2-breakdown p{gap:24px;align-items:baseline;margin:10px 0;line-height:1.5}
 #kot_v2 .kv2-breakdown p>b{margin-left:auto;min-width:100px;text-align:right;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
 #kot_v2 .kv2-order>footer strong{font-size:26px;font-variant-numeric:tabular-nums;line-height:1.4}
-#kot_v2 .kv2-line{grid-template-columns:minmax(38px,max-content) minmax(100px,1fr) 85px minmax(90px,max-content) 95px 42px}
-@media(max-width:1150px){#kot_v2 .kv2-line{grid-template-columns:minmax(36px,max-content) minmax(75px,1fr) 72px minmax(85px,max-content) 78px 32px}}
+#kot_v2 .kv2-line{grid-template-columns:minmax(38px,max-content) minmax(100px,1fr) 85px minmax(90px,max-content) 95px 48px}
+@media(max-width:1150px){#kot_v2 .kv2-line{grid-template-columns:minmax(36px,max-content) minmax(75px,1fr) 72px minmax(85px,max-content) 78px 48px}}
 @media(max-width:520px){#kot_v2 .kv2-line{grid-template-columns:minmax(36px,max-content) minmax(0,1fr) minmax(85px,max-content)}}
 
 /* Captain kitchen-send-feedback / placed tick, scaled to a quiet footer scene. */
@@ -314,3 +334,23 @@
 #kot_v2 .kv2-breakdown>.kv2-bill-content{max-width:none;display:grid;grid-template-columns:minmax(150px,1fr) minmax(240px,360px);gap:24px;margin:0}
 .kv2-bill-summary{grid-column:2;grid-row:1}.kv2-bill-notes{grid-column:1;grid-row:1}
 @media(max-width:850px){#kot_v2 .kv2-breakdown>.kv2-bill-content{grid-template-columns:1fr;gap:8px}.kv2-bill-summary,.kv2-bill-notes{grid-column:1;grid-row:auto}}
+
+/* Minimum hit areas apply even when a touchscreen till also has a mouse.
+   Keep compact/short-window rules from shrinking interactive controls. */
+#kot_v2,.kv2-dialog,.kv2-actions-menu{--kv2-hit-size:44px}
+#kot_v2 button,.kv2-dialog button,.kv2-actions-menu button{
+    min-width:var(--kv2-hit-size)!important;
+    min-height:var(--kv2-hit-size)!important;
+    touch-action:manipulation;
+}
+.kv2-dialog header [data-close]{width:48px;height:48px;flex:0 0 48px;padding:0;font-size:26px;line-height:1;display:grid;place-items:center}
+#kot_v2 .kv2-draft-line>.kv2-stepper{flex-wrap:wrap;gap:8px}
+#kot_v2 .kv2-breakdown>summary{min-height:44px;display:flex;align-items:center;gap:8px}
+#kot_v2 .kv2-breakdown>summary::before{content:'▸'}
+#kot_v2 .kv2-breakdown[open]>summary::before{content:'▾'}
+.kv2-dialog button:active:not(:disabled),.kv2-actions-menu button:active:not(:disabled){filter:brightness(.94)}
+@media(any-pointer:coarse){
+    #kot_v2,.kv2-dialog,.kv2-actions-menu{--kv2-hit-size:48px}
+    #kot_v2 .kv2-category-chips,.kv2-templates{gap:10px}
+    .kv2-actions-menu section{gap:6px}
+}

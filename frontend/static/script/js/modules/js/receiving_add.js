@@ -2193,7 +2193,7 @@ PosnicPro.purchaseorders = {
             + '<div class="q-num">' + esc(d.receiving_id) + '</div>'
             + '<div class="q-muted">Bill date: ' + dt(d.date) + '</div>'
             + (d.expected_date ? '<div class="q-muted">Expected: ' + dt(d.expected_date) + '</div>' : '')
-            + '<div class="q-status">' + L[st].toUpperCase() + '</div>'
+            + '<div class="q-status" data-status="' + st + '">' + L[st].toUpperCase() + '</div>'
             + '</div>';
         var supplier = '<div class="q-billto"><div class="q-label"><lang class="lang_newsupplier_title">Supplier</lang></div>'
             + '<div class="q-cust">' + esc(d.supplier_name || '-') + '</div>'

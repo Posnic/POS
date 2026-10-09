@@ -25,7 +25,7 @@ test('three outlet windows are independently titled, and minimized windows resto
   await assert.rejects(open(event, { outletId: '../bad', branchId: id(9) }));
 });
 function page() {
-  const dom = new JSDOM('<!doctype html><div class="page_loader" id="sales_page">Cart</div><span id="billing_outlet_charge"></span><span id="addSalesGstTax_1">0</span>', { url: 'http://localhost/dashboard.html', runScripts: 'outside-only' });
+  const dom = new JSDOM('<!doctype html><aside class="leftbar">Navigation</aside><div class="rightbar"><div class="page_loader" id="sales_page">Cart</div></div><span id="billing_outlet_charge"></span><span id="addSalesGstTax_1">0</span>', { url: 'http://localhost/dashboard.html', runScripts: 'outside-only' });
   const w = dom.window;
   w.eval(fs.readFileSync('frontend/static/script/js/jquery.min.js', 'utf8'));
   w.billingWindowId = ''; w.API_URL = '/api/';
@@ -41,6 +41,24 @@ test('outlet prices and service charges do not compound on repeated recalculatio
   assert.equal(w.PosnicPro.sales.charges.length, 1);
   assert.equal(w.PosnicPro.sales.charges[0].amount, 25);
   assert.equal(w.PosnicPro.sales.charges[0].tax_amount, 1.25);
+  w.close();
+});
+
+test('outlet sidebar and billing button follow explicit enablement, including disabling again', () => {
+  const w = page();
+  w.$('body').append('<ul><li id="manage_li_billingoutlets"></li></ul><button id="billing_outlets_open"></button>');
+  w.PosnicPro.demoSamples = { load() {} };
+  const source = fs.readFileSync('frontend/static/script/js/core/PosnicPro.js', 'utf8');
+  const start = source.indexOf('    applyModuleSidebar: function () {');
+  const end = source.indexOf('\n    },', start);
+  const apply = w.eval('(' + source.slice(start, end + 6).replace('applyModuleSidebar:', '') + ')');
+  for (const enabled of [undefined, false, true, false]) {
+    w.PosnicPro.local.get = key => key === 'general_settings' ? JSON.stringify({ module_billing_outlets_enable: enabled }) : null;
+    apply();
+    for (const selector of ['#manage_li_billingoutlets', '#billing_outlets_open']) {
+      assert.equal(w.$(selector).css('display') !== 'none', enabled === true);
+    }
+  }
   w.close();
 });
 test('opening and leaving the outlet menu preserves the existing cart', async () => {
@@ -69,9 +87,12 @@ test('window-scoped branch and register preferences do not overwrite the shared 
   w.close();
 });
 
-test('outlet page escapes legacy main positioning and offers setup when empty', async () => {
+test('outlet page stays in the dashboard content without covering navigation and offers setup when empty', async () => {
  const w=page(); await w.PosnicPro.billingoutlets.show();
  assert.equal(w.$('#billing_outlets_page')[0].tagName, 'SECTION');
+ assert.equal(w.$('#billing_outlets_page').parent()[0], w.$('.rightbar')[0]);
+ assert.notEqual(w.$('#billing_outlets_page').css('position'), 'fixed');
+ assert.notEqual(w.$('.leftbar').css('display'), 'none');
  assert.match(w.$('#billing_content').text(), /No billing outlets yet/);
  w.PosnicPro.billingoutlets.data.manage=true; w.PosnicPro.billingoutlets.tab('windows');
  assert.equal(w.$('#billing_content [data-billing-tab="setup"]').length,1);

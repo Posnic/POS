@@ -788,7 +788,7 @@
             + '<div class="q-doc-title">' + (PosnicPro.local.get('gst_action') === 'enable' ? PosnicPro.i18n.t('lang_tax_invoice', 'TAX INVOICE') : PosnicPro.i18n.t('lang_sales_receipt', 'SALES RECEIPT')) + '</div>'
             + '<div class="q-num">' + esc(d.sales_id) + '</div>'
             + '<div class="q-muted">Date: ' + esc(d.string_date ? String(d.string_date).slice(0, 10) : (d.date ? String(d.date).slice(0, 10) : '-')) + '</div>'
-            + '<div class="q-status">' + esc(stamp) + '</div>'
+            + '<div class="q-status" data-status="' + (cancelled ? 'cancelled' : /return/i.test(proc) ? 'returned' : unpaid ? 'unpaid' : 'paid') + '">' + esc(stamp) + '</div>'
             + '</div>';
         var billto = '<div class="q-billto"><div class="q-label"><lang class="lang_bill_to_2">Bill To</lang></div>'
             + '<div class="q-cust">' + esc(d.customer_name || 'Walk-in customer') + '</div>'
@@ -799,7 +799,10 @@
             + '<th>#</th><th><lang class="lang_newitem_title">Item</lang></th><th class="text-right"><lang class="lang_qty_title">Qty</lang></th>'
             + '<th class="text-right"><lang class="lang_price_title">Price</lang></th><th class="text-right"><lang class="lang_amount_title">Amount</lang></th>'
             + '</tr></thead><tbody>';
-        (d.items || []).forEach(function (l, i) {
+        var displayLines = Array.isArray(d.receipt_line_rows) ? d.receipt_line_rows.map(function (line) {
+            return { item_name: line.name, item_quantity: line.qty, item_unit: line.unit, item_base_price: line.rate, display_amount: line.amount };
+        }) : (d.items || []);
+        displayLines.forEach(function (l, i) {
             var unit = Number(l.item_base_price);
             if (!Number.isFinite(unit)) {
                 unit = Number(l.item_price) || 0;
@@ -809,7 +812,7 @@
             items += '<tr><td>' + (i + 1) + '</td><td>' + esc(l.item_name) + '</td>'
                 + '<td class="text-right">' + esc(l.item_quantity) + ' ' + esc(l.item_unit || '') + '</td>'
                 + '<td class="text-right">' + money(unit) + '</td>'
-                + '<td class="text-right">' + money(unit * (Number(l.item_quantity) || 0)) + '</td></tr>';
+                + '<td class="text-right">' + money(l.display_amount != null ? l.display_amount : unit * (Number(l.item_quantity) || 0)) + '</td></tr>';
         });
         items += '</tbody><tfoot>'
             + '<tr class="q-sub"><td colspan="4" class="text-right"><lang class="lang_subtotal">Subtotal</lang></td>'
@@ -9740,7 +9743,7 @@ PosnicPro.quotes = {
                 + '<div class="q-num">' + esc(q.quote_id) + '</div>'
                 + '<div class="q-muted">Date: ' + d(q.created_date) + '</div>'
                 + '<div class="q-muted">Valid till: ' + ed('valid_until', d(q.valid_until), 'dd/mm/yyyy') + '</div>'
-                + (!open ? '<div class="q-status">' + esc(String(q.status).toUpperCase()) + '</div>' : '')
+                + (!open ? '<div class="q-status" data-status="' + esc(String(q.status).toLowerCase()) + '">' + esc(String(q.status).toUpperCase()) + '</div>' : '')
                 + '</div>'
                 + '</div>'
                 + '<div class="q-billto"><div class="q-label"><lang class="lang_bill_to_2">Bill To</lang></div>'

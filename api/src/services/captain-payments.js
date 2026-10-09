@@ -192,6 +192,12 @@ async function reconcile(db, c, plan) {
     const due = total - paid;
     if (!Number.isSafeInteger(due) || due < 0)
       throw new Error('Payment journal exceeds the order total.');
+    const salePayments = payments.filter((payment) => payment.allocations[String(sale._id)] > 0);
+    const saleTime = require('../helpers/restaurant-sale-time')(
+      sale,
+      due ? 'Unpaid' : 'Paid',
+      salePayments[salePayments.length - 1]?.at
+    );
     const update = await db.collection('sales').updateOne(
       {
         ...baseFilter(c),
@@ -205,6 +211,7 @@ async function reconcile(db, c, plan) {
       {
         $set: {
           captain_payment_version: plan.version,
+          ...saleTime,
           paid_amount: paid / factor,
           partial_balance: paid / factor,
           payment_pending: due / factor,
@@ -303,7 +310,11 @@ async function reconcile(db, c, plan) {
       for (const g of selected)
         for (const [key, amount] of Object.entries(g.components))
           guest.components[key] = (guest.components[key] || 0) + amount;
-      const payload = billForGuest(plan.snapshot, guest, c.branch, plan.sales[0], hash(payment.id));
+      // A collection receipt reflects this payment, even for a partial bill.
+      const receiptSale = { ...plan.sales[0], date: payment.at };
+      const payload = billForGuest(plan.snapshot, guest, c.branch, receiptSale, hash(payment.id), {
+        combineItems: false,
+      });
       // The shared designer expects numeric quantities/rates, even for an equal
       // guest share. Keep the allocated money, never reuse the full sale rows.
       payload.items = payload.items.map((item, index) => {
@@ -311,13 +322,18 @@ async function reconcile(db, c, plan) {
         const qty = (Number(line.quantity) * line.weight) / line.weightTotal;
         return { ...item, qty, rate: qty ? item.amount / qty : 0 };
       });
-      const bill = buildBillPayload(plan.sales[0], c.branch);
+      payload.items = require('../helpers/combine-bill-lines')(
+        guest.lines.map((line) => line.bill_source || {}),
+        payload.items,
+        monetary
+      );
+      const bill = buildBillPayload(receiptSale, c.branch);
       payload.title = bill.title;
       payload.billNo = bill.billNo;
       payload.footer = bill.footer;
       payload.footerImage = bill.footerImage;
       payload.footerImageCaption = bill.footerImageCaption;
-      payload.receiptDocument = receiptDocument(plan.sales[0], c.branch, payload);
+      payload.receiptDocument = receiptDocument(receiptSale, c.branch, payload);
       Object.assign(payload.receiptDocument, {
         receipt_settled: true,
         // Discounts, taxes and adjustments are already allocated in this bill.
