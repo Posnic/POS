@@ -584,12 +584,12 @@
     mountProvenanceHistory: function () {
         var settings = {};
         try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}') || {}; } catch (_) { }
-        var sources = [['pos', 'POS / Counter']];
-        [['module_captain_enable','tableside','Captain / Tableside'],['module_kiosk_enable','kiosk','Kiosk'],['module_online_ordering_enable','online','Online ordering'],['module_messaging_enable','whatsapp','WhatsApp'],['module_delivery_partners_enable','marketplace','Delivery partners'],['module_webshop_enable','ecommerce','Webshop']].forEach(function (entry) {
+        var sources = [['pos', PosnicPro.i18n.t('lang_pos_counter', 'POS / Counter')]];
+        [['module_captain_enable','tableside',PosnicPro.i18n.t('lang_captain_tableside', 'Captain / Tableside')],['module_kiosk_enable','kiosk',PosnicPro.i18n.t('lang_kiosk', 'Kiosk')],['module_online_ordering_enable','online',PosnicPro.i18n.t('lang_online_ordering', 'Online ordering')],['module_messaging_enable','whatsapp',PosnicPro.i18n.t('lang_whatsapp', 'WhatsApp')],['module_delivery_partners_enable','marketplace',PosnicPro.i18n.t('lang_delivery_partners', 'Delivery partners')],['module_webshop_enable','ecommerce',PosnicPro.i18n.t('lang_webshop', 'Webshop')]].forEach(function (entry) {
             if (settings[entry[0]] === true) sources.push([entry[1],entry[2]]);
         });
         var select = $('#sales_history_source'), prior = select.val() || '';
-        select.empty().append($('<option>').val('').text('All sources'));
+        select.empty().append($('<option>').val('').text(PosnicPro.i18n.t('lang_all_sources', 'All sources')));
         sources.forEach(function (s) { select.append($('<option>').val(s[0]).text(s[1])); });
         select.val(sources.some(function (s) { return s[0] === prior; }) ? prior : '');
         $('#sales_history_source_wrap').toggle(sources.length > 1);
@@ -643,7 +643,7 @@
             var restaurant = PosnicPro.local.get('table_options') === 'enable';
             var cur = PosnicPro.local.get('currencySign');
             var historySort = PosnicPro.listSort.value('sales');
-            var timeLabel = historySort === 'recent' ? 'Order created' : historySort === 'updated_desc' ? 'Last updated' : 'Sale date & time';
+            var timeLabel = historySort === 'recent' ? PosnicPro.i18n.t('lang_order_created', 'Order created') : historySort === 'updated_desc' ? PosnicPro.i18n.t('lang_last_updated', 'Last updated') : PosnicPro.i18n.t('lang_sale_date_time', 'Sale date & time');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
                 + '<thead><tr><th><lang class="lang_bill">Bill #</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th class="sl-col-date">' + esc(timeLabel) + '</th>'
                 + (restaurant ? '<th><lang class="lang_table">Table</lang></th>' : '')

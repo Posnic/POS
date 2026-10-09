@@ -16,6 +16,7 @@ for (const [digits, amount, expected] of [[0, 95, '95'], [2, 31.67, '31.67'], [3
         win.$ = require('jquery')(win);
         win.PosnicPro = {
             local: { get: () => 'Currency' },
+            i18n: { t: (_key, fallback) => fallback },
             listSort: { value: () => '' },
             listFilter: {
                 legacyFilters: () => ({}),
@@ -26,7 +27,7 @@ for (const [digits, amount, expected] of [[0, 95, '95'], [2, 31.67, '31.67'], [3
             }
         };
         win.eval('PosnicPro.sales = {' + method + '};');
-        Object.assign(win.PosnicPro.sales, { mountHistoryFilters() {}, renderHistoryPager() {}, HIST_PAGE_SIZE: 25 });
+        Object.assign(win.PosnicPro.sales, { mountHistoryFilters() {}, mountProvenanceHistory() {}, renderHistoryPager() {}, HIST_PAGE_SIZE: 25 });
         win.PosnicPro.sales.loadHistory(1);
         const cells = win.document.querySelectorAll('#sales_list_rows tbody td');
         assert.equal(cells[4].textContent, 'Currency\u00a0' + expected);
@@ -75,6 +76,7 @@ for (const exporting of [false, true]) {
         win.PosnicPro = {
             appendReportTableBody() {}, paging() {}, timeZone: () => 'UTC', convertDate: value => value,
             local: { get: () => 'Currency' },
+            i18n: { t: (_key, fallback) => fallback },
             JSONToCSVConvertor: values => { exported = values; },
             get: (_params, success) => success({ type: 'success', data: {
                 total: rows.length, total_pages: 1, current_page: 1, per_page: 25, list: rows
