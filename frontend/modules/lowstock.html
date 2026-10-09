@@ -1,8 +1,5 @@
 <div class="vertical-layout page_loader" id="lowstockitems" style="display: none">
-    <!-- Low Stock, built to LIST_PAGE_UX_STANDARD.md: a read-only watchlist.
-         A row click opens the ITEM's dossier (#/items/<id>); the Restock
-         button jumps straight into a new purchase with the item and its
-         supplier already on the form. -->
+    <!-- Low stock watchlist with a branch-specific restock basket. -->
     <div id="containerbar">
         <div class="breadcrumbbar crumbbar_padding">
             <div class="row align-items-center row_filter">
@@ -14,6 +11,14 @@
                 </div>
                 <div class="col-auto text-right">
                     <div class="widgetbar" id="lowstockitems_controls">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"><lang class="lang_stock_tools">Stock tools</lang></button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" href="#/inventorycounts"><lang class="lang_stock_counts_recount">Stock counts / recount</lang></a>
+                                <button class="dropdown-item" data-module="item" data-access="write" onclick="PosnicPro.items.openStockAdjustment();"><lang class="lang_stock_adjust_title">Stock adjustment</lang></button>
+                                <button class="dropdown-item" data-module="item" data-access="write" onclick="PosnicPro.items.openBulkStock();"><lang class="lang_bulk_stock_update">Bulk stock update</lang></button>
+                            </div>
+                        </div>
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false" title="Export CSV" data-t-title="lang_export_csv" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
@@ -35,6 +40,12 @@
     </div>
 
     <div class="contentbar">
+        <div id="restock_dock" class="card border-primary mb-3" style="display:none; position:sticky; top:0; z-index:10;">
+            <div class="card-body py-3 d-flex align-items-center justify-content-between flex-wrap">
+                <div><strong><lang class="lang_restock_basket">Restock basket</lang></strong><div id="restock_summary" class="text-muted" aria-live="polite"></div></div>
+                <button type="button" class="btn btn-primary p-3" onclick="PosnicPro.lowstockitems.reviewRestock();"><lang class="lang_review_finish">Review / Finish</lang></button>
+            </div>
+        </div>
         <div id="lowstockitems_split">
         <div class="card m-b-30 md-rail" id="lowstockitems_list_card">
             <div class="card-body">
@@ -47,4 +58,21 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="restock_modal" tabindex="-1" role="dialog" aria-labelledby="restock_title" aria-hidden="true">
+ <div class="modal-dialog modal-lg modal-dialog-centered" role="document"><div class="modal-content">
+  <div class="modal-header"><h5 id="restock_title" class="modal-title"><lang class="lang_restock_basket">Restock basket</lang></h5><button type="button" class="close p-3" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><lang class="lang_text">&times;</lang></button></div>
+  <div class="modal-body">
+   <p><lang class="lang_add_the_quantities_you_want_to_bring_in_st">Add the quantities you want to bring in. Stock changes only when you confirm an adjustment or receive a purchase.</lang></p>
+   <div id="restock_status" role="status" aria-live="polite"></div>
+   <div class="table-responsive" style="max-height:45vh; overflow:auto;"><table class="table"><thead><tr><th><lang class="lang_newitem_title">Item</lang></th><th><lang class="lang_instock_title">In stock</lang></th><th><lang class="lang_quantity_to_add">Quantity to add</lang></th><th></th></tr></thead><tbody id="restock_rows"></tbody></table></div>
+   <div id="restock_finish" style="display:none;" class="border-top pt-3">
+    <div class="form-group mb-3"><label for="restock_supplier"><lang class="lang_purchase_group">Purchase group</lang></label><select id="restock_supplier" class="form-control"></select></div>
+    <p class="text-muted"><lang class="lang_direct_addition_includes_the_whole_basket">Direct addition includes the whole basket. Purchases are prepared one supplier at a time; other items stay in the basket.</lang></p>
+    <div class="row"><div class="col-sm-6 mb-2"><button type="button" class="btn btn-primary p-3 w-100" data-module="item" data-access="write" onclick="PosnicPro.lowstockitems.restockDirect();"><lang class="lang_direct_stock_addition">Direct stock addition</lang></button></div><div class="col-sm-6 mb-2"><button type="button" class="btn btn-outline-primary p-3 w-100" data-module="receiving" data-access="write" onclick="PosnicPro.lowstockitems.restockPurchase();"><lang class="lang_continue_via_purchase">Continue via purchase</lang></button></div></div>
+   </div>
+  </div>
+  <div class="modal-footer"><button type="button" class="btn btn-outline-primary p-3" data-dismiss="modal"><lang class="lang_continue_selecting_items">Continue selecting items</lang></button><button type="button" class="btn btn-primary p-3" id="restock_finish_button" onclick="PosnicPro.lowstockitems.finishRestock();"><lang class="lang_finish">Finish</lang></button></div>
+ </div></div>
 </div>

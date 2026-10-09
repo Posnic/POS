@@ -10,7 +10,10 @@
     function failed() { PosnicPro.alert('error', PosnicPro.i18n.t('lang_expiry_load_failed', 'Could not load expiry reminders. Please try again.')); }
     PosnicPro.itemsettings = {
         showDataTablePage: function () {
-            show('itemsettings');
+            PosnicPro.local.set('posnic_core_tab', '#core-tab-inventory');
+            hasher.setHash('settings/general');
+        },
+        load: function () {
             $('#item_settings_status').text(PosnicPro.i18n.t('lang_loading', 'Loading…'));
             $('#item_settings_save_stock,#expiry_reminders_save').prop('disabled', true);
             PosnicPro.itemStockPreference.load('#item_stock_preference');

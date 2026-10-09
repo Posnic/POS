@@ -41,3 +41,21 @@
     display: block;
   }
 }
+#restock_modal {
+  .table th,
+  .table td {
+    vertical-align: middle;
+  }
+  .restock-qty {
+    width: 120px;
+  }
+  .select2-container .select2-selection--single {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+  }
+  .select2-selection__arrow {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}

@@ -1518,6 +1518,7 @@ test.each([
           request_id: require('crypto').randomUUID(),
         },
       };
+      const paymentStartedAt = Date.now();
       const recorded = await payments.record(paymentRequest);
       expect(recorded.dueMinor).toBe(0);
       expect((await payments.record(paymentRequest)).payments).toEqual(recorded.payments);
@@ -1525,9 +1526,25 @@ test.each([
       expect(settled.payment_status).toBe('Paid');
       expect(minor(settled.paid_amount)).toBe(bill.totalMinor);
       expect(settled.items).toEqual(check.items);
-      expect(require('../../../src/helpers/bill-payload').buildBillPayload(settled, shop)).toEqual(
-        payload
-      );
+      // Settlement changes the bill clock, but not its lines or amounts.
+      expect(settled.date).toEqual(settled.settled_at);
+      expect(new Date(settled.settled_at).getTime()).toBeGreaterThanOrEqual(paymentStartedAt);
+      expect(new Date(settled.settled_at).getTime()).toBeLessThanOrEqual(Date.now());
+      expect(settled.order_date).toEqual(check.order_date || check.created_date || check.date);
+      const receiptDate = new Intl.DateTimeFormat('en-GB', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      })
+        .format(new Date(settled.settled_at))
+        .replace(',', '');
+      expect(require('../../../src/helpers/bill-payload').buildBillPayload(settled, shop)).toEqual({
+        ...payload,
+        date: receiptDate,
+      });
       jest.spyOn(BaseModel, 'getDb').mockResolvedValue(db);
       const desktop = await runWithRequestContext({ license, currentBranch: branch }, () =>
         sales.getLegacyDetails(String(check._id))

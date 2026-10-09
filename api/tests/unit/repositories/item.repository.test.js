@@ -659,6 +659,7 @@ describe('ItemRepository', () => {
       );
       expect(r.status).toBe(true);
       expect(r.data.updated).toBe(1);
+      expect(r.data.updatedItemIds).toEqual([String(FAKE_ID)]);
       expect(col.updateOne.mock.calls[0][1].$set.available_quantity).toBe(7);
     });
 
@@ -705,6 +706,7 @@ describe('ItemRepository', () => {
       expect(r.status).toBe(true);
       expect(r.data.updated).toBe(0);
       expect(r.data.skipped).toBe(1);
+      expect(r.data.updatedItemIds).toEqual([]);
       expect(col.updateOne).not.toHaveBeenCalled();
       // calls[0] is the branch-doc lookup (one shared mock collection);
       // calls[1] is the scoped item fetch under test.

@@ -36,14 +36,23 @@ const round2 = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 1
  *             subtotal:number, effectiveTax:number, effectiveTaxType:string }}
  */
 function computeLineTax(line) {
-  const itemAmount = Number(line.itemAmount) || 0;
-  const sellingPrice = Number(line.sellingPrice) || 0;
+  let itemAmount = Number(line.itemAmount) || 0;
+  let sellingPrice = Number(line.sellingPrice) || 0;
   const itemQuantity = Number(line.itemQuantity) || 0;
   const itemTax = Number(line.itemTax) || 0;
   const taxType = line.taxType || '';
   const discountAmount = Number(line.discountAmount) || 0;
   const discountPercentage = Number(line.discountPercentage) || 0;
   const gstAmount = Number(line.gstAmount) || 0;
+  // Retail gross-unit pricing is opt-in; normal exclusive pricing is unchanged.
+  if (line.roundGrossUnit === true && taxType === 'exclusive' && itemTax > 0) {
+    const factor = Number(line.currencyFactor) || 100;
+    sellingPrice =
+      Math.round((sellingPrice * (1 + itemTax / 100) + Number.EPSILON) * factor) /
+      factor /
+      (1 + itemTax / 100);
+    itemAmount = sellingPrice * itemQuantity;
+  }
 
   let total;
   let tax;

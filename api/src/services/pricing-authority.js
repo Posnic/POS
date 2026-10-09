@@ -47,6 +47,7 @@ function resolve({
   priceList,
   channel = 'counter',
   allowCounterPriceOverride = false,
+  roundGrossUnit = false,
 }) {
   const monetary = Money.policy(branch);
   const round = (value) => Money.fromMinor(Money.toMinor(value, monetary), monetary);
@@ -116,7 +117,7 @@ function resolve({
       fail('item_price_too_high', `${name}: price is outside the allowed range.`);
     source = 'counter_override';
   }
-  selling = round(selling);
+  selling = roundGrossUnit === true ? Number(selling.toFixed(8)) : round(selling);
   if (selling < 0 || (variable && selling > 1000000))
     fail('item_price_too_high', `${name}: price is outside the allowed range.`);
   if (!variable) assertPrice(submitted, selling, round, name);
@@ -131,6 +132,7 @@ function resolve({
     rule_id: ruleId,
     channel,
     selling_price: selling,
+    ...(roundGrossUnit === true ? { roundGrossUnit: true } : {}),
     tax,
     tax_type: taxType,
     currency: monetary,
@@ -176,6 +178,8 @@ function calculate(pricing, quantity, branch = {}, discountAmount = 0, discountP
     itemQuantity: qty,
     itemTax: pricing.tax,
     taxType: pricing.tax_type,
+    roundGrossUnit: pricing.roundGrossUnit === true,
+    currencyFactor: monetary.factor,
     discountAmount,
     discountPercentage,
     gstAmount: 0,

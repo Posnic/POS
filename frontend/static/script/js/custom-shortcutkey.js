@@ -7,6 +7,11 @@ $(document).ready(function () {
      * yet", the same answer the sidebar gives while it waits.
      */
     function aclCan(module, perm) {
+        // Navigation must not interrupt an open dialog or an active editor.
+        // Search widgets can retarget keyboard events away from their input.
+        var active = document.activeElement;
+        if (document.querySelector('.modal.show, .select2-container--open') ||
+            (active && (active.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)))) return false;
         var u = PosnicPro.userACL;
         return !!(u && u[module] && u[module][perm] === true);
     }

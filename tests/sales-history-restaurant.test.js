@@ -35,6 +35,29 @@ test('retail hides restaurant controls and table column', () => {
  const x = setup(false); x.w.PosnicPro.sales.mountRestaurantHistory(); x.w.PosnicPro.sales.loadHistory(1);
  assert.equal(x.$('#sales_restaurant_filters').css('display'), 'none'); assert.doesNotMatch(x.$('#sales_list_rows thead').text(), /Table/); x.close();
 });
+
+test('staff/device/source filters combine and source choices follow enabled features', () => {
+ const x=setup();const s=x.w.PosnicPro.sales;
+ const get=x.w.PosnicPro.local.get;
+ x.w.PosnicPro.local.get=k=>k==='general_settings'?JSON.stringify({module_captain_enable:true,module_kiosk_enable:false}):get(k);
+ s.loadHistory(1);
+ assert.equal(x.$('#sales_history_source option[value=tableside]').length,1);
+ assert.equal(x.$('#sales_history_source option[value=kiosk]').length,0);
+ x.$('#sales_history_staff').val('Asha');x.$('#sales_history_device').val('Samsung');x.$('#sales_history_source').val('tableside');
+ x.$('#sales_provenance_form').trigger('submit');
+ assert.equal(x.requests.at(-1).ordered_by,'Asha');assert.equal(x.requests.at(-1).order_device,'Samsung');assert.equal(x.requests.at(-1).order_source,'tableside');
+ x.$('#sales_provenance_reset').trigger('click');assert.equal(x.requests.at(-1).ordered_by,undefined);
+ x.close();
+});
+
+test('sort selection sends the requested ordering and labels the time being shown', () => {
+ const x=setup(true,[{_id:'1',string_date:'sale time',created_date:'order time',updated_date:'edit time'}]);
+ for(const [sort,label,value] of [['date_asc','Sale date & time','sale time'],['recent','Order created','order time'],['updated_desc','Last updated','edit time']]) {
+ x.w.PosnicPro.listSort.value=()=>sort;x.w.PosnicPro.sales.loadHistory(1);
+ assert.equal(x.requests.at(-1).sort,sort);assert.equal(x.$('th.sl-col-date').text(),label);assert.equal(x.$('td.sl-col-date').text(),value);
+ }
+ x.close();
+});
 test('serving periods save and reload edited hours and names', () => {
  const x = setup(); x.w.PosnicPro.servingPeriods.load(); x.$('.daypart-name').val('Late lunch'); x.$('.daypart-from').val('13:00');
  x.w.PosnicPro.servingPeriods.save(); x.$('#menu_daypart_rows').empty(); x.w.PosnicPro.servingPeriods.load();

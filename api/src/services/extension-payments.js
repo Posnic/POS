@@ -25,7 +25,7 @@ function paymentScope(context) {
     actorId: String(oid(context.actorId)),
   };
 }
-async function saleContext(db, scope, allowCounterPriceOverride = false) {
+async function saleContext(db, scope, allowCounterPriceOverride = false, roundGrossUnit = false) {
   const branch = await db
     .collection('branches')
     .findOne({ _id: scope.branch_id, license: scope.license });
@@ -35,6 +35,7 @@ async function saleContext(db, scope, allowCounterPriceOverride = false) {
   if (!branch || !user) fail('extension_payment_context_unavailable');
   return {
     allowCounterPriceOverride,
+    roundGrossUnit,
     licenseId: String(scope.license),
     branchId: String(scope.branch_id),
     userId: scope.actorId,
@@ -126,6 +127,7 @@ async function preparePayment(context, input) {
       ...(input.stockOperationId ? { stockOperationId: input.stockOperationId } : {}),
       adjusted: Boolean(input.stockOperationId),
       allowCounterPriceOverride: context.allowCounterPriceOverride === true,
+      roundGrossUnit: context.roundGrossUnit === true,
       createdAt: new Date(),
     });
   } catch (error) {
@@ -135,7 +137,12 @@ async function preparePayment(context, input) {
   if (!row || row.digest !== digest) fail('extension_payment_conflict');
   if (row.status === 'rejected') return { rejected: true };
   if (row.status !== 'preparing') return publicPayment(row);
-  const ctx = await saleContext(db, scope, row.allowCounterPriceOverride === true);
+  const ctx = await saleContext(
+    db,
+    scope,
+    row.allowCounterPriceOverride === true,
+    row.roundGrossUnit === true
+  );
   if (!row.quote) {
     const payload = {
       sale_process: 'add',
@@ -411,7 +418,12 @@ async function confirmRecordedPayment(context, input, method, options = {}) {
         stockGrant
       );
     } else {
-      const ctx = await saleContext(db, scope, row.allowCounterPriceOverride === true);
+      const ctx = await saleContext(
+        db,
+        scope,
+        row.allowCounterPriceOverride === true,
+        row.roundGrossUnit === true
+      );
       const save = options.saveSale || require('./sale.service').processSale;
       const beforeStockCommit = async (pricing, document) => {
         const currency = Money.policy(ctx.branchSettings);

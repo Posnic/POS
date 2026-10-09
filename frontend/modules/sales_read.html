@@ -29,12 +29,23 @@
             </div>
             <div id="sales_restaurant_filters" class="flex-wrap align-items-end" style="display:none; gap:12px; margin-top:10px;">
                 <div><label for="sales_history_table" class="mb-1"><lang class="lang_table">Table</lang></label>
-                    <select id="sales_history_table" class="form-control form-control-sm" style="min-width:160px;"><option value="" data-t="lang_all_sales">All sales</option><option value="__tables" data-t="lang_tables_only">Tables only</option></select></div>
+                    <select id="sales_history_table" class="form-control form-control-sm" style="min-width:160px;"><option value="" data-t="lang_all_sales"><lang class="lang_all_sales">All sales</lang></option><option value="__tables" data-t="lang_tables_only"><lang class="lang_tables_only">Tables only</lang></option></select></div>
                 <div><label for="sales_history_period" class="mb-1"><lang class="lang_serving_period">Serving period</lang></label>
-                    <select id="sales_history_period" class="form-control form-control-sm" style="min-width:160px;"><option value="" data-t="lang_all_day">All day</option></select></div>
+                    <select id="sales_history_period" class="form-control form-control-sm" style="min-width:160px;"><option value="" data-t="lang_all_day"><lang class="lang_all_day">All day</lang></option></select></div>
                 <button type="button" id="sales_restaurant_reset" class="btn btn-link btn-sm"><lang class="lang_clear_restaurant_filters">Clear restaurant filters</lang></button>
                 <small id="sales_history_period_hint" class="text-muted" aria-live="polite"></small>
             </div>
+            <details id="sales_provenance_filters" class="mb-3">
+                <summary class="py-2"><lang class="lang_staff_device_source_filters">Staff, device &amp; source filters</lang></summary>
+                <form id="sales_provenance_form" class="d-flex flex-wrap align-items-end" style="gap:12px;padding:12px 0;">
+                    <label class="mb-0"><lang class="lang_restaurant_taken_by">Order taken by</lang><input id="sales_history_staff" class="form-control" type="search" maxlength="120" placeholder="Staff name or email" data-t-placeholder="lang_staff_name_or_email"></label>
+                    <label class="mb-0"><lang class="lang_device">Device</lang><input id="sales_history_device" class="form-control" type="search" maxlength="120" placeholder="Device name or ID" data-t-placeholder="lang_device_name_or_id"></label>
+                    <label class="mb-0" id="sales_history_source_wrap"><lang class="lang_rd_order_source">Order source</lang><select id="sales_history_source" class="form-control"><option value=""><lang class="lang_all_sources">All sources</lang></option></select></label>
+                    <button type="submit" class="btn btn-primary" style="min-height:44px"><lang class="lang_filter_title">Apply</lang></button>
+                    <button type="button" id="sales_provenance_reset" class="btn btn-light" style="min-height:44px"><lang class="lang_clear_title">Clear</lang></button>
+                    <small class="text-muted w-100"><lang class="lang_search_recorded_staff_and_device_details_o">Search recorded staff and device details. Older bills without these details will not match.</lang></small>
+                </form>
+            </details>
             <!--
                 KEPT DELIBERATELY, and not a filter control any more.
 
