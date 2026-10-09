@@ -42,12 +42,37 @@
   }
 }
 #restock_modal {
+  .modal-dialog {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+    width: calc(100% - 32px);
+  }
   .table th,
   .table td {
     vertical-align: middle;
   }
   .restock-qty {
-    width: 120px;
+    width: 96px;
+    min-height: 52px;
+    text-align: center;
+    appearance: textfield;
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      appearance: none;
+      margin: 0;
+    }
+  }
+  .restock-stepper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .restock-step {
+    min-width: 52px;
+    min-height: 52px;
+    font-size: 24px;
+    padding: 4px;
   }
   .select2-container .select2-selection--single {
     min-height: 48px;
