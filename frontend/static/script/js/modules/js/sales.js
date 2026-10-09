@@ -1,4 +1,12 @@
-﻿PosnicPro.sales = {
+﻿// Select checkout numbers for immediate replacement by touch or keyboard.
+$(document).on('focusin click', '#sales_new input[name="addSalesLineItemQty"], #sale_line_edit input[type="number"]', function () {
+    var input = this;
+    setTimeout(function () {
+        if (document.activeElement === input && !input.disabled && !input.readOnly) input.select();
+    }, 0);
+});
+
+PosnicPro.sales = {
     /* Array Declaration */
     extraDiscount: [],
     addLineTable: [],
