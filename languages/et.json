@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Varude eelistust ei õnnestunud salvestada.",
   "lang_track_quantities": "Jälgi koguseid",
   "lang_track_quantities_2": "Jälgikogused:",
-  "lang_track_quantities_count_stock_received_and": "Jälgige koguseid - loendage saadud ja müüdud varusid"
+  "lang_track_quantities_count_stock_received_and": "Jälgige koguseid - loendage saadud ja müüdud varusid",
+  "lang_start_recount": "Alusta ülelugemist",
+  "lang_restock_basket": "Varude täiendamise korv",
+  "lang_finish": "Lõpeta",
+  "lang_quantity_to_add": "Lisatav kogus"
 }

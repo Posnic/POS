@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Преференцијата на акции не може да се зачува.",
   "lang_track_quantities": "Следете ги количините",
   "lang_track_quantities_2": "Следете ги количините:",
-  "lang_track_quantities_count_stock_received_and": "Следете ги количините - бројте ги добиените и продадените залихи"
+  "lang_track_quantities_count_stock_received_and": "Следете ги количините - бројте ги добиените и продадените залихи",
+  "lang_start_recount": "Започни повторно броење",
+  "lang_restock_basket": "Кошничка за дополнување",
+  "lang_finish": "Заврши",
+  "lang_quantity_to_add": "Количина за додавање"
 }

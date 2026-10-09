@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "اولویت سهام را نمی توان ذخیره کرد.",
   "lang_track_quantities": "ردیابی مقادیر",
   "lang_track_quantities_2": "ردیابی مقادیر:",
-  "lang_track_quantities_count_stock_received_and": "ردیابی مقادیر - شمارش موجودی دریافت شده و فروخته شده"
+  "lang_track_quantities_count_stock_received_and": "ردیابی مقادیر - شمارش موجودی دریافت شده و فروخته شده",
+  "lang_start_recount": "شروع شمارش مجدد",
+  "lang_restock_basket": "سبد تأمین موجودی",
+  "lang_finish": "پایان",
+  "lang_quantity_to_add": "مقدار قابل افزودن"
 }

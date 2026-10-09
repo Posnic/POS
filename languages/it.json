@@ -4597,5 +4597,9 @@
   "lang_always_available_2": "Sempre disponibile:",
   "lang_track_quantities_2": "Traccia quantità:",
   "lang_always_available_no_quantity_tracking_or_l": "Sempre disponibile — Vendi senza inserire le quantità in magazzino. Nessun avviso di scorte basse. Adatto ai piatti preparati su ordinazione.",
-  "lang_track_quantities_count_stock_received_and": "Traccia quantità — Registra la merce ricevuta e conta ogni vendita. Sono attivi gli avvisi di scorte basse. Adatto ai prodotti confezionati."
+  "lang_track_quantities_count_stock_received_and": "Traccia quantità — Registra la merce ricevuta e conta ogni vendita. Sono attivi gli avvisi di scorte basse. Adatto ai prodotti confezionati.",
+  "lang_start_recount": "Avvia riconteggio",
+  "lang_restock_basket": "Carrello di rifornimento",
+  "lang_finish": "Termina",
+  "lang_quantity_to_add": "Quantità da aggiungere"
 }

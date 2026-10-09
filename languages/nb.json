@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Aksjeferanse kunne ikke lagres.",
   "lang_track_quantities": "Spor mengder",
   "lang_track_quantities_2": "Spor mengder:",
-  "lang_track_quantities_count_stock_received_and": "Spor antall - telle mottatte og solgte lager"
+  "lang_track_quantities_count_stock_received_and": "Spor antall - telle mottatte og solgte lager",
+  "lang_start_recount": "Start ny opptelling",
+  "lang_restock_basket": "Kurv for påfylling",
+  "lang_finish": "Fullfør",
+  "lang_quantity_to_add": "Antall som skal legges til"
 }

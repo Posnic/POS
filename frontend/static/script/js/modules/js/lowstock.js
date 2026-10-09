@@ -15,6 +15,8 @@ PosnicPro.lowstockitems = {
     },
     showDataTablePage: function () {
         PosnicPro.lowstockitems._chrome();
+        PosnicPro.lowstockitems.renderRestock();
+        PosnicPro.ACLForModule('item');
         PosnicPro.lowstockitems.loadList(1);
     },
     /* Deep link #/lowstockitems/<id>: the watchlist with that item open
@@ -30,7 +32,7 @@ PosnicPro.lowstockitems = {
         var self = PosnicPro.lowstockitems;
         var r = (self._lastRows || []).filter(function (x) { return String(x._id) === String(id); })[0];
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        var actions = '<button type="button" class="btn btn-sm btn-primary-rgba ls-restock" data-module="receiving" data-access="write" data-id="' + esc(id) + '">'
+        var actions = '<button type="button" class="btn btn-sm btn-primary-rgba ls-restock" data-id="' + esc(id) + '">'
             + '<i class="feather icon-plus mr-1"></i>Restock</button>';
         if (r) {
             PosnicPro.listDoc.open({ key: 'lowstockitems', id: id, title: r.name, actions: actions, body: self._docBody(r) });
@@ -142,7 +144,7 @@ PosnicPro.lowstockitems = {
                     + '<td class="ls-col-supplier">' + esc(r.supplier_name || '-') + '</td>'
                     + '<td class="ls-col-category">' + esc(r.category_name || '-') + '</td>'
                     + '<td class="text-right"><span class="rs-pill unpaid">' + esc(r.available_quantity) + ' left</span></td>'
-                    + '<td class="text-right"><button type="button" class="btn btn-sm btn-primary-rgba ls-restock" data-module="receiving" data-access="write" data-id="' + esc(r._id) + '">'
+                    + '<td class="text-right"><button type="button" class="btn btn-sm btn-primary-rgba ls-restock" data-id="' + esc(r._id) + '">'
                     + '<i class="feather icon-plus mr-1"></i>Restock</button></td>'
                     + '</tr>';
             });
@@ -209,44 +211,163 @@ PosnicPro.lowstockitems = {
             filename: 'low-stock.csv'
         });
     },
-    /* Restock: open a new purchase with the item AND its supplier already
-       filled - the flow the old Add Stock action carried, kept as-is. */
+    _restock: {},
+    _restockBranch: null,
+    _restockBusy: false,
+    restockContext: function () {
+        var branch = String(PosnicPro.local.get('branch_id_set') || '');
+        if (this._restockBranch !== branch) {
+            this._restock = {}; this._restockBranch = branch;
+            try { this._restock = JSON.parse(sessionStorage.getItem('restock:' + branch) || '{}'); } catch (e) { this._restock = {}; }
+        }
+    },
+    saveRestock: function () {
+        try { sessionStorage.setItem('restock:' + this._restockBranch, JSON.stringify(this._restock)); } catch (e) { /* The current page still keeps the basket. */ }
+    },
+    restockMessage: function (message) { $('#restock_status').text(message).attr('class', 'alert alert-info'); },
+    renderRestock: function () {
+        var self = this;
+        self.restockContext();
+        self.saveRestock();
+        var ids = Object.keys(self._restock);
+        var esc = function (v) { return $('<span>').text(v == null ? '' : v).html(); };
+        $('#restock_dock').toggle(ids.length > 0);
+        $('#restock_summary').text(ids.length + ' ' + PosnicPro.i18n.t('lang_restock_selected_count', 'item(s) selected. Continue adding items from the list.'));
+        $('#restock_rows').html(ids.map(function (id) {
+            var row = self._restock[id];
+            return '<tr><td>' + esc(row.name) + '<small class="d-block text-muted">' + esc(row.supplier_name || PosnicPro.i18n.t('lang_restock_choose_supplier', 'Choose supplier in purchase')) + '</small></td><td>' + esc(row.available_quantity) + '</td>'
+                + '<td><input class="form-control restock-qty" aria-label="Quantity to add for ' + esc(row.name) + '" type="number" min="0.001" step="any" value="' + esc(row.qty) + '" data-id="' + esc(id) + '" style="min-width:110px; min-height:48px;"></td>'
+                + '<td><button type="button" class="btn btn-outline-danger p-3 restock-remove" data-id="' + esc(id) + '" aria-label="Remove ' + esc(row.name) + '">Remove</button></td></tr>';
+        }).join('') || '<tr><td colspan="4"><lang class="lang_no_items_selected_close_this_window_and_ch">No items selected. Close this window and choose items to restock.</lang></td></tr>');
+        $('#restock_finish_button').prop('disabled', !ids.length).show();
+        $('#restock_finish').hide();
+    },
+    reviewRestock: function () {
+        this.renderRestock();
+        $('#restock_status').empty().removeClass();
+        $('#restock_modal').modal('show');
+        PosnicPro.ACLForModule('item');
+        PosnicPro.ACLForModule('receiving');
+    },
     loadLowStockValue: function (id) {
-        var loader = $(".loader-low_stock");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        PosnicPro.get('items/' + id, function (response) {
-            loader.find(".loadingSpinner:first").remove();
-            PosnicPro.receivings.clearReceivingForm();
-            var data = response.data;
-            var itemDetails = {
-                "item_id": data.id,
-                "item_name": data.name,
-                "company_price": data.company_price,
-                "barcode_id": data.barcode_id,
-                "item_quantity": data.available_quantity,
-                "discount_amount": data.discount_amount,
-                "discount_percentage": data.discount_percentage,
-                "tax": data.tax,
-                "supplier": data.supplier_name
-            };
-            PosnicPro.receivings.addReceivingLineItems(itemDetails);
-            PosnicPro.get('suppliers/' + data.supplier_id, function (response) {
-                if (response.type === 'success') {
-                    let supplierData = response.data;
-                    $('#receiving_add_supplier_id').val(supplierData._id);
-                    $('#receiving_add_supplier_name').val(supplierData.name);
-                    $('#receiving_add_supplier_address').val(supplierData.address);
-                    $('#receiving_add_supplier_phone').val(supplierData.phone);
-                    $('#receiving_add_supplier_email').val(supplierData.email);
-                    $('#receiving_add_supplier_state').val(supplierData.state);
-                    $('#receiving_add_supplier_gst_type').val(supplierData.gst_type);
-                    $('#receiving_add_supplier_gst_number').val(supplierData.gst_number);
-                }
-            });
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
+        var self = this;
+        self.restockContext();
+        if (self._restockBusy) return;
+        if (self._restock[id]) { self.reviewRestock(); return; }
+        if (Object.keys(self._restock).length >= 200) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_finish_this_basket_before_adding_more_than', 'Finish this basket before adding more than 200 items.')); return; }
+        self._restockBusy = true;
+        var branch = self._restockBranch;
+        $('.ls-restock').prop('disabled', true);
+        PosnicPro.get('items/' + encodeURIComponent(id), function (response) {
+            self._restockBusy = false;
+            $('.ls-restock').prop('disabled', false);
+            self.restockContext();
+            if (branch !== self._restockBranch) return;
+            if (!response || response.type !== 'success' || !response.data) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_this_item_try_again', 'Could not load this item. Try again.')); return; }
+            self._restock[id] = Object.assign({}, response.data, { qty: 1, restock_id: String(id) });
+            self.reviewRestock();
+        }, function () {
+            self._restockBusy = false;
+            $('.ls-restock').prop('disabled', false);
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_this_item_try_again', 'Could not load this item. Try again.'));
         });
+    },
+    validRestock: function () {
+        var self = this;
+        self.restockContext();
+        var ids = Object.keys(self._restock);
+        if (!ids.length || ids.some(function (id) { var qty = Number(self._restock[id].qty); return !Number.isFinite(qty) || qty <= 0 || qty > 100000; })) {
+            self.restockMessage(PosnicPro.i18n.t('lang_restock_quantity_invalid', 'Enter a quantity greater than zero and no more than 100,000 for every item.')); return false;
+        }
+        return true;
+    },
+    finishRestock: function () {
+        if (!this.validRestock()) return;
+        var self = this, groups = {};
+        Object.keys(self._restock).forEach(function (id) { var r = self._restock[id]; groups[r.supplier_id || ''] = r.supplier_name || PosnicPro.i18n.t('lang_restock_choose_supplier', 'Choose supplier in purchase'); });
+        var select = $('#restock_supplier').empty();
+        Object.keys(groups).forEach(function (id) { $('<option>').val(id).text(groups[id]).appendTo(select); });
+        $('#restock_status').empty().removeClass();
+        $('#restock_finish').show();
+        $('#restock_finish_button').hide();
+    },
+    restockDirect: function () {
+        var self = this;
+        if (!self.validRestock()) return;
+        var selected = Object.keys(self._restock);
+        $('#restock_modal').one('hidden.bs.modal', function () {
+            PosnicPro.items.openStockAdjustment();
+            $('#stock_adjust_reason').val('__custom__');
+            $('#stock_adjust_custom').val('Restock');
+            $('#stock_adjust_mode').val('add');
+            selected.forEach(function (id) {
+                var r = self._restock[id];
+                PosnicPro.items._adjRows[id] = { name: r.name, stock: Number(r.available_quantity) || 0, qty: Number(r.qty) };
+            });
+            PosnicPro.items._adjustmentComplete = function (data) {
+                (data.updatedItemIds || []).forEach(function (id) { delete self._restock[id]; });
+                self.renderRestock();
+                self.loadList();
+            };
+            PosnicPro.items.adjReasonChanged();
+        }).modal('hide');
+    },
+    restockPurchase: function () {
+        var self = this;
+        if (!self.validRestock()) return;
+        if (Object.keys(PosnicPro.receiving_lineitems || {}).length) {
+            self.restockMessage(PosnicPro.i18n.t('lang_restock_purchase_in_progress', 'An unfinished purchase already has items. Save or clear it in Purchases before transferring this basket. Your restock selection is kept.')); return;
+        }
+        var supplierId = String($('#restock_supplier').val() || '');
+        var ids = Object.keys(self._restock).filter(function (id) { return String(self._restock[id].supplier_id || '') === supplierId; });
+        if (!ids.length) return;
+        if (self._restockBusy) return;
+        var branch = self._restockBranch;
+        var transfer = function (supplier) {
+            self._restockBusy = false;
+            $('#restock_modal button,#restock_modal input,#restock_modal select').prop('disabled', false);
+            self.restockContext();
+            if (branch !== self._restockBranch) return;
+            $('#restock_modal').one('hidden.bs.modal', function () {
+                PosnicPro.receivings._restockDraft = { supplierId: supplierId, supplier: supplier, ids: ids, branch: branch };
+                hasher.setHash('receivings/new');
+            }).modal('hide');
+        };
+        if (!supplierId) { transfer({}); return; }
+        self._restockBusy = true;
+        $('#restock_modal button,#restock_modal input,#restock_modal select').prop('disabled', true);
+        var failed = function () {
+            self._restockBusy = false;
+            $('#restock_modal button,#restock_modal input,#restock_modal select').prop('disabled', false);
+            self.restockMessage(PosnicPro.i18n.t('lang_could_not_load_this_purchase', 'Could not load this purchase.'));
+        };
+        PosnicPro.get('suppliers/' + encodeURIComponent(supplierId), function (response) {
+            if (!response || response.type !== 'success' || !response.data) { failed(); return; }
+            transfer(response.data);
+        }, failed);
+    },
+    applyPurchaseDraft: function () {
+        var self = this, draft = PosnicPro.receivings._restockDraft;
+        if (!draft) return;
+        PosnicPro.receivings._restockDraft = null;
+        self.restockContext();
+        if (draft.branch !== self._restockBranch) return;
+        var ids = draft.ids;
+        PosnicPro.receivings.clearReceivingForm();
+        $('#receiving_add_supplier_id').val(draft.supplierId);
+        $('#receiving_add_supplier_name').val(self._restock[ids[0]].supplier_name || '');
+        ['address', 'phone', 'email', 'state', 'gst_type', 'gst_number'].forEach(function (field) {
+            $('#receiving_add_supplier_' + field).val((draft.supplier || {})[field] || '');
+        });
+        ids.forEach(function (id) {
+            var r = self._restock[id];
+            PosnicPro.receivings.addReceivingLineItems({ item_id: id, item_name: $('<span>').text(r.name).html(), company_price: Number(r.company_price) || 0,
+                barcode_id: r.barcode_id || '', item_quantity: Number(r.qty), item_unit: r.unit || 'qty', tax: Number(r.tax) || 0, tax_type: r.tax_type,
+                discount_amount: 0, discount_percentage: 0, supplier: r.supplier_name || '' });
+            delete self._restock[id];
+        });
+        self.renderRestock();
+        PosnicPro.alert('success', PosnicPro.i18n.t('lang_restock_transferred', 'Items transferred to purchase. Review costs and save the purchase. Other supplier groups remain in your restock basket.'));
     }
 };
 
@@ -263,6 +384,21 @@ $(document).on('click', '#lowstockitems_list_rows tr.lowstockitems-row', functio
 $(document).on('click', '.ls-restock', function (e) {
     e.stopPropagation();
     var id = $(this).data('id');
-    hasher.setHash('receivings/new');
     PosnicPro.lowstockitems.loadLowStockValue(id);
+});
+
+$(document).on('input', '.restock-qty', function () {
+    var row = PosnicPro.lowstockitems._restock[$(this).data('id')];
+    if (row) row.qty = $(this).val();
+    PosnicPro.lowstockitems.saveRestock();
+    $('#restock_finish').hide();
+    $('#restock_finish_button').show();
+});
+$(document).on('click', '.restock-remove', function () {
+    delete PosnicPro.lowstockitems._restock[$(this).data('id')];
+    PosnicPro.lowstockitems.renderRestock();
+});
+$(document).on('focusin click', '.restock-qty', function () {
+    var input = this;
+    setTimeout(function () { if (document.activeElement === input) input.select(); }, 0);
 });

@@ -4597,5 +4597,9 @@
   "lang_always_available_2": "Selalu tersedia:",
   "lang_track_quantities_2": "Lacak jumlah:",
   "lang_always_available_no_quantity_tracking_or_l": "Selalu tersedia — Jual tanpa memasukkan jumlah stok. Tanpa peringatan stok rendah. Cocok untuk hidangan yang dibuat sesuai pesanan.",
-  "lang_track_quantities_count_stock_received_and": "Lacak jumlah — Catat stok masuk dan setiap penjualan. Peringatan stok rendah berlaku. Cocok untuk barang kemasan."
+  "lang_track_quantities_count_stock_received_and": "Lacak jumlah — Catat stok masuk dan setiap penjualan. Peringatan stok rendah berlaku. Cocok untuk barang kemasan.",
+  "lang_start_recount": "Mulai hitung ulang",
+  "lang_restock_basket": "Keranjang pengisian stok",
+  "lang_finish": "Selesai",
+  "lang_quantity_to_add": "Jumlah yang ditambahkan"
 }

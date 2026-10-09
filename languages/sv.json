@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Aktiepreferensen kunde inte sparas.",
   "lang_track_quantities": "Spåra kvantiteter",
   "lang_track_quantities_2": "Spåra kvantiteter:",
-  "lang_track_quantities_count_stock_received_and": "Spåra kvantiteter - räkna mottaget och sålt lager"
+  "lang_track_quantities_count_stock_received_and": "Spåra kvantiteter - räkna mottaget och sålt lager",
+  "lang_start_recount": "Starta omräkning",
+  "lang_restock_basket": "Påfyllningskorg",
+  "lang_finish": "Slutför",
+  "lang_quantity_to_add": "Antal att lägga till"
 }

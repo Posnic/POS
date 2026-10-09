@@ -78,6 +78,7 @@ PosnicPro.receivings = {
         $('#show_last_created_receiving').hide();
         var loader = $(".loader-receiving");
         loader.find(".loadingSpinner:first").remove();
+        if (PosnicPro.receivings._restockDraft) PosnicPro.lowstockitems.applyPurchaseDraft();
     },
     showEdit: function (id) {
         $('#receiving_add_date').removeClass('commonDate');
@@ -674,7 +675,7 @@ PosnicPro.receivings = {
         $('#clearReceiving').show();
         $('#closeReceiving').hide();
         $('.fileupload-preview').html(PosnicPro.i18n.t('lang_upload_file', 'Upload file'));
-        (PosnicPro.local.get('default_supplier_enable_disable') === 'false') ? $('#receiving_add_supplier_id,#receiving_add_supplier_name,#receiving_add_supplier_address,#receiving_add_supplier_phone,#receiving_add_supplier_email,#receiving_add_supplier_state,#receiving_add_supplier_gst_type,#receiving_add_supplier_gst_number').val('') : PosnicPro.defaultSupplierSet();
+        if (!PosnicPro.receivings._restockDraft) (PosnicPro.local.get('default_supplier_enable_disable') === 'false') ? $('#receiving_add_supplier_id,#receiving_add_supplier_name,#receiving_add_supplier_address,#receiving_add_supplier_phone,#receiving_add_supplier_email,#receiving_add_supplier_state,#receiving_add_supplier_gst_type,#receiving_add_supplier_gst_number').val('') : PosnicPro.defaultSupplierSet();
         PosnicPro.receivings.imageParams = [];
         PosnicPro.receivings.receivingAddAction = false;
         PosnicPro.receivings.receivingId = '';

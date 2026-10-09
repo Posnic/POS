@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "无法保存股票偏好。",
   "lang_track_quantities": "追踪数量",
   "lang_track_quantities_2": "追踪数量：",
-  "lang_track_quantities_count_stock_received_and": "追踪数量-计算收到和出售的库存"
+  "lang_track_quantities_count_stock_received_and": "追踪数量-计算收到和出售的库存",
+  "lang_start_recount": "开始重新盘点",
+  "lang_restock_basket": "补货篮",
+  "lang_finish": "完成",
+  "lang_quantity_to_add": "添加数量"
 }

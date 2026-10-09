@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Prednostnih zalog ni bilo mogoče shraniti.",
   "lang_track_quantities": "Sledite količinam",
   "lang_track_quantities_2": "Sledenje količin:",
-  "lang_track_quantities_count_stock_received_and": "Sledite količinam - preštejte prejete in prodane zaloge"
+  "lang_track_quantities_count_stock_received_and": "Sledite količinam - preštejte prejete in prodane zaloge",
+  "lang_start_recount": "Začni ponovno štetje",
+  "lang_restock_basket": "Košarica za dopolnitev zalog",
+  "lang_finish": "Dokončaj",
+  "lang_quantity_to_add": "Količina za dodajanje"
 }

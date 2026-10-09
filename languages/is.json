@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Ekki var hægt að vista hlutabréfavald.",
   "lang_track_quantities": "Fylgstu með magni",
   "lang_track_quantities_2": "Fylgjumagn:",
-  "lang_track_quantities_count_stock_received_and": "Fylgstu með magni - telja birgðir mótteknar og seldar"
+  "lang_track_quantities_count_stock_received_and": "Fylgstu með magni - telja birgðir mótteknar og seldar",
+  "lang_start_recount": "Hefja endurtalningu",
+  "lang_restock_basket": "Karfa fyrir áfyllingu",
+  "lang_finish": "Ljúka",
+  "lang_quantity_to_add": "Magn til að bæta við"
 }

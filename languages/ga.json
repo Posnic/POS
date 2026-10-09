@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Ní fhéadfaí rogha stoic a shábháil.",
   "lang_track_quantities": "Cainníochtaí a ri",
   "lang_track_quantities_2": "Cainníochtaí rianaithe:",
-  "lang_track_quantities_count_stock_received_and": "Cainníochtaí a rianú - comhaireamh stoc a fuarthas"
+  "lang_track_quantities_count_stock_received_and": "Cainníochtaí a rianú - comhaireamh stoc a fuarthas",
+  "lang_start_recount": "Tosaigh athchomhaireamh",
+  "lang_restock_basket": "Ciseán athstocála",
+  "lang_finish": "Críochnaigh",
+  "lang_quantity_to_add": "Cainníocht le cur leis"
 }

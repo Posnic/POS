@@ -4597,5 +4597,9 @@
   "lang_always_available_2": "متاح دائمًا:",
   "lang_track_quantities_2": "تتبع الكميات:",
   "lang_always_available_no_quantity_tracking_or_l": "متاح دائمًا — البيع دون إدخال كميات المخزون. لا توجد تنبيهات انخفاض المخزون. مناسب للأطباق المحضرة عند الطلب.",
-  "lang_track_quantities_count_stock_received_and": "تتبع الكميات — سجّل المخزون المستلم واحسب كل عملية بيع. تُفعّل تنبيهات انخفاض المخزون. مناسب للسلع المعبأة."
+  "lang_track_quantities_count_stock_received_and": "تتبع الكميات — سجّل المخزون المستلم واحسب كل عملية بيع. تُفعّل تنبيهات انخفاض المخزون. مناسب للسلع المعبأة.",
+  "lang_start_recount": "بدء إعادة العد",
+  "lang_restock_basket": "سلة إعادة التخزين",
+  "lang_finish": "إنهاء",
+  "lang_quantity_to_add": "الكمية المراد إضافتها"
 }

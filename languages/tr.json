@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "Hisse senedi tercihi kaydedilemedi.",
   "lang_track_quantities": "Miktarları takip edin",
   "lang_track_quantities_2": "Miktarları takip edin:",
-  "lang_track_quantities_count_stock_received_and": "Miktarları takip edin - alınan ve satılan stokları sayın"
+  "lang_track_quantities_count_stock_received_and": "Miktarları takip edin - alınan ve satılan stokları sayın",
+  "lang_start_recount": "Yeniden sayımı başlat",
+  "lang_restock_basket": "Stok yenileme sepeti",
+  "lang_finish": "Bitir",
+  "lang_quantity_to_add": "Eklenecek miktar"
 }

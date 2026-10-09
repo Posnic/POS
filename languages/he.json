@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "לא ניתן לשמור את העדפת המניות.",
   "lang_track_quantities": "עקוב אחר כמויות",
   "lang_track_quantities_2": "עקוב אחר כמויות:",
-  "lang_track_quantities_count_stock_received_and": "עקוב אחר כמויות - ספירת מלאי שהתקבל ונמכר"
+  "lang_track_quantities_count_stock_received_and": "עקוב אחר כמויות - ספירת מלאי שהתקבל ונמכר",
+  "lang_start_recount": "התחלת ספירה חוזרת",
+  "lang_restock_basket": "סל לחידוש מלאי",
+  "lang_finish": "סיום",
+  "lang_quantity_to_add": "כמות להוספה"
 }

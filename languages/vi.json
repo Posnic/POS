@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "Không thể lưu ưu tiên cổ phiếu.",
   "lang_track_quantities": "Theo dõi số lượng",
   "lang_track_quantities_2": "Theo dõi số lượng:",
-  "lang_track_quantities_count_stock_received_and": "Theo dõi số lượng - đếm cổ phiếu nhận và bán"
+  "lang_track_quantities_count_stock_received_and": "Theo dõi số lượng - đếm cổ phiếu nhận và bán",
+  "lang_start_recount": "Bắt đầu kiểm đếm lại",
+  "lang_restock_basket": "Giỏ bổ sung hàng",
+  "lang_finish": "Hoàn tất",
+  "lang_quantity_to_add": "Số lượng cần thêm"
 }

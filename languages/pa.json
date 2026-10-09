@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "ਸਟਾਕ ਤਰਜੀਹ ਨੂੰ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ.",
   "lang_track_quantities": "ਮਾਤਰਾ ਨੂੰ ਟਰੈਕ ਕਰੋ",
   "lang_track_quantities_2": "ਟਰੈਕ ਮਾਤਰਾ:",
-  "lang_track_quantities_count_stock_received_and": "ਟ੍ਰੈਕ ਮਾਤਰਾ - ਪ੍ਰਾਪਤ ਅਤੇ ਵੇਚੇ ਗਏ ਸਟਾਕ ਦੀ ਗਿਣਤੀ ਕਰੋ"
+  "lang_track_quantities_count_stock_received_and": "ਟ੍ਰੈਕ ਮਾਤਰਾ - ਪ੍ਰਾਪਤ ਅਤੇ ਵੇਚੇ ਗਏ ਸਟਾਕ ਦੀ ਗਿਣਤੀ ਕਰੋ",
+  "lang_start_recount": "ਮੁੜ ਗਿਣਤੀ ਸ਼ੁਰੂ ਕਰੋ",
+  "lang_restock_basket": "ਸਟਾਕ ਭਰਨ ਦੀ ਟੋਕਰੀ",
+  "lang_finish": "ਪੂਰਾ ਕਰੋ",
+  "lang_quantity_to_add": "ਜੋੜਨ ਵਾਲੀ ਮਾਤਰਾ"
 }
