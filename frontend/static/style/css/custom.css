@@ -1322,8 +1322,10 @@ input[type="checkbox"]:checked:after, .checkbox input[type="checkbox"]:checked:a
 #dashboard .dashboard-period-controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;width:100%;max-width:540px}
 #dashboard .dashboard-period-controls .shop_buttons{display:contents}
 #dashboard .dashboard-period-controls .btn{display:inline-flex;align-items:center;justify-content:center;height:38px;min-width:0;width:100%;margin:0;padding:6px;font-size:14px;white-space:nowrap}
-#dashboard #dashboard_refresh{border-color:transparent;border-radius:4px;background:var(--theme-body-bg,#f2f3f7);color:var(--theme-text-secondary,#66758c);box-shadow:none}
-#dashboard #dashboard_refresh:hover{background:var(--theme-menu-active-bg,#edf1fa);color:var(--theme-primary-color,#506fe4)}
+#dashboard #dashboard_refresh{border:1px solid var(--theme-border-color,#dce2eb);border-radius:6px;background:var(--theme-card-bg,#fff);color:var(--theme-text-primary,#183047);box-shadow:none;width:calc(100% - 8px);margin-right:8px;min-height:44px;touch-action:manipulation}
+#dashboard #dashboard_refresh:not(:disabled):hover,#dashboard #dashboard_refresh:not(:disabled):active{background:color-mix(in srgb,var(--theme-primary-color,#506fe4) 12%,var(--theme-card-bg,#fff));border-color:var(--theme-primary-color,#506fe4);color:var(--theme-text-primary,#183047)}
+#dashboard #dashboard_refresh>i,#dashboard #dashboard_refresh>lang{color:inherit}
+#dashboard #dashboard_refresh:disabled{cursor:progress;opacity:.65}
 #dashboard #dashboard_refresh:focus-visible{outline:2px solid var(--theme-primary-color,#506fe4);outline-offset:2px}
 #dashboard #dashboard_refresh_status{grid-column:1/-1;margin-top:8px!important}
 @media(max-width:600px){#dashboard .dashboard-period-controls{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:6px}#dashboard #btnDashboardCountDay{grid-column:1}}
@@ -3018,7 +3020,7 @@ input:checked + .slider:before {
 .q-doc-title { font-weight: 700; font-size: 21px; letter-spacing: 3px; color: #2d3748; }
 .q-num { font-weight: 700; font-size: 14px; margin: 2px 0; }
 .q-title-block { text-align: right; white-space: nowrap; }
-.q-status { display: inline-block; margin-top: 8px; margin-bottom: 2px; padding: 2px 10px; border: 1.5px solid #c53030; color: #c53030; font-weight: 700; font-size: 12px; letter-spacing: 1px; border-radius: 3px; }
+.q-status { display: inline-block; margin-top: 8px; margin-bottom: 2px; padding: 2px 10px; border: 1.5px solid currentColor; color: #526174; font-weight: 700; font-size: 12px; letter-spacing: 1px; border-radius: 3px; }
 .q-billto { margin: 16px 0 6px; }
 .q-cust { font-weight: 700; font-size: 15px; }
 .q-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8a94a6; margin-bottom: 3px; }
@@ -3450,9 +3452,13 @@ input:checked + .slider:before {
 /* Cart row actions: edit and delete are the SAME control, twice - same
    box, same icon size, same hover plate, only the colour differs */
 .sale-line-act { display: inline-flex; align-items: center; justify-content: center;
-    width: 28px; height: 28px; border-radius: 5px; margin: 0 1px; line-height: 1;
+    width: 48px; height: 48px; border-radius: 8px; margin: 0 3px; line-height: 1; touch-action: manipulation;
     background: transparent; border: 0; transition: background .15s ease; }
-.sale-line-act i { font-size: 15px; }
+.sale-line-act i { font-size: 20px; }
+tr[data-sale-edit] { cursor: pointer; }
+tr[data-sale-edit]:hover { background:var(--theme-table-row-hover,#f1f6fc); }
+tr[data-sale-edit]:focus-visible { outline:2px solid var(--theme-primary-color,#4680ff);outline-offset:-2px; }
+.sale-line-act:focus-visible { outline:2px solid var(--theme-primary-color,#4680ff);outline-offset:2px; }
 .sale-line-edit { color: #4680ff; }
 .sale-line-edit:hover { background: #eef3ff; color: #2f5fe0; }
 .sale-line-del { color: #e2523d; }
@@ -4106,10 +4112,24 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     .invoices-split #invoices_list_card .i-col-due,
     .invoices-split #invoices_list_card .i-col-balance { display: none; }
 }
-/* PAID reads green, the rest keep the quote's red stamp: a customer's eye
-   goes to the stamp first, and "paid" is the one word that should not be
-   the colour of a warning. */
-.q-status.is-paid { border-color: #23985c; color: #23985c; }
+/* Status meaning is shared across document details, independent of translation.
+   Text remains visible for monochrome printing and colour-blind readers. */
+.q-status.is-paid,
+.q-status[data-status="paid"],
+.q-status[data-status="received"],
+.q-status[data-status="accepted"] { color: #187044; border-color: currentColor; }
+.q-status[data-status="unpaid"],
+.q-status[data-status="partial"],
+.q-status[data-status="ordered"],
+.q-status[data-status="pending"] { color: #875900; }
+.q-status[data-status="cancelled"],
+.q-status[data-status="canceled"],
+.q-status[data-status="rejected"],
+.q-status[data-status="overdue"] { color: #b42318; }
+.q-status[data-status="returned"],
+.q-status[data-status="refunded"],
+.q-status[data-status="converted"],
+.q-status[data-status="invoiced"] { color: #245eb2; }
 /* The due date turns red only while money is still owed on it. */
 .i-overdue { color: #c53030; font-weight: 600; }
 .ie-pay-strip {
@@ -7703,7 +7723,7 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
 }
 
 /* Billing outlets owns its layout; legacy global main rules must not move it. */
-#billing_outlets_page { margin:0; width:auto; }
+#billing_outlets_page { margin:92px 0 24px; width:auto; color:var(--theme-text-primary,#172b4d); }
 #billing_outlets_page > div { background:var(--theme-card-bg,#fff); border:1px solid var(--theme-border-color,#dce2eb); border-radius:14px; padding:24px; }
 #billing_outlets_page .nav { gap:8px; }
 #billing_outlets_page .nav .active { background:var(--theme-primary-color,#0969da); color:var(--theme-on-primary,#fff); border-radius:6px; }
@@ -7759,4 +7779,3 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
   #items_new #item_translation_chips { flex-direction:row; flex-wrap:wrap; }
   #items_new #item_translation_chips button { width:auto; }
 }
-

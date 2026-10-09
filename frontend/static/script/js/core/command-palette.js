@@ -100,6 +100,11 @@
         for (var i = 0; i < PAGES.length; i++) {
             var p = PAGES[i];
             if (!aclCan(p[2][0], p[2][1])) continue;
+            if (p[1] === 'billingoutlets') {
+                var settings = {};
+                try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) { }
+                if (!settings || settings.module_billing_outlets_enable !== true) continue;
+            }
             list.push({ name: p[0], keywords: p[3], hash: p[1] });
         }
         for (var a = 0; a < ACTIONS.length; a++) {

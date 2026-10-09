@@ -670,7 +670,11 @@ body.customer-display .contentbar {
 
 /* Read-only restaurant context in sale history. */
 .sale-restaurant-summary{background:#fff;border:1px solid #dfe7ef;border-radius:12px;padding:18px 20px;margin:0 0 16px;color:#18314d}
-.sale-restaurant-heading{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.sale-restaurant-summary>.sale-restaurant-heading{display:flex;align-items:center;gap:10px;margin:0;min-height:44px;list-style:none;color:inherit}
+.sale-restaurant-summary[open]>.sale-restaurant-heading{margin-bottom:16px}
+.sale-restaurant-heading::-webkit-details-marker{display:none}
+.sale-restaurant-chevron{width:8px;height:8px;margin-left:auto;margin-right:4px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);flex:none}
+.sale-restaurant-summary[open]>.sale-restaurant-heading .sale-restaurant-chevron{transform:rotate(45deg)}
 .sale-restaurant-summary h3{font-size:15px;font-weight:650;line-height:1.4;margin:0}
 .sale-restaurant-icon{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:9px;background:#edf5ff;color:#397ab7}
 .sale-restaurant-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}

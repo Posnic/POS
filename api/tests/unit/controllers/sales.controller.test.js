@@ -697,6 +697,34 @@ describe('SalesController', () => {
 
   // ── getAll ───────────────────────────────────────────────────────────────────
   describe('getAll', () => {
+    test.each([
+      ['', 'date:desc,_id:desc'],
+      ['date_asc', 'date:asc,_id:asc'],
+      ['date_desc', 'date:desc,_id:desc'],
+      ['recent', 'created_date:desc,_id:desc'],
+      ['updated_desc', 'updated_date:desc,_id:desc'],
+      ['total_desc', 'sales_total:desc,_id:desc'],
+    ])('sort %s reaches pagination', async (sort, sortBy) => {
+      await ctrl.getAll(mockReq({ query: { sort } }), mockRes(), mockNext());
+      expect(salesService.listSales).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({ sortBy }),
+        expect.any(Object)
+      );
+    });
+    test('staff and device filters narrow the existing scoped query', async () => {
+      await ctrl.getAll(
+        mockReq({
+          query: { ordered_by: 'Asha', order_device: 'Kitchen', order_source: 'tableside' },
+        }),
+        mockRes(),
+        mockNext()
+      );
+      const filter = salesService.listSales.mock.calls[0][0];
+      expect(filter.$and).toHaveLength(3);
+      expect(JSON.stringify(filter.$and)).toContain('kitchen_actor.name');
+      expect(JSON.stringify(filter.$and)).toContain('client.device_id');
+    });
     test('200 with paginated list', async () => {
       salesService.listSales.mockResolvedValue({
         results: [{ _id: VALID_ID }],

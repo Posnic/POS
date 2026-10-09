@@ -41,6 +41,7 @@ function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
           ...require('../utils/item-localization').snapshot(live[index]),
           seat: Number(live[index].seat) || 0,
           id: String(sale._id) + ':' + index,
+          bill_source: require('../helpers/combine-bill-lines').source(live[index]),
         });
       });
       for (const key of Object.keys(allocation.components))
@@ -57,7 +58,8 @@ function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
         Number(it.quantity ?? it.item_quantity ?? it.qty) > 0 &&
         String(it.name || it.item_name || '').trim()
     );
-    const payload = buildBillPayload({ ...sale, items: live }, branch);
+    // Allocation and seat assignment require the original one-row-per-line shape.
+    const payload = buildBillPayload({ ...sale, items: live }, branch, { combineItems: false });
     if (!payload.items.length) continue;
     const bases = payload.items.map((it) => Math.max(0, minor(it.amount)));
     const weights = bases.some(Boolean) ? bases : bases.map(() => 1);
@@ -87,6 +89,7 @@ function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
         name: item.name,
         ...require('../utils/item-localization').snapshot(item),
         quantity: Number(item.qty),
+        bill_source: require('../helpers/combine-bill-lines').source(live[i]),
         seat: Number(live[i]?.seat) || 0,
         components: parts,
         amountMinor: parts.reduce((n, c) => n + c.minor, 0),
@@ -124,12 +127,12 @@ function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
     ),
   };
 }
-function billForGuest(snapshot, guest, branch, sale, batchId) {
+function billForGuest(snapshot, guest, branch, sale, batchId, options = {}) {
   const base = buildBillPayload(sale, branch);
   const monetary = Money.snapshot(snapshot);
   const factor = monetary.factor;
   const value = (key) => (guest.components[key] || 0) / factor;
-  return {
+  const bill = {
     ...base,
     currency: monetary.currencySymbol,
     currencyCode: monetary.currencyCode,
@@ -170,6 +173,13 @@ function billForGuest(snapshot, guest, branch, sale, batchId) {
     footerImageCaption: '',
     totalQty: '',
   };
+  if (options.combineItems !== false)
+    bill.items = require('../helpers/combine-bill-lines')(
+      guest.lines.map((line) => line.bill_source || {}),
+      bill.items,
+      monetary
+    );
+  return bill;
 }
 function createService(deps = {}) {
   const models = () => ({

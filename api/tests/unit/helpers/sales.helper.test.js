@@ -23,6 +23,15 @@ jest.mock('mongoose', () => ({
 const helper = require('../../../src/helpers/sales.helper');
 
 describe('sales.helper', () => {
+  test('sale time does not change when a bill is edited or served later', () => {
+    const date = new Date('2026-10-08T07:00:00Z');
+    const result = helper.formatSaleListEntry({
+      date,
+      created_date: new Date('2026-10-08T06:00:00Z'),
+      updated_date: new Date('2026-10-09T08:00:00Z'),
+    });
+    expect(result.string_date).toBe(date.toISOString());
+  });
   test('exports sales helper functions', () => {
     expect(helper.normalizeReportType('weekly')).toBe('Weekly');
     expect(helper.roundToTwo('12.345')).toBe(12.35);

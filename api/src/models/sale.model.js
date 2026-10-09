@@ -333,6 +333,8 @@ const saleSchema = new mongoose.Schema(
     },
 
     // Core sales fields
+    order_date: { type: Date },
+    settled_at: { type: Date },
     date: {
       type: Date,
       default: Date.now,

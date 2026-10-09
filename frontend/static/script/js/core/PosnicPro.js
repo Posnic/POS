@@ -2917,7 +2917,7 @@ PosnicPro = {
         $('#manage_li_onlineordering').toggle(on('module_online_ordering_enable'));
         $('#manage_li_kioskmachine').toggle(on('module_kiosk_enable'));
         $('#manage_li_captainapp').toggle(on('module_captain_enable'));
-        $('#billing_outlets_open').toggle(s.module_billing_outlets_enable === true);
+        $('#billing_outlets_open, #manage_li_billingoutlets').toggle(s.module_billing_outlets_enable === true);
         $('#manage_li_deliverypartners').toggle(on('module_delivery_partners_enable'));
         $('#manage_li_webshop').toggle(on('module_webshop_enable'));
         $('#manage_li_theme').toggle(on('module_themes_enable'));
