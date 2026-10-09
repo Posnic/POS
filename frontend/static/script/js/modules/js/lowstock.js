@@ -168,7 +168,7 @@ PosnicPro.lowstockitems = {
         };
         var html = '';
         if (pages > 1) {
-            html += btn(p - 1, '&laquo;', p <= 1);
+            if (p > 1) { html += btn(p - 1, '&laquo;', false); }
             var end = Math.min(pages, Math.max(1, p - 2) + 4);
             var start = Math.max(1, end - 4);
             for (var n = start; n <= end; n++) {
@@ -176,7 +176,7 @@ PosnicPro.lowstockitems = {
             }
         }
         html += '<span class="q-pg-count">' + label + '</span>';
-        if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
+        if (p < pages) { html += btn(p + 1, '&raquo;', false); }
         $('#lowstockitems_list_paging').html(html);
     },
     goPage: function (n) {
