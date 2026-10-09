@@ -1735,6 +1735,8 @@ describe('SalesService', () => {
        * this service derived from a real payment.
        */
       const openOnTheFloor = {
+        date: new Date('2026-10-06T18:20:00Z'),
+        created_date: new Date('2026-10-06T18:20:00Z'),
         items: [],
         changes: [],
         set: jest.fn(),
@@ -1756,6 +1758,9 @@ describe('SalesService', () => {
       expect(openOnTheFloor.set).toHaveBeenCalled();
       const saved = Object.assign({}, ...openOnTheFloor.set.mock.calls.map((c) => c[0] || {}));
       expect(saved.payment_status).toBe('Paid');
+      expect(saved.date.getTime()).toBeGreaterThan(openOnTheFloor.date.getTime());
+      expect(saved.settled_at).toEqual(saved.date);
+      expect(saved.order_date).toEqual(openOnTheFloor.created_date);
       /* Nothing outstanding. Before the fix this was the whole bill again,
          because the override rewrote it from the total every time. */
       expect(Number(saved.payment_pending)).toBe(0);

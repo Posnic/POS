@@ -3020,7 +3020,7 @@ input:checked + .slider:before {
 .q-doc-title { font-weight: 700; font-size: 21px; letter-spacing: 3px; color: #2d3748; }
 .q-num { font-weight: 700; font-size: 14px; margin: 2px 0; }
 .q-title-block { text-align: right; white-space: nowrap; }
-.q-status { display: inline-block; margin-top: 8px; margin-bottom: 2px; padding: 2px 10px; border: 1.5px solid #c53030; color: #c53030; font-weight: 700; font-size: 12px; letter-spacing: 1px; border-radius: 3px; }
+.q-status { display: inline-block; margin-top: 8px; margin-bottom: 2px; padding: 2px 10px; border: 1.5px solid currentColor; color: #526174; font-weight: 700; font-size: 12px; letter-spacing: 1px; border-radius: 3px; }
 .q-billto { margin: 16px 0 6px; }
 .q-cust { font-weight: 700; font-size: 15px; }
 .q-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8a94a6; margin-bottom: 3px; }
@@ -4112,10 +4112,24 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
     .invoices-split #invoices_list_card .i-col-due,
     .invoices-split #invoices_list_card .i-col-balance { display: none; }
 }
-/* PAID reads green, the rest keep the quote's red stamp: a customer's eye
-   goes to the stamp first, and "paid" is the one word that should not be
-   the colour of a warning. */
-.q-status.is-paid { border-color: #23985c; color: #23985c; }
+/* Status meaning is shared across document details, independent of translation.
+   Text remains visible for monochrome printing and colour-blind readers. */
+.q-status.is-paid,
+.q-status[data-status="paid"],
+.q-status[data-status="received"],
+.q-status[data-status="accepted"] { color: #187044; border-color: currentColor; }
+.q-status[data-status="unpaid"],
+.q-status[data-status="partial"],
+.q-status[data-status="ordered"],
+.q-status[data-status="pending"] { color: #875900; }
+.q-status[data-status="cancelled"],
+.q-status[data-status="canceled"],
+.q-status[data-status="rejected"],
+.q-status[data-status="overdue"] { color: #b42318; }
+.q-status[data-status="returned"],
+.q-status[data-status="refunded"],
+.q-status[data-status="converted"],
+.q-status[data-status="invoiced"] { color: #245eb2; }
 /* The due date turns red only while money is still owed on it. */
 .i-overdue { color: #c53030; font-weight: 600; }
 .ie-pay-strip {
@@ -7709,7 +7723,7 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
 }
 
 /* Billing outlets owns its layout; legacy global main rules must not move it. */
-#billing_outlets_page { margin:0; width:auto; }
+#billing_outlets_page { margin:92px 0 24px; width:auto; color:var(--theme-text-primary,#172b4d); }
 #billing_outlets_page > div { background:var(--theme-card-bg,#fff); border:1px solid var(--theme-border-color,#dce2eb); border-radius:14px; padding:24px; }
 #billing_outlets_page .nav { gap:8px; }
 #billing_outlets_page .nav .active { background:var(--theme-primary-color,#0969da); color:var(--theme-on-primary,#fff); border-radius:6px; }
@@ -7765,4 +7779,3 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
   #items_new #item_translation_chips { flex-direction:row; flex-wrap:wrap; }
   #items_new #item_translation_chips button { width:auto; }
 }
-
