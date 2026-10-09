@@ -7501,6 +7501,45 @@ PosnicPro.sales.loadBillingCatalogue = function (done, preserve) {
     page();
 };
 
+// Bound the live grid while retaining the complete catalogue for barcode/name search.
+PosnicPro.sales.renderTilePages = function (container, tiles) {
+    var page = 0, size = 48;
+    var grid = $('<div class="row sale-tile-grid"></div>').appendTo(container);
+    var pager = $('<nav class="sale-tile-pages d-flex align-items-center justify-content-between py-3" aria-label="Product pages" data-t-aria-label="lang_product_pages"></nav>').appendTo(container);
+    var previous = $('<button type="button" class="btn btn-outline-primary" style="min-height:48px"><lang class="lang_previous">Previous</lang></button>').appendTo(pager);
+    var status = $('<span role="status" class="px-2 text-center"></span>').appendTo(pager);
+    var next = $('<button type="button" class="btn btn-outline-primary" style="min-height:48px"><lang class="lang_next">Next</lang></button>').appendTo(pager);
+    function draw() {
+        PosnicPro.sales.itemsMenu.variantPop.close();
+        grid.html(tiles.slice(page * size, (page + 1) * size).join(''));
+        previous.prop('disabled', page === 0);
+        next.prop('disabled', (page + 1) * size >= tiles.length);
+        status.text(tiles.length ? (page * size + 1) + '–' + Math.min((page + 1) * size, tiles.length) + ' / ' + tiles.length : 'No items');
+        pager.toggleClass('d-none', tiles.length <= size);
+        container.closest('#sales_new_productList,#sales_new_categoryList').scrollTop(0);
+        PosnicPro.sales.itemsMenu.clickEffect();
+    }
+    previous.on('click', function () { if (page > 0) { page--; draw(); } });
+    next.on('click', function () { if ((page + 1) * size < tiles.length) { page++; draw(); } });
+    draw();
+};
+
+PosnicPro.sales.categoryPicture = function (name, image) {
+    if (image && !/(^|\/)category\.svg(?:[?#]|$)/i.test(image)) return image;
+    var groups = [
+        [/baby/i, 'baby'], [/barbecue|kitchen|cook|disposable(?! cigarette)|household/i, 'kitchen'],
+        [/batter|electri|bulb/i, 'battery'], [/bed|linen/i, 'bed'], [/bicycle|bike/i, 'bicycle'],
+        [/birthday|party|decora|christmas/i, 'party'], [/body|cosmetic|beauty|hair|lotion|toiletr/i, 'care'],
+        [/wear|cloth|dylon|shoe/i, 'clothing'], [/candle/i, 'candle'], [/car|motor|auto/i, 'car'],
+        [/cigarette|e-liquid|vape|tobacco/i, 'shop'], [/food|pet|dog|cat/i, 'food'],
+        [/confection|sweet|chocol/i, 'sweet'], [/gas/i, 'gas'], [/diy|tool|door|furniture|hardware/i, 'tools'],
+        [/drink|beverage/i, 'drink'], [/garden/i, 'garden'], [/clean|laundry/i, 'cleaning'],
+        [/station|paper|office/i, 'stationery'], [/pennies|pound|£|products/i, 'tag']
+    ];
+    for (var i = 0; i < groups.length; i++) if (groups[i][0].test(name || '')) return 'static/images/categories/' + groups[i][1] + '.svg';
+    return 'static/images/categories/shop.svg';
+};
+
 PosnicPro.sales.itemsMenu = {
     /*sales Product Display*/
     onlineProductList: function () {
@@ -7546,14 +7585,14 @@ PosnicPro.sales.itemsMenu = {
                      * The class must be here: Parked and Recent Sales render into
                      * #item-lists too, so the grid must not claim every child.
                      */
-                    var app = "<div class='row sale-tile-grid'>";
+                    var tiles = [], app;
                     for (var i = 0; i < getItemdata.length; i++) {
                         var familyGid = getItemdata[i]['variant_group_id'];
                         var familyRows = familyGid && families[familyGid];
                         if (familyRows && familyRows.length > 1) {
                             if (renderedGroups[familyGid]) { continue; }
                             renderedGroups[familyGid] = true;
-                            app = app + PosnicPro.sales.itemsMenu._familyTile(familyRows, currency);
+                            tiles.push(PosnicPro.sales.itemsMenu._familyTile(familyRows, currency));
                             continue;
                         }
                         var list_item_name = PosnicPro.itemName ? PosnicPro.itemName(getItemdata[i]) : (getItemdata[i].item_name || getItemdata[i].name);
@@ -7621,12 +7660,11 @@ PosnicPro.sales.itemsMenu = {
                                 '</div>' +
                                 '</div>' +
                                 '</div>';
-                            app = app + '' + product + '';
+                            tiles.push(product);
                             //app = app + '<a style="padding-right:5px;" href="javascript:void(0)" data-searchval="' + list_item_name + '" class="search-product" data-toggle="tooltip" title="' + list_item_name + " ( Available Stock : " + item_stock + ' )" id="' + getItemdata[i]['id'] + '" onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)"><div class="product color01 flat-box waves-effect waves-block"><h3 id="proname">' + list_item_name.slice(0, 6) + '</h3><img loading="lazy" decoding="async" src=' + image_path + ' alt="no image found"><div class="product_two"><div class="mask"><p> </p><h4>' + currency + '<span class="number">' + getItemdata[i]['selling_price'] + ' </span></h4></div></div></div></a>&nbsp;';
                         }
                     }
-                    app = app + '</div>';
-                    $('#item-lists').append(app);
+                    PosnicPro.sales.renderTilePages($('#item-lists'), tiles);
                 } else {
                     app = "<div class='row'></div><div class='row'></div><div class='text-center text-dark'><p><lang class='lang_there_are_no_items_available'>There are no items available ...!!!</lang></p><a href='#/items/new'>Add New Item</a></div>";
                     $('#item-lists').append(app);
@@ -8286,7 +8324,8 @@ PosnicPro.sales.categoryMenu = {
                     for (var i = 0; i < categorydata.length; i++) {
 
                         var list_category_name = categorydata[i]['category_name'];
-                        var image_path = (categorydata[i]['category_img'] && categorydata[i]['category_img'] !== "category.svg") ? categorydata[i]['category_img'] : 'static/images/default/category.svg';
+                        var image_path = PosnicPro.sales.categoryPicture(list_category_name, categorydata[i]['category_img']);
+                        list_category_name = $('<i>').text(list_category_name || '').html();
                         var _cat = PosnicPro.sales._catTiles[String(categorydata[i]['id'] || '')];
 
                         app += '<div class="wsk-cp cbutton--effect-novak col-lg-3 col-md-4 col-sm-6 col-12 mb-3" ' +
@@ -8340,7 +8379,9 @@ PosnicPro.sales.categoryMenu = {
                    items look like the items they are. */
                 var app = '<div class="row mb-3">' +
                     '<button type="button" class="btn btn-dark-rgba font-18" onclick="PosnicPro.sales.categoryMenu.listCategories();">' +
-                    '<i class="feather icon-arrow-left profile_left_slide slick-arrow mr-2"></i></button></div><div class="row sale-tile-grid">';
+                    '<i class="feather icon-arrow-left profile_left_slide slick-arrow mr-2"></i>Categories</button></div>';
+                $('#item-lists').append(app);
+                var tiles = [];
 
                 var timeZone = PosnicPro.timeZone() || 'Asia/Kolkata';
                 var currentTimestamp = moment().tz(timeZone).valueOf();
@@ -8359,7 +8400,7 @@ PosnicPro.sales.categoryMenu = {
                             ? item.image
                             : 'static/images/default/item.svg';
 
-                        app += '<div class="wsk-cp cbutton--effect-novak col-lg-3 col-md-4 col-sm-6 col-12 mb-3" ' +
+                        app = '<div class="wsk-cp cbutton--effect-novak col-lg-3 col-md-4 col-sm-6 col-12 mb-3" ' +
                             'id="' + item.item_id + '" ' +
                             'onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)">' +
                             '<div class="wsk-cp-product h-100">' +
@@ -8372,18 +8413,19 @@ PosnicPro.sales.categoryMenu = {
                             '<span class="price">' + currency + ' ' + parseFloat(item.selling_price).toFixed(2) + '</span>' +
                             '</div></div></div>';
 
+                        tiles.push(app);
                         shown++;
                     }
                 }
 
-                app += "</div>";
+
 
                 if (shown === 0) {
                     app = "<div class='text-center text-dark'><p><lang class='lang_no_items_found_for_this_category'>No items found for this category.</lang></p></div>";
                 }
 
-                $('#item-lists').append(app);
-                PosnicPro.sales.itemsMenu.clickEffect();
+                if (shown === 0) $('#item-lists').append(app);
+                else PosnicPro.sales.renderTilePages($('#item-lists'), tiles);
 
             } else {
                 PosnicPro.alert(response.type, response.message);
