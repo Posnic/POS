@@ -38,3 +38,14 @@ test('category illustrations preserve custom uploads and replace stock placehold
         assert.ok(fs.existsSync(require('node:path').join(__dirname, '../frontend', asset)));
     }
 });
+
+test('each client category has a distinct illustration, including similar category names', () => {
+    const { sales } = setup();
+    const names = require('./fixtures/sales-category-names.json');
+    const assets = names.map(name => sales.categoryPicture(name, 'static/images/default/category.svg'));
+    assert.equal(new Set(assets).size, names.length);
+    const drawings = assets.map(asset => fs.readFileSync(require('node:path').join(__dirname, '../frontend', asset), 'utf8'));
+    assert.equal(new Set(drawings).size, names.length);
+    assert.equal(sales.categoryPicture(' body   wear ', ''), 'static/images/categories/clothing.svg');
+    assert.equal(sales.categoryPicture('Body Wear', '/uploads/clothes.png'), '/uploads/clothes.png');
+});
