@@ -232,7 +232,7 @@ PosnicPro.lowstockitems = {
         var ids = Object.keys(self._restock);
         var esc = function (v) { return $('<span>').text(v == null ? '' : v).html(); };
         $('#restock_dock').toggle(ids.length > 0);
-        $('#restock_summary').text(ids.length + PosnicPro.i18n.t('lang_restock_selected_count', ' item(s) selected. Continue adding items from the list.'));
+        $('#restock_summary').text(ids.length + ' ' + PosnicPro.i18n.t('lang_restock_selected_count', 'item(s) selected. Continue adding items from the list.'));
         $('#restock_rows').html(ids.map(function (id) {
             var row = self._restock[id];
             return '<tr><td>' + esc(row.name) + '<small class="d-block text-muted">' + esc(row.supplier_name || PosnicPro.i18n.t('lang_restock_choose_supplier', 'Choose supplier in purchase')) + '</small></td><td>' + esc(row.available_quantity) + '</td>'
