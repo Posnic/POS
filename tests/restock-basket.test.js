@@ -54,8 +54,10 @@ test('direct stock addition is reviewed first and only confirmed rows leave bask
 test('purchase transfers a supplier group with selected quantities after form initialisation', () => {
   const t = setup(); t.app._restock = { a: { name: 'Cable', qty: 3, supplier_id: 'supplier-a', company_price: 2 }, b: { name: 'Brush', qty: 2, supplier_id: 'supplier-b' } };
   t.$('#restock_supplier').val('supplier-a'); t.app.restockPurchase();
+  t.request().yes({ type: 'success', data: { address: 'Test supplier address' } });
   assert.equal(t.route(), 'receivings/new'); assert.equal(t.added.length, 0);
   t.app.applyPurchaseDraft();
+  assert.equal(t.$('#receiving_add_supplier_address').val(), 'Test supplier address');
   assert.equal(t.added.length, 1); assert.equal(t.added[0].item_quantity, 3);
   assert.equal(t.added[0].item_id, 'a'); assert.equal(t.$('#receiving_add_supplier_id').val(), 'supplier-a');
   assert.deepEqual(Object.keys(t.app._restock), ['b']);

@@ -321,10 +321,30 @@ PosnicPro.lowstockitems = {
         var supplierId = String($('#restock_supplier').val() || '');
         var ids = Object.keys(self._restock).filter(function (id) { return String(self._restock[id].supplier_id || '') === supplierId; });
         if (!ids.length) return;
-        $('#restock_modal').one('hidden.bs.modal', function () {
-            PosnicPro.receivings._restockDraft = { supplierId: supplierId, ids: ids, branch: self._restockBranch };
-            hasher.setHash('receivings/new');
-        }).modal('hide');
+        if (self._restockBusy) return;
+        var branch = self._restockBranch;
+        var transfer = function (supplier) {
+            self._restockBusy = false;
+            $('#restock_modal button,#restock_modal input,#restock_modal select').prop('disabled', false);
+            self.restockContext();
+            if (branch !== self._restockBranch) return;
+            $('#restock_modal').one('hidden.bs.modal', function () {
+                PosnicPro.receivings._restockDraft = { supplierId: supplierId, supplier: supplier, ids: ids, branch: branch };
+                hasher.setHash('receivings/new');
+            }).modal('hide');
+        };
+        if (!supplierId) { transfer({}); return; }
+        self._restockBusy = true;
+        $('#restock_modal button,#restock_modal input,#restock_modal select').prop('disabled', true);
+        var failed = function () {
+            self._restockBusy = false;
+            $('#restock_modal button,#restock_modal input,#restock_modal select').prop('disabled', false);
+            self.restockMessage(PosnicPro.i18n.t('lang_could_not_load_this_purchase', 'Could not load this purchase.'));
+        };
+        PosnicPro.get('suppliers/' + encodeURIComponent(supplierId), function (response) {
+            if (!response || response.type !== 'success' || !response.data) { failed(); return; }
+            transfer(response.data);
+        }, failed);
     },
     applyPurchaseDraft: function () {
         var self = this, draft = PosnicPro.receivings._restockDraft;
@@ -336,7 +356,9 @@ PosnicPro.lowstockitems = {
         PosnicPro.receivings.clearReceivingForm();
         $('#receiving_add_supplier_id').val(draft.supplierId);
         $('#receiving_add_supplier_name').val(self._restock[ids[0]].supplier_name || '');
-        $('#receiving_add_supplier_address,#receiving_add_supplier_phone,#receiving_add_supplier_email,#receiving_add_supplier_state,#receiving_add_supplier_gst_type,#receiving_add_supplier_gst_number').val('');
+        ['address', 'phone', 'email', 'state', 'gst_type', 'gst_number'].forEach(function (field) {
+            $('#receiving_add_supplier_' + field).val((draft.supplier || {})[field] || '');
+        });
         ids.forEach(function (id) {
             var r = self._restock[id];
             PosnicPro.receivings.addReceivingLineItems({ item_id: id, item_name: $('<span>').text(r.name).html(), company_price: Number(r.company_price) || 0,
