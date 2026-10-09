@@ -3076,9 +3076,46 @@ class ItemRepository extends BaseModel {
         ],
       };
 
-      let cursor = collection.find(match).sort({ sort_order: 1, name: 1, _id: 1 });
-      if (offset) cursor = cursor.skip(offset);
-      const items = await cursor.limit(limit).toArray();
+      let items, nextOffset;
+      if (params.tilePage) {
+        if (params.categoryId) {
+          if (typeof params.categoryId !== 'string' || !ObjectId.isValid(params.categoryId)) {
+            throw new Error('Invalid category');
+          }
+          match.$and.push({ category_id: new ObjectId(params.categoryId) });
+        }
+        match.$and.push({ $or: [
+          { track_inventory: { $ne: true } }, { negative_stock: true },
+          { available_quantity: { $gt: 0 } },
+        ] });
+        // Expiry can be an epoch string or an ISO date. Missing/invalid dates
+        // remain available, matching the billing search's expiry semantics.
+        const expiry = { $convert: { input: { $ifNull: [
+          { $convert: { input: '$items_expiry_date', to: 'double', onError: null, onNull: null } },
+          '$items_expiry_date',
+        ] }, to: 'date', onError: null, onNull: null } };
+        match.$and.push({ $expr: { $or: [ { $eq: [expiry, null] }, { $gte: [expiry, new Date()] } ] } });
+        const size = Math.min(limit, 48);
+        const groups = await collection.aggregate([
+          { $match: match },
+          { $sort: { sort_order: 1, name: 1, _id: 1 } },
+          { $group: {
+            _id: { $cond: [ { $in: [{ $ifNull: ['$variant_group_id', ''] }, ['', null]] },
+              { item: '$_id' }, { family: '$variant_group_id' } ] },
+            sort_order: { $first: '$sort_order' }, name: { $first: '$name' },
+            first_id: { $first: '$_id' }, items: { $push: '$$ROOT' },
+          } },
+          { $sort: { sort_order: 1, name: 1, first_id: 1 } },
+          { $skip: offset }, { $limit: size + 1 },
+        ]).toArray();
+        nextOffset = groups.length > size ? offset + size : null;
+        items = groups.slice(0, size).flatMap(group => group.items);
+      } else {
+        let cursor = collection.find(match).sort({ sort_order: 1, name: 1, _id: 1 });
+        if (offset) cursor = cursor.skip(offset);
+        items = await cursor.limit(limit).toArray();
+        nextOffset = items.length === limit ? offset + limit : null;
+      }
 
       const list = items
         .filter((item) => {
@@ -3135,7 +3172,7 @@ class ItemRepository extends BaseModel {
       return {
         status: true,
         data: list,
-        next_offset: items.length === limit ? offset + limit : null,
+        next_offset: nextOffset,
         message: 'success',
       };
     } catch (error) {

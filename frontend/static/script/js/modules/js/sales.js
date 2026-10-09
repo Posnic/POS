@@ -1,4 +1,4 @@
-﻿PosnicPro.sales = {
+PosnicPro.sales = {
     /* Array Declaration */
     extraDiscount: [],
     addLineTable: [],
@@ -7475,34 +7475,25 @@ PosnicPro.sales.itemCache = {
     },
 };
 
-// The complete catalogue powers instant search. Pagination must finish even
-// when a page contains only unavailable items; next_offset is server-owned.
-PosnicPro.sales.loadBillingCatalogue = function (done, preserve) {
-    var rows = [], offset = 0;
+// Fetch only the requested shelf page. Search uses its own full-catalogue API.
+PosnicPro.sales.loadSalesTilePage = function (offset, categoryId, done) {
     var generation = (PosnicPro.sales._catalogueGeneration || 0) + 1;
     PosnicPro.sales._catalogueGeneration = generation;
-    if (!preserve) PosnicPro.sales._billingCatalogue = null;
-    function page() {
-        PosnicPro.get({ url: 'items/onlineSalesItemsAjaxLists', data: { paginate: 'true', limit: 200, offset: offset } }, function (response) {
-            if (generation !== PosnicPro.sales._catalogueGeneration) return;
-            if (!response || response.type !== 'success') { PosnicPro.sales._catalogueRefreshing = false; done(response || { type: 'error' }); return; }
-            var data = response.data || {};
-            // Older local APIs still return an array during rolling updates.
-            rows = rows.concat(Array.isArray(data) ? data : data.items || []);
-            if (!Array.isArray(data) && Number.isInteger(data.next_offset) && data.next_offset > offset) {
-                offset = data.next_offset; page(); return;
-            }
-            PosnicPro.sales._billingCatalogue = Array.isArray(data) ? null : rows;
-            PosnicPro.sales._catalogueAt = Date.now();
-            PosnicPro.sales._catalogueRefreshing = false;
-            done({ type: 'success', data: rows });
-        }, function () { if (generation === PosnicPro.sales._catalogueGeneration) { PosnicPro.sales._catalogueRefreshing = false; done({ type: 'error' }); } });
-    }
-    page();
+    PosnicPro.get({ url: 'items/onlineSalesItemsAjaxLists', data: {
+        paginate: 'true', tile_page: 'true', limit: 48, offset: offset, category_id: categoryId || ''
+    } }, function (response) {
+        if (generation !== PosnicPro.sales._catalogueGeneration) return;
+        if (!response || response.type !== 'success') { done(response || { type: 'error' }); return; }
+        var data = response.data || {};
+        done({ type: 'success', data: Array.isArray(data) ? data : data.items || [],
+            nextOffset: Number.isInteger(data.next_offset) && data.next_offset > offset ? data.next_offset : null });
+    }, function () {
+        if (generation === PosnicPro.sales._catalogueGeneration) done({ type: 'error' });
+    });
 };
 
 // Bound the live grid while retaining the complete catalogue for barcode/name search.
-PosnicPro.sales.renderTilePages = function (container, tiles) {
+PosnicPro.sales.renderTilePages = function (container, tiles, remote) {
     var page = 0, size = 48;
     var grid = $('<div class="row sale-tile-grid"></div>').appendTo(container);
     var pager = $('<nav class="sale-tile-pages d-flex align-items-center justify-content-between py-3" aria-label="Product pages" data-t-aria-label="lang_product_pages"></nav>').appendTo(container);
@@ -7512,24 +7503,94 @@ PosnicPro.sales.renderTilePages = function (container, tiles) {
     function draw() {
         PosnicPro.sales.itemsMenu.variantPop.close();
         grid.html(tiles.slice(page * size, (page + 1) * size).join(''));
-        previous.prop('disabled', page === 0);
-        next.prop('disabled', (page + 1) * size >= tiles.length);
-        status.text(tiles.length ? (page * size + 1) + '–' + Math.min((page + 1) * size, tiles.length) + ' / ' + tiles.length : 'No items');
-        pager.toggleClass('d-none', tiles.length <= size);
+        previous.prop('disabled', remote ? remote.offset === 0 : page === 0);
+        next.prop('disabled', remote ? remote.nextOffset === null : (page + 1) * size >= tiles.length);
+        status.text(remote ? (tiles.length ? (remote.offset + 1) + '–' + (remote.offset + tiles.length) : '0') : tiles.length ? (page * size + 1) + '–' + Math.min((page + 1) * size, tiles.length) + ' / ' + tiles.length : 'No items');
+        pager.toggleClass('d-none', remote ? remote.offset === 0 && remote.nextOffset === null : tiles.length <= size);
         container.closest('#sales_new_productList,#sales_new_categoryList').scrollTop(0);
         PosnicPro.sales.itemsMenu.clickEffect();
     }
-    previous.on('click', function () { if (page > 0) { page--; draw(); } });
-    next.on('click', function () { if ((page + 1) * size < tiles.length) { page++; draw(); } });
+    previous.on('click', function () { if (remote) { previous.add(next).each(function () { $(this).data('was-disabled', this.disabled).prop('disabled', true); }); remote.load(Math.max(0, remote.offset - size)); return; } if (page > 0) { page--; draw(); } });
+    next.on('click', function () { if (remote) { previous.add(next).each(function () { $(this).data('was-disabled', this.disabled).prop('disabled', true); }); remote.load(remote.nextOffset); return; } if ((page + 1) * size < tiles.length) { page++; draw(); } });
     draw();
 };
 
 PosnicPro.sales.categoryPicture = function (name, image) {
     if (image && !/(^|\/)category\.svg(?:[?#]|$)/i.test(image)) return image;
+    var categoryIcons = {
+        "a: miscellaneous": "shop",
+        "a: pennies products": "coins",
+        "a: £1 plus": "pound",
+        "baby": "baby",
+        "barbecue": "barbecue",
+        "battery": "battery",
+        "bedding": "bed",
+        "bicycle": "bicycle",
+        "birthday & party": "balloons",
+        "body care": "care",
+        "body lotion": "lotion",
+        "body wear": "clothing",
+        "candles": "candle",
+        "car accessories": "car",
+        "car stuff": "steering",
+        "cigarettes": "cigarette",
+        "confectionary": "sweet",
+        "cosmetic": "cosmetics",
+        "calor gas": "gas",
+        "decoration": "decoration",
+        "disposable cigarettes": "vape",
+        "diy": "tools",
+        "dog food": "dogfood",
+        "door and furniture": "door",
+        "drinks": "drink",
+        "dylon": "dye",
+        "e-liquid": "eliquid",
+        "electricals": "plug",
+        "facial wipes": "wipes",
+        "first aid": "firstaid",
+        "food": "groceries",
+        "gardening": "garden",
+        "glassware": "glass",
+        "groceries": "food",
+        "halloween": "halloween",
+        "home fragrance": "fragrance",
+        "household": "household",
+        "insect killer": "insect",
+        "kitchen accessories": "kitchen",
+        "medicine": "medicine",
+        "pad locks": "padlock",
+        "paint": "paint",
+        "party": "party",
+        "pest control": "pest",
+        "pet food": "petfood",
+        "pets": "paw",
+        "phone accessories": "phone",
+        "plastic boxes": "boxes",
+        "plastic products": "plastic",
+        "plumbing": "pipe",
+        "rat & mouse killer": "mouse",
+        "rizla": "papers",
+        "rustins": "varnish",
+        "smoking": "smoking",
+        "stationery": "stationery",
+        "sweets": "sweets",
+        "taps": "tap",
+        "tissue paper": "tissue",
+        "toilet accessories": "toilet",
+        "toiletries": "toiletries",
+        "tooth brushes": "toothbrush",
+        "toys": "toys",
+        "travel supplies": "travel",
+        "valuepack": "valuepack",
+        "winter supplies": "winter",
+        "xmas": "xmas"
+};
+    var categoryName = (name || "").trim().toLowerCase().replace(/\s+/g, " ");
+    if (categoryIcons[categoryName]) return "static/images/categories/" + categoryIcons[categoryName] + ".svg";
     var groups = [
         [/baby/i, 'baby'], [/barbecue|kitchen|cook|disposable(?! cigarette)|household/i, 'kitchen'],
         [/batter|electri|bulb/i, 'battery'], [/bed|linen/i, 'bed'], [/bicycle|bike/i, 'bicycle'],
-        [/birthday|party|decora|christmas/i, 'party'], [/body|cosmetic|beauty|hair|lotion|toiletr/i, 'care'],
+        [/birthday|party|decora|christmas/i, 'party'], [/body(?! wear)|cosmetic|beauty|hair|lotion|toiletr/i, 'care'],
         [/wear|cloth|dylon|shoe/i, 'clothing'], [/candle/i, 'candle'], [/car|motor|auto/i, 'car'],
         [/cigarette|e-liquid|vape|tobacco/i, 'shop'], [/food|pet|dog|cat/i, 'food'],
         [/confection|sweet|chocol/i, 'sweet'], [/gas/i, 'gas'], [/diy|tool|door|furniture|hardware/i, 'tools'],
@@ -7542,14 +7603,16 @@ PosnicPro.sales.categoryPicture = function (name, image) {
 
 PosnicPro.sales.itemsMenu = {
     /*sales Product Display*/
-    onlineProductList: function () {
+    onlineProductList: function (categoryId, offset) {
+        categoryId = typeof categoryId === "string" ? categoryId : "";
+        offset = offset || 0;
         /* crash-hunt probe gate: skippable render */
         if (window.__posnicSkip === 'menu' || window.__posnicSkip === 'all') { return; }
         var loader = $(".loader-product");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $('#sales_new_productList').show();
         $('#sales_new_categoryList').hide();
-        PosnicPro.sales.loadBillingCatalogue(function (response) {
+        PosnicPro.sales.loadSalesTilePage(offset, categoryId, function (response) {
             loader.find(".loadingSpinner:first").remove();
             if (response.type === 'success') {
                 var getItemdata = response.data;
@@ -7559,6 +7622,7 @@ PosnicPro.sales.itemsMenu = {
                 PosnicPro.sales.itemsMenu.variantPop.close();
                 $('#item-lists').remove();
                 $('#sales_new_productList').append(' <div class="col-md-12" id="item-lists">');
+                if (categoryId) $('<button type="button" class="btn btn-outline-primary mb-3"><lang class="lang_categories">Categories</lang></button>').appendTo('#item-lists').on('click', PosnicPro.sales.categoryMenu.listCategories);
                 var currency = PosnicPro.local.get('currencySign');
                 /*
                  * Variant families (V1): members of a family collapse into
@@ -7664,7 +7728,8 @@ PosnicPro.sales.itemsMenu = {
                             //app = app + '<a style="padding-right:5px;" href="javascript:void(0)" data-searchval="' + list_item_name + '" class="search-product" data-toggle="tooltip" title="' + list_item_name + " ( Available Stock : " + item_stock + ' )" id="' + getItemdata[i]['id'] + '" onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)"><div class="product color01 flat-box waves-effect waves-block"><h3 id="proname">' + list_item_name.slice(0, 6) + '</h3><img loading="lazy" decoding="async" src=' + image_path + ' alt="no image found"><div class="product_two"><div class="mask"><p> </p><h4>' + currency + '<span class="number">' + getItemdata[i]['selling_price'] + ' </span></h4></div></div></div></a>&nbsp;';
                         }
                     }
-                    PosnicPro.sales.renderTilePages($('#item-lists'), tiles);
+                    PosnicPro.sales.renderTilePages($('#item-lists'), tiles, { offset: offset, nextOffset: response.nextOffset,
+                        load: function (next) { PosnicPro.sales.itemsMenu.onlineProductList(categoryId, next); } });
                 } else {
                     app = "<div class='row'></div><div class='row'></div><div class='text-center text-dark'><p><lang class='lang_there_are_no_items_available'>There are no items available ...!!!</lang></p><a href='#/items/new'>Add New Item</a></div>";
                     $('#item-lists').append(app);
@@ -7672,7 +7737,10 @@ PosnicPro.sales.itemsMenu = {
                 $('span.number').number(true, 2);
                 PosnicPro.sales.itemsMenu.clickEffect();
             } else {
-                PosnicPro.alert(response.type, response.message);
+                $('#item-lists .sale-tile-pages button').each(function () {
+                    $(this).prop('disabled', $(this).data('was-disabled') === true);
+                });
+                PosnicPro.alert(response.type, response.message || PosnicPro.i18n.t('lang_could_not_load_items_try_again', 'Could not load items - try again.'));
             }
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -8295,6 +8363,7 @@ PosnicPro.sales.categoryMenu = {
      * GET SALES CATEGORY TAGS (OLD FORMAT)
      * -------------------------- */
     listCategories: function () {
+        PosnicPro.sales._catalogueGeneration = (PosnicPro.sales._catalogueGeneration || 0) + 1;
         var loader = $(".loader-category");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
 
@@ -8358,88 +8427,13 @@ PosnicPro.sales.categoryMenu = {
      * GET SALES CATEGORY PRODUCTS (OLD FORMAT)
      * -------------------------- */
     listItems: function (categoryId) {
-        $('.product-category').removeClass('category-focused');
-        $('#category' + categoryId).addClass('category-focused');
-
-        var params = {
-            url: 'items/getItemsByCategoryId',
-            data: { category_id: categoryId }
-        };
-        PosnicPro.get(params, function (response) {
-            if (response.type === 'success') {
-                var data = response.data || [];
-
-                $('#item-lists').remove();
-                $('#category-lists').remove();
-                $('#sales_new_categoryList').append('<div class="col col-xs-12" id="item-lists">');
-
-                var currency = PosnicPro.local.get('currencySign') || '';
-                /* The back button on its own row; the items in the SAME
-                   self-wrapping grid the Items tab uses, so a category's
-                   items look like the items they are. */
-                var app = '<div class="row mb-3">' +
-                    '<button type="button" class="btn btn-dark-rgba font-18" onclick="PosnicPro.sales.categoryMenu.listCategories();">' +
-                    '<i class="feather icon-arrow-left profile_left_slide slick-arrow mr-2"></i>Categories</button></div>';
-                $('#item-lists').append(app);
-                var tiles = [];
-
-                var timeZone = PosnicPro.timeZone() || 'Asia/Kolkata';
-                var currentTimestamp = moment().tz(timeZone).valueOf();
-
-                var shown = 0;
-                for (var i = 0; i < data.length; i++) {
-                    var item = data[i];
-                    var qty = parseFloat(item.available_quantity) || 0;
-                    var allowNegative = item.negative_stock === true;
-                    var expiry = item.items_expiry_date;
-                    var expiryValid = (expiry === null || expiry === '' || expiry >= currentTimestamp);
-                    var showItem = (qty > 0 || allowNegative) && expiryValid;
-
-                    if (showItem) {
-                        var image_path = (item.image && item.image !== "item.svg")
-                            ? item.image
-                            : 'static/images/default/item.svg';
-
-                        app = '<div class="wsk-cp cbutton--effect-novak col-lg-3 col-md-4 col-sm-6 col-12 mb-3" ' +
-                            'id="' + item.item_id + '" ' +
-                            'onclick="PosnicPro.sales.itemsMenu.addToLineItemsList(this.id)">' +
-                            '<div class="wsk-cp-product h-100">' +
-                            '<div class="description-prod text-center">' +
-                            '<p data-searchval="' + item.item_name + '" title="' + item.item_name + '">' +
-                            item.item_name + '</p></div>' +
-                            '<div class="wsk-cp-img text-center">' +
-                            '<img loading="lazy" decoding="async" src="' + image_path + '" alt="Product" class="img-fluid rounded" style="max-height:120px;" />' +
-                            '</div><div class="wsk-cp-text mt-3 text-center">' +
-                            '<span class="price">' + currency + ' ' + parseFloat(item.selling_price).toFixed(2) + '</span>' +
-                            '</div></div></div>';
-
-                        tiles.push(app);
-                        shown++;
-                    }
-                }
-
-
-
-                if (shown === 0) {
-                    app = "<div class='text-center text-dark'><p><lang class='lang_no_items_found_for_this_category'>No items found for this category.</lang></p></div>";
-                }
-
-                if (shown === 0) $('#item-lists').append(app);
-                else PosnicPro.sales.renderTilePages($('#item-lists'), tiles);
-
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-
-        }, 'json').fail(function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+        PosnicPro.sales.itemsMenu.onlineProductList(categoryId, 0);
     }
 };
 PosnicPro.sales.recentMenu = {
     /*Touchsale recent Sales details*/
     salesList: function () {
+        PosnicPro.sales._catalogueGeneration = (PosnicPro.sales._catalogueGeneration || 0) + 1;
         var loader = $(".loader-product");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $('#sales_new_productList').show();
@@ -8886,6 +8880,7 @@ PosnicPro.sales.recentMenu = {
  */
 PosnicPro.sales.parkedMenu = {
     list: function () {
+        PosnicPro.sales._catalogueGeneration = (PosnicPro.sales._catalogueGeneration || 0) + 1;
         var loader = $(".loader-product");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $('#sales_new_productList').show();
@@ -11558,18 +11553,9 @@ $(function () {
                 result["suggestions"] = suggestions;
                 done(result);
             }
-            var catalogue = PosnicPro.sales._billingCatalogue;
-            if (catalogue) {
-                if (Date.now() - PosnicPro.sales._catalogueAt >= 60000 && !PosnicPro.sales._catalogueRefreshing) {
-                    PosnicPro.sales._catalogueRefreshing = true;
-                    PosnicPro.sales.loadBillingCatalogue(function () { PosnicPro.sales._catalogueRefreshing = false; }, true);
-                }
-                receive({ suggestions: PosnicBillingSearch.search(query, catalogue, 20) });
-            } else {
-                PosnicPro.get(params, receive, function () {
-                    if (seq === itemLookupSeq) done({ suggestions: [] });
-                });
-            }
+            PosnicPro.get(params, receive, function () {
+                if (seq === itemLookupSeq) done({ suggestions: [] });
+            });
         },
         onSelect: function (suggestion) {
             var act = suggestion.data && suggestion.data.__action;
@@ -13336,4 +13322,3 @@ $(document).on('focusin click', '#sales_new input[name="addSalesLineItemQty"], #
         if (document.activeElement === input && !input.disabled && !input.readOnly) input.select();
     }, 0);
 });
-
