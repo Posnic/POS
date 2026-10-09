@@ -34,22 +34,19 @@ test('missing expiry and future ISO dates stay visible',()=> {
  for(const v of [undefined,null,'','2027-01-01',String(now+10000)]) assert.equal(engine.expired(v,now),false);
  assert.equal(engine.expired('2025-01-01',now),true);
 });
-test('catalogue traverses filtered empty pages and retains Tea after entry 100',()=> {
- const calls=[]; const context={PosnicPro:{sales:{},get(params,done){calls.push(params.data.offset);done({type:'success',data:calls.length===1?{items:[],next_offset:200}:{items:[{name:'Tea'}],next_offset:null}});}}};
- vm.runInNewContext(section('PosnicPro.sales.loadBillingCatalogue =','PosnicPro.sales.itemsMenu ='),context);
- let result;context.PosnicPro.sales.loadBillingCatalogue(r=>result=r);
- assert.deepEqual(calls,[0,200]);assert.equal(result.data[0].name,'Tea');
- assert.equal(context.PosnicPro.sales._billingCatalogue[0].name,'Tea');
+test('first shelf page completes after one request without downloading later pages',()=> {
+ const calls=[];const context={PosnicPro:{sales:{},get(params,done){calls.push(params);done({type:'success',data:{items:[{name:'First'}],next_offset:48}});}}};
+ vm.runInNewContext(section('PosnicPro.sales.loadSalesTilePage =','PosnicPro.sales.renderTilePages ='),context);
+ let result;context.PosnicPro.sales.loadSalesTilePage(0,'',r=>result=r);
+ assert.equal(calls.length,1);assert.equal(calls[0].data.limit,48);assert.equal(result.nextOffset,48);assert.equal(result.data[0].name,'First');
 });
-test('a late catalogue from a previous branch cannot overwrite the new branch',()=>{
+test('a late shelf page cannot overwrite a newer request or branch',()=>{
  const callbacks=[];const context={PosnicPro:{sales:{},get(p,done){callbacks.push(done);}}};
- vm.runInNewContext(section('PosnicPro.sales.loadBillingCatalogue =','PosnicPro.sales.itemsMenu ='),context);
- context.PosnicPro.sales.loadBillingCatalogue(()=>assert.fail('stale callback'));
- context.PosnicPro.sales._catalogueRefreshing=true;
- context.PosnicPro.sales.loadBillingCatalogue(()=>{});
+ vm.runInNewContext(section('PosnicPro.sales.loadSalesTilePage =','PosnicPro.sales.renderTilePages ='),context);
+ context.PosnicPro.sales.loadSalesTilePage(0,'',()=>assert.fail('stale callback'));
+ let result;context.PosnicPro.sales.loadSalesTilePage(0,'new-category',r=>result=r);
  callbacks[1]({type:'success',data:{items:[{name:'New shop'}],next_offset:null}});callbacks[0]({type:'success',data:{items:[{name:'Old shop'}],next_offset:null}});
- assert.equal(context.PosnicPro.sales._billingCatalogue[0].name,'New shop');
- assert.equal(context.PosnicPro.sales._catalogueRefreshing,false);
+ assert.equal(result.data[0].name,'New shop');
 });
 test('quantity confirmation validates stock and adds full item details; cancel adds nothing',async()=>{
  let options,resolve;const added=[],alerts=[];let focused=false;

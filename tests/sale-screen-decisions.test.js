@@ -33,8 +33,8 @@ test('sale tiles live in ONE self-wrapping grid - no manual row breaks', () => {
     /* Categories own a grid; both product surfaces use the shared pager grid. */
     const grids = sales.match(/class=["']row (mb-3 )?sale-tile-grid/g) || [];
     assert.ok(grids.length >= 2, 'a tile surface lost the sale-tile-grid class: ' + grids.length);
-    assert.equal((sales.match(/PosnicPro\.sales\.renderTilePages\(\$\('#item-lists'\), tiles\)/g) || []).length, 2,
-        'both product surfaces must use the shared paginated grid');
+    assert.match(sales, /PosnicPro\.sales\.renderTilePages\(\$\('#item-lists'\), tiles, /);
+    assert.match(sales, /listItems: function \(categoryId\) \{\s*PosnicPro.sales.itemsMenu.onlineProductList\(categoryId, 0\)/);
 });
 
 test('data-table name links are links, not headlines', () => {
