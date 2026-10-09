@@ -49,3 +49,17 @@ test('each client category has a distinct illustration, including similar catego
     assert.equal(sales.categoryPicture(' body   wear ', ''), 'static/images/categories/clothing.svg');
     assert.equal(sales.categoryPicture('Body Wear', '/uploads/clothes.png'), '/uploads/clothes.png');
 });
+
+test('remote paging requests only the next page on a tap and prevents duplicate taps', () => {
+    const { $, sales } = setup();
+    const requests = [];
+    sales.renderTilePages($('#tiles'), Array.from({ length: 48 }, (_, i) => '<div class="product">' + i + '</div>'),
+        { offset: 0, nextOffset: 48, load: offset => requests.push(offset) });
+    assert.deepEqual(requests, []);
+    assert.equal($('[role="status"]').text(), '1–48');
+    $('button').last().get(0).click();
+    $('button').last().get(0).click();
+    assert.deepEqual(requests, [48]);
+    assert.equal($('.product').length, 48);
+    assert.equal($('button').last().prop('disabled'), true);
+});
