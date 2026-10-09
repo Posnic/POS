@@ -35,6 +35,17 @@
                 <button type="button" id="sales_restaurant_reset" class="btn btn-link btn-sm"><lang class="lang_clear_restaurant_filters">Clear restaurant filters</lang></button>
                 <small id="sales_history_period_hint" class="text-muted" aria-live="polite"></small>
             </div>
+            <details id="sales_provenance_filters" class="mb-3">
+                <summary class="py-2">Staff, device &amp; source filters</summary>
+                <form id="sales_provenance_form" class="d-flex flex-wrap align-items-end" style="gap:12px;padding:12px 0;">
+                    <label class="mb-0">Order taken by<input id="sales_history_staff" class="form-control" type="search" maxlength="120" placeholder="Staff name or email"></label>
+                    <label class="mb-0">Device<input id="sales_history_device" class="form-control" type="search" maxlength="120" placeholder="Device name or ID"></label>
+                    <label class="mb-0" id="sales_history_source_wrap">Order source<select id="sales_history_source" class="form-control"><option value="">All sources</option></select></label>
+                    <button type="submit" class="btn btn-primary" style="min-height:44px">Apply</button>
+                    <button type="button" id="sales_provenance_reset" class="btn btn-light" style="min-height:44px">Clear</button>
+                    <small class="text-muted w-100">Search recorded staff and device details. Older bills without these details will not match.</small>
+                </form>
+            </details>
             <!--
                 KEPT DELIBERATELY, and not a filter control any more.
 

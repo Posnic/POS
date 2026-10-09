@@ -541,8 +541,10 @@
         });
         PosnicPro.listSort.mount('sales', {
             options: [
-                { v: 'date_desc', l: PosnicPro.i18n.t('lang_business_date_newest', 'Business date: newest'), i: 'clock' },
-                { v: 'date_asc', l: PosnicPro.i18n.t('lang_business_date_oldest', 'Business date: oldest'), i: 'rotate-ccw' },
+                { v: 'date_desc', l: PosnicPro.i18n.t('lang_sale_time_newest', 'Sale date & time: newest first'), i: 'clock' },
+                { v: 'date_asc', l: PosnicPro.i18n.t('lang_sale_time_oldest', 'Sale date & time: oldest first'), i: 'rotate-ccw' },
+                { v: 'recent', l: PosnicPro.i18n.t('lang_order_created_newest', 'Order created: newest first'), i: 'clock' },
+                { v: 'updated_desc', l: PosnicPro.i18n.t('lang_updated_newest', 'Last updated: newest first'), i: 'clock' },
                 { v: 'total_desc', l: PosnicPro.i18n.t('lang_highest_bill_first', 'Highest bill first'), i: 'arrow-down' },
                 { v: 'total_asc', l: PosnicPro.i18n.t('lang_lowest_bill_first', 'Lowest bill first'), i: 'arrow-up' },
                 { v: 'items_desc', l: PosnicPro.i18n.t('lang_most_items_first', 'Most items first'), i: 'layers' }
@@ -579,12 +581,32 @@
         $('#sales_restaurant_reset').off('click.restaurantHistory').on('click.restaurantHistory', function () { $('#sales_history_table, #sales_history_period').val(''); PosnicPro.sales.loadHistory(1); });
     },
 
+    mountProvenanceHistory: function () {
+        var settings = {};
+        try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}') || {}; } catch (_) { }
+        var sources = [['pos', 'POS / Counter']];
+        [['module_captain_enable','tableside','Captain / Tableside'],['module_kiosk_enable','kiosk','Kiosk'],['module_online_ordering_enable','online','Online ordering'],['module_messaging_enable','whatsapp','WhatsApp'],['module_delivery_partners_enable','marketplace','Delivery partners'],['module_webshop_enable','ecommerce','Webshop']].forEach(function (entry) {
+            if (settings[entry[0]] === true) sources.push([entry[1],entry[2]]);
+        });
+        var select = $('#sales_history_source'), prior = select.val() || '';
+        select.empty().append($('<option>').val('').text('All sources'));
+        sources.forEach(function (s) { select.append($('<option>').val(s[0]).text(s[1])); });
+        select.val(sources.some(function (s) { return s[0] === prior; }) ? prior : '');
+        $('#sales_history_source_wrap').toggle(sources.length > 1);
+        if (sources.length === 1) select.val('');
+        $('#sales_provenance_form').off('submit.history').on('submit.history', function (e) { e.preventDefault(); PosnicPro.sales.loadHistory(1); });
+        $('#sales_provenance_reset').off('click.history').on('click.history', function () {
+            $('#sales_history_staff, #sales_history_device, #sales_history_source').val(''); PosnicPro.sales.loadHistory(1);
+        });
+    },
+
     _histPage: 1,
     HIST_PAGE_SIZE: 25,
     _histRows: [],
     _openDocId: null,
     loadHistory: function (page) {
         PosnicPro.sales.mountHistoryFilters();
+        PosnicPro.sales.mountProvenanceHistory();
         var self = PosnicPro.sales;
         if (page) { self._histPage = page; }
         var filters = PosnicPro.listFilter.legacyFilters('sales', { dateKey: 'date' });
@@ -595,6 +617,10 @@
                 var d = { page: self._histPage, limit: self.HIST_PAGE_SIZE, filters: JSON.stringify(filters) };
                 var sv = PosnicPro.listSort.value('sales');
                 if (sv) { d.sort = sv; }
+                [['ordered_by','#sales_history_staff'],['order_device','#sales_history_device'],['order_source','#sales_history_source']].forEach(function (field) {
+                    var value = String($(field[1]).val() || '').trim();
+                    if (value) d[field[0]] = value;
+                });
                 if (PosnicPro.local.get('table_options') === 'enable') {
                     var table = $('#sales_history_table').val();
                     if (table === '__tables') d.tables_only = 'true';
@@ -608,7 +634,7 @@
             var list = data.list || [];
             self._histRows = list;
             if (!list.length) {
-                var filtered = PosnicPro.listFilter.activeCount('sales') > 0 || $('#sales_history_table').val() || $('#sales_history_period').val();
+                var filtered = PosnicPro.listFilter.activeCount('sales') > 0 || $('#sales_history_table').val() || $('#sales_history_period').val() || $('#sales_history_staff').val() || $('#sales_history_device').val() || $('#sales_history_source').val();
                 $('#sales_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
                     + (filtered ? PosnicPro.i18n.t('lang_no_sales_match_this_filter', 'No sales match this filter.') : PosnicPro.i18n.t('lang_no_sales_yet_the_first_bill_will_appear_he', 'No sales yet - the first bill will appear here.')) + '</div>');
                 $('#sales_list_paging').html('');
@@ -616,12 +642,15 @@
             }
             var restaurant = PosnicPro.local.get('table_options') === 'enable';
             var cur = PosnicPro.local.get('currencySign');
+            var historySort = PosnicPro.listSort.value('sales');
+            var timeLabel = historySort === 'recent' ? 'Order created' : historySort === 'updated_desc' ? 'Last updated' : 'Sale date & time';
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th><lang class="lang_bill">Bill #</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th class="sl-col-date"><lang class="lang_date_time">Date &amp; time</lang></th>'
+                + '<thead><tr><th><lang class="lang_bill">Bill #</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th class="sl-col-date">' + esc(timeLabel) + '</th>'
                 + (restaurant ? '<th><lang class="lang_table">Table</lang></th>' : '')
                 + '<th class="text-right sl-col-items"><lang class="lang_itemdetail_title">Items</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
                 + '<th class="text-center"><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
+                var historyTime = historySort === 'recent' ? r.created_date : historySort === 'updated_desc' ? r.updated_date : r.string_date || r.date;
                 var digits = Number.isInteger(r.currencyDigits) && r.currencyDigits >= 0 && r.currencyDigits <= 4 ? r.currencyDigits : 2;
                 var partial = /partial/i.test(String(r.payment_status || ''));
                 var unpaid = partial || String(r.payment_status || '').toLowerCase() === 'unpaid';
@@ -640,7 +669,7 @@
                     + ' data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.sales_id) + '</td>'
                     + '<td>' + esc(r.customer_name || 'Walk-in') + '</td>'
-                    + '<td class="sl-col-date">' + esc(r.string_date ? PosnicPro.convertDate(r.string_date) : (r.date ? String(r.date).slice(0, 10) : '-')) + '</td>'
+                    + '<td class="sl-col-date">' + esc(historyTime ? PosnicPro.convertDate(historyTime) : '-') + '</td>'
                     + (restaurant ? '<td>' + esc(r.table_number || '-') + '</td>' : '')
                     + '<td class="text-right sl-col-items">' + esc(r.number_of_items != null ? r.number_of_items : (r.items || []).length) + '</td>'
                     + '<td class="text-right">' + cur + '&nbsp;' + (Number(r.sales_total) || 0).toFixed(digits) + '</td>'
@@ -1440,7 +1469,7 @@
         // whole-line editor door (owner ask): one pencil, every field
         var saleEditIcon = (PosnicPro.local.get('sale_quick_edit') === 'disable') ? '' :
             '<a href="javascript:void(0)" class="sale-line-act sale-line-edit" data-id="' + id + '" title="Edit price, qty, discount, tax" data-t-title="lang_edit_price_qty_discount_tax"><i class="feather icon-edit-2"></i></a>';
-        var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"> ' +
+        var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"' + (saleEditIcon ? ' data-sale-edit="' + id + '" tabindex="0"' : '') + '> ' +
             '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + PosnicPro.escapeHtml(item_name) + '" ' + colWidth + '>' + PosnicPro.escapeHtml(item_name) + inlineNote + '</td>' +
             '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
             '    <td name ="addSalesLineItemUnit" id="addSalesLineItemUnit_' + id + '" class="text-center">' + item_unit + '</td>' +
@@ -6684,13 +6713,14 @@ PosnicPro.sales.lineEdit = {
 $(document).on('click', '.sale-line-edit', function () {
     PosnicPro.sales.lineEdit.open(String($(this).data('id')));
 });
-/*
- * Double-click cell editing is retired (owner, 2026-08-20: "inline edit of
- * sale not required. we can edit via clicking action edit button"). The
- * pencil in the Action column opens the whole line at once, which is the
- * quicker move with a queue at the counter. The per-cell editor it
- * replaced is gone with it - it had no entry point left.
- */
+// The row opens the same editor as the pencil; embedded controls keep their own action.
+$(document).on('click keydown', 'tr[data-sale-edit]', function (event) {
+    if ($(event.target).closest('a,button,input,select,textarea,label,[onclick],[contenteditable="true"],[role="button"]').length) return;
+    if (event.type === 'keydown' && (event.target !== this || (event.key !== 'Enter' && event.key !== ' '))) return;
+    if (PosnicPro.local.get('sale_quick_edit') === 'disable') return;
+    event.preventDefault();
+    PosnicPro.sales.lineEdit.open(String($(this).attr('data-sale-edit')));
+});
 /*
  * Is the tax feature actually on for this shop?
  *
