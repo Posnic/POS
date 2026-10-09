@@ -236,11 +236,17 @@ PosnicPro.lowstockitems = {
         $('#restock_rows').html(ids.map(function (id) {
             var row = self._restock[id];
             return '<tr><td>' + esc(row.name) + '<small class="d-block text-muted">' + esc(row.supplier_name || PosnicPro.i18n.t('lang_restock_choose_supplier', 'Choose supplier in purchase')) + '</small></td><td>' + esc(row.available_quantity) + '</td>'
-                + '<td><input class="form-control restock-qty" aria-label="Quantity to add for ' + esc(row.name) + '" type="number" min="0.001" step="any" value="' + esc(row.qty) + '" data-id="' + esc(id) + '" style="min-width:110px; min-height:48px;"></td>'
+                + '<td><div class="restock-stepper"><button type="button" class="btn btn-outline-primary restock-step" data-step="-1" aria-label="Decrease quantity for ' + esc(row.name) + '">&minus;</button><input class="form-control restock-qty" aria-label="Quantity to add for ' + esc(row.name) + '" type="number" min="0.001" max="100000" step="any" value="' + esc(row.qty) + '" data-id="' + esc(id) + '"><button type="button" class="btn btn-outline-primary restock-step" data-step="1" aria-label="Increase quantity for ' + esc(row.name) + '">+</button></div></td>'
                 + '<td><button type="button" class="btn btn-outline-danger p-3 restock-remove" data-id="' + esc(id) + '" aria-label="Remove ' + esc(row.name) + '">Remove</button></td></tr>';
         }).join('') || '<tr><td colspan="4"><lang class="lang_no_items_selected_close_this_window_and_ch">No items selected. Close this window and choose items to restock.</lang></td></tr>');
         $('#restock_finish_button').prop('disabled', !ids.length).show();
         $('#restock_finish').hide();
+    },
+    stepRestockQuantity: function (value, direction) {
+        var qty = Number(value);
+        if (!Number.isFinite(qty) || qty <= 0) return 1;
+        if (direction < 0 && qty <= 1) return qty;
+        return Math.min(100000, Math.round((qty + direction) * 1000) / 1000);
     },
     reviewRestock: function () {
         this.renderRestock();
@@ -390,6 +396,10 @@ $(document).on('click', '.ls-restock', function (e) {
     PosnicPro.lowstockitems.loadLowStockValue(id);
 });
 
+$(document).on('click', '.restock-step', function () {
+    var input = $(this).closest('.restock-stepper').find('.restock-qty');
+    input.val(PosnicPro.lowstockitems.stepRestockQuantity(input.val(), Number($(this).data('step')))).trigger('input');
+});
 $(document).on('input', '.restock-qty', function () {
     var row = PosnicPro.lowstockitems._restock[$(this).data('id')];
     if (row) row.qty = $(this).val();

@@ -62,6 +62,16 @@ test('purchase transfers a supplier group with selected quantities after form in
   assert.equal(t.added[0].item_id, 'a'); assert.equal(t.$('#receiving_add_supplier_id').val(), 'supplier-a');
   assert.deepEqual(Object.keys(t.app._restock), ['b']);
 });
+test('touch quantity steps use whole units and preserve positive fractional quantities', () => {
+  const { app } = setup();
+  assert.equal(app.stepRestockQuantity(1, 1), 2);
+  assert.equal(app.stepRestockQuantity(2, -1), 1);
+  assert.equal(app.stepRestockQuantity(1, -1), 1);
+  assert.equal(app.stepRestockQuantity(0.5, -1), 0.5);
+  assert.equal(app.stepRestockQuantity(1.5, -1), 0.5);
+  assert.equal(app.stepRestockQuantity(100000, 1), 100000);
+  assert.equal(app.stepRestockQuantity('', 1), 1);
+});
 test('existing purchase is never erased by a restock handoff', () => {
   const t = setup(); t.PosnicPro.receiving_lineitems = [{ item_id: 'existing' }];
   t.app._restock = { a: { name: 'Cable', qty: 1 } }; t.app.restockPurchase();
