@@ -285,10 +285,13 @@ PosnicPro.lowstockitems = {
         if (!this.validRestock()) return;
         var self = this, groups = {};
         Object.keys(self._restock).forEach(function (id) { var r = self._restock[id]; groups[r.supplier_id || ''] = r.supplier_name || PosnicPro.i18n.t('lang_restock_choose_supplier', 'Choose supplier in purchase'); });
-        var select = $('#restock_supplier').empty();
+        var select = $('#restock_supplier');
+        if (select.hasClass('select2-hidden-accessible')) select.select2('destroy');
+        select.empty();
         Object.keys(groups).forEach(function (id) { $('<option>').val(id).text(groups[id]).appendTo(select); });
         $('#restock_status').empty().removeClass();
         $('#restock_finish').show();
+        select.select2({ width: '100%', minimumResultsForSearch: 0, dropdownParent: $('#restock_modal') });
         $('#restock_finish_button').hide();
     },
     restockDirect: function () {
