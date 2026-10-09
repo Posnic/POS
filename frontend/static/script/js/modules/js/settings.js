@@ -517,6 +517,7 @@ PosnicPro.settings = {
         }
         PosnicPro.settings.coreTabsOverflow();
         PosnicPro.settings.restoreCoreTab();
+        if (PosnicPro.itemsettings) PosnicPro.itemsettings.load();
         // Every Config open re-reads server truth. The controls used to be
         // populated only at login (the DOM carried them between visits), so
         // a change saved on another till showed stale here until re-login -

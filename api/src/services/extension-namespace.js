@@ -140,6 +140,7 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
           state: row.data,
           command,
           extensionId: descriptor.id,
+          roundGrossUnit: descriptor.salesWorkspace?.policies?.inclusivePriceEntry === true,
           allowCounterPriceOverride:
             descriptor.salesWorkspace?.policies?.allowCounterPriceOverride === true,
           resources,
@@ -236,6 +237,7 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
             actorId,
             permissions: row.pending.permissions || [],
             extensionId: descriptor.id,
+            roundGrossUnit: descriptor.salesWorkspace?.policies?.inclusivePriceEntry === true,
             allowCounterPriceOverride:
               descriptor.salesWorkspace?.policies?.allowCounterPriceOverride === true,
             operationId,

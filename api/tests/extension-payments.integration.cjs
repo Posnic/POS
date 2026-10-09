@@ -819,3 +819,47 @@ test('explicit host price-entry policy preserves a one-pound VAT-inclusive overr
   assert.equal(sale.items[0].pricing.source, 'counter_override');
   assert.equal(await f.stock(), 2);
 });
+
+test('gross-unit pricing keeps two one-pound exclusive items at two pounds through split settlement', async () => {
+  const f = await fixture();
+  await db
+    .collection('items')
+    .updateOne(
+      { _id: f.item._id },
+      { $set: { selling_price: 0.83, tax: 20, tax_type: 'exclusive' } }
+    );
+  const context = { ...f.context, roundGrossUnit: true, allowCounterPriceOverride: true };
+  const catalogue = await require('../src/services/extension-catalog').prepareContext({
+    db,
+    scope: context.scope,
+    state: { products: [] },
+    command: {
+      type: 'basket.create',
+      lines: [{ productId: String(f.item._id), sellingPrice: 0.83 }],
+    },
+    resources: ['catalog.products'],
+    roundGrossUnit: true,
+    allowCounterPriceOverride: true,
+  });
+  assert.equal(catalogue.products[0].priceMinor, 100);
+  assert.equal(catalogue.products[0].priceSubminor, 100000000);
+  const p = await preparePayment(context, {
+    ...f.input,
+    method: 'split',
+    lines: [{ itemId: String(f.item._id), quantityMilli: 2000, sellingPrice: 0.83 }],
+  });
+  assert.equal(p.valueMinor, 200);
+  const paid = await confirmSplit(context, {
+    paymentId: p.paymentId,
+    cashMinor: 100,
+    cardMinor: 100,
+    tenderMinor: 100,
+    terminalConfirmed: true,
+  });
+  assert.equal(paid.status, 'paid');
+  const sale = await db.collection('sales').findOne({ _id: new ObjectId(paid.saleId) });
+  assert.equal(sale.sales_total, 2);
+  assert.deepEqual(sale.multi_payment, { Cash: 1, Card: 1 });
+  assert.equal(sale.items[0].pricing.roundGrossUnit, true);
+  assert.equal(await f.stock(), 1);
+});
