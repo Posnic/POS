@@ -2257,6 +2257,7 @@ PosnicPro.items = {
        reason as its process. */
     _adjRows: {},
     openStockAdjustment: function () {
+        PosnicPro.items._adjustmentComplete = null;
         PosnicPro.items._adjRows = {};
         $('#stock_adjust_note').val('');
         $('#stock_adjust_search').val('');
@@ -2330,6 +2331,8 @@ PosnicPro.items = {
             PosnicPro.alert(response.type, response.message);
             if (response.type === 'success') {
                 $('#stock_adjust_modal').modal('hide');
+                if (PosnicPro.items._adjustmentComplete) { PosnicPro.items._adjustmentComplete(response.data || {}); PosnicPro.items._adjustmentComplete = null; }
+                else if ($('#lowstockitems').is(':visible')) PosnicPro.lowstockitems.loadList();
                 PosnicPro.items.itemsTable('items');
                 PosnicPro.stocklogs.viewLowStockDashboard();
             }
@@ -2660,6 +2663,7 @@ PosnicPro.items = {
             $('#bulk_stock_submit').prop('disabled', false);
             if (response.type === 'success') {
                 $('#bulk_stock_modal').modal('hide');
+                if ($('#lowstockitems').is(':visible')) PosnicPro.lowstockitems.loadList();
                 PosnicPro.alert('success', response.message);
                 PosnicPro.items.itemsTable();
             } else {

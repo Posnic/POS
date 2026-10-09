@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "Keutamaan saham tidak dapat disimpan.",
   "lang_track_quantities": "Jejaki kuantiti",
   "lang_track_quantities_2": "Kuantiti trek:",
-  "lang_track_quantities_count_stock_received_and": "Jejaki kuantiti - hitung stok yang diterima dan dijual"
+  "lang_track_quantities_count_stock_received_and": "Jejaki kuantiti - hitung stok yang diterima dan dijual",
+  "lang_start_recount": "Mulakan kiraan semula",
+  "lang_restock_basket": "Bakul penambahan stok",
+  "lang_finish": "Selesai",
+  "lang_quantity_to_add": "Kuantiti untuk ditambah"
 }

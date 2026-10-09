@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Akciju priekšroku nevarēja saglabāt.",
   "lang_track_quantities": "Izsekojiet daudzumus",
   "lang_track_quantities_2": "Izsekošanas daudzumi:",
-  "lang_track_quantities_count_stock_received_and": "Izsekojiet daudzumus - saskaitiet saņemtos un pārdotos krājumus"
+  "lang_track_quantities_count_stock_received_and": "Izsekojiet daudzumus - saskaitiet saņemtos un pārdotos krājumus",
+  "lang_start_recount": "Sākt pārskaitīšanu",
+  "lang_restock_basket": "Krājumu papildināšanas grozs",
+  "lang_finish": "Pabeigt",
+  "lang_quantity_to_add": "Pievienojamais daudzums"
 }

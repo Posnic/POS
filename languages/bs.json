@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Preferencije dionica nisu se mogle sačuvati.",
   "lang_track_quantities": "Pratite količine",
   "lang_track_quantities_2": "Količine praćenja:",
-  "lang_track_quantities_count_stock_received_and": "Pratite količine - brojite primljene i prodane zalihe"
+  "lang_track_quantities_count_stock_received_and": "Pratite količine - brojite primljene i prodane zalihe",
+  "lang_start_recount": "Započni ponovno brojanje",
+  "lang_restock_basket": "Korpa za dopunu zaliha",
+  "lang_finish": "Završi",
+  "lang_quantity_to_add": "Količina za dodavanje"
 }

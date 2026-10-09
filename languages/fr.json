@@ -4597,5 +4597,9 @@
   "lang_always_available_2": "Toujours disponible:",
   "lang_track_quantities_2": "Suivre les quantités:",
   "lang_always_available_no_quantity_tracking_or_l": "Toujours disponible — Vendre sans saisir de quantités en stock. Aucune alerte de stock bas. Adapté aux plats préparés à la commande.",
-  "lang_track_quantities_count_stock_received_and": "Suivre les quantités — Saisir les réceptions et compter chaque vente. Les alertes de stock bas s’appliquent. Adapté aux produits emballés."
+  "lang_track_quantities_count_stock_received_and": "Suivre les quantités — Saisir les réceptions et compter chaque vente. Les alertes de stock bas s’appliquent. Adapté aux produits emballés.",
+  "lang_start_recount": "Commencer le recomptage",
+  "lang_restock_basket": "Panier de réapprovisionnement",
+  "lang_finish": "Terminer",
+  "lang_quantity_to_add": "Quantité à ajouter"
 }

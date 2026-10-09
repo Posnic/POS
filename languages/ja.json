@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "株式優先権を保存できませんでした。",
   "lang_track_quantities": "数量を追跡できます。",
   "lang_track_quantities_2": "数量の追跡:",
-  "lang_track_quantities_count_stock_received_and": "数量の追跡-入荷および販売された在庫をカウントします"
+  "lang_track_quantities_count_stock_received_and": "数量の追跡-入荷および販売された在庫をカウントします",
+  "lang_start_recount": "再棚卸しを開始",
+  "lang_restock_basket": "補充カート",
+  "lang_finish": "完了",
+  "lang_quantity_to_add": "追加する数量"
 }

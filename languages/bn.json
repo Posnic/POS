@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "স্টক পছন্দ সংরক্ষণ করা যায়নি।",
   "lang_track_quantities": "ট্র্যাক পরিমাণ",
   "lang_track_quantities_2": "ট্র্যাক পরিমাণ:",
-  "lang_track_quantities_count_stock_received_and": "ট্র্যাক পরিমাণ - প্রাপ্ত এবং বিক্রি স্টক গণনা"
+  "lang_track_quantities_count_stock_received_and": "ট্র্যাক পরিমাণ - প্রাপ্ত এবং বিক্রি স্টক গণনা",
+  "lang_start_recount": "পুনরায় গণনা শুরু করুন",
+  "lang_restock_basket": "মজুত পূরণের ঝুড়ি",
+  "lang_finish": "সম্পন্ন করুন",
+  "lang_quantity_to_add": "যোগ করার পরিমাণ"
 }

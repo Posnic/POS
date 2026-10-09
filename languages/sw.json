@@ -4597,5 +4597,9 @@
   "lang_always_available_2": "Inapatikana daima:",
   "lang_track_quantities_2": "Fuatilia idadi:",
   "lang_always_available_no_quantity_tracking_or_l": "Inapatikana daima — Uza bila kuingiza idadi ya stok. Hakuna tahadhari za stok chache. Inafaa kwa vyakula vinavyopikwa kwa agizo.",
-  "lang_track_quantities_count_stock_received_and": "Fuatilia idadi — Ingiza bidhaa zilizopokelewa na hesabu kila mauzo. Tahadhari za stok chache zinatumika. Inafaa kwa bidhaa zilizofungashwa."
+  "lang_track_quantities_count_stock_received_and": "Fuatilia idadi — Ingiza bidhaa zilizopokelewa na hesabu kila mauzo. Tahadhari za stok chache zinatumika. Inafaa kwa bidhaa zilizofungashwa.",
+  "lang_start_recount": "Anza kuhesabu upya",
+  "lang_restock_basket": "Kikapu cha kuongeza bidhaa",
+  "lang_finish": "Maliza",
+  "lang_quantity_to_add": "Kiasi cha kuongeza"
 }

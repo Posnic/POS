@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "주식 우선순위를 저장할 수 없습니다.",
   "lang_track_quantities": "수량 추적",
   "lang_track_quantities_2": "트랙 수량:",
-  "lang_track_quantities_count_stock_received_and": "수량 추적 - 입고 및 판매된 재고 수"
+  "lang_track_quantities_count_stock_received_and": "수량 추적 - 입고 및 판매된 재고 수",
+  "lang_start_recount": "재고 재실사 시작",
+  "lang_restock_basket": "재입고 장바구니",
+  "lang_finish": "완료",
+  "lang_quantity_to_add": "추가할 수량"
 }

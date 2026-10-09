@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "Не удалось сохранить предпочтение акциям.",
   "lang_track_quantities": "Отслеживайте количество",
   "lang_track_quantities_2": "Отслеживайте количество:",
-  "lang_track_quantities_count_stock_received_and": "Отслеживайте количество товара - подсчитывайте количество полученных и проданных товаров"
+  "lang_track_quantities_count_stock_received_and": "Отслеживайте количество товара - подсчитывайте количество полученных и проданных товаров",
+  "lang_start_recount": "Начать пересчёт",
+  "lang_restock_basket": "Корзина пополнения запасов",
+  "lang_finish": "Завершить",
+  "lang_quantity_to_add": "Количество для добавления"
 }

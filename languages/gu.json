@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "સ્ટોક પસંદગી સાચવી શકાઈ નથી.",
   "lang_track_quantities": "ટ્રૅક જથ્થો",
   "lang_track_quantities_2": "ટ્રેક જથ્થો:",
-  "lang_track_quantities_count_stock_received_and": "ટ્રૅક જથ્થો - પ્રાપ્ત અને વેચવામાં આવેલા સ્ટોકની ગણતરી કરો"
+  "lang_track_quantities_count_stock_received_and": "ટ્રૅક જથ્થો - પ્રાપ્ત અને વેચવામાં આવેલા સ્ટોકની ગણતરી કરો",
+  "lang_start_recount": "ફરી ગણતરી શરૂ કરો",
+  "lang_restock_basket": "સ્ટોક ભરવાની ટોપલી",
+  "lang_finish": "પૂર્ણ કરો",
+  "lang_quantity_to_add": "ઉમેરવાનો જથ્થો"
 }

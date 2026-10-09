@@ -4597,5 +4597,9 @@
   "lang_always_available_2": "Sempre disponível:",
   "lang_track_quantities_2": "Acompanhar quantidades:",
   "lang_always_available_no_quantity_tracking_or_l": "Sempre disponível — Venda sem informar quantidades em estoque. Sem alertas de estoque baixo. Adequado para pratos preparados sob pedido.",
-  "lang_track_quantities_count_stock_received_and": "Acompanhar quantidades — Registre as entradas e conte cada venda. Alertas de estoque baixo se aplicam. Adequado para produtos embalados."
+  "lang_track_quantities_count_stock_received_and": "Acompanhar quantidades — Registre as entradas e conte cada venda. Alertas de estoque baixo se aplicam. Adequado para produtos embalados.",
+  "lang_start_recount": "Iniciar recontagem",
+  "lang_restock_basket": "Cesto de reposição",
+  "lang_finish": "Concluir",
+  "lang_quantity_to_add": "Quantidade a adicionar"
 }

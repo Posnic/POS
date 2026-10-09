@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "स्टॉक प्राधान्य जतन केली जात नाही",
   "lang_track_quantities": "ट्रॅक प्रमाणे",
   "lang_track_quantities_2": "ट्रॅक प्रमाण:",
-  "lang_track_quantities_count_stock_received_and": "मात्रांचा ट्रॅक करा - प्राप्त आणि विकलेल्या"
+  "lang_track_quantities_count_stock_received_and": "मात्रांचा ट्रॅक करा - प्राप्त आणि विकलेल्या",
+  "lang_start_recount": "पुन्हा मोजणी सुरू करा",
+  "lang_restock_basket": "साठा भरण्याची टोपली",
+  "lang_finish": "पूर्ण करा",
+  "lang_quantity_to_add": "जोडायचे प्रमाण"
 }

@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Hindi mai-save ang kagustuhan ng stock.",
   "lang_track_quantities": "Subaybayan ang dami",
   "lang_track_quantities_2": "Subaybayan ang dami:",
-  "lang_track_quantities_count_stock_received_and": "Subaybayan ang dami - bilangin ang stock na natanggap at naibenta"
+  "lang_track_quantities_count_stock_received_and": "Subaybayan ang dami - bilangin ang stock na natanggap at naibenta",
+  "lang_start_recount": "Simulan ang muling pagbibilang",
+  "lang_restock_basket": "Basket ng muling pag-stock",
+  "lang_finish": "Tapusin",
+  "lang_quantity_to_add": "Dami na idaragdag"
 }

@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Preference akcií nelze uložit.",
   "lang_track_quantities": "Sledování množství",
   "lang_track_quantities_2": "Sledování množství:",
-  "lang_track_quantities_count_stock_received_and": "Sledování množství - počítejte přijaté a prodané zásoby"
+  "lang_track_quantities_count_stock_received_and": "Sledování množství - počítejte přijaté a prodané zásoby",
+  "lang_start_recount": "Zahájit přepočítání",
+  "lang_restock_basket": "Košík doplnění zásob",
+  "lang_finish": "Dokončit",
+  "lang_quantity_to_add": "Množství k přidání"
 }

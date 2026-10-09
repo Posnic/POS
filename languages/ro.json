@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Preferința stocurilor nu a putut fi salvată.",
   "lang_track_quantities": "Urmăriți cantitățile",
   "lang_track_quantities_2": "Urmăriți cantitățile:",
-  "lang_track_quantities_count_stock_received_and": "Urmăriți cantitățile - numărați stocul primit și vândut"
+  "lang_track_quantities_count_stock_received_and": "Urmăriți cantitățile - numărați stocul primit și vândut",
+  "lang_start_recount": "Începe renumărarea",
+  "lang_restock_basket": "Coș de reaprovizionare",
+  "lang_finish": "Finalizează",
+  "lang_quantity_to_add": "Cantitate de adăugat"
 }

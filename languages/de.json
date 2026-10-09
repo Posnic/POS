@@ -4597,5 +4597,9 @@
   "lang_always_available_2": "Immer verfügbar:",
   "lang_track_quantities_2": "Mengen verfolgen:",
   "lang_always_available_no_quantity_tracking_or_l": "Immer verfügbar — Ohne Bestandsmengen verkaufen. Keine Warnungen bei niedrigem Bestand. Für frisch zubereitete Gerichte geeignet.",
-  "lang_track_quantities_count_stock_received_and": "Mengen verfolgen — Wareneingänge erfassen und jeden Verkauf zählen. Warnungen bei niedrigem Bestand gelten. Für verpackte Waren geeignet."
+  "lang_track_quantities_count_stock_received_and": "Mengen verfolgen — Wareneingänge erfassen und jeden Verkauf zählen. Warnungen bei niedrigem Bestand gelten. Für verpackte Waren geeignet.",
+  "lang_start_recount": "Nachzählung starten",
+  "lang_restock_basket": "Warenkorb zur Auffüllung",
+  "lang_finish": "Abschließen",
+  "lang_quantity_to_add": "Hinzuzufügende Menge"
 }

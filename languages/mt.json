@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Il-preferenza tal-istokk ma setgħetx tiġi ffrankata.",
   "lang_track_quantities": "Kwantitajiet tat-traċċa",
   "lang_track_quantities_2": "Kwantitajiet tal-binarji:",
-  "lang_track_quantities_count_stock_received_and": "Il-kwantitajiet tat-traċċa - għadd tal-ħażniet riċevuti"
+  "lang_track_quantities_count_stock_received_and": "Il-kwantitajiet tat-traċċa - għadd tal-ħażniet riċevuti",
+  "lang_start_recount": "Ibda għadd mill-ġdid",
+  "lang_restock_basket": "Basket għar-riforniment",
+  "lang_finish": "Temm",
+  "lang_quantity_to_add": "Kwantità li żżid"
 }

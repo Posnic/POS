@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Уподобання акцій не вдалося зберегти.",
   "lang_track_quantities": "Відстежуйте кількість",
   "lang_track_quantities_2": "Кількість відстежень:",
-  "lang_track_quantities_count_stock_received_and": "Відстежуйте кількість - підрахуйте отримані та продані запаси"
+  "lang_track_quantities_count_stock_received_and": "Відстежуйте кількість - підрахуйте отримані та продані запаси",
+  "lang_start_recount": "Почати перерахунок",
+  "lang_restock_basket": "Кошик поповнення запасів",
+  "lang_finish": "Завершити",
+  "lang_quantity_to_add": "Кількість для додавання"
 }

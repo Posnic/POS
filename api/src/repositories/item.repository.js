@@ -3585,6 +3585,7 @@ class ItemRepository extends BaseModel {
         .slice(0, 500);
       const now = new Date();
 
+      const updatedItemIds = [];
       let updated = 0;
       let skipped = 0;
       for (const row of rows) {
@@ -3629,6 +3630,7 @@ class ItemRepository extends BaseModel {
           }
         );
         updated += 1;
+        updatedItemIds.push(String(item._id));
 
         if (item.track_inventory === true) {
           // Same count convention as every other stock writer: old - new,
@@ -3660,7 +3662,7 @@ class ItemRepository extends BaseModel {
 
       return {
         status: true,
-        data: { updated, skipped },
+        data: { updated, skipped, updatedItemIds },
         message:
           updated > 0 ? `Adjusted ${updated} item(s)` : 'Nothing changed - stock already matched',
       };

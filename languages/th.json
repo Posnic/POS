@@ -4597,5 +4597,9 @@
   "lang_always_available_2": "พร้อมขายเสมอ:",
   "lang_track_quantities_2": "ติดตามจำนวน:",
   "lang_always_available_no_quantity_tracking_or_l": "พร้อมขายเสมอ — ขายโดยไม่ต้องกรอกจำนวนสต็อก ไม่มีการแจ้งเตือนสต็อกต่ำ เหมาะกับอาหารที่ปรุงตามสั่ง",
-  "lang_track_quantities_count_stock_received_and": "ติดตามจำนวน — บันทึกสต็อกที่รับเข้าและนับทุกการขาย มีการแจ้งเตือนสต็อกต่ำ เหมาะกับสินค้าบรรจุหีบห่อ"
+  "lang_track_quantities_count_stock_received_and": "ติดตามจำนวน — บันทึกสต็อกที่รับเข้าและนับทุกการขาย มีการแจ้งเตือนสต็อกต่ำ เหมาะกับสินค้าบรรจุหีบห่อ",
+  "lang_start_recount": "เริ่มนับใหม่",
+  "lang_restock_basket": "ตะกร้าเติมสต็อก",
+  "lang_finish": "เสร็จสิ้น",
+  "lang_quantity_to_add": "จำนวนที่จะเพิ่ม"
 }

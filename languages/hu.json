@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "A készletpreferenciát nem sikerült menteni.",
   "lang_track_quantities": "Kövesse nyomon a mennyiségeket",
   "lang_track_quantities_2": "Nyomkövetési mennyiségek:",
-  "lang_track_quantities_count_stock_received_and": "Mennyiségek nyomon követése - számolja meg a kapott és eladott"
+  "lang_track_quantities_count_stock_received_and": "Mennyiségek nyomon követése - számolja meg a kapott és eladott",
+  "lang_start_recount": "Újraszámolás indítása",
+  "lang_restock_basket": "Készletfeltöltési kosár",
+  "lang_finish": "Befejezés",
+  "lang_quantity_to_add": "Hozzáadandó mennyiség"
 }

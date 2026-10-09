@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Nie można zapisać preferencji zapasowych.",
   "lang_track_quantities": "Śledź ilości",
   "lang_track_quantities_2": "Ilości śledzenia:",
-  "lang_track_quantities_count_stock_received_and": "Śledź ilości - policz otrzymane i sprzedane zapasy"
+  "lang_track_quantities_count_stock_received_and": "Śledź ilości - policz otrzymane i sprzedane zapasy",
+  "lang_start_recount": "Rozpocznij ponowne liczenie",
+  "lang_restock_basket": "Koszyk uzupełnienia zapasów",
+  "lang_finish": "Zakończ",
+  "lang_quantity_to_add": "Ilość do dodania"
 }

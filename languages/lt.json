@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Akcijų pirmenybės negalėjo būti išsaugotos.",
   "lang_track_quantities": "Stebėkite kiekius",
   "lang_track_quantities_2": "Stebėkite kiekius:",
-  "lang_track_quantities_count_stock_received_and": "Stebėkite kiekius - skaičiuokite gautas ir parduotas atsargas"
+  "lang_track_quantities_count_stock_received_and": "Stebėkite kiekius - skaičiuokite gautas ir parduotas atsargas",
+  "lang_start_recount": "Pradėti perskaičiavimą",
+  "lang_restock_basket": "Atsargų papildymo krepšelis",
+  "lang_finish": "Baigti",
+  "lang_quantity_to_add": "Pridedamas kiekis"
 }

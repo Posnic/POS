@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Η προτίμηση μετοχών δεν ήταν δυνατή η αποθήκευση.",
   "lang_track_quantities": "Παρακολούθηση ποσοτήτων",
   "lang_track_quantities_2": "Ποσότητες παρακολούθησης:",
-  "lang_track_quantities_count_stock_received_and": "Παρακολουθήστε τις ποσότητες - μετρήστε τα αποθέματα που ελήφθησαν και πωλήθηκαν"
+  "lang_track_quantities_count_stock_received_and": "Παρακολουθήστε τις ποσότητες - μετρήστε τα αποθέματα που ελήφθησαν και πωλήθηκαν",
+  "lang_start_recount": "Έναρξη επανακαταμέτρησης",
+  "lang_restock_basket": "Καλάθι αναπλήρωσης",
+  "lang_finish": "Ολοκλήρωση",
+  "lang_quantity_to_add": "Ποσότητα προς προσθήκη"
 }

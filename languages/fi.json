@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Osakeetuuksia ei voitu tallentaa.",
   "lang_track_quantities": "Seuraa määriä",
   "lang_track_quantities_2": "Seuraa määriä:",
-  "lang_track_quantities_count_stock_received_and": "Seuraa määriä - laske vastaanotetut ja myydyt varastot"
+  "lang_track_quantities_count_stock_received_and": "Seuraa määriä - laske vastaanotetut ja myydyt varastot",
+  "lang_start_recount": "Aloita uudelleenlaskenta",
+  "lang_restock_basket": "Täydennyskori",
+  "lang_finish": "Valmis",
+  "lang_quantity_to_add": "Lisättävä määrä"
 }

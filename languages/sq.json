@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Preferenca e aksioneve nuk mund të ruhet.",
   "lang_track_quantities": "Gjurmoni sasitë",
   "lang_track_quantities_2": "Gjurmoni sasitë:",
-  "lang_track_quantities_count_stock_received_and": "Gjurmoni sasitë - numëroni aksionet e marra dhe të shitura"
+  "lang_track_quantities_count_stock_received_and": "Gjurmoni sasitë - numëroni aksionet e marra dhe të shitura",
+  "lang_start_recount": "Nis rinumërimin",
+  "lang_restock_basket": "Shporta e rifurnizimit",
+  "lang_finish": "Përfundo",
+  "lang_quantity_to_add": "Sasia për të shtuar"
 }

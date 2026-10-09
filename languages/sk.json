@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Preferencie zásob sa nepodarilo uložiť.",
   "lang_track_quantities": "Sledujte množstvá",
   "lang_track_quantities_2": "Sledujte množstvá:",
-  "lang_track_quantities_count_stock_received_and": "Sledujte množstvá - počítajte prijaté a predané zásoby"
+  "lang_track_quantities_count_stock_received_and": "Sledujte množstvá - počítajte prijaté a predané zásoby",
+  "lang_start_recount": "Začať prepočítanie",
+  "lang_restock_basket": "Košík doplnenia zásob",
+  "lang_finish": "Dokončiť",
+  "lang_quantity_to_add": "Množstvo na pridanie"
 }

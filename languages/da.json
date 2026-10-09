@@ -4515,5 +4515,9 @@
   "lang_stock_preference_could_not_be_saved": "Aktiepræference kunne ikke gemmes.",
   "lang_track_quantities": "Spor mængder",
   "lang_track_quantities_2": "Spor mængder:",
-  "lang_track_quantities_count_stock_received_and": "Spor mængder - tæl modtagne og solgte lagre"
+  "lang_track_quantities_count_stock_received_and": "Spor mængder - tæl modtagne og solgte lagre",
+  "lang_start_recount": "Start genoptælling",
+  "lang_restock_basket": "Kurv til genopfyldning",
+  "lang_finish": "Afslut",
+  "lang_quantity_to_add": "Antal der skal tilføjes"
 }

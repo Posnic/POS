@@ -4518,5 +4518,9 @@
   "lang_stock_preference_could_not_be_saved": "اسٹاک کی ترجیح کو محفوظ نہیں کیا جاسکتا۔",
   "lang_track_quantities": "مقدار کو ٹریک کریں",
   "lang_track_quantities_2": "ٹریک کی مقدار:",
-  "lang_track_quantities_count_stock_received_and": "مقدار ٹریک کریں - موصول ہونے والے اور فروخت ہونے والے اسٹاک"
+  "lang_track_quantities_count_stock_received_and": "مقدار ٹریک کریں - موصول ہونے والے اور فروخت ہونے والے اسٹاک",
+  "lang_start_recount": "دوبارہ گنتی شروع کریں",
+  "lang_restock_basket": "اسٹاک بھرنے کی ٹوکری",
+  "lang_finish": "مکمل کریں",
+  "lang_quantity_to_add": "شامل کرنے کی مقدار"
 }
