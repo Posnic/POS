@@ -1093,34 +1093,11 @@ class SalesController extends BaseController {
         filter.status = { $ne: SALE_STATUS.CANCELLED };
       }
 
-      // Match PHP salePage default ordering where the latest sales
-      // (by business sale date) appear first. PHP's parent::page()
-      // effectively sorts by the stored sale date / _id descending.
-      // Use date / created_date as the primary keys and fall back to
-      // _id so that newly inserted sales and imported legacy records
-      // both surface at the top of the Sales History list.
+      // Sort the same sale timestamp shown in Sales History, including time of day.
       const options = {
         page: numericPage,
         limit: numericLimit,
-        /*
-         * Newest rung up, first - ordered by when the sale was recorded,
-         * not by the date written on it.
-         *
-         * These were the other way round, and a shop noticed the way
-         * anybody would: took a sale, opened Sales History, and it was not
-         * at the top. It was there, second, because an older sale carried a
-         * later time of day. `date` is the business date - it can be
-         * backdated by hand and, on a till whose clock has drifted, it can
-         * simply be wrong. Either way it does not answer "did the sale I
-         * just took save?", which is the question this screen gets opened
-         * to answer.
-         *
-         * created_date is when the row was written and nobody edits it. _id
-         * settles ties, because ObjectIds increase with creation, so two
-         * sales in the same second still come back in the order they
-         * happened.
-         */
-        sortBy: 'created_date:desc,_id:desc',
+        sortBy: 'date:desc,_id:desc',
       };
 
       /*
@@ -1132,6 +1109,7 @@ class SalesController extends BaseController {
         recent: 'created_date:desc,_id:desc',
         date_desc: 'date:desc,_id:desc',
         date_asc: 'date:asc,_id:asc',
+        updated_desc: 'updated_date:desc,_id:desc',
         total_desc: 'sales_total:desc,_id:desc',
         total_asc: 'sales_total:asc,_id:desc',
         items_desc: 'number_of_items:desc,_id:desc',
@@ -1155,6 +1133,8 @@ class SalesController extends BaseController {
         );
         filter.$and = [...(filter.$and || []), ...clauses];
       }
+      const provenance = require('../helpers/sales-history-provenance')(req.query);
+      if (provenance.length) filter.$and = [...(filter.$and || []), ...provenance];
       const result = await salesService.listSales(filter, options, { SaleModel });
 
       const docs = Array.isArray(result?.results) ? result.results : [];

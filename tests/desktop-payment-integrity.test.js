@@ -270,6 +270,7 @@ test('partially paid history keeps a settlement action and shows the remaining b
     win.eval('PosnicPro.sales.' + name + ' = ' + source.slice(source.indexOf('function', start), end + 6) + ';');
   }
   sales.mountHistoryFilters = () => {};
+  sales.mountProvenanceHistory = () => {};
   sales.renderHistoryPager = () => {};
   win.PosnicPro.listFilter = { legacyFilters: () => ({}), request: (_key, _options, done) => done({ data: { list: [bill] } }) };
   win.PosnicPro.listSort = { value: () => '' };

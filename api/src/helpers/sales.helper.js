@@ -1028,11 +1028,7 @@ const formatSaleListEntry = (saleDoc) => {
 
   const id = doc._id?.toString?.() || doc.id;
   const saleDate =
-    parseSaleDate(doc.updated_date) ||
-    parseSaleDate(doc.date) ||
-    parseSaleDate(doc.createdAt) ||
-    parseSaleDate(doc.created_date) ||
-    new Date();
+    parseSaleDate(doc.date) || parseSaleDate(doc.created_date) || parseSaleDate(doc.createdAt);
 
   // Derive a timezone-aware string representation so the frontend can
   // display date + time consistently regardless of branch changes.
@@ -1076,7 +1072,7 @@ const formatSaleListEntry = (saleDoc) => {
       parseSaleDate(doc.createdAt) ||
       parseSaleDate(doc.date) ||
       saleDate,
-    updated_date: parseSaleDate(doc.updatedAt) || parseSaleDate(doc.updated_date) || null,
+    updated_date: parseSaleDate(doc.updated_date) || parseSaleDate(doc.updatedAt) || null,
     created_by: doc.created_by || doc.user_name || undefined,
     branch_name: doc.branch_name,
     // KOT-specific fields required by frontend kot.js

@@ -105,63 +105,66 @@ function billable(line) {
  * the bill. Anything with no name is skipped too - it cannot be read on paper
  * and its amount is already inside the total.
  */
-function itemLines(sale, branch, allocation = null) {
+function itemLines(sale, branch, allocation = null, combine = true) {
   const monetary = require('../utils/currency').policy(branch || {});
   const rows = Array.isArray(sale && sale.items) ? sale.items : [];
-  return rows
-    .filter((it) => billable(it) && String(it.name || it.item_name || '').trim())
-    .map((it, index) => {
-      /* Three spellings because three writers exist: a priced online line sets
+  const billRows = rows.filter(
+    (it) => billable(it) && String(it.name || it.item_name || '').trim()
+  );
+  const displayed = billRows.map((it, index) => {
+    /* Three spellings because three writers exist: a priced online line sets
          both `quantity` and `item_quantity`, the till's own path sets
          `item_quantity`, and `qty` is what a hand-built row reaches for.
          Missing one prints a quantity of nothing beside a real price. */
-      const qty = num(
-        it.quantity != null ? it.quantity : it.item_quantity != null ? it.item_quantity : it.qty
-      );
+    const qty = num(
+      it.quantity != null ? it.quantity : it.item_quantity != null ? it.item_quantity : it.qty
+    );
+    /*
+     * THE RATE, AND AN AMOUNT THAT AGREES WITH THE SUBTOTAL.
+     *
+     * The line used to print `it.total`, which for a tax-exclusive item is
+     * the price WITH tax already in it. So a 200 rupee starter times two
+     * printed as 420 while the subtotal underneath said 400, the tax rows
+     * added 20 more, and the bill visibly did not add up. Owner: "paneer
+     * starter 2 x 240 its wrong. it supposed to 200 means 200 x 2 then we add
+     * tax. its exlusive properly need to be displayed".
+     *
+     * On a tax-exclusive invoice the line is what the goods cost and the tax
+     * is stated separately below. Printing the tax-inclusive figure on the
+     * line AND the tax again underneath shows it twice.
+     */
+    const rate = num(
+      it.unit_price != null
+        ? it.unit_price
+        : it.item_base_price != null
+          ? it.item_base_price
+          : it.item_price
+    );
+    return {
+      name: String(it.name || it.item_name).trim(),
+      unit: String(it.item_unit || it.unit || ''),
+      ...require('../utils/item-localization').snapshot(it),
       /*
-       * THE RATE, AND AN AMOUNT THAT AGREES WITH THE SUBTOTAL.
+       * The HSN or SAC code, when the shop asks for it.
        *
-       * The line used to print `it.total`, which for a tax-exclusive item is
-       * the price WITH tax already in it. So a 200 rupee starter times two
-       * printed as 420 while the subtotal underneath said 400, the tax rows
-       * added 20 more, and the bill visibly did not add up. Owner: "paneer
-       * starter 2 x 240 its wrong. it supposed to 200 means 200 x 2 then we add
-       * tax. its exlusive properly need to be displayed".
-       *
-       * On a tax-exclusive invoice the line is what the goods cost and the tax
-       * is stated separately below. Printing the tax-inclusive figure on the
-       * line AND the tax again underneath shows it twice.
+       * Read off the SALE, not the catalogue: a code corrected next month
+       * must not change what a reprinted invoice says it charged. Empty on
+       * every sale made before the field existed, and the column is dropped
+       * entirely when no line carries one - so switching it on does not add a
+       * blank stripe down a year of old bills.
        */
-      const rate = num(
-        it.unit_price != null
-          ? it.unit_price
-          : it.item_base_price != null
-            ? it.item_base_price
-            : it.item_price
-      );
-      return {
-        name: String(it.name || it.item_name).trim(),
-        ...require('../utils/item-localization').snapshot(it),
-        /*
-         * The HSN or SAC code, when the shop asks for it.
-         *
-         * Read off the SALE, not the catalogue: a code corrected next month
-         * must not change what a reprinted invoice says it charged. Empty on
-         * every sale made before the field existed, and the column is dropped
-         * entirely when no line carries one - so switching it on does not add a
-         * blank stripe down a year of old bills.
-         */
-        hsn: wants(branch, 'bill_print_hsn') ? String(it.hsncode || '').trim() : '',
-        rate: rate > 0 ? rate.toFixed(monetary.currencyDigits) : '',
-        qty: qtyText(qty),
-        amount: require('../utils/currency').fromMinor(
-          allocation
-            ? allocation.lines[index].components.find((row) => row.key === 'base')?.minor || 0
-            : require('../utils/currency').toMinor(rate * qty, monetary),
-          monetary
-        ),
-      };
-    });
+      hsn: wants(branch, 'bill_print_hsn') ? String(it.hsncode || '').trim() : '',
+      rate: rate > 0 ? rate.toFixed(monetary.currencyDigits) : '',
+      qty: qtyText(qty),
+      amount: require('../utils/currency').fromMinor(
+        allocation
+          ? allocation.lines[index].components.find((row) => row.key === 'base')?.minor || 0
+          : require('../utils/currency').toMinor(rate * qty, monetary),
+        monetary
+      ),
+    };
+  });
+  return combine ? require('./combine-bill-lines')(billRows, displayed, monetary) : displayed;
 }
 
 /*
@@ -481,9 +484,9 @@ function totalQuantity(branch, items) {
  *                        because a branch row could not be read would lose the
  *                        guest their bill over a cosmetic failure.
  */
-function buildBillPayload(sale = {}, branch = {}) {
+function buildBillPayload(sale = {}, branch = {}, options = {}) {
   const allocation = require('../utils/transfer-allocation').read(sale, branch);
-  const items = itemLines(sale, branch, allocation);
+  const items = itemLines(sale, branch, allocation, options.combineItems !== false);
   const subTotal =
     sale.sales_sub_total != null && sale.sales_sub_total !== ''
       ? num(sale.sales_sub_total)
