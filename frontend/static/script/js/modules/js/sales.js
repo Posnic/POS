@@ -7505,10 +7505,10 @@ PosnicPro.sales.loadBillingCatalogue = function (done, preserve) {
 PosnicPro.sales.renderTilePages = function (container, tiles) {
     var page = 0, size = 48;
     var grid = $('<div class="row sale-tile-grid"></div>').appendTo(container);
-    var pager = $('<nav class="sale-tile-pages d-flex align-items-center justify-content-between py-3" aria-label="Product pages"></nav>').appendTo(container);
-    var previous = $('<button type="button" class="btn btn-outline-primary" style="min-height:48px">Previous</button>').appendTo(pager);
+    var pager = $('<nav class="sale-tile-pages d-flex align-items-center justify-content-between py-3" aria-label="Product pages" data-t-aria-label="lang_product_pages"></nav>').appendTo(container);
+    var previous = $('<button type="button" class="btn btn-outline-primary" style="min-height:48px"><lang class="lang_previous">Previous</lang></button>').appendTo(pager);
     var status = $('<span role="status" class="px-2 text-center"></span>').appendTo(pager);
-    var next = $('<button type="button" class="btn btn-outline-primary" style="min-height:48px">Next</button>').appendTo(pager);
+    var next = $('<button type="button" class="btn btn-outline-primary" style="min-height:48px"><lang class="lang_next">Next</lang></button>').appendTo(pager);
     function draw() {
         PosnicPro.sales.itemsMenu.variantPop.close();
         grid.html(tiles.slice(page * size, (page + 1) * size).join(''));
