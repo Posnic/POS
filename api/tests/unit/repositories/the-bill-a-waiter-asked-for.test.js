@@ -198,7 +198,9 @@ describe('the till collecting what it owes the counter', () => {
     /* hsn is empty until a shop switches the HSN column on AND the line was
        sold after the code started being stored, so the column is dropped and
        nothing changes on an ordinary bill. */
-    expect(bill.items).toEqual([{ name: 'Idli', hsn: '', rate: '30.00', qty: '2', amount: 60 }]);
+    expect(bill.items).toEqual([
+      { name: 'Idli', hsn: '', rate: '30.00', qty: '2', unit: '', amount: 60 },
+    ]);
     expect(bill.total).toBe(60);
     expect(bill.billNo).toBe('INV-7');
   });
