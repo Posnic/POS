@@ -34,7 +34,7 @@
             var days = Number($('#expiry_report_days').val());
             if (!Number.isInteger(days) || days < 0 || days > 365 || $('#expiry_report_days').val() === '') { failed(); return; }
             $('#expiry_report_summary').text(PosnicPro.i18n.t('lang_loading', 'Loading…'));
-            $('#expiry_report_paging').addClass('d-none');
+            $('#expiry_report_paging').removeClass('d-flex').addClass('d-none');
             $('#expiry_report_previous,#expiry_report_next').prop('disabled', true);
             $('#expiry_report_rows').empty();
             PosnicPro.get({url:'items/expiryReport', data:{ page:next, days:days, search:$('#expiry_report_search').val(), status:$('#expiry_report_status').val(), sort:$('#expiry_report_sort').val() }}, function (r) {
@@ -48,7 +48,7 @@
                 });
                 if (!d.rows.length) $('<tr>').append($('<td colspan="5">').text(PosnicPro.i18n.t('lang_no_products_expiry_review', 'No products to review.'))).appendTo('#expiry_report_rows');
                 $('#expiry_report_page').text(page + ' / ' + Math.max(1, Math.ceil(d.total / 25)));
-                $('#expiry_report_paging').toggleClass('d-none', d.total <= 25);
+                $('#expiry_report_paging').toggleClass('d-flex', d.total > 25).toggleClass('d-none', d.total <= 25);
                 $('#expiry_report_previous').toggle(page > 1).prop('disabled', page <= 1);
                 $('#expiry_report_next').toggle(page * 25 < d.total).prop('disabled', page * 25 >= d.total);
             }, function () { if (ticket === request) { $('#expiry_report_summary').text(''); failed(); } });
