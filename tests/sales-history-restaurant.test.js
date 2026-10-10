@@ -16,6 +16,7 @@ function setup(enabled = true, rows = null) {
  get: (p, cb) => cb({ type: 'success', data: p.url === 'setting/getTableOrderAll' ? [{ tableorder_value: '4' }] : (p.url === 'sales/servingPeriods' ? { restaurant_enabled: true, serving_periods: saved } : { values: { menu_dayparts: saved } }) }),
  put: (p, cb) => { saved = JSON.parse(p.data).menu_dayparts; cb({ type: 'success' }); },
  listFilter: { legacyFilters: () => ({}), activeCount: () => 0, request: (key,p,cb) => { requests.push(p.data); cb({ data: { list: rows || [{ _id: 'bill', table_number: '4', sales_id: 'B-1', sales_total: 210, payment_status: 'Paid' }], total: 1 } }); } } };
+ w.PosnicSalePayments = require('../api/src/helpers/sale-payment-summary');
  w.eval('PosnicPro.sales = {' + sales.slice(sales.indexOf('    mountRestaurantHistory: function'), sales.indexOf('    renderHistoryPager: function')) + '};');
  w.PosnicPro.sales.mountHistoryFilters = () => {}; w.PosnicPro.sales.renderHistoryPager = () => {};
  const dayStart = settings.indexOf('PosnicPro.dayparts = {');

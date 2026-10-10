@@ -8,6 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../frontend/static/script/j
 function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   const dom = new JSDOM('<div id="payment_id"></div><input id="Partial_amount" value="262.50"><input id="unpaid_payment_toggle" type="checkbox" checked><button id="save_btn"></button><span id="return_balance_amount"></span><input id="sales_new_customer_partial_balance">', { url: 'http://localhost/', runScripts: 'outside-only' });
   const win = dom.window;
+  win.PosnicSalePayments = require('../api/src/helpers/sale-payment-summary');
   const $ = require('jquery')(win);
   win.$ = win.jQuery = $;
   win.PosnicTaxEngine = require('../frontend/static/script/js/core/tax-engine');
@@ -392,7 +393,7 @@ test('saved receipt lists every discount, charge and split tender with pretax li
   assert.match(sheet.find('tbody tr').eq(1).text(),/28\.57.*28\.57/);
   const sum=sheet.find('tfoot tr.q-sub td:last-child').get().reduce((n,td)=>n+Number($(td).text().replace(/[^\d.-]/g,'')),0);
   assert.equal(Math.round(sum*100)/100,95.32);
-  assert.match(sheet.find('.q-footer').text(),/Cash:.*20\.00.*Card:.*30\.00.*UPI:.*45\.32/);
+  assert.match(sheet.find('.q-footer').text(),/Cash.*20\.00.*Card.*30\.00.*UPI.*45\.32/);
 });
 test('charge action follows late-loaded settings on cart recalculation', (t) => {
   const {dom,$,sales}=savedOrderSetup();t.after(()=>dom.window.close());
