@@ -865,6 +865,18 @@ PosnicPro.settings = {
                 $('#textlocal_sender').val(data.textlocal_sender);
                 $('#textlocal_api').val(data.textlocal_api || '');
                 $('#sales_prefix').val(data.sales_prefix || 'S');
+                $('#sales_search_custom_fields').prop('checked', Array.isArray(data.sales_search_fields))
+                    .off('change.salesSearch').on('change.salesSearch', function () {
+                        $('[name="sales_search_fields"]').prop('disabled', !this.checked);
+                    }).triggerHandler('change.salesSearch');
+                var searchFields = data.sales_search_fields || ['name', 'sku', 'barcode', 'plu'];
+                var displayFields = data.sales_search_display_fields || ['sku', 'category', 'price', 'stock', 'image'];
+                $('[name="sales_search_fields"]').each(function () { this.checked = searchFields.indexOf(this.value) >= 0; });
+                $('[name="sales_search_display_fields"]').each(function () { this.checked = displayFields.indexOf(this.value) >= 0; });
+                $('#sales_search_custom_display').prop('checked', Array.isArray(data.sales_search_display_fields))
+                    .off('change.salesSearch').on('change.salesSearch', function () {
+                        $('[name="sales_search_display_fields"]').prop('disabled', !this.checked);
+                    }).triggerHandler('change.salesSearch');
                 /* WHEN THE BILL NUMBER STARTS AGAIN. Empty is off, which is
                    what a branch that has never been asked reads as, and what
                    every shop did before this existed. The month only means
@@ -2185,6 +2197,10 @@ if ($wrapper.length) {
                 discount_percentage: $('#discount_percentage').val(),
                 discount_amount: $('#discount_amount').val(),
                 sales_prefix: $('#sales_prefix').val(),
+                sales_search_fields: $('#sales_search_custom_fields').is(':checked')
+                    ? $('[name="sales_search_fields"]:checked').map(function () { return this.value; }).get() : null,
+                sales_search_display_fields: $('#sales_search_custom_display').is(':checked')
+                    ? $('[name="sales_search_display_fields"]:checked').map(function () { return this.value; }).get() : null,
                 bill_number_reset: $('#bill_number_reset').val() || '',
                 bill_number_fy_start_month: $('#bill_number_fy_start_month').val() || '4',
                 email_smtp_host: $('#email_smtp_host').val() || '',

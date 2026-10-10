@@ -2822,13 +2822,30 @@ class ItemRepository extends BaseModel {
         licenseId && ObjectId.isValid(licenseId) ? new ObjectId(licenseId) : licenseId || null;
 
       const regex = query ? new RegExp(searchPattern(query), 'i') : null;
+      const SettingsRepository = require('./settings.repository');
+      const preferences = await new SettingsRepository().resolveGroup('preferences', {
+        branchId,
+        licenseId,
+      });
+      if (!preferences.status) throw new Error('Could not load sales search preferences');
+      const searchPreferences = preferences.data.values || {};
       let searchConditions = [];
 
       // PHP Line 1377-1387: Handle type='id' separately to fetch by ObjectId
       if (type === 'id' && query && ObjectId.isValid(query)) {
         searchConditions = [{ _id: new ObjectId(query) }];
       } else if (regex && type === 'barcode') {
-        searchConditions = [{ barcode_id: regex }, { barcodes: regex }];
+        searchConditions = [
+          { barcode_id: itemBarcodes.normalize(query) },
+          { barcodes: itemBarcodes.normalize(query) },
+        ];
+      } else if (regex && Array.isArray(searchPreferences.sales_search_fields)) {
+        searchConditions = require('../helpers/sales-search-fields').conditions(
+          searchPreferences.sales_search_fields,
+          query,
+          regex
+        );
+        if (!searchConditions.length) return { status: true, data: [], message: 'success' };
       } else if (regex) {
         searchConditions = [
           { name: regex },
@@ -2882,7 +2899,7 @@ class ItemRepository extends BaseModel {
           { del_status: { $nin: [1, '1', true] } },
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
-          stockCondition,
+          type === 'barcode' ? null : stockCondition,
           ...(categoryId ? [{ category_id: new ObjectId(categoryId) }] : []),
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ].filter(Boolean),
@@ -2936,7 +2953,9 @@ class ItemRepository extends BaseModel {
             },
           },
           { $sort: { _searchRank: -1, name: 1, _id: 1 } },
-          { $limit: limit },
+          ...(type === 'barcode'
+            ? [{ $sort: { name: 1, itemid: 1, _id: 1 } }]
+            : [{ $limit: limit }]),
           {
             $project: {
               _id: 1,
@@ -2977,6 +2996,7 @@ class ItemRepository extends BaseModel {
         .toArray();
 
       const suggestions = data.map((item) => ({
+        sales_search_display_fields: searchPreferences.sales_search_display_fields || null,
         item_id: item._id?.toString?.() || '',
         item_name: item.name || '',
         ...itemText.snapshot(item),

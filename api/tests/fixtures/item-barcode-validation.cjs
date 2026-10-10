@@ -310,3 +310,46 @@ test('names and barcode text cannot inject markup into a conflict toast', async 
   expect(r.message).not.toContain('<img');
   expect(r.message).toContain('&lt;img');
 });
+
+test('saved Sales fields restrict typed search while exact scans still return all duplicates', async () => {
+  await seed({track_inventory:false, supplier_name:'Vendor A'});
+  await seed({itemid:'MILK-2',track_inventory:false, supplier_name:'Vendor B'});
+  const SettingsRepository = require('../../src/repositories/settings.repository');
+  const settings = new SettingsRepository();
+  await db.collection('branches').updateOne({_id:ctx.branchId},{$set:{sales_search_fields:['supplier'],sales_search_display_fields:['barcode','stock']}});
+  const typed = await repo.getOnlineItemsAjaxList({query:'Milk'},ctx);
+  expect(typed.status).toBe(true);
+  expect(typed.data).toHaveLength(0);
+  const supplier = await repo.getOnlineItemsAjaxList({query:'Vendor A'},ctx);
+  expect(supplier.data).toHaveLength(1);
+  expect(supplier.data[0].sales_search_display_fields).toEqual(['barcode','stock']);
+  const scanned = await repo.getOnlineItemsAjaxList({query:code,type:'barcode'},ctx);
+  expect(scanned.data).toHaveLength(2);
+  const resolved = await settings.resolveGroup('preferences',ctx);
+  expect(resolved.data.values.sales_search_fields).toEqual(['supplier']);
+});
+
+test('search field preferences are isolated to the current branch', async () => {
+  await seed({track_inventory:false});
+  await db.collection('branches').insertOne({_id:new ObjectId(),license:ctx.licenseId,sales_search_fields:['supplier']});
+  const typed = await repo.getOnlineItemsAjaxList({query:'Milk'},ctx);
+  expect(typed.data).toHaveLength(1);
+  expect(typed.data[0].sales_search_display_fields).toBe(null);
+});
+
+test('common Sales settings save persists fields and unrelated saves preserve them', async () => {
+  const SettingModel = require('../../src/models/setting.model');
+  const model = new SettingModel();
+  model.setContext({...ctx,user:{_id:new ObjectId(),username:'Test',access:{}}});
+  const saved = await model.updateCommonSettings({sales_search_fields:['category'],sales_search_display_fields:['barcode','price']});
+  expect(saved.status).toBe(true);
+  let branch = await db.collection('branches').findOne({_id:ctx.branchId});
+  expect(branch.sales_search_fields).toEqual(['category']);
+  expect(branch.sales_search_display_fields).toEqual(['barcode','price']);
+  await model.updateCommonSettings({sales_prefix:'TEST'});
+  branch = await db.collection('branches').findOne({_id:ctx.branchId});
+  expect(branch.sales_search_fields).toEqual(['category']);
+  await model.updateCommonSettings({sales_search_display_fields:null});
+  branch = await db.collection('branches').findOne({_id:ctx.branchId});
+  expect(branch.sales_search_display_fields).toBe(null);
+});

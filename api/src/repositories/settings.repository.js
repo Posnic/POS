@@ -363,6 +363,12 @@ class SettingsRepository extends BaseModel {
           } catch (error) {
             return { status: false, data: null, message: error.message };
           }
+        } else if (['sales_search_fields', 'sales_search_display_fields'].includes(key)) {
+          try {
+            accepted[key] = require('../helpers/sales-search-fields').validate(key, value);
+          } catch (error) {
+            return { status: false, data: null, message: error.message };
+          }
         } else if (key === 'quote_pricing_mode') {
           if (value !== null && !['discount', 'markup'].includes(value)) {
             return {
