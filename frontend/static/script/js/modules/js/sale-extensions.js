@@ -111,7 +111,7 @@
       ok=false;
       if(sequence===stockRefreshSequence)targets.forEach(function(t){if(t.tile.isConnected)t.stock.textContent='Stock unavailable';});
     }
-    if(!ok)PosnicPro.alert('error','Stock display could not refresh. Try Refresh stock again.');
+    if(!ok)PosnicPro.alert('error',PosnicPro.i18n.t('lang_stock_display_could_not_refresh_refresh_sa','Stock display could not refresh. Refresh Sales before checking availability.'));
     done?.(ok);
   }
   function confirmClear() {
@@ -232,6 +232,5 @@
   window.addEventListener('hashchange',function(){if(dialog)close();document.getElementById('sale-clear-dialog')?.remove();notice('');render();});
   window.addEventListener('resize',render);
 })();
-
 
 

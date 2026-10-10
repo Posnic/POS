@@ -8,7 +8,7 @@ const id=n=>String(n).padStart(24,'0');
 function setup(count=1){
  const dom=new JSDOM('<div id="sales_new">'+Array.from({length:count},(_,i)=>`<div class="wsk-cp" id="${id(i+1)}"><span class="wsk-cp-stock">23 in stock</span></div>`).join('')+'</div>');
  let branch='shop',clears=0;const requests=[],alerts=[];
- const PosnicPro={local:{get:()=>branch},sales:{itemCache:{clear(){clears++;}},itemsMenu:{_families:{}}},get(url,ok,fail){requests.push({url,ok,fail});},alert(...args){alerts.push(args);}};
+ const PosnicPro={i18n:{t:(_key,text)=>text},local:{get:()=>branch},sales:{itemCache:{clear(){clears++;}},itemsMenu:{_families:{}}},get(url,ok,fail){requests.push({url,ok,fail});},alert(...args){alerts.push(args);}};
  const code=source.slice(source.indexOf('  async function freshProducts'),source.indexOf('  function confirmClear'));
  const api=new Function('PosnicPro','document','active',code+'return {refreshStock,freshProducts};')(PosnicPro,dom.window.document,()=>true);
  return {...api,dom,PosnicPro,requests,alerts,setBranch:b=>branch=b,get clears(){return clears;},stock:()=>dom.window.document.querySelector('.wsk-cp-stock').textContent};
