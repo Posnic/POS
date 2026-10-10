@@ -4617,6 +4617,45 @@
 
                                             <!-- ============ SALE ============ -->
                                             <div class="tab-pane fade show active" id="core-tab-sale" role="tabpanel">
+<fieldset class="border rounded p-3 mb-4">
+                                                    <legend class="h6">Sales item search</legend>
+                                                    <p>Choose fields for typed searches. Exact barcode scans always work.</p>
+<label><input type="checkbox" id="sales_search_custom_fields"> Customize searchable fields</label>
+<p class="text-muted">Leave this off to keep the standard search, including translated names and quick codes.</p>
+                                                    <div class="mb-3">
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_fields" value="name"> Product name</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_fields" value="sku"> SKU</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_fields" value="barcode"> Barcode</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_fields" value="plu"> Quick code</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_fields" value="supplier"> Supplier</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_fields" value="category"> Category</label>
+                                                    </div>
+                                                    <label>
+                                                    <input type="checkbox" id="sales_search_custom_display"> Customize fields shown in Sales search results and the barcode chooser</label>
+                                                    <p class="text-muted">Leave this off to keep the standard display. Product name is always shown.</p>
+                                                    <div>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_display_fields" value="sku"> SKU</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_display_fields" value="barcode"> Barcode</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_display_fields" value="supplier"> Supplier</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_display_fields" value="category"> Category</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_display_fields" value="price"> Price</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_display_fields" value="stock"> Stock</label>
+                                                    <label class="mr-3">
+                                                    <input type="checkbox" name="sales_search_display_fields" value="image"> Image</label>
+                                                    </div>
+                                                    </fieldset>
                                                 <!--
                                                   The customer-display card was here.
 
