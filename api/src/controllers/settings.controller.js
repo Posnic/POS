@@ -604,6 +604,14 @@ class SettingController extends BaseController {
        * off would be found by an accountant in April rather than by whoever
        * pressed Save. See utils/bill-number.js.
        */
+      try {
+        for (const key of ['sales_search_fields', 'sales_search_display_fields']) {
+          if (data[key] !== undefined)
+            require('../helpers/sales-search-fields').validate(key, data[key]);
+        }
+      } catch (error) {
+        return res.status(400).json({ type: 'error', message: error.message, data: null });
+      }
       if (
         data.bill_number_reset !== undefined &&
         !['', 'off', 'financial', 'calendar'].includes(String(data.bill_number_reset).trim())

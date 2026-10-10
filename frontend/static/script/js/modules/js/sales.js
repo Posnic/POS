@@ -10859,55 +10859,107 @@ $(window).resize(function () {
 }).resize();
 /* ONE resolution path for every way a barcode arrives - hardware scanner
    wedge or the camera (L3). Looks the code up, stock-checks, adds the line. */
-PosnicPro.sales.addByBarcode = function (barcode) {
-        var params = {
-            url: 'items/getOnlineItemsAjaxList',
-            data: 'query=' + barcode + '&type=barcode'
-        };
-        PosnicPro.get(params, function (response) {
-            if (response && response.suggestions && response.suggestions.length > 0) {
-                var itemData = response.suggestions[0] || {};
+PosnicPro.sales.addScannedItem = function (itemData) {
+    var mustCheckStock =
+        (itemData.track_inventory === true || itemData.track_inventory === 'true' || itemData.track_inventory === 1 || itemData.track_inventory === '1');
 
-                var mustCheckStock =
-                    (itemData.track_inventory === true || itemData.track_inventory === 'true' || itemData.track_inventory === 1 || itemData.track_inventory === '1');
+    var isNegativeStock =
+        (itemData.negative_stock === true || itemData.negative_stock === 'true' || itemData.negative_stock === 1 || itemData.negative_stock === '1');
 
-                var isNegativeStock =
-                    (itemData.negative_stock === true || itemData.negative_stock === 'true' || itemData.negative_stock === 1 || itemData.negative_stock === '1');
+    if (mustCheckStock && !isNegativeStock) {
+        var availableQty = parseFloat(itemData.available_quantity) || 0;
+        if (availableQty <= 0) {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_check_the_product_quantity', 'Check the product quantity.'));
+            return;
+        }
+    }
 
-                if (mustCheckStock && !isNegativeStock) {
-                    var availableQty = parseFloat(itemData.available_quantity) || 0;
-                    if (availableQty <= 0) {
-                        PosnicPro.alert('error', PosnicPro.i18n.t('lang_check_the_product_quantity', 'Check the product quantity.'));
-                        return;
-                    }
-                }
+    (PosnicPro.sales.SaleAction === 'return') ? PosnicPro.sales.salesExchange = true : PosnicPro.sales.salesExchange = false;
+    $('#sales_new_item_name').focus();
 
-                (PosnicPro.sales.SaleAction === 'return') ? PosnicPro.sales.salesExchange = true : PosnicPro.sales.salesExchange = false;
-                $('#sales_new_item_name').focus();
-
-                if (itemData.item_id) {
-                    PosnicPro.sales.itemsMenu.addToLineItemsList(itemData.item_id);
-                } else if (itemData.id) {
-                    PosnicPro.sales.itemsMenu.addToLineItemsList(itemData.id);
-                } else if (itemData._id && itemData._id.$oid) {
-                    PosnicPro.sales.itemsMenu.addToLineItemsList(itemData._id.$oid);
-                } else {
-                    PosnicPro.sales.addSalesLineItems(itemData);
-                }
-            } else {
-                $('#sales_new_item_name').focus();
-                swal({
-                    title: "Not found!",
-                    text: "Barcode item not found. Please check item page.",
-                    icon: "warning",
-                    button: "Ok"
-                });
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+    if (itemData.item_id) {
+        PosnicPro.sales.itemsMenu.addToLineItemsList(itemData.item_id);
+    } else if (itemData.id) {
+        PosnicPro.sales.itemsMenu.addToLineItemsList(itemData.id);
+    } else if (itemData._id && itemData._id.$oid) {
+        PosnicPro.sales.itemsMenu.addToLineItemsList(itemData._id.$oid);
+    } else {
+        PosnicPro.sales.addSalesLineItems(itemData);
+    }
 };
+PosnicPro.sales.chooseBarcodeItem = function (items) {
+    if ($('#sharedBarcodePicker').length) { return; }
+    var autocomplete = $('#sales_new_item_name').data('autocomplete');
+    if (autocomplete && typeof autocomplete.disable === 'function') { autocomplete.disable(); }
+    if (autocomplete && typeof autocomplete.hide === 'function') { autocomplete.hide(); }
+    if (!$('#sharedBarcodeStyle').length) {
+        $('<style id="sharedBarcodeStyle">body.shared-barcode-open .autocomplete-suggestions{display:none!important}</style>').appendTo(document.head);
+    }
+    $(document.body).addClass('shared-barcode-open');
+    var modal = $('<div class="modal fade" id="sharedBarcodePicker" tabindex="-1" role="dialog" aria-labelledby="sharedBarcodeTitle"></div>');
+    var content = $('<div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"></div></div>').appendTo(modal).find('.modal-content');
+    var header = $('<div class="modal-header"></div>').appendTo(content);
+    $('<h5 class="modal-title" id="sharedBarcodeTitle"></h5>').text(PosnicPro.i18n.t('lang_choose_product_for_this_barcode', 'Choose product for this barcode')).appendTo(header);
+    $('<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button>').appendTo(header);
+    var body = $('<div class="modal-body"></div>').appendTo(content);
+    $('<p></p>').text(PosnicPro.i18n.t('lang_several_products_share_this_barcode_select', 'Several products share this barcode. Select the product you are selling.')).appendTo(body);
+    var list = $('<div class="list-group"></div>').appendTo(body);
+    items.forEach(function (item) {
+        var button = $('<button type="button" class="list-group-item list-group-item-action text-left py-3"></button>');
+        $('<strong class="d-block"></strong>').text(item.item_name || 'Unnamed item').appendTo(button);
+        var price = Number(item.selling_price) || 0;
+        if (item.tax_type === 'exclusive') { price *= 1 + (Number(item.tax) || 0) / 100; }
+        if (Array.isArray(item.sales_search_display_fields)) {
+            button.empty().append(PosnicPro.sugRow(item,
+                $('<i>').text(item.item_name || 'Unnamed item').html(), {
+                    sales: true, price: price, currency: PosnicPro.local.get('currencySign') || ''
+                }));
+        } else {
+        $('<span class="d-block text-muted"></span>').text('Barcode: ' + (item.barcode_id || 'Not set') + ' | SKU: ' + (item.itemid || item.item_id) + ' | ' +
+            (item.supplier_name || '') + ' | ' + (PosnicPro.local.get('currencySign') || '') + price.toFixed(2) +
+            ' | Stock: ' + (Number(item.available_quantity) || 0)).appendTo(button);
+        }
+        button.on('click', function () { modal.modal('hide'); PosnicPro.sales.addScannedItem(item); });
+        list.append(button);
+    });
+    var footer = $('<div class="modal-footer"></div>').appendTo(content);
+    $('<button type="button" class="btn btn-outline-primary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>').appendTo(footer);
+    modal.on('hidden.bs.modal', function () {
+        modal.remove();
+        $(document.body).removeClass('shared-barcode-open');
+        if (autocomplete && typeof autocomplete.enable === 'function') { autocomplete.enable(); }
+        $('#sales_new_item_name').val('').focus();
+    });
+    modal.appendTo(document.body).modal('show');
+};
+PosnicPro.sales.addByBarcode = function (barcode) {
+    var code = String(barcode || '').trim();
+    if (!code) { return; }
+    PosnicPro.get({ url: 'items/getOnlineItemsAjaxList', data: 'query=' + encodeURIComponent(code) + '&type=barcode' }, function (response) {
+        var items = response && response.suggestions || [];
+        if (items.length > 1) { PosnicPro.sales.chooseBarcodeItem(items); }
+        else if (items.length === 1) { PosnicPro.sales.addScannedItem(items[0]); }
+        else {
+            $('#sales_new_item_name').focus();
+            swal({ title: PosnicPro.i18n.t('lang_not_found', 'Not found!'), text: 'Barcode item not found. Please check item page.', icon: 'warning', button: 'Ok' });
+        }
+    }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_look_up_the_barcode_please_try_a', 'Could not look up the barcode. Please try again.')); });
+};
+// Enter on a typed/pasted retail barcode uses the same explicit resolution path.
+// Capture before autocomplete can select its first matching suggestion.
+if (!PosnicPro.sales._sharedBarcodeEnterBound) {
+    PosnicPro.sales._sharedBarcodeEnterBound = true;
+    document.addEventListener('keydown', function (event) {
+        var input = event.target;
+        if (event.key !== 'Enter' || !input || input.id !== 'sales_new_item_name') { return; }
+        var code = String(input.value || '').trim();
+        if (!/^\d{7,}$/.test(code)) { return; }
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        input.value = '';
+        PosnicPro.sales.addByBarcode(code);
+    }, true);
+}
 $('#sales_new_item_name').scannerDetection({
     timeBeforeScanTest: 200, // wait for the next character for upto 200ms
     avgTimeByChar: 40, // it's not a barcode if a character takes longer than 100ms
@@ -11448,13 +11500,21 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
         thumb = '<span class="sug-tile" style="' + shapeCss + 'background:' + esc(rt.color || '#8a94a6') + '">'
             + esc(d.plu_code || (d.item_name || '?').charAt(0).toUpperCase()) + '</span>';
     }
+    var fields = o.sales && Array.isArray(d.sales_search_display_fields) ? d.sales_search_display_fields : null;
+    var show = function (field) { return !fields || fields.indexOf(field) >= 0; };
     var meta = [];
-    if (d.itemid || d.item_code) { meta.push(esc(d.itemid || d.item_code)); }
-    if (d.plu_code) { meta.push('#' + esc(d.plu_code)); }
-    if (d.short_code) { meta.push(esc(d.short_code)); }
-    if (d.barcode_id && d.barcode_id !== d.itemid) { meta.push(esc(d.barcode_id)); }
-    if (d.category_name) { meta.push(esc(d.category_name)); }
-    if (d.unit) { meta.push(esc(d.unit)); }
+    if (fields) {
+        [['sku', 'SKU', d.itemid || d.item_code], ['barcode', 'Barcode', d.barcode_id],
+         ['supplier', 'Supplier', d.supplier_name], ['category', 'Category', d.category_name]].forEach(function (entry) {
+            if (show(entry[0]) && entry[2]) meta.push(esc(entry[1] + ': ' + entry[2]));
+        });
+    }
+    if (!fields && (d.itemid || d.item_code)) { meta.push(esc(d.itemid || d.item_code)); }
+    if (!fields && d.plu_code) { meta.push('#' + esc(d.plu_code)); }
+    if (!fields && d.short_code) { meta.push(esc(d.short_code)); }
+    if (!fields && d.barcode_id && d.barcode_id !== d.itemid) { meta.push(esc(d.barcode_id)); }
+    if (!fields && d.unit) { meta.push(esc(d.unit)); }
+    if (!fields && d.category_name) { meta.push(esc(d.category_name)); }
     var stock;
     if (d.item_kind === 'service') {
         stock = '<span class="sug-stock na"><lang class="lang_service">Service</lang></span>';
@@ -11473,6 +11533,9 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
             + (o.was != null ? '<del>' + o.currency + '&nbsp;' + Number(o.was).toFixed(2) + '</del>' : '')
             + '</div>'
         : '';
+    if (!show('image')) thumb = '';
+    if (!show('price')) priceHtml = '';
+    if (!show('stock')) stock = '';
     return '<div class="sug-row">' + thumb
         + '<div class="sug-main"><div class="sug-name">' + nameHtml + '</div>'
         + (meta.length ? '<div class="sug-meta">' + meta.join(' &middot; ') + '</div>' : '')
@@ -11606,7 +11669,7 @@ $(function () {
                 var pricing = PosnicBillingSearch.price(suggestion.data, taxEnabled);
                 return PosnicPro.sugRow(suggestion.data,
                     $.Autocomplete.formatResult(suggestion, currentValue), {
-                        currency: currency, price: pricing.price, was: pricing.was
+                        sales: true, currency: currency, price: pricing.price, was: pricing.was
                     });
             }
         }

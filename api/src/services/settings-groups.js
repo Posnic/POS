@@ -117,6 +117,8 @@ const PREFERENCES = [
   'default_supplier',
   'default_tax',
   'sales_prefix',
+  'sales_search_fields',
+  'sales_search_display_fields',
   /* When the bill number starts again at one, and whether the year is printed
      on it. CGST Rule 46(b) makes the financial year the unit of uniqueness in
      India; the EU asks only for a sequential number, so it is a choice rather
