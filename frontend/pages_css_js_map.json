@@ -124,6 +124,7 @@
             "static/script/js/modules/js/weight-bridge.js",
             "static/script/js/modules/js/order-journal.js",
             "../api/src/helpers/billing-search.js",
+            "../api/src/helpers/sale-payment-summary.js",
             "static/script/js/modules/js/restaurant-sale-details.js",
             "static/script/js/modules/js/sales.js",
             "static/script/js/modules/js/order-recovery.js",

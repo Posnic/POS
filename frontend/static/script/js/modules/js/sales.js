@@ -866,9 +866,10 @@ PosnicPro.sales = {
             + '</tfoot></table></div>';
         var footer = '<div class="q-footer">';
         footer += '<div class="q-block"><div class="q-label"><lang class="lang_payment_2">Payment</lang></div>'
-            + (d.multi_payment && Object.keys(d.multi_payment).some(function (key) { return Number(d.multi_payment[key]) > 0; })
-                ? Object.keys(d.multi_payment).filter(function (key) { return Number(d.multi_payment[key]) > 0; })
-                    .map(function (key) { return '<div>' + esc(key) + ': ' + money(d.multi_payment[key]) + '</div>'; }).join('')
+            + (PosnicSalePayments.rows(d).length
+                ? '<table class="sale-payment-breakdown" style="width:100%;min-width:200px;font-size:14px"><tbody>' + PosnicSalePayments.rows(d).map(function (row) {
+                    return '<tr><td style="padding:4px 20px 4px 0">' + esc(row.method) + '</td><td style="text-align:right;white-space:nowrap;font-weight:600">' + money(row.amount) + '</td></tr>';
+                }).join('') + '</tbody></table>'
                 : '<div>' + esc(d.payment_mode || '-') + '</div>')
             + (unpaid && Number(d.payment_pending) > 0
                 ? '<div class="q-muted" style="color: var(--theme-danger-color, #c0392b);">Pending: ' + money(d.payment_pending) + '</div>'

@@ -98,60 +98,14 @@ PosnicPro.sales.view = {
             }
         });
 
-        // Payment Method + Amounts (multi payment support)
-        (function () {
-            var multiPayment = data.multi_payment;
-
-            // If backend sent multi_payment as JSON string, try to parse it
-            if (typeof multiPayment === 'string' && multiPayment.trim() !== '') {
-                try {
-                    var trimmed = multiPayment.trim();
-                    if (trimmed.charAt(0) === '{' || trimmed.charAt(0) === '[') {
-                        multiPayment = JSON.parse(trimmed);
-                    }
-                } catch (e) {
-                    multiPayment = null;
-                }
-            }
-
-            if (multiPayment && typeof multiPayment === 'object' && Object.keys(multiPayment).length > 0) {
-                var currencySign = PosnicPro.local.get('currencySign') || '';
-                var rowsHtml = '';
-                $.each(multiPayment, function (method, amount) {
-                    var num = parseFloat(amount);
-                    if (!isNaN(num) && num !== 0) {
-                        rowsHtml += '<tr>' +
-                            '<td class="pr-3">' + method + '</td>' +
-                            '<td class="text-right" style="white-space:nowrap;">' + currencySign + '&nbsp;' + num.toFixed(2) + '</td>' +
-                            '</tr>';
-                    }
-                });
-
-                if (rowsHtml) {
-                    var tableHtml = '<table class="table table-borderless table-sm mb-0"><tbody>' + rowsHtml + '</tbody></table>';
-                    $('#sale_view_payment_mode').html(tableHtml);
-                    return; // done
-                }
-            }
-
-            // Fallback: no multi_payment data, show single payment_mode with amount
-            var singleMode = (data.payment_mode || '').toString().trim();
-            var grandTotal = (typeof data.items_total !== 'undefined') ? parseFloat(data.items_total) : NaN;
-            if (singleMode) {
-                var currencySingle = PosnicPro.local.get('currencySign') || '';
-                if (!isNaN(grandTotal) && grandTotal !== 0) {
-                    var singleHtml = '<table class="table table-borderless table-sm mb-0"><tbody>' +
-                        '<tr>' +
-                        '<td class="pr-3">' + singleMode + '</td>' +
-                        '<td class="text-right" style="white-space:nowrap;">' + currencySingle + '&nbsp;' + grandTotal.toFixed(2) + '</td>' +
-                        '</tr>' +
-                        '</tbody></table>';
-                    $('#sale_view_payment_mode').html(singleHtml);
-                } else {
-                    $('#sale_view_payment_mode').text(singleMode);
-                }
-            }
-        })();
+        // Show recorded allocations, including legacy JSON and Captain tenders.
+        var paymentRows = PosnicSalePayments.rows(data);
+        var paymentCurrency = PosnicPro.local.get('currencySign') || '';
+        var escapePayment = function (value) { return $('<span>').text(value).html(); };
+        $('#sale_view_payment_mode').html(paymentRows.length
+            ? '<table class="table table-borderless table-sm mb-0"><tbody>' + paymentRows.map(function (row) {
+                return '<tr><td>' + escapePayment(row.method) + '</td><td class="text-right" style="white-space:nowrap">' + escapePayment(paymentCurrency) + ' ' + row.amount.toFixed(2) + '</td></tr>';
+            }).join('') + '</tbody></table>' : escapePayment(data.payment_mode || ''));
 
         // When table order is disabled, hide table/order-type details in the view modal
         var tableOptionsEnabled = (PosnicPro.local.get('table_options') === 'enable');
@@ -1338,46 +1292,12 @@ PosnicPro.sales.view = {
                     // Hide payment mode line for KOT prints
                     $('.print-invoice-payment-mode').text('');
                 } else {
-                    var multiPaymentPrint = data.multi_payment;
-
-                    // If backend sent multi_payment as JSON string, try to parse it
-                    if (typeof multiPaymentPrint === 'string' && multiPaymentPrint.trim() !== '') {
-                        try {
-                            var trimmedMp = multiPaymentPrint.trim();
-                            if (trimmedMp.charAt(0) === '{' || trimmedMp.charAt(0) === '[') {
-                                multiPaymentPrint = JSON.parse(trimmedMp);
-                            }
-                        } catch (e) {
-                            multiPaymentPrint = null;
-                        }
-                    }
-
-                    // Build HTML rows so method is on the left and amount (with currency) is right-aligned
-                    var paymentHtml = '';
-                    if (multiPaymentPrint && typeof multiPaymentPrint === 'object' && Object.keys(multiPaymentPrint).length > 0) {
-                        $.each(multiPaymentPrint, function (method, amount) {
-                            var num = parseFloat(amount);
-                            if (!isNaN(num) && num !== 0) {
-                                paymentHtml += '<div class="payment-line">' +
-                                    '<span class="payment-method">- ' + method + '</span>' +
-                                    '<span class="payment-amount">' + currency + ' ' + num.toFixed(moneyDigits) + '</span>' +
-                                '</div>';
-                            }
-                        });
-                    }
-
-                    // If multi_payment is not present (multi-payment disabled),
-                    // fall back to a single line based on payment_mode and grand total.
-                    if (!paymentHtml) {
-                        var singleModePrint = paymentModeDisplay;
-                        var grandTotalPrint = (typeof data.items_total !== 'undefined') ? parseFloat(data.items_total) : NaN;
-                        if (singleModePrint && !isNaN(grandTotalPrint) && grandTotalPrint !== 0) {
-                            paymentHtml = '<div class="payment-line">' +
-                                '<span class="payment-method">- ' + singleModePrint + '</span>' +
-                                '<span class="payment-amount">' + currency + ' ' + grandTotalPrint.toFixed(moneyDigits) + '</span>' +
-                                '</div>';
-                        }
-                    }
+                    var paymentHtml = PosnicSalePayments.rows(data).map(function (row) {
+                        var method = $('<span>').text(row.method).html();
+                        return '<div class="payment-line" style="display:flex;justify-content:space-between;gap:12px">' +
+                            '<span class="payment-method">' + method + '</span>' +
+                            '<span class="payment-amount">' + currency + ' ' + row.amount.toFixed(2) + '</span></div>';
+                    }).join('');
 
                     if (paymentHtml) {
                         // Use HTML so we can align method and amount like the receipt sample

@@ -12,6 +12,7 @@ function setup() {
     const dom = new JSDOM('<div id="receipt-designer"></div><div class="form-group"><input id="printall" type="checkbox"></div><div class="form-group"><select id="bill_print_copies"><option>1</option></select></div><div class="form-group"><input id="branch_fssai_number"></div>', { url: 'http://localhost/', runScripts: 'outside-only' });
     const w = dom.window; w.$ = w.jQuery = require('jquery')(w);
     w.PosnicPro = { escapeHtml: v => w.$('<i>').text(v).html(), local: { get: key => key === 'currencySign' ? '$' : '', set: () => {} }, i18n: { t: (_key, text) => text }, BRAND_URL: 'https://www.posnic.com' };
+    w.eval(read('api/src/helpers/sale-payment-summary.js'));
     w.eval(read('api/src/helpers/receipt-design.js'));
     w.eval(read('src/receipt-page-layout.js'));
     w.eval(read('frontend/static/script/js/core/receipt-designer.js'));
