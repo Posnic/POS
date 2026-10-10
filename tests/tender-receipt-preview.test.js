@@ -38,6 +38,7 @@ function till() {
     }
     const view = read('frontend/static/script/js/modules/js/sales_view.js');
     win.eval(view.slice(0, view.indexOf('\n};') + 3));
+    win.eval(read('api/src/helpers/sale-payment-summary.js'));
     win.eval(read('api/src/helpers/receipt-design.js'));
     win.eval(read('frontend/static/script/js/core/tender-receipt.js'));
     win.eval(read('frontend/static/script/js/core/receipt-data.js'));
@@ -64,6 +65,15 @@ function till() {
 }
 
 for (const layout of ['80', '58', 'a4']) {
+    test(layout + ': legacy receipt retains every recorded tender', () => {
+        const { dom, win, $, data } = till();
+        const root = $('<div>').html('<div class="print-modal-body print-modal-a4-body">' + (layout === 'a4' ? a4 : thermal) + '</div>');
+        win.PosnicPro.sales.view.renderSaleDocument({ ...data, sales_id: 'S-1', payment_status: 'Paid', multi_payment: '[{"method":"Upi","amount":300},{"method":"Cash","amount":1220}]' }, 'sale', false, root, layout);
+        const payment = root.find('.print-invoice-payment-mode').text();
+        assert.match(payment, /UPI.*300\.00/);
+        assert.match(payment, /Cash.*1,?220\.00/);
+        dom.window.close();
+    });
     test(layout + ': saved branding, QR, content and live totals use the print template', () => {
         const { dom, $, branch, data, preview } = till();
         const before = $('.print-modal-body').html();

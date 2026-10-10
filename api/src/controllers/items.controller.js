@@ -845,8 +845,10 @@ class ItemsController extends BaseController {
 
       const response = await this.service.getOnlineSalesItems(
         {
-          limit: Math.min(limit, 500), offset: Math.max(0, parseInt(req.query.offset, 10) || 0),
-          tilePage: req.query.tile_page === 'true', categoryId: req.query.category_id,
+          limit: Math.min(limit, 500),
+          offset: Math.max(0, parseInt(req.query.offset, 10) || 0),
+          tilePage: req.query.tile_page === 'true',
+          categoryId: req.query.category_id,
         },
         {
           branchId: this.model?.branchId || null,

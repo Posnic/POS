@@ -286,8 +286,10 @@
                 if (Number(data.round_off)) content += pair('Rounding', money(data.round_off));
                 content += pair('Total', money(data.items_total), true);
                 if (!beforePayment && data.sales_id) {
-                    if (data.payment_mode) content += pair('Payment', esc(data.payment_mode));
-                    if (data.partial_check === 'true') content += pair('Payments / credits', money(data.partial_balance)) + pair('Balance due', money(data.payment_pending));
+                    var paymentRows = PosnicSalePayments.rows(data);
+                    if (paymentRows.length) paymentRows.forEach(function (row) { content += pair(row.method, money(row.amount)); });
+                    else if (data.payment_mode) content += pair('Payment', esc(data.payment_mode));
+                    if (data.partial_check === true || data.partial_check === 'true') content += pair('Payments / credits', money(data.partial_balance)) + pair('Balance due', money(data.payment_pending));
                 }
                 content += '</div>';
             } else if (b.type === 'field') {
