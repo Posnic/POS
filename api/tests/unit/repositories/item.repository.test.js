@@ -474,6 +474,13 @@ describe('ItemRepository', () => {
   });
 
   describe('getOnlineItemsAjaxList', () => {
+    let preferences;
+    beforeEach(() => {
+      preferences = jest
+        .spyOn(require('../../../src/repositories/settings.repository').prototype, 'resolveGroup')
+        .mockResolvedValue({ status: true, data: { values: {} } });
+    });
+    afterEach(() => preferences.mockRestore());
     test('category filtering keeps branch and license scope and returns saved icons', async () => {
       col.aggregate.mockReturnValue(mkAgg([{ _id: FAKE_ID, name: 'Tea', icon: '☕' }]));
       const result = await repo.getOnlineItemsAjaxList(

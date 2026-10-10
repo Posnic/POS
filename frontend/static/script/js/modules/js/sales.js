@@ -10899,10 +10899,10 @@ PosnicPro.sales.chooseBarcodeItem = function (items) {
     var modal = $('<div class="modal fade" id="sharedBarcodePicker" tabindex="-1" role="dialog" aria-labelledby="sharedBarcodeTitle"></div>');
     var content = $('<div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"></div></div>').appendTo(modal).find('.modal-content');
     var header = $('<div class="modal-header"></div>').appendTo(content);
-    $('<h5 class="modal-title" id="sharedBarcodeTitle"></h5>').text('Choose product for this barcode').appendTo(header);
-    $('<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>').appendTo(header);
+    $('<h5 class="modal-title" id="sharedBarcodeTitle"></h5>').text(PosnicPro.i18n.t('lang_choose_product_for_this_barcode', 'Choose product for this barcode')).appendTo(header);
+    $('<button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true">&times;</span></button>').appendTo(header);
     var body = $('<div class="modal-body"></div>').appendTo(content);
-    $('<p></p>').text('Several products share this barcode. Select the product you are selling.').appendTo(body);
+    $('<p></p>').text(PosnicPro.i18n.t('lang_several_products_share_this_barcode_select', 'Several products share this barcode. Select the product you are selling.')).appendTo(body);
     var list = $('<div class="list-group"></div>').appendTo(body);
     items.forEach(function (item) {
         var button = $('<button type="button" class="list-group-item list-group-item-action text-left py-3"></button>');
@@ -10923,7 +10923,7 @@ PosnicPro.sales.chooseBarcodeItem = function (items) {
         list.append(button);
     });
     var footer = $('<div class="modal-footer"></div>').appendTo(content);
-    $('<button type="button" class="btn btn-outline-primary" data-dismiss="modal">Cancel</button>').appendTo(footer);
+    $('<button type="button" class="btn btn-outline-primary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>').appendTo(footer);
     modal.on('hidden.bs.modal', function () {
         modal.remove();
         $(document.body).removeClass('shared-barcode-open');
@@ -10941,9 +10941,9 @@ PosnicPro.sales.addByBarcode = function (barcode) {
         else if (items.length === 1) { PosnicPro.sales.addScannedItem(items[0]); }
         else {
             $('#sales_new_item_name').focus();
-            swal({ title: 'Not found!', text: 'Barcode item not found. Please check item page.', icon: 'warning', button: 'Ok' });
+            swal({ title: PosnicPro.i18n.t('lang_not_found', 'Not found!'), text: 'Barcode item not found. Please check item page.', icon: 'warning', button: 'Ok' });
         }
-    }, function () { PosnicPro.alert('error', 'Could not look up the barcode. Please try again.'); });
+    }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_look_up_the_barcode_please_try_a', 'Could not look up the barcode. Please try again.')); });
 };
 // Enter on a typed/pasted retail barcode uses the same explicit resolution path.
 // Capture before autocomplete can select its first matching suggestion.
