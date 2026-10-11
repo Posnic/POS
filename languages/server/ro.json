@@ -944,5 +944,11 @@
   "unsuccessfully": "zadarnic",
   "valid": "valid",
   "date must be YYYY-MM-DD": "Data trebuie să fie YYYY-MM-DD",
-  "start and end must be HH:MM": "începutul și sfârșitul trebuie să fie HH: MM"
+  "start and end must be HH:MM": "începutul și sfârșitul trebuie să fie HH: MM",
+  "Allocated quantities require a completed payment.": "Cantitățile alocate necesită o plată finalizată.",
+  "Item write permission required": "Este necesară permisiunea de scriere a articolului",
+  "Unsupported allocated sale commit": "Commitere de vânzare alocată neacceptată",
+  "Unsupported allocated sale preparation": "Pregătirea vânzării alocate neacceptată",
+  "Unsupported stock allocation sale": "Vânzare de alocare a stocurilor neacceptate",
+  "Use the normal return process for an allocated sale.": "Utilizați procesul normal de returnare pentru o vânzare alocată."
 }

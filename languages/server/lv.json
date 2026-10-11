@@ -944,5 +944,11 @@
   "unsuccessfully": "nesekmīgi",
   "valid": "derīgs",
   "date must be YYYY-MM-DD": "datumam jābūt YYYY-MM-DD",
-  "start and end must be HH:MM": "sākumam un beigām jābūt HH: MM"
+  "start and end must be HH:MM": "sākumam un beigām jābūt HH: MM",
+  "Allocated quantities require a completed payment.": "Piešķirtajiem daudzumiem ir nepieciešams pabeigts maksājums.",
+  "Item write permission required": "Vienuma rakstīšanas atļauja ir nepieciešama",
+  "Unsupported allocated sale commit": "Neatbalstītas piešķirtās pārdošanas saistības",
+  "Unsupported allocated sale preparation": "Neatbalstīta piešķirtās pārdošanas sagatavošana",
+  "Unsupported stock allocation sale": "Neatbalstīta akciju sadales pārdošana",
+  "Use the normal return process for an allocated sale.": "Izmantojiet parasto atgriešanas procesu piešķirtajai pārdošanai."
 }

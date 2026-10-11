@@ -1152,6 +1152,9 @@
   "Item updated": [
     "src/repositories/item.repository.js"
   ],
+  "Item write permission required": [
+    "src/routes/items.routes.js"
+  ],
   "Items marked served": [
     "src/repositories/sale.repository.js"
   ],

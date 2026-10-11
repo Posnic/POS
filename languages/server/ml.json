@@ -944,5 +944,11 @@
   "unsuccessfully": "വിജയകരമായി",
   "valid": "സാധുവായ",
   "date must be YYYY-MM-DD": "തീയതി ആയിരിക്കണം YYYY-MM-DD",
-  "start and end must be HH:MM": "ആരംഭവും അവസാനവും HH ആയിരിക്കണം: MM"
+  "start and end must be HH:MM": "ആരംഭവും അവസാനവും HH ആയിരിക്കണം: MM",
+  "Allocated quantities require a completed payment.": "അനുവദിച്ച അളവിൽ പൂർത്തിയായ പേയ്മെന്റ് ആവശ്യമാണ്.",
+  "Item write permission required": "ഇനം റൈറ്റ് അനുമതി ആവശ്യമാണ്",
+  "Unsupported allocated sale commit": "പിന്തുണയ്ക്കാത്ത അനുവദിച്ച വിൽപ്പന കമ്മിറ്റ്",
+  "Unsupported allocated sale preparation": "പിന്തുണയ്ക്കാത്ത അനുവദിച്ച വിൽപ്പന തയ്യാറാക്കൽ",
+  "Unsupported stock allocation sale": "പിന്തുണയ്ക്കാത്ത സ്റ്റോക്ക് അലോക്കേഷൻ വിൽപ്പന",
+  "Use the normal return process for an allocated sale.": "അനുവദിച്ച വിൽപ്പനയ്ക്കായി സാധാരണ റിട്ടേൺ പ്രക്രിയ ഉപയോഗിക്കുക."
 }

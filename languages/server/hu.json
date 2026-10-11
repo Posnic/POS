@@ -944,5 +944,11 @@
   "unsuccessfully": "sikertelenül",
   "valid": "érvényes",
   "date must be YYYY-MM-DD": "dátumnak kell lennie YYYY-MM-DD",
-  "start and end must be HH:MM": "a kezdetnek és a végének HH-nak kell lennie: MM"
+  "start and end must be HH:MM": "a kezdetnek és a végének HH-nak kell lennie: MM",
+  "Allocated quantities require a completed payment.": "A kiosztott mennyiségek teljesített kifizetést igényelnek.",
+  "Item write permission required": "Elem írási engedélye szükséges",
+  "Unsupported allocated sale commit": "Nem támogatott kiosztott értékesítési kötelezettségvállalás",
+  "Unsupported allocated sale preparation": "Nem támogatott elosztott értékesítési előkészítés",
+  "Unsupported stock allocation sale": "Nem támogatott készletelosztási eladás",
+  "Use the normal return process for an allocated sale.": "Használja a normál visszaküldési folyamatot egy kiosztott értékesítéshez."
 }

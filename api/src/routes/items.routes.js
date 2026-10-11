@@ -244,6 +244,22 @@ router.get('/demo/status', bindController(itemsController.demoStatus));
 // and the members of one family for the edit page's strip.
 router.post('/createFamily', bindController(itemsController.createFamily));
 router.get('/family', bindController(itemsController.getFamily));
+router.get('/priceGrid', bindController(itemsController.priceGrid));
+router.post('/priceSheet', bindController(itemsController.priceSheet));
+router.post('/priceSheetImport', (req, res, next) => {
+  if (!itemsController.checkPermission('item', 'write', req.user))
+    return res.status(403).json({ type: 'error', message: 'Item write permission required' });
+  const multer = require('multer');
+  multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 5 },
+  }).single('file')(req, res, (err) => {
+    if (err) return res.status(400).json({ type: 'error', message: err.message });
+    req.body.action = 'import';
+    return bindController(itemsController.priceSheet)(req, res, next);
+  });
+});
+router.post('/priceGrid', bindController(itemsController.savePriceGrid));
 router.post('/bulkUpdatePrices', bindController(itemsController.bulkUpdatePrices));
 router.post('/bulkPricePreview', bindController(itemsController.bulkPricePreview));
 router.post('/bulkSetMargin', bindController(itemsController.bulkSetMargin));

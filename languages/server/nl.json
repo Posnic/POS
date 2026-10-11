@@ -944,5 +944,11 @@
   "unsuccessfully": "tevergeefs",
   "valid": "geldig",
   "date must be YYYY-MM-DD": "datum moet zijn YYYY-MM-DD",
-  "start and end must be HH:MM": "begin en einde moeten HH zijn: MM"
+  "start and end must be HH:MM": "begin en einde moeten HH zijn: MM",
+  "Allocated quantities require a completed payment.": "Voor toegewezen hoeveelheden is een voltooide betaling vereist.",
+  "Item write permission required": "Schrijftoestemming voor het item vereist",
+  "Unsupported allocated sale commit": "Niet ondersteunde toegezegde verkooptoezegging",
+  "Unsupported allocated sale preparation": "Niet ondersteunde voorbereiding van toegewezen verkopen",
+  "Unsupported stock allocation sale": "Niet ondersteunde verkoop van aandelenallocatie",
+  "Use the normal return process for an allocated sale.": "Gebruik het normale retourproces voor een toegewezen verkoop."
 }

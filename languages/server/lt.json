@@ -944,5 +944,11 @@
   "unsuccessfully": "nesėkmingai",
   "valid": "galiojantis",
   "date must be YYYY-MM-DD": "data turi būti YYYY-MM-DD",
-  "start and end must be HH:MM": "pradžia ir pabaiga turi būti HH: MM"
+  "start and end must be HH:MM": "pradžia ir pabaiga turi būti HH: MM",
+  "Allocated quantities require a completed payment.": "Paskirstytiems kiekiams reikia atlikti užbaigtą mokėjimą.",
+  "Item write permission required": "Reikalingas prekės rašymo leidimas",
+  "Unsupported allocated sale commit": "Nepalaikomas paskirtas pardavimo įsipareigojimas",
+  "Unsupported allocated sale preparation": "Nepalaikomas paskirstyto pardavimo paruošimas",
+  "Unsupported stock allocation sale": "Nepalaikomas akcijų paskirstymo pardavimas",
+  "Use the normal return process for an allocated sale.": "Paskirstytam pardavimui naudokite įprastą grąžinimo procesą."
 }

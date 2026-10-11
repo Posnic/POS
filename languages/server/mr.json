@@ -944,5 +944,11 @@
   "unsuccessfully": "अयशस्वी",
   "valid": "वैध",
   "date must be YYYY-MM-DD": "तारीख असावी YYYY-MM-DD",
-  "start and end must be HH:MM": "प्रारंभ आणि शेवट एचएच असावा: MM"
+  "start and end must be HH:MM": "प्रारंभ आणि शेवट एचएच असावा: MM",
+  "Allocated quantities require a completed payment.": "वाटविलेल्या प्रमाणात पूर्ण पेमेंटची",
+  "Item write permission required": "आयटम लिहिण्याची परवान",
+  "Unsupported allocated sale commit": "असमर्थित वाटवित विक्री",
+  "Unsupported allocated sale preparation": "असमर्थित वाटविल्या विक्र",
+  "Unsupported stock allocation sale": "असमर्थित स्टॉक वितरण",
+  "Use the normal return process for an allocated sale.": "वाटविल्या विक्रीसाठी सामान्य परतावा प्रक्रिया वापरा."
 }

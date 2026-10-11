@@ -944,5 +944,11 @@
   "unsuccessfully": "bila kufanikiwa",
   "valid": "halali",
   "date must be YYYY-MM-DD": "tarehe lazima iwe YYYY-MM-DD",
-  "start and end must be HH:MM": "mwanzo na mwisho lazima uwe HH: MM"
+  "start and end must be HH:MM": "mwanzo na mwisho lazima uwe HH: MM",
+  "Allocated quantities require a completed payment.": "Kiasi vilivyotengenezwa kinahitaji malipo yali",
+  "Item write permission required": "Kipengee kuandika ruhusa inayo",
+  "Unsupported allocated sale commit": "Ujumbe wa uuzaji isiyosaidiwa",
+  "Unsupported allocated sale preparation": "Maandalizi ya mauzo yasiyotumiwa",
+  "Unsupported stock allocation sale": "Uuzaji wa mgawanyiko wa hisa isiyo",
+  "Use the normal return process for an allocated sale.": "Tumia mchakato wa kawaida wa kurudi kwa uuzaji uliotengwa."
 }

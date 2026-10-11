@@ -944,5 +944,11 @@
   "unsuccessfully": "ไม่ประสบความสำเร็จ",
   "valid": "สมเหตุสมผล",
   "date must be YYYY-MM-DD": "วันที่ต้องเป็น YYYY-MM-DD",
-  "start and end must be HH:MM": "เริ่มต้นและสิ้นสุดต้องเป็น HH: MM"
+  "start and end must be HH:MM": "เริ่มต้นและสิ้นสุดต้องเป็น HH: MM",
+  "Allocated quantities require a completed payment.": "ปริมาณที่จัดสรรต้องมีการชำระเงินที่เสร็จสมบูรณ์",
+  "Item write permission required": "ต้องได้รับอนุญาตเขียนรายการ",
+  "Unsupported allocated sale commit": "สัญญาการขายที่จัดสรรที่ไม่ได้รับการสนับสนุน",
+  "Unsupported allocated sale preparation": "การเตรียมการขายที่จัดสรรที่ไม่ได้รับการสนับสนุน",
+  "Unsupported stock allocation sale": "การขายการจัดสรรหุ้นที่ไม่สนับสนุน",
+  "Use the normal return process for an allocated sale.": "ใช้กระบวนการคืนสินค้าปกติสำหรับการขายที่จัดสรรไว้"
 }

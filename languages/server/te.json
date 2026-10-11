@@ -944,5 +944,11 @@
   "unsuccessfully": "విఫల",
   "valid": "చెల్లుబాటు అయ్యే",
   "date must be YYYY-MM-DD": "తేదీ తప్పనిసరిగా ఉండాలి YYYY-MM-DD",
-  "start and end must be HH:MM": "ప్రారంభం మరియు ముగింపు HH ఉండాలి: MM"
+  "start and end must be HH:MM": "ప్రారంభం మరియు ముగింపు HH ఉండాలి: MM",
+  "Allocated quantities require a completed payment.": "కేటాయించిన పరిమాణాలకు పూర్తయిన చెల్లింపు అవసరం.",
+  "Item write permission required": "అంశం రాయడానికి అనుమతి అవసరం",
+  "Unsupported allocated sale commit": "మద్దతు లేని కేటాయించిన అమ్మకానికి కమిట్",
+  "Unsupported allocated sale preparation": "మద్దతు లేని కేటాయించిన అమ్మకపు తయారీ",
+  "Unsupported stock allocation sale": "మద్దతు లేని స్టాక్ కేటాయింపు అమ్మకం",
+  "Use the normal return process for an allocated sale.": "కేటాయించిన అమ్మకానికి సాధారణ రిటర్న్ ప్రక్రియను ఉపయోగించండి."
 }
