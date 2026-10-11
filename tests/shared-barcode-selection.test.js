@@ -25,3 +25,21 @@ test('product names render as text and cancellation does not add a product',()=>
 test('Enter on a typed barcode opens choices without autocomplete selecting the first item',()=>{const t=setup([item('A'),item('B')]);const input=t.$('#sales_new_item_name')[0];input.value='5011397027414';input.dispatchEvent(new input.ownerDocument.defaultView.KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));assert.deepEqual(t.added,[]);assert.equal(t.$('#sharedBarcodePicker .list-group button').length,2);assert.equal(input.value,'');});
 
 test('custom chooser display retains choice by ID while hiding deselected metadata',()=>{const t=setup([item('A',{barcode_id:'123',sales_search_display_fields:['barcode']}),item('B',{barcode_id:'123',sales_search_display_fields:['barcode']})]);t.pos.sales.addByBarcode('123');const buttons=t.$('#sharedBarcodePicker .list-group button');assert.match(buttons.eq(0).text(),/Barcode: 123/);assert.ok(!buttons.eq(0).text().includes('SKU:'));buttons.eq(1).trigger('click');assert.deepEqual(t.added,['B']);});
+
+test('fresh barcode choice cannot reuse a stale cached price for the same ID',()=>{
+ const rows=[item('A',{selling_price:1.2}),item('B',{selling_price:15})];
+ const t=setup(rows), added=[], fetched=[];
+ vm.runInNewContext(source.slice(source.indexOf('PosnicPro.sales.itemCache ='),source.indexOf('PosnicPro.sales.itemCache =')+source.slice(source.indexOf('PosnicPro.sales.itemCache =')).indexOf('\n};')+3),{PosnicPro:t.pos,$:t.$});
+ t.pos.sales.itemCache._map.B={at:Date.now(),json:JSON.stringify(item('B',{selling_price:1.2}))};
+ t.pos.sales.addSalesLineItems=row=>added.push(row);
+ t.pos.sales.itemsMenu.clickEffect=()=>{};
+ const start=source.indexOf('    addToLineItemsList: function (item_id)');
+ const end=source.indexOf('    clickEffect:',start);
+ t.pos.sales.itemsMenu.addToLineItemsList=vm.runInNewContext('({'+source.slice(start,end)+'}).addToLineItemsList',{PosnicPro:t.pos,$:t.$,window:{location:{hash:''}}});
+ t.pos.get=(p,cb)=>{if(typeof p==='string'){fetched.push(p);cb({type:'success',data:rows[1]});}else cb({suggestions:rows});};
+ t.pos.sales.addByBarcode('123');
+ t.$('#sharedBarcodePicker .list-group button').eq(1).trigger('click');
+ assert.equal(added[0].selling_price,15);
+ assert.equal(added[0].item_id,'B');
+ assert.deepEqual(fetched,['items/B']);
+});
