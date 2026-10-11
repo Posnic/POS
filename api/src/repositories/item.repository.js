@@ -6600,6 +6600,150 @@ class ItemRepository extends BaseModel {
     return { items, total };
   }
 
+  async priceGrid(query = {}, context = {}) {
+    const filter = this.priceGridScope(context);
+    const search = String(query.search || '')
+      .trim()
+      .slice(0, 100);
+    if (search) {
+      const literal = searchPattern(search);
+      filter.$or = [
+        { name: { $regex: literal, $options: 'i' } },
+        { itemid: { $regex: literal, $options: 'i' } },
+      ];
+    }
+    if (query.category) filter.category_id = this.toObjectId(query.category);
+    const page = Math.max(1, Math.min(100000, Math.floor(Number(query.page) || 1)));
+    const collection = await this.getCollection(this.collectionName);
+    const [total, items] = await Promise.all([
+      collection.countDocuments(filter),
+      collection
+        .find(filter, {
+          projection: {
+            name: 1,
+            itemid: 1,
+            unit: 1,
+            selling_price: 1,
+            company_price: 1,
+            mrp_price: 1,
+          },
+        })
+        .sort({ name: 1, _id: 1 })
+        .skip((page - 1) * 50)
+        .limit(50)
+        .toArray(),
+    ]);
+    return { total, items, page, pageSize: 50 };
+  }
+
+  priceGridScope(context) {
+    if (!ObjectId.isValid(context.branchId) || !ObjectId.isValid(context.licenseId)) {
+      throw new Error('Branch and license are required');
+    }
+    return {
+      branch_id: this.toObjectId(context.branchId),
+      license: this.toObjectId(context.licenseId),
+      ...NOT_DELETED,
+    };
+  }
+
+  async savePriceGrid(rows, context = {}, allowZero = false) {
+    const scope = this.priceGridScope(context);
+    if (!Array.isArray(rows) || !rows.length || rows.length > 2000)
+      throw new Error('Provide 1 to 2000 price changes');
+    const seen = new Set();
+    for (const row of rows) {
+      if (
+        !row ||
+        !ObjectId.isValid(row.id) ||
+        seen.has(String(row.id)) ||
+        typeof row.price !== 'number' ||
+        !Number.isFinite(row.price) ||
+        row.price < 0 ||
+        row.price > 1000000000 ||
+        (Math.round(row.price * 100) === 0 && !allowZero) ||
+        typeof row.oldPrice !== 'number' ||
+        !Number.isFinite(row.oldPrice)
+      ) {
+        throw new Error('Invalid or duplicate price change');
+      }
+      seen.add(String(row.id));
+    }
+    const collection = await this.getCollection(this.collectionName);
+    const db = await BaseModel.getDb();
+    const saved = [],
+      conflicts = [];
+    const batchId = new ObjectId();
+    for (const row of rows) {
+      const filter = { ...scope, _id: this.toObjectId(row.id), selling_price: row.oldPrice };
+      const item = await collection.findOne(filter);
+      if (!item) {
+        conflicts.push(row.id);
+        continue;
+      }
+      const price = Math.round(row.price * 100) / 100;
+      if (price === 0 && !allowZero) throw new Error('Zero prices require confirmation');
+      if (price === row.oldPrice) {
+        saved.push(row.id);
+        continue;
+      }
+      const now = new Date();
+      const result = await collection.updateOne(filter, {
+        $set: {
+          selling_price: price,
+          updated_date: now,
+          updated_by: context.userName || '',
+          updated_by_id: context.userId || null,
+        },
+      });
+      if (!result.modifiedCount) {
+        conflicts.push(row.id);
+        continue;
+      }
+      await db.collection('price_history').insertOne({
+        item_id: item._id,
+        item_name: item.name,
+        branch_id: item.branch_id,
+        license: scope.license,
+        field: 'selling_price',
+        label: 'Selling price',
+        value_type: 'money',
+        old_value: row.oldPrice,
+        new_value: price,
+        process: 'Bulk',
+        batch_id: batchId,
+        changed_by: context.userName || '',
+        changed_by_id: context.userId || null,
+        date: now,
+        created_date: now,
+        updated_date: now,
+      });
+      saved.push(row.id);
+    }
+    if (saved.length) {
+      const now = new Date();
+      await db
+        .collection('bulk_price_updates')
+        .insertOne({
+          _id: batchId,
+          branch_id: scope.branch_id,
+          license: scope.license,
+          field: 'selling_price',
+          label: 'Selling price',
+          op: 'individual',
+          scope: 'selected',
+          items_changed: saved.length,
+          items_skipped: conflicts.length,
+          changed_by: context.userName || '',
+          changed_by_id: context.userId || null,
+          date: now,
+          created_date: now,
+          updated_date: now,
+        });
+    }
+    return { saved, conflicts };
+  }
+
   async importItems(data, context = {}) {
     return itemBarcodes.withWriteLock(context, () => this._importItems(data, context));
   }

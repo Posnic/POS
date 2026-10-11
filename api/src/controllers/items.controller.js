@@ -1733,6 +1733,46 @@ class ItemsController extends BaseController {
    * { scope: 'all'|'category', category_id?, field, op: 'percent'|'amount',
    *   value, direction: 'increase'|'decrease' }.
    */
+  async priceGrid(req, res) {
+    try {
+      if (req.user?.access?.item?.read === false)
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      await this.ensureContext(req);
+      return this.success(
+        res,
+        await this.service.repository.priceGrid(req.query, {
+          branchId: this.model.branchId,
+          licenseId: this.model.licenseId,
+        })
+      );
+    } catch (error) {
+      return this.error(res, error.message, 400);
+    }
+  }
+
+  async savePriceGrid(req, res) {
+    try {
+      if (req.user?.access?.item?.write === false)
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      await this.ensureContext(req);
+      return this.success(
+        res,
+        await this.service.repository.savePriceGrid(
+          req.body.rows,
+          {
+            branchId: this.model.branchId,
+            licenseId: this.model.licenseId,
+            userName: req.user.name || req.user.email || '',
+            userId: req.user._id,
+          },
+          req.body.allowZero === true
+        )
+      );
+    } catch (error) {
+      return this.error(res, error.message, 400);
+    }
+  }
+
   async bulkUpdatePrices(req, res) {
     try {
       if (req.user?.access?.item?.write === false) {

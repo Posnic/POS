@@ -244,6 +244,8 @@ router.get('/demo/status', bindController(itemsController.demoStatus));
 // and the members of one family for the edit page's strip.
 router.post('/createFamily', bindController(itemsController.createFamily));
 router.get('/family', bindController(itemsController.getFamily));
+router.get('/priceGrid', bindController(itemsController.priceGrid));
+router.post('/priceGrid', bindController(itemsController.savePriceGrid));
 router.post('/bulkUpdatePrices', bindController(itemsController.bulkUpdatePrices));
 router.post('/bulkPricePreview', bindController(itemsController.bulkPricePreview));
 router.post('/bulkSetMargin', bindController(itemsController.bulkSetMargin));
