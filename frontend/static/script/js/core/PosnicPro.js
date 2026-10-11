@@ -2887,6 +2887,8 @@ PosnicPro = {
          */
         /* Manage-sidebar settings entries (the Config layer collapsed into
            them) follow the same switches as the panes they open. */
+        // Keep historical logs available by URL; hide stock tools when tracking is off.
+        $('#stockModule, #inventoryCountsModule, #itemLowModule').toggle(on('stock_management'));
         $('#manage_li_taxmodule').toggle(on('module_tax_enable'));
         $('#manage_li_tableorder').toggle(PosnicPro.local.get('table_options') === 'enable');
         $('#manage_li_cashregister').toggle(on('cash_register_enable'));
