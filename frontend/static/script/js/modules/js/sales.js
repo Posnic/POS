@@ -10862,6 +10862,12 @@ $(window).resize(function () {
 /* ONE resolution path for every way a barcode arrives - hardware scanner
    wedge or the camera (L3). Looks the code up, stock-checks, adds the line. */
 PosnicPro.sales.addScannedItem = function (itemData) {
+    // Barcode results are live. Do not replace the selected record's price
+    // with an older detail-cache entry when adding it to the basket.
+    var selectedId = itemData.item_id || itemData.id || (itemData._id && itemData._id.$oid);
+    if (selectedId && PosnicPro.sales.itemCache) {
+        delete PosnicPro.sales.itemCache._map[selectedId];
+    }
     var mustCheckStock =
         (itemData.track_inventory === true || itemData.track_inventory === 'true' || itemData.track_inventory === 1 || itemData.track_inventory === '1');
 
