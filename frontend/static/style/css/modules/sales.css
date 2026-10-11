@@ -711,3 +711,25 @@ body.customer-display .contentbar {
     #sales_split.saleshist-split{flex-direction:column}
     #sales_split.saleshist-split>.md-rail{flex:0 0 auto;max-width:100%;max-height:28vh}
 }
+
+/* Keep history filters alongside one another without a second expanded panel. */
+.sales-history-filterbar { display:flex; flex-wrap:wrap; align-items:end; gap:10px; margin:12px 0 8px; }
+.sales-history-provenance { display:flex; flex-wrap:wrap; align-items:end; gap:10px; margin:0; }
+.sales-history-filterbar label { font-size:14px; }
+.sales-history-filterbar .form-control { width:170px; height:44px; font-size:14px; }
+.sales-history-filterbar #sales_history_table, .sales-history-filterbar #sales_history_period { width:145px; }
+.sales-history-picker { position:relative; }
+.sales-history-picker input { padding-right:42px; }
+.sales-history-picker-toggle { position:absolute; right:0; bottom:0; height:44px; width:40px; border:0; background:transparent; color:inherit; }
+.sales-history-picker-toggle:focus-visible { outline:2px solid var(--theme-primary-color,#0665df); }
+.sales-history-options .autocomplete-suggestion { min-height:44px; padding:10px 12px; white-space:normal; overflow-wrap:anywhere; }
+@media(max-width:600px) { .sales-history-provenance { width:100%; } .sales-history-filterbar .form-control { width: min(170px, 42vw); } }
+
+#sales_restaurant_reset { display:none; }
+
+/* Sales History has one collapsible filter panel and one action row. */
+#sales_filter_panel { width:100%; margin-top:12px; padding:16px; border:1px solid var(--border-color, #ccd3df); border-radius:10px; }
+#sales_filter_search { flex-basis:100%; width:100%; }
+#sales_filter_search .lf-clear { display:none; }
+#sales_filter_panel input, #sales_filter_panel select, #sales_filter_panel button { min-height:44px; }
+#sales_filter_panel .sales-history-provenance { flex-wrap:wrap; }
