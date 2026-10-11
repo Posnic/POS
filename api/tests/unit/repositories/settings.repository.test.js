@@ -464,15 +464,13 @@ describe('copying settings to another branch', () => {
   });
 
   test('copying preferences cannot turn on sale deletion at another branch', async () => {
-    jest
-      .spyOn(repo, 'resolveGroup')
-      .mockResolvedValue({
-        status: true,
-        data: {
-          values: { allow_sale_hard_delete: true },
-          source: { allow_sale_hard_delete: 'legacy' },
-        },
-      });
+    jest.spyOn(repo, 'resolveGroup').mockResolvedValue({
+      status: true,
+      data: {
+        values: { allow_sale_hard_delete: true },
+        source: { allow_sale_hard_delete: 'legacy' },
+      },
+    });
     const save = jest.spyOn(repo, 'saveGroup');
     const result = await repo.copyGroups(['preferences'], BRANCH, OTHER, { licenseId: LICENSE });
     expect(result.status).toBe(true);
