@@ -6614,6 +6614,9 @@ class ItemRepository extends BaseModel {
     }
     if (query.category) filter.category_id = this.toObjectId(query.category);
     const page = Math.max(1, Math.min(100000, Math.floor(Number(query.page) || 1)));
+    const pageSize = [10, 25, 50, 100].includes(Number(query.pageSize))
+      ? Number(query.pageSize)
+      : 50;
     const collection = await this.getCollection(this.collectionName);
     const [total, items] = await Promise.all([
       collection.countDocuments(filter),
@@ -6629,11 +6632,11 @@ class ItemRepository extends BaseModel {
           },
         })
         .sort({ name: 1, _id: 1 })
-        .skip((page - 1) * 50)
-        .limit(50)
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
         .toArray(),
     ]);
-    return { total, items, page, pageSize: 50 };
+    return { total, items, page, pageSize };
   }
 
   priceGridScope(context) {
@@ -6722,24 +6725,22 @@ class ItemRepository extends BaseModel {
     }
     if (saved.length) {
       const now = new Date();
-      await db
-        .collection('bulk_price_updates')
-        .insertOne({
-          _id: batchId,
-          branch_id: scope.branch_id,
-          license: scope.license,
-          field: 'selling_price',
-          label: 'Selling price',
-          op: 'individual',
-          scope: 'selected',
-          items_changed: saved.length,
-          items_skipped: conflicts.length,
-          changed_by: context.userName || '',
-          changed_by_id: context.userId || null,
-          date: now,
-          created_date: now,
-          updated_date: now,
-        });
+      await db.collection('bulk_price_updates').insertOne({
+        _id: batchId,
+        branch_id: scope.branch_id,
+        license: scope.license,
+        field: 'selling_price',
+        label: 'Selling price',
+        op: 'individual',
+        scope: 'selected',
+        items_changed: saved.length,
+        items_skipped: conflicts.length,
+        changed_by: context.userName || '',
+        changed_by_id: context.userId || null,
+        date: now,
+        created_date: now,
+        updated_date: now,
+      });
     }
     return { saved, conflicts };
   }

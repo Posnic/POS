@@ -17,15 +17,21 @@ function buildServiceWorker(cb) {
     const dir = process.cwd();
     const hash = crypto.createHash('sha256');
     const roots = [path.join(dir, publicDir, 'script'), path.join(dir, publicDir, 'style')];
-    for (const root of roots) {
-      if (!fs.existsSync(root)) continue;
+    function hashFiles(root, relative = '') {
       for (const name of fs.readdirSync(root).sort()) {
         const full = path.join(root, name);
-        if (fs.statSync(full).isFile()) {
-          hash.update(name);
+        const entry = path.posix.join(relative, name);
+        if (fs.statSync(full).isDirectory()) hashFiles(full, entry);
+        else if (fs.statSync(full).isFile()) {
+          hash.update(entry);
           hash.update(fs.readFileSync(full));
         }
       }
+    }
+    for (const root of roots) {
+      if (!fs.existsSync(root)) continue;
+      // Lazy reports contain Price Settings. A lazy-only change is a release too.
+      hashFiles(root, path.basename(root));
     }
     for (const name of fs.readdirSync(path.join(dir, publicDir)).sort()) {
       if (name.endsWith('.html')) {

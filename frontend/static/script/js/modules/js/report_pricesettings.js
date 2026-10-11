@@ -1,101 +1,11 @@
 /**
- * Price Settings page - three tabs over the pricing APIs:
+ * Price Settings page - pricing tools (the editable grid is in price-editor.js):
  *   Set Margin     -> items/marginPreview + items/bulkSetMargin
  *   Custom Change  -> items/bulkPricePreview + items/bulkUpdatePrices
  *   History        -> items/bulkPriceHistory (audit of every bulk run)
  * The object name (pricesettings) matches the route hash #/pricesettings.
  */
 PosnicPro.pricesettings = {
-    _gridDraft: {},
-    _gridRows: {},
-    _gridPage: 1,
-    _gridRequest: 0,
-    gridSearch: function () {
-        clearTimeout(this._gridTimer);
-        this._gridTimer = setTimeout(function () { PosnicPro.pricesettings.gridLoad(1); }, 250);
-    },
-    gridLoad: function (page) {
-        if (this._gridSaving) return;
-        var self = this;
-        if (!self._gridUnloadBound) {
-            window.addEventListener('beforeunload', function (e) { if (Object.keys(self._gridDraft).length) { e.preventDefault(); e.returnValue = ''; } });
-            self._gridUnloadBound = true;
-        }
-        var scope = String(PosnicPro.local.get('branch_id_set') || '') + ':' + String(PosnicPro.local.get('userid') || '');
-        if (self._gridScope !== scope) { self._gridScope = scope; self._gridDraft = {}; }
-        var request = ++self._gridRequest;
-        $('#ps-grid-body').html('<tr><td colspan="7">Loading…</td></tr>');
-        PosnicPro.get({ url: 'items/priceGrid', data: $.param({ page: page, search: $('#ps-grid-search').val(), category: $('#ps-grid-category').val() }) }, function (r) {
-            if (request !== self._gridRequest) return;
-            if (r.type !== 'success') { $('#ps-grid-body').empty(); PosnicPro.alert(r.type, r.message); return; }
-            var d = r.data; self._gridPage = d.page; self._gridRows = {};
-            var body = $('#ps-grid-body').empty();
-            d.items.forEach(function (it) {
-                self._gridRows[it._id] = it;
-                var tr = $('<tr>').attr('data-price-id', it._id);
-                [it.name, it.itemid || '—', it.unit || 'qty'].forEach(function (v) { $('<td>').text(v).appendTo(tr); });
-                [it.company_price, it.mrp_price].forEach(function (v) { $('<td>').addClass('price-reference').hide().text(Number(v || 0).toFixed(2)).appendTo(tr); });
-                $('<td>').text(Number(it.selling_price || 0).toFixed(2)).appendTo(tr);
-                var input = $('<input type="number" min="0" step="0.01" class="form-control" style="min-height:44px;min-width:120px" inputmode="decimal">').attr('aria-label', 'New price for ' + it.name);
-                if (self._gridDraft[it._id]) input.val(self._gridDraft[it._id].price);
-                input.on('paste', function (e) {
-                    var text = (e.originalEvent || e).clipboardData.getData('text');
-                    if (!/[\r\n]/.test(text)) return;
-                    e.preventDefault();
-                    var values = text.trim().split(/\r?\n/);
-                    var targets = tr.add(tr.nextAll()).find('input');
-                    if (values.length > targets.length || values.some(function (v) { return v.trim() && !/^\d+(?:\.\d{1,2})?$/.test(v.trim()); })) {
-                        PosnicPro.alert('warning', 'Paste one column of prices, with at most two decimals, within this page.'); return;
-                    }
-                    values.forEach(function (v, i) { $(targets[i]).val(v.trim()).trigger('input'); });
-                });
-                input.on('focus', function () { this.select(); });
-                input.on('input', function () { self.gridEdit(it, this.value, tr); });
-                input.on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); tr.next().find('input').focus().select(); } });
-                $('<td>').append(input).appendTo(tr); body.append(tr);
-                if (self._gridDraft[it._id]) tr.addClass('table-info');
-            });
-            if (!d.items.length) body.html('<tr><td colspan="7">No matching items</td></tr>');
-            $('#ps-grid-page').text('Page ' + d.page + ' of ' + Math.max(1, Math.ceil(d.total / 50)) + ' · ' + d.total + ' items');
-            $('#ps-grid-prev').prop('disabled', d.page <= 1); $('#ps-grid-next').prop('disabled', d.page * 50 >= d.total);
-            $('#ps-grid .price-reference').toggle($('#ps-grid-reference').is(':checked'));
-            self.gridCount();
-        }, function () { if (request === self._gridRequest) $('#ps-grid-body').html('<tr><td colspan="7">Could not load prices. Try searching again.</td></tr>'); });
-    },
-    gridEdit: function (it, value, tr) {
-        $('#ps-grid-preview').hide();
-        if (value === '' || Number(value) === Number(it.selling_price)) { delete this._gridDraft[it._id]; tr.removeClass('table-info table-warning'); }
-        else {
-            this._gridDraft[it._id] = { id: it._id, name: it.name, oldPrice: Number(it.selling_price), price: Number(value), cost: Number(it.company_price || 0), mrp: Number(it.mrp_price || 0) };
-            tr.addClass('table-info').toggleClass('table-warning', Number(value) <= 0 || Number(value) < Number(it.company_price || 0));
-        }
-        this.gridCount();
-    },
-    gridCount: function () { var n = Object.keys(this._gridDraft).length; $('#ps-grid-count').text(n + ' prices changed'); $('#ps-grid-review').prop('disabled', !n); },
-    gridDiscard: function () { if (!Object.keys(this._gridDraft).length || window.confirm('Discard all unsaved price changes?')) { this._gridDraft = {}; $('#ps-grid-preview').hide(); this.gridLoad(this._gridPage); } },
-    gridReview: function () {
-        var rows = Object.values(this._gridDraft), box = $('#ps-grid-preview').empty().show();
-        if (rows.some(function (r) { return !Number.isFinite(r.price) || r.price < 0; })) { box.text('Correct invalid prices before saving.'); return; }
-        $('<h5>').text('Review ' + rows.length + ' price changes').appendTo(box);
-        rows.forEach(function (r) { $('<div>').text(r.name + ': ' + r.oldPrice.toFixed(2) + ' → ' + r.price.toFixed(2) + (r.price < r.cost ? ' · Below cost' : '') + (r.mrp > 0 && r.price > r.mrp ? ' · Above MRP' : '')).appendTo(box); });
-        if (rows.some(function (r) { return r.price === 0; })) box.append('<label class="d-block mt-2"><input type="checkbox" id="ps-grid-zero"> I confirm the zero selling prices</label>');
-        $('<button class="btn btn-primary mt-3">Confirm update</button>').on('click', function () { PosnicPro.pricesettings.gridSave(this); }).appendTo(box);
-    },
-    gridSave: function (button) {
-        var self = this, rows = Object.values(self._gridDraft);
-        var allowZero = $('#ps-grid-zero').is(':checked');
-        if (rows.some(function (r) { return r.price === 0; }) && !allowZero) return;
-        self._gridSaving = true;
-        $('#ps-grid input, #ps-grid select, #ps-grid button').prop('disabled', true);
-        PosnicPro.post({ url: 'items/priceGrid', data: JSON.stringify({ rows: rows, allowZero: allowZero }) }, function (r) {
-            self._gridSaving = false;
-            $('#ps-grid input, #ps-grid select, #ps-grid button').prop('disabled', false);
-            if (r.type !== 'success') { PosnicPro.alert(r.type, r.message); return; }
-            r.data.saved.forEach(function (id) { delete self._gridDraft[id]; });
-            $('#ps-grid-preview').text(r.data.saved.length + ' saved. ' + r.data.conflicts.length + ' changed elsewhere or are unavailable. Clear and re-enter conflicting rows after reviewing current prices.');
-            self.gridLoad(self._gridPage);
-        }, function () { self._gridSaving = false; $('#ps-grid input, #ps-grid select, #ps-grid button').prop('disabled', false); });
-    },
     _catsLoaded: false,
     _histPage: 1,
     _histSize: 15,
@@ -248,7 +158,7 @@ PosnicPro.pricesettings = {
                 catch (e) { return ''; }
             };
             var describe = function (run) {
-                if (run.op === 'individual') return 'Individual selling prices · selected items';
+                if (run.op === 'individual') return 'Individual prices · selected items';
                 var f = esc(run.label || run.field || 'Price');
                 var scope = run.scope === 'category' ? 'one category' : 'all items';
                 if (run.op === 'margin' || run.op === 'markup' || run.direction === 'margin') {

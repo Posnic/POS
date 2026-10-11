@@ -13,29 +13,39 @@
                 <div class="card m-b-30">
                     <div class="card-body">
                         <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
-<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#ps-grid" onclick="PosnicPro.pricesettings.gridLoad(1)">Edit prices</a></li>
-                            <li class="nav-item"><a class="nav-link active report_tab_font" id="ps-margin-tab" data-toggle="tab" href="#ps-margin" role="tab"><i class="feather icon-percent mr-1"></i><lang class="lang_set_margin">Set Margin</lang></a></li>
+<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#ps-grid" onclick="PosnicPro.pricesettings.gridLoad(1)">Edit prices</a></li>
+                            <li class="nav-item"><a class="nav-link report_tab_font" id="ps-margin-tab" data-toggle="tab" href="#ps-margin" role="tab"><i class="feather icon-percent mr-1"></i><lang class="lang_set_margin">Set Margin</lang></a></li>
                             <li class="nav-item"><a class="nav-link report_tab_font" id="ps-custom-tab" data-toggle="tab" href="#ps-custom" role="tab"><i class="feather icon-sliders mr-1"></i><lang class="lang_custom_change">Custom Change</lang></a></li>
                             <li class="nav-item"><a class="nav-link report_tab_font" id="ps-history-tab" data-toggle="tab" href="#ps-history" role="tab" onclick="PosnicPro.pricesettings.loadHistory(1);"><i class="feather icon-clock mr-1"></i><lang class="lang_history">History</lang></a></li>
                         </ul>
 
                         <div class="tab-content">
-<div class="tab-pane fade" id="ps-grid" role="tabpanel">
-<p>Enter new selling prices. Blank cells leave prices unchanged. Edits stay selected across pages.</p>
+<div class="tab-pane fade show active" id="ps-grid" role="tabpanel">
+<p>Edit prices directly. Blank cells keep the existing price. Review all changes before applying.</p>
 <div class="d-flex flex-wrap mb-3" style="gap:12px">
 <input id="ps-grid-search" class="form-control" style="max-width:360px;min-height:44px" placeholder="Search item or SKU" aria-label="Search item or SKU" oninput="PosnicPro.pricesettings.gridSearch()">
 <select id="ps-grid-category" class="form-control" style="max-width:260px;min-height:44px" aria-label="Category" onchange="PosnicPro.pricesettings.gridLoad(1)"><option value="">All categories</option></select>
-<label><input id="ps-grid-reference" type="checkbox" onchange="$('#ps-grid .price-reference').toggle(this.checked)"> Show cost and MRP</label>
+<details><summary class="btn btn-light">Columns</summary><div id="ps-columns" class="p-2"></div><small>Temporary view for this screen.</small></details>
+<button class="btn btn-light" onclick="PosnicPro.pricesettings.sheetOpen('download')">Download price sheet</button>
+<button class="btn btn-light" onclick="PosnicPro.pricesettings.sheetOpen('import')">Import prices</button>
 </div>
-<div class="table-responsive"><table class="table"><thead><tr><th>Item</th><th>SKU</th><th>Unit</th><th class="price-reference" style="display:none">Cost</th><th class="price-reference" style="display:none">MRP</th><th>Current price</th><th>New price</th></tr></thead><tbody id="ps-grid-body"></tbody></table></div>
-<div class="d-flex justify-content-between align-items-center"><button class="btn btn-light" id="ps-grid-prev" onclick="PosnicPro.pricesettings.gridLoad(PosnicPro.pricesettings._gridPage-1)">Previous</button><span id="ps-grid-page" aria-live="polite"></span><button class="btn btn-light" id="ps-grid-next" onclick="PosnicPro.pricesettings.gridLoad(PosnicPro.pricesettings._gridPage+1)">Next</button></div>
+<div id="ps-draft-status" role="status" aria-live="polite"></div>
+<div class="table-responsive"><table class="table"><thead id="ps-grid-head"></thead><tbody id="ps-grid-body"></tbody></table></div>
+<div class="d-flex flex-wrap justify-content-between align-items-center" style="gap:10px"><label>Rows per page <select id="ps-grid-size" class="form-control" onchange="PosnicPro.pricesettings.gridLoad(1)"><option>10</option><option>25</option><option selected>50</option><option>100</option></select></label><button class="btn btn-light" id="ps-grid-prev" onclick="PosnicPro.pricesettings.gridLoad(PosnicPro.pricesettings._gridPage-1)">Previous</button><span id="ps-grid-page" aria-live="polite"></span><button class="btn btn-light" id="ps-grid-next" onclick="PosnicPro.pricesettings.gridLoad(PosnicPro.pricesettings._gridPage+1)">Next</button></div>
 <div class="card d-flex flex-row flex-wrap align-items-center mt-3 p-3 border rounded" style="position:sticky;bottom:0;gap:12px">
 <strong id="ps-grid-count" aria-live="polite">0 prices changed</strong><button class="btn btn-light" onclick="PosnicPro.pricesettings.gridDiscard()">Discard</button><button class="btn btn-primary" id="ps-grid-review" onclick="PosnicPro.pricesettings.gridReview()">Review &amp; update</button>
 </div>
 <div id="ps-grid-preview" class="mt-3" style="display:none"></div>
+<section id="ps-sheet" class="border rounded p-3 mt-3" hidden>
+<div class="d-flex justify-content-between"><h5 id="ps-sheet-title"></h5><button class="btn btn-light" onclick="document.getElementById('ps-sheet').hidden=true" aria-label="Close price sheet">Close</button></div>
+<div id="ps-sheet-download" hidden><div class="d-flex flex-wrap" style="gap:12px"><label>Search item or SKU<input id="ps-sheet-search" class="form-control" oninput="PosnicPro.pricesettings.sheetCount()"></label><label>Category<select id="ps-sheet-category" class="form-control" onchange="PosnicPro.pricesettings.sheetCount()"></select></label><label>Format<select id="ps-sheet-format" class="form-control"><option value="xlsx">Excel (.xlsx)</option><option value="csv">CSV</option></select></label></div><div id="ps-sheet-fields" class="my-2"></div><div id="ps-sheet-count" role="status"></div><p>Only fill the New price columns. Keep Branch ID, Item ID and Current prices unchanged.</p><button class="btn btn-primary" onclick="PosnicPro.pricesettings.sheetDownload(this)">Prepare download</button></div>
+<div id="ps-sheet-import" hidden><label>Price sheet (.csv or .xlsx, up to 10 MB)<input type="file" id="ps-sheet-file" class="form-control" accept=".csv,.xlsx"></label><label class="d-block"><input type="checkbox" id="ps-sheet-zero"> Apply explicit zero prices (blank cells still stay unchanged)</label><p>Updates existing products only. No stock quantities or historical purchase costs are changed.</p><button class="btn btn-primary" onclick="PosnicPro.pricesettings.sheetImport(this)">Check sheet</button></div>
+<div id="ps-job-view" hidden></div><div id="ps-sheet-status" class="mt-2" role="status" aria-live="polite"></div>
+</section>
+<details class="mt-3"><summary onclick="PosnicPro.pricesettings.sheetHistory()">Recent price sheets and resumable updates</summary><div id="ps-sheet-history"></div></details>
 </div>
                             <!-- ============ Set Margin ============ -->
-                            <div class="tab-pane fade show active" id="ps-margin" role="tabpanel">
+                            <div class="tab-pane fade" id="ps-margin" role="tabpanel">
                                 <p class="text-muted" style="font-size:13.5px;"><lang class="lang_set_the_selling_price_from_a_target_profit">Set the selling price from a target profit margin, worked out from each item's cost, not nudged from an unknown base. Items with no cost price are left alone.</lang></p>
                                 <div class="row">
                                     <div class="col-md-3 form-group">

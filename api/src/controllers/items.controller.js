@@ -1735,7 +1735,7 @@ class ItemsController extends BaseController {
    */
   async priceGrid(req, res) {
     try {
-      if (req.user?.access?.item?.read === false)
+      if (!this.checkPermission('item', 'read', req.user))
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       await this.ensureContext(req);
       return this.success(
@@ -1750,9 +1750,75 @@ class ItemsController extends BaseController {
     }
   }
 
+  async priceSheet(req, res) {
+    try {
+      const action = req.body.action || req.query.action || 'list';
+      if (
+        !this.checkPermission(
+          'item',
+          ['list', 'status', 'download'].includes(action) ? 'read' : 'write',
+          req.user
+        )
+      )
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      await this.ensureContext(req);
+      const c = {
+        branchId: this.model.branchId,
+        licenseId: this.model.licenseId,
+        userName: req.user.name || req.user.email || '',
+        userId: req.user._id,
+      };
+      const service = require('../services/price-sheet');
+      const b = req.body;
+      let data;
+      switch (action) {
+        case 'create':
+          data = await service.create(c, b);
+          break;
+        case 'append':
+          data = await service.append(c, b.jobId, b);
+          break;
+        case 'finish':
+          data = await service.finish(c, b.jobId, b.total);
+          break;
+        case 'status':
+          data = await service.status(c, b.jobId, b.page, b.filter);
+          break;
+        case 'process':
+          data = await service.processBatch(c, b.jobId, b.skipInvalid === true);
+          break;
+        case 'list':
+          data = await service.list(c);
+          break;
+        case 'import':
+          data = await service.importSheet(
+            c,
+            { ...b, allowZero: b.allowZero === 'true' },
+            req.file
+          );
+          break;
+        case 'download': {
+          const wb = await service.sheet(c, b);
+          const csv = b.format === 'csv';
+          const buffer = csv ? await wb.csv.writeBuffer() : await wb.xlsx.writeBuffer();
+          data = {
+            filename: `prices.${csv ? 'csv' : 'xlsx'}`,
+            base64: Buffer.from(buffer).toString('base64'),
+          };
+          break;
+        }
+        default:
+          throw new Error('Unknown price-sheet action');
+      }
+      return this.success(res, data);
+    } catch (error) {
+      return this.error(res, error.message, 400);
+    }
+  }
+
   async savePriceGrid(req, res) {
     try {
-      if (req.user?.access?.item?.write === false)
+      if (!this.checkPermission('item', 'write', req.user))
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       await this.ensureContext(req);
       return this.success(

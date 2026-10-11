@@ -1,0 +1,742 @@
+/* Price Settings: bounded pages, recoverable drafts and resumable price-sheet jobs. */
+(function () {
+  "use strict";
+  var p = PosnicPro.pricesettings;
+  p._gridRows = {};
+  p._gridPage = 1;
+  p.gridSearch = function () {
+    clearTimeout(p._gridTimer);
+    p._gridTimer = setTimeout(function () {
+      p.gridLoad(1);
+    }, 250);
+  };
+  var fields = {
+    selling_price: "Selling price",
+    company_price: "Cost price",
+    mrp_price: "MRP",
+  };
+  var visible = {
+    itemid: true,
+    unit: true,
+    selling_price: true,
+    company_price: false,
+    mrp_price: false,
+  };
+  var draft = {},
+    scope = "",
+    ready,
+    dbPromise,
+    sequence = 0,
+    busy = false,
+    currentJob,
+    jobPage = 1,
+    filter = "";
+  var originalShow = p.showDataTablePage;
+  function key() {
+    return (
+      location.origin +
+      ":" +
+      PosnicPro.local.get("branch_id_set") +
+      ":" +
+      PosnicPro.local.get("userid")
+    );
+  }
+  function db() {
+    if (!dbPromise)
+      dbPromise = new Promise(function (resolve, reject) {
+        var request = indexedDB.open("posnic-price-drafts", 1);
+        request.onupgradeneeded = function () {
+          request.result.createObjectStore("drafts");
+        };
+        request.onsuccess = function () {
+          resolve(request.result);
+        };
+        request.onerror = function () {
+          reject(request.error);
+        };
+      });
+    return dbPromise;
+  }
+  function storage(write) {
+    var captured = scope,
+      snapshot = JSON.parse(JSON.stringify(draft));
+    return db().then(function (database) {
+      return new Promise(function (resolve, reject) {
+        var tx = database.transaction(
+          "drafts",
+          write ? "readwrite" : "readonly",
+        );
+        var request = write
+          ? tx.objectStore("drafts").put(snapshot, captured)
+          : tx.objectStore("drafts").get(captured);
+        tx.oncomplete = function () {
+          resolve(request.result);
+        };
+        tx.onerror = function () {
+          reject(tx.error);
+        };
+        tx.onabort = tx.onerror;
+      });
+    });
+  }
+  function persist() {
+    storage(true)
+      .then(function () {
+        $("#ps-draft-status").text(
+          "Draft saved on this device. Prices are not applied yet.",
+        );
+      })
+      .catch(function () {
+        $("#ps-draft-status").text(
+          "Draft storage is unavailable. Keep this screen open until the update finishes.",
+        );
+      });
+  }
+  function api(data) {
+    return new Promise(function (resolve, reject) {
+      PosnicPro.post(
+        { url: "items/priceSheet", data: JSON.stringify(data) },
+        function (r) {
+          if (r.type === "success") resolve(r.data);
+          else reject(new Error(r.message || "Price request failed"));
+        },
+        function () {
+          reject(new Error("Connection interrupted. Your job can be resumed."));
+        },
+      );
+    });
+  }
+  function error(e) {
+    $("#ps-sheet-status").text(e.message);
+    PosnicPro.alert("warning", e.message);
+  }
+  function id() {
+    var bytes = new Uint8Array(12);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes)
+      .map(function (b) {
+        return b.toString(16).padStart(2, "0");
+      })
+      .join("");
+  }
+  function number(n) {
+    return Number(n || 0).toFixed(2);
+  }
+  function count() {
+    $("#ps-grid-count").text(Object.keys(draft).length + " items changed");
+    $("#ps-grid-review").prop("disabled", busy || !Object.keys(draft).length);
+  }
+  function columns() {
+    var box = $("#ps-columns").empty();
+    Object.keys(visible).forEach(function (f) {
+      var input = $('<input type="checkbox">')
+        .prop("checked", visible[f])
+        .on("change", function () {
+          visible[f] = this.checked;
+          paint();
+        });
+      $('<label class="d-block py-2">')
+        .append(
+          input,
+          document.createTextNode(
+            " " + (fields[f] || (f === "unit" ? "Unit" : "SKU")),
+          ),
+        )
+        .appendTo(box);
+    });
+  }
+  function paint() {
+    var head = $("<tr>").append($("<th>").text("Item"));
+    Object.keys(visible)
+      .filter(function (f) {
+        return visible[f];
+      })
+      .forEach(function (f) {
+        head.append(
+          $("<th>").text(fields[f] || (f === "unit" ? "Unit" : "SKU")),
+        );
+      });
+    $("#ps-grid-head").empty().append(head);
+    var body = $("#ps-grid-body").empty();
+    Object.values(p._gridRows).forEach(function (it) {
+      var tr = $("<tr>").append($("<td>").text(it.name));
+      Object.keys(visible)
+        .filter(function (f) {
+          return visible[f];
+        })
+        .forEach(function (f) {
+          var td = $("<td>").appendTo(tr);
+          if (!fields[f]) {
+            td.text(it[f] || "—");
+            return;
+          }
+          var change = draft[it._id] && draft[it._id].changes[f];
+          var input = $(
+            '<input type="number" min="0" step="0.01" inputmode="decimal" class="form-control">',
+          )
+            .css({ minHeight: "44px", minWidth: "110px", maxWidth: "170px" })
+            .attr("aria-label", fields[f] + " for " + it.name)
+            .attr("data-price-field", f)
+            .val(change ? change.value : number(it[f]));
+          var old = $('<small class="d-block">').text(
+            change ? "Was " + number(change.old) : "",
+          );
+          input
+            .on("focus", function () {
+              this.select();
+            })
+            .on("input", function () {
+              var original =
+                draft[it._id] && draft[it._id].changes[f]
+                  ? draft[it._id].changes[f].old
+                  : Number(it[f] || 0);
+              if (this.value === "" || Number(this.value) === original) {
+                if (draft[it._id]) delete draft[it._id].changes[f];
+              } else {
+                if (!draft[it._id])
+                  draft[it._id] = { id: it._id, name: it.name, changes: {} };
+                draft[it._id].changes[f] = { old: original, value: this.value };
+              }
+              if (draft[it._id] && !Object.keys(draft[it._id].changes).length)
+                delete draft[it._id];
+              var changed = draft[it._id] && draft[it._id].changes[f];
+              td.toggleClass("table-info", !!changed);
+              old.text(changed ? "Was " + number(original) : "");
+              count();
+              persist();
+            })
+            .on("keydown", function (e) {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                tr.next()
+                  .find('[data-price-field="' + f + '"]')
+                  .focus();
+              }
+            });
+          td.toggleClass("table-info", !!change).append(input, old);
+        });
+      body.append(tr);
+    });
+    if (!Object.keys(p._gridRows).length)
+      body.append(
+        $("<tr>").append($('<td colspan="6">').text("No matching items")),
+      );
+    count();
+  }
+  p.showDataTablePage = function () {
+    if (scope !== key()) p._catsLoaded = false;
+    originalShow.call(p);
+    visible = {
+      itemid: true,
+      unit: true,
+      selling_price: true,
+      company_price: false,
+      mrp_price: false,
+    };
+    columns();
+    p.gridLoad(1);
+  };
+  p.gridLoad = async function (page) {
+    if (busy) return;
+    var request = ++sequence,
+      nextScope = key();
+    if (scope !== nextScope) {
+      scope = nextScope;
+      draft = {};
+      p._gridRows = {};
+      ready = storage(false)
+        .then(function (data) {
+          if (scope === nextScope) draft = data || {};
+        })
+        .catch(function () {
+          $("#ps-draft-status").text(
+            "Draft recovery unavailable in this browser.",
+          );
+        });
+    }
+    await ready;
+    if (request !== sequence || key() !== scope) return;
+    columns();
+    var size = Number($("#ps-grid-size").val()) || 50;
+    PosnicPro.get(
+      {
+        url: "items/priceGrid",
+        data: $.param({
+          page: Math.max(1, page),
+          pageSize: size,
+          search: $("#ps-grid-search").val(),
+          category: $("#ps-grid-category").val(),
+        }),
+      },
+      function (r) {
+        if (request !== sequence || key() !== scope) return;
+        if (r.type !== "success") {
+          error(new Error(r.message));
+          return;
+        }
+        p._gridPage = r.data.page;
+        p._gridRows = {};
+        var reconciled = false;
+        r.data.items.forEach(function (it) {
+          p._gridRows[it._id] = it;
+          var d = draft[it._id];
+          if (!d) return;
+          Object.keys(d.changes).forEach(function (f) {
+            if (Number(it[f] || 0) === Number(d.changes[f].value)) {
+              delete d.changes[f];
+              reconciled = true;
+            }
+          });
+          if (!Object.keys(d.changes).length) delete draft[it._id];
+        });
+        if (reconciled) persist();
+        paint();
+        $("#ps-grid-page").text(
+          "Page " +
+            r.data.page +
+            " of " +
+            Math.max(1, Math.ceil(r.data.total / size)) +
+            " · " +
+            r.data.total +
+            " items",
+        );
+        $("#ps-grid-prev").prop("disabled", page <= 1);
+        $("#ps-grid-next").prop("disabled", page * size >= r.data.total);
+      },
+    );
+  };
+  p.gridDiscard = function () {
+    if (window.confirm("Discard all unsaved price changes?")) {
+      draft = {};
+      persist();
+      paint();
+    }
+  };
+  p.gridReview = async function () {
+    if (busy || key() !== scope) return;
+    var rows = Object.values(draft),
+      zero = false;
+    for (var row of rows)
+      for (var change of Object.values(row.changes)) {
+        if (
+          !/^\d+(?:\.\d{1,2})?$/.test(String(change.value)) ||
+          Number(change.value) > 1000000000
+        )
+          return error(
+            new Error(
+              "Correct invalid prices: use non-negative numbers with at most two decimals.",
+            ),
+          );
+        if (Number(change.value) === 0) zero = true;
+      }
+    if (
+      zero &&
+      !window.confirm(
+        "This update includes zero prices. Include these zero values in the review?",
+      )
+    )
+      return;
+    busy = true;
+    count();
+    try {
+      var jobId = id();
+      await api({
+        action: "create",
+        jobId: jobId,
+        name: "Price grid",
+        allowZero: zero,
+      });
+      for (var start = 0; start < rows.length; start += 500)
+        await api({
+          action: "append",
+          jobId: jobId,
+          start: start,
+          rows: rows.slice(start, start + 500),
+        });
+      showJob(
+        await api({ action: "finish", jobId: jobId, total: rows.length }),
+      );
+    } catch (e) {
+      error(e);
+    } finally {
+      busy = false;
+      count();
+    }
+  };
+  p.sheetOpen = function (which) {
+    $("#ps-sheet").prop("hidden", false);
+    $("#ps-sheet-download").prop("hidden", which !== "download");
+    $("#ps-sheet-import").prop("hidden", which !== "import");
+    $("#ps-job-view").prop("hidden", true);
+    $("#ps-sheet-status").text("");
+    $("#ps-sheet-title").text(
+      which === "download" ? "Download price sheet" : "Import price updates",
+    );
+    $("#ps-sheet-category")
+      .html($("#ps-grid-category").html())
+      .val($("#ps-grid-category").val());
+    $("#ps-sheet-search").val($("#ps-grid-search").val());
+    var box = $("#ps-sheet-fields").empty();
+    Object.keys(fields).forEach(function (f) {
+      $('<label class="mr-3">')
+        .append(
+          $('<input type="checkbox">').val(f).prop("checked", !!visible[f]),
+          document.createTextNode(" " + fields[f]),
+        )
+        .appendTo(box);
+    });
+    if (which === "download") p.sheetCount();
+    document
+      .getElementById("ps-sheet")
+      .scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+  var countTimer,
+    countSequence = 0;
+  p.sheetCount = function () {
+    clearTimeout(countTimer);
+    var n = ++countSequence;
+    countTimer = setTimeout(function () {
+      PosnicPro.get(
+        {
+          url: "items/priceGrid",
+          data: $.param({
+            search: $("#ps-sheet-search").val(),
+            category: $("#ps-sheet-category").val(),
+            pageSize: 10,
+          }),
+        },
+        function (r) {
+          if (n === countSequence)
+            $("#ps-sheet-count").text(
+              r.type === "success"
+                ? r.data.total + " matching items across all pages"
+                : "Could not count items",
+            );
+        },
+      );
+    }, 250);
+  };
+  function download(data) {
+    var bytes = Uint8Array.from(atob(data.base64), function (c) {
+      return c.charCodeAt(0);
+    });
+    var url = URL.createObjectURL(new Blob([bytes]));
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = data.filename;
+    a.click();
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 1000);
+  }
+  p.sheetDownload = async function (button) {
+    var selected = $("#ps-sheet-fields input:checked")
+      .map(function () {
+        return this.value;
+      })
+      .get();
+    if (!selected.length)
+      return error(new Error("Select at least one price field"));
+    $(button).prop("disabled", true);
+    $("#ps-sheet-status").text("Preparing all matching items…");
+    try {
+      download(
+        await api({
+          action: "download",
+          fields: selected.join(","),
+          search: $("#ps-sheet-search").val(),
+          category: $("#ps-sheet-category").val(),
+          format: $("#ps-sheet-format").val(),
+        }),
+      );
+      $("#ps-sheet-status").text(
+        "Sheet prepared. Fill in the New columns and import it for review.",
+      );
+    } catch (e) {
+      error(e);
+    } finally {
+      $(button).prop("disabled", false);
+    }
+  };
+  p.sheetImport = function (button) {
+    var file = $("#ps-sheet-file")[0].files[0];
+    if (!file || file.size > 10 * 1024 * 1024)
+      return error(new Error("Choose a CSV or XLSX file up to 10 MB"));
+    var form = new FormData();
+    form.append("file", file);
+    form.append("jobId", id());
+    form.append("name", file.name);
+    form.append("allowZero", $("#ps-sheet-zero").is(":checked"));
+    $(button).prop("disabled", true);
+    $("#ps-sheet-status").text(
+      "Uploading and checking sheet. No prices are being changed.",
+    );
+    PosnicPro.request(
+      {
+        url: "items/priceSheetImport",
+        method: "POST",
+        data: form,
+        contentType: false,
+        processData: false,
+      },
+      function (r) {
+        $(button).prop("disabled", false);
+        if (r.type === "success") showJob(r.data);
+        else error(new Error(r.message));
+      },
+      function () {
+        $(button).prop("disabled", false);
+        error(
+          new Error(
+            "Upload interrupted. Check recent jobs before uploading again.",
+          ),
+        );
+      },
+    );
+  };
+  async function showJob(data) {
+    currentJob = data.job._id;
+    jobPage = data.page;
+    $("#ps-sheet").prop("hidden", false);
+    $("#ps-sheet-download, #ps-sheet-import").prop("hidden", true);
+    $("#ps-sheet-title").text(data.job.name + " · " + data.job.status);
+    var box = $("#ps-job-view").prop("hidden", false).empty(),
+      c = data.counts;
+    $("<p>")
+      .text(
+        (c.pending || 0) +
+          " ready · " +
+          (c.updated || 0) +
+          " updated · " +
+          (c.invalid || 0) +
+          " invalid · " +
+          (c.conflict || 0) +
+          " conflicts · " +
+          (c.unchanged || 0) +
+          " unchanged",
+      )
+      .appendTo(box);
+    var select = $(
+      '<select class="form-control mb-2" aria-label="Review status">',
+    ).css("max-width", "250px");
+    ["", "invalid", "pending", "updated", "conflict", "unchanged"].forEach(
+      function (s) {
+        select.append(
+          $("<option>")
+            .val(s)
+            .text(s || "All rows"),
+        );
+      },
+    );
+    select.val(filter).on("change", function () {
+      filter = this.value;
+      p.sheetJob(currentJob, 1);
+    });
+    box.append(select);
+    var table = $('<table class="table">').append(
+        "<thead><tr><th>Row / item</th><th>Changes</th><th>Status</th></tr></thead>",
+      ),
+      body = $("<tbody>").appendTo(table);
+    data.rows.forEach(function (r) {
+      var tr = $("<tr>").append($("<td>").text(r.number + " · " + r.name));
+      var td = $("<td>");
+      Object.keys(r.changes).forEach(function (f) {
+        $("<div>")
+          .text(
+            fields[f] +
+              ": " +
+              number(r.changes[f].old) +
+              " → " +
+              number(r.changes[f].value),
+          )
+          .appendTo(td);
+      });
+      tr.append(td, $("<td>").text(r.reason || r.status));
+      body.append(tr);
+    });
+    box.append($('<div class="table-responsive">').append(table));
+    var pager = $(
+      '<div class="d-flex flex-wrap align-items-center" style="gap:10px">',
+    );
+    pager.append(
+      $('<button class="btn btn-light">Previous</button>')
+        .prop("disabled", data.page <= 1)
+        .on("click", function () {
+          p.sheetJob(currentJob, jobPage - 1);
+        }),
+      $("<span>").text("Page " + data.page + " · " + data.total + " rows"),
+      $('<button class="btn btn-light">Next</button>')
+        .prop("disabled", data.page * 50 >= data.total)
+        .on("click", function () {
+          p.sheetJob(currentJob, jobPage + 1);
+        }),
+    );
+    box.append(pager);
+    if (data.job.status === "draft")
+      $("<p>")
+        .text(
+          "Upload incomplete. No prices applied. Re-upload the complete sheet to a new job.",
+        )
+        .appendTo(box);
+    if (["review", "running"].includes(data.job.status)) {
+      if (c.invalid)
+        $('<label class="d-block mt-3">')
+          .append(
+            '<input id="ps-job-skip" type="checkbox">',
+            document.createTextNode(
+              " Skip invalid rows and apply valid changes",
+            ),
+          )
+          .appendTo(box);
+      $('<button class="btn btn-primary mt-3">')
+        .text(
+          data.job.status === "running" ? "Resume update" : "Confirm update",
+        )
+        .on("click", function () {
+          p.sheetProcess(this, !!c.invalid);
+        })
+        .appendTo(box);
+    }
+    $('<button class="btn btn-light ml-2 mt-3">Download result report</button>')
+      .on("click", function () {
+        p.sheetReport(this);
+      })
+      .appendTo(box);
+    if (c.invalid || c.conflict) {
+      $(
+        '<button class="btn btn-light ml-2 mt-3">Download current prices for unresolved items</button>',
+      )
+        .on("click", async function () {
+          $(this).prop("disabled", true);
+          try {
+            download(
+              await api({
+                action: "download",
+                retryJobId: currentJob,
+                fields: Object.keys(fields).join(","),
+                format: "xlsx",
+              }),
+            );
+          } catch (e) {
+            error(e);
+          } finally {
+            $(this).prop("disabled", false);
+          }
+        })
+        .appendTo(box);
+    }
+    $("#ps-sheet-status").text(
+      "Changes apply only to this branch. Conflicting prices are kept unchanged.",
+    );
+  }
+  p.sheetJob = async function (job, page) {
+    try {
+      showJob(
+        await api({
+          action: "status",
+          jobId: job,
+          page: page || 1,
+          filter: filter,
+        }),
+      );
+    } catch (e) {
+      error(e);
+    }
+  };
+  p.sheetProcess = async function (button, hasInvalid) {
+    if (busy || (hasInvalid && !$("#ps-job-skip").is(":checked")))
+      return error(
+        new Error(
+          "Explicitly select Skip invalid rows or correct the sheet first.",
+        ),
+      );
+    busy = true;
+    var job = currentJob,
+      captured = scope;
+    $(button).prop("disabled", true);
+    count();
+    try {
+      var data;
+      do {
+        if (key() !== captured)
+          throw new Error(
+            "Branch or user changed. Resume from the original branch.",
+          );
+        data = await api({ action: "process", jobId: job, skipInvalid: true });
+        (data.processed || []).forEach(function (r) {
+          var d = draft[r.id];
+          if (!d) return;
+          Object.keys(r.changes).forEach(function (f) {
+            if (
+              d.changes[f] &&
+              Number(d.changes[f].old) === r.changes[f].old &&
+              Number(d.changes[f].value) === r.changes[f].value
+            )
+              delete d.changes[f];
+          });
+          if (!Object.keys(d.changes).length) delete draft[r.id];
+        });
+        persist();
+        count();
+        $("#ps-sheet-status").text(
+          (data.counts.updated || 0) +
+            " updated; " +
+            (data.counts.pending || 0) +
+            " remaining. Keep this page open, or resume later.",
+        );
+      } while (data.job.status !== "complete");
+      showJob(data);
+    } catch (e) {
+      error(e);
+    } finally {
+      busy = false;
+      $(button).prop("disabled", false);
+      count();
+      p.gridLoad(p._gridPage || 1);
+    }
+  };
+  p.sheetReport = async function (button) {
+    $(button).prop("disabled", true);
+    try {
+      var data = await api({
+        action: "download",
+        jobId: currentJob,
+        format: "csv",
+      });
+      download(data);
+    } catch (e) {
+      error(e);
+    } finally {
+      $(button).prop("disabled", false);
+    }
+  };
+  p.sheetHistory = async function () {
+    try {
+      var jobs = await api({ action: "list" }),
+        box = $("#ps-sheet-history").empty();
+      jobs.forEach(function (j) {
+        $('<button class="btn btn-light d-block my-2">')
+          .text(
+            j.name +
+              " · " +
+              j.status +
+              " · " +
+              new Date(j.created_date).toLocaleString(),
+          )
+          .on("click", function () {
+            filter = "";
+            p.sheetJob(j._id);
+          })
+          .appendTo(box);
+      });
+    } catch (e) {
+      error(e);
+    }
+  };
+  window.addEventListener("beforeunload", function (e) {
+    if (busy) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+})();
