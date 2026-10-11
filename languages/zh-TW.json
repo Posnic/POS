@@ -4647,5 +4647,10 @@
   "lang_search_item_or_sku": "搜尋項目或 SKU",
   "lang_several_products_share_this_barcode_select": "幾個產品共用此條形碼。選擇您要銷售的產品。",
   "lang_temporary_view_for_this_screen": "此畫面的臨時檢視。",
-  "lang_updates_existing_products_only_no_stock_qu": "僅更新現有產品。不會變更庫存數量或歷史購買成本。"
+  "lang_updates_existing_products_only_no_stock_qu": "僅更新現有產品。不會變更庫存數量或歷史購買成本。",
+  "lang_allow_sale_hard_delete": "允許硬刪除銷售",
+  "lang_sale_hard_delete_confirm": "硬刪除將此銷售從銷售歷史記錄中移除，並將其數據移至回收站。",
+  "lang_sale_hard_delete_disabled": "在「銷售」設定中停用銷售的硬刪除",
+  "lang_sale_hard_delete_help": "硬刪除會從活動記錄和銷售歷史記錄中移除銷售。銷售資料會移至回收筒。必須啟用回收筒。相關的庫存和付款調整會反轉。只有具有銷售刪除權限的使用者才能刪除。默認情況下關閉，包括對於超級管理員。",
+  "lang_sale_hard_delete_hint": "默認情況下關閉。刪除的銷售資料會移至回收站。"
 }

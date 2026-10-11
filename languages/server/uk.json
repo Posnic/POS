@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "Непідтримуваний виділений коміт продажу",
   "Unsupported allocated sale preparation": "Підготовка до продажу, що не підтримується",
   "Unsupported stock allocation sale": "Непідтримуваний продаж розподілу запасів",
-  "Use the normal return process for an allocated sale.": "Використовуйте звичайний процес повернення для виділеного продажу."
+  "Use the normal return process for an allocated sale.": "Використовуйте звичайний процес повернення для виділеного продажу.",
+  "Enable Recycle Bin before deleting sales": "Увімкнути кошик перед видаленням продажів"
 }

@@ -991,6 +991,31 @@ describe('changeLog', () => {
 // deletedDocumentBackup (static and instance)
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('deletedDocumentBackup', () => {
+  test('required retention fails closed when Recycle Bin is off', async () => {
+    BaseModel.currentBranch = 'branch001';
+    _mockCollection.findOne.mockResolvedValue({ module_recyclebin_enable: false });
+    const result = await BaseModel.deletedDocumentBackup(
+      'sales',
+      { _id: 'sale001' },
+      { requireRetention: true }
+    );
+    expect(result.status).toBe(false);
+    expect(_mockCollection.insertOne).not.toHaveBeenCalled();
+  });
+  test('required retention saves the full sale when Recycle Bin is on', async () => {
+    BaseModel.currentBranch = 'branch001';
+    _mockCollection.findOne.mockResolvedValue({ module_recyclebin_enable: true });
+    const result = await BaseModel.deletedDocumentBackup(
+      'sales',
+      { _id: 'sale001', sales_total: 100 },
+      { requireRetention: true }
+    );
+    expect(result.status).toBe(true);
+    expect(_mockCollection.insertOne.mock.calls[0][0]).toMatchObject({
+      sales_total: 100,
+      document_name: 'sales',
+    });
+  });
   test('static: inserts to recycle_bin collection', async () => {
     _mockCollection.insertOne.mockResolvedValue({ insertedId: 'backup001' });
     const result = await BaseModel.deletedDocumentBackup('products', { _id: 'doc001' });

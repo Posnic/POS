@@ -4644,5 +4644,10 @@
   "lang_search_item_or_sku": "Leitaratriði eða SKU",
   "lang_several_products_share_this_barcode_select": "Nokkrar vörur deila þessu strikamerki. Veldu vöruna sem þú ert að selja.",
   "lang_temporary_view_for_this_screen": "Tímabundið útsýni fyrir þennan skjá.",
-  "lang_updates_existing_products_only_no_stock_qu": "Uppfærir aðeins núverandi vörur. Engu hlutabréfamagni eða sögulegum kaupkostnaði er breytt."
+  "lang_updates_existing_products_only_no_stock_qu": "Uppfærir aðeins núverandi vörur. Engu hlutabréfamagni eða sögulegum kaupkostnaði er breytt.",
+  "lang_allow_sale_hard_delete": "Leyfa harða eyða sölu",
+  "lang_sale_hard_delete_confirm": "Hard delete fjarlægir þessa sölu úr Sölusögu og færir gögnin sín í ruslafötuna.",
+  "lang_sale_hard_delete_disabled": "Hörð eyða sölu er óvirk í sölustillingum",
+  "lang_sale_hard_delete_help": "Hard delete fjarlægir söluna úr virkum skrám og sölusögu. Sölugögnin færast í ruslafötuna. Recycle Bin verður að vera virk. Tengdum lager- og greiðsluleiðréttingum er snúið við. Aðeins notendur með sölueyða leyfi geta eytt. Sjálfgefið slökkt, þar á meðal fyrir frábær stjórnendur.",
+  "lang_sale_hard_delete_hint": "Sjálfgefið slökkt. Eytt sölugögn færast í ruslafötuna."
 }

@@ -4644,5 +4644,10 @@
   "lang_search_item_or_sku": "Etsi kohde tai SKU",
   "lang_several_products_share_this_barcode_select": "Useat tuotteet jakavat tämän viivakoodin. Valitse tuote, jota myyt.",
   "lang_temporary_view_for_this_screen": "Tilapäinen näkymä tälle näytölle.",
-  "lang_updates_existing_products_only_no_stock_qu": "Päivittää vain olemassa olevia tuotteita. Varastomääriä tai historiallisia ostokustannuksia ei muuteta."
+  "lang_updates_existing_products_only_no_stock_qu": "Päivittää vain olemassa olevia tuotteita. Varastomääriä tai historiallisia ostokustannuksia ei muuteta.",
+  "lang_allow_sale_hard_delete": "Salli myynnin kova poistaminen",
+  "lang_sale_hard_delete_confirm": "Hard delete poistaa tämän myynnin myyntihistoriasta ja siirtää sen tiedot roskakoriin.",
+  "lang_sale_hard_delete_disabled": "Myynnin kiinteä poistaminen on poistettu käytöstä Myynti-asetuksissa",
+  "lang_sale_hard_delete_help": "Hard delete poistaa myynnin aktiivisista tietueista ja myyntihistoriasta. Myyntitiedot siirtyvät roskakoriin. Roskakorin on oltava käytössä. Liittyvät varasto- ja maksuoikaisut peruutetaan. Vain käyttäjät, joilla on myynti-poisto-oikeus, voivat poistaa. Oletusarvoisesti pois päältä, myös superjärjestelmänvalvojille.",
+  "lang_sale_hard_delete_hint": "Oletusarvoisesti pois päältä. Poistetut myyntitiedot siirtyvät roskakoriin."
 }

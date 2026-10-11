@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "Óstudd úthlutað söluskuldbindingu",
   "Unsupported allocated sale preparation": "Óstuddur úthlutaður undirbúningur sölu",
   "Unsupported stock allocation sale": "Óstudd sala á hlutabréfaúthlutun",
-  "Use the normal return process for an allocated sale.": "Notaðu venjulegt skilaferli fyrir úthlutaða sölu."
+  "Use the normal return process for an allocated sale.": "Notaðu venjulegt skilaferli fyrir úthlutaða sölu.",
+  "Enable Recycle Bin before deleting sales": "Virkja ruslafötuna áður en þú eyðir sölu"
 }

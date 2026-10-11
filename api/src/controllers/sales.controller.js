@@ -1235,6 +1235,14 @@ class SalesController extends BaseController {
 
       const rawBody = req.body || {};
 
+      const deleteSettings = await salesService.getBranchById(BaseModel.currentBranch);
+      if (!deleteSettings || ![true, 'true'].includes(deleteSettings.allow_sale_hard_delete)) {
+        return this.error(res, 'Hard delete of sales is disabled in Sales settings', 403);
+      }
+      if (![true, 'true'].includes(deleteSettings.module_recyclebin_enable)) {
+        return this.error(res, 'Enable Recycle Bin before deleting sales', 403);
+      }
+
       const extractIds = (body) => {
         if (!body) return [];
 
@@ -1307,7 +1315,10 @@ class SalesController extends BaseController {
       const deletedSales = await Promise.all(
         validIds.map((id) => salesService.getSaleById(id, { SaleModel }))
       );
-      const result = await salesService.deleteSales(validIds, { SaleModel });
+      const result = await salesService.deleteSales(validIds, {
+        SaleModel,
+        requireRecycleBackup: true,
+      });
 
       // Mirror PHP sales.php::delete behaviour, which calls
       // SalesModel::deleteSaleCollectionData and forwards its

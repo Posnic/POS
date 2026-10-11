@@ -4644,5 +4644,10 @@
   "lang_search_item_or_sku": "Vyhledat položku nebo SKU",
   "lang_several_products_share_this_barcode_select": "Několik produktů sdílí tento čárový kód. Vyberte produkt, který prodáváte.",
   "lang_temporary_view_for_this_screen": "Dočasné zobrazení pro tuto obrazovku.",
-  "lang_updates_existing_products_only_no_stock_qu": "Aktualizuje pouze stávající produkty. Žádné skladové množství ani historické nákupní náklady se nemění."
+  "lang_updates_existing_products_only_no_stock_qu": "Aktualizuje pouze stávající produkty. Žádné skladové množství ani historické nákupní náklady se nemění.",
+  "lang_allow_sale_hard_delete": "Povolit tvrdé smazání prodeje",
+  "lang_sale_hard_delete_confirm": "Tvrdé odstranění odstraní tento prodej z historie prodeje a přesune jeho data do koše.",
+  "lang_sale_hard_delete_disabled": "V nastavení prodeje je zakázáno tvrdé mazání prodejů",
+  "lang_sale_hard_delete_help": "Tvrdé odstranění odstraní prodej z aktivních záznamů a historie prodeje. Údaje o prodeji se přesouvají do koše. Koš musí být povolen. Související úpravy zásob a plateb jsou obráceny. Odstranit mohou pouze uživatelé s oprávněním k prodeji a smazání. Ve výchozím nastavení vypnuto, včetně pro super administrátory.",
+  "lang_sale_hard_delete_hint": "Ve výchozím nastavení vypnuto. Odstraněná data prodeje se přesunou do koše."
 }

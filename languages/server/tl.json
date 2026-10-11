@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "Hindi sinusuportahang inilalaan na pagbebenta",
   "Unsupported allocated sale preparation": "Hindi sinusuportahang inilalaan na paghahanda",
   "Unsupported stock allocation sale": "Hindi sinusuportahang pagbebenta ng alokasyon",
-  "Use the normal return process for an allocated sale.": "Gamitin ang normal na proseso ng pagbabalik para sa isang inilalaan na pagbebenta."
+  "Use the normal return process for an allocated sale.": "Gamitin ang normal na proseso ng pagbabalik para sa isang inilalaan na pagbebenta.",
+  "Enable Recycle Bin before deleting sales": "Paganahin ang Recycle Bin bago tanggalin ang mga"
 }

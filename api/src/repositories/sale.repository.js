@@ -1665,7 +1665,7 @@ class SalesRepository {
     }
   }
 
-  async deleteSales(ids, { SaleModel } = {}) {
+  async deleteSales(ids, { SaleModel, requireRecycleBackup = false } = {}) {
     const captainEdits = [];
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
@@ -1728,6 +1728,20 @@ class SalesRepository {
         ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
       };
 
+      const salesDocs = await salesCollection.find(salesFilter).toArray();
+      if (requireRecycleBackup) {
+        for (const doc of salesDocs) {
+          const backup = await BaseModel.deletedDocumentBackup('sales', doc, {
+            requireRetention: true,
+          });
+          if (!backup || backup.status !== true) {
+            throw new Error(
+              'Sale was not deleted because its Recycle Bin backup could not be saved'
+            );
+          }
+        }
+      }
+
       // Clean register_sales references in cashregister collection
       try {
         await cashRegisterCollection.updateMany(
@@ -1748,7 +1762,6 @@ class SalesRepository {
         console.error('Error cleaning cashregister for deleted sales:', e);
       }
 
-      const salesDocs = await salesCollection.find(salesFilter).toArray();
       const now = new Date();
 
       for (const doc of salesDocs) {
@@ -1849,7 +1862,7 @@ class SalesRepository {
 
         // Backup sales document to recycle_bin
         try {
-          await BaseModel.deletedDocumentBackup('sales', doc);
+          if (!requireRecycleBackup) await BaseModel.deletedDocumentBackup('sales', doc);
         } catch (e) {
           console.error('Error backing up deleted sale document:', e);
         }

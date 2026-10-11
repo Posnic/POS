@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "Tiomantas díolacháin leithdháilte",
   "Unsupported allocated sale preparation": "Ullmhú díola leithdháilte gan",
   "Unsupported stock allocation sale": "Díol leithdháileadh stoc gan tacaíocht",
-  "Use the normal return process for an allocated sale.": "Úsáid an gnáthphróiseas tuairisceáin le haghaidh díolachán leith"
+  "Use the normal return process for an allocated sale.": "Úsáid an gnáthphróiseas tuairisceáin le haghaidh díolachán leith",
+  "Enable Recycle Bin before deleting sales": "Cumasaigh Bosca Athchúrsála sula scriosann"
 }

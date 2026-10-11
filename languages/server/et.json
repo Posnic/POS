@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "Toetamata eraldatud müügikohustus",
   "Unsupported allocated sale preparation": "Toetamata eraldatud müügi ettevalmistamine",
   "Unsupported stock allocation sale": "Toetamata aktsiate jaotamise müük",
-  "Use the normal return process for an allocated sale.": "Kasutage eraldatud müügi jaoks tavalist tagastamisprotsessi."
+  "Use the normal return process for an allocated sale.": "Kasutage eraldatud müügi jaoks tavalist tagastamisprotsessi.",
+  "Enable Recycle Bin before deleting sales": "Enne müügi kustutamist lubage prügikast"
 }

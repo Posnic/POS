@@ -4644,5 +4644,10 @@
   "lang_search_item_or_sku": "Maghanap ng item o SKU",
   "lang_several_products_share_this_barcode_select": "Maraming mga produkto ang nagbabahagi ng barcode na ito. Piliin ang produktong ibinebenta mo.",
   "lang_temporary_view_for_this_screen": "Pansamantalang view para sa screen na ito.",
-  "lang_updates_existing_products_only_no_stock_qu": "I-update lamang ang mga umiiral na produkto. Walang dami ng stock o makasaysayang gastos sa pagbili ang binago."
+  "lang_updates_existing_products_only_no_stock_qu": "I-update lamang ang mga umiiral na produkto. Walang dami ng stock o makasaysayang gastos sa pagbili ang binago.",
+  "lang_allow_sale_hard_delete": "Payagan ang matigas na tanggalin ng mga benta",
+  "lang_sale_hard_delete_confirm": "Tinatanggal ng hard delete ang sale na ito mula sa Kasaysayan ng Sales at inililipat ang data nito sa Recycle Bin.",
+  "lang_sale_hard_delete_disabled": "Hindi pinagana ang hard delete ng mga benta sa mga setting ng Sales",
+  "lang_sale_hard_delete_help": "Tinatanggal ng hard delete ang benta mula sa mga aktibong tala at Kasaysayan ng Pagbebenta. Ang data ng pagbebenta ay lumilipat sa Recycle Bin. Dapat na paganahin ang Recycle Bin. Ang mga kaugnay na pagsasaayos ng stock at pagbabayad ay balig Tanging ang mga gumagamit na may pahintulot sa sale-delete ang maaaring tanggalin. Naka-off bilang default, kabilang ang para sa mga super admin.",
+  "lang_sale_hard_delete_hint": "Naka-off bilang default. Ang tinanggal na data ng pagbebenta ay lilipat sa Recycle Bin"
 }

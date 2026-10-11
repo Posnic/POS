@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "Неподдржан доделен обврска за продажба",
   "Unsupported allocated sale preparation": "Неподдржана подготовка за доделена продажба",
   "Unsupported stock allocation sale": "Неподдржана продажба на распределба на акции",
-  "Use the normal return process for an allocated sale.": "Користете го нормалниот процес на враќање за доделена продажба."
+  "Use the normal return process for an allocated sale.": "Користете го нормалниот процес на враќање за доделена продажба.",
+  "Enable Recycle Bin before deleting sales": "Овозможете корпа за отпадоци пред бришење на продаж"
 }

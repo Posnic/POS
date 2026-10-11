@@ -4729,5 +4729,10 @@
   "lang_rows_per_page": "Rijen per pagina",
   "lang_search_item_or_sku": "Zoek een item of SKU",
   "lang_temporary_view_for_this_screen": "Tijdelijke weergave voor dit scherm.",
-  "lang_updates_existing_products_only_no_stock_qu": "Werkt alleen bestaande producten bij. Er worden geen voorraadaantallen of historische aankoopkosten gewijzigd."
+  "lang_updates_existing_products_only_no_stock_qu": "Werkt alleen bestaande producten bij. Er worden geen voorraadaantallen of historische aankoopkosten gewijzigd.",
+  "lang_allow_sale_hard_delete": "Harde verwijdering van verkopen toestaan",
+  "lang_sale_hard_delete_confirm": "Hard delete verwijdert deze verkoop uit de verkoopgeschiedenis en verplaatst de gegevens naar de Prullenbak.",
+  "lang_sale_hard_delete_disabled": "Het verwijderen van verkopen op harde wijze is uitgeschakeld in de verkoopinstellingen",
+  "lang_sale_hard_delete_help": "Met harde verwijdering wordt de verkoop verwijderd uit actieve records en verkoopgeschiedenis. De verkoopgegevens worden naar de Prullenbak verplaatst. De prullenbak moet ingeschakeld zijn. Gerelateerde voorraad- en betalingsaanpassingen worden teruggedraaid. Alleen gebruikers met toestemming voor verkoop en verwijdering kunnen verwijderen. Standaard uitgeschakeld, ook voor superbeheerders.",
+  "lang_sale_hard_delete_hint": "Standaard uitgeschakeld. Verwijderde verkoopgegevens worden naar de Prullenbak verplaatst."
 }

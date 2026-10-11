@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "Confirmación de venta asignada no admitida",
   "Unsupported allocated sale preparation": "Preparación de ventas asignadas no respaldada",
   "Unsupported stock allocation sale": "Venta por asignación de existencias no respaldada",
-  "Use the normal return process for an allocated sale.": "Usa el proceso de devolución normal para una venta asignada."
+  "Use the normal return process for an allocated sale.": "Usa el proceso de devolución normal para una venta asignada.",
+  "Enable Recycle Bin before deleting sales": "Habilitar la papelera de reciclaje antes de eliminar las ventas"
 }

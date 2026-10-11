@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "Tilldelad försäljningskommitt som inte stöds",
   "Unsupported allocated sale preparation": "Förberedelse av allokerad försäljning som inte stöds",
   "Unsupported stock allocation sale": "Försäljning av lagerallokering som inte stöds",
-  "Use the normal return process for an allocated sale.": "Använd den normala returprocessen för en tilldelad försäljning."
+  "Use the normal return process for an allocated sale.": "Använd den normala returprocessen för en tilldelad försäljning.",
+  "Enable Recycle Bin before deleting sales": "Aktivera papperskorgen innan du tar bort försäljning"
 }

@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "غیر معاون مختص فروخت کا عہد",
   "Unsupported allocated sale preparation": "غیر معاون مختص فروخت کی تیاری",
   "Unsupported stock allocation sale": "غیر معاون اسٹاک مختص فروخت",
-  "Use the normal return process for an allocated sale.": "مختص فروخت کے لئے عام واپسی کے عمل کا استعمال کریں۔"
+  "Use the normal return process for an allocated sale.": "مختص فروخت کے لئے عام واپسی کے عمل کا استعمال کریں۔",
+  "Enable Recycle Bin before deleting sales": "سیلز کو حذف کرنے سے پہلے ری سائیکل بن"
 }

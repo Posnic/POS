@@ -1392,6 +1392,12 @@ class SettingModel extends BaseModel {
         discount_percentage: parseFloat(data.discount_percentage),
         discount_amount: parseFloat(data.discount_amount),
         sales_prefix: data.sales_prefix,
+        ...(data.allow_sale_hard_delete !== undefined
+          ? {
+              allow_sale_hard_delete:
+                data.allow_sale_hard_delete === true || data.allow_sale_hard_delete === 'true',
+            }
+          : {}),
         ...Object.fromEntries(
           ['sales_search_fields', 'sales_search_display_fields']
             .filter((key) => data[key] !== undefined)

@@ -242,7 +242,12 @@ PosnicPro.sales = {
         loader.find(".loadingSpinner:first").remove();
     },
     showDelete: function (id) {
+        if (PosnicPro.local.get('allow_sale_hard_delete') !== 'true') {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_sale_hard_delete_disabled', 'Hard delete of sales is disabled in Sales settings'));
+            return;
+        }
         PosnicPro.deleteTableRowData(id, 'sales');
+        if (!PosnicPro.deleteConfirmation) $('.removeText').text(PosnicPro.i18n.t('lang_sale_hard_delete_confirm', 'Hard delete removes this sale from Sales History and moves its data to Recycle Bin.'));
     },
     showPdf: function (id) {
         PosnicPro.sales.view.salesPdf(id);
@@ -1030,6 +1035,7 @@ PosnicPro.sales = {
                     + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_tab_more">More</lang></button>'
                     + '<div class="dropdown-menu dropdown-menu-right">'
                     + '<a class="dropdown-item" data-module="sales" data-access="write" href="javascript:void(0)" onclick="hasher.setHash(\'sales/' + esc(id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
+                    + (PosnicPro.local.get('allow_sale_hard_delete') === 'true' ? '<a class="dropdown-item text-danger" data-module="sales" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.sales.showDelete(\'' + esc(id) + '\');"><i class="feather icon-trash-2 mr-2"></i><lang class="lang_delete">Delete</lang></a>' : '')
                     + '</div></div>'
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'
@@ -8559,7 +8565,7 @@ PosnicPro.sales.recentMenu = {
                         var returnIcon = kotEnabled
                             ? ''
                             : '<a data-module="sales" data-access="write" href="#/sales/' + id + '/return" class="rs-act btn-secondary-rgba" data-toggle="tooltip" title="Return" data-t-title="lang_return_title"><i class="feather icon-corner-up-left"></i></a>';
-                        var deleteIcon = kotEnabled
+                        var deleteIcon = kotEnabled || PosnicPro.local.get('allow_sale_hard_delete') !== 'true'
                             ? ''
                             : '<a data-module="sales" data-access="delete" href="#/sales/' + id + '/delete" class="rs-act btn-danger-rgba" data-toggle="tooltip" title="Delete" data-t-title="lang_delete"><i class="feather icon-trash"></i></a>';
                         var isParked = (String(params.sale_process) === 'Hold');

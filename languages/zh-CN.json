@@ -4647,5 +4647,10 @@
   "lang_search_item_or_sku": "搜索项目或 SKU",
   "lang_several_products_share_this_barcode_select": "有几种产品共享此条形码。选择您要销售的产品。",
   "lang_temporary_view_for_this_screen": "此屏幕的临时视图。",
-  "lang_updates_existing_products_only_no_stock_qu": "仅更新现有产品。库存数量或历史购买成本没有变化。"
+  "lang_updates_existing_products_only_no_stock_qu": "仅更新现有产品。库存数量或历史购买成本没有变化。",
+  "lang_allow_sale_hard_delete": "允许硬删除销售额",
+  "lang_sale_hard_delete_confirm": "硬删除将此次销售从 “销售历史记录” 中移除，并将其数据移至回收站。",
+  "lang_sale_hard_delete_disabled": "销售设置中禁用硬删除销售额",
+  "lang_sale_hard_delete_help": "硬删除会将销售从有效记录和销售历史记录中移除。销售数据移至回收站。必须启用回收站。相关的库存和付款调整被撤销。只有具有销售删除权限的用户才能删除。默认情况下处于关闭状态，包括超级管理员。",
+  "lang_sale_hard_delete_hint": "默认情况下处于关闭状态。删除的销售数据将移至回收站。"
 }

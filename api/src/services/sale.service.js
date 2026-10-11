@@ -4499,6 +4499,9 @@ module.exports = {
     salesRepository.paginate(filter, options, { SaleModel: getModel(SaleModel) }),
   getLegacySaleDetails: async (id, { SaleModel } = {}) =>
     salesRepository.getLegacyDetails(id, { SaleModel: getModel(SaleModel) }),
-  deleteSales: async (ids, { SaleModel } = {}) =>
-    salesRepository.deleteSales(ids, { SaleModel: getModel(SaleModel) }),
+  deleteSales: async (ids, { SaleModel, requireRecycleBackup } = {}) =>
+    salesRepository.deleteSales(ids, {
+      SaleModel: getModel(SaleModel),
+      ...(requireRecycleBackup ? { requireRecycleBackup: true } : {}),
+    }),
 };

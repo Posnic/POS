@@ -4726,5 +4726,10 @@
   "lang_search_item_or_sku": "Artikel suchen oder SKU",
   "lang_several_products_share_this_barcode_select": "Mehrere Produkte teilen sich diesen Barcode. Wählen Sie das Produkt aus, das Sie verkaufen.",
   "lang_temporary_view_for_this_screen": "Temporäre Ansicht für diesen Bildschirm.",
-  "lang_updates_existing_products_only_no_stock_qu": "Aktualisiert nur bestehende Produkte. Es werden keine Bestandsmengen oder historische Einkaufskosten geändert."
+  "lang_updates_existing_products_only_no_stock_qu": "Aktualisiert nur bestehende Produkte. Es werden keine Bestandsmengen oder historische Einkaufskosten geändert.",
+  "lang_allow_sale_hard_delete": "Harddelete von Verkäufen zulassen",
+  "lang_sale_hard_delete_confirm": "Durch das automatische Löschen wird dieser Verkauf aus der Verkaufshistorie entfernt und die zugehörigen Daten werden in den Papierkorb verschoben.",
+  "lang_sale_hard_delete_disabled": "Das automatische Löschen von Verkäufen ist in den Verkaufseinstellungen deaktiviert",
+  "lang_sale_hard_delete_help": "Durch das automatische Löschen wird der Verkauf aus den aktiven Datensätzen und der Verkaufshistorie entfernt. Die Verkaufsdaten werden in den Papierkorb verschoben. Der Papierkorb muss aktiviert sein. Damit verbundene Bestands- und Zahlungsanpassungen werden rückgängig gemacht. Nur Benutzer mit der Berechtigung zum Löschen von Verkäufen können Daten löschen. Standardmäßig deaktiviert, auch für Superadmins.",
+  "lang_sale_hard_delete_hint": "Standardmäßig deaktiviert. Gelöschte Verkaufsdaten werden in den Papierkorb verschoben."
 }

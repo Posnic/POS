@@ -4644,5 +4644,10 @@
   "lang_search_item_or_sku": "Wyszukiwanie przedmiotu lub SKU",
   "lang_several_products_share_this_barcode_select": "Kilka produktów udostępnia ten kod kreskowy. Wybierz produkt, który sprzedajesz.",
   "lang_temporary_view_for_this_screen": "Widok tymczasowy dla tego ekranu.",
-  "lang_updates_existing_products_only_no_stock_qu": "Aktualizuje tylko istniejące produkty. Żadne ilości zapasów ani historyczne koszty zakupu nie ulegają zmianie."
+  "lang_updates_existing_products_only_no_stock_qu": "Aktualizuje tylko istniejące produkty. Żadne ilości zapasów ani historyczne koszty zakupu nie ulegają zmianie.",
+  "lang_allow_sale_hard_delete": "Zezwalaj na twarde usuwanie sprzedaży",
+  "lang_sale_hard_delete_confirm": "Hard delete usuwa tę sprzedaż z Historii sprzedaży i przenosi jej dane do Kosza.",
+  "lang_sale_hard_delete_disabled": "Twarde usuwanie sprzedaży jest wyłączone w Ustawieniach sprzedaży",
+  "lang_sale_hard_delete_help": "Twarde usuwanie usuwa sprzedaż z aktywnych rekordów i historii sprzedaży. Dane sprzedaży przenoszą się do Kosza. Kosz musi być włączony. Powiązane korekty zapasów i płatności są odwracane. Tylko użytkownicy posiadający uprawnienia sprzedaż-usuwanie mogą usuwać. Domyślnie wyłączone, w tym dla super administratorów.",
+  "lang_sale_hard_delete_hint": "Domyślnie wyłączone. Usunięte dane sprzedaży przenoszą się do Kosza."
 }

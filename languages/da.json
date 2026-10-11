@@ -4644,5 +4644,10 @@
   "lang_search_item_or_sku": "Søg efter element eller SKU",
   "lang_several_products_share_this_barcode_select": "Flere produkter deler denne stregkode. Vælg det produkt, du sælger.",
   "lang_temporary_view_for_this_screen": "Midlertidig visning af denne skærm.",
-  "lang_updates_existing_products_only_no_stock_qu": "Opdaterer kun eksisterende produkter. Ingen lagermængder eller historiske købsomkostninger ændres."
+  "lang_updates_existing_products_only_no_stock_qu": "Opdaterer kun eksisterende produkter. Ingen lagermængder eller historiske købsomkostninger ændres.",
+  "lang_allow_sale_hard_delete": "Tillad hård sletning af salg",
+  "lang_sale_hard_delete_confirm": "Hård sletning fjerner dette salg fra salgshistorik og flytter dets data til papirkurven.",
+  "lang_sale_hard_delete_disabled": "Hård sletning af salg er deaktiveret i Salgsindstillinger",
+  "lang_sale_hard_delete_help": "Hård sletning fjerner salget fra aktive poster og salgshistorik. Salgsdataene flyttes til papirkurven. Papirkurven skal være aktiveret. Relaterede lager- og betalingsjusteringer vendes. Kun brugere med tilladelse til salg-sletning kan slette. Deaktiveret som standard, inklusive for superadministratorer.",
+  "lang_sale_hard_delete_hint": "Fra som standard. Slettede salgsdata flyttes til papirkurven."
 }

@@ -1109,6 +1109,16 @@ describe('SalesRepository', () => {
   });
 
   describe('deleteSales', () => {
+    test('does not delete or adjust records when the required backup fails', async () => {
+      const saleDoc = { _id: FAKE_ID, items: [], partial_check: false };
+      if (!collections.sales) collections.sales = mkCol();
+      collections.sales.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([saleDoc]) });
+      BaseModel.deletedDocumentBackup.mockResolvedValueOnce({ status: false });
+      const result = await salesRepository.deleteSales([FAKE_ID], { requireRecycleBackup: true });
+      expect(result.status).toBe(false);
+      expect(collections.sales.deleteMany).not.toHaveBeenCalled();
+      expect(collections.cashregister.updateMany).not.toHaveBeenCalled();
+    });
     test('returns error for empty array', async () => {
       const r = await salesRepository.deleteSales([]);
       expect(r.status).toBe(false);

@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "不支持的分配销售承诺",
   "Unsupported allocated sale preparation": "不支持的分配销售准备工作",
   "Unsupported stock allocation sale": "不支持的股票配额出售",
-  "Use the normal return process for an allocated sale.": "对分配的销售使用正常退货流程。"
+  "Use the normal return process for an allocated sale.": "对分配的销售使用正常退货流程。",
+  "Enable Recycle Bin before deleting sales": "在删除销售之前启用回收站"
 }

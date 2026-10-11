@@ -808,6 +808,35 @@ describe('SalesController', () => {
 
   // ── delete ───────────────────────────────────────────────────────────────────
   describe('delete', () => {
+    beforeEach(() => {
+      salesService.getBranchById.mockResolvedValue({
+        allow_sale_hard_delete: true,
+        module_recyclebin_enable: true,
+      });
+    });
+    test.each([undefined, false, 'false'])(
+      'blocks even an admin when hard delete is %s',
+      async (setting) => {
+        salesService.getBranchById.mockResolvedValue({
+          allow_sale_hard_delete: setting,
+          module_recyclebin_enable: true,
+        });
+        const res = mockRes();
+        await ctrl.delete(mockReq({ body: { data: [VALID_ID] } }), res, mockNext());
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(salesService.deleteSales).not.toHaveBeenCalled();
+      }
+    );
+    test('requires retained Recycle Bin data', async () => {
+      salesService.getBranchById.mockResolvedValue({
+        allow_sale_hard_delete: true,
+        module_recyclebin_enable: false,
+      });
+      const res = mockRes();
+      await ctrl.delete(mockReq({ body: { data: [VALID_ID] } }), res, mockNext());
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(salesService.deleteSales).not.toHaveBeenCalled();
+    });
     test('200 success', async () => {
       const res = mockRes();
       const next = mockNext();

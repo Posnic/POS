@@ -4644,5 +4644,10 @@
   "lang_search_item_or_sku": "Meklēt vienumu vai SKU",
   "lang_several_products_share_this_barcode_select": "Vairākiem produktiem ir kopīgs šis svītrkods. Izvēlieties produktu, kuru jūs pārdodat.",
   "lang_temporary_view_for_this_screen": "Pagaidu skats šim ekrānam.",
-  "lang_updates_existing_products_only_no_stock_qu": "Atjaunina tikai esošos produktus. Krājumu daudzumi vai vēsturiskās pirkuma izmaksas netiek mainītas."
+  "lang_updates_existing_products_only_no_stock_qu": "Atjaunina tikai esošos produktus. Krājumu daudzumi vai vēsturiskās pirkuma izmaksas netiek mainītas.",
+  "lang_allow_sale_hard_delete": "Atļaut stingri dzēst pārdošanas apjomus",
+  "lang_sale_hard_delete_confirm": "Cietā dzēšana noņem šo pārdošanu no pārdošanas vēstures un pārvieto tā datus uz atkritni.",
+  "lang_sale_hard_delete_disabled": "Pārdošanas iestatījumos ir atspējota pārdošanas cietā dzēšana",
+  "lang_sale_hard_delete_help": "Cietā dzēšana noņem pārdošanu no aktīvajiem ierakstiem un pārdošanas vēstures. Pārdošanas dati tiek pārvietoti uz atkritni. Atkritnei jābūt iespējotai. Saistītās krājumu un maksājumu korekcijas tiek mainītas. Dzēst var tikai lietotāji ar pārdošanas-dzēšanas atļauju. Pēc noklusējuma ir izslēgts, ieskaitot super administratoriem.",
+  "lang_sale_hard_delete_hint": "Pēc noklusējuma ir izslēgts. Izdzēstie pārdošanas dati tiek pārvietoti uz atkritni."
 }

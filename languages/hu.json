@@ -4644,5 +4644,10 @@
   "lang_search_item_or_sku": "Keresett elem vagy SKU",
   "lang_several_products_share_this_barcode_select": "Számos termék osztja meg ezt a vonalkódot. Válassza ki az eladott terméket.",
   "lang_temporary_view_for_this_screen": "Ideiglenes nézet ehhez a képernyőhöz.",
-  "lang_updates_existing_products_only_no_stock_qu": "Csak a meglévő termékeket frissíti. A készletmennyiségek vagy a korábbi vásárlási költségek nem változnak."
+  "lang_updates_existing_products_only_no_stock_qu": "Csak a meglévő termékeket frissíti. A készletmennyiségek vagy a korábbi vásárlási költségek nem változnak.",
+  "lang_allow_sale_hard_delete": "Az értékesítések kemény törlésének engedélyezése",
+  "lang_sale_hard_delete_confirm": "A kemény törlés eltávolítja ezt az eladást az Értékesítési előzményekből, és az adatokat a Lomtárba helyezi.",
+  "lang_sale_hard_delete_disabled": "Az értékesítés kemény törlése le van tiltva az Értékesítési beállításokban",
+  "lang_sale_hard_delete_help": "A kemény törlés eltávolítja az értékesítést az aktív rekordokból és az értékesítési előzményekből. Az értékesítési adatok a Lomtárba kerülnek. A Lomtárat engedélyezni kell. A kapcsolódó készlet- és fizetési kiigazítások visszafordíthatók. Csak az eladás-törlés engedéllyel rendelkező felhasználók törölhetik. Alapértelmezés szerint ki van kapcsolva, beleértve a szuper adminokat is.",
+  "lang_sale_hard_delete_hint": "Alapértelmezés szerint ki van kapcsolva. A törölt értékesítési adatok a Lomtárba kerülnek."
 }

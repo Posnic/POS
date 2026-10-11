@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "Impenn tal-bejgħ allokat mhux appoġġjat",
   "Unsupported allocated sale preparation": "Preparazzjoni tal-bejgħ allokat mhux appoġġjata",
   "Unsupported stock allocation sale": "Bejgħ tal-allokazzjoni tal-istokk mhux ap",
-  "Use the normal return process for an allocated sale.": "Uża l-proċess normali tar-ritorn għal bejgħ allokat."
+  "Use the normal return process for an allocated sale.": "Uża l-proċess normali tar-ritorn għal bejgħ allokat.",
+  "Enable Recycle Bin before deleting sales": "Ippermetti Recycle Bin qabel tħassar il-bejgħ"
 }

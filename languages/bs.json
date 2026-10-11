@@ -4644,5 +4644,10 @@
   "lang_search_item_or_sku": "Pretraživanje stavke ili SKU",
   "lang_several_products_share_this_barcode_select": "Nekoliko proizvoda dijeli ovaj barkod. Odaberite proizvod koji prodajete.",
   "lang_temporary_view_for_this_screen": "Privremeni prikaz za ovaj ekran.",
-  "lang_updates_existing_products_only_no_stock_qu": "Ažurira samo postojeće proizvode. Ne mijenjaju se količine zaliha ili povijesni troškovi kupovine."
+  "lang_updates_existing_products_only_no_stock_qu": "Ažurira samo postojeće proizvode. Ne mijenjaju se količine zaliha ili povijesni troškovi kupovine.",
+  "lang_allow_sale_hard_delete": "Dopustite čvrsto brisanje prodaje",
+  "lang_sale_hard_delete_confirm": "Tvrdo brisanje uklanja ovu prodaju iz Historije prodaje i premješta njene podatke u koš za smeće.",
+  "lang_sale_hard_delete_disabled": "Tvrdo brisanje prodaje onemogućeno je u postavkama prodaje",
+  "lang_sale_hard_delete_help": "Tvrdo brisanje uklanja prodaju iz aktivnih zapisa i istorije prodaje. Podaci o prodaji premještaju se u koš za smeće. Koš za smeće mora biti omogućen. Povezana prilagođavanja zaliha i plaćanja su obrnuta. Samo korisnici s dozvolom za prodaju i brisanje mogu izbrisati. Isključeno prema zadanim postavkama, uključujući i za super administratore.",
+  "lang_sale_hard_delete_hint": "Isključeno prema zadanim postavkama. Izbrisani podaci o prodaji premještaju se u koš za smeće."
 }

@@ -950,5 +950,6 @@
   "Unsupported allocated sale commit": "Ikke støttet tildelt salgsforpliktelse",
   "Unsupported allocated sale preparation": "Forberedelse av tildelt salg som ikke støttes",
   "Unsupported stock allocation sale": "Salg av aksjeallokering som ikke støttes",
-  "Use the normal return process for an allocated sale.": "Bruk den normale returprosessen for et tildelt salg."
+  "Use the normal return process for an allocated sale.": "Bruk den normale returprosessen for et tildelt salg.",
+  "Enable Recycle Bin before deleting sales": "Aktiver papirkurven før du sletter salg"
 }

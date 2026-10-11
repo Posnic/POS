@@ -753,6 +753,9 @@
   "Embedding text exceeds its limit.": [
     "src/services/ask-posnic-embedding.service.js"
   ],
+  "Enable Recycle Bin before deleting sales": [
+    "src/models/base.model.js"
+  ],
   "Enter a code": [
     "src/controllers/online-ordering.controller.js"
   ],
