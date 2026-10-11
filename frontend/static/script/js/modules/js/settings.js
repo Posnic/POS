@@ -636,6 +636,7 @@ PosnicPro.settings = {
                     
                     // Store general settings including hardware_weight_machine_enable
                     var generalSettings = {
+                        stock_management: response.data['stock_management'] !== false,
                         hardware_weight_machine_enable: response.data['hardware_weight_machine_enable'] || false,
                         till_lock_enable: response.data['till_lock_enable'] || false,
                         till_lock_idle_minutes: response.data['till_lock_idle_minutes'] || 0,
@@ -995,6 +996,7 @@ PosnicPro.settings = {
 
                 // Store general settings including hardware_weight_machine_enable
                 var generalSettings = {
+                    stock_management: data.stock_management !== false,
                     hardware_weight_machine_enable: data.hardware_weight_machine_enable || false,
                     till_lock_enable: data.till_lock_enable || false,
                     till_lock_idle_minutes: data.till_lock_idle_minutes || 0,
@@ -2408,6 +2410,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 // Save the Module On/Off state to localStorage (checkboxes
                 // since the toggles-only rebuild).
                 var generalSettings = {
+                    stock_management: $('#stock_management').is(':checked'),
                     hardware_weight_machine_enable: $('#hardware_weight_machine_enable').is(':checked'),
                     till_lock_enable: $('#till_lock_enable').is(':checked'),
                     till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0,

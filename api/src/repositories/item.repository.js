@@ -6678,7 +6678,6 @@ class ItemRepository extends BaseModel {
       const validationErrors = [];
       const requiredFields = [
         'name',
-        'supplier_name',
         'category_name',
         'discount_amount',
         'discount_percentage',
