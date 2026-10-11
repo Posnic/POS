@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Ștergerea dură elimină această vânzare din Istoricul vânzărilor și își mută datele în Coșul de reciclare.",
   "lang_sale_hard_delete_disabled": "Ștergerea hard a vânzărilor este dezactivată în setările Vânzări",
   "lang_sale_hard_delete_help": "Ștergerea dură elimină vânzarea din înregistrările active și Istoricul vânzărilor. Datele de vânzare se mută în Coșul de reciclare. Coșul de reciclare trebuie să fie activat. Ajustările aferente stocurilor și plăților sunt inversate. Numai utilizatorii cu permisiunea de vânzare-ștergere pot șterge. Dezactivat în mod implicit, inclusiv pentru super administratori.",
-  "lang_sale_hard_delete_hint": "Dezactivat în mod implicit. Datele de vânzare șterse se mută în Coșul de reciclare."
+  "lang_sale_hard_delete_hint": "Dezactivat în mod implicit. Datele de vânzare șterse se mută în Coșul de reciclare.",
+  "lang_sale_hard_delete_super_help": "Numai super-administratorii pot activa și utiliza ștergerea dură. Elimină vânzarea din înregistrările active și Istoricul vânzărilor și mută datele de vânzare în Coșul de reciclare. Coșul de reciclare trebuie să fie activat. Ajustările stocurilor și ale soldului clienților sunt inversate. Dezactivat în mod implicit."
 }

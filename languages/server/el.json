@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Μη υποστηριζόμενη προετοιμασία κατανεμημένης πώλησης",
   "Unsupported stock allocation sale": "Μη υποστηριζόμενη πώληση κατανομής αποθεμάτων",
   "Use the normal return process for an allocated sale.": "Χρησιμοποιήστε την κανονική διαδικασία επιστροφής για μια κατανεμημένη πώληση.",
-  "Enable Recycle Bin before deleting sales": "Ενεργοποίηση κάδου ανακύκλωσης πριν διαγράψετε τις πωλήσεις"
+  "Enable Recycle Bin before deleting sales": "Ενεργοποίηση κάδου ανακύκλωσης πριν διαγράψετε τις πωλήσεις",
+  "Only super admins can change the sale hard-delete setting": "Μόνο οι σούπερ διαχειριστές μπορούν να αλλάξουν τη ρύθμιση σκληρής διαγραφής πώλησης"
 }

@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "සහාය නොදක්වන වෙන් කළ විකුණුම් සකස් කිරීම",
   "Unsupported stock allocation sale": "සහාය නොදක්වන කොටස් වෙන් කිරීමේ විකිණීම",
   "Use the normal return process for an allocated sale.": "වෙන් කරන ලද විකිණීමක් සඳහා සාමාන්ය ආපසු ගැනීමේ ක්රියාවලිය භාවිතා කරන්න.",
-  "Enable Recycle Bin before deleting sales": "විකුණුම් මකා දැමීමට පෙර ප්රතිචක්රීකරණ බින්"
+  "Enable Recycle Bin before deleting sales": "විකුණුම් මකා දැමීමට පෙර ප්රතිචක්රීකරණ බින්",
+  "Only super admins can change the sale hard-delete setting": "සුපිරි පරිපාලකයන්ට පමණක් විකිණීමේ හාඩ්-ඩ්රයිට් සැකසුම වෙනස් කළ හැකිය"
 }

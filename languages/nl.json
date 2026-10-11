@@ -4734,5 +4734,6 @@
   "lang_sale_hard_delete_confirm": "Hard delete verwijdert deze verkoop uit de verkoopgeschiedenis en verplaatst de gegevens naar de Prullenbak.",
   "lang_sale_hard_delete_disabled": "Het verwijderen van verkopen op harde wijze is uitgeschakeld in de verkoopinstellingen",
   "lang_sale_hard_delete_help": "Met harde verwijdering wordt de verkoop verwijderd uit actieve records en verkoopgeschiedenis. De verkoopgegevens worden naar de Prullenbak verplaatst. De prullenbak moet ingeschakeld zijn. Gerelateerde voorraad- en betalingsaanpassingen worden teruggedraaid. Alleen gebruikers met toestemming voor verkoop en verwijdering kunnen verwijderen. Standaard uitgeschakeld, ook voor superbeheerders.",
-  "lang_sale_hard_delete_hint": "Standaard uitgeschakeld. Verwijderde verkoopgegevens worden naar de Prullenbak verplaatst."
+  "lang_sale_hard_delete_hint": "Standaard uitgeschakeld. Verwijderde verkoopgegevens worden naar de Prullenbak verplaatst.",
+  "lang_sale_hard_delete_super_help": "Alleen superbeheerders kunnen hard delete inschakelen en gebruiken. Het verwijdert de verkoop uit actieve records en verkoopgeschiedenis en verplaatst de verkoopgegevens naar de Prullenbak. De prullenbak moet ingeschakeld zijn. Aanpassingen van voorraad en klantensaldo worden teruggedraaid. Standaard uitgeschakeld."
 }

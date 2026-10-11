@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Preparazione della vendita allocata non supportata",
   "Unsupported stock allocation sale": "Vendita con allocazione di azioni non supportata",
   "Use the normal return process for an allocated sale.": "Utilizza la normale procedura di restituzione per una vendita allocata.",
-  "Enable Recycle Bin before deleting sales": "Abilita il Cestino prima di eliminare le vendite"
+  "Enable Recycle Bin before deleting sales": "Abilita il Cestino prima di eliminare le vendite",
+  "Only super admins can change the sale hard-delete setting": "Solo i super amministratori possono modificare l'impostazione dell'eliminazione definitiva delle vendite"
 }

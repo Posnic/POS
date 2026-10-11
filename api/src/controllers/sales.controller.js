@@ -1211,6 +1211,9 @@ class SalesController extends BaseController {
 
   async delete(req, res, next) {
     try {
+      if (String(req.user?.usertype || req.user?.role || '').toLowerCase() !== 'super_admin') {
+        return this.error(res, 'Only super admins can hard delete sales', 403);
+      }
       if (!this.checkPermission('sales', 'delete', req.user)) {
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED_DELETE_SALES, 403);
       }

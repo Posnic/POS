@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Ikke-understøttet allokeret salgsforberedelse",
   "Unsupported stock allocation sale": "Ikke-understøttet aktieallokeringssalg",
   "Use the normal return process for an allocated sale.": "Brug den normale returproces for et tildelt salg.",
-  "Enable Recycle Bin before deleting sales": "Aktivér papirkurven, før du sletter salg"
+  "Enable Recycle Bin before deleting sales": "Aktivér papirkurven, før du sletter salg",
+  "Only super admins can change the sale hard-delete setting": "Kun superadministratorer kan ændre indstillingen for hård sletning af salg"
 }

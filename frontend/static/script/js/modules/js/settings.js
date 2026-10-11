@@ -923,6 +923,7 @@ PosnicPro.settings = {
                 $('#allow_sale_date_edit').prop('checked', data.allow_sale_date_edit !== 'false' && data.allow_sale_date_edit !== false);
                 var saleHardDelete = data.allow_sale_hard_delete === true || data.allow_sale_hard_delete === 'true';
                 $('#allow_sale_hard_delete').prop('checked', saleHardDelete);
+                $('#sale_hard_delete_setting').toggle(PosnicPro.local.get('usertype') === 'super_admin');
                 PosnicPro.local.set('allow_sale_hard_delete', saleHardDelete ? 'true' : 'false');
                 PosnicPro.local.set('allow_sale_date_edit', (data.allow_sale_date_edit === 'false' || data.allow_sale_date_edit === false) ? 'false' : 'true');
                 const dbValue = data.sms_auto_send_time; // Replace with your actual database value
@@ -2223,7 +2224,7 @@ if ($wrapper.length) {
                 quote_default_signature: $('#quote_default_signature').val() || '',
                 receiving_prefix: $('#receiving_prefix').val(),
                 allow_sale_date_edit: ($('#allow_sale_date_edit').is(":checked")) ? 'true' : 'false',
-                allow_sale_hard_delete: $('#allow_sale_hard_delete').is(':checked'),
+                allow_sale_hard_delete: PosnicPro.local.get('usertype') === 'super_admin' ? $('#allow_sale_hard_delete').is(':checked') : undefined,
                 indian_gst: $('#indian_gst').val(),
                 branch_gstin_number: $('#branch_gstin_number').val(),
                 print_type: $('#print_type').val(),

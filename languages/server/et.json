@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Toetamata eraldatud müügi ettevalmistamine",
   "Unsupported stock allocation sale": "Toetamata aktsiate jaotamise müük",
   "Use the normal return process for an allocated sale.": "Kasutage eraldatud müügi jaoks tavalist tagastamisprotsessi.",
-  "Enable Recycle Bin before deleting sales": "Enne müügi kustutamist lubage prügikast"
+  "Enable Recycle Bin before deleting sales": "Enne müügi kustutamist lubage prügikast",
+  "Only super admins can change the sale hard-delete setting": "Ainult superadministraatorid saavad muuta müügi kõva kustutamise sätet"
 }

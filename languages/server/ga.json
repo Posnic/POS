@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Ullmhú díola leithdháilte gan",
   "Unsupported stock allocation sale": "Díol leithdháileadh stoc gan tacaíocht",
   "Use the normal return process for an allocated sale.": "Úsáid an gnáthphróiseas tuairisceáin le haghaidh díolachán leith",
-  "Enable Recycle Bin before deleting sales": "Cumasaigh Bosca Athchúrsála sula scriosann"
+  "Enable Recycle Bin before deleting sales": "Cumasaigh Bosca Athchúrsála sula scriosann",
+  "Only super admins can change the sale hard-delete setting": "Ní féidir ach sár-riarthóirí an socrú a scriosadh crua-díola a athrú"
 }

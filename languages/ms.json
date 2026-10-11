@@ -4652,5 +4652,6 @@
   "lang_sale_hard_delete_confirm": "Hard delete membuang jualan ini dari Sejarah Jualan dan memindahkan datanya ke Recycle Bin.",
   "lang_sale_hard_delete_disabled": "Pemadaman keras jualan dilumpuhkan dalam Tetapan Jualan",
   "lang_sale_hard_delete_help": "Hard delete membuang jualan dari rekod aktif dan Sejarah Jualan. Data jualan bergerak ke Recycle Bin. Recycle Bin mesti diaktifkan. Penyesuaian stok dan pembayaran yang berkaitan dibalikkan. Hanya pengguna yang mempunyai kebenaran jualan-padam boleh memadam. Matikan secara lalai, termasuk untuk pentadbir super.",
-  "lang_sale_hard_delete_hint": "Matikan secara lalai. Data jualan yang dipadam bergerak ke Recycle Bin."
+  "lang_sale_hard_delete_hint": "Matikan secara lalai. Data jualan yang dipadam bergerak ke Recycle Bin.",
+  "lang_sale_hard_delete_super_help": "Hanya pentadbir super yang boleh mendayakan dan menggunakan hapus keras. Ia menghilangkan penjualan dari rekod aktif dan Sejarah Jualan dan memindahkan data penjualan ke Recycle Bin. Recycle Bin mesti diaktifkan. Pelarasan baki stok dan pelanggan dibalikkan. Matikan secara lalai."
 }

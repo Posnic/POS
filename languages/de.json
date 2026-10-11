@@ -4731,5 +4731,6 @@
   "lang_sale_hard_delete_confirm": "Durch das automatische Löschen wird dieser Verkauf aus der Verkaufshistorie entfernt und die zugehörigen Daten werden in den Papierkorb verschoben.",
   "lang_sale_hard_delete_disabled": "Das automatische Löschen von Verkäufen ist in den Verkaufseinstellungen deaktiviert",
   "lang_sale_hard_delete_help": "Durch das automatische Löschen wird der Verkauf aus den aktiven Datensätzen und der Verkaufshistorie entfernt. Die Verkaufsdaten werden in den Papierkorb verschoben. Der Papierkorb muss aktiviert sein. Damit verbundene Bestands- und Zahlungsanpassungen werden rückgängig gemacht. Nur Benutzer mit der Berechtigung zum Löschen von Verkäufen können Daten löschen. Standardmäßig deaktiviert, auch für Superadmins.",
-  "lang_sale_hard_delete_hint": "Standardmäßig deaktiviert. Gelöschte Verkaufsdaten werden in den Papierkorb verschoben."
+  "lang_sale_hard_delete_hint": "Standardmäßig deaktiviert. Gelöschte Verkaufsdaten werden in den Papierkorb verschoben.",
+  "lang_sale_hard_delete_super_help": "Nur Superadmins können Hard Delete aktivieren und verwenden. Es entfernt den Verkauf aus den aktiven Datensätzen und der Verkaufshistorie und verschiebt die Verkaufsdaten in den Papierkorb. Der Papierkorb muss aktiviert sein. Anpassungen des Lagerbestands und des Kundensaldos werden rückgängig gemacht. Standardmäßig deaktiviert."
 }

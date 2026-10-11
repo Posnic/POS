@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Përgatitja e shitjes së shpërndarë pa mbështetje",
   "Unsupported stock allocation sale": "Shitja e pambështetur e alokimit",
   "Use the normal return process for an allocated sale.": "Përdorni procesin normal të kthimit për një shitje të caktuar.",
-  "Enable Recycle Bin before deleting sales": "Aktivizo koshin e riciklimit para se të fshini"
+  "Enable Recycle Bin before deleting sales": "Aktivizo koshin e riciklimit para se të fshini",
+  "Only super admins can change the sale hard-delete setting": "Vetëm super administratorët mund të ndryshojnë cilësimet e fshirjes së vështirë të shitjes"
 }

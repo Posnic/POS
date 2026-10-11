@@ -1560,6 +1560,9 @@
   "Only drafts can be deleted": [
     "src/repositories/purchase-order.repository.js"
   ],
+  "Only super admins can change the sale hard-delete setting": [
+    "src/models/setting.model.js"
+  ],
   "Open order not found": [
     "src/repositories/sale.repository.js"
   ],

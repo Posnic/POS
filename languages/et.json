@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Hard delete eemaldab selle müügi müügiajaloost ja viib selle andmed prügikasti.",
   "lang_sale_hard_delete_disabled": "Müügi kõva kustutamine on müügisätetes keelatud",
   "lang_sale_hard_delete_help": "Kõva kustutamine eemaldab müügi aktiivsetest kirjetest ja müügiajaloost. Müügiandmed liiguvad prügikasti. Prügikast peab olema lubatud. Seotud aktsiate ja maksete korrigeerimised on vastupidised. Kustutada saavad ainult müügi-kustutamise loaga kasutajad. Vaikimisi välja lülitatud, sealhulgas superadministraatorite jaoks.",
-  "lang_sale_hard_delete_hint": "Vaikimisi välja lülitatud. Kustutatud müügiandmed viiakse prügikasti."
+  "lang_sale_hard_delete_hint": "Vaikimisi välja lülitatud. Kustutatud müügiandmed viiakse prügikasti.",
+  "lang_sale_hard_delete_super_help": "Ainult superadministraatorid saavad kõva kustutamist lubada ja kasutada. See eemaldab müügi aktiivsetest kirjetest ja müügiajaloost ning viib müügiandmed prügikasti. Prügikast peab olema lubatud. Varude ja kliendi saldo korrigeerimine on vastupidised. Vaikimisi välja lülitatud."
 }

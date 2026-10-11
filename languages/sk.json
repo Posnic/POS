@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Hard delete odstráni tento predaj z Histórie predaja a presunie jeho údaje do koša.",
   "lang_sale_hard_delete_disabled": "Tvrdé odstránenie predaja je zakázané v nastaveniach predaja",
   "lang_sale_hard_delete_help": "Hard delete odstráni predaj z aktívnych záznamov a histórie predaja. Údaje o predaji sa presunú do koša. Kôš musí byť povolený. Súvisiace úpravy zásob a platieb sú zvrátené. Odstrániť môžu iba používatelia s povolením predaj-mazať. Predvolene vypnuté, a to aj pre super správcov.",
-  "lang_sale_hard_delete_hint": "Predvolene vypnuté. Vymazané údaje o predaji sa presunú do koša."
+  "lang_sale_hard_delete_hint": "Predvolene vypnuté. Vymazané údaje o predaji sa presunú do koša.",
+  "lang_sale_hard_delete_super_help": "Iba super správcovia môžu povoliť a používať tvrdé odstránenie. Odstráni predaj z aktívnych záznamov a histórie predaja a presunie údaje o predaji do koša. Kôš musí byť povolený. Úpravy zásob a zostatkov zákazníkov sú obrátené. Predvolene vypnuté."
 }

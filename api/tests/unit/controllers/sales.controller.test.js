@@ -808,6 +808,22 @@ describe('SalesController', () => {
 
   // ── delete ───────────────────────────────────────────────────────────────────
   describe('delete', () => {
+    test.each(['admin', 'owner', 'manager', 'cashier'])(
+      'rejects %s even with sale-delete permission and the switch enabled',
+      async (role) => {
+        const res = mockRes();
+        await ctrl.delete(
+          mockReq({
+            body: { data: [VALID_ID] },
+            user: adminUser({ usertype: role, role, access: { sales: { delete: true } } }),
+          }),
+          res,
+          mockNext()
+        );
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(salesService.deleteSales).not.toHaveBeenCalled();
+      }
+    );
     beforeEach(() => {
       salesService.getBranchById.mockResolvedValue({
         allow_sale_hard_delete: true,

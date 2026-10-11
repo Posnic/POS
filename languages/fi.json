@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Hard delete poistaa tämän myynnin myyntihistoriasta ja siirtää sen tiedot roskakoriin.",
   "lang_sale_hard_delete_disabled": "Myynnin kiinteä poistaminen on poistettu käytöstä Myynti-asetuksissa",
   "lang_sale_hard_delete_help": "Hard delete poistaa myynnin aktiivisista tietueista ja myyntihistoriasta. Myyntitiedot siirtyvät roskakoriin. Roskakorin on oltava käytössä. Liittyvät varasto- ja maksuoikaisut peruutetaan. Vain käyttäjät, joilla on myynti-poisto-oikeus, voivat poistaa. Oletusarvoisesti pois päältä, myös superjärjestelmänvalvojille.",
-  "lang_sale_hard_delete_hint": "Oletusarvoisesti pois päältä. Poistetut myyntitiedot siirtyvät roskakoriin."
+  "lang_sale_hard_delete_hint": "Oletusarvoisesti pois päältä. Poistetut myyntitiedot siirtyvät roskakoriin.",
+  "lang_sale_hard_delete_super_help": "Vain superjärjestelmänvalvojat voivat ottaa käyttöön ja käyttää kovaa poistoa. Se poistaa myynnin aktiivisista tietueista ja myyntihistoriasta ja siirtää myyntitiedot roskakoriin. Roskakorin on oltava käytössä. Varasto- ja asiakassapainojen oikaisut ovat päinvastaisia. Oletusarvoisesti pois päältä."
 }

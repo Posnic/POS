@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Ħassar iebes tneħħi dan il-bejgħ mill-Istorja tal-Bejgħ u jiċċaqlaq id-data tagħha għal Recycle Bin.",
   "lang_sale_hard_delete_disabled": "It-tħassir iebes tal-bejgħ huwa diżattivat fis-settings tal-Bejgħ",
   "lang_sale_hard_delete_help": "Ħassar iebes ineħħi l-bejgħ minn rekords attivi u l-Istorja tal-Bejgħ. Id-dejta tal-bejgħ timxi lejn Recycle Bin. Ir-Recycle Bin għandu jkun attivat. L-aġġustamenti relatati fl-istokk u tal-ħlas huma maqluba. L-utenti biss b'permess għall-bejgħ għall-ħassar jistgħu jħassru. Mitfi b'mod awtomatiku, inkluż għal super ammins.",
-  "lang_sale_hard_delete_hint": "Mitfi b'mod awtomatiku. Id-dejta tal-bejgħ imħassra timxi lejn Recycle Bin."
+  "lang_sale_hard_delete_hint": "Mitfi b'mod awtomatiku. Id-dejta tal-bejgħ imħassra timxi lejn Recycle Bin.",
+  "lang_sale_hard_delete_super_help": "Super ammins biss jistgħu jippermettu u jużaw ħassar iebes. Hija tneħħi l-bejgħ minn rekords attivi u l-Istorja tal-Bejgħ u jċaqlaq id-dejta tal-bejgħ għal Recycle Bin. Ir-Recycle Bin għandu jkun attivat. L-aġġustamenti tal-istokk u tal-bilanċ tal-klijent huma maqluba. Mitfi b'mod awtomatiku."
 }

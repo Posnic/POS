@@ -4727,5 +4727,6 @@
   "lang_sale_hard_delete_confirm": "La eliminación definitiva elimina esta venta del historial de ventas y mueve sus datos a la papelera de reciclaje.",
   "lang_sale_hard_delete_disabled": "La eliminación definitiva de las ventas está deshabilitada en la configuración de ventas",
   "lang_sale_hard_delete_help": "La eliminación definitiva elimina la venta de los registros activos y del historial de ventas. Los datos de venta se trasladan a la papelera de reciclaje. La papelera de reciclaje debe estar habilitada. Los ajustes relacionados con las existencias y los pagos se anulan. Solo los usuarios con permiso de venta y eliminación pueden eliminar. Desactivado de forma predeterminada, incluso para los superadministradores.",
-  "lang_sale_hard_delete_hint": "Desactivado de forma predeterminada. Los datos de venta eliminados se trasladan a la papelera de reciclaje."
+  "lang_sale_hard_delete_hint": "Desactivado de forma predeterminada. Los datos de venta eliminados se trasladan a la papelera de reciclaje.",
+  "lang_sale_hard_delete_super_help": "Solo los superadministradores pueden habilitar y usar la eliminación definitiva. Elimina la venta de los registros activos y del historial de ventas y mueve los datos de la venta a la papelera de reciclaje. La papelera de reciclaje debe estar habilitada. Los ajustes de inventario y de saldo de clientes se anulan. Desactivado de forma predeterminada."
 }

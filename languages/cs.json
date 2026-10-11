@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Tvrdé odstranění odstraní tento prodej z historie prodeje a přesune jeho data do koše.",
   "lang_sale_hard_delete_disabled": "V nastavení prodeje je zakázáno tvrdé mazání prodejů",
   "lang_sale_hard_delete_help": "Tvrdé odstranění odstraní prodej z aktivních záznamů a historie prodeje. Údaje o prodeji se přesouvají do koše. Koš musí být povolen. Související úpravy zásob a plateb jsou obráceny. Odstranit mohou pouze uživatelé s oprávněním k prodeji a smazání. Ve výchozím nastavení vypnuto, včetně pro super administrátory.",
-  "lang_sale_hard_delete_hint": "Ve výchozím nastavení vypnuto. Odstraněná data prodeje se přesunou do koše."
+  "lang_sale_hard_delete_hint": "Ve výchozím nastavení vypnuto. Odstraněná data prodeje se přesunou do koše.",
+  "lang_sale_hard_delete_super_help": "Pouze super administrátoři mohou povolit a používat tvrdé mazání. Odstraní prodej z aktivních záznamů a historie prodeje a přesune data prodeje do koše. Koš musí být povolen. Úpravy zásob a zůstatku zákazníků jsou obráceny. Ve výchozím nastavení vypnuto."
 }

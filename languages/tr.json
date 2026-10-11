@@ -4652,5 +4652,6 @@
   "lang_sale_hard_delete_confirm": "Sabit silme, bu satışı Satış Geçmişi'nden kaldırır ve verilerini Geri Dönüşüm Kutusu'na taşır.",
   "lang_sale_hard_delete_disabled": "Satış ayarlarında satışların sabit silinmesi devre dışı bırakıldı",
   "lang_sale_hard_delete_help": "Sabit silme, satışı etkin kayıtlardan ve Satış Geçmişinden kaldırır. Satış verileri Geri Dönüşüm Kutusu'na taşınır. Geri Dönüşüm Kutusu etkinleştirilmelidir. İlgili stok ve ödeme ayarlamaları tersine çevrilir. Yalnızca satış-silme iznine sahip kullanıcılar silebilir. Süper yöneticiler de dahil olmak üzere varsayılan olarak kapalı.",
-  "lang_sale_hard_delete_hint": "Varsayılan olarak kapalı. Silinen satış verileri Geri Dönüşüm Kutusu'na taşınır."
+  "lang_sale_hard_delete_hint": "Varsayılan olarak kapalı. Silinen satış verileri Geri Dönüşüm Kutusu'na taşınır.",
+  "lang_sale_hard_delete_super_help": "Yalnızca süper yöneticiler sabit silmeyi etkinleştirebilir ve kullanabilir. Satışı etkin kayıtlardan ve Satış Geçmişinden kaldırır ve satış verilerini Geri Dönüşüm Kutusu'na taşır. Geri Dönüşüm Kutusu etkinleştirilmelidir. Stok ve müşteri dengesi ayarlamaları tersine çevrilir. Varsayılan olarak kapalı."
 }

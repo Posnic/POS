@@ -463,6 +463,23 @@ describe('copying settings to another branch', () => {
     expect(r.data.copied.features).toEqual(['quick_sale_enable']);
   });
 
+  test('copying preferences cannot turn on sale deletion at another branch', async () => {
+    jest
+      .spyOn(repo, 'resolveGroup')
+      .mockResolvedValue({
+        status: true,
+        data: {
+          values: { allow_sale_hard_delete: true },
+          source: { allow_sale_hard_delete: 'legacy' },
+        },
+      });
+    const save = jest.spyOn(repo, 'saveGroup');
+    const result = await repo.copyGroups(['preferences'], BRANCH, OTHER, { licenseId: LICENSE });
+    expect(result.status).toBe(true);
+    expect(save).not.toHaveBeenCalled();
+    expect(result.data.copied.preferences).toEqual([]);
+  });
+
   test('legacy values count as the branch own decision', async () => {
     // the common case today: nothing in the new collection at all
     seed({ legacy: { quotes_enable: true } });

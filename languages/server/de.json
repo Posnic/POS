@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Die Vorbereitung eines zugewiesenen Verkaufs wird nicht unterstützt",
   "Unsupported stock allocation sale": "Verkauf von Aktien mit ununterstützter Zuteilung",
   "Use the normal return process for an allocated sale.": "Verwenden Sie das normale Rückgabeverfahren für einen zugewiesenen Verkauf.",
-  "Enable Recycle Bin before deleting sales": "Aktivieren Sie den Papierkorb, bevor Sie Verkäufe löschen"
+  "Enable Recycle Bin before deleting sales": "Aktivieren Sie den Papierkorb, bevor Sie Verkäufe löschen",
+  "Only super admins can change the sale hard-delete setting": "Nur Superadmins können die Einstellung „Sale-Harddelete“ ändern"
 }

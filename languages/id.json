@@ -4731,5 +4731,6 @@
   "lang_sale_hard_delete_confirm": "Hard delete menghapus penjualan ini dari Riwayat Penjualan dan memindahkan datanya ke Recycle Bin.",
   "lang_sale_hard_delete_disabled": "Penghapusan penjualan secara keras dinonaktifkan di pengaturan Penjualan",
   "lang_sale_hard_delete_help": "Hard delete menghapus penjualan dari catatan aktif dan Riwayat Penjualan. Data penjualan pindah ke Recycle Bin. Recycle Bin harus diaktifkan. Penyesuaian stok dan pembayaran terkait dibalik. Hanya pengguna dengan izin penjual-hapus yang dapat menghapus. Nonaktif secara default, termasuk untuk admin super.",
-  "lang_sale_hard_delete_hint": "Mati secara default. Data penjualan yang dihapus dipindahkan ke Recycle Bin."
+  "lang_sale_hard_delete_hint": "Mati secara default. Data penjualan yang dihapus dipindahkan ke Recycle Bin.",
+  "lang_sale_hard_delete_super_help": "Hanya admin super yang dapat mengaktifkan dan menggunakan hard delete. Ini menghapus penjualan dari catatan aktif dan Riwayat Penjualan dan memindahkan data penjualan ke Recycle Bin. Recycle Bin harus diaktifkan. Penyesuaian stok dan saldo pelanggan dibalik. Nonaktif secara default."
 }

@@ -172,6 +172,12 @@ module.exports = {
          settings key, so it is pulled out before the payload is validated -
          otherwise it would be refused as belonging to no group. */
       const { level, ...values } = body;
+      if (
+        Object.hasOwn(values, 'allow_sale_hard_delete') &&
+        String(req.user?.usertype || req.user?.role || '').toLowerCase() !== 'super_admin'
+      ) {
+        return fail(res, 'Only super admins can change the sale hard-delete setting', 403);
+      }
       if (level && level !== 'account' && level !== 'branch') {
         return fail(res, "level must be 'account' or 'branch'");
       }

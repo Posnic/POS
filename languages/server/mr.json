@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "असमर्थित वाटविल्या विक्र",
   "Unsupported stock allocation sale": "असमर्थित स्टॉक वितरण",
   "Use the normal return process for an allocated sale.": "वाटविल्या विक्रीसाठी सामान्य परतावा प्रक्रिया वापरा.",
-  "Enable Recycle Bin before deleting sales": "विक्री हटविण्यापूर्वी रीसायकल"
+  "Enable Recycle Bin before deleting sales": "विक्री हटविण्यापूर्वी रीसायकल",
+  "Only super admins can change the sale hard-delete setting": "केवळ सुपर प्रशासक सेल हार्ड-डिलिट सेटिंग बद"
 }

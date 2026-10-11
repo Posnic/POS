@@ -1192,6 +1192,16 @@ class SettingModel extends BaseModel {
   async updateCommonSettings(data = {}) {
     try {
       if (
+        data.allow_sale_hard_delete !== undefined &&
+        String(this.user?.usertype || this.user?.role || '').toLowerCase() !== 'super_admin'
+      ) {
+        return {
+          status: false,
+          data: null,
+          message: 'Only super admins can change the sale hard-delete setting',
+        };
+      }
+      if (
         data.quote_default_signature !== undefined &&
         data.quote_default_signature !== '' &&
         !require('../helpers/receipt-design').image(data.quote_default_signature)

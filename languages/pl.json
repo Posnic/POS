@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Hard delete usuwa tę sprzedaż z Historii sprzedaży i przenosi jej dane do Kosza.",
   "lang_sale_hard_delete_disabled": "Twarde usuwanie sprzedaży jest wyłączone w Ustawieniach sprzedaży",
   "lang_sale_hard_delete_help": "Twarde usuwanie usuwa sprzedaż z aktywnych rekordów i historii sprzedaży. Dane sprzedaży przenoszą się do Kosza. Kosz musi być włączony. Powiązane korekty zapasów i płatności są odwracane. Tylko użytkownicy posiadający uprawnienia sprzedaż-usuwanie mogą usuwać. Domyślnie wyłączone, w tym dla super administratorów.",
-  "lang_sale_hard_delete_hint": "Domyślnie wyłączone. Usunięte dane sprzedaży przenoszą się do Kosza."
+  "lang_sale_hard_delete_hint": "Domyślnie wyłączone. Usunięte dane sprzedaży przenoszą się do Kosza.",
+  "lang_sale_hard_delete_super_help": "Tylko super administratorzy mogą włączyć i używać twardego usuwania. Usuwa sprzedaż z aktywnych rekordów i historii sprzedaży i przenosi dane sprzedaży do Kosza. Kosz musi być włączony. Korekty zapasów i salda klienta są odwrócone. Domyślnie wyłączone."
 }

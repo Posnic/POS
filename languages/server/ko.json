@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "지원되지 않는 할당 판매 준비",
   "Unsupported stock allocation sale": "미지원 주식 배분 매각",
   "Use the normal return process for an allocated sale.": "배정된 판매에는 일반 반품 절차를 사용하십시오.",
-  "Enable Recycle Bin before deleting sales": "판매를 삭제하기 전에 휴지통 활성화"
+  "Enable Recycle Bin before deleting sales": "판매를 삭제하기 전에 휴지통 활성화",
+  "Only super admins can change the sale hard-delete setting": "슈퍼 관리자만 판매 강제 삭제 설정을 변경할 수 있습니다."
 }

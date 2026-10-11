@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Tinatanggal ng hard delete ang sale na ito mula sa Kasaysayan ng Sales at inililipat ang data nito sa Recycle Bin.",
   "lang_sale_hard_delete_disabled": "Hindi pinagana ang hard delete ng mga benta sa mga setting ng Sales",
   "lang_sale_hard_delete_help": "Tinatanggal ng hard delete ang benta mula sa mga aktibong tala at Kasaysayan ng Pagbebenta. Ang data ng pagbebenta ay lumilipat sa Recycle Bin. Dapat na paganahin ang Recycle Bin. Ang mga kaugnay na pagsasaayos ng stock at pagbabayad ay balig Tanging ang mga gumagamit na may pahintulot sa sale-delete ang maaaring tanggalin. Naka-off bilang default, kabilang ang para sa mga super admin.",
-  "lang_sale_hard_delete_hint": "Naka-off bilang default. Ang tinanggal na data ng pagbebenta ay lilipat sa Recycle Bin"
+  "lang_sale_hard_delete_hint": "Naka-off bilang default. Ang tinanggal na data ng pagbebenta ay lilipat sa Recycle Bin",
+  "lang_sale_hard_delete_super_help": "Tanging ang mga super admin ang maaaring paganahin at gumamit ng hard delete. Tinatanggal nito ang pagbebenta mula sa mga aktibong tala at Kasaysayan ng Benta at inililipat ang data ng pagbebenta sa Recycle Bin. Dapat na paganahin ang Recycle Bin. Ang mga pagsasaayos ng stock at balanse ng customer ay baligtarin. Naka-off bilang default."
 }

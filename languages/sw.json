@@ -4731,5 +4731,6 @@
   "lang_sale_hard_delete_confirm": "Hard delete huondoa uuzaji huu kutoka Historia ya Mauzo na huhamisha data yake kwenye Recycle Bin.",
   "lang_sale_hard_delete_disabled": "Ufutaji ngumu wa mauzo umezimwa katika mipangilio ya Mauzo",
   "lang_sale_hard_delete_help": "Kufuta ngumu huondoa uuzaji kutoka kwa rekodi zinazofanya kazi na Historia ya Mauzo. Takwimu za uuzaji huhamia kwenye Recycle Bin. Recycle Bin lazima iwezeshwe. Marekebisho yanayohusiana na hisa na malipo yanabadilish Watumiaji tu wenye ruhusa ya kuuza-kufuta wanaweza kufuta. Imezimwa kwa chaguo-msingi, pamoja na kwa wasimamizi mzuri.",
-  "lang_sale_hard_delete_hint": "Izimwa kwa chaguo-msingi. Data ya uuzaji iliyofutwa huhamia kwenye Recycle Bin."
+  "lang_sale_hard_delete_hint": "Izimwa kwa chaguo-msingi. Data ya uuzaji iliyofutwa huhamia kwenye Recycle Bin.",
+  "lang_sale_hard_delete_super_help": "Ni wasimamizi wa juu tu wanaweza kuwezesha na kutumia kufuta kwa ngumu. Inaondoa uuzaji kutoka kwa rekodi za kazi na Historia ya Mauzo na huhamisha data ya uuzaji kwenye Recycle Bin. Recycle Bin lazima iwezeshwe. Marekebisho ya hisa na usawa wa wateja hubadilishwa. Izimwa kwa chaguo-msingi."
 }

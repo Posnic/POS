@@ -4652,5 +4652,6 @@
   "lang_sale_hard_delete_confirm": "Hard delete loại bỏ đợt bán hàng này khỏi Lịch sử bán hàng và di chuyển dữ liệu của nó vào Thùng rác.",
   "lang_sale_hard_delete_disabled": "Việc xóa cứng bán hàng bị vô hiệu hóa trong Cài đặt Bán hàng",
   "lang_sale_hard_delete_help": "Xóa cứng xóa bỏ việc bán hàng khỏi hồ sơ đang hoạt động và Lịch sử bán hàng. Dữ liệu bán hàng di chuyển đến Thùng rác. Recycle Bin phải được kích hoạt. Các điều chỉnh cổ phiếu và thanh toán liên quan được đảo ngược. Chỉ những người dùng có quyền sống-xóa mới có thể xóa. Tắt theo mặc định, bao gồm cả cho siêu quản trị viên.",
-  "lang_sale_hard_delete_hint": "Tắt theo mặc định. Dữ liệu bán hàng bị xóa sẽ chuyển đến Thùng rác."
+  "lang_sale_hard_delete_hint": "Tắt theo mặc định. Dữ liệu bán hàng bị xóa sẽ chuyển đến Thùng rác.",
+  "lang_sale_hard_delete_super_help": "Chỉ có siêu quản trị viên mới có thể kích hoạt và sử dụng hard delete. Nó loại bỏ việc bán hàng khỏi các bản ghi đang hoạt động và Lịch sử bán hàng và di chuyển dữ liệu bán hàng sang Thùng rác. Recycle Bin phải được kích hoạt. Điều chỉnh cổ phiếu và số dư khách hàng được đảo ngược. Tắt theo mặc định."
 }

@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Nepodprta dodeljena priprava prodaje",
   "Unsupported stock allocation sale": "Nepodprta prodaja dodeljevanja zalog",
   "Use the normal return process for an allocated sale.": "Za dodeljeno prodajo uporabite običajni postopek vračila.",
-  "Enable Recycle Bin before deleting sales": "Omogočite koš za odpadke pred brisanjem prodaje"
+  "Enable Recycle Bin before deleting sales": "Omogočite koš za odpadke pred brisanjem prodaje",
+  "Only super admins can change the sale hard-delete setting": "Samo super skrbniki lahko spremenijo nastavitev trdega brisanja prodaje"
 }

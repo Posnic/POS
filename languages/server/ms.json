@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Persediaan jualan yang diperuntukkan tidak disokong",
   "Unsupported stock allocation sale": "Jualan peruntukan stok yang tidak disokong",
   "Use the normal return process for an allocated sale.": "Gunakan proses pengembalian biasa untuk penjualan yang diperuntukkan.",
-  "Enable Recycle Bin before deleting sales": "Dayakan Recycle Bin sebelum memadam jualan"
+  "Enable Recycle Bin before deleting sales": "Dayakan Recycle Bin sebelum memadam jualan",
+  "Only super admins can change the sale hard-delete setting": "Hanya pentadbir super yang boleh menukar tetapan hapus keras jualan"
 }

@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Tvrdo brisanje uklanja ovu prodaju iz istorije prodaje i premješta njene podatke u korpu za otpatke.",
   "lang_sale_hard_delete_disabled": "Tvrdo brisanje prodaje je onemogućeno u podešavanjima prodaje",
   "lang_sale_hard_delete_help": "Tvrdo brisanje uklanja prodaju iz aktivnih zapisa i istorije prodaje. Podaci o prodaji premeštaju se u korpu za otpatke. Koš za smeće mora biti omogućen. Povezana prilagođavanja zaliha i plaćanja su obrnuta. Samo korisnici sa dozvolom za prodaju i brisanje mogu izbrisati. Isključeno podrazumevano, uključujući i super administratore.",
-  "lang_sale_hard_delete_hint": "Isključeno podrazumevano. Izbrisani podaci o prodaji premeštaju se u korpu za otpatke."
+  "lang_sale_hard_delete_hint": "Isključeno podrazumevano. Izbrisani podaci o prodaji premeštaju se u korpu za otpatke.",
+  "lang_sale_hard_delete_super_help": "Samo super administratori mogu omogućiti i koristiti hard delete. Uklanja prodaju iz aktivnih zapisa i istorije prodaje i premješta podatke o prodaji u korpu za smeće. Koš za smeće mora biti omogućen. Prilagođavanja zaliha i stanja kupaca su obrnuta. Isključeno podrazumevano."
 }

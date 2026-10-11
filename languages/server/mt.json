@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Preparazzjoni tal-bejgħ allokat mhux appoġġjata",
   "Unsupported stock allocation sale": "Bejgħ tal-allokazzjoni tal-istokk mhux ap",
   "Use the normal return process for an allocated sale.": "Uża l-proċess normali tar-ritorn għal bejgħ allokat.",
-  "Enable Recycle Bin before deleting sales": "Ippermetti Recycle Bin qabel tħassar il-bejgħ"
+  "Enable Recycle Bin before deleting sales": "Ippermetti Recycle Bin qabel tħassar il-bejgħ",
+  "Only super admins can change the sale hard-delete setting": "Super ammins biss jistgħu jibdlu l-issettjar tal-bejgħ ħassar il-hard"
 }

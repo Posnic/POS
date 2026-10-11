@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Hård radering tar bort denna försäljning från försäljningshistoriken och flyttar dess data till papperskorgen.",
   "lang_sale_hard_delete_disabled": "Hård radering av försäljning är inaktiverad i Försäljningsinställningarna",
   "lang_sale_hard_delete_help": "Hård radering tar bort försäljningen från aktiva poster och försäljningshistorik. Försäljningsdata flyttas till papperskorgen. Papperskorgen måste vara aktiverad. Relaterade lager- och betalningsjusteringar återförs. Endast användare med försäljnings-raderingsbehörighet kan ta bort. Av som standard, inklusive för superadministratörer.",
-  "lang_sale_hard_delete_hint": "Av som standard. Raderade försäljningsdata flyttas till papperskorgen."
+  "lang_sale_hard_delete_hint": "Av som standard. Raderade försäljningsdata flyttas till papperskorgen.",
+  "lang_sale_hard_delete_super_help": "Endast superadministratörer kan aktivera och använda hård radering. Den tar bort försäljningen från aktiva poster och försäljningshistorik och flyttar försäljningsdata till papperskorgen. Papperskorgen måste vara aktiverad. Lagerjusteringar och kundbalansjusteringar är omvända. Av som standard."
 }

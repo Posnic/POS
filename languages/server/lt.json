@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Nepalaikomas paskirstyto pardavimo paruošimas",
   "Unsupported stock allocation sale": "Nepalaikomas akcijų paskirstymo pardavimas",
   "Use the normal return process for an allocated sale.": "Paskirstytam pardavimui naudokite įprastą grąžinimo procesą.",
-  "Enable Recycle Bin before deleting sales": "Įgalinkite šiukšlinę prieš ištrinant pardavimus"
+  "Enable Recycle Bin before deleting sales": "Įgalinkite šiukšlinę prieš ištrinant pardavimus",
+  "Only super admins can change the sale hard-delete setting": "Tik super adminai gali pakeisti pardavimo hard-delete nustatymą"
 }

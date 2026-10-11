@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Hård sletning fjerner dette salg fra salgshistorik og flytter dets data til papirkurven.",
   "lang_sale_hard_delete_disabled": "Hård sletning af salg er deaktiveret i Salgsindstillinger",
   "lang_sale_hard_delete_help": "Hård sletning fjerner salget fra aktive poster og salgshistorik. Salgsdataene flyttes til papirkurven. Papirkurven skal være aktiveret. Relaterede lager- og betalingsjusteringer vendes. Kun brugere med tilladelse til salg-sletning kan slette. Deaktiveret som standard, inklusive for superadministratorer.",
-  "lang_sale_hard_delete_hint": "Fra som standard. Slettede salgsdata flyttes til papirkurven."
+  "lang_sale_hard_delete_hint": "Fra som standard. Slettede salgsdata flyttes til papirkurven.",
+  "lang_sale_hard_delete_super_help": "Kun superadministratorer kan aktivere og bruge hård sletning. Det fjerner salget fra aktive poster og salgshistorik og flytter salgsdataene til papirkurven. Papirkurven skal være aktiveret. Lagerjusteringer og kundebalancejusteringer vendes. Fra som standard."
 }

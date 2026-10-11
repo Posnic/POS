@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "割り当てられた売却準備はサポートされていません",
   "Unsupported stock allocation sale": "サポートされていない株式割当売却",
   "Use the normal return process for an allocated sale.": "割り当てられた売却には通常の返品手続きを使用してください。",
-  "Enable Recycle Bin before deleting sales": "販売を削除する前にごみ箱を有効にする"
+  "Enable Recycle Bin before deleting sales": "販売を削除する前にごみ箱を有効にする",
+  "Only super admins can change the sale hard-delete setting": "スーパー管理者のみがセールの完全削除設定を変更できます"
 }

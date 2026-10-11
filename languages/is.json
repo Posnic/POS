@@ -4649,5 +4649,6 @@
   "lang_sale_hard_delete_confirm": "Hard delete fjarlægir þessa sölu úr Sölusögu og færir gögnin sín í ruslafötuna.",
   "lang_sale_hard_delete_disabled": "Hörð eyða sölu er óvirk í sölustillingum",
   "lang_sale_hard_delete_help": "Hard delete fjarlægir söluna úr virkum skrám og sölusögu. Sölugögnin færast í ruslafötuna. Recycle Bin verður að vera virk. Tengdum lager- og greiðsluleiðréttingum er snúið við. Aðeins notendur með sölueyða leyfi geta eytt. Sjálfgefið slökkt, þar á meðal fyrir frábær stjórnendur.",
-  "lang_sale_hard_delete_hint": "Sjálfgefið slökkt. Eytt sölugögn færast í ruslafötuna."
+  "lang_sale_hard_delete_hint": "Sjálfgefið slökkt. Eytt sölugögn færast í ruslafötuna.",
+  "lang_sale_hard_delete_super_help": "Aðeins ofurstjórnendur geta virkjað og notað harða eyða. Það fjarlægir söluna úr virkum skrám og sölusögu og færir sölugögnin í ruslafötuna. Recycle Bin verður að vera virk. Leiðréttingum á birgðum og jafnvægi viðskiptavina er snúið við. Sjálfgefið slökkt."
 }

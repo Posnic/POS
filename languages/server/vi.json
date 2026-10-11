@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "Chuẩn bị bán hàng được phân bổ không được hỗ trợ",
   "Unsupported stock allocation sale": "Bán phân bổ cổ phiếu không được hỗ trợ",
   "Use the normal return process for an allocated sale.": "Sử dụng quy trình trả lại thông thường cho một đợt bán hàng được phân bổ.",
-  "Enable Recycle Bin before deleting sales": "Bật Thùng rác trước khi xóa bán hàng"
+  "Enable Recycle Bin before deleting sales": "Bật Thùng rác trước khi xóa bán hàng",
+  "Only super admins can change the sale hard-delete setting": "Chỉ quản trị viên siêu mới có thể thay đổi cài đặt xóa cứng bán hàng"
 }

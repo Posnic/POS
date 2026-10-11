@@ -951,5 +951,6 @@
   "Unsupported allocated sale preparation": "మద్దతు లేని కేటాయించిన అమ్మకపు తయారీ",
   "Unsupported stock allocation sale": "మద్దతు లేని స్టాక్ కేటాయింపు అమ్మకం",
   "Use the normal return process for an allocated sale.": "కేటాయించిన అమ్మకానికి సాధారణ రిటర్న్ ప్రక్రియను ఉపయోగించండి.",
-  "Enable Recycle Bin before deleting sales": "అమ్మకాలను తొలగించే ముందు రీసైకిల్ బిన్ను ప్రారంభించండి"
+  "Enable Recycle Bin before deleting sales": "అమ్మకాలను తొలగించే ముందు రీసైకిల్ బిన్ను ప్రారంభించండి",
+  "Only super admins can change the sale hard-delete setting": "సూపర్ అడ్మిన్లు మాత్రమే సేల్ హార్డ్-డిలీట్ సెట్టింగ్ను మార్చగలరు"
 }
