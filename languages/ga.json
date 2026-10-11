@@ -4644,5 +4644,11 @@
   "lang_search_item_or_sku": "Cuardaigh mír nó SKU",
   "lang_several_products_share_this_barcode_select": "Roinneann roinnt táirgí an barrachód seo. Roghnaigh an táirge atá tú ag díol.",
   "lang_temporary_view_for_this_screen": "Amharc sealadach don scáileán seo.",
-  "lang_updates_existing_products_only_no_stock_qu": "Nuashonraíonn táirgí atá ann cheana amháin. Ní athraítear aon chainníochtaí stoc ná costais ceannaigh stairiúla."
+  "lang_updates_existing_products_only_no_stock_qu": "Nuashonraíonn táirgí atá ann cheana amháin. Ní athraítear aon chainníochtaí stoc ná costais ceannaigh stairiúla.",
+  "lang_allow_sale_hard_delete": "Lig díolacháin a scriosadh go crua",
+  "lang_sale_hard_delete_confirm": "Baineann Hard delete an díolachán seo as Stair Díolacháin agus aistríonn sé a chuid sonraí chuig Busca Athch",
+  "lang_sale_hard_delete_disabled": "Tá scriosadh crua díolacháin díchumasaithe i socruithe Díolach",
+  "lang_sale_hard_delete_help": "Baineann crua scriosadh an díol ó thaifid ghníomhacha agus Stair Díolacháin. Bogann na sonraí díola chuig Bruscar Athchúrsála. Caithfear bruscar athchúrsála a chumasú. Déantar coigeartuithe stoc agus íocaíochta gaolmhara a ais Ní féidir ach úsáideoirí a bhfuil cead díolacha-scriosadh acu a scriosadh. As de réir réamhshocraithe, lena n-áirítear do sár-riarthóirí.",
+  "lang_sale_hard_delete_hint": "Off de réir réamhshocraithe. Bogann sonraí díola scriosta chuig Bruscar Athchúrsála.",
+  "lang_sale_hard_delete_super_help": "Ní féidir ach sár-riarthóirí a chumasú agus a úsáid scriosadh crua. Baineann sé an díol as taifid ghníomhacha agus Stair Díolacháin agus bogann sé na sonraí díola chuig Bruscán Athchúrsála Caithfear bruscar athchúrsála a chumasú. Déantar coigeartuithe cothromaíochta stoc agus custaiméirí a aischur. Off de réir réamhshocraithe."
 }

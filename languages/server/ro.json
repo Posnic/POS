@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "Commitere de vânzare alocată neacceptată",
   "Unsupported allocated sale preparation": "Pregătirea vânzării alocate neacceptată",
   "Unsupported stock allocation sale": "Vânzare de alocare a stocurilor neacceptate",
-  "Use the normal return process for an allocated sale.": "Utilizați procesul normal de returnare pentru o vânzare alocată."
+  "Use the normal return process for an allocated sale.": "Utilizați procesul normal de returnare pentru o vânzare alocată.",
+  "Enable Recycle Bin before deleting sales": "Activați Coșul de reciclare înainte de a șterge vânzările",
+  "Only super admins can change the sale hard-delete setting": "Doar super-administratorii pot schimba setarea de ștergere dură a vânzării"
 }

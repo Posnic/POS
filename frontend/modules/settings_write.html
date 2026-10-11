@@ -4773,6 +4773,20 @@
                                                         <small class="form-text text-muted"><lang class="lang_changes_ask_this_sale_only_or_update_the_i">Changes ask: this sale only, or update the item record too.</lang></small>
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <div class="form-group col-md-6" id="sale_hard_delete_setting" style="display:none">
+                                                        <label for="allow_sale_hard_delete" data-toggle="tooltip"
+                                                            title="Only super admins can enable and use hard delete. It removes the sale from active records and Sales History and moves the sale data to Recycle Bin. Recycle Bin must be enabled. Stock and customer-balance adjustments are reversed. Off by default."
+                                                            data-t-title="lang_sale_hard_delete_super_help">
+                                                            <lang class="lang_allow_sale_hard_delete">Allow hard delete of sales</lang>
+                                                        </label>
+                                                        <div class="custom-control custom-switch mt-2">
+                                                            <input type="checkbox" class="custom-control-input" id="allow_sale_hard_delete" name="allow_sale_hard_delete" />
+                                                            <label class="custom-control-label" for="allow_sale_hard_delete"></label>
+                                                        </div>
+                                                        <small class="form-text text-muted"><lang class="lang_sale_hard_delete_hint">Off by default. Deleted sale data moves to Recycle Bin.</lang></small>
+                                                    </div>
+                                                </div>
                                                 <div class="row" data-module="plan" data-access="read">
                                                     <div class="form-group col-md-6">
                                                         <label for="sales_sms" data-toggle="tooltip"

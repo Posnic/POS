@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "Nepodporované přidělené potvrzení prodeje",
   "Unsupported allocated sale preparation": "Nepodporovaná příprava přiděleného prodeje",
   "Unsupported stock allocation sale": "Nepodporovaný prodej alokace akcií",
-  "Use the normal return process for an allocated sale.": "Pro přidělený prodej použijte běžný proces vrácení."
+  "Use the normal return process for an allocated sale.": "Pro přidělený prodej použijte běžný proces vrácení.",
+  "Enable Recycle Bin before deleting sales": "Povolit koš před odstraněním prodeje",
+  "Only super admins can change the sale hard-delete setting": "Pouze superadministrátoři mohou změnit nastavení tvrdého odstranění prodeje"
 }

@@ -4644,5 +4644,11 @@
   "lang_search_item_or_sku": "Søk etter element eller SKU",
   "lang_several_products_share_this_barcode_select": "Flere produkter deler denne strekkoden. Velg produktet du selger.",
   "lang_temporary_view_for_this_screen": "Midlertidig visning for denne skjermen.",
-  "lang_updates_existing_products_only_no_stock_qu": "Oppdaterer kun eksisterende produkter. Ingen lagermengder eller historiske kjøpskostnader endres."
+  "lang_updates_existing_products_only_no_stock_qu": "Oppdaterer kun eksisterende produkter. Ingen lagermengder eller historiske kjøpskostnader endres.",
+  "lang_allow_sale_hard_delete": "Tillat hard sletting av salg",
+  "lang_sale_hard_delete_confirm": "Hard delete fjerner dette salget fra salgshistorikken og flytter dataene til papirkurven.",
+  "lang_sale_hard_delete_disabled": "Hard sletting av salg er deaktivert i Salgsinnstillinger",
+  "lang_sale_hard_delete_help": "Hard delete fjerner salget fra aktive poster og salgshistorikk. Salgsdataene flyttes til papirkurven. Papirkurven må være aktivert. Relaterte aksje- og betalingsjusteringer reverseres. Bare brukere med salg-slette-tillatelse kan slette. Av som standard, inkludert for superadministratorer.",
+  "lang_sale_hard_delete_hint": "Av som standard. Slettede salgsdata flyttes til papirkurven.",
+  "lang_sale_hard_delete_super_help": "Bare superadministratorer kan aktivere og bruke hard sletting. Den fjerner salget fra aktive poster og salgshistorikk og flytter salgsdataene til papirkurven. Papirkurven må være aktivert. Aksjer- og kundebalansejusteringer reverseres. Av som standard."
 }

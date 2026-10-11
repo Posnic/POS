@@ -4726,5 +4726,11 @@
   "lang_search_item_or_sku": "Pesquisar item ou SKU",
   "lang_several_products_share_this_barcode_select": "Vários produtos compartilham esse código de barras. Selecione o produto que você está vendendo.",
   "lang_temporary_view_for_this_screen": "Visualização temporária desta tela.",
-  "lang_updates_existing_products_only_no_stock_qu": "Atualiza somente os produtos existentes. Nenhuma quantidade de estoque ou custo histórico de compra é alterado."
+  "lang_updates_existing_products_only_no_stock_qu": "Atualiza somente os produtos existentes. Nenhuma quantidade de estoque ou custo histórico de compra é alterado.",
+  "lang_allow_sale_hard_delete": "Permitir exclusão definitiva de vendas",
+  "lang_sale_hard_delete_confirm": "A exclusão forçada remove essa venda do Histórico de vendas e move seus dados para a Lixeira.",
+  "lang_sale_hard_delete_disabled": "A exclusão definitiva de vendas está desativada nas configurações de vendas",
+  "lang_sale_hard_delete_help": "A exclusão definitiva remove a venda dos registros ativos e do histórico de vendas. Os dados de venda são movidos para a Lixeira. A lixeira deve estar ativada. Os ajustes relacionados ao estoque e ao pagamento são revertidos. Somente usuários com permissão de venda e exclusão podem excluir. Desativado por padrão, inclusive para superadministradores.",
+  "lang_sale_hard_delete_hint": "Desativado por padrão. Os dados de venda excluídos são movidos para a Lixeira.",
+  "lang_sale_hard_delete_super_help": "Somente superadministradores podem ativar e usar a exclusão forçada. Ele remove a venda dos registros ativos e do histórico de vendas e move os dados da venda para a Lixeira. A lixeira deve estar ativada. Os ajustes de estoque e saldo do cliente são revertidos. Desativado por padrão."
 }

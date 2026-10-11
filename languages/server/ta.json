@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "ஆதரிக்கப்படாத ஒதுக்கப்பட்ட விற்பனை உறுதி",
   "Unsupported allocated sale preparation": "ஆதரிக்கப்படாத ஒதுக்கப்பட்ட விற்பனை தயாரிப்பு",
   "Unsupported stock allocation sale": "ஆதரிக்கப்படாத பங்கு ஒதுக்கிப்பு விற்பனை",
-  "Use the normal return process for an allocated sale.": "ஒதுக்கப்பட்ட விற்பனைக்கு சாதாரண வருவாய் செயல்முறையைப் பயன்படுத்தவும்."
+  "Use the normal return process for an allocated sale.": "ஒதுக்கப்பட்ட விற்பனைக்கு சாதாரண வருவாய் செயல்முறையைப் பயன்படுத்தவும்.",
+  "Enable Recycle Bin before deleting sales": "விற்பனையை நீக்குவதற்கு முன் மறுசுழற்சி",
+  "Only super admins can change the sale hard-delete setting": "சூப்பர் நிர்வாகிகள் மட்டுமே விற்பனை ஹார்ட்-டிலீட் அமைப்பை மாற்ற முடியும்"
 }

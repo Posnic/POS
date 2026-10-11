@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "ಬೆಂಬಲವಿಲ್ಲದ ಹಂಚಿಕೆಯಾದ ಮಾರಾಟ ಕಮಿಟ್",
   "Unsupported allocated sale preparation": "ಬೆಂಬಲವಿಲ್ಲದ ಹಂಚಿಕೆಯಾದ ಮಾರಾಟ ಸಿದ್ಧತೆ",
   "Unsupported stock allocation sale": "ಬೆಂಬಲವಿಲ್ಲದ ಸ್ಟಾಕ್ ಹಂಚಿಕೆ ಮಾರಾಟ",
-  "Use the normal return process for an allocated sale.": "ನಿಯೋಜಿತ ಮಾರಾಟಕ್ಕಾಗಿ ಸಾಮಾನ್ಯ ರಿಟರ್ನ್ ಪ್ರಕ್ರಿಯೆಯನ್ನು ಬಳಸಿ."
+  "Use the normal return process for an allocated sale.": "ನಿಯೋಜಿತ ಮಾರಾಟಕ್ಕಾಗಿ ಸಾಮಾನ್ಯ ರಿಟರ್ನ್ ಪ್ರಕ್ರಿಯೆಯನ್ನು ಬಳಸಿ.",
+  "Enable Recycle Bin before deleting sales": "ಮಾರಾಟವನ್ನು ಅಳಿಸುವ ಮೊದಲು ಮರುಬಳಕೆ ಬಿನ್ ಸಕ್ರಿಯ",
+  "Only super admins can change the sale hard-delete setting": "ಸೂಪರ್ ಅಡ್ಮಿನ್ಗಳು ಮಾತ್ರ ಮಾರಾಟ ಹಾರ್ಡ್-ಡಿಲೀಟ್ ಸೆಟ್ಟಿಂಗ್ ಅನ್ನು ಬದಲಾಯಿಸಬಹುದು"
 }

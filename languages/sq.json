@@ -4644,5 +4644,11 @@
   "lang_search_item_or_sku": "Kërkoni artikullin ose SKU",
   "lang_several_products_share_this_barcode_select": "Disa produkte ndajnë këtë kod. Zgjidhni produktin që po shisni",
   "lang_temporary_view_for_this_screen": "Pamje e përkohshme për këtë ekran.",
-  "lang_updates_existing_products_only_no_stock_qu": "Përditëson vetëm produktet ekzistuese. Asnjë sasi e aksioneve ose kostot historike të blerjes nuk ndryshohen."
+  "lang_updates_existing_products_only_no_stock_qu": "Përditëson vetëm produktet ekzistuese. Asnjë sasi e aksioneve ose kostot historike të blerjes nuk ndryshohen.",
+  "lang_allow_sale_hard_delete": "Lejoni fshirjen e vështirë të shitjeve",
+  "lang_sale_hard_delete_confirm": "Hard delete heq këtë shitje nga Historia e Shitjeve dhe zhvendos të dhënat e saj në Recycle Bin.",
+  "lang_sale_hard_delete_disabled": "Fshirja e fortë e shitjeve është çaktivizuar në cilësimet e shitjeve",
+  "lang_sale_hard_delete_help": "Fshirja e vështirë heq shitjen nga regjistrat aktive dhe Historiku i Shitjeve. Të dhënat e shitjes lëvizin në Recycle Bin. Kashi i riciklimit duhet të jetë i aktivizuar. Rregullimet e lidhura të aksioneve dhe pagesave janë kthyer Vetëm përdoruesit me leje shitje-fshirje mund të fshijnë. Çaktivizohet si parazgjedhje, duke përfshirë edhe për super administratorët.",
+  "lang_sale_hard_delete_hint": "I fikur sipas parazgjedhjes. Të dhënat e shitjes së fshirë lëvizin në Recycle Bin.",
+  "lang_sale_hard_delete_super_help": "Vetëm super administratorët mund të aktivizojnë dhe përdorin fshirjen e vështirë. Ai heq shitjen nga regjistrat aktive dhe Historia e Shitjeve dhe zhvendos të dhënat e shitjes në Recycle Bin. Kashi i riciklimit duhet të jetë i aktivizuar. Rregullimet e aksioneve dhe bilancit të klientit ndryshohen. I fikur sipas parazgjedhjes."
 }

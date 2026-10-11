@@ -4647,5 +4647,11 @@
   "lang_search_item_or_sku": "商品を検索するか、SKU",
   "lang_several_products_share_this_barcode_select": "このバーコードは複数の商品で共有されています。販売する製品を選択してください。",
   "lang_temporary_view_for_this_screen": "この画面の一時的な表示です。",
-  "lang_updates_existing_products_only_no_stock_qu": "既存の製品のみを更新します。在庫数や過去の購入コストは変更されません。"
+  "lang_updates_existing_products_only_no_stock_qu": "既存の製品のみを更新します。在庫数や過去の購入コストは変更されません。",
+  "lang_allow_sale_hard_delete": "売上の完全削除を許可",
+  "lang_sale_hard_delete_confirm": "完全削除すると、この売上は販売履歴から削除され、データはごみ箱に移動されます。",
+  "lang_sale_hard_delete_disabled": "売上設定では売上の完全削除は無効になっています。",
+  "lang_sale_hard_delete_help": "完全削除を行うと、アクティブなレコードと販売履歴から販売が削除されます。売上データはごみ箱に移動します。ごみ箱は有効になっている必要があります。関連する在庫と支払調整が取り消されます。削除できるのは、販売/削除権限を持つユーザーだけです。デフォルトではオフです。スーパー管理者も同様です。",
+  "lang_sale_hard_delete_hint": "デフォルトではオフです。削除された売上データはごみ箱に移動されます。",
+  "lang_sale_hard_delete_super_help": "完全削除を有効にして使用できるのはスーパー管理者のみです。アクティブなレコードと販売履歴から販売が削除され、販売データがごみ箱に移動されます。ごみ箱は有効になっている必要があります。在庫調整と顧客残高調整は取り消されます。デフォルトではオフになっています。"
 }

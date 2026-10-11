@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "અસમર્થિત ફાળવેલ વેચાણ કમિટ",
   "Unsupported allocated sale preparation": "અસમર્થિત ફાળવેલ વેચાણ તૈયારી",
   "Unsupported stock allocation sale": "અસમર્થિત સ્ટોક ફાળવણી વેચાણ",
-  "Use the normal return process for an allocated sale.": "ફાળવેલ વેચાણ માટે સામાન્ય વળતર પ્રક્રિયાનો ઉપયોગ કરો."
+  "Use the normal return process for an allocated sale.": "ફાળવેલ વેચાણ માટે સામાન્ય વળતર પ્રક્રિયાનો ઉપયોગ કરો.",
+  "Enable Recycle Bin before deleting sales": "વેચાણ કાઢી નાખતા પહેલા રિસાયકલ બિનને સક્ષમ કરો",
+  "Only super admins can change the sale hard-delete setting": "ફક્ત સુપર એડમિન્સ જ વેચાણ હાર્ડ-ડિલીટ સેટિંગ બદલી શકે છે"
 }

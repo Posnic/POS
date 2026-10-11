@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "Nieobsługiwane przydzielone zatwierdzenie sprzedaży",
   "Unsupported allocated sale preparation": "Niewspierane przygotowanie przydzielonej sprzedaży",
   "Unsupported stock allocation sale": "Nieobsługiwana sprzedaż alokacji zapasów",
-  "Use the normal return process for an allocated sale.": "Użyj normalnego procesu zwrotu dla przydzielonej sprzedaży."
+  "Use the normal return process for an allocated sale.": "Użyj normalnego procesu zwrotu dla przydzielonej sprzedaży.",
+  "Enable Recycle Bin before deleting sales": "Włącz kosz przed usunięciem sprzedaży",
+  "Only super admins can change the sale hard-delete setting": "Tylko super administratorzy mogą zmienić ustawienie sprzedaży twardego usuwania"
 }

@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "不支持的分配銷售提交",
   "Unsupported allocated sale preparation": "不支持的分配銷售準備",
   "Unsupported stock allocation sale": "不支持的股票配置銷售",
-  "Use the normal return process for an allocated sale.": "針對分配銷售，請使用正常退貨流程。"
+  "Use the normal return process for an allocated sale.": "針對分配銷售，請使用正常退貨流程。",
+  "Enable Recycle Bin before deleting sales": "刪除銷售前啟用資源回收站",
+  "Only super admins can change the sale hard-delete setting": "只有超級管理員可以更改銷售硬刪除設置"
 }

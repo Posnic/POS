@@ -4726,5 +4726,11 @@
   "lang_search_item_or_sku": "Élément de recherche ou SKU",
   "lang_several_products_share_this_barcode_select": "Plusieurs produits partagent ce code-barres. Sélectionnez le produit que vous vendez.",
   "lang_temporary_view_for_this_screen": "Affichage temporaire de cet écran.",
-  "lang_updates_existing_products_only_no_stock_qu": "Met à jour uniquement les produits existants. Les quantités en stock ou les coûts d'achat historiques ne sont pas modifiés."
+  "lang_updates_existing_products_only_no_stock_qu": "Met à jour uniquement les produits existants. Les quantités en stock ou les coûts d'achat historiques ne sont pas modifiés.",
+  "lang_allow_sale_hard_delete": "Autoriser la suppression définitive des ventes",
+  "lang_sale_hard_delete_confirm": "La suppression matérielle supprime cette vente de l'historique des ventes et déplace ses données vers la corbeille.",
+  "lang_sale_hard_delete_disabled": "La suppression définitive des ventes est désactivée dans les paramètres de vente",
+  "lang_sale_hard_delete_help": "La suppression matérielle supprime la vente des enregistrements actifs et de l'historique des ventes. Les données de vente sont transférées vers la corbeille. La corbeille doit être activée. Les ajustements relatifs aux stocks et aux paiements sont annulés. Seuls les utilisateurs disposant d'une autorisation de vente et de suppression peuvent effectuer une suppression. Désactivé par défaut, y compris pour les super administrateurs.",
+  "lang_sale_hard_delete_hint": "Désactivé par défaut. Les données de vente supprimées sont déplacées vers la corbeille.",
+  "lang_sale_hard_delete_super_help": "Seuls les super administrateurs peuvent activer et utiliser la suppression matérielle. Il supprime la vente des enregistrements actifs et de l'historique des ventes et déplace les données de vente vers la corbeille. La corbeille doit être activée. Les ajustements de stock et de solde client sont inversés. Désactivé par défaut."
 }

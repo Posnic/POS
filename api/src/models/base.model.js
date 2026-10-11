@@ -830,7 +830,7 @@ class BaseModel {
   /**
    * Static backup deleted document
    */
-  static async deletedDocumentBackup(document, params) {
+  static async deletedDocumentBackup(document, params, { requireRetention = false } = {}) {
     try {
       const backupTable = {
         document_name: document,
@@ -865,6 +865,13 @@ class BaseModel {
           const branchDoc = await currentDb(BaseModel.database)
             .collection('branches')
             .findOne({ _id: branchId }, { projection: { module_recyclebin_enable: 1 } });
+          if (requireRetention && ![true, 'true'].includes(branchDoc?.module_recyclebin_enable)) {
+            return {
+              status: false,
+              data: null,
+              message: 'Enable Recycle Bin before deleting sales',
+            };
+          }
           if (branchDoc && branchDoc.module_recyclebin_enable === false) {
             for (const key of Object.keys(backupTable)) {
               if (
@@ -886,6 +893,7 @@ class BaseModel {
           }
         }
       } catch (e) {
+        if (requireRetention) return { status: false, data: null, message: e.message };
         /* fail open: keep the full backup */
       }
 

@@ -277,6 +277,8 @@ class SettingsRepository extends BaseModel {
           if (where === 'branch' || where === 'legacy') own[key] = read.data.values[key];
         }
 
+        // Destructive-sale consent must be explicitly set at the destination.
+        delete own.allow_sale_hard_delete;
         if (!Object.keys(own).length) {
           copied[group] = [];
           continue;

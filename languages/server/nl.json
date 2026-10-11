@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "Niet ondersteunde toegezegde verkooptoezegging",
   "Unsupported allocated sale preparation": "Niet ondersteunde voorbereiding van toegewezen verkopen",
   "Unsupported stock allocation sale": "Niet ondersteunde verkoop van aandelenallocatie",
-  "Use the normal return process for an allocated sale.": "Gebruik het normale retourproces voor een toegewezen verkoop."
+  "Use the normal return process for an allocated sale.": "Gebruik het normale retourproces voor een toegewezen verkoop.",
+  "Enable Recycle Bin before deleting sales": "Schakel de Prullenbak in voordat u verkopen verwijdert",
+  "Only super admins can change the sale hard-delete setting": "Alleen superbeheerders kunnen de instelling voor hard verwijderen van de verkoop wijzigen"
 }

@@ -1192,6 +1192,16 @@ class SettingModel extends BaseModel {
   async updateCommonSettings(data = {}) {
     try {
       if (
+        data.allow_sale_hard_delete !== undefined &&
+        String(this.user?.usertype || this.user?.role || '').toLowerCase() !== 'super_admin'
+      ) {
+        return {
+          status: false,
+          data: null,
+          message: 'Only super admins can change the sale hard-delete setting',
+        };
+      }
+      if (
         data.quote_default_signature !== undefined &&
         data.quote_default_signature !== '' &&
         !require('../helpers/receipt-design').image(data.quote_default_signature)
@@ -1392,6 +1402,12 @@ class SettingModel extends BaseModel {
         discount_percentage: parseFloat(data.discount_percentage),
         discount_amount: parseFloat(data.discount_amount),
         sales_prefix: data.sales_prefix,
+        ...(data.allow_sale_hard_delete !== undefined
+          ? {
+              allow_sale_hard_delete:
+                data.allow_sale_hard_delete === true || data.allow_sale_hard_delete === 'true',
+            }
+          : {}),
         ...Object.fromEntries(
           ['sales_search_fields', 'sales_search_display_fields']
             .filter((key) => data[key] !== undefined)

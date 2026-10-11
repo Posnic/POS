@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "Confirmação de venda alocada não suportada",
   "Unsupported allocated sale preparation": "Preparação de venda alocada sem suporte",
   "Unsupported stock allocation sale": "Venda não suportada por alocação de ações",
-  "Use the normal return process for an allocated sale.": "Use o processo normal de devolução para uma venda alocada."
+  "Use the normal return process for an allocated sale.": "Use o processo normal de devolução para uma venda alocada.",
+  "Enable Recycle Bin before deleting sales": "Ative a lixeira antes de excluir as vendas",
+  "Only super admins can change the sale hard-delete setting": "Somente superadministradores podem alterar a configuração de exclusão forçada da venda"
 }

@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "Nepodržana dodijeljena obveza prodaje",
   "Unsupported allocated sale preparation": "Nepodržana dodijeljena priprema prodaje",
   "Unsupported stock allocation sale": "Nepodržana prodaja raspodjele zaliha",
-  "Use the normal return process for an allocated sale.": "Koristite uobičajeni postupak povrata za dodijeljenu prodaju."
+  "Use the normal return process for an allocated sale.": "Koristite uobičajeni postupak povrata za dodijeljenu prodaju.",
+  "Enable Recycle Bin before deleting sales": "Omogućite koš za smeće prije brisanja prodaje",
+  "Only super admins can change the sale hard-delete setting": "Samo super administratori mogu promijeniti postavku rasprodaje tvrdog brisanja"
 }

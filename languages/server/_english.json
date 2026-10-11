@@ -753,6 +753,9 @@
   "Embedding text exceeds its limit.": [
     "src/services/ask-posnic-embedding.service.js"
   ],
+  "Enable Recycle Bin before deleting sales": [
+    "src/models/base.model.js"
+  ],
   "Enter a code": [
     "src/controllers/online-ordering.controller.js"
   ],
@@ -1556,6 +1559,9 @@
   ],
   "Only drafts can be deleted": [
     "src/repositories/purchase-order.repository.js"
+  ],
+  "Only super admins can change the sale hard-delete setting": [
+    "src/models/setting.model.js"
   ],
   "Open order not found": [
     "src/repositories/sale.repository.js"

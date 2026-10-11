@@ -4644,5 +4644,11 @@
   "lang_search_item_or_sku": "Ieškokite elemento arba SKU",
   "lang_several_products_share_this_barcode_select": "Keletas produktų dalijasi šiuo brūkšniniu kodu. Pasirinkite produktą, kurį parduodate.",
   "lang_temporary_view_for_this_screen": "Laikinas šio ekrano vaizdas.",
-  "lang_updates_existing_products_only_no_stock_qu": "Atnaujina tik esamus produktus. Jokie atsargų kiekiai ar istorinės pirkimo išlaidos nekeičiamos."
+  "lang_updates_existing_products_only_no_stock_qu": "Atnaujina tik esamus produktus. Jokie atsargų kiekiai ar istorinės pirkimo išlaidos nekeičiamos.",
+  "lang_allow_sale_hard_delete": "Leisti sunkiai ištrinti pardavimus",
+  "lang_sale_hard_delete_confirm": "“Hard delete” pašalina šį pardavimą iš Pardavimų istorijos ir perkelia jo duomenis į šiukšlinę.",
+  "lang_sale_hard_delete_disabled": "Pardavimų nustatymuose išjungtas kietasis pardavimų naikinimas",
+  "lang_sale_hard_delete_help": "Sunkus ištrynimas pašalina pardavimą iš aktyvių įrašų ir Pardavimų istorijos. Pardavimo duomenys perkeliami į šiukšlinę. Šiukšlinė turi būti įjungta. Susiję atsargų ir mokėjimų koregavimai yra atšaukti. Ištrinti gali tik vartotojai, turintys pardavimo-ištrynimo leidimą. Pagal numatytuosius nustatymus išjungta, taip pat ir super administratoriams.",
+  "lang_sale_hard_delete_hint": "Pagal numatytuosius nustatymus išjungta. Ištrinti pardavimo duomenys perkeliami į šiukšlinę.",
+  "lang_sale_hard_delete_super_help": "Tik super adminai gali įjungti ir naudoti “hard delete”. Jis pašalina pardavimą iš aktyvių įrašų ir Pardavimų istorijos ir perkelia pardavimo duomenis į šiukšlinę. Šiukšlinė turi būti įjungta. Atsargų ir klientų balanso koregavimas yra atvirkštinis. Išjungta pagal numatytuosius nustatymus."
 }

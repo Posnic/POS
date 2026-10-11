@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "Neatbalstītas piešķirtās pārdošanas saistības",
   "Unsupported allocated sale preparation": "Neatbalstīta piešķirtās pārdošanas sagatavošana",
   "Unsupported stock allocation sale": "Neatbalstīta akciju sadales pārdošana",
-  "Use the normal return process for an allocated sale.": "Izmantojiet parasto atgriešanas procesu piešķirtajai pārdošanai."
+  "Use the normal return process for an allocated sale.": "Izmantojiet parasto atgriešanas procesu piešķirtajai pārdošanai.",
+  "Enable Recycle Bin before deleting sales": "Pirms pārdošanas izdzēšanas iespējojiet atkritni",
+  "Only super admins can change the sale hard-delete setting": "Tikai super administratori var mainīt pārdošanas cietās dzēšanas iestatījumu"
 }

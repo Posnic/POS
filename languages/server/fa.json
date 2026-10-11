@@ -950,5 +950,7 @@
   "Unsupported allocated sale commit": "تعهد فروش اختصاص داده نشده پشتیبانی شده",
   "Unsupported allocated sale preparation": "آماده سازی فروش اختصاص داده نشده",
   "Unsupported stock allocation sale": "فروش تخصیص سهام پشتیبانی نشده",
-  "Use the normal return process for an allocated sale.": "از فرآیند بازگشت عادی برای فروش اختصاص داده شده استفاده کنید."
+  "Use the normal return process for an allocated sale.": "از فرآیند بازگشت عادی برای فروش اختصاص داده شده استفاده کنید.",
+  "Enable Recycle Bin before deleting sales": "قبل از حذف فروش، سطل بازیافت را فعال کنید",
+  "Only super admins can change the sale hard-delete setting": "فقط مدیران فوق العاده می توانند تنظیمات حذف سخت فروش را تغییر دهند"
 }

@@ -4647,5 +4647,11 @@
   "lang_search_item_or_sku": "검색 항목 또는 SKU",
   "lang_several_products_share_this_barcode_select": "여러 제품이 이 바코드를 공유합니다.판매 중인 제품을 선택합니다.",
   "lang_temporary_view_for_this_screen": "이 화면의 임시 화면입니다.",
-  "lang_updates_existing_products_only_no_stock_qu": "기존 제품만 업데이트합니다.재고 수량이나 과거 구매 비용은 변경되지 않습니다."
+  "lang_updates_existing_products_only_no_stock_qu": "기존 제품만 업데이트합니다.재고 수량이나 과거 구매 비용은 변경되지 않습니다.",
+  "lang_allow_sale_hard_delete": "판매 강제 삭제 허용",
+  "lang_sale_hard_delete_confirm": "강제 삭제는 판매 내역에서 해당 판매를 제거하고 해당 데이터를 휴지통으로 이동합니다.",
+  "lang_sale_hard_delete_disabled": "판매 설정에서는 판매 강제 삭제를 사용할 수 없습니다.",
+  "lang_sale_hard_delete_help": "하드 삭제는 활성 레코드와 판매 내역에서 판매를 제거합니다.판매 데이터는 휴지통으로 이동합니다.휴지통을 활성화해야 합니다.관련 주식 및 지급 조정은 취소됩니다.판매 삭제 권한이 있는 사용자만 삭제할 수 있습니다.슈퍼 관리자를 포함하여 기본적으로 꺼져 있습니다.",
+  "lang_sale_hard_delete_hint": "기본적으로 꺼져 있습니다.삭제된 판매 데이터는 휴지통으로 이동합니다.",
+  "lang_sale_hard_delete_super_help": "슈퍼 관리자만 강제 삭제를 활성화하고 사용할 수 있습니다.활성 레코드와 판매 내역에서 판매를 제거하고 판매 데이터를 휴지통으로 이동합니다.휴지통을 활성화해야 합니다.재고 및 고객 잔고 조정은 취소됩니다.기본적으로 꺼져 있습니다."
 }

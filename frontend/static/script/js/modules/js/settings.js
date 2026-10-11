@@ -629,6 +629,7 @@ PosnicPro.settings = {
                     PosnicPro.local.set('currencySign', currency);
                     $(".branch-name").text(response.data['branch_name']);
                     PosnicPro.local.set('branchname', response.data['branch_name']);
+                    PosnicPro.local.set('allow_sale_hard_delete', (response.data.allow_sale_hard_delete === true || response.data.allow_sale_hard_delete === 'true') ? 'true' : 'false');
                     PosnicPro.local.set('branchemail', response.data['store_email']);
                     PosnicPro.local.setVolatile('branchphone', response.data['store_telephone']);
                     PosnicPro.local.set('branchaddress', response.data['store_address']);
@@ -920,6 +921,10 @@ PosnicPro.settings = {
                 }
                 $('#receiving_prefix').val(data.receiving_prefix || 'P');
                 $('#allow_sale_date_edit').prop('checked', data.allow_sale_date_edit !== 'false' && data.allow_sale_date_edit !== false);
+                var saleHardDelete = data.allow_sale_hard_delete === true || data.allow_sale_hard_delete === 'true';
+                $('#allow_sale_hard_delete').prop('checked', saleHardDelete);
+                $('#sale_hard_delete_setting').toggle(PosnicPro.local.get('usertype') === 'super_admin');
+                PosnicPro.local.set('allow_sale_hard_delete', saleHardDelete ? 'true' : 'false');
                 PosnicPro.local.set('allow_sale_date_edit', (data.allow_sale_date_edit === 'false' || data.allow_sale_date_edit === false) ? 'false' : 'true');
                 const dbValue = data.sms_auto_send_time; // Replace with your actual database value
                 let [time, period] = dbValue.split(' '); // Split into time and AM/PM
@@ -2219,6 +2224,7 @@ if ($wrapper.length) {
                 quote_default_signature: $('#quote_default_signature').val() || '',
                 receiving_prefix: $('#receiving_prefix').val(),
                 allow_sale_date_edit: ($('#allow_sale_date_edit').is(":checked")) ? 'true' : 'false',
+                allow_sale_hard_delete: PosnicPro.local.get('usertype') === 'super_admin' ? $('#allow_sale_hard_delete').is(':checked') : undefined,
                 indian_gst: $('#indian_gst').val(),
                 branch_gstin_number: $('#branch_gstin_number').val(),
                 print_type: $('#print_type').val(),
@@ -2335,6 +2341,7 @@ if ($wrapper.length) {
                 PosnicPro.settings.syncDemoDataAfterSave();
                 let htmlView = $('#footer_print').text();
                 PosnicPro.settings.applyReceiptFooter(response.data);
+                PosnicPro.local.set('allow_sale_hard_delete', $('#allow_sale_hard_delete').is(':checked') ? 'true' : 'false');
                 $('.footer-content').text(htmlView);
                 let htmlHeaderView = $('#header_print').text();
                 $('.header-content').text(htmlHeaderView);

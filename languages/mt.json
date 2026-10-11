@@ -4644,5 +4644,11 @@
   "lang_search_item_or_sku": "Fittex oġġett jew SKU",
   "lang_several_products_share_this_barcode_select": "Diversi prodotti jaqsmu dan il-barcode. Agħżel il-prodott li qed tbiegħ.",
   "lang_temporary_view_for_this_screen": "Veduta temporanja għal dan l-iskrin.",
-  "lang_updates_existing_products_only_no_stock_qu": "Taġġorna l-prodotti eżistenti biss. L-ebda kwantitajiet ta' stokk jew spejjeż storiċi tax-xiri ma jinbidlu"
+  "lang_updates_existing_products_only_no_stock_qu": "Taġġorna l-prodotti eżistenti biss. L-ebda kwantitajiet ta' stokk jew spejjeż storiċi tax-xiri ma jinbidlu",
+  "lang_allow_sale_hard_delete": "Ħalli t-tħassir diffiċli tal-bejgħ",
+  "lang_sale_hard_delete_confirm": "Ħassar iebes tneħħi dan il-bejgħ mill-Istorja tal-Bejgħ u jiċċaqlaq id-data tagħha għal Recycle Bin.",
+  "lang_sale_hard_delete_disabled": "It-tħassir iebes tal-bejgħ huwa diżattivat fis-settings tal-Bejgħ",
+  "lang_sale_hard_delete_help": "Ħassar iebes ineħħi l-bejgħ minn rekords attivi u l-Istorja tal-Bejgħ. Id-dejta tal-bejgħ timxi lejn Recycle Bin. Ir-Recycle Bin għandu jkun attivat. L-aġġustamenti relatati fl-istokk u tal-ħlas huma maqluba. L-utenti biss b'permess għall-bejgħ għall-ħassar jistgħu jħassru. Mitfi b'mod awtomatiku, inkluż għal super ammins.",
+  "lang_sale_hard_delete_hint": "Mitfi b'mod awtomatiku. Id-dejta tal-bejgħ imħassra timxi lejn Recycle Bin.",
+  "lang_sale_hard_delete_super_help": "Super ammins biss jistgħu jippermettu u jużaw ħassar iebes. Hija tneħħi l-bejgħ minn rekords attivi u l-Istorja tal-Bejgħ u jċaqlaq id-dejta tal-bejgħ għal Recycle Bin. Ir-Recycle Bin għandu jkun attivat. L-aġġustamenti tal-istokk u tal-bilanċ tal-klijent huma maqluba. Mitfi b'mod awtomatiku."
 }

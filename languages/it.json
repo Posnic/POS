@@ -4726,5 +4726,11 @@
   "lang_search_item_or_sku": "Cerca articolo o SKU",
   "lang_several_products_share_this_barcode_select": "Diversi prodotti condividono questo codice a barre. Seleziona il prodotto che stai vendendo.",
   "lang_temporary_view_for_this_screen": "Visualizzazione temporanea di questa schermata.",
-  "lang_updates_existing_products_only_no_stock_qu": "Aggiorna solo i prodotti esistenti. Non vengono modificate le quantità di scorte o i costi storici di acquisto."
+  "lang_updates_existing_products_only_no_stock_qu": "Aggiorna solo i prodotti esistenti. Non vengono modificate le quantità di scorte o i costi storici di acquisto.",
+  "lang_allow_sale_hard_delete": "Consenti l'eliminazione definitiva delle vendite",
+  "lang_sale_hard_delete_confirm": "L'eliminazione definitiva rimuove questa vendita dalla cronologia delle vendite e ne sposta i dati nel Cestino.",
+  "lang_sale_hard_delete_disabled": "L'eliminazione definitiva delle vendite è disattivata nelle impostazioni di vendita",
+  "lang_sale_hard_delete_help": "L'eliminazione definitiva rimuove la vendita dai record attivi e dalla cronologia delle vendite. I dati di vendita vengono spostati nel Cestino. Il Cestino deve essere abilitato. Le relative rettifiche relative alle scorte e ai pagamenti vengono annullate. Solo gli utenti con autorizzazione all'eliminazione delle vendite possono effettuare l'eliminazione. Disattivato per impostazione predefinita, anche per i super amministratori.",
+  "lang_sale_hard_delete_hint": "Disattivata per impostazione predefinita. I dati di vendita eliminati vengono spostati nel Cestino.",
+  "lang_sale_hard_delete_super_help": "Solo i super amministratori possono abilitare e utilizzare l'eliminazione definitiva. Rimuove la vendita dai record attivi e dalla cronologia delle vendite e sposta i dati di vendita nel Cestino. Il Cestino deve essere abilitato. Le rettifiche relative alle scorte e al saldo dei clienti vengono annullate. Disattivato per impostazione predefinita."
 }

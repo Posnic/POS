@@ -4644,5 +4644,11 @@
   "lang_search_item_or_sku": "Otsi üksust või SKU",
   "lang_several_products_share_this_barcode_select": "Mitmed tooted jagavad seda vöötkoodi. Valige toode, mida müüte.",
   "lang_temporary_view_for_this_screen": "Selle ekraani ajutine vaade.",
-  "lang_updates_existing_products_only_no_stock_qu": "Uuendab ainult olemasolevaid tooteid. Varude koguseid ega ajaloolisi ostukulusid ei muudeta."
+  "lang_updates_existing_products_only_no_stock_qu": "Uuendab ainult olemasolevaid tooteid. Varude koguseid ega ajaloolisi ostukulusid ei muudeta.",
+  "lang_allow_sale_hard_delete": "Luba müügi kõvasti kustutamist",
+  "lang_sale_hard_delete_confirm": "Hard delete eemaldab selle müügi müügiajaloost ja viib selle andmed prügikasti.",
+  "lang_sale_hard_delete_disabled": "Müügi kõva kustutamine on müügisätetes keelatud",
+  "lang_sale_hard_delete_help": "Kõva kustutamine eemaldab müügi aktiivsetest kirjetest ja müügiajaloost. Müügiandmed liiguvad prügikasti. Prügikast peab olema lubatud. Seotud aktsiate ja maksete korrigeerimised on vastupidised. Kustutada saavad ainult müügi-kustutamise loaga kasutajad. Vaikimisi välja lülitatud, sealhulgas superadministraatorite jaoks.",
+  "lang_sale_hard_delete_hint": "Vaikimisi välja lülitatud. Kustutatud müügiandmed viiakse prügikasti.",
+  "lang_sale_hard_delete_super_help": "Ainult superadministraatorid saavad kõva kustutamist lubada ja kasutada. See eemaldab müügi aktiivsetest kirjetest ja müügiajaloost ning viib müügiandmed prügikasti. Prügikast peab olema lubatud. Varude ja kliendi saldo korrigeerimine on vastupidised. Vaikimisi välja lülitatud."
 }
