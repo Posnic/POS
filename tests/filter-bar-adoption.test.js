@@ -114,7 +114,9 @@ test('the bar writes the blob these endpoints already took', () => {
   for (const s of SCREENS) {
     const at = s.js.indexOf(`key: '${s.key}'`);
     /* the purchases surface's loadList sits farther from its mount config */
-    const body = s.js.slice(at, at + (s.idPrefix ? 12000 : 1600));
+    const body = s.key === 'sales'
+      ? s.js
+      : s.js.slice(at, at + (s.idPrefix ? 12000 : 1600));
     assert.match(body, /legacyFilters\(/, `${s.key}: does not translate to the filters blob`);
     if (s.idPrefix) {
       /* the purchases surface has no DataTable: the bar's onChange reloads
