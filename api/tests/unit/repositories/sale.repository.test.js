@@ -901,6 +901,34 @@ describe('SalesRepository', () => {
   });
 
   describe('getLegacyDetails', () => {
+    test('receipt creation time uses the sale branch even after date simplification', async () => {
+      if (!collections.sales) collections.sales = mkCol();
+      if (!collections.branches) collections.branches = mkCol();
+      const created = new Date('2026-10-11T01:49:09Z');
+      collections.sales.findOne.mockResolvedValue({
+        _id: FAKE_ID,
+        branch_id: FAKE_BRANCH,
+        items: [],
+        created_date: created,
+      });
+      collections.branches.findOne.mockResolvedValue({
+        _id: FAKE_BRANCH,
+        time_zone: 'Europe/London',
+      });
+      BaseModel.simplifyFields.mockImplementationOnce((doc) => ({
+        ...doc,
+        created_date: '10/11/2026 01:49 am',
+      }));
+      const format = require('../../../src/utils/helpers').formatDate;
+      format
+        .mockImplementationOnce(jest.requireActual('../../../src/utils/helpers').formatDate)
+        .mockImplementationOnce(jest.requireActual('../../../src/utils/helpers').formatDate);
+      const result = await salesRepository.getLegacyDetails(FAKE_ID);
+      expect(result.status).toBe(true);
+      expect(result.data.created_date).toBe('10/11/2026 02:49 am');
+      expect(result.data.receipt_date_order).toBe('mdy');
+      expect(created.toISOString()).toBe('2026-10-11T01:49:09.000Z');
+    });
     test('preserves the precise edit revision separately from display dates', async () => {
       if (!collections.sales) collections.sales = mkCol();
       const updated = new Date('2026-10-05T08:12:10.987Z');

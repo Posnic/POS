@@ -3899,6 +3899,12 @@ PosnicPro = {
                 'MM/DD/YYYY',
             ], false);
         if (!m.isValid()) m = moment(new Date(date));
+        // Only absolute timestamps need conversion; legacy shop-local stamps
+        // and date-only inputs must keep their existing wall clock and date.
+        if (date instanceof Date || typeof date === 'number' ||
+            (typeof date === 'string' && /T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(date))) {
+            m = m.tz(PosnicPro.timeZone());
+        }
         return (PosnicPro.local.get('timeformat') === 'enable') ? m.format(formatData + " " + "LT") : m.format(formatData);
     },
     convertFormatDateTime: function () {
