@@ -6997,7 +6997,7 @@ PosnicPro.sales.calculation = {
             return sum + (Number.isFinite(quantity) ? quantity : 0);
         }, 0);
         $('.sale-cart-quantity').text(Number(cartQuantity.toFixed(6)).toLocaleString(undefined, { maximumFractionDigits: 6 }));
-        $('.sale-cart-lines').text(PosnicPro.sales.addLineTable.length);
+        $('.sale-cart-lines').text(PosnicPro.sales.addLineTable.filter(function (row) { return !!row.item_id; }).length);
         var addSalesSubTotal = 0;
         var addSalesLineGstTaxTotal = 0;
         var addSalesLineSubTotal = 0;
