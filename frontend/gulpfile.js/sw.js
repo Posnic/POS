@@ -18,13 +18,20 @@ function buildServiceWorker(cb) {
     const hash = crypto.createHash('sha256');
     const roots = [path.join(dir, publicDir, 'script'), path.join(dir, publicDir, 'style')];
     function hashFiles(root, relative = '') {
-      for (const name of fs.readdirSync(root).sort()) {
+      for (const item of fs.readdirSync(root, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+        const name = item.name;
         const full = path.join(root, name);
         const entry = path.posix.join(relative, name);
-        if (fs.statSync(full).isDirectory()) hashFiles(full, entry);
-        else if (fs.statSync(full).isFile()) {
-          hash.update(entry);
-          hash.update(fs.readFileSync(full));
+        if (item.isDirectory()) hashFiles(full, entry);
+        else if (item.isFile()) {
+          const fd = fs.openSync(full, 'r');
+          try {
+            if (!fs.fstatSync(fd).isFile()) throw new Error('Build asset is no longer a file: ' + entry);
+            hash.update(entry);
+            hash.update(fs.readFileSync(fd));
+          } finally {
+            fs.closeSync(fd);
+          }
         }
       }
     }
