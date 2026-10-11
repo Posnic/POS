@@ -944,5 +944,11 @@
   "nothing_asked": "कुछ नहीं पूछा",
   "nothing_changed": "कुछ भी नहीं बदला",
   "order_changed": "ऑर्डर_चेंज किया गया",
-  "supplier_message_drafts": "आपूर्तिकर्ता_संदेश_ड्राफ़्ट"
+  "supplier_message_drafts": "आपूर्तिकर्ता_संदेश_ड्राफ़्ट",
+  "Allocated quantities require a completed payment.": "आवंटित मात्रा के लिए पूर्ण भुगतान की आवश्यकता होती है।",
+  "Item write permission required": "आइटम लिखने की अनुमति आवश्यक है",
+  "Unsupported allocated sale commit": "असमर्थित आबंटित बिक्री प्रतिबद्धता",
+  "Unsupported allocated sale preparation": "असमर्थित, आबंटित बिक्री की तैयारी",
+  "Unsupported stock allocation sale": "असमर्थित स्टॉक आबंटन बिक्री",
+  "Use the normal return process for an allocated sale.": "आवंटित बिक्री के लिए सामान्य रिटर्न प्रक्रिया का उपयोग करें।"
 }

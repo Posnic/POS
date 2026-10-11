@@ -944,5 +944,11 @@
   "unsuccessfully": "අසාර්ථක",
   "valid": "වලංගු",
   "date must be YYYY-MM-DD": "දිනය විය යුතුය YYYY-MM-DD",
-  "start and end must be HH:MM": "ආරම්භය සහ අවසානය HH විය යුතුය: MM"
+  "start and end must be HH:MM": "ආරම්භය සහ අවසානය HH විය යුතුය: MM",
+  "Allocated quantities require a completed payment.": "වෙන් කරන ලද ප්රමාණවලට සම්පූර්ණ ගෙවීමක් අවශ්ය වේ.",
+  "Item write permission required": "අයිතමය ලිවීමේ අවසරය අවශ්ය වේ",
+  "Unsupported allocated sale commit": "සහාය නොදක්වන වෙන් කළ විකුණුම් කැපවීම",
+  "Unsupported allocated sale preparation": "සහාය නොදක්වන වෙන් කළ විකුණුම් සකස් කිරීම",
+  "Unsupported stock allocation sale": "සහාය නොදක්වන කොටස් වෙන් කිරීමේ විකිණීම",
+  "Use the normal return process for an allocated sale.": "වෙන් කරන ලද විකිණීමක් සඳහා සාමාන්ය ආපසු ගැනීමේ ක්රියාවලිය භාවිතා කරන්න."
 }

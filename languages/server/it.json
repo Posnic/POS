@@ -944,5 +944,11 @@
   "unsuccessfully": "senza successo",
   "valid": "validi",
   "date must be YYYY-MM-DD": "la data deve essere YYYY-MM-DD",
-  "start and end must be HH:MM": "inizio e fine devono essere HH: MM"
+  "start and end must be HH:MM": "inizio e fine devono essere HH: MM",
+  "Allocated quantities require a completed payment.": "Le quantità assegnate richiedono un pagamento completato.",
+  "Item write permission required": "È richiesta l'autorizzazione alla scrittura dell'articolo",
+  "Unsupported allocated sale commit": "Conferma di vendita allocata non supportata",
+  "Unsupported allocated sale preparation": "Preparazione della vendita allocata non supportata",
+  "Unsupported stock allocation sale": "Vendita con allocazione di azioni non supportata",
+  "Use the normal return process for an allocated sale.": "Utilizza la normale procedura di restituzione per una vendita allocata."
 }

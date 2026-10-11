@@ -944,5 +944,11 @@
   "unsuccessfully": "hindi matagumpay",
   "valid": "may bisa",
   "date must be YYYY-MM-DD": "Ang petsa ay dapat YYYY-MM-DD",
-  "start and end must be HH:MM": "ang simula at pagtatapos ay dapat na HH: MM"
+  "start and end must be HH:MM": "ang simula at pagtatapos ay dapat na HH: MM",
+  "Allocated quantities require a completed payment.": "Ang mga inilalaan na dami ay nangangailangan ng isang nakumpleto",
+  "Item write permission required": "Kinakailangan ang pahintulot sa pagsul",
+  "Unsupported allocated sale commit": "Hindi sinusuportahang inilalaan na pagbebenta",
+  "Unsupported allocated sale preparation": "Hindi sinusuportahang inilalaan na paghahanda",
+  "Unsupported stock allocation sale": "Hindi sinusuportahang pagbebenta ng alokasyon",
+  "Use the normal return process for an allocated sale.": "Gamitin ang normal na proseso ng pagbabalik para sa isang inilalaan na pagbebenta."
 }

@@ -137,7 +137,7 @@ async function append(c, id, input) {
     job = await getJob(x, id);
   if (job.status !== 'draft') throw new Error('This job is already submitted');
   if (!Array.isArray(input.rows) || !input.rows.length || input.rows.length > 500)
-    throw new Error('Send 1–500 rows at a time');
+    throw new Error('Send 1 to 500 rows at a time');
   const start = Number(input.start);
   if (!Number.isInteger(start) || start < 0 || start + input.rows.length > LIMIT)
     throw new Error('Maximum 100,000 rows');
@@ -475,7 +475,7 @@ async function importSheet(c, input, file) {
   else throw new Error('Use CSV or XLSX');
   const ws = wb.worksheets[0];
   if (!ws || ws.rowCount < 2 || ws.rowCount > LIMIT + 1)
-    throw new Error('Sheet must have 1–100,000 rows');
+    throw new Error('Sheet must have 1 to 100,000 rows');
   const headers = ws.getRow(1).values.slice(1).map(String);
   if (new Set(headers).size !== headers.length) throw new Error('Duplicate column headers');
   const index = (h) => headers.indexOf(h) + 1;

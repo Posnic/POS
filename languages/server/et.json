@@ -944,5 +944,11 @@
   "unsuccessfully": "ebaõnnestunud",
   "valid": "kehtiv",
   "date must be YYYY-MM-DD": "kuupäev peab olema YYYY-MM-DD",
-  "start and end must be HH:MM": "algus ja lõpp peavad olema HH: MM"
+  "start and end must be HH:MM": "algus ja lõpp peavad olema HH: MM",
+  "Allocated quantities require a completed payment.": "Eraldatud kogused nõuavad täidetud makset.",
+  "Item write permission required": "Vajalik üksuse kirjutamise luba",
+  "Unsupported allocated sale commit": "Toetamata eraldatud müügikohustus",
+  "Unsupported allocated sale preparation": "Toetamata eraldatud müügi ettevalmistamine",
+  "Unsupported stock allocation sale": "Toetamata aktsiate jaotamise müük",
+  "Use the normal return process for an allocated sale.": "Kasutage eraldatud müügi jaoks tavalist tagastamisprotsessi."
 }

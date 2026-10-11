@@ -944,5 +944,11 @@
   "unsuccessfully": "neúspešne",
   "valid": "platný",
   "date must be YYYY-MM-DD": "dátum musí byť YYYY-MM-DD",
-  "start and end must be HH:MM": "začiatok a koniec musia byť HH: MM"
+  "start and end must be HH:MM": "začiatok a koniec musia byť HH: MM",
+  "Allocated quantities require a completed payment.": "Pridelené množstvá vyžadujú dokončenú platbu.",
+  "Item write permission required": "Vyžaduje sa povolenie na zápis položky",
+  "Unsupported allocated sale commit": "Nepodporovaný pridelený odkaz predaja",
+  "Unsupported allocated sale preparation": "Nepodporovaná pridelená príprava predaja",
+  "Unsupported stock allocation sale": "Nepodporovaný predaj alokácie akcií",
+  "Use the normal return process for an allocated sale.": "Na pridelený predaj použite normálny proces vrátenia."
 }

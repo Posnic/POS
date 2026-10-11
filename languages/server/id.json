@@ -944,5 +944,11 @@
   "unsuccessfully": "tidak berhasil",
   "valid": "sahih",
   "date must be YYYY-MM-DD": "Tanggal harus YYYY-MM-DD",
-  "start and end must be HH:MM": "awal dan akhir harus HH: MM"
+  "start and end must be HH:MM": "awal dan akhir harus HH: MM",
+  "Allocated quantities require a completed payment.": "Jumlah yang dialokasikan memerlukan pembayaran yang diselesaikan.",
+  "Item write permission required": "Diperlukan izin penulisan item",
+  "Unsupported allocated sale commit": "Komit penjualan yang dialokasikan tidak didukung",
+  "Unsupported allocated sale preparation": "Persiapan penjualan yang dialokasikan tidak didukung",
+  "Unsupported stock allocation sale": "Penjualan alokasi saham yang tidak didukung",
+  "Use the normal return process for an allocated sale.": "Gunakan proses pengembalian normal untuk penjualan yang dialokasikan."
 }

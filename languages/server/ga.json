@@ -944,5 +944,11 @@
   "unsuccessfully": "gan éirigh leis",
   "valid": "bailí",
   "date must be YYYY-MM-DD": "caithfidh an dáta a bheith YYYY-MM-DD",
-  "start and end must be HH:MM": "caithfidh tús agus deireadh a bheith HH: MM"
+  "start and end must be HH:MM": "caithfidh tús agus deireadh a bheith HH: MM",
+  "Allocated quantities require a completed payment.": "Teastaíonn íocaíocht chomhlánaithe ó chainníochtaí",
+  "Item write permission required": "Cead scríobh mír ag teastáil",
+  "Unsupported allocated sale commit": "Tiomantas díolacháin leithdháilte",
+  "Unsupported allocated sale preparation": "Ullmhú díola leithdháilte gan",
+  "Unsupported stock allocation sale": "Díol leithdháileadh stoc gan tacaíocht",
+  "Use the normal return process for an allocated sale.": "Úsáid an gnáthphróiseas tuairisceáin le haghaidh díolachán leith"
 }

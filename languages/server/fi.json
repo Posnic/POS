@@ -944,5 +944,11 @@
   "unsuccessfully": "tuloksetta",
   "valid": "voimassa",
   "date must be YYYY-MM-DD": "Päivämäärän on oltava YYYY-MM-DD",
-  "start and end must be HH:MM": "Alku ja loppu on oltava HH: MM"
+  "start and end must be HH:MM": "Alku ja loppu on oltava HH: MM",
+  "Allocated quantities require a completed payment.": "Kohdennetut määrät edellyttävät suoritettua maksua.",
+  "Item write permission required": "Kohteen kirjoitusoikeus vaaditaan",
+  "Unsupported allocated sale commit": "Kohdennettua myyntisitoumusta, jota ei tueta",
+  "Unsupported allocated sale preparation": "Kohdennetun myynnin valmistelu, jota ei tueta",
+  "Unsupported stock allocation sale": "Tukematon osakkeiden allokointimyynti",
+  "Use the normal return process for an allocated sale.": "Käytä kohdennetun myynnin normaalia palautusprosessia."
 }

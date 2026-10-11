@@ -944,5 +944,11 @@
   "unsuccessfully": "безуспешно",
   "valid": "важечки",
   "date must be YYYY-MM-DD": "датумот мора да биде YYYY-MM-DD",
-  "start and end must be HH:MM": "почетокот и крајот мора да бидат HH: MM"
+  "start and end must be HH:MM": "почетокот и крајот мора да бидат HH: MM",
+  "Allocated quantities require a completed payment.": "Доделените количини бараат завршена исплата.",
+  "Item write permission required": "Потребна е дозвола за пишување на ставката",
+  "Unsupported allocated sale commit": "Неподдржан доделен обврска за продажба",
+  "Unsupported allocated sale preparation": "Неподдржана подготовка за доделена продажба",
+  "Unsupported stock allocation sale": "Неподдржана продажба на распределба на акции",
+  "Use the normal return process for an allocated sale.": "Користете го нормалниот процес на враќање за доделена продажба."
 }

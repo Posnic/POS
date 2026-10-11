@@ -944,5 +944,11 @@
   "unsuccessfully": "không thành công",
   "valid": "có hiệu lực",
   "date must be YYYY-MM-DD": "ngày phải là YYYY-MM-DD",
-  "start and end must be HH:MM": "Bắt đầu và kết thúc phải là HH: MM"
+  "start and end must be HH:MM": "Bắt đầu và kết thúc phải là HH: MM",
+  "Allocated quantities require a completed payment.": "Số lượng được phân bổ yêu cầu thanh toán hoàn thành.",
+  "Item write permission required": "Yêu cầu quyền ghi mục",
+  "Unsupported allocated sale commit": "Cam kết bán hàng được phân bổ không được hỗ trợ",
+  "Unsupported allocated sale preparation": "Chuẩn bị bán hàng được phân bổ không được hỗ trợ",
+  "Unsupported stock allocation sale": "Bán phân bổ cổ phiếu không được hỗ trợ",
+  "Use the normal return process for an allocated sale.": "Sử dụng quy trình trả lại thông thường cho một đợt bán hàng được phân bổ."
 }

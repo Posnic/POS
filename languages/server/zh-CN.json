@@ -944,5 +944,11 @@
   "unsuccessfully": "不成功",
   "valid": "有效",
   "date must be YYYY-MM-DD": "日期必须是 YYYY-MM-DD",
-  "start and end must be HH:MM": "开始和结束必须是 HH: MM"
+  "start and end must be HH:MM": "开始和结束必须是 HH: MM",
+  "Allocated quantities require a completed payment.": "分配的数量需要完成付款。",
+  "Item write permission required": "需要物品写入权限",
+  "Unsupported allocated sale commit": "不支持的分配销售承诺",
+  "Unsupported allocated sale preparation": "不支持的分配销售准备工作",
+  "Unsupported stock allocation sale": "不支持的股票配额出售",
+  "Use the normal return process for an allocated sale.": "对分配的销售使用正常退货流程。"
 }

@@ -517,7 +517,7 @@
       )
       .appendTo(box);
     var select = $(
-      '<select class="form-control mb-2" aria-label="Review status">',
+      '<select class="form-control mb-2" aria-label="Review status" data-t-aria-label="lang_review_status">',
     ).css("max-width", "250px");
     ["", "invalid", "pending", "updated", "conflict", "unchanged"].forEach(
       function (s) {
@@ -534,7 +534,7 @@
     });
     box.append(select);
     var table = $('<table class="table">').append(
-        "<thead><tr><th>Row / item</th><th>Changes</th><th>Status</th></tr></thead>",
+        '<thead><tr><th><lang class="lang_row_item">Row / item</lang></th><th><lang class="lang_changes">Changes</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr></thead>',
       ),
       body = $("<tbody>").appendTo(table);
     data.rows.forEach(function (r) {
@@ -559,13 +559,13 @@
       '<div class="d-flex flex-wrap align-items-center" style="gap:10px">',
     );
     pager.append(
-      $('<button class="btn btn-light">Previous</button>')
+      $('<button class="btn btn-light"><lang class="lang_previous">Previous</lang></button>')
         .prop("disabled", data.page <= 1)
         .on("click", function () {
           p.sheetJob(currentJob, jobPage - 1);
         }),
       $("<span>").text("Page " + data.page + " · " + data.total + " rows"),
-      $('<button class="btn btn-light">Next</button>')
+      $('<button class="btn btn-light"><lang class="lang_next">Next</lang></button>')
         .prop("disabled", data.page * 50 >= data.total)
         .on("click", function () {
           p.sheetJob(currentJob, jobPage + 1);
@@ -597,14 +597,14 @@
         })
         .appendTo(box);
     }
-    $('<button class="btn btn-light ml-2 mt-3">Download result report</button>')
+    $('<button class="btn btn-light ml-2 mt-3"><lang class="lang_download_result_report">Download result report</lang></button>')
       .on("click", function () {
         p.sheetReport(this);
       })
       .appendTo(box);
     if (c.invalid || c.conflict) {
       $(
-        '<button class="btn btn-light ml-2 mt-3">Download current prices for unresolved items</button>',
+        '<button class="btn btn-light ml-2 mt-3"><lang class="lang_download_current_prices_for_unresolved_ite">Download current prices for unresolved items</lang></button>',
       )
         .on("click", async function () {
           $(this).prop("disabled", true);

@@ -944,5 +944,11 @@
   "unsuccessfully": "neuspešno",
   "valid": "važeće",
   "date must be YYYY-MM-DD": "Datum mora biti YYYY-MM-DD",
-  "start and end must be HH:MM": "početak i kraj moraju biti HH: MM"
+  "start and end must be HH:MM": "početak i kraj moraju biti HH: MM",
+  "Allocated quantities require a completed payment.": "Dodeljene količine zahtevaju završenu uplatu.",
+  "Item write permission required": "Potrebna je dozvola za pisanje stavke",
+  "Unsupported allocated sale commit": "Nepodržana dodeljena prodaja",
+  "Unsupported allocated sale preparation": "Nepodržana priprema dodeljene prodaje",
+  "Unsupported stock allocation sale": "Nepodržana prodaja raspodjele zaliha",
+  "Use the normal return process for an allocated sale.": "Koristite normalan postupak povrata za dodeljenu prodaju."
 }

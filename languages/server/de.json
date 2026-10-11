@@ -944,5 +944,11 @@
   "nothing_asked": "nichts_gefragt",
   "nothing_changed": "nichts_hat sich geändert",
   "order_changed": "bestellung_geändert",
-  "supplier_message_drafts": "Nachrichten_Entwürfe des Lieferanten"
+  "supplier_message_drafts": "Nachrichten_Entwürfe des Lieferanten",
+  "Allocated quantities require a completed payment.": "Zugeteilte Mengen erfordern eine abgeschlossene Zahlung.",
+  "Item write permission required": "Schreibrechte für Artikel erforderlich",
+  "Unsupported allocated sale commit": "Zugewiesener Sale-Commit wird nicht unterstützt",
+  "Unsupported allocated sale preparation": "Die Vorbereitung eines zugewiesenen Verkaufs wird nicht unterstützt",
+  "Unsupported stock allocation sale": "Verkauf von Aktien mit ununterstützter Zuteilung",
+  "Use the normal return process for an allocated sale.": "Verwenden Sie das normale Rückgabeverfahren für einen zugewiesenen Verkauf."
 }
