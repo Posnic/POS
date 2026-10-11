@@ -1911,6 +1911,36 @@ describe('branch serving-period filters', () => {
     });
     expect(res.json.mock.calls[0][0].data.serving_periods[0].id).toBe('lunch');
   });
+  test('history dropdown refuses users without sales access', async () => {
+    const res = mockRes();
+    await ctrl.historyFilterOptions(
+      mockReq({ user: restrictedUser(), query: { branch: VALID_BRANCH, field: 'staff' } }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(salesService.getBranchById).not.toHaveBeenCalled();
+  });
+  test('history dropdown refuses a different tenant before querying sales', async () => {
+    salesService.getBranchById.mockResolvedValue({ license: 'another-license' });
+    const res = mockRes();
+    await ctrl.historyFilterOptions(
+      mockReq({ query: { branch: VALID_BRANCH, field: 'device' } }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+  test('history dropdown refuses a branch outside staff access', async () => {
+    const res = mockRes();
+    await ctrl.historyFilterOptions(
+      mockReq({
+        user: adminUser({ branch_access: [{ branch_id: VALID_LICENSE }] }),
+        query: { branch: VALID_BRANCH, field: 'staff' },
+      }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(salesService.getBranchById).not.toHaveBeenCalled();
+  });
   test('options never expose another license', async () => {
     salesService.getBranchById.mockResolvedValue({
       license: 'another-license',

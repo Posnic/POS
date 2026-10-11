@@ -1386,6 +1386,33 @@ class SalesController extends BaseController {
     }
   }
 
+  async historyFilterOptions(req, res) {
+    try {
+      if (!this.checkPermission('sales', 'read', req.user))
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      const branchId = req.query.branch || resolveBranchId(req.user, req.session);
+      await this.readServingPeriods(req, branchId); // validates branch access and tenant ownership
+      const licenseId =
+        req.tenantContext?.licenseId ||
+        req.user?.license ||
+        req.user?.license_id ||
+        req.user?.licenseId;
+      const pipeline = require('../helpers/sales-history-options')({
+        branchId,
+        licenseId,
+        field: req.query.field,
+        query: req.query.query || '',
+      });
+      const options = await currentConnection(mongoose.connection)
+        .db.collection('sales')
+        .aggregate(pipeline, { maxTimeMS: 5000 })
+        .toArray();
+      return this.success(res, options, 'Filter options loaded');
+    } catch (error) {
+      return this.error(res, error.message, error.statusCode || 500);
+    }
+  }
+
   async servingPeriodOptions(req, res) {
     try {
       if (
