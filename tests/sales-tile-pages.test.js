@@ -17,6 +17,8 @@ test('2,053 products remain reachable with at most 48 live tiles, including last
     sales.renderTilePages($('#tiles'), Array.from({ length: 2053 }, (_, i) => '<div class="product">' + i + '</div>'));
     assert.equal($('.product').length, 48);
     assert.equal($('button').first().prop('disabled'), true);
+    assert.equal($('button').first().prop('hidden'), true);
+    assert.equal($('button').last().prop('hidden'), false);
     const visited = new Set();
     for (let page = 0; page < 43; page++) {
         $('.product').each((_, element) => visited.add(Number(element.textContent)));
@@ -26,6 +28,8 @@ test('2,053 products remain reachable with at most 48 live tiles, including last
     assert.equal(visited.size, 2053);
     assert.equal($('.product').length, 37);
     assert.equal($('button').last().prop('disabled'), true);
+    assert.equal($('button').last().prop('hidden'), true);
+    assert.equal($('button').first().prop('hidden'), false);
     $('button').first().trigger('click');
     assert.equal($('.product').first().text(), '1968');
 });

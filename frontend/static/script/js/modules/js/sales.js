@@ -6997,7 +6997,7 @@ PosnicPro.sales.calculation = {
             return sum + (Number.isFinite(quantity) ? quantity : 0);
         }, 0);
         $('.sale-cart-quantity').text(Number(cartQuantity.toFixed(6)).toLocaleString(undefined, { maximumFractionDigits: 6 }));
-        $('.sale-cart-lines').text(PosnicPro.sales.addLineTable.length);
+        $('.sale-cart-lines').text(PosnicPro.sales.addLineTable.filter(function (row) { return !!row.item_id; }).length);
         var addSalesSubTotal = 0;
         var addSalesLineGstTaxTotal = 0;
         var addSalesLineSubTotal = 0;
@@ -7504,8 +7504,10 @@ PosnicPro.sales.renderTilePages = function (container, tiles, remote) {
     function draw() {
         PosnicPro.sales.itemsMenu.variantPop.close();
         grid.html(tiles.slice(page * size, (page + 1) * size).join(''));
-        previous.prop('disabled', remote ? remote.offset === 0 : page === 0);
-        next.prop('disabled', remote ? remote.nextOffset === null : (page + 1) * size >= tiles.length);
+        var hasPrevious = remote ? remote.offset > 0 : page > 0;
+        var hasNext = remote ? remote.nextOffset !== null : (page + 1) * size < tiles.length;
+        previous.prop('disabled', !hasPrevious).prop('hidden', !hasPrevious);
+        next.prop('disabled', !hasNext).prop('hidden', !hasNext);
         status.text(remote ? (tiles.length ? (remote.offset + 1) + '–' + (remote.offset + tiles.length) : '0') : tiles.length ? (page * size + 1) + '–' + Math.min((page + 1) * size, tiles.length) + ' / ' + tiles.length : 'No items');
         pager.toggleClass('d-none', remote ? remote.offset === 0 && remote.nextOffset === null : tiles.length <= size);
         container.closest('#sales_new_productList,#sales_new_categoryList').scrollTop(0);
