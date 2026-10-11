@@ -31,6 +31,13 @@ require('stream');
 const helpers = require('../../../src/utils/helpers');
 
 describe('helpers utils', () => {
+  test.each([
+    ['2026-10-11T01:49:09Z', 'Europe/London', '10/11/2026 02:49 am'],
+    ['2026-12-11T01:49:09Z', 'Europe/London', '12/11/2026 01:49 am'],
+    ['2026-10-11T23:49:09Z', 'Asia/Kolkata', '10/12/2026 05:19 am'],
+  ])('formatDate uses the requested zone for %s in %s', (date, timeZone, expected) => {
+    expect(helpers.formatDate(date, { timeZone })).toBe(expected);
+  });
   beforeEach(() => {
     jest.clearAllMocks();
     crypto.randomBytes.mockReset();
