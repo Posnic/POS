@@ -229,6 +229,8 @@ const branchSchema = new Schema(
      * a series for. A shop turns it on, ideally on the first of its own year.
      * See utils/bill-number.js.
      */
+    sales_search_fields: { type: Array, default: null },
+    sales_search_display_fields: { type: Array, default: null },
     bill_number_reset: { type: String, default: '' },
     /* Which month a financial year begins in, 1-12. India is April; a shop on
        the calendar year sets `bill_number_reset` to `calendar` instead. */
@@ -368,6 +370,8 @@ class BranchModel {
       roundOff: { type: 'String', select: true },
       sales_mail: { type: 'String', select: true },
       sales_prefix: { type: 'String', select: true },
+      sales_search_fields: { type: 'Array', select: true },
+      sales_search_display_fields: { type: 'Array', select: true },
       bill_number_reset: { type: 'String', select: true },
       bill_number_fy_start_month: { type: 'Number', select: true },
       sales_sms: { type: 'String', select: true },

@@ -4690,5 +4690,16 @@
   "lang_staff_device_source_filters": "Filters voor personeel, apparaten en bronnen",
   "lang_staff_name_or_email": "Naam of e-mailadres van het personeel",
   "lang_updated_newest": "Laatst bijgewerkt: nieuwste eerst",
-  "lang_webshop": "Webshop"
+  "lang_webshop": "Webshop",
+  "lang_choose_fields_for_typed_searches_exact_bar": "Kies de velden voor getypte zoekopdrachten. Exacte barcodescans blijven altijd werken.",
+  "lang_choose_product_for_this_barcode": "Kies het product voor deze barcode",
+  "lang_could_not_look_up_the_barcode_please_try_a": "De barcode kon niet worden opgezocht. Probeer het opnieuw.",
+  "lang_customize_fields_shown_in_sales_search_res": "Velden in verkoopzoekresultaten en de barcodekeuzelijst aanpassen",
+  "lang_customize_searchable_fields": "Doorzoekbare velden aanpassen",
+  "lang_leave_this_off_to_keep_the_standard_displa": "Laat dit uitgeschakeld om de standaardweergave te behouden. De productnaam wordt altijd getoond.",
+  "lang_leave_this_off_to_keep_the_standard_search": "Laat dit uitgeschakeld om de standaardzoekfunctie te behouden, inclusief vertaalde namen en snelcodes.",
+  "lang_not_found": "Niet gevonden!",
+  "lang_product_name_2": "Productnaam",
+  "lang_sales_item_search": "Artikelen zoeken bij verkoop",
+  "lang_several_products_share_this_barcode_select": "Meerdere producten hebben deze barcode. Selecteer het product dat u verkoopt."
 }

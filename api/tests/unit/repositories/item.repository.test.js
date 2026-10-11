@@ -474,6 +474,13 @@ describe('ItemRepository', () => {
   });
 
   describe('getOnlineItemsAjaxList', () => {
+    let preferences;
+    beforeEach(() => {
+      preferences = jest
+        .spyOn(require('../../../src/repositories/settings.repository').prototype, 'resolveGroup')
+        .mockResolvedValue({ status: true, data: { values: {} } });
+    });
+    afterEach(() => preferences.mockRestore());
     test('category filtering keeps branch and license scope and returns saved icons', async () => {
       col.aggregate.mockReturnValue(mkAgg([{ _id: FAKE_ID, name: 'Tea', icon: '☕' }]));
       const result = await repo.getOnlineItemsAjaxList(
@@ -1004,6 +1011,55 @@ describe('ItemRepository', () => {
       col.findOne.mockResolvedValueOnce(null);
       const r = await repo.importItems([item], { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE });
       expect(r.status).toBe(true);
+    });
+    test.each(['', undefined])('imports without an optional supplier (%s)', async (supplier) => {
+      const item = {
+        name: 'A',
+        itemid: 'SKU1',
+        supplier_name: supplier,
+        category_name: 'C',
+        discount_amount: 0,
+        discount_percentage: 0,
+        tax: 0,
+        tax_type: 'exclusive',
+        mrp_price: 10,
+        company_price: 5,
+        selling_price: 8,
+        available_quantity: 100,
+        unit: 'qty',
+        sort_order: 0,
+      };
+      col.findOne.mockResolvedValueOnce(null);
+      expect(
+        (await repo.importItems([item], { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE })).status
+      ).toBe(true);
+    });
+    test('missing selling prices still fail before any write when supplier is blank', async () => {
+      const item = {
+        name: 'A',
+        itemid: 'SKU1',
+        supplier_name: '',
+        category_name: 'C',
+        discount_amount: 0,
+        discount_percentage: 0,
+        tax: 0,
+        tax_type: 'exclusive',
+        mrp_price: 10,
+        company_price: 5,
+        selling_price: '',
+        available_quantity: 0,
+        unit: 'qty',
+        sort_order: 0,
+      };
+      const result = await repo.importItems([item], {
+        branchId: FAKE_BRANCH,
+        licenseId: FAKE_LICENSE,
+      });
+      expect(result.status).toBe(false);
+      expect(result.data[0].status).toContain('selling_price');
+      expect(result.data[0].status).not.toContain('supplier_name');
+      expect(col.insertOne).not.toHaveBeenCalled();
+      expect(col.updateOne).not.toHaveBeenCalled();
     });
     test('a matched item is updated, never re-inserted, and its image is preserved', async () => {
       const item = {

@@ -51,6 +51,23 @@ const formatDate = (date, options = {}) => {
       return '';
     }
 
+    if (options.timeZone) {
+      const parts = Object.fromEntries(
+        new Intl.DateTimeFormat('en-US', {
+          timeZone: options.timeZone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        })
+          .formatToParts(d)
+          .map((part) => [part.type, part.value])
+      );
+      return `${parts.month}/${parts.day}/${parts.year} ${parts.hour}:${parts.minute} ${parts.dayPeriod.toLowerCase()}`;
+    }
+
     // Format as: MM/DD/YYYY hh:mm am/pm (matching PHP format)
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');

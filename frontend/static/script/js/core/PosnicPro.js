@@ -2887,6 +2887,8 @@ PosnicPro = {
          */
         /* Manage-sidebar settings entries (the Config layer collapsed into
            them) follow the same switches as the panes they open. */
+        // Keep historical logs available by URL; hide stock tools when tracking is off.
+        $('#stockModule, #inventoryCountsModule, #itemLowModule').toggle(on('stock_management'));
         $('#manage_li_taxmodule').toggle(on('module_tax_enable'));
         $('#manage_li_tableorder').toggle(PosnicPro.local.get('table_options') === 'enable');
         $('#manage_li_cashregister').toggle(on('cash_register_enable'));
@@ -3899,6 +3901,12 @@ PosnicPro = {
                 'MM/DD/YYYY',
             ], false);
         if (!m.isValid()) m = moment(new Date(date));
+        // Only absolute timestamps need conversion; legacy shop-local stamps
+        // and date-only inputs must keep their existing wall clock and date.
+        if (date instanceof Date || typeof date === 'number' ||
+            (typeof date === 'string' && /T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(date))) {
+            m = m.tz(PosnicPro.timeZone());
+        }
         return (PosnicPro.local.get('timeformat') === 'enable') ? m.format(formatData + " " + "LT") : m.format(formatData);
     },
     convertFormatDateTime: function () {

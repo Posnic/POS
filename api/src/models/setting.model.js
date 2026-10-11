@@ -1392,6 +1392,11 @@ class SettingModel extends BaseModel {
         discount_percentage: parseFloat(data.discount_percentage),
         discount_amount: parseFloat(data.discount_amount),
         sales_prefix: data.sales_prefix,
+        ...Object.fromEntries(
+          ['sales_search_fields', 'sales_search_display_fields']
+            .filter((key) => data[key] !== undefined)
+            .map((key) => [key, require('../helpers/sales-search-fields').validate(key, data[key])])
+        ),
         /*
          * WHEN THE BILL NUMBER STARTS AGAIN AT ONE.
          *
@@ -1658,6 +1663,8 @@ class SettingModel extends BaseModel {
         discount_percentage: 'discount_percentage',
         discount_amount: 'discount_amount',
         sales_prefix: 'sales_prefix',
+        sales_search_fields: 'sales_search_fields',
+        sales_search_display_fields: 'sales_search_display_fields',
         bill_number_reset: 'bill_number_reset',
         bill_number_fy_start_month: 'bill_number_fy_start_month',
         indian_gst: 'indian_gst',

@@ -1583,7 +1583,7 @@ class SalesRepository {
         // PartialReturn / FullReturn we prefer the last updated timestamp
         // (the time the return was completed), which is what the Sales
         // History grid displays.
-        const tz = BaseModel.currentTimeZone || 'Asia/Kolkata';
+        const tz = branchDoc?.time_zone || BaseModel.currentTimeZone || 'Asia/Kolkata';
 
         let dateSource = null;
         const process = (doc.sale_process || '').toString();
@@ -1609,9 +1609,10 @@ class SalesRepository {
           const formatted = formatDate(dateSource, { timeZone: tz });
           if (formatted) {
             normalized.date = formatted;
-            if (!normalized.created_date) {
-              normalized.created_date = formatted;
-            }
+            normalized.created_date = formatDate(doc.created_date || doc.createdAt || dateSource, {
+              timeZone: tz,
+            });
+            normalized.receipt_date_order = 'mdy';
           }
         }
       }

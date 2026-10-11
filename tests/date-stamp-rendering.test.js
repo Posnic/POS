@@ -29,6 +29,16 @@ const core = fs.readFileSync(
   path.join(ROOT, 'frontend', 'static', 'script', 'js', 'core', 'PosnicPro.js'), 'utf8');
 const helpers = fs.readFileSync(path.join(ROOT, 'api', 'src', 'utils', 'helpers.js'), 'utf8');
 
+test('absolute history timestamps use the shop clock while local stamps stay unchanged', () => {
+  const moment = require('../api/node_modules/moment-timezone');
+  const body = core.split('convertDate: function (date) {')[1].split('convertFormatDateTime:')[0].replace(/},\s*$/, '');
+  const convert = new Function('date', 'moment', 'PosnicPro', body);
+  const pos = { timeZone: () => 'Europe/London', local: { get: key => key === 'dateformatset' ? 'dd/mm/yyyy' : 'enable' } };
+  assert.equal(convert('2026-10-11T01:49:09Z', moment, pos), '11/10/2026 2:49 AM');
+  assert.equal(convert('2026-12-11T01:49:09Z', moment, pos), '11/12/2026 1:49 AM');
+  assert.equal(convert('10/11/2026 02:49 am', moment, pos), '11/10/2026 2:49 AM');
+});
+
 test('the server still writes the stamp the client parses', () => {
   assert.match(
     helpers,
