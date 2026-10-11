@@ -28,22 +28,23 @@ router.get(
   '/discovery',
   limit,
   wrap(async (req) => {
-    // No credentials, staff data or cross-branch list in public discovery.
-    // Ambiguous multi-branch installations return no shop-specific hints.
+    // Only public display names and a shared address; never branch IDs or staff data.
     const branches = await req.db
       .collection('branches')
       .find(
-        { module_captain_enable: true },
+        // Match the access service: legacy branches without a switch are enabled.
+        { module_captain_enable: { $nin: [false, 0, '0', 'false'] } },
         { projection: { branch_name: 1, captain_fallback_url: 1, captain_cloud_url: 1 } }
       )
-      .limit(2)
       .toArray();
-    if (branches.length !== 1) return { connections: {} };
-    const branch = branches[0];
+    if (!branches.length) return { connections: {} };
+    const names = [...new Set(branches.map(b => String(b.branch_name || '').trim()).filter(Boolean))];
+    const addresses = [...new Set(branches.map(cloudAddress))];
     return {
       connections: {
-        shopName: branch.branch_name || '',
-        cloud: cloudAddress(branch),
+        shopName: names.join(' · ').slice(0, 160),
+        // Several branches may share a cloud server. Do not guess when they differ.
+        cloud: addresses.length === 1 ? addresses[0] : null,
       },
     };
   })
