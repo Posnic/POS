@@ -4767,5 +4767,20 @@
   "lang_pc_save_correction": "Correctie opslaan",
   "lang_pc_split_amounts_entered_wrongly": "Verkeerd ingevoerde bedragen opgesplitst",
   "lang_pc_upi_recorded_as_cash": "UPIals contant geld geregistreerd",
-  "lang_pc_wrong_method_selected": "Verkeerde methode geselecteerd"
+  "lang_pc_wrong_method_selected": "Verkeerde methode geselecteerd",
+  "lang_applied": "Toegepast",
+  "lang_approve_stock_changes": "Voorraadwijzigingen goedkeuren",
+  "lang_confirm_stock_changes": "Voorraadwijzigingen bevestigen",
+  "lang_connection_interrupted_refresh_to_check_th": "Verbinding onderbroken. Vernieuw om de bewerking te controleren voordat u het opnieuw probeert.",
+  "lang_could_not_confirm_check_permissions_and_re": "Bevestigen is niet gelukt. Controleer uw rechten en vernieuw de bewerking voordat u het opnieuw probeert.",
+  "lang_could_not_load_inventory_operations": "Voorraadbewerkingen konden niet worden geladen.",
+  "lang_could_not_load_operation": "De bewerking kon niet worden geladen.",
+  "lang_could_not_save_inventory_policy": "Het voorraadbeleid kon niet worden opgeslagen.",
+  "lang_inventory_confirmation": "Voorraadbevestiging",
+  "lang_inventory_policy_saved": "Voorraadbeleid opgeslagen.",
+  "lang_load_more": "Meer laden",
+  "lang_mobile_inventory_operations": "Mobiele voorraadbewerkingen",
+  "lang_no_mobile_inventory_operations_yet": "Er zijn nog geen mobiele voorraadbewerkingen.",
+  "lang_not_applied": "Niet toegepast",
+  "lang_save_inventory_policy": "Voorraadbeleid opslaan"
 }
