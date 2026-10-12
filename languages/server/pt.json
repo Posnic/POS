@@ -944,5 +944,13 @@
   "unsuccessfully": "sem sucesso",
   "valid": "válido",
   "date must be YYYY-MM-DD": "a data deve ser YYYY-MM-DD",
-  "start and end must be HH:MM": "o início e o fim devem ser HH: MM"
+  "start and end must be HH:MM": "o início e o fim devem ser HH: MM",
+  "Allocated quantities require a completed payment.": "As quantidades alocadas exigem um pagamento completo.",
+  "Item write permission required": "É necessária a permissão de gravação do item",
+  "Unsupported allocated sale commit": "Confirmação de venda alocada não suportada",
+  "Unsupported allocated sale preparation": "Preparação de venda alocada sem suporte",
+  "Unsupported stock allocation sale": "Venda não suportada por alocação de ações",
+  "Use the normal return process for an allocated sale.": "Use o processo normal de devolução para uma venda alocada.",
+  "Enable Recycle Bin before deleting sales": "Ative a lixeira antes de excluir as vendas",
+  "Only super admins can change the sale hard-delete setting": "Somente superadministradores podem alterar a configuração de exclusão forçada da venda"
 }

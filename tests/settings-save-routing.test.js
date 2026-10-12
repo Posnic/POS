@@ -17,6 +17,7 @@ function setup() {
     const requests = [];
     let receiptSaves = 0;
     w.PosnicPro = {
+        local: { get: () => 'super_admin' },
         settings: { _printDocs: { header: '', footer: '' }, _modulesRemoteBranch: () => null, tableOrderLimitValue: () => 1 },
         receiptDesignerEditor: { save: () => { receiptSaves++; } },
         put: request => requests.push({ url: request.url, data: JSON.parse(request.data) })

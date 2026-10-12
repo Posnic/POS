@@ -944,5 +944,13 @@
   "unsuccessfully": "mingħajr suċċess",
   "valid": "validu",
   "date must be YYYY-MM-DD": "id-data trid tkun YYYY-MM-DD",
-  "start and end must be HH:MM": "il-bidu u t-tmiem għandhom ikunu HH: MM"
+  "start and end must be HH:MM": "il-bidu u t-tmiem għandhom ikunu HH: MM",
+  "Allocated quantities require a completed payment.": "Il-kwantitajiet allokati jeħtieġu pagament komplut.",
+  "Item write permission required": "L-oġġett jikteb permess meħtieġ",
+  "Unsupported allocated sale commit": "Impenn tal-bejgħ allokat mhux appoġġjat",
+  "Unsupported allocated sale preparation": "Preparazzjoni tal-bejgħ allokat mhux appoġġjata",
+  "Unsupported stock allocation sale": "Bejgħ tal-allokazzjoni tal-istokk mhux ap",
+  "Use the normal return process for an allocated sale.": "Uża l-proċess normali tar-ritorn għal bejgħ allokat.",
+  "Enable Recycle Bin before deleting sales": "Ippermetti Recycle Bin qabel tħassar il-bejgħ",
+  "Only super admins can change the sale hard-delete setting": "Super ammins biss jistgħu jibdlu l-issettjar tal-bejgħ ħassar il-hard"
 }

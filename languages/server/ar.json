@@ -944,5 +944,13 @@
   "nothing_asked": "لم يُطلب منك شيء",
   "nothing_changed": "لم يتغير شيء",
   "order_changed": "تم تغيير الطلبية",
-  "supplier_message_drafts": "مسودات رسائل المورد"
+  "supplier_message_drafts": "مسودات رسائل المورد",
+  "Allocated quantities require a completed payment.": "تتطلب الكميات المخصصة دفعة كاملة.",
+  "Item write permission required": "إذن كتابة العنصر مطلوب",
+  "Unsupported allocated sale commit": "التزام بيع مخصص غير معتمد",
+  "Unsupported allocated sale preparation": "إعداد البيع المخصص غير المدعوم",
+  "Unsupported stock allocation sale": "بيع تخصيص الأسهم غير المدعوم",
+  "Use the normal return process for an allocated sale.": "استخدم عملية الإرجاع العادية لعملية بيع مخصصة.",
+  "Enable Recycle Bin before deleting sales": "قم بتمكين سلة المحذوفات قبل حذف المبيعات",
+  "Only super admins can change the sale hard-delete setting": "يمكن للمشرفين المتميزين فقط تغيير إعداد الحذف الصعب للبيع"
 }

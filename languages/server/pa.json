@@ -944,5 +944,13 @@
   "unsuccessfully": "ਅਸਫਲ",
   "valid": "ਵੈਧ",
   "date must be YYYY-MM-DD": "ਤਾਰੀਖ ਹੋਣੀ ਚਾਹੀਦੀ ਹੈ YYYY-MM-DD",
-  "start and end must be HH:MM": "ਸ਼ੁਰੂਆਤ ਅਤੇ ਅੰਤ HH ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ: MM"
+  "start and end must be HH:MM": "ਸ਼ੁਰੂਆਤ ਅਤੇ ਅੰਤ HH ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ: MM",
+  "Allocated quantities require a completed payment.": "ਨਿਰਧਾਰਤ ਮਾਤਰਾਵਾਂ ਲਈ ਪੂਰਾ ਭੁਗਤਾਨ ਦੀ ਲੋੜ ਹੁੰਦੀ",
+  "Item write permission required": "ਆਈਟਮ ਲਿਖਣ ਦੀ ਆਗਿਆ ਦੀ ਲੋੜ",
+  "Unsupported allocated sale commit": "ਅਸਮਰਥਿਤ ਅਲਾਟ ਵਿਕਰੀ ਪ੍ਰਤੀਬੱਧਤਾ",
+  "Unsupported allocated sale preparation": "ਅਸਮਰਥਿਤ ਨਿਰਧਾਰਤ ਵਿਕਰੀ ਦੀ ਤਿਆਰੀ",
+  "Unsupported stock allocation sale": "ਅਸਮਰਥਿਤ ਸਟਾਕ ਅਲਾਟਮੈਂਟ ਵਿ",
+  "Use the normal return process for an allocated sale.": "ਨਿਰਧਾਰਤ ਵਿਕਰੀ ਲਈ ਆਮ ਵਾਪਸੀ ਪ੍ਰਕਿਰਿਆ ਦੀ ਵਰਤੋਂ ਕਰੋ.",
+  "Enable Recycle Bin before deleting sales": "ਵਿਕਰੀ ਮਿਟਾਉਣ ਤੋਂ ਪਹਿਲਾਂ ਰੀਸਾਈਕਲ ਬਿਨ ਸਮਰੱਥ",
+  "Only super admins can change the sale hard-delete setting": "ਸਿਰਫ ਸੁਪਰ ਐਡਮਿਨ ਹੀ ਵਿਕਰੀ ਹਾਰਡ-ਡਿਲੀਟ ਸੈਟਿੰਗ ਨੂੰ ਬਦਲ ਸਕਦੇ ਹਨ"
 }

@@ -40,6 +40,8 @@
     "modifier_groups": "branch"
   },
   "local_only": {
+    "price_sheet_jobs": "Price update staging, execution leases and recovery jobs belong to the installation applying them. Updated item prices sync normally; jobs must never replay on another installation.",
+    "price_sheet_rows": "Staged price changes and per-row recovery receipts belong to the executing price-sheet job and stay on that installation.",
     "captain_email_verifications": "One-use email verification challenges, attempt counters and expiry belong to the issuing account server; replication would permit replay.",
     "captain_phone_verifications": "One-use phone verification challenges, attempt counters and expiry belong to the issuing account server; replication would permit replay.",
     "table_seating": "Atomic branch seating reservations and in-flight move/close state belong to their issuing database. Last-writer-wins sync cannot merge reservation locks; retries must use that authority.",

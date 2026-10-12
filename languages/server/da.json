@@ -944,5 +944,13 @@
   "unsuccessfully": "uden held",
   "valid": "gyldig",
   "date must be YYYY-MM-DD": "Datoen skal være YYYY-MM-DD",
-  "start and end must be HH:MM": "Start og slutning skal være HH: MM"
+  "start and end must be HH:MM": "Start og slutning skal være HH: MM",
+  "Allocated quantities require a completed payment.": "Tildelte mængder kræver en afsluttet betaling.",
+  "Item write permission required": "Elementskrivningstilladelse kræves",
+  "Unsupported allocated sale commit": "Ikke-understøttet allokeret salgsforpligtelse",
+  "Unsupported allocated sale preparation": "Ikke-understøttet allokeret salgsforberedelse",
+  "Unsupported stock allocation sale": "Ikke-understøttet aktieallokeringssalg",
+  "Use the normal return process for an allocated sale.": "Brug den normale returproces for et tildelt salg.",
+  "Enable Recycle Bin before deleting sales": "Aktivér papirkurven, før du sletter salg",
+  "Only super admins can change the sale hard-delete setting": "Kun superadministratorer kan ændre indstillingen for hård sletning af salg"
 }

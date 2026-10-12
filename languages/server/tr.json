@@ -944,5 +944,13 @@
   "unsuccessfully": "başarısızca",
   "valid": "geçerli",
   "date must be YYYY-MM-DD": "tarih olmalı YYYY-MM-DD",
-  "start and end must be HH:MM": "başlangıç ve bitiş HH olmalıdır: MM"
+  "start and end must be HH:MM": "başlangıç ve bitiş HH olmalıdır: MM",
+  "Allocated quantities require a completed payment.": "Tahsis edilen miktarlar tamamlanmış bir ödeme gerektirir.",
+  "Item write permission required": "Öğe yazma izni gerekli",
+  "Unsupported allocated sale commit": "Desteklenmeyen tahsis edilen satış taahhüdü",
+  "Unsupported allocated sale preparation": "Desteklenmeyen tahsis edilmiş satış hazırlığı",
+  "Unsupported stock allocation sale": "Desteklenmeyen stok tahsisi satışı",
+  "Use the normal return process for an allocated sale.": "Tahsis edilen bir satış için normal iade sürecini kullanın.",
+  "Enable Recycle Bin before deleting sales": "Satışları silmeden önce Geri Dönüşüm Kutusunu Etkinleştir",
+  "Only super admins can change the sale hard-delete setting": "Yalnızca süper yöneticiler satış donanımlı silme ayarını değiştirebilir"
 }

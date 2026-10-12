@@ -84,6 +84,7 @@ const FEATURES = [
 ];
 
 const PREFERENCES = [
+  'allow_sale_hard_delete',
   // printing and receipts - shop- and device-shaped, rarely copied
   'print_type',
   'printing_size',

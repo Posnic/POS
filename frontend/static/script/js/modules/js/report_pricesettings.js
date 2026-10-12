@@ -1,5 +1,5 @@
 /**
- * Price Settings page - three tabs over the pricing APIs:
+ * Price Settings page - pricing tools (the editable grid is in price-editor.js):
  *   Set Margin     -> items/marginPreview + items/bulkSetMargin
  *   Custom Change  -> items/bulkPricePreview + items/bulkUpdatePrices
  *   History        -> items/bulkPriceHistory (audit of every bulk run)
@@ -28,6 +28,7 @@ PosnicPro.pricesettings = {
                 opts += '<option value="' + c.id + '">' + $('<div>').text(c.name).html() + '</option>';
             });
             $('#ps_margin_category, #ps_custom_category').html(opts);
+            $('#ps-grid-category').html(opts.replace('Choose a category', 'All categories'));
             PosnicPro.pricesettings._catsLoaded = true;
         });
     },
@@ -157,6 +158,7 @@ PosnicPro.pricesettings = {
                 catch (e) { return ''; }
             };
             var describe = function (run) {
+                if (run.op === 'individual') return 'Individual prices · selected items';
                 var f = esc(run.label || run.field || 'Price');
                 var scope = run.scope === 'category' ? 'one category' : 'all items';
                 if (run.op === 'margin' || run.op === 'markup' || run.direction === 'margin') {

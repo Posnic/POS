@@ -799,6 +799,27 @@ describe('updateCommonSettings', () => {
     expect(r.message).toMatch(/context is required/i);
   });
 
+  test.each([true, false, 'true', 'false', undefined])(
+    'hard-delete setting saves explicit values and preserves omitted values: %s',
+    async (value) => {
+      m.user.usertype = 'super_admin';
+      await m.updateCommonSettings(value === undefined ? {} : { allow_sale_hard_delete: value });
+      const update = col.updateOne.mock.calls[col.updateOne.mock.calls.length - 1][1].$set;
+      if (value === undefined) expect(update).not.toHaveProperty('allow_sale_hard_delete');
+      else expect(update.allow_sale_hard_delete).toBe(value === true || value === 'true');
+    }
+  );
+
+  test.each(['admin', 'owner', 'manager'])(
+    'rejects hard-delete setting changes by %s',
+    async (role) => {
+      m.user.usertype = role;
+      const result = await m.updateCommonSettings({ allow_sale_hard_delete: true });
+      expect(result.status).toBe(false);
+      expect(col.updateOne).not.toHaveBeenCalled();
+    }
+  );
+
   test('returns status:true on success', async () => {
     m.user.access = { plan: { read: true } };
     const r = await m.updateCommonSettings({ print_url: 'true', sales_mail: 'false' });

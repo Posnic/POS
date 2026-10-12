@@ -126,6 +126,51 @@ describe('ItemRepository', () => {
     consoleLogSpy.mockRestore();
   });
 
+  describe('price grid', () => {
+    const context = { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE, userName: 'Owner' };
+    test('scopes pagination and escapes search input', async () => {
+      const chain = mkChain([]);
+      col.find.mockReturnValue(chain);
+      await repo.priceGrid({ search: 'a.*', page: 2 }, context);
+      expect(col.find.mock.calls[0][0]).toMatchObject({
+        branch_id: FAKE_BRANCH,
+        license: FAKE_LICENSE,
+      });
+      expect(new RegExp(col.find.mock.calls[0][0].$or[0].name.$regex).test('abc')).toBe(false);
+      expect(chain.skip).toHaveBeenCalledWith(50);
+      expect(chain.limit).toHaveBeenCalledWith(50);
+    });
+    test('rejects zero and duplicate IDs before writing', async () => {
+      await expect(
+        repo.savePriceGrid([{ id: FAKE_ID, oldPrice: 10, price: 0 }], context)
+      ).rejects.toThrow();
+      const row = { id: FAKE_ID, oldPrice: 10, price: 20 };
+      await expect(repo.savePriceGrid([row, row], context)).rejects.toThrow();
+      expect(col.updateOne).not.toHaveBeenCalled();
+    });
+    test('reports a stale or inaccessible row without changing it', async () => {
+      BaseModel.getDb = jest.fn().mockResolvedValue({ collection: () => col });
+      const result = await repo.savePriceGrid([{ id: FAKE_ID, oldPrice: 10, price: 20 }], context);
+      expect(result.conflicts).toEqual([FAKE_ID]);
+      expect(col.updateOne).not.toHaveBeenCalled();
+    });
+    test('updates only price and provenance, with compare-and-set and history', async () => {
+      BaseModel.getDb = jest.fn().mockResolvedValue({ collection: () => col });
+      col.findOne.mockResolvedValue({ _id: FAKE_ID, name: 'Onion', branch_id: FAKE_BRANCH });
+      const result = await repo.savePriceGrid([{ id: FAKE_ID, oldPrice: 10, price: 20 }], context);
+      expect(result.saved).toEqual([FAKE_ID]);
+      expect(col.updateOne.mock.calls[0][0]).toMatchObject({
+        selling_price: 10,
+        branch_id: FAKE_BRANCH,
+        license: FAKE_LICENSE,
+      });
+      expect(col.updateOne.mock.calls[0][1].$set).not.toHaveProperty('available_quantity');
+      expect(col.insertOne).toHaveBeenCalledWith(
+        expect.objectContaining({ old_value: 10, new_value: 20, changed_by: 'Owner' })
+      );
+    });
+  });
+
   test('extends BaseModel with "items"', () => {
     expect(repo.collectionName).toBe('items');
   });

@@ -495,7 +495,7 @@ PosnicPro.listFilter = {
     LF.toggle = function (key) {
         var m = LF._mounted[key];
         if (!m) return;
-        var $panel = $(m.cfg.container);
+        var $panel = $(m.cfg.panelContainer || m.cfg.container);
         var opening = !$panel.is(':visible');
         $panel.slideToggle(120);
         $(m.cfg.button).toggleClass('lf-btn-open', opening).attr('aria-expanded', opening ? 'true' : 'false');

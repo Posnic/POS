@@ -1899,7 +1899,12 @@ PosnicPro = {
                         }
                     }
 
-                    PosnicPro[actionUrl][actionUrl + "Table"](actionUrl);
+                    if (actionUrl === 'sales' && PosnicPro.sales._openDocId) {
+                        PosnicPro.sales.closeDoc();
+                        PosnicPro.sales.loadHistory();
+                    } else {
+                        PosnicPro[actionUrl][actionUrl + "Table"](actionUrl);
+                    }
                 }
                 PosnicPro.alert(response.type, response.message);
                 PosnicPro.deleteConfirmation = false;

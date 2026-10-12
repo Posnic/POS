@@ -944,5 +944,13 @@
   "unsuccessfully": "অসফলভাবে",
   "valid": "বৈধ",
   "date must be YYYY-MM-DD": "তারিখ অবশ্যই হতে হবে YYYY-MM-DD",
-  "start and end must be HH:MM": "শুরু এবং শেষ অবশ্যই এইচএইচ হতে হবে: MM"
+  "start and end must be HH:MM": "শুরু এবং শেষ অবশ্যই এইচএইচ হতে হবে: MM",
+  "Allocated quantities require a completed payment.": "বরাদ্দ পরিমাণে একটি সম্পূর্ণ অর্থ প্রদানের প্রয়োজন।",
+  "Item write permission required": "আইটেম লেখার অনুমতি প্রয়োজন",
+  "Unsupported allocated sale commit": "অসমর্থিত বরাদ্দ বিক্রয় কমি",
+  "Unsupported allocated sale preparation": "অসমর্থিত বরাদ্দকৃত বিক্রয়",
+  "Unsupported stock allocation sale": "অসমর্থিত স্টক বরাদ্দ বিক্রয়",
+  "Use the normal return process for an allocated sale.": "বরাদ্দ বিক্রয়ের জন্য স্বাভাবিক রিটার্ন প্রক্রিয়া ব্যবহার করুন।",
+  "Enable Recycle Bin before deleting sales": "বিক্রয় মুছে ফেলার আগে পুনর্ব্যবহারযোগ্য",
+  "Only super admins can change the sale hard-delete setting": "শুধুমাত্র সুপার অ্যাডমিনরা সেল হার্ড-ডিলিট সেটিং পরিবর্তন"
 }

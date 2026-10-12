@@ -28,9 +28,9 @@ function setup(enabled = true, rows = null) {
 test('restaurant table column and combined filters drive the paginated request; clear resets both', () => {
  const x = setup(); const s = x.w.PosnicPro.sales; s.mountRestaurantHistory(); s.loadHistory(1);
  assert.match(x.$('#sales_list_rows thead').text(), /Table/);
- x.$('#sales_history_table').val('4'); x.$('#sales_history_period').val('lunch').trigger('change');
+ x.$('#sales_history_table').val('4'); x.$('#sales_history_period').val('lunch'); x.$('#sales_provenance_form').trigger('submit');
  assert.equal(x.requests.at(-1).table_number, '4'); assert.equal(x.requests.at(-1).serving_period, 'lunch');
- x.$('#sales_restaurant_reset').trigger('click'); assert.equal(x.requests.at(-1).table_number, undefined); assert.equal(x.requests.at(-1).serving_period, undefined); x.close();
+ x.$('#sales_provenance_reset').trigger('click'); assert.equal(x.requests.at(-1).table_number, undefined); assert.equal(x.requests.at(-1).serving_period, undefined); x.close();
 });
 test('retail hides restaurant controls and table column', () => {
  const x = setup(false); x.w.PosnicPro.sales.mountRestaurantHistory(); x.w.PosnicPro.sales.loadHistory(1);
@@ -57,6 +57,25 @@ test('sort selection sends the requested ordering and labels the time being show
  x.w.PosnicPro.listSort.value=()=>sort;x.w.PosnicPro.sales.loadHistory(1);
  assert.equal(x.requests.at(-1).sort,sort);assert.equal(x.$('th.sl-col-date').text(),label);assert.equal(x.$('td.sl-col-date').text(),value);
  }
+ x.close();
+});
+
+test('searchable staff and device dropdowns open with choices and filter by the selected value', () => {
+ const x=setup();x.w.jQuery=x.$;
+ x.w.eval(fs.readFileSync(path.join(root,'frontend/static/script/js/jQuery-Autocomplete.min.js'),'utf8'));
+ const lookups=[];
+ x.w.PosnicPro.get=(p,cb)=>{ lookups.push(p.data);cb({type:'success',data:[{label:'Kitchen tablet',value:'device-01'}]}); };
+ x.w.PosnicPro.sales.mountProvenanceHistory();
+ const input=x.$('#sales_history_device');
+ input.trigger('focus');
+ assert.equal(lookups.at(-1).query,'');assert.equal(lookups.at(-1).field,'device');
+ const picker=input.autocomplete();assert.equal(picker.suggestions[0].value,'Kitchen tablet · device-01');
+ picker.select(0);
+ x.$('#sales_provenance_form').trigger('submit');
+ assert.equal(x.requests.at(-1).order_device,'device-01');
+ input.val('counter').trigger('input');
+ x.$('#sales_provenance_form').trigger('submit');assert.equal(x.requests.at(-1).order_device,'counter');
+ x.$('#sales_provenance_reset').trigger('click');assert.equal(x.requests.at(-1).order_device,undefined);
  x.close();
 });
 test('serving periods save and reload edited hours and names', () => {
@@ -95,3 +114,24 @@ for (const status of [
   } finally { x.close(); }
  });
 }
+
+test('retail filters share one panel and selected choices wait for Apply', () => {
+ const x=setup(false); x.w.jQuery=x.$;
+ x.w.eval(fs.readFileSync(path.join(root,'frontend/static/script/js/jQuery-Autocomplete.min.js'),'utf8'));
+ x.w.PosnicPro.get=(p,cb)=>cb({type:'success',data:[{label:'Till one',value:'till-1'}]});
+ const s=x.w.PosnicPro.sales; s.mountProvenanceHistory();
+ assert.equal(x.$('#sales_filter_panel #sales_filter_search').length,1);
+ assert.equal(x.$('#sales_filter_panel #sales_provenance_form').length,1);
+ assert.equal(x.$('#sales_history_staff_label').text(),'Staff');
+ assert.equal(x.$('#sales_restaurant_reset').length,0);
+ const input=x.$('#sales_history_device');
+ input.autocomplete().options.onSelect({value:'Till one',data:'till-1'});
+ assert.equal(x.requests.length,0);
+ input.val('Till one');
+ x.$('[data-picker=device]').trigger('click');
+ assert.equal(input.data('filterValue'),'till-1');
+ x.$('#sales_provenance_form').trigger('submit');
+ assert.equal(x.requests.at(-1).order_device,'till-1');
+ assert.ok(x.$('#sales_active_filters').text().includes('Till one'));
+ x.close();
+});

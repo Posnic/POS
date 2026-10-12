@@ -944,5 +944,13 @@
   "unsuccessfully": "pa sukses",
   "valid": "i vlefshëm",
   "date must be YYYY-MM-DD": "Data duhet të jetë YYYY-MM-DD",
-  "start and end must be HH:MM": "fillimi dhe fundi duhet të jenë HH: MM"
+  "start and end must be HH:MM": "fillimi dhe fundi duhet të jenë HH: MM",
+  "Allocated quantities require a completed payment.": "Sasitë e alokuara kërkojnë një pagesë të plotësuar.",
+  "Item write permission required": "Kërkohet leja e shkrimit të",
+  "Unsupported allocated sale commit": "Angazhimi i shpërndarë i papërkrahur",
+  "Unsupported allocated sale preparation": "Përgatitja e shitjes së shpërndarë pa mbështetje",
+  "Unsupported stock allocation sale": "Shitja e pambështetur e alokimit",
+  "Use the normal return process for an allocated sale.": "Përdorni procesin normal të kthimit për një shitje të caktuar.",
+  "Enable Recycle Bin before deleting sales": "Aktivizo koshin e riciklimit para se të fshini",
+  "Only super admins can change the sale hard-delete setting": "Vetëm super administratorët mund të ndryshojnë cilësimet e fshirjes së vështirë të shitjes"
 }

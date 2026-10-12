@@ -944,5 +944,13 @@
   "unsuccessfully": "misslyckat",
   "valid": "giltigt",
   "date must be YYYY-MM-DD": "Datum måste vara YYYY-MM-DD",
-  "start and end must be HH:MM": "start och slut måste vara HH: MM"
+  "start and end must be HH:MM": "start och slut måste vara HH: MM",
+  "Allocated quantities require a completed payment.": "Tilldelade kvantiteter kräver en slutförd betalning.",
+  "Item write permission required": "Skrivbehörighet för objekt krävs",
+  "Unsupported allocated sale commit": "Tilldelad försäljningskommitt som inte stöds",
+  "Unsupported allocated sale preparation": "Förberedelse av allokerad försäljning som inte stöds",
+  "Unsupported stock allocation sale": "Försäljning av lagerallokering som inte stöds",
+  "Use the normal return process for an allocated sale.": "Använd den normala returprocessen för en tilldelad försäljning.",
+  "Enable Recycle Bin before deleting sales": "Aktivera papperskorgen innan du tar bort försäljning",
+  "Only super admins can change the sale hard-delete setting": "Endast superadministratörer kan ändra inställningen för hård radering av försäljning"
 }

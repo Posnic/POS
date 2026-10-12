@@ -53,6 +53,20 @@ const mkReq = (over = {}) => ({
 });
 
 describe('settings group endpoints', () => {
+  test.each(['admin', 'owner', 'manager'])(
+    'sale deletion setting cannot be changed through grouped settings by %s',
+    async (role) => {
+      const req = mkReq({
+        params: { group: 'preferences' },
+        body: { allow_sale_hard_delete: true },
+      });
+      req.user.usertype = role;
+      const res = mkRes();
+      await controller.write(req, res);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(mockSave).not.toHaveBeenCalled();
+    }
+  );
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});

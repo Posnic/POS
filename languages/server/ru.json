@@ -944,5 +944,13 @@
   "unsuccessfully": "безуспешно",
   "valid": "действительный",
   "date must be YYYY-MM-DD": "дата должна быть YYYY-MM-DD",
-  "start and end must be HH:MM": "начало и конец должны быть HH: MM"
+  "start and end must be HH:MM": "начало и конец должны быть HH: MM",
+  "Allocated quantities require a completed payment.": "Выделенные количества требуют полной оплаты.",
+  "Item write permission required": "Требуется разрешение на запись товара",
+  "Unsupported allocated sale commit": "Выделенное обязательство по продаже, не подтвержденное",
+  "Unsupported allocated sale preparation": "Подготовка к продаже выделенных средств без финансовой поддержки",
+  "Unsupported stock allocation sale": "Продажа акций без обоснования",
+  "Use the normal return process for an allocated sale.": "Используйте обычный процесс возврата распределенной продажи.",
+  "Enable Recycle Bin before deleting sales": "Включите корзину перед удалением продаж",
+  "Only super admins can change the sale hard-delete setting": "Только суперадмины могут изменить настройку жесткого удаления продажи"
 }

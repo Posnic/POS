@@ -944,5 +944,13 @@
   "unsuccessfully": "árangurslaust",
   "valid": "gildir",
   "date must be YYYY-MM-DD": "Dagsetning verður að vera YYYY-MM-DD",
-  "start and end must be HH:MM": "upphaf og endir verða að vera HH: MM"
+  "start and end must be HH:MM": "upphaf og endir verða að vera HH: MM",
+  "Allocated quantities require a completed payment.": "Úthlutað magn krefst fullnaðargreiðslu.",
+  "Item write permission required": "Skrifaheimild til hlutar krafist",
+  "Unsupported allocated sale commit": "Óstudd úthlutað söluskuldbindingu",
+  "Unsupported allocated sale preparation": "Óstuddur úthlutaður undirbúningur sölu",
+  "Unsupported stock allocation sale": "Óstudd sala á hlutabréfaúthlutun",
+  "Use the normal return process for an allocated sale.": "Notaðu venjulegt skilaferli fyrir úthlutaða sölu.",
+  "Enable Recycle Bin before deleting sales": "Virkja ruslafötuna áður en þú eyðir sölu",
+  "Only super admins can change the sale hard-delete setting": "Aðeins ofurstjórnendur geta breytt söluharð-eyða stillingunni"
 }

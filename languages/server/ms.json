@@ -944,5 +944,13 @@
   "unsuccessfully": "gagal",
   "valid": "sah",
   "date must be YYYY-MM-DD": "tarikh mestilah YYYY-MM-DD",
-  "start and end must be HH:MM": "permulaan dan akhir mestilah HH: MM"
+  "start and end must be HH:MM": "permulaan dan akhir mestilah HH: MM",
+  "Allocated quantities require a completed payment.": "Kuantiti yang diperuntukkan memerlukan pembayaran yang lengkap.",
+  "Item write permission required": "Kebenaran menulis item diperlukan",
+  "Unsupported allocated sale commit": "Komitmen jualan yang diperuntukkan yang tidak disokong",
+  "Unsupported allocated sale preparation": "Persediaan jualan yang diperuntukkan tidak disokong",
+  "Unsupported stock allocation sale": "Jualan peruntukan stok yang tidak disokong",
+  "Use the normal return process for an allocated sale.": "Gunakan proses pengembalian biasa untuk penjualan yang diperuntukkan.",
+  "Enable Recycle Bin before deleting sales": "Dayakan Recycle Bin sebelum memadam jualan",
+  "Only super admins can change the sale hard-delete setting": "Hanya pentadbir super yang boleh menukar tetapan hapus keras jualan"
 }

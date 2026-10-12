@@ -944,5 +944,13 @@
   "unsuccessfully": "ללא הצלחה",
   "valid": "תקף",
   "date must be YYYY-MM-DD": "התאריך חייב להיות YYYY-MM-DD",
-  "start and end must be HH:MM": "התחלה וסיום חייבים להיות HH: MM"
+  "start and end must be HH:MM": "התחלה וסיום חייבים להיות HH: MM",
+  "Allocated quantities require a completed payment.": "כמויות שהוקצו דורשות תשלום שהושלם.",
+  "Item write permission required": "נדרשת הרשאת כתיבת פריט",
+  "Unsupported allocated sale commit": "התחייבות מכירה שהוקצתה לא נתמכת",
+  "Unsupported allocated sale preparation": "הכנת מכירה שהוקצתה לא נתמכת",
+  "Unsupported stock allocation sale": "מכירת הקצאת מניות לא נתמכת",
+  "Use the normal return process for an allocated sale.": "השתמש בתהליך ההחזרה הרגיל עבור מכירה שהוקצתה.",
+  "Enable Recycle Bin before deleting sales": "הפעל סל המיחזור לפני מחיקת מכירות",
+  "Only super admins can change the sale hard-delete setting": "רק מנהלי סופר יכולים לשנות את הגדרת המחיקה הקשה של המכירה"
 }

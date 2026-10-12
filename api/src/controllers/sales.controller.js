@@ -1211,6 +1211,9 @@ class SalesController extends BaseController {
 
   async delete(req, res, next) {
     try {
+      if (String(req.user?.usertype || req.user?.role || '').toLowerCase() !== 'super_admin') {
+        return this.error(res, 'Only super admins can hard delete sales', 403);
+      }
       if (!this.checkPermission('sales', 'delete', req.user)) {
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED_DELETE_SALES, 403);
       }
@@ -1234,6 +1237,14 @@ class SalesController extends BaseController {
       await this.ensureContext(req);
 
       const rawBody = req.body || {};
+
+      const deleteSettings = await salesService.getBranchById(BaseModel.currentBranch);
+      if (!deleteSettings || ![true, 'true'].includes(deleteSettings.allow_sale_hard_delete)) {
+        return this.error(res, 'Hard delete of sales is disabled in Sales settings', 403);
+      }
+      if (![true, 'true'].includes(deleteSettings.module_recyclebin_enable)) {
+        return this.error(res, 'Enable Recycle Bin before deleting sales', 403);
+      }
 
       const extractIds = (body) => {
         if (!body) return [];
@@ -1307,7 +1318,10 @@ class SalesController extends BaseController {
       const deletedSales = await Promise.all(
         validIds.map((id) => salesService.getSaleById(id, { SaleModel }))
       );
-      const result = await salesService.deleteSales(validIds, { SaleModel });
+      const result = await salesService.deleteSales(validIds, {
+        SaleModel,
+        requireRecycleBackup: true,
+      });
 
       // Mirror PHP sales.php::delete behaviour, which calls
       // SalesModel::deleteSaleCollectionData and forwards its
@@ -1383,6 +1397,33 @@ class SalesController extends BaseController {
         message: ERROR_MESSAGES.RECENT_SALES_NOT_RETRIEVED,
         data: null,
       });
+    }
+  }
+
+  async historyFilterOptions(req, res) {
+    try {
+      if (!this.checkPermission('sales', 'read', req.user))
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      const branchId = req.query.branch || resolveBranchId(req.user, req.session);
+      await this.readServingPeriods(req, branchId); // validates branch access and tenant ownership
+      const licenseId =
+        req.tenantContext?.licenseId ||
+        req.user?.license ||
+        req.user?.license_id ||
+        req.user?.licenseId;
+      const pipeline = require('../helpers/sales-history-options')({
+        branchId,
+        licenseId,
+        field: req.query.field,
+        query: req.query.query || '',
+      });
+      const options = await currentConnection(mongoose.connection)
+        .db.collection('sales')
+        .aggregate(pipeline, { maxTimeMS: 5000 })
+        .toArray();
+      return this.success(res, options, 'Filter options loaded');
+    } catch (error) {
+      return this.error(res, error.message, error.statusCode || 500);
     }
   }
 

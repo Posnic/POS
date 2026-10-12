@@ -808,6 +808,51 @@ describe('SalesController', () => {
 
   // ── delete ───────────────────────────────────────────────────────────────────
   describe('delete', () => {
+    test.each(['admin', 'owner', 'manager', 'cashier'])(
+      'rejects %s even with sale-delete permission and the switch enabled',
+      async (role) => {
+        const res = mockRes();
+        await ctrl.delete(
+          mockReq({
+            body: { data: [VALID_ID] },
+            user: adminUser({ usertype: role, role, access: { sales: { delete: true } } }),
+          }),
+          res,
+          mockNext()
+        );
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(salesService.deleteSales).not.toHaveBeenCalled();
+      }
+    );
+    beforeEach(() => {
+      salesService.getBranchById.mockResolvedValue({
+        allow_sale_hard_delete: true,
+        module_recyclebin_enable: true,
+      });
+    });
+    test.each([undefined, false, 'false'])(
+      'blocks even an admin when hard delete is %s',
+      async (setting) => {
+        salesService.getBranchById.mockResolvedValue({
+          allow_sale_hard_delete: setting,
+          module_recyclebin_enable: true,
+        });
+        const res = mockRes();
+        await ctrl.delete(mockReq({ body: { data: [VALID_ID] } }), res, mockNext());
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(salesService.deleteSales).not.toHaveBeenCalled();
+      }
+    );
+    test('requires retained Recycle Bin data', async () => {
+      salesService.getBranchById.mockResolvedValue({
+        allow_sale_hard_delete: true,
+        module_recyclebin_enable: false,
+      });
+      const res = mockRes();
+      await ctrl.delete(mockReq({ body: { data: [VALID_ID] } }), res, mockNext());
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(salesService.deleteSales).not.toHaveBeenCalled();
+    });
     test('200 success', async () => {
       const res = mockRes();
       const next = mockNext();
@@ -1910,6 +1955,36 @@ describe('branch serving-period filters', () => {
       licenseId: VALID_LICENSE,
     });
     expect(res.json.mock.calls[0][0].data.serving_periods[0].id).toBe('lunch');
+  });
+  test('history dropdown refuses users without sales access', async () => {
+    const res = mockRes();
+    await ctrl.historyFilterOptions(
+      mockReq({ user: restrictedUser(), query: { branch: VALID_BRANCH, field: 'staff' } }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(salesService.getBranchById).not.toHaveBeenCalled();
+  });
+  test('history dropdown refuses a different tenant before querying sales', async () => {
+    salesService.getBranchById.mockResolvedValue({ license: 'another-license' });
+    const res = mockRes();
+    await ctrl.historyFilterOptions(
+      mockReq({ query: { branch: VALID_BRANCH, field: 'device' } }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+  test('history dropdown refuses a branch outside staff access', async () => {
+    const res = mockRes();
+    await ctrl.historyFilterOptions(
+      mockReq({
+        user: adminUser({ branch_access: [{ branch_id: VALID_LICENSE }] }),
+        query: { branch: VALID_BRANCH, field: 'staff' },
+      }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(salesService.getBranchById).not.toHaveBeenCalled();
   });
   test('options never expose another license', async () => {
     salesService.getBranchById.mockResolvedValue({

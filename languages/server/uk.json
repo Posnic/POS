@@ -944,5 +944,13 @@
   "unsuccessfully": "безуспішно",
   "valid": "дійсний",
   "date must be YYYY-MM-DD": "дата повинна бути YYYY-MM-DD",
-  "start and end must be HH:MM": "початок і кінець повинні бути HH: MM"
+  "start and end must be HH:MM": "початок і кінець повинні бути HH: MM",
+  "Allocated quantities require a completed payment.": "Виділені кількості вимагають завершеної оплати.",
+  "Item write permission required": "Потрібний дозвіл на запис елемента",
+  "Unsupported allocated sale commit": "Непідтримуваний виділений коміт продажу",
+  "Unsupported allocated sale preparation": "Підготовка до продажу, що не підтримується",
+  "Unsupported stock allocation sale": "Непідтримуваний продаж розподілу запасів",
+  "Use the normal return process for an allocated sale.": "Використовуйте звичайний процес повернення для виділеного продажу.",
+  "Enable Recycle Bin before deleting sales": "Увімкнути кошик перед видаленням продажів",
+  "Only super admins can change the sale hard-delete setting": "Тільки суперадміністратори можуть змінити налаштування жорсткого видалення продажу"
 }

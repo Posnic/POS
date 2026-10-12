@@ -944,5 +944,13 @@
   "unsuccessfully": "ناکامیاب",
   "valid": "معقول",
   "date must be YYYY-MM-DD": "تاریخ ہونی چاہئے YYYY-MM-DD",
-  "start and end must be HH:MM": "شروع اور اختتام HH ہونا چاہئے: MM"
+  "start and end must be HH:MM": "شروع اور اختتام HH ہونا چاہئے: MM",
+  "Allocated quantities require a completed payment.": "مختص مقدار میں مکمل ادائیگی کی ضرورت ہوتی ہے۔",
+  "Item write permission required": "شے لکھنے کی اجازت ضروری ہے",
+  "Unsupported allocated sale commit": "غیر معاون مختص فروخت کا عہد",
+  "Unsupported allocated sale preparation": "غیر معاون مختص فروخت کی تیاری",
+  "Unsupported stock allocation sale": "غیر معاون اسٹاک مختص فروخت",
+  "Use the normal return process for an allocated sale.": "مختص فروخت کے لئے عام واپسی کے عمل کا استعمال کریں۔",
+  "Enable Recycle Bin before deleting sales": "سیلز کو حذف کرنے سے پہلے ری سائیکل بن",
+  "Only super admins can change the sale hard-delete setting": "صرف سپر ایڈمنز ہی سیل ہارڈ ڈیلیٹ کی ترتیب تبدیل کرسکتے ہیں"
 }

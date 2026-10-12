@@ -944,5 +944,13 @@
   "nothing_asked": "nada_preguntó",
   "nothing_changed": "nada_cambió",
   "order_changed": "pedido_cambiado",
-  "supplier_message_drafts": "borradores de mensajes del proveedor"
+  "supplier_message_drafts": "borradores de mensajes del proveedor",
+  "Allocated quantities require a completed payment.": "Las cantidades asignadas requieren un pago completo.",
+  "Item write permission required": "Se requiere el permiso de escritura del artículo",
+  "Unsupported allocated sale commit": "Confirmación de venta asignada no admitida",
+  "Unsupported allocated sale preparation": "Preparación de ventas asignadas no respaldada",
+  "Unsupported stock allocation sale": "Venta por asignación de existencias no respaldada",
+  "Use the normal return process for an allocated sale.": "Usa el proceso de devolución normal para una venta asignada.",
+  "Enable Recycle Bin before deleting sales": "Habilitar la papelera de reciclaje antes de eliminar las ventas",
+  "Only super admins can change the sale hard-delete setting": "Solo los superadministradores pueden cambiar la configuración de eliminación definitiva de la venta"
 }
