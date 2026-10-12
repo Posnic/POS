@@ -100,6 +100,7 @@
     "whatsapp_outbox": "Delivery claims and acknowledgements belong to the server that owns the WhatsApp connector. Replicating queued messages could send financial summaries or other messages twice.",
     "ask_posnic_preferences": "Assistant retention and capability controls are enforced by the server where Ask Posnic runs; cross-installation rollout is explicit administration.",
     "inventory_counts": "A stock-count worksheet is local operational state until a reviewed synchronization contract is introduced; it never changes item stock by itself.",
+    "inventory_operations": "Inventory request identities and effect journals remain on the issuing server. Item balances and stocklogs use normal sync; copying an unfinished journal could replay a stock change on an independent ledger.",
     "printjobs": "work waiting for a particular printer, claimed over HTTP by whichever till is allowed to. Syncing it would hand the same bill to two databases and print it twice, which is the one thing the atomic claim exists to prevent",
     "print_tills": "the key digests this shop has allowed to take its print jobs. A till has no use for the list, and copying it between installations would mean a machine allowed in one shop being allowed in another",
     "mobile_sales": "Mobile device grants and durable ingestion journal belong to the issuing server. Moving them independently would permit cross-server replay; completed sales use the normal sales sync.",
