@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "ਅਸਮਰਥਿਤ ਸਟਾਕ ਅਲਾਟਮੈਂਟ ਵਿ",
   "Use the normal return process for an allocated sale.": "ਨਿਰਧਾਰਤ ਵਿਕਰੀ ਲਈ ਆਮ ਵਾਪਸੀ ਪ੍ਰਕਿਰਿਆ ਦੀ ਵਰਤੋਂ ਕਰੋ.",
   "Enable Recycle Bin before deleting sales": "ਵਿਕਰੀ ਮਿਟਾਉਣ ਤੋਂ ਪਹਿਲਾਂ ਰੀਸਾਈਕਲ ਬਿਨ ਸਮਰੱਥ",
-  "Only super admins can change the sale hard-delete setting": "ਸਿਰਫ ਸੁਪਰ ਐਡਮਿਨ ਹੀ ਵਿਕਰੀ ਹਾਰਡ-ਡਿਲੀਟ ਸੈਟਿੰਗ ਨੂੰ ਬਦਲ ਸਕਦੇ ਹਨ"
+  "Only super admins can change the sale hard-delete setting": "ਸਿਰਫ ਸੁਪਰ ਐਡਮਿਨ ਹੀ ਵਿਕਰੀ ਹਾਰਡ-ਡਿਲੀਟ ਸੈਟਿੰਗ ਨੂੰ ਬਦਲ ਸਕਦੇ ਹਨ",
+  "Finish the pending payment correction before closing this register.": "ਇਸ ਰਜਿਸਟਰ ਨੂੰ ਬੰਦ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਬਾਕੀ ਭੁਗਤਾਨ ਸੁਧਾਰ ਨੂੰ ਪੂਰਾ",
+  "Finish the pending payment correction first.": "ਪਹਿਲਾਂ ਬਕਾਇਆ ਭੁਗਤਾਨ ਸੁਧਾਰ ਨੂੰ ਪੂਰਾ ਕਰੋ।"
 }

@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Venda não suportada por alocação de ações",
   "Use the normal return process for an allocated sale.": "Use o processo normal de devolução para uma venda alocada.",
   "Enable Recycle Bin before deleting sales": "Ative a lixeira antes de excluir as vendas",
-  "Only super admins can change the sale hard-delete setting": "Somente superadministradores podem alterar a configuração de exclusão forçada da venda"
+  "Only super admins can change the sale hard-delete setting": "Somente superadministradores podem alterar a configuração de exclusão forçada da venda",
+  "Finish the pending payment correction before closing this register.": "Conclua a correção do pagamento pendente antes de fechar este registro.",
+  "Finish the pending payment correction first.": "Conclua primeiro a correção do pagamento pendente."
 }

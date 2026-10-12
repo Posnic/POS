@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Penjualan alokasi saham yang tidak didukung",
   "Use the normal return process for an allocated sale.": "Gunakan proses pengembalian normal untuk penjualan yang dialokasikan.",
   "Enable Recycle Bin before deleting sales": "Aktifkan Recycle Bin sebelum menghapus penjualan",
-  "Only super admins can change the sale hard-delete setting": "Hanya admin super yang dapat mengubah pengaturan hard delete penjualan"
+  "Only super admins can change the sale hard-delete setting": "Hanya admin super yang dapat mengubah pengaturan hard delete penjualan",
+  "Finish the pending payment correction before closing this register.": "Selesaikan koreksi pembayaran yang tertunda sebelum menutup register ini.",
+  "Finish the pending payment correction first.": "Selesaikan koreksi pembayaran yang tertunda terlebih dahulu."
 }

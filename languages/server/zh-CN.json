@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "不支持的股票配额出售",
   "Use the normal return process for an allocated sale.": "对分配的销售使用正常退货流程。",
   "Enable Recycle Bin before deleting sales": "在删除销售之前启用回收站",
-  "Only super admins can change the sale hard-delete setting": "只有超级管理员才能更改销售硬删除设置"
+  "Only super admins can change the sale hard-delete setting": "只有超级管理员才能更改销售硬删除设置",
+  "Finish the pending payment correction before closing this register.": "在关闭此登记册之前，完成待处理的付款更正。",
+  "Finish the pending payment correction first.": "首先完成待处理的付款更正。"
 }

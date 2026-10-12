@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Desteklenmeyen stok tahsisi satışı",
   "Use the normal return process for an allocated sale.": "Tahsis edilen bir satış için normal iade sürecini kullanın.",
   "Enable Recycle Bin before deleting sales": "Satışları silmeden önce Geri Dönüşüm Kutusunu Etkinleştir",
-  "Only super admins can change the sale hard-delete setting": "Yalnızca süper yöneticiler satış donanımlı silme ayarını değiştirebilir"
+  "Only super admins can change the sale hard-delete setting": "Yalnızca süper yöneticiler satış donanımlı silme ayarını değiştirebilir",
+  "Finish the pending payment correction before closing this register.": "Bu kaydı kapatmadan önce bekleyen ödeme düzeltmesini tamamlayın.",
+  "Finish the pending payment correction first.": "Önce bekleyen ödeme düzeltmesini tamamlayın."
 }

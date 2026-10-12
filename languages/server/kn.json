@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "ಬೆಂಬಲವಿಲ್ಲದ ಸ್ಟಾಕ್ ಹಂಚಿಕೆ ಮಾರಾಟ",
   "Use the normal return process for an allocated sale.": "ನಿಯೋಜಿತ ಮಾರಾಟಕ್ಕಾಗಿ ಸಾಮಾನ್ಯ ರಿಟರ್ನ್ ಪ್ರಕ್ರಿಯೆಯನ್ನು ಬಳಸಿ.",
   "Enable Recycle Bin before deleting sales": "ಮಾರಾಟವನ್ನು ಅಳಿಸುವ ಮೊದಲು ಮರುಬಳಕೆ ಬಿನ್ ಸಕ್ರಿಯ",
-  "Only super admins can change the sale hard-delete setting": "ಸೂಪರ್ ಅಡ್ಮಿನ್ಗಳು ಮಾತ್ರ ಮಾರಾಟ ಹಾರ್ಡ್-ಡಿಲೀಟ್ ಸೆಟ್ಟಿಂಗ್ ಅನ್ನು ಬದಲಾಯಿಸಬಹುದು"
+  "Only super admins can change the sale hard-delete setting": "ಸೂಪರ್ ಅಡ್ಮಿನ್ಗಳು ಮಾತ್ರ ಮಾರಾಟ ಹಾರ್ಡ್-ಡಿಲೀಟ್ ಸೆಟ್ಟಿಂಗ್ ಅನ್ನು ಬದಲಾಯಿಸಬಹುದು",
+  "Finish the pending payment correction before closing this register.": "ಈ ರಿಜಿಸ್ಟರ್ ಅನ್ನು ಮುಚ್ಚುವ ಮೊದಲು ಬಾಕಿ ಪಾವತಿ ತಿದ್ದುಪಡಿ ಮುಗಿಸಿ.",
+  "Finish the pending payment correction first.": "ಬಾಕಿ ಇರುವ ಪಾವತಿ ತಿದ್ದುಪಡಿಯನ್ನು ಮೊದಲು ಮುಗಿಸಿ."
 }

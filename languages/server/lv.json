@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Neatbalstīta akciju sadales pārdošana",
   "Use the normal return process for an allocated sale.": "Izmantojiet parasto atgriešanas procesu piešķirtajai pārdošanai.",
   "Enable Recycle Bin before deleting sales": "Pirms pārdošanas izdzēšanas iespējojiet atkritni",
-  "Only super admins can change the sale hard-delete setting": "Tikai super administratori var mainīt pārdošanas cietās dzēšanas iestatījumu"
+  "Only super admins can change the sale hard-delete setting": "Tikai super administratori var mainīt pārdošanas cietās dzēšanas iestatījumu",
+  "Finish the pending payment correction before closing this register.": "Pirms šī reģistra slēgšanas pabeidziet gaidāmo maksājumu korekciju.",
+  "Finish the pending payment correction first.": "Vispirms pabeidziet gaidāmo maksājumu korekciju."
 }

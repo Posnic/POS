@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "പിന്തുണയ്ക്കാത്ത സ്റ്റോക്ക് അലോക്കേഷൻ വിൽപ്പന",
   "Use the normal return process for an allocated sale.": "അനുവദിച്ച വിൽപ്പനയ്ക്കായി സാധാരണ റിട്ടേൺ പ്രക്രിയ ഉപയോഗിക്കുക.",
   "Enable Recycle Bin before deleting sales": "വിൽപ്പന ഇല്ലാതാക്കുന്നതിന് മുമ്പ് റീസൈക്കിൾ ബിൻ പ്രവർത്തനക്ഷമ",
-  "Only super admins can change the sale hard-delete setting": "സൂപ്പർ അഡ്മിനുകൾക്ക് മാത്രമേ സെയിൽ ഹാർഡ്-ഡിലീറ്റ് സെറ്റിങ് മാറ്റാൻ കഴിയൂ"
+  "Only super admins can change the sale hard-delete setting": "സൂപ്പർ അഡ്മിനുകൾക്ക് മാത്രമേ സെയിൽ ഹാർഡ്-ഡിലീറ്റ് സെറ്റിങ് മാറ്റാൻ കഴിയൂ",
+  "Finish the pending payment correction before closing this register.": "ഈ രജിസ്റ്റർ അടയ്ക്കുന്നതിന് മുമ്പ് തീർപ്പാക്കുന്ന പേയ്മെന്റ് തിരുത്തൽ പൂർത്തിയാക്കുക.",
+  "Finish the pending payment correction first.": "ആദ്യം തീർപ്പാക്കുന്ന പേയ്മെന്റ് തിരുത്തൽ പൂർത്തിയാക്കുക."
 }

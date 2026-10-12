@@ -175,6 +175,13 @@ async function reconcile(db, c, plan) {
   const payments = plan.payments || [];
   if (!payments.length) return;
   for (const sale of plan.sales) {
+    const corrected = await db
+      .collection('sales')
+      .findOne(
+        { ...baseFilter(c), _id: sale._id },
+        { projection: { payment_corrections: 1, payment_correction_pending: 1 } }
+      );
+    if (corrected?.payment_corrections?.length || corrected?.payment_correction_pending) continue;
     const multi = {};
     let paid = 0;
     for (const payment of payments) {
@@ -203,6 +210,8 @@ async function reconcile(db, c, plan) {
         ...baseFilter(c),
         _id: sale._id,
         captain_payment_plan: plan._id,
+        payment_correction_pending: { $exists: false },
+        'payment_corrections.0': { $exists: false },
         $or: [
           { captain_payment_version: { $exists: false } },
           { captain_payment_version: { $lte: plan.version } },
@@ -263,7 +272,10 @@ async function reconcile(db, c, plan) {
     // Existing drawer links keep their tender totals. Floor payments without a
     // drawer remain attributed to the collecting staff member on the sale.
     await db.collection('cashregister').updateMany(
-      { ...baseFilter(c), 'register_sales.sales_id': sale._id },
+      {
+        ...baseFilter(c),
+        'register_sales.sales_id': sale._id,
+      },
       {
         $set: {
           'register_sales.$[entry].register_paymentmode': Object.keys(multi).join(','),
@@ -275,6 +287,7 @@ async function reconcile(db, c, plan) {
         arrayFilters: [
           {
             'entry.sales_id': sale._id,
+            'entry.payment_correction_id': { $exists: false },
             $or: [
               { 'entry.captain_payment_version': { $exists: false } },
               { 'entry.captain_payment_version': { $lte: plan.version } },

@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Salg av aksjeallokering som ikke støttes",
   "Use the normal return process for an allocated sale.": "Bruk den normale returprosessen for et tildelt salg.",
   "Enable Recycle Bin before deleting sales": "Aktiver papirkurven før du sletter salg",
-  "Only super admins can change the sale hard-delete setting": "Bare superadministratorer kan endre innstillingen for hard sletting av salg"
+  "Only super admins can change the sale hard-delete setting": "Bare superadministratorer kan endre innstillingen for hard sletting av salg",
+  "Finish the pending payment correction before closing this register.": "Fullfør den ventende betalingskorrigeringen før du lukker dette registeret.",
+  "Finish the pending payment correction first.": "Fullfør den ventende betalingskorrigeringen først."
 }

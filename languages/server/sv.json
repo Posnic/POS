@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Försäljning av lagerallokering som inte stöds",
   "Use the normal return process for an allocated sale.": "Använd den normala returprocessen för en tilldelad försäljning.",
   "Enable Recycle Bin before deleting sales": "Aktivera papperskorgen innan du tar bort försäljning",
-  "Only super admins can change the sale hard-delete setting": "Endast superadministratörer kan ändra inställningen för hård radering av försäljning"
+  "Only super admins can change the sale hard-delete setting": "Endast superadministratörer kan ändra inställningen för hård radering av försäljning",
+  "Finish the pending payment correction before closing this register.": "Slutför den väntande betalningskorrigeringen innan du stänger detta register.",
+  "Finish the pending payment correction first.": "Slutför den väntande betalningskorrigeringen först."
 }

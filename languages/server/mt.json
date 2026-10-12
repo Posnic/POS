@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Bejgħ tal-allokazzjoni tal-istokk mhux ap",
   "Use the normal return process for an allocated sale.": "Uża l-proċess normali tar-ritorn għal bejgħ allokat.",
   "Enable Recycle Bin before deleting sales": "Ippermetti Recycle Bin qabel tħassar il-bejgħ",
-  "Only super admins can change the sale hard-delete setting": "Super ammins biss jistgħu jibdlu l-issettjar tal-bejgħ ħassar il-hard"
+  "Only super admins can change the sale hard-delete setting": "Super ammins biss jistgħu jibdlu l-issettjar tal-bejgħ ħassar il-hard",
+  "Finish the pending payment correction before closing this register.": "Temm il-korrezzjoni pendenti tal-ħlas qabel ma tagħlaq dan ir-reġistru.",
+  "Finish the pending payment correction first.": "Temm l-ewwel il-korrezzjoni pendenti tal-ħlas."
 }

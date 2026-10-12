@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Tukematon osakkeiden allokointimyynti",
   "Use the normal return process for an allocated sale.": "Käytä kohdennetun myynnin normaalia palautusprosessia.",
   "Enable Recycle Bin before deleting sales": "Ota roskakori käyttöön ennen myynnin poistamista",
-  "Only super admins can change the sale hard-delete setting": "Vain superjärjestelmänvalvojat voivat muuttaa myynnin kovan poiston asetusta"
+  "Only super admins can change the sale hard-delete setting": "Vain superjärjestelmänvalvojat voivat muuttaa myynnin kovan poiston asetusta",
+  "Finish the pending payment correction before closing this register.": "Viimeistele odottava maksun korjaus ennen tämän rekisterin sulkemista.",
+  "Finish the pending payment correction first.": "Viimeistele odottava maksun korjaus ensin."
 }
