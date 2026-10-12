@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Bán phân bổ cổ phiếu không được hỗ trợ",
   "Use the normal return process for an allocated sale.": "Sử dụng quy trình trả lại thông thường cho một đợt bán hàng được phân bổ.",
   "Enable Recycle Bin before deleting sales": "Bật Thùng rác trước khi xóa bán hàng",
-  "Only super admins can change the sale hard-delete setting": "Chỉ quản trị viên siêu mới có thể thay đổi cài đặt xóa cứng bán hàng"
+  "Only super admins can change the sale hard-delete setting": "Chỉ quản trị viên siêu mới có thể thay đổi cài đặt xóa cứng bán hàng",
+  "Finish the pending payment correction before closing this register.": "Hoàn tất việc chỉnh sửa thanh toán đang chờ xử lý trước khi đóng sổ đăng ký này.",
+  "Finish the pending payment correction first.": "Hoàn tất việc chỉnh sửa thanh toán đang chờ xử lý trước."
 }

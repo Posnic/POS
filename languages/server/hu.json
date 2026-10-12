@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Nem támogatott készletelosztási eladás",
   "Use the normal return process for an allocated sale.": "Használja a normál visszaküldési folyamatot egy kiosztott értékesítéshez.",
   "Enable Recycle Bin before deleting sales": "Az értékesítés törlése előtt engedélyezze a Lomtárt",
-  "Only super admins can change the sale hard-delete setting": "Csak szuper adminisztrátorok változtathatják meg az eladási kemény törlési beállítást"
+  "Only super admins can change the sale hard-delete setting": "Csak szuper adminisztrátorok változtathatják meg az eladási kemény törlési beállítást",
+  "Finish the pending payment correction before closing this register.": "A nyilvántartás bezárása előtt fejezze be a függőben lévő fizetési korrekciót.",
+  "Finish the pending payment correction first.": "Először fejezze be a függőben lévő fizetési korrekciót."
 }

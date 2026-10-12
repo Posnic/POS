@@ -5039,6 +5039,7 @@ class SalesRepository {
         {
           _id: saleObjectId,
           ...licenseFilter,
+          payment_correction_pending: { $exists: false },
           $and: [
             {
               $or: [

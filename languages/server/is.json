@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Óstudd sala á hlutabréfaúthlutun",
   "Use the normal return process for an allocated sale.": "Notaðu venjulegt skilaferli fyrir úthlutaða sölu.",
   "Enable Recycle Bin before deleting sales": "Virkja ruslafötuna áður en þú eyðir sölu",
-  "Only super admins can change the sale hard-delete setting": "Aðeins ofurstjórnendur geta breytt söluharð-eyða stillingunni"
+  "Only super admins can change the sale hard-delete setting": "Aðeins ofurstjórnendur geta breytt söluharð-eyða stillingunni",
+  "Finish the pending payment correction before closing this register.": "Ljúktu leiðréttingunni í bið greiðslu áður en þú lokar þessari skrá.",
+  "Finish the pending payment correction first.": "Kláraðu leiðréttinguna í bið greiðslu fyrst."
 }

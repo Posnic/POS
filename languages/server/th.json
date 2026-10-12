@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "การขายการจัดสรรหุ้นที่ไม่สนับสนุน",
   "Use the normal return process for an allocated sale.": "ใช้กระบวนการคืนสินค้าปกติสำหรับการขายที่จัดสรรไว้",
   "Enable Recycle Bin before deleting sales": "เปิดใช้งานถังรีไซเคิลก่อนลบยอดขาย",
-  "Only super admins can change the sale hard-delete setting": "เฉพาะผู้ดูแลระบบซุปเปอร์เท่านั้นที่สามารถเปลี่ยนการตั้งค่าการลบแบบฮาร์ดลดได้"
+  "Only super admins can change the sale hard-delete setting": "เฉพาะผู้ดูแลระบบซุปเปอร์เท่านั้นที่สามารถเปลี่ยนการตั้งค่าการลบแบบฮาร์ดลดได้",
+  "Finish the pending payment correction before closing this register.": "เสร็จสิ้นการแก้ไขการชำระเงินที่รอดำเนินการก่อนปิดการลงทะเบียนนี้",
+  "Finish the pending payment correction first.": "เสร็จสิ้นการแก้ไขการชำระเงินที่รอดำเนินการก่อน"
 }

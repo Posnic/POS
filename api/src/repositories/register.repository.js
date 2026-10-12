@@ -919,6 +919,7 @@ class RegisterRepository {
         licenseToMatch = new ObjectId(licenseToMatch);
       }
 
+      let correctionRevision;
       const registerCollectionData = {
         register_status: REGISTER_STATUS.CLOSED,
         register_closedate: mongoDate,
@@ -937,6 +938,12 @@ class RegisterRepository {
           register_status: REGISTER_STATUS.OPENED,
         });
         if (session) {
+          if (session.payment_correction_locks?.length)
+            return {
+              status: false,
+              message: 'Finish the pending payment correction before closing this register.',
+            };
+          correctionRevision = session.payment_correction_revision;
           const expected = this._expectedCashAtClose(session);
           const countedEntry = (session.countedAmount || []).find(
             (c) => String(c.paymenttype || '').toLowerCase() === 'cash'
@@ -969,6 +976,9 @@ class RegisterRepository {
           branch_id: branchIdToMatch,
           license: licenseToMatch,
           register_status: REGISTER_STATUS.OPENED,
+          'payment_correction_locks.0': { $exists: false },
+          payment_correction_revision:
+            correctionRevision === undefined ? { $exists: false } : correctionRevision,
           ...(managerOverride
             ? {}
             : {

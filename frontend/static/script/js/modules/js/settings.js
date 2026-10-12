@@ -921,6 +921,7 @@ PosnicPro.settings = {
                 }
                 $('#receiving_prefix').val(data.receiving_prefix || 'P');
                 $('#allow_sale_date_edit').prop('checked', data.allow_sale_date_edit !== 'false' && data.allow_sale_date_edit !== false);
+                $('#allow_payment_correction').prop('checked', data.allow_payment_correction === true || data.allow_payment_correction === 'true');
                 var saleHardDelete = data.allow_sale_hard_delete === true || data.allow_sale_hard_delete === 'true';
                 $('#allow_sale_hard_delete').prop('checked', saleHardDelete);
                 $('#sale_hard_delete_setting').toggle(PosnicPro.local.get('usertype') === 'super_admin');
@@ -2224,6 +2225,7 @@ if ($wrapper.length) {
                 quote_default_signature: $('#quote_default_signature').val() || '',
                 receiving_prefix: $('#receiving_prefix').val(),
                 allow_sale_date_edit: ($('#allow_sale_date_edit').is(":checked")) ? 'true' : 'false',
+                allow_payment_correction: $('#allow_payment_correction').is(':checked'),
                 allow_sale_hard_delete: PosnicPro.local.get('usertype') === 'super_admin' ? $('#allow_sale_hard_delete').is(':checked') : undefined,
                 indian_gst: $('#indian_gst').val(),
                 branch_gstin_number: $('#branch_gstin_number').val(),

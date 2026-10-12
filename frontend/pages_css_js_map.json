@@ -400,6 +400,7 @@
         "static/script/js/modules/js/report_sales.js",
         "static/script/js/modules/js/report_pricesettings.js",
         "static/script/js/modules/js/price-editor.js",
+        "static/script/js/modules/js/payment-correction.js",
         "static/script/js/modules/js/report_kot.js",
         "static/script/js/modules/js/report_suppliers.js",
         "static/script/js/modules/js/report_taxdiscount.js",

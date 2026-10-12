@@ -1040,7 +1040,9 @@ PosnicPro.sales = {
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'
             + '</div>';
+        PosnicPro.sales._correctionSaleId = id;
         $('#sales_doc').html(toolbar + '<div class="doc-scroll">' + PosnicPro.restaurantSaleDetails.render(d) + PosnicPro.sales.buildSaleSheet(d) + '</div>');
+        if (window.PosnicPaymentCorrection) PosnicPaymentCorrection.attach(id, d);
     },
     searchItem: function (id) {
         var matched = false;

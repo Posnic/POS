@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "מכירת הקצאת מניות לא נתמכת",
   "Use the normal return process for an allocated sale.": "השתמש בתהליך ההחזרה הרגיל עבור מכירה שהוקצתה.",
   "Enable Recycle Bin before deleting sales": "הפעל סל המיחזור לפני מחיקת מכירות",
-  "Only super admins can change the sale hard-delete setting": "רק מנהלי סופר יכולים לשנות את הגדרת המחיקה הקשה של המכירה"
+  "Only super admins can change the sale hard-delete setting": "רק מנהלי סופר יכולים לשנות את הגדרת המחיקה הקשה של המכירה",
+  "Finish the pending payment correction before closing this register.": "סיים את תיקון התשלום הממתינה לפני סגירת רישום זה.",
+  "Finish the pending payment correction first.": "סיים תחילה את תיקון התשלום הממתינה."
 }

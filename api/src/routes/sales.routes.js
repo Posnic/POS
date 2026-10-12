@@ -470,6 +470,23 @@ router.post(
 
 router.use(protect);
 
+// Payment corrections are a separate workflow: never collect money again.
+const paymentCorrection = require('../services/payment-correction');
+const correctionRoute = (handler) => async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json(await handler(req));
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.status
+        ? error.message
+        : 'Could not finish the correction. Reopen this payment to recover it safely.',
+    });
+  }
+};
+router.get('/payment-correction/:id', correctionRoute(paymentCorrection.read));
+router.post('/payment-correction/:id', correctionRoute(paymentCorrection.save));
+
 const businessDecisionLimit = rateLimit({
   windowMs: 60000,
   limit: 120,

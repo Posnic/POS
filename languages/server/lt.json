@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Nepalaikomas akcijų paskirstymo pardavimas",
   "Use the normal return process for an allocated sale.": "Paskirstytam pardavimui naudokite įprastą grąžinimo procesą.",
   "Enable Recycle Bin before deleting sales": "Įgalinkite šiukšlinę prieš ištrinant pardavimus",
-  "Only super admins can change the sale hard-delete setting": "Tik super adminai gali pakeisti pardavimo hard-delete nustatymą"
+  "Only super admins can change the sale hard-delete setting": "Tik super adminai gali pakeisti pardavimo hard-delete nustatymą",
+  "Finish the pending payment correction before closing this register.": "Prieš uždarydami šį registrą, užbaikite laukiamą mokėjimo korekciją.",
+  "Finish the pending payment correction first.": "Pirmiausia užbaikite laukiančią mokėjimo korekciją."
 }

@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "غیر معاون اسٹاک مختص فروخت",
   "Use the normal return process for an allocated sale.": "مختص فروخت کے لئے عام واپسی کے عمل کا استعمال کریں۔",
   "Enable Recycle Bin before deleting sales": "سیلز کو حذف کرنے سے پہلے ری سائیکل بن",
-  "Only super admins can change the sale hard-delete setting": "صرف سپر ایڈمنز ہی سیل ہارڈ ڈیلیٹ کی ترتیب تبدیل کرسکتے ہیں"
+  "Only super admins can change the sale hard-delete setting": "صرف سپر ایڈمنز ہی سیل ہارڈ ڈیلیٹ کی ترتیب تبدیل کرسکتے ہیں",
+  "Finish the pending payment correction before closing this register.": "اس رجسٹر کو بند کرنے سے پہلے زیر التواء ادائیگی کی اصلاح",
+  "Finish the pending payment correction first.": "پہلے زیر التواء ادائیگی کی اصلاح ختم کریں۔"
 }
