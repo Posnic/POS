@@ -11,7 +11,9 @@ const oid = (v) => new ObjectId(id(v));
 const hash = (v) => crypto.createHash('sha256').update(v).digest('hex');
 const { fail } = require('../utils/branch-access');
 const { allowed } = require('../utils/mobile-pos-access');
-const canConnect = (user, branch) => allowed(user, 'sales') || (allowed(user, 'item', 'read') && (!branch || branch.inventory_policy?.enabled === true));
+const canConnect = (user, branch) =>
+  allowed(user, 'sales') ||
+  (allowed(user, 'item', 'read') && (!branch || branch.inventory_policy?.enabled === true));
 const minor = (n) => Math.round(Number(n || 0) * 100);
 function canonical(v) {
   if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
@@ -205,7 +207,8 @@ async function bootstrap(req) {
       inventoryWrite: allowed(req.user, 'item', 'read') && allowed(req.user, 'item', 'write'),
       supplierRead: allowed(req.user, 'supplier', 'read'),
       sell: allowed(req.user, 'sales'),
-      quickSale: allowed(req.user, 'sales') && c.config.quickSale && allowed(req.user, 'pos', 'quick_sale'),
+      quickSale:
+        allowed(req.user, 'sales') && c.config.quickSale && allowed(req.user, 'pos', 'quick_sale'),
       voidLine: allowed(req.user, 'pos', 'void_line'),
       receiptPrint: allowed(req.user, 'pos', 'reprint_receipt'),
       customerWrite: allowed(req.user, 'customer'),
@@ -269,7 +272,8 @@ async function bootstrap(req) {
 }
 async function cataloguePage(req) {
   const c = await context(req);
-  if (!req.handsetDevice || !canConnect(req.user, c.branch)) fail('Catalogue access is required.', 403);
+  if (!req.handsetDevice || !canConnect(req.user, c.branch))
+    fail('Catalogue access is required.', 403);
   const { version, page } = req.params;
   if (!/^[a-f0-9]{64}$/.test(version) || !/^\d{1,8}$/.test(page))
     fail('Invalid catalogue page.', 400);
