@@ -477,13 +477,11 @@ const correctionRoute = (handler) => async (req, res) => {
     res.set('Cache-Control', 'no-store');
     res.json(await handler(req));
   } catch (error) {
-    res
-      .status(error.status || 500)
-      .json({
-        message: error.status
-          ? error.message
-          : 'Could not finish the correction. Reopen this payment to recover it safely.',
-      });
+    res.status(error.status || 500).json({
+      message: error.status
+        ? error.message
+        : 'Could not finish the correction. Reopen this payment to recover it safely.',
+    });
   }
 };
 router.get('/payment-correction/:id', correctionRoute(paymentCorrection.read));
