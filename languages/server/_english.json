@@ -886,6 +886,12 @@
   "File writing completed": [
     "src/controllers/crons.controller.js"
   ],
+  "Finish the pending payment correction before closing this register.": [
+    "src/repositories/register.repository.js"
+  ],
+  "Finish the pending payment correction first.": [
+    "src/services/sale.service.js"
+  ],
   "Frequent items fetched": [
     "src/repositories/sale.repository.js"
   ],

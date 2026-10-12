@@ -3,6 +3,8 @@ const { ObjectId } = require('mongodb');
 const message =
   'This order has Captain payments. Open payment details to collect the remaining balance.';
 async function mutable(db, sale) {
+  if (sale?.payment_correction_pending)
+    throw Object.assign(new Error('Finish the pending payment correction first.'), { status: 409 });
   if (!sale?.captain_payment_plan) return;
   const plans = db.collection('captain_payment_plans');
   const id = sale.captain_payment_plan;
@@ -40,7 +42,11 @@ async function beginEdit(db, sale) {
   const branch = await db
     .collection('branches')
     .findOne({ _id: sale.branch_id, license: sale.license });
-  if (!require('../utils/captain-payment-enabled')(branch)) return null;
+  if (
+    !require('../utils/captain-payment-enabled')(branch) &&
+    ![true, 'true'].includes(branch?.allow_payment_correction)
+  )
+    return null;
   const token = new ObjectId().toHexString();
   const result = await db.collection('sales').updateOne(
     {
@@ -48,6 +54,7 @@ async function beginEdit(db, sale) {
       license: sale.license,
       branch_id: sale.branch_id,
       captain_payment_plan: { $exists: false },
+      payment_correction_pending: { $exists: false },
       $or: [
         { captain_edit_until: { $exists: false } },
         { captain_edit_until: { $lt: new Date() } },

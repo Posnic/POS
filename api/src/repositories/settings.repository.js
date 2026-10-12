@@ -279,6 +279,7 @@ class SettingsRepository extends BaseModel {
 
         // Destructive-sale consent must be explicitly set at the destination.
         delete own.allow_sale_hard_delete;
+        delete own.allow_payment_correction;
         if (!Object.keys(own).length) {
           copied[group] = [];
           continue;

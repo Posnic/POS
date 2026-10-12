@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "మద్దతు లేని స్టాక్ కేటాయింపు అమ్మకం",
   "Use the normal return process for an allocated sale.": "కేటాయించిన అమ్మకానికి సాధారణ రిటర్న్ ప్రక్రియను ఉపయోగించండి.",
   "Enable Recycle Bin before deleting sales": "అమ్మకాలను తొలగించే ముందు రీసైకిల్ బిన్ను ప్రారంభించండి",
-  "Only super admins can change the sale hard-delete setting": "సూపర్ అడ్మిన్లు మాత్రమే సేల్ హార్డ్-డిలీట్ సెట్టింగ్ను మార్చగలరు"
+  "Only super admins can change the sale hard-delete setting": "సూపర్ అడ్మిన్లు మాత్రమే సేల్ హార్డ్-డిలీట్ సెట్టింగ్ను మార్చగలరు",
+  "Finish the pending payment correction before closing this register.": "ఈ రిజిస్టర్ను మూసివేసే ముందు పెండింగ్ చెల్లింపు దిద్దుబాటును పూర్తి చేయండి.",
+  "Finish the pending payment correction first.": "మొదట పెండింగ్లో ఉన్న చెల్లింపు దిద్దుబాటును పూర్తి చేయండి."
 }

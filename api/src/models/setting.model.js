@@ -1402,6 +1402,12 @@ class SettingModel extends BaseModel {
         discount_percentage: parseFloat(data.discount_percentage),
         discount_amount: parseFloat(data.discount_amount),
         sales_prefix: data.sales_prefix,
+        ...(data.allow_payment_correction !== undefined
+          ? {
+              allow_payment_correction:
+                data.allow_payment_correction === true || data.allow_payment_correction === 'true',
+            }
+          : {}),
         ...(data.allow_sale_hard_delete !== undefined
           ? {
               allow_sale_hard_delete:

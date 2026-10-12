@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Uuzaji wa mgawanyiko wa hisa isiyo",
   "Use the normal return process for an allocated sale.": "Tumia mchakato wa kawaida wa kurudi kwa uuzaji uliotengwa.",
   "Enable Recycle Bin before deleting sales": "Wezesha Recycle Bin kabla ya kufuta mauzo",
-  "Only super admins can change the sale hard-delete setting": "Ni wasimamizi wa juu tu wanaweza kubadilisha mipangilio ya kufuta kwa ngumu ya"
+  "Only super admins can change the sale hard-delete setting": "Ni wasimamizi wa juu tu wanaweza kubadilisha mipangilio ya kufuta kwa ngumu ya",
+  "Finish the pending payment correction before closing this register.": "Kumaliza marekebisho ya malipo yanayosubiri kabla ya kufunga rejista hii",
+  "Finish the pending payment correction first.": "Kumaliza marekebisho ya malipo yanayosubiri kwanza."
 }

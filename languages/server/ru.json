@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Продажа акций без обоснования",
   "Use the normal return process for an allocated sale.": "Используйте обычный процесс возврата распределенной продажи.",
   "Enable Recycle Bin before deleting sales": "Включите корзину перед удалением продаж",
-  "Only super admins can change the sale hard-delete setting": "Только суперадмины могут изменить настройку жесткого удаления продажи"
+  "Only super admins can change the sale hard-delete setting": "Только суперадмины могут изменить настройку жесткого удаления продажи",
+  "Finish the pending payment correction before closing this register.": "Завершите исправление отложенного платежа, прежде чем закрыть этот реестр.",
+  "Finish the pending payment correction first.": "Сначала завершите исправление отложенного платежа."
 }

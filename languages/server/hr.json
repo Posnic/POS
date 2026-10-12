@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Nepodržana prodaja raspodjele zaliha",
   "Use the normal return process for an allocated sale.": "Koristite uobičajeni postupak povrata za dodijeljenu prodaju.",
   "Enable Recycle Bin before deleting sales": "Omogućite koš za smeće prije brisanja prodaje",
-  "Only super admins can change the sale hard-delete setting": "Samo super administratori mogu promijeniti postavku rasprodaje tvrdog brisanja"
+  "Only super admins can change the sale hard-delete setting": "Samo super administratori mogu promijeniti postavku rasprodaje tvrdog brisanja",
+  "Finish the pending payment correction before closing this register.": "Završite ispravak plaćanja na čekanju prije zatvaranja ovog registra.",
+  "Finish the pending payment correction first.": "Prvo završite ispravak plaćanja na čekanju."
 }

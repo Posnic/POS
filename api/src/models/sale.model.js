@@ -717,6 +717,8 @@ const saleSchema = new mongoose.Schema(
       default: 0,
     },
 
+    payment_correction_pending: { type: mongoose.Schema.Types.Mixed },
+    payment_corrections: { type: [mongoose.Schema.Types.Mixed], default: undefined },
     captain_payment_plan: { type: String },
     seating_capacity_revision: { type: String },
     captain_transfer_allocation: { type: mongoose.Schema.Types.Mixed },

@@ -364,12 +364,17 @@ const processSale = async (
     if (id !== '') {
       existingSale = await salesRepository.getById(id);
       if (existingSale) {
+        if (existingSale.payment_correction_pending)
+          return { status: false, message: 'Finish the pending payment correction first.' };
         if (existingSale.extension_stock_operation)
           return { status: false, message: 'Use the normal return process for an allocated sale.' };
         if (existingSale.captain_payment_plan)
           await require('./captain-payment-guard').mutable(await BaseModel.getDb(), existingSale);
         const paymentBranch = await getBranchById(existingSale.branch_id || context.branchId);
-        if (require('../utils/captain-payment-enabled')(paymentBranch))
+        if (
+          require('../utils/captain-payment-enabled')(paymentBranch) ||
+          [true, 'true'].includes(paymentBranch?.allow_payment_correction)
+        )
           finishCaptainEdit = await require('./captain-payment-guard').beginEdit(
             await BaseModel.getDb(),
             existingSale
@@ -1611,6 +1616,8 @@ const processSale = async (
       // absence rather than requiring that synthesized default in MongoDB.
       doc.$where = { ...(doc.$where || {}) };
       for (const field of [
+        'payment_correction_pending',
+        'payment_corrections',
         'payment_status',
         'paid_amount',
         'partial_balance',

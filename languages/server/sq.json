@@ -952,5 +952,7 @@
   "Unsupported stock allocation sale": "Shitja e pambështetur e alokimit",
   "Use the normal return process for an allocated sale.": "Përdorni procesin normal të kthimit për një shitje të caktuar.",
   "Enable Recycle Bin before deleting sales": "Aktivizo koshin e riciklimit para se të fshini",
-  "Only super admins can change the sale hard-delete setting": "Vetëm super administratorët mund të ndryshojnë cilësimet e fshirjes së vështirë të shitjes"
+  "Only super admins can change the sale hard-delete setting": "Vetëm super administratorët mund të ndryshojnë cilësimet e fshirjes së vështirë të shitjes",
+  "Finish the pending payment correction before closing this register.": "Përfundoni korrigjimin e pagesës në pritje përpara se të mbyllni këtë",
+  "Finish the pending payment correction first.": "Përfundoni së pari korrigjimin e pagesës në pritje."
 }
