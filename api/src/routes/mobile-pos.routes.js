@@ -84,7 +84,7 @@ router.post(
     const branch = await req.db
       .collection('branches')
       .findOne({ _id: code.branchId, license: code.license });
-    if (!user || !branch || !mobile.settings(branch).enabled || !mobile.allowed(user, 'sales'))
+    if (!user || !branch || !mobile.settings(branch).enabled || !mobile.canConnect(user, branch))
       mobile.fail('This account cannot connect.', 403);
     if (!require('../utils/auth-version').current(user, code))
       mobile.fail('Pairing code is no longer valid. Generate a new code.', 401);
@@ -103,6 +103,18 @@ router.post(
   })
 );
 router.use(protect);
+const inventory = require('../services/mobile-inventory');
+router.get('/inventory/policy', wrap(inventory.policy));
+router.post('/inventory/policy', wrap(inventory.policy));
+router.get('/inventory/catalogue', wrap(inventory.catalogue));
+router.get('/inventory/items/:id/history', wrap(inventory.history));
+router.get('/inventory/requests/:id', wrap(inventory.requestStatus));
+router.post('/inventory/requests/:id/cancel', wrap(inventory.abandonRequest));
+router.get('/inventory/operations', wrap(inventory.list));
+router.post('/inventory/operations', wrap(inventory.prepare));
+router.get('/inventory/operations/:id', wrap(inventory.get));
+router.post('/inventory/operations/:id/confirm', wrap(inventory.confirm));
+router.post('/inventory/operations/:id/cancel', wrap(inventory.cancel));
 router.get('/photo-orders/options', wrap(require('../services/paper-order').mobileOptions));
 router.post(
   '/photo-orders/recognize',
@@ -164,7 +176,7 @@ router.get(
               .limit(500)
               .toArray()
           )
-            .filter((user) => mobile.allowed(user, 'sales'))
+            .filter((user) => mobile.canConnect(user, c.branch))
             .map((user) => ({ id: String(user._id), name: user.username || user.name || 'Staff' }))
         : [{ id: String(c.userId), name: req.user.username || req.user.name || 'Staff' }],
       currentStaffId: String(c.userId),
@@ -264,7 +276,7 @@ router.post(
       .findOne({ _id: new ObjectId(targetId), license: c.license, activate: true });
     if (
       !target ||
-      !mobile.allowed(target, 'sales') ||
+      !mobile.canConnect(target, c.branch) ||
       (String(target.branch_id) !== String(c.branchId) &&
         !target.branch_access?.some((b) => String(b.branch_id) === String(c.branchId)))
     )
