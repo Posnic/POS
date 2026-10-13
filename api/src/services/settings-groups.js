@@ -120,6 +120,7 @@ const PREFERENCES = [
   'default_tax',
   'sales_prefix',
   'sales_search_fields',
+  'sales_exact_numeric_codes',
   'sales_search_display_fields',
   /* When the bill number starts again at one, and whether the year is printed
      on it. CGST Rule 46(b) makes the financial year the unit of uniqueness in

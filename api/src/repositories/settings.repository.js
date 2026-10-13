@@ -366,6 +366,9 @@ class SettingsRepository extends BaseModel {
           } catch (error) {
             return { status: false, data: null, message: error.message };
           }
+        } else if (key === 'sales_exact_numeric_codes') {
+          if (value !== null && typeof value !== 'boolean') return { status: false, message: 'Exact numeric search must be on or off' };
+          accepted[key] = value;
         } else if (['sales_search_fields', 'sales_search_display_fields'].includes(key)) {
           try {
             accepted[key] = require('../helpers/sales-search-fields').validate(key, value);

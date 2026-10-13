@@ -2,6 +2,85 @@
 (function () {
   "use strict";
   var p = PosnicPro.pricesettings;
+  var priceBranches = [],
+    selectedBranches = [],
+    branchScopeKey = "",
+    editingMode = "direct",
+    reviewScreen = false;
+  function branchName(id) {
+    var branch = priceBranches.find(function (b) {
+      return b.id === String(id);
+    });
+    return branch ? branch.code + " · " + branch.name : String(id || "");
+  }
+  async function loadBranches() {
+    var capturedKey = key();
+    if (branchScopeKey !== capturedKey) {
+      selectedBranches = [];
+      branchScopeKey = capturedKey;
+    }
+    priceBranches = await api({ action: "branches" });
+    if (key() !== capturedKey) return;
+    if (!selectedBranches.length)
+      selectedBranches = [String(PosnicPro.local.get("branch_id_set"))];
+    selectedBranches = selectedBranches.filter(function (id) {
+      return priceBranches.some(function (b) {
+        return b.id === id;
+      });
+    });
+    var box = $("#ps-branches")
+      .empty()
+      .prop("hidden", priceBranches.length <= 1);
+    if (priceBranches.length <= 1) return;
+    $("<strong>").text("Apply prices to").appendTo(box);
+    $('<button class="btn btn-light ml-2">')
+      .text("All accessible branches")
+      .on("click", function () {
+        selectedBranches = priceBranches.map(function (b) {
+          return b.id;
+        });
+        loadBranches().then(function () {
+          p.gridLoad(1);
+          p.sheetCount();
+        });
+      })
+      .appendTo(box);
+    priceBranches.forEach(function (b) {
+      $('<label class="m-2">')
+        .append(
+          $('<input type="checkbox">')
+            .prop("checked", selectedBranches.includes(b.id))
+            .on("change", function () {
+              selectedBranches = $("#ps-branches input:checked")
+                .map(function () {
+                  return this.value;
+                })
+                .get();
+              p.gridLoad(1);
+              p.sheetCount();
+            })
+            .val(b.id),
+          document.createTextNode(" " + branchName(b.id)),
+        )
+        .appendTo(box);
+      $('<button class="btn btn-link btn-sm">')
+        .text("Edit code")
+        .on("click", async function () {
+          var code = window.prompt(
+            "Short branch code (for example ABC)",
+            b.code,
+          );
+          if (!code) return;
+          try {
+            await api({ action: "branchCode", branchId: b.id, code: code });
+            await loadBranches();
+          } catch (e) {
+            error(e);
+          }
+        })
+        .appendTo(box);
+    });
+  }
   function t(key, fallback) {
     return PosnicPro.i18n ? PosnicPro.i18n.t(key, fallback) : fallback;
   }
@@ -56,6 +135,7 @@
     p.clearCategories("ps-" + where + "-category");
   };
   p.editMode = function (mode) {
+    editingMode = mode;
     ["direct", "file"].forEach(function (name) {
       var active = name === mode;
       $("#ps-" + name + "-panel").prop("hidden", !active);
@@ -63,6 +143,9 @@
         .attr("aria-selected", String(active))
         .attr("tabindex", active ? "0" : "-1");
     });
+    if (mode === "file") {
+      p.sheetOpen("download");
+    }
   };
   p.editModeKey = function (event) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -105,6 +188,8 @@
     sequence = 0,
     busy = false,
     currentJob,
+    currentRevision = 0,
+    holdSelections = {},
     jobPage = 1,
     filter = "changes";
   var originalShow = p.showDataTablePage;
@@ -184,6 +269,7 @@
   }
   function error(e) {
     $("#ps-sheet-status").text(e.message);
+    $("#ps-file-status").text(e.message);
     PosnicPro.alert("warning", e.message);
   }
   function id() {
@@ -226,6 +312,7 @@
   }
   function paint() {
     var head = $("<tr>").append($("<th>").text("Item"));
+    if (priceBranches.length > 1) head.append($("<th>").text("Branch"));
     Object.keys(visible)
       .filter(function (f) {
         return visible[f];
@@ -239,6 +326,8 @@
     var body = $("#ps-grid-body").empty();
     Object.values(p._gridRows).forEach(function (it) {
       var tr = $("<tr>").append($("<td>").text(it.name));
+      if (priceBranches.length > 1)
+        tr.append($("<td>").text(branchName(it.branch_id)));
       Object.keys(visible)
         .filter(function (f) {
           return visible[f];
@@ -273,7 +362,12 @@
                 if (draft[it._id]) delete draft[it._id].changes[f];
               } else {
                 if (!draft[it._id])
-                  draft[it._id] = { id: it._id, name: it.name, changes: {} };
+                  draft[it._id] = {
+                    id: it._id,
+                    name: it.name,
+                    branchId: it.branch_id,
+                    changes: {},
+                  };
                 draft[it._id].changes[f] = { old: original, value: this.value };
               }
               if (draft[it._id] && !Object.keys(draft[it._id].changes).length)
@@ -315,10 +409,19 @@
       mrp_price: false,
     };
     columns();
-    p.gridLoad(1);
+    loadBranches()
+      .then(function () {
+        p.gridLoad(1);
+      })
+      .catch(error);
   };
   p.gridLoad = async function (page) {
     if (busy) return;
+    if (priceBranches.length && !selectedBranches.length) {
+      p._gridRows = {};
+      paint();
+      return error(new Error("Select at least one branch"));
+    }
     var request = ++sequence,
       nextScope = key();
     if (scope !== nextScope) {
@@ -347,6 +450,7 @@
           pageSize: size,
           search: $("#ps-grid-search").val(),
           category: categories("ps-grid-category").join(","),
+          branches: selectedBranches.join(","),
         }),
       },
       function (r) {
@@ -395,7 +499,9 @@
   };
   p.gridReview = async function () {
     if (busy || key() !== scope) return;
-    var rows = Object.values(draft),
+    var rows = Object.values(draft).filter(function (row) {
+        return !row.branchId || selectedBranches.includes(String(row.branchId));
+      }),
       zero = false;
     for (var row of rows)
       for (var change of Object.values(row.changes)) {
@@ -427,6 +533,7 @@
         jobId: jobId,
         name: "Price grid",
         allowZero: zero,
+        branches: selectedBranches,
       });
       for (var start = 0; start < rows.length; start += 500) {
         $("#ps-draft-status").text(
@@ -454,16 +561,25 @@
       count();
     }
   };
-  function openSheet() {
-    var dialog = document.getElementById("ps-sheet");
-    if (!dialog.open) dialog.showModal();
-  }
   p.sheetClose = function () {
     document.getElementById("ps-sheet").close();
+    if (reviewScreen) {
+      reviewScreen = false;
+      $("#ps-sheet").removeClass("ps-review-screen");
+      $("#ps-grid > .ps-edit-tabs, #ps-grid > details").prop("hidden", false);
+      $("#ps-branches").prop("hidden", priceBranches.length <= 1);
+      p.editMode(editingMode);
+    }
   };
   p.sheetOpen = function (which) {
-    $("#ps-sheet-download").prop("hidden", which !== "download");
-    $("#ps-sheet-import").prop("hidden", which !== "import");
+    if (!$("#ps-file-status").length)
+      $('<div id="ps-file-status" role="status" class="mt-3">').appendTo(
+        "#ps-file-panel",
+      );
+    $("#ps-sheet-prepare").text("Download price sheet");
+    $("#ps-sheet-import button").text("Validate & review changes");
+    $("#ps-sheet-download").appendTo("#ps-file-download").prop("hidden", false);
+    $("#ps-sheet-import").appendTo("#ps-file-upload").prop("hidden", false);
     $("#ps-job-view").prop("hidden", true);
     $("#ps-sheet-status").text("");
     $("#ps-sheet-title").text(
@@ -480,13 +596,14 @@
         .appendTo(box);
     });
     if (which === "download") p.sheetCount();
-    openSheet();
+    if (which === "import") $("#ps-sheet-file").focus();
   };
   var countTimer,
     countSequence = 0;
   p.sheetCount = function () {
     clearTimeout(countTimer);
     $("#ps-sheet-prepare").prop("disabled", true);
+    if (priceBranches.length && !selectedBranches.length) return;
     $("#ps-sheet-clear").prop("hidden", true);
     var n = ++countSequence;
     countTimer = setTimeout(function () {
@@ -496,6 +613,7 @@
           data: $.param({
             search: $("#ps-sheet-search").val(),
             category: categories("ps-sheet-category").join(","),
+            branches: selectedBranches.join(","),
             pageSize: 10,
           }),
         },
@@ -523,6 +641,11 @@
     }, 250);
   };
   function download(data) {
+    $("#ps-file-status").text(
+      "Downloaded " +
+        data.filename +
+        ". Edit the New columns, then upload the file for review.",
+    );
     var bytes = Uint8Array.from(atob(data.base64), function (c) {
       return c.charCodeAt(0);
     });
@@ -553,6 +676,7 @@
           search: $("#ps-sheet-search").val(),
           category: categories("ps-sheet-category").join(","),
           format: $("#ps-sheet-format").val(),
+          branches: selectedBranches,
         }),
       );
       $("#ps-sheet-status").text(
@@ -573,10 +697,14 @@
     form.append("jobId", id());
     form.append("name", file.name);
     form.append("allowZero", $("#ps-sheet-zero").is(":checked"));
+    form.append("branches", selectedBranches.join(","));
     filter = "changes";
     $(button).prop("disabled", true);
     $("#ps-sheet-status").text(
       "Uploading and checking sheet. No prices are being changed.",
+    );
+    $("#ps-file-status").text(
+      "Uploading and validating. Prices have not been applied.",
     );
     PosnicPro.request(
       {
@@ -602,13 +730,61 @@
     );
   };
   async function showJob(data) {
+    if (
+      currentJob !== data.job._id ||
+      currentRevision !== (data.job.revision || 0)
+    )
+      holdSelections = {};
     currentJob = data.job._id;
+    currentRevision = data.job.revision || 0;
     jobPage = data.page;
-    openSheet();
+    reviewScreen = true;
+    var dialog = document.getElementById("ps-sheet");
+    if (dialog.open) dialog.close();
+    $(dialog).addClass("ps-review-screen").attr("open", "");
+    $(
+      "#ps-direct-panel, #ps-file-panel, #ps-branches, #ps-grid > .ps-edit-tabs, #ps-grid > details",
+    ).prop("hidden", true);
     $("#ps-sheet-download, #ps-sheet-import").prop("hidden", true);
-    $("#ps-sheet-title").text(data.job.name + " · " + data.job.status);
+    $("#ps-sheet-title").text("Review price changes · " + data.job.status);
+    $("#ps-sheet .ps-dialog-header button").text("Back to editing");
     var box = $("#ps-job-view").prop("hidden", false).empty(),
       c = data.counts;
+    if (data.job.exportedAt && data.job.exportedAt.length)
+      $("<p>")
+        .text("Sheet exported: " + data.job.exportedAt.join(", "))
+        .appendTo(box);
+    if (priceBranches.length > 1)
+      $("<p>")
+        .text(
+          "Branches: " + (data.job.branchIds || []).map(branchName).join(", "),
+        )
+        .appendTo(box);
+    if (data.job.lastError) $("<p>").text(data.job.lastError).appendTo(box);
+    if (data.job.status === "scheduled") {
+      $("<p class='ps-update-success'>")
+        .text(
+          "Price update scheduled. Tills receive applied prices through sync.",
+        )
+        .appendTo(box);
+      Object.keys(data.job.dueByBranch || {}).forEach(function (id) {
+        var branch = priceBranches.find(function (b) {
+          return b.id === id;
+        });
+        var zone = branch ? branch.timezone : "Asia/Calcutta";
+        $("<p>")
+          .text(
+            (priceBranches.length > 1 ? branchName(id) + ": " : "") +
+              new Date(data.job.dueByBranch[id]).toLocaleString(undefined, {
+                timeZone: zone,
+              }) +
+              " (" +
+              zone +
+              ")",
+          )
+          .appendTo(box);
+      });
+    }
     if (data.job.status === "complete") {
       var issues = (c.invalid || 0) + (c.conflict || 0);
       var message = issues
@@ -652,6 +828,8 @@
       "pending",
       "updated",
       "conflict",
+      "held",
+      "skipped",
       "unchanged",
     ].forEach(function (s) {
       select.append(
@@ -671,7 +849,14 @@
       body = $("<tbody>").appendTo(table);
     data.rows.forEach(function (r) {
       if (filter === "changes" && r.status === "unchanged") return;
-      var tr = $("<tr>").append($("<td>").text(r.number + " · " + r.name));
+      var tr = $("<tr>").append(
+        $("<td>").text(
+          r.number +
+            " · " +
+            r.name +
+            (priceBranches.length > 1 ? " · " + branchName(r.branch_id) : ""),
+        ),
+      );
       var td = $("<td>");
       Object.keys(r.changes).forEach(function (f) {
         $("<div>")
@@ -685,6 +870,18 @@
           .appendTo(td);
       });
       tr.append(td, $("<td>").text(r.reason || r.status));
+      if (r.status === "held")
+        $('<label class="d-block">')
+          .append(
+            $('<input class="ps-hold-override" type="checkbox">')
+              .val(r.itemId)
+              .prop("checked", !!holdSelections[r.itemId])
+              .on("change", function () {
+                holdSelections[r.itemId] = this.checked;
+              }),
+            document.createTextNode(" Replace held selling price"),
+          )
+          .appendTo(tr.children().last());
       body.append(tr);
     });
     if (!body.children().length)
@@ -721,7 +918,53 @@
           "Upload incomplete. No prices applied. Re-upload the complete sheet to a new job.",
         )
         .appendTo(box);
-    if (["review", "running"].includes(data.job.status) && c.pending) {
+    if (
+      ["review", "running", "scheduled", "attention"].includes(
+        data.job.status,
+      ) &&
+      (c.pending || c.held)
+    ) {
+      if (data.job.status !== "running") {
+        var when = $('<select id="ps-when" class="form-control">')
+          .append(
+            '<option value="now" data-t="lang_now">Now</option><option value="tomorrow">Tomorrow · midnight in each branch timezone</option><option value="custom" data-t="lang_schedule_date_time">Schedule date & time</option>',
+          )
+          .val(data.job.when || "now");
+        $('<label class="d-block mt-3">')
+          .text("When should prices apply?")
+          .append(when)
+          .appendTo(box);
+        $(
+          '<input id="ps-local-time" type="datetime-local" class="form-control" aria-label="Effective date and time" data-t-aria-label="lang_effective_date_and_time">',
+        )
+          .val(data.job.localTime || "")
+          .prop("hidden", when.val() !== "custom")
+          .appendTo(box);
+        when.on("change", function () {
+          $("#ps-local-time").prop("hidden", this.value !== "custom");
+          $("#ps-confirm-prices").text(
+            this.value === "now" ? "Apply prices now" : "Save price schedule",
+          );
+        });
+        $('<label class="d-block mt-3">')
+          .text("Note / description (optional)")
+          .append(
+            $(
+              '<textarea id="ps-note" class="form-control" maxlength="500" placeholder="For example: Diwali offer" data-t-placeholder="lang_for_example_diwali_offer">',
+            ).val(data.job.note || ""),
+          )
+          .appendTo(box);
+        $('<label class="d-block mt-3">')
+          .text(
+            "Keep selling prices until (optional; later changes show a warning)",
+          )
+          .append(
+            $(
+              '<input id="ps-hold-until" type="date" class="form-control">',
+            ).val(data.job.holdDate || ""),
+          )
+          .appendTo(box);
+      }
       if (c.invalid)
         $('<label class="d-block mt-3">')
           .append(
@@ -731,15 +974,37 @@
             ),
           )
           .appendTo(box);
-      $('<button class="btn btn-primary mt-3">')
+      $('<button id="ps-confirm-prices" class="btn btn-primary mt-3">')
         .text(
-          data.job.status === "running" ? "Resume update" : "Confirm update",
+          data.job.status === "running"
+            ? "Resume update"
+            : $("#ps-when").val() === "now"
+              ? "Apply prices now"
+              : "Save price schedule",
         )
         .on("click", function () {
-          p.sheetProcess(this, !!c.invalid);
+          p.sheetProcess(this, !!c.invalid, data.job.status);
         })
         .appendTo(box);
     }
+    if (["scheduled", "review", "attention"].includes(data.job.status))
+      $('<button class="btn btn-light ml-2 mt-3">')
+        .text("Cancel update")
+        .on("click", async function () {
+          if (!window.confirm("Cancel this price update?")) return;
+          try {
+            showJob(
+              await api({
+                action: "cancel",
+                jobId: currentJob,
+                revision: currentRevision,
+              }),
+            );
+          } catch (e) {
+            error(e);
+          }
+        })
+        .appendTo(box);
     $(
       '<button class="btn btn-light ml-2 mt-3"><lang class="lang_download_result_report">Download result report</lang></button>',
     )
@@ -771,7 +1036,7 @@
         .appendTo(box);
     }
     $("#ps-sheet-status").text(
-      "Changes apply only to this branch. Conflicting prices are kept unchanged.",
+      "Changes apply only to the reviewed branches. Conflicting prices are kept unchanged.",
     );
   }
   p.sheetJob = async function (job, page) {
@@ -780,6 +1045,7 @@
         await api({
           action: "status",
           jobId: job,
+          revision: currentRevision,
           page: page || 1,
           filter: filter,
         }),
@@ -788,7 +1054,7 @@
       error(e);
     }
   };
-  p.sheetProcess = async function (button, hasInvalid) {
+  p.sheetProcess = async function (button, hasInvalid, jobStatus) {
     if (busy || (hasInvalid && !$("#ps-job-skip").is(":checked")))
       return error(
         new Error(
@@ -802,6 +1068,25 @@
     count();
     try {
       var data;
+      if (jobStatus !== "running") {
+        var when = $("#ps-when").val() || "now";
+        data = await api({
+          action: "configure",
+          jobId: job,
+          when: when,
+          localTime: $("#ps-local-time").val(),
+          note: $("#ps-note").val(),
+          holdUntil: $("#ps-hold-until").val() || null,
+          holdOverrides: Object.keys(holdSelections).filter(function (id) {
+            return holdSelections[id];
+          }),
+          skipInvalid: !hasInvalid || $("#ps-job-skip").is(":checked"),
+        });
+        if (when !== "now") {
+          showJob(data);
+          return;
+        }
+      }
       do {
         if (key() !== captured)
           throw new Error(
@@ -829,7 +1114,7 @@
             (data.counts.pending || 0) +
             " remaining. Keep this page open, or resume later.",
         );
-      } while (data.job.status !== "complete");
+      } while (data.job.status === "running");
       await p.sheetJob(job, 1);
     } catch (e) {
       error(e);
@@ -855,18 +1140,24 @@
       $(button).prop("disabled", false);
     }
   };
-  p.sheetHistory = async function () {
+  p.sheetHistory = async function (page) {
     try {
-      var jobs = await api({ action: "list" }),
+      var result = await api({
+          action: "list",
+          page: page || 1,
+          status: $("#ps-jobs-filter").val(),
+          pageSize: 10,
+        }),
+        jobs = result.jobs,
         box = $("#ps-sheet-history").empty();
       jobs.forEach(function (j) {
         $('<button class="btn btn-light d-block my-2">')
           .text(
-            j.name +
+            (j.note || "Price update") +
               " · " +
               j.status +
               " · " +
-              new Date(j.created_date).toLocaleString(),
+              new Date(j.effectiveAt || j.created_date).toLocaleString(),
           )
           .on("click", function () {
             filter = "changes";
@@ -874,6 +1165,30 @@
           })
           .appendTo(box);
       });
+      if (!jobs.length) $("<p>").text("No updates in this view.").appendTo(box);
+      var pager = $('<div class="ps-pager">').appendTo(box);
+      $('<button class="btn btn-light">')
+        .text("Previous")
+        .prop("disabled", result.page <= 1)
+        .on("click", function () {
+          p.sheetHistory(result.page - 1);
+        })
+        .appendTo(pager);
+      $("<span>")
+        .text(
+          "Page " +
+            result.page +
+            " of " +
+            Math.max(1, Math.ceil(result.total / result.pageSize)),
+        )
+        .appendTo(pager);
+      $('<button class="btn btn-light">')
+        .text("Next")
+        .prop("disabled", result.page * result.pageSize >= result.total)
+        .on("click", function () {
+          p.sheetHistory(result.page + 1);
+        })
+        .appendTo(pager);
     } catch (e) {
       error(e);
     }
