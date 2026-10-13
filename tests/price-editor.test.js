@@ -239,5 +239,46 @@ test("confirmed direct updates clear applied drafts and refresh the selected res
   assert.equal(f.$("#ps-grid-count").text(), "0 items changed");
   assert.equal(f.calls.at(-1).filter, "changes");
   assert.match(f.$("#ps-job-view tbody").text(), /updated/);
+  assert.equal(f.$("#ps-update-result").hasClass("ps-update-success"), true);
+  assert.equal(f.$("#ps-update-result").text(), "Prices updated successfully.");
   f.close();
 });
+
+for (const [name, status, counts, style, message] of [
+  [
+    "partial update",
+    "complete",
+    { updated: 1, conflict: 1 },
+    "ps-update-warning",
+    "Some items need attention",
+  ],
+  [
+    "unchanged sheet",
+    "complete",
+    { unchanged: 10 },
+    "ps-update-neutral",
+    "No prices were changed",
+  ],
+  ["review", "review", { pending: 1 }, null, null],
+  ["in progress", "running", { updated: 1, pending: 1 }, null, null],
+])
+  test("completion feedback for " + name, async () => {
+    const f = await fixture();
+    f.w.PosnicPro.post = (request, done) =>
+      done({
+        type: "success",
+        data: {
+          job: { _id: "123456789012345678901234", name: "prices.xlsx", status },
+          counts,
+          rows: [],
+          page: 1,
+          total: 0,
+        },
+      });
+    await f.p.sheetJob("123456789012345678901234");
+    if (style) {
+      assert.equal(f.$("#ps-update-result").hasClass(style), true);
+      assert.ok(f.$("#ps-update-result").text().includes(message));
+    } else assert.equal(f.$("#ps-update-result").length, 0);
+    f.close();
+  });

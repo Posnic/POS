@@ -184,6 +184,49 @@ const out =
       );
       if (width === 1366 && !dark)
         await page.screenshot({ path: path.join(out, "review-changes.png") });
+      await page.evaluate(async () => {
+        PosnicPro.post = (request, done) => {
+          const b = JSON.parse(request.data);
+          done({
+            type: "success",
+            data: {
+              job: { _id: b.jobId, name: "prices.xlsx", status: "complete" },
+              counts: { updated: 1, unchanged: 166 },
+              rows: [
+                {
+                  number: 1,
+                  name: "AARVI",
+                  status: "updated",
+                  changes: { selling_price: { old: 100, value: 110 } },
+                },
+              ],
+              page: 1,
+              total: 1,
+              processed: [
+                {
+                  id: "000000000000000000000001",
+                  changes: { selling_price: { old: 100, value: 110 } },
+                },
+              ],
+            },
+          });
+        };
+        await PosnicPro.pricesettings.sheetProcess(
+          document.querySelector("#ps-job-view .btn-primary"),
+          false,
+        );
+      });
+      assert.equal(
+        await page.$eval("#ps-update-result", (el) => el.textContent),
+        "Prices updated successfully.",
+      );
+      if (width === 1366)
+        await page.screenshot({
+          path: path.join(
+            out,
+            `price-update-success-${dark ? "dark" : "light"}.png`,
+          ),
+        });
     }
     console.log(
       "PASS: dialog viewport bounds, no page jump, focus, Escape, changed-only review and responsive layout at desktop, tablet and phone sizes; light and dark themes.",
