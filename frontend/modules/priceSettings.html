@@ -22,6 +22,12 @@
 #ps-draft-status { font-size:12px; margin:8px 0; }
 #ps-sheet { width:min(860px,calc(100vw - 32px)); max-height:85vh; margin:auto; padding:24px; border:1px solid #dce3ec; border-radius:12px; background:var(--ps-surface); color:var(--ps-ink); box-shadow:0 24px 80px #0005; overflow:auto; }
 #ps-sheet h5 { color:var(--ps-ink); margin:0; }
+#ps-update-result { padding:14px 16px; margin-bottom:16px; border:1px solid; border-radius:8px; }
+#ps-update-result.ps-update-success { background:#e4f5e9 !important; border-color:#76b78a; }
+#ps-update-result.ps-update-success, #ps-update-result.ps-update-success * { color:#145b2b !important; }
+#ps-update-result.ps-update-warning { background:#fff4dc !important; border-color:#d6ad52; }
+#ps-update-result.ps-update-warning, #ps-update-result.ps-update-warning * { color:#6b4600 !important; }
+#ps-update-result.ps-update-neutral { background:var(--ps-surface); border-color:var(--ps-line); color:var(--ps-ink); }
 #ps-sheet::backdrop { background:#101b2db3; }
 #ps-sheet .ps-dialog-header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
 #ps-sheet .ps-download-options { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0; }

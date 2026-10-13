@@ -521,6 +521,25 @@
     $("#ps-sheet-title").text(data.job.name + " · " + data.job.status);
     var box = $("#ps-job-view").prop("hidden", false).empty(),
       c = data.counts;
+    if (data.job.status === "complete") {
+      var issues = (c.invalid || 0) + (c.conflict || 0);
+      var message = issues
+        ? '<lang class="lang_price_update_completed_with_issues">Price update finished. Some items need attention.</lang>'
+        : c.updated
+          ? '<lang class="lang_prices_updated_successfully">Prices updated successfully.</lang>'
+          : '<lang class="lang_no_prices_were_changed">No prices were changed.</lang>';
+      $('<div id="ps-update-result" role="status" aria-live="polite">')
+        .addClass(
+          issues
+            ? "ps-update-warning"
+            : c.updated
+              ? "ps-update-success"
+              : "ps-update-neutral",
+        )
+        .append($("<strong>").html(message))
+        .appendTo(box);
+      if (PosnicPro.i18n && PosnicPro.i18n.apply) PosnicPro.i18n.apply(box[0]);
+    }
     $("<p>")
       .text(
         (c.pending || 0) +
