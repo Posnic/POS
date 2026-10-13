@@ -1,6 +1,9 @@
 /* Receipt designer labels are explicit so the language catalog can extract them. */
 PosnicPro.receiptDesignLabel = function (value) {
     switch (value) {
+    case "112 mm thermal (TVS RP 4200)": return PosnicPro.i18n.t('lang_rd_112_mm_thermal', '112 mm thermal (TVS RP 4200)');
+    case "Show business email": return PosnicPro.i18n.t('lang_rd_show_business_email', 'Show business email');
+    case "Show item row numbers": return PosnicPro.i18n.t('lang_rd_show_item_row_numbers', 'Show item row numbers');
     case "Custom left label": return PosnicPro.i18n.t('lang_rd_left_label', 'Custom left label');
     case "Custom text replaces the receipt title. Clear to use the default.": return PosnicPro.i18n.t('lang_rd_label_help', 'Custom text replaces the receipt title. Clear to use the default.');
     case "Date format": return PosnicPro.i18n.t('lang_rd_date_format', 'Date format');
@@ -137,6 +140,7 @@ PosnicPro.receiptDesignLabel = function (value) {
     case "Remove block": return PosnicPro.i18n.t('lang_rd_remove_block', 'Remove block');
     case "Required": return PosnicPro.i18n.t('lang_rd_required', 'Required');
     case "Right": return PosnicPro.i18n.t('lang_right', 'Right');
+    case "Round Off": return PosnicPro.i18n.t('lang_round_off', 'Round Off');
     case "Rounding": return PosnicPro.i18n.t('lang_rounding', 'Rounding');
     case "SGST": return PosnicPro.i18n.t('lang_sgst_tax_receiving', 'SGST');
     case "Sale fields": return PosnicPro.i18n.t('lang_rd_sale_fields', 'Sale fields');

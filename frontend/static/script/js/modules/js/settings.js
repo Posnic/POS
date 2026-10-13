@@ -585,6 +585,8 @@ PosnicPro.settings = {
                 country_id: countryValue[0].element.attributes['data-setting-id'].value
             };
             var formData = PosnicPro.getFormData($('#setting_add'));
+            delete formData.full;
+            formData.store_telephone = PosnicPro.settings.store_telephone.getNumber();
             /* The form lives on the Branch edit page now and always names its
                target branch; registers ride along (class-collected - the
                dynamic rows are not form-serialized). Local state refresh only
@@ -646,6 +648,7 @@ PosnicPro.settings = {
                         staff_roster_enable: response.data['staff_roster_enable'] !== false,
                         cash_register_enable: response.data['cash_register_enable'] !== false,
                         module_tax_enable: response.data['module_tax_enable'] !== false,
+                        item_editor_v2: response.data.item_editor_v2 === true,
                         module_credit_enable: response.data['module_credit_enable'] !== false,
                         module_marketing_enable: response.data['module_marketing_enable'] !== false,
                         module_messaging_enable: response.data['module_messaging_enable'] !== false,
@@ -827,6 +830,7 @@ PosnicPro.settings = {
                 PosnicPro.settings.loadSelectSettingState(country_id);
                 PosnicPro.record_id = id;
                 PosnicPro.roundoff = data.roundOff;
+                $('#item_editor_v2').prop('checked', data.item_editor_v2 === true);
                 // Hidden when the module is off OR nothing is configured.
                 (data.cash_register_enable === false || data.register.length === 0)
                     ? $('.cashRegisterModule').css('display', 'none')
@@ -840,7 +844,7 @@ PosnicPro.settings = {
                 $('#store_address').val(data.store_address);
                 $('#address').val(data.address);
                 $('#store_email').val(data.store_email);
-                $('#store_telephone').val(data.store_telephone);
+                PosnicPro.settings.store_telephone.setNumber(data.store_telephone || '');
                 $('#store_alternativephone').val(data.store_alternativephone);
                 $('#place').val(data.place);
                 $('#city').val(data.city);
@@ -1012,6 +1016,7 @@ PosnicPro.settings = {
                     staff_roster_enable: data.staff_roster_enable !== false,
                     cash_register_enable: data.cash_register_enable !== false,
                     module_tax_enable: data.module_tax_enable !== false,
+                    item_editor_v2: data.item_editor_v2 === true,
                     module_credit_enable: data.module_credit_enable !== false,
                     module_marketing_enable: data.module_marketing_enable !== false,
                     module_messaging_enable: data.module_messaging_enable !== false,
@@ -2249,6 +2254,7 @@ if ($wrapper.length) {
                 stock_management: ($('#stock_management').is(":checked")) ? 'true' : 'false',
                 printall: ($('#printall').is(":checked")) ? 'true' : 'false',
                 roundOff: ($('#decimal_Round').is(":checked")) ? 'true' : 'false',
+                item_editor_v2: $('#item_editor_v2').is(':checked'),
                 receipt_barcode: ($('#receipt_barcode').is(":checked")) ? 'true' : 'false',
                 sales_sms: ($('#sales_sms').is(":checked")) ? 'true' : 'false',
                 auto_sms: ($('#auto_sms').is(":checked")) ? 'true' : 'false',
@@ -2429,6 +2435,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                     staff_roster_enable: $('#staff_roster_enable').is(':checked'),
                     cash_register_enable: $('#cash_register_enable').is(':checked'),
                     module_tax_enable: $('#module_tax_enable').is(':checked'),
+                    item_editor_v2: $('#item_editor_v2').is(':checked'),
                     module_credit_enable: $('#module_credit_enable').is(':checked'),
                     module_marketing_enable: $('#module_marketing_enable').is(':checked'),
                     module_messaging_enable: $('#module_messaging_enable').is(':checked'),
@@ -4390,9 +4397,8 @@ $("#setting_add").validate({
 });
 jQuery.validator.addMethod("setting_phone_number", function (phone_number, element) {
     let valid = PosnicPro.settings.store_telephone.isValidNumber();
-    let num = PosnicPro.settings.store_telephone.getNumber();
     if (valid === true) {
-        $('#store_telephone').val(num);
+        // Keep the national number visible; serialize the international number on save.
         return true;
     } else {
         return false;
@@ -5221,6 +5227,7 @@ PosnicPro.settings.initPrintEditors = function () {
 $(function () {
     PosnicPro.lazyPhoneInput('#store_telephone', PosnicPro.settings, 'store_telephone', {
         separateDialCode: true,
+        initialCountry: 'in',
         preferredCountries: ['in'],
         hiddenInput: "full",
         utilsScript: "../static/script/js/utils.js"
