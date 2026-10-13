@@ -32,7 +32,7 @@ app.whenReady().then(async () => {
     const w = dom.window;
     w.$ = w.jQuery = require(process.env.POSNIC_PROOF_JQUERY || 'jquery')(w);
     w.PosnicPro = { escapeHtml: value => w.$('<i>').text(value).html(), local: { get: () => 'Rs' }, i18n: { t: (_k, text) => text } };
-    for (const file of ['api/src/helpers/receipt-design.js', 'frontend/static/script/js/core/receipt-designer.js']) {
+    for (const file of ['api/src/helpers/receipt-design.js', 'api/src/helpers/sale-payment-summary.js', 'frontend/static/script/js/core/receipt-designer.js']) {
       w.eval(fs.readFileSync(path.join(__dirname, '../..', file), 'utf8'));
     }
     for (const paper of ['58', '80']) {
@@ -92,6 +92,17 @@ app.whenReady().then(async () => {
       assert.ok(bytes.length > 1000);
       assert.equal(BrowserWindow.getAllWindows().length, 0);
       results.push({ captainDesktopParity: paper, bytes: bytes.length });
+      // Exercise the settled path in the actual hidden Electron renderer.
+      data.receipt_settled = true;
+      data.payment_status = 'Paid';
+      data.payment_mode = 'Mixed';
+      data.multi_payment = { UPI: 500, Cash: 340 };
+      data.items = []; // Captain receipts carry canonical receipt_line_rows.
+      const settled = await require('../../src/bill-design').documentFor(data, paper);
+      assert.match(settled, /UPI/);
+      assert.match(settled, /500.00/);
+      assert.match(settled, /340.00/);
+      assert.match(settled, /class="rd-number">5<\/td>/);
     }
     dom.window.close();
     await assert.rejects(renderDesignedReceipt('<article class="rd-document" data-receipt-design="80"></article>', '80'), /blank/);

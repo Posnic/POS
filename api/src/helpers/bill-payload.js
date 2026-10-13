@@ -676,6 +676,14 @@ function receiptDocument(sale, branch, bill) {
     'customer_email',
     'customer_gst_number',
     'sales_description',
+    'payment_mode',
+    'payment_status',
+    'paid_amount',
+    'multi_payment',
+    'captain_payments',
+    'partial_check',
+    'partial_balance',
+    'payment_pending',
   ]) {
     if (sale[key] !== undefined) doc[key] = sale[key];
   }
