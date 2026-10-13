@@ -1,4 +1,6 @@
 {
+  "lang_price_sheet_download_scope": "Download alle artikelen van dit filiaal of beperk het werkblad met de onderstaande filters.",
+  "lang_price_sheet_hidden_ids_help": "Bewerk alleen de groene kolommen voor nieuwe prijzen. Laat een cel leeg om de huidige prijs te behouden. Excel verbergt de identificatiekolommen; CSV bewaart ze aan het einde. Laat deze identificatiegegevens en de huidige prijzen ongewijzigd.",
   "lang_product_pages": "Productpagina's",
   "lang_takeaway_given": "Aan klant gegeven",
   "lang_takeaway_ready_pickup": "Klaar om af te halen",

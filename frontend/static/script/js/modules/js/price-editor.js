@@ -30,7 +30,7 @@
     busy = false,
     currentJob,
     jobPage = 1,
-    filter = "";
+    filter = "changes";
   var originalShow = p.showDataTablePage;
   function key() {
     return (
@@ -123,7 +123,10 @@
     return Number(n || 0).toFixed(2);
   }
   function count() {
-    $("#ps-grid-count").text(Object.keys(draft).length + " items changed");
+    var total = Object.keys(draft).length;
+    $("#ps-grid-count").text(
+      total + (total === 1 ? " item changed" : " items changed"),
+    );
     $("#ps-grid-review").prop("disabled", busy || !Object.keys(draft).length);
   }
   function columns() {
@@ -337,6 +340,7 @@
     )
       return;
     busy = true;
+    filter = "changes";
     count();
     try {
       var jobId = id();
@@ -346,16 +350,25 @@
         name: "Price grid",
         allowZero: zero,
       });
-      for (var start = 0; start < rows.length; start += 500)
+      for (var start = 0; start < rows.length; start += 500) {
+        $("#ps-draft-status").text(
+          "Preparing review: " +
+            Math.min(start + 500, rows.length) +
+            " of " +
+            rows.length +
+            " items…",
+        );
         await api({
           action: "append",
           jobId: jobId,
           start: start,
           rows: rows.slice(start, start + 500),
         });
+      }
       showJob(
         await api({ action: "finish", jobId: jobId, total: rows.length }),
       );
+      $("#ps-draft-status").text("Review ready. Prices are not applied yet.");
     } catch (e) {
       error(e);
     } finally {
@@ -363,8 +376,14 @@
       count();
     }
   };
+  function openSheet() {
+    var dialog = document.getElementById("ps-sheet");
+    if (!dialog.open) dialog.showModal();
+  }
+  p.sheetClose = function () {
+    document.getElementById("ps-sheet").close();
+  };
   p.sheetOpen = function (which) {
-    $("#ps-sheet").prop("hidden", false);
     $("#ps-sheet-download").prop("hidden", which !== "download");
     $("#ps-sheet-import").prop("hidden", which !== "import");
     $("#ps-job-view").prop("hidden", true);
@@ -372,6 +391,7 @@
     $("#ps-sheet-title").text(
       which === "download" ? "Download price sheet" : "Import price updates",
     );
+    filter = "changes";
     $("#ps-sheet-category")
       .html($("#ps-grid-category").html())
       .val($("#ps-grid-category").val());
@@ -386,9 +406,7 @@
         .appendTo(box);
     });
     if (which === "download") p.sheetCount();
-    document
-      .getElementById("ps-sheet")
-      .scrollIntoView({ behavior: "smooth", block: "nearest" });
+    openSheet();
   };
   var countTimer,
     countSequence = 0;
@@ -467,6 +485,7 @@
     form.append("jobId", id());
     form.append("name", file.name);
     form.append("allowZero", $("#ps-sheet-zero").is(":checked"));
+    filter = "changes";
     $(button).prop("disabled", true);
     $("#ps-sheet-status").text(
       "Uploading and checking sheet. No prices are being changed.",
@@ -497,7 +516,7 @@
   async function showJob(data) {
     currentJob = data.job._id;
     jobPage = data.page;
-    $("#ps-sheet").prop("hidden", false);
+    openSheet();
     $("#ps-sheet-download, #ps-sheet-import").prop("hidden", true);
     $("#ps-sheet-title").text(data.job.name + " · " + data.job.status);
     var box = $("#ps-job-view").prop("hidden", false).empty(),
@@ -519,15 +538,21 @@
     var select = $(
       '<select class="form-control mb-2" aria-label="Review status" data-t-aria-label="lang_review_status">',
     ).css("max-width", "250px");
-    ["", "invalid", "pending", "updated", "conflict", "unchanged"].forEach(
-      function (s) {
-        select.append(
-          $("<option>")
-            .val(s)
-            .text(s || "All rows"),
-        );
-      },
-    );
+    [
+      "changes",
+      "",
+      "invalid",
+      "pending",
+      "updated",
+      "conflict",
+      "unchanged",
+    ].forEach(function (s) {
+      select.append(
+        $("<option>")
+          .val(s)
+          .text(s === "changes" ? "Price changes & issues" : s || "All rows"),
+      );
+    });
     select.val(filter).on("change", function () {
       filter = this.value;
       p.sheetJob(currentJob, 1);
@@ -538,6 +563,7 @@
       ),
       body = $("<tbody>").appendTo(table);
     data.rows.forEach(function (r) {
+      if (filter === "changes" && r.status === "unchanged") return;
       var tr = $("<tr>").append($("<td>").text(r.number + " · " + r.name));
       var td = $("<td>");
       Object.keys(r.changes).forEach(function (f) {
@@ -554,18 +580,28 @@
       tr.append(td, $("<td>").text(r.reason || r.status));
       body.append(tr);
     });
+    if (!body.children().length)
+      body.append(
+        $("<tr>").append(
+          $('<td colspan="3">').text("No price changes in this view."),
+        ),
+      );
     box.append($('<div class="table-responsive">').append(table));
     var pager = $(
       '<div class="d-flex flex-wrap align-items-center" style="gap:10px">',
     );
     pager.append(
-      $('<button class="btn btn-light"><lang class="lang_previous">Previous</lang></button>')
+      $(
+        '<button class="btn btn-light"><lang class="lang_previous">Previous</lang></button>',
+      )
         .prop("disabled", data.page <= 1)
         .on("click", function () {
           p.sheetJob(currentJob, jobPage - 1);
         }),
       $("<span>").text("Page " + data.page + " · " + data.total + " rows"),
-      $('<button class="btn btn-light"><lang class="lang_next">Next</lang></button>')
+      $(
+        '<button class="btn btn-light"><lang class="lang_next">Next</lang></button>',
+      )
         .prop("disabled", data.page * 50 >= data.total)
         .on("click", function () {
           p.sheetJob(currentJob, jobPage + 1);
@@ -578,7 +614,7 @@
           "Upload incomplete. No prices applied. Re-upload the complete sheet to a new job.",
         )
         .appendTo(box);
-    if (["review", "running"].includes(data.job.status)) {
+    if (["review", "running"].includes(data.job.status) && c.pending) {
       if (c.invalid)
         $('<label class="d-block mt-3">')
           .append(
@@ -597,7 +633,9 @@
         })
         .appendTo(box);
     }
-    $('<button class="btn btn-light ml-2 mt-3"><lang class="lang_download_result_report">Download result report</lang></button>')
+    $(
+      '<button class="btn btn-light ml-2 mt-3"><lang class="lang_download_result_report">Download result report</lang></button>',
+    )
       .on("click", function () {
         p.sheetReport(this);
       })
@@ -685,7 +723,7 @@
             " remaining. Keep this page open, or resume later.",
         );
       } while (data.job.status !== "complete");
-      showJob(data);
+      await p.sheetJob(job, 1);
     } catch (e) {
       error(e);
     } finally {
@@ -724,7 +762,7 @@
               new Date(j.created_date).toLocaleString(),
           )
           .on("click", function () {
-            filter = "";
+            filter = "changes";
             p.sheetJob(j._id);
           })
           .appendTo(box);
