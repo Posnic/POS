@@ -223,7 +223,7 @@ async function finish(c, id, expected) {
   );
   return status(c, id);
 }
-async function status(c, id, page = 1, filter = '') {
+async function status(c, id, page = 1, filter = 'changes') {
   const x = await collections(c),
     job = await getJob(x, id),
     q = { job_id: job._id };
@@ -231,6 +231,7 @@ async function status(c, id, page = 1, filter = '') {
     .aggregate([{ $match: q }, { $group: { _id: '$status', count: { $sum: 1 } } }])
     .toArray();
   const counts = Object.fromEntries(groups.map((g) => [g._id, g.count]));
+  if (filter === 'changes') q.status = { $ne: 'unchanged' };
   if (['invalid', 'pending', 'updated', 'conflict', 'unchanged'].includes(filter))
     q.status = filter;
   const total = await x.rows.countDocuments(q),
@@ -401,7 +402,9 @@ async function sheet(c, query = {}) {
       'Status',
       'Reason',
     ]);
-    for await (const row of x.rows.find({ job_id: job._id }).sort({ number: 1 })) {
+    for await (const row of x.rows
+      .find({ job_id: job._id, status: { $ne: 'unchanged' } })
+      .sort({ number: 1 })) {
       const changes = Object.entries(
         row.status === 'invalid' ? row.submitted || row.changes : row.changes
       );
@@ -446,22 +449,55 @@ async function sheet(c, query = {}) {
   const workbook = new ExcelJS.Workbook(),
     ws = workbook.addWorksheet('Prices');
   ws.addRow([
-    'Branch ID',
-    'Item ID',
     'Item name',
     'SKU',
     'Unit',
     ...fields.flatMap((f) => [`Current ${FIELDS[f]}`, `New ${FIELDS[f]}`]),
+    'Branch ID',
+    'Item ID',
   ]);
   for await (const it of x.items.find(filter).sort({ name: 1, _id: 1 }))
     ws.addRow([
-      String(c.branchId),
-      String(it._id),
       safe(it.name),
       safe(it.itemid || ''),
       safe(it.unit || ''),
       ...fields.flatMap((f) => [Number(it[f] || 0), null]),
+      String(c.branchId),
+      String(it._id),
     ]);
+  // Keep identity on each row so sorting/filtering never changes the item match.
+  // CSV retains these trailing columns because it has no hidden-column support.
+  const lastVisible = 3 + fields.length * 2;
+  ws.getColumn(lastVisible + 1).hidden = true;
+  ws.getColumn(lastVisible + 2).hidden = true;
+  ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 1 }];
+  ws.autoFilter = { from: 'A1', to: { row: ws.rowCount, column: lastVisible + 2 } };
+  ws.getColumn(1).width = 32;
+  ws.getColumn(2).width = 16;
+  ws.getColumn(3).width = 12;
+  for (let col = 4; col <= lastVisible; col++) {
+    const column = ws.getColumn(col);
+    column.width = 24;
+    column.numFmt = '0.00';
+    column.eachCell({ includeEmpty: true }, (cell, row) => {
+      if (row === 1) return;
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: col % 2 ? 'FFE8F5EE' : 'FFF1F4F8' },
+      };
+    });
+  }
+  ws.getRow(1).height = 32;
+  ws.getRow(1).eachCell((cell, col) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: col >= 4 && col <= lastVisible && col % 2 ? 'FF16704A' : 'FF24364B' },
+    };
+    cell.alignment = { vertical: 'middle', wrapText: true };
+  });
   return workbook;
 }
 async function importSheet(c, input, file) {

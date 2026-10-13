@@ -29,3 +29,50 @@ PosnicPro.inventorycounts = {
     }
 };
 $(document).on('click', '.inventory-count-open', function () { PosnicPro.inventorycounts.open($(this).data('id')); });
+// Mobile inventory shares the item ledger; reviewed operations are visible here.
+PosnicPro.inventorycounts.loadMobile = function (after) {
+    var self = this, branch = PosnicPro.local.get('branch_id_set'), ticket = self.mobileRequest = (self.mobileRequest || 0) + 1;
+    if (!$('#mobile_inventory_operations').length) $('#inventory_counts_list').after('<section id="mobile_inventory_operations" class="mt-4"><h5><lang class="lang_mobile_inventory_operations">Mobile inventory operations</lang></h5><button class="btn btn-outline-primary mobile-inventory-refresh"><lang class="lang_wf_refresh">Refresh</lang></button><div id="mobile_inventory_rows" class="mt-3"></div><div id="mobile_inventory_detail"></div></section>');
+    PosnicPro.get('mobile/v1/inventory/operations' + (after ? '?after=' + encodeURIComponent(after) : ''), function (r) {
+        if (ticket !== self.mobileRequest || branch !== PosnicPro.local.get('branch_id_set')) return;
+        var root = $('#mobile_inventory_rows'); if (!after) root.empty();
+        root.find('.mobile-inventory-more').remove();
+        if (!Array.isArray(r.rows)) return root.text(PosnicPro.i18n.t('lang_could_not_load_inventory_operations', 'Could not load inventory operations.'));
+        if (!r.rows.length) root.text(PosnicPro.i18n.t('lang_no_mobile_inventory_operations_yet', 'No mobile inventory operations yet.'));
+        r.rows.forEach(function (row) {
+            var card = $('<div class="border rounded p-3 mb-2">').appendTo(root);
+            $('<strong>').text(row.mode + ' · ' + row.state).appendTo(card);
+            $('<p>').text(row.reason).appendTo(card);
+            $('<button class="btn btn-outline-primary mobile-inventory-open">').text(PosnicPro.i18n.t('lang_review_title', 'Review')).attr('data-id', row.operationId).appendTo(card);
+        });
+        if (r.next) $('<button class="btn btn-outline-primary mobile-inventory-more">').text(PosnicPro.i18n.t('lang_load_more', 'Load more')).attr('data-after', r.next).appendTo(root);
+    });
+};
+PosnicPro.inventorycounts.openMobile = function (id) {
+    PosnicPro.get('mobile/v1/inventory/operations/' + encodeURIComponent(id), function (r) {
+        var root = $('#mobile_inventory_detail').empty();
+        if (!r.operationId) return root.text(PosnicPro.i18n.t('lang_could_not_load_operation', 'Could not load operation.'));
+        $('<h5>').text(r.mode + ' · ' + r.state).appendTo(root);
+        $('<p>').text(r.reason).appendTo(root);
+        var table = $('<table class="table"><thead><tr><th><lang class="lang_newitem_title">Item</lang></th><th><lang class="lang_expected">Expected</lang></th><th><lang class="lang_quantity">Quantity</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody></tbody></table>').appendTo(root);
+        r.lines.forEach(function (line) {
+            var tr = $('<tr>').appendTo(table.find('tbody'));
+            [line.name, line.expected / 1000, line.quantity / 1000, r.applied.indexOf(line.itemId) >= 0 ? PosnicPro.i18n.t('lang_applied', 'Applied') : PosnicPro.i18n.t('lang_not_applied', 'Not applied')].forEach(function (value) { $('<td>').text(value).appendTo(tr); });
+        });
+        if (r.state === 'prepared' || r.state === 'applying') $('<button class="btn btn-primary mobile-inventory-confirm">').text(r.approvalRequired ? PosnicPro.i18n.t('lang_approve_stock_changes', 'Approve stock changes') : PosnicPro.i18n.t('lang_confirm_stock_changes', 'Confirm stock changes')).attr('data-id', id).appendTo(root);
+        if (r.state === 'conflict') $('<p role="status">').text('Some lines could not be applied. Refresh stock and recount unresolved items. Applied lines stay applied.').appendTo(root);
+    });
+};
+var originalInventoryLoad = PosnicPro.inventorycounts.load;
+PosnicPro.inventorycounts.load = function () { originalInventoryLoad.call(this); this.loadMobile(); };
+$(document).on('click', '.mobile-inventory-refresh', function () { PosnicPro.inventorycounts.loadMobile(); });
+$(document).on('click', '.mobile-inventory-more', function () { PosnicPro.inventorycounts.loadMobile($(this).attr('data-after')); });
+$(document).on('click', '.mobile-inventory-open', function () { PosnicPro.inventorycounts.openMobile($(this).attr('data-id')); });
+$(document).on('click', '.mobile-inventory-confirm', function () {
+    var button = $(this).prop('disabled', true), id = button.attr('data-id');
+    PosnicPro.post({url:'mobile/v1/inventory/operations/' + encodeURIComponent(id) + '/confirm',data:'{}'}, function (r) {
+        button.prop('disabled', false);
+        if (!r.operationId) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_confirm_check_permissions_and_re', 'Could not confirm. Check permissions and refresh the operation before retrying.')); return; }
+        PosnicPro.inventorycounts.openMobile(id); PosnicPro.inventorycounts.loadMobile();
+    }, function () { button.prop('disabled', false); PosnicPro.alert('error', PosnicPro.i18n.t('lang_connection_interrupted_refresh_to_check_th', 'Connection interrupted. Refresh to check the operation before retrying.')); });
+});

@@ -855,7 +855,7 @@ test('manager denials and current user overrides protect mobile bootstrap and in
         ...staffReq,
         user: { ...restricted, access: { sales: { write: false } } },
       }),
-    /cannot sell/
+    /cannot use Mobile POS/
   );
 });
 

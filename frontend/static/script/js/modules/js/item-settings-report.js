@@ -14,6 +14,19 @@
             hasher.setHash('settings/general');
         },
         load: function () {
+            if (!$('#inventory_approval_settings').length) {
+                var panel = $('<div id="inventory_approval_settings" class="card mt-3"><div class="card-body"><h5><lang class="lang_inventory_confirmation">Inventory confirmation</lang></h5><p>Staff with item write permission confirm directly by default. Require manager approval for selected mobile inventory actions:</p></div></div>');
+                $('<label class="d-block"><input type="checkbox" id="mobile_inventory_enabled"> Enable mobile inventory (pilot)</label>').appendTo(panel.find('.card-body'));
+                ['count','receive','damage','loss'].forEach(function (mode) { $('<label class="mr-3">').append($('<input type="checkbox" class="inventory-approval-mode">').val(mode)).append(document.createTextNode(' ' + mode)).appendTo(panel.find('.card-body')); });
+                $('<button type="button" class="btn btn-primary d-block mt-3" id="inventory_approval_save"><lang class="lang_save_inventory_policy">Save inventory policy</lang></button>').appendTo(panel.find('.card-body'));
+                panel.insertAfter('#item_expiry_settings');
+            }
+            PosnicPro.get('mobile/v1/inventory/policy', function (r) {
+                if (!Array.isArray(r.approvalActions)) return;
+                $('#mobile_inventory_enabled').prop('checked', r.enabled === true).prop('disabled', !r.canManage);
+                $('.inventory-approval-mode').each(function () { $(this).prop('checked', r.approvalActions.indexOf($(this).val()) >= 0).prop('disabled', !r.canManage); });
+                $('#inventory_approval_save').prop('disabled', !r.canManage);
+            });
             $('#item_settings_status').text(PosnicPro.i18n.t('lang_loading', 'Loading…'));
             $('#item_settings_save_stock,#expiry_reminders_save').prop('disabled', true);
             PosnicPro.itemStockPreference.load('#item_stock_preference');
@@ -68,3 +81,11 @@
         PosnicPro.put({url:'items/expiryReminders/preference',data:JSON.stringify({enabled:$('#expiry_reminders_enabled').prop('checked'),days:days})},function(r){button.prop('disabled',false);if(r.type!=='success'){failed();return;}PosnicPro.alert('success',PosnicPro.i18n.t('lang_expiry_preferences_saved','Expiry reminder settings saved.'));PosnicPro.expiryReminders.refresh();},function(){button.prop('disabled',false);failed();});
     });
 })();
+$(document).on('click', '#inventory_approval_save', function () {
+    var button = $(this).prop('disabled', true);
+    var approvalActions = $('.inventory-approval-mode:checked').map(function () { return $(this).val(); }).get();
+    PosnicPro.post({url:'mobile/v1/inventory/policy', data:JSON.stringify({enabled:$('#mobile_inventory_enabled').prop('checked'),approvalActions:approvalActions})}, function (r) {
+        button.prop('disabled', false);
+        PosnicPro.alert(Array.isArray(r.approvalActions) ? 'success' : 'error', Array.isArray(r.approvalActions) ? PosnicPro.i18n.t('lang_inventory_policy_saved', 'Inventory policy saved.') : PosnicPro.i18n.t('lang_could_not_save_inventory_policy', 'Could not save inventory policy.'));
+    }, function () { button.prop('disabled', false); PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_save_inventory_policy', 'Could not save inventory policy.')); });
+});
