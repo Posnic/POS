@@ -65,7 +65,7 @@ async function setCode(c, branchId, code) {
     .trim()
     .toUpperCase();
   if (!/^[A-Z][A-Z0-9_-]{1,11}$/.test(code))
-    throw new Error('Use a branch code of 2–12 letters or digits');
+    throw new Error('Use a branch code of 2 to 12 letters or digits');
   const db = await BaseModel.getDb();
   const others = await db
     .collection('branches')
