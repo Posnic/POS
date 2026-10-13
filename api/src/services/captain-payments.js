@@ -355,6 +355,12 @@ async function reconcile(db, c, plan) {
         tax: payload.taxes.reduce((sum, row) => sum + row.amount, 0),
         items: [],
         payment_mode: payment.method,
+        // This receipt covers this collection, not earlier payments on the sale.
+        multi_payment: {},
+        captain_payments: [],
+        partial_check: false,
+        partial_balance: 0,
+        payment_pending: 0,
         ...(payment.tenders
           ? {
               multi_payment: Object.fromEntries(
