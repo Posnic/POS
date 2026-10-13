@@ -1136,3 +1136,19 @@ test('RP 4200 migrates saved 80 mm content independently and keeps email and row
     assert.match($('<div>').html(engine.render(sale, '112', false)).text(), /shop@example.com/);
     dom.window.close();
 });
+
+
+test('fast text preserves rendered payment allocations and rounding; graphics and Tamil fall back', () => {
+    const { dom, engine } = setup();
+    try {
+        const html = '<section class="rd-document"><h1>Shop</h1><table><tr><th>Item</th><th>Qty</th><th>Amount</th></tr><tr><td>Rice</td><td>2</td><td>499.50</td></tr></table><div>Round Off <span>₹0.50</span></div><div>Total ₹500.00</div><div>UPI ₹300.00</div><div>Cash ₹200.00</div><div style="display:none">secret@example.com</div></section>';
+        const lines = engine.fastLines(html);
+        assert.match(lines.join('\n'), /UPI Rs. 300.00/);
+        assert.match(lines.join('\n'), /Cash Rs. 200.00/);
+        assert.match(lines.join('\n'), /Round Off Rs. 0.50/);
+        assert.match(lines.join('\n'), /Rice.*2.*499.50/);
+        assert.doesNotMatch(lines.join('\n'), /secret/);
+        assert.equal(engine.fastLines('<div class="rd-document">தமிழ்</div>'), null);
+        assert.equal(engine.fastLines('<div class="rd-document"><img src="logo.png">Shop</div>'), null);
+    } finally { dom.window.close(); }
+});

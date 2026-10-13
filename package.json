@@ -110,6 +110,7 @@
       "src/startup-auth.js",
       "src/startup-progress.js",
       "src/receipt-log.js",
+      "src/receipt-fast.js",
       "src/print-ledger.js",
       "src/handset-slots.js",
       "src/till-stays-awake.js",

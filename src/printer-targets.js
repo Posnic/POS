@@ -181,7 +181,8 @@ function normalizeTargets(config = {}, fallbackSize) {
       continue;
     }
     seen.add(key);
-    targets.push({ name, copies, pageSize });
+    const printMode = entry && ['fast', 'exact', 'driver'].includes(entry.printMode) ? entry.printMode : undefined;
+    targets.push({ name, copies, pageSize, ...(printMode ? { printMode } : {}) });
   }
 
   if (!targets.length) targets.push({ name: '', copies: globalCopies, pageSize: globalSize });

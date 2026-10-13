@@ -17,7 +17,7 @@
         var documents = parse(PosnicPro.local.get('document_print_profiles'), {});
         var sales = parse(PosnicPro.local.get('receipt_printers'), []);
         if (!Array.isArray(sales) || !sales.length) sales = [{ name: PosnicPro.local.get('receipt_printer') || 'default', pageSize: PosnicPro.local.get('print_width') || '80mm', copies: 1 }];
-        sales = sales.map(function (v) { return { name: String(v.name || 'default'), pageSize: String(v.pageSize || '80mm'), copies: Math.min(20, Math.max(1, parseInt(v.copies, 10) || 1)) }; });
+        sales = sales.map(function (v) { return { name: String(v.name || 'default'), pageSize: String(v.pageSize || '80mm'), printMode: v.printMode || 'exact', copies: Math.min(20, Math.max(1, parseInt(v.copies, 10) || 1)) }; });
         return { sales: sales, invoice: sheet(documents.invoice), quotation: sheet(documents.quotation), itemLanguages: parse(PosnicPro.local.get('item_print_languages'), {}) };
     }
     function mirror(value) {
@@ -61,8 +61,8 @@
         return '<tr data-profile="' + kind + '"><th scope="row">' + esc(title) + (sale && index ? ' ' + (index + 1) : '') + '</th><td>' +
             (desktop() ? select(choices, name, 'data-setting="printer" aria-label="' + esc(title + ' — ' + PosnicPro.i18n.t('lang_printer', 'Printer')) + '"') : '<span>' + esc(PosnicPro.i18n.t('lang_print_browser_dialog', 'Browser print dialog')) + '</span>') +
             '</td><td>' + select(sizes, format, 'data-setting="paper" aria-label="' + esc(title + ' — ' + PosnicPro.i18n.t('lang_print_paper_size', 'Paper size')) + '"') +
-            '</td><td><input class="form-control form-control-sm" type="number" min="1" max="20" data-setting="copies" value="' + value.copies + '" aria-label="' + esc(title + ' — ' + PosnicPro.i18n.t('lang_print_copies', 'Copies')) + '"' + (desktop() ? '' : ' disabled') + '></td><td>' +
-            (sale && index ? '<button type="button" class="btn btn-light btn-sm" data-print-remove aria-label="' + esc(PosnicPro.i18n.t('lang_print_remove_printer', 'Remove printer')) + '">×</button>' : '') + '</td></tr>';
+            '</td><td>' + (sale && desktop() ? select({ exact: PosnicPro.i18n.t('lang_print_mode_exact', 'Exact design'), fast: PosnicPro.i18n.t('lang_print_mode_fast', 'Fast receipt'), driver: PosnicPro.i18n.t('lang_print_mode_driver', 'Windows driver (advanced)') }, value.printMode || 'exact', 'data-setting="mode" aria-label="Print mode"') + '<small>' + esc(PosnicPro.i18n.t('lang_print_mode_help', 'Fast uses standard text layout. Graphics or unsupported text use Exact design.')) + '</small>' : '—') + '</td><td><input class="form-control form-control-sm" type="number" min="1" max="20" data-setting="copies" value="' + value.copies + '" aria-label="' + esc(title + ' — ' + PosnicPro.i18n.t('lang_print_copies', 'Copies')) + '"' + (desktop() ? '' : ' disabled') + '></td><td>' +
+            (sale && desktop() ? '<button type="button" class="btn btn-outline-primary" data-print-test>' + esc(PosnicPro.i18n.t('lang_print_sample', 'Print sample')) + '</button>' : '') + (sale && index ? '<button type="button" class="btn btn-light btn-sm" data-print-remove aria-label="' + esc(PosnicPro.i18n.t('lang_print_remove_printer', 'Remove printer')) + '">×</button>' : '') + '</td></tr>';
     }
     function languageSettings() {
         var words = { '': PosnicPro.i18n.t('lang_item_original_language_print', 'Original item name') };
@@ -75,7 +75,7 @@
     function render() {
         var host = $('#document-print-settings');
         host.html('<section class="print-settings-panel"><h5>' + esc(PosnicPro.i18n.t('lang_print_printers_paper', 'Printers & paper')) + '</h5><p class="small text-muted">' + esc(PosnicPro.i18n.t('lang_print_this_device', 'Saved on this computer')) + '</p><p class="small text-muted mt-2">' +
-            esc(desktop() ? PosnicPro.i18n.t('lang_print_device_help', 'Choose a printer and paper for each document. Other computers keep their own choices.') : PosnicPro.i18n.t('lang_print_browser_help', 'Paper choices are saved in this browser. Choose the printer and copies in the browser print dialog.')) + '</p><div class="table-responsive"><table class="table table-sm mb-2"><thead><tr><th>' + esc(PosnicPro.i18n.t('lang_print_document', 'Document')) + '</th><th>' + esc(PosnicPro.i18n.t('lang_printer', 'Printer')) + '</th><th>' + esc(PosnicPro.i18n.t('lang_print_paper_size', 'Paper size')) + '</th><th>' + esc(PosnicPro.i18n.t('lang_print_copies', 'Copies')) + '</th><th></th></tr></thead><tbody>' +
+            esc(desktop() ? PosnicPro.i18n.t('lang_print_device_help', 'Choose a printer and paper for each document. Other computers keep their own choices.') : PosnicPro.i18n.t('lang_print_browser_help', 'Paper choices are saved in this browser. Choose the printer and copies in the browser print dialog.')) + '</p><div class="table-responsive"><table class="table table-sm mb-2"><thead><tr><th>' + esc(PosnicPro.i18n.t('lang_print_document', 'Document')) + '</th><th>' + esc(PosnicPro.i18n.t('lang_printer', 'Printer')) + '</th><th>' + esc(PosnicPro.i18n.t('lang_print_paper_size', 'Paper size')) + '</th><th>' + esc(PosnicPro.i18n.t('lang_print_mode', 'Print mode')) + '</th><th>' + esc(PosnicPro.i18n.t('lang_print_copies', 'Copies')) + '</th><th></th></tr></thead><tbody>' +
             state.sales.map(function (v, i) { return row('sales', v, i); }).join('') + row('invoice', state.invoice) + row('quotation', state.quotation) +
             '</tbody></table></div>' + languageSettings() + '<div class="d-flex align-items-center flex-wrap mb-2"><button type="button" class="btn btn-outline-primary btn-sm mr-2" data-print-refresh>' + esc(PosnicPro.i18n.t('lang_print_refresh_printers', 'Refresh printers')) + '</button>' +
             (desktop() ? '<button type="button" class="btn btn-outline-primary btn-sm mr-2" data-print-add>' + esc(PosnicPro.i18n.t('lang_print_add_sales_printer', 'Add sales printer')) + '</button>' : '') +
@@ -91,7 +91,7 @@
             if (!Number.isInteger(copies) || copies < 1 || copies > 20) throw new Error(PosnicPro.i18n.t('lang_print_valid_copies', 'Choose between 1 and 20 copies.'));
             var name = el.find('[data-setting="printer"]').val() || (kind === 'sales' ? 'default' : '');
             var paper = el.find('[data-setting="paper"]').val();
-            if (kind === 'sales') next.sales.push({ name: name, pageSize: paper, copies: copies });
+            if (kind === 'sales') next.sales.push({ name: name, pageSize: paper, copies: copies, ...(el.find('[data-setting="mode"]').val() && el.find('[data-setting="mode"]').val() !== 'exact' ? { printMode: el.find('[data-setting="mode"]').val() } : {}) });
             else next[kind] = { printerName: name, paperSize: paper, copies: copies };
         });
         return next;
@@ -124,6 +124,18 @@
             render();
         } catch (_) { state = fromLocal(); queues = []; render(); host.find('[data-print-status]').text(PosnicPro.i18n.t('lang_print_load_failed', 'Could not read printers. Refresh to try again.')); }
         host.off('.documentPrint').on('click.documentPrint', '[data-print-save]', save)
+            .on('click.documentPrint', '[data-print-test]', async function () {
+                var button = $(this), row = button.closest('[data-profile]');
+                button.prop('disabled', true);
+                try {
+                    var target = { name: row.find('[data-setting="printer"]').val(), pageSize: row.find('[data-setting="paper"]').val(), copies: 1, printMode: row.find('[data-setting="mode"]').val() };
+                    var format = target.pageSize.replace('mm', '');
+                    var sample = Object.assign({}, featureState, { sales_id: 'PRINT-TEST', branch_name: 'Print test', items: [{ item_name: 'Sample item', item_quantity: 2, item_price: 249.75, total_amount: 499.5 }], items_subtotal: 499.5, items_total: 500, round_off: 0.5, payment_mode: 'Cash' });
+                    await PosnicPro.receiptDesigner.print(PosnicPro.receiptDesigner.render(sample, format, false), format, { target: target, sample: true });
+                    host.find('[data-print-status]').text(PosnicPro.i18n.t('lang_print_test_submitted', 'Test submitted. Check the paper at the printer.'));
+                } catch (error) { host.find('[data-print-status]').text(error.message); }
+                finally { button.prop('disabled', false); }
+            })
             .on('change.documentPrint', 'select,input', function () { host.find('[data-print-status]').text(PosnicPro.i18n.t('lang_rd_unsaved_changes', 'Unsaved changes')); })
             .on('click.documentPrint', '[data-print-refresh]', async function () {
                 try { state = collect(); var api = window.electronAPI && window.electronAPI.printer; queues = api && api.list ? await api.list() : []; render(); }

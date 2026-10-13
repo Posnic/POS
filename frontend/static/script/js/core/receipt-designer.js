@@ -369,6 +369,32 @@
         try { return Promise.resolve(printDocument(html, format, options)).finally(finish); }
         catch (error) { finish(); throw error; }
     }
+    // Compile only the already-rendered visible content: hidden fields stay hidden.
+    // Unsupported graphics/text are handled by Exact design before submission.
+    function fastLines(html) {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var receipt = doc.querySelector('.rd-document');
+        if (!receipt || receipt.querySelector('img,svg,canvas')) return null;
+        receipt.querySelectorAll('style,script,[hidden]').forEach(function (el) { el.remove(); });
+        var text = '';
+        function walk(node) {
+            if (node.nodeType === 3) { text += node.textContent + ' '; return; }
+            if (node.nodeType !== 1) return;
+            if (node.style.display === 'none') return;
+            var tag = node.tagName;
+            if (tag === 'BR' || tag === 'HR') { text += '\n'; return; }
+            var boundary = /^(DIV|P|H[1-6]|SECTION|TR|DL|DT|DD)$/.test(tag);
+            if (boundary) text += '\n';
+            Array.from(node.childNodes).forEach(walk);
+            if (tag === 'TD' || tag === 'TH') text += ' | ';
+            if (boundary) text += '\n';
+        }
+        walk(receipt);
+        text = text.replace(/₹/g, 'Rs. ').replace(/×/g, 'x').replace(/−/g, '-').replace(/…/g, '...').replace(/\u00a0/g, ' ');
+        if (/[^\x09\x0a\x0d\x20-\x7e]/.test(text)) return null;
+        var lines = text.split(/\r?\n/).map(function (line) { return line.replace(/\s+/g, ' ').trim().replace(/ \|$/, ''); }).filter(Boolean);
+        return lines.length ? lines : null;
+    }
     function printDocument(html, format, options) {
         options = options || {};
         var doc = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(label('Receipt')) + '</title></head><body>' + html + '</body></html>';
@@ -395,7 +421,8 @@
                 pageSize: ['58', '80', '112'].indexOf(format) !== -1 ? format + 'mm' : format,
                 copies: options.target ? options.target.copies : 1,
                 fitReceipt: ['58', '80', '112'].indexOf(format) !== -1,
-                thermalRaster: ['58', '80', '112'].indexOf(format) !== -1,
+                thermalRaster: ['58', '80', '112'].indexOf(format) !== -1 && (!options.target || options.target.printMode !== 'driver'),
+                fastReceiptLines: options.target && options.target.printMode === 'fast' ? fastLines(html) : null,
                 silent: true, strictPrinter: true, forceHtml: true, printBackground: true, margins: { marginType: 'none' } }); })
                 .then(function (result) {
                     if (!result || !result.success) throw new Error(result && result.error || label('Print failed'));
@@ -452,5 +479,5 @@
         } catch (error) { diagnostic({ stage: 'sale-print-failed', success: false, message: error.message }); if (options.propagateFailure) throw error; PosnicPro.alert('error', error.message || label('Print failed')); }
         finally { activeSale = false; finish(); }
     }
-    PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, standardLayout: standardLayout, render: render, css: css, print: print, printSale: printSale, block: block, label: label, copy: copy, formatFor: formatFor };
+    PosnicPro.receiptDesigner = { contract: contract, defaults: defaults, standardLayout: standardLayout, render: render, css: css, print: print, printSale: printSale, block: block, fastLines: fastLines, label: label, copy: copy, formatFor: formatFor };
 }());

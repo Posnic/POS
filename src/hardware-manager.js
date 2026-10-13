@@ -559,7 +559,9 @@ class HardwareManager {
       // Render the complete design before submitting; never fall back after RAW acceptance.
       if (options.thermalRaster === true && ['58mm', '80mm', '112mm'].includes(options.pageSize)) {
         const deviceName = await this._resolvePrinterName(options.printerName);
-        const bytes = await require('./escpos-unicode').renderDesignedReceipt(htmlContent, options.pageSize.replace('mm', ''));
+        const bytes = options.fastReceiptLines
+          ? require('./receipt-fast').renderFastReceipt(options.fastReceiptLines, options.pageSize.replace('mm', ''))
+          : await require('./escpos-unicode').renderDesignedReceipt(htmlContent, options.pageSize.replace('mm', ''));
         diagnostics?.record('print.rendered', { trace, bytes: bytes.length, durationMs: Date.now() - started });
         if (diagnostics?.holdPrint()) {
           diagnostics.setPreview?.(htmlContent);

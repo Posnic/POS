@@ -585,6 +585,8 @@ PosnicPro.settings = {
                 country_id: countryValue[0].element.attributes['data-setting-id'].value
             };
             var formData = PosnicPro.getFormData($('#setting_add'));
+            delete formData.full;
+            formData.store_telephone = PosnicPro.settings.store_telephone.getNumber();
             /* The form lives on the Branch edit page now and always names its
                target branch; registers ride along (class-collected - the
                dynamic rows are not form-serialized). Local state refresh only
@@ -842,7 +844,7 @@ PosnicPro.settings = {
                 $('#store_address').val(data.store_address);
                 $('#address').val(data.address);
                 $('#store_email').val(data.store_email);
-                $('#store_telephone').val(data.store_telephone);
+                PosnicPro.settings.store_telephone.setNumber(data.store_telephone || '');
                 $('#store_alternativephone').val(data.store_alternativephone);
                 $('#place').val(data.place);
                 $('#city').val(data.city);
@@ -4395,9 +4397,8 @@ $("#setting_add").validate({
 });
 jQuery.validator.addMethod("setting_phone_number", function (phone_number, element) {
     let valid = PosnicPro.settings.store_telephone.isValidNumber();
-    let num = PosnicPro.settings.store_telephone.getNumber();
     if (valid === true) {
-        $('#store_telephone').val(num);
+        // Keep the national number visible; serialize the international number on save.
         return true;
     } else {
         return false;
@@ -5226,6 +5227,7 @@ PosnicPro.settings.initPrintEditors = function () {
 $(function () {
     PosnicPro.lazyPhoneInput('#store_telephone', PosnicPro.settings, 'store_telephone', {
         separateDialCode: true,
+        initialCountry: 'in',
         preferredCountries: ['in'],
         hiddenInput: "full",
         utilsScript: "../static/script/js/utils.js"
