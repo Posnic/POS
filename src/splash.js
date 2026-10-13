@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 /*
  * The window that appears the moment somebody double-clicks the icon.
  *
@@ -17,8 +17,8 @@
  * every failure path returns rather than throws.
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 let splash = null;
 /* Once the real window has replaced it, a late call must not put it back. */
@@ -40,15 +40,17 @@ function showSplash(electron, options = {}) {
 
   try {
     const { BrowserWindow, screen } = electron;
+    const name = brandName(electron.app);
 
     const win = new BrowserWindow({
       width: 380,
+      title: name,
       height: 260,
       frame: false,
       transparent: false,
       /* Shown for the instant before the page paints, so it matches the
        bottom of the gradient rather than flashing a different colour. */
-      backgroundColor: '#0C3A64',
+      backgroundColor: "#0C3A64",
       resizable: false,
       movable: false,
       minimizable: false,
@@ -76,21 +78,23 @@ function showSplash(electron, options = {}) {
       const area = screen.getDisplayNearestPoint(cursor).workArea;
       win.setPosition(
         Math.round(area.x + (area.width - 380) / 2),
-        Math.round(area.y + (area.height - 260) / 2)
+        Math.round(area.y + (area.height - 260) / 2),
       );
     } catch (e) {
       win.center();
     }
 
-    win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html()));
-    win.once('ready-to-show', () => {
+    win.loadURL(
+      "data:text/html;charset=utf-8," + encodeURIComponent(html(name)),
+    );
+    win.once("ready-to-show", () => {
       if (!finished && !win.isDestroyed()) win.show();
     });
 
     splash = win;
     return win;
   } catch (e) {
-    console.warn('[Splash] could not show:', e.message);
+    console.warn("[Splash] could not show:", e.message);
     return null;
   }
 }
@@ -122,16 +126,62 @@ function splashIsOpen() {
    file path against. Read once; a missing file just means no mark. */
 function markDataUri() {
   try {
-    const file = path.join(__dirname, '..', 'builds', 'icon-256.png');
+    const file = path.join(__dirname, "..", "builds", "icon-256.png");
     if (!fs.existsSync(file)) return null;
-    return `data:image/png;base64,${fs.readFileSync(file).toString('base64')}`;
+    return `data:image/png;base64,${fs.readFileSync(file).toString("base64")}`;
   } catch (e) {
     return null;
   }
 }
 
-function html() {
+// Startup runs before main.js copies the installer brand into userData. Read
+// the shipped descriptor directly on first launch; an authoritative cloud
+// descriptor (including an explicit disable) still takes precedence offline.
+function brandName(app) {
+  const read = (file) => {
+    try {
+      return JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch {
+      return null;
+    }
+  };
+  let cached = null;
+  try {
+    cached = read(path.join(app.getPath("userData"), "brand", "brand.json"));
+  } catch {}
+  const seed = read(
+    path.join(
+      app && app.isPackaged
+        ? process.resourcesPath
+        : path.join(__dirname, "..", "builds"),
+      "brand-seed",
+      "brand.json",
+    ),
+  );
+  const fromCloud =
+    cached && (typeof cached.version === "number" || cached.updatedAt);
+  const brand = fromCloud ? cached : seed || cached;
+  return brand &&
+    brand.enabled === true &&
+    typeof brand.name === "string" &&
+    brand.name.trim()
+    ? brand.name.trim()
+    : "Posnic";
+}
+
+function html(name) {
   const mark = markDataUri();
+  const title = name.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[c],
+  );
 
   /*
    * An indeterminate bar, not a percentage.
@@ -206,8 +256,8 @@ function html() {
   }
 </style></head>
 <body>
-  ${mark ? `<div class="mark"><img alt="" src="${mark}"></div>` : ''}
-  <h1>Posnic</h1>
+  ${mark ? `<div class="mark"><img alt="" src="${mark}"></div>` : ""}
+  <h1>${title}</h1>
   <p>Starting your till&hellip;</p>
   <div class="bar"><i></i></div>
   <div class="step"></div>
@@ -246,10 +296,10 @@ function showShutdown(electron, options = {}) {
      as a hang, and the reasonable thing to do about a hang is kill it - during
      the one minute where killing it is genuinely a bad idea. */
   const message = options.updating
-    ? 'Installing the update - do not turn the computer off...'
+    ? "Installing the update - do not turn the computer off..."
     : options.restarting
-      ? 'Restarting - saving your work first...'
-      : 'Closing down safely...';
+      ? "Restarting - saving your work first..."
+      : "Closing down safely...";
 
   setSplashText(message);
   return win;
@@ -272,9 +322,9 @@ function setSplashText(message, step) {
       .executeJavaScript(
         `(() => {
            const p = document.querySelector('p');
-           if (p) p.textContent = ${JSON.stringify(String(message || ''))};
+           if (p) p.textContent = ${JSON.stringify(String(message || ""))};
            const s = document.querySelector('.step');
-           if (s) s.textContent = ${JSON.stringify(String(step || ''))};
+           if (s) s.textContent = ${JSON.stringify(String(step || ""))};
          })();`,
       )
       .catch(() => {});
@@ -282,7 +332,8 @@ function setSplashText(message, step) {
 
   try {
     /* The page may not have parsed yet when this is called. */
-    if (win.webContents.isLoading()) win.webContents.once('did-finish-load', paint);
+    if (win.webContents.isLoading())
+      win.webContents.once("did-finish-load", paint);
     else paint();
   } catch (e) {
     /* window torn down mid-call */
@@ -306,7 +357,10 @@ function setShutdownProgress(done, total, label) {
   const win = splash;
   if (!win) return;
 
-  const pct = total > 0 ? Math.max(0, Math.min(100, Math.round((done / total) * 100))) : 0;
+  const pct =
+    total > 0
+      ? Math.max(0, Math.min(100, Math.round((done / total) * 100)))
+      : 0;
 
   const paint = () => {
     if (win.isDestroyed()) return;
@@ -316,9 +370,9 @@ function setShutdownProgress(done, total, label) {
            const bar = document.querySelector('.bar');
            if (bar) bar.classList.add('steps');
            const fill = document.querySelector('.bar i');
-           if (fill) fill.style.width = ${JSON.stringify(pct + '%')};
+           if (fill) fill.style.width = ${JSON.stringify(pct + "%")};
            const p = document.querySelector('p');
-           if (p) p.textContent = ${JSON.stringify(String(label || ''))};
+           if (p) p.textContent = ${JSON.stringify(String(label || ""))};
            const s = document.querySelector('.step');
            if (s) s.textContent = ${JSON.stringify(`Step ${Math.min(done + 1, total)} of ${total}`)};
          })();`,
@@ -327,7 +381,8 @@ function setShutdownProgress(done, total, label) {
   };
 
   try {
-    if (win.webContents.isLoading()) win.webContents.once('did-finish-load', paint);
+    if (win.webContents.isLoading())
+      win.webContents.once("did-finish-load", paint);
     else paint();
   } catch (e) {
     /* window torn down mid-call */
@@ -346,8 +401,8 @@ function showWaitingForPrevious(electron) {
   const win = showSplash(electron, {});
   if (!win) return null;
   setSplashText(
-    'Finishing closing down - your till will open in a moment...',
-    'Waiting for the previous session',
+    "Finishing closing down - your till will open in a moment...",
+    "Waiting for the previous session",
   );
   return win;
 }
