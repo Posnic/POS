@@ -227,3 +227,7 @@
     }
   }
 }
+// Keep the branch phone label above one full-width, touch-friendly control.
+#branchedit_new #setting_add .iti { display: block; width: 100%; }
+#branchedit_new #store_telephone { min-height: 44px; }
+#branchedit_new .iti__selected-flag { min-height: 44px; }

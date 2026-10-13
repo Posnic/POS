@@ -29,7 +29,7 @@ function printMethod(render) {
   const source = read('src/hardware-manager.js');
   const start = source.indexOf('  async printHTML(');
   return vm.runInNewContext('({' + source.slice(start, source.indexOf('\n  async getDefaultPrinter', start)) + '}).printHTML', {
-    require: name => name === './escpos-unicode' ? { renderDesignedReceipt: render } : require(name),
+    require: name => name === './escpos-unicode' ? { renderDesignedReceipt: render } : name === './receipt-fast' ? require('../src/receipt-fast') : require(name),
     console: { error() {}, log() {} },
     Buffer,
     BrowserWindow: function () { throw Error('Must not use driver printing for thermal design'); },
@@ -71,4 +71,13 @@ test('render failure submits nothing; uncertain RAW failure never retries throug
   assert.equal(blank.success, false); assert.equal(calls, 0);
   const failed = await printMethod(async () => Buffer.from('receipt')).call(ctx, '', opts);
   assert.equal(failed.error, 'Acceptance uncertain'); assert.equal(calls, 1);
+});
+
+
+test('fast mode skips Chromium and submits each copy only once', async () => {
+  let calls = 0;
+  const method = printMethod(async () => { throw Error('Fast text must not rasterize'); });
+  const result = await method.call({ _resolvePrinterName: async () => 'Counter', sendRawToPrinter: async (_printer, bytes) => { calls++; assert.ok(bytes.toString('ascii').includes('Cash Rs. 500.00')); return { success: true }; } }, '', { thermalRaster: true, pageSize: '80mm', copies: 2, fastReceiptLines: ['Cash Rs. 500.00'] });
+  assert.equal(result.success, true);
+  assert.equal(calls, 2);
 });

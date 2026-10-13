@@ -2727,6 +2727,7 @@ PosnicPro = {
     PAPER: {
         '58': { css: '58mm', content: '48mm', label: '58mm roll', font: 10, small: 9 },
         '80': { css: '80mm', content: '72mm', label: '80mm roll', font: 12, small: 10 },
+        '112': { css: '112mm', content: '104mm', label: '112 mm thermal (TVS RP 4200)', font: 12, small: 10 },
         'a4': { css: 'A4', content: 'auto', label: 'A4 sheet', t: 'lang_a4_sheet', font: 13, small: 11 }
     },
 
@@ -2734,6 +2735,7 @@ PosnicPro = {
         var stored = PosnicPro.local && typeof PosnicPro.local.get === 'function'
             ? PosnicPro.local.get('print_width')
             : null;
+        if (stored) stored = String(stored).replace(/mm$/, '');
         if (stored && PosnicPro.PAPER[stored]) return stored;
 
         // Nothing chosen yet: fall back to what the old two-way setting implied,
@@ -3507,7 +3509,7 @@ PosnicPro = {
         });
     },
     printView: function (contents, image) {
-        var designMatch = String(contents).match(/data-receipt-design="(58|80|a4|a5|letter)"/);
+        var designMatch = String(contents).match(/data-receipt-design="(58|80|112|a4|a5|letter)"/);
         if (designMatch && PosnicPro.receiptDesigner) return PosnicPro.receiptDesigner.print(contents, designMatch[1]);
         var assetBase = new URL(PosnicPro.baseUrl || '.', document.baseURI).href;
         // Electron: silent print via ipc (window.electronAPI.printer.print)
