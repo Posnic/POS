@@ -17,10 +17,19 @@ test('saved split shapes retain each allocation without double counting Captain 
 });
 
 test('unpaid and historical mixed bills never invent collected money', () => {
+  assert.deepEqual(rows({ captain_payments: { enabled: true, printReceipt: true } }), []);
+  assert.deepEqual(rows({ multi_payment: { Cash: true, Card: false } }), []);
   assert.deepEqual(rows({ payment_mode: 'Cash', payment_status: 'Unpaid', items_total: 500 }), []);
   assert.deepEqual(rows({ payment_mode: 'Cash,UPI', payment_status: 'Paid', items_total: 500 }), []);
   assert.deepEqual(rows({ payment_mode: 'Cash', payment_status: 'Unpaid', partial_check: true, partial_balance: 200, items_total: 500 }), [{ method: 'Cash', amount: 200 }]);
   assert.deepEqual(rows({ payment_mode: 'Card', payment_status: 'Paid', sales_total: 500 }), [{ method: 'Card', amount: 500 }]);
+});
+
+test('background bill payload retains recorded payment allocations', () => {
+  const { buildBillPayload } = require('../api/src/helpers/bill-payload');
+  const sale = { sales_id: 'S-1', payment_status: 'Paid', payment_mode: 'Mixed', paid_amount: 500,
+    multi_payment: { UPI: 300, Cash: 200 }, sales_total: 500, items: [] };
+  assert.deepEqual(rows(buildBillPayload(sale, {}).receiptDocument), rows(sale));
 });
 
 test('sale sheet and designed receipts display the same split and escape method names', () => {

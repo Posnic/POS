@@ -30,6 +30,21 @@ function setup() {
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
 }
 
+test('canonical receipt lines supply both displayed quantities and total quantity', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.receipt_designs.layouts['80'].blocks = [{ type: 'items', itemLayout: 'columns' }, { type: 'field', field: 'total_quantity' }];
+    sale.receipt_line_rows = [{ name: 'Veg Biryani', qty: 1, rate: 200, amount: 200 }];
+    // The print payload may omit legacy lines or carry a different legacy shape.
+    for (const items of [[], [{ item_name: 'Old line', item_quantity: 9 }]]) {
+        sale.items = items;
+        const output = $('<div>').html(engine.render(sale, '80', false));
+        assert.equal(output.find('.rd-total-quantity .rd-number').text(), '1');
+        assert.match(output.text(), /Veg Biryani/);
+        assert.doesNotMatch(output.text(), /Old line/);
+    }
+    dom.window.close();
+});
+
 test('pending goods use the normal layout with a truthful status even without totals', () => {
     const { dom, engine, design, sale, $ } = setup();
     for (const layout of Object.values(design.layouts)) layout.blocks = layout.blocks.filter(b => b.type !== 'totals');
