@@ -14,6 +14,9 @@
     function collect(value) {
       const result = new Map();
       function add(method, amount) {
+        // Branch feature settings can share the captain_payments name.
+        // Boolean switches are not collected amounts.
+        if (typeof amount !== 'number' && typeof amount !== 'string') return;
         method = String(method || '').trim();
         amount = Number(amount);
         if (!method || !Number.isFinite(amount) || amount <= 0) return;
@@ -41,7 +44,8 @@
       return Array.from(result.values());
     }
     let result = collect(sale.multi_payment);
-    if (!result.length) result = collect(sale.captain_payments);
+    if (!result.length && Array.isArray(parse(sale.captain_payments)))
+      result = collect(sale.captain_payments);
     if (result.length) return result;
     const method = String(sale.payment_mode || '').trim();
     // A legacy mixed label does not contain enough information to invent a split.

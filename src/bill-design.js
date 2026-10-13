@@ -42,6 +42,7 @@ async function documentFor(data, paper, baseUrl) {
           "frontend/static/script/js/jquery.min.js",
           "frontend/static/script/js/jquery-barcode.min.js",
           "api/src/helpers/receipt-design.js",
+          "api/src/helpers/sale-payment-summary.js",
           "frontend/static/script/js/core/receipt-designer.js",
         ]) {
           await win.webContents.executeJavaScript(
