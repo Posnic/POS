@@ -198,6 +198,11 @@
         var money = function (v) { return esc(currency) + ' ' + esc(Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })); };
         var pair = function (name, value, total) { return '<div class="rd-total-row' + (total ? ' rd-grand-total' : '') + '"><span>' + esc(label(name)) + '</span><span>' + value + '</span></div>'; };
         var items = data.items || [];
+        // Saved/reprinted receipts can supply canonical lines without legacy items.
+        // Totals and the visible rows must use the same source.
+        var receiptItems = Array.isArray(data.receipt_line_rows) ? data.receipt_line_rows.map(function (line) {
+            return Object.assign({}, line, { item_name: line.name, item_quantity: Number(line.qty), item_price: Number(line.rate), total_amount: line.amount, hsncode: line.hsn });
+        }) : items;
         var present = function (v) { return v !== undefined && v !== null && v !== false && String(v).trim() !== ''; };
         var gstNumber = [data.customer_gstin, data.customer_gstin_number, data.customer_gst_number].find(present);
         var taxNumber = present(gstNumber) ? gstNumber : data.customer_tax_number;
@@ -211,7 +216,7 @@
             customer_name: data.customer_name, customer_phone: data.customer_phone, customer_email: data.customer_email,
             customer_tax_number: taxNumber,
             customer_address: data.customer_address, sale_note: data.sales_description, brand_url: data.website || PosnicPro.BRAND_URL,
-            total_quantity: items.reduce(function (n, i) { return n + Number(i.item_quantity || 0); }, 0),
+            total_quantity: receiptItems.reduce(function (n, i) { return n + Number(i.item_quantity || 0); }, 0),
             table: data.table_number, order_type: data.dine_type, covers: data.covers || data.person_count,
             steward: data.steward_name || data.steward || data.created_by || data.user_name, session: data.serving_session || data.session_name,
             fssai: data.branch_fssai_number, source: data.order_source || data.source,
@@ -253,9 +258,6 @@
                 var compact = !sheet && b.itemLayout === 'compact';
                 var columns = !sheet && b.itemLayout === 'columns';
                 content = '<table' + (columns ? ' class="rd-fixed-columns"' : '') + '><colgroup><col style="width:' + (sheet ? '46' : columns ? (format === '58' ? '40' : '46') : compact ? '68' : '60') + '%">' + (sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : columns ? (format === '58' ? '<col style="width:23%"><col style="width:12%"><col style="width:25%">' : '<col style="width:20%"><col style="width:10%"><col style="width:24%">') : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr><th>' + esc(compact ? label('Item') + ' × ' + label('Qty') : columns ? label('Item name') : label('Item')) + '</th>' + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : columns ? '<th class="rd-number">' + esc(label('Rate')) + '</th><th class="rd-number">' + esc(label('Qty')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
-                var receiptItems = Array.isArray(data.receipt_line_rows) ? data.receipt_line_rows.map(function (line) {
-                    return Object.assign({}, line, { item_name: line.name, item_quantity: Number(line.qty), item_price: Number(line.rate), total_amount: line.amount, hsncode: line.hsn });
-                }) : items;
                 receiptItems.forEach(function (item) {
                     var qty = Number(item.item_quantity || 0);
                     var hsn = item.hsncode || item.hsn_code || item.hsn || (/^\d{4,8}$/.test(item.tax_name || '') ? item.tax_name : '');
