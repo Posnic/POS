@@ -557,7 +557,7 @@ class HardwareManager {
       // Designed rolls use the same raw queue as Hardware Manager's test.
       // A text-only thermal driver may accept HTML/GDI and still feed blank paper.
       // Render the complete design before submitting; never fall back after RAW acceptance.
-      if (options.thermalRaster === true && ['58mm', '80mm'].includes(options.pageSize)) {
+      if (options.thermalRaster === true && ['58mm', '80mm', '112mm'].includes(options.pageSize)) {
         const deviceName = await this._resolvePrinterName(options.printerName);
         const bytes = await require('./escpos-unicode').renderDesignedReceipt(htmlContent, options.pageSize.replace('mm', ''));
         diagnostics?.record('print.rendered', { trace, bytes: bytes.length, durationMs: Date.now() - started });
@@ -581,6 +581,7 @@ class HardwareManager {
         '50mm':  { width: 50000,  height: 1000000, windowWidth: 189 },
         '58mm':  { width: 58000,  height: 1000000, windowWidth: 220 },
         '80mm':  { width: 80000,  height: 1000000, windowWidth: 302 },
+        '112mm': { width: 112000, height: 1000000, windowWidth: 423 },
         '100mm': { width: 100000, height: 1000000, windowWidth: 378 },
         'a4':    { width: 210000, height: 297000,  windowWidth: 794 },
         'a5':    { width: 148000, height: 210000,  windowWidth: 559 },
@@ -652,7 +653,7 @@ class HardwareManager {
       }
       // Designed thermal receipts end at their content instead of feeding a
       // metre of paper (the fallback page size used by older HTML templates).
-      if (options.fitReceipt === true && (sizeKey === '58mm' || sizeKey === '80mm')) {
+      if (options.fitReceipt === true && ['58mm', '80mm', '112mm'].includes(sizeKey)) {
         const fitted = await printWindow.webContents.executeJavaScript(
           `(${fitDocument.toString()})(document)`
         );

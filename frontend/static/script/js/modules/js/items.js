@@ -219,11 +219,17 @@ PosnicPro.items = {
             }
         });
     },
+    openNewItemEditor: function () {
+        var itemSettings = {};
+        try { itemSettings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) {}
+        if (itemSettings.item_editor_v2 !== true || !PosnicPro.items_v2) return false;
+        PosnicPro.items_v2.showAdd();
+        return true;
+    },
     showAdd: function () {
+        if (PosnicPro.items.openNewItemEditor()) return;
         PosnicPro.items.aiRefresh();
-        /* A fresh form has no dish on it, so the plate card is emptied and
-           its badge strip redrawn - otherwise the last dish edited leaves its
-           nutrition sitting in the boxes of the next one. */
+        // Clear the previous item's nutrition before opening a fresh form.
         PosnicPro.itemPlate.wire();
         PosnicPro.itemPlate.aiRefresh();
         PosnicPro.itemPlate.clear();
@@ -550,8 +556,9 @@ PosnicPro.items = {
     },
     /* A shop with tax switched off never sees the Tax card (owner ask). */
     applyTaxGate: function () {
-        var taxOff = PosnicPro.local.get('default_tax_enable_disable') === 'false'
-            && PosnicPro.local.get('gst_action') !== 'enable';
+        var settings = {};
+        try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) {}
+        var taxOff = settings.module_tax_enable === false;
         $("input[name='hsntax_radio_value']").closest('.card').toggle(!taxOff);
     },
     /* The weight-scale flag only means anything when the weight-machine

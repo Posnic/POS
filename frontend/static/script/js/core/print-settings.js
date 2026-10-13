@@ -4,7 +4,7 @@
     'use strict';
     var state, featureState = {}, queues = [], loading;
     var sheets = { a4: 'A4', a5: 'A5', letter: 'US Letter' };
-    var papers = Object.assign({ '58mm': '58 mm thermal', '80mm': '80 mm thermal' }, sheets);
+    var papers = Object.assign({ '58mm': '58 mm thermal', '80mm': '80 mm thermal', '112mm': '112 mm thermal (TVS RP 4200)' }, sheets);
 
     var esc = function (value) { return PosnicPro.escapeHtml(String(value == null ? '' : value)); };
     var desktop = function () { return !!(window.electronAPI && window.electronAPI.preferences); };
@@ -55,7 +55,7 @@
         if (name && !choices[name]) choices[name] = name + ' (' + PosnicPro.i18n.t('lang_about_unavailable', 'Unavailable') + ')';
         var title = sale ? PosnicPro.i18n.t('lang_print_sales_receipts', 'Sales receipts') : kind === 'invoice' ? PosnicPro.i18n.t('lang_invoices_enable', 'Invoices') : PosnicPro.i18n.t('lang_print_quotations', 'Quotations');
         var format = String(value.pageSize || value.paperSize || '80mm').toLowerCase();
-        if (format === '58' || format === '80') format += 'mm';
+        if (['58', '80', '112'].indexOf(format) !== -1) format += 'mm';
         var sizes = Object.assign({}, sale ? papers : sheets);
         if (sale && !sizes[format]) sizes[format] = format;
         return '<tr data-profile="' + kind + '"><th scope="row">' + esc(title) + (sale && index ? ' ' + (index + 1) : '') + '</th><td>' +
@@ -136,5 +136,5 @@
             .on('click.documentPrint', '[data-print-remove]', function () { $(this).closest('tr').remove(); });
     }
     PosnicPro.printSettings = { ready: ready, get: get, mount: mount, features: features, save: save,
-        saleFormat: function () { var value = get('sales')[0].pageSize; return value === '58mm' || value === '80mm' ? value.slice(0, 2) : value; } };
+        saleFormat: function () { var value = get('sales')[0].pageSize; return ['58mm', '80mm', '112mm'].indexOf(value) !== -1 ? value.replace('mm', '') : value; } };
 }());

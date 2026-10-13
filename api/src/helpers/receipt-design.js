@@ -30,6 +30,7 @@
   const formats = {
     58: { name: '58 mm thermal', width: 58, content: 48, font: 10 },
     80: { name: '80 mm thermal', width: 80, content: 72, font: 12 },
+    112: { name: '112 mm thermal (TVS RP 4200)', width: 112, content: 104, font: 12 },
     a4: { name: 'A4', width: 210, height: 297, content: 186, font: 12 },
     a5: { name: 'A5', width: 148, height: 210, content: 124, font: 11 },
     letter: { name: 'US Letter', width: 215.9, height: 279.4, content: 191.9, font: 12 },
@@ -91,6 +92,9 @@
   }
   function layoutFor(value, format) {
     const layout = value.layouts[format];
+    if (format === '112' && layout === undefined && Array.isArray(value.layouts['80']?.blocks)) {
+      return JSON.parse(JSON.stringify(value.layouts['80']));
+    }
     // Designs saved before A5 shipped keep their A4 content as an independent
     // starting point, with text sized for the smaller sheet. Nothing is mutated.
     if (format === 'a5' && layout === undefined && Array.isArray(value.layouts.a4?.blocks)) {
@@ -140,6 +144,7 @@
         }
         if (block.type === 'items') {
           b.hsn = block.hsn === true;
+          b.showRowNumbers = block.showRowNumbers === true;
           if (block.lineStyle != null) {
             if (!['solid', 'dashed', 'dotted'].includes(block.lineStyle))
               throw new Error('Choose a valid separator style.');
@@ -173,6 +178,7 @@
           }
         }
         if (block.type === 'store' && block.fssaiInHeader === true) b.fssaiInHeader = true;
+        if (block.type === 'store' && block.showEmail === false) b.showEmail = false;
         if (textTypes.includes(block.type)) {
           b.bold = block.bold === true;
           if (block.fontSize != null && block.fontSize !== '') {

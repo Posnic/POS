@@ -690,7 +690,7 @@ test('format cards separate editing from default selection and preserve the choi
     w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
     w.PosnicPro.receiptDesignerEditor.load(branch);
     assert.equal($('#rd-default-format').length, 0, 'There is no separate default dropdown');
-    assert.equal($('.rd-format-card').length, 5);
+    assert.equal($('.rd-format-card').length, Object.keys(contract.formats).length);
     assert.equal($('button button').length, 0, 'Each card has two independent native buttons');
     assert.equal($('.rd-format-card.is-default [data-default-format]').attr('data-default-format'), '80');
     $('[data-format="a5"]').trigger('click');
@@ -1110,4 +1110,29 @@ test('UK receipts label the saved registration number as VAT, including legacy G
  assert.equal(contract.taxRegistrationLabel({country:'US'}),'Tax ID');
  assert.equal(contract.taxRegistrationLabel({},'GB'),'VAT No.');
  dom.window.close();
+});
+
+
+test('RP 4200 migrates saved 80 mm content independently and keeps email and row options', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    delete design.layouts['112'];
+    const store = design.layouts['80'].blocks.find(b => b.type === 'store');
+    const items = design.layouts['80'].blocks.find(b => b.type === 'items');
+    store.showEmail = false;
+    items.showRowNumbers = true;
+    const saved = contract.normalize(JSON.parse(JSON.stringify(design)));
+    assert.equal(saved.layouts['112'].blocks.find(b => b.type === 'store').showEmail, false);
+    assert.equal(saved.layouts['112'].blocks.find(b => b.type === 'items').showRowNumbers, true);
+    saved.layouts['112'].fontSize = 14;
+    assert.notEqual(saved.layouts['80'].fontSize, 14);
+    sale.receipt_designs = saved;
+    sale.store_email = 'shop@example.com';
+    sale.items.push({ item_name: 'Second item', item_price: 5, item_quantity: 1, total_amount: 5 });
+    const output = $('<div>').html(engine.render(sale, '112', false));
+    assert.equal(output.find('[data-receipt-design]').attr('data-receipt-design'), '112');
+    assert.doesNotMatch(output.text(), /shop@example.com/);
+    assert.deepEqual(output.find('.rd-row-number').map((i, e) => $(e).text()).get(), ['1. ', '2. ']);
+    saved.layouts['112'].blocks.find(b => b.type === 'store').showEmail = true;
+    assert.match($('<div>').html(engine.render(sale, '112', false)).text(), /shop@example.com/);
+    dom.window.close();
 });

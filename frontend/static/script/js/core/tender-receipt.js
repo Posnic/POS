@@ -256,7 +256,7 @@
                 if (current !== revision) { return; }
                 if (!response || response.type !== 'success' || !response.data) { failed(); return; }
                 var branch = response.data;
-                var layout = branch.print_type === 'a4' ? 'a4' : (branch.print_width === '58' ? '58' : '80');
+                var layout = branch.print_type === 'a4' ? 'a4' : (['58', '80', '112'].indexOf(branch.print_width) !== -1 ? branch.print_width : '80');
                 if (branch.receipt_designs) layout = branch.receipt_designs.defaultFormat;
                 var printer = window.electronAPI && window.electronAPI.printer;
                 if (!branch.receipt_designs && layout !== 'a4' && printer && printer.previewReceipt && PosnicPro.receiptData) {

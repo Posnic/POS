@@ -46,7 +46,7 @@ const PAPER_SIZES = Object.freeze({
   '76mm': { label: '76mm roll (impact)', width: 76000, height: ROLL_HEIGHT_MICRONS, windowWidth: 287, roll: true },
   '80mm': { label: '80mm roll', width: 80000, height: ROLL_HEIGHT_MICRONS, windowWidth: 302, roll: true },
   '100mm': { label: '100mm roll', width: 100000, height: ROLL_HEIGHT_MICRONS, windowWidth: 378, roll: true },
-  '112mm': { label: '112mm roll', width: 112000, height: ROLL_HEIGHT_MICRONS, windowWidth: 423, roll: true },
+  '112mm': { label: '112mm roll (TVS RP 4200)', width: 112000, height: ROLL_HEIGHT_MICRONS, windowWidth: 423, roll: true },
   a4: { label: 'A4 sheet', width: 210000, height: 297000, windowWidth: 794, roll: false },
   a5: { label: 'A5 sheet', width: 148000, height: 210000, windowWidth: 559, roll: false },
   a6: { label: 'A6 sheet', width: 105000, height: 148000, windowWidth: 397, roll: false },
@@ -74,6 +74,7 @@ function columnsFor(sizeKey) {
   if (size.width <= 58000) return 32;
   if (size.width <= 76000) return 42;
   if (size.width <= 80000) return 48;
+  if (key === '112mm') return 69;
   return 64;
 }
 
