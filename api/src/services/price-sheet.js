@@ -439,7 +439,8 @@ async function sheet(c, query = {}) {
     filter.$or = ['name', 'itemid'].map((f) => ({
       [f]: { $regex: searchPattern(String(query.search).slice(0, 100)), $options: 'i' },
     }));
-  if (query.category) filter.category_id = oid(query.category);
+  const categories = require('../utils/price-category-filter')(query.category);
+  if (categories) filter.category_id = categories;
   const fields = String(query.fields || 'selling_price')
     .split(',')
     .filter((f) => Object.hasOwn(FIELDS, f));

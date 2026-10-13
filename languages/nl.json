@@ -4787,5 +4787,15 @@
   "lang_mobile_inventory_operations": "Mobiele voorraadbewerkingen",
   "lang_no_mobile_inventory_operations_yet": "Er zijn nog geen mobiele voorraadbewerkingen.",
   "lang_not_applied": "Niet toegepast",
-  "lang_save_inventory_policy": "Voorraadbeleid opslaan"
+  "lang_save_inventory_policy": "Voorraadbeleid opslaan",
+  "lang_clear_filters": "Filters wissen",
+  "lang_download_branch_price_sheet": "Download een prijslijst voor dit filiaal. Kies alle producten of filter op zoekterm en categorieën.",
+  "lang_edit_new_columns_only": "Bewerk de kolommen Nieuwe prijs in Excel. Laat de huidige prijzen en identificatiecodes ongewijzigd.",
+  "lang_edit_on_screen": "Op het scherm bewerken",
+  "lang_import_review_then_apply": "Importeer het bestand, controleer alleen de wijzigingen en problemen en pas ze daarna toe.",
+  "lang_no_products_match_filters": "Geen producten komen overeen met deze filters.",
+  "lang_try_other_categories_or_clear_filters": "Probeer andere categorieën of wis de zoekterm en categoriefilters.",
+  "lang_update_prices_using_a_file": "Prijzen bijwerken met een bestand",
+  "lang_use_a_price_file": "Een prijsbestand gebruiken",
+  "lang_price_editing_method": "Methode voor prijsbewerking"
 }
