@@ -11,7 +11,7 @@ const output = path.join(root, 'output/item-create-v2'); fs.mkdirSync(output, { 
 const stub = `(function(){var nativeScrollIntoView=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(){nativeScrollIntoView.call(this,{behavior:'instant',block:'center'});};}());window.savedRequests=[];window.PosnicPro={
  local:{get:k=>({currencySign:'₹',tax_type:'inclusive',default_tax_id:'gst5'})[k]},
  i18n:{t:(_key,fallback)=>fallback},HideSideBarModal(){},aclLoaded:()=>true,checkAccess:()=>true,
- get(p,ok,fail,last){if(typeof p==='string'){ok=fail;fail=last;p={url:p};}if(p.url==='items/aiAvailability')return ok({data:{available:false}});if(p.url.includes('Unit'))return ok({suggestions:[{unit_id:'unit-kg',unit_name:'Kilogram',unit_value:'kg'}]});if(p.url.includes('Suppliers'))return ok({suggestions:[{id:'supplier-1',name:'Demo supplier'}]});if(p.url==='settings/group/channels')return ok({data:{values:{menu_dayparts:[{id:'lunch',name:'Lunch'}]}}});if(p.url==='setting/modifierGroups')return ok({data:[{id:'spice',name:'Spice level'}]});if(p.url.includes('Tax')){if(window.failTax)return fail();return ok({data:[{tax_id:'gst5',tax_name:'GST 5%',tax_value:5}]});}ok({suggestions:[{id:'food',name:'Food'}]});},
+ get(p,ok,fail,last){if(typeof p==='string'){ok=fail;fail=last;p={url:p};}if(p.url==='items/getJSONhsncode')return ok({data:{hsn:[{value:'3304',description:'Soap and cosmetics',taxrate:'28%'}]}});if(p.url==='items/aiAvailability')return ok({data:{available:false}});if(p.url.includes('Unit'))return ok({suggestions:[{unit_id:'unit-kg',unit_name:'Kilogram',unit_value:'kg'}]});if(p.url.includes('Suppliers'))return ok({suggestions:[{id:'supplier-1',name:'Demo supplier'}]});if(p.url==='settings/group/channels')return ok({data:{values:{menu_dayparts:[{id:'lunch',name:'Lunch'}]}}});if(p.url==='setting/modifierGroups')return ok({data:[{id:'spice',name:'Spice level'}]});if(p.url.includes('Tax')){if(window.failTax)return fail();return ok({data:[{tax_id:'gst5',tax_name:'GST 5%',tax_value:5}]});}ok({suggestions:[{id:'food',name:'Food'}]});},
  post(p,ok,fail){const d=JSON.parse(p.data);if(p.url==='items/uploadItemMultiImage'){if(window.failUpload)return fail();return ok({type:'success',data:d.items_image.map(p=>({name:'/uploads/item_images/'+p.name,size:p.size,cover:p.cover}))});}const base=d.tax_type==='inclusive'?d.price/(1+d.tax/100):d.price;const discount=d.discount_amount||base*d.discount_percentage/100;const total=Math.max(0,base-discount)*(1+d.tax/100);ok({type:'success',data:{total}});},
  request(p,ok,fail){window.savedRequests.push(JSON.parse(p.data));setTimeout(()=>{if(window.failSave)return fail({responseText:JSON.stringify({message:'Connection unavailable. Your entries are still here.'})});ok({type:'success',data:{id:'sample-item'}});},80);}
 };`;
@@ -83,6 +83,12 @@ fs.writeFileSync(path.join(output, 'preview.html'), html);
   assert.equal(await page.$eval('#iv2-tax-field',el=>el.hidden),true);assert.equal(await page.$eval('#iv2-online',el=>el.hidden),true);
   await page.type('#iv2-name','Tea');await page.type('#iv2-price','20');await page.click('#iv2-save');await page.waitForFunction(()=>!document.getElementById('iv2-success').hidden);
   assert.equal(await page.evaluate(()=>savedRequests[0].tax),0);assert.equal(await page.evaluate(()=>savedRequests[0].ecommerce),false);
+  await page.setContent(html);
+  await page.type('#iv2-hsn','cosmetics');
+  assert.equal(await page.$eval('#iv2-hsn-options option',e=>e.value),'3304');
+  await page.$eval('#iv2-hsn',e=>{e.value='3304';e.dispatchEvent(new Event('input',{bubbles:true}));});
+  assert.equal(await page.$eval('#iv2-hsn-description',e=>e.value),'Soap and cosmetics');
+  assert.equal(await page.$eval('#iv2-hsn-rate',e=>e.value),'','Historic catalogue rates must not be applied silently');
   // Fill the advanced form, then verify the actual request rather than just the labels.
   await page.setContent(html);
   await page.evaluate(()=>document.querySelectorAll('#items_v2 details').forEach(e=>e.open=true));

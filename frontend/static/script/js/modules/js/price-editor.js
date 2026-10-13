@@ -2,6 +2,82 @@
 (function () {
   "use strict";
   var p = PosnicPro.pricesettings;
+  function t(key, fallback) {
+    return PosnicPro.i18n ? PosnicPro.i18n.t(key, fallback) : fallback;
+  }
+  function categories(id) {
+    return $("#" + id + " input:checked")
+      .map(function () {
+        return this.value;
+      })
+      .get();
+  }
+  function categoryLabel(id) {
+    var selected = $("#" + id + " input:checked");
+    $("#" + id + " summary").text(
+      selected.length
+        ? selected
+            .map(function () {
+              return $(this).parent().text().trim();
+            })
+            .get()
+            .join(", ")
+        : t("lang_all_categories", "All categories"),
+    );
+  }
+  p.setPriceCategories = function (items) {
+    ["ps-grid-category", "ps-sheet-category"].forEach(function (id) {
+      var selected = categories(id),
+        box = $("#" + id + " .ps-category-list").empty();
+      items.forEach(function (item) {
+        $("<label>")
+          .append(
+            $("<input type='checkbox'>")
+              .val(item.id)
+              .prop("checked", selected.includes(String(item.id))),
+            document.createTextNode(item.name),
+          )
+          .appendTo(box);
+      });
+      categoryLabel(id);
+    });
+  };
+  p.categoriesChanged = function (id) {
+    categoryLabel(id);
+    if (id === "ps-grid-category") p.gridLoad(1);
+    else p.sheetCount();
+  };
+  p.clearCategories = function (id) {
+    $("#" + id + " input").prop("checked", false);
+    p.categoriesChanged(id);
+  };
+  p.clearPriceFilters = function (where) {
+    $("#ps-" + where + "-search").val("");
+    p.clearCategories("ps-" + where + "-category");
+  };
+  p.editMode = function (mode) {
+    ["direct", "file"].forEach(function (name) {
+      var active = name === mode;
+      $("#ps-" + name + "-panel").prop("hidden", !active);
+      $("#ps-" + name + "-tab")
+        .attr("aria-selected", String(active))
+        .attr("tabindex", active ? "0" : "-1");
+    });
+  };
+  p.editModeKey = function (event) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    var mode =
+      event.key === "Home"
+        ? "direct"
+        : event.key === "End"
+          ? "file"
+          : $("#ps-direct-panel").prop("hidden")
+            ? "direct"
+            : "file";
+    p.editMode(mode);
+    $("#ps-" + mode + "-tab").focus();
+  };
   p._gridRows = {};
   p._gridPage = 1;
   p.gridSearch = function () {
@@ -220,10 +296,12 @@
         });
       body.append(tr);
     });
-    if (!Object.keys(p._gridRows).length)
-      body.append(
-        $("<tr>").append($('<td colspan="6">').text("No matching items")),
-      );
+    var empty = !Object.keys(p._gridRows).length;
+    $("#ps-grid-empty").prop("hidden", !empty);
+    $("#ps-direct-panel .ps-grid-scroll, #ps-direct-panel .ps-pager").prop(
+      "hidden",
+      empty,
+    );
     count();
   }
   p.showDataTablePage = function () {
@@ -268,7 +346,7 @@
           page: Math.max(1, page),
           pageSize: size,
           search: $("#ps-grid-search").val(),
-          category: $("#ps-grid-category").val(),
+          category: categories("ps-grid-category").join(","),
         }),
       },
       function (r) {
@@ -392,10 +470,6 @@
       which === "download" ? "Download price sheet" : "Import price updates",
     );
     filter = "changes";
-    $("#ps-sheet-category")
-      .html($("#ps-grid-category").html())
-      .val($("#ps-grid-category").val());
-    $("#ps-sheet-search").val($("#ps-grid-search").val());
     var box = $("#ps-sheet-fields").empty();
     Object.keys(fields).forEach(function (f) {
       $('<label class="mr-3">')
@@ -412,6 +486,8 @@
     countSequence = 0;
   p.sheetCount = function () {
     clearTimeout(countTimer);
+    $("#ps-sheet-prepare").prop("disabled", true);
+    $("#ps-sheet-clear").prop("hidden", true);
     var n = ++countSequence;
     countTimer = setTimeout(function () {
       PosnicPro.get(
@@ -419,17 +495,29 @@
           url: "items/priceGrid",
           data: $.param({
             search: $("#ps-sheet-search").val(),
-            category: $("#ps-sheet-category").val(),
+            category: categories("ps-sheet-category").join(","),
             pageSize: 10,
           }),
         },
         function (r) {
-          if (n === countSequence)
+          if (n === countSequence) {
+            var empty = r.type === "success" && r.data.total === 0;
+            $("#ps-sheet-prepare").prop(
+              "disabled",
+              r.type !== "success" || empty,
+            );
+            $("#ps-sheet-clear").prop("hidden", !empty);
             $("#ps-sheet-count").text(
               r.type === "success"
-                ? r.data.total + " matching items across all pages"
+                ? empty
+                  ? t(
+                      "lang_no_products_match_filters",
+                      "No products match these filters.",
+                    )
+                  : r.data.total + " matching items across all pages"
                 : "Could not count items",
             );
+          }
         },
       );
     }, 250);
@@ -463,7 +551,7 @@
           action: "download",
           fields: selected.join(","),
           search: $("#ps-sheet-search").val(),
-          category: $("#ps-sheet-category").val(),
+          category: categories("ps-sheet-category").join(","),
           format: $("#ps-sheet-format").val(),
         }),
       );
@@ -521,6 +609,25 @@
     $("#ps-sheet-title").text(data.job.name + " · " + data.job.status);
     var box = $("#ps-job-view").prop("hidden", false).empty(),
       c = data.counts;
+    if (data.job.status === "complete") {
+      var issues = (c.invalid || 0) + (c.conflict || 0);
+      var message = issues
+        ? '<lang class="lang_price_update_completed_with_issues">Price update finished. Some items need attention.</lang>'
+        : c.updated
+          ? '<lang class="lang_prices_updated_successfully">Prices updated successfully.</lang>'
+          : '<lang class="lang_no_prices_were_changed">No prices were changed.</lang>';
+      $('<div id="ps-update-result" role="status" aria-live="polite">')
+        .addClass(
+          issues
+            ? "ps-update-warning"
+            : c.updated
+              ? "ps-update-success"
+              : "ps-update-neutral",
+        )
+        .append($("<strong>").html(message))
+        .appendTo(box);
+      if (PosnicPro.i18n && PosnicPro.i18n.apply) PosnicPro.i18n.apply(box[0]);
+    }
     $("<p>")
       .text(
         (c.pending || 0) +

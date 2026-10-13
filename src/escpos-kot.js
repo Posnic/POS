@@ -93,7 +93,7 @@ function qtyText(value) {
  * @returns {Buffer}
  */
 function renderKitchenTicket(ticket = {}, options = {}) {
-  const r = new Receipt(String(options.paperWidth) === '32' ? '58' : '80');
+  const r = new Receipt(String(options.paperWidth) === '32' ? '58' : String(options.paperWidth) === '69' ? '112' : '80');
   /* Absent means on. A shop only ever sets this to turn it off, and that is
      for a printer that cannot take a raster - see Receipt.strikeLine. */
   const strikeThem = Boolean(ticket.cancelled) && options.strikeCancelled !== false;

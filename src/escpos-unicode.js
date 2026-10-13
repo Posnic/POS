@@ -100,7 +100,7 @@ class GraphicReceipt {
 }
 
 function layout(sale, options = {}) {
-  const paper = options.paperWidth === '58' ? '58' : '80';
+  const paper = ['58', '80', '112'].includes(options.paperWidth) ? options.paperWidth : '80';
   const result = renderSale(sale, { ...options, symbolGlyphs: false }, new GraphicReceipt(paper));
   return { ...result, width: DOTS[paper], paper };
 }
@@ -286,7 +286,7 @@ async function renderReceipt(sale, options = {}, render = rasterize) {
 }
 
 async function renderDesignedReceipt(document, paper, render = rasterize) {
-  if (!['58', '80'].includes(paper)) throw new Error('Designed raw receipts require thermal paper');
+  if (!['58', '80', '112'].includes(paper)) throw new Error('Designed raw receipts require thermal paper');
   const strips = await render({ document, body: '', pictures: [], paper, width: DOTS[paper] });
   const receipt = new Receipt(paper, { glyphs: false });
   if (!strips.length) throw new Error('The rendered receipt is blank');

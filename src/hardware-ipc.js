@@ -250,7 +250,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
     const { renderReceipt } = require('./escpos-unicode');
     const { parse } = require('./escpos-preview');
     const { resolvePictures } = require('./escpos-logo');
-    const paperWidth = options.paperWidth === '58' ? '58' : '80';
+    const paperWidth = ['58', '80', '112'].includes(options.paperWidth) ? options.paperWidth : '80';
     const prepared = await resolvePictures(sale, paperWidth);
     return parse(await renderReceipt(prepared, {
       paperWidth,
@@ -371,7 +371,7 @@ function setupHardwareIPC(hardwareManager, kotManager, billManager) {
         /* Rendered per target: an 80mm roll is 48 columns and a 58mm roll is
            32, so the same bytes cannot serve both. Getting this wrong wraps the
            total onto its own line, which looks like a rounding bug on paper. */
-        const paperWidth = columnsFor(target.pageSize) <= 32 ? '58' : '80';
+        const paperWidth = columnsFor(target.pageSize) <= 32 ? '58' : columnsFor(target.pageSize) === 69 ? '112' : '80';
         /* eslint-disable-next-line no-await-in-loop -- one fetch, cached
            per paper width, and the loop is serial anyway. */
         const logo = await pictureDots('logo', paperWidth, true);

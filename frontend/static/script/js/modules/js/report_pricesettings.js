@@ -28,7 +28,7 @@ PosnicPro.pricesettings = {
                 opts += '<option value="' + c.id + '">' + $('<div>').text(c.name).html() + '</option>';
             });
             $('#ps_margin_category, #ps_custom_category').html(opts);
-            $('#ps-grid-category').html(opts.replace('Choose a category', 'All categories'));
+            PosnicPro.pricesettings.setPriceCategories((response && response.suggestions) || []);
             PosnicPro.pricesettings._catsLoaded = true;
         });
     },

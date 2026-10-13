@@ -1587,6 +1587,9 @@ class SettingModel extends BaseModel {
         header_print: data.header_print,
         footer_print: data.footer_print,
         sale_inline_editor: saleInlineEditor,
+        ...(data.item_editor_v2 !== undefined
+          ? { item_editor_v2: this.toBoolean(data.item_editor_v2) }
+          : {}),
         ...(saleQuickEdit !== undefined
           ? { sale_quick_edit_enable: String(saleQuickEdit) === 'true' }
           : {}),
@@ -1733,6 +1736,7 @@ class SettingModel extends BaseModel {
         header_print: 'header_print',
         footer_print: 'footer_print',
         sale_inline_editor: 'sale_inline_editor',
+        item_editor_v2: 'item_editor_v2',
         enable_multi_payment: 'enable_multi_payment',
         table_options: 'table_options',
         hardware_weight_machine_enable: 'hardware_weight_machine_enable',

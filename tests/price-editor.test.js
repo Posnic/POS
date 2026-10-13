@@ -239,5 +239,103 @@ test("confirmed direct updates clear applied drafts and refresh the selected res
   assert.equal(f.$("#ps-grid-count").text(), "0 items changed");
   assert.equal(f.calls.at(-1).filter, "changes");
   assert.match(f.$("#ps-job-view tbody").text(), /updated/);
+  assert.equal(f.$("#ps-update-result").hasClass("ps-update-success"), true);
+  assert.equal(f.$("#ps-update-result").text(), "Prices updated successfully.");
+  f.close();
+});
+
+for (const [name, status, counts, style, message] of [
+  [
+    "partial update",
+    "complete",
+    { updated: 1, conflict: 1 },
+    "ps-update-warning",
+    "Some items need attention",
+  ],
+  [
+    "unchanged sheet",
+    "complete",
+    { unchanged: 10 },
+    "ps-update-neutral",
+    "No prices were changed",
+  ],
+  ["review", "review", { pending: 1 }, null, null],
+  ["in progress", "running", { updated: 1, pending: 1 }, null, null],
+])
+  test("completion feedback for " + name, async () => {
+    const f = await fixture();
+    f.w.PosnicPro.post = (request, done) =>
+      done({
+        type: "success",
+        data: {
+          job: { _id: "123456789012345678901234", name: "prices.xlsx", status },
+          counts,
+          rows: [],
+          page: 1,
+          total: 0,
+        },
+      });
+    await f.p.sheetJob("123456789012345678901234");
+    if (style) {
+      assert.equal(f.$("#ps-update-result").hasClass(style), true);
+      assert.ok(f.$("#ps-update-result").text().includes(message));
+    } else assert.equal(f.$("#ps-update-result").length, 0);
+    f.close();
+  });
+
+test("editing methods are separate and switching preserves direct drafts", async () => {
+  const f = await fixture();
+  f.$('[data-price-field="selling_price"]').val("25").trigger("input");
+  f.p.editMode("file");
+  assert.equal(f.$("#ps-direct-panel").prop("hidden"), true);
+  assert.equal(f.$("#ps-file-panel").prop("hidden"), false);
+  assert.equal(f.$("#ps-file-tab").attr("aria-selected"), "true");
+  assert.equal(f.$('#ps-direct-panel button[onclick*="sheetOpen"]').length, 0);
+  assert.equal(f.$('#ps-file-panel button[onclick*="sheetOpen"]').length, 2);
+  f.p.editMode("direct");
+  assert.equal(f.$('[data-price-field="selling_price"]').val(), "25");
+  f.close();
+});
+test("multiple categories reach the grid and file filters stay independent", async () => {
+  const f = await fixture();
+  const cats = [
+    { id: "aaaaaaaaaaaaaaaaaaaaaaaa", name: "Fruit" },
+    { id: "bbbbbbbbbbbbbbbbbbbbbbbb", name: "Vegetables" },
+  ];
+  f.p.setPriceCategories(cats);
+  f.$("#ps-grid-category input").prop("checked", true);
+  await f.p.gridLoad(1);
+  assert.equal(
+    f.queries.at(-1).get("category"),
+    cats.map((c) => c.id).join(","),
+  );
+  f.p.sheetOpen("download");
+  await new Promise((r) => setTimeout(r, 300));
+  assert.equal(f.queries.at(-1).get("category"), "");
+  f.$("#ps-sheet-category input").prop("checked", true);
+  f.p.categoriesChanged("ps-sheet-category");
+  await new Promise((r) => setTimeout(r, 300));
+  assert.equal(
+    f.queries.at(-1).get("category"),
+    cats.map((c) => c.id).join(","),
+  );
+  f.p.clearPriceFilters("sheet");
+  assert.equal(f.$("#ps-grid-category input:checked").length, 2);
+  assert.equal(f.$("#ps-sheet-category input:checked").length, 0);
+  f.close();
+});
+test("empty filters explain the result and prevent an empty download", async () => {
+  const f = await fixture();
+  f.w.PosnicPro.get = (r, done) =>
+    done({ type: "success", data: { page: 1, total: 0, items: [] } });
+  await f.p.gridLoad(1);
+  assert.equal(f.$("#ps-grid-empty").prop("hidden"), false);
+  assert.match(f.$("#ps-grid-empty").text(), /No products match/);
+  assert.equal(f.$("#ps-direct-panel .ps-grid-scroll").prop("hidden"), true);
+  f.p.sheetOpen("download");
+  await new Promise((r) => setTimeout(r, 300));
+  assert.match(f.$("#ps-sheet-count").text(), /No products match/);
+  assert.equal(f.$("#ps-sheet-prepare").prop("disabled"), true);
+  assert.equal(f.$("#ps-sheet-clear").prop("hidden"), false);
   f.close();
 });

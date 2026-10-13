@@ -9,6 +9,12 @@ const round2 = (value, decimals = 2) => {
   return Math.round(num * factor) / factor;
 };
 
+function roundSaleTotal(value, enabled, decimals = 2) {
+  const amount = round2(value, decimals);
+  const total = enabled === true ? Math.round(amount) : amount;
+  return { total, roundOff: round2(total - amount, decimals) };
+}
+
 /** Canonical sale header calculation. Coupons and loyalty must already be validated by the controller. */
 function calculateSaleHeader(data, sale_tot_amount, context) {
   // Extra Discount & Round Off
@@ -75,17 +81,14 @@ function calculateSaleHeader(data, sale_tot_amount, context) {
   // Fetch Branch Settings for Round Off
   const roundOffSetting = context.roundOff === true;
 
-  let roundOffValue = 0;
-  let finalSaleTotAmount = itemsTotAmount;
-
-  if (roundOffSetting) {
-    finalSaleTotAmount = Math.round(itemsTotAmount);
-    roundOffValue = finalSaleTotAmount - itemsTotAmount;
-  }
+  const { total: finalSaleTotAmount, roundOff: roundOffValue } = roundSaleTotal(
+    itemsTotAmount,
+    roundOffSetting
+  );
 
   const salesTotalForDoc = round2(finalSaleTotAmount, 2);
   const roundOffForDoc = round2(roundOffValue, 2);
-  const itemsTotalForDoc = roundOffSetting ? Math.round(itemsTotAmount) : round2(itemsTotAmount, 2);
+  const itemsTotalForDoc = salesTotalForDoc;
 
   return {
     beforeManualDiscountForDoc: round2(sale_tot_amount, 2),
@@ -101,4 +104,4 @@ function calculateSaleHeader(data, sale_tot_amount, context) {
     itemsTotalForDoc,
   };
 }
-module.exports = { calculateSaleHeader, round2 };
+module.exports = { calculateSaleHeader, round2, roundSaleTotal };
