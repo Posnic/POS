@@ -4464,5 +4464,22 @@
   "lang_iv2_hsn_confirm": "मिल्ने कोड छान्नुहोस्, त्यसपछि लागू हुने कर दर पुष्टि गर्नुहोस्।",
   "lang_iv2_hsn_load_failed": "सुझावहरू लोड हुन सकेनन्। थाहा भएको HSN कोड लेख्नुहोस् वा फेरि प्रयास गर्न यो फिल्डमा क्लिक गर्नुहोस्।",
   "lang_iv2_hsn_code_invalid": "सुझावबाट HSN / SAC कोड छान्नुहोस् वा ४ देखि ८ अङ्कको कोड लेख्नुहोस्।",
-  "lang_iv2_hsn_rate_required": "यस कोडमा लागू हुने कर दर लेख्नुहोस्। शून्य दरको वस्तुका लागि ० लेख्नुहोस्।"
+  "lang_iv2_hsn_rate_required": "यस कोडमा लागू हुने कर दर लेख्नुहोस्। शून्य दरको वस्तुका लागि ० लेख्नुहोस्।",
+  "lang_1_download_price_sheet": "१ · मूल्य सूची डाउनलोड गर्नुहोस्",
+  "lang_2_edit_new_prices": "२ · नयाँ मूल्यहरू सम्पादन गर्नुहोस्",
+  "lang_3_upload_review": "३ · अपलोड र समीक्षा गर्नुहोस्",
+  "lang_all_updates": "सबै अद्यावधिकहरू",
+  "lang_blank_cells_keep_the_current_price_keep_ma": "खाली कक्षहरूले हालको मूल्य कायम राख्छन्। पहिचान र निर्यात विवरणहरू नबदल्नुहोस्।",
+  "lang_completed": "पूरा भयो",
+  "lang_effective_date_and_time": "लागू हुने मिति र समय",
+  "lang_for_example_diwali_offer": "उदाहरण: दीपावली छुट",
+  "lang_match_typed_numeric_sku_quick_codes_exactl": "टाइप गरिएका संख्यात्मक SKU / छोटो कोड ठ्याक्कै मिलाउनुहोस् (२१ ले १२१ वा २१० मिलाउँदैन)",
+  "lang_needs_attention": "ध्यान दिन आवश्यक छ",
+  "lang_now": "अहिले",
+  "lang_open_the_downloaded_file_in_excel_or_your": "डाउनलोड गरिएको फाइल Excel वा स्प्रेडसिट एपमा खोल्नुहोस्। नयाँ स्तम्भहरू मात्र सम्पादन गर्नुहोस्।",
+  "lang_save_your_edited_file_upload_it_then_valid": "सम्पादित फाइल सुरक्षित गर्नुहोस्, अपलोड गर्नुहोस् र जाँच गर्नुहोस्। लागू गर्नुअघि छुट्टै पर्दामा परिवर्तनहरूको समीक्षा गर्नुहोस्।",
+  "lang_schedule_date_time": "मिति र समय तय गर्नुहोस्",
+  "lang_scheduled_updates_recent_jobs": "निर्धारित अद्यावधिक र हालका कार्यहरू",
+  "lang_the_filename_includes_categories_and_the_e": "फाइलको नाममा वर्गहरू र निर्यात मिति समावेश हुन्छ। सधैं नयाँ डाउनलोडबाट सुरु गर्नुहोस्।",
+  "lang_upcoming": "आगामी"
 }

@@ -110,7 +110,7 @@ describe('ItemRepository', () => {
       findOne: jest.fn().mockResolvedValue(null),
       insertOne: jest.fn().mockResolvedValue({ insertedId: FAKE_ID }),
       insertMany: jest.fn().mockResolvedValue({ insertedIds: [FAKE_ID] }),
-      updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+      updateOne: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
       updateMany: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
       deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
       deleteMany: jest.fn().mockResolvedValue({ deletedCount: 1 }),
@@ -133,9 +133,9 @@ describe('ItemRepository', () => {
       col.find.mockReturnValue(chain);
       await repo.priceGrid({ search: 'a.*', page: 2 }, context);
       expect(col.find.mock.calls[0][0]).toMatchObject({
-        branch_id: FAKE_BRANCH,
         license: FAKE_LICENSE,
       });
+      expect(col.find.mock.calls[0][0].branch_id.$in.map(String)).toEqual([FAKE_BRANCH]);
       expect(new RegExp(col.find.mock.calls[0][0].$or[0].name.$regex).test('abc')).toBe(false);
       expect(chain.skip).toHaveBeenCalledWith(50);
       expect(chain.limit).toHaveBeenCalledWith(50);
@@ -526,6 +526,24 @@ describe('ItemRepository', () => {
         .mockResolvedValue({ status: true, data: { values: {} } });
     });
     afterEach(() => preferences.mockRestore());
+    test.each([undefined, false, true])(
+      'numeric-code matching opts in explicitly (%s)',
+      async (enabled) => {
+        preferences.mockResolvedValue({
+          status: true,
+          data: { values: { sales_exact_numeric_codes: enabled, sales_search_fields: ['sku'] } },
+        });
+        await repo.getOnlineItemsAjaxList(
+          { query: '21' },
+          { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE }
+        );
+        const clauses = col.aggregate.mock.calls.at(-1)[0][0].$match.$and;
+        const codes = clauses.find((c) => c.$or && c.$or.some((p) => p.itemid)).$or;
+        if (enabled === true)
+          expect(codes.find((p) => p.itemid).itemid).toEqual({ $in: ['21', 21] });
+        else expect(codes.find((p) => p.itemid).itemid).toBeInstanceOf(RegExp);
+      }
+    );
     test('category filtering keeps branch and license scope and returns saved icons', async () => {
       col.aggregate.mockReturnValue(mkAgg([{ _id: FAKE_ID, name: 'Tea', icon: '☕' }]));
       const result = await repo.getOnlineItemsAjaxList(

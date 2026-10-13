@@ -38,7 +38,9 @@ router.get(
       )
       .toArray();
     if (!branches.length) return { connections: {} };
-    const names = [...new Set(branches.map(b => String(b.branch_name || '').trim()).filter(Boolean))];
+    const names = [
+      ...new Set(branches.map((b) => String(b.branch_name || '').trim()).filter(Boolean)),
+    ];
     const addresses = [...new Set(branches.map(cloudAddress))];
     return {
       connections: {

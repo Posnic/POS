@@ -11716,6 +11716,8 @@ $(function () {
                     if (quickOn) { suggestions.push({ value: query + ' ', data: { __action: 'quick' } }); }
                     suggestions.push({ value: query + '  ', data: { __action: 'create' } });
                 }
+                // A repeated code needs an explicit choice, never a silent first-item match.
+                $('#sales_new_item_name').autocomplete('setOptions', { autoSelectFirst: suggestions.length === 1 && !suggestions[0].data.__action });
                 result["suggestions"] = suggestions;
                 done(result);
             }
@@ -11750,7 +11752,8 @@ $(function () {
 
             }
         },
-        autoSelectFirst: true,
+        autoSelectFirst: false,
+        tabDisabled: false,
         triggerSelectOnValidInput: false,
         formatResult: function (suggestion, currentValue) {
             var act = suggestion.data && suggestion.data.__action;
