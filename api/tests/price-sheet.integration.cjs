@@ -314,3 +314,51 @@ test('CSV file import crosses the 500-row staging boundary and reviews only chan
   );
   assert.equal((await service.processBatch(context, result.job._id, false)).counts.updated, 2);
 });
+
+test('multiple categories select the same union for paged editing and sheet export', async () => {
+  const Repository = require('../src/repositories/item.repository');
+  const repository = Object.create(Repository.prototype);
+  repository.getCollection = async () => database.collection('items');
+  const cats = [new ObjectId(), new ObjectId(), new ObjectId()];
+  await database.collection('items').deleteMany({});
+  const base = {
+    branch_id: new ObjectId(context.branchId),
+    license: new ObjectId(context.licenseId),
+    selling_price: 20,
+  };
+  await database
+    .collection('items')
+    .insertMany(
+      cats.map((category_id, i) => ({
+        ...base,
+        _id: new ObjectId(),
+        name: 'Product ' + i,
+        category_id,
+      }))
+    );
+  await database
+    .collection('items')
+    .insertOne({
+      ...base,
+      _id: new ObjectId(),
+      name: 'Other branch',
+      branch_id: new ObjectId(),
+      category_id: cats[0],
+    });
+  const query = { category: cats.slice(0, 2).join(',') };
+  const grid = await repository.priceGrid(query, context);
+  assert.equal(grid.total, 2);
+  const sheet = await service.sheet(context, query);
+  assert.equal(sheet.worksheets[0].rowCount, 3);
+  assert.deepEqual(
+    sheet.worksheets[0].getColumn(1).values.slice(2),
+    grid.items.map((i) => i.name)
+  );
+  assert.equal((await repository.priceGrid({ category: String(cats[0]) }, context)).total, 1);
+  assert.equal(
+    (await repository.priceGrid({ category: query.category, search: 'missing' }, context)).total,
+    0
+  );
+  await assert.rejects(repository.priceGrid({ category: 'invalid' }, context), /Invalid category/);
+  await assert.rejects(service.sheet(context, { category: 'invalid' }), /Invalid category/);
+});
