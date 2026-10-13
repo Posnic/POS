@@ -1740,8 +1740,14 @@ class ItemsController extends BaseController {
       await this.ensureContext(req);
       return this.success(
         res,
-        await this.service.repository.priceGrid(req.query,
-          await require('../services/price-scope').context(req.user, this.model.branchId, this.model.licenseId))
+        await this.service.repository.priceGrid(
+          req.query,
+          await require('../services/price-scope').context(
+            req.user,
+            this.model.branchId,
+            this.model.licenseId
+          )
+        )
       );
     } catch (error) {
       return this.error(res, error.message, 400);
@@ -1760,7 +1766,11 @@ class ItemsController extends BaseController {
       )
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       await this.ensureContext(req);
-      const c = await require('../services/price-scope').context(req.user, this.model.branchId, this.model.licenseId);
+      const c = await require('../services/price-scope').context(
+        req.user,
+        this.model.branchId,
+        this.model.licenseId
+      );
       const service = require('../services/price-sheet');
       const b = req.body;
       let data;
@@ -1772,7 +1782,8 @@ class ItemsController extends BaseController {
           data = c.branches;
           break;
         case 'branchCode':
-          if (!this.checkPermission('branch', 'write', req.user)) return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+          if (!this.checkPermission('branch', 'write', req.user))
+            return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
           data = await require('../services/price-scope').setCode(c, b.branchId, b.code);
           break;
         case 'configure':
@@ -1811,7 +1822,7 @@ class ItemsController extends BaseController {
           const csv = b.format === 'csv';
           const buffer = csv ? await wb.csv.writeBuffer() : await wb.xlsx.writeBuffer();
           data = {
-            filename: `${wb.priceFilename || 'Price-results-' + new Date().toISOString().slice(0,10)}.${csv ? 'csv' : 'xlsx'}`,
+            filename: `${wb.priceFilename || 'Price-results-' + new Date().toISOString().slice(0, 10)}.${csv ? 'csv' : 'xlsx'}`,
             base64: Buffer.from(buffer).toString('base64'),
           };
           break;

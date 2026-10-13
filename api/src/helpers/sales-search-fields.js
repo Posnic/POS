@@ -38,9 +38,16 @@ function conditions(fields, query, regex) {
 
 function exactNumericCodes(query, fields) {
   const selected = Array.isArray(fields) && fields.length ? fields : DEFAULT_SEARCH;
-  const columns = { sku: ['itemid', 'item_code'], barcode: ['barcode_id', 'barcodes'], plu: ['short_code', 'plu_code'] };
+  const columns = {
+    sku: ['itemid', 'item_code'],
+    barcode: ['barcode_id', 'barcodes'],
+    plu: ['short_code', 'plu_code'],
+  };
   const values = [String(query)];
-  if (String(Number(query)) === query && Number.isSafeInteger(Number(query))) values.push(Number(query));
-  return selected.flatMap((field) => (columns[field] || []).map((column) => ({ [column]: { $in: values } })));
+  if (String(Number(query)) === query && Number.isSafeInteger(Number(query)))
+    values.push(Number(query));
+  return selected.flatMap((field) =>
+    (columns[field] || []).map((column) => ({ [column]: { $in: values } }))
+  );
 }
 module.exports = { SEARCH, DISPLAY, DEFAULT_SEARCH, validate, conditions, exactNumericCodes };

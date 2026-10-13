@@ -526,14 +526,24 @@ describe('ItemRepository', () => {
         .mockResolvedValue({ status: true, data: { values: {} } });
     });
     afterEach(() => preferences.mockRestore());
-    test.each([undefined, false, true])('numeric-code matching opts in explicitly (%s)', async (enabled) => {
-      preferences.mockResolvedValue({ status: true, data: { values: { sales_exact_numeric_codes: enabled, sales_search_fields: ['sku'] } } });
-      await repo.getOnlineItemsAjaxList({ query: '21' }, { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE });
-      const clauses = col.aggregate.mock.calls.at(-1)[0][0].$match.$and;
-      const codes = clauses.find(c => c.$or && c.$or.some(p => p.itemid)).$or;
-      if (enabled === true) expect(codes.find(p => p.itemid).itemid).toEqual({ $in: ['21', 21] });
-      else expect(codes.find(p => p.itemid).itemid).toBeInstanceOf(RegExp);
-    });
+    test.each([undefined, false, true])(
+      'numeric-code matching opts in explicitly (%s)',
+      async (enabled) => {
+        preferences.mockResolvedValue({
+          status: true,
+          data: { values: { sales_exact_numeric_codes: enabled, sales_search_fields: ['sku'] } },
+        });
+        await repo.getOnlineItemsAjaxList(
+          { query: '21' },
+          { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE }
+        );
+        const clauses = col.aggregate.mock.calls.at(-1)[0][0].$match.$and;
+        const codes = clauses.find((c) => c.$or && c.$or.some((p) => p.itemid)).$or;
+        if (enabled === true)
+          expect(codes.find((p) => p.itemid).itemid).toEqual({ $in: ['21', 21] });
+        else expect(codes.find((p) => p.itemid).itemid).toBeInstanceOf(RegExp);
+      }
+    );
     test('category filtering keeps branch and license scope and returns saved icons', async () => {
       col.aggregate.mockReturnValue(mkAgg([{ _id: FAKE_ID, name: 'Tea', icon: '☕' }]));
       const result = await repo.getOnlineItemsAjaxList(
