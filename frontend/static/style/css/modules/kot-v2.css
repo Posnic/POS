@@ -113,7 +113,7 @@
 #kot_v2 .kv2-searchbar{position:relative;flex:none}
 #kot_v2 #kv2-search{height:44px;min-height:44px;background:var(--theme-card-bg, white);padding:11px 12px}
 #kot_v2 .kv2-category-chips{display:flex;gap:6px;overflow-x:auto;flex:none;padding:4px 0 16px}
-#kot_v2 .kv2-category-chips button{border-radius:18px;padding:7px 11px;font-size:14px;min-height:32px;white-space:nowrap}
+#kot_v2 .kv2-category-chips button{flex:0 0 auto;width:auto;border-radius:18px;padding:7px 11px;font-size:14px;min-height:32px;white-space:nowrap}
 #kot_v2 .kv2-category-chips button.selected{background:color-mix(in srgb, var(--theme-primary-color, #0867ee) 12%, var(--theme-card-bg, white));border-color:var(--theme-primary-color, #0867ee);color:var(--theme-primary-color, #0867ee)}
 #kot_v2 .kv2-catalogue-footer{position:static;padding:12px 0;flex:none;border:0}
 #kot_v2 .kv2-catalogue-footer button{border:0;background:transparent;color:var(--theme-primary-color, #0867ee);font-size:14px;padding:6px 12px;min-height:32px}
@@ -210,7 +210,7 @@
 #kot_v2 .kv2-search-row{display:flex;align-items:center;gap:8px;flex:none;margin-bottom:10px}
 #kot_v2 .kv2-search-row .kv2-searchbar{flex:1;min-width:0}
 #kot_v2 .kv2-search-row>button{flex:none;min-height:44px;white-space:nowrap;font-size:14px;padding:8px 10px}
-#kot_v2 .kv2-menu{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+#kot_v2 .kv2-menu{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));grid-auto-rows:max-content;gap:10px}
 #kot_v2 .kv2-menu .kv2-product{min-height:150px}
 #kot_v2 .kv2-product-text{padding:9px;gap:6px;flex:1 0 auto}
 #kot_v2 .kv2-product-text>small:empty{display:none}
