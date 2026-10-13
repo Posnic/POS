@@ -815,6 +815,9 @@
   "Error: ": [
     "src/repositories/sale.repository.js"
   ],
+  "Exact numeric search must be on or off": [
+    "src/repositories/settings.repository.js"
+  ],
   "Expense Data Exported": [
     "src/models/expense.model.js"
   ],
@@ -1157,6 +1160,9 @@
   ],
   "Item not found in inventory": [
     "src/models/inventory.model.js"
+  ],
+  "Item not found or selling price is held. Review it in Edit prices.": [
+    "src/repositories/item.repository.js"
   ],
   "Item updated": [
     "src/repositories/item.repository.js"

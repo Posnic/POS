@@ -871,6 +871,7 @@ PosnicPro.settings = {
                     .off('change.salesSearch').on('change.salesSearch', function () {
                         $('[name="sales_search_fields"]').prop('disabled', !this.checked);
                     }).triggerHandler('change.salesSearch');
+                $('#sales_exact_numeric_codes').prop('checked', data.sales_exact_numeric_codes === true);
                 var searchFields = data.sales_search_fields || ['name', 'sku', 'barcode', 'plu'];
                 var displayFields = data.sales_search_display_fields || ['sku', 'category', 'price', 'stock', 'image'];
                 $('[name="sales_search_fields"]').each(function () { this.checked = searchFields.indexOf(this.value) >= 0; });
@@ -2205,6 +2206,7 @@ if ($wrapper.length) {
                 discount_percentage: $('#discount_percentage').val(),
                 discount_amount: $('#discount_amount').val(),
                 sales_prefix: $('#sales_prefix').val(),
+                sales_exact_numeric_codes: $('#sales_exact_numeric_codes').is(':checked'),
                 sales_search_fields: $('#sales_search_custom_fields').is(':checked')
                     ? $('[name="sales_search_fields"]:checked').map(function () { return this.value; }).get() : null,
                 sales_search_display_fields: $('#sales_search_custom_display').is(':checked')

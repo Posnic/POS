@@ -133,15 +133,18 @@ test("download has its own visible search/category controls and empty edits leav
   f.close();
 });
 
-test("download and review use a dismissible dialog without scrolling the catalogue", async () => {
+test("download stays in the file workflow and review opens a separate screen", async () => {
   const f = await fixture();
   f.p.sheetOpen("download");
-  assert.equal(f.$("#ps-sheet")[0].open, true);
+  assert.equal(f.$("#ps-sheet")[0].open, false);
+  assert.equal(f.$("#ps-file-download #ps-sheet-download").length, 1);
   f.p.sheetClose();
   assert.equal(f.$("#ps-sheet")[0].open, false);
   f.$('[data-price-field="selling_price"]').val("25").trigger("input");
   await f.p.gridReview();
   assert.equal(f.$("#ps-sheet")[0].open, true);
+  assert.equal(f.$("#ps-direct-panel").prop("hidden"), true);
+  assert.equal(f.$("#ps-sheet").hasClass("ps-review-screen"), true);
   assert.equal(f.$('[aria-label="Review status"]').val(), "changes");
   f.close();
 });
@@ -291,7 +294,8 @@ test("editing methods are separate and switching preserves direct drafts", async
   assert.equal(f.$("#ps-file-panel").prop("hidden"), false);
   assert.equal(f.$("#ps-file-tab").attr("aria-selected"), "true");
   assert.equal(f.$('#ps-direct-panel button[onclick*="sheetOpen"]').length, 0);
-  assert.equal(f.$('#ps-file-panel button[onclick*="sheetOpen"]').length, 2);
+  assert.equal(f.$('#ps-file-panel button[onclick*="sheetDownload"]').length, 1);
+  assert.equal(f.$('#ps-file-panel button[onclick*="sheetImport"]').length, 1);
   f.p.editMode("direct");
   assert.equal(f.$('[data-price-field="selling_price"]').val(), "25");
   f.close();
