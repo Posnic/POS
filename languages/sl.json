@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Uporabite datoteko s cenami",
   "lang_iv2_hsn_code_invalid": "Izberite kodoHSN/SAC med predlogi ali vnesite 4 do 8 mestno kodo.",
   "lang_iv2_hsn_load_failed": "Predlogov ni mogoče naložiti. Vnesite znano HSN kodo ali usmerite to polje, da poskusite znova.",
-  "lang_iv2_hsn_rate_required": "Vnesite veljavno davčno stopnjo za to kodo. Vnesite 0 za element z ničelno oceno."
+  "lang_iv2_hsn_rate_required": "Vnesite veljavno davčno stopnjo za to kodo. Vnesite 0 za element z ničelno oceno.",
+  "lang_print_mode": "Način tiskanja",
+  "lang_print_mode_driver": "Gonilnik za Windows (napredno)",
+  "lang_print_mode_exact": "Natančna zasnova",
+  "lang_print_mode_fast": "Hiter prejem",
+  "lang_print_mode_help": "Hitro uporablja standardno postavitev besedila. Grafika ali nepodprto besedilo uporabljajo natančno oblikovanje.",
+  "lang_print_sample": "Natisni vzorec",
+  "lang_print_test_submitted": "Test je bil predložen. Preverite papir na tiskalniku."
 }

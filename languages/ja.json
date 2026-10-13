@@ -4725,5 +4725,12 @@
   "lang_use_a_price_file": "価格ファイルを使用する。",
   "lang_iv2_hsn_code_invalid": "候補からHSN/SAC コードを選択するか、4 ～ 8 桁のコードを入力します。",
   "lang_iv2_hsn_load_failed": "候補を読み込めませんでした。HSN既知のコードを入力するか、このフィールドにフォーカスを当てて再試行してください。",
-  "lang_iv2_hsn_rate_required": "このコードに適用される税率を入力します。税率がゼロの商品には 0 を入力します。"
+  "lang_iv2_hsn_rate_required": "このコードに適用される税率を入力します。税率がゼロの商品には 0 を入力します。",
+  "lang_print_mode": "印刷モード",
+  "lang_print_mode_driver": "Windows ドライバー (上級者向け)",
+  "lang_print_mode_exact": "正確なデザイン",
+  "lang_print_mode_fast": "迅速な受領",
+  "lang_print_mode_help": "Fast は標準のテキストレイアウトを使用します。グラフィックまたはサポートされていないテキストは正確なデザインを使用します。",
+  "lang_print_sample": "サンプルを印刷",
+  "lang_print_test_submitted": "テストが送信されました。プリンタで用紙を確認してください。"
 }

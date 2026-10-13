@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Úsáid comhad praghais",
   "lang_iv2_hsn_code_invalid": "Roghnai HSN gh cód/ SAC ó na moltaí, nó cuir isteach cód 4 go 8 dhigit.",
   "lang_iv2_hsn_load_failed": "Ní fhéadfaí moltaí a luchtú. Cuir isteach c HSN ód aitheanta nó dírigh an réimse seo chun iarracht a dhéanamh arís.",
-  "lang_iv2_hsn_rate_required": "Cuir isteach an ráta cánach is infheidhme don chód seo. Cuir isteach 0 le haghaidh mír nialasrátáilte."
+  "lang_iv2_hsn_rate_required": "Cuir isteach an ráta cánach is infheidhme don chód seo. Cuir isteach 0 le haghaidh mír nialasrátáilte.",
+  "lang_print_mode": "Modh priontála",
+  "lang_print_mode_driver": "Tiománaí Windows (chun cinn)",
+  "lang_print_mode_exact": "Dearadh cruinn",
+  "lang_print_mode_fast": "Admháil tapa",
+  "lang_print_mode_help": "Fast úsáideann leagan amach téacs caighdeánach Úsáideann grafaicí nó téacs gan tacaíocht Dearadh cruinn.",
+  "lang_print_sample": "Priontáil sampla",
+  "lang_print_test_submitted": "Tástáil curtha isteach. Seiceáil an páipéar ag an printéir."
 }

@@ -4804,5 +4804,12 @@
   "lang_use_a_price_file": "Tumia faili ya bei",
   "lang_iv2_hsn_code_invalid": "Chagua nam HSN bari ya/SAC kutoka kwa mapendekezo, au ingiza nambari ya tarakimu 4 hadi 8.",
   "lang_iv2_hsn_load_failed": "Haikuweza kupakia mapendekezo. Ingiza nam HSN bari inayojulikana au kuzingatia uwanja huu kujaribu tena.",
-  "lang_iv2_hsn_rate_required": "Ingiza kiwango cha ushuru kinachotumika kwa nambari hii. Ingiza 0 kwa bidhaa iliyokadiriwa sifuri."
+  "lang_iv2_hsn_rate_required": "Ingiza kiwango cha ushuru kinachotumika kwa nambari hii. Ingiza 0 kwa bidhaa iliyokadiriwa sifuri.",
+  "lang_print_mode": "Njia ya kuchapisha",
+  "lang_print_mode_driver": "Dereva wa Windows (ya hali ya juu)",
+  "lang_print_mode_exact": "Ubunifu halisi",
+  "lang_print_mode_fast": "Ripoti ya haraka",
+  "lang_print_mode_help": "Haraka hutumia mpangilio wa kawaida wa maandishi. Picha au maandishi isiyosaidiwa hutumia muundo sahihi.",
+  "lang_print_sample": "Sampuli ya kuchapisha",
+  "lang_print_test_submitted": "Mtihani uliwasilishwa. Angalia karatasi kwenye printa."
 }

@@ -4725,5 +4725,12 @@
   "lang_use_a_price_file": "Gunakan fail harga",
   "lang_iv2_hsn_code_invalid": "Pilih kodHSN/SAC dari cadangan, atau masukkan kod 4 hingga 8 digit.",
   "lang_iv2_hsn_load_failed": "Tidak dapat memuatkan cadangan. Masukkan HSN kod yang diketahui atau fokus bidang ini untuk mencuba semula.",
-  "lang_iv2_hsn_rate_required": "Masukkan kadar cukai yang berkenaan untuk kod ini. Masukkan 0 untuk item bernilai sifar."
+  "lang_iv2_hsn_rate_required": "Masukkan kadar cukai yang berkenaan untuk kod ini. Masukkan 0 untuk item bernilai sifar.",
+  "lang_print_mode": "Mod cetak",
+  "lang_print_mode_driver": "Pemacu Windows (lanjutan)",
+  "lang_print_mode_exact": "Reka bentuk yang tepat",
+  "lang_print_mode_fast": "Resit cepat",
+  "lang_print_mode_help": "Cepat menggunakan susun atur teks standard. Grafik atau teks yang tidak disokong menggunakan reka bentuk yang tepat.",
+  "lang_print_sample": "Cetak sampel",
+  "lang_print_test_submitted": "Ujian dikemukakan. Semak kertas di pencetak."
 }

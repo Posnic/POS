@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Gumamit ng file ng presyo",
   "lang_iv2_hsn_code_invalid": "Pumili ng isangHSN/SAC code mula sa mga mungkahi, o magpasok ng 4 hanggang 8 digit na code.",
   "lang_iv2_hsn_load_failed": "Hindi ma-load ang mga mungkahi. Magpasok ng isang kilalang HSN code o ituon ang patlang na ito upang muling subukan.",
-  "lang_iv2_hsn_rate_required": "Ipasok ang naaangkop na rate ng buwis para sa code na ito. Ipasok ang 0 para sa isang zero-rated item."
+  "lang_iv2_hsn_rate_required": "Ipasok ang naaangkop na rate ng buwis para sa code na ito. Ipasok ang 0 para sa isang zero-rated item.",
+  "lang_print_mode": "Mode ng pag-print",
+  "lang_print_mode_driver": "Driver ng Windows (advanced)",
+  "lang_print_mode_exact": "Eksaktong disenyo",
+  "lang_print_mode_fast": "Mabilis na resibo",
+  "lang_print_mode_help": "Ang mabilis ay gumagamit ng karaniwang layout ng teksto. Gumagamit ng mga graphics o hindi suportadong teksto ang Eksaktong disenyo.",
+  "lang_print_sample": "I-print ang sample",
+  "lang_print_test_submitted": "Isinumite ang pagsubok. Suriin ang papel sa printer."
 }

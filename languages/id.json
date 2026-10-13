@@ -4804,5 +4804,12 @@
   "lang_use_a_price_file": "Gunakan file harga",
   "lang_iv2_hsn_code_invalid": "Pilih kodeHSN/SAC dari saran, atau masukkan kode 4 hingga 8 digit.",
   "lang_iv2_hsn_load_failed": "Tidak dapat memuat saran. Masukkan HSN kode yang diketahui atau fokuskan bidang ini untuk mencoba lagi.",
-  "lang_iv2_hsn_rate_required": "Masukkan tarif pajak yang berlaku untuk kode ini. Masukkan 0 untuk item dengan nilai nol."
+  "lang_iv2_hsn_rate_required": "Masukkan tarif pajak yang berlaku untuk kode ini. Masukkan 0 untuk item dengan nilai nol.",
+  "lang_print_mode": "Modus cetak",
+  "lang_print_mode_driver": "Driver Windows (lanjutan)",
+  "lang_print_mode_exact": "Desain yang tepat",
+  "lang_print_mode_fast": "Penerimaan cepat",
+  "lang_print_mode_help": "Cepat menggunakan tata letak teks standar. Grafik atau teks yang tidak didukung menggunakan desain yang tepat.",
+  "lang_print_sample": "Cetak sampel",
+  "lang_print_test_submitted": "Tes diajukan. Periksa kertas di printer."
 }

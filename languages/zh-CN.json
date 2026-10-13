@@ -4725,5 +4725,12 @@
   "lang_use_a_price_file": "使用价格文件",
   "lang_iv2_hsn_code_invalid": "从建议中选择HSN/SAC 代码，或输入 4 到 8 位数的代码。",
   "lang_iv2_hsn_load_failed": "无法加载建议。输入已知HSN代码或聚焦此字段进行重试。",
-  "lang_iv2_hsn_rate_required": "输入此代码的适用税率。对于零评级商品，请输入 0。"
+  "lang_iv2_hsn_rate_required": "输入此代码的适用税率。对于零评级商品，请输入 0。",
+  "lang_print_mode": "打印模式",
+  "lang_print_mode_driver": "Windows 驱动程序（高级）",
+  "lang_print_mode_exact": "精确的设计",
+  "lang_print_mode_fast": "快速收据",
+  "lang_print_mode_help": "Fast 使用标准文本布局。图形或不支持的文本使用精确设计。",
+  "lang_print_sample": "打印样本",
+  "lang_print_test_submitted": "测试已提交。检查打印机上的纸张。"
 }

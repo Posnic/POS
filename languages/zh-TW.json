@@ -4725,5 +4725,12 @@
   "lang_use_a_price_file": "使用價格檔案",
   "lang_iv2_hsn_code_invalid": "從建議中選擇HSN/SAC 代碼，或輸入 4 到 8 位數的代碼。",
   "lang_iv2_hsn_load_failed": "無法載入建議。輸入已知的HSN程式碼或將此欄位重新嘗試。",
-  "lang_iv2_hsn_rate_required": "輸入此代碼的適用稅率。為零排名的料號輸入 0。"
+  "lang_iv2_hsn_rate_required": "輸入此代碼的適用稅率。為零排名的料號輸入 0。",
+  "lang_print_mode": "列印模式",
+  "lang_print_mode_driver": "Windows 驅動程序（進階）",
+  "lang_print_mode_exact": "精確的設計",
+  "lang_print_mode_fast": "快速收貨",
+  "lang_print_mode_help": "快速使用標準文本佈局。圖形或不支援的文字使用「精確設計」。",
+  "lang_print_sample": "列印樣本",
+  "lang_print_test_submitted": "已提交測試。檢查印表機上的紙張。"
 }

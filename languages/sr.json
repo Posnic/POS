@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Koristite datoteku cena",
   "lang_iv2_hsn_code_invalid": "IzaberiteHSN/SAC kod iz predloga ili unesite kod od 4 do 8 cifara.",
   "lang_iv2_hsn_load_failed": "Ne mogu učitati predloge. Unesite poznati HSN kod ili fokusirajte ovo polje da biste pokušali ponovo.",
-  "lang_iv2_hsn_rate_required": "Unesite važeću poresku stopu za ovaj kod. Unesite 0 za stavku sa nultom ocenom."
+  "lang_iv2_hsn_rate_required": "Unesite važeću poresku stopu za ovaj kod. Unesite 0 za stavku sa nultom ocenom.",
+  "lang_print_mode": "Režim štampanja",
+  "lang_print_mode_driver": "Vindovs upravljački program (napredni)",
+  "lang_print_mode_exact": "Tačan dizajn",
+  "lang_print_mode_fast": "Brzi prijem",
+  "lang_print_mode_help": "Brzo koristi standardni raspored teksta. Grafika ili nepodržani tekst koriste Tačan dizajn.",
+  "lang_print_sample": "Štampanje uzorka",
+  "lang_print_test_submitted": "Test je podnesen. Proverite papir na štampaču."
 }

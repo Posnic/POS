@@ -4725,5 +4725,12 @@
   "lang_use_a_price_file": "가격 파일 사용",
   "lang_iv2_hsn_code_invalid": "제안 사항에서HSN/SAC 코드를 선택하거나 4~8자리 코드를 입력합니다.",
   "lang_iv2_hsn_load_failed": "제안을 로드할 수 없습니다.알려진 HSN 코드를 입력하거나 이 필드에 초점을 맞춰 재시도하세요.",
-  "lang_iv2_hsn_rate_required": "이 코드에 해당하는 세율을 입력합니다.세율이 0인 품목의 경우 0을 입력하십시오."
+  "lang_iv2_hsn_rate_required": "이 코드에 해당하는 세율을 입력합니다.세율이 0인 품목의 경우 0을 입력하십시오.",
+  "lang_print_mode": "인쇄 모드",
+  "lang_print_mode_driver": "윈도우 드라이버 (고급)",
+  "lang_print_mode_exact": "정확한 디자인",
+  "lang_print_mode_fast": "빠른 영수증",
+  "lang_print_mode_help": "Fast는 표준 텍스트 레이아웃을 사용합니다.그래픽 또는 지원되지 않는 텍스트는 정확한 디자인을 사용합니다.",
+  "lang_print_sample": "인쇄 샘플",
+  "lang_print_test_submitted": "테스트가 제출되었습니다.프린터에서 용지를 확인하세요."
 }

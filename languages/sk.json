@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Použitie cenového súboru",
   "lang_iv2_hsn_code_invalid": "Zo HSN návrhov vyberte kód/SAC alebo zadajte 4 až 8-miestny kód.",
   "lang_iv2_hsn_load_failed": "Nepodarilo sa načítať návrhy. Zadajte známy HSN kód alebo zamerajte toto pole na opätovné skúmanie.",
-  "lang_iv2_hsn_rate_required": "Zadajte príslušnú sadzbu dane pre tento kód. Zadajte 0 pre položku s nulovým hodnotením."
+  "lang_iv2_hsn_rate_required": "Zadajte príslušnú sadzbu dane pre tento kód. Zadajte 0 pre položku s nulovým hodnotením.",
+  "lang_print_mode": "Režim tlače",
+  "lang_print_mode_driver": "Ovládač systému Windows (pokročilý)",
+  "lang_print_mode_exact": "Presný dizajn",
+  "lang_print_mode_fast": "Rýchle prijatie",
+  "lang_print_mode_help": "Fast používa štandardné rozloženie textu. Grafika alebo nepodporovaný text používajú Presný dizajn.",
+  "lang_print_sample": "Vytlačiť vzorku",
+  "lang_print_test_submitted": "Test predložený. Skontrolujte papier na tlačiarni."
 }

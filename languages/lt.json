@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Naudokite kainos failą",
   "lang_iv2_hsn_code_invalid": "PasirinkiteHSN/SAC kodą iš pasiūlymų arba įveskite 4-8 skaitmenų kodą.",
   "lang_iv2_hsn_load_failed": "Nepavyko įkelti pasiūlymų. Įveskite žinomą HSN kodą arba sufokusuokite šį lauką, kad bandytumėte iš naujo.",
-  "lang_iv2_hsn_rate_required": "Įveskite taikomą šio kodo mokesčio tarifą. Įveskite 0 elementui su nuliniu įvertinimu."
+  "lang_iv2_hsn_rate_required": "Įveskite taikomą šio kodo mokesčio tarifą. Įveskite 0 elementui su nuliniu įvertinimu.",
+  "lang_print_mode": "Spausdinimo režimas",
+  "lang_print_mode_driver": "“Windows” tvarkyklė (išplėstinė)",
+  "lang_print_mode_exact": "Tikslus dizainas",
+  "lang_print_mode_fast": "Greitas gavimas",
+  "lang_print_mode_help": "“Fast” naudoja standartinį teksto išdėstymą. Grafika arba nepalaikomas tekstas naudoja Tikslus dizainas.",
+  "lang_print_sample": "Spausdinti pavyzdį",
+  "lang_print_test_submitted": "Testas pateiktas. Patikrinkite popierių spausdintuve."
 }

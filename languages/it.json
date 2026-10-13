@@ -4804,5 +4804,12 @@
   "lang_use_a_price_file": "Usa un file dei prezzi",
   "lang_iv2_hsn_code_invalid": "Scegli un codiceHSN/SAC tra i suggerimenti o inserisci un codice da 4 a 8 cifre.",
   "lang_iv2_hsn_load_failed": "Impossibile caricare i suggerimenti. Inserisci un HSN codice noto o attiva questo campo per riprovare.",
-  "lang_iv2_hsn_rate_required": "Inserisci l'aliquota fiscale applicabile per questo codice. Inserisci 0 per un articolo con classificazione zero."
+  "lang_iv2_hsn_rate_required": "Inserisci l'aliquota fiscale applicabile per questo codice. Inserisci 0 per un articolo con classificazione zero.",
+  "lang_print_mode": "modalità di stampa",
+  "lang_print_mode_driver": "Driver per Windows (avanzato)",
+  "lang_print_mode_exact": "Design preciso",
+  "lang_print_mode_fast": "Ricevuta rapida",
+  "lang_print_mode_help": "Fast utilizza un layout di testo standard. La grafica o il testo non supportato utilizzano Exact design.",
+  "lang_print_sample": "Esempio di stampa",
+  "lang_print_test_submitted": "Test inviato Controllate la carta sulla stampante."
 }

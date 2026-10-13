@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Izmantojiet cenu failu",
   "lang_iv2_hsn_code_invalid": "Izvēli HSN eties/SAC kodu no ieteikumiem vai ievadiet 4 līdz 8 ciparu kodu.",
   "lang_iv2_hsn_load_failed": "Nevarēja ielādēt ieteikumus. Ievadiet zināmu HSN kodu vai fokusējiet šo lauku, lai mēģinātu atkārtoti.",
-  "lang_iv2_hsn_rate_required": "Ievadiet piemērojamo nodokļa likmi šim kodam. Ievadiet 0 vienumam ar nulles vērtējumu."
+  "lang_iv2_hsn_rate_required": "Ievadiet piemērojamo nodokļa likmi šim kodam. Ievadiet 0 vienumam ar nulles vērtējumu.",
+  "lang_print_mode": "Drukāšanas režīms",
+  "lang_print_mode_driver": "Windows draiveris (uzlabots)",
+  "lang_print_mode_exact": "Precīzs dizains",
+  "lang_print_mode_fast": "Ātra saņemšana",
+  "lang_print_mode_help": "Ātri izmanto standarta teksta izkārtojumu. Grafika vai neatbalstīts teksts izmanto precīzu dizainu.",
+  "lang_print_sample": "Drukāt paraugu",
+  "lang_print_test_submitted": "Pārbaude iesniegta. Pārbaudiet papīru pie printera."
 }

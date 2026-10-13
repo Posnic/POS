@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Utilizați un fișier de preț",
   "lang_iv2_hsn_code_invalid": "Alegeți un HSN cod SAC din sugestii sau introduceți un cod de 4 până la 8 cifre.",
   "lang_iv2_hsn_load_failed": "Nu am putut încărca sugestiile. Introduceți un HSN cod cunoscut sau focalizați acest câmp pentru a încerca din nou.",
-  "lang_iv2_hsn_rate_required": "Introduceți rata de impozitare aplicabilă pentru acest cod. Introduceți 0 pentru un element cu rating zero."
+  "lang_iv2_hsn_rate_required": "Introduceți rata de impozitare aplicabilă pentru acest cod. Introduceți 0 pentru un element cu rating zero.",
+  "lang_print_mode": "Mod de imprimare",
+  "lang_print_mode_driver": "Driver Windows (avansat)",
+  "lang_print_mode_exact": "Proiectare exactă",
+  "lang_print_mode_fast": "Primirea rapidă",
+  "lang_print_mode_help": "Fast utilizează aspectul standard de text. Grafica sau textul neacceptat utilizează Design exact.",
+  "lang_print_sample": "Imprimați eșantionul",
+  "lang_print_test_submitted": "Testul depus. Verificați hârtia de la imprimantă."
 }

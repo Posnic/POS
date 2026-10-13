@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Käytä hintatiedostoa",
   "lang_iv2_hsn_code_invalid": "ValitseHSN/SAC-koodi ehdotuksista tai kirjoita 4-8-numeroinen koodi.",
   "lang_iv2_hsn_load_failed": "Ehdotuksia ei voitu ladata. Anna tunnettu HSN koodi tai yritä uudelleen kohdistamalla tämä kenttä.",
-  "lang_iv2_hsn_rate_required": "Syötä tälle koodille sovellettava verokanta. Kirjoita 0 nollaluokitulle nimikkeelle."
+  "lang_iv2_hsn_rate_required": "Syötä tälle koodille sovellettava verokanta. Kirjoita 0 nollaluokitulle nimikkeelle.",
+  "lang_print_mode": "Tulostustila",
+  "lang_print_mode_driver": "Windows-ohjain (edistynyt)",
+  "lang_print_mode_exact": "Tarkka muotoilu",
+  "lang_print_mode_fast": "Nopea vastaanotto",
+  "lang_print_mode_help": "Fast käyttää tavallista tekstiasettelua. Grafiikka tai teksti, jota ei tueta, käyttävät Tarkkaa suunnittelua.",
+  "lang_print_sample": "Tulosta näyte",
+  "lang_print_test_submitted": "Testi lähetetty. Tarkista tulostimen paperi."
 }

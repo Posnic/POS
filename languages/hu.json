@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Árfájl használata",
   "lang_iv2_hsn_code_invalid": "Válasszon egyHSN/SAC kódot a javaslatok közül, vagy írjon be egy 4-8 számjegyű kódot.",
   "lang_iv2_hsn_load_failed": "Nem sikerült betölteni a javaslatokat. Írjon be egy ismert HSN kódot, vagy fókuszáljon erre a mezőre az újrapróbáláshoz.",
-  "lang_iv2_hsn_rate_required": "Adja meg ehhez a kódhoz alkalmazandó adókulcsot. Adja meg a 0 értéket a nulla besorolású tételhez."
+  "lang_iv2_hsn_rate_required": "Adja meg ehhez a kódhoz alkalmazandó adókulcsot. Adja meg a 0 értéket a nulla besorolású tételhez.",
+  "lang_print_mode": "Nyomtatási mód",
+  "lang_print_mode_driver": "Windows illesztőprogram (haladó)",
+  "lang_print_mode_exact": "Pontos kialakítás",
+  "lang_print_mode_fast": "Gyors átvétel",
+  "lang_print_mode_help": "A Fast szabványos szövegelrendezést használ. A grafika vagy a nem támogatott szöveg az Exact design funkciót használja.",
+  "lang_print_sample": "Minta nyomtatása",
+  "lang_print_test_submitted": "A teszt benyújtva. Ellenőrizze a papírt a nyomtatón."
 }

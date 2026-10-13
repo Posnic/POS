@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Notaðu verðskrá",
   "lang_iv2_hsn_code_invalid": "VelduHSN/SAC kóða úr ábendingunum eða sláðu inn 4 til 8 stafa kóða.",
   "lang_iv2_hsn_load_failed": "Gat ekki hlaðið tillögur. Sláðu inn þekkt HSN an kóða eða einbeittu þessum reit til að reyna aftur.",
-  "lang_iv2_hsn_rate_required": "Sláðu inn viðeigandi skatthlutfall fyrir þennan kóða. Sláðu inn 0 fyrir hlutinn með núlleinkunn."
+  "lang_iv2_hsn_rate_required": "Sláðu inn viðeigandi skatthlutfall fyrir þennan kóða. Sláðu inn 0 fyrir hlutinn með núlleinkunn.",
+  "lang_print_mode": "Prentstilling",
+  "lang_print_mode_driver": "Windows bílstjóri (háþróaður)",
+  "lang_print_mode_exact": "Nákvæm hönnun",
+  "lang_print_mode_fast": "Fljótur kvittun",
+  "lang_print_mode_help": "Fast notar venjulegt textaskipulag. Grafík eða óstuddur texti nota Nákvæma hönnun.",
+  "lang_print_sample": "Prenta sýnishorn",
+  "lang_print_test_submitted": "Próf lagt fram. Athugaðu pappírinn á prentaranum."
 }

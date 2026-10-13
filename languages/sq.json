@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Përdorni një skedar çmimi",
   "lang_iv2_hsn_code_invalid": "Zgjidh HSN ni një kod/SAC nga sugjerimet, ose futni një kod 4 deri në 8 shifra.",
   "lang_iv2_hsn_load_failed": "Nuk mund të ngarkoni sugjerime. Futni një HSN kod të njohur ose përqendrohuni këtë fushë për të riprovuar.",
-  "lang_iv2_hsn_rate_required": "Shkruani normën e zbatueshme të taksave për këtë kod. Futni 0 për një artikull me vlerësim zero."
+  "lang_iv2_hsn_rate_required": "Shkruani normën e zbatueshme të taksave për këtë kod. Futni 0 për një artikull me vlerësim zero.",
+  "lang_print_mode": "Modaliteti i printimit",
+  "lang_print_mode_driver": "Drejtuesi i Windows (i avancuar)",
+  "lang_print_mode_exact": "Dizajn i saktë",
+  "lang_print_mode_fast": "Marrja e shpejtë",
+  "lang_print_mode_help": "Fast përdor paraqitjen standarde të tekstit. Grafika ose teksti i pambështetur përdorin dizajnin e saktë.",
+  "lang_print_sample": "Shtypni mostrën",
+  "lang_print_test_submitted": "Testi i dorëzuar. Kontrolloni letrën në printer."
 }

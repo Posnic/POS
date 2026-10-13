@@ -4725,5 +4725,12 @@
   "lang_use_a_price_file": "Fiyat dosyası kullan",
   "lang_iv2_hsn_code_invalid": "Önerilerden HSN bir/ SAC kodu seçin veya 4 ila 8 basamaklı bir kod girin.",
   "lang_iv2_hsn_load_failed": "Öneriler yüklenemedi. Bilinen bir HSN kod girin veya yeniden denemek için bu alana odaklayın.",
-  "lang_iv2_hsn_rate_required": "Bu kod için geçerli vergi oranını girin. Sıfır dereceli bir öğe için 0 girin."
+  "lang_iv2_hsn_rate_required": "Bu kod için geçerli vergi oranını girin. Sıfır dereceli bir öğe için 0 girin.",
+  "lang_print_mode": "Yazdırma modu",
+  "lang_print_mode_driver": "Windows sürücüsü (gelişmiş)",
+  "lang_print_mode_exact": "Tam tasarım",
+  "lang_print_mode_fast": "Hızlı makbuz",
+  "lang_print_mode_help": "Fast standart metin düzenini kullanır. Grafikler veya desteklenmeyen metinler Tam tasarım kullanır.",
+  "lang_print_sample": "Örnek yazdır",
+  "lang_print_test_submitted": "Test gönderildi. Yazıcıdaki kağıdı kontrol edin."
 }

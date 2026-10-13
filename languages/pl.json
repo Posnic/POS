@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Użyj pliku cenowego",
   "lang_iv2_hsn_code_invalid": "Wybierz kodHSN/SAC spośród sugestii lub wprowadź kod 4-8-cyfrowy.",
   "lang_iv2_hsn_load_failed": "Nie można załadować sugestii. Wprowadź znany HSN kod lub skup to pole, aby spróbować ponownie.",
-  "lang_iv2_hsn_rate_required": "Wprowadź obowiązującą stawkę podatku dla tego kodu. Wprowadź 0 dla pozycji o zerowej ocenie."
+  "lang_iv2_hsn_rate_required": "Wprowadź obowiązującą stawkę podatku dla tego kodu. Wprowadź 0 dla pozycji o zerowej ocenie.",
+  "lang_print_mode": "Tryb drukowania",
+  "lang_print_mode_driver": "Sterownik systemu Windows (zaawansowany)",
+  "lang_print_mode_exact": "Dokładna konstrukcja",
+  "lang_print_mode_fast": "Szybki odbiór",
+  "lang_print_mode_help": "Szybko wykorzystuje standardowy układ tekstu. Grafika lub nieobsługiwany tekst używają Dokładny projekt.",
+  "lang_print_sample": "Wydrukuj próbkę",
+  "lang_print_test_submitted": "Test przesłany. Sprawdź papier na drukarce."
 }

@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "השתמש בקובץ מחיר",
   "lang_iv2_hsn_code_invalid": "בחר קוד HSN /SAC מההצעות, או הזן קוד בן 4 עד 8 ספרות.",
   "lang_iv2_hsn_load_failed": "לא ניתן לטעון הצעות. הזן HSN קוד ידוע או מקד בשדה זה כדי לנסות שוב.",
-  "lang_iv2_hsn_rate_required": "הזן את שיעור המס הרלוונטי עבור קוד זה. הזן 0 לפריט בעל דירוג אפס."
+  "lang_iv2_hsn_rate_required": "הזן את שיעור המס הרלוונטי עבור קוד זה. הזן 0 לפריט בעל דירוג אפס.",
+  "lang_print_mode": "מצב הדפסה",
+  "lang_print_mode_driver": "מנהל התקן של Windows (מתקדם)",
+  "lang_print_mode_exact": "עיצוב מדויק",
+  "lang_print_mode_fast": "קבלה מהירה",
+  "lang_print_mode_help": "מהיר משתמש בפריסת טקסט רגילה. גרפיקה או טקסט שאינו נתמך משתמשים בעיצוב מדויק.",
+  "lang_print_sample": "הדפס מדגם",
+  "lang_print_test_submitted": "מבחן הוגש. בדוק את הנייר במדפסת."
 }

@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Uża fajl tal-prezz",
   "lang_iv2_hsn_code_invalid": "Agħżel HSN kodiċi/SAC mis-suġġerimenti, jew daħħal kodiċi ta '4 sa 8 ċifri.",
   "lang_iv2_hsn_load_failed": "Ma setax jitgħabbi suġġerimenti. Daħħal kodi HSN ċi magħruf jew iffoka dan il-qasam biex terġa 'tipprova.",
-  "lang_iv2_hsn_rate_required": "Daħħal ir-rata tat-taxxa applikabbli għal dan il-kodiċi. Daħħal 0 għal oġġett b'klassifikazzjoni żero."
+  "lang_iv2_hsn_rate_required": "Daħħal ir-rata tat-taxxa applikabbli għal dan il-kodiċi. Daħħal 0 għal oġġett b'klassifikazzjoni żero.",
+  "lang_print_mode": "Modalità tal-istampar",
+  "lang_print_mode_driver": "Sewwieq tal-Windows (avvanzat)",
+  "lang_print_mode_exact": "Disinn eżatt",
+  "lang_print_mode_fast": "Irċevuta veloċi",
+  "lang_print_mode_help": "Fast juża t-tqassim standard tat-test. Grafika jew test mhux appoġġjat jużaw Disinn eżatt.",
+  "lang_print_sample": "Kampjun tal-istampar",
+  "lang_print_test_submitted": "Test sottomess. Iċċekkja l-karta fl-istampatur."
 }

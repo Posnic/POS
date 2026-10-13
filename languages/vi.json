@@ -4725,5 +4725,12 @@
   "lang_use_a_price_file": "Sử dụng tệp giá",
   "lang_iv2_hsn_code_invalid": "Chọn mãHSN/SAC từ các đề xuất hoặc nhập mã từ 4 đến 8 chữ số.",
   "lang_iv2_hsn_load_failed": "Không thể tải đề xuất. Nhập HSN mã đã biết hoặc tập trung vào trường này để thử lại.",
-  "lang_iv2_hsn_rate_required": "Nhập thuế suất áp dụng cho mã này. Nhập 0 cho một mục được xếp hạng bằng không."
+  "lang_iv2_hsn_rate_required": "Nhập thuế suất áp dụng cho mã này. Nhập 0 cho một mục được xếp hạng bằng không.",
+  "lang_print_mode": "Chế độ in",
+  "lang_print_mode_driver": "Trình điều khiển Windows (nâng cao)",
+  "lang_print_mode_exact": "Thiết kế chính xác",
+  "lang_print_mode_fast": "Biên nhận nhanh",
+  "lang_print_mode_help": "Nhanh sử dụng bố cục văn bản tiêu chuẩn. Đồ họa hoặc văn bản không được hỗ trợ sử dụng thiết kế chính xác.",
+  "lang_print_sample": "In mẫu",
+  "lang_print_test_submitted": "Bài kiểm tra đã nộp. Kiểm tra giấy tại máy in."
 }

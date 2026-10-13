@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Använd en prisfil",
   "lang_iv2_hsn_code_invalid": "Välj enHSN/SAC-kod från förslagen, eller ange en 4 till 8-siffrig kod.",
   "lang_iv2_hsn_load_failed": "Det gick inte att ladda förslag. Ange en känd HSN kod eller fokusera det här fältet för att försöka igen.",
-  "lang_iv2_hsn_rate_required": "Ange tillämplig skattesats för den här koden. Ange 0 för ett objekt med nollbetyg."
+  "lang_iv2_hsn_rate_required": "Ange tillämplig skattesats för den här koden. Ange 0 för ett objekt med nollbetyg.",
+  "lang_print_mode": "Utskriftsläge",
+  "lang_print_mode_driver": "Windows-drivrutin (avancerad)",
+  "lang_print_mode_exact": "Exakt design",
+  "lang_print_mode_fast": "Snabbt kvitto",
+  "lang_print_mode_help": "Fast använder standard textlayout. Grafik eller text som inte stöds använder Exakt design.",
+  "lang_print_sample": "Skriv ut prov",
+  "lang_print_test_submitted": "Test inlämnat. Kontrollera papperet på skrivaren."
 }

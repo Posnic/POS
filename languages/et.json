@@ -4722,5 +4722,12 @@
   "lang_use_a_price_file": "Kasutage hinnafaili",
   "lang_iv2_hsn_code_invalid": "Valige HSN soovituste hulgast/SAC-kood või sisestage 4-8-kohaline kood.",
   "lang_iv2_hsn_load_failed": "Soovitusi ei õnnestunud laadida. Sisestage teadaol HSN ev kood või keskenduge sellele väljale uuesti proovimiseks.",
-  "lang_iv2_hsn_rate_required": "Sisestage selle koodi jaoks kohaldatav maksumäär. Sisestage nullreitinguga üksuse jaoks 0."
+  "lang_iv2_hsn_rate_required": "Sisestage selle koodi jaoks kohaldatav maksumäär. Sisestage nullreitinguga üksuse jaoks 0.",
+  "lang_print_mode": "Prindirežiim",
+  "lang_print_mode_driver": "Windowsi draiver (täiustatud)",
+  "lang_print_mode_exact": "Täpne disain",
+  "lang_print_mode_fast": "Kiire kättesaamine",
+  "lang_print_mode_help": "Fast kasutab standardset tekstipaigutust. Graafika või toetamata tekst kasutavad täpset kujundust.",
+  "lang_print_sample": "Prindi näidis",
+  "lang_print_test_submitted": "Test esitati. Kontrollige paberit printeris."
 }
