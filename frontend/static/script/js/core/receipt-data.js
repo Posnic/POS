@@ -172,7 +172,7 @@
  * (48mm). Those are the same numbers as PosnicPro.PAPER.content, and the
  * same 12 dots per character that makes 48 and 32 columns.
  */
-var DOTS = { '58': 384, '80': 576 };
+var DOTS = { '58': 384, '80': 576, '112': 832 };
 
 /* About 30mm of roll. A logo taller than that is a poster, and the shop
    paid for the paper it is printed on. */

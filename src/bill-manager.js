@@ -777,7 +777,7 @@ class BillManager {
        * treatment as the counter receipt rather than a plainer version.
        */
       const { resolvePictures } = require('./escpos-logo');
-      const paperWidth = columnsFor(this.paperSize) <= 32 ? '58' : '80';
+      const paperWidth = columnsFor(this.paperSize) <= 32 ? '58' : columnsFor(this.paperSize) === 69 ? '112' : '80';
       const withPictures = sale.receiptDocument ? null : await resolvePictures(sale || {}, paperWidth);
       const itemLanguage = require('./device-preferences').get('item_print_languages') || {};
       if (withPictures) withPictures.items = (withPictures.items || []).map(item => ({ ...item,

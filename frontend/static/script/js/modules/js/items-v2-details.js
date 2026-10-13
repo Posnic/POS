@@ -28,6 +28,36 @@
     function report(message) { el('error').textContent = message; el('error').hidden = false; }
     function number(id) { return val(id) === '' ? undefined : Number(val(id)); }
     function notify() { el('form').dispatchEvent(new Event('input', { bubbles: true })); }
+    var hsnRows = null, hsnLoading = false;
+    function hsnSuggestions() {
+        if (!caps.tax) return;
+        if (hsnRows === null) {
+            if (hsnLoading) return;
+            hsnLoading = true;
+            P.get({ url: 'items/getJSONhsncode' }, function (r) {
+                hsnLoading = false;
+                if (!r || !r.data || !Array.isArray(r.data.hsn)) return;
+                hsnRows = r.data.hsn;
+                hsnSuggestions();
+            }, function () {
+                hsnLoading = false;
+                el('hsn-hint').textContent = P.i18n.t('lang_iv2_hsn_load_failed', 'Could not load suggestions. Enter a known HSN code or focus this field to retry.');
+            });
+            return;
+        }
+        var query = val('hsn').toLowerCase();
+        var matches = hsnRows.filter(function (r) {
+            return query && (String(r.value).indexOf(query) === 0 || String(r.description || '').toLowerCase().indexOf(query) !== -1);
+        }).slice(0, 20);
+        el('hsn-options').replaceChildren();
+        matches.forEach(function (r) {
+            var o = document.createElement('option'); o.value = String(r.value); o.label = String(r.description || ''); el('hsn-options').appendChild(o);
+        });
+        var match = hsnRows.find(function (r) { return String(r.value) === query; });
+        if (match) el('hsn-description').value = match.description || '';
+        // This catalogue can contain historic tax slabs. Suggest codes only;
+        // never silently replace the rate the shopkeeper selected.
+    }
     function button(text, action) {
         var b = document.createElement('button'); b.type = 'button'; b.className = 'iv2-secondary'; b.textContent = text; b.onclick = action; return b;
     }
@@ -122,6 +152,8 @@
     }
     function isFamily() { return checked('has-variants') && document.querySelector('#items_v2 [name="iv2-kind"]:checked').value !== 'service'; }
     function validate() {
+        if (caps.tax && val('hsn') && !/^\d{4,8}$/.test(val('hsn'))) return error(P.i18n.t('lang_iv2_hsn_code_invalid', 'Choose an HSN / SAC code from the suggestions, or enter a 4 to 8 digit code.'), 'hsn');
+        if (caps.tax && val('hsn') && val('hsn-rate') === '') return error(P.i18n.t('lang_iv2_hsn_rate_required', 'Enter the applicable tax rate for this code. Enter 0 for a zero-rated item.'), 'hsn-rate');
         var invalid = document.querySelector('#iv2-fields input:invalid, #iv2-fields select:invalid, #iv2-fields textarea:invalid');
         if (invalid) return { error: invalid.validationMessage, field: invalid.id };
         if (reading) return error('Wait for the selected photos to finish loading.', 'photos');
@@ -206,6 +238,8 @@
     function reset() {generation++;reading=0;photos=[];variants=[];signature='';el('variant-rows').replaceChildren();el('auto-tile').checked=true;photoPicker();P.itemTranslationsV2.reset();}
     function init() {
         if(initialized)return;initialized=true;
+        el('hsn').addEventListener('focus', hsnSuggestions);
+        el('hsn').addEventListener('input', hsnSuggestions);
         el('photos').addEventListener('change',readPhotos);
         var palette=document.createElement('div');palette.className='iv2-icon-palette';
         ['📦','👕','👟','👜','📱','📚','🧴','✂️','🔧','☕','🍵','🍛','🍜','🍕','🥪','🥗','🍰','🍨','🥤','💧'].forEach(function(icon){var pick=button(icon,function(){el('icon').value=icon;notify();});pick.setAttribute('aria-label',icon);palette.appendChild(pick);});el('icon').after(palette);

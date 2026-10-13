@@ -243,3 +243,21 @@ test('invalid charges do not mutate an order and outlet charges cannot be remove
     charges: [{ name: 'Outlet', amount: 5, source: 'outlet' }],
   });
 });
+
+test('branch rounding is applied once after restaurant tax and recalculated after edits', async () => {
+  await db.collection('branches').updateOne({ _id: branch }, { $set: { roundOff: true } });
+  expect((await save([line(45)])).status).toBe(true);
+  let sale = await stored();
+  expect(sale.sales_total).toBe(95);
+  expect(sale.round_off).toBe(0.5);
+  expect(sale.sales_round_off).toBe(0.5);
+  expect((await save([line(45, 1)])).status).toBe(true);
+  sale = await stored();
+  expect(sale.sales_total).toBe(47);
+  expect(sale.round_off).toBe(-0.25);
+  await db.collection('branches').updateOne({ _id: branch }, { $set: { roundOff: false } });
+  expect((await save([line(45, 1)])).status).toBe(true);
+  sale = await stored();
+  expect(sale.sales_total).toBe(47.25);
+  expect(sale.round_off).toBe(0);
+});

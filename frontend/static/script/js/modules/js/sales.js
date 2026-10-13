@@ -958,7 +958,7 @@ PosnicPro.sales = {
         var footer = '<div class="q-footer">';
         footer += '<div class="q-block"><div class="q-label"><lang class="lang_payment_2">Payment</lang></div>'
             + (PosnicSalePayments.rows(d).length
-                ? '<table class="sale-payment-breakdown" style="width:100%;min-width:200px;font-size:14px"><tbody>' + PosnicSalePayments.rows(d).map(function (row) {
+                ? '<table class="sale-payment-breakdown" style="width:auto;font-size:14px"><tbody>' + PosnicSalePayments.rows(d).map(function (row) {
                     return '<tr><td style="padding:4px 20px 4px 0">' + esc(row.method) + '</td><td style="text-align:right;white-space:nowrap;font-weight:600">' + money(row.amount) + '</td></tr>';
                 }).join('') + '</tbody></table>'
                 : '<div>' + esc(d.payment_mode || '-') + '</div>')

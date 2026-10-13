@@ -8946,7 +8946,12 @@ class SalesRepository {
          offer on the food, and a shop that ends up paying somebody to collect
          an order has been given a rule it did not write. */
       const afterCoupon = Math.max(0, round(foodTotal - couponDiscount));
-      const finalTotal = round(afterCoupon + deliveryFee);
+      const rounded = require('../services/sale-header').roundSaleTotal(
+        round(afterCoupon + deliveryFee),
+        branchDoc.roundOff,
+        monetary.currencyDigits
+      );
+      const finalTotal = rounded.total;
 
       /*
        * What the venue is owed, worked out once and stored on the order.
@@ -9225,6 +9230,8 @@ class SalesRepository {
         subtotal,
         total: finalTotal,
         sales_total: finalTotal,
+        round_off: rounded.roundOff,
+        sales_round_off: rounded.roundOff,
         sales_sub_total: subtotal,
         tax: totalTax,
         discount: round(itemDiscountTotal + discountAmt + couponDiscount),
@@ -11294,6 +11301,11 @@ class SalesRepository {
         0
       );
       const salesTotal = itemsSub - extraDiscountAmount + chargeTotal + chargeTax;
+      const rounded = require('../services/sale-header').roundSaleTotal(
+        salesTotal,
+        shop?.roundOff,
+        monetary.currencyDigits
+      );
       taxTotal += chargeTax;
       const mongoDate = new Date();
       const note =
@@ -11322,9 +11334,11 @@ class SalesRepository {
         subtotal: baseSubtotal,
         sales_sub_total: baseSubtotal,
         items_subtotal: baseSubtotal,
-        sales_total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
-        total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
-        items_total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
+        sales_total: rounded.total,
+        total: rounded.total,
+        items_total: rounded.total,
+        round_off: rounded.roundOff,
+        sales_round_off: rounded.roundOff,
         tax: taxTotal,
         discount: itemDiscountTotal,
         return_tax: 0,
@@ -11425,6 +11439,7 @@ class SalesRepository {
             tax: updateFields.tax,
             discount: updateFields.discount,
             total_amount: updateFields.sales_total,
+            round_off: updateFields.round_off,
             currency: monetary,
             revision: require('node:crypto')
               .createHash('sha256')

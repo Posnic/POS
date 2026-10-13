@@ -61,7 +61,7 @@ PosnicPro.branches = {
             $('#be_page_branch_name').text(d.branch_name || '');
             $('#store_name').val(d.branch_name);
             $('#store_email').val(d.store_email);
-            $('#store_telephone').val(d.store_telephone);
+            PosnicPro.settings.store_telephone.setNumber(d.store_telephone || '');
             $('#store_alternativephone').val(d.store_alternativephone);
             $('#store_address').val(d.store_address);
             $('#printing_address').val(d.printing_address);
@@ -354,6 +354,8 @@ PosnicPro.branches = {
             };
 
             var formData = PosnicPro.getFormData($('#branch_add_form'));
+            delete formData.full;
+            formData.phone = PosnicPro.branches.branch_phone.getNumber();
             var params = {
                 method: method,
                 url: url,
@@ -500,7 +502,7 @@ PosnicPro.branches = {
                 $('#branch_id').val(PosnicPro.record_id);
                 $('#branch_logo').val(data.logo);
                 $('#name_branch').val(data.branch_name);
-                $('#branch_phone').val(data.store_telephone);
+                PosnicPro.branches.branch_phone.setNumber(data.store_telephone || '');
                 $('#branch_email').val(data.store_email);
                 $('#branch_address').val(data.store_address);
                 $('#branch_country').val(data.country).trigger('change.select2');
@@ -717,9 +719,8 @@ PosnicPro.branches = {
         });
         jQuery.validator.addMethod("branch_phone_number", function (phone_number, element) {
             let valid = PosnicPro.branches.branch_phone.isValidNumber();
-            let num = PosnicPro.branches.branch_phone.getNumber();
             if (valid === true) {
-                $('#branch_phone').val(num);
+                // Keep the national number visible; serialize the international number on save.
                 return true;
             } else {
                 return false;
@@ -811,6 +812,7 @@ $('#branch_country').one('change', function () {
 $(function () {
     PosnicPro.lazyPhoneInput('#branch_phone', PosnicPro.branches, 'branch_phone', {
         separateDialCode: true,
+        initialCountry: 'in',
         preferredCountries: ['in'],
         hiddenInput: "full",
         utilsScript: "../static/script/js/utils.js"
