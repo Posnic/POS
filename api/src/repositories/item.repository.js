@@ -626,7 +626,10 @@ class ItemRepository extends BaseModel {
           },
         }
       );
-      if (!priceResult.modifiedCount) { skipped += 1; continue; }
+      if (!priceResult.modifiedCount) {
+        skipped += 1;
+        continue;
+      }
       updated += 1;
       priceRows.push({
         item_id: it._id,
@@ -684,7 +687,9 @@ class ItemRepository extends BaseModel {
       data: { updated, total: items.length, skipped, batch_id: batchId },
       message:
         `Updated ${updated} of ${items.length} item(s)` +
-        (skipped ? `, skipped ${skipped} due to price rules or a selling-price hold. Review held prices in Edit prices.` : ''),
+        (skipped
+          ? `, skipped ${skipped} due to price rules or a selling-price hold. Review held prices in Edit prices.`
+          : ''),
     };
   }
 
@@ -1206,7 +1211,10 @@ class ItemRepository extends BaseModel {
           },
         }
       );
-      if (!priceResult.modifiedCount) { skipped += 1; continue; }
+      if (!priceResult.modifiedCount) {
+        skipped += 1;
+        continue;
+      }
       updated += 1;
       priceRows.push({
         item_id: it._id,
@@ -1261,7 +1269,9 @@ class ItemRepository extends BaseModel {
       data: { updated, total: items.length, skipped, noCost, batch_id: batchId },
       message:
         `Set ${mode === 'markup' ? 'markup' : 'margin'} ${margin}% on ${updated} of ${items.length} item(s)` +
-        (skipped ? `, skipped ${skipped} due to price rules or a selling-price hold. Review held prices in Edit prices.` : '') +
+        (skipped
+          ? `, skipped ${skipped} due to price rules or a selling-price hold. Review held prices in Edit prices.`
+          : '') +
         (noCost ? `, ${noCost} have no cost price` : ''),
     };
   }
@@ -2226,7 +2236,11 @@ class ItemRepository extends BaseModel {
       }
 
       const itemWrite = await collection.updateOne(
-        { _id: itemObjectId, license: licenseObjectId, ...sellingPriceHold.writable(updateData.selling_price) },
+        {
+          _id: itemObjectId,
+          license: licenseObjectId,
+          ...sellingPriceHold.writable(updateData.selling_price),
+        },
         { $set: updateData }
       );
       if (!itemWrite.matchedCount) return { status: false, message: sellingPriceHold.message };
@@ -2845,8 +2859,15 @@ class ItemRepository extends BaseModel {
           { barcode_id: itemBarcodes.normalize(query) },
           { barcodes: itemBarcodes.normalize(query) },
         ];
-      } else if (regex && /^\d+$/.test(query) && searchPreferences.sales_exact_numeric_codes === true) {
-        searchConditions = require('../helpers/sales-search-fields').exactNumericCodes(query, searchPreferences.sales_search_fields);
+      } else if (
+        regex &&
+        /^\d+$/.test(query) &&
+        searchPreferences.sales_exact_numeric_codes === true
+      ) {
+        searchConditions = require('../helpers/sales-search-fields').exactNumericCodes(
+          query,
+          searchPreferences.sales_search_fields
+        );
         if (!searchConditions.length) return { status: true, data: [], message: 'success' };
       } else if (regex && Array.isArray(searchPreferences.sales_search_fields)) {
         searchConditions = require('../helpers/sales-search-fields').conditions(
@@ -5826,11 +5847,18 @@ class ItemRepository extends BaseModel {
       }
       set.updated_date = new Date();
       const result = await collection.updateOne(
-        { _id: objectId, ...require('../utils/record-scope').scope(context),
-          ...(set.selling_price !== undefined ? sellingPriceHold.writable(set.selling_price) : {}) },
+        {
+          _id: objectId,
+          ...require('../utils/record-scope').scope(context),
+          ...(set.selling_price !== undefined ? sellingPriceHold.writable(set.selling_price) : {}),
+        },
         { $set: set }
       );
-      if (!result.matchedCount) return { status: false, message: 'Item not found or selling price is held. Review it in Edit prices.' };
+      if (!result.matchedCount)
+        return {
+          status: false,
+          message: 'Item not found or selling price is held. Review it in Edit prices.',
+        };
       return { status: true, message: 'Item updated' };
     } catch (error) {
       console.error('Error in ItemRepository.quickPatch:', error);
@@ -6612,7 +6640,11 @@ class ItemRepository extends BaseModel {
 
   async priceGrid(query = {}, context = {}) {
     const filter = this.priceGridScope(context);
-    filter.branch_id = { $in: require('../services/price-scope').selected(context, query.branches).map((v) => new ObjectId(v)) };
+    filter.branch_id = {
+      $in: require('../services/price-scope')
+        .selected(context, query.branches)
+        .map((v) => new ObjectId(v)),
+    };
     const search = String(query.search || '')
       .trim()
       .slice(0, 100);
@@ -6623,8 +6655,11 @@ class ItemRepository extends BaseModel {
         { itemid: { $regex: literal, $options: 'i' } },
       ];
     }
-    const categories = await require('../services/price-scope').categoryFilter(context, query.category,
-      require('../services/price-scope').selected(context, query.branches));
+    const categories = await require('../services/price-scope').categoryFilter(
+      context,
+      query.category,
+      require('../services/price-scope').selected(context, query.branches)
+    );
     if (categories) filter.category_id = categories;
     const page = Math.max(1, Math.min(100000, Math.floor(Number(query.page) || 1)));
     const pageSize = [10, 25, 50, 100].includes(Number(query.pageSize))
@@ -6706,14 +6741,17 @@ class ItemRepository extends BaseModel {
         continue;
       }
       const now = new Date();
-      const result = await collection.updateOne({ ...filter, ...sellingPriceHold.writable(price, now) }, {
-        $set: {
-          selling_price: price,
-          updated_date: now,
-          updated_by: context.userName || '',
-          updated_by_id: context.userId || null,
-        },
-      });
+      const result = await collection.updateOne(
+        { ...filter, ...sellingPriceHold.writable(price, now) },
+        {
+          $set: {
+            selling_price: price,
+            updated_date: now,
+            updated_by: context.userName || '',
+            updated_by_id: context.userId || null,
+          },
+        }
+      );
       if (!result.modifiedCount) {
         conflicts.push(row.id);
         continue;
@@ -7539,7 +7577,9 @@ class ItemRepository extends BaseModel {
             updated_by_id: userId,
           };
           const itemWrite = await collection.updateOne(
-            { _id: matched._id, ...sellingPriceHold.writable(setFields.selling_price) }, { $set: setFields });
+            { _id: matched._id, ...sellingPriceHold.writable(setFields.selling_price) },
+            { $set: setFields }
+          );
           if (!itemWrite.matchedCount) {
             importNotes.push(`${updateData.name}: ${sellingPriceHold.message}`);
             continue;
