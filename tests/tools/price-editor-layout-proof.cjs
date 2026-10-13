@@ -127,11 +127,46 @@ const out =
           "frontend/static/script/js/modules/js/price-editor.js",
         ),
       });
-      await page.evaluate(() => PosnicPro.pricesettings.gridLoad(1));
+      await page.evaluate(() => {
+        PosnicPro.pricesettings.setPriceCategories([
+          { id: "aaaaaaaaaaaaaaaaaaaaaaaa", name: "Fruit" },
+          { id: "bbbbbbbbbbbbbbbbbbbbbbbb", name: "Vegetables" },
+        ]);
+        return PosnicPro.pricesettings.gridLoad(1);
+      });
+      if (width === 1366)
+        await page.screenshot({
+          path: path.join(
+            out,
+            "direct-tabs-" + (dark ? "dark" : "light") + ".png",
+          ),
+        });
+      await page.click("#ps-grid-category summary");
+      await page.click("#ps-grid-category input");
+      if (width === 1366)
+        await page.screenshot({
+          path: path.join(
+            out,
+            "category-dropdown-" + (dark ? "dark" : "light") + ".png",
+          ),
+        });
+      await page.click("#ps-grid-category summary");
       await page.$eval('[data-price-field="selling_price"]', (el) => {
         el.value = "110";
         el.dispatchEvent(new Event("input", { bubbles: true }));
       });
+      await page.click("#ps-file-tab");
+      assert.equal(
+        await page.$eval("#ps-direct-panel", (el) => el.hidden),
+        true,
+      );
+      if (width === 1366)
+        await page.screenshot({
+          path: path.join(
+            out,
+            "file-tabs-" + (dark ? "dark" : "light") + ".png",
+          ),
+        });
       const before = await page.evaluate(() => window.scrollY);
       await page.click("[onclick*=\"sheetOpen('download')\"]");
       const geometry = await page.evaluate(() => {
@@ -168,6 +203,7 @@ const out =
         });
       await page.keyboard.press("Escape");
       assert.equal(await page.$eval("#ps-sheet", (d) => d.open), false);
+      await page.click("#ps-direct-tab");
       if (width === 1366 && !dark)
         await page.screenshot({ path: path.join(out, "price-grid.png") });
       await page.click("#ps-grid-review");
@@ -225,6 +261,23 @@ const out =
           path: path.join(
             out,
             `price-update-success-${dark ? "dark" : "light"}.png`,
+          ),
+        });
+      await page.keyboard.press("Escape");
+      await page.evaluate(async () => {
+        PosnicPro.get = (r, done) =>
+          done({ type: "success", data: { page: 1, total: 0, items: [] } });
+        await PosnicPro.pricesettings.gridLoad(1);
+      });
+      assert.equal(
+        await page.$eval("#ps-grid-empty", (el) => el.hidden),
+        false,
+      );
+      if (width === 1366)
+        await page.screenshot({
+          path: path.join(
+            out,
+            "empty-filter-" + (dark ? "dark" : "light") + ".png",
           ),
         });
     }

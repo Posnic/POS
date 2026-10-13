@@ -4383,5 +4383,15 @@
   "lang_pc_save_correction": "सुधार सुरक्षित गर्नुहोस्",
   "lang_pc_split_amounts_entered_wrongly": "विभाजित रकमहरू गलत प्रविष्ट गरियो",
   "lang_pc_upi_recorded_as_cash": "UPI लाई नगदका रूपमा रेकर्ड गरियो",
-  "lang_pc_wrong_method_selected": "गलत विधि छानियो"
+  "lang_pc_wrong_method_selected": "गलत विधि छानियो",
+  "lang_price_editing_method": "मूल्य सम्पादन गर्ने तरिका",
+  "lang_clear_filters": "फिल्टरहरू हटाउनुहोस्",
+  "lang_download_branch_price_sheet": "यस शाखाको मूल्य सूची डाउनलोड गर्नुहोस्। सबै उत्पादनहरू छान्नुहोस् वा खोज र श्रेणीअनुसार फिल्टर गर्नुहोस्।",
+  "lang_edit_new_columns_only": "Excel मा नयाँ मूल्यका स्तम्भहरू मात्र सम्पादन गर्नुहोस्। हालका मूल्य र पहिचान सङ्केतहरू नबदल्नुहोस्।",
+  "lang_edit_on_screen": "स्क्रिनमा सम्पादन गर्नुहोस्",
+  "lang_import_review_then_apply": "फाइल आयात गर्नुहोस्, परिवर्तन र समस्याहरू समीक्षा गर्नुहोस्, अनि लागू गर्नुहोस्।",
+  "lang_no_products_match_filters": "यी फिल्टरहरूसँग मिल्ने उत्पादनहरू छैनन्।",
+  "lang_try_other_categories_or_clear_filters": "अन्य श्रेणीहरू छान्नुहोस् वा खोज र श्रेणीका फिल्टरहरू हटाउनुहोस्।",
+  "lang_update_prices_using_a_file": "फाइल प्रयोग गरेर मूल्य अद्यावधिक गर्नुहोस्",
+  "lang_use_a_price_file": "मूल्य फाइल प्रयोग गर्नुहोस्"
 }

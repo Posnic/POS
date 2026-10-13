@@ -6612,7 +6612,8 @@ class ItemRepository extends BaseModel {
         { itemid: { $regex: literal, $options: 'i' } },
       ];
     }
-    if (query.category) filter.category_id = this.toObjectId(query.category);
+    const categories = require('../utils/price-category-filter')(query.category);
+    if (categories) filter.category_id = categories;
     const page = Math.max(1, Math.min(100000, Math.floor(Number(query.page) || 1)));
     const pageSize = [10, 25, 50, 100].includes(Number(query.pageSize))
       ? Number(query.pageSize)
