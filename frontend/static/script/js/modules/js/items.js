@@ -54,7 +54,9 @@ PosnicPro.items = {
         if ($('#item_open_price').is(':checked')) { target.text(t('lang_item_price_open', 'Customer price is entered at the sale.')); return; }
         if (!$('#items_selling_price').val()) { target.text(t('lang_item_price_enter', 'Enter a selling price to see what the customer pays.')); return; }
         target.text(t('lang_item_price_calculating', 'Checking price…'));
-        var taxOff = PosnicPro.local.get('default_tax_enable_disable') === 'false' && PosnicPro.local.get('gst_action') !== 'enable';
+        var settings = {};
+        try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) {}
+        var taxOff = settings.module_tax_enable === false;
         var tax = taxOff ? 0 : ($('input[name="hsntax_radio_value"]:checked').val() === 'hsncode' ? $('#hsn_tax').val() : self.selectAttr('#items_tax', 'data-tax-value', 0));
         self._previewTimer = setTimeout(function () {
             PosnicPro.post({ url: 'items/pricePreview', data: JSON.stringify({ price: $('#items_selling_price').val(), tax: tax,
