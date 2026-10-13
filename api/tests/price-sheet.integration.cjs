@@ -151,13 +151,17 @@ test('recovering after item write/row acknowledgement cannot apply twice', async
 test('XLSX round trip preserves IDs, blank fields and validates branch', async () => {
   const wb = await service.sheet(context, { fields: 'selling_price,company_price' }),
     ws = wb.worksheets[0];
-  ws.getRow(2).getCell(7).value = 23;
+  ws.getRow(2).getCell(ws.getRow(1).values.indexOf('New Selling price')).value = 23;
   const file = { originalname: 'prices.xlsx', buffer: await wb.xlsx.writeBuffer() };
   const result = await service.importSheet(context, { jobId: new ObjectId().toString() }, file);
   assert.equal(result.counts.pending, 1);
   assert.equal(result.rows[0].changes.selling_price.value, 23);
   assert.equal(result.rows[0].changes.company_price, undefined);
-  const csv = await service.importSheet(context, { jobId: new ObjectId().toString() }, { originalname: 'prices.csv', buffer: await wb.csv.writeBuffer() });
+  const csv = await service.importSheet(
+    context,
+    { jobId: new ObjectId().toString() },
+    { originalname: 'prices.csv', buffer: await wb.csv.writeBuffer() }
+  );
   assert.equal(csv.rows[0].itemId, String(itemId));
   assert.equal(csv.counts.pending, 1);
   await assert.rejects(
@@ -217,3 +221,96 @@ test(
     assert.equal(await database.collection('items').countDocuments({ selling_price: 11 }), 10000);
   }
 );
+
+test('styled Excel hides trailing IDs and sorted rows still update the correct duplicate-name item', async () => {
+  const otherId = new ObjectId();
+  await database.collection('items').insertOne({
+    _id: otherId,
+    branch_id: new ObjectId(context.branchId),
+    license: new ObjectId(context.licenseId),
+    name: 'Onion',
+    itemid: '001',
+    selling_price: 40,
+    available_quantity: 0,
+  });
+  const wb = await service.sheet(context);
+  const ws = wb.worksheets[0];
+  assert.deepEqual(ws.getRow(1).values.slice(1), [
+    'Item name',
+    'SKU',
+    'Unit',
+    'Current Selling price',
+    'New Selling price',
+    'Branch ID',
+    'Item ID',
+  ]);
+  assert.equal(ws.getColumn(6).hidden, true);
+  assert.equal(ws.getColumn(7).hidden, true);
+  assert.equal(ws.views[0].ySplit, 1);
+  const row2 = ws.getRow(2).values;
+  ws.getRow(2).values = ws.getRow(3).values;
+  ws.getRow(3).values = row2;
+  const target = [ws.getRow(2), ws.getRow(3)].find((r) => r.getCell(7).value === String(otherId));
+  target.getCell(5).value = 45;
+  const file = { originalname: 'sorted.xlsx', buffer: await wb.xlsx.writeBuffer() };
+  const result = await service.importSheet(context, { jobId: new ObjectId().toString() }, file);
+  assert.equal(result.counts.pending, 1);
+  assert.equal(result.counts.unchanged, 1);
+  assert.equal(result.total, 1);
+  assert.equal(result.rows[0].itemId, String(otherId));
+  assert.equal((await service.status(context, result.job._id, 1, '')).total, 2);
+  await service.processBatch(context, result.job._id, false);
+  assert.equal((await database.collection('items').findOne({ _id: otherId })).selling_price, 45);
+  assert.equal(
+    (await database.collection('items').findOne({ _id: otherId })).available_quantity,
+    0
+  );
+  assert.equal((await database.collection('items').findOne({ _id: itemId })).selling_price, 20);
+  assert.equal((await service.sheet(context, { jobId: result.job._id })).worksheets[0].rowCount, 2);
+});
+
+test('legacy sheets with leading IDs still import and unchanged sheets show no changes', async () => {
+  const header = 'Branch ID,Item ID,Item name,SKU,Unit,Current Selling price,New Selling price';
+  const file = {
+    originalname: 'legacy.csv',
+    buffer: Buffer.from(
+      header + '\n' + [context.branchId, String(itemId), 'Onion', '001', 'Kg', 20, 20].join(',')
+    ),
+  };
+  const result = await service.importSheet(context, { jobId: new ObjectId().toString() }, file);
+  assert.equal(result.total, 0);
+  assert.equal(result.counts.unchanged, 1);
+  assert.equal((await service.status(context, result.job._id, 1, 'unchanged')).total, 1);
+});
+
+test('CSV file import crosses the 500-row staging boundary and reviews only changed prices', async () => {
+  const items = Array.from({ length: 501 }, (_, i) => ({
+    _id: new ObjectId(),
+    branch_id: new ObjectId(context.branchId),
+    license: new ObjectId(context.licenseId),
+    name: 'Sheet item ' + i,
+    selling_price: 10,
+  }));
+  await database.collection('items').insertMany(items);
+  const wb = await service.sheet(context, { search: 'Sheet item' });
+  const ws = wb.worksheets[0];
+  ws.getRow(2).getCell(5).value = 12;
+  ws.getRow(502).getCell(5).value = 13;
+  const result = await service.importSheet(
+    context,
+    { jobId: new ObjectId().toString() },
+    {
+      originalname: '501-items.csv',
+      buffer: await wb.csv.writeBuffer(),
+    }
+  );
+  assert.equal(result.job.total, 501);
+  assert.equal(result.counts.pending, 2);
+  assert.equal(result.counts.unchanged, 499);
+  assert.equal(result.total, 2);
+  assert.deepEqual(
+    result.rows.map((r) => r.number),
+    [1, 501]
+  );
+  assert.equal((await service.processBatch(context, result.job._id, false)).counts.updated, 2);
+});
