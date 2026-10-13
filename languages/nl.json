@@ -4814,5 +4814,22 @@
   "lang_print_mode_fast": "Snelle ontvangst",
   "lang_print_mode_help": "Fast maakt gebruik van een standaard tekstopmaak. Afbeeldingen of niet-ondersteunde tekst gebruiken het Exact-ontwerp.",
   "lang_print_sample": "Voorbeeld afdrukken",
-  "lang_print_test_submitted": "Test ingediend. Controleer het papier op de printer."
+  "lang_print_test_submitted": "Test ingediend. Controleer het papier op de printer.",
+  "lang_1_download_price_sheet": "1 · Prijslijst downloaden",
+  "lang_2_edit_new_prices": "2 · Nieuwe prijzen bewerken",
+  "lang_3_upload_review": "3 · Uploaden en controleren",
+  "lang_all_updates": "Alle updates",
+  "lang_blank_cells_keep_the_current_price_keep_ma": "Lege cellen behouden de huidige prijs. Laat de identificatievelden en exportgegevens ongewijzigd.",
+  "lang_completed": "Voltooid",
+  "lang_effective_date_and_time": "Ingangsdatum en -tijd",
+  "lang_for_example_diwali_offer": "Bijvoorbeeld: Diwali-aanbieding",
+  "lang_match_typed_numeric_sku_quick_codes_exactl": "Ingevoerde numerieke SKU- en snelcodes exact vergelijken (21 komt niet overeen met 121 of 210)",
+  "lang_needs_attention": "Aandacht vereist",
+  "lang_now": "Nu",
+  "lang_open_the_downloaded_file_in_excel_or_your": "Open het gedownloade bestand in Excel of uw spreadsheetprogramma. Bewerk alleen de kolommen Nieuw.",
+  "lang_save_your_edited_file_upload_it_then_valid": "Sla het bewerkte bestand op, upload het en controleer het. U bekijkt de wijzigingen op een apart scherm voordat u ze toepast.",
+  "lang_schedule_date_time": "Datum en tijd plannen",
+  "lang_scheduled_updates_recent_jobs": "Geplande updates en recente taken",
+  "lang_the_filename_includes_categories_and_the_e": "De bestandsnaam bevat de categorieën en exportdatum. Begin altijd met een nieuwe download.",
+  "lang_upcoming": "Gepland"
 }

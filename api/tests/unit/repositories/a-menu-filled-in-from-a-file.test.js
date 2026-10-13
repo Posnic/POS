@@ -129,7 +129,7 @@ describe('a menu filled in from a file', () => {
         const isItem = doc && doc.itemid !== undefined;
         return { insertedId: isItem ? `item-${doc.name}` : `other-${inserted}` };
       }),
-      updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+      updateOne: jest.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }),
       countDocuments: jest.fn().mockResolvedValue(0),
       aggregate: jest.fn().mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) }),
     };

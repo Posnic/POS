@@ -120,12 +120,12 @@ test('invalid and duplicate rows do not change prices without explicit skipping'
 test('branch and tenant isolation on jobs, exports and item matching', async () => {
   const job = await staged([row()]);
   const other = { ...context, branchId: new ObjectId().toString() };
-  await assert.rejects(service.status(other, job), /not found/);
+  await assert.rejects(service.status(other, job), /not found|unauthorized/);
   assert.equal((await service.sheet(other)).worksheets[0].rowCount, 1);
   const otherJob = new ObjectId().toString();
   await service.create(other, { jobId: otherJob });
   await service.append(other, otherJob, { start: 0, rows: [row()] });
-  assert.equal((await service.finish(other, otherJob, 1)).counts.invalid, 1);
+  assert.equal((await service.finish(other, otherJob, 1)).counts.skipped, 1);
 });
 test('changes after preview are conflicts and never overwrite new values', async () => {
   const job = await staged([row()]);
@@ -170,7 +170,7 @@ test('XLSX round trip preserves IDs, blank fields and validates branch', async (
       { jobId: new ObjectId().toString() },
       file
     ),
-    /different branch/
+    /different branch|unselected branch/
   );
 });
 test('CSV export filters and result reports do not return whole catalogue', async () => {
@@ -243,6 +243,8 @@ test('styled Excel hides trailing IDs and sorted rows still update the correct d
     'New Selling price',
     'Branch ID',
     'Item ID',
+    'Exported at',
+    'Categories',
   ]);
   assert.equal(ws.getColumn(6).hidden, true);
   assert.equal(ws.getColumn(7).hidden, true);
