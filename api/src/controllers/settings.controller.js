@@ -580,6 +580,16 @@ class SettingController extends BaseController {
       settingsService.setModel(settingModel);
 
       const data = req.body;
+      if (
+        data.sales_exact_numeric_codes !== undefined &&
+        typeof data.sales_exact_numeric_codes !== 'boolean'
+      ) {
+        return res.status(400).json({
+          type: 'error',
+          message: 'Exact numeric search must be on or off',
+          data: null,
+        });
+      }
 
       /*
        * Prefixes: 1-6 characters. The old exactly-3 rule rejected the

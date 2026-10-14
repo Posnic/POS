@@ -1192,6 +1192,12 @@ class SettingModel extends BaseModel {
   async updateCommonSettings(data = {}) {
     try {
       if (
+        data.sales_exact_numeric_codes !== undefined &&
+        typeof data.sales_exact_numeric_codes !== 'boolean'
+      ) {
+        return { status: false, data: null, message: 'Exact numeric search must be on or off' };
+      }
+      if (
         data.allow_sale_hard_delete !== undefined &&
         String(this.user?.usertype || this.user?.role || '').toLowerCase() !== 'super_admin'
       ) {
@@ -1770,6 +1776,18 @@ class SettingModel extends BaseModel {
         );
       }
       updateFields.updated_date = new Date();
+
+      // Core Settings uses this legacy endpoint. Keep the grouped preference
+      // used by Sales and its synchronized branch mirror in agreement.
+      if (data.sales_exact_numeric_codes !== undefined) {
+        const SettingsRepository = require('../repositories/settings.repository');
+        const saved = await new SettingsRepository().saveGroup(
+          'preferences',
+          { sales_exact_numeric_codes: data.sales_exact_numeric_codes },
+          { branchId: this.branchId, licenseId: this.licenseId }
+        );
+        if (!saved.status) return saved;
+      }
 
       // Update branch collection (matches PHP $set logic line 389-434)
       await branchCollection.updateOne(

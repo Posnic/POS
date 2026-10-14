@@ -238,6 +238,7 @@ const branchSchema = new Schema(
      * a series for. A shop turns it on, ideally on the first of its own year.
      * See utils/bill-number.js.
      */
+    sales_exact_numeric_codes: { type: Boolean, default: false },
     sales_search_fields: { type: Array, default: null },
     sales_search_display_fields: { type: Array, default: null },
     bill_number_reset: { type: String, default: '' },
@@ -379,6 +380,7 @@ class BranchModel {
       roundOff: { type: 'String', select: true },
       sales_mail: { type: 'String', select: true },
       sales_prefix: { type: 'String', select: true },
+      sales_exact_numeric_codes: { type: 'Boolean', select: true, defaultValue: false },
       sales_search_fields: { type: 'Array', select: true },
       sales_search_display_fields: { type: 'Array', select: true },
       bill_number_reset: { type: 'String', select: true },
