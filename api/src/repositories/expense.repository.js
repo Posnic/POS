@@ -1,6 +1,8 @@
 // src/repositories/expense.repository.js
 const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
+const expenseFilters = require('../utils/expense-filters');
+const { searchPattern } = require('../utils/safe-search');
 
 /**
  * Expense Repository
@@ -19,8 +21,8 @@ class ExpenseRepository extends BaseModel {
     const { page = 1, limit = 10, sort = { created_date: -1 } } = options;
 
     const query = {
-      ...filters,
-      license: BaseModel.license,
+      ...expenseFilters(filters),
+      license: { $eq: BaseModel.license },
       is_deleted: { $ne: true },
     };
 
@@ -52,7 +54,7 @@ class ExpenseRepository extends BaseModel {
     const collection = await this.getCollection(this.collectionName);
     const result = await collection.findOne(
       {
-        license: BaseModel.license,
+        license: { $eq: BaseModel.license },
         is_deleted: { $ne: true },
       },
       { sort: { created_date: -1 }, projection: { _id: 1 } }
@@ -68,8 +70,8 @@ class ExpenseRepository extends BaseModel {
     return await collection.findOne(
       {
         _id: new ObjectId(id),
-        license: BaseModel.license,
-        ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
+        license: { $eq: BaseModel.license },
+        ...(BaseModel.currentBranch ? { branch_id: { $eq: BaseModel.currentBranch } } : {}),
         is_deleted: { $ne: true },
       },
       { projection: { supporting_documents: 0 } }
@@ -154,7 +156,7 @@ class ExpenseRepository extends BaseModel {
     const result = await collection.findOneAndUpdate(
       {
         _id: new ObjectId(id),
-        license: BaseModel.license,
+        license: { $eq: BaseModel.license },
         is_deleted: { $ne: true },
       },
       {
@@ -175,7 +177,7 @@ class ExpenseRepository extends BaseModel {
     // Get document before deletion for backup
     const expense = await collection.findOne({
       _id: new ObjectId(id),
-      license: BaseModel.license,
+      license: { $eq: BaseModel.license },
     });
 
     if (expense) {
@@ -186,7 +188,7 @@ class ExpenseRepository extends BaseModel {
     // Hard delete the document
     const result = await collection.deleteOne({
       _id: new ObjectId(id),
-      license: BaseModel.license,
+      license: { $eq: BaseModel.license },
     });
 
     return result.deletedCount;
@@ -204,7 +206,7 @@ class ExpenseRepository extends BaseModel {
     const documents = await collection
       .find({
         _id: { $in: objectIds },
-        license: BaseModel.license,
+        license: { $eq: BaseModel.license },
       })
       .toArray();
 
@@ -216,7 +218,7 @@ class ExpenseRepository extends BaseModel {
     // Hard delete the documents
     const result = await collection.deleteMany({
       _id: { $in: objectIds },
-      license: BaseModel.license,
+      license: { $eq: BaseModel.license },
     });
 
     return result.deletedCount;
@@ -229,8 +231,8 @@ class ExpenseRepository extends BaseModel {
     const collection = await this.getCollection(this.collectionName);
 
     const query = {
-      ...filters,
-      license: BaseModel.license,
+      ...expenseFilters(filters),
+      license: { $eq: BaseModel.license },
       is_deleted: { $ne: true },
     };
 
@@ -266,13 +268,13 @@ class ExpenseRepository extends BaseModel {
     const { page = 1, limit = 10, branchId = null } = options;
 
     const query = {
-      license: BaseModel.license,
+      license: { $eq: BaseModel.license },
       is_deleted: { $ne: true },
       $or: [
-        { category: new RegExp(searchTerm, 'i') },
-        { recipientname: new RegExp(searchTerm, 'i') },
-        { description: new RegExp(searchTerm, 'i') },
-        { type: new RegExp(searchTerm, 'i') },
+        { category: new RegExp(searchPattern(searchTerm), 'i') },
+        { recipientname: new RegExp(searchPattern(searchTerm), 'i') },
+        { description: new RegExp(searchPattern(searchTerm), 'i') },
+        { type: new RegExp(searchPattern(searchTerm), 'i') },
       ],
     };
 

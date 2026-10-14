@@ -163,7 +163,7 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
       expect(mockCollection.find).toHaveBeenCalledWith(
         expect.objectContaining({
           category: 'Rent',
-          license: BaseModel.license,
+          license: { $eq: BaseModel.license },
           is_deleted: { $ne: true },
         }),
         { projection: { supporting_documents: 0 } }
@@ -209,7 +209,7 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
       await repository.findLatest();
       expect(mockCollection.findOne).toHaveBeenCalledWith(
         expect.objectContaining({
-          license: BaseModel.license,
+          license: { $eq: BaseModel.license },
           is_deleted: { $ne: true },
         }),
         expect.objectContaining({
@@ -250,7 +250,7 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
       expect(mockCollection.findOne).toHaveBeenCalledWith(
         expect.objectContaining({
           _id: expect.any(Object),
-          license: BaseModel.license,
+          license: { $eq: BaseModel.license },
           is_deleted: { $ne: true },
         }),
         { projection: { supporting_documents: 0 } }
@@ -368,7 +368,7 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
       expect(mockCollection.findOneAndUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
           _id: expect.any(Object),
-          license: BaseModel.license,
+          license: { $eq: BaseModel.license },
           is_deleted: { $ne: true },
         }),
         expect.objectContaining({
@@ -433,7 +433,7 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
       expect(mockCollection.findOne).toHaveBeenCalledWith(
         expect.objectContaining({
           _id: expect.any(Object),
-          license: BaseModel.license,
+          license: { $eq: BaseModel.license },
         })
       );
     });
@@ -456,7 +456,7 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
       expect(mockCollection.deleteOne).toHaveBeenCalledWith(
         expect.objectContaining({
           _id: expect.any(Object),
-          license: BaseModel.license,
+          license: { $eq: BaseModel.license },
         })
       );
     });
@@ -482,7 +482,7 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
       expect(mockCollection.find).toHaveBeenCalledWith(
         expect.objectContaining({
           _id: { $in: expect.any(Array) },
-          license: BaseModel.license,
+          license: { $eq: BaseModel.license },
         })
       );
     });
@@ -506,7 +506,7 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
       expect(mockCollection.deleteMany).toHaveBeenCalledWith(
         expect.objectContaining({
           _id: { $in: expect.any(Array) },
-          license: BaseModel.license,
+          license: { $eq: BaseModel.license },
         })
       );
     });
@@ -534,7 +534,7 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
         expect.objectContaining({
           $match: expect.objectContaining({
             category: 'Rent',
-            license: BaseModel.license,
+            license: { $eq: BaseModel.license },
             is_deleted: { $ne: true },
           }),
         })
@@ -584,7 +584,7 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
             expect.objectContaining({ description: expect.any(RegExp) }),
             expect.objectContaining({ type: expect.any(RegExp) }),
           ]),
-          license: BaseModel.license,
+          license: { $eq: BaseModel.license },
           is_deleted: { $ne: true },
         }),
         { projection: { supporting_documents: 0 } }
