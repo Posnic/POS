@@ -4956,5 +4956,6 @@
   "lang_iv2_copy_notice": "Kopie van {name}. Dit is een nieuw, nog niet opgeslagen artikel. Het oorspronkelijke artikel blijft ongewijzigd.",
   "lang_iv2_create_copy": "Een kopie maken",
   "lang_iv2_save_copy": "Opslaan als nieuw artikel",
-  "lang_iv2_copy_suffix": "kopie"
+  "lang_iv2_copy_suffix": "kopie",
+  "lang_rd_store_override_help": "Alleen op de bon. Laat aangepaste tekst leeg voor vestigingsgegevens. Vink een regel uit om deze te verbergen."
 }
