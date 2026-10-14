@@ -1242,3 +1242,34 @@ test('sale printing sends receipt identity to desktop logging while sample print
     assert.equal(sent[1].receiptLog, null);
     dom.window.close();
 });
+
+test('designer samples include GST, switch to IGST, and respect tax disabled', async () => {
+    const { dom, w, $, engine, branch } = setup();
+    Object.assign(branch, { indian_gst: 'gst_on', country: 'India', module_tax_enable: true });
+    let document;
+    engine.print = async html => { document = html; return { success: true }; };
+    const editor = w.PosnicPro.receiptDesignerEditor;
+    editor.load(branch);
+    await editor.printSample();
+    assert.match(document, /CGST 2.5%/); assert.match(document, /SGST 2.5%/);
+    assert.match($('<div>').html(document).text(), /47.25/);
+    $('#rd-sample-tax').val('inter').trigger('change');
+    await editor.printSample();
+    assert.match(document, /IGST 5%/); assert.doesNotMatch(document, /CGST|SGST/);
+    branch.module_tax_enable = false; editor.load(branch);
+    await editor.printSample();
+    assert.doesNotMatch(document, /IGST|CGST|SGST/);
+    assert.equal($('#rd-sample-tax').length, 0);
+    dom.window.close();
+});
+
+test('receipt fallback preserves independently saved CGST and SGST amounts', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.items[0].cgst_tax = 1.13; sale.items[0].sgst_tax = 1.12;
+    const text = $('<div>').html(engine.render(sale, '112', false)).text();
+    assert.match(text, /CGST.*1.13/); assert.match(text, /SGST.*1.12/);
+    sale.receipt_tax_rows = [{ label: 'IGST 5%', amount: 2.25 }];
+    const saved = $('<div>').html(engine.render(sale, '112', false)).text();
+    assert.match(saved, /IGST 5%/); assert.doesNotMatch(saved, /CGST|SGST/);
+    dom.window.close();
+});
