@@ -4729,5 +4729,14 @@
   "lang_print_mode_fast": "Greitas gavimas",
   "lang_print_mode_help": "“Fast” naudoja standartinį teksto išdėstymą. Grafika arba nepalaikomas tekstas naudoja Tikslus dizainas.",
   "lang_print_sample": "Spausdinti pavyzdį",
-  "lang_print_test_submitted": "Testas pateiktas. Patikrinkite popierių spausdintuve."
+  "lang_print_test_submitted": "Testas pateiktas. Patikrinkite popierių spausdintuve.",
+  "lang_delete_sale": "Ištrinti pardavimą",
+  "lang_sale_delete_stock_warning": "Atsargų stebimų prekių atsargos bus pridėtos atgal. Nesekami elementai nekeičiami.",
+  "lang_last_week": "Praeitą savaitę",
+  "lang_paid_bill_review": "Teisinga įrašyta sąskaita",
+  "lang_paid_bill_no_movement": "Tai keičia neteisingai įrašytą sąskaitą ir mokėjimą. Pinigai nėra surenkami ir negrąžinami.",
+  "lang_paid_bill_use_return": "Jei originalūs pinigai iš tikrųjų buvo surinkti, naudokite Grąžinti elementus, kad įrašytumėte grąžinimą vietoj.",
+  "lang_paid_bill_previous": "Anksčiau įrašyta",
+  "lang_paid_bill_corrected": "Pataisyta sąskaita",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Iš naujo įkelkite šį puslapį, kad peržiūrėtumėte apmokėtos sąskaitos korekciją."
 }

@@ -4729,5 +4729,14 @@
   "lang_print_mode_fast": "Brzi prijem",
   "lang_print_mode_help": "Brzo koristi standardni izgled teksta. Grafika ili nepodržani tekst koriste Tačan dizajn.",
   "lang_print_sample": "Ispis uzorka",
-  "lang_print_test_submitted": "Test je podnesen. Provjerite papir na štampaču."
+  "lang_print_test_submitted": "Test je podnesen. Provjerite papir na štampaču.",
+  "lang_delete_sale": "Izbriši prodaju",
+  "lang_sale_delete_stock_warning": "Zalihe će biti dodate natrag za artikle koje se prati zaliha. Nepraćene stavke se ne mijenjaju.",
+  "lang_last_week": "Prošli tjedan",
+  "lang_paid_bill_review": "Točno evidentirani račun",
+  "lang_paid_bill_no_movement": "Ovo mijenja pogrešno evidentiran račun i plaćanje. Novac se ne prikuplja niti vraća.",
+  "lang_paid_bill_use_return": "Ako je izvorni novac stvarno prikupljen, koristite Return items da biste umjesto toga zabilježili povrat novca.",
+  "lang_paid_bill_previous": "Prethodno snimljeno",
+  "lang_paid_bill_corrected": "Ispravljeni račun",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Ponovo učitajte ovu stranicu da biste pregledali ispravljanje plaćenog računa."
 }

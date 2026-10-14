@@ -4729,5 +4729,14 @@
   "lang_print_mode_fast": "Mabilis na resibo",
   "lang_print_mode_help": "Ang mabilis ay gumagamit ng karaniwang layout ng teksto. Gumagamit ng mga graphics o hindi suportadong teksto ang Eksaktong disenyo.",
   "lang_print_sample": "I-print ang sample",
-  "lang_print_test_submitted": "Isinumite ang pagsubok. Suriin ang papel sa printer."
+  "lang_print_test_submitted": "Isinumite ang pagsubok. Suriin ang papel sa printer.",
+  "lang_delete_sale": "Tanggalin ang benta",
+  "lang_sale_delete_stock_warning": "Idaragdag muli ang stock para sa mga item na sinusubaybayan ng imbentaryo. Hindi binago ang mga hindi nasusubaybayan na item.",
+  "lang_last_week": "Noong nakaraang linggo",
+  "lang_paid_bill_review": "Tamang naitala na singil",
+  "lang_paid_bill_no_movement": "Binabago nito ang isang maling naitala na bayad at pagbabayad. Walang pera na nakolekta o ibalik.",
+  "lang_paid_bill_use_return": "Kung talagang nakolekta ang orihinal na pera, gamitin ang mga Return item upang maitala ang refundasyon sa halip.",
+  "lang_paid_bill_previous": "Dati naitala",
+  "lang_paid_bill_corrected": "Natuwid na panukalang",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "I-load muli ang pahinang ito upang suriin ang bayad na pagwawasto ng bayad na bill."
 }

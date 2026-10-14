@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Az értékesítés törlése előtt engedélyezze a Lomtárt",
   "Only super admins can change the sale hard-delete setting": "Csak szuper adminisztrátorok változtathatják meg az eladási kemény törlési beállítást",
   "Finish the pending payment correction before closing this register.": "A nyilvántartás bezárása előtt fejezze be a függőben lévő fizetési korrekciót.",
-  "Finish the pending payment correction first.": "Először fejezze be a függőben lévő fizetési korrekciót."
+  "Finish the pending payment correction first.": "Először fejezze be a függőben lévő fizetési korrekciót.",
+  "Bill correction saved.": "Számla javítása mentve.",
+  "Review the paid bill correction before saving.": "Megtakarítás előtt tekintse át a fizetett számla korrekcióját."
 }

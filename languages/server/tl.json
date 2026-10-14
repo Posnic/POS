@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Paganahin ang Recycle Bin bago tanggalin ang mga",
   "Only super admins can change the sale hard-delete setting": "Tanging mga super admin ang maaaring baguhin ang setting ng sale hard-delete",
   "Finish the pending payment correction before closing this register.": "Tapusin ang nakabinbing pagwawasto ng pagbabayad bago isara ang rehistro na",
-  "Finish the pending payment correction first.": "Tapusin muna ang nakabinbing pagwawasto ng pagbabayad."
+  "Finish the pending payment correction first.": "Tapusin muna ang nakabinbing pagwawasto ng pagbabayad.",
+  "Bill correction saved.": "Nai-save ang pagwawasto ng Bill.",
+  "Review the paid bill correction before saving.": "Suriin ang bayad na pagwawasto ng bayad na bayad bago i-save"
 }

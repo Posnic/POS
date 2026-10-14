@@ -4729,5 +4729,14 @@
   "lang_print_mode_fast": "Rask kvittering",
   "lang_print_mode_help": "Fast bruker standard tekstoppsett. Grafikk eller tekst som ikke støttes, bruker nøyaktig design.",
   "lang_print_sample": "Skriv ut prøve",
-  "lang_print_test_submitted": "Test sendt inn. Sjekk papiret på skriveren."
+  "lang_print_test_submitted": "Test sendt inn. Sjekk papiret på skriveren.",
+  "lang_delete_sale": "Slett salg",
+  "lang_sale_delete_stock_warning": "Lager vil bli lagt tilbake for varesporte varer. Ikke-sporede elementer endres ikke.",
+  "lang_last_week": "Forrige uke",
+  "lang_paid_bill_review": "Korriger registrert regning",
+  "lang_paid_bill_no_movement": "Dette endrer en feilregistrert regning og betaling. Ingen penger innkreves eller refunderes.",
+  "lang_paid_bill_use_return": "Hvis pengene faktisk ble mottatt, bruk Returner varer for å registrere refusjonen i stedet.",
+  "lang_paid_bill_previous": "Tidligere registrert",
+  "lang_paid_bill_corrected": "Korrigert regning",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Last inn siden på nytt for å gjennomgå korrigeringen av den betalte regningen."
 }

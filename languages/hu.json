@@ -4729,5 +4729,14 @@
   "lang_print_mode_fast": "Gyors átvétel",
   "lang_print_mode_help": "A Fast szabványos szövegelrendezést használ. A grafika vagy a nem támogatott szöveg az Exact design funkciót használja.",
   "lang_print_sample": "Minta nyomtatása",
-  "lang_print_test_submitted": "A teszt benyújtva. Ellenőrizze a papírt a nyomtatón."
+  "lang_print_test_submitted": "A teszt benyújtva. Ellenőrizze a papírt a nyomtatón.",
+  "lang_delete_sale": "Értékesítés törlése",
+  "lang_sale_delete_stock_warning": "A készlet-nyomon követett tételekhez hozzáadódik a készletet. A nyomon követhetetlen elemek nem változnak.",
+  "lang_last_week": "Múlt héten",
+  "lang_paid_bill_review": "Helyesen rögzített számla",
+  "lang_paid_bill_no_movement": "Ez megváltoztatja a helytelenül rögzített számlát és fizetést. Pénzt nem gyűjtenek vagy visszatérítenek.",
+  "lang_paid_bill_use_return": "Ha az eredeti pénzt ténylegesen összegyűjtötték, a visszatérítés rögzítéséhez használja a Visszatérítési tételeket.",
+  "lang_paid_bill_previous": "Korábban rögzített",
+  "lang_paid_bill_corrected": "Javított számla",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Töltse be újra ezt az oldalt a fizetett számla korrekciójának áttekintéséhez."
 }

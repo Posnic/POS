@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Įgalinkite šiukšlinę prieš ištrinant pardavimus",
   "Only super admins can change the sale hard-delete setting": "Tik super adminai gali pakeisti pardavimo hard-delete nustatymą",
   "Finish the pending payment correction before closing this register.": "Prieš uždarydami šį registrą, užbaikite laukiamą mokėjimo korekciją.",
-  "Finish the pending payment correction first.": "Pirmiausia užbaikite laukiančią mokėjimo korekciją."
+  "Finish the pending payment correction first.": "Pirmiausia užbaikite laukiančią mokėjimo korekciją.",
+  "Bill correction saved.": "Sąskaitos korekcija išsaugota.",
+  "Review the paid bill correction before saving.": "Prieš taupydami peržiūrėkite apmokėtos sąskaitos korekciją."
 }

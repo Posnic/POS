@@ -4729,5 +4729,14 @@
   "lang_print_mode_fast": "Szybki odbiór",
   "lang_print_mode_help": "Szybko wykorzystuje standardowy układ tekstu. Grafika lub nieobsługiwany tekst używają Dokładny projekt.",
   "lang_print_sample": "Wydrukuj próbkę",
-  "lang_print_test_submitted": "Test przesłany. Sprawdź papier na drukarce."
+  "lang_print_test_submitted": "Test przesłany. Sprawdź papier na drukarce.",
+  "lang_delete_sale": "Usuń sprzedaż",
+  "lang_sale_delete_stock_warning": "Zapasy zostaną dodane z powrotem dla pozycji śledzonych zapasów. Nieśledzone elementy nie są zmieniane.",
+  "lang_last_week": "W zeszłym tygodniu",
+  "lang_paid_bill_review": "Poprawnie zarejestrowany rachunek",
+  "lang_paid_bill_no_movement": "Zmienia to błędnie zarejestrowany rachunek i płatność. Żadne pieniądze nie są zbierane ani zwracane.",
+  "lang_paid_bill_use_return": "Jeśli oryginalne pieniądze zostały faktycznie odebrane, użyj opcji Zwrot przedmiotów, aby zarejestrować zwrot pieniędzy.",
+  "lang_paid_bill_previous": "Wcześniej nagrane",
+  "lang_paid_bill_corrected": "Poprawiony rachunek",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Załaduj ponownie tę stronę, aby przejrzeć opłaconą korektę rachunku."
 }

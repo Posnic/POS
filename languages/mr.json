@@ -4732,5 +4732,14 @@
   "lang_print_mode_fast": "जलद पावती",
   "lang_print_mode_help": "जलद मानक मजकूर लेआउट ग्राफिक्स किंवा असमर्थित मजकूर योग्य",
   "lang_print_sample": "मुद्रित नमुना",
-  "lang_print_test_submitted": "चाचणी सादर केली प्रिंटरवर कागद तपासा."
+  "lang_print_test_submitted": "चाचणी सादर केली प्रिंटरवर कागद तपासा.",
+  "lang_delete_sale": "विक्री हटवा",
+  "lang_sale_delete_stock_warning": "यादी-ट्रॅक केलेल्या वस्तूंसाठी स्टॉक परत जोडला जाईल. ट्रॅक न केलेले आयटम बदलल्या जातात.",
+  "lang_last_week": "मागील आठवड",
+  "lang_paid_bill_review": "योग्य नोंदणी",
+  "lang_paid_bill_no_movement": "यामुळे चुकीने रेकॉर्ड केलेले बिल आणि देय कोणतेही पैसे गोळा होत नाही किंवा परत",
+  "lang_paid_bill_use_return": "मूळ पैसे खरोखर गोळा केले गेले असल्यास, त्याऐवजी परतावा रेकॉर्ड",
+  "lang_paid_bill_previous": "पूर्वी नोंद",
+  "lang_paid_bill_corrected": "सुधारित बि",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "पैड बिल दुरुस्तीचे पुनरावलोकन करण्यासाठी हे पृ"
 }

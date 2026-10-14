@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Activer la corbeille avant de supprimer des ventes",
   "Only super admins can change the sale hard-delete setting": "Seuls les super administrateurs peuvent modifier le paramètre de suppression définitive des ventes",
   "Finish the pending payment correction before closing this register.": "Terminez la correction de paiement en attente avant de fermer ce registre.",
-  "Finish the pending payment correction first.": "Terminez d'abord la correction de paiement en attente."
+  "Finish the pending payment correction first.": "Terminez d'abord la correction de paiement en attente.",
+  "Bill correction saved.": "Correction de facture enregistrée.",
+  "Review the paid bill correction before saving.": "Vérifiez la correction de la facture payée avant d'économiser."
 }

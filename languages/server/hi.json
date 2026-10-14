@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "बिक्री हटाने से पहले रीसायकल बिन सक्षम करें",
   "Only super admins can change the sale hard-delete setting": "केवल सुपर एडमिन ही सेल हार्ड-डिलीट सेटिंग को बदल सकते हैं",
   "Finish the pending payment correction before closing this register.": "इस रजिस्टर को बंद करने से पहले लंबित भुगतान सुधार को समाप्त करें।",
-  "Finish the pending payment correction first.": "लंबित भुगतान सुधार को पहले समाप्त करें।"
+  "Finish the pending payment correction first.": "लंबित भुगतान सुधार को पहले समाप्त करें।",
+  "Bill correction saved.": "बिल सुधार सहेजा गया।",
+  "Review the paid bill correction before saving.": "बचत करने से पहले भुगतान किए गए बिल सुधार की समीक्षा करें।"
 }

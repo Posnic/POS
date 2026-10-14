@@ -86,3 +86,27 @@ test('a slow previous bill response cannot add an action to another bill', async
     assert.equal($('[data-correct-payment]').length, 0);
     dom.window.close();
 });
+
+
+test('a direct Sales visit loads payment correction without opening Reports', () => {
+    const manifest = JSON.parse(fs.readFileSync('frontend/pages_css_js_map.json', 'utf8'));
+    const module = 'static/script/js/modules/js/payment-correction.js';
+    assert.equal(manifest.dashboard.js.filter(file => file === module).length, 1);
+    assert.ok(!manifest.lazy_reports.includes(module), 'Reports must not recreate the correction module');
+});
+
+
+test('paid bill edit reviews the changed total and requires a reason before submitting',async()=>{
+ const {dom,w,$}=await setup();$('.modal').remove();let submitted;
+ const editingBill = {sales_total:357,recorded_bill:Object.freeze({sales_total:357,updated_date:'2026-10-14T01:30:00Z'})};
+ editingBill.sales_total = 168; // The existing cart recalculates this field when a line is removed.
+ w.PosnicPaymentCorrection.reviewBillEdit(editingBill, {sales_total:168,payment_mode:'UPI'}, value=>submitted=value);
+ assert.match($('#paid-bill-review').text(),/357.00/);assert.match($('#paid-bill-review').text(),/168.00.*UPI/);
+ assert.match($('#paid-bill-review').text(),/No money is collected or refunded/);
+ assert.equal($('[data-save-correction]').prop('disabled'),true);
+ $('#paid-bill-reason').val('Wrong item and payment recorded').trigger('input');
+ assert.equal($('[data-save-correction]').prop('disabled'),false);
+ $('[data-save-correction]').trigger('click');
+ assert.equal(submitted.originalTotal,357);assert.equal(submitted.reason,'Wrong item and payment recorded');
+ assert.ok(submitted.id);dom.window.close();
+});

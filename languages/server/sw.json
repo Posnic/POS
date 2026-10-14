@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Wezesha Recycle Bin kabla ya kufuta mauzo",
   "Only super admins can change the sale hard-delete setting": "Ni wasimamizi wa juu tu wanaweza kubadilisha mipangilio ya kufuta kwa ngumu ya",
   "Finish the pending payment correction before closing this register.": "Kumaliza marekebisho ya malipo yanayosubiri kabla ya kufunga rejista hii",
-  "Finish the pending payment correction first.": "Kumaliza marekebisho ya malipo yanayosubiri kwanza."
+  "Finish the pending payment correction first.": "Kumaliza marekebisho ya malipo yanayosubiri kwanza.",
+  "Bill correction saved.": "Marekebisho ya Bill imeokolewa.",
+  "Review the paid bill correction before saving.": "Pitia marekebisho ya bili iliyolipwa kabla ya kuokoa."
 }

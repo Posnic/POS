@@ -1892,7 +1892,7 @@ class SalesRepository {
           }
         }
 
-        const stockLogStatus = !!(branchSettings && branchSettings.stock_management_log);
+        const stockLogStatus = [true, 'true'].includes(branchSettings?.stock_management_log);
 
         const items = Array.isArray(doc.items) ? doc.items : [];
         const salesIdentifier = doc.sales_id || doc.invoice_number || (saleId && saleId.toString());
@@ -1909,7 +1909,7 @@ class SalesRepository {
                   ? item.quantity
                   : 0;
             const itemQty = Number(quantity || 0);
-            if (!itemQty || itemQty <= 0) continue;
+            if (!Number.isFinite(itemQty) || itemQty <= 0) continue;
 
             let itemObjectId = null;
             if (
@@ -1926,23 +1926,24 @@ class SalesRepository {
             if (!itemObjectId) continue;
 
             const itemFilter = {
-              _id: itemObjectId,
+              _id: { $eq: itemObjectId },
             };
             if (licenseId) {
-              itemFilter.license = licenseId;
+              itemFilter.license = { $eq: licenseId };
             }
 
             const itemDoc = await itemsCollection.findOne(itemFilter);
-            if (!itemDoc) continue;
+            if (!itemDoc || ![true, 'true'].includes(itemDoc.track_inventory)) continue;
 
             const openingBalance = Number(itemDoc.available_quantity || 0);
             const availableQuantity = openingBalance + itemQty;
 
-            // PHP checks: $itemdocuments['track_inventory'] === true (boolean or string 'true')
-            if (
-              stockLogStatus &&
-              (itemDoc.track_inventory === true || itemDoc.track_inventory === 'true')
-            ) {
+            // Restore tracked stock even when the optional stock log is disabled.
+            await itemsCollection.updateOne(itemFilter, {
+              $inc: { available_quantity: itemQty },
+              $set: { updated_date: now },
+            });
+            if (stockLogStatus) {
               const countStr = String(itemQty);
 
               await stockLogsRepository.createStockLog({
@@ -1961,12 +1962,6 @@ class SalesRepository {
                 action: 'Add',
                 changed_by_userid: BaseModel.loggedUser,
                 changed_by: BaseModel.loggedUserName || 'System',
-              });
-
-              await itemsCollection.updateOne(itemFilter, {
-                $set: {
-                  available_quantity: availableQuantity,
-                },
               });
             }
           } catch (e) {

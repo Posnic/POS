@@ -4729,5 +4729,14 @@
   "lang_print_mode_fast": "Admháil tapa",
   "lang_print_mode_help": "Fast úsáideann leagan amach téacs caighdeánach Úsáideann grafaicí nó téacs gan tacaíocht Dearadh cruinn.",
   "lang_print_sample": "Priontáil sampla",
-  "lang_print_test_submitted": "Tástáil curtha isteach. Seiceáil an páipéar ag an printéir."
+  "lang_print_test_submitted": "Tástáil curtha isteach. Seiceáil an páipéar ag an printéir.",
+  "lang_delete_sale": "Scrios díol",
+  "lang_sale_delete_stock_warning": "Cuirfear stoc ar ais le haghaidh earraí rianaithe fardail. Ní athraítear earraí gan rianú.",
+  "lang_last_week": "An tseachtain seo caite",
+  "lang_paid_bill_review": "Bille ceart taifeadta",
+  "lang_paid_bill_no_movement": "Athraíonn sé seo bille agus íocaíocht a thaifeadadh go mícheart. Ní bhailítear nó aisíoctar aon airgead.",
+  "lang_paid_bill_use_return": "Má bailíodh an t-airgead bunaidh i ndáiríre, bain úsáid as earraí Tuairisceáin chun an aisíocaíocht",
+  "lang_paid_bill_previous": "Taifeadadh roimhe",
+  "lang_paid_bill_corrected": "Bille ceartaithe",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Athlódáil an leathanach seo chun an ceartú bille íoctha a athbhreithniú."
 }

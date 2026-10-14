@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "விற்பனையை நீக்குவதற்கு முன் மறுசுழற்சி",
   "Only super admins can change the sale hard-delete setting": "சூப்பர் நிர்வாகிகள் மட்டுமே விற்பனை ஹார்ட்-டிலீட் அமைப்பை மாற்ற முடியும்",
   "Finish the pending payment correction before closing this register.": "இந்த பதிவை மூடுவதற்கு முன் நிலுவையில் உள்ள கட்டண திருத்தத்தை முடிக்கவும்.",
-  "Finish the pending payment correction first.": "நிலுவையில் உள்ள கட்டண திருத்தத்தை முதலில் முடிக்கவும்."
+  "Finish the pending payment correction first.": "நிலுவையில் உள்ள கட்டண திருத்தத்தை முதலில் முடிக்கவும்.",
+  "Bill correction saved.": "பில் திருத்தம் சேமிக்கப்பட்டது.",
+  "Review the paid bill correction before saving.": "சேமிப்பதற்கு முன் கட்டண பில் திருத்தத்தை மதிப்பாய்வு செய்யவும்."
 }
