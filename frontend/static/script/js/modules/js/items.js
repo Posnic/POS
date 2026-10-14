@@ -2923,27 +2923,13 @@ PosnicPro.items = {
     },
 
     mfgCheckbox: function (checked) {
-        if (checked) {
-            $("#mfg_checkbox").prop("checked", true);
-            $('#mfg-date-value').removeAttr('disabled');
-            $("#mfg-date").text($('#mfg-date-value').val());
-        } else {
-            $("#mfg_checkbox").prop("checked", false);
-            $('#mfg-date-value').attr('disabled', 'disabled');
-            $("#mfg-date").text('');
-        }
+        $('#mfg_checkbox').prop('checked', !!checked);
+        PosnicShelfLabels.refresh();
     },
 
     expCheckbox: function (checked) {
-        if (checked) {
-            $("#exp_checkbox").prop("checked", true);
-            $('#exp-date-value').removeAttr('disabled');
-            $("#exp-date").text($('#exp-date-value').val());
-        } else {
-            $("#exp_checkbox").prop("checked", false);
-            $('#exp-date-value').attr('disabled', 'disabled');
-            $("#exp-date").text('');
-        }
+        $('#exp_checkbox').prop('checked', !!checked);
+        PosnicShelfLabels.refresh();
     },
 
     printLabelBarcode: function () {
@@ -5054,12 +5040,14 @@ $(document).ready(function () {
     });
 
     $(".text-align").click(function () {
+        if (window.PosnicShelfLabels && $(this).closest('#view_print_lable').length) return;
         $(".text-align").removeClass("btn-primary");
         $(this).addClass("btn-primary");
         newBarcode();
     });
 
     $(".font-option").click(function () {
+        if (window.PosnicShelfLabels && $(this).closest('#view_print_lable').length) return;
         if ($(this).hasClass("btn-primary")) {
             $(this).removeClass("btn-primary");
         } else {
@@ -5158,54 +5146,9 @@ $(document).ready(function () {
    a 1000-char field no receipt renders rich. */
 
 // Update preview function to work with existing system
-var updateLabelPreview = function() {
-    $("#branch-name").text($('#branch-value').val());
-    $("#price-name").text($('#price-value').val());
-    $("#mrp-price").text($('#mrp-price-value').val());
-    $("#address-name").text($('#address-value').val());
+var updateLabelPreview = function () { if (window.PosnicShelfLabels) window.PosnicShelfLabels.refresh(); };
 
-    if ($('#mfg_checkbox').is(':checked')) {
-        $("#mfg-date").text($('#mfg-date-value').val());
-    } else {
-        $("#mfg-date").text('');
-    }
-
-    if ($('#exp_checkbox').is(':checked')) {
-        $("#exp-date").text($('#exp-date-value').val());
-    } else {
-        $("#exp-date").text('');
-    }
-};
-
-function updatePreviewDimensions() {
-    var labelWidth = parseFloat($('#document_width').val()) || 1.96;
-    var labelHeight = parseFloat($('#document_height').val()) || 1.18;
-
-    // Update dimension display
-    $('#preview-width').text(labelWidth);
-    $('#preview-height').text(labelHeight);
-
-    // Calculate scaled dimensions for preview (max 300px width for screen display)
-    var maxPreviewWidth = 300;
-    var aspectRatio = labelHeight / labelWidth;
-
-    var previewWidth = Math.min(maxPreviewWidth, labelWidth * 96); // 96 DPI conversion
-    var previewHeight = previewWidth * aspectRatio;
-
-    // Apply dimensions to preview container
-    $('#preview-container').css({
-        'width': previewWidth + 'px',
-        'height': previewHeight + 'px'
-    });
-
-    // Adjust font sizes based on preview size
-    var fontScale = previewWidth / 200; // Scale factor based on 200px base
-    var baseFontSize = Math.max(8, 12 * fontScale);
-
-    $('#print-preview').css({
-        'font-size': baseFontSize + 'px'
-    });
-}
+function updatePreviewDimensions() { if (window.PosnicShelfLabels) window.PosnicShelfLabels.refresh(); }
 
 function updateSliderLimits() {
     var docWidth = parseFloat($('#document_width').val()) || 1.96;
@@ -5220,7 +5163,7 @@ function updateSliderLimits() {
     $('#bar-height').attr('max', maxBarHeight);
 
     // Update rangeslider if it exists
-    if ($.fn.rangeslider) {
+    if ($.fn.rangeslider && $('#bar-width').is('input[type="range"]') && $('#bar-height').is('input[type="range"]')) {
         $('#bar-width').rangeslider('destroy').rangeslider({
             polyfill: false,
             rangeClass: 'rangeslider',
@@ -5291,37 +5234,6 @@ var newBarcode = function () {
         "font-family": labelSettings.font,
         "text-align": labelSettings.textAlign,
         "font-size": fontSize + 'px'
-    });
-
-    // Generate barcode with current settings - reuse labelSettings
-    $("#labelBarcode").JsBarcode(barcodeValue, {
-        "format": labelSettings.format,
-        "background": backgroundColor,
-        "lineColor": lineColor,
-        "fontSize": fontSize,
-        "height": labelSettings.height,
-        "width": labelSettings.width,
-        "margin": labelSettings.margin,
-        "textMargin": labelSettings.textMargin,
-        "displayValue": "true",
-        "font": labelSettings.font,
-        "textAlign": labelSettings.textAlign,
-        "marginTop": labelSettings.margin_top,
-        "marginBottom": labelSettings.margin_bottom,
-        "marginLeft": labelSettings.margin_left,
-        "marginRight": labelSettings.margin_right,
-        "fontOptions": $(".font-option.btn-primary").map(function () {
-            return this.value;
-        }).get().join(" "),
-        "valid": function (valid) {
-            if (valid) {
-                $("#labelBarcode").show();
-                $("#invalid").hide();
-            } else {
-                $("#labelBarcode").hide();
-                $("#invalid").show();
-            }
-        }
     });
 
     // Update preview content
