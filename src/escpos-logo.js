@@ -23,7 +23,7 @@
  * difference somebody reports as a printer fault.
  */
 
-const DOTS = { 58: 384, 80: 576 };
+const DOTS = { 58: 384, 80: 576, 112: 832 };
 const MAX_ROWS = 240;
 
 /* Big enough for any shop logo and small enough that a wrong URL cannot pull a

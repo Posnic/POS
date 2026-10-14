@@ -40,6 +40,7 @@
     "modifier_groups": "branch"
   },
   "local_only": {
+    "app_brand": "White-label branding is provisioned by the tenant/build configuration, not by catalogue replication between installations.",
     "price_sheet_jobs": "Price update staging, execution leases and recovery jobs belong to the installation applying them. Updated item prices sync normally; jobs must never replay on another installation.",
     "price_sheet_rows": "Staged price changes and per-row recovery receipts belong to the executing price-sheet job and stay on that installation.",
     "captain_email_verifications": "One-use email verification challenges, attempt counters and expiry belong to the issuing account server; replication would permit replay.",

@@ -4621,6 +4621,7 @@
                                                     <legend class="h6"><lang class="lang_sales_item_search">Sales item search</lang></legend>
                                                     <p><lang class="lang_choose_fields_for_typed_searches_exact_bar">Choose fields for typed searches. Exact barcode scans always work.</lang></p>
 <label><input type="checkbox" id="sales_search_custom_fields"> <lang class="lang_customize_searchable_fields">Customize searchable fields</lang></label>
+<label class="d-block"><input type="checkbox" id="sales_exact_numeric_codes"> <lang class="lang_match_typed_numeric_sku_quick_codes_exactl">Match typed numeric SKU / quick codes exactly (21 will not match 121 or 210)</lang></label>
 <p class="text-muted"><lang class="lang_leave_this_off_to_keep_the_standard_search">Leave this off to keep the standard search, including translated names and quick codes.</lang></p>
                                                     <div class="mb-3">
                                                     <label class="mr-3">
@@ -5202,6 +5203,7 @@
                                                             </div>
                                                             
 <div class="tab-pane fade" id="inv-sub-stock" role="tabpanel">
+<div class="card mb-3"><div class="card-body"><label class="d-block"><input type="checkbox" id="item_editor_v2"> <lang class="lang_iv2_use_new_editor">Use the new Add item screen</lang></label><p class="text-muted"><lang class="lang_iv2_editor_setting_help">A guided form for prices, tax, stock and item details. Applies to new items in this branch. Use Save settings to apply.</lang></p><button type="button" class="btn btn-primary" onclick="PosnicPro.settings.updateCommonSetting();"><lang class="lang_save_title">Save</lang></button></div></div>
 <div class="card mb-3"><div class="card-header"><h5><lang class="lang_stock_preference">Stock preference</lang></h5></div><div class="card-body">
  <select id="item_stock_preference" class="form-control mb-3" aria-label="Stock for new items" data-t-aria-label="lang_stock_for_new_items"><option value="" data-t="lang_choose_a_preference">Choose a preference</option><option value="always_available" data-t="lang_always_available">Always available</option><option value="track_quantities" data-t="lang_track_quantities">Track quantities</option></select>
  <p><strong><lang class="lang_always_available_2">Always available:</lang></strong> <lang class="lang_sell_without_entering_stock_quantities_no">Sell without entering stock quantities. No low-stock alerts. Suitable for made-to-order dishes.</lang></p>

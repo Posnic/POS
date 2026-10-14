@@ -30,6 +30,21 @@ function setup() {
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
 }
 
+test('paid receipts use settlement time on every paper format and keep it on reprint', () => {
+    const { dom, engine, sale, $ } = setup();
+    Object.assign(sale, { payment_status: 'Paid', created_date: '14/10/2026 8:50 AM',
+        receipt_date: '14/10/2026 9:05 AM', updated_date: '14/10/2026 10:30 AM' });
+    for (const format of Object.keys(contract.formats)) {
+        const first = engine.render(sale, format, false);
+        const text = $('<div>').html(first).text();
+        assert.match(text, /9:05 AM/);
+        assert.doesNotMatch(text, /8:50 AM|10:30 AM/);
+        assert.equal(engine.render(sale, format, false), first);
+    }
+    assert.equal(sale.created_date, '14/10/2026 8:50 AM');
+    dom.window.close();
+});
+
 test('canonical receipt lines supply both displayed quantities and total quantity', () => {
     const { dom, engine, sale, $ } = setup();
     sale.receipt_designs.layouts['80'].blocks = [{ type: 'items', itemLayout: 'columns' }, { type: 'field', field: 'total_quantity' }];
@@ -690,7 +705,7 @@ test('format cards separate editing from default selection and preserve the choi
     w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
     w.PosnicPro.receiptDesignerEditor.load(branch);
     assert.equal($('#rd-default-format').length, 0, 'There is no separate default dropdown');
-    assert.equal($('.rd-format-card').length, 5);
+    assert.equal($('.rd-format-card').length, Object.keys(contract.formats).length);
     assert.equal($('button button').length, 0, 'Each card has two independent native buttons');
     assert.equal($('.rd-format-card.is-default [data-default-format]').attr('data-default-format'), '80');
     $('[data-format="a5"]').trigger('click');
@@ -1110,4 +1125,45 @@ test('UK receipts label the saved registration number as VAT, including legacy G
  assert.equal(contract.taxRegistrationLabel({country:'US'}),'Tax ID');
  assert.equal(contract.taxRegistrationLabel({},'GB'),'VAT No.');
  dom.window.close();
+});
+
+
+test('RP 4200 migrates saved 80 mm content independently and keeps email and row options', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    delete design.layouts['112'];
+    const store = design.layouts['80'].blocks.find(b => b.type === 'store');
+    const items = design.layouts['80'].blocks.find(b => b.type === 'items');
+    store.showEmail = false;
+    items.showRowNumbers = true;
+    const saved = contract.normalize(JSON.parse(JSON.stringify(design)));
+    assert.equal(saved.layouts['112'].blocks.find(b => b.type === 'store').showEmail, false);
+    assert.equal(saved.layouts['112'].blocks.find(b => b.type === 'items').showRowNumbers, true);
+    saved.layouts['112'].fontSize = 14;
+    assert.notEqual(saved.layouts['80'].fontSize, 14);
+    sale.receipt_designs = saved;
+    sale.store_email = 'shop@example.com';
+    sale.items.push({ item_name: 'Second item', item_price: 5, item_quantity: 1, total_amount: 5 });
+    const output = $('<div>').html(engine.render(sale, '112', false));
+    assert.equal(output.find('[data-receipt-design]').attr('data-receipt-design'), '112');
+    assert.doesNotMatch(output.text(), /shop@example.com/);
+    assert.deepEqual(output.find('.rd-row-number').map((i, e) => $(e).text()).get(), ['1. ', '2. ']);
+    saved.layouts['112'].blocks.find(b => b.type === 'store').showEmail = true;
+    assert.match($('<div>').html(engine.render(sale, '112', false)).text(), /shop@example.com/);
+    dom.window.close();
+});
+
+
+test('fast text preserves rendered payment allocations and rounding; graphics and Tamil fall back', () => {
+    const { dom, engine } = setup();
+    try {
+        const html = '<section class="rd-document"><h1>Shop</h1><table><tr><th>Item</th><th>Qty</th><th>Amount</th></tr><tr><td>Rice</td><td>2</td><td>499.50</td></tr></table><div>Round Off <span>₹0.50</span></div><div>Total ₹500.00</div><div>UPI ₹300.00</div><div>Cash ₹200.00</div><div style="display:none">secret@example.com</div></section>';
+        const lines = engine.fastLines(html);
+        assert.match(lines.join('\n'), /UPI Rs. 300.00/);
+        assert.match(lines.join('\n'), /Cash Rs. 200.00/);
+        assert.match(lines.join('\n'), /Round Off Rs. 0.50/);
+        assert.match(lines.join('\n'), /Rice.*2.*499.50/);
+        assert.doesNotMatch(lines.join('\n'), /secret/);
+        assert.equal(engine.fastLines('<div class="rd-document">தமிழ்</div>'), null);
+        assert.equal(engine.fastLines('<div class="rd-document"><img src="logo.png">Shop</div>'), null);
+    } finally { dom.window.close(); }
 });

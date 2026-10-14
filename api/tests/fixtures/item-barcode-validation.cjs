@@ -353,3 +353,36 @@ test('common Sales settings save persists fields and unrelated saves preserve th
   branch = await db.collection('branches').findOne({_id:ctx.branchId});
   expect(branch.sales_search_display_fields).toBe(null);
 });
+
+test('Core Settings exact numeric toggle survives reload and controls real Sales queries', async () => {
+  const SettingModel = require('../../src/models/setting.model');
+  const SettingsRepository = require('../../src/repositories/settings.repository');
+  const model = new SettingModel();
+  model.setContext({...ctx,user:{_id:new ObjectId(),username:'Test',access:{}}});
+  const settings = new SettingsRepository();
+  const branchReader = new Branch.BranchModel();
+  branchReader.model = {
+    findById: (id) => ({lean: () => db.collection('branches').findOne({_id: new ObjectId(String(id))})}),
+  };
+  await db.collection('branches').updateOne({_id:ctx.branchId}, {$set:{online_ordering:{store_id:'TEST'}}});
+  for (const itemid of ['11','110','111']) {
+    await seed({itemid,barcode_id:'CODE'+itemid,track_inventory:false});
+  }
+  const search = async () => (await repo.getOnlineItemsAjaxList({query:'11'},ctx)).data.map(row => row.itemid).sort();
+  const reload = async () => (await branchReader.getBranchDetails(String(ctx.branchId))).data;
+  expect((await reload()).sales_exact_numeric_codes).toBe(false);
+  expect(await search()).toEqual(['11','110','111']);
+  // Include an existing grouped override: a legacy-only write would leave Sales stale.
+  await settings.saveGroup('preferences',{sales_exact_numeric_codes:false},ctx);
+  expect((await model.updateCommonSettings({sales_exact_numeric_codes:true})).status).toBe(true);
+  expect((await reload()).sales_exact_numeric_codes).toBe(true);
+  expect(await search()).toEqual(['11']);
+  await model.updateCommonSettings({sales_prefix:'TEST'});
+  expect((await reload()).sales_exact_numeric_codes).toBe(true);
+  expect(await search()).toEqual(['11']);
+  expect((await model.updateCommonSettings({sales_exact_numeric_codes:'false'})).status).toBe(false);
+  expect((await reload()).sales_exact_numeric_codes).toBe(true);
+  expect((await model.updateCommonSettings({sales_exact_numeric_codes:false})).status).toBe(true);
+  expect((await reload()).sales_exact_numeric_codes).toBe(false);
+  expect(await search()).toEqual(['11','110','111']);
+});

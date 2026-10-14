@@ -25,7 +25,7 @@ const GS = 0x1d;
 
 // Columns at Font A. Font B is narrower but harder to read on a receipt a
 // customer has to check at a counter.
-const COLUMNS = { '58': 32, '80': 48 };
+const COLUMNS = { '58': 32, '80': 48, '112': 69 };
 
 /*
  * The same paper, measured in dots.
@@ -35,7 +35,7 @@ const COLUMNS = { '58': 32, '80': 48 };
  * per character, which is where 48 and 32 columns come from - the two tables
  * are the same measurement written twice, and they have to agree.
  */
-const DOTS = { '58': 384, '80': 576 };
+const DOTS = { '58': 384, '80': 576, '112': 832 };
 
 /*
  * Text a thermal printer can actually render.

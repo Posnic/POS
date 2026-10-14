@@ -67,3 +67,11 @@ test('full discount leaves additional charges payable and never discounts them',
   ).toBe(20.05);
   expect(() => calculateSaleHeader({ extra_discount: 101 }, 100, {})).toThrow();
 });
+
+test('rounding normalizes currency precision before nearest-unit rounding', () => {
+  const { roundSaleTotal } = require('../../../src/services/sale-header');
+  expect(roundSaleTotal(100.499999999, true)).toEqual({ total: 101, roundOff: 0.5 });
+  expect(roundSaleTotal(100.49, true)).toEqual({ total: 100, roundOff: -0.49 });
+  expect(roundSaleTotal(100.5, false)).toEqual({ total: 100.5, roundOff: 0 });
+  expect(roundSaleTotal(100.5, undefined)).toEqual({ total: 100.5, roundOff: 0 });
+});

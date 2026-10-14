@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "قم بتمكين سلة المحذوفات قبل حذف المبيعات",
   "Only super admins can change the sale hard-delete setting": "يمكن للمشرفين المتميزين فقط تغيير إعداد الحذف الصعب للبيع",
   "Finish the pending payment correction before closing this register.": "قم بإنهاء تصحيح الدفعة المعلقة قبل إغلاق هذا السجل.",
-  "Finish the pending payment correction first.": "قم بإنهاء تصحيح الدفعة المعلقة أولاً."
+  "Finish the pending payment correction first.": "قم بإنهاء تصحيح الدفعة المعلقة أولاً.",
+  "Bill correction saved.": "تم حفظ تصحيح الفاتورة.",
+  "Review the paid bill correction before saving.": "راجع تصحيح الفاتورة المدفوعة قبل الحفظ."
 }

@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "বিক্রয় মুছে ফেলার আগে পুনর্ব্যবহারযোগ্য",
   "Only super admins can change the sale hard-delete setting": "শুধুমাত্র সুপার অ্যাডমিনরা সেল হার্ড-ডিলিট সেটিং পরিবর্তন",
   "Finish the pending payment correction before closing this register.": "এই রেজিস্টারটি বন্ধ করার আগে মুলতুবি অর্থ সংশোধন শেষ করুন",
-  "Finish the pending payment correction first.": "প্রথমে মুলতুবি পেমেন্ট সংশোধন শেষ করুন।"
+  "Finish the pending payment correction first.": "প্রথমে মুলতুবি পেমেন্ট সংশোধন শেষ করুন।",
+  "Bill correction saved.": "বিল সংশোধন সংরক্ষিত",
+  "Review the paid bill correction before saving.": "সঞ্চয় করার আগে প্রদত্ত বিল সংশোধন পর্যালো"
 }

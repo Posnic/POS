@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "เปิดใช้งานถังรีไซเคิลก่อนลบยอดขาย",
   "Only super admins can change the sale hard-delete setting": "เฉพาะผู้ดูแลระบบซุปเปอร์เท่านั้นที่สามารถเปลี่ยนการตั้งค่าการลบแบบฮาร์ดลดได้",
   "Finish the pending payment correction before closing this register.": "เสร็จสิ้นการแก้ไขการชำระเงินที่รอดำเนินการก่อนปิดการลงทะเบียนนี้",
-  "Finish the pending payment correction first.": "เสร็จสิ้นการแก้ไขการชำระเงินที่รอดำเนินการก่อน"
+  "Finish the pending payment correction first.": "เสร็จสิ้นการแก้ไขการชำระเงินที่รอดำเนินการก่อน",
+  "Bill correction saved.": "บันทึกการแก้ไขบิลแล้ว",
+  "Review the paid bill correction before saving.": "ตรวจสอบการแก้ไขบิลที่ชำระแล้วก่อนบันทึก"
 }

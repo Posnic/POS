@@ -108,6 +108,7 @@ const branchSchema = new Schema(
     stock_management: { type: Boolean, default: false },
     stock_management_log: { type: Boolean, default: false },
     sale_inline_editor: { type: Boolean, default: false },
+    item_editor_v2: { type: Boolean, default: false },
     printall: { type: Boolean, default: false },
     enable_notification_reminders: { type: Boolean, default: false },
     enable_email_reminders: { type: Boolean, default: false },
@@ -237,6 +238,7 @@ const branchSchema = new Schema(
      * a series for. A shop turns it on, ideally on the first of its own year.
      * See utils/bill-number.js.
      */
+    sales_exact_numeric_codes: { type: Boolean, default: false },
     sales_search_fields: { type: Array, default: null },
     sales_search_display_fields: { type: Array, default: null },
     bill_number_reset: { type: String, default: '' },
@@ -378,6 +380,7 @@ class BranchModel {
       roundOff: { type: 'String', select: true },
       sales_mail: { type: 'String', select: true },
       sales_prefix: { type: 'String', select: true },
+      sales_exact_numeric_codes: { type: 'Boolean', select: true, defaultValue: false },
       sales_search_fields: { type: 'Array', select: true },
       sales_search_display_fields: { type: 'Array', select: true },
       bill_number_reset: { type: 'String', select: true },
@@ -394,6 +397,7 @@ class BranchModel {
       ssl_tls_type: { type: 'String', select: true },
       state: { type: 'String', select: true },
       sale_inline_editor: { type: 'String', select: true },
+      item_editor_v2: { type: 'Boolean', select: true },
       stock_management: { type: 'String', select: true },
       stock_management_log: { type: 'String', select: true },
       store_address: { type: 'String', select: true },

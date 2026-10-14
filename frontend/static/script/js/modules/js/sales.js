@@ -247,7 +247,7 @@ PosnicPro.sales = {
             return;
         }
         PosnicPro.deleteTableRowData(id, 'sales');
-        if (!PosnicPro.deleteConfirmation) $('.removeText').text(PosnicPro.i18n.t('lang_sale_hard_delete_confirm', 'Hard delete removes this sale from Sales History and moves its data to Recycle Bin.'));
+        if (!PosnicPro.deleteConfirmation) $('.removeText').text(PosnicPro.i18n.t('lang_sale_hard_delete_confirm', 'Hard delete removes this sale from Sales History and moves its data to Recycle Bin.') + ' ' + PosnicPro.i18n.t('lang_sale_delete_stock_warning', 'Stock will be added back for inventory-tracked items. Untracked items are not changed.'));
     },
     showPdf: function (id) {
         PosnicPro.sales.view.salesPdf(id);
@@ -543,7 +543,10 @@ PosnicPro.sales = {
             /* Suggestions come from the customers this till already uses. */
             typeahead: 'customer',
             typeaheadField: 'customer_name',
-            onChange: function () {}
+            onChange: function () { PosnicPro.sales.loadHistory(1); }
+        });
+        $('#sales_quick_dates').off('click.quickDate').on('click.quickDate', '[data-sales-date]', function () {
+            $('#sales_filter_search .lf-preset').val($(this).attr('data-sales-date')).trigger('change');
         });
         PosnicPro.listSort.mount('sales', {
             options: [
@@ -675,9 +678,13 @@ PosnicPro.sales = {
             $('<button type="button" class="btn btn-sm btn-light border">').text(label + ' ×').attr('aria-label', 'Remove ' + label).on('click', function () { remove(); PosnicPro.sales.loadHistory(1); }).appendTo(host);
         };
         var mounted = PosnicPro.listFilter._mounted && PosnicPro.listFilter._mounted.sales;
+        $('#sales_quick_dates [data-sales-date]').each(function () {
+            var selected = !!mounted && mounted.state.preset === $(this).attr('data-sales-date');
+            $(this).toggleClass('btn-primary', selected).toggleClass('btn-outline-primary', !selected).attr('aria-pressed', String(selected));
+        });
         if (mounted) {
             if (mounted.state.search) add(mounted.state.search, function () { mounted.state.search = ''; PosnicPro.listFilter.render('sales'); });
-            if (mounted.state.preset !== 'all') add(mounted.state.preset, function () { mounted.state.preset = 'all'; mounted.state.from = null; mounted.state.to = null; PosnicPro.listFilter.render('sales'); });
+            if (mounted.state.preset !== 'all') add($('#sales_filter_search .lf-preset option:selected').text() || mounted.state.preset, function () { mounted.state.preset = 'all'; mounted.state.from = null; mounted.state.to = null; PosnicPro.listFilter.render('sales'); });
         }
         ['staff', 'device', 'source', 'table', 'period'].forEach(function (field) {
             var input = $('#sales_history_' + field);
@@ -958,7 +965,7 @@ PosnicPro.sales = {
         var footer = '<div class="q-footer">';
         footer += '<div class="q-block"><div class="q-label"><lang class="lang_payment_2">Payment</lang></div>'
             + (PosnicSalePayments.rows(d).length
-                ? '<table class="sale-payment-breakdown" style="width:100%;min-width:200px;font-size:14px"><tbody>' + PosnicSalePayments.rows(d).map(function (row) {
+                ? '<table class="sale-payment-breakdown" style="width:auto;font-size:14px"><tbody>' + PosnicSalePayments.rows(d).map(function (row) {
                     return '<tr><td style="padding:4px 20px 4px 0">' + esc(row.method) + '</td><td style="text-align:right;white-space:nowrap;font-weight:600">' + money(row.amount) + '</td></tr>';
                 }).join('') + '</tbody></table>'
                 : '<div>' + esc(d.payment_mode || '-') + '</div>')
@@ -1018,7 +1025,11 @@ PosnicPro.sales = {
             + (unpaid && !cancelled
                 ? '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i><lang class="lang_settlement">Take Payment</lang></button>'
                 : '')
-            + '<button type="button" class="btn btn-sm btn-light" data-module="sales" data-access="write" data-toggle="tooltip" title="Edit this bill" data-t-title="lang_edit_this_bill" aria-label="Edit" data-t-aria-label="lang_edit_title" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
+            + '<div class="btn-group" data-sale-edit-menu data-module="sales" data-access="write">'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Edit" data-t-aria-label="lang_edit_title"><i class="feather icon-edit-2 mr-1"></i><lang class="lang_edit_title">Edit</lang></button>'
+            + '<div class="dropdown-menu dropdown-menu-right" data-sale-edit-actions>'
+            + '<button type="button" class="dropdown-item" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-2"></i><lang class="lang_edit_this_bill">Edit this bill</lang></button>'
+            + '</div></div>'
             + '<div class="btn-group">'
             + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_share">Share</lang></button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
@@ -1035,7 +1046,7 @@ PosnicPro.sales = {
                     + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_tab_more">More</lang></button>'
                     + '<div class="dropdown-menu dropdown-menu-right">'
                     + '<a class="dropdown-item" data-module="sales" data-access="write" href="javascript:void(0)" onclick="hasher.setHash(\'sales/' + esc(id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
-                    + (PosnicPro.local.get('usertype') === 'super_admin' && PosnicPro.local.get('allow_sale_hard_delete') === 'true' ? '<a class="dropdown-item text-danger" data-module="sales" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.sales.showDelete(\'' + esc(id) + '\');"><i class="feather icon-trash-2 mr-2"></i><lang class="lang_delete">Delete</lang></a>' : '')
+                    + (PosnicPro.local.get('usertype') === 'super_admin' && PosnicPro.local.get('allow_sale_hard_delete') === 'true' ? '<a class="dropdown-item text-danger" data-module="sales" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.sales.showDelete(\'' + esc(id) + '\');"><i class="feather icon-trash-2 mr-2"></i><lang class="lang_delete_sale">Delete sale</lang></a>' : '')
                     + '</div></div>'
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'
@@ -1682,7 +1693,7 @@ PosnicPro.sales = {
         }
 
         // Auto-trigger weight reading for weight-based items
-        PosnicPro.sales.checkAutoWeightTrigger(params);
+        if (!params._quantityConfirmed) PosnicPro.sales.checkAutoWeightTrigger(params);
     },
     customerViewDisplay: function () {
         //PosnicPro.customerview.customer_display_update();
@@ -1837,7 +1848,7 @@ PosnicPro.sales = {
         }
         PosnicPro.sales.customerViewDisplay();
     },
-    openTenderModel: function (methodsReady) {
+    openTenderModel: function (methodsReady, focusTender) {
         if (!PosnicPro.sales.paymentOnlyMode && PosnicPro.sales.saleProcess !== 'KOT' && PosnicPro.saleExtensions?.dispatch('checkout')) return;
 
         // Load methods from this till's API each time. Startup may still be
@@ -1855,7 +1866,7 @@ PosnicPro.sales = {
                 if (!response || response.type !== 'success' || !Array.isArray(response.data)) { failMethods(); return; }
                 PosnicPro.configPaymentType = response.data.map(function (row) { return { payment_value: row.payment_value, enabled: row.enabled !== false }; });
                 if (window.location.hash !== paymentRoute || PosnicPro.sales.editSaleId !== paymentSale) return;
-                PosnicPro.sales.openTenderModel(true);
+                PosnicPro.sales.openTenderModel(true, focusTender);
             }, failMethods);
             return;
         }
@@ -2321,6 +2332,7 @@ PosnicPro.sales = {
             $('.tables-list-hide-show').show();
             $('#infobar-settings-sidebar-tender-details').show();
             if (PosnicPro.askposnic) PosnicPro.askposnic.checkoutPaymentReady();
+            if (focusTender) $('#tendered_amount').focus();
         }
     },
     paymentMethodEnabled: function (name) {
@@ -5226,7 +5238,23 @@ PosnicPro.sales.editSale = {
                 loader.find(".loadingSpinner:first").remove();
             });
             };
-            submitEditSale();
+            var savedBill = PosnicPro.sales.EditRecentSaleParams;
+            if ((savedBill.captain_payment_plan || savedBill.paid_bill_corrected) && savedBill.payment_status === 'Paid') {
+                if (!window.PosnicPaymentCorrection) {
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_reload_this_page_to_review_the_paid_bill_c', 'Reload this page to review the paid bill correction.'));
+                    return false;
+                }
+                loader.find(".loadingSpinner:first").remove();
+                PosnicPaymentCorrection.reviewBillEdit(savedBill, dataEdit, function (correction) {
+                    var signature = JSON.stringify(dataEdit);
+                    var previous = PosnicPro.sales._paidBillEditRetry;
+                    if (previous && previous.sale === SalesDocumentId && previous.signature === signature) correction = previous.correction;
+                    else PosnicPro.sales._paidBillEditRetry = {sale:SalesDocumentId,signature:signature,correction:correction};
+                    dataEdit.paid_bill_correction = correction;
+                    paramsEdit.data = JSON.stringify(dataEdit);
+                    submitEditSale();
+                });
+            } else submitEditSale();
             return false;
         }
     }
@@ -8652,6 +8680,10 @@ PosnicPro.sales.recentMenu = {
         });
         if (PosnicPro.sales.renderCharges) PosnicPro.sales.renderCharges();
         PosnicPro.sales.EditRecentSaleParams = {
+            recorded_bill: Object.freeze({ sales_total: result.sales_total, updated_date: result.order_revision }),
+            captain_payment_plan: result.captain_payment_plan,
+            paid_bill_corrected: !!(result.paid_bill_corrections && result.paid_bill_corrections.length),
+            updated_date: result.updated_date,
             outlet_id: result.outlet_id,
             outlet_snapshot: result.outlet_snapshot,
 
@@ -11053,8 +11085,27 @@ if (!PosnicPro.sales._sharedBarcodeEnterBound) {
     PosnicPro.sales._sharedBarcodeEnterBound = true;
     document.addEventListener('keydown', function (event) {
         var input = event.target;
-        if (event.key !== 'Enter' || !input || input.id !== 'sales_new_item_name') { return; }
+        if (!input || input.id !== 'sales_new_item_name') { return; }
+        // Scanner detection buffers characters before putting them in the input.
+        // Its terminating Enter must never open payment for an apparently empty box.
+        if (event.key && event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+            PosnicPro.sales._searchScanPending = true;
+        }
+        if (event.key !== 'Enter' || event.isComposing || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) { return; }
         var code = String(input.value || '').trim();
+        if (!code && !PosnicPro.sales._searchScanPending) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            if (event.repeat || PosnicPro.sales._loadingPaymentMethods ||
+                PosnicPro.sales.submissionInProgress || PosnicPro.sales.saleProcess === 'KOT' ||
+                !$('#sales_new_item_name').is(':visible') ||
+                $('#infobar-settings-sidebar-tender-details').hasClass('sidebarview') ||
+                !$('.salesBalanceAmount .custom_balance').is(':visible') ||
+                !$('#sales_new_items_tbody tr[id^="touch_row_"]').length ||
+                $('.modal.show:visible, .swal2-modal:visible').length) { return; }
+            PosnicPro.sales.openTenderModel(false, true);
+            return;
+        }
         if (!/^\d{7,}$/.test(code)) { return; }
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -11068,10 +11119,12 @@ $('#sales_new_item_name').scannerDetection({
     preventDefault: true,
     endChar: [13],
     onComplete: function (barcode, qty) {
+        PosnicPro.sales._searchScanPending = false;
         validScan = true;
         PosnicPro.sales.addByBarcode(barcode);
     },
     onError: function (string, qty) {
+        PosnicPro.sales._searchScanPending = false;
         $('#sales_new_item_name').val($('#sales_new_item_name').val() + string).trigger('input');
     }
 });
@@ -11650,12 +11703,45 @@ PosnicPro.sugActionRow = function (icon, cls, title, meta) {
         + '<div class="sug-meta">' + meta + '</div></div></div>';
 };
 PosnicPro.sales.askSearchQuantity = function (item, id) {
+    if (id && !item._searchDetailsLoaded) {
+        PosnicPro.sales.itemCache.get(id, function (details) {
+            PosnicPro.sales.askSearchQuantity(Object.assign({}, details, { _searchDetailsLoaded: true }), id);
+        });
+        return;
+    }
+    var weighed = PosnicPro.sales.isWeighedItem && PosnicPro.sales.isWeighedItem(item);
+    var settings = {};
+    try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) { /* manual entry */ }
+    var scaleOn = settings.hardware_weight_machine_enable === true || settings.hardware_weight_machine_enable === 'true';
+    var readScale = weighed && scaleOn && window.WeightBridge && window.WeightBridge.isAvailable();
+    var request = PosnicPro.sales._searchQuantityRequest = (PosnicPro.sales._searchQuantityRequest || 0) + 1;
     swal({
         title: PosnicPro.i18n.t('lang_quantity', 'Quantity'),
-        text: item.item_name || item.name || '', input: 'text', inputValue: '1', animation: false,
+        text: item.item_name || item.name || '', input: 'text', inputValue: readScale ? '' : '1', animation: false,
         inputAttributes: { min: '0.001', max: '100000', step: 'any', inputmode: 'decimal' },
         showCancelButton: true,
-        onOpen: function () { setTimeout(function () { var input = document.querySelector('.swal2-input'); if (input) { input.focus(); input.select(); } }, 0); },
+        onOpen: function () {
+            var input = document.querySelector('.swal2-input');
+            if (!input) return;
+            var edited = false;
+            input.addEventListener('input', function () { edited = true; });
+            $(input).off('keydown.salesQuantity').on('keydown.salesQuantity', function (event) {
+                if (event.key !== 'Tab' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (!event.originalEvent || !event.originalEvent.repeat) swal.clickConfirm();
+            });
+            setTimeout(function () { if (input.isConnected) { input.focus(); input.select(); } }, 0);
+            if (readScale) {
+                window.WeightBridge.getCurrentWeight({ stableOnly: true }).then(function (weight) {
+                    // A cancelled/replaced dialog or a manual edit owns its quantity.
+                    if (request !== PosnicPro.sales._searchQuantityRequest || edited || !input.isConnected || document.querySelector('.swal2-input') !== input) return;
+                    if (typeof weight !== 'number' || !Number.isFinite(weight) || weight <= 0 || weight > 100000) return;
+                    input.value = weight.toFixed(3);
+                    swal.clickConfirm();
+                }).catch(function () { /* Leave manual quantity entry available. */ });
+            }
+        },
         confirmButtonText: PosnicPro.i18n.t('lang_add_to_sale', 'Add to sale'),
         inputValidator: function (value) {
             return new Promise(function (resolve, reject) {
@@ -11664,6 +11750,8 @@ PosnicPro.sales.askSearchQuantity = function (item, id) {
             });
         }
     }).then(function (result) {
+        if (request !== PosnicPro.sales._searchQuantityRequest) return;
+        PosnicPro.sales._searchQuantityRequest++;
         if (!result || result.dismiss) { $('#sales_new_item_name').focus(); return; }
         var qty = Number(typeof result === 'string' || typeof result === 'number' ? result : result.value);
         if (!Number.isFinite(qty) || qty <= 0 || qty > 100000) return;
@@ -11673,10 +11761,10 @@ PosnicPro.sales.askSearchQuantity = function (item, id) {
                 PosnicPro.alert('error', PosnicPro.i18n.t('lang_some_items_are_out_of_stock', 'Some items are out of stock.'));
                 $('#sales_new_item_name').focus(); return;
             }
-            PosnicPro.sales.addSalesLineItems(Object.assign({}, details, { item_quantity: qty }));
+            PosnicPro.sales.addSalesLineItems(Object.assign({}, details, { item_quantity: qty, _quantityConfirmed: true }));
             if (!$('.modal.show:visible, .swal2-modal:visible').length) $('#sales_new_item_name').focus();
         }
-        if (id) PosnicPro.sales.itemCache.get(id, add); else add(item);
+        add(item);
     }).catch(function () { $('#sales_new_item_name').focus(); });
 };
 
@@ -11716,6 +11804,8 @@ $(function () {
                     if (quickOn) { suggestions.push({ value: query + ' ', data: { __action: 'quick' } }); }
                     suggestions.push({ value: query + '  ', data: { __action: 'create' } });
                 }
+                // A repeated code needs an explicit choice, never a silent first-item match.
+                $('#sales_new_item_name').autocomplete('setOptions', { autoSelectFirst: suggestions.length === 1 && !suggestions[0].data.__action });
                 result["suggestions"] = suggestions;
                 done(result);
             }
@@ -11750,7 +11840,8 @@ $(function () {
 
             }
         },
-        autoSelectFirst: true,
+        autoSelectFirst: false,
+        tabDisabled: false,
         triggerSelectOnValidInput: false,
         formatResult: function (suggestion, currentValue) {
             var act = suggestion.data && suggestion.data.__action;

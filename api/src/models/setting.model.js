@@ -583,7 +583,12 @@ class SettingModel extends BaseModel {
         },
       };
 
-      const andConditions = [dateFilter, { document_name: params.table }];
+      // Sync-only deletion markers have no recoverable document body.
+      const andConditions = [
+        dateFilter,
+        { document_name: params.table },
+        { body_discarded: { $ne: true } },
+      ];
 
       if (params.table === 'items' && branchObjectIds.length) {
         // Items may have branch_access array
@@ -642,7 +647,7 @@ class SettingModel extends BaseModel {
       }
 
       const cursor = await collection.find(filter, {
-        sort: { document_backup_date: -1 },
+        sort: { document_backup_date: -1, _id: -1 },
         skip: (page - 1) * limit,
         limit,
       });
@@ -1192,6 +1197,12 @@ class SettingModel extends BaseModel {
   async updateCommonSettings(data = {}) {
     try {
       if (
+        data.sales_exact_numeric_codes !== undefined &&
+        typeof data.sales_exact_numeric_codes !== 'boolean'
+      ) {
+        return { status: false, data: null, message: 'Exact numeric search must be on or off' };
+      }
+      if (
         data.allow_sale_hard_delete !== undefined &&
         String(this.user?.usertype || this.user?.role || '').toLowerCase() !== 'super_admin'
       ) {
@@ -1587,6 +1598,9 @@ class SettingModel extends BaseModel {
         header_print: data.header_print,
         footer_print: data.footer_print,
         sale_inline_editor: saleInlineEditor,
+        ...(data.item_editor_v2 !== undefined
+          ? { item_editor_v2: this.toBoolean(data.item_editor_v2) }
+          : {}),
         ...(saleQuickEdit !== undefined
           ? { sale_quick_edit_enable: String(saleQuickEdit) === 'true' }
           : {}),
@@ -1733,6 +1747,7 @@ class SettingModel extends BaseModel {
         header_print: 'header_print',
         footer_print: 'footer_print',
         sale_inline_editor: 'sale_inline_editor',
+        item_editor_v2: 'item_editor_v2',
         enable_multi_payment: 'enable_multi_payment',
         table_options: 'table_options',
         hardware_weight_machine_enable: 'hardware_weight_machine_enable',
@@ -1766,6 +1781,18 @@ class SettingModel extends BaseModel {
         );
       }
       updateFields.updated_date = new Date();
+
+      // Core Settings uses this legacy endpoint. Keep the grouped preference
+      // used by Sales and its synchronized branch mirror in agreement.
+      if (data.sales_exact_numeric_codes !== undefined) {
+        const SettingsRepository = require('../repositories/settings.repository');
+        const saved = await new SettingsRepository().saveGroup(
+          'preferences',
+          { sales_exact_numeric_codes: data.sales_exact_numeric_codes },
+          { branchId: this.branchId, licenseId: this.licenseId }
+        );
+        if (!saved.status) return saved;
+      }
 
       // Update branch collection (matches PHP $set logic line 389-434)
       await branchCollection.updateOne(
@@ -4642,6 +4669,14 @@ class SettingModel extends BaseModel {
         };
       }
 
+      if (restoreDocs.some((doc) => doc.body_discarded === true)) {
+        return {
+          status: false,
+          data: null,
+          message: 'No documents found for restoration',
+        };
+      }
+
       // Restore each document to its original collection
       let restoredCount = 0;
       const errors = [];
@@ -4711,7 +4746,14 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       });
 
-      if (param) {
+      if (param && param.body_discarded !== true) {
+        // Reuse the sale detail adapter for Captain and legacy item/date shapes,
+        // using this authorized backup, never a current sale with the same ID.
+        if (param.document_name === 'sales') {
+          return require('../repositories/sale.repository').getLegacyDetails(id, {
+            snapshot: param,
+          });
+        }
         return {
           status: true,
           data: BaseModel.simplifyFields(param),

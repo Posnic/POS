@@ -332,6 +332,7 @@ async function main() {
   });
 
   server.listen(PORT, HOST, () => {
+    server.once('close', require('./src/services/price-schedule-worker').start({ tenants: () => byHost.values() }));
     const stopNotifications =
       require('./src/services/business-notification-worker').startNotifications({
         tenants: () => [...byHost.values()],

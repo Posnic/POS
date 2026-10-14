@@ -296,7 +296,7 @@ class SalesRepository {
     return Model.paginate(filter, options);
   }
 
-  async getLegacyDetails(id, { SaleModel } = {}) {
+  async getLegacyDetails(id, { SaleModel, snapshot } = {}) {
     try {
       if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return { status: false, data: null, message: 'Invalid sale id' };
@@ -315,7 +315,7 @@ class SalesRepository {
         ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
       };
 
-      let saleDoc = await salesCollection.findOne(filter);
+      let saleDoc = snapshot || (await salesCollection.findOne(filter));
 
       // Fallback for deleted sales: if the sale is not present in the live
       // `sales` collection, try to load a backup copy from the
@@ -326,6 +326,8 @@ class SalesRepository {
         const recycleFilter = {
           _id: saleObjectId,
           document_name: 'sales',
+          body_discarded: { $ne: true },
+          ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
           ...(BaseModel.license ? { license: BaseModel.license } : {}),
         };
 
@@ -1597,6 +1599,7 @@ class SalesRepository {
             null;
         } else {
           dateSource =
+            doc.settled_at ||
             doc.date ||
             doc.created_date ||
             doc.createdAt ||
@@ -1612,6 +1615,17 @@ class SalesRepository {
             normalized.created_date = formatDate(doc.created_date || doc.createdAt || dateSource, {
               timeZone: tz,
             });
+            // A paid receipt carries the saved settlement clock, not the kitchen's
+            // order clock or the time a later correction/reprint was requested.
+            normalized.receipt_date = formatDate(
+              (process === 'PartialReturn' || process === 'FullReturn' ? dateSource : null) ||
+                doc.settled_at ||
+                (normalized.payment_status === 'Paid' ? doc.date : null) ||
+                doc.created_date ||
+                doc.createdAt ||
+                dateSource,
+              { timeZone: tz }
+            );
             normalized.receipt_date_order = 'mdy';
           }
         }
@@ -1892,7 +1906,7 @@ class SalesRepository {
           }
         }
 
-        const stockLogStatus = !!(branchSettings && branchSettings.stock_management_log);
+        const stockLogStatus = [true, 'true'].includes(branchSettings?.stock_management_log);
 
         const items = Array.isArray(doc.items) ? doc.items : [];
         const salesIdentifier = doc.sales_id || doc.invoice_number || (saleId && saleId.toString());
@@ -1909,7 +1923,7 @@ class SalesRepository {
                   ? item.quantity
                   : 0;
             const itemQty = Number(quantity || 0);
-            if (!itemQty || itemQty <= 0) continue;
+            if (!Number.isFinite(itemQty) || itemQty <= 0) continue;
 
             let itemObjectId = null;
             if (
@@ -1926,23 +1940,24 @@ class SalesRepository {
             if (!itemObjectId) continue;
 
             const itemFilter = {
-              _id: itemObjectId,
+              _id: { $eq: itemObjectId },
             };
             if (licenseId) {
-              itemFilter.license = licenseId;
+              itemFilter.license = { $eq: licenseId };
             }
 
             const itemDoc = await itemsCollection.findOne(itemFilter);
-            if (!itemDoc) continue;
+            if (!itemDoc || ![true, 'true'].includes(itemDoc.track_inventory)) continue;
 
             const openingBalance = Number(itemDoc.available_quantity || 0);
             const availableQuantity = openingBalance + itemQty;
 
-            // PHP checks: $itemdocuments['track_inventory'] === true (boolean or string 'true')
-            if (
-              stockLogStatus &&
-              (itemDoc.track_inventory === true || itemDoc.track_inventory === 'true')
-            ) {
+            // Restore tracked stock even when the optional stock log is disabled.
+            await itemsCollection.updateOne(itemFilter, {
+              $inc: { available_quantity: itemQty },
+              $set: { updated_date: now },
+            });
+            if (stockLogStatus) {
               const countStr = String(itemQty);
 
               await stockLogsRepository.createStockLog({
@@ -1961,12 +1976,6 @@ class SalesRepository {
                 action: 'Add',
                 changed_by_userid: BaseModel.loggedUser,
                 changed_by: BaseModel.loggedUserName || 'System',
-              });
-
-              await itemsCollection.updateOne(itemFilter, {
-                $set: {
-                  available_quantity: availableQuantity,
-                },
               });
             }
           } catch (e) {
@@ -8946,7 +8955,12 @@ class SalesRepository {
          offer on the food, and a shop that ends up paying somebody to collect
          an order has been given a rule it did not write. */
       const afterCoupon = Math.max(0, round(foodTotal - couponDiscount));
-      const finalTotal = round(afterCoupon + deliveryFee);
+      const rounded = require('../services/sale-header').roundSaleTotal(
+        round(afterCoupon + deliveryFee),
+        branchDoc.roundOff,
+        monetary.currencyDigits
+      );
+      const finalTotal = rounded.total;
 
       /*
        * What the venue is owed, worked out once and stored on the order.
@@ -9225,6 +9239,8 @@ class SalesRepository {
         subtotal,
         total: finalTotal,
         sales_total: finalTotal,
+        round_off: rounded.roundOff,
+        sales_round_off: rounded.roundOff,
         sales_sub_total: subtotal,
         tax: totalTax,
         discount: round(itemDiscountTotal + discountAmt + couponDiscount),
@@ -11294,6 +11310,11 @@ class SalesRepository {
         0
       );
       const salesTotal = itemsSub - extraDiscountAmount + chargeTotal + chargeTax;
+      const rounded = require('../services/sale-header').roundSaleTotal(
+        salesTotal,
+        shop?.roundOff,
+        monetary.currencyDigits
+      );
       taxTotal += chargeTax;
       const mongoDate = new Date();
       const note =
@@ -11322,9 +11343,11 @@ class SalesRepository {
         subtotal: baseSubtotal,
         sales_sub_total: baseSubtotal,
         items_subtotal: baseSubtotal,
-        sales_total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
-        total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
-        items_total: Money.fromMinor(Money.toMinor(salesTotal, monetary), monetary),
+        sales_total: rounded.total,
+        total: rounded.total,
+        items_total: rounded.total,
+        round_off: rounded.roundOff,
+        sales_round_off: rounded.roundOff,
         tax: taxTotal,
         discount: itemDiscountTotal,
         return_tax: 0,
@@ -11425,6 +11448,7 @@ class SalesRepository {
             tax: updateFields.tax,
             discount: updateFields.discount,
             total_amount: updateFields.sales_total,
+            round_off: updateFields.round_off,
             currency: monetary,
             revision: require('node:crypto')
               .createHash('sha256')

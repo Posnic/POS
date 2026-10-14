@@ -1002,7 +1002,9 @@ class SalesController extends BaseController {
       // Enrich the context with branch-specific settings via the service
       context = await salesService.enrichSaleContext(context);
 
-      const result = await salesService.processSale(payload, id, 'Edit', context);
+      const result = payload.paid_bill_correction
+        ? await require('../services/paid-bill-edit').amend(req, payload, context)
+        : await salesService.processSale(payload, id, 'Edit', context);
 
       if (!result || typeof result !== 'object') {
         return this.error(res, ERROR_MESSAGES.FAILED_TO_UPDATE_SALE_UNEXPECTED, 500);

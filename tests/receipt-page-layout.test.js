@@ -5,14 +5,14 @@ const { JSDOM } = require('jsdom');
 const { fitDocument } = require('../src/receipt-page-layout');
 
 test('thermal paper follows receipt content, never the enclosing window height', () => {
-    for (const format of ['58', '80']) {
+    for (const format of ['58', '80', '112']) {
         const dom = new JSDOM('<article class="rd-document" data-receipt-design="' + format + '"></article>');
         const doc = dom.window.document;
         let height = 400;
         doc.querySelector('article').getBoundingClientRect = () => ({ height });
         Object.defineProperty(doc.body, 'scrollHeight', { value: 3000 });
         const fitted = fitDocument(doc);
-        const printableWidth = format === '80' ? 72 : 48;
+        const printableWidth = ({ '58': 48, '80': 72, '112': 104 })[format];
         assert.equal(fitted.width, printableWidth * 1000);
         assert.equal(fitted.height, 106100);
         assert.match(doc.querySelector('#rd-fitted-paper').textContent, new RegExp('@page\\{size:' + printableWidth + 'mm 106.1mm;margin:0;'));
@@ -33,7 +33,7 @@ test('the serialized Electron fitter preserves content-sized paper', () => {
 });
 
 test('browser dialogs use the selected printer paper without centring a smaller CSS page', () => {
-    for (const format of ['58', '80']) {
+    for (const format of ['58', '80', '112']) {
         const dom = new JSDOM('<article class="rd-document" data-receipt-design="' + format + '"></article>');
         const doc = dom.window.document;
         doc.querySelector('article').getBoundingClientRect = () => ({ height: 400 });
@@ -42,7 +42,7 @@ test('browser dialogs use the selected printer paper without centring a smaller 
         const css = doc.querySelector('#rd-fitted-paper').textContent;
         assert.match(css, /@page\{size:auto;margin:0;\}/);
         assert.doesNotMatch(css, /size:\d/);
-        assert.match(css, new RegExp('width:' + (format === '80' ? 72 : 48) + 'mm!important'));
+        assert.match(css, new RegExp('width:' + (({ '58': 48, '80': 72, '112': 104 })[format]) + 'mm!important'));
         assert.match(css, /\.rd-document\{margin:0!important;\}/);
         assert.equal(result.height, 106100, 'The measured content remains available to desktop callers');
         assert.equal(doc.querySelectorAll('#rd-fitted-paper').length, 1);

@@ -1744,10 +1744,14 @@ class ItemsController extends BaseController {
       await this.ensureContext(req);
       return this.success(
         res,
-        await this.service.repository.priceGrid(req.query, {
-          branchId: this.model.branchId,
-          licenseId: this.model.licenseId,
-        })
+        await this.service.repository.priceGrid(
+          req.query,
+          await require('../services/price-scope').context(
+            req.user,
+            this.model.branchId,
+            this.model.licenseId
+          )
+        )
       );
     } catch (error) {
       return this.error(res, error.message, 400);
@@ -1760,22 +1764,38 @@ class ItemsController extends BaseController {
       if (
         !this.checkPermission(
           'item',
-          ['list', 'status', 'download'].includes(action) ? 'read' : 'write',
+          ['list', 'status', 'download', 'branches'].includes(action) ? 'read' : 'write',
           req.user
         )
       )
         return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
       await this.ensureContext(req);
-      const c = {
-        branchId: this.model.branchId,
-        licenseId: this.model.licenseId,
-        userName: req.user.name || req.user.email || '',
-        userId: req.user._id,
-      };
+      const c = await require('../services/price-scope').context(
+        req.user,
+        this.model.branchId,
+        this.model.licenseId
+      );
       const service = require('../services/price-sheet');
       const b = req.body;
       let data;
       switch (action) {
+        case 'prepare':
+          data = await service.prepare(c, b);
+          break;
+        case 'branches':
+          data = c.branches;
+          break;
+        case 'branchCode':
+          if (!this.checkPermission('branch', 'write', req.user))
+            return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+          data = await require('../services/price-scope').setCode(c, b.branchId, b.code);
+          break;
+        case 'configure':
+          data = await service.configure(c, b.jobId, b);
+          break;
+        case 'cancel':
+          data = await service.cancel(c, b.jobId, b);
+          break;
         case 'create':
           data = await service.create(c, b);
           break;
@@ -1792,7 +1812,7 @@ class ItemsController extends BaseController {
           data = await service.processBatch(c, b.jobId, b.skipInvalid === true);
           break;
         case 'list':
-          data = await service.list(c);
+          data = await service.list(c, b);
           break;
         case 'import':
           data = await service.importSheet(
@@ -1806,7 +1826,7 @@ class ItemsController extends BaseController {
           const csv = b.format === 'csv';
           const buffer = csv ? await wb.csv.writeBuffer() : await wb.xlsx.writeBuffer();
           data = {
-            filename: `prices.${csv ? 'csv' : 'xlsx'}`,
+            filename: `${wb.priceFilename || 'Price-results-' + new Date().toISOString().slice(0, 10)}.${csv ? 'csv' : 'xlsx'}`,
             base64: Buffer.from(buffer).toString('base64'),
           };
           break;

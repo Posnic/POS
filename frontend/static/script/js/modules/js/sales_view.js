@@ -103,7 +103,7 @@ PosnicPro.sales.view = {
         var paymentCurrency = PosnicPro.local.get('currencySign') || '';
         var escapePayment = function (value) { return $('<span>').text(value).html(); };
         $('#sale_view_payment_mode').html(paymentRows.length
-            ? '<table class="table table-borderless table-sm mb-0"><tbody>' + paymentRows.map(function (row) {
+            ? '<table class="table table-borderless table-sm mb-0" style="width:auto"><tbody>' + paymentRows.map(function (row) {
                 return '<tr><td>' + escapePayment(row.method) + '</td><td class="text-right" style="white-space:nowrap">' + escapePayment(paymentCurrency) + ' ' + row.amount.toFixed(2) + '</td></tr>';
             }).join('') + '</tbody></table>' : escapePayment(data.payment_mode || ''));
 
@@ -1554,7 +1554,7 @@ PosnicPro.sales.view = {
                         '<span style="font-weight:900; letter-spacing:1px;">'
                         + PosnicPro.escapeHtml(docTitle) + '</span>'
                     );
-                    $('.print_date').text(data.created_date);
+                    $('.print_date').text(data.receipt_date || data.created_date || data.date);
                     if (isA4Layout) {
                         var rowHTMLTaxLine = '';
                         var igst = 0;

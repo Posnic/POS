@@ -4,6 +4,9 @@
     const reasons = ['Wrong method selected', 'Cash recorded as UPI', 'UPI recorded as cash',
         'Card recorded incorrectly', 'Mixed payment missed', 'Split amounts entered wrongly', 'Other reason'];
     const messages = [
+        { label: 'Correct recorded bill', t: 'lang_paid_bill_review' },
+        { label: 'Previously recorded', t: 'lang_paid_bill_previous' },
+        { label: 'Corrected bill', t: 'lang_paid_bill_corrected' },
         { label: 'Already collected', t: 'lang_pc_already_collected' },
         { label: 'Amounts must equal the payment already collected.', t: 'lang_pc_amounts_must_equal_the_payment_already_collected_' },
         { label: 'Back', t: 'lang_pc_back' },
@@ -62,9 +65,9 @@
         const amounts = Object.fromEntries(data.payments.map(r => [data.methods.find(m => m.toLowerCase() === r.method.toLowerCase()) || r.method, String(r.amount)]));
         const button = (label, attr) => '<button type="button" class="btn btn-outline-primary pc-choice" ' + attr + '>' + esc(t(label)) + '</button>';
         const $modal = $('<div id="payment-correction" class="modal fade" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="pc-title"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">'
-            + '<div class="modal-header"><div><h4 id="pc-title">' + esc(t('Correct payment method')) + '</h4><span>' + esc(data.bill) + '</span></div><button type="button" class="btn btn-light pc-close" data-dismiss="modal" aria-label="' + esc(t('Close')) + '">×</button></div>'
-            + '<div class="modal-body"><p>' + esc(t('Already collected')) + ': <strong>' + esc(money(total)) + '</strong><br>' + esc(t('Recorded as')) + ': ' + breakdown(data.payments) + '</p>'
-            + '<p class="text-muted">' + esc(t('Correct the record only. No money is collected or refunded.')) + '</p>'
+            + '<div class="modal-header"><div><h4 id="pc-title">' + esc(t('Correct payment method')) + '</h4><span class="pc-bill">' + esc(data.bill) + '</span></div><button type="button" class="btn btn-light pc-close" data-dismiss="modal" aria-label="' + esc(t('Close')) + '">×</button></div>'
+            + '<div class="modal-body"><p class="pc-summary">' + esc(t('Already collected')) + ': <strong>' + esc(money(total)) + '</strong><br>' + esc(t('Recorded as')) + ': ' + breakdown(data.payments) + '</p>'
+            + '<p class="pc-note text-muted">' + esc(t('Correct the record only. No money is collected or refunded.')) + '</p>'
             + '<div class="pc-edit"><h5>' + esc(t('Payment method')) + '</h5><div class="pc-buttons">'
             + data.methods.concat(data.methods.length > 1 ? ['Mixed'] : []).map((m, i) => button(m, 'data-method="' + i + '"')).join('') + '</div>'
             + '<div class="pc-amounts">' + data.methods.map((m, i) => '<label>' + esc(m) + '<input class="form-control" type="text" inputmode="decimal" data-amount="' + i + '" value="' + esc(amounts[m] || '') + '" placeholder="0" autocomplete="off"></label>').join('') + '</div>'
@@ -73,7 +76,6 @@
             + '<label class="pc-other">' + esc(t('Other reason')) + '<textarea class="form-control" rows="3" maxlength="300"></textarea></label></div>'
             + '<div class="pc-review" hidden></div><p class="pc-error text-danger" role="alert"></p></div>'
             + '<div class="modal-footer"><button type="button" class="btn btn-light pc-back">' + esc(t('Back')) + '</button><button type="button" class="btn btn-light pc-cancel" data-dismiss="modal">' + esc(t('Cancel')) + '</button><button type="button" class="btn btn-primary pc-next">' + esc(t('Review correction')) + '</button><button type="button" class="btn btn-primary pc-save" hidden>' + esc(t('Save correction')) + '</button></div></div></div></div>');
-        if (!$('#payment-correction-style').length) $('head').append('<style id="payment-correction-style">#payment-correction .btn{min-height:50px;min-width:50px;font-size:16px;white-space:normal}#payment-correction .pc-buttons{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 20px}#payment-correction .pc-choice{flex:1 0 130px;padding:12px 18px}#payment-correction .pc-reasons .pc-choice{flex:1 0 200px}#payment-correction .pc-amounts{display:flex;flex-wrap:wrap;gap:14px}#payment-correction .pc-amounts label{flex:1 0 140px}#payment-correction input{min-height:50px;font-size:18px}#payment-correction .modal-body{max-height:70vh;overflow:auto}#payment-correction .pc-other{width:100%}#payment-correction .pc-review{font-size:18px;line-height:1.7}#payment-correction [hidden]{display:none!important}</style>');
         $('body').append($modal);
         function values() {
             if (selected !== 'Mixed') return [{ method: selected, amount: total / factor }];
@@ -142,10 +144,21 @@
         paint(); $modal.modal({ backdrop: 'static', keyboard: false, show: true });
     }
     function attach(id, sale) {
-        if (sale.payment_status !== 'Paid') return;
+        $('#sales_doc [data-paid-bill-history]').remove();
+        if (sale.paid_bill_corrections && sale.paid_bill_corrections.length) {
+            const $audit = $('<details class="card p-3 mb-3" data-paid-bill-history><summary></summary><div></div></details>');
+            $audit.find('summary').text(t('Correct recorded bill'));
+            sale.paid_bill_corrections.slice().reverse().forEach(entry => {
+                $('<p class="mt-3 mb-0">').text(new Date(entry.at).toLocaleString() + ' · ' + entry.actor + ' · ' + entry.reason).appendTo($audit.find('div'));
+                $('<p>').text(entry.before.sales_total + ' → ' + entry.after.sales_total + ' · ' + entry.after.payment_mode).appendTo($audit.find('div'));
+            });
+            $('#sales_doc .doc-scroll').prepend($audit);
+        }
+        $('#sales_doc [data-correct-payment]').remove();
+        if (sale.payment_status !== 'Paid' || /cancel|return|refund/i.test(sale.sale_process || '')) return;
         api(id).then(data => {
             if (PosnicPro.sales._correctionSaleId !== id) return;
-            if (data.enabled) $('<button type="button" class="btn btn-light" style="min-height:48px" data-module="sales" data-access="write">').text(t('Correct payment')).on('click', () => open(id)).insertBefore('#sales_doc .p-doc-toolbar .ml-auto');
+            if (data.enabled) $('<button type="button" class="dropdown-item" data-correct-payment data-module="sales" data-access="write">').text(t('Correct payment')).on('click', () => open(id)).appendTo('#sales_doc [data-sale-edit-actions]');
             if (data.history.length) {
                 const $history = $('<details class="card p-3 mb-3"><summary></summary><div></div></details>');
                 $history.find('summary').text(t('Payment correction history'));
@@ -157,5 +170,24 @@
             }
         }).catch(() => { /* Disabled or no write access: do not offer the workflow. */ });
     }
-    window.PosnicPaymentCorrection = { open, attach };
+    function reviewBillEdit(before, after, save) {
+        before = before.recorded_bill || before;
+        $('#paid-bill-review').remove();
+        const $modal = $('<div id="paid-bill-review" class="modal fade" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="paid-bill-review-title"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h4 id="paid-bill-review-title"><lang class="lang_paid_bill_review">Correct recorded bill</lang></h4><button type="button" class="btn btn-light" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">×</button></div><div class="modal-body"><p><lang class="lang_paid_bill_no_movement">This changes a wrongly recorded bill and payment. No money is collected or refunded.</lang></p><p class="bill-before"></p><p class="bill-after"></p><p><lang class="lang_paid_bill_use_return">If the original money was actually collected, use Return items to record the refund instead.</lang></p><label for="paid-bill-reason"><lang class="lang_pc_reason_for_correction">Reason for correction</lang></label><textarea id="paid-bill-reason" class="form-control" rows="3" maxlength="300"></textarea></div><div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal"><lang class="lang_pc_cancel">Cancel</lang></button><button type="button" class="btn btn-primary" data-save-correction disabled><lang class="lang_pc_save_correction">Save correction</lang></button></div></div></div></div>');
+        const money = amount => (PosnicPro.local.get('currencySign') || '') + ' ' + Number(amount).toFixed(2);
+        $modal.find('.bill-before').text(t('Previously recorded') + ': ' + money(before.sales_total));
+        $modal.find('.bill-after').text(t('Corrected bill') + ': ' + money(after.sales_total) + ' · ' + after.payment_mode);
+        $modal.find('textarea').on('input', function () { $modal.find('[data-save-correction]').prop('disabled', $(this).val().trim().length < 3); });
+        $modal.find('[data-save-correction]').one('click', function () {
+            const reason = $modal.find('textarea').val().trim();
+            if (reason.length < 3) return;
+            $(this).prop('disabled', true);
+            const request = { id: window.crypto.randomUUID(), reason, originalTotal: Number(before.sales_total), updatedAt: new Date(before.updated_date).toISOString() };
+            $modal.modal('hide');
+            save(request);
+        });
+        $modal.on('hidden.bs.modal', () => $modal.remove());
+        $('body').append($modal); if (PosnicPro.i18n.apply) PosnicPro.i18n.apply($modal[0]); $modal.modal({backdrop:'static',keyboard:false,show:true});
+    }
+    window.PosnicPaymentCorrection = { open, attach, reviewBillEdit };
 })(jQuery);

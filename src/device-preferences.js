@@ -209,6 +209,8 @@ function validateDocumentPrintSettings(value) {
   const seen = new Set();
   for (const target of value.sales) {
     if (!target || !name(target.name) || !target.name.trim() || !PAPER_SIZES[target.pageSize] || !copies(target.copies)) throw new Error('Invalid sales printer settings.');
+    if (target.printMode !== undefined && !['fast', 'exact', 'driver'].includes(target.printMode)) throw new Error('Invalid receipt print mode.');
+    if (target.printMode === 'fast' && !['58mm', '80mm', '112mm'].includes(target.pageSize)) throw new Error('Fast receipt requires thermal paper.');
     const key = target.name.trim().toLowerCase();
     if (seen.has(key)) throw new Error('Choose each sales printer once. Use Copies for additional copies.');
     seen.add(key);

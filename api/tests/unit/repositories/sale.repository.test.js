@@ -901,6 +901,59 @@ describe('SalesRepository', () => {
   });
 
   describe('getLegacyDetails', () => {
+    test.each([
+      ['Paid', '2026-10-14T03:35:00Z', '2026-10-14T03:20:00Z', '09:05 am'],
+      ['Paid', null, '2026-10-14T03:35:00Z', '09:05 am'],
+      ['Unpaid', null, '2026-10-14T03:20:00Z', '08:50 am'],
+      ['Partialy Paid', null, '2026-10-14T03:20:00Z', '08:50 am'],
+    ])(
+      'receipt clock for %s uses saved settlement %s, preserving order time',
+      async (status, settled, date, clock) => {
+        if (!collections.branches) collections.branches = mkCol();
+        collections.branches.findOne.mockResolvedValue({
+          _id: FAKE_BRANCH,
+          time_zone: 'Asia/Kolkata',
+        });
+        const snapshot = {
+          _id: FAKE_ID,
+          branch_id: FAKE_BRANCH,
+          items: [],
+          payment_status: status,
+          created_date: new Date('2026-10-14T03:20:00Z'),
+          date: new Date(date),
+          settled_at: settled ? new Date(settled) : undefined,
+          updated_date: new Date('2026-10-14T05:00:00Z'),
+        };
+        const format = require('../../../src/utils/helpers').formatDate;
+        const realFormat = jest.requireActual('../../../src/utils/helpers').formatDate;
+        format
+          .mockImplementationOnce(realFormat)
+          .mockImplementationOnce(realFormat)
+          .mockImplementationOnce(realFormat);
+        const result = await salesRepository.getLegacyDetails(FAKE_ID, { snapshot });
+        expect(result.status).toBe(true);
+        expect(result.data.receipt_date).toBe('10/14/2026 ' + clock);
+        expect(result.data.created_date).toBe('10/14/2026 08:50 am');
+        expect(snapshot.created_date.toISOString()).toBe('2026-10-14T03:20:00.000Z');
+      }
+    );
+
+    test('renders an authorized recycle snapshot without loading a live sale', async () => {
+      if (!collections.sales) collections.sales = mkCol();
+      collections.sales.findOne.mockClear();
+      const snapshot = {
+        _id: FAKE_ID,
+        branch_id: FAKE_BRANCH,
+        sales_id: 'DELETED-1',
+        items: [],
+        sales_total: 168,
+      };
+      const result = await salesRepository.getLegacyDetails(FAKE_ID, { snapshot });
+      expect(result.status).toBe(true);
+      expect(result.data.sales_id).toBe('DELETED-1');
+      expect(collections.sales.findOne).not.toHaveBeenCalled();
+    });
+
     test('receipt creation time uses the sale branch even after date simplification', async () => {
       if (!collections.sales) collections.sales = mkCol();
       if (!collections.branches) collections.branches = mkCol();
@@ -1130,6 +1183,49 @@ describe('SalesRepository', () => {
       expect(r.status).toBe(false);
       expect(r.message).toBe('No valid IDs provided');
     });
+    test.each([true, false])('restores tracked stock with logging %s', async (logging) => {
+      const saleDoc = {
+        _id: FAKE_ID,
+        branch_id: FAKE_BRANCH,
+        items: [{ item_id: FAKE_ITEM, item_quantity: 2.5 }],
+        partial_check: false,
+      };
+      collections.sales = mkCol();
+      collections.sales.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([saleDoc]) });
+      collections.items = mkCol();
+      collections.items.findOne.mockResolvedValue({
+        available_quantity: 10,
+        track_inventory: true,
+      });
+      collections.branches = mkCol();
+      collections.branches.findOne.mockResolvedValue({ stock_management_log: logging });
+      const result = await salesRepository.deleteSales([FAKE_ID]);
+      expect(result.status).toBe(true);
+      expect(collections.items.updateOne).toHaveBeenCalledWith(expect.any(Object), {
+        $inc: { available_quantity: 2.5 },
+        $set: { updated_date: expect.any(Date) },
+      });
+      const logger = StockLogsRepository.mock.results.at(-1).value;
+      expect(logger.createStockLog).toHaveBeenCalledTimes(logging ? 1 : 0);
+    });
+
+    test('held sales never restore stock', async () => {
+      collections.sales = mkCol();
+      collections.sales.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          {
+            _id: FAKE_ID,
+            sale_process: 'Hold',
+            items: [{ item_id: FAKE_ITEM, item_quantity: 2 }],
+          },
+        ]),
+      });
+      collections.items = mkCol();
+      const result = await salesRepository.deleteSales([FAKE_ID]);
+      expect(result.status).toBe(true);
+      expect(collections.items.updateOne).not.toHaveBeenCalled();
+    });
+
     test('deletes sales successfully', async () => {
       const saleDoc = {
         _id: FAKE_ID,
@@ -1146,6 +1242,7 @@ describe('SalesRepository', () => {
       });
       const r = await salesRepository.deleteSales([FAKE_ID]);
       expect(r.status).toBe(true);
+      expect(collections.items.updateOne).not.toHaveBeenCalled();
     });
   });
 
@@ -1189,6 +1286,45 @@ describe('SalesRepository', () => {
   });
 
   describe('createOnlineOrder', () => {
+    test.each([
+      [true, 95, 0.5],
+      [false, 94.5, 0],
+      [undefined, 94.5, 0],
+    ])('restaurant creation honours saved rounding %s', async (roundOff, total, adjustment) => {
+      collections.branches = mkCol();
+      collections.branches.findOne.mockResolvedValue({
+        _id: FAKE_BRANCH,
+        name: 'Main',
+        roundOff,
+        online_ordering: { store_id: 'SHOP1', mode: 'order' },
+      });
+      collections.sales = mkCol();
+      collections.sales.insertOne.mockResolvedValue({ insertedId: FAKE_ID });
+      collections.items = mkCol();
+      collections.items.findOne.mockResolvedValue({
+        _id: FAKE_ITEM,
+        branch_id: FAKE_BRANCH,
+        name: 'Paratha',
+        selling_price: 45,
+        tax: 5,
+        tax_type: 'exclusive',
+      });
+      const result = await salesRepository.createOnlineOrder(
+        {
+          branch: FAKE_BRANCH,
+          items: [{ item_id: FAKE_ITEM, item_quantity: 2, item_price: 45 }],
+        },
+        { staffOrder: true }
+      );
+      expect(result.status).toBe(true);
+      expect(collections.sales.insertOne.mock.calls[0][0]).toMatchObject({
+        sales_total: total,
+        total,
+        round_off: adjustment,
+        sales_round_off: adjustment,
+      });
+    });
+
     test.each([
       ['zero-price fish', { selling_price: 0 }, 500],
       ['open-price fish', { selling_price: 100, open_price: true }, 500],

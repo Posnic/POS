@@ -238,6 +238,9 @@
   "Below referral minimum spend": [
     "src/services/loyalty.service.js"
   ],
+  "Bill correction saved.": [
+    "src/services/paid-bill-edit.js"
+  ],
   "Branch Data Exported": [
     "src/models/branch.model.js"
   ],
@@ -815,6 +818,11 @@
   "Error: ": [
     "src/repositories/sale.repository.js"
   ],
+  "Exact numeric search must be on or off": [
+    "src/controllers/settings.controller.js",
+    "src/models/setting.model.js",
+    "src/repositories/settings.repository.js"
+  ],
   "Expense Data Exported": [
     "src/models/expense.model.js"
   ],
@@ -1157,6 +1165,9 @@
   ],
   "Item not found in inventory": [
     "src/models/inventory.model.js"
+  ],
+  "Item not found or selling price is held. Review it in Edit prices.": [
+    "src/repositories/item.repository.js"
   ],
   "Item updated": [
     "src/repositories/item.repository.js"
@@ -1885,6 +1896,9 @@
   ],
   "Review the basket before checkout.": [
     "src/controllers/ask-posnic.controller.js"
+  ],
+  "Review the paid bill correction before saving.": [
+    "src/services/sale.service.js"
   ],
   "Review the remaining work before confirming.": [
     "src/controllers/ask-posnic.controller.js"
