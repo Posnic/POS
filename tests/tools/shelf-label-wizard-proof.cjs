@@ -3,6 +3,7 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const ROOT = path.resolve(__dirname, '../..');
 const puppeteer = require(path.join(ROOT, 'api/node_modules/puppeteer'));
+const THEME = process.env.SHELF_LABEL_THEME || 'github';
 const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label-wizard');
 
 (async () => {
@@ -12,14 +13,16 @@ const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label
     const page = await browser.newPage(), errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.setViewport({ width: 1200, height: 900, deviceScaleFactor: 1 });
-    const html = fs.readFileSync(path.join(ROOT, 'frontend/modules/items.html'), 'utf8');
+    const html = fs.readFileSync(path.join(ROOT, 'frontend/modules/items.html'), 'utf8').replace(/\r\n/g, '\n');
     const start = html.indexOf('<style>\n#view_print_lable');
     const end = html.indexOf('<!-- Bulk price update -->', start);
     assert.ok(start >= 0 && end > start);
     await page.setContent('<body style="background:#f5f7fb">' + html.slice(start, end) + '</body>');
     const styles = fs.readdirSync(path.join(ROOT, 'frontend/public/style')).find(name => /^dashboard\..*\.css$/.test(name));
+    await page.evaluate(theme => { document.documentElement.dataset.theme = theme; document.body.dataset.theme = theme; }, THEME);
     // Load real theme first; the module's scoped style must win just as it does in the application.
     await page.addStyleTag({ path: path.join(ROOT, 'frontend/public/style', styles) });
+    await page.addStyleTag({ path: path.join(ROOT, 'frontend/static/style/css/theme-variables.css') });
     await page.addStyleTag({ content: html.slice(start + 7, html.indexOf('</style>', start)) });
     for (const script of ['jquery.min.js', 'popper.min.js', 'bootstrap.min.js', 'JsBarcode.all.min.js']) await page.addScriptTag({ path: path.join(ROOT, 'frontend/static/script/js', script) });
     await page.evaluate(() => {
@@ -45,6 +48,11 @@ const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label
     assert.equal(await page.$eval('#sl-products', el => el.querySelectorAll('input[type=checkbox]:checked').length), 0);
     assert.equal(await page.$eval('#sl-next-step', el => el.disabled), true);
     await page.screenshot({ path: path.join(OUT, '01-products-empty.png') });
+    const colours = await page.evaluate(() => { const css = selector => getComputedStyle(document.querySelector(selector)); return { heading: css('#sl-title').color, panel: css('.sl-panel').backgroundColor, header: css('.sl-header').backgroundColor, muted: css('.sl-header .sl-muted').color, input: css('#sl-search').backgroundColor }; });
+    assert.equal(colours.panel, colours.header);
+    assert.notEqual(colours.heading, colours.header);
+    assert.notEqual(colours.muted, colours.header);
+    console.log(THEME, colours);
     await page.click('#sl-all');
     await page.waitForFunction(() => $('#sl-selection-count').text().startsWith('36 products'));
     await page.click('#sl-products input[type=checkbox]');
@@ -61,6 +69,7 @@ const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label
     await page.click('#sl-next-step');
     await page.waitForFunction(() => !document.querySelector('[data-sl-panel="2"]').hidden);
     assert.equal(await page.$eval('#sl-preview', el => el.querySelectorAll('.sl-label').length), 3);
+    assert.equal(await page.$eval('#sl-preview .sl-label p', el => getComputedStyle(el).color), 'rgb(0, 0, 0)');
     const paper = await page.$eval('#sl-preview .sl-sheet', el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height }));
     assert.ok(Math.abs(paper.width / paper.height - 210 / 297) < 0.005);
     await page.screenshot({ path: path.join(OUT, '04-a4-preview.png') });
