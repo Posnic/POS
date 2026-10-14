@@ -4809,5 +4809,6 @@
   "lang_print_sample": "Muestra de impresión",
   "lang_print_test_submitted": "Prueba enviada. Revisa el papel en la impresora.",
   "lang_delete_sale": "Eliminar venta",
-  "lang_sale_delete_stock_warning": "Se volverán a agregar existencias para los artículos cuyo inventario haya sido rastreado. Los artículos sin seguimiento no se modifican."
+  "lang_sale_delete_stock_warning": "Se volverán a agregar existencias para los artículos cuyo inventario haya sido rastreado. Los artículos sin seguimiento no se modifican.",
+  "lang_last_week": "La semana pasada"
 }

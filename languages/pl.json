@@ -4731,5 +4731,6 @@
   "lang_print_sample": "Wydrukuj próbkę",
   "lang_print_test_submitted": "Test przesłany. Sprawdź papier na drukarce.",
   "lang_delete_sale": "Usuń sprzedaż",
-  "lang_sale_delete_stock_warning": "Zapasy zostaną dodane z powrotem dla pozycji śledzonych zapasów. Nieśledzone elementy nie są zmieniane."
+  "lang_sale_delete_stock_warning": "Zapasy zostaną dodane z powrotem dla pozycji śledzonych zapasów. Nieśledzone elementy nie są zmieniane.",
+  "lang_last_week": "W zeszłym tygodniu"
 }

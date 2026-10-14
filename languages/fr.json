@@ -4813,5 +4813,6 @@
   "lang_print_sample": "Imprimer un échantillon",
   "lang_print_test_submitted": "Test soumis. Vérifiez le papier sur l'imprimante.",
   "lang_delete_sale": "Supprimer la vente",
-  "lang_sale_delete_stock_warning": "Le stock sera réajouté pour les articles faisant l'objet d'un suivi d'inventaire. Les articles non suivis ne sont pas modifiés."
+  "lang_sale_delete_stock_warning": "Le stock sera réajouté pour les articles faisant l'objet d'un suivi d'inventaire. Les articles non suivis ne sont pas modifiés.",
+  "lang_last_week": "La semaine dernière"
 }

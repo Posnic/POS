@@ -4734,5 +4734,6 @@
   "lang_print_sample": "Örnek yazdır",
   "lang_print_test_submitted": "Test gönderildi. Yazıcıdaki kağıdı kontrol edin.",
   "lang_delete_sale": "Satışı sil",
-  "lang_sale_delete_stock_warning": "Stok takibi yapılan ürünler için stok geri eklenecektir. İzlenmeyen öğeler değiştirilmez."
+  "lang_sale_delete_stock_warning": "Stok takibi yapılan ürünler için stok geri eklenecektir. İzlenmeyen öğeler değiştirilmez.",
+  "lang_last_week": "Geçen hafta"
 }

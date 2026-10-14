@@ -4734,5 +4734,6 @@
   "lang_print_sample": "In mẫu",
   "lang_print_test_submitted": "Bài kiểm tra đã nộp. Kiểm tra giấy tại máy in.",
   "lang_delete_sale": "Xóa bán hàng",
-  "lang_sale_delete_stock_warning": "Cổ phiếu sẽ được thêm lại cho các mặt hàng theo dõi hàng tồn kho. Các mục chưa được theo dõi không được thay đổi."
+  "lang_sale_delete_stock_warning": "Cổ phiếu sẽ được thêm lại cho các mặt hàng theo dõi hàng tồn kho. Các mục chưa được theo dõi không được thay đổi.",
+  "lang_last_week": "Tuần trước"
 }

@@ -543,7 +543,10 @@ PosnicPro.sales = {
             /* Suggestions come from the customers this till already uses. */
             typeahead: 'customer',
             typeaheadField: 'customer_name',
-            onChange: function () {}
+            onChange: function () { PosnicPro.sales.loadHistory(1); }
+        });
+        $('#sales_quick_dates').off('click.quickDate').on('click.quickDate', '[data-sales-date]', function () {
+            $('#sales_filter_search .lf-preset').val($(this).attr('data-sales-date')).trigger('change');
         });
         PosnicPro.listSort.mount('sales', {
             options: [
@@ -675,9 +678,13 @@ PosnicPro.sales = {
             $('<button type="button" class="btn btn-sm btn-light border">').text(label + ' ×').attr('aria-label', 'Remove ' + label).on('click', function () { remove(); PosnicPro.sales.loadHistory(1); }).appendTo(host);
         };
         var mounted = PosnicPro.listFilter._mounted && PosnicPro.listFilter._mounted.sales;
+        $('#sales_quick_dates [data-sales-date]').each(function () {
+            var selected = !!mounted && mounted.state.preset === $(this).attr('data-sales-date');
+            $(this).toggleClass('btn-primary', selected).toggleClass('btn-outline-primary', !selected).attr('aria-pressed', String(selected));
+        });
         if (mounted) {
             if (mounted.state.search) add(mounted.state.search, function () { mounted.state.search = ''; PosnicPro.listFilter.render('sales'); });
-            if (mounted.state.preset !== 'all') add(mounted.state.preset, function () { mounted.state.preset = 'all'; mounted.state.from = null; mounted.state.to = null; PosnicPro.listFilter.render('sales'); });
+            if (mounted.state.preset !== 'all') add($('#sales_filter_search .lf-preset option:selected').text() || mounted.state.preset, function () { mounted.state.preset = 'all'; mounted.state.from = null; mounted.state.to = null; PosnicPro.listFilter.render('sales'); });
         }
         ['staff', 'device', 'source', 'table', 'period'].forEach(function (field) {
             var input = $('#sales_history_' + field);

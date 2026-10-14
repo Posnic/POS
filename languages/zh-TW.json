@@ -4734,5 +4734,6 @@
   "lang_print_sample": "列印樣本",
   "lang_print_test_submitted": "已提交測試。檢查印表機上的紙張。",
   "lang_delete_sale": "刪除銷售",
-  "lang_sale_delete_stock_warning": "存貨跟踪的物品將添加回庫存。未追蹤的項目不會變更。"
+  "lang_sale_delete_stock_warning": "存貨跟踪的物品將添加回庫存。未追蹤的項目不會變更。",
+  "lang_last_week": "上週"
 }

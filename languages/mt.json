@@ -4731,5 +4731,6 @@
   "lang_print_sample": "Kampjun tal-istampar",
   "lang_print_test_submitted": "Test sottomess. Iċċekkja l-karta fl-istampatur.",
   "lang_delete_sale": "Ħassar il-bejgħ",
-  "lang_sale_delete_stock_warning": "L-istokk se jiżdied lura għal oġġetti traċċati mill-inventarju. Oġġetti mhux traċċati ma jinbidlux."
+  "lang_sale_delete_stock_warning": "L-istokk se jiżdied lura għal oġġetti traċċati mill-inventarju. Oġġetti mhux traċċati ma jinbidlux.",
+  "lang_last_week": "Il-ġimgħa li għaddiet"
 }

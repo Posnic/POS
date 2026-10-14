@@ -4731,5 +4731,6 @@
   "lang_print_sample": "הדפס מדגם",
   "lang_print_test_submitted": "מבחן הוגש. בדוק את הנייר במדפסת.",
   "lang_delete_sale": "מחק מכירה",
-  "lang_sale_delete_stock_warning": "מלאי יתווסף בחזרה עבור פריטים במעקב אחר מלאי. פריטים שלא נעקרו אינם משתנים."
+  "lang_sale_delete_stock_warning": "מלאי יתווסף בחזרה עבור פריטים במעקב אחר מלאי. פריטים שלא נעקרו אינם משתנים.",
+  "lang_last_week": "בשבוע שעבר"
 }

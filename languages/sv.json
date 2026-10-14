@@ -4731,5 +4731,6 @@
   "lang_print_sample": "Skriv ut prov",
   "lang_print_test_submitted": "Test inlämnat. Kontrollera papperet på skrivaren.",
   "lang_delete_sale": "Ta bort försäljning",
-  "lang_sale_delete_stock_warning": "Lager kommer att läggas tillbaka för lagerspårade artiklar. Ospårade objekt ändras inte."
+  "lang_sale_delete_stock_warning": "Lager kommer att läggas tillbaka för lagerspårade artiklar. Ospårade objekt ändras inte.",
+  "lang_last_week": "Förra veckan"
 }

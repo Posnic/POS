@@ -4731,5 +4731,6 @@
   "lang_print_sample": "Prenta sýnishorn",
   "lang_print_test_submitted": "Próf lagt fram. Athugaðu pappírinn á prentaranum.",
   "lang_delete_sale": "Eyða sölu",
-  "lang_sale_delete_stock_warning": "Lagernum verður bætt aftur fyrir vörur sem raktar eru með birgðum. Óreknum hlutum er ekki breytt."
+  "lang_sale_delete_stock_warning": "Lagernum verður bætt aftur fyrir vörur sem raktar eru með birgðum. Óreknum hlutum er ekki breytt.",
+  "lang_last_week": "Í síðustu viku"
 }

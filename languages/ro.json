@@ -4731,5 +4731,6 @@
   "lang_print_sample": "Imprimați eșantionul",
   "lang_print_test_submitted": "Testul depus. Verificați hârtia de la imprimantă.",
   "lang_delete_sale": "Ștergeți vânzarea",
-  "lang_sale_delete_stock_warning": "Stocul va fi adăugat înapoi pentru articolele urmărite în inventar. Elementele neurmărite nu sunt modificate."
+  "lang_sale_delete_stock_warning": "Stocul va fi adăugat înapoi pentru articolele urmărite în inventar. Elementele neurmărite nu sunt modificate.",
+  "lang_last_week": "Săptămâna trecută"
 }

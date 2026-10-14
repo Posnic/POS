@@ -4731,5 +4731,6 @@
   "lang_print_sample": "Vytlačiť vzorku",
   "lang_print_test_submitted": "Test predložený. Skontrolujte papier na tlačiarni.",
   "lang_delete_sale": "Odstrániť predaj",
-  "lang_sale_delete_stock_warning": "Zásoby budú pridané späť pre položky sledované zásoby. Nesledované položky sa nemenia."
+  "lang_sale_delete_stock_warning": "Zásoby budú pridané späť pre položky sledované zásoby. Nesledované položky sa nemenia.",
+  "lang_last_week": "Minulý týždeň"
 }

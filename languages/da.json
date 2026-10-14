@@ -4731,5 +4731,6 @@
   "lang_print_sample": "Udskriv prøve",
   "lang_print_test_submitted": "Test indsendt. Kontroller papiret på printeren.",
   "lang_delete_sale": "Slet salg",
-  "lang_sale_delete_stock_warning": "Lageret tilføjes tilbage for lagersporede varer. Ikke-sporede elementer ændres ikke."
+  "lang_sale_delete_stock_warning": "Lageret tilføjes tilbage for lagersporede varer. Ikke-sporede elementer ændres ikke.",
+  "lang_last_week": "Sidste uge"
 }

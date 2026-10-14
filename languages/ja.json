@@ -4734,5 +4734,6 @@
   "lang_print_sample": "サンプルを印刷",
   "lang_print_test_submitted": "テストが送信されました。プリンタで用紙を確認してください。",
   "lang_delete_sale": "セールを削除",
-  "lang_sale_delete_stock_warning": "在庫追跡商品の在庫は再び追加されます。追跡対象外のアイテムは変更されません。"
+  "lang_sale_delete_stock_warning": "在庫追跡商品の在庫は再び追加されます。追跡対象外のアイテムは変更されません。",
+  "lang_last_week": "過去 1 週間"
 }

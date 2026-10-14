@@ -4731,5 +4731,6 @@
   "lang_print_sample": "I-print ang sample",
   "lang_print_test_submitted": "Isinumite ang pagsubok. Suriin ang papel sa printer.",
   "lang_delete_sale": "Tanggalin ang benta",
-  "lang_sale_delete_stock_warning": "Idaragdag muli ang stock para sa mga item na sinusubaybayan ng imbentaryo. Hindi binago ang mga hindi nasusubaybayan na item."
+  "lang_sale_delete_stock_warning": "Idaragdag muli ang stock para sa mga item na sinusubaybayan ng imbentaryo. Hindi binago ang mga hindi nasusubaybayan na item.",
+  "lang_last_week": "Noong nakaraang linggo"
 }

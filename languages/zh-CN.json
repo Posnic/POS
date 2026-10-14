@@ -4734,5 +4734,6 @@
   "lang_print_sample": "打印样本",
   "lang_print_test_submitted": "测试已提交。检查打印机上的纸张。",
   "lang_delete_sale": "删除销售",
-  "lang_sale_delete_stock_warning": "库存追踪商品的库存将重新添加。未追踪的物品不会更改。"
+  "lang_sale_delete_stock_warning": "库存追踪商品的库存将重新添加。未追踪的物品不会更改。",
+  "lang_last_week": "上周"
 }

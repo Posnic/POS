@@ -4731,5 +4731,6 @@
   "lang_print_sample": "Prindi näidis",
   "lang_print_test_submitted": "Test esitati. Kontrollige paberit printeris.",
   "lang_delete_sale": "Kustuta müük",
-  "lang_sale_delete_stock_warning": "Varude abil jälgitud kaupade varu lisatakse tagasi. Jälgimata üksusi ei muudeta."
+  "lang_sale_delete_stock_warning": "Varude abil jälgitud kaupade varu lisatakse tagasi. Jälgimata üksusi ei muudeta.",
+  "lang_last_week": "Eelmisel nädalal"
 }

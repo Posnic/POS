@@ -4833,5 +4833,6 @@
   "lang_the_filename_includes_categories_and_the_e": "De bestandsnaam bevat de categorieën en exportdatum. Begin altijd met een nieuwe download.",
   "lang_upcoming": "Gepland",
   "lang_delete_sale": "Verkoop verwijderen",
-  "lang_sale_delete_stock_warning": "Voor artikelen die op voorraad zijn bijgehouden, wordt de voorraad weer toegevoegd. Items die niet worden bijgehouden, worden niet gewijzigd."
+  "lang_sale_delete_stock_warning": "Voor artikelen die op voorraad zijn bijgehouden, wordt de voorraad weer toegevoegd. Items die niet worden bijgehouden, worden niet gewijzigd.",
+  "lang_last_week": "Vorige week"
 }

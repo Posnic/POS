@@ -4731,5 +4731,6 @@
   "lang_print_sample": "Vytisknout vzorek",
   "lang_print_test_submitted": "Test byl odeslán. Zkontrolujte papír na tiskárně.",
   "lang_delete_sale": "Smazat prodej",
-  "lang_sale_delete_stock_warning": "Zásoby budou přidány zpět pro položky sledované zásoby. Nesledované položky se nezmění."
+  "lang_sale_delete_stock_warning": "Zásoby budou přidány zpět pro položky sledované zásoby. Nesledované položky se nezmění.",
+  "lang_last_week": "Minulý týden"
 }

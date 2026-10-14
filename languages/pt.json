@@ -4813,5 +4813,6 @@
   "lang_print_sample": "Amostra de impressão",
   "lang_print_test_submitted": "Teste enviado. Verifique o papel na impressora.",
   "lang_delete_sale": "Excluir venda",
-  "lang_sale_delete_stock_warning": "O estoque será adicionado novamente para itens rastreados pelo inventário. Os itens não rastreados não são alterados."
+  "lang_sale_delete_stock_warning": "O estoque será adicionado novamente para itens rastreados pelo inventário. Os itens não rastreados não são alterados.",
+  "lang_last_week": "Semana passada"
 }

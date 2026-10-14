@@ -4731,5 +4731,6 @@
   "lang_print_sample": "Shtypni mostrën",
   "lang_print_test_submitted": "Testi i dorëzuar. Kontrolloni letrën në printer.",
   "lang_delete_sale": "Fshini shitjen",
-  "lang_sale_delete_stock_warning": "Stoqet do të shtohen përsëri për artikujt e gjurmuar nga inventari. Artikujt e pazgjurmuar nuk ndryshohen."
+  "lang_sale_delete_stock_warning": "Stoqet do të shtohen përsëri për artikujt e gjurmuar nga inventari. Artikujt e pazgjurmuar nuk ndryshohen.",
+  "lang_last_week": "Javën e kaluar"
 }

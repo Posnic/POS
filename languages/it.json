@@ -4813,5 +4813,6 @@
   "lang_print_sample": "Esempio di stampa",
   "lang_print_test_submitted": "Test inviato Controllate la carta sulla stampante.",
   "lang_delete_sale": "Elimina vendita",
-  "lang_sale_delete_stock_warning": "Le scorte verranno aggiunte nuovamente per gli articoli tracciati nell'inventario. Gli articoli non tracciati non vengono modificati."
+  "lang_sale_delete_stock_warning": "Le scorte verranno aggiunte nuovamente per gli articoli tracciati nell'inventario. Gli articoli non tracciati non vengono modificati.",
+  "lang_last_week": "La settimana scorsa"
 }

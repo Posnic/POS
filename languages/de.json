@@ -4813,5 +4813,6 @@
   "lang_print_sample": "Beispiel drucken",
   "lang_print_test_submitted": "Test eingereicht. Überprüfen Sie das Papier am Drucker.",
   "lang_delete_sale": "Verkauf löschen",
-  "lang_sale_delete_stock_warning": "Der Lagerbestand für Artikel, für die der Lagerbestand nachverfolgt wird, wird wieder hinzugefügt. Artikel ohne Sendungsverfolgung werden nicht geändert."
+  "lang_sale_delete_stock_warning": "Der Lagerbestand für Artikel, für die der Lagerbestand nachverfolgt wird, wird wieder hinzugefügt. Artikel ohne Sendungsverfolgung werden nicht geändert.",
+  "lang_last_week": "Letzte Woche"
 }
