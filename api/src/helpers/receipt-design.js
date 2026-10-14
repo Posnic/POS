@@ -164,6 +164,7 @@
           if (!['detailed', 'compact', 'columns'].includes(b.itemLayout))
             throw new Error('Choose a valid item layout.');
         }
+        if (block.type === 'totals') b.showPaymentMethod = block.showPaymentMethod !== false;
         if (block.type === 'items' && block.nameMaxChars != null) {
           b.nameMaxChars = Number(block.nameMaxChars);
           if (!Number.isInteger(b.nameMaxChars) || b.nameMaxChars < 8 || b.nameMaxChars > 80)
