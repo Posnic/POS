@@ -1790,7 +1790,10 @@ class ItemsController extends BaseController {
         case 'branchCode':
           if (!this.checkPermission('branch', 'write', req.user))
             return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
-          data = await require('../services/price-scope').setCode(c, b.branchId, b.code);
+          // branchId is reserved for the active tenant scope and is normalized by middleware.
+          // Never fall back to it: an old client must fail instead of editing the active branch.
+          if (!b.targetBranchId) throw new Error('Refresh the page and select the branch to edit');
+          data = await require('../services/price-scope').setCode(c, b.targetBranchId, b.code);
           break;
         case 'configure':
           data = await service.configure(c, b.jobId, b);
