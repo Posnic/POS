@@ -2,6 +2,7 @@
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 jest.mock('../../../src/services/sale.service');
+jest.mock('../../../src/services/sales-history-summary');
 jest.mock('../../../src/services/business-checkout-decisions', () => ({
   createCheckoutDecisions: jest.fn(),
 }));
@@ -697,6 +698,25 @@ describe('SalesController', () => {
 
   // ── getAll ───────────────────────────────────────────────────────────────────
   describe('getAll', () => {
+    test('optional summary receives precisely the same scoped filters as the paginated history', async () => {
+      const summary = require('../../../src/services/sales-history-summary');
+      summary.mockResolvedValue({ count: 20, cancelled: 0, currencies: [] });
+      const res = mockRes();
+      await ctrl.getAll(
+        mockReq({ query: { include_summary: 'true', ordered_by: 'Asha', page: '2', limit: '5' } }),
+        res,
+        mockNext()
+      );
+      expect(summary).toHaveBeenCalledWith(
+        expect.anything(),
+        salesService.listSales.mock.calls[0][0]
+      );
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ summary: expect.objectContaining({ count: 20 }) }),
+        })
+      );
+    });
     test.each([
       ['', 'date:desc,_id:desc'],
       ['date_asc', 'date:asc,_id:asc'],

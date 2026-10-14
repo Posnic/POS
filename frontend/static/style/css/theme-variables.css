@@ -3546,3 +3546,11 @@ html:not([data-theme]) .loadingSpinner::after {
 .sales-customer-pop label { display:block; width:100%; margin-bottom:10px; }
 
 .sales-customer-entry + .sales-customer-pop { position:relative; top:auto; right:auto; width:520px; max-width:100%; margin:0 0 12px; }
+
+/* Keep the history summary beside the date shortcuts without squeezing them. */
+.sales-history-topline { display:flex; align-items:center; flex-wrap:wrap; gap:8px 24px; }
+.sales-history-summary { display:flex; flex-wrap:wrap; gap:10px 22px; margin-left:auto; padding:8px 0; color:var(--theme-text-primary); }
+.sales-history-stat { display:inline-flex; align-items:baseline; gap:7px; white-space:nowrap; }
+.sales-history-stat > span { color:var(--theme-text-secondary); }
+.sales-history-stat strong { font-variant-numeric:tabular-nums; }
+@media(max-width:767px) { .sales-history-summary { margin-left:0; width:100%; } }
