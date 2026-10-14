@@ -394,11 +394,11 @@ test('a shop with the switch on but no licence prints no label', () => {
   assert.ok(!/FSSAI/.test(paper({ ...bill, title: 'TAX INVOICE' })));
 });
 
-test('queued ESC/POS bills omit FSSAI outside India or with Restaurant disabled', () => {
+test('queued ESC/POS bills show opted-in Indian food licences without requiring Restaurant', () => {
   for (const country of ['India', 'IN', 'United States', 'United Arab Emirates', 'Singapore', '', undefined]) {
     for (const enabled of [true, false]) {
       const bill = buildBillPayload(AT(20), { ...HOTEL, country, table_options: enabled, bill_print_fssai: true });
-      const allowed = enabled && ['India', 'IN'].includes(country);
+      const allowed = ['India', 'IN'].includes(country);
       assert.strictEqual(bill.fssai, allowed ? HOTEL.branch_fssai_number : '');
       assert.strictEqual(paper(bill).includes('FSSAI:'), allowed);
     }

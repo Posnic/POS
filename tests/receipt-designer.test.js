@@ -197,7 +197,7 @@ test('FSSAI prints from current branch details on all formats and an explicit fi
         sale.branch_fssai_number = '   ';
         assert.equal(render().find('.rd-field-fssai').length, 0);
         sale.branch_fssai_number = '12345678901234'; sale.table_options = false;
-        assert.doesNotMatch(render().text(), /12345678901234/);
+        assert.match(render().text(), /12345678901234/, 'Indian food retailers retain their configured licence without restaurant mode');
         sale.table_options = true;
     }
     dom.window.close();
@@ -242,6 +242,9 @@ test('country changes hide FSSAI controls and blocks without deleting saved lice
         assert.equal(sent.receipt_designs.layouts['80'].blocks.filter(b => b.field === 'fssai').length, 1);
     }
     branch.table_options = false;
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('[data-field="fssai"]').length, 1, 'Configured Indian food licence remains available');
+    branch.branch_fssai_number = '';
     w.PosnicPro.receiptDesignerEditor.load(branch);
     assert.equal($('[data-field="fssai"]').length, 0);
     assert.equal($('#branch_fssai_number').closest('.form-group').css('display'), 'none');
@@ -1240,6 +1243,23 @@ test('sale printing sends receipt identity to desktop logging while sample print
     assert.equal(sent[0].receiptLog.total, sale.items_total);
     await engine.print('<article>Sample</article>', '80', { sample: true });
     assert.equal(sent[1].receiptLog, null);
+    dom.window.close();
+});
+
+test('store FSSAI control is limited to Indian restaurants and configured food businesses', () => {
+    const { dom, w, $, branch } = setup();
+    for (const [country, restaurant, licence, allowed] of [
+        ['India', true, '', true], ['IN', false, '12345678901234', true],
+        ['India', false, '', false], ['United Kingdom', true, '12345678901234', false],
+        ['', true, '12345678901234', false], ['United States', false, '', false]
+    ]) {
+        Object.assign(branch, { country, table_options: restaurant, branch_fssai_number: licence });
+        w.PosnicPro.receiptDesignerEditor.load(branch);
+        $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Store details')).find('.rd-select').trigger('click');
+        assert.equal($('[data-prop="fssaiInHeader"]').length, allowed ? 1 : 0, country + '/' + restaurant + '/' + licence);
+        assert.equal($('[data-field="fssai"]').length, allowed ? 1 : 0);
+        assert.equal(contract.fieldAvailable('table', branch), restaurant, 'food licence does not enable restaurant fields');
+    }
     dom.window.close();
 });
 

@@ -166,7 +166,7 @@
             });
         }
         if (b.type === 'store') html += '<label><input type="checkbox" data-prop="showEmail" ' + (b.showEmail !== false ? 'checked' : '') + '> ' + esc(t('Show business email')) + '</label>';
-        if (b.type === 'store') html += '<label><input type="checkbox" data-prop="fssaiInHeader" ' + (b.fssaiInHeader ? 'checked' : '') + '> ' + esc(t('Show FSSAI below GSTIN')) + '</label>';
+        if (b.type === 'store' && schema.fieldAvailable('fssai', branch)) html += '<label><input type="checkbox" data-prop="fssaiInHeader" ' + (b.fssaiInHeader ? 'checked' : '') + '> ' + esc(t('Show FSSAI below GSTIN')) + '</label>';
         if (b.type === 'items' && b.itemLayout === 'columns') html += '<label>' + esc(t('Line style')) + '<select data-prop="lineStyle">' + ['dotted', 'dashed', 'solid'].map(function (v) { return '<option value="' + v + '"' + ((b.lineStyle || 'dotted') === v ? ' selected' : '') + '>' + esc(t(v.charAt(0).toUpperCase() + v.slice(1))) + '</option>'; }).join('') + '</select></label>';
         if (b.type === 'totals') html += '<label class="rd-inline"><input type="checkbox" data-prop="showPaymentMethod" ' + (b.showPaymentMethod !== false ? 'checked' : '') + '> ' + esc(t('Show payment method')) + '</label>';
         if (b.type === 'totals') html += '<p class="rd-help">' + esc(t('Uses the actual sale amounts, including discounts, tax, charges and rounding.')) + '</p>';
