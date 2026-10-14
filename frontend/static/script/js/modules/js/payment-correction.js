@@ -65,9 +65,9 @@
         const amounts = Object.fromEntries(data.payments.map(r => [data.methods.find(m => m.toLowerCase() === r.method.toLowerCase()) || r.method, String(r.amount)]));
         const button = (label, attr) => '<button type="button" class="btn btn-outline-primary pc-choice" ' + attr + '>' + esc(t(label)) + '</button>';
         const $modal = $('<div id="payment-correction" class="modal fade" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="pc-title"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">'
-            + '<div class="modal-header"><div><h4 id="pc-title">' + esc(t('Correct payment method')) + '</h4><span>' + esc(data.bill) + '</span></div><button type="button" class="btn btn-light pc-close" data-dismiss="modal" aria-label="' + esc(t('Close')) + '">×</button></div>'
-            + '<div class="modal-body"><p>' + esc(t('Already collected')) + ': <strong>' + esc(money(total)) + '</strong><br>' + esc(t('Recorded as')) + ': ' + breakdown(data.payments) + '</p>'
-            + '<p class="text-muted">' + esc(t('Correct the record only. No money is collected or refunded.')) + '</p>'
+            + '<div class="modal-header"><div><h4 id="pc-title">' + esc(t('Correct payment method')) + '</h4><span class="pc-bill">' + esc(data.bill) + '</span></div><button type="button" class="btn btn-light pc-close" data-dismiss="modal" aria-label="' + esc(t('Close')) + '">×</button></div>'
+            + '<div class="modal-body"><p class="pc-summary">' + esc(t('Already collected')) + ': <strong>' + esc(money(total)) + '</strong><br>' + esc(t('Recorded as')) + ': ' + breakdown(data.payments) + '</p>'
+            + '<p class="pc-note text-muted">' + esc(t('Correct the record only. No money is collected or refunded.')) + '</p>'
             + '<div class="pc-edit"><h5>' + esc(t('Payment method')) + '</h5><div class="pc-buttons">'
             + data.methods.concat(data.methods.length > 1 ? ['Mixed'] : []).map((m, i) => button(m, 'data-method="' + i + '"')).join('') + '</div>'
             + '<div class="pc-amounts">' + data.methods.map((m, i) => '<label>' + esc(m) + '<input class="form-control" type="text" inputmode="decimal" data-amount="' + i + '" value="' + esc(amounts[m] || '') + '" placeholder="0" autocomplete="off"></label>').join('') + '</div>'
@@ -76,7 +76,6 @@
             + '<label class="pc-other">' + esc(t('Other reason')) + '<textarea class="form-control" rows="3" maxlength="300"></textarea></label></div>'
             + '<div class="pc-review" hidden></div><p class="pc-error text-danger" role="alert"></p></div>'
             + '<div class="modal-footer"><button type="button" class="btn btn-light pc-back">' + esc(t('Back')) + '</button><button type="button" class="btn btn-light pc-cancel" data-dismiss="modal">' + esc(t('Cancel')) + '</button><button type="button" class="btn btn-primary pc-next">' + esc(t('Review correction')) + '</button><button type="button" class="btn btn-primary pc-save" hidden>' + esc(t('Save correction')) + '</button></div></div></div></div>');
-        if (!$('#payment-correction-style').length) $('head').append('<style id="payment-correction-style">#payment-correction .btn{min-height:50px;min-width:50px;font-size:16px;white-space:normal}#payment-correction .pc-buttons{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 20px}#payment-correction .pc-choice{flex:1 0 130px;padding:12px 18px}#payment-correction .pc-reasons .pc-choice{flex:1 0 200px}#payment-correction .pc-amounts{display:flex;flex-wrap:wrap;gap:14px}#payment-correction .pc-amounts label{flex:1 0 140px}#payment-correction input{min-height:50px;font-size:18px}#payment-correction .modal-body{max-height:70vh;overflow:auto}#payment-correction .pc-other{width:100%}#payment-correction .pc-review{font-size:18px;line-height:1.7}#payment-correction [hidden]{display:none!important}</style>');
         $('body').append($modal);
         function values() {
             if (selected !== 'Mixed') return [{ method: selected, amount: total / factor }];
