@@ -4806,5 +4806,7 @@
   "lang_expense_files_help": "PDF, JPG or PNG. Up to 5 files, 5 MB each, 10 MB total. Files are saved when you save the entry.",
   "lang_expense_file_retry": "Entry saved, but some attachments could not be saved. Keep this form open and save again to retry.",
   "lang_not_saved": "Not saved",
-  "lang_download": "Download"
+  "lang_download": "Download",
+  "lang_rd_serial_number": "S.No",
+  "lang_rd_show_payment_method": "Show payment method"
 }

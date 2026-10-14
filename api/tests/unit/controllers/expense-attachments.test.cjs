@@ -111,4 +111,3 @@ test('deleted entries cannot receive or expose documents', async () => {
   expect((await attach()).status).toBe(404);
   expect((await request(app).get(url())).status).toBe(404);
 });
-

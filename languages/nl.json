@@ -4962,5 +4962,7 @@
   "lang_expense_files_help": "PDF, JPG of PNG. Tot 5 bestanden, elk 5 MB, in totaal 10 MB. De bestanden worden opgeslagen wanneer u het item opslaat.",
   "lang_expense_file_retry": "Invoer opgeslagen, maar sommige bijlagen konden niet worden opgeslagen. Houd dit formulier open en sla het opnieuw op om het opnieuw te proberen.",
   "lang_not_saved": "Niet opgeslagen",
-  "lang_download": "Downloaden"
+  "lang_download": "Downloaden",
+  "lang_rd_serial_number": "Nr.",
+  "lang_rd_show_payment_method": "Betaalmethode tonen"
 }
