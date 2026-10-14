@@ -33,7 +33,7 @@ test('the menu respects cloud and desktop branding even when runtime-info offers
   const dash = fs.readFileSync(path.join(ROOT, 'frontend/static/script/js/modules/js/dashboard.js'), 'utf8');
   const source = /\(function showAccountLink\(\)[\s\S]*?\}\(\)\);/.exec(dash)[0];
   for (const scenario of [
-    { brand: { enabled: true, name: 'GSHCL' }, account: true, visible: false },
+    { brand: { enabled: true, name: 'Acme POS' }, account: true, visible: false },
     { brand: { enabled: true }, account: true, visible: false },
     { brand: { enabled: false }, account: true, visible: true },
     { brand: { enabled: false }, account: false, visible: false },
