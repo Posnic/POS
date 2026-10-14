@@ -317,6 +317,7 @@ class ItemsController extends BaseController {
         licenseId,
         filters,
         options,
+        labelPricing: req.query.label_pricing === 'true',
       });
 
       if (result.status === true) {
@@ -764,6 +765,9 @@ class ItemsController extends BaseController {
       });
 
       if (result && result.status === true && result.data) {
+        if (req.query.label_pricing === 'true') {
+          result.data = (await this.service.withLabelPricing([result.data], this.model.branchId))[0];
+        }
         return this.success(res, result.data, result.message || 'success');
       }
 

@@ -19,6 +19,7 @@
                 -->
                 <div class="col-auto text-right">
                     <div class="widgetbar">
+                        <button type="button" class="btn btn-outline-primary" onclick="PosnicShelfLabels.open();"><i class="feather icon-printer mr-2"></i>Print shelf labels</button>
                         <a class="btn btn-outline-primary" href="#/itemsettings"><i class="feather icon-settings mr-2"></i><lang class="lang_item_settings">Item settings</lang></a>
                         <a data-module="item" data-access="write" href="#/items" class="btn btn-primary-rgba"
                             onclick="PosnicPro.importTableFile('items'); return false;"
@@ -133,6 +134,32 @@
                     </button>
                 </div>
                 <!--start modal-body-->
+                <section class="p-3 border-bottom" aria-label="Shelf label products">
+                    <h6>1. Select products</h6>
+                    <div class="d-flex flex-wrap" style="gap:8px;">
+                        <button id="sl-all" type="button" class="btn btn-outline-primary">Select all matching the Items filter</button>
+                        <button id="sl-select-loaded" type="button" class="btn btn-outline-secondary">Select loaded products</button>
+                        <button id="sl-clear" type="button" class="btn btn-outline-secondary">Clear selection</button>
+                        <label>Copies <input id="sl-copies" class="form-control" type="number" min="1" max="999" value="1"></label>
+                        <button id="sl-apply-copies" type="button" class="btn btn-outline-secondary">Apply copies</button>
+                    </div>
+                    <label for="sl-search">Find a loaded product</label><input id="sl-search" class="form-control" type="search" placeholder="Name or barcode">
+                    <p id="sl-listed" class="text-muted"></p>
+                    <div class="table-responsive" style="max-height:260px;overflow:auto;"><table class="table table-sm"><thead><tr><th>Select</th><th>Product</th><th>Barcode</th><th>Copies</th></tr></thead><tbody id="sl-products"></tbody></table></div>
+                    <h6>2. Paper layout</h6>
+                    <div class="row">
+                        <label class="col-sm-4">Paper<select id="sl-paper" class="form-control"><option value="roll">Label roll</option><option value="a4">A4 sheet / multiple labels</option></select></label>
+                        <label class="col-sm-2">Sheet margin (mm)<input id="sl-margin" type="number" class="form-control" min="0" value="5" step="0.5"></label>
+                        <label class="col-sm-2">Gap (mm)<input id="sl-gap" type="number" class="form-control" min="0" value="2" step="0.5"></label>
+                        <label class="col-sm-2">Starting slot<input id="sl-start" type="number" class="form-control" min="1" value="1"></label>
+                    </div>
+                    <label class="mr-3"><input id="sl-guides" type="checkbox"> Cutting guides</label>
+                    <label class="mr-3"><input id="sl-bar-text" type="checkbox" checked> Barcode number</label>
+                    <label class="mr-3"><input id="sl-shop" type="checkbox" checked> Shop name</label>
+                    <label class="mr-3"><input id="sl-date" type="checkbox"> Printed date</label>
+                    <label><input id="sl-mrp" type="checkbox"> MRP from item record</label>
+                    <p class="text-muted mb-0">Use Label Design below for label dimensions, fonts, colours, alignment and barcode settings. Prices include VAT and saved item discounts; printing does not change item prices.</p>
+                </section>
                 <div class="modal-body" style="padding:0px;">
                     <!-- Sticky Preview -->
                     <div style="position: sticky; top: 0; z-index: 10; background: #fff; padding: 10px; border-bottom: 1px solid #ddd;">
@@ -207,6 +234,7 @@
                     </div>
 
                     <div class="container">
+                        <h6 class="pt-3">3. Label design</h6>
                         <div class="row search-bar">
                             <div class="col-md-8">
                                 <div class="input-group margin-bottom-sm">
@@ -414,6 +442,16 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <section class="w-100" aria-label="Print preview">
+                        <h6>4. Preview and print</h6>
+                        <p id="sl-summary"></p><p id="sl-status" role="status" aria-live="polite"></p>
+                        <div class="row"><label class="col-sm-3">From label<input id="sl-from" class="form-control" type="number" min="1" value="1"></label><label class="col-sm-3">Labels in this batch<input id="sl-batch" class="form-control" type="number" min="1" max="2000" value="2000"></label></div>
+                        <p class="text-muted">Large selections can be printed in batches of up to 2,000 labels. Choose the printer in the browser dialog; use 100% scale, no browser margins and no headers or footers.</p>
+                        <div class="d-flex align-items-center" style="gap:10px;"><button type="button" id="sl-prev" class="btn btn-outline-secondary">Previous page</button><span id="sl-page"></span><button type="button" id="sl-next" class="btn btn-outline-secondary">Next page</button></div>
+                        <div id="sl-preview" style="overflow:hidden;width:100%;margin:12px 0;background:#eee;"></div>
+                        <button id="sl-test" type="button" class="btn btn-outline-primary">Print one test label</button>
+                        <button id="sl-print" type="button" class="btn btn-primary">Print labels…</button>
+                    </section>
                     <button type="button" class="btn btn-outline-danger" data-dismiss="modal">
                         <i class="feather icon-x-circle mr-2"></i><lang class="lang_close_title"> Close</lang>
                     </button>
