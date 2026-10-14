@@ -96,3 +96,15 @@ describe('items.routes', () => {
     expect(guards.length).toBeGreaterThan(1);
   });
 });
+
+
+test('saved-item details route removes stock quantity before invoking the item editor', () => {
+  const route = router.stack.find(layer => layer.route?.path === '/:id/details').route;
+  const controller = require('../../../src/controllers/items.controller');
+  const req = { body: { name: 'Item', brand: 'Brand', available_quantity: 100 } };
+  let index = 0;
+  const next = () => { const layer = route.stack[index++]; if (layer) layer.handle(req, {}, next); };
+  next();
+  expect(req.body).toEqual({ name: 'Item', brand: 'Brand' });
+  expect(controller.edit).toHaveBeenCalledWith(req, {}, expect.any(Function));
+});

@@ -205,3 +205,30 @@ test('variant family stores independent prices, stock and identity', async () =>
     [200, 250]
   );
 });
+
+
+test('continuing a created item updates details without resetting stock or creating a duplicate', async () => {
+  const data = { ...fixture, name: 'Continue editing', sku_id: 'CONTINUE', barcode_id: '', barcodes: [], inventory: true, available_quantity: 8, image: [{name: '/uploads/kept.jpg', size: 123, cover: 'yes'}], cover_image: '/uploads/kept.jpg' };
+  const created = await service.addItem({ data, ...ctx });
+  assert.equal(created.status, true, JSON.stringify(created));
+  const id = created.data.id, filter = { _id: new ObjectId(id) };
+  const before = await db.collection('items').findOne(filter);
+  await db.collection('items').updateOne(filter, { $set: { available_quantity: 5 } });
+  const count = await db.collection('items').countDocuments();
+  const update = { ...data, sku_id: created.data.itemid, brand: 'Updated brand', description: 'More information' };
+  delete update.available_quantity;
+  const result = await service.updateItem({ id, data: update, ...ctx });
+  assert.equal(result.status, true, JSON.stringify(result));
+  const after = await db.collection('items').findOne(filter);
+  assert.equal(after.available_quantity, 5);
+  assert.equal(after.brand, 'Updated brand');
+  assert.equal(after.description, 'More information');
+  assert.equal(after.image, '/uploads/kept.jpg');
+  assert.deepEqual(after.multi_image, before.multi_image);
+  assert.equal(after.itemid, before.itemid);
+  assert.deepEqual(after.created_date, before.created_date);
+  assert.equal(await db.collection('items').countDocuments(), count);
+  const stockUpdate = await service.updateItem({ id, data: { ...update, available_quantity: 7 }, ...ctx });
+  assert.equal(stockUpdate.status, true);
+  assert.equal((await db.collection('items').findOne(filter)).available_quantity, 7);
+});
