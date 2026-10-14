@@ -3679,7 +3679,7 @@
     },
     "/captain/v1/discovery": {
       "get": {
-        "summary": "branch",
+        "summary": "addresses",
         "operationId": "get_captain_v1_discovery",
         "tags": [
           "Captain access"
