@@ -142,10 +142,11 @@
         paint(); $modal.modal({ backdrop: 'static', keyboard: false, show: true });
     }
     function attach(id, sale) {
-        if (sale.payment_status !== 'Paid') return;
+        $('#sales_doc [data-correct-payment]').remove();
+        if (sale.payment_status !== 'Paid' || /cancel|return|refund/i.test(sale.sale_process || '')) return;
         api(id).then(data => {
             if (PosnicPro.sales._correctionSaleId !== id) return;
-            if (data.enabled) $('<button type="button" class="btn btn-light" style="min-height:48px" data-module="sales" data-access="write">').text(t('Correct payment')).on('click', () => open(id)).insertBefore('#sales_doc .p-doc-toolbar .ml-auto');
+            if (data.enabled) $('<button type="button" class="dropdown-item" data-correct-payment data-module="sales" data-access="write">').text(t('Correct payment')).on('click', () => open(id)).appendTo('#sales_doc [data-sale-edit-actions]');
             if (data.history.length) {
                 const $history = $('<details class="card p-3 mb-3"><summary></summary><div></div></details>');
                 $history.find('summary').text(t('Payment correction history'));

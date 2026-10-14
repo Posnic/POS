@@ -1018,7 +1018,11 @@ PosnicPro.sales = {
             + (unpaid && !cancelled
                 ? '<button type="button" class="btn btn-sm btn-primary" data-module="sales" data-access="write" onclick="PosnicPro.sales.showPayment(\'' + esc(id) + '\');"><i class="feather icon-credit-card mr-1"></i><lang class="lang_settlement">Take Payment</lang></button>'
                 : '')
-            + '<button type="button" class="btn btn-sm btn-light" data-module="sales" data-access="write" data-toggle="tooltip" title="Edit this bill" data-t-title="lang_edit_this_bill" aria-label="Edit" data-t-aria-label="lang_edit_title" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2"></i></button>'
+            + '<div class="btn-group" data-sale-edit-menu data-module="sales" data-access="write">'
+            + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Edit" data-t-aria-label="lang_edit_title"><i class="feather icon-edit-2 mr-1"></i><lang class="lang_edit_title">Edit</lang></button>'
+            + '<div class="dropdown-menu dropdown-menu-right" data-sale-edit-actions>'
+            + '<button type="button" class="dropdown-item" onclick="hasher.setHash(\'sales/' + esc(id) + '/edit\');"><i class="feather icon-edit-2 mr-2"></i><lang class="lang_edit_this_bill">Edit this bill</lang></button>'
+            + '</div></div>'
             + '<div class="btn-group">'
             + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_share">Share</lang></button>'
             + '<div class="dropdown-menu dropdown-menu-right">'
