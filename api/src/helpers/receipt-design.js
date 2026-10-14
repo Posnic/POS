@@ -54,18 +54,17 @@
   };
   const restaurant = ['table', 'order_type', 'covers', 'steward', 'session', 'fssai', 'source'];
   function fieldAvailable(field, branch = {}) {
-    if (!restaurant.includes(field)) return true;
-    if (![true, 'true', 'enable'].includes(branch.table_options)) return false;
-    // The outlet's country determines licensing, never its currency, language
-    // or customer's address. Missing country information does not imply India.
-    return (
-      field !== 'fssai' ||
-      ['INDIA', 'IN', 'IND'].includes(
-        String(branch.country || '')
-          .trim()
-          .toUpperCase()
-      )
-    );
+    const restaurantEnabled = [true, 'true', 'enable'].includes(branch.table_options);
+    if (field === 'fssai') {
+      const country = String(branch.branch_country || branch.country || '')
+        .trim()
+        .toUpperCase();
+      // A saved food licence also supports food retailers without restaurant workflows.
+      const foodBusiness =
+        restaurantEnabled || Boolean(String(branch.branch_fssai_number || '').trim());
+      return ['INDIA', 'IN', 'IND'].includes(country) && foodBusiness;
+    }
+    return !restaurant.includes(field) || restaurantEnabled;
   }
   const types = [
     'store',
@@ -164,6 +163,7 @@
           if (!['detailed', 'compact', 'columns'].includes(b.itemLayout))
             throw new Error('Choose a valid item layout.');
         }
+        if (block.type === 'totals') b.showPaymentMethod = block.showPaymentMethod !== false;
         if (block.type === 'items' && block.nameMaxChars != null) {
           b.nameMaxChars = Number(block.nameMaxChars);
           if (!Number.isInteger(b.nameMaxChars) || b.nameMaxChars < 8 || b.nameMaxChars > 80)

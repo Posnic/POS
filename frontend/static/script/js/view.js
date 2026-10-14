@@ -255,7 +255,24 @@ function setLocalValue() {
         user_image_path = storedBranchImage;
     }
 
-    $("#user-image").attr('src', user_image_path);
+    var avatarFallbacks = [user_image_path];
+    if (storedBranchImage && storedBranchImage !== 'store.png' && storedBranchImage !== 'null' && storedBranchImage !== 'undefined' && storedBranchImage.indexOf('localhost:5000') === -1) {
+        avatarFallbacks.push(storedBranchImage);
+    }
+    avatarFallbacks.push(defaultUserImage);
+    avatarFallbacks = avatarFallbacks.filter(function (value, index, values) {
+        return values.indexOf(value) === index;
+    });
+    var avatarIndex = 0;
+    $("#user-image").off('error.profileAvatar').on('error.profileAvatar', function () {
+        avatarIndex += 1;
+        if (avatarIndex < avatarFallbacks.length) {
+            $(this).attr('src', avatarFallbacks[avatarIndex]);
+        } else {
+            // Even the bundled placeholder can fail offline; never loop requests.
+            $(this).hide();
+        }
+    }).show().attr('src', avatarFallbacks[0]);
 
     $('.user-id').val(PosnicPro.local.get('sid'));
 

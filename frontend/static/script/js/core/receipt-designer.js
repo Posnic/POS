@@ -173,7 +173,7 @@
             '.rd-document table{width:100%;border-collapse:collapse;table-layout:fixed;font:inherit;color:inherit;}' +
             '.rd-document th{font-weight:bold;border-top:1px solid #333;border-bottom:1px solid #333;text-align:left;padding:7px 3px;}' +
             '.rd-document td{padding:6px 3px;vertical-align:top;border-bottom:1px solid #ddd;}.rd-document tr{break-inside:avoid;}.rd-document thead{display:table-header-group;}' +
-            '.rd-item-fixed{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.rd-total-quantity{font-weight:bold;}' +
+            '.rd-row-number{white-space:nowrap;vertical-align:top;text-align:left;}.rd-item-fixed{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.rd-total-quantity{font-weight:bold;}' +
             '.rd-number{text-align:right!important;white-space:normal;}.rd-line-detail{font-size:.88em;color:#444;}' +
             '.rd-total-row{display:flex;justify-content:space-between;gap:12px;margin:3px 0;}.rd-grand-total{font-size:1.3em;font-weight:bold;border-top:2px solid #111;padding-top:7px;margin-top:8px;}' +
             '.rd-totals{width:' + (sheet ? '48%' : '100%') + ';margin-left:auto;}.rd-transaction{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;border-bottom:1px solid #bbb;padding-bottom:8px;}' +
@@ -269,7 +269,9 @@
                 var compact = !sheet && b.itemLayout === 'compact';
                 var columns = !sheet && b.itemLayout === 'columns';
                 var hsnColumn = columns && format === '112' && b.hsn;
-                content = '<table' + (columns ? ' class="rd-fixed-columns"' : '') + '><colgroup><col style="width:' + (hsnColumn ? '36' : sheet ? '46' : columns ? (format === '58' ? '40' : '46') : compact ? '68' : '60') + '%">' + (hsnColumn ? '<col style="width:16%"><col style="width:18%"><col style="width:8%"><col style="width:22%">' : sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : columns ? (format === '58' ? '<col style="width:23%"><col style="width:12%"><col style="width:25%">' : '<col style="width:20%"><col style="width:10%"><col style="width:24%">') : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr><th>' + esc((b.heading || (columns ? label('Item name') : label('Item'))) + (compact ? ' × ' + label('Qty') : '')) + '</th>' + (hsnColumn ? '<th class="rd-number">' + esc(PosnicPro.i18n.t('lang_hsn_2', 'HSN')) + '</th>' : '') + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : columns ? '<th class="rd-number">' + esc(label('Rate')) + '</th><th class="rd-number">' + esc(label('Qty')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
+                var serialWidth = b.showRowNumbers ? (sheet ? 6 : format === '58' ? 15 : format === '80' ? 12 : 9) : 0;
+                var itemWidth = (hsnColumn ? 36 : sheet ? 46 : columns ? (format === '58' ? 40 : 46) : compact ? 68 : 60) - serialWidth;
+                content = '<table' + (columns ? ' class="rd-fixed-columns"' : '') + '><colgroup>' + (b.showRowNumbers ? '<col style="width:' + serialWidth + '%">' : '') + '<col style="width:' + itemWidth + '%">' + (hsnColumn ? '<col style="width:16%"><col style="width:18%"><col style="width:8%"><col style="width:22%">' : sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : columns ? (format === '58' ? '<col style="width:23%"><col style="width:12%"><col style="width:25%">' : '<col style="width:20%"><col style="width:10%"><col style="width:24%">') : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr>' + (b.showRowNumbers ? '<th class="rd-row-number">' + esc(label('S.No')) + '</th>' : '') + '<th>' + esc((b.heading || (columns ? label('Item name') : label('Item'))) + (compact ? ' × ' + label('Qty') : '')) + '</th>' + (hsnColumn ? '<th class="rd-number">' + esc(PosnicPro.i18n.t('lang_hsn_2', 'HSN')) + '</th>' : '') + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : columns ? '<th class="rd-number">' + esc(label('Rate')) + '</th><th class="rd-number">' + esc(label('Qty')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
                 receiptItems.forEach(function (item, index) {
                     var qty = Number(item.item_quantity || 0);
                     var hsn = item.hsncode || item.hsn_code || item.hsn || (/^\d{4,8}$/.test(item.tax_name || '') ? item.tax_name : '');
@@ -279,12 +281,12 @@
                         var limit = b.nameMaxChars || 24;
                         name = chars.length > limit ? chars.slice(0, limit - 1).join('') + '…' : chars.join('');
                     }
-                    content += '<tr><td' + (columns ? ' class="rd-item-fixed"' : '') + '>' + (b.showRowNumbers ? '<span class="rd-row-number">' + (index + 1) + '. </span>' : '') + esc(name) + (compact ? ' × ' + esc(qty) : '') + (b.hsn && !hsnColumn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
+                    content += '<tr>' + (b.showRowNumbers ? '<td class="rd-row-number">' + (index + 1) + '</td>' : '') + '<td' + (columns ? ' class="rd-item-fixed"' : '') + '>' + esc(name) + (compact ? ' × ' + esc(qty) : '') + (b.hsn && !hsnColumn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
                     if (!sheet && !compact && !columns) content += '<div class="rd-line-detail">' + esc(qty + ' ' + (item.item_unit || '') + ' × ') + money(item.item_price) + '</div>';
                     if (Number(item.item_discount) || Number(item.item_discount_percentage)) content += '<div class="rd-line-detail">' + esc(label('Discount')) + ': ' + (Number(item.item_discount_percentage) ? esc(item.item_discount_percentage) + '%' : money(item.item_discount)) + '</div>';
                     content += '</td>' + (hsnColumn ? '<td class="rd-number rd-hsn">' + esc(hsn) + '</td>' : '') + (sheet ? '<td class="rd-number">' + esc(qty + ' ' + (item.item_unit || '')) + '</td><td class="rd-number">' + money(item.item_price) + '</td>' : columns ? '<td class="rd-number">' + Number(item.item_price || 0).toFixed(2) + '</td><td class="rd-number">' + esc(qty) + '</td>' : '') + '<td class="rd-number">' + (columns ? Number(item.total_amount || 0).toFixed(2) : money(item.total_amount)) + '</td></tr>';
                 });
-                if (columns && hasField('total_quantity')) content += '<tr class="rd-total-quantity"><td colspan="' + (hsnColumn ? 3 : 2) + '">' + esc(label('Total Items')) + ': ' + receiptItems.length + '</td><td class="rd-number">' + esc(values.total_quantity) + '</td><td></td></tr>';
+                if (columns && hasField('total_quantity')) content += '<tr class="rd-total-quantity"><td colspan="' + ((hsnColumn ? 3 : 2) + (b.showRowNumbers ? 1 : 0)) + '">' + esc(label('Total Items')) + ': ' + receiptItems.length + '</td><td class="rd-number">' + esc(values.total_quantity) + '</td><td></td></tr>';
                 content += '</tbody></table>';
             } else if (b.type === 'totals') {
                 content = '<div class="rd-totals">' + pair('Subtotal', money(data.items_subtotal));
@@ -301,8 +303,8 @@
                 content += pair('Total', money(data.items_total), true);
                 if (!beforePayment && data.sales_id) {
                     var paymentRows = PosnicSalePayments.rows(data);
-                    if (paymentRows.length) paymentRows.forEach(function (row) { content += pair(row.method, money(row.amount)); });
-                    else if (data.payment_mode) content += pair('Payment', esc(data.payment_mode));
+                    if (b.showPaymentMethod !== false && paymentRows.length) paymentRows.forEach(function (row) { content += pair(row.method, money(row.amount)); });
+                    else if (b.showPaymentMethod !== false && data.payment_mode) content += pair('Payment', esc(data.payment_mode));
                     if (data.partial_check === true || data.partial_check === 'true') content += pair('Payments / credits', money(data.partial_balance)) + pair('Balance due', money(data.payment_pending));
                 }
                 content += '</div>';
