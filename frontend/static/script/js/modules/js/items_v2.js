@@ -106,11 +106,14 @@
         P.itemsV2Details.update(capabilities, selected('iv2-kind'));
         var f = fields(), a = assess(f), named = !!f.name.trim(), tracked = f.kind !== 'service' && f.stock === 'tracked';
         show('iv2-restaurant', capabilities.restaurant && f.kind !== 'service'); show('iv2-online', capabilities.online);
+        var copySource = value('iv2-copy-source');
+        show('iv2-copy-notice', !!copySource && !saved);
+        text('iv2-copy-notice', P.i18n.t('lang_iv2_copy_notice', 'Copy of {name}. This is a new, unsaved item. The original item will not change.').replace('{name}', copySource));
         var noun = f.kind === 'dish' ? 'dish' : f.kind === 'service' ? 'service' : 'item';
-        text('iv2-title', (editing ? PosnicPro.i18n.t('lang_edit_title', 'Edit') : PosnicPro.i18n.t('lang_po_create', 'Create')).trim() + ' ' + noun); text('iv2-name-label', noun.charAt(0).toUpperCase() + noun.slice(1) + ' name');
+        text('iv2-title', copySource ? P.i18n.t('lang_iv2_create_copy', 'Create a copy') : (editing ? PosnicPro.i18n.t('lang_edit_title', 'Edit') : PosnicPro.i18n.t('lang_po_create', 'Create')).trim() + ' ' + noun); text('iv2-name-label', noun.charAt(0).toUpperCase() + noun.slice(1) + ' name');
         document.querySelector('#items_v2 .iv2-heading p').textContent = editing ? P.i18n.t('lang_iv2_edit_hint', 'Add details to your saved item, then save your changes.') : P.i18n.t('lang_start_with_a_name_we_ll_help_you_get_it_re', 'Start with a name. We’ll help you get it ready to sell.');
         document.getElementById('iv2-name').placeholder = f.kind === 'dish' ? 'e.g. Tea, Chicken biryani, Butter naan' : f.kind === 'service' ? 'e.g. Haircut, Delivery, Repair' : 'e.g. Mineral water, Blue shirt';
-        if (!busy && !saved) text('iv2-save', editing ? P.i18n.t('lang_iv2_save_changes', 'Save changes') + ' →' : 'Save ' + noun + ' →');
+        if (!busy && !saved) text('iv2-save', copySource ? P.i18n.t('lang_iv2_save_copy', 'Save as new item') + ' →' : editing ? P.i18n.t('lang_iv2_save_changes', 'Save changes') + ' →' : 'Save ' + noun + ' →');
         var details = P.itemsV2Details.status();
         if (details.hsn) f.taxRate = details.tax;
         var price = Number(f.price);
@@ -160,6 +163,7 @@
     }
     function reset() {
         editing = false; savedItemId = null; savedBranch = null;
+        document.getElementById('iv2-copy-source').value = '';
         P.itemsV2Workspace.reset(); touched.clear();
         document.getElementById('iv2-form').reset(); P.itemsV2Details.reset(); applyBusinessContext(); saved = false; attempted = false;
         document.getElementById('iv2-fields').disabled = false;
@@ -207,6 +211,8 @@
                 if (r.data.itemid != null) document.getElementById('iv2-sku').value = r.data.itemid;
                 if (typeof r.data.track_inventory === 'boolean') document.querySelector('#items_v2 [name="iv2-stock"][value="' + (r.data.track_inventory ? 'tracked' : 'untracked') + '"]').checked = r.data.track_inventory;
             }
+            document.getElementById('iv2-copy-source').value = '';
+            show('iv2-copy-notice', false);
             P.itemsV2Workspace.saved(data, id, a, f.family);
         }, function (xhr) {
             unlock(); var message = 'Couldn’t confirm the save. Check your item list before trying again.';
@@ -251,15 +257,22 @@
         P.itemsV2Workspace.init({refresh:render,reset:reset,edit:function () {
             if (!savedItemId || savedBranch !== P.local.get('branch_id_set')) return;
             editing = true; saved = false; attempted = false;
+            document.getElementById('iv2-copy-source').value = '';
             document.getElementById('iv2-fields').disabled = false; document.getElementById('iv2-save').disabled = false;
             P.itemsV2Workspace.edit(); render();
         },duplicate:function () {
+            var originalName = value('iv2-name');
+            document.getElementById('iv2-copy-source').value = originalName;
+            var suffix = ' (' + P.i18n.t('lang_iv2_copy_suffix', 'copy') + ')';
+            document.getElementById('iv2-name').value = originalName.slice(0, Math.max(0, 200 - suffix.length)) + suffix;
             editing = false; savedItemId = null; savedBranch = null;
             P.itemsV2Workspace.reset(); saved=false; attempted=false; touched.clear();
             document.getElementById('iv2-fields').disabled=false; document.getElementById('iv2-save').disabled=false;
             ['iv2-sku','iv2-barcode','iv2-gtin','iv2-plu','iv2-alt-barcodes','iv2-quantity'].forEach(function(id){document.getElementById(id).value='';});
             document.querySelectorAll('#items_v2 [name="iv2-zero-stock"]').forEach(function(e){e.checked=false;});
-            P.itemsV2Details.duplicate(); render(); document.getElementById('iv2-name').focus();
+            P.itemsV2Details.duplicate(); render();
+            var nameInput = document.getElementById('iv2-name'); nameInput.focus(); nameInput.select();
+            nameInput.dispatchEvent(new Event('input', { bubbles: true }));
         }});
         show('iv2-tax-field', capabilities.tax); document.getElementById('iv2-tax-type').hidden = !capabilities.tax;
         if (!bound) applyBusinessContext();

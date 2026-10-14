@@ -4952,5 +4952,9 @@
   "lang_iv2_edit_hint": "Voeg details toe aan uw opgeslagen artikel en sla uw wijzigingen op.",
   "lang_iv2_edit_stock_note": "Wijzigingen worden toegepast op dit artikel. Voorraadaantallen blijven ongewijzigd.",
   "lang_iv2_save_changes": "Wijzigingen opslaan",
-  "lang_iv2_stock_unchanged": "Voorraadaantallen ongewijzigd"
+  "lang_iv2_stock_unchanged": "Voorraadaantallen ongewijzigd",
+  "lang_iv2_copy_notice": "Kopie van {name}. Dit is een nieuw, nog niet opgeslagen artikel. Het oorspronkelijke artikel blijft ongewijzigd.",
+  "lang_iv2_create_copy": "Een kopie maken",
+  "lang_iv2_save_copy": "Opslaan als nieuw artikel",
+  "lang_iv2_copy_suffix": "kopie"
 }
