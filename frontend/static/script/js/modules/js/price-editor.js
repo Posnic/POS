@@ -120,6 +120,19 @@
         : t("lang_all_categories", "All categories"),
     );
   }
+  // Keep multi-select choices open while selecting; dismiss on outside interaction.
+  $(document).off("click.priceCategories keydown.priceCategories")
+    .on("click.priceCategories", function (event) {
+      $(".ps-category-picker[open]").each(function () {
+        if (!this.contains(event.target)) this.open = false;
+      });
+    }).on("keydown.priceCategories", function (event) {
+      if (event.key !== "Escape") return;
+      $(".ps-category-picker[open]").each(function () {
+        this.open = false;
+        if (this.contains(document.activeElement)) $(this).find("summary").trigger("focus");
+      });
+    });
   p.setPriceCategories = function (items) {
     ["ps-grid-category", "ps-sheet-category"].forEach(function (id) {
       var selected = categories(id),
@@ -628,9 +641,14 @@
   p.sheetCount = function () {
     clearTimeout(countTimer);
     $("#ps-sheet-prepare").prop("disabled", true);
-    if (priceBranches.length && !selectedBranches.length) return;
-    $("#ps-sheet-clear").prop("hidden", true);
     var n = ++countSequence;
+    $("#ps-sheet-count").attr("aria-busy", "true").removeClass("ps-count-empty")
+      .text("Updating matching items…");
+    if (priceBranches.length && !selectedBranches.length) {
+      $("#ps-sheet-count").attr("aria-busy", "false").text("Select a branch to see matching items.");
+      return;
+    }
+    $("#ps-sheet-clear").prop("hidden", true);
     countTimer = setTimeout(function () {
       PosnicPro.get(
         {
@@ -650,17 +668,21 @@
               r.type !== "success" || empty,
             );
             $("#ps-sheet-clear").prop("hidden", !empty);
-            $("#ps-sheet-count").text(
+            $("#ps-sheet-count").attr("aria-busy", "false").toggleClass("ps-count-empty", empty).text(
               r.type === "success"
                 ? empty
                   ? t(
                       "lang_no_products_match_filters",
                       "No products match these filters.",
                     )
-                  : r.data.total + " matching items across all pages"
+                  : r.data.total + (r.data.total === 1 ? " matching item across all pages" : " matching items across all pages")
                 : "Could not count items",
             );
           }
+        },
+        function () {
+          if (n !== countSequence) return;
+          $("#ps-sheet-count").attr("aria-busy", "false").text("Could not count items. Try changing the filters again.");
         },
       );
     }, 250);
@@ -754,7 +776,7 @@
       },
     );
   };
-  async function showJob(data) {
+  async function showJob(data, editSchedule) {
     if (
       currentJob !== data.job._id ||
       currentRevision !== (data.job.revision || 0)
@@ -771,17 +793,17 @@
       "#ps-direct-panel, #ps-file-panel, #ps-schedules-panel, #ps-branches, #ps-grid > .ps-edit-tabs",
     ).prop("hidden", true);
     $("#ps-sheet-download, #ps-sheet-import").prop("hidden", true);
-    $("#ps-sheet-title").text("Review price changes · " + data.job.status);
+    $("#ps-sheet-title").text(data.job.status === "scheduled" ? (editSchedule ? "Edit scheduled prices" : "Price change scheduled") : "Review price changes · " + data.job.status);
     $("#ps-sheet .ps-dialog-header button").text(
       editingMode === "schedules" ? "Back to schedules" : "Back to editing",
     );
     var box = $("#ps-job-view").prop("hidden", false).empty(),
       c = data.counts;
-    if (data.job.exportedAt && data.job.exportedAt.length)
+    if (data.job.status !== "scheduled" && data.job.exportedAt && data.job.exportedAt.length)
       $("<p>")
         .text("Sheet exported: " + data.job.exportedAt.join(", "))
         .appendTo(box);
-    if (priceBranches.length > 1)
+    if (data.job.status !== "scheduled" && priceBranches.length > 1)
       $("<p>")
         .text(
           "Branches: " + (data.job.branchIds || []).map(branchName).join(", "),
@@ -789,28 +811,23 @@
         .appendTo(box);
     if (data.job.lastError) $("<p>").text(data.job.lastError).appendTo(box);
     if (data.job.status === "scheduled") {
-      $("<p class='ps-update-success'>")
-        .text(
-          "Price update scheduled. Tills receive applied prices through sync.",
-        )
-        .appendTo(box);
-      Object.keys(data.job.dueByBranch || {}).forEach(function (id) {
-        var branch = priceBranches.find(function (b) {
-          return b.id === id;
-        });
-        var zone = branch ? branch.timezone : "Asia/Calcutta";
-        $("<p>")
-          .text(
-            (priceBranches.length > 1 ? branchName(id) + ": " : "") +
-              new Date(data.job.dueByBranch[id]).toLocaleString(undefined, {
-                timeZone: zone,
-              }) +
-              " (" +
-              zone +
-              ")",
-          )
-          .appendTo(box);
+      var confirmation = $('<section class="ps-schedule-confirmation" role="status">').appendTo(box);
+      $('<h4>').text("Schedule saved").appendTo(confirmation);
+      $('<p>').text("No further review is needed. Prices will change automatically at the scheduled time. Tills receive the applied prices through sync.").appendTo(confirmation);
+      if (data.job.note) $('<p class="ps-schedule-note">').text(data.job.note).appendTo(confirmation);
+      var timings = {};
+      Object.keys(data.job.dueByBranch || {}).forEach(function(id) {
+        var branch = priceBranches.find(function(b){return b.id === id;}), zone = branch && branch.timezone || "Asia/Calcutta";
+        var label = new Date(data.job.dueByBranch[id]).toLocaleString(undefined,{timeZone:zone}) + " (" + zone + ")";
+        (timings[label] || (timings[label] = [])).push(branchName(id));
       });
+      Object.keys(timings).forEach(function(label) {
+        $('<strong class="d-block">').text(label).appendTo(confirmation);
+        if(priceBranches.length > 1) $('<p>').text(timings[label].join(" · ")).appendTo(confirmation);
+      });
+      $('<p>').text((c.pending || 0) + (c.pending === 1 ? " scheduled price change" : " scheduled price changes")).appendTo(confirmation);
+      $('<button type="button" class="btn btn-primary">').text("View schedules").on("click",function(){p.sheetClose();p.editMode("schedules");p.scheduleFilter("upcoming");}).appendTo(confirmation);
+      if (!editSchedule) $('<button type="button" class="btn btn-light ml-2">').text("Edit schedule").on("click",function(){showJob(data,true);$("#ps-when").focus();}).appendTo(confirmation);
     }
     if (data.job.status === "complete") {
       var issues = (c.invalid || 0) + (c.conflict || 0);
@@ -831,7 +848,7 @@
         .appendTo(box);
       if (PosnicPro.i18n && PosnicPro.i18n.apply) PosnicPro.i18n.apply(box[0]);
     }
-    $("<p>")
+    if (data.job.status !== "scheduled") $("<p>")
       .text(
         (c.pending || 0) +
           " ready · " +
@@ -896,7 +913,7 @@
           )
           .appendTo(td);
       });
-      tr.append(td, $("<td>").text(r.reason || r.status));
+      tr.append(td, $("<td>").text(r.reason || (data.job.status === "scheduled" && r.status === "pending" ? "Scheduled" : r.status)));
       if (r.status === "held")
         $('<label class="d-block">')
           .append(
@@ -949,7 +966,7 @@
       ["review", "running", "scheduled", "attention"].includes(
         data.job.status,
       ) &&
-      (c.pending || c.held)
+      (c.pending || c.held) && (data.job.status !== "scheduled" || editSchedule)
     ) {
       if (data.job.status !== "running") {
         var when = $('<select id="ps-when" class="form-control">')
@@ -1066,7 +1083,7 @@
       "Changes apply only to the reviewed branches. Conflicting prices are kept unchanged.",
     );
   }
-  p.sheetJob = async function (job, page) {
+  p.sheetJob = async function (job, page, editSchedule) {
     try {
       showJob(
         await api({
@@ -1075,7 +1092,7 @@
           revision: currentRevision,
           page: page || 1,
           filter: filter,
-        }),
+        }), editSchedule,
       );
     } catch (e) {
       error(e);
@@ -1223,8 +1240,8 @@
           scheduled: "Scheduled",
           running: "Applying",
           attention: "Needs attention",
-          review: "Needs review",
-          draft: "Unfinished upload",
+          review: "Not submitted",
+          draft: "Incomplete upload",
           complete: "Completed",
           cancelled: "Cancelled",
         };
@@ -1236,7 +1253,7 @@
         );
         async function open(edit) {
           filter = "changes";
-          await p.sheetJob(j._id);
+          await p.sheetJob(j._id, 1, !!edit);
           if (edit) $("#ps-when").focus();
         }
         $('<button type="button" class="btn btn-light btn-sm">')

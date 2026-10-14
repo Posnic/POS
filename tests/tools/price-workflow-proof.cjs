@@ -123,6 +123,7 @@ const out =
               window.testJob = {
                 ...testJob,
                 status: "scheduled",
+                dueByBranch: {[branch]: "2026-10-14T18:30:00Z"},
                 effectiveAt: "2026-10-14T18:30:00Z",
                 note: b.note,
               };
@@ -185,6 +186,16 @@ const out =
       await page.waitForFunction(
         () => !document.querySelector("#ps-sheet-prepare").disabled,
       );
+      await page.click("#ps-sheet-category summary");
+      assert.equal(await page.$eval("#ps-sheet-category", e => e.open), true);
+      await page.click("#ps-sheet-search");
+      assert.equal(await page.$eval("#ps-sheet-category", e => e.open), false);
+      await page.type("#ps-sheet-search", "APPLE");
+      assert.equal(await page.$eval("#ps-sheet-count", e => e.getAttribute("aria-busy")), "true");
+      await page.waitForFunction(() => document.querySelector("#ps-sheet-count").getAttribute("aria-busy") === "false");
+      assert.equal(await page.$eval("#ps-sheet-count", e => e.textContent), "12 matching items across all pages");
+      await page.$eval("#ps-sheet-search", e => { e.value = ""; e.dispatchEvent(new Event("input", { bubbles: true })); });
+      await page.waitForFunction(() => document.querySelector("#ps-sheet-count").getAttribute("aria-busy") === "false");
       await page.screenshot({
         path: path.join(out, `file-${width}-${dark ? "dark" : "light"}.png`),
         fullPage: true,
@@ -207,8 +218,10 @@ const out =
       });
       await page.click("#ps-job-view button.btn-primary");
       await page.waitForFunction(() =>
-        $("#ps-job-view").text().includes("Price update scheduled"),
+        $("#ps-job-view").text().includes("Schedule saved"),
       );
+      assert.equal(await page.$("#ps-confirm-prices"), null);
+      await page.screenshot({path:path.join(out, `scheduled-${width}-${dark ? "dark" : "light"}.png`),fullPage:true});
       await page.click("#ps-sheet .ps-dialog-header button");
       await page.click("#ps-schedules-tab");
       await page.waitForSelector("#ps-sheet-history table");
