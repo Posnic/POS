@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Ātra saņemšana",
   "lang_print_mode_help": "Ātri izmanto standarta teksta izkārtojumu. Grafika vai neatbalstīts teksts izmanto precīzu dizainu.",
   "lang_print_sample": "Drukāt paraugu",
-  "lang_print_test_submitted": "Pārbaude iesniegta. Pārbaudiet papīru pie printera."
+  "lang_print_test_submitted": "Pārbaude iesniegta. Pārbaudiet papīru pie printera.",
+  "lang_delete_sale": "Dzēst pārdošanu",
+  "lang_sale_delete_stock_warning": "Krājumi tiks pievienoti atpakaļ krājumu izsekotajām precēm. Neizsekotie vienumi netiek mainīti."
 }

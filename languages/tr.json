@@ -4732,5 +4732,7 @@
   "lang_print_mode_fast": "Hızlı makbuz",
   "lang_print_mode_help": "Fast standart metin düzenini kullanır. Grafikler veya desteklenmeyen metinler Tam tasarım kullanır.",
   "lang_print_sample": "Örnek yazdır",
-  "lang_print_test_submitted": "Test gönderildi. Yazıcıdaki kağıdı kontrol edin."
+  "lang_print_test_submitted": "Test gönderildi. Yazıcıdaki kağıdı kontrol edin.",
+  "lang_delete_sale": "Satışı sil",
+  "lang_sale_delete_stock_warning": "Stok takibi yapılan ürünler için stok geri eklenecektir. İzlenmeyen öğeler değiştirilmez."
 }

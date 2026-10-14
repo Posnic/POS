@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Marrja e shpejtë",
   "lang_print_mode_help": "Fast përdor paraqitjen standarde të tekstit. Grafika ose teksti i pambështetur përdorin dizajnin e saktë.",
   "lang_print_sample": "Shtypni mostrën",
-  "lang_print_test_submitted": "Testi i dorëzuar. Kontrolloni letrën në printer."
+  "lang_print_test_submitted": "Testi i dorëzuar. Kontrolloni letrën në printer.",
+  "lang_delete_sale": "Fshini shitjen",
+  "lang_sale_delete_stock_warning": "Stoqet do të shtohen përsëri për artikujt e gjurmuar nga inventari. Artikujt e pazgjurmuar nuk ndryshohen."
 }

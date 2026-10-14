@@ -4732,5 +4732,7 @@
   "lang_print_mode_fast": "Biên nhận nhanh",
   "lang_print_mode_help": "Nhanh sử dụng bố cục văn bản tiêu chuẩn. Đồ họa hoặc văn bản không được hỗ trợ sử dụng thiết kế chính xác.",
   "lang_print_sample": "In mẫu",
-  "lang_print_test_submitted": "Bài kiểm tra đã nộp. Kiểm tra giấy tại máy in."
+  "lang_print_test_submitted": "Bài kiểm tra đã nộp. Kiểm tra giấy tại máy in.",
+  "lang_delete_sale": "Xóa bán hàng",
+  "lang_sale_delete_stock_warning": "Cổ phiếu sẽ được thêm lại cho các mặt hàng theo dõi hàng tồn kho. Các mục chưa được theo dõi không được thay đổi."
 }

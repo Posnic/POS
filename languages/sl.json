@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Hiter prejem",
   "lang_print_mode_help": "Hitro uporablja standardno postavitev besedila. Grafika ali nepodprto besedilo uporabljajo natančno oblikovanje.",
   "lang_print_sample": "Natisni vzorec",
-  "lang_print_test_submitted": "Test je bil predložen. Preverite papir na tiskalniku."
+  "lang_print_test_submitted": "Test je bil predložen. Preverite papir na tiskalniku.",
+  "lang_delete_sale": "Izbriši prodajo",
+  "lang_sale_delete_stock_warning": "Zaloga bo dodana nazaj za izdelke, ki se sledijo zalogam. Predmeti, ki se ne sledijo, se ne spremenijo."
 }

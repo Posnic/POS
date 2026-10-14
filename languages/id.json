@@ -4811,5 +4811,7 @@
   "lang_print_mode_fast": "Penerimaan cepat",
   "lang_print_mode_help": "Cepat menggunakan tata letak teks standar. Grafik atau teks yang tidak didukung menggunakan desain yang tepat.",
   "lang_print_sample": "Cetak sampel",
-  "lang_print_test_submitted": "Tes diajukan. Periksa kertas di printer."
+  "lang_print_test_submitted": "Tes diajukan. Periksa kertas di printer.",
+  "lang_delete_sale": "Hapus penjualan",
+  "lang_sale_delete_stock_warning": "Stok akan ditambahkan kembali untuk item yang dilacak persediaan. Item yang tidak terlacak tidak diubah."
 }

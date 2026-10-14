@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Nopea vastaanotto",
   "lang_print_mode_help": "Fast käyttää tavallista tekstiasettelua. Grafiikka tai teksti, jota ei tueta, käyttävät Tarkkaa suunnittelua.",
   "lang_print_sample": "Tulosta näyte",
-  "lang_print_test_submitted": "Testi lähetetty. Tarkista tulostimen paperi."
+  "lang_print_test_submitted": "Testi lähetetty. Tarkista tulostimen paperi.",
+  "lang_delete_sale": "Poista myynti",
+  "lang_sale_delete_stock_warning": "Varasto lisätään takaisin varastoseurattujen tuotteiden osalta. Seuraamattomia kohteita ei muuteta."
 }

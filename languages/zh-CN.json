@@ -4732,5 +4732,7 @@
   "lang_print_mode_fast": "快速收据",
   "lang_print_mode_help": "Fast 使用标准文本布局。图形或不支持的文本使用精确设计。",
   "lang_print_sample": "打印样本",
-  "lang_print_test_submitted": "测试已提交。检查打印机上的纸张。"
+  "lang_print_test_submitted": "测试已提交。检查打印机上的纸张。",
+  "lang_delete_sale": "删除销售",
+  "lang_sale_delete_stock_warning": "库存追踪商品的库存将重新添加。未追踪的物品不会更改。"
 }

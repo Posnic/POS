@@ -4732,5 +4732,7 @@
   "lang_print_mode_fast": "빠른 영수증",
   "lang_print_mode_help": "Fast는 표준 텍스트 레이아웃을 사용합니다.그래픽 또는 지원되지 않는 텍스트는 정확한 디자인을 사용합니다.",
   "lang_print_sample": "인쇄 샘플",
-  "lang_print_test_submitted": "테스트가 제출되었습니다.프린터에서 용지를 확인하세요."
+  "lang_print_test_submitted": "테스트가 제출되었습니다.프린터에서 용지를 확인하세요.",
+  "lang_delete_sale": "판매 삭제",
+  "lang_sale_delete_stock_warning": "인벤토리 추적 품목의 경우 재고가 다시 추가됩니다.추적되지 않은 품목은 변경되지 않습니다."
 }

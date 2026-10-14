@@ -4811,5 +4811,7 @@
   "lang_print_mode_fast": "Schneller Empfang",
   "lang_print_mode_help": "Fast verwendet das Standard-Textlayout. Grafiken oder nicht unterstützter Text verwenden Exact Design.",
   "lang_print_sample": "Beispiel drucken",
-  "lang_print_test_submitted": "Test eingereicht. Überprüfen Sie das Papier am Drucker."
+  "lang_print_test_submitted": "Test eingereicht. Überprüfen Sie das Papier am Drucker.",
+  "lang_delete_sale": "Verkauf löschen",
+  "lang_sale_delete_stock_warning": "Der Lagerbestand für Artikel, für die der Lagerbestand nachverfolgt wird, wird wieder hinzugefügt. Artikel ohne Sendungsverfolgung werden nicht geändert."
 }

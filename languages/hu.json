@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Gyors átvétel",
   "lang_print_mode_help": "A Fast szabványos szövegelrendezést használ. A grafika vagy a nem támogatott szöveg az Exact design funkciót használja.",
   "lang_print_sample": "Minta nyomtatása",
-  "lang_print_test_submitted": "A teszt benyújtva. Ellenőrizze a papírt a nyomtatón."
+  "lang_print_test_submitted": "A teszt benyújtva. Ellenőrizze a papírt a nyomtatón.",
+  "lang_delete_sale": "Értékesítés törlése",
+  "lang_sale_delete_stock_warning": "A készlet-nyomon követett tételekhez hozzáadódik a készletet. A nyomon követhetetlen elemek nem változnak."
 }

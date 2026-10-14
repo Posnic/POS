@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Primirea rapidă",
   "lang_print_mode_help": "Fast utilizează aspectul standard de text. Grafica sau textul neacceptat utilizează Design exact.",
   "lang_print_sample": "Imprimați eșantionul",
-  "lang_print_test_submitted": "Testul depus. Verificați hârtia de la imprimantă."
+  "lang_print_test_submitted": "Testul depus. Verificați hârtia de la imprimantă.",
+  "lang_delete_sale": "Ștergeți vânzarea",
+  "lang_sale_delete_stock_warning": "Stocul va fi adăugat înapoi pentru articolele urmărite în inventar. Elementele neurmărite nu sunt modificate."
 }

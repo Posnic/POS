@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Brzi prijem",
   "lang_print_mode_help": "Brzo koristi standardni raspored teksta. Grafika ili nepodržani tekst koriste Tačan dizajn.",
   "lang_print_sample": "Štampanje uzorka",
-  "lang_print_test_submitted": "Test je podnesen. Proverite papir na štampaču."
+  "lang_print_test_submitted": "Test je podnesen. Proverite papir na štampaču.",
+  "lang_delete_sale": "Izbriši prodaju",
+  "lang_sale_delete_stock_warning": "Zalihe će biti vraćene za artikle koje se prati zaliha. Nepraćene stavke se ne menjaju."
 }

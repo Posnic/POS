@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Snabbt kvitto",
   "lang_print_mode_help": "Fast använder standard textlayout. Grafik eller text som inte stöds använder Exakt design.",
   "lang_print_sample": "Skriv ut prov",
-  "lang_print_test_submitted": "Test inlämnat. Kontrollera papperet på skrivaren."
+  "lang_print_test_submitted": "Test inlämnat. Kontrollera papperet på skrivaren.",
+  "lang_delete_sale": "Ta bort försäljning",
+  "lang_sale_delete_stock_warning": "Lager kommer att läggas tillbaka för lagerspårade artiklar. Ospårade objekt ändras inte."
 }

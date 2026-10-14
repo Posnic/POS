@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Irċevuta veloċi",
   "lang_print_mode_help": "Fast juża t-tqassim standard tat-test. Grafika jew test mhux appoġġjat jużaw Disinn eżatt.",
   "lang_print_sample": "Kampjun tal-istampar",
-  "lang_print_test_submitted": "Test sottomess. Iċċekkja l-karta fl-istampatur."
+  "lang_print_test_submitted": "Test sottomess. Iċċekkja l-karta fl-istampatur.",
+  "lang_delete_sale": "Ħassar il-bejgħ",
+  "lang_sale_delete_stock_warning": "L-istokk se jiżdied lura għal oġġetti traċċati mill-inventarju. Oġġetti mhux traċċati ma jinbidlux."
 }

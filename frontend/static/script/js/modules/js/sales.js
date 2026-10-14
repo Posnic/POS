@@ -247,7 +247,7 @@ PosnicPro.sales = {
             return;
         }
         PosnicPro.deleteTableRowData(id, 'sales');
-        if (!PosnicPro.deleteConfirmation) $('.removeText').text(PosnicPro.i18n.t('lang_sale_hard_delete_confirm', 'Hard delete removes this sale from Sales History and moves its data to Recycle Bin.'));
+        if (!PosnicPro.deleteConfirmation) $('.removeText').text(PosnicPro.i18n.t('lang_sale_hard_delete_confirm', 'Hard delete removes this sale from Sales History and moves its data to Recycle Bin.') + ' ' + PosnicPro.i18n.t('lang_sale_delete_stock_warning', 'Stock will be added back for inventory-tracked items. Untracked items are not changed.'));
     },
     showPdf: function (id) {
         PosnicPro.sales.view.salesPdf(id);
@@ -1039,7 +1039,7 @@ PosnicPro.sales = {
                     + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_tab_more">More</lang></button>'
                     + '<div class="dropdown-menu dropdown-menu-right">'
                     + '<a class="dropdown-item" data-module="sales" data-access="write" href="javascript:void(0)" onclick="hasher.setHash(\'sales/' + esc(id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
-                    + (PosnicPro.local.get('usertype') === 'super_admin' && PosnicPro.local.get('allow_sale_hard_delete') === 'true' ? '<a class="dropdown-item text-danger" data-module="sales" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.sales.showDelete(\'' + esc(id) + '\');"><i class="feather icon-trash-2 mr-2"></i><lang class="lang_delete">Delete</lang></a>' : '')
+                    + (PosnicPro.local.get('usertype') === 'super_admin' && PosnicPro.local.get('allow_sale_hard_delete') === 'true' ? '<a class="dropdown-item text-danger" data-module="sales" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.sales.showDelete(\'' + esc(id) + '\');"><i class="feather icon-trash-2 mr-2"></i><lang class="lang_delete_sale">Delete sale</lang></a>' : '')
                     + '</div></div>'
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'

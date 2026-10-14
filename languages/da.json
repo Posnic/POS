@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Hurtig modtagelse",
   "lang_print_mode_help": "Fast bruger standard tekstlayout. Grafik eller ikke-understøttet tekst bruger Præcis design.",
   "lang_print_sample": "Udskriv prøve",
-  "lang_print_test_submitted": "Test indsendt. Kontroller papiret på printeren."
+  "lang_print_test_submitted": "Test indsendt. Kontroller papiret på printeren.",
+  "lang_delete_sale": "Slet salg",
+  "lang_sale_delete_stock_warning": "Lageret tilføjes tilbage for lagersporede varer. Ikke-sporede elementer ændres ikke."
 }

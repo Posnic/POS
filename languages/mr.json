@@ -4732,5 +4732,7 @@
   "lang_print_mode_fast": "जलद पावती",
   "lang_print_mode_help": "जलद मानक मजकूर लेआउट ग्राफिक्स किंवा असमर्थित मजकूर योग्य",
   "lang_print_sample": "मुद्रित नमुना",
-  "lang_print_test_submitted": "चाचणी सादर केली प्रिंटरवर कागद तपासा."
+  "lang_print_test_submitted": "चाचणी सादर केली प्रिंटरवर कागद तपासा.",
+  "lang_delete_sale": "विक्री हटवा",
+  "lang_sale_delete_stock_warning": "यादी-ट्रॅक केलेल्या वस्तूंसाठी स्टॉक परत जोडला जाईल. ट्रॅक न केलेले आयटम बदलल्या जातात."
 }

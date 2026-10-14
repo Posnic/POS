@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Rask kvittering",
   "lang_print_mode_help": "Fast bruker standard tekstoppsett. Grafikk eller tekst som ikke støttes, bruker nøyaktig design.",
   "lang_print_sample": "Skriv ut prøve",
-  "lang_print_test_submitted": "Test sendt inn. Sjekk papiret på skriveren."
+  "lang_print_test_submitted": "Test sendt inn. Sjekk papiret på skriveren.",
+  "lang_delete_sale": "Slett salg",
+  "lang_sale_delete_stock_warning": "Lager vil bli lagt tilbake for varesporte varer. Ikke-sporede elementer endres ikke."
 }

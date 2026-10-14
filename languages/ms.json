@@ -4732,5 +4732,7 @@
   "lang_print_mode_fast": "Resit cepat",
   "lang_print_mode_help": "Cepat menggunakan susun atur teks standard. Grafik atau teks yang tidak disokong menggunakan reka bentuk yang tepat.",
   "lang_print_sample": "Cetak sampel",
-  "lang_print_test_submitted": "Ujian dikemukakan. Semak kertas di pencetak."
+  "lang_print_test_submitted": "Ujian dikemukakan. Semak kertas di pencetak.",
+  "lang_delete_sale": "Padamkan jualan",
+  "lang_sale_delete_stock_warning": "Stok akan ditambah kembali untuk item yang dijejaki inventori. Item yang tidak dijejaki tidak diubah."
 }

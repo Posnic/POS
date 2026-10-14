@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Szybki odbiór",
   "lang_print_mode_help": "Szybko wykorzystuje standardowy układ tekstu. Grafika lub nieobsługiwany tekst używają Dokładny projekt.",
   "lang_print_sample": "Wydrukuj próbkę",
-  "lang_print_test_submitted": "Test przesłany. Sprawdź papier na drukarce."
+  "lang_print_test_submitted": "Test przesłany. Sprawdź papier na drukarce.",
+  "lang_delete_sale": "Usuń sprzedaż",
+  "lang_sale_delete_stock_warning": "Zapasy zostaną dodane z powrotem dla pozycji śledzonych zapasów. Nieśledzone elementy nie są zmieniane."
 }

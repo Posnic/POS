@@ -4811,5 +4811,7 @@
   "lang_print_mode_fast": "Ricevuta rapida",
   "lang_print_mode_help": "Fast utilizza un layout di testo standard. La grafica o il testo non supportato utilizzano Exact design.",
   "lang_print_sample": "Esempio di stampa",
-  "lang_print_test_submitted": "Test inviato Controllate la carta sulla stampante."
+  "lang_print_test_submitted": "Test inviato Controllate la carta sulla stampante.",
+  "lang_delete_sale": "Elimina vendita",
+  "lang_sale_delete_stock_warning": "Le scorte verranno aggiunte nuovamente per gli articoli tracciati nell'inventario. Gli articoli non tracciati non vengono modificati."
 }

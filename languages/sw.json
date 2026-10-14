@@ -4811,5 +4811,7 @@
   "lang_print_mode_fast": "Ripoti ya haraka",
   "lang_print_mode_help": "Haraka hutumia mpangilio wa kawaida wa maandishi. Picha au maandishi isiyosaidiwa hutumia muundo sahihi.",
   "lang_print_sample": "Sampuli ya kuchapisha",
-  "lang_print_test_submitted": "Mtihani uliwasilishwa. Angalia karatasi kwenye printa."
+  "lang_print_test_submitted": "Mtihani uliwasilishwa. Angalia karatasi kwenye printa.",
+  "lang_delete_sale": "Futa uuzaji",
+  "lang_sale_delete_stock_warning": "Hisa itaongezwa tena kwa vitu vilivyofuatiliwa na hesabu. Vitu visivyofuatiliwa havibadilishwa."
 }

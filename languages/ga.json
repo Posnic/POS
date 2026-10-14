@@ -4729,5 +4729,7 @@
   "lang_print_mode_fast": "Admháil tapa",
   "lang_print_mode_help": "Fast úsáideann leagan amach téacs caighdeánach Úsáideann grafaicí nó téacs gan tacaíocht Dearadh cruinn.",
   "lang_print_sample": "Priontáil sampla",
-  "lang_print_test_submitted": "Tástáil curtha isteach. Seiceáil an páipéar ag an printéir."
+  "lang_print_test_submitted": "Tástáil curtha isteach. Seiceáil an páipéar ag an printéir.",
+  "lang_delete_sale": "Scrios díol",
+  "lang_sale_delete_stock_warning": "Cuirfear stoc ar ais le haghaidh earraí rianaithe fardail. Ní athraítear earraí gan rianú."
 }
