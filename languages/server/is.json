@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Ljúktu leiðréttingunni í bið greiðslu áður en þú lokar þessari skrá.",
   "Finish the pending payment correction first.": "Kláraðu leiðréttinguna í bið greiðslu fyrst.",
   "Bill correction saved.": "Leiðrétting reiknings vistuð.",
-  "Review the paid bill correction before saving.": "Farið yfir leiðréttingu greidds reiknings áður en vistað er."
+  "Review the paid bill correction before saving.": "Farið yfir leiðréttingu greidds reiknings áður en vistað er.",
+  "Choose a saved customer for customer credit.": "Veldu vistaðan viðskiptavin fyrir inneign viðskiptavina.",
+  "Exact numeric search must be on or off": "Nákvæm talnaleit verður að vera kveikt eða slökkt",
+  "Item not found or selling price is held. Review it in Edit prices.": "Hlutur fannst ekki eða söluverð er haldið. Skoðaðu það í Breyta verði."
 }

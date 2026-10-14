@@ -258,6 +258,9 @@ const processSale = async (
         data.items.length > 100)
     )
       return { status: false, message: 'Unsupported decision preview' };
+    // Name-only checkout keeps a bill snapshot without inventing a customer account.
+    if (!data.customer_id && [true, 'true'].includes(data.partial_check))
+      return { status: false, message: 'Choose a saved customer for customer credit.' };
     // 1. Basic Validation
     if ((parseFloat(data.sales_total) || 0) < 0) {
       // PHP checks < 1, but let's say 0 for safety, PHP said < 1
@@ -1250,7 +1253,7 @@ const processSale = async (
       category_name: customer ? customer.category_name : '',
       referrer_id: customer ? customer.referrer_id : '',
       referrer_name: customer ? customer.referrer_name : '',
-      customer_id: new ObjectId(data.customer_id),
+      customer_id: data.customer_id ? new ObjectId(data.customer_id) : null,
       customer_name: (data.customer_name || '').trim(),
       customer_address: (data.customer_address || '').trim(),
       customer_phone: (data.customer_phone || '').trim(),

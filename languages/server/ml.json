@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "ഈ രജിസ്റ്റർ അടയ്ക്കുന്നതിന് മുമ്പ് തീർപ്പാക്കുന്ന പേയ്മെന്റ് തിരുത്തൽ പൂർത്തിയാക്കുക.",
   "Finish the pending payment correction first.": "ആദ്യം തീർപ്പാക്കുന്ന പേയ്മെന്റ് തിരുത്തൽ പൂർത്തിയാക്കുക.",
   "Bill correction saved.": "ബിൽ തിരുത്തൽ സംരക്ഷിച്ചു.",
-  "Review the paid bill correction before saving.": "സേവ് ചെയ്യുന്നതിന് മുമ്പ് പണമടച്ച ബിൽ തിരുത്തൽ അവലോകനം ചെയ്യുക."
+  "Review the paid bill correction before saving.": "സേവ് ചെയ്യുന്നതിന് മുമ്പ് പണമടച്ച ബിൽ തിരുത്തൽ അവലോകനം ചെയ്യുക.",
+  "Choose a saved customer for customer credit.": "ഉപഭോക്തൃ ക്രെഡിറ്റിനായി സംരക്ഷിച്ച ഉപഭോക്താവിനെ തിരഞ്ഞെടുക്കുക.",
+  "Exact numeric search must be on or off": "കൃത്യമായ സംഖ്യാ തിരയൽ ഓണോ ഓഫോ ആയിരിക്കണം",
+  "Item not found or selling price is held. Review it in Edit prices.": "ഇനം കണ്ടെത്തുകയോ വിൽപന വില കൈവശം വയ്ക്കുകയോ ചെയ്തിട്ടില്ല. വിലകൾ എഡിറ്റ് ചെയ്യുന്നതിൽ ഇത് അവലോകനം ചെയ്യുക."
 }

@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Enne selle registri sulgemist lõpetage ootel olev maksekorrektsioon.",
   "Finish the pending payment correction first.": "Esmalt lõpetage ootel olev maksekorrektsioon.",
   "Bill correction saved.": "Arve korrigeerimine salvestatud.",
-  "Review the paid bill correction before saving.": "Enne säästmist vaadake üle tasutud arve korrigeerimine."
+  "Review the paid bill correction before saving.": "Enne säästmist vaadake üle tasutud arve korrigeerimine.",
+  "Choose a saved customer for customer credit.": "Valige kliendikrediidi saamiseks salvestatud klient.",
+  "Exact numeric search must be on or off": "Täpne numbriline otsing peab olema sisse või välja lülitatud",
+  "Item not found or selling price is held. Review it in Edit prices.": "Kauba ei leitud või müügihinda hoitakse. Vaadake see üle jaotises Muuda hindu."
 }

@@ -17,7 +17,7 @@ function setup() {
     w.eval(read('src/receipt-page-layout.js'));
     w.eval(read('frontend/static/script/js/core/receipt-designer.js'));
     w.eval(read('frontend/static/script/js/modules/js/receipt-designer-editor.js'));
-    const branch = { branch_name: 'My Shop', logo: pixel, print_logoimg: true, footer_print: 'Thanks <b>again</b>', footer_qr_url: 'https://example.com/shop', footer_image: pixel, table_options: false };
+    const branch = { customer_print: false, branch_name: 'My Shop', logo: pixel, print_logoimg: true, footer_print: 'Thanks <b>again</b>', footer_qr_url: 'https://example.com/shop', footer_image: pixel, table_options: false };
     const design = w.PosnicPro.receiptDesigner.defaults(branch);
     // Existing saved designs keep their legacy layout; default templates are tested separately.
     for (const l of Object.values(design.layouts)) for (const b of l.blocks) {
@@ -409,7 +409,7 @@ test('editor saves half-width fields and compact items independently by format a
     assert.equal(sent.receipt_designs.defaultFormat, '80');
     assert.equal(sent.receipt_designs.layouts['80'].blocks.some(b => b.type === 'qr'), false, 'Standard templates do not restore obsolete legacy customizations');
     assert.equal(sent.receipt_designs.layouts['80'].blocks.find(b => b.type === 'items').itemLayout, 'columns');
-    assert.equal(sent.receipt_designs.layouts['80'].blocks.filter(b => b.field?.startsWith('customer_')).length, 5);
+    assert.equal(sent.receipt_designs.layouts['80'].blocks.filter(b => b.field?.startsWith('customer_')).length, 4);
     assert.match($('iframe[title="Receipt design preview"]').attr('srcdoc'), /Tax ID:<\/strong> TAX-123456/, 'Adding a tax field has sample data to preview');
     $('[data-format="a4"]').trigger('click');
     $('.rd-select').filter((_i, e) => $(e).text() === 'ItemsRequired').trigger('click');
@@ -1166,4 +1166,38 @@ test('fast text preserves rendered payment allocations and rounding; graphics an
         assert.equal(engine.fastLines('<div class="rd-document">தமிழ்</div>'), null);
         assert.equal(engine.fastLines('<div class="rd-document"><img src="logo.png">Shop</div>'), null);
     } finally { dom.window.close(); }
+});
+
+
+test('custom product and bill labels survive normalization on every paper size, with removable branding', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const format of Object.keys(contract.formats)) {
+        design.layouts[format].blocks.find(b => b.type === 'items').heading = 'Product <name>';
+        design.layouts[format].blocks.find(b => b.type === 'transaction').labelText = 'Invoice No.';
+    }
+    sale.receipt_designs = contract.normalize(design);
+    for (const format of Object.keys(contract.formats)) {
+        const out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('thead th').first().text(), 'Product <name>');
+        assert.match(out.find('.rd-block-transaction').text(), /Invoice No.*S128/);
+        assert.equal(out.find('.rd-branding').length, 1);
+        assert.equal(out.find('name').length, 0);
+    }
+    sale.receipt_designs.showBranding = false;
+    sale.receipt_designs = contract.normalize(sale.receipt_designs);
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-branding').length, 0);
+    dom.window.close();
+});
+
+test('first-time designs include customer details and greeting but preserve explicit customer opt-out', () => {
+    const { dom, engine } = setup();
+    const fresh = engine.defaults({});
+    for (const layout of Object.values(fresh.layouts)) {
+        assert.ok(layout.blocks.some(b => b.field === 'customer_name'));
+        assert.ok(layout.blocks.some(b => b.field === 'customer_phone'));
+        assert.ok(!layout.blocks.some(b => b.field === 'customer_email'));
+        assert.ok(layout.blocks.some(b => b.text === 'Thank you! Visit again.'));
+    }
+    assert.ok(!engine.defaults({customer_print:'false'}).layouts['80'].blocks.some(b => b.field === 'customer_name'));
+    dom.window.close();
 });

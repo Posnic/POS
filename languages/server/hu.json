@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "A nyilvántartás bezárása előtt fejezze be a függőben lévő fizetési korrekciót.",
   "Finish the pending payment correction first.": "Először fejezze be a függőben lévő fizetési korrekciót.",
   "Bill correction saved.": "Számla javítása mentve.",
-  "Review the paid bill correction before saving.": "Megtakarítás előtt tekintse át a fizetett számla korrekcióját."
+  "Review the paid bill correction before saving.": "Megtakarítás előtt tekintse át a fizetett számla korrekcióját.",
+  "Choose a saved customer for customer credit.": "Válasszon egy mentett ügyfelet az ügyfélhitelhez.",
+  "Exact numeric search must be on or off": "A pontos numerikus keresésnek be- vagy kikapcsolva kell lennie",
+  "Item not found or selling price is held. Review it in Edit prices.": "A tétel nem található, vagy az eladási ár megmarad. Tekintse át az Árak szerkesztése menüpontban."
 }

@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Завршете ја исправката за плаќање во очекување пред да го затворите овој регистар.",
   "Finish the pending payment correction first.": "Прво завршете ја исправката за плаќање во очекување.",
   "Bill correction saved.": "Корекцијата на сметката е зачувана.",
-  "Review the paid bill correction before saving.": "Прегледајте ја исправката на платената сметка пред да заштедите."
+  "Review the paid bill correction before saving.": "Прегледајте ја исправката на платената сметка пред да заштедите.",
+  "Choose a saved customer for customer credit.": "Изберете зачуван клиент за кредит на клиентите.",
+  "Exact numeric search must be on or off": "Точното нумеричко пребарување мора да биде вклучено или исклучено",
+  "Item not found or selling price is held. Review it in Edit prices.": "Предметот не е пронајден или продажната цена се одржува. Прегледајте го во Уреди цени."
 }

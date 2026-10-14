@@ -153,10 +153,11 @@
         if (b.type === 'items') html += '<label class="rd-inline"><input type="checkbox" data-prop="showRowNumbers" ' + (b.showRowNumbers ? 'checked' : '') + '> ' + esc(t('Show item row numbers')) + '</label>';
         if (b.type === 'items') html += '<label class="rd-inline"><input type="checkbox" data-prop="hsn" ' + (b.hsn ? 'checked' : '') + '> ' + esc(t('Show HSN / SAC codes')) + '</label><p class="rd-help">' + esc(t(b.itemLayout === 'columns' ? PosnicPro.i18n.t('lang_long_names_are_shortened_to_keep_quantity', 'Long names are shortened to keep quantity in its own column.') : PosnicPro.i18n.t('lang_rd_item_names_wrap_onto_the_next_line_prices_and_quantities_stay_readable_', 'Item names wrap onto the next line. Prices and quantities stay readable.'))) + '</p>';
         if (b.type === 'items' && !schema.formats[format].height) html += '<label for="rd-item-layout">' + esc(t('Item layout')) + '</label><select id="rd-item-layout" data-prop="itemLayout"><option value="detailed"' + (!b.itemLayout || b.itemLayout === 'detailed' ? ' selected' : '') + '>' + esc(t('Detailed - quantity and unit price below')) + '</option><option value="compact"' + (b.itemLayout === 'compact' ? ' selected' : '') + '>' + esc(t('Compact - item × quantity and amount')) + '</option><option value="columns"' + (b.itemLayout === 'columns' ? ' selected' : '') + '>' + esc(t('Fixed columns - item, rate, quantity, amount')) + '</option></select>';
+        if (b.type === 'items') html += '<label>' + esc(t('Item column heading')) + '<input class="form-control" type="text" maxlength="40" data-prop="heading" placeholder="' + esc(t('Item')) + '" value="' + esc(b.heading || '') + '"></label>';
         if (b.type === 'items' && b.itemLayout === 'columns') html += '<label>' + esc(t('Maximum item name characters')) + '<input type="number" min="8" max="80" data-prop="nameMaxChars" value="' + (b.nameMaxChars || 24) + '"></label>';
         if (b.type === 'transaction' && !schema.formats[format].height) html += '<label><input type="checkbox" data-prop="showTitle" ' + (b.showTitle !== false ? 'checked' : '') + '> ' + esc(t('Show invoice / receipt title')) + '</label>';
-        if (b.type === 'transaction' && !schema.formats[format].height) {
-            html += '<label>' + esc(t('Custom left label')) + '<input type="text" maxlength="40" data-prop="labelText" placeholder="' + esc(PosnicPro.i18n.t('lang_bill_no', 'Bill no')) + '" value="' + esc(b.labelText || '') + '"></label><small>' + esc(t('Custom text replaces the receipt title. Clear to use the default.')) + '</small>';
+        if (b.type === 'transaction') {
+            html += '<label>' + esc(t('Custom left label')) + '<input class="form-control" type="text" maxlength="40" data-prop="labelText" placeholder="' + esc(PosnicPro.i18n.t('lang_bill_no', 'Bill no')) + '" value="' + esc(b.labelText || '') + '"></label><small>' + esc(t('Custom text replaces the receipt title. Clear to use the default.')) + '</small>';
             [['dateFormat', 'Date format', [['auto', t('Use default')], ['dmy', 'DD/MM/YYYY'], ['dmy-short', 'DD/MM/YY'], ['mdy', 'MM/DD/YYYY'], ['ymd', 'YYYY-MM-DD']]],
              ['timeFormat', 'Time format', [['auto', t('Use default')], ['12h', '07:05 PM'], ['24h', '19:05'], ['none', t('None')]]]].forEach(function (setting) {
                 html += '<label>' + esc(t(setting[1])) + '<select data-prop="' + setting[0] + '">' + setting[2].map(function (option) {
@@ -210,6 +211,7 @@
         box.find('.rd-reset-confirm').prop('hidden', true);
         renderFormats();
         box.find('#rd-text-size').val(layout().fontSize);
+        box.find('#rd-branding').prop('checked', design.showBranding !== false);
         renderList(); preview();
     }
     function move(id, at) {
@@ -309,7 +311,7 @@
             '<div class="rd-workspace"><aside class="rd-library"><h4>' + esc(t('Add a block')) + '</h4><p>' + esc(t('Click to add. Drag blocks to reorder.')) + '</p><div class="rd-library-buttons">' + ['text', 'qr', 'image', 'logo', 'barcode', 'divider', 'signature'].map(function (type) { return '<button type="button" data-add="' + type + '"><span>+</span>' + esc(t(names[type])) + '</button>'; }).join('') + '</div><h4>' + esc(t('Sale fields')) + '</h4><div class="rd-library-buttons">' + Object.keys(schema.fields).filter(function (f) { return schema.fieldAvailable(f, branch); }).map(function (field) { return '<button type="button" data-add="field" data-field="' + field + '"><span>+</span>' + esc(t(schema.fields[field])) + '</button>'; }).join('') + '</div></aside>' +
             '<section class="rd-layout"><div class="rd-section-heading"><h4>' + esc(t('Your layout')) + ' <small class="rd-block-count"></small></h4><div>' + button('reset-template', 'Reset template', 'refresh-cw') + button('undo', 'Undo', 'rotate-ccw', 'disabled') + '</div></div><div class="rd-reset-confirm" hidden><p>' + esc(t('Reset this format to the standard template? Other formats and branch details are kept. Save designs to apply.')) + '</p><button type="button" class="btn btn-outline-primary btn-sm" data-action="confirm-reset">' + esc(t('Reset template')) + '</button> <button type="button" class="btn btn-light btn-sm" data-action="cancel-reset">' + esc(t('Cancel')) + '</button></div><div class="rd-font-control"><label for="rd-text-size">' + esc(t('Default text size')) + '</label><select id="rd-text-size" aria-describedby="rd-font-scope">' + [8,9,10,11,12,13,14,16,18].map(function (n) { return '<option value="' + n + '">' + n + ' px</option>'; }).join('') + '</select><small id="rd-font-scope">' + esc(t('Applies to this paper format. Select a block to override its text size or make it bold.')) + '</small></div><ol class="rd-block-list"></ol><p class="rd-help">' + esc(t('Store details, receipt details, items and totals are always included.')) + '</p></section>' +
             '<aside class="rd-preview"><div class="rd-section-heading"><h4>' + esc(t('Live preview')) + '</h4><select class="rd-preview-fit" aria-label="' + esc(t('Preview zoom')) + '"><option value="page">' + esc(t('Fit whole receipt')) + '</option><option value="width">' + esc(t('Fit width')) + '</option></select></div><div class="rd-preview-stage"><div class="rd-preview-page"></div></div><div class="rd-preview-footer"><strong class="rd-preview-name"></strong><span class="rd-dimensions"></span><span class="rd-sample-label">' + esc(t('Sample sale')) + '</span></div></aside></div>' +
-            '<section class="rd-print-options"><div class="rd-existing-options"></div></section>');
+            '<section class="rd-print-options"><label><input type="checkbox" id="rd-branding" ' + (design.showBranding !== false ? 'checked' : '') + '> Made with Posnic &middot; posnic.com</label><div class="rd-existing-options"></div></section>');
         // Keep the existing settings controls and values; only their presentation changes.
         ['printall', 'bill_print_copies', 'branch_fssai_number'].forEach(function (id) {
             var group = controls[id];
@@ -329,6 +331,8 @@
         });
         box.off('.receiptDesigner').on('click.receiptDesigner', '[data-format]', function () {
             format = this.getAttribute('data-format'); selected = null; box.find('.rd-preview-stage').scrollTop(0); renderEditor();
+        }).on('change.receiptDesigner', '#rd-branding', function () {
+            checkpoint(); design.showBranding = this.checked; changed();
         }).on('click.receiptDesigner', '[data-default-format]', function () {
             var next = this.getAttribute('data-default-format');
             if (next === design.defaultFormat) return;

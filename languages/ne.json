@@ -4519,5 +4519,9 @@
   "lang_paid_bill_use_return": "यदि पहिलेको रकम वास्तवमै सङ्कलन गरिएको थियो भने, रकम फिर्ता रेकर्ड गर्न सामान फिर्ता विकल्प प्रयोग गर्नुहोस्।",
   "lang_paid_bill_previous": "पहिले रेकर्ड गरिएको",
   "lang_paid_bill_corrected": "सच्याइएको बिल",
-  "lang_reload_this_page_to_review_the_paid_bill_c": "भुक्तानी गरिएको बिलको सुधार समीक्षा गर्न यो पृष्ठ पुनः लोड गर्नुहोस्।"
+  "lang_reload_this_page_to_review_the_paid_bill_c": "भुक्तानी गरिएको बिलको सुधार समीक्षा गर्न यो पृष्ठ पुनः लोड गर्नुहोस्।",
+  "lang_customer_details": "ग्राहक विवरण",
+  "lang_bill_customer_details_help": "यस बिलका लागि वैकल्पिक विवरण। ग्राहकको रेकर्ड सुरक्षित गर्न नयाँ ग्राहक थप्नुहोस् प्रयोग गर्नुहोस्।",
+  "lang_rd_item_column_heading": "वस्तु स्तम्भको शीर्षक",
+  "lang_use_on_this_bill": "यस बिलमा प्रयोग गर्नुहोस्"
 }

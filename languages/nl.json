@@ -4940,5 +4940,10 @@
   "lang_reload_this_page_to_review_the_paid_bill_c": "Laad deze pagina opnieuw om de correctie van de betaalde factuur te bekijken.",
   "lang_price_schedules": "Prijsplanningen",
   "lang_price_schedules_help": "Geplande en onafgeronde updates uit beide bewerkingsmethoden. Open een update om de prijzen, het tijdstip en de optionele notitie te controleren.",
-  "lang_schedule_status": "Planningsstatus"
+  "lang_schedule_status": "Planningsstatus",
+  "lang_bill_customer_details_help": "Optionele gegevens voor dit wetsvoorstel. Gebruik Nieuwe klant toevoegen om een klantrecord op te slaan.",
+  "lang_customer_details": "Gegevens van de klant",
+  "lang_details": "Details",
+  "lang_rd_item_column_heading": "Titel van de kolom van het item",
+  "lang_use_on_this_bill": "Gebruik op dit wetsvoorstel"
 }

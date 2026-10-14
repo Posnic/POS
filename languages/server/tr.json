@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Bu kaydı kapatmadan önce bekleyen ödeme düzeltmesini tamamlayın.",
   "Finish the pending payment correction first.": "Önce bekleyen ödeme düzeltmesini tamamlayın.",
   "Bill correction saved.": "Fatura düzeltmesi kaydedildi.",
-  "Review the paid bill correction before saving.": "Kaydetmeden önce ödenen fatura düzeltmesini gözden geçirin."
+  "Review the paid bill correction before saving.": "Kaydetmeden önce ödenen fatura düzeltmesini gözden geçirin.",
+  "Choose a saved customer for customer credit.": "Müşteri kredisi için kaydedilmiş bir müşteri seçin.",
+  "Exact numeric search must be on or off": "Tam sayısal arama açık veya kapalı olmalıdır",
+  "Item not found or selling price is held. Review it in Edit prices.": "Ürün bulunamadı veya satış fiyatı tutuldu. Fiyatları düzenle bölümünde inceleyin."
 }

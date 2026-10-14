@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Finalizați corecția plății în așteptare înainte de a închide acest registru.",
   "Finish the pending payment correction first.": "Finalizați mai întâi corecția plății în așteptare.",
   "Bill correction saved.": "Corectarea facturii salvată.",
-  "Review the paid bill correction before saving.": "Examinați corecția facturii plătite înainte de a salva."
+  "Review the paid bill correction before saving.": "Examinați corecția facturii plătite înainte de a salva.",
+  "Choose a saved customer for customer credit.": "Alegeți un client salvat pentru creditul clientului.",
+  "Exact numeric search must be on or off": "Căutarea numerică exactă trebuie să fie activată sau dezactivată",
+  "Item not found or selling price is held. Review it in Edit prices.": "Articolul nu a fost găsit sau prețul de vânzare este menținut. Examinați-l în Editați prețurile."
 }

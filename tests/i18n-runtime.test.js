@@ -386,7 +386,7 @@ test('the words behind those tooltips are in every pack', () => {
    */
   const dir = path.join(__dirname, '..', 'languages');
   const english = JSON.parse(fs.readFileSync(path.join(dir, '_english.json'), 'utf8'));
-  for (const key of ['lang_ai_describe_hint', 'lang_walk_in_customer_click_to_choose_or_add']) {
+  for (const key of ['lang_ai_describe_hint', 'lang_customer_details']) {
     assert.ok(english[key], key + ' has no English, so no pack can be asked for it');
     for (const file of fs.readdirSync(dir).filter((f) => /^[a-z]{2}\.json$/.test(f))) {
       const pack = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));

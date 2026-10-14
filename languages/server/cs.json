@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Před uzavřením tohoto registru dokončete opravu čekající platby.",
   "Finish the pending payment correction first.": "Nejprve dokončete opravu čekající platby.",
   "Bill correction saved.": "Oprava účtu uložena.",
-  "Review the paid bill correction before saving.": "Před uložením zkontrolujte opravu zaplaceného účtu."
+  "Review the paid bill correction before saving.": "Před uložením zkontrolujte opravu zaplaceného účtu.",
+  "Choose a saved customer for customer credit.": "Vyberte uloženého zákazníka pro zákaznický kredit.",
+  "Exact numeric search must be on or off": "Přesné číselné vyhledávání musí být zapnuto nebo vypnuto",
+  "Item not found or selling price is held. Review it in Edit prices.": "Položka nenalezena nebo je zachována prodejní cena. Zkontrolujte to v Upravit ceny."
 }

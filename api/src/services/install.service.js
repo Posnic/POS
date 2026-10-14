@@ -603,7 +603,7 @@ class InstallService {
       balance_view: true,
       offlineprocess: true,
       sales_mail: false,
-      customer_print: false,
+      customer_print: true,
       print_logoimg: false,
       print_sale_notes: false,
       tax_checkbox: false,
