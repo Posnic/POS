@@ -583,7 +583,12 @@ class SettingModel extends BaseModel {
         },
       };
 
-      const andConditions = [dateFilter, { document_name: params.table }];
+      // Sync-only deletion markers have no recoverable document body.
+      const andConditions = [
+        dateFilter,
+        { document_name: params.table },
+        { body_discarded: { $ne: true } },
+      ];
 
       if (params.table === 'items' && branchObjectIds.length) {
         // Items may have branch_access array
@@ -642,7 +647,7 @@ class SettingModel extends BaseModel {
       }
 
       const cursor = await collection.find(filter, {
-        sort: { document_backup_date: -1 },
+        sort: { document_backup_date: -1, _id: -1 },
         skip: (page - 1) * limit,
         limit,
       });
@@ -4664,6 +4669,14 @@ class SettingModel extends BaseModel {
         };
       }
 
+      if (restoreDocs.some((doc) => doc.body_discarded === true)) {
+        return {
+          status: false,
+          data: null,
+          message: 'Deleted record details were not retained and cannot be restored.',
+        };
+      }
+
       // Restore each document to its original collection
       let restoredCount = 0;
       const errors = [];
@@ -4733,7 +4746,14 @@ class SettingModel extends BaseModel {
         license: this.normalizeId(this.licenseId),
       });
 
-      if (param) {
+      if (param && param.body_discarded !== true) {
+        // Reuse the sale detail adapter for Captain and legacy item/date shapes,
+        // using this authorized backup, never a current sale with the same ID.
+        if (param.document_name === 'sales') {
+          return require('../repositories/sale.repository').getLegacyDetails(id, {
+            snapshot: param,
+          });
+        }
         return {
           status: true,
           data: BaseModel.simplifyFields(param),

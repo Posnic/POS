@@ -2226,3 +2226,34 @@ describe('billing outlets feature switch', () => {
     expect(setting.parse(undefined)).toBe(false);
   });
 });
+
+describe('recoverable recycle-bin records', () => {
+  test('uses the same recoverable filter for list and count', async () => {
+    const m = makeModel(),
+      col = makeMockCollection();
+    jest.spyOn(m, 'getCollection').mockResolvedValue(col);
+    const result = await m.getBackupTable(
+      { table: 'sales', branchIds: [BRANCH_ID] },
+      { page: 1, limit: 50 }
+    );
+    expect(result.status).toBe(true);
+    const filter = col.find.mock.calls[0][0];
+    expect(filter.$and).toContainEqual({ body_discarded: { $ne: true } });
+    expect(col.countDocuments).toHaveBeenCalledWith(filter);
+    expect(col.find.mock.calls[0][1].sort).toEqual({ document_backup_date: -1, _id: -1 });
+  });
+  test('does not show or restore a sync-only deletion marker', async () => {
+    const m = makeModel(),
+      marker = { _id: BRANCH_ID, document_name: 'sales', body_discarded: true };
+    const col = makeMockCollection({
+      findOne: jest.fn().mockResolvedValue(marker),
+      find: jest.fn().mockReturnValue({ toArray: jest.fn().mockResolvedValue([marker]) }),
+    });
+    jest.spyOn(m, 'getCollection').mockResolvedValue(col);
+    expect((await m.getSettingTableRow(BRANCH_ID)).status).toBe(false);
+    expect((await m.restoreBackup([BRANCH_ID])).status).toBe(false);
+    expect(col.insertOne).not.toHaveBeenCalled();
+    expect(col.replaceOne).not.toHaveBeenCalled();
+    expect(col.deleteMany).not.toHaveBeenCalled();
+  });
+});
