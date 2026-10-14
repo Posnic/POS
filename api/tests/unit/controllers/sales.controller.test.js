@@ -2,6 +2,7 @@
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 jest.mock('../../../src/services/sale.service');
+jest.mock('../../../src/services/paid-bill-edit', () => ({ amend: jest.fn() }));
 jest.mock('../../../src/services/business-checkout-decisions', () => ({
   createCheckoutDecisions: jest.fn(),
 }));
@@ -611,6 +612,27 @@ describe('SalesController', () => {
   // ── update ──────────────────────────────────────────────────────────────────
   describe('update', () => {
     const body = { items: [{ item_id: VALID_ID, item_quantity: 2 }], sales_total: 100 };
+
+    test.each([
+      [403, 'Enable payment corrections in Sale settings first.'],
+      [403, 'You do not have permission to correct this bill.'],
+      [409, 'This bill changed. Reload it before correcting it.'],
+      [422, 'Invalid item quantity.'],
+    ])('returns correction refusal %s with its actionable message', async (status, message) => {
+      salesHelper.normalizeSaleItems.mockReturnValue([{ item_id: VALID_ID }]);
+      require('../../../src/services/paid-bill-edit').amend.mockRejectedValueOnce(
+        Object.assign(new Error(message), { status })
+      );
+      const res = mockRes();
+      const next = mockNext();
+      await ctrl.update(mockReq({ params: { id: VALID_ID }, body: {
+        ...body, paid_bill_correction: { reason: 'Wrong method recorded' },
+      } }), res, next);
+      expect(res.status).toHaveBeenCalledWith(status);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message }));
+      expect(next).not.toHaveBeenCalled();
+      expect(salesService.processSale).not.toHaveBeenCalled();
+    });
 
     test('200 success', async () => {
       salesHelper.normalizeSaleItems.mockReturnValue([{ item_id: VALID_ID }]);
