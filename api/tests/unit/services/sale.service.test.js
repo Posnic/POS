@@ -1318,6 +1318,71 @@ describe('SalesService', () => {
         await server?.stop();
       });
 
+      test('removing a paid Captain item and paying UPI cannot replace the collected total', async () => {
+        await connection.db.dropDatabase();
+        const { ObjectId } = require('mongodb');
+        const sale = {
+          _id: new ObjectId(SALE_ID),
+          branch_id: new ObjectId(BRANCH_ID),
+          license: new ObjectId(LICENSE_ID),
+          sales_id: 'TEST-0027',
+          payment_status: 'Paid',
+          sale_process: 'KOT',
+          sales_total: 357,
+          paid_amount: 357,
+          partial_balance: 357,
+          payment_pending: 0,
+          payment_mode: 'Mixed',
+          multi_payment: { UPI: 299.96, Cash: 57.04 },
+          captain_payment_plan: 'test-paid-plan',
+          items: [
+            {
+              item_id: '64f8f2f4c2b9c0a1e4b11112',
+              item_name: 'Baby Corn 65',
+              item_quantity: 1,
+              item_price: 180,
+              tax: 5,
+            },
+            {
+              item_id: ITEM_ID,
+              item_name: 'Blackcurrant Mojito',
+              item_quantity: 1,
+              item_price: 160,
+              tax: 5,
+            },
+          ],
+        };
+        await connection.db.collection('sales').insertOne(sale);
+        const journal = {
+          _id: sale.captain_payment_plan,
+          state: 'paid',
+          payments: [{ amountMinor: 35700 }],
+        };
+        await connection.db.collection('captain_payment_plans').insertOne(journal);
+        BaseModel.getDb.mockResolvedValue(connection.db);
+        salesRepository.getById.mockImplementation(() => Model.findById(SALE_ID));
+        const result = await salesService.processSale(
+          makeSaleData({
+            sales_total: '168',
+            payment_mode: 'UPI',
+            multi_payment: { UPI: 168 },
+            items: [makeItemPayload({ item_quantity: '1', sale_inline_item_price: 160, tax: 5 })],
+          }),
+          SALE_ID,
+          'Edit',
+          makeContext()
+        );
+        expect(result.status).toBe(false);
+        expect(result.message).toMatch(/already paid.*Return items/);
+        expect(await connection.db.collection('sales').findOne({ _id: sale._id })).toEqual(sale);
+        expect(
+          await connection.db.collection('captain_payment_plans').findOne({ _id: journal._id })
+        ).toEqual(journal);
+        expect(salesRepository.save).not.toHaveBeenCalled();
+        expect(mockItemRepositoryInstance.updateStock).not.toHaveBeenCalled();
+        expect(mockRegisterRepositoryInstance.updateSaleRegisterEntry).not.toHaveBeenCalled();
+      });
+
       test.each(['KOT', 'Hold'])(
         'two full desktop %s edits compete for capacity without losing either order',
         async (initialProcess) => {
