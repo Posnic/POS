@@ -95,6 +95,40 @@ async function fixture() {
     close: () => dom.window.close(),
   };
 }
+test("Edit code targets the clicked branch, independently of the selected active branch", async () => {
+  const f = await fixture();
+  const branches = [
+    { id: "bbbbbbbbbbbbbbbbbbbbbbbb", name: "Althino", code: "ALT" },
+    { id: "aaaaaaaaaaaaaaaaaaaaaaaa", name: "Admin", code: "ADM" },
+    { id: "cccccccccccccccccccccccc", name: "Market", code: "MKT" },
+  ];
+  f.w.PosnicPro.post = (r, done) => {
+    const body = JSON.parse(r.data);
+    f.calls.push(body);
+    if (body.action === "branchCode") {
+      assert.equal(Object.hasOwn(body, "branchId"), false);
+      branches.find((b) => b.id === body.targetBranchId).code = body.code;
+    }
+    done({ type: "success", data: body.action === "branches" ? branches : {} });
+  };
+  f.p.showDataTablePage();
+  await new Promise((r) => setTimeout(r, 0));
+  for (const [index, branch] of branches.entries()) {
+    const code = "CODE" + index;
+    f.w.prompt = (message, current) => {
+      assert.ok(message.includes(branch.name));
+      assert.equal(current, branch.code);
+      return code;
+    };
+    f.$(".ps-branch-row button").eq(index).trigger("click");
+    await new Promise((r) => setTimeout(r, 0));
+    const change = f.calls.filter((b) => b.action === "branchCode").at(-1);
+    assert.equal(change.targetBranchId, branch.id);
+    assert.ok(f.$(".ps-branch-row label").eq(index).text().includes(code));
+    assert.equal(f.$("#ps-branches input:checked").val(), branches[1].id);
+  }
+  f.close();
+});
 test("direct price edits survive pages and selected cost/MRP columns stage only edited fields", async () => {
   const f = await fixture();
   f.$('[data-price-field="selling_price"]').val("25").trigger("input");
