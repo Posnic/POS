@@ -4673,7 +4673,7 @@ class SettingModel extends BaseModel {
         return {
           status: false,
           data: null,
-          message: 'Deleted record details were not retained and cannot be restored.',
+          message: 'No documents found for restoration',
         };
       }
 
