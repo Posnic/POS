@@ -1378,6 +1378,32 @@ describe('SalesService', () => {
         expect(
           await connection.db.collection('captain_payment_plans').findOne({ _id: journal._id })
         ).toEqual(journal);
+        mockItemRepositoryInstance.findItemById.mockResolvedValue(
+          makeItemDoc({ selling_price: 160, tax: 5, tax_type: 'exclusive', track_inventory: false })
+        );
+        const prepared = await salesService.processSale(
+          makeSaleData({
+            sales_total: '168',
+            payment_mode: 'UPI',
+            multi_payment: { UPI: 168 },
+            items: [
+              makeItemPayload({
+                item_quantity: '1',
+                sale_inline_item_price: 160,
+                tax: 5,
+                tax_type: 'exclusive',
+              }),
+            ],
+          }),
+          SALE_ID,
+          'Edit',
+          makeContext(),
+          { preparePaidEdit: true }
+        );
+        expect(prepared.status).toBe(true);
+        expect(prepared.data.sales_total).toBe(168);
+        expect(prepared.data.items).toHaveLength(1);
+        expect(await connection.db.collection('sales').findOne({ _id: sale._id })).toEqual(sale);
         expect(salesRepository.save).not.toHaveBeenCalled();
         expect(mockItemRepositoryInstance.updateStock).not.toHaveBeenCalled();
         expect(mockRegisterRepositoryInstance.updateSaleRegisterEntry).not.toHaveBeenCalled();

@@ -4814,5 +4814,10 @@
   "lang_print_test_submitted": "Mtihani uliwasilishwa. Angalia karatasi kwenye printa.",
   "lang_delete_sale": "Futa uuzaji",
   "lang_sale_delete_stock_warning": "Hisa itaongezwa tena kwa vitu vilivyofuatiliwa na hesabu. Vitu visivyofuatiliwa havibadilishwa.",
-  "lang_last_week": "Wiki iliyopita"
+  "lang_last_week": "Wiki iliyopita",
+  "lang_paid_bill_review": "Muswada iliyorekodiwa sahihi",
+  "lang_paid_bill_no_movement": "Hii inabadilisha bili na malipo iliyorekodiwa vibaya. Hakuna fedha zinazokusanywa au kurejeshwa.",
+  "lang_paid_bill_use_return": "Ikiwa pesa za awali zilikusanywa kweli, tumia vitu vya Kurudi kurekodi malipo badala yake.",
+  "lang_paid_bill_previous": "Imerekodiwa hapo",
+  "lang_paid_bill_corrected": "Muswada uliorekebishwa"
 }

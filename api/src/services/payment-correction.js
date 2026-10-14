@@ -114,6 +114,7 @@ async function recover(db, c, id) {
   const sale = await sales.findOne({ ...scope(c), _id: id });
   const job = sale?.payment_correction_pending;
   if (!job) return sale;
+  if (job.kind === 'paid-bill-edit') return require('./paid-bill-edit').recover(db, c, id);
   const worker = new ObjectId().toHexString();
   const lease = await sales.updateOne(
     {

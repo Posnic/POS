@@ -4732,5 +4732,10 @@
   "lang_print_test_submitted": "Test je bil predložen. Preverite papir na tiskalniku.",
   "lang_delete_sale": "Izbriši prodajo",
   "lang_sale_delete_stock_warning": "Zaloga bo dodana nazaj za izdelke, ki se sledijo zalogam. Predmeti, ki se ne sledijo, se ne spremenijo.",
-  "lang_last_week": "Prejšnji teden"
+  "lang_last_week": "Prejšnji teden",
+  "lang_paid_bill_review": "Pravilno zabeležen račun",
+  "lang_paid_bill_no_movement": "To spremeni napačno evidentiran račun in plačilo. Denar se ne zbira ali vrača.",
+  "lang_paid_bill_use_return": "Če je bil prvotni denar dejansko zbran, uporabite vrnitev artiklov, da namesto tega zabeležite vračilo.",
+  "lang_paid_bill_previous": "Prej zabeleženo",
+  "lang_paid_bill_corrected": "Popravljen račun"
 }

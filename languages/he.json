@@ -4732,5 +4732,10 @@
   "lang_print_test_submitted": "מבחן הוגש. בדוק את הנייר במדפסת.",
   "lang_delete_sale": "מחק מכירה",
   "lang_sale_delete_stock_warning": "מלאי יתווסף בחזרה עבור פריטים במעקב אחר מלאי. פריטים שלא נעקרו אינם משתנים.",
-  "lang_last_week": "בשבוע שעבר"
+  "lang_last_week": "בשבוע שעבר",
+  "lang_paid_bill_review": "חשבון מוקלט נכון",
+  "lang_paid_bill_no_movement": "זה משנה חשבון ותשלום שנרשמו בצורה שגויה. כסף לא נאסף או מוחזר.",
+  "lang_paid_bill_use_return": "אם הכסף המקורי נאסף בפועל, השתמש בפריטים החזר כדי לרשום את ההחזר במקום זאת.",
+  "lang_paid_bill_previous": "הוקלט בעבר",
+  "lang_paid_bill_corrected": "הצעת חוק מתוקנת"
 }

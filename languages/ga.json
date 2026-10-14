@@ -4732,5 +4732,10 @@
   "lang_print_test_submitted": "Tástáil curtha isteach. Seiceáil an páipéar ag an printéir.",
   "lang_delete_sale": "Scrios díol",
   "lang_sale_delete_stock_warning": "Cuirfear stoc ar ais le haghaidh earraí rianaithe fardail. Ní athraítear earraí gan rianú.",
-  "lang_last_week": "An tseachtain seo caite"
+  "lang_last_week": "An tseachtain seo caite",
+  "lang_paid_bill_review": "Bille ceart taifeadta",
+  "lang_paid_bill_no_movement": "Athraíonn sé seo bille agus íocaíocht a thaifeadadh go mícheart. Ní bhailítear nó aisíoctar aon airgead.",
+  "lang_paid_bill_use_return": "Má bailíodh an t-airgead bunaidh i ndáiríre, bain úsáid as earraí Tuairisceáin chun an aisíocaíocht",
+  "lang_paid_bill_previous": "Taifeadadh roimhe",
+  "lang_paid_bill_corrected": "Bille ceartaithe"
 }

@@ -4735,5 +4735,10 @@
   "lang_print_test_submitted": "已提交測試。檢查印表機上的紙張。",
   "lang_delete_sale": "刪除銷售",
   "lang_sale_delete_stock_warning": "存貨跟踪的物品將添加回庫存。未追蹤的項目不會變更。",
-  "lang_last_week": "上週"
+  "lang_last_week": "上週",
+  "lang_paid_bill_review": "正確記錄的賬單",
+  "lang_paid_bill_no_movement": "這會改變錯誤記錄的賬單和付款。不會收取或退款。",
+  "lang_paid_bill_use_return": "如果原始款項是真正收取的，請改用「退貨項目」記錄退款。",
+  "lang_paid_bill_previous": "先前錄製",
+  "lang_paid_bill_corrected": "更正的賬單"
 }

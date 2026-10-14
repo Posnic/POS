@@ -4732,5 +4732,10 @@
   "lang_print_test_submitted": "آزمون ارسال شد. کاغذ را در چاپگر بررسی کنید.",
   "lang_delete_sale": "حذف فروش",
   "lang_sale_delete_stock_warning": "سهام برای اقلام ردیابی موجودی دوباره اضافه می شود. موارد ردیابی نشده تغییر نمی کنند.",
-  "lang_last_week": "هفته گذشته"
+  "lang_last_week": "هفته گذشته",
+  "lang_paid_bill_review": "صورتحساب ضبط درست",
+  "lang_paid_bill_no_movement": "این یک قبض و پرداخت ضبط اشتباه را تغییر می دهد. هیچ پولی جمع آوری یا بازپرداخت نمی شود.",
+  "lang_paid_bill_use_return": "اگر پول اصلی واقعاً جمع آوری شده بود، به جای آن از موارد برگشت برای ثبت بازپرداخت استفاده کنید.",
+  "lang_paid_bill_previous": "قبلا ضبط شده",
+  "lang_paid_bill_corrected": "لایحه تصحیح شده"
 }

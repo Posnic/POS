@@ -4735,5 +4735,10 @@
   "lang_print_test_submitted": "Ujian dikemukakan. Semak kertas di pencetak.",
   "lang_delete_sale": "Padamkan jualan",
   "lang_sale_delete_stock_warning": "Stok akan ditambah kembali untuk item yang dijejaki inventori. Item yang tidak dijejaki tidak diubah.",
-  "lang_last_week": "Minggu lepas"
+  "lang_last_week": "Minggu lepas",
+  "lang_paid_bill_review": "Bil yang direkodkan dengan betul",
+  "lang_paid_bill_no_movement": "Ini mengubah bil dan pembayaran yang direkodkan dengan salah. Tiada wang yang dikumpulkan atau dikembalikan.",
+  "lang_paid_bill_use_return": "Jika wang asal sebenarnya dikumpulkan, gunakan item Pulangan untuk merekodkan bayaran balik sebagai gantinya.",
+  "lang_paid_bill_previous": "Sebelum ini direkodkan",
+  "lang_paid_bill_corrected": "Bil yang diperbetulkan"
 }

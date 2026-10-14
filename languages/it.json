@@ -4814,5 +4814,10 @@
   "lang_print_test_submitted": "Test inviato Controllate la carta sulla stampante.",
   "lang_delete_sale": "Elimina vendita",
   "lang_sale_delete_stock_warning": "Le scorte verranno aggiunte nuovamente per gli articoli tracciati nell'inventario. Gli articoli non tracciati non vengono modificati.",
-  "lang_last_week": "La settimana scorsa"
+  "lang_last_week": "La settimana scorsa",
+  "lang_paid_bill_review": "Fattura registrata corretta",
+  "lang_paid_bill_no_movement": "Ciò modifica una fattura e un pagamento registrati erroneamente. Non viene riscosso o rimborsato alcun denaro.",
+  "lang_paid_bill_use_return": "Se il denaro originale è stato effettivamente riscosso, utilizza gli articoli di reso per registrare il rimborso.",
+  "lang_paid_bill_previous": "Registrato in precedenza",
+  "lang_paid_bill_corrected": "Fattura corretta"
 }

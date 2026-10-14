@@ -4814,5 +4814,10 @@
   "lang_print_test_submitted": "Tes diajukan. Periksa kertas di printer.",
   "lang_delete_sale": "Hapus penjualan",
   "lang_sale_delete_stock_warning": "Stok akan ditambahkan kembali untuk item yang dilacak persediaan. Item yang tidak terlacak tidak diubah.",
-  "lang_last_week": "Minggu lalu"
+  "lang_last_week": "Minggu lalu",
+  "lang_paid_bill_review": "Tagihan tercatat yang benar",
+  "lang_paid_bill_no_movement": "Ini mengubah tagihan dan pembayaran yang salah dicatat. Tidak ada uang yang dikumpulkan atau dikembalikan.",
+  "lang_paid_bill_use_return": "Jika uang asli benar-benar dikumpulkan, gunakan item Kembalikan untuk mencatat pengembalian uang sebagai gantinya.",
+  "lang_paid_bill_previous": "Sebelumnya direkam",
+  "lang_paid_bill_corrected": "Tagihan yang dikoreksi"
 }

@@ -4732,5 +4732,10 @@
   "lang_print_test_submitted": "Test sottomess. Iċċekkja l-karta fl-istampatur.",
   "lang_delete_sale": "Ħassar il-bejgħ",
   "lang_sale_delete_stock_warning": "L-istokk se jiżdied lura għal oġġetti traċċati mill-inventarju. Oġġetti mhux traċċati ma jinbidlux.",
-  "lang_last_week": "Il-ġimgħa li għaddiet"
+  "lang_last_week": "Il-ġimgħa li għaddiet",
+  "lang_paid_bill_review": "Abbozz irreġistrat korrett",
+  "lang_paid_bill_no_movement": "Dan ibiddel kont u ħlas irreġistrati b'mod żbaljat. L-ebda flus ma jinġabru jew ma jitħallsu lura.",
+  "lang_paid_bill_use_return": "Jekk il-flus oriġinali kienu attwalment miġbura, uża oġġetti Ritorn biex tirreġistra r-rifużjoni minflok.",
+  "lang_paid_bill_previous": "Reġistrat qabel",
+  "lang_paid_bill_corrected": "Abbozz ikkoreġut"
 }

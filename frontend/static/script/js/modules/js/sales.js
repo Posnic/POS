@@ -5237,7 +5237,23 @@ PosnicPro.sales.editSale = {
                 loader.find(".loadingSpinner:first").remove();
             });
             };
-            submitEditSale();
+            var savedBill = PosnicPro.sales.EditRecentSaleParams;
+            if ((savedBill.captain_payment_plan || savedBill.paid_bill_corrected) && savedBill.payment_status === 'Paid') {
+                if (!window.PosnicPaymentCorrection) {
+                    PosnicPro.alert('error', 'Reload this page to review the paid bill correction.');
+                    return false;
+                }
+                loader.find(".loadingSpinner:first").remove();
+                PosnicPaymentCorrection.reviewBillEdit(savedBill, dataEdit, function (correction) {
+                    var signature = JSON.stringify(dataEdit);
+                    var previous = PosnicPro.sales._paidBillEditRetry;
+                    if (previous && previous.sale === SalesDocumentId && previous.signature === signature) correction = previous.correction;
+                    else PosnicPro.sales._paidBillEditRetry = {sale:SalesDocumentId,signature:signature,correction:correction};
+                    dataEdit.paid_bill_correction = correction;
+                    paramsEdit.data = JSON.stringify(dataEdit);
+                    submitEditSale();
+                });
+            } else submitEditSale();
             return false;
         }
     }
@@ -8663,6 +8679,9 @@ PosnicPro.sales.recentMenu = {
         });
         if (PosnicPro.sales.renderCharges) PosnicPro.sales.renderCharges();
         PosnicPro.sales.EditRecentSaleParams = {
+            captain_payment_plan: result.captain_payment_plan,
+            paid_bill_corrected: !!(result.paid_bill_corrections && result.paid_bill_corrections.length),
+            updated_date: result.updated_date,
             outlet_id: result.outlet_id,
             outlet_snapshot: result.outlet_snapshot,
 

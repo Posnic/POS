@@ -4834,5 +4834,10 @@
   "lang_upcoming": "Gepland",
   "lang_delete_sale": "Verkoop verwijderen",
   "lang_sale_delete_stock_warning": "Voor artikelen die op voorraad zijn bijgehouden, wordt de voorraad weer toegevoegd. Items die niet worden bijgehouden, worden niet gewijzigd.",
-  "lang_last_week": "Vorige week"
+  "lang_last_week": "Vorige week",
+  "lang_paid_bill_review": "Correct geregistreerde factuur",
+  "lang_paid_bill_no_movement": "Dit wijzigt een verkeerd geregistreerde factuur en betaling. Er wordt geen geld geïnd of terugbetaald.",
+  "lang_paid_bill_use_return": "Als het oorspronkelijke geld daadwerkelijk is geïnd, gebruik dan Retourartikelen om de terugbetaling vast te leggen.",
+  "lang_paid_bill_previous": "Eerder opgenomen",
+  "lang_paid_bill_corrected": "Gecorrigeerde factuur"
 }

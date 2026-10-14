@@ -199,7 +199,14 @@ const processSale = async (
   id = '',
   process = 'Add',
   context = {},
-  { preview = false, beforeCommit, stockGrant, beforeStockCommit, prepareAllocated = false } = {}
+  {
+    preview = false,
+    beforeCommit,
+    stockGrant,
+    beforeStockCommit,
+    prepareAllocated = false,
+    preparePaidEdit = false,
+  } = {}
 ) => {
   // Retry identity describes the submitted request, not derived charge/tax fields.
   const submittedPayload = structuredClone(data);
@@ -319,7 +326,7 @@ const processSale = async (
         data.register_id,
         context.userId,
         context.deviceId,
-        ...(preview ? [{ acquire: false }] : [])
+        ...(preview || preparePaidEdit ? [{ acquire: false }] : [])
       );
       if (!registerSession.status) {
         return {
@@ -368,12 +375,15 @@ const processSale = async (
           return { status: false, message: 'Finish the pending payment correction first.' };
         if (existingSale.extension_stock_operation)
           return { status: false, message: 'Use the normal return process for an allocated sale.' };
-        if (existingSale.captain_payment_plan)
+        if (existingSale.paid_bill_corrections?.length && !preparePaidEdit)
+          return { status: false, message: 'Review the paid bill correction before saving.' };
+        if (existingSale.captain_payment_plan && !preparePaidEdit)
           await require('./captain-payment-guard').mutable(await BaseModel.getDb(), existingSale);
         const paymentBranch = await getBranchById(existingSale.branch_id || context.branchId);
         if (
-          require('../utils/captain-payment-enabled')(paymentBranch) ||
-          [true, 'true'].includes(paymentBranch?.allow_payment_correction)
+          !preparePaidEdit &&
+          (require('../utils/captain-payment-enabled')(paymentBranch) ||
+            [true, 'true'].includes(paymentBranch?.allow_payment_correction))
         )
           finishCaptainEdit = await require('./captain-payment-guard').beginEdit(
             await BaseModel.getDb(),
@@ -1396,6 +1406,7 @@ const processSale = async (
       denomination_values: data.denomination_values ?? (existingSale?.denomination_values || []),
     };
 
+    if (preparePaidEdit) return { status: true, data: updateData };
     let finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
     if (extensionStock) {
       if (paymentStatus !== 'Paid')

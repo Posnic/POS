@@ -94,3 +94,17 @@ test('a direct Sales visit loads payment correction without opening Reports', ()
     assert.equal(manifest.dashboard.js.filter(file => file === module).length, 1);
     assert.ok(!manifest.lazy_reports.includes(module), 'Reports must not recreate the correction module');
 });
+
+
+test('paid bill edit reviews the changed total and requires a reason before submitting',async()=>{
+ const {dom,w,$}=await setup();$('.modal').remove();let submitted;
+ w.PosnicPaymentCorrection.reviewBillEdit({sales_total:357,updated_date:'2026-10-14T01:30:00Z'}, {sales_total:168,payment_mode:'UPI'}, value=>submitted=value);
+ assert.match($('#paid-bill-review').text(),/357.00/);assert.match($('#paid-bill-review').text(),/168.00.*UPI/);
+ assert.match($('#paid-bill-review').text(),/No money is collected or refunded/);
+ assert.equal($('[data-save-correction]').prop('disabled'),true);
+ $('#paid-bill-reason').val('Wrong item and payment recorded').trigger('input');
+ assert.equal($('[data-save-correction]').prop('disabled'),false);
+ $('[data-save-correction]').trigger('click');
+ assert.equal(submitted.originalTotal,357);assert.equal(submitted.reason,'Wrong item and payment recorded');
+ assert.ok(submitted.id);dom.window.close();
+});

@@ -4733,5 +4733,10 @@
   "lang_yourselecteddetails_title": "Selected details will be deleted",
   "lang_delete_sale": "Delete sale",
   "lang_sale_delete_stock_warning": "Stock will be added back for inventory-tracked items. Untracked items are not changed.",
-  "lang_last_week": "Last week"
+  "lang_last_week": "Last week",
+  "lang_paid_bill_review": "Correct recorded bill",
+  "lang_paid_bill_no_movement": "This changes a wrongly recorded bill and payment. No money is collected or refunded.",
+  "lang_paid_bill_use_return": "If the original money was actually collected, use Return items to record the refund instead.",
+  "lang_paid_bill_previous": "Previously recorded",
+  "lang_paid_bill_corrected": "Corrected bill"
 }

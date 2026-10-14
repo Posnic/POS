@@ -4735,5 +4735,10 @@
   "lang_print_test_submitted": "测试已提交。检查打印机上的纸张。",
   "lang_delete_sale": "删除销售",
   "lang_sale_delete_stock_warning": "库存追踪商品的库存将重新添加。未追踪的物品不会更改。",
-  "lang_last_week": "上周"
+  "lang_last_week": "上周",
+  "lang_paid_bill_review": "更正已记录的账单",
+  "lang_paid_bill_no_movement": "这会更改错误记录的账单和付款。不收款或退款。",
+  "lang_paid_bill_use_return": "如果实际收到了原始款项，则改用退货来记录退款。",
+  "lang_paid_bill_previous": "之前录制的",
+  "lang_paid_bill_corrected": "更正后的账单"
 }

@@ -4732,5 +4732,10 @@
   "lang_print_test_submitted": "Testi i dorëzuar. Kontrolloni letrën në printer.",
   "lang_delete_sale": "Fshini shitjen",
   "lang_sale_delete_stock_warning": "Stoqet do të shtohen përsëri për artikujt e gjurmuar nga inventari. Artikujt e pazgjurmuar nuk ndryshohen.",
-  "lang_last_week": "Javën e kaluar"
+  "lang_last_week": "Javën e kaluar",
+  "lang_paid_bill_review": "Fatura e regjistruar e saktë",
+  "lang_paid_bill_no_movement": "Kjo ndryshon një faturë dhe pagesë të regjistruar gabimisht. Asnjë paratë nuk mblidhen apo rimbursohen.",
+  "lang_paid_bill_use_return": "Nëse paratë origjinale janë mbledhur në të vërtetë, përdorni artikujt e kthimit për të regjistruar rimbursimin.",
+  "lang_paid_bill_previous": "Regjistruar më parë",
+  "lang_paid_bill_corrected": "Faturë e korrigjuar"
 }

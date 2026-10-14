@@ -4732,5 +4732,10 @@
   "lang_print_test_submitted": "Pārbaude iesniegta. Pārbaudiet papīru pie printera.",
   "lang_delete_sale": "Dzēst pārdošanu",
   "lang_sale_delete_stock_warning": "Krājumi tiks pievienoti atpakaļ krājumu izsekotajām precēm. Neizsekotie vienumi netiek mainīti.",
-  "lang_last_week": "Pagājušajā nedēļā"
+  "lang_last_week": "Pagājušajā nedēļā",
+  "lang_paid_bill_review": "Pareizi ierakstītais rēķins",
+  "lang_paid_bill_no_movement": "Tas maina nepareizi reģistrētu rēķinu un maksājumu. Nauda netiek iekasēta vai atmaksāta.",
+  "lang_paid_bill_use_return": "Ja sākotnējā nauda faktiski tika savākta, izmantojiet atgriešanas preces, lai reģistrētu atmaksu.",
+  "lang_paid_bill_previous": "Iepriekš ierakstīts",
+  "lang_paid_bill_corrected": "Labots rēķins"
 }

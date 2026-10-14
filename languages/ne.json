@@ -4482,5 +4482,10 @@
   "lang_scheduled_updates_recent_jobs": "निर्धारित अद्यावधिक र हालका कार्यहरू",
   "lang_the_filename_includes_categories_and_the_e": "फाइलको नाममा वर्गहरू र निर्यात मिति समावेश हुन्छ। सधैं नयाँ डाउनलोडबाट सुरु गर्नुहोस्।",
   "lang_upcoming": "आगामी",
-  "lang_last_week": "गत हप्ता"
+  "lang_last_week": "गत हप्ता",
+  "lang_paid_bill_review": "रेकर्ड गरिएको बिल सच्याउनुहोस्",
+  "lang_paid_bill_no_movement": "यसले गलत रेकर्ड गरिएको बिल र भुक्तानी सच्याउँछ। कुनै रकम सङ्कलन वा फिर्ता हुँदैन।",
+  "lang_paid_bill_use_return": "यदि पहिलेको रकम वास्तवमै सङ्कलन गरिएको थियो भने, रकम फिर्ता रेकर्ड गर्न सामान फिर्ता विकल्प प्रयोग गर्नुहोस्।",
+  "lang_paid_bill_previous": "पहिले रेकर्ड गरिएको",
+  "lang_paid_bill_corrected": "सच्याइएको बिल"
 }

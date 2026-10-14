@@ -4814,5 +4814,10 @@
   "lang_print_test_submitted": "Test eingereicht. Überprüfen Sie das Papier am Drucker.",
   "lang_delete_sale": "Verkauf löschen",
   "lang_sale_delete_stock_warning": "Der Lagerbestand für Artikel, für die der Lagerbestand nachverfolgt wird, wird wieder hinzugefügt. Artikel ohne Sendungsverfolgung werden nicht geändert.",
-  "lang_last_week": "Letzte Woche"
+  "lang_last_week": "Letzte Woche",
+  "lang_paid_bill_review": "Richtige aufgezeichnete Rechnung",
+  "lang_paid_bill_no_movement": "Dadurch werden eine falsch aufgezeichnete Rechnung und Zahlung geändert. Es wird kein Geld eingezogen oder zurückerstattet.",
+  "lang_paid_bill_use_return": "Wenn das ursprüngliche Geld tatsächlich eingezogen wurde, verwende stattdessen Artikel zurücksenden, um die Rückerstattung zu erfassen.",
+  "lang_paid_bill_previous": "Zuvor aufgenommen",
+  "lang_paid_bill_corrected": "Korrigierte Rechnung"
 }

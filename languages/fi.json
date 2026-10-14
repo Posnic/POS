@@ -4732,5 +4732,10 @@
   "lang_print_test_submitted": "Testi lähetetty. Tarkista tulostimen paperi.",
   "lang_delete_sale": "Poista myynti",
   "lang_sale_delete_stock_warning": "Varasto lisätään takaisin varastoseurattujen tuotteiden osalta. Seuraamattomia kohteita ei muuteta.",
-  "lang_last_week": "Viime viikolla"
+  "lang_last_week": "Viime viikolla",
+  "lang_paid_bill_review": "Oikea tallennettu lasku",
+  "lang_paid_bill_no_movement": "Tämä muuttaa väärin kirjattua laskua ja maksua. Rahaa ei kerätä tai palauteta.",
+  "lang_paid_bill_use_return": "Jos alkuperäinen raha on todella kerätty, kirjoita palautus sen sijaan käyttämällä Palautuskohteita.",
+  "lang_paid_bill_previous": "Aiemmin tallennettu",
+  "lang_paid_bill_corrected": "Korjattu lasku"
 }
