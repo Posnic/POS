@@ -101,13 +101,16 @@
         var actions = document.createElement('div'); actions.className = 'iv2-result-actions';
         var another = button(P.i18n.t('lang_iv2_another', 'Create another'), callbacks.reset); actions.append(another);
         if (id && /^[a-zA-Z0-9_-]+$/.test(String(id))) {
-            [['', P.i18n.t('lang_iv2_view', 'View item')], ['/edit', P.i18n.t('lang_iv2_add_details', 'Add more details')]].forEach(function (entry) { var a = document.createElement('a'); a.href = '#/items/' + encodeURIComponent(id) + entry[0]; a.textContent = entry[1]; actions.append(a); });
+            [['', P.i18n.t('lang_iv2_view', 'View item')]].forEach(function (entry) { var a = document.createElement('a'); a.href = '#/items/' + encodeURIComponent(id) + entry[0]; a.textContent = entry[1]; actions.append(a); });
         }
+        if (id && !family) actions.append(button(P.i18n.t('lang_iv2_add_details', 'Add more details'), callbacks.edit));
+        if (id && family) { var manage = document.createElement('a'); manage.href = '#/items/' + encodeURIComponent(id) + '/edit'; manage.textContent = P.i18n.t('lang_manage_variants', 'Manage variants'); actions.append(manage); }
         actions.append(button(P.i18n.t('lang_iv2_duplicate', 'Duplicate this item'), function () { callbacks.duplicate(); }));
         box.append(state, heading, price, stock, actions); el('layout').hidden = true; box.hidden = false; another.focus(); box.scrollIntoView({ block: 'start' });
         if (!family && !data.open_price) P.post({ url: 'items/pricePreview', data: JSON.stringify({ price: Number(data.selling_price), tax: Number(data.tax) || 0, tax_type: data.tax_type, discount_amount: Number(data.discount_amount) || 0, discount_percentage: Number(data.discount_percentage) || 0 }) }, function (r) {
             price.textContent = r && r.type === 'success' && r.data && Number.isFinite(Number(r.data.total)) ? (P.local.get('currencySign') || '') + Number(r.data.total).toFixed(2) : '—';
         }, function () { price.textContent = '—'; });
     }
-    P.itemsV2Workspace = { init: init, update: update, reveal: reveal, reset: reset, ready: ready, saved: saved };
+    function edit() { clear(); locked = true; el('layout').hidden = false; el('success').hidden = true; el('draft-note').textContent = 'Editing a saved item. Save your changes before leaving.'; select('details', true); }
+    P.itemsV2Workspace = { edit: edit, init: init, update: update, reveal: reveal, reset: reset, ready: ready, saved: saved };
 }());
