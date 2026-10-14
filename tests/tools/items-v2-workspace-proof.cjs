@@ -69,6 +69,11 @@ const html=fs.readFileSync(path.join(root,'output/item-create-v2/preview.html'),
   await page.setViewport({width:390,height:844});await page.select('#iv2-section-select','details');assert.equal(await page.$eval('#iv2-panel-details',e=>e.hidden),false);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await page.screenshot({path:path.join(root,'output/item-create-v2/actual-tabs-mobile.png'),fullPage:true});
+  await page.evaluate(()=>PosnicPro.items_v2.showAdd('New from sale'));
+  assert.equal(await page.$eval('#iv2-name',e=>e.value),'New from sale');
+  assert.equal(await page.$eval('#iv2-title',e=>e.textContent),'Create item');
+  assert.equal(await page.$eval('#iv2-copy-notice',e=>e.hidden),true);
+
   assert.deepEqual(errors,[]);console.log('PASS: tab keyboard navigation, mobile selection, draft recovery, hidden-field errors, real saved links, duplicate safeguards and variant drafts');
  }finally{await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);process.exitCode=1;});

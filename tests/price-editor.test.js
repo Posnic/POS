@@ -503,3 +503,61 @@ test("schedule views paginate, preserve notes, cancel with revision and exclude 
   );
   f.close();
 });
+
+test("category menus close outside and on Escape, but retain multi-select choices", async () => {
+  const f = await fixture();
+  f.p.setPriceCategories([{ id: "fruit", name: "Fruit" }]);
+  const picker = f.$("#ps-sheet-category");
+  picker.prop("open", true);
+  picker.find("input").trigger("click");
+  assert.equal(picker.prop("open"), true);
+  assert.equal(picker.find("input").prop("checked"), true);
+  f.$("#ps-sheet-search").trigger("click");
+  assert.equal(picker.prop("open"), false);
+  picker.prop("open", true);
+  picker.find("summary").trigger("focus");
+  picker.trigger(f.$.Event("keydown", { key: "Escape" }));
+  assert.equal(picker.prop("open"), false);
+  assert.equal(picker.find("input").prop("checked"), true);
+  f.close();
+});
+
+test("file filters show immediate progress near controls and ignore outdated counts", async () => {
+  const f = await fixture(), responses = [];
+  f.w.PosnicPro.get = (_r, done, fail) => responses.push({ done, fail });
+  f.p.sheetCount();
+  assert.match(f.$("#ps-sheet-count").text(), /Updating/);
+  assert.equal(f.$("#ps-sheet-prepare").prop("disabled"), true);
+  await new Promise(r => setTimeout(r, 300));
+  f.$("#ps-sheet-search").val("apple");
+  f.p.sheetCount();
+  responses[0].done({ type: "success", data: { total: 30 } });
+  assert.match(f.$("#ps-sheet-count").text(), /Updating/);
+  await new Promise(r => setTimeout(r, 300));
+  responses[1].done({ type: "success", data: { total: 1 } });
+  assert.equal(f.$("#ps-sheet-count").text(), "1 matching item across all pages");
+  assert.equal(f.$("#ps-sheet-count").attr("aria-busy"), "false");
+  assert.equal(f.$("#ps-sheet-prepare").prop("disabled"), false);
+  assert.equal(f.$("#ps-sheet-count").prev().find("#ps-sheet-category").length, 1);
+  f.p.sheetCount();
+  await new Promise(r => setTimeout(r, 300));
+  responses[2].fail();
+  assert.match(f.$("#ps-sheet-count").text(), /Could not count/);
+  assert.equal(f.$("#ps-sheet-prepare").prop("disabled"), true);
+  f.close();
+});
+
+test("submitted schedules show confirmation without another submission form; edit is explicit", async () => {
+ const f=await fixture();
+ f.w.PosnicPro.post=(r,done)=>done({type:'success',data:{job:{_id:'scheduled-1',status:'scheduled',revision:2,note:'Diwali offer',when:'tomorrow',dueByBranch:{aaaaaaaaaaaaaaaaaaaaaaaa:'2026-10-15T18:30:00Z'}},counts:{pending:1,unchanged:30},rows:[{row:1,itemName:'Apple',status:'pending',changes:{selling_price:{from:10,to:12}}}],page:1,total:1}});
+ await f.p.sheetJob('scheduled-1');
+ assert.equal(f.$('#ps-sheet-title').text(),'Price change scheduled');
+ assert.match(f.$('.ps-schedule-confirmation').text(),/Schedule saved.*No further review.*Diwali offer/s);
+ assert.equal(f.$('#ps-when,#ps-confirm-prices').length,0);
+ assert.doesNotMatch(f.$('#ps-job-view').text(),/30 unchanged|1 ready/);
+ f.$('.ps-schedule-confirmation button').filter((_,e)=>e.textContent==='Edit schedule').trigger('click');
+ assert.equal(f.$('#ps-when').length,1);
+ assert.equal(f.$('#ps-confirm-prices').length,1);
+ assert.equal(f.$('#ps-note').val(),'Diwali offer');
+ f.close();
+});
