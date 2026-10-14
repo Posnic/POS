@@ -22,7 +22,7 @@
     }
     if (typeof module === 'object' && module.exports) { module.exports = { assess: assess, payload: payload }; return; }
     var P = root.PosnicPro, $ = root.jQuery;
-    var businessContext = null, capabilities = {};
+    var businessContext = null, capabilities = {}, savedItemId = null, editing = false, savedBranch = null;
     function readCapabilities() {
         var settings = {};
         try { settings = JSON.parse(P.local.get('general_settings') || '{}'); } catch (_) {}
@@ -107,15 +107,18 @@
         var f = fields(), a = assess(f), named = !!f.name.trim(), tracked = f.kind !== 'service' && f.stock === 'tracked';
         show('iv2-restaurant', capabilities.restaurant && f.kind !== 'service'); show('iv2-online', capabilities.online);
         var noun = f.kind === 'dish' ? 'dish' : f.kind === 'service' ? 'service' : 'item';
-        text('iv2-title', 'Create ' + noun); text('iv2-name-label', noun.charAt(0).toUpperCase() + noun.slice(1) + ' name');
+        text('iv2-title', (editing ? PosnicPro.i18n.t('lang_edit_title', 'Edit') : PosnicPro.i18n.t('lang_po_create', 'Create')).trim() + ' ' + noun); text('iv2-name-label', noun.charAt(0).toUpperCase() + noun.slice(1) + ' name');
+        document.querySelector('#items_v2 .iv2-heading p').textContent = editing ? P.i18n.t('lang_iv2_edit_hint', 'Add details to your saved item, then save your changes.') : P.i18n.t('lang_start_with_a_name_we_ll_help_you_get_it_re', 'Start with a name. We’ll help you get it ready to sell.');
         document.getElementById('iv2-name').placeholder = f.kind === 'dish' ? 'e.g. Tea, Chicken biryani, Butter naan' : f.kind === 'service' ? 'e.g. Haircut, Delivery, Repair' : 'e.g. Mineral water, Blue shirt';
-        if (!busy && !saved) text('iv2-save', 'Save ' + noun + ' →');
+        if (!busy && !saved) text('iv2-save', editing ? P.i18n.t('lang_iv2_save_changes', 'Save changes') + ' →' : 'Save ' + noun + ' →');
         var details = P.itemsV2Details.status();
         if (details.hsn) f.taxRate = details.tax;
         var price = Number(f.price);
         show('iv2-zero-price', (attempted || touched.has('iv2-price')) && price === 0 && !f.openPrice);
         show('iv2-quantity-row', tracked && !f.family);
-        document.getElementById('iv2-quantity').disabled = !tracked || f.family;
+        document.getElementById('iv2-quantity').disabled = editing || !tracked || f.family;
+        document.getElementById('iv2-has-variants').disabled = editing;
+        if (editing) show('iv2-quantity-row', false);
         show('iv2-zero-stock', (attempted || touched.has('iv2-quantity')) && tracked && Number(f.quantity) === 0);
         document.querySelector('#items_v2 input[name="iv2-stock"][value="tracked"]').disabled = f.kind === 'service' || busy || saved;
         text('iv2-stock-note', tracked ? (f.zeroStock === 'negative' ? PosnicPro.i18n.t('lang_for_this_item_only_sales_can_take_its_stoc', 'For this item only: sales can take its stock below zero.') : PosnicPro.i18n.t('lang_stock_tracking_applies_to_this_item_only', 'Stock tracking applies to this item only.')) : 'This item can be sold without an opening stock quantity.');
@@ -127,6 +130,8 @@
         var note = !named ? 'Give your item a name to begin.' : a.error ? a.error : a.later ? 'Add stock before looking for this item in sale search.' : f.openPrice ? 'The cashier enters the price when selling.' : !price ? 'This item will sell at zero. You can edit the price later.' : tracked ? 'Opening stock: ' + a.quantity + '. Your stock choice will be saved.' : 'No stock count needed. Save it and start selling.';
         var panel = document.getElementById('iv2-readiness');
         if (a.error && !attempted) { title = P.i18n.t('lang_iv2_taking_shape', 'Your item is taking shape'); note = P.i18n.t('lang_iv2_optional_hint', 'Enter the essentials. Optional tabs can wait.'); }
+        if (editing && !a.error) note = P.i18n.t('lang_iv2_edit_stock_note', 'Changes update this item. Stock quantities stay unchanged.');
+        if (editing) text('iv2-summary-stock', P.i18n.t('lang_iv2_stock_unchanged', 'Stock quantities unchanged'));
         panel.dataset.state = a.error && !attempted ? 'neutral' : a.error || a.later ? 'attention' : 'ready';
         panel.querySelector('strong').textContent = title; panel.querySelector('p').textContent = note;
         document.getElementById('iv2-check-name').dataset.done = String(named);
@@ -154,6 +159,7 @@
         }, function () { taxLoading = false; show('iv2-tax-error', true); });
     }
     function reset() {
+        editing = false; savedItemId = null; savedBranch = null;
         P.itemsV2Workspace.reset(); touched.clear();
         document.getElementById('iv2-form').reset(); P.itemsV2Details.reset(); applyBusinessContext(); saved = false; attempted = false;
         document.getElementById('iv2-fields').disabled = false;
@@ -168,6 +174,7 @@
         if (event) event.preventDefault();
         if (busy || saved) return false;
         if (P.aclLoaded && P.aclLoaded() && !P.checkAccess('item', 'write')) { fail('You don’t have permission to create items.'); return false; }
+        if (editing && savedBranch !== P.local.get('branch_id_set')) { fail(P.i18n.t('lang_iv2_edit_branch_changed', 'The active branch changed. Open the item again before editing.')); return false; }
         attempted = true; render();
         if (!P.itemsV2Workspace.ready()) { fail(P.i18n.t('lang_iv2_draft_lists', 'Some draft selections are unavailable. Reload to retry, or discard the draft before saving.')); return false; }
         var f = fields(), a = assess(f);
@@ -188,11 +195,18 @@
         function unlock() { busy = false; document.getElementById('iv2-fields').disabled = false; document.getElementById('iv2-save').disabled = false; text('iv2-save', 'Save item →'); render(); }
         P.itemsV2Details.upload().then(function(){
         Object.assign(data, P.itemsV2Details.data());
-        P.request({ url: f.family ? 'items/createFamily' : 'items', method: 'POST', data: JSON.stringify(f.family ? P.itemsV2Details.family(data) : data) }, function (r) {
+        var requestData = Object.assign({}, data);
+        if (editing) delete requestData.available_quantity;
+        P.request({ url: editing ? 'items/' + encodeURIComponent(savedItemId) + '/details' : f.family ? 'items/createFamily' : 'items', method: editing ? 'PUT' : 'POST', data: JSON.stringify(f.family ? P.itemsV2Details.family(requestData) : requestData) }, function (r) {
             unlock();
             if (!r || r.type !== 'success') { fail(r && r.message || 'Couldn’t save. Your entries are still here.'); return; }
             saved = true; document.getElementById('iv2-fields').disabled = true; document.getElementById('iv2-save').disabled = true; text('iv2-save', 'Saved');
-            var id = r.data && (r.data.id || r.data._id || r.data.created && r.data.created[0]);
+            var id = editing ? savedItemId : r.data && (r.data.id || r.data._id || r.data.created && r.data.created[0]);
+            savedItemId = id; savedBranch = P.local.get('branch_id_set');
+            if (!f.family && r.data) {
+                if (r.data.itemid != null) document.getElementById('iv2-sku').value = r.data.itemid;
+                if (typeof r.data.track_inventory === 'boolean') document.querySelector('#items_v2 [name="iv2-stock"][value="' + (r.data.track_inventory ? 'tracked' : 'untracked') + '"]').checked = r.data.track_inventory;
+            }
             P.itemsV2Workspace.saved(data, id, a, f.family);
         }, function (xhr) {
             unlock(); var message = 'Couldn’t confirm the save. Check your item list before trying again.';
@@ -234,7 +248,13 @@
         $('.page_loader,#osk-container').hide(); $('#items_v2').show();
         capabilities = readCapabilities();
         P.itemsV2Details.init();
-        P.itemsV2Workspace.init({refresh:render,reset:reset,duplicate:function () {
+        P.itemsV2Workspace.init({refresh:render,reset:reset,edit:function () {
+            if (!savedItemId || savedBranch !== P.local.get('branch_id_set')) return;
+            editing = true; saved = false; attempted = false;
+            document.getElementById('iv2-fields').disabled = false; document.getElementById('iv2-save').disabled = false;
+            P.itemsV2Workspace.edit(); render();
+        },duplicate:function () {
+            editing = false; savedItemId = null; savedBranch = null;
             P.itemsV2Workspace.reset(); saved=false; attempted=false; touched.clear();
             document.getElementById('iv2-fields').disabled=false; document.getElementById('iv2-save').disabled=false;
             ['iv2-sku','iv2-barcode','iv2-gtin','iv2-plu','iv2-alt-barcodes','iv2-quantity'].forEach(function(id){document.getElementById(id).value='';});

@@ -2209,6 +2209,10 @@ class ItemRepository extends BaseModel {
         };
       }
 
+      // Additional details must not reset stock that may have changed since creation.
+      const writesQuantity = Object.prototype.hasOwnProperty.call(data, 'available_quantity');
+      if (!writesQuantity) delete updateData.available_quantity;
+
       // Update existing item
       const itemObjectId = new ObjectId(id);
 
@@ -2269,7 +2273,7 @@ class ItemRepository extends BaseModel {
 
       // Create stock log for EDIT Item (mirrors PHP item_model.php: always log
       // when track_inventory is true; do not gate on branch stock_management).
-      if (existingItem && existingItem.track_inventory === true) {
+      if (writesQuantity && existingItem && existingItem.track_inventory === true) {
         const stockLogsRepository = new StockLogsRepository();
         const openingBalance = existingItem.available_quantity || 0;
         const newBalance = updateData.available_quantity || 0;
