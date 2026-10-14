@@ -18,6 +18,7 @@ function setup(failBulk = false) {
     $.fn.modal = function () { this.addClass('show'); return this; };
     const items = Array.from({ length: 30 }, (_, i) => ({ _id: String(i), name: 'Product ' + i, barcode_id: '7622202828256', label_price: 1.75, label_currency_digits: 2 }));
     w.PosnicPro = {
+        i18n: { t: (_key, fallback) => fallback },
         local: { get: key => ({ branchname: 'Test Shop', currencySign: '£' })[key] },
         listFilter: { legacyFilters: () => ({ category: 'test' }) }, items: {},
         get: (params, ok, fail) => queueMicrotask(() => {
@@ -51,6 +52,9 @@ test('the real designer previews A4, prints the same sheets and restores its lay
     $('#sl-paper').val('roll');
     w.PosnicShelfLabels.open(); await tick();
     assert.equal($('#sl-paper').val(), 'a4');
+    $('#sl-clear').trigger('click');
+    assert.equal($('#sl-summary').text(), 'Select products to print.');
+    assert.equal($('#sl-print').prop('disabled'), true);
     output.window.close(); dom.window.close();
 });
 

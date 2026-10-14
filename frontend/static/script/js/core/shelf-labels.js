@@ -109,7 +109,7 @@
         $('#sl-status').removeClass('text-danger').text('');
         try {
             var s = settings(), g = geometry(s), entries = chosen();
-            if (!entries.length) { $('#sl-preview').empty(); $('#sl-summary').text('Select products to print.'); $('#sl-print').prop('disabled', true); return; }
+            if (!entries.length) { $('#sl-preview').empty(); $('#sl-summary').text(PosnicPro.i18n.t('lang_select_products_to_print', 'Select products to print.')); $('#sl-print').prop('disabled', true); return; }
             var amount = Number($('#sl-batch').val()), from = Number($('#sl-from').val());
             var pages = Math.ceil((g.start - 1 + Math.min(amount, count(entries) - from + 1)) / g.capacity);
             state.page = Math.max(0, Math.min(state.page, pages - 1));
