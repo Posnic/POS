@@ -70,6 +70,8 @@ try {
  await page.waitForFunction(()=>!$('.swal2-input').is(':visible'));
  await page.evaluate(()=>{PosnicPro.local.get=()=>null;PosnicPro.sales.askSearchQuantity({},'weighed');});
  await page.waitForFunction(()=>document.activeElement.classList.contains('swal2-input'));
+ assert.equal(await page.$eval('.swal2-input',el=>el.value),'1');
+ await page.keyboard.press('Backspace');
  await page.keyboard.press('Tab');
  await page.waitForSelector('.swal2-validationerror',{visible:true});
  assert.equal(await page.evaluate(()=>window.added.length),4);
@@ -81,6 +83,17 @@ try {
  await page.waitForFunction(()=>document.activeElement.classList.contains('swal2-input'));
  await page.keyboard.type('1');await page.keyboard.down('Shift');await page.keyboard.press('Tab');await page.keyboard.up('Shift');
  assert.equal(await page.evaluate(()=>window.added.length),5);await page.keyboard.press('Escape');
- assert.deepEqual(errors,[]);console.log('PASS: quantity Tab/Enter adds once and restores search, invalid quantity stays open, Shift+Tab navigates, stable scale auto-add, manual override and late-reading cancellation');
+ // Browser/manual mode retains the familiar code -> Tab -> Tab default of one,
+ // even when this item is marked as weighed and the branch enables a scale.
+ await page.waitForFunction(()=>!$('.swal2-input').is(':visible'));
+ await page.evaluate(()=>{PosnicPro.local.get=()=>JSON.stringify({hardware_weight_machine_enable:true});WeightBridge.isAvailable=()=>false;});
+ await page.focus('#sales_new_item_name');await page.$eval('#sales_new_item_name',el=>{el.value='';});
+ await page.keyboard.type('21');await page.waitForSelector('.autocomplete-suggestion',{visible:true});await page.keyboard.press('Tab');
+ await page.waitForFunction(()=>document.activeElement.classList.contains('swal2-input'));
+ assert.equal(await page.$eval('.swal2-input',el=>el.value),'1');
+ await page.keyboard.press('Tab');await page.waitForFunction(()=>window.added.length===6);
+ assert.equal(await page.evaluate(()=>window.added[5].item_quantity),1);
+ await page.waitForFunction(()=>document.activeElement.id==='sales_new_item_name');
+ assert.deepEqual(errors,[]);console.log('PASS: weighed item code/Tab/Tab adds default one in browser, manual quantity validation, stable scale auto-add, cancellation and restored search focus');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
