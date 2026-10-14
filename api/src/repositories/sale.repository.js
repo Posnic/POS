@@ -1926,10 +1926,10 @@ class SalesRepository {
             if (!itemObjectId) continue;
 
             const itemFilter = {
-              _id: itemObjectId,
+              _id: { $eq: itemObjectId },
             };
             if (licenseId) {
-              itemFilter.license = licenseId;
+              itemFilter.license = { $eq: licenseId };
             }
 
             const itemDoc = await itemsCollection.findOne(itemFilter);
