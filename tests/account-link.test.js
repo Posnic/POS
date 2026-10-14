@@ -21,12 +21,47 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
+const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..');
 const { buildRuntimeInfo, hasAccount } = require(
   path.join(ROOT, 'api', 'src', 'utils', 'runtime-info'));
 
 const features = (env) => buildRuntimeInfo(env).features;
+
+test('the menu respects cloud and desktop branding even when runtime-info offers an account', async () => {
+  const dash = fs.readFileSync(path.join(ROOT, 'frontend/static/script/js/modules/js/dashboard.js'), 'utf8');
+  const source = /\(function showAccountLink\(\)[\s\S]*?\}\(\)\);/.exec(dash)[0];
+  for (const scenario of [
+    { brand: { enabled: true, name: 'GSHCL' }, account: true, visible: false },
+    { brand: { enabled: true }, account: true, visible: false },
+    { brand: { enabled: false }, account: true, visible: true },
+    { brand: { enabled: false }, account: false, visible: false },
+    { brand: null, account: true, visible: false },
+    { brand: {}, account: true, visible: false },
+    { error: true, account: true, visible: false },
+    { brand: { enabled: false }, role: 'cashier', account: true, visible: false },
+  ]) {
+    for (const base of ['/', 'http://localhost:3000/']) {
+      const item = { style: { display: 'none' } };
+      const calls = [];
+      vm.runInNewContext(source, {
+        document: { getElementById: () => item },
+        API_URL: base,
+        PosnicPro: { local: { get: () => scenario.role || 'super_admin' } },
+        fetch: async (url) => {
+          calls.push(url);
+          if (scenario.error) throw new Error('Brand unavailable');
+          return { ok: true, json: async () => url === 'brand.json'
+            ? scenario.brand : { features: { account: scenario.account } } };
+        },
+      });
+      await new Promise((resolve) => setImmediate(resolve));
+      assert.equal(item.style.display === '', scenario.visible, JSON.stringify(scenario));
+      if (scenario.brand?.enabled === true) assert.deepEqual(calls, ['brand.json']);
+    }
+  }
+});
 
 test('a provisioned cloud shop is offered its account', () => {
   assert.equal(features({ POSNIC_KEY: 'shop-key' }).account, true);
