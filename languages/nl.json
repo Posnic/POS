@@ -4945,5 +4945,12 @@
   "lang_customer_details": "Gegevens van de klant",
   "lang_details": "Details",
   "lang_rd_item_column_heading": "Titel van de kolom van het item",
-  "lang_use_on_this_bill": "Gebruik op dit wetsvoorstel"
+  "lang_use_on_this_bill": "Gebruik op dit wetsvoorstel",
+  "lang_manage_variants": "Varianten beheren",
+  "lang_iv2_edit_branch_changed": "De actieve vestiging is gewijzigd. Open het artikel opnieuw voordat u het bewerkt.",
+  "lang_iv2_edit_draft_note": "U bewerkt een opgeslagen artikel. Sla uw wijzigingen op voordat u deze pagina verlaat.",
+  "lang_iv2_edit_hint": "Voeg details toe aan uw opgeslagen artikel en sla uw wijzigingen op.",
+  "lang_iv2_edit_stock_note": "Wijzigingen worden toegepast op dit artikel. Voorraadaantallen blijven ongewijzigd.",
+  "lang_iv2_save_changes": "Wijzigingen opslaan",
+  "lang_iv2_stock_unchanged": "Voorraadaantallen ongewijzigd"
 }
