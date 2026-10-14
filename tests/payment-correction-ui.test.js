@@ -86,3 +86,11 @@ test('a slow previous bill response cannot add an action to another bill', async
     assert.equal($('[data-correct-payment]').length, 0);
     dom.window.close();
 });
+
+
+test('a direct Sales visit loads payment correction without opening Reports', () => {
+    const manifest = JSON.parse(fs.readFileSync('frontend/pages_css_js_map.json', 'utf8'));
+    const module = 'static/script/js/modules/js/payment-correction.js';
+    assert.equal(manifest.dashboard.js.filter(file => file === module).length, 1);
+    assert.ok(!manifest.lazy_reports.includes(module), 'Reports must not recreate the correction module');
+});
