@@ -4957,5 +4957,7 @@
   "lang_iv2_create_copy": "Een kopie maken",
   "lang_iv2_save_copy": "Opslaan als nieuw artikel",
   "lang_iv2_copy_suffix": "kopie",
+  "lang_rd_serial_number": "Nr.",
+  "lang_rd_show_payment_method": "Betaalmethode tonen",
   "lang_rd_store_override_help": "Alleen op de bon. Laat aangepaste tekst leeg voor vestigingsgegevens. Vink een regel uit om deze te verbergen."
 }

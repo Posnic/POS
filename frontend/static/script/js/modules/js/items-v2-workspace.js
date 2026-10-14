@@ -1,4 +1,4 @@
-/* Navigation and recovery for the opt-in item editor. Business validation stays in items_v2. */
+/* Navigation and recovery for the item editor. Business validation stays in items_v2. */
 (function () {
     'use strict';
     var P = window.PosnicPro, active = 'basics', bound = false, callbacks, timer, key, restoring = false, pending = [], pendingVariants = null, locked = false;
