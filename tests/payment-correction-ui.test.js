@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const { JSDOM } = require('jsdom');
 const source = fs.readFileSync('frontend/static/script/js/modules/js/payment-correction.js', 'utf8');
 async function setup() {
-    const dom = new JSDOM('<div id="sales_doc"><div class="p-doc-toolbar"><span class="ml-auto"></span></div><div class="doc-scroll"></div></div>', { url:'https://example.test', runScripts:'outside-only' });
+    const dom = new JSDOM('<div id="sales_doc"><div class="p-doc-toolbar"><span class="ml-auto"></span><div data-sale-edit-actions class="dropdown-menu"></div></div><div class="doc-scroll"></div></div>', { url:'https://example.test', runScripts:'outside-only' });
     const w=dom.window, $=require('jquery')(w); w.jQuery=$;
     $.fn.modal=function(action){ if(action==='hide') this.trigger('hidden.bs.modal'); return this; };
     const sent=[];
@@ -38,4 +38,51 @@ test('uncertain retry retains request id and payload; no duplicate submissions w
     $('.pc-save').trigger('click');$('.pc-save').trigger('click');assert.equal(sent.length,1);
     reject({responseJSON:{message:'Temporary failure'}});await Promise.resolve();await Promise.resolve();
     $('.pc-save').trigger('click');assert.equal(sent.length,2);assert.deepEqual(sent[0],sent[1]);dom.window.close();
+});
+
+
+test('payment correction appears inside Edit and opens the existing correction dialog', async () => {
+    const { dom, w, $ } = await setup();
+    $('.modal').remove();
+    w.PosnicPaymentCorrection.attach('sale1', { payment_status: 'Paid' });
+    await Promise.resolve();
+    assert.equal($('#sales_doc [data-sale-edit-actions] [data-correct-payment]').length, 1);
+    assert.equal($('#sales_doc .p-doc-toolbar > [data-correct-payment]').length, 0);
+    $('[data-correct-payment]').trigger('click');
+    await Promise.resolve();
+    assert.equal($('#pc-title').text(), 'Correct payment method');
+    dom.window.close();
+});
+
+test('disabled setting and permission errors never expose correction', async () => {
+    for (const forbidden of [false, true]) {
+        const { dom, w, $ } = await setup();
+        w.PosnicPro.get = (_options, done, fail) => forbidden ? fail({responseJSON:{message:'Forbidden'}}) : done({enabled:false,history:[]});
+        w.PosnicPaymentCorrection.attach('sale1', {payment_status:'Paid'});
+        await Promise.resolve(); await Promise.resolve();
+        assert.equal($('[data-correct-payment]').length, 0);
+        dom.window.close();
+    }
+});
+
+test('unpaid, cancelled and returned bills cannot offer correction', async () => {
+    const { dom, w, $ } = await setup();
+    w.PosnicPro.get = () => assert.fail('Ineligible bill queried payment correction');
+    for (const sale of [{payment_status:'Unpaid'}, {payment_status:'Paid',sale_process:'Cancelled'}, {payment_status:'Paid',sale_process:'Return'}]) {
+        w.PosnicPaymentCorrection.attach('sale1', sale);
+        assert.equal($('[data-correct-payment]').length, 0);
+    }
+    dom.window.close();
+});
+
+test('a slow previous bill response cannot add an action to another bill', async () => {
+    const { dom, w, $ } = await setup();
+    let answer;
+    w.PosnicPro.get = (_options, done) => { answer = done; };
+    w.PosnicPaymentCorrection.attach('sale1', {payment_status:'Paid'});
+    w.PosnicPro.sales._correctionSaleId = 'sale2';
+    answer({enabled:true,history:[]});
+    await Promise.resolve();
+    assert.equal($('[data-correct-payment]').length, 0);
+    dom.window.close();
 });
