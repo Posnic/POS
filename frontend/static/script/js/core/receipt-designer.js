@@ -220,7 +220,7 @@
             total_quantity: receiptItems.reduce(function (n, i) { return n + Number(i.item_quantity || 0); }, 0),
             table: data.table_number, order_type: data.dine_type, covers: data.covers || data.person_count,
             steward: data.steward_name || data.steward || data.created_by || data.user_name, session: data.serving_session || data.session_name,
-            fssai: data.branch_fssai_number, source: data.order_source || data.source,
+            fssai: (layout.blocks.find(function (block) { return block.type === 'store'; }) || {}).fssaiText || data.branch_fssai_number, source: data.order_source || data.source,
         };
         var fixedItems = !sheet && layout.blocks.find(function (b) { return b.type === 'items' && b.itemLayout === 'columns'; });
         var headerFssai = layout.blocks.some(function (b) { return b.type === 'store' && b.fssaiInHeader; });
@@ -229,11 +229,20 @@
             if (b.type === 'field' && ((b.field === 'fssai' && headerFssai) || (b.field === 'total_quantity' && fixedItems))) return '';
             if (b.type === 'field' && !contract.fieldAvailable(b.field, data)) return '';
             if (b.type === 'store') {
-                content = '<div class="rd-store"><h1>' + esc(data.branch_name || data.store_name || PosnicPro.local.get('branchname')) + '</h1><div class="rd-store-contact">' + esc(plain(data.printing_address || data.store_address || '')) + '</div>';
-                if (data.store_telephone) content += '<p>' + esc(data.store_telephone) + '</p>';
-                if (b.showEmail !== false && data.store_email) content += '<p>' + esc(data.store_email) + '</p>';
-                if (data.branch_gstin_number) content += '<p>' + esc(registrationLabel) + ': ' + esc(data.branch_gstin_number) + '</p>';
-                if (contract.fieldAvailable('fssai', data) && present(data.branch_fssai_number) && (headerFssai || !hasField('fssai'))) content += '<p>' + esc(fieldLabel('fssai')) + ': ' + esc(String(data.branch_fssai_number).trim()) + '</p>';
+                function storeText(key, fallback) { return String(b[key] || '').trim() || fallback || ''; }
+                var storeName = storeText('nameText', data.branch_name || data.store_name || PosnicPro.local.get('branchname'));
+                var storeAddress = storeText('addressText', plain(data.printing_address || data.store_address || ''));
+                var storePhone = storeText('phoneText', data.store_telephone);
+                var storeEmail = storeText('emailText', data.store_email);
+                var storeRegistration = storeText('registrationText', data.branch_gstin_number);
+                var storeFssai = storeText('fssaiText', data.branch_fssai_number);
+                content = '<div class="rd-store">';
+                if (b.showName !== false && storeName) content += '<h1>' + esc(storeName) + '</h1>';
+                if (b.showAddress !== false && storeAddress) content += '<div class="rd-store-contact" style="white-space:pre-line">' + esc(storeAddress) + '</div>';
+                if (b.showPhone !== false && storePhone) content += '<p>' + esc(storePhone) + '</p>';
+                if (b.showEmail !== false && storeEmail) content += '<p>' + esc(storeEmail) + '</p>';
+                if (b.showRegistration !== false && storeRegistration) content += '<p>' + esc(registrationLabel) + ': ' + esc(storeRegistration) + '</p>';
+                if (contract.fieldAvailable('fssai', data) && present(storeFssai) && (headerFssai || !hasField('fssai'))) content += '<p>' + esc(fieldLabel('fssai')) + ': ' + esc(String(storeFssai).trim()) + '</p>';
                 content += '</div>';
             } else if (b.type === 'transaction') {
                 var receiptDate = data.receipt_date || data.created_date || data.date || '';

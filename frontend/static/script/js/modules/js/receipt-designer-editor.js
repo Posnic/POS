@@ -165,7 +165,21 @@
                 }).join('') + '</select></label>';
             });
         }
-        if (b.type === 'store') html += '<label><input type="checkbox" data-prop="showEmail" ' + (b.showEmail !== false ? 'checked' : '') + '> ' + esc(t('Show business email')) + '</label>';
+        if (b.type === 'store') {
+            html += '<p class="rd-help">' + esc(PosnicPro.i18n.t('lang_rd_store_override_help', 'Receipt only. Leave custom text blank to use branch details. Untick a line to hide it.')) + '</p>';
+            var storeFields = [
+                ['nameText', 'showName', t('Store name'), branch.branch_name || branch.store_name || '', 200],
+                ['addressText', 'showAddress', t('Address'), branch.printing_address || branch.store_address || '', 1000],
+                ['phoneText', 'showPhone', t('Phone'), branch.store_telephone || '', 100],
+                ['emailText', 'showEmail', t('Email'), branch.store_email || '', 200],
+                ['registrationText', 'showRegistration', schema.taxRegistrationLabel(branch), branch.branch_gstin_number || '', 100]
+            ];
+            if (schema.fieldAvailable('fssai', branch)) storeFields.push(['fssaiText', null, 'FSSAI', branch.branch_fssai_number || '', 100]);
+            storeFields.forEach(function (field) {
+                html += '<label>' + (field[1] ? '<input type="checkbox" data-prop="' + field[1] + '" ' + (b[field[1]] !== false ? 'checked' : '') + '> ' : '') + esc(field[2]) + '</label>';
+                html += '<textarea class="form-control" rows="' + (field[0] === 'addressText' ? 3 : 1) + '" aria-label="' + esc(field[2]) + '" data-prop="' + field[0] + '" maxlength="' + field[4] + '" placeholder="' + esc(field[3]) + '">' + esc(b[field[0]] || '') + '</textarea>';
+            });
+        }
         if (b.type === 'store') html += '<label><input type="checkbox" data-prop="fssaiInHeader" ' + (b.fssaiInHeader ? 'checked' : '') + '> ' + esc(t('Show FSSAI below GSTIN')) + '</label>';
         if (b.type === 'items' && b.itemLayout === 'columns') html += '<label>' + esc(t('Line style')) + '<select data-prop="lineStyle">' + ['dotted', 'dashed', 'solid'].map(function (v) { return '<option value="' + v + '"' + ((b.lineStyle || 'dotted') === v ? ' selected' : '') + '>' + esc(t(v.charAt(0).toUpperCase() + v.slice(1))) + '</option>'; }).join('') + '</select></label>';
         if (b.type === 'totals') html += '<p class="rd-help">' + esc(t('Uses the actual sale amounts, including discounts, tax, charges and rounding.')) + '</p>';
