@@ -352,6 +352,19 @@ router.get('/getItemDetails', bindController(itemsController.getItemDetails));
 // PHP: getOne() - Get single item by ID
 router.get('/:id', ensureValidItemIdParam, bindController(itemsController.getOne));
 
+// The new editor continues a saved item without rewriting its live stock.
+// A separate route fails safely if frontend assets arrive before the API deploy.
+router.put(
+  '/:id/details',
+  ensureValidItemIdParam,
+  (req, res, next) => {
+    if (req.body) delete req.body.available_quantity;
+    next();
+  },
+  validateUpdateItem,
+  bindController(itemsController.edit)
+);
+
 // PHP: edit() - Update existing item (PUT /items/:id)
 router.put(
   '/:id',
