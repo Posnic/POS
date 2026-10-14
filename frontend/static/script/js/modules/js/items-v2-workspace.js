@@ -111,6 +111,6 @@
             price.textContent = r && r.type === 'success' && r.data && Number.isFinite(Number(r.data.total)) ? (P.local.get('currencySign') || '') + Number(r.data.total).toFixed(2) : '—';
         }, function () { price.textContent = '—'; });
     }
-    function edit() { clear(); locked = true; el('layout').hidden = false; el('success').hidden = true; el('draft-note').textContent = 'Editing a saved item. Save your changes before leaving.'; select('details', true); }
+    function edit() { clear(); locked = true; el('layout').hidden = false; el('success').hidden = true; el('draft-note').textContent = P.i18n.t('lang_iv2_edit_draft_note', 'Editing a saved item. Save your changes before leaving.'); select('details', true); }
     P.itemsV2Workspace = { edit: edit, init: init, update: update, reveal: reveal, reset: reset, ready: ready, saved: saved };
 }());
