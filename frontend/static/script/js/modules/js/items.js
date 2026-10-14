@@ -2919,40 +2919,7 @@ PosnicPro.items = {
     },
 
     printLableView: function (id) {
-        var loader = $(".loader-label-item");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        $("#mfg_checkbox").prop("checked", false);
-        $('#mfg-date-value').attr('disabled', 'disabled');
-        $("#exp_checkbox").prop("checked", false);
-        $('#exp-date-value').attr('disabled', 'disabled');
-        PosnicPro.get('items/' + id, function (response) {
-            if (response.type === 'success') {
-                var data = response.data;
-                var currency = PosnicPro.local.get('currencySign');
-                PosnicPro.record_id = data.barcode_id;
-                let items_mfg_date = data.items_mfg_date !== null ? data.items_mfg_date : '';
-                let items_expiry_date = data.items_expiry_date !== null ? data.items_expiry_date : '';
-                items_mfg_date = items_mfg_date.split(' ')[0];
-                items_expiry_date = items_expiry_date.split(' ')[0];
-                $('#userInput').val(data.barcode_id);
-                $('#branch-value').val(data.name);
-                $('#branch-name').text(data.name);
-                $('#price-name').text('PRICE' + " " + currency + " " + data.selling_price);
-                $('#mrp-price').text('MRP' + " " + currency + " " + data.mrp_price);
-                $('#price-value').val('PRICE' + " " + currency + " " + data.selling_price);
-                $('#mrp-price-value').val('MRP' + " " + currency + " " + data.mrp_price);
-                $('#mfg-date-value').val('MFG DATE' + " " + items_mfg_date);
-                $('#exp-date-value').val('EXP DATE' + " " + items_expiry_date);
-                $('#view_print_lable').modal('show');
-                loader.find(".loadingSpinner:first").remove();
-                newBarcode();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+        PosnicShelfLabels.open(id);
     },
 
     mfgCheckbox: function (checked) {
@@ -2980,86 +2947,7 @@ PosnicPro.items = {
     },
 
     printLabelBarcode: function () {
-        var labelWidth = $('#document_width').val();   // in inches
-        var labelHeight = $('#document_height').val(); // in inches
-
-        // Create a copy of the print preview for printing
-        var printContent = document.getElementById("print-preview").cloneNode(true);
-        printContent.id = 'print-content-copy';
-
-        // Get current settings
-        var fontFamily = $('#font').val();
-        var textAlign = $(".text-align.btn-primary").val() || 'center';
-        var backgroundColor = $('#background-color').val();
-
-        // Apply exact dimensions and styling for printing
-        var printStyle =
-            "@page { " +
-            "size: " + labelWidth + "in " + labelHeight + "in; " +
-            "margin: 0; " +
-            "} " +
-
-            "html, body { " +
-            "margin: 0; " +
-            "padding: 0; " +
-            "width: " + labelWidth + "in; " +
-            "height: " + labelHeight + "in; " +
-            "font-family: " + fontFamily + "; " +
-            "} " +
-
-            "#print-content-copy { " +
-            "width: " + labelWidth + "in !important; " +
-            "height: " + labelHeight + "in !important; " +
-            "padding: 2px; " +
-            "box-sizing: border-box; " +
-            "border: none; " +
-            "background: " + backgroundColor + "; " +
-            "} " +
-
-            "#print-content-copy > div { " +
-            "width: 100% !important; " +
-            "height: 100% !important; " +
-            "display: flex !important; " +
-            "flex-direction: column !important; " +
-            "justify-content: center !important; " +
-            "align-items: center !important; " +
-            "} " +
-
-            "#print-content-copy p { " +
-            "margin: 0 !important; " +
-            "font-family: " + fontFamily + " !important; " +
-            "text-align: " + textAlign + " !important; " +
-            "} " +
-
-            "#print-content-copy svg { " +
-            "display: block !important; " +
-            "margin: 2px auto !important; " +
-            "max-width: 100% !important; " +
-            "max-height: 100px !important; " +
-            "} " +
-
-            ".fontfamily { " +
-            "font-family: " + fontFamily + " !important; " +
-            "text-align: " + textAlign + " !important; " +
-            "}";
-
-        // Use PrintJS to print with exact dimensions
-        printJS({
-            printable: printContent.outerHTML,
-            type: 'raw-html',
-            style: printStyle,
-            scanStyles: false
-        });
-
-        // $('#view_print_lable').modal('hide');
-        //
-        // Navigate back to barcode view if needed
-        // let parts = window.location.hash.split('/');
-        // if (parts.length > 1) {
-        //     PosnicPro.items.showBarcode(parts[1]);
-        // }
-
-        return false;
+        return PosnicShelfLabels.print(false);
     },
 
     /*
@@ -5438,6 +5326,7 @@ var newBarcode = function () {
 
     // Update preview content
     updateLabelPreview();
+    if (window.PosnicShelfLabels) window.PosnicShelfLabels.refresh();
 };
 
 

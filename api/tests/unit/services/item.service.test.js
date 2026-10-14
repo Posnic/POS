@@ -403,6 +403,40 @@ describe('ItemService', () => {
   describe('getAllItems', () => {
     const defaultParams = { branchId: BRANCH_ID, licenseId: LICENSE_ID };
 
+    test('label pricing uses branch VAT and item discounts without changing catalogue prices', async () => {
+      const item = {
+        _id: 'item',
+        selling_price: 2,
+        tax: 20,
+        tax_type: 'exclusive',
+        discount_amount: 0.5,
+      };
+      repo.findPage.mockResolvedValue(makePaginatedResult({ items: [item] }));
+      branchesRepository.findById.mockResolvedValue({ currency: 'GBP' });
+      const result = await service.getAllItems({ ...defaultParams, labelPricing: true });
+      expect(result.status).toBe(true);
+      expect(result.data.list[0]).toMatchObject({
+        selling_price: 2,
+        label_price: 1.8,
+        label_currency_digits: 2,
+      });
+      expect(branchesRepository.findById).toHaveBeenCalledWith(BRANCH_ID, { lean: true });
+      expect(item.label_price).toBeUndefined();
+    });
+
+    test('ordinary item lists do not fetch label pricing', async () => {
+      repo.findPage.mockResolvedValue(makePaginatedResult());
+      await service.getAllItems(defaultParams);
+      expect(branchesRepository.findById).not.toHaveBeenCalled();
+    });
+
+    test('label pricing fails closed when the branch cannot be loaded', async () => {
+      repo.findPage.mockResolvedValue(makePaginatedResult());
+      branchesRepository.findById.mockResolvedValue(null);
+      const result = await service.getAllItems({ ...defaultParams, labelPricing: true });
+      expect(result.status).toBe(false);
+    });
+
     test('returns error when branchId is missing', async () => {
       const result = await service.getAllItems({ licenseId: LICENSE_ID });
       expect(result.status).toBe(false);
