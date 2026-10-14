@@ -546,3 +546,18 @@ test("file filters show immediate progress near controls and ignore outdated cou
   assert.equal(f.$("#ps-sheet-prepare").prop("disabled"), true);
   f.close();
 });
+
+test("submitted schedules show confirmation without another submission form; edit is explicit", async () => {
+ const f=await fixture();
+ f.w.PosnicPro.post=(r,done)=>done({type:'success',data:{job:{_id:'scheduled-1',status:'scheduled',revision:2,note:'Diwali offer',when:'tomorrow',dueByBranch:{aaaaaaaaaaaaaaaaaaaaaaaa:'2026-10-15T18:30:00Z'}},counts:{pending:1,unchanged:30},rows:[{row:1,itemName:'Apple',status:'pending',changes:{selling_price:{from:10,to:12}}}],page:1,total:1}});
+ await f.p.sheetJob('scheduled-1');
+ assert.equal(f.$('#ps-sheet-title').text(),'Price change scheduled');
+ assert.match(f.$('.ps-schedule-confirmation').text(),/Schedule saved.*No further review.*Diwali offer/s);
+ assert.equal(f.$('#ps-when,#ps-confirm-prices').length,0);
+ assert.doesNotMatch(f.$('#ps-job-view').text(),/30 unchanged|1 ready/);
+ f.$('.ps-schedule-confirmation button').filter((_,e)=>e.textContent==='Edit schedule').trigger('click');
+ assert.equal(f.$('#ps-when').length,1);
+ assert.equal(f.$('#ps-confirm-prices').length,1);
+ assert.equal(f.$('#ps-note').val(),'Diwali offer');
+ f.close();
+});
