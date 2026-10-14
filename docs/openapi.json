@@ -12262,6 +12262,84 @@
         }
       }
     },
+    "/items/{id}/details": {
+      "put": {
+        "summary": "edit",
+        "operationId": "put_items_id_details",
+        "tags": [
+          "Items"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectid"
+            },
+            "description": "Invalid item ID format"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Item name cannot be empty"
+                  },
+                  "selling_price": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Selling price must be a positive number"
+                  },
+                  "company_price": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Company price must be a positive number"
+                  },
+                  "available_quantity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Available quantity must be a non-negative number"
+                  },
+                  "barcode_id": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Barcode cannot exceed 100 characters"
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "description": "Description cannot exceed 2000 characters"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/kitchen/devices/pair": {
       "post": {
         "summary": "pair",
