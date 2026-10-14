@@ -1599,6 +1599,7 @@ class SalesRepository {
             null;
         } else {
           dateSource =
+            doc.settled_at ||
             doc.date ||
             doc.created_date ||
             doc.createdAt ||
@@ -1614,6 +1615,17 @@ class SalesRepository {
             normalized.created_date = formatDate(doc.created_date || doc.createdAt || dateSource, {
               timeZone: tz,
             });
+            // A paid receipt carries the saved settlement clock, not the kitchen's
+            // order clock or the time a later correction/reprint was requested.
+            normalized.receipt_date = formatDate(
+              (process === 'PartialReturn' || process === 'FullReturn' ? dateSource : null) ||
+                doc.settled_at ||
+                (normalized.payment_status === 'Paid' ? doc.date : null) ||
+                doc.created_date ||
+                doc.createdAt ||
+                dateSource,
+              { timeZone: tz }
+            );
             normalized.receipt_date_order = 'mdy';
           }
         }

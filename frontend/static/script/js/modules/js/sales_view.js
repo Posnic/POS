@@ -1554,7 +1554,7 @@ PosnicPro.sales.view = {
                         '<span style="font-weight:900; letter-spacing:1px;">'
                         + PosnicPro.escapeHtml(docTitle) + '</span>'
                     );
-                    $('.print_date').text(data.created_date);
+                    $('.print_date').text(data.receipt_date || data.created_date || data.date);
                     if (isA4Layout) {
                         var rowHTMLTaxLine = '';
                         var igst = 0;
