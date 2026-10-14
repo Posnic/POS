@@ -766,7 +766,9 @@ class ItemsController extends BaseController {
 
       if (result && result.status === true && result.data) {
         if (req.query.label_pricing === 'true') {
-          result.data = (await this.service.withLabelPricing([result.data], this.model.branchId))[0];
+          result.data = (
+            await this.service.withLabelPricing([result.data], this.model.branchId)
+          )[0];
         }
         return this.success(res, result.data, result.message || 'success');
       }

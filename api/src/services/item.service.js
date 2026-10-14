@@ -134,10 +134,16 @@ class ItemService {
     const branch = await branchesRepository.findById(branchId, { lean: true });
     if (!branch) throw new Error('Branch pricing is unavailable.');
     const { quote } = require('./shelf-label-pricing');
-    return items.map(item => ({ ...item, ...quote(item, branch) }));
+    return items.map((item) => ({ ...item, ...quote(item, branch) }));
   }
 
-  async getAllItems({ branchId, licenseId, filters = {}, options = {}, labelPricing = false } = {}) {
+  async getAllItems({
+    branchId,
+    licenseId,
+    filters = {},
+    options = {},
+    labelPricing = false,
+  } = {}) {
     try {
       if (!branchId || !licenseId) {
         return {
@@ -168,7 +174,10 @@ class ItemService {
           total_pages: result.totalPages,
           per_page: result.limit,
           list: labelPricing
-            ? await this.withLabelPricing((result.items || []).map((it) => this.normalizeItemImages(it)), branchId)
+            ? await this.withLabelPricing(
+                (result.items || []).map((it) => this.normalizeItemImages(it)),
+                branchId
+              )
             : (result.items || []).map((it) => this.normalizeItemImages(it)),
         },
         message: 'success',
