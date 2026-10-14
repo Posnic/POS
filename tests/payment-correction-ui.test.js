@@ -110,3 +110,38 @@ test('paid bill edit reviews the changed total and requires a reason before subm
  assert.equal(submitted.originalTotal,357);assert.equal(submitted.reason,'Wrong item and payment recorded');
  assert.ok(submitted.id);dom.window.close();
 });
+
+test('real request handler keeps background eligibility refusals quiet but explicit correction errors visible', async () => {
+    for (const status of [403, 404, 409, 500]) {
+        const { dom, w, $ } = await setup();
+        w.$ = $;
+        w.API_URL = '/api/';
+        const alerts = [], requests = [];
+        w.PosnicPro.alert = (_type, message) => alerts.push(message);
+        w.PosnicPro.requestDeviceId = () => null;
+        w.PosnicPro.users = { createCookie() {} };
+        $.ajax = options => {
+            requests.push(options);
+            return { done() { return this; }, fail(callback) {
+                callback({ status, responseJSON: { message: 'Only fully paid, non-returned sales can be corrected.' }, getResponseHeader() { return null; } }, 'error', 'error');
+                return this;
+            } };
+        };
+        w.eval(fs.readFileSync('frontend/static/script/js/core/ajax.js', 'utf8'));
+        w.PosnicPro.requestDeviceId = () => null;
+        $('.modal').remove();
+        w.PosnicPaymentCorrection.attach('sale1', { payment_status: 'Paid' });
+        await Promise.resolve(); await Promise.resolve();
+        assert.equal(alerts.length, status === 500 ? 1 : 0);
+        assert.equal($('[data-correct-payment]').length, 0);
+        assert.equal($('.modal').length, 0);
+        assert.equal(requests.length, 1);
+        assert.equal(requests[0].method, 'GET');
+        alerts.length = 0;
+        w.PosnicPaymentCorrection.open('sale1');
+        await Promise.resolve(); await Promise.resolve();
+        assert.ok(alerts.length > 0, 'Explicit action must explain the refusal');
+        assert.ok(requests.every(request => request.method === 'GET'), 'Viewing and refusing correction never submits a change');
+        dom.window.close();
+    }
+});
