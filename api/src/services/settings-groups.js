@@ -114,7 +114,6 @@ const PREFERENCES = [
   'supplier_checkbox',
   'tax_checkbox',
   'sale_inline_editor',
-  'item_editor_v2',
   // business defaults
   'default_customer',
   'default_supplier',

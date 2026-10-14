@@ -199,9 +199,14 @@ PosnicPro.request = function (params, callback, failure = null) {
                 .test(String(url || ''));
             var noSessionYet = onAuthPage && xhr && xhr.status === 401 && !signInCall;
 
+            // Optional background probes can handle expected refusals locally.
+            // Authentication failures must always retain the sign-in flow.
+            var quietFailure = typeof failure === 'function' && xhr.status !== 401 &&
+                Array.isArray(params.quietStatuses) && params.quietStatuses.indexOf(xhr.status) !== -1;
+
             if (noSessionYet) {
                 console.debug('[auth] no session yet on the sign-in screen, which is expected:', url);
-            } else if (!isThemeSettingsMissing && response && response.message) {
+            } else if (!quietFailure && !isThemeSettingsMissing && response && response.message) {
                 PosnicPro.alert(response.type || 'error', response.message);
             }
 

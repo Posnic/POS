@@ -353,12 +353,15 @@ test('schedule status groups paginate without mixing completed or cancelled jobs
     await db
       .collection('price_sheet_jobs')
       .insertOne({ ...original, _id: new ObjectId(), status: 'scheduled' });
-  for (const status of ['running', 'attention', 'complete', 'cancelled'])
+  for (const status of ['running', 'attention', 'complete', 'cancelled', 'draft'])
     await db.collection('price_sheet_jobs').insertOne({ ...original, _id: new ObjectId(), status });
   const upcoming = await service.list(c, { status: 'upcoming', page: 2, pageSize: 10 });
-  assert.equal(upcoming.total, 15);
-  assert.equal(upcoming.jobs.length, 5);
-  assert.ok(upcoming.jobs.every((j) => !['complete', 'cancelled'].includes(j.status)));
+  assert.equal(upcoming.total, 14);
+  assert.equal(upcoming.jobs.length, 4);
+  assert.ok(upcoming.jobs.every((j) => ['scheduled', 'running', 'attention'].includes(j.status)));
+  const drafts = await service.list(c, { status: 'drafts', page: 1, pageSize: 10 });
+  assert.equal(drafts.total, 2);
+  assert.ok(drafts.jobs.every((j) => ['review', 'draft'].includes(j.status)));
   for (const status of ['complete', 'cancelled']) {
     const result = await service.list(c, { status, page: 1, pageSize: 25 });
     assert.equal(result.total, 1);
