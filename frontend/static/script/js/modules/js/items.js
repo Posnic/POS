@@ -225,45 +225,10 @@ PosnicPro.items = {
         PosnicPro.items_v2.showAdd();
     },
     showClone: function (id) {
-        var loader = $(".loader-item");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.items.cloneItem(id);
+        PosnicPro.items_v2.showClone(id);
     },
     showEdit: function (id) {
-        PosnicPro.items.aiRefresh();
-        /* Cleared here too: the read below fills it from the saved dish, and
-           if that read is slow or fails the boxes must not still be showing
-           whatever was open a moment ago. */
-        PosnicPro.itemPlate.wire();
-        PosnicPro.itemPlate.aiRefresh();
-        PosnicPro.itemPlate.clear();
-        var loader = $(".loader-item");
-        loader.find(".loadingSpinner:first").remove();
-        $('#product_without_variant').prop('checked', true);
-        $('#product_with_variant').prop('checked', false);
-
-        $('#show_variant_fields').hide();
-        $('#show_price_fields,#sku_card_col').show();
-        $("#load_price_fields").html('');
-        $("#show-hide-item-discount").show();
-        $('#item_variant_header').hide();
-
-        PosnicPro.showEditModal('items');
-        PosnicPro.items.applyHardwareGates();
-        // Editing is a see-everything visit: open the collapsed sections so
-        // stored description/images/dates/flags are never hidden state.
-        $('#item_details_collapse, #item_extras_collapse').collapse('show');
-        PosnicPro.items.editItem(id);
-        $('#item_discount').show();
-        $('#v-pills-inventory-tab').addClass('active');
-        $('#v-pills-inventory').addClass('show active');
-        $('#items_reset').hide();
-        $('.items_edit_reset').show();
-        // The record id rides data-id; overwriting the DOM id broke every
-        // later #items_edit_reset selector.
-        $('.items_edit_reset').attr('data-id', id);
-        $('.error_item').css('display', 'none');
-        PosnicPro.items.itemAction = 'edit';
+        PosnicPro.items_v2.showEdit(id);
     },
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'items');
@@ -1770,6 +1735,9 @@ PosnicPro.items = {
     },
     /*Edit item dsetails*/
     editItem: function (id) {
+        return PosnicPro.items_v2.showEdit(id);
+    },
+    _legacyEditItem: function (id) {
         var loader = $(".loader-item");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
@@ -2670,6 +2638,9 @@ PosnicPro.items = {
     },
     /*Clone item details*/
     cloneItem: function (id) {
+        return PosnicPro.items_v2.showClone(id);
+    },
+    _legacyCloneItem: function (id) {
         var loader = $(".loader-item");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $(".infobar-settings-sidebar-overlay").css({"background": "rgba(0,0,0,0.4)", "position": "fixed"});
