@@ -4527,5 +4527,7 @@
   "lang_iv2_copy_notice": "{name} को प्रतिलिपि। यो नयाँ वस्तु हो र अझै सुरक्षित गरिएको छैन। मूल वस्तु परिवर्तन हुँदैन।",
   "lang_iv2_create_copy": "प्रतिलिपि बनाउनुहोस्",
   "lang_iv2_save_copy": "नयाँ वस्तुको रूपमा सुरक्षित गर्नुहोस्",
-  "lang_iv2_copy_suffix": "प्रतिलिपि"
+  "lang_iv2_copy_suffix": "प्रतिलिपि",
+  "lang_rd_serial_number": "क्र.सं.",
+  "lang_rd_show_payment_method": "भुक्तानी विधि देखाउनुहोस्"
 }
