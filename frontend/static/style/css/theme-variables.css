@@ -3538,3 +3538,11 @@ html:not([data-theme]) .loadingSpinner::after {
     #payment-correction .pc-reasons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     #payment-correction .pc-choice { padding: 12px 20px; font-size: 14px; }
 }
+
+/* Direct, optional customer entry; theme colours come from the form controls. */
+.sales-customer-entry { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:10px 0; }
+.sales-customer-entry label { margin:0; }
+.sales-customer-entry input { flex:1 1 200px; max-width:360px; min-width:0; }
+.sales-customer-pop label { display:block; width:100%; margin-bottom:10px; }
+
+.sales-customer-entry + .sales-customer-pop { position:relative; top:auto; right:auto; width:520px; max-width:100%; margin:0 0 12px; }

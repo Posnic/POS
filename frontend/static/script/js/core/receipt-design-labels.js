@@ -1,6 +1,7 @@
 /* Receipt designer labels are explicit so the language catalog can extract them. */
 PosnicPro.receiptDesignLabel = function (value) {
     switch (value) {
+    case "Item column heading": return PosnicPro.i18n.t('lang_rd_item_column_heading', 'Item column heading');
     case "112 mm thermal (TVS RP 4200)": return PosnicPro.i18n.t('lang_rd_112_mm_thermal', '112 mm thermal (TVS RP 4200)');
     case "Show business email": return PosnicPro.i18n.t('lang_rd_show_business_email', 'Show business email');
     case "Show item row numbers": return PosnicPro.i18n.t('lang_rd_show_item_row_numbers', 'Show item row numbers');

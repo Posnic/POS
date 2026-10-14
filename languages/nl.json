@@ -4870,5 +4870,10 @@
   "lang_paid_bill_use_return": "Als het oorspronkelijke geld daadwerkelijk is geïnd, gebruik dan Retourartikelen om de terugbetaling vast te leggen.",
   "lang_paid_bill_previous": "Eerder opgenomen",
   "lang_paid_bill_corrected": "Gecorrigeerde factuur",
-  "lang_reload_this_page_to_review_the_paid_bill_c": "Laad deze pagina opnieuw om de correctie van de betaalde factuur te bekijken."
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Laad deze pagina opnieuw om de correctie van de betaalde factuur te bekijken.",
+  "lang_bill_customer_details_help": "Optionele gegevens voor dit wetsvoorstel. Gebruik Nieuwe klant toevoegen om een klantrecord op te slaan.",
+  "lang_customer_details": "Gegevens van de klant",
+  "lang_details": "Details",
+  "lang_rd_item_column_heading": "Titel van de kolom van het item",
+  "lang_use_on_this_bill": "Gebruik op dit wetsvoorstel"
 }

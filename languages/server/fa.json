@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "قبل از بستن این ثبت، اصلاح پرداخت در انتظار را به پایان برسانید.",
   "Finish the pending payment correction first.": "ابتدا تصحیح پرداخت در انتظار را به پایان برسانید.",
   "Bill correction saved.": "تصحیح صورتحساب ذخیره شد",
-  "Review the paid bill correction before saving.": "قبل از صرفه جویی، اصلاح قبض پرداخت شده را بررسی کنید."
+  "Review the paid bill correction before saving.": "قبل از صرفه جویی، اصلاح قبض پرداخت شده را بررسی کنید.",
+  "Choose a saved customer for customer credit.": "مشتری ذخیره شده را برای اعتبار مشتری انتخاب کنید.",
+  "Exact numeric search must be on or off": "جستجوی عددی دقیق باید روشن یا خاموش باشد",
+  "Item not found or selling price is held. Review it in Edit prices.": "مورد یافت نشد یا قیمت فروش حفظ شده است. آن را در ویرایش قیمت ها مرور کنید."
 }

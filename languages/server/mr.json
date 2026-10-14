@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "ही नोंदणी बंद करण्यापूर्वी प्रलंबित पेमेंट",
   "Finish the pending payment correction first.": "प्रथम प्रलंबित पेमेंट सुधारण",
   "Bill correction saved.": "बिल सुधारण जतन",
-  "Review the paid bill correction before saving.": "बचत करण्यापूर्वी पेड बिल दुरुस्तीचे"
+  "Review the paid bill correction before saving.": "बचत करण्यापूर्वी पेड बिल दुरुस्तीचे",
+  "Choose a saved customer for customer credit.": "ग्राहक क्रेडिटसाठी जतन केलेले ग्राहक",
+  "Exact numeric search must be on or off": "अचूक संख्याशी शोध चालू किंवा बंद असणे",
+  "Item not found or selling price is held. Review it in Edit prices.": "आयटम सापडला नाही किंवा विक्री किंमत ठेवली आहे संपादित किंमती मध्ये त्याचे पुनरावलोक"
 }

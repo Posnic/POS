@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Ολοκληρώστε την εκκρεμή διόρθωση πληρωμής πριν κλείσετε αυτό το μητρώο.",
   "Finish the pending payment correction first.": "Ολοκληρώστε πρώτα την εκκρεμή διόρθωση πληρωμής.",
   "Bill correction saved.": "Η διόρθωση λογαριασμού αποθηκεύτηκε.",
-  "Review the paid bill correction before saving.": "Ελέγξτε τη διόρθωση του πληρωμένου λογαριασμού πριν από την αποθήκευση."
+  "Review the paid bill correction before saving.": "Ελέγξτε τη διόρθωση του πληρωμένου λογαριασμού πριν από την αποθήκευση.",
+  "Choose a saved customer for customer credit.": "Επιλέξτε έναν αποθηκευμένο πελάτη για πίστωση πελάτη.",
+  "Exact numeric search must be on or off": "Η ακριβής αριθμητική αναζήτηση πρέπει να είναι ενεργοποιημένη ή απενεργοποιημένη",
+  "Item not found or selling price is held. Review it in Edit prices.": "Το αντικείμενο δεν βρέθηκε ή διατηρείται η τιμή πώλησης. Ελέγξτε το στην Επεξεργασία τιμών."
 }

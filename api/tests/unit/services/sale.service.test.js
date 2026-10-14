@@ -273,6 +273,34 @@ describe('SalesService', () => {
     });
   });
 
+  test('name-only customers save a bill snapshot without a customer record', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    const result = await salesService.processSale(
+      makeSaleData({ customer_id: '', customer_name: 'Bharat visitor', customer_email: '' }),
+      '',
+      'Add',
+      makeContext()
+    );
+    expect(result.status).toBe(true);
+    expect(salesRepository.create.mock.calls[0][0]).toMatchObject({
+      customer_id: null,
+      customer_name: 'Bharat visitor',
+      customer_email: '',
+    });
+    expect(mockCustomerRepositoryInstance.findById).not.toHaveBeenCalled();
+  });
+
+  test('name-only customers cannot create a credit account implicitly', async () => {
+    const result = await salesService.processSale(
+      makeSaleData({ customer_id: '', customer_name: 'Visitor', partial_check: 'true' }),
+      '',
+      'Add',
+      makeContext()
+    );
+    expect(result.status).toBe(false);
+    expect(salesRepository.create).not.toHaveBeenCalled();
+  });
+
   describe('tax-inclusive full-payment integrity', () => {
     const taxableSale = (multi_payment, overrides = {}) =>
       makeSaleData({

@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "이 등록을 마감하기 전에 보류 중인 결제 수정을 완료하십시오.",
   "Finish the pending payment correction first.": "보류 중인 결제 수정을 먼저 완료하십시오.",
   "Bill correction saved.": "청구서 수정이 저장되었습니다.",
-  "Review the paid bill correction before saving.": "저장하기 전에 지불 청구서 수정을 검토하십시오."
+  "Review the paid bill correction before saving.": "저장하기 전에 지불 청구서 수정을 검토하십시오.",
+  "Choose a saved customer for customer credit.": "고객 크레딧으로 사용할 저장된 고객을 선택합니다.",
+  "Exact numeric search must be on or off": "정확한 숫자 검색을 켜거나 꺼야 합니다.",
+  "Item not found or selling price is held. Review it in Edit prices.": "아이템을 찾을 수 없거나 판매 가격이 보류되었습니다.가격 편집에서 검토하세요."
 }

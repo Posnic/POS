@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "এই রেজিস্টারটি বন্ধ করার আগে মুলতুবি অর্থ সংশোধন শেষ করুন",
   "Finish the pending payment correction first.": "প্রথমে মুলতুবি পেমেন্ট সংশোধন শেষ করুন।",
   "Bill correction saved.": "বিল সংশোধন সংরক্ষিত",
-  "Review the paid bill correction before saving.": "সঞ্চয় করার আগে প্রদত্ত বিল সংশোধন পর্যালো"
+  "Review the paid bill correction before saving.": "সঞ্চয় করার আগে প্রদত্ত বিল সংশোধন পর্যালো",
+  "Choose a saved customer for customer credit.": "গ্রাহক ক্রেডিটের জন্য সংরক্ষিত গ্রাহক চয়ন করুন।",
+  "Exact numeric search must be on or off": "সঠিক সংখ্যাগত অনুসন্ধান অবশ্যই চালু বা বন্ধ থাকতে হবে",
+  "Item not found or selling price is held. Review it in Edit prices.": "আইটেম পাওয়া যায় নি বা বিক্রয় মূল্য ধরে রাখা হয়। সম্পাদনা মূল্যে এটি পর্যালোচনা করুন।"
 }

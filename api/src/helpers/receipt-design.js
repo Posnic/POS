@@ -115,7 +115,12 @@
       throw new Error('Choose a valid receipt format.');
     if (JSON.stringify(value).length > 1800000)
       throw new Error('Receipt images are too large. Use smaller images.');
-    const out = { version: 1, defaultFormat: value.defaultFormat, layouts: {} };
+    const out = {
+      version: 1,
+      defaultFormat: value.defaultFormat,
+      showBranding: value.showBranding !== false,
+      layouts: {},
+    };
     Object.keys(formats).forEach(function (format) {
       const layout = layoutFor(value, format);
       if (!layout || !Array.isArray(layout.blocks) || layout.blocks.length > 40)
@@ -143,6 +148,11 @@
             throw new Error('Choose full or half width for a field.');
         }
         if (block.type === 'items') {
+          if (block.heading != null) {
+            if (typeof block.heading !== 'string' || block.heading.length > 40)
+              throw new Error('Item heading must be at most 40 characters.');
+            b.heading = block.heading.trim();
+          }
           b.hsn = block.hsn === true;
           b.showRowNumbers = block.showRowNumbers === true;
           if (block.lineStyle != null) {

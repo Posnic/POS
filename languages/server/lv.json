@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Pirms šī reģistra slēgšanas pabeidziet gaidāmo maksājumu korekciju.",
   "Finish the pending payment correction first.": "Vispirms pabeidziet gaidāmo maksājumu korekciju.",
   "Bill correction saved.": "Rēķina korekcija saglabāta.",
-  "Review the paid bill correction before saving.": "Pirms ietaupīšanas pārskatiet apmaksāto rēķina korekciju."
+  "Review the paid bill correction before saving.": "Pirms ietaupīšanas pārskatiet apmaksāto rēķina korekciju.",
+  "Choose a saved customer for customer credit.": "Izvēlieties saglabātu klientu klientu kredītam.",
+  "Exact numeric search must be on or off": "Precīzai skaitliskajai meklēšanai jābūt ieslēgtai vai izslēgtai",
+  "Item not found or selling price is held. Review it in Edit prices.": "Prece nav atrasta vai pārdošanas cena tiek turēta. Pārskatiet to sadaļā Rediģēt cenas."
 }

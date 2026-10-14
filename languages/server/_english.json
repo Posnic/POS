@@ -433,6 +433,9 @@
   "Choose a purchase order to prepare a supplier message about availability or remaining delivery quantities. Review and confirm to save the text in Ask Posnic. You can then copy it into your normal messaging workflow.": [
     "src/controllers/ask-posnic.controller.js"
   ],
+  "Choose a saved customer for customer credit.": [
+    "src/services/sale.service.js"
+  ],
   "Choose a supplier": [
     "src/repositories/purchase-order.repository.js"
   ],

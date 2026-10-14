@@ -13,8 +13,8 @@
         var sheet = !!contract.formats[format].height;
         var align = contract.formats[format].height ? 'left' : 'center';
         return { fontSize: contract.formats[format].font, blocks: [block('logo', { align: align }), block('store', { align: align, fssaiInHeader: !sheet }), block('transaction', sheet ? {} : { showTitle: false, fontSize: 10 })]
-            .concat(['customer_name', 'customer_phone', 'customer_email', 'customer_address', 'customer_tax_number'].map(function (field) { return block('field', { field: field }); }))
-            .concat([block('items', sheet ? {} : { itemLayout: 'columns', nameMaxChars: 20, lineStyle: 'dotted', fontSize: format === '58' ? 9 : 11 })].concat(sheet ? [] : [block('field', { field: 'total_quantity' })]).concat([block('totals'), block('text', { text: PosnicPro.i18n.t('lang_rd_thank_you', 'Thank you for shopping!'), align: 'center' })])) };
+            .concat(['customer_name', 'customer_phone', 'customer_address', 'customer_tax_number'].map(function (field) { return block('field', { field: field }); }))
+            .concat([block('items', sheet ? {} : { itemLayout: 'columns', nameMaxChars: 20, lineStyle: 'dotted', fontSize: format === '58' ? 9 : 11 })].concat(sheet ? [] : [block('field', { field: 'total_quantity' })]).concat([block('totals'), block('text', { text: 'Thank you! Visit again.', align: 'center' })])) };
     }
     function defaults(branch) {
         var result = { version: 1, defaultFormat: branch.print_type === 'a4' ? 'a4' : ['58', '80', '112'].indexOf(branch.print_width) !== -1 ? branch.print_width : '80', layouts: {} };
@@ -24,7 +24,7 @@
             if (on(branch.print_logoimg)) blocks.push(block('logo', { align: sheet ? 'left' : 'center' }));
             if (branch.header_print && branch.header_print !== 'default') blocks.push(block('text', { text: plain(branch.header_print), align: 'center' }));
             blocks.push(block('store', { align: sheet ? 'left' : 'center', fssaiInHeader: !sheet }), block('transaction', sheet ? {} : { showTitle: false, fontSize: 10 }));
-            if (on(branch.customer_print)) ['customer_name', 'customer_phone', 'customer_address'].forEach(function (field) { blocks.push(block('field', { field: field })); });
+            if (branch.customer_print == null || on(branch.customer_print)) ['customer_name', 'customer_phone', 'customer_address'].forEach(function (field) { blocks.push(block('field', { field: field })); });
             Object.keys({ table: 1, order_type: 1, covers: 1, steward: 1, session: 1, fssai: 1, source: 1 }).forEach(function (field) {
                 var key = { order_type: 'dine_type' }[field] || field;
                 if (contract.fieldAvailable(field, branch) && on(branch['bill_print_' + key])) blocks.push(block('field', { field: field }));
@@ -32,6 +32,7 @@
             blocks.push(block('items', { hsn: on(branch.bill_print_hsn), itemLayout: sheet ? 'detailed' : 'columns', nameMaxChars: 20, lineStyle: 'dotted', fontSize: sheet ? undefined : format === '58' ? 9 : 11 }), block('totals'));
             if (on(branch.bill_print_total_qty) || (!sheet && branch.bill_print_total_qty == null)) blocks.push(block('field', { field: 'total_quantity' }));
             if (on(branch.print_sale_notes)) blocks.push(block('field', { field: 'sale_note' }));
+            if (branch.footer_print == null) blocks.push(block('text', { text: 'Thank you! Visit again.', align: 'center' }));
             if (branch.footer_print) blocks.push(block('text', { text: plain(branch.footer_print), align: 'center' }));
             if (branch.footer_image_caption) blocks.push(block('text', { text: branch.footer_image_caption, align: 'center' }));
             if (branch.footer_qr_url) blocks.push(block('qr', { text: branch.footer_qr_url, src: branch.footer_image || '', width: sheet ? 20 : 50, align: 'center' }));
@@ -240,7 +241,7 @@
                 var customLabel = typeof b.labelText === 'string';
                 if (sheet) {
                     content = '<div class="rd-invoice-meta"><div class="rd-invoice-title">' + esc(documentTitle) + '</div><dl>';
-                    if (data.sales_id) content += '<dt>' + esc(beforePayment ? PosnicPro.i18n.t('lang_bill_no', 'Bill no') : PosnicPro.i18n.t('lang_rd_receipt_number', 'Receipt number')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
+                    if (data.sales_id) content += '<dt>' + esc(customLabel ? b.labelText : beforePayment ? PosnicPro.i18n.t('lang_bill_no', 'Bill no') : PosnicPro.i18n.t('lang_rd_receipt_number', 'Receipt number')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
                     content += '<dt>' + esc(PosnicPro.i18n.t('lang_date_title', 'Date')) + '</dt><dd>' + esc(receiptDate) + '</dd></dl></div>';
                 } else {
                     var billPrefix = '';
@@ -258,7 +259,7 @@
             } else if (b.type === 'items') {
                 var compact = !sheet && b.itemLayout === 'compact';
                 var columns = !sheet && b.itemLayout === 'columns';
-                content = '<table' + (columns ? ' class="rd-fixed-columns"' : '') + '><colgroup><col style="width:' + (sheet ? '46' : columns ? (format === '58' ? '40' : '46') : compact ? '68' : '60') + '%">' + (sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : columns ? (format === '58' ? '<col style="width:23%"><col style="width:12%"><col style="width:25%">' : '<col style="width:20%"><col style="width:10%"><col style="width:24%">') : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr><th>' + esc(compact ? label('Item') + ' × ' + label('Qty') : columns ? label('Item name') : label('Item')) + '</th>' + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : columns ? '<th class="rd-number">' + esc(label('Rate')) + '</th><th class="rd-number">' + esc(label('Qty')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
+                content = '<table' + (columns ? ' class="rd-fixed-columns"' : '') + '><colgroup><col style="width:' + (sheet ? '46' : columns ? (format === '58' ? '40' : '46') : compact ? '68' : '60') + '%">' + (sheet ? '<col style="width:12%"><col style="width:20%"><col style="width:22%">' : columns ? (format === '58' ? '<col style="width:23%"><col style="width:12%"><col style="width:25%">' : '<col style="width:20%"><col style="width:10%"><col style="width:24%">') : '<col style="width:' + (compact ? '32' : '40') + '%">') + '</colgroup><thead><tr><th>' + esc((b.heading || (columns ? label('Item name') : label('Item'))) + (compact ? ' × ' + label('Qty') : '')) + '</th>' + (sheet ? '<th class="rd-number">' + esc(label('Qty')) + '</th><th class="rd-number">' + esc(label('Unit price')) + '</th>' : columns ? '<th class="rd-number">' + esc(label('Rate')) + '</th><th class="rd-number">' + esc(label('Qty')) + '</th>' : '') + '<th class="rd-number">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
                 receiptItems.forEach(function (item, index) {
                     var qty = Number(item.item_quantity || 0);
                     var hsn = item.hsncode || item.hsn_code || item.hsn || (/^\d{4,8}$/.test(item.tax_name || '') ? item.tax_name : '');
@@ -332,6 +333,7 @@
         }).filter(Boolean);
         rendered = pairFields(rendered);
         var html = sheet ? composeSheet(rendered) : rendered.map(function (b) { return b.html; }).join('');
+        if (designs.showBranding !== false) html += '<section class="rd-block rd-branding" style="text-align:center;font-size:10px">Made with Posnic &middot; posnic.com</section>';
         if (pendingGoods) html += '<section class="rd-block rd-payment-status">' + esc(label('Payment pending')) + '</section>';
         if (sheet) {
             var notes = '';
@@ -391,7 +393,7 @@
             if (boundary) text += '\n';
         }
         walk(receipt);
-        text = text.replace(/₹/g, 'Rs. ').replace(/×/g, 'x').replace(/−/g, '-').replace(/…/g, '...').replace(/\u00a0/g, ' ');
+        text = text.replace(/₹/g, 'Rs. ').replace(/×/g, 'x').replace(/−/g, '-').replace(/…/g, '...').replace(/\u00a0/g, ' ').replace(/\u00b7/g, '-');
         if (/[^\x09\x0a\x0d\x20-\x7e]/.test(text)) return null;
         var lines = text.split(/\r?\n/).map(function (line) { return line.replace(/\s+/g, ' ').trim().replace(/ \|$/, ''); }).filter(Boolean);
         return lines.length ? lines : null;

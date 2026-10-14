@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Selesaikan pembetulan pembayaran yang belum selesai sebelum menutup daftar ini.",
   "Finish the pending payment correction first.": "Selesaikan pembetulan pembayaran yang belum selesai terlebih dahulu.",
   "Bill correction saved.": "Pembetulan bil disimpan.",
-  "Review the paid bill correction before saving.": "Semak pembetulan bil yang dibayar sebelum menyimpan."
+  "Review the paid bill correction before saving.": "Semak pembetulan bil yang dibayar sebelum menyimpan.",
+  "Choose a saved customer for customer credit.": "Pilih pelanggan yang disimpan untuk kredit pelanggan.",
+  "Exact numeric search must be on or off": "Carian angka yang tepat mesti dihidupkan atau dimatikan",
+  "Item not found or selling price is held. Review it in Edit prices.": "Item tidak dijumpai atau harga jualan dipegang. Semak semula dalam Edit harga."
 }

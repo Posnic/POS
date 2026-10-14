@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "סיים את תיקון התשלום הממתינה לפני סגירת רישום זה.",
   "Finish the pending payment correction first.": "סיים תחילה את תיקון התשלום הממתינה.",
   "Bill correction saved.": "תיקון החשבונות נשמר.",
-  "Review the paid bill correction before saving.": "בדוק את תיקון החשבון ששולם לפני השמירה."
+  "Review the paid bill correction before saving.": "בדוק את תיקון החשבון ששולם לפני השמירה.",
+  "Choose a saved customer for customer credit.": "בחר לקוח שנשמר עבור אשראי לקוח.",
+  "Exact numeric search must be on or off": "חיפוש מספרי מדויק חייב להיות מופעל או כבוי",
+  "Item not found or selling price is held. Review it in Edit prices.": "הפריט לא נמצא או מחיר המכירה מוחזק. סקור אותו בעריכת מחירים."
 }

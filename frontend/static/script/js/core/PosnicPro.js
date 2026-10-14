@@ -469,6 +469,8 @@ PosnicPro = {
                 PosnicPro.local.set('defaultcustomer', JSON.stringify(response.data['customer']));
                 $('.default-customer-id').val(responseData['customer_id']);
                 $('.default-customer-name').val(responseData['customer_name']);
+                // Do not replace a customer typed or selected while this lookup was pending.
+                if ($.trim($('#sales_new_customer_name').val() || '')) return;
                 $('#sales_new_customer_id').val(responseData['customer_id']);
                 $('#sales_new_customer_name').val(responseData['customer_name']);
                 $('#sales_new_customer_address').val(responseData['customer_address']);

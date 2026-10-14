@@ -10971,6 +10971,21 @@ PosnicPro.sales.qr = {
 };
 /******** END ~ ADD SALES PAGE MENU ********/
 
+// A typed name is a sale snapshot, never a rename of the linked customer.
+$('#sales_new_customer_name').on('input', function () {
+    if ($('#sales_new_customer_id').val()) {
+        $('#sales_new_customer_id,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_address,#sales_new_customer_state,#sales_new_customer_country,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance,#customer_current_balance').val('');
+        PosnicPro.sales._customerCategoryId = '';
+        if (PosnicPro.loyalty && PosnicPro.loyalty.tillClear) PosnicPro.loyalty.tillClear();
+        if (PosnicPro.sales.refreshCustomerAccount) PosnicPro.sales.refreshCustomerAccount();
+        if (PosnicPro.sales.calculation && PosnicPro.sales.calculation.salesTableRowCart) PosnicPro.sales.calculation.salesTableRowCart();
+    }
+    PosnicPro.local.set('customerName', this.value);
+    PosnicPro.local.set('customerPhone', $('#sales_new_customer_phone').val() || '');
+    PosnicPro.local.set('customerEmail', $('#sales_new_customer_email').val() || '');
+    PosnicPro.local.set('customerAddress', $('#sales_new_customer_address').val() || '');
+    if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
+});
 $('#sales_new_customer_name').click(function () {
     PosnicPro.selectAllText(jQuery(this));
 });
@@ -12175,7 +12190,7 @@ $(function () {
             var suggestions = [];
             var params = {
                 url: 'customers/getCustomersAjaxList',
-                data: 'query=' + query
+                data: 'query=' + encodeURIComponent(query)
             };
             PosnicPro.get(params, function (response) {
                 if (seq !== customerLookupSeq) { return; }
@@ -12194,15 +12209,15 @@ $(function () {
             if (suggestion.data !== -1) {
                 PosnicPro.sales.applyCustomerPick(suggestion.data);
             } else {
-                hasher.setHash('sales/customers/new');
+                $('#sales_new_customer_name').val(suggestion.value.trim()).trigger('input');
             }
         },
-        autoSelectFirst: true,
+        autoSelectFirst: false,
         triggerSelectOnValidInput: false,
         formatResult: function (suggestion) {
             let phone = suggestion.data.phone;
             if (suggestion.data === -1 || typeof suggestion.phone === undefined) {
-                phone = "( Add new )";
+                phone = PosnicPro.i18n.t('lang_use_on_this_bill', 'Use on this bill');
             }
             let partial_balance_span = "";
             if (suggestion.data.partial_balance === true) {
@@ -12472,16 +12487,16 @@ PosnicPro.sales.updateCustomerChip = function () {
         } catch (e) { isDefaultCustomer = false; }
     }
     if (id && !isDefaultCustomer) {
-        $('#sales_customer_btn_label').text(name || 'Customer');
+        $('#sales_customer_btn_label').text(PosnicPro.i18n.t('lang_details', 'Details'));
         $btn.addClass('has-customer');
         $icon.removeClass('icon-user').addClass('icon-user-check');
         var tip = (name || 'Customer') + (phone ? ' · ' + phone : '');
         $btn.attr('data-original-title', tip).attr('title', tip);
     } else {
-        $('#sales_customer_btn_label').text(PosnicPro.i18n.t('lang_walk_in', 'Walk-in'));
+        $('#sales_customer_btn_label').text(PosnicPro.i18n.t('lang_details', 'Details'));
         $btn.removeClass('has-customer');
         $icon.removeClass('icon-user-check').addClass('icon-user');
-        var t = 'Walk-in customer. Click to choose or add';
+        var t = name || PosnicPro.i18n.t('lang_customer_details', 'Customer details');
         $btn.attr('data-original-title', t).attr('title', t);
     }
 };
@@ -12507,7 +12522,7 @@ $('.toggle-user-input').click(function () {
     $pop.toggle();
     if ($pop.is(':visible')) {
         PosnicPro.sales.renderRecentCustomers();
-        setTimeout(function () { $('#sales_new_customer_name').trigger('focus'); }, 0);
+        setTimeout(function () { $('#sales_new_customer_phone').trigger('focus'); }, 0);
     }
 });
 // Customer popover: close on the × or an outside click; "Walk-in" clears the
@@ -12538,7 +12553,7 @@ $(document).on('click', '#sales_customer_walkin', function (e) {
 $(document).on('mousedown', function (e) {
     var $pop = $('.toggle-customer-user');
     if (!$pop.length || !$pop.is(':visible')) { return; }
-    if ($(e.target).closest('.toggle-customer-user, #sales_customer_btn, .autocomplete-suggestions').length === 0) {
+    if ($(e.target).closest('.toggle-customer-user, .sales-customer-entry, #sales_customer_btn, .autocomplete-suggestions').length === 0) {
         $pop.hide();
     }
 });
@@ -13361,7 +13376,7 @@ $(function () {
     $('#qe_item_search').autocomplete({
         deferRequestBy: 120,
         lookup: function (query, done) {
-            PosnicPro.get({ url: 'items/getOnlineItemsAjaxList', data: 'query=' + query + '&type=normal' }, function (response) {
+            PosnicPro.get({ url: 'items/getOnlineItemsAjaxList', data: 'query=' + encodeURIComponent(query) + '&type=normal' }, function (response) {
                 var suggestions = [];
                 ((response && response.suggestions) || []).forEach(function (d) {
                     suggestions.push({ value: d.item_name || d.value || '', data: d });
@@ -13381,7 +13396,7 @@ $(function () {
     $('#qe_cust_search').autocomplete({
         deferRequestBy: 120,
         lookup: function (query, done) {
-            PosnicPro.get({ url: 'customers/getCustomersAjaxList', data: 'query=' + query }, function (response) {
+            PosnicPro.get({ url: 'customers/getCustomersAjaxList', data: 'query=' + encodeURIComponent(query) }, function (response) {
                 var suggestions = [];
                 ((response && response.suggestions) || []).forEach(function (d) {
                     suggestions.push({ value: d.name || '', data: d });
