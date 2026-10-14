@@ -3407,3 +3407,134 @@ html:not([data-theme]) .loadingSpinner::after {
 [data-theme="brown"]     { --theme-font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, 'Segoe UI', Roboto, sans-serif; }
 [data-theme="warmnight"] { --theme-font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, 'Segoe UI', Roboto, sans-serif; }
 [data-theme="dark"]      { --theme-font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, sans-serif; }
+
+/* Payment corrections use paired theme tokens, including selected/focused
+   choices. Generic outline-button rules otherwise paint blue text on blue. */
+#payment-correction .modal-content,
+#paid-bill-review .modal-content {
+    background: var(--theme-card-bg) !important;
+    color: var(--theme-text-primary) !important;
+    border: 1px solid var(--theme-border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+#payment-correction .modal-dialog { max-width: 780px; }
+#payment-correction .modal-header,
+#paid-bill-review .modal-header {
+    background: var(--theme-card-bg) !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--theme-border-color) !important;
+    padding: 20px 24px;
+    align-items: center;
+    gap: 16px;
+}
+#payment-correction .modal-header h4,
+#paid-bill-review .modal-header h4,
+#paid-bill-review .modal-header lang {
+    color: var(--theme-text-primary) !important;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+#payment-correction .pc-bill {
+    display: block;
+    margin-top: 4px;
+    color: var(--theme-text-muted) !important;
+    font-size: 14px;
+}
+#payment-correction .modal-body,
+#paid-bill-review .modal-body {
+    padding: 20px 24px;
+    border: 0;
+    max-height: 65vh;
+    overflow-y: auto;
+}
+#payment-correction .pc-summary {
+    padding: 14px 16px;
+    background: var(--theme-body-bg);
+    border: 1px solid var(--theme-border-color);
+    border-radius: 8px;
+    color: var(--theme-text-secondary);
+    line-height: 1.7;
+}
+#payment-correction .pc-summary strong { color: var(--theme-text-primary); }
+#payment-correction .pc-note { font-size: 14px; margin-bottom: 20px; }
+#payment-correction h5 { font-size: 16px; font-weight: 600; }
+#payment-correction .pc-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin: 12px 0 20px;
+}
+#payment-correction .pc-reasons { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+#payment-correction .btn,
+#paid-bill-review .btn { min-height: 48px; min-width: 48px; white-space: normal; }
+#payment-correction .pc-choice {
+    position: relative;
+    min-height: 58px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-color) !important;
+    background: var(--theme-card-bg) !important;
+    color: var(--theme-text-primary) !important;
+    font-size: 15px;
+    line-height: 1.4;
+    box-shadow: none !important;
+    overflow-wrap: anywhere;
+}
+#payment-correction .pc-choice:hover {
+    background: var(--theme-table-row-hover) !important;
+    border-color: var(--theme-primary-color) !important;
+}
+#payment-correction .pc-choice[aria-pressed="true"],
+#payment-correction .pc-choice[aria-pressed="true"]:hover,
+#payment-correction .pc-choice[aria-pressed="true"]:focus {
+    background: var(--theme-btn-primary-bg) !important;
+    color: var(--theme-btn-primary-text) !important;
+    border-color: var(--theme-btn-primary-bg) !important;
+    font-weight: 600;
+}
+#payment-correction .pc-choice[aria-pressed="true"]::after {
+    content: '\2713';
+    position: absolute;
+    top: 5px;
+    right: 7px;
+    font-size: 13px;
+    color: inherit;
+}
+#payment-correction .btn:focus-visible,
+#paid-bill-review .btn:focus-visible {
+    outline: 2px solid var(--theme-primary-color);
+    outline-offset: 3px;
+}
+#payment-correction .pc-amounts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+#payment-correction .pc-amounts label { min-width: 0; }
+#payment-correction input { min-height: 48px; font-size: 18px; }
+#payment-correction .pc-other { width: 100%; }
+#payment-correction .pc-review { font-size: 16px; line-height: 1.7; }
+#payment-correction .modal-footer,
+#paid-bill-review .modal-footer {
+    padding: 16px 24px;
+    border: 0;
+    border-top: 1px solid var(--theme-border-color);
+    background: var(--theme-card-bg);
+}
+#payment-correction .btn-light,
+#paid-bill-review .btn-light {
+    background: var(--theme-body-bg) !important;
+    color: var(--theme-text-primary) !important;
+    border: 1px solid var(--theme-border-color) !important;
+}
+#payment-correction .btn-primary,
+#paid-bill-review .btn-primary {
+    background: var(--theme-btn-primary-bg) !important;
+    color: var(--theme-btn-primary-text) !important;
+    border-color: var(--theme-btn-primary-bg) !important;
+}
+#payment-correction [hidden] { display: none !important; }
+@media (max-width: 575px) {
+    #payment-correction .modal-dialog { margin: 12px; }
+    #payment-correction .modal-header, #payment-correction .modal-body, #payment-correction .modal-footer { padding: 16px; }
+    #payment-correction .pc-reasons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #payment-correction .pc-choice { padding: 12px 20px; font-size: 14px; }
+}
