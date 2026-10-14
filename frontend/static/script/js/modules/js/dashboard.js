@@ -852,8 +852,16 @@ function posnicLanguageStyling(code) {
      * which is exactly how a feature ships dead.
      */
     var base = (typeof API_URL === 'string' && API_URL) || '/';
-    fetch(base + 'api/runtime-info')
+    // Cloud and paired tills can receive their brand from brand.json rather
+    // than WHITE_LABEL_NAME. Require an explicitly unbranded installation
+    // before offering a Posnic account; unknown branding stays hidden.
+    fetch('brand.json', { cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (brand) {
+            if (!brand || brand.enabled !== false) return null;
+            return fetch(base + 'api/runtime-info');
+        })
+        .then(function (r) { return r && r.ok ? r.json() : null; })
         .then(function (info) {
             if (info && info.features && info.features.account) item.style.display = '';
         })
