@@ -4,6 +4,23 @@
     var cssRequests = {};
     var revision = 0;
     var resizeObserver;
+    var refreshTimer;
+    var cartObserver;
+    function refreshVisible() {
+        if (!$('#tender_receipt_preview').is(':visible')) return;
+        ++revision; // Invalidate an older response as soon as the cart changes.
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(function () { PosnicPro.tenderReceipt.show(); }, 120);
+    }
+    function watchCart() {
+        $(document).off('.tenderReceiptFresh').on('input.tenderReceiptFresh change.tenderReceiptFresh',
+            '#sales_new_items_table input, [id^="sales_new_customer_"], #sales_description', refreshVisible);
+        if (cartObserver) cartObserver.disconnect();
+        cartObserver = new MutationObserver(refreshVisible);
+        $('#sales_new_items_table tbody, #sales_new_subtotal, #tax, #RoundOff, #discount_sale_amount, #extraDisc, .tendered_total').each(function () {
+            cartObserver.observe(this, { childList: true, subtree: true, characterData: true });
+        });
+    }
 
     function assetBase() {
         return new URL(PosnicPro.baseUrl || '.', document.baseURI).href;
@@ -44,8 +61,10 @@
                 tax_type: /^exc/i.test($('#addSalesLineItemTaxType_' + id).text()) ? 'exclusive' : 'inclusive',
                 tax_fields: number(cached.tax) === read('addSalesLineItemTax_') ? cached.tax_fields || [] : [],
                 tax_name: cached.tax_name || '',
+                hsn_code: cached.hsn_code || cached.hsncode || cached.hsn || '',
                 igst_tax: interstate ? tax : 0,
-                cgst_tax: interstate ? 0 : tax / 2
+                cgst_tax: interstate ? 0 : tax / 2,
+                sgst_tax: interstate ? 0 : tax / 2
             });
         });
         var extra = number($('#extraDisc').text());
@@ -60,6 +79,8 @@
             customer_email: $('#sales_new_customer_email').val() || '',
             customer_address: $('#sales_new_customer_address').val() || '',
             customer_gst_number: $('#sales_new_customer_gst_number').val() || '',
+            customer_tax_number: $('#sales_new_customer_tax_number').val() || '',
+            customer_state: $('#sales_new_customer_state').val() || '',
             items_subtotal: number($('#sales_new_subtotal').text()),
             items_total: number($('.tendered_total').first().text()),
             discount: number($('#discount_sale_amount').text()),
@@ -137,7 +158,7 @@
     function mount(box, html, css, layout) {
         var sheet = layout === 'a4' || layout === 'a5' || layout === 'letter';
         var designed = html.indexOf('data-receipt-design=') !== -1;
-        var width = sheet ? (layout === 'letter' ? 816 : layout === 'a5' ? 559 : 794) : (layout === '58' ? 182 : 273);
+        var width = sheet ? (layout === 'letter' ? 816 : layout === 'a5' ? 559 : 794) : (layout === '112' ? 393 : layout === '58' ? 182 : 273);
         var frame = $('<iframe class="tender-receipt-frame" title="Sale print preview" data-t-title="lang_sale_print_preview" sandbox="allow-same-origin" scrolling="no">');
         var paper = $('<div class="tender-receipt-paper">').append(frame);
         var fit = function () {
@@ -235,6 +256,8 @@
         rawData: rawData,
         mountRaw: mountRaw,
         show: function () {
+            clearTimeout(refreshTimer);
+            watchCart();
             var current = ++revision;
             var box = $('#tender_receipt_preview');
             if (resizeObserver) { resizeObserver.disconnect(); resizeObserver = null; }
