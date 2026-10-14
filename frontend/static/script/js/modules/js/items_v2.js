@@ -107,10 +107,10 @@
         var f = fields(), a = assess(f), named = !!f.name.trim(), tracked = f.kind !== 'service' && f.stock === 'tracked';
         show('iv2-restaurant', capabilities.restaurant && f.kind !== 'service'); show('iv2-online', capabilities.online);
         var noun = f.kind === 'dish' ? 'dish' : f.kind === 'service' ? 'service' : 'item';
-        text('iv2-title', (editing ? 'Edit ' : 'Create ') + noun); text('iv2-name-label', noun.charAt(0).toUpperCase() + noun.slice(1) + ' name');
-        document.querySelector('#items_v2 .iv2-heading p').textContent = editing ? 'Add details to your saved item, then save your changes.' : 'Start with a name. We’ll help you get it ready to sell.';
+        text('iv2-title', (editing ? PosnicPro.i18n.t('lang_edit_title', 'Edit') : PosnicPro.i18n.t('lang_po_create', 'Create')).trim() + ' ' + noun); text('iv2-name-label', noun.charAt(0).toUpperCase() + noun.slice(1) + ' name');
+        document.querySelector('#items_v2 .iv2-heading p').textContent = editing ? P.i18n.t('lang_iv2_edit_hint', 'Add details to your saved item, then save your changes.') : P.i18n.t('lang_start_with_a_name_we_ll_help_you_get_it_re', 'Start with a name. We’ll help you get it ready to sell.');
         document.getElementById('iv2-name').placeholder = f.kind === 'dish' ? 'e.g. Tea, Chicken biryani, Butter naan' : f.kind === 'service' ? 'e.g. Haircut, Delivery, Repair' : 'e.g. Mineral water, Blue shirt';
-        if (!busy && !saved) text('iv2-save', editing ? 'Save changes →' : 'Save ' + noun + ' →');
+        if (!busy && !saved) text('iv2-save', editing ? P.i18n.t('lang_iv2_save_changes', 'Save changes') + ' →' : 'Save ' + noun + ' →');
         var details = P.itemsV2Details.status();
         if (details.hsn) f.taxRate = details.tax;
         var price = Number(f.price);
@@ -130,8 +130,8 @@
         var note = !named ? 'Give your item a name to begin.' : a.error ? a.error : a.later ? 'Add stock before looking for this item in sale search.' : f.openPrice ? 'The cashier enters the price when selling.' : !price ? 'This item will sell at zero. You can edit the price later.' : tracked ? 'Opening stock: ' + a.quantity + '. Your stock choice will be saved.' : 'No stock count needed. Save it and start selling.';
         var panel = document.getElementById('iv2-readiness');
         if (a.error && !attempted) { title = P.i18n.t('lang_iv2_taking_shape', 'Your item is taking shape'); note = P.i18n.t('lang_iv2_optional_hint', 'Enter the essentials. Optional tabs can wait.'); }
-        if (editing && !a.error) note = 'Changes update this item. Stock quantities stay unchanged.';
-        if (editing) text('iv2-summary-stock', 'Stock quantities unchanged');
+        if (editing && !a.error) note = P.i18n.t('lang_iv2_edit_stock_note', 'Changes update this item. Stock quantities stay unchanged.');
+        if (editing) text('iv2-summary-stock', P.i18n.t('lang_iv2_stock_unchanged', 'Stock quantities unchanged'));
         panel.dataset.state = a.error && !attempted ? 'neutral' : a.error || a.later ? 'attention' : 'ready';
         panel.querySelector('strong').textContent = title; panel.querySelector('p').textContent = note;
         document.getElementById('iv2-check-name').dataset.done = String(named);
@@ -174,7 +174,7 @@
         if (event) event.preventDefault();
         if (busy || saved) return false;
         if (P.aclLoaded && P.aclLoaded() && !P.checkAccess('item', 'write')) { fail('You don’t have permission to create items.'); return false; }
-        if (editing && savedBranch !== P.local.get('branch_id_set')) { fail('The active branch changed. Open the item again before editing.'); return false; }
+        if (editing && savedBranch !== P.local.get('branch_id_set')) { fail(P.i18n.t('lang_iv2_edit_branch_changed', 'The active branch changed. Open the item again before editing.')); return false; }
         attempted = true; render();
         if (!P.itemsV2Workspace.ready()) { fail(P.i18n.t('lang_iv2_draft_lists', 'Some draft selections are unavailable. Reload to retry, or discard the draft before saving.')); return false; }
         var f = fields(), a = assess(f);
