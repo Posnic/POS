@@ -431,7 +431,6 @@ $("#expenseSubmitForm").one('click', function () {
 /* Optional evidence: drafts stay in memory until the expense has an ID. */
 PosnicPro.expenseFiles = {
     pending: [], existing: [], removed: [], saving: false, generation: 0, viewGeneration: 0, previewUrls: [],
-    t: function (key, fallback) { return PosnicPro.i18n.t(key, fallback); },
     request: function (params) {
         return new Promise(function (resolve, reject) {
             PosnicPro.request(params, function (response) {

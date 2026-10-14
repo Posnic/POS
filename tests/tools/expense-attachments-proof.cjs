@@ -10,6 +10,9 @@ const read = p => fs.readFileSync(path.join(root, p), 'utf8');
   const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
   try {
     const page = await browser.newPage(); const errors = [];
+    const out = path.join(root, 'output/cashbook-attachments'); fs.mkdirSync(out, { recursive: true });
+    const downloads = fs.mkdtempSync(path.join(out, 'download-'));
+    await (await page.createCDPSession()).send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads });
     page.on('pageerror', error => errors.push(error.message));
     const form = read('frontend/modals/expense.html');
     const styles = ['bootstrap.min.css', 'style.css', 'theme-variables.css'].map(name => '<style>' + read('frontend/static/style/css/' + name) + '</style>').join('');
@@ -28,7 +31,14 @@ const read = p => fs.readFileSync(path.join(root, p), 'utf8');
     await page.addScriptTag({ path: path.join(root, 'frontend/static/script/js/modules/js/expenses.js') });
     const checks = await page.evaluate(async () => {
       const files = PosnicPro.expenseFiles; const result = {};
-      const a = new File(['%PDF-1.4 example'], 'Supplier receipt.pdf', { type: 'application/pdf' });
+      const stream = 'BT /F1 16 Tf 30 100 Td (Receipt reference) Tj ET';
+      const objects = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>', '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 150] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>', '<< /Length ' + stream.length + ' >>\nstream\n' + stream + '\nendstream'];
+      let pdf = '%PDF-1.4\n'; const offsets = [0];
+      objects.forEach((object, i) => { offsets.push(pdf.length); pdf += (i + 1) + ' 0 obj\n' + object + '\nendobj\n'; });
+      const xref = pdf.length;
+      pdf += 'xref\n0 6\n0000000000 65535 f \n' + offsets.slice(1).map(offset => String(offset).padStart(10, '0') + ' 00000 n \n').join('') + 'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF';
+      const a = new File([pdf], 'Supplier receipt.pdf', { type: 'application/pdf' });
+      window.proofPdf = a;
       const png = Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII='), c => c.charCodeAt(0));
       const b = new File([png], 'Delivery receipt.png', { type: 'image/png' });
       files.choose([a, b]); result.selected = files.pending.length;
@@ -36,6 +46,7 @@ const read = p => fs.readFileSync(path.join(root, p), 'utf8');
       await new Promise(resolve => setTimeout(resolve, 30));
       result.previewWidth = document.querySelector('#expenses_files_preview img').naturalWidth;
       $('#expenses_files_preview').empty();
+      await files.open('', { pending: 0, name: a.name }, true, true);
       let uploadCount = 0, expenseWrites = [], saved = [];
       PosnicPro.request = (params, success, failure) => {
         if (params.url === 'expenses' || params.method === 'PUT') {
@@ -76,13 +87,23 @@ const read = p => fs.readFileSync(path.join(root, p), 'utf8');
     assert.equal(checks.pendingAfterRetry, 0); assert.equal(checks.uploads, 3);
     assert.equal(checks.uploadsWithoutFile, 3); assert.equal(checks.invalidRejected, true);
     assert.equal(checks.stagedRemoval, 1); assert.equal(checks.uploadsAfterRemove, 3);
-    const out = path.join(root, 'output/cashbook-attachments'); fs.mkdirSync(out, { recursive: true });
+    for (let attempt = 0; attempt < 30 && !fs.existsSync(path.join(downloads, 'Supplier receipt.pdf')); attempt++) await new Promise(resolve => setTimeout(resolve, 100));
+    assert.match(fs.readFileSync(path.join(downloads, 'Supplier receipt.pdf'), 'utf8'), /^%PDF-1\.4/);
     await page.evaluate(() => {
       $('#infobar-settings-sidebar-expense').addClass('sidebarshow');
       $('#expenses_date').val('2026/10/14'); $('#expenses_amount').val('150');
       $('#expenses_type').val('debit'); $('#expenses_category').val('Transport');
       $('#expenses_expensesnote').val('Delivery expense');
     });
+    await page.evaluate(async () => {
+      PosnicPro.expenseFiles.pending = [window.proofPdf];
+      await PosnicPro.expenseFiles.open('', { pending: 0, name: 'Supplier receipt.pdf' }, false, true);
+      PosnicPro.expenseFiles.pending = [];
+    });
+    await page.waitForSelector('#expenses_files_preview iframe');
+    await new Promise(resolve => setTimeout(resolve, 700));
+    await page.$('#expenses_files_preview').then(element => element.screenshot({path:path.join(out,'pdf-preview.png')}));
+    await page.evaluate(() => $('#expenses_files_preview').empty());
     for (const theme of ['light', 'dark']) for (const width of [1000, 390]) {
       await page.setViewport({ width, height: 1100 });
       await page.evaluate(theme => { document.documentElement.setAttribute('data-theme', theme); }, theme);
