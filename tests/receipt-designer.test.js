@@ -1210,7 +1210,7 @@ test('four-inch fixed columns give HSN its own column and keep quantity totals a
     sale.items[0].hsncode = '12345678';
     sale.items.push({ item_name: 'Without HSN', item_price: 2, item_quantity: 1, total_amount: 2 });
     const output = $('<div>').html(engine.render(sale, '112', false));
-    assert.deepEqual(output.find('thead th').map((_i, el) => $(el).text()).get(), ['Item name', 'HSN/SAC', 'Rate', 'Qty', 'Amount']);
+    assert.deepEqual(output.find('thead th').map((_i, el) => $(el).text()).get(), ['Item name', 'HSN', 'Rate', 'Qty', 'Amount']);
     assert.equal(output.find('tbody tr').first().children().length, 5);
     assert.equal(output.find('.rd-hsn').first().text(), '12345678');
     assert.equal(output.find('.rd-hsn').last().text(), '');
