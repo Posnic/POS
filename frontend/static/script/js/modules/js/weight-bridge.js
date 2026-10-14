@@ -36,7 +36,8 @@
          * Get current weight from the weight machine
          * @returns {Promise<number|null>} Weight value or null if not available
          */
-        getCurrentWeight: function() {
+        getCurrentWeight: function(options) {
+            var stableOnly = !!(options && options.stableOnly);
             return new Promise((resolve, reject) => {
                 if (!isElectron) {
                     console.warn('[WeightBridge] Not running in Electron - weight machine not available');
@@ -79,7 +80,7 @@
                     };
 
                     var timer = setTimeout(function () {
-                        finish(latest, false);
+                        finish(stableOnly ? null : latest, false);
                     }, 6000);   // scales need a moment to settle
 
                     stop = window.electronAPI.hardware.onUsbData(function (data) {
@@ -88,7 +89,7 @@
                         latest = weight;
                         // `stable` comes from the scale reader; older builds
                         // without it fall back to accepting the first reading.
-                        var isStable = (typeof data === 'object' && 'stable' in data) ? !!data.stable : true;
+                        var isStable = (typeof data === 'object' && 'stable' in data) ? data.stable === true : !stableOnly;
                         if (isStable && weight > 0) finish(weight, true);
                     });
 
