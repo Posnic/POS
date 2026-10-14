@@ -23,7 +23,7 @@ The browser creates a temporary Blob for preview/download. PDF previews use the 
 
 ## Verification
 
-Run `node --test api/tests/unit/controllers/expense-attachments.test.cjs` for isolated MongoDB/HTTP integration coverage: permission and branch isolation, exact content round-trip, deduplication under concurrent retries, type/size/count limits, deletion and legacy empty entries. The test owns its temporary database and never uses client data.
+Run `node --test api/tests/unit/controllers/expense-attachments.proof.cjs` for isolated MongoDB/HTTP integration coverage: permission and branch isolation, exact content round-trip, deduplication under concurrent retries, type/size/count limits, deletion and legacy empty entries. The test owns its temporary database and never uses client data.
 
 Run `node tests/tools/expense-attachments-proof.cjs` for browser coverage of optional saving, multiple selection, partial-upload retry without duplicate expense, image preview, staged removal and light/dark layouts. This harness uses the actual Cash Book form and scripts with simulated save responses; it is not a live tenant deployment test.
 

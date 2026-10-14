@@ -65,12 +65,15 @@ class ExpenseRepository extends BaseModel {
    */
   async findById(id) {
     const collection = await this.getCollection(this.collectionName);
-    return await collection.findOne({
-      _id: new ObjectId(id),
-      license: BaseModel.license,
-      ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
-      is_deleted: { $ne: true },
-    }, { projection: { supporting_documents: 0 } });
+    return await collection.findOne(
+      {
+        _id: new ObjectId(id),
+        license: BaseModel.license,
+        ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
+        is_deleted: { $ne: true },
+      },
+      { projection: { supporting_documents: 0 } }
+    );
   }
 
   /**

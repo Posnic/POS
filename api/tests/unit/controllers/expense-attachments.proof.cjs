@@ -82,6 +82,11 @@ test('rejects executable content disguised as PNG and files over the limit', asy
   expect((await attach(Buffer.alloc(MAX_FILE + 1), 'large.pdf')).status).toBe(400);
   expect((await request(app).get(url())).body.data).toEqual([]);
 });
+test('download extension follows detected content instead of an executable supplied filename', async () => {
+  const uploaded = await attach(pdf, 'receipt.html');
+  expect(uploaded.status).toBe(200);
+  expect(uploaded.body.data.name).toBe('receipt.pdf');
+});
 test('permission and branch checks happen before writing/reading/removing files', async () => {
   const saved = (await attach()).body.data;
   for (const suffix of ['', '/' + saved.id]) {

@@ -25,6 +25,23 @@ function metadata(documents = []) {
   return documents.map(({ content, ...meta }) => meta);
 }
 
+function safeName(name, type) {
+  const extension = { 'application/pdf': '.pdf', 'image/jpeg': '.jpg', 'image/png': '.png' }[type];
+  const clean =
+    Array.from(String(name || 'receipt'))
+      .map((char) =>
+        char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127 || char === '/' || char === '\\'
+          ? '_'
+          : char
+      )
+      .join('')
+      .replace(/\.[^.]*$/, '')
+      .trim()
+      .slice(0, 110) || 'receipt';
+  // Never download a PDF supplied as "receipt.html" as executable HTML.
+  return clean + extension;
+}
+
 class ExpenseAttachmentsController extends BaseController {
   // Keep small, bounded supporting files on the same document as the entry.
   // Backup/recycle-bin and document sync preserve the bytes with their owner.
@@ -38,11 +55,17 @@ class ExpenseAttachmentsController extends BaseController {
       this.notFound(res, 'Cash Book entry not found');
       return null;
     }
-    const query = { _id: new ObjectId(req.params.id), ...requestScope(req), is_deleted: { $ne: true } };
+    const query = {
+      _id: new ObjectId(req.params.id),
+      ...requestScope(req),
+      is_deleted: { $ne: true },
+    };
     const collection = req.db.collection('expenses');
-    const entry = await collection.findOne(query, { projection: includeContent
-      ? { supporting_documents: 1 }
-      : { 'supporting_documents.content': 0 } });
+    const entry = await collection.findOne(query, {
+      projection: includeContent
+        ? { supporting_documents: 1 }
+        : { 'supporting_documents.content': 0 },
+    });
     if (!entry) {
       this.notFound(res, 'Cash Book entry not found');
       return null;
@@ -69,7 +92,9 @@ class ExpenseAttachmentsController extends BaseController {
   add = async (req, res) => {
     const ctx = await this.context(req, res, 'write');
     if (!ctx) return;
-    await new Promise((resolve, reject) => upload(req, res, (error) => error ? reject(error) : resolve()));
+    await new Promise((resolve, reject) =>
+      upload(req, res, (error) => (error ? reject(error) : resolve()))
+    );
     const file = req.file;
     const type = file && detectedType(file.buffer);
     if (!type || !file.size) return this.error(res, 'Attach a PDF, JPG or PNG file.', 400);
@@ -78,27 +103,32 @@ class ExpenseAttachmentsController extends BaseController {
     if (previous) return this.success(res, metadata([previous])[0], 'Already attached');
     const meta = {
       id,
-      name: Array.from(String(file.originalname || 'receipt')).map((char) =>
-        char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127 || char === '/' || char === '\\' ? '_' : char
-      ).join('').slice(0, 120),
+      name: safeName(file.originalname, type),
       size: file.size,
       type,
       uploaded_at: new Date(),
       uploaded_by: String(req.user._id || ''),
     };
-    const result = await ctx.collection.updateOne({
-      ...ctx.query,
-      'supporting_documents.id': { $ne: id },
-      $expr: { $and: [
-        { $lt: [{ $size: { $ifNull: ['$supporting_documents', []] } }, MAX_FILES] },
-        { $lte: [{ $sum: '$supporting_documents.size' }, MAX_TOTAL - file.size] },
-      ] },
-    }, {
-      $push: { supporting_documents: { ...meta, content: file.buffer.toString('base64') } },
-      $set: { updated_date: new Date() },
-    });
+    const result = await ctx.collection.updateOne(
+      {
+        ...ctx.query,
+        'supporting_documents.id': { $ne: id },
+        $expr: {
+          $and: [
+            { $lt: [{ $size: { $ifNull: ['$supporting_documents', []] } }, MAX_FILES] },
+            { $lte: [{ $sum: '$supporting_documents.size' }, MAX_TOTAL - file.size] },
+          ],
+        },
+      },
+      {
+        $push: { supporting_documents: { ...meta, content: file.buffer.toString('base64') } },
+        $set: { updated_date: new Date() },
+      }
+    );
     if (!result.matchedCount) {
-      const current = await ctx.collection.findOne(ctx.query, { projection: { supporting_documents: 1 } });
+      const current = await ctx.collection.findOne(ctx.query, {
+        projection: { supporting_documents: 1 },
+      });
       const duplicate = current?.supporting_documents?.find((item) => item.id === id);
       if (duplicate) return this.success(res, metadata([duplicate])[0], 'Already attached');
       return this.error(res, 'Use up to 5 attachments, 5 MB each and 10 MB total per entry.', 409);
@@ -109,10 +139,13 @@ class ExpenseAttachmentsController extends BaseController {
   remove = async (req, res) => {
     const ctx = await this.context(req, res, 'write');
     if (!ctx) return;
-    await ctx.collection.updateOne({ ...ctx.query, 'supporting_documents.id': req.params.attId }, {
-      $pull: { supporting_documents: { id: req.params.attId } },
-      $set: { updated_date: new Date() },
-    });
+    await ctx.collection.updateOne(
+      { ...ctx.query, 'supporting_documents.id': req.params.attId },
+      {
+        $pull: { supporting_documents: { id: req.params.attId } },
+        $set: { updated_date: new Date() },
+      }
+    );
     // Idempotent removal: a lost response must not make Save retries fail.
     return this.success(res, { id: req.params.attId }, 'Attachment removed');
   };
@@ -120,9 +153,11 @@ class ExpenseAttachmentsController extends BaseController {
 
 const controller = new ExpenseAttachmentsController();
 function handler(method) {
-  return (req, res, next) => controller[method](req, res).catch((error) => {
-    if (error instanceof multer.MulterError) return controller.error(res, 'Use one file at a time, up to 5 MB.', 400);
-    return next(error);
-  });
+  return (req, res, next) =>
+    controller[method](req, res).catch((error) => {
+      if (error instanceof multer.MulterError)
+        return controller.error(res, 'Use one file at a time, up to 5 MB.', 400);
+      return next(error);
+    });
 }
 module.exports = { handler, detectedType, metadata, MAX_FILE, MAX_TOTAL, MAX_FILES };
