@@ -4827,7 +4827,7 @@
   "lang_price_sheet_hidden_ids_help": "ఆకుపచ్చ కొత్త ధర నిలువు వరుసలను మాత్రమే సవరించండి. దాని ప్రస్తుత ధరను ఉంచడానికి సెల్ను ఖాళీగా ఉంచండి. ఎక్సెల్ సరిపోలే ID లను దాచిపెడుతుంది; CSV వాటిని చివరిలో ఉంచుతుంది. ఆ ID లు మరియు ప్రస్తుత ధరలను మారకుండా ఉంచండి.",
   "lang_price_update_completed_with_issues": "ధర నవీకరణ పూర్తయింది. కొన్ని అంశాలకు శ్రద్ధ అవసరం.",
   "lang_prices_updated_successfully": "ధరలు విజయవంతంగా నవీకరించబడ్డాయి.",
-  "lang_rd_112_mm_thermal": "112 థ mm ర్మల్ (టీవీఎస్ ఆర్పి 4200)",
+  "lang_rd_112_mm_thermal": "112 థ mm ర్మల్",
   "lang_rd_show_business_email": "వ్యాపార ఇమెయిల్ చూపించు",
   "lang_rd_show_item_row_numbers": "అంశం వరుస సంఖ్యలను చూపించు",
   "lang_save_inventory_policy": "జాబితా విధానాన్ని సేవ్ చేయండి",

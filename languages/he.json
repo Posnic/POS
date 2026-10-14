@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "ערוך רק את עמודות המחיר החדש הירוקות. השאר תא ריק כדי לשמור על מחירו הנוכחי. Excel מסתיר את המזהים התואמים; CSV שומר אותם בסוף. שמור את המזהים והמחירים הנוכחיים ללא שינוי.",
   "lang_price_update_completed_with_issues": "עדכון המחירים הסתיים. חלק מהפריטים זקוקים לתשומת לב.",
   "lang_prices_updated_successfully": "המחירים עודכנו בהצלחה.",
-  "lang_rd_112_mm_thermal": "112 mm תרמי (טלוויזיות רופי 4200)",
+  "lang_rd_112_mm_thermal": "112 mm תרמי",
   "lang_rd_show_business_email": "הצג דוא\"ל עסקי",
   "lang_rd_show_item_row_numbers": "הצג מספרי שורות פריטים",
   "lang_save_inventory_policy": "שמירת מדיניות מלאי",

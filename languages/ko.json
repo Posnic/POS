@@ -4747,7 +4747,7 @@
   "lang_price_sheet_hidden_ids_help": "초록색 신규 가격 열만 수정하세요.현재 가격을 유지하려면 셀을 비워 두십시오.Excel은 일치하는 ID를 숨기고 CSV에서는 끝에 해당 ID를 보관합니다.해당 ID와 현재 가격은 그대로 유지하세요.",
   "lang_price_update_completed_with_issues": "가격 업데이트가 완료되었습니다.일부 품목은 주의가 필요합니다.",
   "lang_prices_updated_successfully": "가격이 성공적으로 업데이트되었습니다.",
-  "lang_rd_112_mm_thermal": "112 mm 써멀 (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm 써멀",
   "lang_rd_show_business_email": "비즈니스 이메일 보기",
   "lang_rd_show_item_row_numbers": "항목 행 번호 보기",
   "lang_save_inventory_policy": "인벤토리 정책 저장",

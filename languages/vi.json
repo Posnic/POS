@@ -4747,7 +4747,7 @@
   "lang_price_sheet_hidden_ids_help": "Chỉ chỉnh sửa cột giá mới màu xanh lá cây. Để trống một ô để giữ giá hiện tại của nó. Excel ẩn ID phù hợp; CSV giữ chúng ở cuối. Giữ các ID đó và giá hiện tại không thay đổi.",
   "lang_price_update_completed_with_issues": "Cập nhật giá đã hoàn tất. Một số mặt hàng cần chú ý.",
   "lang_prices_updated_successfully": "Giá được cập nhật thành công.",
-  "lang_rd_112_mm_thermal": "112 mm nhiệt (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm nhiệt",
   "lang_rd_show_business_email": "Hiển thị email doanh nghiệp",
   "lang_rd_show_item_row_numbers": "Hiển thị số hàng mục",
   "lang_save_inventory_policy": "Lưu chính sách hàng tồn kho",

@@ -4827,7 +4827,7 @@
   "lang_price_sheet_hidden_ids_help": "केवल हरे रंग के नए मूल्य कॉलम संपादित करें। सेल की मौजूदा कीमत को बनाए रखने के लिए उसे खाली छोड़ दें। Excel मेल खाने वाले आईडी को छुपाता है; CSV उन्हें अंत में रखता है। उन आईडी और मौजूदा कीमतों को अपरिवर्तित रखें।",
   "lang_price_update_completed_with_issues": "कीमत का अपडेट खत्म हुआ। कुछ वस्तुओं पर ध्यान देने की आवश्यकता है।",
   "lang_prices_updated_successfully": "कीमतें सफलतापूर्वक अपडेट की गईं।",
-  "lang_rd_112_mm_thermal": "112 mm थर्मल (टीवीएस आरपी 4200)",
+  "lang_rd_112_mm_thermal": "112 mm थर्मल",
   "lang_rd_show_business_email": "बिज़नेस ईमेल दिखाएं",
   "lang_rd_show_item_row_numbers": "आइटम पंक्ति क्रमांक दिखाएं",
   "lang_save_inventory_policy": "इन्वेंट्री पॉलिसी सहेजें",

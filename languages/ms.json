@@ -4747,7 +4747,7 @@
   "lang_price_sheet_hidden_ids_help": "Edit hanya lajur harga baru hijau. Biarkan sel kosong untuk mengekalkan harga semasa. Excel menyembunyikan ID yang sepadan; CSV menyimpannya pada akhir. Pastikan ID dan harga semasa tidak berubah.",
   "lang_price_update_completed_with_issues": "Kemas kini harga selesai. Sesetengah item memerlukan perhatian.",
   "lang_prices_updated_successfully": "Harga dikemas kini dengan jayanya.",
-  "lang_rd_112_mm_thermal": "112 mm haba (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm haba",
   "lang_rd_show_business_email": "Tunjukkan e-mel perniagaan",
   "lang_rd_show_item_row_numbers": "Tunjukkan nombor baris item",
   "lang_save_inventory_policy": "Simpan dasar inventori",

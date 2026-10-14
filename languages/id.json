@@ -4827,7 +4827,7 @@
   "lang_price_sheet_hidden_ids_help": "Edit hanya kolom harga baru berwarna hijau. Biarkan sel kosong untuk mempertahankan harga saat ini. Excel menyembunyikan ID yang cocok; CSV menyimpannya di akhir. Pertahankan ID dan harga saat ini tidak berubah.",
   "lang_price_update_completed_with_issues": "Pembaruan harga selesai. Beberapa item perlu perhatian.",
   "lang_prices_updated_successfully": "Harga berhasil diperbarui.",
-  "lang_rd_112_mm_thermal": "112 mm termal (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termal",
   "lang_rd_show_business_email": "Tampilkan email bisnis",
   "lang_rd_show_item_row_numbers": "Tampilkan nomor baris item",
   "lang_save_inventory_policy": "Simpan kebijakan inventaris",

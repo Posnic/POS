@@ -4747,7 +4747,7 @@
   "lang_price_sheet_hidden_ids_help": "Yalnızca yeşil Yeni fiyat sütunlarını düzenleyin. Mevcut fiyatını korumak için bir hücreyi boş bırakın. Excel eşleşen kimlikleri gizler; CSV onları sonunda tutar. Bu kimlikleri ve Mevcut fiyatları değişmeden tutun.",
   "lang_price_update_completed_with_issues": "Fiyat güncellemesi bitti. Bazı öğeler dikkat gerektirir.",
   "lang_prices_updated_successfully": "Fiyatlar başarıyla güncellendi.",
-  "lang_rd_112_mm_thermal": "112 mm termal (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termal",
   "lang_rd_show_business_email": "İşletme e-postasını göster",
   "lang_rd_show_item_row_numbers": "Öğe satır numaralarını göster",
   "lang_save_inventory_policy": "Envanter politikasını kaydet",

@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Upravte iba zelené stĺpce Nová cena. Nechajte bunku prázdnu, aby ste zachovali jej aktuálnu cenu. Excel skryje zodpovedajúce ID; CSV ich uchováva na konci. Udržujte tieto ID a aktuálne ceny nezmenené.",
   "lang_price_update_completed_with_issues": "Aktualizácia ceny dokončená. Niektoré položky si vyžadujú pozornosť.",
   "lang_prices_updated_successfully": "Ceny sa úspešne aktualizovali.",
-  "lang_rd_112_mm_thermal": "112 mm tepelné (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm tepelné",
   "lang_rd_show_business_email": "Zobraziť firemný e-mail",
   "lang_rd_show_item_row_numbers": "Zobraziť čísla riadkov položiek",
   "lang_save_inventory_policy": "Zásady uloženia zásob",

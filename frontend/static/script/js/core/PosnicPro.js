@@ -2729,7 +2729,7 @@ PosnicPro = {
     PAPER: {
         '58': { css: '58mm', content: '48mm', label: '58mm roll', font: 10, small: 9 },
         '80': { css: '80mm', content: '72mm', label: '80mm roll', font: 12, small: 10 },
-        '112': { css: '112mm', content: '104mm', label: '112 mm thermal (TVS RP 4200)', font: 12, small: 10 },
+        '112': { css: '112mm', content: '104mm', label: '112 mm thermal', font: 12, small: 10 },
         'a4': { css: 'A4', content: 'auto', label: 'A4 sheet', t: 'lang_a4_sheet', font: 13, small: 11 }
     },
 

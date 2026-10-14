@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Redigeerige ainult rohelisi Uus hind veerge. Praeguse hinna säilitamiseks jätke lahter tühjaks. Excel peidab sobivad ID-d; CSV hoiab need lõpus. Hoidke need ID-d ja praegused hinnad muutumatuna.",
   "lang_price_update_completed_with_issues": "Hinnavuendus on lõppenud. Mõned esemed vajavad tähelepanu.",
   "lang_prices_updated_successfully": "Hinnad on edukalt uuendatud.",
-  "lang_rd_112_mm_thermal": "112 mm termiline (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termiline",
   "lang_rd_show_business_email": "Näita ettevõtte e-posti aadressi",
   "lang_rd_show_item_row_numbers": "Näita üksuste ridade numbreid",
   "lang_save_inventory_policy": "Salvesta varude poliitika",
