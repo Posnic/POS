@@ -5,7 +5,7 @@ const browser=await puppeteer.launch({headless:true});
 try {
  const page=await browser.newPage();const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error(e.stack);});
  await page.setContent('<input id="sales_new_item_name"><style>.autocomplete-suggestions{background:white;border:1px solid #ddd}.autocomplete-selected{background:#ddd}</style>');
- for(const file of ['frontend/static/script/js/jquery.min.js','frontend/static/script/js/jQuery-Autocomplete.min.js','frontend/static/style/plugins/sweet-alert2/sweetalert2.min.js','api/src/helpers/billing-search.js']) await page.addScriptTag({path:path.join(ROOT,file)});
+ for(const file of ['frontend/static/script/js/jquery.min.js','frontend/static/script/js/jquery.scannerdetection.js','frontend/static/script/js/jQuery-Autocomplete.min.js','frontend/static/style/plugins/sweet-alert2/sweetalert2.min.js','api/src/helpers/billing-search.js']) await page.addScriptTag({path:path.join(ROOT,file)});
  await page.addStyleTag({path:path.join(ROOT,'frontend/static/style/plugins/sweet-alert2/sweetalert2.min.css')});
  await page.evaluate(()=>{
   window.added=[];window.PosnicPro={i18n:{t:(k,f)=>f},local:{get:()=>null},alert:()=>{},sales:{_catalogueAt:Date.now(),_billingCatalogue:[{name:'Tea',item_name:'Tea',item_id:'tea',selling_price:50,tax:5,tax_type:'exclusive'},{name:'Chicken Biryani',item_name:'Chicken Biryani',item_id:'cb',selling_price:200}],itemCache:{get:(id,cb)=>cb({item_id:id,item_name:id,track_inventory:false,selling_price:50})},addSalesLineItems:item=>window.added.push(item)},sugActionRow:(i,c,t)=>t,sugRow:(item,html)=>html};
@@ -94,6 +94,20 @@ try {
  await page.keyboard.press('Tab');await page.waitForFunction(()=>window.added.length===6);
  assert.equal(await page.evaluate(()=>window.added[5].item_quantity),1);
  await page.waitForFunction(()=>document.activeElement.id==='sales_new_item_name');
- assert.deepEqual(errors,[]);console.log('PASS: weighed item code/Tab/Tab adds default one in browser, manual quantity validation, stable scale auto-add, cancellation and restored search focus');
+ // Continue the same two-Tab flow through payment and Save. Only persistence is stubbed.
+ await page.evaluate(()=>{
+  $('body').append('<span class="salesBalanceAmount"><a class="custom_balance">PAY</a></span><table><tbody id="sales_new_items_tbody"><tr id="touch_row_one"><td>Weighed item</td></tr></tbody></table><div id="infobar-settings-sidebar-tender-details" style="display:none"><input id="tendered_amount"><button id="save_btn">Save</button></div>');
+  window.saved=0;PosnicPro.sales.saleProcess='Add';
+  PosnicPro.sales.openTenderModel=()=>{$('#infobar-settings-sidebar-tender-details').show().addClass('sidebarview');$('#tendered_amount').focus();};
+  $('#save_btn').on('click',()=>{window.saved++;PosnicPro.sales.submissionInProgress=true;$('#save_btn').prop('disabled',true);});
+ });
+ const enterStart=raw.indexOf('if (!PosnicPro.sales._sharedBarcodeEnterBound)');
+ const enterEnd=raw.indexOf('/*\n * Camera scan',enterStart);
+ await page.addScriptTag({content:raw.slice(enterStart,enterEnd)});
+ await page.keyboard.press('Enter');await page.waitForFunction(()=>document.activeElement.id==='tendered_amount');
+ assert.equal(await page.evaluate(()=>window.saved),0);
+ await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>window.saved),1);
+ await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>window.saved),1);
+ assert.deepEqual(errors,[]);console.log('PASS: code/Tab/Tab/Enter/Enter adds default one, opens payment and saves once in browser fixture; manual validation, stable scale auto-add, cancellation and restored search focus');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
