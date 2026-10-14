@@ -1130,6 +1130,49 @@ describe('SalesRepository', () => {
       expect(r.status).toBe(false);
       expect(r.message).toBe('No valid IDs provided');
     });
+    test.each([true, false])('restores tracked stock with logging %s', async (logging) => {
+      const saleDoc = {
+        _id: FAKE_ID,
+        branch_id: FAKE_BRANCH,
+        items: [{ item_id: FAKE_ITEM, item_quantity: 2.5 }],
+        partial_check: false,
+      };
+      collections.sales = mkCol();
+      collections.sales.find.mockReturnValue({ toArray: jest.fn().mockResolvedValue([saleDoc]) });
+      collections.items = mkCol();
+      collections.items.findOne.mockResolvedValue({
+        available_quantity: 10,
+        track_inventory: true,
+      });
+      collections.branches = mkCol();
+      collections.branches.findOne.mockResolvedValue({ stock_management_log: logging });
+      const result = await salesRepository.deleteSales([FAKE_ID]);
+      expect(result.status).toBe(true);
+      expect(collections.items.updateOne).toHaveBeenCalledWith(expect.any(Object), {
+        $inc: { available_quantity: 2.5 },
+        $set: { updated_date: expect.any(Date) },
+      });
+      const logger = StockLogsRepository.mock.results.at(-1).value;
+      expect(logger.createStockLog).toHaveBeenCalledTimes(logging ? 1 : 0);
+    });
+
+    test('held sales never restore stock', async () => {
+      collections.sales = mkCol();
+      collections.sales.find.mockReturnValue({
+        toArray: jest.fn().mockResolvedValue([
+          {
+            _id: FAKE_ID,
+            sale_process: 'Hold',
+            items: [{ item_id: FAKE_ITEM, item_quantity: 2 }],
+          },
+        ]),
+      });
+      collections.items = mkCol();
+      const result = await salesRepository.deleteSales([FAKE_ID]);
+      expect(result.status).toBe(true);
+      expect(collections.items.updateOne).not.toHaveBeenCalled();
+    });
+
     test('deletes sales successfully', async () => {
       const saleDoc = {
         _id: FAKE_ID,
@@ -1146,6 +1189,7 @@ describe('SalesRepository', () => {
       });
       const r = await salesRepository.deleteSales([FAKE_ID]);
       expect(r.status).toBe(true);
+      expect(collections.items.updateOne).not.toHaveBeenCalled();
     });
   });
 

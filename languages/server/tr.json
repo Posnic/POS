@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Satışları silmeden önce Geri Dönüşüm Kutusunu Etkinleştir",
   "Only super admins can change the sale hard-delete setting": "Yalnızca süper yöneticiler satış donanımlı silme ayarını değiştirebilir",
   "Finish the pending payment correction before closing this register.": "Bu kaydı kapatmadan önce bekleyen ödeme düzeltmesini tamamlayın.",
-  "Finish the pending payment correction first.": "Önce bekleyen ödeme düzeltmesini tamamlayın."
+  "Finish the pending payment correction first.": "Önce bekleyen ödeme düzeltmesini tamamlayın.",
+  "Bill correction saved.": "Fatura düzeltmesi kaydedildi.",
+  "Review the paid bill correction before saving.": "Kaydetmeden önce ödenen fatura düzeltmesini gözden geçirin."
 }

@@ -247,7 +247,7 @@ PosnicPro.sales = {
             return;
         }
         PosnicPro.deleteTableRowData(id, 'sales');
-        if (!PosnicPro.deleteConfirmation) $('.removeText').text(PosnicPro.i18n.t('lang_sale_hard_delete_confirm', 'Hard delete removes this sale from Sales History and moves its data to Recycle Bin.'));
+        if (!PosnicPro.deleteConfirmation) $('.removeText').text(PosnicPro.i18n.t('lang_sale_hard_delete_confirm', 'Hard delete removes this sale from Sales History and moves its data to Recycle Bin.') + ' ' + PosnicPro.i18n.t('lang_sale_delete_stock_warning', 'Stock will be added back for inventory-tracked items. Untracked items are not changed.'));
     },
     showPdf: function (id) {
         PosnicPro.sales.view.salesPdf(id);
@@ -543,7 +543,10 @@ PosnicPro.sales = {
             /* Suggestions come from the customers this till already uses. */
             typeahead: 'customer',
             typeaheadField: 'customer_name',
-            onChange: function () {}
+            onChange: function () { PosnicPro.sales.loadHistory(1); }
+        });
+        $('#sales_quick_dates').off('click.quickDate').on('click.quickDate', '[data-sales-date]', function () {
+            $('#sales_filter_search .lf-preset').val($(this).attr('data-sales-date')).trigger('change');
         });
         PosnicPro.listSort.mount('sales', {
             options: [
@@ -675,9 +678,13 @@ PosnicPro.sales = {
             $('<button type="button" class="btn btn-sm btn-light border">').text(label + ' ×').attr('aria-label', 'Remove ' + label).on('click', function () { remove(); PosnicPro.sales.loadHistory(1); }).appendTo(host);
         };
         var mounted = PosnicPro.listFilter._mounted && PosnicPro.listFilter._mounted.sales;
+        $('#sales_quick_dates [data-sales-date]').each(function () {
+            var selected = !!mounted && mounted.state.preset === $(this).attr('data-sales-date');
+            $(this).toggleClass('btn-primary', selected).toggleClass('btn-outline-primary', !selected).attr('aria-pressed', String(selected));
+        });
         if (mounted) {
             if (mounted.state.search) add(mounted.state.search, function () { mounted.state.search = ''; PosnicPro.listFilter.render('sales'); });
-            if (mounted.state.preset !== 'all') add(mounted.state.preset, function () { mounted.state.preset = 'all'; mounted.state.from = null; mounted.state.to = null; PosnicPro.listFilter.render('sales'); });
+            if (mounted.state.preset !== 'all') add($('#sales_filter_search .lf-preset option:selected').text() || mounted.state.preset, function () { mounted.state.preset = 'all'; mounted.state.from = null; mounted.state.to = null; PosnicPro.listFilter.render('sales'); });
         }
         ['staff', 'device', 'source', 'table', 'period'].forEach(function (field) {
             var input = $('#sales_history_' + field);
@@ -1039,7 +1046,7 @@ PosnicPro.sales = {
                     + '<button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><lang class="lang_tab_more">More</lang></button>'
                     + '<div class="dropdown-menu dropdown-menu-right">'
                     + '<a class="dropdown-item" data-module="sales" data-access="write" href="javascript:void(0)" onclick="hasher.setHash(\'sales/' + esc(id) + '/return\');"><i class="feather icon-corner-up-left mr-2"></i>Return items</a>'
-                    + (PosnicPro.local.get('usertype') === 'super_admin' && PosnicPro.local.get('allow_sale_hard_delete') === 'true' ? '<a class="dropdown-item text-danger" data-module="sales" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.sales.showDelete(\'' + esc(id) + '\');"><i class="feather icon-trash-2 mr-2"></i><lang class="lang_delete">Delete</lang></a>' : '')
+                    + (PosnicPro.local.get('usertype') === 'super_admin' && PosnicPro.local.get('allow_sale_hard_delete') === 'true' ? '<a class="dropdown-item text-danger" data-module="sales" data-access="delete" href="javascript:void(0)" onclick="PosnicPro.sales.showDelete(\'' + esc(id) + '\');"><i class="feather icon-trash-2 mr-2"></i><lang class="lang_delete_sale">Delete sale</lang></a>' : '')
                     + '</div></div>'
                 : '')
             + '<button type="button" class="btn btn-sm btn-light" title="Close and show the full list" data-t-title="lang_close_and_show_the_full_list" aria-label="Close" data-t-aria-label="lang_close_title" onclick="PosnicPro.sales.closeDoc();"><i class="feather icon-x"></i></button>'
@@ -5230,7 +5237,23 @@ PosnicPro.sales.editSale = {
                 loader.find(".loadingSpinner:first").remove();
             });
             };
-            submitEditSale();
+            var savedBill = PosnicPro.sales.EditRecentSaleParams;
+            if ((savedBill.captain_payment_plan || savedBill.paid_bill_corrected) && savedBill.payment_status === 'Paid') {
+                if (!window.PosnicPaymentCorrection) {
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_reload_this_page_to_review_the_paid_bill_c', 'Reload this page to review the paid bill correction.'));
+                    return false;
+                }
+                loader.find(".loadingSpinner:first").remove();
+                PosnicPaymentCorrection.reviewBillEdit(savedBill, dataEdit, function (correction) {
+                    var signature = JSON.stringify(dataEdit);
+                    var previous = PosnicPro.sales._paidBillEditRetry;
+                    if (previous && previous.sale === SalesDocumentId && previous.signature === signature) correction = previous.correction;
+                    else PosnicPro.sales._paidBillEditRetry = {sale:SalesDocumentId,signature:signature,correction:correction};
+                    dataEdit.paid_bill_correction = correction;
+                    paramsEdit.data = JSON.stringify(dataEdit);
+                    submitEditSale();
+                });
+            } else submitEditSale();
             return false;
         }
     }
@@ -8656,6 +8679,10 @@ PosnicPro.sales.recentMenu = {
         });
         if (PosnicPro.sales.renderCharges) PosnicPro.sales.renderCharges();
         PosnicPro.sales.EditRecentSaleParams = {
+            recorded_bill: Object.freeze({ sales_total: result.sales_total, updated_date: result.order_revision }),
+            captain_payment_plan: result.captain_payment_plan,
+            paid_bill_corrected: !!(result.paid_bill_corrections && result.paid_bill_corrections.length),
+            updated_date: result.updated_date,
             outlet_id: result.outlet_id,
             outlet_snapshot: result.outlet_snapshot,
 

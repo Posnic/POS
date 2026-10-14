@@ -758,3 +758,17 @@ test('desktop and captain both honor the master disabled methods', async () => {
   const plan = await service.prepare(req());
   await expect(service.record(pay(plan))).rejects.toThrow();
 });
+
+test('editing a paid Captain bill explains returns without suggesting another collection', async () => {
+  const plan = await service.prepare(req());
+  await service.record(pay(plan));
+  const saved = await db.collection('sales').findOne({ _id: sale._id });
+  const journal = await db.collection('captain_payment_plans').findOne({ _id: plan.id });
+  await expect(guard.beginEdit(db, saved)).rejects.toMatchObject({
+    status: 409,
+    message:
+      'This bill is already paid through Captain. Use Return items to remove items, or Correct payment to change the payment method.',
+  });
+  expect(await db.collection('sales').findOne({ _id: sale._id })).toEqual(saved);
+  expect(await db.collection('captain_payment_plans').findOne({ _id: plan.id })).toEqual(journal);
+});

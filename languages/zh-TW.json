@@ -4732,5 +4732,14 @@
   "lang_print_mode_fast": "快速收貨",
   "lang_print_mode_help": "快速使用標準文本佈局。圖形或不支援的文字使用「精確設計」。",
   "lang_print_sample": "列印樣本",
-  "lang_print_test_submitted": "已提交測試。檢查印表機上的紙張。"
+  "lang_print_test_submitted": "已提交測試。檢查印表機上的紙張。",
+  "lang_delete_sale": "刪除銷售",
+  "lang_sale_delete_stock_warning": "存貨跟踪的物品將添加回庫存。未追蹤的項目不會變更。",
+  "lang_last_week": "上週",
+  "lang_paid_bill_review": "正確記錄的賬單",
+  "lang_paid_bill_no_movement": "這會改變錯誤記錄的賬單和付款。不會收取或退款。",
+  "lang_paid_bill_use_return": "如果原始款項是真正收取的，請改用「退貨項目」記錄退款。",
+  "lang_paid_bill_previous": "先前錄製",
+  "lang_paid_bill_corrected": "更正的賬單",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "重新載入此頁面以檢閱已付帳單更正。"
 }

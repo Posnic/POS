@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Povolit koš před odstraněním prodeje",
   "Only super admins can change the sale hard-delete setting": "Pouze superadministrátoři mohou změnit nastavení tvrdého odstranění prodeje",
   "Finish the pending payment correction before closing this register.": "Před uzavřením tohoto registru dokončete opravu čekající platby.",
-  "Finish the pending payment correction first.": "Nejprve dokončete opravu čekající platby."
+  "Finish the pending payment correction first.": "Nejprve dokončete opravu čekající platby.",
+  "Bill correction saved.": "Oprava účtu uložena.",
+  "Review the paid bill correction before saving.": "Před uložením zkontrolujte opravu zaplaceného účtu."
 }

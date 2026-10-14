@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Aktiver papirkurven før du sletter salg",
   "Only super admins can change the sale hard-delete setting": "Bare superadministratorer kan endre innstillingen for hard sletting av salg",
   "Finish the pending payment correction before closing this register.": "Fullfør den ventende betalingskorrigeringen før du lukker dette registeret.",
-  "Finish the pending payment correction first.": "Fullfør den ventende betalingskorrigeringen først."
+  "Finish the pending payment correction first.": "Fullfør den ventende betalingskorrigeringen først.",
+  "Bill correction saved.": "Regningskorrigeringen er lagret.",
+  "Review the paid bill correction before saving.": "Gjennomgå korrigeringen av den betalte regningen før du lagrer."
 }

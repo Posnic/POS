@@ -4729,5 +4729,14 @@
   "lang_print_mode_fast": "Nopea vastaanotto",
   "lang_print_mode_help": "Fast käyttää tavallista tekstiasettelua. Grafiikka tai teksti, jota ei tueta, käyttävät Tarkkaa suunnittelua.",
   "lang_print_sample": "Tulosta näyte",
-  "lang_print_test_submitted": "Testi lähetetty. Tarkista tulostimen paperi."
+  "lang_print_test_submitted": "Testi lähetetty. Tarkista tulostimen paperi.",
+  "lang_delete_sale": "Poista myynti",
+  "lang_sale_delete_stock_warning": "Varasto lisätään takaisin varastoseurattujen tuotteiden osalta. Seuraamattomia kohteita ei muuteta.",
+  "lang_last_week": "Viime viikolla",
+  "lang_paid_bill_review": "Oikea tallennettu lasku",
+  "lang_paid_bill_no_movement": "Tämä muuttaa väärin kirjattua laskua ja maksua. Rahaa ei kerätä tai palauteta.",
+  "lang_paid_bill_use_return": "Jos alkuperäinen raha on todella kerätty, kirjoita palautus sen sijaan käyttämällä Palautuskohteita.",
+  "lang_paid_bill_previous": "Aiemmin tallennettu",
+  "lang_paid_bill_corrected": "Korjattu lasku",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Lataa tämä sivu uudelleen tarkistaaksesi maksetun laskun korjauksen."
 }

@@ -4811,5 +4811,14 @@
   "lang_print_mode_fast": "استلام سريع",
   "lang_print_mode_help": "يستخدم Fast تخطيط النص القياسي. تستخدم الرسومات أو النصوص غير المدعومة التصميم الدقيق.",
   "lang_print_sample": "عينة الطباعة",
-  "lang_print_test_submitted": "تم إرسال الاختبار. تحقق من الورق في الطابعة."
+  "lang_print_test_submitted": "تم إرسال الاختبار. تحقق من الورق في الطابعة.",
+  "lang_delete_sale": "حذف البيع",
+  "lang_sale_delete_stock_warning": "ستتم إضافة المخزون مرة أخرى للعناصر التي يتم تتبعها في المخزون. لا يتم تغيير العناصر التي لم يتم تعقبها.",
+  "lang_last_week": "الأسبوع الماضي",
+  "lang_paid_bill_review": "فاتورة مسجلة صحيحة",
+  "lang_paid_bill_no_movement": "يؤدي هذا إلى تغيير الفاتورة والدفع المسجلين بشكل خاطئ. لا يتم جمع أي أموال أو استردادها.",
+  "lang_paid_bill_use_return": "إذا تم جمع الأموال الأصلية بالفعل، فاستخدم عناصر الإرجاع لتسجيل استرداد الأموال بدلاً من ذلك.",
+  "lang_paid_bill_previous": "تم تسجيله مسبقًا",
+  "lang_paid_bill_corrected": "فاتورة مصححة",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "أعد تحميل هذه الصفحة لمراجعة تصحيح الفاتورة المدفوعة."
 }

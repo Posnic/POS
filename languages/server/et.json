@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Enne müügi kustutamist lubage prügikast",
   "Only super admins can change the sale hard-delete setting": "Ainult superadministraatorid saavad muuta müügi kõva kustutamise sätet",
   "Finish the pending payment correction before closing this register.": "Enne selle registri sulgemist lõpetage ootel olev maksekorrektsioon.",
-  "Finish the pending payment correction first.": "Esmalt lõpetage ootel olev maksekorrektsioon."
+  "Finish the pending payment correction first.": "Esmalt lõpetage ootel olev maksekorrektsioon.",
+  "Bill correction saved.": "Arve korrigeerimine salvestatud.",
+  "Review the paid bill correction before saving.": "Enne säästmist vaadake üle tasutud arve korrigeerimine."
 }

@@ -4732,5 +4732,14 @@
   "lang_print_mode_fast": "빠른 영수증",
   "lang_print_mode_help": "Fast는 표준 텍스트 레이아웃을 사용합니다.그래픽 또는 지원되지 않는 텍스트는 정확한 디자인을 사용합니다.",
   "lang_print_sample": "인쇄 샘플",
-  "lang_print_test_submitted": "테스트가 제출되었습니다.프린터에서 용지를 확인하세요."
+  "lang_print_test_submitted": "테스트가 제출되었습니다.프린터에서 용지를 확인하세요.",
+  "lang_delete_sale": "판매 삭제",
+  "lang_sale_delete_stock_warning": "인벤토리 추적 품목의 경우 재고가 다시 추가됩니다.추적되지 않은 품목은 변경되지 않습니다.",
+  "lang_last_week": "지난 주",
+  "lang_paid_bill_review": "기록된 청구서 수정",
+  "lang_paid_bill_no_movement": "이로 인해 잘못 기록된 청구서 및 결제가 변경됩니다.금액은 징수되거나 환불되지 않습니다.",
+  "lang_paid_bill_use_return": "원래 금액이 실제로 수령된 경우 반품 품목을 사용하여 환불을 대신 기록하세요.",
+  "lang_paid_bill_previous": "이전에 녹음됨",
+  "lang_paid_bill_corrected": "수정된 청구서",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "이 페이지를 새로고침하여 결제 청구서 수정을 검토하십시오."
 }

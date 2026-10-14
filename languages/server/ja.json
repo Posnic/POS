@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "販売を削除する前にごみ箱を有効にする",
   "Only super admins can change the sale hard-delete setting": "スーパー管理者のみがセールの完全削除設定を変更できます",
   "Finish the pending payment correction before closing this register.": "このレジスターを閉じる前に、保留中の支払いの修正を完了してください。",
-  "Finish the pending payment correction first.": "まず、保留中の支払いの修正を完了してください。"
+  "Finish the pending payment correction first.": "まず、保留中の支払いの修正を完了してください。",
+  "Bill correction saved.": "請求書修正が保存されました。",
+  "Review the paid bill correction before saving.": "保存する前に、支払い済み請求書の修正を確認してください。"
 }

@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "قبل از حذف فروش، سطل بازیافت را فعال کنید",
   "Only super admins can change the sale hard-delete setting": "فقط مدیران فوق العاده می توانند تنظیمات حذف سخت فروش را تغییر دهند",
   "Finish the pending payment correction before closing this register.": "قبل از بستن این ثبت، اصلاح پرداخت در انتظار را به پایان برسانید.",
-  "Finish the pending payment correction first.": "ابتدا تصحیح پرداخت در انتظار را به پایان برسانید."
+  "Finish the pending payment correction first.": "ابتدا تصحیح پرداخت در انتظار را به پایان برسانید.",
+  "Bill correction saved.": "تصحیح صورتحساب ذخیره شد",
+  "Review the paid bill correction before saving.": "قبل از صرفه جویی، اصلاح قبض پرداخت شده را بررسی کنید."
 }

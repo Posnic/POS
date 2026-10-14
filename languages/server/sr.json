@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Omogućite korpu za otpatke pre brisanja prodaje",
   "Only super admins can change the sale hard-delete setting": "Samo super administratori mogu da promene postavku za tvrdo brisanje prodaje",
   "Finish the pending payment correction before closing this register.": "Završite ispravku plaćanja na čekanju pre zatvaranja ovog registra.",
-  "Finish the pending payment correction first.": "Prvo završite korekciju plaćanja na čekanju."
+  "Finish the pending payment correction first.": "Prvo završite korekciju plaćanja na čekanju.",
+  "Bill correction saved.": "Ispravka računa sačuvana.",
+  "Review the paid bill correction before saving.": "Pregledajte ispravljanje plaćenog računa pre uštede."
 }

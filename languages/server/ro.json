@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Activați Coșul de reciclare înainte de a șterge vânzările",
   "Only super admins can change the sale hard-delete setting": "Doar super-administratorii pot schimba setarea de ștergere dură a vânzării",
   "Finish the pending payment correction before closing this register.": "Finalizați corecția plății în așteptare înainte de a închide acest registru.",
-  "Finish the pending payment correction first.": "Finalizați mai întâi corecția plății în așteptare."
+  "Finish the pending payment correction first.": "Finalizați mai întâi corecția plății în așteptare.",
+  "Bill correction saved.": "Corectarea facturii salvată.",
+  "Review the paid bill correction before saving.": "Examinați corecția facturii plătite înainte de a salva."
 }

@@ -4729,5 +4729,14 @@
   "lang_print_mode_fast": "Fljótur kvittun",
   "lang_print_mode_help": "Fast notar venjulegt textaskipulag. Grafík eða óstuddur texti nota Nákvæma hönnun.",
   "lang_print_sample": "Prenta sýnishorn",
-  "lang_print_test_submitted": "Próf lagt fram. Athugaðu pappírinn á prentaranum."
+  "lang_print_test_submitted": "Próf lagt fram. Athugaðu pappírinn á prentaranum.",
+  "lang_delete_sale": "Eyða sölu",
+  "lang_sale_delete_stock_warning": "Lagernum verður bætt aftur fyrir vörur sem raktar eru með birgðum. Óreknum hlutum er ekki breytt.",
+  "lang_last_week": "Í síðustu viku",
+  "lang_paid_bill_review": "Rétt skráð reikningur",
+  "lang_paid_bill_no_movement": "Þetta breytir ranglega skráðum reikningi og greiðslu. Engir peningar eru innheimtir eða endurgreiddir.",
+  "lang_paid_bill_use_return": "Ef upphaflega peningurinn var í raun safnað skaltu nota Return atriði til að skrá endurgreiðsluna í staðinn.",
+  "lang_paid_bill_previous": "Áður skráð",
+  "lang_paid_bill_corrected": "Leiðrétt frumvarp",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Endurhlaða þessari síðu til að fara yfir leiðréttingu greidds reiknings."
 }

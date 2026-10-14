@@ -4729,5 +4729,14 @@
   "lang_print_mode_fast": "Rychlé přijetí",
   "lang_print_mode_help": "Fast používá standardní rozložení textu. Grafika nebo nepodporovaný text používají Přesný design.",
   "lang_print_sample": "Vytisknout vzorek",
-  "lang_print_test_submitted": "Test byl odeslán. Zkontrolujte papír na tiskárně."
+  "lang_print_test_submitted": "Test byl odeslán. Zkontrolujte papír na tiskárně.",
+  "lang_delete_sale": "Smazat prodej",
+  "lang_sale_delete_stock_warning": "Zásoby budou přidány zpět pro položky sledované zásoby. Nesledované položky se nezmění.",
+  "lang_last_week": "Minulý týden",
+  "lang_paid_bill_review": "Správný zaznamenaný účet",
+  "lang_paid_bill_no_movement": "Tím se změní nesprávně zaznamenaný účet a platba. Žádné peníze nejsou vybírány ani vráceny.",
+  "lang_paid_bill_use_return": "Pokud byly původní peníze skutečně vybrány, místo toho použijte položku Vrácení k zaznamenání vrácení peněz.",
+  "lang_paid_bill_previous": "Dříve nahrané",
+  "lang_paid_bill_corrected": "Opravený účet",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Znovu načtěte tuto stránku a zkontrolujte opravu zaplaceného účtu."
 }

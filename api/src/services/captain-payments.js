@@ -175,13 +175,27 @@ async function reconcile(db, c, plan) {
   const payments = plan.payments || [];
   if (!payments.length) return;
   for (const sale of plan.sales) {
-    const corrected = await db
-      .collection('sales')
-      .findOne(
-        { ...baseFilter(c), _id: sale._id },
-        { projection: { payment_corrections: 1, payment_correction_pending: 1 } }
-      );
-    if (corrected?.payment_corrections?.length || corrected?.payment_correction_pending) continue;
+    const corrected = await db.collection('sales').findOne(
+      { ...baseFilter(c), _id: sale._id },
+      {
+        projection: {
+          payment_corrections: 1,
+          paid_bill_corrections: 1,
+          payment_correction_pending: 1,
+        },
+      }
+    );
+    if (
+      corrected?.paid_bill_corrections?.length ||
+      corrected?.payment_correction_pending?.kind === 'paid-bill-edit'
+    )
+      return;
+    if (
+      corrected?.payment_corrections?.length ||
+      corrected?.paid_bill_corrections?.length ||
+      corrected?.payment_correction_pending
+    )
+      continue;
     const multi = {};
     let paid = 0;
     for (const payment of payments) {
@@ -212,6 +226,7 @@ async function reconcile(db, c, plan) {
         captain_payment_plan: plan._id,
         payment_correction_pending: { $exists: false },
         'payment_corrections.0': { $exists: false },
+        'paid_bill_corrections.0': { $exists: false },
         $or: [
           { captain_payment_version: { $exists: false } },
           { captain_payment_version: { $lte: plan.version } },
@@ -263,6 +278,11 @@ async function reconcile(db, c, plan) {
     );
     if (!update.matchedCount) {
       const current = await db.collection('sales').findOne({ ...baseFilter(c), _id: sale._id });
+      if (
+        current?.paid_bill_corrections?.length ||
+        current?.payment_correction_pending?.kind === 'paid-bill-edit'
+      )
+        return;
       if (
         current?.captain_payment_plan !== plan._id ||
         current.captain_payment_version < plan.version

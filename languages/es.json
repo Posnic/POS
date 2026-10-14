@@ -4807,5 +4807,14 @@
   "lang_print_mode_fast": "Recepción rápida",
   "lang_print_mode_help": "Fast utiliza un diseño de texto estándar. Los gráficos o textos no compatibles utilizan Exact Design.",
   "lang_print_sample": "Muestra de impresión",
-  "lang_print_test_submitted": "Prueba enviada. Revisa el papel en la impresora."
+  "lang_print_test_submitted": "Prueba enviada. Revisa el papel en la impresora.",
+  "lang_delete_sale": "Eliminar venta",
+  "lang_sale_delete_stock_warning": "Se volverán a agregar existencias para los artículos cuyo inventario haya sido rastreado. Los artículos sin seguimiento no se modifican.",
+  "lang_last_week": "La semana pasada",
+  "lang_paid_bill_review": "Factura registrada correcta",
+  "lang_paid_bill_no_movement": "Esto cambia una factura y un pago mal registrados. No se recauda ni se reembolsa ningún dinero.",
+  "lang_paid_bill_use_return": "Si el dinero original se cobró realmente, usa Devolución de artículos para registrar el reembolso.",
+  "lang_paid_bill_previous": "Grabado anteriormente",
+  "lang_paid_bill_corrected": "Factura corregida",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Vuelva a cargar esta página para revisar la corrección de la factura pagada."
 }
