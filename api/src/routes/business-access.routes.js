@@ -426,10 +426,18 @@ router.get(
     )
   )
 );
-router.get('/insights', wrap(async (req, res) => res.json(
-  await require('../services/business-insights').readBusinessInsights(req.db,
-    await req.businessAccess.contextFor(req.businessIdentity.user), req.query)
-)));
+router.get(
+  '/insights',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-insights').readBusinessInsights(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.query
+      )
+    )
+  )
+);
 router.get(
   '/items',
   wrap(async (req, res) =>

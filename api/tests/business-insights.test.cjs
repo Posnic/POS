@@ -1,4 +1,4 @@
-const { test } = require('node:test');
+const { test } = require('@jest/globals');
 const assert = require('node:assert/strict');
 const { ObjectId } = require('mongodb');
 const { summarizeInsights, readBusinessInsights } = require('../src/services/business-insights');
