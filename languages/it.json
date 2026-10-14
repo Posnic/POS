@@ -4904,5 +4904,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Il nome del file include le categorie e la data di esportazione. Inizia sempre da un nuovo download.",
   "lang_upcoming": "Prossimo",
   "lang_use_label_design_below_for_label_dimension": "Usa Label Design qui sotto per le dimensioni delle etichette, i caratteri, i colori, l'allineamento e le impostazioni dei codici a barre. I prezzi includono l'IVA e gli sconti sugli articoli salvati; la stampa non modifica i prezzi degli articoli.",
-  "lang_use_on_this_bill": "Utilizza su questa fattura"
+  "lang_use_on_this_bill": "Utilizza su questa fattura",
+  "lang_attach_receipt_optional": "Allega ricevuta/documento (opzionale)",
+  "lang_attach_files": "Allega file",
+  "lang_expense_files_help": "PDF, JPG o PNG. Fino a 5 file, 5 MB ciascuno, 10 MB in totale. I file vengono salvati quando si salva la voce.",
+  "lang_expense_file_retry": "Voce salvata, ma non è stato possibile salvare alcuni allegati. Tieni aperto questo modulo e salva di nuovo per riprovare.",
+  "lang_not_saved": "Non salvato",
+  "lang_download": "Scarica"
 }

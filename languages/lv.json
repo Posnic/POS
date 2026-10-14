@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Faila nosaukums ietver kategorijas un eksportēšanas datumu. Vienmēr sāciet no jaunas lejupielādes.",
   "lang_upcoming": "Gaidāmais",
   "lang_use_label_design_below_for_label_dimension": "Izmantojiet etiķetes dizainu zemāk, lai uzrādītu etiķetes izmērus, fontus, krāsas, izlīdzināšanu un svītrkodu iestatījumus. Cenās ir iekļauts PVN un ietaupītās preces atlaides; drukāšana nemaina preču cenas.",
-  "lang_use_on_this_bill": "Izmantojiet šajā rēķinā"
+  "lang_use_on_this_bill": "Izmantojiet šajā rēķinā",
+  "lang_attach_receipt_optional": "Pievienojiet kvīti/dokumentu (pēc izvēles)",
+  "lang_attach_files": "Pievienojiet failus",
+  "lang_expense_files_help": "PDF, JPG vai PNG. Līdz 5 failiem, katrs 5 MB, kopā 10 MB. Faili tiek saglabāti, saglabājot ierakstu.",
+  "lang_expense_file_retry": "Ieraksts saglabāts, bet dažus pielikumus nevarēja saglabāt. Saglabājiet šo veidlapu atvērtu un saglabājiet vēlreiz, lai mēģinātu atkārtoti.",
+  "lang_not_saved": "Nav saglabāts",
+  "lang_download": "Lejupielādēt"
 }

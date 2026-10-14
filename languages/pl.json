@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Nazwa pliku zawiera kategorie i datę eksportu. Zawsze zaczynaj od świeżego pobrania.",
   "lang_upcoming": "Nadchodzące",
   "lang_use_label_design_below_for_label_dimension": "Użyj poniższego Projektu etykiet, aby uzyskać ustawienia wymiarów etykiet, czcionek, kolorów, linii trasowania i kodów kreskowych. Ceny zawierają podatek VAT i zniżki na zapisane przedmioty; drukowanie nie zmienia cen przedmiotów.",
-  "lang_use_on_this_bill": "Użyj na tym rachunku"
+  "lang_use_on_this_bill": "Użyj na tym rachunku",
+  "lang_attach_receipt_optional": "Dołącz paragon/dokument (opcjonalnie)",
+  "lang_attach_files": "Dołącz pliki",
+  "lang_expense_files_help": "PDF, JPG lub PNG. Do 5 plików, po 5 MB każdy, łącznie 10 MB. Pliki są zapisywane podczas zapisywania wpisu.",
+  "lang_expense_file_retry": "Wpis został zapisany, ale niektórych załączników nie można zapisać. Pozostaw ten formularz otwarty i zapisz ponownie, aby spróbować ponownie.",
+  "lang_not_saved": "Nie zapisano",
+  "lang_download": "Ściągnij"
 }

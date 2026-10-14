@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "A fájlnév tartalmazza a kategóriákat és az exportálás dátumát. Mindig kezdje egy új letöltéssel.",
   "lang_upcoming": "Közelgő",
   "lang_use_label_design_below_for_label_dimension": "A címke méreteinek, betűtípusainak, színeinek, igazításának és vonalkód-beállításainak használatához az alábbi Címketervezést Az árak tartalmazzák az ÁFÁ-t és a megtakarított termékkedvezményeket; a nyomtatás nem változtatja meg a termékek árát.",
-  "lang_use_on_this_bill": "Használja ezen a számlán"
+  "lang_use_on_this_bill": "Használja ezen a számlán",
+  "lang_attach_receipt_optional": "Nyilvántartás/dokumentum csatolása (opcionális)",
+  "lang_attach_files": "Fájlok csatolása",
+  "lang_expense_files_help": "PDF, JPG vagy PNG. Legfeljebb 5 fájl, egyenként 5 MB, összesen 10 MB. A fájlok mentésekor kerülnek mentésre a bejegyzés.",
+  "lang_expense_file_retry": "A bejegyzés mentett, de néhány mellékletet nem sikerült menteni. Tartsa nyitva ezt az űrlapot, és mentse újra, hogy újra megpróbálkozzon.",
+  "lang_not_saved": "Nem mentett",
+  "lang_download": "Letöltés"
 }

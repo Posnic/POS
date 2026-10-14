@@ -165,7 +165,8 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
           category: 'Rent',
           license: BaseModel.license,
           is_deleted: { $ne: true },
-        })
+        }),
+        { projection: { supporting_documents: 0 } }
       );
     });
 
@@ -251,7 +252,8 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
           _id: expect.any(Object),
           license: BaseModel.license,
           is_deleted: { $ne: true },
-        })
+        }),
+        { projection: { supporting_documents: 0 } }
       );
     });
 
@@ -584,7 +586,8 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
           ]),
           license: BaseModel.license,
           is_deleted: { $ne: true },
-        })
+        }),
+        { projection: { supporting_documents: 0 } }
       );
     });
 
@@ -593,7 +596,8 @@ describe('ExpenseRepository (class, extends BaseModel)', () => {
       expect(mockCollection.find).toHaveBeenCalledWith(
         expect.objectContaining({
           branch_id: expect.any(Object),
-        })
+        }),
+        { projection: { supporting_documents: 0 } }
       );
     });
 

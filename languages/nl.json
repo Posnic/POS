@@ -4956,5 +4956,11 @@
   "lang_iv2_copy_notice": "Kopie van {name}. Dit is een nieuw, nog niet opgeslagen artikel. Het oorspronkelijke artikel blijft ongewijzigd.",
   "lang_iv2_create_copy": "Een kopie maken",
   "lang_iv2_save_copy": "Opslaan als nieuw artikel",
-  "lang_iv2_copy_suffix": "kopie"
+  "lang_iv2_copy_suffix": "kopie",
+  "lang_attach_receipt_optional": "Kwitantie/document bijvoegen (optioneel)",
+  "lang_attach_files": "Bestanden bijvoegen",
+  "lang_expense_files_help": "PDF, JPG of PNG. Tot 5 bestanden, elk 5 MB, in totaal 10 MB. De bestanden worden opgeslagen wanneer u het item opslaat.",
+  "lang_expense_file_retry": "Invoer opgeslagen, maar sommige bijlagen konden niet worden opgeslagen. Houd dit formulier open en sla het opnieuw op om het opnieuw te proberen.",
+  "lang_not_saved": "Niet opgeslagen",
+  "lang_download": "Downloaden"
 }

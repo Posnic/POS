@@ -4825,5 +4825,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Tên tệp bao gồm các danh mục và ngày xuất. Luôn bắt đầu từ một bản tải xuống mới.",
   "lang_upcoming": "Sắp tới",
   "lang_use_label_design_below_for_label_dimension": "Sử dụng Thiết kế nhãn bên dưới để biết kích thước nhãn, phông chữ, màu sắc, căn chỉnh và cài đặt mã vạch. Giá đã bao gồm VAT và giảm giá mặt hàng đã lưu; in ấn không làm thay đổi giá mặt hàng.",
-  "lang_use_on_this_bill": "Sử dụng trên hóa đơn này"
+  "lang_use_on_this_bill": "Sử dụng trên hóa đơn này",
+  "lang_attach_receipt_optional": "Đính kèm biên nhận/tài liệu (tùy chọn)",
+  "lang_attach_files": "Đính kèm tập tin",
+  "lang_expense_files_help": "PDF, JPG hoặc PNG. Tối đa 5 tệp, mỗi tệp 5 MB, tổng cộng 10 MB. Các tệp được lưu khi bạn lưu mục nhập.",
+  "lang_expense_file_retry": "Mục nhập đã lưu, nhưng một số tệp đính kèm không thể được lưu. Giữ biểu mẫu này mở và lưu lại để thử lại.",
+  "lang_not_saved": "Không được lưu",
+  "lang_download": "Tải về"
 }

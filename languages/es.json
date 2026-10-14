@@ -4900,5 +4900,11 @@
   "lang_the_filename_includes_categories_and_the_e": "El nombre del archivo incluye las categorías y la fecha de exportación. Comience siempre con una descarga nueva.",
   "lang_upcoming": "Próximamente",
   "lang_use_label_design_below_for_label_dimension": "Usa el diseño de etiquetas que aparece a continuación para configurar las dimensiones, las fuentes, los colores, la alineación y el código de barras de las etiquetas. Los precios incluyen el IVA y los descuentos por artículos guardados; la impresión no cambia los precios de los artículos.",
-  "lang_use_on_this_bill": "Úselo en esta factura"
+  "lang_use_on_this_bill": "Úselo en esta factura",
+  "lang_attach_receipt_optional": "Adjunte el recibo/documento (opcional)",
+  "lang_attach_files": "Adjuntar archivos",
+  "lang_expense_files_help": "PDF, JPG o PNG. Hasta 5 archivos de 5 MB cada uno, 10 MB en total. Los archivos se guardan al guardar la entrada.",
+  "lang_expense_file_retry": "Entrada guardada, pero algunos archivos adjuntos no se pudieron guardar. Mantenga este formulario abierto y vuelva a guardarlo para volver a intentarlo.",
+  "lang_not_saved": "No se ha guardado",
+  "lang_download": "Descargar"
 }

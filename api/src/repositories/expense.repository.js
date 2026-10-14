@@ -28,7 +28,7 @@ class ExpenseRepository extends BaseModel {
 
     const [expenses, total] = await Promise.all([
       collection
-        .find(query)
+        .find(query, { projection: { supporting_documents: 0 } })
         .sort(sort)
         .skip(Math.max(0, (page - 1) * limit))
         .limit(limit)
@@ -70,7 +70,7 @@ class ExpenseRepository extends BaseModel {
       license: BaseModel.license,
       ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
       is_deleted: { $ne: true },
-    });
+    }, { projection: { supporting_documents: 0 } });
   }
 
   /**
@@ -281,7 +281,7 @@ class ExpenseRepository extends BaseModel {
 
     const [expenses, total] = await Promise.all([
       collection
-        .find(query)
+        .find(query, { projection: { supporting_documents: 0 } })
         .sort({ created_date: -1 })
         .skip(Math.max(0, (page - 1) * limit))
         .limit(limit)

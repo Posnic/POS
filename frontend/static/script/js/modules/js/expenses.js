@@ -1,6 +1,8 @@
 PosnicPro.expenses = {
     expenseAction: 'add',
     showAdd: function () {
+        if (PosnicPro.expenseFiles.saving) return;
+        PosnicPro.expenseFiles.reset();
         var loader = $(".loader-expense");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.HideSideBarModal();
@@ -23,6 +25,7 @@ PosnicPro.expenses = {
         PosnicPro.expenses.expenseAction = 'add';
     },
     showEdit: function (id) {
+        if (PosnicPro.expenseFiles.saving) return;
         var loader = $(".loader-category");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.showEditModal('expenses');
@@ -141,7 +144,10 @@ PosnicPro.expenses = {
     },
     /*This expenses Function Used To Add & Edit */
     expenses: function () {
+        if (PosnicPro.expenseFiles.saving) return false;
         if ($('#expenses_amount').val() !== '') {
+            PosnicPro.expenseFiles.saving = true;
+            $('#expenseSubmitForm').prop('disabled', true);
             var loader = $(".loader-expense");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
             var method = 'POST';
@@ -157,8 +163,23 @@ PosnicPro.expenses = {
                 url: url,
                 data: JSON.stringify(PosnicPro.getFormData($('#expenses_add_list_form')))
             };
-            PosnicPro.request(params, function (response) {
+            PosnicPro.request(params, async function (response) {
                 if (response.type === 'success') {
+                    var savedId = (typeof response.data === 'object' && response.data.id) ? response.data.id : response.data;
+                    savedId = savedId || $('#expenses_id').val();
+                    // Retain the committed ID before uploading. A failed file upload
+                    // retries against this entry rather than creating a duplicate.
+                    $('#expenses_id').val(savedId);
+                    try {
+                        await PosnicPro.expenseFiles.save(savedId);
+                    } catch (error) {
+                        PosnicPro.expenseFiles.finish();
+                        PosnicPro.expenseFiles.render('#expenses_files_list', PosnicPro.expenseFiles.existing, savedId, true);
+                        $('#expenses_files_status').text(PosnicPro.i18n.t('lang_expense_file_retry', 'Entry saved, but some attachments could not be saved. Keep this form open and save again to retry.') + ' ' + error.message);
+                        return;
+                    }
+                    PosnicPro.expenseFiles.reset();
+                    PosnicPro.expenseFiles.finish();
                     $("#expenses_add_list_form").trigger('reset');
                     $('#show_last_created_expense').show();
                     var expenseId = (typeof response.data === 'object' && response.data.id) ? response.data.id : response.data;
@@ -182,9 +203,11 @@ PosnicPro.expenses = {
                     loader.find(".loadingSpinner:first").remove();
                     PosnicPro.alert(response.type, response.message);
                 } else {
+                    PosnicPro.expenseFiles.finish();
                     PosnicPro.alert(response.type, response.message);
                 }
             }, function (xhr) {
+                PosnicPro.expenseFiles.finish();
                 var response = jQuery.parseJSON(xhr.responseText);
                 PosnicPro.alert(response.type, response.message);
             });
@@ -211,6 +234,7 @@ PosnicPro.expenses = {
     viewExpensesData: function (response) {
         $('#expenses_view').modal('show');
         var data = response.data;
+        PosnicPro.expenseFiles.load(data._id || PosnicPro.record_id, false);
 
         $.each(data, function (key, val) {
             if (val === '') {
@@ -252,6 +276,7 @@ PosnicPro.expenses = {
                 PosnicPro.record_id = id;
                 PosnicPro.commonEditDate(data.date);
                 $('#expenses_id').val(PosnicPro.record_id);
+                PosnicPro.expenseFiles.load(id, true);
                 $('#expenses_amount').val(data.amount);
                 $('#expenses_tax').val(data.tax);
                 $("#expenses_type").val(data.type).change();
@@ -299,6 +324,8 @@ PosnicPro.expenses = {
         PosnicPro.deleteTableData(PosnicPro.expenses_checkbox, 'expenses');
     },
     expenseClearForm: function () {
+        if (PosnicPro.expenseFiles.saving) return;
+        PosnicPro.expenseFiles.reset();
         $('#expenses_add_list_form')[0].reset();
         $('#expenses_expensesnote').html('');
         $('.error_expense').css('display', 'none');
@@ -401,5 +428,128 @@ $("#expenseSubmitForm").one('click', function () {
     PosnicPro.expenses.validForm();
 });
 
-/*end*/
-
+/* Optional evidence: drafts stay in memory until the expense has an ID. */
+PosnicPro.expenseFiles = {
+    pending: [], existing: [], removed: [], saving: false, generation: 0, viewGeneration: 0, previewUrls: [],
+    t: function (key, fallback) { return PosnicPro.i18n.t(key, fallback); },
+    request: function (params) {
+        return new Promise(function (resolve, reject) {
+            PosnicPro.request(params, function (response) {
+                if (response.type === 'success') resolve(response.data);
+                else reject(new Error(response.message || 'Attachment request failed'));
+            }, function (xhr) {
+                var response = xhr.responseJSON || {};
+                reject(new Error(response.message || 'Attachment request failed'));
+            });
+        });
+    },
+    finish: function () {
+        this.saving = false;
+        $('#expenseSubmitForm').prop('disabled', false);
+        $('.loader-expense .loadingSpinner').remove();
+    },
+    reset: function () {
+        this.generation++;
+        this.pending = []; this.existing = []; this.removed = [];
+        this.previewUrls.forEach(function (url) { URL.revokeObjectURL(url); });
+        this.previewUrls = [];
+        $('#expenses_files').val('');
+        $('#expenses_files_status,#expenses_files_list,#expenses_files_preview,#expenses_view_files_preview').empty();
+    },
+    load: async function (id, editing) {
+        if (editing) this.reset();
+        var generation = this.generation;
+        var viewGeneration = ++this.viewGeneration;
+        $('#expenses_view_files_preview').empty();
+        var host = editing ? '#expenses_files_list' : '#expenses_view_files_list';
+        $(host).text(PosnicPro.i18n.t('lang_loading_3', 'Loading…'));
+        try {
+            var files = await this.request({ url: 'expenses/' + id + '/attachments' });
+            if (editing && generation !== this.generation) return;
+            if (!editing && viewGeneration !== this.viewGeneration) return;
+            if (editing) this.existing = files;
+            this.render(host, files, id, editing);
+        } catch (error) { $(host).text(error.message); }
+    },
+    render: function (host, files, id, editing) {
+        var self = this, target = $(host).empty();
+        var rows = files.filter(function (file) { return !editing || self.removed.indexOf(file.id) < 0; });
+        if (editing) rows = rows.concat(this.pending.map(function (file, index) { return { name: file.name, size: file.size, pending: index }; }));
+        if (!rows.length) target.append($('<small>').text(PosnicPro.i18n.t('lang_nothing_attached_yet', 'Nothing attached yet.')));
+        rows.forEach(function (file) {
+            var row = $('<div class="border rounded p-2 mb-2">');
+            row.append($('<div>').css('overflow-wrap', 'anywhere').text(file.name));
+            row.append($('<small class="d-block mb-1">').text((file.size / 1024 / 1024).toFixed(2) + ' MB' + (file.pending !== undefined ? ' · ' + PosnicPro.i18n.t('lang_not_saved', 'Not saved') : '')));
+            function button(label, action) { return $('<button type="button" class="btn btn-sm btn-outline-primary mr-2 mb-1">').text(label).on('click', action); }
+            row.append(button(PosnicPro.i18n.t('lang_preview', 'Preview'), function () { self.open(id, file, false, editing); }));
+            row.append(button(PosnicPro.i18n.t('lang_download', 'Download'), function () { self.open(id, file, true, editing); }));
+            if (editing) row.append(button(PosnicPro.i18n.t('lang_remove', 'Remove'), function () {
+                if (self.saving) return;
+                if (file.pending !== undefined) self.pending.splice(file.pending, 1);
+                else self.removed.push(file.id);
+                $('#expenses_files_preview').empty();
+                self.render(host, self.existing, id, true);
+            }));
+            target.append(row);
+        });
+    },
+    choose: function (files) {
+        if (this.saving) return;
+        var self = this;
+        var saved = this.existing.filter(function (file) { return self.removed.indexOf(file.id) < 0; });
+        var combined = saved.concat(this.pending, Array.from(files));
+        if (combined.length > 5 || combined.reduce(function (sum, file) { return sum + file.size; }, 0) > 10 * 1024 * 1024 || Array.from(files).some(function (file) {
+            return !file.size || file.size > 5 * 1024 * 1024 || ['application/pdf', 'image/jpeg', 'image/png'].indexOf(file.type) < 0;
+        })) {
+            $('#expenses_files_status').text(PosnicPro.i18n.t('lang_expense_files_help', 'PDF, JPG or PNG. Up to 5 files, 5 MB each, 10 MB total. Files are saved when you save the entry.'));
+            return;
+        }
+        this.pending = this.pending.concat(Array.from(files));
+        $('#expenses_files_status').empty();
+        this.render('#expenses_files_list', this.existing, $('#expenses_id').val(), true);
+    },
+    open: async function (id, file, download, editing) {
+        var preview = $(editing ? '#expenses_files_preview' : '#expenses_view_files_preview');
+        try {
+            var blob;
+            if (file.pending !== undefined) blob = this.pending[file.pending];
+            else {
+                var data = await this.request({ url: 'expenses/' + id + '/attachments/' + file.id });
+                var bytes = atob(data.content);
+                var buffer = new Uint8Array(bytes.length);
+                for (var i = 0; i < bytes.length; i++) buffer[i] = bytes.charCodeAt(i);
+                blob = new Blob([buffer], { type: data.type });
+            }
+            if (!blob) return;
+            var url = URL.createObjectURL(blob); this.previewUrls.push(url);
+            if (download) {
+                var a = document.createElement('a'); a.href = url; a.download = file.name; a.click();
+            } else {
+                preview.empty().append($('<button type="button" class="btn btn-sm btn-outline-secondary mb-2">').text(PosnicPro.i18n.t('lang_close_title', 'Close')).on('click', function () { preview.empty(); URL.revokeObjectURL(url); }));
+                if (blob.type === 'application/pdf') preview.append($('<iframe class="w-100 border rounded">').attr({ src: url, title: file.name }).css('height', '360px'));
+                else preview.append($('<img class="img-fluid rounded">').attr({ src: url, alt: file.name }));
+            }
+        } catch (error) { preview.empty().text(error.message); }
+    },
+    save: async function (id) {
+        // Remove staged files first to free the documented count/size allowance.
+        while (this.removed.length) {
+            var removed = this.removed[0];
+            await this.request({ method: 'DELETE', url: 'expenses/' + id + '/attachments/' + removed });
+            this.existing = this.existing.filter(function (file) { return file.id !== removed; });
+            this.removed.shift();
+        }
+        while (this.pending.length) {
+            var form = new FormData(); form.append('file', this.pending[0]);
+            var saved = await this.request({ method: 'POST', url: 'expenses/' + id + '/attachments', data: form, processData: false, contentType: false });
+            if (!this.existing.some(function (file) { return file.id === saved.id; })) this.existing.push(saved);
+            this.pending.shift();
+        }
+    }
+};
+$(document).on('change', '#expenses_files', function () {
+    PosnicPro.expenseFiles.choose(this.files); this.value = '';
+});
+$(document).on('click', '#expenses_choose_files', function () {
+    if (!PosnicPro.expenseFiles.saving) $('#expenses_files').trigger('click');
+});

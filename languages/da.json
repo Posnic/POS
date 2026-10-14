@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Filnavnet indeholder kategorier og eksportdatoen. Start altid fra en frisk download.",
   "lang_upcoming": "Kommende",
   "lang_use_label_design_below_for_label_dimension": "Brug Label Design nedenfor til etiketdimensioner, skrifttyper, farver, justering og stregkodeindstillinger. Priserne inkluderer moms og rabatter på gemte varer; udskrivning ændrer ikke varepriserne.",
-  "lang_use_on_this_bill": "Brug på denne regning"
+  "lang_use_on_this_bill": "Brug på denne regning",
+  "lang_attach_receipt_optional": "Vedhæft kvittering/ dokument (valgfrit)",
+  "lang_attach_files": "Vedhæft filer",
+  "lang_expense_files_help": "PDF, JPG eller PNG. Op til 5 filer, 5 MB hver, 10 MB i alt. Filer gemmes, når du gemmer posten.",
+  "lang_expense_file_retry": "Indtastning gemt, men nogle vedhæftede filer kunne ikke gemmes. Hold denne formular åben, og gem igen for at prøve igen.",
+  "lang_not_saved": "Ikke gemt",
+  "lang_download": "Hent"
 }

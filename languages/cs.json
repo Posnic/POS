@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Název souboru obsahuje kategorie a datum exportu. Vždy začněte novým stahováním.",
   "lang_upcoming": "Připravované",
   "lang_use_label_design_below_for_label_dimension": "Pro kóty štítků, písma, barvy, zarovnání a nastavení čárového kódu použijte níže uvedený návrh štítku. Ceny zahrnují DPH a slevy na uložené položky; tisk nemění ceny položek.",
-  "lang_use_on_this_bill": "Použít na tomto účtu"
+  "lang_use_on_this_bill": "Použít na tomto účtu",
+  "lang_attach_receipt_optional": "Přiložit účtenku/dokument (nepovinné)",
+  "lang_attach_files": "Připojit soubory",
+  "lang_expense_files_help": "PDF, JPG nebo PNG. Až 5 souborů, každý po 5 MB, celkem 10 MB. Soubory se uloží při uložení položky.",
+  "lang_expense_file_retry": "Položka byla uložena, ale některé přílohy nemohly být uloženy. Ponechte tento formulář otevřený a znovu jej uložte a zkuste to znovu.",
+  "lang_not_saved": "Neuloženo",
+  "lang_download": "Stáhnout"
 }

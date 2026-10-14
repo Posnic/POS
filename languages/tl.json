@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Kasama sa pangalan ng file ang mga kategorya at petsa ng pag-export. Laging magsimula mula sa isang sariwang pag-download.",
   "lang_upcoming": "Paparating na",
   "lang_use_label_design_below_for_label_dimension": "Gamitin ang Disenyo ng Label sa ibaba para sa mga sukat ng label, font, kulay, pagkakahanay at mga setting ng barcode. Kasama sa mga presyo ang VAT at nai-save na diskwento sa item; hindi binabago ng pag-print ang mga presyo ng item.",
-  "lang_use_on_this_bill": "Gamitin sa panukalang ito"
+  "lang_use_on_this_bill": "Gamitin sa panukalang ito",
+  "lang_attach_receipt_optional": "Ilakip ang resiba/dokumento (opsyonal)",
+  "lang_attach_files": "Ilakip ang mga file",
+  "lang_expense_files_help": "PDF, JPG o PNG. Hanggang sa 5 mga file, 5 MB bawat isa, 10 MB kabuuang. Ang mga file ay nai-save kapag nai-save mo ang entry.",
+  "lang_expense_file_retry": "Naka-save ang entry, ngunit ang ilang mga attachment ay hindi mai-save. Panatilihing bukas ang form na ito at i-save muli upang subukang muli.",
+  "lang_not_saved": "Hindi nai-save",
+  "lang_download": "I-download"
 }
