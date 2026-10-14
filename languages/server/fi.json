@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Viimeistele odottava maksun korjaus ennen tämän rekisterin sulkemista.",
   "Finish the pending payment correction first.": "Viimeistele odottava maksun korjaus ensin.",
   "Bill correction saved.": "Laskun korjaus tallennettu.",
-  "Review the paid bill correction before saving.": "Tarkista maksetun laskun korjaus ennen tallentamista."
+  "Review the paid bill correction before saving.": "Tarkista maksetun laskun korjaus ennen tallentamista.",
+  "Choose a saved customer for customer credit.": "Valitse tallennettu asiakas asiakasluottoa varten.",
+  "Exact numeric search must be on or off": "Tarkan numeerisen haun on oltava käytössä tai pois päältä",
+  "Item not found or selling price is held. Review it in Edit prices.": "Tuotetta ei löydy tai myyntihinta pidetään voimassa. Tarkista se kohdassa Muokkaa hintoja."
 }

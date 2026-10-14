@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Završite ispravak plaćanja na čekanju prije zatvaranja ovog registra.",
   "Finish the pending payment correction first.": "Prvo završite ispravak plaćanja na čekanju.",
   "Bill correction saved.": "Ispravak računa sačuvan.",
-  "Review the paid bill correction before saving.": "Pregledajte ispravljanje plaćenog računa prije spremanja."
+  "Review the paid bill correction before saving.": "Pregledajte ispravljanje plaćenog računa prije spremanja.",
+  "Choose a saved customer for customer credit.": "Odaberite spremljenog kupca za kredit kupca.",
+  "Exact numeric search must be on or off": "Točno numeričko pretraživanje mora biti uključeno ili isključeno",
+  "Item not found or selling price is held. Review it in Edit prices.": "Artikal nije pronađen ili se zadržava prodajna cijena. Pregledajte ga u Uredi cijene."
 }

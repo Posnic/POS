@@ -956,5 +956,8 @@
   "Finish the pending payment correction before closing this register.": "Zakończ oczekującą korektę płatności przed zamknięciem tego rejestru.",
   "Finish the pending payment correction first.": "Najpierw zakończ oczekującą korektę płatności.",
   "Bill correction saved.": "Korekta rachunku została zapisana.",
-  "Review the paid bill correction before saving.": "Przejrzyj opłaconą korektę rachunku przed zapisaniem."
+  "Review the paid bill correction before saving.": "Przejrzyj opłaconą korektę rachunku przed zapisaniem.",
+  "Choose a saved customer for customer credit.": "Wybierz zapisanego klienta do kredytu klienta.",
+  "Exact numeric search must be on or off": "Dokładne wyszukiwanie numeryczne musi być włączone lub wyłączone",
+  "Item not found or selling price is held. Review it in Edit prices.": "Przedmiot nie został znaleziony lub cena sprzedaży jest utrzymywana. Przejrzyj to w Edytuj ceny."
 }

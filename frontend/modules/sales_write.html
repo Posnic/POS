@@ -154,36 +154,26 @@
                                         data-toggle="tooltip" title="Quick sale - just an amount" data-t-title="lang_quick_sale_just_an_amount">
                                         <i class="feather icon-zap"></i>
                                     </a>
-                                    <span class="input-group-btn" id="employee_box">
-                                        <span id="sales_customer_btn"
-                                            class="btn btn-primary-rgba toggle-user-input sales-customer-btn"
-                                            data-toggle="tooltip" data-placement="top"
-                                            title="Walk-in customer. Click to choose or add" data-t-title="lang_walk_in_customer_click_to_choose_or_add"
-                                            data-original-title="Walk-in customer. Click to choose or add">
-                                            <i class="feather icon-user"></i>
-                                            <span id="sales_customer_btn_label"
-                                                class="sales-customer-label"><lang class="lang_walk_in">Walk-in</lang></span>
-                                        </span>
-                                    </span>
+
                                 </div>
                             </div>
 
+                            <div class="sales-customer-entry">
+                                <label for="sales_new_customer_name"><lang class="lang_customer_name">Customer name</lang></label>
+                                <input type="text" id="sales_new_customer_name" placeholder="Walk-in customer" data-t-placeholder="lang_walk_in_customer" class="form-control osk-trigger clear-sale-text" maxlength="200" autocomplete="off">
+                                <button type="button" id="sales_customer_btn" class="btn btn-outline-primary toggle-user-input sales-customer-btn" aria-label="Customer details" data-t-aria-label="lang_customer_details"><i class="feather icon-user"></i><span id="sales_customer_btn_label"><lang class="lang_details">Details</lang></span></button>
+                            </div>
                             <div class="toggle-customer-user sales-customer-pop" style="display:none;">
                                 <div class="sales-customer-pop-head">
                                     <span class="sales-customer-pop-title"><i
-                                            class="feather icon-users mr-1"></i><lang class="lang_choose_customer_2">Choose customer</lang></span>
+                                            class="feather icon-users mr-1"></i><lang class="lang_customer_details">Customer details</lang></span>
                                     <a href="javascript:void(0)" class="sales-customer-pop-x"
                                         id="sales_customer_pop_close" title="Close" data-t-title="lang_close_title"><lang class="lang_text">&times;</lang></a>
                                 </div>
-                                <div class="input-group bootstrap-touchspin sales-customer-search-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text sales-customer-search-ic"><i
-                                                class="feather icon-search"></i></span>
-                                    </div>
-                                    <input type="text" id="sales_new_customer_name" placeholder="Search name or phone…" data-t-placeholder="lang_search_name_or_phone"
-                                        class="form-control border-control osk-trigger clear-sale-text" required
-                                        autocomplete="off">
-                                </div>
+                                <p class="text-muted"><lang class="lang_bill_customer_details_help">Optional details for this bill. Use Add new customer to save a customer record.</lang></p>
+                                <label><lang class="lang_phone">Phone:</lang><input type="tel" name="sales_new_customer_phone" id="sales_new_customer_phone" class="form-control" maxlength="40"></label>
+                                <label><lang class="lang_email">Email:</lang><input type="email" name="sales_new_customer_email" id="sales_new_customer_email" class="form-control" maxlength="254"></label>
+                                <label><lang class="lang_address">Address:</lang><textarea name="sales_new_customer_address" id="sales_new_customer_address" class="form-control" maxlength="500"></textarea></label>
                                 <!-- Recency (owner feedback): the last 10 customers picked
                                      on this till, rendered from a localStorage LRU. -->
                                 <div id="sales_recent_customers" style="display:none; max-height:220px; overflow-y:auto;"></div>
@@ -677,9 +667,6 @@
                     <input type="hidden" name="grand_total" id="grand_total"
                         class="form-control amount-input sales_price_fields" disabled="disabled" />
                     <input name="sales_new_customer_id" id="sales_new_customer_id" type="hidden">
-                    <input name="sales_new_customer_phone" id="sales_new_customer_phone" type="hidden">
-                    <input name="sales_new_customer_address" id="sales_new_customer_address" type="hidden">
-                    <input name="sales_new_customer_email" id="sales_new_customer_email" type="hidden">
                     <input name="sales_new_customer_state" id="sales_new_customer_state" type="hidden" />
                     <input name="sales_new_customer_country" id="sales_new_customer_country" type="hidden" />
                     <input name="sales_new_customer_gst_type" id="sales_new_customer_gst_type" type="hidden" />
