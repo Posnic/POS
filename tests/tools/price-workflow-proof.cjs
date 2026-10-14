@@ -148,6 +148,13 @@ const out =
         ]);
       });
       await page.waitForSelector('[data-price-field="selling_price"]');
+      assert.equal(
+        await page.$eval("#ps-file-tab", (e) =>
+          e.getAttribute("aria-selected"),
+        ),
+        "true",
+      );
+      assert.equal(await page.$eval("#ps-direct-panel", (e) => e.hidden), true);
       assert.equal(await page.$eval("#ps-branches", (e) => e.hidden), !multi);
       await page.$eval('[data-price-field="selling_price"]', (e) => {
         e.value = "110";
@@ -175,6 +182,9 @@ const out =
         ),
         false,
       );
+      await page.waitForFunction(
+        () => !document.querySelector("#ps-sheet-prepare").disabled,
+      );
       await page.screenshot({
         path: path.join(out, `file-${width}-${dark ? "dark" : "light"}.png`),
         fullPage: true,
@@ -200,7 +210,17 @@ const out =
         $("#ps-job-view").text().includes("Price update scheduled"),
       );
       await page.click("#ps-sheet .ps-dialog-header button");
-      await page.evaluate(() => PosnicPro.pricesettings.sheetHistory(1));
+      await page.click("#ps-schedules-tab");
+      await page.waitForSelector("#ps-sheet-history table");
+      assert.equal(await page.$eval("#ps-file-panel", (e) => e.hidden), true);
+      assert.equal(await page.$eval("#ps-branches", (e) => e.hidden), true);
+      await page.screenshot({
+        path: path.join(
+          out,
+          `schedules-${width}-${dark ? "dark" : "light"}.png`,
+        ),
+        fullPage: true,
+      });
       assert.equal(
         await page.$eval("#ps-sheet-history", (e) =>
           e.textContent.includes("Diwali offer"),
@@ -211,6 +231,22 @@ const out =
         await page.$eval("#ps-sheet-history", (e) =>
           e.textContent.includes(".xlsx"),
         ),
+        false,
+      );
+      await page.evaluate(() =>
+        [...document.querySelectorAll(".ps-job-actions button")]
+          .find((e) => e.textContent === "Edit")
+          .click(),
+      );
+      await page.waitForFunction(() => document.activeElement.id === "ps-when");
+      assert.equal(
+        await page.$eval("#ps-schedules-panel", (e) => e.hidden),
+        true,
+      );
+      await page.click("#ps-sheet .ps-dialog-header button");
+      await page.waitForSelector("#ps-sheet-history table");
+      assert.equal(
+        await page.$eval("#ps-schedules-panel", (e) => e.hidden),
         false,
       );
     }
