@@ -5,7 +5,7 @@
   var priceBranches = [],
     selectedBranches = [],
     branchScopeKey = "",
-    editingMode = "direct",
+    editingMode = "file",
     reviewScreen = false;
   function branchName(id) {
     var branch = priceBranches.find(function (b) {
@@ -28,11 +28,25 @@
         return b.id === id;
       });
     });
-    var box = $("#ps-branches")
+    var container = $("#ps-branches")
       .empty()
-      .prop("hidden", priceBranches.length <= 1);
+      .prop("hidden", priceBranches.length <= 1 || editingMode === "schedules");
     if (priceBranches.length <= 1) return;
-    $("<strong>").text("Apply prices to").appendTo(box);
+    var picker = $("<details>").appendTo(container);
+    function selectionLabel() {
+      picker
+        .find("summary")
+        .text(
+          "Apply prices to: " +
+            selectedBranches.length +
+            " of " +
+            priceBranches.length +
+            " branches",
+        );
+    }
+    $('<summary class="btn btn-light">').appendTo(picker);
+    selectionLabel();
+    var box = $('<div class="ps-branch-options">').appendTo(picker);
     $('<button class="btn btn-light ml-2">')
       .text("All accessible branches")
       .on("click", function () {
@@ -46,6 +60,7 @@
       })
       .appendTo(box);
     priceBranches.forEach(function (b) {
+      var row = $('<div class="ps-branch-row">').appendTo(box);
       $('<label class="m-2">')
         .append(
           $('<input type="checkbox">')
@@ -56,13 +71,14 @@
                   return this.value;
                 })
                 .get();
+              selectionLabel();
               p.gridLoad(1);
               p.sheetCount();
             })
             .val(b.id),
           document.createTextNode(" " + branchName(b.id)),
         )
-        .appendTo(box);
+        .appendTo(row);
       $('<button class="btn btn-link btn-sm">')
         .text("Edit code")
         .on("click", async function () {
@@ -78,7 +94,7 @@
             error(e);
           }
         })
-        .appendTo(box);
+        .appendTo(row);
     });
   }
   function t(key, fallback) {
@@ -136,13 +152,18 @@
   };
   p.editMode = function (mode) {
     editingMode = mode;
-    ["direct", "file"].forEach(function (name) {
+    ["file", "direct", "schedules"].forEach(function (name) {
       var active = name === mode;
       $("#ps-" + name + "-panel").prop("hidden", !active);
       $("#ps-" + name + "-tab")
         .attr("aria-selected", String(active))
         .attr("tabindex", active ? "0" : "-1");
     });
+    $("#ps-branches").prop(
+      "hidden",
+      mode === "schedules" || priceBranches.length <= 1,
+    );
+    if (mode === "schedules") p.sheetHistory(historyPage);
     if (mode === "file") {
       p.sheetOpen("download");
     }
@@ -150,14 +171,16 @@
   p.editModeKey = function (event) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
+    var modes = ["file", "direct", "schedules"],
+      index = modes.indexOf(editingMode);
     var mode =
-      event.key === "Home"
-        ? "direct"
-        : event.key === "End"
-          ? "file"
-          : $("#ps-direct-panel").prop("hidden")
-            ? "direct"
-            : "file";
+      modes[
+        event.key === "Home"
+          ? 0
+          : event.key === "End"
+            ? 2
+            : (index + (event.key === "ArrowRight" ? 1 : 2)) % 3
+      ];
     p.editMode(mode);
     $("#ps-" + mode + "-tab").focus();
   };
@@ -412,6 +435,7 @@
     loadBranches()
       .then(function () {
         p.gridLoad(1);
+        p.editMode(editingMode);
       })
       .catch(error);
   };
@@ -566,7 +590,7 @@
     if (reviewScreen) {
       reviewScreen = false;
       $("#ps-sheet").removeClass("ps-review-screen");
-      $("#ps-grid > .ps-edit-tabs, #ps-grid > details").prop("hidden", false);
+      $("#ps-grid > .ps-edit-tabs").prop("hidden", false);
       $("#ps-branches").prop("hidden", priceBranches.length <= 1);
       p.editMode(editingMode);
     }
@@ -586,15 +610,16 @@
       which === "download" ? "Download price sheet" : "Import price updates",
     );
     filter = "changes";
-    var box = $("#ps-sheet-fields").empty();
-    Object.keys(fields).forEach(function (f) {
-      $('<label class="mr-3">')
-        .append(
-          $('<input type="checkbox">').val(f).prop("checked", !!visible[f]),
-          document.createTextNode(" " + fields[f]),
-        )
-        .appendTo(box);
-    });
+    var box = $("#ps-sheet-fields");
+    if (!box.children().length)
+      Object.keys(fields).forEach(function (f) {
+        $('<label class="mr-3">')
+          .append(
+            $('<input type="checkbox">').val(f).prop("checked", !!visible[f]),
+            document.createTextNode(" " + fields[f]),
+          )
+          .appendTo(box);
+      });
     if (which === "download") p.sheetCount();
     if (which === "import") $("#ps-sheet-file").focus();
   };
@@ -743,11 +768,13 @@
     if (dialog.open) dialog.close();
     $(dialog).addClass("ps-review-screen").attr("open", "");
     $(
-      "#ps-direct-panel, #ps-file-panel, #ps-branches, #ps-grid > .ps-edit-tabs, #ps-grid > details",
+      "#ps-direct-panel, #ps-file-panel, #ps-schedules-panel, #ps-branches, #ps-grid > .ps-edit-tabs",
     ).prop("hidden", true);
     $("#ps-sheet-download, #ps-sheet-import").prop("hidden", true);
     $("#ps-sheet-title").text("Review price changes · " + data.job.status);
-    $("#ps-sheet .ps-dialog-header button").text("Back to editing");
+    $("#ps-sheet .ps-dialog-header button").text(
+      editingMode === "schedules" ? "Back to schedules" : "Back to editing",
+    );
     var box = $("#ps-job-view").prop("hidden", false).empty(),
       c = data.counts;
     if (data.job.exportedAt && data.job.exportedAt.length)
@@ -1140,32 +1167,128 @@
       $(button).prop("disabled", false);
     }
   };
+  var historyPage = 1,
+    historyStatus = "upcoming",
+    historySequence = 0;
+  p.scheduleFilter = function (status) {
+    historyStatus = status;
+    $("[data-job-status]").each(function () {
+      $(this).attr("aria-pressed", String(this.dataset.jobStatus === status));
+    });
+    p.sheetHistory(1);
+  };
   p.sheetHistory = async function (page) {
+    var request = ++historySequence,
+      box = $("#ps-sheet-history").empty();
+    box.text("Loading updates…");
     try {
       var result = await api({
-          action: "list",
-          page: page || 1,
-          status: $("#ps-jobs-filter").val(),
-          pageSize: 10,
-        }),
-        jobs = result.jobs,
-        box = $("#ps-sheet-history").empty();
-      jobs.forEach(function (j) {
-        $('<button class="btn btn-light d-block my-2">')
-          .text(
-            (j.note || "Price update") +
-              " · " +
-              j.status +
-              " · " +
-              new Date(j.effectiveAt || j.created_date).toLocaleString(),
-          )
-          .on("click", function () {
-            filter = "changes";
-            p.sheetJob(j._id);
-          })
-          .appendTo(box);
+        action: "list",
+        page: page || 1,
+        status: historyStatus,
+        pageSize: Number($("#ps-jobs-size").val()) || 10,
       });
-      if (!jobs.length) $("<p>").text("No updates in this view.").appendTo(box);
+      if (request !== historySequence) return;
+      if (!result.jobs.length && result.page > 1)
+        return p.sheetHistory(result.page - 1);
+      historyPage = result.page;
+      box.empty();
+      var wrap = $('<div class="table-responsive">').appendTo(box),
+        table = $('<table class="ps-jobs-table">').appendTo(wrap),
+        head = $("<tr>").appendTo($("<thead>").appendTo(table)),
+        body = $("<tbody>").appendTo(table);
+      ["Note / description", "Timing"]
+        .concat(priceBranches.length > 1 ? ["Branches"] : [])
+        .concat(["Status", "Actions"])
+        .forEach(function (label) {
+          $('<th scope="col">').text(label).appendTo(head);
+        });
+      result.jobs.forEach(function (j) {
+        var row = $("<tr>").appendTo(body);
+        $("<td>")
+          .text(j.note || "Price update")
+          .appendTo(row);
+        $("<td>")
+          .text(
+            j.effectiveAt
+              ? new Date(j.effectiveAt).toLocaleString()
+              : "Created " + new Date(j.created_date).toLocaleString(),
+          )
+          .appendTo(row);
+        if (priceBranches.length > 1)
+          $("<td>")
+            .text((j.branchIds || [j.branch_id]).map(branchName).join(", "))
+            .appendTo(row);
+        var labels = {
+          scheduled: "Scheduled",
+          running: "Applying",
+          attention: "Needs attention",
+          review: "Needs review",
+          draft: "Unfinished upload",
+          complete: "Completed",
+          cancelled: "Cancelled",
+        };
+        $('<span class="ps-job-status">')
+          .text(labels[j.status] || j.status)
+          .appendTo($("<td>").appendTo(row));
+        var actions = $('<div class="ps-job-actions">').appendTo(
+          $("<td>").appendTo(row),
+        );
+        async function open(edit) {
+          filter = "changes";
+          await p.sheetJob(j._id);
+          if (edit) $("#ps-when").focus();
+        }
+        $('<button type="button" class="btn btn-light btn-sm">')
+          .text("View")
+          .on("click", function () {
+            open(false);
+          })
+          .appendTo(actions);
+        if (["scheduled", "review", "attention"].includes(j.status)) {
+          $('<button type="button" class="btn btn-light btn-sm">')
+            .text("Edit")
+            .on("click", open)
+            .appendTo(actions);
+          $('<button type="button" class="btn btn-light btn-sm">')
+            .text("Cancel")
+            .on("click", async function () {
+              if (
+                !window.confirm(
+                  "Cancel this price update? It will no longer be applied.",
+                )
+              )
+                return;
+              $(this).prop("disabled", true);
+              try {
+                await api({
+                  action: "cancel",
+                  jobId: j._id,
+                  revision: j.revision || 0,
+                });
+                await p.sheetHistory(historyPage);
+              } catch (e) {
+                $(this).prop("disabled", false);
+                box.find(".ps-list-error").remove();
+                $('<p class="ps-list-error" role="alert">')
+                  .text(e.message)
+                  .prependTo(box);
+                error(e);
+              }
+            })
+            .appendTo(actions);
+        }
+      });
+      if (!result.jobs.length) {
+        wrap.remove();
+        $('<p class="ps-empty">')
+          .text(
+            "No " +
+              (historyStatus === "complete" ? "completed" : historyStatus) +
+              " updates.",
+          )
+          .appendTo(box);
+      }
       var pager = $('<div class="ps-pager">').appendTo(box);
       $('<button class="btn btn-light">')
         .text("Previous")
@@ -1179,7 +1302,10 @@
           "Page " +
             result.page +
             " of " +
-            Math.max(1, Math.ceil(result.total / result.pageSize)),
+            Math.max(1, Math.ceil(result.total / result.pageSize)) +
+            " · " +
+            result.total +
+            " updates",
         )
         .appendTo(pager);
       $('<button class="btn btn-light">')
@@ -1190,6 +1316,8 @@
         })
         .appendTo(pager);
     } catch (e) {
+      if (request === historySequence)
+        box.text("Could not load updates. Select the status again to retry.");
       error(e);
     }
   };
