@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Dette endrer en feilregistrert regning og betaling. Ingen penger innkreves eller refunderes.",
   "lang_paid_bill_use_return": "Hvis pengene faktisk ble mottatt, bruk Returner varer for å registrere refusjonen i stedet.",
   "lang_paid_bill_previous": "Tidligere registrert",
-  "lang_paid_bill_corrected": "Korrigert regning"
+  "lang_paid_bill_corrected": "Korrigert regning",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Last inn siden på nytt for å gjennomgå korrigeringen av den betalte regningen."
 }

@@ -4740,5 +4740,6 @@
   "lang_paid_bill_no_movement": "这会更改错误记录的账单和付款。不收款或退款。",
   "lang_paid_bill_use_return": "如果实际收到了原始款项，则改用退货来记录退款。",
   "lang_paid_bill_previous": "之前录制的",
-  "lang_paid_bill_corrected": "更正后的账单"
+  "lang_paid_bill_corrected": "更正后的账单",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "重新加载此页面以查看已付账单更正。"
 }

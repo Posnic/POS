@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "זה משנה חשבון ותשלום שנרשמו בצורה שגויה. כסף לא נאסף או מוחזר.",
   "lang_paid_bill_use_return": "אם הכסף המקורי נאסף בפועל, השתמש בפריטים החזר כדי לרשום את ההחזר במקום זאת.",
   "lang_paid_bill_previous": "הוקלט בעבר",
-  "lang_paid_bill_corrected": "הצעת חוק מתוקנת"
+  "lang_paid_bill_corrected": "הצעת חוק מתוקנת",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "טען מחדש דף זה כדי לבדוק את תיקון החשבונות בתשלום."
 }

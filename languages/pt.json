@@ -4819,5 +4819,6 @@
   "lang_paid_bill_no_movement": "Isso altera uma fatura e um pagamento registrados incorretamente. Nenhum dinheiro é coletado ou reembolsado.",
   "lang_paid_bill_use_return": "Se o dinheiro original foi realmente coletado, use itens de devolução para registrar o reembolso.",
   "lang_paid_bill_previous": "Gravado anteriormente",
-  "lang_paid_bill_corrected": "Fatura corrigida"
+  "lang_paid_bill_corrected": "Fatura corrigida",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Recarregue esta página para revisar a correção da fatura paga."
 }

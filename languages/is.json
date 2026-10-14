@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Þetta breytir ranglega skráðum reikningi og greiðslu. Engir peningar eru innheimtir eða endurgreiddir.",
   "lang_paid_bill_use_return": "Ef upphaflega peningurinn var í raun safnað skaltu nota Return atriði til að skrá endurgreiðsluna í staðinn.",
   "lang_paid_bill_previous": "Áður skráð",
-  "lang_paid_bill_corrected": "Leiðrétt frumvarp"
+  "lang_paid_bill_corrected": "Leiðrétt frumvarp",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Endurhlaða þessari síðu til að fara yfir leiðréttingu greidds reiknings."
 }

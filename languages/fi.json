@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Tämä muuttaa väärin kirjattua laskua ja maksua. Rahaa ei kerätä tai palauteta.",
   "lang_paid_bill_use_return": "Jos alkuperäinen raha on todella kerätty, kirjoita palautus sen sijaan käyttämällä Palautuskohteita.",
   "lang_paid_bill_previous": "Aiemmin tallennettu",
-  "lang_paid_bill_corrected": "Korjattu lasku"
+  "lang_paid_bill_corrected": "Korjattu lasku",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Lataa tämä sivu uudelleen tarkistaaksesi maksetun laskun korjauksen."
 }

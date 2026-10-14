@@ -4819,5 +4819,6 @@
   "lang_paid_bill_no_movement": "สิ่งนี้จะเปลี่ยนบิลและการชำระเงินที่บันทึกไม่ถูกต้องไม่มีการเก็บเงินหรือคืนเงิน",
   "lang_paid_bill_use_return": "หากมีการรวบรวมเงินเดิมจริง ให้ใช้รายการคืนเพื่อบันทึกการคืนเงินแทน",
   "lang_paid_bill_previous": "บันทึกไว้ก่อนหน้านี้",
-  "lang_paid_bill_corrected": "บิลที่ถูกแก้ไข"
+  "lang_paid_bill_corrected": "บิลที่ถูกแก้ไข",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "โหลดหน้านี้ใหม่เพื่อตรวจสอบการแก้ไขบิลที่ชำระแล้ว"
 }

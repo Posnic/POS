@@ -238,6 +238,9 @@
   "Below referral minimum spend": [
     "src/services/loyalty.service.js"
   ],
+  "Bill correction saved.": [
+    "src/services/paid-bill-edit.js"
+  ],
   "Branch Data Exported": [
     "src/models/branch.model.js"
   ],
@@ -816,6 +819,8 @@
     "src/repositories/sale.repository.js"
   ],
   "Exact numeric search must be on or off": [
+    "src/controllers/settings.controller.js",
+    "src/models/setting.model.js",
     "src/repositories/settings.repository.js"
   ],
   "Expense Data Exported": [
@@ -1891,6 +1896,9 @@
   ],
   "Review the basket before checkout.": [
     "src/controllers/ask-posnic.controller.js"
+  ],
+  "Review the paid bill correction before saving.": [
+    "src/services/sale.service.js"
   ],
   "Review the remaining work before confirming.": [
     "src/controllers/ask-posnic.controller.js"

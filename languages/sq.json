@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Kjo ndryshon një faturë dhe pagesë të regjistruar gabimisht. Asnjë paratë nuk mblidhen apo rimbursohen.",
   "lang_paid_bill_use_return": "Nëse paratë origjinale janë mbledhur në të vërtetë, përdorni artikujt e kthimit për të regjistruar rimbursimin.",
   "lang_paid_bill_previous": "Regjistruar më parë",
-  "lang_paid_bill_corrected": "Faturë e korrigjuar"
+  "lang_paid_bill_corrected": "Faturë e korrigjuar",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Rishikoni këtë faqe për të rishikuar korrigjimin e faturës së paguar."
 }

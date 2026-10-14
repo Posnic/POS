@@ -4839,5 +4839,6 @@
   "lang_paid_bill_no_movement": "Dit wijzigt een verkeerd geregistreerde factuur en betaling. Er wordt geen geld geïnd of terugbetaald.",
   "lang_paid_bill_use_return": "Als het oorspronkelijke geld daadwerkelijk is geïnd, gebruik dan Retourartikelen om de terugbetaling vast te leggen.",
   "lang_paid_bill_previous": "Eerder opgenomen",
-  "lang_paid_bill_corrected": "Gecorrigeerde factuur"
+  "lang_paid_bill_corrected": "Gecorrigeerde factuur",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Laad deze pagina opnieuw om de correctie van de betaalde factuur te bekijken."
 }

@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "To spremeni napačno evidentiran račun in plačilo. Denar se ne zbira ali vrača.",
   "lang_paid_bill_use_return": "Če je bil prvotni denar dejansko zbran, uporabite vrnitev artiklov, da namesto tega zabeležite vračilo.",
   "lang_paid_bill_previous": "Prej zabeleženo",
-  "lang_paid_bill_corrected": "Popravljen račun"
+  "lang_paid_bill_corrected": "Popravljen račun",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Ponovno naložite to stran, če želite pregledati popravek plačanega računa."
 }

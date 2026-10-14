@@ -4740,5 +4740,6 @@
   "lang_paid_bill_no_movement": "यामुळे चुकीने रेकॉर्ड केलेले बिल आणि देय कोणतेही पैसे गोळा होत नाही किंवा परत",
   "lang_paid_bill_use_return": "मूळ पैसे खरोखर गोळा केले गेले असल्यास, त्याऐवजी परतावा रेकॉर्ड",
   "lang_paid_bill_previous": "पूर्वी नोंद",
-  "lang_paid_bill_corrected": "सुधारित बि"
+  "lang_paid_bill_corrected": "सुधारित बि",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "पैड बिल दुरुस्तीचे पुनरावलोकन करण्यासाठी हे पृ"
 }

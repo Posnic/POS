@@ -4740,5 +4740,6 @@
   "lang_paid_bill_no_movement": "Điều này làm thay đổi hóa đơn và thanh toán được ghi sai. Không có tiền được thu hoặc hoàn lại.",
   "lang_paid_bill_use_return": "Nếu số tiền ban đầu đã thực sự được thu thập, hãy sử dụng các mặt hàng trả lại để ghi lại khoản hoàn lại.",
   "lang_paid_bill_previous": "Được ghi lại trước đây",
-  "lang_paid_bill_corrected": "Hóa đơn đã sửa"
+  "lang_paid_bill_corrected": "Hóa đơn đã sửa",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Tải lại trang này để xem lại việc chỉnh sửa hóa đơn đã thanh toán."
 }

@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "این یک قبض و پرداخت ضبط اشتباه را تغییر می دهد. هیچ پولی جمع آوری یا بازپرداخت نمی شود.",
   "lang_paid_bill_use_return": "اگر پول اصلی واقعاً جمع آوری شده بود، به جای آن از موارد برگشت برای ثبت بازپرداخت استفاده کنید.",
   "lang_paid_bill_previous": "قبلا ضبط شده",
-  "lang_paid_bill_corrected": "لایحه تصحیح شده"
+  "lang_paid_bill_corrected": "لایحه تصحیح شده",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "برای بررسی تصحیح صورتحساب پرداخت شده، این صفحه را دوباره بارگذاری کنید."
 }

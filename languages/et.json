@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "See muudab valesti registreeritud arvet ja makset. Raha ei koguta ega tagastata.",
   "lang_paid_bill_use_return": "Kui algne raha koguti tegelikult, kasutage tagasimakse registreerimiseks selle asemel tagastusesemeid.",
   "lang_paid_bill_previous": "Varem salvestatud",
-  "lang_paid_bill_corrected": "Parandatud arve"
+  "lang_paid_bill_corrected": "Parandatud arve",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Tasulise arve paranduse ülevaatamiseks laadige see leht uuesti."
 }

@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Detta ändrar en felaktigt registrerad faktura och betalning. Inga pengar samlas in eller återbetalas.",
   "lang_paid_bill_use_return": "Om de ursprungliga pengarna faktiskt samlades in använder du Returvaror för att registrera återbetalningen istället.",
   "lang_paid_bill_previous": "Tidigare inspelad",
-  "lang_paid_bill_corrected": "Korrigerad räkning"
+  "lang_paid_bill_corrected": "Korrigerad räkning",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Ladda om den här sidan för att granska den betalda fakturakorrigeringen."
 }

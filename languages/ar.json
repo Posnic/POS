@@ -4819,5 +4819,6 @@
   "lang_paid_bill_no_movement": "يؤدي هذا إلى تغيير الفاتورة والدفع المسجلين بشكل خاطئ. لا يتم جمع أي أموال أو استردادها.",
   "lang_paid_bill_use_return": "إذا تم جمع الأموال الأصلية بالفعل، فاستخدم عناصر الإرجاع لتسجيل استرداد الأموال بدلاً من ذلك.",
   "lang_paid_bill_previous": "تم تسجيله مسبقًا",
-  "lang_paid_bill_corrected": "فاتورة مصححة"
+  "lang_paid_bill_corrected": "فاتورة مصححة",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "أعد تحميل هذه الصفحة لمراجعة تصحيح الفاتورة المدفوعة."
 }

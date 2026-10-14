@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Acest lucru modifică o factură și o plată înregistrate greșit. Nu se colectează sau se rambursează bani.",
   "lang_paid_bill_use_return": "Dacă banii inițiali au fost colectați efectiv, utilizați Returnarea articolelor pentru a înregistra rambursarea.",
   "lang_paid_bill_previous": "Înregistrat anterior",
-  "lang_paid_bill_corrected": "Factură corectată"
+  "lang_paid_bill_corrected": "Factură corectată",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Reîncărcați această pagină pentru a examina corecția facturii plătite."
 }

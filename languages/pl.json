@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Zmienia to błędnie zarejestrowany rachunek i płatność. Żadne pieniądze nie są zbierane ani zwracane.",
   "lang_paid_bill_use_return": "Jeśli oryginalne pieniądze zostały faktycznie odebrane, użyj opcji Zwrot przedmiotów, aby zarejestrować zwrot pieniędzy.",
   "lang_paid_bill_previous": "Wcześniej nagrane",
-  "lang_paid_bill_corrected": "Poprawiony rachunek"
+  "lang_paid_bill_corrected": "Poprawiony rachunek",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Załaduj ponownie tę stronę, aby przejrzeć opłaconą korektę rachunku."
 }

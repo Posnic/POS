@@ -4740,5 +4740,6 @@
   "lang_paid_bill_no_movement": "Bu, yanlış kaydedilen fatura ve ödemeyi değiştirir. Para tahsil edilmez veya iade edilmez.",
   "lang_paid_bill_use_return": "Orijinal para gerçekten tahsil edildiyse, bunun yerine geri ödemeyi kaydetmek için İade öğelerini kullanın.",
   "lang_paid_bill_previous": "Daha önce kaydedilmiş",
-  "lang_paid_bill_corrected": "Düzeltilmiş fatura"
+  "lang_paid_bill_corrected": "Düzeltilmiş fatura",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Ücretli fatura düzeltmesini incelemek için bu sayfayı yeniden yükleyin."
 }

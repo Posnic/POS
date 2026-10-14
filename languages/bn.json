@@ -4740,5 +4740,6 @@
   "lang_paid_bill_no_movement": "এটি ভুলভাবে রেকর্ড করা বিল এবং পেমেন্ট পরিবর্তন করে। কোন টাকা সংগ্রহ বা ফেরত দেওয়া হয় না।",
   "lang_paid_bill_use_return": "যদি আসলে মূল অর্থ সংগ্রহ করা হয় তবে পরিবর্তে ফেরত রেকর্ড করতে রিটার্ন আইটেমগুলি ব্যবহার করুন।",
   "lang_paid_bill_previous": "পূর্বে রেকর্ড করা হয়েছে",
-  "lang_paid_bill_corrected": "সংশোধিত বিল"
+  "lang_paid_bill_corrected": "সংশোধিত বিল",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "প্রদান করা বিল সংশোধন পর্যালোচনা করতে এই পৃষ্ঠাটি পুনরায়"
 }

@@ -4819,5 +4819,6 @@
   "lang_paid_bill_no_movement": "Cela modifie une facture et un paiement mal enregistrés. Aucun argent n'est collecté ou remboursé.",
   "lang_paid_bill_use_return": "Si l'argent initial a effectivement été collecté, utilisez plutôt l'option Retourner les articles pour enregistrer le remboursement.",
   "lang_paid_bill_previous": "Enregistré précédemment",
-  "lang_paid_bill_corrected": "Facture corrigée"
+  "lang_paid_bill_corrected": "Facture corrigée",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Rechargez cette page pour consulter la correction de la facture payée."
 }

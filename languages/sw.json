@@ -4819,5 +4819,6 @@
   "lang_paid_bill_no_movement": "Hii inabadilisha bili na malipo iliyorekodiwa vibaya. Hakuna fedha zinazokusanywa au kurejeshwa.",
   "lang_paid_bill_use_return": "Ikiwa pesa za awali zilikusanywa kweli, tumia vitu vya Kurudi kurekodi malipo badala yake.",
   "lang_paid_bill_previous": "Imerekodiwa hapo",
-  "lang_paid_bill_corrected": "Muswada uliorekebishwa"
+  "lang_paid_bill_corrected": "Muswada uliorekebishwa",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Pakia upya ukurasa huu ili kukagua marekebisho ya bili iliyolipwa."
 }

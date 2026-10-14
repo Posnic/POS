@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Увімкнути кошик перед видаленням продажів",
   "Only super admins can change the sale hard-delete setting": "Тільки суперадміністратори можуть змінити налаштування жорсткого видалення продажу",
   "Finish the pending payment correction before closing this register.": "Завершіть виправлення очікуваних платежів перед закриттям цього реєстру.",
-  "Finish the pending payment correction first.": "Спочатку завершіть виправлення очікуваного платежу."
+  "Finish the pending payment correction first.": "Спочатку завершіть виправлення очікуваного платежу.",
+  "Bill correction saved.": "Виправлення рахунків збережено.",
+  "Review the paid bill correction before saving.": "Перегляньте виправлення оплаченого рахунку перед збереженням."
 }

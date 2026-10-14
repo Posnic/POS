@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "ਇਹ ਗਲਤ ਰਿਕਾਰਡ ਕੀਤੇ ਬਿੱਲ ਅਤੇ ਭੁਗਤਾਨ ਨੂੰ ਬਦਲਦਾ ਹੈ. ਕੋਈ ਪੈਸਾ ਇਕੱਠਾ ਜਾਂ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾਂਦਾ.",
   "lang_paid_bill_use_return": "ਜੇ ਅਸਲ ਪੈਸਾ ਅਸਲ ਵਿੱਚ ਇਕੱਠਾ ਕੀਤਾ ਗਿਆ ਸੀ, ਤਾਂ ਰਿਫੰਡ ਨੂੰ ਰਿਕਾਰਡ ਕਰਨ ਲਈ ਵਾਪਸੀ ਆਈਟਮਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ.",
   "lang_paid_bill_previous": "ਪਹਿਲਾਂ ਰਿਕਾਰਡ ਕੀਤਾ ਗਿਆ",
-  "lang_paid_bill_corrected": "ਠੀਕ ਕੀਤਾ ਬਿੱਲ"
+  "lang_paid_bill_corrected": "ਠੀਕ ਕੀਤਾ ਬਿੱਲ",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "ਭੁਗਤਾਨ ਕੀਤੇ ਬਿੱਲ ਸੁਧਾਰ ਦੀ ਸਮੀਖਿਆ ਕਰਨ ਲਈ ਇਸ ਪੰਨੇ ਨੂੰ ਦੁਬਾਰਾ"
 }

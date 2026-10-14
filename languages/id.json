@@ -4819,5 +4819,6 @@
   "lang_paid_bill_no_movement": "Ini mengubah tagihan dan pembayaran yang salah dicatat. Tidak ada uang yang dikumpulkan atau dikembalikan.",
   "lang_paid_bill_use_return": "Jika uang asli benar-benar dikumpulkan, gunakan item Kembalikan untuk mencatat pengembalian uang sebagai gantinya.",
   "lang_paid_bill_previous": "Sebelumnya direkam",
-  "lang_paid_bill_corrected": "Tagihan yang dikoreksi"
+  "lang_paid_bill_corrected": "Tagihan yang dikoreksi",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Muat ulang halaman ini untuk meninjau koreksi tagihan berbayar."
 }

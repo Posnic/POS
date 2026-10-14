@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Pirms pārdošanas izdzēšanas iespējojiet atkritni",
   "Only super admins can change the sale hard-delete setting": "Tikai super administratori var mainīt pārdošanas cietās dzēšanas iestatījumu",
   "Finish the pending payment correction before closing this register.": "Pirms šī reģistra slēgšanas pabeidziet gaidāmo maksājumu korekciju.",
-  "Finish the pending payment correction first.": "Vispirms pabeidziet gaidāmo maksājumu korekciju."
+  "Finish the pending payment correction first.": "Vispirms pabeidziet gaidāmo maksājumu korekciju.",
+  "Bill correction saved.": "Rēķina korekcija saglabāta.",
+  "Review the paid bill correction before saving.": "Pirms ietaupīšanas pārskatiet apmaksāto rēķina korekciju."
 }

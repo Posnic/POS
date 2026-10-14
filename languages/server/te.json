@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "అమ్మకాలను తొలగించే ముందు రీసైకిల్ బిన్ను ప్రారంభించండి",
   "Only super admins can change the sale hard-delete setting": "సూపర్ అడ్మిన్లు మాత్రమే సేల్ హార్డ్-డిలీట్ సెట్టింగ్ను మార్చగలరు",
   "Finish the pending payment correction before closing this register.": "ఈ రిజిస్టర్ను మూసివేసే ముందు పెండింగ్ చెల్లింపు దిద్దుబాటును పూర్తి చేయండి.",
-  "Finish the pending payment correction first.": "మొదట పెండింగ్లో ఉన్న చెల్లింపు దిద్దుబాటును పూర్తి చేయండి."
+  "Finish the pending payment correction first.": "మొదట పెండింగ్లో ఉన్న చెల్లింపు దిద్దుబాటును పూర్తి చేయండి.",
+  "Bill correction saved.": "బిల్ దిద్దుబాటు సేవ్ చేయబడింది.",
+  "Review the paid bill correction before saving.": "ఆదా చేయడానికి ముందు చెల్లించిన బిల్లు దిద్దుబాటును సమీక్షించండి."
 }

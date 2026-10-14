@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Cumasaigh Bosca Athchúrsála sula scriosann",
   "Only super admins can change the sale hard-delete setting": "Ní féidir ach sár-riarthóirí an socrú a scriosadh crua-díola a athrú",
   "Finish the pending payment correction before closing this register.": "Críochnaigh an ceartú íocaíochta atá ar feitheamh sula ndúnfaidh",
-  "Finish the pending payment correction first.": "Críochnaigh an ceartú íocaíochta ar feithe"
+  "Finish the pending payment correction first.": "Críochnaigh an ceartú íocaíochta ar feithe",
+  "Bill correction saved.": "Sábháilte ceartú bille.",
+  "Review the paid bill correction before saving.": "Déan athbhreithniú ar an gceartú bille íoctha"
 }

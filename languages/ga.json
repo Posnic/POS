@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Athraíonn sé seo bille agus íocaíocht a thaifeadadh go mícheart. Ní bhailítear nó aisíoctar aon airgead.",
   "lang_paid_bill_use_return": "Má bailíodh an t-airgead bunaidh i ndáiríre, bain úsáid as earraí Tuairisceáin chun an aisíocaíocht",
   "lang_paid_bill_previous": "Taifeadadh roimhe",
-  "lang_paid_bill_corrected": "Bille ceartaithe"
+  "lang_paid_bill_corrected": "Bille ceartaithe",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Athlódáil an leathanach seo chun an ceartú bille íoctha a athbhreithniú."
 }

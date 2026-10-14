@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Time se mijenja pogrešno evidentirani račun i plaćanje. Novac se ne prikuplja ili vraća.",
   "lang_paid_bill_use_return": "Ako je izvorni novac stvarno prikupljen, upotrijebite Return items da biste umjesto toga zabilježili povrat novca.",
   "lang_paid_bill_previous": "Prethodno snimljeno",
-  "lang_paid_bill_corrected": "Ispravljeni račun"
+  "lang_paid_bill_corrected": "Ispravljeni račun",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Ponovno učitajte ovu stranicu da biste pregledali ispravljanje plaćenog računa."
 }

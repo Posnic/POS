@@ -4740,5 +4740,6 @@
   "lang_paid_bill_no_movement": "اس سے غلط طور پر ریکارڈ کردہ بل اور ادائیگی میں تبدیلی آتی ہے۔ کوئی رقم جمع یا واپس نہیں کی جاتی ہے۔",
   "lang_paid_bill_use_return": "اگر اصل رقم اصل میں جمع کی گئی تھی تو، اس کے بجائے واپسی کو ریکارڈ کرنے کے لئے واپسی کی اشیاء",
   "lang_paid_bill_previous": "پہلے ریکارڈ کیا گیا",
-  "lang_paid_bill_corrected": "درست کردہ بل"
+  "lang_paid_bill_corrected": "درست کردہ بل",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "ادا شدہ بل کی اصلاح کا جائزہ لینے کے لئے اس صفحے کو دوبارہ"
 }

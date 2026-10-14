@@ -4819,5 +4819,6 @@
   "lang_paid_bill_no_movement": "Dadurch werden eine falsch aufgezeichnete Rechnung und Zahlung geändert. Es wird kein Geld eingezogen oder zurückerstattet.",
   "lang_paid_bill_use_return": "Wenn das ursprüngliche Geld tatsächlich eingezogen wurde, verwende stattdessen Artikel zurücksenden, um die Rückerstattung zu erfassen.",
   "lang_paid_bill_previous": "Zuvor aufgenommen",
-  "lang_paid_bill_corrected": "Korrigierte Rechnung"
+  "lang_paid_bill_corrected": "Korrigierte Rechnung",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Laden Sie diese Seite erneut, um die Korrektur der bezahlten Rechnung zu überprüfen."
 }

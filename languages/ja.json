@@ -4740,5 +4740,6 @@
   "lang_paid_bill_no_movement": "これにより、誤って記録された請求書と支払いが変更されます。金銭の回収や返金は行われません。",
   "lang_paid_bill_use_return": "元の金額が実際に回収された場合は、代わりに「返品商品」を使用して返金を記録してください。",
   "lang_paid_bill_previous": "以前に記録された",
-  "lang_paid_bill_corrected": "修正された請求書"
+  "lang_paid_bill_corrected": "修正された請求書",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "このページをリロードして、支払い済み請求書の修正を確認してください。"
 }

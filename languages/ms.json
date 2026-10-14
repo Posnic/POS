@@ -4740,5 +4740,6 @@
   "lang_paid_bill_no_movement": "Ini mengubah bil dan pembayaran yang direkodkan dengan salah. Tiada wang yang dikumpulkan atau dikembalikan.",
   "lang_paid_bill_use_return": "Jika wang asal sebenarnya dikumpulkan, gunakan item Pulangan untuk merekodkan bayaran balik sebagai gantinya.",
   "lang_paid_bill_previous": "Sebelum ini direkodkan",
-  "lang_paid_bill_corrected": "Bil yang diperbetulkan"
+  "lang_paid_bill_corrected": "Bil yang diperbetulkan",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Muat semula halaman ini untuk mengkaji semula pembetulan bil berbayar."
 }

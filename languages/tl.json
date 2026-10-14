@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Binabago nito ang isang maling naitala na bayad at pagbabayad. Walang pera na nakolekta o ibalik.",
   "lang_paid_bill_use_return": "Kung talagang nakolekta ang orihinal na pera, gamitin ang mga Return item upang maitala ang refundasyon sa halip.",
   "lang_paid_bill_previous": "Dati naitala",
-  "lang_paid_bill_corrected": "Natuwid na panukalang"
+  "lang_paid_bill_corrected": "Natuwid na panukalang",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "I-load muli ang pahinang ito upang suriin ang bayad na pagwawasto ng bayad na bill."
 }

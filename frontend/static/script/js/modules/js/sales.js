@@ -5240,7 +5240,7 @@ PosnicPro.sales.editSale = {
             var savedBill = PosnicPro.sales.EditRecentSaleParams;
             if ((savedBill.captain_payment_plan || savedBill.paid_bill_corrected) && savedBill.payment_status === 'Paid') {
                 if (!window.PosnicPaymentCorrection) {
-                    PosnicPro.alert('error', 'Reload this page to review the paid bill correction.');
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_reload_this_page_to_review_the_paid_bill_c', 'Reload this page to review the paid bill correction.'));
                     return false;
                 }
                 loader.find(".loadingSpinner:first").remove();

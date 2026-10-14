@@ -4819,5 +4819,6 @@
   "lang_paid_bill_no_movement": "Ciò modifica una fattura e un pagamento registrati erroneamente. Non viene riscosso o rimborsato alcun denaro.",
   "lang_paid_bill_use_return": "Se il denaro originale è stato effettivamente riscosso, utilizza gli articoli di reso per registrare il rimborso.",
   "lang_paid_bill_previous": "Registrato in precedenza",
-  "lang_paid_bill_corrected": "Fattura corretta"
+  "lang_paid_bill_corrected": "Fattura corretta",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Ricarica questa pagina per esaminare la correzione della fattura pagata."
 }

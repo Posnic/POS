@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Aktifkan Recycle Bin sebelum menghapus penjualan",
   "Only super admins can change the sale hard-delete setting": "Hanya admin super yang dapat mengubah pengaturan hard delete penjualan",
   "Finish the pending payment correction before closing this register.": "Selesaikan koreksi pembayaran yang tertunda sebelum menutup register ini.",
-  "Finish the pending payment correction first.": "Selesaikan koreksi pembayaran yang tertunda terlebih dahulu."
+  "Finish the pending payment correction first.": "Selesaikan koreksi pembayaran yang tertunda terlebih dahulu.",
+  "Bill correction saved.": "Koreksi tagihan disimpan.",
+  "Review the paid bill correction before saving.": "Tinjau koreksi tagihan berbayar sebelum menabung."
 }

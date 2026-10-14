@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Dan ibiddel kont u ħlas irreġistrati b'mod żbaljat. L-ebda flus ma jinġabru jew ma jitħallsu lura.",
   "lang_paid_bill_use_return": "Jekk il-flus oriġinali kienu attwalment miġbura, uża oġġetti Ritorn biex tirreġistra r-rifużjoni minflok.",
   "lang_paid_bill_previous": "Reġistrat qabel",
-  "lang_paid_bill_corrected": "Abbozz ikkoreġut"
+  "lang_paid_bill_corrected": "Abbozz ikkoreġut",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Erġa' tagħbija din il-paġna biex tirrevedi l-korrezzjoni tal-kont imħallas."
 }

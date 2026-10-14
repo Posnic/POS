@@ -4737,5 +4737,6 @@
   "lang_paid_bill_no_movement": "Tai keičia neteisingai įrašytą sąskaitą ir mokėjimą. Pinigai nėra surenkami ir negrąžinami.",
   "lang_paid_bill_use_return": "Jei originalūs pinigai iš tikrųjų buvo surinkti, naudokite Grąžinti elementus, kad įrašytumėte grąžinimą vietoj.",
   "lang_paid_bill_previous": "Anksčiau įrašyta",
-  "lang_paid_bill_corrected": "Pataisyta sąskaita"
+  "lang_paid_bill_corrected": "Pataisyta sąskaita",
+  "lang_reload_this_page_to_review_the_paid_bill_c": "Iš naujo įkelkite šį puslapį, kad peržiūrėtumėte apmokėtos sąskaitos korekciją."
 }

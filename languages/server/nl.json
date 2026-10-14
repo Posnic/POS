@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Schakel de Prullenbak in voordat u verkopen verwijdert",
   "Only super admins can change the sale hard-delete setting": "Alleen superbeheerders kunnen de instelling voor hard verwijderen van de verkoop wijzigen",
   "Finish the pending payment correction before closing this register.": "Voltooi de openstaande betalingscorrectie voordat u dit register sluit.",
-  "Finish the pending payment correction first.": "Voltooi eerst de openstaande betalingscorrectie."
+  "Finish the pending payment correction first.": "Voltooi eerst de openstaande betalingscorrectie.",
+  "Bill correction saved.": "Factuurcorrectie opgeslagen.",
+  "Review the paid bill correction before saving.": "Controleer de correctie van de betaalde factuur voordat u gaat sparen."
 }

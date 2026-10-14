@@ -954,5 +954,7 @@
   "Enable Recycle Bin before deleting sales": "Ative a lixeira antes de excluir as vendas",
   "Only super admins can change the sale hard-delete setting": "Somente superadministradores podem alterar a configuração de exclusão forçada da venda",
   "Finish the pending payment correction before closing this register.": "Conclua a correção do pagamento pendente antes de fechar este registro.",
-  "Finish the pending payment correction first.": "Conclua primeiro a correção do pagamento pendente."
+  "Finish the pending payment correction first.": "Conclua primeiro a correção do pagamento pendente.",
+  "Bill correction saved.": "Correção da fatura salva.",
+  "Review the paid bill correction before saving.": "Revise a correção da fatura paga antes de salvar."
 }
