@@ -83,12 +83,12 @@
         .text("Edit code")
         .on("click", async function () {
           var code = window.prompt(
-            "Short branch code (for example ABC)",
+            "Short branch code for " + b.name + " (for example ABC)",
             b.code,
           );
           if (!code) return;
           try {
-            await api({ action: "branchCode", branchId: b.id, code: code });
+            await api({ action: "branchCode", targetBranchId: b.id, code: code });
             await loadBranches();
           } catch (e) {
             error(e);

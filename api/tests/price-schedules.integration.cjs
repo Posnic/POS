@@ -16,6 +16,8 @@ before(async () => {
   server = await MongoMemoryServer.create();
   client = await MongoClient.connect(server.getUri());
   db = client.db('scheduled-prices');
+  BaseModel.database = db;
+  BaseModel._connectedUri = null;
   BaseModel.getDb = async () => db;
 });
 after(async () => {
@@ -95,6 +97,33 @@ async function makeDue(job) {
       { $set: { effectiveAt: past, dueByBranch: { [branchA]: past, [branchB]: past } } }
     );
 }
+test('branch code controller preserves the explicit target after tenant normalization and rejects legacy clients', async () => {
+  const controller = require('../src/controllers/items.controller');
+  const { setActiveTenantContext } = require('../src/utils/tenant-context');
+  const user = await db.collection('users').findOne({ _id: userId });
+  async function edit(body, branchWrite = true, actor = user) {
+    const req = { body: { action: 'branchCode', ...body }, query: {}, user: { ...actor } };
+    setActiveTenantContext(req, { branchId: branchA, licenseId: license, branchName: 'Main' });
+    return controller.priceSheet.call({
+      model: { branchId: branchA, licenseId: license },
+      ensureContext: async () => {},
+      checkPermission: (resource) => resource !== 'branch' || branchWrite,
+      success: (_res, data) => ({ data }),
+      error: (_res, error, status) => ({ error, status }),
+    }, req, {});
+  }
+  assert.deepEqual(await edit({ targetBranchId: String(branchB), code: 'ASC' }), { data: { code: 'ASC' } });
+  assert.equal((await db.collection('branches').findOne({ _id: branchA })).price_code, 'ABC');
+  assert.equal((await db.collection('branches').findOne({ _id: branchB })).price_code, 'ASC');
+  assert.match((await edit({ branchId: String(branchB), code: 'WRONG' })).error, /Refresh/);
+  assert.match((await edit({ targetBranchId: String(new ObjectId()), code: 'NOPE' })).error, /unauthorized/);
+  assert.match((await edit({ targetBranchId: String(branchB), code: 'ABC' })).error, /already in use/);
+  assert.equal((await edit({ targetBranchId: String(branchB), code: 'NOPE' }, false)).status, 403);
+  const restricted = { ...user, branch_access: [{ branch_id: branchA }] };
+  assert.match((await edit({ targetBranchId: String(branchB), code: 'NOPE' }, true, restricted)).error, /unauthorized/);
+  assert.equal((await db.collection('branches').findOne({ _id: branchA })).price_code, 'ABC');
+  assert.equal((await db.collection('branches').findOne({ _id: branchB })).price_code, 'ASC');
+});
 test('all means permitted branches, duplicate codes are rejected, and missing items are skipped', async () => {
   const restricted = { ...c, branches: [c.branches.find((b) => b.id === String(branchA))] };
   assert.throws(() => scope.selected(restricted, [String(branchB)]), /unauthorized/);
