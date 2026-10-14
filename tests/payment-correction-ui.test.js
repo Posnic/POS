@@ -98,7 +98,9 @@ test('a direct Sales visit loads payment correction without opening Reports', ()
 
 test('paid bill edit reviews the changed total and requires a reason before submitting',async()=>{
  const {dom,w,$}=await setup();$('.modal').remove();let submitted;
- w.PosnicPaymentCorrection.reviewBillEdit({sales_total:357,updated_date:'2026-10-14T01:30:00Z'}, {sales_total:168,payment_mode:'UPI'}, value=>submitted=value);
+ const editingBill = {sales_total:357,recorded_bill:Object.freeze({sales_total:357,updated_date:'2026-10-14T01:30:00Z'})};
+ editingBill.sales_total = 168; // The existing cart recalculates this field when a line is removed.
+ w.PosnicPaymentCorrection.reviewBillEdit(editingBill, {sales_total:168,payment_mode:'UPI'}, value=>submitted=value);
  assert.match($('#paid-bill-review').text(),/357.00/);assert.match($('#paid-bill-review').text(),/168.00.*UPI/);
  assert.match($('#paid-bill-review').text(),/No money is collected or refunded/);
  assert.equal($('[data-save-correction]').prop('disabled'),true);

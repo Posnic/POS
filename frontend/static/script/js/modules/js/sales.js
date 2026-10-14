@@ -8679,6 +8679,7 @@ PosnicPro.sales.recentMenu = {
         });
         if (PosnicPro.sales.renderCharges) PosnicPro.sales.renderCharges();
         PosnicPro.sales.EditRecentSaleParams = {
+            recorded_bill: Object.freeze({ sales_total: result.sales_total, updated_date: result.updated_date }),
             captain_payment_plan: result.captain_payment_plan,
             paid_bill_corrected: !!(result.paid_bill_corrections && result.paid_bill_corrections.length),
             updated_date: result.updated_date,
