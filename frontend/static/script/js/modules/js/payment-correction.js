@@ -40,7 +40,7 @@
     ];
     const t = text => { const entry = messages.find(m => m.label === text); return entry ? PosnicPro.i18n.t(entry.t, text) : text; };
     const esc = text => $('<span>').text(String(text == null ? '' : text)).html();
-    function api(id, data) {
+    function api(id, data, background = false) {
         return new Promise((resolve, reject) => {
             const fail = xhr => {
                 let response = xhr.responseJSON;
@@ -48,7 +48,7 @@
                 reject(new Error(response && (response.message || response.error?.message) || t('Connection lost. Retry the same correction.')));
             };
             if (data) PosnicPro.post({ url: 'sales/payment-correction/' + id, processData: false, data: JSON.stringify(data) }, resolve, fail);
-            else PosnicPro.get({ url: 'sales/payment-correction/' + id }, resolve, fail);
+            else PosnicPro.get({ url: 'sales/payment-correction/' + id, quietStatuses: background ? [403, 404, 409] : [] }, resolve, fail);
         });
     }
     function open(id) {
@@ -156,7 +156,7 @@
         }
         $('#sales_doc [data-correct-payment]').remove();
         if (sale.payment_status !== 'Paid' || /cancel|return|refund/i.test(sale.sale_process || '')) return;
-        api(id).then(data => {
+        api(id, null, true).then(data => {
             if (PosnicPro.sales._correctionSaleId !== id) return;
             if (data.enabled) $('<button type="button" class="dropdown-item" data-correct-payment data-module="sales" data-access="write">').text(t('Correct payment')).on('click', () => open(id)).appendTo('#sales_doc [data-sale-edit-actions]');
             if (data.history.length) {
