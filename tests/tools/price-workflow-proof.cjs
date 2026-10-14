@@ -185,6 +185,16 @@ const out =
       await page.waitForFunction(
         () => !document.querySelector("#ps-sheet-prepare").disabled,
       );
+      await page.click("#ps-sheet-category summary");
+      assert.equal(await page.$eval("#ps-sheet-category", e => e.open), true);
+      await page.click("#ps-sheet-search");
+      assert.equal(await page.$eval("#ps-sheet-category", e => e.open), false);
+      await page.type("#ps-sheet-search", "APPLE");
+      assert.equal(await page.$eval("#ps-sheet-count", e => e.getAttribute("aria-busy")), "true");
+      await page.waitForFunction(() => document.querySelector("#ps-sheet-count").getAttribute("aria-busy") === "false");
+      assert.equal(await page.$eval("#ps-sheet-count", e => e.textContent), "12 matching items across all pages");
+      await page.$eval("#ps-sheet-search", e => { e.value = ""; e.dispatchEvent(new Event("input", { bubbles: true })); });
+      await page.waitForFunction(() => document.querySelector("#ps-sheet-count").getAttribute("aria-busy") === "false");
       await page.screenshot({
         path: path.join(out, `file-${width}-${dark ? "dark" : "light"}.png`),
         fullPage: true,
