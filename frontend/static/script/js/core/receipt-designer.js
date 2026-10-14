@@ -255,6 +255,7 @@
                     }
                     content = '<div class="rd-transaction"' + (b.showTitle === false ? ' style="column-gap:4px"' : '') + '><strong>' + (customLabel ? esc(b.labelText) + (b.labelText ? ' ' : '') : b.showTitle === false ? esc(billPrefix) : esc(documentTitle)) + (data.sales_id ? (customLabel || b.showTitle === false ? '' : ' ') + headerValue(data.sales_id) : '') + '</strong><span class="rd-transaction-date">' + thermalDate(formattedDate) + '</span></div>';
                 }
+                if (!data.sales_id && !pendingGoods) content += '<p class="rd-pending-number">' + esc(PosnicPro.i18n.t('lang_receipt_number_after_save', 'Receipt number is assigned after saving the sale.')) + '</p>';
                 if (present(taxNumber) && !hasField('customer_tax_number')) content += '<p class="rd-customer-tax">' + esc(fieldLabel('customer_tax_number')) + ': ' + esc(String(taxNumber).trim()) + '</p>';
             } else if (b.type === 'items') {
                 var compact = !sheet && b.itemLayout === 'compact';
