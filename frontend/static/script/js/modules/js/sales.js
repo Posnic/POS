@@ -11098,7 +11098,8 @@ if (!PosnicPro.sales._sharedBarcodeEnterBound) {
             event.stopImmediatePropagation();
             if (event.repeat || PosnicPro.sales._loadingPaymentMethods ||
                 PosnicPro.sales.submissionInProgress || PosnicPro.sales.saleProcess === 'KOT' ||
-                !$('#newsalespage').is(':visible') ||
+                !$('#sales_new_item_name').is(':visible') ||
+                $('#infobar-settings-sidebar-tender-details').hasClass('sidebarview') ||
                 !$('.salesBalanceAmount .custom_balance').is(':visible') ||
                 !$('#sales_new_items_tbody tr[id^="touch_row_"]').length ||
                 $('.modal.show:visible, .swal2-modal:visible').length) { return; }
