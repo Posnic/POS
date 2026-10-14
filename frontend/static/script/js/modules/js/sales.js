@@ -11675,6 +11675,12 @@ PosnicPro.sales.askSearchQuantity = function (item, id) {
             if (!input) return;
             var edited = false;
             input.addEventListener('input', function () { edited = true; });
+            $(input).off('keydown.salesQuantity').on('keydown.salesQuantity', function (event) {
+                if (event.key !== 'Tab' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (!event.originalEvent || !event.originalEvent.repeat) swal.clickConfirm();
+            });
             setTimeout(function () { if (input.isConnected) { input.focus(); input.select(); } }, 0);
             if (weighed && scaleOn && window.WeightBridge && window.WeightBridge.isAvailable()) {
                 window.WeightBridge.getCurrentWeight({ stableOnly: true }).then(function (weight) {
