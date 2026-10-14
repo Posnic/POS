@@ -35,7 +35,8 @@ test('checkout and open-price policies remain independent and do not mutate the 
 test('native Pay uses the extension only for an eligible new checkout',()=>{
  const fs=require('node:fs'),vm=require('node:vm');
  const source=fs.readFileSync(require('node:path').join(__dirname,'../frontend/static/script/js/modules/js/sales.js'),'utf8');
- const start=source.indexOf('    openTenderModel: function (methodsReady) {');
+ const start=source.indexOf('    openTenderModel: function (');
+ assert.ok(start >= 0, 'native payment function must be present');
  const end=source.indexOf('        // Load methods',start);
  const body=source.slice(source.indexOf('{',start)+1,end);
  for(const scenario of [{enabled:true,paymentOnly:false,kot:false,expected:0},{enabled:false,paymentOnly:false,kot:false,expected:1},{enabled:true,paymentOnly:true,kot:false,expected:1},{enabled:true,paymentOnly:false,kot:true,expected:1}]) {
