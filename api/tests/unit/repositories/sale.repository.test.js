@@ -901,6 +901,43 @@ describe('SalesRepository', () => {
   });
 
   describe('getLegacyDetails', () => {
+    test.each([
+      ['Paid', '2026-10-14T03:35:00Z', '2026-10-14T03:20:00Z', '09:05 am'],
+      ['Paid', null, '2026-10-14T03:35:00Z', '09:05 am'],
+      ['Unpaid', null, '2026-10-14T03:20:00Z', '08:50 am'],
+      ['Partialy Paid', null, '2026-10-14T03:20:00Z', '08:50 am'],
+    ])(
+      'receipt clock for %s uses saved settlement %s, preserving order time',
+      async (status, settled, date, clock) => {
+        if (!collections.branches) collections.branches = mkCol();
+        collections.branches.findOne.mockResolvedValue({
+          _id: FAKE_BRANCH,
+          time_zone: 'Asia/Kolkata',
+        });
+        const snapshot = {
+          _id: FAKE_ID,
+          branch_id: FAKE_BRANCH,
+          items: [],
+          payment_status: status,
+          created_date: new Date('2026-10-14T03:20:00Z'),
+          date: new Date(date),
+          settled_at: settled ? new Date(settled) : undefined,
+          updated_date: new Date('2026-10-14T05:00:00Z'),
+        };
+        const format = require('../../../src/utils/helpers').formatDate;
+        const realFormat = jest.requireActual('../../../src/utils/helpers').formatDate;
+        format
+          .mockImplementationOnce(realFormat)
+          .mockImplementationOnce(realFormat)
+          .mockImplementationOnce(realFormat);
+        const result = await salesRepository.getLegacyDetails(FAKE_ID, { snapshot });
+        expect(result.status).toBe(true);
+        expect(result.data.receipt_date).toBe('10/14/2026 ' + clock);
+        expect(result.data.created_date).toBe('10/14/2026 08:50 am');
+        expect(snapshot.created_date.toISOString()).toBe('2026-10-14T03:20:00.000Z');
+      }
+    );
+
     test('renders an authorized recycle snapshot without loading a live sale', async () => {
       if (!collections.sales) collections.sales = mkCol();
       collections.sales.findOne.mockClear();

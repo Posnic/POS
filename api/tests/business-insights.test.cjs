@@ -1,4 +1,4 @@
-const { test } = require('@jest/globals');
+const test = typeof jest !== 'undefined' ? global.test : require('node:test').test;
 const assert = require('node:assert/strict');
 const { ObjectId } = require('mongodb');
 const { summarizeInsights, readBusinessInsights } = require('../src/services/business-insights');

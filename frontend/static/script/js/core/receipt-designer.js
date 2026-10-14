@@ -235,12 +235,13 @@
                 if (contract.fieldAvailable('fssai', data) && present(data.branch_fssai_number) && (headerFssai || !hasField('fssai'))) content += '<p>' + esc(fieldLabel('fssai')) + ': ' + esc(String(data.branch_fssai_number).trim()) + '</p>';
                 content += '</div>';
             } else if (b.type === 'transaction') {
-                var formattedDate = transactionDate(data.created_date || data.date || '', b, data.receipt_date_order);
+                var receiptDate = data.receipt_date || data.created_date || data.date || '';
+                var formattedDate = transactionDate(receiptDate, b, data.receipt_date_order);
                 var customLabel = typeof b.labelText === 'string';
                 if (sheet) {
                     content = '<div class="rd-invoice-meta"><div class="rd-invoice-title">' + esc(documentTitle) + '</div><dl>';
                     if (data.sales_id) content += '<dt>' + esc(beforePayment ? PosnicPro.i18n.t('lang_bill_no', 'Bill no') : PosnicPro.i18n.t('lang_rd_receipt_number', 'Receipt number')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
-                    content += '<dt>' + esc(PosnicPro.i18n.t('lang_date_title', 'Date')) + '</dt><dd>' + esc(data.created_date || data.date || '') + '</dd></dl></div>';
+                    content += '<dt>' + esc(PosnicPro.i18n.t('lang_date_title', 'Date')) + '</dt><dd>' + esc(receiptDate) + '</dd></dl></div>';
                 } else {
                     var billPrefix = '';
                     if (b.showTitle === false && data.sales_id) {
