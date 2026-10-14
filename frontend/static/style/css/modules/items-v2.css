@@ -1,6 +1,6 @@
 #items_v2{--iv2-ink:#182b49;--iv2-muted:#61738e;--iv2-line:#e2e8f1;--iv2-blue:#0963e8;color:var(--iv2-ink);background:#f6f8fb;font-size:16px;min-height:80vh}
 #items_v2 *{box-sizing:border-box}#items_v2 [hidden]{display:none!important}
-#items_v2 .iv2-workspace{width:100%;max-width:none;margin:0;padding:32px 24px 48px}
+#items_v2 .iv2-workspace{width:100%;max-width:1440px;margin:0;padding:32px 24px 48px}
 #items_v2 .iv2-heading{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:26px}
 #items_v2 .iv2-eyebrow{font-size:14px;font-weight:700;letter-spacing:1.5px;color:var(--iv2-muted)}
 #items_v2 .iv2-eyebrow span{display:inline-block;margin-left:10px;border-radius:5px;background:#e9f0ff;padding:4px 7px;color:#3264ae;letter-spacing:0;font-weight:500}
