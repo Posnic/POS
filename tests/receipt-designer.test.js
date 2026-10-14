@@ -30,6 +30,21 @@ function setup() {
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
 }
 
+test('paid receipts use settlement time on every paper format and keep it on reprint', () => {
+    const { dom, engine, sale, $ } = setup();
+    Object.assign(sale, { payment_status: 'Paid', created_date: '14/10/2026 8:50 AM',
+        receipt_date: '14/10/2026 9:05 AM', updated_date: '14/10/2026 10:30 AM' });
+    for (const format of Object.keys(contract.formats)) {
+        const first = engine.render(sale, format, false);
+        const text = $('<div>').html(first).text();
+        assert.match(text, /9:05 AM/);
+        assert.doesNotMatch(text, /8:50 AM|10:30 AM/);
+        assert.equal(engine.render(sale, format, false), first);
+    }
+    assert.equal(sale.created_date, '14/10/2026 8:50 AM');
+    dom.window.close();
+});
+
 test('canonical receipt lines supply both displayed quantities and total quantity', () => {
     const { dom, engine, sale, $ } = setup();
     sale.receipt_designs.layouts['80'].blocks = [{ type: 'items', itemLayout: 'columns' }, { type: 'field', field: 'total_quantity' }];
