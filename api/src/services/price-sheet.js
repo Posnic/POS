@@ -510,7 +510,8 @@ async function list(c, input = {}) {
   )
     q.status = input.status;
   if (input.status === 'upcoming')
-    q.status = { $in: ['scheduled', 'running', 'attention', 'review', 'draft'] };
+    q.status = { $in: ['scheduled', 'running', 'attention'] };
+  if (input.status === 'drafts') q.status = { $in: ['review', 'draft'] };
   const page = Math.max(1, Math.floor(Number(input.page) || 1));
   const pageSize = [10, 25, 50].includes(Number(input.pageSize)) ? Number(input.pageSize) : 10;
   return {

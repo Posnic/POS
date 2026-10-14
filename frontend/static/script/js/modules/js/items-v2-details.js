@@ -266,5 +266,23 @@
         variants.forEach(function(row){['sku_id','barcode_id','gtin'].forEach(function(key){row[key]='';});row.available_quantity=0;});
         el('variant-rows').replaceChildren(); if(isFamily())generate();
     }
-    P.itemsV2Details={draft:draft,restoreDraft:restoreDraft,duplicate:duplicate,init:init,reset:reset,upload:upload,data:data,validate:validate,update:update,status:status,family:family};
+    function load(item) {
+        reset();
+        var mapping = {mrp:'mrp_price',reorder:'reorder_point',plu:'plu_code',gtin:'gtin','purchase-unit':'purchase_unit','pack-size':'conversion_factor',brand:'brand',position:'sort_order',icon:'icon','tile-color':'tile_color','tile-shape':'tile_shape','service-unit':'service_unit','hsn':'hsncode','hsn-description':'hsndescription','hsn-rate':'tax','prep-note':'prep_note','prep-minutes':'prep_minutes'};
+        Object.keys(mapping).forEach(function(id){if(item[mapping[id]] != null) el(id).value=item[mapping[id]];});
+        ['mfg','expiry'].forEach(function(id){var v=item[id==='mfg'?'items_mfg_date':'items_expiry_date'];el(id).value=v?String(v).slice(0,10):'';});
+        el('tags').value=(item.tags||[]).join(', '); el('alt-barcodes').value=(item.barcodes||[]).join(', ');
+        el('discount-type').value=Number(item.discount_percentage)?'percentage':'amount';el('discount').value=item.discount_percentage||item.discount_amount||0;
+        el('auto-tile').checked=!item.tile_color; el('open-price').checked=!!item.open_price;el('weight').checked=!!item.item_weight_machine_based;el('spice').checked=!!item.spice_choice;
+        function select(id,value,name,unit) {value=String(value||'');if(value&&!Array.from(el(id).options).some(function(o){return o.value===value;})){var o=new Option(name||value,value);o.dataset.name=name||value;o.dataset.unit=unit||'';el(id).add(o);}el(id).value=value;}
+        select('unit',item.unit_id||item.unit||'qty',item.unit,item.unit);select('supplier',item.supplier_id,item.supplier_name);
+        ['goes-with','channel-off'].forEach(function(id){var values=item[id.replace(/-/g,'_')]||[];values.forEach(function(v){select(id,v,v);});Array.from(el(id).options).forEach(function(o){o.selected=values.includes(o.value);});});
+        nutrients.forEach(function(n){el('n-'+n).value=item.nutrition&&item.nutrition[n]!=null?item.nutrition[n]:'';});
+        foodTags.forEach(function(k){el('food-'+k).checked=(item.food_tags||[]).includes(k);});marks.forEach(function(k){el('mark-'+k).checked=(item.menu_marks||[]).includes(k);});
+        var images=Array.isArray(item.multi_image)?item.multi_image:[];
+        if(!images.length&&item.image&&item.image!=='item.svg')images=[{name:item.image,cover:'yes'}];
+        photos=images.map(function(p){return {name:p.name,uploaded:p.name,preview:p.name,size:p.size,cover:p.cover|| (p.name===item.image?'yes':'no')};});photoPicker();
+        P.itemTranslationsV2.reset(item);
+    }
+    P.itemsV2Details={load:load,draft:draft,restoreDraft:restoreDraft,duplicate:duplicate,init:init,reset:reset,upload:upload,data:data,validate:validate,update:update,status:status,family:family};
 }(typeof window==='undefined'?globalThis:window));
