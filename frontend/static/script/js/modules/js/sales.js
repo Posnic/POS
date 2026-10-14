@@ -11664,10 +11664,11 @@ PosnicPro.sales.askSearchQuantity = function (item, id) {
     var settings = {};
     try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) { /* manual entry */ }
     var scaleOn = settings.hardware_weight_machine_enable === true || settings.hardware_weight_machine_enable === 'true';
+    var readScale = weighed && scaleOn && window.WeightBridge && window.WeightBridge.isAvailable();
     var request = PosnicPro.sales._searchQuantityRequest = (PosnicPro.sales._searchQuantityRequest || 0) + 1;
     swal({
         title: PosnicPro.i18n.t('lang_quantity', 'Quantity'),
-        text: item.item_name || item.name || '', input: 'text', inputValue: weighed ? '' : '1', animation: false,
+        text: item.item_name || item.name || '', input: 'text', inputValue: readScale ? '' : '1', animation: false,
         inputAttributes: { min: '0.001', max: '100000', step: 'any', inputmode: 'decimal' },
         showCancelButton: true,
         onOpen: function () {
@@ -11682,7 +11683,7 @@ PosnicPro.sales.askSearchQuantity = function (item, id) {
                 if (!event.originalEvent || !event.originalEvent.repeat) swal.clickConfirm();
             });
             setTimeout(function () { if (input.isConnected) { input.focus(); input.select(); } }, 0);
-            if (weighed && scaleOn && window.WeightBridge && window.WeightBridge.isAvailable()) {
+            if (readScale) {
                 window.WeightBridge.getCurrentWeight({ stableOnly: true }).then(function (weight) {
                     // A cancelled/replaced dialog or a manual edit owns its quantity.
                     if (request !== PosnicPro.sales._searchQuantityRequest || edited || !input.isConnected || document.querySelector('.swal2-input') !== input) return;
