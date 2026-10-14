@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Csak a zöld Új ár oszlopokat szerkesztheti. Hagyja üresen egy cellát, hogy megtartsa az aktuális árát. Az Excel elrejti a megfelelő azonosítókat; a CSV a végén tartja őket. Tartsa változatlanul ezeket az azonosítókat és az aktuális árakat.",
   "lang_price_update_completed_with_issues": "Az árfrissítés befejeződött. Egyes elemek figyelmet igényelnek.",
   "lang_prices_updated_successfully": "Az árak sikeresen frissültek.",
-  "lang_rd_112_mm_thermal": "112 mm termikus (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termikus",
   "lang_rd_show_business_email": "Mutasson üzleti e-mail címet",
   "lang_rd_show_item_row_numbers": "Elemsorszámok megjelenítése",
   "lang_save_inventory_policy": "Készletházirend mentése",

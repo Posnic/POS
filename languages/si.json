@@ -4827,7 +4827,7 @@
   "lang_price_sheet_hidden_ids_help": "හරිත නව මිල තීරු පමණක් සංස්කරණය කරන්න. එහි වත්මන් මිල තබා ගැනීම සඳහා සෛලයක් හිස් තබන්න. එක්සෙල් ගැලපෙන හැඳුනුම්පත් සඟවයි; CSV ඒවා අවසානයේ තබා ගනී. එම හැඳුනුම්පත් සහ වත්මන් මිල නොවෙනස්ව තබා ගන්න.",
   "lang_price_update_completed_with_issues": "මිල යාවත්කාලීන කිරීම අවසන් විය. සමහර භාණ්ඩවලට අවධානය යොමු කළ යුතුය.",
   "lang_prices_updated_successfully": "මිල සාර්ථකව යාවත්කාලීන කර ඇත.",
-  "lang_rd_112_mm_thermal": "112 තා mm ප (ටීවීඑස් ආර්පී 4200)",
+  "lang_rd_112_mm_thermal": "112 තා mm ප",
   "lang_rd_show_business_email": "ව්යාපාරික විද්යුත් තැපැල් පෙන්වන්න",
   "lang_rd_show_item_row_numbers": "අයිතමය පේළි අංක පෙන්වන්න",
   "lang_save_inventory_policy": "බඩු ප්රතිපත්තිය සුරකින්න",

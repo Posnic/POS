@@ -30,7 +30,7 @@
   const formats = {
     58: { name: '58 mm thermal', width: 58, content: 48, font: 10 },
     80: { name: '80 mm thermal', width: 80, content: 72, font: 12 },
-    112: { name: '112 mm thermal (TVS RP 4200)', width: 112, content: 104, font: 12 },
+    112: { name: '112 mm thermal', width: 112, content: 104, font: 12 },
     a4: { name: 'A4', width: 210, height: 297, content: 186, font: 12 },
     a5: { name: 'A5', width: 148, height: 210, content: 124, font: 11 },
     letter: { name: 'US Letter', width: 215.9, height: 279.4, content: 191.9, font: 12 },

@@ -4827,7 +4827,7 @@
   "lang_price_sheet_hidden_ids_help": "Modifica solo le colonne verdi Nuovi prezzi. Lascia una cella vuota per mantenerne il prezzo attuale. Excel nasconde gli ID corrispondenti; CSV li mantiene alla fine. Mantieni gli ID e i prezzi correnti invariati.",
   "lang_price_update_completed_with_issues": "L'aggiornamento dei prezzi è terminato. Alcuni articoli richiedono attenzione.",
   "lang_prices_updated_successfully": "Prezzi aggiornati con successo.",
-  "lang_rd_112_mm_thermal": "112 mm termico (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termico",
   "lang_rd_show_business_email": "Email aziendale dedicata allo spettacolo",
   "lang_rd_show_item_row_numbers": "Mostra i numeri di riga degli articoli",
   "lang_save_inventory_policy": "Salva politica di inventario",

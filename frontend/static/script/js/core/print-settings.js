@@ -4,7 +4,7 @@
     'use strict';
     var state, featureState = {}, queues = [], loading;
     var sheets = { a4: 'A4', a5: 'A5', letter: 'US Letter' };
-    var papers = Object.assign({ '58mm': '58 mm thermal', '80mm': '80 mm thermal', '112mm': '112 mm thermal (TVS RP 4200)' }, sheets);
+    var papers = Object.assign({ '58mm': '58 mm thermal', '80mm': '80 mm thermal', '112mm': '112 mm thermal' }, sheets);
 
     var esc = function (value) { return PosnicPro.escapeHtml(String(value == null ? '' : value)); };
     var desktop = function () { return !!(window.electronAPI && window.electronAPI.preferences); };

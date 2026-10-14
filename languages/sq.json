@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Redaktoni vetëm kolonat e gjelbra të çmimeve të reja. Lëreni një qelizë bosh për të mbajtur çmimin e saj aktual. Excel fsheh ID-të që përputhen; CSV i mban ato në fund. Mbani ato ID dhe çmimet aktuale të pandryshuara.",
   "lang_price_update_completed_with_issues": "Përditësimi i çmimit përfundoi Disa artikuj kanë nevojë për vëmendje.",
   "lang_prices_updated_successfully": "Çmimet janë përditësuar me sukses",
-  "lang_rd_112_mm_thermal": "112 mm termik (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termik",
   "lang_rd_show_business_email": "Shfaq emailin e biznesit",
   "lang_rd_show_item_row_numbers": "Trego numrat e rreshtit të artikuj",
   "lang_save_inventory_policy": "Ruaj politikën e inventarit",

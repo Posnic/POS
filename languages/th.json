@@ -4827,7 +4827,7 @@
   "lang_price_sheet_hidden_ids_help": "แก้ไขเฉพาะคอลัมน์ราคาใหม่สีเขียวเว้นเซลล์ว่างเพื่อรักษาราคาปัจจุบันไว้Excel ซ่อนรหัสที่ตรงกัน CSV จะเก็บไว้ในตอนท้ายเก็บรหัสและราคาปัจจุบันเหล่านั้นไม่เปลี่ยนแปลง",
   "lang_price_update_completed_with_issues": "การอัพเดทราคาเสร็จสิ้นบางรายการต้องการความสนใจ",
   "lang_prices_updated_successfully": "อัพเดทราคาเรียบร้อยแล้ว",
-  "lang_rd_112_mm_thermal": "112 เครื่องทำ mm ความร้อน (ทีวีเอส RP 4200)",
+  "lang_rd_112_mm_thermal": "112 เครื่องทำ mm ความร้อน",
   "lang_rd_show_business_email": "แสดงอีเมลธุรกิจ",
   "lang_rd_show_item_row_numbers": "แสดงหมายเลขแถวรายการ",
   "lang_save_inventory_policy": "บันทึกนโยบายสินค้าคงคลัง",

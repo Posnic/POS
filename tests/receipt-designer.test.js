@@ -1201,3 +1201,44 @@ test('first-time designs include customer details and greeting but preserve expl
     assert.ok(!engine.defaults({customer_print:'false'}).layouts['80'].blocks.some(b => b.field === 'customer_name'));
     dom.window.close();
 });
+
+test('four-inch fixed columns give HSN its own column and keep quantity totals aligned', () => {
+    const { dom, engine, sale, design, $ } = setup();
+    for (const format of ['58', '80', '112']) {
+        design.layouts[format].blocks = [{ type: 'items', itemLayout: 'columns', hsn: true }, { type: 'field', field: 'total_quantity' }];
+    }
+    sale.items[0].hsncode = '12345678';
+    sale.items.push({ item_name: 'Without HSN', item_price: 2, item_quantity: 1, total_amount: 2 });
+    const output = $('<div>').html(engine.render(sale, '112', false));
+    assert.deepEqual(output.find('thead th').map((_i, el) => $(el).text()).get(), ['Item name', 'HSN/SAC', 'Rate', 'Qty', 'Amount']);
+    assert.equal(output.find('tbody tr').first().children().length, 5);
+    assert.equal(output.find('.rd-hsn').first().text(), '12345678');
+    assert.equal(output.find('.rd-hsn').last().text(), '');
+    assert.equal(output.find('.rd-total-quantity td').first().attr('colspan'), '3');
+    assert.equal(output.find('.rd-total-quantity .rd-number').text(), '3');
+    assert.equal(output.find('col').toArray().reduce((sum, el) => sum + parseFloat(el.style.width), 0), 100);
+    for (const format of ['58', '80']) {
+        const narrow = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(narrow.find('thead th').length, 4);
+        assert.match(narrow.find('.rd-line-detail').text(), /HSN\/SAC: 12345678/);
+    }
+    design.layouts['112'].blocks[0].hsn = false;
+    const hidden = $('<div>').html(engine.render(sale, '112', false));
+    assert.equal(hidden.find('thead th').length, 4);
+    assert.doesNotMatch(hidden.text(), /12345678|HSN\/SAC/);
+    dom.window.close();
+});
+
+test('sale printing sends receipt identity to desktop logging while sample printing does not', async () => {
+    const { dom, w, engine, sale } = setup();
+    const sent = [];
+    w.PosnicPro.resolveReceiptPrinter = () => 'Counter';
+    w.PosnicPro.afterPrint = () => {};
+    w.electronAPI = { printer: { print: async (_html, options) => { sent.push(options); return { success: true }; } } };
+    await engine.printSale(sale, '80');
+    assert.equal(sent[0].receiptLog.saleId, sale.sales_id);
+    assert.equal(sent[0].receiptLog.total, sale.items_total);
+    await engine.print('<article>Sample</article>', '80', { sample: true });
+    assert.equal(sent[1].receiptLog, null);
+    dom.window.close();
+});

@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Editja biss il-kolonni aħdar tal-prezz Ġdid. Ħalli ċellula vojta biex iżżomm il-prezz attwali tagħha. Excel jaħbi l-IDs li jaqblu; CSV iżommhom fl-aħħar. Żomm dawk l-ID u l-prezzijiet kurrenti mhux mibdula.",
   "lang_price_update_completed_with_issues": "L-aġġornament tal-prezz lest. Xi oġġetti jeħtieġu attenzjoni.",
   "lang_prices_updated_successfully": "Prezzijiet aġġornati b'suċċess.",
-  "lang_rd_112_mm_thermal": "112 mm termali (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termali",
   "lang_rd_show_business_email": "Uri l-email tan-negozju",
   "lang_rd_show_item_row_numbers": "Uri numri tar-ringiela tal-oġġetti",
   "lang_save_inventory_policy": "Ħlief il-politika tal-inventarju",

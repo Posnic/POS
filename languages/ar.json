@@ -4827,7 +4827,7 @@
   "lang_price_sheet_hidden_ids_help": "قم بتحرير أعمدة الأسعار الجديدة الخضراء فقط. اترك الخلية فارغة للحفاظ على سعرها الحالي. يخفي Excel المعرفات المطابقة؛ يحتفظ بها CSV في النهاية. احتفظ بهذه المعرفات والأسعار الحالية دون تغيير.",
   "lang_price_update_completed_with_issues": "تم الانتهاء من تحديث الأسعار. تحتاج بعض العناصر إلى الاهتمام.",
   "lang_prices_updated_successfully": "تم تحديث الأسعار بنجاح.",
-  "lang_rd_112_mm_thermal": "112 درجة mm حرارية (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 درجة mm حرارية",
   "lang_rd_show_business_email": "عرض البريد الإلكتروني للنشاط التجاري",
   "lang_rd_show_item_row_numbers": "عرض أرقام صفوف العناصر",
   "lang_save_inventory_policy": "سياسة حفظ المخزون",

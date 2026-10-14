@@ -4747,7 +4747,7 @@
   "lang_price_sheet_hidden_ids_help": "ફક્ત લીલા નવા ભાવ કૉલમ્સને સંપાદિત કરો. તેની વર્તમાન કિંમત રાખવા માટે સેલને ખાલી છોડો. એક્સેલ મેચિંગ આઇડીઓને છુપાવે છે; CSV તેમને અંતે રાખે છે. તે ID અને વર્તમાન ભાવો યથાવત રાખો.",
   "lang_price_update_completed_with_issues": "ભાવ અપડેટ સમાપ્ત થયું. કેટલીક વસ્તુઓને ધ્યાનની જરૂર છે.",
   "lang_prices_updated_successfully": "કિંમતો સફળતાપૂર્વક અપડેટ.",
-  "lang_rd_112_mm_thermal": "112 થ mm ર્મલ (ટીવીએસ આરપી 4200)",
+  "lang_rd_112_mm_thermal": "112 થ mm ર્મલ",
   "lang_rd_show_business_email": "વ્યવસાય ઇમેઇલ બતાવો",
   "lang_rd_show_item_row_numbers": "આઇટમ પંક્તિ નંબરો બતાવો",
   "lang_save_inventory_policy": "ઇન્વેન્ટરી નીતિ સાચવો",

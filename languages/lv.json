@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Rediģējiet tikai zaļās Jaunās cenas kolonnas. Atstājiet šūnu tukšu, lai saglabātu tās pašreizējo cenu. Excel slēpj atbilstošos ID; CSV tos saglabā beigās. Saglabājiet šos ID un pašreizējās cenas nemainīgas.",
   "lang_price_update_completed_with_issues": "Cenu atjaunināšana pabeigta. Dažiem priekšmetiem jāpievērš uzmanība.",
   "lang_prices_updated_successfully": "Cenas veiksmīgi atjauninātas.",
-  "lang_rd_112_mm_thermal": "112 mm termiskais (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termiskais",
   "lang_rd_show_business_email": "Rādīt biznesa e-pastu",
   "lang_rd_show_item_row_numbers": "Rādīt vienumu rindu numurus",
   "lang_save_inventory_policy": "Saglabāt krājumu politiku",

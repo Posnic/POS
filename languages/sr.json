@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Uredite samo zelene kolone Nove cene. Ostavite ćeliju praznu da biste zadržali trenutnu cenu. Ekcel skriva odgovarajuće ID-ove; CSV ih zadržava na kraju. Održavajte te ID-ove i trenutne cene nepromenjene.",
   "lang_price_update_completed_with_issues": "Ažuriranje cene je završeno. Nekim predmetima je potrebna pažnja.",
   "lang_prices_updated_successfully": "Cene su uspešno ažurirane.",
-  "lang_rd_112_mm_thermal": "112 mm termalni (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termalni",
   "lang_rd_show_business_email": "Prikaži poslovnu e-poštu",
   "lang_rd_show_item_row_numbers": "Prikaži brojeve redova stavki",
   "lang_save_inventory_policy": "Sačuvaj politiku zaliha",

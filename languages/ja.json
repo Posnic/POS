@@ -4747,7 +4747,7 @@
   "lang_price_sheet_hidden_ids_help": "緑色の「新価格」列のみを編集してください。現在の価格を維持するには、セルを空白のままにします。一致する ID は Excel では非表示になり、CSV では末尾に保持されます。これらの ID と現在の価格はそのままにしておきます。",
   "lang_price_update_completed_with_issues": "価格の更新が完了しました。注意が必要な項目もあります。",
   "lang_prices_updated_successfully": "価格は正常に更新されました。",
-  "lang_rd_112_mm_thermal": "112 mm サーマル (テレビ対RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm サーマル",
   "lang_rd_show_business_email": "ビジネス用メールを表示",
   "lang_rd_show_item_row_numbers": "項目の行番号を表示",
   "lang_save_inventory_policy": "インベントリポリシーを保存",

@@ -4747,7 +4747,7 @@
   "lang_price_sheet_hidden_ids_help": "صرف سبز نئے قیمت کے کالموں میں ترمیم کریں۔ اس کی موجودہ قیمت کو برقرار رکھنے کے لئے سیل کو خالی چھوڑ دیں۔ ایکسل مماثل آئی ڈی کو چھپاتا ہے۔ CSV انہیں آخر میں رکھتا ہے۔ ان آئی ڈی اور موجودہ قیمتوں میں کوئی تبدیلی نہیں رکھیں۔",
   "lang_price_update_completed_with_issues": "قیمت کی تازہ کاری ختم ہوا۔ کچھ اشیاء کو توجہ دینے کی ضرورت ہے۔",
   "lang_prices_updated_successfully": "قیمتیں کامیابی کے ساتھ اپ ڈیٹ",
-  "lang_rd_112_mm_thermal": "112 تھر mm مل (ٹی وی ایس آر پی 4200)",
+  "lang_rd_112_mm_thermal": "112 تھر mm مل",
   "lang_rd_show_business_email": "کاروباری ای میل دکھائیں",
   "lang_rd_show_item_row_numbers": "آئٹم قطار نمبر دکھائیں",
   "lang_save_inventory_policy": "انوینٹری کی پالیسی کو",

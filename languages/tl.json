@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "I-edit lamang ang berdeng mga haligi ng Bagong presyo. Mag-iwan ng isang cell blank upang mapanatili ang kasalukuyang presyo nito. Itinatago ng Excel ang mga tumutugma na ID; Pinapanatili ng CSV ang mga ito sa dulo. Panatilihing hindi magbago ang mga ID at Kasalukuyang mga presyo.",
   "lang_price_update_completed_with_issues": "Natapos ang pag-update ng presyo. Ang ilang mga item ay nangangailangan ng pansin.",
   "lang_prices_updated_successfully": "Matagumpay na na-update ang presyo.",
-  "lang_rd_112_mm_thermal": "112 mm termal (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termal",
   "lang_rd_show_business_email": "Ipakita ang email ng negosyo",
   "lang_rd_show_item_row_numbers": "Ipakita ang numero ng hilera ng item",
   "lang_save_inventory_policy": "I-save ang patakaran sa imbensya",

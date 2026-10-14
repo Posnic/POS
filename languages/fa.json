@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "فقط ستون های سبز قیمت جدید را ویرایش کنید. یک سلول را خالی بگذارید تا قیمت فعلی آن حفظ شود. اکسل شناسه های مطابق را پنهان می کند؛ CSV آنها را در پایان نگه می دارد. این شناسه ها و قیمت های فعلی را بدون تغییر نگه دارید.",
   "lang_price_update_completed_with_issues": "به روز رسانی قیمت تمام شد. برخی از موارد نیاز به توجه دارند.",
   "lang_prices_updated_successfully": "قیمت ها با موفقیت به روز شد",
-  "lang_rd_112_mm_thermal": "۱۱ mm ۲ حرارتی (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "۱۱ mm ۲ حرارتی",
   "lang_rd_show_business_email": "نمایش ایمیل کسب و کار",
   "lang_rd_show_item_row_numbers": "نمایش شماره ردیف آیتم",
   "lang_save_inventory_policy": "سیاست ذخیره موجودی",

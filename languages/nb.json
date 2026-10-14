@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Rediger bare de grønne kolonnene Ny pris. La en celle være tom for å beholde gjeldende pris. Excel skjuler samsvarende ID-er; CSV holder dem på slutten. Hold disse ID-ene og gjeldende priser uendret.",
   "lang_price_update_completed_with_issues": "Prisoppdatering ferdig. Noen elementer trenger oppmerksomhet.",
   "lang_prices_updated_successfully": "Prisene er oppdatert med hell.",
-  "lang_rd_112_mm_thermal": "112 mm termisk (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termisk",
   "lang_rd_show_business_email": "Vis bedriftens e-post",
   "lang_rd_show_item_row_numbers": "Vis vareradnumre",
   "lang_save_inventory_policy": "Lagre lagerpolicy",
