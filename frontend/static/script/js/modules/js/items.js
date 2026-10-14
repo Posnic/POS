@@ -221,69 +221,8 @@ PosnicPro.items = {
             }
         });
     },
-    openNewItemEditor: function () {
-        var itemSettings = {};
-        try { itemSettings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) {}
-        if (itemSettings.item_editor_v2 !== true || !PosnicPro.items_v2) return false;
-        PosnicPro.items_v2.showAdd();
-        return true;
-    },
     showAdd: function () {
-        if (PosnicPro.items.openNewItemEditor()) return;
-        PosnicPro.items.aiRefresh();
-        // Clear the previous item's nutrition before opening a fresh form.
-        PosnicPro.itemPlate.wire();
-        PosnicPro.itemPlate.aiRefresh();
-        PosnicPro.itemPlate.clear();
-        var loader = $(".loader-item");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.HideSideBarModal();
-        // A fresh form belongs to no family.
-        $('#item_family_strip').hide().find('.family-chips').html('');
-        PosnicPro.items._family = null;
-        PosnicPro.items.renderModifierGroups([]);
-        $('#item_discount').hide();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        PosnicPro.collapseMenuForWorkspace();
-        $(".vertical-menu li a").removeClass("active");
-        PosnicPro.showAddModal('item');
-        $('.page_loader,#osk-container').hide();
-        $('.page-title-box,#items_new,#item_variant_header').show();
-        $('#v-pills-inventory-tab,#view_items_page,.item_new_shortcut').addClass('active');
-        $('#v-pills-inventory').addClass('show active');
-        $('#v-pills-purchase-tab').removeClass('active');
-        $('#v-pills-purchase').removeClass('show active');
-        $("#items_mfg_date").val('');
-        $("#items_expiry_date").val('');
-        $('#item_upload_image_status').val('no');
-        // IC1c: a fresh entry starts with the essentials; the collapsed
-        // sections open on demand (and always open on edit).
-        // Owner: these sections stay open - nothing on the form hides behind a click.
-        PosnicPro.items.applyHardwareGates();
-        PosnicPro.items.applyTaxGate();
-        PosnicPro.items.addItemButton();
-        $('#items_reset').show();
-        $('.items_edit_reset').hide();
-        if (PosnicPro.items.itemAction === 'edit') {
-            PosnicPro.items.itemClearForm();
-        }
-        PosnicPro.items.itemAction = 'add';
-        PosnicPro.itemDayparts.set([]);
-        PosnicPro.itemStockPreference.load(null, function (preference) {
-            if (PosnicPro.items.itemAction !== 'add' || !preference) return;
-            $('#item_track_inventory').prop('checked', preference === 'track_quantities').trigger('change');
-        });
-        PosnicPro.itemTranslations.reset();
-        
-        // Apply discount from selected category
-        setTimeout(function() {
-            var selectedOption = $('.items_category').find('option:selected')[0];
-            if (selectedOption) {
-                console.log('triggerAddNew: Applying discount from category');
-                PosnicPro.items.applyCategoryDiscount(selectedOption);
-            }
-        }, 500);
+        PosnicPro.items_v2.showAdd();
     },
     showClone: function (id) {
         var loader = $(".loader-item");
@@ -978,25 +917,8 @@ PosnicPro.items = {
         PosnicPro.items.loadList(1);
     },
     triggerAddNew: function () {
-        PosnicPro.items.showAdd();
-        $('#item_variant_header').hide();
-        $('#show_variant_fields').hide();
-        $('#show_price_fields,#sku_card_col').show();
-        $('#product_without_variant').prop('checked', true);
-        $('#product_with_variant').prop('checked', false);
-        $('#show_variant_fields').hide();
-        $('#show_price_fields,#sku_card_col').show();
-        $("#load_price_fields").html('');
-        $("#show-hide-item-discount").show();
-        if ($('#sales_new_item_name').val() !== '') {
-            var itemname = $('#sales_new_item_name').val();
-            PosnicPro.items.itemStatus = 'salespage';
-        } else {
-            itemname = $('#receiving_add_item_name').val();
-            PosnicPro.items.itemStatus = 'receivingpage';
-        }
-        $('#items_name').val(itemname);
-
+        var itemname = $('#sales_new_item_name').val() || $('#receiving_add_item_name').val() || '';
+        PosnicPro.items_v2.showAdd(itemname);
     },
     /*
      * Modifier groups on the item form (V2): Restaurant-mode only. The

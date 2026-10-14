@@ -143,10 +143,8 @@ test('what saves also loads, on both paths', () => {
   const loads = (ITEMS.match(/PosnicPro\.itemPlate\.set\(data\)/g) || []).length;
   assert.strictEqual(loads, 2, 'both load paths must fill the plate');
 
-  /* And a fresh form is emptied, or the last dish edited leaves its
-     nutrition sitting in the boxes of the next one - which would be saved,
-     silently, onto a different dish. */
-  assert.match(ITEMS, /showAdd: function \(\)[\s\S]{0,400}PosnicPro\.itemPlate\.clear\(\)/);
+  // New items use the separate creator; legacy plate fields cannot leak into it.
+  assert.match(ITEMS, /showAdd: function \(\) \{\s*PosnicPro\.items_v2\.showAdd\(\)/);
 });
 
 test('an empty box is not a zero, in either direction', () => {

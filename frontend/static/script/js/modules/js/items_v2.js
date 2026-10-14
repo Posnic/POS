@@ -1,4 +1,4 @@
-/* Isolated opt-in route: #/items_v2/new. No existing item or sale handlers are replaced. */
+/* Default item creator, also available through the #/items_v2/new alias. */
 (function (root) {
     'use strict';
     function assess(f) {
@@ -249,7 +249,7 @@
         document.getElementById('iv2-name').addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); document.getElementById('iv2-price').focus(); } });
         document.getElementById('iv2-price').addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); if (selected('iv2-stock') === 'tracked') document.getElementById('iv2-quantity').focus(); else save(); } });
     }
-    function open() {
+    function open(initialName) {
         if (P.HideSideBarModal) P.HideSideBarModal();
         $('.page_loader,#osk-container').hide(); $('#items_v2').show();
         capabilities = readCapabilities();
@@ -284,6 +284,11 @@
             select.replaceChildren(new Option('No category', ''));
             ((r && r.suggestions) || []).forEach(function (c) { var option = new Option(c.name, c.id); option.dataset.name = c.name; select.add(option); }); select.value = previous;
         }, function () { /* category is optional */ });
+        if (typeof initialName === 'string') {
+            reset();
+            document.getElementById('iv2-name').value = initialName;
+            document.getElementById('iv2-name').dispatchEvent(new Event('input', { bubbles: true }));
+        }
         render(); document.getElementById('iv2-name').focus();
     }
     P.items_v2 = { showAdd: open, showDataTablePage: open, setBusinessContext: function (category) {
