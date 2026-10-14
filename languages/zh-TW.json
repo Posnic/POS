@@ -4747,7 +4747,7 @@
   "lang_price_sheet_hidden_ids_help": "僅編輯綠色的「新增價格」欄。將單元格保留空白以保留其當前價格。Excel 隱藏匹配的 ID；CSV 將它們保留在最後。保持這些 ID 和當前價格不變。",
   "lang_price_update_completed_with_issues": "價格更新完成。有些項目需要注意。",
   "lang_prices_updated_successfully": "價格已成功更新。",
-  "lang_rd_112_mm_thermal": "112 mm 熱電器（電視器 4200 印尼盾）",
+  "lang_rd_112_mm_thermal": "112 mm 熱電器",
   "lang_rd_show_business_email": "展示業務電子郵件",
   "lang_rd_show_item_row_numbers": "顯示項目列號",
   "lang_save_inventory_policy": "儲存庫存政策",

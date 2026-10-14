@@ -4827,7 +4827,7 @@
   "lang_price_sheet_hidden_ids_help": "Bearbeiten Sie nur die grünen Spalten „Neuer Preis“. Lassen Sie eine Zelle leer, um den aktuellen Preis beizubehalten. Excel versteckt die passenden IDs; CSV behält sie am Ende bei. Behalten Sie diese IDs und aktuellen Preise unverändert bei.",
   "lang_price_update_completed_with_issues": "Die Preisaktualisierung ist abgeschlossen. Einige Artikel benötigen Aufmerksamkeit.",
   "lang_prices_updated_successfully": "Die Preise wurden erfolgreich aktualisiert.",
-  "lang_rd_112_mm_thermal": "112 mm thermisch (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm thermisch",
   "lang_rd_show_business_email": "Geschäftliche E-Mail-Adresse anzeigen",
   "lang_rd_show_item_row_numbers": "Zeilennummern der Artikel anzeigen",
   "lang_save_inventory_policy": "Inventarrichtlinie speichern",

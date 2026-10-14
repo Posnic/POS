@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Redaguokite tik žaliuosius Naujos kainos stulpelius. Palikite langelį tuščią, kad išlaikytumėte dabartinę kainą. “Excel” slepia atitinkančius ID; CSV saugo juos pabaigoje. Laikykite tuos ID ir dabartines kainas nepakitusius.",
   "lang_price_update_completed_with_issues": "Kainų atnaujinimas baigtas. Kai kuriems daiktams reikia dėmesio.",
   "lang_prices_updated_successfully": "Kainos sėkmingai atnaujintos.",
-  "lang_rd_112_mm_thermal": "112 mm šiluminis (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm šiluminis",
   "lang_rd_show_business_email": "Rodyti verslo el. paštą",
   "lang_rd_show_item_row_numbers": "Rodyti elementų eilučių numerius",
   "lang_save_inventory_policy": "Išsaugoti atsargų politiką",

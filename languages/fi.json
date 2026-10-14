@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Muokkaa vain vihreitä Uusi hinta -sarakkeita. Jätä solu tyhjäksi, jotta sen nykyinen hinta säilyy. Excel piilottaa vastaavat tunnukset; CSV säilyttää ne lopussa. Pidä nuo tunnukset ja nykyiset hinnat ennallaan.",
   "lang_price_update_completed_with_issues": "Hintapäivitys valmis. Jotkut kohteet tarvitsevat huomiota.",
   "lang_prices_updated_successfully": "Hinnat päivitettiin onnistuneesti.",
-  "lang_rd_112_mm_thermal": "112 mm lämpö (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm lämpö",
   "lang_rd_show_business_email": "Näytä yrityksen sähköposti",
   "lang_rd_show_item_row_numbers": "Näytä kohteen rivinumerot",
   "lang_save_inventory_policy": "Tallenna varastokäytäntö",

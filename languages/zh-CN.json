@@ -4747,7 +4747,7 @@
   "lang_price_sheet_hidden_ids_help": "仅编辑绿色的新价格列。将单元格留空以保持其当前价格。Excel 会隐藏匹配的 ID；CSV 会将它们保留在末尾。保持这些身份证和当前价格不变。",
   "lang_price_update_completed_with_issues": "价格更新已完成。有些物品需要注意。",
   "lang_prices_updated_successfully": "价格已成功更新。",
-  "lang_rd_112_mm_thermal": "112 mm 散热（TVS RP 4200）",
+  "lang_rd_112_mm_thermal": "112 mm 散热",
   "lang_rd_show_business_email": "显示企业邮箱",
   "lang_rd_show_item_row_numbers": "显示项目行号",
   "lang_save_inventory_policy": "保存库存政策",

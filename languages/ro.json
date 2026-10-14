@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Editați numai coloanele verzi de preț nou. Lăsați o celulă necompletată pentru a păstra prețul curent. Excel ascunde ID-urile potrivite; CSV le păstrează la sfârșit. Păstrați aceste ID-uri și prețurile curente neschimbate.",
   "lang_price_update_completed_with_issues": "Actualizarea prețurilor a fost finalizată. Unele elemente au nevoie de atenție.",
   "lang_prices_updated_successfully": "Prețurile au fost actualizate cu succes.",
-  "lang_rd_112_mm_thermal": "112 mm termic (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termic",
   "lang_rd_show_business_email": "Afișați e-mailul afacerii",
   "lang_rd_show_item_row_numbers": "Afișați numerele rândurilor articolelor",
   "lang_save_inventory_policy": "Salvați politica de inventar",

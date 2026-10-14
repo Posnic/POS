@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Uredite samo zelene stupce Nove cijene. Ostavite ćeliju praznu kako biste zadržali trenutnu cijenu. Excel skriva odgovarajuće ID-ove; CSV ih zadržava na kraju. Održavajte te ID-ove i trenutne cijene nepromijenjene.",
   "lang_price_update_completed_with_issues": "Ažuriranje cijene završeno. Neke stavke trebaju pažnju.",
   "lang_prices_updated_successfully": "Cijene su uspješno ažurirane.",
-  "lang_rd_112_mm_thermal": "112 mm termalna (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 mm termalna",
   "lang_rd_show_business_email": "Prikaži poslovnu e-poštu",
   "lang_rd_show_item_row_numbers": "Prikaži brojeve redaka stavki",
   "lang_save_inventory_policy": "Pravila o spremanju zaliha",

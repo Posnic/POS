@@ -4744,7 +4744,7 @@
   "lang_price_sheet_hidden_ids_help": "Breyttu aðeins grænu Nýju verðdálkunum. Skildu reit auða til að halda núverandi verði þess. Excel felur samsvarandi auðkenni; CSV heldur þeim í lokin. Haltu þessum skilríkjum og núverandi verði óbreyttum.",
   "lang_price_update_completed_with_issues": "Verðuppfærslu lokið. Sumir hlutir þurfa athygli.",
   "lang_prices_updated_successfully": "Verð uppfærð með góðum árangri.",
-  "lang_rd_112_mm_thermal": "112 hit mm auppstreymi (TVS RP 4200)",
+  "lang_rd_112_mm_thermal": "112 hit mm auppstreymi",
   "lang_rd_show_business_email": "Sýna viðskiptatölvupóstur",
   "lang_rd_show_item_row_numbers": "Sýna hlutaröðunúmer",
   "lang_save_inventory_policy": "Vista birgðastefnu",

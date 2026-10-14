@@ -4747,7 +4747,7 @@
   "lang_price_sheet_hidden_ids_help": "केवळ हिरव्या नवीन किंमत स्तंभ संपाद सध्याची किंमत ठेवण्यासाठी सेल रिक्त ठेवा. एक्सेल जुळणारे आयडी लपवते; CSV ते शेवटी ठेव ते आयडी आणि वर्तमान किंमती अपरिवर्तित",
   "lang_price_update_completed_with_issues": "किंमत अद्यतन संपले काही वस्तूंना लक्ष देणे",
   "lang_prices_updated_successfully": "किमती यशस्वीरित्या",
-  "lang_rd_112_mm_thermal": "112 mm थर्मल (टीव्हीएस आरपी 4200)",
+  "lang_rd_112_mm_thermal": "112 mm थर्मल",
   "lang_rd_show_business_email": "व्यावसायिक ईमेल",
   "lang_rd_show_item_row_numbers": "आयटम पंक्ती संख्या",
   "lang_save_inventory_policy": "यादी धोरण सेव",

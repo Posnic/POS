@@ -549,6 +549,9 @@ class HardwareManager {
 
   async printHTML(htmlContent, options = {}) {
     let printWindow;
+    const receiptAttempts = [];
+    let receiptPrinter = options.printerName;
+    let capturedOnly = false;
     const diagnostics = this.diagnostic?.();
     const trace = diagnostics?.active ? require('crypto').randomUUID() : undefined;
     const started = Date.now();
@@ -559,11 +562,13 @@ class HardwareManager {
       // Render the complete design before submitting; never fall back after RAW acceptance.
       if (options.thermalRaster === true && ['58mm', '80mm', '112mm'].includes(options.pageSize)) {
         const deviceName = await this._resolvePrinterName(options.printerName);
+        receiptPrinter = deviceName;
         const bytes = options.fastReceiptLines
           ? require('./receipt-fast').renderFastReceipt(options.fastReceiptLines, options.pageSize.replace('mm', ''))
           : await require('./escpos-unicode').renderDesignedReceipt(htmlContent, options.pageSize.replace('mm', ''));
         diagnostics?.record('print.rendered', { trace, bytes: bytes.length, durationMs: Date.now() - started });
         if (diagnostics?.holdPrint()) {
+          capturedOnly = true;
           diagnostics.setPreview?.(htmlContent);
           diagnostics.record('print.result', { trace, diagnosticOnly: true, submitted: false, stage: 'captured' });
           return { success: false, diagnosticOnly: true, error: 'Receipt captured for diagnostics. Nothing was sent to the printer.' };
@@ -573,6 +578,7 @@ class HardwareManager {
         for (let copy = 0; copy < copies; copy++) {
           const result = await this.sendRawToPrinter(deviceName, bytes, 'Posnic Receipt', { jobId: requestId + '-' + copy });
           diagnostics?.record('print.result', { trace, jobId: requestId + '-' + copy, success: result.success, status: result.status, submitted: result.submitted, retryable: result.retryable, message: result.error });
+          receiptAttempts.push({ name: deviceName, status: result.success ? 'success' : 'failed', reason: result.error, jobId: result.jobId, bytes: bytes.length });
           if (!result.success) return result;
         }
         return { success: true };
@@ -625,6 +631,7 @@ class HardwareManager {
       hardenPrintWindow(printWindow);
 
       const deviceName = await this._resolvePrinterName(options.printerName);
+      receiptPrinter = deviceName;
 
       const expectedReceipt = /data-receipt-design\s*=/.test(htmlContent);
       const prepare = async () => {
@@ -676,6 +683,7 @@ class HardwareManager {
       }
 
       if (diagnostics?.holdPrint()) {
+        capturedOnly = true;
         diagnostics.setPreview?.(htmlContent);
         diagnostics.record('print.result', { trace, diagnosticOnly: true, submitted: false, stage: 'captured' });
         return { success: false, diagnosticOnly: true, error: 'Receipt captured for diagnostics. Nothing was sent to the printer.' };
@@ -702,6 +710,7 @@ class HardwareManager {
       }
 
 
+      receiptAttempts.push({ name: deviceName, status: result.success ? 'success' : 'failed', reason: result.error, jobId: result.jobId });
       if (result.success) {
         console.log('Print job sent successfully');
         return { success: true };
@@ -711,9 +720,19 @@ class HardwareManager {
       return { success: false, error: result.error || 'Print job failed' };
     } catch (error) {
       diagnostics?.record('print.result', { trace, success: false, message: error.message, code: error.code, durationMs: Date.now() - started });
+      receiptAttempts.push({ name: receiptPrinter, status: 'failed', reason: error.message });
       console.error('Failed to print:', error);
       return { success: false, error: error.message };
     } finally {
+      if (options.receiptLog && !capturedOnly) {
+        try {
+          require('./receipt-log').record({
+            saleId: options.receiptLog.saleId, total: options.receiptLog.total,
+            title: options.receiptLog.title, source: 'Till', ms: Date.now() - started,
+            printers: receiptAttempts.length ? receiptAttempts : [{ name: receiptPrinter, status: 'failed', reason: 'Receipt was not submitted' }],
+          });
+        } catch (_) { /* A log failure must never change the printing outcome. */ }
+      }
       if (printWindow && !printWindow.isDestroyed()) printWindow.destroy();
     }
   }
