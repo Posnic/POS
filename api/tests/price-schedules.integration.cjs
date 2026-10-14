@@ -214,13 +214,21 @@ test('exact numeric lookup preserves leading zeroes and excludes prefix matches'
 });
 
 test('multi-branch conflicts retain their branch in recovery sheets and result reports', async () => {
-  const r = await prepared({ items: [{ sku: '21', branchPrices: { [branchA]: { selling_price: 75 }, [branchB]: { selling_price: 80 } } }] });
+  const r = await prepared({
+    items: [
+      {
+        sku: '21',
+        branchPrices: { [branchA]: { selling_price: 75 }, [branchB]: { selling_price: 80 } },
+      },
+    ],
+  });
   await db.collection('items').updateOne({ _id: itemB }, { $set: { selling_price: 73 } });
   const result = await service.processBatch(c, r.job._id, false);
   assert.equal(result.counts.updated, 1);
   assert.equal(result.counts.conflict, 1);
   const wb = await service.sheet(c, { retryJobId: r.job._id });
-  const ws = wb.worksheets[0], headers = ws.getRow(1).values.slice(1);
+  const ws = wb.worksheets[0],
+    headers = ws.getRow(1).values.slice(1);
   assert.equal(ws.rowCount, 2);
   assert.equal(ws.getRow(2).getCell(headers.indexOf('Branch ID') + 1).value, String(branchB));
   assert.equal(ws.getRow(2).getCell(headers.indexOf('Current Selling price') + 1).value, 73);
@@ -307,4 +315,24 @@ test('stale schedule edits and cancellation cannot replace a newer review', asyn
   await assert.rejects(service.cancel(c, r.job._id, { revision: first.job.revision }), /reload/);
   assert.equal((await service.status(c, r.job._id)).job.note, 'Revised');
   await service.cancel(c, r.job._id, { revision: second.job.revision });
+});
+
+test('schedule status groups paginate without mixing completed or cancelled jobs', async () => {
+  const r = await prepared();
+  const original = await db.collection('price_sheet_jobs').findOne({ _id: r.job._id });
+  for (let i = 0; i < 12; i++)
+    await db
+      .collection('price_sheet_jobs')
+      .insertOne({ ...original, _id: new ObjectId(), status: 'scheduled' });
+  for (const status of ['running', 'attention', 'complete', 'cancelled'])
+    await db.collection('price_sheet_jobs').insertOne({ ...original, _id: new ObjectId(), status });
+  const upcoming = await service.list(c, { status: 'upcoming', page: 2, pageSize: 10 });
+  assert.equal(upcoming.total, 15);
+  assert.equal(upcoming.jobs.length, 5);
+  assert.ok(upcoming.jobs.every((j) => !['complete', 'cancelled'].includes(j.status)));
+  for (const status of ['complete', 'cancelled']) {
+    const result = await service.list(c, { status, page: 1, pageSize: 25 });
+    assert.equal(result.total, 1);
+    assert.equal(result.jobs[0].status, status);
+  }
 });

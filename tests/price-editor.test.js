@@ -207,6 +207,39 @@ test("file picker uploads for review without applying and hides unchanged rows",
     f.calls.some((c) => c.action === "process"),
     false,
   );
+  assert.deepEqual(
+    f
+      .$("#ps-when option")
+      .map((_, e) => e.value)
+      .get(),
+    ["now", "tomorrow", "custom"],
+  );
+  f.w.PosnicPro.post = (r, done) => {
+    const b = JSON.parse(r.data);
+    f.calls.push(b);
+    done({
+      type: "success",
+      data: {
+        job: { _id: "123456789012345678901234", status: "scheduled" },
+        counts: { pending: 1 },
+        rows: [],
+        page: 1,
+        total: 1,
+      },
+    });
+  };
+  f.$("#ps-when").val("tomorrow").trigger("change");
+  f.$("#ps-note").val("Diwali offer");
+  await f.p.sheetProcess(
+    f.$("#ps-job-view button.btn-primary")[0],
+    false,
+    "review",
+  );
+  assert.equal(f.calls.find((c) => c.action === "configure").when, "tomorrow");
+  assert.equal(
+    f.calls.find((c) => c.action === "configure").note,
+    "Diwali offer",
+  );
   f.close();
 });
 test("confirmed direct updates clear applied drafts and refresh the selected result filter", async () => {
@@ -294,7 +327,10 @@ test("editing methods are separate and switching preserves direct drafts", async
   assert.equal(f.$("#ps-file-panel").prop("hidden"), false);
   assert.equal(f.$("#ps-file-tab").attr("aria-selected"), "true");
   assert.equal(f.$('#ps-direct-panel button[onclick*="sheetOpen"]').length, 0);
-  assert.equal(f.$('#ps-file-panel button[onclick*="sheetDownload"]').length, 1);
+  assert.equal(
+    f.$('#ps-file-panel button[onclick*="sheetDownload"]').length,
+    1,
+  );
   assert.equal(f.$('#ps-file-panel button[onclick*="sheetImport"]').length, 1);
   f.p.editMode("direct");
   assert.equal(f.$('[data-price-field="selling_price"]').val(), "25");
@@ -341,5 +377,95 @@ test("empty filters explain the result and prevent an empty download", async () 
   assert.match(f.$("#ps-sheet-count").text(), /No products match/);
   assert.equal(f.$("#ps-sheet-prepare").prop("disabled"), true);
   assert.equal(f.$("#ps-sheet-clear").prop("hidden"), false);
+  f.close();
+});
+
+test("file is first and default; three tabs isolate schedules and support keyboard navigation", async () => {
+  const f = await fixture();
+  assert.deepEqual(
+    f
+      .$('.ps-edit-tabs [role="tab"]')
+      .map((_, e) => e.id)
+      .get(),
+    ["ps-file-tab", "ps-direct-tab", "ps-schedules-tab"],
+  );
+  assert.equal(f.$("#ps-file-panel").prop("hidden"), false);
+  assert.equal(f.$("#ps-direct-panel").prop("hidden"), true);
+  f.w.PosnicPro.post = (r, done) =>
+    done({
+      type: "success",
+      data: { jobs: [], page: 1, pageSize: 10, total: 0 },
+    });
+  f.p.editModeKey({ key: "End", preventDefault() {} });
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(f.$("#ps-schedules-panel").prop("hidden"), false);
+  assert.equal(f.$("#ps-file-panel").prop("hidden"), true);
+  assert.equal(f.$("#ps-branches").prop("hidden"), true);
+  assert.equal(f.w.document.activeElement.id, "ps-schedules-tab");
+  assert.match(f.$("#ps-sheet-history").text(), /No upcoming updates/);
+  f.p.editModeKey({ key: "Home", preventDefault() {} });
+  assert.equal(f.$("#ps-file-panel").prop("hidden"), false);
+  f.$('#ps-sheet-fields input[value="company_price"]').prop("checked", true);
+  f.p.editMode("direct");
+  f.p.editMode("file");
+  assert.equal(
+    f.$('#ps-sheet-fields input[value="company_price"]').prop("checked"),
+    true,
+  );
+  f.close();
+});
+test("schedule views paginate, preserve notes, cancel with revision and exclude edit actions from completed", async () => {
+  const f = await fixture(),
+    requests = [];
+  f.w.PosnicPro.post = (r, done) => {
+    const b = JSON.parse(r.data);
+    requests.push(b);
+    done({
+      type: "success",
+      data:
+        b.action === "list"
+          ? {
+              jobs: [
+                {
+                  _id: "123456789012345678901234",
+                  note: "Diwali offer",
+                  status: b.status === "complete" ? "complete" : "scheduled",
+                  revision: 7,
+                  effectiveAt: "2026-11-01T00:00:00Z",
+                },
+              ],
+              page: b.page,
+              pageSize: b.pageSize,
+              total: 26,
+            }
+          : {},
+    });
+  };
+  f.p.editMode("schedules");
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(requests[0].status, "upcoming");
+  assert.match(f.$("#ps-sheet-history").text(), /Diwali offer/);
+  f.$("#ps-sheet-history .ps-pager button").last().trigger("click");
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(requests.at(-1).page, 2);
+  f.$("#ps-sheet-history .ps-job-actions button").last().trigger("click");
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(requests.find((r) => r.action === "cancel").revision, 7);
+  f.$("#ps-jobs-size").val("25");
+  f.p.scheduleFilter("complete");
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(requests.at(-1).page, 1);
+  assert.equal(requests.at(-1).pageSize, 25);
+  assert.deepEqual(
+    f
+      .$(".ps-job-actions button")
+      .map((_, e) => e.textContent)
+      .get(),
+    ["View"],
+  );
+  assert.equal(
+    f.$('[data-job-status="complete"]').attr("aria-pressed"),
+    "true",
+  );
   f.close();
 });
