@@ -1146,7 +1146,7 @@ test('RP 4200 migrates saved 80 mm content independently and keeps email and row
     const output = $('<div>').html(engine.render(sale, '112', false));
     assert.equal(output.find('[data-receipt-design]').attr('data-receipt-design'), '112');
     assert.doesNotMatch(output.text(), /shop@example.com/);
-    assert.deepEqual(output.find('.rd-row-number').map((i, e) => $(e).text()).get(), ['1. ', '2. ']);
+    assert.deepEqual(output.find('tbody .rd-row-number').map((i, e) => $(e).text()).get(), ['1', '2']);
     saved.layouts['112'].blocks.find(b => b.type === 'store').showEmail = true;
     assert.match($('<div>').html(engine.render(sale, '112', false)).text(), /shop@example.com/);
     dom.window.close();
@@ -1240,5 +1240,60 @@ test('sale printing sends receipt identity to desktop logging while sample print
     assert.equal(sent[0].receiptLog.total, sale.items_total);
     await engine.print('<article>Sample</article>', '80', { sample: true });
     assert.equal(sent[1].receiptLog, null);
+    dom.window.close();
+});
+
+test('serial numbers occupy a separate optional column on every format and layout', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const format of Object.keys(contract.formats)) for (const layout of ['columns', 'compact', 'detailed']) {
+        const items = design.layouts[format].blocks.find(b => b.type === 'items');
+        Object.assign(items, { showRowNumbers: true, itemLayout: layout, hsn: true });
+        let out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('thead th').first().text(), 'S.No');
+        assert.equal(out.find('tbody tr').first().children().first().text(), '1');
+        assert.match(out.find('tbody tr').first().children().eq(1).text(), /^Cup/);
+        assert.equal(out.find('col').length, out.find('thead th').length);
+        items.showRowNumbers = false;
+        out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('.rd-row-number').length, 0);
+    }
+    dom.window.close();
+});
+
+test('payment method preference survives save and reload independently per format', () => {
+    const { dom, w, $, branch } = setup();
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    const selectTotals = () => $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Totals')).find('.rd-select').trigger('click');
+    selectTotals();
+    assert.equal($('[data-prop="showPaymentMethod"]').prop('checked'), true);
+    $('[data-prop="showPaymentMethod"]').prop('checked', false).trigger('change');
+    $('[data-action="save"]').trigger('click');
+    const saved = contract.normalize(sent.receipt_designs);
+    assert.equal(saved.layouts['80'].blocks.find(b => b.type === 'totals').showPaymentMethod, false);
+    assert.equal(saved.layouts['112'].blocks.find(b => b.type === 'totals').showPaymentMethod, true);
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: saved });
+    selectTotals();
+    assert.equal($('[data-prop="showPaymentMethod"]').prop('checked'), false);
+    dom.window.close();
+});
+
+test('hiding payment method removes cash and card without hiding totals or balance due', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    Object.assign(sale, { payment_mode: 'Card', partial_check: true, partial_balance: 10, payment_pending: 16 });
+    for (const format of Object.keys(contract.formats)) {
+        const totals = design.layouts[format].blocks.find(b => b.type === 'totals');
+        assert.match($('<div>').html(engine.render(sale, format, false)).text(), /Card/);
+        totals.showPaymentMethod = false;
+        let output = $('<div>').html(engine.render(sale, format, false));
+        assert.doesNotMatch(output.text(), /Card/);
+        assert.match(output.text(), /Balance due/);
+        assert.match(output.text(), /26\.00/);
+        sale.payment_mode = 'Cash';
+        output = $('<div>').html(engine.render(sale, format, false));
+        assert.doesNotMatch(output.text(), /Cash/);
+        sale.payment_mode = 'Card';
+    }
     dom.window.close();
 });
