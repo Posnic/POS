@@ -120,6 +120,19 @@
         : t("lang_all_categories", "All categories"),
     );
   }
+  // Keep multi-select choices open while selecting; dismiss on outside interaction.
+  $(document).off("click.priceCategories keydown.priceCategories")
+    .on("click.priceCategories", function (event) {
+      $(".ps-category-picker[open]").each(function () {
+        if (!this.contains(event.target)) this.open = false;
+      });
+    }).on("keydown.priceCategories", function (event) {
+      if (event.key !== "Escape") return;
+      $(".ps-category-picker[open]").each(function () {
+        this.open = false;
+        if (this.contains(document.activeElement)) $(this).find("summary").trigger("focus");
+      });
+    });
   p.setPriceCategories = function (items) {
     ["ps-grid-category", "ps-sheet-category"].forEach(function (id) {
       var selected = categories(id),
@@ -628,9 +641,14 @@
   p.sheetCount = function () {
     clearTimeout(countTimer);
     $("#ps-sheet-prepare").prop("disabled", true);
-    if (priceBranches.length && !selectedBranches.length) return;
-    $("#ps-sheet-clear").prop("hidden", true);
     var n = ++countSequence;
+    $("#ps-sheet-count").attr("aria-busy", "true").removeClass("ps-count-empty")
+      .text("Updating matching items…");
+    if (priceBranches.length && !selectedBranches.length) {
+      $("#ps-sheet-count").attr("aria-busy", "false").text("Select a branch to see matching items.");
+      return;
+    }
+    $("#ps-sheet-clear").prop("hidden", true);
     countTimer = setTimeout(function () {
       PosnicPro.get(
         {
@@ -650,17 +668,21 @@
               r.type !== "success" || empty,
             );
             $("#ps-sheet-clear").prop("hidden", !empty);
-            $("#ps-sheet-count").text(
+            $("#ps-sheet-count").attr("aria-busy", "false").toggleClass("ps-count-empty", empty).text(
               r.type === "success"
                 ? empty
                   ? t(
                       "lang_no_products_match_filters",
                       "No products match these filters.",
                     )
-                  : r.data.total + " matching items across all pages"
+                  : r.data.total + (r.data.total === 1 ? " matching item across all pages" : " matching items across all pages")
                 : "Could not count items",
             );
           }
+        },
+        function () {
+          if (n !== countSequence) return;
+          $("#ps-sheet-count").attr("aria-busy", "false").text("Could not count items. Try changing the filters again.");
         },
       );
     }, 250);
