@@ -603,6 +603,21 @@ describe('updateGeneralSetting', () => {
 // updateCommonSettings
 // =============================================================================
 describe('updateCommonSettings', () => {
+  test.each([true, false])('accepts exact numeric search set to %s', async (enabled) => {
+    settingsService.updateCommonSettings.mockResolvedValue(ok());
+    const res = mockRes();
+    await ctrl.updateCommonSettings(mockReq({ body: { sales_exact_numeric_codes: enabled } }), res);
+    expect(settingsService.updateCommonSettings).toHaveBeenCalledWith({
+      sales_exact_numeric_codes: enabled,
+    });
+  });
+
+  test('rejects a string boolean instead of silently enabling exact search', async () => {
+    const res = mockRes();
+    await ctrl.updateCommonSettings(mockReq({ body: { sales_exact_numeric_codes: 'false' } }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(settingsService.updateCommonSettings).not.toHaveBeenCalled();
+  });
   const validBody = { receiving_prefix: 'REC', notification_value: 10 };
 
   test('rejects an invalid receipt design before calling the settings writer', async () => {

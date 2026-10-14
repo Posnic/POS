@@ -28,6 +28,59 @@ try {
  await page.waitForFunction(()=>!$('.swal2-input').is(':visible'));await page.keyboard.type('22');await page.waitForFunction(()=>$('.autocomplete-suggestion').length===2);
  assert.equal(await page.evaluate(()=>$('#sales_new_item_name').data('autocomplete').selectedIndex),-1);await page.keyboard.press('Enter');
  assert.equal(await page.evaluate(()=>$('.swal2-input').is(':visible')),false);assert.equal(await page.evaluate(()=>window.added.length),2);
- assert.deepEqual(errors,[]);console.log('PASS: real autocomplete arrows/Enter, Tab/quantity/Enter, restored focus, no duplicate add, ambiguous codes require selection, Escape cancels');
+ await page.keyboard.press('Escape');
+ await page.evaluate(()=>{
+  PosnicPro.local.get=()=>JSON.stringify({hardware_weight_machine_enable:true});
+  PosnicPro.sales.isWeighedItem=item=>item.item_weight_machine_based===true;
+  PosnicPro.sales.itemCache.get=(id,cb)=>cb({item_id:id,item_name:'Weighed item',item_weight_machine_based:true,track_inventory:false});
+  window.scaleReads=0;
+  window.WeightBridge={isAvailable:()=>true,getCurrentWeight:options=>{
+   if(!options.stableOnly) throw new Error('Automatic add requires stable readings');
+   window.scaleReads++;return new Promise(resolve=>{window.resolveScale=resolve;});
+  }};
+  PosnicPro.sales.askSearchQuantity({},'weighed');
+ });
+ await page.waitForSelector('.swal2-input',{visible:true});
+ await page.evaluate(()=>window.resolveScale(0.375));
+ await page.waitForFunction(()=>window.added.length===3);
+ assert.equal(await page.evaluate(()=>window.added[2].item_quantity),0.375);
+ assert.equal(await page.evaluate(()=>window.added[2]._quantityConfirmed),true);
+ assert.equal(await page.evaluate(()=>window.scaleReads),1);
+ await page.waitForFunction(()=>document.activeElement.id==='sales_new_item_name');
+ // A cashier's manual entry wins over a late scale response.
+ await page.evaluate(()=>PosnicPro.sales.askSearchQuantity({},'weighed'));
+ await page.waitForFunction(()=>document.activeElement.classList.contains('swal2-input'));
+ await page.keyboard.type('0.5');await page.evaluate(()=>window.resolveScale(0.9));
+ assert.equal(await page.$eval('.swal2-input',el=>el.value),'0.5');
+ assert.equal(await page.evaluate(()=>window.added.length),3);
+ await page.keyboard.press('Enter');await page.waitForFunction(()=>window.added.length===4);
+ assert.equal(await page.evaluate(()=>window.added[3].item_quantity),0.5);
+ // Cancellation discards a late reading, including when a new dialog exists.
+ await page.evaluate(()=>PosnicPro.sales.askSearchQuantity({},'weighed'));
+ await page.waitForSelector('.swal2-input',{visible:true});
+ await page.evaluate(()=>{window.oldScale=window.resolveScale;});await page.keyboard.press('Escape');
+ await page.waitForFunction(()=>!$('.swal2-input').is(':visible'));
+ await page.evaluate(()=>PosnicPro.sales.askSearchQuantity({},'weighed'));
+ await page.waitForSelector('.swal2-input',{visible:true});
+ await page.evaluate(()=>window.oldScale(0.8));
+ assert.equal(await page.$eval('.swal2-input',el=>el.value),'');
+ assert.equal(await page.evaluate(()=>window.added.length),4);
+ await page.evaluate(()=>window.resolveScale(null));await page.keyboard.press('Escape');
+ // Tab from quantity is the same validated action as Add to sale.
+ await page.waitForFunction(()=>!$('.swal2-input').is(':visible'));
+ await page.evaluate(()=>{PosnicPro.local.get=()=>null;PosnicPro.sales.askSearchQuantity({},'weighed');});
+ await page.waitForFunction(()=>document.activeElement.classList.contains('swal2-input'));
+ await page.keyboard.press('Tab');
+ await page.waitForSelector('.swal2-validationerror',{visible:true});
+ assert.equal(await page.evaluate(()=>window.added.length),4);
+ await page.type('.swal2-input','0.625');await page.keyboard.press('Tab');
+ await page.waitForFunction(()=>window.added.length===5);
+ assert.equal(await page.evaluate(()=>window.added[4].item_quantity),0.625);
+ await page.waitForFunction(()=>document.activeElement.id==='sales_new_item_name');
+ await page.evaluate(()=>PosnicPro.sales.askSearchQuantity({},'weighed'));
+ await page.waitForFunction(()=>document.activeElement.classList.contains('swal2-input'));
+ await page.keyboard.type('1');await page.keyboard.down('Shift');await page.keyboard.press('Tab');await page.keyboard.up('Shift');
+ assert.equal(await page.evaluate(()=>window.added.length),5);await page.keyboard.press('Escape');
+ assert.deepEqual(errors,[]);console.log('PASS: quantity Tab/Enter adds once and restores search, invalid quantity stays open, Shift+Tab navigates, stable scale auto-add, manual override and late-reading cancellation');
 }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1693,7 +1693,7 @@ PosnicPro.sales = {
         }
 
         // Auto-trigger weight reading for weight-based items
-        PosnicPro.sales.checkAutoWeightTrigger(params);
+        if (!params._quantityConfirmed) PosnicPro.sales.checkAutoWeightTrigger(params);
     },
     customerViewDisplay: function () {
         //PosnicPro.customerview.customer_display_update();
@@ -11680,12 +11680,44 @@ PosnicPro.sugActionRow = function (icon, cls, title, meta) {
         + '<div class="sug-meta">' + meta + '</div></div></div>';
 };
 PosnicPro.sales.askSearchQuantity = function (item, id) {
+    if (id && !item._searchDetailsLoaded) {
+        PosnicPro.sales.itemCache.get(id, function (details) {
+            PosnicPro.sales.askSearchQuantity(Object.assign({}, details, { _searchDetailsLoaded: true }), id);
+        });
+        return;
+    }
+    var weighed = PosnicPro.sales.isWeighedItem && PosnicPro.sales.isWeighedItem(item);
+    var settings = {};
+    try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) { /* manual entry */ }
+    var scaleOn = settings.hardware_weight_machine_enable === true || settings.hardware_weight_machine_enable === 'true';
+    var request = PosnicPro.sales._searchQuantityRequest = (PosnicPro.sales._searchQuantityRequest || 0) + 1;
     swal({
         title: PosnicPro.i18n.t('lang_quantity', 'Quantity'),
-        text: item.item_name || item.name || '', input: 'text', inputValue: '1', animation: false,
+        text: item.item_name || item.name || '', input: 'text', inputValue: weighed ? '' : '1', animation: false,
         inputAttributes: { min: '0.001', max: '100000', step: 'any', inputmode: 'decimal' },
         showCancelButton: true,
-        onOpen: function () { setTimeout(function () { var input = document.querySelector('.swal2-input'); if (input) { input.focus(); input.select(); } }, 0); },
+        onOpen: function () {
+            var input = document.querySelector('.swal2-input');
+            if (!input) return;
+            var edited = false;
+            input.addEventListener('input', function () { edited = true; });
+            $(input).off('keydown.salesQuantity').on('keydown.salesQuantity', function (event) {
+                if (event.key !== 'Tab' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                if (!event.originalEvent || !event.originalEvent.repeat) swal.clickConfirm();
+            });
+            setTimeout(function () { if (input.isConnected) { input.focus(); input.select(); } }, 0);
+            if (weighed && scaleOn && window.WeightBridge && window.WeightBridge.isAvailable()) {
+                window.WeightBridge.getCurrentWeight({ stableOnly: true }).then(function (weight) {
+                    // A cancelled/replaced dialog or a manual edit owns its quantity.
+                    if (request !== PosnicPro.sales._searchQuantityRequest || edited || !input.isConnected || document.querySelector('.swal2-input') !== input) return;
+                    if (typeof weight !== 'number' || !Number.isFinite(weight) || weight <= 0 || weight > 100000) return;
+                    input.value = weight.toFixed(3);
+                    swal.clickConfirm();
+                }).catch(function () { /* Leave manual quantity entry available. */ });
+            }
+        },
         confirmButtonText: PosnicPro.i18n.t('lang_add_to_sale', 'Add to sale'),
         inputValidator: function (value) {
             return new Promise(function (resolve, reject) {
@@ -11694,6 +11726,8 @@ PosnicPro.sales.askSearchQuantity = function (item, id) {
             });
         }
     }).then(function (result) {
+        if (request !== PosnicPro.sales._searchQuantityRequest) return;
+        PosnicPro.sales._searchQuantityRequest++;
         if (!result || result.dismiss) { $('#sales_new_item_name').focus(); return; }
         var qty = Number(typeof result === 'string' || typeof result === 'number' ? result : result.value);
         if (!Number.isFinite(qty) || qty <= 0 || qty > 100000) return;
@@ -11703,10 +11737,10 @@ PosnicPro.sales.askSearchQuantity = function (item, id) {
                 PosnicPro.alert('error', PosnicPro.i18n.t('lang_some_items_are_out_of_stock', 'Some items are out of stock.'));
                 $('#sales_new_item_name').focus(); return;
             }
-            PosnicPro.sales.addSalesLineItems(Object.assign({}, details, { item_quantity: qty }));
+            PosnicPro.sales.addSalesLineItems(Object.assign({}, details, { item_quantity: qty, _quantityConfirmed: true }));
             if (!$('.modal.show:visible, .swal2-modal:visible').length) $('#sales_new_item_name').focus();
         }
-        if (id) PosnicPro.sales.itemCache.get(id, add); else add(item);
+        add(item);
     }).catch(function () { $('#sales_new_item_name').focus(); });
 };
 
