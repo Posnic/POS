@@ -1848,7 +1848,7 @@ PosnicPro.sales = {
         }
         PosnicPro.sales.customerViewDisplay();
     },
-    openTenderModel: function (methodsReady) {
+    openTenderModel: function (methodsReady, focusTender) {
         if (!PosnicPro.sales.paymentOnlyMode && PosnicPro.sales.saleProcess !== 'KOT' && PosnicPro.saleExtensions?.dispatch('checkout')) return;
 
         // Load methods from this till's API each time. Startup may still be
@@ -1866,7 +1866,7 @@ PosnicPro.sales = {
                 if (!response || response.type !== 'success' || !Array.isArray(response.data)) { failMethods(); return; }
                 PosnicPro.configPaymentType = response.data.map(function (row) { return { payment_value: row.payment_value, enabled: row.enabled !== false }; });
                 if (window.location.hash !== paymentRoute || PosnicPro.sales.editSaleId !== paymentSale) return;
-                PosnicPro.sales.openTenderModel(true);
+                PosnicPro.sales.openTenderModel(true, focusTender);
             }, failMethods);
             return;
         }
@@ -2332,6 +2332,7 @@ PosnicPro.sales = {
             $('.tables-list-hide-show').show();
             $('#infobar-settings-sidebar-tender-details').show();
             if (PosnicPro.askposnic) PosnicPro.askposnic.checkoutPaymentReady();
+            if (focusTender) $('#tendered_amount').focus();
         }
     },
     paymentMethodEnabled: function (name) {
@@ -11084,8 +11085,26 @@ if (!PosnicPro.sales._sharedBarcodeEnterBound) {
     PosnicPro.sales._sharedBarcodeEnterBound = true;
     document.addEventListener('keydown', function (event) {
         var input = event.target;
-        if (event.key !== 'Enter' || !input || input.id !== 'sales_new_item_name') { return; }
+        if (!input || input.id !== 'sales_new_item_name') { return; }
+        // Scanner detection buffers characters before putting them in the input.
+        // Its terminating Enter must never open payment for an apparently empty box.
+        if (event.key && event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+            PosnicPro.sales._searchScanPending = true;
+        }
+        if (event.key !== 'Enter' || event.isComposing || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) { return; }
         var code = String(input.value || '').trim();
+        if (!code && !PosnicPro.sales._searchScanPending) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            if (event.repeat || PosnicPro.sales._loadingPaymentMethods ||
+                PosnicPro.sales.submissionInProgress || PosnicPro.sales.saleProcess === 'KOT' ||
+                !$('#newsalespage').is(':visible') ||
+                !$('.salesBalanceAmount .custom_balance').is(':visible') ||
+                !$('#sales_new_items_tbody tr[id^="touch_row_"]').length ||
+                $('.modal.show:visible, .swal2-modal:visible').length) { return; }
+            PosnicPro.sales.openTenderModel(false, true);
+            return;
+        }
         if (!/^\d{7,}$/.test(code)) { return; }
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -11099,10 +11118,12 @@ $('#sales_new_item_name').scannerDetection({
     preventDefault: true,
     endChar: [13],
     onComplete: function (barcode, qty) {
+        PosnicPro.sales._searchScanPending = false;
         validScan = true;
         PosnicPro.sales.addByBarcode(barcode);
     },
     onError: function (string, qty) {
+        PosnicPro.sales._searchScanPending = false;
         $('#sales_new_item_name').val($('#sales_new_item_name').val() + string).trigger('input');
     }
 });
