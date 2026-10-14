@@ -8,13 +8,13 @@ const puppeteer = require(path.join(ROOT, 'api/node_modules/puppeteer'));
  try {
   const page = await browser.newPage();
   const errors=[]; page.on('pageerror', e=>errors.push(e.message));
-  await page.setContent('<div id="newsalespage"><input id="sales_new_item_name"><span class="salesBalanceAmount"><a class="custom_balance">PAY</a></span><table><tbody id="sales_new_items_tbody"><tr id="touch_row_one"><td>Item</td></tr></tbody></table></div><div id="payment" style="display:none"><input id="tendered_amount"><button id="save">Save</button></div>');
+  await page.setContent('<div id="newsalespage" style="display:none"></div><div id="sales_new"><input id="sales_new_item_name"><span class="salesBalanceAmount"><a class="custom_balance">PAY</a></span><table><tbody id="sales_new_items_tbody"><tr id="touch_row_one"><td>Item</td></tr></tbody></table></div><div id="payment" style="display:none"><input id="tendered_amount"><button id="save">Save</button></div>');
   for (const file of ['frontend/static/script/js/jquery.min.js','frontend/static/script/js/jquery.scannerdetection.js','frontend/static/script/js/jQuery-Autocomplete.min.js']) await page.addScriptTag({path:path.join(ROOT,file)});
   await page.evaluate(()=>{
    window.opens=0; window.saved=0; window.scanned=[];
    window.PosnicPro={sales:{saleProcess:'Add',addByBarcode:code=>window.scanned.push(code),openTenderModel:(ready,focus)=>{
     window.opens++; PosnicPro.sales._loadingPaymentMethods=true;
-    setTimeout(()=>{PosnicPro.sales._loadingPaymentMethods=false; $('#newsalespage').hide();$('#payment').show();if(focus)$('#tendered_amount').focus();},100);
+    setTimeout(()=>{PosnicPro.sales._loadingPaymentMethods=false; $('#sales_new').hide();$('#payment').show();if(focus)$('#tendered_amount').focus();},100);
    }}};
    $('#save').on('click',()=>window.saved++);
    $('#sales_new_item_name').autocomplete({lookup:[{value:'Tea',data:'tea'}]});
@@ -30,7 +30,7 @@ const puppeteer = require(path.join(ROOT, 'api/node_modules/puppeteer'));
   await page.keyboard.press('Enter'); assert.equal(await page.evaluate(()=>window.saved),0);
   await page.keyboard.press('Tab'); assert.equal(await page.evaluate(()=>document.activeElement.id),'save');
   await page.keyboard.press('Enter'); assert.equal(await page.evaluate(()=>window.saved),1);
-  const reset=async()=>{await page.evaluate(()=>{$('#payment').hide();$('#newsalespage').show();$('#sales_new_item_name').val('').focus();window.opens=0;PosnicPro.sales._searchScanPending=false;});};
+  const reset=async()=>{await page.evaluate(()=>{$('#payment').hide();$('#sales_new').show();$('#sales_new_item_name').val('').focus();window.opens=0;PosnicPro.sales._searchScanPending=false;});};
   await reset();
   // A scanner's fast digits are buffered; its Enter adds the barcode, never pays.
   await page.keyboard.type('12345678'); await page.keyboard.press('Enter');
