@@ -11085,6 +11085,21 @@ if (!PosnicPro.sales._sharedBarcodeEnterBound) {
     PosnicPro.sales._sharedBarcodeEnterBound = true;
     document.addEventListener('keydown', function (event) {
         var input = event.target;
+        // A separate Enter in Tender confirms the displayed payment through the
+        // same Save button (and validation) as a mouse click. Held keys cannot save.
+        if (input && input.id === 'tendered_amount' && event.key === 'Enter') {
+            if (event.isComposing || event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) { return; }
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            var save = document.getElementById('save_btn');
+            if (event.repeat || PosnicPro.sales._loadingPaymentMethods ||
+                PosnicPro.sales.submissionInProgress || !save || save.disabled ||
+                !$('#infobar-settings-sidebar-tender-details').hasClass('sidebarview') ||
+                !$('#tendered_amount').is(':visible') || !$(save).is(':visible') ||
+                $('.modal.show:visible, .swal2-modal:visible').length) { return; }
+            save.click();
+            return;
+        }
         if (!input || input.id !== 'sales_new_item_name') { return; }
         // Scanner detection buffers characters before putting them in the input.
         // Its terminating Enter must never open payment for an apparently empty box.
