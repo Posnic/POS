@@ -415,7 +415,7 @@ PosnicPro.settings = {
                             '<a data-module = "branch" data-access = "write" data-toggle="tooltip" title="Restore" data-t-title="lang_restore_title" href="#/settings/' + row._id + '/restore" data-id="settings/' + row._id + '/restore" class="point-cursor mobile_tooltip"><i class="feather icon-repeat"></i></a>' +
                             '</div>' +
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-                        var updateDate = PosnicPro.convertDate(row.string_date);
+                        var updateDate = PosnicPro.convertDate(row.document_backup_date || row.string_date || row.date || row.created_date);
                         if (tableName === 'sales') {
                             var trow = '<tr> <td><input type="checkbox" class="sales-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'sales\');"></td> <td scope="row">' + row_no + '</td>  <td>' + row.sales_id + '</td> <td>' + updateDate + '</td> <td>' + row.customer_name + '</td> <td class="text-center"><span class="badge badge-success-inverse">' + row.sale_process + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.sales_total + '</span></td> <td><span>' + action + ' </span></td> </tr>';
                         } else if (tableName === 'receivings') {

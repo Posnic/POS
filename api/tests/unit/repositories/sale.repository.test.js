@@ -901,6 +901,22 @@ describe('SalesRepository', () => {
   });
 
   describe('getLegacyDetails', () => {
+    test('renders an authorized recycle snapshot without loading a live sale', async () => {
+      if (!collections.sales) collections.sales = mkCol();
+      collections.sales.findOne.mockClear();
+      const snapshot = {
+        _id: FAKE_ID,
+        branch_id: FAKE_BRANCH,
+        sales_id: 'DELETED-1',
+        items: [],
+        sales_total: 168,
+      };
+      const result = await salesRepository.getLegacyDetails(FAKE_ID, { snapshot });
+      expect(result.status).toBe(true);
+      expect(result.data.sales_id).toBe('DELETED-1');
+      expect(collections.sales.findOne).not.toHaveBeenCalled();
+    });
+
     test('receipt creation time uses the sale branch even after date simplification', async () => {
       if (!collections.sales) collections.sales = mkCol();
       if (!collections.branches) collections.branches = mkCol();

@@ -296,7 +296,7 @@ class SalesRepository {
     return Model.paginate(filter, options);
   }
 
-  async getLegacyDetails(id, { SaleModel } = {}) {
+  async getLegacyDetails(id, { SaleModel, snapshot } = {}) {
     try {
       if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return { status: false, data: null, message: 'Invalid sale id' };
@@ -315,7 +315,7 @@ class SalesRepository {
         ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
       };
 
-      let saleDoc = await salesCollection.findOne(filter);
+      let saleDoc = snapshot || (await salesCollection.findOne(filter));
 
       // Fallback for deleted sales: if the sale is not present in the live
       // `sales` collection, try to load a backup copy from the
@@ -326,6 +326,8 @@ class SalesRepository {
         const recycleFilter = {
           _id: saleObjectId,
           document_name: 'sales',
+          body_discarded: { $ne: true },
+          ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
           ...(BaseModel.license ? { license: BaseModel.license } : {}),
         };
 
