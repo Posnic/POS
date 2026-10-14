@@ -47,3 +47,13 @@ test('optional GTIN validates length and check digit', () => {
   assert.equal(validGtin('4006381333932'), false);
   assert.equal(validGtin('SOAP-123'), false);
 });
+
+test('all standard item edit and duplicate entry points use the new editor', () => {
+    const source = require('node:fs').readFileSync('frontend/static/script/js/modules/js/items.js', 'utf8');
+    for (const method of ['showEdit', 'editItem']) {
+        assert.match(source, new RegExp(method + ': function \\(id\\) \\{\\s*(?:return )?PosnicPro.items_v2.showEdit\\(id\\)'));
+    }
+    for (const method of ['showClone', 'cloneItem']) {
+        assert.match(source, new RegExp(method + ': function \\(id\\) \\{\\s*(?:return )?PosnicPro.items_v2.showClone\\(id\\)'));
+    }
+});

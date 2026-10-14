@@ -64,9 +64,12 @@ test('edit goes through set(), and never sets the raw box', () => {
   assert.equal(viaSet, 2, `expected both edit paths to use itemDayparts.set, found ${viaSet}`);
 });
 
-test('a new dish gets the list too, with nothing pre-selected', () => {
-  assert.match(ITEMS, /PosnicPro\.items\.itemAction = 'add';\s*\n\s*PosnicPro\.itemDayparts\.set\(\[\]\);/,
-    'opening the form for a new dish does not fill the periods');
+test('a new dish loads serving periods in the default creator without auto-selecting them', () => {
+  assert.match(ITEMS, /showAdd: function \(\) \{\s*PosnicPro\.items_v2\.showAdd\(\)/);
+  const creator = fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js/items_v2.js'), 'utf8');
+  assert.match(creator, /if \(capabilities.restaurant\) loadRestaurantOptions\(\)/);
+  assert.match(creator, /fill\('iv2-periods', Array.isArray\(rows\) \? rows : \[\]/);
+  assert.match(creator, /input.checked = previous.has\(String\(row.id\)\)/);
 });
 
 test('what is chosen is what is saved', () => {
