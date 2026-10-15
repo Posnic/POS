@@ -561,3 +561,18 @@ test("submitted schedules show confirmation without another submission form; edi
  assert.equal(f.$('#ps-note').val(),'Diwali offer');
  f.close();
 });
+
+test('synced applied history is clearly read-only and does not offer job execution or report actions', async () => {
+  const f = await fixture();
+  try {
+    f.w.PosnicPro.post = (r, done) => done({type:'success',data:{
+      job:{_id:'123456789012345678901234',status:'complete',syncedHistory:true,branchIds:['aaaaaaaaaaaaaaaaaaaaaaaa']},
+      counts:{updated:1},rows:[{number:1,name:'Apple',branch_id:'aaaaaaaaaaaaaaaaaaaaaaaa',status:'updated',changes:{selling_price:{old:10,value:12}}}],page:1,total:1,
+    }});
+    await f.p.sheetJob('123456789012345678901234');
+    assert.match(f.$('#ps-sheet-title').text(),/synced history/);
+    assert.match(f.$('#ps-job-view').text(),/not the full cloud schedule/);
+    assert.match(f.$('#ps-job-view').text(),/10.00.*12.00/);
+    assert.doesNotMatch(f.$('#ps-job-view button').text(),/Download result report|Apply|Cancel|Edit schedule/);
+  } finally { f.close(); }
+});

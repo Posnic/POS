@@ -829,7 +829,11 @@
       $('<button type="button" class="btn btn-primary">').text("View schedules").on("click",function(){p.sheetClose();p.editMode("schedules");p.scheduleFilter("upcoming");}).appendTo(confirmation);
       if (!editSchedule) $('<button type="button" class="btn btn-light ml-2">').text("Edit schedule").on("click",function(){showJob(data,true);$("#ps-when").focus();}).appendTo(confirmation);
     }
-    if (data.job.status === "complete") {
+    if (data.job.syncedHistory) {
+      $("#ps-sheet-title").text("Applied prices · synced history");
+      $("<p>").text("Read-only applied changes received through sync. This is not the full cloud schedule: pending, skipped and failed rows are not included. Manage the original schedule on the web.").appendTo(box);
+    }
+    if (data.job.status === "complete" && !data.job.syncedHistory) {
       var issues = (c.invalid || 0) + (c.conflict || 0);
       var message = issues
         ? '<lang class="lang_price_update_completed_with_issues">Price update finished. Some items need attention.</lang>'
@@ -1049,7 +1053,7 @@
           }
         })
         .appendTo(box);
-    $(
+    if (!data.job.syncedHistory) $(
       '<button class="btn btn-light ml-2 mt-3"><lang class="lang_download_result_report">Download result report</lang></button>',
     )
       .on("click", function () {
@@ -1246,7 +1250,7 @@
           cancelled: "Cancelled",
         };
         $('<span class="ps-job-status">')
-          .text(labels[j.status] || j.status)
+          .text(j.syncedHistory ? "Applied (synced history)" : labels[j.status] || j.status)
           .appendTo($("<td>").appendTo(row));
         var actions = $('<div class="ps-job-actions">').appendTo(
           $("<td>").appendTo(row),
