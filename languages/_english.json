@@ -4801,6 +4801,7 @@
   "lang_yourselecteddetails_title": "Selected details will be deleted",
   "lang_rd_serial_number": "S.No",
   "lang_rd_show_payment_method": "Show payment method",
+  "lang_rd_store_override_help": "Receipt only. Leave custom text blank to use branch details. Untick a line to hide it.",
   "lang_attach_files": "Attach files",
   "lang_attach_receipt_optional": "Attach receipt / document (optional)",
   "lang_download": "Download",
@@ -4808,6 +4809,5 @@
   "lang_expense_files_help": "PDF, JPG or PNG. Up to 5 files, 5 MB each, 10 MB total. Files are saved when you save the entry.",
   "lang_not_saved": "Not saved",
   "lang_receipt_number_after_save": "Receipt number is assigned after saving the sale.",
-  "lang_rd_sample_tax_help": "Example tax: 5%. Actual receipts use saved sale taxes.",
-  "lang_rd_store_override_help": "Receipt only. Leave custom text blank to use branch details. Untick a line to hide it."
+  "lang_rd_sample_tax_help": "Example tax: 5%. Actual receipts use saved sale taxes."
 }
