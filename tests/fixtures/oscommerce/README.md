@@ -73,7 +73,8 @@ second POS sale when the same order is re-imported.
 
 `invalid-orders.csv` intentionally contains examples of:
 
-1. Missing `SKU` (empty field).
+1. Missing `SKU` (empty field): a future product-mapping case, not an
+   unconditional validation error, because SKU is optional in this fixture.
 2. Negative `Unit Price`.
 3. Non-numeric `Unit Price` (`not_a_number`).
 
