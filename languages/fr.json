@@ -4904,5 +4904,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Le nom de fichier inclut les catégories et la date d'exportation. Commencez toujours par un nouveau téléchargement.",
   "lang_upcoming": "À venir",
   "lang_use_label_design_below_for_label_dimension": "Utilisez Label Design ci-dessous pour les dimensions des étiquettes, les polices, les couleurs, l'alignement et les paramètres des codes-barres. Les prix incluent la TVA et les remises sur les articles enregistrés ; l'impression ne modifie pas le prix des articles.",
-  "lang_use_on_this_bill": "À utiliser sur cette facture"
+  "lang_use_on_this_bill": "À utiliser sur cette facture",
+  "lang_attach_receipt_optional": "Joindre un reçu ou un document (facultatif)",
+  "lang_attach_files": "Joindre des fichiers",
+  "lang_expense_files_help": "PDF, JPG ou PNG. Jusqu'à 5 fichiers de 5 Mo chacun, soit 10 Mo au total. Les fichiers sont enregistrés lorsque vous enregistrez l'entrée.",
+  "lang_expense_file_retry": "Entrée enregistrée, mais certaines pièces jointes n'ont pas pu être enregistrées. Gardez ce formulaire ouvert et enregistrez-le à nouveau pour réessayer.",
+  "lang_not_saved": "Non enregistré",
+  "lang_download": "Télécharger"
 }

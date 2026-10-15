@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "שם הקובץ כולל קטגוריות ותאריך הייצוא. התחל תמיד מהורדה חדשה.",
   "lang_upcoming": "בקרוב",
   "lang_use_label_design_below_for_label_dimension": "השתמש בעיצוב תוויות למטה עבור מידות תוויות, גופנים, צבעים, יישור והגדרות ברקוד. המחירים כוללים מע\"מ והנחות פריטים שמורים; ההדפסה אינה משנה את מחירי הפריטים.",
-  "lang_use_on_this_bill": "השתמש בהצעת חוק זו"
+  "lang_use_on_this_bill": "השתמש בהצעת חוק זו",
+  "lang_attach_receipt_optional": "צרף קבלה/מסמך (אופציונלי)",
+  "lang_attach_files": "צרף קבצים",
+  "lang_expense_files_help": "PDF, JPG או PNG. עד 5 קבצים, 5 מגה בייט כל אחד, 10 מגהבייט בסך הכל. קבצים נשמרים בעת שמירת הערך.",
+  "lang_expense_file_retry": "הערך נשמר, אך לא ניתן לשמור קבצים מצורפים מסוימים. שמור טופס זה פתוח ושמור שוב כדי לנסות שוב.",
+  "lang_not_saved": "לא נשמר",
+  "lang_download": "הורד"
 }

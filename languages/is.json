@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Skráarnafnið inniheldur flokka og útflutningsdag. Byrjaðu alltaf á fersku niðurhali.",
   "lang_upcoming": "Á döfinni",
   "lang_use_label_design_below_for_label_dimension": "Notaðu Merkjahönnun hér að neðan fyrir stærð merkimiða, letur, liti, röðun og strikamerkjastillingar. Verð innifalinn virðisaukaskattur og vistaður hlutaafsláttur; prentun breytir ekki vöruverði.",
-  "lang_use_on_this_bill": "Notaðu á þessu frumvarpi"
+  "lang_use_on_this_bill": "Notaðu á þessu frumvarpi",
+  "lang_attach_receipt_optional": "Hengdu kvittun/skjal (valfrjálst)",
+  "lang_attach_files": "Hengdu skrár",
+  "lang_expense_files_help": "PDF, JPG eða PNG. Allt að 5 skrár, 5 MB hver, alls 10 MB. Skrár eru vistaðar þegar þú vistar færsluna.",
+  "lang_expense_file_retry": "Færsla vistuð en ekki var hægt að vista sum viðhengi. Haltu þessu eyðublaði opnu og vistaðu aftur til að reyna aftur.",
+  "lang_not_saved": "Ekki vistað",
+  "lang_download": "Sækja"
 }

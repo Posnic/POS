@@ -4904,5 +4904,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Nama file mencakup kategori dan tanggal ekspor. Selalu mulai dari unduhan baru.",
   "lang_upcoming": "Mendatang",
   "lang_use_label_design_below_for_label_dimension": "Gunakan Desain Label di bawah ini untuk dimensi label, font, warna, penyelarasan, dan pengaturan barcode. Harga sudah termasuk PPN dan diskon barang yang disimpan; pencetakan tidak mengubah harga barang.",
-  "lang_use_on_this_bill": "Gunakan pada tagihan ini"
+  "lang_use_on_this_bill": "Gunakan pada tagihan ini",
+  "lang_attach_receipt_optional": "Lampirkan tanda terima/dokumen (opsional)",
+  "lang_attach_files": "Lampirkan file",
+  "lang_expense_files_help": "PDF, JPG atau PNG. Hingga 5 file, masing-masing 5 MB, total 10 MB. File disimpan saat Anda menyimpan entri.",
+  "lang_expense_file_retry": "Entri disimpan, tetapi beberapa lampiran tidak dapat disimpan. Buka formulir ini dan simpan lagi untuk mencoba lagi.",
+  "lang_not_saved": "Tidak disimpan",
+  "lang_download": "Unduh"
 }

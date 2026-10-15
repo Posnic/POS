@@ -4825,5 +4825,11 @@
   "lang_the_filename_includes_categories_and_the_e": "ファイル名にはカテゴリとエクスポート日が含まれます。常に新規ダウンロードから始めてください。",
   "lang_upcoming": "近日公開",
   "lang_use_label_design_below_for_label_dimension": "ラベルのサイズ、フォント、色、配置、バーコードの設定には、以下のラベルデザインを使用してください。価格にはVATと保存済み商品の割引が含まれていますが、印刷しても商品価格は変わりません。",
-  "lang_use_on_this_bill": "この請求書で使用"
+  "lang_use_on_this_bill": "この請求書で使用",
+  "lang_attach_receipt_optional": "領収書/書類添付 (任意)",
+  "lang_attach_files": "ファイルを添付",
+  "lang_expense_files_help": "PDF、JPG、または PNG。最大 5 つのファイル、それぞれ 5 MB、合計で 10 MB です。エントリを保存すると、ファイルが保存されます。",
+  "lang_expense_file_retry": "エントリは保存されましたが、一部の添付ファイルを保存できませんでした。このフォームを開いたまま保存し直して、再試行してください。",
+  "lang_not_saved": "保存されていません",
+  "lang_download": "ダウンロード"
 }

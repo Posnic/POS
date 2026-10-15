@@ -4825,5 +4825,11 @@
   "lang_the_filename_includes_categories_and_the_e": "文件名包括类别和导出日期。务必从全新下载开始。",
   "lang_upcoming": "即将到来",
   "lang_use_label_design_below_for_label_dimension": "使用下面的标签设计来设置标签尺寸、字体、颜色、对齐方式和条形码设置。价格包括增值税和保存的商品折扣；打印不会更改商品价格。",
-  "lang_use_on_this_bill": "在这张账单上使用"
+  "lang_use_on_this_bill": "在这张账单上使用",
+  "lang_attach_receipt_optional": "附上收据/文件（可选）",
+  "lang_attach_files": "附加文件",
+  "lang_expense_files_help": "PDF、JPG 或 PNG。最多 5 个文件，每个文件 5 MB，总计 10 MB。保存条目时会保存文件。",
+  "lang_expense_file_retry": "条目已保存，但无法保存某些附件。保持此表单处于打开状态，然后再次保存以重试。",
+  "lang_not_saved": "未保存",
+  "lang_download": "下載"
 }

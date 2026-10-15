@@ -1,4 +1,18 @@
 /* Theme Variables CSS - Dynamic theming support */
+.expense-supporting-files {
+    background: var(--theme-card-bg);
+    color: var(--theme-text-primary);
+    border: 1px solid var(--theme-border-color);
+    border-radius: 8px;
+    padding: 16px;
+}
+.expense-supporting-files small,
+.expense-supporting-files label {
+    color: var(--theme-text-secondary);
+}
+.expense-supporting-files .border {
+    border-color: var(--theme-border-color) !important;
+}
 
 /* Self-hosted DM Sans (variable font) - served same-origin from /static/fonts
    so browser privacy/ad-block extensions and CDN blockers can NEVER stop the

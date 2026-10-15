@@ -4825,5 +4825,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Dosya adı kategorileri ve dışa aktarma tarihini içerir. Her zaman yeni bir indirmeden başlayın.",
   "lang_upcoming": "Yaklaşan",
   "lang_use_label_design_below_for_label_dimension": "Etiket boyutları, yazı tipleri, renkler, hizalama ve barkod ayarları için aşağıdaki Etiket Tasarımını kullanın. Fiyatlara KDV ve kaydedilen ürün indirimleri dahildir; baskı ürün fiyatlarını değiştirmez.",
-  "lang_use_on_this_bill": "Bu faturada kullanın"
+  "lang_use_on_this_bill": "Bu faturada kullanın",
+  "lang_attach_receipt_optional": "Makbuz/belge ekleyin (isteğe bağlı)",
+  "lang_attach_files": "Dosyaları ekle",
+  "lang_expense_files_help": "PDF, JPG veya PNG. 5 adede kadar dosya, her biri 5 MB, toplam 10 MB. Girdi kaydettiğinizde dosyalar kaydedilir.",
+  "lang_expense_file_retry": "Giriş kaydedildi, ancak bazı ekler kaydedilemedi. Bu formu açık tutun ve tekrar denemek için tekrar kaydedin.",
+  "lang_not_saved": "Kaydedilmedi",
+  "lang_download": "İndir"
 }

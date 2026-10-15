@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "L-isem tal-fajl jinkludi kategoriji u d-data tal-esportazzjoni. Dejjem ibda minn tniżżil ġdid.",
   "lang_upcoming": "Li ġejjin",
   "lang_use_label_design_below_for_label_dimension": "Uża Disinn tat-Tikketta hawn taħt għad-dimensjonijiet tat-tikketta, fonts, kuluri, allinjament u settings tal-barcode. Il-prezzijiet jinkludu l-VAT u l-iskontijiet tal-oġġetti ffrankati; l-istampar ma jbiddilx il-prezzi",
-  "lang_use_on_this_bill": "Uża fuq dan l-abbozz"
+  "lang_use_on_this_bill": "Uża fuq dan l-abbozz",
+  "lang_attach_receipt_optional": "Ehmeż irċevuta/dokument (mhux obbligatorju)",
+  "lang_attach_files": "Waħħal fajls",
+  "lang_expense_files_help": "PDF, JPG jew PNG. Sa 5 fajls, 5 MB kull wieħed, total ta' 10 MB. Il-fajls jiġu ffrankati meta tiffranka l-entrata.",
+  "lang_expense_file_retry": "Id-dħul salvat, iżda xi annessi ma setgħux jiġu ffrankati. Żomm din il-formola miftuħa u ssalva mill-ġdid biex terġa 'tipprova.",
+  "lang_not_saved": "Mhux salvat",
+  "lang_download": "Niżżel"
 }

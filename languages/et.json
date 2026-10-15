@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Failinimi sisaldab kategooriaid ja ekspordikuupäeva. Alustage alati värskest allalaadimisest.",
   "lang_upcoming": "Eelseisev",
   "lang_use_label_design_below_for_label_dimension": "Kasutage allolevat sildikujundust sildi mõõtmete, fontide, värvide, joondamise ja vöötkoodi sätete jaoks. Hinnad sisaldavad käibemaksu ja salvestatud kaupade allahindlusi; printimine ei muuda kaupade hindu.",
-  "lang_use_on_this_bill": "Kasutage sellel arvel"
+  "lang_use_on_this_bill": "Kasutage sellel arvel",
+  "lang_attach_receipt_optional": "Lisage kviitung/dokument (valikuline)",
+  "lang_attach_files": "Failide lisamine",
+  "lang_expense_files_help": "PDF, JPG või PNG. Kuni 5 faili, igaüks 5 MB, kokku 10 MB. Failid salvestatakse kirje salvestamisel.",
+  "lang_expense_file_retry": "Kirje salvestatud, kuid mõnda manust ei õnnestunud salvestada. Hoidke see vorm avatud ja salvestage uuesti proovimiseks.",
+  "lang_not_saved": "Ei salvestata",
+  "lang_download": "Allalaadimine"
 }
