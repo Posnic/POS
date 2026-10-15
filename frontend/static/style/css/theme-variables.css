@@ -3568,3 +3568,5 @@ html:not([data-theme]) .loadingSpinner::after {
 .sales-history-stat > span { color:var(--theme-text-secondary); }
 .sales-history-stat strong { font-variant-numeric:tabular-nums; }
 @media(max-width:767px) { .sales-history-summary { margin-left:0; width:100%; } }
+/* Recovery notice stays in document flow below the fixed dashboard chrome. */
+#offline_recovery_notice{margin-top:84px!important}
