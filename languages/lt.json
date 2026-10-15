@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Failo pavadinimas apima kategorijas ir eksporto datą. Visada pradėkite nuo naujo atsisiuntimo.",
   "lang_upcoming": "Artimiausi",
   "lang_use_label_design_below_for_label_dimension": "Žemiau naudokite etiketės dizainą etiketės matmenims, šriftams, spalvoms, lygiavimui ir brūkšninio kodo nustatymams. Į kainas įskaičiuotas PVM ir išsaugotos prekės nuolaidos; spausdinant prekių kainos nekeičiamos.",
-  "lang_use_on_this_bill": "Naudokite šioje sąskaitoje"
+  "lang_use_on_this_bill": "Naudokite šioje sąskaitoje",
+  "lang_attach_receipt_optional": "Pridėti kvitą/dokumentą (neprivaloma)",
+  "lang_attach_files": "Pridėti failus",
+  "lang_expense_files_help": "PDF, JPG arba PNG. Iki 5 failų, po 5 MB, iš viso 10 MB. Failai išsaugomi, kai įrašote įrašą.",
+  "lang_expense_file_retry": "Įrašas išsaugotas, tačiau kai kurių priedų nepavyko išsaugoti. Laikykite šią formą atidarytą ir išsaugokite dar kartą, kad bandytumėte iš naujo.",
+  "lang_not_saved": "Neišsaugota",
+  "lang_download": "Parsisiųsti"
 }

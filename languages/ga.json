@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Cuimsíonn ainm an chomhaid catagóirí agus an dáta easpórtála Tosaigh i gcónaí ó íoslódáil úr.",
   "lang_upcoming": "Ag teacht",
   "lang_use_label_design_below_for_label_dimension": "Úsáid Dearadh Lipéad thíos le haghaidh toisí lipéad, clónna, dathanna, ailíniú agus socruithe Cuimsíonn praghsanna CBL agus lascainí earraí sábháilte; ní athraíonn priontáil praghsanna",
-  "lang_use_on_this_bill": "Úsáid ar an mbille seo"
+  "lang_use_on_this_bill": "Úsáid ar an mbille seo",
+  "lang_attach_receipt_optional": "Ceangail admháil/doiciméad (roghnach)",
+  "lang_attach_files": "Ceangail comhaid",
+  "lang_expense_files_help": "PDF, JPG nó PNG. Suas le 5 chomhad, 5 MB an ceann, 10 MB san iomlán. Sábháiltear comhaid nuair a shábhálann tú an iontráil.",
+  "lang_expense_file_retry": "Sábháil iontráil, ach ní fhéadfaí roinnt ceangaltáin a shábháil. Coinnigh an fhoirm seo oscailte agus sábháil arís chun triail a dhéanamh arís",
+  "lang_not_saved": "Níor sábháilte",
+  "lang_download": "Íoslódáil"
 }

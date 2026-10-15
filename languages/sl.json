@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Ime datoteke vključuje kategorije in datum izvoza. Vedno začnite z novim prenosom.",
   "lang_upcoming": "Prihajajoči",
   "lang_use_label_design_below_for_label_dimension": "Spodaj uporabite Oblikovanje nalepk za dimenzije nalepk, pisave, barve, nastavitve poravnave in črtne kode. Cene vključujejo DDV in popuste za shranjene artikle; tiskanje ne spreminja cen artiklov.",
-  "lang_use_on_this_bill": "Uporabite na tem računu"
+  "lang_use_on_this_bill": "Uporabite na tem računu",
+  "lang_attach_receipt_optional": "Priložite potrdilo/dokument (neobvezno)",
+  "lang_attach_files": "Priložite datoteke",
+  "lang_expense_files_help": "PDF, JPG ali PNG. Do 5 datotek, po 5 MB, skupaj 10 MB. Datoteke se shranijo, ko shranite vnos.",
+  "lang_expense_file_retry": "Vnos je shranjen, vendar nekaterih prilog ni bilo mogoče shraniti. Ta obrazec naj bo odprt in ponovno shranite, da poskusite znova.",
+  "lang_not_saved": "Ni shranjeno",
+  "lang_download": "Prenesi"
 }

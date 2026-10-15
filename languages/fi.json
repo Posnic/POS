@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Tiedostonimi sisältää luokat ja vientipäivän. Aloita aina tuoreesta latauksesta.",
   "lang_upcoming": "Tuleva",
   "lang_use_label_design_below_for_label_dimension": "Käytä alla olevaa Label Design -sovellusta tarran mittojen, fonttien, värien, kohdistuksen ja viivakoodiasetusten määrittämiseen. Hinnat sisältävät arvonlisäveron ja tallennettujen tuotteiden alennukset; tulostaminen ei muuta tuotteiden hintoja.",
-  "lang_use_on_this_bill": "Käytä tässä laskussa"
+  "lang_use_on_this_bill": "Käytä tässä laskussa",
+  "lang_attach_receipt_optional": "Liitä kuitti/asiakirja (valinnainen)",
+  "lang_attach_files": "Liitä tiedostot",
+  "lang_expense_files_help": "PDF, JPG tai PNG. Enintään 5 tiedostoa, 5 Mt kukin, yhteensä 10 Mt. Tiedostot tallennetaan, kun tallennat merkinnän.",
+  "lang_expense_file_retry": "Merkintä tallennettu, mutta joitain liitteitä ei voitu tallentaa. Pidä tämä lomake auki ja tallenna uudelleen yrittääksesi uudelleen.",
+  "lang_not_saved": "Ei tallennettu",
+  "lang_download": "Lataa"
 }

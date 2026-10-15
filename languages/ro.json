@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Numele fișierului include categoriile și data exportului. Începeți întotdeauna de la o descărcare nouă.",
   "lang_upcoming": "Urmatoare",
   "lang_use_label_design_below_for_label_dimension": "Utilizați Label Design de mai jos pentru dimensiunile etichetelor, fonturile, culorile, alinierea și setările codului de bare. Prețurile includ TVA și reduceri la articolele salvate; imprimarea nu modifică prețurile articolelor.",
-  "lang_use_on_this_bill": "Utilizați pe această factură"
+  "lang_use_on_this_bill": "Utilizați pe această factură",
+  "lang_attach_receipt_optional": "Atașați chitanța/documentul (opțional)",
+  "lang_attach_files": "Atașați fișiere",
+  "lang_expense_files_help": "PDF, JPG sau PNG. Până la 5 fișiere, câte 5 MB fiecare, 10 MB total. Fișierele sunt salvate atunci când salvați intrarea.",
+  "lang_expense_file_retry": "Intrarea a fost salvată, dar unele atașamente nu au putut fi salvate. Păstrați acest formular deschis și salvați din nou pentru a încerca din nou.",
+  "lang_not_saved": "Nu a fost salvat",
+  "lang_download": "Descarca"
 }

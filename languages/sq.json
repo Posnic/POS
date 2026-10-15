@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Emri i skedarit përfshin kategoritë dhe datën e eksportit. Gjithmonë filloni nga një shkarkim i ri.",
   "lang_upcoming": "Të ardhshme",
   "lang_use_label_design_below_for_label_dimension": "Përdorni dizajnin e etiketës më poshtë për dimensionet e etiketës, shkronjat, ngjyrat, shtrirjen dhe cilësimet Çmimet përfshijnë TVSH-në dhe zbritjet e artikujve të ruajtura; shtypja nuk ndryshon çmimet e",
-  "lang_use_on_this_bill": "Përdorni në këtë faturë"
+  "lang_use_on_this_bill": "Përdorni në këtë faturë",
+  "lang_attach_receipt_optional": "Bashkangjitni faturë/dokumentin (opsionale)",
+  "lang_attach_files": "Bashkangjitni skedarët",
+  "lang_expense_files_help": "PDF, JPG ose PNG. Deri në 5 skedarë, 5 MB secila, 10 MB gjithsej. Skedarët ruhen kur ruani hyrjen.",
+  "lang_expense_file_retry": "Hyrja është ruajtur, por disa bashkëngjitje nuk mund të ruhen. Mbani këtë formular të hapur dhe ruani përsëri për të riprovuar.",
+  "lang_not_saved": "Nuk është ruajtur",
+  "lang_download": "Shkarko"
 }

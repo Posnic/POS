@@ -135,3 +135,20 @@ test('retail filters share one panel and selected choices wait for Apply', () =>
  assert.ok(x.$('#sales_active_filters').text().includes('Till one'));
  x.close();
 });
+
+test('history totals use the full filtered response, show dynamic methods and safely render labels',()=>{
+ const x=setup();const s=x.w.PosnicPro.sales;
+ x.w.PosnicPro.listFilter.request=(key,p,cb)=>{x.requests.push(p.data);cb({data:{list:[],summary:{count:32,cancelled:1,currencies:[{currencyCode:'INR',currencyDigits:2,total:1250,payments:[{method:'Cash',amount:500},{method:'<img src=x>',amount:750}]}]}}});};
+ s.loadHistory(2);assert.equal(x.requests.at(-1).include_summary,'true');
+ const text=x.$('#sales_history_summary').text();assert.match(text,/Sales32/);assert.match(text,/1,250.00/);assert.match(text,/CashINR 500.00/);assert.match(text,/Cancelled1/);assert.equal(x.$('#sales_history_summary img').length,0);
+ s.paintHistorySummary({count:0,cancelled:0,currencies:[]});assert.doesNotMatch(x.$('#sales_history_summary').text(),/1,250/);x.close();
+});
+
+test('a slow previous filter response cannot replace the newest history totals',()=>{
+ const x=setup();const callbacks=[];
+ x.w.PosnicPro.listFilter.request=(key,p,cb)=>callbacks.push(cb);
+ x.w.PosnicPro.sales.loadHistory(1);x.w.PosnicPro.sales.loadHistory(1);
+ callbacks[1]({data:{list:[],summary:{count:2,cancelled:0,currencies:[]}}});
+ callbacks[0]({data:{list:[],summary:{count:99,cancelled:0,currencies:[]}}});
+ assert.match(x.$('#sales_history_summary').text(),/Sales2/);assert.doesNotMatch(x.$('#sales_history_summary').text(),/99/);x.close();
+});

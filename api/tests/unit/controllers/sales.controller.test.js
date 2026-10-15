@@ -2,6 +2,8 @@
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 jest.mock('../../../src/services/sale.service');
+jest.mock('../../../src/services/sales-history-summary');
+jest.mock('../../../src/services/paid-bill-edit', () => ({ amend: jest.fn() }));
 jest.mock('../../../src/services/business-checkout-decisions', () => ({
   createCheckoutDecisions: jest.fn(),
 }));
@@ -612,6 +614,35 @@ describe('SalesController', () => {
   describe('update', () => {
     const body = { items: [{ item_id: VALID_ID, item_quantity: 2 }], sales_total: 100 };
 
+    test.each([
+      [403, 'Enable payment corrections in Sale settings first.'],
+      [403, 'You do not have permission to correct this bill.'],
+      [409, 'This bill changed. Reload it before correcting it.'],
+      [422, 'Invalid item quantity.'],
+    ])('returns correction refusal %s with its actionable message', async (status, message) => {
+      salesHelper.normalizeSaleItems.mockReturnValue([{ item_id: VALID_ID }]);
+      require('../../../src/services/paid-bill-edit').amend.mockRejectedValueOnce(
+        Object.assign(new Error(message), { status })
+      );
+      const res = mockRes();
+      const next = mockNext();
+      await ctrl.update(
+        mockReq({
+          params: { id: VALID_ID },
+          body: {
+            ...body,
+            paid_bill_correction: { reason: 'Wrong method recorded' },
+          },
+        }),
+        res,
+        next
+      );
+      expect(res.status).toHaveBeenCalledWith(status);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message }));
+      expect(next).not.toHaveBeenCalled();
+      expect(salesService.processSale).not.toHaveBeenCalled();
+    });
+
     test('200 success', async () => {
       salesHelper.normalizeSaleItems.mockReturnValue([{ item_id: VALID_ID }]);
       salesService.processSale.mockResolvedValue({
@@ -697,6 +728,25 @@ describe('SalesController', () => {
 
   // ── getAll ───────────────────────────────────────────────────────────────────
   describe('getAll', () => {
+    test('optional summary receives precisely the same scoped filters as the paginated history', async () => {
+      const summary = require('../../../src/services/sales-history-summary');
+      summary.mockResolvedValue({ count: 20, cancelled: 0, currencies: [] });
+      const res = mockRes();
+      await ctrl.getAll(
+        mockReq({ query: { include_summary: 'true', ordered_by: 'Asha', page: '2', limit: '5' } }),
+        res,
+        mockNext()
+      );
+      expect(summary).toHaveBeenCalledWith(
+        expect.anything(),
+        salesService.listSales.mock.calls[0][0]
+      );
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ summary: expect.objectContaining({ count: 20 }) }),
+        })
+      );
+    });
     test.each([
       ['', 'date:desc,_id:desc'],
       ['date_asc', 'date:asc,_id:asc'],

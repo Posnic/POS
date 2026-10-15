@@ -8,6 +8,12 @@ require('mongodb');
 // Apply authentication middleware to all routes
 router.use(protect);
 
+const attachments = require('../controllers/expense-attachments.controller');
+router.get('/:id/attachments', attachments.handler('list'));
+router.get('/:id/attachments/:attId', attachments.handler('read'));
+router.post('/:id/attachments', attachments.handler('add'));
+router.delete('/:id/attachments/:attId', attachments.handler('remove'));
+
 // GET /api/expenses - Get all expenses with pagination
 router.get('/', (req, res) => expensesController.getAll(req, res));
 

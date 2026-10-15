@@ -4825,5 +4825,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Nama fail termasuk kategori dan tarikh eksport. Sentiasa mulakan dari muat turun baru.",
   "lang_upcoming": "Akan Datang",
   "lang_use_label_design_below_for_label_dimension": "Gunakan Reka Bentuk Label di bawah untuk dimensi label, fon, warna, penjajaran dan tetapan kod bar. Harga termasuk VAT dan diskaun item yang disimpan; percetakan tidak mengubah harga item.",
-  "lang_use_on_this_bill": "Gunakan pada bil ini"
+  "lang_use_on_this_bill": "Gunakan pada bil ini",
+  "lang_attach_receipt_optional": "Lampirkan resit/dokumen (pilihan)",
+  "lang_attach_files": "Lampirkan fail",
+  "lang_expense_files_help": "PDF, JPG atau PNG. Sehingga 5 fail, masing-masing 5 MB, jumlah 10 MB. Fail disimpan apabila anda menyimpan entri.",
+  "lang_expense_file_retry": "Kemasukan disimpan, tetapi beberapa lampiran tidak dapat disimpan. Pastikan borang ini terbuka dan simpan lagi untuk mencuba semula.",
+  "lang_not_saved": "Tidak disimpan",
+  "lang_download": "Muat turun"
 }
