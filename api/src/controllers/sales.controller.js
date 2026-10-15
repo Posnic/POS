@@ -1162,6 +1162,14 @@ class SalesController extends BaseController {
         total,
       };
 
+      if (req.query.include_summary === 'true') {
+        // Reuse the fully scoped and filtered history query, including session restrictions.
+        payload.summary = await require('../services/sales-history-summary')(
+          SaleModel,
+          filter
+        ).catch(() => null);
+      }
+
       return this.success(res, payload, SUCCESS_MESSAGES.SALES_RETRIEVED, 200);
     } catch (error) {
       next(error);

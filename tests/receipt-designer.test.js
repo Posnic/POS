@@ -1246,6 +1246,95 @@ test('sale printing sends receipt identity to desktop logging while sample print
     dom.window.close();
 });
 
+test('store print overrides persist per format without changing branch contact data', () => {
+    const { dom, w, $, branch, sale, engine } = setup();
+    branch.store_telephone = '+919876543210';
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Store details')).find('.rd-select').trigger('click');
+    $('[data-prop="phoneText"]').val('98765 43210').trigger('input');
+    $('[data-prop="nameText"]').val('Receipt shop').trigger('input');
+    $('[data-prop="addressText"]').val('First line\nSecond line').trigger('input');
+    $('[data-action="save"]').trigger('click');
+    const saved = contract.normalize(sent.receipt_designs);
+    assert.equal(saved.layouts['80'].blocks.find(b => b.type === 'store').phoneText, '98765 43210');
+    assert.equal(saved.layouts['112'].blocks.find(b => b.type === 'store').phoneText, undefined);
+    assert.equal(sent.store_telephone, undefined);
+    assert.equal(branch.store_telephone, '+919876543210');
+    Object.assign(sale, { receipt_designs: saved, store_telephone: branch.store_telephone });
+    assert.match($('<div>').html(engine.render(sale, '80', false)).find('.rd-store').text(), /98765 43210/);
+    assert.doesNotMatch($('<div>').html(engine.render(sale, '80', false)).find('.rd-store').text(), /\+91/);
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: saved });
+    $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Store details')).find('.rd-select').trigger('click');
+    assert.equal($('[data-prop="phoneText"]').val(), '98765 43210');
+    dom.window.close();
+});
+
+test('store visibility, empty overrides, escaping and validation apply to every format', () => {
+    const { dom, $, engine, sale, design } = setup();
+    sale.store_telephone = '+919876543210';
+    for (const format of Object.keys(contract.formats)) {
+        const store = design.layouts[format].blocks.find(b => b.type === 'store');
+        Object.assign(store, { nameText: '<b>Shop</b>', phoneText: '   ', addressText: 'New address', registrationText: 'CUSTOM123' });
+        sale.receipt_designs = contract.normalize(design);
+        let output = $('<div>').html(engine.render(sale, format, false)).find('.rd-store');
+        assert.equal(output.find('h1').text(), '<b>Shop</b>');
+        assert.equal(output.find('h1 b').length, 0);
+        assert.match(output.text(), /\+919876543210/);
+        assert.match(output.text(), /CUSTOM123/);
+        Object.assign(store, { showName: false, showAddress: false, showPhone: false, showEmail: false, showRegistration: false });
+        sale.receipt_designs = contract.normalize(design);
+        output = $('<div>').html(engine.render(sale, format, false)).find('.rd-store');
+        assert.equal(output.text(), '');
+    }
+    design.layouts['80'].blocks.find(b => b.type === 'store').phoneText = '1'.repeat(101);
+    assert.throws(() => contract.normalize(design), /too long/);
+    dom.window.close();
+});
+
+test('designer samples include GST, switch to IGST, and respect tax disabled', async () => {
+    const { dom, w, $, engine, branch } = setup();
+    Object.assign(branch, { indian_gst: 'gst_on', country: 'India', module_tax_enable: true });
+    let document;
+    engine.print = async html => { document = html; return { success: true }; };
+    const editor = w.PosnicPro.receiptDesignerEditor;
+    editor.load(branch);
+    await editor.printSample();
+    assert.match(document, /CGST 2.5%/); assert.match(document, /SGST 2.5%/);
+    assert.match($('<div>').html(document).text(), /47.25/);
+    $('#rd-sample-tax').val('inter').trigger('change');
+    await editor.printSample();
+    assert.match(document, /IGST 5%/); assert.doesNotMatch(document, /CGST|SGST/);
+    branch.module_tax_enable = false; editor.load(branch);
+    await editor.printSample();
+    assert.doesNotMatch(document, /IGST|CGST|SGST/);
+    assert.equal($('#rd-sample-tax').length, 0);
+    dom.window.close();
+});
+
+test('receipt fallback preserves independently saved CGST and SGST amounts', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.items[0].cgst_tax = 1.13; sale.items[0].sgst_tax = 1.12;
+    const text = $('<div>').html(engine.render(sale, '112', false)).text();
+    assert.match(text, /CGST.*1.13/); assert.match(text, /SGST.*1.12/);
+    sale.receipt_tax_rows = [{ label: 'IGST 5%', amount: 2.25 }];
+    const saved = $('<div>').html(engine.render(sale, '112', false)).text();
+    assert.match(saved, /IGST 5%/); assert.doesNotMatch(saved, /CGST|SGST/);
+    dom.window.close();
+});
+
+test('pre-save receipt states that the number is pending and final receipt removes that notice', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.sales_id = '';
+    assert.match($('<div>').html(engine.render(sale, '112', true)).text(), /Receipt number is assigned after saving/);
+    sale.sales_id = 'INV-123';
+    const saved = $('<div>').html(engine.render(sale, '112', false));
+    assert.equal(saved.find('.rd-pending-number').length, 0);
+    assert.match(saved.text(), /INV-123/);
+    dom.window.close();
+});
+
 test('store FSSAI control is limited to Indian restaurants and configured food businesses', () => {
     const { dom, w, $, branch } = setup();
     for (const [country, restaurant, licence, allowed] of [

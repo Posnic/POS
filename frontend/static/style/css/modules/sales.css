@@ -731,5 +731,24 @@ body.customer-display .contentbar {
 #sales_filter_panel { width:100%; margin-top:12px; padding:16px; border:1px solid var(--border-color, #ccd3df); border-radius:10px; }
 #sales_filter_search { flex-basis:100%; width:100%; }
 #sales_filter_search .lf-clear { display:none; }
-#sales_filter_panel input, #sales_filter_panel select, #sales_filter_panel button { min-height:44px; }
+#sales_filter_panel input:not([type="checkbox"]), #sales_filter_panel select, #sales_filter_panel button { min-height:44px; }
 #sales_filter_panel .sales-history-provenance { flex-wrap:wrap; }
+
+/* Keep the search controls readable without stretching the checkbox itself. */
+#sales_filter_search .lf-row { flex-wrap:wrap; gap:10px; }
+#sales_filter_search .lf-search { flex:0 1 360px; width:360px; max-width:100%; }
+#sales_filter_search .lf-q { width:100%; }
+#sales_filter_search .lf-exact { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:0 12px; margin:0; border:1px solid var(--theme-border-color,#ccd3df); border-radius:4px; }
+#sales_filter_search .lf-exact-cb { position:static; width:16px; height:16px; min-height:0; flex:0 0 16px; margin:0; }
+#sales_filter_panel .sales-history-picker { margin-bottom:0; }
+#sales_filter_panel .sales-history-provenance label > .form-control { margin-top:4px; }
+@media(max-width:600px) {
+    #sales_filter_panel .sales-history-provenance { width:100%; }
+    #sales_filter_panel .sales-history-provenance label { width:100%; }
+    #sales_filter_panel .sales-history-provenance .form-control { width:100%; }
+    #sales_filter_search .lf-search { flex-basis:100%; width:100%; }
+    #sales_filter_search .lf-field, #sales_filter_search .lf-preset-wrap { flex:1 1 140px; min-width:0; }
+    #sales_filter_search .lf-preset { width:100%; }
+    #sales_filter_search .lf-custom { position:static; flex-direction:column; align-items:stretch; white-space:normal; }
+    #sales_filter_search .lf-custom input { width:100%; min-width:0; }
+}

@@ -187,6 +187,25 @@
             }
           }
         }
+        if (block.type === 'store') {
+          for (const [key, max] of Object.entries({
+            nameText: 200,
+            addressText: 1000,
+            phoneText: 100,
+            emailText: 200,
+            registrationText: 100,
+            fssaiText: 100,
+          })) {
+            if (block[key] != null) {
+              if (typeof block[key] !== 'string' || block[key].length > max)
+                throw new Error('Store receipt text is too long.');
+              if (block[key].trim()) b[key] = block[key].trim();
+            }
+          }
+          for (const key of ['showName', 'showAddress', 'showPhone', 'showRegistration']) {
+            if (block[key] === false) b[key] = false;
+          }
+        }
         if (block.type === 'store' && block.fssaiInHeader === true) b.fssaiInHeader = true;
         if (block.type === 'store' && block.showEmail === false) b.showEmail = false;
         if (textTypes.includes(block.type)) {

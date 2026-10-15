@@ -1,0 +1,4 @@
+Order ID,Order Date,Product Name,Quantity,Unit Price,Currency,Order Status,SKU,Customer Name,Customer Email
+SYNTH-OSC-BAD-1,2026-09-17,Synthetic Saffron 1g,1,450.00,INR,paid,,Anil Sharma,anil.sharma@example.test
+SYNTH-OSC-BAD-2,2026-09-18,Synthetic Ghee 500ml,2,-120.00,INR,paid,SYNTH-OSC-SKU-010,Meera Joshi,meera.joshi@example.test
+SYNTH-OSC-BAD-3,2026-09-19,Synthetic Pickle Jar 300g,1,not_a_number,INR,paid,SYNTH-OSC-SKU-011,Ravi Kumar,ravi.kumar@example.test

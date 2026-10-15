@@ -12,24 +12,15 @@ const WORKFLOW = fs.readFileSync(
 
 const APPROVED_ACTIONS = new Map([
   ['actions/checkout', '3d3c42e5aac5ba805825da76410c181273ba90b1'],
-  ['ossf/scorecard-action', '2d1146689b8cda280b9bc96326124645441f03bc'],
+  ['ossf/scorecard-action', 'fa7117db83c52d787ae5a89f350999701505d78e'],
   ['actions/upload-artifact', '043fb46d1a93c77aae656e7c1c64a875d1fc6a0a'],
-  /* v4.38.2. Verified against upstream before approving, the same way the
-     previous pin was and for the same reason - a bump arrives as a SHA and a
-     trailing comment, and the comment is written by whoever opened the pull
-     request, not by the registry:
-
-       gh api repos/github/codeql-action/git/ref/tags/v4.38.2
-         -> annotated tag 88585263c0627ee42c0e1c5143a112c8d6f4aa18
-       gh api repos/github/codeql-action/git/tags/88585263...
-         -> commit 2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2
-
-     which is the commit the workflow now pins. Dereference the ANNOTATED TAG,
-     not the ref: refs/tags/vX for a signed release points at a tag object, and
-     reading .object.sha off the ref gives the tag, not the commit it names.
-
-     Do this again for the next bump rather than trusting the comment. */
-  ['github/codeql-action/upload-sarif', '2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2'],
+  /* Verified upstream annotated release tags, not only PR comments:
+     ossf/scorecard-action v2.5.0 tag 46dc3187a971a9febf3aeb7f94ccde489f7bb46a
+       -> fa7117db83c52d787ae5a89f350999701505d78e
+     github/codeql-action v4.38.3 tag cee97f86b972a3ded3c58d04148362b193ddc518
+       -> 24c54180a607b1449ed407dd24f251e4e9147c8d
+     Dereference each annotated tag again when updating these pins. */
+  ['github/codeql-action/upload-sarif', '24c54180a607b1449ed407dd24f251e4e9147c8d'],
 ]);
 
 test('Scorecard runs only on supported default-branch and scheduled triggers', () => {
