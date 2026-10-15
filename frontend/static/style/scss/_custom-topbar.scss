@@ -17,6 +17,8 @@
     }
   }
 }
+html.is-electron .topbar { top: var(--titlebar-h, 44px); }
+
 .topbar-mobile {
     display: none;
     background-color: $white;
