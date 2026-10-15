@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Filnavnet inneholder kategorier og eksportdato. Start alltid fra en ny nedlasting.",
   "lang_upcoming": "Kommende",
   "lang_use_label_design_below_for_label_dimension": "Bruk etikettdesign nedenfor for etikettdimensjoner, skrifter, farger, justering og strekkodeinnstillinger. Prisene inkluderer moms og rabatter på lagrede varer; utskrift endrer ikke vareprisene.",
-  "lang_use_on_this_bill": "Bruk på denne regningen"
+  "lang_use_on_this_bill": "Bruk på denne regningen",
+  "lang_attach_receipt_optional": "Legg ved kvittering/ dokument (valgfritt)",
+  "lang_attach_files": "Legg ved filer",
+  "lang_expense_files_help": "PDF, JPG eller PNG. Opptil 5 filer, 5 MB hver, 10 MB totalt. Filer lagres når du lagrer oppføringen.",
+  "lang_expense_file_retry": "Oppføring lagret, men noen vedlegg kunne ikke lagres. Hold dette skjemaet åpent og lagre igjen for å prøve på nytt.",
+  "lang_not_saved": "Ikke lagret",
+  "lang_download": "Last ned"
 }

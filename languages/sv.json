@@ -4822,5 +4822,11 @@
   "lang_the_filename_includes_categories_and_the_e": "Filnamnet innehåller kategorier och exportdatum. Börja alltid från en ny nedladdning.",
   "lang_upcoming": "Kommande",
   "lang_use_label_design_below_for_label_dimension": "Använd Etikettdesign nedan för etikettmått, teckensnitt, färger, justering och streckkodsinställningar. Priserna inkluderar moms och sparade artikelrabatter; utskrift ändrar inte artikelpriserna.",
-  "lang_use_on_this_bill": "Använd på denna räkning"
+  "lang_use_on_this_bill": "Använd på denna räkning",
+  "lang_attach_receipt_optional": "Bifoga kvitto/dokument (valfritt)",
+  "lang_attach_files": "Bifoga filer",
+  "lang_expense_files_help": "PDF, JPG eller PNG. Upp till 5 filer, 5 MB vardera, 10 MB totalt. Filer sparas när du sparar posten.",
+  "lang_expense_file_retry": "Posten sparades, men vissa bilagor kunde inte sparas. Håll det här formuläret öppet och spara igen för att försöka igen.",
+  "lang_not_saved": "Inte sparad",
+  "lang_download": "Ladda ner"
 }

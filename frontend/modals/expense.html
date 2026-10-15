@@ -73,6 +73,17 @@
                     </div>
                 </div>
                 <div class="form-row">
+                    <div class="form-group col-md-12 expense-supporting-files">
+                        <label for="expenses_files"><lang class="lang_attach_receipt_optional">Attach receipt / document (optional)</lang></label>
+                        <input type="file" id="expenses_files" hidden accept="application/pdf,image/jpeg,image/png" multiple aria-describedby="expenses_files_help">
+                        <div><button type="button" id="expenses_choose_files" class="btn btn-outline-primary"><lang class="lang_attach_files">Attach files</lang></button></div>
+                        <small id="expenses_files_help" class="form-text"><lang class="lang_expense_files_help">PDF, JPG or PNG. Up to 5 files, 5 MB each, 10 MB total. Files are saved when you save the entry.</lang></small>
+                        <div id="expenses_files_list" class="mt-2"></div>
+                        <div id="expenses_files_status" class="mt-2" role="status" aria-live="polite"></div>
+                        <div id="expenses_files_preview" class="mt-2"></div>
+                    </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group col-md-12">
                         <div class="pull-right">
                             <button type="button" class="btn btn-outline-secondary infobar-settings-reset" id="expense_reset" onclick="PosnicPro.expenses.expenseClearForm();"><i class="feather icon-refresh-ccw mr-2"></i><lang class="lang_clear_title"> Clear</lang></button>

@@ -4825,5 +4825,11 @@
   "lang_the_filename_includes_categories_and_the_e": "파일 이름에는 범주와 내보내기 날짜가 포함됩니다.항상 새로 다운로드한 후 시작하세요.",
   "lang_upcoming": "곧 출시 예정",
   "lang_use_label_design_below_for_label_dimension": "라벨 크기, 글꼴, 색상, 정렬 및 바코드 설정에 아래의 라벨 디자인을 사용하세요.가격에는 VAT 및 할인 품목 할인이 포함되며, 인쇄해도 품목 가격은 변경되지 않습니다.",
-  "lang_use_on_this_bill": "이 청구서에 사용하세요."
+  "lang_use_on_this_bill": "이 청구서에 사용하세요.",
+  "lang_attach_receipt_optional": "영수증/문서 첨부 (선택 사항)",
+  "lang_attach_files": "파일 첨부",
+  "lang_expense_files_help": "PDF, JPG 또는 PNG최대 5개 파일, 각 5MB, 총 10MB항목을 저장하면 파일이 저장됩니다.",
+  "lang_expense_file_retry": "항목이 저장되었지만 일부 첨부 파일을 저장할 수 없습니다.다시 시도하려면 이 양식을 열어 두었다가 다시 저장하십시오.",
+  "lang_not_saved": "저장되지 않음",
+  "lang_download": "다운로드"
 }
