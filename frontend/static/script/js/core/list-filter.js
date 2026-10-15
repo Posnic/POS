@@ -312,9 +312,11 @@ PosnicPro.listFilter = {
             }
             return existing;
         }
+        var initialPreset = cfg.defaultPreset || 'all';
+        var initialRange = LF.range(initialPreset);
         LF._mounted[key] = {
             cfg: cfg,
-            state: { search: '', field: 'all', exact: false, preset: 'all', from: null, to: null, extra: {} }
+            state: { search: '', field: 'all', exact: false, preset: initialPreset, from: initialRange.from, to: initialRange.to, extra: {} }
         };
         LF.render(key);
         return LF._mounted[key];
