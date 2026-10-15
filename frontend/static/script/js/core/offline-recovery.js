@@ -28,7 +28,7 @@
     function dialog(title, body) {
         if (activeDialog) activeDialog.close();
         var node = document.createElement('dialog');
-        node.style.cssText = 'width:600px;max-width:calc(100vw - 32px);max-height:90vh;overflow:auto;border:1px solid #ddd;border-radius:12px;padding:24px;color:var(--theme-text-color,#222);background:var(--theme-card-bg,#fff)';
+        node.style.cssText = 'width:600px;max-width:calc(100vw - 32px);max-height:90vh;overflow:auto;border:1px solid var(--theme-border-color,#ddd);border-radius:12px;padding:24px;color:var(--theme-text-primary,#222);background:var(--theme-card-bg,#fff)';
         var titleId = 'offline-recovery-title-' + (++dialogSequence);
         node.setAttribute('aria-labelledby', titleId);
         node.innerHTML = '<div class="d-flex justify-content-between align-items-start"><h4></h4><button type="button" class="btn btn-light" data-close aria-label="Close recovery" data-t-aria-label="lang_close_recovery">×</button></div>' + body;
@@ -126,7 +126,7 @@
                 var data = result.data, codes = data.recoveryCodes;
                 var note = document.createElement('p'); note.textContent = PosnicPro.i18n.t('lang_recovery_shown_once', 'Shown once. Each code can reset {account} once.').replace('{account}', data.recoveryAccount);
                 var help = document.createElement('p'); help.textContent = PosnicPro.i18n.t('lang_recovery_one_line_hint', 'Each line is a separate recovery code. To reset your password, enter only one complete line, not the whole list.');
-                var list = document.createElement('pre'); list.dir = 'ltr'; list.style.cssText = 'font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere'; list.textContent = codes.join('\n');
+                var list = document.createElement('pre'); list.dir = 'ltr'; list.style.cssText = 'font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;color:inherit;background:transparent'; list.textContent = codes.join('\n');
                 var save = document.createElement('button'); save.type = 'button'; save.className = 'btn btn-primary'; save.textContent = PosnicPro.i18n.t('lang_recovery_save_codes', 'Save recovery codes');
                 save.onclick = function () { saveCodes(data.recoveryAccount, codes); };
                 var label = document.createElement('label'); label.className = 'd-block mt-3';
@@ -169,7 +169,7 @@
                     if (!host) return;
                     var banner = document.createElement('div'); banner.id = 'offline_recovery_notice'; banner.className = 'alert alert-warning m-3';
                     banner.textContent = PosnicPro.i18n.t('lang_recovery_setup_reminder', 'Protect access to your shop: save offline recovery codes in case email is unavailable.') + ' ';
-                    var button = document.createElement('button'); button.type = 'button'; button.className = 'btn btn-sm btn-outline-dark'; button.textContent = PosnicPro.i18n.t('lang_recovery_setup_action', 'Set up recovery'); button.onclick = manageCodes;
+                    var button = document.createElement('button'); button.type = 'button'; button.className = 'btn btn-sm btn-primary'; button.textContent = PosnicPro.i18n.t('lang_recovery_setup_action', 'Set up recovery'); button.onclick = manageCodes;
                     banner.appendChild(button); host.prepend(banner);
                 }
             }).catch(function () { /* Staff and Cloud accounts do not manage owner recovery. */ });
