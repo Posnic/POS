@@ -3546,3 +3546,6 @@ html:not([data-theme]) .loadingSpinner::after {
 .sales-customer-pop label { display:block; width:100%; margin-bottom:10px; }
 
 .sales-customer-entry + .sales-customer-pop { position:relative; top:auto; right:auto; width:520px; max-width:100%; margin:0 0 12px; }
+
+/* Recovery notice stays in document flow below the fixed dashboard chrome. */
+#offline_recovery_notice{margin-top:84px!important}
