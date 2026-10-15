@@ -2749,7 +2749,11 @@ if ($("#sale_quick_edit").is(":checked")) {
                 $("#view_config_page").removeClass('active');
                 $("#v-pills-dashboard-tab").addClass('active');
                 $("#v-pills-dashboard-tab").addClass('active show');
-                hasher.setHash('branches');
+                if (hasher.getHash() === 'branches') {
+                    PosnicPro.branches.loadList();
+                } else {
+                    hasher.setHash('branches');
+                }
                 PosnicPro.alert('success', PosnicPro.i18n.t('lang_branch_changed', 'Branch changed'));
             }
             return false;

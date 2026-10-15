@@ -4,6 +4,29 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const { JSDOM } = require('jsdom');
 
+test('successful switching refreshes an already-open branch list or navigates to it', () => {
+    const source = fs.readFileSync(require.resolve('../frontend/static/script/js/modules/js/settings.js'), 'utf8');
+    const method = source.slice(source.indexOf('    listBranchName: function'), source.indexOf('    removePopupBranchImage: function'));
+    for (const hash of ['branches', 'items']) {
+        const calls = [];
+        const noop = () => {};
+        const chain = new Proxy(noop, { get: () => chain, apply: () => chain });
+        const values = { branch_id_set: 'old' };
+        const PosnicPro = new Proxy({
+            post: (_params, success) => success({ type: 'success', data: { branch_name: 'New branch' } }),
+            local: { get: key => values[key], set: (key, value) => { values[key] = value; }, setVolatile: noop },
+            branches: { branchClearform: noop, loadList: () => calls.push(['refresh', values.branch_id_set]) },
+            settings: { viewSettings: noop },
+            i18n: { t: (_key, fallback) => fallback },
+        }, { get: (target, key) => key in target ? target[key] : chain });
+        const context = { PosnicPro, $: chain, document: {}, db: chain, setLocalValue: noop,
+            hasher: { getHash: () => hash, setHash: value => calls.push(['navigate', value]) } };
+        const change = vm.runInNewContext('({' + method + '}).listBranchName', context);
+        change('new');
+        assert.deepEqual(calls, hash === 'branches' ? [['refresh', 'new']] : [['navigate', 'branches']]);
+    }
+});
+
 function setup(record, options = {}) {
     const dom = new JSDOM('<div id="header_branch_switcher" hidden><span id="header_current_branch"></span><div id="header_branch_list"></div></div><div id="branch_register_swipe"></div>', { runScripts: 'outside-only' });
     dom.window.eval(fs.readFileSync(require.resolve('../frontend/static/script/js/jquery.min.js'), 'utf8'));
