@@ -1041,6 +1041,12 @@ class SalesController extends BaseController {
       // PHP sales.php::edit() forwards the model message directly.
       return this.success(res, result.data, result.message || SUCCESS_MESSAGES.SALE_UPDATED, 200);
     } catch (error) {
+      // Paid-bill correction uses branch-access errors with a numeric status.
+      // Return expected refusals to the till instead of masking them as a 500.
+      const status = error.statusCode || error.status;
+      if (Number.isInteger(status) && status >= 400 && status < 500) {
+        return this.error(res, error.message, status);
+      }
       next(error);
     }
   }
