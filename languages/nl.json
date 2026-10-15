@@ -4967,5 +4967,8 @@
   "lang_expense_files_help": "PDF, JPG of PNG. Tot 5 bestanden, elk 5 MB, in totaal 10 MB. De bestanden worden opgeslagen wanneer u het item opslaat.",
   "lang_expense_file_retry": "Invoer opgeslagen, maar sommige bijlagen konden niet worden opgeslagen. Houd dit formulier open en sla het opnieuw op om het opnieuw te proberen.",
   "lang_not_saved": "Niet opgeslagen",
-  "lang_download": "Downloaden"
+  "lang_download": "Downloaden",
+  "lang_switch_branch": "Van vestiging wisselen",
+  "lang_could_not_check_the_current_register_pleas": "De huidige kassa kon niet worden gecontroleerd. Probeer het opnieuw voordat u van vestiging wisselt.",
+  "lang_this_window_belongs_to_one_branch_open_ano": "Dit venster hoort bij één vestiging. Open een andere vestiging vanuit het hoofdvenster."
 }
