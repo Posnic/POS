@@ -4801,5 +4801,6 @@
   "lang_yourselecteddetails_title": "Selected details will be deleted",
   "lang_rd_serial_number": "S.No",
   "lang_rd_show_payment_method": "Show payment method",
+  "lang_rd_sample_tax_help": "Example tax: 5%. Actual receipts use saved sale taxes.",
   "lang_rd_store_override_help": "Receipt only. Leave custom text blank to use branch details. Untick a line to hide it."
 }

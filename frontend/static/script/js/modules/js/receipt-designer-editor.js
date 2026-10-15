@@ -24,13 +24,18 @@
     function status(text, error) { box.find('.rd-status').text(text).toggleClass('rd-error', !!error); }
     function checkpoint() { undo.push(engine.copy(design)); if (undo.length > 30) undo.shift(); }
     function changed() { status(t('Unsaved changes')); box.find('[data-action="undo"]').prop('disabled', !undo.length); schedulePreview(); }
+    var sampleInterstate = false;
+    function sampleTaxEnabled() { return ![false, 'false', 'disable'].includes(branch.module_tax_enable); }
+    function sampleIndianGst() { return ['gst_on', 'enable', true, 'true'].includes(branch.indian_gst) || ['enable', true, 'true'].includes(branch.gst); }
     function sample() {
         var item = function (name, price, qty) { return { item_name: name, item_price: price, item_quantity: qty, item_unit: 'ea', total_amount: price * qty, hsn_code: '1234' }; };
+        var tax = sampleTaxEnabled() ? 2.25 : 0;
+        var taxRows = !tax ? [] : sampleIndianGst() ? (sampleInterstate ? [{ label: t('IGST') + ' 5%', amount: tax }] : [{ label: t('CGST') + ' 2.5%', amount: 1.13 }, { label: t('SGST') + ' 2.5%', amount: 1.12 }]) : [{ label: t('Tax') + ' 5%', amount: tax }];
         return Object.assign({}, branch, printOptions(), { receipt_designs: design, sales_id: 'S-000128', created_date: new Date().toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
             customer_name: 'Alex Morgan', customer_phone: '+1 202 555 0148', customer_email: 'alex@example.com', customer_address: '24 Market Street',
             customer_gstin: '', customer_tax_number: layout().blocks.some(function (b) { return b.field === 'customer_tax_number'; }) ? 'TAX-123456' : '',
             items: [item('Everyday notebook', 12, 2), item('Reusable travel cup', 18, 1), item('Gift wrap', 3, 1)],
-            items_subtotal: 45, items_total: 45, tax: 0, discount: 0, sale_extra_discount: 0, round_off: 0, charges: [],
+            items_subtotal: 45, items_total: 45 + tax, tax: tax, receipt_tax_rows: taxRows, discount: 0, sale_extra_discount: 0, round_off: 0, charges: [],
             sales_description: t('Please keep this receipt for your records.'), payment_mode: 'Card', partial_check: 'false',
             table_number: '12', dine_type: 'Dine in', covers: 2, steward_name: 'Sam', serving_session: 'Lunch', order_source: 'Counter' });
     }
@@ -327,6 +332,10 @@
             '<section class="rd-layout"><div class="rd-section-heading"><h4>' + esc(t('Your layout')) + ' <small class="rd-block-count"></small></h4><div>' + button('reset-template', 'Reset template', 'refresh-cw') + button('undo', 'Undo', 'rotate-ccw', 'disabled') + '</div></div><div class="rd-reset-confirm" hidden><p>' + esc(t('Reset this format to the standard template? Other formats and branch details are kept. Save designs to apply.')) + '</p><button type="button" class="btn btn-outline-primary btn-sm" data-action="confirm-reset">' + esc(t('Reset template')) + '</button> <button type="button" class="btn btn-light btn-sm" data-action="cancel-reset">' + esc(t('Cancel')) + '</button></div><div class="rd-font-control"><label for="rd-text-size">' + esc(t('Default text size')) + '</label><select id="rd-text-size" aria-describedby="rd-font-scope">' + [8,9,10,11,12,13,14,16,18].map(function (n) { return '<option value="' + n + '">' + n + ' px</option>'; }).join('') + '</select><small id="rd-font-scope">' + esc(t('Applies to this paper format. Select a block to override its text size or make it bold.')) + '</small></div><ol class="rd-block-list"></ol><p class="rd-help">' + esc(t('Store details, receipt details, items and totals are always included.')) + '</p></section>' +
             '<aside class="rd-preview"><div class="rd-section-heading"><h4>' + esc(t('Live preview')) + '</h4><select class="rd-preview-fit" aria-label="' + esc(t('Preview zoom')) + '"><option value="page">' + esc(t('Fit whole receipt')) + '</option><option value="width">' + esc(t('Fit width')) + '</option></select></div><div class="rd-preview-stage"><div class="rd-preview-page"></div></div><div class="rd-preview-footer"><strong class="rd-preview-name"></strong><span class="rd-dimensions"></span><span class="rd-sample-label">' + esc(t('Sample sale')) + '</span></div></aside></div>' +
             '<section class="rd-print-options"><label><input type="checkbox" id="rd-branding" ' + (design.showBranding !== false ? 'checked' : '') + '> Made with Posnic &middot; posnic.com</label><div class="rd-existing-options"></div></section>');
+        if (sampleTaxEnabled()) {
+            box.find('.rd-preview-footer').append('<label>' + esc(PosnicPro.i18n.t('lang_rd_sample_tax_help', 'Example tax: 5%. Actual receipts use saved sale taxes.')) + (sampleIndianGst() ? '<select id="rd-sample-tax"><option value="intra">CGST + SGST</option><option value="inter" data-t="lang_igst_tax_receiving">IGST</option></select>' : '') + '</label>');
+            box.find('#rd-sample-tax').val(sampleInterstate ? 'inter' : 'intra').on('change', function () { sampleInterstate = this.value === 'inter'; schedulePreview(); });
+        }
         // Keep the existing settings controls and values; only their presentation changes.
         ['printall', 'bill_print_copies', 'branch_fssai_number'].forEach(function (id) {
             var group = controls[id];
