@@ -2669,8 +2669,9 @@ if ($("#sale_quick_edit").is(":checked")) {
         PosnicPro.post(params, function (response) {
             if (response.type === 'success') {
                 $("#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-inventory-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab,#v-pills-manage-tab,#v-pills-branch-tab").removeClass("active");
-                PosnicPro.getBranchTaxList();
                 PosnicPro.local.set("branch_id_set", id);
+                PosnicPro.getBranchTaxList();
+                PosnicPro.getBranchDropdownOption();
                 $(document).trigger('posnic:branch-changed');
                 // Cached items carry the OLD branch's stock and pricing.
                 if (PosnicPro.sales && PosnicPro.sales.itemCache) {

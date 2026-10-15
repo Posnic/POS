@@ -72,11 +72,12 @@ class SupplierRepository extends BaseModel {
   /**
    * Find supplier by email
    */
-  async findByEmail(email) {
+  async findByEmail(email, branchId = BaseModel.currentBranch) {
     const collection = await this.getCollection(this.collectionName);
     return await collection.findOne({
       email,
       license: BaseModel.license,
+      branch_id: branchId,
       is_deleted: { $ne: true },
     });
   }
@@ -228,6 +229,9 @@ class SupplierRepository extends BaseModel {
       throw new Error('Supplier not found');
     }
 
+    const backup = await BaseModel.deletedDocumentBackup(this.collectionName, supplier);
+    if (!backup?.status) throw new Error(backup?.message || 'Supplier backup failed');
+
     // Backup to recycle bin collection
     const recycleCollection = await this.getCollection(this.collectionName + '_recycle_bin');
     await recycleCollection.insertOne({
@@ -262,6 +266,13 @@ class SupplierRepository extends BaseModel {
 
     if (suppliers.length === 0) {
       return { deletedCount: 0 };
+    }
+
+    // The common recycle record is also the deletion event consumed by sync.
+    // Keep the legacy backup below for existing restore screens.
+    for (const supplier of suppliers) {
+      const backup = await BaseModel.deletedDocumentBackup(this.collectionName, supplier);
+      if (!backup?.status) throw new Error(backup?.message || 'Supplier backup failed');
     }
 
     // Backup to recycle bin collection

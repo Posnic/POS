@@ -194,6 +194,23 @@ PosnicPro.branches = {
             PosnicPro.listDoc.body('branches', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_branch">Could not open this branch.</lang></div>');
         });
     },
+    showChange: function (id) {
+        if (!id || String(id) === String(PosnicPro.local.get('branch_id_set'))) { return; }
+        if (typeof billingWindowId !== 'undefined' && billingWindowId) {
+            PosnicPro.alert('warning', 'This window belongs to one branch. Open another outlet from the main window.');
+            return;
+        }
+        PosnicPro.local.set('changebranchid', id);
+        return db.currentregister.get('1').then(function (record) {
+            if ((record && record.register_status === 'open') || PosnicPro.local.get('userRegisterStatus') === 'Open') {
+                $('#branch_register_swipe').modal('show');
+                return;
+            }
+            PosnicPro.settings.listBranchName(id);
+        }, function () {
+            PosnicPro.alert('error', 'Could not check the current register. Please retry before switching branches.');
+        });
+    },
     /* The name the OLD table machinery answered to - settings flows still
        call it after branch saves. */
     branchesTable: function () {

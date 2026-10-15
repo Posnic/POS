@@ -25,6 +25,26 @@ const makeDb = (index = { name: 'email_1', key: { email: 1 }, unique: true }) =>
 };
 
 describe('migrateOptionalEmailIndexes', () => {
+  test('replaces the old business-wide supplier constraint only after the branch index exists', async () => {
+    const { db, collections } = makeDb({ name: 'supplier_nonempty_email', key: { email: 1 }, unique: true });
+    await migrateOptionalEmailIndexes(db);
+    const suppliers = collections.get('suppliers');
+    expect(suppliers.createIndex).toHaveBeenCalledWith(
+      { license: 1, branch_id: 1, email: 1 },
+      expect.objectContaining({ name: 'supplier_branch_nonempty_email', unique: true })
+    );
+    expect(suppliers.createIndex.mock.invocationCallOrder[0]).toBeLessThan(suppliers.dropIndex.mock.invocationCallOrder[0]);
+  });
+
+  test('retains the old supplier constraint and contacts if branch uniqueness cannot be built', async () => {
+    const { db, collections } = makeDb();
+    collections.get('suppliers').createIndex.mockRejectedValue({ code: 11000 });
+    const warning = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    await migrateOptionalEmailIndexes(db);
+    expect(collections.get('suppliers').dropIndex).not.toHaveBeenCalled();
+    expect(collections.get('suppliers').updateMany).not.toHaveBeenCalled();
+    warning.mockRestore();
+  });
   test('unsets blank emails and replaces non-sparse unique indexes', async () => {
     const { db, collections } = makeDb();
     await migrateOptionalEmailIndexes(db);
@@ -36,7 +56,9 @@ describe('migrateOptionalEmailIndexes', () => {
       ) {
         expect(collection.updateMany).not.toHaveBeenCalled();
         expect(collection.createIndex).toHaveBeenCalledWith(
-          { email: 1 },
+          collection === collections.get('suppliers')
+            ? { license: 1, branch_id: 1, email: 1 }
+            : { email: 1 },
           expect.objectContaining({
             unique: true,
             partialFilterExpression: { email: { $type: 'string', $gt: '' } },
