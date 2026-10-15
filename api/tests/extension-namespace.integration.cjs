@@ -51,6 +51,58 @@ function fixture() {
 }
 const noEffect = { executeEffect: async () => ({ applied: true }) };
 
+test('upgrade advances above imported fences without deleting items or replaying stock', async () => {
+  const f = fixture();
+  const token = require('node:crypto').createHash('sha256')
+    .update(`${f.scope.license}:${f.scope.branchId}:${f.descriptor.id}`).digest('hex');
+  const item = { _id: new ObjectId(), license: f.scope.license, branch_id: f.scope.branchId,
+    track_inventory: true, item_status: 'regular', available_quantity: 5,
+    extension_stock_streams: { [token]: { sequence: 330, digest: 'old-receipt', applied: true } } };
+  await db.collection('items').insertMany([item,
+    { ...item, _id: new ObjectId(), license: new ObjectId(), extension_stock_streams: { [token]: { sequence: 999 } } },
+    { ...item, _id: new ObjectId(), branch_id: new ObjectId(), extension_stock_streams: { [token]: { sequence: 999 } } }]);
+  const { applyStockEffect } = require('../src/services/extension-stock-effects');
+  const deps = { executeEffect: async context => applyStockEffect(db, f.scope, {
+    itemId: String(item._id), operationId: context.operationId, deltaMilli: -1000,
+    stream: { id: f.descriptor.id, sequence: context.sequence } }) };
+  const result = await executeNamespace(db, f.scope, f.descriptor, f.actor, f.input, deps);
+  assert.deepEqual(await executeNamespace(db, f.scope, f.descriptor, f.actor, f.input, deps), result);
+  const saved = await db.collection('items').findOne({ _id: item._id });
+  assert.equal(saved.available_quantity, 4);
+  assert.equal(saved.extension_stock_streams[token].sequence, 331);
+  const row = await db.collection('extension_namespaces').findOne({ _id: token });
+  assert.equal(row.effectSequence, 331);
+  assert.equal(row.localStockFenceVersion, 1);
+  assert.equal(await db.collection('items').countDocuments({ license: f.scope.license }), 2);
+});
+
+test('upgrade does not renumber a pending effect or discard its receipts', async () => {
+  const f = fixture();
+  await assert.rejects(executeNamespace(db, f.scope, f.descriptor, f.actor, f.input,
+    { executeEffect: async () => { throw Error('interrupted'); } }), /interrupted/);
+  const row = await db.collection('extension_namespaces').findOne({ license: f.scope.license });
+  await db.collection('extension_namespaces').updateOne({ _id: row._id }, { $unset: { localStockFenceVersion: '' } });
+  const item = { _id: new ObjectId(), license: f.scope.license, branch_id: f.scope.branchId,
+    available_quantity: 4, extension_stock_streams: { [row._id]: { sequence: 330 } } };
+  await db.collection('items').insertOne(item);
+  await recoverNamespace(db, f.scope, f.descriptor, f.actor, {
+    executeEffect: async context => { assert.equal(context.sequence, 1); return { applied: true }; } });
+  assert.deepEqual(await db.collection('items').findOne({ _id: item._id }), item);
+  assert.equal((await db.collection('extension_namespaces').findOne({ _id: row._id })).effectSequence, 1);
+});
+
+test('invalid imported fence refuses a new command without changing stock', async () => {
+  const f = fixture();
+  const token = require('node:crypto').createHash('sha256')
+    .update(`${f.scope.license}:${f.scope.branchId}:${f.descriptor.id}`).digest('hex');
+  const item = { _id: new ObjectId(), license: f.scope.license, branch_id: f.scope.branchId,
+    available_quantity: 5, extension_stock_streams: { [token]: { sequence: 'bad' } } };
+  await db.collection('items').insertOne(item);
+  await assert.rejects(executeNamespace(db, f.scope, f.descriptor, f.actor, f.input, noEffect), /extension_stock_receipt_invalid/);
+  assert.deepEqual(await db.collection('items').findOne({ _id: item._id }), item);
+  assert.equal((await db.collection('extension_namespaces').findOne({ _id: token })).pending, undefined);
+});
+
 test('repeated removal and restore retain state, effect receipts and other shops', async () => {
   const f = fixture();
   await executeNamespace(db, f.scope, f.descriptor, f.actor, f.input, noEffect);

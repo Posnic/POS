@@ -139,7 +139,7 @@ test('signed view and catalogue retain staff, installation and branch boundaries
     headers: { Authorization: 'Bearer reader' },
   });
   assert.deepEqual((await list.json()).extensions, [
-    { id: descriptor.id, displayName: descriptor.displayName, version: descriptor.version, enabled: true, installed: true },
+    { id: descriptor.id, displayName: descriptor.displayName, version: descriptor.version, enabled: true, installed: true, salesWorkspace: null },
   ]);
   assert.equal((await request('/view', { token: 'key' })).status, 403);
   const view = await (await request('/view', { token: 'reader' })).json();
