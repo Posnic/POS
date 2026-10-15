@@ -474,7 +474,10 @@ describe('SupplierRepository', () => {
 
     test('does not delete when the sync backup cannot be saved', async () => {
       col.find.mockReturnValue(mkChain([{ _id: FAKE_ID }]));
-      BaseModel.deletedDocumentBackup.mockResolvedValueOnce({ status: false, message: 'Backup unavailable' });
+      BaseModel.deletedDocumentBackup.mockResolvedValueOnce({
+        status: false,
+        message: 'Backup unavailable',
+      });
       await expect(repo.bulkSoftDelete([FAKE_ID])).rejects.toThrow('Backup unavailable');
       expect(col.deleteMany).not.toHaveBeenCalled();
     });

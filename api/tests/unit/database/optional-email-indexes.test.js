@@ -26,14 +26,20 @@ const makeDb = (index = { name: 'email_1', key: { email: 1 }, unique: true }) =>
 
 describe('migrateOptionalEmailIndexes', () => {
   test('replaces the old business-wide supplier constraint only after the branch index exists', async () => {
-    const { db, collections } = makeDb({ name: 'supplier_nonempty_email', key: { email: 1 }, unique: true });
+    const { db, collections } = makeDb({
+      name: 'supplier_nonempty_email',
+      key: { email: 1 },
+      unique: true,
+    });
     await migrateOptionalEmailIndexes(db);
     const suppliers = collections.get('suppliers');
     expect(suppliers.createIndex).toHaveBeenCalledWith(
       { license: 1, branch_id: 1, email: 1 },
       expect.objectContaining({ name: 'supplier_branch_nonempty_email', unique: true })
     );
-    expect(suppliers.createIndex.mock.invocationCallOrder[0]).toBeLessThan(suppliers.dropIndex.mock.invocationCallOrder[0]);
+    expect(suppliers.createIndex.mock.invocationCallOrder[0]).toBeLessThan(
+      suppliers.dropIndex.mock.invocationCallOrder[0]
+    );
   });
 
   test('retains the old supplier constraint and contacts if branch uniqueness cannot be built', async () => {
