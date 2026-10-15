@@ -27,6 +27,7 @@ jest.mock('../../../src/models/base.model', () => {
   }
   MockBaseModel.prototype.getCollection = jest.fn();
   MockBaseModel.simplifyFields = jest.fn((doc) => doc);
+  MockBaseModel.deletedDocumentBackup = jest.fn().mockResolvedValue({ status: true });
   MockBaseModel.license = null;
   MockBaseModel.currentBranch = null;
   MockBaseModel.loggedUser = null;
@@ -461,6 +462,25 @@ describe('SupplierRepository', () => {
   // ── bulkSoftDelete ───────────────────────────────────────────────────────────
 
   describe('bulkSoftDelete', () => {
+    test('publishes a sync deletion record before removing suppliers', async () => {
+      const doc = { _id: FAKE_ID, branch_id: FAKE_BRANCH, license: FAKE_LICENSE };
+      col.find.mockReturnValue(mkChain([doc]));
+      await repo.bulkSoftDelete([FAKE_ID]);
+      expect(BaseModel.deletedDocumentBackup).toHaveBeenCalledWith('suppliers', doc);
+      expect(BaseModel.deletedDocumentBackup.mock.invocationCallOrder[0]).toBeLessThan(
+        col.deleteMany.mock.invocationCallOrder[0]
+      );
+    });
+
+    test('does not delete when the sync backup cannot be saved', async () => {
+      col.find.mockReturnValue(mkChain([{ _id: FAKE_ID }]));
+      BaseModel.deletedDocumentBackup.mockResolvedValueOnce({
+        status: false,
+        message: 'Backup unavailable',
+      });
+      await expect(repo.bulkSoftDelete([FAKE_ID])).rejects.toThrow('Backup unavailable');
+      expect(col.deleteMany).not.toHaveBeenCalled();
+    });
     test('backs up and deletes multiple suppliers', async () => {
       const docs = [{ _id: FAKE_ID }, { _id: FAKE_ID_2 }];
       col.find.mockReturnValue(mkChain(docs));

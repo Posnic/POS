@@ -570,6 +570,7 @@ PosnicPro = {
         });
     },
     setBranchDropdownOption: function (data) {
+        PosnicPro.renderBranchSwitcher(data);
         var allbranch = [];
         var branchOption = [];
         var dashboardBranchOption = [];
@@ -591,11 +592,11 @@ PosnicPro = {
             AllbranchOption += '<option name="selectall" value="' + allbranch + '">selectall</option><option name="removeall" value="' + allbranch + '">removeall</option>';
             $('.dropdown-cursor-pointer').attr("disabled", false).css({ cursor: 'pointer' });
             $('#dropdownMenuLink').addClass('dropdown-toggle');
-            document.getElementById("dropdownMenuLink").disabled = false;
+            if (document.getElementById("dropdownMenuLink")) document.getElementById("dropdownMenuLink").disabled = false;
         } else if ($("#change_branch_list").is(":empty")) {
             $('.dropdown-cursor-pointer').attr("disabled", false).css({ cursor: 'auto' });
             $('#dropdownMenuLink').removeClass('dropdown-toggle');
-            document.getElementById("dropdownMenuLink").disabled = true;
+            if (document.getElementById("dropdownMenuLink")) document.getElementById("dropdownMenuLink").disabled = true;
         }
         var listBranch = AllbranchOption.concat(branchOption);
         $('.load-branch').html(listBranch);
@@ -613,6 +614,28 @@ PosnicPro = {
         var branch_id = PosnicPro.local.get('branch_id_set');
         $("#branch_name option[value='" + branch_id + "']").attr("selected", true);
         $(".select-current-branches").select2().val(branch_id).trigger("change");
+    },
+    renderBranchSwitcher: function (data) {
+        var current = String(PosnicPro.local.get('branch_id_set') || '');
+        var list = $('#header_branch_list').empty();
+        var seen = {};
+        var branches = (data || []).filter(function (branch) {
+            var id = String(branch.id || '');
+            if (!id || seen[id]) return false;
+            seen[id] = true;
+            return true;
+        });
+        $('#header_branch_switcher').prop('hidden', branches.length < 2 || (typeof billingWindowId !== 'undefined' && !!billingWindowId));
+        $('#header_current_branch').text(PosnicPro.local.get('branchname') || 'Branch');
+        branches.forEach(function (branch) {
+            var active = String(branch.id) === current;
+            if (active) $('#header_current_branch').text(branch.branch_name);
+            var item = $('<button type="button" class="dropdown-item" style="white-space:normal"></button>')
+                .text(branch.branch_name || 'Branch').prop('disabled', active).toggleClass('active', active);
+            if (active) item.attr('aria-current', 'true');
+            item.on('click', function () { PosnicPro.branches.showChange(String(branch.id)); });
+            list.append(item);
+        });
     },
     getBranchTaxList: function () {
         var data = {
