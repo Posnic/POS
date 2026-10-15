@@ -193,8 +193,11 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
     if (row.localStockFenceVersion !== 1) {
       const field = `extension_stock_streams.${key._id}.sequence`;
       const cursor = db.collection('items').find(
-        { license: key.license, [field]: { $exists: true },
-          $or: [{ branch_id: key.branch_id }, { 'branch_access.branch_id': key.branch_id }] },
+        {
+          license: key.license,
+          [field]: { $exists: true },
+          $or: [{ branch_id: key.branch_id }, { 'branch_access.branch_id': key.branch_id }],
+        },
         { projection: { [field]: 1 } }
       );
       for await (const item of cursor) {
