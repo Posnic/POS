@@ -772,3 +772,46 @@ test('editing a paid Captain bill explains returns without suggesting another co
   expect(await db.collection('sales').findOne({ _id: sale._id })).toEqual(saved);
   expect(await db.collection('captain_payment_plans').findOne({ _id: plan.id })).toEqual(journal);
 });
+
+test('web settlement returns the paid receipt without queuing a duplicate, including a lost-response retry', async () => {
+  await db.collection('branches').updateOne({ _id: branch }, { $set: { printall: true } });
+  const queue = require('../../../src/repositories/print-job.repository').queuePrintJob;
+  queue.mockClear();
+  const plan = await service.prepare({ ...req(), captainPaymentDesktop: true });
+  const request = { ...pay(plan, { receiptDelivery: 'browser' }), captainPaymentDesktop: true };
+  const result = await service.record(request);
+  expect(result.browserReceipt).toMatchObject({
+    items_total: 105,
+    paid_amount: 105,
+    payment_mode: 'Cash',
+    receipt_settled: true,
+  });
+  expect(result.browserReceipt.receipt_line_rows).toHaveLength(1);
+  expect(queue).not.toHaveBeenCalled();
+  const retried = await service.record(request);
+  expect(retried.browserReceipt).toEqual(result.browserReceipt);
+  expect(retried.payments).toHaveLength(1);
+  expect(queue).not.toHaveBeenCalled();
+});
+
+test('web auto print off returns no document and phone cannot redirect counter receipts', async () => {
+  const queue = require('../../../src/repositories/print-job.repository').queuePrintJob;
+  queue.mockClear();
+  const plan = await service.prepare(req());
+  const paid = await service.record({
+    ...pay(plan, { receiptDelivery: 'browser' }),
+    captainPaymentDesktop: true,
+  });
+  expect(paid.browserReceipt).toBeUndefined();
+  expect(queue).not.toHaveBeenCalled();
+});
+
+test('phone-supplied browser delivery is ignored and still queues exactly one receipt', async () => {
+  await db.collection('branches').updateOne({ _id: branch }, { $set: { printall: true } });
+  const queue = require('../../../src/repositories/print-job.repository').queuePrintJob;
+  queue.mockClear();
+  const plan = await service.prepare(req());
+  const result = await service.record(pay(plan, { receiptDelivery: 'browser' }));
+  expect(result.browserReceipt).toBeUndefined();
+  expect(queue).toHaveBeenCalledTimes(1);
+});
