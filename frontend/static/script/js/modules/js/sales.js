@@ -527,6 +527,7 @@ PosnicPro.sales = {
         if (!$('#sales_filter_panel').length) { return; }
         PosnicPro.listFilter.mount({
             key: 'sales',
+            defaultPreset: 'today',
             rows: '#sales_list_rows',
             onRefresh: function () { return PosnicPro.sales.loadHistory(); },
             container: '#sales_filter_search',
