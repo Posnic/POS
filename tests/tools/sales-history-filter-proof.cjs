@@ -1,0 +1,11 @@
+const fs=require('fs'),path=require('path'),assert=require('assert/strict'),puppeteer=require('../../api/node_modules/puppeteer');
+(async()=>{const browser=await puppeteer.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});try{
+const page=await browser.newPage();const html=fs.readFileSync('frontend/modules/sales_read.html','utf8');await page.setContent('<html><body><div style="padding:20px">'+html.slice(html.indexOf('<div id="sales_filter_panel"'),html.indexOf('<div id="sales_active_filters"'))+'</div></body></html>');
+for(const file of ['bootstrap.min.css','custom.css','theme-variables.css','modules/sales.css'])await page.addStyleTag({path:path.resolve('frontend/static/style/css',file)});
+await page.addScriptTag({path:require.resolve('jquery')});await page.evaluate(()=>{window.PosnicPro={i18n:{t:(_k,v)=>v}};});await page.addScriptTag({path:path.resolve('frontend/static/script/js/core/list-filter.js')});
+await page.evaluate(()=>{const lf=PosnicPro.listFilter;lf._mounted.proof={cfg:{container:'#sales_filter_search',dateField:'date',searchPlaceholder:'Search bill number, customer',searchFields:[{value:'customer',label:'Customer'}]},state:{search:'',field:'customer',exact:false,preset:'today'}};lf.render('proof');document.querySelector('#sales_filter_panel').style.display='flex';document.querySelector('#sales_restaurant_filters').style.display='flex';});
+fs.mkdirSync('output/history-filters',{recursive:true});
+for(const width of [1366,1920,390]){await page.setViewport({width,height:600});const sizes=await page.evaluate(()=>{const box=s=>document.querySelector(s).getBoundingClientRect();const cb=box('.lf-exact-cb'),label=box('.lf-exact');return {overflow:document.documentElement.scrollWidth>innerWidth,checkbox:cb.height,center:Math.abs(cb.y+cb.height/2-label.y-label.height/2),search:box('.lf-q').width};});assert(!sizes.overflow,JSON.stringify(sizes));assert.equal(sizes.checkbox,16);assert(sizes.center<1);assert(sizes.search>280);await page.screenshot({path:`output/history-filters/${width}.png`});}
+console.log('PASS: actual filter renderer at 390, 1366 and 1920px; no overflow; checkbox centered and search readable.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
+
