@@ -562,7 +562,7 @@
             if (method === "recover") {
               commandBusy = true;
               if (embedded?.onBusy) embedded.onBusy(true);
-              return request(base + "/recover", {}).then(afterCommand).then(function(result){commandBusy=false;if(embedded?.onBusy) embedded.onBusy(false);return result;},function(error){if(embedded?.onBusy) embedded.onBusy(true);throw error;});
+              return request(base + "/recover", {}).then(afterCommand).then(function(result){commandBusy=false;if(embedded?.onBusy) embedded.onBusy(false);return result;},function(error){commandBusy=false;if(embedded?.onBusy) embedded.onBusy(false);if(embedded?.onError) embedded.onError(error);throw error;});
             }
             if (method === "receipt")
               return request(base + "/receipt", input).then(
