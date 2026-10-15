@@ -287,6 +287,8 @@
           ...(tenders ? { tenders } : {}),
           reference,
           request_id: crypto.randomUUID(),
+          ...(!mobile() && !window.electronAPI && !/Electron/i.test(navigator.userAgent)
+            ? { receiptDelivery: "browser" } : {}),
         },
       };
       if (!save()) {
@@ -331,6 +333,14 @@
         }),
       );
       if (!showReceipt) dialog.close();
+      // Payment is already confirmed. A print failure must never retry the collection.
+      if (!mobile() && result.browserReceipt) {
+        Promise.resolve().then(() => {
+          if (!PosnicPro.receiptDesigner?.printSale) throw new Error(t("Print failed"));
+          return PosnicPro.receiptDesigner.printSale(result.browserReceipt, undefined, false,
+            { preserveWorkspace: true, propagateFailure: true });
+        }).catch(printError => PosnicPro.alert("error", printError.message || t("Print failed")));
+      }
     } catch (e) {
       if ([400, 403, 409, 422].includes(e.status)) {
         pending = null;
