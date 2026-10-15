@@ -1246,6 +1246,17 @@ test('sale printing sends receipt identity to desktop logging while sample print
     dom.window.close();
 });
 
+test('pre-save receipt states that the number is pending and final receipt removes that notice', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.sales_id = '';
+    assert.match($('<div>').html(engine.render(sale, '112', true)).text(), /Receipt number is assigned after saving/);
+    sale.sales_id = 'INV-123';
+    const saved = $('<div>').html(engine.render(sale, '112', false));
+    assert.equal(saved.find('.rd-pending-number').length, 0);
+    assert.match(saved.text(), /INV-123/);
+    dom.window.close();
+});
+
 test('store FSSAI control is limited to Indian restaurants and configured food businesses', () => {
     const { dom, w, $, branch } = setup();
     for (const [country, restaurant, licence, allowed] of [

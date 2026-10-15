@@ -4958,5 +4958,6 @@
   "lang_iv2_save_copy": "Opslaan als nieuw artikel",
   "lang_iv2_copy_suffix": "kopie",
   "lang_rd_serial_number": "Nr.",
-  "lang_rd_show_payment_method": "Betaalmethode tonen"
+  "lang_rd_show_payment_method": "Betaalmethode tonen",
+  "lang_receipt_number_after_save": "Het bonnummer wordt toegewezen nadat de verkoop is opgeslagen."
 }

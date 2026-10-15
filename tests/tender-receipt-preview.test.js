@@ -149,7 +149,7 @@ for (const layout of ['80', 'a4']) {
 
 test('cart reads numeric amounts, fractional quantities and product names without edit controls', () => {
     const { dom, win, $, branch, preview } = till();
-    win.PosnicPro.sales.SaleTableLineItems = { A: { tax: 2, tax_name: '4811' } };
+    win.PosnicPro.sales.SaleTableLineItems = { A: { tax: 2, tax_name: '4811', hsn_code: '1234' } };
     $('body').append('<input id="sales_new_customer_name" value="Sam"><input id="sales_new_customer_gst_number" value="GST123"><input id="grand_total" value="1500">' +
         '<span id="sales_new_subtotal">1,500.00</span><span id="extraDisc">10</span><span id="percentIcon"></span>' +
         '<span id="RoundOff">-0.45</span><span id="discount_sale_amount">20.00</span>' +
@@ -166,6 +166,7 @@ test('cart reads numeric amounts, fractional quantities and product names withou
     assert.equal(result.items[0].item_name, 'Gift & Wrap');
     assert.equal(result.items[0].item_price, 1020, 'Inclusive price was stripped of tax twice');
     assert.equal(result.items[0].tax_name, '4811');
+    assert.equal(result.items[0].hsn_code, '1234');
     assert.equal(result.items[0].item_quantity, 1.5);
     assert.equal(result.items[0].total_amount, 1530);
     assert.equal(result.sales_id, '');
@@ -388,3 +389,43 @@ for (const country of ['United Kingdom', 'India']) {
         dom.window.close();
     });
 }
+
+test('visible preview refreshes current customer and totals, rejecting an older response', async () => {
+    const { dom, win, $, branch, preview } = till();
+    $.expr.pseudos.visible = () => true;
+    $('body').append('<input id="sales_new_customer_name" value="Old customer"><input id="sales_new_customer_phone" value="111">');
+    branch.receipt_designs = { defaultFormat: '112' };
+    const requests = [], rendered = [];
+    win.PosnicPro.get = (_request, done) => requests.push(done);
+    win.PosnicPro.receiptDesigner = { render(data) { rendered.push(data); return '<section data-receipt-design="112">Updated</section>'; } };
+    preview.show();
+    $('#sales_new_customer_name').val('Latest customer').trigger('change');
+    $('#sales_new_customer_phone').val('222').trigger('input');
+    $('.tendered_total').text('99.00');
+    requests[0]({ type: 'success', data: branch });
+    assert.equal(rendered.length, 0, 'old branch response cannot mount stale content');
+    const deadline = Date.now() + 2000;
+    while (requests.length < 2 && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 20));
+    assert.equal(requests.length, 2, 'rapid changes coalesce into one refresh');
+    requests[1]({ type: 'success', data: branch });
+    while (!rendered.length && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 20));
+    assert.equal(rendered[0].customer_name, 'Latest customer');
+    assert.equal(rendered[0].customer_phone, '222');
+    assert.equal(rendered[0].items_total, 99);
+    const frame = $('#tender_receipt_preview iframe'); frame.trigger('load');
+    assert.equal(frame.css('width'), '393px', '112mm preview uses its own printable width');
+    dom.window.close();
+});
+
+test('final printing retrieves the saved sale before rendering the receipt', () => {
+    const { dom, win } = till();
+    let done, request, printed;
+    win.PosnicPro.get = (url, callback) => { request = url; done = callback; };
+    win.PosnicPro.receiptDesigner = { printSale(data) { printed = data; } };
+    win.PosnicPro.sales.view.printSale('saved-id', 'sale');
+    assert.equal(request, 'sales/saved-id'); assert.equal(printed, undefined);
+    const saved = { sales_id: 'INV-123', customer_name: 'Saved customer', items_total: 99, payment_mode: 'Cash' };
+    done({ type: 'success', data: saved });
+    assert.equal(printed, saved);
+    dom.window.close();
+});

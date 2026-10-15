@@ -4800,5 +4800,6 @@
   "lang_your_time_or_expertise": "Your time or expertise",
   "lang_yourselecteddetails_title": "Selected details will be deleted",
   "lang_rd_serial_number": "S.No",
-  "lang_rd_show_payment_method": "Show payment method"
+  "lang_rd_show_payment_method": "Show payment method",
+  "lang_receipt_number_after_save": "Receipt number is assigned after saving the sale."
 }
