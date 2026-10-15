@@ -59,3 +59,48 @@ GitHub Actions spending is constrained. Prefer local verification.
 ## Optional features
 
 Optional workflows and behaviors must default off and require explicit opt-in in their module's settings. Server capability support alone is not user consent. Preserve explicitly saved settings on upgrades. Do not introduce automatic workflow transitions such as table cleaning. Keep duplicate prevention, durable order recovery, payment integrity, authentication and access checks automatic. Document default changes and test both unset and explicitly enabled settings.
+
+## Sync is part of every data feature
+
+A feature is not complete just because it works in the web app or on one till.
+For every new feature, bug fix, collection, persisted field, setting, or change
+to a write/delete path, review synchronization before implementation is called
+complete. This applies to API routes, helpers, workers and desktop code as well
+as models, repositories, services and controllers.
+
+- Identify all data the feature reads and writes, its tenant/branch scope, and
+  which installation is authoritative. State what users must see on the web,
+  on the originating till and on another authorized till, including offline
+  operation and reconnection.
+- Configure shared business data end to end in the same delivery: POS
+  `api/src/sync/collections.json`, Gateway
+  `apps/sync-gateway/src/collections.js`, and the sync agent's
+  `apps/sync-agent/sync-config.json`. Check names, scopes, transport behaviour
+  and the agent actually bundled or installed on the till. If existing lanes
+  already cover a field, verify that explicitly; do not add redundant lanes.
+- Verify stable identifiers, tenant/branch access, timestamps/checkpoints,
+  conflict handling, deletions/tombstones and referenced files such as images
+  and attachments. Updating a collection list alone is not sufficient.
+- Never leave newly introduced or changed business data as `undecided` and
+  treat the feature as finished. Review existing exclusions when extending a
+  feature; an old exclusion is not proof that the current behaviour is right.
+- Intentional local-only data needs a concrete reason and a defined user
+  experience. Credentials, sessions, execution leases, printer queues and
+  payment/stock command journals must not be blindly replicated. When users
+  need cross-installation visibility, provide a read-only shared view or an
+  authenticated request to the authoritative server. Do not replay schedules,
+  payments, stock movements, messages or print jobs on another installation.
+- Test the feature's required directions: cloud to till, till to cloud, and
+  other authorized tills where applicable. Cover create/update/delete,
+  reconnect/retry, duplicates, branch isolation and existing-data migration or
+  backfill. Check files separately from their database references. A passing
+  classification test or matching manifests does not prove delivery.
+- Include the sync decision, related Gateway/agent changes, rollout order and
+  test evidence in the PR or handoff. Do not claim the feature is deployed or
+  ready for clients until required Gateway/API/agent changes and the intended
+  installer are available together. State any unverified live-device behaviour
+  or remaining gap explicitly; do not hide it behind passing local tests.
+
+Apply this review using existing local checks and regression tests. This rule
+is not permission to add CI jobs, bypass branch protections, or change security
+and access controls without the authorization otherwise required above.
