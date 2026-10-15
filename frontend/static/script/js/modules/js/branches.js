@@ -197,7 +197,7 @@ PosnicPro.branches = {
     showChange: function (id) {
         if (!id || String(id) === String(PosnicPro.local.get('branch_id_set'))) { return; }
         if (typeof billingWindowId !== 'undefined' && billingWindowId) {
-            PosnicPro.alert('warning', 'This window belongs to one branch. Open another outlet from the main window.');
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_this_window_belongs_to_one_branch_open_ano', 'This window belongs to one branch. Open another outlet from the main window.'));
             return;
         }
         PosnicPro.local.set('changebranchid', id);
@@ -208,7 +208,7 @@ PosnicPro.branches = {
             }
             PosnicPro.settings.listBranchName(id);
         }, function () {
-            PosnicPro.alert('error', 'Could not check the current register. Please retry before switching branches.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_check_the_current_register_pleas', 'Could not check the current register. Please retry before switching branches.'));
         });
     },
     /* The name the OLD table machinery answered to - settings flows still

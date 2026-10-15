@@ -12,6 +12,7 @@ function setup(record, options = {}) {
     const calls = [];
     $.fn.modal = function (action) { calls.push(['modal', action]); return this; };
     const PosnicPro = {
+        i18n: { t: (_key, fallback) => fallback },
         lazyPhoneInput() {},
         local: { get: key => values[key], set: (key, value) => { values[key] = value; } },
         settings: { listBranchName: id => calls.push(['switch', id]) },
