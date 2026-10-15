@@ -269,7 +269,17 @@ async function finish(c, id, expected) {
 }
 async function status(c, id, page = 1, filter = 'changes') {
   const x = await collections(c),
-    job = await getJob(x, id),
+    existing = await x.jobs.findOne({ _id: oid(id), license: x.s.license });
+  if (!existing)
+    return require('./price-synced-history').status(
+      x.db,
+      c,
+      branchScope.selected(c, 'all'),
+      id,
+      Math.max(1, Math.min(2000, Math.floor(Number(page) || 1))),
+      filter
+    );
+  const job = await getJob(x, id),
     q = { job_id: job._id };
   const groups = await x.rows
     .aggregate([{ $match: q }, { $group: { _id: '$status', count: { $sum: 1 } } }])
@@ -513,6 +523,8 @@ async function list(c, input = {}) {
   if (input.status === 'drafts') q.status = { $in: ['review', 'draft'] };
   const page = Math.max(1, Math.floor(Number(input.page) || 1));
   const pageSize = [10, 25, 50].includes(Number(input.pageSize)) ? Number(input.pageSize) : 10;
+  if (input.status === 'complete')
+    return require('./price-synced-history').list(x.db, c, ids, q, page, pageSize);
   return {
     total: await x.jobs.countDocuments(q),
     page,

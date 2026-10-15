@@ -368,3 +368,34 @@ test('schedule status groups paginate without mixing completed or cancelled jobs
     assert.equal(result.jobs[0].status, status);
   }
 });
+
+test('synced applied history is visible without copying executable jobs, and is scoped and paginated', async () => {
+  const batch = new ObjectId();
+  const records = Array.from({length: 53}, (_, i) => ({
+    _id: new ObjectId(), license, branch_id: branchA, batch_id: batch,
+    item_id: new ObjectId(), item_name: 'Item '+i, field: 'selling_price',
+    old_value: 10, new_value: 12, note: 'Morning prices', date: new Date(),
+  }));
+  await db.collection('price_history').insertMany(records);
+  await db.collection('price_history').insertMany([
+    {...records[0], _id:new ObjectId(), license:new ObjectId(), batch_id:new ObjectId()},
+    {...records[0], _id:new ObjectId(), branch_id:new ObjectId(), batch_id:new ObjectId()},
+  ]);
+  const result = await service.list(c, {status:'complete'});
+  assert.equal(result.total,1);
+  assert.equal(result.jobs[0].syncedHistory,true);
+  assert.equal(result.jobs[0].note,'Morning prices');
+  const view = await service.status(c,String(batch),2,'changes');
+  assert.equal(view.total,53);
+  assert.equal(view.rows.length,3);
+  assert.equal(view.rows[0].number,51);
+  assert.deepEqual(view.rows[0].changes.selling_price,{old:10,value:12});
+  assert.equal((await service.list(c,{status:'upcoming'})).total,0);
+  assert.equal(await db.collection('price_sheet_jobs').countDocuments({}),0);
+  await assert.rejects(()=>service.cancel(c,String(batch),{}),/not found/);
+  await assert.rejects(()=>service.processBatch(c,String(batch),true),/not found/);
+  await db.collection('price_sheet_jobs').insertOne({_id:batch,license,branch_id:branchA,branchIds:[String(branchA)],status:'complete',created_date:new Date()});
+  const deduped = await service.list(c,{status:'complete'});
+  assert.equal(deduped.total,1);
+  assert.equal(deduped.jobs[0].syncedHistory,undefined);
+});
