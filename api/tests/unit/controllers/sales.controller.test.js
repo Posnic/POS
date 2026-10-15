@@ -626,9 +626,17 @@ describe('SalesController', () => {
       );
       const res = mockRes();
       const next = mockNext();
-      await ctrl.update(mockReq({ params: { id: VALID_ID }, body: {
-        ...body, paid_bill_correction: { reason: 'Wrong method recorded' },
-      } }), res, next);
+      await ctrl.update(
+        mockReq({
+          params: { id: VALID_ID },
+          body: {
+            ...body,
+            paid_bill_correction: { reason: 'Wrong method recorded' },
+          },
+        }),
+        res,
+        next
+      );
       expect(res.status).toHaveBeenCalledWith(status);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message }));
       expect(next).not.toHaveBeenCalled();
