@@ -60,6 +60,9 @@ Var POSNIC_BACKUPS_CHECK
 Var POSNIC_REMOVAL_SUMMARY
 !include nsDialogs.nsh
 !include LogicLib.nsh
+; electron-builder loads custom includes before its assisted UI template.
+; Our page functions use MUI_HEADER_TEXT while this file is parsed.
+!include MUI2.nsh
 
 ; Posnic stores its runtime and user-specific data under the current profile.
 ; Force per-user installation and skip the redundant all-users/current-user page.
