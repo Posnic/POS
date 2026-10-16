@@ -26,10 +26,57 @@ body.desktop-window .wizard-container .btn-primary { background: #086fa7 !import
 #stepCloud summary { color: #176da5; cursor: pointer; }
 #stepCloud details .form-group { margin-top: 16px; }
 [data-simple-hidden] { display: none !important; }
-@media (prefers-color-scheme: dark) {
+:root[data-window-theme="dark"] {
   .simple-intro, .simple-option small, .simple-check small { color: #bac6d2; }
   .simple-option { border-color: #424b56; }
   .simple-shop, .simple-note { background: #2b323c; color: #edf2f7; }
   #stepCloud summary, .simple-link { color: #91cff8; }
 }
 @media (max-width: 480px) { .wizard-body { padding: 20px; } }
+
+/* Match the approved card and footer across every step, including transitions. */
+body.desktop-window[data-desktop-window="setup"] { display: flex; flex-direction: column; align-items: center; padding: 28px 20px; font: 14px/1.5 'Segoe UI', sans-serif; }
+.wizard-container { margin: auto; flex-shrink: 0; }
+.wizard-header { padding: 20px 28px; }
+.wizard-header::after { color: var(--w-muted); }
+.wizard-header .wizard-logo { display: none; }
+.setup-brand { font-size: 23px; font-weight: 600; letter-spacing: .5px; color: #146da8; }
+.wizard-body { padding: 30px 28px 0; }
+.wizard-body .form-section { margin: 0; min-height: 0; }
+.wizard-body .form-section h2 { font-size: 25px; font-weight: 600; line-height: 1.25; margin: 0 0 10px; padding: 0; border: 0; color: var(--w-text); }
+.simple-intro { color: var(--w-muted); margin-bottom: 22px; }
+.desktop-window[data-desktop-window="setup"] .wizard-container button { min-height: 42px; font-size: 14px !important; font-weight: 400 !important; }
+.desktop-window .wizard-container .simple-option { position: relative; padding: 18px 42px 18px 18px; }
+.simple-option::after { content: '\2192'; position: absolute; right: 18px; top: 50%; transform: translateY(-50%); }
+.simple-option strong { font-weight: 600; }
+.simple-option small, .simple-check small { font-size: 12px; color: var(--w-muted); }
+.desktop-window .wizard-container .simple-option:first-child { border-color: #146da8 !important; }
+.simple-shop, .simple-note { background: var(--w-raised); color: var(--w-text); }
+.simple-shop small, #existingSyncNote, .setup-note { color: var(--w-muted); font-size: 13px; }
+.desktop-window[data-desktop-window="setup"] .wizard-container .simple-link { background: transparent !important; border: 0 !important; color: #146da8 !important; padding: 7px 0; min-height: 34px; }
+.wizard-container details { margin: 18px 0; }
+.wizard-container summary { color: #146da8; cursor: pointer; }
+.wizard-container details .form-group { margin-top: 16px; }
+.wizard-container .field-hint, #cloudSignupLink { font-size: 12px; color: var(--w-muted); }
+.wizard-container .form-group label { font-size: 14px; font-weight: 400; }
+.wizard-container input:not([type="checkbox"]), .wizard-container select { min-height: 44px; }
+.wizard-container .form-section > .btn-container, .setup-footer { margin: 28px -28px 0; padding: 17px 28px; border-top: 1px solid var(--w-border); background: var(--w-raised); display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.wizard-container .btn-container .btn { flex: 0 1 auto; letter-spacing: 0; }
+.wizard-container #browserWait .btn-container { margin-top: 12px; flex-wrap: wrap; }
+.wizard-container #stepQuick > .form-row { grid-template-columns: 1fr; gap: 0; }
+.setup-note { margin: 16px 0 0; }
+#stepProgress { padding-bottom: 28px; min-height: 300px; }
+#stepRecovery #recoveryCodes { color: var(--w-text); background: var(--w-raised) !important; }
+#stepRecovery > p, #qProgSub, #qProgPct { color: var(--w-muted) !important; }
+#qProgText { color: var(--w-text) !important; }
+#simpleSetupError:empty { display: none; }
+:root[data-window-theme="dark"] .setup-brand,
+:root[data-window-theme="dark"] .wizard-container summary,
+:root[data-window-theme="dark"] .wizard-container .simple-link { color: #91cff8 !important; }
+@media (max-width: 480px) {
+  body.desktop-window[data-desktop-window="setup"] { padding: 16px 10px; }
+  .wizard-header { padding: 18px; }
+  .wizard-body { padding: 24px 18px 0; }
+  .wizard-body .form-section h2 { font-size: 22px; }
+  .wizard-container .form-section > .btn-container, .setup-footer { margin-left: -18px; margin-right: -18px; padding: 15px 18px; }
+}
