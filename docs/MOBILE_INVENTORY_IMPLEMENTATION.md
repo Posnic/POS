@@ -2,7 +2,7 @@
 
 The mobile client and POS server must both include this change. Beta 20 does not include inventory. This document records implemented scope; it does not mark the complete inventory roadmap finished.
 
-Mobile inventory is off by default. An administrator enables **Enable mobile inventory (pilot)** under **Core Settings → Items/Inventory**, then refreshes the phone's connection/catalogue. Existing explicit approval choices are preserved.
+Mobile inventory is enabled by default for new branches and branches without a saved choice. An explicit saved disable remains off. Administrators manage **Enable mobile inventory** and approval actions under **Core Settings → Inventory → Mobile inventory**, then refresh the phone's connection/catalogue. Existing approval choices and role permissions are preserved.
 
 ## Implemented
 
@@ -12,7 +12,7 @@ Mobile inventory is off by default. An administrator enables **Enable mobile inv
 - Persistent partial-count, direct-receiving, damage and loss drafts. Counted zero differs from an item never added to a count. Quantities use thousandths, with whole-unit validation.
 - Server prepare/review/confirm/status/cancel endpoints. A durable request identity and atomic per-item effect prevent duplicate stock changes after a lost reply or restart. Conflicted operations report applied and unapplied lines separately.
 - Current server ACL and branch/tenant checks, including approval policy rechecking at confirmation. An unchanged count uses an atomic expected-quantity/date/revision check; a changed item requires another observation. Pending sales on this phone block count confirmation.
-- Direct confirmation by default. Administrators can require approval for selected actions under Core Settings → Items/Inventory. Owners/admins approve in Inventory → Stock Counts or in the phone's operation history.
+- Direct confirmation by default. Administrators can require approval for selected actions under Core Settings → Inventory → Mobile inventory. Owners/admins approve in Inventory → Stock Counts or in the phone's operation history.
 - Stock changes update the existing item balance and stocklogs; the normal POS sync transports these records. Operation journals remain on the issuing server and are never replayed against a different server.
 - Mobile labels and messages in all 18 app languages (beta translations; native-speaker review remains necessary).
 
@@ -33,3 +33,9 @@ Local tests use a disposable MongoDB database, never production shop stock:
 - Mobile: `npm run check`, web export and Playwright tests including receiving/review/confirm and saved zero counts across restart.
 
 Device acceptance still needs: offline count/restart, reconnect, interrupted confirmation, actual cashier/admin roles, branch isolation, fractional quantities, camera permission recovery and the installed desktop's sync behavior.
+
+## Settings rollout and synchronization
+
+The policy remains `branches.inventory_policy`, scoped to the selected licensed branch. Saving it updates `updated_date`; POS and Gateway classify branches as global tenant data, and the sync agent carries branches on its existing batch lane. No new collection or transport is introduced. Saved true/false and approval choices travel with the branch; unset is interpreted consistently by bootstrap, inventory access, policy reads and the branch model after this update. Operation journals remain local to their issuing server.
+
+Deploy the POS API and frontend together, then update connected tills to the same implementation. Refresh the mobile snapshot after changing policy. The menu is a server/web change and does not require a new APK. Mixed-version servers may interpret an unset policy differently until upgraded; saving an explicit choice avoids that ambiguity. Live cloud-to-till and other-till delivery is not verified by the local API tests.
