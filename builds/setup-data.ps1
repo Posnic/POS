@@ -8,6 +8,15 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
+# Stream the current filename without flooding the UI for every small file.
+$script:progressClock = [Diagnostics.Stopwatch]::StartNew()
+function Write-RemovalProgress([string]$Message, [switch]$Force) {
+  if ($Force -or $script:progressClock.ElapsedMilliseconds -ge 100) {
+    Write-Output $Message
+    $script:progressClock.Restart()
+  }
+}
+
 function Get-ExtendedPath([string]$File) {
   if ($File.StartsWith('\\?\')) { return $File }
   $full = [IO.Path]::GetFullPath($File)
@@ -35,10 +44,12 @@ function Remove-UnlinkedTree([IO.DirectoryInfo]$Directory) {
     if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked folders cannot be deleted here.' }
     if ($entry.Attributes -band [IO.FileAttributes]::Directory) { Remove-UnlinkedTree $entry }
     else {
+      Write-RemovalProgress ('Deleting: ' + $entry.FullName)
       $entry.IsReadOnly = $false
       $entry.Delete()
     }
   }
+  Write-RemovalProgress ('Removing folder: ' + $Directory.FullName)
   $Directory.Delete()
 }
 function Remove-CheckedTree([string]$Root) {
@@ -46,6 +57,7 @@ function Remove-CheckedTree([string]$Root) {
   # Validate the entire tree, then use extended paths for the actual removal.
   $extended = Get-ExtendedPath $Root
   if (![IO.Directory]::Exists($extended)) { return }
+  Write-RemovalProgress ('Removing folder: ' + $Root) -Force
   $directory = New-Object IO.DirectoryInfo $extended
   Assert-UnlinkedTree $directory
   Remove-UnlinkedTree $directory
@@ -56,6 +68,7 @@ try {
   if ([Environment]::Is64BitOperatingSystem -and ![Environment]::Is64BitProcess) {
     throw 'Use the native 64-bit PowerShell host so running applications can be checked safely.'
   }
+  Write-RemovalProgress 'Checking that the application is closed...' -Force
   $documents = [Environment]::GetFolderPath('MyDocuments')
   $DataRoot = Assert-DirectChild $env:APPDATA $DataRoot
   $BackupsRoot = Assert-DirectChild $documents $BackupsRoot
@@ -75,6 +88,7 @@ try {
       $lockFile = Join-Path $DataRoot $name
       if (Test-Path -LiteralPath $lockFile) { $locks += [IO.File]::Open($lockFile, 'Open', 'ReadWrite', 'None') }
     }
+    Write-RemovalProgress 'Preparing selected local data for removal...' -Force
     # Validate paths before applying the user's explicit deletion choices.
     Assert-UnlinkedTree (New-Object IO.DirectoryInfo (Get-ExtendedPath $DataRoot))
     foreach ($lock in $locks) { $lock.Dispose() }; $locks = @()
@@ -83,12 +97,12 @@ try {
       if ($KeepHardware -eq '1' -and $entry.Name -in $hardwareFiles) { continue }
       if ($KeepBackups -eq '1' -and $entry.Name -eq 'backups') { continue }
       if ($entry.PSIsContainer) { Remove-CheckedTree $entry.FullName }
-      else { Remove-Item -LiteralPath $entry.FullName -Force }
+      else { Write-RemovalProgress ('Deleting: ' + $entry.Name); Remove-Item -LiteralPath $entry.FullName -Force }
     }
   } elseif ($KeepHardware -eq '0') {
     foreach ($name in $hardwareFiles) {
       $target = Join-Path $DataRoot $name
-      if (Test-Path -LiteralPath $target) { Remove-Item -LiteralPath $target -Force }
+      if (Test-Path -LiteralPath $target) { Write-RemovalProgress ('Deleting hardware settings: ' + $name) -Force; Remove-Item -LiteralPath $target -Force }
     }
   }
   if ($KeepBackups -eq '0') {
