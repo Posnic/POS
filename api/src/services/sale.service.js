@@ -426,6 +426,13 @@ const processSale = async (
     const pricingCustomer = data.customer_id
       ? await customerRepository.findById(data.customer_id)
       : null;
+    const gstPlace = require('../helpers/gst-place');
+    const supplierState = context.branchState || pricingBranch.state || '';
+    const saleCustomerState = gstPlace.customerState(
+      data,
+      { ...pricingBranch, state: supplierState },
+      pricingCustomer
+    );
     let priceList;
     if (pricingCustomer?.category_id) {
       const pricingDb = await BaseModel.getDb();
@@ -662,7 +669,7 @@ const processSale = async (
 
       const indianGstSetting = context.branchSettings?.indian_gst || 'gst_off';
 
-      const interPlace = (data.customer_state || '').trim() !== (context.branchState || '').trim();
+      const interPlace = gstPlace.isInterState(supplierState, saleCustomerState);
       if (indianGstSetting === 'gst_on' && gstValue > 0) {
         if (interPlace) {
           igst_value = gstValue;
@@ -1274,7 +1281,7 @@ const processSale = async (
           }
         : {}),
       customer_email: (data.customer_email || '').trim(),
-      customer_state: (data.customer_state || '').trim(),
+      customer_state: saleCustomerState,
       customer_country: (data.customer_country || '').trim(),
       country_sort: finalCountrySort,
       customer_gst_type: (data.customer_gst_type || '').trim(),
