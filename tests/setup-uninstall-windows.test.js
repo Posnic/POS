@@ -40,6 +40,8 @@ test('Windows uninstaller handles all eight keep combinations without creating e
   for (const business of [0, 1]) for (const hardware of [0, 1]) for (const backups of [0, 1]) {
     const f = fixture(t), result = f.run(business, hardware, backups);
     assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /Checking that the application is closed/);
+    if (!business) assert.match(result.stdout, /Removing folder: .*mongodb/);
     assert.equal(fs.existsSync(path.join(f.data, 'mongodb/data/sales.wt')), Boolean(business));
     assert.equal(fs.existsSync(path.join(f.data, 'preferences.json')), Boolean(hardware));
     assert.equal(fs.existsSync(path.join(f.backups, 'saved.json')), Boolean(backups));
