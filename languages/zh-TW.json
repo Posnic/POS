@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "PDF，JPG 或 PNG。最多 5 個文件，每個 5 MB，總共 10 MB。儲存項目時，檔案會儲存。",
   "lang_expense_file_retry": "項目已儲存，但部分附件無法儲存。保持此表單打開並再次儲存以重試。",
   "lang_not_saved": "未儲存",
-  "lang_download": "下載"
+  "lang_download": "下載",
+  "lang_staff_account": "員工帳戶",
+  "lang_api_integration": "API 整合",
+  "lang_allow_shared_phone_number": "允許共用電話號碼",
+  "lang_same_as_branch": "與分店相同",
+  "lang_15_character_gstin": "15位GSTIN",
+  "lang_customer_name_phone": "客戶姓名 / 電話"
 }

@@ -4910,5 +4910,11 @@
   "lang_expense_files_help": "PDF, JPG හෝ PNG. ගොනු 5 ක් දක්වා, 5 MB බැගින්, මුළු 10 MB. ඔබ ඇතුළත් කිරීම සුරකින විට ගොනු සුරකිනු ලැබේ.",
   "lang_expense_file_retry": "ඇතුළත් කිරීම සුරකින ලද නමුත් සමහර ඇමුණුම් සුරැකීමට නොහැකි විය. මෙම පෝරමය විවෘතව තබා නැවත උත්සාහ කිරීම සඳහා නැවත සුරකින්න.",
   "lang_not_saved": "සුරකිනු නොමැත",
-  "lang_download": "බාගත කරන්න"
+  "lang_download": "බාගත කරන්න",
+  "lang_staff_account": "සේවක ගිණුම",
+  "lang_api_integration": "API ඒකාබද්ධ කිරීම",
+  "lang_allow_shared_phone_number": "හවුල් දුරකථන අංකයට අවසර දෙන්න",
+  "lang_same_as_branch": "ශාඛාවට සමානයි",
+  "lang_15_character_gstin": "අක්ෂර 15ක GSTIN",
+  "lang_customer_name_phone": "පාරිභෝගික නම / දුරකථනය"
 }

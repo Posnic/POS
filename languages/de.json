@@ -4910,5 +4910,11 @@
   "lang_expense_files_help": "PDF, JPG oder PNG. Bis zu 5 Dateien, jeweils 5 MB, insgesamt 10 MB. Dateien werden gespeichert, wenn Sie den Eintrag speichern.",
   "lang_expense_file_retry": "Eintrag gespeichert, aber einige Anlagen konnten nicht gespeichert werden. Lassen Sie dieses Formular geöffnet und speichern Sie es erneut, um es erneut zu versuchen.",
   "lang_not_saved": "Nicht gespeichert",
-  "lang_download": "Herunterladen"
+  "lang_download": "Herunterladen",
+  "lang_staff_account": "Mitarbeiterkonto",
+  "lang_api_integration": "API-Integration",
+  "lang_allow_shared_phone_number": "Gemeinsame Telefonnummer erlauben",
+  "lang_same_as_branch": "Wie die Filiale",
+  "lang_15_character_gstin": "15-stellige GSTIN",
+  "lang_customer_name_phone": "Kundenname / Telefon"
 }

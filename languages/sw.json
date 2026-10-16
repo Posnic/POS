@@ -4910,5 +4910,11 @@
   "lang_expense_files_help": "PDF, JPG au PNG. Hadi faili 5, 5 MB kila moja, jumla ya 10 MB. Faili zinahifadhiwa wakati unapohifadhi ingilio.",
   "lang_expense_file_retry": "Kuingia imehifadhiwa, lakini viambatisho vingine havikuweza kuhifadhi Weka fomu hii wazi na uhifadhi tena ili kujaribu tena.",
   "lang_not_saved": "Haikuokolewa",
-  "lang_download": "Pakua"
+  "lang_download": "Pakua",
+  "lang_staff_account": "Akaunti ya mfanyakazi",
+  "lang_api_integration": "Muunganisho wa API",
+  "lang_allow_shared_phone_number": "Ruhusu nambari ya simu ya pamoja",
+  "lang_same_as_branch": "Sawa na tawi",
+  "lang_15_character_gstin": "GSTIN yenye herufi 15",
+  "lang_customer_name_phone": "Jina la mteja / simu"
 }

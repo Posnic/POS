@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG arba PNG. Iki 5 failų, po 5 MB, iš viso 10 MB. Failai išsaugomi, kai įrašote įrašą.",
   "lang_expense_file_retry": "Įrašas išsaugotas, tačiau kai kurių priedų nepavyko išsaugoti. Laikykite šią formą atidarytą ir išsaugokite dar kartą, kad bandytumėte iš naujo.",
   "lang_not_saved": "Neišsaugota",
-  "lang_download": "Parsisiųsti"
+  "lang_download": "Parsisiųsti",
+  "lang_staff_account": "Darbuotojo paskyra",
+  "lang_api_integration": "API integracija",
+  "lang_allow_shared_phone_number": "Leisti bendrą telefono numerį",
+  "lang_same_as_branch": "Kaip filialo",
+  "lang_15_character_gstin": "15 simbolių GSTIN",
+  "lang_customer_name_phone": "Kliento vardas / telefonas"
 }

@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "PDF, JPG 또는 PNG최대 5개 파일, 각 5MB, 총 10MB항목을 저장하면 파일이 저장됩니다.",
   "lang_expense_file_retry": "항목이 저장되었지만 일부 첨부 파일을 저장할 수 없습니다.다시 시도하려면 이 양식을 열어 두었다가 다시 저장하십시오.",
   "lang_not_saved": "저장되지 않음",
-  "lang_download": "다운로드"
+  "lang_download": "다운로드",
+  "lang_staff_account": "직원 계정",
+  "lang_api_integration": "API 연동",
+  "lang_allow_shared_phone_number": "전화번호 공유 허용",
+  "lang_same_as_branch": "지점과 동일",
+  "lang_15_character_gstin": "15자 GSTIN",
+  "lang_customer_name_phone": "고객 이름 / 전화번호"
 }

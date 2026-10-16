@@ -421,6 +421,7 @@ PosnicPro.customers = {
                 url += '/' + $('#customer_id').val();
             }
             var formData = PosnicPro.getFormData($('#customer_add_form'));
+            formData.allow_shared_phone = $('#customer_shared_phone').prop('checked');
             var phoneInput = PosnicPro.customers.customer_phone;
             formData.phone = $('#customer_phone').val().trim() && phoneInput ? phoneInput.getNumber() : '';
             delete formData.full;
@@ -607,6 +608,7 @@ PosnicPro.customers = {
                 $('#customer_email').val(data.email);
                 $('#customer_address').val(data.address);
                 $('#customer_city').val(data.city);
+                $('#customer_shared_phone').prop('checked', data.allow_shared_phone === true);
                 $('#customer_country').val(data.country).trigger('change.select2');
                 $('#customer_category').val(data.category_id).trigger("change");
                 $('#customer_referrer_name').val(data.referrer_name);

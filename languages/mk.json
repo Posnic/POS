@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG или PNG. До 5 датотеки, по 5 MB, вкупно 10 MB. Датотеките се зачувуваат кога ќе го зачувате записот.",
   "lang_expense_file_retry": "Влезот е зачуван, но некои прилози не можеа да се зачуваат. Чувајте го овој формулар отворен и зачувајте повторно за да се обидете повторно.",
   "lang_not_saved": "Не е зачуван",
-  "lang_download": "Преземи"
+  "lang_download": "Преземи",
+  "lang_staff_account": "Сметка за вработен",
+  "lang_api_integration": "API интеграција",
+  "lang_allow_shared_phone_number": "Дозволи заеднички телефонски број",
+  "lang_same_as_branch": "Исто како филијалата",
+  "lang_15_character_gstin": "GSTIN од 15 знаци",
+  "lang_customer_name_phone": "Име на клиент / телефон"
 }

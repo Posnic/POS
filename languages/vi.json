@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "PDF, JPG hoặc PNG. Tối đa 5 tệp, mỗi tệp 5 MB, tổng cộng 10 MB. Các tệp được lưu khi bạn lưu mục nhập.",
   "lang_expense_file_retry": "Mục nhập đã lưu, nhưng một số tệp đính kèm không thể được lưu. Giữ biểu mẫu này mở và lưu lại để thử lại.",
   "lang_not_saved": "Không được lưu",
-  "lang_download": "Tải về"
+  "lang_download": "Tải về",
+  "lang_staff_account": "Tài khoản nhân viên",
+  "lang_api_integration": "Tích hợp API",
+  "lang_allow_shared_phone_number": "Cho phép dùng chung số điện thoại",
+  "lang_same_as_branch": "Giống chi nhánh",
+  "lang_15_character_gstin": "GSTIN gồm 15 ký tự",
+  "lang_customer_name_phone": "Tên khách hàng / điện thoại"
 }

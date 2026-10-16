@@ -4910,5 +4910,11 @@
   "lang_expense_files_help": "ಪಿಡಿಎಫ್, ಜೆಪಿಜಿ ಅಥವಾ ಪಿಎನ್ಜಿ. 5 ಫೈಲ್ಗಳವರೆಗೆ, ತಲಾ 5 ಎಂಬಿ, ಒಟ್ಟು 10 ಎಂಬಿ. ನೀವು ನಮೂದನ್ನು ಉಳಿಸಿದಾಗ ಫೈಲ್ಗಳನ್ನು ಉಳಿಸಲಾಗುತ್ತದೆ.",
   "lang_expense_file_retry": "ಎಂಟ್ರಿ ಉಳಿಸಲಾಗಿದೆ, ಆದರೆ ಕೆಲವು ಲಗತ್ತುಗಳನ್ನು ಉಳಿಸಲಾಗಲಿಲ್ಲ. ಈ ಫಾರ್ಮ್ ಅನ್ನು ತೆರೆದಿರಿಸಿ ಮತ್ತು ಮರುಪ್ರಯತ್ನಿಸಲು ಮತ್ತೆ ಉಳಿಸಿ.",
   "lang_not_saved": "ಉಳಿಸಲಾಗಿಲ್ಲ",
-  "lang_download": "ಡೌನ್ಲೋಡ್ ಮಾಡಿ"
+  "lang_download": "ಡೌನ್ಲೋಡ್ ಮಾಡಿ",
+  "lang_staff_account": "ಸಿಬ್ಬಂದಿ ಖಾತೆ",
+  "lang_api_integration": "API ಏಕೀಕರಣ",
+  "lang_allow_shared_phone_number": "ಒಂದೇ ಫೋನ್ ಸಂಖ್ಯೆಯನ್ನು ಬಳಸಲು ಅನುಮತಿಸಿ",
+  "lang_same_as_branch": "ಶಾಖೆಯಂತೆಯೇ",
+  "lang_15_character_gstin": "15 ಅಕ್ಷರಗಳ GSTIN",
+  "lang_customer_name_phone": "ಗ್ರಾಹಕರ ಹೆಸರು / ಫೋನ್"
 }

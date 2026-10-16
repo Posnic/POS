@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "পিডিএফ, জেপিজি বা পিএনজি। 5 টি ফাইল পর্যন্ত, প্রতিটি 5 এমবি, মোট 10 এমবি। আপনি এন্ট্রি সংরক্ষণ করার সময় ফাইলগুলি সংরক্ষণ করা হয়।",
   "lang_expense_file_retry": "এন্ট্রি সংরক্ষিত, কিন্তু কিছু সংযুক্তি সংরক্ষণ করা যায়নি। এই ফর্মটি খোলা রাখুন এবং আবার চেষ্টা করতে আবার সংরক্ষণ করুন।",
   "lang_not_saved": "সংরক্ষণ করা হয়নি",
-  "lang_download": "ডাউনলোড"
+  "lang_download": "ডাউনলোড",
+  "lang_staff_account": "কর্মীর অ্যাকাউন্ট",
+  "lang_api_integration": "API সংযোগ",
+  "lang_allow_shared_phone_number": "একই ফোন নম্বর ব্যবহারের অনুমতি দিন",
+  "lang_same_as_branch": "শাখার মতোই",
+  "lang_15_character_gstin": "১৫ অক্ষরের GSTIN",
+  "lang_customer_name_phone": "গ্রাহকের নাম / ফোন"
 }

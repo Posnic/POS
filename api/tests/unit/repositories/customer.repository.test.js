@@ -318,6 +318,17 @@ describe('CustomerRepository (class, extends BaseModel)', () => {
   // ── findByPhone ────────────────────────────────────────────────────────────
 
   describe('findByPhone', () => {
+    test('excludes the edited customer while preserving tenant scope', async () => {
+      await repository.findByPhone('9876543210', '507f1f77bcf86cd799439011');
+      expect(mockCollection.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phone: '9876543210',
+          _id: { $ne: expect.anything() },
+          license: BaseModel.license,
+        })
+      );
+    });
+
     test('calls collection.findOne with phone', async () => {
       await repository.findByPhone('9876543210');
       expect(mockCollection.findOne).toHaveBeenCalledWith(

@@ -40,15 +40,16 @@ const supplierKeys = { license: 1, branch_id: 1, email: 1 };
 const supplierOptions = { ...options, name: 'supplier_branch_nonempty_email' };
 
 const migrateSupplierEmailIndex = (db) =>
-  migrateContactEmailIndex(
-    db,
-    'suppliers',
-    supplierOptions,
-    supplierKeys
-  );
+  migrateContactEmailIndex(db, 'suppliers', supplierOptions, supplierKeys);
 const migrateCustomerEmailIndex = (db) =>
   migrateContactEmailIndex(db, 'customers', {
     ...options,
     name: 'customer_nonempty_email',
   });
-module.exports = { migrateSupplierEmailIndex, migrateCustomerEmailIndex, options, supplierKeys, supplierOptions };
+module.exports = {
+  migrateSupplierEmailIndex,
+  migrateCustomerEmailIndex,
+  options,
+  supplierKeys,
+  supplierOptions,
+};

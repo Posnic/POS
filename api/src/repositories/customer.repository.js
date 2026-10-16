@@ -85,10 +85,11 @@ class CustomerRepository extends BaseModel {
   /**
    * Find customer by phone
    */
-  async findByPhone(phone) {
+  async findByPhone(phone, excludeId) {
     const collection = await this.getCollection(this.collectionName);
     return await collection.findOne({
       phone,
+      ...(excludeId ? { _id: { $ne: new ObjectId(excludeId) } } : {}),
       license: BaseModel.license,
       is_deleted: { $ne: true },
     });

@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG alebo PNG. Až 5 súborov, každý 5 MB, celkom 10 MB. Súbory sa ukladajú pri uložení položky.",
   "lang_expense_file_retry": "Záznam bol uložený, ale niektoré prílohy sa nepodarilo uložiť. Tento formulár nechajte otvorený a znova ho uložte, aby ste to skúsili znova.",
   "lang_not_saved": "Nie je uložený",
-  "lang_download": "Stiahnite si"
+  "lang_download": "Stiahnite si",
+  "lang_staff_account": "Účet zamestnanca",
+  "lang_api_integration": "Integrácia API",
+  "lang_allow_shared_phone_number": "Povoliť zdieľané telefónne číslo",
+  "lang_same_as_branch": "Rovnaké ako pobočka",
+  "lang_15_character_gstin": "GSTIN s 15 znakmi",
+  "lang_customer_name_phone": "Meno zákazníka / telefón"
 }

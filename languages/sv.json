@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG eller PNG. Upp till 5 filer, 5 MB vardera, 10 MB totalt. Filer sparas när du sparar posten.",
   "lang_expense_file_retry": "Posten sparades, men vissa bilagor kunde inte sparas. Håll det här formuläret öppet och spara igen för att försöka igen.",
   "lang_not_saved": "Inte sparad",
-  "lang_download": "Ladda ner"
+  "lang_download": "Ladda ner",
+  "lang_staff_account": "Personalkonto",
+  "lang_api_integration": "API-integration",
+  "lang_allow_shared_phone_number": "Tillåt delat telefonnummer",
+  "lang_same_as_branch": "Samma som filialen",
+  "lang_15_character_gstin": "GSTIN med 15 tecken",
+  "lang_customer_name_phone": "Kundnamn / telefon"
 }
