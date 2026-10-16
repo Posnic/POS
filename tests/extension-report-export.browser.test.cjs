@@ -12,6 +12,7 @@ test('report bridge permits only bounded text and cleans up after exports and fa
  window.exportReport=eval('('+helper.trim()+')');
  window.output=[];
  window.PosnicPro={reportExport:{csv:(id,meta)=>{output.push({text:document.getElementById(id).textContent,html:document.getElementById(id).innerHTML,meta})},xls:()=>{throw Error('export failed')}},lazy:{load:async()=>{throw Error('PDF unavailable')}}};
+ window.PosnicPro.i18n={t:(key,fallback)=>fallback||key};
  },helper);
  const result=await page.evaluate(async()=>{
  const data={format:'csv',range:'2026-10-01 to 2026-10-31',rows:[['<img src=x onerror=alert(1)>','GBP','=1+1']]};

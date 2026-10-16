@@ -249,7 +249,10 @@ class SupplierService {
 
       // Check for duplicate email
       if (supplierData.email) {
-        const existingSupplier = await this.repository.findByEmail(supplierData.email);
+        const existingSupplier = await this.repository.findByEmail(
+          supplierData.email,
+          supplierData.branch_id
+        );
         if (existingSupplier) {
           return {
             status: false,
@@ -297,7 +300,10 @@ class SupplierService {
 
       // Check for duplicate email if email is being updated
       if (updateData.email && updateData.email !== existingSupplier.email) {
-        const duplicateSupplier = await this.repository.findByEmail(updateData.email);
+        const duplicateSupplier = await this.repository.findByEmail(
+          updateData.email,
+          existingSupplier.branch_id
+        );
         if (duplicateSupplier) {
           return {
             status: false,
@@ -650,7 +656,10 @@ class SupplierService {
             address: existingSupplier.address || '',
           });
         } else {
-          if (supplier.email && (await this.repository.findByEmail(supplier.email))) {
+          if (
+            supplier.email &&
+            (await this.repository.findByEmail(supplier.email, supplier.branch_id))
+          ) {
             validationErrors.push({
               name: supplier.name,
               status: 'Email is already used by another supplier',

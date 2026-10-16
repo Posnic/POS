@@ -6,7 +6,7 @@ const options = {
   partialFilterExpression: { email: { $type: 'string', $gt: '' } },
 };
 
-async function migrateContactEmailIndex(db, name, indexOptions) {
+async function migrateContactEmailIndex(db, name, indexOptions, keys = { email: 1 }) {
   if (!(await db.listCollections({ name }, { nameOnly: true }).hasNext())) return;
   const collection = db.collection(name);
   const indexes = await collection.listIndexes().toArray();
@@ -14,7 +14,7 @@ async function migrateContactEmailIndex(db, name, indexOptions) {
   // a new uniqueness rule fit historical data. A duplicate is a deferred
   // migration, not a reason to take the entire till offline.
   try {
-    await collection.createIndex({ email: 1 }, indexOptions);
+    await collection.createIndex(keys, indexOptions);
   } catch (error) {
     if (error?.code !== 11000) throw error;
     console.warn(
@@ -36,7 +36,16 @@ async function migrateContactEmailIndex(db, name, indexOptions) {
   }
 }
 
-const migrateSupplierEmailIndex = (db) => migrateContactEmailIndex(db, 'suppliers', options);
+const migrateSupplierEmailIndex = (db) =>
+  migrateContactEmailIndex(
+    db,
+    'suppliers',
+    {
+      ...options,
+      name: 'supplier_branch_nonempty_email',
+    },
+    { license: 1, branch_id: 1, email: 1 }
+  );
 const migrateCustomerEmailIndex = (db) =>
   migrateContactEmailIndex(db, 'customers', {
     ...options,
