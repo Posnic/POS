@@ -329,3 +329,41 @@ FunctionEnd
   
   ; Data choices were applied and verified before application removal.
 !macroend
+
+; Shell plugins may change the shell context. Never rely on that context for
+; the final registration cleanup of this per-user installation. Keep a live
+; installation registered, and do not remove another installation's entry.
+!macro POSNIC_VERIFY_REMOVAL
+  IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" posnic_removal_failed
+  ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation"
+  ${If} $0 != ""
+  ${AndIf} $0 != $INSTDIR
+    Goto posnic_removal_failed
+  ${EndIf}
+  ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}"
+  ${If} $0 == "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}"
+  ${EndIf}
+  DeleteRegKey HKCU "${UNINSTALL_REGISTRY_KEY}"
+  DeleteRegKey HKCU "${INSTALL_REGISTRY_KEY}"
+  ClearErrors
+  EnumRegValue $0 HKCU "${UNINSTALL_REGISTRY_KEY}" 0
+  IfErrors 0 posnic_removal_failed
+  ClearErrors
+  EnumRegValue $0 HKCU "${INSTALL_REGISTRY_KEY}" 0
+  IfErrors posnic_removal_verified posnic_removal_failed
+  posnic_removal_failed:
+    SetErrorLevel 1
+    Abort "Removal is incomplete. Close the application and run the installer to repair it, then retry removal."
+  posnic_removal_verified:
+    DetailPrint "Application removal and Windows registration verified."
+!macroend
+
+; Runs after electron-builder's file, shortcut and registration cleanup. A
+; failure must not reach the successful finish page.
+!macro customUnInstallSection
+  Section "un.Verify removal"
+    !insertmacro check64BitAndSetRegView
+    !insertmacro POSNIC_VERIFY_REMOVAL
+  SectionEnd
+!macroend
