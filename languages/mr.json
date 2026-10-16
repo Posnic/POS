@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "पीडीएफ, जेपीजी किंवा PNG. 5 फायली पर्यंत, प्रत्येक 5 एमबी, एकूण 10 एमबी जेव्हा आपण एंट्री जतन करता तेव्हा फाइल्",
   "lang_expense_file_retry": "प्रवेश जतन केला, परंतु काही संलग्नक जतन केले हा फॉर्म खुला ठेवा आणि पुन्हा प्रयत्न करण्यासाठी पुन्ह",
   "lang_not_saved": "जतन केलेले नाही",
-  "lang_download": "डानलोड"
+  "lang_download": "डानलोड",
+  "lang_staff_account": "कर्मचारी खाते",
+  "lang_api_integration": "API एकत्रीकरण",
+  "lang_allow_shared_phone_number": "सामायिक फोन नंबरला परवानगी द्या",
+  "lang_same_as_branch": "शाखेप्रमाणेच",
+  "lang_15_character_gstin": "15 अक्षरांचा GSTIN",
+  "lang_customer_name_phone": "ग्राहकाचे नाव / फोन"
 }

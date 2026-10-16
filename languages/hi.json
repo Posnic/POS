@@ -4910,5 +4910,11 @@
   "lang_expense_files_help": "PDF, JPG या PNG। अधिकतम 5 फ़ाइलें, प्रत्येक में 5 MB, कुल 10 MB। जब आप प्रविष्टि सहेजते हैं तो फ़ाइलें सहेजी जाती हैं।",
   "lang_expense_file_retry": "प्रविष्टि सहेजी गई, लेकिन कुछ अटैचमेंट सहेजे नहीं जा सके। इस फ़ॉर्म को खुला रखें और फिर से कोशिश करने के लिए फिर से सेव करें।",
   "lang_not_saved": "सहेजा नहीं गया",
-  "lang_download": "डाउनलोड करें"
+  "lang_download": "डाउनलोड करें",
+  "lang_staff_account": "कर्मचारी खाता",
+  "lang_api_integration": "API एकीकरण",
+  "lang_allow_shared_phone_number": "साझा फ़ोन नंबर की अनुमति दें",
+  "lang_same_as_branch": "शाखा के समान",
+  "lang_15_character_gstin": "15 अक्षरों का GSTIN",
+  "lang_customer_name_phone": "ग्राहक का नाम / फ़ोन"
 }

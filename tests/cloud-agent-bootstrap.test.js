@@ -89,10 +89,10 @@ function connection(start, refreshCaptainDiscovery = async () => {}) {
   const helper = main.slice(main.indexOf('let cloudConnectionBusy ='), main.indexOf("ipcMain.handle('cloud:resume'"));
   const manager = { stop() {}, start };
   const sandbox = { fs: { existsSync: () => false, readFileSync: () => { throw Object.assign(new Error('missing'), { code: 'ENOENT' }); }, writeFileSync() {}, chmodSync() {} }, validateActivation, path, app: { getPath: () => 'test' },
-    process: { env: {} }, console: { log() {}, warn() {} }, CLOUD_CONFIG_FILE: 'test.json', syncAgentManager: manager,
+    __dirname: path.join(__dirname, '../src'), process: { env: {} }, console: { log() {}, warn() {} }, CLOUD_CONFIG_FILE: 'test.json', syncAgentManager: manager,
     WEBSITE_API: 'https://www.posnic.com', AbortSignal,
     fetch: async () => ({ ok: true, json: async () => ({ tenantDb: 'shop', branchIds: [] }) }),
-    require: (name) => name === 'mongodb' ? { MongoClient: class {
+    require: (name) => name.endsWith('supplier-email-index') ? { migrateSupplierEmailIndex: async () => {} } : name === 'mongodb' ? { MongoClient: class {
       async connect() {} async close() {}
       db() { return { collection: () => ({ find: () => ({ toArray: async () => [] }), countDocuments: async () => 0 }) }; }
     } } : require(name === './cloud-shop-identity' ? '../src/cloud-shop-identity' : name),

@@ -41,8 +41,8 @@ class CustomerModel extends BaseModel {
         type: 'String',
         select: true,
         required: true,
-        unique: true,
       },
+      allow_shared_phone: { type: 'Boolean', select: true, default: false },
       alternatePhone: { type: 'String', select: true },
 
       // Address Information

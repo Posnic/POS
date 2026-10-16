@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "ਪੀਡੀਐਫ, ਜੇਪੀਜੀ ਜਾਂ ਪੀ ਐਨ ਜੀ. 5 ਫਾਈਲਾਂ ਤੱਕ, ਹਰੇਕ 5 MB, ਕੁੱਲ 10 MB। ਜਦੋਂ ਤੁਸੀਂ ਐਂਟਰੀ ਸੁਰੱਖਿਅਤ ਕਰਦੇ ਹੋ ਤਾਂ ਫਾਈਲਾਂ ਸੁਰੱਖਿਅਤ ਕੀਤੀਆਂ ਜਾਂਦੀਆਂ ਹਨ।",
   "lang_expense_file_retry": "ਐਂਟਰੀ ਸੁਰੱਖਿਅਤ ਕੀਤੀ ਗਈ, ਪਰ ਕੁਝ ਅਟੈਚਮੈਂਟ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਕੀਤੇ ਜਾ ਸਕਦੇ. ਇਸ ਫਾਰਮ ਨੂੰ ਖੁੱਲਾ ਰੱਖੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰਨ ਲਈ ਦੁਬਾਰਾ ਸੁਰੱਖਿਅਤ ਕਰੋ.",
   "lang_not_saved": "ਸੁਰੱਖਿਅਤ ਨਹੀਂ",
-  "lang_download": "ਡਾਊਨਲੋਡ"
+  "lang_download": "ਡਾਊਨਲੋਡ",
+  "lang_staff_account": "ਕਰਮਚਾਰੀ ਖਾਤਾ",
+  "lang_api_integration": "API ਏਕੀਕਰਨ",
+  "lang_allow_shared_phone_number": "ਸਾਂਝੇ ਫ਼ੋਨ ਨੰਬਰ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ",
+  "lang_same_as_branch": "ਸ਼ਾਖਾ ਵਾਂਗ",
+  "lang_15_character_gstin": "15 ਅੱਖਰਾਂ ਦਾ GSTIN",
+  "lang_customer_name_phone": "ਗਾਹਕ ਦਾ ਨਾਮ / ਫ਼ੋਨ"
 }

@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG ili PNG. Do 5 datoteka, po 5 MB, ukupno 10 MB. Datoteke se čuvaju kada spremite unos.",
   "lang_expense_file_retry": "Unos je sačuvan, ali neki prilozi nisu mogli biti sačuvani. Držite ovaj obrazac otvoren i ponovno spremite da biste ga ponovo pokušali.",
   "lang_not_saved": "Nije sačuvano",
-  "lang_download": "Preuzmi"
+  "lang_download": "Preuzmi",
+  "lang_staff_account": "Račun zaposlenika",
+  "lang_api_integration": "API integracija",
+  "lang_allow_shared_phone_number": "Dozvoli zajednički broj telefona",
+  "lang_same_as_branch": "Isto kao poslovnica",
+  "lang_15_character_gstin": "GSTIN od 15 znakova",
+  "lang_customer_name_phone": "Ime kupca / telefon"
 }

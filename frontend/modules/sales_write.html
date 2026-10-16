@@ -137,12 +137,12 @@
                                         class="form-control border-control osk-trigger">
 
                                     <div class="sales-customer-entry">
-                                      <input type="text" id="sales_new_customer_name" aria-label="Customer name" placeholder="Customer name / phone" class="form-control osk-trigger clear-sale-text" maxlength="200" autocomplete="off">
+                                      <input type="text" id="sales_new_customer_name" aria-label="Customer name" data-t-aria-label="lang_customer_name" placeholder="Customer name / phone" data-t-placeholder="lang_customer_name_phone" class="form-control osk-trigger clear-sale-text" maxlength="200" autocomplete="off">
                                       <button type="button" id="sales_customer_btn" class="btn btn-outline-primary toggle-user-input sales-customer-btn" aria-expanded="false" aria-controls="sales_customer_popup" aria-label="Customer details" data-t-aria-label="lang_customer_details"><i class="feather icon-sliders"></i></button>
                                       <div id="sales_customer_search" class="sales-customer-search-pop" hidden>
                                         <div id="sales_customer_results"></div>
                                         <div id="sales_recent_customers"></div>
-                                        <button type="button" id="sales_customer_add_new" class="sales-customer-pop-action"><i class="feather icon-user-plus mr-2"></i>Add new customer details</button>
+                                        <button type="button" id="sales_customer_add_new" class="sales-customer-pop-action"><i class="feather icon-user-plus mr-2"></i><lang class="lang_add_new_customer_details">Add new customer details</lang></button>
                                       </div>
                                     </div>
 
@@ -180,15 +180,15 @@
                                 <label><lang class="lang_phone">Phone:</lang><input type="tel" name="sales_new_customer_phone" id="sales_new_customer_phone" class="form-control" maxlength="40"></label>
                                 <label><lang class="lang_email">Email:</lang><input type="email" name="sales_new_customer_email" id="sales_new_customer_email" class="form-control" maxlength="254"></label>
                                 <div class="sales-customer-gst" hidden>
-                                  <label for="sales_customer_state_select">State</label>
-                                  <input type="hidden" id="sales_new_customer_state"><select id="sales_customer_state_select" class="form-control"><option value="">Same as branch</option></select>
-                                  <label class="mt-2" for="sales_new_customer_gst_number">GSTIN <span class="text-muted">(optional)</span></label>
-                                  <input id="sales_new_customer_gst_number" class="form-control" maxlength="15" placeholder="15-character GSTIN">
+                                  <label for="sales_customer_state_select"><lang class="lang_state_title">State</lang></label>
+                                  <input type="hidden" id="sales_new_customer_state"><select id="sales_customer_state_select" class="form-control"><option value=""><lang class="lang_same_as_branch">Same as branch</lang></option></select>
+                                  <label class="mt-2" for="sales_new_customer_gst_number"><lang class="lang_gstin">GSTIN</lang> <span class="text-muted"><lang class="lang_optional">(optional)</lang></span></label>
+                                  <input id="sales_new_customer_gst_number" class="form-control" maxlength="15" placeholder="15-character GSTIN" data-t-placeholder="lang_15_character_gstin">
                                   <p id="sales_customer_gst_hint" class="small mt-2" role="status"></p>
                                 </div>
-                                <details class="sales-customer-address"><summary>Address &amp; delivery (optional)</summary>
-                                  <div class="sales-customer-gst" hidden><label for="sales_place_of_supply_select">Place of supply (if different)</label><input type="hidden" id="sales_place_of_supply"><select id="sales_place_of_supply_select" class="form-control"><option value="">Same as customer / branch</option></select></div>
-                                  <textarea name="sales_new_customer_address" id="sales_new_customer_address" aria-label="Customer address" class="form-control mt-2" maxlength="500" rows="2"></textarea>
+                                <details class="sales-customer-address"><summary><lang class="lang_address_delivery_optional">Address &amp; delivery (optional)</lang></summary>
+                                  <div class="sales-customer-gst" hidden><label for="sales_place_of_supply_select"><lang class="lang_place_of_supply_if_different">Place of supply (if different)</lang></label><input type="hidden" id="sales_place_of_supply"><select id="sales_place_of_supply_select" class="form-control"><option value=""><lang class="lang_same_as_customer_branch">Same as customer / branch</lang></option></select></div>
+                                  <textarea name="sales_new_customer_address" id="sales_new_customer_address" aria-label="Customer address" data-t-aria-label="lang_rd_customer_address" class="form-control mt-2" maxlength="500" rows="2"></textarea>
                                 </details>
                                 <button type="button" id="sales_customer_done" class="btn btn-primary"><lang class="lang_done">Done</lang></button>
                                 <a href="javascript:void(0)" class="sales-customer-pop-action sales-customer-walkin"

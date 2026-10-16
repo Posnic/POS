@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG nó PNG. Suas le 5 chomhad, 5 MB an ceann, 10 MB san iomlán. Sábháiltear comhaid nuair a shábhálann tú an iontráil.",
   "lang_expense_file_retry": "Sábháil iontráil, ach ní fhéadfaí roinnt ceangaltáin a shábháil. Coinnigh an fhoirm seo oscailte agus sábháil arís chun triail a dhéanamh arís",
   "lang_not_saved": "Níor sábháilte",
-  "lang_download": "Íoslódáil"
+  "lang_download": "Íoslódáil",
+  "lang_staff_account": "Cuntas foirne",
+  "lang_api_integration": "Comhtháthú API",
+  "lang_allow_shared_phone_number": "Ceadaigh uimhir theileafóin chomhroinnte",
+  "lang_same_as_branch": "Mar an gcéanna leis an mbrainse",
+  "lang_15_character_gstin": "GSTIN 15 charachtar",
+  "lang_customer_name_phone": "Ainm an chustaiméara / fón"
 }

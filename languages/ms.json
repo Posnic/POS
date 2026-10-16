@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "PDF, JPG atau PNG. Sehingga 5 fail, masing-masing 5 MB, jumlah 10 MB. Fail disimpan apabila anda menyimpan entri.",
   "lang_expense_file_retry": "Kemasukan disimpan, tetapi beberapa lampiran tidak dapat disimpan. Pastikan borang ini terbuka dan simpan lagi untuk mencuba semula.",
   "lang_not_saved": "Tidak disimpan",
-  "lang_download": "Muat turun"
+  "lang_download": "Muat turun",
+  "lang_staff_account": "Akaun kakitangan",
+  "lang_api_integration": "Integrasi API",
+  "lang_allow_shared_phone_number": "Benarkan nombor telefon dikongsi",
+  "lang_same_as_branch": "Sama seperti cawangan",
+  "lang_15_character_gstin": "GSTIN 15 aksara",
+  "lang_customer_name_phone": "Nama pelanggan / telefon"
 }

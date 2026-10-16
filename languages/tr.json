@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "PDF, JPG veya PNG. 5 adede kadar dosya, her biri 5 MB, toplam 10 MB. Girdi kaydettiğinizde dosyalar kaydedilir.",
   "lang_expense_file_retry": "Giriş kaydedildi, ancak bazı ekler kaydedilemedi. Bu formu açık tutun ve tekrar denemek için tekrar kaydedin.",
   "lang_not_saved": "Kaydedilmedi",
-  "lang_download": "İndir"
+  "lang_download": "İndir",
+  "lang_staff_account": "Personel hesabı",
+  "lang_api_integration": "API entegrasyonu",
+  "lang_allow_shared_phone_number": "Ortak telefon numarasına izin ver",
+  "lang_same_as_branch": "Şubeyle aynı",
+  "lang_15_character_gstin": "15 karakterli GSTIN",
+  "lang_customer_name_phone": "Müşteri adı / telefon"
 }

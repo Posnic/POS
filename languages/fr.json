@@ -4910,5 +4910,11 @@
   "lang_expense_files_help": "PDF, JPG ou PNG. Jusqu'à 5 fichiers de 5 Mo chacun, soit 10 Mo au total. Les fichiers sont enregistrés lorsque vous enregistrez l'entrée.",
   "lang_expense_file_retry": "Entrée enregistrée, mais certaines pièces jointes n'ont pas pu être enregistrées. Gardez ce formulaire ouvert et enregistrez-le à nouveau pour réessayer.",
   "lang_not_saved": "Non enregistré",
-  "lang_download": "Télécharger"
+  "lang_download": "Télécharger",
+  "lang_staff_account": "Compte du personnel",
+  "lang_api_integration": "Intégration API",
+  "lang_allow_shared_phone_number": "Autoriser un numéro de téléphone partagé",
+  "lang_same_as_branch": "Identique à la succursale",
+  "lang_15_character_gstin": "GSTIN de 15 caractères",
+  "lang_customer_name_phone": "Nom du client / téléphone"
 }

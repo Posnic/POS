@@ -4910,5 +4910,11 @@
   "lang_expense_files_help": "PDF, JPG o PNG. Fino a 5 file, 5 MB ciascuno, 10 MB in totale. I file vengono salvati quando si salva la voce.",
   "lang_expense_file_retry": "Voce salvata, ma non è stato possibile salvare alcuni allegati. Tieni aperto questo modulo e salva di nuovo per riprovare.",
   "lang_not_saved": "Non salvato",
-  "lang_download": "Scarica"
+  "lang_download": "Scarica",
+  "lang_staff_account": "Account del personale",
+  "lang_api_integration": "Integrazione API",
+  "lang_allow_shared_phone_number": "Consenti numero di telefono condiviso",
+  "lang_same_as_branch": "Come la filiale",
+  "lang_15_character_gstin": "GSTIN di 15 caratteri",
+  "lang_customer_name_phone": "Nome cliente / telefono"
 }

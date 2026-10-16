@@ -190,6 +190,7 @@ class CustomerController extends BaseController {
       name: req.body.name,
       email: req.body.email || '',
       phone: req.body.phone || '',
+      allow_shared_phone: normalizeBoolean(req.body.allow_shared_phone),
       alternatePhone: req.body.alternatePhone,
       address: req.body.address || '',
       city: req.body.city || '',
@@ -310,6 +311,9 @@ class CustomerController extends BaseController {
 
     // Extract update data
     const updateData = { ...req.body };
+    if (req.body.allow_shared_phone !== undefined) {
+      updateData.allow_shared_phone = normalizeBoolean(req.body.allow_shared_phone);
+    }
 
     // Convert branch_id to ObjectId if present
     if (updateData.branch_id) {

@@ -6,7 +6,7 @@ const { JSDOM } = require('jsdom');
 const root = path.join(__dirname, '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 function fixture() {
-  const files = ['modals/user.html', 'modals/customer.html', 'modals/supplier.html', 'modals/branch.html', 'modals/category_add.html', 'modules/branchEdit.html', 'modules/settings_write.html'];
+  const files = ['modals/customer_category_add.html', 'modals/variant_add.html', 'modals/tax.html', 'modals/payment.html', 'modals/denomcash.html', 'modals/expense.html', 'modals/tableorder.html', 'modals/user.html', 'modals/customer.html', 'modals/supplier.html', 'modals/branch.html', 'modals/category_add.html', 'modules/branchEdit.html', 'modules/settings_write.html'];
   const dom = new JSDOM(files.map(p => read('frontend/' + p)).join('\n'), { runScripts: 'outside-only' });
   const w = dom.window;
   w.eval(read('frontend/static/script/js/jquery.min.js'));
@@ -102,3 +102,23 @@ for (const kind of ['customer', 'supplier', 'branch']) {
     dom.window.close();
   });
 }
+
+test('small editors and account choices preserve controls in their appropriate layouts', () => {
+  const {w,d,dom}=fixture();
+  w.eval(read('frontend/static/script/js/core/record-workspace.js'));
+  w.PosnicPro.recordWorkspace.init();
+  assert.ok(d.querySelector('#infobar-settings-sidebar-customercategory').classList.contains('record-dialog-small'));
+  assert.ok(d.querySelector('#apiMethod').closest('.record-account-types'));
+  assert.equal(d.querySelector('#customer_shared_phone').checked,false);
+  dom.window.close();
+});
+test('email validation accepts plus addressing and long domains', () => {
+  const {w,dom}=fixture();
+  const methods={};
+  w.jQuery.validator={addMethod:(name,fn)=>{methods[name]=fn;}};
+  w.eval(read('frontend/static/script/js/validpassword-showhidepassword.js'));
+  const validate=value=>methods.emailExt.call({optional:()=>false},value,{});
+  for(const value of ['shop+123@example.com','owner@example.technology']) assert.equal(validate(value),true);
+  for(const value of ['bad email@example.com','owner@@example.com','owner@example']) assert.equal(validate(value),false);
+  dom.window.close();
+});

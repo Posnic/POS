@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG או PNG. עד 5 קבצים, 5 מגה בייט כל אחד, 10 מגהבייט בסך הכל. קבצים נשמרים בעת שמירת הערך.",
   "lang_expense_file_retry": "הערך נשמר, אך לא ניתן לשמור קבצים מצורפים מסוימים. שמור טופס זה פתוח ושמור שוב כדי לנסות שוב.",
   "lang_not_saved": "לא נשמר",
-  "lang_download": "הורד"
+  "lang_download": "הורד",
+  "lang_staff_account": "חשבון עובד",
+  "lang_api_integration": "שילוב API",
+  "lang_allow_shared_phone_number": "אפשר מספר טלפון משותף",
+  "lang_same_as_branch": "זהה לסניף",
+  "lang_15_character_gstin": "GSTIN בן 15 תווים",
+  "lang_customer_name_phone": "שם לקוח / טלפון"
 }

@@ -284,7 +284,11 @@
         initialized = true;
         contacts('customer', 'customer_add_form');
         contacts('supplier', 'supplier_add');
-        ['users', 'branch', 'category', 'customer-category'].forEach(function (name) { decorateDialog(document.getElementById('infobar-settings-sidebar-' + name)); });
+        ['users', 'branch', 'category', 'customercategory', 'variant', 'tax', 'taxgroup', 'payment', 'denomcash', 'expense', 'tableorder'].forEach(function (name) {
+            var panel = document.getElementById('infobar-settings-sidebar-' + name);
+            decorateDialog(panel);
+            if (panel && !['users', 'branch', 'category'].includes(name)) panel.classList.add('record-dialog-small');
+        });
         var branch = document.getElementById('branch_add_form');
         if (branch) {
             var identity = section(branch, 'lang_shopinfo', 'Branch / Outlet Info');
@@ -301,6 +305,7 @@
         var user = document.getElementById('user_form_upload');
         if (user) {
             var profile = section(user, 'lang_vieweditprofile_title', 'Profile Details');
+            profile.parentElement.classList.add('record-staff-profile');
             moveFields(user, profile, ['users_firstname', 'users_lastname', 'users_name', 'users_email', 'users_password', 'users_retype_password']);
             user.prepend(profile.parentElement);
             var photo = user.querySelector('.profilebox');
@@ -310,8 +315,17 @@
             formTabs(user, [['lang_vieweditprofile_title', 'Profile Details'], ['lang_record_access', 'Access & branches']], function (child) {
                 return child.querySelector('#branchtype,#choose_register,#click_collapse') ? 1 : 0;
             });
+            var accountTypes = user.querySelector('#defaultMethod').closest('.row.m-b-20');
+            accountTypes.classList.add('record-account-types');
+            user.prepend(accountTypes);
+            var status = user.querySelector('#ActiveMethod').closest('.col-md-12.mt-5');
+            status.classList.add('record-account-status');
+            user.insertBefore(status, user.querySelector('.record-actions'));
         }
         shapes(); sales(); branchEdit();
+        document.querySelectorAll('.record-dialog .form-row,.record-dialog .row').forEach(function (row) {
+            if (!row.textContent.trim() && !row.querySelector('input,select,textarea,button,a,img')) row.remove();
+        });
     }
     PosnicPro.recordWorkspace = { init: init };
     $(init);

@@ -230,7 +230,7 @@ class CustomerService {
       }
 
       // Check for duplicate phone (only if phone is provided)
-      if (customerData.phone) {
+      if (customerData.phone && customerData.allow_shared_phone !== true) {
         const existingByPhone = await this.repository.findByPhone(customerData.phone);
         if (existingByPhone) {
           return {
@@ -296,8 +296,12 @@ class CustomerService {
       }
 
       // Check for duplicate phone if phone is being updated
-      if (updateData.phone && updateData.phone !== existing.phone) {
-        const existingByPhone = await this.repository.findByPhone(updateData.phone);
+      const sharedPhone = updateData.allow_shared_phone ?? existing.allow_shared_phone;
+      const phone = updateData.phone ?? existing.phone;
+      const revokedSharing =
+        updateData.allow_shared_phone === false && existing.allow_shared_phone === true;
+      if (phone && (phone !== existing.phone || revokedSharing) && sharedPhone !== true) {
+        const existingByPhone = await this.repository.findByPhone(phone, id);
         if (existingByPhone && existingByPhone._id.toString() !== id) {
           return {
             status: false,

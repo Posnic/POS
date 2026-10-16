@@ -4986,5 +4986,15 @@
   "lang_name_or_phone": "Naam of telefoonnummer",
   "lang_save_new_customer": "Nieuwe klant opslaan",
   "lang_saving_customer": "Klant opslaan...",
-  "lang_search_customer_or_enter_a_new_name": "Zoek een klant of voer een nieuwe naam in"
+  "lang_search_customer_or_enter_a_new_name": "Zoek een klant of voer een nieuwe naam in",
+  "lang_staff_account": "Medewerkersaccount",
+  "lang_api_integration": "API-integratie",
+  "lang_allow_shared_phone_number": "Gedeeld telefoonnummer toestaan",
+  "lang_same_as_branch": "Gelijk aan vestiging",
+  "lang_15_character_gstin": "GSTIN van 15 tekens",
+  "lang_customer_name_phone": "Klantnaam / telefoon",
+  "lang_add_new_customer_details": "Nieuwe klantgegevens toevoegen",
+  "lang_address_delivery_optional": "Adres en bezorging (optioneel)",
+  "lang_place_of_supply_if_different": "Plaats van levering (indien afwijkend)",
+  "lang_same_as_customer_branch": "Gelijk aan klant / vestiging"
 }

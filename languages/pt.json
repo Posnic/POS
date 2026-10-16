@@ -4910,5 +4910,11 @@
   "lang_expense_files_help": "PDF, JPG ou PNG. Até 5 arquivos, 5 MB cada, 10 MB no total. Os arquivos são salvos quando você salva a entrada.",
   "lang_expense_file_retry": "A entrada foi salva, mas alguns anexos não puderam ser salvos. Mantenha esse formulário aberto e salve-o novamente para tentar novamente.",
   "lang_not_saved": "Não salvo",
-  "lang_download": "Baixar"
+  "lang_download": "Baixar",
+  "lang_staff_account": "Conta de funcionário",
+  "lang_api_integration": "Integração API",
+  "lang_allow_shared_phone_number": "Permitir número de telefone partilhado",
+  "lang_same_as_branch": "Igual à filial",
+  "lang_15_character_gstin": "GSTIN de 15 caracteres",
+  "lang_customer_name_phone": "Nome do cliente / telefone"
 }
