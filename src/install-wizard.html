@@ -889,7 +889,18 @@
                         <input type="password" id="qPassword" autocomplete="new-password" minlength="8" placeholder="Minimum 8 characters">
                     </div>
                 </div>
-                <details id="offlineDetails"><summary>Optional shop details</summary>
+
+<section class="setup-region" aria-labelledby="regionTitle">
+<h3 id="regionTitle">Location &amp; regional settings</h3>
+<p class="field-hint" id="qRegionHint">Check these details for your shop. Device suggestions can be changed.</p>
+<div class="region-grid">
+<div class="form-group"><label for="qCountry">Country *</label><select id="qCountry" required><option value="">Select country</option></select></div>
+<div class="form-group"><label for="qState">State / province</label><input id="qState" list="qStateList" autocomplete="address-level1"><datalist id="qStateList"></datalist></div>
+<div class="form-group"><label for="qCity">City / town *</label><input id="qCity" required autocomplete="address-level2"></div>
+<div class="form-group"><label for="qCurrency">Currency *</label><select id="qCurrency" required><option value="">Select currency</option></select></div>
+<div class="form-group"><label for="qTimezone">Timezone *</label><input id="qTimezone" list="qTimezoneList" required placeholder="e.g. Asia/Kolkata"><datalist id="qTimezoneList"></datalist></div>
+</div></section>
+<section id="offlineDetails" aria-label="Shop details"><h3>Shop details</h3>
                     <div class="form-group"><label for="qAddress">Business address</label><input type="text" id="qAddress" autocomplete="street-address" placeholder="Shop no, street, city"></div>
                 <div class="form-row">
                     <div class="form-group">
@@ -904,16 +915,16 @@
                             <option value="icecream">🍦 Ice Cream Parlour</option>
                         </select>
                     </div>
-                    <div class="form-group" hidden>
+                    <div class="form-group">
                         <label style="display:flex;align-items:center;cursor:pointer;margin:0 0 10px 0;">
                             <input type="checkbox" id="qDemoData" style="width:18px;height:18px;margin-right:8px;cursor:pointer;">
-                            Load sample data
+                            Load demo products for this business type
                         </label>
                     </div>
                 </div>
-                </details>
-                <div id="qError" style="display:none;color:#dc3545;margin:8px 0;"></div>
-                <p class="setup-note">Starts empty, without demo data. You can connect to cloud later in Settings.</p>
+                </section>
+                <div id="qError" role="alert" style="display:none;color:#dc3545;margin:8px 0;"></div>
+                <p class="setup-note">Leave demo data unchecked to start empty. Review your country, currency and tax settings before your first sale.</p>
                 <div class="btn-container">
                     <button type="button" class="btn btn-secondary" id="qBackBtn">Back</button>
                     <button type="button" class="btn btn-primary" id="qCreateBtn">Create shop</button>
@@ -1532,6 +1543,8 @@ const form = document.getElementById('installForm');
             const qError = document.getElementById('qError');
             qError.style.display = 'none';
 
+            if (!window.PosnicSetupRegion.validate()) return;
+            const region = window.PosnicSetupRegion.values();
             const businessName = document.getElementById('qBusinessName').value.trim();
             const address = document.getElementById('qAddress').value.trim();
             const email = document.getElementById('qEmail').value.trim();
@@ -1579,12 +1592,7 @@ const form = document.getElementById('installForm');
                 register_companyname: businessName,
                 register_address: address,
                 register_fullnumber: '',
-                register_country: 'India',
-                register_countryid: '',
-                register_state: '',
-                register_timezone: 'Asia/Kolkata',
-                register_city: '',
-                register_pincode: '',
+                ...region,
                 register_license: qObjectId(),
                 register_demo: demoData,
                 businessType: businessType || '',
@@ -2496,6 +2504,8 @@ const form = document.getElementById('installForm');
             button.click();
         });
     </script>
+<script src="setup-region-data.js"></script>
+<script src="setup-region.js"></script>
 <script src="simple-setup.js"></script>
 </body>
 </html>

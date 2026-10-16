@@ -165,3 +165,12 @@ body.desktop-window[data-desktop-window="setup"] .wizard-container .setup-design
 body.desktop-window .wizard-container .setup-design button.primary { background:#0874bc!important;color:#fff!important;border-color:transparent!important; }
 body.desktop-window .wizard-container .setup-design button.trial { background:var(--tint)!important;color:var(--blue)!important;border-color:var(--blue)!important; }
 body.desktop-window .wizard-container .setup-design button.back { border:0!important;background:transparent!important;color:var(--blue)!important;padding:0!important;min-height:32px; }
+/* Always-visible regional and demo choices in shop creation. */
+#stepQuick h3 { font-size:17px; margin:24px 0 14px; color:var(--w-text); }
+#stepQuick .region-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 18px; }
+#stepQuick .setup-field-error { color:#b42318; font-size:12px; margin-top:6px; }
+#stepQuick [aria-invalid="true"] { border-color:#b42318!important; }
+#stepQuick #offlineDetails { border-top:1px solid var(--w-border); margin-top:12px; }
+#stepQuick #qDemoData { flex-shrink:0; }
+:root[data-window-theme="dark"] #stepQuick .setup-field-error { color:#ffb4a9; }
+@media(max-width:570px) { #stepQuick .region-grid { grid-template-columns:1fr; } }
