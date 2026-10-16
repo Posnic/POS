@@ -1502,3 +1502,14 @@ test('hiding payment method removes cash and card without hiding totals or balan
     }
     dom.window.close();
 });
+
+test('GBP and EUR receipts stay on Fast receipt without raster fallback', () => {
+    const {dom, engine} = setup();
+    try {
+      const lines = engine.fastLines('<section class="rd-document"><p>Total \u00a31.50</p><p>Cash \u00a32.00</p><p>Change \u00a30.50</p><p>Total \u20ac3.00</p></section>');
+      assert.ok(lines);
+      const bytes = require('../src/receipt-fast').renderFastReceipt(lines, '80').toString('ascii');
+      assert.match(bytes, /Total GBP 1.50/); assert.match(bytes, /Cash GBP 2.00/);
+      assert.match(bytes, /Change GBP 0.50/); assert.match(bytes, /Total EUR 3.00/);
+    } finally { dom.window.close(); }
+});

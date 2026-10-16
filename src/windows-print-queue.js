@@ -262,13 +262,13 @@ class WindowsPrintQueue {
       if (job.accepted && this.live.has(job.id) && !job.lastJobError && !reason) return this.transition(job, 'sent');
       return this.transition(job, 'failed', 'Print outcome unknown; check the printer before requesting a duplicate');
     }
-    // An idle initialization must finish before a receipt is submitted.
+    // Optional idle traffic must not hold a ready printer for 30 seconds.
+    // The same per-printer writer and Windows queue preserve submission order.
+    // Keep failed/offline jobs blocked by readiness; suppress further idle writes
+    // when an old pulse is still pending rather than adding more reset jobs.
     const pulse = this.keepAlive[job.printer.toLowerCase()];
     if (pulse?.pending && this.pulsePending(pulse, health)) {
-      if (this.now() - pulse.at < 30000) return this.transition(job, 'waiting', pulse.status);
-      // Do not bypass an actual failed Windows job: readiness still applies.
-      // Optional ESC @ traffic alone cannot permanently starve real receipts.
-      pulse.pending = false; pulse.suppressed = true;
+      pulse.suppressed = true;
       this.write('keep-alive.json', this.keepAlive);
     }
     if (job.state === 'failed') {
@@ -276,7 +276,10 @@ class WindowsPrintQueue {
       job.reconnect = false; job.retries = 0; job.nextAt = 0;
     }
     if (job.nextAt > this.now()) return;
-    const canWake = !reason || (health.present === true && reason === 'Printer offline');
+    // Ready printers receive the receipt immediately: enqueue already prefixes ESC @.
+    // A separate wake job can remain visible in Windows for 30 seconds.
+    // Only an actually offline device needs the recovery initialization.
+    const canWake = health.present === true && reason === 'Printer offline';
     if (canWake && job.binding.initialize !== false && this.transport.initialize) {
       if (!job.wakeDocument) {
         job.wakeDocument = 'Posnic-initialize-' + job.id;
@@ -300,11 +303,7 @@ class WindowsPrintQueue {
         reason = readiness(health, job.binding);
         if (reason) return this.defer(job, reason);
       }
-      if (health.jobs.some(item => item.document === job.wakeDocument)) {
-        if (job.wakeStartedAt == null) { job.wakeStartedAt = this.now(); this.write(job.id + '.json', job); }
-        if (this.now() - job.wakeStartedAt < 30000) return this.transition(job, 'waiting', 'Waiting for printer initialization');
-        // Receipt already contains ESC @ in the same job; no new wake is sent.
-      }
+
     }
     if (reason) return this.defer(job, reason, /offline|disconnected|Printer error|failed job|USB discovery failed|could not be identified|Multiple connected USB|Saved USB device is absent|Printer status unknown/i.test(reason));
     // Persist BEFORE crossing the spooler boundary. A crash in the following
