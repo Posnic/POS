@@ -401,7 +401,8 @@ PosnicPro.users = {
         $(selectBranch).each(function (index) {
             var branch_id = selectBranch[index].id;
             var branch_name = selectBranch[index].text;
-            var branch_image = selectBranch[index].element.attributes['data-logo'].value;
+            var option = selectBranch[index].element;
+            var branch_image = (option && option.getAttribute('data-logo')) || 'store.png';
             branchData.push({branch_id: branch_id, branch_name: branch_name, branch_image: branch_image});
         });
         var branchType = {
@@ -1870,7 +1871,13 @@ PosnicPro.users = {
     },
     clickNormalForm: function () {
 
-        $(".user_add").validate({
+        var validator = $("#user_form_upload").validate({
+            // Tabs and Select2 hide real required controls. Only omit the API account fields.
+            ignore: 'input[type="hidden"], :disabled, #app_name, #users_api',
+            errorPlacement: function (error, element) {
+                var select = element.next('.select2');
+                error.insertAfter(select.length ? select : element);
+            },
             errorClass: 'error error_users',
             highlight: function (element, errorClass) {
                 $(element).css("border-color", "#f9616d");
@@ -1943,7 +1950,7 @@ PosnicPro.users = {
                     required: "Type the password again",
                     minlength: "Password must be at least 5 characters",
                     maxlength: "Password should not be more than 20 characters",
-                    equalTo: "Not match retype Password"
+                    equalTo: "Passwords do not match. Enter the same password in both fields."
                 },
                 email: {
                     required: "Enter the email address",
@@ -1961,15 +1968,29 @@ PosnicPro.users = {
         jQuery.validator.addMethod("lettersonly", function (value, element) {
             return this.optional(element) || /^[a-z\s]+$/i.test(value);
         }, "Use letters, numbers and spaces only");
-        if ($('.user_add').valid()) {            // checks form for validity
-            var checked = $("#user_form_upload .onoffswitch-checkbox[data-id]:checked, #user_form_upload .pos-action-box:checked").length;
-            if (checked > 0) {
-                $("#checkbox_error").text("").removeClass('error');
-                PosnicPro.users.userForm();
-            } else {
-                PosnicPro.users.showPermissionError();
+        var valid = $('#user_form_upload').valid();
+        var checked = $("#user_form_upload .onoffswitch-checkbox[data-id]:checked, #user_form_upload .pos-action-box:checked").length;
+        $('#user_save_errors').remove();
+        if (!checked) PosnicPro.users.showPermissionError();
+        else $('#checkbox_error').text('').removeClass('error').hide();
+        if (!valid || !checked) {
+            var summary = $('<div id="user_save_errors" class="alert alert-danger" role="alert" tabindex="-1"></div>');
+            (validator.errorList || []).forEach(function (item) {
+                $('<div>').text(item.message).appendTo(summary);
+            });
+            if (!checked) $('<div>').text($('#checkbox_error').text()).appendTo(summary);
+            $('#user_form_upload .record-actions').before(summary);
+            // Field errors take priority, but the summary also explains missing access.
+            if (!valid && validator.errorList && validator.errorList.length) {
+                var first = validator.errorList[0].element;
+                $('#user_form_upload').trigger('record-reveal', [first]);
+                var focus = $(first).next('.select2').find('.select2-selection')[0] || first;
+                focus.focus();
+                focus.scrollIntoView({ block: 'nearest' });
             }
+            return;
         }
+        PosnicPro.users.userForm();
     },
     clickApiForm: function () {
         $("#app_name,#users_api").on('keyup', function () {
@@ -2018,6 +2039,8 @@ PosnicPro.users = {
         }
     },
     userClearForm: function () {
+        $('#user_save_errors').remove();
+        $('#checkbox_error').text('').removeClass('error').hide();
         $("#branchtype").select2({
             placeholder: "Select branch"
         });

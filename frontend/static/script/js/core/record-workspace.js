@@ -74,7 +74,10 @@
             };
             nav.appendChild(button); form.appendChild(panel); return panel;
         });
+        var activeIndex = 0;
+        var restoreTimer;
         function show(index) {
+            activeIndex = index;
             panels.forEach(function (p, i) { p.hidden = i !== index; nav.children[i].setAttribute('aria-selected', String(i === index)); });
         }
         children.forEach(function (child) {
@@ -85,6 +88,8 @@
         var actions = form.querySelector('.record-actions');
         if (actions) form.appendChild(actions);
         function validateAll() {
+            clearTimeout(restoreTimer);
+            restoreTimer = setTimeout(function () { show(activeIndex); }, 0);
             panels.forEach(function (p) { p.hidden = false; });
             form.querySelectorAll('details.record-details').forEach(function (p) { p.open = true; });
         }
@@ -93,6 +98,8 @@
         form.addEventListener('keydown', function (event) { if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA' && event.target.tagName !== 'BUTTON') validateAll(); }, true);
         form.addEventListener('submit', validateAll, true);
         function reveal(input) {
+            var disclosure = input.closest('details');
+            if (disclosure) disclosure.open = true;
             var index = panels.findIndex(function (p) { return p.contains(input); });
             if (index >= 0) show(index);
         }

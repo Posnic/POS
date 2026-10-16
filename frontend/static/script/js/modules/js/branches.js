@@ -87,32 +87,38 @@ PosnicPro.branches = {
         PosnicPro.branches.loadFullEdit(id);
     },
     loadFullEdit: function (id) {
+        var request = (this.editRequest || 0) + 1; this.editRequest = request;
+        var save = $('#setting_add button[type=submit]').prop('disabled', true);
+        $('#setting_add').validate().resetForm();
+        PosnicPro.settings.stateRequest = (PosnicPro.settings.stateRequest || 0) + 1;
         PosnicPro.branchSignature.mount('#branch-signature-settings', { branchId: id });
         // Option lists first (idempotent - they repopulate by id wherever the
         // controls live), then this branch's values over them.
-        PosnicPro.settings.loadSelectSettingCountry();
-        PosnicPro.settings.loadSelectSettingCurrency();
-        PosnicPro.settings.timeZone();
-        PosnicPro.get({ url: 'branches/getBranchDetails', data: { id: id } }, function (response) {
-            if (response.type !== 'success') { PosnicPro.alert(response.type, response.message); return; }
-            var d = response.data;
-            PosnicPro.record_id = id;
-            $('#edit_branch_target,#be_logo_target').val(id);
-            $('#be_page_branch_name').text(d.branch_name || '');
-            $('#store_name').val(d.branch_name);
-            $('#store_email').val(d.store_email);
-            PosnicPro.settings.store_telephone.setNumber(d.store_telephone || '');
-            $('#store_alternativephone').val(d.store_alternativephone);
-            $('#store_address').val(d.store_address);
-            $('#printing_address').val(d.printing_address);
-            $('#city').val(d.city);
-            $('#pincode').val(d.pincode);
-            $('#website').val(d.website);
-            $('#branch_gstin_number').val(d.branch_gstin_number);
-            // Selects fill after their (async) option lists land.
-            setTimeout(function () {
+        $.when(PosnicPro.settings.loadSelectSettingCountry(),
+            PosnicPro.settings.loadSelectSettingCurrency(), PosnicPro.settings.timeZone()).done(function () {
+            if (PosnicPro.branches.editRequest !== request) return;
+            PosnicPro.get({ url: 'branches/getBranchDetails', data: { id: id } }, function (response) {
+                if (PosnicPro.branches.editRequest !== request) return;
+                if (response.type !== 'success') { PosnicPro.alert(response.type, response.message); return; }
+                var d = response.data;
+                PosnicPro.record_id = id;
+                $('#edit_branch_target,#be_logo_target').val(id);
+                $('#be_page_branch_name').text(d.branch_name || '');
+                $('#store_name').val(d.branch_name);
+                $('#store_email').val(d.store_email);
+                $('#branch_upi_id').val(d.branch_upi_id || '');
+                $('#branch_upi_name').val(d.branch_upi_name || '');
+                PosnicPro.settings.store_telephone.setNumber(d.store_telephone || '');
+                $('#store_alternativephone').val(d.store_alternativephone);
+                $('#store_address').val(d.store_address);
+                $('#printing_address').val(d.printing_address);
+                $('#city').val(d.city);
+                $('#pincode').val(d.pincode);
+                $('#website').val(d.website);
+                $('#branch_gstin_number').val(d.branch_gstin_number);
+                // All reference lists are ready before selecting saved values.
                 $('#setting_country').val(d.country).trigger('change.select2');
-                PosnicPro.settings.loadSelectSettingState(d.country_id, d.state);
+                PosnicPro.settings.loadSelectSettingState(d.country_id, d.state || '');
                 PosnicPro.settings.applyTaxProfile(d.country);
                 $('#currency_setting').val(d.currency_text).trigger('change.select2');
                 var cv = (d.currency_value && d.currency_value[0]) || { currency_text: 'INR', currency_sign: '₹' };
@@ -126,18 +132,19 @@ PosnicPro.branches = {
                 $('#storedate').val(d.client_dateformat).trigger('change.select2');
                 $('#serverdate').val(d.server_dateformat);
                 $('#dateText').val(d.dateformat_text);
-            }, 600);
-            var image_path = (d.logo && d.logo !== 'store.png') ? d.logo : 'static/images/default/store.png';
-            $('#previewing').attr('src', image_path);
-            $('#setting_logo_value').val(d.logo || 'store.png');
-            $('#be_register_rows').empty();
-            $.each(d.register || [], function (i, r) {
-                var name = (r && (r.register_name || r.name)) || (typeof r === 'string' ? r : '');
-                if (name) { PosnicPro.branches.beAddRegisterRow(name); }
+                var image_path = (d.logo && d.logo !== 'store.png') ? d.logo : 'static/images/default/store.png';
+                $('#previewing').attr('src', image_path);
+                $('#setting_logo_value').val(d.logo || 'store.png');
+                $('#be_register_rows').empty();
+                save.prop('disabled', false);
+                $.each(d.register || [], function (i, r) {
+                    var name = (r && (r.register_name || r.name)) || (typeof r === 'string' ? r : '');
+                    if (name) { PosnicPro.branches.beAddRegisterRow(name); }
+                });
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
             });
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
         });
     },
     beAddRegisterRow: function (name) {
