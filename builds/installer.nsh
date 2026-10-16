@@ -28,9 +28,9 @@ SetDatablockOptimize on
 ; Owner: "i saw message like pos installed on the end while uninstalled."
 !ifdef BUILD_UNINSTALLER
   !define MUI_WELCOMEPAGE_TITLE "Remove Posnic"
-  !define MUI_WELCOMEPAGE_TEXT "This removes the Posnic application from this computer.$\r$\n$\r$\nYour sales, stock and customers stay in the data folder; they are not deleted.$\r$\n$\r$\nClose any running copy of Posnic before continuing."
+  !define MUI_WELCOMEPAGE_TEXT "This removes the Posnic application from this computer.$\r$\n$\r$\nChoose which business data, hardware settings and backups to keep on the next screen.$\r$\n$\r$\nClose any running copy of Posnic before continuing."
   !define MUI_FINISHPAGE_TITLE "Posnic is removed"
-  !define MUI_FINISHPAGE_TEXT "The application has been removed from this computer.$\r$\n$\r$\nYour data folder was kept, so installing Posnic again picks up where you left off."
+  !define MUI_FINISHPAGE_TEXT "$POSNIC_REMOVAL_SUMMARY"
 !else
   !define MUI_WELCOMEPAGE_TITLE "Welcome to Posnic"
   !define MUI_WELCOMEPAGE_TEXT "Posnic is a point of sale that works without internet. Your sales, stock and customers stay on this computer.$\r$\n$\r$\nSetup installs the application and its database. The first launch takes a few minutes while the database is prepared; later launches take seconds.$\r$\n$\r$\nClose any running copy of Posnic before continuing."
@@ -51,7 +51,18 @@ ShowUninstDetails show
 
 Var POSNIC_REPAIR_MODE
 Var POSNIC_START_MENU_FOLDER
-Var POSNIC_DELETE_DATA
+Var POSNIC_KEEP_BUSINESS
+Var POSNIC_KEEP_HARDWARE
+Var POSNIC_KEEP_BACKUPS
+Var POSNIC_BUSINESS_CHECK
+Var POSNIC_HARDWARE_CHECK
+Var POSNIC_BACKUPS_CHECK
+Var POSNIC_REMOVAL_SUMMARY
+!include nsDialogs.nsh
+!include LogicLib.nsh
+; electron-builder loads custom includes before its assisted UI template.
+; Our page functions use MUI_HEADER_TEXT while this file is parsed.
+!include MUI2.nsh
 
 ; Posnic stores its runtime and user-specific data under the current profile.
 ; Force per-user installation and skip the redundant all-users/current-user page.
@@ -103,6 +114,12 @@ Var POSNIC_DELETE_DATA
   normal_install_mode:
     DetailPrint "INSTALL/UPDATE MODE"
   install_mode_done:
+  IfSilent setup_review_done
+    CreateDirectory "$APPDATA\posnic"
+    FileOpen $0 "$APPDATA\posnic\.setup-review" w
+    FileWrite $0 "manual-install"
+    FileClose $0
+  setup_review_done:
   
   ; ── Close any running instance of Posnic before installing ──
   DetailPrint "[TIME CHECK] Step 1 START: Process termination"
@@ -206,37 +223,97 @@ Var POSNIC_DELETE_DATA
   DetailPrint "[TIME CHECK] Installation process finished"
 !macroend
 
-; Let the user decide about their data; keeping it is the safe default.
-; Deleting requires a second, explicit confirmation with a backup warning -
-; for a local-only shop this data is the ONLY copy of their sales history.
+; Preserve everything during silent upgrades. The normal uninstall has three
+; independent keep choices, matching the desktop setup design.
 !macro customUnInit
-  StrCpy $POSNIC_DELETE_DATA "0"
-
-  ; An upgrade runs the OLD uninstaller first, silently, purely to clear out the
-  ; previous files - the installer's own log shows it as
-  ;   old-uninstaller.exe /S /KEEP_APP_DATA
-  ; Asking about data there is worse than pointless. The answer is always
-  ; "keep", the person is in the middle of an install they think is routine, and
-  ; a mis-click on "No" erases the only copy of their sales history. A silent
-  ; run must keep the data and say nothing.
-  ;
-  ; NSIS does not skip a MessageBox in silent mode on its own: without /SD it
-  ; still draws the dialog and waits, which is why this appeared mid-install and
-  ; stalled there until it was answered.
-  IfSilent unposnic_done
-
-  MessageBox MB_YESNO|MB_ICONQUESTION|MB_DEFBUTTON1 "Keep your business data and hardware settings?$\r$\n$\r$\nYES - Keep my data (recommended for updates and test reinstalls). Keeps sales, backups, printer selections, paper sizes and other hardware settings. Reinstall using the same Windows account.$\r$\n$\r$\nNO - I want to permanently delete everything from this computer." /SD IDYES IDYES unposnic_done
-
-  MessageBox MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2 "WARNING - PERMANENT DELETION$\r$\n$\r$\nThis will erase ALL sales history, inventory, customers and settings from this computer. If you do not use Posnic Cloud, this is the ONLY copy of your business data - it CANNOT be recovered.$\r$\n$\r$\nYour backup folder (Documents\Posnic-Backups) will also be deleted. If you may ever need this data, click NO now and first copy that folder to a pen drive or another computer.$\r$\n$\r$\nPermanently delete everything?" /SD IDNO IDYES unposnic_wipe
-  Goto unposnic_done
-
-  unposnic_wipe:
-    StrCpy $POSNIC_DELETE_DATA "1"
-  unposnic_done:
+  StrCpy $POSNIC_KEEP_BUSINESS "1"
+  StrCpy $POSNIC_KEEP_HARDWARE "1"
+  StrCpy $POSNIC_KEEP_BACKUPS "1"
+  StrCpy $POSNIC_REMOVAL_SUMMARY "The application was removed. Business data, hardware settings and backups were kept."
 !macroend
+
+!macro customUnWelcomePage
+  !insertmacro MUI_UNPAGE_WELCOME
+  UninstPage custom un.PosnicDataPage un.PosnicDataLeave
+!macroend
+
+!ifdef BUILD_UNINSTALLER
+Function un.PosnicDataPage
+  IfSilent 0 +2
+    Abort
+  !insertmacro MUI_HEADER_TEXT "Remove Posnic?" "The application will be removed. Choose what to keep."
+  nsDialogs::Create 1018
+  Pop $0
+  ${NSD_CreateCheckbox} 0 12u 100% 20u "Keep business data"
+  Pop $POSNIC_BUSINESS_CHECK
+  ${NSD_SetState} $POSNIC_BUSINESS_CHECK $POSNIC_KEEP_BUSINESS
+  ${NSD_CreateLabel} 14u 34u 95% 22u "Sales, stock, customers and pending changes."
+  Pop $0
+  ${NSD_CreateCheckbox} 0 62u 100% 20u "Keep hardware settings"
+  Pop $POSNIC_HARDWARE_CHECK
+  ${NSD_SetState} $POSNIC_HARDWARE_CHECK $POSNIC_KEEP_HARDWARE
+  ${NSD_CreateLabel} 14u 84u 95% 22u "Scales, printers and kitchen screens."
+  Pop $0
+  ${NSD_CreateCheckbox} 0 112u 100% 20u "Keep saved backups"
+  Pop $POSNIC_BACKUPS_CHECK
+  ${NSD_SetState} $POSNIC_BACKUPS_CHECK $POSNIC_KEEP_BACKUPS
+  ${NSD_CreateLabel} 0 145u 100% 36u "Cloud data will not be deleted. Before removing business data, a verified recovery copy is saved separately in Documents."
+  Pop $0
+  nsDialogs::Show
+FunctionEnd
+
+Function un.PosnicDataLeave
+  ${NSD_GetState} $POSNIC_BUSINESS_CHECK $POSNIC_KEEP_BUSINESS
+  ${NSD_GetState} $POSNIC_HARDWARE_CHECK $POSNIC_KEEP_HARDWARE
+  ${NSD_GetState} $POSNIC_BACKUPS_CHECK $POSNIC_KEEP_BACKUPS
+  StrCpy $POSNIC_REMOVAL_SUMMARY "Cloud data unchanged.$\r$\n"
+  ${If} $POSNIC_KEEP_BUSINESS == 1
+    StrCpy $POSNIC_REMOVAL_SUMMARY "$POSNIC_REMOVAL_SUMMARY$\r$\nBusiness data: kept"
+  ${Else}
+    StrCpy $POSNIC_REMOVAL_SUMMARY "$POSNIC_REMOVAL_SUMMARY$\r$\nBusiness data: removed locally; recovery copy kept in Documents\Posnic-Recovery"
+  ${EndIf}
+  ${If} $POSNIC_KEEP_HARDWARE == 1
+    StrCpy $POSNIC_REMOVAL_SUMMARY "$POSNIC_REMOVAL_SUMMARY$\r$\nHardware settings: kept"
+  ${Else}
+    StrCpy $POSNIC_REMOVAL_SUMMARY "$POSNIC_REMOVAL_SUMMARY$\r$\nHardware settings: deleted"
+  ${EndIf}
+  ${If} $POSNIC_KEEP_BACKUPS == 1
+    StrCpy $POSNIC_REMOVAL_SUMMARY "$POSNIC_REMOVAL_SUMMARY$\r$\nSaved backups: kept"
+  ${Else}
+    StrCpy $POSNIC_REMOVAL_SUMMARY "$POSNIC_REMOVAL_SUMMARY$\r$\nSaved backups: deleted"
+  ${EndIf}
+  ${If} $POSNIC_KEEP_BUSINESS == 1
+  ${AndIf} $POSNIC_KEEP_HARDWARE == 1
+  ${AndIf} $POSNIC_KEEP_BACKUPS == 1
+    Return
+  ${EndIf}
+  MessageBox MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2 "Apply these choices?$\r$\n$POSNIC_REMOVAL_SUMMARY$\r$\n$\r$\nSelected local data will be removed. Continue?" /SD IDNO IDYES +2
+    Abort
+FunctionEnd
+
+Function un.PosnicApplyData
+  IfSilent 0 +2
+    Return
+  ${If} $POSNIC_KEEP_BUSINESS == 1
+  ${AndIf} $POSNIC_KEEP_HARDWARE == 1
+  ${AndIf} $POSNIC_KEEP_BACKUPS == 1
+    Return
+  ${EndIf}
+  nsExec::ExecToStack '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\setup-data.ps1" -DataRoot "$APPDATA\posnic" -BackupsRoot "$DOCUMENTS\Posnic-Backups" -RecoveryRoot "$DOCUMENTS\Posnic-Recovery" -AppExecutable "$INSTDIR\${APP_EXECUTABLE_FILENAME}" -HardwareManifest "$INSTDIR\resources\setup-hardware-files.json" -KeepBusiness $POSNIC_KEEP_BUSINESS -KeepHardware $POSNIC_KEEP_HARDWARE -KeepBackups $POSNIC_KEEP_BACKUPS'
+  Pop $0
+  Pop $1
+  ${If} $0 != 0
+    MessageBox MB_OK|MB_ICONSTOP "Removal stopped.$\r$\n$1" /SD IDOK
+    Abort
+  ${EndIf}
+FunctionEnd
+!endif
 
 ; Custom uninstallation steps
 !macro customUnInstall
+  ; Apply choices only when uninstall starts, so Back/Cancel on earlier pages
+  ; cannot change data. This hook runs before electron-builder removes files.
+  Call un.PosnicApplyData
   DetailPrint "Removing Posnic..."
   DetailPrint "Removing startup launcher..."
   
@@ -250,10 +327,5 @@ Var POSNIC_DELETE_DATA
   DeleteRegValue HKCU "Software\Posnic" "Start Menu Folder"
   DeleteRegKey /ifempty HKCU "Software\Posnic"
   
-  DetailPrint "Cleaning up application data..."
-  StrCmp $POSNIC_DELETE_DATA "1" 0 unskipdata
-    DetailPrint "Deleting database and backups (user choice)..."
-    RMDir /r "$APPDATA\posnic"
-    RMDir /r "$DOCUMENTS\Posnic-Backups"
-  unskipdata:
+  ; Data choices were applied and verified before application removal.
 !macroend

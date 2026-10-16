@@ -49,8 +49,9 @@ function handler({ answer = 1, fail = false, conflict = true } = {}) {
     mongoDBManager: { dataPath: 'data' }, syncAgentManager: {}, CLOUD_CONFIG_FILE: 'cloud-config',
     fs: { existsSync: () => true, unlinkSync: file => calls.push('unlink:' + path.basename(file)) },
     BrowserWindow: { fromWebContents: () => ({}) }, dialog: { showMessageBox: async () => ({ response: answer }) },
-    removeFullAccountData: async uri => { assert.equal(uri, 'mongodb://127.0.0.1:47017'); calls.push('delete'); if (fail) throw Error('database unavailable'); },
-    app: { getPath: () => 'profile', relaunch: () => calls.push('relaunch'), exit: () => calls.push('exit') },
+    saveAndResetLocalSetup: async (keepHardware, uri) => { assert.equal(keepHardware, true); assert.equal(uri, 'mongodb://127.0.0.1:47017'); calls.push('verified-recovery-reset'); if (fail) throw Error('recovery unavailable'); },
+    relaunchAfterQuit: false,
+    app: { getPath: () => 'profile', quit: () => calls.push('quit') },
   };
   vm.runInNewContext(source.slice(start, end), sandbox);
   return { calls, run: (page = 'install-wizard.html') => callback({ senderFrame: { url: pathToFileURL(path.join(root, page)).href }, sender: {} }) };
@@ -64,9 +65,9 @@ test('cancel keeps data; unrelated pages and absent conflict cannot reset', asyn
 
 test('confirmed reset stops sync before deletion and removes stale identity only after success', async () => {
   const success = handler(); assert.equal((await success.run()).ok, true);
-  assert.deepEqual(success.calls, ['verify', 'verify', 'stop', 'unlink:cloud-config', 'delete', 'unlink:cloud-shop-identity.json', 'unlink:.startup-ready', 'relaunch', 'exit']);
+  assert.deepEqual(success.calls, ['verify', 'verified-recovery-reset', 'quit']);
   const failure = handler({ fail: true }); assert.equal((await failure.run()).ok, false);
-  assert.deepEqual(failure.calls, ['verify', 'verify', 'stop', 'unlink:cloud-config', 'delete']);
+  assert.deepEqual(failure.calls, ['verify', 'verified-recovery-reset']);
 });
 
 test('both cloud screens expose choices only for shop conflicts and recover after cancellation', async () => {
