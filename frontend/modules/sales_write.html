@@ -131,10 +131,12 @@
 
                         <div class="col-xs-12 col-md-6 col-lg-6 col-xl-6 mobile-hide" id="items_view_hide">
                             <div class="row">
-                                <div class="col-12 input-group bootstrap-touchspin" style="padding-right: 18px;">
+                                <div class="col-12 input-group bootstrap-touchspin sales-search-toolbar" style="padding-right: 18px;">
                                     <input type="text" placeholder="Find item name, sku or barcode" data-t-placeholder="lang_find_item_name_sku_or_barcode_2"
                                         name="sales_new_item_name" id="sales_new_item_name"
                                         class="form-control border-control osk-trigger">
+
+                                    <button type="button" id="sales_customer_btn" class="btn btn-outline-primary toggle-user-input sales-customer-btn" aria-expanded="false" aria-controls="sales_customer_popup" aria-label="Customer details" data-t-aria-label="lang_customer_details"><i class="feather icon-user"></i></button>
 
                                     <!-- Camera scan (Loyverse study L3): shown only where the
                                          browser has BarcodeDetector - sales.js gates it. -->
@@ -158,29 +160,29 @@
                                 </div>
                             </div>
 
-                            <div class="sales-customer-entry">
-                                <label for="sales_new_customer_name"><lang class="lang_customer_name">Customer name</lang></label>
-                                <input type="text" id="sales_new_customer_name" placeholder="Walk-in customer" data-t-placeholder="lang_walk_in_customer" class="form-control osk-trigger clear-sale-text" maxlength="200" autocomplete="off">
-                                <button type="button" id="sales_customer_btn" class="btn btn-outline-primary toggle-user-input sales-customer-btn" aria-label="Customer details" data-t-aria-label="lang_customer_details"><i class="feather icon-user"></i><span id="sales_customer_btn_label"><lang class="lang_details">Details</lang></span></button>
-                            </div>
-                            <div class="toggle-customer-user sales-customer-pop" style="display:none;">
+                            <div id="sales_customer_popup" role="region" aria-label="Customer details" data-t-aria-label="lang_customer_details" class="toggle-customer-user sales-customer-pop" style="display:none;">
                                 <div class="sales-customer-pop-head">
                                     <span class="sales-customer-pop-title"><i
                                             class="feather icon-users mr-1"></i><lang class="lang_customer_details">Customer details</lang></span>
                                     <a href="javascript:void(0)" class="sales-customer-pop-x"
                                         id="sales_customer_pop_close" title="Close" data-t-title="lang_close_title"><lang class="lang_text">&times;</lang></a>
                                 </div>
-                                <p class="text-muted"><lang class="lang_bill_customer_details_help">Optional details for this bill. Use Add new customer to save a customer record.</lang></p>
+                                <label for="sales_new_customer_name"><lang class="lang_search_customer_or_enter_a_new_name">Search customer or enter a new name</lang></label>
+                                <input type="text" id="sales_new_customer_name" placeholder="Name or mobile number" data-t-placeholder="lang_name_or_mobile_number" class="form-control osk-trigger clear-sale-text" maxlength="200" autocomplete="off">
+                                <div id="sales_customer_results"></div>
+                                <div id="sales_customer_status" role="status" class="small my-2"></div>
+                                <p class="text-muted"><lang class="lang_bill_customer_details_help">Optional details for this bill. Use Save new customer to save these details as a customer record.</lang></p>
                                 <label><lang class="lang_phone">Phone:</lang><input type="tel" name="sales_new_customer_phone" id="sales_new_customer_phone" class="form-control" maxlength="40"></label>
                                 <label><lang class="lang_email">Email:</lang><input type="email" name="sales_new_customer_email" id="sales_new_customer_email" class="form-control" maxlength="254"></label>
                                 <label><lang class="lang_address">Address:</lang><textarea name="sales_new_customer_address" id="sales_new_customer_address" class="form-control" maxlength="500"></textarea></label>
                                 <!-- Recency (owner feedback): the last 10 customers picked
                                      on this till, rendered from a localStorage LRU. -->
                                 <div id="sales_recent_customers" style="display:none; max-height:220px; overflow-y:auto;"></div>
-                                <a data-module="customer" data-access="write" href="#/sales/customers/new"
+                                <button type="button" data-module="customer" data-access="write"
                                     class="sales-customer-pop-action" id="sales_customer_add_new">
-                                    <i class="feather icon-user-plus mr-2"></i><lang class="lang_add_new_customer">Add new customer</lang>
-                                </a>
+                                    <i class="feather icon-user-plus mr-2"></i><span><lang class="lang_save_new_customer">Save new customer</lang></span>
+                                </button>
+                                <button type="button" id="sales_customer_done" class="btn btn-primary"><lang class="lang_use_on_this_bill">Use on this bill</lang></button>
                                 <a href="javascript:void(0)" class="sales-customer-pop-action sales-customer-walkin"
                                     id="sales_customer_walkin">
                                     <i class="feather icon-user mr-2"></i><lang class="lang_walk_in_customer">Walk-in customer</lang>

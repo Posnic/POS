@@ -14,6 +14,7 @@ PosnicPro.suppliers = {
         $('.supplier_edit_reset').hide();
         $('#supplier_country').val(PosnicPro.local.get("country_setting")).trigger('change.select2');
         PosnicPro.local.set('edit_supplier_state', PosnicPro.local.get("state_setting"));
+        $('#supplier_city').val(PosnicPro.local.get("city_setting") || "");
         PosnicPro.suppliers.loadSelectSupplierState(PosnicPro.local.get('countryid'), 'add');
         PosnicPro.suppliers.addSupplierButton();
         $('.add_new_tooltip').tooltip("hide");
@@ -549,35 +550,32 @@ PosnicPro.suppliers = {
         $('#supplier_add')[0].reset();
         $('#supplier_country').val(PosnicPro.local.get("country_setting")).trigger('change.select2');
         PosnicPro.local.set('edit_supplier_state', PosnicPro.local.get("state_setting"));
+        $('#supplier_city').val(PosnicPro.local.get("city_setting") || "");
         PosnicPro.suppliers.loadSelectSupplierState(PosnicPro.local.get('countryid'), 'clear');
-        $("#supplier_gst_type option[value='" + data.gst_type + "']").prop("selected", false);
+        $("#supplier_gst_type").val("consumer");
         $('.supplier-gstr-number').hide();
         $('.error_supplier').css('display', 'none');
     },
     loadSelectSupplierState: function (id, action) {
         var stateSelect = $('#supplier_state');
+        var request = (PosnicPro.suppliers.stateRequest || 0) + 1;
+        PosnicPro.suppliers.stateRequest = request;
+        var selectedState = action === 'edit' ? PosnicPro.local.get('edit_supplier_state') :
+            (action === 'add' || action === 'clear') ? PosnicPro.local.get('state_setting') : '';
         var params = {
             url: 'setting/getJSONState',
             data: {id: id}
         };
         PosnicPro.get(params, function (response) {
+            if (PosnicPro.suppliers.stateRequest !== request) return;
             stateSelect.empty();
-            suggestions: $.map(response.data['stateJsonArray'], function (dataItem) {
-                var options;
-                options += '<option value="' + dataItem + '">' + dataItem + ' </option>';
-                stateSelect.append(options).trigger('change');
+            stateSelect.append(new Option('', ''));
+            (response.data.stateJsonArray || []).forEach(function (state) {
+                stateSelect.append(new Option(state, state));
             });
-            // Pre-select the stored state for every action, not just edit: the
-            // add/clear paths store the shop's own state (state_setting), so a
-            // new supplier now defaults to the shop's state instead of whatever
-            // sorts first in the list. Falls back to the first option only when
-            // no state is stored.
-            if (PosnicPro.local.get('edit_supplier_state') !== '') {
-                 stateSelect.val(PosnicPro.local.get('edit_supplier_state')).trigger('change.select2');
-            } else {
-                $('#supplier_state option:eq(0)').prop('selected', true);
-            }
-            (PosnicPro.suppliers.supplier_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
+            var found = Array.from(stateSelect[0].options).some(function (option) { return option.value === selectedState; });
+            stateSelect.val(found ? selectedState : '').trigger('change.select2');
+            (PosnicPro.suppliers.supplier_phone || { setCountry: function () {} }).setCountry(response.data.countrySortName);
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);

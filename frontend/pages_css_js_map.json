@@ -32,6 +32,7 @@
             "static/style/css/component.css",
             "static/style/plugins/sweet-alert2/sweetalert2.min.css",
             "static/pages/lock-screen.css",
+            "static/style/css/record-workspace.css",
             "static/style/css/rtl.css"
         ],
         "js": [
@@ -178,7 +179,8 @@
             "static/script/js/core/order-alert.js",
             "static/script/js/core/kitchen-call.js",
             "static/script/js/core/online-order-watch.js",
-            "static/script/js/core/request-dock.js"
+            "static/script/js/core/request-dock.js",
+            "static/script/js/core/record-workspace.js"
         ]
     },
     "login": {

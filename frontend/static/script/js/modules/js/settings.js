@@ -620,6 +620,8 @@ PosnicPro.settings = {
                     $('.display-currency').text(currency);
                     $('#setting_status').val("Yes");
                     PosnicPro.local.set("country_setting", response.data.country);
+                    PosnicPro.local.set("state_setting", response.data.state || "");
+                    PosnicPro.local.set("city_setting", response.data.city || "");
                     PosnicPro.local.set('countryid', response.data['country_id']);
                     PosnicPro.local.set('countryname', '');
                     PosnicPro.local.set('statename', '');
@@ -1492,6 +1494,7 @@ if ($wrapper.length) {
                 PosnicPro.local.set("country_value", data.country);
                 PosnicPro.local.set("country_setting", data.country);
                 PosnicPro.local.set("state_setting", data.state);
+                PosnicPro.local.set("city_setting", data.city || "");
                 $('#setting_country').val(data.country).trigger('change.select2');
                 let stateId = $("#setting_country option[value='" + data.country + "']").data("setting-id");
                 PosnicPro.local.set("currency_setting", data.currency);
