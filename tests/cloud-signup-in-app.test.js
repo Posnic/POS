@@ -6,11 +6,12 @@ const path = require('node:path');
 const { JSDOM } = require('jsdom');
 const source = fs.readFileSync(path.join(__dirname, '../src/install-wizard.html'), 'utf8');
 
-test('cloud trial leads, offline Community setup and pairing remain available', () => {
+test('compact cloud choice, Community setup and pairing remain available', () => {
   const dom = new JSDOM(source), doc = dom.window.document;
-  assert.equal(doc.querySelector('.mode-cards').firstElementChild.id, 'modeCloud');
-  assert.match(doc.querySelector('#modeCloud').textContent, /14-day free trial/);
-  assert.equal(doc.querySelector('#chooseLocalBtn').textContent, 'Set up offline');
+  assert.equal(doc.querySelector('.simple-options').firstElementChild.id, 'chooseCloudBtn');
+  assert.match(doc.querySelector('#chooseLocalBtn').textContent, /Set up offline/);
+  assert.equal(doc.querySelector('#pairDetails').open, false);
+  assert.equal(doc.querySelector('#customServerDetails').open, false);
   assert.ok(doc.querySelector('#pairCode'));
   assert.equal(doc.querySelector('#cloudServer').type, 'hidden');
   assert.equal(doc.querySelector('#suPassword'), null);
@@ -33,7 +34,7 @@ test('trial and sign-in actions use browser authorization; pairing stays indepen
   dom.window.document.getElementById('pairCode').value = 'P1-K7M4-9QX2';
   dom.window.document.getElementById('pairBtn').click();
   await Promise.all(pending);
-  assert.deepEqual(calls, ['signup', 'login', 'signup', 'login', 'P1-K7M4-9QX2']);
+  assert.deepEqual(calls, ['login', 'signup', 'login', 'P1-K7M4-9QX2']);
   dom.window.document.getElementById('cancelBrowserBtn').click(); assert.equal(calls.at(-1), 'cancel');
   dom.window.close();
 });

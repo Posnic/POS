@@ -724,6 +724,7 @@
     <link rel="stylesheet" href="window-theme.css">
     <link rel="stylesheet" href="desktop-design.css">
     <script src="window-theme.js"></script>
+<link rel="stylesheet" href="simple-setup.css">
 </head>
 <body class="choosing desktop-window" data-desktop-window="setup">
     <div class="wizard-container">
@@ -791,63 +792,37 @@
                 </div>
             </div>
 
+            <div id="simpleSetupError" role="alert"></div>
+            <div class="form-section" id="stepExisting" style="display:none"><h2>Welcome back</h2><p class="simple-intro">Your shop is already on this computer.</p><div class="simple-shop"><strong>Existing shop</strong><small id="existingConnection"></small></div><p id="existingSyncNote"></p><button class="simple-link" id="showFresh" type="button">Start fresh instead</button><div class="btn-container"><button class="btn btn-primary" id="continueExisting" type="button">Continue with this shop</button></div></div>
+            <div class="form-section" id="stepFresh" style="display:none"><h2>Start fresh on this computer</h2><p class="simple-intro">Replace the current business data. Your cloud data stays unchanged.</p><label class="simple-check"><input type="checkbox" id="freshKeepHardware" checked><span>Keep this computer’s hardware settings<small>Weighing scales, printers and kitchen screens.</small></span></label><p class="simple-note">We’ll save and verify a recovery copy before replacing your data. Any unsynced work stays in that copy and will not upload automatically.</p><div id="freshStatus" role="status" aria-live="polite"></div><div class="btn-container"><button class="btn btn-secondary" id="freshBack" type="button">Back</button><button class="btn btn-primary" id="startFresh" type="button">Save recovery copy &amp; continue</button></div></div>
             <!-- Cloud enrollment is separate from everyday local staff login. -->
             <div class="form-section" id="step0" style="display:block;">
-                <div class="mode-head"><h2>Your shop, ready anywhere</h2><p>Start with Posnic Cloud, or keep your shop on this computer.</p></div>
-                <div class="mode-cards">
-                    <div class="mode-card is-primary" id="modeCloud">
-                        <span class="mode-flag">Recommended</span>
-                        <div class="mode-title-row"><h3>Posnic Cloud</h3><span class="mode-badge">14-day free trial</span></div>
-                        <p class="mode-headline">One shop across your desktop and the cloud.</p>
-                        <p>Connect securely in your browser. Your till keeps working when the internet drops.</p>
-                        <ul class="mode-points"><li>Sync sales, stock and customers across your branches</li><li>View your business from a browser, anywhere</li><li>Use local staff login after the first download</li></ul>
-                        <button type="button" class="btn btn-primary" id="chooseCloudBtn">Start cloud trial</button>
-                        <a href="#" id="signupLink" class="mode-link">Sign in to an existing cloud account</a>
-                        <a href="#" id="choosePairLink" class="mode-link">Have a pairing code?</a>
-                    </div>
-                    <div class="mode-card" id="modeLocal">
-                        <div class="mode-title-row"><h3>Community Edition</h3><span class="mode-badge neutral">Free</span></div>
-                        <p class="mode-headline">Keep your shop on this computer.</p>
-                        <p>Set up and sign in without an internet connection or cloud account.</p>
-                        <ul class="mode-points"><li>Run your till fully offline</li><li>Connect counters and phones over your shop Wi-Fi</li><li>Manage your own local backups</li></ul>
-                        <button type="button" class="btn btn-outline" id="chooseLocalBtn">Set up offline</button>
-                    </div>
+                <h2>Let’s set up your shop</h2>
+                <p class="simple-intro">Choose how you want to get started.</p>
+                <div class="simple-options">
+                  <button type="button" class="simple-option" id="chooseCloudBtn"><strong>Connect to cloud</strong><small>Sign in to your shop. Work offline after setup.</small></button>
+                  <button type="button" class="simple-option" id="chooseLocalBtn"><strong>Set up offline</strong><small>Community edition. No cloud account needed.</small></button>
                 </div>
-                <p class="mode-footnote">Cloud needs internet for authorization and the first download. After that, staff sign in locally and changes sync when you reconnect.</p>
+                <div hidden><a id="signupLink"></a><a id="choosePairLink"></a></div>
             </div>
 
             <div class="form-section" id="stepCloud" style="display:none;">
                 <h2>Connect to Posnic Cloud</h2>
-                <p class="field-hint" style="margin-bottom:18px;">Sign in or create your account in your browser, then approve this computer. Your cloud password stays in the browser.</p>
-                <button type="button" class="btn btn-primary" id="browserSignInBtn" style="width:100%;">Sign in with browser</button>
-                <a href="#" id="cloudSignupLink" class="mode-link" style="display:block;margin-top:12px;">New to Posnic? Start your free cloud trial</a>
-                <div id="browserWait" style="display:none;margin:16px 0;" role="status" aria-live="polite">
-                    <p>Complete the approval in your browser, then return here. This window will continue automatically.</p>
-                    <div class="btn-container"><button type="button" class="btn btn-secondary" id="reopenBrowserBtn">Open browser again</button><button type="button" class="btn btn-secondary" id="cancelBrowserBtn">Cancel</button></div>
-                </div>
-                <div class="form-group" id="pairRow" style="margin-top:24px;">
-                    <label for="pairCode">Or use a pairing code</label>
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <input type="text" id="pairCode" placeholder="P1-K7M4-9QX2" autocomplete="off" style="text-transform:uppercase;letter-spacing:1px;">
-                        <button type="button" class="btn btn-secondary" id="pairBtn">Pair</button>
-                    </div>
-                    <div class="field-hint">Use a code from your shop owner. It expires after ten minutes.</div>
-                </div>
-                <details style="margin:18px 0;color:#64748b;font-size:13px;"><summary>Advanced connection</summary>
-                    <input type="hidden" id="cloudServer" value="https://gateway.posnic.com">
-                    <p class="cloud-server-note">Posnic Cloud <a href="#" id="cloudServerToggle">Change server</a></p>
-                    <div class="form-group" id="cloudServerRow" style="display:none;"><label for="cloudServerVisible">Cloud server</label><input type="text" id="cloudServerVisible" value="https://gateway.posnic.com"></div>
-                    <div class="form-group"><label for="cloudEmail">Owner email</label><input type="email" id="cloudEmail" autocomplete="username"></div>
-                    <div class="form-group"><label for="cloudPassword">Cloud password</label><input type="password" id="cloudPassword" autocomplete="current-password"></div>
-                    <button type="button" class="btn btn-secondary" id="cloudConnectBtn">Connect with password</button>
-                </details>
+                <p class="simple-intro">Sign in in your browser, then approve this computer.</p>
+                <button type="button" class="btn btn-primary" id="browserSignInBtn" style="width:100%">Sign in with Posnic in browser</button>
+                <a href="#" id="cloudSignupLink" class="mode-link" style="display:block;margin-top:12px">New to Posnic? Create a cloud account</a>
+                <div id="browserWait" style="display:none;margin:16px 0" role="status" aria-live="polite"><p>Finish approval in your browser. Setup will continue here automatically.</p><div class="btn-container"><button type="button" class="btn btn-secondary" id="reopenBrowserBtn">Open browser again</button><button type="button" class="btn btn-secondary" id="cancelBrowserBtn">Cancel</button></div></div>
+                <input type="hidden" id="cloudServer" value="https://gateway.posnic.com">
+                <details id="pairDetails"><summary>Use a pairing code instead</summary><div class="form-group" id="pairRow"><label for="pairCode">Code from your shop owner</label><input type="text" id="pairCode" placeholder="Enter pairing code" autocomplete="off"><button type="button" class="btn btn-secondary" id="pairBtn">Pair this computer</button></div></details>
+                <details id="customServerDetails"><summary>Connect to a custom server</summary><div class="form-group"><label for="cloudServerVisible">Server URL</label><input type="url" id="cloudServerVisible" placeholder="https://your-server.com" required autocomplete="off"><div class="field-hint">Use the address provided by your administrator.</div></div><button type="button" id="customServerBtn" class="btn btn-secondary">Continue with this server</button></details>
+                <div hidden><a id="cloudServerToggle"></a><div id="cloudServerRow"></div><input id="cloudEmail"><input id="cloudPassword" type="password"><button id="cloudConnectBtn"></button></div>
                 <div id="cloudError" role="alert" style="display:none;color:#b91c1c;margin:12px 0;"></div>
                 <section id="cloudConflict" hidden style="border:1px solid #e0a889;border-radius:10px;padding:16px;margin:16px 0;">
                     <h3 style="margin:0 0 8px;">Choose how to continue</h3>
-                    <p>Keep this computer’s existing shop data and sign in to its cloud account, or delete the local data and start setup again.</p>
-                    <p class="field-hint">Unsynced changes will be lost. Cloud records and existing backups stay unchanged. After restart, sign in again or use a new pairing code.</p>
+                    <p>Keep this computer’s existing shop data and sign in to its cloud account, or save a recovery copy and start fresh.</p>
+                    <p class="field-hint">A verified recovery copy protects unsynced changes. Cloud records and existing backups stay unchanged. After restart, sign in again or use a new pairing code.</p>
                     <button type="button" class="btn btn-secondary" id="keepLocalShop">Keep data / use another login</button>
-                    <button type="button" class="btn btn-secondary" id="deleteLocalShop" style="color:#b91c1c;border-color:#b91c1c;">Delete local data and restart</button>
+                    <button type="button" class="btn btn-secondary" id="deleteLocalShop" style="color:#b91c1c;border-color:#b91c1c;">Save recovery copy &amp; restart</button>
                     <p id="cloudResetStatus" role="status" aria-live="polite"></p>
                 </section>
                 <script src="cloud-reset-ui.js"></script>
@@ -1356,7 +1331,7 @@ const form = document.getElementById('installForm');
         // Step 0: installation mode (local shop vs Posnic Cloud)
         // ------------------------------------------------------------------
         function showSection(id) {
-            ['step0', 'stepCloud', 'stepCloudSignup', 'stepQuick', 'stepProgress', 'stepRecovery', 'step1', 'step2', 'step3', 'step4'].forEach((name) => {
+            ['stepExisting', 'stepFresh', 'step0', 'stepCloud', 'stepCloudSignup', 'stepQuick', 'stepProgress', 'stepRecovery', 'step1', 'step2', 'step3', 'step4'].forEach((name) => {
                 const el = document.getElementById(name);
                 if (el) el.style.display = name === id ? 'block' : 'none';
             });
@@ -1644,11 +1619,11 @@ const form = document.getElementById('installForm');
             showSection('stepCloud');
             await runCloudSetup(() => window.electronAPI.cloud.authorize(intent), true);
         }
-        document.getElementById('chooseCloudBtn').addEventListener('click', () => startBrowserCloud('signup'));
+        document.getElementById('chooseCloudBtn').addEventListener('click', () => showSection('stepCloud'));
         document.getElementById('browserSignInBtn').addEventListener('click', () => startBrowserCloud('login'));
         document.getElementById('signupLink').addEventListener('click', (e) => { e.preventDefault(); startBrowserCloud('login'); });
         document.getElementById('cloudSignupLink').addEventListener('click', (e) => { e.preventDefault(); startBrowserCloud('signup'); });
-        document.getElementById('choosePairLink').addEventListener('click', (e) => { e.preventDefault(); showSection('stepCloud'); document.getElementById('pairCode').focus(); });
+        document.getElementById('choosePairLink').addEventListener('click', (e) => { e.preventDefault(); showSection('stepCloud'); document.getElementById('pairDetails').open = true; document.getElementById('pairCode').focus(); });
         document.getElementById('cancelBrowserBtn').addEventListener('click', () => window.electronAPI.cloud.cancelAuthorization());
         window.addEventListener('beforeunload', () => window.electronAPI?.cloud?.cancelAuthorization());
         document.getElementById('reopenBrowserBtn').addEventListener('click', async () => {
@@ -1679,8 +1654,10 @@ const form = document.getElementById('installForm');
             row.style.display = row.style.display === 'none' ? 'block' : 'none';
             if (row.style.display === 'block') document.getElementById('cloudServerVisible').focus();
         });
-        document.getElementById('cloudServerVisible').addEventListener('input', (e) => {
-            document.getElementById('cloudServer').value = e.target.value.trim();
+        document.getElementById('customServerBtn').addEventListener('click', async () => {
+            const field = document.getElementById('cloudServerVisible');
+            if (!field.reportValidity()) return;
+            await runCloudSetup(() => window.electronAPI.cloud.authorize('login', field.value.trim()), true);
         });
 
         document.getElementById('cloudConnectBtn').addEventListener('click', async () => {
@@ -1721,6 +1698,7 @@ const form = document.getElementById('installForm');
             window.showCloudConflict(null);
             btn.disabled = backBtn.disabled = pairBtn.disabled = true;
             document.getElementById('browserSignInBtn').disabled = true;
+            document.getElementById('customServerBtn').disabled = true;
             document.getElementById('browserWait').style.display = browser && !resumeCloudDownload ? 'block' : 'none';
             errorBox.style.display = 'none';
             progress.style.display = 'block';
@@ -1730,6 +1708,7 @@ const form = document.getElementById('installForm');
                 clearTimeout(poll);
                 btn.disabled = backBtn.disabled = pairBtn.disabled = false;
                 document.getElementById('browserSignInBtn').disabled = false;
+                document.getElementById('customServerBtn').disabled = false;
                 document.getElementById('browserWait').style.display = 'none';
                 progress.style.display = 'none';
                 errorBox.textContent = message;
@@ -2472,6 +2451,7 @@ const form = document.getElementById('installForm');
             if (!step || step.style.display === 'none') return;
 
             const cloudAction = field.id === 'pairCode' ? 'pairBtn'
+                : field.id === 'cloudServerVisible' ? 'customServerBtn'
                 : field.closest('details') ? 'cloudConnectBtn' : 'browserSignInBtn';
             const button = step.id === 'stepCloud' ? document.getElementById(cloudAction)
                 : step.querySelector('.btn-primary:not([disabled])');
@@ -2481,5 +2461,6 @@ const form = document.getElementById('installForm');
             button.click();
         });
     </script>
+<script src="simple-setup.js"></script>
 </body>
 </html>

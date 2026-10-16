@@ -1,0 +1,35 @@
+/* Approved compact setup: one primary action, alternatives disclosed on demand. */
+body.desktop-window[data-desktop-window="setup"] { background: var(--desktop-bg, #f4f7fa); }
+body.choosing .wizard-container, .wizard-container { max-width: 620px !important; }
+.wizard-container { border-radius: 12px; }
+.wizard-header { padding: 22px 28px; }
+.wizard-header { text-align: left; display: flex; align-items: center; justify-content: space-between; }
+.wizard-header::after { content: 'Setup'; font-size: 12px; color: #596b7c; }
+.wizard-header .wizard-logo { width: 52px; margin: 0; }
+body.desktop-window .wizard-container .btn-primary { background: #086fa7 !important; color: #fff !important; border-color: #086fa7 !important; }
+.wizard-header p { display: none; }
+.wizard-body { padding: 28px; }
+.wizard-body h2 { font-size: 25px; margin-bottom: 10px; }
+.simple-intro { color: #596b7c; line-height: 1.5; margin-bottom: 24px; }
+.simple-options { display: grid; gap: 12px; }
+.simple-option { width: 100%; text-align: left; padding: 18px; border: 1px solid #dce4eb; border-radius: 8px; background: transparent; color: inherit; }
+.simple-option strong { display: block; font-size: 16px; }
+.simple-option small { display: block; font-size: 13px; line-height: 1.5; margin-top: 5px; color: #596b7c; }
+.simple-option:first-child { border-color: #3d85c6; }
+.simple-shop, .simple-note { background: #f3f6f9; padding: 16px; border-radius: 8px; margin: 18px 0; line-height: 1.5; }
+.simple-shop strong, .simple-shop small { display: block; }
+.simple-check { display: flex; align-items: flex-start; gap: 10px; margin: 20px 0; }
+.simple-check input { width: 18px; height: 18px; margin-top: 3px; }
+.simple-check small { display: block; color: #596b7c; }
+.simple-link { background: none; border: 0; color: #176da5; padding: 8px 0; }
+#stepCloud details { margin: 20px 0; }
+#stepCloud summary { color: #176da5; cursor: pointer; }
+#stepCloud details .form-group { margin-top: 16px; }
+[data-simple-hidden] { display: none !important; }
+@media (prefers-color-scheme: dark) {
+  .simple-intro, .simple-option small, .simple-check small { color: #bac6d2; }
+  .simple-option { border-color: #424b56; }
+  .simple-shop, .simple-note { background: #2b323c; color: #edf2f7; }
+  #stepCloud summary, .simple-link { color: #91cff8; }
+}
+@media (max-width: 480px) { .wizard-body { padding: 20px; } }
