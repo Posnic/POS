@@ -28,6 +28,15 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Discovery exposes only public display names, never branch/staff identifiers.
+router.get('/discovery', rateLimit({ windowMs: 60000, limit: 60 }), wrap(async (req) => {
+  const rows = await req.db.collection('branches').find(
+    { module_mobile_pos_enable: { $nin: [false, 0, '0', 'false'] } },
+    { projection: { _id: 0, branch_name: 1 } }
+  ).limit(10).toArray();
+  return { shopName: [...new Set(rows.map(row => String(row.branch_name || '').trim()).filter(Boolean))].join(' · ').slice(0,160) };
+}));
+
 router.post(
   '/enrolment-proof',
   rateLimit({ windowMs: 60000, limit: 120, standardHeaders: true, legacyHeaders: false }),

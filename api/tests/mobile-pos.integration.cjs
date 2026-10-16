@@ -1304,3 +1304,9 @@ test('mobile snapshot sync carries disabled methods and still accepts a previous
     await db.collection('branches').replaceOne({ _id: branch._id }, savedBranch);
   }
 });
+
+test('public mobile discovery exposes a shop name without credentials or internal identifiers', async () => {
+ const result = await call('/mobile/v1/discovery', undefined, null);
+ assert.equal(result.status,200);
+ assert.deepEqual(result.data,{shopName:branch.branch_name});
+});
