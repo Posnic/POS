@@ -49,6 +49,13 @@ SetDatablockOptimize on
 ShowInstDetails show
 ShowUninstDetails show
 
+; common.nsh is loaded after this include and sets nevershow. Override it
+; in the late header hook, after electron-builder has declared its pages.
+!macro customHeader
+  ShowInstDetails show
+  ShowUninstDetails show
+!macroend
+
 Var POSNIC_REPAIR_MODE
 Var POSNIC_START_MENU_FOLDER
 Var POSNIC_KEEP_BUSINESS
@@ -259,7 +266,7 @@ Function un.PosnicDataPage
   ${NSD_CreateCheckbox} 0 112u 100% 20u "Keep saved backups"
   Pop $POSNIC_BACKUPS_CHECK
   ${NSD_SetState} $POSNIC_BACKUPS_CHECK $POSNIC_KEEP_BACKUPS
-  ${NSD_CreateLabel} 0 145u 100% 36u "Cloud data will not be deleted. Before removing business data, a verified recovery copy is saved separately in Documents."
+  ${NSD_CreateLabel} 0 145u 100% 36u "Cloud data will not be deleted. Unchecked data is permanently removed from this computer. No extra backup is created."
   Pop $0
   nsDialogs::Show
 FunctionEnd
@@ -272,7 +279,7 @@ Function un.PosnicDataLeave
   ${If} $POSNIC_KEEP_BUSINESS == 1
     StrCpy $POSNIC_REMOVAL_SUMMARY "$POSNIC_REMOVAL_SUMMARY$\r$\nBusiness data: kept"
   ${Else}
-    StrCpy $POSNIC_REMOVAL_SUMMARY "$POSNIC_REMOVAL_SUMMARY$\r$\nBusiness data: removed locally; recovery copy kept in Documents\Posnic-Recovery"
+    StrCpy $POSNIC_REMOVAL_SUMMARY "$POSNIC_REMOVAL_SUMMARY$\r$\nBusiness data: permanently removed from this computer"
   ${EndIf}
   ${If} $POSNIC_KEEP_HARDWARE == 1
     StrCpy $POSNIC_REMOVAL_SUMMARY "$POSNIC_REMOVAL_SUMMARY$\r$\nHardware settings: kept"
@@ -289,7 +296,7 @@ Function un.PosnicDataLeave
   ${AndIf} $POSNIC_KEEP_BACKUPS == 1
     Return
   ${EndIf}
-  MessageBox MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2 "Apply these choices?$\r$\n$POSNIC_REMOVAL_SUMMARY$\r$\n$\r$\nSelected local data will be removed. Continue?" /SD IDNO IDYES +2
+  MessageBox MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2 "Apply these choices?$\r$\n$POSNIC_REMOVAL_SUMMARY$\r$\n$\r$\nUnchecked local data will be permanently removed. No extra backup will be created. Continue?" /SD IDNO IDYES +2
     Abort
 FunctionEnd
 
@@ -302,11 +309,13 @@ Function un.PosnicApplyData
   ${If} ${RunningX64}
     StrCpy $POSNIC_POWERSHELL "$WINDIR\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
   ${EndIf}
-  nsExec::ExecToStack '"$POSNIC_POWERSHELL" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\setup-data.ps1" -DataRoot "$APPDATA\posnic" -BackupsRoot "$DOCUMENTS\Posnic-Backups" -RecoveryRoot "$DOCUMENTS\Posnic-Recovery" -AppExecutable "$INSTDIR\${APP_EXECUTABLE_FILENAME}" -HardwareManifest "$INSTDIR\resources\setup-hardware-files.json" -KeepBusiness $POSNIC_KEEP_BUSINESS -KeepHardware $POSNIC_KEEP_HARDWARE -KeepBackups $POSNIC_KEEP_BACKUPS'
+  SetDetailsView show
+  SetDetailsPrint both
+  DetailPrint "Applying your data choices..."
+  nsExec::ExecToLog '"$POSNIC_POWERSHELL" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\setup-data.ps1" -DataRoot "$APPDATA\posnic" -BackupsRoot "$DOCUMENTS\Posnic-Backups" -RecoveryRoot "$DOCUMENTS\Posnic-Recovery" -AppExecutable "$INSTDIR\${APP_EXECUTABLE_FILENAME}" -HardwareManifest "$INSTDIR\resources\setup-hardware-files.json" -KeepBusiness $POSNIC_KEEP_BUSINESS -KeepHardware $POSNIC_KEEP_HARDWARE -KeepBackups $POSNIC_KEEP_BACKUPS'
   Pop $0
-  Pop $1
   ${If} $0 != 0
-    MessageBox MB_OK|MB_ICONSTOP "Removal stopped.$\r$\n$1" /SD IDOK
+    MessageBox MB_OK|MB_ICONSTOP "Removal stopped. See the details above for the error. Your selected cleanup may be incomplete." /SD IDOK
     Abort
   ${EndIf}
 FunctionEnd
@@ -330,7 +339,7 @@ FunctionEnd
   DeleteRegValue HKCU "Software\Posnic" "Start Menu Folder"
   DeleteRegKey /ifempty HKCU "Software\Posnic"
   
-  ; Data choices were applied and verified before application removal.
+  ; Data choices were applied before application removal.
 !macroend
 
 ; Shell plugins may change the shell context. Never rely on that context for
