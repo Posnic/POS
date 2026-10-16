@@ -36,19 +36,19 @@ async function migrateContactEmailIndex(db, name, indexOptions, keys = { email: 
   }
 }
 
+const supplierKeys = { license: 1, branch_id: 1, email: 1 };
+const supplierOptions = { ...options, name: 'supplier_branch_nonempty_email' };
+
 const migrateSupplierEmailIndex = (db) =>
   migrateContactEmailIndex(
     db,
     'suppliers',
-    {
-      ...options,
-      name: 'supplier_branch_nonempty_email',
-    },
-    { license: 1, branch_id: 1, email: 1 }
+    supplierOptions,
+    supplierKeys
   );
 const migrateCustomerEmailIndex = (db) =>
   migrateContactEmailIndex(db, 'customers', {
     ...options,
     name: 'customer_nonempty_email',
   });
-module.exports = { migrateSupplierEmailIndex, migrateCustomerEmailIndex, options };
+module.exports = { migrateSupplierEmailIndex, migrateCustomerEmailIndex, options, supplierKeys, supplierOptions };

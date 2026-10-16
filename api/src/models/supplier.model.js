@@ -76,7 +76,8 @@ supplierSchema.plugin(paginate);
 
 // Indexes
 supplierSchema.index({ name: 'text', phone: 'text' });
-supplierSchema.index({ email: 1 }, require('../database/migrations/supplier-email-index').options);
+const { supplierKeys, supplierOptions } = require('../database/migrations/supplier-email-index');
+supplierSchema.index(supplierKeys, supplierOptions);
 
 // Static method to check if email is taken
 supplierSchema.statics.isEmailTaken = async function (email, excludeSupplierId) {

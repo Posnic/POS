@@ -87,3 +87,19 @@ test('customer migration also permits repeated empty and missing emails while re
   await migrateCustomerEmailIndex(db);
   assert.equal(await customers.countDocuments(), 6);
 });
+
+
+test('fresh supplier model and enrollment migration agree across branch copies and restarts', async () => {
+  const { supplierKeys, supplierOptions } = require('../../../src/database/migrations/supplier-email-index');
+  const suppliers = db.collection('suppliers');
+  await suppliers.createIndex({ email: 1 }, { name: 'supplier_nonempty_email', unique: true });
+  await suppliers.insertOne({ license: 'shop', branch_id: 'one', email: 'same@example.com' });
+  await migrateSupplierEmailIndex(db);
+  await suppliers.createIndex(supplierKeys, supplierOptions);
+  await suppliers.insertOne({ license: 'shop', branch_id: 'two', email: 'same@example.com' });
+  await migrateSupplierEmailIndex(db);
+  await suppliers.createIndex(supplierKeys, supplierOptions);
+  await assert.rejects(suppliers.insertOne({ license: 'shop', branch_id: 'two', email: 'same@example.com' }), { code: 11000 });
+  assert.equal(await suppliers.countDocuments(), 2);
+  assert.equal((await suppliers.indexes()).some(index => index.unique && Object.keys(index.key).length === 1), false);
+});

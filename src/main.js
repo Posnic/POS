@@ -1315,6 +1315,11 @@ async function connectVerifiedCloudDevice(activation, base) {
       if (error.code === 'LOCAL_SHOP_CONFLICT') cloudResetUri = localUri;
       throw error;
     }
+    // First-download enrollment can run before the API starts. Repair the old
+    // business-wide supplier constraint before the agent pulls branch copies.
+    const migrationRoot = app.isPackaged ? process.resourcesPath : path.join(__dirname, '..');
+    await require(path.join(migrationRoot, 'api/src/database/migrations/supplier-email-index'))
+      .migrateSupplierEmailIndex(db);
   } finally { await localClient.close(); }
   // Create once, exclusively: do not follow or overwrite a file installed
   // between verification and enrollment by another process.
