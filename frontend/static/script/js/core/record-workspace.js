@@ -237,6 +237,22 @@
                 block.remove();
             } else panels[block.id === 'sharing_fieldset' ? 2 : 0].appendChild(block);
         });
+        var form = root.closest('form');
+        if (form) {
+            form.addEventListener('submit', function () {
+                if (!root.classList.contains('active')) return;
+                panels.forEach(function (panel) { panel.hidden = false; });
+                // Existing validation runs synchronously; restore the selected section afterwards.
+                setTimeout(function () {
+                    panels.forEach(function (panel, index) { panel.hidden = nav.children[index].getAttribute('aria-selected') !== 'true'; });
+                }, 0);
+            }, true);
+            $(form).on('invalid-form.recordSales', function (event, validator) {
+                var input = validator.errorList.length && validator.errorList[0].element;
+                var index = panels.findIndex(function (panel) { return input && panel.contains(input); });
+                if (index >= 0) nav.children[index].click();
+            });
+        }
     }
     function branchEdit() {
         var form = document.getElementById('setting_add');
