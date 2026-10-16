@@ -4972,5 +4972,13 @@
   "lang_download": "Downloaden",
   "lang_switch_branch": "Van vestiging wisselen",
   "lang_could_not_check_the_current_register_pleas": "De huidige kassa kon niet worden gecontroleerd. Probeer het opnieuw voordat u van vestiging wisselt.",
-  "lang_this_window_belongs_to_one_branch_open_ano": "Dit venster hoort bij één vestiging. Open een andere vestiging vanuit het hoofdvenster."
+  "lang_this_window_belongs_to_one_branch_open_ano": "Dit venster hoort bij één vestiging. Open een andere vestiging vanuit het hoofdvenster.",
+  "lang_record_checkout": "Afrekenen",
+  "lang_record_receipts": "Bonnen en delen",
+  "lang_record_controls": "Beheer",
+  "lang_record_regional": "Regio en belasting",
+  "lang_record_profile": "Profiel",
+  "lang_record_print_details": "Afdrukgegevens",
+  "lang_record_access": "Toegang en filialen",
+  "lang_record_setup": "Kassa’s en inrichting"
 }

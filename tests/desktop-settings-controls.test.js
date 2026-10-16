@@ -7,7 +7,7 @@ const read = file => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
 function page(t, changes = {}) {
-  const dom = new JSDOM(['devices', 'app', 'updates', 'backups', 'cloudsync', 'systemstatus', 'kitchen'].map(key => `<div data-desktop-page="${key}"></div>`).join(''), { runScripts: 'outside-only', url: 'http://localhost/' });
+  const dom = new JSDOM(['hardware', 'app', 'updates', 'backups', 'cloudsync', 'systemstatus', 'kitchen'].map(key => `<div data-desktop-page="${key}"></div>`).join(''), { runScripts: 'outside-only', url: 'http://localhost/' });
   t.after(() => dom.window.close());
   const w = dom.window, $ = require('jquery')(w), calls = [];
   w.$ = w.jQuery = $;
@@ -43,7 +43,7 @@ test('printer settings and design are separate panes without disclosure controls
 });
 
 test('the cash drawer uses existing persisted field names and preserves other configuration', async t => {
-  const p = page(t); await p.load('devices');
+  const p = page(t); await p.load('hardware');
   assert.equal(p.$('[data-field="drawerAuto"]').prop('checked'), true);
   p.$('[data-field="drawerAuto"]').prop('checked', false);
   await p.click('save-devices');
@@ -65,7 +65,7 @@ test('viewing kitchen settings never starts the worker; resuming preserves paper
 test('changing automatic drawer opening keeps an existing serial connection', async t => {
   const original = { method: 'serial', port: 'COM4', baudRate: 9600, printerName: 'Counter', pin: 0, autoOpenOnSale: false };
   const p = page(t, { setup: w => { w.electronAPI.cashDrawer.loadConfig = async () => original; } });
-  await p.load('devices');
+  await p.load('hardware');
   p.$('[data-field="drawerAuto"]').prop('checked', true);
   await p.click('save-devices');
   assert.deepEqual(p.calls[0], ['drawer', { ...original, autoOpenOnSale: true }]);
@@ -136,8 +136,8 @@ test('Linux does not offer an unsupported start-at-login switch', async t => {
 
 test('unprivileged users cannot load or save desktop configuration', async t => {
   const p = page(t, { setup: w => { w.PosnicPro.userACL.branch.write = false; } });
-  await p.load('devices');
-  assert.match(p.$('[data-desktop-page="devices"]').text(), /administrator/);
+  await p.load('hardware');
+  assert.match(p.$('[data-desktop-page="hardware"]').text(), /administrator/);
   assert.equal(p.$('[data-desktop-action="save-devices"]').length, 0);
   assert.deepEqual(p.calls, []);
 });

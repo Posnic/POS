@@ -20,7 +20,8 @@ PosnicPro.customers = {
         $('#customer_reset').show();
         $('.customer_edit_reset').hide();
         $('#customer_country').val(PosnicPro.local.get("country_setting")).trigger('change.select2');
-        PosnicPro.local.set('edit_customer_state', PosnicPro.local.get("state_setting"));        
+        PosnicPro.local.set('edit_customer_state', PosnicPro.local.get("state_setting"));
+        $('#customer_city').val(PosnicPro.local.get("city_setting") || "");
         PosnicPro.customers.addCustomerButton();
         $('.add_new_tooltip').tooltip("hide");
         if (PosnicPro.customers.customerAction === 'edit') {
@@ -771,32 +772,31 @@ PosnicPro.customers = {
         PosnicPro.customers.loadSelectCustomerState(PosnicPro.local.get('countryid'), 'clear');
         $('#customer_add_form')[0].reset();
         $('#customer_country').val(PosnicPro.local.get("country_setting")).trigger('change.select2');
-        PosnicPro.local.set('edit_customer_state', PosnicPro.local.get("state_setting"));        
+        PosnicPro.local.set('edit_customer_state', PosnicPro.local.get("state_setting"));
+        $('#customer_city').val(PosnicPro.local.get("city_setting") || "");
         $('.error_customer').css('display', 'none')
     },
     loadSelectCustomerState: function (id, action, savedPhone) {
         var stateSelect = $('#customer_state');
+        var request = (PosnicPro.customers.stateRequest || 0) + 1;
+        PosnicPro.customers.stateRequest = request;
+        var selectedState = action === 'edit' ? PosnicPro.local.get('edit_customer_state') :
+            (action === 'add' || action === 'clear') ? PosnicPro.local.get('state_setting') : '';
         var params = {
             url: 'setting/getJSONState',
             data: {id: id}
         };
         PosnicPro.get(params, function (response) {
+            if (PosnicPro.customers.stateRequest !== request) return;
             stateSelect.empty();
-            suggestions: $.map(response.data['stateJsonArray'], function (dataItem) {
-                var options;
-                options += '<option value="' + dataItem + '">' + dataItem + ' </option>';
-                stateSelect.append(options).trigger('change');
+            stateSelect.append(new Option('', ''));
+            (response.data.stateJsonArray || []).forEach(function (state) {
+                stateSelect.append(new Option(state, state));
             });
-
-            if (PosnicPro.local.get('edit_customer_state') !== '' && action === 'edit') {
-                stateSelect.val(PosnicPro.local.get('edit_customer_state')).trigger('change.select2');
-                (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
-                if (action === 'edit' && savedPhone !== undefined) PosnicPro.customers.setPhone(savedPhone);
-            } else {
-                $('#customer_state option:eq(0)').prop('selected', true);
-                (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
-                if (action === 'edit' && savedPhone !== undefined) PosnicPro.customers.setPhone(savedPhone);
-            }
+            var found = Array.from(stateSelect[0].options).some(function (option) { return option.value === selectedState; });
+            stateSelect.val(found ? selectedState : '').trigger('change.select2');
+            (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data.countrySortName);
+            if (action === 'edit' && savedPhone !== undefined) PosnicPro.customers.setPhone(savedPhone);
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);

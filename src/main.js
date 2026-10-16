@@ -2820,6 +2820,13 @@ function createMenu() {
     }
   ];
 
+  // Keep the independent tools available when the page fails, in one place.
+  const fileMenu = template.find(item => item.label === 'File');
+  const recoveryMenu = template.find(item => item.label === 'Maintenance');
+  const recoveryItems = fileMenu.submenu.filter(item => item.label && !['App Settings', 'Exit'].includes(item.label));
+  fileMenu.submenu = fileMenu.submenu.filter(item => ['App Settings', 'Exit'].includes(item.label));
+  recoveryMenu.label = 'Help && Recovery';
+  recoveryMenu.submenu.unshift(...recoveryItems, { type: 'separator' });
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }

@@ -21,6 +21,7 @@ PosnicPro.branches = {
         $('#branch_id').val('');
         $('#branch_country').val(PosnicPro.local.get("country_setting")).trigger('change.select2');
         PosnicPro.local.set('edit_branch_state', PosnicPro.local.get("state_setting"));
+        $('#branch_city').val(PosnicPro.local.get("city_setting") || "");
         var countryDetail = $('#branch_country').select2("data");
         if (PosnicPro.branches.branchAction === 'edit') {
             PosnicPro.branches.branchClearform();
@@ -514,6 +515,7 @@ PosnicPro.branches = {
             if (response.type === 'success') {
                 $('#branches_new').modal('show');
                 data = response.data;
+                PosnicPro.local.set('edit_branch_state', data.state);
                 PosnicPro.branches.loadSelectBranchState(data.country_id, 'edit');
                 PosnicPro.record_id = id;
                 $('#branch_id').val(PosnicPro.record_id);
@@ -522,6 +524,7 @@ PosnicPro.branches = {
                 PosnicPro.branches.branch_phone.setNumber(data.store_telephone || '');
                 $('#branch_email').val(data.store_email);
                 $('#branch_address').val(data.store_address);
+                $('#branch_city').val(data.city || '');
                 $('#branch_country').val(data.country).trigger('change.select2');
                 PosnicPro.local.set('edit_branch_state', data.state);
                 $('#branch_title').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
@@ -628,6 +631,7 @@ PosnicPro.branches = {
         $('.register-wrapper .register-fields .register-input:nth-child(n+2)').remove();
         $('#branch_country').val(PosnicPro.local.get("country_setting")).trigger('change.select2');
         PosnicPro.local.set('edit_branch_state', PosnicPro.local.get("state_setting"));
+        $('#branch_city').val(PosnicPro.local.get("city_setting") || "");
         $('#branch_address').html('');
         $('.error_branch').css('display', 'none');
         var $lastChild = $('.register-input:last-child');
@@ -635,25 +639,24 @@ PosnicPro.branches = {
     },
     loadSelectBranchState: function (id, action) {
         var stateSelect = $('#branch_state');
+        var request = (PosnicPro.branches.stateRequest || 0) + 1;
+        PosnicPro.branches.stateRequest = request;
+        var selectedState = action === 'edit' ? PosnicPro.local.get('edit_branch_state') :
+            (action === 'add' || action === 'clear') ? PosnicPro.local.get('state_setting') : '';
         var params = {
             url: 'setting/getJSONState',
             data: {id: id}
         };
         PosnicPro.get(params, function (response) {
+            if (PosnicPro.branches.stateRequest !== request) return;
             stateSelect.empty();
-            suggestions: $.map(response.data['stateJsonArray'], function (dataItem) {
-                var options;
-                options += '<option value="' + dataItem + '">' + dataItem + ' </option>';
-                stateSelect.append(options).trigger('change');
+            stateSelect.append(new Option('', ''));
+            (response.data.stateJsonArray || []).forEach(function (state) {
+                stateSelect.append(new Option(state, state));
             });
-
-            if (PosnicPro.local.get('edit_branch_state') !== '' && action === 'edit') {
-                stateSelect.val(PosnicPro.local.get('edit_branch_state')).trigger('change.select2');
-                (PosnicPro.branches.branch_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
-            } else {
-                $('#branch_state option:eq(0)').prop('selected', true);
-                (PosnicPro.branches.branch_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
-            }
+            var found = Array.from(stateSelect[0].options).some(function (option) { return option.value === selectedState; });
+            stateSelect.val(found ? selectedState : '').trigger('change.select2');
+            (PosnicPro.branches.branch_phone || { setCountry: function () {} }).setCountry(response.data.countrySortName);
         });
     },
     validForm: function () {

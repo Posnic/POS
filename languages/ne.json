@@ -4539,5 +4539,13 @@
   "lang_expense_files_help": "PDF, JPG वा PNG। बढीमा ५ फाइल, प्रत्येक ५ MB र कुल १० MB सम्म। प्रविष्टि सुरक्षित गर्दा फाइलहरू सुरक्षित हुन्छन्।",
   "lang_expense_file_retry": "प्रविष्टि सुरक्षित भयो, तर केही संलग्नकहरू सुरक्षित गर्न सकिएन। पुनः प्रयास गर्न यो फारम खुला राख्नुहोस् र फेरि सुरक्षित गर्नुहोस्।",
   "lang_not_saved": "सुरक्षित गरिएको छैन",
-  "lang_download": "डाउनलोड गर्नुहोस्"
+  "lang_download": "डाउनलोड गर्नुहोस्",
+  "lang_record_access": "पहुँच र शाखाहरू",
+  "lang_record_checkout": "बिल भुक्तानी",
+  "lang_record_controls": "नियन्त्रणहरू",
+  "lang_record_print_details": "छपाइ विवरण",
+  "lang_record_profile": "प्रोफाइल",
+  "lang_record_receipts": "रसिद र साझेदारी",
+  "lang_record_regional": "क्षेत्र र कर",
+  "lang_record_setup": "क्यास काउन्टर र सेटअप"
 }
