@@ -4547,5 +4547,11 @@
   "lang_record_profile": "प्रोफाइल",
   "lang_record_receipts": "रसिद र साझेदारी",
   "lang_record_regional": "क्षेत्र र कर",
-  "lang_record_setup": "क्यास काउन्टर र सेटअप"
+  "lang_record_setup": "क्यास काउन्टर र सेटअप",
+  "lang_customer_saved": "ग्राहक सुरक्षित गरियो।",
+  "lang_enter_a_new_customer_name_first_or_select": "पहिले नयाँ ग्राहकको नाम लेख्नुहोस् वा विद्यमान ग्राहक छान्नुहोस्।",
+  "lang_name_or_phone": "नाम वा फोन",
+  "lang_save_new_customer": "नयाँ ग्राहक सुरक्षित गर्नुहोस्",
+  "lang_saving_customer": "ग्राहक सुरक्षित गर्दै...",
+  "lang_search_customer_or_enter_a_new_name": "ग्राहक खोज्नुहोस् वा नयाँ नाम लेख्नुहोस्"
 }

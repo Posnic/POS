@@ -4980,5 +4980,11 @@
   "lang_record_profile": "Profiel",
   "lang_record_print_details": "Afdrukgegevens",
   "lang_record_access": "Toegang en filialen",
-  "lang_record_setup": "Kassa’s en inrichting"
+  "lang_record_setup": "Kassa’s en inrichting",
+  "lang_customer_saved": "Klant opgeslagen.",
+  "lang_enter_a_new_customer_name_first_or_select": "Voer eerst een nieuwe klantnaam in of selecteer een bestaande klant.",
+  "lang_name_or_phone": "Naam of telefoonnummer",
+  "lang_save_new_customer": "Nieuwe klant opslaan",
+  "lang_saving_customer": "Klant opslaan...",
+  "lang_search_customer_or_enter_a_new_name": "Zoek een klant of voer een nieuwe naam in"
 }
