@@ -1,4 +1,5 @@
 'use strict';
+const inventoryEnabled = require('../utils/mobile-inventory-policy');
 
 // Inventory uses the existing item balance and stocklogs. The effect marker is
 // written atomically with the balance, so a retry cannot apply a line twice.
@@ -25,8 +26,8 @@ const revision = (row) =>
 const wall = (c) => ({ license: c.license, branch_id: c.branchId });
 async function access(req, write = false) {
   const c = await mobile.context(req, Boolean(req.handsetDevice));
-  if (req.handsetDevice && c.branch.inventory_policy?.enabled !== true)
-    mobile.fail('Enable mobile inventory in Core Settings → Items/Inventory.', 403);
+  if (req.handsetDevice && !inventoryEnabled(c.branch))
+    mobile.fail('Enable mobile inventory in Core Settings → Inventory → Mobile inventory.', 403);
   if (write && req.handsetDevice) {
     const scope = req.body?.scope;
     if (
@@ -497,7 +498,7 @@ async function policy(req) {
   if (req.method === 'POST') {
     if (!canManage) mobile.fail('An administrator must change inventory policy.', 403);
     const actions = req.body?.approvalActions;
-    const enabled = req.body?.enabled ?? c.branch.inventory_policy?.enabled === true;
+    const enabled = req.body?.enabled ?? inventoryEnabled(c.branch);
     if (
       typeof enabled !== 'boolean' ||
       !Array.isArray(actions) ||
@@ -519,7 +520,7 @@ async function policy(req) {
   }
   return {
     canManage,
-    enabled: c.branch.inventory_policy?.enabled === true,
+    enabled: inventoryEnabled(c.branch),
     approvalActions: permissions(req, c).approvalActions,
   };
 }

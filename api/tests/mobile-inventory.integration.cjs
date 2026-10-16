@@ -173,9 +173,9 @@ test('inventory-only staff can enroll without gaining selling permission', async
     .updateOne({ _id: row.branch_id }, { $set: { module_mobile_pos_enable: false } });
   await assert.rejects(inventory.catalogue(req), { status: 403 });
 });
-test('approval policy is administrator-only and persists explicit opt-in', async () => {
+test('approval policy is administrator-only and persists selected approval actions', async () => {
   assert.deepEqual((await inventory.policy(req)).approvalActions, []);
-  assert.equal((await inventory.policy(req)).enabled, false);
+  assert.equal((await inventory.policy(req)).enabled, true);
   req.method = 'POST';
   req.body = { enabled: true, approvalActions: ['damage'] };
   assert.deepEqual((await inventory.policy(req)).approvalActions, ['damage']);
@@ -193,16 +193,14 @@ test('stock history reads the shared desktop audit and remains branch scoped', a
   assert.equal(history.rows[0].opening, '10');
   assert.equal(history.rows[0].closing, '15');
   assert.equal(history.rows[0].reason, 'Mobile inventory receive');
-  await db
-    .collection('stocklogs')
-    .insertOne({
-      _id: new ObjectId(),
-      view_item_id: row._id,
-      license: row.license,
-      branch_id: new ObjectId(),
-      created_date: new Date(),
-      process: 'Other branch',
-    });
+  await db.collection('stocklogs').insertOne({
+    _id: new ObjectId(),
+    view_item_id: row._id,
+    license: row.license,
+    branch_id: new ObjectId(),
+    created_date: new Date(),
+    process: 'Other branch',
+  });
   assert.equal((await inventory.history(req)).rows.length, 1);
 });
 test('catalogue is fully paged, including categories and suppliers from the server', async () => {
@@ -266,4 +264,27 @@ test('null lines and case-variant duplicate ObjectIds are rejected before writin
     { itemId: String(row._id).toUpperCase(), quantity: 1000 },
   ];
   assert.throws(() => inventory.validate(body), { status: 400 });
+});
+
+test('mobile inventory defaults on, preserves explicit off and existing approval choices', async () => {
+  req.method = 'GET';
+  assert.equal((await inventory.policy(req)).enabled, true);
+  req.handsetDevice = 'test-phone';
+  assert.equal((await inventory.catalogue(req)).rows.length, 1);
+  await db.collection('branches').updateOne(
+    { _id: row.branch_id },
+    {
+      $set: { inventory_policy: { enabled: false, approvalActions: ['count'] } },
+    }
+  );
+  assert.equal((await inventory.policy(req)).enabled, false);
+  assert.deepEqual((await inventory.policy(req)).approvalActions, ['count']);
+  await assert.rejects(inventory.catalogue(req), { status: 403 });
+  req.method = 'POST';
+  req.body = { approvalActions: ['count'] };
+  assert.equal((await inventory.policy(req)).enabled, false);
+  req.body.enabled = true;
+  assert.equal((await inventory.policy(req)).enabled, true);
+  assert.equal((await inventory.catalogue(req)).rows.length, 1);
+  assert.equal((await db.collection('items').findOne({ _id: row._id })).available_quantity, 10);
 });

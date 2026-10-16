@@ -1,4 +1,5 @@
 'use strict';
+const inventoryEnabled = require('../utils/mobile-inventory-policy');
 
 // Mobile writes have a durable intent before any effects. Each effect has its
 // own stable identity, so a lost response or process restart can resume safely
@@ -13,7 +14,7 @@ const { fail } = require('../utils/branch-access');
 const { allowed } = require('../utils/mobile-pos-access');
 const canConnect = (user, branch) =>
   allowed(user, 'sales') ||
-  (allowed(user, 'item', 'read') && (!branch || branch.inventory_policy?.enabled === true));
+  (allowed(user, 'item', 'read') && (!branch || inventoryEnabled(branch)));
 const minor = (n) => Math.round(Number(n || 0) * 100);
 function canonical(v) {
   if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
@@ -220,7 +221,7 @@ async function bootstrap(req) {
     upiAccounts: c.config.upiAccounts,
     defaultUpiAccountId: c.config.defaultUpiAccountId || undefined,
     capabilities: {
-      inventory: c.branch.inventory_policy?.enabled === true && allowed(req.user, 'item', 'read'),
+      inventory: inventoryEnabled(c.branch) && allowed(req.user, 'item', 'read'),
       saleSync: true,
       devicePairing: true,
       tillPrint: true,
