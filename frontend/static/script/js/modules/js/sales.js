@@ -4348,10 +4348,12 @@ PosnicPro.sales.addSale = {
                     redeem_points: (PosnicPro.loyalty ? PosnicPro.loyalty.redeemPointsForPayload() : 0),
                     coupon_code: (PosnicPro.coupons ? PosnicPro.coupons.codeForPayload() : ''),
                     customer_name: $('#sales_new_customer_name').val(),
+                    create_customer_on_save: !$('#sales_new_customer_id').val() && !!$.trim($('#sales_new_customer_name').val()),
                     customer_address: $('#sales_new_customer_address').val(),
                     customer_phone: $('#sales_new_customer_phone').val(),
                     customer_email: $('#sales_new_customer_email').val(),
                     customer_state: $('#sales_new_customer_state').val(),
+                    place_of_supply: $('#sales_place_of_supply').val(),
                     customer_country: $('#sales_new_customer_country').val(),
                     customer_gst_type: $('#sales_new_customer_gst_type').val(),
                     customer_gst_number: $('#sales_new_customer_gst_number').val(),
@@ -5013,11 +5015,13 @@ PosnicPro.sales.editSale = {
                 sales_total: $("#grand_total").val(),
                 customer_id: $('#sales_new_customer_id').val(),
                 customer_name: ($('#sales_new_customer_name').val() === '') ? 'Anonymous' : $('#sales_new_customer_name').val(),
+                create_customer_on_save: !$('#sales_new_customer_id').val() && !!$.trim($('#sales_new_customer_name').val()),
                 customer_address: $('#sales_new_customer_address').val(),
                 sales_id: SalesDocumentId,
                 customer_phone: $('#sales_new_customer_phone').val(),
                 customer_email: $('#sales_new_customer_email').val(),
                 customer_state: $('#sales_new_customer_state').val(),
+                    place_of_supply: $('#sales_place_of_supply').val(),
                 customer_country: $('#sales_new_customer_country').val(),
                 customer_gst_type: $('#sales_new_customer_gst_type').val(),
                 customer_gst_number: $('#sales_new_customer_gst_number').val(),
@@ -5355,10 +5359,12 @@ PosnicPro.sales.holdSale = {
                 sales_sub_total: String($('#sales_new_subtotal').text() || '').replace(/,/g, ''),
                 customer_id: $('#sales_new_customer_id').val(),
                 customer_name: $('#sales_new_customer_name').val(),
+                    create_customer_on_save: !$('#sales_new_customer_id').val() && !!$.trim($('#sales_new_customer_name').val()),
                 customer_address: $('#sales_new_customer_address').val(),
                 customer_phone: $('#sales_new_customer_phone').val(),
                 customer_email: $('#sales_new_customer_email').val(),
                 customer_state: $('#sales_new_customer_state').val(),
+                    place_of_supply: $('#sales_place_of_supply').val(),
                 customer_country: $('#sales_new_customer_country').val(),
                 customer_gst_type: $('#sales_new_customer_gst_type').val(),
                 customer_gst_number: $('#sales_new_customer_gst_number').val(),
@@ -7158,6 +7164,7 @@ PosnicPro.sales.calculation = {
         $('#sales_new_subtotal').number(addSalesLineSubTotal, 2);
         $("#sales_total_company_price").val(addSalesLineSubTotal);
         $("#tax").number(addSalesLineGstTaxTotal, 2);
+        if (PosnicPro.sales.updateCustomerGst) PosnicPro.sales.updateCustomerGst(addSalesLineGstTaxTotal);
         // Show line-item discounts plus any coupon/loyalty applied to the bill.
         var billDiscForShow = PosnicPro.sales.calculation.billLevelDiscount();
         $("#discount_sale_amount").number(addReceivingLineDiscountTotal + billDiscForShow, 2);
@@ -7413,7 +7420,7 @@ PosnicPro.sales.setSaleDefaults = function () {
      * own Walk-in is then resolved (the server finds or creates it), which
      * is exactly what the chip has been claiming all along.
      */
-    $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance').val('');
+    $('#sales_place_of_supply,#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance').val('');
     PosnicPro.defaultcustomerSet();
     if (PosnicPro.loyalty) PosnicPro.loyalty.tillClear();
     if (PosnicPro.coupons) PosnicPro.coupons.tillClear();
@@ -7510,7 +7517,7 @@ PosnicPro.sales.setDefaults = function () {
     if (PosnicPro.sales.defaultCustomer === true) {
         // second copy of the reset above - same rule: clear the previous
         // customer, then resolve the branch Walk-in so the sale is billable
-        $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number').val('');
+        $('#sales_place_of_supply,#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number').val('');
         PosnicPro.defaultcustomerSet();
     }
     PosnicPro.sales.SaleTableLineItems = [];
@@ -8762,6 +8769,7 @@ PosnicPro.sales.recentMenu = {
         $('#sales_new_customer_phone').val(result.customer_phone || '');
         $('#sales_new_customer_email').val(result.customer_email || '');
         $('#sales_new_customer_state').val(result.customer_state || '');
+        $('#sales_place_of_supply').val(result.place_of_supply || '');
         if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
         $('#sales_new_customer_country').val(result.customer_country || '');
         $('#sales_new_customer_gst_type').val(result.customer_gst_type || '');
@@ -10997,7 +11005,7 @@ PosnicPro.sales.qr = {
 // A typed name is a sale snapshot, never a rename of the linked customer.
 $('#sales_new_customer_name').on('input', function () {
     if ($('#sales_new_customer_id').val()) {
-        $('#sales_new_customer_id,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_address,#sales_new_customer_state,#sales_new_customer_country,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance,#customer_current_balance').val('');
+        $('#sales_place_of_supply,#sales_new_customer_id,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_address,#sales_new_customer_state,#sales_new_customer_country,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance,#customer_current_balance').val('');
         PosnicPro.sales._customerCategoryId = '';
         if (PosnicPro.loyalty && PosnicPro.loyalty.tillClear) PosnicPro.loyalty.tillClear();
         if (PosnicPro.sales.refreshCustomerAccount) PosnicPro.sales.refreshCustomerAccount();
@@ -12035,6 +12043,7 @@ PosnicPro.sales.applyCustomerPick = function (data) {
     $('#sales_new_customer_phone').val(data.phone);
     $('#sales_new_customer_email').val(data.email);
     $('#sales_new_customer_state').val(data.state);
+    $('#sales_place_of_supply').val('');
     $('#sales_new_customer_country').val(data.country);
     $('#sales_new_customer_gst_type').val(data.gst_type);
     $('#sales_new_customer_gst_number').val(data.gst_number);
@@ -12057,6 +12066,8 @@ PosnicPro.sales.applyCustomerPick = function (data) {
     if (PosnicPro.loyalty) PosnicPro.loyalty.tillShow(data.id);
     if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
     PosnicPro.sales.setCustomerPopup(false);
+    $('#sales_customer_search').prop('hidden', true);
+    if (PosnicPro.sales.updateCustomerGst) PosnicPro.sales.updateCustomerGst();
     PosnicPro.sales._recentPush('recent_customers', {
         id: data.id, name: data.name, phone: data.phone, email: data.email,
         address: data.address, state: data.state, country: data.country,
@@ -12234,6 +12245,7 @@ $(function () {
                 PosnicPro.sales.applyCustomerPick(suggestion.data);
             } else {
                 $('#sales_new_customer_name').val(suggestion.value.trim()).trigger('input');
+                PosnicPro.sales.setCustomerPopup(true);
             }
         },
         autoSelectFirst: false,
@@ -12241,7 +12253,7 @@ $(function () {
         formatResult: function (suggestion) {
             let phone = suggestion.data.phone;
             if (suggestion.data === -1 || typeof suggestion.phone === undefined) {
-                phone = PosnicPro.i18n.t('lang_use_on_this_bill', 'Use on this bill');
+                phone = 'New customer · saved with sale';
             }
             let partial_balance_span = "";
             if (suggestion.data.partial_balance === true) {
@@ -12513,13 +12525,13 @@ PosnicPro.sales.updateCustomerChip = function () {
     if (id && !isDefaultCustomer) {
 
         $btn.addClass('has-customer');
-        $icon.removeClass('icon-user').addClass('icon-user-check');
+        $icon.removeClass('icon-user icon-user-check').addClass('icon-sliders');
         var tip = (name || 'Customer') + (phone ? ' · ' + phone : '');
         $btn.attr('data-original-title', tip).attr('title', tip).attr('aria-label', 'Customer: ' + tip);
     } else {
 
         $btn.removeClass('has-customer');
-        $icon.removeClass('icon-user-check').addClass('icon-user');
+        $icon.removeClass('icon-user icon-user-check').addClass('icon-sliders');
         var t = name || PosnicPro.i18n.t('lang_customer_details', 'Customer details');
         $btn.attr('data-original-title', t).attr('title', t).attr('aria-label', 'Customer: ' + t);
     }
@@ -12541,12 +12553,66 @@ PosnicPro.sales.applySaleDateLock = function () {
             .attr('readonly', true).css({ 'pointer-events': 'none' });
     } catch (e) { /* fail open: leave the date editable */ }
 };
+PosnicPro.sales.customerGstStates = [];
+PosnicPro.sales.updateCustomerGst = function (tax) {
+    var enabled = PosnicPro.local.get('gst_action') === 'enable';
+    $('.sales-customer-gst').prop('hidden', !enabled);
+    if (!enabled) { $('#sales_gst_breakdown').text(''); return; }
+    var states = PosnicPro.sales.customerGstStates;
+    $('#sales_customer_state_select').val($('#sales_new_customer_state').val() || '');
+    $('#sales_place_of_supply_select').val($('#sales_place_of_supply').val() || '');
+    function key(value) {
+        value = String(value || '').trim().toLowerCase();
+        var state = states.find(function (s) { return s.value.toLowerCase() === value || s.id === value.padStart(2, '0'); });
+        return state ? state.id : value;
+    }
+    var branch = PosnicPro.local.get('state_setting') || PosnicPro.local.get('statename') || '';
+    var state = $('#sales_place_of_supply').val() || $('#sales_new_customer_state').val() || branch;
+    var interstate = !!(key(branch) && key(state) && key(branch) !== key(state));
+    var amount = typeof tax === 'number' ? tax : Number($('#tax').text().replace(/,/g, '')) || 0;
+    var currency = PosnicPro.local.get('currencySign') || '';
+    var gstin = ($('#sales_new_customer_gst_number').val() || '').trim().toUpperCase();
+    var input = document.getElementById('sales_new_customer_gst_number');
+    var error = gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin) ? 'Enter a valid 15-character GSTIN.' : '';
+    if (gstin.length === 15 && $('#sales_new_customer_state').val() && key($('#sales_new_customer_state').val()) !== gstin.slice(0, 2)) error = 'GSTIN and customer state do not match.';
+    if (input) input.setCustomValidity(error);
+    $('#sales_customer_gst_hint').text(error || ('Place of supply: ' + (state || 'Select state') + ' · ' + (interstate ? 'IGST' : 'CGST + SGST')));
+    $('#sales_gst_breakdown').text(amount > 0 ? (interstate ? 'IGST ' + currency + amount.toFixed(2) : 'CGST ' + currency + (amount / 2).toFixed(2) + ' + SGST ' + currency + (amount - Math.round(amount * 50) / 100).toFixed(2)) : '');
+};
+$('#sales_customer_state_select, #sales_place_of_supply_select, #sales_new_customer_gst_number').on('input change', function () {
+    if (this.id === 'sales_customer_state_select') $('#sales_new_customer_state').val(this.value);
+    if (this.id === 'sales_place_of_supply_select') $('#sales_place_of_supply').val(this.value);
+    $('#sales_new_customer_country').val('India');
+    var gstin = ($('#sales_new_customer_gst_number').val() || '').trim().toUpperCase();
+    $('#sales_new_customer_gst_type').val(gstin ? 'regular' : 'consumer');
+    if (this.id === 'sales_new_customer_gst_number' && !$('#sales_new_customer_state').val()) {
+        var match = PosnicPro.sales.customerGstStates.find(function (state) { return state.id === gstin.slice(0, 2); });
+        if (match) $('#sales_new_customer_state').val(match.value);
+    }
+    PosnicPro.sales.updateCustomerGst();
+});
+$(function () {
+    PosnicPro.sales.updateCustomerGst();
+    if (PosnicPro.local.get('gst_action') !== 'enable') return;
+    PosnicPro.get({url:'setting/getJSONGstState'}, function (response) {
+        PosnicPro.sales.customerGstStates = response.data.gststate || [];
+        $('#sales_customer_state_select, #sales_place_of_supply_select').each(function () {
+            var current = this.value;
+            PosnicPro.sales.customerGstStates.forEach(function (state) { this.add(new Option(state.value + ' (' + state.id + ')', state.value)); }, this);
+            this.value = current;
+        });
+        PosnicPro.sales.updateCustomerGst();
+    });
+});
 PosnicPro.sales.setCustomerPopup = function (open, returnFocus) {
     $('.toggle-customer-user').toggle(open);
     $('#sales_customer_btn').attr('aria-expanded', String(open));
     if (open) {
-        PosnicPro.sales.renderRecentCustomers();
-        $('#sales_new_customer_name').trigger('focus').trigger('select');
+        $('#sales_customer_search').prop('hidden', true);
+        $('#sales_customer_detail_name').text($('#sales_new_customer_name').val() || 'Walk-in customer');
+        $('#sales_customer_status').text($('#sales_new_customer_id').val() ? '' : 'New customer will be saved with the sale.');
+        PosnicPro.sales.updateCustomerGst();
+        $('#sales_new_customer_phone').trigger('focus');
     } else {
         $('#sales_customer_results .autocomplete-suggestions').hide();
         if (returnFocus) $('#sales_customer_btn').trigger('focus');
@@ -12566,36 +12632,22 @@ $(document).on('keydown', '#sales_customer_popup', function (e) {
     }
 });
 $(document).on('click', '#sales_customer_add_new', function () {
-    var $button = $(this);
-    if ($button.prop('disabled')) return;
-    var data = {};
-    ['name', 'phone', 'email', 'address'].forEach(function (key) {
-        data[key] = ($('#sales_new_customer_' + key).val() || '').trim();
-    });
-    var $status = $('#sales_customer_status');
-    if (!data.name || $('#sales_new_customer_id').val()) {
-        $status.text(PosnicPro.i18n.t('lang_enter_a_new_customer_name_first_or_select', 'Enter a new customer name first, or select an existing customer.'));
-        $('#sales_new_customer_name').trigger('focus');
-        return;
-    }
-    $button.prop('disabled', true);
-    $status.text(PosnicPro.i18n.t('lang_saving', 'Saving ...'));
-    PosnicPro.request({method: 'POST', url: 'customers', data: JSON.stringify(data)}, function (response) {
-        $button.prop('disabled', false);
-        var saved = response.data || {};
-        var id = saved.id || saved.customer_id || saved._id;
-        if (response.type !== 'success' || !id) {
-            $status.text(response.message || 'Could not save customer. Please check the details.');
-            return;
-        }
-        $status.text(PosnicPro.i18n.t('lang_customer_saved', 'Customer saved.'));
-        PosnicPro.sales.applyCustomerPick(Object.assign({}, data, saved, {id: id}));
-        PosnicPro.sales.setCustomerPopup(false, true);
-    }, function (xhr) {
-        $button.prop('disabled', false);
-        var response = xhr.responseJSON || {};
-        $status.text(response.message || 'Could not save customer. Check the details and try again.');
-    });
+    PosnicPro.sales.setCustomerPopup(true);
+});
+$('#sales_new_customer_name').on('focus input', function () {
+    $('.toggle-customer-user').hide();
+    $('#sales_customer_btn').attr('aria-expanded', 'false');
+    $('#sales_customer_search').prop('hidden', false);
+    PosnicPro.sales.renderRecentCustomers();
+    $('#sales_recent_customers').toggle(!this.value.trim());
+    $('#sales_customer_add_new').text(this.value.trim() ? 'Create ' + this.value.trim() + ' · add details' : 'Add customer details');
+});
+$('#sales_new_customer_name').on('keydown', function (e) {
+    if (e.key === 'Escape') $('#sales_customer_search').prop('hidden', true);
+});
+$(document).on('mousedown', function (e) {
+    if (!$(e.target).closest('.sales-customer-entry, .autocomplete-suggestions').length)
+        $('#sales_customer_search').prop('hidden', true);
 });
 // Customer popover: close on the × or an outside click; "Walk-in" clears the
 // customer back to none. Selecting a search result (autocomplete onSelect) also
@@ -12606,7 +12658,7 @@ $(document).on('click', '#sales_customer_pop_close', function () {
 });
 $(document).on('click', '#sales_customer_walkin', function (e) {
     e.preventDefault();
-    $('#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance').val('');
+    $('#sales_place_of_supply,#sales_new_customer_id,#sales_new_customer_name,#sales_new_customer_address,#sales_new_customer_phone,#sales_new_customer_email,#sales_new_customer_state,#sales_new_customer_gst_type,#sales_new_customer_gst_number,#sales_new_customer_partial_balance').val('');
     /*
      * Walk-in means the branch's OWN Walk-in customer record - the same one
      * a fresh sale starts with - not "no customer at all". Blanking every

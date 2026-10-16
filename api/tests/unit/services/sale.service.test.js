@@ -194,7 +194,7 @@ describe('SalesService', () => {
     ['64f8f2f4c2b9c0a1e4b22222', ' tamil nadu ', '', false],
     ['64f8f2f4c2b9c0a1e4b22222', 'Karnataka', '', true],
     ['64f8f2f4c2b9c0a1e4b22222', '29', '', true],
-    ['64f8f2f4c2b9c0a1e4b22222', '29', '64f8f2f4c2b9c0a1e4b22222', false],
+    ['64f8f2f4c2b9c0a1e4b22222', '29', '64f8f2f4c2b9c0a1e4b22222', true],
   ])(
     'saves GST by customer state (%s, %s, default %s)',
     async (customer_id, customer_state, default_customer, inter) => {
@@ -223,7 +223,7 @@ describe('SalesService', () => {
       expect(saved.items[0].tax_components.map((component) => component.name)).toEqual(
         inter ? ['IGST'] : ['CGST', 'SGST']
       );
-      if (!customer_state || default_customer) expect(saved.customer_state).toBe('Tamil Nadu');
+      if (!customer_state) expect(saved.customer_state).toBe('Tamil Nadu');
     }
   );
 
@@ -330,6 +330,75 @@ describe('SalesService', () => {
     expect(mockCustomerRepositoryInstance.findById).not.toHaveBeenCalled();
   });
 
+  test('auto-create is finalized only after a successful sale write', async () => {
+    const helper = require('../../../src/services/sale-customer');
+    const id = new (require('mongodb').ObjectId)();
+    const plan = jest.spyOn(helper, 'plan').mockResolvedValue({ id, pending: true });
+    const finish = jest.spyOn(helper, 'finish').mockResolvedValue();
+    try {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      const result = await salesService.processSale(
+        makeSaleData({ customer_id: '', create_customer_on_save: true }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result.status).toBe(true);
+      expect(salesRepository.create.mock.calls[0][0].customer_creation_pending).toBe(true);
+      expect(String(salesRepository.create.mock.calls[0][0].customer_id)).toBe(String(id));
+      expect(finish.mock.invocationCallOrder[0]).toBeGreaterThan(
+        salesRepository.create.mock.invocationCallOrder[0]
+      );
+    } finally {
+      plan.mockRestore();
+      finish.mockRestore();
+    }
+  });
+  test('a rejected sale never materializes the planned customer', async () => {
+    const helper = require('../../../src/services/sale-customer');
+    const plan = jest
+      .spyOn(helper, 'plan')
+      .mockResolvedValue({ id: new (require('mongodb').ObjectId)(), pending: true });
+    const finish = jest.spyOn(helper, 'finish').mockResolvedValue();
+    try {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(null);
+      const result = await salesService.processSale(
+        makeSaleData({ customer_id: '', create_customer_on_save: true }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result.status).toBe(false);
+      expect(finish).not.toHaveBeenCalled();
+    } finally {
+      plan.mockRestore();
+      finish.mockRestore();
+    }
+  });
+  test('delivery state overrides customer state for GST without changing the customer snapshot', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(
+      makeItemDoc({ tax: 18, tax_type: 'exclusive' })
+    );
+    const result = await salesService.processSale(
+      makeSaleData({
+        customer_state: 'Tamil Nadu',
+        place_of_supply: 'Karnataka',
+        sales_total: '236',
+        multi_payment: { Cash: 236 },
+      }),
+      '',
+      'Add',
+      makeContext({
+        branchState: 'Tamil Nadu',
+        branchSettings: { sortname: 'IN', indian_gst: 'gst_on' },
+      })
+    );
+    expect(result.status).toBe(true);
+    const saved = salesRepository.create.mock.calls[0][0];
+    expect(saved.items[0].igst_tax).toBe(36);
+    expect(saved.customer_state).toBe('Tamil Nadu');
+    expect(saved.place_of_supply).toBe('Karnataka');
+  });
   test('name-only customers cannot create a credit account implicitly', async () => {
     const result = await salesService.processSale(
       makeSaleData({ customer_id: '', customer_name: 'Visitor', partial_check: 'true' }),
