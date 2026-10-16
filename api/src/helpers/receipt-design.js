@@ -5,6 +5,29 @@
   else root.PosnicReceiptDesign = factory();
 })(typeof window !== 'undefined' ? window : this, function () {
   'use strict';
+  function taxLabel(data, fallbackCountry) {
+    data = data || {};
+    const country = String(
+      data.branch_country || data.country || data.sortname || fallbackCountry || ''
+    )
+      .trim()
+      .toLowerCase();
+    if (['in', 'ind', 'india', 'au', 'aus', 'australia'].includes(country)) return 'GST';
+    if (
+      [
+        'gb',
+        'gbr',
+        'uk',
+        'united kingdom',
+        'united kingdom of great britain and northern ireland',
+        'za',
+        'zaf',
+        'south africa',
+      ].includes(country)
+    )
+      return 'VAT';
+    return 'Tax';
+  }
   function taxRegistrationLabel(data, fallbackCountry) {
     data = data || {};
     const country = String(
@@ -120,6 +143,11 @@
       showBranding: value.showBranding !== false,
       layouts: {},
     };
+    if (value.brandingText != null) {
+      if (typeof value.brandingText !== 'string' || value.brandingText.length > 200)
+        throw new Error('Receipt footer text must be at most 200 characters.');
+      out.brandingText = value.brandingText.trim();
+    }
     Object.keys(formats).forEach(function (format) {
       const layout = layoutFor(value, format);
       if (!layout || !Array.isArray(layout.blocks) || layout.blocks.length > 40)
@@ -267,6 +295,7 @@
     return out;
   }
   return {
+    taxLabel: taxLabel,
     taxRegistrationLabel: taxRegistrationLabel,
     formats: formats,
     fields: fields,

@@ -561,7 +561,8 @@ class HardwareManager {
       // A text-only thermal driver may accept HTML/GDI and still feed blank paper.
       // Render the complete design before submitting; never fall back after RAW acceptance.
       if (options.thermalRaster === true && ['58mm', '80mm', '112mm'].includes(options.pageSize)) {
-        const deviceName = await this._resolvePrinterName(options.printerName);
+        const deviceName = await this._resolvePrinterName(options.printerName) || (await this.getDefaultPrinter())?.name;
+        if (!deviceName) throw new Error('No default printer is available. Choose a sales receipt printer in Printer Settings.');
         receiptPrinter = deviceName;
         const bytes = options.fastReceiptLines
           ? require('./receipt-fast').renderFastReceipt(options.fastReceiptLines, options.pageSize.replace('mm', ''))
@@ -740,13 +741,19 @@ class HardwareManager {
   async getDefaultPrinter() {
     try {
       const printers = await this.listPrinters();
+      // Electron can omit isDefault on Windows. Enumeration order is not a
+      // default: its first entry may be an offline or kitchen printer.
+      if (process.platform === 'win32') {
+        const name = await spooler.defaultPrinterName();
+        return name ? printers.find(p => p.name === name) || { name, displayName: name, isDefault: true } : null;
+      }
       const defaultPrinter = printers.find(p => p.isDefault);
       if (defaultPrinter) {
         console.log('Default printer:', defaultPrinter.name);
         return defaultPrinter;
       }
       console.warn('No default printer found');
-      return printers.length > 0 ? printers[0] : null;
+      return null;
     } catch (error) {
       console.error('Failed to get default printer:', error);
       return null;

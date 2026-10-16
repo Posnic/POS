@@ -47,6 +47,20 @@ test('designed thermal copies use RAW once each, with distinct delivery identiti
   assert.notEqual(calls[0][3].jobId, calls[1][3].jobId);
 });
 
+test('thermal System Default resolves to the actual default before RAW submission', async () => {
+  const calls = [];
+  const method = printMethod(async () => Buffer.from('receipt'));
+  const ctx = { _resolvePrinterName: async () => '', getDefaultPrinter: async () => ({ name: 'Reception' }),
+    sendRawToPrinter: async name => { calls.push(name); return { success: true }; } };
+  assert.equal((await method.call(ctx, '', { thermalRaster: true, pageSize: '80mm' })).success, true);
+  assert.deepEqual(calls, ['Reception']);
+  ctx.getDefaultPrinter = async () => null;
+  const failed = await method.call(ctx, '', { thermalRaster: true, pageSize: '80mm' });
+  assert.equal(failed.success, false);
+  assert.match(failed.error, /Choose a sales receipt printer/);
+  assert.equal(calls.length, 1);
+});
+
 test('capture-only renders the actual receipt but submits no copies and reports no delivery', async () => {
   const { DiagnosticSession } = require('../src/diagnostic-session');
   const session = new DiagnosticSession(); session.start(); session.setCapture(true);
