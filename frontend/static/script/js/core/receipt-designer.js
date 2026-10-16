@@ -415,7 +415,7 @@
             if (boundary) text += '\n';
         }
         walk(receipt);
-        text = text.replace(/₹/g, 'Rs. ').replace(/×/g, 'x').replace(/−/g, '-').replace(/…/g, '...').replace(/\u00a0/g, ' ').replace(/\u00b7/g, '-');
+        text = text.replace(/\u00a3/g, 'GBP ').replace(/\u20ac/g, 'EUR ').replace(/₹/g, 'Rs. ').replace(/×/g, 'x').replace(/−/g, '-').replace(/…/g, '...').replace(/\u00a0/g, ' ').replace(/\u00b7/g, '-');
         if (/[^\x09\x0a\x0d\x20-\x7e]/.test(text)) return null;
         var lines = text.split(/\r?\n/).map(function (line) { return line.replace(/\s+/g, ' ').trim().replace(/ \|$/, ''); }).filter(Boolean);
         return lines.length ? lines : null;

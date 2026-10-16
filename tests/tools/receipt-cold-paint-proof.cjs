@@ -15,6 +15,7 @@ app.whenReady().then(async () => {
       const body = Array.from({ length: 12 }, (_, i) => `<div style="height:256px;background:linear-gradient(to right,black ${(i + 1) * 16}px,white ${(i + 1) * 16}px)"></div>`).join('');
       const document = `<html><body style="margin:0"><article class="rd-document" data-receipt-design="${paper}" style="width:${width}px"><span style="position:absolute;color:transparent">Synthetic receipt total</span>${body}</article></body></html>`;
       for (let attempt = 0; attempt < 3; attempt++) {
+        const started = performance.now();
         const strips = await rasterize({ document, paper, width });
         assert.equal(strips.length, 12);
         for (let index = 0; index < strips.length; index++) {
@@ -23,7 +24,7 @@ app.whenReady().then(async () => {
             for (let x = 0; x < width / 8; x++) assert.equal(data[row * width / 8 + x], x < (index + 1) * 2 ? 255 : 0, `paper=${paper},attempt=${attempt},strip=${index},row=${row},byte=${x}`);
           }
         }
-        results.push({ paper, attempt, strips: strips.length });
+        results.push({ paper, attempt, strips: strips.length, preparationMs: Math.round(performance.now() - started) });
       }
     }
     fs.writeFileSync(output, JSON.stringify({ passed: results.length, results }, null, 2));
