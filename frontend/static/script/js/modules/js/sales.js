@@ -1949,7 +1949,7 @@ PosnicPro.sales = {
         if (!PosnicPro.sales.paymentOnlyMode && ($('#sales_new_items_table tbody tr').find(':nth-child(8)').text() === '' || customer_name === '')) {
             if (customer_name === '') {
                 $('.toggle-customer-user').css({ display: 'block' });
-                $("#sales_new_customer_name").focus();
+                PosnicPro.sales.setCustomerPopup(true);
                 PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_customer_name', 'Enter a customer name.'));
                 return false;
             }
@@ -4239,7 +4239,7 @@ PosnicPro.sales.addSale = {
 
             if (customer_name === '') {
                 $('.toggle-customer-user').css({ display: 'block' });
-                $("#sales_new_customer_name").focus();
+                PosnicPro.sales.setCustomerPopup(true);
                 PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_customer_name', 'Enter a customer name.'));
                 return false;
             }
@@ -4714,7 +4714,7 @@ PosnicPro.sales.editSale = {
         // Skip customer/item validation entirely in payment-only mode (items already loaded from DB)
         if (!PosnicPro.sales.paymentOnlyMode && ($('#sales_new_items_table tbody tr').find(':nth-child(8)').text() === '' || customer_name === '')) {
             if (customer_name === '') {
-                $("#sales_new_customer_name").focus();
+                PosnicPro.sales.setCustomerPopup(true);
                 PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_customer_name', 'Enter a customer name.'));
                 return false;
             }
@@ -5297,7 +5297,7 @@ PosnicPro.sales.holdSale = {
 
             if (customer_name === '') {
                 $('.toggle-customer-user').css({ display: 'block' });
-                $("#sales_new_customer_name").focus();
+                PosnicPro.sales.setCustomerPopup(true);
                 PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_customer_name', 'Enter a customer name.'));
                 return false;
             }
@@ -12056,7 +12056,7 @@ PosnicPro.sales.applyCustomerPick = function (data) {
     PosnicPro.sales.calculation.salesTableRowCart();
     if (PosnicPro.loyalty) PosnicPro.loyalty.tillShow(data.id);
     if (PosnicPro.sales.updateCustomerChip) PosnicPro.sales.updateCustomerChip();
-    $('.toggle-customer-user').hide();
+    PosnicPro.sales.setCustomerPopup(false);
     PosnicPro.sales._recentPush('recent_customers', {
         id: data.id, name: data.name, phone: data.phone, email: data.email,
         address: data.address, state: data.state, country: data.country,
@@ -12206,6 +12206,7 @@ $(document).on('click', '.recent-customer-row', function () {
 $(function () {
     var customerLookupSeq = 0;
     $('#sales_new_customer_name').autocomplete({
+        appendTo: '#sales_customer_results',
         deferRequestBy: 120,
         lookup: function (query, done) {
             var seq = ++customerLookupSeq;
@@ -12510,17 +12511,17 @@ PosnicPro.sales.updateCustomerChip = function () {
         } catch (e) { isDefaultCustomer = false; }
     }
     if (id && !isDefaultCustomer) {
-        $('#sales_customer_btn_label').text(PosnicPro.i18n.t('lang_details', 'Details'));
+
         $btn.addClass('has-customer');
         $icon.removeClass('icon-user').addClass('icon-user-check');
         var tip = (name || 'Customer') + (phone ? ' · ' + phone : '');
-        $btn.attr('data-original-title', tip).attr('title', tip);
+        $btn.attr('data-original-title', tip).attr('title', tip).attr('aria-label', 'Customer: ' + tip);
     } else {
-        $('#sales_customer_btn_label').text(PosnicPro.i18n.t('lang_details', 'Details'));
+
         $btn.removeClass('has-customer');
         $icon.removeClass('icon-user-check').addClass('icon-user');
         var t = name || PosnicPro.i18n.t('lang_customer_details', 'Customer details');
-        $btn.attr('data-original-title', t).attr('title', t);
+        $btn.attr('data-original-title', t).attr('title', t).attr('aria-label', 'Customer: ' + t);
     }
 };
 // Super-admin "lock sale date": when the setting is off, the New Sale date is
@@ -12540,20 +12541,68 @@ PosnicPro.sales.applySaleDateLock = function () {
             .attr('readonly', true).css({ 'pointer-events': 'none' });
     } catch (e) { /* fail open: leave the date editable */ }
 };
-$('.toggle-user-input').click(function () {
-    var $pop = $('.toggle-customer-user');
-    $pop.toggle();
-    if ($pop.is(':visible')) {
+PosnicPro.sales.setCustomerPopup = function (open, returnFocus) {
+    $('.toggle-customer-user').toggle(open);
+    $('#sales_customer_btn').attr('aria-expanded', String(open));
+    if (open) {
         PosnicPro.sales.renderRecentCustomers();
-        setTimeout(function () { $('#sales_new_customer_phone').trigger('focus'); }, 0);
+        $('#sales_new_customer_name').trigger('focus').trigger('select');
+    } else {
+        $('#sales_customer_results .autocomplete-suggestions').hide();
+        if (returnFocus) $('#sales_customer_btn').trigger('focus');
     }
+};
+$('.toggle-user-input').click(function () {
+    PosnicPro.sales.setCustomerPopup($('#sales_customer_btn').attr('aria-expanded') !== 'true');
+});
+$(document).on('click', '#sales_customer_done', function () {
+    PosnicPro.sales.updateCustomerChip();
+    PosnicPro.sales.setCustomerPopup(false, true);
+});
+$(document).on('keydown', '#sales_customer_popup', function (e) {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        PosnicPro.sales.setCustomerPopup(false, true);
+    }
+});
+$(document).on('click', '#sales_customer_add_new', function () {
+    var $button = $(this);
+    if ($button.prop('disabled')) return;
+    var data = {};
+    ['name', 'phone', 'email', 'address'].forEach(function (key) {
+        data[key] = ($('#sales_new_customer_' + key).val() || '').trim();
+    });
+    var $status = $('#sales_customer_status');
+    if (!data.name || $('#sales_new_customer_id').val()) {
+        $status.text('Enter a new customer name first, or select an existing customer.');
+        $('#sales_new_customer_name').trigger('focus');
+        return;
+    }
+    $button.prop('disabled', true);
+    $status.text('Saving customer...');
+    PosnicPro.request({method: 'POST', url: 'customers', data: JSON.stringify(data)}, function (response) {
+        $button.prop('disabled', false);
+        var saved = response.data || {};
+        var id = saved.id || saved.customer_id || saved._id;
+        if (response.type !== 'success' || !id) {
+            $status.text(response.message || 'Could not save customer. Please check the details.');
+            return;
+        }
+        $status.text('Customer saved.');
+        PosnicPro.sales.applyCustomerPick(Object.assign({}, data, saved, {id: id}));
+        PosnicPro.sales.setCustomerPopup(false, true);
+    }, function (xhr) {
+        $button.prop('disabled', false);
+        var response = xhr.responseJSON || {};
+        $status.text(response.message || 'Could not save customer. Check the details and try again.');
+    });
 });
 // Customer popover: close on the × or an outside click; "Walk-in" clears the
 // customer back to none. Selecting a search result (autocomplete onSelect) also
 // closes it. The popover reuses #sales_new_customer_name so search/submit are
 // unchanged - only the presentation moved into a floating card.
 $(document).on('click', '#sales_customer_pop_close', function () {
-    $('.toggle-customer-user').hide();
+    PosnicPro.sales.setCustomerPopup(false);
 });
 $(document).on('click', '#sales_customer_walkin', function (e) {
     e.preventDefault();
@@ -12571,13 +12620,13 @@ $(document).on('click', '#sales_customer_walkin', function (e) {
     if (PosnicPro.sales.calculation && PosnicPro.sales.calculation.salesTableRowCart) {
         PosnicPro.sales.calculation.salesTableRowCart();
     }
-    $('.toggle-customer-user').hide();
+    PosnicPro.sales.setCustomerPopup(false);
 });
 $(document).on('mousedown', function (e) {
     var $pop = $('.toggle-customer-user');
     if (!$pop.length || !$pop.is(':visible')) { return; }
     if ($(e.target).closest('.toggle-customer-user, .sales-customer-entry, #sales_customer_btn, .autocomplete-suggestions').length === 0) {
-        $pop.hide();
+        PosnicPro.sales.setCustomerPopup(false);
     }
 });
 $(document).ready(function () {
