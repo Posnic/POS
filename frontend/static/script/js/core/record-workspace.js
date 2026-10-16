@@ -8,7 +8,7 @@
         case 'lang_record_receipts': fallback = PosnicPro.i18n.t('lang_record_receipts', 'Receipts & sharing'); break;
         case 'lang_record_controls': fallback = PosnicPro.i18n.t('lang_record_controls', 'Controls'); break;
         case 'lang_record_regional': fallback = PosnicPro.i18n.t('lang_record_regional', 'Regional & tax'); break;
-        case 'lang_record_profile': fallback = PosnicPro.i18n.t('lang_record_profile', 'Profile'); break;
+        case 'lang_vieweditprofile_title': fallback = PosnicPro.i18n.t('lang_vieweditprofile_title', 'Profile Details'); break;
         case 'lang_record_print_details': fallback = PosnicPro.i18n.t('lang_record_print_details', 'Printing details'); break;
         case 'lang_record_access': fallback = PosnicPro.i18n.t('lang_record_access', 'Access & branches'); break;
         case 'lang_record_setup': fallback = PosnicPro.i18n.t('lang_record_setup', 'Registers & setup'); break;
@@ -300,14 +300,14 @@
         }
         var user = document.getElementById('user_form_upload');
         if (user) {
-            var profile = section(user, 'lang_record_profile', 'Profile');
+            var profile = section(user, 'lang_vieweditprofile_title', 'Profile Details');
             moveFields(user, profile, ['users_firstname', 'users_lastname', 'users_name', 'users_email', 'users_password', 'users_retype_password']);
             user.prepend(profile.parentElement);
             var photo = user.querySelector('.profilebox');
             if (photo) user.prepend(photo);
             var actions = user.querySelector('.record-actions');
             if (actions) user.appendChild(actions);
-            formTabs(user, [['lang_record_profile', 'Profile'], ['lang_record_access', 'Access & branches']], function (child) {
+            formTabs(user, [['lang_vieweditprofile_title', 'Profile Details'], ['lang_record_access', 'Access & branches']], function (child) {
                 return child.querySelector('#branchtype,#choose_register,#click_collapse') ? 1 : 0;
             });
         }

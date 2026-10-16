@@ -8,7 +8,7 @@ function setup(){
  const dom=new JSDOM(fs.readFileSync('frontend/modules/sales_write.html','utf8'),{runScripts:'outside-only'});
  const w=dom.window,$=jquery(w);w.$=$;
  const calls=[];
- w.PosnicPro={sales:{renderRecentCustomers(){},updateCustomerChip(){},applyCustomerPick(d){calls.push(d);}},request(p,ok,fail){calls.push({p,ok,fail});}};
+ w.PosnicPro={i18n:{t(key,fallback){return fallback;}},sales:{renderRecentCustomers(){},updateCustomerChip(){},applyCustomerPick(d){calls.push(d);}},request(p,ok,fail){calls.push({p,ok,fail});}};
  const a=source.indexOf('PosnicPro.sales.setCustomerPopup =');
  w.eval(source.slice(a,source.indexOf('// Customer popover:',a)));
  return {dom,w,$,calls};

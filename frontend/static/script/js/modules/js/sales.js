@@ -12579,7 +12579,7 @@ $(document).on('click', '#sales_customer_add_new', function () {
         return;
     }
     $button.prop('disabled', true);
-    $status.text(PosnicPro.i18n.t('lang_saving_customer', 'Saving customer...'));
+    $status.text(PosnicPro.i18n.t('lang_saving', 'Saving ...'));
     PosnicPro.request({method: 'POST', url: 'customers', data: JSON.stringify(data)}, function (response) {
         $button.prop('disabled', false);
         var saved = response.data || {};
